@@ -1,0 +1,31 @@
+<!-- Les paires enregistrées -->
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Joueur 1</th>
+            <th>Joueur 2</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr *ngFor="let team of teams,let i=index">
+            <td>{{i+1}}</td>
+            <td *ngFor="let player of team">
+                <span *ngIf="player.organization.id ==1438"> ✅</span>
+                <span *ngIf="player.organization.id !=1438"> &#11036;</span>
+
+
+                <span *ngIf="player.gender==1;else madame"> M. </span>
+                <ng-template #madame> Mme </ng-template>
+                {{player.lastname | uppercase}}
+                {{player.firstname}}
+                <br>
+                <small>
+                    {{player.license_number}}
+                    (IV = {{player.iv.id}} )
+                    {{player.iv.code}}
+                </small>
+            </td>
+        </tr>
+    </tbody>
+</table>
