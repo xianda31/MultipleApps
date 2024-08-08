@@ -2,11 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
 import { generateClient, SelectionSet } from 'aws-amplify/data';
-import type { Schema } from '../../../../../../my-shared-backend/amplify/data/resource';
-// Remove the import statement for 'Nullable'
-
-// const selectionSet = ['id', 'email', 'username'] as const;
-// type Administrator = SelectionSet<Schema['Administrator']['type'], typeof selectionSet>;
+import type { Schema } from '../../../../../../amplify/data/resource';
 
 type Administrator = {
   id: string | null;
@@ -31,6 +27,7 @@ export class AdminsComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     await this.listAdministrators();
+    console.log(this.administrators);
     this.adminForm['controls']['email'].valueChanges.subscribe((email) => {
       if (!this.unicityCheck(email)) {
         this.adminForm['controls']['email'].setErrors({ 'notUnique': true });

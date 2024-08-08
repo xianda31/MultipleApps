@@ -17,12 +17,11 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
+            "allowedCommonJsDependencies": ["lodash", "qrcode"],
             "outputPath": "dist/admin-dashboard",
             "index": "projects/admin-dashboard/src/index.html",
             "browser": "projects/admin-dashboard/src/main.ts",
-            "polyfills": [
-              "zone.js"
-            ],
+            "polyfills": ["zone.js"],
             "tsConfig": "projects/admin-dashboard/tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "assets": [
@@ -31,9 +30,7 @@
                 "input": "projects/admin-dashboard/public"
               }
             ],
-            "styles": [
-              "projects/admin-dashboard/src/styles.scss"
-            ],
+            "styles": ["projects/admin-dashboard/src/styles.scss"],
             "scripts": []
           },
           "configurations": {
@@ -78,10 +75,7 @@
         "test": {
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
-            "polyfills": [
-              "zone.js",
-              "zone.js/testing"
-            ],
+            "polyfills": ["zone.js", "zone.js/testing"],
             "tsConfig": "projects/admin-dashboard/tsconfig.spec.json",
             "inlineStyleLanguage": "scss",
             "assets": [
@@ -90,9 +84,7 @@
                 "input": "projects/admin-dashboard/public"
               }
             ],
-            "styles": [
-              "projects/admin-dashboard/src/styles.scss"
-            ],
+            "styles": ["projects/admin-dashboard/src/styles.scss"],
             "scripts": []
           }
         }
@@ -115,9 +107,7 @@
             "outputPath": "dist/web-site",
             "index": "projects/web-site/src/index.html",
             "browser": "projects/web-site/src/main.ts",
-            "polyfills": [
-              "zone.js"
-            ],
+            "polyfills": ["zone.js"],
             "tsConfig": "projects/web-site/tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "assets": [
@@ -126,9 +116,7 @@
                 "input": "projects/web-site/public"
               }
             ],
-            "styles": [
-              "projects/web-site/src/styles.scss"
-            ],
+            "styles": ["projects/web-site/src/styles.scss"],
             "scripts": []
           },
           "configurations": {
@@ -173,10 +161,7 @@
         "test": {
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
-            "polyfills": [
-              "zone.js",
-              "zone.js/testing"
-            ],
+            "polyfills": ["zone.js", "zone.js/testing"],
             "tsConfig": "projects/web-site/tsconfig.spec.json",
             "inlineStyleLanguage": "scss",
             "assets": [
@@ -185,9 +170,7 @@
                 "input": "projects/web-site/public"
               }
             ],
-            "styles": [
-              "projects/web-site/src/styles.scss"
-            ],
+            "styles": ["projects/web-site/src/styles.scss"],
             "scripts": []
           }
         }
