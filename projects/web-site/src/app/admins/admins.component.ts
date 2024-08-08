@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
 import { generateClient, SelectionSet } from 'aws-amplify/data';
-import type { Schema } from '../../../../../../amplify/data/resource';
+import type { Schema } from '../../../../../amplify/data/resource';
 
 type Administrator = {
   id: string | null;

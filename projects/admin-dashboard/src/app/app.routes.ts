@@ -1,8 +1,6 @@
 
-import { Component } from '@angular/core';
 import { Routes } from '@angular/router';
 import { AuthComponent } from './auth/auth.component';
-import { AppComponent } from './app.component';
 import { AdminsComponent } from './admins/admins.component';
 import { MembersComponent } from './members/members.component';
 import { TournamentsComponent } from './tournaments/tournaments/tournaments.component';
