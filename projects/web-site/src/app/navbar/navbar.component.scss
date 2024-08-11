@@ -1,83 +1,23 @@
-// body {
-//     font-family: "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-//     background-color: #fff;
-//     height: 200vh;
-//     position: relative;
+// .bkgrd {
+//     position: absolute;
+//     height: 100vh-17vh;
+//     width: 100%;
+//     display: flex;
+//     justify-content: center;
+//     align-items: center;
 // }
 
-// body:before {
+// .bkgrd::before {
 //     content: "";
+//     background-image: url("../../../assets/images/ai.jpeg");
+//     background-size: cover;
 //     position: absolute;
 //     top: 0;
 //     left: 0;
 //     right: 0;
 //     bottom: 0;
-//     background: rgba(0, 0, 0, 0.5);
-//     -webkit-transition: .3s all ease;
-//     -o-transition: .3s all ease;
-//     transition: .3s all ease;
-//     opacity: 0;
-//     visibility: hidden;
-//     z-index: 1;
+//     opacity: 0.35;
 // }
-
-// body.offcanvas-menu:before {
-//     opacity: 1;
-//     z-index: 1002;
-//     visibility: visible;
-// }
-
-// p {
-//     color: #b3b3b3;
-//     font-weight: 300;
-// }
-
-// h1,
-// h2,
-// h3,
-// h4,
-// h5,
-// h6,
-// .h1,
-// .h2,
-// .h3,
-// .h4,
-// .h5,
-// .h6 {
-//     font-family: "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-// }
-
-// a {
-//     -webkit-transition: .3s all ease;
-//     -o-transition: .3s all ease;
-//     transition: .3s all ease;
-// }
-
-// a,
-// a:hover {
-//     text-decoration: none !important;
-// }
-
-.bkgrd {
-    position: absolute;
-    height: 100vh-17vh;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.bkgrd::before {
-    content: "";
-    background-image: url("../../../assets/images/ai.jpeg");
-    background-size: cover;
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    opacity: 0.35;
-}
 
 .top-bar {
     padding: .5rem 0;

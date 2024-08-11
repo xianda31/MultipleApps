@@ -17,7 +17,18 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "allowedCommonJsDependencies": ["lodash", "qrcode"],
+            "allowedCommonJsDependencies": [
+              "lodash",
+              "qrcode",
+              "js-cookie",
+              "classnames",
+              "cookie",
+              "camelcase-keys",
+              "xstate/lib/waitFor.js",
+              "style-dictionary/lib/utils/references/usesReference.js",
+              "style-dictionary/lib/utils/flattenProperties.js",
+              "style-dictionary/lib/utils/deepExtend.js"
+            ],
             "outputPath": "dist/admin-dashboard",
             "index": "projects/admin-dashboard/src/index.html",
             "browser": "projects/admin-dashboard/src/main.ts",
