@@ -159,14 +159,15 @@ a:hover {
 
 .site-navbar .site-navigation .site-menu .has-children>a:before {
     position: absolute;
-    content: "⛅";
+    content: "\e313";
+    // content: "here";
     font-size: 16px;
     top: 50%;
     right: 0;
     -webkit-transform: translateY(-50%);
     -ms-transform: translateY(-50%);
     transform: translateY(-50%);
-    font-family: 'Smooch';
+    font-family: 'Icomoon';
 }
 
 .site-navbar .site-navigation .site-menu .has-children .dropdown {
