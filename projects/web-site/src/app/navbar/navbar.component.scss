@@ -1,23 +1,23 @@
-// .bkgrd {
-//     position: absolute;
-//     height: 100vh-17vh;
-//     width: 100%;
-//     display: flex;
-//     justify-content: center;
-//     align-items: center;
-// }
+.bkgrd {
+    position: absolute;
+    height: 100vh-17vh;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
 
-// .bkgrd::before {
-//     content: "";
-//     background-image: url("../../../assets/images/ai.jpeg");
-//     background-size: cover;
-//     position: absolute;
-//     top: 0;
-//     left: 0;
-//     right: 0;
-//     bottom: 0;
-//     opacity: 0.35;
-// }
+.bkgrd::before {
+    content: "";
+    background-image: url("../../../assets/images/ai.jpeg");
+    background-size: cover;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0.35;
+}
 
 .top-bar {
     padding: .5rem 0;
