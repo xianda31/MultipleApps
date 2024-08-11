@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
-import { FfbService } from '../../ffb/services/ffb.service';
-import { Person } from '../../ffb/interface/tournament.ffb.interface';
 import { CommonModule } from '@angular/common';
+import { Person } from '../../../../../common/ffb/interface/tournament.ffb.interface';
+import { FfbService } from '../../../../../common/ffb/services/ffb.service';
 
 @Component({
   selector: 'app-tournament',

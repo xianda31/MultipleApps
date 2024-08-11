@@ -1,38 +1,38 @@
 import { Component } from '@angular/core';
-import { FfbService } from '../../ffb/services/ffb.service';
-import { ffb_tournament } from '../../ffb/interface/tournament.ffb.interface';
 import { CommonModule } from '@angular/common';
 import { TournamentComponent } from '../tournament/tournament.component';
+import { TeamsComponent } from "../../../../../web-site/src/app/tournaments/teams/teams.component";
+import { FFB_tournament } from '../../../../../common/ffb/interface/FFBtournament.interface';
+import { FfbService } from '../../../../../common/ffb/services/ffb.service';
 
 @Component({
   selector: 'app-tournaments',
   standalone: true,
   imports: [CommonModule,
-    TournamentComponent
-  ],
+    TournamentComponent, TeamsComponent],
   templateUrl: './tournaments.component.html',
   styleUrl: './tournaments.component.scss'
 })
 export class TournamentsComponent {
-  nextTournaments!: ffb_tournament[];
-  tournaments: ffb_tournament[] = [];
+  nextTournaments!: FFB_tournament[];
+  tournaments: FFB_tournament[] = [];
 
   tournamentSelected = false;
-  selectedTournament!: ffb_tournament;
+  selectedTournament!: FFB_tournament;
   constructor(
     private ffbService: FfbService
   ) { }
   async ngOnInit(): Promise<void> {
     const today = new Date();
     this.nextTournaments = await this.ffbService.getTournaments();
-    this.nextTournaments = this.nextTournaments.filter((tournament: ffb_tournament) => {
+    this.nextTournaments = this.nextTournaments.filter((tournament: FFB_tournament) => {
       return new Date(tournament.date) >= today;
     });
     this.tournaments = this.nextTournaments;
     console.log('TournamentsComponent.ngOnInit', this.tournaments);
   }
 
-  selectTournament(tournament: ffb_tournament) {
+  selectTournament(tournament: FFB_tournament) {
     this.tournaments = [];
     this.tournaments.push(tournament);
     this.tournamentSelected = true;
