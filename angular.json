@@ -116,7 +116,10 @@
                 "input": "projects/web-site/public"
               }
             ],
-            "styles": ["projects/web-site/src/styles.scss"],
+            "styles": [
+              "node_modules/bootstrap/dist/css/bootstrap.min.css",
+              "projects/web-site/src/styles.scss"
+            ],
             "scripts": []
           },
           "configurations": {

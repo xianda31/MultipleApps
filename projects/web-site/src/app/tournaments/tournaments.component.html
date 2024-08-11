@@ -1,0 +1,31 @@
+<div class="p-2 col-md-8 offset-md-2">
+
+    <div class="card">
+        <div class="card-header">
+            <h4 class="card-title">Les prochains tournois</h4>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Tournoi</th>
+                            <th>Heure</th>
+                            <th>Joueur isolé</th>
+
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let t of tournaments">
+                            <td>{{t.date}}</td>
+                            <td>{{t.tournament_name}}</td>
+                            <td>{{t.time}}</td>
+                            <td>{{t.has_isolated_player}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,52 +1,67 @@
-<div class="site-mobile-menu site-navbar-target">
-    <div class="site-mobile-menu-header">
-        <div class="site-mobile-menu-close mt-3">
-            <span class="icon-close2 js-menu-toggle"></span>
-        </div>
-    </div>
-    <div class="site-mobile-menu-body"></div>
-</div>
-
-
 <div class="top-bar">
     <div class="container">
-        <div class="row">
-            <div class="col-12">
-                <a href="#" class=""><span class="mr-2  icon-envelope-open-o"></span> <span
-                        class="d-none d-md-inline-block">info&#64;bcsto.com</span></a>
-                <span class="mx-md-2 d-inline-block"></span>
-                <a href="#" class="mr-2 icon-phone">
-
-                    <span class="d-none d-md-inline-block"> (33) 0606 0666</span>
-                </a>
-
-
-                <div class="float-end">
-
-                    <a href="#" class=""><span class="mr-2  icon-twitter"></span> <span
-                            class="d-none d-md-inline-block">Twitter</span></a>
-                    <span class="mx-md-2 d-inline-block"></span>
-                    <a href="#" class=""><span class="mr-2  icon-facebook"></span> <span
-                            class="d-none d-md-inline-block">Facebook</span></a>
-
-                </div>
-
+        <div class="row-cols-lg-auto row">
+            <div class="col">
+                <span class="mr-2  icon-envelope-open-o"></span>
+                <span class="inline-block">
+                    <a href="#" class="">info&#64;bcsto.com </a>
+                </span>
             </div>
-
+            <div class="col">
+                <span class="mr-2 icon-phone"></span>
+                <span class="inline-block"> (33) 6 66 0666</span>
+            </div>
         </div>
-
     </div>
 </div>
 
-<header class="site-navbar js-sticky-header site-navbar-target" role="banner">
-
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
     <div class="container">
+        <a class="navbar-brand" href="#">BCSTO</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="#">Accueil</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Le Club</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                        Tournois
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <li><a class="dropdown-item" routerLink="/tournaments">Régularité</a></li>
+                        <li><a class="dropdown-item" href="#">Résultats</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item" href="#">Calendrier</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link disabled">Photos</a>
+                </li>
+            </ul>
+            <form class="d-flex">
+                <input class="form-control me-2" type="mail" placeholder="Mail" aria-label="Mail">
+                <button class="btn btn-outline-success" type="submit">Login</button>
+            </form>
+        </div>
+    </div>
+</nav>
+
+
+<!-- <div class="site-mobile-menu site-navbar-target"></div> -->
+<!-- <div class="container">
         <div class="row align-items-center position-relative">
 
 
-            <!-- <div class="site-logo">
-                <a href="index.html" class="text-black"><span class="text-primary">BCSTO </span></a>
-            </div> -->
             <div class=" col-12">
                 <nav class="site-navigation text-right ml-auto " role="navigation">
 
@@ -93,12 +108,10 @@
 
             </div>
 
-            <div class="toggle-button d-inline-block d-lg-none"><a href="#"
-                    class="site-menu-toggle py-5 js-menu-toggle text-black"><span class="icon-menu h3"></span></a></div>
+
 
         </div>
-    </div>
+    </div> -->
 
-</header>
 
-<div class="hero"></div>
+<div class="bkgrd"></div>

@@ -64,7 +64,7 @@ export interface ffb_teams {
 export interface ffb_tournament {
   id: number;
   organization_id: number;
-  date: string;
+  date: string | Date;
   moment_id: number;
   tournament_name: string
   max_teams: number
@@ -86,6 +86,7 @@ export interface ffb_tournament {
   iv_player_max: number
   droped_target_link: string
   edulib_students_group_id: any
+  has_isolated_player: boolean
   vimeo_id: any
   is_halftime: boolean
   nb_round: number
