@@ -27,5 +27,12 @@
                 </small>
             </td>
         </tr>
+
     </tbody>
 </table>
+<br>
+<span class="form-check form-switch">
+    <input class="form-check-input" (click)="toggler = !toggler" [(ngModel)]="toggler" type="checkbox" role="switch">
+    <label class="form-check-label">inscription</label>
+</span>
+<app-inscription *ngIf="toggler" [tournamentTeamsId]="tournamentTeamsId" (newTeam)="addTeam($event)"></app-inscription>

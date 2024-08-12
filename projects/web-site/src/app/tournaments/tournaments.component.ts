@@ -4,11 +4,12 @@ import { RouterModule } from '@angular/router';
 import { FFB_tournament } from '../../../../common/ffb/interface/FFBtournament.interface';
 import { FfbService } from '../../../../common/ffb/services/ffb.service';
 import { TeamsComponent } from './teams/teams.component';
+import { InscriptionComponent } from './inscription/inscription.component';
 
 @Component({
   selector: 'app-tournaments',
   standalone: true,
-  imports: [RouterModule, CommonModule, TeamsComponent],
+  imports: [RouterModule, CommonModule, TeamsComponent, InscriptionComponent],
   templateUrl: './tournaments.component.html',
   styleUrl: './tournaments.component.scss'
 })
@@ -18,6 +19,8 @@ export class TournamentsComponent {
 
   tournamentSelected = false;
   selectedTournament!: FFB_tournament;
+  enrolled = false;
+
   constructor(
     private ffbService: FfbService
   ) { }
