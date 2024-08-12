@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FfbService } from '../../../../../common/ffb/services/ffb.service';
-import { Person } from '../../../../../common/ffb/interface/tournament.ffb.interface';
+import { Person } from '../../../../../common/ffb/interface/teams.interface';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 
 @Component({

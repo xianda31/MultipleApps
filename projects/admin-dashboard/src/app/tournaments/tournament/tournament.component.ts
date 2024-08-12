@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Person } from '../../../../../common/ffb/interface/tournament.ffb.interface';
+import { Person } from '../../../../../common/ffb/interface/teams.interface';
 import { FfbService } from '../../../../../common/ffb/services/ffb.service';
 
 @Component({

@@ -1,0 +1,83 @@
+<!-- list DB -->
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <h6>
+                Membres:
+                <span> {{licenseesNbr}} licenciés</span>
+                <span> - {{sympatisantsNbr}} sympathisants</span>
+            </h6>
+            <!-- choix filtre -->
+            <form [formGroup]="radioButtonGroup">
+                <p>
+                    Afficher :
+                    <ng-container *ngFor="let filter of filters ; let i=index">
+                        <input type="radio" [value]="filter" [id]="i" formControlName="radioButton" />
+                        {{filter}}
+                    </ng-container>
+                </p>
+            </form>
+
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <!-- <th>Id</th> -->
+                        <th>#</th>
+                        <th>Civilité</th>
+                        <th>Nom</th>
+                        <th>Prénom</th>
+                        <th>N° Licence</th>
+                        <th class="text-center">payée</th>
+                        <th class="text-center">au Club</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let member of filteredMembers; let i = index"
+                        [class]="member.license_id?'':'table-danger'">
+                        <td>{{i+1}}</td>
+                        <td>{{member.gender}}</td>
+                        <td>{{member.lastname | uppercase}}</td>
+                        <td>{{member.firstname}}</td>
+                        <td>{{member.license_number}}</td>
+                        <td class="text-center">{{member.license_id ? '☑' : '☐'}}</td>
+                        <!-- <td class="text-center"> {{ (member.orga_license_id == 1438) ? "":'&#9745;' }}                        </td> -->
+                        <td class="text-center">
+                            {{(member.license_id !== null && (member.orga_license_id ===undefined )) ? '☑' :
+                            '☐' }}
+                        </td>
+                        <td>
+                            <!-- <button class="btn btn-danger btn-sm">xfer</button> -->
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- UI creation -->
+    <!-- <form [formGroup]="adminForm">
+        <div class="row d-flex align-items-end">
+
+            <div class="col-4">
+                <label>email</label>
+                <input type="text" placeholder="john.do@example.com" class="form-control" id="email"
+                    formControlName="email">
+            </div>
+            <div class="col-4">
+                <label>Username</label>
+                <input type="text" placeholder="john" class="form-control" id="username" formControlName="username">
+            </div>
+            <div class="col-4 ">
+                <button type="submit" (click)="createAdministrator()" class="btn btn-primary ">Create</button>
+            </div>
+        </div>
+        <div class="row d-flex align-items-end">
+            <div class="col-4">
+                <small class="text-danger" *ngIf="adminForm.get('email')?.hasError('notUnique')">ce mail existe déjà
+                    !</small>
+            </div>
+        </div>
+
+    </form> -->
+</div>

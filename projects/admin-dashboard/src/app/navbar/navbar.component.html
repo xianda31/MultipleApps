@@ -20,18 +20,29 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item">
-                    <a class="nav-link active" aria-current="page" href="#">Membres</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" routerLink="/tournaments">Tournois</a>
-                </li>
+
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown1" role="button"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                        Membres
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown1">
+                        <li><a class="dropdown-item" href="#">Adhérents BCSTO</a></li>
+                        <li><a class="dropdown-item  " [routerLink]="['/licensees']">Licenciés FFB</a></li>
+                        <li><a class="dropdown-item" href="#">Autres</a></li>
+
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" routerLink="/admins">Admins</a>
+                </li>
+
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown2" role="button"
                         data-bs-toggle="dropdown" aria-expanded="false">
                         web-site
                     </a>
-                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown2">
                         <li><a class="dropdown-item" href="#">Accueil</a></li>
                         <li><a class="dropdown-item" href="#">Photos</a></li>
                         <li><a class="dropdown-item" href="#">Blog</a></li>

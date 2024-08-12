@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { CommonModule, UpperCasePipe } from '@angular/common';
-import { Person } from '../../../../../common/ffb/interface/tournament.ffb.interface';
+import { Person } from '../../../../../common/ffb/interface/teams.interface';
 import { FfbService } from '../../../../../common/ffb/services/ffb.service';
 import { InscriptionComponent } from '../inscription/inscription.component';
 import { FormsModule } from '@angular/forms';
