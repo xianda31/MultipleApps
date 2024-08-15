@@ -79,5 +79,22 @@ export class MembersService {
     }
   }
 
+  async deleteMember(license_number: string) {
+    const client = generateClient<Schema>();
+    const { data: deletedMember, errors } = await client.models.Member.delete({ id: license_number });
+    if (errors) {
+      console.error(errors);
+      return;
+    }
+    if (!deletedMember) {
+      console.error('Member not deleted');
+      return;
+    } else {
+      console.log('Member deleted', deletedMember.license_number);
+      this._members = this._members.filter((m) => m.license_number !== license_number);
+      this._members$.next(this._members);
+    }
+  }
+
 
 }

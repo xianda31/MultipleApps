@@ -1,0 +1,39 @@
+<!-- Les paires enregistrées -->
+<form [formGroup]="newTeam" *ngIf="newTeam">
+
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Joueur 1</th>
+                <th>Joueur 2</th>
+                <th class="text-center">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let team of teams,let i=index">
+                <td>{{i+1}}</td>
+                <td *ngFor="let person of team">
+                    <span *ngIf="membership(person.license_number)"> ✅</span>
+                    <span *ngIf="!membership(person.license_number)"> &#11036;</span>
+                    {{person.lastname | uppercase}}
+                    {{person.firstname}}
+                </td>
+                <td class="text-center danger"> <i class="fa-regular fa-trash-can" (click)="deleteTeam(team)"></i>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                    <input type="text" class="form-control" formControlName="me" placeholder="moi !!">
+                </td>
+                <td>
+                    <input type="text" class="form-control" formControlName="partner" placeholder="partenaire">
+                </td>
+                <td class="text-center action"> <i (click)="addTeam()" class="fa-regular fa-square-plus"></i></td>
+            </tr>
+        </tbody>
+    </table>
+
+</form>

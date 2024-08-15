@@ -1,52 +1,47 @@
-<div class="container">
+<div class="p-2 col-md-8 offset-md-2">
 
-</div>
-<div class="card">
-    <div *ngIf="tournaments" class="card-body">
-        <div class="col-md-2"></div>
-        <div class="col-md-8">
-            <!-- <h3>Les prochains tournois</h3> -->
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Tournoi</th>
-                        <th>Heure</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr *ngFor="let t of tournaments">
-                        <td>{{t.date}}</td>
-                        <td>{{t.tournament_name}}</td>
-                        <td>{{t.time}}</td>
-                        <td *ngIf="!tournamentSelected">
-                            <button (click)="selectTournament(t)" class="btn btn-primary btn-sm">Choisir</button>
-                        </td>
-                        <td *ngIf="tournamentSelected">
-                            <button (click)="saveTournament()" class="btn btn-primary btn-sm">Fermer</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+    <div class="card">
+        <div class="card-header">
+
+            <h4 class="card-title">Les prochains tournois au Club</h4>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Tournoi</th>
+                            <th>Heure</th>
+                            <th class="text-center">nb paires</th>
+                            <th class="text-center"><i class="bi bi-person-arms-up"></i></th>
+                            <th class="text-center">Action</th>
+
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let t of tournaments">
+                            <td>{{t.date}}</td>
+                            <td>{{t.tournament_name}}</td>
+                            <td>{{t.time}}</td>
+                            <td class="text-center">{{((t.nbr_inscrit-t.nbr_inscrit%2)/2)}} </td>
+                            <td class="text-center"><i *ngIf="t.has_isolated_player" class="bi bi-person-arms-up"></i>
+                            </td>
+                            <td class="text-center">
+                                <h4 class="action">
+                                    <i (click)="clickOnTournament(t)" *ngIf="!tournamentSelected"
+                                        class="fa-solid fa-arrow-right-to-bracket"></i>
+                                    <i (click)="clickOnTournament(t)" *ngIf="tournamentSelected"
+                                        class="fa-solid fa-arrow-right-from-bracket"></i>
+                                </h4>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div *ngIf="tournamentSelected">
+                <app-teams [tournamentTeamsId]="selectedTournament.team_tournament_id"></app-teams>
+            </div>
         </div>
     </div>
-
-    <div *ngIf="tournamentSelected" class="row">
-        <div class="col-md-8 offset-md-2">
-            <!-- <h3>
-                composition du tournoi
-                <span> {{selectedTournament.tournament_name}} </span>
-            </h3> -->
-            <app-tournament [tournamentId]="selectedTournament.team_tournament_id"></app-tournament>
-
-        </div>
-    </div>
 </div>
-
-
-<!-- <div class="row ps-4" *ngFor="let t of tournaments">
-    <div class="col-auto"> {{t.date}}</div>
-    <div class="col-5"> {{t.tournament_name}}</div>
-    <div class="col-auto"> {{t.time}}</div>
-</div> -->

@@ -1,15 +1,14 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, formatDate } from '@angular/common';
 import { TournamentComponent } from '../tournament/tournament.component';
-import { TeamsComponent } from "../../../../../web-site/src/app/tournaments/teams/teams.component";
 import { FFB_tournament } from '../../../../../common/ffb/interface/FFBtournament.interface';
 import { FfbService } from '../../../../../common/ffb/services/ffb.service';
+import { TeamsComponent } from '../teams/teams.component';
 
 @Component({
   selector: 'app-tournaments',
   standalone: true,
-  imports: [CommonModule,
-    TournamentComponent, TeamsComponent],
+  imports: [CommonModule, TournamentComponent, TeamsComponent],
   templateUrl: './tournaments.component.html',
   styleUrl: './tournaments.component.scss'
 })
@@ -19,6 +18,7 @@ export class TournamentsComponent {
 
   tournamentSelected = false;
   selectedTournament!: FFB_tournament;
+  Math: any;
   constructor(
     private ffbService: FfbService
   ) { }
@@ -28,10 +28,23 @@ export class TournamentsComponent {
     this.nextTournaments = this.nextTournaments.filter((tournament: FFB_tournament) => {
       return new Date(tournament.date) >= today;
     });
+    this.nextTournaments.forEach((tournament: FFB_tournament) => {
+      tournament.date = formatDate(tournament.date, 'dd-MM-yyyy', 'en-FR');
+      tournament.time = tournament.time.split(':').slice(0, 2).join(':');
+    }
+    );
     this.tournaments = this.nextTournaments;
     console.log('TournamentsComponent.ngOnInit', this.tournaments);
   }
 
+
+  clickOnTournament(tournament: FFB_tournament) {
+    if (this.tournamentSelected) {
+      this.closeTournament();
+    } else {
+      this.selectTournament(tournament);
+    }
+  }
   selectTournament(tournament: FFB_tournament) {
     this.tournaments = [];
     this.tournaments.push(tournament);
@@ -39,7 +52,7 @@ export class TournamentsComponent {
     this.selectedTournament = tournament;
   }
 
-  saveTournament() {
+  closeTournament() {
     this.tournamentSelected = false;
     this.tournaments = this.nextTournaments;
 

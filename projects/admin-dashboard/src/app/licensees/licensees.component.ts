@@ -26,7 +26,7 @@ export class LicenseesComponent implements OnInit {
   sympatisantsNbr: number = 0;
   licenseesNbr: number = 0;
   membersNbr: number = 0;
-  filters: string[] = ['Tous', 'licenciés', 'sympathisants'];
+  filters: string[] = ['Tous', 'adhérents-licenciés', 'sympathisants'];
   selection: string = '';
 
   radioButtonGroup: FormGroup = new FormGroup({
@@ -50,12 +50,12 @@ export class LicenseesComponent implements OnInit {
     this.selection = this.radioButtonGroup.value.radioButton;
     this.filteredMembers = this.members.filter((member: FFB_licensee) => {
       switch (this.selection) {
-        case 'Tous':
+        case this.filters[0]:  //'Tous':
           return member;
-        case 'licenciés':
+        case this.filters[1]: //'licenciés':
           return member.orga_license_id ? false : member;
 
-        case 'sympathisants':
+        case this.filters[2]: //'sympathisants':
           return member.orga_license_id ? member : false;
       }
       return member;

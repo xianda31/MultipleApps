@@ -22,7 +22,7 @@ export class MembersComponent implements OnInit {
   thisSeasonMembersNbr: number = 0;
   licensees !: FFB_licensee[];
 
-  filters: string[] = ['Tous', 'à jour', 'non à jour'];
+  filters: string[] = ['Tous', ' de cette saison', ' non encore à jour'];
   selection: string = '';
 
   verbose: string = '';
@@ -74,11 +74,11 @@ export class MembersComponent implements OnInit {
     this.selection = this.radioButtonGroup.value.radioButton;
     this.filteredMembers = this.members.filter((member: Member) => {
       switch (this.selection) {
-        case 'Tous':
+        case this.filters[0]: //'Tous':
           return member;
-        case 'à jour':
+        case this.filters[1]: //'à jour':
           return (member.season == '2024/2025' || member.is_sympathisant) ? member : false;
-        case 'non à jour':
+        case this.filters[2]: //'non à jour':
           return (member.season != '2024/2025' && !member.is_sympathisant) ? member : false;
       }
       return member;
@@ -155,6 +155,8 @@ export class MembersComponent implements OnInit {
     }
 
   }
-
+  deleteMember(member: Member) {
+    this.membersService.deleteMember(member.id);
+  }
 }
 
