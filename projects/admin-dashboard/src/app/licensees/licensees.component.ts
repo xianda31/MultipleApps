@@ -4,6 +4,8 @@ import { FfbService } from '../../../../common/ffb/services/ffb.service';
 import { FFB_tournament } from '../../../../common/ffb/interface/FFBtournament.interface';
 import { FFB_licensee } from '../../../../common/ffb/interface/licensee.interface';
 import { FormControl, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { LicenseesService } from './services/licensees.service';
+import { MembersService } from '../members/service/members.service';
 
 @Component({
   selector: 'app-members',
@@ -15,7 +17,9 @@ import { FormControl, FormGroup, ReactiveFormsModule, FormsModule } from '@angul
 export class LicenseesComponent implements OnInit {
 
   constructor(
-    private FFBService: FfbService
+    // private FFBService: FfbService,
+    private licenseesService: LicenseesService,
+    private membersService: MembersService
   ) { }
   members!: FFB_licensee[];
   filteredMembers: FFB_licensee[] = [];
@@ -23,16 +27,19 @@ export class LicenseesComponent implements OnInit {
   licenseesNbr: number = 0;
   membersNbr: number = 0;
   filters: string[] = ['Tous', 'licenciés', 'sympathisants'];
-  selection: string = this.filters[0];
+  selection: string = '';
 
   radioButtonGroup: FormGroup = new FormGroup({
     radioButton: new FormControl(this.filters[0])
   });
 
   async ngOnInit(): Promise<void> {
-    this.members = await this.FFBService.getMembers();
-    this.filteredMembers = this.members;
-    this.categoriesCount();
+    this.licenseesService.FFB_licensees$.subscribe((licensees) => {
+      this.members = licensees;
+      this.filteredMembers = this.members;
+      this.categoriesCount();
+    });
+
 
     this.radioButtonGroup.valueChanges.subscribe(() => {
       this.filter();
@@ -63,4 +70,7 @@ export class LicenseesComponent implements OnInit {
     this.licenseesNbr = this.membersNbr - this.sympatisantsNbr;
   }
 
+  is_a_registred_member(member: FFB_licensee): boolean {
+    return this.membersService.isMember(member.license_number);
+  }
 }

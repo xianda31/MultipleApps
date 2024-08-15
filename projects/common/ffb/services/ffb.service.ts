@@ -49,7 +49,7 @@ export class FfbService {
     }
   }
 
-  async getMembers(): Promise<FFB_licensee[]> {
+  async getAdherents(): Promise<FFB_licensee[]> {
     try {
       const restOperation = get({
         apiName: 'myHttpApi',

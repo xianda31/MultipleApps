@@ -1,0 +1,52 @@
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <h6>Adhérents du Club</h6>
+            <h6>
+                <div> {{licensees.length}} dans la base FFB</div>
+                <div> {{thisSeasonMembersNbr}} cette saison vs {{members.length}} joueurs dans la base Club </div>
+            </h6>
+            <h6>
+                mise à jour à partir de la base FFB :
+                <button class="btn btn-primary btn-sm" (click)="getMembersfromFFB()">
+                    <i class="bi bi-person-fill-add"></i>
+                </button>
+            </h6>
+            <pre> {{verbose}} </pre>
+            <!-- choix filtre -->
+            <form [formGroup]="radioButtonGroup">
+                <p>
+                    Afficher :
+                    <ng-container *ngFor="let filter of filters ; let i=index">
+                        <input type="radio" [value]="filter" [id]="i" formControlName="radioButton" />
+                        {{filter}}
+                    </ng-container>
+                </p>
+            </form>
+        </div>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Civilité</th>
+                    <th>Nom</th>
+                    <th>Prénom</th>
+                    <th>Sympathisant</th>
+                    <th>Saison</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let member of filteredMembers; let i = index">
+                    <td>{{i+1}}</td>
+                    <td>{{member.gender}}</td>
+                    <td>{{member.lastname | uppercase}}</td>
+                    <td>{{member.firstname}}</td>
+                    <td>{{member.is_sympathisant ? 'Y' : ''}}</td>
+                    <td>{{member.season}}</td>
+                    <td>
+                        <!-- <i class="bi bi-person-fill-add" (click)="createMember(member)"></i> -->
+                    </td>
+                </tr>
+            </tbody>
+        </table>

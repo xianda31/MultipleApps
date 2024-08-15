@@ -9,11 +9,17 @@ const schema = a.schema({
     .authorization((allow) => [allow.publicApiKey()]),
 
   Member: a.model({
+    gender: a.string(),
     firstname: a.string(),
     lastname: a.string(),
-    license: a.string(),
+    license_number: a.string(),
+    birthdate: a.string(),
+    city: a.string(),
+    season: a.string(),
     email: a.string(),
-    username: a.string(),
+    phone_one: a.string(),
+    orga_license_name: a.string(),
+    is_sympathisant: a.boolean()
   })
     .authorization((allow) => [allow.publicApiKey()]),
 });
