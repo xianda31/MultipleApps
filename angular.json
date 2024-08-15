@@ -136,7 +136,6 @@
             "tsConfig": "projects/web-site/tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "assets": [
-              "assets/images/*",
               {
                 "glob": "**/*",
                 "input": "projects/web-site/public"
