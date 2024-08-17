@@ -20,6 +20,7 @@
                     {{person.lastname | uppercase}}
                     {{person.firstname}}
                 </td>
+                <td class="text-center" *ngIf="team.length < 2"> <i class="bi bi-person-arms-up"></i> </td>
                 <td class="text-center danger"> <i class="fa-regular fa-trash-can" (click)="deleteTeam(team)"></i>
                 </td>
             </tr>

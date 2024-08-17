@@ -3,6 +3,7 @@ import { get } from 'aws-amplify/api';
 import { Team, TournamentTeaming, Player, Person } from '../interface/teams.interface';
 import { FFB_tournament } from '../interface/FFBtournament.interface';
 import { FFB_licensee } from '../interface/licensee.interface';
+import { FFBplayer } from '../interface/FFBplayer.interface';
 @Injectable({
   providedIn: 'root'
 })
@@ -29,6 +30,31 @@ export class FfbService {
     } catch (error) {
       console.log('GET call failed: ', error);
       return "";
+    }
+  }
+
+  async searchPlayersSuchAs(hint: string): Promise<FFBplayer[]> {
+    try {
+      const restOperation = get({
+        apiName: 'myHttpApi',
+        path: 'v1/subscription-search-members',
+        options: {
+          queryParams: {
+            // alive: "1",
+            // bbo: "false",
+            search: hint
+          }
+        }
+      });
+      const { body } = await restOperation.response;
+      // console.log('GET call succeeded: ', await body.text());
+      const data = await body.json();
+      // console.log('searchPlayersSuchAs returned : ', data);
+      const data2 = data as unknown as FFBplayer[];
+      return data2;
+    } catch (error) {
+      console.log('GET call failed: ', error);
+      return [];
     }
   }
 

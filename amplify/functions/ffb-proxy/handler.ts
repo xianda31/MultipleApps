@@ -36,6 +36,22 @@ export const handler = async (event: APIGatewayProxyEvent) => {
                 } else {
                     return 500;
                 }
+            case "subscription-search-members":
+                if (event.queryStringParameters?.search) {
+                    try {
+                        const res = await fetch(
+                            ffbUrl + path +
+                            "?search=" + event.queryStringParameters.search
+                            + "&alive=1&bbo=false",
+                            { headers: { Authorization: token }, },
+                        );
+                        return res.json();
+                    } catch (e) {
+                        return 500;
+                    }
+                } else {
+                    return 500;
+                }
             case "organizations/1438/club_tournament":
             case "organizations/1438/members":
                 try {

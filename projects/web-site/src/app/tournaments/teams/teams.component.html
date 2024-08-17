@@ -11,20 +11,16 @@
     <tbody>
         <tr *ngFor="let team of teams,let i=index">
             <td>{{i+1}}</td>
-            <td *ngFor="let player of team">
-                <span *ngIf="player.organization.id ==1438"> ✅</span>
-                <span *ngIf="player.organization.id !=1438"> &#11036;</span>
-
-
-                <span *ngIf="player.gender==1;else madame"> M. </span>
+            <td *ngFor="let person of team">
+                <span *ngIf="person.gender==1;else madame"> M. </span>
                 <ng-template #madame> Mme </ng-template>
-                {{player.lastname | uppercase}}
-                {{player.firstname}}
+                {{person.lastname | uppercase}}
+                {{person.firstname}}
                 <!-- <br> -->
                 <small>
-                    {{player.license_number}}
-                    {{player.iv.code}}
-                    (IV = {{player.iv.id}} )
+                    {{person.license_number}}
+                    {{person.iv.code}}
+                    (IV = {{person.iv.id}} )
                 </small>
             </td>
         </tr>
