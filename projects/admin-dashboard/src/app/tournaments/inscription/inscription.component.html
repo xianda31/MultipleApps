@@ -2,15 +2,9 @@
 <div class="offset-md-2 col-md-6">
     <div class="row">
         <div class="col-6">
-            {{partner.value}}
+            <!-- {{partner.value}} -->
         </div>
         <div class="col-6">
-            <!-- <input list="listeFFB" [formControl]="partner" class="form-control">
-            <datalist id="listeFFB">
-                <option *ngFor="let partner of partners">
-                    {{partner.firstname}} {{partner.lastname}} ({{partner.last_club}})
-                </option>
-            </datalist> -->
             <app-input-player [formControl]="partner"></app-input-player>
         </div>
     </div>

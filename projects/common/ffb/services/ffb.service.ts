@@ -4,6 +4,8 @@ import { Team, TournamentTeaming, Player, Person } from '../interface/teams.inte
 import { FFB_tournament } from '../interface/FFBtournament.interface';
 import { FFB_licensee } from '../interface/licensee.interface';
 import { FFBplayer } from '../interface/FFBplayer.interface';
+import { from, Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 @Injectable({
   providedIn: 'root'
 })
@@ -32,6 +34,7 @@ export class FfbService {
       return "";
     }
   }
+
 
   async searchPlayersSuchAs(hint: string): Promise<FFBplayer[]> {
     try {

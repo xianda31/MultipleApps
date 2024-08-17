@@ -31,25 +31,13 @@ export class InscriptionComponent {
 
   constructor(
     private ffbService: FfbService
-  ) { }
+  ) {
 
-  // ngOnInit(): void {
-  //   this.partner.valueChanges.pipe(
-  //     // debounceTime(400),
-  //     // distinctUntilChanged()
-  //   )
-  //     .subscribe((value) => {
-  //       if (value) {
-  //         let search = value;
-  //         console.log('valueChanges : ', search);
-  //         if (search.length > 3) {
-  //           this.ffbService.searchPlayersSuchAs(search)
-  //             .then((partners: FFBplayer[]) => {
-  //               this.partners = partners;
-  //             });
-  //         }
-  //       }
-  //     }
-  //     );
-  // }
+    this.partner.valueChanges.subscribe((license_number) => {
+      if (license_number) {
+        console.log('InscriptionComponent.partner.valueChanges', license_number);
+      }
+    });
+  }
+
 }

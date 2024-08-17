@@ -4,7 +4,7 @@ import { FFBplayer } from '../../../../../common/ffb/interface/FFBplayer.interfa
 import { FfbService } from '../../../../../common/ffb/services/ffb.service';
 import { CommonModule } from '@angular/common';
 import { get } from 'aws-amplify/api';
-import { debounceTime } from 'rxjs';
+import { debounceTime, from, Observable } from 'rxjs';
 
 @Component({
   selector: 'app-input-player',
@@ -23,8 +23,6 @@ import { debounceTime } from 'rxjs';
 export class InputPlayerComponent implements OnInit, ControlValueAccessor {
 
   input: FormControl = new FormControl();
-  search: string = '';
-  // selectedOption: FFBplayer | null = null;
   partners!: FFBplayer[];
 
   onChange: (value: string) => void = () => { };
@@ -36,7 +34,6 @@ export class InputPlayerComponent implements OnInit, ControlValueAccessor {
   ) { }
 
   writeValue(input: any): void {
-    console.log('writeValue', input);
     if (input === undefined || input === null) {
       return;
     }
@@ -52,55 +49,27 @@ export class InputPlayerComponent implements OnInit, ControlValueAccessor {
     this.disabled = isDisabled;
   }
 
-  clicked() {
-    console.log('clicked');
-    // this.onChange(value);
-  }
-
   ngOnInit(): void {
-
-    // let listeFFB = document.getElementById('listeFFB');
-    // listeFFB?.addEventListener('click', (event) => {
-    //   let target = event.target as HTMLElement;
-    //   if (target.tagName === 'LI') {
-    //     let value = target.getAttribute('data-value');
-    //     console.log('click', value);
-    //     // this.input.setValue(value);
-    //     // this.onChange(value);
-    //   }
-    // });
-
-    this.input.valueChanges
-      .pipe(
-        debounceTime(400),
-      )
-      .subscribe((value) => {
-        if (value) {
-          let search = value;
-          console.log('valueChanges : ', search);
-          this.onChange('#' + search);
+    this.input.valueChanges.pipe(debounceTime(100))
+      .subscribe((search) => {
+        if (search) {
           if (search.length > 3) {
             this.ffbService.searchPlayersSuchAs(search)
               .then((partners: FFBplayer[]) => {
                 this.partners = partners;
               });
           }
+          this.onChange(this.getLicenceNbr(search));
         }
       });
-    // this.control.valueChanges.subscribe((value) => {
-    //   if (value) {
-    //     let search = value;
-    //     console.log('valueChanges : ', search);
-    //     if (search.length > 3) {
-    //       this.ffbService.searchPlayersSuchAs(search)
-    //         .then((partners: FFBplayer[]) => {
-    //           this.partners = partners;
-    //         });
-    //     }
-    //   }
-    // }    );
   }
-  ngOnDestroy() {
-    // this.subscriptions.forEach(sub => sub.unsubscribe());
+
+  getLicenceNbr(str: string): string {
+    // let arr = str.substring(0, str.length - 1).split('(');
+    // console.log('getLicenceNbr', arr);
+    return str.substring(0, str.length - 1).split('(')[1] ?? '';
   }
+
+
 }
+

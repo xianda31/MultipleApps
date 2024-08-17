@@ -1,8 +1,6 @@
 <input class="text" list="listeFFB" autocomplete="on" [formControl]="input" class="form-control">
-
-
 <datalist id="listeFFB">
-    <option *ngFor="let partner of partners" (click)="clicked()">
-        {{partner.firstname}} {{partner.lastname}} ({{partner.last_club}})
+    <option *ngFor="let partner of partners ">
+        {{partner.firstname}} {{partner.lastname}} ({{partner.license_number}})
     </option>
 </datalist>
