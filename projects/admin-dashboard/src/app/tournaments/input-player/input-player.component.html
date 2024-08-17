@@ -1,0 +1,6 @@
+<input list="listeFFB" [formControl]="control" class="form-control">
+<datalist id="listeFFB">
+    <option *ngFor="let partner of partners">
+        {{partner.firstname}} {{partner.lastname}} ({{partner.last_club}})
+    </option>
+</datalist>

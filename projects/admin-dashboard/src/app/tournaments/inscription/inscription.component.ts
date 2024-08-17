@@ -5,21 +5,22 @@ import { Form, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '
 import { FFBplayer } from '../../../../../common/ffb/interface/FFBplayer.interface';
 import { CommonModule } from '@angular/common';
 import { Observable, debounceTime, distinctUntilChanged, from } from 'rxjs';
+import { InputPlayerComponent } from "../input-player/input-player.component";
 
 @Component({
   selector: 'app-inscription',
   standalone: true,
-  imports: [ReactiveFormsModule, FormsModule, CommonModule],
+  imports: [ReactiveFormsModule, FormsModule, CommonModule, InputPlayerComponent],
   templateUrl: './inscription.component.html',
   styleUrl: './inscription.component.scss'
 })
-export class InscriptionComponent implements OnInit {
+export class InscriptionComponent {
 
   @Input() tournamentTeamsId!: number;
   @Output() inscriptionDone = new EventEmitter<Person[] | null>();
 
 
-  partners!: FFBplayer[];
+  // partners!: FFBplayer[];
 
 
   // newTeam: FormGroup = new FormGroup({
@@ -32,23 +33,23 @@ export class InscriptionComponent implements OnInit {
     private ffbService: FfbService
   ) { }
 
-  ngOnInit(): void {
-    this.partner.valueChanges.pipe(
-      // debounceTime(400),
-      // distinctUntilChanged()
-    )
-      .subscribe((value) => {
-        if (value) {
-          let search = value;
-          console.log('valueChanges : ', search);
-          if (search.length > 3) {
-            this.ffbService.searchPlayersSuchAs(search)
-              .then((partners: FFBplayer[]) => {
-                this.partners = partners;
-              });
-          }
-        }
-      }
-      );
-  }
+  // ngOnInit(): void {
+  //   this.partner.valueChanges.pipe(
+  //     // debounceTime(400),
+  //     // distinctUntilChanged()
+  //   )
+  //     .subscribe((value) => {
+  //       if (value) {
+  //         let search = value;
+  //         console.log('valueChanges : ', search);
+  //         if (search.length > 3) {
+  //           this.ffbService.searchPlayersSuchAs(search)
+  //             .then((partners: FFBplayer[]) => {
+  //               this.partners = partners;
+  //             });
+  //         }
+  //       }
+  //     }
+  //     );
+  // }
 }
