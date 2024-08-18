@@ -28,6 +28,7 @@ export class InscriptionComponent {
   // });
 
   partner: FormControl = new FormControl();
+  partner2: FormControl = new FormControl();
 
   constructor(
     private ffbService: FfbService
@@ -41,9 +42,9 @@ export class InscriptionComponent {
   }
 
   go() {
-    this.ffbService.postTeam('148080').then((data) => {
-      console.log('inscription done', JSON.stringify(data));
-    });
+    // this.ffbService.postTeam('148080', ['02439752']).then((data) => {
+    //   console.log('inscription done', JSON.stringify(data));
+    // });
 
   }
 

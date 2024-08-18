@@ -20,9 +20,10 @@ import { debounceTime, from, Observable } from 'rxjs';
   templateUrl: './input-player.component.html',
   styleUrl: './input-player.component.scss'
 })
-export class InputPlayerComponent implements OnInit, ControlValueAccessor {
+export class InputPlayerComponent implements ControlValueAccessor {
+  @Input() listeId!: string;
 
-  input: FormControl = new FormControl();
+  str_player: string = '';
   partners!: FFBplayer[];
 
   onChange: (value: string) => void = () => { };
@@ -37,7 +38,8 @@ export class InputPlayerComponent implements OnInit, ControlValueAccessor {
     if (input === undefined || input === null) {
       return;
     }
-    this.input.setValue('#' + input);
+    // this.input.setValue('#' + input);
+    this.str_player = input;
   }
   registerOnChange(fn: any): void {
     this.onChange = fn;
@@ -49,24 +51,19 @@ export class InputPlayerComponent implements OnInit, ControlValueAccessor {
     this.disabled = isDisabled;
   }
 
-  ngOnInit(): void {
-    this.input.valueChanges.pipe(debounceTime(100))
-      .subscribe((search) => {
-        if (search) {
-          if (search.length > 3) {
-            this.ffbService.searchPlayersSuchAs(search)
-              .then((partners: FFBplayer[]) => {
-                this.partners = partners;
-              });
-          }
-          this.onChange(this.getLicenceNbr(search));
-        }
-      });
+  setValue(str_player: string) {
+    this.onTouch();
+    if (str_player.length > 3) {
+      this.ffbService.searchPlayersSuchAs(str_player)
+        .then((partners: FFBplayer[]) => {
+          this.partners = partners;
+          // console.log('%s options found', partners.length);
+        });
+      this.onChange(this.getLicenceNbr(str_player));
+    }
   }
 
   getLicenceNbr(str: string): string {
-    // let arr = str.substring(0, str.length - 1).split('(');
-    // console.log('getLicenceNbr', arr);
     return str.substring(0, str.length - 1).split('(')[1] ?? '';
   }
 

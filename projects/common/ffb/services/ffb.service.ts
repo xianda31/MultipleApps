@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
-import { get, post } from 'aws-amplify/api';
+import { del, get, post } from 'aws-amplify/api';
 import { Team, TournamentTeaming, Player, Person } from '../interface/teams.interface';
 import { club_tournament } from '../interface/club_tournament.interface';
 import { FFB_licensee } from '../interface/licensee.interface';
 import { FFBplayer } from '../interface/FFBplayer.interface';
 import { from, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { team_tournament } from '../interface/team_tournament.interface';
+import { TournamentTeams } from '../interface/tournament_teams.interface';
 @Injectable({
   providedIn: 'root'
 })
@@ -96,20 +96,18 @@ export class FfbService {
     }
   }
 
-  async postTeam(tournamentId: string): Promise<team_tournament | null> {
+  async postTeam(tournamentId: string, licences: string[]): Promise<TournamentTeams | null> {
+
+    let players: { license_number: string, computed_amount: number }[] = [];
+    licences.forEach(licence => {
+      players.push({ license_number: licence, computed_amount: 0 });
+    });
     try {
       const restOperation = post({
         apiName: 'myHttpApi',
         path: 'v1/organizations/1438/tournament',
         options: {
-          body: {
-            "players": [
-              {
-                "license_number": "02439752",
-                "computed_amount": 0,
-              }
-            ]
-          },
+          body: { players: players },
           queryParams: {
             id: tournamentId.toString()
           }
@@ -117,7 +115,7 @@ export class FfbService {
       });
       const { body } = await restOperation.response;
       const data = await body.json();
-      const data2 = data as unknown as team_tournament;;
+      const data2 = data as unknown as TournamentTeams;;
       return data2;
     } catch (error) {
       console.log('POST call failed: ', error);
@@ -125,32 +123,48 @@ export class FfbService {
     }
   }
 
-  async getTournamentTeams(id: number): Promise<Person[][]> {
-    // console.log('getTournamentTeams id:', id);
+  async deleteTeam(tournamentId: string, teamId: string): Promise<boolean | null> {
     try {
-      const restOperation = get({
+      const restOperation = del({
         apiName: 'myHttpApi',
         path: 'v1/organizations/1438/tournament',
         options: {
-          queryParams: { id: id.toString() }
+          queryParams: {
+            id: tournamentId.toString(),
+            team_id: teamId.toString()
+          }
         }
       });
-      const { body } = await restOperation.response;
-      const json = await body.json();
-      const data = json as unknown as TournamentTeaming;
-      // ffb_teams { subscription_tournament,teams: FFBTeam[] }
-      // FFBTeam { id, players: FFBplayer[] }
-      // FFBplayer { id, position, email, firstname, lastname .... person: Person }
-      // Person { id, license_number, lastname, firstname,... user: User, iv: Iv, organization: Organization }
-      return data.teams.map((team: Team) => {
-        return team.players.map((player: Player) => {
-          return player.person
-        })
-      });
+      // const { body } = await restOperation.response;
+      // const data = await body.json();
+      // const data2 = data as unknown as TournamentTeams;
+      console.log('DELETE call succeeded: ', restOperation.response);
+      return true;
     } catch (error) {
-      console.log('GET call failed: ', error);
-      return [];
+      console.log('DELETE call failed: ', error);
+      return null;
     }
+  }
+
+  async getTournamentTeams(id: number): Promise<TournamentTeams> {
+    // console.log('getTournamentTeams id:', id);
+    let promise: Promise<TournamentTeams> = new Promise(async (resolve, reject) => {
+      try {
+        const restOperation = get({
+          apiName: 'myHttpApi',
+          path: 'v1/organizations/1438/tournament',
+          options: { queryParams: { id: id.toString() } }
+        });
+        const { body } = await restOperation.response;
+        const json = await body.json();
+        const data = json as unknown as TournamentTeaming;
+        resolve(data as unknown as TournamentTeams);
+      } catch (error) {
+        console.log('GET call failed: ', error);
+        reject(error);
+      }
+    });
+    return promise;
   }
 
 }

@@ -2,6 +2,7 @@ import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Person } from '../../../../../common/ffb/interface/teams.interface';
 import { FfbService } from '../../../../../common/ffb/services/ffb.service';
+import { TournamentTeams } from '../../../../../common/ffb/interface/tournament_teams.interface';
 
 @Component({
   selector: 'app-tournament',
@@ -14,7 +15,7 @@ import { FfbService } from '../../../../../common/ffb/services/ffb.service';
 export class TournamentComponent implements OnChanges {
   @Input() tournamentId: number = 0;
 
-  teams !: Person[][];
+  tournament !: TournamentTeams;
   constructor(
     private ffbService: FfbService
   ) { }
@@ -22,7 +23,7 @@ export class TournamentComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     console.log('TournamentComponent.ngOnChanges', changes);
     this.ffbService.getTournamentTeams(this.tournamentId).then((data) => {
-      this.teams = data;
+      this.tournament = data;
       console.log('TournamentComponent.getTournamentTeams', data);
     });
   }

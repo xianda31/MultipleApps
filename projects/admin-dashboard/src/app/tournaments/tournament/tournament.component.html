@@ -8,11 +8,11 @@
         </tr>
     </thead>
     <tbody>
-        <tr *ngFor="let team of teams,let i=index">
+        <tr *ngFor="let team of tournament.teams,let i=index">
             <td>{{i+1}}</td>
-            <td *ngFor="let player of team">
-                <span *ngIf="player.organization.id ==1438"> ✅</span>
-                <span *ngIf="player.organization.id !=1438"> &#11036;</span>
+            <td *ngFor="let player of team.players">
+                <span *ngIf="player.person.organization.id ==1438"> ✅</span>
+                <span *ngIf="player.person.organization.id !=1438"> &#11036;</span>
 
 
                 <span *ngIf="player.gender==1;else madame"> M. </span>
@@ -21,9 +21,9 @@
                 {{player.firstname}}
                 <br>
                 <small>
-                    {{player.license_number}}
-                    (IV = {{player.iv.id}} )
-                    {{player.iv.code}}
+                    {{player.person.license_number}}
+                    (IV = {{player.person.iv.id}} )
+                    {{player.person.iv.code}}
                 </small>
             </td>
         </tr>

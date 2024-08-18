@@ -34,7 +34,6 @@ export class TournamentsComponent {
     }
     );
     this.tournaments = this.nextTournaments;
-    console.log('TournamentsComponent.ngOnInit', this.tournaments);
   }
 
 

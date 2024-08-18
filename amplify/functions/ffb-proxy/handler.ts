@@ -77,14 +77,19 @@ export const handler = async (event: APIGatewayProxyEventV2) => {
                         'body': 'remote server error :' + e
                     };
                 }
+
             case "organizations/1438/tournament":
+
                 let method = event.requestContext?.http.method || "GET";
 
                 if (method === "GET" && event.queryStringParameters?.id) {
                     try {
                         const res = await fetch(
                             ffbUrl + path + "/" + event.queryStringParameters.id,
-                            { headers: { Authorization: token }, },
+                            {
+                                method: "GET",
+                                headers: { Authorization: token },
+                            },
                         );
                         return res.json();
                     } catch (e) {
@@ -94,6 +99,29 @@ export const handler = async (event: APIGatewayProxyEventV2) => {
                         };
                     }
                 }
+
+                if (method === "DELETE" && event.queryStringParameters?.id && event.queryStringParameters?.team_id) {
+                    try {
+                        const res = await fetch(
+                            ffbUrl + path
+                            + "/" + event.queryStringParameters.id
+                            + "/subscription" + "/" + event.queryStringParameters.team_id,
+                            {
+                                method: "DELETE",
+                                headers: { Authorization: token },
+                            },
+                        );
+                        return res.json();
+                    } catch (e) {
+                        return {
+                            'statusCode': 500,
+                            'body': 'remote server error :' + e
+                        };
+                    }
+                }
+
+
+
                 if (method === "POST"
                     && event.queryStringParameters?.id
                     && event.body !== null) {
@@ -114,6 +142,8 @@ export const handler = async (event: APIGatewayProxyEventV2) => {
                         };
                     }
                 }
+
+
                 return {
                     'statusCode': 400,
                     'body': 'proxy error : invalid path'

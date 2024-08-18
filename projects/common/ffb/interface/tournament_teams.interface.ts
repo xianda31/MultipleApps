@@ -1,4 +1,4 @@
-export interface team_tournament {
+export interface TournamentTeams {
     subscription_tournament: SubscriptionTournament
     teams: Team[]
     isolated_player_count: number

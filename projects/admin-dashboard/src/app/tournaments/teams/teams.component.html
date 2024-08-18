@@ -1,5 +1,5 @@
 <!-- Les paires enregistrées -->
-<form [formGroup]="newTeam" *ngIf="newTeam">
+<form *ngIf="tournament" [formGroup]="newTeamGroup">
 
 
     <table class="table table-striped">
@@ -12,28 +12,61 @@
             </tr>
         </thead>
         <tbody>
-            <tr *ngFor="let team of teams,let i=index">
+            <tr *ngFor="let team of tournament.teams,let i=index">
                 <td>{{i+1}}</td>
-                <td *ngFor="let person of team">
-                    <span *ngIf="membership(person.license_number)"> ✅</span>
-                    <span *ngIf="!membership(person.license_number)"> &#11036;</span>
-                    {{person.lastname | uppercase}}
-                    {{person.firstname}}
+                <td *ngFor="let player of team.players">
+                    <span *ngIf="membership(player.person.license_number)"> ✅</span>
+                    <span *ngIf="!membership(player.person.license_number)"> &#11036;</span>
+                    {{player.person.lastname | uppercase}}
+                    {{player.person.firstname}}
                 </td>
-                <td class="text-center" *ngIf="team.length < 2"> <i class="bi bi-person-arms-up"></i> </td>
-                <td class="text-center danger"> <i class="fa-regular fa-trash-can" (click)="deleteTeam(team)"></i>
+                <td class="text-start" *ngIf="team.is_isolated_player"> <i class="bi bi-person-arms-up"></i> </td>
+                <td class="text-center danger">
+                    <i class="fa-regular fa-trash-can" (click)="deleteTeam(team.id)"></i>
                 </td>
             </tr>
             <tr>
+                <td colspan="4" class="text-start">
+
+                    <small>
+                        nota : les adhérents à jour sont marqués d'un ✅
+                    </small>
+                </td>
+            </tr>
+
+            <!-- bandeau ajout équipe -->
+            <tr>
                 <td></td>
                 <td>
-                    <input type="text" class="form-control" formControlName="me" placeholder="moi !!">
+                    <app-input-player listeId="player1" type="text" class="form-control" formControlName="player1"
+                        required>
+                    </app-input-player>
+                    <span *ngIf="player1?.touched && player1?.hasError('required')">
+                        <small class="text-warning"> veuillez définir le joueur1</small>
+                    </span>
                 </td>
                 <td>
-                    <input type="text" class="form-control" formControlName="partner" placeholder="partenaire">
+                    <app-input-player listeId="player2" type="text" class="form-control"
+                        formControlName="player2"></app-input-player>
+                    <span *ngIf="player2?.touched && player2?.hasError('required')">
+                        <small class="text-warning"> veuillez définir le joueur2</small>
+                    </span>
+
                 </td>
-                <td class="text-center action"> <i (click)="addTeam()" class="fa-regular fa-square-plus"></i></td>
+                <td class="text-center align-content-center action">
+                    <i (click)="addTeam()" class="fa-regular fa-square-plus"></i>
+                </td>
             </tr>
+            <!-- <tr>
+                <td colspan="4" class="text-start">
+                    <small>
+                        <div *ngIf="player2?.touched && player2?.hasError('required')" class="alert alert-danger">
+                            <small> veuillez définir le joueur2</small>
+                        </div>
+                    </small>
+                    {{newTeamGroup.valid| json}}
+                </td>
+            </tr> -->
         </tbody>
     </table>
 

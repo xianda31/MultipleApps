@@ -13,7 +13,7 @@ export const routes: Routes = [
     { path: 'licensees', component: LicenseesComponent },
     { path: 'members', component: MembersComponent },
     { path: 'tournaments', component: TournamentsComponent },
-    { path: 'inscription', component: InscriptionComponent }
+    // { path: 'inscription', component: InscriptionComponent }
     // { path: 'home', component: AppComponent },
     // { path: '**', redirectTo: '/' }
 ];
