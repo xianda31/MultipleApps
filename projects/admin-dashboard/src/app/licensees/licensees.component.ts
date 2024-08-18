@@ -1,7 +1,7 @@
 import { CommonModule, JsonPipe, UpperCasePipe } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FfbService } from '../../../../common/ffb/services/ffb.service';
-import { FFB_tournament } from '../../../../common/ffb/interface/FFBtournament.interface';
+import { club_tournament } from '../../../../common/ffb/interface/club_tournament.interface';
 import { FFB_licensee } from '../../../../common/ffb/interface/licensee.interface';
 import { FormControl, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { LicenseesService } from './services/licensees.service';

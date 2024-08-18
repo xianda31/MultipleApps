@@ -40,4 +40,11 @@ export class InscriptionComponent {
     });
   }
 
+  go() {
+    this.ffbService.postTeam('148080').then((data) => {
+      console.log('inscription done', JSON.stringify(data));
+    });
+
+  }
+
 }

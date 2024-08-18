@@ -1,4 +1,4 @@
-export interface FFB_tournament {
+export interface club_tournament {
     id: number
     organization_id: number
     date: string
