@@ -16,7 +16,7 @@ import { TournamentTeams } from '../../../../../common/ffb/interface/tournament_
 export class TeamsComponent implements OnInit {
 
   @Input() tournamentTeamsId!: number;
-  // toggler: boolean = false;
+
 
   newTeamGroup: FormGroup = new FormGroup({
     player1: new FormControl('', Validators.required),

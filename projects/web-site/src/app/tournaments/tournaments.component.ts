@@ -4,12 +4,11 @@ import { RouterModule } from '@angular/router';
 import { club_tournament } from '../../../../common/ffb/interface/club_tournament.interface';
 import { FfbService } from '../../../../common/ffb/services/ffb.service';
 import { TeamsComponent } from './teams/teams.component';
-import { InscriptionComponent } from './inscription/inscription.component';
 
 @Component({
   selector: 'app-tournaments',
   standalone: true,
-  imports: [RouterModule, CommonModule, TeamsComponent, InscriptionComponent],
+  imports: [RouterModule, CommonModule, TeamsComponent],
   templateUrl: './tournaments.component.html',
   styleUrl: './tournaments.component.scss'
 })

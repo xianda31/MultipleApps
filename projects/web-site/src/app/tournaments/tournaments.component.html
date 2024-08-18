@@ -1,4 +1,4 @@
-<div class="p-2 col-md-8 offset-md-2">
+<div class="p-2 col-12 col-md-10 mx-auto">
 
     <div class="card">
         <div class="card-header">
@@ -13,8 +13,8 @@
                             <th>Date</th>
                             <th>Tournoi</th>
                             <th>Heure</th>
-                            <th><i class="bi bi-people-fill"></i></th>
-                            <th><i class="bi bi-person-fill-exclamation"></i></th>
+                            <th class="text-center">nb paires</th>
+                            <th class="text-center"><i class="bi bi-person-arms-up"></i></th>
                             <th>Action</th>
 
                         </tr>
@@ -24,7 +24,7 @@
                             <td>{{t.date}}</td>
                             <td>{{t.tournament_name}}</td>
                             <td>{{t.time}}</td>
-                            <td class="text-center">{{t.nbr_inscrit}}</td>
+                            <td class="text-center">{{((t.nbr_inscrit-t.nbr_inscrit%2)/2)}}</td>
                             <td class="text-center"><i *ngIf="t.has_isolated_player" class="bi bi-person-arms-up"></i>
                             </td>
                             <td class="text-center">
