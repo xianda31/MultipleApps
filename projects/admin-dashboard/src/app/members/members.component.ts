@@ -66,7 +66,7 @@ export class MembersComponent implements OnInit {
       this.createOrUpdateMember(licensee);
     });
     if (this.verbose.length === 0) {
-      this.verbose = 'Aucune modification nécessaire ; la base adhérents est à jour';
+      this.verbose = '.. la base adhérents est à jour (aucune modification) ';
     }
   }
 
@@ -93,14 +93,15 @@ export class MembersComponent implements OnInit {
     if (existingMember) {
       let member = this.compare(existingMember, licensee);
       if (member !== null) {
-        console.log('MembersComponent update', member);
+        this.verbose += 'modification : ' + member.lastname + ' ' + member.firstname + '\n';
+
         this.membersService.updateMember(member!);
       }
 
     } else {
-      console.log('MembersComponent.createOrUpdateMember create');
+      // console.log('MembersComponent.createOrUpdateMember create');
       let newMember = this.createNewMember(licensee);
-      this.verbose += 'creating ' + newMember.lastname + ' ' + newMember.firstname + '\n';
+      this.verbose += 'creation : ' + newMember.lastname + ' ' + newMember.firstname + '\n';
       this.membersService.createMember(newMember);
     }
   }

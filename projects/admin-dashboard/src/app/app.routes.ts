@@ -5,15 +5,15 @@ import { AdminsComponent } from './admins/admins.component';
 import { LicenseesComponent } from './licensees/licensees.component';
 import { TournamentsComponent } from './tournaments/tournaments/tournaments.component';
 import { MembersComponent } from './members/members.component';
-import { InscriptionComponent } from './tournaments/inscription/inscription.component';
+import { HomePageComponent } from './home-page/home-page.component';
 
 export const routes: Routes = [
+    { path: 'tournaments', component: TournamentsComponent },
     { path: 'auth', component: AuthComponent },
     { path: 'admins', component: AdminsComponent },
     { path: 'licensees', component: LicenseesComponent },
     { path: 'members', component: MembersComponent },
-    { path: 'tournaments', component: TournamentsComponent },
-    // { path: 'inscription', component: InscriptionComponent }
-    // { path: 'home', component: AppComponent },
-    // { path: '**', redirectTo: '/' }
+    { path: 'home', component: HomePageComponent },
+    { path: '', redirectTo: '/home', pathMatch: 'full' }
+
 ];

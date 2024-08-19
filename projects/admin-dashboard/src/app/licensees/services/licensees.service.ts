@@ -9,7 +9,6 @@ import { FfbService } from '../../../../../common/ffb/services/ffb.service';
 export class LicenseesService {
   private _licensees: FFB_licensee[] = [];
   private _licensees$: BehaviorSubject<FFB_licensee[]> = new BehaviorSubject(this._licensees);
-  private call: number = 1;
 
   constructor(
     private FFBService: FfbService
@@ -17,7 +16,6 @@ export class LicenseesService {
     this.FFBService.getAdherents().then((licensees) => {
       this._licensees = licensees;
       this._licensees$.next(this._licensees);
-      console.log('LicenseesService.getAdherents call#', this.call++);
     });
 
   }

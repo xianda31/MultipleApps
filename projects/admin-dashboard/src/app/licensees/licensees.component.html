@@ -1,62 +1,73 @@
 <!-- list DB -->
-<div class="container">
-    <div class="row">
-        <div class="col-md-12">
-            <h6>base FFB : affiliés au BCSTO</h6>
-            <h6>
-                <span> {{licenseesNbr}} licenciés</span>
-                <span> - {{sympatisantsNbr}} sympathisants</span>
-            </h6>
-            <!-- choix filtre -->
-            <form [formGroup]="radioButtonGroup">
-                <p>
-                    Afficher :
-                    <ng-container *ngFor="let filter of filters ; let i=index">
-                        <input type="radio" [value]="filter" [id]="i" formControlName="radioButton" />
-                        {{filter}}
-                    </ng-container>
-                </p>
-            </form>
+<div class="p-2 col col-md-8 mx-auto">
 
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <!-- <th>Id</th> -->
-                        <th>#</th>
-                        <th>Civilité</th>
-                        <th>Nom</th>
-                        <th>Prénom</th>
-                        <th>N° Licence</th>
-                        <th class="text-center">réglée</th>
-                        <th class="text-center">au Club</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr *ngFor="let member of filteredMembers; let i = index">
-                        <!-- [class]="member.license_id?'':'table-danger'"> -->
-                        <td>{{i+1}}</td>
-                        <td>{{member.gender}}</td>
-                        <td>{{member.lastname | uppercase}}</td>
-                        <td>{{member.firstname}}</td>
-                        <td>{{member.license_number}}</td>
-                        <td class="text-center">{{member.license_id ? (member.free ? '&#10004;': '☑') : "&#10060;"}}
-                        </td>
+    <div class="card">
+        <div class="card-header">
 
-                        <!-- <td class="text-center">{{member.license_id ? '☑' : '☐'}}</td>   -->
-                        <!-- <td class="text-center"> {{ (member.orga_license_id == 1438) ? "":'&#9745;' }}                        </td> -->
-                        <td class="text-center">
-                            {{(member.license_id !== null && (member.orga_license_id ===undefined )) ? '☑' :
-                            "" }}
-                        </td>
-                        <td>
-                            <!-- {{  is_a_registred_member(member)  }} -->
-                            <!-- <button class="btn btn-danger btn-sm">xfer</button> -->
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <h5>base FFB : affiliés au BCSTO</h5>
         </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-12">
+                    <h6>
+                        <span> {{licenseesNbr}} licenciés</span>
+                        <span> - {{sympatisantsNbr}} sympathisants</span>
+                    </h6>
+                    <!-- choix filtre -->
+                    <form [formGroup]="radioButtonGroup">
+                        <p>
+                            Afficher :
+                            <ng-container *ngFor="let filter of filters ; let i=index">
+                                <input type="radio" [value]="filter" [id]="i" formControlName="radioButton" />
+                                {{filter}}
+                            </ng-container>
+                        </p>
+                    </form>
+
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <!-- <th>Id</th> -->
+                                <th>#</th>
+                                <th>Civilité</th>
+                                <th>Nom</th>
+                                <th>Prénom</th>
+                                <th>N° Licence</th>
+                                <th class="text-center">réglée</th>
+                                <th class="text-center">au Club</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let member of filteredMembers; let i = index">
+                                <!-- [class]="member.license_id?'':'table-danger'"> -->
+                                <td>{{i+1}}</td>
+                                <td>{{member.gender}}</td>
+                                <td>{{member.lastname | uppercase}}</td>
+                                <td>{{member.firstname}}</td>
+                                <td>{{member.license_number}}</td>
+                                <td class="text-center">{{member.license_id ? (member.free ? '&#10004;': '☑') :
+                                    "&#10060;"}}
+                                </td>
+
+                                <!-- <td class="text-center">{{member.license_id ? '☑' : '☐'}}</td>   -->
+                                <!-- <td class="text-center"> {{ (member.orga_license_id == 1438) ? "":'&#9745;' }}                        </td> -->
+                                <td class="text-center">
+                                    {{(member.license_id !== null && (member.orga_license_id ===undefined )) ? '☑' :
+                                    "" }}
+                                </td>
+                                <td>
+                                    <!-- {{  is_a_registred_member(member)  }} -->
+                                    <!-- <button class="btn btn-danger btn-sm">xfer</button> -->
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+
     </div>
 
 </div>
