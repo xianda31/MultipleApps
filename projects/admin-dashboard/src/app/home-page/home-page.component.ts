@@ -22,27 +22,33 @@ export class HomePageComponent {
       {
         title: 'Gestion des tournois du Club',
         subtitle: 'Accès à la base FFB',
-        description: 'Sélectionner un tournoi, compléter les équipes, editer une feuille de match',
+        description: 'Compléter les équipes d\'un tournoi, éditer la feuille de match (temporaire)',
         link1: { route: '/tournaments', label: 'Tournois' },
       },
       {
         title: 'Gestion des adhérents',
         subtitle: 'Accès aux bases FFB et Club pour le suivi des adhésions',
-        description: 'Editeur de la base Club des adhérents , injection des données FFB',
+        description: 'Editer la base Club des adhérents, consolider les données avec celles de la FFB, visualiser les détails adhérents (historique achat, licences, ...)',
         link1: { route: '/members', label: 'Adhérents' },
-        link2: { route: '/licensees', label: 'Adhérents' }
+        link2: { route: '/licensees', label: 'base FFB' }
       },
       {
         title: 'Gestion du site',
         subtitle: 'Gestion du contenu du site ',
-        description: 'Modifier le contenu des pages, ajouter des images, des vidéos, des liens',
+        description: 'Modifier le contenu des pages, des articles, des événements',
         link1: { route: '#', label: 'Site web' }
       },
       {
         title: 'Gestion des ventes',
         subtitle: 'Saisie assistée des opérations de caisse',
-        description: 'Enregistrement de vente de licences, de cotisations, de produits dérivés',
+        description: 'Enregistrer les ventes de licences, de cotisations, de produits dérivés ...',
         link1: { route: '#', label: 'Ventes' }
+      },
+      {
+        title: 'Configuration système',
+        subtitle: 'Paramétrer les options du système',
+        description: 'Procéder à des opérations de maintenance, de changement de configuration',
+        link1: { route: '/sysconf', label: 'Système' }
       },
     ];
 

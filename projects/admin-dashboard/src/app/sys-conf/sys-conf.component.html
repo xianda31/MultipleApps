@@ -1,0 +1,35 @@
+<div class="container">
+    <form [formGroup]="sysconfGroup">
+        <div class="card col-12 col-md-10 m-1">
+            <div class="card-body">
+                <div class="card-title"> Configuration Système </div>
+                <div class="card-subtitle"> menus du site </div>
+                <div class="card-text">
+                    <div class="row">
+                        <div class="col-8">
+                            <label for="siteConfJson">Configuration</label>
+                            <textarea id="siteConfJson" class="form-control" formControlName="siteConfJson"></textarea>
+                        </div>
+                        <div class="col-4">
+                            <button (click)="saveConf()" class="btn btn-primary">Sauvegarder</button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </form>
+
+    <!-- develop configurations fields -->
+    web_site_menus:
+    <div class="row" *ngFor="let item of siteConf.web_site_menus">
+        <div class="col">
+            {{item.label}}
+            {{item.route?.componentEnum}}
+            <span> <small>{{item.route?.name | json}}</small> </span>
+
+        </div>
+
+    </div>
+</div>
