@@ -3,16 +3,19 @@ export interface SiteConf {
     web_site_menus: MenuItem[]
 }
 
-interface Route {
-    path: string
-    componentEnum: string  // pointe sur un composant prédéfini compilé
-    name: string
+// navbar :
+//  si "!menu.has_submenu" => menu = label:menu.label link:menu.page.link, 
+// sinon => menu = label:menu.label + loop sur submenus
+
+interface EndItem {
+    link: string   // router : { path: link, data: { pageId: id }, component: ... }
+    pageId: string
 }
 
 
 export interface MenuItem {
     label: string
-    has_submenu: boolean,
-    route?: Route
+    has_submenu: boolean, // true => submenu! ; false => page!
+    endItem?: EndItem
     submenus?: MenuItem[]
 }

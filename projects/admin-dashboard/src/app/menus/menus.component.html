@@ -1,0 +1,67 @@
+<div class="container">
+
+    <form [formGroup]="menuGroup">
+        <table class="table">
+
+            <thead>
+
+                <tr>
+                    <th>id</th>
+                    <th>label</th>
+                    <th>has_menu</th>
+                    <th>link</th>
+                    <th>pageId</th>
+                    <!-- <th>root id</th>
+                    <th>submenus</th> -->
+                    <th class="col-2">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let menu of menus">
+                    <td>{{menu.id}}</td>
+                    <td>{{menu.label}}</td>
+                    <td>{{menu.has_submenu}}</td>
+                    <td>{{menu.endItem?.link}}</td>
+                    <td>{{menu.endItem?.pageId}}</td>
+                    <!-- <td>{{menu.rootmenu}}</td>
+                    <td>{{menu.submenus?.length ?? 0}}</td> -->
+                    <td class="col-2">
+                        <div>
+
+                            <button class="btn btn-sm btn-primary" (click)="editMenu(menu)">Edit</button>
+                            <button class="btn btn-sm btn-warning" (click)="deleteMenu(menu.id!)">Del</button>
+                        </div>
+                    </td>
+                </tr>
+                <tr></tr>
+                <!-- bandeau creation/modification -->
+                <tr>
+                    <td><input type="text" class="form-control" formControlName="id"></td>
+                    <td> <input type="text" class="form-control" formControlName="label"> </td>
+                    <td> <input type="text" class="form-control" formControlName="has_submenu"> </td>
+                    <td>
+                        <div formGroupName="endItem">
+                            <input type="text" class="form-control" formControlName="link">
+                        </div>
+                    </td>
+                    <td>
+                        <div formGroupName="endItem">
+
+                            <input type="text" class="form-control" formControlName="pageId">
+                        </div>
+                    </td>
+                    <!-- <td> <input type="text" class="form-control" formControlName="pageId"> </td> -->
+
+                    <td class="col-2">
+                        <div class=" mx-auto">
+                            <button class="btn btn-sm btn-primary" (click)="saveMenu()">Save</button>
+                            <button class="btn btn-sm btn-warning" (click)="clear()">clear</button>
+                        </div>
+                    </td>
+
+
+                </tr>
+            </tbody>
+        </table>
+    </form>
+</div>

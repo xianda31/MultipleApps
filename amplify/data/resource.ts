@@ -28,9 +28,40 @@ const schema = a.schema({
     site: a.json(),
   })
     .authorization((allow) => [allow.publicApiKey()]),
+
+  Menu: a.model({
+    // id: a.id(),
+    label: a.string().required(),
+    has_submenu: a.boolean().required(),
+    endItem: a.customType({
+      link: a.string().required(),
+      pageId: a.string(),
+    }),
+    // rootmenu: a.belongsTo('Menu', 'id'),
+    // submenus: a.hasMany('Menu', 'id'),
+  })
+    .authorization((allow) => [allow.publicApiKey()]),
+
+
+  Page: a.model({
+    layout: a.enum(['PLAIN', 'HIERARCHICAL', 'CAROUSEL']),
+    title: a.string(),
+    content: a.string(),
+    articles: a.hasMany('Article', 'pageId'),
+  })
+    .authorization((allow) => [allow.publicApiKey()]),
+
+  Article: a.model({
+    title: a.string(),
+    content: a.string(),
+    tags: a.string().array(),
+
+    pageId: a.id(),
+    page: a.belongsTo('Page', 'pageId'),
+  })
+    .authorization((allow) => [allow.publicApiKey()]),
+
 });
-
-
 
 export type Schema = ClientSchema<typeof schema>;
 

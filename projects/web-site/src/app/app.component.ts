@@ -44,7 +44,7 @@ export class AppComponent {
         this.updateRoutes(menu.submenus!);
       } else {
 
-        addedRoutes.push({ path: menu.route!.path, component: GenericSimplePageComponent, data: { pageId: menu.route!.name } });
+        addedRoutes.push({ path: menu.endItem!.link, component: GenericSimplePageComponent, data: { pageId: menu.endItem?.pageId } });
       }
     });
     addedRoutes = [...addedRoutes, ...this.router.config];
