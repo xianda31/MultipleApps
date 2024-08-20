@@ -2,6 +2,7 @@ import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
 import { last } from 'rxjs';
 
 const schema = a.schema({
+
   Administrator: a.model({
     email: a.string(),
     username: a.string(),
@@ -22,7 +23,14 @@ const schema = a.schema({
     is_sympathisant: a.boolean()
   })
     .authorization((allow) => [allow.publicApiKey()]),
+
+  Configuration: a.model({
+    site: a.json(),
+  })
+    .authorization((allow) => [allow.publicApiKey()]),
 });
+
+
 
 export type Schema = ClientSchema<typeof schema>;
 
