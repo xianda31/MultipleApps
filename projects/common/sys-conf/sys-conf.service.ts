@@ -8,15 +8,16 @@ export class SysConfService {
   conf: SiteConf = {
     color: 'blue',
     web_site_menus: [
-      { label: 'Accueil', has_submenu: false, endItem: { link: 'home', pageId: 'home' } },
-      { label: 'Contact', has_submenu: false, endItem: { link: 'contact', pageId: 'contact' } },
+      { label: 'Contact', has_submenu: false, endItems: [{ label: 'Contact', link: 'contact', pageId: 'contact' }] },
+      { label: 'Accueil', has_submenu: false, endItems: [{ label: 'Accueil', link: 'home', pageId: 'home' }] },
       {
-        label: 'La vie du Club', has_submenu: true, submenus: [
-          { label: 'Historique', has_submenu: false, endItem: { link: 'historique', pageId: 'historique' } },
-          { label: 'Organisation', has_submenu: false, endItem: { link: 'organisation', pageId: 'organisation' } },
-          { label: 'Les installations', has_submenu: false, endItem: { link: 'installations', pageId: 'installations' } },
-          { label: 'Les tarifs', has_submenu: false, endItem: { link: 'tarifs', pageId: 'tarifs' } },
-          { label: 'Les partenaires', has_submenu: false, endItem: { link: 'partenaires', pageId: 'partenaires' } },
+        label: 'La vie du Club', has_submenu: true,
+        endItems: [
+          { label: 'Historique', link: 'historique', pageId: 'historique' },
+          { label: 'Organisation', link: 'organisation', pageId: 'organisation' },
+          { label: 'Les installations', link: 'installations', pageId: 'installations' },
+          { label: 'Les tarifs', link: 'tarifs', pageId: 'tarifs' },
+          { label: 'Les partenaires', link: 'partenaires', pageId: 'partenaires' },
         ]
       }
     ]

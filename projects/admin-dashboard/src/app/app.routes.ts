@@ -7,7 +7,7 @@ import { TournamentsComponent } from './tournaments/tournaments/tournaments.comp
 import { MembersComponent } from './members/members.component';
 import { HomePageComponent } from './home-page/home-page.component';
 import { SysConfComponent } from './sys-conf/sys-conf.component';
-import { MenusComponent } from './menus/menus.component';
+import { LayoutComponent } from './site-layout/layout/layout.component';
 
 export const routes: Routes = [
     { path: 'tournaments', component: TournamentsComponent },
@@ -16,7 +16,7 @@ export const routes: Routes = [
     { path: 'licensees', component: LicenseesComponent },
     { path: 'members', component: MembersComponent },
     { path: 'home', component: HomePageComponent },
-    { path: 'menus', component: MenusComponent },
+    { path: 'layout', component: LayoutComponent },
     { path: 'sysconf', component: SysConfComponent },
     { path: '', redirectTo: '/home', pathMatch: 'full' }
 

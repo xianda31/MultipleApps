@@ -28,7 +28,7 @@
                 <ng-container *ngFor="let menu of siteMenus">
                     <li *ngIf="!menu.has_submenu" class="nav-item">
                         <a class="nav-link active" aria-current="page"
-                            routerLink="{{menu.endItem?.link}}">{{menu.label}}</a>
+                            routerLink="{{menu.endItems[0].link}}">{{menu.label}}</a>
                     </li>
                     <li *ngIf="menu.has_submenu" class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
@@ -36,8 +36,8 @@
                             {{menu.label}}
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <li *ngFor="let submenu of menu.submenus">
-                                <a class="dropdown-item" routerLink="{{submenu.endItem?.link}}">{{submenu.label}}</a>
+                            <li *ngFor="let endItem of menu.endItems">
+                                <a class="dropdown-item" routerLink="{{'/' + endItem.link}}">{{endItem.label}}</a>
                             </li>
                         </ul>
                     </li>

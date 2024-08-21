@@ -1,27 +1,16 @@
 import { Component, OnInit } from '@angular/core';
-import { Schema } from '../../../../../amplify/data/resource';
+import { Schema } from '../../../../../../amplify/data/resource';
 import { generateClient } from 'aws-amplify/api';
 import { CommonModule } from '@angular/common';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-
-type Menu = {
-  id: string;
-  label: string;
-  has_submenu: boolean;
-  endItem?:
-  {
-    link: string;
-    pageId?: string | null;
-  } | null;
-  // rootmenu?: string;
-  // submenus?: Menu[];
-}
-
+import { Menu } from '../../../../../common/menu.interface';
+import { PagesComponent } from "../pages/pages.component";
+import { SelectionSet } from 'aws-amplify/data';
 
 @Component({
   selector: 'app-menus',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, PagesComponent],
   templateUrl: './menus.component.html',
   styleUrl: './menus.component.scss'
 })
@@ -32,11 +21,7 @@ export class MenusComponent implements OnInit {
   menuGroup: FormGroup = new FormGroup({
     id: new FormControl(''),
     label: new FormControl('', Validators.required),
-    has_submenu: new FormControl(false),
-    endItem: new FormGroup({
-      link: new FormControl(''),
-      pageId: new FormControl
-    })
+    summary: new FormControl(''),
   });
 
   constructor() { }
@@ -46,46 +31,47 @@ export class MenusComponent implements OnInit {
   ngOnInit(): void {
     this.listMenus();
 
-    let menu_child1: Menu = {
-      id: 'id_child1',
-      label: 'label_child1',
-      has_submenu: false,
-      endItem: {
-        link: 'link_child1',
-        pageId: 'pageId_child1'
-      },
-    };
 
-    let menu0: Menu = {
-      id: 'id_root0',
-      label: 'label_root0',
-      has_submenu: true,
-      // submenus: []
-    };
-
-    // this.createMenu(menu_child1);
   }
 
-  // onSubmit() {
-  //   console.log(this.menuGroup.value);
-  //   this.createMenu(this.menuGroup.value);
-  // }
+  showMenu(menu: Menu) {
+    this.getMenu(menu.id).then((menu) => {
+      console.log('showMenu', menu);
+    });
+  }
+
 
   async listMenus() {
 
     const client = generateClient<Schema>();
-    const { data: menus, errors } = await client.models.Menu.list();
+    const { data: menus, errors } = await client.models.Menu.list({ selectionSet: ["id", "label", "summary", "pages.*"] });
     if (errors) { console.error(errors); return; }
+
     console.log('listMenus', menus);
-    this.menus = menus as Menu[];
+    this.menus = menus as unknown as Menu[];
   }
 
+  async getMenu(id: string): Promise<Menu | null | undefined> {
+    return new Promise<Menu | null | undefined>(async (resolve, reject) => {
+
+      const client = generateClient<Schema>();
+      const { data: menu, errors } = await client.models.Menu.get({ id }, { selectionSet: ["id", "pages.*"] });
+      if (errors) {
+        console.error(errors);
+        reject(errors);
+        return;
+      }
+      console.log('getMenu', menu);
+      resolve(menu as unknown as Menu);
+      return
+    });
+  }
 
 
   editMenu(menu: Menu) {
     console.log('editMenu', menu);
     // this.menuGroup.patchValue({ menu });
-    this.menuGroup.patchValue({ id: menu.id, label: menu.label, has_submenu: menu.has_submenu, endItem: menu.endItem });
+    this.menuGroup.patchValue({ id: menu.id, label: menu.label, summary: menu.summary });
     this.creation = false;
   }
 
@@ -130,7 +116,7 @@ export class MenusComponent implements OnInit {
 
       console.log('updatedMenu', updatedMenu);
       if (updatedMenu) {
-        this.menus = this.menus.map((m) => m.id === updatedMenu.id ? updatedMenu : m);
+        this.menus = this.menus.map((m: Menu) => m.id === updatedMenu.id ? updatedMenu : m) as Menu[];
         resolve(updatedMenu);
       } else {
         reject('Menu not updated');
@@ -142,11 +128,12 @@ export class MenusComponent implements OnInit {
     return new Promise<any>(async (resolve, reject) => {
       let { id, ...menuCreateInput } = menu;
       const client = generateClient<Schema>();
-      const { data: newMenu, errors } = await client.models.Menu.create(menuCreateInput);
+      const { data: data, errors } = await client.models.Menu.create(menuCreateInput);
       if (errors) { console.error(errors); reject(errors); }
-
+      let newMenu: Menu = { id: data?.id!, ...menuCreateInput };;
       console.log('newMenu', newMenu);
       if (newMenu) {
+        this.menus.push(newMenu as Menu);
         resolve(newMenu);
       } else {
         reject('Menu not created');

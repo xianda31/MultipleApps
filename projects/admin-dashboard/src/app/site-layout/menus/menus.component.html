@@ -8,9 +8,8 @@
                 <tr>
                     <th>id</th>
                     <th>label</th>
-                    <th>has_menu</th>
-                    <th>link</th>
-                    <th>pageId</th>
+                    <th>summary</th>
+                    <th>nb page</th>
                     <!-- <th>root id</th>
                     <th>submenus</th> -->
                     <th class="col-2">Actions</th>
@@ -20,16 +19,16 @@
                 <tr *ngFor="let menu of menus">
                     <td>{{menu.id}}</td>
                     <td>{{menu.label}}</td>
-                    <td>{{menu.has_submenu}}</td>
-                    <td>{{menu.endItem?.link}}</td>
-                    <td>{{menu.endItem?.pageId}}</td>
+                    <td>{{menu.summary}}</td>
+                    <td>{{menu.pages?.length}}</td>
                     <!-- <td>{{menu.rootmenu}}</td>
                     <td>{{menu.submenus?.length ?? 0}}</td> -->
                     <td class="col-2">
-                        <div>
+                        <div class=" btn-group role=group">
 
                             <button class="btn btn-sm btn-primary" (click)="editMenu(menu)">Edit</button>
-                            <button class="btn btn-sm btn-warning" (click)="deleteMenu(menu.id!)">Del</button>
+                            <button class="btn btn-sm btn-warning ms-1" (click)="deleteMenu(menu.id!)">delete</button>
+                            <button class="btn btn-sm btn-secondary ms-1" (click)="showMenu(menu)">show</button>
                         </div>
                     </td>
                 </tr>
@@ -38,24 +37,14 @@
                 <tr>
                     <td><input type="text" class="form-control" formControlName="id"></td>
                     <td> <input type="text" class="form-control" formControlName="label"> </td>
-                    <td> <input type="text" class="form-control" formControlName="has_submenu"> </td>
-                    <td>
-                        <div formGroupName="endItem">
-                            <input type="text" class="form-control" formControlName="link">
-                        </div>
-                    </td>
-                    <td>
-                        <div formGroupName="endItem">
-
-                            <input type="text" class="form-control" formControlName="pageId">
-                        </div>
-                    </td>
+                    <td> <input type="text" class="form-control" formControlName="summary"> </td>
                     <!-- <td> <input type="text" class="form-control" formControlName="pageId"> </td> -->
-
+                    <td> </td>
                     <td class="col-2">
-                        <div class=" mx-auto">
+                        <div class=" btn-group role=group">
                             <button class="btn btn-sm btn-primary" (click)="saveMenu()">Save</button>
-                            <button class="btn btn-sm btn-warning" (click)="clear()">clear</button>
+                            <!-- <button class="btn btn-sm btn-light" disabled></button> -->
+                            <button class="btn btn-sm btn-warning ms-1" (click)="clear()">clear</button>
                         </div>
                     </td>
 
@@ -65,3 +54,6 @@
         </table>
     </form>
 </div>
+
+<h5>Les pages</h5>
+<app-pages [menus]="menus"></app-pages>

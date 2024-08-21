@@ -19,7 +19,7 @@ import { CommonModule } from '@angular/common';
 export class AppComponent {
   title = 'web-site';
   siteConf !: SiteConf;
-  // loaded = false;
+  loaded = false;
 
   constructor(
     private sysconfService: SysConfService,
@@ -29,7 +29,7 @@ export class AppComponent {
     this.sysconfService.getSysConf().then((data) => {
       this.siteConf = data;
       this.updateRoutes(this.siteConf.web_site_menus);
-      // this.loaded = true;
+      this.loaded = true;
 
     });
 
@@ -40,16 +40,13 @@ export class AppComponent {
 
     let addedRoutes: Routes = [];
     menus.forEach((menu) => {
-      if (menu.has_submenu) {
-        this.updateRoutes(menu.submenus!);
-      } else {
-
-        addedRoutes.push({ path: menu.endItem!.link, component: GenericSimplePageComponent, data: { pageId: menu.endItem?.pageId } });
-      }
+      menu.endItems.forEach((endItem) => {
+        addedRoutes.push({ path: endItem.link, component: GenericSimplePageComponent, data: { pageId: endItem.pageId } });
+      });
     });
+
     addedRoutes = [...addedRoutes, ...this.router.config];
     this.router.resetConfig(addedRoutes);
-    // console.log(this.router.config);
-
+    // console.log('routes :', this.router.config);
   }
 }

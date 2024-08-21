@@ -1,0 +1,65 @@
+<p>pages works!</p>
+<div class="container">
+
+    <form [formGroup]="pageGroup">
+        <table class="table">
+
+            <thead>
+
+                <tr>
+                    <th>id</th>
+                    <th>menuId</th>
+                    <th>link</th>
+                    <th>layout</th>
+                    <th>title</th>
+                    <th>nb articles</th>
+                    <th class="col-2">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let page of pages">
+                    <td>{{page.id}}</td>
+                    <td>{{page.menuId}}</td>
+                    <td>{{page.link}}</td>
+                    <td>{{page.layout}}</td>
+                    <td>{{page.title}}</td>
+                    <td>{{page.articles?.length}}</td>
+                    <!-- <td>{{page.rootpage}}</td>
+                    <td>{{page.subpages?.length ?? 0}}</td> -->
+                    <td class="col-2">
+                        <div class=" btn-group role=group">
+
+                            <button class="btn btn-sm btn-primary" (click)="editPage(page)">Edit</button>
+                            <button class="btn btn-sm btn-warning ms-1" (click)="deletePage(page.id!)">delete</button>
+                        </div>
+                    </td>
+                </tr>
+                <tr></tr>
+                <!-- bandeau creation/modification -->
+                <tr>
+                    <td><input type="text" class="form-control" formControlName="id">
+
+                    <td>
+                        <select type="text" class="form-control" formControlName="menuId">
+                            <option *ngFor="let menu of menus" [value]="menu.id">{{menu.label}} {{menu.id}}</option>
+                        </select>
+                    </td>
+
+                    <td> <input type="text" class="form-control" formControlName="link"> </td>
+                    <td> <input type="text" class="form-control" formControlName="layout"> </td>
+                    <td> <input type="text" class="form-control" formControlName="title"> </td>
+                    <td> </td><!-- // col nb articles -->
+                    <td class="col-2">
+                        <div class=" btn-group role=group">
+                            <button class="btn btn-sm btn-primary" (click)="savePage()">Save</button>
+                            <!-- <button class="btn btn-sm btn-light" disabled></button> -->
+                            <button class="btn btn-sm btn-warning ms-1" (click)="clear()">clear</button>
+                        </div>
+                    </td>
+
+
+                </tr>
+            </tbody>
+        </table>
+    </form>
+</div>

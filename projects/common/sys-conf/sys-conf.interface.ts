@@ -8,14 +8,15 @@ export interface SiteConf {
 // sinon => menu = label:menu.label + loop sur submenus
 
 interface EndItem {
+    label: string
     link: string   // router : { path: link, data: { pageId: id }, component: ... }
     pageId: string
 }
 
 
 export interface MenuItem {
-    label: string
+    label?: string
     has_submenu: boolean, // true => submenu! ; false => page!
-    endItem?: EndItem
-    submenus?: MenuItem[]
+    endItems: EndItem[]
+    // submenus?: MenuItem[]
 }

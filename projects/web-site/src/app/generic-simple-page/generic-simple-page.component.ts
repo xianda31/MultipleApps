@@ -16,6 +16,7 @@ export class GenericSimplePageComponent {
     this.router.data.subscribe(data => {
       let { pageId } = data;
       this.pageId = pageId;
+      console.log(this.pageId);
     });
   }
 
