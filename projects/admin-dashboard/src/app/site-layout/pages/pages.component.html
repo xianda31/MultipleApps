@@ -1,4 +1,4 @@
-<div *ngIf="menus.length>0" class="container ">
+<div *ngIf="menus.length>0 && pages_loaded" class="container ">
     <h5>Les pages</h5>
     <form [formGroup]="pageGroup">
         <table class="table">
@@ -35,7 +35,33 @@
                 </tr>
                 <tr></tr>
                 <!-- bandeau creation/modification -->
+                <tr>
 
+                    <td>
+                        <select type="text" class="form-control" formControlName="menuId">
+                            <option *ngFor="let menu of menus" [value]="menu.id">...{{menu.id | slice:-8}}</option>
+                        </select>
+                    </td>
+
+                    <td>
+                        <input class="form-control" disabled value="{{ menuId!==null?getMenu(menuId)?.label:'' }}">
+                    </td>
+                    <td>
+                        <input type="text" class="form-control" formControlName="link">
+                    </td>
+                    <td> <input type="text" class="form-control" formControlName="layout"> </td>
+                    <td> <input type="text" class="form-control" formControlName="title"> </td>
+                    <td> </td><!-- // col nb articles -->
+                    <td class="col-2">
+                        <div class=" btn-group role=group">
+                            <button class="btn btn-sm btn-primary" (click)="savePage()">Save</button>
+                            <!-- <button class="btn btn-sm btn-light" disabled></button> -->
+                            <button class="btn btn-sm btn-warning ms-1" (click)="clear()">clear</button>
+                        </div>
+                    </td>
+
+
+                </tr>
             </tbody>
         </table>
     </form>

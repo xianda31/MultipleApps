@@ -5,7 +5,6 @@ import { CommonModule } from '@angular/common';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Menu } from '../../../../../common/menu.interface';
 import { PagesComponent } from "../pages/pages.component";
-import { SelectionSet } from 'aws-amplify/data';
 import { disable } from 'aws-amplify/analytics';
 
 @Component({
@@ -31,20 +30,60 @@ export class MenusComponent implements OnInit {
 
 
   ngOnInit(): void {
-    this.listMenus();
+    // this.listMenus();
 
+    this.queryMenus();
+    this.subscribeToPagesEvents();
 
   }
 
-  showMenu(menu: Menu) {
-    this.getMenu(menu.id).then((menu) => {
-      console.log('showMenu', menu);
-    });
-  }
+  // showMenu(menu: Menu) {
+  //   this.getMenu(menu.id).then((menu) => {
+  //     console.log('showMenu', menu);
+  //   });
+  // }
 
   pageChange() {
     console.log('pageChange');
-    this.listMenus();
+    // this.listMenus();
+  }
+
+  subscribeToPagesEvents() {
+    const client = generateClient<Schema>();
+    client.models.Page.onCreate()
+      .subscribe({
+        next: (data) => {
+          console.log('page onCreate event : ', data);
+          this.listMenus();
+        },
+        error: (error) => {
+          console.error('error', error);
+        }
+      });
+    client.models.Page.onUpdate()
+      .subscribe({
+        next: (data) => {
+          console.log('page onUpdate event : ', data);
+          this.listMenus();
+
+        },
+        error: (error) => {
+          console.error('error', error);
+        }
+      });
+  }
+  queryMenus() {
+    const client = generateClient<Schema>();
+    client.models.Menu.observeQuery({ selectionSet: ["id", "label", "summary", "rank", "pages.*"] })
+      .subscribe({
+        next: (data) => {
+          console.log('menus', data.items);
+          this.menus = data.items as Menu[];
+        },
+        error: (error) => {
+          console.error('error', error);
+        }
+      });
   }
 
   async listMenus() {

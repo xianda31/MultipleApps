@@ -18,6 +18,7 @@ export class PagesComponent implements OnInit, OnChanges {
   @Input() menus!: Menu[];
   @Output() pageChange: EventEmitter<Page> = new EventEmitter<Page>();
   pages: Page[] = [];
+  pages_loaded: boolean = false;
   creation: boolean = true;
 
   pageGroup: FormGroup = new FormGroup({
@@ -36,7 +37,8 @@ export class PagesComponent implements OnInit, OnChanges {
 
 
   ngOnInit(): void {
-    this.listPages();
+    // this.listPages();
+    this.queryPages();
   }
 
   getMenu(id: string): Menu | undefined {
@@ -44,24 +46,41 @@ export class PagesComponent implements OnInit, OnChanges {
   }
   get menuId() { return this.pageGroup.get('menuId')?.value; }
 
-  async listPages() {
-
+  queryPages() {
     const client = generateClient<Schema>();
-    const { data: data, errors } = await client.models.Page.list({ selectionSet: ["id", "menuId", "link", "layout", "title"] });
-    if (errors) { console.error(errors); return; }
-    console.log('data', data);
-    let pages: Page[] = data as unknown as Page[];
-    this.pages = pages;
-    console.log('listPages', this.pages);
-    // this.pages = this.pages.sort((a, b) => a.id.localeCompare(b.id));
+    client.models.Page.observeQuery({ selectionSet: ["id", "menuId", "link", "layout", "title"] })
+      .subscribe({
+        next: (data) => {
+          // console.log('pages', data.items);
+          this.pages = data.items as Page[];
+          this.pages = this.pages.sort((a, b) => a.menuId.localeCompare(b.menuId));
+          this.pages_loaded = data.isSynced
+        },
+        error: (error) => {
+          console.error('error', error);
+        }
+      });
   }
+
+  // async listPages() {
+
+  //   const client = generateClient<Schema>();
+  //   const { data: data, errors } = await client.models.Page.list({ selectionSet: ["id", "menuId", "link", "layout", "title"] });
+  //   if (errors) { console.error(errors); return; }
+  //   console.log('data', data);
+  //   let pages: Page[] = data as unknown as Page[];
+  //   this.pages = pages;
+  //   console.log('listPages', this.pages);
+  //   // this.pages = this.pages.sort((a, b) => a.id.localeCompare(b.id));
+  // }
 
 
 
   editPage(page: Page) {
-    console.log('editPage', page);
+    // console.log('editPage', page);
     // this.pageGroup.patchValue({ page });
-    this.pageGroup.patchValue({ id: page.id, menuId: page.menuId, link: page.link, layout: page.layout, title: page.title });
+    // this.pageGroup.patchValue({ id: page.id, menuId: page.menuId, link: page.link, layout: page.layout, title: page.title });
+    this.pageGroup.patchValue(page);
     this.creation = false;
   }
 
@@ -69,13 +88,14 @@ export class PagesComponent implements OnInit, OnChanges {
     if (this.pageGroup.invalid) {
       return;
     }
+    let page = this.pageGroup.getRawValue() as Page;
     if (this.creation) {
-      this.createPage(this.pageGroup.value);
+      this.createPage(page);
     } else {
-      this.updatePage(this.pageGroup.value);
+      this.updatePage(page);
     }
-    console.log('emit', this.pageGroup.value);
-    this.pageChange.emit(this.pageGroup.value);
+    // console.log('emit', page);
+    this.pageChange.emit(page);
     this.clear();
   }
 
@@ -111,7 +131,7 @@ export class PagesComponent implements OnInit, OnChanges {
         return;
       }
 
-      console.log('updatedPage', updatedPage);
+      // console.log('updatedPage', updatedPage);
       if (updatedPage) {
         this.pages = this.pages.map((m: Page) => m.id === updatedPage.id ? updatedPage : m) as Page[];
         resolve(updatedPage);
@@ -128,7 +148,7 @@ export class PagesComponent implements OnInit, OnChanges {
       const { data: data, errors } = await client.models.Page.create(pageCreateInput);
       if (errors) { console.error(errors); reject(errors); }
       let newPage: Page = { id: data?.id!, ...pageCreateInput };;
-      console.log('newPage', newPage);
+      // console.log('newPage', newPage);
       if (newPage) {
         this.pages.push(newPage as Page);
         resolve(newPage);
