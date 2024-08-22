@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -15,7 +15,8 @@ import { Menu, Page } from '../../../../../common/menu.interface';
 })
 export class PagesComponent implements OnInit, OnChanges {
 
-  @Input() menus: Menu[] = [];
+  @Input() menus!: Menu[];
+  @Output() pageChange: EventEmitter<Page> = new EventEmitter<Page>();
   pages: Page[] = [];
   creation: boolean = true;
 
@@ -28,24 +29,31 @@ export class PagesComponent implements OnInit, OnChanges {
   });
 
   constructor() { }
-  ngOnChanges(changes: SimpleChanges): void {
-    console.log('menus', this.menus);
-  }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    console.log('menus change', this.menus);
+  }
 
 
   ngOnInit(): void {
     this.listPages();
   }
 
+  getMenu(id: string): Menu | undefined {
+    return this.menus.find((m) => m.id === id);
+  }
+  get menuId() { return this.pageGroup.get('menuId')?.value; }
 
   async listPages() {
 
     const client = generateClient<Schema>();
-    const { data: pages, errors } = await client.models.Page.list();
+    const { data: data, errors } = await client.models.Page.list({ selectionSet: ["id", "menuId", "link", "layout", "title"] });
     if (errors) { console.error(errors); return; }
-    console.log('listPages', pages);
-    this.pages = pages as unknown as Page[];
+    console.log('data', data);
+    let pages: Page[] = data as unknown as Page[];
+    this.pages = pages;
+    console.log('listPages', this.pages);
+    // this.pages = this.pages.sort((a, b) => a.id.localeCompare(b.id));
   }
 
 
@@ -66,6 +74,8 @@ export class PagesComponent implements OnInit, OnChanges {
     } else {
       this.updatePage(this.pageGroup.value);
     }
+    console.log('emit', this.pageGroup.value);
+    this.pageChange.emit(this.pageGroup.value);
     this.clear();
   }
 

@@ -6,6 +6,7 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } 
 import { Menu } from '../../../../../common/menu.interface';
 import { PagesComponent } from "../pages/pages.component";
 import { SelectionSet } from 'aws-amplify/data';
+import { disable } from 'aws-amplify/analytics';
 
 @Component({
   selector: 'app-menus',
@@ -19,9 +20,10 @@ export class MenusComponent implements OnInit {
   creation: boolean = true;
 
   menuGroup: FormGroup = new FormGroup({
-    id: new FormControl(''),
+    id: new FormControl({ value: '', disabled: true }),
     label: new FormControl('', Validators.required),
     summary: new FormControl(''),
+    rank: new FormControl(0, Validators.required),
   });
 
   constructor() { }
@@ -40,15 +42,20 @@ export class MenusComponent implements OnInit {
     });
   }
 
+  pageChange() {
+    console.log('pageChange');
+    this.listMenus();
+  }
 
   async listMenus() {
 
     const client = generateClient<Schema>();
-    const { data: menus, errors } = await client.models.Menu.list({ selectionSet: ["id", "label", "summary", "pages.*"] });
+    const { data: menus, errors } = await client.models.Menu.list({ selectionSet: ["id", "label", "summary", "rank", "pages.*"] });
     if (errors) { console.error(errors); return; }
 
-    console.log('listMenus', menus);
     this.menus = menus as unknown as Menu[];
+    this.menus = this.menus.sort((a, b) => a.rank - b.rank);
+    console.log('listMenus', this.menus);
   }
 
   async getMenu(id: string): Promise<Menu | null | undefined> {
@@ -71,7 +78,7 @@ export class MenusComponent implements OnInit {
   editMenu(menu: Menu) {
     console.log('editMenu', menu);
     // this.menuGroup.patchValue({ menu });
-    this.menuGroup.patchValue({ id: menu.id, label: menu.label, summary: menu.summary });
+    this.menuGroup.patchValue({ id: menu.id, label: menu.label, summary: menu.summary, rank: menu.rank });
     this.creation = false;
   }
 
@@ -79,12 +86,14 @@ export class MenusComponent implements OnInit {
     if (this.menuGroup.invalid) {
       return;
     }
+    let menu: Menu = this.menuGroup.getRawValue() as Menu;
     if (this.creation) {
-      this.createMenu(this.menuGroup.value);
+      this.createMenu(menu);
     } else {
-      this.updateMenu(this.menuGroup.value);
+      this.updateMenu(menu);
     }
     this.clear();
+    this.creation = true;
   }
 
   clear() {
@@ -109,14 +118,18 @@ export class MenusComponent implements OnInit {
   }
 
   async updateMenu(menu: Menu): Promise<any> {
+    console.log('updating Menu...', menu);
     return new Promise<any>(async (resolve, reject) => {
       const client = generateClient<Schema>();
-      const { data: updatedMenu, errors } = await client.models.Menu.update(menu);
+      // let AWSmenu = { id: menu.id, label: menu.label, summary: menu.summary, rank: menu.rank };
+      const { data: data, errors } = await client.models.Menu.update(menu);
       if (errors) { console.error(errors); reject(errors); }
-
+      let updatedMenu: Menu = { ...menu };
       console.log('updatedMenu', updatedMenu);
       if (updatedMenu) {
-        this.menus = this.menus.map((m: Menu) => m.id === updatedMenu.id ? updatedMenu : m) as Menu[];
+        this.menus = this.menus
+          .map((m: Menu) => m.id === updatedMenu.id ? updatedMenu : m)
+          .sort((a, b) => a.rank - b.rank);
         resolve(updatedMenu);
       } else {
         reject('Menu not updated');

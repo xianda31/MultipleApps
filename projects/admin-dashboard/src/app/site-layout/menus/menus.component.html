@@ -1,25 +1,25 @@
-<div class="container">
-
+<div *ngIf="menus.length>0" class="container ">
+    <h5> Les menus</h5>
     <form [formGroup]="menuGroup">
         <table class="table">
 
             <thead>
 
                 <tr>
-                    <th>id</th>
-                    <th>label</th>
-                    <th>summary</th>
-                    <th>nb page</th>
-                    <!-- <th>root id</th>
-                    <th>submenus</th> -->
-                    <th class="col-2">Actions</th>
+                    <th class="col-2">id menu</th>
+                    <th class="col-2">label menu</th>
+                    <th class="col-4">summary</th>
+                    <th class="col-2">rank</th>
+                    <th class="col-1">nb page</th>
+                    <th class="col-1">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 <tr *ngFor="let menu of menus">
-                    <td>{{menu.id}}</td>
-                    <td>{{menu.label}}</td>
+                    <td class="table-info">...{{menu.id | slice:-8}}</td>
+                    <td class="table-info">{{menu.label}}</td>
                     <td>{{menu.summary}}</td>
+                    <td>{{menu.rank}}</td>
                     <td>{{menu.pages?.length}}</td>
                     <!-- <td>{{menu.rootmenu}}</td>
                     <td>{{menu.submenus?.length ?? 0}}</td> -->
@@ -28,7 +28,7 @@
 
                             <button class="btn btn-sm btn-primary" (click)="editMenu(menu)">Edit</button>
                             <button class="btn btn-sm btn-warning ms-1" (click)="deleteMenu(menu.id!)">delete</button>
-                            <button class="btn btn-sm btn-secondary ms-1" (click)="showMenu(menu)">show</button>
+                            <!-- <button class="btn btn-sm btn-secondary ms-1" (click)="showMenu(menu)">show</button> -->
                         </div>
                     </td>
                 </tr>
@@ -38,6 +38,7 @@
                     <td><input type="text" class="form-control" formControlName="id"></td>
                     <td> <input type="text" class="form-control" formControlName="label"> </td>
                     <td> <input type="text" class="form-control" formControlName="summary"> </td>
+                    <td> <input type="text" class="form-control" formControlName="rank"> </td>
                     <!-- <td> <input type="text" class="form-control" formControlName="pageId"> </td> -->
                     <td> </td>
                     <td class="col-2">
@@ -53,7 +54,7 @@
             </tbody>
         </table>
     </form>
-</div>
 
-<h5>Les pages</h5>
-<app-pages [menus]="menus"></app-pages>
+
+    <app-pages [menus]="menus" (pageChange)="pageChange()"></app-pages>
+</div>

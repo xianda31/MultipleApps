@@ -2,6 +2,7 @@ export interface Menu {
     id: string;
     label: string;
     summary?: string;
+    rank: number;
     pages?: Page[];
 
 }

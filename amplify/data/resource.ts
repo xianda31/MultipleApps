@@ -44,7 +44,6 @@ const schema = a.schema({
     link: a.string().required(),
     layout: a.string(),
     title: a.string(),
-
     menuId: a.id(),
     menu: a.belongsTo('Menu', 'menuId'),
     // articles: a.hasMany('Article', 'pageId'),
@@ -56,6 +55,7 @@ const schema = a.schema({
   Menu: a.model({
     label: a.string().required(),
     summary: a.string(),
+    rank: a.integer(),
     pages: a.hasMany('Page', 'menuId'),
   })
     .authorization((allow) => [allow.publicApiKey()]),
