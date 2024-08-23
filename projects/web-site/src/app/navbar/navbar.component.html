@@ -26,12 +26,23 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <ng-container *ngFor="let menu of siteMenus">
-                    <li *ngIf="!menu.has_submenu" class="nav-item">
+                    <li *ngIf="menu.pages && menu.pages.length == 1" class="nav-item">
                         <a class="nav-link active" aria-current="page"
-                            routerLink="{{menu.endItems[0].link}}">{{menu.label}}</a>
+                            routerLink="{{menu.pages[0].link}}">{{menu.label}}</a>
                     </li>
-                    <li *ngIf="menu.has_submenu" class="nav-item dropdown">
+                    <li *ngIf="menu.pages && menu.pages.length >= 1" class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            {{menu.label}}
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <li *ngFor="let page of menu.pages">
+                                <a class="dropdown-item"
+                                    routerLink="{{'/' + page.link | replace : ' ':'_'}}">{{page.link}}</a>
+                            </li>
+                        </ul>
+                    </li>
+                    <!-- <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
                             data-bs-toggle="dropdown" aria-expanded="false">
                             {{menu.label}}
                         </a>
@@ -40,7 +51,7 @@
                                 <a class="dropdown-item" routerLink="{{'/' + endItem.link}}">{{endItem.label}}</a>
                             </li>
                         </ul>
-                    </li>
+                    </li> -->
                 </ng-container>
             </ul>
 

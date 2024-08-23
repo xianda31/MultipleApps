@@ -1,5 +1,5 @@
-<ng-container *ngIf="siteConf">
+<ng-container *ngIf="loaded">
 
-    <app-navbar [siteMenus]="siteConf.web_site_menus"></app-navbar>
+    <app-navbar [siteMenus]="menus"></app-navbar>
     <router-outlet></router-outlet>
 </ng-container>

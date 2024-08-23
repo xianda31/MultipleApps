@@ -3,9 +3,9 @@ import { Router, RouterOutlet, Routes } from '@angular/router';
 import { NavbarComponent } from "./navbar/navbar.component";
 
 import { GenericSimplePageComponent } from './generic-simple-page/generic-simple-page.component';
-import { SysConfService } from '../../../common/sys-conf/sys-conf.service';
-import { MenuItem, SiteConf } from '../../../common/sys-conf/sys-conf.interface';
 import { CommonModule } from '@angular/common';
+import { SiteLayoutService } from '../../../common/site-layout/site-layout.service';
+import { Menu, Page } from '../../../common/menu.interface';
 
 
 
@@ -18,30 +18,31 @@ import { CommonModule } from '@angular/common';
 })
 export class AppComponent {
   title = 'web-site';
-  siteConf !: SiteConf;
+  // pages: Page[] = [];
+  menus: Menu[] = [];
   loaded = false;
 
   constructor(
-    private sysconfService: SysConfService,
+    // private sysconfService: SysConfService,
+    private siteLayoutService: SiteLayoutService,
     private router: Router
 
   ) {
-    this.sysconfService.getSysConf().then((data) => {
-      this.siteConf = data;
-      this.updateRoutes(this.siteConf.web_site_menus);
+
+    this.siteLayoutService.menus$.subscribe((menus) => {
+      this.menus = menus;
+      // this.pages = pages;
+      this.updateRoutes();
       this.loaded = true;
-
     });
-
-    // routes.push({ path: 'news', component: GenericSimplePageComponent, data: { pageId: 'news' } });
   }
 
-  updateRoutes(menus: MenuItem[]) {
+  updateRoutes() {
 
     let addedRoutes: Routes = [];
-    menus.forEach((menu) => {
-      menu.endItems.forEach((endItem) => {
-        addedRoutes.push({ path: endItem.link, component: GenericSimplePageComponent, data: { pageId: endItem.pageId } });
+    this.menus.forEach((menu) => {
+      menu.pages?.forEach((page) => {
+        addedRoutes.push({ path: page.link.replace(' ', '_'), component: GenericSimplePageComponent, data: { pageId: page.id } });
       });
     });
 
@@ -49,4 +50,6 @@ export class AppComponent {
     this.router.resetConfig(addedRoutes);
     // console.log('routes :', this.router.config);
   }
+
+
 }
