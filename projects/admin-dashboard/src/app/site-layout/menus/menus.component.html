@@ -1,4 +1,4 @@
-<div *ngIf="menus.length>0" class="container ">
+<div class="container ">
     <h5> Les menus</h5>
     <form [formGroup]="menuGroup">
         <table class="table">
@@ -26,8 +26,8 @@
                     <td class="col-2">
                         <div class=" btn-group role=group">
 
-                            <button class="btn btn-sm btn-primary" (click)="editMenu(menu)">Edit</button>
-                            <button class="btn btn-sm btn-warning ms-1" (click)="deleteMenu(menu.id!)">delete</button>
+                            <button class="btn btn-sm btn-primary" (click)="onEdit(menu)">Edit</button>
+                            <button class="btn btn-sm btn-warning ms-1" (click)="onDelete(menu.id!)">delete</button>
                             <!-- <button class="btn btn-sm btn-secondary ms-1" (click)="showMenu(menu)">show</button> -->
                         </div>
                     </td>
@@ -43,9 +43,9 @@
                     <td> </td>
                     <td class="col-2">
                         <div class=" btn-group role=group">
-                            <button class="btn btn-sm btn-primary" (click)="saveMenu()">Save</button>
+                            <button class="btn btn-sm btn-primary" (click)="onSave()">Save</button>
                             <!-- <button class="btn btn-sm btn-light" disabled></button> -->
-                            <button class="btn btn-sm btn-warning ms-1" (click)="clear()">clear</button>
+                            <button class="btn btn-sm btn-warning ms-1" (click)="onClear()">clear</button>
                         </div>
                     </td>
 
@@ -55,6 +55,6 @@
         </table>
     </form>
 
-
-    <app-pages [menus]="menus" (pageChange)="pageChange()"></app-pages>
+    <!-- 
+    <app-pages></app-pages> -->
 </div>

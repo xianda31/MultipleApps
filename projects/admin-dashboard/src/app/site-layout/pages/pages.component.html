@@ -1,4 +1,4 @@
-<div *ngIf="menus.length>0 && pages_loaded" class="container ">
+<div *ngIf=" layout_loaded" class="container ">
     <h5>Les pages</h5>
     <form [formGroup]="pageGroup">
         <table class="table">
@@ -17,8 +17,10 @@
             </thead>
             <tbody>
                 <tr *ngFor="let page of pages">
-                    <td class="table-info">...{{page.menuId | slice:-8}}</td>
-                    <td class="table-info">{{getMenu(page.menuId)?.label }}</td>
+                    <td [class]="getMenuLabel(page.menuId)?'table-info':'table-warning'">...{{page.menuId | slice:-8}}
+                    </td>
+                    <td [class]="getMenuLabel(page.menuId)?'table-info':'table-warning'">{{getMenuLabel(page.menuId)??
+                        'orpheline' }}</td>
                     <td>{{page.link}}</td>
                     <td>{{page.layout}}</td>
                     <td>{{page.title}}</td>
@@ -28,8 +30,8 @@
                     <td class="col-2">
                         <div class=" btn-group role=group">
 
-                            <button class="btn btn-sm btn-primary" (click)="editPage(page)">Edit</button>
-                            <button class="btn btn-sm btn-warning ms-1" (click)="deletePage(page.id!)">delete</button>
+                            <button class="btn btn-sm btn-primary" (click)="onEdit(page)">Edit</button>
+                            <button class="btn btn-sm btn-warning ms-1" (click)="onDelete(page.id!)">delete</button>
                         </div>
                     </td>
                 </tr>
@@ -44,7 +46,7 @@
                     </td>
 
                     <td>
-                        <input class="form-control" disabled value="{{ menuId!==null?getMenu(menuId)?.label:'' }}">
+                        <input class="form-control" disabled value="{{ getMenuLabel(menuId)?? ''}}">
                     </td>
                     <td>
                         <input type="text" class="form-control" formControlName="link">
@@ -54,9 +56,9 @@
                     <td> </td><!-- // col nb articles -->
                     <td class="col-2">
                         <div class=" btn-group role=group">
-                            <button class="btn btn-sm btn-primary" (click)="savePage()">Save</button>
+                            <button class="btn btn-sm btn-primary" (click)="onSave()">Save</button>
                             <!-- <button class="btn btn-sm btn-light" disabled></button> -->
-                            <button class="btn btn-sm btn-warning ms-1" (click)="clear()">clear</button>
+                            <button class="btn btn-sm btn-warning ms-1" (click)="onClear()">clear</button>
                         </div>
                     </td>
 

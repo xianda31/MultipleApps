@@ -1,10 +1,9 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import { generateClient } from 'aws-amplify/api';
-import { Schema } from '../../../../../../amplify/data/resource';
 import { Menu, Page } from '../../../../../common/menu.interface';
+import { SiteLayoutService } from '../../../../../common/site-layout/site-layout.service';
 
 @Component({
   selector: 'app-pages',
@@ -13,150 +12,78 @@ import { Menu, Page } from '../../../../../common/menu.interface';
   templateUrl: './pages.component.html',
   styleUrl: './pages.component.scss'
 })
-export class PagesComponent implements OnInit, OnChanges {
+export class PagesComponent {
 
-  @Input() menus!: Menu[];
-  @Output() pageChange: EventEmitter<Page> = new EventEmitter<Page>();
+  // @Input() menus!: Menu[];
+  // @Output() pageChange: EventEmitter<Page> = new EventEmitter<Page>();
   pages: Page[] = [];
-  pages_loaded: boolean = false;
+  menus: Menu[] = [];
+
+  layout_loaded: boolean = false;
   creation: boolean = true;
 
   pageGroup: FormGroup = new FormGroup({
     id: new FormControl(''),
-    menuId: new FormControl(''),
-    link: new FormControl(''),
-    layout: new FormControl(''),
-    title: new FormControl(''),
+    menuId: new FormControl('', Validators.required),
+    link: new FormControl('', Validators.required),
+    layout: new FormControl('', Validators.required),
+    title: new FormControl('', Validators.required),
   });
 
-  constructor() { }
+  constructor(
+    private siteLayoutService: SiteLayoutService
+  ) {
+    this.siteLayoutService.layout$.subscribe(([menus, pages]) => {
+      this.menus = menus;
+      this.pages = pages;
+      this.layout_loaded = true;
+      // console.log('layout', menus, pages);
+    });
 
-  ngOnChanges(changes: SimpleChanges): void {
-    console.log('menus change', this.menus);
   }
 
-
-  ngOnInit(): void {
-    // this.listPages();
-    this.queryPages();
-  }
-
-  getMenu(id: string): Menu | undefined {
-    return this.menus.find((m) => m.id === id);
+  getMenuLabel(id: string): string | null {
+    let menu = this.menus.find((m) => m.id === id);
+    if (!menu) return null;
+    return menu.label;
   }
   get menuId() { return this.pageGroup.get('menuId')?.value; }
 
-  queryPages() {
-    const client = generateClient<Schema>();
-    client.models.Page.observeQuery({ selectionSet: ["id", "menuId", "link", "layout", "title"] })
-      .subscribe({
-        next: (data) => {
-          // console.log('pages', data.items);
-          this.pages = data.items as Page[];
-          this.pages = this.pages.sort((a, b) => a.menuId.localeCompare(b.menuId));
-          this.pages_loaded = data.isSynced
-        },
-        error: (error) => {
-          console.error('error', error);
-        }
-      });
+  onClear() {
+    this.pageGroup.reset();
   }
-
-  // async listPages() {
-
-  //   const client = generateClient<Schema>();
-  //   const { data: data, errors } = await client.models.Page.list({ selectionSet: ["id", "menuId", "link", "layout", "title"] });
-  //   if (errors) { console.error(errors); return; }
-  //   console.log('data', data);
-  //   let pages: Page[] = data as unknown as Page[];
-  //   this.pages = pages;
-  //   console.log('listPages', this.pages);
-  //   // this.pages = this.pages.sort((a, b) => a.id.localeCompare(b.id));
-  // }
-
-
-
-  editPage(page: Page) {
-    // console.log('editPage', page);
-    // this.pageGroup.patchValue({ page });
-    // this.pageGroup.patchValue({ id: page.id, menuId: page.menuId, link: page.link, layout: page.layout, title: page.title });
+  onEdit(page: Page) {
     this.pageGroup.patchValue(page);
     this.creation = false;
   }
 
-  savePage() {
-    if (this.pageGroup.invalid) {
-      return;
-    }
+  onDelete(pageId: string): void {
+    this.siteLayoutService.deletePage(pageId).then((deletedPage) => {
+    }).catch((error) => {
+      console.error('page deletion error', error);
+    });
+  }
+  onSave() {
+    if (this.pageGroup.invalid) return;
     let page = this.pageGroup.getRawValue() as Page;
-    if (this.creation) {
-      this.createPage(page);
-    } else {
-      this.updatePage(page);
-    }
-    // console.log('emit', page);
-    this.pageChange.emit(page);
-    this.clear();
+    this.creation ? this.createPage(page) : this.updatePage(page);
+    this.onClear();
   }
 
-  clear() {
-    this.pageGroup.reset();
-  }
-
-  async deletePage(pageId: string): Promise<any> {
-    return new Promise<any>(async (resolve, reject) => {
-
-      const client = generateClient<Schema>();
-      const { data: deletedPage, errors } = await client.models.Page.delete({ id: pageId });
-      if (errors) { console.error(errors); reject(errors); }
-
-      console.log('deletedPage', deletedPage);
-      if (deletedPage) {
-        this.pages = this.pages.filter((m) => m.id !== pageId);
-        resolve(deletedPage);
-      } else {
-        reject('Page not deleted');
-      }
+  createPage(page: Page): void {
+    this.siteLayoutService.createPage(page).then((newPage) => {
+    }).catch((error) => {
+      console.error('page creation error', error);
     });
   }
 
-  async updatePage(page: Page): Promise<any> {
-    return new Promise<any>(async (resolve, reject) => {
-      const client = generateClient<Schema>();
-      console.log('updating Page', page);
-      const { data: updatedPage, errors } = await client.models.Page.update(page);
-      if (errors) {
-        console.error('error', errors);
-        reject(errors);
-        return;
-      }
-
-      // console.log('updatedPage', updatedPage);
-      if (updatedPage) {
-        this.pages = this.pages.map((m: Page) => m.id === updatedPage.id ? updatedPage : m) as Page[];
-        resolve(updatedPage);
-      } else {
-        reject('Page not updated');
-      }
+  updatePage(page: Page): void {
+    this.siteLayoutService.updatePage(page).then((updatedPage) => {
+    }).catch((error) => {
+      console.error('page update error', error);
     });
   }
 
-  async createPage(page: Page): Promise<any> {
-    return new Promise<any>(async (resolve, reject) => {
-      let { id, ...pageCreateInput } = page;
-      const client = generateClient<Schema>();
-      const { data: data, errors } = await client.models.Page.create(pageCreateInput);
-      if (errors) { console.error(errors); reject(errors); }
-      let newPage: Page = { id: data?.id!, ...pageCreateInput };;
-      // console.log('newPage', newPage);
-      if (newPage) {
-        this.pages.push(newPage as Page);
-        resolve(newPage);
-      } else {
-        reject('Page not created');
-      }
-    });
-  }
 
 }
 
