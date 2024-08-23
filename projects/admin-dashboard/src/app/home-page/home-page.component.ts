@@ -36,7 +36,7 @@ export class HomePageComponent {
         title: 'Gestion du site',
         subtitle: 'Gestion du contenu du site ',
         description: 'Modifier le contenu des pages, des articles, des événements',
-        link1: { route: '/menus', label: 'menus et pages' }
+        link1: { route: '/layout', label: 'menus et pages' }
       },
       {
         title: 'Gestion des ventes',

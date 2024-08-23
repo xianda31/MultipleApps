@@ -30,7 +30,7 @@
                         <a class="nav-link active" aria-current="page"
                             routerLink="{{menu.pages[0].link}}">{{menu.label}}</a>
                     </li>
-                    <li *ngIf="menu.pages && menu.pages.length >= 1" class="nav-item dropdown">
+                    <li *ngIf="menu.pages && menu.pages.length > 1" class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
                             data-bs-toggle="dropdown" aria-expanded="false">
                             {{menu.label}}
