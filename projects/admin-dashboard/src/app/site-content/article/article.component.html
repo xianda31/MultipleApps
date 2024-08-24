@@ -3,7 +3,12 @@
     <div class="row">
         <div class="col-4">
             <form [formGroup]="articleForm">
+
                 <div class="form-group">
+                    <label for="template">Modèle</label>
+                    <select type="text" class="form-control" id="template" formControlName="template">
+                        <option *ngFor="let key of templates_keys" [value]="key">{{key}}</option>
+                    </select>
                     <label for="title">Titre</label>
                     <input type="text" class="form-control" id="title" formControlName="title">
                     <label for="content">Contenu</label>
@@ -15,19 +20,9 @@
                 <button class="btn btn-sm btn-primary" (click)="onSubmit()">Enregistrer</button>
             </div>
         </div>
-        <div class="col-8">
-            ici l'UI graphique
-            <div class="card">
-                <div class="card-header">
 
-                    <h5 class="card-title">{{title}}</h5>
-                </div>
-                <div class="card-body">
-                    <div class="card-text">
-                        <span [innerHTML]="content"></span>
-                    </div>
-                </div>
-            </div>
+        <div class="col-8">
+            <app-render-article *ngIf="article_in_progress" [article]="article_in_progress"></app-render-article>
         </div>
     </div>
 </div>

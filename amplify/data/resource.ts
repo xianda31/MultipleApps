@@ -38,8 +38,11 @@ const schema = a.schema({
     .authorization((allow) => [allow.publicApiKey()]),
 
   Article: a.model({
-    title: a.string(),
-    content: a.string(),
+    title: a.string().required(),
+    content: a.string().required(),
+    template: a.string().required(),
+    icon: a.string(),
+    image: a.string(),
     tags: a.string().array(),
     pages: a.hasMany('PageArticle', 'articleId'),
   })

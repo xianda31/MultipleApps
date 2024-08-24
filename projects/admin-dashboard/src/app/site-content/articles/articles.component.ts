@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { ArticlesService } from '../../../../../common/site-layout_and_contents/articles.service';
 import { CommonModule } from '@angular/common';
-import { Article } from '../../../../../common/menu.interface';
+import { Article, TemplateEnum } from '../../../../../common/menu.interface';
 import { Router } from '@angular/router';
 
 @Component({
@@ -25,10 +25,11 @@ export class ArticlesComponent {
   }
 
   onAdd() {
-    const newArticle = {
+    const newArticle: Article = {
       id: '',
       title: 'New Article',
       content: 'Content goes here',
+      template: TemplateEnum.newsEnum,
     }
     let article = this.articlesService.createArticle(newArticle);
     console.log('new article', article);

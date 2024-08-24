@@ -1,0 +1,15 @@
+<!-- {{article | json}} -->
+<!-- <div *ngIf="loaded"> -->
+
+<ng-container *ngIf="article.template.toString()  ==='defaultEnum'">
+    <div class="card">
+        <img class="card-img-top" src="images/pexels-introspectivedsgn-6152927.jpg" alt="Card image cap">
+        <div class="card-body">
+            <h5 class="card-title">{{article.title}}</h5>
+            <div class="card-text">
+                <span [innerHTML]="article.content"></span>
+            </div>
+        </div>
+    </div>
+</ng-container>
+<!-- </div> -->
