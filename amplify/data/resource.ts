@@ -29,22 +29,23 @@ const schema = a.schema({
   })
     .authorization((allow) => [allow.publicApiKey()]),
 
-  PageArticle: a.model({
-    articleId: a.id(),
-    pageId: a.id(),
-    article: a.belongsTo('Article', 'articleId'),
-    page: a.belongsTo('Page', 'pageId'),
-  })
-    .authorization((allow) => [allow.publicApiKey()]),
+  // PageArticle: a.model({
+  //   articleId: a.id(),
+  //   pageId: a.id(),
+  //   article: a.belongsTo('Article', 'articleId'),
+  //   page: a.belongsTo('Page', 'pageId'),
+  // })
+  //   .authorization((allow) => [allow.publicApiKey()]),
 
   Article: a.model({
     title: a.string().required(),
     content: a.string().required(),
     template: a.string().required(),
+    pageId: a.id(),
+    page: a.belongsTo('Page', 'pageId'),
     icon: a.string(),
     image: a.string(),
     tags: a.string().array(),
-    pages: a.hasMany('PageArticle', 'articleId'),
   })
     .authorization((allow) => [allow.publicApiKey()]),
 
@@ -55,7 +56,7 @@ const schema = a.schema({
     summary: a.string(),
     menuId: a.id(),
     menu: a.belongsTo('Menu', 'menuId'),
-    articles: a.hasMany('PageArticle', 'pageId'),
+    articles: a.hasMany('Article', 'pageId'),
   })
     .authorization((allow) => [allow.publicApiKey()]),
 

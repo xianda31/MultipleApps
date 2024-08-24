@@ -1,2 +1,7 @@
 <p>generic-simple-page works!</p>
 {{pageId}}
+<div *ngIf="page" class="container">
+    <div class="col-md-4" *ngFor="let article of page.articles">
+        <app-render-article *ngIf="article" [article]="article"></app-render-article>
+    </div>
+</div>

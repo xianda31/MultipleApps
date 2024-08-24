@@ -3,17 +3,23 @@
     <table class="table">
         <thead>
             <tr>
-                <th class="col-2">id article</th>
-                <th class="col-2">title</th>
-                <th class="col-4">content</th>
-                <th class="col-2">Actions</th>
+                <!-- <th class="col-2">id article</th> -->
+                <th class="col-3">title</th>
+                <th class="col-3">template</th>
+                <th class="col-3">page</th>
+                <th class="col-3">Actions</th>
             </tr>
         </thead>
         <tbody>
             <tr *ngFor="let article of articles">
-                <td class="table-info">...{{article.id | slice:-8}}</td>
-                <td class="table-info"> {{article.title}}</td>
-                <td>{{article.content}}</td>
+                <!-- <td >...{{article.id | slice:-8}}</td> -->
+                <td> {{article.title}}</td>
+                <td>{{article.template }}</td>
+                <td>
+                    <select class="form-select" [(ngModel)]="article.pageId" (ngModelChange)="onPageSelect(article)">
+                        <option *ngFor="let page of pages" [value]="page.id">{{page.link}}</option>
+                    </select>
+                </td>
                 <td class="col-2">
                     <div class=" btn-group role=group">
                         <button class="btn btn-sm btn-primary" (click)="onEdit(article)">Edit</button>
@@ -22,5 +28,5 @@
             </tr>
         </tbody>
     </table>
+    <button class="btn btn-sm btn-primary" (click)="onAdd()">Ajout</button>
 </div>
-<button (click)="onAdd()">Add</button>

@@ -1,5 +1,6 @@
 <div class="container">
     <h5>Editeur d'article</h5>
+
     <div class="row">
         <div class="col-4">
             <form [formGroup]="articleForm">
@@ -7,7 +8,7 @@
                 <div class="form-group">
                     <label for="template">Modèle</label>
                     <select type="text" class="form-control" id="template" formControlName="template">
-                        <option *ngFor="let key of templates_keys" [value]="key">{{key}}</option>
+                        <option *ngFor="let value of templates_values" [value]="value">{{value}}</option>
                     </select>
                     <label for="title">Titre</label>
                     <input type="text" class="form-control" id="title" formControlName="title">
@@ -19,6 +20,8 @@
 
                 <button class="btn btn-sm btn-primary" (click)="onSubmit()">Enregistrer</button>
             </div>
+
+            {{articleForm.value | json}}
         </div>
 
         <div class="col-8">

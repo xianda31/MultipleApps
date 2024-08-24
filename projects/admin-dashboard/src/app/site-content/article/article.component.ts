@@ -1,11 +1,11 @@
 import { Component, Input } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ArticlesService } from '../../../../../common/site-layout_and_contents/articles.service';
 import { Form, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Template } from 'aws-cdk-lib/assertions';
 import { Article, TemplateEnum } from '../../../../../common/menu.interface';
-import { RenderArticleComponent } from '../../render-article/render-article.component';
+import { RenderArticleComponent } from '../../../../../common/render-article/render-article.component';
 
 @Component({
   selector: 'app-article',
@@ -18,7 +18,9 @@ export class ArticleComponent {
   id: string = '';
 
   templates = TemplateEnum;
-  templates_keys: string[] = Object.keys(this.templates);
+  // templates_keys: string[] = Object.keys(this.templates);
+  templates_values: string[] = Object.values(this.templates);
+
   // ctx: any;
   article_in_progress!: Article;
 
@@ -40,7 +42,9 @@ export class ArticleComponent {
 
   constructor(
     private route: ActivatedRoute,
-    private articlesService: ArticlesService
+    private articlesService: ArticlesService,
+    private router: Router
+
   ) {
 
     this.id = this.route.snapshot.paramMap.get('id') || '';
@@ -68,7 +72,7 @@ export class ArticleComponent {
     this.articlesService.updateArticle(article).then((updatedArticle) => {
       console.log(' article updated', updatedArticle);
       // this.ctx = { title: this.title, content: this.content };
-
+      this.router.navigate(['/articles']);
     });
     // this.articleForm.reset();
   }

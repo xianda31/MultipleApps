@@ -23,6 +23,7 @@ export interface Article {
     title: string;
     content: string;
     template: TemplateEnum;
+    pageId?: string;
     icon?: string;
     image?: string;
     tags?: string[];
@@ -30,21 +31,21 @@ export interface Article {
 }
 
 export enum TemplateEnum {
-    defaultEnum = 'default',
-    // imageEnum = 'image',
-    // videoEnum = 'video',
-    // audioEnum = 'audio',
-    galleryEnum = 'gallery',
-    tabsEnum = 'tabs',
-    listEnum = 'list',
-    tableEnum = 'table',
-    formEnum = 'form',
-    chartEnum = 'chart',
-    calendarEnum = 'calendar',
-    faqEnum = 'faq',
-    blogEnum = 'blog',
-    newsEnum = 'news',
-    eventEnum = 'event',
-    productEnum = 'product',
-    socialEnum = 'social',
+    defaultTemplate = 'default',
+    // imageTemplate = 'image',
+    // videoTemplate = 'video',
+    // audioTemplate = 'audio',
+    galleryTemplate = 'gallery',
+    tabsTemplate = 'tabs',
+    listTemplate = 'list',
+    tableTemplate = 'table',
+    formTemplate = 'form',
+    chartTemplate = 'chart',
+    calendarTemplate = 'calendar',
+    faqTemplate = 'faq',
+    blogTemplate = 'blog',
+    newsTemplate = 'news',
+    eventTemplate = 'event',
+    productTemplate = 'product',
+    socialTemplate = 'social',
 }

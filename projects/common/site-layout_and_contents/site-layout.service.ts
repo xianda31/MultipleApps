@@ -150,6 +150,20 @@ export class SiteLayoutService {
       }
     });
   }
+  getPage(page_id: string): Page | undefined {
+    return this._pages.find((p) => p.id === page_id);
+  }
+  readPage(page_id: string) {
+    return new Promise<any>(async (resolve, reject) => {
+      const client = generateClient<Schema>();
+      const { data: data, errors } = await client.models.Page.get(
+        { id: page_id }, { selectionSet: ["layout", "summary", "articles.*"] }
+      );
+      if (errors) { console.error(errors); reject(errors); }
+      let page: Page = data as unknown as Page;
+      resolve(page);
+    });
+  }
 
   updatePage(page: Page) {
     return new Promise<any>(async (resolve, reject) => {

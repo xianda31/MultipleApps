@@ -1,36 +1,56 @@
 import { Component } from '@angular/core';
 import { ArticlesService } from '../../../../../common/site-layout_and_contents/articles.service';
 import { CommonModule } from '@angular/common';
-import { Article, TemplateEnum } from '../../../../../common/menu.interface';
+import { Article, Page, TemplateEnum } from '../../../../../common/menu.interface';
 import { Router } from '@angular/router';
+import { SiteLayoutService } from '../../../../../common/site-layout_and_contents/site-layout.service';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-articles',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './articles.component.html',
   styleUrl: './articles.component.scss'
 })
 export class ArticlesComponent {
   articles: Article[] = [];
+  pages: Page[] = [];
   constructor(
     private articlesService: ArticlesService,
+    private siteLayoutService: SiteLayoutService,
     private router: Router
   ) {
 
     this.articlesService.articles$.subscribe((articles) => {
       this.articles = articles;
+      // console.log('articles', this.articles);
+    });
+
+    this.siteLayoutService.pages$.subscribe((pages) => {
+      this.pages = pages;
     });
 
   }
 
+  onPageSelect(article: Article) {
+    this.articlesService.updateArticle(article)
+      .then((article) => {
+        // console.log('article updated', article);
+      })
+      .catch((error) => {
+        // console.error('article update error', error);
+      });
+
+  }
   onAdd() {
     const newArticle: Article = {
       id: '',
       title: 'New Article',
       content: 'Content goes here',
-      template: TemplateEnum.newsEnum,
+      template: TemplateEnum.defaultTemplate,
     }
+
     let article = this.articlesService.createArticle(newArticle);
     console.log('new article', article);
   }

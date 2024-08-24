@@ -15,7 +15,7 @@ export class ArticlesService {
 
   constructor() {
     const client = generateClient<Schema>();
-    client.models.Article.observeQuery({ selectionSet: ["id", "title", "content", "tags"] })
+    client.models.Article.observeQuery({ selectionSet: ["id", "title", "content", "template", "pageId"] })
       .subscribe({
         next: (data) => {
           this.articles = data.items as unknown as Article[];
@@ -29,7 +29,7 @@ export class ArticlesService {
 
   // articlesSubscription() {
   //   const client = generateClient<Schema>();
-  //   client.models.Article.observeQuery({ selectionSet: ["id", "title", "content", "tags", "pageId"] })
+  //   client.models.Article.observeQuery({ selectionSet: ["id", "title", "content", "pageId", "pageId"] })
   //     .subscribe({
   //       next: (data) => {
   //         this.articles = data.items as unknown as Article[];
@@ -43,7 +43,7 @@ export class ArticlesService {
 
   listArticles() {
     const client = generateClient<Schema>();
-    client.models.Article.list({ selectionSet: ["id", "title", "content", "tags"] })
+    client.models.Article.list({ selectionSet: ["id", "title", "content", "template", "pageId"] })
       .then(({ data, errors }) => {
         if (errors) {
           console.error('errors', errors);
