@@ -4,8 +4,8 @@ import { NavbarComponent } from "./navbar/navbar.component";
 
 import { GenericSimplePageComponent } from './generic-simple-page/generic-simple-page.component';
 import { CommonModule } from '@angular/common';
-import { SiteLayoutService } from '../../../common/site-layout/site-layout.service';
-import { Menu, Page } from '../../../common/menu.interface';
+import { Menu } from '../../../common/menu.interface';
+import { SiteLayoutService } from '../../../common/site-layout_and_contents/site-layout.service';
 
 
 

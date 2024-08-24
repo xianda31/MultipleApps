@@ -3,12 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Menu } from '../../../../../common/menu.interface';
 import { PagesComponent } from "../pages/pages.component";
-import { SiteLayoutService } from '../../../../../common/site-layout/site-layout.service';
+import { SiteLayoutService } from '../../../../../common/site-layout_and_contents/site-layout.service';
 
 @Component({
   selector: 'app-menus',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, PagesComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './menus.component.html',
   styleUrl: './menus.component.scss'
 })

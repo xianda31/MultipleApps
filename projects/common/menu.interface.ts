@@ -1,3 +1,5 @@
+import { PagesComponent } from "../admin-dashboard/src/app/site-content/pages/pages.component";
+
 export interface Menu {
     id: string;
     label: string;
@@ -11,7 +13,7 @@ export interface Page {
     id: string;
     menuId: string;
     link: string;
-    layout: string;
+    summary: string;
     title: string;
     articles?: Article[];
 }
@@ -20,6 +22,6 @@ export interface Article {
     id: string;
     title: string;
     content: string;
-    tags: string[];
-    pageId: string;
+    tags?: string[];
+    pages?: Page[];
 }

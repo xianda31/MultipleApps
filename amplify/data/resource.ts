@@ -29,13 +29,19 @@ const schema = a.schema({
   })
     .authorization((allow) => [allow.publicApiKey()]),
 
+  PageArticle: a.model({
+    articleId: a.id(),
+    pageId: a.id(),
+    article: a.belongsTo('Article', 'articleId'),
+    page: a.belongsTo('Page', 'pageId'),
+  })
+    .authorization((allow) => [allow.publicApiKey()]),
+
   Article: a.model({
     title: a.string(),
     content: a.string(),
     tags: a.string().array(),
-
-    // pageId: a.id(),
-    // page: a.belongsTo('Page', 'pageId'),
+    pages: a.hasMany('PageArticle', 'articleId'),
   })
     .authorization((allow) => [allow.publicApiKey()]),
 
@@ -43,10 +49,10 @@ const schema = a.schema({
   Page: a.model({
     link: a.string().required(),
     layout: a.string(),
-    title: a.string(),
+    summary: a.string(),
     menuId: a.id(),
     menu: a.belongsTo('Menu', 'menuId'),
-    // articles: a.hasMany('Article', 'pageId'),
+    articles: a.hasMany('PageArticle', 'pageId'),
   })
     .authorization((allow) => [allow.publicApiKey()]),
 
