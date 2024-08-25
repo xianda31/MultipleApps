@@ -1,5 +1,5 @@
-<div class="top-bar">
-    <div class="container">
+<div class="container p-0 m-0">
+    <!-- <div class="top-bar">
         <div class="row-cols-lg-auto row">
             <div class="col">
                 <span class="mr-2  icon-envelope-open-o"></span>
@@ -12,83 +12,58 @@
                 <span class="inline-block"> (33) 6 66 0666</span>
             </div>
         </div>
-    </div>
-</div>
+    </div> -->
 
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
-    <div class="container">
-        <a class="navbar-brand" href="#">BCSTO</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
-            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+    <nav class="navbar navbar-expand-lg navbar-light ">
+        <div class="container">
+            <a class="navbar-brand" routerLink="/home">
+                <img class=" brand-img" src="images/bcsto.jpg">
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
+                aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
 
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <ng-container *ngFor="let menu of siteMenus">
-                    <li *ngIf="menu.pages && menu.pages.length == 1" class="nav-item">
-                        <a class="nav-link active" aria-current="page"
-                            routerLink="{{menu.pages[0].link}}">{{menu.label}}</a>
-                    </li>
-                    <li *ngIf="menu.pages && menu.pages.length > 1" class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
-                            data-bs-toggle="dropdown" aria-expanded="false">
-                            {{menu.label}}
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <li *ngFor="let page of menu.pages">
-                                <a class="dropdown-item"
-                                    routerLink="{{'/' + page.link | replace : ' ':'_'}}">{{page.link}}</a>
-                            </li>
-                        </ul>
-                    </li>
-                    <!-- <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
-                            data-bs-toggle="dropdown" aria-expanded="false">
-                            {{menu.label}}
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <li *ngFor="let endItem of menu.endItems">
-                                <a class="dropdown-item" routerLink="{{'/' + endItem.link}}">{{endItem.label}}</a>
-                            </li>
-                        </ul>
-                    </li> -->
-                </ng-container>
-            </ul>
-
-            <!-- <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item">
-                    <a class="nav-link active" aria-current="page" routerLink="/news">Les nouvelles</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">Le Club</a>
-                </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <ng-container *ngFor="let menu of siteMenus">
+                        <li *ngIf="menu.pages && menu.pages.length == 1" class="nav-item">
+                            <a class="nav-link active" aria-current="page"
+                                routerLink="{{menu.pages[0].link}}">{{menu.label}}</a>
+                        </li>
+                        <li *ngIf="menu.pages && menu.pages.length > 1" class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                                {{menu.label}}
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <li *ngFor="let page of menu.pages">
+                                    <a class="dropdown-item"
+                                        routerLink="{{'/' + page.link | replace : ' ':'_'}}">{{page.link}}</a>
+                                </li>
+                            </ul>
+                        </li>
+                        <!-- <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
                         data-bs-toggle="dropdown" aria-expanded="false">
-                        Tournois
+                        {{menu.label}}
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                        <li><a class="dropdown-item" routerLink="/tournaments">Régularité</a></li>
-                        <li><a class="dropdown-item" href="#">Résultats</a></li>
-                        <li>
-                            <hr class="dropdown-divider">
+                        <li *ngFor="let endItem of menu.endItems">
+                            <a class="dropdown-item" routerLink="{{'/' + endItem.link}}">{{endItem.label}}</a>
                         </li>
-                        <li><a class="dropdown-item" href="#">Calendrier</a></li>
                     </ul>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link disabled">Photos</a>
-                </li>
-            </ul> -->
-            <form class="d-flex">
-                <input class="form-control me-2" type="mail" placeholder="Mail" aria-label="Mail">
-                <button class="btn btn-outline-success" type="submit">Login</button>
-            </form>
+                </li> -->
+                    </ng-container>
+                </ul>
+
+                <form class="d-flex">
+                    <input class="form-control me-2" type="mail" placeholder="Mail" aria-label="Mail">
+                    <button class="btn btn-outline-success" type="submit">Login</button>
+                </form>
+            </div>
         </div>
-    </div>
-</nav>
+    </nav>
 
-
-
-
-<div class="bkgrd"></div>
+    <!-- <div class="bkgrd"></div> -->
+</div>
