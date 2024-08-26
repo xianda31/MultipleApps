@@ -5,12 +5,10 @@ import { Article, Page } from '../../../../../common/menu.interface';
 import { CommonModule } from '@angular/common';
 import { RenderArticleComponent } from '../../../../../common/render-article/render-article.component';
 import { ArticlesService } from '../../../../../common/site-layout_and_contents/articles.service';
-import { BreadcrumbComponent } from '../breadcrumb/breadcrumb.component';
-
 @Component({
   selector: 'app-generic-simple-page',
   standalone: true,
-  imports: [CommonModule, RenderArticleComponent, BreadcrumbComponent],
+  imports: [CommonModule, RenderArticleComponent],
   templateUrl: './generic-simple-page.component.html',
   styleUrl: './generic-simple-page.component.scss'
 })

@@ -5,12 +5,11 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { RenderArticleComponent } from '../../../../../common/render-article/render-article.component';
 import { Router } from '@angular/router';
-import { BreadcrumbComponent } from '../breadcrumb/breadcrumb.component';
 
 @Component({
   selector: 'app-home-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RenderArticleComponent, BreadcrumbComponent],
+  imports: [CommonModule, ReactiveFormsModule, RenderArticleComponent],
   templateUrl: './home-page.component.html',
   styleUrl: './home-page.component.scss'
 })

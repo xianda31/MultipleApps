@@ -42,7 +42,6 @@ export class AppComponent {
     let addedRoutes: Routes = [];
     this.menus.forEach((menu) => {
       menu.pages?.forEach((page) => {
-        console.log('pushing route : {path: %s , component:generic.. data:%s', page.link.replace(' ', '_'), page.id);
         addedRoutes.push({ path: page.link.replace(' ', '_'), component: GenericSimplePageComponent, data: { pageId: page.id } });
       });
     });
