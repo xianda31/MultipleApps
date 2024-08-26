@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { TournamentsComponent } from './tournaments/tournaments.component';
-import { GenericSimplePageComponent } from './generic-simple-page/generic-simple-page.component';
+import { GenericSimplePageComponent } from './pages/generic-simple-page/generic-simple-page.component';
 import { HomePageComponent } from './pages/home-page/home-page.component';
 
 

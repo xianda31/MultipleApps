@@ -43,12 +43,25 @@ export class ArticlesComponent {
       });
 
   }
+
+  onFeaturedSelect(article: Article) {
+    console.log('onFeaturedSelect', article.featured);
+    this.articlesService.updateArticle(article)
+      .then((article) => {
+        console.log('article updated', article);
+      })
+      .catch((error) => {
+        // console.error('article update error', error);
+      });
+  }
+
   onAdd() {
     const newArticle: Article = {
       id: '',
       title: 'New Article',
       content: 'Content goes here',
       template: TemplateEnum.defaultTemplate,
+      featured: false,
     }
 
     let article = this.articlesService.createArticle(newArticle);

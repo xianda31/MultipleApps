@@ -1,0 +1,22 @@
+.card-footer {
+    // display: flex;
+    justify-content: space-between;
+    //   align-items: center;
+    padding: 0.5rem 1rem;
+    background-color: inherit;
+    border-top: 0;
+    //   border-top: 1px solid #e9ecef;
+    //   border-bottom-right-radius: 0.25rem;
+    //   border-bottom-left-radius: 0.25rem;
+
+}
+
+.card-footer:hover {
+    cursor: pointer;
+    font-weight: bolder;
+}
+
+.article-title {
+    font-weight: bold;
+    color: #064a14;
+}

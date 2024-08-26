@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { Router, RouterOutlet, Routes } from '@angular/router';
 import { NavbarComponent } from "./navbar/navbar.component";
 
-import { GenericSimplePageComponent } from './generic-simple-page/generic-simple-page.component';
+import { GenericSimplePageComponent } from './pages/generic-simple-page/generic-simple-page.component';
 import { CommonModule } from '@angular/common';
 import { Menu } from '../../../common/menu.interface';
 import { SiteLayoutService } from '../../../common/site-layout_and_contents/site-layout.service';
@@ -42,6 +42,7 @@ export class AppComponent {
     let addedRoutes: Routes = [];
     this.menus.forEach((menu) => {
       menu.pages?.forEach((page) => {
+        console.log('pushing route : {path: %s , component:generic.. data:%s', page.link.replace(' ', '_'), page.id);
         addedRoutes.push({ path: page.link.replace(' ', '_'), component: GenericSimplePageComponent, data: { pageId: page.id } });
       });
     });

@@ -50,14 +50,15 @@ export class SiteLayoutService {
 
   pagesSubscription() {
     const client = generateClient<Schema>();
-    client.models.Page.observeQuery({ selectionSet: ["id", "menuId", "link", "layout", "summary"] })
+    client.models.Page.observeQuery({ selectionSet: ["id", "menuId", "link", "layout", "summary", "articles.*"] })
       .subscribe({
         next: (data) => {
           // console.log('pages', data.items);
           this._pages = data.items as unknown as Page[];
-          this._pages = this._pages.sort((a, b) => a.menuId.localeCompare(b.menuId));
+          this._pages = this._pages
+            .sort((a, b) => a.menuId.localeCompare(b.menuId))
+            .sort((a, b) => this.getMenuRank(a.menuId) - this.getMenuRank(b.menuId));
           this.pages_loaded = data.isSynced
-          this._pages = this._pages.sort((a, b) => this.getMenu(a.menuId)!.rank - this.getMenu(b.menuId)!.rank);
 
           this._pages$.next(this._pages);
           // console.log('pages_loaded', this._pages);
@@ -101,8 +102,9 @@ export class SiteLayoutService {
     });
   }
 
-  getMenu(menu_id: string): Menu | undefined {
-    return this._menus.find((m) => m.id === menu_id);
+  getMenuRank(menu_id: string): number {
+    let menu = this._menus.find((m) => m.id === menu_id);
+    return menu ? menu.rank : 0;
   }
 
   updateMenu(menu: Menu) {
@@ -172,7 +174,7 @@ export class SiteLayoutService {
       if (errors) { console.error(errors); reject(errors); }
       let updatedPage: Page = data as unknown as Page;
       this._pages = this._pages.map(p => p.id === updatedPage.id ? updatedPage : p);
-      this._pages = this._pages.sort((a, b) => this.getMenu(a.menuId)!.rank - this.getMenu(b.menuId)!.rank);
+      this._pages = this._pages.sort((a, b) => this.getMenuRank(a.menuId) - this.getMenuRank(b.menuId));
 
       this._pages$.next(this._pages);
       this.listMenus();
@@ -187,7 +189,7 @@ export class SiteLayoutService {
       const { data, errors } = await client.models.Page.delete({ id: pageId });
       if (errors) { console.error(errors); reject(errors); }
       this._pages = this._pages.filter(p => p.id !== pageId);
-      this._pages = this._pages.sort((a, b) => this.getMenu(a.menuId)!.rank - this.getMenu(b.menuId)!.rank);
+      this._pages = this._pages.sort((a, b) => this.getMenuRank(a.menuId) - this.getMenuRank(b.menuId));
       this._pages$.next(this._pages);
       this.listMenus();
 

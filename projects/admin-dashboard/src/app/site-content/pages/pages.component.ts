@@ -27,7 +27,7 @@ export class PagesComponent {
     menuId: new FormControl('', Validators.required),
     link: new FormControl('', Validators.required),
     layout: new FormControl('', Validators.required),
-    title: new FormControl('', Validators.required),
+    summary: new FormControl('', Validators.required),
   });
 
   constructor(
@@ -73,7 +73,7 @@ export class PagesComponent {
   createPage(page: Page): void {
     this.siteLayoutService.createPage(page).then((newPage) => {
     }).catch((error) => {
-      console.error('page creation error', error);
+      console.error('page creation error', page, error);
     });
   }
 

@@ -41,6 +41,7 @@ const schema = a.schema({
     title: a.string().required(),
     content: a.string().required(),
     template: a.string().required(),
+    featured: a.boolean(),
     pageId: a.id(),
     page: a.belongsTo('Page', 'pageId'),
     icon: a.string(),

@@ -17,6 +17,8 @@ import { RenderArticleComponent } from '../../../../../common/render-article/ren
 export class ArticleComponent {
   id: string = '';
 
+  featuredMode: boolean = false;
+
   templates = TemplateEnum;
   // templates_keys: string[] = Object.keys(this.templates);
   templates_values: string[] = Object.values(this.templates);

@@ -1,15 +1,49 @@
 <!-- {{article | json}} -->
 <!-- <div *ngIf="loaded"> -->
 
-<div *ngIf="article.template.toString()  ==='default'">
-    <div class="card ">
-        <img class="card-img-top" src="images/pexels-introspectivedsgn-6152927.jpg" alt="Card image cap">
-        <div class="card-body">
-            <h5 class="card-title">{{article.title}}</h5>
-            <div class="card-text">
-                <span [innerHTML]="article.content"></span>
+
+
+<!-- mode vignette (featuredMode = true) -->
+<ng-container *ngIf="featuredMode">
+    <ng-container *ngIf=" article.template.toString()  ==='event'">
+        <div class="card h-100">
+            <div class="card-image-top">
+                <img class="card-img-top" src="images/cards-740ko.jpg" alt="Card image cap">
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">{{article.title}}</h5>
+                <div class="card-text">
+                    <span [innerHTML]="article.content | trunk "></span>
+                </div>
+            </div>
+            <div (click)="onFollow(article)" class="card-footer">
+                <small class=" text-uppercase">voir plus</small>
             </div>
         </div>
+    </ng-container>
+    <ng-container *ngIf="article.template.toString()  ==='default'">
+        <div class="card h-100">
+            <img class="card-img-top" src="images/cards-740ko.jpg" alt="Card image cap">
+            <div class="card-body">
+                <h5 class="card-title">{{article.title}}</h5>
+                <div class="card-text">
+                    <span [innerHTML]="article.content"></span>
+                </div>
+            </div>
+        </div>
+    </ng-container>
+</ng-container>
+
+<!-- mode "normal" via generic-simple-page  -->
+<ng-container *ngIf="!featuredMode">
+    <!-- <ng-container *ngIf=" article.template.toString()  ==='event'
+    || article.template.toString()  ==='default'"> -->
+    <div class=" pt-2">
+
+        <h5 class="article-title">{{article.title | uppercase}}</h5>
+        <div class="card-text pt-1 ps-2">
+            <span [innerHTML]="article.content | replace:'|':'' "></span>
+        </div>
     </div>
-</div>
-<!-- </div> -->
+    <!-- </ng-container> -->
+</ng-container>

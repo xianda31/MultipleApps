@@ -14,7 +14,8 @@ export interface Page {
     menuId: string;
     link: string;
     summary: string;
-    title: string;
+    layout: string;
+    // title: string;
     articles?: Article[];
 }
 
@@ -23,6 +24,7 @@ export interface Article {
     title: string;
     content: string;
     template: TemplateEnum;
+    featured: boolean;
     pageId?: string;
     icon?: string;
     image?: string;
@@ -32,6 +34,7 @@ export interface Article {
 
 export enum TemplateEnum {
     defaultTemplate = 'default',
+    eventTemplate = 'event',
     // imageTemplate = 'image',
     // videoTemplate = 'video',
     // audioTemplate = 'audio',
@@ -45,7 +48,6 @@ export enum TemplateEnum {
     faqTemplate = 'faq',
     blogTemplate = 'blog',
     newsTemplate = 'news',
-    eventTemplate = 'event',
     productTemplate = 'product',
     socialTemplate = 'social',
 }
