@@ -10,7 +10,6 @@
                     <th class="col-2">label menu</th>
                     <th class="col-2">lien-titre</th>
                     <th class="col-2">template</th>
-                    <th class="col-23">descriptif</th>
                     <th class="col-1">Actions</th>
                 </tr>
             </thead>
@@ -21,8 +20,7 @@
                     <td [class]="getMenuLabel(page.menuId)?'table-info':'table-warning'">{{getMenuLabel(page.menuId)??
                         'orpheline' }}</td>
                     <td>{{page.link}}</td>
-                    <td>{{page.layout}}</td>
-                    <td>{{page.summary}}</td>
+                    <td>{{page.template}}</td>
                     <!-- <td>{{page.title}}</td> -->
                     <!-- <td>{{page.articles?.length}}</td> -->
                     <!-- <td>{{page.rootpage}}</td>
@@ -51,8 +49,7 @@
                     <td>
                         <input type="text" class="form-control" formControlName="link">
                     </td>
-                    <td> <input type="text" class="form-control" formControlName="layout"> </td>
-                    <td> <input type="text" class="form-control" formControlName="summary"> </td>
+                    <td> <input type="text" class="form-control" formControlName="template"> </td>
                     <td class="col-2">
                         <div class=" btn-group role=group">
                             <button class="btn btn-sm btn-primary" (click)="onSave()">Save</button>

@@ -39,22 +39,21 @@ const schema = a.schema({
 
   Article: a.model({
     title: a.string().required(),
-    content: a.string().required(),
     template: a.string().required(),
+    content: a.string().required(),
     featured: a.boolean(),
+    rank: a.integer(),
+    image: a.string(),
     pageId: a.id(),
     page: a.belongsTo('Page', 'pageId'),
-    icon: a.string(),
-    image: a.string(),
-    tags: a.string().array(),
+    // tags: a.string().array(),
   })
     .authorization((allow) => [allow.publicApiKey()]),
 
 
   Page: a.model({
     link: a.string().required(),
-    layout: a.string(),
-    summary: a.string(),
+    template: a.string(),
     menuId: a.id(),
     menu: a.belongsTo('Menu', 'menuId'),
     articles: a.hasMany('Article', 'pageId'),

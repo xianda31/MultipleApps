@@ -13,24 +13,26 @@ import { ArticlesService } from '../../../../../common/site-layout_and_contents/
   styleUrl: './generic-simple-page.component.scss'
 })
 export class GenericSimplePageComponent {
-  pageId!: string;
+  path!: string;
   page!: Page;
   articles: Article[] = [];
   constructor(
     private router: ActivatedRoute,
-    private articlesService: ArticlesService
+    private articlesService: ArticlesService,
+    private siteLayoutService: SiteLayoutService
   ) {
     this.router.data.subscribe(async data => {
       let { pageId } = data;
-      this.pageId = pageId;
-      // this.page = await this.siteLayoutService.readPage(this.pageId);
+      this.siteLayoutService.pages$.subscribe((pages) => {
+        this.siteLayoutService.getFullPathAsync(pageId).then((path) => {
+          this.path = path;
+        });
+      });
       this.articlesService.articles$.subscribe((articles: Article[]) => {
         this.articles = articles
-          .filter((article) => article.pageId === this.pageId)
+          .filter((article) => article.pageId === pageId)
           .sort((a, b) => a.featured ? -1 : 1);
       });
-
-      // console.log(page);
     });
   }
 }

@@ -26,8 +26,7 @@ export class PagesComponent {
     id: new FormControl(''),
     menuId: new FormControl('', Validators.required),
     link: new FormControl('', Validators.required),
-    layout: new FormControl('', Validators.required),
-    summary: new FormControl('', Validators.required),
+    template: new FormControl('', Validators.required),
   });
 
   constructor(

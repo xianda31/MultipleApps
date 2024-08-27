@@ -13,8 +13,7 @@ export interface Page {
     id: string;
     menuId: string;
     link: string;
-    summary: string;
-    layout: string;
+    template: string;
     // title: string;
     articles?: Article[];
 }
@@ -22,13 +21,12 @@ export interface Page {
 export interface Article {
     id: string;
     title: string;
-    content: string;
     template: TemplateEnum;
+    content: string;
     featured: boolean;
-    pageId?: string;
-    icon?: string;
+    rank: number;
     image?: string;
-    tags?: string[];
+    pageId?: string;
     pages?: Page[];
 }
 

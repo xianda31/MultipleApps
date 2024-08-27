@@ -61,6 +61,7 @@ export class ArticlesComponent {
       title: 'New Article',
       content: 'Content goes here',
       template: TemplateEnum.defaultTemplate,
+      rank: 0,
       featured: false,
     }
 

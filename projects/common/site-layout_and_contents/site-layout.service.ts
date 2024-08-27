@@ -45,12 +45,26 @@ export class SiteLayoutService {
         }
       });
 
-
   }
 
-  pagesSubscription() {
+  // utilitaires
+  getFullPathAsync(pageId: string): Promise<string> {
     const client = generateClient<Schema>();
-    client.models.Page.observeQuery({ selectionSet: ["id", "menuId", "link", "layout", "summary", "articles.*"] })
+    return new Promise<string>(async (resolve, reject) => {
+      const { data, errors } = await client.models.Page.get({ id: pageId }, { selectionSet: ["menuId", "link"] });
+      if (errors) { console.error(errors); reject(errors); }
+      let page: Page = data as unknown as Page;
+      let menu = this._menus.find((m) => m.id === page.menuId);
+      if (!menu) { reject('menu not found'); } else {
+
+        resolve(menu.label + ' > ' + page.link);
+      }
+    });
+  }
+
+  private pagesSubscription() {
+    const client = generateClient<Schema>();
+    client.models.Page.observeQuery({ selectionSet: ["id", "menuId", "link", "template", "articles.*"] })
       .subscribe({
         next: (data) => {
           // console.log('pages', data.items);
@@ -159,7 +173,7 @@ export class SiteLayoutService {
     return new Promise<any>(async (resolve, reject) => {
       const client = generateClient<Schema>();
       const { data: data, errors } = await client.models.Page.get(
-        { id: page_id }, { selectionSet: ["layout", "summary", "articles.*"] }
+        { id: page_id }, { selectionSet: ["template", "articles.*"] }
       );
       if (errors) { console.error(errors); reject(errors); }
       let page: Page = data as unknown as Page;
