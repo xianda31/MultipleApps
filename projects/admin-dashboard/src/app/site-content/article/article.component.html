@@ -28,7 +28,9 @@
             <div class="form-check form-switch">
                 <input class="form-check-input" [(ngModel)]="featuredMode" type="checkbox" role="switch"
                     id="flexSwitchCheckChecked" checked>
-                <label class="form-check-label" for="flexSwitchCheckChecked">mode vignette</label>
+                <label class="form-check-label" for="flexSwitchCheckChecked">
+                    {{featuredMode ? 'en vedette' : 'pleine page'}}
+                </label>
             </div>
             <div [class]="featuredMode? 'row col-6':''">
                 <app-render-article [featuredMode]="featuredMode" *ngIf="article_in_progress"
