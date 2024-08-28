@@ -5,7 +5,7 @@ export interface Menu {
     label: string;
     summary?: string;
     rank: number;
-    pages?: Page[];
+    pages: Page[];
 
 }
 
@@ -14,6 +14,7 @@ export interface Page {
     menuId: string;
     link: string;
     template: string;
+    rank: number;
     // title: string;
     articles?: Article[];
 }

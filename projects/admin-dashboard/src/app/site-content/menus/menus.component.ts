@@ -27,7 +27,7 @@ export class MenusComponent {
     private siteLayoutService: SiteLayoutService) {
     this.siteLayoutService.menus$.subscribe((menus) => {
       this.menus = menus;
-      // console.log('menus', menus);
+      // console.log('menusComponent subscribed to menus$', menus);
     });
   }
 
@@ -50,13 +50,20 @@ export class MenusComponent {
   onSave() {
     if (this.menuGroup.invalid) return;
     let menu: Menu = this.menuGroup.getRawValue() as Menu;
+    let pages = this.menus.find((m) => m.id === menu.id)?.pages;
+    if (pages) {
+      menu.pages = pages
+    } else {
+      console.log('oops ! no pages found for menu', menu.id);
+    }
     this.creation ? this.createMenu(menu) : this.updateMenu(menu);
     this.onClear();
     this.creation = true;
   }
 
   updateMenu(menu: Menu): void {
-    this.siteLayoutService.updateMenu(menu).then((updatedMenu) => {
+    this.siteLayoutService.updateMenu(menu).then(() => {
+      console.log('menusComponent : menu updated', menu);
     }
     ).catch((error) => {
       console.error('menu update error', error);

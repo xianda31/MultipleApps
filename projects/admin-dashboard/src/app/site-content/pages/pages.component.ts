@@ -27,6 +27,7 @@ export class PagesComponent {
     menuId: new FormControl('', Validators.required),
     link: new FormControl('', Validators.required),
     template: new FormControl('', Validators.required),
+    rank: new FormControl(0)
   });
 
   constructor(
@@ -36,7 +37,6 @@ export class PagesComponent {
       this.menus = menus;
       this.pages = pages;
       this.layout_loaded = true;
-      // console.log('layout', menus, pages);
     });
 
   }

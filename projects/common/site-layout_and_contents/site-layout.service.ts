@@ -27,24 +27,11 @@ export class SiteLayoutService {
 
   constructor() {
 
-    const client = generateClient<Schema>();
 
+    // this.menusSubscription();
+    this.readMenus();
 
-    client.models.Menu.observeQuery({ selectionSet: ["id", "label", "summary", "rank", "pages.*"] })
-      .subscribe({
-        next: (data) => {
-          this._menus = data.items as unknown as Menu[];
-          this._menus = this._menus.sort((a, b) => a.rank - b.rank);
-          // this.menus_loaded = data.isSynced
-          this._menus$.next(this._menus);
-          // console.log('menus_loaded', this._menus);
-          this.pagesSubscription();
-        },
-        error: (error) => {
-          console.error('error', error);
-        }
-      });
-
+    this.pagesSubscription();
   }
 
   // utilitaires
@@ -62,14 +49,51 @@ export class SiteLayoutService {
     });
   }
 
+  private getMenuRank(menu_id: string): number {
+    let menu = this._menus.find((m) => m.id === menu_id);
+    return menu ? menu.rank : 0;
+  }
+
+  private menusSubscription() {
+    const client = generateClient<Schema>();
+
+    client.models.Menu.observeQuery({ selectionSet: ["id", "label", "summary", "rank", "pages.*"] })
+      .subscribe({
+        next: (data) => {
+          this._menus = data.items as unknown as Menu[];
+          const iSynced = data.isSynced;
+          if (iSynced) { console.log('menus  synced '); }
+          // check if pages are there ; there is a bug in the API :o((
+          this._menus = this._menus.map((m) => {
+            if (typeof m.pages === 'function') {
+              console.log(' menu "%s" has lost its pages  !!...', m.label);
+            } else {
+              m.pages = m.pages.sort((a, b) => a.rank - b.rank);
+            }
+            return m;
+          });
+          this._menus = this._menus.sort((a, b) => a.rank - b.rank);
+
+          // this.menus_loaded = data.isSynced
+          this._menus$.next(this._menus);
+          // console.log('menus_loaded', this._menus);
+        },
+        error: (error) => {
+          console.error('error', error);
+        }
+      });
+  }
+
+
   private pagesSubscription() {
     const client = generateClient<Schema>();
-    client.models.Page.observeQuery({ selectionSet: ["id", "menuId", "link", "template", "articles.*"] })
+    client.models.Page.observeQuery({ selectionSet: ["id", "menuId", "link", "template", "rank", "articles.*"] })
       .subscribe({
         next: (data) => {
           // console.log('pages', data.items);
           this._pages = data.items as unknown as Page[];
           this._pages = this._pages
+            .sort((a, b) => a.rank - b.rank)
             .sort((a, b) => a.menuId.localeCompare(b.menuId))
             .sort((a, b) => this.getMenuRank(a.menuId) - this.getMenuRank(b.menuId));
           this.pages_loaded = data.isSynced
@@ -84,17 +108,6 @@ export class SiteLayoutService {
   }
 
   // menu REST API
-
-  listMenus() {
-    const client = generateClient<Schema>();
-    client.models.Menu.list({ selectionSet: ["id", "label", "summary", "rank", "pages.*"] })
-      .then(({ data, errors }) => {
-        if (errors) { console.error(errors); }
-        this._menus = data as unknown as Menu[];
-        this._menus = this._menus.sort((a, b) => a.rank - b.rank);
-        this._menus$.next(this._menus);
-      });
-  }
 
 
 
@@ -116,22 +129,47 @@ export class SiteLayoutService {
     });
   }
 
-  getMenuRank(menu_id: string): number {
-    let menu = this._menus.find((m) => m.id === menu_id);
-    return menu ? menu.rank : 0;
+  readMenu(menu_id: string) {
+    return new Promise<Menu>(async (resolve, reject) => {
+      const client = generateClient<Schema>();
+      const { data: data, errors } = await client.models.Menu.get(
+        { id: menu_id }, { selectionSet: ["id", "label", "summary", "rank", "pages.*"] }
+      );
+      if (errors) { console.error(errors); reject(errors); }
+      let menu: Menu = data as unknown as Menu;
+      resolve(menu);
+    });
   }
 
+  // listMenus() {
+  //   const client = generateClient<Schema>();
+  //   client.models.Menu.list({ selectionSet: ["id", "label", "summary", "rank", "pages.*"] })
+  //     .then(({ data, errors }) => {
+  //       if (errors) { console.error(errors); }
+  //       this._menus = data as unknown as Menu[];
+  //       this._menus = this._menus.sort((a, b) => a.rank - b.rank);
+  //       this._menus$.next(this._menus);
+  //     });
+  // }
+
+
+  private readMenus() {
+    const client = generateClient<Schema>();
+    client.models.Menu.list({ selectionSet: ["id", "label", "summary", "rank", "pages.*"] })
+      .then(({ data, errors }) => {
+        if (errors) { console.error(errors); }
+        this._menus = data as unknown as Menu[];
+        this._menus = this._menus.sort((a, b) => a.rank - b.rank);
+        this._menus$.next(this._menus);
+      });
+  }
   updateMenu(menu: Menu) {
-    return new Promise<any>(async (resolve, reject) => {
+    return new Promise<void>(async (resolve, reject) => {
       const client = generateClient<Schema>();
       const { data: data, errors } = await client.models.Menu.update(menu);
       if (errors) { console.error(errors); reject(errors); }
-      let updatedMenu: Menu = data as unknown as Menu;
-      this._menus = this._menus
-        .map(m => m.id === updatedMenu.id ? updatedMenu : m)
-        .sort((a, b) => a.rank - b.rank);
-      this._menus$.next(this._menus);
-      resolve(updatedMenu);
+      this.readMenus();
+      resolve();
     });
   }
 
@@ -159,7 +197,7 @@ export class SiteLayoutService {
       if (newPage) {
         this._pages.push(newPage as Page);
         this._pages$.next(this._pages);
-        this.listMenus();
+        this.readMenus();
         resolve(newPage);
       } else {
         reject('Page not created');
@@ -191,7 +229,7 @@ export class SiteLayoutService {
       this._pages = this._pages.sort((a, b) => this.getMenuRank(a.menuId) - this.getMenuRank(b.menuId));
 
       this._pages$.next(this._pages);
-      this.listMenus();
+      this.readMenus();
 
       resolve(updatedPage);
     });
@@ -205,7 +243,7 @@ export class SiteLayoutService {
       this._pages = this._pages.filter(p => p.id !== pageId);
       this._pages = this._pages.sort((a, b) => this.getMenuRank(a.menuId) - this.getMenuRank(b.menuId));
       this._pages$.next(this._pages);
-      this.listMenus();
+      this.readMenus();
 
       resolve(data);
     });

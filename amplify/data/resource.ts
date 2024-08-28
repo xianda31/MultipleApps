@@ -54,6 +54,7 @@ const schema = a.schema({
   Page: a.model({
     link: a.string().required(),
     template: a.string(),
+    rank: a.integer(),
     menuId: a.id(),
     menu: a.belongsTo('Menu', 'menuId'),
     articles: a.hasMany('Article', 'pageId'),
