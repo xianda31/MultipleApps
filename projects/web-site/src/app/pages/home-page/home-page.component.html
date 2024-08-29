@@ -1,8 +1,14 @@
+<div class="text-muted mb-4">BCSTO</div>
+<div class="text-center mb-5">
+    <h4>Les actualités du moment au Bridge Club de Saint-Orens</h4>
+</div>
+<br>
+
 <div *ngFor="let page of pages">
     <div *ngIf="hasFeaturedArticles(page)" class="m-2 ">
-        <!-- <div class="card-body"> -->
-        <div class="bg-light underlined mb-3">
-            <h4>{{page.link}}</h4>
+        <div class="card-body">
+            <!-- <div class="bg-light underlined mb-3"> -->
+            <h4>{{page.link | uppercase}}</h4>
         </div>
         <!-- <div class="row"> -->
         <div class="container">
@@ -15,12 +21,7 @@
                             [article]="article"></app-render-article>
                     </div>
                 </ng-container>
-                <!-- <div  class="col-lg m-2">
-        </div> -->
             </div>
         </div>
-        <!-- </div> -->
-        <!-- </div> -->
     </div>
-
 </div>
