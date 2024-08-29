@@ -43,8 +43,11 @@ export class SiteLayoutService {
       let page: Page = data as unknown as Page;
       let menu = this._menus.find((m) => m.id === page.menuId);
       if (!menu) { reject('menu not found'); } else {
-
-        resolve(menu.label + ' > ' + page.link);
+        if (menu.pages.length === 1) {
+          resolve(menu.label);
+        } else {
+          resolve(menu.label + ' > ' + page.link);
+        }
       }
     });
   }

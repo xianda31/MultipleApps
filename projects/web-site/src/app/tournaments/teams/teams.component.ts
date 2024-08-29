@@ -4,7 +4,7 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } 
 import { Person } from '../../../../../common/ffb/interface/teams.interface';
 import { FfbService } from '../../../../../common/ffb/services/ffb.service';
 import { TournamentTeams } from '../../../../../common/ffb/interface/tournament_teams.interface';
-import { InputPlayerComponent } from '../../../../../admin-dashboard/src/app/tournaments/input-player/input-player.component';
+import { InputPlayerComponent } from '../../../../../common/ffb/input-player/input-player.component';
 @Component({
   selector: 'app-teams',
   standalone: true,

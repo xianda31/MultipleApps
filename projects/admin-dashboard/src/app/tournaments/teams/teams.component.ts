@@ -4,8 +4,8 @@ import { Person } from '../../../../../common/ffb/interface/teams.interface';
 import { FfbService } from '../../../../../common/ffb/services/ffb.service';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MembersService } from '../../members/service/members.service';
-import { InputPlayerComponent } from '../input-player/input-player.component';
 import { TournamentTeams } from '../../../../../common/ffb/interface/tournament_teams.interface';
+import { InputPlayerComponent } from '../../../../../common/ffb/input-player/input-player.component';
 @Component({
   selector: 'app-teams',
   standalone: true,

@@ -36,7 +36,6 @@ export class HomePageComponent {
       console.error('article\'s page not found', article.pageId);
       return;
     } else {
-      // console.log('navigate to', '/' + page.link);
       this.router.navigate(['/' + page.link]);
     }
   }

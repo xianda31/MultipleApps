@@ -41,13 +41,6 @@ const routeConfig: ApplicationConfig = {
   ]
 };
 
-// const appConfig: ApplicationConfig = {
-//   providers: [
-//     provideZoneChangeDetection({ eventCoalescing: true }),
-//     provideRouter(routes),
-//     { provide: LOCALE_ID, useValue: 'fr-FR' }
-//   ]
-// };
 
 bootstrapApplication(AppComponent, routeConfig)
   .catch((err) => console.error(err));

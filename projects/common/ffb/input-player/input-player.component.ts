@@ -1,7 +1,7 @@
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, FormControl, FormsModule, NG_VALUE_ACCESSOR, ReactiveFormsModule } from '@angular/forms';
-import { FFBplayer } from '../../../../../common/ffb/interface/FFBplayer.interface';
-import { FfbService } from '../../../../../common/ffb/services/ffb.service';
+import { FFBplayer } from '../interface/FFBplayer.interface';
+import { FfbService } from '../services/ffb.service';
 import { CommonModule } from '@angular/common';
 import { get } from 'aws-amplify/api';
 import { debounceTime, from, Observable } from 'rxjs';
