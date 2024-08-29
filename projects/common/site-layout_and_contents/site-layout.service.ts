@@ -163,6 +163,7 @@ export class SiteLayoutService {
         this._menus$.next(this._menus);
       });
   }
+
   updateMenu(menu: Menu) {
     return new Promise<void>(async (resolve, reject) => {
       const client = generateClient<Schema>();

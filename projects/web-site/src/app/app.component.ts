@@ -6,6 +6,7 @@ import { GenericSimplePageComponent } from './pages/generic-simple-page/generic-
 import { CommonModule } from '@angular/common';
 import { Menu } from '../../../common/menu.interface';
 import { SiteLayoutService } from '../../../common/site-layout_and_contents/site-layout.service';
+import { Observable } from 'rxjs';
 
 
 
@@ -18,38 +19,24 @@ import { SiteLayoutService } from '../../../common/site-layout_and_contents/site
 })
 export class AppComponent {
   title = 'web-site';
-  // pages: Page[] = [];
   menus: Menu[] = [];
-  loaded = false;
 
   constructor(
-    // private sysconfService: SysConfService,
     private siteLayoutService: SiteLayoutService,
-    private router: Router
-
   ) {
 
     this.siteLayoutService.menus$.subscribe((menus) => {
       this.menus = menus;
-      // this.pages = pages;
-      this.updateRoutes();
+      this.menus = this.menus.map((menu) => {
+        menu.pages = menu.pages.sort((a, b) => a.rank - b.rank);
+        return menu;
+      });
       this.loaded = true;
     });
   }
+  loaded = false;
 
-  updateRoutes() {
 
-    let addedRoutes: Routes = [];
-    this.menus.forEach((menu) => {
-      menu.pages?.forEach((page) => {
-        addedRoutes.push({ path: page.link.replace(' ', '_'), component: GenericSimplePageComponent, data: { pageId: page.id } });
-      });
-    });
-
-    addedRoutes = [...addedRoutes, ...this.router.config];
-    this.router.resetConfig(addedRoutes);
-    // console.log('routes :', this.router.config);
-  }
 
 
 }

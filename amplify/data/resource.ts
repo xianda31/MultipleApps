@@ -41,12 +41,11 @@ const schema = a.schema({
     title: a.string().required(),
     template: a.string().required(),
     content: a.string().required(),
-    featured: a.boolean(),
-    rank: a.integer(),
+    featured: a.boolean().required(),
+    rank: a.integer().required(),
     image: a.string(),
     pageId: a.id(),
     page: a.belongsTo('Page', 'pageId'),
-    // tags: a.string().array(),
   })
     .authorization((allow) => [allow.publicApiKey()]),
 

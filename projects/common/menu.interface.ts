@@ -26,9 +26,8 @@ export interface Article {
     content: string;
     featured: boolean;
     rank: number;
-    image?: string;
     pageId?: string;
-    pages?: Page[];
+    image?: string;
 }
 
 export enum TemplateEnum {

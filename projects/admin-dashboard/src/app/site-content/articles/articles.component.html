@@ -7,7 +7,8 @@
                 <th class="col-3">title</th>
                 <th class="col-2">template</th>
                 <th class="col-1">en vedette</th>
-                <th class="col-3">page</th>
+                <th class="col-1">rang</th>
+                <th class="col-2">page</th>
                 <th class="col-3">Actions</th>
             </tr>
         </thead>
@@ -18,6 +19,11 @@
                 <td>{{article.template }}</td>
                 <td>
                     <input type="checkbox" [(ngModel)]="article.featured" (ngModelChange)="onFeaturedSelect(article)">
+                </td>
+                <td>
+                    <input class="form-control" [(ngModel)]="article.rank" (ngModelChange)="onRankChange(article)">
+                    <!-- {{article.rank}} -->
+                </td>
                 <td>
                     <select class="form-select" [(ngModel)]="article.pageId" (ngModelChange)="onPageSelect(article)">
                         <option *ngFor="let page of pages" [value]="page.id">{{page.link}}</option>

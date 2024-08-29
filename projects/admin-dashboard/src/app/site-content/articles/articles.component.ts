@@ -23,7 +23,9 @@ export class ArticlesComponent {
   ) {
 
     this.articlesService.articles$.subscribe((articles) => {
-      this.articles = articles;
+      this.articles = articles
+        .sort((a, b) => a.rank - b.rank)
+        .sort((a, b) => a.pageId?.localeCompare(b.pageId || '') || 0);
       // console.log('articles', this.articles);
     });
 
@@ -54,6 +56,17 @@ export class ArticlesComponent {
         // console.error('article update error', error);
       });
   }
+  onRankChange(article: Article) {
+    this.articlesService.updateArticle(article)
+      .then((article) => {
+        console.log('article rank updated', article.rank);
+        console.log('article updated', this.articles);
+      })
+      .catch((error) => {
+        // console.error('article update error', error);
+      });
+  }
+
 
   onAdd() {
     const newArticle: Article = {
