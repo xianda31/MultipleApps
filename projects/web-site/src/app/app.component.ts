@@ -5,7 +5,7 @@ import { NavbarComponent } from "./navbar/navbar.component";
 import { GenericSimplePageComponent } from './pages/generic-simple-page/generic-simple-page.component';
 import { CommonModule } from '@angular/common';
 import { Menu } from '../../../common/menu.interface';
-import { SiteLayoutService } from '../../../common/site-layout_and_contents/site-layout.service';
+import { SiteLayoutService } from '../../../common/services/site-layout.service';
 import { Observable } from 'rxjs';
 
 

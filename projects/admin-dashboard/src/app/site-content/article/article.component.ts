@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ArticlesService } from '../../../../../common/site-layout_and_contents/articles.service';
+import { ArticlesService } from '../../../../../common/services/articles.service';
 import { Form, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Article, TemplateEnum } from '../../../../../common/menu.interface';

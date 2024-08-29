@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { MenusComponent } from '../menus/menus.component';
 import { PagesComponent } from '../pages/pages.component';
-import { SiteLayoutService } from '../../../../../common/site-layout_and_contents/site-layout.service';
+import { SiteLayoutService } from '../../../../../common/services/site-layout.service';
 import { Menu } from '../../../../../common/menu.interface';
 import { CommonModule } from '@angular/common';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop'; // Import DragDropModule

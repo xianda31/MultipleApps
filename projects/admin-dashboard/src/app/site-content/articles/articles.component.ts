@@ -1,9 +1,9 @@
 import { Component } from '@angular/core';
-import { ArticlesService } from '../../../../../common/site-layout_and_contents/articles.service';
+import { ArticlesService } from '../../../../../common/services/articles.service';
 import { CommonModule } from '@angular/common';
 import { Article, Page, TemplateEnum } from '../../../../../common/menu.interface';
 import { Router } from '@angular/router';
-import { SiteLayoutService } from '../../../../../common/site-layout_and_contents/site-layout.service';
+import { SiteLayoutService } from '../../../../../common/services/site-layout.service';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 @Component({

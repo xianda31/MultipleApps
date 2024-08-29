@@ -1,0 +1,11 @@
+<div class="container">
+
+    <div class="input-group mb-3">
+        <!-- <label (click)="onUpload($event)" class="input-group-text" for="fileInput">Upload</label> -->
+        <input type="file" class="form-control" (change)="onChange($event)">
+    </div>
+    <!-- <pre>{{fileOutput}}</pre>
+      -->
+
+    <img *ngIf="base64String" [src]="base64String" alt="image" class="img-fluid">
+</div>

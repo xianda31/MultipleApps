@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Router, Routes } from '@angular/router';
-import { SiteLayoutService } from '../../../common/site-layout_and_contents/site-layout.service';
+import { SiteLayoutService } from '../../../common/services/site-layout.service';
 import { routes } from './app.routes';
 import { GenericSimplePageComponent } from './pages/generic-simple-page/generic-simple-page.component';
 

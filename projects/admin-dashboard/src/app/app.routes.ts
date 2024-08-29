@@ -10,6 +10,7 @@ import { HomePageComponent } from './home-page/home-page.component';
 import { LayoutComponent } from './site-content/layout/layout.component';
 import { ArticlesComponent } from './site-content/articles/articles.component';
 import { ArticleComponent } from './site-content/article/article.component';
+import { TestComponent } from './site-content/files/test/test.component';
 
 export const routes: Routes = [
     { path: 'tournaments', component: TournamentsComponent },
@@ -21,6 +22,7 @@ export const routes: Routes = [
     { path: 'layout', component: LayoutComponent },
     { path: 'articles', component: ArticlesComponent },
     { path: 'article/:id', component: ArticleComponent },
+    { path: 'test', component: TestComponent },
     { path: '', redirectTo: '/home', pathMatch: 'full' }
 
 ];

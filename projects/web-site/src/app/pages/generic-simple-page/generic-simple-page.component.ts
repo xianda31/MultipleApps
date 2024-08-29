@@ -1,10 +1,10 @@
 import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { SiteLayoutService } from '../../../../../common/site-layout_and_contents/site-layout.service';
+import { SiteLayoutService } from '../../../../../common/services/site-layout.service';
 import { Article, Page } from '../../../../../common/menu.interface';
 import { CommonModule } from '@angular/common';
 import { RenderArticleComponent } from '../../../../../common/render-article/render-article.component';
-import { ArticlesService } from '../../../../../common/site-layout_and_contents/articles.service';
+import { ArticlesService } from '../../../../../common/services/articles.service';
 @Component({
   selector: 'app-generic-simple-page',
   standalone: true,

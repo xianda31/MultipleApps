@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { SiteLayoutService } from '../../../../../common/site-layout_and_contents/site-layout.service';
+import { SiteLayoutService } from '../../../../../common/services/site-layout.service';
 import { Page } from '../../../../../common/menu.interface';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';

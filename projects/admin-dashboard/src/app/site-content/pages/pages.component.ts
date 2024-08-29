@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { Menu, Page } from '../../../../../common/menu.interface';
-import { SiteLayoutService } from '../../../../../common/site-layout_and_contents/site-layout.service';
+import { SiteLayoutService } from '../../../../../common/services/site-layout.service';
 
 @Component({
   selector: 'app-pages',
