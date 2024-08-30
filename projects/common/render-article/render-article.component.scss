@@ -20,3 +20,17 @@
     font-weight: bold;
     color: #064a14;
 }
+
+.thumbnail img {
+    width: 90px;
+    height: auto;
+    margin-right: 3px;
+    float: left
+}
+
+.thumbnail span {
+    display: block;
+    // align-items: self-start;
+    // justify-content: flex-start;
+    margin-right: 5px;
+}

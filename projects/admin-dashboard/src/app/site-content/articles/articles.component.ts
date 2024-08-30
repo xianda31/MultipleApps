@@ -50,7 +50,7 @@ export class ArticlesComponent {
     console.log('onFeaturedSelect', article.featured);
     this.articlesService.updateArticle(article)
       .then((article) => {
-        console.log('article updated', article);
+        // console.log('article updated', article);
       })
       .catch((error) => {
         // console.error('article update error', error);
@@ -59,8 +59,8 @@ export class ArticlesComponent {
   onRankChange(article: Article) {
     this.articlesService.updateArticle(article)
       .then((article) => {
-        console.log('article rank updated', article.rank);
-        console.log('article updated', this.articles);
+        // console.log('article rank updated', article.rank);
+        // console.log('article updated', this.articles);
       })
       .catch((error) => {
         // console.error('article update error', error);

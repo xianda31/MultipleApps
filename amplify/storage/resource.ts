@@ -9,7 +9,7 @@ export const storage = defineStorage({
         ],
         'thumbnails/*': [
             allow.authenticated.to(['read', 'write']),
-            allow.guest.to(['read', 'write'])
+            allow.guest.to(['read', 'write', 'delete'])
         ],
     })
 })

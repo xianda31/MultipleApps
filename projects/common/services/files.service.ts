@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { getUrl, list } from 'aws-amplify/storage';
+import { getUrl, list, remove } from 'aws-amplify/storage';
 import { S3Item } from '../file.interface';
 import { BehaviorSubject, Observable } from 'rxjs';
 
@@ -44,7 +44,6 @@ export class FileService {
   listFiles() {
     list({ path: 'thumbnails/', options: { listAll: true } })
       .then((data) => {
-        console.log(data);
         this._S3Items = data.items;
 
         this._S3Items.forEach((item) => {
@@ -53,5 +52,20 @@ export class FileService {
         this._S3Items$.next(this._S3Items);
       })
   };
+
+  delete(path: string) {
+    remove({ path: path })
+      .then((data) => {
+        // console.log(data);
+        this.listFiles();
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  }
+
+  add(path: string) {
+    this.listFiles();
+  }
 }
 

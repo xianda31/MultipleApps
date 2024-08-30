@@ -46,7 +46,7 @@ export class ArticleComponent {
   constructor(
     private route: ActivatedRoute,
     private articlesService: ArticlesService,
-    private fileService: FileService = new FileService(),
+    private fileService: FileService,
     private router: Router
 
   ) {

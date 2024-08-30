@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, EventEmitter, Output } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { uploadData } from 'aws-amplify/storage';
 import { ImageSize } from '../../../const';
@@ -12,6 +12,7 @@ import { ImageSize } from '../../../const';
   styleUrl: './img-upload.component.scss'
 })
 export class ImgUploadComponent {
+  @Output() uploaded = new EventEmitter<Blob>();
   resizedBase64String: any;
   file!: File;
 
@@ -37,8 +38,8 @@ export class ImgUploadComponent {
     fetch(base64)
       .then(res => res.blob())
       .then(blob => {
-        console.log(blob);
-        this.upload(blob, new File([blob], filename));
+        this.upload(blob, new File([blob], filename)).then(() => {
+        });
       });
   }
 
@@ -48,24 +49,27 @@ export class ImgUploadComponent {
     img.onload = () => {
       const width = img.width;
       const height = img.height;
-      const filename = this.file.name.split('.')[0] + width + 'x' + height + '.jpg';
+      const filename = this.file.name;
+      // const filename = this.file.name.split('.')[0] + width + 'x' + height + '.jpg';
       console.log(filename);
       URL.revokeObjectURL(img.src);
       this.imageToBlob(this.resizedBase64String, filename);
     };
   }
 
-  async upload(data: any, file: File) {
+  async upload(blob: any, file: File) {
     try {
       uploadData({
-        data: data,
+        data: blob,
         path: `thumbnails/${file.name}`,
         // bucket: 'publicBucket'
         options: {
           contentType: 'image/jpeg',
           metadata: { customKey: 'thumbnail' },
         }
-      })
+      }).result.then((result) => {
+        this.uploaded.emit(blob);
+      });
     } catch (e) {
       console.log("error", e);
     }

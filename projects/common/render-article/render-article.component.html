@@ -39,8 +39,12 @@
     <div class=" pt-2">
 
         <h5 class="article-title">{{article.title | uppercase}}</h5>
-        <div class="card-text pt-1 ps-2">
-            <span [innerHTML]="article.content | replace:'|':'' "></span>
+        <div class=" pt-1 ps-2">
+            <span class="thumbnail">
+                <img [src]="signedUrl | async" alt="Card image cap">
+                <span [innerHTML]="article.content | replace:'|':'' "></span>
+            </span>
+
         </div>
     </div>
     <!-- </ng-container> -->
