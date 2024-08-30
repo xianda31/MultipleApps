@@ -12,6 +12,12 @@
                     </select>
                     <label for="title">Titre</label>
                     <input type="text" class="form-control" id="title" formControlName="title">
+
+                    <label for="title">Image</label>
+                    <select type="text" class="form-control" id="image" formControlName="image">
+                        <option *ngFor="let item of S3Items | async" [value]="item.path">{{item.path}}</option>
+                    </select>
+
                     <label for="content">Contenu</label>
                     <textarea class="form-control" id="content" formControlName="content"></textarea>
                 </div>

@@ -1,10 +1,13 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ArticlesService } from '../../../../../common/services/articles.service';
 import { Form, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Article, TemplateEnum } from '../../../../../common/menu.interface';
 import { RenderArticleComponent } from '../../../../../common/render-article/render-article.component';
+import { FileService } from '../../../../../common/services/files.service';
+import { Observable } from 'rxjs';
+import { S3Item } from '../../../../../common/file.interface'; // Import the S3item type from the appropriate module
 
 @Component({
   selector: 'app-article',
@@ -15,14 +18,12 @@ import { RenderArticleComponent } from '../../../../../common/render-article/ren
 })
 export class ArticleComponent {
   id: string = '';
-
+  S3Items: Observable<S3Item[]> = new Observable<S3Item[]>();
   featuredMode: boolean = false;
 
   templates = TemplateEnum;
-  // templates_keys: string[] = Object.keys(this.templates);
   templates_values: string[] = Object.values(this.templates);
 
-  // ctx: any;
   article_in_progress!: Article;
 
   articleForm: FormGroup = new FormGroup({
@@ -45,6 +46,7 @@ export class ArticleComponent {
   constructor(
     private route: ActivatedRoute,
     private articlesService: ArticlesService,
+    private fileService: FileService = new FileService(),
     private router: Router
 
   ) {
@@ -64,6 +66,9 @@ export class ArticleComponent {
     this.articleForm.valueChanges.subscribe((value) => {
       this.article_in_progress = value;
     });
+
+    this.S3Items = this.fileService.S3Items;
+
   }
 
 

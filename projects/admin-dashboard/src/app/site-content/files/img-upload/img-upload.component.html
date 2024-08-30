@@ -1,0 +1,7 @@
+<div class="input-group mb-3">
+    <input type="file" class="form-control" (change)="onChange($event)">
+    <button class="btn btn-sm btn-primary" type="button" (click)="onUpload()">Upload</button>
+</div>
+<div class="col-4" *ngIf="resizedBase64String">
+    <img [src]="resizedBase64String" alt="image" class="img-fluid">
+</div>

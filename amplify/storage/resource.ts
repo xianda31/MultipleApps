@@ -7,23 +7,28 @@ export const storage = defineStorage({
             allow.guest.to(['read']),
             allow.entity('identity').to(['read', 'write', 'delete'])
         ],
-        'picture-submissions/*': [
+        'thumbnails/*': [
             allow.authenticated.to(['read', 'write']),
             allow.guest.to(['read', 'write'])
         ],
     })
 })
 
-export const firstBucket = defineStorage({
-    name: 'firstBucket',
-    // isDefault: true, // identify your default storage bucket (required)
-});
+// export const firstBucket = defineStorage({
+//     name: 'publicBucket',
+//     access: (allow) => ({
+//         'public/*': [
+//             allow.guest.to(['read'])
+//         ]
+//     })
+//     // isDefault: true, // identify your default storage bucket (required)
+// });
 
-export const secondBucket = defineStorage({
-    name: 'secondBucket',
-    access: (allow) => ({
-        'private/{entity_id}/*': [
-            allow.entity('identity').to(['read', 'write', 'delete'])
-        ]
-    })
-})
+// export const secondBucket = defineStorage({
+//     name: 'protectedBucket',
+//     access: (allow) => ({
+//         'private/{entity_id}/*': [
+//             allow.entity('identity').to(['read', 'write', 'delete'])
+//         ]
+//     })
+// })

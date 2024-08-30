@@ -1,11 +1,13 @@
 <div class="container">
+  <ng-container *ngIf="S3listItems">
 
-    <div class="input-group mb-3">
-        <!-- <label (click)="onUpload($event)" class="input-group-text" for="fileInput">Upload</label> -->
-        <input type="file" class="form-control" (change)="onChange($event)">
+    <div *ngFor="let item of S3listItems">
+      <span> {{item.path}}</span>
+      <img [src]="item.url |async" alt="image" class="img-fluid">
+
     </div>
-    <!-- <pre>{{fileOutput}}</pre>
-      -->
-
-    <img *ngIf="base64String" [src]="base64String" alt="image" class="img-fluid">
+  </ng-container>
+  <div class="col-md-6">
+    <app-img-upload></app-img-upload>
+  </div>
 </div>

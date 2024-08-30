@@ -1,30 +1,57 @@
 import { Injectable } from '@angular/core';
-import { uploadData } from "aws-amplify/storage";
+import { getUrl, list } from 'aws-amplify/storage';
+import { S3Item } from '../file.interface';
+import { BehaviorSubject, Observable } from 'rxjs';
+
+
 
 @Injectable({
   providedIn: 'root'
 })
-export class FilesService {
+export class FileService {
 
-  constructor() { }
+  _S3Items: S3Item[] = [];
+  private _S3Items$: BehaviorSubject<S3Item[]> = new BehaviorSubject<S3Item[]>(this._S3Items);
 
-  // uploadFile(key: string, file: any): Promise<any> {
-  //   return new Promise((resolve, reject) => {
-  //     Storage.put(key, file, {
-  //       level: 'public',
-  //       contentType: file.type,
-  //       progressCallback(progress: any) {
-  //         // console.log(`Uploaded: ${progress.loaded}/${progress.total}`);
-  //       },
-  //     })
-  //       .then((result) => {
-  //         this.publicBucket.push({ key: key, lastModified: Date.now(), size: file.size, __isFile: true });
-  //         this.bucketLoaded$.next(true);
-  //         resolve(result);
-  //       })
-  //       .catch((err) => {
-  //         reject(err);
-  //       });
-  //   });
-  // }
+  constructor() {
+    this.listFiles();
+  }
+
+  get S3Items(): Observable<S3Item[]> {
+    return this._S3Items$.asObservable();
+  }
+
+  placeholderUrl(): Promise<URL> {
+    return new Promise<URL>((resolve, reject) => {
+      resolve(new URL("../../admin-dashboard/public/images/bcsto.png"));
+    });
+  }
+
+  getPresignedUrl(path: string): Promise<URL> {
+    return new Promise<URL>((resolve, reject) => {
+      getUrl({ path: path, options: { validateObjectExistence: false } })
+        .then((linkToStorageFile) => {
+          // console.log('linkToStorageFile', linkToStorageFile);
+          resolve(linkToStorageFile.url);
+        })
+        .catch((error) => {
+          console.log(error);
+          reject(error);
+        });
+    });
+  }
+
+  listFiles() {
+    list({ path: 'thumbnails/', options: { listAll: true } })
+      .then((data) => {
+        console.log(data);
+        this._S3Items = data.items;
+
+        this._S3Items.forEach((item) => {
+          item.url = this.getPresignedUrl(item.path);
+        });
+        this._S3Items$.next(this._S3Items);
+      })
+  };
 }
+

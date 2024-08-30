@@ -1,14 +1,9 @@
-<!-- {{article | json}} -->
-<!-- <div *ngIf="loaded"> -->
-
-
-
 <!-- mode vignette (featuredMode = true) -->
 <ng-container *ngIf="featuredMode">
     <ng-container *ngIf=" article.template.toString()  ==='event'">
         <div class="card h-100">
-            <div class="card-image-top">
-                <img class="card-img-top" src="images/cards-740ko.jpg" alt="Card image cap">
+            <div *ngIf="signedUrl" class="card-image-top">
+                <img class="card-img-top" [src]="signedUrl | async" alt="Card image cap">
             </div>
             <div class="card-body">
                 <h5 class="card-title">{{article.title}}</h5>
@@ -21,9 +16,12 @@
             </div>
         </div>
     </ng-container>
+
     <ng-container *ngIf="article.template.toString()  ==='default'">
         <div class="card h-100">
-            <img class="card-img-top" src="images/cards-740ko.jpg" alt="Card image cap">
+            <div *ngIf="signedUrl">
+                <img class="card-img-top" [src]="signedUrl | async" alt="Card image cap">
+            </div>
             <div class="card-body">
                 <h5 class="card-title">{{article.title}}</h5>
                 <div class="card-text">
