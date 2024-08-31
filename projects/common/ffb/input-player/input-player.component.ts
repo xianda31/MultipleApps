@@ -1,10 +1,8 @@
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
-import { ControlValueAccessor, FormControl, FormsModule, NG_VALUE_ACCESSOR, ReactiveFormsModule } from '@angular/forms';
+import { Component, forwardRef, Input } from '@angular/core';
+import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR, ReactiveFormsModule } from '@angular/forms';
 import { FFBplayer } from '../interface/FFBplayer.interface';
 import { FfbService } from '../services/ffb.service';
 import { CommonModule } from '@angular/common';
-import { get } from 'aws-amplify/api';
-import { debounceTime, from, Observable } from 'rxjs';
 
 @Component({
   selector: 'app-input-player',

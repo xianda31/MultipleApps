@@ -1,13 +1,7 @@
 <div class="container">
-  <ng-container *ngIf="S3listItems">
+  <form [formGroup]="inputGroup">
+    <app-input-menu formControlName="menu_id" [menus]="menus"></app-input-menu>
+  </form>
 
-    <div *ngFor="let item of S3listItems">
-      <span> {{item.path}}</span>
-      <img [src]="item.url |async" alt="image" class="img-fluid">
-
-    </div>
-  </ng-container>
-  <div class="col-md-6">
-    <app-img-upload></app-img-upload>
-  </div>
+  returned : {{menu_id | json}}
 </div>

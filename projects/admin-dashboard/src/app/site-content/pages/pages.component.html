@@ -6,23 +6,23 @@
             <thead>
 
                 <tr>
-                    <th class="col-2">id menu</th>
-                    <th class="col-2">label menu</th>
-                    <th class="col-2">lien-titre</th>
-                    <th class="col-2">template</th>
-                    <th class="col-2"> rang </th>
-                    <th class="col-2 text-end">Actions</th>
+                    <!-- <th class="col-2">id menu</th> -->
+                    <th class="col-3">menu</th>
+                    <th class="col-3">sous-menu</th>
+                    <th class="col-3">template</th>
+                    <!-- <th class="col-3"> rang </th> -->
+                    <th class="col-3 text-end">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 <tr *ngFor="let page of pages">
-                    <td [class]="getMenuLabel(page.menuId)?'table-info':'table-warning'">...{{page.menuId | slice:-8}}
-                    </td>
-                    <td [class]="getMenuLabel(page.menuId)?'table-info':'table-warning'">{{getMenuLabel(page.menuId)??
+                    <!-- <td [class]="getMenuLabel(page.menuId)?'table-info':'table-warning'">...{{page.menuId | slice:-8}}
+                    </td> -->
+                    <td [class]="getMenuLabel(page.menuId)?'':'table-warning'">{{getMenuLabel(page.menuId)??
                         'orpheline' }}</td>
                     <td>{{page.link}}</td>
                     <td>{{page.template}}</td>
-                    <td>{{page.rank}}</td>
+                    <!-- <td>{{page.rank}}</td> -->
                     <!-- <td>{{page.title}}</td> -->
                     <!-- <td>{{page.articles?.length}}</td> -->
                     <!-- <td>{{page.rootpage}}</td>
@@ -38,22 +38,20 @@
                 <tr></tr>
                 <!-- bandeau creation/modification -->
                 <tr>
+                    <!-- 
+                    <td>
+                        <input type="text" class="form-control" formControlName="menuId">
+                    </td> -->
 
                     <td>
-                        <select type="text" class="form-control" formControlName="menuId">
-                            <option *ngFor="let menu of menus" [value]="menu.id">...{{menu.id | slice:-8}}</option>
-                        </select>
-                    </td>
-
-                    <td>
-                        <input class="form-control" disabled value="{{ getMenuLabel(menuId)?? ''}}">
+                        <app-input-menu formControlName="menu" [menus]="menus"></app-input-menu>
                     </td>
                     <td>
                         <input type="text" class="form-control" formControlName="link">
                     </td>
                     <td> <input type="text" class="form-control" formControlName="template"> </td>
 
-                    <td> <input type="text" class="form-control" formControlName="rank"> </td>
+                    <!-- <td> <input type="text" class="form-control" formControlName="rank"> </td> -->
 
                     <td class="col-2">
                         <div class=" btn-group role=group">

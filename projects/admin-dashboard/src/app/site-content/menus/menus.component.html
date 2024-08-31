@@ -1,60 +1,62 @@
 <div class="container ">
     <h5> Les menus</h5>
-    <form [formGroup]="menuGroup">
-        <table class="table">
+    <div class="col-md-12">
 
-            <thead>
 
-                <tr>
-                    <th class="col-2">id menu</th>
-                    <th class="col-2">label menu</th>
-                    <th class="col-6">summary</th>
-                    <!-- <th class="col-2">rang</th> -->
-                    <th class="col-1">nb page</th>
-                    <th class="col-1">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr *ngFor="let menu of menus">
-                    <td class="table-info">...{{menu.id | slice:-8}}</td>
-                    <td class="table-info">{{menu.label}}</td>
-                    <td>{{menu.summary}}</td>
-                    <!-- <td>{{menu.rank}}</td> -->
-                    <td>{{menu.pages.length}}</td>
-                    <!-- <td>{{menu.rootmenu}}</td>
+        <form [formGroup]="menuGroup">
+            <table class="table">
+                <thead>
+
+                    <tr>
+                        <!-- <th class="col-2">id menu</th> -->
+                        <th class="col-2">label menu</th>
+                        <th class="col-6">summary</th>
+                        <!-- <th class="col-2">rang</th> -->
+                        <th class="col-2 text-center">nb page</th>
+                        <th class="col-2">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let menu of menus">
+                        <!-- <td class="table-info">...{{menu.id | slice:-8}}</td> -->
+                        <td>{{menu.label}}</td>
+                        <td>{{menu.summary}}</td>
+                        <!-- <td>{{menu.rank}}</td> -->
+                        <td class="text-center">{{menu.pages.length}}</td>
+                        <!-- <td>{{menu.rootmenu}}</td>
                     <td>{{menu.submenus?.length ?? 0}}</td> -->
-                    <td class="col-2">
-                        <div class=" btn-group role=group">
+                        <td class="col-2">
+                            <div class=" btn-group role=group">
 
-                            <button class="btn btn-sm btn-primary" (click)="onEdit(menu)">Edit</button>
-                            <button class="btn btn-sm btn-warning ms-1" (click)="onDelete(menu.id!)">delete</button>
-                            <!-- <button class="btn btn-sm btn-secondary ms-1" (click)="showMenu(menu)">show</button> -->
-                        </div>
-                    </td>
-                </tr>
-                <tr></tr>
-                <!-- bandeau creation/modification -->
-                <tr>
-                    <td><input type="text" class="form-control" formControlName="id"></td>
-                    <td> <input type="text" class="form-control" formControlName="label"> </td>
-                    <td> <input type="text" class="form-control" formControlName="summary"> </td>
-                    <!-- <td> <input type="text" class="form-control" formControlName="rank"> </td> -->
-                    <!-- <td> <input type="text" class="form-control" formControlName="pageId"> </td> -->
-                    <td> </td>
-                    <td class="col-2">
-                        <div class=" btn-group role=group">
-                            <button class="btn btn-sm btn-primary" (click)="onSave()">Save</button>
-                            <!-- <button class="btn btn-sm btn-light" disabled></button> -->
-                            <button class="btn btn-sm btn-warning ms-1" (click)="onClear()">clear</button>
-                        </div>
-                    </td>
+                                <button class="btn btn-sm btn-primary" (click)="onEdit(menu)">Edit</button>
+                                <button class="btn btn-sm btn-warning ms-1" (click)="onDelete(menu.id!)">delete</button>
+                                <!-- <button class="btn btn-sm btn-secondary ms-1" (click)="showMenu(menu)">show</button> -->
+                            </div>
+                        </td>
+                    </tr>
+                    <tr></tr>
+                    <!-- bandeau creation/modification -->
+                    <tr>
+                        <!-- <td><input type="text" class="form-control" formControlName="id"></td> -->
+                        <td> <input type="text" class="form-control" formControlName="label"> </td>
+                        <td> <input type="text" class="form-control" formControlName="summary"> </td>
+                        <!-- <td> <input type="text" class="form-control" formControlName="rank"> </td> -->
+                        <!-- <td> <input type="text" class="form-control" formControlName="pageId"> </td> -->
+                        <td> </td>
+                        <td class="col-2">
+                            <div class=" btn-group role=group">
+                                <button class="btn btn-sm btn-primary" (click)="onSave()">Save</button>
+                                <!-- <button class="btn btn-sm btn-light" disabled></button> -->
+                                <button class="btn btn-sm btn-warning ms-1" (click)="onClear()">clear</button>
+                            </div>
+                        </td>
 
 
-                </tr>
-            </tbody>
-        </table>
-    </form>
-
+                    </tr>
+                </tbody>
+            </table>
+        </form>
+    </div>
     <!-- 
     <app-pages></app-pages> -->
 </div>

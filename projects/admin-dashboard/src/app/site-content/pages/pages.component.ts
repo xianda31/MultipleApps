@@ -4,11 +4,12 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } 
 
 import { Menu, Page } from '../../../../../common/menu.interface';
 import { SiteLayoutService } from '../../../../../common/services/site-layout.service';
+import { InputMenuComponent } from "../input-menu/input-menu.component";
 
 @Component({
   selector: 'app-pages',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, InputMenuComponent],
   templateUrl: './pages.component.html',
   styleUrl: './pages.component.scss'
 })
@@ -24,7 +25,8 @@ export class PagesComponent {
 
   pageGroup: FormGroup = new FormGroup({
     id: new FormControl(''),
-    menuId: new FormControl('', Validators.required),
+    menuId: new FormControl({ value: '', disabled: true }),
+    menu: new FormControl<Menu | null>(null),
     link: new FormControl('', Validators.required),
     template: new FormControl('', Validators.required),
     rank: new FormControl(0)
@@ -53,6 +55,8 @@ export class PagesComponent {
   }
   onEdit(page: Page) {
     this.pageGroup.patchValue(page);
+    let menu = this.menus.find((m) => m.id === page.menuId);
+    this.pageGroup.patchValue({ menu: menu });
     this.creation = false;
   }
 
@@ -64,12 +68,26 @@ export class PagesComponent {
   }
   onSave() {
     if (this.pageGroup.invalid) return;
-    let page = this.pageGroup.getRawValue() as Page;
+    // recuperation du menu retourné par input-menu , et ajout de son id dans le menuId 
+    //et suppression de la propriété menu pour coller au model de page
+    let menu = this.pageGroup.get('menu')?.value;
+    this.pageGroup.patchValue({ menuId: menu.id });
+    let page = this.pageGroup.getRawValue();
+    delete page.menu;
+
     this.creation ? this.createPage(page) : this.updatePage(page);
     this.onClear();
   }
 
   createPage(page: Page): void {
+    // mettre la nouvelle page en dernier rang
+    let menu = this.menus.find((m) => m.id === page.menuId);
+    if (!menu) {
+      console.error('menu not found for page', page);
+      return;
+    }
+    page.rank = menu.pages?.length + 1;
+
     this.siteLayoutService.createPage(page).then((newPage) => {
     }).catch((error) => {
       console.error('page creation error', page, error);
