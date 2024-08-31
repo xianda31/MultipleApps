@@ -28,7 +28,6 @@ export class RenderArticleComponent implements OnChanges {
   }
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['article']) {
-      console.log('changes', this.article);
       if (this.article.image) {
         this.signedUrl = this.FileService.getPresignedUrl(this.article.image);
         // console.log('this.signedUrl', this.signedUrl);

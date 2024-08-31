@@ -5,7 +5,8 @@
     <ul class="list-group list-group-horizontal " cdkDropList cdkDropListOrientation="horizontal"
         (cdkDropListDropped)="onDropMenu($event)">
 
-        <li class="list-group-item m-1 w-75 bg-light border-1 border-secondary" cdkDrag *ngFor="let menu of menus">
+        <li class="list-group-item m-1 w-75 bg-primary text-light border-1 border-secondary" cdkDrag
+            *ngFor="let menu of menus">
             {{menu.label}}
             <div *cdkDragPreview> <i class="fa fa-bars"></i> </div>
             <ul cdkDropList cdkDropListOrientation="vertical" (cdkDropListDropped)="onDropPage(menu,$event)">

@@ -3,15 +3,17 @@
 
     <div class="row">
         <div class="col-4">
+            <h5>Paramètres article</h5>
             <form [formGroup]="articleForm">
 
                 <div class="form-group">
+                    <label for="title">Titre</label>
+                    <input type="text" class="form-control" id="title" formControlName="title">
+
                     <label for="template">Modèle</label>
                     <select type="text" class="form-control" id="template" formControlName="template">
                         <option *ngFor="let value of templates_values" [value]="value">{{value}}</option>
                     </select>
-                    <label for="title">Titre</label>
-                    <input type="text" class="form-control" id="title" formControlName="title">
 
                     <label for="title">Image</label>
                     <select type="text" class="form-control" id="image" formControlName="image">
@@ -27,7 +29,7 @@
                 <button class="btn btn-sm btn-primary" (click)="onSubmit()">Enregistrer</button>
             </div>
 
-            {{articleForm.value | json}}
+            <!-- {{articleForm.value | json}} -->
         </div>
 
         <div class="col-8">
@@ -39,21 +41,19 @@
                 </label>
             </div> -->
             <div class="row">
-                <div class="col-6">
-                    <app-render-article [featuredMode]="false" *ngIf="article_in_progress"
-                        [article]="article_in_progress"></app-render-article>
+                <div class="col-8">
+                    <h5> Vue page</h5>
+                    <div class="card">
+                        <app-render-article [featuredMode]="false" *ngIf="article_in_progress"
+                            [article]="article_in_progress"></app-render-article>
+                    </div>
                 </div>
-                <div class="col-6">
+                <div class="col-xxl-4">
+                    <h5>Vue vignette "en vedette"</h5>
                     <app-render-article [featuredMode]="true" *ngIf="article_in_progress"
                         [article]="article_in_progress"></app-render-article>
                 </div>
             </div>
-            <!-- <div class="row col-12">
-                <h5>Vue page dédiée</h5>
-                <div class="row">
-                    <app-render-article [article]="article"></app-render-article>
-                </div>
-            </div> -->
         </div>
     </div>
 </div>

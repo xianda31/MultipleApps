@@ -27,7 +27,6 @@ export class MenusComponent {
     private siteLayoutService: SiteLayoutService) {
     this.siteLayoutService.menus$.subscribe((menus) => {
       this.menus = menus;
-      console.log('menusComponent subscribed to menus$', menus);
     });
   }
 

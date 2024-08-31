@@ -5,17 +5,19 @@ import { Article, Page, TemplateEnum } from '../../../../../common/menu.interfac
 import { Router } from '@angular/router';
 import { SiteLayoutService } from '../../../../../common/services/site-layout.service';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { ArticleComponent } from "../article/article.component";
 
 @Component({
   selector: 'app-articles',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, ArticleComponent],
   templateUrl: './articles.component.html',
   styleUrl: './articles.component.scss'
 })
 export class ArticlesComponent {
   articles: Article[] = [];
   pages: Page[] = [];
+  articleToEdit: Article | null = null;
   constructor(
     private articlesService: ArticlesService,
     private siteLayoutService: SiteLayoutService,
@@ -89,7 +91,8 @@ export class ArticlesComponent {
   }
 
   onEdit(article: Article) {
-    this.router.navigate(['/article', article.id]);
+    this.articleToEdit = article;
+    // this.router.navigate(['/article', article.id]);
 
   }
 }

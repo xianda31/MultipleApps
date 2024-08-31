@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ArticlesService } from '../../../../../common/services/articles.service';
 import { Form, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -16,8 +16,11 @@ import { S3Item } from '../../../../../common/file.interface'; // Import the S3i
   templateUrl: './article.component.html',
   styleUrl: './article.component.scss'
 })
-export class ArticleComponent {
+export class ArticleComponent implements OnChanges {
   id: string = '';
+  @Input() articleToEdit!: Article;
+
+
   S3Items: Observable<S3Item[]> = new Observable<S3Item[]>();
   featuredMode: boolean = false;
 
@@ -51,17 +54,17 @@ export class ArticleComponent {
 
   ) {
 
-    this.id = this.route.snapshot.paramMap.get('id') || '';
-    if (this.id) {
-      this.articlesService.readArticle(this.id).then((article) => {
-        console.log('article', article);
-        this.articleForm.patchValue(article);
-        this.article_in_progress = article;
-        // this.ctx = { title: this.title, content: this.content };
-      }).catch((error) => {
-        console.error('article error', error);
-      });
-    }
+    // this.id = this.route.snapshot.paramMap.get('id') || '';
+    // if (this.id) {
+    //   this.articlesService.readArticle(this.id).then((article) => {
+    //     console.log('article', article);
+    //     this.articleForm.patchValue(article);
+    //     this.article_in_progress = article;
+    //     // this.ctx = { title: this.title, content: this.content };
+    //   }).catch((error) => {
+    //     console.error('article error', error);
+    //   });
+    // }
 
     this.articleForm.valueChanges.subscribe((value) => {
       this.article_in_progress = value;
@@ -73,17 +76,20 @@ export class ArticleComponent {
 
 
 
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['articleToEdit'] && this.articleToEdit) {
+      this.articleForm.patchValue(this.articleToEdit);
+    }
+  }
+
+
+
 
   onSubmit() {
     if (this.articleForm.invalid) return;
     let article: Article = this.articleForm.getRawValue();
-    console.log('article', article);
     this.articlesService.updateArticle(article).then((updatedArticle) => {
-      console.log(' article updated', updatedArticle);
-      // this.ctx = { title: this.title, content: this.content };
-      this.router.navigate(['/articles']);
     });
-    // this.articleForm.reset();
   }
 
 }

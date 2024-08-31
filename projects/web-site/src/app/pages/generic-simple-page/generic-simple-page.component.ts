@@ -21,19 +21,20 @@ export class GenericSimplePageComponent {
     private articlesService: ArticlesService,
     private siteLayoutService: SiteLayoutService
   ) {
+
     this.router.data.subscribe(async data => {
       let { pageId } = data;
       // this.siteLayoutService.pages$.subscribe((pages) => {
       this.siteLayoutService.getFullPathAsync(pageId).then((path) => {
         this.path = path;
       });
-      // });
-      this.articlesService.articles$.subscribe((articles: Article[]) => {
-        this.articles = articles
-          .filter((article) => article.pageId === pageId)
-          .sort((a, b) => a.rank - b.rank);
-        // .sort((a, b) => a.featured ? -1 : 1);
+
+      this.siteLayoutService.readPage(pageId).then((page) => {
+        this.page = page;
+        this.page.articles = this.page.articles?.sort((a, b) => a.rank - b.rank) || [];
       });
+
     });
+
   }
 }

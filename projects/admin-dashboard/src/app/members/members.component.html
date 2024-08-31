@@ -47,6 +47,7 @@
                                 <th><i class="fa-solid fa-user-astronaut"></i></th>
                                 <th>Nom</th>
                                 <th>Prénom</th>
+                                <th>téléphone</th>
                                 <!-- <th>Saison</th> -->
                                 <th class="text-center">Actions</th>
                             </tr>
@@ -59,6 +60,7 @@
                                 <td *ngIf="!member.is_sympathisant"> </td>
                                 <td>{{member.lastname | uppercase}}</td>
                                 <td>{{member.firstname}}</td>
+                                <td>{{member.phone_one}}</td>
                                 <!-- <td>{{member.season}}</td> -->
                                 <td class="action text-center">
                                     <i class="fa-regular fa-trash-can" (click)="deleteMember(member)"></i>

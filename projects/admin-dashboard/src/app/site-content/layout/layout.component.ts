@@ -50,14 +50,12 @@ export class LayoutComponent {
   }
 
   onDropMenu(event: CdkDragDrop<string[]>) {
-    console.log('onDropMenu ', event);
-    console.log('onDropMenu %s => %s', event.previousIndex, event.currentIndex);
     moveItemInArray(this.menus, event.previousIndex, event.currentIndex);
     let rank = 0;
     this.menus.forEach(async (menu) => {
       menu.rank = rank;
       rank++;
-      // await this.siteLayoutService.updateMenu(menu);
+      this.siteLayoutService.updateMenu(menu);
     });
   }
 

@@ -1,5 +1,6 @@
 <!-- mode vignette (featuredMode = true) -->
-<ng-container *ngIf="featuredMode">
+<ng-container *ngIf="featuredMode ; else pageMode">
+
     <ng-container *ngIf=" article.template.toString()  ==='event'">
         <div class="card h-100">
             <div *ngIf="signedUrl" class="card-image-top">
@@ -33,19 +34,24 @@
 </ng-container>
 
 <!-- mode "normal" via generic-simple-page  -->
-<ng-container *ngIf="!featuredMode">
-    <!-- <ng-container *ngIf=" article.template.toString()  ==='event'
-    || article.template.toString()  ==='default'"> -->
-    <div class=" pt-2">
-
-        <h5 class="article-title">{{article.title | uppercase}}</h5>
-        <div class=" pt-1 ps-2">
-            <span class="thumbnail">
-                <img [src]="signedUrl | async" alt="Card image cap">
-                <span [innerHTML]="article.content | replace:'|':'' "></span>
-            </span>
-
+<ng-template #pageMode>
+    <div class="card no-border">
+        <div class="row g-0">
+            <div class="col-3 text-center pt-3 ">
+                <img *ngIf=" article.template.toString()  ==='event'" class="img-fluid  rounded-2 w-75 h-auto mt-3"
+                    [src]="signedUrl | async" alt="Card image cap">
+            </div>
+            <div class="col-9 align-content-center">
+                <div class=" card-body ">
+                    <h5 class="card-title article-title">{{article.title | uppercase}}</h5>
+                    <span [innerHTML]="article.content | replace:'|':'' "></span>
+                    <!-- <div class=" pt-1 ps-2">
+                        <span class="thumbnail">
+                            <img [src]="signedUrl | async" alt="Card image cap">
+                        </span>
+                    </div> -->
+                </div>
+            </div>
         </div>
     </div>
-    <!-- </ng-container> -->
-</ng-container>
+</ng-template>

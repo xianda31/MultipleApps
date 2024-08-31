@@ -8,8 +8,8 @@
                 <tr>
                     <th class="col-2">id menu</th>
                     <th class="col-2">label menu</th>
-                    <th class="col-4">summary</th>
-                    <th class="col-2">rang</th>
+                    <th class="col-6">summary</th>
+                    <!-- <th class="col-2">rang</th> -->
                     <th class="col-1">nb page</th>
                     <th class="col-1">Actions</th>
                 </tr>
@@ -19,7 +19,7 @@
                     <td class="table-info">...{{menu.id | slice:-8}}</td>
                     <td class="table-info">{{menu.label}}</td>
                     <td>{{menu.summary}}</td>
-                    <td>{{menu.rank}}</td>
+                    <!-- <td>{{menu.rank}}</td> -->
                     <td>{{menu.pages.length}}</td>
                     <!-- <td>{{menu.rootmenu}}</td>
                     <td>{{menu.submenus?.length ?? 0}}</td> -->
@@ -38,7 +38,7 @@
                     <td><input type="text" class="form-control" formControlName="id"></td>
                     <td> <input type="text" class="form-control" formControlName="label"> </td>
                     <td> <input type="text" class="form-control" formControlName="summary"> </td>
-                    <td> <input type="text" class="form-control" formControlName="rank"> </td>
+                    <!-- <td> <input type="text" class="form-control" formControlName="rank"> </td> -->
                     <!-- <td> <input type="text" class="form-control" formControlName="pageId"> </td> -->
                     <td> </td>
                     <td class="col-2">
