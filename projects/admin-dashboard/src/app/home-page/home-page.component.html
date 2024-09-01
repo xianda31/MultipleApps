@@ -1,20 +1,21 @@
 <div class="bkgrd"></div>
 <div class="centered">
-    <div class="container ">
-        <div class="row justify-content-center">
-            <!-- <div class=" "> -->
+    <!-- <div class="container "> -->
+    <div class="row justify-content-center text-center ">
+        <!-- <div class=" "> -->
 
-            <div *ngFor="let topic of topics" class="card col-md-5  m-1">
-                <div class="card-body">
-                    <h5 class="card-title">{{topic.title}}</h5>
-                    <h6 class="card-subtitle mb-2 text-muted">{{topic.subtitle}}</h6>
-                    <p class="card-text">{{topic.description}}</p>
-                    <a [routerLink]=" topic.link1.route" class="card-link">{{topic.link1.label}}</a>
-                    <a *ngIf="topic.link2" [routerLink]="topic.link2.route" class="card-link">{{topic.link2.label}}</a>
-                </div>
+        <div *ngFor="let topic of topics" class="card col-md-2 m-2">
+            <div class="card-body">
+                <h5 class="card-title">{{topic.title}}</h5>
+                <h6 class="card-subtitle mb-2 text-muted">{{topic.subtitle}}</h6>
+                <p class="card-text">{{topic.description}}</p>
+                <a [routerLink]=" topic.link1.route" class="card-link">{{topic.link1.label}}</a>
+                <a *ngIf="topic.link2" [routerLink]="topic.link2.route" class="card-link">{{topic.link2.label}}</a>
             </div>
-            <!-- </div> -->
-
         </div>
+        <!-- </div> -->
+
+        <!-- </div> -->
     </div>
-    <!-- </div> -->
+</div>
+<!-- </div> -->
