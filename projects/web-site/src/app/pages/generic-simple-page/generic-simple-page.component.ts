@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { SiteLayoutService } from '../../../../../common/services/site-layout.service';
-import { Article, Page } from '../../../../../common/menu.interface';
+import { Article, PageTemplateEnum, Page } from '../../../../../common/menu.interface';
 import { CommonModule } from '@angular/common';
 import { RenderArticleComponent } from '../../../../../common/render-article/render-article.component';
 import { ArticlesService } from '../../../../../common/services/articles.service';
@@ -16,6 +16,8 @@ export class GenericSimplePageComponent {
   path!: string;
   page!: Page;
   articles: Article[] = [];
+
+  pageTemplateEnum = PageTemplateEnum;
   constructor(
     private router: ActivatedRoute,
     private articlesService: ArticlesService,

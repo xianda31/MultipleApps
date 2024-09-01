@@ -13,7 +13,7 @@ export interface Page {
     id: string;
     menuId: string;
     link: string;
-    template: string;
+    template: PageTemplateEnum;
     rank: number;
     // title: string;
     articles?: Article[];
@@ -22,7 +22,7 @@ export interface Page {
 export interface Article {
     id: string;
     title: string;
-    template: TemplateEnum;
+    template: ArticleTemplateEnum;
     content: string;
     featured: boolean;
     rank: number;
@@ -30,22 +30,27 @@ export interface Article {
     image?: string;
 }
 
-export enum TemplateEnum {
+export enum ArticleTemplateEnum {
     defaultTemplate = 'default',
     eventTemplate = 'event',
     // imageTemplate = 'image',
     // videoTemplate = 'video',
     // audioTemplate = 'audio',
-    galleryTemplate = 'gallery',
-    tabsTemplate = 'tabs',
-    listTemplate = 'list',
-    tableTemplate = 'table',
-    formTemplate = 'form',
-    chartTemplate = 'chart',
-    calendarTemplate = 'calendar',
-    faqTemplate = 'faq',
-    blogTemplate = 'blog',
-    newsTemplate = 'news',
-    productTemplate = 'product',
-    socialTemplate = 'social',
+    // galleryTemplate = 'gallery',
+    // tabsTemplate = 'tabs',
+    // listTemplate = 'list',
+    // tableTemplate = 'table',
+    // formTemplate = 'form',
+    // chartTemplate = 'chart',
+    // calendarTemplate = 'calendar',
+    // faqTemplate = 'faq',
+    // blogTemplate = 'blog',
+    // newsTemplate = 'news',
+    // productTemplate = 'product',
+    // socialTemplate = 'social',
+}
+
+export enum PageTemplateEnum {
+    default = 'default',
+    sidebar = 'sidebar',
 }

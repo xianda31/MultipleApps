@@ -10,7 +10,7 @@
             {{menu.label}}
             <div *cdkDragPreview> <i class="fa fa-bars"></i> </div>
             <ul cdkDropList cdkDropListOrientation="vertical" (cdkDropListDropped)="onDropPage(menu,$event)">
-                <li cdkDrag *ngFor="let page of menu.pages"> {{page.link}}
+                <li cdkDrag *ngFor="let page of menu.pages" (dblclick)="onClick(page)"> {{page.link}}
                     <div *cdkDragPreview>
                         <i class="bi bi-1-square"></i>
                     </div>

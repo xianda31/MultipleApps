@@ -49,7 +49,12 @@
                     <td>
                         <input type="text" class="form-control" formControlName="link">
                     </td>
-                    <td> <input type="text" class="form-control" formControlName="template"> </td>
+                    <td>
+                        <!-- <input type="text" class="form-control" formControlName="template"> -->
+                        <select type="text" class="form-control" id="template" formControlName="template">
+                            <option *ngFor="let value of templates_values" [value]="value">{{value}}</option>
+                        </select>
+                    </td>
 
                     <!-- <td> <input type="text" class="form-control" formControlName="rank"> </td> -->
 

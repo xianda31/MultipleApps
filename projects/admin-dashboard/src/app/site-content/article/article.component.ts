@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ArticlesService } from '../../../../../common/services/articles.service';
 import { Form, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Article, TemplateEnum } from '../../../../../common/menu.interface';
+import { Article, ArticleTemplateEnum } from '../../../../../common/menu.interface';
 import { RenderArticleComponent } from '../../../../../common/render-article/render-article.component';
 import { FileService } from '../../../../../common/services/files.service';
 import { Observable } from 'rxjs';
@@ -24,7 +24,7 @@ export class ArticleComponent implements OnChanges {
   S3Items: Observable<S3Item[]> = new Observable<S3Item[]>();
   featuredMode: boolean = false;
 
-  templates = TemplateEnum;
+  templates = ArticleTemplateEnum;
   templates_values: string[] = Object.values(this.templates);
 
   article_in_progress!: Article;

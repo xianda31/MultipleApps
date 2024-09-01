@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { ArticlesService } from '../../../../../common/services/articles.service';
 import { CommonModule } from '@angular/common';
-import { Article, Page, TemplateEnum } from '../../../../../common/menu.interface';
+import { Article, Page, ArticleTemplateEnum } from '../../../../../common/menu.interface';
 import { Router } from '@angular/router';
 import { SiteLayoutService } from '../../../../../common/services/site-layout.service';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -75,7 +75,7 @@ export class ArticlesComponent {
       id: '',
       title: 'New Article',
       content: 'Content goes here',
-      template: TemplateEnum.defaultTemplate,
+      template: ArticleTemplateEnum.defaultTemplate,
       rank: 0,
       featured: false,
     }

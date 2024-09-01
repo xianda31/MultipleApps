@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { MenusComponent } from '../menus/menus.component';
 import { PagesComponent } from '../pages/pages.component';
 import { SiteLayoutService } from '../../../../../common/services/site-layout.service';
-import { Menu } from '../../../../../common/menu.interface';
+import { Menu, Page } from '../../../../../common/menu.interface';
 import { CommonModule } from '@angular/common';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop'; // Import DragDropModule
 import { take } from 'rxjs';
@@ -59,4 +59,8 @@ export class LayoutComponent {
     });
   }
 
-}
+  onClick(page: Page) {
+    console.log(page);
+  }
+
+} 
