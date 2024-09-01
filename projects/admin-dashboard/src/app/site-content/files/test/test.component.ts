@@ -7,6 +7,7 @@ import { SiteLayoutService } from '../../../../../../common/services/site-layout
 import { Menu, Page } from '../../../../../../common/menu.interface';
 import { InputMenuComponent } from "../../input-menu/input-menu.component";
 import { Form, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { ToastService } from '../../../../../../common/toaster/toast.service';
 
 
 @Component({
@@ -30,7 +31,8 @@ export class TestComponent {
   }
 
   constructor(
-    private siteLayoutService: SiteLayoutService
+    private siteLayoutService: SiteLayoutService,
+    private toastService: ToastService,
   ) {
     this.siteLayoutService.layout$.subscribe(([menus, pages]) => {
       this.menus = menus;
@@ -40,6 +42,7 @@ export class TestComponent {
 
   }
 
-
+  toast() {
+    this.toastService.showSuccessToast('Success', 'This is a success toast.');
+  }
 }
-
