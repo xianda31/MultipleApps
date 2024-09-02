@@ -1,0 +1,64 @@
+<form [formGroup]="pageGroup">
+    <!-- <div class="row "> -->
+    <div class="row">
+        <div class="col-md-5">
+            <div class="form-group">
+                <label for="label">Libellé menu</label>
+                <input type="text" class="form-control bg-primary" id="link" formControlName="link">
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="row">
+
+                <div class="form-group">
+                    <label for="template">Modèle</label>
+                    <select type="text" class="form-control" id="template" formControlName="template">
+                        <option *ngFor="let value of templates_values" [value]="value">{{value}}</option>
+                    </select>
+                </div>
+
+                <div *ngIf="touched || dirty" class="col-md-2 align-content-end">
+                    <button class="btn btn-sm btn-primary" (click)="onSubmit()">Enregistrer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-5">
+            <!-- <div class="card-body"> -->
+            <div class="list-group list-group-vertical align-items-center" cdkDropList cdkDropListOrientation="vertical"
+                (cdkDropListDropped)="onDropArticle($event)">
+                <div class=" list-group-item m-1 w-75 bg-primary-subtle text-dark border-1 border-secondary  " cdkDrag
+                    *ngFor="let article of filtered_articles$(page.id) | async" (dblclick)="onDblClick(article)">
+                    <span>
+                        {{article.title}}
+                        <i class="bi bi-trash3 btn-warning float-end " (click)="onDeleteArticle(article)"></i>
+                    </span>
+                    <!-- {{article.title}} -->
+                    <div *cdkDragPreview>
+                        <i class="bi bi-1-square"></i>
+                    </div>
+                </div>
+            </div>
+            <!-- </div> -->
+            <div class="align-items-center">
+                <button class="btn btn-sm btn-outline-primary float-end" (click)="onCreateArticle()">Ajout d'un
+                    article</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+
+        <app-article *ngIf="selectedArticle" (articleUpdated)="submitArticle($event)"
+            [articleToEdit]="selectedArticle"></app-article>
+    </div>
+
+    <!-- </div> -->
+
+
+
+    <!-- <label> Articles</label> -->
+    <div class="col-md-6">
+    </div>
+</form>

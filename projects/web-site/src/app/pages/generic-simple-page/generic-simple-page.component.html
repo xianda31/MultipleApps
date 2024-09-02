@@ -1,5 +1,4 @@
 <div class="text-muted mb-4" *ngIf="path">{{path}}</div>
-{{page.template}}
 <div *ngIf="page" class="container">
     <ng-container *ngIf="page.template === pageTemplateEnum.default;else with_list">
         <div *ngFor="let article of page.articles">
@@ -9,12 +8,12 @@
     </ng-container>
     <ng-template #with_list>
         <div class="row">
-            <div class="col-4">
+            <div class="col-3">
                 <div *ngFor="let article of page.articles">
                     <app-render-article [featuredMode]="true" *ngIf="article" [article]="article"></app-render-article>
                 </div>
             </div>
-            <div class="col-8">
+            <div class="col-9">
                 <div *ngFor="let article of page.articles">
                     <app-render-article [featuredMode]="false" *ngIf="article" [article]="article"></app-render-article>
                 </div>

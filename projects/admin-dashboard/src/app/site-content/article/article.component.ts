@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ArticlesService } from '../../../../../common/services/articles.service';
 import { Form, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -20,6 +20,7 @@ import { ToastService } from '../../../../../common/toaster/toast.service';
 export class ArticleComponent implements OnChanges {
   id: string = '';
   @Input() articleToEdit!: Article;
+  @Output() articleUpdated: EventEmitter<Article> = new EventEmitter<Article>();
 
 
   S3Items: Observable<S3Item[]> = new Observable<S3Item[]>();
@@ -76,12 +77,12 @@ export class ArticleComponent implements OnChanges {
 
 
   onSubmit() {
-    if (this.articleForm.invalid) return;
+    if (this.articleForm.invalid || !this.articleForm.touched) return;
     let article: Article = this.articleForm.getRawValue();
     this.articlesService.updateArticle(article).then((updatedArticle) => {
       this.ToastService.showSuccessToast('gestion des articles', 'article mis à jour');
-
     });
+    this.articleUpdated.emit(article);
   }
 
 }

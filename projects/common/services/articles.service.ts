@@ -11,7 +11,7 @@ export class ArticlesService {
   private articles: Article[] = [];
   private _articles$ = new BehaviorSubject<Article[]>(this.articles);
 
-  articles$ = this._articles$.asObservable();
+  articles$ = this._articles$.asObservable(); // Observable<Article[]>
 
   constructor() {
     const client = generateClient<Schema>();
@@ -54,7 +54,7 @@ export class ArticlesService {
   }
 
   createArticle(article: Article) {
-    return new Promise((resolve, reject) => {
+    return new Promise<Article>((resolve, reject) => {
       const client = generateClient<Schema>();
       let { id, ...articleCreateInput } = article;
       client.models.Article.create(articleCreateInput)

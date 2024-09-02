@@ -1,6 +1,10 @@
 <div class="container">
 
-    <h5> Disposition des menus (drag & drop)</h5>
+    <h5> Disposition des menus</h5>
+    <small class="" text-muted>
+        Ordre des menus et page/sous-menu par drag&drop ; Double-clic pour éditer une page/sous-menu
+    </small>
+
 
     <ul class="list-group list-group-horizontal " cdkDropList cdkDropListOrientation="horizontal"
         (cdkDropListDropped)="onDropMenu($event)">
@@ -18,18 +22,7 @@
             </ul>
         </li>
     </ul>
-    <div class="mt-3">
 
-        <h5> Paramètres détaillés</h5>
-    </div>
-    <div class="row">
-        <div class="col-md-6">
+    <app-page *ngIf="selectedPage" [page]="selectedPage"></app-page>
 
-            <app-menus></app-menus>
-        </div>
-        <div class="col-md-6">
-
-            <app-pages></app-pages>
-        </div>
-    </div>
 </div>

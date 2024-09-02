@@ -1,11 +1,10 @@
 <div class="container">
-    <h5>Editeur d'article</h5>
+    <!-- <h5>Editeur d'article</h5> -->
 
     <div class="row">
         <div class="col-4">
             <h5>Paramètres article</h5>
             <form [formGroup]="articleForm">
-
                 <div class="form-group">
                     <label for="title">Titre</label>
                     <input type="text" class="form-control" id="title" formControlName="title">
@@ -41,14 +40,14 @@
                 </label>
             </div> -->
             <div class="row">
-                <div class="col-8">
+                <div class="col-md-8">
                     <h5> Vue page</h5>
-                    <div class="card">
+                    <div class="card h-auto">
                         <app-render-article [featuredMode]="false" *ngIf="article_in_progress"
                             [article]="article_in_progress"></app-render-article>
                     </div>
                 </div>
-                <div class="col-xxl-4">
+                <div class="col-md-4">
                     <h5>Vue vignette "en vedette"</h5>
                     <app-render-article [featuredMode]="true" *ngIf="article_in_progress"
                         [article]="article_in_progress"></app-render-article>

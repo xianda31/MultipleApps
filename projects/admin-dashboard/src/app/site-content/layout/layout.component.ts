@@ -6,16 +6,18 @@ import { Menu, Page } from '../../../../../common/menu.interface';
 import { CommonModule } from '@angular/common';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop'; // Import DragDropModule
 import { take } from 'rxjs';
+import { PageComponent } from '../page/page.component';
 
 @Component({
   selector: 'app-layout',
   standalone: true,
-  imports: [CommonModule, DragDropModule, MenusComponent, PagesComponent], // Add DragDropModule to the imports array
+  imports: [CommonModule, DragDropModule, MenusComponent, PagesComponent, PageComponent], // Add DragDropModule to the imports array
   templateUrl: './layout.component.html',
   styleUrl: './layout.component.scss'
 })
 export class LayoutComponent {
   menus: Menu[] = [];
+  selectedPage!: Page;
 
   constructor(
     private siteLayoutService: SiteLayoutService) {
@@ -60,7 +62,7 @@ export class LayoutComponent {
   }
 
   onClick(page: Page) {
-    console.log(page);
+    this.selectedPage = page;
   }
 
 } 
