@@ -8,6 +8,7 @@ import { RenderArticleComponent } from '../../../../../common/render-article/ren
 import { FileService } from '../../../../../common/services/files.service';
 import { Observable } from 'rxjs';
 import { S3Item } from '../../../../../common/file.interface'; // Import the S3item type from the appropriate module
+import { ToastService } from '../../../../../common/toaster/toast.service';
 
 @Component({
   selector: 'app-article',
@@ -50,21 +51,10 @@ export class ArticleComponent implements OnChanges {
     private route: ActivatedRoute,
     private articlesService: ArticlesService,
     private fileService: FileService,
-    private router: Router
+    private ToastService: ToastService,
 
   ) {
 
-    // this.id = this.route.snapshot.paramMap.get('id') || '';
-    // if (this.id) {
-    //   this.articlesService.readArticle(this.id).then((article) => {
-    //     console.log('article', article);
-    //     this.articleForm.patchValue(article);
-    //     this.article_in_progress = article;
-    //     // this.ctx = { title: this.title, content: this.content };
-    //   }).catch((error) => {
-    //     console.error('article error', error);
-    //   });
-    // }
 
     this.articleForm.valueChanges.subscribe((value) => {
       this.article_in_progress = value;
@@ -89,6 +79,8 @@ export class ArticleComponent implements OnChanges {
     if (this.articleForm.invalid) return;
     let article: Article = this.articleForm.getRawValue();
     this.articlesService.updateArticle(article).then((updatedArticle) => {
+      this.ToastService.showSuccessToast('gestion des articles', 'article mis à jour');
+
     });
   }
 

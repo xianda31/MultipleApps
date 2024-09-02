@@ -21,7 +21,6 @@ export class ToasterComponent implements OnInit {
   ) { }
 
   ngOnInit() {
-    console.log('toaster component initialized');
     this.subscribeToToasts();
   }
 
@@ -32,8 +31,8 @@ export class ToasterComponent implements OnInit {
         title: toasts.title,
         message: toasts.message,
       };
+
       this.currentToasts.push(currentToast);
-      console.log('new toast posted', currentToast);
       this.cdr.detectChanges();
     });
   }
