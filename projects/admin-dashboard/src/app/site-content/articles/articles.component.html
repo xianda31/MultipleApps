@@ -9,8 +9,8 @@
                     <th class="col-1">template</th>
                     <th class="col-1 text-center">en vedette</th>
                     <th class="col-4">page</th>
-                    <th class="col-1 text-center">rang</th>
-                    <!-- <th class="col-2">Actions</th> -->
+                    <!-- <th class="col-1 text-center">rang</th> -->
+                    <th class="col-1">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -28,16 +28,15 @@
                             <option *ngFor="let page of pages" [value]="page.id">{{page.link}}</option>
                         </select>
                     </td>
-                    <td>
+                    <!-- <td>
                         <input class="form-control  text-center" [(ngModel)]="article.rank"
                             (ngModelChange)="onRankChange(article)">
-                        <!-- {{article.rank}} -->
-                    </td>
-                    <!-- <td class="col-2">
+                    </td> -->
+                    <td>
                         <div class=" btn-group role=group">
                             <button class="btn btn-sm btn-warning ms-1" (click)="onDelete(article.id!)">delete</button>
                         </div>
-                    </td> -->
+                    </td>
                 </tr>
             </tbody>
         </table>

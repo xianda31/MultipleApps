@@ -1,7 +1,7 @@
 <!-- mode vignette (featuredMode = true) -->
 <ng-container *ngIf="featuredMode ; else pageMode">
 
-    <ng-container *ngIf=" article.template.toString()  ==='event'">
+    <ng-container *ngIf=" article.template  === articleTemplateEnum.event">
         <div class="card h-100">
             <div *ngIf="signedUrl" class="card-image-top">
                 <img class="card-img-top" [src]="signedUrl | async" alt="Card image cap">
@@ -18,7 +18,7 @@
         </div>
     </ng-container>
 
-    <ng-container *ngIf="article.template.toString()  ==='default'">
+    <ng-container *ngIf="article.template  === articleTemplateEnum.default">
         <div class="card h-100">
             <div *ngIf="signedUrl">
                 <img class="card-img-top" [src]="signedUrl | async" alt="Card image cap">
@@ -35,23 +35,44 @@
 
 <!-- mode "normal" via generic-simple-page  -->
 <ng-template #pageMode>
-    <div class="card no-border">
-        <div class="row g-0">
-            <div class="col-3 text-center pt-3 ">
-                <img *ngIf=" article.template.toString()  ==='event'" class="img-fluid  rounded-2 w-75 h-auto mt-3"
-                    [src]="signedUrl | async" alt="Card image cap">
+
+    <ng-container *ngIf=" article.template  === articleTemplateEnum.IDcard ; else otherCases">
+        <div class="card h-100">
+            <div *ngIf="signedUrl" class="card-image-top">
+                <div class="row g-0">
+                    <div class="col-md-4">
+                        <img class="img-fluid rounded-start h-100" [src]="signedUrl | async" alt="Card image cap">
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card-body">
+                            <div class="card-text">
+                                <span [innerHTML]="article.content | trunk "></span>
+                            </div>
+                            <p class="card-title mt-3">{{article.title}}</p>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="col-9 align-content-center">
-                <div class=" card-body ">
-                    <h5 class="card-title article-title">{{article.title | uppercase}}</h5>
-                    <span [innerHTML]="article.content | replace:'|':'' "></span>
-                    <!-- <div class=" pt-1 ps-2">
+        </div>
+    </ng-container>
+    <ng-template #otherCases>
+        <div class="card no-border">
+            <div class="row g-0">
+                <div class="col-3 text-center pt-1 ">
+                    <img *ngIf=" article.template  === articleTemplateEnum.event"
+                        class="img-fluid  rounded-2 w-75 h-auto " [src]="signedUrl | async" alt="Card image cap">
+                </div>
+                <div class="col-9 align-content-center">
+                    <div class=" card-body p-0 ">
+                        <h5 class="card-title article-title">{{article.title | uppercase}}</h5>
+                        <span [innerHTML]="article.content | replace:'|':'' "></span>
+                        <!-- <div class=" pt-1 ps-2">
                         <span class="thumbnail">
                             <img [src]="signedUrl | async" alt="Card image cap">
                         </span>
                     </div> -->
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</ng-template>
+    </ng-template>

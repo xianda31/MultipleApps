@@ -21,6 +21,17 @@
                 </li>
             </ul>
         </li>
+        <li class="list-group-item m-1 w-75 bg-secondary text-dark border-1 border-secondary">
+            <!-- Ajout d'un menu -->
+            <div class="input-group input-group-sm mb-3">
+                <input type="text" class="form-control" placeholder="autre menu" aria-label="autre menue"
+                    aria-describedby="button-addon2">
+                <button class="btn btn-primary" type="button" id="button-addon2">
+                    <i class="bi bi-plus-circle"></i>
+                </button>
+            </div>
+            <!-- <input type="text" class="form-control" [(ngModel)]="newMenu" (keyup.enter)="onAddMenu()"> -->
+        </li>
     </ul>
 
     <app-page *ngIf="selectedPage" [page]="selectedPage"></app-page>

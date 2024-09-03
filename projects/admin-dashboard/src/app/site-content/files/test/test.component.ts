@@ -8,6 +8,7 @@ import { Menu, Page } from '../../../../../../common/menu.interface';
 import { InputMenuComponent } from "../../input-menu/input-menu.component";
 import { Form, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ToastService } from '../../../../../../common/toaster/toast.service';
+import { environment } from '../../../../environments/environment';
 
 
 @Component({
@@ -40,8 +41,9 @@ export class TestComponent {
 
     });
 
-  }
 
+    console.log(environment.season);
+  }
   toast() {
     this.toastService.showSuccessToast('Success', 'This is a success toast.');
   }

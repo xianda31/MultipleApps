@@ -122,7 +122,7 @@ export class PageComponent implements OnInit, OnChanges {
     const newArticle: Article = {
       id: '',
       title: 'New Article',
-      template: ArticleTemplateEnum.defaultTemplate,
+      template: ArticleTemplateEnum.default,
       content: 'Content goes here',
       featured: false,
       rank: 0,
@@ -159,11 +159,12 @@ export class PageComponent implements OnInit, OnChanges {
     moveItemInArray(this.filtered_articles, event.previousIndex, event.currentIndex);
     this.filtered_articles.forEach((article, index) => {
       article.rank = index + 1;
+      // console.log('article %s : %s', article.title, index);
       promises.push(this.articlesService.updateArticle(article));
     });
 
     const promise = combineLatest(promises).subscribe((articles) => {
-      console.log('articles updated', articles);
+      // console.log('articles updated', articles);
       this.toastService.showSuccessToast('edition layout', 'Order des articles mis à jour');
       promise.unsubscribe();
     });

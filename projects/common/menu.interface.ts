@@ -31,8 +31,9 @@ export interface Article {
 }
 
 export enum ArticleTemplateEnum {
-    defaultTemplate = 'default',
-    eventTemplate = 'event',
+    default = 'default',
+    event = 'event',
+    IDcard = 'IDcard-side'
     // imageTemplate = 'image',
     // videoTemplate = 'video',
     // audioTemplate = 'audio',
@@ -53,4 +54,5 @@ export enum ArticleTemplateEnum {
 export enum PageTemplateEnum {
     default = 'default',
     sidebar = 'sidebar',
+    par4 = 'par4',
 }

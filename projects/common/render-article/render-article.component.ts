@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
-import { Article } from '../../common/menu.interface';
+import { Article, ArticleTemplateEnum } from '../../common/menu.interface';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { TrunkPipe } from '../pipes/trunk.pipe';
 import { ReplacePipe } from '../pipes/replace.pipe';
@@ -16,7 +16,7 @@ export class RenderArticleComponent implements OnChanges {
   @Input() article!: Article;
   @Input() featuredMode: boolean = false;
   @Output() follow = new EventEmitter<Article>();
-
+  articleTemplateEnum = ArticleTemplateEnum;
   signedUrl!: Promise<URL>
 
   constructor(

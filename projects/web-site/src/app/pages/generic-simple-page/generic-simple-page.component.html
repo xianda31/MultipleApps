@@ -1,12 +1,20 @@
 <div class="text-muted mb-4" *ngIf="path">{{path}}</div>
 <div *ngIf="page" class="container">
-    <ng-container *ngIf="page.template === pageTemplateEnum.default;else with_list">
+    <ng-container *ngIf="page.template === pageTemplateEnum.par4">
+        <div class="row">
+
+            <div class="col-md-3" *ngFor="let article of page.articles">
+                <app-render-article [featuredMode]="false" *ngIf="article" [article]="article"></app-render-article>
+            </div>
+        </div>
+    </ng-container>
+    <ng-container *ngIf="page.template === pageTemplateEnum.default">
         <div *ngFor="let article of page.articles">
             <app-render-article [featuredMode]="false" *ngIf="article" [article]="article"></app-render-article>
         </div>
-
     </ng-container>
-    <ng-template #with_list>
+
+    <ng-container *ngIf="page.template === pageTemplateEnum.sidebar">
         <div class="row">
             <div class="col-3">
                 <div *ngFor="let article of page.articles">
@@ -19,5 +27,5 @@
                 </div>
             </div>
         </div>
-    </ng-template>
+    </ng-container>
 </div>

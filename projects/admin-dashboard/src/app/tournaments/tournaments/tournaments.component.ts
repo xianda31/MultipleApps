@@ -18,7 +18,7 @@ export class TournamentsComponent {
 
   tournamentSelected = false;
   selectedTournament!: club_tournament;
-  Math: any;
+  // Math: any;
   constructor(
     private ffbService: FfbService
   ) { }

@@ -21,7 +21,6 @@ export class ArticlesComponent {
   constructor(
     private articlesService: ArticlesService,
     private siteLayoutService: SiteLayoutService,
-    private router: Router
   ) {
 
     this.articlesService.articles$.subscribe((articles) => {
@@ -58,16 +57,16 @@ export class ArticlesComponent {
         // console.error('article update error', error);
       });
   }
-  onRankChange(article: Article) {
-    this.articlesService.updateArticle(article)
-      .then((article) => {
-        // console.log('article rank updated', article.rank);
-        // console.log('article updated', this.articles);
-      })
-      .catch((error) => {
-        // console.error('article update error', error);
-      });
-  }
+  // onRankChange(article: Article) {
+  //   this.articlesService.updateArticle(article)
+  //     .then((article) => {
+  //       // console.log('article rank updated', article.rank);
+  //       // console.log('article updated', this.articles);
+  //     })
+  //     .catch((error) => {
+  //       // console.error('article update error', error);
+  //     });
+  // }
 
 
   onAdd() {
@@ -75,7 +74,7 @@ export class ArticlesComponent {
       id: '',
       title: 'New Article',
       content: 'Content goes here',
-      template: ArticleTemplateEnum.defaultTemplate,
+      template: ArticleTemplateEnum.default,
       rank: 0,
       featured: false,
     }
@@ -88,6 +87,7 @@ export class ArticlesComponent {
     }).catch((error) => {
       console.error('article deletion error', error);
     });
+    this.articleToEdit = null;
   }
 
   onEdit(article: Article) {

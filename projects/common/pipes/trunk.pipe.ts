@@ -12,7 +12,7 @@ export class TrunkPipe implements PipeTransform {
         let count = string.indexOf('|');
         if (count === -1) {
             count = MAX_LENGTH;
-            console.log('No trunk found => ', string.slice(0, count));
+            // console.log('No trunk found => ', string.slice(0, count));
         }
         return string.slice(0, count);
     }

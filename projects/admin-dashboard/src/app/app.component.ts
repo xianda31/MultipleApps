@@ -3,7 +3,8 @@ import { RouterOutlet } from '@angular/router';
 import { NavbarComponent } from './navbar/navbar.component';
 import { ToasterComponent } from '../../../common/toaster/components/toaster/toaster.component';
 import { ToastEvent } from '../../../common/toaster/models/toast-event';
-import { CommonModule } from '@angular/common';
+import { CommonModule, registerLocaleData } from '@angular/common';
+import localeFr from '@angular/common/locales/fr'; // Import the 'localeFr' variable
 
 @Component({
   selector: 'app-root',
@@ -18,6 +19,7 @@ export class AppComponent {
 
   constructor(
   ) {
+    registerLocaleData(localeFr);
   }
 
 }

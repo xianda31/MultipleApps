@@ -3,11 +3,10 @@ import { Router, RouterOutlet, Routes } from '@angular/router';
 import { NavbarComponent } from "./navbar/navbar.component";
 
 import { GenericSimplePageComponent } from './pages/generic-simple-page/generic-simple-page.component';
-import { CommonModule } from '@angular/common';
+import { CommonModule, registerLocaleData } from '@angular/common';
 import { Menu } from '../../../common/menu.interface';
 import { SiteLayoutService } from '../../../common/services/site-layout.service';
-import { Observable } from 'rxjs';
-
+import localeFr from '@angular/common/locales/fr';
 
 
 @Component({
@@ -33,6 +32,8 @@ export class AppComponent {
       });
       this.loaded = true;
     });
+
+    registerLocaleData(localeFr);
   }
   loaded = false;
 
