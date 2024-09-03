@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { CommonModule, UpperCasePipe } from '@angular/common';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Person, Player } from '../../../../../common/ffb/interface/teams.interface';
+import { Person, Player } from '../../../../../common/ffb/interface/tournament_teams.interface';
 import { FfbService } from '../../../../../common/ffb/services/ffb.service';
 import { Team, TournamentTeams } from '../../../../../common/ffb/interface/tournament_teams.interface';
 import { InputPlayerComponent } from '../../../../../common/ffb/input-player/input-player.component';
@@ -9,6 +9,10 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TeamRegistrationComponent } from '../../modals/team-registration/team-registration.component';
 import { ToastService } from '../../../../../common/toaster/toast.service';
 import { club_tournament } from '../../../../../common/ffb/interface/club_tournament.interface';
+
+
+interface LicensePair { player1: string, player2: string }
+
 @Component({
   selector: 'app-teams',
   standalone: true,
@@ -57,20 +61,26 @@ export class TeamsComponent implements OnInit {
   }
 
 
-  modal(isolated_player: Player | null): Promise<string[] | null> {
+
+  modal(isolated_player: Player | null): Promise<LicensePair | null> {
     const modalRef = this.modalService.open(TeamRegistrationComponent, { centered: true });
     modalRef.componentInstance.tournament = this.tournament;
     modalRef.componentInstance.isolated_player = isolated_player;
     console.log('isolated_player', isolated_player);
-    return modalRef.result as Promise<string[] | null>;
+    return modalRef.result as Promise<LicensePair | null>;
   }
 
 
   addTeam(isolated_player: Player | null) {
-    this.modal(isolated_player).then((team) => {
-      if (team) {
-        console.log('TeamsComponent.addTeam', team);
-        // this.teams.push(team);
+    this.modal(isolated_player).then((licenses) => {
+      if (licenses) {
+        console.log('licenses', licenses);
+        let _licenses = [licenses.player1, licenses.player2];
+        console.log('TeamsComponent.addTeam', this.tournament.team_tournament_id.toString(), _licenses);
+        // this.ffbService.postTeam(this.tournament.team_tournament_id.toString(), licenses).then((data) => {
+        //   console.log('inscription done', JSON.stringify(data));
+        // });
+        this.listTeams();
       }
     });
 
@@ -90,10 +100,6 @@ export class TeamsComponent implements OnInit {
     // console.log('TeamsComponent.addTeam', this.tournamentTeamsId, licenses);
 
 
-    // this.ffbService.postTeam(this.tournamentTeamsId.toString(), licenses).then((data) => {
-    //   console.log('inscription done', JSON.stringify(data));
-    // });
-    // this.listTeams();
   }
 
 

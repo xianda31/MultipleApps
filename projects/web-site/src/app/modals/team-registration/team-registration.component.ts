@@ -4,7 +4,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { InputPlayerComponent } from '../../../../../common/ffb/input-player/input-player.component';
 import { CommonModule } from '@angular/common';
-import { Player } from '../../../../../common/ffb/interface/teams.interface';
+import { Player } from '../../../../../common/ffb/interface/tournament_teams.interface';
 
 @Component({
   selector: 'app-team-registration',

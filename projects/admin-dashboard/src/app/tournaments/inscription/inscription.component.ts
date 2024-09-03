@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FfbService } from '../../../../../common/ffb/services/ffb.service';
-import { Person } from '../../../../../common/ffb/interface/teams.interface';
+import { Person } from '../../../../../common/ffb/interface/tournament_teams.interface';
 import { Form, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FFBplayer } from '../../../../../common/ffb/interface/FFBplayer.interface';
 import { CommonModule } from '@angular/common';
