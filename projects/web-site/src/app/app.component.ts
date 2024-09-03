@@ -7,12 +7,13 @@ import { CommonModule, registerLocaleData } from '@angular/common';
 import { Menu } from '../../../common/menu.interface';
 import { SiteLayoutService } from '../../../common/services/site-layout.service';
 import localeFr from '@angular/common/locales/fr';
+import { ToasterComponent } from '../../../common/toaster/components/toaster/toaster.component';
 
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, NavbarComponent],
+  imports: [CommonModule, RouterOutlet, NavbarComponent, ToasterComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })

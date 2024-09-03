@@ -5,6 +5,9 @@ import { club_tournament } from '../../../../common/ffb/interface/club_tournamen
 import { FfbService } from '../../../../common/ffb/services/ffb.service';
 import { TeamsComponent } from './teams/teams.component';
 import { environment } from '../../environments/environment.development';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TeamRegistrationComponent } from '../modals/team-registration/team-registration.component';
+import { ToastService } from '../../../../common/toaster/toast.service';
 
 @Component({
   selector: 'app-tournaments',
@@ -27,7 +30,9 @@ export class TournamentsComponent {
 
 
   constructor(
-    private ffbService: FfbService
+    private ffbService: FfbService,
+    private toastService: ToastService
+
   ) { }
   async ngOnInit(): Promise<void> {
     const today = new Date();
@@ -70,4 +75,6 @@ export class TournamentsComponent {
     this.tournaments = this.nextTournaments;
 
   }
+
+
 }

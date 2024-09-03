@@ -9,59 +9,24 @@
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let team of tournament.teams,let i=index">
-                    <!-- <td>{{i+1}}</td> -->
+                <tr *ngFor="let team of teams,let i=index">
                     <td *ngFor="let player of team.players">
-                        <span *ngIf="player.person.gender==1;else madame"> M. </span>
-                        <ng-template #madame> Mme </ng-template>
-                        {{player.person.lastname | uppercase}}
+                        <!-- <span *ngIf="player.person.gender==1;else madame"> M. </span>
+                        <ng-template #madame> Mme </ng-template> -->
                         {{player.person.firstname}}
+                        {{player.person.lastname | uppercase}}
                         <small>
-                            <!-- <br> -->
-                            <!-- {{player.person.license_number}} -->
-                            <!-- {{player.person.iv.code}} -->
-                            <!-- (IV = {{player.person.iv.id}} ) -->
                         </small>
                     </td>
                     <td *ngIf="team.is_isolated_player" class="text-start align-content-center">
-                        <button class="btn btn-sm btn-primary" disabled>completer l'équipe</button>
+                        <button class="btn btn-sm btn-primary" (click)="addTeam(team.players[0])">completer
+                            l'équipe</button>
                     </td>
                 </tr>
-
-                <!-- bandeau ajout équipe -->
-
-                <!-- <tr class="align-items-end">
-                    <td colspan="2">
-                        <h6>inscrire une équipe (bientôt disponible) </h6>
-                    </td>
-                </tr>
-
-                <tr class="table-primary">
-
-                    <td class="text-center align-content-center action">
-                        <i *ngIf="team_creation" (click)="addTeam()" class="fa-regular fa-square-plus"></i>
-                    </td>
-                    <td>
-                        <app-input-player listeId="player1" type="text" class="form-control" formControlName="player1"
-                            required>
-                        </app-input-player>
-                        <span *ngIf="player1?.touched && player1?.hasError('required')">
-                            <small class="text-warning"> veuillez définir le joueur1</small>
-                        </span>
-                    </td>
-                    <td>
-                        <app-input-player listeId="player2" type="text" class="form-control" formControlName="player2"
-                            placeholder="mon partenaire"></app-input-player>
-                        <span *ngIf="player2?.touched && player2?.hasError('required')">
-                            <small class="text-warning"> veuillez définir le joueur2</small>
-                        </span>
-
-                    </td>
-
-                </tr> -->
-
             </tbody>
         </table>
+        <button class="btn btn-primary" (click)="addTeam(null)">Inscription</button>
+
     </div>
 
 </form>

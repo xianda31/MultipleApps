@@ -1,6 +1,3 @@
-
-
-
 export interface TournamentTeaming {
   organization_club_tournament: any
   time: any

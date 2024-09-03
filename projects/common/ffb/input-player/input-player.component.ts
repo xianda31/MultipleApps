@@ -38,6 +38,7 @@ export class InputPlayerComponent implements ControlValueAccessor {
     }
     // this.input.setValue('#' + input);
     this.str_player = input;
+    console.log('writeValue', input);
   }
   registerOnChange(fn: any): void {
     this.onChange = fn;

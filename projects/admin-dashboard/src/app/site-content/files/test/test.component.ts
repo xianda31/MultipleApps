@@ -9,6 +9,8 @@ import { InputMenuComponent } from "../../input-menu/input-menu.component";
 import { Form, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ToastService } from '../../../../../../common/toaster/toast.service';
 import { environment } from '../../../../environments/environment';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TeamSubscriptionComponent } from '../../../modals/team-subscription/team-subscription.component';
 
 
 @Component({
@@ -34,6 +36,7 @@ export class TestComponent {
   constructor(
     private siteLayoutService: SiteLayoutService,
     private toastService: ToastService,
+    private modalService: NgbModal
   ) {
     this.siteLayoutService.layout$.subscribe(([menus, pages]) => {
       this.menus = menus;
@@ -46,5 +49,13 @@ export class TestComponent {
   }
   toast() {
     this.toastService.showSuccessToast('Success', 'This is a success toast.');
+  }
+
+  modal() {
+    const modalRef = this.modalService.open(TeamSubscriptionComponent, { centered: true });
+    modalRef.componentInstance.title = 'Hello, World!';
+    modalRef.result.then((result) => {
+      console.log('Modal closed:', result);
+    });
   }
 }

@@ -7,8 +7,7 @@
     <h5> Les prochains tournois de régularité ouverts à l'inscription</h5>
     <div class="container pt-3">
         <div class="row">
-            <div class="col-md-4">
-
+            <div class="col-md-3">
                 <div class="my-1" *ngFor="let t of tournaments">
                     <div [class]="tournamentClass(t.tournament_name).card"
                         style="box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;">
@@ -24,19 +23,18 @@
 
                             <div class="card-text">
                                 <div class="row">
-                                    <div class="col-8">
+                                    <div class="col-10">
                                         <small>
-                                            {{((t.nbr_inscrit-t.nbr_inscrit%2)/2)}} paire(s) actuellement inscrite(s)
+                                            {{((t.nbr_inscrit-t.nbr_inscrit%2)/2)}} paire(s) inscrite(s)
                                         </small>
                                         <div class="row">
-
                                             <small *ngIf="t.has_isolated_player">
                                                 <i class="bi bi-person-arms-up"> </i>
                                                 <span class="text-info-emphasis">cherche partenaire </span>
                                             </small>
                                         </div>
                                     </div>
-                                    <div class="col-4 text-muted text-center">
+                                    <div class="col-2 text-muted text-center">
                                         <!-- <button (click)="clickOnTournament(t)" class="btn btn-primary btn-sm"> -->
                                         <i (click)="clickOnTournament(t)"
                                             [class]="!tournamentSelected? 'bi bi-eye-fill' :'bi bi-eye-slash-fill' "></i>
@@ -45,22 +43,19 @@
                                     </div>
                                 </div>
                             </div>
-                            <!-- <p class="card-text"><small class="text-muted">
-                                    {{t.tournament_name}}
-                                </small></p> -->
 
                         </div>
                     </div>
                 </div>
             </div>
             <div class="col-md-6">
+                {{tournamentSelected | json}}
                 <p *ngIf="tournamentSelected">
-
                     {{selectedTournament.tournament_name}}
-                    <button *ngIf="selectedTournament" class="btn btn-primary disabled">Inscription</button>
+                    <!-- <button *ngIf="selectedTournament" class="btn btn-primary" (click)="onSignUp()">Inscription</button> -->
                 </p>
                 <div *ngIf="tournamentSelected" class="card" style="box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;">
-                    <app-teams [tournamentTeamsId]="selectedTournament.team_tournament_id"></app-teams>
+                    <app-teams [tournament]="selectedTournament"></app-teams>
                 </div>
             </div>
             <!-- <div class="col-md-3">
@@ -115,7 +110,7 @@
                     </table>
                 </div>
                 <div *ngIf="tournamentSelected">
-                    <app-teams [tournamentTeamsId]="selectedTournament.team_tournament_id"></app-teams>
+                    <app-teams [tournament]="selectedTournament"></app-teams>
                 </div>
             </div>
         </div>
