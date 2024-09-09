@@ -4,6 +4,7 @@ import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { TrunkPipe } from '../pipes/trunk.pipe';
 import { ReplacePipe } from '../pipes/replace.pipe';
 import { FileService } from '../services/files.service';
+import { RenderingMode } from './render-article.interface';
 
 @Component({
   selector: 'app-render-article',
@@ -14,9 +15,11 @@ import { FileService } from '../services/files.service';
 })
 export class RenderArticleComponent implements OnChanges {
   @Input() article!: Article;
-  @Input() featuredMode: boolean = false;
+  @Input() rendering: RenderingMode = RenderingMode.Full;
   @Output() follow = new EventEmitter<Article>();
   articleTemplateEnum = ArticleTemplateEnum;
+  renderMode = RenderingMode;
+
   signedUrl!: Promise<URL>
 
   constructor(

@@ -5,6 +5,8 @@ import { Article, PageTemplateEnum, Page } from '../../../../../common/menu.inte
 import { CommonModule } from '@angular/common';
 import { RenderArticleComponent } from '../../../../../common/render-article/render-article.component';
 import { ArticlesService } from '../../../../../common/services/articles.service';
+import { RenderingMode } from '../../../../../common/render-article/render-article.interface';
+
 @Component({
   selector: 'app-generic-simple-page',
   standalone: true,
@@ -16,17 +18,16 @@ export class GenericSimplePageComponent {
   path!: string;
   page!: Page;
   articles: Article[] = [];
-
+  renderingMode = RenderingMode;
   pageTemplateEnum = PageTemplateEnum;
+  default_article !: Article;
   constructor(
     private router: ActivatedRoute,
-    private articlesService: ArticlesService,
     private siteLayoutService: SiteLayoutService
   ) {
 
     this.router.data.subscribe(async data => {
       let { pageId } = data;
-      // this.siteLayoutService.pages$.subscribe((pages) => {
       this.siteLayoutService.getFullPathAsync(pageId).then((path) => {
         this.path = path;
       });
@@ -34,6 +35,7 @@ export class GenericSimplePageComponent {
       this.siteLayoutService.readPage(pageId).then((page) => {
         this.page = page;
         this.page.articles = this.page.articles?.sort((a, b) => a.rank - b.rank) || [];
+        this.default_article = this.page.articles[0];
       });
 
     });

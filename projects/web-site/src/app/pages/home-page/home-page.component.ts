@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { RenderArticleComponent } from '../../../../../common/render-article/render-article.component';
 import { Router } from '@angular/router';
+import { RenderingMode } from '../../../../../common/render-article/render-article.interface';
 
 @Component({
   selector: 'app-home-page',
@@ -15,6 +16,7 @@ import { Router } from '@angular/router';
 })
 export class HomePageComponent {
   pages !: Page[];
+  renderMode = RenderingMode;
   constructor(
     private siteLayoutService: SiteLayoutService,
     private router: Router

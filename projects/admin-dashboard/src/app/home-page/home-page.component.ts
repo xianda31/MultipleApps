@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { RenderingMode } from '../../../../common/render-article/render-article.interface';
 
 @Component({
   selector: 'app-home-page',
@@ -11,6 +12,8 @@ import { RouterLink } from '@angular/router';
   styleUrl: './home-page.component.scss'
 })
 export class HomePageComponent {
+  renderMode = RenderingMode;
+
 
   topics: {
     title: string,

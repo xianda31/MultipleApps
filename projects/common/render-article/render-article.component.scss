@@ -38,3 +38,8 @@
 .no-border {
     border: none;
 }
+
+.side-img img {
+    max-inline-size: auto;
+    box-shadow: 3px 3px 4px rgba(0, 0, 0, 0.6);
+}

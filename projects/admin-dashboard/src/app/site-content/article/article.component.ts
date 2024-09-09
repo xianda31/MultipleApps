@@ -9,6 +9,7 @@ import { FileService } from '../../../../../common/services/files.service';
 import { Observable } from 'rxjs';
 import { S3Item } from '../../../../../common/file.interface'; // Import the S3item type from the appropriate module
 import { ToastService } from '../../../../../common/toaster/toast.service';
+import { RenderingMode } from '../../../../../common/render-article/render-article.interface';
 
 @Component({
   selector: 'app-article',
@@ -30,6 +31,7 @@ export class ArticleComponent implements OnChanges {
   templates_values: string[] = Object.values(this.templates);
 
   article_in_progress!: Article;
+  renderingMode = RenderingMode;
 
   articleForm: FormGroup = new FormGroup({
     id: new FormControl(''),

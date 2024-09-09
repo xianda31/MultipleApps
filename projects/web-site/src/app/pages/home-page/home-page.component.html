@@ -5,21 +5,14 @@
 </div>
 <br>
 
-<div class="row gy-3 ms-2">
+<div class="row gy-3 mx-2">
     <ng-container *ngFor="let page of pages">
-        <!-- <div *ngIf="hasFeaturedArticles(page)" class="m-2 "> -->
-        <!-- <div class="card-body">
-            <h4>{{page.link | uppercase}}</h4>
-        </div> -->
-        <!-- <div class="container"> -->
         <ng-container *ngFor="let article of page.articles">
             <div *ngIf="article.featured" class="col-md-4">
                 <h5>{{page.link | uppercase}}</h5>
-                <app-render-article [featuredMode]=true (follow)="onFollow(article)"
+                <app-render-article [rendering]="renderMode.Thumbnail" (follow)="onFollow(article)"
                     [article]="article"></app-render-article>
             </div>
         </ng-container>
-        <!-- </div> -->
-        <!-- </div> -->
     </ng-container>
 </div>
