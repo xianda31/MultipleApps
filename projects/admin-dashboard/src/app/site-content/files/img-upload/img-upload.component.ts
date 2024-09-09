@@ -94,11 +94,11 @@ export class ImgUploadComponent {
 
         if (width > height) {
           // image horizontale
-          console.log("image horizontale");
+          //  console.log("image horizontale");
           let ratio = width / height
           if (ratio > ImageSize.THUMBNBAIL_RATIO) {
             // plus large que haut
-            console.log("%s: plus large que haut ", ratio);
+            //  console.log("%s: plus large que haut ", ratio);
             sw = height * ImageSize.THUMBNBAIL_RATIO
             sh = height
             sx = (width - sw) / 2
@@ -107,7 +107,7 @@ export class ImgUploadComponent {
             // dh = height
           } else {
             // plus haut que large
-            console.log("%s: plus haut que large ", ratio);
+            //  console.log("%s: plus haut que large ", ratio);
             sw = width
             sh = width / ImageSize.THUMBNBAIL_RATIO
             sx = 0
@@ -118,11 +118,11 @@ export class ImgUploadComponent {
 
         } else {
           // image verticale
-          console.log("image verticale");
+          //  console.log("image verticale");
           let ratio = height / width
           if (ratio > ImageSize.THUMBNBAIL_RATIO) {
             // plus haut que large
-            console.log("%s: trop haute ", ratio);
+            //  console.log("%s: trop haute ", ratio);
             sw = width
             sh = width / ImageSize.THUMBNBAIL_RATIO
             sx = 0
@@ -131,7 +131,7 @@ export class ImgUploadComponent {
             // dh = width / ImageSize.THUMBNBAIL_RATIO
           } else {
             // plus large que haut
-            console.log("%s: trop large ", ratio);
+            //  console.log("%s: trop large ", ratio);
             sw = height / ImageSize.THUMBNBAIL_RATIO
             sh = height
             sx = (width - sw) / 2
@@ -155,7 +155,7 @@ export class ImgUploadComponent {
         canvas.width = dw
         canvas.height = dh
 
-        console.log("image %s x %s : \n sx=%s sy=%s sw=%s sh=%s \n final : %s x %s", width, height, sx, sy, sw, sh, width, height);
+        //  console.log("image %s x %s : \n sx=%s sy=%s sw=%s sh=%s \n final : %s x %s", width, height, sx, sy, sw, sh, width, height);
         let ctx = canvas.getContext('2d')
         if (ctx) {
           ctx.drawImage(img, sx, sy, sw, sh, 0, 0, dw, dh);
@@ -164,6 +164,4 @@ export class ImgUploadComponent {
       }
     })
   }
-
-
 }
