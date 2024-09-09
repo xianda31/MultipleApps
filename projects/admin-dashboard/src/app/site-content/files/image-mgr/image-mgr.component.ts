@@ -8,13 +8,13 @@ import { ImgUploadComponent } from '../img-upload/img-upload.component';
 
 
 @Component({
-  selector: 'app-filemgr',
+  selector: 'app-image-mgr',
   standalone: true,
   imports: [CommonModule, ImgUploadComponent],
-  templateUrl: './filemgr.component.html',
-  styleUrl: './filemgr.component.scss'
+  templateUrl: './image-mgr.component.html',
+  styleUrl: './image-mgr.component.scss'
 })
-export class FilemgrComponent {
+export class ImageMgrComponent {
   S3Items!: S3Item[];
 
   constructor(

@@ -95,4 +95,8 @@ export class ArticlesComponent {
     // this.router.navigate(['/article', article.id]);
 
   }
+
+  onDone() {
+    this.articleToEdit = null;
+  }
 }

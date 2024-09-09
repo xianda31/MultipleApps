@@ -44,7 +44,7 @@
     </div>
     <br>
     <div *ngIf="articleToEdit" class="col-md-12">
-        <app-article [articleToEdit]="articleToEdit"></app-article>
+        <app-article [articleToEdit]="articleToEdit" (articleUpdated)="onDone()"></app-article>
         <!-- </div> -->
     </div>
 

@@ -3,10 +3,10 @@ import { Pipe, PipeTransform } from '@angular/core';
 const MAX_LENGTH = 40;
 
 @Pipe({
-    name: 'trunk',
+    name: 'head',
     standalone: true
 })
-export class TrunkPipe implements PipeTransform {
+export class HeadPipe implements PipeTransform {
 
     transform(string: string): string {
         let count = string.indexOf('|');

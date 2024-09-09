@@ -1,15 +1,16 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { Article, ArticleTemplateEnum } from '../../common/menu.interface';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
-import { TrunkPipe } from '../pipes/trunk.pipe';
 import { ReplacePipe } from '../pipes/replace.pipe';
 import { FileService } from '../services/files.service';
 import { RenderingMode } from './render-article.interface';
+import { HeadPipe } from '../pipes/trail.pipe';
+import { TrailPipe } from '../pipes/head.pipe';
 
 @Component({
   selector: 'app-render-article',
   standalone: true,
-  imports: [CommonModule, ReplacePipe, TrunkPipe],
+  imports: [CommonModule, ReplacePipe, HeadPipe, TrailPipe],
   templateUrl: './render-article.component.html',
   styleUrl: './render-article.component.scss'
 })

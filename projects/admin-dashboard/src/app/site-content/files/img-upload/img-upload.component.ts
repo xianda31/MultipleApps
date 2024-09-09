@@ -86,22 +86,79 @@ export class ImgUploadComponent {
         let width = img.width
         let height = img.height
 
+        // mise au ratio
+        let sx, sy, sw, sh;
+
+        let dw = width, dh = height
+
+
         if (width > height) {
-          if (width > ImageSize.THUMBNAIL_MAX_WIDTH) {
-            height *= ImageSize.THUMBNAIL_MAX_WIDTH / width
-            width = ImageSize.THUMBNAIL_MAX_WIDTH
+          // image horizontale
+          console.log("image horizontale");
+          let ratio = width / height
+          if (ratio > ImageSize.THUMBNBAIL_RATIO) {
+            // plus large que haut
+            console.log("%s: plus large que haut ", ratio);
+            sw = height * ImageSize.THUMBNBAIL_RATIO
+            sh = height
+            sx = (width - sw) / 2
+            sy = 0
+            // dw = height * ImageSize.THUMBNBAIL_RATIO
+            // dh = height
+          } else {
+            // plus haut que large
+            console.log("%s: plus haut que large ", ratio);
+            sw = width
+            sh = width / ImageSize.THUMBNBAIL_RATIO
+            sx = 0
+            sy = (height - sh) / 2
+            // dw = width
+            // dh = width / ImageSize.THUMBNBAIL_RATIO
           }
+
         } else {
-          if (height > ImageSize.THUMBNAIL_MAX_HEIGHT) {
-            width *= ImageSize.THUMBNAIL_MAX_HEIGHT / height
-            height = ImageSize.THUMBNAIL_MAX_HEIGHT
+          // image verticale
+          console.log("image verticale");
+          let ratio = height / width
+          if (ratio > ImageSize.THUMBNBAIL_RATIO) {
+            // plus haut que large
+            console.log("%s: trop haute ", ratio);
+            sw = width
+            sh = width / ImageSize.THUMBNBAIL_RATIO
+            sx = 0
+            sy = (height - sh) / 2
+            // dw = width
+            // dh = width / ImageSize.THUMBNBAIL_RATIO
+          } else {
+            // plus large que haut
+            console.log("%s: trop large ", ratio);
+            sw = height / ImageSize.THUMBNBAIL_RATIO
+            sh = height
+            sx = (width - sw) / 2
+            sy = 0
+            // dw = height * ImageSize.THUMBNBAIL_RATIO
+            // dh = height
           }
         }
-        canvas.width = width
-        canvas.height = height
+
+        // reduction de taille proportionnelle
+
+        if (sw > ImageSize.THUMBNAIL_MAX_WIDTH) {
+          dh = sh * ImageSize.THUMBNAIL_MAX_WIDTH / sw
+          dw = ImageSize.THUMBNAIL_MAX_WIDTH
+        } else {
+          if (sh > ImageSize.THUMBNAIL_MAX_HEIGHT) {
+            dw = sw * ImageSize.THUMBNAIL_MAX_HEIGHT / sh
+            dh = ImageSize.THUMBNAIL_MAX_HEIGHT
+          }
+        }
+        canvas.width = dw
+        canvas.height = dh
+
+        console.log("image %s x %s : \n sx=%s sy=%s sw=%s sh=%s \n final : %s x %s", width, height, sx, sy, sw, sh, width, height);
         let ctx = canvas.getContext('2d')
         if (ctx) {
-          ctx.drawImage(img, 0, 0, width, height);
+          ctx.drawImage(img, sx, sy, sw, sh, 0, 0, dw, dh);
         }
         resolve(canvas.toDataURL('image/jpeg', 0.8))
       }

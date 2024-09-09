@@ -33,6 +33,7 @@ export interface Article {
 export enum ArticleTemplateEnum {
     default = 'default',
     event = 'event',
+    letter = 'letter',
     IDcard = 'IDcard-side'
     // imageTemplate = 'image',
     // videoTemplate = 'video',
