@@ -19,7 +19,7 @@ export class MenusComponent {
   menuGroup: FormGroup = new FormGroup({
     id: new FormControl({ value: '', disabled: true }),
     label: new FormControl('', Validators.required),
-    summary: new FormControl('', Validators.required),
+    // summary: new FormControl('', Validators.required),
     rank: new FormControl(0),
   });
 
@@ -31,7 +31,7 @@ export class MenusComponent {
   }
 
   onEdit(menu: Menu) {
-    this.menuGroup.patchValue({ id: menu.id, label: menu.label, summary: menu.summary, rank: menu.rank });
+    this.menuGroup.patchValue({ id: menu.id, label: menu.label, rank: menu.rank });
     this.creation = false;
   }
 

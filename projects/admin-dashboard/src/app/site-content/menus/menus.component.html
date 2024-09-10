@@ -2,7 +2,6 @@
     <h5> Les menus</h5>
     <div class="col-md-12">
 
-
         <form [formGroup]="menuGroup">
             <table class="table">
                 <thead>
@@ -20,7 +19,7 @@
                     <tr *ngFor="let menu of menus">
                         <!-- <td class="table-info">...{{menu.id | slice:-8}}</td> -->
                         <td>{{menu.label}}</td>
-                        <td>{{menu.summary}}</td>
+                        <!-- <td>{{menu.summary}}</td> -->
                         <!-- <td>{{menu.rank}}</td> -->
                         <td class="text-center">{{menu.pages.length}}</td>
                         <!-- <td>{{menu.rootmenu}}</td>
@@ -39,7 +38,7 @@
                     <tr>
                         <!-- <td><input type="text" class="form-control" formControlName="id"></td> -->
                         <td> <input type="text" class="form-control" formControlName="label"> </td>
-                        <td> <input type="text" class="form-control" formControlName="summary"> </td>
+                        <!-- <td> <input type="text" class="form-control" formControlName="summary"> </td> -->
                         <!-- <td> <input type="text" class="form-control" formControlName="rank"> </td> -->
                         <!-- <td> <input type="text" class="form-control" formControlName="pageId"> </td> -->
                         <td> </td>

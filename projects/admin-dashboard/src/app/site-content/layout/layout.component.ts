@@ -2,22 +2,24 @@ import { Component } from '@angular/core';
 import { MenusComponent } from '../menus/menus.component';
 import { PagesComponent } from '../pages/pages.component';
 import { SiteLayoutService } from '../../../../../common/services/site-layout.service';
-import { Menu, Page } from '../../../../../common/menu.interface';
+import { Menu, Page, PageTemplateEnum } from '../../../../../common/menu.interface';
 import { CommonModule } from '@angular/common';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop'; // Import DragDropModule
 import { take } from 'rxjs';
 import { PageComponent } from '../page/page.component';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-layout',
   standalone: true,
-  imports: [CommonModule, DragDropModule, MenusComponent, PagesComponent, PageComponent], // Add DragDropModule to the imports array
+  imports: [CommonModule, FormsModule, DragDropModule, MenusComponent, PagesComponent, PageComponent], // Add DragDropModule to the imports array
   templateUrl: './layout.component.html',
   styleUrl: './layout.component.scss'
 })
 export class LayoutComponent {
   menus: Menu[] = [];
   selectedPage!: Page;
+  new_menu_label: string = '';
 
   constructor(
     private siteLayoutService: SiteLayoutService) {
@@ -65,4 +67,24 @@ export class LayoutComponent {
     this.selectedPage = page;
   }
 
-} 
+  onCreateMenu() {
+    const new_menu: Menu = { id: '', label: this.new_menu_label, rank: 0, pages: [] };
+    this.siteLayoutService.createMenu(new_menu)
+      .then(() => { this.new_menu_label = ''; })
+      .catch((error) => {
+        console.error('menu creation error', error);
+      }
+      );
+  }
+
+  onDeleteMenu(menu: Menu) {
+    this.siteLayoutService.deleteAllPages(menu.id);
+    this.siteLayoutService.deleteMenu(menu.id);
+  }
+
+  onAddPage(menu: Menu) {
+    let page: Page = { id: '', menuId: menu.id, rank: 0, link: 'new page', template: PageTemplateEnum.default };
+
+    this.siteLayoutService.createPage(page);
+  }
+}

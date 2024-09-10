@@ -60,7 +60,7 @@ export class SiteLayoutService {
   private menusSubscription() {
     const client = generateClient<Schema>();
 
-    client.models.Menu.observeQuery({ selectionSet: ["id", "label", "summary", "rank", "pages.*"] })
+    client.models.Menu.observeQuery({ selectionSet: ["id", "label", "rank", "pages.*"] })
       .subscribe({
         next: (data) => {
           this._menus = data.items as unknown as Menu[];
@@ -136,7 +136,7 @@ export class SiteLayoutService {
     return new Promise<Menu>(async (resolve, reject) => {
       const client = generateClient<Schema>();
       const { data: data, errors } = await client.models.Menu.get(
-        { id: menu_id }, { selectionSet: ["id", "label", "summary", "rank", "pages.*"] }
+        { id: menu_id }, { selectionSet: ["id", "label", "rank", "pages.*"] }
       );
       if (errors) { console.error(errors); reject(errors); }
       let menu: Menu = data as unknown as Menu;
@@ -158,7 +158,7 @@ export class SiteLayoutService {
 
   private readMenus() {
     const client = generateClient<Schema>();
-    client.models.Menu.list({ selectionSet: ["id", "label", "summary", "rank", "pages.*"] })
+    client.models.Menu.list({ selectionSet: ["id", "label", "rank", "pages.*"] })
       .then(({ data, errors }) => {
         if (errors) { console.error(errors); }
         this._menus = data as unknown as Menu[];
@@ -186,6 +186,7 @@ export class SiteLayoutService {
       this._menus$.next(this._menus);
       resolve(data);
     });
+
   }
 
   // page REST API
@@ -253,5 +254,15 @@ export class SiteLayoutService {
     });
   }
 
+  deleteAllPages(menuId: string) {
+    return new Promise<any>(async (resolve, reject) => {
+      const client = generateClient<Schema>();
+      this._pages
+        .filter(p => p.menuId === menuId)
+        .map(async (p) => { this.deletePage(p.id).then(() => { }); })
+
+      resolve('pages deleted');
+    });
+  }
 
 }

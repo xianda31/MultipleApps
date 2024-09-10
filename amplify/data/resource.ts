@@ -64,7 +64,7 @@ const schema = a.schema({
 
   Menu: a.model({
     label: a.string().required(),
-    summary: a.string(),
+    // summary: a.string(),
     rank: a.integer(),
     pages: a.hasMany('Page', 'menuId'),
   })

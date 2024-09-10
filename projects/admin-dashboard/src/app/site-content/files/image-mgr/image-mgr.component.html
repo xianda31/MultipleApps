@@ -1,7 +1,11 @@
 <div class="container">
-    <h5>La base d'images pour les articles</h5>
-    <div class="col-md-6">
+    <h5>La base d'images pour illustration des articles</h5>
+    <div class="col-md-6 ">
+        ajouter une image à la collection :
+        <app-img-upload directory="thumbnails/" (uploaded)="addItem($event)"></app-img-upload>
+    </div>
 
+    <!-- <div class="col-md-6">
         <table class="table">
             <thead>
                 <tr>
@@ -27,10 +31,25 @@
             </tbody>
         </table>
 
+    </div> -->
+    <div class="card p-2">
+        <div class="row row-cols-4 row-cols-md-6 4 ">
+            <div class="col" *ngFor="let item of S3Items  ; let i = index">
+                <!-- <div class="card"> -->
+                <img [src]="item.url | async" [alt]="item.path" class="img-fluid">
+                <div class="card-body">
+                    <p class="card-text">
+                        {{item.path | replace:'thumbnails/':''}}
+                        <i (click)="onDelete(item)" class="bi bi-trash trash"></i>
+                    </p>
+                </div>
+                <!-- </div> -->
+            </div>
+        </div>
+
     </div>
 
-    <div class="col-md-6">
-        <app-img-upload (uploaded)="addItem($event)"></app-img-upload>
-    </div>
+
+
 
 </div>

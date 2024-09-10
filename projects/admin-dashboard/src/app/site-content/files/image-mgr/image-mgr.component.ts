@@ -5,12 +5,13 @@ import { CommonModule } from '@angular/common';
 import { FileService } from '../../../../../../common/services/files.service';
 import { Observable } from 'rxjs';
 import { ImgUploadComponent } from '../img-upload/img-upload.component';
+import { ReplacePipe } from '../../../../../../common/pipes/replace.pipe';
 
 
 @Component({
   selector: 'app-image-mgr',
   standalone: true,
-  imports: [CommonModule, ImgUploadComponent],
+  imports: [CommonModule, ImgUploadComponent, ReplacePipe],
   templateUrl: './image-mgr.component.html',
   styleUrl: './image-mgr.component.scss'
 })
@@ -23,7 +24,6 @@ export class ImageMgrComponent {
   ) {
     this.fileService.S3Items.subscribe((items) => {
       this.S3Items = items;
-
     });
 
   }

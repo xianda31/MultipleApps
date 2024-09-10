@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { uploadData } from 'aws-amplify/storage';
 import { ImageSize } from '../../../const';
@@ -12,6 +12,7 @@ import { ImageSize } from '../../../const';
   styleUrl: './img-upload.component.scss'
 })
 export class ImgUploadComponent {
+  @Input() directory: string = '';
   @Output() uploaded = new EventEmitter<Blob>();
   resizedBase64String: any;
   file!: File;
@@ -61,7 +62,7 @@ export class ImgUploadComponent {
     try {
       uploadData({
         data: blob,
-        path: `thumbnails/${file.name}`,
+        path: this.directory + file.name,
         // bucket: 'publicBucket'
         options: {
           contentType: 'image/jpeg',

@@ -21,11 +21,11 @@ export class FileService {
     return this._S3Items$.asObservable();
   }
 
-  placeholderUrl(): Promise<URL> {
-    return new Promise<URL>((resolve, reject) => {
-      resolve(new URL("../../admin-dashboard/public/images/bcsto.png"));
-    });
-  }
+  // private placeholderUrl(): Promise<URL> {
+  //   return new Promise<URL>((resolve, reject) => {
+  //     resolve(new URL("../../admin-dashboard/public/images/bcsto.png"));
+  //   });
+  // }
 
   getPresignedUrl(path: string): Promise<URL> {
     return new Promise<URL>((resolve, reject) => {

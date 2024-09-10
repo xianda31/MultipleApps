@@ -3,7 +3,7 @@ import { PagesComponent } from "../admin-dashboard/src/app/site-content/pages/pa
 export interface Menu {
     id: string;
     label: string;
-    summary?: string;
+    // summary?: string;
     rank: number;
     pages: Page[];
 
