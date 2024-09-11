@@ -36,6 +36,7 @@ export class TournamentsComponent {
   ) { }
   async ngOnInit(): Promise<void> {
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     this.nextTournaments = await this.ffbService.getTournaments();
     this.nextTournaments = this.nextTournaments.filter((tournament: club_tournament) => {
       return new Date(tournament.date) >= today;
