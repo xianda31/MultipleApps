@@ -20,12 +20,15 @@ export class ArticlesService {
         next: (data) => {
           this.articles = data.items as unknown as Article[];
           this._articles$.next(this.articles);
+          console.log('%s articles chargés', this.articles.length);
         },
         error: (error) => {
           console.error('error', error);
         }
       });
   }
+
+
 
   // articlesSubscription() {
   //   const client = generateClient<Schema>();

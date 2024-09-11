@@ -12,6 +12,7 @@ import { ArticlesComponent } from './site-content/articles/articles.component';
 import { ArticleComponent } from './site-content/article/article.component';
 import { TestComponent } from './site-content/files/test/test.component';
 import { ImageMgrComponent } from './site-content/files/image-mgr/image-mgr.component';
+import { AlbumsComponent } from './site-content/albums/albums.component';
 
 export const routes: Routes = [
     { path: 'tournaments', component: TournamentsComponent },
@@ -24,6 +25,8 @@ export const routes: Routes = [
     { path: 'articles', component: ArticlesComponent },
     { path: 'article/:id', component: ArticleComponent },
     { path: 'test', component: TestComponent },
-    { path: 'imagemgr', component: ImageMgrComponent }, // Use the imported ImgmgrComponent
+    { path: 'imagemgr', component: ImageMgrComponent },
+    { path: 'albums', component: AlbumsComponent },
+    { path: '**', redirectTo: '/home' },
     { path: '', redirectTo: '/home', pathMatch: 'full' }
 ];

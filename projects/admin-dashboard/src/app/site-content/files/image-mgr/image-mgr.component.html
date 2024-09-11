@@ -1,55 +1,31 @@
-<div class="container">
+<div *ngIf="S3Items" class="container">
     <h5>La base d'images pour illustration des articles</h5>
     <div class="col-md-6 ">
         ajouter une image à la collection :
         <app-img-upload directory="thumbnails/" (uploaded)="addItem($event)"></app-img-upload>
     </div>
 
-    <!-- <div class="col-md-6">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>nom</th>
-                    <th>taille</th>
-                    <th></th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr *ngFor="let item of S3Items  ; let i = index">
-                    <td>{{i}}</td>
-                    <td>{{item.path}}</td>
-                    <td>{{item.size }}</td>
-                    <td>
-                        <img [src]="item.url | async" [alt]="item.path" class="img-fluid">
-                    </td>
-                    <td>
-                        <button class="btn btn-sm btn-warning ms-1" (click)="onDelete(item)">delete</button>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-
-    </div> -->
-    <div class="card p-2">
-        <div class="row row-cols-4 row-cols-md-6 4 ">
+    <div class="card p-3">
+        <div class="row row-cols-4 row-cols-md-6 ">
             <div class="col" *ngFor="let item of S3Items  ; let i = index">
-                <!-- <div class="card"> -->
-                <img [src]="item.url | async" [alt]="item.path" class="img-fluid">
+                <div class="position-relative">
+                    <img [src]="item.url | async" [alt]="item.path" class="img-fluid">
+                    <span class="badge ">
+                        <!-- <span class="visually-hidden">New alerts</span> -->
+                        <i (click)="onDelete(item)" class="bi bi-trash trash"></i>
+                    </span>
+                    <span class="position-absolute top-100 start-0 translate-middle badge rounded-pill bg-primary">
+                        {{item.usage}}
+                        <span class="visually-hidden">unread messages</span>
+                    </span>
+                </div>
                 <div class="card-body">
                     <p class="card-text">
                         {{item.path | replace:'thumbnails/':''}}
-                        <i (click)="onDelete(item)" class="bi bi-trash trash"></i>
                     </p>
                 </div>
-                <!-- </div> -->
             </div>
         </div>
-
     </div>
-
-
-
 
 </div>

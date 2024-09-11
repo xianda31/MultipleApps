@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { uploadData } from 'aws-amplify/storage';
 import { ImageSize } from '../../../const';
+import { map } from 'rxjs';
 
 @Component({
   selector: 'app-img-upload',
@@ -13,72 +14,97 @@ import { ImageSize } from '../../../const';
 })
 export class ImgUploadComponent {
   @Input() directory: string = '';
-  @Output() uploaded = new EventEmitter<Blob>();
-  resizedBase64String: any;
-  file!: File;
+  @Input() multiple: boolean = false;
+  @Input() ratio_untouched: boolean = false;
+  @Output() uploaded = new EventEmitter<string>();
+  @ViewChild('fileInput') fileInput!: ElementRef;
+  resizedBase64Strings: { base64: string, file: File }[] = [];
+  files!: File[];
+  uploadPromises: Promise<any>[] = [];
+  file_selected: boolean = false;
 
+  constructor() { }
 
   onChange(event: any) {
-    this.file = event.target.files[0];
-    const reader = new FileReader();
-    reader.readAsDataURL(this.file);
-    reader.onload = () => {
-      const base64String = reader.result as string;
-
-      //resize and set preview image
-      this.resizeImage(base64String)
-        .then((base64) => {
-          this.resizedBase64String = base64;
-          // console.log('%s x %s ', height, width);
-        });
-    };
-
+    this.files = [];
+    this.resizedBase64Strings = [];
+    for (let i = 0; i < event.target.files.length; i++) {
+      this.files.push(event.target.files[i]);
+    }
+    this.files.forEach((file) => {
+      this.readFile(file).then((base64) => {
+        this.resizedBase64Strings.push({ base64, file });
+      })
+    });
+    this.file_selected = true;
   }
 
-  imageToBlob(base64: string, filename: string) {
-    fetch(base64)
-      .then(res => res.blob())
-      .then(blob => {
-        this.upload(blob, new File([blob], filename)).then(() => {
-        });
-      });
+  readFile(file: File): Promise<string> {
+    let promise = new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const base64String = reader.result as string;
+        this.resizeImage(base64String)
+          .then((base64) => {
+            // this.resizedBase64String = base64;
+            resolve(base64);
+          });
+      };
+    });
+    return promise;
+  };
+
+
+  dataUrltoBlob(dataUrl: string): Blob {
+    const [meta, data] = dataUrl.split(",")
+    // Convert the base64 encoded data to a binary string.
+    const byteString = atob(data)
+    // Get the MIME type.
+    const [mimeTypeWithDataPrefix] = meta.split(";")
+    const mimeType = mimeTypeWithDataPrefix.replace("data:", "")
+    // Convert the binary string to an ArrayBuffer.
+    const arrayBuffer = Uint8Array.from(byteString, (c) => c.charCodeAt(0)).buffer
+    // Create a blob from the ArrayBuffer.
+    return new Blob([arrayBuffer], { type: mimeType })
   }
 
   onUpload() {
-    const img = new Image();
-    img.src = this.resizedBase64String;
-    img.onload = () => {
-      const width = img.width;
-      const height = img.height;
-      const filename = this.file.name;
-      // const filename = this.file.name.split('.')[0] + width + 'x' + height + '.jpg';
-      console.log(filename);
-      URL.revokeObjectURL(img.src);
-      this.imageToBlob(this.resizedBase64String, filename);
-    };
+    this.uploadPromises = [];
+    this.resizedBase64Strings.forEach(({ base64, file }) => {
+      const blob = this.dataUrltoBlob(base64);
+      this.uploadPromises.push(this.upload(blob, new File([blob], file.name)));
+    });
+    Promise.all(this.uploadPromises).then(() => {
+      this.reset_input();
+      this.resizedBase64Strings = [];
+      this.uploaded.emit('done');
+    });
+  }
+
+  reset_input() {
+    this.fileInput.nativeElement.value = '';
+    this.file_selected = false;
   }
 
   async upload(blob: any, file: File) {
-    try {
+    let promise = new Promise((resolve, reject) => {
       uploadData({
         data: blob,
         path: this.directory + file.name,
         // bucket: 'publicBucket'
         options: {
           contentType: 'image/jpeg',
-          metadata: { customKey: 'thumbnail' },
+          metadata: { customKey: 'bcsto' },
         }
-      }).result.then((result) => {
-        this.uploaded.emit(blob);
-      });
-    } catch (e) {
-      console.log("error", e);
-    }
+      }).result
+        .then((result) => { resolve(result); })
+        .catch((error) => { reject(error); });
+    });
+    return promise;
   }
 
   resizeImage(base64Str: string): Promise<string> {
-
-
     return new Promise((resolve) => {
       let img = new Image()
       img.src = base64Str
@@ -86,62 +112,42 @@ export class ImgUploadComponent {
         let canvas = document.createElement('canvas')
         let width = img.width
         let height = img.height
-
-        // mise au ratio
-        let sx, sy, sw, sh;
-
+        let sx = 0, sy = 0
+        let sw = width, sh = height;
         let dw = width, dh = height
 
+        // mise au ratio
+        if (!this.ratio_untouched) {
 
-        if (width > height) {
-          // image horizontale
-          //  console.log("image horizontale");
-          let ratio = width / height
-          if (ratio > ImageSize.THUMBNBAIL_RATIO) {
-            // plus large que haut
-            //  console.log("%s: plus large que haut ", ratio);
-            sw = height * ImageSize.THUMBNBAIL_RATIO
-            sh = height
-            sx = (width - sw) / 2
-            sy = 0
-            // dw = height * ImageSize.THUMBNBAIL_RATIO
-            // dh = height
-          } else {
-            // plus haut que large
-            //  console.log("%s: plus haut que large ", ratio);
-            sw = width
-            sh = width / ImageSize.THUMBNBAIL_RATIO
-            sx = 0
-            sy = (height - sh) / 2
-            // dw = width
-            // dh = width / ImageSize.THUMBNBAIL_RATIO
-          }
+          if (width > height) {
+            let ratio = width / height
+            if (ratio > ImageSize.THUMBNBAIL_RATIO) {
+              sw = height * ImageSize.THUMBNBAIL_RATIO
+              sh = height
+              sx = (width - sw) / 2
+              sy = 0
+            } else {
+              sw = width
+              sh = width / ImageSize.THUMBNBAIL_RATIO
+              sx = 0
+              sy = (height - sh) / 2
+            }
 
-        } else {
-          // image verticale
-          //  console.log("image verticale");
-          let ratio = height / width
-          if (ratio > ImageSize.THUMBNBAIL_RATIO) {
-            // plus haut que large
-            //  console.log("%s: trop haute ", ratio);
-            sw = width
-            sh = width / ImageSize.THUMBNBAIL_RATIO
-            sx = 0
-            sy = (height - sh) / 2
-            // dw = width
-            // dh = width / ImageSize.THUMBNBAIL_RATIO
           } else {
-            // plus large que haut
-            //  console.log("%s: trop large ", ratio);
-            sw = height / ImageSize.THUMBNBAIL_RATIO
-            sh = height
-            sx = (width - sw) / 2
-            sy = 0
-            // dw = height * ImageSize.THUMBNBAIL_RATIO
-            // dh = height
+            let ratio = height / width
+            if (ratio > ImageSize.THUMBNBAIL_RATIO) {
+              sw = width
+              sh = width / ImageSize.THUMBNBAIL_RATIO
+              sx = 0
+              sy = (height - sh) / 2
+            } else {
+              sw = height / ImageSize.THUMBNBAIL_RATIO
+              sh = height
+              sx = (width - sw) / 2
+              sy = 0
+            }
           }
         }
-
         // reduction de taille proportionnelle
 
         if (sw > ImageSize.THUMBNAIL_MAX_WIDTH) {

@@ -24,7 +24,7 @@ export class ArticleComponent implements OnChanges {
   @Output() articleUpdated: EventEmitter<Article> = new EventEmitter<Article>();
 
 
-  S3Items: Observable<S3Item[]> = new Observable<S3Item[]>();
+  S3Items: S3Item[] = [];
   featuredMode: boolean = false;
 
   templates = ArticleTemplateEnum;
@@ -63,8 +63,10 @@ export class ArticleComponent implements OnChanges {
       this.article_in_progress = value;
     });
 
-    this.S3Items = this.fileService.S3Items;
 
+    this.fileService.list('thumbnails/').then((data) => {
+      this.S3Items = data;   // pour la liste déroulante des images disponibles
+    });
   }
 
 

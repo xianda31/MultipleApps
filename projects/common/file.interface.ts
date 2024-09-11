@@ -4,4 +4,5 @@ export interface S3Item {
     lastModified?: Date | undefined;
     size?: number;
     url?: Promise<URL>;
+    usage?: number;
 }
