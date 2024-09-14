@@ -1,0 +1,95 @@
+<div class="container ">
+    <form [formGroup]="loggerForm">
+        <div class="col-md-8 offset-md-2">
+
+            <div class="card p-5">
+                <img class=" nice_shadow w-25 align-self-center" src="images/bcsto.jpg">
+                <div class="card-body">
+                    <div class="row">
+
+                        <div class=" col-md-6 text-muted p-5">
+
+                            <ng-container [ngTemplateOutlet]="show_form"> </ng-container>
+
+                            <ng-container [ngSwitch]="mode$ | async">
+                                <ng-container *ngSwitchCase="process_flow.SIGN_UP"
+                                    [ngTemplateOutlet]="sign_up"></ng-container>
+                                <ng-container *ngSwitchCase="process_flow.CONFIRM_SIGN_UP"
+                                    [ngTemplateOutlet]="confirm_sign_up"></ng-container>
+                                <ng-container *ngSwitchCase="process_flow.SIGN_IN"
+                                    [ngTemplateOutlet]="sign_in"></ng-container>
+                            </ng-container>
+                        </div>
+
+                        <div class="col-md-6">
+                            <img class="img-fluid photo" src="images/ai3.jpg">
+                            <p class="text-center text-muted mt-3">En vous connectant, vous pourrez accéder à des
+                                services
+                                et informations
+                                réservées aux adhérents du Club</p>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <ng-template #sign_in>
+            <div class="row mt-5">
+                <button class="btn btn-success " type="button" (click)="signIn()"
+                    [disabled]="!loggerForm.valid">Login</button>
+            </div>
+            <div class="row mt-3">
+                <button class="btn btn-link" type="button" (click)="goSignUp()">Créer un compte</button>
+                <!-- <button class="btn btn-link" type="button" (click)="resetPassword()">Mot de passe                    oublié</button> -->
+                <button class="btn btn-link" type="button" (click)="signOut()">se déconnecter</button>
+            </div>
+
+        </ng-template>
+
+
+        <ng-template #sign_up>
+            <!-- <ng-container [ngTemplateOutlet]="show_form"> </ng-container> -->
+
+            <div class="row mt-5">
+                <!-- <label for="sign_up">Vous n'avez pas encore ouvert de compte</label> -->
+                <button class="btn btn-success " type="button" (click)="signUp()" [disabled]="!loggerForm.valid">
+                    Créer mon compte</button>
+            </div>
+            <div *ngIf="sign_up_sent" class="row mt-3">
+                <label> Vérifions votre adresse mail : un code vous a été adressé </label>
+                <input type="text" (keyup.enter)="confirmSignUp()" class="form-control" formControlName="sign_up_code"
+                    placeholder="code reçu par mail">
+            </div>
+        </ng-template>
+        <ng-template #confirm_sign_up>
+            <!-- <ng-container [ngTemplateOutlet]="show_form"> </ng-container> -->
+
+            <div class="row mt-3">
+                <label> Vérifions votre adresse mail : récuperez le code envoyé à l'adresse {{email.value}} </label>
+                <input type="text" (keyup.enter)="confirmSignUp()" class="form-control" formControlName="sign_up_code"
+                    placeholder="code reçu par mail">
+            </div>
+        </ng-template>
+
+        <ng-template #show_form>
+            <div class="row mt-3 ">
+                <label for="email">adresse mail</label>
+                <input class="form-control me-2" autocomplete="email" type="text" id="email" formControlName="email">
+                <span *ngIf="email.dirty && email.hasError('not_member')" class="text-danger">
+                    adresse mail non répertoriée au Club</span>
+                <span
+                    *ngIf=" mode !== process_flow.SIGN_UP && email.dirty && !email.hasError('not_member') && email.hasError('no_account')"
+                    class="text-danger">
+                    créez votre compte d'abord</span>
+            </div>
+            <div class="row mt-3">
+                <label for="password">mot de passe</label>
+                <input class="form-control me-2" autocomplete="password" (keyup.enter)="signIn()" type="password"
+                    id="password" formControlName="password">
+            </div>
+        </ng-template>
+
+    </form>
+</div>

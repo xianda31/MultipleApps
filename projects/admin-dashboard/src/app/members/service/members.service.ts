@@ -62,6 +62,33 @@ export class MembersService {
 
   }
 
+  async readMember(id: string): Promise<Member | null> {
+    const client = generateClient<Schema>();
+    const { data, errors } = await client.models.Member.get({ id: id });
+    if (errors) {
+      console.error(errors);
+      return null;
+    }
+    return data as Member;
+  }
+
+  async getMemberByEmail(email: string): Promise<Member | null> {
+    let promise = new Promise<Member | null>(async (resolve, reject) => {
+      const client = generateClient<Schema>();
+      const { data, errors } = await client.models.Member.list({
+        filter: {
+          email: { eq: email }
+        }
+      });
+      if (errors) {
+        console.error(errors);
+        reject(null);
+      }
+      resolve(data[0] as Member);   // array of only one element, hopefully !!!
+    });
+    return promise;
+  }
+
   async updateMember(member: Member) {
     const client = generateClient<Schema>();
     const { data: updatedMember, errors } = await client.models.Member.update(member);

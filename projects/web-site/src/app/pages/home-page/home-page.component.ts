@@ -23,7 +23,7 @@ export class HomePageComponent {
   ) {
     this.siteLayoutService.pages$.subscribe((pages) => {
       this.pages = pages;
-      console.log('HomePageComponent.pages', this.pages);
+      // console.log('HomePageComponent.pages', this.pages);
     });
   }
 

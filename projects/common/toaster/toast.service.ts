@@ -11,7 +11,6 @@ export class ToastService {
   private _toastEvents = new Subject<ToastEvent>();
 
   constructor() {
-    console.log('toast service initialized');
     this.toastEvents = this._toastEvents.asObservable();
   }
 

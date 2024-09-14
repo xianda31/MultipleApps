@@ -1,19 +1,4 @@
 <div class="container p-0 m-0">
-    <!-- <div class="top-bar">
-        <div class="row-cols-lg-auto row">
-            <div class="col">
-                <span class="mr-2  icon-envelope-open-o"></span>
-                <span class="inline-block">
-                    <a href="#" class="">info&#64;bcsto.com </a>
-                </span>
-            </div>
-            <div class="col">
-                <span class="mr-2 icon-phone"></span>
-                <span class="inline-block"> (33) 6 66 0666</span>
-            </div>
-        </div>
-    </div> -->
-
     <nav class="navbar navbar-expand-lg navbar-light ">
         <div class="container">
             <a class="navbar-brand" routerLink="/home">
@@ -49,11 +34,23 @@
                         <a class="nav-link" routerLink="/tournaments">Tournois</a>
                     </li>
                 </ul>
+                <a *ngIf="whoAmI === null" routerLink="/authentification">
+                    <button class="btn btn-success align-items-center" type="button">
+                        <i class="bi bi-person-fill"></i>
+                        <span class="ms-2">Espace membre</span>
+                    </button>
+                </a>
+                <a *ngIf="whoAmI !== null">
+                    <button class="btn btn-success align-items-center" type="button">
+                        <span class="ms-2">Moi</span>
+                    </button>
+                    <button routerLink="/authentification/sign-out" class="btn btn-outline-success align-items-center"
+                        type="button">
+                        <span class="ms-2">Logout</span>
+                    </button>
+                </a>
 
-                <form class="d-flex">
-                    <input class="form-control me-2" type="mail" placeholder="Mail" aria-label="Mail">
-                    <button class="btn btn-outline-success" type="submit">Login</button>
-                </form>
+                <!-- <app-sign-in></app-sign-in> -->
             </div>
         </div>
     </nav>

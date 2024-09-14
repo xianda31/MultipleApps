@@ -54,7 +54,7 @@ export class MembersComponent implements OnInit {
       this.members = members.sort((a, b) => a.lastname.localeCompare(b.lastname));
       this.filteredMembers = this.members;
       this.thisSeasonMembersNbr = this.members.reduce((acc, member) => {
-        return (member.season == '2024/2025' || member.is_sympathisant) ? acc + 1 : acc;
+        return (member.season === '2024/2025' || member.is_sympathisant) ? acc + 1 : acc;
       }, 0);
     });
 
@@ -77,9 +77,9 @@ export class MembersComponent implements OnInit {
         case this.filters[0]: //'Tous':
           return member;
         case this.filters[1]: //'à jour':
-          return (member.season == '2024/2025' || member.is_sympathisant) ? member : false;
+          return (member.season === '2024/2025' || member.is_sympathisant) ? member : false;
         case this.filters[2]: //'non à jour':
-          return (member.season != '2024/2025' && !member.is_sympathisant) ? member : false;
+          return (member.season !== '2024/2025' && !member.is_sympathisant) ? member : false;
       }
       return member;
     });
@@ -123,6 +123,7 @@ export class MembersComponent implements OnInit {
       phone_one: licensee.phone_one,
       orga_license_name: licensee.orga_license_name ?? 'BCSTO',
       is_sympathisant: licensee.is_sympathisant ?? false,
+      has_account: member.has_account,
 
     }
     let is: { [key: string]: any } = member;
@@ -152,7 +153,8 @@ export class MembersComponent implements OnInit {
       email: licensee.email ?? '',
       phone_one: licensee.phone_one,
       orga_license_name: licensee.orga_license_name ?? 'BCSTO',
-      is_sympathisant: licensee.is_sympathisant ?? false
+      is_sympathisant: licensee.is_sympathisant ?? false,
+      has_account: false,
     }
 
   }

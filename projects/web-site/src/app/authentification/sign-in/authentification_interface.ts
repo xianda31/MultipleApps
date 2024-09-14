@@ -1,0 +1,1 @@
+export enum Process_flow { SIGN_IN, SIGN_UP, CONFIRM_SIGN_UP, FORGOT_PASSWORD, RESET_PASSWORD };

@@ -11,4 +11,5 @@ export interface Member {
     phone_one: string
     orga_license_name: string
     is_sympathisant: boolean
+    has_account: boolean
 }

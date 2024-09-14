@@ -8,6 +8,8 @@ import { HomePageComponent } from './pages/home-page/home-page.component';
 export const routes: Routes = [
     { path: 'home', component: HomePageComponent },
     { path: 'tournaments', component: TournamentsComponent },
+    { path: 'authentification', loadChildren: () => import('./authentification/authentification.module').then(m => m.AuthentificationModule) },
+    { path: '', redirectTo: 'home', pathMatch: 'full' },
     { path: '**', redirectTo: 'home' }
 ];
 
