@@ -3,11 +3,12 @@ import { confirmSignUp, signIn, signUp, signOut, AuthError, AuthUser, SignInInpu
 import { CognitoIdentityProviderClient, ExplicitAuthFlowsType, ListUsersCommand } from '@aws-sdk/client-cognito-identity-provider';
 import { BehaviorSubject, empty, Observable } from 'rxjs';
 import { AbstractControl, ValidationErrors } from '@angular/forms';
-import { ToastService } from '../../../../common/toaster/toast.service';
-import { Process_flow } from './sign-in/authentification_interface';
 import { Behavior } from 'aws-cdk-lib/aws-cloudfront';
-import { Member } from '../../../../common/members/member.interface';
 import { get } from 'aws-amplify/api';
+import { Process_flow } from './sign-in/authentification_interface';
+import { ToastService } from '../toaster/toast.service';
+import { Member } from '../members/member.interface';
+import { MembersService } from '../../admin-dashboard/src/app/members/service/members.service';
 
 @Injectable({
   providedIn: 'root'
@@ -20,6 +21,9 @@ export class AuthentificationService {
   private _whoAmI$: BehaviorSubject<Member | null> = new BehaviorSubject(this._whoAmI);
   constructor(
     private toastService: ToastService,
+    private membersService: MembersService,
+
+
 
   ) { }
 
@@ -34,6 +38,10 @@ export class AuthentificationService {
   set whoAmI(member: Member | null) {
     this._whoAmI = member;
     this._whoAmI$.next(this._whoAmI);
+  }
+
+  get whoAmI(): Member | null {
+    return this._whoAmI;
   }
 
   async signIn(email: string, password: string): Promise<any> {
@@ -52,7 +60,9 @@ export class AuthentificationService {
             switch (err.name) {
               case 'UserAlreadyAuthenticatedException':
                 let currentUser = await getCurrentUser();
-                console.log("current user", currentUser);
+                this._whoAmI = await this.membersService.getMemberByEmail(currentUser.signInDetails!.loginId!);
+                this._whoAmI$.next(this._whoAmI);
+                console.log("current member", this._whoAmI);
                 resolve({ isSignedIn: true, nextStep: null });
                 break;
               case 'NotAuthorizedException':

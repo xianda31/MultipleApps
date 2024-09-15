@@ -30,23 +30,35 @@
                             </ul>
                         </li>
                     </ng-container>
+
                     <li class="nav-item">
                         <a class="nav-link" routerLink="/tournaments">Tournois</a>
+                    </li>
+                </ul>
+                <ul *ngIf="whoAmI !== null" class="navbar-nav me-auto mb-2 mb-lg-0">
+
+                    <li class="nav-item align-content-center">
+                        <button routerLink="/authentification/sign-out"
+                            class="btn btn-outline-success align-items-center" type="button">
+                            <span class="ms-2">Logout</span>
+                        </button>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            {{whoAmI.firstname}}
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <li> <a class="dropdown-item" routerLink="/tournaments">Tournois</a></li>
+                            <li> <a class="dropdown-item" routerLink="/personal/data">Mes données</a></li>
+
+                        </ul>
                     </li>
                 </ul>
                 <a *ngIf="whoAmI === null" routerLink="/authentification">
                     <button class="btn btn-success align-items-center" type="button">
                         <i class="bi bi-person-fill"></i>
                         <span class="ms-2">Espace membre</span>
-                    </button>
-                </a>
-                <a *ngIf="whoAmI !== null">
-                    <button class="btn btn-success align-items-center" type="button">
-                        <span class="ms-2">Moi</span>
-                    </button>
-                    <button routerLink="/authentification/sign-out" class="btn btn-outline-success align-items-center"
-                        type="button">
-                        <span class="ms-2">Logout</span>
                     </button>
                 </a>
 
