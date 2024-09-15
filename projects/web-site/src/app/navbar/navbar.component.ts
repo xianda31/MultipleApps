@@ -4,9 +4,8 @@ import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { signOut } from 'aws-amplify/auth';
 import { Menu } from '../../../../common/menu.interface';
 import { ReplacePipe } from '../../../../common/pipes/replace.pipe';
-import { SignInComponent } from "../../../../common/authentification/sign-in/sign-in.component";
-import { AuthentificationModule } from '../../../../common/authentification/authentification.module';
 import { Member } from '../../../../common/members/member.interface';
+import { AuthentificationModule } from '../../../../common/authentification/authentification.module';
 import { AuthentificationService } from '../../../../common/authentification/authentification.service';
 
 
