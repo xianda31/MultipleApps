@@ -5,7 +5,7 @@ import { BehaviorSubject, empty, Observable } from 'rxjs';
 import { AbstractControl, ValidationErrors } from '@angular/forms';
 import { Behavior } from 'aws-cdk-lib/aws-cloudfront';
 import { get } from 'aws-amplify/api';
-import { Process_flow } from './sign-in/authentification_interface';
+import { Process_flow } from './authentification_interface';
 import { ToastService } from '../toaster/toast.service';
 import { Member } from '../members/member.interface';
 import { MembersService } from '../../admin-dashboard/src/app/members/service/members.service';
@@ -66,7 +66,7 @@ export class AuthentificationService {
                 resolve({ isSignedIn: true, nextStep: null });
                 break;
               case 'NotAuthorizedException':
-                this.toastService.showErrorToast('sign in', 'Incorrect username or password');
+                this.toastService.showErrorToast('identification', 'mail et ou mot de passe incorrect(s)');
                 reject(err);
                 break;
               default:
@@ -101,6 +101,7 @@ export class AuthentificationService {
         .then((res) => {
           this._mode = Process_flow.CONFIRM_SIGN_UP;
           this._mode$.next(this._mode);
+          this.toastService.showSuccessToast('création compte', 'un mail vous a été envoyé');
           resolve(res);
           //  this.sign_up_sent = true;
         });

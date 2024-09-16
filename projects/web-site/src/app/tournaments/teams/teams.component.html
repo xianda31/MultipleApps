@@ -1,32 +1,58 @@
-<form *ngIf="tournament" [formGroup]="newTeamGroup">
+<div class="card" *ngIf="teams">
+    <div class="card-header">
+        <h4 class="card-title">{{tournament.tournament_name}}</h4>
+        <i class="bi bi-x-circle-fill" (click)="exit()"></i>
+    </div>
     <div class="card-body">
         <table class="table table-borderless table-sm">
             <thead>
                 <tr>
-                    <!-- <th>#</th> -->
-                    <th class="col-6">Joueur 1</th>
-                    <th class="col-6">Joueur 2</th>
+                    <th class="col-2"></th>
+                    <th class="col-4"></th>
+                    <th class="col-4"></th>
+                    <th class="col-2"></th>
                 </tr>
             </thead>
             <tbody>
                 <tr *ngFor="let team of teams,let i=index">
+                    <td>{{i+1}}</td>
                     <td *ngFor="let player of team.players">
                         <!-- <span *ngIf="player.person.gender==1;else madame"> M. </span>
                         <ng-template #madame> Mme </ng-template> -->
                         {{player.person.firstname}}
                         {{player.person.lastname | uppercase}}
-                        <small>
-                        </small>
                     </td>
                     <td *ngIf="team.is_isolated_player" class="text-start align-content-center">
-                        <button class="btn btn-sm btn-primary" (click)="addTeam(team.players[0])">completer
+                        <button [disabled]="!whoAmI" class="btn btn-sm btn-primary"
+                            (click)="completeTeam(team.players[0])">completer
                             l'équipe</button>
                     </td>
+                    <td></td>
+                </tr>
+
+                <tr class="table-primary">
+                    <td class="align-content-center">{{teams.length + 1}}</td>
+                    <td class="align-content-center">
+                        {{whoAmI?.firstname}} {{whoAmI?.lastname}}
+                    </td>
+                    <td>
+                        <app-input-player listeId="player2" type="text" class="form-control " [formControl]="player2"
+                            required>
+                        </app-input-player>
+                    </td>
+                    <td>
+
+                        <button [disabled]="!whoAmI" class="btn btn-primary"
+                            (click)="subscribeWithPlayer2()">Inscription</button>
+                    </td>
+
                 </tr>
             </tbody>
         </table>
-        <button class="btn btn-primary" (click)="addTeam(null)">Inscription</button>
 
     </div>
+    <ng-template #add_team>
 
-</form>
+
+    </ng-template>
+</div>

@@ -49,13 +49,13 @@
                 </div>
             </div>
             <div class="col-md-6">
-                <!-- {{tournamentSelected | json}} -->
-                <p *ngIf="tournamentSelected">
-                    {{selectedTournament.tournament_name}}
-                    <!-- <button *ngIf="selectedTournament" class="btn btn-primary" (click)="onSignUp()">Inscription</button> -->
-                </p>
-                <div *ngIf="tournamentSelected" class="card" style="box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;">
-                    <app-teams [tournament]="selectedTournament"></app-teams>
+                <div *ngIf="tournamentSelected">
+                    <p>
+                        {{selectedTournament.tournament_name}}
+                    </p>
+                    <div class="card" style="box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;">
+                        <app-teams (subscribed)="done()" [tournament]="selectedTournament"></app-teams>
+                    </div>
                 </div>
             </div>
             <!-- <div class="col-md-3">

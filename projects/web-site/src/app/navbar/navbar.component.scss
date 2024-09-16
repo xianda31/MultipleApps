@@ -40,3 +40,13 @@
     max-inline-size: 150px;
     box-shadow: 3px 3px 4px rgba(0, 0, 0, 0.6);
 }
+
+// get dropdown menu to work  on hover
+.dropdown:hover>.dropdown-menu {
+    display: block;
+}
+
+.dropdown>.dropdown-toggle:active {
+    /*Without this, clicking will make it sticky*/
+    pointer-events: none;
+}

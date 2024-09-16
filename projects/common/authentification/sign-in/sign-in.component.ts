@@ -4,7 +4,7 @@ import { AbstractControl, FormControl, FormGroup, FormsModule, ReactiveFormsModu
 import { MembersService } from '../../../admin-dashboard/src/app/members/service/members.service';
 import { delay, from, map, Observable, of, switchMap, tap } from 'rxjs';
 import { ToastService } from '../../toaster/toast.service';
-import { Process_flow } from './authentification_interface';
+import { Process_flow } from '../authentification_interface';
 import { Router } from '@angular/router';
 import { AuthentificationService } from '../authentification.service';
 

@@ -77,5 +77,10 @@ export class TournamentsComponent {
 
   }
 
+  done() {
+    this.tournamentSelected = false;
+  }
+
+
 
 }

@@ -36,6 +36,9 @@ export class TournamentsComponent {
     this.tournaments = this.nextTournaments;
   }
 
+  done(subscribed: boolean) {
+    this.tournamentSelected = false;
+  }
 
   clickOnTournament(tournament: club_tournament) {
     if (this.tournamentSelected) {
