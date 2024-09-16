@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
-import { confirmSignUp, signIn, signUp, signOut, AuthError, SignInInput, getCurrentUser, SignUpOutput, resetPassword, confirmResetPassword } from 'aws-amplify/auth';
+import { confirmSignUp, signIn, signUp, signOut, AuthError, SignInInput, getCurrentUser, SignUpOutput, resetPassword, confirmResetPassword, fetchUserAttributes } from 'aws-amplify/auth';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Process_flow } from './authentification_interface';
 import { ToastService } from '../toaster/toast.service';
-import { Member } from '../members/member.interface';
 import { MembersService } from '../../admin-dashboard/src/app/members/service/members.service';
+import { Member } from '../members/member.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -13,54 +13,50 @@ export class AuthentificationService {
 
   private _mode: Process_flow = Process_flow.SIGN_IN;
   private _mode$: BehaviorSubject<Process_flow> = new BehaviorSubject(this._mode);
-  private _whoAmI: Member | null = null;
-  private _whoAmI$: BehaviorSubject<Member | null> = new BehaviorSubject(this._whoAmI);
+  private _logged_member: Member | null = null;
+  private _logged_member$: BehaviorSubject<Member | null> = new BehaviorSubject(this._logged_member);
   constructor(
     private toastService: ToastService,
-    private membersService: MembersService,
-
-
-
+    private memberService: MembersService
   ) { }
 
   get mode$(): Observable<Process_flow> {
     return this._mode$ as Observable<Process_flow>;
   }
 
-  get whoAmI$(): Observable<Member | null> {
-    return this._whoAmI$ as Observable<Member | null>;
+  get logged_member$(): Observable<Member | null> {
+    return this._logged_member$ as Observable<Member | null>;
   }
 
-  set whoAmI(member: Member | null) {
-    this._whoAmI = member;
-    this._whoAmI$.next(this._whoAmI);
-  }
+  // set logged_member(member: string | null) {
+  //   this._logged_member = member;
+  //   this._logged_member$.next(this._logged_member);
+  // }
 
-  get whoAmI(): Member | null {
-    return this._whoAmI;
+  // get logged_member(): string | null {
+  //   return this._logged_member;
+  // }
+
+  changeMode(mode: Process_flow) {
+    this._mode = mode;
+    this._mode$.next(this._mode);
   }
 
   async signIn(email: string, password: string): Promise<any> {
 
     let signInInput: SignInInput = { username: email, password: password };
-
     let promise = new Promise(async (resolve, reject) => {
       {
         try {
           let { isSignedIn, nextStep } = await signIn(signInInput);
-          // console.log("output", { isSignedIn, nextStep });
-          // this.toastService.showSuccessToast('sign in', 'success');
-          resolve({ isSignedIn, nextStep });
+          const attributes = await fetchUserAttributes();
+          let member_id = attributes['custom:member_id'];
+          this._logged_member = await this.memberService.readMember(member_id!);
+          this._logged_member$.next(this._logged_member);
+          resolve(member_id);
         } catch (err) {
           if (err instanceof AuthError) {
             switch (err.name) {
-              // case 'UserAlreadyAuthenticatedException':
-              //   let currentUser = await getCurrentUser();
-              //   this._whoAmI = await this.membersService.getMemberByEmail(currentUser.signInDetails!.loginId!);
-              //   this._whoAmI$.next(this._whoAmI);
-              //   console.log("current member", this._whoAmI);
-              //   resolve({ isSignedIn: true, nextStep: null });
-              //   break;
               case 'NotAuthorizedException':
                 this.toastService.showWarningToast('identification', 'mail ou mot de passe incorrect');
                 reject(err);
@@ -80,15 +76,19 @@ export class AuthentificationService {
     return promise;
   }
 
-  changeMode(mode: Process_flow) {
-    this._mode = mode;
-    this._mode$.next(this._mode);
-  }
 
-  async signUp(email: string, password: string): Promise<SignUpOutput> {
+  async signUp(email: string, password: string, member_id: string): Promise<SignUpOutput> {
 
     let promise = new Promise<SignUpOutput>((resolve, reject) => {
-      signUp({ username: email, password: password })
+      signUp({
+        username: email,
+        password: password,
+        options: {
+          userAttributes: {
+            "custom:member_id": member_id
+          }
+        }
+      })
         .catch((err) => {
           if (err instanceof AuthError) {
             switch (err.name) {
@@ -138,6 +138,8 @@ export class AuthentificationService {
           reject(err);
         })
         .then((res) => {
+          this._logged_member = null;
+          this._logged_member$.next(this._logged_member);
           // this.toastService.showSuccessToast('sign out', 'success');
           resolve(res);
         });
@@ -194,37 +196,30 @@ export class AuthentificationService {
           reject(err);
         });
     });
-
     return promise;
   }
 
+  async getCurrentUser(): Promise<any> {
+    let promise = new Promise((resolve, reject) => {
+      getCurrentUser()
+        .then(async (user) => {
+          // console.log('user', user);
 
+          const attributes = await fetchUserAttributes();
+          let member_id = attributes['custom:member_id'];
+          this._logged_member = await this.memberService.readMember(member_id!);
+          this._logged_member$.next(this._logged_member);
 
+          // console.log('current User', attributes, member_id);
+          resolve(member_id);
+        })
+        .catch((err) => {
+          // this.toastService.showErrorToast('get current user', err.message);
+          reject(err);
+        });
+    });
+    return promise;
+  }
 
-  // listGroup() {
-  //   const configuration = {
-  //     region: 'eu-west-3',
-  //     // ExplicitAuthFlows: [
-  //     //   ExplicitAuthFlowsType.ALLOW_ADMIN_USER_PASSWORD_AUTH,
-  //     // ]
-  //     // credentials: {
-  //     //   accessKeyId: '<YOUR_AwsAccessKey_HERE>',
-  //     //   secretAccessKey: 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
-  //     // }
-  //   };
-
-  //   const command = new ListUsersCommand({
-  //     UserPoolId: "eu-west-3_HjxM7NCLo",
-  //   });
-  //   const client = new CognitoIdentityProviderClient(configuration);
-
-  //   client.send(command).then((data) => {
-  //     console.log("data", data);
-  //   })
-  //     .catch((error) => {
-  //       console.error(error);
-  //     });
-
-  // }
 
 }

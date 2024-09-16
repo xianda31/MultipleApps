@@ -49,10 +49,22 @@ export class SignInComponent {
     this.mode$ = this.auth.mode$;
     this.mode$.subscribe((mode) => {
       this.mode = mode;
-    }
-    );
+    });
 
     this.email.setAsyncValidators(this.emailValidator);
+
+    // traiter le cas où l'utilisateur est déjà connecté
+    this.auth.getCurrentUser()
+      .then(async (member_id) => {
+        if (member_id) {
+          // console.log("member_id", member_id);
+          const me = await this.membersService.readMember(member_id);
+          // this.auth.whoAmI = me;
+          this.toastService.showSuccessToast('identification', 'Bonjour ' + me!.firstname);
+          this.router.navigate(['/']);
+        }
+      })
+    // .catch((err) => console.log("err", err));
   }
 
   emailValidator = (control: AbstractControl): Observable<ValidationErrors | null> => {
@@ -79,15 +91,15 @@ export class SignInComponent {
   async signIn() {
     if (this.loggerForm.invalid) return;
     try {
-      let { isSignedIn, nextStep } = await this.auth.signIn(this.email.value, this.password.value)
-      if (!isSignedIn) {
+      let member_id = await this.auth.signIn(this.email.value, this.password.value)
+      if (!member_id) {
         this.toastService.showErrorToast('sign in', 'erreur imprévue');
         return;
       }
-      const me = await this.membersService.getMemberByEmail(this.email.value);
-      this.auth.whoAmI = me;
-      this.router.navigate(['/']);
+      const me = await this.membersService.readMember(member_id);
+      // this.auth.whoAmI = me;
       this.toastService.showSuccessToast('identification', 'Bonjour ' + me!.firstname);
+      this.router.navigate(['/']);
 
     } catch (err: any) {
       console.log("sign in error", err);
@@ -101,7 +113,8 @@ export class SignInComponent {
   async signUp() {
 
     if (this.loggerForm.invalid) return;
-    await this.auth.signUp(this.email.value, this.password.value)
+    let member = await this.membersService.getMemberByEmail(this.email.value);
+    await this.auth.signUp(this.email.value, this.password.value, member!.id)
       // .catch((err) => this.toastService.showInfoToast('sign up', err.message))
       .then(({ isSignUpComplete, nextStep }) => {
         this.sign_up_sent = true;
@@ -110,8 +123,7 @@ export class SignInComponent {
 
   async confirmSignUp() {
     if (this.loggerForm.invalid) return;
-    await this.auth.confirmSignUp(this.email.value, this.loggerForm.get('sign_up_code')?.value
-    )
+    await this.auth.confirmSignUp(this.email.value, this.code.value)
       .then(({ isSignUpComplete, nextStep }) => {
         if (!isSignUpComplete) {
           this.toastService.showErrorToast('sign up', 'erreur imprévue');
@@ -140,7 +152,7 @@ export class SignInComponent {
     this.auth.resetPassword(this.email.value);
   }
 
-  newPassword() {
+  setPassword() {
     this.auth.newPassword(this.email.value, this.code.value, this.password.value);
   }
 
@@ -148,7 +160,4 @@ export class SignInComponent {
     this.auth.signOut();
   }
 
-  togglePasswordVisibility() {
-    this.show_password = !this.show_password;
-  }
 }

@@ -54,17 +54,12 @@
         <ng-template #confirm_reset_password>
             <div class="row mt-3">
                 <label> Renseignez le code envoyé par email : </label>
-                <input type="text" (keyup.enter)="newPassword()" class="form-control bg-primary text-white"
+                <input type="text" (keyup.enter)="setPassword()" class="form-control bg-outline-primary "
                     formControlName="code" placeholder="code reçu par mail">
             </div>
             <div class="row mt-5">
-                <button class="btn btn-success " type="button" (click)="newPassword()"
+                <button class="btn btn-success " type="button" (click)="setPassword()"
                     [disabled]="!loggerForm.valid">Nouveau mot de passe</button>
-            </div>
-            <div class="row mt-3">
-                <!-- <button class="btn btn-link" type="button" (click)="resetPassword()">Mot de passe oublié</button>
-                <button class="btn btn-link" type="button" (click)="signOut()">se déconnecter</button>
-                <button class="btn btn-link" type="button" (click)="goSignUp()">Créer un compte</button> -->
             </div>
 
         </ng-template>
@@ -86,8 +81,8 @@
         <ng-template #confirm_sign_up>
             <div class="row mt-3">
                 <label> Renseignez le code envoyé par email : </label>
-                <input type="text" (keyup.enter)="confirmSignUp()" class="form-control bg-primary text-white"
-                    formControlName="sign_up_code" placeholder="code reçu par mail">
+                <input type="text" (keyup.enter)="confirmSignUp()" class="form-control bg-outline-primary "
+                    formControlName="code" placeholder="code reçu par mail">
             </div>
         </ng-template>
 
@@ -110,7 +105,8 @@
                 <div class="input-group">
                     <input class="form-control me-2" autocomplete="password" (keyup.enter)="signIn()"
                         [type]="show_password?'text':'password'" id="password" formControlName="password">
-                    <i [class]="show_password?'bi bi-eye-slash':'bi bi-eye'" (click)="togglePasswordVisibility()"></i>
+                    <i [class]="show_password?'bi bi-eye-slash':'bi bi-eye'"
+                        (click)="show_password = !show_password"></i>
                 </div>
                 <span *ngIf="password.dirty && password.hasError('pattern')" class="text-danger">
                     complexité mot de passe insuffisante

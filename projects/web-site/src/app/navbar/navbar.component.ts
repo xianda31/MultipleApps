@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild } from '@angular/core';
+import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { signOut } from 'aws-amplify/auth';
@@ -7,6 +7,7 @@ import { ReplacePipe } from '../../../../common/pipes/replace.pipe';
 import { Member } from '../../../../common/members/member.interface';
 import { AuthentificationModule } from '../../../../common/authentification/authentification.module';
 import { AuthentificationService } from '../../../../common/authentification/authentification.service';
+import { MembersService } from '../../../../admin-dashboard/src/app/members/service/members.service';
 
 
 
@@ -18,15 +19,18 @@ import { AuthentificationService } from '../../../../common/authentification/aut
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.scss'
 })
-export class NavbarComponent {
+export class NavbarComponent implements OnInit {
   @Input() isSignedIn: boolean = false;
   @Input() siteMenus!: Menu[];
   whoAmI!: Member | null;
 
   constructor(
-    private auth: AuthentificationService
+    private auth: AuthentificationService,
+    private membersService: MembersService
   ) {
-    this.auth.whoAmI$.subscribe((member) => {
+  }
+  ngOnInit(): void {
+    this.auth.logged_member$.subscribe(async (member) => {
       this.whoAmI = member;
       // console.log(this.whoAmI);
     });

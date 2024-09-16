@@ -18,7 +18,6 @@ export class SignOutComponent implements OnInit {
   ) { }
   ngOnInit(): void {
     this.auth.signOut();
-    this.auth.whoAmI = null;
     this.router.navigate(['/']);
   }
 }

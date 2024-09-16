@@ -64,9 +64,9 @@ export class TeamsComponent implements OnInit {
       .then((data) => { this.teams = data!.teams; })
       .catch((error) => { console.log('TeamsComponent.ngOnInit', error); });
 
-    this.whoAmI = this.auth.whoAmI;
-    if (this.whoAmI) {
-    }
+    this.auth.logged_member$.subscribe((member) => {
+      this.whoAmI = member;
+    });
 
   }
   completeTeam(player: Player) {
