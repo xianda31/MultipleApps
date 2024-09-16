@@ -1,10 +1,6 @@
 import { Injectable } from '@angular/core';
-import { confirmSignUp, signIn, signUp, signOut, AuthError, AuthUser, SignInInput, getCurrentUser } from 'aws-amplify/auth';
-import { CognitoIdentityProviderClient, ExplicitAuthFlowsType, ListUsersCommand } from '@aws-sdk/client-cognito-identity-provider';
-import { BehaviorSubject, empty, Observable } from 'rxjs';
-import { AbstractControl, ValidationErrors } from '@angular/forms';
-import { Behavior } from 'aws-cdk-lib/aws-cloudfront';
-import { get } from 'aws-amplify/api';
+import { confirmSignUp, signIn, signUp, signOut, AuthError, SignInInput, getCurrentUser, SignUpOutput, resetPassword, confirmResetPassword } from 'aws-amplify/auth';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { Process_flow } from './authentification_interface';
 import { ToastService } from '../toaster/toast.service';
 import { Member } from '../members/member.interface';
@@ -58,15 +54,15 @@ export class AuthentificationService {
         } catch (err) {
           if (err instanceof AuthError) {
             switch (err.name) {
-              case 'UserAlreadyAuthenticatedException':
-                let currentUser = await getCurrentUser();
-                this._whoAmI = await this.membersService.getMemberByEmail(currentUser.signInDetails!.loginId!);
-                this._whoAmI$.next(this._whoAmI);
-                console.log("current member", this._whoAmI);
-                resolve({ isSignedIn: true, nextStep: null });
-                break;
+              // case 'UserAlreadyAuthenticatedException':
+              //   let currentUser = await getCurrentUser();
+              //   this._whoAmI = await this.membersService.getMemberByEmail(currentUser.signInDetails!.loginId!);
+              //   this._whoAmI$.next(this._whoAmI);
+              //   console.log("current member", this._whoAmI);
+              //   resolve({ isSignedIn: true, nextStep: null });
+              //   break;
               case 'NotAuthorizedException':
-                this.toastService.showErrorToast('identification', 'mail et ou mot de passe incorrect(s)');
+                this.toastService.showWarningToast('identification', 'mail ou mot de passe incorrect');
                 reject(err);
                 break;
               default:
@@ -89,21 +85,44 @@ export class AuthentificationService {
     this._mode$.next(this._mode);
   }
 
-  async signUp(email: string, password: string): Promise<any> {
+  async signUp(email: string, password: string): Promise<SignUpOutput> {
 
-    let promise = new Promise((resolve, reject) => {
-      console.log("sign up");
+    let promise = new Promise<SignUpOutput>((resolve, reject) => {
       signUp({ username: email, password: password })
         .catch((err) => {
-          this.toastService.showInfoToast('sign up', err.message);
+          if (err instanceof AuthError) {
+            switch (err.name) {
+              case 'UserAlreadyAuthenticatedException':
+                this.toastService.showInfoToast('sign up', 'vous êtes déjà inscrit');
+                break;
+              case 'UsernameExistsException':
+                this.toastService.showInfoToast('sign up', 'vous êtes déjà inscrit');
+                break;
+              case 'InvalidPasswordException':
+                this.toastService.showInfoToast('sign up', 'mot de passe non conforme');
+                break;
+              default:
+                this.toastService.showInfoToast('sign up', err.message);
+                break;
+            }
+          } else {
+            this.toastService.showInfoToast('sign up', err.message);
+          }
           reject(err);
         })
         .then((res) => {
-          this._mode = Process_flow.CONFIRM_SIGN_UP;
-          this._mode$.next(this._mode);
-          this.toastService.showSuccessToast('création compte', 'un mail vous a été envoyé');
-          resolve(res);
-          //  this.sign_up_sent = true;
+          if (res) {
+            let output = res as SignUpOutput;
+            if (output.nextStep.signUpStep === 'CONFIRM_SIGN_UP') {
+              this._mode = Process_flow.CONFIRM_SIGN_UP;
+              this._mode$.next(this._mode);
+              this.toastService.showSuccessToast('création compte', 'un mail vous a été envoyé');
+              resolve({ isSignUpComplete: res.isSignUpComplete, nextStep: res.nextStep });
+            } else {
+              this.toastService.showInfoToast('sign up', 'erreur imprévue');
+              reject(res);
+            }
+          }
         });
 
     });
@@ -126,6 +145,39 @@ export class AuthentificationService {
     return promise;
   }
 
+  async resetPassword(email: string): Promise<any> {
+    let promise = new Promise((resolve, reject) => {
+      resetPassword({ username: email })
+        .catch((err) => {
+          this.toastService.showErrorToast('reset password', err.message);
+          reject(err);
+        })
+        .then((res) => {
+          this.toastService.showSuccessToast('reset password', 'mot de passe réinitialisé');
+          this._mode = Process_flow.CONFIRM_RESET_PASSWORD;
+          this._mode$.next(this._mode);
+          resolve(res);
+        });
+    });
+    return promise;
+  }
+
+  async newPassword(email: string, code: string, password: string): Promise<any> {
+    let promise = new Promise((resolve, reject) => {
+      confirmResetPassword({ username: email, confirmationCode: code, newPassword: password })
+        .catch((err) => {
+          this.toastService.showErrorToast('new password', err.message);
+          reject(err);
+        })
+        .then((res) => {
+          this.toastService.showSuccessToast('new password', 'mot de passe réinitialisé');
+          this._mode = Process_flow.SIGN_IN;
+          this._mode$.next(this._mode);
+          resolve(res);
+        });
+    });
+    return promise;
+  }
 
   async confirmSignUp(email: string, code: string): Promise<any> {
     let promise = new Promise((resolve, reject) => {
