@@ -23,6 +23,7 @@ export class NavbarComponent implements OnInit {
   @Input() isSignedIn: boolean = false;
   @Input() siteMenus!: Menu[];
   whoAmI!: Member | null;
+  logged_in: boolean = false;
 
   constructor(
     private auth: AuthentificationService,
@@ -32,6 +33,7 @@ export class NavbarComponent implements OnInit {
   ngOnInit(): void {
     this.auth.logged_member$.subscribe(async (member) => {
       this.whoAmI = member;
+      if (this.whoAmI != null) this.logged_in = true;
       // console.log(this.whoAmI);
     });
   }
