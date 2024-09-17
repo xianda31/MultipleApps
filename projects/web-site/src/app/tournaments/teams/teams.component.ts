@@ -32,7 +32,7 @@ export class TeamsComponent implements OnInit {
   team_creation = false;
   whoAmI: Member | null = null;
 
-  player2: FormControl = new FormControl('', Validators.required);
+  player2: FormControl = new FormControl(null, Validators.required);
 
   // newTeamGroup: FormGroup = new FormGroup({
   //   player1: new FormControl('moi', Validators.required),

@@ -1,13 +1,13 @@
 import { CommonModule, DatePipe, formatDate } from '@angular/common';
 import { Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { club_tournament } from '../../../../common/ffb/interface/club_tournament.interface';
-import { FfbService } from '../../../../common/ffb/services/ffb.service';
-import { TeamsComponent } from './teams/teams.component';
-import { environment } from '../../environments/environment.development';
+import { club_tournament } from '../../../../../common/ffb/interface/club_tournament.interface';
+import { FfbService } from '../../../../../common/ffb/services/ffb.service';
+import { TeamsComponent } from '../teams/teams.component';
+import { environment } from '../../../environments/environment.development';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { TeamRegistrationComponent } from '../modals/team-registration/team-registration.component';
-import { ToastService } from '../../../../common/toaster/toast.service';
+import { TeamRegistrationComponent } from '../../modals/team-registration/team-registration.component';
+import { ToastService } from '../../../../../common/toaster/toast.service';
 
 @Component({
   selector: 'app-tournaments',
