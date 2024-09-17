@@ -32,7 +32,6 @@ export class HomePageComponent {
   }
 
   onFollow(article: any) {
-    console.log('onFollow', article);
     let page = this.pages.find((p) => p.id === article.pageId);
     if (!page) {
       console.error('article\'s page not found', article.pageId);

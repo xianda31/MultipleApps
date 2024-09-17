@@ -7,19 +7,30 @@
                 <input type="text" class="form-control bg-primary" id="link" formControlName="link">
             </div>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-7">
             <div class="row">
 
                 <div class="form-group">
-                    <label for="template">Modèle</label>
-                    <select type="text" class="form-control" id="template" formControlName="template">
-                        <option *ngFor="let value of templates_values" [value]="value">{{value}}</option>
-                    </select>
+                    <div class="row">
+                        <div class="col">
+                            <label for="template">Modèle</label>
+                            <select type="text" class="form-control" id="template" formControlName="template">
+                                <option *ngFor="let value of templates_values" [value]="value">{{value}}</option>
+                            </select>
+                        </div>
+                        <div class="col align-content-end">
+                            <div class=" form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch"
+                                    formControlName="member_only">
+                                <label class="form-check-label">Réservé aux membres</label>
+                            </div>
+                        </div>
+                        <div *ngIf="touched || dirty" class="col-2 align-content-end">
+                            <button class="btn btn-sm btn-primary" (click)="onSubmit()">Enregistrer</button>
+                        </div>
+                    </div>
                 </div>
 
-                <div *ngIf="touched || dirty" class="col-md-2 align-content-end">
-                    <button class="btn btn-sm btn-primary" (click)="onSubmit()">Enregistrer</button>
-                </div>
             </div>
         </div>
     </div>

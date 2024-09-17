@@ -37,7 +37,8 @@ export class PageComponent implements OnInit, OnChanges {
     menu: new FormControl<Menu | null>(null),
     link: new FormControl('', Validators.required),
     template: new FormControl('', Validators.required),
-    rank: new FormControl({ value: 0, disabled: true })
+    rank: new FormControl({ value: 0, disabled: true }),
+    member_only: new FormControl(false)
   });
 
   get touched() { return this.pageGroup.touched; }

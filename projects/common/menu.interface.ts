@@ -15,6 +15,7 @@ export interface Page {
     link: string;
     template: PageTemplateEnum;
     rank: number;
+    member_only: boolean;
     // title: string;
     articles?: Article[];
 }
@@ -32,7 +33,7 @@ export interface Article {
 
 export enum ArticleTemplateEnum {
     default = 'default',
-    event = 'event',
+    header = 'header',
     letter = 'letter',
     IDcard = 'IDcard-side'
     // imageTemplate = 'image',

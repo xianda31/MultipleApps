@@ -30,9 +30,11 @@
 
         <!-- page en mode par defaut -->
         <ng-container *ngSwitchCase="pageTemplateEnum.default">
-            <div *ngFor="let article of page.articles">
-                <app-render-article [rendering]="renderingMode.Full" *ngIf="article"
-                    [article]="article"></app-render-article>
+            <div class="row">
+                <div class="col-md-9 offset-1" *ngFor="let article of page.articles">
+                    <app-render-article [rendering]="renderingMode.Full" *ngIf="article"
+                        [article]="article"></app-render-article>
+                </div>
             </div>
         </ng-container>
     </ng-container>

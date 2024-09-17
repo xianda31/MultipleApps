@@ -83,7 +83,7 @@ export class LayoutComponent {
   }
 
   onAddPage(menu: Menu) {
-    let page: Page = { id: '', menuId: menu.id, rank: 0, link: 'new page', template: PageTemplateEnum.default };
+    let page: Page = { id: '', menuId: menu.id, rank: 0, link: 'new page', template: PageTemplateEnum.default, member_only: false };
 
     this.siteLayoutService.createPage(page);
   }

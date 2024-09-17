@@ -55,6 +55,7 @@ const schema = a.schema({
     link: a.string().required(),
     template: a.string(),
     rank: a.integer(),
+    member_only: a.boolean(),
     menuId: a.id(),
     menu: a.belongsTo('Menu', 'menuId'),
     articles: a.hasMany('Article', 'pageId'),

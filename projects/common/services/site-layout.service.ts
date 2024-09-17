@@ -90,7 +90,7 @@ export class SiteLayoutService {
 
   private pagesSubscription() {
     const client = generateClient<Schema>();
-    client.models.Page.observeQuery({ selectionSet: ["id", "menuId", "link", "template", "rank", "articles.*"] })
+    client.models.Page.observeQuery({ selectionSet: ["id", "menuId", "link", "template", "rank", "member_only", "articles.*"] })
       .subscribe({
         next: (data) => {
           // console.log('pages', data.items);
@@ -216,7 +216,7 @@ export class SiteLayoutService {
     return new Promise<any>(async (resolve, reject) => {
       const client = generateClient<Schema>();
       const { data: data, errors } = await client.models.Page.get(
-        { id: page_id }, { selectionSet: ["template", "articles.*"] }
+        { id: page_id }, { selectionSet: ["template", "member_only", "articles.*"] }
       );
       if (errors) { console.error(errors); reject(errors); }
       let page: Page = data as unknown as Page;
