@@ -34,7 +34,6 @@ export class NavbarComponent implements OnInit {
     this.auth.logged_member$.subscribe(async (member) => {
       this.whoAmI = member;
       if (this.whoAmI != null) this.logged_in = true;
-      // console.log(this.whoAmI);
     });
   }
 
