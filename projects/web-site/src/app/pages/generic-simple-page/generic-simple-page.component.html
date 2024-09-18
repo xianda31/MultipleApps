@@ -28,6 +28,17 @@
             </div>
         </ng-container>
 
+        <!-- page en mode album -->
+        <ng-container *ngSwitchCase="pageTemplateEnum.album">
+            <div class="row row-cols-2 row-cols-md-4 g-2">
+                <div class="col" *ngFor="let article of page.articles">
+
+                    <app-render-article [rendering]="renderingMode.Full" *ngIf="article"
+                        [article]="article"></app-render-article>
+                </div>
+            </div>
+        </ng-container>
+
         <!-- page en mode par defaut -->
         <ng-container *ngSwitchCase="pageTemplateEnum.default">
             <div class="row">

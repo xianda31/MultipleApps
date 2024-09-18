@@ -35,7 +35,8 @@ export enum ArticleTemplateEnum {
     default = 'default',
     header = 'header',
     letter = 'letter',
-    IDcard = 'IDcard-side'
+    IDcard = 'IDcard-side',
+    photo = 'photo',
     // imageTemplate = 'image',
     // videoTemplate = 'video',
     // audioTemplate = 'audio',
@@ -57,4 +58,5 @@ export enum PageTemplateEnum {
     default = 'default',
     sidebar = 'sidebar',
     par4 = 'par4',
+    album = 'album'
 }

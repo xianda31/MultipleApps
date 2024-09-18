@@ -29,7 +29,8 @@
                 </li>
             </ul>
             <ul>
-                <li> <i (click)="onAddPage(menu)" class="bi bi-plus-circle"></i> </li>
+                <li> <i (click)="onAddPage(menu)" (keypress.enter)="onAddPage(menu)" class="bi bi-plus-circle"></i>
+                </li>
             </ul>
 
         <li class="list-group-item m-1 w-75 bg-secondary text-dark border-1 border-secondary">
@@ -45,6 +46,6 @@
         </li>
     </ul>
 
-    <app-page *ngIf="selectedPage" [page]="selectedPage"></app-page>
+    <app-page *ngIf="selectedPage" [page]="selectedPage" (close)="selectedPage=null"></app-page>
 
 </div>

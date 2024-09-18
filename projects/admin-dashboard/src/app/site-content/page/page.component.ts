@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { Article, ArticleTemplateEnum, Menu, Page, PageTemplateEnum } from '../../../../../common/menu.interface';
@@ -11,6 +11,11 @@ import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-
 import { combineLatest, map, Observable } from 'rxjs';
 import { ArticleComponent } from '../article/article.component';
 import { a } from '@aws-amplify/backend';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { GetAlbumComponent } from '../../modals/get-album/get-album.component';
+import { S3 } from 'aws-cdk-lib/aws-ses-actions';
+import { S3Item } from '../../../../../common/file.interface';
+import { FileService } from '../../../../../common/services/files.service';
 
 
 @Component({
@@ -22,11 +27,20 @@ import { a } from '@aws-amplify/backend';
 })
 export class PageComponent implements OnInit, OnChanges {
 
+
+
   @Input() page!: Page;
+  @Output() close = new EventEmitter<void>();
   filtered_articles: Article[] = [];
-
-
   selectedArticle: Article | null = null;
+
+  path: string = '';
+  album_name: string = '';
+  S3Items: S3Item[] = [];
+  filteredItems: S3Item[] = [];
+  paths: string[] = [];
+  folders: Set<string> = new Set();
+
 
   templates = PageTemplateEnum;
   templates_values: string[] = Object.values(this.templates);
@@ -43,6 +57,12 @@ export class PageComponent implements OnInit, OnChanges {
 
   get touched() { return this.pageGroup.touched; }
   get dirty() { return this.pageGroup.dirty; }
+  get template() { return this.pageGroup.get('template')?.value; }
+
+  is_an_album(): boolean {
+    let bool = this.template === PageTemplateEnum.album;
+    return bool;
+  }
 
   filtered_articles$(page_id: string): Observable<Article[]> {
     return this.articlesService.articles$.pipe(
@@ -54,7 +74,11 @@ export class PageComponent implements OnInit, OnChanges {
   constructor(
     private siteLayoutService: SiteLayoutService,
     private articlesService: ArticlesService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private modalService: NgbModal,
+    private fileService: FileService
+
+
   ) { }
 
   ngOnInit(): void {
@@ -69,18 +93,65 @@ export class PageComponent implements OnInit, OnChanges {
     this.selectedArticle = null;
   }
 
-  onSubmit(): void {
+  album_auto_fill(): void {
+
+    this.listAlbums();
+    const modalRef = this.modalService.open(GetAlbumComponent, { centered: true });
+    modalRef.componentInstance.folders = this.folders;
+
+    modalRef.result.then((selected_folder: string) => {
+      if (selected_folder === null) return;
+      this.filteredItems = this.S3Items.filter((item) => item.path.startsWith(selected_folder));
+      console.log('selected folder', selected_folder, this.filteredItems);
+
+      this.filteredItems.forEach(async (s3item, index) => {
+        const article: Article = {
+          id: '',
+          title: 'photo album' + index,
+          template: ArticleTemplateEnum.photo,
+          content: 'photo album',
+          featured: false,
+          rank: index + 1,
+          pageId: this.page.id,
+          image: s3item.path
+        };
+        await this.articlesService.createArticle(article);
+        console.log('article created', article.title);
+      });
+    });
+    // console.log('Modal closed:', path);
+  }
+
+
+  listAlbums() {
+    this.S3Items = [];
+    this.fileService.list('albums/').then((data) => {
+      data.forEach((item) => {
+        if (item.size) {
+          this.S3Items.push(item);
+          let possibleFolder = item.path.split('/').slice(0, -1).join('/');
+          if (possibleFolder) this.folders.add(possibleFolder);
+        } else {
+          this.folders.add(item.path);
+        }
+      });
+      // this.S3Items.forEach((item) => item.url = this.fileService.getPresignedUrl(item.path));
+    });
+  }
+
+  onSavePage(): void {
     const page = this.pageGroup.getRawValue();
     delete page.menu;
     // console.log(page);
     this.updatePage(page);
   }
 
-  onDelete(pageId: string): void {
-    this.siteLayoutService.deletePage(pageId).then((deletedPage) => {
+  onDeletePage(): void {
+    this.siteLayoutService.deletePage(this.page.id).then((deletedPage) => {
     }).catch((error) => {
       console.error('page deletion error', error);
     });
+    this.close.emit();
   }
 
   onDeleteArticle(article: Article): void {
@@ -89,35 +160,9 @@ export class PageComponent implements OnInit, OnChanges {
       .catch((error) => {
         console.error('article deletion error', error);
       });
+    this.selectedArticle = null;
   }
 
-  // onSave() {
-  //   if (this.pageGroup.invalid) return;
-  //   // recuperation du menu retourné par input-menu , et ajout de son id dans le menuId 
-  //   //et suppression de la propriété menu pour coller au model de page
-  //   let menu = this.pageGroup.get('menu')?.value;
-  //   this.pageGroup.patchValue({ menuId: menu.id });
-  //   let page = this.pageGroup.getRawValue();
-  //   delete page.menu;
-
-  //   this.creation ? this.createPage(page) : this.updatePage(page);
-  //   this.onClear();
-  // }
-
-  // createPage(page: Page): void {
-  //   // mettre la nouvelle page en dernier rang
-  //   let menu = this.menus.find((m) => m.id === page.menuId);
-  //   if (!menu) {
-  //     console.error('menu not found for page', page);
-  //     return;
-  //   }
-  //   page.rank = menu.pages?.length + 1;
-
-  //   this.siteLayoutService.createPage(page).then((newPage) => {
-  //   }).catch((error) => {
-  //     console.error('page creation error', page, error);
-  //   });
-  // }
 
   onCreateArticle() {
     const newArticle: Article = {
@@ -129,13 +174,11 @@ export class PageComponent implements OnInit, OnChanges {
       rank: 0,
       pageId: this.page.id
     }
-
     this.articlesService.createArticle(newArticle).then((article) => {
       this.selectedArticle = article;
       this.toastService.showSuccessToast('edition layout', 'Nouvel article à renseigner');
       // console.log('new article', article);
     });
-
   }
 
   submitArticle(article: Article): void {

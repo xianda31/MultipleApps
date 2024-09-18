@@ -18,7 +18,7 @@ import { FormsModule } from '@angular/forms';
 })
 export class LayoutComponent {
   menus: Menu[] = [];
-  selectedPage!: Page;
+  selectedPage: Page | null = null;
   new_menu_label: string = '';
 
   constructor(

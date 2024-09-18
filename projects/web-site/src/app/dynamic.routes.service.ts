@@ -3,6 +3,7 @@ import { Router, Routes } from '@angular/router';
 import { SiteLayoutService } from '../../../common/services/site-layout.service';
 import { routes } from './app.routes';
 import { GenericSimplePageComponent } from './pages/generic-simple-page/generic-simple-page.component';
+import { loggedInGuard } from './guards/logged-in.guard';
 
 @Injectable()
 export class DynamicRoutesService {
@@ -18,7 +19,12 @@ export class DynamicRoutesService {
                     let addedRoutes: Routes = [];
                     menus.forEach((menu) => {
                         menu.pages?.forEach((page) => {
-                            addedRoutes.push({ path: page.link.replace(' ', '_'), component: GenericSimplePageComponent, data: { pageId: page.id } });
+                            addedRoutes.push({
+                                path: page.link.replace(' ', '_'),
+                                component: GenericSimplePageComponent,
+                                canActivate: page.member_only ? [loggedInGuard] : [],
+                                data: { pageId: page.id }
+                            });
                         });
                     });
                     const newRoutes: Routes = [...addedRoutes, ...routes];
