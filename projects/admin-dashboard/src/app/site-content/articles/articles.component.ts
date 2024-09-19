@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { SiteLayoutService } from '../../../../../common/services/site-layout.service';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArticleComponent } from "../article/article.component";
+import { ToastService } from '../../../../../common/toaster/toast.service';
 
 @Component({
   selector: 'app-articles',
@@ -21,6 +22,7 @@ export class ArticlesComponent {
   constructor(
     private articlesService: ArticlesService,
     private siteLayoutService: SiteLayoutService,
+    private toastService: ToastService,
   ) {
 
     this.articlesService.articles$.subscribe((articles) => {
@@ -39,6 +41,7 @@ export class ArticlesComponent {
   onPageSelect(article: Article) {
     this.articlesService.updateArticle(article)
       .then((article) => {
+        this.toastService.showSuccessToast('article', 'Article mis à jour');
         // console.log('article updated', article);
       })
       .catch((error) => {
@@ -48,25 +51,14 @@ export class ArticlesComponent {
   }
 
   onFeaturedSelect(article: Article) {
-    console.log('onFeaturedSelect', article.featured);
     this.articlesService.updateArticle(article)
       .then((article) => {
-        // console.log('article updated', article);
+        this.toastService.showSuccessToast('articles', 'Article mis à jour');
       })
       .catch((error) => {
-        // console.error('article update error', error);
+        console.error('article update error', error);
       });
   }
-  // onRankChange(article: Article) {
-  //   this.articlesService.updateArticle(article)
-  //     .then((article) => {
-  //       // console.log('article rank updated', article.rank);
-  //       // console.log('article updated', this.articles);
-  //     })
-  //     .catch((error) => {
-  //       // console.error('article update error', error);
-  //     });
-  // }
 
 
   onAdd() {
