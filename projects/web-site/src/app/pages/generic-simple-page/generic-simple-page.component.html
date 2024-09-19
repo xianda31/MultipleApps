@@ -1,7 +1,8 @@
 <div class="text-muted mb-4" *ngIf="path">{{path}}</div>
 <div *ngIf="page" class="container">
     <ng-container [ngSwitch]="page.template">
-        <!-- card en col-3 -->
+
+        <!-- x4 : card en col-3 -->
         <ng-container *ngSwitchCase="pageTemplateEnum.par4">
             <div class="row">
 

@@ -72,8 +72,8 @@ export class ArticlesComponent {
   onAdd() {
     const newArticle: Article = {
       id: '',
-      title: 'New Article',
-      content: 'Content goes here',
+      title: 'titre de l\'article',
+      content: 'contenu de l\'article (en HTML)',
       template: ArticleTemplateEnum.default,
       rank: 0,
       featured: false,

@@ -27,9 +27,9 @@ export class HomePageComponent {
     });
   }
 
-  hasFeaturedArticles(page: Page): boolean {
-    return page.articles ? page.articles.some((article) => article.featured) : false;
-  }
+  // hasFeaturedArticles(page: Page): boolean {
+  //   return page.articles ? page.articles.some((article) => article.featured) : false;
+  // }
 
   onFollow(article: any) {
     let page = this.pages.find((p) => p.id === article.pageId);

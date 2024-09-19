@@ -63,7 +63,7 @@ export class LayoutComponent {
     });
   }
 
-  onClick(page: Page) {
+  onSelectPage(page: Page) {
     this.selectedPage = page;
   }
 
