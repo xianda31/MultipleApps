@@ -10,6 +10,7 @@
                 [ngTemplateOutlet]="thumbnail_default"></ng-container>
             <ng-container *ngSwitchDefault [ngTemplateOutlet]="thumbnail_default"></ng-container>
         </ng-container>
+
         <ng-template #thumbnail_default>
             <div class="card h-100">
                 <div *ngIf="signedUrl">

@@ -5,7 +5,6 @@
         <!-- x4 : card en col-3 -->
         <ng-container *ngSwitchCase="pageTemplateEnum.par4">
             <div class="row">
-
                 <div class="col-md-3" *ngFor="let article of page.articles">
                     <app-render-article [rendering]="renderingMode.Full" *ngIf="article"
                         [article]="article"></app-render-article>
@@ -33,7 +32,6 @@
         <ng-container *ngSwitchCase="pageTemplateEnum.album">
             <div class="row row-cols-2 row-cols-md-4 g-2">
                 <div class="col" *ngFor="let article of page.articles">
-
                     <app-render-article [rendering]="renderingMode.Full" *ngIf="article"
                         [article]="article"></app-render-article>
                 </div>

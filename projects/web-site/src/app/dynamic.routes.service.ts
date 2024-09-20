@@ -20,7 +20,7 @@ export class DynamicRoutesService {
                     menus.forEach((menu) => {
                         menu.pages?.forEach((page) => {
                             addedRoutes.push({
-                                path: page.link.replace(' ', '_'),
+                                path: page.link.replace(' ', '-'),
                                 component: GenericSimplePageComponent,
                                 canActivate: page.member_only ? [loggedInGuard] : [],
                                 data: { pageId: page.id }
