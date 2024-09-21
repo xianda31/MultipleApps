@@ -33,7 +33,6 @@ export class AppComponent implements OnInit, OnDestroy {
     console.log('AppComponent ngOnInit');
     this.menus_subscription = this.siteLayoutService.getMenus().subscribe((menus) => {
       this.menus = menus;
-      console.log(this.menus);
     });
 
     registerLocaleData(localeFr);

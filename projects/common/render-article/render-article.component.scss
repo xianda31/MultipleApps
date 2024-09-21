@@ -21,19 +21,30 @@
     color: #064a14;
 }
 
-.thumbnail img {
-    width: 90px;
-    height: auto;
-    margin-right: 3px;
-    float: left
-}
+// .thumbnail img {
+//     width: 90px;
+//     height: auto;
+//     max-height: min-content;
+//     margin-right: 3px;
+//     float: left
+// }
 
-.thumbnail span {
-    display: block;
-    // align-items: self-start;
-    // justify-content: flex-start;
-    margin-right: 5px;
-}
+// .idcard_image {
+//     max-height: 200px;
+//     width: auto;
+// }
+
+// .thumbnail span {
+//     display: block;
+//     // align-items: self-start;
+//     // justify-content: flex-start;
+//     margin-right: 5px;
+// }
+
+// img {
+//     max-height: 850px;
+//     width: auto;
+// }
 
 .no-border {
     border: none;
@@ -48,10 +59,11 @@
     visibility: hidden;
 }
 
-.bigger_on_hover:hover {
-    transform: scale(1.05);
-}
-
 .show_on_hover:hover .masked {
     visibility: visible;
+
+}
+
+.bigger_on_hover:hover {
+    transform: scale(1.05);
 }

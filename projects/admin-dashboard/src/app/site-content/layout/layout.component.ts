@@ -27,14 +27,12 @@ export class LayoutComponent implements OnDestroy {
 
     this.layout_subscription = this.siteLayoutService.getLayout()
       .subscribe(({ menus, pages }) => {
-        console.log('layout', menus, pages);
         this.menus = menus;
       }
       );
 
   }
   ngOnDestroy(): void {
-    console.log('layout destroyed');
     this.layout_subscription.unsubscribe();
   }
 

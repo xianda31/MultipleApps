@@ -1,10 +1,6 @@
 <div class="container">
 
     <h5> Disposition des menus</h5>
-    <small class="" text-muted>
-        Ordre des menus et page/sous-menu par drag&drop ; Double-clic pour éditer une page/sous-menu
-    </small>
-
 
     <ul class="list-group list-group-horizontal " cdkDropList cdkDropListOrientation="horizontal"
         (cdkDropListDropped)="onDropMenu($event)">
@@ -45,6 +41,15 @@
             <!-- <input type="text" class="form-control" [(ngModel)]="newMenu" (keyup.enter)="onAddMenu()"> -->
         </li>
     </ul>
+
+    <div> <small class="text-muted">
+            drag&drop pour ordonner les menus entre eux , ou les pages/sous-menus d'un même menu
+        </small> </div>
+    <div> <small class="text-muted">
+            double-clic sur une page pour ouvrir et éditer la page et ses articles
+            page/sous-menu
+        </small> </div>
+
 
     <app-page *ngIf="selectedPage" [page]="selectedPage" (close)="page_event($event)"></app-page>
 

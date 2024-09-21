@@ -3,7 +3,7 @@
     <ng-container *ngSwitchCase="renderMode.Thumbnail">
         <ng-container [ngSwitch]=" article.template">
             <ng-container *ngSwitchCase="articleTemplateEnum.IDcard"
-                [ngTemplateOutlet]="thumbnail_default"></ng-container>
+                [ngTemplateOutlet]="thumbnail_IDcard"></ng-container>
             <ng-container *ngSwitchCase="articleTemplateEnum.header"
                 [ngTemplateOutlet]="thumbnail_default"></ng-container>
             <ng-container *ngSwitchCase="articleTemplateEnum.letter"
@@ -11,6 +11,31 @@
             <ng-container *ngSwitchDefault [ngTemplateOutlet]="thumbnail_default"></ng-container>
         </ng-container>
 
+        <ng-template #thumbnail_IDcard>
+            <div class="card h-100">
+                <div class="card-img-top" *ngIf="signedUrl">
+                    <div class="row g-0 justify-content-end">
+                        <div class="col-md-6">
+                            <img [src]="signedUrl | async" alt="Card image cap">
+                        </div>
+                        <div class="col-md-6  align-self-center ">
+                            <!-- <div class="d-flex  "> -->
+                            <div class="card-body text-center ">
+                                <h5 class="card-title ">{{article.title}}</h5>
+                                <span [innerHTML]="article.content | head"></span>
+                            </div>
+                            <!-- </div> -->
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <span [innerHTML]="article.content | trail"></span>
+                    </div>
+                </div>
+                <div (click)="onFollow(article)" class="card-footer">
+                    <small class=" text-uppercase">voir plus</small>
+                </div>
+            </div>
+        </ng-template>
         <ng-template #thumbnail_default>
             <div class="card h-100">
                 <div *ngIf="signedUrl">
@@ -29,6 +54,8 @@
         </ng-template>
     </ng-container>
 
+    <!-- </ng-container> -->
+
     <!-- mode "normal" ie Full   -->
     <ng-container *ngSwitchCase="renderMode.Full">
         <ng-container [ngSwitch]=" article.template">
@@ -42,24 +69,28 @@
 
         <!-- pleine page / article de type IDcard-side -->
         <ng-template #full_IDcard>
-            <div class="card h-100 nice_shadow bigger_on_hover">
+            <div class="card h-100 nice_shadow bigger_on_hover show_on_hover">
                 <div *ngIf="signedUrl" class="card-image-top">
                     <div class="row g-0">
-                        <div class="col-md-4  ">
+                        <div class="col-md-3  ">
                             <img class="img-fluid rounded-start w-100" [src]="signedUrl | async" [alt]="article.title">
                         </div>
-                        <div class="col-md-8">
-                            <div class="card-body">
-                                <h5 class="card-title mt-3">{{article.title}}</h5>
-                                <div class="card-text show_on_hover">
-                                    <span [innerHTML]="article.content | head "></span>
-                                    <h6 class=" masked lh-sm mt-2 fst-italic" [innerHTML]="article.content| trail ">
-                                    </h6>
-                                </div>
-
+                        <div class="col-md-9   ">
+                            <div class="card-body g-0">
+                                <h5>{{article.title}}</h5>
+                                <span [innerHTML]="article.content | head "></span>
+                                <small class=" masked fst-italic" [innerHTML]="article.content | trail "> </small>
                             </div>
+                            <!-- <div class=""> -->
+                            <!-- </div> -->
+                            <!-- <div class="card-text show_on_hover">
+                                    <p class=" masked lh-sm fst-italic" [innerHTML]="article.content| trail ">
+                                    </p>
+                                </div> -->
                         </div>
                     </div>
+
+
                 </div>
             </div>
         </ng-template>

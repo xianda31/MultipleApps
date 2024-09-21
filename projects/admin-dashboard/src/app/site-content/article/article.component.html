@@ -2,7 +2,7 @@
     <!-- <h5>Editeur d'article</h5> -->
 
     <div class="row">
-        <div class="col-4">
+        <div class="col-md-4">
             <h5>Paramètres article</h5>
             <form [formGroup]="articleForm">
                 <div class="form-group">
@@ -31,7 +31,7 @@
             <!-- {{articleForm.value | json}} -->
         </div>
 
-        <div class="col-8">
+        <div class=" col-md-6">
             <!-- <div class="form-check form-switch">
                 <input class="form-check-input" [(ngModel)]="featuredMode" type="checkbox" role="switch"
                     id="flexSwitchCheckChecked" checked>
@@ -40,14 +40,14 @@
                 </label>
             </div> -->
             <div class="row">
-                <div class="col-md-8">
+                <div class="col-md-6">
                     <h5> Vue page</h5>
                     <div class="card h-auto">
                         <app-render-article [rendering]="renderingMode.Full" *ngIf="article_in_progress"
                             [article]="article_in_progress"></app-render-article>
                     </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <h5>Vue vignette "en vedette"</h5>
                     <app-render-article [rendering]="renderingMode.Thumbnail" *ngIf="article_in_progress"
                         [article]="article_in_progress"></app-render-article>
