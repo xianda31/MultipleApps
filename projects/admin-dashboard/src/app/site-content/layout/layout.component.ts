@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { MenusComponent } from '../menus/menus.component';
 import { PagesComponent } from '../pages/pages.component';
 import { SiteLayoutService } from '../../../../../common/services/site-layout.service';
@@ -16,23 +16,28 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './layout.component.html',
   styleUrl: './layout.component.scss'
 })
-export class LayoutComponent {
-  menus: Menu[] = [];
+export class LayoutComponent implements OnDestroy {
+  menus!: Menu[];
+  layout_subscription: any;
   selectedPage: Page | null = null;
   new_menu_label: string = '';
 
   constructor(
     private siteLayoutService: SiteLayoutService) {
 
-    this.siteLayoutService.menus$
-      .subscribe((menus) => {
+    this.layout_subscription = this.siteLayoutService.getLayout()
+      .subscribe(({ menus, pages }) => {
+        console.log('layout', menus, pages);
         this.menus = menus;
-        this.menus = this.menus.map((menu) => {
-          menu.pages = menu.pages.sort((a, b) => a.rank - b.rank);
-          return menu;
-        });
-      });
+      }
+      );
+
   }
+  ngOnDestroy(): void {
+    console.log('layout destroyed');
+    this.layout_subscription.unsubscribe();
+  }
+
   onDropPage(menu: Menu, event: CdkDragDrop<string[]>) {
 
     if (event.previousContainer === event.container) {
@@ -53,6 +58,14 @@ export class LayoutComponent {
     }
   }
 
+  page_event(close: boolean) {
+    this.siteLayoutService.readMenu(this.selectedPage!.menuId).then((menu) => {
+      this.menus = this.menus.map((m) => m.id === menu.id ? menu : m);
+    });
+    if (close) {
+      this.selectedPage = null;
+    }
+  }
   onDropMenu(event: CdkDragDrop<string[]>) {
     moveItemInArray(this.menus, event.previousIndex, event.currentIndex);
     let rank = 0;

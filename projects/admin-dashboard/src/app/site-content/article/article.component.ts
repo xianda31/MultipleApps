@@ -1,15 +1,13 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { ArticlesService } from '../../../../../common/services/articles.service';
-import { Form, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Article, ArticleTemplateEnum } from '../../../../../common/menu.interface';
+import { Article, ArticleTemplateEnum, RenderingModeEnum } from '../../../../../common/menu.interface';
 import { RenderArticleComponent } from '../../../../../common/render-article/render-article.component';
 import { FileService } from '../../../../../common/services/files.service';
-import { Observable } from 'rxjs';
 import { S3Item } from '../../../../../common/file.interface'; // Import the S3item type from the appropriate module
 import { ToastService } from '../../../../../common/toaster/toast.service';
-import { RenderingMode } from '../../../../../common/render-article/render-article.interface';
 
 @Component({
   selector: 'app-article',
@@ -31,7 +29,7 @@ export class ArticleComponent implements OnChanges {
   templates_values: string[] = Object.values(this.templates);
 
   article_in_progress!: Article;
-  renderingMode = RenderingMode;
+  renderingMode = RenderingModeEnum;
 
   articleForm: FormGroup = new FormGroup({
     id: new FormControl(''),

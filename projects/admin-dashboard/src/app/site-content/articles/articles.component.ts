@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { ArticlesService } from '../../../../../common/services/articles.service';
 import { CommonModule } from '@angular/common';
 import { Article, Page, ArticleTemplateEnum } from '../../../../../common/menu.interface';
@@ -15,9 +15,12 @@ import { ToastService } from '../../../../../common/toaster/toast.service';
   templateUrl: './articles.component.html',
   styleUrl: './articles.component.scss'
 })
-export class ArticlesComponent {
+export class ArticlesComponent implements OnDestroy {
   articles: Article[] = [];
   pages: Page[] = [];
+  articles_subscription: any;
+  pages_subscription: any;
+
   articleToEdit: Article | null = null;
   constructor(
     private articlesService: ArticlesService,
@@ -25,17 +28,22 @@ export class ArticlesComponent {
     private toastService: ToastService,
   ) {
 
-    this.articlesService.articles$.subscribe((articles) => {
+    this.articles_subscription = this.articlesService.articles$.subscribe((articles) => {
       this.articles = articles
         .sort((a, b) => a.rank - b.rank)
         .sort((a, b) => a.pageId?.localeCompare(b.pageId || '') || 0);
       // console.log('articles', this.articles);
     });
 
-    this.siteLayoutService.pages$.subscribe((pages) => {
+    this.pages_subscription = this.siteLayoutService.getPages().subscribe((pages) => {
       this.pages = pages;
+      // console.log('pages', this.pages);
     });
 
+  }
+  ngOnDestroy(): void {
+    this.articles_subscription.unsubscribe();
+    this.pages_subscription.unsubscribe();
   }
 
   onPageSelect(article: Article) {
@@ -84,8 +92,6 @@ export class ArticlesComponent {
 
   onEdit(article: Article) {
     this.articleToEdit = article;
-    // this.router.navigate(['/article', article.id]);
-
   }
 
   onDone() {

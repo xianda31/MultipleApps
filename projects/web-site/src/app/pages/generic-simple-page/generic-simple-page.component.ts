@@ -1,11 +1,9 @@
 import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { SiteLayoutService } from '../../../../../common/services/site-layout.service';
-import { Article, PageTemplateEnum, Page } from '../../../../../common/menu.interface';
+import { Article, PageTemplateEnum, Page, RenderingModeEnum } from '../../../../../common/menu.interface';
 import { CommonModule } from '@angular/common';
 import { RenderArticleComponent } from '../../../../../common/render-article/render-article.component';
-import { ArticlesService } from '../../../../../common/services/articles.service';
-import { RenderingMode } from '../../../../../common/render-article/render-article.interface';
 
 @Component({
   selector: 'app-generic-simple-page',
@@ -18,7 +16,7 @@ export class GenericSimplePageComponent {
   path!: string;
   page!: Page;
   articles: Article[] = [];
-  renderingMode = RenderingMode;
+  renderingMode = RenderingModeEnum;
   pageTemplateEnum = PageTemplateEnum;
   default_article !: Article;
   constructor(

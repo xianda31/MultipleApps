@@ -37,21 +37,6 @@ export enum ArticleTemplateEnum {
     letter = 'letter',
     IDcard = 'IDcard-side',
     photo = 'photo',
-    // imageTemplate = 'image',
-    // videoTemplate = 'video',
-    // audioTemplate = 'audio',
-    // galleryTemplate = 'gallery',
-    // tabsTemplate = 'tabs',
-    // listTemplate = 'list',
-    // tableTemplate = 'table',
-    // formTemplate = 'form',
-    // chartTemplate = 'chart',
-    // calendarTemplate = 'calendar',
-    // faqTemplate = 'faq',
-    // blogTemplate = 'blog',
-    // newsTemplate = 'news',
-    // productTemplate = 'product',
-    // socialTemplate = 'social',
 }
 
 export enum PageTemplateEnum {
@@ -60,3 +45,10 @@ export enum PageTemplateEnum {
     par4 = 'par4',
     album = 'album'
 }
+
+export enum RenderingModeEnum {
+    Full = 'Full',
+    Thumbnail = 'Thumbnail',
+    Image_and_title = 'Image and title',
+
+} 

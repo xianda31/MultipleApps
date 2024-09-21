@@ -10,7 +10,7 @@
         <ng-container *ngFor="let article of page.articles">
             <div *ngIf="article.featured" class="col-md-4">
                 <h5>{{page.link | uppercase}}</h5>
-                <app-render-article [rendering]="renderMode.Thumbnail" (follow)="onFollow(article)"
+                <app-render-article [rendering]="renderingModeEnum.Thumbnail" (follow)="onFollow(article)"
                     [article]="article"></app-render-article>
             </div>
         </ng-container>

@@ -1,9 +1,8 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
-import { Article, ArticleTemplateEnum } from '../../common/menu.interface';
+import { Article, ArticleTemplateEnum, RenderingModeEnum } from '../../common/menu.interface';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { ReplacePipe } from '../pipes/replace.pipe';
 import { FileService } from '../services/files.service';
-import { RenderingMode } from './render-article.interface';
 import { HeadPipe } from '../pipes/trail.pipe';
 import { TrailPipe } from '../pipes/head.pipe';
 
@@ -16,10 +15,10 @@ import { TrailPipe } from '../pipes/head.pipe';
 })
 export class RenderArticleComponent implements OnChanges {
   @Input() article!: Article;
-  @Input() rendering: RenderingMode = RenderingMode.Full;
+  @Input() rendering: RenderingModeEnum = RenderingModeEnum.Full;
   @Output() follow = new EventEmitter<Article>();
   articleTemplateEnum = ArticleTemplateEnum;
-  renderMode = RenderingMode;
+  renderMode = RenderingModeEnum;
 
   signedUrl!: Promise<URL>
 

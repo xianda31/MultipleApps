@@ -38,11 +38,17 @@ export class PagesComponent {
   constructor(
     private siteLayoutService: SiteLayoutService
   ) {
-    this.siteLayoutService.layout$.subscribe(([menus, pages]) => {
-      this.menus = menus;
+    this.siteLayoutService.getPages().subscribe((pages) => {
       this.pages = pages;
-      this.layout_loaded = true;
     });
+    this.siteLayoutService.getMenus().subscribe((menus) => {
+      this.menus = menus;
+    });
+    // this.siteLayoutService.layout$.subscribe(([menus, pages]) => {
+    //   this.menus = menus;
+    //   this.pages = pages;
+    //   this.layout_loaded = true;
+    // });
 
   }
 
@@ -63,8 +69,8 @@ export class PagesComponent {
     this.creation = false;
   }
 
-  onDelete(pageId: string): void {
-    this.siteLayoutService.deletePage(pageId).then((deletedPage) => {
+  onDelete(page: Page): void {
+    this.siteLayoutService.deletePage(page).then((deletedPage) => {
     }).catch((error) => {
       console.error('page deletion error', error);
     });

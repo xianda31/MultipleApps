@@ -14,7 +14,7 @@ export class DynamicRoutesService {
     initRoutes() {
         // console.log('initRoutes');
         return new Promise<Routes>((resolve, reject) => {
-            this.siteLayoutService.menus$.subscribe((menus) => {
+            this.siteLayoutService.getMenus().subscribe((menus) => {
                 if (menus.length !== 0) {
                     let addedRoutes: Routes = [];
                     menus.forEach((menu) => {

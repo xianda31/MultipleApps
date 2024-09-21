@@ -38,11 +38,11 @@ export class TestComponent {
     private toastService: ToastService,
     private modalService: NgbModal
   ) {
-    this.siteLayoutService.layout$.subscribe(([menus, pages]) => {
-      this.menus = menus;
-      this.pages = pages;
+    // this.siteLayoutService.layout$.subscribe(([menus, pages]) => {
+    //   this.menus = menus;
+    //   this.pages = pages;
 
-    });
+    // });
 
 
     console.log(environment.season);

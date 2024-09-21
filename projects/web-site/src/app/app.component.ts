@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router, RouterOutlet, Routes } from '@angular/router';
 import { NavbarComponent } from "./navbar/navbar.component";
 
@@ -17,26 +17,27 @@ import { ToasterComponent } from '../../../common/toaster/components/toaster/toa
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
-export class AppComponent {
+export class AppComponent implements OnInit, OnDestroy {
   title = 'web-site';
-  menus: Menu[] = [];
+  menus!: Menu[];
+  menus_subscription: any;
 
   constructor(
     private siteLayoutService: SiteLayoutService,
-  ) {
+  ) { }
 
-    this.siteLayoutService.menus$.subscribe((menus) => {
+  ngOnDestroy(): void {
+    this.menus_subscription.unsubscribe();
+  }
+  ngOnInit(): void {
+    console.log('AppComponent ngOnInit');
+    this.menus_subscription = this.siteLayoutService.getMenus().subscribe((menus) => {
       this.menus = menus;
-      this.menus = this.menus.map((menu) => {
-        menu.pages = menu.pages.sort((a, b) => a.rank - b.rank);
-        return menu;
-      });
-      this.loaded = true;
+      console.log(this.menus);
     });
 
     registerLocaleData(localeFr);
   }
-  loaded = false;
 
 
 

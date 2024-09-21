@@ -30,7 +30,7 @@ export class PageComponent implements OnInit, OnChanges {
 
 
   @Input() page!: Page;
-  @Output() close = new EventEmitter<void>();
+  @Output() close = new EventEmitter<boolean>();
   filtered_articles: Article[] = [];
   selectedArticle: Article | null = null;
 
@@ -144,14 +144,16 @@ export class PageComponent implements OnInit, OnChanges {
     delete page.menu;
     // console.log(page);
     this.updatePage(page);
+    this.close.emit(false);
+
   }
 
   onDeletePage(): void {
-    this.siteLayoutService.deletePage(this.page.id).then((deletedPage) => {
+    this.siteLayoutService.deletePage(this.page).then((deletedPage) => {
     }).catch((error) => {
       console.error('page deletion error', error);
     });
-    this.close.emit();
+    this.close.emit(true);
   }
 
   onDeleteArticle(article: Article): void {

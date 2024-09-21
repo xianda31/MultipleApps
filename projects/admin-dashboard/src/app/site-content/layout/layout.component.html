@@ -13,13 +13,13 @@
             *ngFor="let menu of menus">
             <div class="row">
                 <div class="col fw-bold">
-
                     {{menu.label}}
                 </div>
                 <div class="col text-end">
                     <i (click)="onDeleteMenu(menu)" class="bi bi-trash3"></i>
                 </div>
             </div>
+
             <div *cdkDragPreview> <i class="fa fa-bars"></i> </div>
             <ul cdkDropList cdkDropListOrientation="vertical" (cdkDropListDropped)="onDropPage(menu,$event)">
                 <li cdkDrag *ngFor="let page of menu.pages" (dblclick)="onSelectPage(page)"> {{page.link}}
@@ -46,6 +46,6 @@
         </li>
     </ul>
 
-    <app-page *ngIf="selectedPage" [page]="selectedPage" (close)="selectedPage=null"></app-page>
+    <app-page *ngIf="selectedPage" [page]="selectedPage" (close)="page_event($event)"></app-page>
 
 </div>

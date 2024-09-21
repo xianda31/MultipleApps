@@ -25,7 +25,7 @@ export class MenusComponent {
 
   constructor(
     private siteLayoutService: SiteLayoutService) {
-    this.siteLayoutService.menus$.subscribe((menus) => {
+    this.siteLayoutService.getMenus().subscribe((menus) => {
       this.menus = menus;
     });
   }

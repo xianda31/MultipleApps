@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { RenderingMode } from '../../../../common/render-article/render-article.interface';
+import { RenderingModeEnum } from '../../../../common/menu.interface';
 
 @Component({
   selector: 'app-home-page',
@@ -12,7 +12,7 @@ import { RenderingMode } from '../../../../common/render-article/render-article.
   styleUrl: './home-page.component.scss'
 })
 export class HomePageComponent {
-  renderMode = RenderingMode;
+  renderMode = RenderingModeEnum;
 
 
   topics: {

@@ -1,11 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { SiteLayoutService } from '../../../../../common/services/site-layout.service';
-import { Article, Page } from '../../../../../common/menu.interface';
+import { Article, Page, RenderingModeEnum } from '../../../../../common/menu.interface';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { RenderArticleComponent } from '../../../../../common/render-article/render-article.component';
 import { Router } from '@angular/router';
-import { RenderingMode } from '../../../../../common/render-article/render-article.interface';
 
 @Component({
   selector: 'app-home-page',
@@ -14,22 +13,22 @@ import { RenderingMode } from '../../../../../common/render-article/render-artic
   templateUrl: './home-page.component.html',
   styleUrl: './home-page.component.scss'
 })
-export class HomePageComponent {
+export class HomePageComponent implements OnDestroy {
   pages !: Page[];
-  renderMode = RenderingMode;
+  pages_subscription!: any;
+  renderingModeEnum = RenderingModeEnum;
   constructor(
     private siteLayoutService: SiteLayoutService,
     private router: Router
   ) {
-    this.siteLayoutService.pages$.subscribe((pages) => {
+    this.pages_subscription = this.siteLayoutService.getPages().subscribe((pages) => {
       this.pages = pages;
-      // console.log('HomePageComponent.pages', this.pages);
     });
   }
+  ngOnDestroy(): void {
+    this.pages_subscription.unsubscribe();
+  }
 
-  // hasFeaturedArticles(page: Page): boolean {
-  //   return page.articles ? page.articles.some((article) => article.featured) : false;
-  // }
 
   onFollow(article: Article) {
     let page = this.pages.find((p) => p.id === article.pageId);

@@ -7,7 +7,6 @@ import { ReplacePipe } from '../../../../common/pipes/replace.pipe';
 import { Member } from '../../../../common/members/member.interface';
 import { AuthentificationModule } from '../../../../common/authentification/authentification.module';
 import { AuthentificationService } from '../../../../common/authentification/authentification.service';
-import { MembersService } from '../../../../admin-dashboard/src/app/members/service/members.service';
 
 
 
@@ -27,7 +26,6 @@ export class NavbarComponent implements OnInit {
 
   constructor(
     private auth: AuthentificationService,
-    private membersService: MembersService
   ) {
   }
   ngOnInit(): void {
