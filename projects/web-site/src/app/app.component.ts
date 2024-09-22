@@ -1,8 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Router, RouterOutlet, Routes } from '@angular/router';
+import { RouterOutlet } from '@angular/router';
 import { NavbarComponent } from "./navbar/navbar.component";
 
-import { GenericSimplePageComponent } from './pages/generic-simple-page/generic-simple-page.component';
 import { CommonModule, registerLocaleData } from '@angular/common';
 import { Menu } from '../../../common/menu.interface';
 import { SiteLayoutService } from '../../../common/services/site-layout.service';

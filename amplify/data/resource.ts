@@ -3,11 +3,24 @@ import { last } from 'rxjs';
 
 const schema = a.schema({
 
-  Administrator: a.model({
-    email: a.string(),
-    username: a.string(),
+  Product: a.model({
+    name: a.string().required(),
+    description: a.string().required(),
+    price: a.float().array().required(),
+    category: a.string().required(),
+    active: a.boolean().required(),
   })
     .authorization((allow) => [allow.publicApiKey()]),
+
+
+  // Order: a.model({
+  //   order_number: a.id().required(),
+  //   order_date: a.string().required(),
+  //   member_id: a.id().required(),
+  //   member: a.belongsTo('Member', 'member_id'),
+  // })
+  //   .authorization((allow) => [allow.publicApiKey()]),
+
 
   Member: a.model({
     license_number: a.id().required(),
@@ -25,18 +38,6 @@ const schema = a.schema({
   })
     .authorization((allow) => [allow.publicApiKey()]),
 
-  Configuration: a.model({
-    site: a.json(),
-  })
-    .authorization((allow) => [allow.publicApiKey()]),
-
-  // PageArticle: a.model({
-  //   articleId: a.id(),
-  //   pageId: a.id(),
-  //   article: a.belongsTo('Article', 'articleId'),
-  //   page: a.belongsTo('Page', 'pageId'),
-  // })
-  //   .authorization((allow) => [allow.publicApiKey()]),
 
   Article: a.model({
     title: a.string().required(),
@@ -61,7 +62,6 @@ const schema = a.schema({
     articles: a.hasMany('Article', 'pageId'),
   })
     .authorization((allow) => [allow.publicApiKey()]),
-
 
 
   Menu: a.model({

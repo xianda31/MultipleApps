@@ -1,7 +1,6 @@
 
 import { Routes } from '@angular/router';
 import { AuthComponent } from './auth/auth.component';
-import { AdminsComponent } from './admins/admins.component';
 import { LicenseesComponent } from './licensees/licensees.component';
 import { TournamentsComponent } from './tournaments/tournaments/tournaments.component';
 import { MembersComponent } from './members/members.component';
@@ -17,7 +16,6 @@ import { AlbumsComponent } from './site-content/albums/albums.component';
 export const routes: Routes = [
     { path: 'tournaments', component: TournamentsComponent },
     { path: 'auth', component: AuthComponent },
-    { path: 'admins', component: AdminsComponent },
     { path: 'licensees', component: LicenseesComponent },
     { path: 'members', component: MembersComponent },
     { path: 'home', component: HomePageComponent },
@@ -27,6 +25,7 @@ export const routes: Routes = [
     { path: 'test', component: TestComponent },
     { path: 'imagemgr', component: ImageMgrComponent },
     { path: 'albums', component: AlbumsComponent },
+    { path: 'sales', loadChildren: () => import('./sales/sales.module').then(m => m.SalesModule) },
     { path: '**', redirectTo: '/home' },
     { path: '', redirectTo: '/home', pathMatch: 'full' }
 ];

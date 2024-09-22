@@ -34,9 +34,16 @@
                     </ul>
                 </li>
 
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown1" role="button"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                        Vente
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown1">
+                        <li><a class="dropdown-item  " [routerLink]="['/sales/price_list']">liste des prix</a></li>
+                        <li><a class="dropdown-item" href="#">Autres</a></li>
 
-                <li class="nav-item">
-                    <a class="nav-link" href="#">Vente</a>
+                    </ul>
                 </li>
 
                 <li class="nav-item">
@@ -58,7 +65,7 @@
                     </ul>
                 </li>
 
-                <li class="nav-item dropdown">
+                <!-- <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" id="navbarDropdown3" role="button" data-bs-toggle="dropdown"
                         aria-expanded="false">
                         Utilitaires
@@ -67,7 +74,7 @@
                         <li><a class="dropdown-item" href="#">Base des photos</a></li>
                         <li><a class="dropdown-item" href="#">Blog</a></li>
                     </ul>
-                </li>
+                </li> -->
             </ul>
             <form class="d-flex">
                 <input class="form-control me-2" type="mail" placeholder="Mail" aria-label="Mail">
