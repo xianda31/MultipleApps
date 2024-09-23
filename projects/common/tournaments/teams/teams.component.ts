@@ -1,17 +1,15 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { CommonModule, UpperCasePipe } from '@angular/common';
-import { Form, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Person, Player } from '../../../../../common/ffb/interface/tournament_teams.interface';
-import { FfbService } from '../../../../../common/ffb/services/ffb.service';
-import { Team, TournamentTeams } from '../../../../../common/ffb/interface/tournament_teams.interface';
-import { InputPlayerComponent } from '../../../../../common/ffb/input-player/input-player.component';
+import { FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Player } from '../../ffb/interface/tournament_teams.interface';
+import { FfbService } from '../../ffb/services/ffb.service';
+import { Team } from '../../ffb/interface/tournament_teams.interface';
+import { InputPlayerComponent } from '../../ffb/input-player/input-player.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { TeamRegistrationComponent } from '../../modals/team-registration/team-registration.component';
-import { ToastService } from '../../../../../common/toaster/toast.service';
-import { club_tournament } from '../../../../../common/ffb/interface/club_tournament.interface';
-import { Authorization } from 'aws-cdk-lib/aws-events';
-import { AuthentificationService } from '../../../../../common/authentification/authentification.service';
-import { Member } from '../../../../../common/members/member.interface';
+import { ToastService } from '../../toaster/toast.service';
+import { club_tournament } from '../../ffb/interface/club_tournament.interface';
+import { AuthentificationService } from '../../authentification/authentification.service';
+import { Member } from '../../members/member.interface';
 
 
 // interface LicensePair { player1: string, player2: string }

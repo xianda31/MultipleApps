@@ -1,8 +1,9 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TournamentsComponent } from './tournaments.component';
-import { TournamentComponent } from '../tournament/tournament.component';
+import { TournamentsComponent } from './tournaments/tournaments.component';
+import { TournamentComponent } from './tournament/tournament.component';
 import { RouterModule, Routes } from '@angular/router';
+import { WrapperComponent } from './wrapper/wrapper.component';
 
 const routes: Routes = [
   {

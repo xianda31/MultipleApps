@@ -1,13 +1,13 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ToastService } from '../../../../../common/toaster/toast.service';
-import { AuthentificationService } from '../../../../../common/authentification/authentification.service';
-import { FfbService } from '../../../../../common/ffb/services/ffb.service';
-import { Player, Team, TournamentTeams } from '../../../../../common/ffb/interface/tournament_teams.interface';
-import { Member } from '../../../../../common/members/member.interface';
+import { ToastService } from '../../toaster/toast.service';
+import { AuthentificationService } from '../../authentification/authentification.service';
+import { FfbService } from '../../ffb/services/ffb.service';
+import { Player, Team, TournamentTeams } from '../../ffb/interface/tournament_teams.interface';
+import { Member } from '../../members/member.interface';
 import { FormControl, Validators, Form, FormsModule, ReactiveFormsModule, ValidationErrors, AbstractControl } from '@angular/forms';
 import { CommonModule, UpperCasePipe } from '@angular/common';
-import { InputPlayerComponent } from '../../../../../common/ffb/input-player/input-player.component';
+import { InputPlayerComponent } from '../../ffb/input-player/input-player.component';
 import { BehaviorSubject, combineLatest, from, map, Observable, of, switchMap } from 'rxjs';
 
 @Component({

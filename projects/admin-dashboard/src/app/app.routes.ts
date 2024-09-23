@@ -2,7 +2,6 @@
 import { Routes } from '@angular/router';
 import { AuthComponent } from './auth/auth.component';
 import { LicenseesComponent } from './licensees/licensees.component';
-import { TournamentsComponent } from './tournaments/tournaments/tournaments.component';
 import { MembersComponent } from './members/members.component';
 import { HomePageComponent } from './home-page/home-page.component';
 // import { SysConfComponent } from './sys-conf/sys-conf.component';
@@ -12,7 +11,6 @@ import { ArticleComponent } from './site-content/article/article.component';
 import { TestComponent } from './site-content/files/test/test.component';
 import { ImageMgrComponent } from './site-content/files/image-mgr/image-mgr.component';
 import { AlbumsComponent } from './site-content/albums/albums.component';
-import { TournamentsModule } from '../../../web-site/src/app/tournaments/tournaments/tournaments.module';
 
 export const routes: Routes = [
     { path: 'auth', component: AuthComponent },
@@ -26,8 +24,11 @@ export const routes: Routes = [
     { path: 'imagemgr', component: ImageMgrComponent },
     { path: 'albums', component: AlbumsComponent },
     { path: 'sales', loadChildren: () => import('./sales/sales.module').then(m => m.SalesModule) },
-    // { path: 'tournaments', component: TournamentsComponent },
-    { path: 'tournaments', loadChildren: () => import('../../../web-site/src/app/tournaments/tournaments/tournaments.module').then(m => m.TournamentsModule) },
+    {
+        path: 'tournaments',
+        data: { app: 'admin-dashboard' },
+        loadChildren: () => import('../../../common/tournaments/tournaments.module').then(m => m.TournamentsModule)
+    },
 
     { path: '**', redirectTo: '/home' },
     { path: '', redirectTo: '/home', pathMatch: 'full' }

@@ -1,13 +1,11 @@
 import { CommonModule, DatePipe, formatDate } from '@angular/common';
 import { Component } from '@angular/core';
-import { RouterModule } from '@angular/router';
-import { club_tournament } from '../../../../../common/ffb/interface/club_tournament.interface';
-import { FfbService } from '../../../../../common/ffb/services/ffb.service';
+import { ActivatedRoute, RouterModule } from '@angular/router';
+import { club_tournament } from '../../ffb/interface/club_tournament.interface';
+import { FfbService } from '../../ffb/services/ffb.service';
 import { TeamsComponent } from '../teams/teams.component';
-import { environment } from '../../../environments/environment.development';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { TeamRegistrationComponent } from '../../modals/team-registration/team-registration.component';
-import { ToastService } from '../../../../../common/toaster/toast.service';
+import { environment } from '../../../web-site/src/environments/environment.development';
+import { ToastService } from '../../toaster/toast.service';
 
 @Component({
   selector: 'app-tournaments',
@@ -31,10 +29,18 @@ export class TournamentsComponent {
 
   constructor(
     private ffbService: FfbService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private router: ActivatedRoute,
+
 
   ) { }
   async ngOnInit(): Promise<void> {
+    this.router.data.subscribe(async data => {
+      console.log('ngOnInit', data);
+      let { app } = data;
+      this.app = app;
+    });
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     this.nextTournaments = await this.ffbService.getTournaments();

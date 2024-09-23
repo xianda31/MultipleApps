@@ -1,59 +1,58 @@
-<!-- <ng-container *ngIf="app === 'web-site';then web_site else admin_dashboard">
-</ng-container> -->
+<ng-container *ngIf="app === 'admin-dashboard';then admin_dashboard  else web_site ">
+</ng-container>
 
 
-<!-- <ng-template #web_site> -->
-
-<h5> Les prochains tournois de régularité ouverts à l'inscription</h5>
-<div class="container pt-3">
-    <div class="row">
-        <div class="col-md-4">
-            <div class="card my-1" *ngFor="let t of tournaments" [routerLink]="['/tournaments',t.id]" [queryParams]="{
+<ng-template #web_site>
+    <h5> Les prochains tournois de régularité ouverts à l'inscription</h5>
+    <div class="container pt-3">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card my-1" *ngFor="let t of tournaments" [routerLink]="['/tournaments',t.id]" [queryParams]="{
                     team_tournament_id: t.team_tournament_id,
                     tournament_name : t.tournament_name,
                     }">
-                <div [class]="tournamentClass(t.tournament_name).card"
-                    style="box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;">
-                    <span class="stamp">
-                        <i [class]="tournamentClass(t.tournament_name).icon"></i>
-                    </span>
-                    <div class="card-body">
-                        <div class="card-title">
-                            <div class="row text-center">
-                                <h6>{{t.date }} &nbsp;{{t.time}}</h6>
+                    <div [class]="tournamentClass(t.tournament_name).card"
+                        style="box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;">
+                        <span class="stamp">
+                            <i [class]="tournamentClass(t.tournament_name).icon"></i>
+                        </span>
+                        <div class="card-body">
+                            <div class="card-title">
+                                <div class="row text-center">
+                                    <h6>{{t.date }} &nbsp;{{t.time}}</h6>
+                                </div>
                             </div>
-                        </div>
-                        <div class="row">
-                            <div class="col">
-                                <small>
-                                    {{((t.nbr_inscrit-t.nbr_inscrit%2)/2)}} paire(s) inscrite(s)
-                                </small>
+                            <div class="row">
+                                <div class="col">
+                                    <small>
+                                        {{((t.nbr_inscrit-t.nbr_inscrit%2)/2)}} paire(s) inscrite(s)
+                                    </small>
 
-                            </div>
-                            <div class="col">
-                                <!-- <div class="row"> -->
-                                <small *ngIf="t.has_isolated_player">
-                                    <i class="bi bi-person-arms-up"> </i>
-                                    <span class="text-info-emphasis">cherche partenaire </span>
-                                </small>
-                                <!-- </div> -->
+                                </div>
+                                <div class="col">
+                                    <!-- <div class="row"> -->
+                                    <small *ngIf="t.has_isolated_player">
+                                        <i class="bi bi-person-arms-up"> </i>
+                                        <span class="text-info-emphasis">cherche partenaire </span>
+                                    </small>
+                                    <!-- </div> -->
 
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+            <div class="col-md-8">
+                <router-outlet></router-outlet>
+            </div>
         </div>
-        <div class="col-md-8">
-            <router-outlet></router-outlet>
-        </div>
+
+
     </div>
+</ng-template>
 
-
-</div>
-<!-- </ng-template> -->
-
-<!-- <ng-template #admin_dashboard>
+<ng-template #admin_dashboard>
     <div class="p-2 col-12 col-md-10 mx-auto">
 
         <div class="card">
@@ -102,4 +101,4 @@
             </div>
         </div>
     </div>
-</ng-template> -->
+</ng-template>
