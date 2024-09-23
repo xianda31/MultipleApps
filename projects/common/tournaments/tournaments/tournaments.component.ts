@@ -1,11 +1,12 @@
 import { CommonModule, DatePipe, formatDate } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { club_tournament } from '../../ffb/interface/club_tournament.interface';
 import { FfbService } from '../../ffb/services/ffb.service';
 import { TeamsComponent } from '../teams/teams.component';
 import { environment } from '../../../web-site/src/environments/environment.development';
 import { ToastService } from '../../toaster/toast.service';
+import { TournamentService } from '../../services/tournament.service';
 
 @Component({
   selector: 'app-tournaments',
@@ -14,12 +15,15 @@ import { ToastService } from '../../toaster/toast.service';
   templateUrl: './tournaments.component.html',
   styleUrl: './tournaments.component.scss'
 })
-export class TournamentsComponent {
+export class TournamentsComponent implements OnInit, OnDestroy {
 
   app: string = environment.app;
 
-  nextTournaments!: club_tournament[];
-  tournaments: club_tournament[] = [];
+  // nextTournaments!: club_tournament[];
+  all_tournaments!: club_tournament[];
+  next_tournaments!: club_tournament[];
+  tournaments!: club_tournament[];
+  tournaments_subscription: any;
 
   tournamentSelected = false;
   selectedTournament!: club_tournament;
@@ -31,28 +35,50 @@ export class TournamentsComponent {
     private ffbService: FfbService,
     private toastService: ToastService,
     private router: ActivatedRoute,
+    private tournamentService: TournamentService
 
 
   ) { }
-  async ngOnInit(): Promise<void> {
+
+
+  ngOnDestroy(): void {
+    this.tournaments_subscription.unsubscribe();
+  }
+
+
+  ngOnInit(): void {
     this.router.data.subscribe(async data => {
-      console.log('ngOnInit', data);
+      // console.log('ngOnInit', data);
       let { app } = data;
       this.app = app;
     });
 
+    this.tournaments_subscription = this.tournamentService.listTournaments().subscribe((all_tournaments: club_tournament[]) => {
+      this.all_tournaments = all_tournaments;
+      this.next_tournaments = this.filter_next_tournaments();
+      this.tournaments = this.next_tournaments;
+    });
+
+    // const today = new Date();
+    // today.setHours(0, 0, 0, 0);
+    // this.nextTournaments = await this.ffbService.getTournaments();
+
+    // this.nextTournaments = this.nextTournaments.filter((tournament: club_tournament) => {
+    //   return new Date(tournament.date) >= today;
+    // });
+    // this.nextTournaments.forEach((tournament: club_tournament) => {
+    //   tournament.date = formatDate(tournament.date, 'EEEE d MMMM', 'fr-FR');
+    //   tournament.time = tournament.time.split(':').slice(0, 2).join(':');
+    // }
+    // );
+
+    // this.tournaments = this.nextTournaments;
+  }
+
+  filter_next_tournaments(): club_tournament[] {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    this.nextTournaments = await this.ffbService.getTournaments();
-    this.nextTournaments = this.nextTournaments.filter((tournament: club_tournament) => {
-      return new Date(tournament.date) >= today;
-    });
-    this.nextTournaments.forEach((tournament: club_tournament) => {
-      tournament.date = formatDate(tournament.date, 'EEEE d MMMM', 'fr-FR');
-      tournament.time = tournament.time.split(':').slice(0, 2).join(':');
-    }
-    );
-    this.tournaments = this.nextTournaments;
+    return this.all_tournaments.filter((t) => new Date(t.date) >= today);
   }
 
   tournamentClass(name: string): { card: string, icon: string } {
@@ -79,7 +105,7 @@ export class TournamentsComponent {
 
   closeTournament() {
     this.tournamentSelected = false;
-    this.tournaments = this.nextTournaments;
+    this.tournaments = this.next_tournaments;
 
   }
 

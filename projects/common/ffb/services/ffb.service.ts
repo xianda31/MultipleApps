@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
 import { del, get, post } from 'aws-amplify/api';
-import { club_tournament } from '../interface/club_tournament.interface';
+import { club_tournament, Tournament } from '../interface/club_tournament.interface';
 import { FFB_licensee } from '../interface/licensee.interface';
 import { FFBplayer } from '../interface/FFBplayer.interface';
 import { TournamentTeams } from '../interface/tournament_teams.interface';
+import { from, Observable } from 'rxjs';
 @Injectable({
   providedIn: 'root'
 })
@@ -56,6 +57,17 @@ export class FfbService {
       console.log('GET call failed: ', error);
       return [];
     }
+  }
+  _getTournaments(): Observable<Tournament[]> {
+    const restOperation = get({
+      apiName: 'myHttpApi',
+      path: 'v1/organizations/1438/club_tournament',
+    });
+
+    return from((async () => {
+      const response = await restOperation.response;
+      return response.body.json() as unknown as Tournament[];
+    })());
   }
 
   async getTournaments(): Promise<club_tournament[]> {

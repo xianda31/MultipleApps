@@ -1,3 +1,6 @@
+
+export interface Tournament extends club_tournament { }
+
 export interface club_tournament {
     id: number
     organization_id: number
