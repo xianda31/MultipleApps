@@ -29,7 +29,6 @@ export class AppComponent implements OnInit, OnDestroy {
     this.menus_subscription.unsubscribe();
   }
   ngOnInit(): void {
-    console.log('AppComponent ngOnInit');
     this.menus_subscription = this.siteLayoutService.getMenus().subscribe((menus) => {
       this.menus = menus;
     });

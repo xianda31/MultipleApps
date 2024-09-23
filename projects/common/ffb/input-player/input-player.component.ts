@@ -1,7 +1,7 @@
 import { Component, forwardRef, Input } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR, ReactiveFormsModule } from '@angular/forms';
 import { FFBplayer } from '../interface/FFBplayer.interface';
-import { FfbService } from '../services/ffb.service';
+import { FFB_proxyService } from '../services/ffb.service';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -29,7 +29,7 @@ export class InputPlayerComponent implements ControlValueAccessor {
   disabled = false;
 
   constructor(
-    private ffbService: FfbService
+    private ffbService: FFB_proxyService
   ) { }
 
   writeValue(input: any): void {

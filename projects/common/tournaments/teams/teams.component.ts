@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { CommonModule, UpperCasePipe } from '@angular/common';
 import { FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Player } from '../../ffb/interface/tournament_teams.interface';
-import { FfbService } from '../../ffb/services/ffb.service';
+import { FFB_proxyService } from '../../ffb/services/ffb.service';
 import { Team } from '../../ffb/interface/tournament_teams.interface';
 import { InputPlayerComponent } from '../../ffb/input-player/input-player.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -42,7 +42,7 @@ export class TeamsComponent implements OnInit {
 
   // tournament !: TournamentTeams;
   constructor(
-    private ffbService: FfbService,
+    private ffbService: FFB_proxyService,
     private modalService: NgbModal,
     private toastService: ToastService,
     private auth: AuthentificationService

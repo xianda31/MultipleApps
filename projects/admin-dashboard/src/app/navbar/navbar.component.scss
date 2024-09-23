@@ -6,3 +6,13 @@
 .top-bar a {
     color: #666666;
 }
+
+// get dropdown menu to work  on hover
+.dropdown:hover>.dropdown-menu {
+    display: block;
+}
+
+.dropdown>.dropdown-toggle:active {
+    /*Without this, clicking will make it sticky*/
+    pointer-events: none;
+}

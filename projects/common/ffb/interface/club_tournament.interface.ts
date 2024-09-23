@@ -60,7 +60,7 @@ export interface club_tournament {
     simultaneous_moment: any
     simultaneous_code: any
     simultaneous_tournament_id: any
-    team_tournament_id: number
+    team_tournament_id: string //number
     nbr_inscrit: number
     has_isolated_player: boolean
     paid_amount: number

@@ -3,8 +3,6 @@ import { CommonModule } from '@angular/common';
 import { TournamentsComponent } from './tournaments/tournaments.component';
 import { TournamentComponent } from './tournament/tournament.component';
 import { RouterModule, Routes } from '@angular/router';
-import { WrapperComponent } from './wrapper/wrapper.component';
-import { FfbService } from '../ffb/services/ffb.service';
 
 const routes: Routes = [
   {
@@ -12,7 +10,7 @@ const routes: Routes = [
     component: TournamentsComponent,
     children: [
       { path: ':id', component: TournamentComponent },
-      { path: 'log', component: TournamentComponent }
+      // { path: 'log', component: TournamentComponent }
     ]
   }
 ]

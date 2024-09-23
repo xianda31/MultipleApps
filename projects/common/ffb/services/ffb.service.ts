@@ -8,7 +8,7 @@ import { from, Observable } from 'rxjs';
 @Injectable({
   providedIn: 'root'
 })
-export class FfbService {
+export class FFB_proxyService {
 
   constructor() { }
 
@@ -70,22 +70,22 @@ export class FfbService {
     })());
   }
 
-  async getTournaments(): Promise<club_tournament[]> {
-    try {
-      const restOperation = get({
-        apiName: 'myHttpApi',
-        path: 'v1/organizations/1438/club_tournament',
-      });
-      const { body } = await restOperation.response;
-      // console.log('GET call succeeded: ', await body.text());
-      const data = await body.json();
-      const data2 = data as unknown as club_tournament[];
-      return data2;
-    } catch (error) {
-      console.log('GET call failed: ', error);
-      return [];
-    }
-  }
+  // async getTournaments(): Promise<club_tournament[]> {
+  //   try {
+  //     const restOperation = get({
+  //       apiName: 'myHttpApi',
+  //       path: 'v1/organizations/1438/club_tournament',
+  //     });
+  //     const { body } = await restOperation.response;
+  //     // console.log('GET call succeeded: ', await body.text());
+  //     const data = await body.json();
+  //     const data2 = data as unknown as club_tournament[];
+  //     return data2;
+  //   } catch (error) {
+  //     console.log('GET call failed: ', error);
+  //     return [];
+  //   }
+  // }
 
   async getAdherents(): Promise<FFB_licensee[]> {
     try {
@@ -154,14 +154,14 @@ export class FfbService {
     }
   }
 
-  async getTournamentTeams(id: number): Promise<TournamentTeams> {
+  async getTournamentTeams(id: string): Promise<TournamentTeams> {
     // console.log('getTournamentTeams id:', id);
     let promise: Promise<TournamentTeams> = new Promise(async (resolve, reject) => {
       try {
         const restOperation = get({
           apiName: 'myHttpApi',
           path: 'v1/organizations/1438/tournament',
-          options: { queryParams: { id: id.toString() } }
+          options: { queryParams: { id: id } }
         });
         const { body } = await restOperation.response;
         const json = await body.json();

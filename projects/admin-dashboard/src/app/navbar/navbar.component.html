@@ -13,7 +13,9 @@
 
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <div class="container">
-        <a class="navbar-brand" routerLink="/home">BCSTO</a>
+        <a class="navbar-brand" routerLink="/home">
+            <i class="fs-4 bi-house"></i> <span class="ms-1 d-none d-sm-inline">Home</span>
+        </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
             aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -24,7 +26,8 @@
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown1" role="button"
                         data-bs-toggle="dropdown" aria-expanded="false">
-                        Adhérents
+                        <i class="fs-4 bi-people"></i> <span class="ms-1 d-none d-sm-inline">Adhérents</span>
+
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdown1">
                         <li><a class="dropdown-item  " [routerLink]="['/licensees']">base FFB</a></li>
@@ -37,7 +40,7 @@
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown1" role="button"
                         data-bs-toggle="dropdown" aria-expanded="false">
-                        Vente
+                        <i class="fs-4 bi-table"></i> <span class="ms-1 d-none d-sm-inline">Achats</span>
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdown1">
                         <li><a class="dropdown-item  " [routerLink]="['/sales/products']">catalogue produits</a></li>
@@ -49,7 +52,7 @@
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown1" role="button"
                         data-bs-toggle="dropdown" aria-expanded="false">
-                        Tournois
+                        <i class="fs-4 bi-grid"></i> <span class="ms-1 d-none d-sm-inline">Tournois</span>
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdown1">
                         <li><a class="dropdown-item  " routerLink="/tournaments">les prochains</a></li>
@@ -62,7 +65,8 @@
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" id="navbarDropdown3" role="button" data-bs-toggle="dropdown"
                         aria-expanded="false">
-                        Site web
+                        <i class="fs-4 bi-cloud"></i> <span class="ms-1 d-none d-sm-inline">Site web</span>
+
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdown3">
                         <li><a class="dropdown-item" routerLink="/layout">Menus & pages</a></li>
