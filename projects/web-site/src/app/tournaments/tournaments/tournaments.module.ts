@@ -4,12 +4,14 @@ import { TournamentsComponent } from './tournaments.component';
 import { TournamentComponent } from '../tournament/tournament.component';
 import { RouterModule, Routes } from '@angular/router';
 
-const Routes: Routes = [
+const routes: Routes = [
   {
     path: '',
     component: TournamentsComponent,
     children: [
-      { path: ':id', component: TournamentComponent }]
+      { path: ':id', component: TournamentComponent },
+      { path: 'log', component: TournamentComponent }
+    ]
   }
 ]
 
@@ -18,7 +20,7 @@ const Routes: Routes = [
     CommonModule,
     TournamentsComponent,
     TournamentComponent,
-    RouterModule.forChild(Routes)
+    RouterModule.forChild(routes)
   ],
   exports: [
     TournamentsComponent

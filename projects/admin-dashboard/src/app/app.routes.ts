@@ -12,9 +12,9 @@ import { ArticleComponent } from './site-content/article/article.component';
 import { TestComponent } from './site-content/files/test/test.component';
 import { ImageMgrComponent } from './site-content/files/image-mgr/image-mgr.component';
 import { AlbumsComponent } from './site-content/albums/albums.component';
+import { TournamentsModule } from '../../../web-site/src/app/tournaments/tournaments/tournaments.module';
 
 export const routes: Routes = [
-    { path: 'tournaments', component: TournamentsComponent },
     { path: 'auth', component: AuthComponent },
     { path: 'licensees', component: LicenseesComponent },
     { path: 'members', component: MembersComponent },
@@ -26,6 +26,9 @@ export const routes: Routes = [
     { path: 'imagemgr', component: ImageMgrComponent },
     { path: 'albums', component: AlbumsComponent },
     { path: 'sales', loadChildren: () => import('./sales/sales.module').then(m => m.SalesModule) },
+    // { path: 'tournaments', component: TournamentsComponent },
+    { path: 'tournaments', loadChildren: () => import('../../../web-site/src/app/tournaments/tournaments/tournaments.module').then(m => m.TournamentsModule) },
+
     { path: '**', redirectTo: '/home' },
     { path: '', redirectTo: '/home', pathMatch: 'full' }
 ];

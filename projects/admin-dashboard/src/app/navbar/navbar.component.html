@@ -40,8 +40,20 @@
                         Vente
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdown1">
-                        <li><a class="dropdown-item  " [routerLink]="['/sales/price_list']">liste des prix</a></li>
-                        <li><a class="dropdown-item" href="#">Autres</a></li>
+                        <li><a class="dropdown-item  " [routerLink]="['/sales/products']">catalogue produits</a></li>
+                        <li><a class="dropdown-item">Autres</a></li>
+
+                    </ul>
+                </li>
+
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown1" role="button"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                        Tournois
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown1">
+                        <li><a class="dropdown-item  " routerLink="/tournaments">les prochains</a></li>
+                        <li><a class="dropdown-item  " routerLink="/tournaments/log">historique</a></li>
 
                     </ul>
                 </li>

@@ -5,4 +5,6 @@ export interface Product {
     price: [number];
     category: string;
     active: boolean;
+    // createdAt?: any;
+    // updatedAt?: any;
 }

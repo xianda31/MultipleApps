@@ -2,18 +2,24 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, Routes } from '@angular/router';
 import { ProductsComponent } from './products/products.component';
+import { ReactiveFormsModule, Form, FormsModule } from '@angular/forms';
 
 const routes: Routes = [
-  { path: 'price_list', component: ProductsComponent },
+  { path: 'products', component: ProductsComponent },
 ];
 
 @NgModule({
-  declarations: [],
   imports: [
     CommonModule,
-    RouterModule.forChild(routes)
-    // RouterModule.forChild(routes)
+    FormsModule,
+    ReactiveFormsModule,
+    RouterModule.forChild(routes),
+
   ],
-  exports: [RouterModule]
+  declarations: [ProductsComponent],
+
+  providers: [SalesModule],
+
+  exports: [ProductsComponent]
 })
 export class SalesModule { }
