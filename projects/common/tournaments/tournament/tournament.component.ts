@@ -46,11 +46,23 @@ export class TournamentComponent implements OnInit {
       this.tournament_name = params['tournament_name'];
 
       console.log('subscribing to id', this.team_tournament_id);
+
       this.TournamentService.getTeams(this.team_tournament_id).subscribe((tteams) => {
         this.teams = tteams.teams;
-      }
 
-      )
+      });
+
+      this.auth.logged_member$.subscribe((member) => {
+        this.whoAmI = member;
+        if (this.whoAmI == null) {
+          this.subscription_authorized = false;
+          console.log('oups ! on ne devrait pas être là');
+        } else {
+          this.subscription_authorized = !this.has_subscribed(Number(this.whoAmI.license_number));
+        }
+        // console.log('logged member', this.whoAmI);
+      });
+
       // let tournament_teams$: Observable<TournamentTeams> = from(this.ffbService.getTournamentTeams(this.team_tournament_id));
 
       // combineLatest([this.team_update$, this.auth.logged_member$]).pipe(
