@@ -36,8 +36,8 @@ export class ProductsComponent implements OnInit, OnDestroy {
       description: new FormControl('', Validators.required),
       price: new FormControl('', [Validators.required, Validators.min(0)]),
       category: new FormControl('', Validators.required),
-      double_ownership: new FormControl<boolean>(false),
-      active: new FormControl<boolean>(true),
+      double_ownership: new FormControl<boolean>(false, { nonNullable: true }),
+      active: new FormControl<boolean>(true, { nonNullable: true }),
       color: new FormControl('', Validators.required),
     });
 
