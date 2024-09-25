@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { generateClient, get } from 'aws-amplify/api';
-import { BehaviorSubject, generate, Observable } from 'rxjs';
+import { BehaviorSubject, from, generate, Observable } from 'rxjs';
 import { Schema } from '../../../../../../amplify/data/resource';
 import { Member } from '../../../../../common/members/member.interface';
 
@@ -8,34 +8,32 @@ import { Member } from '../../../../../common/members/member.interface';
   providedIn: 'root'
 })
 export class MembersService {
-  private _members: Member[] = [];
+  private _members!: Member[];
   private _members$: BehaviorSubject<Member[]> = new BehaviorSubject(this._members);
-  private call: number = 1;
 
   constructor() {
-    this.getMembers().then((members) => {
-      this._members = members;
-      this._members$.next(this._members);
-    });
+    // this.getMembers().then((members) => {
+    //   this._members = members;
+    //   this._members$.next(this._members);
+    // });
   }
 
-  get members$(): Observable<Member[]> {
-    return this._members$ as Observable<Member[]>;
-  }
+  // get members$(): Observable<Member[]> {
+  //   return this._members$ as Observable<Member[]>;
+  // }
 
-  private getMembers(): Promise<Member[]> {
-    const client = generateClient<Schema>();
+  listMembers(): Observable<Member[]> {
 
     const fetchMembers = async () => {
+      const client = generateClient<Schema>();
       const { data: members, errors } = await client.models.Member.list();
       if (errors) {
-        console.error(errors);
+        console.error('Member.list error', errors);
         return [];
       }
       return members as Member[];
     };
-    // console.log('MembersService.getMembers call #', this.call++);
-    return fetchMembers();
+    return this._members ? this._members$.asObservable() : from(fetchMembers());
   }
 
 

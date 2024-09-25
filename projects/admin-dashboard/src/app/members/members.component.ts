@@ -50,7 +50,7 @@ export class MembersComponent implements OnInit {
       this.licensees = licensees;
     });
 
-    this.membersService.members$.subscribe((members) => {
+    this.membersService.listMembers().subscribe((members) => {
       this.members = members.sort((a, b) => a.lastname.localeCompare(b.lastname));
       this.filteredMembers = this.members;
       this.thisSeasonMembersNbr = this.members.reduce((acc, member) => {

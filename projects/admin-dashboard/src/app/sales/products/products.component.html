@@ -6,19 +6,29 @@
                 <thead>
                     <tr>
                         <th>Produit</th>
-                        <th>Prix</th>
                         <th>Description</th>
                         <th>Catégorie</th>
+                        <th>Prix</th>
+                        <th>couleur</th>
+                        <th>2eme nom</th>
                         <th>actif</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr *ngFor="let product of products">
-                        <td (click)="onReadProduct(product)">{{ product.name }}</td>
-                        <td>{{ product.price }}</td>
+                        <td (click)="onReadProduct(product)">{{ product.glyph }}</td>
                         <td>{{ product.description }}</td>
                         <td>{{ product.category }}</td>
+                        <td>{{ product.price }}</td>
+                        <td>{{ product.color }}</td>
+                        <td>
+                            <div class=" form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch"
+                                    [(ngModel)]="product.double_ownership" [ngModelOptions]="{standalone: true}"
+                                    (ngModelChange)="onModProduct(product)">
+                            </div>
+                        </td>
                         <td>
 
                             <div class=" form-check form-switch">
@@ -28,33 +38,36 @@
                             </div>
                         </td>
                         <!-- <td> <input type="checkbox" input="product.active"> </td> -->
-                        <td>
-                            <i class="fa-regular fa-trash-can" (click)="onDeleteProduct(product)"></i>
-                            <!-- <i class="fa-regular fa-edit" (click)="onModProduct(product)"></i> -->
+                        <td class="text-center ">
+                            <button class="btn btn-outline-danger" (click)="onDeleteProduct(product)">
+                                <i class="bi bi-trash3"></i>
+                            </button>
+                            <!-- <i class="fa-regular fa-edit" (click)=qonModProduct(product)"></i> -->
                         </td>
                     </tr>
                     <tr></tr>
                     <tr>
+                        <td> <input type="text" class="form-control" formControlName="glyph"> </td>
+                        <td> <input type="text" class="form-control" formControlName="description"> </td>
+                        <td> <input type="text" class="form-control" formControlName="category"> </td>
+                        <td> <input type="text" class="form-control" formControlName="price"> </td>
+                        <td> <input type="text" class="form-control" formControlName="color"> </td>
+
                         <td>
-                            <input type="text" class="form-control" formControlName="name">
-                        </td>
-                        <td>
-                            <input type="text" class="form-control" formControlName="price">
-                        </td>
-                        <td>
-                            <input type="text" class="form-control" formControlName="description">
-                        </td>
-                        <td>
-                            <input type="text" class="form-control" formControlName="category">
+                            <div class=" form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch"
+                                    formControlName="double_ownership">
+                            </div>
                         </td>
                         <td>
                             <div class=" form-check form-switch">
                                 <input class="form-check-input" type="checkbox" role="switch" formControlName="active">
                             </div>
                         </td>
-                        <td>
-                            <button *ngIf="!product_selected" (click)="onCreateProduct()">Ajouter un produit</button>
-                            <button *ngIf="product_selected" (click)="onUpdateProduct()">Enregistrer</button>
+                        <td class="text-center ">
+                            <button class="btn btn-outline-primary" [disabled]="!product_form_filled()"
+                                (click)="product_selected ? onUpdateProduct() :onCreateProduct()">
+                                <i class="bi bi-check2-square"></i></button>
                         </td>
                     </tr>
                 </tbody>

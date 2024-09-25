@@ -4,10 +4,12 @@ import { last } from 'rxjs';
 const schema = a.schema({
 
   Product: a.model({
-    name: a.string().required(),
+    glyph: a.string().required(),
     description: a.string().required(),
-    price: a.float().array().required(),
     category: a.string().required(),
+    price: a.float().required(),
+    color: a.string(),
+    double_ownership: a.boolean().required(),
     active: a.boolean().required(),
   })
     .authorization((allow) => [allow.publicApiKey()]),

@@ -42,7 +42,7 @@ export class ProductService {
         const _listProducts = (): Observable<Product[]> => {
             console.log("listProducts");
             const client = generateClient<Schema>();
-            return from(client.models.Product.list({ selectionSet: ["id", "name", "description", "price", "category", "active"] }))
+            return from(client.models.Product.list())
                 .pipe(
                     map((response) => response.data as unknown as Product[]),
                     tap((products) => this.products = products)

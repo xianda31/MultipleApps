@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ProductService } from '../../../../../common/services/product.service';
-import { FormGroup, ReactiveFormsModule, Form, FormControl } from '@angular/forms';
+import { FormGroup, ReactiveFormsModule, Form, FormControl, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Product } from './product.interface';
 @Component({
@@ -32,14 +32,20 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
     this.productForm = new FormGroup({
       id: new FormControl(),
-      name: new FormControl(),
-      description: new FormControl(),
-      price: new FormControl(),
-      category: new FormControl(),
-      active: new FormControl<boolean>(false),
-
+      glyph: new FormControl('', Validators.required),
+      description: new FormControl('', Validators.required),
+      price: new FormControl('', [Validators.required, Validators.min(0)]),
+      category: new FormControl('', Validators.required),
+      double_ownership: new FormControl<boolean>(false),
+      active: new FormControl<boolean>(true),
+      color: new FormControl('', Validators.required),
     });
+
   }
+  product_form_filled() {
+    return this.productForm.valid;
+  }
+
   onCreateProduct() {
     let new_product = this.productForm.getRawValue();
     console.log('new_product', new_product);

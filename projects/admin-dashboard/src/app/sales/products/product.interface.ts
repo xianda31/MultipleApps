@@ -1,10 +1,12 @@
 export interface Product {
     id: string;
-    name: string;
+    glyph: string;
     description: string;
-    price: [number];
+    price: number;
     category: string;
+    double_ownership: boolean;
     active: boolean;
+    color?: string;
     // createdAt?: any;
     // updatedAt?: any;
 }

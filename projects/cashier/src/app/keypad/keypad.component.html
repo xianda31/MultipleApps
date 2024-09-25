@@ -1,8 +1,24 @@
-<div class="card-group">
-    <div *ngFor="let product of products" class="card">
-        <div class="card-body">
-            <p>{{product.name}}</p>
+<div class="container">
+    <div class="row row-cols-4  g-2">
+        <div class="col" *ngFor="let key of keypad">
+
+            <div class="card  h-100 nice_shadow  key" (click)="onClick(key)">
+                <div class="card-body text-center px-0">
+                    <strong>{{key.glyph}}</strong>
+                    <p>
+                        <small>{{key.price}} €</small>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card  h-100 nice_shadow  key" (click)="onClear()">
+            <div class="card-body text-center px-0">
+                <strong>CLEAR</strong>
+                <p>
+                    <small> clear</small>
+                </p>
+            </div>
         </div>
     </div>
-
 </div>

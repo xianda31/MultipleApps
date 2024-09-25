@@ -1,0 +1,7 @@
+<div *ngFor="let book_entry of book_entries | keyvalue">
+    {{book_entry.key}}
+    <span *ngFor="let article of book_entry.value.articles">
+        {{article.product_glyph}}
+    </span>
+
+</div>

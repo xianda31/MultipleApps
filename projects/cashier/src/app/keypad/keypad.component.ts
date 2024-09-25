@@ -1,7 +1,8 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { ProductService } from '../../../../common/services/product.service';
 import { Product } from '../../../../admin-dashboard/src/app/sales/products/product.interface';
 import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-keypad',
@@ -11,20 +12,22 @@ import { CommonModule } from '@angular/common';
   styleUrl: './keypad.component.scss'
 })
 export class KeypadComponent implements OnInit, OnDestroy {
-  products_subscription: any;
-  products: Product[] = [];
+  @Input() keypad: Product[] = [];
+  @Output() keyStroked = new EventEmitter<Product | null>();
+
 
   constructor(private productService: ProductService) { }
 
   ngOnDestroy(): void {
-    this.products_subscription.unsubscribe();
   }
 
   ngOnInit(): void {
+  }
 
-    this.products_subscription = this.productService.listProducts().subscribe((products) => {
-      console.log('products', products);
-      this.products = products;
-    });
+  onClick(product: Product) {
+    this.keyStroked.emit(product);
+  }
+  onClear() {
+    this.keyStroked.emit(null);
   }
 }
