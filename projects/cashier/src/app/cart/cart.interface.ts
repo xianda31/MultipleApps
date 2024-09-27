@@ -1,28 +1,46 @@
 
 export interface CartItem {
-    payee_id: string;
+    product_glyph: string;
     payee_fullname: string;
-    article: Article;
+    sale: Sale;
 }
 
-interface Article {
+export interface Sale {
+    season: string;
     product_id: string;
-    product_glyph: string;
-    price: number;
+    payee_id: string;
+    price_payed: number;
 }
+
+// interface Article {
+// }
+
 export interface BookEntry {
     // payee_id: string;
     // fullname: string;
-    articles: Article[];
+    sales: Sale[];
     payment_id: string;
 }
 
+export enum PaymentMode {
+    CASH = 'cash',
+    CHEQUE = 'cheque',
+    TRANSFER = 'transfer',
+    CARD = 'card',
+    DEBT = 'debt',
+}
+
 export interface Payment {
-    id: string;
-    date: string;
+    id?: string;
+    season: string;
     amount: number;
-    // payer_name: string;
-    bank: string;
-    cheque_number: string;
+    payer_id: string;
+    payment_mode: PaymentMode;
+    bank?: string;
+    cheque_no?: string;
+    cross_checked?: boolean;
 
 }
+
+
+export const Bank_names = ['Bank of America', 'Chase', 'Wells Fargo', 'Citigroup'];

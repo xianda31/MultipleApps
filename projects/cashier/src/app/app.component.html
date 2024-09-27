@@ -1,29 +1,5 @@
 <div class="container">
     <app-navbar [double_price]="double_price"></app-navbar>
-
-    <div class="row mt-3 mt-2">
-        <div class="col-12 col-md-6 mt-2">
-            <app-keypad [keypad]="keypad" (keyStroked)="keyStroked($event)"></app-keypad>
-            <div class="row">
-                <div class="col-10">
-
-                    <select id="buyer" class="form-select mt-2" (change)="buyerSelected($event)">
-                        <option selected>Bénéficiaire</option>
-                        <option *ngFor="let buyer of members" [value]="buyer.id">{{buyer.lastname}} {{buyer.firstname}}
-                        </option>
-                    </select>
-                </div>
-                <div class="col-2">
-
-                </div>
-            </div>
-            <div *ngIf="members" class="mt-2">
-                <app-cart [members]="members"></app-cart>
-            </div>
-        </div>
-        <div class="col-12 col-md-6 mt-2">
-            <app-payment></app-payment>
-        </div>
-    </div>
+    <router-outlet></router-outlet>
     <app-toaster></app-toaster>
 </div>

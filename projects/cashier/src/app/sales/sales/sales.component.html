@@ -1,0 +1,50 @@
+<div class="container">
+    <h5>Vente</h5>
+    <div class="row mt-3 mt-2">
+        <div class="col col-md-6 mt-2">
+            <div class="card">
+                <div class="card-body">
+                    <app-keypad [keypad]="keypad" (keyStroked)="keyStroked($event)"></app-keypad>
+                </div>
+            </div>
+
+            <div class="row">
+                <form [formGroup]="payeesForm">
+                    <div class=" mt-3">
+                        <div class="row p-2">
+                            <div class="col-6">
+                                <label for="payee_1">Bénéficiaire 1</label>
+                                <div class="input-group border-primary">
+                                    <app-input-member id="payee_1" class="form-control" [members]="members"
+                                        formControlName="payee_1"></app-input-member>
+                                    <button class="btn btn-outline-secondary" type="button">
+                                        <i (click)="clear(payee_1)" class="bi bi-x-circle"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <label for="payee_2">Bénéficiaire 2</label>
+                                <div class="input-group border-primary">
+                                    <app-input-member id="payee_2" class="form-control" [members]="members"
+                                        formControlName="payee_2"></app-input-member>
+                                    <button class="btn btn-outline-secondary" type="button">
+                                        <i (click)="clear(payee_2)" class="bi bi-x-circle"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div *ngIf="members" class=" mt-2">
+                <app-cart (done)="checkout()"></app-cart>
+            </div>
+        </div>
+        <div class="col col-md-6 mt-2">
+            <div class="card">
+                <app-book-logger></app-book-logger>
+            </div>
+        </div>
+        <app-toaster></app-toaster>
+    </div>

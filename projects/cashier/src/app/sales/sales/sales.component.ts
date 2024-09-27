@@ -1,34 +1,30 @@
-import { registerLocaleData, CommonModule, JsonPipe } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
-import { RouterModule, RouterOutlet } from '@angular/router';
-import localeFr from '@angular/common/locales/fr';
-import { KeypadComponent } from "./sales/keypad/keypad.component";
-import { NavbarComponent } from './navbar/navbar.component';
-import { ToasterComponent } from '../../../common/toaster/components/toaster/toaster.component';
-import { CartComponent } from './cart/cart.component';
-import { Product } from '../../../admin-dashboard/src/app/sales/products/product.interface';
-import { CartService } from './cart.service';
-import { MembersService } from '../../../admin-dashboard/src/app/members/service/members.service';
-import { Member } from '../../../common/members/member.interface';
-import { AbstractControl, Form, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ToastService } from '../../../common/toaster/toast.service';
-import { CartItem, Payment, PaymentMode, Sale } from './cart/cart.interface';
-import { ProductService } from '../../../common/services/product.service';
-import { InputMemberComponent } from "./input-member/input-member.component";
+import { Component } from '@angular/core';
+import { FormGroup, FormControl, Validators, AbstractControl, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { GetPaymentComponent } from './sales/get-payment/get-payment.component';
-import { BookLoggerComponent } from './book-logger/book-logger.component';
-
-
+import { MembersService } from '../../../../../admin-dashboard/src/app/members/service/members.service';
+import { Member } from '../../../../../common/members/member.interface';
+import { ProductService } from '../../../../../common/services/product.service';
+import { ToastService } from '../../../../../common/toaster/toast.service';
+import { CartService } from '../../cart.service';
+import { PaymentMode, Sale, CartItem, Payment } from '../../cart/cart.interface';
+import { GetPaymentComponent } from '../get-payment/get-payment.component';
+import { Product } from '../../../../../admin-dashboard/src/app/sales/products/product.interface';
+import { NavbarComponent } from '../../navbar/navbar.component';
+import { ToasterComponent } from '../../../../../common/toaster/components/toaster/toaster.component';
+import { CommonModule } from '@angular/common';
+import { KeypadComponent } from '../keypad/keypad.component';
+import { CartComponent } from '../../cart/cart.component';
+import { BookLoggerComponent } from '../../book-logger/book-logger.component';
+import { InputMemberComponent } from '../../input-member/input-member.component';
 
 @Component({
-  selector: 'app-root',
+  selector: 'app-sales',
   standalone: true,
-  imports: [RouterModule, ReactiveFormsModule, NavbarComponent, ToasterComponent, CommonModule, FormsModule, KeypadComponent, CartComponent, BookLoggerComponent, InputMemberComponent],
-  templateUrl: './app.component.html',
-  styleUrl: './app.component.scss'
+  imports: [ReactiveFormsModule, ToasterComponent, CommonModule, FormsModule, KeypadComponent, CartComponent, BookLoggerComponent, InputMemberComponent],
+  templateUrl: './sales.component.html',
+  styleUrl: './sales.component.scss'
 })
-export class AppComponent implements OnInit {
+export class SalesComponent {
   [x: string]: any;
   title = 'cashier';
   season = '2024/25';

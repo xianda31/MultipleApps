@@ -60,11 +60,11 @@ export class PaymentComponent {
 
     // for each payee, list all items
     payees.forEach((payee) => {
-      let book_entry: BookEntry = { payment_id: 'xxx', articles: [] };
+      let book_entry: BookEntry = { payment_id: 'xxx', sales: [] };
 
-      book_entry.articles = cart
+      book_entry.sales = cart
         .filter((item) => item.payee_fullname === payee)
-        .map((item) => item.article);
+        .map((item) => item.sale);
 
       this.book_entries.set(payee, book_entry);
     });

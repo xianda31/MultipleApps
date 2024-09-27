@@ -1,37 +1,40 @@
 <div class="card">
-    <h5 class="card-header">Panier</h5>
     <div class="card-body">
+        <i class="bi bi-cart"></i>
         <div class="row justify-content-center " *ngFor="let item of cart$ | async">
             <div class="col-5">
-                <span> {{item.article.product_glyph}}
-                    {{get_product(item.article.product_id)!.description}} </span>
+                <span> {{item.product_glyph}}
+                    {{get_product(item.sale.product_id)!.description}} </span>
             </div>
             <div class="col-4">
                 <span class="col-4">
-                    {{get_member(item.payee_id)!.firstname}}
-                    {{get_member(item.payee_id)!.lastname}}
+                    {{get_member(item.sale.payee_id)!.firstname}}
+                    {{get_member(item.sale.payee_id)!.lastname}}
                 </span>
 
             </div>
-            <div class="col-2">
-                <span class="col-2">{{item.article.price |
+            <div class="col-2 text-end">
+                <span class="col-2 ">{{item.sale.price_payed |
                     currency:'€':'symbol':'2.2-2':'fr'}} </span>
             </div>
             <div class="col-1 text-danger">
                 <i class="bi bi-trash3" (click)="removeFromCart(item)"></i>
             </div>
         </div>
-    </div>
-    <div class="card-footer">
-        <div class="row">
-            <div class="col-9">
-                <span>Total</span>
+        <hr *ngIf="getTotal() !==0">
+        <div class="row  align-content-center">
+            <div class="col-5 align-self-center">
+                <span class="fw-bold">Total</span>
             </div>
-            <div class="col-2 text-end">
-                <span>{{getTotal() | currency:'€':'symbol':'2.2-2':'fr'}}</span>
+            <div class="col-4">
+                <button (click)="checkout()" class="btn btn-sm btn-outline-primary" type="button">régler</button>
             </div>
-            <div class="col-1 text-success">
-                <i class="bi bi-bag-check-fill" (click)="checkout()"></i>
+            <div class="col-2 text-end align-self-center">
+                <span class="fw-bold">{{getTotal() | currency:'€':'symbol':'2.2-2':'fr'}}</span>
+            </div>
+
+            <div class="col-1 text-success align-self-center">
+                <!-- <i class="bi bi-bag-check-fill" ></i> -->
             </div>
         </div>
     </div>

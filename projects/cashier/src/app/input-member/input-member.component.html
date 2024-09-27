@@ -1,0 +1,13 @@
+<!-- <select class="form-select" [(ngModel)]="input" (change)="onSelect($event)">
+    <option *ngFor="let member of members" [ngValue]="member.id">{{member.lastname}} {{member.firstname}}</option>
+</select> 
+
+style="outline:none;border:none;width: 100%; "-->
+
+<input style="outline:none;border:none;width: 100%; " type="text" list="datalist" [(ngModel)]="input"
+    (ngModelChange)="setValue(input)">
+<datalist id="datalist">
+    <option *ngFor="let member of members ">
+        {{member.firstname}} {{member.lastname}} : {{member.license_number}}
+    </option>
+</datalist>

@@ -1,12 +1,12 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, EventEmitter, OnDestroy, OnInit, Output } from '@angular/core';
 import { CartService } from '../cart.service';
-import { Form, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { Product } from '../../../../admin-dashboard/src/app/sales/products/product.interface';
 import { Observable } from 'rxjs';
-import { Member } from '../../../../common/members/member.interface';
-import { CartItem } from './cart.interface';
+import { CartItem, PaymentMode } from './cart.interface';
 import { ProductService } from '../../../../common/services/product.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { MembersService } from '../../../../admin-dashboard/src/app/members/service/members.service';
 
 @Component({
   selector: 'app-cart',
@@ -16,16 +16,22 @@ import { ProductService } from '../../../../common/services/product.service';
   styleUrl: './cart.component.scss'
 })
 export class CartComponent implements OnInit, OnDestroy {
-  @Input() members: Member[] = [];
+  @Output() done = new EventEmitter<void>();
+  // @Input() members: Member[] = [];
   cart_subscription: any;
   cart$ !: Observable<CartItem[]>;
   products!: Product[];
 
+
   constructor(
+    private membersService: MembersService,
     private cartService: CartService,
-    private productService: ProductService
+    private productService: ProductService,
+    private modalService: NgbModal,
+
   ) { }
   ngOnDestroy(): void {
+    console.log('cart destroyed');
     // this.cart_subscription.unsubscribe();
   }
 
@@ -41,8 +47,7 @@ export class CartComponent implements OnInit, OnDestroy {
   }
 
   get_member(member_id: string) {
-    if (!this.members) console.log('members not found');
-    let payee = this.members.find((member) => member.id === member_id);
+    let payee = this.membersService.getMember(member_id);
     if (!payee) { console.log('payee not found', member_id); }
     return payee;
   }
@@ -56,6 +61,24 @@ export class CartComponent implements OnInit, OnDestroy {
   }
 
   checkout() {
-    // Implement checkout logic here
+    this.done.emit();
   }
+  // checkout() {
+  //   const modalRef = this.modalService.open(GetPaymentComponent, { centered: true });
+
+  //   let payment_in: Payment = {
+  //     season: '2024/25',
+  //     amount: this.getTotal() + 1000,
+  //     payer_id: 'XXXX',
+  //     payment_mode: PaymentMode.CASH,
+  //   }
+
+
+  //   modalRef.componentInstance.payment_in = payment_in;
+
+  //   modalRef.result.then((payment: string) => {
+  //     if (payment === null) return;
+  //     console.log('payment', payment);
+  //   });
+  // }
 }

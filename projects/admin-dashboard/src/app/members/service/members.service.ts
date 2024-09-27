@@ -31,14 +31,19 @@ export class MembersService {
         console.error('Member.list error', errors);
         return [];
       }
+      this._members = members as Member[];
       return members as Member[];
     };
     return this._members ? this._members$.asObservable() : from(fetchMembers());
   }
 
 
-  isMember(license_number: string): boolean {
-    return this._members.some((m) => m.license_number === license_number);
+  getMemberbyLicense(license_number: string): Member | null {
+    return this._members.find((m) => m.license_number === license_number) || null;
+  }
+
+  getMember(id: string): Member | null {
+    return this._members.find((m) => m.id === id) || null;
   }
 
   async createMember(member: Member) {
