@@ -26,7 +26,9 @@ export class MembersService {
 
     const fetchMembers = async () => {
       const client = generateClient<Schema>();
-      const { data: members, errors } = await client.models.Member.list();
+      const { data: members, errors } = await client.models.Member.list(
+        { limit: 200 }
+      );
       if (errors) {
         console.error('Member.list error', errors);
         return [];
@@ -58,7 +60,7 @@ export class MembersService {
       console.error('Member not created');
       return;
     } else {
-      // console.log('Member created', newMember);
+      console.log('Member created', newMember);
       this._members.push(newMember as Member);
       // this._members$.next(this._members);
     }

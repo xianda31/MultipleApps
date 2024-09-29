@@ -7,11 +7,13 @@ import { FFB_licensee } from '../../../../common/ffb/interface/licensee.interfac
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule, UpperCasePipe } from '@angular/common';
 import { environment } from '../../environments/environment';
+import { PhonePipe } from '../../../../common/pipes/phone.pipe';
+import { CapitalizeFirstPipe } from '../../../../common/pipes/capitalize_first';
 
 @Component({
   selector: 'app-members',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, UpperCasePipe],
+  imports: [CommonModule, ReactiveFormsModule, UpperCasePipe, PhonePipe, CapitalizeFirstPipe],
   templateUrl: './members.component.html',
   styleUrl: './members.component.scss'
 })
@@ -87,7 +89,7 @@ export class MembersComponent implements OnInit {
 
 
 
-  createOrUpdateMember(licensee: FFB_licensee) {
+  async createOrUpdateMember(licensee: FFB_licensee) {
     let existingMember = this.members.find((m) => m.license_number === licensee.license_number);
 
     if (existingMember) {
@@ -102,7 +104,7 @@ export class MembersComponent implements OnInit {
       // console.log('MembersComponent.createOrUpdateMember create');
       let newMember = this.createNewMember(licensee);
       this.verbose += 'creation : ' + newMember.lastname + ' ' + newMember.firstname + '\n';
-      this.membersService.createMember(newMember);
+      let new_member = await this.membersService.createMember(newMember).then;
     }
   }
 
@@ -158,8 +160,8 @@ export class MembersComponent implements OnInit {
     }
 
   }
-  deleteMember(member: Member) {
-    this.membersService.deleteMember(member.id);
-  }
+  // deleteMember(member: Member) {
+  //   this.membersService.deleteMember(member.id);
+  // }
 }
 
