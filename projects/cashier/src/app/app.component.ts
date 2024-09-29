@@ -18,6 +18,7 @@ import { InputMemberComponent } from "./input-member/input-member.component";
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { GetPaymentComponent } from './sales/get-payment/get-payment.component';
 import { BookLoggerComponent } from './book-logger/book-logger.component';
+import { AccountingService } from './sales/accounting.service';
 
 
 
@@ -90,7 +91,7 @@ export class AppComponent implements OnInit {
       this.cartService.clearCart();
       return
     }
-    if (product.double_ownership) {
+    if (product.paired) {
 
       if (!this.payee_2.valid) {
         this.toastService.showWarningToast('saisie achat', 'selectionner le 2eme bénéficiaire');

@@ -1,12 +1,21 @@
 import { Component } from '@angular/core';
 import { Observable } from 'rxjs';
-import { BookEntry, CartItem } from '../cart/cart.interface';
+import { CartItem, Sale } from '../cart/cart.interface';
 import { Product } from '../../../../admin-dashboard/src/app/sales/products/product.interface';
 import { Member } from '../../../../common/members/member.interface';
 import { MembersService } from '../../../../admin-dashboard/src/app/members/service/members.service';
 import { ProductService } from '../../../../common/services/product.service';
 import { CartService } from '../cart.service';
 import { CommonModule } from '@angular/common';
+
+
+interface BookEntry {
+  // payee_id: string;q
+  // fullname: string;
+  sales: Sale[];
+  payment_id: string;
+}
+
 
 @Component({
   selector: 'app-book-logger',
@@ -41,13 +50,7 @@ export class BookLoggerComponent {
       this.updateSale(cart);
     });
 
-    // this.membersService.listMembers().subscribe((members) => {
-    //   this.members = members.sort((a, b) => a.lastname.localeCompare(b.lastname))
-    //     .map((member) => {
-    //       member.lastname = member.lastname.toUpperCase();
-    //       return member;
-    //     });
-    // });
+
   }
 
   updateSale(cart: CartItem[]) {

@@ -4,7 +4,7 @@ export interface Product {
     description: string;
     price: number;
     category: string;
-    double_ownership: boolean;
+    paired: boolean;
     active: boolean;
     color?: string;
     // createdAt?: any;

@@ -89,4 +89,8 @@ export class ProductService {
         });
         return promise;
     }
+
+    getProduct(id: string): Product {
+        return this.products.find((product) => product.id === id) as Product;
+    }
 }

@@ -1,5 +1,6 @@
 import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
 import { last } from 'rxjs';
+import { Payment } from '../../projects/cashier/src/app/cart/cart.interface';
 
 const schema = a.schema({
 
@@ -8,9 +9,32 @@ const schema = a.schema({
     description: a.string().required(),
     category: a.string().required(),
     price: a.float().required(),
-    color: a.string(),
-    double_ownership: a.boolean().required(),
+    // color: a.string(),
+    paired: a.boolean().required(),
     active: a.boolean().required(),
+  })
+    .authorization((allow) => [allow.publicApiKey()]),
+
+  Sale: a.model({
+    season: a.string().required(),
+    product_id: a.id().required(),
+    payee_id: a.id().required(),
+    price_payed: a.float().required(),
+    payment_id: a.id().required(),
+    payment: a.belongsTo('Payment', 'payment_id'),
+  })
+    .authorization((allow) => [allow.publicApiKey()]),
+
+  Payment: a.model({
+    season: a.string().required(),
+    amount: a.float().required(),
+    payer_id: a.id().required(),
+    member: a.belongsTo('Member', 'payer_id'),
+    sales: a.hasMany('Sale', 'payment_id'),
+    payment_mode: a.string().required(),
+    bank: a.string(),
+    cheque_no: a.string(),
+    cross_checked: a.boolean(),
   })
     .authorization((allow) => [allow.publicApiKey()]),
 
@@ -37,6 +61,7 @@ const schema = a.schema({
     orga_license_name: a.string(),
     is_sympathisant: a.boolean(),
     has_account: a.boolean(),
+    payments: a.hasMany('Payment', 'payer_id'),
   })
     .authorization((allow) => [allow.publicApiKey()]),
 

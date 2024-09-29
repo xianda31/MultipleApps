@@ -69,6 +69,6 @@ export class LicenseesComponent implements OnInit {
   }
 
   is_a_registred_member(member: FFB_licensee): boolean {
-    return this.membersService.isMember(member.license_number);
+    return !this.membersService.getMemberbyLicense(member.license_number);
   }
 }

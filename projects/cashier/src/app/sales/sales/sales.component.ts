@@ -9,13 +9,13 @@ import { CartService } from '../../cart.service';
 import { PaymentMode, Sale, CartItem, Payment } from '../../cart/cart.interface';
 import { GetPaymentComponent } from '../get-payment/get-payment.component';
 import { Product } from '../../../../../admin-dashboard/src/app/sales/products/product.interface';
-import { NavbarComponent } from '../../navbar/navbar.component';
 import { ToasterComponent } from '../../../../../common/toaster/components/toaster/toaster.component';
 import { CommonModule } from '@angular/common';
 import { KeypadComponent } from '../keypad/keypad.component';
 import { CartComponent } from '../../cart/cart.component';
 import { BookLoggerComponent } from '../../book-logger/book-logger.component';
 import { InputMemberComponent } from '../../input-member/input-member.component';
+import { AccountingService } from '../accounting.service';
 
 @Component({
   selector: 'app-sales',
@@ -51,6 +51,8 @@ export class SalesComponent {
     private toastService: ToastService,
     private productService: ProductService,
     private modalService: NgbModal,
+    private accountingService: AccountingService,
+
 
   ) { }
 
@@ -58,6 +60,7 @@ export class SalesComponent {
     // registerLocaleData(localeFr);
 
     this.membersService.listMembers().subscribe((members) => {
+      // console.log('members', members);
       this.members = members.sort((a, b) => a.lastname.localeCompare(b.lastname))
         .map((member) => {
           member.lastname = member.lastname.toUpperCase();
@@ -86,7 +89,7 @@ export class SalesComponent {
       this.cartService.clearCart();
       return
     }
-    if (product.double_ownership) {
+    if (product.paired) {
 
       if (!this.payee_2.valid) {
         this.toastService.showWarningToast('saisie achat', 'selectionner le 2eme bénéficiaire');
@@ -160,9 +163,11 @@ export class SalesComponent {
     modalRef.componentInstance.payment_in = payment_in;
     modalRef.componentInstance.buyer_fullname = this.payee_1.value.lastname + ' ' + this.payee_1.value.firstname;
 
-    modalRef.result.then((payment: string) => {
+    modalRef.result.then(async (payment: string) => {
       if (payment === null) return;
-      console.log('payment', payment);
+
+      this.writeOperation(payment_in);
+      // this.saveCart(payment_id);
     });
   }
 
@@ -170,4 +175,15 @@ export class SalesComponent {
     return member.lastname + ' ' + member.firstname;
   }
 
+  saveCart(p_id: string): void {
+    console.log('saveCart', p_id);
+    // this.cartService.saveCart();
+  }
+  writeOperation(payment: Payment) {
+    this.accountingService.writeOperation(payment).subscribe((res) => {
+      console.log('writeOperation', res);
+
+    });
+
+  }
 }

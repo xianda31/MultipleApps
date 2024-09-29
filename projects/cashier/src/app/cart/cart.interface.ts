@@ -10,17 +10,10 @@ export interface Sale {
     product_id: string;
     payee_id: string;
     price_payed: number;
+    payment_id?: string;
 }
 
-// interface Article {
-// }
 
-export interface BookEntry {
-    // payee_id: string;
-    // fullname: string;
-    sales: Sale[];
-    payment_id: string;
-}
 
 export enum PaymentMode {
     CASH = 'cash',
@@ -39,6 +32,7 @@ export interface Payment {
     bank?: string;
     cheque_no?: string;
     cross_checked?: boolean;
+    sales?: Sale[];
 
 }
 

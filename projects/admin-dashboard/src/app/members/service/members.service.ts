@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { generateClient, get } from 'aws-amplify/api';
-import { BehaviorSubject, from, generate, Observable } from 'rxjs';
+import { BehaviorSubject, from, generate, Observable, of } from 'rxjs';
 import { Schema } from '../../../../../../amplify/data/resource';
 import { Member } from '../../../../../common/members/member.interface';
 
@@ -9,7 +9,7 @@ import { Member } from '../../../../../common/members/member.interface';
 })
 export class MembersService {
   private _members!: Member[];
-  private _members$: BehaviorSubject<Member[]> = new BehaviorSubject(this._members);
+  // private _members$: BehaviorSubject<Member[]> = new BehaviorSubject(this._members);
 
   constructor() {
     // this.getMembers().then((members) => {
@@ -34,7 +34,7 @@ export class MembersService {
       this._members = members as Member[];
       return members as Member[];
     };
-    return this._members ? this._members$.asObservable() : from(fetchMembers());
+    return this._members ? of(this._members) : from(fetchMembers());
   }
 
 
@@ -60,7 +60,7 @@ export class MembersService {
     } else {
       // console.log('Member created', newMember);
       this._members.push(newMember as Member);
-      this._members$.next(this._members);
+      // this._members$.next(this._members);
     }
 
   }
@@ -105,7 +105,7 @@ export class MembersService {
     } else {
       console.log('Member updated', updatedMember.license_number);
       this._members = this._members.map((m) => m.license_number === member.license_number ? member : m);
-      this._members$.next(this._members);
+      // this._members$.next(this._members);
     }
   }
 
@@ -121,7 +121,7 @@ export class MembersService {
       return;
     } else {
       this._members = this._members.filter((m) => m.license_number !== deletedMember.license_number);
-      this._members$.next(this._members);
+      // this._members$.next(this._members);
     }
   }
 

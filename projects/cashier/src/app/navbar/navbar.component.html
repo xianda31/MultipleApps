@@ -3,7 +3,8 @@
         <div class="row-cols-lg-auto row">
             <h4 class="col">
                 <span class="inline-block">
-                    ventes Bridge Club Saint-Orens
+                    <i class="fs-4 bi-piggy-bank"></i>
+                    Recettes Bridge Club Saint-Orens
                 </span>
             </h4>
         </div>
@@ -20,62 +21,36 @@
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            <div class="justify-content-start">
+            <ul class=" navbar-nav  me-auto mb-2 mb-lg-0 ">
 
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item">
-                        <a class="nav-link" [routerLink]="['/sales']">
-                            <i class="fs-4 bi-cart"></i>
-                            <span class="ms-1 d-none d-sm-inline">Vente</span>
-                        </a>
-                    </li>
+                <li class="nav-item me-5">
+                    <a class="nav-link" [routerLink]="['/sales']">
+                        <i class="fs-4 bi-cart"></i>
+                        <span class="ms-1 d-none d-sm-inline">Vente</span>
+                    </a>
+                </li>
 
-                    <li class="nav-item">
-                        <a class="nav-link " [routerLink]="['/fees']">
-                            <i class="fs-4 bi-card-checklist"></i>
-                            <span class="ms-1 d-none d-sm-inline">Droits de table</span>
-                        </a>
-                    </li>
+                <li class="nav-item me-5">
+                    <a class="nav-link " [routerLink]="['/fees']">
+                        <i class="fs-4 bi-card-checklist"></i>
+                        <span class="ms-1 d-none d-sm-inline">Droits de table</span>
+                    </a>
+                </li>
 
+                <li class="nav-item me-5">
+                    <a class="nav-link" [routerLink]="['/books']">
+                        <i class="fs-4 bi-table"></i>
+                        <span class="ms-1 d-none d-sm-inline">Comptes</span>
+                    </a>
+                </li>
 
-                    <!-- <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown1" role="button"
-                            data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fs-4 bi-people"></i> <span class="ms-1 d-none d-sm-inline">Adhérents</span>
-    
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown1">
-                            <li><a class="dropdown-item  " [routerLink]="['/licensees']">base FFB</a></li>
-                            <li><a class="dropdown-item" [routerLink]="['/members']">base BCSTO</a></li>
-                            <li><a class="dropdown-item" href="#">Autres</a></li>
-    
-                        </ul>
-                    </li> -->
+            </ul>
 
-                    <!-- <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown1" role="button"
-                            data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fs-4 bi-table"></i> <span class="ms-1 d-none d-sm-inline">Achats</span>
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown1">
-                            <li><a class="dropdown-item  " [routerLink]="['/sales/products']">catalogue produits</a></li>
-                            <li><a class="dropdown-item">Autres</a></li>
-    
-                        </ul>
-                    </li> -->
-                </ul>
-            </div>
-            <div class="mx-auto justify-content-between ">
-                <!-- <div class=" form-check form-switch">
-                    <input class="form-check-input" type="checkbox" role="switch" [(ngModel)]="double_price">
-                    <label class="form-check-label">roy René</label>
-                </div> -->
+            <form class="d-flex">
+                <input class="form-control me-2" type="mail" placeholder="Mail" aria-label="Mail">
+                <button class="btn btn-outline-success" type="submit">Login</button>
+            </form>
 
-                <form class="d-flex">
-                    <input class="form-control me-2" type="mail" placeholder="Mail" aria-label="Mail">
-                    <button class="btn btn-outline-success" type="submit">Login</button>
-                </form>
-            </div>
         </div>
     </div>
 </nav>
