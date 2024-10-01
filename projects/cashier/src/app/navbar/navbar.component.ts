@@ -13,7 +13,6 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 })
 export class NavbarComponent {
 
-  @Input() double_price: boolean = false;
   // async logOut() {
   //   await signOut();
   // }

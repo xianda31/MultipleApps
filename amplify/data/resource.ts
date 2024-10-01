@@ -15,7 +15,7 @@ const schema = a.schema({
   })
     .authorization((allow) => [allow.publicApiKey()]),
 
-  Sale: a.model({
+  SaleItem: a.model({
     season: a.string().required(),
     product_id: a.id().required(),
     payee_id: a.id().required(),
@@ -27,10 +27,12 @@ const schema = a.schema({
 
   Payment: a.model({
     season: a.string().required(),
+    event: a.datetime().required(),
+    creator: a.string().required(),
     amount: a.float().required(),
     payer_id: a.id().required(),
     member: a.belongsTo('Member', 'payer_id'),
-    sales: a.hasMany('Sale', 'payment_id'),
+    saleItems: a.hasMany('SaleItem', 'payment_id'),
     payment_mode: a.string().required(),
     bank: a.string(),
     cheque_no: a.string(),
@@ -39,13 +41,6 @@ const schema = a.schema({
     .authorization((allow) => [allow.publicApiKey()]),
 
 
-  // Order: a.model({
-  //   order_number: a.id().required(),
-  //   order_date: a.string().required(),
-  //   member_id: a.id().required(),
-  //   member: a.belongsTo('Member', 'member_id'),
-  // })
-  //   .authorization((allow) => [allow.publicApiKey()]),
 
 
   Member: a.model({

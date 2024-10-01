@@ -1,41 +1,69 @@
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <!-- <th>Saison</th> -->
-            <th scope="col">montant</th>
-            <th scope="col">Payé par</th>
-            <th scope="col">Mode</th>
-            <!-- <th scope="col">Banque</th> -->
-            <th scope="col">Cheque No</th>
-            <!-- <th scope="col">CA</th> -->
-            <!-- Add more headers as needed -->
-        </tr>
-    </thead>
-    <tbody>
-        <tr *ngFor="let payment of payments">
-            <!-- <td>{{ payment.season }}</td> -->
-            <td>{{ payment.amount | currency:'€':'symbol':'2.2-2':'fr' }}</td>
-            <td>{{payer_name (payment.payer_id )}}</td>
-            <td>{{ payment.payment_mode }}</td>
-            <!-- <td>{{ payment.bank }}</td> -->
-            <td>{{ payment.cheque_no }}</td>
-            <!-- <td>{{ payment.cross_checked }}</td> -->
-            <td colspan="4">
-                <table class="table table-sm">
-                    <!-- <thead>
-                        <tr>
-                            <th>Produit</th>
-                            <th>Prix</th>
-                        </tr>
-                    </thead> -->
-                    <tbody>
-                        <tr *ngFor="let sale of payment.sales">
-                            <td>{{getProduct(sale.product_id).glyph}}</td>
-                            <td>{{sale.price_payed | currency:'€':'symbol':'2.2-2':'fr'}}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </td>
-        </tr>
-    </tbody>
-</table>
+<div class="form-check">
+    <input class="form-check-input" type="radio" name="radio" [(ngModel)]="by_payment_radio" [value]="false">
+    Vue par articles vendus
+</div>
+<div class="form-check">
+    <input class="form-check-input" type="radio" name="radio" [(ngModel)]="by_payment_radio" [value]="true" checked>
+    Vue par paiements reçus
+</div>
+
+<ng-container *ngIf="loaded">
+    <ng-container *ngIf="by_payment_radio ; else bySales" [ngTemplateOutlet]="byPayments"></ng-container>
+</ng-container> >
+
+
+
+<ng-template #byPayments>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th scope="col">Event</th>
+                <th scope="col">montant</th>
+                <th scope="col">Payé par</th>
+                <th scope="col">Mode</th>
+                <th scope="col">Cheque No</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let payment of payments">
+                <td>{{ format_date(payment.event) }}</td>
+                <td>{{ payment.amount | currency:'€':'symbol':'2.2-2':'fr' }}</td>
+                <td>{{member_name (payment.payer_id )}}</td>
+                <td>{{ payment.payment_mode }}</td>
+                <td>{{ payment.cheque_no }}</td>
+                <td colspan="4">
+                    <table class="table table-sm">
+                        <tbody>
+                            <tr *ngFor="let sale of payment.saleItems">
+                                <td>{{getProduct(sale.product_id).glyph}}</td>
+                                <td>{{member_name(sale.payee_id)}}</td>
+                                <td>{{sale.price_payed | currency:'€':'symbol':'2.2-2':'fr'}}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</ng-template>
+
+<ng-template #bySales>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th scope="col">Produit</th>
+                <th scope="col">Pour</th>
+                <th scope="col">Prix</th>
+                <th scope="col">Paiement</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let saleItem of saleItems">
+                <td>{{getProduct(saleItem.product_id).glyph}}</td>
+                <td>{{member_name(saleItem.payee_id)}}</td>
+                <td>{{saleItem.price_payed | currency:'€':'symbol':'2.2-2':'fr'}}</td>
+                <td>{{getPayment(saleItem.payment_id!)?.payment_mode}}</td>
+            </tr>
+        </tbody>
+    </table>
+</ng-template>

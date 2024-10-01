@@ -6,16 +6,18 @@ import { Member } from '../../../../../common/members/member.interface';
 import { ProductService } from '../../../../../common/services/product.service';
 import { ToastService } from '../../../../../common/toaster/toast.service';
 import { CartService } from '../../cart.service';
-import { PaymentMode, Sale, CartItem, Payment } from '../../cart/cart.interface';
+import { PaymentMode, SaleItem, CartItem, Payment } from '../../cart/cart.interface';
 import { GetPaymentComponent } from '../get-payment/get-payment.component';
 import { Product } from '../../../../../admin-dashboard/src/app/sales/products/product.interface';
 import { ToasterComponent } from '../../../../../common/toaster/components/toaster/toaster.component';
-import { CommonModule } from '@angular/common';
+import { CommonModule, formatDate } from '@angular/common';
 import { KeypadComponent } from '../keypad/keypad.component';
 import { CartComponent } from '../../cart/cart.component';
 import { BookLoggerComponent } from '../../book-logger/book-logger.component';
 import { InputMemberComponent } from '../../input-member/input-member.component';
 import { AccountingService } from '../accounting.service';
+import { GetEventComponent } from '../../get-event/get-event.component';
+import { from, Observable } from 'rxjs';
 
 @Component({
   selector: 'app-sales',
@@ -31,11 +33,26 @@ export class SalesComponent {
   double_price = false;
   members!: Member[];
   buyer!: Member | null;
-
+  alt_payee_switch: boolean = false;
+  event: Date | null = null;
+  creator: Member = {
+    id: '1', lastname: 'Do', firstname: 'John',
+    gender: '',
+    license_number: '',
+    birthdate: '',
+    city: '',
+    season: '',
+    email: '',
+    phone_one: '',
+    orga_license_name: '',
+    is_sympathisant: false,
+    has_account: false
+  };
   paymentMode = PaymentMode;
 
-
+  members_subscription: any;
   products_subscription: any;
+  event_subscription: any;
   keypad: Product[] = [];
 
   payeesForm: FormGroup = new FormGroup({
@@ -56,11 +73,16 @@ export class SalesComponent {
 
   ) { }
 
-  ngOnInit(): void {
-    // registerLocaleData(localeFr);
+  ngOnDestroy(): void {
+    this.products_subscription.unsubscribe();
+    this.members_subscription.unsubscribe();
+    this.event_subscription.unsubscribe();
 
-    this.membersService.listMembers().subscribe((members) => {
-      // console.log('members', members);
+  }
+
+  async ngOnInit(): Promise<void> {
+
+    this.members_subscription = this.membersService.listMembers().subscribe((members) => {
       this.members = members.sort((a, b) => a.lastname.localeCompare(b.lastname))
         .map((member) => {
           member.lastname = member.lastname.toUpperCase();
@@ -71,77 +93,56 @@ export class SalesComponent {
     this.products_subscription = this.productService.listProducts().subscribe((products) => {
       this.keypad = products.filter((product) => product.active);
     });
+
+    this.event_subscription = this.cartService.open_sale_session().subscribe((date) => {
+      (date !== null) ? console.log('event', date) : console.log('no event');
+      this.event = date
+    });
   }
 
-  clear(frmctrl: AbstractControl) {
-    console.log('clear', frmctrl);
-    this.payee_1.reset();
-    frmctrl.reset();
+  close() {
+    this.event = null;
+    this.cartService.close_sale_session();
+    this.toastService.showSuccessToast('saisie achat', 'session close');
   }
 
-  keyStroked(product: Product | null) {
+  keyStroked(product: Product) {
     if (!this.payee_1.valid) {
-      this.toastService.showWarningToast('saisie achat', 'selectionner un bénéficiaire');
+      this.toastService.showWarningToast('saisie achat', 'selectionner au moins le bénéficiaire 1');
       return
     }
 
-    if (!product) {
-      this.cartService.clearCart();
+    if (product.paired && !this.payee_2.valid) {
+      this.toastService.showWarningToast('article couple', 'selectionner le 2eme bénéficiaire');
       return
     }
+
+
     if (product.paired) {
-
-      if (!this.payee_2.valid) {
-        this.toastService.showWarningToast('saisie achat', 'selectionner le 2eme bénéficiaire');
-        return
-      }
-
-      const sale1: Sale = {
-        season: this.season,
-        product_id: product.id,
-        price_payed: product.price,
-        payee_id: this.payee_1.value.id,
-      };
-
-      let cart_item1: CartItem = {
-        product_glyph: product.glyph,
-        payee_fullname: this.payee_1.value.lastname + ' ' + this.payee_1.value.firstname,
-        sale: sale1
-      }
+      const cart_item1 = this.set_cart_item(product, this.payee_1.value);
+      const cart_item2 = this.set_cart_item(product, this.payee_2.value);
       this.cartService.addToCart(cart_item1);
-
-      const sale2: Sale = {
-        season: this.season,
-        product_id: product.id,
-        price_payed: product.price,
-        payee_id: this.payee_2.value.id,
-      };
-
-      let cart_item2: CartItem = {
-        product_glyph: product.glyph,
-        payee_fullname: this.payee_2.value.lastname + ' ' + this.payee_2.value.firstname,
-        sale: sale2
-      }
       this.cartService.addToCart(cart_item2);
-
-
-
     } else {
-
-      const sale1: Sale = {
-        season: this.season,
-        product_id: product.id,
-        price_payed: product.price,
-        payee_id: this.payee_1.value.id,
-      };
-
-      let cart_item1: CartItem = {
-        product_glyph: product.glyph,
-        payee_fullname: this.payee_1.value.lastname + ' ' + this.payee_1.value.firstname,
-        sale: sale1
-      }
-      this.cartService.addToCart(cart_item1);
+      const cart_item = this.set_cart_item(product, this.alt_payee_switch ? this.payee_2.value : this.payee_1.value);
+      this.cartService.addToCart(cart_item);
     }
+  }
+
+  set_cart_item(product: Product, payee: Member): CartItem {
+    const saleItem: SaleItem = {
+      season: this.season,
+      product_id: product.id,
+      price_payed: product.price,
+      payee_id: payee.id,
+    };
+
+    return {
+      product_glyph: product.glyph,
+      payee_fullname: payee.lastname + ' ' + payee.firstname,
+      saleItem: saleItem
+    }
+
   }
 
   checkout() {
@@ -150,40 +151,39 @@ export class SalesComponent {
       this.toastService.showWarningToast('saisie achat', 'le panier est vide');
       return
     }
-    const modalRef = this.modalService.open(GetPaymentComponent, { centered: true });
 
     let payment_in: Payment = {
       season: '2024/25',
+      event: this.event!,
+      creator: this.creator.firstname + ' ' + this.creator.lastname,
       amount: this.cartService.getTotal(),
       payer_id: this.payee_1.value.id,
       payment_mode: PaymentMode.CASH,
     }
 
+    this.confirm_payment(payment_in).subscribe((payment_out) => {
 
-    modalRef.componentInstance.payment_in = payment_in;
-    modalRef.componentInstance.buyer_fullname = this.payee_1.value.lastname + ' ' + this.payee_1.value.firstname;
+      if (payment_out === null) return;
 
-    modalRef.result.then(async (payment: string) => {
-      if (payment === null) return;
+      this.accountingService.writeOperation(payment_out).subscribe((res) => {
 
-      this.writeOperation(payment_in);
-      // this.saveCart(payment_id);
+        this.cartService.push_sale_in_session(payment_out);
+        this.cartService.clearCart();
+        this.toastService.showSuccessToast('saisie achat', 'vente enregistrée');
+        this.alt_payee_switch = false;
+        this.payeesForm.reset();
+      });
     });
   }
 
-  fullname(member: Member): string {
-    return member.lastname + ' ' + member.firstname;
+  confirm_payment(pre_payment: Payment): Observable<Payment | null> {
+    const modalRef = this.modalService.open(GetPaymentComponent, { centered: true });
+    modalRef.componentInstance.payment_in = pre_payment;
+    return from(modalRef.result);
   }
 
-  saveCart(p_id: string): void {
-    console.log('saveCart', p_id);
-    // this.cartService.saveCart();
+  format_date(date: Date): string {
+    return formatDate(date, 'EEEE d MMMM HH:00', 'fr-FR');
   }
-  writeOperation(payment: Payment) {
-    this.accountingService.writeOperation(payment).subscribe((res) => {
-      console.log('writeOperation', res);
 
-    });
-
-  }
 }

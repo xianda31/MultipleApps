@@ -2,10 +2,10 @@
 export interface CartItem {
     product_glyph: string;
     payee_fullname: string;
-    sale: Sale;
+    saleItem: SaleItem;
 }
 
-export interface Sale {
+export interface SaleItem {
     season: string;
     product_id: string;
     payee_id: string;
@@ -26,13 +26,15 @@ export enum PaymentMode {
 export interface Payment {
     id?: string;
     season: string;
+    event: Date;
+    creator: string;
     amount: number;
     payer_id: string;
     payment_mode: PaymentMode;
     bank?: string;
     cheque_no?: string;
     cross_checked?: boolean;
-    sales?: Sale[];
+    saleItems?: SaleItem[];
 
 }
 

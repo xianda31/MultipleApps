@@ -31,13 +31,13 @@ export class CartComponent implements OnInit, OnDestroy {
 
   ) { }
   ngOnDestroy(): void {
-    console.log('cart destroyed');
-    // this.cart_subscription.unsubscribe();
+    // console.log('cart destroyed');
+    this.cart_subscription.unsubscribe();
   }
 
   ngOnInit(): void {
     this.cart$ = this.cartService.getCart();
-    this.productService.listProducts().subscribe((products) => {
+    this.cart_subscription = this.productService.listProducts().subscribe((products) => {
       this.products = products;
     });
   }

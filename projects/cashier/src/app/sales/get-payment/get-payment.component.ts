@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, Output } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Bank_names, Payment, PaymentMode } from '../../cart/cart.interface';
 import { CurrencyPipe, CommonModule } from '@angular/common';
@@ -13,9 +13,8 @@ import { AbstractControl, FormControl, FormGroup, FormsModule, ReactiveFormsModu
 })
 export class GetPaymentComponent implements OnInit {
   @Input() payment_in!: Payment;
-  @Input() buyer_fullname!: string;
-
-  payment_out!: Payment | null;
+  // @Input() buyer_fullname!: string;
+  @Output() payment_out!: Payment | null;
   paymentForm!: FormGroup;
   paymentMode = PaymentMode;
   bank_names = Bank_names;
@@ -56,7 +55,8 @@ export class GetPaymentComponent implements OnInit {
 
 
   got_it() {
-    this.payment_out = { ...this.paymentForm.value };
+    this.payment_out = { ...this.payment_in, ...this.paymentForm.value };
+    console.log(this.payment_out);
     this.activeModal.close(this.payment_out);
   }
 

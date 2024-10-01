@@ -17,7 +17,7 @@
                 </thead>
                 <tbody>
                     <tr *ngFor="let product of products">
-                        <td (click)="onReadProduct(product)">{{ product.glyph }}</td>
+                        <td>{{ product.glyph }}</td>
                         <td>{{ product.description }}</td>
                         <td>{{ product.category }}</td>
                         <td>{{ product.price }}</td>
@@ -25,8 +25,7 @@
                         <td>
                             <div class=" form-check form-switch">
                                 <input class="form-check-input" type="checkbox" role="switch"
-                                    [(ngModel)]="product.paired" [ngModelOptions]="{standalone: true}"
-                                    (ngModelChange)="onModProduct(product)">
+                                    [(ngModel)]="product.paired" [ngModelOptions]="{standalone: true}" disabled>
                             </div>
                         </td>
                         <td>
@@ -39,10 +38,9 @@
                         </td>
                         <!-- <td> <input type="checkbox" input="product.active"> </td> -->
                         <td class="text-center ">
-                            <button class="btn btn-outline-danger" (click)="onDeleteProduct(product)">
-                                <i class="bi bi-trash3"></i>
+                            <button class="btn btn-outline-primary" (click)="onReadProduct(product)">
+                                <i class="bi bi-pen"></i>
                             </button>
-                            <!-- <i class="fa-regular fa-edit" (click)=qonModProduct(product)"></i> -->
                         </td>
                     </tr>
                     <tr></tr>

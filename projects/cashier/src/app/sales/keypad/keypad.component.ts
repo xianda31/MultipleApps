@@ -13,7 +13,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 })
 export class KeypadComponent implements OnInit, OnDestroy {
   @Input() keypad: Product[] = [];
-  @Output() keyStroked = new EventEmitter<Product | null>();
+  @Output() keyStroked = new EventEmitter<Product>();
 
 
   constructor(private productService: ProductService) { }
@@ -25,9 +25,10 @@ export class KeypadComponent implements OnInit, OnDestroy {
   }
 
   onClick(product: Product) {
+    console.log('click on', product);
     this.keyStroked.emit(product);
   }
-  onClear() {
-    this.keyStroked.emit(null);
-  }
+  // onClear() {
+  //   this.keyStroked.emit(null);
+  // }
 }

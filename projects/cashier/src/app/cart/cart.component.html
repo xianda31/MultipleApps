@@ -4,17 +4,17 @@
         <div class="row justify-content-center " *ngFor="let item of cart$ | async">
             <div class="col-5">
                 <span> {{item.product_glyph}}
-                    {{get_product(item.sale.product_id)!.description}} </span>
+                    {{get_product(item.saleItem.product_id)!.description}} </span>
             </div>
             <div class="col-4">
                 <span class="col-4">
-                    {{get_member(item.sale.payee_id)!.firstname}}
-                    {{get_member(item.sale.payee_id)!.lastname}}
+                    {{get_member(item.saleItem.payee_id)!.firstname}}
+                    {{get_member(item.saleItem.payee_id)!.lastname}}
                 </span>
 
             </div>
             <div class="col-2 text-end">
-                <span class="col-2 ">{{item.sale.price_payed |
+                <span class="col-2 ">{{item.saleItem.price_payed |
                     currency:'€':'symbol':'2.2-2':'fr'}} </span>
             </div>
             <div class="col-1 text-danger">
@@ -31,10 +31,6 @@
             </div>
             <div class="col-2 text-end align-self-center">
                 <span class="fw-bold">{{getTotal() | currency:'€':'symbol':'2.2-2':'fr'}}</span>
-            </div>
-
-            <div class="col-1 text-success align-self-center">
-                <!-- <i class="bi bi-bag-check-fill" ></i> -->
             </div>
         </div>
     </div>

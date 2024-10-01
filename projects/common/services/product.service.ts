@@ -9,11 +9,7 @@ import { generateClient } from 'aws-amplify/api';
     providedIn: 'root'
 })
 export class ProductService {
-    private products!: Product[];
-    private _products$ = new BehaviorSubject<Product[]>(this.products);
-
-
-
+    private _products!: Product[];
 
     // CL(R)UD Product
 
@@ -25,9 +21,10 @@ export class ProductService {
             client.models.Product.create(productCreateInput)
                 .then((response) => {
                     let _product = response.data as unknown as Product;
-                    this.products.push(_product);
+                    // this.products.push(_product);
                     // this.products = [...this.products, _product];
-                    resolve(product);
+                    this._products.push(_product);
+                    resolve(_product);
                 })
                 .catch((error) => {
                     console.error("error : ", error);
@@ -40,15 +37,14 @@ export class ProductService {
     // Retrieve all products
     listProducts(): Observable<Product[]> {
         const _listProducts = (): Observable<Product[]> => {
-            console.log("listProducts");
             const client = generateClient<Schema>();
             return from(client.models.Product.list())
                 .pipe(
                     map((response) => response.data as unknown as Product[]),
-                    tap((products) => this.products = products)
+                    tap((products) => this._products = products)
                 );
         }
-        return this.products ? of(this.products) : _listProducts();
+        return this._products ? of(this._products) : _listProducts();
     }
 
 
@@ -58,8 +54,8 @@ export class ProductService {
             const client = generateClient<Schema>();
             client.models.Product.update(product)
                 .then((response) => {
-                    const index = this.products.findIndex((p) => p.id === product.id);
-                    this.products[index] = product;
+                    const index = this._products.findIndex((p) => p.id === product.id);
+                    this._products[index] = product;
                     let _product = response.data as unknown as Product;
                     resolve(_product);
                 })
@@ -77,8 +73,8 @@ export class ProductService {
             const client = generateClient<Schema>();
             client.models.Product.delete({ id: product.id })
                 .then((response) => {
-                    const index = this.products.findIndex((p) => p.id === product.id);
-                    this.products.splice(index, 1);
+                    const index = this._products.findIndex((p) => p.id === product.id);
+                    this._products.splice(index, 1);
                     let _product = response.data as unknown as Product;
                     resolve(_product);
                 })
@@ -91,6 +87,6 @@ export class ProductService {
     }
 
     getProduct(id: string): Product {
-        return this.products.find((product) => product.id === id) as Product;
+        return this._products.find((product) => product.id === id) as Product;
     }
 }

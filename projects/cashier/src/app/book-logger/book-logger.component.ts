@@ -1,18 +1,17 @@
-import { Component } from '@angular/core';
-import { Observable } from 'rxjs';
-import { CartItem, Sale } from '../cart/cart.interface';
-import { Product } from '../../../../admin-dashboard/src/app/sales/products/product.interface';
-import { Member } from '../../../../common/members/member.interface';
+import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { CartItem, Payment, SaleItem } from '../cart/cart.interface';
 import { MembersService } from '../../../../admin-dashboard/src/app/members/service/members.service';
 import { ProductService } from '../../../../common/services/product.service';
 import { CartService } from '../cart.service';
-import { CommonModule } from '@angular/common';
+import { CommonModule, formatDate } from '@angular/common';
+import { AccountingService } from '../sales/accounting.service';
+import { map, Observable, tap } from 'rxjs';
 
 
 interface BookEntry {
   // payee_id: string;q
   // fullname: string;
-  sales: Sale[];
+  sales: SaleItem[];
   payment_id: string;
 }
 
@@ -25,54 +24,41 @@ interface BookEntry {
   styleUrl: './book-logger.component.scss'
 })
 export class BookLoggerComponent {
-  cart$ !: Observable<CartItem[]>;
-  products!: Product[];
-  // members!: Member[];
-
-  book_entries: Map<string, BookEntry> = new Map();
-
+  // payments: Payment[] = [];
+  @Input() event: Date | null = null;
+  cart_subscription: any;
+  payments$!: Observable<Payment[]>;
+  payments_sum: number = 0;
 
   constructor(
     private cartService: CartService,
-    private productService: ProductService,
     private membersService: MembersService,
+    private productService: ProductService,
 
-  ) { }
-  ngOnInit(): void {
-    this.cart$ = this.cartService.getCart();
-
-
-    this.productService.listProducts().subscribe((products) => {
-      this.products = products;
-    });
-
-    this.cart$.subscribe((cart) => {
-      this.updateSale(cart);
-    });
-
+  ) {
+    this.payments$ = this.cartService.get_sales_in_session().pipe(
+      // map((payments) => payments.filter((payment) => payment.event === this.event)),
+      tap((payments) => {
+        this.payments_sum = payments.reduce((acc, payment) => acc + payment.amount, 0);
+        console.log(payments);
+      })
+    )
 
   }
 
-  updateSale(cart: CartItem[]) {
-    // list all payees 
-    // const payeeIds = cart.map((item) => item.payee_fullname);
-    const payees = [...new Set(cart.map((item) => item.payee_fullname))];
-
-    this.book_entries = new Map<string, BookEntry>();
-
-    // for each payee, list all items
-    payees.forEach((payee) => {
-      let book_entry: BookEntry = { payment_id: 'xxx', sales: [] };
-
-      book_entry.sales = cart
-        .filter((item) => item.payee_fullname === payee)
-        .map((item) => item.sale);
-
-      this.book_entries.set(payee, book_entry);
-    });
-
-    console.log(this.book_entries);
+  member_name(member_id: string) {
+    let member = this.membersService.getMember(member_id);
+    return member ? member.lastname + ' ' + member.firstname : '???';
   }
 
+  format_date(date: Date): string {
+    return formatDate(date, 'EEEE d MMMM HH:00', 'fr-FR');
+  }
+  getProduct(product_id: string) {
+    return this.productService.getProduct(product_id);
+  }
+  print() {
+    window.print();
+  }
 
 }

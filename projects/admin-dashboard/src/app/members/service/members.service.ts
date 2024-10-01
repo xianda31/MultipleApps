@@ -36,6 +36,7 @@ export class MembersService {
       this._members = members as Member[];
       return members as Member[];
     };
+
     return this._members ? of(this._members) : from(fetchMembers());
   }
 
