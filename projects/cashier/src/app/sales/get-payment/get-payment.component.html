@@ -23,10 +23,10 @@
         <div class="col col-md-6 mb-3">
             <label for="payment_mode" class="form-label">Mode paiement</label>
             <select id="payment_mode" class="form-select form-select-sm" formControlName="payment_mode">
-                <option value="cash">Espèce</option>
-                <option value="cheque">Chèque</option>
-                <option value="transfer">Virement</option>
-                <option value="debt">Dette</option>
+                <option [value]="paymentMode.CASH">Espèce</option>
+                <option [value]="paymentMode.CHEQUE">Chèque</option>
+                <option [value]="paymentMode.TRANSFER">Virement</option>
+                <option [value]="paymentMode.DEBT">Dette</option>
             </select>
         </div>
         <div *ngIf="payment_mode.value === paymentMode.CHEQUE" class="col-12 mb-3">
@@ -36,7 +36,8 @@
                     <label for="bank" class="form-label">Banque</label>
                     <select list="banks" type="text" id="bank_names" class="form-select form-select-sm"
                         formControlName="bank">
-                        <option id="bank_names" *ngFor="let bank_name of bank_names" [value]="bank_name">{{bank_name}}
+                        <option id="bank_names" *ngFor="let bank_name of bank_names | keyvalue" [value]="bank_name.key">
+                            {{bank_name.value}}
                         </option>
                     </select>
                     <div *ngIf="bank.touched && bank.invalid " class="text-danger">

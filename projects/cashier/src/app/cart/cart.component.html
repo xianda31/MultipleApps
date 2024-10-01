@@ -1,17 +1,18 @@
 <div class="card">
     <div class="card-body">
-        <i class="bi bi-cart"></i>
-        <div class="row justify-content-center " *ngFor="let item of cart$ | async">
-            <div class="col-5">
-                <span> {{item.product_glyph}}
-                    {{get_product(item.saleItem.product_id)!.description}} </span>
+        <div class="row  align-content-center align-items-center" *ngFor="let item of cart$ | async">
+            <div class="col-3">
+                <span> {{get_product(item.saleItem.product_id)!.description}} </span>
             </div>
-            <div class="col-4">
-                <span class="col-4">
-                    {{get_member(item.saleItem.payee_id)!.firstname}}
-                    {{get_member(item.saleItem.payee_id)!.lastname}}
-                </span>
-
+            <div class="col-6">
+                <div class="input-group ">
+                    <app-input-member class="form-control" [members]="members" [(ngModel)]="item.payee"
+                        (ngModelChange)="payee_changed(item)"></app-input-member>
+                    <button (click)="payee_cleared(item)" class="btn btn-outline-secondary" type="button">Clear</button>
+                </div>
+                <div *ngIf="!item.payee" class="text-danger">
+                    <span>bénéficiaire à renseigner</span>
+                </div>
             </div>
             <div class="col-2 text-end">
                 <span class="col-2 ">{{item.saleItem.price_payed |
@@ -27,7 +28,8 @@
                 <span class="fw-bold">Total</span>
             </div>
             <div class="col-4">
-                <button (click)="checkout()" class="btn btn-sm btn-outline-primary" type="button">régler</button>
+                <button [disabled]="some_payee_cleared()" (click)="checkout()" class="btn btn-sm btn-primary"
+                    type="button">régler</button>
             </div>
             <div class="col-2 text-end align-self-center">
                 <span class="fw-bold">{{getTotal() | currency:'€':'symbol':'2.2-2':'fr'}}</span>

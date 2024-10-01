@@ -33,7 +33,7 @@ export class SalesComponent {
   double_price = false;
   members!: Member[];
   buyer!: Member | null;
-  alt_payee_switch: boolean = false;
+  // alt_payee_switch: boolean = false;
   event: Date | null = null;
   creator: Member = {
     id: '1', lastname: 'Do', firstname: 'John',
@@ -56,11 +56,11 @@ export class SalesComponent {
   keypad: Product[] = [];
 
   payeesForm: FormGroup = new FormGroup({
-    payee_1: new FormControl('', Validators.required),
-    payee_2: new FormControl('', Validators.required),
+    payee_1: new FormControl(null, Validators.required),
+    // payee_2: new FormControl(null, Validators.required),
   });
   get payee_1() { return this.payeesForm.get('payee_1')!; }
-  get payee_2() { return this.payeesForm.get('payee_2')!; }
+  // get payee_2() { return this.payeesForm.get('payee_2')!; }
 
   constructor(
     private cartService: CartService,
@@ -112,34 +112,34 @@ export class SalesComponent {
       return
     }
 
-    if (product.paired && !this.payee_2.valid) {
-      this.toastService.showWarningToast('article couple', 'selectionner le 2eme bénéficiaire');
-      return
-    }
+    // if (product.paired && !this.payee_2.valid) {
+    //   this.toastService.showWarningToast('article couple', 'selectionner le 2eme bénéficiaire');
+    //   return
+    // }
 
 
     if (product.paired) {
       const cart_item1 = this.set_cart_item(product, this.payee_1.value);
-      const cart_item2 = this.set_cart_item(product, this.payee_2.value);
+      const cart_item2 = this.set_cart_item(product, null);
       this.cartService.addToCart(cart_item1);
       this.cartService.addToCart(cart_item2);
     } else {
-      const cart_item = this.set_cart_item(product, this.alt_payee_switch ? this.payee_2.value : this.payee_1.value);
+      const cart_item = this.set_cart_item(product, this.payee_1.value);
       this.cartService.addToCart(cart_item);
     }
   }
 
-  set_cart_item(product: Product, payee: Member): CartItem {
+  set_cart_item(product: Product, payee: Member | null): CartItem {
     const saleItem: SaleItem = {
       season: this.season,
       product_id: product.id,
       price_payed: product.price,
-      payee_id: payee.id,
+      payee_id: payee === null ? '' : payee.id,
     };
 
     return {
       product_glyph: product.glyph,
-      payee_fullname: payee.lastname + ' ' + payee.firstname,
+      payee: payee,
       saleItem: saleItem
     }
 
@@ -170,7 +170,6 @@ export class SalesComponent {
         this.cartService.push_sale_in_session(payment_out);
         this.cartService.clearCart();
         this.toastService.showSuccessToast('saisie achat', 'vente enregistrée');
-        this.alt_payee_switch = false;
         this.payeesForm.reset();
       });
     });

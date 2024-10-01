@@ -7,6 +7,6 @@ style="outline:none;border:none;width: 100%; "-->
 <input type="text" list="datalist" [(ngModel)]="input" (ngModelChange)="setValue(input)">
 <datalist id="datalist">
     <option *ngFor="let member of members ">
-        {{member.firstname}} {{member.lastname}} : {{member.license_number}}
+        {{member.lastname | uppercase}}&#160;{{member.firstname}}
     </option>
 </datalist>

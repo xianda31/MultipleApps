@@ -18,7 +18,10 @@ export class GetEventComponent {
   constructor(
     private activeModal: NgbActiveModal,
 
-  ) { }
+  ) {
+    this.date = formatDate(new Date(), 'yyyy-MM-dd', 'fr');
+
+  }
 
   got_it() {
 

@@ -28,12 +28,13 @@ export class InputMemberComponent implements ControlValueAccessor {
 
   // constructor(  ) { }
 
-  writeValue(input: any): void {
-    if (input === undefined || input === null || input === '') {
+  writeValue(input: Member | null): void {
+    if (input === undefined || input === null) {
       this.input = '';
       return;
     }
-    this.input = input;
+
+    this.input = input.lastname + '\u00A0' + input.firstname;
   }
   registerOnChange(fn: any): void {
     this.onChange = fn;
@@ -47,9 +48,12 @@ export class InputMemberComponent implements ControlValueAccessor {
 
   setValue(input: string) {
     this.onTouch();
-    const license_number = input.split(': ')[1];
-    const member = this.members.find((m) => m.license_number == license_number) ?? null;
+    const substring = input.split('\u00A0');
+    // console.log(substring);
+    const member = this.members.find((m) => (m.lastname === substring[0] && m.firstname === substring[1])) ?? null;
     this.onChange(member);
   }
 
 }
+
+

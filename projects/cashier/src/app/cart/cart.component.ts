@@ -7,11 +7,14 @@ import { CartItem, PaymentMode } from './cart.interface';
 import { ProductService } from '../../../../common/services/product.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MembersService } from '../../../../admin-dashboard/src/app/members/service/members.service';
+import { InputMemberComponent } from '../input-member/input-member.component';
+import { Member } from '../../../../common/members/member.interface';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-cart',
   standalone: true,
-  imports: [CommonModule, CurrencyPipe],
+  imports: [CommonModule, FormsModule, InputMemberComponent, CurrencyPipe],
   templateUrl: './cart.component.html',
   styleUrl: './cart.component.scss'
 })
@@ -19,7 +22,9 @@ export class CartComponent implements OnInit, OnDestroy {
   @Output() done = new EventEmitter<void>();
   // @Input() members: Member[] = [];
   cart_subscription: any;
+  members_subscription: any;
   cart$ !: Observable<CartItem[]>;
+  members!: Member[];
   products!: Product[];
 
 
@@ -40,6 +45,10 @@ export class CartComponent implements OnInit, OnDestroy {
     this.cart_subscription = this.productService.listProducts().subscribe((products) => {
       this.products = products;
     });
+    this.members_subscription = this.membersService.listMembers().subscribe((members) => {
+      this.members = members;
+    });
+
   }
 
   get_product(product_id: string) {
@@ -63,22 +72,17 @@ export class CartComponent implements OnInit, OnDestroy {
   checkout() {
     this.done.emit();
   }
-  // checkout() {
-  //   const modalRef = this.modalService.open(GetPaymentComponent, { centered: true });
 
-  //   let payment_in: Payment = {
-  //     season: '2024/25',
-  //     amount: this.getTotal() + 1000,
-  //     payer_id: 'XXXX',
-  //     payment_mode: PaymentMode.CASH,
-  //   }
+  payee_changed(item: CartItem) {
+    if (!item.payee) return;
+    item.saleItem.payee_id = item.payee.id;
+  }
 
+  payee_cleared(item: CartItem) {
+    item.payee = null;
+  }
 
-  //   modalRef.componentInstance.payment_in = payment_in;
-
-  //   modalRef.result.then((payment: string) => {
-  //     if (payment === null) return;
-  //     console.log('payment', payment);
-  //   });
-  // }
+  some_payee_cleared(): boolean {
+    return this.cartService.getCartItems().some((item) => !item.payee);
+  }
 }

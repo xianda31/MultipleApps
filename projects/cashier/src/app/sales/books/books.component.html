@@ -29,7 +29,7 @@
                 <td>{{ format_date(payment.event) }}</td>
                 <td>{{ payment.amount | currency:'€':'symbol':'2.2-2':'fr' }}</td>
                 <td>{{member_name (payment.payer_id )}}</td>
-                <td>{{ payment.payment_mode }}</td>
+                <td>{{ payment.payment_mode === payment_mode.CASH ? 'espèces' : payment.bank}}</td>
                 <td>{{ payment.cheque_no }}</td>
                 <td colspan="4">
                     <table class="table table-sm">

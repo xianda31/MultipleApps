@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { AccountingService } from '../accounting.service';
-import { Payment, SaleItem } from '../../cart/cart.interface';
+import { Payment, PaymentMode, SaleItem } from '../../cart/cart.interface';
 import { CommonModule, formatDate } from '@angular/common';
 import { MembersService } from '../../../../../admin-dashboard/src/app/members/service/members.service';
 import { ProductService } from '../../../../../common/services/product.service';
@@ -21,6 +21,7 @@ export class BooksComponent {
   payments_subscription: any;
   sales_subscription: any;
   both_subscription: any;
+  payment_mode = PaymentMode;
   loaded = false;
 
   constructor(

@@ -1,32 +1,35 @@
 <div class="container">
     <div class="card">
         <div class="card-header">
-            {{format_date(event!)}}
+            paiements reçus pour le {{format_date(event!)}}
 
         </div>
         <div class="card-body">
-
-            <div *ngFor="let payment of payments$ | async">
-                {{member_name (payment.payer_id )}}
-                {{payment.amount | currency:'€':'symbol':'2.2-2':'fr'}}
-                {{payment.payment_mode}}
-                {{payment.cheque_no}}
-                <table class="table table-sm">
-                    <tbody>
-                        <tr *ngFor="let sale of payment.saleItems">
-                            {{getProduct(sale.product_id).glyph}}
-                            {{member_name(sale.payee_id)}}
+            <div class="table-responsive-sm">
+                <table class="table table-striped  table-borderless table-primary align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="col-4">Acheteur</th>
+                            <th class="col-2">Montant </th>
+                            <th class="col-3">Mode</th>
+                            <th class="col-3">Cheque No</th>
+                        </tr>
+                    </thead>
+                    <tbody class="table-group-divider">
+                        <tr *ngFor="let payment of payments$ | async">
+                            <td>{{member_name(payment.payer_id)}}</td>
+                            <td class="text-end">{{payment.amount | currency:'€':'symbol':'2.2-2':'fr'}}</td>
+                            <td>{{payment.payment_mode}}</td>
+                            <td>{{payment.cheque_no}}</td>
                         </tr>
                     </tbody>
                 </table>
-
             </div>
+
+
             <div class="row  align-content-center">
-                <div class="col-5 align-self-center">
+                <div class="col-4 align-self-center">
                     <span class="fw-bold">Total</span>
-                </div>
-                <div class="col-4">
-                    <button (click)="print()" class="btn btn-sm btn-outline-primary" type="button">imprimer</button>
                 </div>
                 <div class="col-2 text-end align-self-center">
                     <span class="fw-bold">{{payments_sum | currency:'€':'symbol':'2.2-2':'fr'}}</span>
