@@ -1,12 +1,12 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ProductService } from '../../../../../common/services/product.service';
 import { FormGroup, ReactiveFormsModule, Form, FormControl, Validators } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+import { CommonModule, CurrencyPipe } from '@angular/common';
 import { Product } from './product.interface';
 @Component({
   selector: 'app-products',
   standalone: false,
-  // imports: [CommonModule,  ReactiveFormsModule],
+  // imports: [CurrencyPipe],
   templateUrl: './products.component.html',
   styleUrl: './products.component.scss'
 })

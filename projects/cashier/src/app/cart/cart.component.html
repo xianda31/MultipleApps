@@ -24,14 +24,14 @@
         </div>
         <hr *ngIf="getTotal() !==0">
         <div class="row  align-content-center">
-            <div class="col-5 align-self-center">
+            <div class="col col-md-5 align-self-center">
                 <span class="fw-bold">Total</span>
             </div>
-            <div class="col-4">
+            <div class="col col-md-4">
                 <button [disabled]="some_payee_cleared()" (click)="checkout()" class="btn btn-sm btn-primary"
                     type="button">régler</button>
             </div>
-            <div class="col-2 text-end align-self-center">
+            <div class="col col-md-2 text-end align-self-center">
                 <span class="fw-bold">{{getTotal() | currency:'€':'symbol':'2.2-2':'fr'}}</span>
             </div>
         </div>
