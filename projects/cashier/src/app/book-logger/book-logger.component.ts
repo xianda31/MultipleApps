@@ -6,6 +6,7 @@ import { CartService } from '../cart.service';
 import { CommonModule, formatDate } from '@angular/common';
 import { AccountingService } from '../sales/accounting.service';
 import { map, Observable, tap } from 'rxjs';
+import { SessionService } from '../session/session.service';
 
 
 interface BookEntry {
@@ -32,11 +33,12 @@ export class BookLoggerComponent {
 
   constructor(
     private cartService: CartService,
+    private sessionService: SessionService,
     private membersService: MembersService,
     private productService: ProductService,
 
   ) {
-    this.payments$ = this.cartService.get_sales_in_session().pipe(
+    this.payments$ = this.sessionService.get_sales_in_session().pipe(
       // map((payments) => payments.filter((payment) => payment.event === this.event)),
       tap((payments) => {
         this.payments_sum = payments.reduce((acc, payment) => acc + payment.amount, 0);

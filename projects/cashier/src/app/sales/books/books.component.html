@@ -17,7 +17,7 @@
     <table class="table table-striped">
         <thead>
             <tr>
-                <th scope="col">Event</th>
+                <!-- <th scope="col">Event</th> -->
                 <th scope="col">montant</th>
                 <th scope="col">Payé par</th>
                 <th scope="col">Mode</th>
@@ -26,7 +26,7 @@
         </thead>
         <tbody>
             <tr *ngFor="let payment of payments">
-                <td>{{ format_date(payment.event) }}</td>
+                <!-- <td>{{ format_date(payment.event) }}</td> -->
                 <td>{{ payment.amount | currency:'€':'symbol':'2.2-2':'fr' }}</td>
                 <td>{{member_name (payment.payer_id )}}</td>
                 <td>{{ payment.payment_mode === payment_mode.CASH ? 'espèces' : payment.bank}}</td>

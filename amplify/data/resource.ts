@@ -15,8 +15,15 @@ const schema = a.schema({
   })
     .authorization((allow) => [allow.publicApiKey()]),
 
-  SaleItem: a.model({
+  Session: a.model({
     season: a.string().required(),
+    creator: a.string().required(),
+    event: a.datetime().required(),
+    payments: a.hasMany('Payment', 'session_id'),
+  })
+    .authorization((allow) => [allow.publicApiKey()]),
+
+  SaleItem: a.model({
     product_id: a.id().required(),
     payee_id: a.id().required(),
     price_payed: a.float().required(),
@@ -26,17 +33,16 @@ const schema = a.schema({
     .authorization((allow) => [allow.publicApiKey()]),
 
   Payment: a.model({
-    season: a.string().required(),
-    event: a.datetime().required(),
-    creator: a.string().required(),
     amount: a.float().required(),
+    session_id: a.id().required(),
     payer_id: a.id().required(),
-    member: a.belongsTo('Member', 'payer_id'),
-    saleItems: a.hasMany('SaleItem', 'payment_id'),
+    payer: a.belongsTo('Member', 'payer_id'),
+    session: a.belongsTo('Session', 'session_id'),
     payment_mode: a.string().required(),
     bank: a.string(),
     cheque_no: a.string(),
     cross_checked: a.boolean(),
+    saleItems: a.hasMany('SaleItem', 'payment_id'),
   })
     .authorization((allow) => [allow.publicApiKey()]),
 

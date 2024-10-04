@@ -1,0 +1,9 @@
+<div *ngIf="current_session" class="row bg-secondary text-white mb-3 p-2">
+    <div class="col">
+        ventes du {{ current_session.event| date: 'fullDate' : 'fr'}}
+    </div>
+    <div class="col">
+        saison : {{current_session.season}}
+    </div>
+
+</div>

@@ -28,7 +28,7 @@ export class GetPaymentComponent implements OnInit {
 
     this.paymentForm = new FormGroup({
       // id: new FormControl(''),
-      season: new FormControl({ value: '', disabled: true }),
+      // season: new FormControl({ value: '', disabled: true }),
       amount: new FormControl({ value: '', disabled: true }),
       payer_id: new FormControl(''),
       payment_mode: new FormControl<PaymentMode>(PaymentMode.CASH, Validators.required),
@@ -37,7 +37,7 @@ export class GetPaymentComponent implements OnInit {
     });
 
     this.paymentForm.patchValue({
-      season: this.payment_in.season,
+      // season: this.payment_in.season,
       amount: this.payment_in.amount,
       payment_mode: PaymentMode.CASH,
       bank: '',

@@ -7,14 +7,32 @@ export interface CartItem {
 }
 
 export interface SaleItem {
-    season: string;
+    // season: string;
     product_id: string;
     payee_id: string;
     price_payed: number;
     payment_id?: string;
 }
 
+export interface Session {
+    season: string;
+    creator: string;
+    event: Date;
+    payments: Payment[];
+}
 
+export interface Payment {
+    id?: string;
+    amount: number;
+    payer_id: string;
+    session_id: string;
+    payment_mode: PaymentMode;
+    bank?: string;
+    cheque_no?: string;
+    cross_checked?: boolean;
+    saleItems?: SaleItem[];
+
+}
 
 export enum PaymentMode {
     CASH = 'espèces',
@@ -22,21 +40,6 @@ export enum PaymentMode {
     TRANSFER = 'virement',
     CARD = 'carte',
     DEBT = 'dette',
-}
-
-export interface Payment {
-    id?: string;
-    season: string;
-    event: Date;
-    creator: string;
-    amount: number;
-    payer_id: string;
-    payment_mode: PaymentMode;
-    bank?: string;
-    cheque_no?: string;
-    cross_checked?: boolean;
-    saleItems?: SaleItem[];
-
 }
 
 

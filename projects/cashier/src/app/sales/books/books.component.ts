@@ -46,8 +46,8 @@ export class BooksComponent {
       this.productService.listProducts(),
     ])
       .subscribe(([payments, saleItems, members, products]) => {
-        this.payments = payments.filter((payment) => payment.season === '2024/25');
-        this.saleItems = saleItems.filter((sale) => sale.season === '2024/25');
+        this.payments = payments.filter((payment) => payment);
+        this.saleItems = saleItems.filter((sale) => sale);
         this.loaded = true;
       });
   }

@@ -61,8 +61,8 @@ export class AccountingService {
 
   writeOperation(payment: Payment): Observable<SaleItem[]> {
     const client = generateClient<Schema>();
-    const paymentWithStringEvent = { ...payment, event: payment.event.toISOString() };
-    return from(client.models.Payment.create(paymentWithStringEvent))
+    // const paymentWithStringEvent = { ...payment, event: payment.event.toISOString() };
+    return from(client.models.Payment.create(payment))
       .pipe(
         map((response: { data: unknown; }) => {
           let payment = response.data as unknown as Payment;
@@ -87,7 +87,7 @@ export class AccountingService {
     const _listPayments = (): Observable<Payment[]> => {
       const client = generateClient<Schema>();
       return from(client.models.Payment.list(
-        { selectionSet: ['id', 'season', 'event', 'creator', 'amount', 'payer_id', 'payment_mode', 'bank', 'cheque_no', 'saleItems.*'] }))
+        { selectionSet: ['id', 'amount', 'payer_id', 'payment_mode', 'bank', 'cheque_no', 'saleItems.*'] }))
         .pipe(
           map((response: { data: unknown; }) => response.data as unknown as Payment[]),
           tap((payments) => {

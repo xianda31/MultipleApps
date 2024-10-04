@@ -6,7 +6,7 @@ import { Member } from '../../../../../common/members/member.interface';
 import { ProductService } from '../../../../../common/services/product.service';
 import { ToastService } from '../../../../../common/toaster/toast.service';
 import { CartService } from '../../cart.service';
-import { PaymentMode, SaleItem, CartItem, Payment } from '../../cart/cart.interface';
+import { PaymentMode, SaleItem, CartItem, Payment, Session } from '../../cart/cart.interface';
 import { GetPaymentComponent } from '../get-payment/get-payment.component';
 import { Product } from '../../../../../admin-dashboard/src/app/sales/products/product.interface';
 import { ToasterComponent } from '../../../../../common/toaster/components/toaster/toaster.component';
@@ -18,36 +18,24 @@ import { InputMemberComponent } from '../../input-member/input-member.component'
 import { AccountingService } from '../accounting.service';
 import { GetEventComponent } from '../../get-event/get-event.component';
 import { from, Observable } from 'rxjs';
+import { SessionService } from '../../session/session.service';
+import { SessionComponent } from '../../session/session.component';
 
 @Component({
   selector: 'app-sales',
   standalone: true,
-  imports: [ReactiveFormsModule, ToasterComponent, CommonModule, FormsModule, KeypadComponent, CartComponent, BookLoggerComponent, InputMemberComponent],
+  imports: [ReactiveFormsModule, ToasterComponent, CommonModule, FormsModule, KeypadComponent, CartComponent, BookLoggerComponent, InputMemberComponent, SessionComponent],
   templateUrl: './sales.component.html',
   styleUrl: './sales.component.scss'
 })
 export class SalesComponent {
   [x: string]: any;
   title = 'cashier';
-  season = '2024/25';
-  double_price = false;
+  // double_price = false;
   members!: Member[];
   buyer!: Member | null;
   // alt_payee_switch: boolean = false;
-  event: Date | null = null;
-  creator: Member = {
-    id: '1', lastname: 'Do', firstname: 'John',
-    gender: '',
-    license_number: '',
-    birthdate: '',
-    city: '',
-    season: '',
-    email: '',
-    phone_one: '',
-    orga_license_name: '',
-    is_sympathisant: false,
-    has_account: false
-  };
+  session!: Session | null;
   paymentMode = PaymentMode;
 
   members_subscription: any;
@@ -57,12 +45,11 @@ export class SalesComponent {
 
   payeesForm: FormGroup = new FormGroup({
     payee_1: new FormControl(null, Validators.required),
-    // payee_2: new FormControl(null, Validators.required),
   });
   get payee_1() { return this.payeesForm.get('payee_1')!; }
-  // get payee_2() { return this.payeesForm.get('payee_2')!; }
 
   constructor(
+    private sessionService: SessionService,
     private cartService: CartService,
     private membersService: MembersService,
     private toastService: ToastService,
@@ -76,11 +63,10 @@ export class SalesComponent {
   ngOnDestroy(): void {
     this.products_subscription.unsubscribe();
     this.members_subscription.unsubscribe();
-    this.event_subscription.unsubscribe();
 
   }
 
-  async ngOnInit(): Promise<void> {
+  ngOnInit(): void {
 
     this.members_subscription = this.membersService.listMembers().subscribe((members) => {
       this.members = members.sort((a, b) => a.lastname.localeCompare(b.lastname))
@@ -94,15 +80,15 @@ export class SalesComponent {
       this.keypad = products.filter((product) => product.active);
     });
 
-    this.event_subscription = this.cartService.open_sale_session().subscribe((date) => {
-      (date !== null) ? console.log('event', date) : console.log('no event');
-      this.event = date
-    });
+    // this.event_subscription = this.sessionService.open_sale_session().subscribe((session) => {
+    //   this.event = session.event;
+    // });
+
   }
 
   close() {
-    this.event = null;
-    this.cartService.close_sale_session();
+    // this.event = null;
+    this.sessionService.close_sale_session();
     this.toastService.showSuccessToast('saisie achat', 'session close');
   }
 
@@ -111,12 +97,6 @@ export class SalesComponent {
       this.toastService.showWarningToast('saisie achat', 'selectionner au moins le bénéficiaire 1');
       return
     }
-
-    // if (product.paired && !this.payee_2.valid) {
-    //   this.toastService.showWarningToast('article couple', 'selectionner le 2eme bénéficiaire');
-    //   return
-    // }
-
 
     if (product.paired) {
       const cart_item1 = this.set_cart_item(product, this.payee_1.value);
@@ -131,7 +111,6 @@ export class SalesComponent {
 
   set_cart_item(product: Product, payee: Member | null): CartItem {
     const saleItem: SaleItem = {
-      season: this.season,
       product_id: product.id,
       price_payed: product.price,
       payee_id: payee === null ? '' : payee.id,
@@ -153,9 +132,7 @@ export class SalesComponent {
     }
 
     let payment_in: Payment = {
-      season: '2024/25',
-      event: this.event!,
-      creator: this.creator.firstname + ' ' + this.creator.lastname,
+      session_id: 'XXXXXXX',
       amount: this.cartService.getTotal(),
       payer_id: this.payee_1.value.id,
       payment_mode: PaymentMode.CASH,
@@ -166,8 +143,7 @@ export class SalesComponent {
       if (payment_out === null) return;
 
       this.accountingService.writeOperation(payment_out).subscribe((res) => {
-
-        this.cartService.push_sale_in_session(payment_out);
+        this.sessionService.push_saleItems_in_session(payment_out);
         this.cartService.clearCart();
         this.toastService.showSuccessToast('saisie achat', 'vente enregistrée');
         this.payeesForm.reset();
@@ -183,6 +159,10 @@ export class SalesComponent {
 
   format_date(date: Date): string {
     return formatDate(date, 'EEEE d MMMM HH:00', 'fr-FR');
+  }
+
+  set_session(session: Session | null) {
+    this.session = session;
   }
 
 }

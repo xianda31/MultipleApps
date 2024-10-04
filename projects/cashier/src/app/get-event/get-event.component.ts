@@ -20,17 +20,17 @@ export class GetEventComponent {
 
   ) {
     this.date = formatDate(new Date(), 'yyyy-MM-dd', 'fr');
-
   }
 
   got_it() {
 
     const date = new Date(this.date);
     date.setHours(this.time, 0, 0, 0);
+    console.log('get-event ---->', this.date);
     this.activeModal.close(date);
   }
 
-  close() {
-    this.activeModal.close(null)
+  dismiss() {
+    this.activeModal.close(null);
   }
 }
