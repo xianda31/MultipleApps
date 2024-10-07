@@ -5,6 +5,7 @@ import { BehaviorSubject, Observable, from, tap, of, map } from 'rxjs';
 import { GetEventComponent } from '../get-event/get-event.component';
 import { CartService } from '../cart.service';
 import { Member } from '../../../../common/members/member.interface';
+import { AuthentificationService } from '../../../../common/authentification/authentification.service';
 
 @Injectable({
   providedIn: 'root'
@@ -17,26 +18,21 @@ export class SessionService {
   private _payments$ = new BehaviorSubject<Payment[]>(this._payments);
 
   season = '2024/25';
-  creator: Member = {
-    id: '1', lastname: 'Do', firstname: 'John',
-    gender: '',
-    license_number: '',
-    birthdate: '',
-    city: '',
-    season: '',
-    email: '',
-    phone_one: '',
-    orga_license_name: '',
-    is_sympathisant: false,
-    has_account: false
-  };
+  vendor!: Member;
 
 
   constructor(
     private modalService: NgbModal,
     private cartService: CartService,
+    private authService: AuthentificationService
 
-  ) { }
+  ) {
+    this.authService.logged_member$.subscribe((member) => {
+      if (member) {
+        this.vendor = member;
+      }
+    });
+  }
 
   open_sale_session(): Observable<Session | null> {
 
@@ -48,7 +44,7 @@ export class SessionService {
           if (date === null) {
             return null;
           }
-          this._current_session = { season: this.season, creator: this.creator.firstname + '' + this.creator.lastname, event: date, payments: [] };
+          this._current_session = { season: this.season, creator: this.vendor.firstname + ' ' + this.vendor.lastname, event: date, payments: [] };
           this._current_session$.next(this._current_session);
           return this._current_session;
         }),

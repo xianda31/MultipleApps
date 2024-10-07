@@ -6,9 +6,10 @@ import { TestComponent } from './test/test.component';
 import { AdminInComponent } from './admin-in/admin-in.component';
 import { AppComponent } from './app.component';
 import { HomeComponent } from './home/home.component';
+import { loggedInGuard } from '../../../web-site/src/app/guards/logged-in.guard';
 
 export const routes: Routes = [
-    { path: 'sales', component: SalesComponent },
+    { path: 'sales', component: SalesComponent },   //, canActivate: [loggedInGuard]
     { path: 'books', component: BooksComponent },
     { path: 'fees', component: FeesComponent },
     { path: '', component: HomeComponent },
