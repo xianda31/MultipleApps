@@ -1,27 +1,17 @@
 <form [formGroup]="paymentForm">
     <div class="modal-header">
-        <div class="col-12">
-
-            <div class="row  align-items-center">
-                <div class="col-4 text-start">
-                    <h5> {{payment_in.amount | currency:'€':'symbol':'2.2-2':'fr'}} </h5>
-                </div>
-                <!-- <div class="col-4 text-center">
-                    <h6> {{buyer_fullname}}</h6>
-                </div> -->
-                <div class="col-4 text-end">
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
-                        (click)="close()"></button>
-                </div>
-            </div>
+        <!-- <div class="col-12"> -->
+        <h5>Mode de paiement</h5>
+        <div class="col  text-end">
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                (click)="close()"></button>
         </div>
+        <!-- </div> -->
     </div>
 
     <div class="modal-body">
-
         <!-- <div class="row"> -->
         <div class="col col-md-6 mb-3">
-            <label for="payment_mode" class="form-label">Mode paiement</label>
             <select id="payment_mode" class="form-select form-select-sm" formControlName="payment_mode">
                 <option [value]="paymentMode.CASH">Espèce</option>
                 <option [value]="paymentMode.CHEQUE">Chèque</option>
@@ -29,7 +19,7 @@
                 <option [value]="paymentMode.DEBT">Dette</option>
             </select>
         </div>
-        <div *ngIf="payment_mode.value === paymentMode.CHEQUE" class="col-12 mb-3">
+        <div *ngIf="payment_mode.value === paymentMode.CHEQUE" class="col-sm-12  col-md-6 mb-3">
             <div class="row">
 
                 <div class="col-6 px-2">
@@ -56,10 +46,7 @@
                 </div>
             </div>
         </div>
-
-    </div>
-    <div class="modal-footer">
         <button [disabled]="!paymentForm.valid && payment_mode.value === 'check'" type="submit"
-            class="btn btn-primary btn-sm" (click)="got_it()">OK</button>
+            class="btn btn-primary btn-sm align-self-end" (click)="got_it()">OK</button>
     </div>
 </form>

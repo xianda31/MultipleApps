@@ -1,9 +1,12 @@
-<div *ngIf="current_session" class="row bg-secondary text-white mb-3 p-2">
+<div *ngIf="current_session" class="row bg-secondary text-white mb-3 p-2 align-items-center">
     <div class="col">
-        ventes du {{ current_session.event| date: 'fullDate' : 'fr'}}
+        ventes du {{ current_session.event| date: 'short' : 'fr'}}
     </div>
     <div class="col">
         saison : {{current_session.season}}
+    </div>
+    <div class="col text-end">
+        <button class="btn btn-primary" (click)="renew_session()">Nouvelle session</button>
     </div>
 
 </div>

@@ -18,7 +18,9 @@ export class AuthentificationService {
   constructor(
     private toastService: ToastService,
     private memberService: MembersService
-  ) { }
+  ) {
+    this.getCurrentUser();    // recherche si un user est déjà connecté (application mémoire locale)
+  }
 
   get mode$(): Observable<Process_flow> {
     return this._mode$ as Observable<Process_flow>;
@@ -28,14 +30,6 @@ export class AuthentificationService {
     return this._logged_member$ as Observable<Member | null>;
   }
 
-  // set logged_member(member: string | null) {
-  //   this._logged_member = member;
-  //   this._logged_member$.next(this._logged_member);
-  // }
-
-  // get logged_member(): string | null {
-  //   return this._logged_member;
-  // }
 
   changeMode(mode: Process_flow) {
     this._mode = mode;
@@ -49,8 +43,10 @@ export class AuthentificationService {
       {
         try {
           let { isSignedIn, nextStep } = await signIn(signInInput);
+
           const attributes = await fetchUserAttributes();
           let member_id = attributes['custom:member_id'];
+          if (!member_id) { console.log('no member_id !!!!!'); reject('no member_id'); }
           this._logged_member = await this.memberService.readMember(member_id!);
           this._logged_member$.next(this._logged_member);
           resolve(member_id);
@@ -78,7 +74,7 @@ export class AuthentificationService {
 
 
   async signUp(email: string, password: string, member_id: string): Promise<SignUpOutput> {
-
+    console.log('sign up', email, password, member_id);
     let promise = new Promise<SignUpOutput>((resolve, reject) => {
       signUp({
         username: email,
@@ -199,23 +195,20 @@ export class AuthentificationService {
     return promise;
   }
 
-  async getCurrentUser(): Promise<any> {
-    let promise = new Promise((resolve, reject) => {
+  async getCurrentUser(): Promise<string | null> {
+    let promise = new Promise<string | null>((resolve, reject) => {
       getCurrentUser()
-        .then(async (user) => {
-          // console.log('user', user);
-
+        .then(async ({ username, userId, signInDetails }) => {
           const attributes = await fetchUserAttributes();
           let member_id = attributes['custom:member_id'];
+
           this._logged_member = await this.memberService.readMember(member_id!);
           this._logged_member$.next(this._logged_member);
 
-          // console.log('current User', attributes, member_id);
-          resolve(member_id);
+          resolve(member_id!);
         })
         .catch((err) => {
-          // this.toastService.showErrorToast('get current user', err.message);
-          reject(err);
+          resolve(null);          // erreur "normale" si pas de user connecté
         });
     });
     return promise;

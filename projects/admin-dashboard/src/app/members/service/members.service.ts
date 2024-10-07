@@ -26,6 +26,7 @@ export class MembersService {
 
     const fetchMembers = async () => {
       const client = generateClient<Schema>();
+      // console.log('fetching members ... 200 max');
       const { data: members, errors } = await client.models.Member.list(
         { limit: 200 }
       );

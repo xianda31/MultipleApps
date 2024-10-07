@@ -8,8 +8,6 @@ import { Process_flow } from '../authentification_interface';
 import { Router } from '@angular/router';
 import { AuthentificationService } from '../authentification.service';
 
-
-
 const EMAIL_PATTERN = "^[_A-Za-z0-9-\+]+(\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\.[A-Za-z0-9]+)*(\.[A-Za-z]{2,})$";
 const PSW_PATTERN = '^(?!\\s+)(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[\\^$*.[\\]{}()?"!@#%&/\\\\,><\': ;| _~`=+-]).{8,256}(?<!\\s)$';
 @Component({
@@ -37,6 +35,26 @@ export class SignInComponent {
   get email() { return this.loggerForm.get('email')!; }
   get password() { return this.loggerForm.get('password')!; }
   get code() { return this.loggerForm.get('code')!; }
+  emailValidator = (control: AbstractControl): Observable<ValidationErrors | null> => {
+
+    if (!control.value.match(EMAIL_PATTERN)) return of(null);
+    return of(control.value).pipe(
+      delay(100),
+      switchMap((email) => from(this.membersService.getMemberByEmail(email))),
+      // tap((member) => console.log("member", member?.lastname)),
+      map((member) => {
+        if (!member) return { not_member: true };
+        if (member.has_account) return null;
+        if (this.mode === this.process_flow.SIGN_IN) {
+          return null;
+
+          // return { no_account: true };
+        } else {
+          return null;
+        }
+      })
+    )
+  }
 
   constructor(
     private membersService: MembersService,
@@ -57,35 +75,13 @@ export class SignInComponent {
     this.auth.getCurrentUser()
       .then(async (member_id) => {
         if (member_id) {
-          // console.log("member_id", member_id);
           const me = await this.membersService.readMember(member_id);
           // this.auth.whoAmI = me;
           this.toastService.showSuccessToast('identification', 'Bonjour ' + me!.firstname);
           this.router.navigate(['/']);
         }
       })
-    // .catch((err) => console.log("err", err));
-  }
-
-  emailValidator = (control: AbstractControl): Observable<ValidationErrors | null> => {
-
-    if (!control.value.match(EMAIL_PATTERN)) return of(null);
-    return of(control.value).pipe(
-      delay(100),
-      switchMap((email) => from(this.membersService.getMemberByEmail(email))),
-      // tap((member) => console.log("member", member?.lastname)),
-      map((member) => {
-        if (!member) return { not_member: true };
-        if (member.has_account) return null;
-        if (this.mode === this.process_flow.SIGN_IN) {
-          return null;
-
-          // return { no_account: true };
-        } else {
-          return null;
-        }
-      })
-    )
+      .catch((err) => console.log("err", err));  // pas grave si erreur
   }
 
   async signIn() {
@@ -114,6 +110,11 @@ export class SignInComponent {
 
     if (this.loggerForm.invalid) return;
     let member = await this.membersService.getMemberByEmail(this.email.value);
+    if (!member) {
+      this.toastService.showErrorToast('sign up', 'erreur imprévue');
+      return;
+    } else {      // console.log("member", member);
+    }
     await this.auth.signUp(this.email.value, this.password.value, member!.id)
       // .catch((err) => this.toastService.showInfoToast('sign up', err.message))
       .then(({ isSignUpComplete, nextStep }) => {

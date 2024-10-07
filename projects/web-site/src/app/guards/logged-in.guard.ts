@@ -10,5 +10,6 @@ export const loggedInGuard: CanActivateFn = (route, state) => {
   return auth.logged_member$.pipe(
     take(1),
     map(member => !!member),
+    tap((member) => console.log("gard", member))
   );
 };

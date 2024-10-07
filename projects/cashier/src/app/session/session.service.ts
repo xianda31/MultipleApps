@@ -12,6 +12,7 @@ import { Member } from '../../../../common/members/member.interface';
 export class SessionService {
 
   private _current_session: Session | null = null;
+  private _current_session$ = new BehaviorSubject<Session | null>(this._current_session);
   private _payments: Payment[] = [];
   private _payments$ = new BehaviorSubject<Payment[]>(this._payments);
 
@@ -48,6 +49,7 @@ export class SessionService {
             return null;
           }
           this._current_session = { season: this.season, creator: this.creator.firstname + '' + this.creator.lastname, event: date, payments: [] };
+          this._current_session$.next(this._current_session);
           return this._current_session;
         }),
         tap((session) => {
@@ -56,7 +58,7 @@ export class SessionService {
         )
       );
     }
-    return (this._current_session !== null) ? of(this._current_session) : set_session();
+    return (this._current_session !== null) ? (this._current_session$.asObservable()) : set_session();
   }
 
   push_saleItems_in_session(payment: Payment): void {
@@ -75,5 +77,7 @@ export class SessionService {
   close_sale_session() {
     console.log('close_sale_session');
     this._current_session = null;
+    this.cartService.clearCart();
+    this._current_session$.next(this._current_session);
   }
 }

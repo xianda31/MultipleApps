@@ -20,7 +20,7 @@
                             </a>
                             <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                                 <ng-container *ngFor="let page of menu.pages">
-                                    <li *ngIf="logged_in || !page.member_only">
+                                    <li *ngIf="(logged_member$ | async) || !page.member_only">
                                         <a class="dropdown-item"
                                             routerLink="{{'/' + page.link | replace : ' ':'-'}}">{{page.link}}</a>
                                     </li>
@@ -29,33 +29,29 @@
                         </li>
                     </ng-container>
 
-                    <li *ngIf="logged_in" class="nav-item">
+                    <li *ngIf="logged_member$ | async" class="nav-item">
                         <a class="nav-link" routerLink="/tournaments">Tournois</a>
                     </li>
                 </ul>
-                <ul *ngIf="logged_in" class="navbar-nav me-auto mb-2 mb-lg-0">
-
+                <ul *ngIf="logged_member$ | async" class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
                             data-bs-toggle="dropdown" aria-expanded="false">
-                            {{whoAmI?.firstname}}
+                            {{(logged_member$ | async)?.firstname}}
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <!-- <li> <a class="dropdown-item" routerLink="/tournaments">Tournois</a></li> -->
                             <li> <a class="dropdown-item" routerLink="/personal/data">Mes données</a></li>
                             <li> <a class="dropdown-item" routerLink="/authentification/sign-out">Déconnexion</a></li>
 
                         </ul>
                     </li>
                 </ul>
-                <a *ngIf="!logged_in" routerLink="/authentification">
+                <a *ngIf="!(logged_member$ | async)" routerLink="/authentification/sign-in">
                     <button class="btn btn-success align-items-center nice_shadow" type="button">
                         <i class="bi bi-person-fill"></i>
                         <span class="ms-2">Espace membre</span>
                     </button>
                 </a>
-
-                <!-- <app-sign-in></app-sign-in> -->
             </div>
         </div>
     </nav>

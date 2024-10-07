@@ -92,7 +92,7 @@ export class AccountingService {
           map((response: { data: unknown; }) => response.data as unknown as Payment[]),
           tap((payments) => {
             this._payments = payments;
-            console.log('payments', payments);
+            // console.log('payments', payments);
           })
         );
     }

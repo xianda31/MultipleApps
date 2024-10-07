@@ -7,6 +7,7 @@ import { ReplacePipe } from '../../../../common/pipes/replace.pipe';
 import { Member } from '../../../../common/members/member.interface';
 import { AuthentificationModule } from '../../../../common/authentification/authentification.module';
 import { AuthentificationService } from '../../../../common/authentification/authentification.service';
+import { Observable } from 'rxjs';
 
 
 
@@ -14,29 +15,23 @@ import { AuthentificationService } from '../../../../common/authentification/aut
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, ReplacePipe, AuthentificationModule],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, ReplacePipe],
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.scss'
 })
-export class NavbarComponent implements OnInit {
+export class NavbarComponent {
   @Input() isSignedIn: boolean = false;
   @Input() siteMenus!: Menu[];
-  whoAmI!: Member | null;
-  logged_in: boolean = false;
+  logged_member$: Observable<Member | null> = new Observable<Member | null>();
 
   constructor(
     private auth: AuthentificationService,
   ) {
-  }
-  ngOnInit(): void {
-    this.auth.logged_member$.subscribe(async (member) => {
-      this.whoAmI = member;
-      if (this.whoAmI != null) this.logged_in = true;
-    });
+    this.logged_member$ = this.auth.logged_member$;
   }
 
   async logOut() {
-    await signOut();
+    this.auth.signOut();
   }
 
 

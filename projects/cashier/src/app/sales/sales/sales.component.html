@@ -5,16 +5,6 @@
     </div>
 
     <div *ngIf="session" class="card">
-        <!-- <div class="card-header">
-            <div class="row">
-                <div class="col">
-                    <h5>Ventes du {{format_date(event!)}}</h5>
-                </div>
-                <div class="col text-end">
-                    <button type="button" class="btn-close" (click)="close()"></button>
-                </div>
-            </div>
-        </div> -->
 
         <div class="card-body">
             <div class="row mt-2">
@@ -32,17 +22,6 @@
                                             formControlName="payee_1"></app-input-member>
                                     </div>
                                 </div>
-                                <!-- <div class="col-6">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" role="switch"
-                                            [(ngModel)]="alt_payee_switch" [ngModelOptions]="{standalone: true}">
-                                        <label class="form-check-label">Autre bénéficiaire</label>
-                                    </div>
-                                    <div class="input-group border-primary">
-                                        <app-input-member id="payee_2" class="form-control" [members]="members"
-                                            formControlName="payee_2"></app-input-member>
-                                    </div>
-                                </div> -->
                             </div>
                         </div>
                     </form>

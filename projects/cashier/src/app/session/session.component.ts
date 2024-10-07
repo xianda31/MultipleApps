@@ -29,10 +29,21 @@ export class SessionComponent {
   }
 
   ngOnInit(): void {
+    this.new_session();
+  }
+
+  renew_session() {
+    this.sessionService.close_sale_session();
+    this.session_subscription.unsubscribe();
+    this.new_session();
+  }
+
+  new_session() {
     this.session_subscription = this.sessionService.open_sale_session().subscribe((session: Session | null) => {
       console.log('session', session);
       this.current_session = session,
         this.session.emit(session);
     });
   }
+
 }

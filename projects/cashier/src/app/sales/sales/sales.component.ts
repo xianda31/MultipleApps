@@ -80,16 +80,7 @@ export class SalesComponent {
       this.keypad = products.filter((product) => product.active);
     });
 
-    // this.event_subscription = this.sessionService.open_sale_session().subscribe((session) => {
-    //   this.event = session.event;
-    // });
 
-  }
-
-  close() {
-    // this.event = null;
-    this.sessionService.close_sale_session();
-    this.toastService.showSuccessToast('saisie achat', 'session close');
   }
 
   keyStroked(product: Product) {
