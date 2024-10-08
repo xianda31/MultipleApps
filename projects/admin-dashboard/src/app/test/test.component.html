@@ -1,0 +1,88 @@
+<div class="container">
+
+    <div *ngIf="loaded" class="card mt-2">
+        <div class="card-header">
+            <div class="row justify-content-around">
+                <div class="col-md-6">
+                    <h5>paramétrage applications</h5>
+                </div>
+                <div class="col-md-6 text-end">
+                    <button class=" btn btn-outline-success btn-sm" (click)="save_configuration()">save</button>
+                </div>
+            </div>
+        </div>
+        <!-- <h5>paramétrage applications</h5> -->
+        <div class="card-body">
+
+            <form [formGroup]="systemFormGroup">
+                <h5>développeur</h5>
+                <div class="col-md-3 pe-3">
+                    <div class="input-group ">
+                        <span class="input-group-text">mode</span>
+                        <input type="text" class="form-control" formControlName="mode">
+                    </div>
+                </div>
+                <br>
+                <h5>comptabilité</h5>
+                <div class="col-md-3 pe-3">
+                    <div class="input-group">
+                        <span class="input-group-text">saison</span>
+                        <input type="text" class="form-control" formControlName="season">
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <h6 class="card-header">compte débit</h6>
+                            <div class="card-body">
+
+                                <div formArrayName="debit_accounts">
+
+                                    <div *ngFor="let debit_account of debit_accounts.controls; let i = index">
+                                        <div class="row " [formGroupName]=" i">
+                                            <div class="col input-group">
+                                                <span class="input-group-text">code</span>
+                                                <input type="text" class="form-control" formControlName="key">
+                                            </div>
+                                            <div class="col input-group">
+                                                <span class="input-group-text">description</span>
+                                                <input type="text" class="form-control" formControlName="description">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <h6 class="card-header">compte crédit</h6>
+                            <div class="card-body">
+
+                                <div formArrayName="credit_accounts">
+
+                                    <div *ngFor="let credit_account of credit_accounts.controls; let i = index">
+                                        <div class="row " [formGroupName]=" i">
+                                            <div class="col input-group">
+                                                <span class="input-group-text">code</span>
+                                                <input type="text" class="form-control" formControlName="key">
+                                            </div>
+                                            <div class="col input-group">
+                                                <span class="input-group-text">description</span>
+                                                <input type="text" class="form-control" formControlName="description">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                    </div>
+
+                </div>
+            </form>
+        </div>
+    </div>

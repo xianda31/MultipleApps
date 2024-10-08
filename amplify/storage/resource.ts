@@ -15,6 +15,10 @@ export const storage = defineStorage({
             allow.authenticated.to(['read', 'write']),
             allow.guest.to(['read', 'write', 'delete'])
         ],
+        'system/*': [
+            allow.authenticated.to(['read', 'write', 'delete']),
+            allow.guest.to(['read', 'write', 'delete'])
+        ],
     })
 })
 

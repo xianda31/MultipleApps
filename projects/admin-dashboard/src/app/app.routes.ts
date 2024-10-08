@@ -8,9 +8,9 @@ import { HomePageComponent } from './home-page/home-page.component';
 import { LayoutComponent } from './site-content/layout/layout.component';
 import { ArticlesComponent } from './site-content/articles/articles.component';
 import { ArticleComponent } from './site-content/article/article.component';
-import { TestComponent } from './site-content/files/test/test.component';
 import { ImageMgrComponent } from './site-content/files/image-mgr/image-mgr.component';
 import { AlbumsComponent } from './site-content/albums/albums.component';
+import { TestComponent } from './test/test.component';
 
 export const routes: Routes = [
     { path: 'auth', component: AuthComponent },

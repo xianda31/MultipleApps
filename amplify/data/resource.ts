@@ -4,6 +4,12 @@ import { Payment } from '../../projects/cashier/src/app/cart/cart.interface';
 
 const schema = a.schema({
 
+  // SystemData: a.model({
+  //   key: a.string().required(),
+  //   json: a.json().required(),
+  // })
+  //   .authorization((allow) => [allow.publicApiKey()]),
+
   Product: a.model({
     glyph: a.string().required(),
     description: a.string().required(),
