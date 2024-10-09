@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { signOut } from 'aws-amplify/auth';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { AdminInComponent } from "../admin-in/admin-in.component";
+import { AdminInComponent } from "../../../../common/authentification/admin-in/admin-in.component";
 
 @Component({
   selector: 'app-navbar',

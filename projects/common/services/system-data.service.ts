@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { downloadData, uploadData } from 'aws-amplify/storage';
-import { SystemConfiguration } from './system-conf.interface';
+import { SystemConfiguration } from '../system-conf.interface';
+import { from } from 'rxjs';
 
 
 
@@ -33,7 +34,6 @@ export class SystemDataService {
     const blob = new Blob([json], { type: 'text/plain' });
     const file = new File([blob], 'system_configuration.txt');
     this.upload(blob, 'system/', file).then((data) => {
-      console.log('data : ', data);
     });
   }
 
@@ -48,13 +48,15 @@ export class SystemDataService {
     return promise;
   }
 
-  async read_configuration(): Promise<SystemConfiguration> {
+  private async read_configuration(): Promise<SystemConfiguration> {
     return this.download().then(async (data) => {
-      console.log('data : ', data);
       const conf: SystemConfiguration = JSON.parse(data);
-      console.log('conf : ', conf);
       return conf;
     });
+  }
+
+  get configuration$() {
+    return from(this.read_configuration());
   }
 
 

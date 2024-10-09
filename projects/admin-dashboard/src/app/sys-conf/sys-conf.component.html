@@ -1,35 +1,107 @@
 <div class="container">
-    <form [formGroup]="sysconfGroup">
-        <div class="card col-12 col-md-10 m-1">
-            <div class="card-body">
-                <div class="card-title"> Configuration Système </div>
-                <div class="card-subtitle"> menus du site </div>
-                <div class="card-text">
-                    <div class="row">
-                        <div class="col-8">
-                            <label for="siteConfJson">Configuration</label>
-                            <textarea id="siteConfJson" class="form-control" formControlName="siteConfJson"></textarea>
-                        </div>
-                        <div class="col-4">
-                            <button (click)="saveConf()" class="btn btn-primary">Sauvegarder</button>
-                        </div>
+    <form [formGroup]="systemFormGroup">
 
+        <div *ngIf="loaded" class="card mt-2">
+            <div class="card-header">
+                <div class="row justify-content-around">
+                    <div class="col-md-6">
+                        <h5>paramétrage applications</h5>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <button class=" btn btn-outline-success btn-sm"
+                            (click)="save_configuration()">enregistrer</button>
                     </div>
                 </div>
             </div>
+            <div class="card-body">
+                <!-- paramètres développeur -->
+                <div class="card w-50 mt-2">
+                    <h5 class="card-header">développeur</h5>
+                    <div class="card-body">
+                        <div class="col-md-6 pe-3">
+                            <div class="input-group ">
+                                <span class="input-group-text">mode</span>
+                                <input type="text" class="form-control" formControlName="mode">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- paramètres comptabilité -->
+                <div class="card mt-2">
+                    <h5 class="card-header">comptabilité</h5>
+                    <div class="card-body">
 
+                        <div class="col-md-3 pe-3">
+                            <div class="input-group">
+                                <span class="input-group-text">saison</span>
+                                <input type="text" class="form-control" formControlName="season">
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <h6 class="card-header">compte débit</h6>
+                                    <div class="card-body">
+
+                                        <div formArrayName="debit_accounts">
+
+                                            <div *ngFor="let debit_account of debit_accounts.controls; let i = index">
+                                                <div class="row " [formGroupName]=" i">
+                                                    <div class="col input-group">
+                                                        <span class="input-group-text">code</span>
+                                                        <input type="text" class="form-control" formControlName="key">
+                                                    </div>
+                                                    <div class="col input-group">
+                                                        <span class="input-group-text">description</span>
+                                                        <input type="text" class="form-control"
+                                                            formControlName="description">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <h6 class="card-header">compte crédit</h6>
+                                    <div class="card-body">
+
+                                        <div formArrayName="credit_accounts">
+
+                                            <div *ngFor="let credit_account of credit_accounts.controls; let i = index">
+                                                <div class="row " [formGroupName]=" i">
+                                                    <div class="col input-group">
+                                                        <span class="input-group-text">code</span>
+                                                        <input type="text" class="form-control" formControlName="key">
+                                                    </div>
+                                                    <div class="col input-group">
+                                                        <span class="input-group-text">description</span>
+                                                        <input type="text" class="form-control"
+                                                            formControlName="description">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+                <!-- paramètres UE site -->
+                <div class="card mt-2">
+                    <h5 class="card-header">site</h5>
+                    <div class="card-body">
+                    </div>
+                </div>
+
+            </div>
         </div>
     </form>
-
-    <!-- develop configurations fields -->
-    web_site_menus:
-    <div class="row" *ngFor="let item of siteConf.web_site_menus">
-        <div class="col">
-            {{item.label}}
-            <!-- {{item.endItem.link?.componentEnum}}
-            <span> <small>{{item.link?.name | json}}</small> </span> -->
-
-        </div>
-
-    </div>
 </div>

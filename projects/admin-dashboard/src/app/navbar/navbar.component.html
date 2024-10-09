@@ -14,7 +14,7 @@
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <div class="container">
         <a class="navbar-brand" routerLink="/home">
-            <i class="fs-4 bi-house"></i> <span class="ms-1 d-none d-sm-inline">Home</span>
+            <i class="fs-4 bi-tools"></i> <span class="ms-1 d-none d-sm-inline">Home</span>
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
             aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -77,21 +77,18 @@
                     </ul>
                 </li>
 
-                <!-- <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" id="navbarDropdown3" role="button" data-bs-toggle="dropdown"
-                        aria-expanded="false">
-                        Utilitaires
+                <li class="nav-item">
+                    <a class="nav-link" routerLink="/sysconf">
+                        <i class="fs-4 bi-gear"></i> <span class="ms-1 d-none d-sm-inline">Configuration</span>
                     </a>
-                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown3">
-                        <li><a class="dropdown-item" href="#">Base des photos</a></li>
-                        <li><a class="dropdown-item" href="#">Blog</a></li>
-                    </ul>
-                </li> -->
+                </li>
+
             </ul>
-            <form class="d-flex">
-                <input class="form-control me-2" type="mail" placeholder="Mail" aria-label="Mail">
-                <button class="btn btn-outline-success" type="submit">Login</button>
-            </form>
+            <ul class=" navbar-nav  mb-2 mb-lg-0 ">
+                <li class="nav-item  me-5">
+                    <app-admin-in></app-admin-in>
+                </li>
+            </ul>
         </div>
     </div>
 </nav>

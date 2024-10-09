@@ -11,6 +11,7 @@ import { ArticleComponent } from './site-content/article/article.component';
 import { ImageMgrComponent } from './site-content/files/image-mgr/image-mgr.component';
 import { AlbumsComponent } from './site-content/albums/albums.component';
 import { TestComponent } from './test/test.component';
+import { SysConfComponent } from './sys-conf/sys-conf.component';
 
 export const routes: Routes = [
     { path: 'auth', component: AuthComponent },
@@ -24,6 +25,8 @@ export const routes: Routes = [
     { path: 'imagemgr', component: ImageMgrComponent },
     { path: 'albums', component: AlbumsComponent },
     { path: 'sales', loadChildren: () => import('./sales/sales.module').then(m => m.SalesModule) },
+    { path: 'sysconf', component: SysConfComponent },
+
     {
         path: 'tournaments',
         data: { app: 'admin-dashboard' },

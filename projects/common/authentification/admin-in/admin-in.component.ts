@@ -1,11 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { AuthentificationService } from '../../../../common/authentification/authentification.service';
-import { MembersService } from '../../../../admin-dashboard/src/app/members/service/members.service';
-import { ToastService } from '../../../../common/toaster/toast.service';
+import { AuthentificationService } from '../authentification.service';
+import { MembersService } from '../../../admin-dashboard/src/app/members/service/members.service';
+import { ToastService } from '../../toaster/toast.service';
 import { Observable } from 'rxjs';
-import { Member } from '../../../../common/members/member.interface';
+import { Member } from '../../members/member.interface';
 
 @Component({
   selector: 'app-admin-in',
