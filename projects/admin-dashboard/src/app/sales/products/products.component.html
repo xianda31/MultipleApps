@@ -7,7 +7,7 @@
                     <tr>
                         <th class="col-2">Produit</th>
                         <th class="col-4">Description</th>
-                        <th class="col-1">Catégorie</th>
+                        <th class="col-1">Compte</th>
                         <th class="col-1 text-center">Prix</th>
                         <!-- <th class="col-2">couleur</th> -->
                         <th class="col-2 text-center">2eme nom</th>
@@ -22,8 +22,8 @@
                         <td class="text-center">{{ product.category }}</td>
                         <td class="text-end">{{ product.price | currency:'€':'symbol':'2.2-2':'fr' }}</td>
                         <!-- <td>{{ product.color }}</td> -->
-                        <td class="d-flex justify-content-center">
-                            <div class=" form-check form-switch">
+                        <td class="text-center">
+                            <div class="mx-auto form-switch">
                                 <input class="form-check-input" type="checkbox" role="switch"
                                     [(ngModel)]="product.paired" [ngModelOptions]="{standalone: true}" disabled>
                             </div>
@@ -47,12 +47,17 @@
                     <tr>
                         <td> <input type="text" class="form-control" formControlName="glyph"> </td>
                         <td> <input type="text" class="form-control" formControlName="description"> </td>
-                        <td> <input type="text" class="form-control" formControlName="category"> </td>
+                        <td> <input list="datalist" type="text" class="form-control" formControlName="category">
+                            <datalist id="datalist">
+                                <option *ngFor="let category of categories$ | async" [value]="category">
+                                </option>
+                            </datalist>
+                        </td>
                         <td> <input type="text" class="form-control" formControlName="price"> </td>
                         <!-- <td> <input type="text" class="form-control" formControlName="color"> </td> -->
 
-                        <td class="d-flex justify-content-center">
-                            <div class=" form-check form-switch">
+                        <td class="text-center">
+                            <div class="mx-auto form-check form-switch">
                                 <input class="form-check-input" type="checkbox" role="switch" formControlName="paired">
                             </div>
                         </td>

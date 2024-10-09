@@ -3,6 +3,8 @@ import { ProductService } from '../../../../../common/services/product.service';
 import { FormGroup, ReactiveFormsModule, Form, FormControl, Validators } from '@angular/forms';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { Product } from './product.interface';
+import { SystemDataService } from '../../../../../common/services/system-data.service';
+import { map, Observable } from 'rxjs';
 @Component({
   selector: 'app-products',
   standalone: false,
@@ -15,15 +17,24 @@ export class ProductsComponent implements OnInit, OnDestroy {
   products: Product[] = [];
   productForm!: FormGroup;
   product_selected: boolean = false;
+  categories$ !: Observable<string[]>;
 
   constructor(
     private productService: ProductService,
+    private systemDataService: SystemDataService
   ) { }
   ngOnDestroy(): void {
     this.products_subscription.unsubscribe();
   }
 
   ngOnInit(): void {
+
+    this.categories$ = this.systemDataService.configuration$.pipe(
+      map((configuration) => configuration.credit_accounts),
+      map((credit_accounts) => credit_accounts.map((account) => account.key)
+      )
+    );
+
 
     this.products_subscription = this.productService.listProducts().subscribe((products) => {
       console.log('products', products);
