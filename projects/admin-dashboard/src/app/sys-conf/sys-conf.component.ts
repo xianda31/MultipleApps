@@ -40,11 +40,16 @@ export class SysConfComponent {
           description: ['']
         })
       ]),
+      thumbnail: this.fb.group({
+        width: [300],
+        height: [200],
+        ratio: [1.78]
+      })
     });
   }
 
   ngOnInit(): void {
-    this.systemDataService.configuration$.subscribe((configuration) => {
+    this.systemDataService.read_configuration().subscribe((configuration) => {
       this.loadDataInFormGroup(configuration);
       this.loaded = true;
     });

@@ -1,9 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, OnInit } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { uploadData } from 'aws-amplify/storage';
-import { ImageSize } from '../../../const';
+// import { ImageSize } from '../../../const';
 import { map } from 'rxjs';
+import { SystemDataService } from '../../../../../../common/services/system-data.service';
+import { ImageSize } from '../../../../../../common/system-conf.interface';
 
 @Component({
   selector: 'app-img-upload',
@@ -22,8 +24,16 @@ export class ImgUploadComponent {
   files!: File[];
   uploadPromises: Promise<any>[] = [];
   file_selected: boolean = false;
+  thumbnailSize !: ImageSize;
 
-  constructor() { }
+  constructor(
+    private systemDataService: SystemDataService
+  ) {
+    this.systemDataService.configuration$.subscribe((configuration) => {
+      this.thumbnailSize = configuration.thumbnailSize;
+    });
+
+  }
 
   onChange(event: any) {
     this.files = [];
@@ -38,6 +48,7 @@ export class ImgUploadComponent {
     });
     this.file_selected = true;
   }
+
 
   readFile(file: File): Promise<string> {
     let promise = new Promise<string>((resolve, reject) => {
@@ -121,27 +132,27 @@ export class ImgUploadComponent {
 
           if (width > height) {
             let ratio = width / height
-            if (ratio > ImageSize.THUMBNBAIL_RATIO) {
-              sw = height * ImageSize.THUMBNBAIL_RATIO
+            if (ratio > this.thumbnailSize.ratio) {
+              sw = height * this.thumbnailSize.ratio
               sh = height
               sx = (width - sw) / 2
               sy = 0
             } else {
               sw = width
-              sh = width / ImageSize.THUMBNBAIL_RATIO
+              sh = width / this.thumbnailSize.ratio
               sx = 0
               sy = (height - sh) / 2
             }
 
           } else {
             let ratio = height / width
-            if (ratio > ImageSize.THUMBNBAIL_RATIO) {
+            if (ratio > this.thumbnailSize.ratio) {
               sw = width
-              sh = width / ImageSize.THUMBNBAIL_RATIO
+              sh = width / this.thumbnailSize.ratio
               sx = 0
               sy = (height - sh) / 2
             } else {
-              sw = height / ImageSize.THUMBNBAIL_RATIO
+              sw = height / this.thumbnailSize.ratio
               sh = height
               sx = (width - sw) / 2
               sy = 0
@@ -150,13 +161,13 @@ export class ImgUploadComponent {
         }
         // reduction de taille proportionnelle
 
-        if (sw > ImageSize.THUMBNAIL_MAX_WIDTH) {
-          dh = sh * ImageSize.THUMBNAIL_MAX_WIDTH / sw
-          dw = ImageSize.THUMBNAIL_MAX_WIDTH
+        if (sw > this.thumbnailSize.max_width) {
+          dh = sh * this.thumbnailSize.max_width / sw
+          dw = this.thumbnailSize.max_width
         } else {
-          if (sh > ImageSize.THUMBNAIL_MAX_HEIGHT) {
-            dw = sw * ImageSize.THUMBNAIL_MAX_HEIGHT / sh
-            dh = ImageSize.THUMBNAIL_MAX_HEIGHT
+          if (sh > this.thumbnailSize.max_height) {
+            dw = sw * this.thumbnailSize.max_height / sh
+            dh = this.thumbnailSize.max_height
           }
         }
         canvas.width = dw

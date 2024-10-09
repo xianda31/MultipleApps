@@ -8,12 +8,12 @@ export const storage = defineStorage({
             allow.entity('identity').to(['read', 'write', 'delete'])
         ],
         'thumbnails/*': [
-            allow.authenticated.to(['read', 'write']),
-            allow.guest.to(['read', 'write', 'delete'])
+            allow.authenticated.to(['read', 'write', 'delete']),
+            allow.guest.to(['read'])
         ],
         'albums/*': [
-            allow.authenticated.to(['read', 'write']),
-            allow.guest.to(['read', 'write', 'delete'])
+            allow.authenticated.to(['read', 'write', 'delete']),
+            allow.guest.to(['read'])
         ],
         'system/*': [
             allow.authenticated.to(['read', 'write', 'delete']),

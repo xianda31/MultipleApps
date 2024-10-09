@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { downloadData, uploadData } from 'aws-amplify/storage';
 import { SystemConfiguration } from '../system-conf.interface';
-import { from } from 'rxjs';
+import { from, of } from 'rxjs';
 
 
 
@@ -9,6 +9,7 @@ import { from } from 'rxjs';
   providedIn: 'root'
 })
 export class SystemDataService {
+  system_configuration !: SystemConfiguration;
 
   constructor() { }
 
@@ -48,17 +49,25 @@ export class SystemDataService {
     return promise;
   }
 
-  private async read_configuration(): Promise<SystemConfiguration> {
-    return this.download().then(async (data) => {
-      const conf: SystemConfiguration = JSON.parse(data);
-      return conf;
+  private async download_configuration(): Promise<SystemConfiguration> {
+    let promise = new Promise<SystemConfiguration>((resolve, reject) => {
+      this.download()
+        .then(async (data) => {
+          this.system_configuration = JSON.parse(data);
+          resolve(this.system_configuration);
+        })
+        .catch((error) => { reject(error); });
     });
+    return promise;
+  }
+
+  read_configuration() {
+    return from(this.download_configuration());
   }
 
   get configuration$() {
-    return from(this.read_configuration());
+    return this.system_configuration ? of(this.system_configuration) : from(this.download_configuration());
   }
-
 
 
 

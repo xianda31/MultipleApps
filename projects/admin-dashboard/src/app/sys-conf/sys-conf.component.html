@@ -98,6 +98,21 @@
                 <div class="card mt-2">
                     <h5 class="card-header">site</h5>
                     <div class="card-body">
+                        <h6> recadrage des vignettes stockées du site</h6>
+                        <div class="row" formGroupName="thumbnail">
+                            <div class="col input-group">
+                                <span class="input-group-text">largeur (en pixel)</span>
+                                <input type="text" class="form-control" formControlName="width">
+                            </div>
+                            <div class="col input-group">
+                                <span class="input-group-text">hauteur (en pixel)</span>
+                                <input type="text" class="form-control" formControlName="height">
+                            </div>
+                            <div class="col input-group">
+                                <span class="input-group-text">ratio</span>
+                                <input type="text" class="form-control" formControlName="ratio">
+                            </div>
+                        </div>
                     </div>
                 </div>
 
