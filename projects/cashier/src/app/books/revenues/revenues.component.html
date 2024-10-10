@@ -7,44 +7,25 @@
 
 
 
-<!-- <ng-template #byPayments> -->
-<table class="table table-primary">
+<table class="table table-sm">
     <thead>
         <tr>
-            <th class="col-2">session</th>
-            <th class="col-10"></th>
-            <!-- <th scope="col"></th>
-                <th scope="col"></th>
-                <th scope="col"></th> -->
+            <th class="col">date</th>
+            <th scope="col">montant</th>
+            <th scope="col">réglé par</th>
+            <th scope="col">mode</th>
+            <th scope="col">Cheque No</th>
         </tr>
     </thead>
     <tbody>
-        <tr *ngFor="let session of sessions">
-            <td>
-                {{ session.event | date: 'short' : 'fr'}}
-                ({{session.creator}})
-            </td>
-            <td>
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th scope="col">montant</th>
-                            <th scope="col">Payé par</th>
-                            <th scope="col">Mode</th>
-                            <th scope="col">Cheque No</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr *ngFor="let payment of session.payments">
-                            <td>{{ payment.amount | currency:'€':'symbol':'2.2-2':'fr' }}</td>
-                            <td>{{member_name (payment.payer_id )}}</td>
-                            <td>{{ payment.payment_mode === payment_mode.CASH ? 'espèces' : payment.bank}}</td>
-                            <td>{{ payment.cheque_no }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </td>
-        </tr>
+        <ng-container *ngFor="let session of sessions ; let s=index">
+            <tr *ngFor="let payment of session.payments">
+                <td>{{session.event | date}}</td>
+                <td>{{ payment.amount | currency:'€':'symbol':'2.2-2':'fr' }}</td>
+                <td>{{member_name (payment.payer_id )}}</td>
+                <td>{{ payment.payment_mode === payment_mode.CASH ? 'espèces' : bank_name(payment.bank!)}}</td>
+                <td>{{ payment.cheque_no }}</td>
+            </tr>
+        </ng-container>
     </tbody>
 </table>
-<!-- </ng-template> -->

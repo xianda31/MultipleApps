@@ -90,33 +90,48 @@
 
 
                             </div>
-
                         </div>
-                    </div>
-                </div>
-                <!-- paramètres UE site -->
-                <div class="card mt-2">
-                    <h5 class="card-header">site</h5>
-                    <div class="card-body">
-                        <h6> recadrage des vignettes stockées du site</h6>
-                        <div class="row" formGroupName="thumbnail">
-                            <div class="col input-group">
-                                <span class="input-group-text">largeur (en pixel)</span>
-                                <input type="text" class="form-control" formControlName="width">
-                            </div>
-                            <div class="col input-group">
-                                <span class="input-group-text">hauteur (en pixel)</span>
-                                <input type="text" class="form-control" formControlName="height">
-                            </div>
-                            <div class="col input-group">
-                                <span class="input-group-text">ratio</span>
-                                <input type="text" class="form-control" formControlName="ratio">
+
+                        <div class="card mt-2">
+                            <h6 class="card-header">codes banques</h6>
+                            <div class="card-body">
+                                <div class="row " formArrayName="banks">
+                                    <div class="col-md-4" *ngFor="let bank of banks.controls; let i = index">
+                                        <div class="input-group" [formGroupName]=" i">
+                                            <span class="input-group-text">#</span>
+                                            <input type="text" class="form-control" formControlName="key">
+                                            <input type="text" class="form-control" formControlName="name">
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
+
                     </div>
                 </div>
-
             </div>
+            <!-- paramètres UE site -->
+            <div class="card mt-2">
+                <h5 class="card-header">site</h5>
+                <div class="card-body">
+                    <h6> recadrage des vignettes stockées du site</h6>
+                    <div class="row" formGroupName="thumbnail">
+                        <div class="col input-group">
+                            <span class="input-group-text">largeur (en pixel)</span>
+                            <input type="text" class="form-control" formControlName="width">
+                        </div>
+                        <div class="col input-group">
+                            <span class="input-group-text">hauteur (en pixel)</span>
+                            <input type="text" class="form-control" formControlName="height">
+                        </div>
+                        <div class="col input-group">
+                            <span class="input-group-text">ratio</span>
+                            <input type="text" class="form-control" formControlName="ratio">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </form>
 </div>

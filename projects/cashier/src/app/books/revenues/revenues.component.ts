@@ -6,6 +6,7 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { map, Observable, of, tap } from 'rxjs';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { SessionService } from '../../session/session.service';
+import { Bank } from '../../../../../common/system-conf.interface';
 
 
 @Component({
@@ -25,6 +26,7 @@ export class RevenuesComponent {
   season_subscription: any;
   payment_mode = PaymentMode;
   season: string = '';
+  banks !: Bank[];
   season$: Observable<string> = of(this.season);
   loaded = false;
 
@@ -34,8 +36,12 @@ export class RevenuesComponent {
     private sessionService: SessionService,
   ) {
     this.season$ = this.systemDataService.configuration$.pipe(
+      tap((conf) => {
+        this.season = conf.season;
+        this.banks = conf.banks;
+
+      }),
       map((conf) => conf.season),
-      tap((season) => this.season = season)
     );
   }
 
@@ -57,7 +63,7 @@ export class RevenuesComponent {
   list_sessions(season: string) {
     this.sessionService.list_sessions(season)
       .then((sessions) => {
-        this.sessions = sessions.sort((a, b) => a.event < b.event ? 1 : -1);
+        this.sessions = sessions.sort((a, b) => a.event > b.event ? 1 : -1);
         console.log('sessions', this.sessions);
         this.loaded = true;
       });
@@ -70,7 +76,12 @@ export class RevenuesComponent {
 
   member_name(member_id: string) {
     let member = this.membersService.getMember(member_id);
-    return member ? member.lastname + ' ' + member.firstname : '???';
+    return member ? member.lastname.toLocaleUpperCase() + ' ' + member.firstname : '???';
+  }
+
+  bank_name(bank_key: string) {
+    let bank = this.banks.find((bank) => bank.key === bank_key);
+    return bank ? bank.name : '???';
   }
 
   format_date(date: Date): string {

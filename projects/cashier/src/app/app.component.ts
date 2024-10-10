@@ -10,6 +10,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { InputMemberComponent } from "./input-member/input-member.component";
 import { BookLoggerComponent } from './book-logger/book-logger.component';
 import { MembersService } from '../../../admin-dashboard/src/app/members/service/members.service';
+import { SystemDataService } from '../../../common/services/system-data.service';
 
 
 
@@ -24,14 +25,20 @@ export class AppComponent {
 
   constructor(
     private membersService: MembersService,
+    private systemDataService: SystemDataService,
   ) { }
 
   ngOnInit(): void {
     registerLocaleData(localeFr);
     // recuperation des membres à ce niveau car ils sont utilisés dans plusieurs composants
+
     this.membersService.listMembers().subscribe((members) => {
-      // console.log('members', members);
     });
+
+    // récuperation des parametres de configuration
+    this.systemDataService.configuration$.subscribe((conf) => {
+    });
+
 
 
   }

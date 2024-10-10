@@ -4,6 +4,11 @@ export interface Account {
     description: string;
 }
 
+export interface Bank {
+    key: string;
+    name: string;
+}
+
 export interface ImageSize {
     max_width: number;
     max_height: number;
@@ -16,6 +21,7 @@ export interface SystemConfiguration {
     season: string;
     debit_accounts: Account[];
     credit_accounts: Account[];
+    banks: Bank[];
     thumbnailSize: ImageSize;
 }
 

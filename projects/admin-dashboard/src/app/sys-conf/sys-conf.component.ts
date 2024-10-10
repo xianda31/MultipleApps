@@ -3,6 +3,7 @@ import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } f
 import { CommonModule, JsonPipe } from '@angular/common';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 import { SystemConfiguration } from '../../../../common/system-conf.interface';
+import { map } from 'rxjs';
 
 
 
@@ -40,6 +41,12 @@ export class SysConfComponent {
           description: ['']
         })
       ]),
+      banks: this.fb.array([
+        this.fb.group({
+          key: [''],
+          name: ['']
+        })
+      ]),
       thumbnail: this.fb.group({
         width: [300],
         height: [200],
@@ -68,6 +75,10 @@ export class SysConfComponent {
     return this.systemFormGroup.get('credit_accounts') as FormArray;
   }
 
+  get banks() {
+    return this.systemFormGroup.get('banks') as FormArray;
+  }
+
   loadDataInFormGroup(configuration: SystemConfiguration) {
     this.systemFormGroup.patchValue(configuration);
     // patchValue doest not work for FormArray ; work-around : clear and re-populate
@@ -80,5 +91,34 @@ export class SysConfComponent {
     configuration.credit_accounts.forEach((account: any) => {
       this.credit_accounts.push(this.fb.group(account));
     });
+
+    this.banks.clear();
+    configuration.banks.forEach((bank: any) => {
+      this.banks.push(this.fb.group(bank));
+    });
+
+    // const Bank_names: { [key: string]: string } = {
+    //   'COU': 'Banque Courtois',
+    //   'POP': 'Banque Populaire',
+    //   'POS': 'Banque Postale',
+    //   'BNP': 'BNP',
+    //   'RAM': 'Boursorama',
+    //   'EPA': 'Caisse d\'Epargne',
+    //   'AGR': 'Crédit Agricole',
+    //   'LYO': 'Crédit Lyonnais',
+    //   'MUT': 'Crédit Mutuel',
+    //   'FOR': 'Fortuneo',
+    //   'Hi!': 'HSBC',
+    //   'ING': 'ING',
+    //   "AXA": 'AXA',
+    //   'LCL': 'LCL',
+    //   'SOG': 'Société Générale',
+    //   'CCF': 'CCF',
+    //   'COO': 'Crédit Coopératif',
+    // };
+
+    // Object.keys(Bank_names).forEach((key) => {
+    //   this.banks.push(this.fb.group({ key, name: Bank_names[key] }));
+    // });
   }
 }

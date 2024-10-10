@@ -26,8 +26,8 @@
                     <label for="bank" class="form-label">Banque</label>
                     <select list="banks" type="text" id="bank_names" class="form-select form-select-sm"
                         formControlName="bank">
-                        <option id="bank_names" *ngFor="let bank_name of bank_names | keyvalue" [value]="bank_name.key">
-                            {{bank_name.value}}
+                        <option id="bank_names" *ngFor="let bank of banks " [value]="bank.key">
+                            {{bank.name}}
                         </option>
                     </select>
                     <div *ngIf="bank.touched && bank.invalid " class="text-danger">

@@ -43,24 +43,3 @@ export enum PaymentMode {
     DEBT = 'dette',
 }
 
-
-// export const Bank_names = ['Bank of America', 'Chase', 'Wells Fargo', 'Citigroup'];
-export const Bank_names = {
-    'COU': 'Banque Courtois',
-    'POP': 'Banque Populaire',
-    'POS': 'Banque Postale',
-    'BNP': 'BNP',
-    'RAM': 'Boursorama',
-    'EPA': 'Caisse d\'Epargne',
-    'AGR': 'Crédit Agricole',
-    'LYO': 'Crédit Lyonnais',
-    'MUT': 'Crédit Mutuel',
-    'FOR': 'Fortuneo',
-    'Hi!': 'HSBC',
-    'ING': 'ING',
-    "AXA": 'AXA',
-    'LCL': 'LCL',
-    'SOG': 'Société Générale',
-    'CCF': 'CCF',
-    'COO': 'Crédit Coopératif',
-}

@@ -1,8 +1,10 @@
 import { Component, Input, OnInit, Output } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { Bank_names, Payment, PaymentMode } from '../../cart/cart.interface';
+import { Payment, PaymentMode } from '../../cart/cart.interface';
 import { CurrencyPipe, CommonModule } from '@angular/common';
 import { AbstractControl, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { Bank, SystemConfiguration } from '../../../../../common/system-conf.interface';
+import { SystemDataService } from '../../../../../common/services/system-data.service';
 
 @Component({
   selector: 'app-get-payment',
@@ -17,14 +19,18 @@ export class GetPaymentComponent implements OnInit {
   @Output() payment_out!: Payment | null;
   paymentForm!: FormGroup;
   paymentMode = PaymentMode;
-  bank_names = Bank_names;
+  banks !: Bank[];
 
   constructor(
+    private systemDataService: SystemDataService,
     private activeModal: NgbActiveModal,
-
   ) { }
 
   ngOnInit(): void {
+
+    this.systemDataService.configuration$.subscribe((conf) => {
+      this.banks = conf.banks;
+    });
 
     this.paymentForm = new FormGroup({
       // id: new FormControl(''),
