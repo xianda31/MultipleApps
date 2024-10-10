@@ -49,24 +49,24 @@ export class BooksComponent {
 
     this.systemDataService.configuration$.subscribe((conf) => {
       this.season = conf.season;
+
+      this.combo_subscription = combineLatest([
+        this.accountingService.getPayments(),
+        this.accountingService.getSaleItems(),
+        this.membersService.listMembers(),
+        this.productService.listProducts(),
+        this.sessionService.list_sessions(this.season)
+
+      ])
+        .subscribe(([payments, saleItems, members, products, sessions]) => {
+          this.payments = payments.filter((payment) => payment);
+          this.saleItems = saleItems.filter((sale) => sale);
+          this.sessions = sessions.sort((a, b) => a.event < b.event ? 1 : -1);
+          console.log('sessions', this.sessions);
+          this.loaded = true;
+        });
+
     });
-
-    this.combo_subscription = combineLatest([
-      this.accountingService.getPayments(),
-      this.accountingService.getSaleItems(),
-      this.membersService.listMembers(),
-      this.productService.listProducts(),
-      this.sessionService.list_sessions(this.season)
-
-    ])
-      .subscribe(([payments, saleItems, members, products, sessions]) => {
-        this.payments = payments.filter((payment) => payment);
-        this.saleItems = saleItems.filter((sale) => sale);
-        this.sessions = sessions.sort((a, b) => a.event < b.event ? 1 : -1);
-        console.log('sessions', this.sessions);
-        this.loaded = true;
-      });
-
 
   }
 

@@ -9,6 +9,7 @@ import { CartComponent } from './cart/cart.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { InputMemberComponent } from "./input-member/input-member.component";
 import { BookLoggerComponent } from './book-logger/book-logger.component';
+import { MembersService } from '../../../admin-dashboard/src/app/members/service/members.service';
 
 
 
@@ -21,10 +22,18 @@ import { BookLoggerComponent } from './book-logger/book-logger.component';
 })
 export class AppComponent {
 
-
+  constructor(
+    private membersService: MembersService,
+  ) { }
 
   ngOnInit(): void {
     registerLocaleData(localeFr);
+    // recuperation des membres à ce niveau car ils sont utilisés dans plusieurs composants
+    this.membersService.listMembers().subscribe((members) => {
+      // console.log('members', members);
+    });
+
+
   }
 
 

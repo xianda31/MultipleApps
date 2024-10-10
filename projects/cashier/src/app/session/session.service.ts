@@ -112,11 +112,10 @@ export class SessionService {
   }
 
   async list_sessions(season: string): Promise<Session[]> {
-    console.log('list_sessions', season);
+    console.log('list sessions of season :', season);
     const client = generateClient<Schema>();
     const result = await client.models.Session.list(
-      { selectionSet: ["id", "creator", "event", "payments.*"] }
-      // { filter: { season: { eq: season } } }
+      { selectionSet: ["id", "creator", "event", "payments.*"], filter: { season: { eq: season } } }
     );
     return result.data as unknown as Session[];
   }

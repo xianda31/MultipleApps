@@ -28,12 +28,10 @@ import { SessionComponent } from '../../session/session.component';
   styleUrl: './sales.component.scss'
 })
 export class SalesComponent {
-  [x: string]: any;
+  // [x: string]: any;
   title = 'cashier';
-  // double_price = false;
   members!: Member[];
   buyer!: Member | null;
-  // alt_payee_switch: boolean = false;
   session!: Session | null;
   paymentMode = PaymentMode;
 
