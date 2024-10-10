@@ -1,11 +1,13 @@
 import { Component } from '@angular/core';
 import { AccountingService } from '../accounting.service';
-import { Payment, PaymentMode, SaleItem } from '../../cart/cart.interface';
+import { Payment, PaymentMode, SaleItem, Session } from '../../cart/cart.interface';
 import { CommonModule, formatDate } from '@angular/common';
 import { MembersService } from '../../../../../admin-dashboard/src/app/members/service/members.service';
 import { ProductService } from '../../../../../common/services/product.service';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { combineLatest } from 'rxjs';
+import { SystemDataService } from '../../../../../common/services/system-data.service';
+import { SessionService } from '../../session/session.service';
 
 @Component({
   selector: 'app-books',
@@ -17,39 +19,55 @@ import { combineLatest } from 'rxjs';
 export class BooksComponent {
   payments: Payment[] = [];
   saleItems: SaleItem[] = [];
+  sessions: Session[] = [];
   by_payment_radio: boolean = true;
   payments_subscription: any;
   sales_subscription: any;
-  both_subscription: any;
+  combo_subscription: any;
   payment_mode = PaymentMode;
+  season: string = '';
   loaded = false;
 
   constructor(
     private accountingService: AccountingService,
     private membersService: MembersService,
     private productService: ProductService,
+    private systemDataService: SystemDataService,
+    private sessionService: SessionService,
   ) { }
 
 
   ngDestroy() {
     // this.payments_subscription.unsubscribe();
     // this.sales_subscription.unsubscribe();
-    this.both_subscription.unsubscribe();
+    this.combo_subscription.unsubscribe();
   }
 
 
   ngOnInit(): void {
-    this.both_subscription = combineLatest([
+
+
+    this.systemDataService.configuration$.subscribe((conf) => {
+      this.season = conf.season;
+    });
+
+    this.combo_subscription = combineLatest([
       this.accountingService.getPayments(),
       this.accountingService.getSaleItems(),
       this.membersService.listMembers(),
       this.productService.listProducts(),
+      this.sessionService.list_sessions(this.season)
+
     ])
-      .subscribe(([payments, saleItems, members, products]) => {
+      .subscribe(([payments, saleItems, members, products, sessions]) => {
         this.payments = payments.filter((payment) => payment);
         this.saleItems = saleItems.filter((sale) => sale);
+        this.sessions = sessions.sort((a, b) => a.event < b.event ? 1 : -1);
+        console.log('sessions', this.sessions);
         this.loaded = true;
       });
+
+
   }
 
 

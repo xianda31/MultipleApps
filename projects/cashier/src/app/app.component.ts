@@ -20,10 +20,7 @@ import { BookLoggerComponent } from './book-logger/book-logger.component';
   styleUrl: './app.component.scss'
 })
 export class AppComponent {
-  [x: string]: any;
-  title = 'cashier';
-  season = '2024/25';
-  double_price = false;
+
 
 
   ngOnInit(): void {

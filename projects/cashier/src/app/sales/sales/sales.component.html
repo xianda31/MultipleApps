@@ -1,6 +1,6 @@
 <div class="container-md">
     <div class="">
-        <app-session (change)="set_session($event)"></app-session>
+        <app-session (onChangeSession)="set_session($event)"></app-session>
     </div>
 
     <div *ngIf="session" class="card">
@@ -39,7 +39,7 @@
                 <!-- right column for payments -->
                 <div class="col-sm-12 col-md-6 ">
                     <!-- <div class="card"> -->
-                    <app-book-logger [event]="session.event"></app-book-logger>
+                    <app-book-logger [event]="string_to_date(session.event)"></app-book-logger>
                     <!-- </div> -->
                 </div>
             </div>

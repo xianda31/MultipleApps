@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { FormGroup, FormControl, Validators, AbstractControl, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { FormGroup, FormControl, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MembersService } from '../../../../../admin-dashboard/src/app/members/service/members.service';
 import { Member } from '../../../../../common/members/member.interface';
@@ -16,7 +16,6 @@ import { CartComponent } from '../../cart/cart.component';
 import { BookLoggerComponent } from '../../book-logger/book-logger.component';
 import { InputMemberComponent } from '../../input-member/input-member.component';
 import { AccountingService } from '../accounting.service';
-import { GetEventComponent } from '../../get-event/get-event.component';
 import { from, Observable } from 'rxjs';
 import { SessionService } from '../../session/session.service';
 import { SessionComponent } from '../../session/session.component';
@@ -124,7 +123,7 @@ export class SalesComponent {
     }
 
     let payment_in: Payment = {
-      session_id: 'XXXXXXX',
+      session_id: this.session!.id!,
       amount: this.cartService.getTotal(),
       payer_id: this.payee_1.value.id,
       payment_mode: PaymentMode.CASH,
@@ -152,9 +151,22 @@ export class SalesComponent {
   format_date(date: Date): string {
     return formatDate(date, 'EEEE d MMMM HH:00', 'fr-FR');
   }
+  string_to_date(date: string): Date {
+    return new Date(date);
+  }
 
-  set_session(session: Session | null) {
+  async set_session(session: Session | null) {
     this.session = session;
+    if (session !== null) {
+      const sessions = await this.sessionService.search_sessions(session);
+      if (sessions.length === 0) {
+        this.session = await this.sessionService.create_session(session);
+      } else {
+        // this.session = sessions[0];
+        this.toastService.showWarningToast('session', 'reprise d\'une session existante');
+        this.session = await this.sessionService.update_session(sessions[0]);
+      }
+    }
   }
 
 }

@@ -13,7 +13,7 @@ import { FormsModule } from '@angular/forms';
 })
 export class SessionComponent {
 
-  @Output() change = new EventEmitter<Session | null>();
+  @Output() onChangeSession = new EventEmitter<Session | null>();
   session_subscription: any;
   current_session: Session | null = null;
 
@@ -37,9 +37,8 @@ export class SessionComponent {
 
   new_session() {
     this.session_subscription = this.sessionService.open_sale_session().subscribe((session: Session | null) => {
-      // console.log('session', session);
       this.current_session = session,
-        this.change.emit(session);
+        this.onChangeSession.emit(session);
     });
   }
 

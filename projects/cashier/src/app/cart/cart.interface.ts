@@ -15,9 +15,10 @@ export interface SaleItem {
 }
 
 export interface Session {
+    id?: string;
     season: string;
     creator: string;
-    event: Date;
+    event: string;
     payments: Payment[];
 }
 

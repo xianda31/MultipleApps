@@ -1,3 +1,10 @@
+<div class="col-md-3 mt-3">
+    <div class="input-group input-group-sm mb-2">
+        <span class="input-group-text">Saison</span>
+        <input type="text" class="form-control" [(ngModel)]="season">
+    </div>
+</div>
+
 <div class="form-check">
     <input class="form-check-input" type="radio" name="radio" [(ngModel)]="by_payment_radio" [value]="false">
     Vue par articles vendus
@@ -6,6 +13,7 @@
     <input class="form-check-input" type="radio" name="radio" [(ngModel)]="by_payment_radio" [value]="true" checked>
     Vue par paiements reçus
 </div>
+
 
 <ng-container *ngIf="loaded">
     <ng-container *ngIf="by_payment_radio ; else bySales" [ngTemplateOutlet]="byPayments"></ng-container>
@@ -17,7 +25,7 @@
     <table class="table table-striped">
         <thead>
             <tr>
-                <!-- <th scope="col">Event</th> -->
+                <th scope="col">session</th>
                 <th scope="col">montant</th>
                 <th scope="col">Payé par</th>
                 <th scope="col">Mode</th>
@@ -25,19 +33,19 @@
             </tr>
         </thead>
         <tbody>
-            <tr *ngFor="let payment of payments">
-                <!-- <td>{{ format_date(payment.event) }}</td> -->
-                <td>{{ payment.amount | currency:'€':'symbol':'2.2-2':'fr' }}</td>
-                <td>{{member_name (payment.payer_id )}}</td>
-                <td>{{ payment.payment_mode === payment_mode.CASH ? 'espèces' : payment.bank}}</td>
-                <td>{{ payment.cheque_no }}</td>
+            <tr *ngFor="let session of sessions">
+                <td>
+                    {{ session.event | date: 'short' : 'fr'}}
+                    ({{session.creator}})
+                </td>
                 <td colspan="4">
                     <table class="table table-sm">
                         <tbody>
-                            <tr *ngFor="let sale of payment.saleItems">
-                                <td>{{getProduct(sale.product_id).glyph}}</td>
-                                <td>{{member_name(sale.payee_id)}}</td>
-                                <td>{{sale.price_payed | currency:'€':'symbol':'2.2-2':'fr'}}</td>
+                            <tr *ngFor="let payment of session.payments">
+                                <td>{{ payment.amount | currency:'€':'symbol':'2.2-2':'fr' }}</td>
+                                <td>{{member_name (payment.payer_id )}}</td>
+                                <td>{{ payment.payment_mode === payment_mode.CASH ? 'espèces' : payment.bank}}</td>
+                                <td>{{ payment.cheque_no }}</td>
                             </tr>
                         </tbody>
                     </table>
