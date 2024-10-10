@@ -10,7 +10,7 @@
 <table class="table table-sm">
     <thead>
         <tr>
-            <th class="col">date</th>
+            <th class="col">vente du</th>
             <th scope="col">montant</th>
             <th scope="col">réglé par</th>
             <th scope="col">mode</th>
@@ -19,8 +19,8 @@
     </thead>
     <tbody>
         <ng-container *ngFor="let session of sessions ; let s=index">
-            <tr *ngFor="let payment of session.payments">
-                <td>{{session.event | date}}</td>
+            <tr [ngClass]="color_swapper(s)" *ngFor="let payment of session.payments">
+                <td>{{format_date(session.event)}} ({{ format_vendor(session.creator)}})</td>
                 <td>{{ payment.amount | currency:'€':'symbol':'2.2-2':'fr' }}</td>
                 <td>{{member_name (payment.payer_id )}}</td>
                 <td>{{ payment.payment_mode === payment_mode.CASH ? 'espèces' : bank_name(payment.bank!)}}</td>

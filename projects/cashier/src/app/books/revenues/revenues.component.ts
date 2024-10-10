@@ -70,7 +70,6 @@ export class RevenuesComponent {
   }
 
   new_season() {
-    console.log('new season :', this.season);
     this.list_sessions(this.season);
   }
 
@@ -84,8 +83,19 @@ export class RevenuesComponent {
     return bank ? bank.name : '???';
   }
 
-  format_date(date: Date): string {
-    return formatDate(date, 'EEEE d MMMM HH:00', 'fr-FR');
+  format_date(date: string): string {
+    const formated_date = new Date(date);
+    // return formatDate(date, 'EEEE d MMMM HH:00', 'fr-FR');
+    return formated_date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', hour: 'numeric' });
+  }
+
+  format_vendor(vendor: string): string {
+    const gliph = vendor.toLocaleLowerCase().split(' ').map((word) => word[0]).join('');
+    return gliph;
+  }
+
+  color_swapper(i: number) {
+    return i % 2 === 0 ? 'table-light' : 'table-primary';
   }
 }
 
