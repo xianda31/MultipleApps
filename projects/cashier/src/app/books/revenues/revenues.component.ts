@@ -7,6 +7,7 @@ import { map, Observable, of, tap } from 'rxjs';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { SessionService } from '../../session/session.service';
 import { Bank } from '../../../../../common/system-conf.interface';
+import { ExcelService } from '../../excel.service';
 
 
 @Component({
@@ -34,6 +35,7 @@ export class RevenuesComponent {
     private membersService: MembersService,
     private systemDataService: SystemDataService,
     private sessionService: SessionService,
+    private excelService: ExcelService
   ) {
     this.season$ = this.systemDataService.configuration$.pipe(
       tap((conf) => {
@@ -96,6 +98,21 @@ export class RevenuesComponent {
 
   color_swapper(i: number) {
     return i % 2 === 0 ? 'table-light' : 'table-primary';
+  }
+
+  export_excel() {
+    let data: any[] = [];
+    this.sessions.forEach((session) => {
+      session.payments.forEach((payment) => {
+        data.push({
+          date: this.format_date(session.event),
+          montant: payment.amount,
+          bénéficiaire: this.member_name(payment.payer_id),
+          payment_mode: payment.payment_mode,
+        });
+      });
+    });
+    this.excelService.generateExcel(data, 'revenues');
   }
 }
 
