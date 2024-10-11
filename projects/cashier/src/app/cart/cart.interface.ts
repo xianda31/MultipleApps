@@ -15,18 +15,18 @@ export interface SaleItem {
 }
 
 export interface Session {
-    id?: string;
     season: string;
-    creator: string;
+    vendor: string;
     event: string;
-    payments: Payment[];
 }
 
 export interface Payment {
     id?: string;
     amount: number;
     payer_id: string;
-    session_id: string;
+    season: string;
+    vendor: string;
+    event: string;
     payment_mode: PaymentMode;
     bank?: string;
     cheque_no?: string;

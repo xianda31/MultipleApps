@@ -1,20 +1,11 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
-import { CartItem, Payment, SaleItem } from '../cart/cart.interface';
+import { Component, Input } from '@angular/core';
+import { Payment, SaleItem } from '../cart/cart.interface';
 import { MembersService } from '../../../../admin-dashboard/src/app/members/service/members.service';
 import { ProductService } from '../../../../common/services/product.service';
 import { CartService } from '../cart.service';
 import { CommonModule, formatDate } from '@angular/common';
-import { AccountingService } from '../sales/accounting.service';
-import { map, Observable, tap } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { SessionService } from '../session/session.service';
-
-
-interface BookEntry {
-  // payee_id: string;q
-  // fullname: string;
-  sales: SaleItem[];
-  payment_id: string;
-}
 
 
 @Component({
@@ -42,7 +33,6 @@ export class BookLoggerComponent {
       // map((payments) => payments.filter((payment) => payment.event === this.event)),
       tap((payments) => {
         this.payments_sum = payments.reduce((acc, payment) => acc + payment.amount, 0);
-        console.log(payments);
       })
     )
 

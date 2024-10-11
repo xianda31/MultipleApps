@@ -12,6 +12,7 @@ export class AccountingService {
 
   private _payments!: Payment[];
   private _saleItems!: SaleItem[];
+  current_season: string = '';
 
   constructor(
     private cartService: CartService
@@ -64,17 +65,15 @@ export class AccountingService {
     // const paymentWithStringEvent = { ...payment, event: payment.event.toISOString() };
     return from(client.models.Payment.create(payment))
       .pipe(
-        map((response: { data: unknown; }) => {
+        switchMap((response: { data: unknown; }) => {
           let payment = response.data as unknown as Payment;
           if (!payment || !payment.id) {
-            throw new Error('payment writing not performed');
+            throw new Error('payment writing not performed' + JSON.stringify(response));
           } else {
-            // this._payments.push(payment);
+            this._payments.push(payment);
             return this.writeCart(payment.id);
           }
-        }),
-        switchMap((saleItems) => saleItems)
-        // map(() => true)
+        })
       );
   }
 
@@ -82,22 +81,26 @@ export class AccountingService {
     return this._payments.find((payment) => payment.id === payment_id);
   }
 
-  getPayments(): Observable<Payment[]> {
+  getPayments(season: string): Observable<Payment[]> {
+    let new_season = false;
+    if (this.current_season !== season) {
+      new_season = true;
+      this.current_season = season;
+    }
 
     const _listPayments = (): Observable<Payment[]> => {
       const client = generateClient<Schema>();
       return from(client.models.Payment.list(
-        { selectionSet: ['id', 'amount', 'payer_id', 'payment_mode', 'bank', 'cheque_no', 'saleItems.*'] }))
-        .pipe(
+        {
+          // selectionSet: ['id', 'amount', 'payer_id', 'season', 'event', 'vendor', 'payment_mode', 'bank', 'cheque_no', 'saleItems.*'],
+          filter: { season: { eq: season } }
+        })).pipe(
           map((response: { data: unknown; }) => response.data as unknown as Payment[]),
-          tap((payments) => {
-            this._payments = payments;
-            // console.log('payments', payments);
-          })
+          tap((payments) => { this._payments = payments; })
         );
     }
 
-    return this._payments ? of(this._payments) : _listPayments();
+    return (this._payments && !new_season) ? of(this._payments) : _listPayments();
   }
 
 

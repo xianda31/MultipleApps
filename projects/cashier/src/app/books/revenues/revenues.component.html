@@ -2,7 +2,7 @@
     <div class="col-md-3 mt-3">
         <div class="input-group input-group-sm mb-2">
             <span class="input-group-text">Saison</span>
-            <input type="text" class="form-control" (change)="new_season()" [(ngModel)]="season">
+            <input type="text" class="form-control" (change)="new_season($event)" [value]="season">
         </div>
     </div>
     <div class="col-md-3 ms-auto">
@@ -27,14 +27,12 @@
         </tr>
     </thead>
     <tbody>
-        <ng-container *ngFor="let session of sessions ; let s=index">
-            <tr [ngClass]="color_swapper(s)" *ngFor="let payment of session.payments">
-                <td>{{format_date(session.event)}} ({{ format_vendor(session.creator)}})</td>
-                <td>{{ payment.amount | currency:'€':'symbol':'2.2-2':'fr' }}</td>
-                <td>{{member_name (payment.payer_id )}}</td>
-                <td>{{ payment.payment_mode === payment_mode.CASH ? 'espèces' : bank_name(payment.bank!)}}</td>
-                <td>{{ payment.cheque_no }}</td>
-            </tr>
-        </ng-container>
+        <tr *ngFor="let payment of payments">
+            <td>{{format_date(payment.event)}} ({{ format_vendor(payment.vendor)}})</td>
+            <td>{{ payment.amount | currency:'€':'symbol':'2.2-2':'fr' }}</td>
+            <td>{{member_name (payment.payer_id )}}</td>
+            <td>{{ payment.payment_mode === payment_mode.CASH ? 'espèces' : bank_name(payment.bank!)}}</td>
+            <td>{{ payment.cheque_no }}</td>
+        </tr>
     </tbody>
 </table>

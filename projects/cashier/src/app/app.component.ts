@@ -11,6 +11,7 @@ import { InputMemberComponent } from "./input-member/input-member.component";
 import { BookLoggerComponent } from './book-logger/book-logger.component';
 import { MembersService } from '../../../admin-dashboard/src/app/members/service/members.service';
 import { SystemDataService } from '../../../common/services/system-data.service';
+import { combineLatest } from 'rxjs';
 
 
 
@@ -23,6 +24,8 @@ import { SystemDataService } from '../../../common/services/system-data.service'
 })
 export class AppComponent {
 
+  init: boolean = false;
+
   constructor(
     private membersService: MembersService,
     private systemDataService: SystemDataService,
@@ -30,14 +33,13 @@ export class AppComponent {
 
   ngOnInit(): void {
     registerLocaleData(localeFr);
-    // recuperation des membres à ce niveau car ils sont utilisés dans plusieurs composants
 
-    this.membersService.listMembers().subscribe((members) => {
+    combineLatest([this.membersService.listMembers(), this.systemDataService.configuration$]).subscribe(([members, conf]) => {
+      this.init = true;
     });
 
-    // récuperation des parametres de configuration
-    this.systemDataService.configuration$.subscribe((conf) => {
-    });
+
+
 
 
 

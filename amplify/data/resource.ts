@@ -21,13 +21,13 @@ const schema = a.schema({
   })
     .authorization((allow) => [allow.publicApiKey()]),
 
-  Session: a.model({
-    season: a.string().required(),
-    creator: a.string().required(),
-    event: a.datetime().required(),
-    payments: a.hasMany('Payment', 'session_id'),
-  })
-    .authorization((allow) => [allow.publicApiKey()]),
+  // Session: a.model({
+  //   season: a.string().required(),
+  //   creator: a.string().required(),
+  //   event: a.datetime().required(),
+  //   payments: a.hasMany('Payment', ['event', 'creator']),
+  // }).identifier(['event', 'creator'])
+  //   .authorization((allow) => [allow.publicApiKey()]),
 
   SaleItem: a.model({
     product_id: a.id().required(),
@@ -40,10 +40,13 @@ const schema = a.schema({
 
   Payment: a.model({
     amount: a.float().required(),
-    session_id: a.id().required(),
+    vendor: a.string().required(),
+    event: a.datetime().required(),
+    season: a.string().required(),
+    // session_id: a.id().required(),
     payer_id: a.id().required(),
     payer: a.belongsTo('Member', 'payer_id'),
-    session: a.belongsTo('Session', 'session_id'),
+    // session: a.belongsTo('Session', ['event', 'creator']),
     payment_mode: a.string().required(),
     bank: a.string(),
     cheque_no: a.string(),

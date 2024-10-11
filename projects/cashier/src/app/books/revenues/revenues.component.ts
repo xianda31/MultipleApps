@@ -1,13 +1,13 @@
 import { Component } from '@angular/core';
-import { PaymentMode, Session } from '../../cart/cart.interface';
-import { CommonModule, formatDate } from '@angular/common';
+import { Payment, PaymentMode } from '../../cart/cart.interface';
+import { CommonModule } from '@angular/common';
 import { MembersService } from '../../../../../admin-dashboard/src/app/members/service/members.service';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { map, Observable, of, tap } from 'rxjs';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
-import { SessionService } from '../../session/session.service';
 import { Bank } from '../../../../../common/system-conf.interface';
 import { ExcelService } from '../../excel.service';
+import { AccountingService } from '../../sales/accounting.service';
 
 
 @Component({
@@ -18,9 +18,9 @@ import { ExcelService } from '../../excel.service';
   styleUrl: './revenues.component.scss'
 })
 export class RevenuesComponent {
-  // payments: Payment[] = [];
+  payments: Payment[] = [];
   // saleItems: SaleItem[] = [];
-  sessions: Session[] = [];
+  // sessions: Session[] = [];
   // by_payment_radio: boolean = true;
   payments_subscription: any;
   sales_subscription: any;
@@ -34,7 +34,7 @@ export class RevenuesComponent {
   constructor(
     private membersService: MembersService,
     private systemDataService: SystemDataService,
-    private sessionService: SessionService,
+    private accountingService: AccountingService,
     private excelService: ExcelService
   ) {
     this.season$ = this.systemDataService.configuration$.pipe(
@@ -57,22 +57,31 @@ export class RevenuesComponent {
 
 
     this.season_subscription = this.season$.subscribe((season) => {
-      this.list_sessions(season);
+      this.list_payments(season);
     });
 
   }
 
-  list_sessions(season: string) {
-    this.sessionService.list_sessions(season)
-      .then((sessions) => {
-        this.sessions = sessions.sort((a, b) => a.event > b.event ? 1 : -1);
-        console.log('sessions', this.sessions);
-        this.loaded = true;
+  // list_sessions(season: string) {
+  //   this.sessionService.list_sessions(season)
+  //     .then((sessions) => {
+  //       this.sessions = sessions.sort((a, b) => a.event > b.event ? 1 : -1);
+  //       console.log('sessions', this.sessions);
+  //       this.loaded = true;
+  //     });
+  // }
+
+  list_payments(season: string) {
+    this.payments_subscription = this.accountingService.getPayments(season)
+      .subscribe((payments) => {
+        this.payments = payments.sort((a, b) => a.event > b.event ? 1 : -1);
       });
   }
 
-  new_season() {
-    this.list_sessions(this.season);
+  new_season(event: any) {
+    this.payments_subscription.unsubscribe();
+    let season = event.target.value;
+    this.list_payments(season);
   }
 
   member_name(member_id: string) {
@@ -102,14 +111,12 @@ export class RevenuesComponent {
 
   export_excel() {
     let data: any[] = [];
-    this.sessions.forEach((session) => {
-      session.payments.forEach((payment) => {
-        data.push({
-          date: this.format_date(session.event),
-          montant: payment.amount,
-          bénéficiaire: this.member_name(payment.payer_id),
-          payment_mode: payment.payment_mode,
-        });
+    this.payments.forEach((payment) => {
+      data.push({
+        date: this.format_date(payment.event),
+        montant: payment.amount,
+        bénéficiaire: this.member_name(payment.payer_id),
+        payment_mode: payment.payment_mode,
       });
     });
     this.excelService.generateExcel(data, 'revenues');

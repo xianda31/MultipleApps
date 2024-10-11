@@ -121,7 +121,9 @@ export class SalesComponent {
     }
 
     let payment_in: Payment = {
-      session_id: this.session!.id!,
+      season: this.session!.season,
+      vendor: this.session!.vendor,
+      event: this.session!.event,
       amount: this.cartService.getTotal(),
       payer_id: this.payee_1.value.id,
       payment_mode: PaymentMode.CASH,
@@ -155,16 +157,16 @@ export class SalesComponent {
 
   async set_session(session: Session | null) {
     this.session = session;
-    if (session !== null) {
-      const sessions = await this.sessionService.search_sessions(session);
-      if (sessions.length === 0) {
-        this.session = await this.sessionService.create_session(session);
-      } else {
-        // this.session = sessions[0];
-        this.toastService.showWarningToast('session', 'reprise d\'une session existante');
-        this.session = await this.sessionService.update_session(sessions[0]);
-      }
-    }
+    // if (session !== null) {
+    //   const sessions = await this.sessionService.search_sessions(session);
+    //   if (sessions.length === 0) {
+    //     this.session = await this.sessionService.create_session(session);
+    //   } else {
+    //     // this.session = sessions[0];
+    //     this.toastService.showWarningToast('session', 'reprise d\'une session existante');
+    //     this.session = await this.sessionService.update_session(sessions[0]);
+    //   }
+    // }
   }
 
 }
