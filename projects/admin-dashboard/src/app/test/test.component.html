@@ -1,0 +1,30 @@
+<div class="container">
+
+    <div class="input-group mb-3">
+        <input #fileInput type="file" class="form-control" (change)="onChange($event)">
+        <!-- <button class="btn btn-sm btn-primary" type="button" (click)="onUpload()"
+        [disabled]="!file_selected">Upload</button> -->
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>vente du</th>
+                <th>montant</th>
+                <th>réglé par</th>
+                <th>mode</th>
+                <th>Cheque No</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let payment of payments">
+                <td>{{format_date(payment.event)}} ({{ format_vendor(payment.vendor)}})</td>
+                <td>{{ payment.amount | currency:'€':'symbol':'2.2-2':'fr' }}</td>
+                <td>{{member_name (payment.payer_id )}}</td>
+                <td>{{ payment.payment_mode === payment_mode.CASH ? 'espèces' : bank_name(payment.bank!)}}</td>
+                <td>{{ payment.cheque_no }}</td>
+            </tr>
+        </tbody>
+
+    </table>
+</div>

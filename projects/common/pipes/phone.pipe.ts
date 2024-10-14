@@ -7,6 +7,9 @@ import { Pipe, PipeTransform } from '@angular/core';
 export class PhonePipe implements PipeTransform {
 
   transform(str: string): string {
+    if (!str) {
+      return '';
+    }
     if (str.startsWith('33')) {
       str = str.replace('33', '0');
     }

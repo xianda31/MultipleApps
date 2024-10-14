@@ -46,7 +46,7 @@ export class BooksComponent {
 
   ngOnInit(): void {
 
-
+    console.log('books component init');
     this.systemDataService.configuration$.subscribe((conf) => {
       this.season = conf.season;
 
