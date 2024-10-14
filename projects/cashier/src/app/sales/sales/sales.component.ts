@@ -6,24 +6,24 @@ import { Member } from '../../../../../common/members/member.interface';
 import { ProductService } from '../../../../../common/services/product.service';
 import { ToastService } from '../../../../../common/toaster/toast.service';
 import { CartService } from '../../cart.service';
-import { PaymentMode, SaleItem, CartItem, Payment, Session } from '../../cart/cart.interface';
+import { PaymentMode, SaleItem, CartItem, Payment, Session } from './cart/cart.interface';
 import { GetPaymentComponent } from '../get-payment/get-payment.component';
 import { Product } from '../../../../../admin-dashboard/src/app/sales/products/product.interface';
 import { ToasterComponent } from '../../../../../common/toaster/components/toaster/toaster.component';
 import { CommonModule, formatDate } from '@angular/common';
 import { KeypadComponent } from '../keypad/keypad.component';
-import { CartComponent } from '../../cart/cart.component';
+import { CartComponent } from './cart/cart.component';
 import { BookLoggerComponent } from '../../book-logger/book-logger.component';
 import { InputMemberComponent } from '../../input-member/input-member.component';
 import { AccountingService } from '../accounting.service';
-import { from, Observable } from 'rxjs';
-import { SessionService } from '../../session/session.service';
-import { SessionComponent } from '../../session/session.component';
+import { combineLatest, from, Observable } from 'rxjs';
+import { AuthentificationService } from '../../../../../common/authentification/authentification.service';
+import { SystemDataService } from '../../../../../common/services/system-data.service';
 
 @Component({
   selector: 'app-sales',
   standalone: true,
-  imports: [ReactiveFormsModule, ToasterComponent, CommonModule, FormsModule, KeypadComponent, CartComponent, BookLoggerComponent, InputMemberComponent, SessionComponent],
+  imports: [ReactiveFormsModule, ToasterComponent, CommonModule, FormsModule, KeypadComponent, CartComponent, BookLoggerComponent, InputMemberComponent],
   templateUrl: './sales.component.html',
   styleUrl: './sales.component.scss'
 })
@@ -32,8 +32,13 @@ export class SalesComponent {
   title = 'cashier';
   members!: Member[];
   buyer!: Member | null;
-  session!: Session | null;
+  session!: Session;
   paymentMode = PaymentMode;
+  season !: string;
+  vendor!: Member;
+  input_disabled = true;
+  today: string = "";
+
 
   members_subscription: any;
   products_subscription: any;
@@ -46,38 +51,47 @@ export class SalesComponent {
   get payee_1() { return this.payeesForm.get('payee_1')!; }
 
   constructor(
-    private sessionService: SessionService,
     private cartService: CartService,
     private membersService: MembersService,
     private toastService: ToastService,
     private productService: ProductService,
     private modalService: NgbModal,
     private accountingService: AccountingService,
+    private authService: AuthentificationService,
+    private SystemDataService: SystemDataService
 
 
   ) { }
 
   ngOnDestroy(): void {
-    this.products_subscription.unsubscribe();
-    this.members_subscription.unsubscribe();
+    // this.products_subscription.unsubscribe();
+    // this.members_subscription.unsubscribe();
 
   }
 
   ngOnInit(): void {
+    this.today = new Date().toLocaleDateString('en-CA');
 
-    this.members_subscription = this.membersService.listMembers().subscribe((members) => {
+    combineLatest([this.membersService.listMembers(), this.productService.listProducts(), this.SystemDataService.configuration$, this.authService.logged_member$]).subscribe(([members, products, conf, logged]) => {
       this.members = members.sort((a, b) => a.lastname.localeCompare(b.lastname))
         .map((member) => {
           member.lastname = member.lastname.toUpperCase();
           return member;
         });
-    });
-
-    this.products_subscription = this.productService.listProducts().subscribe((products) => {
       this.keypad = products.filter((product) => product.active);
+      this.season = conf.season;
+
+      if (logged === null) return;
+      this.vendor = logged;
+
+      console.log('vendor', this.vendor);
+
+      this.session = {
+        season: this.season,
+        vendor: this.vendor.firstname + ' ' + this.vendor.lastname,
+        event: new Date().toLocaleDateString('en-CA'),
+      }
     });
-
-
 
   }
 
@@ -134,7 +148,7 @@ export class SalesComponent {
       if (payment_out === null) return;
 
       this.accountingService.writeOperation(payment_out).subscribe((res) => {
-        this.sessionService.push_saleItems_in_session(payment_out);
+        this.cartService.push_saleItems_in_session(payment_out);
         this.cartService.clearCart();
         this.toastService.showSuccessToast('saisie achat', 'vente enregistrée');
         this.payeesForm.reset();
@@ -149,14 +163,15 @@ export class SalesComponent {
   }
 
   format_date(date: Date): string {
-    return formatDate(date, 'EEEE d MMMM HH:00', 'fr-FR');
+    // return formatDate(date, 'EEEE d MMMM HH:00', 'fr-FR');
+    return date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', hour: 'numeric' });
   }
   string_to_date(date: string): Date {
     return new Date(date);
   }
 
   async set_session(session: Session | null) {
-    this.session = session;
+    // this.session = session;
     // if (session !== null) {
     //   const sessions = await this.sessionService.search_sessions(session);
     //   if (sessions.length === 0) {
@@ -167,6 +182,16 @@ export class SalesComponent {
     //     this.session = await this.sessionService.update_session(sessions[0]);
     //   }
     // }
+  }
+
+  renew_session() {
+    this.input_disabled = false;
+  }
+
+  done(event: any) {
+    console.log('done', event);
+    this.session.event = event;
+    this.input_disabled = true;
   }
 
 }

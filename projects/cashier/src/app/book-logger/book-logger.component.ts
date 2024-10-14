@@ -1,11 +1,10 @@
 import { Component, Input } from '@angular/core';
-import { Payment, SaleItem } from '../cart/cart.interface';
+import { Payment } from '../sales/sales/cart/cart.interface';
 import { MembersService } from '../../../../admin-dashboard/src/app/members/service/members.service';
 import { ProductService } from '../../../../common/services/product.service';
 import { CartService } from '../cart.service';
 import { CommonModule, formatDate } from '@angular/common';
 import { Observable, tap } from 'rxjs';
-import { SessionService } from '../session/session.service';
 
 
 @Component({
@@ -24,12 +23,11 @@ export class BookLoggerComponent {
 
   constructor(
     private cartService: CartService,
-    private sessionService: SessionService,
     private membersService: MembersService,
     private productService: ProductService,
 
   ) {
-    this.payments$ = this.sessionService.get_sales_in_session().pipe(
+    this.payments$ = this.cartService.payments_of_the_day.pipe(
       // map((payments) => payments.filter((payment) => payment.event === this.event)),
       tap((payments) => {
         this.payments_sum = payments.reduce((acc, payment) => acc + payment.amount, 0);

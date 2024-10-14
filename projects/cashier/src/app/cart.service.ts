@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { CartItem } from './cart/cart.interface';
+import { CartItem, Payment } from './sales/sales/cart/cart.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -8,6 +8,8 @@ import { CartItem } from './cart/cart.interface';
 export class CartService {
   private cart: CartItem[] = [];
   private cart$ = new BehaviorSubject<CartItem[]>(this.cart);
+  private _payments_of_the_day: Payment[] = [];
+  private _payments_of_the_day$ = new BehaviorSubject<Payment[]>(this._payments_of_the_day);
 
 
 
@@ -45,6 +47,18 @@ export class CartService {
     return this.cart;
   }
 
+  push_saleItems_in_session(payment: Payment): void {
+    const sale: Payment = { ...payment };
+    sale.saleItems = [];
+    this.cart.forEach((item) => { sale.saleItems!.push(item.saleItem) });
+    this._payments_of_the_day.push(sale);
+    this._payments_of_the_day$.next(this._payments_of_the_day);
+  }
+
+
+  get payments_of_the_day(): Observable<Payment[]> {
+    return this._payments_of_the_day$.asObservable();
+  }
 
 
 

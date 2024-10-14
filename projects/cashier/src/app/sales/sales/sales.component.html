@@ -1,6 +1,16 @@
 <div class="container-md">
-    <div class="">
-        <app-session (onChangeSession)="set_session($event)"></app-session>
+    <div *ngIf="session" class="row bg-light mt-2 mb-3 p-3 justify-content-around align-items-center">
+        <div class="col-4">
+            saison : {{session.season}}
+        </div>
+        <div class="col-3">
+            <div class=" input-group input-group-sm">
+                <span class="input-group-text">date de vente</span>
+                <input [readonly]="input_disabled" type="date" class="form-control" [(ngModel)]="session.event">
+                <button class="btn btn-sm btn-outline-primary" (click)="renew_session()">Autre date</button>
+            </div>
+        </div>
+
     </div>
 
     <div *ngIf="session" class="card">

@@ -1,14 +1,14 @@
 import { Component, EventEmitter, OnDestroy, OnInit, Output } from '@angular/core';
-import { CartService } from '../cart.service';
+import { CartService } from '../../../cart.service';
 import { CommonModule, CurrencyPipe } from '@angular/common';
-import { Product } from '../../../../admin-dashboard/src/app/sales/products/product.interface';
+import { Product } from '../../../../../../admin-dashboard/src/app/sales/products/product.interface';
 import { Observable } from 'rxjs';
 import { CartItem, PaymentMode } from './cart.interface';
-import { ProductService } from '../../../../common/services/product.service';
+import { ProductService } from '../../../../../../common/services/product.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { MembersService } from '../../../../admin-dashboard/src/app/members/service/members.service';
-import { InputMemberComponent } from '../input-member/input-member.component';
-import { Member } from '../../../../common/members/member.interface';
+import { MembersService } from '../../../../../../admin-dashboard/src/app/members/service/members.service';
+import { InputMemberComponent } from '../../../input-member/input-member.component';
+import { Member } from '../../../../../../common/members/member.interface';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 @Component({

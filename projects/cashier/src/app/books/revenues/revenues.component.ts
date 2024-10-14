@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Payment, PaymentMode } from '../../cart/cart.interface';
+import { Payment, PaymentMode } from '../../sales/sales/cart/cart.interface';
 import { CommonModule } from '@angular/common';
 import { MembersService } from '../../../../../admin-dashboard/src/app/members/service/members.service';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';

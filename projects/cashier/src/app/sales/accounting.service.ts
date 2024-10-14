@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Payment, SaleItem } from '../cart/cart.interface';
+import { Payment, SaleItem } from './sales/cart/cart.interface';
 import { generateClient } from 'aws-amplify/api';
 import { Schema } from '../../../../../amplify/data/resource';
 import { combineLatest, from, map, Observable, of, switchMap, tap } from 'rxjs';
@@ -70,7 +70,7 @@ export class AccountingService {
           if (!payment || !payment.id) {
             throw new Error('payment writing not performed' + JSON.stringify(response));
           } else {
-            this._payments.push(payment);
+            // this._payments.push(payment);
             return this.writeCart(payment.id);
           }
         })

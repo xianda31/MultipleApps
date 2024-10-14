@@ -1,6 +1,6 @@
 import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
 import { last } from 'rxjs';
-import { Payment } from '../../projects/cashier/src/app/cart/cart.interface';
+import { Payment } from '../../projects/cashier/src/app/sales/sales/cart/cart.interface';
 
 const schema = a.schema({
 
@@ -41,7 +41,7 @@ const schema = a.schema({
   Payment: a.model({
     amount: a.float().required(),
     vendor: a.string().required(),
-    event: a.datetime().required(),
+    event: a.string().required(),
     season: a.string().required(),
     // session_id: a.id().required(),
     payer_id: a.id().required(),
