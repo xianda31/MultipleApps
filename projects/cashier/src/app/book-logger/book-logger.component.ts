@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { Payment } from '../sales/sales/cart/cart.interface';
+import { Sale } from '../sales/sales/cart/cart.interface';
 import { MembersService } from '../../../../admin-dashboard/src/app/members/service/members.service';
 import { ProductService } from '../../../../common/services/product.service';
 import { CartService } from '../cart.service';
@@ -15,11 +15,11 @@ import { Observable, tap } from 'rxjs';
   styleUrl: './book-logger.component.scss'
 })
 export class BookLoggerComponent {
-  // payments: Payment[] = [];
-  @Input() event: Date | null = null;
+  // sales: Sale[] = [];
+  // @Input() event: Date | null = null;
   cart_subscription: any;
-  payments$!: Observable<Payment[]>;
-  payments_sum: number = 0;
+  sales$!: Observable<Sale[]>;
+  sales_sum: number = 0;
 
   constructor(
     private cartService: CartService,
@@ -27,10 +27,10 @@ export class BookLoggerComponent {
     private productService: ProductService,
 
   ) {
-    this.payments$ = this.cartService.payments_of_the_day.pipe(
-      // map((payments) => payments.filter((payment) => payment.event === this.event)),
-      tap((payments) => {
-        this.payments_sum = payments.reduce((acc, payment) => acc + payment.amount, 0);
+    this.sales$ = this.cartService.sales_of_the_day.pipe(
+      // map((sales) => sales.filter((sale) => sale.event === this.event)),
+      tap((sales) => {
+        this.sales_sum = sales.reduce((acc, sale) => acc + sale.amount, 0);
       })
     )
 

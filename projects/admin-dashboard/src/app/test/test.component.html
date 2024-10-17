@@ -17,12 +17,13 @@
             </tr>
         </thead>
         <tbody>
-            <tr *ngFor="let payment of payments">
-                <td>{{format_date(payment.event)}} ({{ format_vendor(payment.vendor)}})</td>
-                <td>{{ payment.amount | currency:'€':'symbol':'2.2-2':'fr' }}</td>
-                <td>{{member_name (payment.payer_id )}}</td>
-                <td>{{ payment.payment_mode === payment_mode.CASH ? 'espèces' : bank_name(payment.bank!)}}</td>
-                <td>{{ payment.cheque_no }}</td>
+            <tr *ngFor="let sale of sales">
+                <td>{{format_date(sale.session.event)}} ({{ format_vendor(sale.session.vendor)}})</td>
+                <td>{{ sale.amount | currency:'€':'symbol':'2.2-2':'fr' }}</td>
+                <td>{{member_name (sale.payer_id )}}</td>
+                <td>{{ sale.payment.payment_mode === payment_mode.CASH ? 'espèces' : bank_name(sale.payment.bank!)}}
+                </td>
+                <td>{{ sale.payment.cheque_no }}</td>
             </tr>
         </tbody>
 

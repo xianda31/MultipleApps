@@ -1,13 +1,14 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import * as ExcelJS from 'exceljs';
-import { Payment, PaymentMode, SaleItem } from '../../../../cashier/src/app/sales/sales/cart/cart.interface';
+import { Payment, PaymentMode, Sale, SaleItem } from '../../../../cashier/src/app/sales/sales/cart/cart.interface';
 import { MembersService } from '../members/service/members.service';
 import { Member } from '../../../../common/members/member.interface';
 import { CommonModule } from '@angular/common';
 import { Bank } from '../../../../common/system-conf.interface';
 import { Observable, of, tap, map } from 'rxjs';
 import { SystemDataService } from '../../../../common/services/system-data.service';
+import { SalesModule } from '../sales/sales.module';
 @Component({
   selector: 'app-test',
   standalone: true,
@@ -17,7 +18,7 @@ import { SystemDataService } from '../../../../common/services/system-data.servi
 })
 export class TestComponent {
   members: Member[] = [];
-  payments: Payment[] = [];
+  sales: Sale[] = [];
   payment_mode = PaymentMode;
   season: string = '';
   banks !: Bank[];
@@ -58,7 +59,7 @@ export class TestComponent {
 
   process_exel_file(workbook: ExcelJS.Workbook) {
 
-    this.payments = [];
+    this.sales = [];
     // workbook.eachSheet((worksheet, sheetId) => { console.log('worksheet', worksheet?.name) });
     let worksheet = workbook.getWorksheet(1);
     if (!worksheet) {
@@ -72,18 +73,22 @@ export class TestComponent {
         if (colD?.toString() !== 'transfert') {
 
           let { payment_mode, bank, cheque_no } = this.retrieve_pmode(row.getCell(8).value?.toString() as string);
-          let payment: Payment = {
+          let sale: Sale = {
             amount: row.getCell(32).value?.valueOf() as number,
             payer_id: this.retrieve_member(row.getCell(5).value?.toString() as string),
-            season: '2023/24',
-            vendor: 'uploader',
-            event: row.getCell(2).value?.toString() as string,
-            payment_mode: payment_mode,
-            bank: bank,
-            cheque_no: cheque_no,
+            session: {
+              season: '2023/24',
+              vendor: 'uploader',
+              event: row.getCell(2).value?.toString() as string,
+            },
+            payment: {
+              payment_mode: payment_mode,
+              bank: bank,
+              cheque_no: cheque_no,
+            },
             saleItems: this.process_products(row)
           };
-          if (payment.payer_id !== '???') this.payments.push(payment);
+          if (sale.payer_id !== '???') this.sales.push(sale);
           // console.log('Row ' + rowNumber + ' = ' + JSON.stringify(payment));
         }
       }

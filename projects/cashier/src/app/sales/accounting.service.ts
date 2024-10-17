@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Payment, SaleItem } from './sales/cart/cart.interface';
+import { Payment, Sale, SaleItem } from './sales/cart/cart.interface';
 import { generateClient } from 'aws-amplify/api';
 import { Schema } from '../../../../../amplify/data/resource';
 import { combineLatest, from, map, Observable, of, switchMap, tap } from 'rxjs';
@@ -10,7 +10,7 @@ import { CartService } from '../cart.service';
 })
 export class AccountingService {
 
-  private _payments!: Payment[];
+  private _sales!: Sale[];
   private _saleItems!: SaleItem[];
   current_season: string = '';
 
@@ -18,14 +18,14 @@ export class AccountingService {
     private cartService: CartService
   ) { }
 
-  writeCart(payment_id: string): Observable<SaleItem[]> {
+  writeSaleItems(sale: Sale): Observable<SaleItem[]> {
     let observables: Observable<SaleItem>[] = [];
 
-    let writeSaleItem: (sale: SaleItem, payment_id: string) => Observable<SaleItem> = (sale, payment_id) => {
+    let writeSaleItem: (saleItem: SaleItem, sale_id: string) => Observable<SaleItem> = (saleItem, sale_id) => {
 
       const client = generateClient<Schema>();
-      const saleWithPaymentId = { ...sale, payment_id: payment_id };
-      return from(client.models.SaleItem.create(saleWithPaymentId))
+      const saleWithSaleId = { ...saleItem, sale_id: sale.id! };
+      return from(client.models.SaleItem.create(saleWithSaleId))
         .pipe(
           map((response: { data: unknown; }) => response.data as unknown as SaleItem),
           // tap((saleItem) => this._saleItems.push(saleItem))
@@ -34,14 +34,12 @@ export class AccountingService {
 
     let cartItems = this.cartService.getCartItems();
     cartItems.forEach((cartItem) => {
-      observables.push(writeSaleItem(cartItem.saleItem, payment_id));
+      observables.push(writeSaleItem(cartItem.saleItem, sale.id!));
     });
 
-    return combineLatest(observables).pipe(
-      map((saleItems) => {
-        return saleItems;
-      })
-    );
+    return combineLatest(observables)
+
+
   }
 
   getSaleItems(): Observable<SaleItem[]> {
@@ -60,47 +58,53 @@ export class AccountingService {
     return this._saleItems ? of(this._saleItems) : _listSaleItems();
   }
 
-  writeOperation(payment: Payment): Observable<SaleItem[]> {
+  writeOperation(sale: Sale): Observable<SaleItem[]> {
+    console.log('saving sale', sale);
     const client = generateClient<Schema>();
-    // const paymentWithStringEvent = { ...payment, event: payment.event.toISOString() };
-    return from(client.models.Payment.create(payment))
+    const { saleItems, ...saleInput } = sale;
+    return from(client.models.Sale.create(saleInput))
       .pipe(
-        switchMap((response: { data: unknown; }) => {
-          let payment = response.data as unknown as Payment;
-          if (!payment || !payment.id) {
-            throw new Error('payment writing not performed' + JSON.stringify(response));
+        map((response: { data: unknown; }) => {
+          let new_sale = response.data as unknown as Sale;
+          if (!new_sale || !new_sale.id) {
+            throw new Error('sale writing not performed' + JSON.stringify(response));
           } else {
-            // this._payments.push(payment);
-            return this.writeCart(payment.id);
+            sale.id = new_sale.id;
+            // this._sales.push(sale);
+            return sale;
           }
+        }),
+        switchMap((sale) => {
+          return this.writeSaleItems(sale)
         })
+
       );
   }
 
-  getPayment(payment_id: string): Payment | undefined {
-    return this._payments.find((payment) => payment.id === payment_id);
+  getSale(sale_id: string): Sale | undefined {
+    return this._sales.find((sale) => sale.id === sale_id);
   }
 
-  getPayments(season: string): Observable<Payment[]> {
+  getSales(season: string): Observable<Sale[]> {
     let new_season = false;
     if (this.current_season !== season) {
       new_season = true;
       this.current_season = season;
     }
 
-    const _listPayments = (): Observable<Payment[]> => {
+    const _listSales = (): Observable<Sale[]> => {
       const client = generateClient<Schema>();
-      return from(client.models.Payment.list(
+      return from(client.models.Sale.list(
         {
-          // selectionSet: ['id', 'amount', 'payer_id', 'season', 'event', 'vendor', 'payment_mode', 'bank', 'cheque_no', 'saleItems.*'],
-          filter: { season: { eq: season } }
+          // selectionSet: ['id', 'amount', 'payer_id', 'season', 'event', 'vendor', 'sale_mode', 'bank', 'cheque_no', 'saleItems.*'],
+          // filter: { session :  { eq: season } }
         })).pipe(
-          map((response: { data: unknown; }) => response.data as unknown as Payment[]),
-          tap((payments) => { this._payments = payments; })
+          map((response: { data: unknown; }) => response.data as unknown as Sale[]),
+          tap((sales) => { this._sales = sales; })
         );
     }
 
-    return (this._payments && !new_season) ? of(this._payments) : _listPayments();
+    return (this._sales && !new_season) ? of(this._sales) : _listSales();
   }
 
 

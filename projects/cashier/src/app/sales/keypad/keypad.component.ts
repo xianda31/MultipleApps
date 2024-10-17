@@ -14,6 +14,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 export class KeypadComponent implements OnInit, OnDestroy {
   @Input() keypad: Product[] = [];
   @Output() keyStroked = new EventEmitter<Product>();
+  keys: { [key: string]: Product[] } = {};
 
 
   constructor(private productService: ProductService) { }
@@ -22,13 +23,24 @@ export class KeypadComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // sort products by category
+    const categories: Map<string, Product[]> = new Map();
+    this.keypad.forEach((product) => {
+      if (categories.has(product.category)) {
+        categories.get(product.category)!.push(product);
+      } else {
+        categories.set(product.category, [product]);
+      }
+    });
+    this.keys = Object.fromEntries(categories);
+    console.log(this.keys);
   }
 
+  // get_products(key: string): Product[] {
+  //   return categories.get(key) || [];
+  // }
+
   onClick(product: Product) {
-    console.log('click on', product);
     this.keyStroked.emit(product);
   }
-  // onClear() {
-  //   this.keyStroked.emit(null);
-  // }
 }

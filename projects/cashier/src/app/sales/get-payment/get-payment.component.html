@@ -1,4 +1,4 @@
-<form [formGroup]="paymentForm">
+<form [formGroup]="saleForm">
     <div class="modal-header">
         <!-- <div class="col-12"> -->
         <h5>Mode de paiement</h5>
@@ -46,7 +46,7 @@
                 </div>
             </div>
         </div>
-        <button [disabled]="!paymentForm.valid && payment_mode.value === 'check'" type="submit"
+        <button [disabled]="!saleForm.valid && payment_mode.value === 'check'" type="submit"
             class="btn btn-primary btn-sm align-self-end" (click)="got_it()">OK</button>
     </div>
 </form>

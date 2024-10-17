@@ -1,14 +1,6 @@
 import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
-import { last } from 'rxjs';
-import { Payment } from '../../projects/cashier/src/app/sales/sales/cart/cart.interface';
 
 const schema = a.schema({
-
-  // SystemData: a.model({
-  //   key: a.string().required(),
-  //   json: a.json().required(),
-  // })
-  //   .authorization((allow) => [allow.publicApiKey()]),
 
   Product: a.model({
     glyph: a.string().required(),
@@ -25,7 +17,7 @@ const schema = a.schema({
   //   season: a.string().required(),
   //   creator: a.string().required(),
   //   event: a.datetime().required(),
-  //   payments: a.hasMany('Payment', ['event', 'creator']),
+  //   payments: a.hasMany('Sale', ['event', 'creator']),
   // }).identifier(['event', 'creator'])
   //   .authorization((allow) => [allow.publicApiKey()]),
 
@@ -33,25 +25,31 @@ const schema = a.schema({
     product_id: a.id().required(),
     payee_id: a.id().required(),
     price_payed: a.float().required(),
-    payment_id: a.id().required(),
-    payment: a.belongsTo('Payment', 'payment_id'),
+    sale_id: a.id().required(),
+    sale: a.belongsTo('Sale', 'sale_id'),
   })
     .authorization((allow) => [allow.publicApiKey()]),
 
-  Payment: a.model({
-    amount: a.float().required(),
-    vendor: a.string().required(),
-    event: a.string().required(),
-    season: a.string().required(),
-    // session_id: a.id().required(),
+  Sale: a.model({
     payer_id: a.id().required(),
-    payer: a.belongsTo('Member', 'payer_id'),
-    // session: a.belongsTo('Session', ['event', 'creator']),
-    payment_mode: a.string().required(),
-    bank: a.string(),
-    cheque_no: a.string(),
-    cross_checked: a.boolean(),
-    saleItems: a.hasMany('SaleItem', 'payment_id'),
+    // payer: a.belongsTo('Member', 'payer_id'),
+    amount: a.float().required(),
+
+    session: a.customType({
+      vendor: a.string().required(),
+      event: a.string().required(),
+      season: a.string().required()
+    }),
+
+    payment: a.customType(
+      {
+        payment_mode: a.string().required(),
+        bank: a.string(),
+        cheque_no: a.string(),
+        cross_checked: a.boolean(),
+      }),
+
+    saleItems: a.hasMany('SaleItem', 'sale_id'),
   })
     .authorization((allow) => [allow.publicApiKey()]),
 
@@ -71,7 +69,7 @@ const schema = a.schema({
     orga_license_name: a.string(),
     is_sympathisant: a.boolean(),
     has_account: a.boolean(),
-    payments: a.hasMany('Payment', 'payer_id'),
+    // payments: a.hasMany('Sale', 'payer_id'),
   })
     .authorization((allow) => [allow.publicApiKey()]),
 

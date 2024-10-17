@@ -1,39 +1,31 @@
-<div class="card">
-    <div class="card-body">
-        <div class="row  align-content-center align-items-center" *ngFor="let item of cart$ | async">
-            <div class="col-3">
-                <span> {{get_product(item.saleItem.product_id)!.description}} </span>
+<div class="bg-body-tertiary">
+    <!-- <div class="card-body "> -->
+    <div class="row  align-content-center align-items-center" *ngFor="let item of cart$ | async">
+
+        <!-- descriptif produit -->
+        <div class="col-5">
+            <span> - {{get_product(item.saleItem.product_id)!.description}} </span>
+        </div>
+        <div class="col-4">
+            <div class="input-group input-group-sm">
+                <app-input-member class="form-control" [members]="members" [(ngModel)]="item.payee"
+                    (ngModelChange)="payee_changed(item)"></app-input-member>
+                <button (click)="payee_cleared(item)" class="btn btn-outline-secondary" type="button">
+                    <i class="bi bi-x-lg"></i>
+                </button>
             </div>
-            <div class="col-6">
-                <div class="input-group ">
-                    <app-input-member class="form-control" [members]="members" [(ngModel)]="item.payee"
-                        (ngModelChange)="payee_changed(item)"></app-input-member>
-                    <button (click)="payee_cleared(item)" class="btn btn-outline-secondary" type="button">Clear</button>
-                </div>
-                <div *ngIf="!item.payee" class="text-danger">
-                    <span>bénéficiaire à renseigner</span>
-                </div>
-            </div>
-            <div class="col-2 text-end">
-                <span class="col-2 ">{{item.saleItem.price_payed |
-                    currency:'€':'symbol':'2.2-2':'fr'}} </span>
-            </div>
-            <div class="col-1 text-danger">
-                <i class="bi bi-trash3" (click)="removeFromCart(item)"></i>
+            <div *ngIf="!item.payee" class="text-danger">
+                <span>bénéficiaire à renseigner</span>
             </div>
         </div>
-        <hr *ngIf="getTotal() !==0">
-        <div class="row  align-content-center">
-            <div class="col col-md-5 align-self-center">
-                <span class="fw-bold">Total</span>
-            </div>
-            <div class="col col-md-4">
-                <button [disabled]="some_payee_cleared()" (click)="checkout()" class="btn btn-sm btn-primary"
-                    type="button">régler</button>
-            </div>
-            <div class="col col-md-2 text-end align-self-center">
-                <span class="fw-bold">{{getTotal() | currency:'€':'symbol':'2.2-2':'fr'}}</span>
-            </div>
+        <div class="col-2 text-end">
+            <span class="col-2 ">{{item.saleItem.price_payed |
+                currency:'€':'symbol':'2.2-2':'fr'}} </span>
+        </div>
+        <div class="col-1 text-danger">
+            <i class="bi bi-trash3" (click)="removeFromCart(item)"></i>
         </div>
     </div>
+
+    <!-- </div> -->
 </div>

@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Payment, PaymentMode } from '../../sales/sales/cart/cart.interface';
+import { Payment, PaymentMode, Sale } from '../../sales/sales/cart/cart.interface';
 import { CommonModule } from '@angular/common';
 import { MembersService } from '../../../../../admin-dashboard/src/app/members/service/members.service';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
@@ -18,11 +18,10 @@ import { AccountingService } from '../../sales/accounting.service';
   styleUrl: './revenues.component.scss'
 })
 export class RevenuesComponent {
-  payments: Payment[] = [];
+  sales: Sale[] = [];
   // saleItems: SaleItem[] = [];
   // sessions: Session[] = [];
   // by_payment_radio: boolean = true;
-  payments_subscription: any;
   sales_subscription: any;
   season_subscription: any;
   payment_mode = PaymentMode;
@@ -57,31 +56,23 @@ export class RevenuesComponent {
 
 
     this.season_subscription = this.season$.subscribe((season) => {
-      this.list_payments(season);
+      this.list_sales(season);
     });
 
   }
 
-  // list_sessions(season: string) {
-  //   this.sessionService.list_sessions(season)
-  //     .then((sessions) => {
-  //       this.sessions = sessions.sort((a, b) => a.event > b.event ? 1 : -1);
-  //       console.log('sessions', this.sessions);
-  //       this.loaded = true;
-  //     });
-  // }
 
-  list_payments(season: string) {
-    this.payments_subscription = this.accountingService.getPayments(season)
-      .subscribe((payments) => {
-        this.payments = payments.sort((a, b) => a.event > b.event ? 1 : -1);
+  list_sales(season: string) {
+    this.sales_subscription = this.accountingService.getSales(season)
+      .subscribe((sales) => {
+        this.sales = sales.sort((a, b) => a.session.event > b.session.event ? 1 : -1);
       });
   }
 
   new_season(event: any) {
-    this.payments_subscription.unsubscribe();
+    this.sales_subscription.unsubscribe();
     let season = event.target.value;
-    this.list_payments(season);
+    this.list_sales(season);
   }
 
   member_name(member_id: string) {
@@ -111,12 +102,12 @@ export class RevenuesComponent {
 
   export_excel() {
     let data: any[] = [];
-    this.payments.forEach((payment) => {
+    this.sales.forEach((sale) => {
       data.push({
-        date: this.format_date(payment.event),
-        montant: payment.amount,
-        bénéficiaire: this.member_name(payment.payer_id),
-        payment_mode: payment.payment_mode,
+        date: this.format_date(sale.session.event),
+        montant: sale.amount,
+        bénéficiaire: this.member_name(sale.payer_id),
+        sale_mode: sale.payment.payment_mode,
       });
     });
     this.excelService.generateExcel(data, 'revenues');

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { CartService } from '../../../cart.service';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { Product } from '../../../../../../admin-dashboard/src/app/sales/products/product.interface';
@@ -19,7 +19,9 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
   styleUrl: './cart.component.scss'
 })
 export class CartComponent implements OnInit, OnDestroy {
-  @Output() done = new EventEmitter<void>();
+  @Input() valid: boolean = false;
+  @Output() validChange = new EventEmitter<boolean>();
+  // @Output() done = new EventEmitter<void>();
   // @Input() members: Member[] = [];
   cart_subscription: any;
   members_subscription: any;
@@ -65,21 +67,21 @@ export class CartComponent implements OnInit, OnDestroy {
     this.cartService.removeFromCart(cart_item);
   }
 
-  getTotal() {
-    return this.cartService.getTotal();
-  }
 
-  checkout() {
-    this.done.emit();
-  }
+
+  // checkout() {
+  //   this.done.emit();
+  // }
 
   payee_changed(item: CartItem) {
     if (!item.payee) return;
     item.saleItem.payee_id = item.payee.id;
+    this.validChange.emit(true);
   }
 
   payee_cleared(item: CartItem) {
     item.payee = null;
+    this.validChange.emit(false);
   }
 
   some_payee_cleared(): boolean {

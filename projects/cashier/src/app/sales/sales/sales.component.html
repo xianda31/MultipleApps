@@ -1,65 +1,147 @@
 <div class="container-md">
+    <!-- session header -->
     <div *ngIf="session" class="row bg-light mt-2 mb-3 p-3 justify-content-around align-items-center">
         <div class="col-4">
             saison : {{session.season}}
         </div>
-        <div class="col-3">
+        <div class="col-4">
+            {{session.vendor}}
+        </div>
+        <div class="col-4">
             <div class=" input-group input-group-sm">
                 <span class="input-group-text">date de vente</span>
                 <input [readonly]="input_disabled" type="date" class="form-control" [(ngModel)]="session.event">
                 <button class="btn btn-sm btn-outline-primary" (click)="renew_session()">Autre date</button>
             </div>
         </div>
-
     </div>
 
-    <div *ngIf="session" class="card">
+    <!-- sale editor -->
+    <div *ngIf="session" class="row bg-body-secondary">
+        <div class="row">
+            <!-- product keypad -->
+            <div class="col-3 mt-2">
+                <div class="row">
 
-        <div class="card-body">
-            <div class="row mt-2">
-
-                <!--  left column for sales -->
-                <div class="col-sm-12 col-md-6">
-                    <!-- buyer -->
-                    <form [formGroup]="payeesForm">
-                        <div class="row">
-                            <div class="row ">
-                                <div class="col-6">
-                                    <label for="payee_1">Acheteur</label>
-                                    <div class="input-group border-primary">
-                                        <app-input-member id="payee_1" class="form-control " [members]="members"
-                                            formControlName="payee_1"></app-input-member>
+                    <div class="col-8 gx-2">
+                        <div class="row" *ngFor="let category of products_sorted_by_category | keyvalue">
+                            <div class="card-group">
+                                <div *ngFor="let product of category.value"
+                                    class="card text-white bg-primary nice_shadow  bigger-on-hover"
+                                    (click)="keyStroked(product)">
+                                    <div class="card-body text-center px-0 py-1">
+                                        <strong>{{product.glyph}}</strong>
+                                        <p>
+                                            <small>{{product.price.toFixed(2)}} €</small>
+                                        </p>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </form>
-                    <!-- keypad -->
-                    <div class="card mt-2">
-                        <div class="card-body">
-                            <app-keypad [keypad]="keypad" (keyStroked)="keyStroked($event)"></app-keypad>
-                        </div>
                     </div>
-                    <!-- cart -->
-                    <div class="mt-2" *ngIf="members">
-                        <app-cart (done)="checkout()"></app-cart>
+                    <!-- payment keys -->
+                    <div class="col-4 gx-2">
+                        <ng-container class="row" *ngFor="let paymode of paymodes">
+                            <div [class]=" paymode.class ">
+                                <div (click)="paymode_selected(paymode)" class="card-body text-center px-0 py-1">
+                                    <strong>{{paymode.glyph}}</strong>
+                                    <p><i [class]="paymode.icon"></i> </p>
+                                </div>
+                            </div>
+                        </ng-container>
                     </div>
-                </div>
-
-                <!-- right column for payments -->
-                <div class="col-sm-12 col-md-6 ">
-                    <!-- <div class="card"> -->
-                    <app-book-logger [event]="string_to_date(session.event)"></app-book-logger>
-                    <!-- </div> -->
                 </div>
             </div>
+            <!-- cart -->
+            <div class="col-5 mt-2  fst-italic fst-light fs-6 font-monospace ">
 
+                <!-- buyer -->
+                <div class="row mb-2 p-2">
+                    <div [formGroup]="payeesForm" class="row align-items-center ">
+                        <div class="col-auto"><strong> Acheteur</strong> </div>
+                        <div class="col-5">
+                            <app-input-member class="form-control form-control-sm" [members]="members"
+                                formControlName="payee_1"></app-input-member>
+                        </div>
+                    </div>
+                </div>
+                <!-- cart details -->
+                <div class="row mb-2 p-2">
+                    <app-cart [(valid)]="cart_is_valid"></app-cart>
+                </div>
+                <!-- price and payment details -->
+                <div *ngIf="getTotal() !==0" class="mb-2 p-2">
+                    <div class="row">
+                        <div class="col col-md-5 align-self-center">
+                            <span class="fw-bold">Total à régler</span>
+                        </div>
+                        <div class="offset-4 col col-md-2 text-end align-self-center">
+                            <span class="fw-bold">{{getTotal() | currency:'€':'symbol':'2.2-2':'fr'}}</span>
+                        </div>
+                    </div>
 
+                    <div *ngIf="sale" class="row mt-2">
+                        <div>
+                            <strong>Mode de paiement :</strong>
+                            {{sale.payment.payment_mode}}
+                        </div>
+                        <container-element [ngSwitch]="sale.payment.payment_mode">
+                            <ng-container *ngSwitchCase="paymentMode.CHEQUE" [ngTemplateOutlet]="get_check_ref">
+                            </ng-container>
+                            <ng-container *ngSwitchDefault>
+                                <button class="btn btn-sm btn-primary" (click)="valid_sale(sale)">confirmation</button>
+                            </ng-container>
+                        </container-element>
+                    </div>
+                </div>
+            </div>
+            <!--  sales_of_the_day -->
+            <div class="col-md-4 mt-2 fst-italic fst-light fs-6 font-monospace bg-body-tertiary">
+                <strong>encaissements : </strong>
+                <table class="table table-striped  table-borderless table-primary align-middle">
+                    <tr *ngFor="let sale of sales_of_the_day$ | async">
+                        <td>{{member_name(sale.payer_id)}}</td>
+                        <td class="text-end">{{sale.amount | currency:'€':'symbol':'2.2-2':'fr'}}</td>
+                        <td>{{sale.payment.payment_mode}}</td>
+                    </tr>
+                </table>
+            </div>
         </div>
+
+
+
     </div>
+    <ng-template #get_check_ref>
+        <form [formGroup]="checkForm">
+            <div class="row flex-row align-items-end">
+                <div class="col-4 px-2">
+                    <label for="bank" class="form-label">Banque</label>
+                    <select list="banks" type="text" id="bank_names" class="form-select form-select-sm"
+                        formControlName="bank">
+                        <option id="bank_names" *ngFor="let bank of banks " [value]="bank.key">
+                            {{bank.name}}
+                        </option>
+                    </select>
+                    <div *ngIf="bank.touched && bank.invalid " class="text-danger">
+                        le nom de la banque doit être renseigné.
+                    </div>
+                </div>
+                <div class="col-4 px-2">
+                    <label for="cheque_no" class="form-label">N° Chèque</label>
+                    <input type="text" id="cheque_no" class="form-control form-control-sm" formControlName="cheque_no">
+                    <div *ngIf="cheque_no.touched && cheque_no.invalid " class="text-danger">
+                        <span *ngIf="cheque_no.errors?.['required']">le n° de chèque doit être renseigné. </span>
+                        <span *ngIf="cheque_no.errors?.['pattern']">le n° de chèque doit avoir 6 digits. </span>
+                    </div>
+                </div>
+                <div class="col-4">
 
-</div>
-
-<!-- <div *ngIf="event === null">
+                    <button [disabled]="!checkForm.valid" class="btn btn-sm btn-primary"
+                        (click)="check_validated()">confirmation</button>
+                </div>
+            </div>
+        </form>
+    </ng-template>
+    <!-- <div *ngIf="event === null">
     fin de session de saisie : pour redémarrer une session cliquer sur Vente dans la barre de menue
 </div> -->

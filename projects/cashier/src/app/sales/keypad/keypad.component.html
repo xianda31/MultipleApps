@@ -1,24 +1,15 @@
 <div class="container">
-    <div class="row row-cols-4  g-2">
-        <div class="col" *ngFor="let key of keypad">
-
-            <div class="card  h-100 nice_shadow  key" (click)="onClick(key)">
-                <div class="card-body text-center px-0">
-                    <strong>{{key.glyph}}</strong>
+    <div class="row" *ngFor="let category of keys | keyvalue">
+        <div class="card-group">
+            <div *ngFor="let product of category.value" class="card text-white bg-primary nice_shadow  key"
+                (click)="onClick(product)">
+                <div class="card-body text-center px-0 py-1">
+                    <strong>{{product.glyph}}</strong>
                     <p>
-                        <small>{{key.price}} €</small>
+                        <small>{{product.price.toFixed(2)}} €</small>
                     </p>
                 </div>
             </div>
         </div>
-
-        <!-- <div class="card  h-100 nice_shadow  key" (click)="onClear()">
-            <div class="card-body text-center px-0">
-                <strong>CLEAR</strong>
-                <p>
-                    <small> clear</small>
-                </p>
-            </div>
-        </div> -->
     </div>
 </div>

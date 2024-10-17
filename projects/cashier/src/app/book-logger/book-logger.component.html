@@ -7,34 +7,32 @@
     <div class="card-body">
         <div class="table-responsive-sm">
             <table class="table table-striped  table-borderless table-primary align-middle">
-                <thead class="table-light">
+                <!-- <thead class="table-light">
                     <tr>
                         <th class="col col-md-4">Acheteur</th>
                         <th class="col col-md-2 text-end">Montant </th>
                         <th class="col col-md-3">Mode</th>
-                        <th class="col col-md-3">Cheque No</th>
                     </tr>
-                </thead>
+                </thead> -->
                 <tbody class="table-group-divider">
-                    <tr *ngFor="let payment of payments$ | async">
-                        <td>{{member_name(payment.payer_id)}}</td>
-                        <td class="text-end">{{payment.amount | currency:'€':'symbol':'2.2-2':'fr'}}</td>
-                        <td>{{payment.payment_mode}}</td>
-                        <td>{{payment.cheque_no}}</td>
+                    <tr *ngFor="let sale of sales$ | async">
+                        <td>{{member_name(sale.payer_id)}}</td>
+                        <td class="text-end">{{sale.amount | currency:'€':'symbol':'2.2-2':'fr'}}</td>
+                        <td>{{sale.payment.payment_mode}}</td>
                     </tr>
                 </tbody>
             </table>
         </div>
 
 
-        <div class="row  align-content-center">
+        <!-- <div class="row  align-content-center">
             <div class="col col-md-4 align-self-center">
                 <span class="fw-bold">Total</span>
             </div>
             <div class="col col-md-2 text-end align-self-center">
-                <span class="fw-bold">{{payments_sum | currency:'€':'symbol':'2.2-2':'fr'}}</span>
+                <span class="fw-bold">{{sales_sum | currency:'€':'symbol':'2.2-2':'fr'}}</span>
             </div>
-        </div>
+        </div> -->
 
     </div>
 

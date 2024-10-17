@@ -1,6 +1,6 @@
 import { Component, Input, OnInit, Output } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { Payment, PaymentMode } from '../sales/cart/cart.interface';
+import { Payment, PaymentMode, Sale } from '../sales/cart/cart.interface';
 import { CurrencyPipe, CommonModule } from '@angular/common';
 import { AbstractControl, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { Bank, SystemConfiguration } from '../../../../../common/system-conf.interface';
@@ -14,10 +14,9 @@ import { SystemDataService } from '../../../../../common/services/system-data.se
   styleUrl: './get-payment.component.scss'
 })
 export class GetPaymentComponent implements OnInit {
-  @Input() payment_in!: Payment;
-  // @Input() buyer_fullname!: string;
-  @Output() payment_out!: Payment | null;
-  paymentForm!: FormGroup;
+  @Input() sale_in!: Sale;
+  @Output() sale_out!: Sale | null;
+  saleForm!: FormGroup;
   paymentMode = PaymentMode;
   banks !: Bank[];
 
@@ -32,38 +31,38 @@ export class GetPaymentComponent implements OnInit {
       this.banks = conf.banks;
     });
 
-    this.paymentForm = new FormGroup({
+    this.saleForm = new FormGroup({
       // id: new FormControl(''),
       // season: new FormControl({ value: '', disabled: true }),
       amount: new FormControl({ value: '', disabled: true }),
       payer_id: new FormControl(''),
-      payment_mode: new FormControl<PaymentMode>(PaymentMode.CASH, Validators.required),
+      sale_mode: new FormControl<PaymentMode>(PaymentMode.CASH, Validators.required),
       bank: new FormControl('', Validators.required),
       cheque_no: new FormControl('', [Validators.pattern(/^\d{6}$/), Validators.required]),
     });
 
-    this.paymentForm.patchValue({
-      // season: this.payment_in.season,
-      amount: this.payment_in.amount,
+    this.saleForm.patchValue({
+      // season: this.sale_in.season,
+      amount: this.sale_in.amount,
       payment_mode: PaymentMode.CASH,
       bank: '',
       cheque_no: '',
-      payer_id: this.payment_in.payer_id,
+      payer_id: this.sale_in.payer_id,
     });
 
-    this.payment_out = { ...this.payment_in };
+    this.sale_out = { ...this.sale_in };
 
   }
 
-  get payment_mode() { return this.paymentForm.get('payment_mode')!; }
-  get bank() { return this.paymentForm.get('bank')!; }
-  get cheque_no() { return this.paymentForm.get('cheque_no')!; }
+  get payment_mode() { return this.saleForm.get('payment_mode')!; }
+  get bank() { return this.saleForm.get('bank')!; }
+  get cheque_no() { return this.saleForm.get('cheque_no')!; }
 
 
   got_it() {
-    this.payment_out = { ...this.payment_in, ...this.paymentForm.value };
-    console.log(this.payment_out);
-    this.activeModal.close(this.payment_out);
+    this.sale_out = { ...this.sale_in, ...this.saleForm.value };
+    console.log(this.sale_out);
+    this.activeModal.close(this.sale_out);
   }
 
   close() {
