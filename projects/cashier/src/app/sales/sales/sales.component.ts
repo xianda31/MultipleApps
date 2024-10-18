@@ -123,7 +123,6 @@ export class SalesComponent {
         payee_id: payee === null ? '' : payee.id,
       };
       return {
-        product_glyph: product.glyph,
         payee: payee,
         saleItem: saleItem
       }

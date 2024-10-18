@@ -1,7 +1,7 @@
 import { Member } from "../../../../common/member.interface";
 
 export interface CartItem {
-    product_glyph: string;
+    // product_glyph: string;
     payee: Member | null;   // pour mettre une raz dans le champ de saisie
     saleItem: SaleItem;
 }
