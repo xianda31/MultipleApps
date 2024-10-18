@@ -1,8 +1,8 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
-import { ProductService } from '../../../../../common/services/product.service';
-import { Product } from '../../../../../admin-dashboard/src/app/sales/products/product.interface';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { ProductService } from '../../../../common/services/product.service';
+import { Product } from '../../../../admin-dashboard/src/app/sales/products/product.interface';
 
 @Component({
   selector: 'app-keypad',

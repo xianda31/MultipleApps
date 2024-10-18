@@ -1,63 +1,65 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { CartItem, Sale } from './sales/sales/cart/cart.interface';
+import { CartItem, Sale } from './cart/cart.interface';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CartService {
-  private cart: CartItem[] = [];
-  private cart$ = new BehaviorSubject<CartItem[]>(this.cart);
+  private _cart: CartItem[] = [];
+  private _cart$ = new BehaviorSubject<CartItem[]>(this._cart);
+
   private _sales_of_the_day: Sale[] = [];
-  private sales_of_the_day$ = new BehaviorSubject<Sale[]>(this._sales_of_the_day);
+  private _sales_of_the_day$ = new BehaviorSubject<Sale[]>(this._sales_of_the_day);
 
 
+  get cart$(): Observable<CartItem[]> {
+    return this._cart$.asObservable();
+  }
 
   addToCart(CartItem: CartItem): void {
-    this.cart.push(CartItem);
-    this.cart$.next(this.cart);
+    this._cart.push(CartItem);
+    this._cart$.next(this._cart);
   }
 
   removeFromCart(CartItem: CartItem): void {
-    const index = this.cart.indexOf(CartItem);
+    const index = this._cart.indexOf(CartItem);
     if (index > -1) {
-      this.cart.splice(index, 1);
-      this.cart$.next(this.cart);
+      this._cart.splice(index, 1);
+      this._cart$.next(this._cart);
     }
   }
 
   clearCart(): void {
-    this.cart = [];
-    this.cart$.next(this.cart);
+    this._cart = [];
+    this._cart$.next(this._cart);
   }
 
-  getCart(): Observable<CartItem[]> {
-    return this.cart$.asObservable();
+
+  getCartAmount(): number {
+    return this._cart.reduce((total, item) => total + item.saleItem.price_payed, 0);
   }
 
-  getTotal(): number {
-    return this.cart.reduce((total, item) => total + item.saleItem.price_payed, 0);
-  }
-
-  getQuantity(): number {
-    return this.cart.length;
-  }
 
   getCartItems(): CartItem[] {
-    return this.cart;
+    return this._cart;
   }
 
-  push_saleItems_in_session(sale: Sale): void {
-    // const _sale: Sale = { ...sale };
-    // _sale.saleItems = [];
-    // this.cart.forEach((item) => { _sale.saleItems!.push(item.saleItem) });
+
+  // sales of the day for logger
+
+  push_sale_of_the_day(sale: Sale): void {
     this._sales_of_the_day.push(sale);
-    this.sales_of_the_day$.next(this._sales_of_the_day);
+    this._sales_of_the_day$.next(this._sales_of_the_day);
   }
 
+  get sales_of_the_day$(): Observable<Sale[]> {
+    return this._sales_of_the_day$.asObservable();
+  }
 
-  get sales_of_the_day(): Observable<Sale[]> {
-    return this.sales_of_the_day$.asObservable();
+  reset_sales_of_the_day(): void {
+    this._sales_of_the_day = [];
+    this._sales_of_the_day$.next(this._sales_of_the_day);
   }
 
 

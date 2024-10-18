@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { generateClient, get } from 'aws-amplify/api';
 import { BehaviorSubject, from, generate, Observable, of } from 'rxjs';
 import { Schema } from '../../../../../../amplify/data/resource';
-import { Member } from '../../../../../common/members/member.interface';
+import { Member } from '../../../../../common/member.interface';
 
 @Injectable({
   providedIn: 'root'

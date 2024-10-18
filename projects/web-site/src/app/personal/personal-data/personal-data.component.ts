@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators, Form, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { Member } from '../../../../../common/members/member.interface';
+import { Member } from '../../../../../common/member.interface';
 import { first, last } from 'rxjs';
 import { auth } from '../../../../../../amplify/auth/resource';
 import { CommonModule } from '@angular/common';

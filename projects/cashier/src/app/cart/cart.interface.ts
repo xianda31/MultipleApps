@@ -1,4 +1,4 @@
-import { Member } from "../../../../../../common/members/member.interface";
+import { Member } from "../../../../common/member.interface";
 
 export interface CartItem {
     product_glyph: string;
@@ -11,7 +11,7 @@ export interface SaleItem {
     product_id: string;
     payee_id: string;
     price_payed: number;
-    payment_id?: string;
+    sale_id?: string;
 }
 
 export interface Session {
@@ -21,25 +21,26 @@ export interface Session {
 }
 
 export interface Payment {
-    id?: string;
-    amount: number;
-    payer_id: string;
-    season: string;
-    vendor: string;
-    event: string;
     payment_mode: PaymentMode;
     bank?: string;
     cheque_no?: string;
     cross_checked?: boolean;
-    saleItems?: SaleItem[];
-
+}
+export interface Sale {
+    id?: string;
+    payer_id: string;
+    amount: number;
+    session: Session;
+    payment: Payment;
+    saleItems: SaleItem[];
 }
 
 export enum PaymentMode {
     CASH = 'espèces',
     CHEQUE = 'chèque',
     TRANSFER = 'virement',
-    CARD = 'carte',
     DEBT = 'dette',
+    ASSETS = 'avoir',
+    CARD = 'carte',
 }
 

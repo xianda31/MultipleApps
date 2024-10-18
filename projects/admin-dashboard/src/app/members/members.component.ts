@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { MembersService } from './service/members.service';
 import { LicenseesService } from '../licensees/services/licensees.service';
 import { combineLatest, Observable } from 'rxjs';
-import { Member } from '../../../../common/members/member.interface';
+import { Member } from '../../../../common/member.interface';
 import { FFB_licensee } from '../../../../common/ffb/interface/licensee.interface';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule, UpperCasePipe } from '@angular/common';

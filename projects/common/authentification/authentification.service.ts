@@ -4,7 +4,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { Process_flow } from './authentification_interface';
 import { ToastService } from '../toaster/toast.service';
 import { MembersService } from '../../admin-dashboard/src/app/members/service/members.service';
-import { Member } from '../members/member.interface';
+import { Member } from '../member.interface';
 
 @Injectable({
   providedIn: 'root'

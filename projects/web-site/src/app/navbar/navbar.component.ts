@@ -4,7 +4,7 @@ import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { signOut } from 'aws-amplify/auth';
 import { Menu } from '../../../../common/menu.interface';
 import { ReplacePipe } from '../../../../common/pipes/replace.pipe';
-import { Member } from '../../../../common/members/member.interface';
+import { Member } from '../../../../common/member.interface';
 import { AuthentificationModule } from '../../../../common/authentification/authentification.module';
 import { AuthentificationService } from '../../../../common/authentification/authentification.service';
 import { Observable } from 'rxjs';

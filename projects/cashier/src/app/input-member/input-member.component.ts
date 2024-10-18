@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, forwardRef, Input } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR, ReactiveFormsModule } from '@angular/forms';
-import { Member } from '../../../../common/members/member.interface';
+import { Member } from '../../../../common/member.interface';
 
 @Component({
   selector: 'app-input-member',

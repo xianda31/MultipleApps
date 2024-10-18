@@ -9,7 +9,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastService } from '../../toaster/toast.service';
 import { club_tournament } from '../../ffb/interface/club_tournament.interface';
 import { AuthentificationService } from '../../authentification/authentification.service';
-import { Member } from '../../members/member.interface';
+import { Member } from '../../member.interface';
 
 
 // interface LicensePair { player1: string, player2: string }

@@ -1,14 +1,14 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
-import { CartService } from '../../../cart.service';
+import { CartService } from '../cart.service';
 import { CommonModule, CurrencyPipe } from '@angular/common';
-import { Product } from '../../../../../../admin-dashboard/src/app/sales/products/product.interface';
+import { Product } from '../../../../admin-dashboard/src/app/sales/products/product.interface';
 import { Observable } from 'rxjs';
 import { CartItem, PaymentMode } from './cart.interface';
-import { ProductService } from '../../../../../../common/services/product.service';
+import { ProductService } from '../../../../common/services/product.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { MembersService } from '../../../../../../admin-dashboard/src/app/members/service/members.service';
-import { InputMemberComponent } from '../../../input-member/input-member.component';
-import { Member } from '../../../../../../common/members/member.interface';
+import { MembersService } from '../../../../admin-dashboard/src/app/members/service/members.service';
+import { InputMemberComponent } from '../input-member/input-member.component';
+import { Member } from '../../../../common/member.interface';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
@@ -43,7 +43,7 @@ export class CartComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.cart$ = this.cartService.getCart();
+    this.cart$ = this.cartService.cart$;
     this.cart_subscription = this.productService.listProducts().subscribe((products) => {
       this.products = products;
     });
@@ -67,11 +67,6 @@ export class CartComponent implements OnInit, OnDestroy {
     this.cartService.removeFromCart(cart_item);
   }
 
-
-
-  // checkout() {
-  //   this.done.emit();
-  // }
 
   payee_changed(item: CartItem) {
     if (!item.payee) return;

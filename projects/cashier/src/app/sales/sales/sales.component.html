@@ -4,31 +4,31 @@
         <div class="col-4">
             saison : {{session.season}}
         </div>
-        <div class="col-4">
+        <div class="col-5">
             {{session.vendor}}
         </div>
-        <div class="col-4">
+        <div class="col-3">
             <div class=" input-group input-group-sm">
                 <span class="input-group-text">date de vente</span>
-                <input [readonly]="input_disabled" type="date" class="form-control" [(ngModel)]="session.event">
-                <button class="btn btn-sm btn-outline-primary" (click)="renew_session()">Autre date</button>
+                <input type="date" class="form-control" (ngModelChange)="renew_session()" [(ngModel)]="session.event">
+                <!-- <button class="btn btn-sm btn-outline-primary" (click)="renew_session()">Autre date</button> -->
             </div>
         </div>
     </div>
 
     <!-- sale editor -->
-    <div *ngIf="session" class="row bg-body-secondary">
+    <div *ngIf="session" class="row ">
         <div class="row">
             <!-- product keypad -->
             <div class="col-3 mt-2">
                 <div class="row">
 
                     <div class="col-8 gx-2">
-                        <div class="row" *ngFor="let category of products_sorted_by_category | keyvalue">
+                        <div class="row" *ngFor="let category of product_keys | keyvalue">
                             <div class="card-group">
                                 <div *ngFor="let product of category.value"
                                     class="card text-white bg-primary nice_shadow  bigger-on-hover"
-                                    (click)="keyStroked(product)">
+                                    (click)="productSelected(product)">
                                     <div class="card-body text-center px-0 py-1">
                                         <strong>{{product.glyph}}</strong>
                                         <p>
@@ -59,7 +59,7 @@
                 <div class="row mb-2 p-2">
                     <div [formGroup]="payeesForm" class="row align-items-center ">
                         <div class="col-auto"><strong> Acheteur</strong> </div>
-                        <div class="col-5">
+                        <div class="col-6">
                             <app-input-member class="form-control form-control-sm" [members]="members"
                                 formControlName="payee_1"></app-input-member>
                         </div>
@@ -69,8 +69,8 @@
                 <div class="row mb-2 p-2">
                     <app-cart [(valid)]="cart_is_valid"></app-cart>
                 </div>
-                <!-- price and payment details -->
                 <div *ngIf="getTotal() !==0" class="mb-2 p-2">
+                    <!-- price  -->
                     <div class="row">
                         <div class="col col-md-5 align-self-center">
                             <span class="fw-bold">Total à régler</span>
@@ -79,24 +79,26 @@
                             <span class="fw-bold">{{getTotal() | currency:'€':'symbol':'2.2-2':'fr'}}</span>
                         </div>
                     </div>
-
+                    <!--  payment details -->
                     <div *ngIf="sale" class="row mt-2">
-                        <div>
+                        <span>
                             <strong>Mode de paiement :</strong>
                             {{sale.payment.payment_mode}}
-                        </div>
-                        <container-element [ngSwitch]="sale.payment.payment_mode">
-                            <ng-container *ngSwitchCase="paymentMode.CHEQUE" [ngTemplateOutlet]="get_check_ref">
-                            </ng-container>
-                            <ng-container *ngSwitchDefault>
-                                <button class="btn btn-sm btn-primary" (click)="valid_sale(sale)">confirmation</button>
-                            </ng-container>
-                        </container-element>
+                        </span>
+                        <ng-container *ngIf="sale.payment.payment_mode === paymentMode.CHEQUE"
+                            [ngTemplateOutlet]="get_check_ref">
+                        </ng-container>
+
+                    </div>
+                    <!-- validation -->
+                    <div *ngIf="sale" class="row px-2 mt-2">
+                        <button [disabled]="sale.payment.payment_mode === paymentMode.CHEQUE && !checkForm.valid"
+                            class="btn btn-success nice_shadow" (click)="valid_sale(sale)">confirmation</button>
                     </div>
                 </div>
             </div>
             <!--  sales_of_the_day -->
-            <div class="col-md-4 mt-2 fst-italic fst-light fs-6 font-monospace bg-body-tertiary">
+            <div class="col-md-4 mt-4 fst-italic fst-light fs-6 font-monospace bg-body-tertiary">
                 <strong>encaissements : </strong>
                 <table class="table table-striped  table-borderless table-primary align-middle">
                     <tr *ngFor="let sale of sales_of_the_day$ | async">
@@ -118,7 +120,7 @@
                     <label for="bank" class="form-label">Banque</label>
                     <select list="banks" type="text" id="bank_names" class="form-select form-select-sm"
                         formControlName="bank">
-                        <option id="bank_names" *ngFor="let bank of banks " [value]="bank.key">
+                        <option id="bank_names" *ngFor="let bank of banks$ | async " [value]="bank.key">
                             {{bank.name}}
                         </option>
                     </select>
@@ -136,8 +138,6 @@
                 </div>
                 <div class="col-4">
 
-                    <button [disabled]="!checkForm.valid" class="btn btn-sm btn-primary"
-                        (click)="check_validated()">confirmation</button>
                 </div>
             </div>
         </form>

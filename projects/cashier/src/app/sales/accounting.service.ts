@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Payment, Sale, SaleItem } from './sales/cart/cart.interface';
+import { Payment, Sale, SaleItem } from '../cart/cart.interface';
 import { generateClient } from 'aws-amplify/api';
 import { Schema } from '../../../../../amplify/data/resource';
 import { combineLatest, from, map, Observable, of, switchMap, tap } from 'rxjs';
