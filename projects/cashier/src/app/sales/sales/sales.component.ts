@@ -151,21 +151,21 @@ export class SalesComponent {
       ...this.session,
       amount: this.cartService.getCartAmount(),
       payer_id: this.payee_1.value.id,
-      payment: {
-        payment_mode: paymode.payment_mode,
+      payments: [{
+        type: paymode.payment_mode,
         bank: '',
         cheque_no: '',
         cross_checked: false,
-      },
+      }],
       saleItems: this.cartService.getCartItems().map((item) => item)
     }
   }
 
   valid_sale(sale: Sale): void {
 
-    if (sale.payment.payment_mode === PaymentMode.CHEQUE) {
-      this.sale!.payment.bank = this.bank.value;
-      this.sale!.payment.cheque_no = this.cheque_no.value;
+    if (sale.payments[0].type === PaymentMode.CHEQUE) {
+      this.sale!.payments[0].bank = this.bank.value;
+      this.sale!.payments[0].cheque_no = this.cheque_no.value;
     }
     this.accountingService.writeOperation(sale).subscribe((res) => {
       this.cartService.push_sale_of_the_day(sale);

@@ -83,16 +83,16 @@
                     <div *ngIf="sale" class="row mt-2">
                         <span>
                             <strong>Mode de paiement :</strong>
-                            {{sale.payment.payment_mode}}
+                            {{sale.payments[0].type}}
                         </span>
-                        <ng-container *ngIf="sale.payment.payment_mode === paymentMode.CHEQUE"
+                        <ng-container *ngIf="sale.payments[0].type === paymentMode.CHEQUE"
                             [ngTemplateOutlet]="get_check_ref">
                         </ng-container>
 
                     </div>
                     <!-- validation -->
                     <div *ngIf="sale" class="row px-2 mt-2">
-                        <button [disabled]="sale.payment.payment_mode === paymentMode.CHEQUE && !checkForm.valid"
+                        <button [disabled]="sale.payments[0].type === paymentMode.CHEQUE && !checkForm.valid"
                             class="btn btn-success nice_shadow" (click)="valid_sale(sale)">confirmation</button>
                     </div>
                 </div>
@@ -104,7 +104,7 @@
                     <tr *ngFor="let sale of sales_of_the_day$ | async">
                         <td>{{member_name(sale.payer_id)}}</td>
                         <td class="text-end">{{sale.amount | currency:'€':'symbol':'2.2-2':'fr'}}</td>
-                        <td>{{sale.payment.payment_mode}}</td>
+                        <!-- <td>{{sale.payments[0].type}}</td> -->
                     </tr>
                 </table>
             </div>

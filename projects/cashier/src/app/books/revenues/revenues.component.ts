@@ -65,7 +65,8 @@ export class RevenuesComponent {
   list_sales(season: string) {
     this.sales_subscription = this.accountingService.getSales(season)
       .subscribe((sales) => {
-        this.sales = sales.sort((a, b) => a.event > b.event ? 1 : -1);
+        this.sales = sales.sort((a, b) => a.event > b.event ? 1 : -1)
+          .sort((a, b) => a.createdAt! < b.createdAt! ? 1 : -1);
       });
   }
 
@@ -88,11 +89,11 @@ export class RevenuesComponent {
   format_date(date: string): string {
     const formated_date = new Date(date);
     // return formatDate(date, 'EEEE d MMMM HH:00', 'fr-FR');
-    return formated_date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', hour: 'numeric' });
+    return formated_date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
   }
 
   format_vendor(vendor: string): string {
-    const gliph = vendor.toLocaleLowerCase().split(' ').map((word) => word[0]).join('');
+    const gliph = vendor.toLocaleUpperCase().split(' ').map((word) => word[0]).join('');
     return gliph;
   }
 
@@ -107,7 +108,7 @@ export class RevenuesComponent {
         date: this.format_date(sale.event),
         montant: sale.amount,
         bénéficiaire: this.member_name(sale.payer_id),
-        sale_mode: sale.payment.payment_mode,
+        sale_mode: sale.payments[0].type,
       });
     });
     this.excelService.generateExcel(data, 'revenues');

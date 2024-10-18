@@ -18,16 +18,17 @@ export interface Session {
 }
 
 export interface Payment {
-    payment_mode: PaymentMode;
+    type: PaymentMode;
     bank?: string;
     cheque_no?: string;
     cross_checked?: boolean;
 }
 export interface Sale extends Session {
     id?: string;
+    createdAt?: string;
     payer_id: string;
     amount: number;
-    payment: Payment;
+    payments: Payment[];
     saleItems: SaleItem[];
 }
 

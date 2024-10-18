@@ -23,25 +23,22 @@ const schema = a.schema({
     .authorization((allow) => [allow.publicApiKey()]),
 
 
+  Payment: a.model({
+    type: a.string().required(),
+    bank: a.string(),
+    cheque_no: a.string(),
+    sale_id: a.id().required(),
+    sale: a.belongsTo('Sale', 'sale_id'),
+  }).authorization((allow) => [allow.publicApiKey()]),
 
 
   Sale: a.model({
     season: a.string().required(),
     payer_id: a.id().required(),
     amount: a.float().required(),
-
     vendor: a.string().required(),
     event: a.string().required(),
-
-
-    payment: a.customType(
-      {
-        payment_mode: a.string().required(),
-        bank: a.string(),
-        cheque_no: a.string(),
-        cross_checked: a.boolean(),
-      }),
-
+    payments: a.hasMany('Payment', 'sale_id'),
     saleItems: a.hasMany('SaleItem', 'sale_id'),
   })
 

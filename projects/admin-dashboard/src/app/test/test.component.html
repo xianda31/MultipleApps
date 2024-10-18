@@ -21,7 +21,7 @@
                 <td>{{format_date(sale.session.event)}} ({{ format_vendor(sale.session.vendor)}})</td>
                 <td>{{ sale.amount | currency:'€':'symbol':'2.2-2':'fr' }}</td>
                 <td>{{member_name (sale.payer_id )}}</td>
-                <td>{{ sale.payment.payment_mode === payment_mode.CASH ? 'espèces' : bank_name(sale.payment.bank!)}}
+                <td>{{ sale.payment.type === payment_mode.CASH ? 'espèces' : bank_name(sale.payment.bank!)}}
                 </td>
                 <td>{{ sale.payment.cheque_no }}</td>
             </tr>
