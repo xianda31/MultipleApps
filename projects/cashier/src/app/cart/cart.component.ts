@@ -60,7 +60,7 @@ export class CartComponent implements OnInit, OnDestroy {
 
   payee_changed(item: CartItem) {
     if (!item.payee) return;
-    item.saleItem.payee_id = item.payee.id;
+    item.payee_id = item.payee.id;
     this.validChange.emit(true);
   }
 
@@ -70,6 +70,6 @@ export class CartComponent implements OnInit, OnDestroy {
   }
 
   some_payee_cleared(): boolean {
-    return this.cartService.getCartItems().some((item) => !item.saleItem.payee_id);
+    return this.cartService.getCartItems().some((item) => !item.payee_id);
   }
 }

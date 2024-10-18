@@ -7,19 +7,11 @@ const schema = a.schema({
     description: a.string().required(),
     category: a.string().required(),
     price: a.float().required(),
-    // color: a.string(),
     paired: a.boolean().required(),
     active: a.boolean().required(),
   })
     .authorization((allow) => [allow.publicApiKey()]),
 
-  // Session: a.model({
-  //   season: a.string().required(),
-  //   creator: a.string().required(),
-  //   event: a.datetime().required(),
-  //   payments: a.hasMany('Sale', ['event', 'creator']),
-  // }).identifier(['event', 'creator'])
-  //   .authorization((allow) => [allow.publicApiKey()]),
 
   SaleItem: a.model({
     product_id: a.id().required(),
@@ -30,16 +22,17 @@ const schema = a.schema({
   })
     .authorization((allow) => [allow.publicApiKey()]),
 
+
+
+
   Sale: a.model({
+    season: a.string().required(),
     payer_id: a.id().required(),
-    // payer: a.belongsTo('Member', 'payer_id'),
     amount: a.float().required(),
 
-    session: a.customType({
-      vendor: a.string().required(),
-      event: a.string().required(),
-      season: a.string().required()
-    }),
+    vendor: a.string().required(),
+    event: a.string().required(),
+
 
     payment: a.customType(
       {
@@ -51,6 +44,7 @@ const schema = a.schema({
 
     saleItems: a.hasMany('SaleItem', 'sale_id'),
   })
+
     .authorization((allow) => [allow.publicApiKey()]),
 
 

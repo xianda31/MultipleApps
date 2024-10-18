@@ -69,14 +69,14 @@
                 <div class="row mb-2 p-2">
                     <app-cart [(valid)]="cart_is_valid"></app-cart>
                 </div>
-                <div *ngIf="getTotal() !==0" class="mb-2 p-2">
+                <div *ngIf="getCartAmount() !==0" class="mb-2 p-2">
                     <!-- price  -->
                     <div class="row">
                         <div class="col col-md-5 align-self-center">
                             <span class="fw-bold">Total à régler</span>
                         </div>
                         <div class="offset-4 col col-md-2 text-end align-self-center">
-                            <span class="fw-bold">{{getTotal() | currency:'€':'symbol':'2.2-2':'fr'}}</span>
+                            <span class="fw-bold">{{getCartAmount() | currency:'€':'symbol':'2.2-2':'fr'}}</span>
                         </div>
                     </div>
                     <!--  payment details -->

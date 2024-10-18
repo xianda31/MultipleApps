@@ -4,7 +4,7 @@
 
         <!-- descriptif produit -->
         <div class="col-5">
-            <span> - {{get_product(item.saleItem.product_id)!.description}} </span>
+            <span> - {{get_product(item.product_id)!.description}} </span>
         </div>
         <div class="col-4">
             <div class="input-group input-group-sm">
@@ -19,7 +19,7 @@
             </div>
         </div>
         <div class="col-2 text-end">
-            <span class="col-2 ">{{item.saleItem.price_payed |
+            <span class="col-2 ">{{item.price_payed |
                 currency:'€':'symbol':'2.2-2':'fr'}} </span>
         </div>
         <div class="col-1 text-danger">

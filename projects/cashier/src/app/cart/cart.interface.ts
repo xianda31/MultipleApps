@@ -1,13 +1,10 @@
 import { Member } from "../../../../common/member.interface";
 
-export interface CartItem {
-    // product_glyph: string;
-    payee: Member | null;   // pour mettre une raz dans le champ de saisie
-    saleItem: SaleItem;
+export interface CartItem extends SaleItem {
+    payee: Member | null;
 }
 
 export interface SaleItem {
-    // season: string;
     product_id: string;
     payee_id: string;
     price_payed: number;
@@ -26,11 +23,10 @@ export interface Payment {
     cheque_no?: string;
     cross_checked?: boolean;
 }
-export interface Sale {
+export interface Sale extends Session {
     id?: string;
     payer_id: string;
     amount: number;
-    session: Session;
     payment: Payment;
     saleItems: SaleItem[];
 }

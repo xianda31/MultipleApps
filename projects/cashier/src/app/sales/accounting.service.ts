@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
-import { Payment, Sale, SaleItem } from '../cart/cart.interface';
+import { Sale, SaleItem } from '../cart/cart.interface';
 import { generateClient } from 'aws-amplify/api';
 import { Schema } from '../../../../../amplify/data/resource';
 import { combineLatest, from, map, Observable, of, switchMap, tap } from 'rxjs';
-import { CartService } from '../cart.service';
 
 @Injectable({
   providedIn: 'root'
@@ -15,53 +14,45 @@ export class AccountingService {
   current_season: string = '';
 
   constructor(
-    private cartService: CartService
   ) { }
 
   writeSaleItems(sale: Sale): Observable<SaleItem[]> {
     let observables: Observable<SaleItem>[] = [];
 
     let writeSaleItem: (saleItem: SaleItem, sale_id: string) => Observable<SaleItem> = (saleItem, sale_id) => {
-
       const client = generateClient<Schema>();
       const saleWithSaleId = { ...saleItem, sale_id: sale.id! };
       return from(client.models.SaleItem.create(saleWithSaleId))
         .pipe(
           map((response: { data: unknown; }) => response.data as unknown as SaleItem),
-          // tap((saleItem) => this._saleItems.push(saleItem))
         );
     };
-
-    let cartItems = this.cartService.getCartItems();
-    cartItems.forEach((cartItem) => {
-      observables.push(writeSaleItem(cartItem.saleItem, sale.id!));
+    sale.saleItems.forEach((saleItem) => {
+      observables.push(writeSaleItem(saleItem, sale.id!));
     });
 
     return combineLatest(observables)
-
-
   }
 
   getSaleItems(): Observable<SaleItem[]> {
 
-    const _listSaleItems = (): Observable<SaleItem[]> => {
+    const _listSaleItems$ = (): Observable<SaleItem[]> => {
       const client = generateClient<Schema>();
       return from(client.models.SaleItem.list())
         .pipe(
           map((response: { data: unknown; }) => response.data as unknown as SaleItem[]),
           tap((saleItems) => {
-
             this._saleItems = saleItems;
           })
         );
     }
-    return this._saleItems ? of(this._saleItems) : _listSaleItems();
+    return this._saleItems ? of(this._saleItems) : _listSaleItems$();
   }
 
   writeOperation(sale: Sale): Observable<SaleItem[]> {
-    console.log('saving sale', sale);
     const client = generateClient<Schema>();
     const { saleItems, ...saleInput } = sale;
+    // console.log('saleInput', saleInput);
     return from(client.models.Sale.create(saleInput))
       .pipe(
         map((response: { data: unknown; }) => {
@@ -70,7 +61,7 @@ export class AccountingService {
             throw new Error('sale writing not performed' + JSON.stringify(response));
           } else {
             sale.id = new_sale.id;
-            // this._sales.push(sale);
+            if (this._sales) this._sales.push(sale);
             return sale;
           }
         }),
@@ -96,11 +87,14 @@ export class AccountingService {
       const client = generateClient<Schema>();
       return from(client.models.Sale.list(
         {
-          // selectionSet: ['id', 'amount', 'payer_id', 'season', 'event', 'vendor', 'sale_mode', 'bank', 'cheque_no', 'saleItems.*'],
-          // filter: { session :  { eq: season } }
+          // selectionSet: ['id', 'amount', 'payer_id',  'payment.*'],
+          filter: { season: { eq: season } },
         })).pipe(
           map((response: { data: unknown; }) => response.data as unknown as Sale[]),
-          tap((sales) => { this._sales = sales; })
+          tap((sales) => {
+            this._sales = sales;
+            console.log('sales', sales);
+          })
         );
     }
 

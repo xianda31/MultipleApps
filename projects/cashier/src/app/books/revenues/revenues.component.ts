@@ -65,7 +65,7 @@ export class RevenuesComponent {
   list_sales(season: string) {
     this.sales_subscription = this.accountingService.getSales(season)
       .subscribe((sales) => {
-        this.sales = sales.sort((a, b) => a.session.event > b.session.event ? 1 : -1);
+        this.sales = sales.sort((a, b) => a.event > b.event ? 1 : -1);
       });
   }
 
@@ -104,7 +104,7 @@ export class RevenuesComponent {
     let data: any[] = [];
     this.sales.forEach((sale) => {
       data.push({
-        date: this.format_date(sale.session.event),
+        date: this.format_date(sale.event),
         montant: sale.amount,
         bénéficiaire: this.member_name(sale.payer_id),
         sale_mode: sale.payment.payment_mode,

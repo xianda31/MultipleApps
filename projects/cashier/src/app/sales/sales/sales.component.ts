@@ -49,6 +49,7 @@ export class SalesComponent {
   sales_of_the_day$ !: Observable<Sale[]>;
   payments: Payment[] = [];
   paymentMode = PaymentMode;
+
   paymodes: PayMode[] = [
     { glyph: 'ESPECES', icon: 'bi bi-cash-coin', class: 'card nice_shadow bigger-on-hover bg-primary text-white', payment_mode: PaymentMode.CASH },
     { glyph: 'CHEQUE', icon: 'bi bi-bank', class: 'card nice_shadow bigger-on-hover bg-primary text-white', payment_mode: PaymentMode.CHEQUE },
@@ -122,10 +123,7 @@ export class SalesComponent {
         price_payed: product.price,
         payee_id: payee === null ? '' : payee.id,
       };
-      return {
-        payee: payee,
-        saleItem: saleItem
-      }
+      return { payee: payee, ...saleItem }
     }
 
     if (!this.payee_1.valid) {
@@ -144,16 +142,13 @@ export class SalesComponent {
     }
   }
 
-
-
-
   paymode_selected(paymode: PayMode) {
     if (!this.cart_is_valid || this.cartService.getCartItems().length === 0) {
       this.toastService.showWarningToast('saisie achat', 'le panier est vide ou partiellement renseigné');
       return
     }
     this.sale = {
-      session: this.session,
+      ...this.session,
       amount: this.cartService.getCartAmount(),
       payer_id: this.payee_1.value.id,
       payment: {
@@ -162,9 +157,8 @@ export class SalesComponent {
         cheque_no: '',
         cross_checked: false,
       },
-      saleItems: this.cartService.getCartItems().map((item) => item.saleItem)
+      saleItems: this.cartService.getCartItems().map((item) => item)
     }
-
   }
 
   valid_sale(sale: Sale): void {
@@ -184,16 +178,7 @@ export class SalesComponent {
 
 
 
-  // format_date(date: Date): string {
-  //   // return formatDate(date, 'EEEE d MMMM HH:00', 'fr-FR');
-  //   return date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', hour: 'numeric' });
-  // }
-  // xstring_to_date(date: string): Date {
-  //   return new Date(date);
-  // }
-
-
-  getTotal() {
+  getCartAmount() {
     return this.cartService.getCartAmount();
   }
   renew_session() {
@@ -208,12 +193,10 @@ export class SalesComponent {
 
 
   sorted_products(products: Product[]): { [k: string]: Product[]; } {
-
     products = products
       .filter((product) => product.active)
       .sort((a, b) => b.price - a.price);
-
-    // sort products by category
+    // reorder products by category
     const categories: Map<string, Product[]> = new Map();
     products.forEach((product) => {
       if (categories.has(product.category)) {
