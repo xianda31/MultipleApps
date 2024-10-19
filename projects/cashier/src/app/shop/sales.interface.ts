@@ -1,8 +1,9 @@
 
 export interface SaleItem {
+    id?: string;
     season: string;
     payee_id: string;
-    payed: number;
+    paied: number;
     product_id: string;
     sale_id?: string;
 }

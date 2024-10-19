@@ -142,7 +142,7 @@ export class TestComponent {
         let saleItem: SaleItem = {
           product_id: product.name,
           payee_id: row.getCell(5).value?.toString() as string,
-          price_payed: price.valueOf() as number,
+          price_paied: price.valueOf() as number,
         };
         saleItems.push(saleItem);
       }

@@ -14,7 +14,7 @@
                         [members]="members" [(ngModel)]="item.payee"></app-input-member>
                 <td>
                 <td>
-                    {{item.payed | currency:'€':'symbol':'2.2-2':'fr'}}
+                    {{item.paied | currency:'€':'symbol':'2.2-2':'fr'}}
                 </td>
                 <td class="text-end text-danger">
                     <i class="bi bi-trash3" (click)="removeFromCart(item)"></i>

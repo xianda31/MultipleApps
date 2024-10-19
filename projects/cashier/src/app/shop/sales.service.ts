@@ -21,12 +21,14 @@ export class SalesService {
 
     let writeSaleItem: (saleItem: SaleItem, sale_id: string) => Observable<SaleItem> = (saleItem, sale_id) => {
       const client = generateClient<Schema>();
-      const saleWithSaleId = { ...saleItem, sale_id: sale.id! };
+      let { ...saleWithSaleId } = { ...saleItem, sale_id };
+      // console.log('saleWithSaleId', saleWithSaleId);
       return from(client.models.SaleItem.create(saleWithSaleId))
         .pipe(
           map((response: { data: unknown; }) => response.data as unknown as SaleItem),
         );
     };
+
     sale.saleItems.forEach((saleItem) => {
       observables.push(writeSaleItem(saleItem, sale.id!));
     });
@@ -34,19 +36,30 @@ export class SalesService {
     return combineLatest(observables)
   }
 
-  getSaleItems(): Observable<SaleItem[]> {
+  getSaleItems(season: string): Observable<SaleItem[]> {
+    let new_season = false;
+    if (this.current_season !== season) {
+      new_season = true;
+      this.current_season = season;
+    }
 
-    const _listSaleItems$ = (): Observable<SaleItem[]> => {
+    const _listSaleItems = (): Observable<SaleItem[]> => {
       const client = generateClient<Schema>();
-      return from(client.models.SaleItem.list())
+      return from(client.models.SaleItem.list(
+        {
+          filter: { season: { eq: season } },
+        }
+      ))
         .pipe(
-          map((response: { data: unknown; }) => response.data as unknown as SaleItem[]),
+          tap((response) => console.log('response.data', response.data)),
+          map((response: { data: SaleItem[]; }) => response.data),
           tap((saleItems) => {
+            console.log('saleItems', saleItems);
             this._saleItems = saleItems;
           })
         );
     }
-    return this._saleItems ? of(this._saleItems) : _listSaleItems$();
+    return (this._saleItems && !new_season) ? of(this._saleItems) : _listSaleItems();
   }
 
   writeOperation(sale: Sale): Observable<SaleItem[]> {
@@ -93,10 +106,11 @@ export class SalesService {
           // selectionSet: ['id', 'amount', 'payer_id',  'payment.*'],
           filter: { season: { eq: season } },
         })).pipe(
+          tap((response) => console.log('response.data', response.data)),
+
           map((response: { data: unknown; }) => response.data as unknown as Sale[]),
           tap((sales) => {
             this._sales = sales;
-            console.log('sales', sales);
           })
         );
     }

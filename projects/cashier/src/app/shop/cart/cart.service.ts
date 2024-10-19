@@ -82,7 +82,7 @@ export class CartService {
 
 
   getCartAmount(): number {
-    return this._cart.reduce((total, item) => total + item.payed, 0);
+    return this._cart.reduce((total, item) => total + item.paied, 0);
   }
 
 

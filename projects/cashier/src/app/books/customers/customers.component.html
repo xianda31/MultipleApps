@@ -1,0 +1,32 @@
+<div class="row justify-content-between align-items-center">
+    <div class="col-md-3 mt-3">
+        <div class="input-group input-group-sm mb-2">
+            <span class="input-group-text">Saison</span>
+            <input type="text" class="form-control" (change)="new_season($event)" [value]="season$ | async">
+        </div>
+    </div>
+    <div class="col-md-3 ms-auto">
+        <button class="btn btn-sm btn-outline-primary" (click)="export_excel()">
+            Export excel
+        </button>
+
+    </div>
+
+</div>
+
+<table *ngIf="saleItems.length>0" class="table table-sm">
+    <thead>
+        <tr>
+            <th scope="col">adhérent</th>
+            <th scope="col">produit</th>
+            <th scope="col">montant</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr *ngFor="let saleItem of saleItems">
+            <td>{{member_name(saleItem.payee_id) }}</td>
+            <td>{{product_name(saleItem.product_id) }}</td>
+            <td>{{ saleItem.paied | currency:'€':'symbol':'2.2-2':'fr' }}</td>
+        </tr>
+    </tbody>
+</table>

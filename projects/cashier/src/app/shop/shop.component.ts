@@ -114,7 +114,7 @@ export class ShopComponent {
       const saleItem: SaleItem = {
         season: this.session.season,
         product_id: product.id,
-        payed: product.price,
+        paied: product.price,
         payee_id: payee === null ? '' : payee.id,
       };
       return { payee: payee, ...saleItem }
@@ -168,7 +168,7 @@ export class ShopComponent {
       amount: this.cartService.getCartAmount(),
       payer_id: this.payee_1.value.id,
       revenues: this.cartService.getRevenues(),
-      saleItems: this.cartService.getCartItems().map((item) => item)
+      saleItems: this.cartService.getCartItems().map((item) => { delete item.payee; return item; }),
     }
 
     this.salesService.writeOperation(sale).subscribe((res) => {

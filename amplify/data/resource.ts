@@ -16,12 +16,11 @@ const schema = a.schema({
   SaleItem: a.model({
     season: a.string().required(),
     payee_id: a.id().required(),
-    payed: a.float().required(),
+    paied: a.float().required(),
     product_id: a.id().required(),
     sale_id: a.id().required(),
     sale: a.belongsTo('Sale', 'sale_id'),
-  })
-    .authorization((allow) => [allow.publicApiKey()]),
+  }).authorization((allow) => [allow.publicApiKey()]),
 
 
   Revenue: a.model({

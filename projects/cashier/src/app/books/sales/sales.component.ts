@@ -19,9 +19,6 @@ import { Sale, PaymentMode } from '../../shop/sales.interface';
 })
 export class SalesComponent {
   sales: Sale[] = [];
-  // saleItems: SaleItem[] = [];
-  // sessions: Session[] = [];
-  // by_payment_radio: boolean = true;
   sales_subscription: any;
   season_subscription: any;
   payment_mode = PaymentMode;
