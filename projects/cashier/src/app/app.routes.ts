@@ -1,12 +1,12 @@
 import { Routes } from '@angular/router';
-import { SalesComponent } from './sales//sales/sales.component'; // Adjust the import path as necessary
+import { ShopComponent } from './shop/shop.component';
 import { FeesComponent } from './fees/fees/fees.component';
 import { HomeComponent } from './home/home.component';
-import { RevenuesComponent } from './books/revenues/revenues.component';
+import { SalesComponent } from './books/sales/sales.component';
 
 export const routes: Routes = [
-    { path: 'sales', component: SalesComponent },   //, canActivate: [loggedInGuard]
-    { path: 'books/revenues', component: RevenuesComponent },
+    { path: 'sales', component: ShopComponent },   //, canActivate: [loggedInGuard]
+    { path: 'books/sales', component: SalesComponent },
     { path: 'fees', component: FeesComponent },
     { path: '', component: HomeComponent },
     // {

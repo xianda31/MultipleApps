@@ -24,7 +24,7 @@ const schema = a.schema({
     .authorization((allow) => [allow.publicApiKey()]),
 
 
-  Payment: a.model({
+  Revenue: a.model({
     season: a.string().required(),
     amount: a.float().required(),
     sale_id: a.id().required(),
@@ -41,7 +41,7 @@ const schema = a.schema({
     amount: a.float().required(),
     vendor: a.string().required(),
     event: a.string().required(),
-    payments: a.hasMany('Payment', 'sale_id'),
+    revenues: a.hasMany('Revenue', 'sale_id'),
     saleItems: a.hasMany('SaleItem', 'sale_id'),
   })
 

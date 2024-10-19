@@ -1,7 +1,7 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import * as ExcelJS from 'exceljs';
-import { Payment, PaymentMode, Sale, SaleItem } from '../../../../cashier/src/app/cart/cart.interface';
+import { Payment, PaymentMode, Sale, SaleItem } from '../../../../cashier/src/app/shop/cart/cart.interface';
 import { MembersService } from '../members/service/members.service';
 import { Member } from '../../../../common/member.interface';
 import { CommonModule } from '@angular/common';

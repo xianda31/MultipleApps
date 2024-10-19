@@ -1,6 +1,6 @@
 import { Component, Input, OnInit, Output } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { Payment, PaymentMode, Sale } from '../cart/cart.interface';
+import { Payment, PaymentMode, Sale } from '../shop/cart/cart.interface';
 import { CurrencyPipe, CommonModule } from '@angular/common';
 import { AbstractControl, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { Bank, SystemConfiguration } from '../../../../common/system-conf.interface';

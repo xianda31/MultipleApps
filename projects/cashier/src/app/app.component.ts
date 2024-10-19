@@ -4,13 +4,13 @@ import { RouterModule } from '@angular/router';
 import localeFr from '@angular/common/locales/fr';
 import { NavbarComponent } from './navbar/navbar.component';
 import { ToasterComponent } from '../../../common/toaster/components/toaster/toaster.component';
-import { CartComponent } from './cart/cart.component';
+import { CartComponent } from './shop/cart/cart.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { InputMemberComponent } from "./input-member/input-member.component";
 import { MembersService } from '../../../admin-dashboard/src/app/members/service/members.service';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { combineLatest } from 'rxjs';
-import { KeypadComponent } from './keypad/keypad.component';
+import { KeypadComponent } from './shop/keypad/keypad.component';
 
 
 
