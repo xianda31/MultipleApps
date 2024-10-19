@@ -2,12 +2,12 @@ import { Injectable } from '@angular/core';
 import { generateClient } from 'aws-amplify/api';
 import { Schema } from '../../../../../amplify/data/resource';
 import { combineLatest, from, map, Observable, of, switchMap, tap } from 'rxjs';
-import { Sale, SaleItem } from './sales/sales.interface';
+import { Sale, SaleItem } from './sales.interface';
 
 @Injectable({
   providedIn: 'root'
 })
-export class AccountingService {
+export class SalesService {
 
   private _sales!: Sale[];
   private _saleItems!: SaleItem[];
@@ -50,6 +50,9 @@ export class AccountingService {
   }
 
   writeOperation(sale: Sale): Observable<SaleItem[]> {
+
+    console.log('sale', sale);
+
     const client = generateClient<Schema>();
     const { saleItems, ...saleInput } = sale;
     // console.log('saleInput', saleInput);

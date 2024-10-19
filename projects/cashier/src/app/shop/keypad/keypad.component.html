@@ -1,0 +1,15 @@
+<div class="container">
+    <div class="row" *ngFor="let category of keys | keyvalue">
+        <div class="card-group">
+            <div *ngFor="let product of category.value" class="card text-white bg-primary nice_shadow  key"
+                (click)="onClick(product)">
+                <div class="card-body text-center px-0 py-1">
+                    <strong>{{product.glyph}}</strong>
+                    <p>
+                        <small>{{product.price.toFixed(2)}} €</small>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,87 @@
+<div *ngIf="getCartAmount() !==0" class="bg-body-tertiary">
+    <strong>Panier :</strong>
+    <!-- <div class="table-responsive"> -->
+    <table class="w-100">
+        <tbody>
+            <tr *ngFor="let item of cart$ | async">
+                <!-- descriptif produit -->
+                <td> {{get_product(item.product_id)!.description}} </td>
+                <td class="input-group input-group-sm">
+                    <button (click)="item.payee=null" class="btn btn-outline-secondary" type="button">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                    <app-input-member [ngClass]="!item.payee?'to-fill-in':''" class="form-control form-control-sm"
+                        [members]="members" [(ngModel)]="item.payee"></app-input-member>
+                <td>
+                <td>
+                    {{item.payed | currency:'€':'symbol':'2.2-2':'fr'}}
+                </td>
+                <td class="text-end text-danger">
+                    <i class="bi bi-trash3" (click)="removeFromCart(item)"></i>
+                </td>
+            </tr>
+
+            <tr>
+                <td>Total à régler </td>
+                <td>.............</td>
+                <td colspan="2" class="fw-bold">{{getCartAmount() | currency:'€':'symbol':'2.2-2':'fr'}}</td>
+                <td class="text-end text-danger"></td>
+            </tr>
+        </tbody>
+    </table>
+    <!-- </div> -->
+
+
+
+    <!--  payment details -->
+    <!-- <div class="row mt-2"> -->
+    <br>
+    <strong>Mode de paiement :</strong>
+    <table class="w-100">
+        <tbody>
+            <tr *ngFor="let revenue of revenues$ | async">
+                <ng-container *ngTemplateOutlet="payment_info ; context:{revenue:revenue}">
+                </ng-container>
+                <td>
+                    {{revenue.amount | currency:'€':'symbol':'2.2-2':'fr'}}
+                </td>
+                <td class="text-end text-danger">
+                    <i class="bi bi-trash3" (click)="removeFromRevenues(revenue)"></i>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- validation -->
+    <div class="row px-2 mt-4">
+        <button [disabled]="!(complete_and_balanced$() )" class="btn btn-success nice_shadow"
+            (click)="valid_sale()">confirmation</button>
+    </div>
+</div>
+
+
+<ng-template #payment_info let-revenue="revenue">
+
+    <td colspan="3" *ngIf="revenue.mode !== paymentMode.CHEQUE">
+        {{revenue.mode}}
+    </td>
+
+    <ng-container *ngIf="revenue.mode === paymentMode.CHEQUE">
+        <td>
+            {{revenue.mode}}
+        </td>
+        <td>
+            <select [ngClass]="!revenue.bank?'to-fill-in':''" class="form-control form-control-sm"
+                [(ngModel)]="revenue.bank" required>
+                <option value="undefined" hidden disabled>banque</option>
+                <option *ngFor="let bank of banks$ | async " [value]="bank.key">
+                    {{bank.name}}
+                </option>
+            </select>
+        </td>
+        <td>
+            <input [ngClass]="!revenue.cheque_no?'to-fill-in':''" placeholder="N° de chèque" type="text" id="cheque_no"
+                class="form-control form-control-sm" [(ngModel)]="revenue.cheque_no">
+        </td>
+    </ng-container>
+</ng-template>

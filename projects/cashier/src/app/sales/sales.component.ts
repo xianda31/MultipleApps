@@ -1,23 +1,23 @@
 import { Component } from '@angular/core';
 import { FormGroup, FormControl, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
-import { MembersService } from '../../../../../admin-dashboard/src/app/members/service/members.service';
-import { Member } from '../../../../../common/member.interface';
-import { ProductService } from '../../../../../common/services/product.service';
-import { ToastService } from '../../../../../common/toaster/toast.service';
-import { CartService } from '../../cart.service';
-import { Product } from '../../../../../admin-dashboard/src/app/sales/products/product.interface';
-import { ToasterComponent } from '../../../../../common/toaster/components/toaster/toaster.component';
+import { MembersService } from '../../../../admin-dashboard/src/app/members/service/members.service';
+import { Member } from '../../../../common/member.interface';
+import { ProductService } from '../../../../common/services/product.service';
+import { ToastService } from '../../../../common/toaster/toast.service';
+import { CartService } from '../cart.service';
+import { Product } from '../../../../admin-dashboard/src/app/sales/products/product.interface';
+import { ToasterComponent } from '../../../../common/toaster/components/toaster/toaster.component';
 import { CommonModule } from '@angular/common';
-import { CartComponent } from '../../cart/cart.component';
-import { InputMemberComponent } from '../../input-member/input-member.component';
-import { AccountingService } from '../accounting.service';
+import { CartComponent } from '../cart/cart.component';
+import { InputMemberComponent } from '../input-member/input-member.component';
+import { SalesService } from './sales.service';
 import { map, Observable } from 'rxjs';
-import { SystemDataService } from '../../../../../common/services/system-data.service';
-import { Bank } from '../../../../../common/system-conf.interface';
-import { SessionService } from '../session.service';
-import { KeypadComponent } from '../../keypad/keypad.component';
-import { Payment, PaymentMode, Sale, SaleItem, Session } from './sales.interface';
-import { CartItem } from '../../cart/cart.interface';
+import { SystemDataService } from '../../../../common/services/system-data.service';
+import { Bank } from '../../../../common/system-conf.interface';
+import { SessionService } from './session.service';
+import { KeypadComponent } from '../keypad/keypad.component';
+import { PaymentMode, Sale, SaleItem, Session } from './sales.interface';
+import { CartItem } from '../cart/cart.interface';
 
 interface PayMode {
   glyph: string;
@@ -69,7 +69,7 @@ export class SalesComponent {
     private membersService: MembersService,
     private toastService: ToastService,
     private productService: ProductService,
-    private accountingService: AccountingService,
+    private salesService: SalesService,
     private systemDataService: SystemDataService,
     private sessionService: SessionService,
   ) {
@@ -185,7 +185,7 @@ export class SalesComponent {
       saleItems: this.cartService.getCartItems().map((item) => item)
     }
 
-    this.accountingService.writeOperation(sale).subscribe((res) => {
+    this.salesService.writeOperation(sale).subscribe((res) => {
       this.cartService.push_sale_of_the_day(sale);
       this.cartService.clearCart();
       this.toastService.showSuccessToast('saisie achat', 'vente enregistrée');
