@@ -1,5 +1,4 @@
 import { Component } from '@angular/core';
-import { Payment, PaymentMode, Sale } from '../../cart/cart.interface';
 import { CommonModule } from '@angular/common';
 import { MembersService } from '../../../../../admin-dashboard/src/app/members/service/members.service';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
@@ -8,6 +7,7 @@ import { SystemDataService } from '../../../../../common/services/system-data.se
 import { Bank } from '../../../../../common/system-conf.interface';
 import { ExcelService } from '../../excel.service';
 import { AccountingService } from '../../sales/accounting.service';
+import { Sale, PaymentMode } from '../../sales/sales/sales.interface';
 
 
 @Component({
@@ -108,7 +108,7 @@ export class RevenuesComponent {
         date: this.format_date(sale.event),
         montant: sale.amount,
         bénéficiaire: this.member_name(sale.payer_id),
-        sale_mode: sale.payments[0].type,
+        sale_mode: sale.payments[0].mode,
       });
     });
     this.excelService.generateExcel(data, 'revenues');

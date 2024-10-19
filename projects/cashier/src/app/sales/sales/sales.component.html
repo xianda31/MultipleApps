@@ -65,37 +65,13 @@
                         </div>
                     </div>
                 </div>
-                <!-- cart details -->
+                <!-- cart  -->
                 <div class="row mb-2 p-2">
-                    <app-cart [(valid)]="cart_is_valid"></app-cart>
+                    <app-cart (complete)="save_cart()"></app-cart>
                 </div>
-                <div *ngIf="getCartAmount() !==0" class="mb-2 p-2">
-                    <!-- price  -->
-                    <div class="row">
-                        <div class="col col-md-5 align-self-center">
-                            <span class="fw-bold">Total à régler</span>
-                        </div>
-                        <div class="offset-4 col col-md-2 text-end align-self-center">
-                            <span class="fw-bold">{{getCartAmount() | currency:'€':'symbol':'2.2-2':'fr'}}</span>
-                        </div>
-                    </div>
-                    <!--  payment details -->
-                    <div *ngIf="sale" class="row mt-2">
-                        <span>
-                            <strong>Mode de paiement :</strong>
-                            {{sale.payments[0].type}}
-                        </span>
-                        <ng-container *ngIf="sale.payments[0].type === paymentMode.CHEQUE"
-                            [ngTemplateOutlet]="get_check_ref">
-                        </ng-container>
 
-                    </div>
-                    <!-- validation -->
-                    <div *ngIf="sale" class="row px-2 mt-2">
-                        <button [disabled]="sale.payments[0].type === paymentMode.CHEQUE && !checkForm.valid"
-                            class="btn btn-success nice_shadow" (click)="valid_sale(sale)">confirmation</button>
-                    </div>
-                </div>
+
+
             </div>
             <!--  sales_of_the_day -->
             <div class="col-md-4 mt-4 fst-italic fst-light fs-6 font-monospace bg-body-tertiary">
@@ -104,7 +80,7 @@
                     <tr *ngFor="let sale of sales_of_the_day$ | async">
                         <td>{{member_name(sale.payer_id)}}</td>
                         <td class="text-end">{{sale.amount | currency:'€':'symbol':'2.2-2':'fr'}}</td>
-                        <!-- <td>{{sale.payments[0].type}}</td> -->
+                        <!-- <td>{{sale.payments[0].mode}}</td> -->
                     </tr>
                 </table>
             </div>
@@ -113,35 +89,7 @@
 
 
     </div>
-    <ng-template #get_check_ref>
-        <form [formGroup]="checkForm">
-            <div class="row flex-row align-items-end">
-                <div class="col-4 px-2">
-                    <label for="bank" class="form-label">Banque</label>
-                    <select list="banks" type="text" id="bank_names" class="form-select form-select-sm"
-                        formControlName="bank">
-                        <option id="bank_names" *ngFor="let bank of banks$ | async " [value]="bank.key">
-                            {{bank.name}}
-                        </option>
-                    </select>
-                    <div *ngIf="bank.touched && bank.invalid " class="text-danger">
-                        le nom de la banque doit être renseigné.
-                    </div>
-                </div>
-                <div class="col-4 px-2">
-                    <label for="cheque_no" class="form-label">N° Chèque</label>
-                    <input type="text" id="cheque_no" class="form-control form-control-sm" formControlName="cheque_no">
-                    <div *ngIf="cheque_no.touched && cheque_no.invalid " class="text-danger">
-                        <span *ngIf="cheque_no.errors?.['required']">le n° de chèque doit être renseigné. </span>
-                        <span *ngIf="cheque_no.errors?.['pattern']">le n° de chèque doit avoir 6 digits. </span>
-                    </div>
-                </div>
-                <div class="col-4">
 
-                </div>
-            </div>
-        </form>
-    </ng-template>
     <!-- <div *ngIf="event === null">
     fin de session de saisie : pour redémarrer une session cliquer sur Vente dans la barre de menue
 </div> -->

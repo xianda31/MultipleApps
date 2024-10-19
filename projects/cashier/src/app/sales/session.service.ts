@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, combineLatest, map, Observable } from 'rxjs';
 import { AuthentificationService } from '../../../../common/authentification/authentification.service';
 import { SystemDataService } from '../../../../common/services/system-data.service';
-import { Session } from '../cart/cart.interface';
+import { Session } from './sales/sales.interface';
 @Injectable({
   providedIn: 'root'
 })

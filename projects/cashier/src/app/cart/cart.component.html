@@ -1,31 +1,87 @@
-<div class="bg-body-tertiary">
-    <!-- <div class="card-body "> -->
-    <div class="row  align-content-center align-items-center" *ngFor="let item of cart$ | async">
+<div *ngIf="getCartAmount() !==0" class="bg-body-tertiary">
+    <strong>Panier :</strong>
+    <!-- <div class="table-responsive"> -->
+    <table class="w-100">
+        <tbody>
+            <tr *ngFor="let item of cart$ | async">
+                <!-- descriptif produit -->
+                <td> {{get_product(item.product_id)!.description}} </td>
+                <td class="input-group input-group-sm">
+                    <button (click)="item.payee=null" class="btn btn-outline-secondary" type="button">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                    <app-input-member [ngClass]="!item.payee?'to-fill-in':''" class="form-control form-control-sm"
+                        [members]="members" [(ngModel)]="item.payee"></app-input-member>
+                <td>
+                <td>
+                    {{item.payed | currency:'€':'symbol':'2.2-2':'fr'}}
+                </td>
+                <td class="text-end text-danger">
+                    <i class="bi bi-trash3" (click)="removeFromCart(item)"></i>
+                </td>
+            </tr>
 
-        <!-- descriptif produit -->
-        <div class="col-5">
-            <span> - {{get_product(item.product_id)!.description}} </span>
-        </div>
-        <div class="col-4">
-            <div class="input-group input-group-sm">
-                <app-input-member class="form-control" [members]="members" [(ngModel)]="item.payee"
-                    (ngModelChange)="payee_changed(item)"></app-input-member>
-                <button (click)="payee_cleared(item)" class="btn btn-outline-secondary" type="button">
-                    <i class="bi bi-x-lg"></i>
-                </button>
-            </div>
-            <div *ngIf="!item.payee" class="text-danger">
-                <span>bénéficiaire à renseigner</span>
-            </div>
-        </div>
-        <div class="col-2 text-end">
-            <span class="col-2 ">{{item.price_payed |
-                currency:'€':'symbol':'2.2-2':'fr'}} </span>
-        </div>
-        <div class="col-1 text-danger">
-            <i class="bi bi-trash3" (click)="removeFromCart(item)"></i>
-        </div>
-    </div>
-
+            <tr>
+                <td>Total à régler </td>
+                <td>.............</td>
+                <td colspan="2" class="fw-bold">{{getCartAmount() | currency:'€':'symbol':'2.2-2':'fr'}}</td>
+                <td class="text-end text-danger"></td>
+            </tr>
+        </tbody>
+    </table>
     <!-- </div> -->
+
+
+
+    <!--  payment details -->
+    <!-- <div class="row mt-2"> -->
+    <br>
+    <strong>Mode de paiement :</strong>
+    <table class="w-100">
+        <tbody>
+            <tr *ngFor="let payment of payments$ | async">
+                <ng-container *ngTemplateOutlet="payment_info ; context:{payment:payment}">
+                </ng-container>
+                <td>
+                    {{payment.amount | currency:'€':'symbol':'2.2-2':'fr'}}
+                </td>
+                <td class="text-end text-danger">
+                    <i class="bi bi-trash3" (click)="removeFromPayments(payment)"></i>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- validation -->
+    <div class="row px-2 mt-4">
+        <button [disabled]="!(complete_and_balanced$() )" class="btn btn-success nice_shadow"
+            (click)="valid_sale()">confirmation</button>
+    </div>
 </div>
+
+
+<ng-template #payment_info let-payment="payment">
+
+    <td colspan="3" *ngIf="payment.mode !== paymentMode.CHEQUE">
+        {{payment.mode}}
+    </td>
+
+    <ng-container *ngIf="payment.mode === paymentMode.CHEQUE">
+        <td>
+            {{payment.mode}}
+        </td>
+        <td>
+            <select [ngClass]="!payment.bank?'to-fill-in':''" class="form-control form-control-sm"
+                [(ngModel)]="payment.bank" required>
+                <option value="undefined" hidden disabled>banque</option>
+                <option *ngFor="let bank of banks$ | async " [value]="bank.key">
+                    {{bank.name}}
+                </option>
+            </select>
+        </td>
+        <td>
+            <input [ngClass]="!payment.cheque_no?'to-fill-in':''" placeholder="N° de chèque" type="text" id="cheque_no"
+                class="form-control form-control-sm" [(ngModel)]="payment.cheque_no">
+        </td>
+    </ng-container>
+</ng-template>

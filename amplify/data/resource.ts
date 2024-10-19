@@ -14,9 +14,10 @@ const schema = a.schema({
 
 
   SaleItem: a.model({
-    product_id: a.id().required(),
+    season: a.string().required(),
     payee_id: a.id().required(),
-    price_payed: a.float().required(),
+    payed: a.float().required(),
+    product_id: a.id().required(),
     sale_id: a.id().required(),
     sale: a.belongsTo('Sale', 'sale_id'),
   })
@@ -24,11 +25,13 @@ const schema = a.schema({
 
 
   Payment: a.model({
-    type: a.string().required(),
-    bank: a.string(),
-    cheque_no: a.string(),
+    season: a.string().required(),
+    amount: a.float().required(),
     sale_id: a.id().required(),
     sale: a.belongsTo('Sale', 'sale_id'),
+    mode: a.string().required(),
+    bank: a.string(),
+    cheque_no: a.string(),
   }).authorization((allow) => [allow.publicApiKey()]),
 
 

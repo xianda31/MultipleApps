@@ -18,12 +18,12 @@
         </thead>
         <tbody>
             <tr *ngFor="let sale of sales">
-                <td>{{format_date(sale.session.event)}} ({{ format_vendor(sale.session.vendor)}})</td>
+                <td>{{format_date(sale.event)}} ({{ format_vendor(sale.vendor)}})</td>
                 <td>{{ sale.amount | currency:'€':'symbol':'2.2-2':'fr' }}</td>
                 <td>{{member_name (sale.payer_id )}}</td>
-                <td>{{ sale.payment.type === payment_mode.CASH ? 'espèces' : bank_name(sale.payment.bank!)}}
+                <td>{{ sale.payments[0].type === payment_mode.CASH ? 'espèces' : bank_name(sale.payments[0].bank!)}}
                 </td>
-                <td>{{ sale.payment.cheque_no }}</td>
+                <td>{{ sale.payments[0].cheque_no }}</td>
             </tr>
         </tbody>
 

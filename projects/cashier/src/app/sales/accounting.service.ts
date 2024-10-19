@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
-import { Sale, SaleItem } from '../cart/cart.interface';
 import { generateClient } from 'aws-amplify/api';
 import { Schema } from '../../../../../amplify/data/resource';
 import { combineLatest, from, map, Observable, of, switchMap, tap } from 'rxjs';
+import { Sale, SaleItem } from './sales/sales.interface';
 
 @Injectable({
   providedIn: 'root'

@@ -5,7 +5,6 @@ import { Member } from '../../../../../common/member.interface';
 import { ProductService } from '../../../../../common/services/product.service';
 import { ToastService } from '../../../../../common/toaster/toast.service';
 import { CartService } from '../../cart.service';
-import { PaymentMode, SaleItem, CartItem, Payment, Session, Sale } from '../../cart/cart.interface';
 import { Product } from '../../../../../admin-dashboard/src/app/sales/products/product.interface';
 import { ToasterComponent } from '../../../../../common/toaster/components/toaster/toaster.component';
 import { CommonModule } from '@angular/common';
@@ -17,6 +16,8 @@ import { SystemDataService } from '../../../../../common/services/system-data.se
 import { Bank } from '../../../../../common/system-conf.interface';
 import { SessionService } from '../session.service';
 import { KeypadComponent } from '../../keypad/keypad.component';
+import { Payment, PaymentMode, Sale, SaleItem, Session } from './sales.interface';
+import { CartItem } from '../../cart/cart.interface';
 
 interface PayMode {
   glyph: string;
@@ -36,18 +37,15 @@ export class SalesComponent {
   session!: Session;
 
   cart_is_valid = true;
+
   sale: Sale | null = null;
 
   members_subscription: any;
   products_subscription: any;
-  // event_subscription: any;
-
-  // products: Product[] = [];
   product_keys!: { [k: string]: Product[]; };
   banks$ !: Observable<Bank[]>;
 
   sales_of_the_day$ !: Observable<Sale[]>;
-  payments: Payment[] = [];
   paymentMode = PaymentMode;
 
   paymodes: PayMode[] = [
@@ -58,12 +56,7 @@ export class SalesComponent {
     { glyph: 'AVOIR', icon: 'bi bi-gift', class: 'card nice_shadow bigger-on-hover bg-success text-white', payment_mode: PaymentMode.ASSETS },
   ]
 
-  checkForm: FormGroup = new FormGroup({
-    bank: new FormControl('', Validators.required),
-    cheque_no: new FormControl('', [Validators.pattern(/^\d{6}$/), Validators.required])
-  });
-  get bank() { return this.checkForm.get('bank')!; }
-  get cheque_no() { return this.checkForm.get('cheque_no')!; }
+
 
   payeesForm: FormGroup = new FormGroup({
     payee_1: new FormControl(null, Validators.required),
@@ -119,8 +112,9 @@ export class SalesComponent {
 
     let cart_item = (product: Product, payee: Member | null): CartItem => {
       const saleItem: SaleItem = {
+        season: this.session.season,
         product_id: product.id,
-        price_payed: product.price,
+        payed: product.price,
         payee_id: payee === null ? '' : payee.id,
       };
       return { payee: payee, ...saleItem }
@@ -147,26 +141,50 @@ export class SalesComponent {
       this.toastService.showWarningToast('saisie achat', 'le panier est vide ou partiellement renseigné');
       return
     }
-    this.sale = {
+
+    if (paymode.payment_mode === PaymentMode.ASSETS) {
+      const payment = {
+        season: this.session.season,
+        mode: paymode.payment_mode,
+        amount: 12,
+      }
+      this.cartService.addToPayments(payment);
+    } else {
+      const payment = {
+        season: this.session.season,
+        mode: paymode.payment_mode,
+        amount: this.cartService.getCartAmount(),
+      }
+      this.cartService.addToPayments(payment);
+
+    }
+
+
+    // this.sale = {
+    //   ...this.session,
+    //   amount: this.cartService.getCartAmount(),
+    //   payer_id: this.payee_1.value.id,
+    //   payments: [{
+    //     season: this.session.season,
+    //     mode: paymode.payment_mode,
+    //     amount: this.cartService.getCartAmount(),
+    //     bank: '',
+    //     cheque_no: '',
+    //   }],
+    //   saleItems: this.cartService.getCartItems().map((item) => item)
+    // }
+  }
+
+  save_cart(): void {
+
+    const sale = {
       ...this.session,
       amount: this.cartService.getCartAmount(),
       payer_id: this.payee_1.value.id,
-      payments: [{
-        type: paymode.payment_mode,
-        bank: '',
-        cheque_no: '',
-        cross_checked: false,
-      }],
+      payments: this.cartService.getPayments(),
       saleItems: this.cartService.getCartItems().map((item) => item)
     }
-  }
 
-  valid_sale(sale: Sale): void {
-
-    if (sale.payments[0].type === PaymentMode.CHEQUE) {
-      this.sale!.payments[0].bank = this.bank.value;
-      this.sale!.payments[0].cheque_no = this.cheque_no.value;
-    }
     this.accountingService.writeOperation(sale).subscribe((res) => {
       this.cartService.push_sale_of_the_day(sale);
       this.cartService.clearCart();
@@ -178,9 +196,6 @@ export class SalesComponent {
 
 
 
-  getCartAmount() {
-    return this.cartService.getCartAmount();
-  }
   renew_session() {
     this.sessionService.set_current_session(this.session);
     this.cartService.reset_sales_of_the_day();
