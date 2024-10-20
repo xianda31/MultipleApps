@@ -11,6 +11,25 @@ import { generateClient } from 'aws-amplify/api';
 export class ProductService {
     private _products!: Product[];
 
+
+    // utilities (after listProducts)
+
+    products_array(): { [k: string]: Product[]; } {
+        const products = this._products
+            .filter((product) => product.active)
+            .sort((a, b) => b.price - a.price);
+        // reorder products by category
+        const categories: Map<string, Product[]> = new Map();
+        products.forEach((product) => {
+            if (categories.has(product.category)) {
+                categories.get(product.category)!.push(product);
+            } else {
+                categories.set(product.category, [product]);
+            }
+        });
+        return Object.fromEntries(categories);
+    }
+
     // CL(R)UD Product
 
     // Create a new product

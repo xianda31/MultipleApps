@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MembersService } from '../../../../../admin-dashboard/src/app/members/service/members.service';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
-import { from, map, Observable, of, tap } from 'rxjs';
+import { combineLatest, from, map, Observable, of, tap } from 'rxjs';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { Bank } from '../../../../../common/system-conf.interface';
 import { ExcelService } from '../../excel.service';
@@ -11,6 +11,7 @@ import { Sale, PaymentMode, SaleItem } from '../../shop/sales.interface';
 import { Member } from '../../../../../common/member.interface';
 import { ProductService } from '../../../../../common/services/product.service';
 import { Product } from '../../../../../admin-dashboard/src/app/sales/products/product.interface';
+
 
 
 @Component({
@@ -30,6 +31,8 @@ export class CustomersComponent {
   loaded = false;
   members: Member[] = [];
   products: Product[] = [];
+  data_list: { [m: string]: { [c: string]: number } } = {};
+  product_keys: string[] = [];
 
   constructor(
     private membersService: MembersService,
@@ -49,29 +52,44 @@ export class CustomersComponent {
 
 
   ngOnInit(): void {
-    this.season_subscription = this.season$.subscribe((season) => {
-      this.list_saleItems(season);
-    });
-    this.membersService.listMembers().subscribe((members) => {
-      this.members = members;
-      this.loaded = true;
-    });
 
-    this.products_subscription = this.productService.listProducts()
-      .subscribe((products) => {
+    combineLatest([this.season$, this.membersService.listMembers(), this.productService.listProducts()])
+      .subscribe(([season, members, products]) => {
+        this.members = members;
         this.products = products;
+        this.product_keys = Object.keys(this.productService.products_array());
+        this.list_saleItems(season);
       });
   }
-
 
 
   list_saleItems(season: string) {
     this.saleItems_subscription = this.salesService.getSaleItems(season)
       .subscribe((saleItems) => {
         this.saleItems = saleItems;
-        console.log('saleItems', this.saleItems);
+        this.data_list = this.format_data_list();
       });
   }
+
+  format_data_list(): { [m: string]: { [c: string]: number } } {
+    const data: { [m: string]: { [c: string]: number } } = {};
+    this.saleItems.forEach((saleItem) => {
+      const name = this.member_name(saleItem.payee_id);
+      const product = this.product_name(saleItem.product_id);
+      if (data[name]) {
+        if (data[name][product]) {
+          data[name][product] += saleItem.paied;
+        } else {
+          data[name][product] = saleItem.paied;
+        }
+      } else {
+        data[name] = { [product]: saleItem.paied };
+      }
+    });
+    return data;
+  }
+
+
 
   new_season(event: any) {
     this.saleItems_subscription.unsubscribe();
@@ -81,12 +99,12 @@ export class CustomersComponent {
 
   member_name(member_id: string): string {
     const member = this.members.find((m) => m.id === member_id);
-    return member ? member.firstname + ' ' + member.lastname : 'inconnu';
+    return member ? member.lastname.toUpperCase() + ' ' + member.firstname : 'inconnu ???';
   }
 
   product_name(product_id: string): string {
     const product = this.products.find((p) => p.id === product_id);
-    return product ? product.description : 'inconnu';
+    return product ? product.category : 'inconnu';
   }
 
   format_date(date: string): string {
@@ -97,14 +115,14 @@ export class CustomersComponent {
 
   export_excel() {
     let data: any[] = [];
-    this.saleItems.forEach((saleItem) => {
+    let headers = ['adhérent', ...this.product_keys];
+    Object.entries(this.data_list).forEach(([key, entry]) => {
       data.push({
-        // date: this.format_date(saleItem.event),
-        // montant: saleItem.amount,
-        // bénéficiaire: this.member_name(saleItem.payer_id),
-        // saleItem_mode: saleItem.revenues[0].mode,
+        membre: key,
+        ...entry,
       });
+
     });
-    this.excelService.generateExcel(data, 'ventes');
+    this.excelService.generateExcel_withHeader(headers, data, 'recettes');
   }
 }

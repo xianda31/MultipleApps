@@ -14,19 +14,18 @@
 
 </div>
 
-<table *ngIf="saleItems.length>0" class="table table-sm">
+<table class="table table-sm">
     <thead>
         <tr>
-            <th scope="col">adhérent</th>
-            <th scope="col">produit</th>
-            <th scope="col">montant</th>
+            <th>Adhérent</th>
+            <th *ngFor="let product of product_keys">{{product}}</th>
         </tr>
-    </thead>
     <tbody>
-        <tr *ngFor="let saleItem of saleItems">
-            <td>{{member_name(saleItem.payee_id) }}</td>
-            <td>{{product_name(saleItem.product_id) }}</td>
-            <td>{{ saleItem.paied | currency:'€':'symbol':'2.2-2':'fr' }}</td>
+        <tr *ngFor="let entry of data_list | keyvalue ">
+            <td>{{entry.key }}</td>
+            <td *ngFor="let product of product_keys">
+                {{entry.value[product]? entry.value[product] : ''}}
+            </td>
         </tr>
     </tbody>
 </table>

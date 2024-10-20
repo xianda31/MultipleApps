@@ -26,6 +26,7 @@ export class SalesService {
       return from(client.models.SaleItem.create(saleWithSaleId))
         .pipe(
           map((response: { data: unknown; }) => response.data as unknown as SaleItem),
+          tap((saleItem) => { this._saleItems.push(saleItem) })
         );
     };
 
@@ -51,10 +52,8 @@ export class SalesService {
         }
       ))
         .pipe(
-          tap((response) => console.log('response.data', response.data)),
           map((response: { data: SaleItem[]; }) => response.data),
           tap((saleItems) => {
-            console.log('saleItems', saleItems);
             this._saleItems = saleItems;
           })
         );
@@ -63,8 +62,6 @@ export class SalesService {
   }
 
   writeOperation(sale: Sale): Observable<SaleItem[]> {
-
-    console.log('sale', sale);
 
     const client = generateClient<Schema>();
     const { saleItems, ...saleInput } = sale;

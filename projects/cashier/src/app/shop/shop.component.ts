@@ -100,7 +100,8 @@ export class ShopComponent {
     });
 
     this.productService.listProducts().subscribe((products) => {
-      this.product_keys = this.sorted_products(products);
+      // this.products = products;
+      this.product_keys = this.productService.products_array();
     });
 
     this.sessionService.current_session.subscribe((session) => {
@@ -173,9 +174,9 @@ export class ShopComponent {
 
     this.salesService.writeOperation(sale).subscribe((res) => {
       this.cartService.push_sale_of_the_day(sale);
-      this.cartService.clearCart();
       this.toastService.showSuccessToast('saisie achat', 'vente enregistrée');
       this.payeesForm.reset();
+      this.cartService.clearCart();
       this.sale = null;
     });
   }
@@ -193,19 +194,5 @@ export class ShopComponent {
   }
 
 
-  sorted_products(products: Product[]): { [k: string]: Product[]; } {
-    products = products
-      .filter((product) => product.active)
-      .sort((a, b) => b.price - a.price);
-    // reorder products by category
-    const categories: Map<string, Product[]> = new Map();
-    products.forEach((product) => {
-      if (categories.has(product.category)) {
-        categories.get(product.category)!.push(product);
-      } else {
-        categories.set(product.category, [product]);
-      }
-    });
-    return Object.fromEntries(categories);;
-  }
+
 }
