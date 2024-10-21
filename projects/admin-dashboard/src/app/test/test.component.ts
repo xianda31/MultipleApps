@@ -1,14 +1,12 @@
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import * as ExcelJS from 'exceljs';
-import { Payment, PaymentMode, Sale, SaleItem } from '../../../../cashier/src/app/shop/cart/cart.interface';
 import { MembersService } from '../members/service/members.service';
 import { Member } from '../../../../common/member.interface';
 import { CommonModule } from '@angular/common';
 import { Bank } from '../../../../common/system-conf.interface';
 import { Observable, of, tap, map } from 'rxjs';
 import { SystemDataService } from '../../../../common/services/system-data.service';
-import { SalesModule } from '../sales/sales.module';
+import { PaymentMode, Sale, SaleItem } from '../../../../cashier/src/app/shop/sales.interface';
 @Component({
   selector: 'app-test',
   standalone: true,
@@ -76,16 +74,17 @@ export class TestComponent {
           let sale: Sale = {
             amount: row.getCell(32).value?.valueOf() as number,
             payer_id: this.retrieve_member(row.getCell(5).value?.toString() as string),
-            session: {
+            season: '2023/24',
+            vendor: 'uploader',
+            event: row.getCell(2).value?.toString() as string,
+            revenues: [{
               season: '2023/24',
-              vendor: 'uploader',
-              event: row.getCell(2).value?.toString() as string,
-            },
-            payment: {
-              payment_mode: payment_mode,
+              amount: row.getCell(32).value?.valueOf() as number,
+              mode: payment_mode,
               bank: bank,
               cheque_no: cheque_no,
-            },
+              sale_id: '???'
+            }],
             saleItems: this.process_products(row)
           };
           if (sale.payer_id !== '???') this.sales.push(sale);
@@ -141,8 +140,9 @@ export class TestComponent {
       if (price) {
         let saleItem: SaleItem = {
           product_id: product.name,
+          season: this.season,
           payee_id: row.getCell(5).value?.toString() as string,
-          price_paied: price.valueOf() as number,
+          paied: price.valueOf() as number,
         };
         saleItems.push(saleItem);
       }

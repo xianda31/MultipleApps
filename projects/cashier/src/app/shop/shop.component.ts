@@ -103,7 +103,6 @@ export class ShopComponent {
       // this.products = products;
       this.product_keys = this.productService.products_array();
     });
-
     this.sessionService.current_session.subscribe((session) => {
       this.session = session;
     });
@@ -148,6 +147,7 @@ export class ShopComponent {
         season: this.session.season,
         mode: paymode.payment_mode,
         amount: 12,
+        sale_id: this.sale?.id || '',
       }
       this.cartService.addToRevenues(revenue);
     } else {
@@ -155,6 +155,8 @@ export class ShopComponent {
         season: this.session.season,
         mode: paymode.payment_mode,
         amount: this.cartService.getCartAmount(),
+        sale_id: this.sale?.id || '',
+
       }
       this.cartService.addToRevenues(revenue);
 

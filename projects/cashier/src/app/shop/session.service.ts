@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, combineLatest, map, Observable } from 'rxjs';
+import { BehaviorSubject, combineLatest, map, Observable, of } from 'rxjs';
 import { AuthentificationService } from '../../../../common/authentification/authentification.service';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 import { Session } from './sales.interface';
@@ -9,7 +9,7 @@ import { Session } from './sales.interface';
 export class SessionService {
 
   private _current_session!: Session;
-  private _current_session$: BehaviorSubject<Session> = new BehaviorSubject<Session>(this._current_session);
+  // private _current_session$: BehaviorSubject<Session> = new BehaviorSubject<Session>(this._current_session);
   constructor(
     private authService: AuthentificationService,
     private systemDataService: SystemDataService
@@ -17,7 +17,7 @@ export class SessionService {
   ) { }
 
   get current_session(): Observable<Session> {
-    if (this._current_session == null) {
+    if (!this._current_session) {
       return combineLatest([this.authService.logged_member$, this.systemDataService.configuration$])
         .pipe(
           map(([vendor, conf]) => {
@@ -31,13 +31,13 @@ export class SessionService {
         );
 
     } else {
-      return this._current_session$.asObservable();
+      return of(this._current_session);
     }
   }
 
 
   set_current_session(session: Session) {
     this._current_session = session;
-    this._current_session$.next(this._current_session);
+    // this._current_session$.next(this._current_session);
   }
 }

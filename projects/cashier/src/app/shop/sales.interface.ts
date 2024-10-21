@@ -15,10 +15,11 @@ export interface Session {
 }
 
 export interface Revenue {
+    id?: string;
     season: string;
     amount: number;
-    sale_id?: string;
-    mode: PaymentMode;
+    sale_id: string;
+    mode: string;
     bank?: string;
     cheque_no?: string;
 }
@@ -37,5 +38,5 @@ export enum PaymentMode {
     TRANSFER = 'virement',
     DEBT = 'dette',
     ASSETS = 'avoir',
-    CARD = 'carte',
+    // CARD = 'carte',
 }

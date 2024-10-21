@@ -56,6 +56,8 @@ export class SalesComponent {
       this.list_sales(season);
     });
 
+
+
   }
 
 

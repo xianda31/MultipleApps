@@ -17,14 +17,15 @@
 <table class="table table-sm">
     <thead>
         <tr>
-            <th>Adhérent</th>
-            <th *ngFor="let account of credit_accounts">{{account}}</th>
+            <th>#</th>
+            <th class="text-center" *ngFor="let account of credit_accounts">{{account}}</th>
         </tr>
+    </thead>
     <tbody>
-        <tr *ngFor="let entry of data_list | keyvalue ">
-            <td>{{entry.key }}</td>
-            <td *ngFor="let account of credit_accounts">
-                {{entry.value[account]? entry.value[account] : ''}}
+        <tr *ngFor="let data of data_list |keyvalue">
+            <td>{{data.key }}</td>
+            <td class="text-end pe-5" *ngFor="let account of credit_accounts">
+                {{data.value[account]? data.value[account] : ''}}
             </td>
         </tr>
     </tbody>

@@ -33,6 +33,7 @@ export class CustomersComponent {
   products: Product[] = [];
   data_list: { [m: string]: { [c: string]: number } } = {};
   product_keys: string[] = [];
+  credit_accounts: string[] = [];
 
   constructor(
     private membersService: MembersService,
@@ -42,7 +43,8 @@ export class CustomersComponent {
     private excelService: ExcelService,
   ) {
     this.season$ = this.systemDataService.configuration$.pipe(
-      map((conf) => conf.season));
+      tap((conf) => this.credit_accounts = conf.credit_accounts.map((account) => account.key)),
+      map((conf) => conf.season))
   }
 
 
@@ -115,10 +117,10 @@ export class CustomersComponent {
 
   export_excel() {
     let data: any[] = [];
-    let headers = ['adhérent', ...this.product_keys];
+    let headers = ['adhérent', ...this.credit_accounts];
     Object.entries(this.data_list).forEach(([key, entry]) => {
       data.push({
-        membre: key,
+        'adhérent': key,
         ...entry,
       });
 

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { generateClient } from 'aws-amplify/api';
 import { Schema } from '../../../../../amplify/data/resource';
 import { combineLatest, from, map, Observable, of, switchMap, tap } from 'rxjs';
-import { Sale, SaleItem } from './sales.interface';
+import { Revenue, Sale, SaleItem } from './sales.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -10,32 +10,36 @@ import { Sale, SaleItem } from './sales.interface';
 export class SalesService {
 
   private _sales!: Sale[];
-  private _saleItems!: SaleItem[];
+  private _saleItems: SaleItem[] = [];
   current_season: string = '';
 
   constructor(
   ) { }
 
-  writeSaleItems(sale: Sale): Observable<SaleItem[]> {
+
+  // saleItems API
+
+  writeSaleItems(saleItems: SaleItem[], sale_id: string): Observable<SaleItem[]> {
     let observables: Observable<SaleItem>[] = [];
 
     let writeSaleItem: (saleItem: SaleItem, sale_id: string) => Observable<SaleItem> = (saleItem, sale_id) => {
       const client = generateClient<Schema>();
-      let { ...saleWithSaleId } = { ...saleItem, sale_id };
-      // console.log('saleWithSaleId', saleWithSaleId);
-      return from(client.models.SaleItem.create(saleWithSaleId))
+      let { ...saleItemCreateInput } = { ...saleItem, sale_id };
+      // console.log('saleItemCreateInput', saleItemCreateInput);
+      return from(client.models.SaleItem.create(saleItemCreateInput))
         .pipe(
           map((response: { data: unknown; }) => response.data as unknown as SaleItem),
           tap((saleItem) => { this._saleItems.push(saleItem) })
         );
     };
 
-    sale.saleItems.forEach((saleItem) => {
-      observables.push(writeSaleItem(saleItem, sale.id!));
+    saleItems.forEach((saleItem) => {
+      observables.push(writeSaleItem(saleItem, sale_id));
     });
 
     return combineLatest(observables)
   }
+
 
   getSaleItems(season: string): Observable<SaleItem[]> {
     let new_season = false;
@@ -52,16 +56,54 @@ export class SalesService {
         }
       ))
         .pipe(
-          map((response: { data: SaleItem[]; }) => response.data),
+          map((response: { data: SaleItem[] }) => response.data),
           tap((saleItems) => {
             this._saleItems = saleItems;
           })
         );
     }
-    return (this._saleItems && !new_season) ? of(this._saleItems) : _listSaleItems();
+    return (this._saleItems.length > 0 && !new_season) ? of(this._saleItems) : _listSaleItems();
   }
 
-  writeOperation(sale: Sale): Observable<SaleItem[]> {
+
+  // Revenues API
+
+  getRevenues(season: string): Observable<Revenue[]> {
+    const client = generateClient<Schema>();
+    return from(client.models.Revenue.list(
+      {
+        // filter: { season: { eq: season } },
+      }
+    ))
+      .pipe(
+        tap((response) => console.log('response.data', response.data)),
+        map((response: { data: any }) => response.data as unknown as Revenue[])
+      );
+  }
+
+  writeRevenues(revenues: Revenue[], sale_id: string): Observable<Revenue[]> {
+    let observables: Observable<Revenue>[] = [];
+
+    let writeRevenue: (revenue: Revenue) => Observable<Revenue> = (revenue) => {
+      let { ...revenueCreateInput } = { ...revenue, sale_id };
+      const client = generateClient<Schema>();
+      return from(client.models.Revenue.create(revenueCreateInput))
+        .pipe(
+          map((response: { data: unknown }) => response.data as unknown as Revenue),
+          tap((revenue) => { })
+        );
+    };
+
+    revenues.forEach((revenue) => {
+      observables.push(writeRevenue(revenue));
+    });
+
+    return combineLatest(observables)
+  }
+
+  // sale API
+
+  writeOperation(sale: Sale): Observable<[SaleItem[], Revenue[]]> {
 
     const client = generateClient<Schema>();
     const { saleItems, ...saleInput } = sale;
@@ -79,7 +121,10 @@ export class SalesService {
           }
         }),
         switchMap((sale) => {
-          return this.writeSaleItems(sale)
+          return combineLatest([
+            this.writeSaleItems(sale.saleItems, sale.id!),
+            this.writeRevenues(sale.revenues, sale.id!)
+          ]);
         })
 
       );
