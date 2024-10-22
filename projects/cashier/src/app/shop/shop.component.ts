@@ -11,7 +11,7 @@ import { CommonModule } from '@angular/common';
 import { CartComponent } from './cart/cart.component';
 import { InputMemberComponent } from '../input-member/input-member.component';
 import { SalesService } from './sales.service';
-import { map, Observable } from 'rxjs';
+import { combineLatest, map, Observable } from 'rxjs';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 import { Bank } from '../../../../common/system-conf.interface';
 import { SessionService } from './session.service';
@@ -28,7 +28,7 @@ interface PayMode {
 @Component({
   selector: 'app-shop',
   standalone: true,
-  imports: [ReactiveFormsModule, ToasterComponent, CommonModule, FormsModule, KeypadComponent, CartComponent, InputMemberComponent],
+  imports: [ReactiveFormsModule, ToasterComponent, CommonModule, FormsModule, CartComponent, InputMemberComponent],
   templateUrl: './shop.component.html',
   styleUrl: './shop.component.scss'
 })
@@ -42,11 +42,16 @@ export class ShopComponent {
 
   members_subscription: any;
   products_subscription: any;
+  sales_subscription: any;
+  products!: Product[];
   product_keys!: { [k: string]: Product[]; };
   banks$ !: Observable<Bank[]>;
 
-  sales_of_the_day$ !: Observable<Sale[]>;
+  // sales_of_the_day$ !: Observable<Sale[]>;
+  sales_of_the_day: Sale[] = [];
   paymentMode = PaymentMode;
+
+  loading_complete = false;
 
   paymodes: PayMode[] = [
     { glyph: 'ESPECES', icon: 'bi bi-cash-coin', class: 'card nice_shadow bigger-on-hover bg-primary text-white', payment_mode: PaymentMode.CASH },
@@ -58,10 +63,10 @@ export class ShopComponent {
 
 
 
-  payeesForm: FormGroup = new FormGroup({
-    payee_1: new FormControl(null, Validators.required),
+  buyerForm: FormGroup = new FormGroup({
+    buyer: new FormControl(null, Validators.required),
   });
-  get payee_1() { return this.payeesForm.get('payee_1')!; }
+  get buyer() { return this.buyerForm.get('buyer')!; }
 
 
   constructor(
@@ -84,29 +89,38 @@ export class ShopComponent {
 
   ngOnInit(): void {
 
-    this.sales_of_the_day$ = this.cartService.sales_of_the_day$;
 
+    combineLatest([this.membersService.listMembers(), this.productService.listProducts(), this.sessionService.current_session]).subscribe(([members, products, session]) => {
+      this.members = members;
+      this.products = products;
+      this.product_keys = this.productService.products_array(products);
+      this.session = session;
+      this.sales_subscription = this.cartService.get_sales_of_the_day(session).subscribe((sales) => {
+        this.sales_of_the_day = sales;
+        console.log('sales of the day', sales);
+        this.loading_complete = true;
+      });
+    });
 
     this.banks$ = this.systemDataService.configuration$.pipe(
       map((conf) => conf.banks)
     );
 
-    this.membersService.listMembers().subscribe((members) => {
-      this.members = members.sort((a, b) => a.lastname.localeCompare(b.lastname))
-        .map((member) => {
-          member.lastname = member.lastname.toUpperCase();
-          return member;
-        });
-    });
+    // this.membersService.listMembers().subscribe((members) => {
+    //   this.members = members;
+    // });
 
-    this.productService.listProducts().subscribe((products) => {
-      // this.products = products;
-      this.product_keys = this.productService.products_array();
-    });
-    this.sessionService.current_session.subscribe((session) => {
-      this.session = session;
-    });
+    // this.productService.listProducts().subscribe((products) => {
+    //   // this.products = products;
+    //   this.product_keys = this.productService.products_array();
+    // });
+
+    // this.sessionService.current_session.subscribe((session) => {
+    //   this.session = session;
+    // });
   }
+
+
 
   productSelected(product: Product) {
 
@@ -120,18 +134,18 @@ export class ShopComponent {
       return { payee: payee, ...saleItem }
     }
 
-    if (!this.payee_1.valid) {
+    if (!this.buyer.valid) {
       this.toastService.showWarningToast('saisie achat', 'selectionner au moins le bénéficiaire 1');
       return
     }
 
     if (product.paired) {
-      const cart_item1 = cart_item(product, this.payee_1.value);
+      const cart_item1 = cart_item(product, this.buyer.value);
       const cart_item2 = cart_item(product, null);
       this.cartService.addToCart(cart_item1);
       this.cartService.addToCart(cart_item2);
     } else {
-      const cart_item1 = cart_item(product, this.payee_1.value);
+      const cart_item1 = cart_item(product, this.buyer.value);
       this.cartService.addToCart(cart_item1);
     }
   }
@@ -154,7 +168,7 @@ export class ShopComponent {
       const revenue = {
         season: this.session.season,
         mode: paymode.payment_mode,
-        amount: this.cartService.getCartAmount(),
+        amount: this.cartService.getRemainToPay(),
         sale_id: this.sale?.id || '',
 
       }
@@ -164,12 +178,12 @@ export class ShopComponent {
 
   }
 
-  save_cart(): void {
+  store_sale(): void {
 
     const sale: Sale = {
       ...this.session,
       amount: this.cartService.getCartAmount(),
-      payer_id: this.payee_1.value.id,
+      payer_id: this.buyer.value.id,
       revenues: this.cartService.getRevenues(),
       saleItems: this.cartService.getCartItems().map((item) => { delete item.payee; return item; }),
     }
@@ -177,24 +191,28 @@ export class ShopComponent {
     this.salesService.writeOperation(sale).subscribe((res) => {
       this.cartService.push_sale_of_the_day(sale);
       this.toastService.showSuccessToast('saisie achat', 'vente enregistrée');
-      this.payeesForm.reset();
       this.cartService.clearCart();
       this.sale = null;
+      this.buyerForm.reset();
     });
   }
 
 
 
-  renew_session() {
+  renew_session(event: any) {
+    this.session.event = event;
+    console.log('renew session', this.session);
     this.sessionService.set_current_session(this.session);
-    this.cartService.reset_sales_of_the_day();
   }
 
   member_name(member_id: string) {
-    let member = this.membersService.getMember(member_id);
+    let member = this.members.find((m) => m.id === member_id);
     return member ? member.lastname + ' ' + member.firstname : '???';
   }
 
-
+  product_category(product_id: string) {
+    let product = this.products.find((p) => p.id === product_id);
+    return product ? product.category : '???';
+  }
 
 }

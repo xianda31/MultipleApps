@@ -14,8 +14,8 @@ export class ProductService {
 
     // utilities (after listProducts)
 
-    products_array(): { [k: string]: Product[]; } {
-        const products = this._products
+    products_array(products: Product[]): { [k: string]: Product[]; } {
+        products
             .filter((product) => product.active)
             .sort((a, b) => b.price - a.price);
         // reorder products by category

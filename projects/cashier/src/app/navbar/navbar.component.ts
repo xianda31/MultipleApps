@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -12,6 +12,6 @@ import { AdminInComponent } from "../../../../common/authentification/admin-in/a
   styleUrl: './navbar.component.scss'
 })
 export class NavbarComponent {
-
+  @Input() season: string = '';
 
 }

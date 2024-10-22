@@ -28,14 +28,19 @@ export class MembersService {
       const client = generateClient<Schema>();
       // console.log('fetching members ... 200 max');
       const { data: members, errors } = await client.models.Member.list(
-        { limit: 200 }
+        { limit: 300 }
       );
       if (errors) {
         console.error('Member.list error', errors);
         return [];
       }
       this._members = members as Member[];
-      return members as Member[];
+      this._members = this._members.sort((a, b) => a.lastname.localeCompare(b.lastname))
+        .map((member) => {
+          member.lastname = member.lastname.toUpperCase();
+          return member;
+        });
+      return this._members as Member[];
     };
 
     return this._members ? of(this._members) : from(fetchMembers());

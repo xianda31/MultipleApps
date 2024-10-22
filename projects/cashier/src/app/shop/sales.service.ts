@@ -72,11 +72,10 @@ export class SalesService {
     const client = generateClient<Schema>();
     return from(client.models.Revenue.list(
       {
-        // filter: { season: { eq: season } },
+        filter: { season: { eq: season } },
       }
     ))
       .pipe(
-        tap((response) => console.log('response.data', response.data)),
         map((response: { data: any }) => response.data as unknown as Revenue[])
       );
   }
@@ -145,11 +144,9 @@ export class SalesService {
       const client = generateClient<Schema>();
       return from(client.models.Sale.list(
         {
-          // selectionSet: ['id', 'amount', 'payer_id',  'payment.*'],
+          selectionSet: ['id', 'amount', 'season', 'vendor', 'event', 'payer_id', 'saleItems.*'],
           filter: { season: { eq: season } },
         })).pipe(
-          tap((response) => console.log('response.data', response.data)),
-
           map((response: { data: unknown; }) => response.data as unknown as Sale[]),
           tap((sales) => {
             this._sales = sales;

@@ -59,7 +59,7 @@ export class CustomersComponent {
       .subscribe(([season, members, products]) => {
         this.members = members;
         this.products = products;
-        this.product_keys = Object.keys(this.productService.products_array());
+        this.product_keys = Object.keys(this.productService.products_array(products));
         this.list_saleItems(season);
       });
   }

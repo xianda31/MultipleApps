@@ -4,7 +4,10 @@
             <h4 class="col">
                 <span class="inline-block">
                     <i class="fs-4 bi-piggy-bank"></i>
-                    Recettes Bridge Club Saint-Orens
+                    Comptabilité Bridge Club Saint-Orens
+                    <span class="fs-5">
+                        (saison {{season}})
+                    </span>
                 </span>
             </h4>
         </div>
@@ -21,7 +24,7 @@
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            <ul class=" navbar-nav  me-auto mb-2 mb-lg-0 ">
+            <ul class=" navbar-nav  me-auto mb-2 mb-lg-0  align-items-center">
 
                 <li class="nav-item me-5">
                     <a class="nav-link" [routerLink]="['/sales']">
@@ -49,8 +52,13 @@
 
                     </ul>
                 </li>
+
             </ul>
-            <ul class=" navbar-nav  mb-2 mb-lg-0 ">
+
+            <!-- <ul class=" navbar-nav align-self-center mb-2 mb-lg-0  me-5">
+            </ul> -->
+
+            <ul class=" navbar-nav align-self-center mb-2 mb-lg-0 ">
                 <li class="nav-item  me-5">
                     <app-admin-in></app-admin-in>
                 </li>
