@@ -11,6 +11,7 @@ export class SalesService {
 
   private _sales!: Sale[];
   private _saleItems: SaleItem[] = [];
+  private _revenues: Revenue[] = [];
   current_season: string = '';
 
   constructor(
@@ -69,15 +70,27 @@ export class SalesService {
   // Revenues API
 
   getRevenues(season: string): Observable<Revenue[]> {
-    const client = generateClient<Schema>();
-    return from(client.models.Revenue.list(
-      {
-        filter: { season: { eq: season } },
-      }
-    ))
-      .pipe(
-        map((response: { data: any }) => response.data as unknown as Revenue[])
-      );
+
+    let new_season = false;
+    if (this.current_season !== season) {
+      new_season = true;
+      this.current_season = season;
+    }
+    const _listRevenues = (): Observable<Revenue[]> => {
+      const client = generateClient<Schema>();
+      return from(client.models.Revenue.list(
+        {
+          filter: { season: { eq: season } },
+        }
+      ))
+        .pipe(
+          map((response: { data: any }) => response.data as unknown as Revenue[]),
+          tap((revenues) => {
+            this._revenues = revenues;
+          })
+        );
+    }
+    return (this._revenues.length > 0 && !new_season) ? of(this._revenues) : _listRevenues();
   }
 
   writeRevenues(revenues: Revenue[], sale_id: string): Observable<Revenue[]> {

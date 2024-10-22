@@ -17,7 +17,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
   products: Product[] = [];
   productForm!: FormGroup;
   product_selected: boolean = false;
-  categories$ !: Observable<string[]>;
+  accounts$ !: Observable<string[]>;
 
   constructor(
     private productService: ProductService,
@@ -29,7 +29,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
 
-    this.categories$ = this.systemDataService.configuration$.pipe(
+    this.accounts$ = this.systemDataService.configuration$.pipe(
       map((configuration) => configuration.credit_accounts),
       map((credit_accounts) => credit_accounts.map((account) => account.key)
       )
@@ -37,7 +37,6 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
 
     this.products_subscription = this.productService.listProducts().subscribe((products) => {
-      console.log('products', products);
       this.products = products;
     });
 
@@ -46,7 +45,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
       glyph: new FormControl('', Validators.required),
       description: new FormControl('', Validators.required),
       price: new FormControl('', [Validators.required, Validators.min(0)]),
-      category: new FormControl('', Validators.required),
+      account: new FormControl('', Validators.required),
       paired: new FormControl<boolean>(false, { nonNullable: true }),
       active: new FormControl<boolean>(true, { nonNullable: true }),
       // color: new FormControl('', Validators.required),
@@ -59,7 +58,6 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
   onCreateProduct() {
     let new_product = this.productForm.getRawValue();
-    console.log('new_product', new_product);
     this.productService.createProduct(new_product);
     this.productForm.reset();
     this.product_selected = false;
@@ -71,7 +69,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
   }
 
   onModProduct(product: Product) {
-    console.log('mod product', product);
+    // console.log('mod product', product);
     this.productService.updateProduct(product);
 
   }

@@ -25,9 +25,9 @@
                 <div class="row">
 
                     <div class="col-8 gx-2">
-                        <div class="row" *ngFor="let category of product_keys | keyvalue">
+                        <div class="row" *ngFor="let products of products_array ">
                             <div class="card-group">
-                                <div *ngFor="let product of category.value"
+                                <div *ngFor="let product of products"
                                     class="card text-white bg-primary nice_shadow  bigger-on-hover"
                                     (click)="productSelected(product)">
                                     <div class="card-body text-center px-0 py-1">
@@ -82,7 +82,7 @@
                         <td>
                             {{member_name(sale.payer_id)}} :
                             <ng-container *ngFor="let item of sale.saleItems">
-                                {{product_category(item.product_id)}}
+                                {{product_account(item.product_id)}}
                             </ng-container>
                         </td>
                         <td class="text-end">{{sale.amount | currency:'€':'symbol':'2.2-2':'fr'}}</td>

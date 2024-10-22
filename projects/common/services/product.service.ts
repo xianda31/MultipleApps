@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Product } from '../../admin-dashboard/src/app/sales/products/product.interface';
-import { BehaviorSubject, from, map, Observable, of, tap } from 'rxjs';
+import { BehaviorSubject, from, map, Observable, of, switchMap, tap } from 'rxjs';
 import { data, Schema } from '../../../amplify/data/resource';
 import { generateClient } from 'aws-amplify/api';
+import { SystemDataService } from './system-data.service';
 
 
 @Injectable({
@@ -10,25 +11,26 @@ import { generateClient } from 'aws-amplify/api';
 })
 export class ProductService {
     private _products!: Product[];
+    products_keys: string[] = [];
+
+    constructor(
+        private systemDataService: SystemDataService
+    ) { }
 
 
-    // utilities (after listProducts)
+    // utilities functions
 
-    products_array(products: Product[]): { [k: string]: Product[]; } {
-        products
-            .filter((product) => product.active)
-            .sort((a, b) => b.price - a.price);
-        // reorder products by category
-        const categories: Map<string, Product[]> = new Map();
-        products.forEach((product) => {
-            if (categories.has(product.category)) {
-                categories.get(product.category)!.push(product);
-            } else {
-                categories.set(product.category, [product]);
-            }
+
+    products_array(products: Product[]): [Product[]] {
+        const accounts = products.map((product) => product.account);
+        const products_accounts = [...new Set(accounts)];
+        const array: [Product[]] = [[]];
+        products_accounts.forEach((account) => {
+            array.push(products.filter((product) => product.account === account));
         });
-        return Object.fromEntries(categories);
+        return array;
     }
+
 
     // CL(R)UD Product
 
@@ -60,10 +62,26 @@ export class ProductService {
             return from(client.models.Product.list())
                 .pipe(
                     map((response) => response.data as unknown as Product[]),
-                    tap((products) => this._products = products)
+                    map((products) => products.filter((product) => product.active)),
+                    map((products) => products.sort((a, b) => b.price - a.price)),
+                    switchMap((products) => this.sorted_products(products)),
+                    tap((products) => this._products = products),
                 );
         }
         return this._products ? of(this._products) : _listProducts();
+    }
+
+    sorted_products(products: Product[]): Observable<Product[]> {
+        return this.systemDataService.configuration$.pipe(
+            map((conf) => {
+                const products_accounts = conf.credit_accounts.map((account) => account.key);
+                const sorted_products: Product[] = [];
+                products_accounts.forEach((key) => {
+                    sorted_products.push(...products.filter((product) => product.account === key));
+                });
+                return sorted_products;
+            })
+        );
     }
 
 
@@ -103,9 +121,5 @@ export class ProductService {
                 });
         });
         return promise;
-    }
-
-    getProduct(id: string): Product {
-        return this._products.find((product) => product.id === id) as Product;
     }
 }

@@ -3,7 +3,7 @@ export interface Product {
     glyph: string;
     description: string;
     price: number;
-    category: string;
+    account: string;
     paired: boolean;
     active: boolean;
     color?: string;

@@ -5,7 +5,7 @@ const schema = a.schema({
   Product: a.model({
     glyph: a.string().required(),
     description: a.string().required(),
-    category: a.string().required(),
+    account: a.string().required(),
     price: a.float().required(),
     paired: a.boolean().required(),
     active: a.boolean().required(),
@@ -31,6 +31,7 @@ const schema = a.schema({
     mode: a.string().required(),
     bank: a.string(),
     cheque_no: a.string(),
+    cashed: a.boolean(),
   }).authorization((allow) => [allow.publicApiKey()]),
 
 

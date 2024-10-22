@@ -24,15 +24,15 @@ export class KeypadComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     // sort products by category
-    const categories: Map<string, Product[]> = new Map();
+    const accounts: Map<string, Product[]> = new Map();
     this.keypad.forEach((product) => {
-      if (categories.has(product.category)) {
-        categories.get(product.category)!.push(product);
+      if (accounts.has(product.account)) {
+        accounts.get(product.account)!.push(product);
       } else {
-        categories.set(product.category, [product]);
+        accounts.set(product.account, [product]);
       }
     });
-    this.keys = Object.fromEntries(categories);
+    this.keys = Object.fromEntries(accounts);
     console.log(this.keys);
   }
 

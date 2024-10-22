@@ -44,7 +44,7 @@ export class ShopComponent {
   products_subscription: any;
   sales_subscription: any;
   products!: Product[];
-  product_keys!: { [k: string]: Product[]; };
+  products_array!: [Product[]];
   banks$ !: Observable<Bank[]>;
 
   // sales_of_the_day$ !: Observable<Sale[]>;
@@ -89,15 +89,13 @@ export class ShopComponent {
 
   ngOnInit(): void {
 
-
     combineLatest([this.membersService.listMembers(), this.productService.listProducts(), this.sessionService.current_session]).subscribe(([members, products, session]) => {
       this.members = members;
       this.products = products;
-      this.product_keys = this.productService.products_array(products);
+      this.products_array = this.productService.products_array(products);
       this.session = session;
       this.sales_subscription = this.cartService.get_sales_of_the_day(session).subscribe((sales) => {
         this.sales_of_the_day = sales;
-        console.log('sales of the day', sales);
         this.loading_complete = true;
       });
     });
@@ -105,22 +103,7 @@ export class ShopComponent {
     this.banks$ = this.systemDataService.configuration$.pipe(
       map((conf) => conf.banks)
     );
-
-    // this.membersService.listMembers().subscribe((members) => {
-    //   this.members = members;
-    // });
-
-    // this.productService.listProducts().subscribe((products) => {
-    //   // this.products = products;
-    //   this.product_keys = this.productService.products_array();
-    // });
-
-    // this.sessionService.current_session.subscribe((session) => {
-    //   this.session = session;
-    // });
   }
-
-
 
   productSelected(product: Product) {
 
@@ -173,7 +156,6 @@ export class ShopComponent {
 
       }
       this.cartService.addToRevenues(revenue);
-
     }
 
   }
@@ -201,7 +183,6 @@ export class ShopComponent {
 
   renew_session(event: any) {
     this.session.event = event;
-    console.log('renew session', this.session);
     this.sessionService.set_current_session(this.session);
   }
 
@@ -210,9 +191,9 @@ export class ShopComponent {
     return member ? member.lastname + ' ' + member.firstname : '???';
   }
 
-  product_category(product_id: string) {
+  product_account(product_id: string) {
     let product = this.products.find((p) => p.id === product_id);
-    return product ? product.category : '???';
+    return product ? product.account : '???';
   }
 
 }

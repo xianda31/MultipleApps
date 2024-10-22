@@ -22,6 +22,7 @@ export interface Revenue {
     mode: string;
     bank?: string;
     cheque_no?: string;
+    cashed?: boolean;
 }
 export interface Sale extends Session {
     payer_id: string;

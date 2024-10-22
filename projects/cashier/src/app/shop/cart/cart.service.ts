@@ -112,7 +112,6 @@ export class CartService {
 
   get_sales_of_the_day(session: Session): Observable<Sale[]> {
 
-    console.log('new session', session);
     return this.salesService.getSales(session.season).pipe(
       map((sales) => sales.filter((sale) => sale.vendor === session.vendor && sale.event === session.event)),
       tap((sales) => this._sales_of_the_day = sales),

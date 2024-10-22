@@ -19,7 +19,7 @@
                     <tr *ngFor="let product of products">
                         <td>{{ product.glyph }}</td>
                         <td>{{ product.description }}</td>
-                        <td class="text-center">{{ product.category }}</td>
+                        <td class="text-center">{{ product.account }}</td>
                         <td class="text-end">{{ product.price | currency:'€':'symbol':'2.2-2':'fr' }}</td>
                         <!-- <td>{{ product.color }}</td> -->
                         <td class="text-center">
@@ -46,9 +46,9 @@
                     <tr>
                         <td> <input type="text" class="form-control" formControlName="glyph"> </td>
                         <td> <input type="text" class="form-control" formControlName="description"> </td>
-                        <td> <input list="datalist" type="text" class="form-control" formControlName="category">
+                        <td> <input list="datalist" type="text" class="form-control" formControlName="account">
                             <datalist id="datalist">
-                                <option *ngFor="let category of categories$ | async" [value]="category">
+                                <option *ngFor="let account of accounts$ | async" [value]="account">
                                 </option>
                             </datalist>
                         </td>

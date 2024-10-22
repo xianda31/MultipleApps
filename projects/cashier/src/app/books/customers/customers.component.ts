@@ -106,7 +106,7 @@ export class CustomersComponent {
 
   product_name(product_id: string): string {
     const product = this.products.find((p) => p.id === product_id);
-    return product ? product.category : 'inconnu';
+    return product ? product.account : 'inconnu';
   }
 
   format_date(date: string): string {
