@@ -1,18 +1,11 @@
 <div *ngIf="loading_complete" class="container-md">
     <!-- session header -->
     <div *ngIf="session" class="row bg-light mt-2 mb-3 p-3 justify-content-around align-items-center">
-        <!-- <div class="col-4">
-            saison : {{session.season}}
-        </div>
-        <div class="col-5">
-            {{session.vendor}}
-        </div> -->
         <div class="col-3">
             <div class=" input-group input-group-sm">
                 <span class="input-group-text">date de vente</span>
                 <input type="date" class="form-control" (ngModelChange)="renew_session($event)"
                     [(ngModel)]="session.event">
-                <!-- <button class="btn btn-sm btn-outline-primary" (click)="renew_session()">Autre date</button> -->
             </div>
         </div>
     </div>
@@ -20,16 +13,16 @@
     <!-- sale editor -->
     <div *ngIf="session" class="row ">
         <div class="row">
-            <!-- product keypad -->
             <div class="col-3 mt-2">
-                <div class="row">
 
+                <div class="row">
+                    <!-- product keypad -->
                     <div class="col-8 gx-2">
                         <div class="row" *ngFor="let products of products_array ">
                             <div class="card-group">
                                 <div *ngFor="let product of products"
                                     class="card text-white bg-primary nice_shadow  bigger-on-hover"
-                                    (click)="productSelected(product)">
+                                    (click)="product_selected(product)">
                                     <div class="card-body text-center px-0 py-1">
                                         <strong>{{product.glyph}}</strong>
                                         <p>
@@ -37,6 +30,16 @@
                                         </p>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                        <div *ngIf="debt_amount > 0"
+                            class="card text-white bg-warning nice_shadow  bigger-on-hover mt-1"
+                            (click)="product_selected(debt_product)">
+                            <div class="card-body text-center px-0 py-1">
+                                <strong>DETTE</strong>
+                                <p>
+                                    <small>{{debt_amount.toFixed(2)}} €</small>
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -55,7 +58,6 @@
             </div>
             <!-- cart -->
             <div class="col-5 mt-2  fst-italic fst-light fs-6 font-monospace ">
-
                 <!-- buyer -->
                 <div class="row mb-2 p-2">
                     <div [formGroup]="buyerForm" class="row align-items-center ">
@@ -70,10 +72,8 @@
                 <div class="row mb-2 p-2">
                     <app-cart (complete)="store_sale()"></app-cart>
                 </div>
-
-
-
             </div>
+
             <!--  sales_of_the_day -->
             <div class="col-md-4 mt-4 fst-italic fst-light fs-6 font-monospace bg-body-tertiary">
                 <strong>encaissements du jour : </strong>
@@ -90,6 +90,8 @@
                 </table>
             </div>
         </div>
+
+
 
 
 

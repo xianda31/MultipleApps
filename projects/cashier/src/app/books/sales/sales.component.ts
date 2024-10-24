@@ -96,9 +96,9 @@ export class SalesComponent {
     return gliph;
   }
 
-  color_swapper(i: number) {
-    return i % 2 === 0 ? 'table-light' : 'table-primary';
-  }
+  // color_swapper(i: number) {
+  //   return i % 2 === 0 ? 'table-light' : 'table-primary';
+  // }
 
   export_excel() {
     let data: any[] = [];

@@ -29,13 +29,13 @@ export class SysConfComponent {
       club_identifier: [''],
       mode: [''],
       season: [''],
-      debit_accounts: this.fb.array([
+      charge_accounts: this.fb.array([
         this.fb.group({
           key: [''],
           description: ['']
         })
       ]),
-      credit_accounts: this.fb.array([
+      product_accounts: this.fb.array([
         this.fb.group({
           key: [''],
           description: ['']
@@ -67,12 +67,12 @@ export class SysConfComponent {
     this.systemDataService.save_configuration(configuration);
   }
 
-  get debit_accounts() {
-    return this.systemFormGroup.get('debit_accounts') as FormArray;
+  get charge_accounts() {
+    return this.systemFormGroup.get('charge_accounts') as FormArray;
   }
 
-  get credit_accounts() {
-    return this.systemFormGroup.get('credit_accounts') as FormArray;
+  get product_accounts() {
+    return this.systemFormGroup.get('product_accounts') as FormArray;
   }
 
   get banks() {
@@ -82,14 +82,14 @@ export class SysConfComponent {
   loadDataInFormGroup(configuration: SystemConfiguration) {
     this.systemFormGroup.patchValue(configuration);
     // patchValue doest not work for FormArray ; work-around : clear and re-populate
-    this.debit_accounts.clear();
-    configuration.debit_accounts.forEach((account: any) => {
-      this.debit_accounts.push(this.fb.group(account));
+    this.charge_accounts.clear();
+    configuration.charge_accounts.forEach((account: any) => {
+      this.charge_accounts.push(this.fb.group(account));
     });
 
-    this.credit_accounts.clear();
-    configuration.credit_accounts.forEach((account: any) => {
-      this.credit_accounts.push(this.fb.group(account));
+    this.product_accounts.clear();
+    configuration.product_accounts.forEach((account: any) => {
+      this.product_accounts.push(this.fb.group(account));
     });
 
     this.banks.clear();

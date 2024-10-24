@@ -25,11 +25,12 @@ export class CartComponent implements OnInit, OnDestroy {
   @Output() complete = new EventEmitter<void>();
 
   sale_is_ok = signal(true);
-
+  counter = 0;
   cart_subscription: any;
   members_subscription: any;
 
-  cart$ !: Observable<CartItem[]>;
+  // cart$ !: Observable<CartItem[]>;
+  cart: CartItem[] = [];
   members!: Member[];
   products!: Product[];
 
@@ -69,7 +70,11 @@ export class CartComponent implements OnInit, OnDestroy {
     this.cart_subscription = this.productService.listProducts().subscribe((products) => {
       this.products = products;
     });
-    this.cart$ = this.cartService.cart$;
+    this.cartService.cart$.subscribe((cart) => {
+      this.cart = cart;
+      this.counter++;
+      console.log('cart refreshed', this.counter);
+    });
     this.banks$ = this.systemDataService.configuration$.pipe(map((conf) => conf.banks));
     this.revenues$ = this.cartService.revenues$;
 
@@ -77,8 +82,13 @@ export class CartComponent implements OnInit, OnDestroy {
 
   }
 
-  get_product(product_id: string) {
-    return this.products.find((product) => product.id === product_id);
+  get_counter() {
+    return this.counter++;
+  }
+
+  get_product_description(product_id: string): string {
+    const product = this.products.find((product) => product.id === product_id);
+    return product?.description || '???';
   }
 
   removeFromCart(cart_item: CartItem) {

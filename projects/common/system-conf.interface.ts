@@ -19,8 +19,8 @@ export interface SystemConfiguration {
     club_identifier: string;
     mode: string;
     season: string;
-    debit_accounts: Account[];
-    credit_accounts: Account[];
+    charge_accounts: Account[];
+    product_accounts: Account[];
     banks: Bank[];
     thumbnailSize: ImageSize;
 }

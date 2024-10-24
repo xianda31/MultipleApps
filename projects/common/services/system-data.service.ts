@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { downloadData, uploadData } from 'aws-amplify/storage';
 import { SystemConfiguration } from '../system-conf.interface';
 import { from, of } from 'rxjs';
+import { Toast } from 'bootstrap';
+import { ToastService } from '../toaster/toast.service';
 
 
 
@@ -11,7 +13,10 @@ import { from, of } from 'rxjs';
 export class SystemDataService {
   system_configuration !: SystemConfiguration;
 
-  constructor() { }
+  constructor(
+    private toastService: ToastService
+
+  ) { }
 
   private async upload(blob: any, directory: string, file: File) {
     let promise = new Promise((resolve, reject) => {
@@ -25,7 +30,11 @@ export class SystemDataService {
         }
       }).result
         .then((result) => { resolve(result); })
-        .catch((error) => { reject(error); });
+        .catch((error) => {
+          console.log('error', error);
+          this.toastService.showErrorToast('configuration système', 'erreur de chargement');
+          reject(error);
+        });
     });
     return promise;
   }
@@ -44,7 +53,10 @@ export class SystemDataService {
         path: 'system/system_configuration.txt',
       }).result
         .then((result) => { resolve(result.body.text()); })
-        .catch((error) => { reject(error); });
+        .catch((error) => {
+          reject(error);
+
+        });
     });
     return promise;
   }

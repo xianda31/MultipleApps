@@ -32,6 +32,7 @@ export class CustomersComponent {
   members: Member[] = [];
   products: Product[] = [];
   data_list: { [m: string]: { [c: string]: number } } = {};
+  data_sums: { [c: string]: number } = {};
   product_keys: string[] = [];
   credit_accounts: string[] = [];
 
@@ -43,7 +44,7 @@ export class CustomersComponent {
     private excelService: ExcelService,
   ) {
     this.season$ = this.systemDataService.configuration$.pipe(
-      tap((conf) => this.credit_accounts = conf.credit_accounts.map((account) => account.key)),
+      tap((conf) => this.credit_accounts = conf.product_accounts.map((account) => account.key)),
       map((conf) => conf.season))
   }
 
@@ -70,25 +71,8 @@ export class CustomersComponent {
       .subscribe((saleItems) => {
         this.saleItems = saleItems;
         this.data_list = this.format_data_list();
+        this.data_sums = this.compute_sums(this.data_list);
       });
-  }
-
-  format_data_list(): { [m: string]: { [c: string]: number } } {
-    const data: { [m: string]: { [c: string]: number } } = {};
-    this.saleItems.forEach((saleItem) => {
-      const name = this.member_name(saleItem.payee_id);
-      const product = this.product_name(saleItem.product_id);
-      if (data[name]) {
-        if (data[name][product]) {
-          data[name][product] += saleItem.paied;
-        } else {
-          data[name][product] = saleItem.paied;
-        }
-      } else {
-        data[name] = { [product]: saleItem.paied };
-      }
-    });
-    return data;
   }
 
 
@@ -127,4 +111,53 @@ export class CustomersComponent {
     });
     this.excelService.generateExcel_withHeader(headers, data, 'recettes');
   }
+
+  // utilities for data formatting and sum computation
+
+  format_data_list(): { [m: string]: { [c: string]: number } } {
+    const data: { [m: string]: { [c: string]: number } } = {};
+    this.data_sums = {};
+    this.saleItems.forEach((saleItem) => {
+      const name = this.member_name(saleItem.payee_id);
+      const product = this.product_name(saleItem.product_id);
+      if (data[name]) {
+        if (data[name][product]) {
+          data[name][product] += saleItem.paied;
+        } else {
+          data[name][product] = saleItem.paied;
+        }
+      } else {
+        data[name] = { [product]: saleItem.paied };
+      }
+    });
+
+    // compute member sums
+    Object.entries(data).forEach(([name, entry]) => {
+      Object.entries(entry).forEach(([key, amount]) => {
+        if (data[name]['total']) {
+          data[name]['total'] += amount;
+        } else {
+          data[name]['total'] = amount;
+        }
+      });
+
+    });
+    return data;
+  }
+
+  compute_sums(data_list: { [m: string]: { [c: string]: number } }): { [c: string]: number } {
+    const sums: { [c: string]: number } = {};
+    Object.entries(data_list).forEach(([key, entry]) => {
+      Object.entries(entry).forEach(([product, amount]) => {
+        if (sums[product]) {
+          sums[product] += amount;
+        } else {
+          sums[product] = amount;
+        }
+      });
+    });
+    return sums
+  }
+
+
 }

@@ -52,7 +52,7 @@ export class RevenuesComponent {
 
     const data_list: { [m: string]: { [c: string]: number } } = {};
     this.revenues.forEach((revenue) => {
-      const sale = this.saleService.getSale(revenue.sale_id);
+      const sale = this.saleService.get_sale(revenue.sale_id);
       const event = sale ? (sale.event) : 'inconnu';
       if (!data_list[event]) {
         data_list[event] = { [revenue.mode]: revenue.amount };

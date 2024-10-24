@@ -1,11 +1,12 @@
-<div *ngIf="getCartAmount() !==0" class="bg-body-tertiary">
-    <strong>Panier :</strong>
+<div class="bg-body-tertiary">
+    <strong>Panier : ({{cart.length}}) {{counter}}</strong>
     <!-- <div class="table-responsive"> -->
     <table class="w-100">
         <tbody>
-            <tr *ngFor="let item of cart$ | async">
+            debug : {{cart.length}}
+            <tr *ngFor="let item of cart ">
                 <!-- descriptif produit -->
-                <td> {{get_product(item.product_id)!.description}} </td>
+                <td> {{get_product_description(item.product_id)}} </td>
                 <td class="input-group input-group-sm">
                     <button (click)="item.payee=null" class="btn btn-outline-secondary" type="button">
                         <i class="bi bi-x-lg"></i>

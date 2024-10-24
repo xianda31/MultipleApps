@@ -8,7 +8,7 @@ import { RevenuesComponent } from './revenues/revenues.component';
 export const routes: Routes = [
     { path: 'sales', component: ShopComponent },   //, canActivate: [loggedInGuard]
     { path: 'books/revenues', component: RevenuesComponent },
-    { path: 'books/members', component: CustomersComponent },
+    { path: 'books/customers', component: CustomersComponent },
     { path: 'fees', component: FeesComponent },
     { path: '', component: HomeComponent },
     // {

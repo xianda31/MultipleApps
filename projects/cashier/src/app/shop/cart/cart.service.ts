@@ -4,6 +4,7 @@ import { CartItem } from './cart.interface';
 import { Revenue, Sale, Session } from '../sales.interface';
 import { remove } from 'aws-amplify/storage';
 import { SalesService } from '../sales.service';
+import { Member } from '../../../../../common/member.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -90,10 +91,14 @@ export class CartService {
     return this._cart.reduce((total, item) => total + item.paied, 0);
   }
 
+
   getRemainToPay(): number {
     return this.getCartAmount() - this.getRevenuesAmount();
   }
 
+  getDebtRefundAmount(): number {
+    return this._cart.filter((item) => item.product_id = 'debt').reduce((total, item) => total + item.paied, 0);
+  }
 
   getCartItems(): CartItem[] {
     return this._cart;
@@ -103,20 +108,24 @@ export class CartService {
     return (this._cart.every((item) => item.payee_id)) && (this.getCartAmount() === this.getRevenuesAmount());
   }
 
+
+
   // sales of the day for logger
 
-  push_sale_of_the_day(sale: Sale): void {
-    this._sales_of_the_day.push(sale);
-    // this._sales_of_the_day$.next(this._sales_of_the_day);
-  }
+  // push_sale_of_the_day(sale: Sale): void {
+  //   this._sales_of_the_day.push(sale);
+  //   // this._sales_of_the_day$.next(this._sales_of_the_day);
+  // }
 
-  get_sales_of_the_day(session: Session): Observable<Sale[]> {
+  // get_sales_of_the_day(session: Session): Observable<Sale[]> {
 
-    return this.salesService.getSales(session.season).pipe(
-      map((sales) => sales.filter((sale) => sale.vendor === session.vendor && sale.event === session.event)),
-      tap((sales) => this._sales_of_the_day = sales),
-    );
-  }
+  //   return this.salesService.getSales(session.season).pipe(
+  //     map((sales) => sales.filter((sale) =>  sale.event === session.event)),
+  //     tap((sales) => this._sales_of_the_day = sales),
+  //   );
+  // }
+
+  //
 
 
 

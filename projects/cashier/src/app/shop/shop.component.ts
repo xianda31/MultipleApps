@@ -16,7 +16,7 @@ import { SystemDataService } from '../../../../common/services/system-data.servi
 import { Bank } from '../../../../common/system-conf.interface';
 import { SessionService } from './session.service';
 import { KeypadComponent } from './keypad/keypad.component';
-import { PaymentMode, Sale, SaleItem, Session } from './sales.interface';
+import { PaymentMode, Revenue, Sale, SaleItem, Session } from './sales.interface';
 import { CartItem } from './cart/cart.interface';
 
 interface PayMode {
@@ -45,13 +45,14 @@ export class ShopComponent {
   sales_subscription: any;
   products!: Product[];
   products_array!: [Product[]];
+  debt_amount = 0;
   banks$ !: Observable<Bank[]>;
-
-  // sales_of_the_day$ !: Observable<Sale[]>;
+  sales: Sale[] = [];
   sales_of_the_day: Sale[] = [];
   paymentMode = PaymentMode;
 
   loading_complete = false;
+
 
   paymodes: PayMode[] = [
     { glyph: 'ESPECES', icon: 'bi bi-cash-coin', class: 'card nice_shadow bigger-on-hover bg-primary text-white', payment_mode: PaymentMode.CASH },
@@ -61,12 +62,20 @@ export class ShopComponent {
     { glyph: 'AVOIR', icon: 'bi bi-gift', class: 'card nice_shadow bigger-on-hover bg-success text-white', payment_mode: PaymentMode.ASSETS },
   ]
 
-
+  debt_product: Product = {
+    id: 'debt',
+    glyph: 'DETTE',
+    description: 'dette',
+    price: 0,
+    account: 'DEBT',
+    paired: false,
+    active: true,
+  }
 
   buyerForm: FormGroup = new FormGroup({
     buyer: new FormControl(null, Validators.required),
   });
-  get buyer() { return this.buyerForm.get('buyer')!; }
+  get buyer() { return this.buyerForm.get('buyer')?.value as Member | null }
 
 
   constructor(
@@ -94,8 +103,10 @@ export class ShopComponent {
       this.products = products;
       this.products_array = this.productService.products_array(products);
       this.session = session;
-      this.sales_subscription = this.cartService.get_sales_of_the_day(session).subscribe((sales) => {
-        this.sales_of_the_day = sales;
+      this.sales_subscription = this.salesService.get_sales(session.season).subscribe((sales) => {
+        this.sales = sales;
+
+        this.sales_of_the_day = sales.filter((sale) => sale.event === session.event);
         this.loading_complete = true;
       });
     });
@@ -103,9 +114,50 @@ export class ShopComponent {
     this.banks$ = this.systemDataService.configuration$.pipe(
       map((conf) => conf.banks)
     );
+
+    this.buyerForm.valueChanges.subscribe((value) => {
+      const buyer: Member | null = value['buyer'];
+      // console.log('buyerForm.valueChanges', buyer);
+      if (buyer === null) return;
+
+      this.debt_amount = this.find_debt(buyer);
+      if (this.debt_amount > 0) {
+        this.debt_product.price = this.debt_amount;
+        this.toastService.showWarningToast('dette', 'cette personne a une dette de ' + this.debt_amount + ' €');
+      }
+    });
+    // const debt: Product = {
+    //   id: 'debt',
+    //   glyph: 'DETTE',
+    //   description: 'dette',
+    //   price: debt_amount,
+    //   account: '???R',
+    //   paired: false,
+    //   active: true,
+    // }
+    // this.products_array.push([debt]);
+    // this.products.push(debt);
+
   }
 
-  productSelected(product: Product) {
+  find_debt(payer: Member): number {
+    console.log('payer', payer);
+    const payer_sales = this.sales.filter((sale) => sale.payer_id === payer.id);
+    console.log('sales of : ', payer_sales);
+    const revenues: Revenue[] = [];
+    payer_sales.forEach((sale) => {
+      sale.revenues
+        .filter((revenue) => revenue.mode === PaymentMode.DEBT)
+        .forEach((revenue) => {
+          console.log('revenue in DEBT', revenue);
+          revenues.push(revenue);
+        });
+    });
+    return revenues.reduce((acc, revenue) => acc + revenue.amount, 0);
+  }
+
+
+  product_selected(product: Product) {
 
     let cart_item = (product: Product, payee: Member | null): CartItem => {
       const saleItem: SaleItem = {
@@ -117,18 +169,19 @@ export class ShopComponent {
       return { payee: payee, ...saleItem }
     }
 
-    if (!this.buyer.valid) {
+    if (!this.buyerForm.valid) {
       this.toastService.showWarningToast('saisie achat', 'selectionner au moins le bénéficiaire 1');
       return
     }
 
     if (product.paired) {
-      const cart_item1 = cart_item(product, this.buyer.value);
+      const cart_item1 = cart_item(product, this.buyer);
       const cart_item2 = cart_item(product, null);
       this.cartService.addToCart(cart_item1);
       this.cartService.addToCart(cart_item2);
     } else {
-      const cart_item1 = cart_item(product, this.buyer.value);
+      const cart_item1 = cart_item(product, this.buyer);
+      console.log('cart_item1', cart_item1);
       this.cartService.addToCart(cart_item1);
     }
   }
@@ -138,40 +191,44 @@ export class ShopComponent {
       this.toastService.showWarningToast('saisie achat', 'le panier est vide ou partiellement renseigné');
       return
     }
+    const amount = (paymode.payment_mode === PaymentMode.ASSETS) ? 123 : this.cartService.getRemainToPay();
 
-    if (paymode.payment_mode === PaymentMode.ASSETS) {
-      const revenue = {
-        season: this.session.season,
-        mode: paymode.payment_mode,
-        amount: 12,
-        sale_id: this.sale?.id || '',
-      }
-      this.cartService.addToRevenues(revenue);
-    } else {
-      const revenue = {
-        season: this.session.season,
-        mode: paymode.payment_mode,
-        amount: this.cartService.getRemainToPay(),
-        sale_id: this.sale?.id || '',
-
-      }
-      this.cartService.addToRevenues(revenue);
+    const revenue = {
+      season: this.session.season,
+      mode: paymode.payment_mode,
+      amount: amount,
+      sale_id: this.sale?.id || '',
     }
-
+    this.cartService.addToRevenues(revenue);
+    console.log('revenue', revenue);
   }
 
   store_sale(): void {
 
+    // if some cartItems of DEBT type, then add a revenue of DEBT type
+    const debt_amount = this.cartService.getCartItems().filter((item) => item.product_id);
     const sale: Sale = {
       ...this.session,
       amount: this.cartService.getCartAmount(),
-      payer_id: this.buyer.value.id,
+      payer_id: this.buyer!.id,
       revenues: this.cartService.getRevenues(),
       saleItems: this.cartService.getCartItems().map((item) => { delete item.payee; return item; }),
     }
 
+    // const debt_refund = this.cartService.getDebtRefundAmount();
+    // console.log('debt_refund', debt_refund);
+    // if (debt_refund > 0) {
+    //   const debt_revenue = {
+    //     season: this.session.season,
+    //     mode: PaymentMode.DEBT,
+    //     amount: -debt_refund,
+    //     sale_id: sale.id || '',
+    //   }
+    //   sale.revenues.push(debt_revenue);
+    // }
+
     this.salesService.writeOperation(sale).subscribe((res) => {
-      this.cartService.push_sale_of_the_day(sale);
+      // this.cartService.push_sale_of_the_day(sale);
       this.toastService.showSuccessToast('saisie achat', 'vente enregistrée');
       this.cartService.clearCart();
       this.sale = null;

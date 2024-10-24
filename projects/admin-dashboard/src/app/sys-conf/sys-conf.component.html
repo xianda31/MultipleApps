@@ -40,21 +40,27 @@
                         <div class="row mt-2">
                             <div class="col-md-6">
                                 <div class="card">
-                                    <h6 class="card-header">compte débit</h6>
+                                    <h6 class="card-header">comptes de charge</h6>
                                     <div class="card-body">
 
-                                        <div formArrayName="debit_accounts">
+                                        <div formArrayName="charge_accounts">
 
-                                            <div *ngFor="let debit_account of debit_accounts.controls; let i = index">
+                                            <div *ngFor="let charge_account of charge_accounts.controls; let i = index">
                                                 <div class="row " [formGroupName]=" i">
-                                                    <div class="col input-group">
-                                                        <span class="input-group-text">code</span>
-                                                        <input type="text" class="form-control" formControlName="key">
+                                                    <div class="col-4">
+                                                        <div class=" input-group">
+                                                            <span class="input-group-text">code</span>
+                                                            <input type="text" class="form-control"
+                                                                formControlName="key">
+                                                        </div>
                                                     </div>
-                                                    <div class="col input-group">
-                                                        <span class="input-group-text">description</span>
-                                                        <input type="text" class="form-control"
-                                                            formControlName="description">
+                                                    <div class="col-8">
+                                                        <div class=" input-group">
+                                                            <span class="input-group-text">description</span>
+                                                            <input type="text" class="form-control"
+                                                                formControlName="description">
+                                                        </div>
+
                                                     </div>
                                                 </div>
                                             </div>
@@ -66,21 +72,28 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="card">
-                                    <h6 class="card-header">compte crédit</h6>
+                                    <h6 class="card-header">comptes de produit</h6>
                                     <div class="card-body">
 
-                                        <div formArrayName="credit_accounts">
+                                        <div formArrayName="product_accounts">
 
-                                            <div *ngFor="let credit_account of credit_accounts.controls; let i = index">
+                                            <div
+                                                *ngFor="let product_account of product_accounts.controls; let i = index">
                                                 <div class="row " [formGroupName]=" i">
-                                                    <div class="col input-group">
-                                                        <span class="input-group-text">code</span>
-                                                        <input type="text" class="form-control" formControlName="key">
+                                                    <div class="col-4">
+                                                        <div class=" input-group">
+                                                            <span class="input-group-text">code</span>
+                                                            <input type="text" class="form-control"
+                                                                formControlName="key">
+                                                        </div>
                                                     </div>
-                                                    <div class="col input-group">
-                                                        <span class="input-group-text">description</span>
-                                                        <input type="text" class="form-control"
-                                                            formControlName="description">
+                                                    <div class="col-8">
+
+                                                        <div class=" input-group">
+                                                            <span class="input-group-text">description</span>
+                                                            <input type="text" class="form-control"
+                                                                formControlName="description">
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>

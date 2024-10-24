@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { generateClient } from 'aws-amplify/api';
 import { Schema } from '../../../../../amplify/data/resource';
-import { combineLatest, from, map, Observable, of, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, combineLatest, from, map, Observable, of, switchMap, tap } from 'rxjs';
 import { Revenue, Sale, SaleItem } from './sales.interface';
 
 @Injectable({
@@ -9,9 +9,12 @@ import { Revenue, Sale, SaleItem } from './sales.interface';
 })
 export class SalesService {
 
-  private _sales!: Sale[];
+  private _sales: Sale[] = [];
+  private _sales$ = new BehaviorSubject<Sale[]>(this._sales);
   private _saleItems: SaleItem[] = [];
+  private _saleItems$ = new BehaviorSubject<SaleItem[]>(this._saleItems);
   private _revenues: Revenue[] = [];
+  private _revenues$ = new BehaviorSubject<Revenue[]>(this._revenues);
   current_season: string = '';
 
   constructor(
@@ -30,7 +33,10 @@ export class SalesService {
       return from(client.models.SaleItem.create(saleItemCreateInput))
         .pipe(
           map((response: { data: unknown; }) => response.data as unknown as SaleItem),
-          tap((saleItem) => { this._saleItems.push(saleItem) })
+          tap((saleItem) => {
+            this._saleItems.push(saleItem);
+            this._saleItems$.next(this._saleItems);
+          })
         );
     };
 
@@ -60,14 +66,17 @@ export class SalesService {
           map((response: { data: SaleItem[] }) => response.data),
           tap((saleItems) => {
             this._saleItems = saleItems;
+            this._saleItems$.next(this._saleItems);
           })
         );
     }
-    return (this._saleItems.length > 0 && !new_season) ? of(this._saleItems) : _listSaleItems();
+    return (this._saleItems.length > 0 && !new_season) ? (this._saleItems$.asObservable()) : _listSaleItems();
   }
 
 
   // Revenues API
+
+
 
   getRevenues(season: string): Observable<Revenue[]> {
 
@@ -102,7 +111,6 @@ export class SalesService {
       return from(client.models.Revenue.create(revenueCreateInput))
         .pipe(
           map((response: { data: unknown }) => response.data as unknown as Revenue),
-          tap((revenue) => { })
         );
     };
 
@@ -129,6 +137,7 @@ export class SalesService {
           } else {
             sale.id = new_sale.id;
             if (this._sales) this._sales.push(sale);
+            this._sales$.next(this._sales);
             return sale;
           }
         }),
@@ -142,11 +151,11 @@ export class SalesService {
       );
   }
 
-  getSale(sale_id: string): Sale | undefined {
+  get_sale(sale_id: string): Sale | undefined {
     return this._sales.find((sale) => sale.id === sale_id);
   }
 
-  getSales(season: string): Observable<Sale[]> {
+  get_sales(season: string): Observable<Sale[]> {
     let new_season = false;
     if (this.current_season !== season) {
       new_season = true;
@@ -157,17 +166,17 @@ export class SalesService {
       const client = generateClient<Schema>();
       return from(client.models.Sale.list(
         {
-          selectionSet: ['id', 'amount', 'season', 'vendor', 'event', 'payer_id', 'saleItems.*'],
+          selectionSet: ['id', 'amount', 'season', 'vendor', 'event', 'payer_id', 'saleItems.*', 'revenues.*'],
           filter: { season: { eq: season } },
         })).pipe(
           map((response: { data: unknown; }) => response.data as unknown as Sale[]),
           tap((sales) => {
             this._sales = sales;
+            this._sales$.next(this._sales);
           })
         );
     }
-
-    return (this._sales && !new_season) ? of(this._sales) : _listSales();
+    return (this._sales && !new_season) ? this._sales$.asObservable() : _listSales();
   }
 
 
