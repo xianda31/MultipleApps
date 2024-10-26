@@ -73,7 +73,6 @@ export class CartComponent implements OnInit, OnDestroy {
     this.cartService.cart$.subscribe((cart) => {
       this.cart = cart;
       this.counter++;
-      console.log('cart refreshed', this.counter);
     });
     this.banks$ = this.systemDataService.configuration$.pipe(map((conf) => conf.banks));
     this.revenues$ = this.cartService.revenues$;

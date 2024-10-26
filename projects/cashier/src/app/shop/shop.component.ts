@@ -58,12 +58,12 @@ export class ShopComponent {
     { glyph: 'ESPECES', icon: 'bi bi-cash-coin', class: 'card nice_shadow bigger-on-hover bg-primary text-white', payment_mode: PaymentMode.CASH },
     { glyph: 'CHEQUE', icon: 'bi bi-bank', class: 'card nice_shadow bigger-on-hover bg-primary text-white', payment_mode: PaymentMode.CHEQUE },
     { glyph: 'VIREMENT', icon: 'bi bi-globe', class: 'card nice_shadow bigger-on-hover bg-primary text-white', payment_mode: PaymentMode.TRANSFER },
-    { glyph: 'CREDIT', icon: 'bi bi-sticky', class: 'card nice_shadow bigger-on-hover bg-warning', payment_mode: PaymentMode.DEBT },
+    { glyph: 'CREDIT', icon: 'bi bi-sticky', class: 'card nice_shadow bigger-on-hover bg-warning', payment_mode: PaymentMode.CREDIT },
     { glyph: 'AVOIR', icon: 'bi bi-gift', class: 'card nice_shadow bigger-on-hover bg-success text-white', payment_mode: PaymentMode.ASSETS },
   ]
 
   debt_product: Product = {
-    id: 'debt',
+    id: 'debit',
     glyph: 'DETTE',
     description: 'dette',
     price: 0,
@@ -121,38 +121,26 @@ export class ShopComponent {
       if (buyer === null) return;
 
       this.debt_amount = this.find_debt(buyer);
-      if (this.debt_amount > 0) {
+      if (this.debt_amount !== 0) {
         this.debt_product.price = this.debt_amount;
         this.toastService.showWarningToast('dette', 'cette personne a une dette de ' + this.debt_amount + ' €');
       }
     });
-    // const debt: Product = {
-    //   id: 'debt',
-    //   glyph: 'DETTE',
-    //   description: 'dette',
-    //   price: debt_amount,
-    //   account: '???R',
-    //   paired: false,
-    //   active: true,
-    // }
-    // this.products_array.push([debt]);
-    // this.products.push(debt);
 
   }
 
   find_debt(payer: Member): number {
-    console.log('payer', payer);
     const payer_sales = this.sales.filter((sale) => sale.payer_id === payer.id);
-    console.log('sales of : ', payer_sales);
     const revenues: Revenue[] = [];
     payer_sales.forEach((sale) => {
       sale.revenues
-        .filter((revenue) => revenue.mode === PaymentMode.DEBT)
+        .filter((revenue) => revenue.mode === PaymentMode.CREDIT)
         .forEach((revenue) => {
-          console.log('revenue in DEBT', revenue);
+          console.log('revenue in CREDIT', revenue);
           revenues.push(revenue);
         });
     });
+    console.log('revenues', revenues);
     return revenues.reduce((acc, revenue) => acc + revenue.amount, 0);
   }
 
@@ -166,6 +154,7 @@ export class ShopComponent {
         paied: product.price,
         payee_id: payee === null ? '' : payee.id,
       };
+      console.log('product_selected', saleItem);
       return { payee: payee, ...saleItem }
     }
 
@@ -181,7 +170,7 @@ export class ShopComponent {
       this.cartService.addToCart(cart_item2);
     } else {
       const cart_item1 = cart_item(product, this.buyer);
-      console.log('cart_item1', cart_item1);
+      console.log('cart_item1', cart_item1.product_id);
       this.cartService.addToCart(cart_item1);
     }
   }
@@ -197,35 +186,34 @@ export class ShopComponent {
       season: this.session.season,
       mode: paymode.payment_mode,
       amount: amount,
-      sale_id: this.sale?.id || '',
+      sale_id: '',
     }
     this.cartService.addToRevenues(revenue);
-    console.log('revenue', revenue);
   }
 
   store_sale(): void {
 
-    // if some cartItems of DEBT type, then add a revenue of DEBT type
-    const debt_amount = this.cartService.getCartItems().filter((item) => item.product_id);
+    const revenues = this.cartService.getRevenues();
+    console.log('revenues', revenues.map((revenue) => revenue.mode));
+    // const credit = this.cartService.getCreditAmount();
+    // console.log('credit en cours', credit);
+    // // if some cartItems of DEBT type, then add a revenue of DEBT type
+    // if (credit !== 0) {
+    //   const debt_revenue = {
+    //     season: this.session.season,
+    //     mode: PaymentMode.CREDIT,
+    //     amount: -credit,
+    //     sale_id: '',
+    //   }
+    //   revenues.push(debt_revenue);
+    // }
     const sale: Sale = {
       ...this.session,
       amount: this.cartService.getCartAmount(),
       payer_id: this.buyer!.id,
-      revenues: this.cartService.getRevenues(),
+      revenues: [...this.cartService.getRevenues()],
       saleItems: this.cartService.getCartItems().map((item) => { delete item.payee; return item; }),
     }
-
-    // const debt_refund = this.cartService.getDebtRefundAmount();
-    // console.log('debt_refund', debt_refund);
-    // if (debt_refund > 0) {
-    //   const debt_revenue = {
-    //     season: this.session.season,
-    //     mode: PaymentMode.DEBT,
-    //     amount: -debt_refund,
-    //     sale_id: sale.id || '',
-    //   }
-    //   sale.revenues.push(debt_revenue);
-    // }
 
     this.salesService.writeOperation(sale).subscribe((res) => {
       // this.cartService.push_sale_of_the_day(sale);

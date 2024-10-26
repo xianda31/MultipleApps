@@ -37,7 +37,7 @@ export enum PaymentMode {
     CASH = 'espèces',
     CHEQUE = 'chèque',
     TRANSFER = 'virement',
-    DEBT = 'dette',
+    CREDIT = 'crédit',
     ASSETS = 'avoir',
     // CARD = 'carte',
 }
