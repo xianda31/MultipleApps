@@ -18,13 +18,13 @@
     <thead>
         <tr>
             <th>Encaissements</th>
-            <th class="text-center" *ngFor="let account of credit_accounts">{{account}}</th>
+            <th class="text-center" *ngFor="let account of debit_accounts">{{account}}</th>
         </tr>
     </thead>
     <tbody>
         <tr *ngFor="let data of data_list |keyvalue">
             <td>{{data.key }}</td>
-            <td class="text-end pe-5" *ngFor="let account of credit_accounts">
+            <td class="text-end pe-5" *ngFor="let account of debit_accounts">
                 {{data.value[account]? data.value[account] : ''}}
             </td>
         </tr>

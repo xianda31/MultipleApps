@@ -4,11 +4,14 @@ import { FeesComponent } from './fees/fees/fees.component';
 import { HomeComponent } from './home/home.component';
 import { CustomersComponent } from './books/customers/customers.component';
 import { RevenuesComponent } from './revenues/revenues.component';
+import { SalesComponent } from './books/sales/sales.component';
 
 export const routes: Routes = [
     { path: 'sales', component: ShopComponent },   //, canActivate: [loggedInGuard]
     { path: 'books/revenues', component: RevenuesComponent },
     { path: 'books/customers', component: CustomersComponent },
+    { path: 'books/sales', component: SalesComponent },
+
     { path: 'fees', component: FeesComponent },
     { path: '', component: HomeComponent },
     // {

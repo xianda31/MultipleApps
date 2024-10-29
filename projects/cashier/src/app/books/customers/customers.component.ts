@@ -2,16 +2,15 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MembersService } from '../../../../../admin-dashboard/src/app/members/service/members.service';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
-import { combineLatest, from, map, Observable, of, tap } from 'rxjs';
+import { combineLatest, map, Observable, tap } from 'rxjs';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
-import { Bank } from '../../../../../common/system-conf.interface';
 import { ExcelService } from '../../excel.service';
 import { SalesService } from '../../shop/sales.service';
-import { Sale, PaymentMode, SaleItem } from '../../shop/sales.interface';
+import { PaymentMode } from '../../shop/sales.interface';
 import { Member } from '../../../../../common/member.interface';
 import { ProductService } from '../../../../../common/services/product.service';
 import { Product } from '../../../../../admin-dashboard/src/app/sales/products/product.interface';
-
+import { Record } from '../../shop/sales.interface';
 
 
 @Component({
@@ -22,8 +21,7 @@ import { Product } from '../../../../../admin-dashboard/src/app/sales/products/p
   styleUrl: './customers.component.scss'
 })
 export class CustomersComponent {
-  saleItems: SaleItem[] = [];
-  saleItems_subscription: any;
+  sales_subscription: any;
   season_subscription: any;
   products_subscription: any;
   payment_mode = PaymentMode;
@@ -61,26 +59,25 @@ export class CustomersComponent {
         this.members = members;
         this.products = products;
         this.product_keys = Object.keys(this.productService.products_array(products));
-        this.list_saleItems(season);
+        this.list_sales(season);
       });
   }
 
 
-  list_saleItems(season: string) {
-    this.saleItems_subscription = this.salesService.getSaleItems(season)
-      .subscribe((saleItems) => {
-        this.saleItems = saleItems;
-        this.data_list = this.format_data_list();
-        this.data_sums = this.compute_sums(this.data_list);
-      });
+  list_sales(season: string) {
+    this.sales_subscription = this.salesService.get_sales(season).subscribe((sales) => {
+      console.log('sales', sales);
+      const products = sales.map((sale) => sale.records.filter((record) => record.class.includes('product')));
+      this.data_list = this.format_data_list(products);
+    });
   }
 
 
 
   new_season(event: any) {
-    this.saleItems_subscription.unsubscribe();
-    let season = event.target.value;
-    this.list_saleItems(season);
+    // this.cartItems_subscription.unsubscribe();
+    // let season = event.target.value;
+    // this.list_cartItems(season);
   }
 
   member_name(member_id: string): string {
@@ -114,34 +111,34 @@ export class CustomersComponent {
 
   // utilities for data formatting and sum computation
 
-  format_data_list(): { [m: string]: { [c: string]: number } } {
+  format_data_list(products_array: Record[][]): { [m: string]: { [c: string]: number } } {
     const data: { [m: string]: { [c: string]: number } } = {};
-    this.data_sums = {};
-    this.saleItems.forEach((saleItem) => {
-      const name = this.member_name(saleItem.payee_id);
-      const product = this.product_name(saleItem.product_id);
-      if (data[name]) {
-        if (data[name][product]) {
-          data[name][product] += saleItem.paied;
-        } else {
-          data[name][product] = saleItem.paied;
-        }
-      } else {
-        data[name] = { [product]: saleItem.paied };
-      }
-    });
+    // this.data_sums = {};
+    // products_array.forEach((products) => {
+    //   const name = this.member_name(saleItem.payee_id);
+    //   const product = this.product_name(saleItem.product_id);
+    //   if (data[name]) {
+    //     if (data[name][product]) {
+    //       data[name][product] += saleItem.paied;
+    //     } else {
+    //       data[name][product] = saleItem.paied;
+    //     }
+    //   } else {
+    //     data[name] = { [product]: saleItem.paied };
+    //   }
+    // });
 
-    // compute member sums
-    Object.entries(data).forEach(([name, entry]) => {
-      Object.entries(entry).forEach(([key, amount]) => {
-        if (data[name]['total']) {
-          data[name]['total'] += amount;
-        } else {
-          data[name]['total'] = amount;
-        }
-      });
+    // // compute member sums
+    // Object.entries(data).forEach(([name, entry]) => {
+    //   Object.entries(entry).forEach(([key, amount]) => {
+    //     if (data[name]['total']) {
+    //       data[name]['total'] += amount;
+    //     } else {
+    //       data[name]['total'] = amount;
+    //     }
+    //   });
 
-    });
+    // });
     return data;
   }
 

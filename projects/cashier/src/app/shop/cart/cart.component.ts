@@ -3,13 +3,13 @@ import { CartService } from './cart.service';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { Product } from '../../../../../admin-dashboard/src/app/sales/products/product.interface';
 import { map, Observable } from 'rxjs';
-import { CartItem } from './cart.interface';
+import { CartItem, Payment } from './cart.interface';
 import { ProductService } from '../../../../../common/services/product.service';
 import { MembersService } from '../../../../../admin-dashboard/src/app/members/service/members.service';
 import { InputMemberComponent } from '../../input-member/input-member.component';
 import { Member } from '../../../../../common/member.interface';
 import { FormControl, FormGroup, FormsModule, Validators } from '@angular/forms';
-import { Revenue, PaymentMode } from '../sales.interface';
+import { PaymentMode } from '../sales.interface';
 import { Bank } from '../../../../../common/system-conf.interface';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 
@@ -25,7 +25,6 @@ export class CartComponent implements OnInit, OnDestroy {
   @Output() complete = new EventEmitter<void>();
 
   sale_is_ok = signal(true);
-  counter = 0;
   cart_subscription: any;
   members_subscription: any;
 
@@ -34,7 +33,7 @@ export class CartComponent implements OnInit, OnDestroy {
   members!: Member[];
   products!: Product[];
 
-  revenues$ !: Observable<Revenue[]>;
+  payments$ !: Observable<Payment[]>;
   paymentMode = PaymentMode;
 
   banks$ !: Observable<Bank[]>;
@@ -72,18 +71,17 @@ export class CartComponent implements OnInit, OnDestroy {
     });
     this.cartService.cart$.subscribe((cart) => {
       this.cart = cart;
-      this.counter++;
     });
     this.banks$ = this.systemDataService.configuration$.pipe(map((conf) => conf.banks));
-    this.revenues$ = this.cartService.revenues$;
+    this.payments$ = this.cartService.payments$;
 
     this.complete_and_balanced$ = this.cartService.complete_and_balanced$;
 
   }
 
-  get_counter() {
-    return this.counter++;
-  }
+  // get_counter() {
+  //   return this.counter++;
+  // }
 
   get_product_description(product_id: string): string {
     const product = this.products.find((product) => product.id === product_id);
@@ -98,12 +96,17 @@ export class CartComponent implements OnInit, OnDestroy {
     return this.cartService.getCartItems().some((item) => !item.payee_id);
   }
 
+  payeeChanged(index: number) {
+    if (!this.cart[index].payee) return;
+    this.cart[index].payee_id = this.cart[index].payee!.id;
+  }
+
   getCartAmount() {
     return this.cartService.getCartAmount();
   }
 
-  removeFromRevenues(payment: Revenue) {
-    this.cartService.removeFromRevenues(payment);
+  removeFromPayments(payment: Payment) {
+    this.cartService.removeFromPayments(payment);
   }
 
   valid_sale() {

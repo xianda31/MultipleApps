@@ -6,7 +6,7 @@ import { CommonModule } from '@angular/common';
 import { Bank } from '../../../../common/system-conf.interface';
 import { Observable, of, tap, map } from 'rxjs';
 import { SystemDataService } from '../../../../common/services/system-data.service';
-import { PaymentMode, Sale, SaleItem } from '../../../../cashier/src/app/shop/sales.interface';
+import { PaymentMode, Record, Sale } from '../../../../cashier/src/app/shop/sales.interface';
 @Component({
   selector: 'app-test',
   standalone: true,
@@ -72,20 +72,20 @@ export class TestComponent {
 
           let { payment_mode, bank, cheque_no } = this.retrieve_pmode(row.getCell(8).value?.toString() as string);
           let sale: Sale = {
-            amount: row.getCell(32).value?.valueOf() as number,
+            // amount: row.getCell(32).value?.valueOf() as number,
             payer_id: this.retrieve_member(row.getCell(5).value?.toString() as string),
             season: '2023/24',
             vendor: 'uploader',
             event: row.getCell(2).value?.toString() as string,
-            revenues: [{
+            records: [{
+              class: 'Payment_debit',
               season: '2023/24',
               amount: row.getCell(32).value?.valueOf() as number,
               mode: payment_mode,
               bank: bank,
               cheque_no: cheque_no,
-              sale_id: '???'
-            }],
-            saleItems: this.process_products(row)
+              sale_id: 'tbd'
+            }, ...this.process_products(row)],
           };
           if (sale.payer_id !== '???') this.sales.push(sale);
           // console.log('Row ' + rowNumber + ' = ' + JSON.stringify(payment));
@@ -122,8 +122,8 @@ export class TestComponent {
       return '???';
     }
   }
-  process_products(row: ExcelJS.Row): SaleItem[] {
-    let saleItems: SaleItem[] = [];
+  process_products(row: ExcelJS.Row): Record[] {
+    let records: Record[] = [];
     const product_columns = [
       { col: 9, name: 'autre' },
       { col: 10, name: 'PAF' },
@@ -138,16 +138,18 @@ export class TestComponent {
     product_columns.forEach((product) => {
       let price = row.getCell(product.col).value;
       if (price) {
-        let saleItem: SaleItem = {
+        let record: Record = {
+          class: 'Product_credit',
           product_id: product.name,
           season: this.season,
-          payee_id: row.getCell(5).value?.toString() as string,
-          paied: price.valueOf() as number,
+          member_id: row.getCell(5).value?.toString() as string,
+          amount: price.valueOf() as number,
+          sale_id: 'tbd'
         };
-        saleItems.push(saleItem);
+        records.push(record);
       }
     });
-    return saleItems;
+    return records;
   }
   member_name(member_id: string) {
     let member = this.membersService.getMember(member_id);

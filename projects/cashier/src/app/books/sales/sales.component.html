@@ -1,4 +1,4 @@
-<div class="row justify-content-between align-items-center">
+<div *ngIf="loaded" class="row justify-content-between align-items-center">
     <div class="col-md-3 mt-3">
         <div class="input-group input-group-sm mb-2">
             <span class="input-group-text">Saison</span>
@@ -14,23 +14,4 @@
 
 </div>
 
-<table class="table table-sm">
-    <thead>
-        <tr>
-            <th class="col">date</th>
-            <th scope="col">montant</th>
-            <th scope="col">réglé par</th>
-            <!-- <th scope="col">mode</th>
-            <th scope="col">Cheque No</th> -->
-        </tr>
-    </thead>
-    <tbody>
-        <tr *ngFor="let sale of sales">
-            <td>{{format_date(sale.event)}} ({{ format_vendor(sale.vendor)}})</td>
-            <td>{{ sale.amount | currency:'€':'symbol':'2.2-2':'fr' }}</td>
-            <td>{{member_name (sale.payer_id )}}</td>
-            <!-- <td>{{ sale.payments[0].type === payment_mode.CASH ? 'espèces' : bank_name(sale.payments[0].bank!)}}</td>
-            <td>{{ sale.payments[0].cheque_no }}</td> -->
-        </tr>
-    </tbody>
-</table>
+<app-sales-viewer *ngIf="loaded" [sales]="sales"> </app-sales-viewer>

@@ -1,0 +1,30 @@
+<table *ngIf="loaded" class="table table-sm">
+    <thead>
+        <tr>
+            <th class="col">date</th>
+            <th scope="col">bénéficiaire</th>
+            <th class="text-center" *ngFor="let account of product_accounts">{{account}}</th>
+            <th class="text-center" *ngFor="let account of payment_accounts">{{account}}</th>
+
+            <!-- <th scope="col">mode</th>
+            <th scope="col">Cheque No</th> -->
+        </tr>
+    </thead>
+    <tbody>
+        <ng-container *ngFor="let f_sale of f_sales">
+            <!-- <td>{{ sale_amount(sale) | currency:'€':'symbol':'2.2-2':'fr' }}</td> -->
+            <tr *ngFor="let products of f_sale.products  | keyvalue ; let ip = index" class="align-middle">
+                <td>{{format_date(f_sale.event)}} </td>
+                <td class="text-start"> {{products.key}}</td>
+                <td *ngFor="let account of product_accounts" class="text-center">
+                    {{products.value[account] ? products.value[account] : ''}}
+                </td>
+                <ng-container *ngIf="ip===0">
+                    <td [attr.rowspan]="f_sale.payees_nbr" *ngFor="let account of payment_accounts" class="text-center">
+                        {{f_sale.payments[account] ? f_sale.payments[account] : ''}}
+                    </td>
+                </ng-container>
+            </tr>
+        </ng-container>
+    </tbody>
+</table>

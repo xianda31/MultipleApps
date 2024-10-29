@@ -15,9 +15,8 @@ import { combineLatest, map, Observable } from 'rxjs';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 import { Bank } from '../../../../common/system-conf.interface';
 import { SessionService } from './session.service';
-import { KeypadComponent } from './keypad/keypad.component';
-import { PaymentMode, Revenue, Sale, SaleItem, Session } from './sales.interface';
-import { CartItem } from './cart/cart.interface';
+import { PaymentMode, Sale, Session } from './sales.interface';
+import { CartItem, Payment } from './cart/cart.interface';
 
 interface PayMode {
   glyph: string;
@@ -120,42 +119,41 @@ export class ShopComponent {
       // console.log('buyerForm.valueChanges', buyer);
       if (buyer === null) return;
 
-      this.debt_amount = this.find_debt(buyer);
-      if (this.debt_amount !== 0) {
-        this.debt_product.price = this.debt_amount;
-        this.toastService.showWarningToast('dette', 'cette personne a une dette de ' + this.debt_amount + ' €');
-      }
+      // this.debt_amount = this.find_debt(buyer);
+      // if (this.debt_amount !== 0) {
+      //   this.debt_product.price = this.debt_amount;
+      //   this.toastService.showWarningToast('dette', 'cette personne a une dette de ' + this.debt_amount + ' €');
+      // }
     });
 
   }
 
-  find_debt(payer: Member): number {
-    const payer_sales = this.sales.filter((sale) => sale.payer_id === payer.id);
-    const revenues: Revenue[] = [];
-    payer_sales.forEach((sale) => {
-      sale.revenues
-        .filter((revenue) => revenue.mode === PaymentMode.CREDIT)
-        .forEach((revenue) => {
-          console.log('revenue in CREDIT', revenue);
-          revenues.push(revenue);
-        });
-    });
-    console.log('revenues', revenues);
-    return revenues.reduce((acc, revenue) => acc + revenue.amount, 0);
-  }
+  // find_debt(payer: Member): number {
+  //   const payer_sales = this.sales.filter((sale) => sale.payer_id === payer.id);
+  //   const payments: Revenue[] = [];
+  //   payer_sales.forEach((sale) => {
+  //     sale.payments
+  //       .filter((payment) => payment.mode === PaymentMode.CREDIT)
+  //       .forEach((payment) => {
+  //         console.log('payment in CREDIT', payment);
+  //         payments.push(payment);
+  //       });
+  //   });
+  //   console.log('payments', payments);
+  //   return payments.reduce((acc, payment) => acc + payment.amount, 0);
+  // }
 
 
   product_selected(product: Product) {
 
     let cart_item = (product: Product, payee: Member | null): CartItem => {
-      const saleItem: SaleItem = {
-        season: this.session.season,
+      const cartItem: CartItem = {
+        // season: this.session.season,
         product_id: product.id,
         paied: product.price,
         payee_id: payee === null ? '' : payee.id,
       };
-      console.log('product_selected', saleItem);
-      return { payee: payee, ...saleItem }
+      return { payee: payee, ...cartItem }
     }
 
     if (!this.buyerForm.valid) {
@@ -170,7 +168,6 @@ export class ShopComponent {
       this.cartService.addToCart(cart_item2);
     } else {
       const cart_item1 = cart_item(product, this.buyer);
-      console.log('cart_item1', cart_item1.product_id);
       this.cartService.addToCart(cart_item1);
     }
   }
@@ -180,48 +177,30 @@ export class ShopComponent {
       this.toastService.showWarningToast('saisie achat', 'le panier est vide ou partiellement renseigné');
       return
     }
-    const amount = (paymode.payment_mode === PaymentMode.ASSETS) ? 123 : this.cartService.getRemainToPay();
+    const amount = (paymode.payment_mode === PaymentMode.ASSETS) ? 25 : this.cartService.getRemainToPay();
 
-    const revenue = {
-      season: this.session.season,
+    const payment: Payment = {
+      payer_id: this.buyer!.id,
       mode: paymode.payment_mode,
       amount: amount,
-      sale_id: '',
     }
-    this.cartService.addToRevenues(revenue);
+    this.cartService.addToPayments(payment);
   }
 
-  store_sale(): void {
+  sale_confirmed(): void {
 
-    const revenues = this.cartService.getRevenues();
-    console.log('revenues', revenues.map((revenue) => revenue.mode));
-    // const credit = this.cartService.getCreditAmount();
-    // console.log('credit en cours', credit);
-    // // if some cartItems of DEBT type, then add a revenue of DEBT type
-    // if (credit !== 0) {
-    //   const debt_revenue = {
-    //     season: this.session.season,
-    //     mode: PaymentMode.CREDIT,
-    //     amount: -credit,
-    //     sale_id: '',
-    //   }
-    //   revenues.push(debt_revenue);
-    // }
-    const sale: Sale = {
-      ...this.session,
-      amount: this.cartService.getCartAmount(),
-      payer_id: this.buyer!.id,
-      revenues: [...this.cartService.getRevenues()],
-      saleItems: this.cartService.getCartItems().map((item) => { delete item.payee; return item; }),
-    }
+    const payments = this.cartService.getPayments();
+    console.log('payments', payments);
+    this.cartService.save_sale(this.session, this.buyer!);
+    this.buyerForm.reset();
 
-    this.salesService.writeOperation(sale).subscribe((res) => {
-      // this.cartService.push_sale_of_the_day(sale);
-      this.toastService.showSuccessToast('saisie achat', 'vente enregistrée');
-      this.cartService.clearCart();
-      this.sale = null;
-      this.buyerForm.reset();
-    });
+
+    // this.salesService.writeOperation(sale).subscribe((res) => {
+    //   // this.cartService.push_sale_of_the_day(sale);
+    //   this.toastService.showSuccessToast('saisie achat', 'vente enregistrée');
+    //   this.cartService.clearCart();
+    //   this.sale = null;
+    // });
   }
 
 
@@ -240,5 +219,13 @@ export class ShopComponent {
     let product = this.products.find((p) => p.id === product_id);
     return product ? product.account : '???';
   }
-
+  product_name(product_id: string) {
+    let product = this.products.find((p) => p.id === product_id);
+    return product ? product.account : '???';
+  }
+  sale_amount(sale: Sale) {
+    return sale.records
+      .filter((record) => record.class.includes('Product'))
+      .reduce((total, record) => total + record.amount, 0);
+  }
 }

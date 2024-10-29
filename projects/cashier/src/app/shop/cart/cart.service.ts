@@ -1,8 +1,7 @@
-import { computed, Injectable, Signal, signal } from '@angular/core';
-import { BehaviorSubject, map, Observable, of, tap } from 'rxjs';
-import { CartItem } from './cart.interface';
-import { Revenue, Sale, Session } from '../sales.interface';
-import { remove } from 'aws-amplify/storage';
+import { Injectable, Signal, signal } from '@angular/core';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { CartItem, Payment } from './cart.interface';
+import { Sale, Session } from '../sales.interface';
 import { SalesService } from '../sales.service';
 import { Member } from '../../../../../common/member.interface';
 
@@ -14,8 +13,8 @@ export class CartService {
   private _cart: CartItem[] = [];
   private _cart$ = new BehaviorSubject<CartItem[]>(this._cart);
 
-  private _revenues: Revenue[] = [];
-  private _revenues$ = new BehaviorSubject<Revenue[]>(this._revenues);
+  private _payments: Payment[] = [];
+  private _payments$ = new BehaviorSubject<Payment[]>(this._payments);
 
   private _sales_of_the_day: Sale[] = [];
 
@@ -31,31 +30,31 @@ export class CartService {
   }
 
 
-  get revenues$(): Observable<Revenue[]> {
-    return this._revenues$.asObservable();
+  get payments$(): Observable<Payment[]> {
+    return this._payments$.asObservable();
   }
 
 
-  addToRevenues(payment: Revenue): void {
-    this._revenues.push(payment);
-    this._revenues$.next(this._revenues);
+  addToPayments(payment: Payment): void {
+    this._payments.push(payment);
+    this._payments$.next(this._payments);
     this._complete_and_balanced.update(() => this.isCompleteAndBalanced());
   }
 
-  removeFromRevenues(payment: Revenue): void {
-    const index = this._revenues.indexOf(payment);
+  removeFromPayments(payment: Payment): void {
+    const index = this._payments.indexOf(payment);
     if (index > -1) {
-      this._revenues.splice(index, 1);
-      this._revenues$.next(this._revenues);
+      this._payments.splice(index, 1);
+      this._payments$.next(this._payments);
     }
     this._complete_and_balanced.update(() => this.isCompleteAndBalanced());
   }
 
-  getRevenuesAmount(): number {
-    return this._revenues.reduce((total, item) => total + item.amount, 0);
+  getPaymentsAmount(): number {
+    return this._payments.reduce((total, item) => total + item.amount, 0);
   }
-  getRevenues(): Revenue[] {
-    return this._revenues;
+  getPayments(): Payment[] {
+    return this._payments;
   }
 
 
@@ -64,7 +63,6 @@ export class CartService {
   }
 
   addToCart(CartItem: CartItem): void {
-    console.log('CartItem', CartItem.product_id);
     this._cart.push(CartItem);
     this._cart$.next(this._cart);
     this._complete_and_balanced.update(() => this.isCompleteAndBalanced());
@@ -81,9 +79,9 @@ export class CartService {
 
   clearCart(): void {
     this._cart = [];
-    this._revenues = [];
+    this._payments = [];
     this._cart$.next(this._cart);
-    this._revenues$.next(this._revenues);
+    this._payments$.next(this._payments);
     this._complete_and_balanced.set(false);
   }
 
@@ -94,7 +92,7 @@ export class CartService {
 
 
   getRemainToPay(): number {
-    return this.getCartAmount() - this.getRevenuesAmount();
+    return this.getCartAmount() - this.getPaymentsAmount();
   }
 
   getCreditAmount(): number {
@@ -111,11 +109,18 @@ export class CartService {
   }
 
   private isCompleteAndBalanced(): boolean {
-    return (this._cart.every((item) => item.payee_id)) && (this.getCartAmount() === this.getRevenuesAmount());
+    return (this._cart.every((item) => item.payee_id)) && (this.getCartAmount() === this.getPaymentsAmount());
   }
 
 
-
+  save_sale(session: Session, buyer: Member): void {
+    this.salesService.save_sale$(session, buyer, this._cart, this._payments)
+      .subscribe((sale) => {
+        // console.log('sale saved', sale);
+        this._sales_of_the_day.push(sale);
+        this.clearCart();
+      });
+  }
 
 
 

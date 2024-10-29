@@ -2,45 +2,60 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MembersService } from '../../../../../admin-dashboard/src/app/members/service/members.service';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
-import { map, Observable, of, tap } from 'rxjs';
+import { combineLatest, map, Observable, of, switchMap, tap } from 'rxjs';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { Bank } from '../../../../../common/system-conf.interface';
 import { ExcelService } from '../../excel.service';
 import { SalesService } from '../../shop/sales.service';
 import { Sale, PaymentMode } from '../../shop/sales.interface';
+import { ProductService } from '../../../../../common/services/product.service';
+import { SalesViewerComponent } from "../sales-viewer/sales-viewer.component";
+
 
 
 @Component({
   selector: 'app-sales',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, SalesViewerComponent],
   templateUrl: './sales.component.html',
   styleUrl: './sales.component.scss'
 })
 export class SalesComponent {
-  sales: Sale[] = [];
   sales_subscription: any;
   season_subscription: any;
+  products_subscription: any;
   payment_mode = PaymentMode;
   season: string = '';
   banks !: Bank[];
   season$: Observable<string> = of(this.season);
   loaded = false;
+  // payment_accounts: string[] = [];
+  // payMode = PaymentMode;
+  // sales$!: Observable<Sale[]>;
+  sales: Sale[] = [];
 
   constructor(
     private membersService: MembersService,
     private systemDataService: SystemDataService,
     private salesService: SalesService,
+    private productService: ProductService,
     private excelService: ExcelService
   ) {
-    this.season$ = this.systemDataService.configuration$.pipe(
-      tap((conf) => {
-        this.season = conf.season;
-        this.banks = conf.banks;
 
-      }),
-      map((conf) => conf.season),
-    );
+    // this.sales$ = this.systemDataService.configuration$.pipe(
+    //   tap((conf) => {
+    //     this.season = conf.season;
+    //     this.banks = conf.banks;
+    //   }),
+    //   switchMap((conf) => {
+    //     return this.list_sales(conf.season);
+    //   })
+    // );
+
+
+    // this.payment_accounts = Object.entries(this.payMode).map(([key, value]) => value);
+
+
   }
 
 
@@ -50,23 +65,28 @@ export class SalesComponent {
 
 
   ngOnInit(): void {
-
-
-    this.season_subscription = this.season$.subscribe((season) => {
-      this.list_sales(season);
-    });
-
-
-
+    combineLatest([this.systemDataService.configuration$, this.productService.listProducts()])
+      .subscribe(([conf, products]) => {
+        // this.products = products;
+        this.season = conf.season;
+        this.banks = conf.banks;
+        this.list_sales(this.season).subscribe((sales) => {
+          this.sales = sales;
+          console.log('sales', this.sales);
+          this.loaded = true;
+        });
+      });
   }
 
 
-  list_sales(season: string) {
-    this.sales_subscription = this.salesService.getSales(season)
-      .subscribe((sales) => {
-        this.sales = sales.sort((a, b) => a.event > b.event ? 1 : -1)
-        // .sort((a, b) => a.createdAt! < b.createdAt! ? 1 : -1);
-      });
+  list_sales(season: string): Observable<Sale[]> {
+    return this.salesService.get_sales(season).pipe(
+      map((sales) => {
+        // if (!sales) return [];
+        return sales.sort((a, b) => a.event > b.event ? 1 : -1)
+        // console.log('sales', this.sales);
+      })
+    );
   }
 
   new_season(event: any) {
@@ -75,26 +95,9 @@ export class SalesComponent {
     this.list_sales(season);
   }
 
-  member_name(member_id: string) {
-    let member = this.membersService.getMember(member_id);
-    return member ? member.lastname.toLocaleUpperCase() + ' ' + member.firstname : '???';
-  }
 
-  bank_name(bank_key: string) {
-    let bank = this.banks.find((bank) => bank.key === bank_key);
-    return bank ? bank.name : '???';
-  }
 
-  format_date(date: string): string {
-    const formated_date = new Date(date);
-    // return formatDate(date, 'EEEE d MMMM HH:00', 'fr-FR');
-    return formated_date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
-  }
 
-  format_vendor(vendor: string): string {
-    const gliph = vendor.toLocaleUpperCase().split(' ').map((word) => word[0]).join('');
-    return gliph;
-  }
 
   // color_swapper(i: number) {
   //   return i % 2 === 0 ? 'table-light' : 'table-primary';
@@ -102,15 +105,15 @@ export class SalesComponent {
 
   export_excel() {
     let data: any[] = [];
-    this.sales.forEach((sale) => {
-      data.push({
-        date: this.format_date(sale.event),
-        montant: sale.amount,
-        bénéficiaire: this.member_name(sale.payer_id),
-        sale_mode: sale.revenues[0].mode,
-      });
-    });
-    this.excelService.generateExcel(data, 'revenues');
+    // this.sales.forEach((sale) => {
+    //   data.push({
+    //     date: this.format_date(sale.event),
+    //     montant: 666,
+    //     bénéficiaire: this.member_name(sale.payer_id),
+    //     // sale_mode: sale.revenues[0].mode,
+    //   });
+    // });
+    // this.excelService.generateExcel(data, 'revenues');
   }
 }
 

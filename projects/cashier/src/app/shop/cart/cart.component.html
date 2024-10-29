@@ -1,10 +1,9 @@
 <div class="bg-body-tertiary">
-    <strong>Panier : ({{cart.length}}) {{counter}}</strong>
+    <strong>Panier : </strong>
     <!-- <div class="table-responsive"> -->
     <table class="w-100">
         <tbody>
-            debug : {{cart.length}}
-            <tr *ngFor="let item of cart ">
+            <tr *ngFor="let item of cart ; let i = index ">
                 <!-- descriptif produit -->
                 <td> {{get_product_description(item.product_id)}} </td>
                 <td class="input-group input-group-sm">
@@ -12,7 +11,8 @@
                         <i class="bi bi-x-lg"></i>
                     </button>
                     <app-input-member [ngClass]="!item.payee?'to-fill-in':''" class="form-control form-control-sm"
-                        [members]="members" [(ngModel)]="item.payee"></app-input-member>
+                        [members]="members" [(ngModel)]="item.payee"
+                        (ngModelChange)="payeeChanged(i)"></app-input-member>
                 <td>
                 <td>
                     {{item.paied | currency:'€':'symbol':'2.2-2':'fr'}}
@@ -40,14 +40,14 @@
     <strong>Mode de paiement :</strong>
     <table class="w-100">
         <tbody>
-            <tr *ngFor="let revenue of revenues$ | async">
-                <ng-container *ngTemplateOutlet="payment_info ; context:{revenue:revenue}">
+            <tr *ngFor="let payment of payments$ | async">
+                <ng-container *ngTemplateOutlet="payment_info ; context:{payment:payment}">
                 </ng-container>
                 <td>
-                    {{revenue.amount | currency:'€':'symbol':'2.2-2':'fr'}}
+                    {{payment.amount | currency:'€':'symbol':'2.2-2':'fr'}}
                 </td>
                 <td class="text-end text-danger">
-                    <i class="bi bi-trash3" (click)="removeFromRevenues(revenue)"></i>
+                    <i class="bi bi-trash3" (click)="removeFromPayments(payment)"></i>
                 </td>
             </tr>
         </tbody>
@@ -61,19 +61,19 @@
 </div>
 
 
-<ng-template #payment_info let-revenue="revenue">
+<ng-template #payment_info let-payment="payment">
 
-    <td colspan="3" *ngIf="revenue.mode !== paymentMode.CHEQUE">
-        {{revenue.mode}}
+    <td colspan="3" *ngIf="payment.mode !== paymentMode.CHEQUE">
+        {{payment.mode}}
     </td>
 
-    <ng-container *ngIf="revenue.mode === paymentMode.CHEQUE">
+    <ng-container *ngIf="payment.mode === paymentMode.CHEQUE">
         <td>
-            {{revenue.mode}}
+            {{payment.mode}}
         </td>
         <td>
-            <select [ngClass]="!revenue.bank?'to-fill-in':''" class="form-control form-control-sm"
-                [(ngModel)]="revenue.bank" required>
+            <select [ngClass]="!payment.bank?'to-fill-in':''" class="form-control form-control-sm"
+                [(ngModel)]="payment.bank" required>
                 <option value="undefined" hidden disabled>banque</option>
                 <option *ngFor="let bank of banks$ | async " [value]="bank.key">
                     {{bank.name}}
@@ -81,8 +81,8 @@
             </select>
         </td>
         <td>
-            <input [ngClass]="!revenue.cheque_no?'to-fill-in':''" placeholder="N° de chèque" type="text" id="cheque_no"
-                class="form-control form-control-sm" [(ngModel)]="revenue.cheque_no">
+            <input [ngClass]="!payment.cheque_no?'to-fill-in':''" placeholder="N° de chèque" type="text" id="cheque_no"
+                class="form-control form-control-sm" [(ngModel)]="payment.cheque_no">
         </td>
     </ng-container>
 </ng-template>

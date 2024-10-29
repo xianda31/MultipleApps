@@ -13,38 +13,34 @@ const schema = a.schema({
     .authorization((allow) => [allow.publicApiKey()]),
 
 
-  SaleItem: a.model({
-    season: a.string().required(),
-    payee_id: a.id().required(),
-    paied: a.float().required(),
-    product_id: a.id().required(),
-    sale_id: a.id().required(),
-    sale: a.belongsTo('Sale', 'sale_id'),
-  }).authorization((allow) => [allow.publicApiKey()]),
-
-
-  Revenue: a.model({
+  Record: a.model({
+    class: a.string().required(),
     season: a.string().required(),
     amount: a.float().required(),
+    // debit_credit: a.enum(['DEBIT', 'CREDIT']),
+
     sale_id: a.id().required(),
     sale: a.belongsTo('Sale', 'sale_id'),
-    mode: a.string().required(),
+
+    member_id: a.id(),
+
+    mode: a.string(),
     bank: a.string(),
     cheque_no: a.string(),
-    cashed: a.boolean(),
-  }).authorization((allow) => [allow.publicApiKey()]),
 
+    // payee_id: a.id(),
+    product_id: a.id(),
+  })
+    .authorization((allow) => [allow.publicApiKey()]),
 
   Sale: a.model({
     season: a.string().required(),
     payer_id: a.id().required(),
-    amount: a.float().required(),
-    vendor: a.string().required(),
+    // amount: a.float().required(),
+    // vendor: a.string().required(),
     event: a.string().required(),
-    revenues: a.hasMany('Revenue', 'sale_id'),
-    saleItems: a.hasMany('SaleItem', 'sale_id'),
+    records: a.hasMany('Record', 'sale_id'),
   })
-
     .authorization((allow) => [allow.publicApiKey()]),
 
 

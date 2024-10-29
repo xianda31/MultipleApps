@@ -3,7 +3,7 @@ import { combineLatest, map, Observable, tap } from 'rxjs';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 import { ExcelService } from '../excel.service';
 import { SalesService } from '../shop/sales.service';
-import { PaymentMode, Revenue } from '../shop/sales.interface';
+import { PaymentMode, Record } from '../shop/sales.interface';
 import { CommonModule } from '@angular/common';
 import { data } from '../../../../../amplify/data/resource';
 
@@ -16,11 +16,11 @@ import { data } from '../../../../../amplify/data/resource';
 })
 export class RevenuesComponent {
   season$!: Observable<string>;
-  revenues: Revenue[] = [];
-  revenues_subscription: any;
+  // revenues: Revenue[] = [];
+  records_subscription: any;
   payMode = PaymentMode;
   data_list: { [m: string]: { [c: string]: number } } = {};
-  credit_accounts: string[] = [];
+  debit_accounts: string[] = [];
 
 
   constructor(
@@ -33,34 +33,36 @@ export class RevenuesComponent {
       map((conf) => conf.season))
 
     this.season$.subscribe((season) => {
-      this.list_revenues(season);
+      this.list_records(season);
     }
     );
 
-    this.credit_accounts = Object.entries(this.payMode).map(([key, value]) => value);
-    // console.log('this.credit_accounts', this.credit_accounts);
+    this.debit_accounts = Object.entries(this.payMode).map(([key, value]) => value);
+    // console.log('this.debit_accounts', this.debit_accounts);
   }
 
-  list_revenues(season: string) {
-    this.revenues_subscription = this.saleService.getRevenues(season).subscribe((revenues) => {
-      this.revenues = revenues;
-      this.data_list = this.format_data_list();
+  list_records(season: string) {
+    this.records_subscription = this.saleService.get_records(season).subscribe((records) => {
+      console.log('records', records);
+      const payments = records.filter((record) => record.class.includes('debit'));
+      this.data_list = this.format_data_list(payments);
     });
   }
 
-  format_data_list(): { [m: string]: { [c: string]: number } } {
+  format_data_list(payments: Record[]): { [m: string]: { [c: string]: number } } {
 
     const data_list: { [m: string]: { [c: string]: number } } = {};
-    this.revenues.forEach((revenue) => {
-      const sale = this.saleService.get_sale(revenue.sale_id);
+    payments.forEach((payment) => {
+      const sale = this.saleService.get_sale(payment.sale_id);
       const event = sale ? (sale.event) : 'inconnu';
+      const payment_mode = payment.mode as string;
       if (!data_list[event]) {
-        data_list[event] = { [revenue.mode]: revenue.amount };
+        data_list[event] = { [payment_mode]: payment.amount };
       } else {
-        if (!data_list[event][revenue.mode]) {
-          data_list[event][revenue.mode] = revenue.amount;
+        if (!data_list[event][payment_mode]) {
+          data_list[event][payment_mode] = payment.amount;
         } else {
-          data_list[event][revenue.mode] += revenue.amount;
+          data_list[event][payment_mode] += payment.amount;
         }
       }
     });
@@ -68,9 +70,9 @@ export class RevenuesComponent {
   }
 
   new_season(event: any) {
-    this.revenues_subscription.unsubscribe();
+    this.records_subscription.unsubscribe();
     let season = event.target.value;
-    this.list_revenues(season);
+    // this.list_records(season);
   }
 
   // vendor_glyph(vendor: string) {
@@ -80,7 +82,7 @@ export class RevenuesComponent {
 
   export_excel() {
     // let data: any[] = [];
-    // let headers = ['adhérent', ...this.credit_accounts];
+    // let headers = ['adhérent', ...this.debit_accounts];
     // Object.entries(this.data_list).forEach(([key, entry]) => {
     //   data.push({
     //     'adhérent': key,

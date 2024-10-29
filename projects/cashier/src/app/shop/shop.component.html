@@ -70,7 +70,7 @@
                 </div>
                 <!-- cart  -->
                 <div class="row mb-2 p-2">
-                    <app-cart (complete)="store_sale()"></app-cart>
+                    <app-cart (complete)="sale_confirmed()"></app-cart>
                 </div>
             </div>
 
@@ -81,11 +81,13 @@
                     <tr *ngFor="let sale of sales_of_the_day">
                         <td>
                             {{member_name(sale.payer_id)}} :
-                            <ng-container *ngFor="let item of sale.saleItems">
-                                {{product_account(item.product_id)}}
+                            <ng-container *ngFor="let record of sale.records">
+                                <span *ngIf="record.class.includes('Product') ">
+                                    {{product_name(record.product_id!)}}
+                                </span>
                             </ng-container>
                         </td>
-                        <td class="text-end">{{sale.amount | currency:'€':'symbol':'2.2-2':'fr'}}</td>
+                        <td class="text-end">{{sale_amount(sale) | currency:'€':'symbol':'2.2-2':'fr'}}</td>
                     </tr>
                 </table>
             </div>
