@@ -40,16 +40,6 @@ export interface Session {
     event: string;
 }
 
-// export interface Revenue {
-//     id?: string;
-//     season: string;
-//     amount: number;
-//     sale_id: string;
-//     mode: string;
-//     bank?: string;
-//     cheque_no?: string;
-//     cashed?: boolean;
-// }
 
 
 export interface Sale extends Session {

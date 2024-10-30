@@ -1,13 +1,13 @@
 import { Component, Input } from '@angular/core';
-import { PaymentMode, Sale } from '../../shop/sales.interface';
-import { MembersService } from '../../../../../admin-dashboard/src/app/members/service/members.service';
-import { ProductService } from '../../../../../common/services/product.service';
-import { SystemDataService } from '../../../../../common/services/system-data.service';
-import { ExcelService } from '../../excel.service';
-import { SalesService } from '../../shop/sales.service';
-import { Bank } from '../../../../../common/system-conf.interface';
+import { PaymentMode, Sale } from '../../cashier/src/app/shop/sales.interface';
+import { MembersService } from '../../admin-dashboard/src/app/members/service/members.service';
+import { ProductService } from '../services/product.service';
+import { SystemDataService } from '../services/system-data.service';
+import { ExcelService } from '../../cashier/src/app/excel.service';
+import { SalesService } from '../../cashier/src/app/shop/sales.service';
+import { Bank } from '../system-conf.interface';
 import { Observable, of, tap, map } from 'rxjs';
-import { Product } from '../../../../../admin-dashboard/src/app/sales/products/product.interface';
+import { Product } from '../../admin-dashboard/src/app/sales/products/product.interface';
 import { CommonModule } from '@angular/common';
 
 interface f_products { [payee: string]: { [product_key: string]: number } }
@@ -84,10 +84,10 @@ export class SalesViewerComponent {
       sale.records.forEach((record) => {
         if (record.class.includes('Product')) {
           const payee = this.member_name(record.member_id!);
-          console.log('record', record);
+          // console.log('record', record);
           const product = this.products.find((product) => product.id === record.product_id);
           if (!product) {
-            console.log('Huston, there is a problem'); return;
+            console.log('Huston, there is a problem', record); return;
           }
           const product_key = product.account;
           const amount = record.amount;

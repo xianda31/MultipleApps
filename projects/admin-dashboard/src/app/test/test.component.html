@@ -6,7 +6,8 @@
         [disabled]="!file_selected">Upload</button> -->
     </div>
 
-    <table>
+    <app-sales-viewer *ngIf="loaded" [sales]="sales"> </app-sales-viewer>
+    <!-- <table>
         <thead>
             <tr>
                 <th>vente du</th>
@@ -27,5 +28,5 @@
             </tr>
         </tbody>
 
-    </table>
+    </table> -->
 </div>

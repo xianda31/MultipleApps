@@ -9,7 +9,7 @@ import { ExcelService } from '../../excel.service';
 import { SalesService } from '../../shop/sales.service';
 import { Sale, PaymentMode } from '../../shop/sales.interface';
 import { ProductService } from '../../../../../common/services/product.service';
-import { SalesViewerComponent } from "../sales-viewer/sales-viewer.component";
+import { SalesViewerComponent } from "../../../../../common/sales-viewer/sales-viewer.component";
 
 
 
