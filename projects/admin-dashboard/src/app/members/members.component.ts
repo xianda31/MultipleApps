@@ -4,16 +4,18 @@ import { LicenseesService } from '../licensees/services/licensees.service';
 import { combineLatest, Observable } from 'rxjs';
 import { Member } from '../../../../common/member.interface';
 import { FFB_licensee } from '../../../../common/ffb/interface/licensee.interface';
-import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule, UpperCasePipe } from '@angular/common';
-import { environment } from '../../environments/environment';
 import { PhonePipe } from '../../../../common/pipes/phone.pipe';
 import { CapitalizeFirstPipe } from '../../../../common/pipes/capitalize_first';
+import { InputPlayerComponent } from '../../../../common/ffb/input-licensee/input-player.component';
+import { FFBplayer } from '../../../../common/ffb/interface/FFBplayer.interface';
+import { SystemDataService } from '../../../../common/services/system-data.service';
 
 @Component({
   selector: 'app-members',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, UpperCasePipe, PhonePipe, CapitalizeFirstPipe],
+  imports: [FormsModule, CommonModule, ReactiveFormsModule, UpperCasePipe, PhonePipe, CapitalizeFirstPipe, InputPlayerComponent],
   templateUrl: './members.component.html',
   styleUrl: './members.component.scss'
 })
@@ -23,6 +25,8 @@ export class MembersComponent implements OnInit {
   // missingMembers: Member[] = [];
   thisSeasonMembersNbr: number = 0;
   licensees !: FFB_licensee[];
+  new_player!: FFBplayer;
+  season: string = '';
 
   filters: string[] = ['Tous', ' de cette saison', ' non encore à jour'];
   selection: string = '';
@@ -36,6 +40,7 @@ export class MembersComponent implements OnInit {
   constructor(
     private licenseesService: LicenseesService,
     private membersService: MembersService,
+    private sysConfService: SystemDataService
   ) {
 
   }
@@ -45,21 +50,52 @@ export class MembersComponent implements OnInit {
 
 
     this.radioButtonGroup.valueChanges.subscribe(() => {
-      this.filter();
+      this.selection_filter();
     });
 
     this.licenseesService.FFB_licensees$.subscribe((licensees) => {
       this.licensees = licensees;
     });
-
-    this.membersService.listMembers().subscribe((members) => {
+    combineLatest([this.sysConfService.configuration$, this.membersService.listMembers()]).subscribe(([conf, members]) => {
+      this.season = conf.season;
+      console.log('season', this.season);
       this.members = members.sort((a, b) => a.lastname.localeCompare(b.lastname));
       this.filteredMembers = this.members;
       this.thisSeasonMembersNbr = this.members.reduce((acc, member) => {
-        return (member.season === '2024/2025' || member.is_sympathisant) ? acc + 1 : acc;
+        return (member.season === this.season || member.is_sympathisant) ? acc + 1 : acc;
       }, 0);
     });
 
+  }
+
+  add_licensee(player: FFBplayer) {
+    if (player) {
+      const new_member: Member = this.player2member(player);
+      this.filteredMembers.push(new_member);
+      this.filteredMembers = this.filteredMembers.sort((a, b) => a.lastname.localeCompare(b.lastname));
+      this.thisSeasonMembersNbr = this.members.reduce((acc, member) => {
+        return (member.season === this.season || member.is_sympathisant) ? acc + 1 : acc;
+      }, 0);
+      this.membersService.createMember(new_member);
+    }
+  }
+
+  player2member(player: FFBplayer): Member {
+    return {
+      id: '',
+      gender: player.gender === 1 ? 'M.' : 'Mme',
+      firstname: player.firstname,
+      lastname: player.lastname.toUpperCase(),
+      license_number: player.license_number,
+      birthdate: player.birthdate,
+      city: player.city ?? '',
+      season: player.last_season,
+      email: '?',
+      phone_one: '?',
+      orga_license_name: "BCSTO",
+      is_sympathisant: false,
+      has_account: false,
+    }
   }
 
   getMembersfromFFB() {
@@ -72,16 +108,16 @@ export class MembersComponent implements OnInit {
     }
   }
 
-  filter() {
+  selection_filter() {
     this.selection = this.radioButtonGroup.value.radioButton;
     this.filteredMembers = this.members.filter((member: Member) => {
       switch (this.selection) {
         case this.filters[0]: //'Tous':
           return member;
         case this.filters[1]: //'à jour':
-          return (member.season === '2024/2025' || member.is_sympathisant) ? member : false;
+          return (member.season === this.season || member.is_sympathisant) ? member : false;
         case this.filters[2]: //'non à jour':
-          return (member.season !== '2024/2025' && !member.is_sympathisant) ? member : false;
+          return (member.season !== this.season && !member.is_sympathisant) ? member : false;
       }
       return member;
     });
@@ -96,15 +132,15 @@ export class MembersComponent implements OnInit {
       let member = this.compare(existingMember, licensee);
       if (member !== null) {
         this.verbose += 'modification : ' + member.lastname + ' ' + member.firstname + '\n';
-
-        this.membersService.updateMember(member!);
+        console.log('%s updated to %s', existingMember.lastname, member.lastname);
+        await this.membersService.updateMember(member);
       }
 
     } else {
       // console.log('MembersComponent.createOrUpdateMember create');
       let newMember = this.createNewMember(licensee);
       this.verbose += 'creation : ' + newMember.lastname + ' ' + newMember.firstname + '\n';
-      let new_member = await this.membersService.createMember(newMember).then;
+      let new_member = await this.membersService.createMember(newMember);
     }
   }
 
@@ -117,7 +153,7 @@ export class MembersComponent implements OnInit {
       license_number: licensee.license_number,
       gender: licensee.gender,
       firstname: licensee.firstname,
-      lastname: licensee.lastname,
+      lastname: licensee.lastname.toUpperCase(),
       birthdate: licensee.birthdate,
       city: licensee.city ?? '',
       season: licensee.season ?? '',
@@ -134,7 +170,7 @@ export class MembersComponent implements OnInit {
 
     for (let key in next) {
       if (next[key] !== is[key]) {
-        console.log('MembersComponent.compare  : diff on', key, is[key], next[key]);
+        console.log('diff on', key, is[key], next[key]);
         this.verbose += 'updating ' + member.lastname + ' ' + member.firstname + ' (' + key + ')' + '\n';
         diff = true;
       }

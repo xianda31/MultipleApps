@@ -57,9 +57,9 @@
                         {{whoAmI?.firstname}} {{whoAmI?.lastname}}
                     </td>
                     <td>
-                        <app-input-player listeId="player2" type="text" class="form-control form-control-sm"
+                        <app-input-player-license listeId="player2" type="text" class="form-control form-control-sm"
                             [formControl]="player2" required>
-                        </app-input-player>
+                        </app-input-player-license>
                         <span *ngIf="player2.errors?.['already_engaged'] && player2.touched" class="text-danger">Ce
                             joueur est déjà inscrit</span>
                     </td>

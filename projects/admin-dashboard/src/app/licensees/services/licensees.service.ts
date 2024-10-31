@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { FFB_licensee } from '../../../../../common/ffb/interface/licensee.interface';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, from } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { FFB_proxyService } from '../../../../../common/ffb/services/ffb.service';
 
 @Injectable({
@@ -22,5 +23,11 @@ export class LicenseesService {
 
   get FFB_licensees$(): Observable<FFB_licensee[]> {
     return this._licensees$;
+  }
+
+  getLicenseeByLicense(license: string): Observable<FFB_licensee> {
+    return from(this.FFBService.getLicenceeDetails(license)).pipe(
+      filter((licensee): licensee is FFB_licensee => licensee !== null)
+    );
   }
 }

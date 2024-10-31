@@ -6,15 +6,15 @@ import { Player, Team, TournamentTeams } from '../../ffb/interface/tournament_te
 import { Member } from '../../member.interface';
 import { FormControl, Validators, Form, FormsModule, ReactiveFormsModule, ValidationErrors, AbstractControl } from '@angular/forms';
 import { CommonModule, UpperCasePipe } from '@angular/common';
-import { InputPlayerComponent } from '../../ffb/input-player/input-player.component';
 import { BehaviorSubject, combineLatest, from, map, Observable, of, switchMap } from 'rxjs';
 import { FFB_proxyService } from '../../ffb/services/ffb.service';
 import { TournamentService } from '../../services/tournament.service';
+import { InputPlayerLicenseComponent } from '../../ffb/input-player/input-player-license.component';
 
 @Component({
   selector: 'app-tournament',
   standalone: true,
-  imports: [UpperCasePipe, InputPlayerComponent, CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [UpperCasePipe, InputPlayerLicenseComponent, CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './tournament.component.html',
   styleUrl: './tournament.component.scss'
 })

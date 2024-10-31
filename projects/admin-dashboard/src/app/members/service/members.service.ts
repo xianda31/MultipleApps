@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { generateClient, get } from 'aws-amplify/api';
-import { BehaviorSubject, from, generate, Observable, of } from 'rxjs';
+import { BehaviorSubject, from, generate, Observable, of, last } from 'rxjs';
 import { Schema } from '../../../../../../amplify/data/resource';
 import { Member } from '../../../../../common/member.interface';
 
@@ -112,7 +112,7 @@ export class MembersService {
       console.error('Member not updated');
       return;
     } else {
-      console.log('Member updated', updatedMember.license_number);
+      console.log('Member updated', updatedMember.lastname);
       this._members = this._members.map((m) => m.license_number === member.license_number ? member : m);
       // this._members$.next(this._members);
     }

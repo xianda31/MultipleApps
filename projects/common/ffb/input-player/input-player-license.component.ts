@@ -5,21 +5,22 @@ import { FFB_proxyService } from '../services/ffb.service';
 import { CommonModule } from '@angular/common';
 
 @Component({
-  selector: 'app-input-player',
+  selector: 'app-input-player-license',
   standalone: true,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => InputPlayerComponent),
+      useExisting: forwardRef(() => InputPlayerLicenseComponent),
       multi: true
     }
   ],
   imports: [ReactiveFormsModule, FormsModule, CommonModule],
-  templateUrl: './input-player.component.html',
-  styleUrl: './input-player.component.scss'
+  templateUrl: './input-player-license.component.html',
+  styleUrl: './input-player-license.component.scss'
 })
-export class InputPlayerComponent implements ControlValueAccessor {
+export class InputPlayerLicenseComponent implements ControlValueAccessor {
   @Input() listeId!: string;
+  @Input() placeholder!: string;
 
   str_player: string = '';
   partners!: FFBplayer[];
@@ -38,7 +39,7 @@ export class InputPlayerComponent implements ControlValueAccessor {
     }
     // this.input.setValue('#' + input);
     this.str_player = input;
-    console.log('writeValue', input);
+    // console.log('writeValue', input);
   }
   registerOnChange(fn: any): void {
     this.onChange = fn;

@@ -4,7 +4,7 @@ import { FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angu
 import { Player } from '../../ffb/interface/tournament_teams.interface';
 import { FFB_proxyService } from '../../ffb/services/ffb.service';
 import { Team } from '../../ffb/interface/tournament_teams.interface';
-import { InputPlayerComponent } from '../../ffb/input-player/input-player.component';
+import { InputPlayerLicenseComponent } from '../../ffb/input-player/input-player-license.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastService } from '../../toaster/toast.service';
 import { club_tournament } from '../../ffb/interface/club_tournament.interface';
@@ -17,7 +17,7 @@ import { Member } from '../../member.interface';
 @Component({
   selector: 'app-teams',
   standalone: true,
-  imports: [UpperCasePipe, CommonModule, FormsModule, ReactiveFormsModule, InputPlayerComponent],
+  imports: [UpperCasePipe, CommonModule, FormsModule, ReactiveFormsModule, InputPlayerLicenseComponent],
   templateUrl: './teams.component.html',
   styleUrl: './teams.component.scss'
 })

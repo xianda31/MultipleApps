@@ -12,9 +12,9 @@ export class FFB_proxyService {
 
   constructor() { }
 
-  async getLicenceeDetails(search: string) {
+  async getLicenceeDetails(search: string): Promise<FFB_licensee | null> {
     if (search === '') {
-      return "";
+      return null;
     }
     try {
       const restOperation = get({
@@ -27,10 +27,10 @@ export class FFB_proxyService {
       const { body } = await restOperation.response;
       // console.log('GET call succeeded: ', await body.text());
       const data = await body.json();
-      return data;
+      return data as unknown as FFB_licensee;
     } catch (error) {
       console.log('GET call failed: ', error);
-      return "";
+      return null;
     }
   }
 
