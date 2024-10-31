@@ -10,7 +10,7 @@ import { ArticleComponent } from './site-content/article/article.component';
 import { ImageMgrComponent } from './site-content/files/image-mgr/image-mgr.component';
 import { AlbumsComponent } from './site-content/albums/albums.component';
 import { SysConfComponent } from './sys-conf/sys-conf.component';
-import { TestComponent } from './test/test.component';
+import { XlsImportComponent } from './xls-import/xls-import.component';
 
 export const routes: Routes = [
     { path: 'auth', component: AuthComponent },
@@ -24,7 +24,7 @@ export const routes: Routes = [
     { path: 'albums', component: AlbumsComponent },
     { path: 'sales', loadChildren: () => import('./sales/sales.module').then(m => m.SalesModule) },
     { path: 'sysconf', component: SysConfComponent },
-    { path: 'test', component: TestComponent },
+    { path: 'xls_import', component: XlsImportComponent },
 
     {
         path: 'tournaments',

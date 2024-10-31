@@ -1,0 +1,11 @@
+<div class="container">
+
+    <div class="input-group mb-3">
+        <input #fileInput type="file" class="form-control" (change)="onChange($event)">
+    </div>
+
+    <pre> {{verbose()}} </pre>
+
+    <app-sales-viewer *ngIf="loaded" [sales]="sales"> </app-sales-viewer>
+
+</div>

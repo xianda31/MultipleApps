@@ -87,7 +87,8 @@ export class SalesViewerComponent {
           // console.log('record', record);
           const product = this.products.find((product) => product.id === record.product_id);
           if (!product) {
-            console.log('Huston, there is a problem', record); return;
+            // console.log('ref. missing', record);
+            return;
           }
           const product_key = product.account;
           const amount = record.amount;
@@ -114,7 +115,7 @@ export class SalesViewerComponent {
       f_sales.push({ event, payees_nbr, products, payments });
     });
 
-    console.log('f_sales', f_sales);
+    // console.log('f_sales', f_sales);
     return f_sales;
   }
 
