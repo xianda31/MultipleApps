@@ -65,9 +65,9 @@ export class CustomersComponent {
 
 
   list_sales(season: string) {
-    this.sales_subscription = this.salesService.get_sales(season).subscribe((sales) => {
+    this.sales_subscription = this.salesService.get_sales$(season).subscribe((sales) => {
       console.log('sales', sales);
-      const products = sales.map((sale) => sale.records.filter((record) => record.class.includes('product')));
+      const products = sales.map((sale) => sale.records!.filter((record) => record.class.includes('product')));
       this.data_list = this.format_data_list(products);
     });
   }

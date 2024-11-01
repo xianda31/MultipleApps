@@ -48,7 +48,7 @@ export interface Sale extends Session {
     createdAt?: string;
     // amount: number;
     payer_id: string;
-    records: Record[];
+    records?: Record[];
 
     // revenues: Revenue[];
     // saleItems: SaleItem[];

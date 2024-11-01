@@ -10,6 +10,7 @@ import { PaymentMode, Record, Sale } from '../../../../cashier/src/app/shop/sale
 import { SalesViewerComponent } from '../../../../common/sales-viewer/sales-viewer.component';
 import { ProductService } from '../../../../common/services/product.service';
 import { Product } from '../sales/products/product.interface';
+import { SalesService } from '../../../../cashier/src/app/shop/sales.service';
 @Component({
   selector: 'app-test',
   standalone: true,
@@ -29,11 +30,13 @@ export class XlsImportComponent {
   worksheet!: ExcelJS.Worksheet;
   // verbose: string = '';
   verbose = signal<string>('');
+  excel_uploaded: boolean = false;
 
   constructor(
     private membersService: MembersService,
     private systemDataService: SystemDataService,
     private productsService: ProductService,
+    private salesService: SalesService,
 
   ) {
     this.systemDataService.configuration$.pipe(
@@ -59,6 +62,9 @@ export class XlsImportComponent {
 
 
   onChange(event: any) {
+    this.loaded = false;
+    this.excel_uploaded = false;
+    this.sales = [];
     const file = event.target.files[0];
     // console.log('file', file);
     let workbook = new ExcelJS.Workbook();
@@ -66,13 +72,60 @@ export class XlsImportComponent {
       this.verbose.set('\n');
       this.process_exel_file(workbook);
       this.loaded = true;
+      this.excel_uploaded = true;
+    });
+  }
 
+  sales_validity_check(sales: Sale[]): boolean {
+    let valid = true;
+    sales.forEach((sale) => {
+      if (!sale.records || sale.records.length === 0) {
+        console.log('anomaly : no records');
+        valid = false;
+      } else {
+        let total_credit = sale.records.reduce((acc, record) => record.class.includes('credit') ? acc + record.amount : acc, 0);
+        let total_debit = sale.records.reduce((acc, record) => record.class.includes('debit') ? acc + record.amount : acc, 0);
+        if (total_credit !== total_debit) {
+          console.log('amounts not equal', total_credit, total_debit);
+          this.verbose.set(this.verbose() + '[' + sale.payer_id + '] ' + 'montants non égaux : ' + total_credit + ' vs ' + total_debit + '\n');
+          valid = false;
+        }
+      }
+    });
+    return valid;
+  }
+
+  data_store() {
+
+    // verify sales integrity
+    this.sales_validity_check(this.sales);
+
+    // delete ALL sales of the season
+    this.salesService.get_sales$(this.season).subscribe((sales) => {
+      sales.forEach((sale) => {
+        this.salesService.delete_sale$(sale.id!).subscribe((response) => {
+          console.log('sales deletion status : ', sale.id, response);
+        });
+      });
+    }
+    );
+    // console.log('sales', this.sales);
+    this.sales.forEach((sale) => {
+      this.salesService.create_sale$(sale).subscribe((new_sale) => {
+
+
+        sale.records!.forEach((record) => {
+          record.sale_id = new_sale.id!;
+          this.salesService.create_record$(record).subscribe((record) => {
+            // console.log('record created', record);
+          });
+        });
+      });
     });
   }
 
   process_exel_file(workbook: ExcelJS.Workbook) {
 
-    this.sales = [];
     // workbook.eachSheet((this.worksheet, sheetId) => { console.log('this.worksheet', this.worksheet?.name) });
     let ws = workbook.getWorksheet(1);
     if (!ws) {
@@ -80,8 +133,6 @@ export class XlsImportComponent {
     } else {
       this.worksheet = ws;
     }
-
-
 
     let addresses: { [master: string]: string[] } = {};
     let colGroup = this.worksheet.getColumn(7);
@@ -116,8 +167,6 @@ export class XlsImportComponent {
       }
     });
 
-    console.log('addresses', addresses);
-
     // traitement lignes du tableau addresses (bloc de cellules mergées)
     Object.entries(addresses).forEach(([master, cells]) => {
       this.analyse(master, cells)
@@ -141,16 +190,16 @@ export class XlsImportComponent {
     };
 
     // payment side
-    let colE = master_row.getCell(5).value;
-    let colG = master_row.getCell(7).value;
-    let colH = master_row.getCell(8).value;
-    let colAH = master_row.getCell(34).value;
-    let colAE = master_row.getCell(31).value;
-    let colAF = master_row.getCell(32).value;
+    let col_member = master_row.getCell(5).value;
+    let col_nature = master_row.getCell(7).value;
+    let col_pièce = master_row.getCell(8).value;
+    let col_dette = master_row.getCell(31).value;
+    let col_avoir = master_row.getCell(32).value;
+    let col_caisse = master_row.getCell(33).value;
+    let col_virement = master_row.getCell(35).value;
 
-    let { payment_mode, bank, cheque_no } = this.retrieve_pmode(colG?.toString() as string, colH?.toString() as string);
-    const amount = (payment_mode === PaymentMode.TRANSFER) ? colAH?.valueOf() as number : colAF?.valueOf() as number;
-
+    let { payment_mode, bank, cheque_no } = this.retrieve_pmode(col_nature?.toString() as string, col_pièce?.toString() as string);
+    const amount = (payment_mode === PaymentMode.TRANSFER) ? col_virement?.valueOf() as number : col_caisse?.valueOf() as number;
 
     let records: Record[] = [{
       class: 'Payment_debit',
@@ -160,15 +209,24 @@ export class XlsImportComponent {
       bank: bank,
       cheque_no: cheque_no,
       sale_id: master,
-      member_id: colE?.toString() as string,
+      member_id: col_member?.toString() as string,
     }];
-    if (colAE) {
-      console.log('assets', colAE?.toString());
+    if (col_dette) {
       records.push({
         class: 'Payment_debit',
         season: this.season,
-        member_id: colE?.toString() as string,
-        amount: colAE?.valueOf() as number,
+        member_id: col_member?.toString() as string,
+        amount: col_dette?.valueOf() as number,
+        mode: PaymentMode.CREDIT,
+        sale_id: master
+      });
+    }
+    if (col_avoir) {
+      records.push({
+        class: 'Payment_debit',
+        season: this.season,
+        member_id: col_member?.toString() as string,
+        amount: col_avoir?.valueOf() as number,
         mode: PaymentMode.ASSETS,
         sale_id: master
       });
@@ -183,7 +241,7 @@ export class XlsImportComponent {
     );
 
     // control amounts equality
-    console.log('records', records);
+
     let total_credit = records.reduce((acc, record) => record.class.includes('credit') ? acc + record.amount : acc, 0);
     let total_debit = records.reduce((acc, record) => record.class.includes('debit') ? acc + record.amount : acc, 0);
 
@@ -197,16 +255,16 @@ export class XlsImportComponent {
 
   }
 
-  retrieve_pmode(colG: string, colH: string): { payment_mode: PaymentMode, bank: string, cheque_no: string } {
+  retrieve_pmode(colG: string, col_pièce: string): { payment_mode: PaymentMode, bank: string, cheque_no: string } {
 
 
-    if (colH === '' || colH === ' ' || colH === undefined) {
+    if (col_pièce === '' || col_pièce === ' ' || col_pièce === undefined) {
       if (colG === 'espèces') return { payment_mode: PaymentMode.CASH, bank: '', cheque_no: '' };
       return { payment_mode: PaymentMode.TRANSFER, bank: '', cheque_no: '' };
     } else {
-      // console.log('colH', colH);
-      let key = colH.substring(0, 3);
-      let cheque_no = colH.substring(3, 10);
+      // console.log('col_pièce', col_pièce);
+      let key = col_pièce.substring(0, 3);
+      let cheque_no = col_pièce.substring(3, 10);
       return { payment_mode: PaymentMode.CHEQUE, bank: key, cheque_no: cheque_no };
     }
   }
@@ -219,8 +277,11 @@ export class XlsImportComponent {
     let z = concat(name);
     if (z === 'DROITSDETABLE'
       || z === 'ERREURDECAISSE'
-      || z === 'ERREURCAISSE')
+      || z === 'ERREURCAISSE') {
+      // this.verbose.set(this.verbose() + '[' + row_nbr + '] ' + z + ' non enregistrée ' + '\n');
+
       return null;
+    }
 
     const member = this.members.find((member) => (concat(member.lastname + member.firstname)) === z);
 

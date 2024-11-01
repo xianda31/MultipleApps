@@ -23,136 +23,6 @@ export class SalesService {
   ) { }
 
 
-  // saleItems API
-
-  // writeCartItems(saleItems: CartItem[], sale_id: string): Observable<CartItem[]> {
-  //   let observables: Observable<CartItem>[] = [];
-
-  //   let writeCartItem: (saleItem: CartItem, sale_id: string) => Observable<CartItem> = (saleItem, sale_id) => {
-  //     const client = generateClient<Schema>();
-  //     let { ...saleItemCreateInput } = { ...saleItem, sale_id };
-  //     // console.log('saleItemCreateInput', saleItemCreateInput);
-  //     return from(client.models.CartItem.create(saleItemCreateInput))
-  //       .pipe(
-  //         map((response: { data: unknown; }) => response.data as unknown as CartItem),
-  //         tap((saleItem) => {
-  //           this._saleItems.push(saleItem);
-  //           this._saleItems$.next(this._saleItems);
-  //         })
-  //       );
-  //   };
-
-  //   saleItems.forEach((saleItem) => {
-  //     observables.push(writeCartItem(saleItem, sale_id));
-  //   });
-
-  //   return combineLatest(observables)
-  // }
-
-
-  // getCartItems(season: string): Observable<CartItem[]> {
-  //   let new_season = false;
-  //   if (this.current_season !== season) {
-  //     new_season = true;
-  //     this.current_season = season;
-  //   }
-
-  //   const _listCartItems = (): Observable<CartItem[]> => {
-  //     const client = generateClient<Schema>();
-  //     return from(client.models.CartItem.list(
-  //       {
-  //         filter: { season: { eq: season } },
-  //       }
-  //     ))
-  //       .pipe(
-  //         map((response: { data: CartItem[] }) => response.data),
-  //         tap((saleItems) => {
-  //           this._saleItems = saleItems;
-  //           this._saleItems$.next(this._saleItems);
-  //         })
-  //       );
-  //   }
-  //   return (this._saleItems.length > 0 && !new_season) ? (this._saleItems$.asObservable()) : _listCartItems();
-  // }
-
-
-  // Revenues API
-
-
-
-  // getRevenues(season: string): Observable<Payment[]> {
-
-  //   let new_season = false;
-  //   if (this.current_season !== season) {
-  //     new_season = true;
-  //     this.current_season = season;
-  //   }
-  //   const _listRevenues = (): Observable<Payment[]> => {
-  //     const client = generateClient<Schema>();
-  //     return from(client.models.Payment.list(
-  //       {
-  //         filter: { season: { eq: season } },
-  //       }
-  //     ))
-  //       .pipe(
-  //         map((response: { data: any }) => response.data as unknown as Payment[]),
-  //         tap((revenues) => {
-  //           this._revenues = revenues;
-  //         })
-  //       );
-  //   }
-  //   return (this._revenues.length > 0 && !new_season) ? of(this._revenues) : _listRevenues();
-  // }
-
-  // writeRevenues(revenues: Payment[], sale_id: string): Observable<Payment[]> {
-  //   let observables: Observable<Payment>[] = [];
-
-  //   let writeRevenue: (revenue: Payment) => Observable<Payment> = (revenue) => {
-  //     let { ...revenueCreateInput } = { ...revenue, sale_id };
-  //     const client = generateClient<Schema>();
-  //     return from(client.models.Payment.create(revenueCreateInput))
-  //       .pipe(
-  //         map((response: { data: unknown }) => response.data as unknown as Payment),
-  //       );
-  //   };
-
-  //   revenues.forEach((revenue) => {
-  //     observables.push(writeRevenue(revenue));
-  //   });
-
-  //   return combineLatest(observables)
-  // }
-
-  // // sale API
-
-  // writeOperation(sale: Sale): Observable<[CartItem[], Payment[]]> {
-
-  //   const client = generateClient<Schema>();
-  //   const { saleItems, ...saleInput } = sale;
-  //   // console.log('saleInput', saleInput);
-  //   return from(client.models.Sale.create(saleInput))
-  //     .pipe(
-  //       map((response: { data: unknown; }) => {
-  //         let new_sale = response.data as unknown as Sale;
-  //         if (!new_sale || !new_sale.id) {
-  //           throw new Error('sale writing not performed' + JSON.stringify(response));
-  //         } else {
-  //           sale.id = new_sale.id;
-  //           if (this._sales) this._sales.push(sale);
-  //           this._sales$.next(this._sales);
-  //           return sale;
-  //         }
-  //       }),
-  //       switchMap((sale) => {
-  //         return combineLatest([
-  //           this.writeCartItems(sale.saleItems, sale.id!),
-  //           this.writeRevenues(sale.revenues, sale.id!)
-  //         ]);
-  //       })
-
-  //     );
-  // }
-
 
   // Record API
 
@@ -161,7 +31,6 @@ export class SalesService {
       class: 'Product_credit',
       season: session.season,
       amount: cart.paied,
-      // debit_credit: DebitCredit.CREDIT,
       sale_id: sale_id,
 
       product_id: cart.product_id,
@@ -174,7 +43,6 @@ export class SalesService {
       class: 'Payment_debit',
       season: session.season,
       amount: payment.amount,
-      // debit_credit: DebitCredit.DEBIT,
       sale_id: sale_id,
 
       member_id: payment.payer_id,
@@ -211,30 +79,40 @@ export class SalesService {
       );
   }
 
-  create_sale$(session: Session, payer: Member, amount: number): Observable<Sale> {
+  create_sale$(sale: Sale): Observable<Sale> {
+    // console.log('sale to create', sale);
     const client = generateClient<Schema>();
-    return from(client.models.Sale.create({
-      // amount: amount,
-      season: session.season,
-      // vendor: session.vendor,
-      event: session.event,
-      payer_id: payer.id,
-    })
+    return from(client.models.Sale.create(sale)
       .then((response) => {
-        const created_sale = response.data as unknown as Sale;
+        // console.log('response', response);
+        const created_sale = response.data as unknown as Sale;    // marche pas si error dans response
         // console.log('created sale', created_sale);
         return created_sale;
       })
-      .catch((error) => {
+      .catch((error) => {             // non capté si error dans response !!!!
         console.error('error', error);
         throw new Error(error)
       }));
   }
 
+
+  delete_sale$(sale_id: string): Observable<Sale> {
+    const client = generateClient<Schema>();
+    return from(client.models.Sale.delete({ id: sale_id })
+      .then((response) => {
+        return response.data as unknown as Sale;
+      })
+      .catch((error) => {
+        console.error('error', error);
+        throw new Error(error);
+      }));
+  }
+
+
   save_sale$(session: Session, buyer: Member, cart: CartItem[], payments: Payment[]): Observable<Sale> {
-    console.log('save_sale', cart, payments);
+    // console.log('save_sale', session);
     let new_sale: Sale;
-    return this.create_sale$(session, buyer, cart.reduce((total, item) => total + item.paied, 0))
+    return this.create_sale$({ ...session, payer_id: buyer.id! })
       .pipe(
         catchError((error) => {
           console.error('error', error);
@@ -242,6 +120,7 @@ export class SalesService {
         }),
         map((sale) => {
           new_sale = sale;
+          console.log('new_sale', new_sale);
           return sale;
         }),
         switchMap((sale) => {
@@ -271,7 +150,8 @@ export class SalesService {
     return this._sales.find((sale) => sale.id === sale_id);
   }
 
-  get_sales(season: string): Observable<Sale[]> {
+
+  get_sales$(season: string): Observable<Sale[]> {
     let new_season = false;
     if (this.current_season !== season) {
       new_season = true;
@@ -282,7 +162,7 @@ export class SalesService {
       const client = generateClient<Schema>();
       return from(client.models.Sale.list(
         {
-          selectionSet: ['id', 'season', 'event', 'payer_id', 'records.*'],
+          selectionSet: ['id', 'season', 'event', 'vendor', 'payer_id', 'records.*'],
           filter: { season: { eq: season } },
         })).pipe(
           map((response: { data: unknown; }) => response.data as unknown as Sale[]),

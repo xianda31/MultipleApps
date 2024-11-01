@@ -80,7 +80,7 @@ export class SalesComponent {
 
 
   list_sales(season: string): Observable<Sale[]> {
-    return this.salesService.get_sales(season).pipe(
+    return this.salesService.get_sales$(season).pipe(
       map((sales) => {
         // if (!sales) return [];
         return sales.sort((a, b) => a.event > b.event ? 1 : -1)

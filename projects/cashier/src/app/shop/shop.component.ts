@@ -102,7 +102,7 @@ export class ShopComponent {
       this.products = products;
       this.products_array = this.productService.products_array(products);
       this.session = session;
-      this.sales_subscription = this.salesService.get_sales(session.season).subscribe((sales) => {
+      this.sales_subscription = this.salesService.get_sales$(session.season).subscribe((sales) => {
         this.sales = sales;
 
         this.sales_of_the_day = sales.filter((sale) => sale.event === session.event);
@@ -224,6 +224,7 @@ export class ShopComponent {
     return product ? product.account : '???';
   }
   sale_amount(sale: Sale) {
+    if (!sale.records) return 0;
     return sale.records
       .filter((record) => record.class.includes('Product'))
       .reduce((total, record) => total + record.amount, 0);

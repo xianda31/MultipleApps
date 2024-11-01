@@ -4,7 +4,16 @@
         <input #fileInput type="file" class="form-control" (change)="onChange($event)">
     </div>
 
+    <h6 *ngIf="excel_uploaded">
+        mise à jour base comptable (toutes les données seront écrasées) :
+        <button class="btn btn-danger btn-sm" (click)="data_store()">
+            <i class="fa-solid fa-gear"></i>
+        </button>
+    </h6>
+
     <pre> {{verbose()}} </pre>
+
+
 
     <app-sales-viewer *ngIf="loaded" [sales]="sales"> </app-sales-viewer>
 

@@ -37,7 +37,7 @@ const schema = a.schema({
     season: a.string().required(),
     payer_id: a.id().required(),
     // amount: a.float().required(),
-    // vendor: a.string().required(),
+    vendor: a.string().required(),
     event: a.string().required(),
     records: a.hasMany('Record', 'sale_id'),
   })

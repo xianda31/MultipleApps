@@ -81,7 +81,7 @@ export class SalesViewerComponent {
       const event = sale.event;
       const products: f_products = {};
       const payments: f_payments = {};
-      sale.records.forEach((record) => {
+      sale.records?.forEach((record) => {
         if (record.class.includes('Product')) {
           const payee = this.member_name(record.member_id!);
           // console.log('record', record);
@@ -141,6 +141,9 @@ export class SalesViewerComponent {
   // }
 
   sale_amount(sale: Sale) {
+    if (!sale.records) {
+      return 0;
+    }
     return sale.records
       .filter((record) => record.class.includes('Product'))
       .reduce((total, record) => total + record.amount, 0);
