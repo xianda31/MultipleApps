@@ -2,9 +2,14 @@ import { Injectable } from '@angular/core';
 import { generateClient } from 'aws-amplify/api';
 import { Schema } from '../../../../../amplify/data/resource';
 import { BehaviorSubject, catchError, combineLatest, from, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
-import { Sale, Session, Record } from './sales.interface';
+import { Sale, Session, Record, f_Sale, f_products, f_payments, PaymentMode } from './sales.interface';
 import { CartItem, Payment } from './cart/cart.interface';
 import { Member } from '../../../../common/member.interface';
+import { MembersService } from '../../../../admin-dashboard/src/app/members/service/members.service';
+import { ProductService } from '../../../../common/services/product.service';
+import { Product } from '../../../../admin-dashboard/src/app/sales/products/product.interface';
+import { ExcelService } from '../excel.service';
+import { xls_header } from '../../../../common/excel/excel.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -18,9 +23,23 @@ export class SalesService {
   private _revenues: Payment[] = [];
   private _revenues$ = new BehaviorSubject<Payment[]>(this._revenues);
   current_season: string = '';
+  products: Product[] = [];
 
   constructor(
-  ) { }
+    private membersService: MembersService,
+    private productService: ProductService,
+    private excelService: ExcelService
+
+
+  ) {
+    this.productService.listProducts().subscribe((products) => {
+      this.products = products;
+      // this.f_sales = this.salesService.tabulate_sales(this.sales);
+      // // console.log('f_sales', this.f_sales);
+      // this.loaded = true;
+    });
+
+  }
 
 
 
@@ -174,6 +193,8 @@ export class SalesService {
     }
     return (this._sales && !new_season) ? this._sales$.asObservable() : _listSales();
   }
+
+  // utility functions
 
 
 }

@@ -48,4 +48,46 @@ export class ExcelService {
       saveAs(blob, `${fileName}.xlsx`);
     });
   }
+
+
+  // unitary API
+
+  createWorkbook(): ExcelJS.Workbook {
+    return new ExcelJS.Workbook();
+  }
+
+  createWorksheet(workbook: ExcelJS.Workbook, name: string): ExcelJS.Worksheet {
+    return workbook.addWorksheet(name);
+  }
+  addHeaderRow(worksheet: ExcelJS.Worksheet, headers: string[]): void {
+    worksheet.addRow(headers);
+  }
+  addDataRow(worksheet: ExcelJS.Worksheet, data: { [key: string]: any }, headers: string[]): number {
+    const row: any[] = [];
+    headers.forEach((header) => {
+      row.push(data[header]);
+    });
+    return worksheet.addRow(row).number;
+  }
+
+  mergeCellsOfCol(worksheet: ExcelJS.Worksheet, headers: string[], header: string, row_start: number, row_end: number): void {
+    let col_nbr = headers.findIndex((hdr) => hdr === header);
+    if (!col_nbr) {
+      console.log('col %s not found', header);
+      return;
+    } else { col_nbr++; }
+    let range = worksheet.getCell(row_start, col_nbr).fullAddress.address
+      + ':' + worksheet.getCell(row_end, col_nbr).fullAddress.address;
+
+    worksheet.mergeCells(range);
+  }
+
+
+  saveWorkbook(workbook: ExcelJS.Workbook, fileName: string): void {
+    workbook.xlsx.writeBuffer().then((buffer) => {
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      saveAs(blob, `${fileName}.xlsx`);
+    });
+  }
+
 }

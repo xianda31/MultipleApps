@@ -122,4 +122,12 @@ export class ProductService {
         });
         return promise;
     }
+
+
+    //utilities functions (once products are loaded)
+
+    getProduct(product_id: string): Product {
+        return this._products.find((product) => product.id === product_id) as Product;
+    }
+
 }

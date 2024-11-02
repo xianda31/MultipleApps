@@ -62,3 +62,13 @@ export enum PaymentMode {
     ASSETS = 'avoir',
     // CARD = 'carte',
 }
+
+
+export interface f_products { [payee: string]: { [product_key: string]: number } }
+export interface f_payments { [payment_key: string]: number }
+export interface f_Sale {
+    event: string;
+    payees_nbr: number;
+    payments: f_payments;
+    products: f_products;
+}
