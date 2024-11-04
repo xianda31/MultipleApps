@@ -35,10 +35,11 @@ const schema = a.schema({
 
   Sale: a.model({
     season: a.string().required(),
-    payer_id: a.id().required(),
-    // amount: a.float().required(),
     vendor: a.string().required(),
     event: a.string().required(),
+
+    payer_id: a.id().required(),
+    comment: a.string(),
     records: a.hasMany('Record', 'sale_id'),
   })
     .authorization((allow) => [allow.publicApiKey()]),

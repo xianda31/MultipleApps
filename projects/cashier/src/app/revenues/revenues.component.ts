@@ -42,7 +42,7 @@ export class RevenuesComponent {
   }
 
   list_records(season: string) {
-    this.records_subscription = this.saleService.get_records(season).subscribe((records) => {
+    this.records_subscription = this.saleService.read_records$(season).subscribe((records) => {
       console.log('records', records);
       const payments = records.filter((record) => record.class.includes('debit'));
       this.data_list = this.format_data_list(payments);

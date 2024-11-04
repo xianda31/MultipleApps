@@ -84,6 +84,7 @@ export class CartComponent implements OnInit, OnDestroy {
   // }
 
   get_product_description(product_id: string): string {
+    if (product_id === 'debt') return 'Dette';
     const product = this.products.find((product) => product.id === product_id);
     return product?.description || '???';
   }

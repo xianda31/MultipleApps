@@ -12,7 +12,7 @@ export interface Payment {
 
 
 export interface CartItem {
-    payee?: Member | null;
+    payee?: Member | null;    // null => 2nd payee to fill-in
     paied: number;
     payee_id: string;
     product_id: string;

@@ -2,7 +2,7 @@
     <div class="col-md-3 mt-3">
         <div class="input-group input-group-sm mb-2">
             <span class="input-group-text">Saison</span>
-            <input type="text" class="form-control" (change)="new_season($event)" [value]="season">
+            <input type="text" class="form-control" (change)="change_season($event)" [value]="season">
         </div>
     </div>
     <div class="col-md-3 ms-auto">
@@ -14,4 +14,4 @@
 
 </div>
 
-<app-sales-viewer *ngIf="loaded" [sales]="sales"> </app-sales-viewer>
+<app-sales-viewer *ngIf="loaded" [sales]="sales" (delete)="delete_sale($event)"> </app-sales-viewer>

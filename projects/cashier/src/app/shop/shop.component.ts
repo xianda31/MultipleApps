@@ -62,7 +62,7 @@ export class ShopComponent {
   ]
 
   debt_product: Product = {
-    id: 'debit',
+    id: 'debt',
     glyph: 'DETTE',
     description: 'dette',
     price: 0,
@@ -119,29 +119,27 @@ export class ShopComponent {
       // console.log('buyerForm.valueChanges', buyer);
       if (buyer === null) return;
 
-      // this.debt_amount = this.find_debt(buyer);
-      // if (this.debt_amount !== 0) {
-      //   this.debt_product.price = this.debt_amount;
-      //   this.toastService.showWarningToast('dette', 'cette personne a une dette de ' + this.debt_amount + ' €');
-      // }
+      this.debt_amount = this.find_debt(buyer);
+      if (this.debt_amount !== 0) {
+        this.debt_product.price = this.debt_amount;
+        this.toastService.showWarningToast('dette', 'cette personne a une dette de ' + this.debt_amount + ' €');
+      }
     });
 
   }
 
-  // find_debt(payer: Member): number {
-  //   const payer_sales = this.sales.filter((sale) => sale.payer_id === payer.id);
-  //   const payments: Revenue[] = [];
-  //   payer_sales.forEach((sale) => {
-  //     sale.payments
-  //       .filter((payment) => payment.mode === PaymentMode.CREDIT)
-  //       .forEach((payment) => {
-  //         console.log('payment in CREDIT', payment);
-  //         payments.push(payment);
-  //       });
-  //   });
-  //   console.log('payments', payments);
-  //   return payments.reduce((acc, payment) => acc + payment.amount, 0);
-  // }
+  find_debt(payer: Member): number {
+    const payer_sales = this.sales.filter((sale) => sale.payer_id === payer.id);
+    let due = 0;
+    payer_sales.forEach((sale) => {
+      if (sale.records) {
+        due += sale.records.filter((payment) => payment.mode === PaymentMode.CREDIT)
+          .reduce((acc, payment) => acc + payment.amount, 0);
+      }
+    });
+    console.log('dette', due);
+    return due;
+  }
 
 
   product_selected(product: Product) {

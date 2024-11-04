@@ -1,13 +1,16 @@
 <table class="table table-sm">
     <thead>
         <tr>
-            <th class="col">date</th>
+            <th class="col">date
+                <i class="bi bi-arrow-down-up" (click)="swap_date_sorting()"></i>
+            </th>
             <th scope="col">bénéficiaire</th>
-            <th class="text-center" *ngFor="let account of product_accounts">{{account}}</th>
+            <th class="text-center" *ngFor="let account of product_accounts"> {{account}} </th>
             <th class="text-center" *ngFor="let account of payment_accounts">{{account}}</th>
 
-            <!-- <th scope="col">mode</th>
-            <th scope="col">Cheque No</th> -->
+            <!-- <th scope="col">mode</th> -->
+            <th scope="col">Cheque No</th>
+            <th scope="col">Action</th>
         </tr>
     </thead>
     <tbody>
@@ -22,6 +25,12 @@
                 <ng-container *ngIf="ip===0">
                     <td [attr.rowspan]="f_sale.payees_nbr" *ngFor="let account of payment_accounts" class="text-center">
                         {{f_sale.payments[account] ? f_sale.payments[account] : ''}}
+                    </td>
+                    <td [attr.rowspan]="f_sale.payees_nbr">{{f_sale.reference}}</td>
+                    <td [attr.rowspan]="f_sale.payees_nbr">
+                        <button class="btn btn-sm btn-outline-danger" (click)="delete_sale(f_sale)">
+                            <i class="bi bi-trash"></i>
+                        </button>
                     </td>
                 </ng-container>
             </tr>

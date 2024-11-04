@@ -1,15 +1,12 @@
 import { Injectable } from '@angular/core';
 import { generateClient } from 'aws-amplify/api';
 import { Schema } from '../../../../../amplify/data/resource';
-import { BehaviorSubject, catchError, combineLatest, from, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
-import { Sale, Session, Record, f_Sale, f_products, f_payments, PaymentMode } from './sales.interface';
+import { BehaviorSubject, catchError, combineLatest, from, map, Observable, of, switchMap, tap } from 'rxjs';
+import { Sale, Session, Record, PaymentMode } from './sales.interface';
 import { CartItem, Payment } from './cart/cart.interface';
 import { Member } from '../../../../common/member.interface';
-import { MembersService } from '../../../../admin-dashboard/src/app/members/service/members.service';
 import { ProductService } from '../../../../common/services/product.service';
 import { Product } from '../../../../admin-dashboard/src/app/sales/products/product.interface';
-import { ExcelService } from '../excel.service';
-import { xls_header } from '../../../../common/excel/excel.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -18,42 +15,43 @@ export class SalesService {
 
   private _sales: Sale[] = [];
   private _sales$ = new BehaviorSubject<Sale[]>(this._sales);
-  private _saleItems: CartItem[] = [];
-  private _saleItems$ = new BehaviorSubject<CartItem[]>(this._saleItems);
-  private _revenues: Payment[] = [];
-  private _revenues$ = new BehaviorSubject<Payment[]>(this._revenues);
   current_season: string = '';
   products: Product[] = [];
 
   constructor(
-    private membersService: MembersService,
-    private productService: ProductService,
-    private excelService: ExcelService
-
+    private productService: ProductService
 
   ) {
     this.productService.listProducts().subscribe((products) => {
       this.products = products;
-      // this.f_sales = this.salesService.tabulate_sales(this.sales);
-      // // console.log('f_sales', this.f_sales);
-      // this.loaded = true;
     });
 
   }
 
 
-
   // Record API
 
   cart2Record(session: Session, sale_id: string, cart: CartItem): Record {
-    return {
-      class: 'Product_credit',
-      season: session.season,
-      amount: cart.paied,
-      sale_id: sale_id,
+    if (cart.product_id === 'debt') {
+      return {
+        class: 'Payment_debit',
+        season: session.season,
+        amount: -cart.paied,
+        sale_id: sale_id,
 
-      product_id: cart.product_id,
-      member_id: cart.payee_id,
+        member_id: cart.payee_id,
+        mode: PaymentMode.CREDIT
+      }
+    } else {
+      return {
+        class: 'Product_credit',
+        season: session.season,
+        amount: cart.paied,
+        sale_id: sale_id,
+
+        product_id: cart.product_id,
+        member_id: cart.payee_id,
+      }
     }
   }
 
@@ -85,7 +83,7 @@ export class SalesService {
     );
   }
 
-  get_records(season: string): Observable<Record[]> {
+  read_records$(season: string): Observable<Record[]> {
 
     const client = generateClient<Schema>();
     return from(client.models.Record.list(
@@ -96,6 +94,18 @@ export class SalesService {
       .pipe(
         map((response: { data: any }) => response.data as unknown as Record[]),
       );
+  }
+
+  delete_record$(record_id: string): Observable<Record> {
+    const client = generateClient<Schema>();
+    return from(client.models.Record.delete({ id: record_id })
+      .then((response) => {
+        return response.data as unknown as Record;
+      })
+      .catch((error) => {
+        console.error('error', error);
+        throw new Error(error);
+      }));
   }
 
   create_sale$(sale: Sale): Observable<Sale> {
@@ -127,6 +137,21 @@ export class SalesService {
       }));
   }
 
+  cancel_sale$(sale_id: string): Observable<boolean> {
+    const sale = this._sales.find((sale) => sale.id === sale_id);
+    if (!sale) { return of(false); }
+    const records = sale.records;
+    if (!records) { return of(false) }
+    return combineLatest(records.map((record) => this.delete_record$(record.id!))).pipe(
+      switchMap(() => this.delete_sale$(sale_id)),
+      catchError((error) => {
+        console.error('error', error);
+        throw new Error(error);
+      }),
+      map(() => true)
+    );
+
+  }
 
   save_sale$(session: Session, buyer: Member, cart: CartItem[], payments: Payment[]): Observable<Sale> {
     // console.log('save_sale', session);

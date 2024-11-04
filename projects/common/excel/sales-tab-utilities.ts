@@ -59,6 +59,9 @@ export class SalesTabUtilities {
                 row['Caisse entrée'] = f_sale.payments[payment];
                 row['Nature'] = 'chèque';
                 break;
+              case PaymentMode.CREDIT:
+                row['Dette'] = f_sale.payments[payment];
+                break;
               case PaymentMode.TRANSFER:
                 row['Banque entrée'] = f_sale.payments[payment];
                 row['Nature'] = 'virement';
@@ -76,6 +79,8 @@ export class SalesTabUtilities {
         this.excelService.mergeCellsOfCol(wks, headers, 'Caisse entrée', row_start, row_end);
         this.excelService.mergeCellsOfCol(wks, headers, 'Banque entrée', row_start, row_end);
 
+        // this.excelService.mergeCellsOfCol(wks, headers, 'Cheque No', row_start, row_end);
+
       }
     });
     this.excelService.saveWorkbook(wbk, filename);
@@ -90,6 +95,7 @@ export class SalesTabUtilities {
       const event = sale.event;
       const products: f_products = {};
       const payments: f_payments = {};
+      let reference: string | undefined = undefined;
       sale.records?.forEach((record) => {
         if (record.class.includes('Product')) {
           const payee = this.member_name(record.member_id!);
@@ -118,10 +124,18 @@ export class SalesTabUtilities {
           } else {
             payments[payment_key] += amount;
           }
+          reference = record.mode === PaymentMode.CHEQUE ? record.bank! + record.cheque_no! : undefined;
         }
       });
       const payees_nbr = Object.keys(products).length;
-      f_sales.push({ event, payees_nbr, products, payments });
+      f_sales.push({
+        sale_id: sale.id!,
+        event: event,
+        payees_nbr: payees_nbr,
+        products: products,
+        payments: payments,
+        reference: reference
+      });
     });
 
     return f_sales;
