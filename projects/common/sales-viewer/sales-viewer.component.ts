@@ -29,7 +29,7 @@ export class SalesViewerComponent {
 
   ngOnChanges(): void {
     this.f_sales = this.salesTabUtilities.tabulate_sales(this.sales);
-    this.sort_by_date(this.up_sorting);
+    this.f_sales = this.salesTabUtilities.sort_by_date(this.f_sales, this.up_sorting);
   }
 
   ngOnInit(): void {
@@ -39,9 +39,11 @@ export class SalesViewerComponent {
     this.systemDataService.configuration$.subscribe((conf) => {
       this.product_accounts = conf.product_accounts.map((account) => account.key);
     });
-
+    // console.log('sales', this.sales);
     this.f_sales = this.salesTabUtilities.tabulate_sales(this.sales);
-    this.sort_by_date(this.up_sorting);
+    this.f_sales = this.salesTabUtilities.sort_by_date(this.f_sales, this.up_sorting);
+
+    // this.sort_by_date(this.up_sorting);
 
   }
 
@@ -54,22 +56,23 @@ export class SalesViewerComponent {
   swap_date_sorting(): void {
 
     this.up_sorting = !this.up_sorting;
-    this.sort_by_date(this.up_sorting);
+    this.f_sales = this.salesTabUtilities.sort_by_date(this.f_sales, this.up_sorting);
+    // this.sort_by_date(this.up_sorting);
 
   }
 
 
-  sort_by_date(up_sorting: boolean): void {
-    let compare_up = (a: f_Sale, b: f_Sale) => new Date(a.event) < new Date(b.event) ? 1 : -1;
-    let compare_down = (a: f_Sale, b: f_Sale) => new Date(a.event) > new Date(b.event) ? 1 : -1;
+  // sort_by_date(up_sorting: boolean): void {
+  //   let compare_up = (a: f_Sale, b: f_Sale) => new Date(a.event) < new Date(b.event) ? 1 : -1;
+  //   let compare_down = (a: f_Sale, b: f_Sale) => new Date(a.event) > new Date(b.event) ? 1 : -1;
 
-    if (up_sorting) {
-      this.f_sales.sort(compare_up);
-    } else {
-      this.f_sales.sort(compare_down);
-    }
+  //   if (up_sorting) {
+  //     this.f_sales.sort(compare_up);
+  //   } else {
+  //     this.f_sales.sort(compare_down);
+  //   }
 
-  }
+  // }
 
   delete_sale(f_sale: f_Sale): void {
     this.delete.emit(f_sale.sale_id);

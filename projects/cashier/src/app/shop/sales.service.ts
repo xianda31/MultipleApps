@@ -100,6 +100,7 @@ export class SalesService {
     const client = generateClient<Schema>();
     return from(client.models.Record.delete({ id: record_id })
       .then((response) => {
+        // console.log('response', response);
         return response.data as unknown as Record;
       })
       .catch((error) => {
@@ -129,6 +130,7 @@ export class SalesService {
     const client = generateClient<Schema>();
     return from(client.models.Sale.delete({ id: sale_id })
       .then((response) => {
+        // console.log('sale delete response', response);
         return response.data as unknown as Sale;
       })
       .catch((error) => {

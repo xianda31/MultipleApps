@@ -1,0 +1,42 @@
+<div *ngIf="loaded" class="row justify-content-between align-items-center">
+    <div class="col-md-3 mt-3">
+        <div class="input-group input-group-sm mb-2">
+            <span class="input-group-text">Saison</span>
+            <input type="text" class="form-control" (change)="change_season($event)" [value]="season">
+        </div>
+    </div>
+    <!-- <div class="col-md-3 ms-auto">
+        <button class="btn btn-sm btn-outline-primary" (click)="export_excel()">
+            Export excel
+        </button>
+    </div> -->
+    <table class="table table-sm">
+        <thead>
+            <tr>
+                <th class="col">date
+                    <i class="bi bi-arrow-down-up" (click)="swap_date_sorting()"></i>
+                </th>
+                <th class="text-center" *ngFor="let account of payment_accounts">{{account}}</th>
+
+                <!-- <th scope="col">mode</th> -->
+                <!-- <th scope="col">Cheque No</th>
+                <th scope="col">Action</th> -->
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let f_sale of f_sales">
+                <td>{{format_date(f_sale.event)}} </td>
+                <td *ngFor="let account of payment_accounts" class="text-center">
+                    {{f_sale.payments[account] ? f_sale.payments[account] : ''}}
+                </td>
+                <!-- <td>{{ sale_amount(sale) | currency:'€':'symbol':'2.2-2':'fr' }}</td> -->
+            </tr>
+            <tr class="fw-bold">
+                <td>Total</td>
+                <td *ngFor="let account of payment_accounts" class="text-center">
+                    {{total_payments[account]}}
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>

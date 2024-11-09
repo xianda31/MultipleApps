@@ -11,6 +11,8 @@ import { SalesViewerComponent } from '../../../../common/sales-viewer/sales-view
 import { ProductService } from '../../../../common/services/product.service';
 import { Product } from '../sales/products/product.interface';
 import { SalesService } from '../../../../cashier/src/app/shop/sales.service';
+import { COL, MAP, PRODUCTS } from '../../../../common/excel/excel.interface';
+import { write } from '@popperjs/core';
 @Component({
   selector: 'app-test',
   standalone: true,
@@ -80,13 +82,14 @@ export class XlsImportComponent {
     let valid = true;
     sales.forEach((sale) => {
       if (!sale.records || sale.records.length === 0) {
-        console.log('anomaly : no records');
+        console.log('anomaly : no records in', sale);
         valid = false;
       } else {
         let total_credit = sale.records.reduce((acc, record) => record.class.includes('credit') ? acc + record.amount : acc, 0);
         let total_debit = sale.records.reduce((acc, record) => record.class.includes('debit') ? acc + record.amount : acc, 0);
         if (total_credit !== total_debit) {
           console.log('amounts not equal', total_credit, total_debit);
+          console.log('sale', sale);
           this.verbose.set(this.verbose() + '[' + sale.payer_id + '] ' + 'montants non égaux : ' + total_credit + ' vs ' + total_debit + '\n');
           valid = false;
         }
@@ -99,139 +102,129 @@ export class XlsImportComponent {
 
     // verify sales integrity
     this.sales_validity_check(this.sales);
+    console.log('sales', this.sales);
+    // this.salesService.get_sales$(this.season).subscribe((sales) => {
+    //   // delete ALL sales of the season
+    //   sales.forEach((sale) => {
+    //     this.salesService.cancel_sale$(sale.id!).subscribe((response) => {
+    //       console.log('sale deleted', sale.id);
+    //     });
+    //   });
 
-    // delete ALL sales of the season
-    this.salesService.get_sales$(this.season).subscribe((sales) => {
-      sales.forEach((sale) => {
-        this.salesService.delete_sale$(sale.id!).subscribe((response) => {
-          console.log('sales deletion status : ', sale.id, response);
-        });
-      });
-    }
-    );
-    // console.log('sales', this.sales);
-    this.sales.forEach((sale) => {
-      this.salesService.create_sale$(sale).subscribe((new_sale) => {
+    //   // create new sales
+    //   this.sales.forEach((sale) => {
+    //     this.salesService.create_sale$(sale).subscribe((new_sale) => {
+    //       sale.records!.forEach((record) => {
+    //         record.sale_id = new_sale.id!;
+    //         this.salesService.create_record$(record).subscribe((record) => {
+    //         });
+    //       });
+    //     });
+    //   });
+    // });
 
-
-        sale.records!.forEach((record) => {
-          record.sale_id = new_sale.id!;
-          this.salesService.create_record$(record).subscribe((record) => {
-            // console.log('record created', record);
-          });
-        });
-      });
-    });
+    this.excel_uploaded = false;
   }
 
   process_exel_file(workbook: ExcelJS.Workbook) {
-
-    // workbook.eachSheet((this.worksheet, sheetId) => { console.log('this.worksheet', this.worksheet?.name) });
     let ws = workbook.getWorksheet(1);
+    let meta_rows: { [master: string]: string[] } = {};
+
+
     if (!ws) {
       return;
-    } else {
-      this.worksheet = ws;
-    }
+    } else { this.worksheet = ws; }
 
-    let addresses: { [master: string]: string[] } = {};
-    let colGroup = this.worksheet.getColumn(7);
-    // recherche des cellules mergées (colonne G)
-    colGroup.eachCell((cell, rowNumber) => {
-      let Arow = this.worksheet.getCell('A' + rowNumber).toString();
+    this.sales = [];
+    let col_nature = this.worksheet.getColumn(MAP.nature);
 
-      if (Arow.startsWith('C') && Arow !== 'C999') {
-        let Drow = this.worksheet.getCell('D' + rowNumber).toString();
-        if (Drow !== 'transfert') {
-          let Erow = this.worksheet.getCell('E' + rowNumber).toString();
-          const member = this.retrieve_member(rowNumber, Erow);
-          if (member) {
+    // recherche des cellules mergées (colonne Nature) => meta_rows
 
-            if (cell.isMerged) {
+    col_nature.eachCell((cell, rowNumber) => {
+      let cell_chrono = this.worksheet.getCell(MAP.chrono + rowNumber).toString();
 
-              let merge = cell.master.address;
-              if (addresses[merge]) {
-                addresses[merge].push(cell.address);
-              } else {
-                addresses[merge] = [cell.address];
-              }
-            } else {
-              if (addresses[cell.address]) {
-                addresses[cell.address].push(cell.address);
-              } else {
-                addresses[cell.address] = [cell.address];
-              }
-            }
+      if (cell_chrono.startsWith('C') && cell_chrono !== 'C999') {
+
+        if (cell.isMerged) {
+          let merge = cell.master.address;
+          if (meta_rows[merge]) {
+            meta_rows[merge].push(cell.address);
+          } else {
+            meta_rows[merge] = [cell.address];
+          }
+        } else {
+          if (meta_rows[cell.address]) {
+            meta_rows[cell.address].push(cell.address);
+          } else {
+            meta_rows[cell.address] = [cell.address];
           }
         }
+
       }
     });
 
-    // traitement lignes du tableau addresses (bloc de cellules mergées)
-    Object.entries(addresses).forEach(([master, cells]) => {
-      this.analyse(master, cells)
+    // traitement lignes du tableau meta_rows (bloc de cellules mergées)
+
+    Object.entries(meta_rows).forEach(([master, cells]) => {
+      this.process(master, cells)
     });
   }
 
-  analyse(master: string, cells: string[]) {
+  process(master: string, cells: string[]) {
     // create sale (master)
     let row_number = +this.worksheet.getCell(master).row;
     let master_row = this.worksheet.getRow(row_number);
-    let payer = this.retrieve_member(master_row.number, master_row.getCell(5).value?.toString() as string);
+    let payer = this.retrieve_member(master_row.number, master_row.getCell(MAP.membre).value?.toString() as string);
+
     if (payer === null) {
+      // console.log('payer not found', row_number);
       return;
     };
     let sale: Sale = {
-      payer_id: this.retrieve_member(row_number, master_row.getCell(5).value?.toString() as string)?.id as string,
+      payer_id: payer.id,
       season: this.season,
       vendor: 'uploader',
-      event: master_row.getCell(2).value?.toString() as string,
+      event: master_row.getCell(MAP.date).value?.toString() as string,
       records: [],
     };
 
-    // payment side
-    let col_member = master_row.getCell(5).value;
-    let col_nature = master_row.getCell(7).value;
-    let col_pièce = master_row.getCell(8).value;
-    let col_dette = master_row.getCell(31).value;
-    let col_avoir = master_row.getCell(32).value;
-    let col_caisse = master_row.getCell(33).value;
-    let col_virement = master_row.getCell(35).value;
+    let col_member = master_row.getCell(MAP['membre']).value;
+    // let col_nature = master_row.getCell(MAP['nature']).value;
+    let col_pièce = master_row.getCell(MAP['n° pièce']).value;
+    let col_dette = master_row.getCell(MAP['credit_in']).value;
+    let col_avoir = master_row.getCell(MAP['avoir_in']).value;
+    let col_caisse = master_row.getCell(MAP['espèces_in']).value;
+    let col_banque = master_row.getCell(MAP['banque_in']).value;
+    let records: Record[] = [];
 
-    let { payment_mode, bank, cheque_no } = this.retrieve_pmode(col_nature?.toString() as string, col_pièce?.toString() as string);
-    const amount = (payment_mode === PaymentMode.TRANSFER) ? col_virement?.valueOf() as number : col_caisse?.valueOf() as number;
 
-    let records: Record[] = [{
-      class: 'Payment_debit',
-      season: this.season,
-      amount: amount,
-      mode: payment_mode,
-      bank: bank,
-      cheque_no: cheque_no,
-      sale_id: master,
-      member_id: col_member?.toString() as string,
-    }];
-    if (col_dette) {
-      records.push({
-        class: 'Payment_debit',
-        season: this.season,
-        member_id: col_member?.toString() as string,
-        amount: col_dette?.valueOf() as number,
-        mode: PaymentMode.CREDIT,
-        sale_id: master
+    // construct payment side
+
+    [{ col: col_dette, mode: PaymentMode.CREDIT },
+    { col: col_avoir, mode: PaymentMode.ASSETS },
+    { col: col_caisse, mode: PaymentMode.CASH },
+    { col: col_banque, mode: PaymentMode.TRANSFER }]
+      .forEach(({ col, mode }) => {
+
+        if (!col?.valueOf()) { return; }
+
+        let bank = (mode === PaymentMode.CHEQUE) ? col_pièce?.toString().substring(0, 3) : '';
+        let cheque_no = (mode === PaymentMode.CHEQUE) ? col_pièce?.toString().substring(3, 10) : '';
+
+        records.push({
+          class: 'Payment_debit',
+          season: this.season,
+          amount: col?.valueOf() as number,
+          mode: mode,
+          bank: bank,
+          cheque_no: cheque_no,
+          sale_id: master,
+          member_id: col_member?.toString() as string,
+        });
+
       });
-    }
-    if (col_avoir) {
-      records.push({
-        class: 'Payment_debit',
-        season: this.season,
-        member_id: col_member?.toString() as string,
-        amount: col_avoir?.valueOf() as number,
-        mode: PaymentMode.ASSETS,
-        sale_id: master
-      });
-    }
-    // products side
+
+    // construct products side
 
     cells.forEach((cell) => {
       let row_number = +this.worksheet.getCell(cell).row;
@@ -247,6 +240,7 @@ export class XlsImportComponent {
 
     if (total_credit !== total_debit) {
       console.log('amounts not equal', total_credit, total_debit);
+      console.log('sale', records);
       this.verbose.set(this.verbose() + '[' + row_number + '] ' + 'montants non égaux : ' + total_credit + ' vs ' + total_debit + '\n');
     }
 
@@ -255,59 +249,15 @@ export class XlsImportComponent {
 
   }
 
-  retrieve_pmode(colG: string, col_pièce: string): { payment_mode: PaymentMode, bank: string, cheque_no: string } {
 
-
-    if (col_pièce === '' || col_pièce === ' ' || col_pièce === undefined) {
-      if (colG === 'espèces') return { payment_mode: PaymentMode.CASH, bank: '', cheque_no: '' };
-      return { payment_mode: PaymentMode.TRANSFER, bank: '', cheque_no: '' };
-    } else {
-      // console.log('col_pièce', col_pièce);
-      let key = col_pièce.substring(0, 3);
-      let cheque_no = col_pièce.substring(3, 10);
-      return { payment_mode: PaymentMode.CHEQUE, bank: key, cheque_no: cheque_no };
-    }
-  }
-
-  retrieve_member(row_nbr: number, name: string): Member | null {
-
-    let concat = (name: string) => {
-      return name.split('').filter(char => (char !== ' ' && char !== '-')).join('').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    };
-    let z = concat(name);
-    if (z === 'DROITSDETABLE'
-      || z === 'ERREURDECAISSE'
-      || z === 'ERREURCAISSE') {
-      // this.verbose.set(this.verbose() + '[' + row_nbr + '] ' + z + ' non enregistrée ' + '\n');
-
-      return null;
-    }
-
-    const member = this.members.find((member) => (concat(member.lastname + member.firstname)) === z);
-
-    if (member) { return member; }
-    else {
-      // console.log('%s not found : concatenated in [%s]', name, z);
-      this.verbose.set(this.verbose() + '[' + row_nbr + '] ' + name + ' n\'est pas adhérent : ' + '\n');
-      return null;
-    }
-  }
   process_products(row: ExcelJS.Row): Record[] {
     let records: Record[] = [];
-    const product_columns = [
-      { col: 9, name: 'autre', account: 'BIB' },
-      { col: 10, name: 'PAF', account: 'PAF' },
-      { col: 11, name: 'initiation', account: 'INI' },
-      { col: 12, name: 'perf', account: 'PER' },
-      { col: 13, name: 'subvention', account: 'SUB' },
-      { col: 14, name: 'adhesion', account: 'ADH' },
-      { col: 15, name: 'licence', account: 'LIC' },
-      { col: 16, name: 'droit de table', account: 'TAB' },
-      { col: 17, name: 'carte', account: 'TAB' },
-    ];
-    product_columns.forEach((product) => {
-      let price = row.getCell(product.col).value;
-      if (price) {
+
+    PRODUCTS.forEach((product) => {
+      // if (row.getCell(product.col).value !== null) {
+      let cellValue = row.getCell(product.col).value;
+      if (cellValue !== null && cellValue !== undefined) {
+        let price = cellValue.valueOf() as number;
         let prod_id = this.products.find((prod) => prod.price === price && prod.account === product.account);
         if (!prod_id) {
           console.log('product not found', product.name, price);
@@ -317,19 +267,17 @@ export class XlsImportComponent {
           class: 'Product_credit',
           product_id: prod_id ? prod_id.id : '???',
           season: this.season,
-          member_id: this.retrieve_member(row.number, row.getCell(5).value?.toString() as string)?.id as string,
-          amount: price.valueOf() as number,
+          member_id: this.retrieve_member(row.number, row.getCell(MAP.membre).value?.toString() as string)?.id as string,
+          amount: price,
           sale_id: 'tbd'
         };
         records.push(record);
       }
+      // }
     });
     return records;
   }
-  member_name(member_id: string) {
-    let member = this.membersService.getMember(member_id);
-    return member ? member.lastname.toLocaleUpperCase() + ' ' + member.firstname : '???';
-  }
+
 
   bank_name(bank_key: string) {
     let bank = this.banks.find((bank) => bank.key === bank_key);
@@ -347,9 +295,19 @@ export class XlsImportComponent {
     return gliph;
   }
 
-  color_swapper(i: number) {
-    return i % 2 === 0 ? 'table-light' : 'table-primary';
-  }
+  retrieve_member(row_nbr: number, name: string): Member | null {
+    let concat = (name: string) => {
+      return name.split('').filter(char => (char !== ' ' && char !== '-')).join('').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    };
 
+    let doejohn = concat(name);
+    const member = this.members.find((member) => (concat(member.lastname + member.firstname)) === doejohn);
+
+    if (member) { return member; }
+    else {
+      this.verbose.set(this.verbose() + '[' + row_nbr + '] ' + name + ' n\'est pas un adhérent connu : ' + '\n');
+      return null;
+    }
+  }
 
 }

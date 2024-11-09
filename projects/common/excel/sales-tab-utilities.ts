@@ -142,6 +142,32 @@ export class SalesTabUtilities {
   }
 
 
+
+  sort_by_date(f_sales: f_Sale[], up_sorting: boolean): f_Sale[] {
+    let compare_up = (a: f_Sale, b: f_Sale) => new Date(a.event) < new Date(b.event) ? 1 : -1;
+    let compare_down = (a: f_Sale, b: f_Sale) => new Date(a.event) > new Date(b.event) ? 1 : -1;
+
+    if (up_sorting) {
+      return f_sales.sort(compare_up);
+    } else {
+      return f_sales.sort(compare_down);
+    }
+
+  }
+
+  total_payments(f_sales: f_Sale[]): f_payments {
+    let total_payments: f_payments = {};
+    f_sales.forEach((f_sale) => {
+      Object.keys(f_sale.payments).forEach((payment) => {
+        if (!total_payments[payment]) {
+          total_payments[payment] = f_sale.payments[payment];
+        } else {
+          total_payments[payment] += f_sale.payments[payment];
+        }
+      });
+    });
+    return total_payments;
+  }
   member_name(member_id: string) {
     let member = this.membersService.getMember(member_id);
     return member ? member.lastname.toLocaleUpperCase() + ' ' + member.firstname : '???';
