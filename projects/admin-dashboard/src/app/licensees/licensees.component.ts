@@ -4,40 +4,40 @@ import { FFB_licensee } from '../../../../common/ffb/interface/licensee.interfac
 import { FormControl, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { LicenseesService } from './services/licensees.service';
 import { MembersService } from '../members/service/members.service';
-import { CapitalizeFirstPipe } from '../../../../common/pipes/capitalize_first';
 
 @Component({
   selector: 'app-members',
   standalone: true,
-  imports: [ReactiveFormsModule, FormsModule, CommonModule, UpperCasePipe, CapitalizeFirstPipe],
+  imports: [ReactiveFormsModule, FormsModule, CommonModule, UpperCasePipe],
   templateUrl: './licensees.component.html',
   styleUrl: './licensees.component.scss'
 })
 export class LicenseesComponent implements OnInit {
-
-  constructor(
-    // private FFBService: FfbService,
-    private licenseesService: LicenseesService,
-    private membersService: MembersService
-  ) { }
   licensees!: FFB_licensee[];
   filteredLicensees: FFB_licensee[] = [];
   sympatisantsNbr: number = 0;
   licenseesNbr: number = 0;
   filters: string[] = ['Tous', 'adhérents-licenciés', 'sympathisants'];
   selection: string = '';
+  loaded: boolean = false;
+
+  constructor(
+    private licenseesService: LicenseesService,
+    private membersService: MembersService
+  ) { }
 
   radioButtonGroup: FormGroup = new FormGroup({
     radioButton: new FormControl(this.filters[0])
   });
 
-  async ngOnInit(): Promise<void> {
-    this.licenseesService.FFB_licensees$.subscribe((licensees) => {
+  ngOnInit(): void {
+    this.loaded = false;
+    this.licenseesService.list_FFB_licensees$().subscribe((licensees) => {
       this.licensees = licensees;
       this.filteredLicensees = this.licensees;
       this.categoriesCount();
+      this.loaded = true;
     });
-
 
     this.radioButtonGroup.valueChanges.subscribe(() => {
       this.filter();

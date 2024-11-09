@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { generateClient, get } from 'aws-amplify/api';
-import { BehaviorSubject, from, generate, Observable, of, last } from 'rxjs';
+import { BehaviorSubject, from, generate, Observable, of, last, map, tap, switchMap } from 'rxjs';
 import { Schema } from '../../../../../../amplify/data/resource';
 import { Member } from '../../../../../common/member.interface';
 import { ToastService } from '../../../../../common/toaster/toast.service';
@@ -10,20 +10,12 @@ import { ToastService } from '../../../../../common/toaster/toast.service';
 })
 export class MembersService {
   private _members!: Member[];
-  // private _members$: BehaviorSubject<Member[]> = new BehaviorSubject(this._members);
+  private _members$: BehaviorSubject<Member[]> = new BehaviorSubject(this._members);
 
   constructor(
     private toastService: ToastService
-  ) {
-    // this.getMembers().then((members) => {
-    //   this._members = members;
-    //   this._members$.next(this._members);
-    // });
-  }
+  ) { }
 
-  // get members$(): Observable<Member[]> {
-  //   return this._members$ as Observable<Member[]>;
-  // }
 
   listMembers(): Observable<Member[]> {
 
@@ -45,8 +37,17 @@ export class MembersService {
         });
       return this._members as Member[];
     };
+    console.log('fetching members from ', this._members ? 'cache' : 'AWS');
 
-    return this._members ? of(this._members) : from(fetchMembers());
+    let remote_load$ = from(fetchMembers()).pipe(
+      tap((members) => {
+        this._members = members;
+        this._members$.next(this._members);
+      }),
+      switchMap(() => this._members$.asObservable())
+    )
+
+    return this._members ? this._members$.asObservable() : remote_load$;
   }
 
 
@@ -73,7 +74,7 @@ export class MembersService {
       this.toastService.showSuccessToast('Membre créé', `${newMember.lastname} ${newMember.firstname}`);
       // console.log('Member created', newMember);
       this._members.push(newMember as Member);
-      // this._members$.next(this._members);
+      this._members$.next(this._members);
     }
 
   }
@@ -118,7 +119,7 @@ export class MembersService {
     } else {
       console.log('Member updated', updatedMember.lastname);
       this._members = this._members.map((m) => m.license_number === member.license_number ? member : m);
-      // this._members$.next(this._members);
+      this._members$.next(this._members);
     }
   }
 
@@ -135,7 +136,7 @@ export class MembersService {
     } else {
       this._members = this._members.filter((m) => m.license_number !== deletedMember.license_number);
       this.toastService.showSuccessToast('Membre supprimé', `${deletedMember.lastname} ${deletedMember.firstname}`);
-      // this._members$.next(this._members);
+      this._members$.next(this._members);
     }
   }
 

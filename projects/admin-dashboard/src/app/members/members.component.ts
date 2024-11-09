@@ -1,13 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { MembersService } from './service/members.service';
 import { LicenseesService } from '../licensees/services/licensees.service';
-import { combineLatest, Observable } from 'rxjs';
+import { combineLatest } from 'rxjs';
 import { Member } from '../../../../common/member.interface';
 import { FFB_licensee } from '../../../../common/ffb/interface/licensee.interface';
 import { FormControl, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule, UpperCasePipe } from '@angular/common';
 import { PhonePipe } from '../../../../common/pipes/phone.pipe';
-import { CapitalizeFirstPipe } from '../../../../common/pipes/capitalize_first';
 import { InputPlayerComponent } from '../../../../common/ffb/input-licensee/input-player.component';
 import { FFBplayer } from '../../../../common/ffb/interface/FFBplayer.interface';
 import { SystemDataService } from '../../../../common/services/system-data.service';
@@ -53,12 +52,11 @@ export class MembersComponent implements OnInit {
       this.selection_filter();
     });
 
-    this.licenseesService.FFB_licensees$.subscribe((licensees) => {
+    this.licenseesService.list_FFB_licensees$().subscribe((licensees) => {
       this.licensees = licensees;
     });
     combineLatest([this.sysConfService.configuration$, this.membersService.listMembers()]).subscribe(([conf, members]) => {
       this.season = conf.season;
-      // console.log('season', this.season);
       this.members = members.sort((a, b) => a.lastname.localeCompare(b.lastname));
       this.filteredMembers = this.members;
       this.thisSeasonMembersNbr = this.members.reduce((acc, member) => {
@@ -81,9 +79,8 @@ export class MembersComponent implements OnInit {
   }
 
   capitalize_first(str: string | undefined): string {
-    if (!str) {
-      return '';
-    }
+    if (!str) return '';
+
     str = str.replace(/^(\w)(.+)/, (match, p1, p2) => p1.toUpperCase() + p2.toLowerCase())
     return str;
   }
@@ -99,7 +96,7 @@ export class MembersComponent implements OnInit {
       lastname: player.lastname.toUpperCase(),
       license_number: player.license_number,
       birthdate: player.birthdate,
-      city: this.capitalize_first(player.city),
+      city: this.capitalize_first(player.city.toLowerCase()),
       season: player.last_season,
       email: '?',
       phone_one: '?',
@@ -166,7 +163,7 @@ export class MembersComponent implements OnInit {
       firstname: licensee.firstname,
       lastname: licensee.lastname.toUpperCase(),
       birthdate: licensee.birthdate,
-      city: this.capitalize_first(licensee.city),
+      city: this.capitalize_first(licensee.city?.toLowerCase()),
       season: licensee.season ?? '',
       email: licensee.email ?? '',
       phone_one: licensee.phone_one,
@@ -190,6 +187,7 @@ export class MembersComponent implements OnInit {
   }
 
   createNewMember(licensee: FFB_licensee): Member {
+    console.log('MembersComponent.createNewMember', licensee);
     return {
       id: '',
       gender: licensee.gender,
@@ -197,7 +195,7 @@ export class MembersComponent implements OnInit {
       lastname: licensee.lastname,
       license_number: licensee.license_number,
       birthdate: licensee.birthdate,
-      city: licensee.city ?? '',
+      city: this.capitalize_first(licensee.city?.toLowerCase()),
       season: licensee.season ?? '',
       email: licensee.email ?? '',
       phone_one: licensee.phone_one,

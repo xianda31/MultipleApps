@@ -1,17 +1,23 @@
 <!-- list DB -->
-<div class="p-2 col col-md-8 mx-auto">
+<div *ngIf="!loaded" class="d-flex justify-content-center">
+    <div class="spinner-border text-success" role="status">
+    </div>
+    <span>... querying FFB database...</span>
+</div>
+
+<div *ngIf="loaded" class="p-2 col col-md-8 mx-auto">
 
     <div class="card">
         <div class="card-header">
 
-            <h5>base FFB : affiliés au BCSTO cette saison</h5>
+            <h5>base FFB : {{licenseesNbr + sympatisantsNbr}} adhérents cette saison</h5>
         </div>
         <div class="card-body">
             <div class="row">
                 <div class="col-md-12">
                     <h6>
                         <span> {{licenseesNbr}} licenciés</span>
-                        <span> - {{sympatisantsNbr}} sympathisants</span>
+                        <span> + {{sympatisantsNbr}} sympathisants</span>
                     </h6>
                     <!-- choix filtre -->
                     <form [formGroup]="radioButtonGroup">
@@ -34,8 +40,7 @@
                                 <th>Prénom</th>
                                 <th>N° Licence</th>
                                 <th class="text-center">réglée</th>
-                                <th class="text-center">au Club</th>
-                                <th>Ville</th>
+                                <th class="text-start">club externe</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -52,12 +57,8 @@
 
                                 <!-- <td class="text-center">{{licensee.license_id ? '☑' : '☐'}}</td>   -->
                                 <!-- <td class="text-center"> {{ (licensee.orga_license_id == 1438) ? "":'&#9745;' }}                        </td> -->
-                                <td class="text-center">
-                                    {{(licensee.license_id !== null && (licensee.orga_license_id ===undefined )) ? '☑' :
-                                    "" }}
-                                </td>
-                                <td>
-                                    {{licensee.city ? (licensee.city | capitalize_first) : ''}}
+                                <td class="text-start">
+                                    {{licensee.orga_license_name }}
                                 </td>
                             </tr>
                         </tbody>
