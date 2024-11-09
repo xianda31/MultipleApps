@@ -5,6 +5,10 @@ import { ToasterComponent } from '../../../common/toaster/components/toaster/toa
 import { ToastEvent } from '../../../common/toaster/models/toast-event';
 import { CommonModule, registerLocaleData } from '@angular/common';
 import localeFr from '@angular/common/locales/fr'; // Import the 'localeFr' variable
+import { combineLatest } from 'rxjs';
+import { SalesService } from '../../../cashier/src/app/shop/sales.service';
+import { SystemDataService } from '../../../common/services/system-data.service';
+import { MembersService } from './members/service/members.service';
 
 @Component({
   selector: 'app-root',
@@ -16,10 +20,26 @@ import localeFr from '@angular/common/locales/fr'; // Import the 'localeFr' vari
 export class AppComponent {
   title = 'admin-dashboard';
   currentToasts: ToastEvent[] = [];
+  season !: string;
+  init: boolean = false;
 
   constructor(
+    private membersService: MembersService,
+    private systemDataService: SystemDataService,
+    private salesService: SalesService
   ) {
     registerLocaleData(localeFr);
+    combineLatest([
+      this.membersService.listMembers(),
+      this.systemDataService.configuration$,
+
+    ]).subscribe(([members, conf]) => {
+      this.season = conf.season;
+      this.salesService.get_sales$(this.season).subscribe((sales) => {
+        this.init = true;
+      });
+
+    });
   }
 
 }

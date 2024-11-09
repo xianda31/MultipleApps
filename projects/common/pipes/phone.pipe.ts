@@ -13,7 +13,8 @@ export class PhonePipe implements PipeTransform {
     if (str.startsWith('33')) {
       str = str.replace('33', '0');
     }
-    str = str.replace(/\+\d\d|\d\d?(?=(?:\d\d)+\b)/g, '$& ');;
+    str = str.replace(/\+\d\d|\d\d?(?=(?:\d\d)+\b)/g, '$& ');
+    str = str.replace(/ /g, '\u00a0');
     return str;
 
   }

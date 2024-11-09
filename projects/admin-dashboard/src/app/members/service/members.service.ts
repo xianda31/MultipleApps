@@ -3,6 +3,7 @@ import { generateClient, get } from 'aws-amplify/api';
 import { BehaviorSubject, from, generate, Observable, of, last } from 'rxjs';
 import { Schema } from '../../../../../../amplify/data/resource';
 import { Member } from '../../../../../common/member.interface';
+import { ToastService } from '../../../../../common/toaster/toast.service';
 
 @Injectable({
   providedIn: 'root'
@@ -11,7 +12,9 @@ export class MembersService {
   private _members!: Member[];
   // private _members$: BehaviorSubject<Member[]> = new BehaviorSubject(this._members);
 
-  constructor() {
+  constructor(
+    private toastService: ToastService
+  ) {
     // this.getMembers().then((members) => {
     //   this._members = members;
     //   this._members$.next(this._members);
@@ -26,7 +29,7 @@ export class MembersService {
 
     const fetchMembers = async () => {
       const client = generateClient<Schema>();
-      // console.log('fetching members ... 200 max');
+      // console.log('fetching members ... 300 max');
       const { data: members, errors } = await client.models.Member.list(
         { limit: 300 }
       );
@@ -67,7 +70,8 @@ export class MembersService {
       console.error('Member not created');
       return;
     } else {
-      console.log('Member created', newMember);
+      this.toastService.showSuccessToast('Membre créé', `${newMember.lastname} ${newMember.firstname}`);
+      // console.log('Member created', newMember);
       this._members.push(newMember as Member);
       // this._members$.next(this._members);
     }
@@ -130,6 +134,7 @@ export class MembersService {
       return;
     } else {
       this._members = this._members.filter((m) => m.license_number !== deletedMember.license_number);
+      this.toastService.showSuccessToast('Membre supprimé', `${deletedMember.lastname} ${deletedMember.firstname}`);
       // this._members$.next(this._members);
     }
   }

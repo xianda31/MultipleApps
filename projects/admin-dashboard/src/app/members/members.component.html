@@ -2,14 +2,16 @@
     <div class="card">
         <div class="card-header">
 
-            <h5>Adhérents au Club</h5>
+            <h5>
+                Adhérents {{season}}
+            </h5>
+
         </div>
         <div class="card-body">
 
 
             <div class="row">
                 <div class="col-md-6">
-                    {{filteredMembers.length}} adhérents affichés
                     <h6>
                         <div> {{licensees.length}} adhérents (ou sympathisants) dans la base FFB</div>
                         <div> {{members.length}} noms dans la base BCSTO</div>
@@ -19,7 +21,7 @@
 
                 <!-- ajout d'un adhérent supplémentaire -->
                 <div class="col-md-6">
-                    <app-input-player listeId="new_guest" placeholder="adhérent supplémentaire" type="text"
+                    <app-input-player listeId="new_guest" placeholder="licencié supplémentaire" type="text"
                         class="form-control" [(ngModel)]="new_player"
                         (ngModelChange)="add_licensee(new_player)"></app-input-player>
                 </div>
@@ -44,6 +46,10 @@
                                 {{filter}}
                             </ng-container>
                         </p>
+                        {{filteredMembers.length}} adhérents affichés
+                        <p>
+
+                        </p>
                     </form>
                 </div>
 
@@ -63,7 +69,7 @@
                             <!-- <th>compte site</th> -->
                             <th>Ville</th>
                             <th>No licence</th>
-                            <th><i class="fa-solid fa-user-astronaut"></i></th>
+                            <!-- <th><i class="fa-solid fa-user-astronaut"></i></th> -->
                             <th class="text-center">License</th>
                             <th class="text-center">Actions</th>
                         </tr>
@@ -78,13 +84,13 @@
                             <td>{{member.email}}</td>
                             <!-- <td>{{member.has_account}}</td> -->
                             <!-- <td>{{member.birthdate | date: 'dd/MM/yyyy'}}</td> -->
+                            <td>{{member.city }}</td>
                             <td>{{member.license_number}}</td>
-                            <td>{{member.city | capitalize_first}}</td>
-                            <td *ngIf="member.is_sympathisant"> <i class="fa-solid fa-user-astronaut"></i> </td>
-                            <td *ngIf="!member.is_sympathisant"> </td>
+                            <!-- <td *ngIf="member.is_sympathisant"> <i class="fa-solid fa-user-astronaut"></i> </td> -->
+                            <!-- <td *ngIf="!member.is_sympathisant"> </td> -->
                             <td class="text-center">{{member.season}}</td>
                             <td class="action text-center">
-                                <!-- <i class="fa-regular fa-trash-can" (click)="deleteMember(member)"></i> -->
+                                <i class="fa-regular fa-trash-can" (click)="deleteMember(member)"></i>
                                 <!-- <i class="bi bi-person-fill-add" (click)="createMember(member)"></i> -->
                             </td>
                         </tr>

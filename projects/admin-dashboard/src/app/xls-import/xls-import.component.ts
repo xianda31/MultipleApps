@@ -305,7 +305,7 @@ export class XlsImportComponent {
 
     if (member) { return member; }
     else {
-      this.verbose.set(this.verbose() + '[' + row_nbr + '] ' + name + ' n\'est pas un adhérent connu : ' + '\n');
+      this.verbose.set(this.verbose() + '[' + row_nbr + '] ' + name + ' n\'est pas un(e) adhérent(e) connu(e) : ' + '\n');
       return null;
     }
   }

@@ -15,7 +15,7 @@ import { SystemDataService } from '../../../../common/services/system-data.servi
 @Component({
   selector: 'app-members',
   standalone: true,
-  imports: [FormsModule, CommonModule, ReactiveFormsModule, UpperCasePipe, PhonePipe, CapitalizeFirstPipe, InputPlayerComponent],
+  imports: [FormsModule, CommonModule, ReactiveFormsModule, UpperCasePipe, PhonePipe, InputPlayerComponent],
   templateUrl: './members.component.html',
   styleUrl: './members.component.scss'
 })
@@ -58,7 +58,7 @@ export class MembersComponent implements OnInit {
     });
     combineLatest([this.sysConfService.configuration$, this.membersService.listMembers()]).subscribe(([conf, members]) => {
       this.season = conf.season;
-      console.log('season', this.season);
+      // console.log('season', this.season);
       this.members = members.sort((a, b) => a.lastname.localeCompare(b.lastname));
       this.filteredMembers = this.members;
       this.thisSeasonMembersNbr = this.members.reduce((acc, member) => {
@@ -80,7 +80,18 @@ export class MembersComponent implements OnInit {
     }
   }
 
+  capitalize_first(str: string | undefined): string {
+    if (!str) {
+      return '';
+    }
+    str = str.replace(/^(\w)(.+)/, (match, p1, p2) => p1.toUpperCase() + p2.toLowerCase())
+    return str;
+  }
+
+
+
   player2member(player: FFBplayer): Member {
+
     return {
       id: '',
       gender: player.gender === 1 ? 'M.' : 'Mme',
@@ -88,7 +99,7 @@ export class MembersComponent implements OnInit {
       lastname: player.lastname.toUpperCase(),
       license_number: player.license_number,
       birthdate: player.birthdate,
-      city: player.city ?? '',
+      city: this.capitalize_first(player.city),
       season: player.last_season,
       email: '?',
       phone_one: '?',
@@ -131,7 +142,7 @@ export class MembersComponent implements OnInit {
     if (existingMember) {
       let member = this.compare(existingMember, licensee);
       if (member !== null) {
-        this.verbose += 'modification : ' + member.lastname + ' ' + member.firstname + '\n';
+        // this.verbose += 'modification : ' + member.lastname + ' ' + member.firstname + '\n';
         console.log('%s updated to %s', existingMember.lastname, member.lastname);
         await this.membersService.updateMember(member);
       }
@@ -155,7 +166,7 @@ export class MembersComponent implements OnInit {
       firstname: licensee.firstname,
       lastname: licensee.lastname.toUpperCase(),
       birthdate: licensee.birthdate,
-      city: licensee.city ?? '',
+      city: this.capitalize_first(licensee.city),
       season: licensee.season ?? '',
       email: licensee.email ?? '',
       phone_one: licensee.phone_one,
@@ -170,7 +181,7 @@ export class MembersComponent implements OnInit {
 
     for (let key in next) {
       if (next[key] !== is[key]) {
-        console.log('diff on', key, is[key], next[key]);
+        // console.log('diff on', key, is[key], next[key]);
         this.verbose += 'updating ' + member.lastname + ' ' + member.firstname + ' (' + key + ')' + '\n';
         diff = true;
       }
@@ -196,8 +207,8 @@ export class MembersComponent implements OnInit {
     }
 
   }
-  // deleteMember(member: Member) {
-  //   this.membersService.deleteMember(member.id);
-  // }
+  deleteMember(member: Member) {
+    this.membersService.deleteMember(member.id);
+  }
 }
 
