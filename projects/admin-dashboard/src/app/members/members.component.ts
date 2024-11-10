@@ -10,6 +10,9 @@ import { PhonePipe } from '../../../../common/pipes/phone.pipe';
 import { InputPlayerComponent } from '../../../../common/ffb/input-licensee/input-player.component';
 import { FFBplayer } from '../../../../common/ffb/interface/FFBplayer.interface';
 import { SystemDataService } from '../../../../common/services/system-data.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { GetNewbeeComponent } from '../modals/get-newbee/get-newbee.component';
+import { ToastService } from '../../../../common/toaster/toast.service';
 
 @Component({
   selector: 'app-members',
@@ -39,15 +42,14 @@ export class MembersComponent implements OnInit {
   constructor(
     private licenseesService: LicenseesService,
     private membersService: MembersService,
-    private sysConfService: SystemDataService
-  ) {
+    private sysConfService: SystemDataService,
+    private modalService: NgbModal,
+    private toastService: ToastService
 
+  ) {
   }
 
   ngOnInit(): void {
-
-
-
     this.radioButtonGroup.valueChanges.subscribe(() => {
       this.selection_filter();
     });
@@ -57,30 +59,55 @@ export class MembersComponent implements OnInit {
     });
     combineLatest([this.sysConfService.configuration$, this.membersService.listMembers()]).subscribe(([conf, members]) => {
       this.season = conf.season;
+
       this.members = members.sort((a, b) => a.lastname.localeCompare(b.lastname));
-      this.filteredMembers = this.members;
       this.thisSeasonMembersNbr = this.members.reduce((acc, member) => {
         return (member.season === this.season || member.is_sympathisant) ? acc + 1 : acc;
       }, 0);
-    });
 
+      this.filteredMembers = this.members;
+    });
   }
+
+
 
   add_licensee(player: FFBplayer) {
     if (player) {
       const new_member: Member = this.player2member(player);
-      this.filteredMembers.push(new_member);
-      this.filteredMembers = this.filteredMembers.sort((a, b) => a.lastname.localeCompare(b.lastname));
-      this.thisSeasonMembersNbr = this.members.reduce((acc, member) => {
-        return (member.season === this.season || member.is_sympathisant) ? acc + 1 : acc;
-      }, 0);
       this.membersService.createMember(new_member);
     }
   }
 
+  add_newbee() {
+    const modalRef = this.modalService.open(GetNewbeeComponent, { centered: true });
+
+    modalRef.result.then((newbee: any) => {
+      if (newbee) {
+        let new_member: Member = {
+          id: '',
+          gender: newbee.gender,
+          firstname: newbee.firstname,
+          lastname: newbee.lastname.toUpperCase(),
+          license_number: '??' + newbee.lastname.toUpperCase().slice(0, 3) + newbee.firstname.slice(0, 3),
+          birthdate: newbee.birthdate,
+          city: this.capitalize_first(newbee.city.toLowerCase()),
+          season: '',
+          email: newbee.email ?? '',
+          phone_one: newbee.phone ?? '',
+          orga_license_name: 'BCSTO',
+          is_sympathisant: false,
+          has_account: false,
+        }
+        this.membersService.createMember(new_member).then((_member) => {
+          this.toastService.showSuccessToast('Nouveau membre non licencié', new_member.lastname + ' ' + new_member.firstname);
+        });
+      }
+
+    });
+  }
+
   capitalize_first(str: string | undefined): string {
     if (!str) return '';
-
     str = str.replace(/^(\w)(.+)/, (match, p1, p2) => p1.toUpperCase() + p2.toLowerCase())
     return str;
   }

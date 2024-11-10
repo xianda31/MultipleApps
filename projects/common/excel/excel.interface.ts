@@ -139,7 +139,7 @@ export const PRODUCTS = [
     { col: 'M', name: 'adhesion', account: 'ADH' },
     { col: 'N', name: 'licence', account: 'LIC' },
     { col: 'O', name: 'droit de table', account: 'TAB' },
-    { col: 'P', name: 'carte', account: 'TAB' },
+    { col: 'P', name: 'carte', account: 'CAR' },
 ];
 
 

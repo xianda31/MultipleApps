@@ -1,4 +1,4 @@
-<div *ngIf="members" class="p-2 col col-md-8 mx-auto">
+<div *ngIf="members && licensees" class="p-2 col col-md-8 mx-auto">
     <div class="card">
         <div class="card-header">
 
@@ -19,12 +19,25 @@
                     </h6>
                 </div>
 
-                <!-- ajout d'un adhérent supplémentaire -->
+                <!-- ajout d'un adhérent licencié supplémentaire -->
                 <div class="col-md-6">
-                    <app-input-player listeId="new_guest" placeholder="licencié supplémentaire" type="text"
-                        class="form-control" [(ngModel)]="new_player"
-                        (ngModelChange)="add_licensee(new_player)"></app-input-player>
+                    <h6>ajout d'adhérent :</h6>
+                    <label><strong>NON licencié </strong>(ex. débutant) :
+                        <i class="fs-6 bi-person-square" (click)="add_newbee()"></i>
+                    </label>
+                    <div class="row">
+                        <div class="col">
+                            <label class="text-end"><strong>licencié </strong>(futur adhérent) :</label>
+                        </div>
+                        <div class="col">
+                            <app-input-player listeId="new_guest" placeholder="nom prénom" type="text"
+                                class="form-control form-control-sm" [(ngModel)]="new_player"
+                                (ngModelChange)="add_licensee(new_player)"></app-input-player>
+                        </div>
+                    </div>
                 </div>
+
+
             </div>
             <div class="row">
                 <div class="col-md-6">
@@ -39,16 +52,15 @@
                 <div class="col-md-6 ">
                     <!-- choix filtre -->
                     <form [formGroup]="radioButtonGroup">
-                        <p>
+                        <p class="mt-2">
                             Afficher :
                             <ng-container *ngFor="let filter of filters ; let i=index">
                                 <input type="radio" [value]="filter" [id]="i" formControlName="radioButton" />
                                 {{filter}}
                             </ng-container>
                         </p>
-                        {{filteredMembers.length}} adhérents affichés
                         <p>
-
+                            {{filteredMembers.length}} adhérents affichés
                         </p>
                     </form>
                 </div>

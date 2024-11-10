@@ -41,19 +41,13 @@ export class XlsImportComponent {
     private salesService: SalesService,
 
   ) {
-    this.systemDataService.configuration$.pipe(
-      tap((conf) => {
-        this.season = conf.season;
-        this.banks = conf.banks;
-        // console.log('banks', this.banks);
-
-      }),
-      map((conf) => conf.season),
-    ).subscribe((season) => { });
+    this.systemDataService.configuration$.subscribe((conf) => {
+      this.season = conf.season;
+      this.banks = conf.banks;
+    });
 
     this.membersService.listMembers().subscribe((members) => {
       this.members = members;
-      // console.log('members', members);
     });
 
     this.productsService.listProducts().subscribe((products) => {
@@ -99,29 +93,27 @@ export class XlsImportComponent {
   }
 
   data_store() {
-
     // verify sales integrity
     this.sales_validity_check(this.sales);
-    console.log('sales', this.sales);
-    // this.salesService.get_sales$(this.season).subscribe((sales) => {
-    //   // delete ALL sales of the season
-    //   sales.forEach((sale) => {
-    //     this.salesService.cancel_sale$(sale.id!).subscribe((response) => {
-    //       console.log('sale deleted', sale.id);
-    //     });
-    //   });
+    this.salesService.get_sales$(this.season).subscribe((sales) => {
+      // delete ALL sales of the season
+      sales.forEach((sale) => {
+        this.salesService.cancel_sale$(sale.id!).subscribe((response) => {
+          console.log('sale deleted', sale.id);
+        });
+      });
 
-    //   // create new sales
-    //   this.sales.forEach((sale) => {
-    //     this.salesService.create_sale$(sale).subscribe((new_sale) => {
-    //       sale.records!.forEach((record) => {
-    //         record.sale_id = new_sale.id!;
-    //         this.salesService.create_record$(record).subscribe((record) => {
-    //         });
-    //       });
-    //     });
-    //   });
-    // });
+      // create new sales
+      this.sales.forEach((sale) => {
+        this.salesService.create_sale$(sale).subscribe((new_sale) => {
+          sale.records!.forEach((record) => {
+            record.sale_id = new_sale.id!;
+            this.salesService.create_record$(record).subscribe((record) => {
+            });
+          });
+        });
+      });
+    });
 
     this.excel_uploaded = false;
   }

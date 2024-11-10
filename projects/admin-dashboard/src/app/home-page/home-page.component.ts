@@ -44,9 +44,9 @@ export class HomePageComponent {
       },
       {
         title: 'Gestion des ventes',
-        subtitle: 'Saisie assistée des opérations de caisse',
-        description: 'Enregistrer les ventes de licences, de cotisations, de produits dérivés ...',
-        link1: { route: '#', label: 'Ventes' }
+        subtitle: 'Configuration des opérations de caisse',
+        description: 'Définir les articles en vente, les tarifs, ...',
+        link1: { route: '/sales/products', label: 'Catalogue' }
       },
       {
         title: 'Configuration système',
