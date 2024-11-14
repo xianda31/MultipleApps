@@ -27,7 +27,7 @@ interface PayMode {
 @Component({
   selector: 'app-shop',
   standalone: true,
-  imports: [ReactiveFormsModule, ToasterComponent, CommonModule, FormsModule, CartComponent, InputMemberComponent],
+  imports: [ReactiveFormsModule, CommonModule, FormsModule, CartComponent, InputMemberComponent],
   templateUrl: './shop.component.html',
   styleUrl: './shop.component.scss'
 })
@@ -102,7 +102,7 @@ export class ShopComponent {
       this.products = products;
       this.products_array = this.productService.products_array(products);
       this.session = session;
-      this.sales_subscription = this.salesService.get_sales$(session.season).subscribe((sales) => {
+      this.sales_subscription = this.salesService.f_list_sales$(session.season).subscribe((sales) => {
         this.sales = sales;
 
         this.sales_of_the_day = sales.filter((sale) => sale.event === session.event);
@@ -180,6 +180,8 @@ export class ShopComponent {
     const payment: Payment = {
       payer_id: this.buyer!.id,
       mode: paymode.payment_mode,
+      bank: '',
+      cheque_no: '',
       amount: amount,
     }
     this.cartService.addToPayments(payment);
@@ -192,13 +194,6 @@ export class ShopComponent {
     this.cartService.save_sale(this.session, this.buyer!);
     this.buyerForm.reset();
 
-
-    // this.salesService.writeOperation(sale).subscribe((res) => {
-    //   // this.cartService.push_sale_of_the_day(sale);
-    //   this.toastService.showSuccessToast('saisie achat', 'vente enregistrée');
-    //   this.cartService.clearCart();
-    //   this.sale = null;
-    // });
   }
 
 

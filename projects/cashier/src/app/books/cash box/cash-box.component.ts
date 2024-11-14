@@ -54,7 +54,7 @@ export class CashBoxComponent {
 
   load_sales(season: string): any {
     this.loaded = false;
-    return this.salesService.get_sales$(season).pipe(
+    return this.salesService.f_list_sales$(season).pipe(
       map((sales) => { return sales.sort((a, b) => a.event > b.event ? 1 : -1) })
     ).subscribe((sales) => {
       this.sales = sales;

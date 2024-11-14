@@ -6,8 +6,8 @@ export interface Payment {
     amount: number;
     payer_id: string;
     mode: PaymentMode;
-    bank?: string;
-    cheque_no?: string;
+    bank: string;
+    cheque_no: string;
 }
 
 

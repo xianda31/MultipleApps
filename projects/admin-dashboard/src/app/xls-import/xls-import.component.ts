@@ -4,7 +4,7 @@ import { MembersService } from '../members/service/members.service';
 import { Member } from '../../../../common/member.interface';
 import { CommonModule } from '@angular/common';
 import { Bank } from '../../../../common/system-conf.interface';
-import { Observable, of, tap, map } from 'rxjs';
+import { Observable, of, tap, map, combineLatest, take } from 'rxjs';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 import { PaymentMode, Record, Sale } from '../../../../cashier/src/app/shop/sales.interface';
 import { SalesViewerComponent } from '../../../../common/sales-viewer/sales-viewer.component';
@@ -13,6 +13,7 @@ import { Product } from '../sales/products/product.interface';
 import { SalesService } from '../../../../cashier/src/app/shop/sales.service';
 import { COL, MAP, PRODUCTS } from '../../../../common/excel/excel.interface';
 import { write } from '@popperjs/core';
+import { ToastService } from '../../../../common/toaster/toast.service';
 @Component({
   selector: 'app-test',
   standalone: true,
@@ -39,6 +40,7 @@ export class XlsImportComponent {
     private systemDataService: SystemDataService,
     private productsService: ProductService,
     private salesService: SalesService,
+    private toastservice: ToastService,
 
   ) {
     this.systemDataService.configuration$.subscribe((conf) => {
@@ -94,28 +96,36 @@ export class XlsImportComponent {
 
   data_store() {
     // verify sales integrity
+    console.log('current sales', this.sales);
     this.sales_validity_check(this.sales);
-    this.salesService.get_sales$(this.season).subscribe((sales) => {
-      // delete ALL sales of the season
-      sales.forEach((sale) => {
-        this.salesService.cancel_sale$(sale.id!).subscribe((response) => {
-          console.log('sale deleted', sale.id);
-        });
-      });
 
-      // create new sales
-      this.sales.forEach((sale) => {
-        this.salesService.create_sale$(sale).subscribe((new_sale) => {
-          sale.records!.forEach((record) => {
-            record.sale_id = new_sale.id!;
-            this.salesService.create_record$(record).subscribe((record) => {
-            });
-          });
+    const subscription = this.salesService.f_list_sales$(this.season).pipe(take(1)).subscribe((sales) => {
+      console.log('%s sales currently in DB', sales.length);
+      if (sales.length === 0) {
+        this.save_sales();
+        return;
+      } else {
+        // delete ALL sales of the season
+        combineLatest(sales.map((sale) => this.salesService.f_delete_sale$(sale.id!))).subscribe((dones) => {
+          const done = dones.every((done) => done);
+          console.log('all %s sales deleted', sales.length);
+          if (done) this.save_sales();
         });
-      });
+      }
+    });
+    subscription.unsubscribe();
+    this.excel_uploaded = false;
+  }
+
+  save_sales() {
+    // create new sales
+    let i = 0;
+    console.log('creating %s new sales', this.sales.length, this.sales);
+    combineLatest(this.sales.map((sale) => this.salesService.f_create_sale$(sale))).subscribe((new_sales) => {
+      console.log('%s : new sales', i++, new_sales);
+
     });
 
-    this.excel_uploaded = false;
   }
 
   process_exel_file(workbook: ExcelJS.Workbook) {
@@ -166,52 +176,53 @@ export class XlsImportComponent {
     // create sale (master)
     let row_number = +this.worksheet.getCell(master).row;
     let master_row = this.worksheet.getRow(row_number);
-    let payer = this.retrieve_member(master_row.number, master_row.getCell(MAP.membre).value?.toString() as string);
+    let member = this.retrieve_member(master_row.number, master_row.getCell(MAP['membre']).value?.toString() as string);
 
-    if (payer === null) {
-      // console.log('payer not found', row_number);
+    if (member === null) {
+      // console.log('member not found', row_number);
       return;
     };
     let sale: Sale = {
-      payer_id: payer.id,
+      payer_id: member.id,
       season: this.season,
       vendor: 'uploader',
       event: master_row.getCell(MAP.date).value?.toString() as string,
       records: [],
     };
 
-    let col_member = master_row.getCell(MAP['membre']).value;
-    // let col_nature = master_row.getCell(MAP['nature']).value;
-    let col_pièce = master_row.getCell(MAP['n° pièce']).value;
-    let col_dette = master_row.getCell(MAP['credit_in']).value;
-    let col_avoir = master_row.getCell(MAP['avoir_in']).value;
-    let col_caisse = master_row.getCell(MAP['espèces_in']).value;
-    let col_banque = master_row.getCell(MAP['banque_in']).value;
+    // let cell_nature = master_row.getCell(MAP['nature']).value;
+    let cell_chèque = master_row.getCell(MAP['n° chèque']).value;
+    let cell_dette = master_row.getCell(MAP['credit_in']).value;
+    let cell_avoir = master_row.getCell(MAP['avoir_in']).value;
+    let cell_caisse = master_row.getCell(MAP['espèces_in']).value;
+    let cell_banque = master_row.getCell(MAP['banque_in']).value;
+    let cell_bordereau = master_row.getCell(MAP['bordereau']).value;
     let records: Record[] = [];
 
 
     // construct payment side
 
-    [{ col: col_dette, mode: PaymentMode.CREDIT },
-    { col: col_avoir, mode: PaymentMode.ASSETS },
-    { col: col_caisse, mode: PaymentMode.CASH },
-    { col: col_banque, mode: PaymentMode.TRANSFER }]
-      .forEach(({ col, mode }) => {
+    [{ cell: cell_dette, mode: PaymentMode.CREDIT },
+    { cell: cell_avoir, mode: PaymentMode.ASSETS },
+    { cell: cell_caisse, mode: PaymentMode.CASH },
+    { cell: cell_banque, mode: undefined }]
+      .forEach(({ cell, mode }) => {
 
-        if (!col?.valueOf()) { return; }
-
-        let bank = (mode === PaymentMode.CHEQUE) ? col_pièce?.toString().substring(0, 3) : '';
-        let cheque_no = (mode === PaymentMode.CHEQUE) ? col_pièce?.toString().substring(3, 10) : '';
-
+        if (!cell?.valueOf()) { return; }
+        if (mode === undefined) {
+          mode = cell_chèque ? PaymentMode.CHEQUE : PaymentMode.TRANSFER;
+        }
+        let cheque = cell_chèque?.toString() ?? '';
+        let slip = cell_bordereau?.toString() ?? '';
         records.push({
           class: 'Payment_debit',
           season: this.season,
-          amount: col?.valueOf() as number,
+          amount: cell?.valueOf() as number,
           mode: mode,
-          bank: bank,
-          cheque_no: cheque_no,
+          cheque: cheque,
+          slip: slip,
           sale_id: master,
-          member_id: col_member?.toString() as string,
+          member_id: member.id,
         });
 
       });

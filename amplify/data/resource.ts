@@ -17,7 +17,6 @@ const schema = a.schema({
     class: a.string().required(),
     season: a.string().required(),
     amount: a.float().required(),
-    // debit_credit: a.enum(['DEBIT', 'CREDIT']),
 
     sale_id: a.id().required(),
     sale: a.belongsTo('Sale', 'sale_id'),
@@ -25,8 +24,9 @@ const schema = a.schema({
     member_id: a.id(),
 
     mode: a.string(),
-    bank: a.string(),
-    cheque_no: a.string(),
+    // bank: a.string(),
+    cheque: a.string(),
+    slip: a.string(),
 
     // payee_id: a.id(),
     product_id: a.id(),

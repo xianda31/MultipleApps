@@ -53,7 +53,7 @@ export class RevenuesComponent {
 
     const data_list: { [m: string]: { [c: string]: number } } = {};
     payments.forEach((payment) => {
-      const sale = this.saleService.get_sale(payment.sale_id);
+      const sale = this.saleService.read_sale(payment.sale_id);
       const event = sale ? (sale.event) : 'inconnu';
       const payment_mode = payment.mode as string;
       if (!data_list[event]) {

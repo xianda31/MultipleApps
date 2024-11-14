@@ -1,7 +1,7 @@
 import { Injectable, Signal, signal } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { CartItem, Payment } from './cart.interface';
-import { Sale, Session } from '../sales.interface';
+import { Sale, Session, Record, PaymentMode } from '../sales.interface';
 import { SalesService } from '../sales.service';
 import { Member } from '../../../../../common/member.interface';
 
@@ -114,16 +114,58 @@ export class CartService {
 
 
   save_sale(session: Session, buyer: Member): void {
-    this.salesService.save_sale$(session, buyer, this._cart, this._payments)
+    console.log('save_sale', this._payments);
+    const records: Record[] = [];
+    this._cart.forEach((cartItem) => { records.push(this.cart2Record(session, '', cartItem)) });
+    this._payments.forEach((payment) => { records.push(this.payment2Record(session, '', payment)) });
+    const sale: Sale = {
+      ...session, payer_id: buyer.id, records: records
+    };
+    this.salesService.f_create_sale$(sale)
       .subscribe((sale) => {
         // console.log('sale saved', sale);
         this._sales_of_the_day.push(sale);
         this.clearCart();
       });
+
   }
 
 
+  cart2Record(session: Session, sale_id: string, cart: CartItem): Record {
+    if (cart.product_id === 'debt') {
+      return {
+        class: 'Payment_debit',
+        season: session.season,
+        amount: -cart.paied,
+        sale_id: sale_id,
 
+        member_id: cart.payee_id,
+        mode: PaymentMode.CREDIT
+      }
+    } else {
+      return {
+        class: 'Product_credit',
+        season: session.season,
+        amount: cart.paied,
+        sale_id: sale_id,
 
+        product_id: cart.product_id,
+        member_id: cart.payee_id,
+      }
+    }
+  }
+
+  payment2Record(session: Session, sale_id: string, payment: Payment): Record {
+    return {
+      class: 'Payment_debit',
+      season: session.season,
+      amount: payment.amount,
+      sale_id: sale_id,
+
+      member_id: payment.payer_id,
+      mode: payment.mode,
+      cheque: payment.bank + payment.cheque_no,
+    }
+  }
 
 }

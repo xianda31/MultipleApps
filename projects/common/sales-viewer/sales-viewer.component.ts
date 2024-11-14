@@ -20,7 +20,7 @@ export class SalesViewerComponent {
   product_accounts: string[] = [];
   payment_accounts: string[] = [];
   payMode = PaymentMode;
-  up_sorting = true;
+  up_sorting = false;
 
   constructor(
     private systemDataService: SystemDataService,

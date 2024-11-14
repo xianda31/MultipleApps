@@ -49,7 +49,7 @@ export class SalesComponent {
 
   load_sales(season: string): any {
     this.loaded = false;
-    return this.salesService.get_sales$(season).pipe(
+    return this.salesService.f_list_sales$(season).pipe(
       map((sales) => { return sales.sort((a, b) => a.event > b.event ? 1 : -1) })
     ).subscribe((sales) => {
       this.sales = sales;
@@ -68,7 +68,7 @@ export class SalesComponent {
   }
 
   delete_sale(sale_id: string) {
-    this.salesService.cancel_sale$(sale_id).subscribe((done) => {
+    this.salesService.f_delete_sale$(sale_id).subscribe((done) => {
       if (done) {
         // delete locally
         this.sales = this.sales.filter((sale) => sale.id !== sale_id);

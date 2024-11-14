@@ -124,9 +124,10 @@ export class SalesTabUtilities {
           } else {
             payments[payment_key] += amount;
           }
-          reference = record.mode === PaymentMode.CHEQUE ? record.bank! + record.cheque_no! : undefined;
+          reference = record.mode === PaymentMode.CHEQUE ? record.cheque : undefined;
         }
       });
+
       const payees_nbr = Object.keys(products).length;
       f_sales.push({
         sale_id: sale.id!,

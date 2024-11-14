@@ -10,8 +10,9 @@ export interface Record {
 
     member_id?: string;  // payer or payee
     mode?: PaymentMode;
-    bank?: string;
-    cheque_no?: string;
+    // bank?: string;
+    cheque?: string;
+    slip?: string;
 
     product_id?: string;
 

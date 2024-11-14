@@ -35,7 +35,7 @@ export class AppComponent {
 
     ]).subscribe(([members, conf]) => {
       this.season = conf.season;
-      this.salesService.get_sales$(this.season).subscribe((sales) => {
+      this.salesService.f_list_sales$(this.season).subscribe((sales) => {
         this.init = true;
       });
 
