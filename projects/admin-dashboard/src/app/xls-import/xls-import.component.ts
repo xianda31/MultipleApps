@@ -4,7 +4,7 @@ import { MembersService } from '../members/service/members.service';
 import { Member } from '../../../../common/member.interface';
 import { CommonModule } from '@angular/common';
 import { Bank } from '../../../../common/system-conf.interface';
-import { Observable, of, tap, map, combineLatest, take } from 'rxjs';
+import { Observable, of, tap, map, combineLatest, take, forkJoin } from 'rxjs';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 import { PaymentMode, Record, Sale } from '../../../../cashier/src/app/shop/sales.interface';
 import { SalesViewerComponent } from '../../../../common/sales-viewer/sales-viewer.component';
@@ -30,10 +30,13 @@ export class XlsImportComponent {
   products: Product[] = [];
   season$: Observable<string> = of(this.season);
   loaded = false;
+  create_progress = 0;
+  progress_style = 'width: 0%';
   worksheet!: ExcelJS.Worksheet;
   // verbose: string = '';
   verbose = signal<string>('');
   excel_uploaded: boolean = false;
+  data_uploading = false;
 
   constructor(
     private membersService: MembersService,
@@ -96,35 +99,39 @@ export class XlsImportComponent {
 
   data_store() {
     // verify sales integrity
-    console.log('current sales', this.sales);
+    this.data_uploading = true
     this.sales_validity_check(this.sales);
 
     const subscription = this.salesService.f_list_sales$(this.season).pipe(take(1)).subscribe((sales) => {
-      console.log('%s sales currently in DB', sales.length);
       if (sales.length === 0) {
         this.save_sales();
         return;
       } else {
         // delete ALL sales of the season
-        combineLatest(sales.map((sale) => this.salesService.f_delete_sale$(sale.id!))).subscribe((dones) => {
+        forkJoin(sales.map((sale) => this.salesService.f_delete_sale$(sale.id!))).subscribe((dones) => {
           const done = dones.every((done) => done);
-          console.log('all %s sales deleted', sales.length);
           if (done) this.save_sales();
         });
       }
     });
     subscription.unsubscribe();
-    this.excel_uploaded = false;
   }
 
   save_sales() {
     // create new sales
-    let i = 0;
-    console.log('creating %s new sales', this.sales.length, this.sales);
-    combineLatest(this.sales.map((sale) => this.salesService.f_create_sale$(sale))).subscribe((new_sales) => {
-      console.log('%s : new sales', i++, new_sales);
-
+    this.create_progress = 0;
+    this.sales.forEach((sale) => {
+      this.salesService.f_create_sale$(sale).subscribe((new_sale) => {
+        this.create_progress++;
+        this.progress_style = 'width: ' + (this.create_progress / this.sales.length) * 100 + '%';
+        if (this.create_progress === this.sales.length) {
+          this.data_uploading = false;
+          this.excel_uploaded = false;
+          this.toastservice.showSuccessToast('ventes importées', 'ventes importées avec succès');
+        }
+      });
     });
+    // this.excel_uploaded = false;
 
   }
 

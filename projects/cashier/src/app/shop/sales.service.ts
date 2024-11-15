@@ -137,6 +137,7 @@ export class SalesService {
         {
           selectionSet: ['id', 'season', 'event', 'vendor', 'payer_id', 'records.*'],
           filter: { season: { eq: season } },
+          limit: 1000
         })).pipe(
           map((response: { data: unknown; }) => response.data as unknown as Sale[]),
           tap((sales) => {
