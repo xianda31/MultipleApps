@@ -54,24 +54,24 @@ export class RevenuesComponent {
     const data_list: { [m: string]: { [c: string]: number } } = {};
     payments.forEach((payment) => {
       const sale = this.saleService.read_sale(payment.sale_id);
-      const event = sale ? (sale.event) : 'inconnu';
+      const date = sale ? (sale.date) : 'inconnu';
       const payment_mode = payment.mode as string;
-      if (!data_list[event]) {
-        data_list[event] = { [payment_mode]: payment.amount };
+      if (!data_list[date]) {
+        data_list[date] = { [payment_mode]: payment.amount };
       } else {
-        if (!data_list[event][payment_mode]) {
-          data_list[event][payment_mode] = payment.amount;
+        if (!data_list[date][payment_mode]) {
+          data_list[date][payment_mode] = payment.amount;
         } else {
-          data_list[event][payment_mode] += payment.amount;
+          data_list[date][payment_mode] += payment.amount;
         }
       }
     });
     return data_list;
   }
 
-  new_season(event: any) {
+  new_season(date: any) {
     this.records_subscription.unsubscribe();
-    let season = event.target.value;
+    let season = date.target.value;
     // this.list_records(season);
   }
 

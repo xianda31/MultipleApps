@@ -25,7 +25,7 @@
         </thead>
         <tbody>
             <tr *ngFor="let f_sale of f_sales">
-                <td>{{format_date(f_sale.event)}} </td>
+                <td>{{(f_sale.date)}} </td>
                 <td *ngFor="let account of payment_accounts" class="text-center">
                     {{f_sale.payments[account] ? f_sale.payments[account] : ''}}
                 </td>

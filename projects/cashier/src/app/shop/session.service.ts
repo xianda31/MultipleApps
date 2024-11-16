@@ -22,7 +22,7 @@ export class SessionService {
         this._current_session = {
           season: conf.season,
           vendor: vendor ? (vendor.firstname + ' ' + vendor.lastname) : '.. faut quelqu\'un !',
-          event: new Date().toLocaleDateString('en-CA'),
+          date: new Date().toISOString(),
         };
         this._current_session$.next(this._current_session);
       });

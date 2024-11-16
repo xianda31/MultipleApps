@@ -4,8 +4,8 @@
         <div class="col-3">
             <div class=" input-group input-group-sm">
                 <span class="input-group-text">date de vente</span>
-                <input type="date" class="form-control" (ngModelChange)="renew_session($event)"
-                    [(ngModel)]="session.event">
+                <input type="date" class="form-control" (ngModelChange)="session_change($event)"
+                    [(ngModel)]="session.date">
             </div>
         </div>
     </div>
@@ -99,6 +99,6 @@
 
     </div>
 
-    <!-- <div *ngIf="event === null">
+    <!-- <div *ngIf="date === null">
     fin de session de saisie : pour redémarrer une session cliquer sur Vente dans la barre de menue
 </div> -->

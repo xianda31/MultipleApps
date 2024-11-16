@@ -17,7 +17,7 @@
         <ng-container *ngFor="let f_sale of f_sales">
             <!-- <td>{{ sale_amount(sale) | currency:'€':'symbol':'2.2-2':'fr' }}</td> -->
             <tr *ngFor="let products of f_sale.products  | keyvalue ; let ip = index" class="align-middle">
-                <td>{{format_date(f_sale.event)}} </td>
+                <td>{{f_sale.date | date}} </td>
                 <td class="text-start"> {{products.key}}</td>
                 <td *ngFor="let account of product_accounts" class="text-center">
                     {{products.value[account] ? products.value[account] : ''}}

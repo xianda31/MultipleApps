@@ -35,10 +35,17 @@ export class SalesService {
   // Sale only (without records)  API
 
   create_sale$(sale: Sale): Observable<Sale> {
-
+    console.log('creating sale', sale.date);
     const client = generateClient<Schema>();
-    return from(client.models.Sale.create(sale)
+    const saleInput = { ...sale, date: new Date(sale.date).toISOString() };
+    saleInput.date = new Date(saleInput.date).toISOString().split('T')[0];
+    console.log('saleInput', saleInput.date);
+    return from(client.models.Sale.create(saleInput)
       .then((response) => {
+        if (response.errors) {
+          console.error('error', response.errors);
+          throw new Error(JSON.stringify(response.errors));
+        }
         // console.log('response', response);
         const created_sale = response.data as unknown as Sale;    // marche pas si error dans response
         // console.log('created sale', created_sale);
@@ -122,7 +129,7 @@ export class SalesService {
 
 
 
-  f_list_sales$(season: string): Observable<Sale[]> {
+  f_list_sales$(season: string, date?: string): Observable<Sale[]> {
     let new_season = false;
     if (this.current_season !== season) {
       new_season = true;
@@ -133,10 +140,11 @@ export class SalesService {
       console.log('fetching sales from ', this._sales ? 'cache' : 'AWS');
 
       const client = generateClient<Schema>();
+      const filter = date ? { season: { eq: season }, date: { eq: date } } : { season: { eq: season } };
       return from(client.models.Sale.list(
         {
-          selectionSet: ['id', 'season', 'event', 'vendor', 'payer_id', 'records.*'],
-          filter: { season: { eq: season } },
+          selectionSet: ['id', 'season', 'date', 'vendor', 'payer_id', 'records.*'],
+          filter: filter,
           limit: 1000
         })).pipe(
           map((response: { data: unknown; }) => response.data as unknown as Sale[]),

@@ -43,7 +43,7 @@ export class SalesTabUtilities {
       let row_end = 0;
       Object.keys(f_sale.products).forEach((payee, index) => {
         let row: { [key: string]: any } = [];
-        row['Date'] = new Date(f_sale.event);
+        row['Date'] = new Date(f_sale.date);
         row['Bénéficiaire'] = payee;
         Object.keys(f_sale.products[payee]).forEach((product) => {
           row[product] = f_sale.products[payee][product];
@@ -92,7 +92,7 @@ export class SalesTabUtilities {
     const f_sales: f_Sale[] = [];
     // formatage données payee_produits
     sales.forEach((sale) => {
-      const event = sale.event;
+      const date = sale.date;
       const products: f_products = {};
       const payments: f_payments = {};
       let reference: string | undefined = undefined;
@@ -131,7 +131,7 @@ export class SalesTabUtilities {
       const payees_nbr = Object.keys(products).length;
       f_sales.push({
         sale_id: sale.id!,
-        event: event,
+        date: date,
         payees_nbr: payees_nbr,
         products: products,
         payments: payments,
@@ -145,8 +145,8 @@ export class SalesTabUtilities {
 
 
   sort_by_date(f_sales: f_Sale[], up_sorting: boolean): f_Sale[] {
-    let compare_up = (a: f_Sale, b: f_Sale) => new Date(a.event) < new Date(b.event) ? 1 : -1;
-    let compare_down = (a: f_Sale, b: f_Sale) => new Date(a.event) > new Date(b.event) ? 1 : -1;
+    let compare_up = (a: f_Sale, b: f_Sale) => new Date(a.date) < new Date(b.date) ? 1 : -1;
+    let compare_down = (a: f_Sale, b: f_Sale) => new Date(a.date) > new Date(b.date) ? 1 : -1;
 
     if (up_sorting) {
       return f_sales.sort(compare_up);

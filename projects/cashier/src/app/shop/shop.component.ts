@@ -97,22 +97,29 @@ export class ShopComponent {
 
   ngOnInit(): void {
 
-    combineLatest([this.membersService.listMembers(), this.productService.listProducts(), this.sessionService.current_session]).subscribe(([members, products, session]) => {
+    combineLatest([this.membersService.listMembers(), this.productService.listProducts()]).subscribe(([members, products]) => {
       this.members = members;
       this.products = products;
       this.products_array = this.productService.products_array(products);
-      this.session = session;
-      this.sales_subscription = this.salesService.f_list_sales$(session.season).subscribe((sales) => {
-        this.sales = sales;
-
-        this.sales_of_the_day = sales.filter((sale) => sale.event === session.event);
-        this.loading_complete = true;
-      });
     });
+
+
 
     this.banks$ = this.systemDataService.configuration$.pipe(
       map((conf) => conf.banks)
     );
+
+
+    this.sessionService.current_session.subscribe((session) => {
+      this.session = session;
+      this.sales_subscription = this.salesService.f_list_sales$(this.session.season).subscribe((sales) => {
+        this.sales = sales;
+        console.log('sales', sales);
+        this.sales_of_the_day = sales.filter((sale) => sale.date === this.session.date);
+        console.log('sales of the day', this.sales_of_the_day);
+        this.loading_complete = true;
+      });
+    });
 
     this.buyerForm.valueChanges.subscribe((value) => {
       const buyer: Member | null = value['buyer'];
@@ -140,7 +147,6 @@ export class ShopComponent {
     console.log('dette', due);
     return due;
   }
-
 
   product_selected(product: Product) {
 
@@ -196,10 +202,8 @@ export class ShopComponent {
 
   }
 
-
-
-  renew_session(event: any) {
-    this.session.event = event;
+  session_change(date: any) {
+    this.session.date = date;
     this.sessionService.set_current_session(this.session);
   }
 

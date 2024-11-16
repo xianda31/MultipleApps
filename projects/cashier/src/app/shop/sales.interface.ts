@@ -12,15 +12,15 @@ export interface Record {
     mode?: PaymentMode;
     // bank?: string;
     cheque?: string;
-    slip?: string;
-
+    deposit_ref?: string;
+    bank_statement?: string;
     product_id?: string;
 
 }
 export interface Session {
     season: string;
     vendor: string;
-    event: string;
+    date: string;
 }
 export interface Sale extends Session {
     id?: string;
@@ -44,7 +44,7 @@ export interface f_products { [payee: string]: { [product_key: string]: number }
 export interface f_payments { [payment_key: string]: number }
 export interface f_Sale {
     sale_id: string;
-    event: string;
+    date: string;
     payees_nbr: number;
     payments: f_payments;
     products: f_products;

@@ -13,7 +13,7 @@ import { ToastService } from '../../../../../common/toaster/toast.service';
 @Component({
   selector: 'app-cash-box',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, SalesViewerComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './cash-box.component.html',
   styleUrl: './cash-box.component.scss'
 })
@@ -55,7 +55,7 @@ export class CashBoxComponent {
   load_sales(season: string): any {
     this.loaded = false;
     return this.salesService.f_list_sales$(season).pipe(
-      map((sales) => { return sales.sort((a, b) => a.event > b.event ? 1 : -1) })
+      map((sales) => { return sales.sort((a, b) => a.date > b.date ? 1 : -1) })
     ).subscribe((sales) => {
       this.sales = sales;
       // console.log(this.sales);

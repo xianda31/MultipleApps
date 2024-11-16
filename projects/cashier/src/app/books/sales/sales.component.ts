@@ -50,16 +50,16 @@ export class SalesComponent {
   load_sales(season: string): any {
     this.loaded = false;
     return this.salesService.f_list_sales$(season).pipe(
-      map((sales) => { return sales.sort((a, b) => a.event > b.event ? 1 : -1) })
+      map((sales) => { return sales.sort((a, b) => a.date > b.date ? 1 : -1) })
     ).subscribe((sales) => {
       this.sales = sales;
       this.loaded = true;
     });
   }
 
-  change_season(event: any) {
+  change_season(date: any) {
     this.sales_subscription.unsubscribe();
-    this.season = event.target.value;
+    this.season = date.target.value;
     this.sales_subscription = this.load_sales(this.season);
   }
 

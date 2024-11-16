@@ -102,13 +102,15 @@ export class XlsImportComponent {
     this.data_uploading = true
     this.sales_validity_check(this.sales);
 
-    const subscription = this.salesService.f_list_sales$(this.season).pipe(take(1)).subscribe((sales) => {
-      if (sales.length === 0) {
+    const subscription = this.salesService.f_list_sales$(this.season).pipe(take(1)).subscribe((current_sales) => {
+      console.log('sales', current_sales);
+
+      if (current_sales.length === 0) {
         this.save_sales();
         return;
       } else {
         // delete ALL sales of the season
-        forkJoin(sales.map((sale) => this.salesService.f_delete_sale$(sale.id!))).subscribe((dones) => {
+        forkJoin(current_sales.map((sale) => this.salesService.f_delete_sale$(sale.id!))).subscribe((dones) => {
           const done = dones.every((done) => done);
           if (done) this.save_sales();
         });
@@ -184,7 +186,7 @@ export class XlsImportComponent {
     let row_number = +this.worksheet.getCell(master).row;
     let master_row = this.worksheet.getRow(row_number);
     let member = this.retrieve_member(master_row.number, master_row.getCell(MAP['membre']).value?.toString() as string);
-
+    let date = master_row.getCell(MAP.date).value?.toString() || '';
     if (member === null) {
       // console.log('member not found', row_number);
       return;
@@ -193,7 +195,7 @@ export class XlsImportComponent {
       payer_id: member.id,
       season: this.season,
       vendor: 'uploader',
-      event: master_row.getCell(MAP.date).value?.toString() as string,
+      date: date,
       records: [],
     };
 
@@ -220,14 +222,14 @@ export class XlsImportComponent {
           mode = cell_chèque ? PaymentMode.CHEQUE : PaymentMode.TRANSFER;
         }
         let cheque = cell_chèque?.toString() ?? '';
-        let slip = cell_bordereau?.toString() ?? '';
+        let deposit_ref = cell_bordereau?.toString() ?? '';
         records.push({
           class: 'Payment_debit',
           season: this.season,
           amount: cell?.valueOf() as number,
           mode: mode,
           cheque: cheque,
-          slip: slip,
+          deposit_ref: deposit_ref,
           sale_id: master,
           member_id: member.id,
         });

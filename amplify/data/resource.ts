@@ -26,7 +26,8 @@ const schema = a.schema({
     mode: a.string(),
     // bank: a.string(),
     cheque: a.string(),
-    slip: a.string(),
+    deposit_ref: a.string(),   // bordereau
+    bank_statement: a.string(),
 
     // payee_id: a.id(),
     product_id: a.id(),
@@ -36,7 +37,7 @@ const schema = a.schema({
   Sale: a.model({
     season: a.string().required(),
     vendor: a.string().required(),
-    event: a.string().required(),
+    date: a.date().required(),
 
     payer_id: a.id().required(),
     comment: a.string(),
