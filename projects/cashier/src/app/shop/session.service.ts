@@ -35,7 +35,6 @@ export class SessionService {
 
 
   set_current_session(session: Session) {
-    console.log('new session', session);
     this._current_session = session;
     this._current_session$.next(this._current_session);
   }

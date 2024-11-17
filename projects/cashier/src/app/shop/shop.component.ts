@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { FormGroup, FormControl, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { MembersService } from '../../../../admin-dashboard/src/app/members/service/members.service';
 import { Member } from '../../../../common/member.interface';
@@ -6,14 +6,11 @@ import { ProductService } from '../../../../common/services/product.service';
 import { ToastService } from '../../../../common/toaster/toast.service';
 import { CartService } from './cart/cart.service';
 import { Product } from '../../../../admin-dashboard/src/app/sales/products/product.interface';
-import { ToasterComponent } from '../../../../common/toaster/components/toaster/toaster.component';
 import { CommonModule } from '@angular/common';
 import { CartComponent } from './cart/cart.component';
 import { InputMemberComponent } from '../input-member/input-member.component';
 import { SalesService } from './sales.service';
-import { combineLatest, map, Observable } from 'rxjs';
-import { SystemDataService } from '../../../../common/services/system-data.service';
-import { Bank } from '../../../../common/system-conf.interface';
+import { combineLatest, Observable } from 'rxjs';
 import { SessionService } from './session.service';
 import { PaymentMode, Sale, Session } from './sales.interface';
 import { CartItem, Payment } from './cart/cart.interface';
@@ -45,8 +42,6 @@ export class ShopComponent {
   products!: Product[];
   products_array!: [Product[]];
   debt_amount = 0;
-  // banks$ !: Observable<Bank[]>;
-  // sales: Sale[] = [];
   sales_of_the_day: Sale[] = [];
   paymentMode = PaymentMode;
   day: string = new Date().toISOString().split('T')[0];
@@ -86,7 +81,6 @@ export class ShopComponent {
     private sessionService: SessionService,
   ) {
     this.sales_of_the_day$ = this.salesService.f_list_sales_of_day$(this.day);
-
   }
 
   ngOnInit(): void {
@@ -100,26 +94,19 @@ export class ShopComponent {
 
     this.sessionService.current_session.subscribe((session) => {
       this.session = session;
-      console.log('session', this.session);
     });
 
-    // this.sales_subscription = this.salesService.f_list_sales_of_day$(this.day).subscribe((sales) => {
-    //   // this.sales = sales;
-    //   // console.log('sales', sales);
-    //   this.sales_of_the_day = sales;
-    //   console.log('sales of the day', this.sales_of_the_day);
-    //   this.loading_complete = true;
-    // });
+
 
     this.buyerForm.valueChanges.subscribe(async (value) => {
       const buyer: Member | null = value['buyer'];
-      // console.log('buyerForm.valueChanges', buyer);
       if (buyer === null) return;
 
       this.debt_amount = await this.find_debt(buyer);
       if (this.debt_amount !== 0) {
         this.debt_product.price = this.debt_amount;
         this.toastService.showWarningToast('dette', 'cette personne a une dette de ' + this.debt_amount + ' €');
+        this.product_selected(this.debt_product);
       }
     });
 
@@ -135,7 +122,6 @@ export class ShopComponent {
 
     let cart_item = (product: Product, payee: Member | null): CartItem => {
       const cartItem: CartItem = {
-        // season: this.session.season,
         product_id: product.id,
         paied: product.price,
         payee_id: payee === null ? '' : payee.id,
@@ -144,7 +130,7 @@ export class ShopComponent {
     }
 
     if (!this.buyerForm.valid) {
-      this.toastService.showWarningToast('saisie achat', 'selectionner au moins le bénéficiaire 1');
+      this.toastService.showWarningToast('saisie achat', 'selectionner un acheteur');
       return
     }
 
@@ -185,7 +171,7 @@ export class ShopComponent {
 
   }
 
-  session_change(date: any) {
+  date_change(date: any) {
     this.session.date = date;
     this.day = date;
 

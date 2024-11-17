@@ -40,12 +40,6 @@ export class CartComponent implements OnInit, OnDestroy {
 
   complete_and_balanced$ !: Signal<boolean>;
 
-  // checkForm: FormGroup = new FormGroup({
-  //   bank: new FormControl('', Validators.required),
-  //   cheque_no: new FormControl('', [Validators.pattern(/^\d{6}$/), Validators.required])
-  // });
-  // get bank() { return this.checkForm.get('bank')!; }
-  // get cheque_no() { return this.checkForm.get('cheque_no')!; }
 
   constructor(
     private membersService: MembersService,

@@ -4,7 +4,7 @@
         <div class="col-3">
             <div class=" input-group input-group-sm">
                 <span class="input-group-text">date de vente</span>
-                <input type="date" class="form-control" (ngModelChange)="session_change($event)"
+                <input type="date" class="form-control" (ngModelChange)="date_change($event)"
                     [(ngModel)]="session.date">
             </div>
         </div>
@@ -32,7 +32,8 @@
                                 </div>
                             </div>
                         </div>
-                        <div *ngIf="debt_amount > 0"
+                        <!-- "produit" dette -->
+                        <!-- <div *ngIf="debt_amount > 0"
                             class="card text-white bg-warning nice_shadow  bigger-on-hover mt-1"
                             (click)="product_selected(debt_product)">
                             <div class="card-body text-center px-0 py-1">
@@ -41,7 +42,8 @@
                                     <small>{{debt_amount.toFixed(2)}} €</small>
                                 </p>
                             </div>
-                        </div>
+                        </div> -->
+
                     </div>
                     <!-- payment keys -->
                     <div class="col-4 gx-2">
@@ -92,13 +94,4 @@
                 </table>
             </div>
         </div>
-
-
-
-
-
     </div>
-
-    <!-- <div *ngIf="date === null">
-    fin de session de saisie : pour redémarrer une session cliquer sur Vente dans la barre de menue
-</div> -->

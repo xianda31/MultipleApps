@@ -129,7 +129,6 @@ export class SalesService {
 
 
   private _listSales = (filter: any): Observable<Sale[]> => {
-    console.log('fetching sales from AWS');
 
     const client = generateClient<Schema>();
     return from(client.models.Sale.list(
@@ -159,7 +158,6 @@ export class SalesService {
   }
 
   f_list_sales_of_day$(date: string): Observable<Sale[]> {
-    console.log('fetching sales of the day', date);
     const filter = { date: { eq: date } };
     return this._listSales(filter);
   }
