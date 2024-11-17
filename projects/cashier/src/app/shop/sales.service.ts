@@ -8,6 +8,7 @@ import { Member } from '../../../../common/member.interface';
 import { ProductService } from '../../../../common/services/product.service';
 import { Product } from '../../../../admin-dashboard/src/app/sales/products/product.interface';
 import { ToastService } from '../../../../common/toaster/toast.service';
+import { filter } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -127,35 +128,40 @@ export class SalesService {
   }
 
 
+  private _listSales = (filter: any): Observable<Sale[]> => {
+    console.log('fetching sales from AWS');
 
+    const client = generateClient<Schema>();
+    return from(client.models.Sale.list(
+      {
+        selectionSet: ['id', 'season', 'date', 'vendor', 'payer_id', 'records.*'],
+        filter: filter,
+        limit: 1000
+      })).pipe(
+        map((response: { data: unknown; }) => response.data as unknown as Sale[]),
+        tap((sales) => {
+          this._sales = sales;
+          this._sales$.next(this._sales);
+        }),
+        switchMap(() => this._sales$.asObservable())
+      );
+  }
 
-  f_list_sales$(season: string, date?: string): Observable<Sale[]> {
+  f_list_sales$(season: string): Observable<Sale[]> {
+
     let new_season = false;
     if (this.current_season !== season) {
       new_season = true;
       this.current_season = season;
     }
+    const filter = { season: { eq: season } };
+    return (this._sales && !new_season) ? this._sales$.asObservable() : this._listSales(filter);
+  }
 
-    const _listSales = (): Observable<Sale[]> => {
-      console.log('fetching sales from ', this._sales ? 'cache' : 'AWS');
-
-      const client = generateClient<Schema>();
-      const filter = date ? { season: { eq: season }, date: { eq: date } } : { season: { eq: season } };
-      return from(client.models.Sale.list(
-        {
-          selectionSet: ['id', 'season', 'date', 'vendor', 'payer_id', 'records.*'],
-          filter: filter,
-          limit: 1000
-        })).pipe(
-          map((response: { data: unknown; }) => response.data as unknown as Sale[]),
-          tap((sales) => {
-            this._sales = sales;
-            this._sales$.next(this._sales);
-          }),
-          switchMap(() => this._sales$.asObservable())
-        );
-    }
-    return (this._sales && !new_season) ? this._sales$.asObservable() : _listSales();
+  f_list_sales_of_day$(date: string): Observable<Sale[]> {
+    console.log('fetching sales of the day', date);
+    const filter = { date: { eq: date } };
+    return this._listSales(filter);
   }
 
 
@@ -210,4 +216,20 @@ export class SalesService {
   }
 
 
+  // utilities
+
+  find_debt(member: Member): Promise<number> {
+    const client = generateClient<Schema>();
+    return new Promise<number>((resolve, reject) => {
+      client.models.Record.observeQuery({
+        filter: { mode: { eq: PaymentMode.CREDIT } }
+      }).pipe(
+        map((records) => {
+          const due = records.items.filter((record) => record.member_id === member.id)
+            .reduce((acc, record) => acc + record.amount, 0);
+          return (due);
+        })
+      ).subscribe((due) => { resolve(due); });
+    });
+  }
 }

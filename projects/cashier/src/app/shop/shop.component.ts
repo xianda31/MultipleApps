@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, computed, signal } from '@angular/core';
 import { FormGroup, FormControl, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { MembersService } from '../../../../admin-dashboard/src/app/members/service/members.service';
 import { Member } from '../../../../common/member.interface';
@@ -33,25 +33,25 @@ interface PayMode {
 })
 export class ShopComponent {
   members!: Member[];
-  session!: Session;
+  // session!: Session;
 
   cart_is_valid = true;
 
   sale: Sale | null = null;
-
+  session !: Session;
   members_subscription: any;
   products_subscription: any;
   sales_subscription: any;
   products!: Product[];
   products_array!: [Product[]];
   debt_amount = 0;
-  banks$ !: Observable<Bank[]>;
-  sales: Sale[] = [];
+  // banks$ !: Observable<Bank[]>;
+  // sales: Sale[] = [];
   sales_of_the_day: Sale[] = [];
   paymentMode = PaymentMode;
-
+  day: string = new Date().toISOString().split('T')[0];
   loading_complete = false;
-
+  sales_of_the_day$!: Observable<Sale[]>;
 
   paymodes: PayMode[] = [
     { glyph: 'ESPECES', icon: 'bi bi-cash-coin', class: 'card nice_shadow bigger-on-hover bg-primary text-white', payment_mode: PaymentMode.CASH },
@@ -83,15 +83,9 @@ export class ShopComponent {
     private toastService: ToastService,
     private productService: ProductService,
     private salesService: SalesService,
-    private systemDataService: SystemDataService,
     private sessionService: SessionService,
   ) {
-
-  }
-
-  ngOnDestroy(): void {
-    // this.products_subscription.unsubscribe();
-    // this.members_subscription.unsubscribe();
+    this.sales_of_the_day$ = this.salesService.f_list_sales_of_day$(this.day);
 
   }
 
@@ -104,29 +98,25 @@ export class ShopComponent {
     });
 
 
-
-    this.banks$ = this.systemDataService.configuration$.pipe(
-      map((conf) => conf.banks)
-    );
-
-
     this.sessionService.current_session.subscribe((session) => {
       this.session = session;
-      this.sales_subscription = this.salesService.f_list_sales$(this.session.season).subscribe((sales) => {
-        this.sales = sales;
-        console.log('sales', sales);
-        this.sales_of_the_day = sales.filter((sale) => sale.date === this.session.date);
-        console.log('sales of the day', this.sales_of_the_day);
-        this.loading_complete = true;
-      });
+      console.log('session', this.session);
     });
 
-    this.buyerForm.valueChanges.subscribe((value) => {
+    // this.sales_subscription = this.salesService.f_list_sales_of_day$(this.day).subscribe((sales) => {
+    //   // this.sales = sales;
+    //   // console.log('sales', sales);
+    //   this.sales_of_the_day = sales;
+    //   console.log('sales of the day', this.sales_of_the_day);
+    //   this.loading_complete = true;
+    // });
+
+    this.buyerForm.valueChanges.subscribe(async (value) => {
       const buyer: Member | null = value['buyer'];
       // console.log('buyerForm.valueChanges', buyer);
       if (buyer === null) return;
 
-      this.debt_amount = this.find_debt(buyer);
+      this.debt_amount = await this.find_debt(buyer);
       if (this.debt_amount !== 0) {
         this.debt_product.price = this.debt_amount;
         this.toastService.showWarningToast('dette', 'cette personne a une dette de ' + this.debt_amount + ' €');
@@ -135,15 +125,8 @@ export class ShopComponent {
 
   }
 
-  find_debt(payer: Member): number {
-    const payer_sales = this.sales.filter((sale) => sale.payer_id === payer.id);
-    let due = 0;
-    payer_sales.forEach((sale) => {
-      if (sale.records) {
-        due += sale.records.filter((payment) => payment.mode === PaymentMode.CREDIT)
-          .reduce((acc, payment) => acc + payment.amount, 0);
-      }
-    });
+  find_debt(payer: Member): Promise<number> {
+    let due = this.salesService.find_debt(payer);
     console.log('dette', due);
     return due;
   }
@@ -204,6 +187,10 @@ export class ShopComponent {
 
   session_change(date: any) {
     this.session.date = date;
+    this.day = date;
+
+    this.sales_of_the_day$ = this.salesService.f_list_sales_of_day$(this.day);
+
     this.sessionService.set_current_session(this.session);
   }
 

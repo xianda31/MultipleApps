@@ -22,7 +22,7 @@ export class SessionService {
         this._current_session = {
           season: conf.season,
           vendor: vendor ? (vendor.firstname + ' ' + vendor.lastname) : '.. faut quelqu\'un !',
-          date: new Date().toISOString(),
+          date: new Date().toISOString().split('T')[0],
         };
         this._current_session$.next(this._current_session);
       });

@@ -1,4 +1,4 @@
-<div *ngIf="loading_complete" class="container-md">
+<div class="container-md">
     <!-- session header -->
     <div *ngIf="session" class="row bg-light mt-2 mb-3 p-3 justify-content-around align-items-center">
         <div class="col-3">
@@ -78,7 +78,7 @@
             <div class="col-md-4 mt-4 fst-italic fst-light fs-6 font-monospace bg-body-tertiary">
                 <strong>encaissements du jour : </strong>
                 <table class="table table-striped  table-borderless table-primary align-middle">
-                    <tr *ngFor="let sale of sales_of_the_day">
+                    <tr *ngFor="let sale of sales_of_the_day$ | async">
                         <td>
                             {{member_name(sale.payer_id)}} :
                             <ng-container *ngFor="let record of sale.records">
