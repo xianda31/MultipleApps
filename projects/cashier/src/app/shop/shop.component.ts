@@ -108,6 +108,8 @@ export class ShopComponent {
         this.toastService.showWarningToast('dette', 'cette personne a une dette de ' + this.debt_amount + ' €');
         this.product_selected(this.debt_product);
       }
+
+      this.cartService.clearCart();
     });
 
   }
@@ -178,6 +180,8 @@ export class ShopComponent {
     this.sales_of_the_day$ = this.salesService.f_list_sales_of_day$(this.day);
 
     this.sessionService.set_current_session(this.session);
+    this.cartService.clearCart();
+    this.buyerForm.reset();
   }
 
   member_name(member_id: string) {

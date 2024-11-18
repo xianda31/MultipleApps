@@ -10,7 +10,7 @@
                         <th class="col-1">Compte</th>
                         <th class="col-1 text-center">Prix</th>
                         <!-- <th class="col-2">couleur</th> -->
-                        <th class="col-2 text-center">2eme nom</th>
+                        <th class="col-2 text-center">couple</th>
                         <th class="col-1">actif</th>
                         <th class="col-1">Actions</th>
                     </tr>
@@ -65,7 +65,7 @@
                             </div>
                         </td>
                         <td class="text-center ">
-                            <button class="btn btn-outline-primary" [disabled]="!product_form_filled()"
+                            <button class="btn btn-outline-primary btn-sm" [disabled]="!product_form_filled()"
                                 (click)="product_selected ? onUpdateProduct() :onCreateProduct()">
                                 <i class="bi bi-check2-square"></i></button>
                         </td>
