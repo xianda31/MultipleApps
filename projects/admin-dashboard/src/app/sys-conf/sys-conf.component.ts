@@ -11,7 +11,7 @@ import { map } from 'rxjs';
 @Component({
   selector: 'app-sys-conf',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, JsonPipe],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './sys-conf.component.html',
   styleUrl: './sys-conf.component.scss'
 })
@@ -19,6 +19,8 @@ export class SysConfComponent {
 
   systemFormGroup!: FormGroup;
   loaded!: boolean;
+  fileUrl: any;
+
 
   constructor(
     private systemDataService: SystemDataService,
@@ -56,8 +58,9 @@ export class SysConfComponent {
   }
 
   ngOnInit(): void {
-    this.systemDataService.read_configuration().subscribe((configuration) => {
+    this.systemDataService.configuration$.subscribe((configuration) => {
       this.loadDataInFormGroup(configuration);
+      this.fileUrl = this.systemDataService.get_file_url(configuration);
       this.loaded = true;
     });
   }
@@ -97,28 +100,39 @@ export class SysConfComponent {
       this.banks.push(this.fb.group(bank));
     });
 
-    // const Bank_names: { [key: string]: string } = {
-    //   'COU': 'Banque Courtois',
-    //   'POP': 'Banque Populaire',
-    //   'POS': 'Banque Postale',
-    //   'BNP': 'BNP',
-    //   'RAM': 'Boursorama',
-    //   'EPA': 'Caisse d\'Epargne',
-    //   'AGR': 'Crédit Agricole',
-    //   'LYO': 'Crédit Lyonnais',
-    //   'MUT': 'Crédit Mutuel',
-    //   'FOR': 'Fortuneo',
-    //   'Hi!': 'HSBC',
-    //   'ING': 'ING',
-    //   "AXA": 'AXA',
-    //   'LCL': 'LCL',
-    //   'SOG': 'Société Générale',
-    //   'CCF': 'CCF',
-    //   'COO': 'Crédit Coopératif',
-    // };
-
-    // Object.keys(Bank_names).forEach((key) => {
-    //   this.banks.push(this.fb.group({ key, name: Bank_names[key] }));
-    // });
   }
+  // const Bank_names: { [key: string]: string } = {
+  //   'COU': 'Banque Courtois',
+  //   'POP': 'Banque Populaire',
+  //   'POS': 'Banque Postale',
+  //   'BNP': 'BNP',
+  //   'RAM': 'Boursorama',
+  //   'EPA': 'Caisse d\'Epargne',
+  //   'AGR': 'Crédit Agricole',
+  //   'LYO': 'Crédit Lyonnais',
+  //   'MUT': 'Crédit Mutuel',
+  //   'FOR': 'Fortuneo',
+  //   'Hi!': 'HSBC',
+  //   'ING': 'ING',
+  //   "AXA": 'AXA',
+  //   'LCL': 'LCL',
+  //   'SOG': 'Société Générale',
+  //   'CCF': 'CCF',
+  //   'COO': 'Crédit Coopératif',
+  // };
+
+  // Object.keys(Bank_names).forEach((key) => {
+  //   this.banks.push(this.fb.group({ key, name: Bank_names[key] }));
+  // });
+  async onInput(event: any) {
+    const file = event.target.files[0];
+    // console.log('file', file);
+    if (file) {
+      const text = await file.text();
+      console.log('text', text);
+      this.loadDataInFormGroup(JSON.parse(text));
+    }
+
+  }
+
 }

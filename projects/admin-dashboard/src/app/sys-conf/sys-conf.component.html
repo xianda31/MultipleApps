@@ -8,8 +8,28 @@
                         <h5>paramétrage applications</h5>
                     </div>
                     <div class="col-md-6 text-end">
-                        <button class=" btn btn-outline-success btn-sm"
-                            (click)="save_configuration()">enregistrer</button>
+                        <div class="row">
+                            <div class="col">
+                                <button class=" btn btn-outline-success btn-sm">
+                                    <i class=" bi-file-earmark-arrow-up-fill"></i>
+                                    <a [href]="fileUrl" style="text-decoration: none; color: var(--bs-success);"
+                                        download="conf.txt">export
+                                        .txt</a>
+                                </button>
+                            </div>
+                            <div class="col">
+                                <button class=" btn btn-outline-success btn-sm" (click)="fileInput.click()">
+                                    <i class=" bi-file-earmark-arrow-down-fill"></i>
+                                    import.txt</button>
+                                <input #fileInput type="file" style="display:none" class="form-control form-control-sm"
+                                    (change)="onInput($event)">
+                            </div>
+                            <div class="col">
+                                <button class=" btn btn-outline-success btn-sm" (click)="save_configuration()">
+                                    <i class="bi-cloud-arrow-up-fill"></i>
+                                    sauvegarder</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

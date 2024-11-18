@@ -4,6 +4,7 @@ import { SystemConfiguration } from '../system-conf.interface';
 import { from, of } from 'rxjs';
 import { Toast } from 'bootstrap';
 import { ToastService } from '../toaster/toast.service';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 
 
@@ -14,9 +15,23 @@ export class SystemDataService {
   system_configuration !: SystemConfiguration;
 
   constructor(
-    private toastService: ToastService
+    private toastService: ToastService,
+    private sanitizer: DomSanitizer
 
   ) { }
+
+  // S3 download / upload
+
+  get configuration$() {
+    return this.system_configuration ? of(this.system_configuration) : from(this.get_configuration());
+  }
+  async save_configuration(conf: SystemConfiguration) {
+    const json = JSON.stringify(conf);
+    const blob = new Blob([json], { type: 'text/plain' });
+    const file = new File([blob], 'system_configuration.txt');
+    this.upload(blob, 'system/', file).then((data) => {
+    });
+  }
 
   private async upload(blob: any, directory: string, file: File) {
     let promise = new Promise((resolve, reject) => {
@@ -39,48 +54,31 @@ export class SystemDataService {
     return promise;
   }
 
-  async save_configuration(conf: SystemConfiguration) {
-    const json = JSON.stringify(conf);
-    const blob = new Blob([json], { type: 'text/plain' });
-    const file = new File([blob], 'system_configuration.txt');
-    this.upload(blob, 'system/', file).then((data) => {
-    });
-  }
 
-  private async download(): Promise<string> {
-    let promise = new Promise<string>((resolve, reject) => {
+  private async get_configuration(): Promise<SystemConfiguration> {
+    let promise = new Promise<SystemConfiguration>((resolve, reject) => {
       downloadData({
         path: 'system/system_configuration.txt',
       }).result
-        .then((result) => { resolve(result.body.text()); })
+        .then(async (result) => {
+          this.system_configuration = JSON.parse(await result.body.text());
+          resolve(this.system_configuration);
+        })
         .catch((error) => {
           reject(error);
-
         });
     });
     return promise;
   }
 
-  private async download_configuration(): Promise<SystemConfiguration> {
-    let promise = new Promise<SystemConfiguration>((resolve, reject) => {
-      this.download()
-        .then(async (data) => {
-          this.system_configuration = JSON.parse(data);
-          resolve(this.system_configuration);
-        })
-        .catch((error) => { reject(error); });
-    });
-    return promise;
-  }
+  // local file download / upload
 
-  read_configuration() {
-    return from(this.download_configuration());
-  }
+  get_file_url(conf: SystemConfiguration): SafeResourceUrl {
+    const json = JSON.stringify(conf);
+    const blob = new Blob([json], { type: 'text/plain' });
 
-  get configuration$() {
-    return this.system_configuration ? of(this.system_configuration) : from(this.download_configuration());
+    return this.sanitizer.bypassSecurityTrustResourceUrl(window.URL.createObjectURL(blob));
   }
-
 
 
 }
