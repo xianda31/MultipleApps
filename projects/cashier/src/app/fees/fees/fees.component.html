@@ -1,1 +1,76 @@
-<p>fees works!</p>
+<div class="container-md">
+    <!-- session header -->
+    <div class="row bg-light mt-2 mb-3 p-3 justify-content-around align-items-center">
+        <div class="col-4">
+            <div class=" input-group input-group-sm">
+                date du tournoi :&nbsp;
+                <select class="form-select form-select-sm" [(ngModel)]="selected_tournament"
+                    (ngModelChange)="tournament_selected($event)">
+                    <option *ngFor="let trn of next_tournaments" [ngValue]="trn">
+                        {{ trn.date | date:'dd/MM/yyyy' }} &nbsp; {{ trn.time }}</option>
+                </select>
+            </div>
+        </div>
+        <div class="col-8">
+            <div *ngIf="selected_tournament !== null" class="text-muted">
+                {{selected_tournament.tournament_name}}
+            </div>
+        </div>
+    </div>
+
+    <button class="btn btn-primary me-2" (click)="check_all()">
+        <i class="fa-solid fa-check"></i> adhérents</button>
+    <button class="btn btn-primary" (click)="save_fees()">enregistrer</button>
+    <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" role="switch" (change)="toggle_sort()">
+        <label class="form-check-label">tri alphabétique</label>
+    </div>
+
+
+    <div class="row">
+        <!-- <div class="col-12"> -->
+        <div class="row row-cols-1 row-cols-md-4 g-1">
+            <div class="col" *ngFor="let gamer of gamers">
+                <ng-container *ngTemplateOutlet="fee_editor ; context:{gamer :gamer}"></ng-container>
+            </div>
+        </div>
+        <!-- </div> -->
+    </div>
+</div>
+
+<ng-template #fee_editor ; let-gamer="gamer">
+    <div class="card h-100">
+        <div class="card-body py-0 px-1">
+            <div class="row">
+                <div class="col-7">
+                    <h6 class="p-0 mb-0">{{gamer.lastname}} </h6>
+                    <span class="text-muted">{{gamer.firstname}} </span>
+                    <!-- <div class="text-muted" *ngIf="gamer.is_member"> crédit : {{gamer.credit}}</div>
+                    <div class="text-muted" *ngIf="!gamer.is_member"> droit de table : 4€</div> -->
+                </div>
+
+                <div class="col-3 align-content-center">
+                    <div *ngIf="gamer.is_member" class="form-check form-check-reverse">
+                        <!-- [ngClass]="((gamer.games_credit <= 2)) ? 'form-check warning-radio' : 'form-check'"> -->
+                        <input class="form-check-input" type="radio" [name]="'card_or_euro' + gamer.index"
+                            id="flexRadioDefault1" value="card" [(ngModel)]="gamer.selection" />
+                        <label class="form-check-label" [ngStyle]="{'color': (gamer.games_credit<=2) ? 'red' : 'black'}"
+                            for="flexRadioDefault1">
+                            {{gamer.games_credit}}
+                            <i class=" bi-pass"></i>
+                        </label>
+                    </div>
+
+                    <div class="form-check form-check-reverse">
+                        <input class="form-check-input" type="radio" [name]="'card_or_euro' + gamer.index"
+                            id="flexRadioDefault2" value="euro" [(ngModel)]="gamer.selection" />
+                        <label class="form-check-label" for="flexRadioDefault2"> {{gamer.in_euro}}€ </label>
+                    </div>
+                </div>
+                <div class="col-2 align-content-center justify-content-end">
+                    <input class="form-check-input" type="checkbox" [(ngModel)]="gamer.validated" id="flexCheckDefault">
+                </div>
+            </div>
+        </div>
+    </div>
+</ng-template>

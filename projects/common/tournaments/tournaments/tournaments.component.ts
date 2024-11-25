@@ -13,7 +13,7 @@ import { ReplacePipe } from "../../pipes/replace.pipe";
 @Component({
   selector: 'app-tournaments',
   standalone: true,
-  imports: [RouterModule, CommonModule, TeamsComponent, DatePipe, ReplacePipe],
+  imports: [RouterModule, CommonModule, TeamsComponent],
   templateUrl: './tournaments.component.html',
   styleUrl: './tournaments.component.scss'
 })
@@ -34,8 +34,6 @@ export class TournamentsComponent implements OnInit, OnDestroy {
 
 
   constructor(
-    private ffbService: FFB_proxyService,
-    private toastService: ToastService,
     private activeRouter: ActivatedRoute,
     private router: Router,
     private tournamentService: TournamentService
@@ -62,20 +60,6 @@ export class TournamentsComponent implements OnInit, OnDestroy {
       this.tournaments = this.next_tournaments;
     });
 
-    // const today = new Date();
-    // today.setHours(0, 0, 0, 0);
-    // this.nextTournaments = await this.ffbService.getTournaments();
-
-    // this.nextTournaments = this.nextTournaments.filter((tournament: club_tournament) => {
-    //   return new Date(tournament.date) >= today;
-    // });
-    // this.nextTournaments.forEach((tournament: club_tournament) => {
-    //   tournament.date = formatDate(tournament.date, 'EEEE d MMMM', 'fr-FR');
-    //   tournament.time = tournament.time.split(':').slice(0, 2).join(':');
-    // }
-    // );
-
-    // this.tournaments = this.nextTournaments;
   }
 
   filter_next_tournaments(): club_tournament[] {

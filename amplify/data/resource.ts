@@ -60,7 +60,9 @@ const schema = a.schema({
     phone_one: a.string(),
     orga_license_name: a.string(),
     is_sympathisant: a.boolean(),
-    has_account: a.boolean(),
+    license_status: a.string(),
+    license_taken_at: a.string(),
+    games_credit: a.integer(),
     // payments: a.hasMany('Sale', 'payer_id'),
   })
     .authorization((allow) => [allow.publicApiKey()]),

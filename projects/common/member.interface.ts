@@ -9,7 +9,9 @@ export interface Member {
     season: string
     email: string
     phone_one: string
-    orga_license_name: string
+    // orga_license_name: string
     is_sympathisant: boolean
-    has_account: boolean
+    license_status: string
+    license_taken_at: string
+    games_credit: number
 }

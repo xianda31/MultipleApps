@@ -56,6 +56,7 @@ export class MembersComponent implements OnInit {
 
     this.licenseesService.list_FFB_licensees$().subscribe((licensees) => {
       this.licensees = licensees;
+      // console.log('MembersComponent.ngOnInit licensees', licensees);
     });
     combineLatest([this.sysConfService.configuration$, this.membersService.listMembers()]).subscribe(([conf, members]) => {
       this.season = conf.season;
@@ -94,9 +95,10 @@ export class MembersComponent implements OnInit {
           season: '',
           email: newbee.email ?? '',
           phone_one: newbee.phone ?? '',
-          orga_license_name: 'BCSTO',
+          license_taken_at: 'BCSTO',
+          license_status: 'unknown',
           is_sympathisant: false,
-          has_account: false,
+          games_credit: 0,
         }
         this.membersService.createMember(new_member).then((_member) => {
           this.toastService.showSuccessToast('Nouveau membre non licencié', new_member.lastname + ' ' + new_member.firstname);
@@ -127,9 +129,10 @@ export class MembersComponent implements OnInit {
       season: player.last_season,
       email: '?',
       phone_one: '?',
-      orga_license_name: "BCSTO",
+      license_taken_at: "BCSTO",
+      license_status: "unknown",
       is_sympathisant: false,
-      has_account: false,
+      games_credit: 0,
     }
   }
 
@@ -194,9 +197,11 @@ export class MembersComponent implements OnInit {
       season: licensee.season ?? '',
       email: licensee.email ?? '',
       phone_one: licensee.phone_one,
-      orga_license_name: licensee.orga_license_name ?? 'BCSTO',
+      license_taken_at: licensee.orga_license_name ?? 'BCSTO',
+      license_status: licensee.license_id ? (licensee.free ? 'free' : 'paied') : 'unpaied',
       is_sympathisant: licensee.is_sympathisant ?? false,
-      has_account: member.has_account,
+
+      games_credit: member.games_credit,
 
     }
     let is: { [key: string]: any } = member;
@@ -226,14 +231,28 @@ export class MembersComponent implements OnInit {
       season: licensee.season ?? '',
       email: licensee.email ?? '',
       phone_one: licensee.phone_one,
-      orga_license_name: licensee.orga_license_name ?? 'BCSTO',
       is_sympathisant: licensee.is_sympathisant ?? false,
-      has_account: false,
+      license_status: licensee.license_id ? (licensee.free ? 'free' : 'paied') : 'unpaied',
+      license_taken_at: licensee.orga_license_name ?? 'BCSTO',
+      games_credit: 0,
     }
 
   }
   deleteMember(member: Member) {
     this.membersService.deleteMember(member.id);
+  }
+
+  license_status_logo(status: string): string {
+    switch (status) {
+      case 'free':
+        return '✔';
+      case 'paied':
+        return '☑';
+      case 'unpaied':
+        return '❌';
+      default:
+        return '?';
+    }
   }
 }
 
