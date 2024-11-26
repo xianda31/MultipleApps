@@ -22,8 +22,13 @@ export class SystemDataService {
 
   // S3 download / upload
 
+
   get configuration$() {
     return this.system_configuration ? of(this.system_configuration) : from(this.get_configuration());
+  }
+
+  getSystemData() {
+    return this.configuration$;
   }
   async save_configuration(conf: SystemConfiguration) {
     const json = JSON.stringify(conf);

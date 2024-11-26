@@ -34,15 +34,46 @@
                 </div>
             </div>
             <div class="card-body">
-                <!-- paramètres développeur -->
-                <div class="card w-50 mt-2">
-                    <h5 class="card-header">développeur</h5>
+                <!-- paramètres divers -->
+                <div class="card  mt-2">
+                    <h5 class="card-header">divers</h5>
                     <div class="card-body">
-                        <div class="col-md-6 pe-3">
-                            <div class="input-group ">
-                                <span class="input-group-text">mode</span>
-                                <input type="text" class="form-control" formControlName="mode">
+
+                        <div class="row mt-2">
+
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <h6 class="card-header">développeur</h6>
+                                    <div class="card-body">
+                                        <div class="input-group ">
+                                            <span class="input-group-text">dev</span>
+                                            <input type="text" class="form-control" formControlName="dev_mode">
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
+
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <h6 class="card-header">prix tournoi (utiliser un . et non une ,)</h6>
+                                    <div class="card-body">
+                                        <div class="row">
+
+                                            <div class="col input-group ">
+                                                <span class="input-group-text">adhérent</span>
+                                                <input type="text" class="form-control"
+                                                    formControlName="member_trn_price">
+                                            </div>
+                                            <div class="col input-group ">
+                                                <span class="input-group-text">non adhérent</span>
+                                                <input type="text" class="form-control"
+                                                    formControlName="non_member_trn_price">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
                 </div>
@@ -142,24 +173,24 @@
 
                     </div>
                 </div>
-            </div>
-            <!-- paramètres UE site -->
-            <div class="card mt-2">
-                <h5 class="card-header">site</h5>
-                <div class="card-body">
-                    <h6> recadrage des vignettes stockées du site</h6>
-                    <div class="row" formGroupName="thumbnail">
-                        <div class="col input-group">
-                            <span class="input-group-text">largeur (en pixel)</span>
-                            <input type="text" class="form-control" formControlName="width">
-                        </div>
-                        <div class="col input-group">
-                            <span class="input-group-text">hauteur (en pixel)</span>
-                            <input type="text" class="form-control" formControlName="height">
-                        </div>
-                        <div class="col input-group">
-                            <span class="input-group-text">ratio</span>
-                            <input type="text" class="form-control" formControlName="ratio">
+                <!-- paramètres UE site -->
+                <div class="card mt-2">
+                    <h5 class="card-header">site</h5>
+                    <div class="card-body">
+                        <h6> recadrage des vignettes stockées du site</h6>
+                        <div class="row" formGroupName="thumbnail">
+                            <div class="col input-group">
+                                <span class="input-group-text">largeur (en pixel)</span>
+                                <input type="text" class="form-control" formControlName="width">
+                            </div>
+                            <div class="col input-group">
+                                <span class="input-group-text">hauteur (en pixel)</span>
+                                <input type="text" class="form-control" formControlName="height">
+                            </div>
+                            <div class="col input-group">
+                                <span class="input-group-text">ratio</span>
+                                <input type="text" class="form-control" formControlName="ratio">
+                            </div>
                         </div>
                     </div>
                 </div>

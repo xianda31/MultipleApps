@@ -17,8 +17,10 @@ export interface ImageSize {
 
 export interface SystemConfiguration {
     club_identifier: string;
-    mode: string;
+    dev_mode: string;
     season: string;
+    member_trn_price: number;
+    non_member_trn_price: number;
     charge_accounts: Account[];
     product_accounts: Account[];
     banks: Bank[];

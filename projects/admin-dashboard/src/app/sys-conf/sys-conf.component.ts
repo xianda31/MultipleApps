@@ -29,8 +29,11 @@ export class SysConfComponent {
 
     this.systemFormGroup = this.fb.group({
       club_identifier: [''],
-      mode: [''],
+      dev_mode: [''],
       season: [''],
+      member_trn_price: 3,
+      non_member_trn_price: 4,
+
       charge_accounts: this.fb.array([
         this.fb.group({
           key: [''],
