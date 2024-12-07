@@ -54,39 +54,47 @@ const schema = a.schema({
     value: a.float().required(),
   }),
 
-  Expense: a.model({
-    // sub_account: a.string().required(),
+  // Expense: a.model({
+  //   // sub_account: a.string().required(),
 
-    label: a.string().required(),
-    amounts: a.json().required(),
-    financial_id: a.id().required(),
-    financial: a.belongsTo('Financial', 'financial_id'),
-  })
-    .authorization((allow) => [allow.publicApiKey()]),
+  //   label: a.string().required(),
+  //   amounts: a.json().required(),
+  //   financial_id: a.id().required(),
+  //   financial: a.belongsTo('Financial', 'financial_id'),
+  // })
+  //   .authorization((allow) => [allow.publicApiKey()]),
 
 
-  Revenue: a.model({
+  // Revenue: a.model({
 
-    // sub_account: a.string().required(),
+  //   // sub_account: a.string().required(),
+  //   beneficiary: a.string(),
+
+  //   label: a.string().required(),
+  //   amounts: a.json().required(),
+  //   financial_id: a.id().required(),
+  //   financial: a.belongsTo('Financial', 'financial_id'),
+
+  // }).authorization((allow) => [allow.publicApiKey()]),
+
+
+  Operation: a.customType({
     beneficiary: a.string(),
-
     label: a.string().required(),
     amounts: a.json().required(),
-    financial_id: a.id().required(),
-    financial: a.belongsTo('Financial', 'financial_id'),
-
-  }).authorization((allow) => [allow.publicApiKey()]),
+    operation_type: a.string().required(),
+  }),
 
   Financial: a.model({
     season: a.string().required(),
     date: a.date().required(),
-    type: a.string().required(),
-
+    bank_label: a.string().required(),
     amounts: a.json().required(),
 
-    revenues: a.hasMany('Revenue', 'financial_id'),
-    expense: a.hasOne('Expense', 'financial_id'),
-    c2b: a.string(),
+    // revenues: a.hasMany('Revenue', 'financial_id'),
+    // expense: a.hasOne('Expense', 'financial_id'),
+
+    operation: a.ref('Operation').array().required(),
 
     cheque_ref: a.string(),
     deposit_ref: a.string(),

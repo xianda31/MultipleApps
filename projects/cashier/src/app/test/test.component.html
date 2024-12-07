@@ -16,7 +16,7 @@
         <table class="table table-sm">
             <thead>
                 <tr>
-                    <th class="col"># </th>
+                    <th class="col">Date </th>
                     <th class="col">libellé </th>
                     <th class="col ">bénéficiaire</th>
                     <th class="col text-center" *ngFor="let account of p_accounts">{{account}} </th>
@@ -27,7 +27,8 @@
 
                 <tr *ngFor="let revenue of revenues">
                     <td>
-                        <i class="bi bi-trash3" (click)="delete_revenue(revenue)"></i>
+                        {{revenue.date | date: 'dd/MM/yyyy'}}
+                        <!-- <i class="bi bi-trash3" (click)="delete_revenue(revenue)"></i> -->
                     </td>
                     <td>{{revenue.label}}</td>
                     <td>{{revenue.beneficiary}}</td>
@@ -35,28 +36,6 @@
                         {{revenue.amounts[account]}}
                     </td>
                 </tr>
-                <!-- <tr *ngFor="let revenue of t_revenues">
-                    <td>
-                        <i class="bi bi-trash3" (click)="delete_revenue(revenue)"></i>
-                    </td>
-                    <td>{{revenue.label}}</td>
-                    <td>{{revenue.beneficiary}}</td>
-                    <td *ngFor="let account of p_accounts" class="text-center">
-                        {{revenue.amounts[account]}}
-                    </td>
-                </tr>
-
-                <tr *ngFor="let revenue of x_revenues">
-                    <td>
-                        <i class="bi bi-trash3" (click)="delete_revenue(revenue)"></i>
-                    </td>
-                    <td>{{revenue.label}}</td>
-                    <td>{{revenue.beneficiary}}</td>
-                    <td *ngFor="let account of p_accounts" class="text-center">
-                        {{revenue.amounts[account]}}
-                    </td>
-                </tr> -->
-
             </tbody>
         </table>
     </div>
@@ -73,12 +52,9 @@
         <table class="table table-sm">
             <thead>
                 <tr>
-                    <th class="col"># </th>
-                    <!-- <th class="col">date </th> -->
-                    <!-- <th class="col">sous-compte </th> -->
+                    <th class="col">Date </th>
                     <th class="col">libellé </th>
                     <th class="col text-center" *ngFor="let account of x_accounts">{{account}} </th>
-                    <!-- <th class="col">id </th> -->
                 </tr>
             </thead>
 
@@ -86,7 +62,8 @@
 
                 <tr *ngFor="let expense of expenses">
                     <td>
-                        <i class="bi bi-trash3" (click)="delete_expense(expense)"></i>
+                        {{expense.date | date: 'dd/MM/yyyy'}}
+                        <!-- <i class="bi bi-trash3" (click)="delete_expense(expense)"></i> -->
                     </td>
                     <!-- <td>{{expense.sub_account}}</td> -->
                     <td>{{expense.label}}</td>
@@ -126,7 +103,7 @@
                             <td>
                                 <i class="bi bi-trash3" (click)="delete_financial(financial)"></i>
                             </td>
-                            <td>{{financial.c2b ?? financial.type}}</td>
+                            <td>{{ financial.bank_label}}</td>
                             <!-- <td>{{financial.label}}</td> -->
                             <td *ngFor=" let op of bank_ops " class="text-center">
                                 {{financial.amounts[op] }}

@@ -11,15 +11,24 @@
 // }
 
 
-export enum OPERATION_LABEL {
-    cash_in = 'Versement d\'espèces',
+export enum BANK_LABEL {
+    none = 'néant',
+    cash_deposit = 'Versement d\'espèces',
     cash_out = 'Retrait d\'espèces',
-    cheque_in = 'Remise de chèque',
-    cheque_out = 'chèque émis',
-    transfer_in = 'Virement reçu',
-    transfer_out = 'Virement émis',
+    cheque_deposit = 'Remise de chèque',
+    cheque_emit = 'chèque émis',
+    transfer_receipt = 'Virement reçu',
+    transfer_emit = 'Virement émis',
     debiting = 'Prélèvement',
-    card_out = 'Paiement par carte',
+    card_payment = 'Paiement par carte',
+    saving_deposit = 'Versement sur compte \épargne',
+    saving_out = 'Retrait du compte \épargne',
+}
+
+export enum OPERATION_TYPE {
+    REVENUE = 'REVENUE',
+    EXPENSE = 'EXPENSE',
+    MOVEMENT = 'MOVEMENT',
 }
 
 export enum FINANCIAL_OPERATION {
@@ -32,15 +41,19 @@ export enum FINANCIAL_OPERATION {
 }
 
 export interface Revenue extends Operation { // comptes de produits
-    id?: string;
-    financial_id: string;
-    financial?: Financial;
+    // id?: string;
+    // financial_id: string;
+    // financial?: Financial;
+    season: string;
+    date: string;
 };
 
 export interface Expense extends Operation {  // comptes de charges
-    id?: string;
-    financial_id: string;
-    financial?: Financial;
+    // id?: string;
+    // financial_id: string;
+    // financial?: Financial;
+    season: string;
+    date: string;
 };
 
 // export interface Movement {
@@ -54,8 +67,8 @@ export type f_Value = {
 };
 export interface Operation {
     label: string;
+    operation_type: OPERATION_TYPE;
     amounts: k_Value;
-    // sub_account: SOUS_COMPTES_PRODUITS | SOUS_COMPTES_CHARGES,
     beneficiary?: string,
 }
 
@@ -63,17 +76,15 @@ export interface Financial { // comptes financiers
     id?: string;
     season: string;
     date: string;
-    type: OPERATION_LABEL;
+    bank_label: BANK_LABEL;
 
     amounts: f_Value
+    operation: Operation[];
 
-    revenues?: Revenue[];
-    expense?: Expense;
-    c2b?: string;
+    bank_report?: string;
 
     cheque_ref?: string;
     deposit_ref?: string;
-    bank_report?: string;
 }
 
 
