@@ -1,0 +1,187 @@
+<div class="col-6">
+    <div class="row ">
+
+        <label for="test_pattern">test pattern</label>
+        <select class="form-select" (change)="select_test_pattern($event)">
+            <option *ngFor="let test of test_patterns" [value]="test">{{test}}</option>
+        </select>
+    </div>
+</div>
+
+<div class="card mt-2">
+    <div class="card-header">
+        <h5>compte produits</h5>
+    </div>
+    <div class="card-body">
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th class="col"># </th>
+                    <th class="col">libellé </th>
+                    <th class="col ">bénéficiaire</th>
+                    <th class="col text-center" *ngFor="let account of p_accounts">{{account}} </th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                <tr *ngFor="let revenue of revenues">
+                    <td>
+                        <i class="bi bi-trash3" (click)="delete_revenue(revenue)"></i>
+                    </td>
+                    <td>{{revenue.label}}</td>
+                    <td>{{revenue.beneficiary}}</td>
+                    <td *ngFor="let account of p_accounts" class="text-center">
+                        {{revenue.amounts[account]}}
+                    </td>
+                </tr>
+                <!-- <tr *ngFor="let revenue of t_revenues">
+                    <td>
+                        <i class="bi bi-trash3" (click)="delete_revenue(revenue)"></i>
+                    </td>
+                    <td>{{revenue.label}}</td>
+                    <td>{{revenue.beneficiary}}</td>
+                    <td *ngFor="let account of p_accounts" class="text-center">
+                        {{revenue.amounts[account]}}
+                    </td>
+                </tr>
+
+                <tr *ngFor="let revenue of x_revenues">
+                    <td>
+                        <i class="bi bi-trash3" (click)="delete_revenue(revenue)"></i>
+                    </td>
+                    <td>{{revenue.label}}</td>
+                    <td>{{revenue.beneficiary}}</td>
+                    <td *ngFor="let account of p_accounts" class="text-center">
+                        {{revenue.amounts[account]}}
+                    </td>
+                </tr> -->
+
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+
+
+<div class="card mt-2">
+    <div class="card-header">
+        <h5>compte de charges</h5>
+    </div>
+    <div class="card-body">
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th class="col"># </th>
+                    <!-- <th class="col">date </th> -->
+                    <!-- <th class="col">sous-compte </th> -->
+                    <th class="col">libellé </th>
+                    <th class="col text-center" *ngFor="let account of x_accounts">{{account}} </th>
+                    <!-- <th class="col">id </th> -->
+                </tr>
+            </thead>
+
+            <tbody>
+
+                <tr *ngFor="let expense of expenses">
+                    <td>
+                        <i class="bi bi-trash3" (click)="delete_expense(expense)"></i>
+                    </td>
+                    <!-- <td>{{expense.sub_account}}</td> -->
+                    <td>{{expense.label}}</td>
+                    <td *ngFor="let account of x_accounts" class="text-center">
+                        {{expense.amounts[account]}}
+                    </td>
+                    <!-- <td> {{expense.financial_id}}</td> -->
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="row mt-2">
+    <div class="col-md-9">
+        <div class="card">
+            <div class="card-header">
+                <h5>compte bancaire</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th class="col"># </th>
+                            <th class="col">label </th>
+                            <!-- <th class="col">libellé</th> -->
+                            <th class="col text-center" *ngFor="let op of bank_ops ">{{op}} </th>
+                            <th class="col">relevé </th>
+                            <th class="col">n° chèque </th>
+                            <th class="col">bordereau </th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        <tr *ngFor="let financial of bank_financials">
+                            <td>
+                                <i class="bi bi-trash3" (click)="delete_financial(financial)"></i>
+                            </td>
+                            <td>{{financial.c2b ?? financial.type}}</td>
+                            <!-- <td>{{financial.label}}</td> -->
+                            <td *ngFor=" let op of bank_ops " class="text-center">
+                                {{financial.amounts[op] }}
+                            </td>
+                            <td>{{financial.bank_report}}</td>
+                            <td>{{financial.cheque_ref}}</td>
+                            <td>{{financial.deposit_ref}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card ">
+            <div class="card-header">
+                <h5>liquidités caisse : {{current_cash_amount}}</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th class="col"># </th>
+                            <!-- <th class="col">label </th> -->
+                            <!-- <th class="col">libellé</th> -->
+                            <th class="col text-center" *ngFor="let op of cash_ops ">{{op}} </th>
+                            <!-- <th class="col">mode </th>
+                    <th class="col">relevé </th>
+                    <th class="col">n° chèque </th>
+                    <th class="col">bordereau </th> -->
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        <tr *ngFor="let financial of cash_financials">
+                            <td>
+                                <i class="bi bi-trash3" (click)="delete_financial(financial)"></i>
+                            </td>
+                            <!-- <td>{{financial.movement ?? ''}}</td> -->
+                            <!-- <td>{{financial.label}}</td> -->
+                            <td *ngFor=" let op of cash_ops " class="text-center">
+                                {{financial.amounts[op] }}
+                            </td>
+                            <!-- <td>{{financial.type}}</td>
+                    <td>{{financial.bank_report}}</td>
+                    <td>{{financial.cheque_ref}}</td>
+                    <td>{{financial.deposit_ref}}</td> -->
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+
+</div>

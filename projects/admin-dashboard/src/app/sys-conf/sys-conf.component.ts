@@ -104,29 +104,8 @@ export class SysConfComponent {
     });
 
   }
-  // const Bank_names: { [key: string]: string } = {
-  //   'COU': 'Banque Courtois',
-  //   'POP': 'Banque Populaire',
-  //   'POS': 'Banque Postale',
-  //   'BNP': 'BNP',
-  //   'RAM': 'Boursorama',
-  //   'EPA': 'Caisse d\'Epargne',
-  //   'AGR': 'Crédit Agricole',
-  //   'LYO': 'Crédit Lyonnais',
-  //   'MUT': 'Crédit Mutuel',
-  //   'FOR': 'Fortuneo',
-  //   'Hi!': 'HSBC',
-  //   'ING': 'ING',
-  //   "AXA": 'AXA',
-  //   'LCL': 'LCL',
-  //   'SOG': 'Société Générale',
-  //   'CCF': 'CCF',
-  //   'COO': 'Crédit Coopératif',
-  // };
 
-  // Object.keys(Bank_names).forEach((key) => {
-  //   this.banks.push(this.fb.group({ key, name: Bank_names[key] }));
-  // });
+
   async onInput(event: any) {
     const file = event.target.files[0];
     // console.log('file', file);
