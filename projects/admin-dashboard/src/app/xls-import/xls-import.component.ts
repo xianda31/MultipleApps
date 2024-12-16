@@ -11,7 +11,7 @@ import { SalesViewerComponent } from '../../../../common/sales-viewer/sales-view
 import { ProductService } from '../../../../common/services/product.service';
 import { Product } from '../sales/products/product.interface';
 import { SalesService } from '../../../../cashier/src/app/shop/sales.service';
-import { COL, MAP, PRODUCTS } from '../../../../common/excel/excel.interface';
+import { COL, MAP, PRODUCTS_COL } from '../../../../common/excel/excel.interface';
 import { write } from '@popperjs/core';
 import { ToastService } from '../../../../common/toaster/toast.service';
 @Component({
@@ -265,7 +265,7 @@ export class XlsImportComponent {
   process_products(row: ExcelJS.Row): Record[] {
     let records: Record[] = [];
 
-    PRODUCTS.forEach((product) => {
+    PRODUCTS_COL.forEach((product) => {
       // if (row.getCell(product.col).value !== null) {
       let cellValue = row.getCell(product.col).value;
       if (cellValue !== null && cellValue !== undefined) {

@@ -58,7 +58,7 @@ export class BookService {
       }
       const created_entry = this.parsed_entry(response.data as unknown as Financial_output);
       this._financials.push(created_entry);
-      this._financials$.next(this._financials);
+      this._financials$.next(this._financials.sort((a, b) => a.date.localeCompare(b.date)));
       return (created_entry);
     } catch (error) {
       console.error('error', error);
@@ -72,7 +72,7 @@ export class BookService {
     try {
       const response = await client.models.Financial.get(
         { id: entry_id },
-        { selectionSet: ['id', 'season', 'date', 'amounts', 'operation.*', 'cheque_ref', 'deposit_ref', 'bank_report'] }
+        { selectionSet: ['id', 'season', 'date', 'amounts', 'operations.*', 'cheque_ref', 'deposit_ref', 'bank_report'] }
       );
       if (response.errors) {
         console.error('error', response.errors);
@@ -86,6 +86,7 @@ export class BookService {
   }
 
 
+
   delete_financial(entry_id: string) {
     const client = generateClient<Schema>();
 
@@ -96,7 +97,7 @@ export class BookService {
           throw new Error(JSON.stringify(response.errors));
         }
         this._financials = this._financials.filter((entry) => entry.id !== entry_id);
-        this._financials$.next(this._financials);
+        this._financials$.next(this._financials.sort((a, b) => a.date.localeCompare(b.date)));
         return response;
       })
       .catch((error) => {
@@ -112,7 +113,7 @@ export class BookService {
       map((response: { data: unknown }) => response.data as Financial_output[]),
       tap((financials) => {
         this._financials = financials.map((entry) => this.parsed_entry(entry));
-        this._financials$.next(this._financials);
+        this._financials$.next(this._financials.sort((a, b) => a.date.localeCompare(b.date)));
       }),
       switchMap(() => this._financials$.asObservable())
     );

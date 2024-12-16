@@ -1,56 +1,8 @@
 // compta.xls file definition
 
-export const xls_header = [
-    // 'chrono'
-    'Date',
-    // 'mois',
-    // 'type',
-    'Bénéficiaire',
-    // 'info',
-    'Nature',
-    'n° pièce',
+import { EXPENSES_ACCOUNTS, FINANCIALS, PRODUCTS_ACCOUNTS, PRODUCTS_OR_EXPENSES } from "../new_sales.interface";
 
-    'BIB', //'autre',
-    'PAF',
-    'INI', //'initiation',
-    'PER', //'perfectionnement',
-    'SUB', //'subvention',
-    'ADH', //'adhésion',
-    'LIC',  //'licence',
-    //'droit de table',
-    'TAB', //'carte',
 
-    // 'ref carte',
-
-    // 'license',
-    // 'FFB',
-    // 'Bridge+',
-    // 'Formation',
-    // 'Matériel',
-    // 'PTT',
-    // 'Compétitions',
-    // 'réunions',
-    // 'fêtes',
-    // 'café-eau',
-    // 'autre',
-    // 'banque',
-
-    'Dette',
-    'Avoir',
-
-    'Caisse entrée',
-    'Caisse sortie',
-
-    'Banque entrée',
-    'Banque sortie',
-
-    // 'pointage',
-    // 'bordereau',
-
-    // 'verif balance',
-    // 'verif dépot',
-    // 'verif caisse',
-];
 
 export enum COL {
     A = 1,
@@ -101,46 +53,118 @@ export const MAP = {
     'chrono': 'A',
     'date': 'B',
     'mois': 'C',
-    'membre': 'D',
+    'intitulé': 'D',
     'info': 'E',
-
     'n° carte': 'F',
-    'livres': 'G',
-    'PAF': 'H',
-    'INI': 'I',
-    'PER': 'J',
-    'Autres': 'K',
-    'Adhésion': 'L',
-    'Licence': 'M',
-    'droit de table': 'N',
-    'TAB': 'O',
-    'credit_in': 'AB',
-    'avoir_in': 'AC',
-    'espèces_in': 'AD',
-    'banque_in': 'AE',
-    'livret_in': 'AF',
-    'credit_out': 'AG',
-    'avoir_out': 'AH',
-    'espèces_out': 'AI',
-    'banque_out': 'AJ',
-    'livret_out': 'AK',
-    'pointage': 'AL',
-    'n° chèque': 'AM',
-    'bordereau': 'AN',
-    'verif balance': 'AO',
-    'nature': 'AP',
+
+    // 'products': 'G:O',
+    // 'expenses': 'P:AB',
+    // 'financial': 'AC:AL',
+
+    'pointage': 'AM',
+    'n° chèque': 'AN',
+    'bordereau': 'AO',
+    'verif balance': 'AP',
+    'nature': 'AQ',
 }
 
-export const PRODUCTS = [
-    { col: 'G', name: 'autre', account: 'BIB' },
-    { col: 'H', name: 'PAF', account: 'PAF' },
-    { col: 'I', name: 'initiation', account: 'INI' },
-    { col: 'J', name: 'perf', account: 'PER' },
-    { col: 'K', name: 'subvention', account: 'SUB' },
-    { col: 'L', name: 'adhesion', account: 'ADH' },
-    { col: 'M', name: 'licence', account: 'LIC' },
-    { col: 'N', name: 'droit de table', account: 'TAB' },
-    { col: 'O', name: 'carte', account: 'CAR' },
-];
+export type ACCOUNTS_COL = { [key in PRODUCTS_ACCOUNTS | EXPENSES_ACCOUNTS]?: string }
 
+export const PRODUCTS_COL: ACCOUNTS_COL = {
+    'ADH': 'L',
+    'LIC': 'M',
+    'CAR': 'O',
+    'DdT': 'N',
+    'PER': 'J',
+    'INI': 'I',
+    'BIB': 'G',
+    //  'KFE': 'K',
+    'FET': 'H',
+    //  'BNQ': 'X',
+    'DIV': 'K',
+}
+
+export const EXPENSES_COL: ACCOUNTS_COL = {
+    'LIC': 'P',
+    'FFB': 'Q',
+    'BRP': 'R',
+    'FOR': 'S',
+    'BIB': 'T',
+    'MAT': 'U',
+    'WEB': 'V',
+    'CMP': 'W',
+    'REU': 'X',
+    'FET': 'Y',
+    'KFE': 'Z',
+    'DIV': 'AA',
+    'BNQ': 'AB',
+}
+
+export const FINANCIAL_COL: { [key in FINANCIALS]?: string } = {
+    'creance_in': 'AC',
+    'avoir_in': 'AD',
+    'cash_in': 'AE',
+    'bank_in': 'AF',
+    'saving_in': 'AG',
+    'creance_out': 'AH',
+    'avoir_out': 'AI',
+    'cash_out': 'AJ',
+    'bank_out': 'AK',
+    'saving_out': 'AL',
+}
+
+
+
+
+export const xls_header = [
+    // 'chrono'
+    'Date',
+    // 'mois',
+    // 'type',
+    'Bénéficiaire',
+    // 'info',
+    'Nature',
+    'n° pièce',
+
+    'BIB', //'autre',
+    'PAF',
+    'INI', //'initiation',
+    'PER', //'perfectionnement',
+    'SUB', //'subvention',
+    'ADH', //'adhésion',
+    'LIC',  //'licence',
+    //'droit de table',
+    'TAB', //'carte',
+
+    // 'ref carte',
+
+    // 'license',
+    // 'FFB',
+    // 'Bridge+',
+    // 'Formation',
+    // 'Matériel',
+    // 'PTT',
+    // 'Compétitions',
+    // 'réunions',
+    // 'fêtes',
+    // 'café-eau',
+    // 'autre',
+    // 'banque',
+
+    // 'Dette',
+    // 'Avoir',
+
+    // 'Caisse entrée',
+    // 'Caisse sortie',
+
+    // 'Banque entrée',
+    // 'Banque sortie',
+
+    // 'pointage',
+    // 'bordereau',
+
+    // 'verif balance',
+    // 'verif dépot',
+    // 'verif caisse',
+];
 

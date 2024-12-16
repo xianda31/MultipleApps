@@ -94,7 +94,7 @@ const schema = a.schema({
     // revenues: a.hasMany('Revenue', 'financial_id'),
     // expense: a.hasOne('Expense', 'financial_id'),
 
-    operation: a.ref('Operation').array().required(),
+    operations: a.ref('Operation').array().required(),
 
     cheque_ref: a.string(),
     deposit_ref: a.string(),

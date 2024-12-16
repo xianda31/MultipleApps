@@ -1,10 +1,46 @@
-<div class="col-6">
-    <div class="row ">
-
+<div class="row align-items-end ">
+    <div class="col-4">
         <label for="test_pattern">test pattern</label>
         <select class="form-select" (change)="select_test_pattern($event)">
             <option *ngFor="let test of test_patterns" [value]="test">{{test}}</option>
         </select>
+    </div>
+
+    <div class="col-4">
+        <div class="input-group">
+            <input #fileInput type="file" class="form-control" (change)="onFileChange($event)">
+        </div>
+    </div>
+
+    <div class="col-4">
+        <label>feuille excel</label>
+        <select class="form-select" [(ngModel)]="worksheet" (ngModelChange)="select_sheet()">
+            <option>----------</option>
+            <option *ngFor="let sheet of worksheets" [ngValue]="sheet">{{sheet.name}}</option>
+        </select>
+    </div>
+</div>
+
+
+<div *ngIf="excel_uploaded" class=" align-items-center">
+    <h6 class="col-6 ">
+        mise à jour de la base (toutes les données actuelles seront écrasées) :
+        <button class="btn btn-danger btn-sm" (click)="data_store()">
+            <i class="bi bi-cloud-upload"></i>
+        </button>
+    </h6>
+
+    <div *ngIf="data_uploading" class="col-6">
+
+        <div *ngIf="create_progress === 0">
+            Préparation des données en cours ...
+            <span class="spinner-border text-primary" role="status"></span>
+        </div>
+
+        <h6 *ngIf="create_progress > 0" class="text-center"> Sauvegarde des données en cours ... </h6>
+        <div class="progress" role="progressbar" aria-valuenow=create_progress aria-valuemin="0" aria-valuemax="100">
+            <div [style]="progress_style" class="progress-bar progress-bar-striped progress-bar-animated"></div>
+        </div>
     </div>
 </div>
 
@@ -18,21 +54,16 @@
                 <tr>
                     <th class="col">Date </th>
                     <th class="col">libellé </th>
-                    <th class="col ">bénéficiaire</th>
-                    <th class="col text-center" *ngFor="let account of p_accounts">{{account}} </th>
+                    <th class="col text-center" *ngFor="let account of products_accounts ">{{account}}
+                    </th>
                 </tr>
             </thead>
 
             <tbody>
-
                 <tr *ngFor="let revenue of revenues">
-                    <td>
-                        {{revenue.date | date: 'dd/MM/yyyy'}}
-                        <!-- <i class="bi bi-trash3" (click)="delete_revenue(revenue)"></i> -->
-                    </td>
+                    <td> {{revenue.date | date: 'dd/MM/yyyy'}} </td>
                     <td>{{revenue.label}}</td>
-                    <td>{{revenue.beneficiary}}</td>
-                    <td *ngFor="let account of p_accounts" class="text-center">
+                    <td *ngFor="let account of products_accounts " class="text-center">
                         {{revenue.amounts[account]}}
                     </td>
                 </tr>
@@ -54,7 +85,8 @@
                 <tr>
                     <th class="col">Date </th>
                     <th class="col">libellé </th>
-                    <th class="col text-center" *ngFor="let account of x_accounts">{{account}} </th>
+                    <th class="col text-center" *ngFor="let account of expenses_accounts ">{{account}}
+                    </th>
                 </tr>
             </thead>
 
@@ -67,7 +99,7 @@
                     </td>
                     <!-- <td>{{expense.sub_account}}</td> -->
                     <td>{{expense.label}}</td>
-                    <td *ngFor="let account of x_accounts" class="text-center">
+                    <td *ngFor="let account of expenses_accounts " class="text-center">
                         {{expense.amounts[account]}}
                     </td>
                     <!-- <td> {{expense.financial_id}}</td> -->
@@ -88,6 +120,7 @@
                     <thead>
                         <tr>
                             <th class="col"># </th>
+                            <th class="col">date </th>
                             <th class="col">label </th>
                             <!-- <th class="col">libellé</th> -->
                             <th class="col text-center" *ngFor="let op of bank_ops ">{{op}} </th>
@@ -103,6 +136,7 @@
                             <td>
                                 <i class="bi bi-trash3" (click)="delete_financial(financial)"></i>
                             </td>
+                            <td>{{financial.date | date: 'dd/MM/yyyy'}}</td>
                             <td>{{ financial.bank_label}}</td>
                             <!-- <td>{{financial.label}}</td> -->
                             <td *ngFor=" let op of bank_ops " class="text-center">
