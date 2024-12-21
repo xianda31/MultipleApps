@@ -11,7 +11,7 @@ import { MembersService } from '../../../admin-dashboard/src/app/members/service
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { combineLatest } from 'rxjs';
 import { KeypadComponent } from './shop/keypad/keypad.component';
-import { SalesService } from './shop/sales.service';
+import { BookService } from './book.service';
 
 
 
@@ -29,8 +29,9 @@ export class AppComponent {
   constructor(
     private membersService: MembersService,
     private systemDataService: SystemDataService,
-    private salesService: SalesService
-  ) { }
+    private bookService: BookService
+  ) {
+  }
 
   ngOnInit(): void {
     registerLocaleData(localeFr);
@@ -41,7 +42,7 @@ export class AppComponent {
 
     ]).subscribe(([members, conf]) => {
       this.season = conf.season;
-      this.salesService.f_list_sales$(this.season).subscribe((sales) => {
+      this.bookService.list_financials$(this.season).subscribe((sales) => {
         this.init = true;
       });
 

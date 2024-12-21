@@ -2,8 +2,8 @@ import { Component } from '@angular/core';
 import { combineLatest, map, Observable, tap } from 'rxjs';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 import { ExcelService } from '../excel.service';
-import { SalesService } from '../shop/sales.service';
-import { PaymentMode, Record } from '../shop/sales.interface';
+// import { SalesService } from '../shop/old_sales.service';
+import { PaymentMode, Record } from '../shop/old_sales.interface';
 import { CommonModule } from '@angular/common';
 import { data } from '../../../../../amplify/data/resource';
 

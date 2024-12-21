@@ -3,14 +3,12 @@ import { ShopComponent } from './shop/shop.component';
 import { FeesComponent } from './fees/fees/fees.component';
 import { HomeComponent } from './home/home.component';
 import { CustomersComponent } from './books/customers/customers.component';
-import { RevenuesComponent } from './revenues/revenues.component';
+// import { RevenuesComponent } from './revenues/revenues.component';
 import { SalesComponent } from './books/sales/sales.component';
-import { CashBoxComponent } from './books/cash box/cash-box.component';
 import { TestComponent } from './test/test.component';
 
 export const routes: Routes = [
     { path: 'sales', component: ShopComponent },   //, canActivate: [loggedInGuard]
-    { path: 'books/cash-box', component: CashBoxComponent },
     { path: 'books/customers', component: CustomersComponent },
     { path: 'books/sales', component: SalesComponent },
     { path: 'test', component: TestComponent },

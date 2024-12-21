@@ -1,17 +1,32 @@
 
-// export enum BANK_LABEL {
-//     none = 'néant',
-//     cash_deposit = 'Versement d\'espèces',
-//     cash_out = 'Retrait d\'espèces',
-//     cheque_deposit = 'Remise de chèque',
-//     cheque_emit = 'chèque émis',
-//     transfer_receipt = 'Virement reçu',
-//     transfer_emit = 'Virement émis',
-//     debiting = 'Prélèvement',
-//     card_payment = 'Paiement par carte',
-//     saving_deposit = 'Versement sur compte \épargne',
-//     saving_out = 'Retrait du compte \épargne',
-// }
+export enum BANK_LABEL {
+    none = 'néant',
+    cash_deposit = 'Versement d\'espèces',
+    cash_out = 'Retrait d\'espèces',
+    cheque_deposit = 'Remise de chèque',
+    cheque_emit = 'chèque émis',
+    transfer_receipt = 'Virement reçu',
+    transfer_emit = 'Virement émis',
+    debiting = 'Prélèvement',
+    card_payment = 'Paiement par carte',
+    saving_deposit = 'Versement sur compte \épargne',
+    saving_out = 'Retrait du compte \épargne',
+}
+
+export enum PaymentMode {
+    CASH = 'espèces',
+    CHEQUE = 'chèque',
+    TRANSFER = 'virement',
+    CREDIT = 'crédit',
+    ASSETS = 'avoir',
+    // CARD = 'carte',
+}
+
+export interface Session {
+    season: string;
+    // vendor: string;
+    date: string;
+}
 
 export enum FINANCIALS {
     ASSET_debit = 'avoir_in',
@@ -72,15 +87,15 @@ export enum EXPENSES_ACCOUNTS {
 
 export type PRODUCTS_OR_EXPENSES = PRODUCTS_ACCOUNTS | EXPENSES_ACCOUNTS;
 
-export interface Revenue extends Operation { // comptes de produits
-    season: string;
-    date: string;
-};
+export interface Revenue extends Operation, Session { }// comptes de produits
+//     season: string;
+//     date: string;
+// };
 
-export interface Expense extends Operation {  // comptes de charges
-    season: string;
-    date: string;
-};
+export interface Expense extends Operation, Session { }; // comptes de charges
+//     season: string;
+//     date: string;
+// };
 
 // export interface Movement {
 // }
@@ -88,24 +103,23 @@ export interface Expense extends Operation {  // comptes de charges
 export type op_Value = { [key in PRODUCTS_OR_EXPENSES]?: number };
 export type f_Value = { [key in FINANCIALS]?: number; };
 export interface Operation {
-    label: string;
+    label: string;          // libellé de l'opération ; nom de l'adhérent
     operation_type: OPERATION_TYPE;
     amounts: op_Value;
 }
 
-export interface Financial { // comptes financiers
+export interface Financial extends Session { // comptes financiers
     id?: string;
-    season: string;
-    date: string;
-    bank_label: string;
+    // season: string;
+    // date: string;
 
     amounts: f_Value
     operations: Operation[];
 
-    bank_report?: string;
-
-    cheque_ref?: string;
-    deposit_ref?: string;
+    bank_label?: string;         // libellé de l'opération bancaire
+    bank_report?: string;       // (mois) relevé bancaire
+    cheque_ref?: string;        // code banque + numéro de chèque
+    deposit_ref?: string;       //  référence bordereau de dépôt
 }
 
 

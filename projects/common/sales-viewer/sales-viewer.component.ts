@@ -1,8 +1,8 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { f_Sale, PaymentMode, Sale } from '../../cashier/src/app/shop/sales.interface';
 import { SystemDataService } from '../services/system-data.service';
 import { CommonModule } from '@angular/common';
 import { SalesTabUtilities } from '../excel/sales-tab-utilities';
+import { PaymentMode } from '../new_sales.interface';
 
 
 @Component({

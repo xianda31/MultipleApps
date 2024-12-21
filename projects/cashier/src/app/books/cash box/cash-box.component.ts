@@ -3,8 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { map, Observable } from 'rxjs';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
-import { SalesService } from '../../shop/sales.service';
-import { Sale, PaymentMode, f_Sale, f_payments } from '../../shop/sales.interface';
+import { Sale, PaymentMode, f_Sale, f_payments } from '../../shop/old_sales.interface';
 import { SalesViewerComponent } from "../../../../../common/sales-viewer/sales-viewer.component";
 import { SalesTabUtilities } from '../../../../../common/excel/sales-tab-utilities';
 import { ToastService } from '../../../../../common/toaster/toast.service';
@@ -33,7 +32,7 @@ export class CashBoxComponent {
 
   constructor(
     private systemDataService: SystemDataService,
-    private salesService: SalesService,
+    // private bookService: BookService,
     private salesTabUtilities: SalesTabUtilities,
     private toastService: ToastService,
   ) { }

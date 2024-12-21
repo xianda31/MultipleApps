@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { generateClient } from 'aws-amplify/api';
 import { Schema } from '../../../../../amplify/data/resource';
 import { BehaviorSubject, catchError, combineLatest, from, map, Observable, of, switchMap, tap } from 'rxjs';
-import { Sale, Session, Record, PaymentMode } from './sales.interface';
+import { Sale, Session, Record, PaymentMode } from './old_sales.interface';
 import { CartItem, Payment } from './cart/cart.interface';
 import { Member } from '../../../../common/member.interface';
 import { ProductService } from '../../../../common/services/product.service';

@@ -3,17 +3,17 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { map, Observable } from 'rxjs';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
-import { SalesService } from '../../shop/sales.service';
-import { Sale, PaymentMode } from '../../shop/sales.interface';
-import { SalesViewerComponent } from "../../../../../common/sales-viewer/sales-viewer.component";
-import { SalesTabUtilities } from '../../../../../common/excel/sales-tab-utilities';
+// import { SalesViewerComponent } from "../../../../../common/sales-viewer/sales-viewer.component";
+// import { SalesTabUtilities } from '../../../../../common/excel/sales-tab-utilities';
 import { ToastService } from '../../../../../common/toaster/toast.service';
+import { BookService } from '../../book.service';
+import { Financial, PaymentMode } from '../../../../../common/new_sales.interface';
 
 
 @Component({
   selector: 'app-sales',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, SalesViewerComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './sales.component.html',
   styleUrl: './sales.component.scss'
 })
@@ -24,13 +24,13 @@ export class SalesComponent {
   season: string = '';
   loaded = false;
 
-  sales: Sale[] = [];
+  sales: Financial[] = [];
 
   constructor(
     private systemDataService: SystemDataService,
-    private salesService: SalesService,
-    private salesTabUtilities: SalesTabUtilities,
+    // private salesTabUtilities: SalesTabUtilities,
     private toastService: ToastService,
+    private bookService: BookService
   ) { }
 
 
@@ -49,9 +49,7 @@ export class SalesComponent {
 
   load_sales(season: string): any {
     this.loaded = false;
-    return this.salesService.f_list_sales$(season).pipe(
-      map((sales) => { return sales.sort((a, b) => a.date > b.date ? 1 : -1) })
-    ).subscribe((sales) => {
+    this.bookService.list_financials$().subscribe((sales) => {
       this.sales = sales;
       this.loaded = true;
     });
@@ -64,11 +62,11 @@ export class SalesComponent {
   }
 
   export_excel() {
-    this.salesTabUtilities.excelify_sales(this.sales, 'revenues');
+    // this.salesTabUtilities.excelify_sales(this.sales, 'revenues');
   }
 
   delete_sale(sale_id: string) {
-    this.salesService.f_delete_sale$(sale_id).subscribe((done) => {
+    this.bookService.delete_financial(sale_id).then((done) => {
       if (done) {
         // delete locally
         this.sales = this.sales.filter((sale) => sale.id !== sale_id);

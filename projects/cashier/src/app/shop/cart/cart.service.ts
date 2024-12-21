@@ -1,9 +1,9 @@
 import { Injectable, Signal, signal } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { CartItem, Payment } from './cart.interface';
-import { Sale, Session, Record, PaymentMode } from '../sales.interface';
-import { SalesService } from '../sales.service';
 import { Member } from '../../../../../common/member.interface';
+import { BookService } from '../../book.service';
+import { BANK_LABEL, f_Value, Financial, FINANCIALS, op_Value, Operation, PaymentMode, REVENUE, Revenue, Session } from '../../../../../common/new_sales.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -16,18 +16,18 @@ export class CartService {
   private _payments: Payment[] = [];
   private _payments$ = new BehaviorSubject<Payment[]>(this._payments);
 
-  private _sales_of_the_day: Sale[] = [];
+  private _debt: number = 0;
 
-  _complete_and_balanced = signal(false);
+  // _complete_and_balanced = signal(false);
 
   constructor(
-    private salesService: SalesService
+    private bookService: BookService,
   ) { }
 
 
-  get complete_and_balanced$(): Signal<boolean> {
-    return (this._complete_and_balanced);
-  }
+  // get complete_and_balanced$(): Signal<boolean> {
+  //   return (this._complete_and_balanced);
+  // }
 
 
   get payments$(): Observable<Payment[]> {
@@ -36,9 +36,10 @@ export class CartService {
 
 
   addToPayments(payment: Payment): void {
+
     this._payments.push(payment);
     this._payments$.next(this._payments);
-    this._complete_and_balanced.update(() => this.isCompleteAndBalanced());
+    // this._complete_and_balanced.update(() => this.isCompleteAndBalanced());
   }
 
   removeFromPayments(payment: Payment): void {
@@ -47,11 +48,12 @@ export class CartService {
       this._payments.splice(index, 1);
       this._payments$.next(this._payments);
     }
-    this._complete_and_balanced.update(() => this.isCompleteAndBalanced());
+    // this._complete_and_balanced.update(() => this.isCompleteAndBalanced());
   }
 
   getPaymentsAmount(): number {
     return this._payments.reduce((total, item) => total + item.amount, 0);
+
   }
   getPayments(): Payment[] {
     return this._payments;
@@ -65,7 +67,7 @@ export class CartService {
   addToCart(CartItem: CartItem): void {
     this._cart.push(CartItem);
     this._cart$.next(this._cart);
-    this._complete_and_balanced.update(() => this.isCompleteAndBalanced());
+    // this._complete_and_balanced.update(() => this.isCompleteAndBalanced());
   }
 
   removeFromCart(CartItem: CartItem): void {
@@ -73,21 +75,24 @@ export class CartService {
     if (index > -1) {
       this._cart.splice(index, 1);
       this._cart$.next(this._cart);
-      this._complete_and_balanced.update(() => this.isCompleteAndBalanced());
+      // this._complete_and_balanced.update(() => this.isCompleteAndBalanced());
     }
   }
 
   clearCart(): void {
     this._cart = [];
     this._payments = [];
+    this._debt = 0;
     this._cart$.next(this._cart);
     this._payments$.next(this._payments);
-    this._complete_and_balanced.set(false);
+    // this._complete_and_balanced.set(false);
   }
 
-
+  setDebt(amount: number): void {
+    this._debt = amount;
+  }
   getCartAmount(): number {
-    return this._cart.reduce((total, item) => total + item.paied, 0);
+    return this._cart.reduce((total, item) => total + item.paied, 0) + this._debt;
   }
 
 
@@ -108,64 +113,120 @@ export class CartService {
     return this._cart;
   }
 
-  private isCompleteAndBalanced(): boolean {
-    return (this._cart.every((item) => item.payee_id)) && (this.getCartAmount() === this.getPaymentsAmount());
+  isCompleteAndBalanced(): boolean {
+    return (this._cart.every((item) => item.payee_id)) && (this.getCartAmount() !== 0) && (this.getRemainToPay() === 0);
   }
 
 
-  save_sale(session: Session, buyer: Member): void {
-    console.log('save_sale', this._payments);
-    const records: Record[] = [];
-    this._cart.forEach((cartItem) => { records.push(this.cart2Record(session, '', cartItem)) });
-    this._payments.forEach((payment) => { records.push(this.payment2Record(session, '', payment)) });
-    const sale: Sale = {
-      ...session, payer_id: buyer.id, records: records
-    };
-    this.salesService.f_create_sale$(sale)
-      .subscribe((sale) => {
-        // console.log('sale saved', sale);
-        this._sales_of_the_day.push(sale);
-        this.clearCart();
+  save_sale(session: Session, buyer?: Member): Promise<Financial> {
+    let promise = new Promise<Financial>((resolve, reject) => {
+      const sale: Financial = {
+        ...session,
+        amounts: this.payments2fValue(this._payments),
+        operations: this.cart2Operations(),
+        cheque_ref: this.payments2cheque_ref(this._payments),
+      };
+      let bank_label = this.payments2bank_label(this._payments);
+      if (bank_label) {
+        sale.bank_label = bank_label;
+      }
+
+      this.bookService.create_financial(sale)
+        .then((sale) => {
+          resolve(sale);
+
+          this.clearCart();
+        })
+        .catch((error) => {
+          console.error('error saving sale', error);
+          reject(error);
+        });
+    });
+    return promise;
+  }
+
+  cart2Operations(): Operation[] {
+    let operations: Operation[] = [];
+    let payees: Map<string, CartItem[]> = new Map();
+    this._cart.forEach((cartitem) => {
+      let payee = cartitem.payee_name;
+
+      if (payees.has(payee)) {
+        payees.get(payee)!.push(cartitem);
+      } else {
+        payees.set(payee, [cartitem]);
+      }
+    });
+
+    for (let [payee, cartitems] of payees) {
+      let op_amounts: op_Value = {};
+      cartitems.forEach((cartitem) => {
+        let account = cartitem.product_account;
+        if (op_amounts[account]) {
+          op_amounts[account] += cartitem.paied;
+        } else {
+          op_amounts[account] = cartitem.paied;
+        }
       });
-
+      let operation = {
+        label: payee,
+        operation_type: REVENUE.MEMBER,
+        amounts: op_amounts,
+      };
+      console.log('operation', operation);
+      operations.push(operation);
+    }
+    return operations;
   }
 
-
-  cart2Record(session: Session, sale_id: string, cart: CartItem): Record {
-    if (cart.product_id === 'debt') {
-      return {
-        class: 'Payment_debit',
-        season: session.season,
-        amount: -cart.paied,
-        sale_id: sale_id,
-
-        member_id: cart.payee_id,
-        mode: PaymentMode.CREDIT
-      }
+  payments2bank_label(payments: Payment[]): BANK_LABEL | undefined {
+    if (payments.some((payment) => payment.mode === PaymentMode.CHEQUE)) {
+      return BANK_LABEL.cheque_deposit;
     } else {
-      return {
-        class: 'Product_credit',
-        season: session.season,
-        amount: cart.paied,
-        sale_id: sale_id,
-
-        product_id: cart.product_id,
-        member_id: cart.payee_id,
+      if (payments.some((payment) => payment.mode === PaymentMode.TRANSFER)) {
+        return BANK_LABEL.transfer_receipt;
       }
     }
+    return undefined;
   }
 
-  payment2Record(session: Session, sale_id: string, payment: Payment): Record {
-    return {
-      class: 'Payment_debit',
-      season: session.season,
-      amount: payment.amount,
-      sale_id: sale_id,
-
-      member_id: payment.payer_id,
-      mode: payment.mode,
-      cheque: payment.bank + payment.cheque_no,
+  payments2cheque_ref(payments: Payment[]): string {
+    let label = payments.reduce((label, payment) => label + payment.bank + payment.cheque_no, '');
+    let payment = payments.find((payment) => payment.mode === PaymentMode.CHEQUE);
+    if (payment) {
+      return payment.bank + payment.cheque_no;
+    } else {
+      return '';
     }
   }
+
+  payments2fValue(payments: Payment[]): f_Value {
+    let f_amounts: f_Value = {};
+    console.log('payments', payments);
+    payments.forEach((payment) => {
+      switch (payment.mode) {
+        case PaymentMode.CASH:
+          f_amounts['cash_in'] = payment.amount;
+          break;
+        case PaymentMode.CHEQUE:
+          f_amounts['bank_in'] = payment.amount;
+          break;
+        case PaymentMode.TRANSFER:
+          f_amounts['bank_in'] = payment.amount;
+          break;
+        case PaymentMode.ASSETS:
+          f_amounts['creance_in'] = payment.amount;
+          break;
+        case PaymentMode.CREDIT:
+          f_amounts['creance_in'] = payment.amount;
+          break;
+      }
+    });
+    if (this._debt !== 0) {
+      f_amounts['creance_out'] = this._debt;
+    }
+    return f_amounts;
+  }
+
 
 }

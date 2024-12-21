@@ -52,7 +52,7 @@ export class TestComponent {
 
 
   financial_ops = Object.values(FINANCIALS);
-  bank_ops = this.financial_ops.filter(op => !op.includes('cash') && !op.includes('avoir') && !op.includes('creance'));
+  bank_ops = this.financial_ops.filter(op => !op.includes('cash') && !op.includes('avoir'));
   cash_ops = this.financial_ops.filter(op => op.includes('cash'));
 
   constructor(
@@ -62,11 +62,8 @@ export class TestComponent {
 
 
   ) {
+    console.log('test component');
     this.init_test_entries();
-    // Object.entries(EXPENSES_COL).forEach((expense) => {
-    //   let [account, col] = expense;
-    //   console.log(account as EXPENSES_ACCOUNTS, col);
-    // });
   }
 
   async ngOnInit() {
@@ -78,10 +75,6 @@ export class TestComponent {
       this.products = products;
     });
 
-    // this.SystemDataService.configuration$.subscribe((conf) => {
-    //   // this.p_accounts = conf.product_accounts.map(account => account.key);
-    //   // this.x_accounts = conf.charge_accounts.map(account => account.key);
-    // });
 
     this.bookService.list_financials$().subscribe((financials) => {
       this.financials = financials;
@@ -99,16 +92,7 @@ export class TestComponent {
     this.bank_financials = this.financials.filter(financial => this.bank_ops.some(op => financial.amounts[op] !== undefined));
     this.cash_financials = this.financials.filter(financial => this.cash_ops.some(op => financial.amounts[op] !== undefined));
 
-    this.revenues = this.financials.reduce((acc, financial) => {
-      const revenues = financial.operations
-        .filter(op => op.operation_type === REVENUE.MEMBER || op.operation_type === REVENUE.ANY)
-        .map(op => ({
-          ...op,
-          season: financial.season,
-          date: financial.date
-        } as Revenue));
-      return [...acc, ...revenues];
-    }, [] as Revenue[]);
+    this.revenues = this.bookService.get_revenues_from_members();
 
     this.expenses = this.financials.reduce((acc, financial) => {
       const expenses = financial.operations
@@ -259,7 +243,6 @@ export class TestComponent {
         if (!cell?.valueOf()) { return; }
         financial.amounts[name as FINANCIALS] = cell.valueOf() as number;
       });
-
 
       // construct products operation side
 

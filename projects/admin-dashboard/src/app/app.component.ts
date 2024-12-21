@@ -6,7 +6,6 @@ import { ToastEvent } from '../../../common/toaster/models/toast-event';
 import { CommonModule, registerLocaleData } from '@angular/common';
 import localeFr from '@angular/common/locales/fr'; // Import the 'localeFr' variable
 import { combineLatest } from 'rxjs';
-import { SalesService } from '../../../cashier/src/app/shop/sales.service';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { MembersService } from './members/service/members.service';
 
@@ -26,7 +25,6 @@ export class AppComponent {
   constructor(
     private membersService: MembersService,
     private systemDataService: SystemDataService,
-    private salesService: SalesService
   ) {
     registerLocaleData(localeFr);
     combineLatest([
@@ -34,10 +32,10 @@ export class AppComponent {
       this.systemDataService.configuration$,
 
     ]).subscribe(([members, conf]) => {
-      this.season = conf.season;
-      this.salesService.f_list_sales$(this.season).subscribe((sales) => {
-        this.init = true;
-      });
+      // this.season = conf.season;
+      // this.bookService.f_list_sales$(this.season).subscribe((sales) => {
+      //   this.init = true;
+      // });
 
     });
   }

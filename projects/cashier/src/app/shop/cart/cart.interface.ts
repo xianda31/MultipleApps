@@ -1,5 +1,5 @@
 import { Member } from "../../../../../common/member.interface";
-import { PaymentMode } from "../sales.interface";
+import { PaymentMode, PRODUCTS_ACCOUNTS } from "../../../../../common/new_sales.interface";
 
 
 export interface Payment {
@@ -16,6 +16,8 @@ export interface CartItem {
     paied: number;
     payee_id: string;
     product_id: string;
+    product_account: PRODUCTS_ACCOUNTS;
+    payee_name: string;
 }
 
 

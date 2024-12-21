@@ -11,76 +11,46 @@
     </div>
 
     <!-- sale editor -->
-    <div *ngIf="session" class="row ">
-        <div class="row">
-            <div class="col-3 mt-2">
-
-                <div class="row">
-                    <!-- product keypad -->
-                    <div class="col-8 gx-2">
-                        <div class="row" *ngFor="let products of products_array ">
-                            <div class="card-group">
-                                <div *ngFor="let product of products"
-                                    class="card text-white bg-primary nice_shadow  bigger-on-hover"
-                                    (click)="product_selected(product)">
-                                    <div class="card-body text-center px-0 py-1">
-                                        <strong>{{product.glyph}}</strong>
-                                        <p>
-                                            <small>{{product.price.toFixed(2)}} €</small>
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
+    <div class="row ">
+        <!-- keypad -->
+        <div class="col-3 mt-2">
+            <app-keypad [asset]="asset_amount" (product_click)="product_selected($event)"
+                (paymode_click)="paymode_selected($event)">
+            </app-keypad>
+        </div>
+        <!-- cart -->
+        <div class="col-5 mt-2  fst-italic fst-light fs-6 font-monospace ">
+            <!-- buyer -->
+            <div class="row mb-2 p-2">
+                <div [formGroup]="buyerForm" class="row align-items-center ">
+                    <div class="col-auto"><strong> Acheteur</strong> </div>
+                    <div class="col-6">
+                        <app-input-member class="form-control form-control-sm" [members]="members"
+                            formControlName="buyer"></app-input-member>
                     </div>
-                    <!-- payment keys -->
-                    <div class="col-4 gx-2">
-                        <ng-container class="row" *ngFor="let paymode of paymodes">
-                            <div [class]=" paymode.class ">
-                                <div (click)="paymode_selected(paymode)" class="card-body text-center px-0 py-1">
-                                    <strong>{{paymode.glyph}}</strong>
-                                    <p><i [class]="paymode.icon"></i> </p>
-                                </div>
-                            </div>
+                </div>
+            </div>
+
+
+            <!-- cart  -->
+            <div class="row mb-2 p-2">
+                <app-cart [debt_amount]="debt_amount" (complete)="cart_confirmed()"></app-cart>
+            </div>
+        </div>
+
+        <!--  sales_of_the_day -->
+        <div class="col-md-4 mt-24 fst-italic fst-light fs-6 font-monospace bg-body-tertiary">
+            <strong>encaissements du jour : </strong>
+            <table class="mt-2 table table-striped  table-borderless table-primary align-middle">
+                <tr *ngFor="let sale of sales_of_the_day()">
+                    <td>
+                        {{sale.label}} :
+                        <ng-container *ngFor="let amount of sale.amounts | keyvalue">
+                            {{amount.key}}
                         </ng-container>
-                    </div>
-                </div>
-            </div>
-            <!-- cart -->
-            <div class="col-5 mt-2  fst-italic fst-light fs-6 font-monospace ">
-                <!-- buyer -->
-                <div class="row mb-2 p-2">
-                    <div [formGroup]="buyerForm" class="row align-items-center ">
-                        <div class="col-auto"><strong> Acheteur</strong> </div>
-                        <div class="col-6">
-                            <app-input-member class="form-control form-control-sm" [members]="members"
-                                formControlName="buyer"></app-input-member>
-                        </div>
-                    </div>
-                </div>
-                <!-- cart  -->
-                <div class="row mb-2 p-2">
-                    <app-cart (complete)="sale_confirmed()"></app-cart>
-                </div>
-            </div>
-
-            <!--  sales_of_the_day -->
-            <div class="col-md-4 mt-4 fst-italic fst-light fs-6 font-monospace bg-body-tertiary">
-                <strong>encaissements du jour : </strong>
-                <table class="table table-striped  table-borderless table-primary align-middle">
-                    <tr *ngFor="let sale of sales_of_the_day$ | async">
-                        <td>
-                            {{member_name(sale.payer_id)}} :
-                            <ng-container *ngFor="let record of sale.records">
-                                <span *ngIf="record.class.includes('Product') ">
-                                    {{product_name(record.product_id!)}}
-                                </span>
-                            </ng-container>
-                        </td>
-                        <td class="text-end">{{sale_amount(sale) | currency:'€':'symbol':'2.2-2':'fr'}}</td>
-                    </tr>
-                </table>
-            </div>
+                    </td>
+                    <td class="text-end">{{sale_amount(sale) | currency:'€':'symbol':'2.2-2':'fr'}}</td>
+                </tr>
+            </table>
         </div>
     </div>

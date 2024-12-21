@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { generateClient } from 'aws-amplify/api';
 
-import { Financial } from '../../../common/new_sales.interface';
+import { Financial, REVENUE, Revenue, FINANCIALS } from '../../../common/new_sales.interface';
 import { Schema } from '../../../../amplify/data/resource';
 import { BehaviorSubject, from, map, Observable, switchMap, tap } from 'rxjs';
 
@@ -106,7 +106,7 @@ export class BookService {
       });
   }
 
-  list_financials$(): Observable<Financial[]> {
+  list_financials$(season?: string): Observable<Financial[]> {
     const client = generateClient<Schema>();
 
     return from(client.models.Financial.list()).pipe(
@@ -119,5 +119,56 @@ export class BookService {
     );
   }
 
+  // utility functions
 
+  get_revenues_from_members(): Revenue[] {
+    return this._financials.reduce((acc, financial) => {
+      const revenues = financial.operations
+        .filter(op => op.operation_type === REVENUE.MEMBER || op.operation_type === REVENUE.ANY)
+        .map(op => ({
+          ...op,
+          season: financial.season,
+          date: financial.date
+        } as Revenue));
+      return [...acc, ...revenues];
+    }, [] as Revenue[]);
+  }
+
+
+  find_debt(member_full_name: string): number {
+    let debt = new Map<string, number>();
+    this._financials.forEach((financial) => {
+
+      if (financial.amounts[FINANCIALS.DEBT_debit]) {
+        let name = financial.operations[0].label;
+        debt.set(name, (debt.get(name) || 0) + financial.amounts[FINANCIALS.DEBT_debit]);
+      }
+      if (financial.amounts[FINANCIALS.DEBT_credit]) {
+        let name = financial.operations[0].label;
+        debt.set(name, (debt.get(name) || 0) - financial.amounts[FINANCIALS.DEBT_credit]);
+      }
+
+    });
+    // console.log('%s debt is : ', member_full_name, debt.get(member_full_name) || 0);
+    return debt.get(member_full_name) || 0;
+
+  }
+
+  find_assets(member_full_name: string): number {
+    let assets = new Map<string, number>();
+    this._financials.forEach((financial) => {
+
+      if (financial.amounts[FINANCIALS.ASSET_debit]) {
+        let name = financial.operations[0].label;
+        assets.set(name, (assets.get(name) || 0) + financial.amounts[FINANCIALS.ASSET_debit]);
+      }
+      if (financial.amounts[FINANCIALS.ASSET_credit]) {
+        let name = financial.operations[0].label;
+        assets.set(name, (assets.get(name) || 0) - financial.amounts[FINANCIALS.ASSET_credit]);
+      }
+
+    });
+    // console.log('%s assets is : ', member_full_name, assets.get(member_full_name) || 0);
+    return assets.get(member_full_name) || 0;
+  }
 }

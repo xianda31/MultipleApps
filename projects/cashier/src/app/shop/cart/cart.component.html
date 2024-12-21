@@ -1,4 +1,6 @@
 <div class="bg-body-tertiary">
+
+
     <strong>Panier : </strong>
     <!-- <div class="table-responsive"> -->
     <table class="w-100">
@@ -22,16 +24,25 @@
                 </td>
             </tr>
 
+            <!-- debt if any -->
+            <tr *ngIf="debt_amount > 0">
+                <td> Dette </td>
+                <td></td>
+                <td></td>
+                <td>{{debt_amount | currency:'€':'symbol':'2.2-2':'fr'}}</td>
+                <td class="text-end text-danger"></td>
+
+            </tr>
+            <tr></tr>
             <tr>
                 <td>Total à régler </td>
                 <td>.............</td>
-                <td colspan="2" class="fw-bold">{{getCartAmount() | currency:'€':'symbol':'2.2-2':'fr'}}</td>
+                <td colspan="2" class="fw-bold">{{total_amount() | currency:'€':'symbol':'2.2-2':'fr'}}</td>
                 <td class="text-end text-danger"></td>
             </tr>
         </tbody>
     </table>
     <!-- </div> -->
-
 
 
     <!--  payment details -->
@@ -40,10 +51,10 @@
     <strong>Mode de paiement :</strong>
     <table class="w-100">
         <tbody>
-            <tr *ngFor="let payment of payments$ | async">
+            <tr *ngFor="let payment of payments">
                 <ng-container *ngTemplateOutlet="payment_info ; context:{payment:payment}">
                 </ng-container>
-                <td>
+                <td class="text-end">
                     {{payment.amount | currency:'€':'symbol':'2.2-2':'fr'}}
                 </td>
                 <td class="text-end text-danger">
@@ -53,10 +64,10 @@
         </tbody>
     </table>
 
-    <!-- validation -->
+    <!-- validation  //-->
     <div class="row px-2 mt-4">
-        <button [disabled]="!(complete_and_balanced$() )" class="btn btn-success nice_shadow"
-            (click)="valid_sale()">confirmation</button>
+        <button [disabled]="!(sale_is_ok() )" class="btn btn-success nice_shadow"
+            (click)="validate_sale()">confirmation</button>
     </div>
 </div>
 

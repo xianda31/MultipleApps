@@ -1,15 +1,31 @@
-<div class="container">
-    <div class="row" *ngFor="let category of keys | keyvalue">
-        <div class="card-group">
-            <div *ngFor="let product of category.value" class="card text-white bg-primary nice_shadow  key"
-                (click)="onClick(product)">
-                <div class="card-body text-center px-0 py-1">
-                    <strong>{{product.glyph}}</strong>
-                    <p>
-                        <small>{{product.price.toFixed(2)}} €</small>
-                    </p>
+<div class="row">
+    <!-- product keypad -->
+    <div class="col-8 gx-2">
+        <div class="row" *ngFor="let products of products_array | keyvalue ">
+            <div class="card-group">
+
+                <div *ngFor="let product of products.value"
+                    class="m-1 card text-white bg-primary nice_shadow  bigger-on-hover"
+                    (click)="on_product_click(product)">
+                    <div class="card-body text-center px-0 py-1">
+                        <strong>{{product.glyph}}</strong>
+                        <p>
+                            <small>{{product.price.toFixed(2)}} €</small>
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
+    </div>
+    <!-- payment keys -->
+    <div class="col-4 gx-2">
+        <ng-container class="row" *ngFor="let key of payment_keypad">
+            <div [class]=" key.class " (click)="on_paykey_click(key)">
+                <div class="card-body text-center px-0 py-1">
+                    <strong>{{key.title}}</strong>
+                    <p><i [class]="key.icon"></i> </p>
+                </div>
+            </div>
+        </ng-container>
     </div>
 </div>

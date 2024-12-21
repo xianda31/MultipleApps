@@ -21,12 +21,13 @@ export class ProductService {
     // utilities functions
 
 
-    products_array(products: Product[]): [Product[]] {
-        const accounts = products.map((product) => product.account);
+    products_by_accounts(products: Product[]): Map<string, Product[]> {
+        const accounts = products.filter((product) => product.active).map((product) => product.account);
         const products_accounts = [...new Set(accounts)];
-        const array: [Product[]] = [[]];
+
+        let array = new Map();
         products_accounts.forEach((account) => {
-            array.push(products.filter((product) => product.account === account));
+            array.set(account, products.filter((product) => product.account === account));
         });
         return array;
     }

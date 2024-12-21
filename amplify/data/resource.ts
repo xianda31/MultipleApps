@@ -1,6 +1,4 @@
 import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
-import { Bank } from '../../projects/common/system-conf.interface';
-import { Product } from 'aws-cdk-lib/aws-servicecatalog';
 
 
 
@@ -18,68 +16,43 @@ const schema = a.schema({
     .authorization((allow) => [allow.publicApiKey()]),
 
 
-  Record: a.model({
-    class: a.string().required(),
-    season: a.string().required(),
-    amount: a.float().required(),
+  // Record: a.model({
+  //   class: a.string().required(),
+  //   season: a.string().required(),
+  //   amount: a.float().required(),
 
-    sale_id: a.id().required(),
-    sale: a.belongsTo('Sale', 'sale_id'),
+  //   sale_id: a.id().required(),
+  //   sale: a.belongsTo('Sale', 'sale_id'),
 
-    member_id: a.id(),
+  //   member_id: a.id(),
 
-    mode: a.string(),
-    // bank: a.string(),
-    cheque: a.string(),
-    deposit_ref: a.string(),   // bordereau
-    bank_statement: a.string(),
+  //   mode: a.string(),
+  //   // bank: a.string(),
+  //   cheque: a.string(),
+  //   deposit_ref: a.string(),   // bordereau
+  //   bank_statement: a.string(),
 
-    // payee_id: a.id(),
-    product_id: a.id(),
-  })
-    .authorization((allow) => [allow.publicApiKey()]),
-
-  Sale: a.model({
-    season: a.string().required(),
-    vendor: a.string().required(),
-    date: a.date().required(),
-
-    payer_id: a.id().required(),
-    comment: a.string(),
-    records: a.hasMany('Record', 'sale_id'),
-  })
-    .authorization((allow) => [allow.publicApiKey()]),
-
-  Value: a.customType({
-    value: a.float().required(),
-  }),
-
-  // Expense: a.model({
-  //   // sub_account: a.string().required(),
-
-  //   label: a.string().required(),
-  //   amounts: a.json().required(),
-  //   financial_id: a.id().required(),
-  //   financial: a.belongsTo('Financial', 'financial_id'),
+  //   // payee_id: a.id(),
+  //   product_id: a.id(),
   // })
   //   .authorization((allow) => [allow.publicApiKey()]),
 
+  // Sale: a.model({
+  //   season: a.string().required(),
+  //   vendor: a.string().required(),
+  //   date: a.date().required(),
 
-  // Revenue: a.model({
+  //   payer_id: a.id().required(),
+  //   comment: a.string(),
+  //   records: a.hasMany('Record', 'sale_id'),
+  // })
+  //   .authorization((allow) => [allow.publicApiKey()]),
 
-  //   // sub_account: a.string().required(),
-  //   beneficiary: a.string(),
-
-  //   label: a.string().required(),
-  //   amounts: a.json().required(),
-  //   financial_id: a.id().required(),
-  //   financial: a.belongsTo('Financial', 'financial_id'),
-
-  // }).authorization((allow) => [allow.publicApiKey()]),
-
+  // Value: a.customType({
+  //   value: a.float().required(),
+  // }),
 
   Operation: a.customType({
-    beneficiary: a.string(),
     label: a.string().required(),
     amounts: a.json().required(),
     operation_type: a.string().required(),
@@ -88,29 +61,16 @@ const schema = a.schema({
   Financial: a.model({
     season: a.string().required(),
     date: a.date().required(),
-    bank_label: a.string().required(),
     amounts: a.json().required(),
-
-    // revenues: a.hasMany('Revenue', 'financial_id'),
-    // expense: a.hasOne('Expense', 'financial_id'),
-
     operations: a.ref('Operation').array().required(),
 
+    bank_label: a.string(),
     cheque_ref: a.string(),
     deposit_ref: a.string(),
     bank_report: a.string(),
 
   }).authorization((allow) => [allow.publicApiKey()]),
 
-
-
-  // BookEntry: a.model({
-
-  //   products: a.ref('Products_and_Services_account').array(),
-  //   expenses: a.ref('Expenses_account'),
-  //   financial: a.ref('Financial_account').required(),
-  // })
-  //   .authorization((allow) => [allow.publicApiKey()]),
 
   Member: a.model({
     license_number: a.id().required(),

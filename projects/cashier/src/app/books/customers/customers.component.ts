@@ -5,12 +5,11 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { combineLatest, map, Observable, tap } from 'rxjs';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { ExcelService } from '../../excel.service';
-import { SalesService } from '../../shop/sales.service';
-import { PaymentMode } from '../../shop/sales.interface';
+import { PaymentMode } from '../../shop/old_sales.interface';
 import { Member } from '../../../../../common/member.interface';
 import { ProductService } from '../../../../../common/services/product.service';
 import { Product } from '../../../../../admin-dashboard/src/app/sales/products/product.interface';
-import { Record } from '../../shop/sales.interface';
+import { Record } from '../../shop/old_sales.interface';
 
 
 @Component({
@@ -37,7 +36,6 @@ export class CustomersComponent {
   constructor(
     private membersService: MembersService,
     private systemDataService: SystemDataService,
-    private salesService: SalesService,
     private productService: ProductService,
     private excelService: ExcelService,
   ) {
@@ -58,18 +56,18 @@ export class CustomersComponent {
       .subscribe(([season, members, products]) => {
         this.members = members;
         this.products = products;
-        this.product_keys = Object.keys(this.productService.products_array(products));
+        this.product_keys = Object.keys(this.productService.products_by_accounts(products));
         this.list_sales(season);
       });
   }
 
 
   list_sales(season: string) {
-    this.sales_subscription = this.salesService.f_list_sales$(season).subscribe((sales) => {
-      console.log('sales', sales);
-      const products = sales.map((sale) => sale.records!.filter((record) => record.class.includes('product')));
-      this.data_list = this.format_data_list(products);
-    });
+    // this.sales_subscription = this.salesService.f_list_sales$(season).subscribe((sales) => {
+    //   console.log('sales', sales);
+    //   const products = sales.map((sale) => sale.records!.filter((record) => record.class.includes('product')));
+    //   this.data_list = this.format_data_list(products);
+    // });
   }
 
 

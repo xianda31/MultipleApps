@@ -1,8 +1,9 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ProductService } from '../../../../../common/services/product.service';
 import { Product } from '../../../../../admin-dashboard/src/app/sales/products/product.interface';
+import { Payment_key, PAYMENT_KEYS } from './keypad.interface';
+import { PaymentMode } from '../../../../../common/new_sales.interface';
 
 @Component({
   selector: 'app-keypad',
@@ -11,36 +12,42 @@ import { Product } from '../../../../../admin-dashboard/src/app/sales/products/p
   templateUrl: './keypad.component.html',
   styleUrl: './keypad.component.scss'
 })
-export class KeypadComponent implements OnInit, OnDestroy {
-  @Input() keypad: Product[] = [];
-  @Output() keyStroked = new EventEmitter<Product>();
-  keys: { [key: string]: Product[] } = {};
+export class KeypadComponent {
 
 
-  constructor(private productService: ProductService) { }
+  @Output() product_click = new EventEmitter<Product>();
+  @Output() paymode_click = new EventEmitter<PaymentMode>();
+  @Input() asset: number = 0;
 
-  ngOnDestroy(): void {
-  }
+  products_array: Map<string, Product[]> = new Map();
+  payment_keypad = PAYMENT_KEYS;
 
-  ngOnInit(): void {
-    // sort products by category
-    const accounts: Map<string, Product[]> = new Map();
-    this.keypad.forEach((product) => {
-      if (accounts.has(product.account)) {
-        accounts.get(product.account)!.push(product);
-      } else {
-        accounts.set(product.account, [product]);
-      }
+
+  constructor(
+    private productService: ProductService,
+  ) {
+    this.productService.listProducts().subscribe((products) => {
+      this.products_array = this.productService.products_by_accounts(products);
     });
-    this.keys = Object.fromEntries(accounts);
-    console.log(this.keys);
   }
 
-  // get_products(key: string): Product[] {
-  //   return categories.get(key) || [];
-  // }
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['asset']) {
+      console.log(changes['asset'].currentValue);
+      if (changes['asset'].currentValue > 0) {
 
-  onClick(product: Product) {
-    this.keyStroked.emit(product);
+        this.payment_keypad = PAYMENT_KEYS;
+      } else {
+        this.payment_keypad = PAYMENT_KEYS.filter(key => key.payment_mode !== PaymentMode.ASSETS);
+      }
+    }
+  }
+
+  on_product_click(product: Product) {
+    this.product_click.emit(product);
+  }
+
+  on_paykey_click(key: Payment_key) {
+    this.paymode_click.emit(key.payment_mode);
   }
 }

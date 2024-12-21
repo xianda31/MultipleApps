@@ -7,7 +7,7 @@ import { Person, Player, Team, TournamentTeams } from '../../../../common/ffb/in
 import { BehaviorSubject, map, Observable, of, tap } from 'rxjs';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 import { ProductService } from '../../../../common/services/product.service';
-import { Sale } from '../shop/sales.interface';
+import { Sale } from '../shop/old_sales.interface';
 import { Member } from '../../../../common/member.interface';
 import { Game, Gamer } from './fees/fees.interface';
 

@@ -4,7 +4,7 @@ import { MembersService } from '../../admin-dashboard/src/app/members/service/me
 import { ExcelService } from '../../cashier/src/app/excel.service';
 import { ProductService } from '../services/product.service';
 import { xls_header } from './excel.interface';
-import { f_payments, f_products, f_Sale, PaymentMode, Sale } from '../../cashier/src/app/shop/sales.interface';
+import { f_payments, f_products, f_Sale, PaymentMode, Sale } from '../../cashier/src/app/shop/old_sales.interface';
 
 @Injectable({
   providedIn: 'root'
