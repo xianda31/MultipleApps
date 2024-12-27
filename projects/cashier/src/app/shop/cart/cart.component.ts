@@ -9,9 +9,9 @@ import { MembersService } from '../../../../../admin-dashboard/src/app/members/s
 import { InputMemberComponent } from '../../input-member/input-member.component';
 import { Member } from '../../../../../common/member.interface';
 import { FormsModule } from '@angular/forms';
-import { PaymentMode } from '../old_sales.interface';
 import { Bank } from '../../../../../common/system-conf.interface';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
+import { PaymentMode } from '../../../../../common/new_sales.interface';
 
 @Component({
   selector: 'app-cart',

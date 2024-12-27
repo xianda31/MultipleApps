@@ -2,18 +2,18 @@ import { Routes } from '@angular/router';
 import { ShopComponent } from './shop/shop.component';
 import { FeesComponent } from './fees/fees/fees.component';
 import { HomeComponent } from './home/home.component';
-import { CustomersComponent } from './books/customers/customers.component';
-// import { RevenuesComponent } from './revenues/revenues.component';
-import { SalesComponent } from './books/sales/sales.component';
-import { TestComponent } from './test/test.component';
+import { BooksOverviewComponent } from './books/books-overview/books-overview.component';
+import { ImportExcelComponent } from './excel/import-excel/import-excel.component';
+import { BankStatusComponent } from './books/bank-status/bank-status.component';
+import { BookingComponent } from './books/booking/booking.component';
 
 export const routes: Routes = [
-    { path: 'sales', component: ShopComponent },   //, canActivate: [loggedInGuard]
-    { path: 'books/customers', component: CustomersComponent },
-    { path: 'books/sales', component: SalesComponent },
-    { path: 'test', component: TestComponent },
-
+    { path: 'shop', component: ShopComponent },   //, canActivate: [loggedInGuard]
+    { path: 'books/overview', component: BooksOverviewComponent },
+    { path: 'books/bank-status', component: BankStatusComponent },
+    { path: 'books/booking', component: BookingComponent },
     { path: 'fees', component: FeesComponent },
+    { path: 'excel/import', component: ImportExcelComponent },
     { path: '', component: HomeComponent },
     // {
     //     path: 'authentification',

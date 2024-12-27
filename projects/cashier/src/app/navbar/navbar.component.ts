@@ -7,7 +7,7 @@ import { AdminInComponent } from "../../../../common/authentification/admin-in/a
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, FormsModule, ReactiveFormsModule, AdminInComponent],
+  imports: [CommonModule, RouterLink, FormsModule, ReactiveFormsModule, AdminInComponent],
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.scss'
 })

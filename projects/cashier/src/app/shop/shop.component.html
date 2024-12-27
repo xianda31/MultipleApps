@@ -24,9 +24,12 @@
             <div class="row mb-2 p-2">
                 <div [formGroup]="buyerForm" class="row align-items-center ">
                     <div class="col-auto"><strong> Acheteur</strong> </div>
-                    <div class="col-6">
+                    <div class="col-6 input-group input-group-sm">
                         <app-input-member class="form-control form-control-sm" [members]="members"
                             formControlName="buyer"></app-input-member>
+                        <span class="input-group-text">
+                            <i class="bi bi-x-lg" (click)="clear_sale()"></i>
+                        </span>
                     </div>
                 </div>
             </div>
@@ -45,11 +48,11 @@
                 <tr *ngFor="let sale of sales_of_the_day()">
                     <td>
                         {{sale.label}} :
-                        <ng-container *ngFor="let amount of sale.amounts | keyvalue">
-                            {{amount.key}}
+                        <ng-container *ngFor="let value of sale.values | keyvalue">
+                            {{value.key}}
                         </ng-container>
                     </td>
-                    <td class="text-end">{{sale_amount(sale) | currency:'€':'symbol':'2.2-2':'fr'}}</td>
+                    <td class="text-end">{{sale_value(sale) | currency:'€':'symbol':'2.2-2':'fr'}}</td>
                 </tr>
             </table>
         </div>

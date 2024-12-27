@@ -6,7 +6,6 @@ import { ToastService } from '../../../../common/toaster/toast.service';
 import { CartService } from './cart/cart.service';
 import { Product } from '../../../../admin-dashboard/src/app/sales/products/product.interface';
 import { CommonModule } from '@angular/common';
-// import { CartComponent } from './cart/cart.component';
 import { InputMemberComponent } from '../input-member/input-member.component';
 import { SessionService } from './session.service';
 import { CartItem, Payment } from './cart/cart.interface';
@@ -32,8 +31,6 @@ export class ShopComponent {
   debt_amount = 0;
   asset_amount = 0;
 
-  // loading_complete = false;
-
   sales: Financial[] = [];
 
   day = signal(new Date().toISOString().split('T')[0]);
@@ -41,8 +38,6 @@ export class ShopComponent {
   sales_of_the_day = computed(() => {
     return this.sales_to_members().filter((revenue) => revenue.date === this.day());
   });
-
-
 
   buyerForm: FormGroup = new FormGroup({
     buyer: new FormControl(null, Validators.required),
@@ -69,7 +64,6 @@ export class ShopComponent {
 
     this.membersService.listMembers().subscribe((members) => {
       this.members = members;
-      // this.loading_complete = true;
     });
 
     this.sessionService.current_session.subscribe((session) => {
@@ -82,12 +76,12 @@ export class ShopComponent {
 
       this.debt_amount = await this.find_debt(buyer);
       if (this.debt_amount !== 0) {
-        this.toastService.showWarningToast('dette', 'cette personne a une dette de ' + this.debt_amount + ' €');
+        this.toastService.showWarningToast('dette', 'cette personne a une dette de ' + this.debt_amount.toFixed(2) + ' €');
       }
 
       this.asset_amount = await this.find_assets(buyer);
       if (this.asset_amount !== 0) {
-        this.toastService.showInfoToast('avoir', 'cette personne a un avoir de ' + this.asset_amount + ' €');
+        this.toastService.showInfoToast('avoir', 'cette personne a un avoir de ' + this.asset_amount.toFixed(2) + ' €');
       }
 
       this.cartService.clearCart();
@@ -104,7 +98,6 @@ export class ShopComponent {
   find_assets(payer: Member): Promise<number> {
     let name = payer.lastname + ' ' + payer.firstname;
     let due = this.bookService.find_assets(name);
-    due = 12.50;
     return Promise.resolve(due);
   }
 
@@ -166,7 +159,12 @@ export class ShopComponent {
         console.error('error saving sale', error);
       });
     this.buyerForm.reset();
+  }
 
+  clear_sale(): void {
+    this.cartService.clearCart();
+    this.buyerForm.reset();
+    this.debt_amount = 0;
   }
 
   date_change(date: any) {
@@ -183,8 +181,8 @@ export class ShopComponent {
     return member ? member.lastname + ' ' + member.firstname : '???';
   }
 
-  sale_amount(sale: Revenue) {
-    if (!sale.amounts) return 0;
-    return Object.values(sale.amounts).reduce((total, amount) => total + amount, 0);
+  sale_value(sale: Revenue) {
+    if (!sale.values) return 0;
+    return Object.values(sale.values).reduce((total, value) => total + value, 0);
   }
 }

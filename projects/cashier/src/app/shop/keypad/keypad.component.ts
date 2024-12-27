@@ -35,12 +35,15 @@ export class KeypadComponent {
     if (changes['asset']) {
       console.log(changes['asset'].currentValue);
       if (changes['asset'].currentValue > 0) {
-
         this.payment_keypad = PAYMENT_KEYS;
       } else {
-        this.payment_keypad = PAYMENT_KEYS.filter(key => key.payment_mode !== PaymentMode.ASSETS);
+        this.payment_keypad = PAYMENT_KEYS.filter(key => !this.is_asset_key(key));
       }
     }
+  }
+
+  is_asset_key(key: Payment_key): boolean {
+    return key.payment_mode === PaymentMode.ASSETS;
   }
 
   on_product_click(product: Product) {

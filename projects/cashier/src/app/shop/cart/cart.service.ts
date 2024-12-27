@@ -3,7 +3,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { CartItem, Payment } from './cart.interface';
 import { Member } from '../../../../../common/member.interface';
 import { BookService } from '../../book.service';
-import { BANK_LABEL, f_Value, Financial, FINANCIALS, op_Value, Operation, PaymentMode, REVENUE, Revenue, Session } from '../../../../../common/new_sales.interface';
+import { BANK_OP_TYPE, f_Value, Financial, FINANCIALS, op_Value, Operation, OPERATION_CLASS, PaymentMode, Revenue, Session } from '../../../../../common/new_sales.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -122,13 +122,14 @@ export class CartService {
     let promise = new Promise<Financial>((resolve, reject) => {
       const sale: Financial = {
         ...session,
+        bank_op_type: this.payments2bank_op_type(this._payments),
         amounts: this.payments2fValue(this._payments),
         operations: this.cart2Operations(),
         cheque_ref: this.payments2cheque_ref(this._payments),
       };
-      let bank_label = this.payments2bank_label(this._payments);
-      if (bank_label) {
-        sale.bank_label = bank_label;
+      let bank_op_type = this.payments2bank_op_type(this._payments);
+      if (bank_op_type) {
+        sale.bank_op_type = bank_op_type;
       }
 
       this.bookService.create_financial(sale)
@@ -159,19 +160,19 @@ export class CartService {
     });
 
     for (let [payee, cartitems] of payees) {
-      let op_amounts: op_Value = {};
+      let op_values: op_Value = {};
       cartitems.forEach((cartitem) => {
         let account = cartitem.product_account;
-        if (op_amounts[account]) {
-          op_amounts[account] += cartitem.paied;
+        if (op_values[account]) {
+          op_values[account] += cartitem.paied;
         } else {
-          op_amounts[account] = cartitem.paied;
+          op_values[account] = cartitem.paied;
         }
       });
       let operation = {
         label: payee,
-        operation_type: REVENUE.MEMBER,
-        amounts: op_amounts,
+        class: OPERATION_CLASS.REVENUE_FROM_MEMBER,
+        values: op_values,
       };
       console.log('operation', operation);
       operations.push(operation);
@@ -179,15 +180,15 @@ export class CartService {
     return operations;
   }
 
-  payments2bank_label(payments: Payment[]): BANK_LABEL | undefined {
+  payments2bank_op_type(payments: Payment[]): BANK_OP_TYPE {
     if (payments.some((payment) => payment.mode === PaymentMode.CHEQUE)) {
-      return BANK_LABEL.cheque_deposit;
+      return BANK_OP_TYPE.cheque_deposit;
     } else {
       if (payments.some((payment) => payment.mode === PaymentMode.TRANSFER)) {
-        return BANK_LABEL.transfer_receipt;
+        return BANK_OP_TYPE.transfer_receipt;
       }
     }
-    return undefined;
+    return BANK_OP_TYPE.none;
   }
 
   payments2cheque_ref(payments: Payment[]): string {

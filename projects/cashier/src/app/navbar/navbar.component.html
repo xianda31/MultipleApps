@@ -27,7 +27,7 @@
             <ul class=" navbar-nav  me-auto mb-2 mb-lg-0  align-items-center">
 
                 <li class="nav-item me-5">
-                    <a class="nav-link" [routerLink]="['/sales']">
+                    <a class="nav-link" [routerLink]="['/shop']">
                         <i class="fs-4 bi-cart"></i>
                         <span class="ms-1 d-none d-sm-inline">Vente</span>
                     </a>
@@ -46,11 +46,25 @@
                         <i class="fs-4 bi-table"></i> <span class="ms-1 d-none d-sm-inline">Comptes</span>
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdown1">
-                        <li><a class="dropdown-item  " routerLink="/books/cash-box">caisse</a></li>
-                        <li><a class="dropdown-item  " routerLink="/books/customers">adhérents</a></li>
-                        <li><a class="dropdown-item  " routerLink="/books/sales">ventes</a></li>
+                        <!-- <li><a class="dropdown-item  " routerLink="/books/cash-box">caisse</a></li> -->
+                        <li><a class="dropdown-item  " routerLink="/books/booking">écriture</a></li>
+                        <li><a class="dropdown-item  " routerLink="/books/overview">vue générale</a></li>
 
+                        <li><a class="dropdown-item  " routerLink="/books/bank-status">rapprochement bancaire</a></li>
                         <li><a class="dropdown-item  ">droits de table</a></li>
+
+                    </ul>
+                </li>
+
+                <li class="nav-item dropdown me-5">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown1" role="button"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fs-4 bi-file-earmark-spreadsheet"></i> <span
+                            class="ms-1 d-none d-sm-inline">Excel</span>
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown1">
+                        <li><a class="dropdown-item  " routerLink="/excel/import">import</a></li>
+                        <li><a class="dropdown-item  ">export</a></li>
 
                     </ul>
                 </li>

@@ -1,6 +1,6 @@
 // compta.xls file definition
 
-import { EXPENSES_ACCOUNTS, FINANCIALS, PRODUCTS_ACCOUNTS, PRODUCTS_OR_EXPENSES } from "../new_sales.interface";
+import { EXPENSES_ACCOUNTS, FINANCIALS, PRODUCTS_ACCOUNTS } from "../new_sales.interface";
 
 
 

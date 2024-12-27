@@ -1,0 +1,38 @@
+<div class=" mt-2 card">
+    <div class="card-header">
+        <h5>compte bancaire</h5>
+    </div>
+    <div class="card-body">
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th class="col"># </th>
+                    <th class="col">date </th>
+                    <th class="col">type </th>
+                    <!-- <th class="col">libellé</th> -->
+                    <th class="col text-center" *ngFor="let op of bank_or_saving_ops ">{{op}} </th>
+                    <th class="col">relevé </th>
+                    <th class="col">n° chèque </th>
+                    <th class="col">bordereau </th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                <tr *ngFor="let statement of bank_statements">
+                    <td>
+                        <i class="bi bi-search" (click)="show_statement(statement)"></i>
+                    </td>
+                    <td>{{statement.date | date: 'dd/MM/yyyy'}}</td>
+                    <td>{{ statement.bank_op_type}}</td>
+                    <td *ngFor=" let op of bank_or_saving_ops " class="text-center">
+                        {{statement.amounts[op]?.toFixed(2)}}
+                    </td>
+                    <td>{{statement.bank_report}}</td>
+                    <td>{{statement.cheque_ref}}</td>
+                    <td>{{statement.deposit_ref}}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

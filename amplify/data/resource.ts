@@ -54,8 +54,8 @@ const schema = a.schema({
 
   Operation: a.customType({
     label: a.string().required(),
-    amounts: a.json().required(),
-    operation_type: a.string().required(),
+    values: a.json().required(),
+    class: a.string().required(),
   }),
 
   Financial: a.model({
@@ -64,7 +64,7 @@ const schema = a.schema({
     amounts: a.json().required(),
     operations: a.ref('Operation').array().required(),
 
-    bank_label: a.string(),
+    bank_op_type: a.string().required(),
     cheque_ref: a.string(),
     deposit_ref: a.string(),
     bank_report: a.string(),

@@ -37,27 +37,42 @@
             <tr>
                 <td>Total à régler </td>
                 <td>.............</td>
-                <td colspan="2" class="fw-bold">{{total_amount() | currency:'€':'symbol':'2.2-2':'fr'}}</td>
+                <td></td>
+                <td class="fw-bold">{{total_amount() | currency:'€':'symbol':'2.2-2':'fr'}}</td>
                 <td class="text-end text-danger"></td>
             </tr>
-        </tbody>
-    </table>
-    <!-- </div> -->
 
+            <tr></tr>
 
-    <!--  payment details -->
-    <!-- <div class="row mt-2"> -->
-    <br>
-    <strong>Mode de paiement :</strong>
-    <table class="w-100">
-        <tbody>
+            <tr>
+                <strong>Mode de paiement :</strong>
+            </tr>
+
             <tr *ngFor="let payment of payments">
-                <ng-container *ngTemplateOutlet="payment_info ; context:{payment:payment}">
+                <td colspan="1">
+                    {{payment.mode}}
+                </td>
+
+                <ng-container *ngIf="payment.mode === paymentMode.CHEQUE">
+                    <td colspan="3">
+                        <select [ngClass]="!payment.bank?'to-fill-in':''" class="form-control form-control-sm"
+                            [(ngModel)]="payment.bank" required>
+                            <option value="undefined" hidden disabled>banque</option>
+                            <option *ngFor="let bank of banks$ | async " [value]="bank.key">
+                                {{bank.name}}
+                            </option>
+                        </select>
+                    </td>
+                    <td colspan="3">
+                        <input [ngClass]="!payment.cheque_no?'to-fill-in':''" placeholder="N° de chèque" type="text"
+                            id="cheque_no" class="form-control form-control-sm" [(ngModel)]="payment.cheque_no">
+                    </td>
                 </ng-container>
-                <td class="text-end">
+
+                <td colspan="3" class="text-end fw-bold">
                     {{payment.amount | currency:'€':'symbol':'2.2-2':'fr'}}
                 </td>
-                <td class="text-end text-danger">
+                <td colspan="1" class="text-end text-danger">
                     <i class="bi bi-trash3" (click)="removeFromPayments(payment)"></i>
                 </td>
             </tr>
@@ -74,15 +89,9 @@
 
 <ng-template #payment_info let-payment="payment">
 
-    <td colspan="3" *ngIf="payment.mode !== paymentMode.CHEQUE">
-        {{payment.mode}}
-    </td>
 
     <ng-container *ngIf="payment.mode === paymentMode.CHEQUE">
-        <td>
-            {{payment.mode}}
-        </td>
-        <td>
+        <td colspan="3">
             <select [ngClass]="!payment.bank?'to-fill-in':''" class="form-control form-control-sm"
                 [(ngModel)]="payment.bank" required>
                 <option value="undefined" hidden disabled>banque</option>
@@ -91,7 +100,7 @@
                 </option>
             </select>
         </td>
-        <td>
+        <td colspan="3">
             <input [ngClass]="!payment.cheque_no?'to-fill-in':''" placeholder="N° de chèque" type="text" id="cheque_no"
                 class="form-control form-control-sm" [(ngModel)]="payment.cheque_no">
         </td>

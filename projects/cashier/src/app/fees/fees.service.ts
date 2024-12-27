@@ -7,7 +7,6 @@ import { Person, Player, Team, TournamentTeams } from '../../../../common/ffb/in
 import { BehaviorSubject, map, Observable, of, tap } from 'rxjs';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 import { ProductService } from '../../../../common/services/product.service';
-import { Sale } from '../shop/old_sales.interface';
 import { Member } from '../../../../common/member.interface';
 import { Game, Gamer } from './fees/fees.interface';
 
@@ -158,22 +157,22 @@ export class FeesService {
     let members_euros = members.reduce((acc, gamer) => acc + (gamer.in_euro ? gamer.price : 0), 0);
     console.log('non_members_euros', non_members_euros);
     console.log('members_euros', members_euros);
-    let sale: Sale = {
-      season: this.game.season,
-      vendor: 'cashier',
-      date: new Date().toISOString(),
-      payer_id: 'cashier',
-      records: [
-        {
-          class: 'Product_credit',
-          season: this.game.season,
-          amount: members_euros + non_members_euros,
-          sale_id: '???',
-          member_id: '????',
-          product_id: 'fee',
-        }
-      ]
-    };
+    // let sale: Sale = {
+    //   season: this.game.season,
+    //   vendor: 'cashier',
+    //   date: new Date().toISOString(),
+    //   payer_id: 'cashier',
+    //   records: [
+    //     {
+    //       class: 'Product_credit',
+    //       season: this.game.season,
+    //       amount: members_euros + non_members_euros,
+    //       sale_id: '???',
+    //       member_id: '????',
+    //       product_id: 'fee',
+    //     }
+    //   ]
+    // };
   }
 
 

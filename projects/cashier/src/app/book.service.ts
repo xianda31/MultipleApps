@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { generateClient } from 'aws-amplify/api';
 
-import { Financial, REVENUE, Revenue, FINANCIALS } from '../../../common/new_sales.interface';
+import { Financial, Revenue, FINANCIALS, Expense, OPERATION_CLASS } from '../../../common/new_sales.interface';
 import { Schema } from '../../../../amplify/data/resource';
 import { BehaviorSubject, from, map, Observable, switchMap, tap } from 'rxjs';
 
@@ -124,7 +124,7 @@ export class BookService {
   get_revenues_from_members(): Revenue[] {
     return this._financials.reduce((acc, financial) => {
       const revenues = financial.operations
-        .filter(op => op.operation_type === REVENUE.MEMBER || op.operation_type === REVENUE.ANY)
+        .filter(op => op.class === OPERATION_CLASS.REVENUE_FROM_MEMBER)
         .map(op => ({
           ...op,
           season: financial.season,
@@ -171,4 +171,20 @@ export class BookService {
     // console.log('%s assets is : ', member_full_name, assets.get(member_full_name) || 0);
     return assets.get(member_full_name) || 0;
   }
+
+
+  get_expenses(): Expense[] {
+    return this._financials.reduce((acc, financial) => {
+      const expenses = financial.operations
+        .filter(op => op.class === OPERATION_CLASS.EXPENSE)
+        .map(op => ({
+          ...op,
+          season: financial.season,
+          date: financial.date
+        } as Expense));
+      return [...acc, ...expenses];
+    }, [] as Expense[]);
+  }
+
+
 }
