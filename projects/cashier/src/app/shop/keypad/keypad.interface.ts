@@ -1,4 +1,4 @@
-import { PaymentMode } from "../../../../../common/new_sales.interface";
+import { PaymentMode } from "../cart/cart.interface";
 
 export interface Payment_key {
     title: string;

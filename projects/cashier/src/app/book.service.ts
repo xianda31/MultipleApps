@@ -21,10 +21,10 @@ export class BookService {
 
   jsonified_entry(entry: Financial): Financial_input {
     const replacer = (key: string, value: any) => {
-      if (key === 'amounts') {
+      if (key === 'amounts' || key === 'values') {
         return JSON.stringify(value);
       }
-      return value
+      return value;
     }
 
     let stringified = JSON.stringify(entry, replacer);
@@ -33,7 +33,7 @@ export class BookService {
 
   parsed_entry(entry: Financial_output): Financial {
     const replacer = (key: string, value: any) => {
-      if (key === 'amounts') {
+      if (key === 'amounts' || key === 'values') {
         return JSON.parse(value);
       }
       return value
@@ -121,17 +121,32 @@ export class BookService {
 
   // utility functions
 
+  get_revenues(): Revenue[] {
+    return this._financials
+      .filter(financial => financial.class === OPERATION_CLASS.REVENUE_FROM_MEMBER || financial.class === OPERATION_CLASS.OTHER_REVENUE)
+      .reduce((acc, financial) => {
+        const revenues = financial.operations
+          .map(op => ({
+            ...op,
+            season: financial.season,
+            date: financial.date
+          } as Revenue));
+        return [...acc, ...revenues];
+      }, [] as Revenue[]);
+  }
+
   get_revenues_from_members(): Revenue[] {
-    return this._financials.reduce((acc, financial) => {
-      const revenues = financial.operations
-        .filter(op => op.class === OPERATION_CLASS.REVENUE_FROM_MEMBER)
-        .map(op => ({
-          ...op,
-          season: financial.season,
-          date: financial.date
-        } as Revenue));
-      return [...acc, ...revenues];
-    }, [] as Revenue[]);
+    return this._financials
+      .filter(financial => financial.class === OPERATION_CLASS.REVENUE_FROM_MEMBER)
+      .reduce((acc, financial) => {
+        const revenues = financial.operations
+          .map(op => ({
+            ...op,
+            season: financial.season,
+            date: financial.date
+          } as Revenue));
+        return [...acc, ...revenues];
+      }, [] as Revenue[]);
   }
 
 
@@ -140,11 +155,13 @@ export class BookService {
     this._financials.forEach((financial) => {
 
       if (financial.amounts[FINANCIALS.DEBT_debit]) {
-        let name = financial.operations[0].label;
+        let name = financial.operations[0].member;   // member is the name of the debt owner & payee
+        if (!name) throw new Error('no member name found');
         debt.set(name, (debt.get(name) || 0) + financial.amounts[FINANCIALS.DEBT_debit]);
       }
       if (financial.amounts[FINANCIALS.DEBT_credit]) {
-        let name = financial.operations[0].label;
+        let name = financial.operations[0].member;   // member is the name of the debt owner & payee
+        if (!name) throw new Error('no member name found');
         debt.set(name, (debt.get(name) || 0) - financial.amounts[FINANCIALS.DEBT_credit]);
       }
 
@@ -159,12 +176,14 @@ export class BookService {
     this._financials.forEach((financial) => {
 
       if (financial.amounts[FINANCIALS.ASSET_debit]) {
-        let name = financial.operations[0].label;
-        assets.set(name, (assets.get(name) || 0) + financial.amounts[FINANCIALS.ASSET_debit]);
+        let name = financial.operations[0].member;   // member is the name of the asset owner & payer
+        if (!name) throw new Error('no member name found');
+        assets.set(name, (assets.get(name) || 0) - financial.amounts[FINANCIALS.ASSET_debit]);
       }
       if (financial.amounts[FINANCIALS.ASSET_credit]) {
-        let name = financial.operations[0].label;
-        assets.set(name, (assets.get(name) || 0) - financial.amounts[FINANCIALS.ASSET_credit]);
+        let name = financial.operations[0].member;
+        if (!name) throw new Error('no member name found');
+        assets.set(name, (assets.get(name) || 0) + financial.amounts[FINANCIALS.ASSET_credit]);
       }
 
     });
@@ -174,16 +193,17 @@ export class BookService {
 
 
   get_expenses(): Expense[] {
-    return this._financials.reduce((acc, financial) => {
-      const expenses = financial.operations
-        .filter(op => op.class === OPERATION_CLASS.EXPENSE)
-        .map(op => ({
-          ...op,
-          season: financial.season,
-          date: financial.date
-        } as Expense));
-      return [...acc, ...expenses];
-    }, [] as Expense[]);
+    return this._financials
+      .filter(financial => financial.class === OPERATION_CLASS.EXPENSE)
+      .reduce((acc, financial) => {
+        const expenses = financial.operations
+          .map(op => ({
+            ...op,
+            season: financial.season,
+            date: financial.date
+          } as Expense));
+        return [...acc, ...expenses];
+      }, [] as Expense[]);
   }
 
 

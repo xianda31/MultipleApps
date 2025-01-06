@@ -1,7 +1,7 @@
 import { Component, signal } from '@angular/core';
 import * as ExcelJS from 'exceljs';
 import { EXPENSES_COL, FINANCIAL_COL, MAP, PRODUCTS_COL } from '../../../../../common/excel/excel.interface';
-import { BANK_OP_TYPE, EXPENSES_ACCOUNTS, Financial, FINANCIALS, op_Value, Operation, OPERATION_CLASS, PRODUCTS_ACCOUNTS } from '../../../../../common/new_sales.interface';
+import { BOOKING_ID, Financial, FINANCIALS, op_Value, Operation, OPERATION_CLASS } from '../../../../../common/new_sales.interface';
 import { Member } from '../../../../../common/member.interface';
 import { MembersService } from '../../../../../admin-dashboard/src/app/members/service/members.service';
 import { BookService } from '../../book.service';
@@ -177,12 +177,16 @@ export class ImportExcelComponent {
       let cell_bordereau = master_row.getCell(MAP['bordereau']).value;
       let cell_nature = master_row.getCell(MAP['nature']).value;
 
+
       let financial: Financial = {
         season: this.season,
         date: new Date(date).toISOString().split('T')[0],
         amounts: {},
         operations: [],
         bank_op_type: this.convert_to_bank_op_type(cell_nature?.toString() as string),
+        class: cell_chrono.startsWith('C') ? OPERATION_CLASS.REVENUE_FROM_MEMBER
+          : (cell_chrono.startsWith('K') ? OPERATION_CLASS.OTHER_REVENUE : OPERATION_CLASS.EXPENSE)
+
       };
 
       if (cell_chèque?.toString()) { financial.cheque_ref = cell_chèque?.toString() as string; }
@@ -203,6 +207,7 @@ export class ImportExcelComponent {
         let row_number = +this.worksheet.getCell(cell).row;
         let row = this.worksheet.getRow(row_number);
         let operation = this.compute_operation_amounts(row);
+
         financial.operations.push(operation);
       });
 
@@ -215,47 +220,47 @@ export class ImportExcelComponent {
     return promise;
   }
 
-  convert_to_bank_op_type(nature: string): BANK_OP_TYPE {
+  convert_to_bank_op_type(nature: string): BOOKING_ID {
     switch (this.worksheet.name) {
       case 'chrono banque':
 
         switch (nature) {
           case 'dépôt':
-            return BANK_OP_TYPE.cash_deposit;
+            return BOOKING_ID.cash_deposit;
           case 'chèque':
-            return BANK_OP_TYPE.cheque_emit;
+            return BOOKING_ID.cheque_emit;
           case 'virement reçu':
-            return BANK_OP_TYPE.transfer_receipt;
+            return BOOKING_ID.transfer_receipt;
           case 'virement emis':
-            return BANK_OP_TYPE.transfer_emit;
+            return BOOKING_ID.transfer_emit;
           case 'prélèvement':
-            return BANK_OP_TYPE.bank_debiting;
+            return BOOKING_ID.bank_debiting;
           case 'carte':
-            return BANK_OP_TYPE.card_payment;
+            return BOOKING_ID.card_payment;
           case 'versement compte épargne':
-            return BANK_OP_TYPE.saving_deposit;
+            return BOOKING_ID.saving_deposit;
           default:
             console.log('erreur de nature', nature);
-            return BANK_OP_TYPE.none;
+            return BOOKING_ID.none;
         }
 
       case 'chrono vente':
 
         switch (nature) {
           case 'virement':
-            return BANK_OP_TYPE.transfer_receipt;
+            return BOOKING_ID.transfer_receipt;
           case 'chèque':
-            return BANK_OP_TYPE.cheque_deposit;
+            return BOOKING_ID.cheque_deposit;
           default:
-            return BANK_OP_TYPE.none;
+            return BOOKING_ID.none;
         }
 
       case 'droits de table':
-        return BANK_OP_TYPE.none;
+        return BOOKING_ID.none;
 
       default:
         console.log('erreur de feuille', this.worksheet.name);
-        return BANK_OP_TYPE.none;
+        return BOOKING_ID.none;
     }
   }
   control_amounts_balance(financial: Financial): boolean {
@@ -269,14 +274,15 @@ export class ImportExcelComponent {
 
     let products_sum = 0;
     let expenses_sum = 0;
+    let sum = 0;
     financial.operations.forEach((operation) => {
-      let sum = Object.values(operation.values).reduce((acc, value) => acc + value, 0);
-      if (operation.class === OPERATION_CLASS.REVENUE_FROM_MEMBER || operation.class === OPERATION_CLASS.OTHER_REVENUE) {
-        products_sum += sum;
-      } else if (operation.class === OPERATION_CLASS.EXPENSE) {
-        expenses_sum += sum;
-      }
+      sum += Object.values(operation.values).reduce((acc, value) => acc + value, 0);
     });
+    if (financial.class === OPERATION_CLASS.REVENUE_FROM_MEMBER || financial.class === OPERATION_CLASS.OTHER_REVENUE) {
+      products_sum += sum;
+    } else if (financial.class === OPERATION_CLASS.EXPENSE) {
+      expenses_sum += sum;
+    }
 
     if (total !== (products_sum - expenses_sum)) {
       console.log('amounts not equal', total_debit, total_credit, products_sum, expenses_sum);
@@ -296,7 +302,7 @@ export class ImportExcelComponent {
     if (Object.keys(revenues).length > 0) {
       operation = {
         label: row.getCell(MAP.intitulé).value?.toString() as string,
-        class: cell_chrono.startsWith('C') ? OPERATION_CLASS.REVENUE_FROM_MEMBER : OPERATION_CLASS.OTHER_REVENUE,
+        // class: cell_chrono.startsWith('C') ? OPERATION_CLASS.REVENUE_FROM_MEMBER : OPERATION_CLASS.OTHER_REVENUE,
         values: revenues,
       };
     } else {
@@ -304,13 +310,13 @@ export class ImportExcelComponent {
       if (Object.keys(expenses).length > 0) {
         operation = {
           label: row.getCell(MAP.intitulé).value?.toString() as string,
-          class: OPERATION_CLASS.EXPENSE,
+          // class: OPERATION_CLASS.EXPENSE,
           values: expenses,
         };
       } else {
         operation = {
           label: row.getCell(MAP.intitulé).value?.toString() as string,
-          class: OPERATION_CLASS.MOVEMENT,
+          // class: OPERATION_CLASS.MOVEMENT,
           values: {},
         };
       }
@@ -327,7 +333,7 @@ export class ImportExcelComponent {
       let cellValue = row.getCell(col).value;
       if (cellValue !== null && cellValue !== undefined) {
         let price = cellValue.valueOf() as number;
-        values[account as PRODUCTS_ACCOUNTS] = price;
+        values[account] = price;
       }
     });
     return values;
@@ -340,7 +346,7 @@ export class ImportExcelComponent {
       let cellValue = row.getCell(col).value;
       if (cellValue !== null && cellValue !== undefined) {
         let price = cellValue.valueOf() as number;
-        values[account as EXPENSES_ACCOUNTS] = price;
+        values[account] = price;
       }
     });
 

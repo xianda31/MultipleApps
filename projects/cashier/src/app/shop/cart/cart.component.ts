@@ -3,7 +3,7 @@ import { CartService } from './cart.service';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { Product } from '../../../../../admin-dashboard/src/app/sales/products/product.interface';
 import { combineLatest, map, Observable } from 'rxjs';
-import { CartItem, Payment } from './cart.interface';
+import { CartItem, Payment, PaymentMode } from './cart.interface';
 import { ProductService } from '../../../../../common/services/product.service';
 import { MembersService } from '../../../../../admin-dashboard/src/app/members/service/members.service';
 import { InputMemberComponent } from '../../input-member/input-member.component';
@@ -11,7 +11,6 @@ import { Member } from '../../../../../common/member.interface';
 import { FormsModule } from '@angular/forms';
 import { Bank } from '../../../../../common/system-conf.interface';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
-import { PaymentMode } from '../../../../../common/new_sales.interface';
 
 @Component({
   selector: 'app-cart',

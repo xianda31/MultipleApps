@@ -1,6 +1,13 @@
 import { Member } from "../../../../../common/member.interface";
-import { PaymentMode, PRODUCTS_ACCOUNTS } from "../../../../../common/new_sales.interface";
 
+export enum PaymentMode {
+    CASH = 'espèces',
+    CHEQUE = 'chèque',
+    TRANSFER = 'virement',
+    CREDIT = 'crédit',
+    ASSETS = 'avoir',
+    // CARD = 'carte',
+}
 
 export interface Payment {
     amount: number;
@@ -16,7 +23,7 @@ export interface CartItem {
     paied: number;
     payee_id: string;
     product_id: string;
-    product_account: PRODUCTS_ACCOUNTS;
+    product_account: string;
     payee_name: string;
 }
 

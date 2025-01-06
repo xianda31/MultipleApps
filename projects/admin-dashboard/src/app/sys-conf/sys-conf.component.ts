@@ -4,6 +4,7 @@ import { CommonModule, JsonPipe } from '@angular/common';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 import { SystemConfiguration } from '../../../../common/system-conf.interface';
 import { map } from 'rxjs';
+import { ToastService } from '../../../../common/toaster/toast.service';
 
 
 
@@ -24,6 +25,7 @@ export class SysConfComponent {
 
   constructor(
     private systemDataService: SystemDataService,
+    private toatService: ToastService,
     private fb: FormBuilder
   ) {
 
@@ -112,7 +114,16 @@ export class SysConfComponent {
     if (file) {
       const text = await file.text();
       console.log('text', text);
-      this.loadDataInFormGroup(JSON.parse(text));
+      try {
+        let json = JSON.parse(text);
+        this.loadDataInFormGroup(json);
+        this.toatService.showSuccessToast('fichier de configuration chargé', 'les données sont prêtes à être enregistrées');
+      } catch (error) {
+        console.error('error', error);
+        this.toatService.showErrorToast('erreur chargement fichier de configuration', 'vérifiez la syntaxe');
+      }
+      // let json = JSON.parse(text);
+      // this.loadDataInFormGroup(JSON.parse(text));
     }
 
   }

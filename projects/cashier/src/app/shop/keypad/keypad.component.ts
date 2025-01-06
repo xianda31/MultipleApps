@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ProductService } from '../../../../../common/services/product.service';
 import { Product } from '../../../../../admin-dashboard/src/app/sales/products/product.interface';
 import { Payment_key, PAYMENT_KEYS } from './keypad.interface';
-import { PaymentMode } from '../../../../../common/new_sales.interface';
+import { PaymentMode } from '../cart/cart.interface';
 
 @Component({
   selector: 'app-keypad',

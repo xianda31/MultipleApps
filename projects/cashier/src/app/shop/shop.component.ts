@@ -8,8 +8,8 @@ import { Product } from '../../../../admin-dashboard/src/app/sales/products/prod
 import { CommonModule } from '@angular/common';
 import { InputMemberComponent } from '../input-member/input-member.component';
 import { SessionService } from './session.service';
-import { CartItem, Payment } from './cart/cart.interface';
-import { Financial, PaymentMode, PRODUCTS_ACCOUNTS, Revenue, Session } from '../../../../common/new_sales.interface';
+import { CartItem, Payment, PaymentMode } from './cart/cart.interface';
+import { Financial, Revenue, Session } from '../../../../common/new_sales.interface';
 import { BookService } from '../book.service';
 import { KeypadComponent } from "./keypad/keypad.component";
 import { CartComponent } from "./cart/cart.component";
@@ -108,7 +108,7 @@ export class ShopComponent {
         product_id: product.id,
         paied: product.price,
         payee_id: payee === null ? '' : payee.id,
-        product_account: product.account as PRODUCTS_ACCOUNTS,
+        product_account: product.account,
         payee_name: payee === null ? '' : payee.lastname + ' ' + payee.firstname
       };
       return { payee: payee, ...cartItem }
@@ -137,7 +137,8 @@ export class ShopComponent {
       this.toastService.showWarningToast('saisie achat', 'le panier est vide ou partiellement renseigné');
       return
     }
-    const amount = (payment_mode === PaymentMode.ASSETS) ? 25 : this.cartService.getRemainToPay();
+    const amount = (payment_mode === PaymentMode.ASSETS) ? this.asset_amount : this.cartService.getRemainToPay();
+    this.asset_amount = (payment_mode === PaymentMode.ASSETS) ? 0 : this.asset_amount;
 
     const payment: Payment = {
       payer_id: this.buyer!.id,

@@ -1,6 +1,6 @@
 // compta.xls file definition
 
-import { EXPENSES_ACCOUNTS, FINANCIALS, PRODUCTS_ACCOUNTS } from "../new_sales.interface";
+import { FINANCIALS } from "../new_sales.interface";
 
 
 
@@ -68,7 +68,7 @@ export const MAP = {
     'nature': 'AQ',
 }
 
-export type ACCOUNTS_COL = { [key in PRODUCTS_ACCOUNTS | EXPENSES_ACCOUNTS]?: string }
+export type ACCOUNTS_COL = { [key: string]: string }
 
 export const PRODUCTS_COL: ACCOUNTS_COL = {
     'ADH': 'L',
@@ -98,6 +98,7 @@ export const EXPENSES_COL: ACCOUNTS_COL = {
     'KFE': 'Z',
     'DIV': 'AA',
     'BNQ': 'AB',
+    'KDO': 'AC',
 }
 
 export const FINANCIAL_COL: { [key in FINANCIALS]?: string } = {

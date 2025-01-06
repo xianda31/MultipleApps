@@ -1,9 +1,9 @@
-import { Injectable, Signal, signal } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { CartItem, Payment } from './cart.interface';
+import { CartItem, Payment, PaymentMode } from './cart.interface';
 import { Member } from '../../../../../common/member.interface';
 import { BookService } from '../../book.service';
-import { BANK_OP_TYPE, f_Value, Financial, FINANCIALS, op_Value, Operation, OPERATION_CLASS, PaymentMode, Revenue, Session } from '../../../../../common/new_sales.interface';
+import { BOOKING_ID, f_Value, Financial, op_Value, Operation, OPERATION_CLASS, Session } from '../../../../../common/new_sales.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -123,6 +123,7 @@ export class CartService {
       const sale: Financial = {
         ...session,
         bank_op_type: this.payments2bank_op_type(this._payments),
+        class: OPERATION_CLASS.REVENUE_FROM_MEMBER,
         amounts: this.payments2fValue(this._payments),
         operations: this.cart2Operations(),
         cheque_ref: this.payments2cheque_ref(this._payments),
@@ -170,25 +171,25 @@ export class CartService {
         }
       });
       let operation = {
-        label: payee,
-        class: OPERATION_CLASS.REVENUE_FROM_MEMBER,
+        label: 'vente adhérent',
+        member: payee,
         values: op_values,
       };
-      console.log('operation', operation);
+      // console.log('operation', operation);
       operations.push(operation);
     }
     return operations;
   }
 
-  payments2bank_op_type(payments: Payment[]): BANK_OP_TYPE {
+  payments2bank_op_type(payments: Payment[]): BOOKING_ID {
     if (payments.some((payment) => payment.mode === PaymentMode.CHEQUE)) {
-      return BANK_OP_TYPE.cheque_deposit;
+      return BOOKING_ID.cheque_deposit;
     } else {
       if (payments.some((payment) => payment.mode === PaymentMode.TRANSFER)) {
-        return BANK_OP_TYPE.transfer_receipt;
+        return BOOKING_ID.transfer_receipt;
       }
     }
-    return BANK_OP_TYPE.none;
+    return BOOKING_ID.none;
   }
 
   payments2cheque_ref(payments: Payment[]): string {
@@ -203,7 +204,7 @@ export class CartService {
 
   payments2fValue(payments: Payment[]): f_Value {
     let f_amounts: f_Value = {};
-    console.log('payments', payments);
+    // console.log('payments', payments);
     payments.forEach((payment) => {
       switch (payment.mode) {
         case PaymentMode.CASH:
@@ -216,7 +217,7 @@ export class CartService {
           f_amounts['bank_in'] = payment.amount;
           break;
         case PaymentMode.ASSETS:
-          f_amounts['creance_in'] = payment.amount;
+          f_amounts['avoir_in'] = payment.amount;
           break;
         case PaymentMode.CREDIT:
           f_amounts['creance_in'] = payment.amount;
