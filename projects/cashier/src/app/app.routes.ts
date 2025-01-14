@@ -12,6 +12,7 @@ export const routes: Routes = [
     { path: 'books/overview', component: BooksOverviewComponent },
     { path: 'books/bank-status', component: BankStatusComponent },
     { path: 'books/booking', component: BookingComponent },
+    { path: 'books/booking/:id', component: BookingComponent },
     { path: 'fees', component: FeesComponent },
     { path: 'excel/import', component: ImportExcelComponent },
     { path: '', component: HomeComponent },

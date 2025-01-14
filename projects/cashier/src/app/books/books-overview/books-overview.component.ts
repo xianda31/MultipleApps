@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Expense, Financial, FINANCIALS, OPERATION_CLASS, Revenue } from '../../../../../common/new_sales.interface';
+import { Expense, Financial, FINANCIALS, RECORD_CLASS, Revenue } from '../../../../../common/new_sales.interface';
 import { BookService } from '../../book.service';
 import { CommonModule } from '@angular/common';
 import { Member } from '../../../../../common/member.interface';
@@ -8,6 +8,9 @@ import { Product } from '../../../../../admin-dashboard/src/app/sales/products/p
 import { ProductService } from '../../../../../common/services/product.service';
 import { FormsModule } from '@angular/forms';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { BookingEditComponent } from '../../booking-edit/booking-edit.component';
+import { Router } from '@angular/router';
 
 
 @Component({
@@ -40,7 +43,6 @@ export class BooksOverviewComponent {
   current_debt_amount: number = 0;
 
 
-
   financial_ops = Object.values(FINANCIALS);
   bank_ops = this.financial_ops.filter(op => !op.includes('cash') && !op.includes('avoir') && !op.includes('creance'));
   cash_ops = this.financial_ops.filter(op => op.includes('cash'));
@@ -51,13 +53,14 @@ export class BooksOverviewComponent {
     private bookService: BookService,
     private membersService: MembersService,
     private systemDataService: SystemDataService,
+    private router: Router,
 
     private productsService: ProductService,
   ) {
 
   }
 
-  async ngOnInit() {
+  ngOnInit() {
 
     this.systemDataService.configuration$.subscribe((conf) => {
       this.expenses_accounts = conf.charge_accounts.map((account) => account.key);
@@ -99,33 +102,21 @@ export class BooksOverviewComponent {
     this.bank_financials = this.financials.filter(financial => this.bank_ops.some(op => financial.amounts[op] !== undefined));
     this.cash_financials = this.financials.filter(financial => this.cash_ops.some(op => financial.amounts[op] !== undefined));
     this.asset_financials = this.financials.filter(financial => this.asset_ops.some(op => financial.amounts[op] !== undefined));
+    console.log('this.asset_financials', this.asset_financials);
     this.debt_financials = this.financials.filter(financial => this.debt_ops.some(op => financial.amounts[op] !== undefined));
     this.revenues = this.bookService.get_revenues();
-
-    this.expenses = this.financials
-      .filter(financial => financial.class === OPERATION_CLASS.EXPENSE)
-      .reduce((acc, financial) => {
-        const expenses = financial.operations
-          .map(op => ({
-            ...op,
-            season: financial.season,
-            date: financial.date
-          } as Expense));
-        return [...acc, ...expenses];
-      }, [] as Expense[]);
+    this.expenses = this.bookService.get_expenses();
 
   }
 
-
-  // data_store() { }
 
   delete_financial(financial: Financial) {
     this.bookService.delete_financial(financial.id!).then((financial) => {
     });
   }
 
+  show_financial(financial_id: string) {
+    this.router.navigate(['/books/booking', financial_id]);
+  }
 
 }
-
-
-

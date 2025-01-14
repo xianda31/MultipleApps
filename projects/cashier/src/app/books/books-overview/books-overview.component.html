@@ -24,6 +24,9 @@
                     <td *ngFor="let account of products_accounts " class="text-center">
                         {{revenue.values[account]}}
                     </td>
+                    <td>
+                        <i class="bi bi-search" (click)="show_financial(revenue.id)"></i>
+                    </td>
                 </tr>
             </tbody>
         </table>
@@ -80,12 +83,13 @@
                 <tr>
                     <th class="col"># </th>
                     <th class="col">date </th>
-                    <th class="col">label </th>
+                    <th class="col">opération </th>
                     <!-- <th class="col">libellé</th> -->
                     <th class="col text-center" *ngFor="let op of bank_ops ">{{op}} </th>
-                    <th class="col">relevé </th>
                     <th class="col">n° chèque </th>
+                    <th class="col">relevé </th>
                     <th class="col">bordereau </th>
+                    <th class="col"> </th>
                 </tr>
             </thead>
 
@@ -100,9 +104,12 @@
                     <td *ngFor=" let op of bank_ops " class="text-center">
                         {{financial.amounts[op] }}
                     </td>
-                    <td>{{financial.bank_report}}</td>
                     <td>{{financial.cheque_ref}}</td>
+                    <td>{{financial.bank_report}}</td>
                     <td>{{financial.deposit_ref}}</td>
+                    <td>
+                        <i class="bi bi-search" (click)="show_financial(financial.id)"></i>
+                    </td>
                 </tr>
             </tbody>
         </table>
@@ -139,6 +146,7 @@
                 <thead>
                     <tr>
                         <th class="col"># </th>
+                        <th class="col">adhérent </th>
                         <th class="col text-center" *ngFor="let op of ops ">{{op}} </th>
                     </tr>
                 </thead>
@@ -149,6 +157,7 @@
                         <td>
                             <i class="bi bi-trash3" (click)="delete_financial(financial)"></i>
                         </td>
+                        <td>{{financial.operations[0]?.member}}</td>
                         <td *ngFor=" let op of ops " class="text-center">
                             {{ financial.amounts[op] }}
                         </td>

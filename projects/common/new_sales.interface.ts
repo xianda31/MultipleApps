@@ -1,4 +1,4 @@
-export enum BOOKING_ID {
+export enum BANK_OPERATION_TYPE {
     none = 'néant',
 
     asset_emit = 'émission d\'avoir',
@@ -40,18 +40,18 @@ export enum FINANCIALS {
     // NaN = 'NaN'                      // pour les opérations non financières
 }
 
-export enum OPERATION_CLASS {
+export enum RECORD_CLASS {
     REVENUE_FROM_MEMBER = 'vente adhérent',
     OTHER_REVENUE = 'recettes hors vente adhérent',
     EXPENSE = 'toutes dépenses',
     MOVEMENT = 'mouvement bancaire',
 }
 
-export type op_Value = { [key: string]: number };
+export type operation_values = { [key: string]: number };
 export interface Operation {
-    label: string;          // libellé de l'opération 
+    label?: string;          // libellé de l'opération 
     member?: string;        // nom de l'adhérent
-    values: op_Value;
+    values: operation_values;
 }
 
 export interface Session {
@@ -59,23 +59,27 @@ export interface Session {
     // vendor: string;
     date: string;
 }
-export interface Revenue extends Operation, Session { }// comptes de produits
-export interface Expense extends Operation, Session { }; // comptes de charges
+export interface Revenue extends Operation, Session {
+    id: string;
+}// comptes de produits
+export interface Expense extends Operation, Session {
+    id: string;
+}; // comptes de charges
 
 
-export type f_Value = { [key in FINANCIALS]?: number; };
+export type bank_values = { [key in FINANCIALS]?: number; };
 export interface BankStatement {
     season: string;
     date: string;
-    amounts: f_Value
-    bank_op_type: BOOKING_ID;   // type d'opération bancaire
+    bank_op_type: BANK_OPERATION_TYPE;   // type d'opération bancaire
+    amounts: bank_values
     cheque_ref?: string;        // code banque + numéro de chèque
     bank_report?: string;       // (mois) relevé bancaire
     deposit_ref?: string;       //  référence bordereau de dépôt
 }
 export interface Financial extends BankStatement { // comptes financiers
-    id?: string;
-    class: OPERATION_CLASS;
+    id: string;
+    class: RECORD_CLASS;
     operations: Operation[];
 }
 

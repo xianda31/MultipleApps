@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { generateClient } from 'aws-amplify/api';
 
-import { Financial, Revenue, FINANCIALS, Expense, OPERATION_CLASS } from '../../../common/new_sales.interface';
+import { Financial, Revenue, FINANCIALS, Expense, RECORD_CLASS } from '../../../common/new_sales.interface';
 import { Schema } from '../../../../amplify/data/resource';
-import { BehaviorSubject, from, map, Observable, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, from, map, Observable, of, switchMap, tap } from 'rxjs';
 
 type Financial_input = Schema['Financial']['type'];
 type Financial_output = Financial & {
@@ -15,7 +15,7 @@ type Financial_output = Financial & {
 })
 export class BookService {
 
-  private _financials: Financial[] = [];
+  private _financials!: Financial[];
   private _financials$ = new BehaviorSubject<Financial[]>(this._financials);
   constructor() { }
 
@@ -48,10 +48,11 @@ export class BookService {
 
   async create_financial(financial: Financial) {
     const client = generateClient<Schema>();
-    const jsonified_entry: Financial_input = this.jsonified_entry(financial);
+    let jsonified_entry: Financial_input = this.jsonified_entry(financial);
+    const { id, ...jsonified_entry_without_id } = jsonified_entry;
     // console.log('jsonified_entry', jsonified_entry);
     try {
-      const response = await client.models.Financial.create(this.jsonified_entry(financial));
+      const response = await client.models.Financial.create(jsonified_entry_without_id);
       if (response.errors) {
         console.error('error creating', this.jsonified_entry(financial), response.errors);
         throw new Error(JSON.stringify(response.errors));
@@ -72,13 +73,32 @@ export class BookService {
     try {
       const response = await client.models.Financial.get(
         { id: entry_id },
-        { selectionSet: ['id', 'season', 'date', 'amounts', 'operations.*', 'cheque_ref', 'deposit_ref', 'bank_report'] }
+        { selectionSet: ['id', 'season', 'date', 'amounts', 'operations.*', 'class', 'bank_op_type', 'cheque_ref', 'deposit_ref', 'bank_report'] }
       );
       if (response.errors) {
         console.error('error', response.errors);
         throw new Error(JSON.stringify(response.errors));
       }
       return this.parsed_entry(response.data as unknown as Financial_output);
+    } catch (error) {
+      console.error('error', error);
+      throw new Error(error instanceof Error ? error.message : String(error));
+    }
+  }
+  async update_financial(financial: Financial) {
+    const client = generateClient<Schema>();
+    const jsonified_entry: Financial_input = this.jsonified_entry(financial);
+
+    try {
+      const response = await client.models.Financial.update(this.jsonified_entry(financial));
+      if (response.errors) {
+        console.error('error', response.errors);
+        throw new Error(JSON.stringify(response.errors));
+      }
+      const updated_entry = this.parsed_entry(response.data as unknown as Financial_output);
+      this._financials = this._financials.map((entry) => entry.id === updated_entry.id ? updated_entry : entry);
+      this._financials$.next(this._financials.sort((a, b) => a.date.localeCompare(b.date)));
+      return updated_entry;
     } catch (error) {
       console.error('error', error);
       throw new Error(error instanceof Error ? error.message : String(error));
@@ -107,29 +127,48 @@ export class BookService {
   }
 
   list_financials$(season?: string): Observable<Financial[]> {
-    const client = generateClient<Schema>();
 
-    return from(client.models.Financial.list()).pipe(
-      map((response: { data: unknown }) => response.data as Financial_output[]),
+    const fetchFinancials = async () => {
+      const client = generateClient<Schema>();
+      const { data, errors } = await client.models.Financial.list({
+        filter: season ? { season: { eq: season } } : undefined
+      });
+      if (errors) {
+        console.error(errors);
+        throw new Error(JSON.stringify(errors));
+      }
+      this._financials = (data as unknown as Financial_output[])
+        .map((entry) => this.parsed_entry(entry as Financial_output))
+        .sort((a, b) => a.date.localeCompare(b.date));
+      return this._financials;
+    };
+    console.log('fetching financials from ', this._financials ? 'cache' : 'server');
+    let remote_load$ = from(fetchFinancials()).pipe(
       tap((financials) => {
-        this._financials = financials.map((entry) => this.parsed_entry(entry));
-        this._financials$.next(this._financials.sort((a, b) => a.date.localeCompare(b.date)));
+        this._financials = financials;
+        // console.log('financials %s element(s) loaded from AWS', financials.length);
+        this._financials$.next(financials);
       }),
       switchMap(() => this._financials$.asObservable())
     );
+
+    return this._financials ? this._financials$.asObservable() : remote_load$;
   }
 
   // utility functions
 
+
+
   get_revenues(): Revenue[] {
     return this._financials
-      .filter(financial => financial.class === OPERATION_CLASS.REVENUE_FROM_MEMBER || financial.class === OPERATION_CLASS.OTHER_REVENUE)
+      .filter(financial => financial.class === RECORD_CLASS.REVENUE_FROM_MEMBER || financial.class === RECORD_CLASS.OTHER_REVENUE)
       .reduce((acc, financial) => {
         const revenues = financial.operations
           .map(op => ({
             ...op,
             season: financial.season,
-            date: financial.date
+            date: financial.date,
+            id: financial.id,
           } as Revenue));
         return [...acc, ...revenues];
       }, [] as Revenue[]);
@@ -137,13 +176,14 @@ export class BookService {
 
   get_revenues_from_members(): Revenue[] {
     return this._financials
-      .filter(financial => financial.class === OPERATION_CLASS.REVENUE_FROM_MEMBER)
+      .filter(financial => financial.class === RECORD_CLASS.REVENUE_FROM_MEMBER)
       .reduce((acc, financial) => {
         const revenues = financial.operations
           .map(op => ({
             ...op,
             season: financial.season,
-            date: financial.date
+            date: financial.date,
+            id: financial.id,
           } as Revenue));
         return [...acc, ...revenues];
       }, [] as Revenue[]);
@@ -194,13 +234,14 @@ export class BookService {
 
   get_expenses(): Expense[] {
     return this._financials
-      .filter(financial => financial.class === OPERATION_CLASS.EXPENSE)
+      .filter(financial => financial.class === RECORD_CLASS.EXPENSE)
       .reduce((acc, financial) => {
         const expenses = financial.operations
           .map(op => ({
             ...op,
             season: financial.season,
-            date: financial.date
+            date: financial.date,
+            id: financial.id,
           } as Expense));
         return [...acc, ...expenses];
       }, [] as Expense[]);

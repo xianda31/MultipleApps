@@ -3,7 +3,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { CartItem, Payment, PaymentMode } from './cart.interface';
 import { Member } from '../../../../../common/member.interface';
 import { BookService } from '../../book.service';
-import { BOOKING_ID, f_Value, Financial, op_Value, Operation, OPERATION_CLASS, Session } from '../../../../../common/new_sales.interface';
+import { BANK_OPERATION_TYPE, bank_values, Financial, operation_values, Operation, RECORD_CLASS, Session } from '../../../../../common/new_sales.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -122,8 +122,9 @@ export class CartService {
     let promise = new Promise<Financial>((resolve, reject) => {
       const sale: Financial = {
         ...session,
+        id: '',
         bank_op_type: this.payments2bank_op_type(this._payments),
-        class: OPERATION_CLASS.REVENUE_FROM_MEMBER,
+        class: RECORD_CLASS.REVENUE_FROM_MEMBER,
         amounts: this.payments2fValue(this._payments),
         operations: this.cart2Operations(),
         cheque_ref: this.payments2cheque_ref(this._payments),
@@ -161,7 +162,7 @@ export class CartService {
     });
 
     for (let [payee, cartitems] of payees) {
-      let op_values: op_Value = {};
+      let op_values: operation_values = {};
       cartitems.forEach((cartitem) => {
         let account = cartitem.product_account;
         if (op_values[account]) {
@@ -181,15 +182,15 @@ export class CartService {
     return operations;
   }
 
-  payments2bank_op_type(payments: Payment[]): BOOKING_ID {
+  payments2bank_op_type(payments: Payment[]): BANK_OPERATION_TYPE {
     if (payments.some((payment) => payment.mode === PaymentMode.CHEQUE)) {
-      return BOOKING_ID.cheque_deposit;
+      return BANK_OPERATION_TYPE.cheque_deposit;
     } else {
       if (payments.some((payment) => payment.mode === PaymentMode.TRANSFER)) {
-        return BOOKING_ID.transfer_receipt;
+        return BANK_OPERATION_TYPE.transfer_receipt;
       }
     }
-    return BOOKING_ID.none;
+    return BANK_OPERATION_TYPE.none;
   }
 
   payments2cheque_ref(payments: Payment[]): string {
@@ -202,8 +203,8 @@ export class CartService {
     }
   }
 
-  payments2fValue(payments: Payment[]): f_Value {
-    let f_amounts: f_Value = {};
+  payments2fValue(payments: Payment[]): bank_values {
+    let f_amounts: bank_values = {};
     // console.log('payments', payments);
     payments.forEach((payment) => {
       switch (payment.mode) {
