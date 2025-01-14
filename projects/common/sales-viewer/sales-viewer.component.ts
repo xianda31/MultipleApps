@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { SystemDataService } from '../services/system-data.service';
 import { CommonModule } from '@angular/common';
 import { SalesTabUtilities } from '../excel/sales-tab-utilities';
-import { PaymentMode } from '../new_sales.interface';
+import { PaymentMode } from '../accounting.interface';
 
 
 @Component({

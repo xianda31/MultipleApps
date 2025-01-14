@@ -25,7 +25,7 @@
                         {{revenue.values[account]}}
                     </td>
                     <td>
-                        <i class="bi bi-search" (click)="show_financial(revenue.id)"></i>
+                        <i class="bi bi-search" (click)="show_book_entry(revenue.id)"></i>
                     </td>
                 </tr>
             </tbody>
@@ -65,7 +65,7 @@
                     <td *ngFor="let account of expenses_accounts " class="text-center">
                         {{expense.values[account]}}
                     </td>
-                    <!-- <td> {{expense.financial_id}}</td> -->
+                    <!-- <td> {{expense.book_entry_id}}</td> -->
                 </tr>
             </tbody>
         </table>
@@ -95,20 +95,20 @@
 
             <tbody>
 
-                <tr *ngFor="let financial of bank_financials">
+                <tr *ngFor="let book_entry of bank_book_entrys">
                     <td>
-                        <i class="bi bi-trash3" (click)="delete_financial(financial)"></i>
+                        <i class="bi bi-trash3" (click)="delete_book_entry(book_entry)"></i>
                     </td>
-                    <td>{{financial.date | date: 'dd/MM/yyyy'}}</td>
-                    <td>{{ financial.bank_op_type}}</td>
+                    <td>{{book_entry.date | date: 'dd/MM/yyyy'}}</td>
+                    <td>{{ book_entry.bank_op_type}}</td>
                     <td *ngFor=" let op of bank_ops " class="text-center">
-                        {{financial.amounts[op] }}
+                        {{book_entry.amounts[op] }}
                     </td>
-                    <td>{{financial.cheque_ref}}</td>
-                    <td>{{financial.bank_report}}</td>
-                    <td>{{financial.deposit_ref}}</td>
+                    <td>{{book_entry.cheque_ref}}</td>
+                    <td>{{book_entry.bank_report}}</td>
+                    <td>{{book_entry.deposit_ref}}</td>
                     <td>
-                        <i class="bi bi-search" (click)="show_financial(financial.id)"></i>
+                        <i class="bi bi-search" (click)="show_book_entry(book_entry.id)"></i>
                     </td>
                 </tr>
             </tbody>
@@ -120,23 +120,23 @@
 <div class="row mt-2">
     <div class="col-md-4">
         <div
-            *ngTemplateOutlet="other_report ; context: {title:'liquidités', balance:current_cash_amount, ops:cash_ops, financials: cash_financials}">
+            *ngTemplateOutlet="other_report ; context: {title:'liquidités', balance:current_cash_amount, ops:cash_ops, book_entrys: cash_book_entrys}">
         </div>
     </div>
     <div class="col-md-4">
         <div
-            *ngTemplateOutlet="other_report ; context: {title:'avoir', balance:current_assets_amount, ops:asset_ops, financials: asset_financials}">
+            *ngTemplateOutlet="other_report ; context: {title:'avoir', balance:current_assets_amount, ops:asset_ops, book_entrys: asset_book_entrys}">
         </div>
     </div>
     <div class="col-md-4">
         <div
-            *ngTemplateOutlet="other_report ; context: {title:'dettes', balance:current_debt_amount, ops:debt_ops, financials: debt_financials}">
+            *ngTemplateOutlet="other_report ; context: {title:'dettes', balance:current_debt_amount, ops:debt_ops, book_entrys: debt_book_entrys}">
         </div>
     </div>
 
 </div>
 
-<ng-template #other_report let-title="title" let-balance="balance" let-ops="ops" let-financials="financials">
+<ng-template #other_report let-title="title" let-balance="balance" let-ops="ops" let-book_entrys="book_entrys">
     <div class="card">
         <div class="card-header">
             <h5>{{title}} {{balance}}</h5>
@@ -153,13 +153,13 @@
 
                 <tbody>
 
-                    <tr *ngFor="let financial of financials">
+                    <tr *ngFor="let book_entry of book_entrys">
                         <td>
-                            <i class="bi bi-trash3" (click)="delete_financial(financial)"></i>
+                            <i class="bi bi-trash3" (click)="delete_book_entry(book_entry)"></i>
                         </td>
-                        <td>{{financial.operations[0]?.member}}</td>
+                        <td>{{book_entry.operations[0]?.member}}</td>
                         <td *ngFor=" let op of ops " class="text-center">
-                            {{ financial.amounts[op] }}
+                            {{ book_entry.amounts[op] }}
                         </td>
                     </tr>
                 </tbody>

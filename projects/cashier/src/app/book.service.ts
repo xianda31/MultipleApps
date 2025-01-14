@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 import { generateClient } from 'aws-amplify/api';
 
-import { Financial, Revenue, FINANCIALS, Expense, RECORD_CLASS } from '../../../common/new_sales.interface';
+import { Bookentry, Revenue, FINANCIAL_ACCOUNTS, Expense, RECORD_CLASS } from '../../../common/accounting.interface';
 import { Schema } from '../../../../amplify/data/resource';
 import { BehaviorSubject, from, map, Observable, of, switchMap, tap } from 'rxjs';
 
-type Financial_input = Schema['Financial']['type'];
-type Financial_output = Financial & {
+type Bookentry_input = Schema['Bookentry']['type'];
+type Bookentry_output = Bookentry & {
   createdAt: Date,
   updatedAt: Date,
 }
@@ -15,11 +15,11 @@ type Financial_output = Financial & {
 })
 export class BookService {
 
-  private _financials!: Financial[];
-  private _financials$ = new BehaviorSubject<Financial[]>(this._financials);
+  private _book_entrys!: Bookentry[];
+  private _book_entrys$ = new BehaviorSubject<Bookentry[]>(this._book_entrys);
   constructor() { }
 
-  jsonified_entry(entry: Financial): Financial_input {
+  jsonified_entry(entry: Bookentry): Bookentry_input {
     const replacer = (key: string, value: any) => {
       if (key === 'amounts' || key === 'values') {
         return JSON.stringify(value);
@@ -28,10 +28,10 @@ export class BookService {
     }
 
     let stringified = JSON.stringify(entry, replacer);
-    return JSON.parse(stringified) as Financial_input;
+    return JSON.parse(stringified) as Bookentry_input;
   }
 
-  parsed_entry(entry: Financial_output): Financial {
+  parsed_entry(entry: Bookentry_output): Bookentry {
     const replacer = (key: string, value: any) => {
       if (key === 'amounts' || key === 'values') {
         return JSON.parse(value);
@@ -40,26 +40,26 @@ export class BookService {
     }
 
     let destringified = JSON.stringify(entry, replacer);
-    return JSON.parse(destringified) as Financial;
+    return JSON.parse(destringified) as Bookentry;
 
   }
 
-  // CRUD(L) Financial
+  // CRUD(L) Bookentry
 
-  async create_financial(financial: Financial) {
+  async create_book_entry(book_entry: Bookentry) {
     const client = generateClient<Schema>();
-    let jsonified_entry: Financial_input = this.jsonified_entry(financial);
+    let jsonified_entry: Bookentry_input = this.jsonified_entry(book_entry);
     const { id, ...jsonified_entry_without_id } = jsonified_entry;
     // console.log('jsonified_entry', jsonified_entry);
     try {
-      const response = await client.models.Financial.create(jsonified_entry_without_id);
+      const response = await client.models.Bookentry.create(jsonified_entry_without_id);
       if (response.errors) {
-        console.error('error creating', this.jsonified_entry(financial), response.errors);
+        console.error('error creating', this.jsonified_entry(book_entry), response.errors);
         throw new Error(JSON.stringify(response.errors));
       }
-      const created_entry = this.parsed_entry(response.data as unknown as Financial_output);
-      this._financials.push(created_entry);
-      this._financials$.next(this._financials.sort((a, b) => a.date.localeCompare(b.date)));
+      const created_entry = this.parsed_entry(response.data as unknown as Bookentry_output);
+      this._book_entrys.push(created_entry);
+      this._book_entrys$.next(this._book_entrys.sort((a, b) => a.date.localeCompare(b.date)));
       return (created_entry);
     } catch (error) {
       console.error('error', error);
@@ -67,11 +67,11 @@ export class BookService {
     }
   }
 
-  async read_financial(entry_id: string) {
+  async read_book_entry(entry_id: string) {
     const client = generateClient<Schema>();
 
     try {
-      const response = await client.models.Financial.get(
+      const response = await client.models.Bookentry.get(
         { id: entry_id },
         { selectionSet: ['id', 'season', 'date', 'amounts', 'operations.*', 'class', 'bank_op_type', 'cheque_ref', 'deposit_ref', 'bank_report'] }
       );
@@ -79,25 +79,25 @@ export class BookService {
         console.error('error', response.errors);
         throw new Error(JSON.stringify(response.errors));
       }
-      return this.parsed_entry(response.data as unknown as Financial_output);
+      return this.parsed_entry(response.data as unknown as Bookentry_output);
     } catch (error) {
       console.error('error', error);
       throw new Error(error instanceof Error ? error.message : String(error));
     }
   }
-  async update_financial(financial: Financial) {
+  async update_book_entry(book_entry: Bookentry) {
     const client = generateClient<Schema>();
-    const jsonified_entry: Financial_input = this.jsonified_entry(financial);
+    const jsonified_entry: Bookentry_input = this.jsonified_entry(book_entry);
 
     try {
-      const response = await client.models.Financial.update(this.jsonified_entry(financial));
+      const response = await client.models.Bookentry.update(this.jsonified_entry(book_entry));
       if (response.errors) {
         console.error('error', response.errors);
         throw new Error(JSON.stringify(response.errors));
       }
-      const updated_entry = this.parsed_entry(response.data as unknown as Financial_output);
-      this._financials = this._financials.map((entry) => entry.id === updated_entry.id ? updated_entry : entry);
-      this._financials$.next(this._financials.sort((a, b) => a.date.localeCompare(b.date)));
+      const updated_entry = this.parsed_entry(response.data as unknown as Bookentry_output);
+      this._book_entrys = this._book_entrys.map((entry) => entry.id === updated_entry.id ? updated_entry : entry);
+      this._book_entrys$.next(this._book_entrys.sort((a, b) => a.date.localeCompare(b.date)));
       return updated_entry;
     } catch (error) {
       console.error('error', error);
@@ -107,17 +107,17 @@ export class BookService {
 
 
 
-  delete_financial(entry_id: string) {
+  delete_book_entry(entry_id: string) {
     const client = generateClient<Schema>();
 
-    return client.models.Financial.delete({ id: entry_id })
+    return client.models.Bookentry.delete({ id: entry_id })
       .then((response) => {
         if (response.errors) {
           console.error('error', response.errors);
           throw new Error(JSON.stringify(response.errors));
         }
-        this._financials = this._financials.filter((entry) => entry.id !== entry_id);
-        this._financials$.next(this._financials.sort((a, b) => a.date.localeCompare(b.date)));
+        this._book_entrys = this._book_entrys.filter((entry) => entry.id !== entry_id);
+        this._book_entrys$.next(this._book_entrys.sort((a, b) => a.date.localeCompare(b.date)));
         return response;
       })
       .catch((error) => {
@@ -126,33 +126,33 @@ export class BookService {
       });
   }
 
-  list_financials$(season?: string): Observable<Financial[]> {
+  list_book_entrys$(season?: string): Observable<Bookentry[]> {
 
-    const fetchFinancials = async () => {
+    const fetchBookentrys = async () => {
       const client = generateClient<Schema>();
-      const { data, errors } = await client.models.Financial.list({
+      const { data, errors } = await client.models.Bookentry.list({
         filter: season ? { season: { eq: season } } : undefined
       });
       if (errors) {
         console.error(errors);
         throw new Error(JSON.stringify(errors));
       }
-      this._financials = (data as unknown as Financial_output[])
-        .map((entry) => this.parsed_entry(entry as Financial_output))
+      this._book_entrys = (data as unknown as Bookentry_output[])
+        .map((entry) => this.parsed_entry(entry as Bookentry_output))
         .sort((a, b) => a.date.localeCompare(b.date));
-      return this._financials;
+      return this._book_entrys;
     };
-    console.log('fetching financials from ', this._financials ? 'cache' : 'server');
-    let remote_load$ = from(fetchFinancials()).pipe(
-      tap((financials) => {
-        this._financials = financials;
-        // console.log('financials %s element(s) loaded from AWS', financials.length);
-        this._financials$.next(financials);
+    console.log('fetching book_entrys from ', this._book_entrys ? 'cache' : 'server');
+    let remote_load$ = from(fetchBookentrys()).pipe(
+      tap((book_entrys) => {
+        this._book_entrys = book_entrys;
+        // console.log('book_entrys %s element(s) loaded from AWS', book_entrys.length);
+        this._book_entrys$.next(book_entrys);
       }),
-      switchMap(() => this._financials$.asObservable())
+      switchMap(() => this._book_entrys$.asObservable())
     );
 
-    return this._financials ? this._financials$.asObservable() : remote_load$;
+    return this._book_entrys ? this._book_entrys$.asObservable() : remote_load$;
   }
 
   // utility functions
@@ -160,30 +160,30 @@ export class BookService {
 
 
   get_revenues(): Revenue[] {
-    return this._financials
-      .filter(financial => financial.class === RECORD_CLASS.REVENUE_FROM_MEMBER || financial.class === RECORD_CLASS.OTHER_REVENUE)
-      .reduce((acc, financial) => {
-        const revenues = financial.operations
+    return this._book_entrys
+      .filter(book_entry => book_entry.class === RECORD_CLASS.REVENUE_FROM_MEMBER || book_entry.class === RECORD_CLASS.OTHER_REVENUE)
+      .reduce((acc, book_entry) => {
+        const revenues = book_entry.operations
           .map(op => ({
             ...op,
-            season: financial.season,
-            date: financial.date,
-            id: financial.id,
+            season: book_entry.season,
+            date: book_entry.date,
+            id: book_entry.id,
           } as Revenue));
         return [...acc, ...revenues];
       }, [] as Revenue[]);
   }
 
   get_revenues_from_members(): Revenue[] {
-    return this._financials
-      .filter(financial => financial.class === RECORD_CLASS.REVENUE_FROM_MEMBER)
-      .reduce((acc, financial) => {
-        const revenues = financial.operations
+    return this._book_entrys
+      .filter(book_entry => book_entry.class === RECORD_CLASS.REVENUE_FROM_MEMBER)
+      .reduce((acc, book_entry) => {
+        const revenues = book_entry.operations
           .map(op => ({
             ...op,
-            season: financial.season,
-            date: financial.date,
-            id: financial.id,
+            season: book_entry.season,
+            date: book_entry.date,
+            id: book_entry.id,
           } as Revenue));
         return [...acc, ...revenues];
       }, [] as Revenue[]);
@@ -192,17 +192,17 @@ export class BookService {
 
   find_debt(member_full_name: string): number {
     let debt = new Map<string, number>();
-    this._financials.forEach((financial) => {
+    this._book_entrys.forEach((book_entry) => {
 
-      if (financial.amounts[FINANCIALS.DEBT_debit]) {
-        let name = financial.operations[0].member;   // member is the name of the debt owner & payee
+      if (book_entry.amounts[FINANCIAL_ACCOUNTS.DEBT_debit]) {
+        let name = book_entry.operations[0].member;   // member is the name of the debt owner & payee
         if (!name) throw new Error('no member name found');
-        debt.set(name, (debt.get(name) || 0) + financial.amounts[FINANCIALS.DEBT_debit]);
+        debt.set(name, (debt.get(name) || 0) + book_entry.amounts[FINANCIAL_ACCOUNTS.DEBT_debit]);
       }
-      if (financial.amounts[FINANCIALS.DEBT_credit]) {
-        let name = financial.operations[0].member;   // member is the name of the debt owner & payee
+      if (book_entry.amounts[FINANCIAL_ACCOUNTS.DEBT_credit]) {
+        let name = book_entry.operations[0].member;   // member is the name of the debt owner & payee
         if (!name) throw new Error('no member name found');
-        debt.set(name, (debt.get(name) || 0) - financial.amounts[FINANCIALS.DEBT_credit]);
+        debt.set(name, (debt.get(name) || 0) - book_entry.amounts[FINANCIAL_ACCOUNTS.DEBT_credit]);
       }
 
     });
@@ -213,17 +213,17 @@ export class BookService {
 
   find_assets(member_full_name: string): number {
     let assets = new Map<string, number>();
-    this._financials.forEach((financial) => {
+    this._book_entrys.forEach((book_entry) => {
 
-      if (financial.amounts[FINANCIALS.ASSET_debit]) {
-        let name = financial.operations[0].member;   // member is the name of the asset owner & payer
+      if (book_entry.amounts[FINANCIAL_ACCOUNTS.ASSET_debit]) {
+        let name = book_entry.operations[0].member;   // member is the name of the asset owner & payer
         if (!name) throw new Error('no member name found');
-        assets.set(name, (assets.get(name) || 0) - financial.amounts[FINANCIALS.ASSET_debit]);
+        assets.set(name, (assets.get(name) || 0) - book_entry.amounts[FINANCIAL_ACCOUNTS.ASSET_debit]);
       }
-      if (financial.amounts[FINANCIALS.ASSET_credit]) {
-        let name = financial.operations[0].member;
+      if (book_entry.amounts[FINANCIAL_ACCOUNTS.ASSET_credit]) {
+        let name = book_entry.operations[0].member;
         if (!name) throw new Error('no member name found');
-        assets.set(name, (assets.get(name) || 0) + financial.amounts[FINANCIALS.ASSET_credit]);
+        assets.set(name, (assets.get(name) || 0) + book_entry.amounts[FINANCIAL_ACCOUNTS.ASSET_credit]);
       }
 
     });
@@ -233,15 +233,15 @@ export class BookService {
 
 
   get_expenses(): Expense[] {
-    return this._financials
-      .filter(financial => financial.class === RECORD_CLASS.EXPENSE)
-      .reduce((acc, financial) => {
-        const expenses = financial.operations
+    return this._book_entrys
+      .filter(book_entry => book_entry.class === RECORD_CLASS.EXPENSE)
+      .reduce((acc, book_entry) => {
+        const expenses = book_entry.operations
           .map(op => ({
             ...op,
-            season: financial.season,
-            date: financial.date,
-            id: financial.id,
+            season: book_entry.season,
+            date: book_entry.date,
+            id: book_entry.id,
           } as Expense));
         return [...acc, ...expenses];
       }, [] as Expense[]);

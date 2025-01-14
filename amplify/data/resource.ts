@@ -5,52 +5,9 @@ import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
 
 const schema = a.schema({
 
-  Product: a.model({
-    glyph: a.string().required(),
-    description: a.string().required(),
-    account: a.string().required(),
-    price: a.float().required(),
-    paired: a.boolean().required(),
-    active: a.boolean().required(),
-  })
-    .authorization((allow) => [allow.publicApiKey()]),
 
 
-  // Record: a.model({
-  //   class: a.string().required(),
-  //   season: a.string().required(),
-  //   amount: a.float().required(),
-
-  //   sale_id: a.id().required(),
-  //   sale: a.belongsTo('Sale', 'sale_id'),
-
-  //   member_id: a.id(),
-
-  //   mode: a.string(),
-  //   // bank: a.string(),
-  //   cheque: a.string(),
-  //   deposit_ref: a.string(),   // bordereau
-  //   bank_statement: a.string(),
-
-  //   // payee_id: a.id(),
-  //   product_id: a.id(),
-  // })
-  //   .authorization((allow) => [allow.publicApiKey()]),
-
-  // Sale: a.model({
-  //   season: a.string().required(),
-  //   vendor: a.string().required(),
-  //   date: a.date().required(),
-
-  //   payer_id: a.id().required(),
-  //   comment: a.string(),
-  //   records: a.hasMany('Record', 'sale_id'),
-  // })
-  //   .authorization((allow) => [allow.publicApiKey()]),
-
-  // Value: a.customType({
-  //   value: a.float().required(),
-  // }),
+  // comptabilité 
 
   Operation: a.customType({
     label: a.string().required(),
@@ -58,7 +15,7 @@ const schema = a.schema({
     values: a.json().required(),
   }),
 
-  Financial: a.model({
+  Bookentry: a.model({
     season: a.string().required(),
     date: a.date().required(),
     amounts: a.json().required(),
@@ -72,6 +29,7 @@ const schema = a.schema({
 
   }).authorization((allow) => [allow.publicApiKey()]),
 
+  // Adhérents et produits Club
 
   Member: a.model({
     license_number: a.id().required(),
@@ -92,6 +50,17 @@ const schema = a.schema({
   })
     .authorization((allow) => [allow.publicApiKey()]),
 
+  Product: a.model({
+    glyph: a.string().required(),
+    description: a.string().required(),
+    account: a.string().required(),
+    price: a.float().required(),
+    paired: a.boolean().required(),
+    active: a.boolean().required(),
+  })
+    .authorization((allow) => [allow.publicApiKey()]),
+
+  // Site web
 
   Article: a.model({
     title: a.string().required(),

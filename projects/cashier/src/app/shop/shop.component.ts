@@ -9,7 +9,7 @@ import { CommonModule } from '@angular/common';
 import { InputMemberComponent } from '../input-member/input-member.component';
 import { SessionService } from './session.service';
 import { CartItem, Payment, PaymentMode } from './cart/cart.interface';
-import { Financial, Revenue, Session } from '../../../../common/new_sales.interface';
+import { Bookentry, Revenue, Session } from '../../../../common/accounting.interface';
 import { BookService } from '../book.service';
 import { KeypadComponent } from "./keypad/keypad.component";
 import { CartComponent } from "./cart/cart.component";
@@ -31,7 +31,7 @@ export class ShopComponent {
   debt_amount = 0;
   asset_amount = 0;
 
-  sales: Financial[] = [];
+  sales: Bookentry[] = [];
 
   day = signal(new Date().toISOString().split('T')[0]);
   sales_to_members = signal<Revenue[]>([]);
@@ -53,8 +53,8 @@ export class ShopComponent {
     private sessionService: SessionService,
   ) {
 
-    this.bookService.list_financials$().subscribe((financial) => {
-      this.sales = financial;
+    this.bookService.list_book_entrys$().subscribe((book_entry) => {
+      this.sales = book_entry;
       this.sales_to_members.set(this.bookService.get_revenues_from_members());
     });
   }

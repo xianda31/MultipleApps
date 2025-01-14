@@ -1,5 +1,6 @@
 export enum BANK_OPERATION_TYPE {
-    none = 'néant',
+
+    cash_received = 'paiement en espèces',
 
     asset_emit = 'émission d\'avoir',
 
@@ -26,7 +27,7 @@ export enum BANK_OPERATION_TYPE {
 
 
 
-export enum FINANCIALS {
+export enum FINANCIAL_ACCOUNTS {
     ASSET_debit = 'avoir_in',
     ASSET_credit = 'avoir_out',
     DEBT_debit = 'creance_in',
@@ -67,7 +68,7 @@ export interface Expense extends Operation, Session {
 }; // comptes de charges
 
 
-export type bank_values = { [key in FINANCIALS]?: number; };
+export type bank_values = { [key in FINANCIAL_ACCOUNTS]?: number; };
 export interface BankStatement {
     season: string;
     date: string;
@@ -77,7 +78,7 @@ export interface BankStatement {
     bank_report?: string;       // (mois) relevé bancaire
     deposit_ref?: string;       //  référence bordereau de dépôt
 }
-export interface Financial extends BankStatement { // comptes financiers
+export interface Bookentry extends BankStatement { // comptes financiers
     id: string;
     class: RECORD_CLASS;
     operations: Operation[];

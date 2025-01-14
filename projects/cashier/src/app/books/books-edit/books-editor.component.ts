@@ -3,11 +3,11 @@ import { Component, Input, SimpleChanges } from '@angular/core';
 import { Location } from '@angular/common';
 import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { BookService } from '../../book.service';
-import { bank_values, Financial, operation_values, RECORD_CLASS, season, BANK_OPERATION_TYPE, Operation } from '../../../../../common/new_sales.interface';
+import { bank_values, Bookentry, operation_values, RECORD_CLASS, season, BANK_OPERATION_TYPE, Operation } from '../../../../../common/accounting.interface';
 import { Bank } from '../../../../../common/system-conf.interface';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { ToastService } from '../../../../../common/toaster/toast.service';
-import { ACCOUNTING_OPERATION, get_accounting_operations, get_types_of_class } from '../../../../../common/booking.definition';
+import { Transaction, get_transaction, bank_op_types_for_class } from '../../../../../common/transaction.definition';
 import { MembersService } from '../../../../../admin-dashboard/src/app/members/service/members.service';
 import { Member } from '../../../../../common/member.interface';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -16,11 +16,11 @@ import { ActivatedRoute, Router } from '@angular/router';
   selector: 'app-booking',
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule],
-  templateUrl: './booking.component.html',
-  styleUrl: './booking.component.scss'
+  templateUrl: './books-editor.component.html',
+  styleUrl: './books-editor.component.scss'
 })
-export class BookingComponent {
-  financial_id!: string;
+export class BooksEditorComponent {
+  book_entry_id!: string;
   banks !: Bank[];
   club_bank!: Bank;
   members!: Member[];
@@ -35,8 +35,8 @@ export class BookingComponent {
   form_ready = false;
 
   creation = false;
-  selected_financial!: Financial;
-  accounting_operation?: ACCOUNTING_OPERATION;
+  selected_book_entry!: Bookentry;
+  accounting_operation?: Transaction;
 
   constructor(
     private fb: FormBuilder,
@@ -61,17 +61,17 @@ export class BookingComponent {
       this.revenues_accounts = conf.product_accounts.map((account) => account.key);
 
       this.route.params.subscribe(params => {
-        this.financial_id = params['id']; // Access the 'id' parameter from the URL
-        if (this.financial_id !== undefined) {
-          this.bookService.read_financial(this.financial_id)
-            .then((financial) => {
+        this.book_entry_id = params['id']; // Access the 'id' parameter from the URL
+        if (this.book_entry_id !== undefined) {
+          this.bookService.read_book_entry(this.book_entry_id)
+            .then((book_entry) => {
               this.init_form();
-              this.set_form(financial);
+              this.set_form(book_entry);
               this.valueChanges_subscribe();
               this.creation = false;
               this.form_ready = true;
             })
-            .catch((error) => { throw new Error('error reading financial', error) });
+            .catch((error) => { throw new Error('error reading book_entry', error) });
         } else {
           // component in creation mode
           this.init_form();
@@ -107,7 +107,7 @@ export class BookingComponent {
     // form.op_class
     this.form.controls['op_class'].valueChanges.subscribe((op_class) => {
       this.accounting_operation = undefined!;
-      this.op_types = get_types_of_class(op_class);
+      this.op_types = bank_op_types_for_class(op_class);
 
       this.operations.clear();
       this.form.controls['op_type'].setValue('', { emitEvent: false });
@@ -133,7 +133,7 @@ export class BookingComponent {
     // form.op_type
 
     this.form.controls['op_type'].valueChanges.subscribe((op_type) => {
-      this.accounting_operation = get_accounting_operations(this.op_class, op_type);
+      this.accounting_operation = get_transaction(this.op_class, op_type);
       // gestion des validators pour les champs bank_name et cheque_ref
       switch (op_type) {
         case BANK_OPERATION_TYPE.cheque_deposit:
@@ -170,56 +170,58 @@ export class BookingComponent {
   }
 
   set_operationForm_change_detection(operationForm: FormGroup) {
-    // TODO : what if several fields updated !!!
-    operationForm.controls['values'].valueChanges.subscribe((value) => {
-      let total = value
-        .map((val: string) => this.parse_to_float(val))
-        .reduce((acc: number, val: number) => acc + (val ?? 0), 0);
+    operationForm.controls['values'].valueChanges.subscribe(() => {
+      let total = 0;
+      this.operations.controls.forEach((operation) => {
+        total += (operation as FormGroup).controls['values'].value
+          .map((val: string) => this.parse_to_float(val))
+          .reduce((acc: number, val: number) => acc + val, 0);
+      });
       this.form.controls['total'].setValue(total);
     });
   }
 
-  set_form(financial: Financial) {
+  set_form(book_entry: Bookentry) {
 
-    console.log('financial to set', financial);
-    this.selected_financial = financial;
+    console.log('book_entry to set', book_entry);
+    this.selected_book_entry = book_entry;
 
-    this.accounting_operation = get_accounting_operations(financial.class, financial.bank_op_type);
-    this.op_types = get_types_of_class(financial.class);
+    this.accounting_operation = get_transaction(book_entry.class, book_entry.bank_op_type);
+    this.op_types = bank_op_types_for_class(book_entry.class);
     // console.log('op types changed', this.op_types);
     let total = 0;
-    switch (financial.class) {
+    switch (book_entry.class) {
       case RECORD_CLASS.EXPENSE:
-        total = financial.amounts[this.accounting_operation.financial_to_credit!] || 0;
+        total = book_entry.amounts[this.accounting_operation.account_to_credit!] || 0;
         this.form.controls['total'].disable();
         break;
       case RECORD_CLASS.REVENUE_FROM_MEMBER:
-        total = financial.amounts[this.accounting_operation.financial_to_debit!] || 0;
+        total = book_entry.amounts[this.accounting_operation.account_to_debit!] || 0;
         this.form.controls['total'].disable();
         break;
       case RECORD_CLASS.OTHER_REVENUE:
-        total = financial.amounts[this.accounting_operation.financial_to_debit!] || 0;
+        total = book_entry.amounts[this.accounting_operation.account_to_debit!] || 0;
         this.form.controls['total'].disable();
         break;
       case RECORD_CLASS.MOVEMENT:
-        total = financial.amounts[this.accounting_operation.financial_to_debit!] || 0;
+        total = book_entry.amounts[this.accounting_operation.account_to_debit!] || 0;
         this.form.controls['total'].enable();
         break;
     }
 
     this.form.patchValue({
-      id: financial.id,
-      date: financial.date,
-      op_class: financial.class,
-      op_type: financial.bank_op_type,
+      id: book_entry.id,
+      date: book_entry.date,
+      op_class: book_entry.class,
+      op_type: book_entry.bank_op_type,
       total: total,
-      bank_name: financial.cheque_ref?.slice(0, 3),
-      cheque_number: financial.cheque_ref?.slice(3),
+      bank_name: book_entry.cheque_ref?.slice(0, 3),
+      cheque_number: book_entry.cheque_ref?.slice(3),
     });
 
     this.operations.clear();
-    financial.operations.forEach((operation) => {
-      if (financial.class === RECORD_CLASS.EXPENSE) {
+    book_entry.operations.forEach((operation) => {
+      if (book_entry.class === RECORD_CLASS.EXPENSE) {
         this.add_operation(this.expenses_accounts, operation.label!, operation.values, operation.member);
       } else {
         this.add_operation(this.revenues_accounts, operation.label!, operation.values, operation.member);
@@ -233,13 +235,12 @@ export class BookingComponent {
   onSubmit() {
     console.log('submitted form', this.form.value);
     let operations: Operation[] = [];
-    // let op_values: operation_values = {};
     let amounts: bank_values = {};
     let total = 0;
-    let accounting_operations = get_accounting_operations(this.op_class, this.form.controls['op_type'].value);
+    let TRANSACTIONS = get_transaction(this.op_class, this.form.controls['op_type'].value);
 
 
-    if ((accounting_operations.class === RECORD_CLASS.OTHER_REVENUE) || (accounting_operations.class === RECORD_CLASS.REVENUE_FROM_MEMBER)) {
+    if ((TRANSACTIONS.class === RECORD_CLASS.OTHER_REVENUE) || (TRANSACTIONS.class === RECORD_CLASS.REVENUE_FROM_MEMBER)) {
       operations = this.operations.controls.map((operation) => {
         let op_values: operation_values = {};
         this.revenues_accounts.forEach((account: string, index: number) => {
@@ -256,7 +257,7 @@ export class BookingComponent {
         };
       });
     }
-    if (accounting_operations.class === RECORD_CLASS.EXPENSE) {
+    if (TRANSACTIONS.class === RECORD_CLASS.EXPENSE) {
       operations = this.operations.controls.map((operation) => {
         let op_values: operation_values = {};
         this.expenses_accounts.forEach((account: string, index: number) => {
@@ -273,17 +274,14 @@ export class BookingComponent {
         };
       });
     }
-    if (accounting_operations.class === RECORD_CLASS.MOVEMENT) {
-      // let value = this.parse_to_float((this.operations.controls[0] as FormGroup).controls['values'].value);
-      // if (value !== 0) {
+    if (TRANSACTIONS.class === RECORD_CLASS.MOVEMENT) {
       total = this.parse_to_float(this.form.controls['total'].value);
-      // }
     }
-    if (accounting_operations.financial_to_debit) amounts[accounting_operations.financial_to_debit] = total;
-    if (accounting_operations.financial_to_credit) amounts[accounting_operations.financial_to_credit] = total;
+    if (TRANSACTIONS.account_to_debit) amounts[TRANSACTIONS.account_to_debit] = total;
+    if (TRANSACTIONS.account_to_credit) amounts[TRANSACTIONS.account_to_credit] = total;
 
 
-    let booking: Financial = {
+    let booking: Bookentry = {
       season: season(new Date(this.form.controls['date'].value)),
       date: this.form.controls['date'].value,
       id: this.form.controls['id'].value,
@@ -298,21 +296,21 @@ export class BookingComponent {
     // if (booking.operations[0].member === '') delete booking.operations[0].member;
 
 
-    console.log('financial to save', booking);
+    console.log('book_entry to save', booking);
     if (this.creation) {
-      this.bookService.create_financial(booking).then(() =>
+      this.bookService.create_book_entry(booking).then(() =>
         this.toastService.showSuccessToast('création', 'écriture enregistrée'));
       this.init_form();
     } else {
-      booking.id = this.financial_id;
-      this.bookService.update_financial(booking).then(() =>
+      booking.id = this.book_entry_id;
+      this.bookService.update_book_entry(booking).then(() =>
         this.toastService.showSuccessToast('correction', 'écriture modifiée'));
       this.location.back();
     }
   }
 
   delete() {
-    this.bookService.delete_financial(this.financial_id).then(() =>
+    this.bookService.delete_book_entry(this.book_entry_id).then(() =>
       this.toastService.showSuccessToast('suppression', 'écriture supprimée'));
     this.location.back();
   }

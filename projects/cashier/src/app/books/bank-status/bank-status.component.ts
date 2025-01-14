@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { BankStatement, Expense, Financial, FINANCIALS, Revenue } from '../../../../../common/new_sales.interface';
+import { BankStatement, Expense, Bookentry, FINANCIAL_ACCOUNTS, Revenue } from '../../../../../common/accounting.interface';
 import { BookService } from '../../book.service';
 import { CommonModule } from '@angular/common';
 import { Form, FormsModule } from '@angular/forms';
@@ -13,19 +13,19 @@ import { Form, FormsModule } from '@angular/forms';
 })
 export class BankStatusComponent {
 
-  // financials: Financial[] = [];
+  // book_entrys: Bookentry[] = [];
   bank_statements: BankStatement[] = [];
-  bank_or_saving_ops = Object.values(FINANCIALS).filter(op => op.includes('bank') || op.includes('saving'));
+  bank_or_saving_ops = Object.values(FINANCIAL_ACCOUNTS).filter(op => op.includes('bank') || op.includes('saving'));
 
   constructor(
     private bookService: BookService,
   ) {
-    this.bookService.list_financials$().subscribe((financials) => {
+    this.bookService.list_book_entrys$().subscribe((book_entrys) => {
       // filtrer les operations de type banque ou éparge
       // extraire la partie bancaire des opérations
-      let bank_statements: BankStatement[] = financials
-        .filter(financial => this.bank_or_saving_ops.some(op => financial.amounts[op] !== undefined))
-        .map(financial => { let { operations, ...bank_statement } = financial; return bank_statement; });
+      let bank_statements: BankStatement[] = book_entrys
+        .filter(book_entry => this.bank_or_saving_ops.some(op => book_entry.amounts[op] !== undefined))
+        .map(book_entry => { let { operations, ...bank_statement } = book_entry; return bank_statement; });
 
       // cumuler les montants de chèque de même bordereau de dépôt
       let bordereaux = bank_statements.map(statement => statement.deposit_ref);

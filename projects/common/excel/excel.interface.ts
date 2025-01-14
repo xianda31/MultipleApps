@@ -1,6 +1,6 @@
 // compta.xls file definition
 
-import { FINANCIALS } from "../new_sales.interface";
+import { FINANCIAL_ACCOUNTS } from "../accounting.interface";
 
 
 
@@ -59,7 +59,7 @@ export const MAP = {
 
     // 'products': 'G:O',
     // 'expenses': 'P:AB',
-    // 'financial': 'AC:AL',
+    // 'book_entry': 'AC:AL',
 
     'pointage': 'AM',
     'n° chèque': 'AN',
@@ -101,7 +101,7 @@ export const EXPENSES_COL: ACCOUNTS_COL = {
     'KDO': 'AC',
 }
 
-export const FINANCIAL_COL: { [key in FINANCIALS]?: string } = {
+export const FINANCIAL_COL: { [key in FINANCIAL_ACCOUNTS]?: string } = {
     'creance_in': 'AC',
     'avoir_in': 'AD',
     'cash_in': 'AE',

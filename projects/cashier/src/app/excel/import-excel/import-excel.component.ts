@@ -1,7 +1,7 @@
 import { Component, signal } from '@angular/core';
 import * as ExcelJS from 'exceljs';
 import { EXPENSES_COL, FINANCIAL_COL, MAP, PRODUCTS_COL } from '../../../../../common/excel/excel.interface';
-import { BANK_OPERATION_TYPE, Financial, FINANCIALS, operation_values, Operation, RECORD_CLASS } from '../../../../../common/new_sales.interface';
+import { BANK_OPERATION_TYPE, Bookentry, FINANCIAL_ACCOUNTS, operation_values, Operation, RECORD_CLASS } from '../../../../../common/accounting.interface';
 import { Member } from '../../../../../common/member.interface';
 import { MembersService } from '../../../../../admin-dashboard/src/app/members/service/members.service';
 import { BookService } from '../../book.service';
@@ -22,7 +22,7 @@ export class ImportExcelComponent {
   worksheet !: ExcelJS.Worksheet;
   worksheets!: ExcelJS.Worksheet[];
 
-  financials: Financial[] = [];
+  book_entrys: Bookentry[] = [];
 
   members: Member[] = [];
   season: string = '2024/2025';
@@ -68,7 +68,7 @@ export class ImportExcelComponent {
   process_exel_file(worksheet: ExcelJS.Worksheet) {
     this.worksheet = worksheet;
     console.log('processing worksheet ', this.worksheet.name);
-    this.financials = [];
+    this.book_entrys = [];
 
     // recherche balise ?999
 
@@ -111,9 +111,9 @@ export class ImportExcelComponent {
     // traitement lignes du tableau meta_rows (bloc de cellules mergées)
 
     Object.entries(meta_rows).forEach(([master, cells]) => {
-      this.convert_to_financial(master, cells)
-        .then((financial) => {
-          this.financials.push(financial);
+      this.convert_to_book_entry(master, cells)
+        .then((book_entry) => {
+          this.book_entrys.push(book_entry);
         })
         .catch((error) => {
           console.log('error at  %s', master, error);
@@ -123,15 +123,15 @@ export class ImportExcelComponent {
         );
     });
 
-    console.log('%s écritures prêtes à être importées', this.financials.length);
+    console.log('%s écritures prêtes à être importées', this.book_entrys.length);
 
 
   }
 
   upload_data() {
-    this.financials.forEach((financial, index) => {
-      this.bookService.create_financial(financial).then(() => {
-        this.create_progress = Math.round((index + 1) / this.financials.length * 100);
+    this.book_entrys.forEach((book_entry, index) => {
+      this.bookService.create_book_entry(book_entry).then(() => {
+        this.create_progress = Math.round((index + 1) / this.book_entrys.length * 100);
         this.progress_style = 'width: ' + this.create_progress + '%';
         if (this.create_progress === 100) {
           this.data_uploading = false;
@@ -146,9 +146,9 @@ export class ImportExcelComponent {
   }
 
 
-  async convert_to_financial(master: string, cells: string[]): Promise<Financial> {
+  async convert_to_book_entry(master: string, cells: string[]): Promise<Bookentry> {
 
-    let promise = new Promise<Financial>((resolve, reject) => {
+    let promise = new Promise<Bookentry>((resolve, reject) => {
       // create sale (master)
       let row_number = +this.worksheet.getCell(master).row;
 
@@ -178,7 +178,7 @@ export class ImportExcelComponent {
       let cell_nature = master_row.getCell(MAP['nature']).value;
 
 
-      let financial: Financial = {
+      let book_entry: Bookentry = {
         season: this.season,
         date: new Date(date).toISOString().split('T')[0],
         id: '',
@@ -190,16 +190,16 @@ export class ImportExcelComponent {
 
       };
 
-      if (cell_chèque?.toString()) { financial.cheque_ref = cell_chèque?.toString() as string; }
-      if (cell_bordereau?.toString()) { financial.deposit_ref = cell_bordereau?.toString() as string; }
+      if (cell_chèque?.toString()) { book_entry.cheque_ref = cell_chèque?.toString() as string; }
+      if (cell_bordereau?.toString()) { book_entry.deposit_ref = cell_bordereau?.toString() as string; }
 
-      // financial.amounts
+      // book_entry.amounts
 
       Object.entries(FINANCIAL_COL).forEach((entry) => {
         let [name, col] = entry;
         let cell = master_row.getCell(col).value;
         if (!cell?.valueOf()) { return; }
-        financial.amounts[name as FINANCIALS] = cell.valueOf() as number;
+        book_entry.amounts[name as FINANCIAL_ACCOUNTS] = cell.valueOf() as number;
       });
 
       // construct products operation side
@@ -209,13 +209,13 @@ export class ImportExcelComponent {
         let row = this.worksheet.getRow(row_number);
         let operation = this.compute_operation_amounts(row);
 
-        financial.operations.push(operation);
+        book_entry.operations.push(operation);
       });
 
-      if (!this.control_amounts_balance(financial)) {
+      if (!this.control_amounts_balance(book_entry)) {
         reject('amounts not balanced');
       } else {
-        resolve(financial);
+        resolve(book_entry);
       }
     });
     return promise;
@@ -242,7 +242,7 @@ export class ImportExcelComponent {
             return BANK_OPERATION_TYPE.saving_deposit;
           default:
             console.log('erreur de nature', nature);
-            return BANK_OPERATION_TYPE.none;
+            return BANK_OPERATION_TYPE.cash_received;
         }
 
       case 'chrono vente':
@@ -253,41 +253,41 @@ export class ImportExcelComponent {
           case 'chèque':
             return BANK_OPERATION_TYPE.cheque_deposit;
           default:
-            return BANK_OPERATION_TYPE.none;
+            return BANK_OPERATION_TYPE.cash_received;
         }
 
       case 'droits de table':
-        return BANK_OPERATION_TYPE.none;
+        return BANK_OPERATION_TYPE.cash_received;
 
       default:
         console.log('erreur de feuille', this.worksheet.name);
-        return BANK_OPERATION_TYPE.none;
+        return BANK_OPERATION_TYPE.cash_received;
     }
   }
-  control_amounts_balance(financial: Financial): boolean {
-    let debit_keys: FINANCIALS[] = Object.keys(financial.amounts).filter((key): key is FINANCIALS => key.includes('in'));
-    let total_debit = debit_keys.reduce((acc, key) => acc + (financial.amounts[key] || 0), 0);
+  control_amounts_balance(book_entry: Bookentry): boolean {
+    let debit_keys: FINANCIAL_ACCOUNTS[] = Object.keys(book_entry.amounts).filter((key): key is FINANCIAL_ACCOUNTS => key.includes('in'));
+    let total_debit = debit_keys.reduce((acc, key) => acc + (book_entry.amounts[key] || 0), 0);
 
-    let credit_keys: FINANCIALS[] = Object.keys(financial.amounts).filter((key): key is FINANCIALS => key.includes('out'));
-    let total_credit = credit_keys.reduce((acc, key) => acc + (financial.amounts[key] || 0), 0);
+    let credit_keys: FINANCIAL_ACCOUNTS[] = Object.keys(book_entry.amounts).filter((key): key is FINANCIAL_ACCOUNTS => key.includes('out'));
+    let total_credit = credit_keys.reduce((acc, key) => acc + (book_entry.amounts[key] || 0), 0);
 
     let total = total_debit - total_credit;
 
     let products_sum = 0;
     let expenses_sum = 0;
     let sum = 0;
-    financial.operations.forEach((operation) => {
+    book_entry.operations.forEach((operation) => {
       sum += Object.values(operation.values).reduce((acc, value) => acc + value, 0);
     });
-    if (financial.class === RECORD_CLASS.REVENUE_FROM_MEMBER || financial.class === RECORD_CLASS.OTHER_REVENUE) {
+    if (book_entry.class === RECORD_CLASS.REVENUE_FROM_MEMBER || book_entry.class === RECORD_CLASS.OTHER_REVENUE) {
       products_sum += sum;
-    } else if (financial.class === RECORD_CLASS.EXPENSE) {
+    } else if (book_entry.class === RECORD_CLASS.EXPENSE) {
       expenses_sum += sum;
     }
 
     if (total !== (products_sum - expenses_sum)) {
       console.log('amounts not equal', total_debit, total_credit, products_sum, expenses_sum);
-      console.log('financial', financial);
+      console.log('book_entry', book_entry);
       this.verbose.set(this.verbose() + 'montants non égaux : ' + total_debit + ' vs ' + total_credit + '\n');
       return false;
     }

@@ -3,7 +3,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { CartItem, Payment, PaymentMode } from './cart.interface';
 import { Member } from '../../../../../common/member.interface';
 import { BookService } from '../../book.service';
-import { BANK_OPERATION_TYPE, bank_values, Financial, operation_values, Operation, RECORD_CLASS, Session } from '../../../../../common/new_sales.interface';
+import { BANK_OPERATION_TYPE, bank_values, Bookentry, operation_values, Operation, RECORD_CLASS, Session } from '../../../../../common/accounting.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -118,9 +118,9 @@ export class CartService {
   }
 
 
-  save_sale(session: Session, buyer?: Member): Promise<Financial> {
-    let promise = new Promise<Financial>((resolve, reject) => {
-      const sale: Financial = {
+  save_sale(session: Session, buyer?: Member): Promise<Bookentry> {
+    let promise = new Promise<Bookentry>((resolve, reject) => {
+      const sale: Bookentry = {
         ...session,
         id: '',
         bank_op_type: this.payments2bank_op_type(this._payments),
@@ -134,7 +134,7 @@ export class CartService {
         sale.bank_op_type = bank_op_type;
       }
 
-      this.bookService.create_financial(sale)
+      this.bookService.create_book_entry(sale)
         .then((sale) => {
           resolve(sale);
 
@@ -190,7 +190,7 @@ export class CartService {
         return BANK_OPERATION_TYPE.transfer_receipt;
       }
     }
-    return BANK_OPERATION_TYPE.none;
+    return BANK_OPERATION_TYPE.cash_received;
   }
 
   payments2cheque_ref(payments: Payment[]): string {

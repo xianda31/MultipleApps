@@ -42,7 +42,7 @@ export class AppComponent {
 
     ]).subscribe(([members, conf]) => {
       this.season = conf.season;
-      this.bookService.list_financials$(this.season).subscribe((sales) => {
+      this.bookService.list_book_entrys$(this.season).subscribe((sales) => {
         this.init = true;
       });
 
