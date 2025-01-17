@@ -15,8 +15,8 @@ type Bookentry_output = Bookentry & {
 })
 export class BookService {
 
-  private _book_entrys!: Bookentry[];
-  private _book_entrys$ = new BehaviorSubject<Bookentry[]>(this._book_entrys);
+  private _book_entries!: Bookentry[];
+  private _book_entries$ = new BehaviorSubject<Bookentry[]>(this._book_entries);
   constructor() { }
 
   jsonified_entry(entry: Bookentry): Bookentry_input {
@@ -58,8 +58,8 @@ export class BookService {
         throw new Error(JSON.stringify(response.errors));
       }
       const created_entry = this.parsed_entry(response.data as unknown as Bookentry_output);
-      this._book_entrys.push(created_entry);
-      this._book_entrys$.next(this._book_entrys.sort((a, b) => a.date.localeCompare(b.date)));
+      this._book_entries.push(created_entry);
+      this._book_entries$.next(this._book_entries.sort((a, b) => a.date.localeCompare(b.date)));
       return (created_entry);
     } catch (error) {
       console.error('error', error);
@@ -96,8 +96,8 @@ export class BookService {
         throw new Error(JSON.stringify(response.errors));
       }
       const updated_entry = this.parsed_entry(response.data as unknown as Bookentry_output);
-      this._book_entrys = this._book_entrys.map((entry) => entry.id === updated_entry.id ? updated_entry : entry);
-      this._book_entrys$.next(this._book_entrys.sort((a, b) => a.date.localeCompare(b.date)));
+      this._book_entries = this._book_entries.map((entry) => entry.id === updated_entry.id ? updated_entry : entry);
+      this._book_entries$.next(this._book_entries.sort((a, b) => a.date.localeCompare(b.date)));
       return updated_entry;
     } catch (error) {
       console.error('error', error);
@@ -116,8 +116,8 @@ export class BookService {
           console.error('error', response.errors);
           throw new Error(JSON.stringify(response.errors));
         }
-        this._book_entrys = this._book_entrys.filter((entry) => entry.id !== entry_id);
-        this._book_entrys$.next(this._book_entrys.sort((a, b) => a.date.localeCompare(b.date)));
+        this._book_entries = this._book_entries.filter((entry) => entry.id !== entry_id);
+        this._book_entries$.next(this._book_entries.sort((a, b) => a.date.localeCompare(b.date)));
         return response;
       })
       .catch((error) => {
@@ -126,9 +126,9 @@ export class BookService {
       });
   }
 
-  list_book_entrys$(season?: string): Observable<Bookentry[]> {
+  list_book_entries$(season?: string): Observable<Bookentry[]> {
 
-    const fetchBookentrys = async () => {
+    const fetchBookentries = async () => {
       const client = generateClient<Schema>();
       const { data, errors } = await client.models.Bookentry.list({
         filter: season ? { season: { eq: season } } : undefined
@@ -137,22 +137,22 @@ export class BookService {
         console.error(errors);
         throw new Error(JSON.stringify(errors));
       }
-      this._book_entrys = (data as unknown as Bookentry_output[])
+      this._book_entries = (data as unknown as Bookentry_output[])
         .map((entry) => this.parsed_entry(entry as Bookentry_output))
         .sort((a, b) => a.date.localeCompare(b.date));
-      return this._book_entrys;
+      return this._book_entries;
     };
-    console.log('fetching book_entrys from ', this._book_entrys ? 'cache' : 'server');
-    let remote_load$ = from(fetchBookentrys()).pipe(
-      tap((book_entrys) => {
-        this._book_entrys = book_entrys;
-        // console.log('book_entrys %s element(s) loaded from AWS', book_entrys.length);
-        this._book_entrys$.next(book_entrys);
+    console.log('fetching book_entries from ', this._book_entries ? 'cache' : 'server');
+    let remote_load$ = from(fetchBookentries()).pipe(
+      tap((book_entries) => {
+        this._book_entries = book_entries;
+        // console.log('book_entries %s element(s) loaded from AWS', book_entries.length);
+        this._book_entries$.next(book_entries);
       }),
-      switchMap(() => this._book_entrys$.asObservable())
+      switchMap(() => this._book_entries$.asObservable())
     );
 
-    return this._book_entrys ? this._book_entrys$.asObservable() : remote_load$;
+    return this._book_entries ? this._book_entries$.asObservable() : remote_load$;
   }
 
   // utility functions
@@ -160,7 +160,7 @@ export class BookService {
 
 
   get_revenues(): Revenue[] {
-    return this._book_entrys
+    return this._book_entries
       .filter(book_entry => book_entry.class === RECORD_CLASS.REVENUE_FROM_MEMBER || book_entry.class === RECORD_CLASS.OTHER_REVENUE)
       .reduce((acc, book_entry) => {
         const revenues = book_entry.operations
@@ -175,7 +175,7 @@ export class BookService {
   }
 
   get_revenues_from_members(): Revenue[] {
-    return this._book_entrys
+    return this._book_entries
       .filter(book_entry => book_entry.class === RECORD_CLASS.REVENUE_FROM_MEMBER)
       .reduce((acc, book_entry) => {
         const revenues = book_entry.operations
@@ -192,7 +192,7 @@ export class BookService {
 
   find_debt(member_full_name: string): number {
     let debt = new Map<string, number>();
-    this._book_entrys.forEach((book_entry) => {
+    this._book_entries.forEach((book_entry) => {
 
       if (book_entry.amounts[FINANCIAL_ACCOUNTS.DEBT_debit]) {
         let name = book_entry.operations[0].member;   // member is the name of the debt owner & payee
@@ -213,7 +213,7 @@ export class BookService {
 
   find_assets(member_full_name: string): number {
     let assets = new Map<string, number>();
-    this._book_entrys.forEach((book_entry) => {
+    this._book_entries.forEach((book_entry) => {
 
       if (book_entry.amounts[FINANCIAL_ACCOUNTS.ASSET_debit]) {
         let name = book_entry.operations[0].member;   // member is the name of the asset owner & payer
@@ -233,7 +233,7 @@ export class BookService {
 
 
   get_expenses(): Expense[] {
-    return this._book_entrys
+    return this._book_entries
       .filter(book_entry => book_entry.class === RECORD_CLASS.EXPENSE)
       .reduce((acc, book_entry) => {
         const expenses = book_entry.operations

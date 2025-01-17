@@ -43,7 +43,7 @@ export const TRANSACTIONS: Transaction[] = [
     {
         bank_operation_type: BANK_OPERATION_TYPE.cheque_deposit,
         class: RECORD_CLASS.REVENUE_FROM_MEMBER,
-        account_to_debit: FINANCIAL_ACCOUNTS.BANK_debit,
+        account_to_debit: FINANCIAL_ACCOUNTS.CASH_debit,   // was BANK_debit
         nominative: true,
     },
     {
@@ -106,21 +106,7 @@ export const TRANSACTIONS: Transaction[] = [
 
 ]
 
-// export function bank_op_type_2_account_to_credit(op: BANK_OPERATION_TYPE): FINANCIAL_ACCOUNTS {
-//     let accounts = TRANSACTIONS.find((mapping) => mapping.bank_operation_type === op)!.account_to_credit;
-//     if (!accounts) {
-//         throw new Error(`No credit account found for ${op}`);
-//     }
-//     return accounts;
-// }
 
-// export function bank_op_type_2_account_to_debit(op: BANK_OPERATION_TYPE): FINANCIAL_ACCOUNTS {
-//     let accounts = TRANSACTIONS.find((mapping) => mapping.bank_operation_type === op)!.account_to_debit;
-//     if (!accounts) {
-//         throw new Error(`No debit account found for ${op}`);
-//     }
-//     return accounts;
-// }
 
 export function bank_op_types_for_class(op_class: RECORD_CLASS): BANK_OPERATION_TYPE[] {
     return TRANSACTIONS

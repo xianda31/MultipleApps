@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { CartItem, Payment, PaymentMode } from './cart.interface';
+import { CartItem, Payment, PaymentMode, SALE_ACCOUNTS } from './cart.interface';
 import { Member } from '../../../../../common/member.interface';
 import { BookService } from '../../book.service';
 import { BANK_OPERATION_TYPE, bank_values, Bookentry, operation_values, Operation, RECORD_CLASS, Session } from '../../../../../common/accounting.interface';
@@ -137,7 +137,7 @@ export class CartService {
       this.bookService.create_book_entry(sale)
         .then((sale) => {
           resolve(sale);
-
+          console.log('sale saved', sale);
           this.clearCart();
         })
         .catch((error) => {
@@ -205,28 +205,12 @@ export class CartService {
 
   payments2fValue(payments: Payment[]): bank_values {
     let f_amounts: bank_values = {};
-    // console.log('payments', payments);
     payments.forEach((payment) => {
-      switch (payment.mode) {
-        case PaymentMode.CASH:
-          f_amounts['cash_in'] = payment.amount;
-          break;
-        case PaymentMode.CHEQUE:
-          f_amounts['bank_in'] = payment.amount;
-          break;
-        case PaymentMode.TRANSFER:
-          f_amounts['bank_in'] = payment.amount;
-          break;
-        case PaymentMode.ASSETS:
-          f_amounts['avoir_in'] = payment.amount;
-          break;
-        case PaymentMode.CREDIT:
-          f_amounts['creance_in'] = payment.amount;
-          break;
-      }
+      f_amounts[SALE_ACCOUNTS[payment.mode]] = payment.amount;
     });
+
     if (this._debt !== 0) {
-      f_amounts['creance_out'] = this._debt;
+      f_amounts['creance_out'] = this._debt;  // paiement de la dette
     }
     return f_amounts;
   }

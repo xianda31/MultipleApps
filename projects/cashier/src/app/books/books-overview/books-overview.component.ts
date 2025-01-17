@@ -31,11 +31,11 @@ export class BooksOverviewComponent {
   revenues!: Revenue[];
   expenses: Expense[] = [];
 
-  book_entrys: Bookentry[] = [];
-  bank_book_entrys: Bookentry[] = [];
-  cash_book_entrys: Bookentry[] = [];
-  asset_book_entrys: Bookentry[] = [];
-  debt_book_entrys: Bookentry[] = [];
+  book_entries: Bookentry[] = [];
+  cash_book_entries: Bookentry[] = [];
+  bank_book_entries: Bookentry[] = [];
+  asset_book_entries: Bookentry[] = [];
+  debt_book_entries: Bookentry[] = [];
   current_cash_amount: number = 0;
   current_assets_amount: number = 0;
   current_debt_amount: number = 0;
@@ -73,19 +73,19 @@ export class BooksOverviewComponent {
     });
 
 
-    this.bookService.list_book_entrys$().subscribe((book_entrys) => {
-      this.book_entrys = book_entrys;
+    this.bookService.list_book_entries$().subscribe((book_entries) => {
+      this.book_entries = book_entries;
       this.build_arrays();
 
-      this.current_cash_amount = this.cash_book_entrys.reduce((acc, book_entry) => {
+      this.current_cash_amount = this.cash_book_entries.reduce((acc, book_entry) => {
         return acc + (book_entry.amounts['cash_in'] || 0) - (book_entry.amounts['cash_out'] || 0);
       }, 0);
 
-      this.current_assets_amount = this.asset_book_entrys.reduce((acc, book_entry) => {
+      this.current_assets_amount = this.asset_book_entries.reduce((acc, book_entry) => {
         return acc + (book_entry.amounts['avoir_in'] || 0) - (book_entry.amounts['avoir_out'] || 0);
       }, 0);
 
-      this.current_debt_amount = this.debt_book_entrys.reduce((acc, book_entry) => {
+      this.current_debt_amount = this.debt_book_entries.reduce((acc, book_entry) => {
         return acc + (book_entry.amounts['creance_in'] || 0) - (book_entry.amounts['creance_out'] || 0);
       }, 0);
 
@@ -96,11 +96,10 @@ export class BooksOverviewComponent {
 
 
   build_arrays() {
-    this.bank_book_entrys = this.book_entrys.filter(book_entry => this.bank_ops.some(op => book_entry.amounts[op] !== undefined));
-    this.cash_book_entrys = this.book_entrys.filter(book_entry => this.cash_ops.some(op => book_entry.amounts[op] !== undefined));
-    this.asset_book_entrys = this.book_entrys.filter(book_entry => this.asset_ops.some(op => book_entry.amounts[op] !== undefined));
-    console.log('this.asset_book_entrys', this.asset_book_entrys);
-    this.debt_book_entrys = this.book_entrys.filter(book_entry => this.debt_ops.some(op => book_entry.amounts[op] !== undefined));
+    this.bank_book_entries = this.book_entries.filter(book_entry => this.bank_ops.some(op => book_entry.amounts[op] !== undefined));
+    this.cash_book_entries = this.book_entries.filter(book_entry => this.cash_ops.some(op => book_entry.amounts[op] !== undefined));
+    this.asset_book_entries = this.book_entries.filter(book_entry => this.asset_ops.some(op => book_entry.amounts[op] !== undefined));
+    this.debt_book_entries = this.book_entries.filter(book_entry => this.debt_ops.some(op => book_entry.amounts[op] !== undefined));
     this.revenues = this.bookService.get_revenues();
     this.expenses = this.bookService.get_expenses();
 

@@ -49,6 +49,7 @@
                     <th class="col"> bénéficiaire</th>
                     <th class="col text-center" *ngFor="let account of expenses_accounts ">{{account}}
                     </th>
+                    <th></th>
                 </tr>
             </thead>
 
@@ -57,20 +58,22 @@
                 <tr *ngFor="let expense of expenses">
                     <td>
                         {{expense.date | date: 'dd/MM/yyyy'}}
-                        <!-- <i class="bi bi-trash3" (click)="delete_expense(expense)"></i> -->
                     </td>
-                    <!-- <td>{{expense.sub_account}}</td> -->
                     <td>{{expense.label}}</td>
                     <td>{{expense.member}}</td>
                     <td *ngFor="let account of expenses_accounts " class="text-center">
                         {{expense.values[account]}}
                     </td>
-                    <!-- <td> {{expense.book_entry_id}}</td> -->
+                    <td>
+                        <i class="bi bi-search" (click)="show_book_entry(expense.id)"></i>
+                    </td>
                 </tr>
             </tbody>
         </table>
     </div>
 </div>
+
+<!-- Compte bancaire -->
 
 <div class="card mt-2">
     <!-- <div class="card"> -->
@@ -81,8 +84,7 @@
         <table class="table table-sm">
             <thead>
                 <tr>
-                    <th class="col"># </th>
-                    <th class="col">date </th>
+                    <th class="col">Date </th>
                     <th class="col">opération </th>
                     <!-- <th class="col">libellé</th> -->
                     <th class="col text-center" *ngFor="let op of bank_ops ">{{op}} </th>
@@ -95,10 +97,7 @@
 
             <tbody>
 
-                <tr *ngFor="let book_entry of bank_book_entrys">
-                    <td>
-                        <i class="bi bi-trash3" (click)="delete_book_entry(book_entry)"></i>
-                    </td>
+                <tr *ngFor="let book_entry of bank_book_entries">
                     <td>{{book_entry.date | date: 'dd/MM/yyyy'}}</td>
                     <td>{{ book_entry.bank_op_type}}</td>
                     <td *ngFor=" let op of bank_ops " class="text-center">
@@ -117,29 +116,69 @@
     <!-- </div> -->
 </div>
 
+
+<!-- Caisse -->
+
+<div class="card mt-2">
+    <div class="card-header">
+        <h5>espèces et chèques en attente de dépot : {{current_cash_amount}} €</h5>
+    </div>
+    <div class="card-body">
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th class="col">adhérent </th>
+                    <th class="col text-center" *ngFor="let op of cash_ops ">{{op}} </th>
+                    <th class="col">chèque </th>
+                    <th class="col">bordereau </th>
+                    <th class="col">select </th>
+                    <th class="col"> </th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                <tr *ngFor="let book_entry of book_entries">
+
+                    <td>{{book_entry.operations[0].member}}</td>
+                    <td *ngFor=" let op of cash_ops " class="text-center">
+                        {{ book_entry.amounts[op] }}
+                    </td>
+                    <ng-container *ngIf="book_entry.cheque_ref">
+                        <td>{{book_entry.cheque_ref}}</td>
+                        <td> <input type="checkbox" [(ngModel)]="book_entry.deposit_ref"> </td>
+                        <td> {{book_entry.deposit_ref}} </td>
+                    </ng-container>
+                    <ng-container *ngIf="!book_entry.cheque_ref">
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </ng-container>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- autres comptes -->
 <div class="row mt-2">
     <div class="col-md-4">
         <div
-            *ngTemplateOutlet="other_report ; context: {title:'liquidités', balance:current_cash_amount, ops:cash_ops, book_entrys: cash_book_entrys}">
+            *ngTemplateOutlet="other_report ; context: {title:'avoir adhérents', balance:current_assets_amount, ops:asset_ops, book_entries: asset_book_entries}">
         </div>
     </div>
     <div class="col-md-4">
         <div
-            *ngTemplateOutlet="other_report ; context: {title:'avoir', balance:current_assets_amount, ops:asset_ops, book_entrys: asset_book_entrys}">
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div
-            *ngTemplateOutlet="other_report ; context: {title:'dettes', balance:current_debt_amount, ops:debt_ops, book_entrys: debt_book_entrys}">
+            *ngTemplateOutlet="other_report ; context: {title:'dettes adhérents', balance:current_debt_amount, ops:debt_ops, book_entries: debt_book_entries}">
         </div>
     </div>
 
 </div>
 
-<ng-template #other_report let-title="title" let-balance="balance" let-ops="ops" let-book_entrys="book_entrys">
+<ng-template #other_report let-title="title" let-balance="balance" let-ops="ops" let-book_entries="book_entries">
     <div class="card">
         <div class="card-header">
-            <h5>{{title}} {{balance}}</h5>
+            <h5>{{title}} : {{balance}} €</h5>
         </div>
         <div class="card-body">
             <table class="table table-sm">
@@ -148,18 +187,24 @@
                         <th class="col"># </th>
                         <th class="col">adhérent </th>
                         <th class="col text-center" *ngFor="let op of ops ">{{op}} </th>
+                        <th class="col">chèque </th>
+                        <th class="col"> </th>
                     </tr>
                 </thead>
 
                 <tbody>
 
-                    <tr *ngFor="let book_entry of book_entrys">
+                    <tr *ngFor="let book_entry of book_entries">
                         <td>
                             <i class="bi bi-trash3" (click)="delete_book_entry(book_entry)"></i>
                         </td>
                         <td>{{book_entry.operations[0]?.member}}</td>
                         <td *ngFor=" let op of ops " class="text-center">
                             {{ book_entry.amounts[op] }}
+                        </td>
+                        <td>{{book_entry.cheque_ref}}</td>
+                        <td>
+                            <i class="bi bi-search" (click)="show_book_entry(book_entry.id)"></i>
                         </td>
                     </tr>
                 </tbody>

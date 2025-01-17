@@ -25,8 +25,6 @@ export enum BANK_OPERATION_TYPE {
     saving_withdraw = 'retrait compte \épargne',
 }
 
-
-
 export enum FINANCIAL_ACCOUNTS {
     ASSET_debit = 'avoir_in',
     ASSET_credit = 'avoir_out',
@@ -38,8 +36,9 @@ export enum FINANCIAL_ACCOUNTS {
     BANK_credit = 'bank_out',
     SAVING_debit = 'saving_in',
     SAVING_credit = 'saving_out',
-    // NaN = 'NaN'                      // pour les opérations non financières
 }
+
+
 
 export enum RECORD_CLASS {
     REVENUE_FROM_MEMBER = 'vente adhérent',

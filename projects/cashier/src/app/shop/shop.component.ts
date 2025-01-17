@@ -53,7 +53,7 @@ export class ShopComponent {
     private sessionService: SessionService,
   ) {
 
-    this.bookService.list_book_entrys$().subscribe((book_entry) => {
+    this.bookService.list_book_entries$().subscribe((book_entry) => {
       this.sales = book_entry;
       this.sales_to_members.set(this.bookService.get_revenues_from_members());
     });

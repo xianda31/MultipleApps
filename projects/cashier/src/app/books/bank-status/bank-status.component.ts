@@ -13,17 +13,17 @@ import { Form, FormsModule } from '@angular/forms';
 })
 export class BankStatusComponent {
 
-  // book_entrys: Bookentry[] = [];
+  // book_entries: Bookentry[] = [];
   bank_statements: BankStatement[] = [];
   bank_or_saving_ops = Object.values(FINANCIAL_ACCOUNTS).filter(op => op.includes('bank') || op.includes('saving'));
 
   constructor(
     private bookService: BookService,
   ) {
-    this.bookService.list_book_entrys$().subscribe((book_entrys) => {
+    this.bookService.list_book_entries$().subscribe((book_entries) => {
       // filtrer les operations de type banque ou éparge
       // extraire la partie bancaire des opérations
-      let bank_statements: BankStatement[] = book_entrys
+      let bank_statements: BankStatement[] = book_entries
         .filter(book_entry => this.bank_or_saving_ops.some(op => book_entry.amounts[op] !== undefined))
         .map(book_entry => { let { operations, ...bank_statement } = book_entry; return bank_statement; });
 
