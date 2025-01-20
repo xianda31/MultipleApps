@@ -184,13 +184,13 @@ export class CartService {
 
   payments2bank_op_type(payments: Payment[]): BANK_OPERATION_TYPE {
     if (payments.some((payment) => payment.mode === PaymentMode.CHEQUE)) {
-      return BANK_OPERATION_TYPE.cheque_deposit;
+      return BANK_OPERATION_TYPE.cheque_receipt;
     } else {
       if (payments.some((payment) => payment.mode === PaymentMode.TRANSFER)) {
         return BANK_OPERATION_TYPE.transfer_receipt;
       }
     }
-    return BANK_OPERATION_TYPE.cash_received;
+    return BANK_OPERATION_TYPE.cash_receipt;
   }
 
   payments2cheque_ref(payments: Payment[]): string {

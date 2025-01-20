@@ -23,7 +23,7 @@
                     <input type="text" class="form-control" formControlName="total">
                 </div>
                 <div class="col-2"
-                    *ngIf="accounting_operation && (op_type === BANK_OPERATION_TYPES.cheque_deposit || op_type === BANK_OPERATION_TYPES.cheque_emit)">
+                    *ngIf="accounting_operation && (op_type === BANK_OPERATION_TYPES.cheque_receipt || op_type === BANK_OPERATION_TYPES.cheque_emit)">
                     <ng-container [ngTemplateOutlet]="cheque_definition"></ng-container>
                 </div>
             </ng-container>

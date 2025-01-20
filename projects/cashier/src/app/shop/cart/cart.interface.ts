@@ -1,6 +1,8 @@
 import { FINANCIAL_ACCOUNTS } from "../../../../../common/accounting.interface";
 import { Member } from "../../../../../common/member.interface";
 
+
+// TODO : PaymentMode very similar to BANK_OPERATION_TYPE  => streamline !
 export enum PaymentMode {
     CASH = 'espèces',
     CHEQUE = 'chèque',

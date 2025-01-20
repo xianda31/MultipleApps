@@ -97,7 +97,9 @@ export class BookService {
       }
       const updated_entry = this.parsed_entry(response.data as unknown as Bookentry_output);
       this._book_entries = this._book_entries.map((entry) => entry.id === updated_entry.id ? updated_entry : entry);
-      this._book_entries$.next(this._book_entries.sort((a, b) => a.date.localeCompare(b.date)));
+      this._book_entries$.next(this._book_entries.sort((a, b) => {
+        return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
+      }));
       return updated_entry;
     } catch (error) {
       console.error('error', error);
@@ -117,7 +119,9 @@ export class BookService {
           throw new Error(JSON.stringify(response.errors));
         }
         this._book_entries = this._book_entries.filter((entry) => entry.id !== entry_id);
-        this._book_entries$.next(this._book_entries.sort((a, b) => a.date.localeCompare(b.date)));
+        this._book_entries$.next(this._book_entries.sort((a, b) => {
+          return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
+        }));
         return response;
       })
       .catch((error) => {
@@ -139,7 +143,9 @@ export class BookService {
       }
       this._book_entries = (data as unknown as Bookentry_output[])
         .map((entry) => this.parsed_entry(entry as Bookentry_output))
-        .sort((a, b) => a.date.localeCompare(b.date));
+        .sort((a, b) => {
+          return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
+        });
       return this._book_entries;
     };
     console.log('fetching book_entries from ', this._book_entries ? 'cache' : 'server');

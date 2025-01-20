@@ -104,12 +104,12 @@ export const EXPENSES_COL: ACCOUNTS_COL = {
 export const FINANCIAL_COL: { [key in FINANCIAL_ACCOUNTS]?: string } = {
     'creance_in': 'AC',
     'avoir_in': 'AD',
-    'cash_in': 'AE',
+    'cashbox_in': 'AE',
     'bank_in': 'AF',
     'saving_in': 'AG',
     'creance_out': 'AH',
     'avoir_out': 'AI',
-    'cash_out': 'AJ',
+    'cashbox_out': 'AJ',
     'bank_out': 'AK',
     'saving_out': 'AL',
 }

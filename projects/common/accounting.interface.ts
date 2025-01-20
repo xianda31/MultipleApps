@@ -1,6 +1,6 @@
 export enum BANK_OPERATION_TYPE {
 
-    cash_received = 'paiement en espèces',
+    cash_receipt = 'paiement en espèces',
 
     asset_emit = 'émission d\'avoir',
 
@@ -8,13 +8,14 @@ export enum BANK_OPERATION_TYPE {
     // debt_emit = 'émission de créance',
     // debt_receipt = 'réception de créance',
 
-    cash_raising = 'collecte de fonds en espèces',
-    cheque_raising = 'collecte de fonds en chèques',
+    cash_raising = 'dépot de fonds en espèces',
+    cheque_raising = 'dépot de fonds en chèques',
     cash_deposit = 'dépot d\'espèces',
-    cheque_deposit = 'réception de chèque',
+    cheque_receipt = 'achat adhérent par chèque',
+    cheque_deposit = 'dépot de chèque en banque',
     transfer_receipt = 'virement reçu',
 
-    cash_withdraw = 'retrait d\'espèces',   // pour l'instant non permis !!
+    // cash_withdraw = 'retrait d\'espèces',   // pour l'instant non permis !!
 
     cheque_emit = 'paiement par chèque',
     transfer_emit = 'paiement par virement',
@@ -30,8 +31,8 @@ export enum FINANCIAL_ACCOUNTS {
     ASSET_credit = 'avoir_out',
     DEBT_debit = 'creance_in',
     DEBT_credit = 'creance_out',
-    CASH_debit = 'cash_in',
-    CASH_credit = 'cash_out',
+    CASH_debit = 'cashbox_in',
+    CASH_credit = 'cashbox_out',
     BANK_debit = 'bank_in',
     BANK_credit = 'bank_out',
     SAVING_debit = 'saving_in',
@@ -79,6 +80,7 @@ export interface BankStatement {
 }
 export interface Bookentry extends BankStatement { // comptes financiers
     id: string;
+    updatedAt?: string;
     class: RECORD_CLASS;
     operations: Operation[];
 }

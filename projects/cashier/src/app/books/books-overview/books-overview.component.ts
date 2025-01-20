@@ -9,12 +9,13 @@ import { ProductService } from '../../../../../common/services/product.service';
 import { FormsModule } from '@angular/forms';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { Router } from '@angular/router';
+import { CashBoxStatusComponent } from '../cash-box-status/cash-box-status.component';
 
 
 @Component({
   selector: 'app-books-overview',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, CashBoxStatusComponent],
   templateUrl: './books-overview.component.html',
   styleUrl: './books-overview.component.scss'
 })
@@ -32,18 +33,18 @@ export class BooksOverviewComponent {
   expenses: Expense[] = [];
 
   book_entries: Bookentry[] = [];
-  cash_book_entries: Bookentry[] = [];
+  cashbox_book_entries: Bookentry[] = [];
   bank_book_entries: Bookentry[] = [];
   asset_book_entries: Bookentry[] = [];
   debt_book_entries: Bookentry[] = [];
-  current_cash_amount: number = 0;
+  current_cashbox_amount: number = 0;
   current_assets_amount: number = 0;
   current_debt_amount: number = 0;
 
 
   book_entry_ops = Object.values(FINANCIAL_ACCOUNTS);
-  bank_ops = this.book_entry_ops.filter(op => !op.includes('cash') && !op.includes('avoir') && !op.includes('creance'));
-  cash_ops = this.book_entry_ops.filter(op => op.includes('cash'));
+  bank_ops = this.book_entry_ops.filter(op => op.includes('bank') || op.includes('saving'));
+  cashbox_ops = this.book_entry_ops.filter(op => op.includes('cashbox'));
   asset_ops = this.book_entry_ops.filter(op => op.includes('avoir'));
   debt_ops = this.book_entry_ops.filter(op => op.includes('creance'));
 
@@ -77,8 +78,8 @@ export class BooksOverviewComponent {
       this.book_entries = book_entries;
       this.build_arrays();
 
-      this.current_cash_amount = this.cash_book_entries.reduce((acc, book_entry) => {
-        return acc + (book_entry.amounts['cash_in'] || 0) - (book_entry.amounts['cash_out'] || 0);
+      this.current_cashbox_amount = this.cashbox_book_entries.reduce((acc, book_entry) => {
+        return acc + (book_entry.amounts['cashbox_in'] || 0) - (book_entry.amounts['cashbox_out'] || 0);
       }, 0);
 
       this.current_assets_amount = this.asset_book_entries.reduce((acc, book_entry) => {
@@ -97,12 +98,11 @@ export class BooksOverviewComponent {
 
   build_arrays() {
     this.bank_book_entries = this.book_entries.filter(book_entry => this.bank_ops.some(op => book_entry.amounts[op] !== undefined));
-    this.cash_book_entries = this.book_entries.filter(book_entry => this.cash_ops.some(op => book_entry.amounts[op] !== undefined));
+    this.cashbox_book_entries = this.book_entries.filter(book_entry => this.cashbox_ops.some(op => book_entry.amounts[op] !== undefined));
     this.asset_book_entries = this.book_entries.filter(book_entry => this.asset_ops.some(op => book_entry.amounts[op] !== undefined));
     this.debt_book_entries = this.book_entries.filter(book_entry => this.debt_ops.some(op => book_entry.amounts[op] !== undefined));
     this.revenues = this.bookService.get_revenues();
     this.expenses = this.bookService.get_expenses();
-
   }
 
 

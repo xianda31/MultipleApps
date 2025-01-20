@@ -242,7 +242,7 @@ export class ImportExcelComponent {
             return BANK_OPERATION_TYPE.saving_deposit;
           default:
             console.log('erreur de nature', nature);
-            return BANK_OPERATION_TYPE.cash_received;
+            return BANK_OPERATION_TYPE.cash_receipt;
         }
 
       case 'chrono vente':
@@ -253,15 +253,15 @@ export class ImportExcelComponent {
           case 'chèque':
             return BANK_OPERATION_TYPE.cheque_deposit;
           default:
-            return BANK_OPERATION_TYPE.cash_received;
+            return BANK_OPERATION_TYPE.cash_receipt;
         }
 
       case 'droits de table':
-        return BANK_OPERATION_TYPE.cash_received;
+        return BANK_OPERATION_TYPE.cash_receipt;
 
       default:
         console.log('erreur de feuille', this.worksheet.name);
-        return BANK_OPERATION_TYPE.cash_received;
+        return BANK_OPERATION_TYPE.cash_receipt;
     }
   }
   control_amounts_balance(book_entry: Bookentry): boolean {
