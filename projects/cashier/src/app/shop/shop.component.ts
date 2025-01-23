@@ -186,4 +186,9 @@ export class ShopComponent {
     if (!sale.values) return 0;
     return Object.values(sale.values).reduce((total, value) => total + value, 0);
   }
+
+  payment_type(sale: Revenue): string {
+    let book_entry = this.sales.find((entry) => entry.id === sale.id);
+    return book_entry ? book_entry.bank_op_type : '???';
+  }
 }

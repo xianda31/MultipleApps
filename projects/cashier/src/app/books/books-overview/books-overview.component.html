@@ -146,22 +146,19 @@
                     <td *ngFor=" let op of cashbox_ops " class="text-center">
                         {{ book_entry.amounts[op] }}
                     </td>
-                    <!-- <ng-container *ngIf="book_entry.cheque_ref"> -->
                     <td>{{book_entry.cheque_ref}}</td>
                     <td> {{book_entry.deposit_ref}} </td>
-                    <!-- </ng-container> -->
-                    <!-- <ng-container *ngIf="!book_entry.cheque_ref">
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                    </ng-container> -->
+                    <td>
+                        <i class="bi bi-search" (click)="show_book_entry(book_entry.id)"></i>
+                    </td>
+
                 </tr>
             </tbody>
         </table>
     </div>
 </div>
 
-<app-cash-box-status></app-cash-box-status>
+
 <!-- autres comptes -->
 <div class="row mt-2">
     <div class="col-md-4">

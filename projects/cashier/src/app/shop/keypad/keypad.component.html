@@ -1,6 +1,6 @@
 <div class="row">
     <!-- product keypad -->
-    <div class="col-8 gx-2">
+    <div class="col-8 ">
         <div class="row" *ngFor="let products of products_array | keyvalue ">
             <div class="card-group">
 
@@ -18,7 +18,7 @@
         </div>
     </div>
     <!-- payment keys -->
-    <div class="col-4 gx-2">
+    <div class="col-4 ">
         <ng-container class="row" *ngFor="let key of payment_keypad">
             <div [class]=" key.class " (click)="on_paykey_click(key)">
                 <div class="card-body text-center px-0 py-1">

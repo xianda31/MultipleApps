@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { Bookentry, BANK_OPERATION_TYPE, RECORD_CLASS } from '../../../../../common/accounting.interface';
 import { BookService } from '../../book.service';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { get_transaction } from '../../../../../common/transaction.definition';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { Bank } from '../../../../../common/system-conf.interface';
@@ -21,17 +21,23 @@ export class CashBoxStatusComponent {
   cheques_for_deposit: Bookentry[] = [];
   current_cash_amount: number = 0;
   cash_out_amount: number = 0;
-  temp_refs: Map<string, { amount: number, new_ref: string }> = new Map<string, { amount: number, new_ref: string }>();
+  temp_refs: Map<string, { cheque_qty: number, amount: number, new_ref: string }> = new Map<string, { cheque_qty: number, amount: number, new_ref: string }>();
   banks !: Bank[];
+
+  cashForm!: FormGroup;
+  coins = ['2€', '1€', '0,50€', '0,20€', '0,10€'];
+
 
   constructor(
     private bookService: BookService,
     private systemDataService: SystemDataService,
+    private fb: FormBuilder
   ) { }
 
 
   ngOnInit() {
 
+    this.init_cashForm();
 
     this.systemDataService.configuration$.subscribe((conf) => {
       this.banks = conf.banks;
@@ -53,19 +59,24 @@ export class CashBoxStatusComponent {
           if (book_entry.deposit_ref && book_entry.deposit_ref.startsWith('temp_')) {
             this.temp_refs.set(book_entry.deposit_ref, {
               amount: (this.temp_refs.get(book_entry.deposit_ref)?.amount ?? 0) + (book_entry.amounts['cashbox_in'] ?? 0),
+              cheque_qty: (this.temp_refs.get(book_entry.deposit_ref)?.cheque_qty ?? 0) + 1,
               new_ref: ''
             });
           }
         });
     });
   }
+  check_out() {
+    if (this.cash_out_amount !== 0) {
+      this.create_cash_out_entry(this.cash_out_amount);
+      this.cash_out_amount = 0;
+    }
+    this.cheques_check_out();
+  }
+
   // gestion des espèces en caisse
   //   choix du montant à retirer et création d'un mouvement de dépot
 
-  cash_out() {
-    this.create_cash_out_entry(this.cash_out_amount);
-    this.cash_out_amount = 0;
-  }
   create_cash_out_entry(amount: number) {
     let transaction = get_transaction(RECORD_CLASS.MOVEMENT, BANK_OPERATION_TYPE.cash_deposit);
     let cash_out: Bookentry = {
@@ -169,5 +180,16 @@ export class CashBoxStatusComponent {
       return bank.name + ' n°' + ref.split(bank.key)[1];
     }
     return ref;
+  }
+
+  // inventaire monnaie en caisse
+  init_cashForm() {
+    this.cashForm = this.fb.group({
+      '2€': [0],
+      '1€': [0],
+      '0,50€': [0],
+      '0,20€': [0],
+      '0,10€': [0],
+    });
   }
 }

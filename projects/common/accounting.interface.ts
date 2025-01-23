@@ -1,6 +1,7 @@
 export enum BANK_OPERATION_TYPE {
 
     cash_receipt = 'paiement en espèces',
+    cheque_receipt = 'achat adhérent par chèque',
 
     asset_emit = 'émission d\'avoir',
 
@@ -11,7 +12,6 @@ export enum BANK_OPERATION_TYPE {
     cash_raising = 'dépot de fonds en espèces',
     cheque_raising = 'dépot de fonds en chèques',
     cash_deposit = 'dépot d\'espèces',
-    cheque_receipt = 'achat adhérent par chèque',
     cheque_deposit = 'dépot de chèque en banque',
     transfer_receipt = 'virement reçu',
 

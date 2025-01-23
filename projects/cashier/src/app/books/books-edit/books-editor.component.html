@@ -22,16 +22,18 @@
                     <label for="amount">Montant</label>
                     <input type="text" class="form-control" formControlName="total">
                 </div>
-                <div class="col-2"
-                    *ngIf="accounting_operation && (op_type === BANK_OPERATION_TYPES.cheque_receipt || op_type === BANK_OPERATION_TYPES.cheque_emit)">
-                    <ng-container [ngTemplateOutlet]="cheque_definition"></ng-container>
+                <div class="col-2">
+                    <ng-container [ngTemplateOutlet]="cheque_definition"
+                        *ngIf="accounting_operation && (op_type === BANK_OPERATION_TYPES.cheque_receipt || op_type === BANK_OPERATION_TYPES.cheque_emit)">
+                    </ng-container>
+                    <ng-container [ngTemplateOutlet]="deposit"
+                        *ngIf="accounting_operation && (op_type === BANK_OPERATION_TYPES.cheque_deposit || op_type === BANK_OPERATION_TYPES.cheque_receipt)">
+                    </ng-container>
                 </div>
             </ng-container>
-
-
         </div>
 
-        <div *ngIf="accounting_operation">
+        <div class="mt-3" *ngIf="accounting_operation">
             <div formArrayName="operations">
                 <div class="row align-items-start" *ngFor="let operation of operations.controls; let i = index">
                     <br>
@@ -58,10 +60,6 @@
                                     [ngTemplateOutletContext]="{inputFormGroup: operation}"></ng-container>
                             </div>
                             <div *ngSwitchCase="RECORD_CLASSES.MOVEMENT">
-                                <!-- <div [formGroupName]="i" class="col-2 ">
-                                        <label for="amount">Montant</label>
-                                        <input type="text" class="form-control" formControlName="total">
-                                    </div> -->
                             </div>
                         </div>
                     </div>
@@ -76,7 +74,7 @@
                     {{!creation?'Modifier':'Créer'}}</button>
             </div>
             <div *ngIf="!creation" class="col-1">
-                <button type="button" class="btn btn-primary" (click)="cancel()">Abandon</button>
+                <button type="button" class="btn btn-primary" (click)="cancel()">Retour</button>
             </div>
             <div *ngIf="!creation" class="col-1">
                 <button type="button" class="btn btn-warning " (click)="delete()">Supprimer</button>
@@ -161,6 +159,16 @@
                 <input type="text" class="form-control" id="cheque_number" formControlName="cheque_number">
             </div>
         </ng-template>
+
+        <!-- formulaire chèque -->
+        <ng-template #deposit>
+            <div class="col align-items-end">
+                <label for="deposit_ref">Bordereau</label>
+                <input type="text" class="form-control" id="deposit_ref" formControlName="deposit_ref">
+            </div>
+        </ng-template>
+
+
         <!-- formulaire chèque Club -->
         <ng-template #cheque_club>
             <div class="col align-items-end">

@@ -11,49 +11,72 @@
     </div>
 
     <!-- sale editor -->
-    <div class="row ">
-        <!-- keypad -->
-        <div class="col-3 mt-2">
-            <app-keypad [asset]="asset_amount" (product_click)="product_selected($event)"
-                (paymode_click)="paymode_selected($event)">
-            </app-keypad>
-        </div>
-        <!-- cart -->
-        <div class="col-5 mt-2  fst-italic fst-light fs-6 font-monospace ">
-            <!-- buyer -->
-            <div class="row mb-2 p-2">
-                <div [formGroup]="buyerForm" class="row align-items-center ">
-                    <div class="col-auto"><strong> Acheteur</strong> </div>
-                    <div class="col-6 input-group input-group-sm">
-                        <app-input-member class="form-control form-control-sm" [members]="members"
-                            formControlName="buyer"></app-input-member>
-                        <span class="input-group-text">
-                            <i class="bi bi-x-lg" (click)="clear_sale()"></i>
-                        </span>
-                    </div>
+
+    <div class="card">
+        <div class="card-body">
+
+            <div class="row justify-content-evenly">
+
+                <!-- colonne keypad -->
+                <div class="col-3 mt-2">
+                    <app-keypad [asset]="asset_amount" (product_click)="product_selected($event)"
+                        (paymode_click)="paymode_selected($event)">
+                    </app-keypad>
                 </div>
+
+                <!-- colonne cart & vente du jour -->
+                <div class="col-9   fs-6 font-monospace  ">
+                    <div class="container h-100 d-flex flex-column">
+                        <div class="">
+                            <!-- buyer -->
+                            <div class="col-4 ">
+                                <div [formGroup]="buyerForm" class="align-items-center ">
+                                    <div class="col-4 input-group input-group-sm">
+                                        <span class="input-group-text"> Adhérent </span>
+                                        <app-input-member class="form-control form-control-sm" [members]="members"
+                                            formControlName="buyer"></app-input-member>
+                                        <span class="input-group-text">
+                                            <i class="bi bi-x-circle" (click)="clear_sale()"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- cart  -->
+                            <div class=" col-8 mt-2">
+                                <app-cart [debt_amount]="debt_amount" (complete)="cart_confirmed()"></app-cart>
+                            </div>
+                        </div>
+
+                        <!--  sales_of_the_day -->
+                        <div class="row mt-auto p-2">
+                            <div class="card">
+
+                                <strong>encaissements du jour : </strong>
+                                <table class="table table-striped  table-borderless table-primary align-middle">
+                                    <tr *ngFor="let sale of sales_of_the_day()">
+                                        <td>
+                                            {{sale.member}} :
+                                            <ng-container *ngFor="let value of sale.values | keyvalue">
+                                                {{value.key}} [{{value.value}}]
+                                            </ng-container>
+                                        </td>
+                                        <td>
+
+                                            {{payment_type(sale)}}
+                                        </td>
+                                        <td class="text-end">
+                                            {{sale_value(sale) | currency:'€':'symbol':'2.2-2':'fr'}}
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
             </div>
-
-
-            <!-- cart  -->
-            <div class="row mb-2 p-2">
-                <app-cart [debt_amount]="debt_amount" (complete)="cart_confirmed()"></app-cart>
-            </div>
-        </div>
-
-        <!--  sales_of_the_day -->
-        <div class="col-md-4 mt-24 fst-italic fst-light fs-6 font-monospace bg-body-tertiary">
-            <strong>encaissements du jour : </strong>
-            <table class="mt-2 table table-striped  table-borderless table-primary align-middle">
-                <tr *ngFor="let sale of sales_of_the_day()">
-                    <td>
-                        {{sale.label}} :
-                        <ng-container *ngFor="let value of sale.values | keyvalue">
-                            {{value.key}}
-                        </ng-container>
-                    </td>
-                    <td class="text-end">{{sale_value(sale) | currency:'€':'symbol':'2.2-2':'fr'}}</td>
-                </tr>
-            </table>
         </div>
     </div>
+
+</div>

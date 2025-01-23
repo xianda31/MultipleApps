@@ -98,6 +98,7 @@ export class BooksEditorComponent {
       'total': new FormControl<number>({ value: 0, disabled: true }),
       'bank_name': [''],
       'cheque_number': [''],
+      'deposit_ref': [''],
       'operations': new FormArray([]),
     });
 
@@ -217,6 +218,7 @@ export class BooksEditorComponent {
       total: total,
       bank_name: book_entry.cheque_ref?.slice(0, 3),
       cheque_number: book_entry.cheque_ref?.slice(3),
+      deposit_ref: book_entry.deposit_ref,
     });
 
     this.operations.clear();
@@ -287,6 +289,7 @@ export class BooksEditorComponent {
       id: this.form.controls['id'].value,
       bank_op_type: this.form.controls['op_type'].value,
       cheque_ref: this.form.controls['bank_name'].value?.toString() + this.form.controls['cheque_number'].value?.toString(),
+      deposit_ref: this.form.controls['deposit_ref'].value ?? null,
       amounts: amounts,
       class: this.form.controls['op_class'].value,
       operations: operations

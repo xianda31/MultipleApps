@@ -1,76 +1,96 @@
-<div class="row mt-2">
-    <div class="col-md-3 gx-1">
-        <div class="card h-100">
-            <div class="card-body p-0">
-                <div class="card-header">
-                    <h5>espèces en caisse : {{current_cash_amount}} €</h5>
-                </div>
-                <div class=" input-group mt-2 px-2">
-                    <span class="input-group-text">montant à déposer</span>
-                    <input type="text" class="form-control" [(ngModel)]="cash_out_amount">
-                    <button class="btn btn-primary" [disabled]="cash_out_amount === 0"
-                        (click)="cash_out()">déposer</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-5 gx-1">
+<div class="container">
 
-        <div class="card h-100">
-            <div class="card-body p-0">
-                <h5 class="card-header">
-                    <div class="row g-0">
-                        <span class="col">chèques à déposer</span>
-                        <span class="col-auto " *ngIf="cheques_for_deposit.length !== 0">
-                            <button class="btn btn-sm btn-primary align-self-end"
-                                [disabled]="!some_cheque_selected_for_deposit()"
-                                (click)="cheques_check_out()">déposer</button>
-                        </span>
+    <div class="row mt-2">
+
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-body p-0">
+                    <div class="card-header">
+                        <h5 class="row">
+                            <span class="col">retrait caisse pour dépot en banque</span>
+                            <span class="col-auto " *ngIf="cheques_for_deposit.length !== 0">
+                                <button class="btn btn-sm btn-primary align-self-end"
+                                    [disabled]="!some_cheque_selected_for_deposit()  && cash_out_amount === 0"
+                                    (click)="check_out()">déposer</button>
+                            </span>
+                        </h5>
                     </div>
-                </h5>
-            </div>
 
-            <div class="card-text ps-3 pe-3">
-                <table class="table table-sm table-borderless ">
-                    <tbody>
-                        <tr *ngFor="let book_entry of cheques_for_deposit">
-                            <td>{{develop_bank_ref(book_entry.cheque_ref)}}</td>
-                            <td>{{(book_entry.operations.length !== 0) ? book_entry.operations[0].member : ''}}</td>
-                            <td> {{ book_entry.amounts['cashbox_in'] }}€ </td>
-                            <td> <input type="checkbox" [(ngModel)]="book_entry.deposit_ref"> </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 gx-1">
-        <div class="card h-100">
-            <div class="card-body p-0">
-                <div class="card-header">
+                    <div class="card-text ps-3 pe-3">
+                        <div class="row align-items-center mt-2">
+                            <div class="col-6">
+                                <label class="strong fw-bold text-decoration-underline "> {{current_cash_amount}} € en
+                                    caisse</label>
+                            </div>
+                            <div class="col-6">
+                                <div class=" input-group ">
+                                    <span class="input-group-text">somme à déposer</span>
+                                    <input type="text" class="form-control text-end" [(ngModel)]="cash_out_amount">
+                                </div>
+                            </div>
+                        </div>
 
-                    <h5> bordereaux à confirmer </h5>
-                </div>
-                <div class="card-text ps-3 pe-3">
-                    <table class="table table-sm align-middle table-borderless ">
-                        <tbody>
-                            <tr *ngFor="let ref of temp_refs | keyvalue , let i = index">
-                                <td> {{get_date_of_temporary_deposit_ref(ref.key)}}</td>
-                                <td>{{ref.value.amount}}€</td>
-                                <td>
-                                    <input type="text" class="form-control" [(ngModel)]="ref.value.new_ref"
-                                        placeholder="référence de bordereau">
-                                </td>
-                                <td>
-                                    <button [disabled]="ref.value.new_ref===''" class="btn btn-sm btn-primary">
-                                        <i (click)="validate_deposit(ref)" class=" bi-check2"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                        <label class="fw-bold text-decoration-underline ">{{cheques_for_deposit.length}} chèque(s) en
+                            caisse</label>
+                        <table class="table table-sm table-borderless ">
+                            <tbody>
+                                <tr *ngFor="let book_entry of cheques_for_deposit">
+                                    <td>{{develop_bank_ref(book_entry.cheque_ref)}}</td>
+                                    <td>{{(book_entry.operations.length !== 0) ? book_entry.operations[0].member : ''}}
+                                    </td>
+                                    <td> {{ book_entry.amounts['cashbox_in'] }}€ </td>
+                                    <td> <input type="checkbox" [(ngModel)]="book_entry.deposit_ref"> </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                    </div>
                 </div>
             </div>
         </div>
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-body p-0">
+                    <div class="card-header">
+                        <h5> bordereaux de dépot chèques à confirmer </h5>
+                    </div>
+                    <div class="card-text ps-3 pe-3">
+                        <table class="table table-sm align-middle table-borderless ">
+                            <tbody>
+                                <tr *ngFor="let ref of temp_refs | keyvalue , let i = index">
+                                    <td> {{get_date_of_temporary_deposit_ref(ref.key)}}</td>
+                                    <td>{{ref.value.cheque_qty}} chèque(s)</td>
+                                    <td>montant total :{{ref.value.amount}}€</td>
+                                    <td>
+                                        <input type="text" class="form-control" [(ngModel)]="ref.value.new_ref"
+                                            placeholder="référence de bordereau">
+                                    </td>
+                                    <td>
+                                        <button [disabled]="ref.value.new_ref===''" class="btn btn-sm btn-primary">
+                                            <i (click)="validate_deposit(ref)" class=" bi-check2"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <div class="card mt-3">
+        <div class="card-header">
+            <h5>statut caisse</h5>
+        </div>
+        <div class="card-body">
+            <form class="col-3" [formGroup]="cashForm">
+                <div class="input-group" *ngFor="let coin of coins">
+                    <label class="input-group-text col-8">pièce de {{coin}}</label>
+                    <input type="number" class="form-control text-end" [formControlName]="coin" [id]="coin">
+                </div>
+            </form>
+        </div>
+    </div>
+
 </div>

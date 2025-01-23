@@ -6,6 +6,7 @@ import { BooksOverviewComponent } from './books/books-overview/books-overview.co
 import { ImportExcelComponent } from './excel/import-excel/import-excel.component';
 import { BankStatusComponent } from './books/bank-status/bank-status.component';
 import { BooksEditorComponent } from './books/books-edit/books-editor.component';
+import { CashBoxStatusComponent } from './books/cash-box-status/cash-box-status.component';
 
 export const routes: Routes = [
     { path: 'shop', component: ShopComponent },   //, canActivate: [loggedInGuard]
@@ -13,6 +14,7 @@ export const routes: Routes = [
     { path: 'books/bank-status', component: BankStatusComponent },
     { path: 'books/editor', component: BooksEditorComponent },
     { path: 'books/editor/:id', component: BooksEditorComponent },
+    { path: 'books/cash-box-status', component: CashBoxStatusComponent },
     { path: 'fees', component: FeesComponent },
     { path: 'excel/import', component: ImportExcelComponent },
     { path: '', component: HomeComponent },
