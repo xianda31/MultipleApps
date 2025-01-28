@@ -1,47 +1,78 @@
-export enum BANK_OPERATION_TYPE {
+export enum ENTRY_TYPE {
+    cash_payment = 'cash_payment',
+    cheque_payment = 'cheque_payment',
+    debt_payment = 'debt_payment',
+    transfer_payment = 'transfer_payment',
+    cash_receipt = 'cash_receipt',
+    cheque_receipt = 'cheque_receipt',
+    transfer_receipt = 'transfer_receipt',
+    cash_raising = 'cash_raising',
+    // cheque_raising = 'cheque_raising',
+    cash_deposit = 'cash_deposit',
+    cheque_deposit = 'cheque_deposit',
+    saving_deposit = 'saving_deposit',
+    saving_withdraw = 'saving_withdraw',
+    asset_emit = 'asset_emit',
+    cheque_emit = 'cheque_emit',
+    transfer_emit = 'transfer_emit',
+    card_payment = 'card_payment',
+    bank_debiting = 'bank_debiting',
 
-    cash_receipt = 'paiement en espèces',
-    cheque_receipt = 'achat adhérent par chèque',
-
-    asset_emit = 'émission d\'avoir',
-
-    // asset_receipt = 'réception d\'avoir',   
-    // debt_emit = 'émission de créance',
-    // debt_receipt = 'réception de créance',
-
-    cash_raising = 'dépot de fonds en espèces',
-    cheque_raising = 'dépot de fonds en chèques',
-    cash_deposit = 'dépot d\'espèces',
-    cheque_deposit = 'dépot de chèque en banque',
-    transfer_receipt = 'virement reçu',
-
-    // cash_withdraw = 'retrait d\'espèces',   // pour l'instant non permis !!
-
-    cheque_emit = 'paiement par chèque',
-    transfer_emit = 'paiement par virement',
-    bank_debiting = 'prélèvement',
-    card_payment = 'paiement par carte',
-
-    saving_deposit = 'versement compte \épargne',
-    saving_withdraw = 'retrait compte \épargne',
 }
 
-export enum FINANCIAL_ACCOUNTS {
-    ASSET_debit = 'avoir_in',
-    ASSET_credit = 'avoir_out',
-    DEBT_debit = 'creance_in',
-    DEBT_credit = 'creance_out',
+// export enum BOOK_ENTRY_TYPE {
+
+//     // vente à adhérent
+//     cash_payment = 'paiement en espèces',
+//     cheque_payment = 'paiement par chèque',
+//     debt_payment = 'paiement par créance',
+//     transfer_payment = 'paiement par virement',
+
+//     //B.  vente unitaire à tiers
+//     cash_receipt = 'paiement en espèces',               // ex. droit de table
+//     cheque_receipt = 'paiement par chèque',               // ex. participation d'un invité,d'un autre club
+//     transfer_receipt = 'paiement par virement',          // ex. participation d'un invité,d'un autre
+
+//     //C. reception groupée de fond de tiers
+//     cash_raising = 'dépot de fonds levés en espèces',
+//     cheque_raising = 'dépot de fonds levés en chèques',
+
+//     // D.  mouvements de fonds
+//     cash_deposit = 'dépot d\'espèces',
+//     cheque_deposit = 'dépot de chèque en banque',
+//     saving_deposit = 'versement compte \épargne',
+//     saving_withdraw = 'retrait compte \épargne',
+
+//     // debt_emit = 'émission de créance',
+//     // asset_receipt = 'paiement par avoir',
+//     // cash_withdraw = 'retrait d\'espèces',   // pour l'instant non permis !!
+
+//     // E. achat , dépenses
+//     asset_emit = 'émission d\'avoir',
+//     cheque_emit = 'achat par chèque',
+//     transfer_emit = 'achat par virement',
+//     card_payment = 'achat par carte',
+//     bank_debiting = 'prélèvement',
+
+// }
+
+export enum FINANCIAL_ACCOUNT {
     CASH_debit = 'cashbox_in',
-    CASH_credit = 'cashbox_out',
     BANK_debit = 'bank_in',
-    BANK_credit = 'bank_out',
+    ASSET_debit = 'avoir_in',
+    DEBT_debit = 'creance_in',
     SAVING_debit = 'saving_in',
+
+    CASH_credit = 'cashbox_out',
+    BANK_credit = 'bank_out',
+    ASSET_credit = 'avoir_out',
+    DEBT_credit = 'creance_out',
     SAVING_credit = 'saving_out',
 }
 
 
 
-export enum RECORD_CLASS {
+export enum BOOK_ENTRY_CLASS {
     REVENUE_FROM_MEMBER = 'vente adhérent',
     OTHER_REVENUE = 'recettes hors vente adhérent',
     EXPENSE = 'toutes dépenses',
@@ -68,20 +99,20 @@ export interface Expense extends Operation, Session {
 }; // comptes de charges
 
 
-export type bank_values = { [key in FINANCIAL_ACCOUNTS]?: number; };
-export interface BankStatement {
+export type bank_values = { [key in FINANCIAL_ACCOUNT]?: number; };
+
+
+export interface Bookentry {
+    id: string;
+    updatedAt?: string;
     season: string;
     date: string;
-    bank_op_type: BANK_OPERATION_TYPE;   // type d'opération bancaire
+    class: BOOK_ENTRY_CLASS;
+    bank_op_type: ENTRY_TYPE;   // type d'opération bancaire
     amounts: bank_values
     cheque_ref?: string;        // code banque + numéro de chèque
     bank_report?: string;       // (mois) relevé bancaire
     deposit_ref?: string;       //  référence bordereau de dépôt
-}
-export interface Bookentry extends BankStatement { // comptes financiers
-    id: string;
-    updatedAt?: string;
-    class: RECORD_CLASS;
     operations: Operation[];
 }
 

@@ -1,7 +1,7 @@
 import { Component, signal } from '@angular/core';
 import * as ExcelJS from 'exceljs';
 import { EXPENSES_COL, FINANCIAL_COL, MAP, PRODUCTS_COL } from '../../../../../common/excel/excel.interface';
-import { BANK_OPERATION_TYPE, Bookentry, FINANCIAL_ACCOUNTS, operation_values, Operation, RECORD_CLASS } from '../../../../../common/accounting.interface';
+import { ENTRY_TYPE, Bookentry, FINANCIAL_ACCOUNT, operation_values, Operation, BOOK_ENTRY_CLASS } from '../../../../../common/accounting.interface';
 import { Member } from '../../../../../common/member.interface';
 import { MembersService } from '../../../../../admin-dashboard/src/app/members/service/members.service';
 import { BookService } from '../../book.service';
@@ -185,8 +185,8 @@ export class ImportExcelComponent {
         amounts: {},
         operations: [],
         bank_op_type: this.convert_to_bank_op_type(cell_nature?.toString() as string),
-        class: cell_chrono.startsWith('C') ? RECORD_CLASS.REVENUE_FROM_MEMBER
-          : (cell_chrono.startsWith('K') ? RECORD_CLASS.OTHER_REVENUE : RECORD_CLASS.EXPENSE)
+        class: cell_chrono.startsWith('C') ? BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER
+          : (cell_chrono.startsWith('K') ? BOOK_ENTRY_CLASS.OTHER_REVENUE : BOOK_ENTRY_CLASS.EXPENSE)
 
       };
 
@@ -199,7 +199,7 @@ export class ImportExcelComponent {
         let [name, col] = entry;
         let cell = master_row.getCell(col).value;
         if (!cell?.valueOf()) { return; }
-        book_entry.amounts[name as FINANCIAL_ACCOUNTS] = cell.valueOf() as number;
+        book_entry.amounts[name as FINANCIAL_ACCOUNT] = cell.valueOf() as number;
       });
 
       // construct products operation side
@@ -221,54 +221,54 @@ export class ImportExcelComponent {
     return promise;
   }
 
-  convert_to_bank_op_type(nature: string): BANK_OPERATION_TYPE {
+  convert_to_bank_op_type(nature: string): ENTRY_TYPE {
     switch (this.worksheet.name) {
       case 'chrono banque':
 
         switch (nature) {
           case 'dépôt':
-            return BANK_OPERATION_TYPE.cash_deposit;
+            return ENTRY_TYPE.cash_deposit;
           case 'chèque':
-            return BANK_OPERATION_TYPE.cheque_emit;
+            return ENTRY_TYPE.cheque_emit;
           case 'virement reçu':
-            return BANK_OPERATION_TYPE.transfer_receipt;
+            return ENTRY_TYPE.transfer_receipt;
           case 'virement emis':
-            return BANK_OPERATION_TYPE.transfer_emit;
+            return ENTRY_TYPE.transfer_emit;
           case 'prélèvement':
-            return BANK_OPERATION_TYPE.bank_debiting;
+            return ENTRY_TYPE.bank_debiting;
           case 'carte':
-            return BANK_OPERATION_TYPE.card_payment;
+            return ENTRY_TYPE.card_payment;
           case 'versement compte épargne':
-            return BANK_OPERATION_TYPE.saving_deposit;
+            return ENTRY_TYPE.saving_deposit;
           default:
             console.log('erreur de nature', nature);
-            return BANK_OPERATION_TYPE.cash_receipt;
+            return ENTRY_TYPE.cash_receipt;
         }
 
       case 'chrono vente':
 
         switch (nature) {
           case 'virement':
-            return BANK_OPERATION_TYPE.transfer_receipt;
+            return ENTRY_TYPE.transfer_receipt;
           case 'chèque':
-            return BANK_OPERATION_TYPE.cheque_deposit;
+            return ENTRY_TYPE.cheque_deposit;
           default:
-            return BANK_OPERATION_TYPE.cash_receipt;
+            return ENTRY_TYPE.cash_receipt;
         }
 
       case 'droits de table':
-        return BANK_OPERATION_TYPE.cash_receipt;
+        return ENTRY_TYPE.cash_receipt;
 
       default:
         console.log('erreur de feuille', this.worksheet.name);
-        return BANK_OPERATION_TYPE.cash_receipt;
+        return ENTRY_TYPE.cash_receipt;
     }
   }
   control_amounts_balance(book_entry: Bookentry): boolean {
-    let debit_keys: FINANCIAL_ACCOUNTS[] = Object.keys(book_entry.amounts).filter((key): key is FINANCIAL_ACCOUNTS => key.includes('in'));
+    let debit_keys: FINANCIAL_ACCOUNT[] = Object.keys(book_entry.amounts).filter((key): key is FINANCIAL_ACCOUNT => key.includes('in'));
     let total_debit = debit_keys.reduce((acc, key) => acc + (book_entry.amounts[key] || 0), 0);
 
-    let credit_keys: FINANCIAL_ACCOUNTS[] = Object.keys(book_entry.amounts).filter((key): key is FINANCIAL_ACCOUNTS => key.includes('out'));
+    let credit_keys: FINANCIAL_ACCOUNT[] = Object.keys(book_entry.amounts).filter((key): key is FINANCIAL_ACCOUNT => key.includes('out'));
     let total_credit = credit_keys.reduce((acc, key) => acc + (book_entry.amounts[key] || 0), 0);
 
     let total = total_debit - total_credit;
@@ -279,9 +279,9 @@ export class ImportExcelComponent {
     book_entry.operations.forEach((operation) => {
       sum += Object.values(operation.values).reduce((acc, value) => acc + value, 0);
     });
-    if (book_entry.class === RECORD_CLASS.REVENUE_FROM_MEMBER || book_entry.class === RECORD_CLASS.OTHER_REVENUE) {
+    if (book_entry.class === BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER || book_entry.class === BOOK_ENTRY_CLASS.OTHER_REVENUE) {
       products_sum += sum;
-    } else if (book_entry.class === RECORD_CLASS.EXPENSE) {
+    } else if (book_entry.class === BOOK_ENTRY_CLASS.EXPENSE) {
       expenses_sum += sum;
     }
 
@@ -303,7 +303,7 @@ export class ImportExcelComponent {
     if (Object.keys(revenues).length > 0) {
       operation = {
         label: row.getCell(MAP.intitulé).value?.toString() as string,
-        // class: cell_chrono.startsWith('C') ? RECORD_CLASS.REVENUE_FROM_MEMBER : RECORD_CLASS.OTHER_REVENUE,
+        // class: cell_chrono.startsWith('C') ? BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER : BOOK_ENTRY_CLASS.OTHER_REVENUE,
         values: revenues,
       };
     } else {
@@ -311,13 +311,13 @@ export class ImportExcelComponent {
       if (Object.keys(expenses).length > 0) {
         operation = {
           label: row.getCell(MAP.intitulé).value?.toString() as string,
-          // class: RECORD_CLASS.EXPENSE,
+          // class: BOOK_ENTRY_CLASS.EXPENSE,
           values: expenses,
         };
       } else {
         operation = {
           label: row.getCell(MAP.intitulé).value?.toString() as string,
-          // class: RECORD_CLASS.MOVEMENT,
+          // class: BOOK_ENTRY_CLASS.MOVEMENT,
           values: {},
         };
       }

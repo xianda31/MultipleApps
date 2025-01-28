@@ -8,17 +8,17 @@ import { Product } from '../../../../admin-dashboard/src/app/sales/products/prod
 import { CommonModule } from '@angular/common';
 import { InputMemberComponent } from '../input-member/input-member.component';
 import { SessionService } from './session.service';
-import { CartItem, Payment, PaymentMode } from './cart/cart.interface';
 import { Bookentry, Revenue, Session } from '../../../../common/accounting.interface';
 import { BookService } from '../book.service';
-import { KeypadComponent } from "./keypad/keypad.component";
 import { CartComponent } from "./cart/cart.component";
+import { ProductService } from '../../../../common/services/product.service';
+import { get_transaction } from '../../../../common/transaction.definition';
 
 
 @Component({
   selector: 'app-shop',
   standalone: true,
-  imports: [ReactiveFormsModule, CommonModule, FormsModule, InputMemberComponent, KeypadComponent, CartComponent],
+  imports: [ReactiveFormsModule, CommonModule, FormsModule, InputMemberComponent, CartComponent],
   templateUrl: './shop.component.html',
   styleUrl: './shop.component.scss'
 })
@@ -30,6 +30,9 @@ export class ShopComponent {
   session !: Session;
   debt_amount = 0;
   asset_amount = 0;
+
+  products_array: Map<string, Product[]> = new Map();
+
 
   sales: Bookentry[] = [];
 
@@ -51,6 +54,7 @@ export class ShopComponent {
     private toastService: ToastService,
     private bookService: BookService,
     private sessionService: SessionService,
+    private productService: ProductService,
   ) {
 
     this.bookService.list_book_entries$().subscribe((book_entry) => {
@@ -61,6 +65,9 @@ export class ShopComponent {
 
 
   ngOnInit(): void {
+    this.productService.listProducts().subscribe((products) => {
+      this.products_array = this.productService.products_by_accounts(products);
+    });
 
     this.membersService.listMembers().subscribe((members) => {
       this.members = members;
@@ -101,54 +108,25 @@ export class ShopComponent {
     return Promise.resolve(due);
   }
 
-  product_selected(event: any) {
-    const product = event as Product;
-    let cart_item = (product: Product, payee: Member | null): CartItem => {
-      const cartItem: CartItem = {
-        product_id: product.id,
-        paied: product.price,
-        payee_id: payee === null ? '' : payee.id,
-        product_account: product.account,
-        payee_name: payee === null ? '' : payee.lastname + ' ' + payee.firstname
-      };
-      return { payee: payee, ...cartItem }
-    }
+  on_product_click(product: Product) {
 
     if (!this.buyerForm.valid) {
       this.toastService.showWarningToast('saisie achat', 'selectionner un acheteur');
-      return
+      return;
     }
 
     if (product.paired) {
-      const cart_item1 = cart_item(product, this.buyer);
-      const cart_item2 = cart_item(product, null);
+      const cart_item1 = this.cartService.build_cart_item(product, this.buyer);
+      const cart_item2 = this.cartService.build_cart_item(product, null);
       this.cartService.addToCart(cart_item1);
       this.cartService.addToCart(cart_item2);
     } else {
-      const cart_item1 = cart_item(product, this.buyer);
+      const cart_item1 = this.cartService.build_cart_item(product, this.buyer);
       this.cartService.addToCart(cart_item1);
     }
   }
 
 
-  paymode_selected(event: any) {
-    const payment_mode = event as PaymentMode;
-    if (!this.cart_is_valid || (this.cartService.getCartItems().length === 0 && this.debt_amount === 0)) {
-      this.toastService.showWarningToast('saisie achat', 'le panier est vide ou partiellement renseigné');
-      return
-    }
-    const amount = (payment_mode === PaymentMode.ASSETS) ? this.asset_amount : this.cartService.getRemainToPay();
-    this.asset_amount = (payment_mode === PaymentMode.ASSETS) ? 0 : this.asset_amount;
-
-    const payment: Payment = {
-      payer_id: this.buyer!.id,
-      mode: payment_mode,
-      bank: '',
-      cheque_no: '',
-      amount: amount,
-    }
-    this.cartService.addToPayments(payment);
-  }
 
   cart_confirmed(): void {
     this.cartService.save_sale(this.session, this.buyer!)
@@ -182,13 +160,30 @@ export class ShopComponent {
     return member ? member.lastname + ' ' + member.firstname : '???';
   }
 
-  sale_value(sale: Revenue) {
-    if (!sale.values) return 0;
-    return Object.values(sale.values).reduce((total, value) => total + value, 0);
+  sale_amount(sale: Revenue): number {
+    let book_entry = this.sales.find((entry) => entry.id === sale.id);
+    if (!book_entry) throw new Error('sale not found');
+    let amount = 0;
+    for (let [key, value] of Object.entries(book_entry.amounts)) {
+      if (key.endsWith('_in')) {
+        amount += value;
+      }
+    }
+    return amount;
+  }
+
+  debt_paied(sale: Revenue): number {
+    let book_entry = this.sales.find((entry) => entry.id === sale.id);
+    return book_entry?.amounts['creance_out'] ?? 0;
+  }
+  asset_used(sale: Revenue): number {
+    let book_entry = this.sales.find((entry) => entry.id === sale.id);
+    return book_entry?.amounts['avoir_in'] ?? 0;
   }
 
   payment_type(sale: Revenue): string {
     let book_entry = this.sales.find((entry) => entry.id === sale.id);
-    return book_entry ? book_entry.bank_op_type : '???';
+    if (!book_entry) throw new Error('sale not found');
+    return get_transaction(book_entry.bank_op_type).label;
   }
 }

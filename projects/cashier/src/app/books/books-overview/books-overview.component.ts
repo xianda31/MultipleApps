@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Expense, Bookentry, FINANCIAL_ACCOUNTS, Revenue } from '../../../../../common/accounting.interface';
+import { Expense, Bookentry, FINANCIAL_ACCOUNT, Revenue, ENTRY_TYPE } from '../../../../../common/accounting.interface';
 import { BookService } from '../../book.service';
 import { CommonModule } from '@angular/common';
 import { Member } from '../../../../../common/member.interface';
@@ -10,12 +10,13 @@ import { FormsModule } from '@angular/forms';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { Router } from '@angular/router';
 import { CashBoxStatusComponent } from '../cash-box-status/cash-box-status.component';
+import { get_transaction } from '../../../../../common/transaction.definition';
 
 
 @Component({
   selector: 'app-books-overview',
   standalone: true,
-  imports: [CommonModule, FormsModule, CashBoxStatusComponent],
+  imports: [CommonModule, FormsModule],
   templateUrl: './books-overview.component.html',
   styleUrl: './books-overview.component.scss'
 })
@@ -42,7 +43,7 @@ export class BooksOverviewComponent {
   current_debt_amount: number = 0;
 
 
-  book_entry_ops = Object.values(FINANCIAL_ACCOUNTS);
+  book_entry_ops = Object.values(FINANCIAL_ACCOUNT);
   bank_ops = this.book_entry_ops.filter(op => op.includes('bank') || op.includes('saving'));
   cashbox_ops = this.book_entry_ops.filter(op => op.includes('cashbox'));
   asset_ops = this.book_entry_ops.filter(op => op.includes('avoir'));
@@ -94,6 +95,11 @@ export class BooksOverviewComponent {
 
   }
 
+  // utilities
+
+  transaction_label(op_type: ENTRY_TYPE): string {
+    return get_transaction(op_type).label;
+  }
 
 
   build_arrays() {

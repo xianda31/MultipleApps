@@ -37,7 +37,7 @@ export class MembersService {
         });
       return this._members as Member[];
     };
-    console.log('fetching members from ', this._members ? 'cache' : 'AWS');
+    // console.log('fetching members from ', this._members ? 'cache' : 'AWS');
 
     let remote_load$ = from(fetchMembers()).pipe(
       tap((members) => {

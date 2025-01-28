@@ -1,73 +1,93 @@
 <div *ngIf="form_ready" class="mt-2">
     <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <div class="col-2">
+            <label for="date">Date</label>
+            <input type="date" class="form-control" id="date" formControlName="date">
+        </div>
         <div class="row  align-items-start">
-            <div class="col-2">
-                <label for="date">Date</label>
-                <input type="date" class="form-control" id="date" formControlName="date">
-            </div>
             <div class="col-3">
                 <label for="op_type">Classe d'opération</label>
                 <select class="form-control" id="op_class" formControlName="op_class">
                     <option value="undefined" hidden disabled>néant</option>
-                    <option *ngFor="let op_class of op_classes" [value]="op_class">
-                        {{op_class}}
+                    <option *ngFor="let value of transaction_class_values" [value]="value">
+                        {{value}}
                     </option>
                 </select>
             </div>
             <ng-container *ngIf="op_types">
-                <div class="col-3">
+                <div class="col-4">
                     <ng-container [ngTemplateOutlet]="select_operation_type"></ng-container>
                 </div>
-                <div class="col-2">
-                    <label for="amount">Montant</label>
-                    <input type="text" class="form-control" formControlName="total">
-                </div>
-                <div class="col-2">
-                    <ng-container [ngTemplateOutlet]="cheque_definition"
-                        *ngIf="accounting_operation && (op_type === BANK_OPERATION_TYPES.cheque_receipt || op_type === BANK_OPERATION_TYPES.cheque_emit)">
-                    </ng-container>
-                    <ng-container [ngTemplateOutlet]="deposit"
-                        *ngIf="accounting_operation && (op_type === BANK_OPERATION_TYPES.cheque_deposit || op_type === BANK_OPERATION_TYPES.cheque_receipt)">
-                    </ng-container>
+                <div class="col-5">
+                    <div class="row">
+                        <div class="col-8">
+                            <ng-container [ngTemplateOutlet]="cheque_definition"
+                                *ngIf="transaction && transaction_with_cheque(op_type)">
+                            </ng-container>
+                        </div>
+                        <div class="col-4">
+                            <ng-container [ngTemplateOutlet]="deposit"
+                                *ngIf="transaction && transaction_with_deposit(op_type)">
+                            </ng-container>
+                        </div>
+                    </div>
                 </div>
             </ng-container>
         </div>
 
-        <div class="mt-3" *ngIf="accounting_operation">
+        <div class="row mt-3" *ngIf="transaction">
+            <div class="col-2">
+                <!-- <label for="amount">Montant</label>
+                <input type="text" class="form-control" formControlName="total"> -->
+            </div>
+            <div class="col-10">
+                <ng-container [ngTemplateOutlet]="financial_amounts"
+                    [ngTemplateOutletContext]="{inputFormGroup: form}"></ng-container>
+            </div>
+        </div>
+
+
+        <div class="mt-3" *ngIf="transaction">
             <div formArrayName="operations">
-                <div class="row align-items-start" *ngFor="let operation of operations.controls; let i = index">
+                <div class="row align-items-end" *ngFor="let operation of operations.controls; let i = index">
                     <br>
-                    <div class="col-3">
+                    <div class="col-2">
                         <ng-container [ngTemplateOutlet]="label"
                             [ngTemplateOutletContext]="{inputFormGroup: operation}"></ng-container>
                     </div>
                     <div class="col-2"> <!-- formulaire adhérent -->
-                        <ng-container *ngIf="accounting_operation.nominative" [ngTemplateOutlet]="member"
+                        <ng-container *ngIf="transaction.nominative" [ngTemplateOutlet]="member"
                             [ngTemplateOutletContext]="{inputFormGroup: operation}"></ng-container>
                     </div>
                     <div class="col-7">
-                        <div [ngSwitch]="accounting_operation.class">
-                            <div *ngSwitchCase="RECORD_CLASSES.EXPENSE">
+                        <div [ngSwitch]="transaction.class">
+                            <div *ngSwitchCase="transaction_classes.EXPENSE">
                                 <ng-container [ngTemplateOutlet]="expense"
                                     [ngTemplateOutletContext]="{inputFormGroup: operation}"></ng-container>
                             </div>
-                            <div *ngSwitchCase="RECORD_CLASSES.REVENUE_FROM_MEMBER">
+                            <div *ngSwitchCase="transaction_classes.REVENUE_FROM_MEMBER">
                                 <ng-container [ngTemplateOutlet]="revenue"
                                     [ngTemplateOutletContext]="{inputFormGroup: operation}"></ng-container>
                             </div>
-                            <div *ngSwitchCase="RECORD_CLASSES.OTHER_REVENUE">
+                            <div *ngSwitchCase="transaction_classes.OTHER_REVENUE">
                                 <ng-container [ngTemplateOutlet]="revenue"
                                     [ngTemplateOutletContext]="{inputFormGroup: operation}"></ng-container>
                             </div>
-                            <div *ngSwitchCase="RECORD_CLASSES.MOVEMENT">
+                            <div *ngSwitchCase="transaction_classes.MOVEMENT">
                             </div>
                         </div>
+                    </div>
+                    <div *ngIf="creation" class="col-1 text-end">
+                        <button type="button" class="btn btn-primary" (click)="init_operation(transaction)">
+                            <i class="bi bi-person-fill-add"></i>
+                        </button>
                     </div>
                 </div>
             </div>
 
         </div>
-
+        form.status : {{form.status}}<br>
+        operations.status : {{form.get('operations')?.status}}
         <div class="row mt-3">
             <div class="col-1">
                 <button [disabled]="form.invalid" type="submit" class="btn btn-primary">
@@ -103,14 +123,28 @@
             </ng-container>
         </ng-template>
 
-        <!-- formulaire écriture  -->
+        <!-- formulaire type opération  -->
         <ng-template #select_operation_type>
             <label for="op_type">Opération</label>
             <div class="form-check" *ngFor="let op_type of op_types">
                 <input class="form-check-input" type="radio" [value]="op_type" formControlName="op_type">
                 <label class="form-check-label" for="op_type">
-                    {{op_type}}
+                    {{transaction_label(op_type)}}
                 </label>
+            </div>
+
+        </ng-template>
+
+        <!-- formulaire montants financiers -->
+        <ng-template #financial_amounts let-inputFormGroup="inputFormGroup">
+            <div formArrayName="amounts" class="row ">
+                <div class="col gx-1" *ngFor="let account of financial_accounts ; let i = index">
+                    <label>{{account}}</label>
+                    <input type="text" class="form-control" [formControlName]="i" [id]="'value' + i">
+                    <div *ngIf="amounts.get(i.toString())?.invalid" class="text-danger">
+                        <small>Le montant doit être un nombre</small>
+                    </div>
+                </div>
             </div>
         </ng-template>
 
@@ -128,7 +162,6 @@
                 </div>
                 <!-- </div> -->
             </ng-container>
-
         </ng-template>
 
         <!-- formulaire recette -->
@@ -148,15 +181,19 @@
 
         <!-- formulaire chèque -->
         <ng-template #cheque_definition>
-            <div class="col align-items-end">
-                <label for="bank_name">Banque</label>
-                <select class="form-control" formControlName="bank_name" required>
-                    <option *ngFor="let bank of banks " [value]="bank.key">
-                        {{bank.name}}
-                    </option>
-                </select>
-                <label for="cheque_number">n° de chèque</label>
-                <input type="text" class="form-control" id="cheque_number" formControlName="cheque_number">
+            <div class="row align-items-end">
+                <div class="col">
+                    <label for="bank_name">Banque</label>
+                    <select class="form-control" formControlName="bank_name" required>
+                        <option *ngFor="let bank of banks " [value]="bank.key">
+                            {{bank.name}}
+                        </option>
+                    </select>
+                </div>
+                <div class="col">
+                    <label for="cheque_number">n° de chèque</label>
+                    <input type="text" class="form-control" id="cheque_number" formControlName="cheque_number">
+                </div>
             </div>
         </ng-template>
 
@@ -166,6 +203,8 @@
                 <label for="deposit_ref">Bordereau</label>
                 <input type="text" class="form-control" id="deposit_ref" formControlName="deposit_ref">
             </div>
+            <label *ngIf="this.deposit_ref_changed">nb : modification globale</label>
+
         </ng-template>
 
 

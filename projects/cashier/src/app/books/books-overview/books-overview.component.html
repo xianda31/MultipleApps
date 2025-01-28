@@ -99,7 +99,7 @@
 
                 <tr *ngFor="let book_entry of bank_book_entries">
                     <td>{{book_entry.date | date: 'dd/MM/yyyy'}}</td>
-                    <td>{{ book_entry.bank_op_type}}</td>
+                    <td>{{transaction_label (book_entry.bank_op_type)}}</td>
                     <td *ngFor=" let op of bank_ops " class="text-center">
                         {{book_entry.amounts[op] }}
                     </td>

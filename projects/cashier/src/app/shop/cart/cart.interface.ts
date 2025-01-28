@@ -1,8 +1,8 @@
-import { FINANCIAL_ACCOUNTS } from "../../../../../common/accounting.interface";
+import { FINANCIAL_ACCOUNT } from "../../../../../common/accounting.interface";
 import { Member } from "../../../../../common/member.interface";
 
 
-// TODO : PaymentMode very similar to BANK_OPERATION_TYPE  => streamline !
+// TODO : PaymentMode very similar to BOOK_ENTRY_TYPE  => streamline !
 export enum PaymentMode {
     CASH = 'espèces',
     CHEQUE = 'chèque',
@@ -12,13 +12,13 @@ export enum PaymentMode {
     // CARD = 'carte',
 }
 
-export const SALE_ACCOUNTS: { [key in PaymentMode]: FINANCIAL_ACCOUNTS } = {
-    [PaymentMode.CASH]: FINANCIAL_ACCOUNTS.CASH_debit,
-    [PaymentMode.CHEQUE]: FINANCIAL_ACCOUNTS.CASH_debit,    // les chèques sont encaissés en caisse d'abord
-    [PaymentMode.TRANSFER]: FINANCIAL_ACCOUNTS.BANK_debit,
-    [PaymentMode.CREDIT]: FINANCIAL_ACCOUNTS.DEBT_debit,
-    [PaymentMode.ASSETS]: FINANCIAL_ACCOUNTS.ASSET_debit,
-    // [PaymentMode.CARD]: FINANCIAL_ACCOUNTS.CARD_OUT,
+export const SALE_ACCOUNTS: { [key in PaymentMode]: FINANCIAL_ACCOUNT } = {
+    [PaymentMode.CASH]: FINANCIAL_ACCOUNT.CASH_debit,
+    [PaymentMode.CHEQUE]: FINANCIAL_ACCOUNT.CASH_debit,    // les chèques sont encaissés en caisse d'abord
+    [PaymentMode.TRANSFER]: FINANCIAL_ACCOUNT.BANK_debit,
+    [PaymentMode.CREDIT]: FINANCIAL_ACCOUNT.DEBT_debit,
+    [PaymentMode.ASSETS]: FINANCIAL_ACCOUNT.ASSET_debit,
+    // [PaymentMode.CARD]: FINANCIAL_ACCOUNT.CARD_OUT,
 }
 
 

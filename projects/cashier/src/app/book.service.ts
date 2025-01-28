@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { generateClient } from 'aws-amplify/api';
 
-import { Bookentry, Revenue, FINANCIAL_ACCOUNTS, Expense, RECORD_CLASS } from '../../../common/accounting.interface';
+import { Bookentry, Revenue, FINANCIAL_ACCOUNT, Expense, BOOK_ENTRY_CLASS } from '../../../common/accounting.interface';
 import { Schema } from '../../../../amplify/data/resource';
 import { BehaviorSubject, from, map, Observable, of, switchMap, tap } from 'rxjs';
 
@@ -167,7 +167,7 @@ export class BookService {
 
   get_revenues(): Revenue[] {
     return this._book_entries
-      .filter(book_entry => book_entry.class === RECORD_CLASS.REVENUE_FROM_MEMBER || book_entry.class === RECORD_CLASS.OTHER_REVENUE)
+      .filter(book_entry => book_entry.class === BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER || book_entry.class === BOOK_ENTRY_CLASS.OTHER_REVENUE)
       .reduce((acc, book_entry) => {
         const revenues = book_entry.operations
           .map(op => ({
@@ -182,7 +182,7 @@ export class BookService {
 
   get_revenues_from_members(): Revenue[] {
     return this._book_entries
-      .filter(book_entry => book_entry.class === RECORD_CLASS.REVENUE_FROM_MEMBER)
+      .filter(book_entry => book_entry.class === BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER)
       .reduce((acc, book_entry) => {
         const revenues = book_entry.operations
           .map(op => ({
@@ -200,15 +200,15 @@ export class BookService {
     let debt = new Map<string, number>();
     this._book_entries.forEach((book_entry) => {
 
-      if (book_entry.amounts[FINANCIAL_ACCOUNTS.DEBT_debit]) {
+      if (book_entry.amounts[FINANCIAL_ACCOUNT.DEBT_debit]) {
         let name = book_entry.operations[0].member;   // member is the name of the debt owner & payee
         if (!name) throw new Error('no member name found');
-        debt.set(name, (debt.get(name) || 0) + book_entry.amounts[FINANCIAL_ACCOUNTS.DEBT_debit]);
+        debt.set(name, (debt.get(name) || 0) + book_entry.amounts[FINANCIAL_ACCOUNT.DEBT_debit]);
       }
-      if (book_entry.amounts[FINANCIAL_ACCOUNTS.DEBT_credit]) {
+      if (book_entry.amounts[FINANCIAL_ACCOUNT.DEBT_credit]) {
         let name = book_entry.operations[0].member;   // member is the name of the debt owner & payee
         if (!name) throw new Error('no member name found');
-        debt.set(name, (debt.get(name) || 0) - book_entry.amounts[FINANCIAL_ACCOUNTS.DEBT_credit]);
+        debt.set(name, (debt.get(name) || 0) - book_entry.amounts[FINANCIAL_ACCOUNT.DEBT_credit]);
       }
 
     });
@@ -221,15 +221,15 @@ export class BookService {
     let assets = new Map<string, number>();
     this._book_entries.forEach((book_entry) => {
 
-      if (book_entry.amounts[FINANCIAL_ACCOUNTS.ASSET_debit]) {
+      if (book_entry.amounts[FINANCIAL_ACCOUNT.ASSET_debit]) {
         let name = book_entry.operations[0].member;   // member is the name of the asset owner & payer
         if (!name) throw new Error('no member name found');
-        assets.set(name, (assets.get(name) || 0) - book_entry.amounts[FINANCIAL_ACCOUNTS.ASSET_debit]);
+        assets.set(name, (assets.get(name) || 0) - book_entry.amounts[FINANCIAL_ACCOUNT.ASSET_debit]);
       }
-      if (book_entry.amounts[FINANCIAL_ACCOUNTS.ASSET_credit]) {
+      if (book_entry.amounts[FINANCIAL_ACCOUNT.ASSET_credit]) {
         let name = book_entry.operations[0].member;
         if (!name) throw new Error('no member name found');
-        assets.set(name, (assets.get(name) || 0) + book_entry.amounts[FINANCIAL_ACCOUNTS.ASSET_credit]);
+        assets.set(name, (assets.get(name) || 0) + book_entry.amounts[FINANCIAL_ACCOUNT.ASSET_credit]);
       }
 
     });
@@ -240,7 +240,7 @@ export class BookService {
 
   get_expenses(): Expense[] {
     return this._book_entries
-      .filter(book_entry => book_entry.class === RECORD_CLASS.EXPENSE)
+      .filter(book_entry => book_entry.class === BOOK_ENTRY_CLASS.EXPENSE)
       .reduce((acc, book_entry) => {
         const expenses = book_entry.operations
           .map(op => ({
@@ -253,5 +253,12 @@ export class BookService {
       }, [] as Expense[]);
   }
 
-
+  update_deposit_refs(deposit_ref: string, new_deposit_ref: string) {
+    this._book_entries.forEach((entry) => {
+      if (entry.deposit_ref === deposit_ref) {
+        entry.deposit_ref = new_deposit_ref;
+      }
+    });
+    this._book_entries$.next(this._book_entries);
+  }
 }
