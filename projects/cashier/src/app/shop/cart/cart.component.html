@@ -114,8 +114,7 @@
 
         <!-- validation  //-->
         <div class="row col-12 mt-4">
-            <button
-                [disabled]=" !selected_payment.mode || (cart.length === 0 && debt_amount === 0) || (total_amount()<0)"
+            <button [disabled]=" !selected_payment.mode || (cart.length === 0 ) || (total_amount()<0)"
                 class="btn btn-success nice_shadow" (click)="validate_sale()">confirmation
                 du panier</button>
         </div>

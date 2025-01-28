@@ -180,7 +180,7 @@ export class CartService {
     f_amounts[SALE_ACCOUNTS[payment_mode]] = this.getCartAmount();
 
     if (this._debt !== 0) {
-      f_amounts[FINANCIAL_ACCOUNT.DEBT_debit] = this._debt;  // paiement de la dette
+      f_amounts[FINANCIAL_ACCOUNT.DEBT_credit] = this._debt;  // paiement de la dette
     }
     if (this._asset !== 0) {
       f_amounts[FINANCIAL_ACCOUNT.ASSET_debit] = this._asset;  // paiement avec un avoir

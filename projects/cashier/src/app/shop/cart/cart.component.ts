@@ -49,6 +49,8 @@ export class CartComponent {
   ) { }
 
   ngOnChanges(changes: SimpleChanges): void {
+
+
     if (changes['debt_amount'] && changes['debt_amount'].currentValue > 0) {
       this.cartService.setDebt(changes['debt_amount'].currentValue);
       this.total_amount.update(() => this.cartService.getCartAmount());
@@ -74,12 +76,13 @@ export class CartComponent {
 
 
 
-    combineLatest([this.cartService.cart$]).subscribe(([cart]) => {
+    this.cartService.cart$.subscribe((cart) => {
       this.cart = cart;
-      // this.payment = payment;
+      if (this.cart.length === 0) {
+        this.clear_payment();
+      }
       this.total_amount.update(() => this.cartService.getCartAmount());
 
-      // this.sale_is_ok.update(() => this.cartService.isCompleteAndBalanced());
     });
   }
 

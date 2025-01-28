@@ -67,7 +67,7 @@
                             <div class="card">
                                 <strong>encaissements du jour : </strong>
                                 <table class="table table-striped  table-borderless table-primary align-middle">
-                                    <tr *ngFor="let sale of sales_of_the_day()">
+                                    <tr *ngFor="let sale of sales_of_the_day() , let i = index">
                                         <td>
                                             {{sale.member}} :
                                             <ng-container *ngFor="let value of sale.values | keyvalue">
@@ -80,11 +80,10 @@
                                                 -avoir [{{asset_used(sale)}}]
                                             </ng-container>
                                         </td>
-                                        <td>
-
+                                        <td *ngIf="standalone_sale(i)">
                                             {{payment_type(sale)}}
                                         </td>
-                                        <td class="text-end">
+                                        <td *ngIf="standalone_sale(i)" class="text-end">
                                             {{sale_amount(sale) | currency:'€':'symbol':'2.2-2':'fr'}}
                                         </td>
                                     </tr>

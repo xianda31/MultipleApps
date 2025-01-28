@@ -8,7 +8,7 @@ export type Transaction = {
     financial_account_to_debit?: FINANCIAL_ACCOUNT,
     nominative: boolean,
     deposit: boolean,
-    cheque: boolean
+    cheque: 'in' | 'out' | 'none'
 };
 
 export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
@@ -23,7 +23,7 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
         financial_account_to_debit: FINANCIAL_ACCOUNT.CASH_debit,
         nominative: true,
         deposit: false,
-        cheque: false,
+        cheque: 'none',
     },
     // paiement par chèque par un adhérent 
     [ENTRY_TYPE.cheque_payment]: {
@@ -32,7 +32,7 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
         financial_account_to_debit: FINANCIAL_ACCOUNT.CASH_debit,
         nominative: true,
         deposit: false,
-        cheque: true,
+        cheque: 'in',
     },
     // vente à crédit (créance) à un adhérent 
     [ENTRY_TYPE.debt_payment]: {
@@ -41,7 +41,7 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
         financial_account_to_debit: FINANCIAL_ACCOUNT.DEBT_debit,
         nominative: true,
         deposit: false,
-        cheque: false,
+        cheque: 'none',
     },
     // paiement par virement par un adhérent
     [ENTRY_TYPE.transfer_payment]: {
@@ -50,7 +50,7 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
         financial_account_to_debit: FINANCIAL_ACCOUNT.BANK_debit,
         nominative: true,
         deposit: false,
-        cheque: false,
+        cheque: 'none',
     },
 
     //B.  vente unitaire à tiers ****
@@ -63,7 +63,7 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
         financial_account_to_debit: FINANCIAL_ACCOUNT.CASH_debit,
         nominative: false,
         deposit: false,
-        cheque: false,
+        cheque: 'none',
     },
 
     // réception de chèque(s) de la par d'autres qu'un adhérent
@@ -73,25 +73,15 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
         financial_account_to_debit: FINANCIAL_ACCOUNT.BANK_debit,
         nominative: false,
         deposit: false,
-        cheque: true,
+        cheque: 'in',
     },
-    // virement en notre faveur reçu d'une autre entité
-    // dépot de fonds en chèques (non tracés)
-    // [ENTRY_TYPE.cheque_raising]: {
-    //     label: 'REMISE DE CHÈQUES',
-    //     class: BOOK_ENTRY_CLASS.OTHER_REVENUE,
-    //     financial_account_to_debit: FINANCIAL_ACCOUNT.BANK_debit,
-    //     nominative: false,
-    //     deposit: true,
-    //     cheque: false,
-    // },
     [ENTRY_TYPE.transfer_receipt]: {
         label: 'VIREMENT EN NOTRE FAVEUR',
         class: BOOK_ENTRY_CLASS.OTHER_REVENUE,
         financial_account_to_debit: FINANCIAL_ACCOUNT.BANK_debit,
         nominative: false,
         deposit: false,
-        cheque: false,
+        cheque: 'none',
     },
 
     // C. reception groupée de fond de tiers  ****
@@ -104,9 +94,19 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
         financial_account_to_debit: FINANCIAL_ACCOUNT.BANK_debit,
         nominative: false,
         deposit: true,
-        cheque: false,
+        cheque: 'none',
     },
 
+    // virement en notre faveur reçu d'une autre entité
+    // dépot de fonds en chèques (non tracés)
+    [ENTRY_TYPE.cheques_raising]: {
+        label: 'REMISE DE CHÈQUES',
+        class: BOOK_ENTRY_CLASS.OTHER_REVENUE,
+        financial_account_to_debit: FINANCIAL_ACCOUNT.BANK_debit,
+        nominative: false,
+        deposit: true,
+        cheque: 'none',
+    },
     // D.  mouvements de fonds ****
     // ****  CLASS = MOVEMENT ****
 
@@ -118,7 +118,7 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
         financial_account_to_debit: FINANCIAL_ACCOUNT.BANK_debit,
         nominative: false,
         deposit: true,
-        cheque: false,
+        cheque: 'none',
     },
     // dépot de chèques (receptionnés en caisse) en banque
     [ENTRY_TYPE.cheque_deposit]: {
@@ -128,7 +128,7 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
         financial_account_to_debit: FINANCIAL_ACCOUNT.BANK_debit,
         nominative: false,
         deposit: true,
-        cheque: false,
+        cheque: 'none',
     },
     // versement sur compte épargne
     [ENTRY_TYPE.saving_deposit]: {
@@ -138,7 +138,7 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
         financial_account_to_debit: FINANCIAL_ACCOUNT.SAVING_debit,
         nominative: false,
         deposit: false,
-        cheque: false,
+        cheque: 'none',
     },
     // retrait du compte épargne
     [ENTRY_TYPE.saving_withdraw]: {
@@ -148,22 +148,13 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
         financial_account_to_credit: FINANCIAL_ACCOUNT.SAVING_credit,
         nominative: false,
         deposit: false,
-        cheque: false,
+        cheque: 'none',
     },
 
 
     // E. achat , dépenses
     // ****  CLASS = EXPENSE ****
 
-    // émission d'avoir à un adhérent
-    [ENTRY_TYPE.asset_emit]: {
-        label: 'attribution nominative d\'avoir',
-        class: BOOK_ENTRY_CLASS.EXPENSE,
-        financial_account_to_credit: FINANCIAL_ACCOUNT.ASSET_credit,
-        nominative: true,
-        deposit: false,
-        cheque: false,
-    },
     // paiement par chèque d'une prestation ou service
     [ENTRY_TYPE.cheque_emit]: {
         label: 'CHEQUE EMIS',
@@ -171,7 +162,7 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
         financial_account_to_credit: FINANCIAL_ACCOUNT.BANK_credit,
         nominative: false,
         deposit: false,
-        cheque: true,
+        cheque: 'out',
     },
     // paiement à un tiers d'une prestation ou service par virement
     [ENTRY_TYPE.transfer_emit]: {
@@ -180,7 +171,7 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
         financial_account_to_credit: FINANCIAL_ACCOUNT.BANK_credit,
         nominative: false,
         deposit: false,
-        cheque: false,
+        cheque: 'none',
     },
     // paiement par carte bancaire d'une prestation ou de marchandises
     [ENTRY_TYPE.card_payment]: {
@@ -189,7 +180,7 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
         financial_account_to_credit: FINANCIAL_ACCOUNT.BANK_credit,
         nominative: false,
         deposit: false,
-        cheque: false,
+        cheque: 'none',
     },
     // prélèvement sur le compte bancaire par une autre entité
     [ENTRY_TYPE.bank_debiting]: {
@@ -198,9 +189,18 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
         financial_account_to_credit: FINANCIAL_ACCOUNT.BANK_credit,
         nominative: false,
         deposit: false,
-        cheque: false,
+        cheque: 'none',
     },
 
+    // émission d'avoir à un adhérent
+    [ENTRY_TYPE.asset_emit]: {
+        label: 'attribution nominative d\'avoir',
+        class: BOOK_ENTRY_CLASS.EXPENSE,
+        financial_account_to_credit: FINANCIAL_ACCOUNT.ASSET_credit,
+        nominative: true,
+        deposit: false,
+        cheque: 'none',
+    },
 
 }
 

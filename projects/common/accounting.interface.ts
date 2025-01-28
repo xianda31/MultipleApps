@@ -7,7 +7,7 @@ export enum ENTRY_TYPE {
     cheque_receipt = 'cheque_receipt',
     transfer_receipt = 'transfer_receipt',
     cash_raising = 'cash_raising',
-    // cheque_raising = 'cheque_raising',
+    cheques_raising = 'cheques_raising',
     cash_deposit = 'cash_deposit',
     cheque_deposit = 'cheque_deposit',
     saving_deposit = 'saving_deposit',

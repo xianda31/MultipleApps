@@ -144,6 +144,7 @@ export class ShopComponent {
     this.cartService.clearCart();
     this.buyerForm.reset();
     this.debt_amount = 0;
+    this.asset_amount = 0;
   }
 
   date_change(date: any) {
@@ -163,13 +164,15 @@ export class ShopComponent {
   sale_amount(sale: Revenue): number {
     let book_entry = this.sales.find((entry) => entry.id === sale.id);
     if (!book_entry) throw new Error('sale not found');
-    let amount = 0;
-    for (let [key, value] of Object.entries(book_entry.amounts)) {
-      if (key.endsWith('_in')) {
-        amount += value;
-      }
-    }
+    let amount = (book_entry.amounts['cashbox_in'] ?? 0) + (book_entry.amounts['bank_in'] ?? 0);
     return amount;
+  }
+
+  standalone_sale(index: number): boolean {
+    if (index === 0) return true;
+    let sale = this.sales_of_the_day()[index];
+    let prev = this.sales_of_the_day()[index - 1];
+    return sale.id !== prev.id;
   }
 
   debt_paied(sale: Revenue): number {

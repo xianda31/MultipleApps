@@ -41,6 +41,8 @@ export class BooksEditorComponent {
 
   form_ready = false;
   creation = false;
+  financial_accounts_locked = true;
+
   deposit_ref_changed = false;
 
   selected_book_entry!: Bookentry;
@@ -73,10 +75,12 @@ export class BooksEditorComponent {
       this.route.params.subscribe(params => {
         this.book_entry_id = params['id']; // Access the 'id' parameter from the URL
         if (this.book_entry_id !== undefined) {
+          // component in edition mode
           this.bookService.read_book_entry(this.book_entry_id)
             .then((book_entry) => {
               this.init_form();
               this.set_form(book_entry);
+              this.form.get('op_class')!.disable();
               this.valueChanges_subscribe();
               this.creation = false;
               this.form_ready = true;
@@ -116,8 +120,8 @@ export class BooksEditorComponent {
 
   }
 
-  init_operations(transaction: Transaction) {
-    this.operations.clear();
+  init_operation(transaction: Transaction) {
+
 
     let option = transaction.nominative ? { member: '' } : {};
     switch (transaction.class) {
@@ -125,8 +129,6 @@ export class BooksEditorComponent {
         this.add_operation(this.expenses_accounts, transaction.label, option);
         break;
       case BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER:
-        this.add_operation(this.revenues_accounts, transaction.label, option);
-        break;
       case BOOK_ENTRY_CLASS.OTHER_REVENUE:
         this.add_operation(this.revenues_accounts, transaction.label, option);
         break;
@@ -142,33 +144,51 @@ export class BooksEditorComponent {
       this.transaction = undefined!;
       this.op_types = class_types(op_class);
       this.form.controls['op_type'].setValue('', { emitEvent: false });
+      this.financial_accounts_locked = true;
     });
 
 
     // form.op_type
 
     this.form.controls['op_type'].valueChanges.subscribe((op_type) => {
+
       this.transaction = get_transaction(op_type);
 
 
-      // initialisation  des  operations
 
-      if (this.creation) this.init_operations(this.transaction);
+      // initialisation form operations si en mode création
+
+      if (this.creation) this.init_operation(this.transaction);
 
       // gestion des validators pour les champs bank_name et cheque_ref
 
-      if (this.transaction_with_cheque(op_type)) {
-        this.form.controls['bank_name'].setValidators([Validators.required]);
-        this.form.controls['cheque_number'].setValidators([Validators.required]);
-      } else {
-        this.form.controls['bank_name'].reset();
-        this.form.controls['bank_name'].clearValidators();
-        this.form.controls['cheque_number'].reset();
-        this.form.controls['cheque_number'].clearValidators();
+      switch (this.transaction.cheque) {
+        case 'in':
+          this.form.controls['bank_name'].setValidators([Validators.required]);
+          this.form.controls['cheque_number'].setValidators([Validators.required]);
+          break;
+        case 'out':
+          this.form.controls['bank_name'].setValue(this.club_bank.key);
+          this.form.controls['bank_name'].disable();
+          this.form.controls['bank_name'].setValidators([Validators.required]);
+          this.form.controls['cheque_number'].setValidators([Validators.required]);
+          break;
+        case 'none':
+          this.form.controls['bank_name'].reset();
+          this.form.controls['bank_name'].clearValidators();
+          this.form.controls['cheque_number'].reset();
+          this.form.controls['cheque_number'].clearValidators();
+          break;
       }
 
+
+      this.form.controls['bank_name'].updateValueAndValidity();
+      this.form.controls['cheque_number'].updateValueAndValidity();
+
+
       // gestion des disablings pour les champs amounts
-      this.amounts.controls.forEach((control) => { control.reset(); });
+
+      if (this.creation) this.amounts.controls.forEach((control) => { control.reset(); });
       this.handle_financial_accounts_enabling(this.transaction);
 
     });
@@ -185,6 +205,7 @@ export class BooksEditorComponent {
 
   }
 
+
   add_operation(accounts: string[], label: string, options: Partial<AddOperationOptions> = {}) {
     let operationForm: FormGroup = this.fb.group({
       'label': [label],
@@ -200,20 +221,23 @@ export class BooksEditorComponent {
     // this.set_operationForm_change_detection(operationForm);
   }
 
-  // set_operationForm_change_detection(operationForm: FormGroup) {
-  //   operationForm.controls['values'].valueChanges.subscribe(() => {
-  //     let total = 0;
-  //     this.operations.controls.forEach((operation) => {
-  //       total += (operation as FormGroup).controls['values'].value
-  //         .map((val: string) => this.parse_to_float(val))
-  //         .reduce((acc: number, val: number) => acc + val, 0);
-  //     });
-  //   });
-  // }
+  lock_unlock_financial_accounts() {
+    if (this.financial_accounts_locked) {
+      this.amounts.controls.forEach((control) => {
+        control.enable();
+      });
+      this.financial_accounts_locked = false;
+    } else {
+      this.financial_accounts_locked = true;
+      this.handle_financial_accounts_enabling(this.transaction!);
+    }
+  }
 
   handle_financial_accounts_enabling(transaction: Transaction) {
 
-    this.amounts.controls.forEach((control) => { control.disable(); });
+    this.amounts.controls.forEach((control) => {
+      control.disable();
+    });
     let account = transaction.financial_account_to_debit;
     if (account) {
       this.amounts.controls[this.financial_accounts.indexOf(account)].enable();
@@ -223,7 +247,9 @@ export class BooksEditorComponent {
     if (account) {
       this.amounts.controls[this.financial_accounts.indexOf(account)].enable();
     }
+
   }
+
 
   set_form(book_entry: Bookentry) {
 
@@ -231,29 +257,14 @@ export class BooksEditorComponent {
 
     this.transaction = get_transaction(book_entry.bank_op_type);
     this.op_types = class_types(book_entry.class);
-    // console.log('op types changed', this.op_types);
-    let total = 0;
-    switch (book_entry.class) {
-      case BOOK_ENTRY_CLASS.EXPENSE:
-        total = book_entry.amounts[this.transaction.financial_account_to_credit!] || 0;
-        break;
-      case BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER:
-        total = book_entry.amounts[this.transaction.financial_account_to_debit!] || 0;
-        break;
-      case BOOK_ENTRY_CLASS.OTHER_REVENUE:
-        total = book_entry.amounts[this.transaction.financial_account_to_debit!] || 0;
-        break;
-      case BOOK_ENTRY_CLASS.MOVEMENT:
-        total = book_entry.amounts[this.transaction.financial_account_to_debit!] || 0;
-        break;
-    }
+
 
     this.form.patchValue({
       id: book_entry.id,
       date: book_entry.date,
       op_class: book_entry.class,
       op_type: book_entry.bank_op_type,
-      total: total,
+      // total: total,
       // amounts: book_entry.amounts,   => calculé par les lignes suivantes
       bank_name: book_entry.cheque_ref?.slice(0, 3),
       cheque_number: book_entry.cheque_ref?.slice(3),
@@ -270,11 +281,15 @@ export class BooksEditorComponent {
     book_entry.operations.forEach((operation) => {
       if (book_entry.class === BOOK_ENTRY_CLASS.EXPENSE) {
         this.add_operation(this.expenses_accounts, operation.label!, { values: operation.values, member: operation.member });
-      } else {
+      }
+      if (book_entry.class === BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER || book_entry.class === BOOK_ENTRY_CLASS.OTHER_REVENUE) {
         this.add_operation(this.revenues_accounts, operation.label!, { values: operation.values, member: operation.member });
       }
     });
 
+    if (this.transaction.cheque === 'out') {
+      this.form.controls['bank_name'].disable();
+    }
   };
 
 
@@ -301,62 +316,70 @@ export class BooksEditorComponent {
 
     // construction des opérations
 
-    if ((TRANSACTIONS.class === BOOK_ENTRY_CLASS.OTHER_REVENUE) || (TRANSACTIONS.class === BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER)) {
-      operations = this.operations.controls.map((operation) => {
-        let op_values: operation_values = {};
-        this.revenues_accounts.forEach((account: string, index: number) => {
-          let value = this.parse_to_float((operation as FormGroup).controls['values'].value[index]);
-          if (value && value !== 0) {
-            op_values[account] = value;
-            total_revenue += value;
-          }
+    switch (TRANSACTIONS.class) {
+
+      case BOOK_ENTRY_CLASS.MOVEMENT:
+        break;
+
+      case BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER:
+      case BOOK_ENTRY_CLASS.OTHER_REVENUE:
+
+        operations = this.operations.controls.map((operation) => {
+          let op_values: operation_values = {};
+          this.revenues_accounts.forEach((account: string, index: number) => {
+            let value = this.parse_to_float((operation as FormGroup).controls['values'].value[index]);
+            if (value && value !== 0) {
+              op_values[account] = value;
+              total_revenue += value;
+            }
+          });
+          return {
+            label: (operation as FormGroup).controls['label'].value,
+            member: (operation as FormGroup).controls['member'].value,
+            values: op_values
+          };
         });
-        return {
-          label: (operation as FormGroup).controls['label'].value,
-          member: (operation as FormGroup).controls['member'].value,
-          values: op_values
-        };
-      });
 
-      if (total_revenue !== total_financial) {
-        this.toastService.showWarningToast('erreur', 'total des recettes différent du total financier');
-        // console.log('erreur', this.form);
-        // console.log('revenue : %s expenses: %s , financial %s', total_revenue, total_expense, total_financial);
-        return
-      }
-    }
+        if (total_revenue !== total_financial) {
+          this.toastService.showWarningToast('erreur', 'total des recettes différent du total financier');
+          return;
+        } else {
+          this.create_book_entry(amounts, operations);
+        }
+        break;
 
+      case BOOK_ENTRY_CLASS.EXPENSE:
 
-    if (TRANSACTIONS.class === BOOK_ENTRY_CLASS.EXPENSE) {
-      operations = this.operations.controls.map((operation) => {
-        let op_values: operation_values = {};
-        this.expenses_accounts.forEach((account: string, index: number) => {
-          let value = this.parse_to_float((operation as FormGroup).controls['values'].value[index]);
-          if (value && value !== 0) {
-            op_values[account] = value;
-            total_expense += value;
-          }
+        operations = this.operations.controls.map((operation) => {
+          let op_values: operation_values = {};
+          this.expenses_accounts.forEach((account: string, index: number) => {
+            let value = this.parse_to_float((operation as FormGroup).controls['values'].value[index]);
+            if (value && value !== 0) {
+              op_values[account] = value;
+              total_expense += value;
+            }
+          });
+          return {
+            label: (operation as FormGroup).controls['label'].value,
+            member: (operation as FormGroup).controls['member']?.value,
+            values: op_values
+          };
         });
-        return {
-          label: (operation as FormGroup).controls['label'].value,
-          member: (operation as FormGroup).controls['member']?.value,
-          values: op_values
-        };
-      });
 
-      if (total_expense !== -total_financial) {
-        this.toastService.showWarningToast('erreur', 'total des dépenses différent du total financier');
-        console.log('erreur', this.form);
-        console.log('revenue : %s expenses: %s , financial %s', total_revenue, total_expense, total_financial);
+        if (total_expense !== -total_financial) {
+          this.toastService.showWarningToast('erreur', 'total des dépenses différent du total financier');
+          console.log('erreur', this.form);
+          console.log('revenue : %s expenses: %s , financial %s', total_revenue, total_expense, total_financial);
 
-        return;
-      }
+          return;
+        } else { this.create_book_entry(amounts, operations); }
+
+        break;
     }
 
-    if (TRANSACTIONS.class === BOOK_ENTRY_CLASS.MOVEMENT) {
-      operations = [];
-    }
+  }
 
+  create_book_entry(amounts: { [key: string]: number }, operations: Operation[]) {
 
     let booking: Bookentry = {
       season: season(new Date(this.form.controls['date'].value)),
@@ -393,7 +416,7 @@ export class BooksEditorComponent {
     }
   }
 
-  delete() {
+  delete_book_entry() {
     this.bookService.delete_book_entry(this.book_entry_id).then(() =>
       this.toastService.showSuccessToast('suppression', 'écriture supprimée'));
     this.location.back();
@@ -426,9 +449,14 @@ export class BooksEditorComponent {
   transaction_label(op_type: ENTRY_TYPE): string {
     return get_transaction(op_type).label;
   }
-
   transaction_with_cheque(op_type: ENTRY_TYPE): boolean {
-    return get_transaction(op_type).cheque;
+    return get_transaction(op_type).cheque !== 'none';
+  }
+  transaction_with_cheque_in(op_type: ENTRY_TYPE): boolean {
+    return (get_transaction(op_type).cheque === 'in');
+  }
+  transaction_with_cheque_out(op_type: ENTRY_TYPE): boolean {
+    return (get_transaction(op_type).cheque === 'out');
   }
 
   transaction_with_deposit(op_type: ENTRY_TYPE): boolean {
