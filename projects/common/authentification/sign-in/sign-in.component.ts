@@ -44,7 +44,7 @@ export class SignInComponent {
       // tap((member) => console.log("member", member?.lastname)),
       map((member) => {
         if (!member) return { not_member: true };
-        if (member.has_account) return null;
+        // if (member.has_account) return null;
         if (this.mode === this.process_flow.SIGN_IN) {
           return null;
 
@@ -137,7 +137,7 @@ export class SignInComponent {
                 this.toastService.showErrorToast('sign up', 'erreur imprévue');
                 return;
               } else {
-                member.has_account = true;
+                // member.has_account = true;
                 this.membersService.updateMember(member);
                 this.toastService.showSuccessToast('création compte', 'Bienvenue ' + member.firstname);
                 this.auth.changeMode(Process_flow.SIGN_IN);
