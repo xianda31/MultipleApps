@@ -318,8 +318,7 @@ export class BooksEditorComponent {
 
     switch (TRANSACTIONS.class) {
 
-      case BOOK_ENTRY_CLASS.MOVEMENT:
-        break;
+
 
       case BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER:
       case BOOK_ENTRY_CLASS.OTHER_REVENUE:
@@ -374,6 +373,10 @@ export class BooksEditorComponent {
           return;
         } else { this.create_book_entry(amounts, operations); }
 
+        break;
+
+      case BOOK_ENTRY_CLASS.MOVEMENT:
+        this.create_book_entry(amounts, operations);
         break;
     }
 
