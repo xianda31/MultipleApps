@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Bookentry, ENTRY_TYPE, BOOK_ENTRY_CLASS } from '../../../../../common/accounting.interface';
+import { BookEntry, ENTRY_TYPE, BOOK_ENTRY_CLASS, FINANCIAL_ACCOUNT } from '../../../../../common/accounting.interface';
 import { BookService } from '../../book.service';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -17,8 +17,8 @@ import { Bank } from '../../../../../common/system-conf.interface';
 export class CashBoxStatusComponent {
 
   season: string = '2024/2025';
-  book_entries: Bookentry[] = [];
-  cheques_for_deposit: Bookentry[] = [];
+  book_entries: BookEntry[] = [];
+  cheques_for_deposit: BookEntry[] = [];
   current_cash_amount: number = 0;
   cash_out_amount: number = 0;
   temp_refs: Map<string, { cheque_qty: number, amount: number, new_ref: string }> = new Map<string, { cheque_qty: number, amount: number, new_ref: string }>();
@@ -48,17 +48,18 @@ export class CashBoxStatusComponent {
 
       // filtre les chèques à déposer
       this.cheques_for_deposit = book_entries
-        .filter(book_entry => book_entry.bank_op_type === ENTRY_TYPE.cheque_receipt)
-        .filter(book_entry => book_entry.cheque_ref !== undefined && (book_entry.deposit_ref === null));
+        .filter(book_entry => get_transaction(book_entry.bank_op_type).cheque === 'in')
+        .filter(book_entry => book_entry.cheque_ref !== undefined && (book_entry.deposit_ref === '' || book_entry.deposit_ref === null));
+
 
       // énumère les bordereaux de dépot chèque en temp_
       this.temp_refs.clear();
       this.book_entries
-        .filter(book_entry => book_entry.bank_op_type === ENTRY_TYPE.cheque_receipt)
+        .filter(book_entry => get_transaction(book_entry.bank_op_type).cheque === 'in')
         .forEach(book_entry => {
           if (book_entry.deposit_ref && book_entry.deposit_ref.startsWith('temp_')) {
             this.temp_refs.set(book_entry.deposit_ref, {
-              amount: (this.temp_refs.get(book_entry.deposit_ref)?.amount ?? 0) + (book_entry.amounts['cashbox_in'] ?? 0),
+              amount: (this.temp_refs.get(book_entry.deposit_ref)?.amount ?? 0) + (book_entry.amounts?.['cashbox_in'] ?? 0),
               cheque_qty: (this.temp_refs.get(book_entry.deposit_ref)?.cheque_qty ?? 0) + 1,
               new_ref: ''
             });
@@ -78,15 +79,14 @@ export class CashBoxStatusComponent {
   //   choix du montant à retirer et création d'un mouvement de dépot
 
   create_cash_out_entry(amount: number) {
-    let transaction = get_transaction(ENTRY_TYPE.cash_deposit);
-    let cash_out: Bookentry = {
+    let cash_out: BookEntry = {
       season: this.season,
       date: new Date().toISOString().split('T')[0],
-      class: BOOK_ENTRY_CLASS.MOVEMENT,
+      class: BOOK_ENTRY_CLASS.e_MOVEMENT,
       bank_op_type: ENTRY_TYPE.cash_deposit,
       amounts: {
-        [transaction.financial_account_to_credit as string]: amount,
-        [transaction.financial_account_to_debit as string]: amount
+        [FINANCIAL_ACCOUNT.CASHBOX_credit]: amount,
+        [FINANCIAL_ACCOUNT.BANK_debit]: amount
       },
       operations: [],
       id: ''
@@ -125,15 +125,14 @@ export class CashBoxStatusComponent {
     this.create_cheque_deposit_entry(ref.value.amount, ref.value.new_ref);
   }
   create_cheque_deposit_entry(value: number, ref: string) {
-    let transaction = get_transaction(ENTRY_TYPE.cheque_deposit);
-    let cheque_deposit: Bookentry = {
+    let cheque_deposit: BookEntry = {
       season: this.season,
       date: new Date().toISOString().split('T')[0],
-      class: BOOK_ENTRY_CLASS.MOVEMENT,
+      class: BOOK_ENTRY_CLASS.e_MOVEMENT,
       bank_op_type: ENTRY_TYPE.cheque_deposit,
       amounts: {
-        [transaction.financial_account_to_credit as string]: value,
-        [transaction.financial_account_to_debit as string]: value
+        [FINANCIAL_ACCOUNT.CASHBOX_credit]: value,
+        [FINANCIAL_ACCOUNT.BANK_debit]: value
       },
       deposit_ref: ref,
       operations: [],
@@ -145,16 +144,14 @@ export class CashBoxStatusComponent {
 
   // utilitaires
 
-  cash_balance(entries: Bookentry[]): number {
+  cash_balance(entries: BookEntry[]): number {
     // calculer le montant disponible en espèces
     return entries.reduce((acc, book_entry) => {
-      switch (book_entry.bank_op_type) {
-        case ENTRY_TYPE.cash_receipt:
-          return acc + (book_entry.amounts['cashbox_in'] || 0);
-        case ENTRY_TYPE.cash_deposit:
-          return acc - (book_entry.amounts['cashbox_out'] || 0);
-        default:
-          return acc;
+      let transaction = get_transaction(book_entry.bank_op_type);
+      if (transaction.cash === 'none') {
+        return acc;
+      } else {
+        return (acc + (book_entry.amounts?.['cashbox_in'] ?? 0) - (book_entry.amounts?.['cashbox_out'] ?? 0));
       }
     }, 0);
   }

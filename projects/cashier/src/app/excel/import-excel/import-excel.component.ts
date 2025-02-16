@@ -1,7 +1,7 @@
 import { Component, signal } from '@angular/core';
 import * as ExcelJS from 'exceljs';
 import { EXPENSES_COL, FINANCIAL_COL, MAP, PRODUCTS_COL } from '../../../../../common/excel/excel.interface';
-import { ENTRY_TYPE, Bookentry, FINANCIAL_ACCOUNT, operation_values, Operation, BOOK_ENTRY_CLASS } from '../../../../../common/accounting.interface';
+import { ENTRY_TYPE, BookEntry, FINANCIAL_ACCOUNT, operation_values, Operation, BOOK_ENTRY_CLASS } from '../../../../../common/accounting.interface';
 import { Member } from '../../../../../common/member.interface';
 import { MembersService } from '../../../../../admin-dashboard/src/app/members/service/members.service';
 import { BookService } from '../../book.service';
@@ -22,7 +22,7 @@ export class ImportExcelComponent {
   worksheet !: ExcelJS.Worksheet;
   worksheets!: ExcelJS.Worksheet[];
 
-  book_entrys: Bookentry[] = [];
+  book_entrys: BookEntry[] = [];
 
   members: Member[] = [];
   season: string = '2024/2025';
@@ -146,9 +146,9 @@ export class ImportExcelComponent {
   }
 
 
-  async convert_to_book_entry(master: string, cells: string[]): Promise<Bookentry> {
+  async convert_to_book_entry(master: string, cells: string[]): Promise<BookEntry> {
 
-    let promise = new Promise<Bookentry>((resolve, reject) => {
+    let promise = new Promise<BookEntry>((resolve, reject) => {
       // create sale (master)
       let row_number = +this.worksheet.getCell(master).row;
 
@@ -178,15 +178,15 @@ export class ImportExcelComponent {
       let cell_nature = master_row.getCell(MAP['nature']).value;
 
 
-      let book_entry: Bookentry = {
+      let book_entry: BookEntry = {
         season: this.season,
         date: new Date(date).toISOString().split('T')[0],
         id: '',
         amounts: {},
         operations: [],
         bank_op_type: this.convert_to_bank_op_type(cell_nature?.toString() as string),
-        class: cell_chrono.startsWith('C') ? BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER
-          : (cell_chrono.startsWith('K') ? BOOK_ENTRY_CLASS.OTHER_REVENUE : BOOK_ENTRY_CLASS.EXPENSE)
+        class: cell_chrono.startsWith('C') ? BOOK_ENTRY_CLASS.a_REVENUE_FROM_MEMBER
+          : (cell_chrono.startsWith('K') ? BOOK_ENTRY_CLASS.c_OTHER_REVENUE : BOOK_ENTRY_CLASS.b_OTHER_EXPENSE)
 
       };
 
@@ -264,7 +264,7 @@ export class ImportExcelComponent {
         return ENTRY_TYPE.cash_receipt;
     }
   }
-  control_amounts_balance(book_entry: Bookentry): boolean {
+  control_amounts_balance(book_entry: BookEntry): boolean {
     let debit_keys: FINANCIAL_ACCOUNT[] = Object.keys(book_entry.amounts).filter((key): key is FINANCIAL_ACCOUNT => key.includes('in'));
     let total_debit = debit_keys.reduce((acc, key) => acc + (book_entry.amounts[key] || 0), 0);
 
@@ -279,9 +279,9 @@ export class ImportExcelComponent {
     book_entry.operations.forEach((operation) => {
       sum += Object.values(operation.values).reduce((acc, value) => acc + value, 0);
     });
-    if (book_entry.class === BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER || book_entry.class === BOOK_ENTRY_CLASS.OTHER_REVENUE) {
+    if (book_entry.class === BOOK_ENTRY_CLASS.a_REVENUE_FROM_MEMBER || book_entry.class === BOOK_ENTRY_CLASS.c_OTHER_REVENUE) {
       products_sum += sum;
-    } else if (book_entry.class === BOOK_ENTRY_CLASS.EXPENSE) {
+    } else if (book_entry.class === BOOK_ENTRY_CLASS.b_OTHER_EXPENSE) {
       expenses_sum += sum;
     }
 
@@ -303,7 +303,7 @@ export class ImportExcelComponent {
     if (Object.keys(revenues).length > 0) {
       operation = {
         label: row.getCell(MAP.intitulé).value?.toString() as string,
-        // class: cell_chrono.startsWith('C') ? BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER : BOOK_ENTRY_CLASS.OTHER_REVENUE,
+        // class: cell_chrono.startsWith('C') ? BOOK_ENTRY_CLASS.a_REVENUE_FROM_MEMBER : BOOK_ENTRY_CLASS.c_OTHER_REVENUE,
         values: revenues,
       };
     } else {
@@ -317,7 +317,7 @@ export class ImportExcelComponent {
       } else {
         operation = {
           label: row.getCell(MAP.intitulé).value?.toString() as string,
-          // class: BOOK_ENTRY_CLASS.MOVEMENT,
+          // class: BOOK_ENTRY_CLASS.e_MOVEMENT,
           values: {},
         };
       }

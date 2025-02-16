@@ -56,11 +56,20 @@
                     </div>
                     <div class="card-text ps-3 pe-3">
                         <table class="table table-sm align-middle table-borderless ">
+                            <thead>
+                                <tr>
+                                    <th>date</th>
+                                    <th>cheques</th>
+                                    <th>montant</th>
+                                    <th>bordereau</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
                             <tbody>
                                 <tr *ngFor="let ref of temp_refs | keyvalue , let i = index">
                                     <td> {{get_date_of_temporary_deposit_ref(ref.key)}}</td>
-                                    <td>{{ref.value.cheque_qty}} chèque(s)</td>
-                                    <td>montant total :{{ref.value.amount}}€</td>
+                                    <td class="text-center">{{ref.value.cheque_qty}}</td>
+                                    <td lass="text-end">{{ref.value.amount}}€</td>
                                     <td>
                                         <input type="text" class="form-control" [(ngModel)]="ref.value.new_ref"
                                             placeholder="référence de bordereau">

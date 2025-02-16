@@ -1,4 +1,4 @@
-import { FINANCIAL_ACCOUNT } from "../../../../../common/accounting.interface";
+import { CUSTOMER_ACCOUNT, FINANCIAL_ACCOUNT } from "../../../../../common/accounting.interface";
 import { Member } from "../../../../../common/member.interface";
 
 
@@ -12,12 +12,12 @@ export enum PaymentMode {
     // CARD = 'carte',
 }
 
-export const SALE_ACCOUNTS: { [key in PaymentMode]: FINANCIAL_ACCOUNT } = {
-    [PaymentMode.CASH]: FINANCIAL_ACCOUNT.CASH_debit,
-    [PaymentMode.CHEQUE]: FINANCIAL_ACCOUNT.CASH_debit,    // les chèques sont encaissés en caisse d'abord
+export const SALE_ACCOUNTS: { [key in PaymentMode]: FINANCIAL_ACCOUNT | CUSTOMER_ACCOUNT } = {
+    [PaymentMode.CASH]: FINANCIAL_ACCOUNT.CASHBOX_debit,
+    [PaymentMode.CHEQUE]: FINANCIAL_ACCOUNT.CASHBOX_debit,    // les chèques sont encaissés en caisse d'abord
     [PaymentMode.TRANSFER]: FINANCIAL_ACCOUNT.BANK_debit,
-    [PaymentMode.CREDIT]: FINANCIAL_ACCOUNT.DEBT_debit,
-    [PaymentMode.ASSETS]: FINANCIAL_ACCOUNT.ASSET_debit,
+    [PaymentMode.CREDIT]: CUSTOMER_ACCOUNT.DEBT_debit,
+    [PaymentMode.ASSETS]: CUSTOMER_ACCOUNT.ASSET_debit,
     // [PaymentMode.CARD]: FINANCIAL_ACCOUNT.CARD_OUT,
 }
 

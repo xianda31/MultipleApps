@@ -3,16 +3,19 @@ import { Component } from '@angular/core';
 import { Location } from '@angular/common';
 import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { BookService } from '../../book.service';
-import { Bookentry, operation_values, BOOK_ENTRY_CLASS, season, Operation, FINANCIAL_ACCOUNT, ENTRY_TYPE } from '../../../../../common/accounting.interface';
+import { BookEntry, operation_values, BOOK_ENTRY_CLASS, season, Operation, FINANCIAL_ACCOUNT, ENTRY_TYPE } from '../../../../../common/accounting.interface';
 import { Bank } from '../../../../../common/system-conf.interface';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { ToastService } from '../../../../../common/toaster/toast.service';
-import { Transaction, get_transaction, class_types } from '../../../../../common/transaction.definition';
+import { Transaction, get_transaction, class_types, Account_def } from '../../../../../common/transaction.definition';
 import { MembersService } from '../../../../../admin-dashboard/src/app/members/service/members.service';
 import { Member } from '../../../../../common/member.interface';
 import { ActivatedRoute } from '@angular/router';
+import { Subscription } from 'rxjs';
 
-interface AddOperationOptions {
+interface Operation_initial_values {
+  customer_accounts?: string[];
+  label?: string;
   member?: string;
   values?: { [key: string]: number };
 }
@@ -28,14 +31,15 @@ export class BooksEditorComponent {
   banks !: Bank[];
   club_bank!: Bank;
   members!: Member[];
-  expenses_accounts !: string[]; //= Object.values(EXPENSES_ACCOUNTS);
-  revenues_accounts !: string[]; //= Object.values(PRODUCTS_ACCOUNTS);
-  financial_accounts = Object.values(FINANCIAL_ACCOUNT);
+  expenses_accounts !: string[];
+  products_accounts !: string[];
+  financial_accounts !: Account_def[];
+  customer_accounts !: Account_def[];
+  profit_and_loss_accounts !: string[];
 
   op_types !: ENTRY_TYPE[];
 
   transaction_classes = Object(BOOK_ENTRY_CLASS);
-  transaction_class_values = Object.values(BOOK_ENTRY_CLASS);
 
   form!: FormGroup;
 
@@ -44,9 +48,11 @@ export class BooksEditorComponent {
   financial_accounts_locked = true;
 
   deposit_ref_changed = false;
+  selected_book_entry!: BookEntry;
 
-  selected_book_entry!: Bookentry;
   transaction?: Transaction;
+
+  operations_valueChanges_subscription!: Subscription;
 
   constructor(
     private fb: FormBuilder,
@@ -70,131 +76,166 @@ export class BooksEditorComponent {
       this.banks = conf.banks;
       this.club_bank = this.banks.find(bank => bank.key === 'AGR')!;
       this.expenses_accounts = conf.charge_accounts.map((account) => account.key);
-      this.revenues_accounts = conf.product_accounts.map((account) => account.key);
+      this.products_accounts = conf.product_accounts.map((account) => account.key);
+    });
 
-      this.route.params.subscribe(params => {
-        this.book_entry_id = params['id']; // Access the 'id' parameter from the URL
-        if (this.book_entry_id !== undefined) {
-          // component in edition mode
-          this.bookService.read_book_entry(this.book_entry_id)
-            .then((book_entry) => {
-              this.init_form();
-              this.set_form(book_entry);
-              this.form.get('op_class')!.disable();
-              this.valueChanges_subscribe();
-              this.creation = false;
-              this.form_ready = true;
-            })
-            .catch((error) => { throw new Error('error reading book_entry', error) });
-        } else {
-          // component in creation mode
-          this.init_form();
-          this.valueChanges_subscribe();
-          this.creation = true;
-          this.form_ready = true;
-        }
-      });
+    this.init_form();
 
-      this.route.parent?.params.subscribe(params => {
-        console.log('parent params', params);
+    this.route.params.subscribe(params => {
+      this.book_entry_id = params['id']; // Access the 'id' parameter from the URL
+      this.creation = (this.book_entry_id === undefined);
+      if (!this.creation) {
+        this.bookService.read_book_entry(this.book_entry_id)
+          .then((book_entry) => {
+            this.selected_book_entry = book_entry;
+            console.log('editing book_entry', book_entry);
+            this.set_form(book_entry);
+            this.valueChanges_subscribe();
+          })
+          .catch((error) => { throw new Error('error reading book_entry', error) });
+
+      } else {
+        this.valueChanges_subscribe();
+      }
+
+      this.form_ready = true;
+
+    });
+
+  }
+
+  operations_valueChanges_subscribe() {
+
+    // operation change handler pour le calcul du total
+
+    console.log('operations_valueChanges_subscribd');
+
+
+    this.operations_valueChanges_subscription = this.operations.valueChanges.subscribe((op_values) => {
+      console.log('operations_valueChanges : ', op_values);
+
+      op_values.forEach((values: Operation_initial_values, index: number) => {
+        let total: number = this.sum_operation_values(this.transaction!, values);
+        (this.operations.at(index) as FormGroup).controls['total'].setValue(total, { emitEvent: false });
       });
     });
   }
 
+
+
   init_form() {
     const today = formatDate(new Date(), 'yyyy-MM-dd', 'en');
     this.transaction = undefined!;
+    this.op_types = [];
+
     this.form = this.fb.group({
       'id': [''],
       'date': [today, Validators.required],
       'op_class': ['', Validators.required],
       'op_type': ['', Validators.required],
-      'amounts': new FormArray(
-        (this.financial_accounts.map(field => new FormControl<string>(({ value: '', disabled: false }), [Validators.pattern(/^\d+(\.\d+)?$/)]))),
-        { validators: [this.atLeastOneFieldValidator] }),
+      'amounts': new FormArray([]),
       'bank_name': [''],
       'cheque_number': [''],
       'deposit_ref': [''],
       'operations': new FormArray([]),
     });
-
   }
 
-  init_operation(transaction: Transaction) {
+
+  set_form(book_entry: BookEntry) {
+
+    this.transaction = get_transaction(book_entry.bank_op_type);
+    this.op_types = class_types(book_entry.class);
+
+    this.financial_accounts = this.transaction.financial_accounts;
+
+    this.form.patchValue({
+      id: book_entry.id,
+      date: book_entry.date,
+      op_class: book_entry.class,
+      op_type: book_entry.bank_op_type,
+      bank_name: book_entry.cheque_ref?.slice(0, 3),
+      cheque_number: book_entry.cheque_ref?.slice(3),
+      deposit_ref: book_entry.deposit_ref,
+    });
+
+    this.form.get('op_class')?.disable();   // bloque le changment de la classe d'opération
+
+    // création des champs amounts
+    this.init_financial_accounts(this.transaction);
+
+    this.financial_accounts.forEach((account) => {
+      let value = book_entry.amounts[account.key as FINANCIAL_ACCOUNT] ?? '';
+      (this.form.controls['amounts'] as FormArray).controls[this.financial_accounts.indexOf(account)].setValue(value);
+    });
+
+    // création des champs operations
+    this.operations.clear();
+    this.profit_and_loss_accounts = this.which_profit_and_loss_accounts(this.transaction);
+
+    book_entry.operations.forEach((operation) => {
+      this.add_operation(this.transaction!, operation);
+    });
+    this.operations_valueChanges_subscribe();
 
 
-    let option = transaction.nominative ? { member: '' } : {};
-    switch (transaction.class) {
-      case BOOK_ENTRY_CLASS.EXPENSE:
-        this.add_operation(this.expenses_accounts, transaction.label, option);
-        break;
-      case BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER:
-      case BOOK_ENTRY_CLASS.OTHER_REVENUE:
-        this.add_operation(this.revenues_accounts, transaction.label, option);
-        break;
-      case BOOK_ENTRY_CLASS.MOVEMENT:
-        console.log('total enabled');
-        break;
+    if (this.transaction.cheque === 'out') {
+      this.form.controls['bank_name'].disable();
     }
+
+  };
+
+
+
+  reset_form() {
+    const today = formatDate(new Date(), 'yyyy-MM-dd', 'en');
+    this.transaction = undefined!;
+    this.op_types = [];
+    this.form.controls['date'].setValue(formatDate(new Date(), 'yyyy-MM-dd', 'en'));
+    this.financial_accounts_locked = true;
+    this.operations.clear();
+    this.amounts.clear();
+    this.operations_valueChanges_subscription.unsubscribe();
   }
 
   valueChanges_subscribe() {
-    // form.op_class
+    // form.op_class change handler
     this.form.controls['op_class'].valueChanges.subscribe((op_class) => {
       this.transaction = undefined!;
       this.op_types = class_types(op_class);
-      this.form.controls['op_type'].setValue('', { emitEvent: false });
       this.financial_accounts_locked = true;
     });
 
-
-    // form.op_type
-
+    // form.op_type change handler
     this.form.controls['op_type'].valueChanges.subscribe((op_type) => {
-
       this.transaction = get_transaction(op_type);
-
-
 
       // initialisation form operations si en mode création
 
-      if (this.creation) this.init_operation(this.transaction);
+      if (this.creation) {
+        this.operations.clear();
+        this.profit_and_loss_accounts = this.which_profit_and_loss_accounts(this.transaction);
+        this.add_operation(this.transaction);
+        // this.init_operation(this.transaction);
+      }
+
+      // operations valueChanges subscription
+      this.operations_valueChanges_subscribe();
 
       // gestion des validators pour les champs bank_name et cheque_ref
 
-      switch (this.transaction.cheque) {
-        case 'in':
-          this.form.controls['bank_name'].setValidators([Validators.required]);
-          this.form.controls['cheque_number'].setValidators([Validators.required]);
-          break;
-        case 'out':
-          this.form.controls['bank_name'].setValue(this.club_bank.key);
-          this.form.controls['bank_name'].disable();
-          this.form.controls['bank_name'].setValidators([Validators.required]);
-          this.form.controls['cheque_number'].setValidators([Validators.required]);
-          break;
-        case 'none':
-          this.form.controls['bank_name'].reset();
-          this.form.controls['bank_name'].clearValidators();
-          this.form.controls['cheque_number'].reset();
-          this.form.controls['cheque_number'].clearValidators();
-          break;
+      this.handle_cheque_info_validators(this.transaction);
+      this.handled_deposit_ref_validators(this.transaction);
+
+      // création des champs amounts
+      if (this.creation) {
+        this.amounts.clear();
+        this.init_financial_accounts(this.transaction);
       }
-
-
-      this.form.controls['bank_name'].updateValueAndValidity();
-      this.form.controls['cheque_number'].updateValueAndValidity();
-
-
-      // gestion des disablings pour les champs amounts
-
-      if (this.creation) this.amounts.controls.forEach((control) => { control.reset(); });
-      this.handle_financial_accounts_enabling(this.transaction);
-
+      // this.handle_financial_accounts_enabling(this.transaction);
     });
 
-    // form.deposit_ref
-
+    // form.deposit_ref change handler
     this.form.controls['deposit_ref'].valueChanges.subscribe((deposit_ref) => {
       if (!this.creation) {
         if (this.form.controls['op_type'].value === ENTRY_TYPE.cheque_deposit) {
@@ -205,20 +246,113 @@ export class BooksEditorComponent {
 
   }
 
+  sum_operation_values(transaction: Transaction, values: Operation_initial_values): number {
+    let total: number = 0;
+    let profit_and_loss_accounts = this.which_profit_and_loss_accounts(transaction);
+    profit_and_loss_accounts.forEach((account, index) => {
+      let value = this.parse_to_float(values.values?.[index]?.toString() ?? '');
+      total += value;
+    });
+    let customer_accounts = transaction.customer_accounts;
+    if (customer_accounts !== undefined) {
+      customer_accounts.forEach((account, index) => {
+        let value = this.parse_to_float(values.customer_accounts?.[index]?.toString() ?? '');
+        if (account.key.endsWith('_in')) { total -= value; }
+        if (account.key.endsWith('_out')) { total += value; }
+      });
+    }
+    return total;
+  }
 
-  add_operation(accounts: string[], label: string, options: Partial<AddOperationOptions> = {}) {
+  handle_cheque_info_validators(transaction: Transaction) {
+    switch (transaction.cheque) {
+      case 'in':
+        this.form.controls['bank_name'].setValidators([Validators.required]);
+        this.form.controls['cheque_number'].setValidators([Validators.required]);
+        break;
+      case 'out':
+        this.form.controls['bank_name'].setValue(this.club_bank.key);
+        this.form.controls['bank_name'].disable();
+        this.form.controls['bank_name'].setValidators([Validators.required]);
+        this.form.controls['cheque_number'].setValidators([Validators.required]);
+        break;
+      case 'none':
+        this.form.controls['bank_name'].reset();
+        this.form.controls['bank_name'].clearValidators();
+        this.form.controls['cheque_number'].reset();
+        this.form.controls['cheque_number'].clearValidators();
+        break;
+    }
+
+    this.form.controls['bank_name'].updateValueAndValidity();
+    this.form.controls['cheque_number'].updateValueAndValidity();
+  }
+
+  handled_deposit_ref_validators(transaction: Transaction) {
+    if (transaction.require_deposit_ref) {
+      this.form.controls['deposit_ref'].setValidators([Validators.required]);
+    } else {
+      this.form.controls['deposit_ref'].clearValidators();
+    }
+    this.form.controls['deposit_ref'].updateValueAndValidity();
+  }
+
+  add_operation(transaction: Transaction, operation_initial?: Operation) {
+
+    let profit_and_loss_accounts = this.which_profit_and_loss_accounts(transaction);
+    let label = transaction.label;
+
     let operationForm: FormGroup = this.fb.group({
-      'label': [label],
+      'label': [label.toLocaleLowerCase()],
       'values': this.fb.array(
-        (accounts.map(field => new FormControl<string>((options.values?.[field]?.toString() ?? ''), [Validators.pattern(/^\d+(\.\d+)?$/)]))),
+        (profit_and_loss_accounts.map(field => new FormControl<string>((operation_initial?.values?.[field]?.toString() ?? ''), [Validators.pattern(/^\d+(\.\d+)?$/)])) as unknown[]),
         { validators: [this.atLeastOneFieldValidator] }),
     });
-    if (options.member !== undefined) {
-      operationForm.addControl('member', new FormControl(options.member, Validators.required));
+    if (transaction.nominative) {
+      operationForm.addControl('member', new FormControl(operation_initial?.member ?? '', Validators.required));
+    }
+
+
+    let total = '';
+    if (operation_initial) {
+      total = this.sum_operation_values(transaction, operationForm.value).toString();
+    }
+    operationForm.addControl('total', new FormControl({ value: total, disabled: true }));
+
+    if (transaction.customer_accounts !== undefined) {
+      this.customer_accounts = transaction.customer_accounts;
+      operationForm.addControl('customer_accounts', this.fb.array(
+        this.customer_accounts.map((account_def) => new FormControl<string>((operation_initial?.values?.[account_def.key]?.toString() ?? ''), [Validators.pattern(/^\d+(\.\d+)?$/)]))
+      ));
     }
 
     this.operations.push(operationForm);
-    // this.set_operationForm_change_detection(operationForm);
+
+
+  }
+
+  init_financial_accounts(transaction: Transaction) {
+    this.financial_accounts = transaction.financial_accounts;
+    this.financial_accounts.forEach((account) => {
+      if (transaction.financial_accounts_to_charge.includes(account.key)) {
+        this.amounts.push(new FormControl('', [Validators.required, Validators.pattern(/^\d+(\.\d+)?$/)]));
+      }
+      else {
+        this.amounts.push(new FormControl({ value: '', disabled: true }, [Validators.pattern(/^\d+(\.\d+)?$/)]));
+      }
+    });
+  }
+
+  handle_financial_accounts_enabling(transaction: Transaction) {
+    this.financial_accounts.forEach((account, index) => {
+      if (transaction.financial_accounts_to_charge.includes(account.key)) {
+        this.amounts.controls[index].setValidators([Validators.required, Validators.pattern(/^\d+(\.\d+)?$/)]);
+        this.amounts.controls[index].enable();
+      } else {
+        this.amounts.controls[index].disable();
+        this.amounts.controls[index].clearValidators();
+      }
+    });
   }
 
   lock_unlock_financial_accounts() {
@@ -233,158 +367,85 @@ export class BooksEditorComponent {
     }
   }
 
-  handle_financial_accounts_enabling(transaction: Transaction) {
-
-    this.amounts.controls.forEach((control) => {
-      control.disable();
-    });
-    let account = transaction.financial_account_to_debit;
-    if (account) {
-      this.amounts.controls[this.financial_accounts.indexOf(account)].enable();
-    }
-
-    account = transaction.financial_account_to_credit
-    if (account) {
-      this.amounts.controls[this.financial_accounts.indexOf(account)].enable();
-    }
-
-  }
-
-
-  set_form(book_entry: Bookentry) {
-
-    this.selected_book_entry = book_entry;
-
-    this.transaction = get_transaction(book_entry.bank_op_type);
-    this.op_types = class_types(book_entry.class);
-
-
-    this.form.patchValue({
-      id: book_entry.id,
-      date: book_entry.date,
-      op_class: book_entry.class,
-      op_type: book_entry.bank_op_type,
-      // total: total,
-      // amounts: book_entry.amounts,   => calculé par les lignes suivantes
-      bank_name: book_entry.cheque_ref?.slice(0, 3),
-      cheque_number: book_entry.cheque_ref?.slice(3),
-      deposit_ref: book_entry.deposit_ref,
-    });
-
-    this.financial_accounts.forEach((account) => {
-      let value = book_entry.amounts[account] ?? '';
-      (this.form.controls['amounts'] as FormArray).controls[this.financial_accounts.indexOf(account)].setValue(value);
-    });
-    this.handle_financial_accounts_enabling(this.transaction);
-
-    this.operations.clear();
-    book_entry.operations.forEach((operation) => {
-      if (book_entry.class === BOOK_ENTRY_CLASS.EXPENSE) {
-        this.add_operation(this.expenses_accounts, operation.label!, { values: operation.values, member: operation.member });
-      }
-      if (book_entry.class === BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER || book_entry.class === BOOK_ENTRY_CLASS.OTHER_REVENUE) {
-        this.add_operation(this.revenues_accounts, operation.label!, { values: operation.values, member: operation.member });
-      }
-    });
-
-    if (this.transaction.cheque === 'out') {
-      this.form.controls['bank_name'].disable();
-    }
-  };
-
-
-
   onSubmit() {
     let operations: Operation[] = [];
     let amounts: { [key: string]: number } = {};
-    let total_revenue = 0;
-    let total_expense = 0;
-    let total_financial = 0;
-
-    let TRANSACTIONS = get_transaction(this.form.controls['op_type'].value);
+    let transaction = get_transaction(this.op_type);
 
     // constructions des montants
 
-    this.financial_accounts.forEach((account: string, index: number) => {
+    this.financial_accounts.forEach((account: Account_def, index: number) => {
       let value = this.parse_to_float((this.form.controls['amounts'] as FormArray).controls[index].value);
       if (value && value !== 0) {
-        amounts[account] = value;
-        if (account.endsWith('_in')) total_financial += value;
-        if (account.endsWith('_out')) total_financial -= value;
+        amounts[account.key] = value;
       }
     });
 
     // construction des opérations
 
-    switch (TRANSACTIONS.class) {
+    operations = this.operations.controls.map((operation) => {
+      let op_values: operation_values = {};
 
-
-
-      case BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER:
-      case BOOK_ENTRY_CLASS.OTHER_REVENUE:
-
-        operations = this.operations.controls.map((operation) => {
-          let op_values: operation_values = {};
-          this.revenues_accounts.forEach((account: string, index: number) => {
-            let value = this.parse_to_float((operation as FormGroup).controls['values'].value[index]);
-            if (value && value !== 0) {
-              op_values[account] = value;
-              total_revenue += value;
-            }
-          });
-          return {
-            label: (operation as FormGroup).controls['label'].value,
-            member: (operation as FormGroup).controls['member'].value,
-            values: op_values
-          };
-        });
-
-        if (total_revenue !== total_financial) {
-          this.toastService.showWarningToast('erreur', 'total des recettes différent du total financier');
-          return;
-        } else {
-          this.create_book_entry(amounts, operations);
+      this.profit_and_loss_accounts.forEach((account: string, index: number) => {
+        let value = this.parse_to_float((operation as FormGroup).controls['values'].value[index]);
+        if (value && value !== 0) {
+          op_values[account] = value;
         }
-        break;
+      });
 
-      case BOOK_ENTRY_CLASS.EXPENSE:
-
-        operations = this.operations.controls.map((operation) => {
-          let op_values: operation_values = {};
-          this.expenses_accounts.forEach((account: string, index: number) => {
-            let value = this.parse_to_float((operation as FormGroup).controls['values'].value[index]);
-            if (value && value !== 0) {
-              op_values[account] = value;
-              total_expense += value;
-            }
-          });
-          return {
-            label: (operation as FormGroup).controls['label'].value,
-            member: (operation as FormGroup).controls['member']?.value,
-            values: op_values
-          };
+      if (transaction.customer_accounts !== undefined) {
+        transaction.customer_accounts.forEach((account: Account_def, index: number) => {
+          let value = this.parse_to_float((operation as FormGroup).controls['customer_accounts'].value[index]);
+          if (value && value !== 0) {
+            op_values[account.key] = value;
+          }
         });
+      }
 
-        if (total_expense !== -total_financial) {
-          this.toastService.showWarningToast('erreur', 'total des dépenses différent du total financier');
-          console.log('erreur', this.form);
-          console.log('revenue : %s expenses: %s , financial %s', total_revenue, total_expense, total_financial);
 
-          return;
-        } else { this.create_book_entry(amounts, operations); }
+      return {
+        label: (operation as FormGroup).controls['label']?.value,
+        member: (operation as FormGroup).controls['member']?.value,
+        values: op_values
+      };
+    });
 
-        break;
-
-      case BOOK_ENTRY_CLASS.MOVEMENT:
-        this.create_book_entry(amounts, operations);
-        break;
-    }
-
+    this.save_book_entry(amounts, operations);
   }
 
-  create_book_entry(amounts: { [key: string]: number }, operations: Operation[]) {
+  book_entry_balanced(bookEntry: BookEntry): boolean {
+    let total_profit_and_loss = 0;
+    let total_financial = 0;
+    let transaction = get_transaction(bookEntry.bank_op_type);
 
-    let booking: Bookentry = {
+    Object.entries(bookEntry.amounts).forEach(([key, amount]: [string, number]) => {
+      if (key.endsWith('_in')) total_financial += amount;
+      if (key.endsWith('_out')) total_financial -= amount;
+    }, 0);
+
+    bookEntry.operations.forEach((operation) => {
+      let values = operation.values;
+      Object.entries(values).forEach(([key, amount]: [string, number]) => {
+        if (key.endsWith('_in')) total_financial += amount;
+        if (key.endsWith('_out')) total_financial -= amount;
+        if (!key.endsWith('_in') && !key.endsWith('_out')) total_profit_and_loss += amount;
+      });
+    }
+    );
+
+    if (!transaction.is_of_profit_type) {
+      total_profit_and_loss = -total_profit_and_loss;
+    }
+
+    return total_financial === total_profit_and_loss;
+  }
+
+
+  // dynamoDB operations
+
+  save_book_entry(amounts: { [key: string]: number }, operations: Operation[]) {
+
+    let booking: BookEntry = {
       season: season(new Date(this.form.controls['date'].value)),
       date: this.form.controls['date'].value,
       id: this.form.controls['id'].value,
@@ -396,12 +457,20 @@ export class BooksEditorComponent {
       operations: operations
     };
 
+    if (!this.book_entry_balanced(booking)) {
+      this.toastService.showWarningToast('erreur', 'total des dépenses différent du total financier');
+      return;
+    }
+
+
+
     if (booking.cheque_ref === '') delete booking.cheque_ref;
 
     if (this.creation) {
       this.bookService.create_book_entry(booking).then(() =>
         this.toastService.showSuccessToast('création', 'écriture enregistrée'));
-      this.init_form();
+      console.log('book_entry created', booking);
+      this.reset_form();
     } else {
       booking.id = this.book_entry_id;
       this.bookService.update_book_entry(booking).then(() => {
@@ -425,10 +494,18 @@ export class BooksEditorComponent {
     this.location.back();
   }
 
+
+
+  // events
+
   cancel() {
     this.location.back();
   }
 
+  double_click(amount: any) {
+    let cntrl = amount as FormControl;
+    cntrl.setValue(this.operations_grand_total());
+  }
 
   // getters
 
@@ -449,6 +526,18 @@ export class BooksEditorComponent {
 
   // utilities
 
+  operations_grand_total(): number {
+    let grand_total = 0;
+    this.operations.controls.forEach((operation) => {
+      grand_total += parseFloat((operation as FormGroup).controls['total'].value);
+    });
+    return grand_total;
+  }
+  which_profit_and_loss_accounts(transaction: Transaction): string[] {
+    if (transaction.is_of_profit_type === undefined) return [];
+    return transaction.is_of_profit_type ? this.products_accounts : this.expenses_accounts;
+  }
+
   transaction_label(op_type: ENTRY_TYPE): string {
     return get_transaction(op_type).label;
   }
@@ -463,7 +552,7 @@ export class BooksEditorComponent {
   }
 
   transaction_with_deposit(op_type: ENTRY_TYPE): boolean {
-    return get_transaction(op_type).deposit;
+    return get_transaction(op_type).require_deposit_ref;
   }
 
   parse_to_string(value: number): string {

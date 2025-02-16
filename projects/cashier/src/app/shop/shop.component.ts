@@ -8,7 +8,7 @@ import { Product } from '../../../../admin-dashboard/src/app/sales/products/prod
 import { CommonModule } from '@angular/common';
 import { InputMemberComponent } from '../input-member/input-member.component';
 import { SessionService } from './session.service';
-import { Bookentry, Revenue, Session } from '../../../../common/accounting.interface';
+import { BookEntry, Revenue, Session } from '../../../../common/accounting.interface';
 import { BookService } from '../book.service';
 import { CartComponent } from "./cart/cart.component";
 import { ProductService } from '../../../../common/services/product.service';
@@ -34,7 +34,7 @@ export class ShopComponent {
   products_array: Map<string, Product[]> = new Map();
 
 
-  sales: Bookentry[] = [];
+  sales: BookEntry[] = [];
 
   day = signal(new Date().toISOString().split('T')[0]);
   sales_to_members = signal<Revenue[]>([]);
@@ -98,7 +98,7 @@ export class ShopComponent {
 
   find_debt(payer: Member): Promise<number> {
     let name = payer.lastname + ' ' + payer.firstname;
-    let due = this.bookService.find_debt(name);
+    let due = this.bookService.find_member_debt(name);
     return Promise.resolve(due);
   }
 
@@ -164,8 +164,10 @@ export class ShopComponent {
   sale_amount(sale: Revenue): number {
     let book_entry = this.sales.find((entry) => entry.id === sale.id);
     if (!book_entry) throw new Error('sale not found');
-    let amount = (book_entry.amounts['cashbox_in'] ?? 0) + (book_entry.amounts['bank_in'] ?? 0);
-    return amount;
+    return (book_entry.amounts?.['cashbox_in'] ?? 0) + (book_entry.amounts?.['bank_in'] ?? 0);
+    // return book_entry.operations.reduce((acc, op) => {
+    //   return acc + (op.values['cashbox_in'] ?? 0) + (op.values['bank_in'] ?? 0);
+    // }, 0);
   }
 
   standalone_sale(index: number): boolean {
@@ -177,11 +179,17 @@ export class ShopComponent {
 
   debt_paied(sale: Revenue): number {
     let book_entry = this.sales.find((entry) => entry.id === sale.id);
-    return book_entry?.amounts['creance_out'] ?? 0;
+    if (!book_entry) throw new Error('sale not found');
+    return book_entry.operations.reduce((acc, op) => {
+      return acc + (op.values['creance_out'] ?? 0);
+    }, 0);
   }
   asset_used(sale: Revenue): number {
     let book_entry = this.sales.find((entry) => entry.id === sale.id);
-    return book_entry?.amounts['avoir_in'] ?? 0;
+    if (!book_entry) throw new Error('sale not found');
+    return book_entry.operations.reduce((acc, op) => {
+      return acc + (op.values['avoir_in'] ?? 0);
+    }, 0);
   }
 
   payment_type(sale: Revenue): string {

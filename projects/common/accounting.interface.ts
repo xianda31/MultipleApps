@@ -20,63 +20,66 @@ export enum ENTRY_TYPE {
 
 }
 
-// export enum BOOK_ENTRY_TYPE {
 
-//     // vente à adhérent
-//     cash_payment = 'paiement en espèces',
-//     cheque_payment = 'paiement par chèque',
-//     debt_payment = 'paiement par créance',
-//     transfer_payment = 'paiement par virement',
-
-//     //B.  vente unitaire à tiers
-//     cash_receipt = 'paiement en espèces',               // ex. droit de table
-//     cheque_receipt = 'paiement par chèque',               // ex. participation d'un invité,d'un autre club
-//     transfer_receipt = 'paiement par virement',          // ex. participation d'un invité,d'un autre
-
-//     //C. reception groupée de fond de tiers
-//     cash_raising = 'dépot de fonds levés en espèces',
-//     cheque_raising = 'dépot de fonds levés en chèques',
-
-//     // D.  mouvements de fonds
-//     cash_deposit = 'dépot d\'espèces',
-//     cheque_deposit = 'dépot de chèque en banque',
-//     saving_deposit = 'versement compte \épargne',
-//     saving_withdraw = 'retrait compte \épargne',
-
-//     // debt_emit = 'émission de créance',
-//     // asset_receipt = 'paiement par avoir',
-//     // cash_withdraw = 'retrait d\'espèces',   // pour l'instant non permis !!
-
-//     // E. achat , dépenses
-//     asset_emit = 'émission d\'avoir',
-//     cheque_emit = 'achat par chèque',
-//     transfer_emit = 'achat par virement',
-//     card_payment = 'achat par carte',
-//     bank_debiting = 'prélèvement',
-
-// }
 
 export enum FINANCIAL_ACCOUNT {
-    CASH_debit = 'cashbox_in',
+    CASHBOX_debit = 'cashbox_in',
+    CASHBOX_credit = 'cashbox_out',
+
     BANK_debit = 'bank_in',
-    ASSET_debit = 'avoir_in',
-    DEBT_debit = 'creance_in',
     SAVING_debit = 'saving_in',
 
-    CASH_credit = 'cashbox_out',
     BANK_credit = 'bank_out',
+    SAVING_credit = 'saving_out',
+
+}
+
+export enum CUSTOMER_ACCOUNT {
+    ASSET_debit = 'avoir_in',
+    DEBT_debit = 'creance_in',
     ASSET_credit = 'avoir_out',
     DEBT_credit = 'creance_out',
-    SAVING_credit = 'saving_out',
+}
+
+export const Financial_debit_accounts: { [key in Partial<FINANCIAL_ACCOUNT>]?: string } = {
+    [FINANCIAL_ACCOUNT.CASHBOX_debit]: 'Caisse',
+    [FINANCIAL_ACCOUNT.BANK_debit]: 'Banque',
+    [FINANCIAL_ACCOUNT.SAVING_debit]: 'Epargne',
+}
+export const Financial_credit_accounts: { [key in Partial<FINANCIAL_ACCOUNT>]?: string } = {
+    [FINANCIAL_ACCOUNT.CASHBOX_credit]: 'Caisse',
+    [FINANCIAL_ACCOUNT.BANK_credit]: 'Banque',
+    [FINANCIAL_ACCOUNT.SAVING_credit]: 'Epargne',
+}
+
+export const Bank_accounts: { [key in Partial<FINANCIAL_ACCOUNT>]?: string } = {
+    [FINANCIAL_ACCOUNT.BANK_debit]: 'bank_in',
+    [FINANCIAL_ACCOUNT.BANK_credit]: 'bank_out',
+    [FINANCIAL_ACCOUNT.SAVING_debit]: 'saving_in',
+    [FINANCIAL_ACCOUNT.SAVING_credit]: 'saving_out',
+}
+export const Cashbox_accounts: { [key in Partial<FINANCIAL_ACCOUNT>]?: string } = {
+    [FINANCIAL_ACCOUNT.CASHBOX_debit]: 'cashbox_in',
+    [FINANCIAL_ACCOUNT.CASHBOX_credit]: 'cashbox_out',
 }
 
 
 
+// export const Customer_debit_accounts: { [key in Partial<CUSTOMER_ACCOUNT>]?: string } = {
+//     [CUSTOMER_ACCOUNT.ASSET_debit]: 'Avoir',
+//     [CUSTOMER_ACCOUNT.DEBT_debit]: 'Créance',
+// }
+// export const Customer_credit_accounts: { [key in Partial<CUSTOMER_ACCOUNT>]?: string } = {
+//     [CUSTOMER_ACCOUNT.ASSET_credit]: 'Avoir',
+//     [CUSTOMER_ACCOUNT.DEBT_credit]: 'Créance',
+// }
+
 export enum BOOK_ENTRY_CLASS {
-    REVENUE_FROM_MEMBER = 'vente adhérent',
-    OTHER_REVENUE = 'recettes hors vente adhérent',
-    EXPENSE = 'toutes dépenses',
-    MOVEMENT = 'mouvement bancaire',
+    a_REVENUE_FROM_MEMBER = 'vente adhérent',
+    b_OTHER_EXPENSE = 'toutes dépenses',
+    c_OTHER_REVENUE = 'recettes hors vente adhérent',
+    d_EXPENSE_FOR_MEMBER = 'dépense adhérent',
+    e_MOVEMENT = 'mouvement bancaire',
 }
 
 export type operation_values = { [key: string]: number };
@@ -102,7 +105,7 @@ export interface Expense extends Operation, Session {
 export type bank_values = { [key in FINANCIAL_ACCOUNT]?: number; };
 
 
-export interface Bookentry {
+export interface BookEntry {
     id: string;
     updatedAt?: string;
     season: string;

@@ -15,7 +15,7 @@ const schema = a.schema({
     values: a.json().required(),
   }),
 
-  Bookentry: a.model({
+  BookEntry: a.model({
     season: a.string().required(),
     date: a.date().required(),
     amounts: a.json().required(),

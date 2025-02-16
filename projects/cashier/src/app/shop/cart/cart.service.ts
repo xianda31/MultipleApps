@@ -3,7 +3,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { CartItem, Payment, PaymentMode, SALE_ACCOUNTS } from './cart.interface';
 import { Member } from '../../../../../common/member.interface';
 import { BookService } from '../../book.service';
-import { ENTRY_TYPE, bank_values, Bookentry, operation_values, Operation, BOOK_ENTRY_CLASS, Session, FINANCIAL_ACCOUNT } from '../../../../../common/accounting.interface';
+import { ENTRY_TYPE, bank_values, BookEntry, operation_values, Operation, BOOK_ENTRY_CLASS, Session, FINANCIAL_ACCOUNT, CUSTOMER_ACCOUNT } from '../../../../../common/accounting.interface';
 import { Product } from '../../../../../admin-dashboard/src/app/sales/products/product.interface';
 
 @Injectable({
@@ -75,13 +75,13 @@ export class CartService {
     return this._cart;
   }
 
-  save_sale(session: Session, buyer?: Member): Promise<Bookentry> {
-    let promise = new Promise<Bookentry>((resolve, reject) => {
-      const sale: Bookentry = {
+  save_sale(session: Session, buyer?: Member): Promise<BookEntry> {
+    let promise = new Promise<BookEntry>((resolve, reject) => {
+      const sale: BookEntry = {
         ...session,
         id: '',
         bank_op_type: this.payment_mode2bank_op_type(this._payment.mode),
-        class: BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER,
+        class: BOOK_ENTRY_CLASS.a_REVENUE_FROM_MEMBER,
         amounts: this.payments2fValue(this._payment.mode),
         operations: this.cart2Operations(),
         cheque_ref: this.payments2cheque_ref(this._payment),
@@ -140,6 +140,18 @@ export class CartService {
           op_values[account] = cartitem.paied;
         }
       });
+
+      if (this.payment.mode === PaymentMode.CREDIT) {
+        op_values[CUSTOMER_ACCOUNT.DEBT_debit] = this.getCartAmount();  // paiement par dette
+      }
+
+      if (this._debt !== 0) {
+        op_values[CUSTOMER_ACCOUNT.DEBT_credit] = this._debt;  // paiement de la dette
+      }
+      if (this._asset !== 0) {
+        op_values[CUSTOMER_ACCOUNT.ASSET_debit] = this._asset;  // paiement avec un avoir
+      }
+
       let operation = {
         label: 'vente adhérent',
         member: payee,
@@ -176,15 +188,16 @@ export class CartService {
 
   payments2fValue(payment_mode: PaymentMode): bank_values {
     let f_amounts: bank_values = {};
-
-    f_amounts[SALE_ACCOUNTS[payment_mode]] = this.getCartAmount();
-
-    if (this._debt !== 0) {
-      f_amounts[FINANCIAL_ACCOUNT.DEBT_credit] = this._debt;  // paiement de la dette
+    if (Object.values(FINANCIAL_ACCOUNT).includes(SALE_ACCOUNTS[payment_mode] as FINANCIAL_ACCOUNT)) {
+      const account = SALE_ACCOUNTS[payment_mode] as FINANCIAL_ACCOUNT;
+      f_amounts[account] = this.getCartAmount();
     }
-    if (this._asset !== 0) {
-      f_amounts[FINANCIAL_ACCOUNT.ASSET_debit] = this._asset;  // paiement avec un avoir
-    }
+    // if (this._debt !== 0) {
+    //   f_amounts[FINANCIAL_ACCOUNT.DEBT_credit] = this._debt;  // paiement de la dette
+    // }
+    // if (this._asset !== 0) {
+    //   f_amounts[FINANCIAL_ACCOUNT.ASSET_debit] = this._asset;  // paiement avec un avoir
+    // }
     return f_amounts;
   }
 
