@@ -1,14 +1,14 @@
-import { Component, EventEmitter, Input, Output, signal, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Output, signal } from '@angular/core';
 import { CartService } from './cart.service';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { Product } from '../../../../../admin-dashboard/src/app/sales/products/product.interface';
-import { combineLatest, map, Observable } from 'rxjs';
-import { CartItem, Payment, PaymentMode } from './cart.interface';
+import { map, Observable } from 'rxjs';
+import { Cart, CartItem, Payment, PaymentMode } from './cart.interface';
 import { ProductService } from '../../../../../common/services/product.service';
 import { MembersService } from '../../../../../admin-dashboard/src/app/members/service/members.service';
 import { InputMemberComponent } from '../../input-member/input-member.component';
 import { Member } from '../../../../../common/member.interface';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Bank } from '../../../../../common/system-conf.interface';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 
@@ -21,20 +21,16 @@ import { SystemDataService } from '../../../../../common/services/system-data.se
 })
 export class CartComponent {
   @Output() complete = new EventEmitter<void>();
-  @Input() debt_amount = 0;
-  @Input() asset_amount = 0;
 
+  debt_amount = 0;
+  asset_amount = 0;
   total_amount = signal(0);
-  // sale_is_ok = signal(false);
 
-  cart: CartItem[] = [];
+  cart: Cart = { items: [], debt: null, asset: null, buyer_name: '' };
   members!: Member[];
   products!: Product[];
 
-  // payments !: Payment[];
   paymentMode = PaymentMode;
-  // payment_form !: FormGroup;
-  // selected_payment.mode!: PaymentMode;
   selected_payment !: Payment;
 
   banks$ !: Observable<Bank[]>;
@@ -45,21 +41,7 @@ export class CartComponent {
     private productService: ProductService,
     private systemDataService: SystemDataService,
 
-
   ) { }
-
-  ngOnChanges(changes: SimpleChanges): void {
-
-
-    if (changes['debt_amount'] && changes['debt_amount'].currentValue > 0) {
-      this.cartService.setDebt(changes['debt_amount'].currentValue);
-      this.total_amount.update(() => this.cartService.getCartAmount());
-    }
-    if (changes['asset_amount'] && changes['asset_amount'].currentValue > 0) {
-      this.cartService.setAsset(changes['asset_amount'].currentValue);
-      this.total_amount.update(() => this.cartService.getCartAmount());
-    }
-  }
 
 
   ngOnInit(): void {
@@ -78,15 +60,16 @@ export class CartComponent {
 
     this.cartService.cart$.subscribe((cart) => {
       this.cart = cart;
-      if (this.cart.length === 0) {
+      this.debt_amount = cart.debt?.amount || 0;
+      this.asset_amount = cart.asset?.amount || 0;
+
+      if (this.cart.items.length === 0) {
         this.clear_payment();
       }
       this.total_amount.update(() => this.cartService.getCartAmount());
 
     });
   }
-
-
 
   get_product_description(product_id: string): string {
     const product = this.products.find((product) => product.id === product_id);
@@ -98,14 +81,12 @@ export class CartComponent {
   }
 
   some_payee_cleared(): boolean {
-    return this.cartService.getCartItems().some((item) => !item.payee_id);
+    return this.cartService.getCartItems().some((item) => !item.payee_name);
   }
 
   payeeChanged(index: number) {
-    if (!this.cart[index].payee) return;
-    this.cart[index].payee_id = this.cart[index].payee!.id;
-    this.cart[index].payee_name = this.cart[index].payee!.lastname + ' ' + this.cart[index].payee!.firstname;
-    // console.log('payeeChanged', this.cart[index].payee_name);
+    if (!this.cart.items[index].payee) return;
+    this.cart.items[index].payee_name = this.cart.items[index].payee!.lastname + ' ' + this.cart.items[index].payee!.firstname;
   }
 
   clear_payment() {
@@ -123,13 +104,8 @@ export class CartComponent {
   }
 
   payment_mode_change() {
-    console.log('payment_mode_change', this.selected_payment);
     this.cartService.payment = this.selected_payment;
   }
-
-  // removeFromPayments(payment: Payment) {
-  //   // this.cartService.removeFromPayments(payment);
-  // }
 
   validate_sale() {
     this.complete.emit();

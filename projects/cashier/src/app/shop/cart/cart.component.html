@@ -26,7 +26,7 @@
                     </td>
                 </tr>
 
-                <tr *ngFor="let item of cart ; let i = index ">
+                <tr *ngFor="let item of cart.items ; let i = index ">
                     <!-- descriptif produit -->
                     <td> {{get_product_description(item.product_id)}} </td>
                     <td class="input-group input-group-sm">
@@ -46,7 +46,7 @@
                 </tr>
 
 
-                <ng-container *ngIf="(cart.length > 0 || debt_amount > 0)">
+                <ng-container *ngIf="(cart.items.length > 0 || debt_amount > 0)">
                     <tr>
                         <td colspan="5">
                             <hr class="hr hr-blurry" />
@@ -113,8 +113,11 @@
 
 
         <!-- validation  //-->
+
+        nbre éléments : {{cart.items.length}}
         <div class="row col-12 mt-4">
-            <button [disabled]=" !selected_payment.mode || (cart.length === 0 ) || (total_amount()<0)"
+            <button
+                [disabled]=" !selected_payment.mode || (cart.items.length === 0 && !(total_amount()>0)) || (total_amount()<0)"
                 class="btn btn-success nice_shadow" (click)="validate_sale()">confirmation
                 du panier</button>
         </div>

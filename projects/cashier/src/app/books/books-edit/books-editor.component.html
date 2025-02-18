@@ -25,7 +25,7 @@
                             <ng-container [ngTemplateOutlet]="financial_amounts"
                                 [ngTemplateOutletContext]="{inputFormGroup: form}"></ng-container>
                         </div>
-                        <div class="col-4  text-start">
+                        <div *ngIf="financial_accounts.length>0" class="col-4  text-start">
                             <i [class]="financial_accounts_locked ? 'fs-4 bi-lock-fill' : 'fs-4 bi-unlock-fill'"
                                 (click)="lock_unlock_financial_accounts()"></i>
                         </div>
@@ -204,7 +204,7 @@
         <ng-template #total let-inputFormGroup="inputFormGroup">
             <ng-container [formGroup]="inputFormGroup">
                 <div class="col">
-                    <label for="total">total</label>
+                    <label for="total">s/total</label>
                     <input type="text" class="form-control" id="total" formControlName="total">
                 </div>
             </ng-container>

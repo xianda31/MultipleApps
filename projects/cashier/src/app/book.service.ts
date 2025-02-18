@@ -207,6 +207,12 @@ export class BookService {
       }, [] as Revenue[]);
   }
 
+  get_cashbox_amount(): number {
+    return this._book_entries.reduce((acc, book_entry) => {
+      return acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0);
+    }
+      , 0);
+  }
   get_debts(): Map<string, number> {
     let debt = new Map<string, number>();
     this._book_entries.forEach((book_entry) => {
@@ -226,6 +232,26 @@ export class BookService {
     // console.log('%s debt is : ', member_full_name, debt.get(member_full_name) || 0);
     return debt;
 
+  }
+
+  get_assets(): Map<string, number> {
+    let assets = new Map<string, number>();
+    this._book_entries.forEach((book_entry) => {
+
+      book_entry.operations.forEach((op) => {
+        if (op.values[CUSTOMER_ACCOUNT.ASSET_debit]) {
+          let name = op.member;
+          if (!name) throw new Error('no member name found');
+          assets.set(name, (assets.get(name) || 0) - op.values[CUSTOMER_ACCOUNT.ASSET_debit]);
+        }
+        if (op.values[CUSTOMER_ACCOUNT.ASSET_credit]) {
+          let name = op.member;
+          if (!name) throw new Error('no member name found');
+          assets.set(name, (assets.get(name) || 0) + op.values[CUSTOMER_ACCOUNT.ASSET_credit]);
+        }
+      });
+    });
+    return assets;
   }
 
   find_member_debt(member_full_name: string): number {

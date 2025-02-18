@@ -80,18 +80,21 @@ export class ShopComponent {
     this.buyerForm.valueChanges.subscribe(async (value) => {
       const buyer: Member | null = value['buyer'];
       if (buyer === null) return;
+      this.cartService.clearCart();
+      this.cartService.setBuyer(buyer.lastname + ' ' + buyer.firstname);
 
       this.debt_amount = await this.find_debt(buyer);
       if (this.debt_amount !== 0) {
         this.toastService.showWarningToast('dette', 'cette personne a une dette de ' + this.debt_amount.toFixed(2) + ' €');
+        this.cartService.setDebt(buyer.lastname + ' ' + buyer.firstname, this.debt_amount);
       }
 
       this.asset_amount = await this.find_assets(buyer);
       if (this.asset_amount !== 0) {
         this.toastService.showInfoToast('avoir', 'cette personne a un avoir de ' + this.asset_amount.toFixed(2) + ' €');
+        this.cartService.setAsset(buyer.lastname + ' ' + buyer.firstname, this.asset_amount);
       }
 
-      this.cartService.clearCart();
     });
 
   }

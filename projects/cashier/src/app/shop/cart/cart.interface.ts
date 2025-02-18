@@ -34,10 +34,17 @@ export interface Payment {
 export interface CartItem {
     payee?: Member | null;    // null => 2nd payee to fill-in
     paied: number;
-    payee_id: string;
+    // payee_id: string;
     product_id: string;
     product_account: string;
     payee_name: string;
+}
+
+export interface Cart {
+    items: CartItem[];
+    debt: { name: string, amount: number } | null;
+    asset: { name: string, amount: number } | null;
+    buyer_name: string;
 }
 
 

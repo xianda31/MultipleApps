@@ -121,7 +121,7 @@
 
 <div class="card mt-2">
     <div class="card-header">
-        <h5>caisse : historique</h5>
+        <h5>caisse {{current_cash_amount}}€ : historique</h5>
     </div>
     <div class="card-body">
         <table class="table table-sm">
@@ -143,7 +143,6 @@
 
                     <td>{{book_entry.date | date: 'dd/MM/yyyy'}}</td>
                     <td>{{book_entry.class}}</td>
-                    <!-- <td>{{(book_entry.operations.length !== 0) ? book_entry.operations[0].member : ''}}</td> -->
                     <td *ngFor=" let account of cashbox_accounts " class="text-center">
                         {{ book_entry.amounts[account] }}
                     </td>
@@ -163,9 +162,9 @@
 <!-- autres comptes -->
 <div class="row mt-2">
     <div class="col-md-4">
-        <!-- <div
-            *ngTemplateOutlet="other_report ; context: {title:'avoir adhérents', balance:current_assets_amount, ops:asset_ops, book_entries: asset_book_entries}">
-        </div> -->
+        <div
+            *ngTemplateOutlet="other_report ; context: {title:'avoir adhérents', balance:current_assets_amount, map: assets}">
+        </div>
     </div>
     <div class="col-md-4">
         <div
@@ -186,19 +185,20 @@
                     <tr>
                         <th class="col">adhérent </th>
                         <th class="col text-center"> montant </th>
+                        <!-- <th class="col"> </th> -->
                     </tr>
                 </thead>
 
                 <tbody>
 
                     <tr *ngFor="let entry of map | keyvalue">
-                        <!-- <td>
-                            <i class="bi bi-trash3" (click)="delete_book_entry(book_entry)"></i>
-                        </td> -->
                         <td>{{entry.key}}</td>
                         <td class="text-center">
                             {{ entry.value }}
                         </td>
+                        <!-- <td>
+                            <i class="bi bi-search" (click)="show_map_entry(entry)"></i>
+                        </td> -->
                     </tr>
                 </tbody>
             </table>

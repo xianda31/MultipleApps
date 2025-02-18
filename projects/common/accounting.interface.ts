@@ -1,8 +1,8 @@
 export enum ENTRY_TYPE {
-    cash_payment = 'cash_payment',
-    cheque_payment = 'cheque_payment',
-    debt_payment = 'debt_payment',
-    transfer_payment = 'transfer_payment',
+    payment_in_cash = 'payment_in_cash',
+    payment_by_cheque = 'payment_by_cheque',
+    payment_on_credit = 'payment_on_credit',
+    payment_by_transfer = 'payment_by_transfer',
     cash_receipt = 'cash_receipt',
     cheque_receipt = 'cheque_receipt',
     transfer_receipt = 'transfer_receipt',
@@ -65,15 +65,6 @@ export const Cashbox_accounts: { [key in Partial<FINANCIAL_ACCOUNT>]?: string } 
 
 
 
-// export const Customer_debit_accounts: { [key in Partial<CUSTOMER_ACCOUNT>]?: string } = {
-//     [CUSTOMER_ACCOUNT.ASSET_debit]: 'Avoir',
-//     [CUSTOMER_ACCOUNT.DEBT_debit]: 'Créance',
-// }
-// export const Customer_credit_accounts: { [key in Partial<CUSTOMER_ACCOUNT>]?: string } = {
-//     [CUSTOMER_ACCOUNT.ASSET_credit]: 'Avoir',
-//     [CUSTOMER_ACCOUNT.DEBT_credit]: 'Créance',
-// }
-
 export enum BOOK_ENTRY_CLASS {
     a_REVENUE_FROM_MEMBER = 'vente adhérent',
     b_OTHER_EXPENSE = 'toutes dépenses',
@@ -110,6 +101,7 @@ export interface BookEntry {
     updatedAt?: string;
     season: string;
     date: string;
+    tag?: string;
     class: BOOK_ENTRY_CLASS;
     bank_op_type: ENTRY_TYPE;   // type d'opération bancaire
     amounts: bank_values

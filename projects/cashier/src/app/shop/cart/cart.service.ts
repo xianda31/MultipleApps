@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { CartItem, Payment, PaymentMode, SALE_ACCOUNTS } from './cart.interface';
+import { Cart, CartItem, Payment, PaymentMode, SALE_ACCOUNTS } from './cart.interface';
 import { Member } from '../../../../../common/member.interface';
 import { BookService } from '../../book.service';
 import { ENTRY_TYPE, bank_values, BookEntry, operation_values, Operation, BOOK_ENTRY_CLASS, Session, FINANCIAL_ACCOUNT, CUSTOMER_ACCOUNT } from '../../../../../common/accounting.interface';
@@ -11,13 +11,9 @@ import { Product } from '../../../../../admin-dashboard/src/app/sales/products/p
 })
 
 export class CartService {
-  private _cart: CartItem[] = [];
-  private _cart$ = new BehaviorSubject<CartItem[]>(this._cart);
-
+  private _cart: Cart = { items: [], debt: null, asset: null, buyer_name: '' };
   private _payment!: Payment;
-
-  private _debt: number = 0;
-  private _asset: number = 0;
+  private _cart$: BehaviorSubject<Cart> = new BehaviorSubject<Cart>(this._cart);
 
   constructor(
     private bookService: BookService,
@@ -30,49 +26,54 @@ export class CartService {
     return this._payment;
   }
 
-  get cart$(): Observable<CartItem[]> {
+  get cart$(): Observable<Cart> {
     return this._cart$.asObservable();
   }
 
   addToCart(CartItem: CartItem): void {
-    this._cart.push(CartItem);
+    this._cart.items.push(CartItem);
     this._cart$.next(this._cart);
-    // this._complete_and_balanced.update(() => this.isCompleteAndBalanced());
   }
 
   removeFromCart(CartItem: CartItem): void {
-    const index = this._cart.indexOf(CartItem);
+    const index = this._cart.items.indexOf(CartItem);
     if (index > -1) {
-      this._cart.splice(index, 1);
+      this._cart.items.splice(index, 1);
       this._cart$.next(this._cart);
-      // this._complete_and_balanced.update(() => this.isCompleteAndBalanced());
     }
   }
 
   clearCart(): void {
-    this._cart = [];
-    // this._payment = { amount: 0, payer_id: '', mode: PaymentMode.CASH, bank: '', cheque_no: '' };
-    this._debt = 0;
+    this._cart.items = [];
+    this._cart.debt = null;
+    this._cart.asset = null;
     this._cart$.next(this._cart);
-    // this._payment$.next(this._payment);
-    // this._complete_and_balanced.set(false);
   }
 
-  setDebt(amount: number): void {
-    this._debt = amount;
+  setDebt(name: string, amount: number): void {
+    this._cart.debt = { name: name, amount: amount };
+    this._cart$.next(this._cart);
+
   }
-  setAsset(amount: number): void {
-    this._asset = amount;
+  setAsset(name: string, amount: number): void {
+    this._cart.asset = { name: name, amount: amount };
+    this._cart$.next(this._cart);
+  }
+
+  setBuyer(buyer_name: string): void {
+    this._cart.buyer_name = buyer_name;
+    this._cart$.next(this._cart);
   }
 
   getCartAmount(): number {
-    return this._cart.reduce((total, item) => total + item.paied, 0) + this._debt - this._asset;
+    // console.log('getCartAmount', this._cart.debt, this._cart.asset);
+    return this._cart.items.reduce((total, item) => total + item.paied, 0) + (this._cart.debt?.amount || 0) - (this._cart.asset?.amount || 0);
   }
 
 
 
   getCartItems(): CartItem[] {
-    return this._cart;
+    return this._cart.items;
   }
 
   save_sale(session: Session, buyer?: Member): Promise<BookEntry> {
@@ -109,7 +110,7 @@ export class CartService {
     const cartItem: CartItem = {
       product_id: product.id,
       paied: product.price,
-      payee_id: payee === null ? '' : payee.id,
+      // payee_id: payee === null ? '' : payee.id,
       product_account: product.account,
       payee_name: payee === null ? '' : payee.lastname + ' ' + payee.firstname
     };
@@ -120,7 +121,7 @@ export class CartService {
   cart2Operations(): Operation[] {
     let operations: Operation[] = [];
     let payees: Map<string, CartItem[]> = new Map();
-    this._cart.forEach((cartitem) => {
+    this._cart.items.forEach((cartitem) => {
       let payee = cartitem.payee_name;
 
       if (payees.has(payee)) {
@@ -129,6 +130,17 @@ export class CartService {
         payees.set(payee, [cartitem]);
       }
     });
+    // push debt_credit and asset_debit as "CartItems"
+    if (this._cart.debt) {
+      let items = payees.get(this._cart.debt.name) ?? [];
+      items.push({ paied: this._cart.debt.amount, product_account: CUSTOMER_ACCOUNT.DEBT_credit, payee_name: this._cart.debt.name, product_id: '' });
+      payees.set(this._cart.debt.name, items);
+    }
+    if (this._cart.asset) {
+      let items = payees.get(this._cart.asset.name) ?? [];
+      items.push({ paied: this._cart.asset.amount, product_account: CUSTOMER_ACCOUNT.ASSET_debit, payee_name: this._cart.asset.name, product_id: '' });
+      payees.set(this._cart.asset.name, items);
+    }
 
     for (let [payee, cartitems] of payees) {
       let op_values: operation_values = {};
@@ -140,18 +152,10 @@ export class CartService {
           op_values[account] = cartitem.paied;
         }
       });
-
-      if (this.payment.mode === PaymentMode.CREDIT) {
-        op_values[CUSTOMER_ACCOUNT.DEBT_debit] = this.getCartAmount();  // paiement par dette
+      // paiement du panier à crédit
+      if (payee === this._cart.buyer_name && this.payment.mode === PaymentMode.CREDIT) {
+        op_values[CUSTOMER_ACCOUNT.DEBT_debit] = this.getCartAmount();
       }
-
-      if (this._debt !== 0) {
-        op_values[CUSTOMER_ACCOUNT.DEBT_credit] = this._debt;  // paiement de la dette
-      }
-      if (this._asset !== 0) {
-        op_values[CUSTOMER_ACCOUNT.ASSET_debit] = this._asset;  // paiement avec un avoir
-      }
-
       let operation = {
         label: 'vente adhérent',
         member: payee,
@@ -160,22 +164,23 @@ export class CartService {
       // console.log('operation', operation);
       operations.push(operation);
     }
+
     return operations;
   }
 
   payment_mode2bank_op_type(payment_mode: PaymentMode): ENTRY_TYPE {
     if (payment_mode === PaymentMode.CREDIT) {
-      return ENTRY_TYPE.debt_payment;
+      return ENTRY_TYPE.payment_on_credit;
     }
 
     if (payment_mode === PaymentMode.CHEQUE) {
-      return ENTRY_TYPE.cheque_payment;
+      return ENTRY_TYPE.payment_by_cheque;
     } else {
       if (payment_mode === PaymentMode.TRANSFER) {
-        return ENTRY_TYPE.transfer_payment;
+        return ENTRY_TYPE.payment_by_transfer;
       }
     }
-    return ENTRY_TYPE.cash_payment;
+    return ENTRY_TYPE.payment_in_cash;
   }
 
   payments2cheque_ref(payment: Payment): string {

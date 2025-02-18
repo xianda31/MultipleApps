@@ -18,6 +18,7 @@ const schema = a.schema({
   BookEntry: a.model({
     season: a.string().required(),
     date: a.date().required(),
+    tag: a.string(),
     amounts: a.json().required(),
     operations: a.ref('Operation').array().required(),
 

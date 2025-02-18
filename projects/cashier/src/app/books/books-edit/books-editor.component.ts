@@ -74,7 +74,7 @@ export class BooksEditorComponent {
 
     this.systemDataService.configuration$.subscribe((conf) => {
       this.banks = conf.banks;
-      this.club_bank = this.banks.find(bank => bank.key === 'AGR')!;
+      this.club_bank = this.banks.find(bank => bank.key === conf.club_bank_key)!;
       this.expenses_accounts = conf.charge_accounts.map((account) => account.key);
       this.products_accounts = conf.product_accounts.map((account) => account.key);
     });
@@ -88,7 +88,7 @@ export class BooksEditorComponent {
         this.bookService.read_book_entry(this.book_entry_id)
           .then((book_entry) => {
             this.selected_book_entry = book_entry;
-            console.log('editing book_entry', book_entry);
+            console.log('book_entry read', book_entry);
             this.set_form(book_entry);
             this.valueChanges_subscribe();
           })
@@ -108,11 +108,11 @@ export class BooksEditorComponent {
 
     // operation change handler pour le calcul du total
 
-    console.log('operations_valueChanges_subscribd');
+
 
 
     this.operations_valueChanges_subscription = this.operations.valueChanges.subscribe((op_values) => {
-      console.log('operations_valueChanges : ', op_values);
+
 
       op_values.forEach((values: Operation_initial_values, index: number) => {
         let total: number = this.sum_operation_values(this.transaction!, values);
@@ -232,7 +232,6 @@ export class BooksEditorComponent {
         this.amounts.clear();
         this.init_financial_accounts(this.transaction);
       }
-      // this.handle_financial_accounts_enabling(this.transaction);
     });
 
     // form.deposit_ref change handler
@@ -247,6 +246,7 @@ export class BooksEditorComponent {
   }
 
   sum_operation_values(transaction: Transaction, values: Operation_initial_values): number {
+
     let total: number = 0;
     let profit_and_loss_accounts = this.which_profit_and_loss_accounts(transaction);
     profit_and_loss_accounts.forEach((account, index) => {
@@ -257,6 +257,7 @@ export class BooksEditorComponent {
     if (customer_accounts !== undefined) {
       customer_accounts.forEach((account, index) => {
         let value = this.parse_to_float(values.customer_accounts?.[index]?.toString() ?? '');
+        if (!transaction.is_of_profit_type) { value = -value; }
         if (account.key.endsWith('_in')) { total -= value; }
         if (account.key.endsWith('_out')) { total += value; }
       });
@@ -312,19 +313,18 @@ export class BooksEditorComponent {
       operationForm.addControl('member', new FormControl(operation_initial?.member ?? '', Validators.required));
     }
 
-
-    let total = '';
-    if (operation_initial) {
-      total = this.sum_operation_values(transaction, operationForm.value).toString();
-    }
-    operationForm.addControl('total', new FormControl({ value: total, disabled: true }));
-
     if (transaction.customer_accounts !== undefined) {
       this.customer_accounts = transaction.customer_accounts;
       operationForm.addControl('customer_accounts', this.fb.array(
         this.customer_accounts.map((account_def) => new FormControl<string>((operation_initial?.values?.[account_def.key]?.toString() ?? ''), [Validators.pattern(/^\d+(\.\d+)?$/)]))
       ));
     }
+
+    let total = '';
+    if (operation_initial) {
+      total = this.sum_operation_values(transaction, operationForm.value).toString();
+    }
+    operationForm.addControl('total', new FormControl({ value: total, disabled: true }));
 
     this.operations.push(operationForm);
 
@@ -469,7 +469,6 @@ export class BooksEditorComponent {
     if (this.creation) {
       this.bookService.create_book_entry(booking).then(() =>
         this.toastService.showSuccessToast('création', 'écriture enregistrée'));
-      console.log('book_entry created', booking);
       this.reset_form();
     } else {
       booking.id = this.book_entry_id;

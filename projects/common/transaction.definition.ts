@@ -19,10 +19,10 @@ export const customer_assets: Account_def[] = [
     { key: CUSTOMER_ACCOUNT.ASSET_debit, label: '-AVOIR' },
     { key: CUSTOMER_ACCOUNT.DEBT_credit, label: '+DETTE' },
 ]
-// export const customer_credits: Account_def[] = [
-//     { key: CUSTOMER_ACCOUNT.ASSET_credit, label: 'Avoir' },
-//     { key: CUSTOMER_ACCOUNT.DEBT_credit, label: 'Créance' },
-// ]
+export const customer_debt: Account_def[] = [
+    { key: CUSTOMER_ACCOUNT.ASSET_debit, label: '-Avoir' },
+    { key: CUSTOMER_ACCOUNT.DEBT_debit, label: 'DETTE' },
+]
 
 
 export type Transaction = {
@@ -44,7 +44,7 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
     // ****  CLASS = a_REVENUE_FROM_MEMBER ****
 
     // paiement en espèces par un adhérent 
-    [ENTRY_TYPE.cash_payment]: {
+    [ENTRY_TYPE.payment_in_cash]: {
         label: 'paiement en espèces',
         class: BOOK_ENTRY_CLASS.a_REVENUE_FROM_MEMBER,
         financial_accounts: financial_debits,
@@ -57,7 +57,7 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
         cheque: 'none',
     },
     // paiement par chèque par un adhérent 
-    [ENTRY_TYPE.cheque_payment]: {
+    [ENTRY_TYPE.payment_by_cheque]: {
         label: 'paiement par chèque',
         class: BOOK_ENTRY_CLASS.a_REVENUE_FROM_MEMBER,
         financial_accounts: financial_debits,
@@ -65,16 +65,16 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
         financial_accounts_to_charge: [FINANCIAL_ACCOUNT.CASHBOX_debit],
         nominative: true,
         is_of_profit_type: true,
-        require_deposit_ref: false,
+        require_deposit_ref: true,
         cash: 'none',
         cheque: 'in',
     },
     // vente à crédit (créance) à un adhérent 
-    [ENTRY_TYPE.debt_payment]: {
+    [ENTRY_TYPE.payment_on_credit]: {
         label: 'paiement à \"crédit\"',
         class: BOOK_ENTRY_CLASS.a_REVENUE_FROM_MEMBER,
-        financial_accounts: financial_debits,
-        customer_accounts: [{ key: CUSTOMER_ACCOUNT.DEBT_debit, label: 'Créance' }],
+        financial_accounts: [],
+        customer_accounts: customer_debt,
         financial_accounts_to_charge: [CUSTOMER_ACCOUNT.DEBT_debit],
         nominative: true,
         is_of_profit_type: true,
@@ -83,7 +83,7 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
         cheque: 'none',
     },
     // paiement par virement par un adhérent
-    [ENTRY_TYPE.transfer_payment]: {
+    [ENTRY_TYPE.payment_by_transfer]: {
         label: 'VIREMENT EN NOTRE FAVEUR',
         class: BOOK_ENTRY_CLASS.a_REVENUE_FROM_MEMBER,
         financial_accounts: financial_debits,
@@ -120,7 +120,7 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
         financial_accounts_to_charge: [FINANCIAL_ACCOUNT.CASHBOX_debit],
         nominative: false,
         is_of_profit_type: true,
-        require_deposit_ref: false,
+        require_deposit_ref: true,
         cash: 'none',
         cheque: 'in',
     },
@@ -143,7 +143,7 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
     [ENTRY_TYPE.asset_emit]: {
         label: 'attribution nominative d\'avoir',
         class: BOOK_ENTRY_CLASS.d_EXPENSE_FOR_MEMBER,
-        financial_accounts: financial_credits,
+        financial_accounts: [],
         customer_accounts: [{ key: CUSTOMER_ACCOUNT.ASSET_credit, label: 'Avoir' }],
         financial_accounts_to_charge: [CUSTOMER_ACCOUNT.ASSET_credit],
         nominative: true,

@@ -33,6 +33,7 @@ export class SysConfComponent {
       club_identifier: [''],
       dev_mode: [''],
       season: [''],
+      club_bank_key: [''],
       member_trn_price: 3,
       non_member_trn_price: 4,
 
@@ -85,6 +86,11 @@ export class SysConfComponent {
 
   get banks() {
     return this.systemFormGroup.get('banks') as FormArray;
+  }
+  get_club_bank(): string {
+    let key = this.systemFormGroup.get('club_bank_key')?.value;
+    let cntrl = this.banks.controls.find((bank) => bank.value.key === key);
+    return cntrl?.value.name ?? '???';
   }
 
   loadDataInFormGroup(configuration: SystemConfiguration) {

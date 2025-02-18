@@ -57,8 +57,7 @@
                             </div>
                             <!-- cart  -->
                             <div class=" col-12 mt-2">
-                                <app-cart [debt_amount]="debt_amount" [asset_amount]="asset_amount"
-                                    (complete)="cart_confirmed()"></app-cart>
+                                <app-cart (complete)="cart_confirmed()"></app-cart>
                             </div>
                         </div>
 
@@ -73,12 +72,12 @@
                                             <ng-container *ngFor="let value of sale.values | keyvalue">
                                                 {{value.key}} [{{value.value}}]
                                             </ng-container>
-                                            <ng-container *ngIf="debt_paied(sale)>0">
+                                            <!-- <ng-container *ngIf="debt_paied(sale)>0">
                                                 +dette [{{debt_paied(sale)}}]
-                                            </ng-container>
-                                            <ng-container *ngIf="asset_used(sale)>0">
+                                            </ng-container> -->
+                                            <!-- <ng-container *ngIf="asset_used(sale)>0">
                                                 -avoir [{{asset_used(sale)}}]
-                                            </ng-container>
+                                            </ng-container> -->
                                         </td>
                                         <td *ngIf="standalone_sale(i)">
                                             {{payment_type(sale)}}

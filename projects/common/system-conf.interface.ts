@@ -19,6 +19,7 @@ export interface SystemConfiguration {
     club_identifier: string;
     dev_mode: string;
     season: string;
+    club_bank_key: string;
     member_trn_price: number;
     non_member_trn_price: number;
     charge_accounts: Account[];
