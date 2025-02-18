@@ -1,4 +1,9 @@
 import { FINANCIAL_ACCOUNT, BOOK_ENTRY_CLASS, ENTRY_TYPE, CUSTOMER_ACCOUNT } from './accounting.interface';
+
+export const _CHEQUE_IN_CASHBOX: boolean = false;     // flag to indicate if cheques are first deposited in cashbox
+
+export const _CHEQUE_IN_ACCOUNT: FINANCIAL_ACCOUNT = _CHEQUE_IN_CASHBOX ? FINANCIAL_ACCOUNT.CASHBOX_debit : FINANCIAL_ACCOUNT.BANK_debit;
+
 export type Account_def = {
     key: FINANCIAL_ACCOUNT | CUSTOMER_ACCOUNT
     label: string
@@ -62,10 +67,10 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
         class: BOOK_ENTRY_CLASS.a_REVENUE_FROM_MEMBER,
         financial_accounts: financial_debits,
         customer_accounts: customer_assets,
-        financial_accounts_to_charge: [FINANCIAL_ACCOUNT.CASHBOX_debit],
+        financial_accounts_to_charge: _CHEQUE_IN_CASHBOX ? [FINANCIAL_ACCOUNT.CASHBOX_debit] : [FINANCIAL_ACCOUNT.BANK_debit],
         nominative: true,
         is_of_profit_type: true,
-        require_deposit_ref: true,
+        require_deposit_ref: false,
         cash: 'none',
         cheque: 'in',
     },
@@ -117,10 +122,10 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
         label: 'paiement par chèque',
         class: BOOK_ENTRY_CLASS.c_OTHER_REVENUE,
         financial_accounts: financial_debits,
-        financial_accounts_to_charge: [FINANCIAL_ACCOUNT.CASHBOX_debit],
+        financial_accounts_to_charge: _CHEQUE_IN_CASHBOX ? [FINANCIAL_ACCOUNT.CASHBOX_debit] : [FINANCIAL_ACCOUNT.BANK_debit],
         nominative: false,
         is_of_profit_type: true,
-        require_deposit_ref: true,
+        require_deposit_ref: false,
         cash: 'none',
         cheque: 'in',
     },

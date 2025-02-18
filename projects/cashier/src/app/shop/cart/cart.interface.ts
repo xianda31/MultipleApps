@@ -14,7 +14,7 @@ export enum PaymentMode {
 
 export const SALE_ACCOUNTS: { [key in PaymentMode]: FINANCIAL_ACCOUNT | CUSTOMER_ACCOUNT } = {
     [PaymentMode.CASH]: FINANCIAL_ACCOUNT.CASHBOX_debit,
-    [PaymentMode.CHEQUE]: FINANCIAL_ACCOUNT.CASHBOX_debit,    // les chèques sont encaissés en caisse d'abord
+    [PaymentMode.CHEQUE]: FINANCIAL_ACCOUNT.BANK_debit,    // les chèques sont encaissés en banque direct // caisse d'abord
     [PaymentMode.TRANSFER]: FINANCIAL_ACCOUNT.BANK_debit,
     [PaymentMode.CREDIT]: CUSTOMER_ACCOUNT.DEBT_debit,
     [PaymentMode.ASSETS]: CUSTOMER_ACCOUNT.ASSET_debit,

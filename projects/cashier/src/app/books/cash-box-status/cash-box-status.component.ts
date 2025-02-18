@@ -3,7 +3,7 @@ import { BookEntry, ENTRY_TYPE, BOOK_ENTRY_CLASS, FINANCIAL_ACCOUNT } from '../.
 import { BookService } from '../../book.service';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { get_transaction } from '../../../../../common/transaction.definition';
+import { _CHEQUE_IN_ACCOUNT, _CHEQUE_IN_CASHBOX, get_transaction } from '../../../../../common/transaction.definition';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { Bank } from '../../../../../common/system-conf.interface';
 
@@ -23,6 +23,8 @@ export class CashBoxStatusComponent {
   cash_out_amount: number = 0;
   temp_refs: Map<string, { cheque_qty: number, amount: number, new_ref: string }> = new Map<string, { cheque_qty: number, amount: number, new_ref: string }>();
   banks !: Bank[];
+
+  CHEQUE_IN_ACCOUNT = _CHEQUE_IN_ACCOUNT;
 
   cashForm!: FormGroup;
   coins = ['2€', '1€', '0,50€', '0,20€', '0,10€'];
@@ -51,7 +53,6 @@ export class CashBoxStatusComponent {
         .filter(book_entry => get_transaction(book_entry.bank_op_type).cheque === 'in')
         .filter(book_entry => book_entry.cheque_ref !== undefined && (book_entry.deposit_ref === '' || book_entry.deposit_ref === null));
 
-
       // énumère les bordereaux de dépot chèque en temp_
       this.temp_refs.clear();
       this.book_entries
@@ -59,7 +60,7 @@ export class CashBoxStatusComponent {
         .forEach(book_entry => {
           if (book_entry.deposit_ref && book_entry.deposit_ref.startsWith('temp_')) {
             this.temp_refs.set(book_entry.deposit_ref, {
-              amount: (this.temp_refs.get(book_entry.deposit_ref)?.amount ?? 0) + (book_entry.amounts?.['cashbox_in'] ?? 0),
+              amount: (this.temp_refs.get(book_entry.deposit_ref)?.amount ?? 0) + (book_entry.amounts?.[this.CHEQUE_IN_ACCOUNT] ?? 0),
               cheque_qty: (this.temp_refs.get(book_entry.deposit_ref)?.cheque_qty ?? 0) + 1,
               new_ref: ''
             });
@@ -67,12 +68,12 @@ export class CashBoxStatusComponent {
         });
     });
   }
-  check_out() {
+  cash_out() {
     if (this.cash_out_amount !== 0) {
       this.create_cash_out_entry(this.cash_out_amount);
       this.cash_out_amount = 0;
     }
-    this.cheques_check_out();
+    // this.cheques_check_out();
   }
 
   // gestion des espèces en caisse
@@ -94,11 +95,10 @@ export class CashBoxStatusComponent {
     this.bookService.create_book_entry(cash_out);
   }
 
-  // gestion des chèques en caisse
+  // gestion des chèques à déposer
 
   // 1. marquage en temporaire des chèques à déposer : 
-  //     les chèques sont listés et marqués (ref temporaire) pour un dépôt futur (restent en caisse)
-
+  //     les chèques sont listés et marqués (ref temporaire) en attente du bordereau de dépôt 
   cheques_check_out() {
     let temp_ref = 'temp_' + new Date().toISOString();
     this.cheques_for_deposit.forEach((book_entry) => {
@@ -111,7 +111,7 @@ export class CashBoxStatusComponent {
 
   // 2. validation du dépôt des chèques
   //     les chèques sont référencés définitivement (ref de bordereau dépot définitif)
-  //     un mouvement de dépôt est créé (cash-out -> bank_in)
+  //     un mouvement de dépôt est créé (cash-out -> bank_in) si _CHEQUE_IN_CASHBOX mode
 
   validate_deposit(ref: { key: string, value: { amount: number, new_ref: string } }) {
     // temp_ref -> tobe_ref
@@ -121,9 +121,12 @@ export class CashBoxStatusComponent {
         this.bookService.update_book_entry(entry);
       }
     });
-    // création du mouvement de dépôt
-    this.create_cheque_deposit_entry(ref.value.amount, ref.value.new_ref);
+    // création du mouvement de dépôt si _CHEQUE_IN_CASHBOX
+    if (_CHEQUE_IN_CASHBOX) {
+      this.create_cheque_deposit_entry(ref.value.amount, ref.value.new_ref);
+    }
   }
+
   create_cheque_deposit_entry(value: number, ref: string) {
     let cheque_deposit: BookEntry = {
       season: this.season,
