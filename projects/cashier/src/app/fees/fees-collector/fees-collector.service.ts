@@ -10,6 +10,7 @@ import { Game, Gamer } from '../fees.interface';
 import { ToastService } from '../../../../../common/toaster/toast.service';
 import { club_tournament } from '../../../../../common/ffb/interface/club_tournament.interface';
 import { FeesEditorService } from '../fees-editor/fees-editor.service';
+import { BookService } from '../../book.service';
 
 
 
@@ -37,7 +38,8 @@ export class FeesCollectorService {
     private membersService: MembersService,
     private tournamentService: TournamentService,
     private systemDataService: SystemDataService,
-    private feesEditorService: FeesEditorService
+    private feesEditorService: FeesEditorService,
+    private BookService: BookService
 
 
   ) {
@@ -156,12 +158,22 @@ export class FeesCollectorService {
     if (!members_validated) {
       this.toastService.showWarningToast('droits de table', 'tous les adhérents doivent être validés');
     }
-    // sum-up non-members fees and members fees in euros
+    // sum-up non-members and members fees in euros
     let non_members_euros = non_members.reduce((acc, gamer) => acc + gamer.price, 0);
     let members_euros = members.reduce((acc, gamer) => acc + (gamer.in_euro ? gamer.price : 0), 0);
     console.log('non_members_euros', non_members_euros);
     console.log('members_euros', members_euros);
 
+    this.BookService.create_tournament_fees_entry(this.game.tournament!.date, non_members_euros + members_euros);
+    // charge members game_credits
+
+    members.forEach((gamer) => {
+      if (!gamer.in_euro) {
+        let member = gamer.is_member as Member;
+        let amount = gamer.price;
+        this.feesEditorService.add_game_credit('tournoi du' + this.game.tournament!.date, member.id, this.game.fees_doubled ? 2 : 1);
+      }
+    });
 
   }
 

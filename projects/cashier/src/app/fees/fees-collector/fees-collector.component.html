@@ -12,9 +12,9 @@
             </div>
         </div>
         <div class="col-8">
-            <div *ngIf="selected_tournament " class="row justify-content-between text-muted">
+            <div *ngIf="game.tournament " class="row justify-content-between text-muted">
                 <div class="col-auto">
-                    {{selected_tournament.tournament_name}}
+                    {{game.tournament.tournament_name}}
                 </div>
                 <div class="col-auto">
                     <span class="form-check form-switch">
@@ -37,8 +37,8 @@
         </span>
 
         <button class="col btn btn-sm btn-primary me-2" (click)="check_all_members()">
-            <i class="fa-solid fa-check"></i> adhérents</button>
-        <button class="col btn btn-sm btn-primary me-2" (click)="save_fees()">enregistrer</button>
+            <i class="fa-solid fa-check"></i> valider tous les adhérents</button>
+        <button class="col btn btn-sm btn-primary me-2" (click)="save_fees()">enregistrer le tournoi</button>
     </div>
 
     <div *ngIf="game" class="row">

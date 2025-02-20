@@ -21,9 +21,7 @@ import { FeesEditorService } from '../fees-editor/fees-editor.service';
 export class FeesCollectorComponent {
 
   next_tournaments: Observable<club_tournament[]>;
-  selected_tournament: club_tournament | null = null;
-  // fee_factor: number = 1;
-  // game$!: Observable<Game>
+  // selected_tournament: club_tournament | null = null;
   game!: Game;
 
   constructor(
@@ -36,12 +34,11 @@ export class FeesCollectorComponent {
     this.next_tournaments = this.tournamentService.list_next_tournaments();
     this.feesCollectorService.game$.subscribe((game) => {
       this.game = game;
-      console.log('game', game);
     });
   }
 
   tournament_selected(tournament: any) {
-    this.selected_tournament = tournament;
+    // this.selected_tournament = tournament;
     console.log('tournament', tournament);
     this.feesCollectorService.set_tournament(tournament);
   };

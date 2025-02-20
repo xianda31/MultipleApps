@@ -69,4 +69,10 @@ export class FeesEditorService {
     }
   }
 
+  // TODO : à améliorer en terme de configurabilité des constantes
+  tournament_card_sold(date: string, member: Member, paied: number) {
+    if (member) {
+      this.add_game_credit('vente du ' + date, member.id, paied === 15 ? 6 : 12);
+    }
+  }
 }

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { generateClient } from 'aws-amplify/api';
 
-import { BookEntry, Revenue, FINANCIAL_ACCOUNT, Expense, BOOK_ENTRY_CLASS, CUSTOMER_ACCOUNT } from '../../../common/accounting.interface';
+import { BookEntry, Revenue, FINANCIAL_ACCOUNT, Expense, BOOK_ENTRY_CLASS, CUSTOMER_ACCOUNT, ENTRY_TYPE, season, bank_values, Operation } from '../../../common/accounting.interface';
 import { Schema } from '../../../../amplify/data/resource';
 import { BehaviorSubject, from, map, Observable, of, switchMap, tap } from 'rxjs';
 
@@ -307,4 +307,26 @@ export class BookService {
     });
     this._book_entries$.next(this._book_entries);
   }
+
+  create_tournament_fees_entry(date: string, fees_amount: number) {
+    let amounts: bank_values = {};
+    amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] = fees_amount;
+
+    let operation: Operation = { values: {} };
+    operation.values['DdT'] = fees_amount;
+    operation.label = 'droits de table';
+
+    let seasonValue = season(new Date(date));
+    const entry: BookEntry = {
+      id: '',
+      season: seasonValue,
+      date: date,
+      amounts: amounts,
+      operations: [operation],
+      class: BOOK_ENTRY_CLASS.c_OTHER_REVENUE,
+      bank_op_type: ENTRY_TYPE.cash_receipt,
+    };
+    return this.create_book_entry(entry);
+  }
+
 }

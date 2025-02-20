@@ -5,6 +5,7 @@ import { Member } from '../../../../../common/member.interface';
 import { BookService } from '../../book.service';
 import { ENTRY_TYPE, bank_values, BookEntry, operation_values, Operation, BOOK_ENTRY_CLASS, Session, FINANCIAL_ACCOUNT, CUSTOMER_ACCOUNT } from '../../../../../common/accounting.interface';
 import { Product } from '../../../../../admin-dashboard/src/app/sales/products/product.interface';
+import { FeesEditorService } from '../../fees/fees-editor/fees-editor.service';
 
 @Injectable({
   providedIn: 'root'
@@ -17,6 +18,7 @@ export class CartService {
 
   constructor(
     private bookService: BookService,
+    private feesService: FeesEditorService,
   ) { }
 
   set payment(payment: Payment) {
@@ -96,6 +98,7 @@ export class CartService {
         .then((sale) => {
           resolve(sale);
           console.log('sale saved', sale);
+          this.save_fees_credits(session);
           this.clearCart();
         })
         .catch((error) => {
@@ -110,7 +113,6 @@ export class CartService {
     const cartItem: CartItem = {
       product_id: product.id,
       paied: product.price,
-      // payee_id: payee === null ? '' : payee.id,
       product_account: product.account,
       payee_name: payee === null ? '' : payee.lastname + ' ' + payee.firstname
     };
@@ -197,14 +199,16 @@ export class CartService {
       const account = SALE_ACCOUNTS[payment_mode] as FINANCIAL_ACCOUNT;
       f_amounts[account] = this.getCartAmount();
     }
-    // if (this._debt !== 0) {
-    //   f_amounts[FINANCIAL_ACCOUNT.DEBT_credit] = this._debt;  // paiement de la dette
-    // }
-    // if (this._asset !== 0) {
-    //   f_amounts[FINANCIAL_ACCOUNT.ASSET_debit] = this._asset;  // paiement avec un avoir
-    // }
     return f_amounts;
   }
 
+
+  save_fees_credits(session: Session) {
+    this._cart.items.forEach((cartitem) => {
+      if (cartitem.product_account === 'CAR') {
+        this.feesService.tournament_card_sold(session.date, cartitem.payee!, cartitem.paied);
+      }
+    });
+  }
 
 }
