@@ -1,14 +1,15 @@
 import { Injectable } from '@angular/core';
-import { club_tournament } from '../../../../common/ffb/interface/club_tournament.interface';
-import { MembersService } from '../../../../admin-dashboard/src/app/members/service/members.service';
-import { TournamentService } from '../../../../common/services/tournament.service';
-import { ToastService } from '../../../../common/toaster/toast.service';
-import { Person, Player, Team, TournamentTeams } from '../../../../common/ffb/interface/tournament_teams.interface';
+import { MembersService } from '../../../../../admin-dashboard/src/app/members/service/members.service';
+import { TournamentService } from '../../../../../common/services/tournament.service';
+import { Person, Player, Team, TournamentTeams } from '../../../../../common/ffb/interface/tournament_teams.interface';
 import { BehaviorSubject, map, Observable, of, tap } from 'rxjs';
-import { SystemDataService } from '../../../../common/services/system-data.service';
-import { ProductService } from '../../../../common/services/product.service';
-import { Member } from '../../../../common/member.interface';
-import { Game, Gamer } from './fees/fees.interface';
+import { SystemDataService } from '../../../../../common/services/system-data.service';
+import { ProductService } from '../../../../../common/services/product.service';
+import { Game_credit, Member } from '../../../../../common/member.interface';
+import { Game, Gamer } from '../fees.interface';
+import { ToastService } from '../../../../../common/toaster/toast.service';
+import { club_tournament } from '../../../../../common/ffb/interface/club_tournament.interface';
+import { FeesEditorService } from '../fees-editor/fees-editor.service';
 
 
 
@@ -16,8 +17,16 @@ import { Game, Gamer } from './fees/fees.interface';
 @Injectable({
   providedIn: 'root'
 })
-export class FeesService {
-  game!: Game;
+export class FeesCollectorService {
+  game: Game = {
+    season: '',
+    member_trn_price: 0,
+    non_member_trn_price: 0,
+    alphabetic_sort: false,
+    fees_doubled: false,
+    gamers: [],
+    tournament: null,
+  };
   _game$: BehaviorSubject<Game> = new BehaviorSubject<Game>(this.game);
   members: Member[] = [];
 
@@ -28,7 +37,7 @@ export class FeesService {
     private membersService: MembersService,
     private tournamentService: TournamentService,
     private systemDataService: SystemDataService,
-    private productService: ProductService,
+    private feesEditorService: FeesEditorService
 
 
   ) {
@@ -43,18 +52,13 @@ export class FeesService {
         non_member_trn_price: +systemData.non_member_trn_price,
         alphabetic_sort: false,
         fees_doubled: false,
-        gamers: []
+        gamers: [],
+        tournament: null,
       };
 
     });
 
-    // this.productService.listProducts().subscribe((products) => {
-    //   // this.products = products;
-    //   console.log('products', products);
-    // });
   }
-
-
 
   get game$(): Observable<Game> {
     return this._game$.asObservable();
@@ -74,14 +78,15 @@ export class FeesService {
     let is_member = this.is_member(license);
     let in_euro = !is_member;
     let price = is_member ? this.game.member_trn_price : this.game.non_member_trn_price;
-    let games_credit = is_member ? is_member.games_credit : 0;
+
+    let game_credits = (is_member !== undefined) ? this.feesEditorService.get_current_game_credit(is_member.id) : 0;
 
     return {
       license: license,
       firstname: person.firstname,
       lastname: person.lastname.toUpperCase(),
       is_member: is_member,
-      games_credit: games_credit,
+      game_credits: game_credits,
       in_euro: in_euro,
       index: index,
       price: price,
@@ -126,10 +131,9 @@ export class FeesService {
       map((teams: Team[]) => teams.map((team) => team.players)),
       map((players: Player[][]) => players.flat()),
       map((players: Player[]) => players.map((player) => player.person)),
-
     ).subscribe((persons: Person[]) => {
-      // this.persons = persons;
       this.game.gamers = persons.map((person, index) => this.person2gamer(person, index));
+      this.game.tournament = tournament;
       this._game$.next(this.game)
     }
     );
@@ -157,22 +161,8 @@ export class FeesService {
     let members_euros = members.reduce((acc, gamer) => acc + (gamer.in_euro ? gamer.price : 0), 0);
     console.log('non_members_euros', non_members_euros);
     console.log('members_euros', members_euros);
-    // let sale: Sale = {
-    //   season: this.game.season,
-    //   vendor: 'cashier',
-    //   date: new Date().toISOString(),
-    //   payer_id: 'cashier',
-    //   records: [
-    //     {
-    //       class: 'Product_credit',
-    //       season: this.game.season,
-    //       amount: members_euros + non_members_euros,
-    //       sale_id: '???',
-    //       member_id: '????',
-    //       product_id: 'fee',
-    //     }
-    //   ]
-    // };
+
+
   }
 
 

@@ -32,6 +32,11 @@ const schema = a.schema({
 
   // Adhérents et produits Club
 
+  Game_credit: a.customType({
+    tag: a.string().required(),
+    amount: a.integer().required(),
+  }),
+
   Member: a.model({
     license_number: a.id().required(),
     gender: a.string(),
@@ -46,8 +51,7 @@ const schema = a.schema({
     is_sympathisant: a.boolean(),
     license_status: a.string(),
     license_taken_at: a.string(),
-    games_credit: a.integer(),
-    // payments: a.hasMany('Sale', 'payer_id'),
+    game_credits: a.ref('Game_credit').array(),
   })
     .authorization((allow) => [allow.publicApiKey()]),
 

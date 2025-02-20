@@ -4,7 +4,7 @@
         <div class="col-4">
             <div class=" input-group input-group-sm">
                 tournoi du :&nbsp;
-                <select class="form-select form-select-sm" [(ngModel)]="selected_tournament"
+                <select class="form-select form-select-sm" [(ngModel)]="game.tournament"
                     (ngModelChange)="tournament_selected($event)">
                     <option *ngFor="let trn of next_tournaments | async" [ngValue]="trn">
                         {{ trn.date | date:'dd/MM/yyyy' }} &nbsp; {{ trn.time }}</option>
@@ -18,8 +18,8 @@
                 </div>
                 <div class="col-auto">
                     <span class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" [checked]="(game$|async)?.fees_doubled"
-                            role="switch" [checked]="(game$ | async)?.fees_doubled" (change)="toggle_fee()">
+                        <input class="form-check-input" type="checkbox" [checked]="game.fees_doubled" role="switch"
+                            [checked]="game.fees_doubled" (change)="toggle_fee()">
                         <label class="form-check-label">droit doublé</label>
                     </span>
                 </div>
@@ -28,10 +28,10 @@
     </div>
     <!-- bandeau présentation et validation -->
 
-    <div *ngIf="game$ | async" class="row bg-light mb-3 p-3 justify-content-around align-items-center">
+    <div *ngIf="game" class="row bg-light mb-3 p-3 justify-content-around align-items-center">
 
         <span class="col form-check form-switch">
-            <input class="form-check-input" type="checkbox" role="switch" [checked]="(game$ | async)?.alphabetic_sort"
+            <input class="form-check-input" type="checkbox" role="switch" [checked]="game.alphabetic_sort"
                 (change)="toggle_sort()">
             <label class="form-check-label">tri alphabétique</label>
         </span>
@@ -41,12 +41,12 @@
         <button class="col btn btn-sm btn-primary me-2" (click)="save_fees()">enregistrer</button>
     </div>
 
-    <div *ngIf="game$ | async" class="row">
+    <div *ngIf="game" class="row">
         <!-- <div class="col-12"> -->
         <div class="row row-cols-1 row-cols-md-4 g-1">
-            <div class="col" *ngFor="let gamer of (game$ | async)?.gamers">
+            <div class="col" *ngFor="let gamer of game.gamers">
                 <ng-container
-                    *ngTemplateOutlet="fee_editor; context:{gamer: gamer, doubled: ((game$ | async)?.fees_doubled)}"></ng-container>
+                    *ngTemplateOutlet="fee_editor; context:{gamer: gamer, doubled: (game.fees_doubled)}"></ng-container>
             </div>
         </div>
         <!-- </div> -->
@@ -70,9 +70,9 @@
                         <!-- [ngClass]="((gamer.games_credit <= 2)) ? 'form-check warning-radio' : 'form-check'"> -->
                         <input class="form-check-input" type="radio" [name]="'card_or_euro' + gamer.index"
                             [id]="'pass-radio'+ gamer.index" [value]="false" [(ngModel)]="gamer.in_euro" />
-                        <label class="form-check-label" [ngStyle]="{'color': (gamer.games_credit<=2) ? 'red' : 'black'}"
+                        <label class="form-check-label" [ngStyle]="{'color': (gamer.game_credits<=2) ? 'red' : 'black'}"
                             [for]="'pass-radio'+ gamer.index">
-                            {{gamer.games_credit}}
+                            {{gamer.game_credits}}
                             <i class="bi-pass"></i>
                             <i *ngIf="doubled" class="bi-pass"></i>
 

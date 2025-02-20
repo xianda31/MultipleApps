@@ -1,4 +1,7 @@
-import { Member } from "../../../../../common/member.interface";
+import { club_tournament } from "../../../../common/ffb/interface/club_tournament.interface";
+import { Game_credit, Member } from "../../../../common/member.interface";
+
+export const MAX_CREDITS_HISTORY = 10;
 
 interface Fees_context {
     season: string;
@@ -8,6 +11,7 @@ interface Fees_context {
     alphabetic_sort: boolean;
 }
 export interface Game extends Fees_context {
+    tournament: club_tournament | null;
     gamers: Gamer[];
 }
 
@@ -16,7 +20,7 @@ export interface Gamer {
     firstname: string;
     lastname: string;
     is_member: Member | undefined;
-    games_credit: number;
+    game_credits: number;
     index: number;
     in_euro: boolean;
     price: number;

@@ -33,12 +33,19 @@
                     </a>
                 </li>
 
-                <li class="nav-item me-5">
-                    <a class="nav-link " [routerLink]="['/fees']">
-                        <i class="fs-4 bi-card-checklist"></i>
-                        <span class="ms-1 d-none d-sm-inline">Droits de table</span>
+
+                <li class="nav-item dropdown me-5">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown1" role="button"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fs-4 bi-card-checklist"></i> <span class="ms-1 d-none d-sm-inline">Droits de
+                            table</span>
                     </a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown1">
+                        <li><a class="dropdown-item  " routerLink="/fees/collector">tournoi</a></li>
+                        <li><a class="dropdown-item  " routerLink="/fees/editor">édition</a></li>
+                    </ul>
                 </li>
+
 
                 <li class="nav-item dropdown me-5">
                     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown1" role="button"

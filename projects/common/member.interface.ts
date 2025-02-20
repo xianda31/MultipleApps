@@ -1,3 +1,8 @@
+
+export interface Game_credit {
+    tag: string,
+    amount: number
+}
 export interface Member {
     id: string;
     gender: string;
@@ -13,5 +18,5 @@ export interface Member {
     is_sympathisant: boolean
     license_status: string
     license_taken_at: string
-    games_credit: number
+    game_credits: Game_credit[]
 }

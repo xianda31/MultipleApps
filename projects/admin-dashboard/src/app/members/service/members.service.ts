@@ -55,6 +55,10 @@ export class MembersService {
     return this._members.find((m) => m.license_number === license_number) || null;
   }
 
+  getMemberbyName(name: string): Member | null {
+    return this._members.find((m) => m.lastname + ' ' + m.firstname === name) || null;
+  }
+
   getMember(id: string): Member | null {
     return this._members.find((m) => m.id === id) || null;
   }
@@ -117,7 +121,7 @@ export class MembersService {
       console.error('Member not updated');
       return;
     } else {
-      console.log('Member updated', updatedMember.lastname);
+      // console.log('Member updated', updatedMember.lastname);
       this._members = this._members.map((m) => m.license_number === member.license_number ? member : m);
       this._members$.next(this._members);
     }
