@@ -17,7 +17,7 @@ export class SessionService {
     private systemDataService: SystemDataService
 
   ) {
-    combineLatest([this.authService.logged_member$, this.systemDataService.configuration$])
+    combineLatest([this.authService.logged_member$, this.systemDataService.get_configuration()])
       .subscribe(([vendor, conf]) => {
         this._current_session = {
           season: conf.season,

@@ -41,7 +41,7 @@ export class CashBoxStatusComponent {
 
     this.init_cashForm();
 
-    this.systemDataService.configuration$.subscribe((conf) => {
+    this.systemDataService.get_configuration().subscribe((conf) => {
       this.banks = conf.banks;
     });
     this.bookService.list_book_entries$().subscribe((book_entries) => {

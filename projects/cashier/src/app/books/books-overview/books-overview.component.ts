@@ -46,9 +46,9 @@ export class BooksOverviewComponent {
 
   ngOnInit() {
 
-    this.systemDataService.configuration$.subscribe((conf) => {
-      this.expenses_accounts = conf.charge_accounts.map((account) => account.key);
-      this.products_accounts = conf.product_accounts.map((account) => account.key);
+    this.systemDataService.get_configuration().subscribe((conf) => {
+      this.expenses_accounts = conf.financial_tree.expenses.map((account) => account.key);
+      this.products_accounts = conf.financial_tree.revenues.map((account) => account.key);
     });
 
 

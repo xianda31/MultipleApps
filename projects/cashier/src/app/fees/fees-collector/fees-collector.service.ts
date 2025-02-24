@@ -47,11 +47,11 @@ export class FeesCollectorService {
       this.members = members;
     });
 
-    this.systemDataService.getSystemData().subscribe((systemData) => {
+    this.systemDataService.get_configuration().subscribe((sys_conf) => {
       this.game = {
-        season: systemData.season,
-        member_trn_price: +systemData.member_trn_price,
-        non_member_trn_price: +systemData.non_member_trn_price,
+        season: sys_conf.season,
+        member_trn_price: +sys_conf.member_trn_price,
+        non_member_trn_price: +sys_conf.non_member_trn_price,
         alphabetic_sort: false,
         fees_doubled: false,
         gamers: [],

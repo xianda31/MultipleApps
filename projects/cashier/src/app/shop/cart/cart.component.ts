@@ -54,7 +54,7 @@ export class CartComponent {
     this.productService.listProducts().subscribe((products) => {
       this.products = products;
     });
-    this.banks$ = this.systemDataService.configuration$.pipe(map((conf) => conf.banks));
+    this.banks$ = this.systemDataService.get_configuration().pipe(map((conf) => conf.banks));
 
 
 
