@@ -27,17 +27,17 @@ export class AppComponent {
     private systemDataService: SystemDataService,
   ) {
     registerLocaleData(localeFr);
-    combineLatest([
-      this.membersService.listMembers(),
-      this.systemDataService.configuration$,
+    // combineLatest([
+    //   this.membersService.listMembers(),
+    //   this.systemDataService.get_configuration(),
 
-    ]).subscribe(([members, conf]) => {
-      // this.season = conf.season;
-      // this.bookService.f_list_sales$(this.season).subscribe((sales) => {
-      //   this.init = true;
-      // });
+    // ]).subscribe(([members, conf]) => {
+    //   // this.season = conf.season;
+    //   // this.bookService.f_list_sales$(this.season).subscribe((sales) => {
+    //   //   this.init = true;
+    //   // });
 
-    });
+    // });
   }
 
 }

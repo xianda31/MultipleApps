@@ -1,8 +1,8 @@
 import { CUSTOMER_ACCOUNT, FINANCIAL_ACCOUNT } from "../../../../../common/accounting.interface";
 import { Member } from "../../../../../common/member.interface";
+import { _CHEQUE_IN_CASHBOX } from "../../../../../common/transaction.definition";
 
 
-// TODO : PaymentMode very similar to BOOK_ENTRY_TYPE  => streamline !
 export enum PaymentMode {
     CASH = 'espèces',
     CHEQUE = 'chèque',
@@ -14,7 +14,7 @@ export enum PaymentMode {
 
 export const SALE_ACCOUNTS: { [key in PaymentMode]: FINANCIAL_ACCOUNT | CUSTOMER_ACCOUNT } = {
     [PaymentMode.CASH]: FINANCIAL_ACCOUNT.CASHBOX_debit,
-    [PaymentMode.CHEQUE]: FINANCIAL_ACCOUNT.BANK_debit,    // les chèques sont encaissés en banque direct // caisse d'abord
+    [PaymentMode.CHEQUE]: _CHEQUE_IN_CASHBOX ? FINANCIAL_ACCOUNT.CASHBOX_debit : FINANCIAL_ACCOUNT.BANK_debit,
     [PaymentMode.TRANSFER]: FINANCIAL_ACCOUNT.BANK_debit,
     [PaymentMode.CREDIT]: CUSTOMER_ACCOUNT.DEBT_debit,
     [PaymentMode.ASSETS]: CUSTOMER_ACCOUNT.ASSET_debit,

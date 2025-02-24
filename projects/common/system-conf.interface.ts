@@ -15,6 +15,17 @@ export interface ImageSize {
     ratio: number;
 }
 
+
+export interface Sub_class {
+    key: string;
+    class: string;
+    description: string;
+}
+export interface Financial_tree {
+    classes: { key: string, description: string }[];
+    revenues: Sub_class[];
+    expenses: Sub_class[];
+}
 export interface SystemConfiguration {
     club_identifier: string;
     dev_mode: string;
@@ -22,8 +33,7 @@ export interface SystemConfiguration {
     club_bank_key: string;
     member_trn_price: number;
     non_member_trn_price: number;
-    charge_accounts: Account[];
-    product_accounts: Account[];
+    financial_tree: Financial_tree;
     banks: Bank[];
     thumbnailSize: ImageSize;
 }

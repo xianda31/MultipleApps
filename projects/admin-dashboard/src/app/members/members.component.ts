@@ -58,7 +58,7 @@ export class MembersComponent implements OnInit {
       this.licensees = licensees;
       // console.log('MembersComponent.ngOnInit licensees', licensees);
     });
-    combineLatest([this.sysConfService.configuration$, this.membersService.listMembers()]).subscribe(([conf, members]) => {
+    combineLatest([this.sysConfService.get_configuration(), this.membersService.listMembers()]).subscribe(([conf, members]) => {
       this.season = conf.season;
 
       this.members = members.sort((a, b) => a.lastname.localeCompare(b.lastname));

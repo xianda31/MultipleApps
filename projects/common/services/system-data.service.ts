@@ -1,8 +1,7 @@
 import { Injectable } from '@angular/core';
 import { downloadData, uploadData } from 'aws-amplify/storage';
 import { SystemConfiguration } from '../system-conf.interface';
-import { from, of } from 'rxjs';
-import { Toast } from 'bootstrap';
+import { BehaviorSubject, from, Observable, switchMap, tap } from 'rxjs';
 import { ToastService } from '../toaster/toast.service';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
@@ -12,8 +11,8 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
   providedIn: 'root'
 })
 export class SystemDataService {
-  system_configuration !: SystemConfiguration;
-
+  private _system_configuration !: SystemConfiguration;
+  private _system_configuration$: BehaviorSubject<SystemConfiguration> = new BehaviorSubject(this._system_configuration);
   constructor(
     private toastService: ToastService,
     private sanitizer: DomSanitizer
@@ -23,13 +22,24 @@ export class SystemDataService {
   // S3 download / upload
 
 
-  get configuration$() {
-    return this.system_configuration ? of(this.system_configuration) : from(this.get_configuration());
+  get_configuration(): Observable<SystemConfiguration> {
+
+    let remote_load$ = from(this.download_configuration()).pipe(
+      tap((conf) => {
+        this._system_configuration = conf;
+        this._system_configuration$.next(this._system_configuration);
+        if (this.trace_on()) console.log(' configuration from S3', this._system_configuration);
+      }),
+      switchMap(() => this._system_configuration$.asObservable())
+    );
+
+    return (this._system_configuration !== undefined) ? this._system_configuration$.asObservable() : remote_load$;
   }
 
-  getSystemData() {
-    return this.configuration$;
-  }
+  // getSystemData() {
+  //   return this._system_configuration;
+  // }
+
   async save_configuration(conf: SystemConfiguration) {
     const json = JSON.stringify(conf);
     const blob = new Blob([json], { type: 'text/plain' });
@@ -60,14 +70,15 @@ export class SystemDataService {
   }
 
 
-  private async get_configuration(): Promise<SystemConfiguration> {
+  private async download_configuration(): Promise<SystemConfiguration> {
     let promise = new Promise<SystemConfiguration>((resolve, reject) => {
       downloadData({
         path: 'system/system_configuration.txt',
       }).result
         .then(async (result) => {
-          this.system_configuration = JSON.parse(await result.body.text());
-          resolve(this.system_configuration);
+          const data = JSON.parse(await result.body.text());
+          const { charge_accounts, product_accounts, ...sys_conf } = data;
+          resolve(sys_conf);
         })
         .catch((error) => {
           reject(error);
@@ -84,6 +95,13 @@ export class SystemDataService {
 
     return this.sanitizer.bypassSecurityTrustResourceUrl(window.URL.createObjectURL(blob));
   }
+
+  // utilities functions
+
+  trace_on() {
+    return this._system_configuration.dev_mode === 'trace';
+  }
+
 
 
 }

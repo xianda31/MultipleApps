@@ -100,115 +100,88 @@
                                 </div>
                             </div>
                         </div>
-
-                        <div class="row mt-2">
-                            <div class="col-md-6">
-                                <div class="card">
-                                    <h6 class="card-header">comptes de charge</h6>
-                                    <div class="card-body">
-
-                                        <div formArrayName="charge_accounts">
-
-                                            <div *ngFor="let charge_account of charge_accounts.controls; let i = index">
-                                                <div class="row " [formGroupName]=" i">
-                                                    <div class="col-4">
-                                                        <div class=" input-group">
-                                                            <span class="input-group-text">code</span>
-                                                            <input type="text" class="form-control"
-                                                                formControlName="key">
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-8">
-                                                        <div class=" input-group">
-                                                            <span class="input-group-text">description</span>
-                                                            <input type="text" class="form-control"
-                                                                formControlName="description">
-                                                        </div>
-
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-
-                            </div>
-                            <div class="col-md-6">
-                                <div class="card">
-                                    <h6 class="card-header">comptes de produit</h6>
-                                    <div class="card-body">
-
-                                        <div formArrayName="product_accounts">
-
-                                            <div
-                                                *ngFor="let product_account of product_accounts.controls; let i = index">
-                                                <div class="row " [formGroupName]=" i">
-                                                    <div class="col-4">
-                                                        <div class=" input-group">
-                                                            <span class="input-group-text">code</span>
-                                                            <input type="text" class="form-control"
-                                                                formControlName="key">
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-8">
-
-                                                        <div class=" input-group">
-                                                            <span class="input-group-text">description</span>
-                                                            <input type="text" class="form-control"
-                                                                formControlName="description">
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-
-                            </div>
-                        </div>
-
+                        <!-- structure comptes de résultats -->
                         <div class="card mt-2">
-                            <h6 class="card-header">codes banques</h6>
-                            <div class="card-body">
-                                <div class="row " formArrayName="banks">
-                                    <div class="col-md-4" *ngFor="let bank of banks.controls; let i = index">
-                                        <div class="input-group" [formGroupName]=" i">
-                                            <span class="input-group-text">#</span>
-                                            <input type="text" class="form-control" formControlName="key">
-                                            <input type="text" class="form-control" formControlName="name">
+                            <h6 class="card-header">comptes de résultats</h6>
+                            <div class="card-body" formGroupName="financial_tree">
+                                <div *ngFor="let class of classes.controls">
+                                    <h6 class="col-2"> {{class.get('description')?.value }}</h6>
+                                    <div class="row my-2 offset-2">
+                                        <div class="col-6">
+                                            <div class="card h-100 bg-body-secondary" formArrayName="expenses">
+                                                <div class="card-body">
+                                                    <div *ngFor="let expense of expenses.controls; let i = index">
+                                                        <div class="input-group" [formGroupName]=" i"
+                                                            *ngIf="expense.get('class')?.value === class.get('key')?.value">
+                                                            <input type="text" class="form-control w-25"
+                                                                formControlName="key">
+                                                            <input type="text" class="form-control w-75"
+                                                                formControlName="description">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
+
+                                        <div class="col-6">
+                                            <div class="card h-100 bg-body-tertiary" formArrayName="revenues">
+                                                <div class="card-body">
+                                                    <div *ngFor="let revenue of revenues.controls; let i = index">
+                                                        <div class="input-group" [formGroupName]=" i"
+                                                            *ngIf="revenue.get('class')?.value === class.get('key')?.value">
+                                                            <input type="text" class="form-control w-25"
+                                                                formControlName="key">
+                                                            <input type="text" class="form-control w-75"
+                                                                formControlName="description">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card mt-2">
+                        <h6 class="card-header">codes banques</h6>
+                        <div class="card-body">
+                            <div class="row " formArrayName="banks">
+                                <div class="col-md-4" *ngFor="let bank of banks.controls; let i = index">
+                                    <div class="input-group" [formGroupName]=" i">
+                                        <span class="input-group-text">#</span>
+                                        <input type="text" class="form-control" formControlName="key">
+                                        <input type="text" class="form-control" formControlName="name">
                                     </div>
                                 </div>
                             </div>
                         </div>
-
                     </div>
+
                 </div>
-                <!-- paramètres UE site -->
-                <div class="card mt-2">
-                    <h5 class="card-header">site</h5>
-                    <div class="card-body">
-                        <h6> recadrage des vignettes stockées du site</h6>
-                        <div class="row" formGroupName="thumbnail">
-                            <div class="col input-group">
-                                <span class="input-group-text">largeur (en pixel)</span>
-                                <input type="text" class="form-control" formControlName="width">
-                            </div>
-                            <div class="col input-group">
-                                <span class="input-group-text">hauteur (en pixel)</span>
-                                <input type="text" class="form-control" formControlName="height">
-                            </div>
-                            <div class="col input-group">
-                                <span class="input-group-text">ratio</span>
-                                <input type="text" class="form-control" formControlName="ratio">
-                            </div>
+            </div>
+            <!-- paramètres UE site -->
+            <div class="card mt-2">
+                <h5 class="card-header">site</h5>
+                <div class="card-body">
+                    <h6> recadrage des vignettes stockées du site</h6>
+                    <div class="row" formGroupName="thumbnail">
+                        <div class="col input-group">
+                            <span class="input-group-text">largeur (en pixel)</span>
+                            <input type="text" class="form-control" formControlName="width">
+                        </div>
+                        <div class="col input-group">
+                            <span class="input-group-text">hauteur (en pixel)</span>
+                            <input type="text" class="form-control" formControlName="height">
+                        </div>
+                        <div class="col input-group">
+                            <span class="input-group-text">ratio</span>
+                            <input type="text" class="form-control" formControlName="ratio">
                         </div>
                     </div>
                 </div>
             </div>
-
         </div>
     </form>
 </div>

@@ -29,7 +29,7 @@ export class ImgUploadComponent {
   constructor(
     private systemDataService: SystemDataService
   ) {
-    this.systemDataService.configuration$.subscribe((configuration) => {
+    this.systemDataService.get_configuration().subscribe((configuration) => {
       this.thumbnailSize = configuration.thumbnailSize;
     });
 

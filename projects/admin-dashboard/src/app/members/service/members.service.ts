@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { generateClient, get } from 'aws-amplify/api';
-import { BehaviorSubject, from, generate, Observable, of, last, map, tap, switchMap } from 'rxjs';
+import { generateClient } from 'aws-amplify/api';
+import { BehaviorSubject, from, Observable, tap, switchMap } from 'rxjs';
 import { Schema } from '../../../../../../amplify/data/resource';
 import { Member } from '../../../../../common/member.interface';
 import { ToastService } from '../../../../../common/toaster/toast.service';
