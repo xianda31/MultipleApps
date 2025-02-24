@@ -173,7 +173,7 @@
             <ng-container [formGroup]="inputFormGroup">
                 <div formArrayName="values" class="row ">
                     <div class="col gx-1" *ngFor="let account of inputFormGroup.get('values').controls ; let i = index">
-                        <label>{{profit_and_loss_accounts[i]}}</label>
+                        <label>{{profit_and_loss_accounts[i].key}}</label>
                         <input type="text" class="form-control" [formControlName]="i" [id]="'value' + i">
                         <div *ngIf="account.invalid" class="text-danger">
                             <small>Le montant doit être un nombre</small>

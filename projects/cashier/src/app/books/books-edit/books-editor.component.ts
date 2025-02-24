@@ -19,6 +19,11 @@ interface Operation_initial_values {
   member?: string;
   values?: { [key: string]: number };
 }
+
+interface Account {
+  key: string;
+  description: string;
+}
 @Component({
   selector: 'app-booking',
   standalone: true,
@@ -31,11 +36,12 @@ export class BooksEditorComponent {
   banks !: Bank[];
   club_bank!: Bank;
   members!: Member[];
-  expenses_accounts !: string[];
-  products_accounts !: string[];
+  expenses_accounts !: Account[];
+  products_accounts !: Account[];
+  profit_and_loss_accounts !: Account[];
+
   financial_accounts !: Account_def[];
   customer_accounts !: Account_def[];
-  profit_and_loss_accounts !: string[];
 
   op_types !: ENTRY_TYPE[];
 
@@ -75,8 +81,8 @@ export class BooksEditorComponent {
     this.systemDataService.get_configuration().subscribe((conf) => {
       this.banks = conf.banks;
       this.club_bank = this.banks.find(bank => bank.key === conf.club_bank_key)!;
-      this.expenses_accounts = conf.financial_tree.expenses.map((account) => account.key);
-      this.products_accounts = conf.financial_tree.revenues.map((account) => account.key);
+      this.expenses_accounts = conf.financial_tree.expenses;
+      this.products_accounts = conf.financial_tree.revenues;
     });
 
     this.init_form();
@@ -306,7 +312,7 @@ export class BooksEditorComponent {
     let operationForm: FormGroup = this.fb.group({
       'label': [label.toLocaleLowerCase()],
       'values': this.fb.array(
-        (profit_and_loss_accounts.map(field => new FormControl<string>((operation_initial?.values?.[field]?.toString() ?? ''), [Validators.pattern(/^\d+(\.\d+)?$/)])) as unknown[]),
+        (profit_and_loss_accounts.map(account => new FormControl<string>((operation_initial?.values?.[account.key]?.toString() ?? ''), [Validators.pattern(/^\d+(\.\d+)?$/)])) as unknown[]),
         { validators: [this.atLeastOneFieldValidator] }),
     });
     if (transaction.nominative) {
@@ -386,10 +392,10 @@ export class BooksEditorComponent {
     operations = this.operations.controls.map((operation) => {
       let op_values: operation_values = {};
 
-      this.profit_and_loss_accounts.forEach((account: string, index: number) => {
+      this.profit_and_loss_accounts.forEach((account: Account, index: number) => {
         let value = this.parse_to_float((operation as FormGroup).controls['values'].value[index]);
         if (value && value !== 0) {
-          op_values[account] = value;
+          op_values[account.key] = value;
         }
       });
 
@@ -532,7 +538,7 @@ export class BooksEditorComponent {
     });
     return grand_total;
   }
-  which_profit_and_loss_accounts(transaction: Transaction): string[] {
+  which_profit_and_loss_accounts(transaction: Transaction): Account[] {
     if (transaction.is_of_profit_type === undefined) return [];
     return transaction.is_of_profit_type ? this.products_accounts : this.expenses_accounts;
   }
