@@ -1,10 +1,10 @@
 import { CommonModule, formatDate } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, ViewEncapsulation } from '@angular/core';
 import { Location } from '@angular/common';
 import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { BookService } from '../../book.service';
 import { BookEntry, operation_values, BOOK_ENTRY_CLASS, season, Operation, FINANCIAL_ACCOUNT, ENTRY_TYPE } from '../../../../../common/accounting.interface';
-import { Bank, Financial_tree } from '../../../../../common/system-conf.interface';
+import { Bank } from '../../../../../common/system-conf.interface';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { ToastService } from '../../../../../common/toaster/toast.service';
 import { Transaction, get_transaction, class_types, Account_def } from '../../../../../common/transaction.definition';
@@ -12,6 +12,8 @@ import { MembersService } from '../../../../../admin-dashboard/src/app/members/s
 import { Member } from '../../../../../common/member.interface';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { Tooltip } from 'bootstrap';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 interface Operation_initial_values {
   customer_accounts?: string[];
@@ -27,7 +29,8 @@ interface Account {
 @Component({
   selector: 'app-booking',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  encapsulation: ViewEncapsulation.None,   // nécessaire pour que les tooltips fonctionnent
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbTooltipModule],
   templateUrl: './books-editor.component.html',
   styleUrl: './books-editor.component.scss'
 })
@@ -70,6 +73,14 @@ export class BooksEditorComponent {
     private location: Location
 
   ) { }
+
+
+  ngAfterViewInit() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new Tooltip(tooltipTriggerEl)
+    });
+  }
 
   ngOnInit() {
 

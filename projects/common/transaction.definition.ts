@@ -7,26 +7,27 @@ export const _CHEQUE_IN_ACCOUNT: FINANCIAL_ACCOUNT = _CHEQUE_IN_CASHBOX ? FINANC
 export type Account_def = {
     key: FINANCIAL_ACCOUNT | CUSTOMER_ACCOUNT
     label: string
+    description: string
 }
 
 export const financial_debits: Account_def[] = [
-    { key: FINANCIAL_ACCOUNT.CASHBOX_debit, label: 'Caisse_in' },
-    { key: FINANCIAL_ACCOUNT.BANK_debit, label: 'Banque_in' },
-    { key: FINANCIAL_ACCOUNT.SAVING_debit, label: 'Epargne_in' },
+    { key: FINANCIAL_ACCOUNT.CASHBOX_debit, label: 'Caisse_in', description: ' ' },
+    { key: FINANCIAL_ACCOUNT.BANK_debit, label: 'Banque_in', description: ' ' },
+    { key: FINANCIAL_ACCOUNT.SAVING_debit, label: 'Epargne_in', description: ' ' },
 ]
 export const financial_credits: Account_def[] = [
-    { key: FINANCIAL_ACCOUNT.CASHBOX_credit, label: 'Caisse_out' },
-    { key: FINANCIAL_ACCOUNT.BANK_credit, label: 'Banque_out' },
-    { key: FINANCIAL_ACCOUNT.SAVING_credit, label: 'Epargne_out' },
+    { key: FINANCIAL_ACCOUNT.CASHBOX_credit, label: 'Caisse_out', description: ' ' },
+    { key: FINANCIAL_ACCOUNT.BANK_credit, label: 'Banque_out', description: ' ' },
+    { key: FINANCIAL_ACCOUNT.SAVING_credit, label: 'Epargne_out', description: ' ' },
 
 ]
 export const customer_assets: Account_def[] = [
-    { key: CUSTOMER_ACCOUNT.ASSET_debit, label: '-AVOIR' },
-    { key: CUSTOMER_ACCOUNT.DEBT_credit, label: '+DETTE' },
+    { key: CUSTOMER_ACCOUNT.ASSET_debit, label: '-AVOIR', description: 'utilisation d\'un avoir' },
+    { key: CUSTOMER_ACCOUNT.DEBT_credit, label: '+DETTE', description: 'paiement d\'une dette' },
 ]
 export const customer_debt: Account_def[] = [
-    { key: CUSTOMER_ACCOUNT.ASSET_debit, label: '-Avoir' },
-    { key: CUSTOMER_ACCOUNT.DEBT_debit, label: 'DETTE' },
+    { key: CUSTOMER_ACCOUNT.ASSET_debit, label: '-Avoir', description: 'utilisation d\'un avoir' },
+    { key: CUSTOMER_ACCOUNT.DEBT_debit, label: 'DETTE', description: 'montant du"crédit"' },
 ]
 
 
@@ -149,7 +150,7 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
         label: 'attribution nominative d\'avoir',
         class: BOOK_ENTRY_CLASS.d_EXPENSE_FOR_MEMBER,
         financial_accounts: [],
-        customer_accounts: [{ key: CUSTOMER_ACCOUNT.ASSET_credit, label: 'Avoir' }],
+        customer_accounts: [{ key: CUSTOMER_ACCOUNT.ASSET_credit, label: 'Avoir', description: 'valeur de l\'avoir attribué' }],
         financial_accounts_to_charge: [CUSTOMER_ACCOUNT.ASSET_credit],
         nominative: true,
         is_of_profit_type: false,
