@@ -99,10 +99,11 @@
         </div>
         <!-- form.status : {{form.status}}<br>
         operations.status : {{form.get('operations')?.status}} -->
+
         <div class="row mt-3">
             <div class="col-1">
                 <button [disabled]="form.invalid || !financial_accounts_locked " type="submit" class="btn btn-primary">
-                    {{!creation?'Modifier':'Créer'}}</button>
+                    {{creation?'Créer':'Enregistrer'}}</button>
             </div>
             <div *ngIf="!creation" class="col-1">
                 <button type="button" class="btn btn-primary" (click)="cancel()">Retour</button>

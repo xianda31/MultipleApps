@@ -1,6 +1,6 @@
 import { FINANCIAL_ACCOUNT, BOOK_ENTRY_CLASS, ENTRY_TYPE, CUSTOMER_ACCOUNT } from './accounting.interface';
 
-export const _CHEQUE_IN_CASHBOX: boolean = false;     // flag to indicate if cheques are first deposited in cashbox
+export const _CHEQUE_IN_CASHBOX: boolean = true;     // flag to indicate if cheques are first deposited in cashbox
 
 export const _CHEQUE_IN_ACCOUNT: FINANCIAL_ACCOUNT = _CHEQUE_IN_CASHBOX ? FINANCIAL_ACCOUNT.CASHBOX_debit : FINANCIAL_ACCOUNT.BANK_debit;
 
@@ -232,7 +232,7 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
         class: BOOK_ENTRY_CLASS.e_MOVEMENT,
         // profit_and_loss_accounts: FINANCIAL_ACCOUNT.BANK_debit,
         financial_accounts: [...financial_credits, ...financial_debits],
-        financial_accounts_to_charge: [FINANCIAL_ACCOUNT.BANK_credit, FINANCIAL_ACCOUNT.SAVING_debit],
+        financial_accounts_to_charge: [FINANCIAL_ACCOUNT.BANK_debit, FINANCIAL_ACCOUNT.SAVING_credit],
         nominative: false,
         require_deposit_ref: false,
         cash: 'none',

@@ -232,7 +232,9 @@ export class BooksEditorComponent {
       if (this.creation) {
         this.operations.clear();
         this.profit_and_loss_accounts = this.which_profit_and_loss_accounts(this.transaction);
-        this.add_operation(this.transaction);
+        if (this.transaction.class !== BOOK_ENTRY_CLASS.e_MOVEMENT) {  // les transactions type mouvement ne nécessite pas d'opération
+          this.add_operation(this.transaction);
+        }
         // this.init_operation(this.transaction);
       }
 
@@ -318,7 +320,7 @@ export class BooksEditorComponent {
   add_operation(transaction: Transaction, operation_initial?: Operation) {
 
     let profit_and_loss_accounts = this.which_profit_and_loss_accounts(transaction);
-    let label = transaction.label;
+    let label = operation_initial?.label ?? transaction.label;
 
     let operationForm: FormGroup = this.fb.group({
       'label': [label.toLocaleLowerCase()],

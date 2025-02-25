@@ -7,6 +7,7 @@ import { ImportExcelComponent } from './excel/import-excel/import-excel.componen
 import { BooksEditorComponent } from './books/books-edit/books-editor.component';
 import { CashBoxStatusComponent } from './books/cash-box-status/cash-box-status.component';
 import { FeesEditorComponent } from './fees/fees-editor/fees-editor.component';
+import { BankReconciliationComponent } from './bank-reconciliation/bank-reconciliation.component';
 
 export const routes: Routes = [
     { path: 'shop', component: ShopComponent },   //, canActivate: [loggedInGuard]
@@ -17,6 +18,7 @@ export const routes: Routes = [
     { path: 'fees/collector', component: FeesCollectorComponent },
     { path: 'fees/editor', component: FeesEditorComponent },
     { path: 'excel/import', component: ImportExcelComponent },
+    { path: 'bank-reconciliation', component: BankReconciliationComponent },
     { path: '', component: HomeComponent },
     // {
     //     path: 'authentification',
