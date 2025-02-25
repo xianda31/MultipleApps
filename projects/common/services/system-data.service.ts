@@ -102,6 +102,34 @@ export class SystemDataService {
     return this._system_configuration.dev_mode === 'trace';
   }
 
+  get_season(date: Date): string {
+    const month = date.getMonth();
+    const year = date.getFullYear();
+    if (month < 7) return `${year - 1}/${year}`;
+    return `${year}/${year + 1}`;
+  }
 
+  get_season_months(date: Date): string[] {
+    const month = 1 + date.getMonth();
+    const year = +date.getFullYear();
+    let months: string[] = [];
+    if (month <= 6) {
+      for (let i = 7; i <= 12; i++) {
+        let m = (i).toString().padStart(2, '0');
+        months.push((year - 1).toString().slice(-2) + '-' + m);
+      }
+      for (let i = 1; i <= month; i++) {
+        let m = (i).toString().padStart(2, '0');
+        months.push(year.toString().slice(-2) + '-' + m);
+      }
+    } else {
+      for (let i = 1; i <= month; i++) {
+        let m = (i).toString().padStart(2, '0');
+        months.push(year.toString().slice(-2) + '-' + m);
+      }
+    }
+    return months;
+
+  }
 
 }

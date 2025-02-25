@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
 import { generateClient } from 'aws-amplify/api';
 
-import { BookEntry, Revenue, FINANCIAL_ACCOUNT, Expense, BOOK_ENTRY_CLASS, CUSTOMER_ACCOUNT, ENTRY_TYPE, season, bank_values, Operation } from '../../../common/accounting.interface';
+import { BookEntry, Revenue, FINANCIAL_ACCOUNT, Expense, BOOK_ENTRY_CLASS, CUSTOMER_ACCOUNT, ENTRY_TYPE, bank_values, Operation } from '../../../common/accounting.interface';
 import { Schema } from '../../../../amplify/data/resource';
 import { BehaviorSubject, from, map, Observable, of, switchMap, tap } from 'rxjs';
+import { SystemDataService } from '../../../common/services/system-data.service';
 
 type BookEntry_input = Schema['BookEntry']['type'];
 type BookEntry_output = BookEntry & {
@@ -17,7 +18,9 @@ export class BookService {
 
   private _book_entries!: BookEntry[];
   private _book_entries$ = new BehaviorSubject<BookEntry[]>(this._book_entries);
-  constructor() { }
+  constructor(
+    private systemDataService: SystemDataService
+  ) { }
 
   jsonified_entry(entry: BookEntry): BookEntry_input {
     const replacer = (key: string, value: any) => {
@@ -87,8 +90,6 @@ export class BookService {
   }
   async update_book_entry(book_entry: BookEntry) {
     const client = generateClient<Schema>();
-    const jsonified_entry: BookEntry_input = this.jsonified_entry(book_entry);
-
     try {
       const response = await client.models.BookEntry.update(this.jsonified_entry(book_entry));
       if (response.errors) {
@@ -98,7 +99,7 @@ export class BookService {
       const updated_entry = this.parsed_entry(response.data as unknown as BookEntry_output);
       this._book_entries = this._book_entries.map((entry) => entry.id === updated_entry.id ? updated_entry : entry);
       this._book_entries$.next(this._book_entries.sort((a, b) => {
-        return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
+        return a.date.localeCompare(b.date) // === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
       }));
       return updated_entry;
     } catch (error) {
@@ -316,7 +317,7 @@ export class BookService {
     operation.values['DdT'] = fees_amount;
     operation.label = 'droits de table';
 
-    let seasonValue = season(new Date(date));
+    let seasonValue = this.systemDataService.get_season(new Date(date));
     const entry: BookEntry = {
       id: '',
       season: seasonValue,

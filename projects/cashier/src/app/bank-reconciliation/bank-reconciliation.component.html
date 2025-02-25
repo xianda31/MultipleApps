@@ -1,43 +1,81 @@
-<!-- Compte bancaire -->
-
 <div class="card mt-2">
-    <!-- <div class="card"> -->
     <div class="card-header">
-        <h5>compte bancaire</h5>
+        <div class="row justify-content-evenly">
+
+            <h5>compte bancaire</h5>
+        </div>
     </div>
     <div class="card-body">
-        <table class="table table-sm">
-            <thead>
-                <tr>
-                    <th class="col">Date </th>
-                    <th class="col">opération </th>
-                    <!-- <th class="col">libellé</th> -->
-                    <th class="col text-center" *ngFor="let account of bank_accounts ">{{account}} </th>
-                    <th class="col">n° chèque </th>
-                    <th class="col">relevé </th>
-                    <th class="col">bordereau </th>
-                    <th class="col"> </th>
-                </tr>
-            </thead>
+        <div ngbAccordion>
+            <div *ngFor="let bank_report of bank_reports ;  let last = last" ngbAccordionItem [collapsed]="!last">
+                <h2 ngbAccordionHeader>
+                    <button ngbAccordionButton> relevé de banque n° {{bank_report}}</button>
+                </h2>
+                <div ngbAccordionCollapse>
+                    <div ngbAccordionBody>
+                        <ng-container *ngTemplateOutlet="report; context:{bank_report: bank_report}"></ng-container>
+                    </div>
+                </div>
+            </div>
 
-            <tbody>
+            <div ngbAccordionItem [collapsed]="false">
+                <h2 ngbAccordionHeader>
+                    <button ngbAccordionButton>opérations non pointées</button>
+                </h2>
+                <div ngbAccordionCollapse>
+                    <div ngbAccordionBody>
+                        <ng-container *ngTemplateOutlet="report; context:{bank_report: null}"></ng-container>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                <tr *ngFor="let book_entry of bank_book_entries">
+</div>
+<ng-template #report let-bank_report="bank_report">
+    <table class="table table-sm">
+        <thead>
+            <tr>
+                <th class="col-1">Date </th>
+                <th class="col-4">opération </th>
+                <th class="col text-center" *ngFor="let account of bank_accounts ">{{account}} </th>
+                <th class="text-start">n° chèque </th>
+                <th class="col-1 text-center">{{bank_report ? bank_report : 'relevé'}}</th>
+                <th class="col-1 "> </th>
+            </tr>
+        </thead>
+
+        <tbody>
+            <ng-container *ngFor="let book_entry of bank_book_entries">
+
+                <tr *ngIf="book_entry.bank_report === bank_report" class="table-light">
                     <td>{{book_entry.date | date: 'dd/MM/yyyy'}}</td>
                     <td>{{transaction_label(book_entry.bank_op_type)}}</td>
                     <td *ngFor=" let account of bank_accounts " class="text-center">
                         {{book_entry.amounts[account] }}
                     </td>
                     <td>{{book_entry.cheque_ref}}</td>
-                    <td>{{book_entry.bank_report}}</td>
-                    <td>{{book_entry.deposit_ref}}</td>
-                    <td>
+                    <td class="col-1 text-end">
+                        <div *ngIf="bank_report !== null" class="form-check form-switch form-check-inline">
+                            <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault"
+                                [checked]="book_entry.bank_report !== null"
+                                (change)="set_bank_report(book_entry,bank_report)">
+                        </div>
+                        <div *ngIf="bank_report === null">
+                            <select class="form-select form-select-sm" [(ngModel)]="book_entry.bank_report"
+                                (ngModelChange)="update_bank_report(book_entry)">
+                                <option hidden disabled> </option>
+                                <option *ngFor="let report of bank_reports" [value]="report">{{report}}</option>
+                            </select>
+                        </div>
+                    </td>
+                    <!-- <td *ngIf="bank_report !== null" class="text-center">{{book_entry.bank_report}}</td> -->
+                    <td class="col-1 text-end">
                         <i [ngbTooltip]="book_label(book_entry)" tooltipClass="my-custom-class" placement="end"
                             class="bi bi-info-circle" (click)="show_book_entry(book_entry.id)"></i>
                     </td>
                 </tr>
-            </tbody>
-        </table>
-    </div>
-    <!-- </div> -->
-</div>
+            </ng-container>
+        </tbody>
+    </table>
+</ng-template>

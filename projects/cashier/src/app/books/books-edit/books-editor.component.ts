@@ -3,7 +3,7 @@ import { Component, ViewEncapsulation } from '@angular/core';
 import { Location } from '@angular/common';
 import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { BookService } from '../../book.service';
-import { BookEntry, operation_values, BOOK_ENTRY_CLASS, season, Operation, FINANCIAL_ACCOUNT, ENTRY_TYPE } from '../../../../../common/accounting.interface';
+import { BookEntry, operation_values, BOOK_ENTRY_CLASS, Operation, FINANCIAL_ACCOUNT, ENTRY_TYPE } from '../../../../../common/accounting.interface';
 import { Bank } from '../../../../../common/system-conf.interface';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { ToastService } from '../../../../../common/toaster/toast.service';
@@ -465,7 +465,7 @@ export class BooksEditorComponent {
   save_book_entry(amounts: { [key: string]: number }, operations: Operation[]) {
 
     let booking: BookEntry = {
-      season: season(new Date(this.form.controls['date'].value)),
+      season: this.systemDataService.get_season(new Date(this.form.controls['date'].value)),
       date: this.form.controls['date'].value,
       id: this.form.controls['id'].value,
       bank_op_type: this.form.controls['op_type'].value,

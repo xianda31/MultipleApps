@@ -106,15 +106,10 @@ export interface BookEntry {
     bank_op_type: ENTRY_TYPE;   // type d'opération bancaire
     amounts: bank_values
     cheque_ref?: string;        // code banque + numéro de chèque
-    bank_report?: string;       // (mois) relevé bancaire
+    bank_report?: string | null;       // (mois) relevé bancaire
     deposit_ref?: string;       //  référence bordereau de dépôt
     operations: Operation[];
 }
 
-export function season(date: Date): string {
-    const month = date.getMonth();
-    const year = date.getFullYear();
-    if (month < 7) return `${year - 1}/${year}`;
-    return `${year}/${year + 1}`;
-}
+
 
