@@ -17,6 +17,8 @@ export enum ENTRY_TYPE {
     transfer_emit = 'transfer_emit',
     card_payment = 'card_payment',
     bank_debiting = 'bank_debiting',
+    asset_forwarding = 'asset_forwarding',
+    cheque_forwarding = 'cheque_forwarding',
 
 }
 
@@ -39,6 +41,11 @@ export enum CUSTOMER_ACCOUNT {
     DEBT_debit = 'creance_in',
     ASSET_credit = 'avoir_out',
     DEBT_credit = 'creance_out',
+}
+
+export enum BALANCE_SHEET_ACCOUNT {
+    BAL_credit = 'report_out',
+    BAL_debit = 'report_in',
 }
 
 export const Financial_debit_accounts: { [key in Partial<FINANCIAL_ACCOUNT>]?: string } = {
@@ -71,6 +78,7 @@ export enum BOOK_ENTRY_CLASS {
     c_OTHER_REVENUE = 'recettes hors vente adhérent',
     d_EXPENSE_FOR_MEMBER = 'dépense adhérent',
     e_MOVEMENT = 'mouvement bancaire',
+    f_BALANCE_SHEET = 'spécifique bilan',
 }
 
 export type operation_values = { [key: string]: number };

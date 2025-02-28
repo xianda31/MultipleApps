@@ -235,7 +235,7 @@ export class BookService {
 
   }
 
-  get_assets(): Map<string, number> {
+  get_assets_value(): Map<string, number> {
     let assets = new Map<string, number>();
     this._book_entries.forEach((book_entry) => {
 
@@ -249,6 +249,33 @@ export class BookService {
           let name = op.member;
           if (!name) throw new Error('no member name found');
           assets.set(name, (assets.get(name) || 0) + op.values[CUSTOMER_ACCOUNT.ASSET_credit]);
+        }
+      });
+    });
+    return assets;
+  }
+  get_assets(): Map<string, { total: number, entries: BookEntry[] }> {
+    let assets = new Map<string, { total: number, entries: BookEntry[] }>();
+    this._book_entries.forEach((book_entry) => {
+
+      book_entry.operations.forEach((op) => {
+        if (op.values[CUSTOMER_ACCOUNT.ASSET_debit]) {
+          let name = op.member;
+          if (!name) throw new Error('no member name found');
+          assets.set(name, {
+            total: (assets.get(name)?.total || 0) - op.values[CUSTOMER_ACCOUNT.ASSET_debit],
+            entries: [...(assets.get(name)?.entries || []), book_entry]
+          }
+          );
+        }
+        if (op.values[CUSTOMER_ACCOUNT.ASSET_credit]) {
+          let name = op.member;
+          if (!name) throw new Error('no member name found');
+          assets.set(name, {
+            total: (assets.get(name)?.total || 0) + op.values[CUSTOMER_ACCOUNT.ASSET_credit],
+            entries: [...(assets.get(name)?.entries || []), book_entry]
+          }
+          );
         }
       });
     });

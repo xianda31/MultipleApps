@@ -4,15 +4,12 @@ import { MembersService } from '../members/service/members.service';
 import { Member } from '../../../../common/member.interface';
 import { CommonModule } from '@angular/common';
 import { Bank } from '../../../../common/system-conf.interface';
-import { Observable, of, tap, map, combineLatest, take, forkJoin } from 'rxjs';
+import { Observable, of, take, forkJoin } from 'rxjs';
 import { SystemDataService } from '../../../../common/services/system-data.service';
-import { PaymentMode, Record, Sale } from '../../../../cashier/src/app/shop/old_sales.interface';
 import { SalesViewerComponent } from '../../../../common/sales-viewer/sales-viewer.component';
 import { ProductService } from '../../../../common/services/product.service';
 import { Product } from '../sales/products/product.interface';
-import { SalesService } from '../../../../cashier/src/app/shop/old_sales.service';
-import { COL, MAP, PRODUCTS_COL } from '../../../../common/excel/excel.interface';
-import { write } from '@popperjs/core';
+import { MAP, PRODUCTS_COL } from '../../../../common/excel/excel.interface';
 import { ToastService } from '../../../../common/toaster/toast.service';
 @Component({
   selector: 'app-test',

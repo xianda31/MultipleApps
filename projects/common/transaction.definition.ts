@@ -1,11 +1,11 @@
-import { FINANCIAL_ACCOUNT, BOOK_ENTRY_CLASS, ENTRY_TYPE, CUSTOMER_ACCOUNT } from './accounting.interface';
+import { FINANCIAL_ACCOUNT, BOOK_ENTRY_CLASS, ENTRY_TYPE, CUSTOMER_ACCOUNT, BALANCE_SHEET_ACCOUNT } from './accounting.interface';
 
 export const _CHEQUE_IN_CASHBOX: boolean = true;     // flag to indicate if cheques are first deposited in cashbox
 
 export const _CHEQUE_IN_ACCOUNT: FINANCIAL_ACCOUNT = _CHEQUE_IN_CASHBOX ? FINANCIAL_ACCOUNT.CASHBOX_debit : FINANCIAL_ACCOUNT.BANK_debit;
 
 export type Account_def = {
-    key: FINANCIAL_ACCOUNT | CUSTOMER_ACCOUNT
+    key: string //FINANCIAL_ACCOUNT | CUSTOMER_ACCOUNT | BALANCE_SHEET_ACCOUNT
     label: string
     description: string
 }
@@ -22,14 +22,27 @@ export const financial_credits: Account_def[] = [
 
 ]
 export const customer_assets: Account_def[] = [
-    { key: CUSTOMER_ACCOUNT.ASSET_debit, label: '-AVOIR', description: 'utilisation d\'un avoir' },
-    { key: CUSTOMER_ACCOUNT.DEBT_credit, label: '+DETTE', description: 'paiement d\'une dette' },
+    { key: CUSTOMER_ACCOUNT.ASSET_debit, label: '-AVOIR', description: 'déduction d\'un avoir' },
+    { key: CUSTOMER_ACCOUNT.DEBT_credit, label: '+DETTE', description: 'remboursement d\'une dette' },
 ]
 export const customer_debt: Account_def[] = [
     { key: CUSTOMER_ACCOUNT.ASSET_debit, label: '-Avoir', description: 'utilisation d\'un avoir' },
     { key: CUSTOMER_ACCOUNT.DEBT_debit, label: 'DETTE', description: 'montant du"crédit"' },
 ]
 
+export const balance_sheet_accounts: Account_def[] = [
+    { key: BALANCE_SHEET_ACCOUNT.BAL_credit, label: 'BAL_credit', description: 'actif' },
+    { key: BALANCE_SHEET_ACCOUNT.BAL_debit, label: 'report_in', description: 'passif' },
+]
+
+export const class_definitions: { [key in BOOK_ENTRY_CLASS]: string } = {
+    [BOOK_ENTRY_CLASS.a_REVENUE_FROM_MEMBER]: 'achat adhérent',
+    [BOOK_ENTRY_CLASS.b_OTHER_EXPENSE]: 'dépense non nominative',
+    [BOOK_ENTRY_CLASS.c_OTHER_REVENUE]: 'recette non nominative',
+    [BOOK_ENTRY_CLASS.d_EXPENSE_FOR_MEMBER]: 'dépense en faveur d\'adhérent',
+    [BOOK_ENTRY_CLASS.e_MOVEMENT]: 'mouvement bancaire',
+    [BOOK_ENTRY_CLASS.f_BALANCE_SHEET]: 'opérations spécifiques au bilan',
+}
 
 export type Transaction = {
     class: BOOK_ENTRY_CLASS,
@@ -88,7 +101,7 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
         cash: 'none',
         cheque: 'none',
     },
-    // paiement par virement par un adhérent
+    // paiement par virement d'un adhérent
     [ENTRY_TYPE.payment_by_transfer]: {
         label: 'VIREMENT EN NOTRE FAVEUR',
         class: BOOK_ENTRY_CLASS.a_REVENUE_FROM_MEMBER,
@@ -147,7 +160,7 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
 
     // émission d'avoir à un adhérent
     [ENTRY_TYPE.asset_emit]: {
-        label: 'attribution nominative d\'avoir',
+        label: 'attribution d\'avoir(s) nominatif(s)',
         class: BOOK_ENTRY_CLASS.d_EXPENSE_FOR_MEMBER,
         financial_accounts: [],
         customer_accounts: [{ key: CUSTOMER_ACCOUNT.ASSET_credit, label: 'Avoir', description: 'valeur de l\'avoir attribué' }],
@@ -158,6 +171,8 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
         cash: 'none',
         cheque: 'none',
     },
+
+
 
     // D. reception groupée de fond de tiers  ****
     // ****  CLASS = c_OTHER_REVENUE ****
@@ -239,6 +254,35 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
         cheque: 'none',
     },
 
+    // E. opérations spécifiques bilan
+    // ****  CLASS = BALANCE_SHEET ****
+
+    [ENTRY_TYPE.asset_forwarding]: {
+        label: 'report  d\'avoir(s) nominatif(s)',
+        class: BOOK_ENTRY_CLASS.f_BALANCE_SHEET,
+        financial_accounts: [{ key: BALANCE_SHEET_ACCOUNT.BAL_debit, label: 'report_in', description: 'passif' }],
+        customer_accounts: [{ key: CUSTOMER_ACCOUNT.ASSET_credit, label: 'Avoir', description: 'valeur de l\'avoir attribué' }],
+        financial_accounts_to_charge: [CUSTOMER_ACCOUNT.ASSET_credit],
+        nominative: true,
+        is_of_profit_type: false,
+        require_deposit_ref: false,
+        cash: 'none',
+        cheque: 'none',
+    },
+    // report d'encours qpaiement par chèque d'une prestation ou service
+    [ENTRY_TYPE.cheque_forwarding]: {
+        label: 'report d\'encours de chèque(s)',
+        class: BOOK_ENTRY_CLASS.f_BALANCE_SHEET,
+        financial_accounts: financial_credits,
+        financial_accounts_to_charge: [FINANCIAL_ACCOUNT.BANK_credit],
+        customer_accounts: balance_sheet_accounts,
+        nominative: true,
+        is_of_profit_type: false,
+        require_deposit_ref: false,
+        cash: 'none',
+        cheque: 'out',
+    },
+
 
     // F. achat , dépenses
     // ****  CLASS = EXPENSE ****
@@ -249,6 +293,7 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
         class: BOOK_ENTRY_CLASS.b_OTHER_EXPENSE,
         financial_accounts: financial_credits,
         financial_accounts_to_charge: [FINANCIAL_ACCOUNT.BANK_credit],
+        customer_accounts: balance_sheet_accounts,
         nominative: false,
         is_of_profit_type: false,
         require_deposit_ref: false,
@@ -299,11 +344,21 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
 
 
 export function class_types(op_class: BOOK_ENTRY_CLASS): ENTRY_TYPE[] {
-    return Object.entries(TRANSACTIONS)
-        .filter(([, mapping]) => mapping.class === op_class)
-        .map(([entryType]) => entryType as ENTRY_TYPE);
+    let check = Object.values(BOOK_ENTRY_CLASS).includes(op_class);
+    if (check) {
+        return Object.entries(TRANSACTIONS)
+            .filter(([, mapping]) => mapping.class === op_class)
+            .map(([entryType]) => entryType as ENTRY_TYPE);
+    } else {
+        throw new Error(`class ${op_class} not found`);
+    }
 }
 
 export function get_transaction(entry_type: ENTRY_TYPE): Transaction {
-    return TRANSACTIONS[entry_type];
+    let check = Object.keys(TRANSACTIONS).includes(entry_type);
+    if (check) {
+        return TRANSACTIONS[entry_type];
+    } else {
+        throw new Error(`transaction ${entry_type} not found`);
+    }
 }   

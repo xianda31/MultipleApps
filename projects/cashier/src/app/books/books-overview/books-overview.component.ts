@@ -7,7 +7,7 @@ import { SystemDataService } from '../../../../../common/services/system-data.se
 import { Router } from '@angular/router';
 import { get_transaction } from '../../../../../common/transaction.definition';
 
-
+interface EntryValue { total: number, entries: BookEntry[] };
 @Component({
   selector: 'app-books-overview',
   standalone: true,
@@ -36,7 +36,8 @@ export class BooksOverviewComponent {
   cashbox_accounts = Object.values(Cashbox_accounts) as FINANCIAL_ACCOUNT[];
 
   debts: Map<string, number> = new Map();
-  assets: Map<string, number> = new Map();
+  assets: Map<string, EntryValue> = new Map();
+  assets_entries: { [key: string]: EntryValue } = {};
 
   constructor(
     private bookService: BookService,
@@ -59,9 +60,11 @@ export class BooksOverviewComponent {
       this.current_cash_amount = this.bookService.get_cashbox_amount();
       this.debts = this.bookService.get_debts();
       this.assets = this.bookService.get_assets();
+      this.assets_entries = Object.fromEntries(this.assets.entries());
+      console.log(this.assets_entries);
 
       this.current_debt_amount = this.debts.size > 0 ? Array.from(this.debts.values()).reduce((acc, debt) => acc + debt, 0) : 0;
-      this.current_assets_amount = this.assets.size > 0 ? Array.from(this.assets.values()).reduce((acc, asset) => acc + asset, 0) : 0;
+      this.current_assets_amount = this.assets.size > 0 ? Array.from(this.assets.values()).reduce((acc, asset) => acc + asset.total, 0) : 0;
 
     });
 
@@ -89,6 +92,12 @@ export class BooksOverviewComponent {
 
   show_book_entry(book_entry_id: string) {
     this.router.navigate(['/books/editor', book_entry_id]);
+  }
+
+  show(selection: string) {
+    let id = selection.split(' : ')[1];
+    console.log(id);
+    this.router.navigate(['/books/editor', id]);
   }
 
 }

@@ -3,11 +3,11 @@ import { Component, ViewEncapsulation } from '@angular/core';
 import { Location } from '@angular/common';
 import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { BookService } from '../../book.service';
-import { BookEntry, operation_values, BOOK_ENTRY_CLASS, Operation, FINANCIAL_ACCOUNT, ENTRY_TYPE } from '../../../../../common/accounting.interface';
+import { BookEntry, operation_values, BOOK_ENTRY_CLASS, Operation, FINANCIAL_ACCOUNT, ENTRY_TYPE, CUSTOMER_ACCOUNT } from '../../../../../common/accounting.interface';
 import { Bank } from '../../../../../common/system-conf.interface';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { ToastService } from '../../../../../common/toaster/toast.service';
-import { Transaction, get_transaction, class_types, Account_def } from '../../../../../common/transaction.definition';
+import { Transaction, get_transaction, class_types, Account_def, class_definitions } from '../../../../../common/transaction.definition';
 import { MembersService } from '../../../../../admin-dashboard/src/app/members/service/members.service';
 import { Member } from '../../../../../common/member.interface';
 import { ActivatedRoute } from '@angular/router';
@@ -29,7 +29,7 @@ interface Account {
 @Component({
   selector: 'app-booking',
   standalone: true,
-  encapsulation: ViewEncapsulation.None,   // nécessaire pour que les tooltips fonctionnent
+  encapsulation: ViewEncapsulation.None,   // nécessaire pour que les CSS des tooltips fonctionnent
   imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbTooltipModule],
   templateUrl: './books-editor.component.html',
   styleUrl: './books-editor.component.scss'
@@ -49,6 +49,7 @@ export class BooksEditorComponent {
   op_types !: ENTRY_TYPE[];
 
   transaction_classes = Object(BOOK_ENTRY_CLASS);
+  class_definitions = class_definitions;
 
   form!: FormGroup;
 
@@ -75,12 +76,12 @@ export class BooksEditorComponent {
   ) { }
 
 
-  ngAfterViewInit() {
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-      return new Tooltip(tooltipTriggerEl)
-    });
-  }
+  // ngAfterViewInit() {
+  //   var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+  //   var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+  //     return new Tooltip(tooltipTriggerEl)
+  //   });
+  // }
 
   ngOnInit() {
 
@@ -101,6 +102,7 @@ export class BooksEditorComponent {
     this.route.params.subscribe(params => {
       this.book_entry_id = params['id']; // Access the 'id' parameter from the URL
       this.creation = (this.book_entry_id === undefined);
+
       if (!this.creation) {
         this.bookService.read_book_entry(this.book_entry_id)
           .then((book_entry) => {
@@ -317,6 +319,10 @@ export class BooksEditorComponent {
     this.form.controls['deposit_ref'].updateValueAndValidity();
   }
 
+  delete_operation(index: number) {
+    this.operations.removeAt(index);
+  }
+
   add_operation(transaction: Transaction, operation_initial?: Operation) {
 
     let profit_and_loss_accounts = this.which_profit_and_loss_accounts(transaction);
@@ -353,7 +359,7 @@ export class BooksEditorComponent {
   init_financial_accounts(transaction: Transaction) {
     this.financial_accounts = transaction.financial_accounts;
     this.financial_accounts.forEach((account) => {
-      if (transaction.financial_accounts_to_charge.includes(account.key)) {
+      if (transaction.financial_accounts_to_charge.includes(account.key as FINANCIAL_ACCOUNT | CUSTOMER_ACCOUNT)) {
         this.amounts.push(new FormControl('', [Validators.required, Validators.pattern(/^\d+(\.\d+)?$/)]));
       }
       else {
@@ -364,7 +370,7 @@ export class BooksEditorComponent {
 
   handle_financial_accounts_enabling(transaction: Transaction) {
     this.financial_accounts.forEach((account, index) => {
-      if (transaction.financial_accounts_to_charge.includes(account.key)) {
+      if (transaction.financial_accounts_to_charge.includes(account.key as FINANCIAL_ACCOUNT | CUSTOMER_ACCOUNT)) {
         this.amounts.controls[index].setValidators([Validators.required, Validators.pattern(/^\d+(\.\d+)?$/)]);
         this.amounts.controls[index].enable();
       } else {

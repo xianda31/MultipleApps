@@ -12,7 +12,7 @@ import { FormsModule } from '@angular/forms';
 @Component({
   selector: 'app-layout',
   standalone: true,
-  imports: [CommonModule, FormsModule, DragDropModule, MenusComponent, PagesComponent, PageComponent], // Add DragDropModule to the imports array
+  imports: [CommonModule, FormsModule, DragDropModule, PageComponent], // Add DragDropModule to the imports array
   templateUrl: './layout.component.html',
   styleUrl: './layout.component.scss'
 })

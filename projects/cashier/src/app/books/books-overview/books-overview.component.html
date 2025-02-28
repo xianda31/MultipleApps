@@ -46,7 +46,7 @@
                 <tr>
                     <th class="col">Date </th>
                     <th class="col">libellé </th>
-                    <th class="col"> bénéficiaire</th>
+                    <!-- <th class="col"> bénéficiaire</th> -->
                     <th class="col text-center" *ngFor="let account of expenses_accounts ">{{account}}
                     </th>
                     <th></th>
@@ -60,7 +60,7 @@
                         {{expense.date | date: 'dd/MM/yyyy'}}
                     </td>
                     <td>{{expense.label}}</td>
-                    <td>{{expense.member}}</td>
+                    <!-- <td>{{expense.member}}</td> -->
                     <td *ngFor="let account of expenses_accounts " class="text-center">
                         {{expense.values[account]}}
                     </td>
@@ -163,7 +163,7 @@
 <div class="row mt-2">
     <div class="col-md-4">
         <div
-            *ngTemplateOutlet="other_report ; context: {title:'avoir adhérents', balance:current_assets_amount, map: assets}">
+            *ngTemplateOutlet="other_report_2 ; context: {title:'avoir adhérents', balance:current_assets_amount, map: assets_entries}">
         </div>
     </div>
     <div class="col-md-4">
@@ -185,7 +185,7 @@
                     <tr>
                         <th class="col">adhérent </th>
                         <th class="col text-center"> montant </th>
-                        <!-- <th class="col"> </th> -->
+                        <th class="col"> </th>
                     </tr>
                 </thead>
 
@@ -196,9 +196,47 @@
                         <td class="text-center">
                             {{ entry.value }}
                         </td>
-                        <!-- <td>
-                            <i class="bi bi-search" (click)="show_map_entry(entry)"></i>
-                        </td> -->
+                        <td>
+
+                            <!-- <i class="bi bi-search" (click)="show_map_entry(entry)"></i> -->
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</ng-template>
+
+<ng-template #other_report_2 let-title="title" let-balance="balance" let-map="map">
+    <div class="card">
+        <div class="card-header">
+            <h5>{{title}} : {{balance}} €</h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th class="col">adhérent </th>
+                        <th class="col text-center"> montant </th>
+                        <th class="col"> </th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    <tr *ngFor="let entry of map | keyvalue">
+                        <td>{{entry.key}}</td>
+                        <td class="text-center">
+                            {{ $any(entry.value).total}}
+                        </td>
+                        <td>
+                            <select #choice (change)="show(choice.value)" class="form-select form-select-sm">
+                                <option hidden></option>
+                                <option *ngFor="let book of $any(entry.value).entries ; let i = index">
+                                    {{book.date}} : {{book.id}}</option>
+                            </select>
+                            <!-- <i class="bi bi-search" (click)="show_map_entry(entry)"></i> -->
+                        </td>
                     </tr>
                 </tbody>
             </table>
