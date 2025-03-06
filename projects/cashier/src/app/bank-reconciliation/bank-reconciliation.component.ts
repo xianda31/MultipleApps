@@ -1,13 +1,15 @@
 import { Component, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Bank_accounts, BookEntry, ENTRY_TYPE, FINANCIAL_ACCOUNT } from '../../../../common/accounting.interface';
+import { Bank_accounts, BookEntry, ENTRY_TYPE, FINANCIAL_ACCOUNT, Liquidities } from '../../../../common/accounting.interface';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 import { BookService } from '../book.service';
 import { get_transaction } from '../../../../common/transaction.definition';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { Router } from '@angular/router';
 import { ToastService } from '../../../../common/toaster/toast.service';
+import { tap, switchMap } from 'rxjs';
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-bank-reconciliation',
@@ -19,7 +21,8 @@ import { ToastService } from '../../../../common/toaster/toast.service';
 })
 export class BankReconciliationComponent {
 
-
+  current_season!: string;
+  initial_liquidities: Liquidities = { cash: 0, bank: 0, savings: 0 };
   bank_book_entries: BookEntry[] = [];
   bank_accounts = Object.values(Bank_accounts) as FINANCIAL_ACCOUNT[];
   bank_reports: string[] = [];
@@ -39,14 +42,20 @@ export class BankReconciliationComponent {
       console.log(this.bank_book_entries);
     });
 
+    this.systemDataService.get_configuration().pipe(
+      tap((conf) => { this.current_season = conf.season; }),
+      switchMap((conf) => this.systemDataService.get_balance_sheet_initial_amounts(conf.season)))
+      .subscribe((liquidities) => {
+        this.initial_liquidities = liquidities;
+        console.log('initial_liquidities', this.initial_liquidities);
+      });
   }
 
 
   // utilities
 
   transaction_label(op_type: ENTRY_TYPE): string {
-    return get_transaction(op_type).
-      label;
+    return get_transaction(op_type).label;
   }
 
   book_label(book_entry: BookEntry): string {
@@ -72,16 +81,44 @@ export class BankReconciliationComponent {
   update_bank_report(book_entry: BookEntry) {
     let date = book_entry.date.slice(2, 7);
     let report = book_entry.bank_report;
-    if (report && report <= date) {
+    if (report && report < date) {
       this.ToastService.showWarningToast('pointage annulé', 'le relevé ne peut être antérieur à l\'opération');
       book_entry.bank_report = null;
     }
-
     this.bookService.update_book_entry(book_entry);
   }
 
-  // possible_bank_reports(): string[] {
-  //   return this.bank_reports;
-  // }
+
+
+  movement_in(report: string): { bank: number, savings: number } {
+    let book_entries = this.bank_book_entries.filter(book_entry => book_entry.bank_report === report);
+    let bank = book_entries.reduce((acc, book_entry) => {
+      return acc + (book_entry.amounts[FINANCIAL_ACCOUNT.BANK_debit] ?? 0);
+    }, 0);
+    let savings = book_entries.reduce((acc, book_entry) => {
+      return acc + (book_entry.amounts[FINANCIAL_ACCOUNT.SAVING_debit] ?? 0);
+    }, 0);
+    return { bank, savings };
+  }
+
+  movement_out(report: string): { bank: number, savings: number } {
+    let book_entries = this.bank_book_entries.filter(book_entry => book_entry.bank_report === report);
+    let bank = book_entries.reduce((acc, book_entry) => {
+      return acc + (book_entry.amounts[FINANCIAL_ACCOUNT.BANK_credit] ?? 0);
+    }, 0);
+    let savings = book_entries.reduce((acc, book_entry) => {
+      return acc + (book_entry.amounts[FINANCIAL_ACCOUNT.SAVING_credit] ?? 0);
+    }, 0);
+    return { bank, savings };
+  }
+  balance(report: string): { bank: number, savings: number } {
+    return this.bank_reports.filter(r => r.localeCompare(report) <= 0).reduce((acc, report) => {
+      let in_ = this.movement_in(report);
+      let out = this.movement_out(report);
+      return { bank: acc.bank + in_.bank - out.bank, savings: acc.savings + in_.savings - out.savings };
+    }
+      , { bank: this.initial_liquidities.bank, savings: this.initial_liquidities.savings });
+  }
+
 
 }

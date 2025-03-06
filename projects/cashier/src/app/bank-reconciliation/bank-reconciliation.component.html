@@ -8,12 +8,14 @@
     <div class="card-body">
         <div ngbAccordion>
             <div *ngFor="let bank_report of bank_reports ;  let last = last" ngbAccordionItem [collapsed]="!last">
-                <h2 ngbAccordionHeader>
-                    <button ngbAccordionButton> relevé de banque n° {{bank_report}}</button>
-                </h2>
+                <div ngbAccordionHeader class="accordion-button my-custom-header justify-content-between">
+                    <p class="m-0"> relevé de banque n° {{bank_report}}
+                        (épargne: {{balance(bank_report).savings}})</p>
+                    <button ngbAccordionToggle class="btn btn-link p-0">{{balance(bank_report).bank}}</button>
+                </div>
                 <div ngbAccordionCollapse>
                     <div ngbAccordionBody>
-                        <ng-container *ngTemplateOutlet="report; context:{bank_report: bank_report}"></ng-container>
+                        <ng-container *ngTemplateOutlet=" report; context:{bank_report: bank_report}"></ng-container>
                     </div>
                 </div>
             </div>
@@ -33,13 +35,13 @@
 
 </div>
 <ng-template #report let-bank_report="bank_report">
-    <table class="table table-sm">
+    <table class="table table-sm table-borderless table-responsive">
         <thead>
             <tr>
                 <th class="col-1">Date </th>
                 <th class="col-4">opération </th>
                 <th class="col text-center" *ngFor="let account of bank_accounts ">{{account}} </th>
-                <th class="text-start">n° chèque </th>
+                <th class="col-1 text-start">n° chèque </th>
                 <th class="col-1 text-center">{{bank_report ? bank_report : 'relevé'}}</th>
                 <th class="col-1 "> </th>
             </tr>
@@ -48,7 +50,7 @@
         <tbody>
             <ng-container *ngFor="let book_entry of bank_book_entries">
 
-                <tr *ngIf="book_entry.bank_report === bank_report" class="table-light">
+                <tr *ngIf="book_entry.bank_report === bank_report">
                     <td>{{book_entry.date | date: 'dd/MM/yyyy'}}</td>
                     <td>{{transaction_label(book_entry.bank_op_type)}}</td>
                     <td *ngFor=" let account of bank_accounts " class="text-center">
@@ -77,5 +79,13 @@
                 </tr>
             </ng-container>
         </tbody>
+        <tfoot class="table-group-divider">
+            <tr class="table-light">
+                <td colspan="2">solde</td>
+                <td class="text-center"> {{movement_in(bank_report).bank}} </td>
+                <td class="text-center"> {{movement_out(bank_report).bank}} </td>
+
+            </tr>
+        </tfoot>
     </table>
 </ng-template>

@@ -18,3 +18,8 @@
 .my-custom-class.bs-tooltip-bottom .tooltip-arrow::before {
     border-bottom-color: darkgreen;
 }
+
+// ngbAccordion
+.my-custom-header::after {
+    content: none;
+}

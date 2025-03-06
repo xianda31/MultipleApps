@@ -133,29 +133,6 @@ export class SysConfComponent {
       this.revenues.push(this.fb.group(account));
     });
 
-    // const keys = Object.keys(configuration.financial_tree);
-    // keys.forEach((key) => {
-    //   let revenue = configuration.financial_tree[key].revenue;
-    //   let revenue_keys = Object.keys(revenue);
-    //   revenue_keys.forEach((revenue_key) => {
-    //     this.revenues.push(this.fb.group({ class: key, key: revenue_key, description: revenue[revenue_key] }));
-    //   });
-
-    //   let expense = configuration.financial_tree[key].expense;
-    //   let expense_keys = Object.keys(expense);
-    //   expense_keys.forEach((expense_key) => {
-    //     this.expenses.push(this.fb.group({ class: key, key: expense_key, description: expense[expense_key] }));
-    //   }
-    //   );
-    // });
-    // configuration.charge_accounts.forEach((account: any) => {
-    //   this.expenses.push(this.fb.group(account));
-    // });
-
-    // this.revenues.clear();
-    // configuration.product_accounts.forEach((account: any) => {
-    //   this.revenues.push(this.fb.group(account));
-    // });
 
     this.banks.clear();
     configuration.banks.forEach((bank: any) => {

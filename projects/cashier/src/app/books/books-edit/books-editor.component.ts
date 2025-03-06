@@ -127,9 +127,6 @@ export class BooksEditorComponent {
 
     // operation change handler pour le calcul du total
 
-
-
-
     this.operations_valueChanges_subscription = this.operations.valueChanges.subscribe((op_values) => {
 
 

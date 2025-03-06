@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
 import { downloadData, uploadData } from 'aws-amplify/storage';
 import { SystemConfiguration } from '../system-conf.interface';
-import { BehaviorSubject, from, Observable, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, from, map, Observable, switchMap, tap } from 'rxjs';
 import { ToastService } from '../toaster/toast.service';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { Balance_sheet, Liquidities } from '../accounting.interface';
 
 
 
@@ -24,7 +25,7 @@ export class SystemDataService {
 
   get_configuration(): Observable<SystemConfiguration> {
 
-    let remote_load$ = from(this.download_configuration()).pipe(
+    let remote_load$ = from(this.download_configuration('system/system_configuration.txt')).pipe(
       tap((conf) => {
         this._system_configuration = conf;
         this._system_configuration$.next(this._system_configuration);
@@ -36,9 +37,33 @@ export class SystemDataService {
     return (this._system_configuration !== undefined) ? this._system_configuration$.asObservable() : remote_load$;
   }
 
-  // getSystemData() {
-  //   return this._system_configuration;
-  // }
+  get_balance_history(): Observable<Balance_sheet[]> {
+    return from(this.download_balance_history('accounting/balance_history.txt'));
+  }
+
+
+  select_sheet() {
+    // this.other_seasons = this.seasons.filter((season) => season !== this.selected_season);
+  }
+
+  get_balance_sheet_initial_amounts(season: string): Observable<Liquidities> {
+    return from(this.download_balance_history('accounting/balance_history.txt')).pipe(
+      map((balance_sheets) => {
+        let prev_balance_sheet = balance_sheets.find((sheet) => sheet.season === this.previous_season(season)) ?? { season: '', assets: { receivables: 0, stock: 0, liquidities: { cash: 0, bank: 0, savings: 0 } }, liabilities: { accrued_expenses: 0, balance_forward: 0 } };
+        return prev_balance_sheet.assets.liquidities;
+      }),
+    );
+  }
+
+
+  save_balance_history(balance_sheets: Balance_sheet[]) {
+    const json = JSON.stringify(balance_sheets);
+    const blob = new Blob([json], { type: 'text/plain' });
+    const file = new File([blob], 'balance_history.txt');
+    this.upload(blob, 'accounting/', file).then((data) => {
+    }
+    );
+  }
 
   async save_configuration(conf: SystemConfiguration) {
     const json = JSON.stringify(conf);
@@ -59,7 +84,10 @@ export class SystemDataService {
           metadata: { customKey: 'bcsto' },
         }
       }).result
-        .then((result) => { resolve(result); })
+        .then((result) => {
+          this.toastService.showSuccessToast('configuration système', 'sauvegarde réussie');
+          resolve(result);
+        })
         .catch((error) => {
           console.log('error', error);
           this.toastService.showErrorToast('configuration système', 'erreur de chargement');
@@ -70,10 +98,10 @@ export class SystemDataService {
   }
 
 
-  private async download_configuration(): Promise<SystemConfiguration> {
-    let promise = new Promise<SystemConfiguration>((resolve, reject) => {
+  private async download_configuration(path: string): Promise<any> {
+    let promise = new Promise<any>((resolve, reject) => {
       downloadData({
-        path: 'system/system_configuration.txt',
+        path: path,
       }).result
         .then(async (result) => {
           const data = JSON.parse(await result.body.text());
@@ -87,9 +115,25 @@ export class SystemDataService {
     return promise;
   }
 
+  private async download_balance_history(path: string): Promise<Balance_sheet[]> {
+    let promise = new Promise<any>((resolve, reject) => {
+      downloadData({
+        path: path,
+      }).result
+        .then(async (result) => {
+          const data = JSON.parse(await result.body.text());
+          resolve(data as Balance_sheet[]);
+        })
+        .catch((error) => {
+          reject(error);
+        });
+    });
+    return promise;
+  }
+
   // local file download / upload
 
-  get_file_url(conf: SystemConfiguration): SafeResourceUrl {
+  get_file_url(conf: any): SafeResourceUrl {
     const json = JSON.stringify(conf);
     const blob = new Blob([json], { type: 'text/plain' });
 
@@ -106,7 +150,7 @@ export class SystemDataService {
     const month = date.getMonth();
     const year = date.getFullYear();
     if (month < 7) return `${year - 1}/${year}`;
-    return `${year}/${year + 1}`;
+    return `${year}-${year + 1}`;
   }
 
   get_season_months(date: Date): string[] {
@@ -131,5 +175,10 @@ export class SystemDataService {
     return months;
 
   }
+
+  previous_season(season: string) {
+    return (+season.slice(0, 4) - 1).toString() + '-' + (+season.slice(0, 4)).toString();
+  }
+
 
 }

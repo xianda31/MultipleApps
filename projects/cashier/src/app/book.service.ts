@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { generateClient } from 'aws-amplify/api';
 
-import { BookEntry, Revenue, FINANCIAL_ACCOUNT, Expense, BOOK_ENTRY_CLASS, CUSTOMER_ACCOUNT, ENTRY_TYPE, bank_values, Operation } from '../../../common/accounting.interface';
+import { BookEntry, Revenue, FINANCIAL_ACCOUNT, Expense, BOOK_ENTRY_CLASS, CUSTOMER_ACCOUNT, ENTRY_TYPE, bank_values, Operation, Liquidity } from '../../../common/accounting.interface';
 import { Schema } from '../../../../amplify/data/resource';
 import { BehaviorSubject, from, map, Observable, of, switchMap, tap } from 'rxjs';
 import { SystemDataService } from '../../../common/services/system-data.service';
@@ -208,12 +208,22 @@ export class BookService {
       }, [] as Revenue[]);
   }
 
-  get_cashbox_amount(): number {
+  get_cashbox_movements_amount(): number {
     return this._book_entries.reduce((acc, book_entry) => {
       return acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0);
-    }
-      , 0);
+    }, 0);
   }
+  get_bank_movements_amount(): number {
+    return this._book_entries.reduce((acc, book_entry) => {
+      return acc + (book_entry.amounts[FINANCIAL_ACCOUNT.BANK_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.BANK_credit] || 0);
+    }, 0);
+  }
+  get_savings_movements_amount(): number {
+    return this._book_entries.reduce((acc, book_entry) => {
+      return acc + (book_entry.amounts[FINANCIAL_ACCOUNT.SAVING_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.SAVING_credit] || 0);
+    }, 0);
+  }
+
   get_debts(): Map<string, number> {
     let debt = new Map<string, number>();
     this._book_entries.forEach((book_entry) => {
@@ -356,5 +366,7 @@ export class BookService {
     };
     return this.create_book_entry(entry);
   }
+
+
 
 }

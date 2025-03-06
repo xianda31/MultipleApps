@@ -120,4 +120,23 @@ export interface BookEntry {
 }
 
 
+export interface Balance_sheet {
+    season: string;
+    // assets
+    assets: {  // actif
+        receivables: number; // créances
+        stock: number; // stocks
+        liquidities: Liquidities
+    };
+    liabilities: { // passif
+        balance_forward: number; // report à nouveau
+        accrued_expenses: number; // dettes,charges à payer
+    };
+}
+export interface Liquidities {
+    cash: number;
+    bank: number;
+    savings: number;
+}
+export type Liquidity = keyof Liquidities;
 

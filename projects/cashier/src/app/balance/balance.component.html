@@ -1,0 +1,161 @@
+<div *ngIf="loaded" class="container">
+
+    <div class="col-md-6 text-end">
+        <div class="row">
+            <div class="col">
+                <button class=" btn btn-outline-success btn-sm">
+                    <i class=" bi-file-earmark-arrow-up-fill"></i>
+                    <a [href]="fileUrl" style="text-decoration: none; color: var(--bs-success);"
+                        download="bilan.txt">export.txt</a>
+                </button>
+            </div>
+            <div class="col">
+                <button class=" btn btn-outline-success btn-sm" (click)="fileInput.click()">
+                    <i class=" bi-file-earmark-arrow-down-fill"></i>
+                    import.txt</button>
+                <input #fileInput type="file" style="display:none" class="form-control form-control-sm text-end"
+                    (change)="onInput($event)">
+            </div>
+            <div class="col">
+                <button class=" btn btn-outline-success btn-sm" (click)="save_balance_sheets()">
+                    <i class="bi-cloud-arrow-up-fill"></i>
+                    sauvegarder</button>
+            </div>
+        </div>
+    </div>
+    <div class="card mt-5">
+        <div class="card-header">
+            <div class="row align-items-center">
+                <div class="col-auto">
+                    <label class="col-form-label"> bilan de l'exercice </label>
+                </div>
+                <div class="col-auto">
+                    <select [(ngModel)]="selected_season" (ngModelChange)="select_sheet()" type="text"
+                        class="form-control" placeholder="saison">
+                        <option *ngFor="let season of seasons" [value]="season" [selected]="season === selected_season">
+                            {{season}}
+                        </option>
+                    </select>
+                </div>
+                <div *ngIf="selected_season === current_season" class="col-auto">
+                    <button class="btn btn-outline-success btn-sm" (click)="update_balance_sheet_figures()">
+                        <i class="fs-5 bi-gear"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div *ngIf="loaded" class="card-body">
+            <div class="row">
+                <div class="col-6">
+                    <!-- <div class="card"> -->
+                    <!-- <div class="card-body"> -->
+                    <table class="table table-sm table-bordered table-responsive text-end fs-5">
+                        <thead>
+                            <tr class="table-primary">
+                                <th width="30%" class="text-start">ACTIF </th>
+                                <th width="30%">
+                                    {{ current_balance_sheet.season }}</th>
+                                <th width="10%">var.</th>
+                                <th width="30%">
+                                    {{ prev_balance_sheet.season }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="text-start">STOCKS</td>
+                                <td>{{current_balance_sheet.assets.stock}}</td>
+                                <td></td>
+                                <td>{{prev_balance_sheet.assets.stock}}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-start">CREANCES</td>
+                                <td>{{current_balance_sheet.assets.receivables}}</td>
+                                <td></td>
+                                <td>{{prev_balance_sheet.assets.receivables}}</td>
+                            </tr>
+
+                            <tr>
+                                <td class="text-start">TRESORERIE</td>
+                                <td>
+                                    {{total_current_liquidities()}} </td>
+                                <td>{{get_liquidities_evolution()}}</td>
+                                <td>{{total_previous_liquidities()}}</td>
+                            </tr>
+                            <tr class="fw-light fs-6">
+                                <td>caisse</td>
+                                <td> {{current_balance_sheet.assets.liquidities.cash}}</td>
+                                <td>{{get_liquidity_evolution('cash')}}</td>
+                                <td> {{prev_balance_sheet.assets.liquidities.cash}}</td>
+                            </tr>
+                            <tr class="fw-light fs-6">
+                                <td>banque</td>
+                                <td> {{current_balance_sheet.assets.liquidities.bank}}</td>
+                                <td>{{get_liquidity_evolution('bank')}}</td>
+                                <td> {{prev_balance_sheet.assets.liquidities.bank}}</td>
+                            </tr>
+                            <tr class="fw-light fs-6">
+                                <td>épargne</td>
+                                <td> {{current_balance_sheet.assets.liquidities.savings}}</td>
+                                <td>{{get_liquidity_evolution('savings')}}</td>
+                                <td> {{prev_balance_sheet.assets.liquidities.savings}}</td>
+                            </tr>
+
+                            <tr class="table-primary fw-bold">
+                                <td class="text-start ">TOTAL ACTIF</td>
+                                <td> {{total_current_assets()}} </td>
+                                <td>{{get_assets_evolution()}}</td>
+                                <td>{{total_previous_assets()}}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <!-- </div> -->
+                    <!-- </div> -->
+                </div>
+
+                <!-- PASSIF -->
+                <div class="col-6">
+                    <table class="table table-sm table-bordered table-responsive text-end fs-5">
+                        <thead>
+                            <tr class="table-primary">
+                                <th width="70%" class="text-start">PASSIF </th>
+                                <th width="30%">
+                                    {{ current_balance_sheet.season }}</th>
+
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="text-start">REPORT A NOUVEAU</td>
+                                <td>{{current_balance_sheet.liabilities.balance_forward}}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-start">CHARGES ENGAGEES</td>
+                                <td>{{current_balance_sheet.liabilities.accrued_expenses}}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-start">EXERCICE {{deficit?'DEFICITAIRE':'BENEFICIAIRE'}}</td>
+                            </tr>
+                            <tr class="fw-light fs-6">
+                                <td>&#8205;</td>
+                                <td>&#8205;</td>
+                            </tr>
+                            <tr class="fw-light fs-6">
+                                <td>&#8205;</td>
+                                <td>&#8205;</td>
+                            </tr>
+                            <tr class="fw-light fs-6">
+                                <td>&#8205;</td>
+                                <td>&#8205;</td>
+                            </tr>
+                            <tr class="table-primary fw-bold">
+                                <td class="text-start ">TOTAL PASSIF</td>
+                                <td> {{get_total_current_liabilities()}} </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>

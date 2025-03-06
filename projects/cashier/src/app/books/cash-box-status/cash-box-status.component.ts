@@ -16,7 +16,7 @@ import { Bank } from '../../../../../common/system-conf.interface';
 })
 export class CashBoxStatusComponent {
 
-  season: string = '2024/2025';
+  season!: string;
   book_entries: BookEntry[] = [];
   cheques_for_deposit: BookEntry[] = [];
   current_cash_amount: number = 0;
@@ -43,6 +43,7 @@ export class CashBoxStatusComponent {
 
     this.systemDataService.get_configuration().subscribe((conf) => {
       this.banks = conf.banks;
+      this.season = conf.season;
     });
     this.bookService.list_book_entries$().subscribe((book_entries) => {
       this.book_entries = book_entries;
