@@ -20,6 +20,7 @@
 }
 
 // ngbAccordion
-.my-custom-header::after {
-    content: none;
+.custom-header {
+    padding-bottom: 0 !important;
+    padding-top: 0.5rem !important;
 }

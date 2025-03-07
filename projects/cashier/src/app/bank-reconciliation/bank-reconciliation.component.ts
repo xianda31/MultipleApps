@@ -10,12 +10,13 @@ import { Router } from '@angular/router';
 import { ToastService } from '../../../../common/toaster/toast.service';
 import { tap, switchMap } from 'rxjs';
 import { filter } from 'rxjs/operators';
+import { threedigitsPipe } from '../../../../common/pipes/three_digits.pipe';
 
 @Component({
   selector: 'app-bank-reconciliation',
   standalone: true,
   encapsulation: ViewEncapsulation.None,   // nécessaire pour que les tooltips fonctionnent
-  imports: [CommonModule, FormsModule, NgbModule],
+  imports: [CommonModule, FormsModule, NgbModule, threedigitsPipe],
   templateUrl: './bank-reconciliation.component.html',
   styleUrl: './bank-reconciliation.component.scss'
 })

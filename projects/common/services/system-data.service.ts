@@ -149,7 +149,7 @@ export class SystemDataService {
   get_season(date: Date): string {
     const month = date.getMonth();
     const year = date.getFullYear();
-    if (month < 7) return `${year - 1}/${year}`;
+    if (month < 7) return `${year - 1}-${year}`;
     return `${year}-${year + 1}`;
   }
 

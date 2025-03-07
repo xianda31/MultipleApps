@@ -1,7 +1,7 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({
-  name: '3digits',
+  name: 'threedigits',
   standalone: true
 })
 export class threedigitsPipe implements PipeTransform {
