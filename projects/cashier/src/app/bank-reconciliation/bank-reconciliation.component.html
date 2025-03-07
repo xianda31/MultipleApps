@@ -1,48 +1,67 @@
-<div class="card mt-2">
-    <div class="card-header">
-        <div class="row justify-content-evenly">
+<div class="container">
+    <div class="card mt-2">
+        <div class="card-header">
+            <div class="row justify-content-evenly">
 
-            <h5>compte bancaire</h5>
+                <h5>compte bancaire</h5>
+            </div>
         </div>
-    </div>
-    <div class="card-body">
-        <div ngbAccordion>
-            <div *ngFor="let bank_report of bank_reports ;  let last = last" ngbAccordionItem [collapsed]="!last">
-                <div ngbAccordionHeader class="accordion-button my-custom-header justify-content-between">
-                    <p class="m-0"> relevé de banque n° {{bank_report}}
-                        (épargne: {{balance(bank_report).savings}})</p>
-                    <button ngbAccordionToggle class="btn btn-link p-0">{{balance(bank_report).bank}}</button>
+        <div class="card-body">
+            <div ngbAccordion>
+                <div ngbAccordionItem [collapsed]="!last" *ngFor="let bank_report of bank_reports ;  let last = last">
+                    <div ngbAccordionHeader>
+                        <button ngbAccordionButton>
+                            <table class="w-75">
+                                <thead>
+                                    <tr>
+                                        <th class="col-4">Relevé </th>
+                                        <th class="col-3 text-center"> compte courant : </th>
+                                        <th class="col-3 text-center"> compte épargne : </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="fw-bold">
+                                    <tr>
+                                        <td> relevé de banque n° {{bank_report}}</td>
+                                        <td class="text-center"><b>{{balance(bank_report).bank | threedigits}} €</b>
+                                        </td>
+                                        <td class="text-center"> <b>{{balance(bank_report).savings| threedigits}} €</b>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </button>
+                    </div>
+                    <div ngbAccordionCollapse>
+                        <div ngbAccordionBody>
+                            <ng-container
+                                *ngTemplateOutlet=" report; context:{bank_report: bank_report}"></ng-container>
+                        </div>
+                    </div>
                 </div>
-                <div ngbAccordionCollapse>
-                    <div ngbAccordionBody>
-                        <ng-container *ngTemplateOutlet=" report; context:{bank_report: bank_report}"></ng-container>
+
+                <div ngbAccordionItem [collapsed]="false">
+                    <h2 ngbAccordionHeader>
+                        <button ngbAccordionButton>opérations non pointées</button>
+                    </h2>
+                    <div ngbAccordionCollapse>
+                        <div ngbAccordionBody>
+                            <ng-container *ngTemplateOutlet="report; context:{bank_report: null}"></ng-container>
+                        </div>
                     </div>
                 </div>
             </div>
-
-            <div ngbAccordionItem [collapsed]="false">
-                <h2 ngbAccordionHeader>
-                    <button ngbAccordionButton>opérations non pointées</button>
-                </h2>
-                <div ngbAccordionCollapse>
-                    <div ngbAccordionBody>
-                        <ng-container *ngTemplateOutlet="report; context:{bank_report: null}"></ng-container>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
-
 </div>
 <ng-template #report let-bank_report="bank_report">
     <table class="table table-sm table-borderless table-responsive">
         <thead>
             <tr>
                 <th class="col-1">Date </th>
-                <th class="col-4">opération </th>
+                <th class="col-3">opération </th>
+                <!-- <th class="col-1 text-start">n° chèque </th> -->
                 <th class="col text-center" *ngFor="let account of bank_accounts ">{{account}} </th>
-                <th class="col-1 text-start">n° chèque </th>
-                <th class="col-1 text-center">{{bank_report ? bank_report : 'relevé'}}</th>
+                <th class="col-2 text-end ">{{bank_report ? bank_report : 'relevé'}}</th>
                 <th class="col-1 "> </th>
             </tr>
         </thead>
@@ -52,12 +71,12 @@
 
                 <tr *ngIf="book_entry.bank_report === bank_report">
                     <td>{{book_entry.date | date: 'dd/MM/yyyy'}}</td>
-                    <td>{{transaction_label(book_entry.bank_op_type)}}</td>
+                    <td>{{transaction_label(book_entry.bank_op_type)}}
+                        {{book_entry.cheque_ref}}</td>
                     <td *ngFor=" let account of bank_accounts " class="text-center">
                         {{book_entry.amounts[account] }}
                     </td>
-                    <td>{{book_entry.cheque_ref}}</td>
-                    <td class="col-1 text-end">
+                    <td class="col-2 text-end">
                         <div *ngIf="bank_report !== null" class="form-check form-switch form-check-inline">
                             <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault"
                                 [checked]="book_entry.bank_report !== null"
@@ -81,9 +100,12 @@
         </tbody>
         <tfoot class="table-group-divider">
             <tr class="table-light">
-                <td colspan="2">solde</td>
+                <td colspan="2">totaux</td>
                 <td class="text-center"> {{movement_in(bank_report).bank}} </td>
                 <td class="text-center"> {{movement_out(bank_report).bank}} </td>
+                <td class="text-center"> {{movement_in(bank_report).savings}} </td>
+                <td class="text-center"> {{movement_out(bank_report).savings}} </td>
+                <td colspan="2"> </td>
 
             </tr>
         </tfoot>
