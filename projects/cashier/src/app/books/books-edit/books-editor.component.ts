@@ -16,7 +16,7 @@ import { Tooltip } from 'bootstrap';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 interface Operation_initial_values {
-  customer_accounts?: string[];
+  optional_accounts?: string[];
   label?: string;
   member?: string;
   values?: { [key: string]: number };
@@ -44,7 +44,7 @@ export class BooksEditorComponent {
   profit_and_loss_accounts !: Account[];
 
   financial_accounts !: Account_def[];
-  customer_accounts !: Account_def[];
+  optional_accounts !: Account_def[];
 
   op_types !: ENTRY_TYPE[];
 
@@ -231,7 +231,7 @@ export class BooksEditorComponent {
       if (this.creation) {
         this.operations.clear();
         this.profit_and_loss_accounts = this.which_profit_and_loss_accounts(this.transaction);
-        if (this.transaction.class !== BOOK_ENTRY_CLASS.e_MOVEMENT) {  // les transactions type mouvement ne nécessite pas d'opération
+        if (!this.transaction.pure_financial) {  // les transactions type mouvement ne nécessite pas d'opération
           this.add_operation(this.transaction);
         }
         // this.init_operation(this.transaction);
@@ -271,10 +271,10 @@ export class BooksEditorComponent {
       let value = this.parse_to_float(values.values?.[index]?.toString() ?? '');
       total += value;
     });
-    let customer_accounts = transaction.customer_accounts;
-    if (customer_accounts !== undefined) {
-      customer_accounts.forEach((account, index) => {
-        let value = this.parse_to_float(values.customer_accounts?.[index]?.toString() ?? '');
+    let optional_accounts = transaction.optional_accounts;
+    if (optional_accounts !== undefined) {
+      optional_accounts.forEach((account, index) => {
+        let value = this.parse_to_float(values.optional_accounts?.[index]?.toString() ?? '');
         if (!transaction.is_of_profit_type) { value = -value; }
         if (account.key.endsWith('_in')) { total -= value; }
         if (account.key.endsWith('_out')) { total += value; }
@@ -333,14 +333,14 @@ export class BooksEditorComponent {
     });
     if (transaction.nominative) {
       operationForm.addControl('member', new FormControl(operation_initial?.member ?? '', Validators.required));
+      if (transaction.optional_accounts !== undefined) {
+        this.optional_accounts = transaction.optional_accounts;
+        operationForm.addControl('optional_accounts', this.fb.array(
+          this.optional_accounts.map((account_def) => new FormControl<string>((operation_initial?.values?.[account_def.key]?.toString() ?? ''), [Validators.pattern(/^\d+(\.\d+)?$/)]))
+        ));
+      }
     }
 
-    if (transaction.customer_accounts !== undefined) {
-      this.customer_accounts = transaction.customer_accounts;
-      operationForm.addControl('customer_accounts', this.fb.array(
-        this.customer_accounts.map((account_def) => new FormControl<string>((operation_initial?.values?.[account_def.key]?.toString() ?? ''), [Validators.pattern(/^\d+(\.\d+)?$/)]))
-      ));
-    }
 
     let total = '';
     if (operation_initial) {
@@ -349,7 +349,7 @@ export class BooksEditorComponent {
     operationForm.addControl('total', new FormControl({ value: total, disabled: true }));
 
     this.operations.push(operationForm);
-
+    console.log('operations', this.operations);
 
   }
 
@@ -415,9 +415,9 @@ export class BooksEditorComponent {
         }
       });
 
-      if (transaction.customer_accounts !== undefined) {
-        transaction.customer_accounts.forEach((account: Account_def, index: number) => {
-          let value = this.parse_to_float((operation as FormGroup).controls['customer_accounts'].value[index]);
+      if (transaction.optional_accounts !== undefined) {
+        transaction.optional_accounts.forEach((account: Account_def, index: number) => {
+          let value = this.parse_to_float((operation as FormGroup).controls['optional_accounts'].value[index]);
           if (value && value !== 0) {
             op_values[account.key] = value;
           }

@@ -1,0 +1,63 @@
+<div class="card mt-2">
+    <h5 class="card-header">comptes de résultats</h5>
+    <div class="card-body">
+        <table class="table table-sm table-borderless table-responsive">
+            <thead>
+                <tr>
+                    <th class="col-2">Classe</th>
+                    <th class="col-4">Dépenses</th>
+                    <th class="col-2"></th>
+                    <th class="col-4">Recettes</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let class of p_and_l_classes ">
+                    <td class="col-2">{{class.description }}</td>
+                    <td class="col-4">
+                        <table class="table table-sm table-borderless table-responsive">
+                            <tbody>
+                                <ng-container *ngFor="let expense of expense_classes">
+                                    <tr *ngIf="expense.class === class.key">
+                                        <td class="col-1">{{expense.key}} </td>
+                                        <td class="col-9">{{expense.description}}</td>
+                                        <td class="col-2 text-end">{{get_total_expenses(expense.key) |
+                                            number:'1.2-2':'fr'}}</td>
+                                    </tr>
+                                </ng-container>
+                            </tbody>
+                        </table>
+                    </td>
+                    <td class="col-2"></td>
+                    <td class="col-4">
+                        <table class="table table-sm table-borderless table-responsive">
+                            <tbody>
+                                <ng-container *ngFor="let revenue of revenue_classes">
+                                    <tr *ngIf="revenue.class === class.key">
+                                        <td class="col-1">{{revenue.key}} </td>
+                                        <td class="col-9">{{revenue.description}}</td>
+                                        <td class="col-2 text-end">{{get_total_revenues(revenue.key) |
+                                            number:'1.2-2':'fr'}}</td>
+                                    </tr>
+                                </ng-container>
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr class="fw-bold bg-body-secondary">
+                    <td class="col-2">TOTAUX :</td>
+                    <td class="col-4 text-end">{{get_total_expenses() | number:'1.2-2':'fr'}}</td>
+                    <td class="col-2"> </td>
+                    <td class="col-4 text-end">{{get_total_revenues() | number:'1.2-2':'fr'}}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    <div class="card-footer">
+        <h5 class="ms-3">
+            {{get_profit_and_loss_result()>0 ? 'bénéfice net :' : 'perte nette :'}}
+            {{get_profit_and_loss_result() | number:'1.2-2':'fr'}} €
+        </h5>
+    </div>
+</div>

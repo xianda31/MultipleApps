@@ -20,7 +20,6 @@ export class SysConfComponent {
   systemFormGroup!: FormGroup;
   loaded!: boolean;
   fileUrl: any;
-  // financial_results_tree: Financial_results_tree = FINANCIAL_RESULTS_TREE;
 
   constructor(
     private systemDataService: SystemDataService,
@@ -74,14 +73,6 @@ export class SysConfComponent {
 
   ngOnInit(): void {
     this.systemDataService.get_configuration().subscribe((configuration) => {
-      // configuration.financial_tree.classes = [
-      //   { key: "LIC", description: "licence FFB" },
-      //   { key: "CMP", description: "compétition" },
-      //   { key: "FOR", description: "formation bridge" },
-      //   { key: "FET", description: "festif" },
-      //   { key: "FON", description: "fonctionnement" },
-      //   { key: "DIV", description: "divers" },
-      // ]
       this.loadDataInFormGroup(configuration);
       this.fileUrl = this.systemDataService.get_file_url(configuration);
       this.loaded = true;

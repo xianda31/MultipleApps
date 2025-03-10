@@ -83,7 +83,7 @@
                                 </div>
                             </div>
                             <div class="offset-1 col-2">
-                                <div [ngTemplateOutlet]="customer_accounts_form"
+                                <div [ngTemplateOutlet]="optional_accounts_form"
                                     [ngTemplateOutletContext]="{inputFormGroup: operation}">
                                 </div>
                             </div>
@@ -112,8 +112,8 @@
             </div>
 
         </div>
-        <!-- form.status : {{form.status}}<br>
-        operations.status : {{form.get('operations')?.status}} -->
+        form.status : {{form.status}}<br>
+        operations.status : {{form.get('operations')?.status}}
         <div class="row mt-5">
             <div class="col-1">
                 <button [disabled]="form.invalid || !financial_accounts_locked " type="submit" class="btn btn-primary">
@@ -201,13 +201,13 @@
 
 
         <!-- formulaire credit_avoir client -->
-        <ng-template #customer_accounts_form let-inputFormGroup="inputFormGroup">
+        <ng-template #optional_accounts_form let-inputFormGroup="inputFormGroup">
             <ng-container [formGroup]="inputFormGroup">
-                <div formArrayName="customer_accounts" class="row ">
+                <div formArrayName="optional_accounts" class="row ">
                     <div class="col-4 gx-1"
-                        *ngFor="let account of inputFormGroup.get('customer_accounts').controls ; let i = index">
-                        <label [ngbTooltip]="customer_accounts[i].description" tooltipClass="my-custom-class"
-                            placement="top">{{customer_accounts[i].label}}</label>
+                        *ngFor="let account of inputFormGroup.get('optional_accounts').controls ; let i = index">
+                        <label [ngbTooltip]="optional_accounts[i].description" tooltipClass="my-custom-class"
+                            placement="top">{{optional_accounts[i].label}}</label>
                         <input type="text" class="form-control" [formControlName]="i" [id]="'customer_account' + i">
                         <div *ngIf="account.invalid" class="text-danger">
                             <small>Le montant doit être un nombre</small>

@@ -209,19 +209,25 @@ export class BookService {
   }
 
   get_cashbox_movements_amount(): number {
-    return this._book_entries.reduce((acc, book_entry) => {
+    return this.Round(this._book_entries.reduce((acc, book_entry) => {
       return acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0);
-    }, 0);
+    }, 0));
   }
   get_bank_movements_amount(): number {
-    return this._book_entries.reduce((acc, book_entry) => {
-      return acc + (book_entry.amounts[FINANCIAL_ACCOUNT.BANK_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.BANK_credit] || 0);
-    }, 0);
+    return this.Round(this._book_entries.reduce((acc, book_entry) => {
+      return acc + (book_entry.amounts[FINANCIAL_ACCOUNT.BANK_debit] || 0) - (((book_entry.bank_report !== null) ? (book_entry.amounts[FINANCIAL_ACCOUNT.BANK_credit] || 0) : 0));
+    }, 0));
   }
+  get_bank_accrued_expenses(): number {
+    return this.Round(this._book_entries.reduce((acc, book_entry) => {
+      return acc + ((book_entry.bank_report === null) ? (book_entry.amounts[FINANCIAL_ACCOUNT.BANK_credit] || 0) : 0);
+    }, 0));
+  }
+
   get_savings_movements_amount(): number {
-    return this._book_entries.reduce((acc, book_entry) => {
+    return this.Round(this._book_entries.reduce((acc, book_entry) => {
       return acc + (book_entry.amounts[FINANCIAL_ACCOUNT.SAVING_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.SAVING_credit] || 0);
-    }, 0);
+    }, 0));
   }
 
   get_debts(): Map<string, number> {
@@ -368,5 +374,38 @@ export class BookService {
   }
 
 
+  get_total_revenues(key?: string): number {
+    let total = (values: { [key: string]: number }): number => {
+      return Object.values(values).reduce((acc, value) => acc + value, 0);
+    }
 
+    if (!key) {
+      return this.get_revenues().reduce((acc, revenue) => acc + total(revenue.values), 0);
+    } else {
+      return this.get_revenues().reduce((acc, revenue) => acc + (revenue.values[key] ? revenue.values[key] : 0), 0);
+    }
+  }
+
+
+  get_total_expenses(key?: string): number {
+    let total = (values: { [key: string]: number }): number => {
+      return Object.values(values).reduce((acc, value) => acc + value, 0);
+    }
+    if (!key) {
+      return this.get_expenses().reduce((acc, expense) => acc + total(expense.values), 0);
+    } else {
+      return this.get_expenses().reduce((acc, expense) => acc + (expense.values[key] ? expense.values[key] : 0), 0);
+    }
+  }
+
+  get_profit_and_loss_result(): number {
+
+
+    return this.Round(this.get_total_revenues() - this.get_total_expenses());
+  }
+  Round(value: number) {
+    const neat = +(Math.abs(value).toPrecision(15));
+    const rounded = Math.round(neat * 100) / 100;
+    return rounded * Math.sign(value);
+  }
 }
