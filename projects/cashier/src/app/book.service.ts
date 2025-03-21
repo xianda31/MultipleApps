@@ -218,7 +218,7 @@ export class BookService {
       return acc + (book_entry.amounts[FINANCIAL_ACCOUNT.BANK_debit] || 0) - (((book_entry.bank_report !== null) ? (book_entry.amounts[FINANCIAL_ACCOUNT.BANK_credit] || 0) : 0));
     }, 0));
   }
-  get_bank_accrued_expenses(): number {
+  get_bank_outstanding_expenses(): number {
     return this.Round(this._book_entries.reduce((acc, book_entry) => {
       return acc + ((book_entry.bank_report === null) ? (book_entry.amounts[FINANCIAL_ACCOUNT.BANK_credit] || 0) : 0);
     }, 0));
@@ -251,26 +251,55 @@ export class BookService {
 
   }
 
-  get_assets_value(): Map<string, number> {
-    let assets = new Map<string, number>();
-    this._book_entries.forEach((book_entry) => {
 
+  // get_clients_credit_value(): number {  // avoir clients
+  //   let value = 0;
+  //   this._book_entries.forEach((book_entry) => {
+  //     book_entry.operations.forEach((op) => {
+  //       if (op.values[CUSTOMER_ACCOUNT.ASSET_credit]) {
+  //         value += op.values[CUSTOMER_ACCOUNT.ASSET_credit];
+  //       }
+  //     });
+  //   });
+  //   return value;
+  // }
+
+  get_clients_debit_value(): number {  // dettes clients
+    let value = 0;
+    console.log(':::', this._book_entries);
+    this._book_entries.forEach((book_entry) => {
       book_entry.operations.forEach((op) => {
-        if (op.values[CUSTOMER_ACCOUNT.ASSET_debit]) {
-          let name = op.member;
-          if (!name) throw new Error('no member name found');
-          assets.set(name, (assets.get(name) || 0) - op.values[CUSTOMER_ACCOUNT.ASSET_debit]);
-        }
-        if (op.values[CUSTOMER_ACCOUNT.ASSET_credit]) {
-          let name = op.member;
-          if (!name) throw new Error('no member name found');
-          assets.set(name, (assets.get(name) || 0) + op.values[CUSTOMER_ACCOUNT.ASSET_credit]);
+        if (op.values[CUSTOMER_ACCOUNT.DEBT_debit]) {
+          value += op.values[CUSTOMER_ACCOUNT.DEBT_debit];
         }
       });
     });
-    return assets;
+    return value;
   }
-  get_assets(): Map<string, { total: number, entries: BookEntry[] }> {
+
+  // get_assets_value(): Map<string, number> {
+  //   let assets = new Map<string, number>();
+  //   this._book_entries.forEach((book_entry) => {
+
+  //     book_entry.operations.forEach((op) => {
+  //       if (op.values[CUSTOMER_ACCOUNT.ASSET_debit]) {
+  //         let name = op.member;
+  //         if (!name) throw new Error('no member name found');
+  //         assets.set(name, (assets.get(name) || 0) - op.values[CUSTOMER_ACCOUNT.ASSET_debit]);
+  //       }
+  //       if (op.values[CUSTOMER_ACCOUNT.ASSET_credit]) {
+  //         let name = op.member;
+  //         if (!name) throw new Error('no member name found');
+  //         assets.set(name, (assets.get(name) || 0) + op.values[CUSTOMER_ACCOUNT.ASSET_credit]);
+  //       }
+  //     });
+  //   });
+  //   return assets;
+  // }
+
+
+  // avoir clients :
+  get_customers_assets(): Map<string, { total: number, entries: BookEntry[] }> {
     let assets = new Map<string, { total: number, entries: BookEntry[] }>();
     this._book_entries.forEach((book_entry) => {
 
@@ -296,6 +325,11 @@ export class BookService {
       });
     });
     return assets;
+  }
+  get_customers_assets_amount(): number {
+    let assets = this.get_customers_assets();
+    return assets.size > 0 ? Array.from(assets.values()).reduce((acc, asset) => acc + asset.total, 0) : 0;
+
   }
 
   find_member_debt(member_full_name: string): number {
@@ -376,7 +410,8 @@ export class BookService {
 
   get_total_revenues(key?: string): number {
     let total = (values: { [key: string]: number }): number => {
-      return Object.values(values).reduce((acc, value) => acc + value, 0);
+      return Object.entries(values).reduce((acc, [key, value]) => acc + ((!Object.values(CUSTOMER_ACCOUNT).includes(key as CUSTOMER_ACCOUNT)) ? value : 0), 0);
+      // return Object.values(values).reduce((acc, value) => acc + value, 0);
     }
 
     if (!key) {
@@ -389,7 +424,8 @@ export class BookService {
 
   get_total_expenses(key?: string): number {
     let total = (values: { [key: string]: number }): number => {
-      return Object.values(values).reduce((acc, value) => acc + value, 0);
+      return Object.entries(values).reduce((acc, [key, value]) => acc + ((!Object.values(CUSTOMER_ACCOUNT).includes(key as CUSTOMER_ACCOUNT)) ? value : 0), 0);
+      // return Object.values(values).reduce((acc, value) => acc + value, 0);
     }
     if (!key) {
       return this.get_expenses().reduce((acc, expense) => acc + total(expense.values), 0);

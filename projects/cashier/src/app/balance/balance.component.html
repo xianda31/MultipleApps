@@ -1,182 +1,220 @@
-<div *ngIf="loaded" class="container">
+<div class="container">
 
-    <div class="col-md-6 text-end">
-        <div class="row">
-            <div class="col">
-                <button class=" btn btn-outline-success btn-sm">
-                    <i class=" bi-file-earmark-arrow-up-fill"></i>
-                    <a [href]="fileUrl" style="text-decoration: none; color: var(--bs-success);"
-                        download="bilan.txt">export.txt</a>
-                </button>
-            </div>
-            <div class="col">
-                <button class=" btn btn-outline-success btn-sm" (click)="fileInput.click()">
-                    <i class=" bi-file-earmark-arrow-down-fill"></i>
-                    import.txt</button>
-                <input #fileInput type="file" style="display:none" class="form-control form-control-sm text-end"
-                    (change)="onInput($event)">
-            </div>
-            <div class="col">
-                <button class=" btn btn-outline-success btn-sm" (click)="save_balance_sheets()">
-                    <i class="bi-cloud-arrow-up-fill"></i>
-                    sauvegarder</button>
-            </div>
-        </div>
+  <div class="col-md-6 text-end">
+    <div class="row">
+      <div class="col">
+        <button class=" btn btn-outline-success btn-sm">
+          <i class=" bi-file-earmark-arrow-up-fill"></i>
+          <a [href]="fileUrl" style="text-decoration: none; color: var(--bs-success);"
+            download="bilan.txt">export.txt</a>
+        </button>
+      </div>
+      <div class="col">
+        <button class=" btn btn-outline-success btn-sm" (click)="fileInput.click()">
+          <i class=" bi-file-earmark-arrow-down-fill"></i>
+          import.txt</button>
+        <input #fileInput type="file" style="display:none" class="form-control form-control-sm text-end"
+          (change)="onInput($event)">
+      </div>
+      <div class="col">
+        <button class=" btn btn-outline-success btn-sm" (click)="save_balance_sheets()">
+          <i class="bi-cloud-arrow-up-fill"></i>
+          sauvegarder</button>
+      </div>
     </div>
-    <div class="card mt-5">
-        <div class="card-header">
-            <div class="row align-items-center">
-                <div class="col-auto">
-                    <h5> b ilan de l'exercice </h5>
-                </div>
-                <div class="col-auto">
-                    <select [(ngModel)]="selected_season" (ngModelChange)="select_sheet()" type="text"
-                        class="form-control" placeholder="saison">
-                        <option *ngFor="let season of seasons" [value]="season" [selected]="season === selected_season">
-                            {{season}}
-                        </option>
-                    </select>
-                </div>
-                <div *ngIf="selected_season === current_season" class="col-auto">
-                    <button class="btn btn-outline-success btn-sm" (click)="update_balance_sheet_figures()">
-                        <i class="fs-5 bi-gear"></i>
-                    </button>
-                </div>
-            </div>
+  </div>
+  <div class="card mt-5">
+    <div class="card-header">
+      <div class="row align-items-center">
+        <div class="col-auto">
+          <h5> bilan de l'exercice </h5>
         </div>
-        <div *ngIf="loaded" class="card-body">
-            <div class="row">
-                <div class="col-6">
-                    <!-- <div class="card"> -->
-                    <!-- <div class="card-body"> -->
-                    <table class="table table-sm table-borderless table-responsive text-end fs-5 align-middle">
-                        <thead>
-                            <tr class="table-primary">
-                                <th width="30%" class="text-start">ACTIF </th>
-                                <th width="10%">var.</th>
-                                <th width="30%"> {{ current_balance_sheet.season }}</th>
-                                <th width="30%" class="table-secondary fs-5"> {{ prev_balance_sheet.season }}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td class="text-start">STOCKS</td>
-                                <td></td>
-                                <td>{{current_balance_sheet.assets.stock | number:nbr_trunc:'fr'}}</td>
-                                <td class="table-secondary fs-5">{{prev_balance_sheet.assets.stock |
-                                    number:nbr_trunc:'fr'}}
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="text-start">CREANCES</td>
-                                <td></td>
-                                <td>{{current_balance_sheet.assets.receivables | number:nbr_trunc:'fr'}}</td>
-                                <td class="table-secondary fs-5">{{prev_balance_sheet.assets.receivables |
-                                    number:nbr_trunc:'fr'}}</td>
-                            </tr>
-                            <tr>
-                                <td>&#8205;</td>
-                                <td>&#8205;</td>
-                                <td>&#8205;</td>
-                                <td class="table-secondary fs-5">&#8205;</td>
-                            </tr>
-
-                            <tr>
-                                <td class="text-start">TRESORERIE</td>
-                                <td>{{liquidities_evolution | number:nbr_trunc:'fr'}}</td>
-                                <td>
-                                    {{total_current_liquidities() | number:nbr_trunc:'fr'}} </td>
-                                <td class="table-secondary fs-5">{{total_previous_liquidities() |
-                                    number:nbr_trunc:'fr'}}
-                                </td>
-                            </tr>
-                            <tr class="fw-light fs-6">
-                                <td>épargne</td>
-                                <td>{{get_liquidity_evolution('savings')| number:nbr_trunc:'fr'}}</td>
-                                <td> {{current_balance_sheet.assets.liquidities.savings | number:nbr_trunc:'fr'}}</td>
-                                <td class="table-secondary fs-5"> {{prev_balance_sheet.assets.liquidities.savings
-                                    |
-                                    number:nbr_trunc:'fr'}}</td>
-                            </tr>
-                            <tr class="fw-light fs-6">
-                                <td>banque</td>
-                                <td>{{get_liquidity_evolution('bank')| number:nbr_trunc:'fr'}}</td>
-                                <td> {{current_balance_sheet.assets.liquidities.bank | number:nbr_trunc:'fr'}}</td>
-                                <td class="table-secondary fs-5"> {{prev_balance_sheet.assets.liquidities.bank}}
-                                </td>
-                            </tr>
-                            <tr class="fw-light fs-6">
-                                <td>caisse</td>
-                                <td>{{get_liquidity_evolution('cash')| number:nbr_trunc:'fr'}}</td>
-                                <td> {{current_balance_sheet.assets.liquidities.cash | number:nbr_trunc:'fr'}}</td>
-
-                                <td class="table-secondary fs-5"> {{prev_balance_sheet.assets.liquidities.cash |
-                                    number:nbr_trunc:'fr'}}</td>
-                            </tr>
-
-                            <tr class="table-primary fw-bold">
-                                <td class="text-start ">TOTAL ACTIF</td>
-                                <td>{{get_assets_evolution() | number:nbr_trunc:'fr'}}</td>
-                                <td> {{total_current_assets()| number:nbr_trunc:'fr'}} </td>
-
-                                <td class="table-secondary fs-5">{{total_previous_assets()|
-                                    number:nbr_trunc:'fr'}}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <!-- </div> -->
-                    <!-- </div> -->
-                </div>
-
-                <!-- PASSIF -->
-                <div class="col-6">
-                    <table class="table table-sm table-borderless table-responsive text-end fs-5">
-                        <thead>
-                            <tr class="table-primary">
-                                <th width="70%" class="text-start">PASSIF </th>
-                                <th width="30%">
-                                    {{ current_balance_sheet.season }}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td class="text-start">REPORT A NOUVEAU</td>
-                                <td>{{current_balance_sheet.liabilities.balance_forward | number:nbr_trunc:'fr'}}</td>
-                            </tr>
-                            <tr>
-                                <td class="text-start">CHARGES ENGAGEES</td>
-                                <td>{{current_balance_sheet.liabilities.accrued_expenses | number:nbr_trunc:'fr'}}</td>
-                            </tr>
-                            <tr>
-                                <td>&#8205;</td>
-                                <td>&#8205;</td>
-                            </tr>
-                            <tr class="table-primary fw-bold">
-                                <td class="text-start ">EXERCICE
-                                    {{deficit?'DEFICITAIRE':'BENEFICIAIRE'}}</td>
-                                <td>{{profit_and_loss_result | number:nbr_trunc:'fr'}}</td>
-                            </tr>
-                            <tr class="fw-light fs-5">
-                                <td>&#8205;</td>
-                                <td>&#8205;</td>
-                            </tr>
-                            <tr class="fw-light fs-5">
-                                <td>&#8205;</td>
-                                <td>&#8205;</td>
-                            </tr>
-                            <tr class="fw-light fs-5">
-                                <td>&#8205;</td>
-                                <td>&#8205;</td>
-                            </tr>
-                            <tr class="table-primary fw-bold">
-                                <td class="text-start ">TOTAL PASSIF</td>
-                                <td> {{get_total_current_liabilities() | number:nbr_trunc:'fr'}} </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+        <div class="col-auto">
+          <select [(ngModel)]="selected_season" (ngModelChange)="select_sheet()" type="text" class="form-control"
+            placeholder="saison">
+            <option *ngFor="let season of seasons" [value]="season" [selected]="season === selected_season">
+              {{season}}
+            </option>
+          </select>
         </div>
+        <div *ngIf="selected_season === current_season" class="col-auto">
+          <button class="btn btn-outline-success btn-sm" (click)="update_balance_sheet_figures()">
+            <i class="fs-5 bi-gear"></i>
+          </button>
+        </div>
+      </div>
     </div>
+    <div class="card-body">
+      <div class="row mx-2">
+        <div class=" col-8">
+          <table class="table table-sm table-borderless table-responsive text-end fs-5 align-middle">
+            <thead>
+              <tr class="table-primary">
+                <th width="35%" class="text-start">ACTIF </th>
+                <th width="24%"> {{ current_balance_sheet.season }}</th>
+                <th width="2%" class="table-light"></th>
+                <th width="8%" class="pe-2">var.</th>
+                <th width="9%" class="table-light text-start"></th>
+                <th width="22%" class="table-secondary fs-5"> {{ prev_balance_sheet.season }}</th>
+              </tr>
+            </thead>
+            <tbody>
 
+              <tr class="fw-bolder">
+                <td class="text-start ">CREANCES</td>
+                <td>{{current_balance_sheet.client_debts | number:truncature:'fr'}}</td>
+                <td>&#8205;</td>
+                <td>
+                  {{(current_balance_sheet.client_debts - prev_balance_sheet.client_debts) | number:truncature:'fr'}}
+                </td>
+                <td class="text-center">
+                  <ng-container [ngTemplateOutlet]="trend"
+                    [ngTemplateOutletContext]="{value: (current_balance_sheet.client_debts - prev_balance_sheet.client_debts)}"></ng-container>
+                </td>
+                <td class="table-secondary fs-5">{{prev_balance_sheet.client_debts |
+                  number:truncature:'fr'}}</td>
+
+              </tr>
+
+              <tr class="fw-bolder">
+                <td class="text-start">TRESORERIE</td>
+                <td>
+                  {{total_current_liquidities() | number:truncature:'fr'}} </td>
+                <td>&#8205;</td>
+                <td>{{liquidities_evolution | number:truncature:'fr'}}</td>
+                <td class="text-center"><ng-container [ngTemplateOutlet]="trend"
+                    [ngTemplateOutletContext]="{value: liquidities_evolution}"></ng-container>
+                </td>
+                <td class="table-secondary fs-5">{{total_previous_liquidities() |
+                  number:truncature:'fr'}}
+                </td>
+              </tr>
+              <tr class="fw-light fs-6">
+                <td>épargne</td>
+                <td> {{current_balance_sheet.liquidities.savings | number:truncature:'fr'}}</td>
+                <td>&#8205;</td>
+                <td>{{get_liquidity_evolution('savings')| number:truncature:'fr'}}</td>
+                <td>&#8205;</td>
+                <td class="table-secondary"> {{prev_balance_sheet.liquidities.savings
+                  | number:truncature:'fr'}}</td>
+              </tr>
+              <tr class="fw-light fs-6">
+                <td>banque</td>
+                <td> {{current_balance_sheet.liquidities.bank | number:truncature:'fr'}}</td>
+                <td>&#8205;</td>
+                <td>{{get_liquidity_evolution('bank')| number:truncature:'fr'}}</td>
+                <td>&#8205;</td>
+                <td class="table-secondary"> {{prev_balance_sheet.liquidities.bank}}
+                </td>
+              </tr>
+              <tr class="fw-light fs-6">
+                <td>caisse</td>
+                <td> {{current_balance_sheet.liquidities.cash | number:truncature:'fr'}}</td>
+                <td>&#8205;</td>
+                <td>{{get_liquidity_evolution('cash')| number:truncature:'fr'}}</td>
+                <td>&#8205;</td>
+                <td class="table-secondary"> {{prev_balance_sheet.liquidities.cash |
+                  number:truncature:'fr'}}</td>
+              </tr>
+              <tr class="fw-bolder">
+                <td class="text-start">ENCOURS</td>
+                <td>
+                  {{total_current_outstandings() | number:truncature:'fr'}} </td>
+                <td>&#8205;</td>
+                <td>{{get_outstandings_evolution()| number:truncature:'fr'}}</td>
+                <td class="text-center">
+                  <ng-container [ngTemplateOutlet]="trend"
+                    [ngTemplateOutletContext]="{value:-get_outstandings_evolution()}"></ng-container>
+
+                </td>
+                <td class="table-secondary fs-5">{{total_previous_outstandings() |
+                  number:truncature:'fr'}}
+                </td>
+              </tr>
+              <tr class="fw-light fs-6">
+                <td>chèques non encaissés</td>
+                <td>{{-current_balance_sheet.outstanding_expenses | number:truncature:'fr'}}</td>
+                <td>&#8205;</td>
+                <td>&#8205;</td>
+                <td>&#8205;</td>
+                <td class="table-secondary">
+                  {{-prev_balance_sheet.outstanding_expenses | number:truncature:'fr'}}
+                </td>
+              </tr>
+              <tr class="fw-light fs-6">
+                <td>avoirs, chèques-cadeaux</td>
+                <td>{{-current_balance_sheet.gift_vouchers | number:truncature:'fr'}}</td>
+                <td>&#8205;</td>
+                <td>&#8205;</td>
+                <td>&#8205;</td>
+                <td class="table-secondary">{{-prev_balance_sheet.gift_vouchers | number:truncature:'fr'}}</td>
+              </tr>
+
+              <tr class="table-primary fw-bold">
+                <td class="text-start ">TOTAL ACTIF</td>
+                <td> {{total_current_net_asset()| number:truncature:'fr'}} </td>
+                <td class="table-light">&#8205;</td>
+                <td>{{get_net_asset_evolution() | number:truncature:'fr'}}</td>
+                <td class="table-light text-center">
+                  <ng-container [ngTemplateOutlet]="trend"
+                    [ngTemplateOutletContext]="{value:get_net_asset_evolution()}"></ng-container>
+
+                </td>
+                <td class="table-secondary">{{total_previous_net_asset()|
+                  number:truncature:'fr'}}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- PASSIF -->
+        <div class="col-4">
+          <table class="table table-sm table-borderless table-responsive text-end fs-5">
+            <thead>
+              <tr class="table-primary">
+                <th width="65%" class="text-start">PASSIF </th>
+                <th width="35%"> {{ current_balance_sheet.season }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-start">REPORT A NOUVEAU</td>
+                <td>{{balance_forward | number:truncature:'fr'}}</td>
+              </tr>
+              <!-- alignment with "TRESORERIE" -->
+              <tr>
+                <td>&#8205;</td>
+                <td>&#8205;</td>
+              </tr>
+              <tr *ngFor="let n of [1, 2, 3]" class="fw-light fs-6">
+                <td>&#8205;</td>
+                <td>&#8205;</td>
+              </tr>
+
+              <tr class="table-primary fw-bold">
+                <td class="text-start ">EXERCICE
+                  {{profit_and_loss_result < 0?'DEFICITAIRE':'BENEFICIAIRE'}}</td>
+                <td>{{profit_and_loss_result | number:truncature:'fr'}}</td>
+              </tr>
+              <tr *ngFor="let n of [1, 2]" class="fw-light fs-6">
+                <td>&#8205;</td>
+                <td>&#8205;</td>
+              </tr>
+
+
+              <tr class="table-primary fw-bold">
+                <td class="text-start ">TOTAL PASSIF</td>
+                <td> {{get_total_current_liabilities() | number:truncature:'fr'}} </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
+<ng-template #trend let-value="value">
+  <i *ngIf="value>0" class="bi bi-arrow-up-right"></i>
+  <i *ngIf="value<0" class="bi bi-arrow-down-right"></i>
+  <i *ngIf="value===0" class="bi bi-arrows"></i>
+</ng-template>

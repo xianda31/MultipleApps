@@ -55,14 +55,12 @@ export class BooksOverviewComponent {
 
     this.bookService.list_book_entries$().subscribe((book_entries) => {
       this.book_entries = book_entries;
-      console.log('book_entries:', this.book_entries);
       this.build_arrays();
 
       this.current_cash_movements = this.bookService.get_cashbox_movements_amount();
       this.debts = this.bookService.get_debts();
-      this.assets = this.bookService.get_assets();
+      this.assets = this.bookService.get_customers_assets();
       this.assets_entries = Object.fromEntries(this.assets.entries());
-      console.log(this.assets_entries);
 
       this.current_debt_amount = this.debts.size > 0 ? Array.from(this.debts.values()).reduce((acc, debt) => acc + debt, 0) : 0;
       this.current_assets_amount = this.assets.size > 0 ? Array.from(this.assets.values()).reduce((acc, asset) => acc + asset.total, 0) : 0;
@@ -80,7 +78,6 @@ export class BooksOverviewComponent {
 
   build_arrays() {
     this.bank_book_entries = this.book_entries.filter(book_entry => this.bank_accounts.some(op => book_entry.amounts[op] !== undefined));
-    console.log('bank:', this.bank_book_entries);
     this.cashbox_book_entries = this.book_entries.filter(book_entry => this.cashbox_accounts.some(op => book_entry.amounts[op] !== undefined));;
     this.revenues = this.bookService.get_revenues();
     this.expenses = this.bookService.get_expenses();

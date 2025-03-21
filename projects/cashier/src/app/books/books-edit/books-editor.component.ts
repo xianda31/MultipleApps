@@ -107,7 +107,6 @@ export class BooksEditorComponent {
         this.bookService.read_book_entry(this.book_entry_id)
           .then((book_entry) => {
             this.selected_book_entry = book_entry;
-            console.log('book_entry read', book_entry);
             this.set_form(book_entry);
             this.valueChanges_subscribe();
           })
@@ -349,7 +348,6 @@ export class BooksEditorComponent {
     operationForm.addControl('total', new FormControl({ value: total, disabled: true }));
 
     this.operations.push(operationForm);
-    console.log('operations', this.operations);
 
   }
 

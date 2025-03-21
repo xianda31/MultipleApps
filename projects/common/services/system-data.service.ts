@@ -47,10 +47,10 @@ export class SystemDataService {
   }
 
   get_balance_sheet_initial_amounts(season: string): Observable<Liquidities> {
-    return from(this.download_balance_history('accounting/balance_history.txt')).pipe(
-      map((balance_sheets) => {
-        let prev_balance_sheet = balance_sheets.find((sheet) => sheet.season === this.previous_season(season)) ?? { season: '', assets: { receivables: 0, stock: 0, liquidities: { cash: 0, bank: 0, savings: 0 } }, liabilities: { accrued_expenses: 0, balance_forward: 0 } };
-        return prev_balance_sheet.assets.liquidities;
+    return this.get_balance_history().pipe(
+      map((balance_sheets: Balance_sheet[]) => {
+        let prev_balance_sheet = balance_sheets.find((sheet) => sheet.season === this.previous_season(season));
+        return prev_balance_sheet ? prev_balance_sheet.liquidities : { cash: 0, bank: 0, savings: 0 };
       }),
     );
   }
@@ -85,12 +85,12 @@ export class SystemDataService {
         }
       }).result
         .then((result) => {
-          this.toastService.showSuccessToast('configuration système', 'sauvegarde réussie');
+          this.toastService.showSuccessToast(file.name, 'sauvegarde réussie');
           resolve(result);
         })
         .catch((error) => {
           console.log('error', error);
-          this.toastService.showErrorToast('configuration système', 'erreur de chargement');
+          this.toastService.showErrorToast(file.name, 'erreur de chargement');
           reject(error);
         });
     });
@@ -122,6 +122,7 @@ export class SystemDataService {
       }).result
         .then(async (result) => {
           const data = JSON.parse(await result.body.text());
+          // console.log('%s : downloaded data', path, data);
           resolve(data as Balance_sheet[]);
         })
         .catch((error) => {

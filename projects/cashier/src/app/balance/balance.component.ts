@@ -4,7 +4,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 import { ToastService } from '../../../../common/toaster/toast.service';
 import { Balance_sheet, Liquidity } from '../../../../common/accounting.interface';
-import { switchMap, tap } from 'rxjs';
+import { combineLatest, switchMap, tap } from 'rxjs';
 import { BookService } from '../book.service';
 
 @Component({
@@ -19,17 +19,15 @@ export class BalanceComponent {
   selected_season!: string;
   current_season!: string;
   seasons: string[] = [];
-  // other_seasons: string[] = [];
-  loaded = false;
-  deficit = false;
   profit_and_loss_result = 0;
 
   balance_sheets: Balance_sheet[] = [];
   current_balance_sheet !: Balance_sheet;
   prev_balance_sheet !: Balance_sheet;
+  balance_forward: number = 0;
   liquidities_evolution = 0;
 
-  nbr_trunc = '1.2-2';  //'1.0-0';
+  truncature = '1.0-0';// '1.2-2';  //
 
   constructor(
     private systemDataService: SystemDataService,
@@ -38,35 +36,50 @@ export class BalanceComponent {
   ) { }
 
   get_liquidity_evolution(liquidity: Liquidity): string {
-    const currentAssets = this.current_balance_sheet.assets.liquidities[liquidity] ?? 0;
-    const previousAssets = this.prev_balance_sheet.assets.liquidities[liquidity] ?? 0;
-    const diff = currentAssets - previousAssets;
+    const current = this.current_balance_sheet.liquidities[liquidity] ?? 0;
+    const previous = this.prev_balance_sheet.liquidities[liquidity] ?? 0;
+    const diff = current - previous;
     return diff > 0 ? '+' + diff : diff < 0 ? diff.toString() : '';
   }
   total_current_liquidities() {
-    return this.current_balance_sheet.assets.liquidities.cash + this.current_balance_sheet.assets.liquidities.bank + this.current_balance_sheet.assets.liquidities.savings;
+    return this.current_balance_sheet.liquidities.cash + this.current_balance_sheet.liquidities.bank + this.current_balance_sheet.liquidities.savings;
   }
   total_previous_liquidities() {
-    return this.prev_balance_sheet.assets.liquidities.cash + this.prev_balance_sheet.assets.liquidities.bank + this.prev_balance_sheet.assets.liquidities.savings;
+    return this.prev_balance_sheet.liquidities.cash + this.prev_balance_sheet.liquidities.bank + this.prev_balance_sheet.liquidities.savings;
   }
   get_liquidities_evolution() {
     let diff = this.total_current_liquidities() - this.total_previous_liquidities();
     return diff > 0 ? '+' + diff : diff < 0 ? diff.toString() : '';
   }
 
-  total_current_assets() {
-    return this.current_balance_sheet.assets.receivables + this.current_balance_sheet.assets.stock + this.total_current_liquidities();
+  total_current_outstandings() {
+    return -(+this.current_balance_sheet.outstanding_expenses + this.current_balance_sheet.gift_vouchers);
   }
-  total_previous_assets() {
-    return this.prev_balance_sheet.assets.receivables + this.prev_balance_sheet.assets.stock + this.total_previous_liquidities();
+  total_previous_outstandings() {
+    return -(+this.prev_balance_sheet.outstanding_expenses + this.prev_balance_sheet.gift_vouchers);
   }
-  get_assets_evolution() {
-    let diff = this.total_current_assets() - this.total_previous_assets();
+  get_outstandings_evolution() {
+    let diff = this.total_current_outstandings() - this.total_previous_outstandings();
+    return diff > 0 ? '+' + diff : diff < 0 ? diff.toString() : '';
+  }
+
+  total_current_net_asset() {
+    return this.net_asset_total(this.current_balance_sheet);
+  }
+  total_previous_net_asset() {
+    return this.net_asset_total(this.prev_balance_sheet);
+  }
+  net_asset_total(balance_sheet: Balance_sheet) {
+    return balance_sheet.stock + balance_sheet.client_debts + balance_sheet.liquidities.cash + balance_sheet.liquidities.bank + balance_sheet.liquidities.savings - (+balance_sheet.outstanding_expenses + balance_sheet.gift_vouchers);
+  }
+
+  get_net_asset_evolution() {
+    let diff = this.total_current_net_asset() - this.total_previous_net_asset();
     return diff > 0 ? '+' + diff : diff < 0 ? diff.toString() : '';
   }
 
   get_total_current_liabilities() {
-    return this.current_balance_sheet.liabilities.accrued_expenses + this.current_balance_sheet.liabilities.balance_forward + this.profit_and_loss_result;
+    return this.net_asset_total(this.prev_balance_sheet) + this.profit_and_loss_result;
   }
 
   update_balance_sheet_figures() {
@@ -76,39 +89,39 @@ export class BalanceComponent {
     let cashbox_movements = this.bookService.get_cashbox_movements_amount();
     let bank_movements = this.bookService.get_bank_movements_amount();
     let savings_movements = this.bookService.get_savings_movements_amount();
-    this.liquidities_evolution = cashbox_movements + bank_movements + savings_movements;;
-    let bank_accrued_expenses = this.bookService.get_bank_accrued_expenses();
-    this.current_balance_sheet.assets.liquidities.cash = this.prev_balance_sheet.assets.liquidities.cash + cashbox_movements;
-    this.current_balance_sheet.assets.liquidities.bank = this.prev_balance_sheet.assets.liquidities.bank + bank_movements;
-    this.current_balance_sheet.assets.liquidities.savings = this.prev_balance_sheet.assets.liquidities.savings + savings_movements;
-    this.current_balance_sheet.liabilities.balance_forward = this.assets_total(this.prev_balance_sheet);
-    this.current_balance_sheet.liabilities.accrued_expenses = bank_accrued_expenses;
+    let bank_outstanding_expenses = this.bookService.get_bank_outstanding_expenses();
+    let gift_vouchers = this.bookService.get_customers_assets_amount();
+    let client_debts = this.bookService.get_clients_debit_value();
+
+    this.liquidities_evolution = cashbox_movements + bank_movements + savings_movements;
+
+    this.current_balance_sheet.liquidities.cash = this.prev_balance_sheet.liquidities.cash + cashbox_movements;
+    this.current_balance_sheet.liquidities.bank = this.prev_balance_sheet.liquidities.bank + bank_movements;
+    this.current_balance_sheet.liquidities.savings = this.prev_balance_sheet.liquidities.savings + savings_movements;
+    this.balance_forward = this.net_asset_total(this.prev_balance_sheet);
+    this.current_balance_sheet.outstanding_expenses = bank_outstanding_expenses;
+    this.current_balance_sheet.gift_vouchers = gift_vouchers;
+    this.current_balance_sheet.client_debts = client_debts;
   }
 
-  assets_total(balance_sheet: Balance_sheet) {
-    return balance_sheet.assets.receivables + balance_sheet.assets.stock + balance_sheet.assets.liquidities.cash + balance_sheet.assets.liquidities.bank + balance_sheet.assets.liquidities.savings;
-  }
 
   ngOnInit() {
 
-    this.systemDataService.get_configuration().pipe(
-      tap((conf) => {
+    combineLatest([
+      this.systemDataService.get_configuration(),
+      this.systemDataService.get_balance_history(),
+      this.bookService.list_book_entries$()
+    ])
+      .subscribe(([conf, balance_sheets, entries]) => {
         this.selected_season = conf.season;
         this.current_season = conf.season;
-      }),
-      switchMap((conf) => this.systemDataService.get_balance_history()))
-      .subscribe((balance_sheets) => {
         this.balance_sheets = balance_sheets.sort((a, b) => b.season.localeCompare(a.season));
-        console.log('balance_sheets', this.balance_sheets);
         this.seasons = this.balance_sheets.map((sheet) => sheet.season);
         this.select_sheet();
+        this.profit_and_loss_result = this.bookService.get_profit_and_loss_result();
         this.update_balance_sheet_figures();
-        this.loaded = true;
+
       });
-    this.bookService.list_book_entries$().subscribe(() => {
-      this.profit_and_loss_result = this.bookService.get_profit_and_loss_result();
-      this.deficit = this.profit_and_loss_result < 0;
-    });
   }
 
 
@@ -117,8 +130,15 @@ export class BalanceComponent {
   }
 
   select_sheet() {
-    this.current_balance_sheet = this.balance_sheets.find((sheet) => sheet.season === this.selected_season) ?? { season: '', assets: { receivables: 0, stock: 0, liquidities: { cash: 0, bank: 0, savings: 0 } }, liabilities: { accrued_expenses: 0, balance_forward: 0 } };
-    this.prev_balance_sheet = this.balance_sheets.find((sheet) => sheet.season === this.previous_season(this.selected_season)) ?? { season: '', assets: { receivables: 0, stock: 0, liquidities: { cash: 0, bank: 0, savings: 0 } }, liabilities: { accrued_expenses: 0, balance_forward: 0 } };
+    this.current_balance_sheet = this.balance_sheets.find((sheet) => sheet.season === this.selected_season) ?? { season: '', stock: 0, client_debts: 0, liquidities: { cash: 0, bank: 0, savings: 0 }, outstanding_expenses: 0, gift_vouchers: 0 };
+    this.prev_balance_sheet = this.balance_sheets.find((sheet) => sheet.season === this.previous_season(this.selected_season)) ?? {
+      season: '', stock: 0, client_debts: 0, liquidities: { cash: 0, bank: 0, savings: 0 }, outstanding_expenses: 0, gift_vouchers: 0
+    };
+    this.balance_forward = this.net_asset_total(this.prev_balance_sheet);
+    this.profit_and_loss_result = this.net_asset_total(this.current_balance_sheet) - this.balance_forward;
+    // this.deficit = this.profit_and_loss_result < 0;
+    console.log('this.current_balance_sheet', this.current_balance_sheet);
+
     this.fileUrl = this.systemDataService.get_file_url(this.balance_sheets);
     // this.other_seasons = this.seasons.filter((season) => season !== this.selected_season);
   }
