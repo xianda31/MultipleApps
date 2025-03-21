@@ -147,15 +147,13 @@ export class BookService {
         .sort((a, b) => {
           return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
         });
+      // console.log('book_entries %s element(s) loaded from AWS', this._book_entries.length);
+      this._book_entries$.next(this._book_entries);   // !! update cache with each fetch paquet
       return this._book_entries;
     };
+
     // console.log('fetching book_entries from ', this._book_entries ? 'cache' : 'server');
     let remote_load$ = from(fetchBookentries()).pipe(
-      tap((book_entries) => {
-        this._book_entries = book_entries;
-        // console.log('book_entries %s element(s) loaded from AWS', book_entries.length);
-        this._book_entries$.next(book_entries);
-      }),
       switchMap(() => this._book_entries$.asObservable())
     );
 
@@ -266,11 +264,14 @@ export class BookService {
 
   get_clients_debit_value(): number {  // dettes clients
     let value = 0;
-    console.log(':::', this._book_entries);
+    // console.log(':::', this._book_entries);
     this._book_entries.forEach((book_entry) => {
       book_entry.operations.forEach((op) => {
         if (op.values[CUSTOMER_ACCOUNT.DEBT_debit]) {
           value += op.values[CUSTOMER_ACCOUNT.DEBT_debit];
+        }
+        if (op.values[CUSTOMER_ACCOUNT.DEBT_credit]) {
+          value -= op.values[CUSTOMER_ACCOUNT.DEBT_credit];
         }
       });
     });

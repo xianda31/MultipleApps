@@ -44,122 +44,137 @@
         </div>
       </div>
     </div>
-    <div class="card-body">
+    <div *ngIf="loaded" class="card-body">
       <div class="row mx-2">
         <div class=" col-8">
           <table class="table table-sm table-borderless table-responsive text-end fs-5 align-middle">
             <thead>
               <tr class="table-primary">
+                <th width="9%" class="table-light text-start"></th>
                 <th width="35%" class="text-start">ACTIF </th>
                 <th width="24%"> {{ current_balance_sheet.season }}</th>
                 <th width="2%" class="table-light"></th>
-                <th width="8%" class="pe-2">var.</th>
-                <th width="9%" class="table-light text-start"></th>
-                <th width="22%" class="table-secondary fs-5"> {{ prev_balance_sheet.season }}</th>
+                <th width="8%" class="variation">diff.</th>
+                <th width="2%" class="table-light"></th>
+                <th width="20%" class="table-secondary fs-5"> {{ prev_balance_sheet.season }}</th>
               </tr>
             </thead>
             <tbody>
 
               <tr class="fw-bolder">
-                <td class="text-start ">CREANCES</td>
-                <td>{{current_balance_sheet.client_debts | number:truncature:'fr'}}</td>
-                <td>&#8205;</td>
-                <td>
-                  {{(current_balance_sheet.client_debts - prev_balance_sheet.client_debts) | number:truncature:'fr'}}
-                </td>
                 <td class="text-center">
                   <ng-container [ngTemplateOutlet]="trend"
                     [ngTemplateOutletContext]="{value: (current_balance_sheet.client_debts - prev_balance_sheet.client_debts)}"></ng-container>
                 </td>
+                <td class="text-start ">CREANCES</td>
+                <td>{{current_balance_sheet.client_debts | number:truncature:'fr'}}</td>
+                <td>&#8205;</td>
+                <td class="variation">
+                  {{(current_balance_sheet.client_debts - prev_balance_sheet.client_debts) | number:truncature:'fr'}}
+                </td>
+                <td>&#8205;</td>
                 <td class="table-secondary fs-5">{{prev_balance_sheet.client_debts |
                   number:truncature:'fr'}}</td>
 
               </tr>
 
               <tr class="fw-bolder">
+                <td class="text-center"><ng-container [ngTemplateOutlet]="trend"
+                    [ngTemplateOutletContext]="{value: get_liquidities_evolution()}"></ng-container>
+                </td>
                 <td class="text-start">TRESORERIE</td>
                 <td>
                   {{total_current_liquidities() | number:truncature:'fr'}} </td>
                 <td>&#8205;</td>
-                <td>{{liquidities_evolution | number:truncature:'fr'}}</td>
-                <td class="text-center"><ng-container [ngTemplateOutlet]="trend"
-                    [ngTemplateOutletContext]="{value: liquidities_evolution}"></ng-container>
-                </td>
+                <td class="variation">{{get_liquidities_evolution() | number:truncature:'fr'}}</td>
+                <td>&#8205;</td>
+
                 <td class="table-secondary fs-5">{{total_previous_liquidities() |
                   number:truncature:'fr'}}
                 </td>
               </tr>
               <tr class="fw-light fs-6">
+                <td>&#8205;</td>
                 <td>épargne</td>
                 <td> {{current_balance_sheet.liquidities.savings | number:truncature:'fr'}}</td>
                 <td>&#8205;</td>
-                <td>{{get_liquidity_evolution('savings')| number:truncature:'fr'}}</td>
+                <td class="variation">{{get_liquidity_evolution('savings')| number:truncature:'fr'}}</td>
                 <td>&#8205;</td>
+
                 <td class="table-secondary"> {{prev_balance_sheet.liquidities.savings
                   | number:truncature:'fr'}}</td>
               </tr>
               <tr class="fw-light fs-6">
+                <td>&#8205;</td>
                 <td>banque</td>
                 <td> {{current_balance_sheet.liquidities.bank | number:truncature:'fr'}}</td>
                 <td>&#8205;</td>
-                <td>{{get_liquidity_evolution('bank')| number:truncature:'fr'}}</td>
+                <td class="variation">{{get_liquidity_evolution('bank')| number:truncature:'fr'}}</td>
                 <td>&#8205;</td>
+
                 <td class="table-secondary"> {{prev_balance_sheet.liquidities.bank}}
                 </td>
               </tr>
               <tr class="fw-light fs-6">
+                <td>&#8205;</td>
                 <td>caisse</td>
                 <td> {{current_balance_sheet.liquidities.cash | number:truncature:'fr'}}</td>
                 <td>&#8205;</td>
-                <td>{{get_liquidity_evolution('cash')| number:truncature:'fr'}}</td>
+                <td class="variation">{{get_liquidity_evolution('cash')| number:truncature:'fr'}}</td>
                 <td>&#8205;</td>
+
                 <td class="table-secondary"> {{prev_balance_sheet.liquidities.cash |
                   number:truncature:'fr'}}</td>
               </tr>
               <tr class="fw-bolder">
+                <td class="text-center">
+                  <ng-container [ngTemplateOutlet]="trend"
+                    [ngTemplateOutletContext]="{value:-get_outstandings_evolution()}"></ng-container>
+                </td>
                 <td class="text-start">ENCOURS</td>
                 <td>
                   {{total_current_outstandings() | number:truncature:'fr'}} </td>
                 <td>&#8205;</td>
-                <td>{{get_outstandings_evolution()| number:truncature:'fr'}}</td>
-                <td class="text-center">
-                  <ng-container [ngTemplateOutlet]="trend"
-                    [ngTemplateOutletContext]="{value:-get_outstandings_evolution()}"></ng-container>
+                <td class="variation">{{get_outstandings_evolution()| number:truncature:'fr'}}</td>
+                <td>&#8205;</td>
 
-                </td>
                 <td class="table-secondary fs-5">{{total_previous_outstandings() |
                   number:truncature:'fr'}}
                 </td>
               </tr>
               <tr class="fw-light fs-6">
+                <td>&#8205;</td>
                 <td>chèques non encaissés</td>
                 <td>{{-current_balance_sheet.outstanding_expenses | number:truncature:'fr'}}</td>
                 <td>&#8205;</td>
                 <td>&#8205;</td>
                 <td>&#8205;</td>
+
                 <td class="table-secondary">
                   {{-prev_balance_sheet.outstanding_expenses | number:truncature:'fr'}}
                 </td>
               </tr>
               <tr class="fw-light fs-6">
+                <td>&#8205;</td>
                 <td>avoirs, chèques-cadeaux</td>
-                <td>{{-current_balance_sheet.gift_vouchers | number:truncature:'fr'}}</td>
+                <td class="variation"> {{-current_balance_sheet.gift_vouchers | number:truncature:'fr'}}</td>
                 <td>&#8205;</td>
                 <td>&#8205;</td>
+
                 <td>&#8205;</td>
                 <td class="table-secondary">{{-prev_balance_sheet.gift_vouchers | number:truncature:'fr'}}</td>
               </tr>
 
               <tr class="table-primary fw-bold">
-                <td class="text-start ">TOTAL ACTIF</td>
-                <td> {{total_current_net_asset()| number:truncature:'fr'}} </td>
-                <td class="table-light">&#8205;</td>
-                <td>{{get_net_asset_evolution() | number:truncature:'fr'}}</td>
                 <td class="table-light text-center">
                   <ng-container [ngTemplateOutlet]="trend"
                     [ngTemplateOutletContext]="{value:get_net_asset_evolution()}"></ng-container>
-
                 </td>
+                <td class="text-start ">TOTAL ACTIF</td>
+                <td> {{total_current_net_asset()| number:truncature:'fr'}} </td>
+                <td class="table-light">&#8205;</td>
+                <td class="variation">{{get_net_asset_evolution() | number:truncature:'fr'}}</td>
+                <td class="table-light">&#8205;</td>
                 <td class="table-secondary">{{total_previous_net_asset()|
                   number:truncature:'fr'}}</td>
               </tr>
@@ -177,7 +192,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr>
+              <tr class="fw-bolder">
                 <td class="text-start">REPORT A NOUVEAU</td>
                 <td>{{balance_forward | number:truncature:'fr'}}</td>
               </tr>
@@ -214,7 +229,7 @@
   </div>
 </div>
 <ng-template #trend let-value="value">
-  <i *ngIf="value>0" class="bi bi-arrow-up-right"></i>
-  <i *ngIf="value<0" class="bi bi-arrow-down-right"></i>
-  <i *ngIf="value===0" class="bi bi-arrows"></i>
+  <i *ngIf="value>0" class="fs-5 bi-arrow-up-right"></i>
+  <i *ngIf="value<0" class="fs-5 bi-arrow-down-right"></i>
+  <i *ngIf="value===0" class="fs-5 bi-arrows"></i>
 </ng-template>
