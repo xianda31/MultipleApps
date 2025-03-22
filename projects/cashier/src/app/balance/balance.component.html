@@ -1,29 +1,11 @@
 <div class="container">
 
   <div class="col-md-6 text-end">
-    <div class="row">
-      <div class="col">
-        <button class=" btn btn-outline-success btn-sm">
-          <i class=" bi-file-earmark-arrow-up-fill"></i>
-          <a [href]="fileUrl" style="text-decoration: none; color: var(--bs-success);"
-            download="bilan.txt">export.txt</a>
-        </button>
-      </div>
-      <div class="col">
-        <button class=" btn btn-outline-success btn-sm" (click)="fileInput.click()">
-          <i class=" bi-file-earmark-arrow-down-fill"></i>
-          import.txt</button>
-        <input #fileInput type="file" style="display:none" class="form-control form-control-sm text-end"
-          (change)="onInput($event)">
-      </div>
-      <div class="col">
-        <button class=" btn btn-outline-success btn-sm" (click)="save_balance_sheets()">
-          <i class="bi-cloud-arrow-up-fill"></i>
-          sauvegarder</button>
-      </div>
+    <div class="row mt-3">
+
     </div>
   </div>
-  <div class="card mt-5">
+  <div class="card mt-1">
     <div class="card-header">
       <div class="row align-items-center">
         <div class="col-auto">
@@ -41,6 +23,26 @@
           <button class="btn btn-outline-success btn-sm" (click)="update_balance_sheet_figures()">
             <i class="fs-5 bi-gear"></i>
           </button>
+        </div>
+        <div class="col mx-auto">&#8205;</div>
+        <div class="col-auto">
+          <button class=" btn btn-outline-success btn-sm">
+            <i class=" bi-file-earmark-arrow-up-fill"></i>
+            <a [href]="fileUrl" style="text-decoration: none; color: var(--bs-success);"
+              download="bilan.txt">export.txt</a>
+          </button>
+        </div>
+        <div class="col-auto">
+          <button class=" btn btn-outline-success btn-sm" (click)="fileInput.click()">
+            <i class=" bi-file-earmark-arrow-down-fill"></i>
+            import.txt</button>
+          <input #fileInput type="file" style="display:none" class="form-control form-control-sm text-end"
+            (change)="onInput($event)">
+        </div>
+        <div class="col-auto">
+          <button class=" btn btn-outline-success btn-sm" (click)="save_balance_sheets()">
+            <i class="bi-cloud-arrow-up-fill"></i>
+            sauvegarder</button>
         </div>
       </div>
     </div>
