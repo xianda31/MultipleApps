@@ -1,10 +1,8 @@
 import { Injectable } from '@angular/core';
-import { downloadData, uploadData } from 'aws-amplify/storage';
 import { SystemConfiguration } from '../system-conf.interface';
 import { BehaviorSubject, from, map, Observable, switchMap, tap } from 'rxjs';
-import { ToastService } from '../toaster/toast.service';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Balance_sheet, Liquidities } from '../accounting.interface';
+import { FileService } from './files.service';
 
 
 
@@ -15,8 +13,7 @@ export class SystemDataService {
   private _system_configuration !: SystemConfiguration;
   private _system_configuration$: BehaviorSubject<SystemConfiguration> = new BehaviorSubject(this._system_configuration);
   constructor(
-    private toastService: ToastService,
-    private sanitizer: DomSanitizer
+    private fileService: FileService
 
   ) { }
 
@@ -25,7 +22,7 @@ export class SystemDataService {
 
   get_configuration(): Observable<SystemConfiguration> {
 
-    let remote_load$ = from(this.download_configuration('system/system_configuration.txt')).pipe(
+    let remote_load$ = from(this.fileService.download_json_file('system/system_configuration.txt')).pipe(
       tap((conf) => {
         this._system_configuration = conf;
         this._system_configuration$.next(this._system_configuration);
@@ -38,13 +35,11 @@ export class SystemDataService {
   }
 
   get_balance_history(): Observable<Balance_sheet[]> {
-    return from(this.download_balance_history('accounting/balance_history.txt'));
+    return from(this.fileService.download_json_file('accounting/balance_history.txt'));
   }
 
 
-  select_sheet() {
-    // this.other_seasons = this.seasons.filter((season) => season !== this.selected_season);
-  }
+
 
   get_balance_sheet_initial_amounts(season: string): Observable<Liquidities> {
     return this.get_balance_history().pipe(
@@ -57,89 +52,17 @@ export class SystemDataService {
 
 
   save_balance_history(balance_sheets: Balance_sheet[]) {
-    const json = JSON.stringify(balance_sheets);
-    const blob = new Blob([json], { type: 'text/plain' });
-    const file = new File([blob], 'balance_history.txt');
-    this.upload(blob, 'accounting/', file).then((data) => {
-    }
-    );
+    return this.fileService.upload_to_S3(balance_sheets, 'accounting/', 'balance_history.txt')
+
   }
 
   async save_configuration(conf: SystemConfiguration) {
-    const json = JSON.stringify(conf);
-    const blob = new Blob([json], { type: 'text/plain' });
-    const file = new File([blob], 'system_configuration.txt');
-    this.upload(blob, 'system/', file).then((data) => {
+    this.fileService.upload_to_S3(conf, 'system/', 'system_configuration.txt').then((data) => {
     });
   }
 
-  private async upload(blob: any, directory: string, file: File) {
-    let promise = new Promise((resolve, reject) => {
-      uploadData({
-        data: blob,
-        path: directory + file.name,
-        // bucket: 'publicBucket'
-        options: {
-          contentType: 'text/plain;charset=utf-8',
-          metadata: { customKey: 'bcsto' },
-        }
-      }).result
-        .then((result) => {
-          this.toastService.showSuccessToast(file.name, 'sauvegarde réussie');
-          resolve(result);
-        })
-        .catch((error) => {
-          console.log('error', error);
-          this.toastService.showErrorToast(file.name, 'erreur de chargement');
-          reject(error);
-        });
-    });
-    return promise;
-  }
 
 
-  private async download_configuration(path: string): Promise<any> {
-    let promise = new Promise<any>((resolve, reject) => {
-      downloadData({
-        path: path,
-      }).result
-        .then(async (result) => {
-          const data = JSON.parse(await result.body.text());
-          const { charge_accounts, product_accounts, ...sys_conf } = data;
-          resolve(sys_conf);
-        })
-        .catch((error) => {
-          reject(error);
-        });
-    });
-    return promise;
-  }
-
-  private async download_balance_history(path: string): Promise<Balance_sheet[]> {
-    let promise = new Promise<any>((resolve, reject) => {
-      downloadData({
-        path: path,
-      }).result
-        .then(async (result) => {
-          const data = JSON.parse(await result.body.text());
-          // console.log('%s : downloaded data', path, data);
-          resolve(data as Balance_sheet[]);
-        })
-        .catch((error) => {
-          reject(error);
-        });
-    });
-    return promise;
-  }
-
-  // local file download / upload
-
-  get_file_url(conf: any): SafeResourceUrl {
-    const json = JSON.stringify(conf);
-    const blob = new Blob([json], { type: 'text/plain' });
-
-    return this.sanitizer.bypassSecurityTrustResourceUrl(window.URL.createObjectURL(blob));
-  }
 
   // utilities functions
 

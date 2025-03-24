@@ -6,6 +6,7 @@ import { ToastService } from '../../../../common/toaster/toast.service';
 import { Balance_sheet, Liquidity } from '../../../../common/accounting.interface';
 import { combineLatest, forkJoin, switchMap, tap } from 'rxjs';
 import { BookService } from '../book.service';
+import { FileService } from '../../../../common/services/files.service';
 
 @Component({
   selector: 'app-balance',
@@ -34,6 +35,7 @@ export class BalanceComponent {
     private systemDataService: SystemDataService,
     private bookService: BookService,
     private toatService: ToastService,
+    private fileService: FileService
   ) { }
 
   get_liquidity_evolution(liquidity: Liquidity): string {
@@ -140,7 +142,7 @@ export class BalanceComponent {
       season: '', stock: 0, client_debts: 0, liquidities: { cash: 0, bank: 0, savings: 0 }, outstanding_expenses: 0, gift_vouchers: 0
     };
 
-    this.fileUrl = this.systemDataService.get_file_url(this.balance_sheets);
+    this.fileUrl = this.fileService.get_file_url(this.balance_sheets);
     // this.other_seasons = this.seasons.filter((season) => season !== this.selected_season);
   }
 
@@ -165,4 +167,6 @@ export class BalanceComponent {
     }
 
   }
+
+
 }

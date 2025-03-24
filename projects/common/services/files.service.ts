@@ -2,6 +2,9 @@ import { Injectable } from '@angular/core';
 import { getUrl, list, remove } from 'aws-amplify/storage';
 import { S3Item } from '../file.interface';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { downloadData, uploadData } from 'aws-amplify/storage';
+import { ToastService } from '../toaster/toast.service';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 
 
@@ -9,6 +12,11 @@ import { BehaviorSubject, Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class FileService {
+
+  constructor(
+    private toastService: ToastService,
+    private sanitizer: DomSanitizer
+  ) { }
 
   getPresignedUrl(path: string): Promise<URL> {
     return new Promise<URL>((resolve, reject) => {
@@ -48,6 +56,61 @@ export class FileService {
       .catch((error) => {
         console.log(error);
       });
+  }
+
+  // json upload/download utilities
+
+  async upload_to_S3(data: any, directory: string, filename: string) {
+    const json = JSON.stringify(data);
+    const blob = new Blob([json], { type: 'text/plain' });
+    const file = new File([blob], filename);
+    let promise = new Promise((resolve, reject) => {
+      uploadData({
+        data: blob,
+        path: directory + file.name,
+        // bucket: 'publicBucket'
+        options: {
+          contentType: 'text/plain;charset=utf-8',
+          metadata: { customKey: 'bcsto' },
+        }
+      }).result
+        .then((result) => {
+          this.toastService.showSuccessToast(file.name, 'sauvegarde réussie');
+          resolve(result);
+        })
+        .catch((error) => {
+          console.log('error', error);
+          this.toastService.showErrorToast(file.name, 'erreur de chargement');
+          reject(error);
+        });
+    });
+    return promise;
+  }
+
+
+  async download_json_file(path: string): Promise<any> {
+    let promise = new Promise<any>((resolve, reject) => {
+      downloadData({
+        path: path,
+      }).result
+        .then(async (result) => {
+          const data = JSON.parse(await result.body.text());
+          // console.log('%s : downloaded data', path, data);
+          resolve(data);
+        })
+        .catch((error) => {
+          reject(error);
+        });
+    });
+    return promise;
+  }
+
+
+
+  get_file_url(obj: any): SafeResourceUrl {
+    const json = JSON.stringify(obj);
+    const blob = new Blob([json], { type: 'text/plain' });
+    return this.sanitizer.bypassSecurityTrustResourceUrl(window.URL.createObjectURL(blob));
   }
 
 }

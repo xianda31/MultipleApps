@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 import { SystemConfiguration } from '../../../../common/system-conf.interface';
 import { ToastService } from '../../../../common/toaster/toast.service';
+import { FileService } from '../../../../common/services/files.service';
 
 
 
@@ -24,6 +25,7 @@ export class SysConfComponent {
   constructor(
     private systemDataService: SystemDataService,
     private toatService: ToastService,
+    private fileService: FileService,
     private fb: FormBuilder
   ) {
 
@@ -74,7 +76,7 @@ export class SysConfComponent {
   ngOnInit(): void {
     this.systemDataService.get_configuration().subscribe((configuration) => {
       this.loadDataInFormGroup(configuration);
-      this.fileUrl = this.systemDataService.get_file_url(configuration);
+      this.fileUrl = this.fileService.get_file_url(configuration);
       this.loaded = true;
     });
   }
