@@ -40,7 +40,6 @@ export class BankReconciliationComponent {
     this.bank_reports = this.systemDataService.get_season_months(new Date());
     this.bookService.list_book_entries$().subscribe((book_entries) => {
       this.bank_book_entries = book_entries.filter(book_entry => this.bank_accounts.some(op => book_entry.amounts[op] !== undefined));
-      console.log(this.bank_book_entries);
     });
 
     this.systemDataService.get_configuration().pipe(

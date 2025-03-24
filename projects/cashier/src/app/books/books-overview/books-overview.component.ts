@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Expense, BookEntry, FINANCIAL_ACCOUNT, Revenue, ENTRY_TYPE, Cashbox_accounts, Bank_accounts } from '../../../../../common/accounting.interface';
+import { Expense, BookEntry, FINANCIAL_ACCOUNT, Revenue, ENTRY_TYPE, Cashbox_accounts, Bank_accounts, Liquidities } from '../../../../../common/accounting.interface';
 import { BookService } from '../../book.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -17,6 +17,7 @@ interface EntryValue { total: number, entries: BookEntry[] };
 })
 export class BooksOverviewComponent {
 
+
   expenses_accounts !: string[];
   products_accounts !: string[];
 
@@ -31,6 +32,7 @@ export class BooksOverviewComponent {
   current_assets_amount: number = 0;
   current_debt_amount: number = 0;
 
+  initial_liquidities!: Liquidities;
 
   bank_accounts = Object.values(Bank_accounts) as FINANCIAL_ACCOUNT[];
   cashbox_accounts = Object.values(Cashbox_accounts) as FINANCIAL_ACCOUNT[];
@@ -50,8 +52,10 @@ export class BooksOverviewComponent {
     this.systemDataService.get_configuration().subscribe((conf) => {
       this.expenses_accounts = conf.financial_tree.expenses.map((account) => account.key);
       this.products_accounts = conf.financial_tree.revenues.map((account) => account.key);
+      this.systemDataService.get_balance_sheet_initial_amounts(conf.season).subscribe((liquidities) => {
+        this.initial_liquidities = liquidities;
+      });
     });
-
 
     this.bookService.list_book_entries$().subscribe((book_entries) => {
       this.book_entries = book_entries;

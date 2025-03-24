@@ -159,6 +159,8 @@ export class BooksEditorComponent {
 
   set_form(book_entry: BookEntry) {
 
+    // console.log('chargement de :', book_entry);
+
     this.transaction = get_transaction(book_entry.bank_op_type);
     this.op_types = class_types(book_entry.class);
 

@@ -5,6 +5,7 @@ import { BookEntry, Revenue, FINANCIAL_ACCOUNT, Expense, BOOK_ENTRY_CLASS, CUSTO
 import { Schema } from '../../../../amplify/data/resource';
 import { BehaviorSubject, from, map, Observable, of, switchMap, tap } from 'rxjs';
 import { SystemDataService } from '../../../common/services/system-data.service';
+import { ToastService } from '../../../common/toaster/toast.service';
 
 type BookEntry_input = Schema['BookEntry']['type'];
 type BookEntry_output = BookEntry & {
@@ -19,7 +20,8 @@ export class BookService {
   private _book_entries!: BookEntry[];
   private _book_entries$ = new BehaviorSubject<BookEntry[]>(this._book_entries);
   constructor(
-    private systemDataService: SystemDataService
+    private systemDataService: SystemDataService,
+    private toastService: ToastService
   ) { }
 
   jsonified_entry(entry: BookEntry): BookEntry_input {
@@ -379,12 +381,23 @@ export class BookService {
   }
 
   update_deposit_refs(deposit_ref: string, new_deposit_ref: string) {
+    let new_entries: BookEntry[] = [];
     this._book_entries.forEach((entry) => {
       if (entry.deposit_ref === deposit_ref) {
         entry.deposit_ref = new_deposit_ref;
+        new_entries.push(entry);
       }
     });
-    this._book_entries$.next(this._book_entries);
+    if (new_entries.length > 0) {
+      let n = new_entries.length;
+      new_entries.forEach((entry) => {
+        this.update_book_entry(entry);
+      });
+      this.toastService.showSuccessToast('base comptabilité', `${n} références de dépôt mises à jour`);
+      this._book_entries$.next(this._book_entries);
+    } else {
+      throw Error('enable to find any entry with deposit_ref : ' + deposit_ref);
+    }
   }
 
   create_tournament_fees_entry(date: string, fees_amount: number) {
@@ -436,10 +449,9 @@ export class BookService {
   }
 
   get_profit_and_loss_result(): number {
-
-
     return this.Round(this.get_total_revenues() - this.get_total_expenses());
   }
+
   Round(value: number) {
     const neat = +(Math.abs(value).toPrecision(15));
     const rounded = Math.round(neat * 100) / 100;

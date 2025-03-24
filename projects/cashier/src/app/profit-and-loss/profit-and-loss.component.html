@@ -18,7 +18,7 @@
               <tbody>
                 <ng-container *ngFor="let expense of expense_classes">
                   <tr class="tr_hoverable" *ngIf="expense.class === class.key"
-                    (click)="show_details_extended($event,'expense', expense.key)">
+                    (click)="show_details('expense', expense.key)">
                     <td class="col-1">{{expense.key}} </td>
                     <td class="col-9">{{expense.description}}</td>
                     <td class="col-2 text-end">{{get_total_expenses(expense.key) |

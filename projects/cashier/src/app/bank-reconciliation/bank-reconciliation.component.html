@@ -71,7 +71,7 @@
         <tr *ngIf="book_entry.bank_report === bank_report">
           <td>{{book_entry.date | date: 'dd/MM/yyyy'}}</td>
           <td>{{transaction_label(book_entry.bank_op_type)}}
-            {{book_entry.cheque_ref}}</td>
+            {{book_entry.cheque_ref}} {{book_entry.deposit_ref}}</td>
           <td *ngFor=" let account of bank_accounts " class="text-center">
             {{book_entry.amounts[account] }}
           </td>

@@ -285,7 +285,7 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
     cash: 'none',
     cheque: 'none',
   },
-  // report d'encours qpaiement par chèque d'une prestation ou service
+  // report d'encours paiement par chèque d'une prestation ou service
   [ENTRY_TYPE.cheque_forwarding]: {
     label: 'report d\'encours de chèque(s)',
     class: BOOK_ENTRY_CLASS.f_BALANCE_SHEET,
@@ -310,7 +310,7 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
     class: BOOK_ENTRY_CLASS.b_OTHER_EXPENSE,
     financial_accounts: financial_credits,
     financial_accounts_to_charge: [FINANCIAL_ACCOUNT.BANK_credit],
-    optional_accounts: balance_sheet_accounts,
+    // optional_accounts: balance_sheet_accounts,
     nominative: false,
     pure_financial: false,
     is_of_profit_type: false,

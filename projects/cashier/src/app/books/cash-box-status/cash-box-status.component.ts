@@ -47,7 +47,7 @@ export class CashBoxStatusComponent {
     });
     this.bookService.list_book_entries$().subscribe((book_entries) => {
       this.book_entries = book_entries;
-      this.current_cash_amount = this.cash_balance(book_entries);
+      this.current_cash_amount = this.bookService.get_cashbox_movements_amount();
 
       // filtre les chèques à déposer
       this.cheques_for_deposit = book_entries
@@ -69,6 +69,8 @@ export class CashBoxStatusComponent {
         });
     });
   }
+
+
   cash_out() {
     if (this.cash_out_amount !== 0) {
       this.create_cash_out_entry(this.cash_out_amount);
@@ -98,8 +100,8 @@ export class CashBoxStatusComponent {
 
   // gestion des chèques à déposer
 
-  // 1. marquage en temporaire des chèques à déposer : 
-  //     les chèques sont listés et marqués (ref temporaire) en attente du bordereau de dépôt 
+  // 1. marquage en temporaire des chèques à déposer :
+  //     les chèques sont listés et marqués (ref temporaire) en attente du bordereau de dépôt
   cheques_check_out() {
     let temp_ref = 'temp_' + new Date().toISOString();
     this.cheques_for_deposit.forEach((book_entry) => {
@@ -148,17 +150,17 @@ export class CashBoxStatusComponent {
 
   // utilitaires
 
-  cash_balance(entries: BookEntry[]): number {
-    // calculer le montant disponible en espèces
-    return entries.reduce((acc, book_entry) => {
-      let transaction = get_transaction(book_entry.bank_op_type);
-      if (transaction.cash === 'none') {
-        return acc;
-      } else {
-        return (acc + (book_entry.amounts?.['cashbox_in'] ?? 0) - (book_entry.amounts?.['cashbox_out'] ?? 0));
-      }
-    }, 0);
-  }
+  // cash_balance(entries: BookEntry[]): number {
+  //   // calculer le montant disponible en espèces
+  //   return entries.reduce((acc, book_entry) => {
+  //     let transaction = get_transaction(book_entry.bank_op_type);
+  //     if (transaction.cash === 'none') {
+  //       return acc;
+  //     } else {
+  //       return (acc + (book_entry.amounts?.['cashbox_in'] ?? 0) - (book_entry.amounts?.['cashbox_out'] ?? 0));
+  //     }
+  //   }, 0);
+  // }
 
   get_date_of_temporary_deposit_ref(ref: string | undefined): string {
     if (ref === undefined) {
