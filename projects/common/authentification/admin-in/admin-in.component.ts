@@ -19,7 +19,7 @@ export class AdminInComponent {
   loginForm !: FormGroup;
   get email() { return this.loginForm.get('email'); }
   get password() { return this.loginForm.get('password') };
-  logged_member$: Observable<Member | null> = new Observable<Member | null>();
+  logged_member: Member | null = null;
 
 
   constructor(
@@ -37,35 +37,24 @@ export class AdminInComponent {
   }
 
   ngOnInit() {
-    this.logged_member$ = this.auth.logged_member$;
-
-    // this.auth.getCurrentUser().then((id) => {
-
-    //   console.log("id", this.membersService.getMember(id!));
-
-    // });
-
-
+    this.auth.logged_member$.subscribe((member) => {
+      this.logged_member = null;
+      if (member !== null) {
+        this.toastService.showSuccessToast('identification', 'Bonjour ' + member.firstname);
+        this.logged_member = member;
+      }
+    });
   }
 
   signOut() {
     this.auth.signOut();
   }
-  // get_current_session() {
-  // }
-
-
-
 
   async signIn() {
-    try {
-      let member_id = await this.auth.signIn(this.email!.value, this.password!.value)
-      if (!member_id) {
-        this.toastService.showErrorToast('sign in', 'erreur imprévue');
-        return;
-      }
-    } catch (err: any) {
-      console.log("sign in error", err);
-    }
+    this.auth.signIn(this.email!.value, this.password!.value);
+    // .then((member_id) => {      })
+    // .catch((err) => {
+    //   console.log("sign in error", err);
+    // })
   }
 }

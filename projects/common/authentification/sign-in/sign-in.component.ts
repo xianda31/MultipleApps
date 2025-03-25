@@ -92,6 +92,7 @@ export class SignInComponent {
         this.toastService.showErrorToast('sign in', 'erreur imprévue');
         return;
       }
+      console.log("member_id", member_id);
       const me = await this.membersService.readMember(member_id);
       // this.auth.whoAmI = me;
       this.toastService.showSuccessToast('identification', 'Bonjour ' + me!.firstname);

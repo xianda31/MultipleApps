@@ -5,6 +5,7 @@ import { Process_flow } from './authentification_interface';
 import { ToastService } from '../toaster/toast.service';
 import { MembersService } from '../../admin-dashboard/src/app/members/service/members.service';
 import { Member } from '../member.interface';
+import { custom_resources } from 'aws-cdk-lib';
 
 @Injectable({
   providedIn: 'root'
@@ -13,8 +14,8 @@ export class AuthentificationService {
 
   private _mode: Process_flow = Process_flow.SIGN_IN;
   private _mode$: BehaviorSubject<Process_flow> = new BehaviorSubject(this._mode);
-  private _logged_member: Member | null = null;
-  private _logged_member$: BehaviorSubject<Member | null> = new BehaviorSubject(this._logged_member);
+  // private _logged_member: Member | null = null;
+  private _logged_member$: BehaviorSubject<Member | null> = new BehaviorSubject<Member | null>(null);
   constructor(
     private toastService: ToastService,
     private memberService: MembersService
@@ -43,27 +44,33 @@ export class AuthentificationService {
       {
         try {
           let { isSignedIn, nextStep } = await signIn(signInInput);
+          // console.log("isSignedIn: %s nextStep : %s", isSignedIn, nextStep);
 
           const attributes = await fetchUserAttributes();
+          // console.log('attributes', attributes);
           let member_id = attributes['custom:member_id'];
-          if (!member_id) { console.log('no member_id !!!!!'); reject('no member_id'); }
-          this._logged_member = await this.memberService.readMember(member_id!);
-          this._logged_member$.next(this._logged_member);
-          resolve(member_id);
-        } catch (err) {
-          if (err instanceof AuthError) {
-            switch (err.name) {
-              case 'NotAuthorizedException':
-                this.toastService.showWarningToast('identification', 'mail ou mot de passe incorrect');
-                reject(err);
-                break;
-              default:
-                this.toastService.showErrorToast('sign in', err.message);
-                reject(err);
-                break;
+          // console.log('member_id', member_id);
+          if (!member_id) {
+            reject('local storage invalid');
+          } else {
+            let member = await this.memberService.readMember(member_id);
+            this._logged_member$.next(member);
+            resolve(member_id);
+          }
+        } catch (err: any) {
+
+          if (err.name === 'UserAlreadyAuthenticatedException') {
+            const user = await getCurrentUser();
+            let member = await this.memberService.getMemberByEmail(user.signInDetails?.loginId!);
+            if (member) {
+              this._logged_member$.next(member);
+              resolve(member.id);
+            }
+            else {
+              reject(err);
             }
           } else {
-            console.log("error", err);
+            this.toastService.showErrorToast('erreur identification', err.message);
             reject(err);
           }
         }
@@ -134,8 +141,8 @@ export class AuthentificationService {
           reject(err);
         })
         .then((res) => {
-          this._logged_member = null;
-          this._logged_member$.next(this._logged_member);
+          // this._logged_member = null;
+          this._logged_member$.next(null);
           // this.toastService.showSuccessToast('sign out', 'success');
           resolve(res);
         });
@@ -202,8 +209,8 @@ export class AuthentificationService {
           const attributes = await fetchUserAttributes();
           let member_id = attributes['custom:member_id'];
 
-          this._logged_member = await this.memberService.readMember(member_id!);
-          this._logged_member$.next(this._logged_member);
+          // this._logged_member = this.memberService.getMember(member_id!);
+          this._logged_member$.next(this.memberService.getMember(member_id!));
 
           resolve(member_id!);
         })
