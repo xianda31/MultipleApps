@@ -8,8 +8,8 @@ import { get_transaction } from '../../../../common/transaction.definition';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { Router } from '@angular/router';
 import { ToastService } from '../../../../common/toaster/toast.service';
-import { tap, switchMap } from 'rxjs';
-import { filter } from 'rxjs/operators';
+import { tap, switchMap, combineLatest } from 'rxjs';
+import { filter, map } from 'rxjs/operators';
 import { threedigitsPipe } from '../../../../common/pipes/three_digits.pipe';
 
 @Component({
@@ -38,16 +38,20 @@ export class BankReconciliationComponent {
   ngOnInit() {
 
     this.bank_reports = this.systemDataService.get_season_months(new Date());
-    this.bookService.list_book_entries$().subscribe((book_entries) => {
-      this.bank_book_entries = book_entries.filter(book_entry => this.bank_accounts.some(op => book_entry.amounts[op] !== undefined));
-    });
 
     this.systemDataService.get_configuration().pipe(
-      tap((conf) => { this.current_season = conf.season; }),
-      switchMap((conf) => this.systemDataService.get_balance_sheet_initial_amounts(conf.season)))
-      .subscribe((liquidities) => {
+      map((conf) => {
+        this.current_season = conf.season;
+        return conf.season;
+      }),
+      switchMap((season) => combineLatest([
+        this.systemDataService.get_balance_sheet_initial_amounts(season),
+        this.bookService.list_book_entries$(season)
+      ])))
+      .subscribe(([liquidities, book_entries]) => {
         this.initial_liquidities = liquidities;
         console.log('initial_liquidities', this.initial_liquidities);
+        this.bank_book_entries = book_entries.filter(book_entry => this.bank_accounts.some(op => book_entry.amounts[op] !== undefined));
       });
   }
 

@@ -13,6 +13,8 @@ import { BookService } from '../book.service';
 import { CartComponent } from "./cart/cart.component";
 import { ProductService } from '../../../../common/services/product.service';
 import { get_transaction } from '../../../../common/transaction.definition';
+import { SystemConfiguration } from '../../../../common/system-conf.interface';
+import { SystemDataService } from '../../../../common/services/system-data.service';
 
 
 @Component({
@@ -55,12 +57,15 @@ export class ShopComponent {
     private bookService: BookService,
     private sessionService: SessionService,
     private productService: ProductService,
+    private systemDataService: SystemDataService
   ) {
 
-    this.bookService.list_book_entries$().subscribe((book_entry) => {
-      this.sales = book_entry;
-      this.sales_to_members.set(this.bookService.get_revenues_from_members());
-    });
+    this.systemDataService.get_configuration().subscribe((conf: SystemConfiguration) => {
+      this.bookService.list_book_entries$(conf.season).subscribe((book_entry) => {
+        this.sales = book_entry;
+        this.sales_to_members.set(this.bookService.get_revenues_from_members());
+      });
+    })
   }
 
 

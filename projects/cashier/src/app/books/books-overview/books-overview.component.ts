@@ -32,7 +32,7 @@ export class BooksOverviewComponent {
   current_assets_amount: number = 0;
   current_debt_amount: number = 0;
 
-  initial_liquidities!: Liquidities;
+  initial_liquidities: Liquidities = { cash: 0, bank: 0, savings: 0 };
 
   bank_accounts = Object.values(Bank_accounts) as FINANCIAL_ACCOUNT[];
   cashbox_accounts = Object.values(Cashbox_accounts) as FINANCIAL_ACCOUNT[];
@@ -52,23 +52,26 @@ export class BooksOverviewComponent {
     this.systemDataService.get_configuration().subscribe((conf) => {
       this.expenses_accounts = conf.financial_tree.expenses.map((account) => account.key);
       this.products_accounts = conf.financial_tree.revenues.map((account) => account.key);
+
       this.systemDataService.get_balance_sheet_initial_amounts(conf.season).subscribe((liquidities) => {
         this.initial_liquidities = liquidities;
       });
-    });
 
-    this.bookService.list_book_entries$().subscribe((book_entries) => {
-      this.book_entries = book_entries;
-      this.build_arrays();
+      this.bookService.list_book_entries$(conf.season).subscribe((book_entries) => {
 
-      this.current_cash_movements = this.bookService.get_cashbox_movements_amount();
-      this.debts = this.bookService.get_debts();
-      this.assets = this.bookService.get_customers_assets();
-      this.assets_entries = Object.fromEntries(this.assets.entries());
+        this.book_entries = book_entries;
+        console.log('book_entries', this.book_entries);
+        this.build_arrays();
 
-      this.current_debt_amount = this.debts.size > 0 ? Array.from(this.debts.values()).reduce((acc, debt) => acc + debt, 0) : 0;
-      this.current_assets_amount = this.assets.size > 0 ? Array.from(this.assets.values()).reduce((acc, asset) => acc + asset.total, 0) : 0;
+        this.current_cash_movements = this.bookService.get_cashbox_movements_amount();
+        this.debts = this.bookService.get_debts();
+        this.assets = this.bookService.get_customers_assets();
+        this.assets_entries = Object.fromEntries(this.assets.entries());
 
+        this.current_debt_amount = this.debts.size > 0 ? Array.from(this.debts.values()).reduce((acc, debt) => acc + debt, 0) : 0;
+        this.current_assets_amount = this.assets.size > 0 ? Array.from(this.assets.values()).reduce((acc, asset) => acc + asset.total, 0) : 0;
+
+      });
     });
 
   }

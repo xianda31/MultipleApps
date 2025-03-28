@@ -19,6 +19,7 @@ export enum ENTRY_TYPE {
   bank_debiting = 'bank_debiting',
   asset_forwarding = 'asset_forwarding',
   cheque_forwarding = 'cheque_forwarding',
+  debt_forwarding = 'debt_forwarding',
 
 }
 
@@ -101,7 +102,7 @@ export interface Expense extends Operation, Session {
 }; // comptes de charges
 
 
-export type bank_values = { [key in FINANCIAL_ACCOUNT]?: number; };
+export type bank_values = { [key in FINANCIAL_ACCOUNT | BALANCE_ACCOUNT]?: number; };
 
 
 export interface BookEntry {

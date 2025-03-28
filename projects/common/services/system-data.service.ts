@@ -3,6 +3,7 @@ import { SystemConfiguration } from '../system-conf.interface';
 import { BehaviorSubject, from, map, Observable, switchMap, tap } from 'rxjs';
 import { Balance_sheet, Liquidities } from '../accounting.interface';
 import { FileService } from './files.service';
+import { formatDate } from '@angular/common';
 
 
 
@@ -61,7 +62,12 @@ export class SystemDataService {
     });
   }
 
-
+  async to_next_season() {
+    this._system_configuration.season = this.next_season(this._system_configuration.season);
+    console.log('next season', this._system_configuration.season);
+    this._system_configuration$.next(this._system_configuration);
+    this.save_configuration(this._system_configuration);
+  }
 
 
   // utilities functions
@@ -104,5 +110,13 @@ export class SystemDataService {
     return (+season.slice(0, 4) - 1).toString() + '-' + (+season.slice(0, 4)).toString();
   }
 
+  next_season(season: string) {
+    return (+season.slice(5, 9)).toString() + '-' + (+season.slice(5, 9) + 1).toString();
+  }
 
+  closout_date(season: string): string {
+    let date = new Date('01/07/' + season.slice(5, 9));
+    return formatDate(date, 'yyyy-MM-dd', 'en')
+    // return '01/07/' + season.slice(5, 9);
+  }
 }

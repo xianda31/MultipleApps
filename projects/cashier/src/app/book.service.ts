@@ -133,33 +133,70 @@ export class BookService {
       });
   }
 
-  list_book_entries$(season?: string): Observable<BookEntry[]> {
+  list_book_entries$(season: string): Observable<BookEntry[]> {
 
     const fetchBookentries = async () => {
       const client = generateClient<Schema>();
       const { data, errors } = await client.models.BookEntry.list({
-        filter: season ? { season: { eq: season } } : undefined
+        filter: { season: { eq: season } }
       });
       if (errors) {
         console.error(errors);
         throw new Error(JSON.stringify(errors));
       }
-      this._book_entries = (data as unknown as BookEntry_output[])
-        .map((entry) => this.parsed_entry(entry as BookEntry_output))
-        .sort((a, b) => {
-          return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
-        });
-      // console.log('book_entries %s element(s) loaded from AWS', this._book_entries.length);
-      this._book_entries$.next(this._book_entries);   // !! update cache with each fetch paquet
-      return this._book_entries;
+      return data as unknown as BookEntry_output[];
     };
 
     // console.log('fetching book_entries from ', this._book_entries ? 'cache' : 'server');
     let remote_load$ = from(fetchBookentries()).pipe(
+      map((entries) => {
+        this._book_entries = entries
+          .map((entry) => this.parsed_entry(entry as BookEntry_output))
+          .sort((a, b) => {
+            return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
+          });
+        // console.log('book_entries %s element(s) loaded from AWS', this._book_entries.length);
+        this._book_entries$.next(this._book_entries);
+        return entries;
+      }),
       switchMap(() => this._book_entries$.asObservable())
     );
 
     return this._book_entries ? this._book_entries$.asObservable() : remote_load$;
+  }
+
+  clear_book_entries$(season: string) {
+
+    const fetchBookentries = async (season: string) => {
+      const client = generateClient<Schema>();
+      const { data, errors } = await client.models.BookEntry.list({
+        filter: { season: { eq: season } }
+      });
+      if (errors) {
+        console.error(errors);
+        throw new Error(JSON.stringify(errors));
+      }
+      return data as unknown as BookEntry_output[];
+    };
+
+    const deleteBookentries = async (entries: BookEntry_output[]) => {
+      const client = generateClient<Schema>();
+      const promises = entries.map(entry => client.models.BookEntry.delete({ id: entry.id }));
+      return Promise.all(promises);
+    };
+
+    from(fetchBookentries(season)).pipe(
+      switchMap((entries) => deleteBookentries(entries)),
+      tap((response) => {
+        if (response.some((res) => res.errors)) {
+          console.error('error', response);
+          throw new Error(JSON.stringify(response));
+        }
+        this._book_entries = this._book_entries.filter((entry) => entry.season !== season); // remove all entries from the season
+        this._book_entries$.next(this._book_entries);
+      })
+    ).subscribe();
+
   }
 
   // utility functions
@@ -252,18 +289,6 @@ export class BookService {
   }
 
 
-  // get_clients_credit_value(): number {  // avoir clients
-  //   let value = 0;
-  //   this._book_entries.forEach((book_entry) => {
-  //     book_entry.operations.forEach((op) => {
-  //       if (op.values[CUSTOMER_ACCOUNT.ASSET_credit]) {
-  //         value += op.values[CUSTOMER_ACCOUNT.ASSET_credit];
-  //       }
-  //     });
-  //   });
-  //   return value;
-  // }
-
   get_clients_debit_value(): number {  // dettes clients
     let value = 0;
     // console.log(':::', this._book_entries);
@@ -279,26 +304,6 @@ export class BookService {
     });
     return value;
   }
-
-  // get_assets_value(): Map<string, number> {
-  //   let assets = new Map<string, number>();
-  //   this._book_entries.forEach((book_entry) => {
-
-  //     book_entry.operations.forEach((op) => {
-  //       if (op.values[CUSTOMER_ACCOUNT.ASSET_debit]) {
-  //         let name = op.member;
-  //         if (!name) throw new Error('no member name found');
-  //         assets.set(name, (assets.get(name) || 0) - op.values[CUSTOMER_ACCOUNT.ASSET_debit]);
-  //       }
-  //       if (op.values[CUSTOMER_ACCOUNT.ASSET_credit]) {
-  //         let name = op.member;
-  //         if (!name) throw new Error('no member name found');
-  //         assets.set(name, (assets.get(name) || 0) + op.values[CUSTOMER_ACCOUNT.ASSET_credit]);
-  //       }
-  //     });
-  //   });
-  //   return assets;
-  // }
 
 
   // avoir clients :

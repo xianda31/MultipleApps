@@ -5,7 +5,7 @@ import { CommonModule } from '@angular/common';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { BookService } from '../../book.service';
 import { Revenue, Expense, BookEntry } from '../../../../../common/accounting.interface';
-import { combineLatest } from 'rxjs';
+import { combineLatest, tap, switchMap } from 'rxjs';
 import { Router } from '@angular/router';
 
 
@@ -41,15 +41,18 @@ export class ProfitAndLossDetailsComponent {
 
   ngOnInit(): void {
 
-    combineLatest([this.route.queryParams, this.systemDataService.get_configuration(), this.bookService.list_book_entries$()])
-      .subscribe(([params, configuration, book_entries]) => {
+    this.systemDataService.get_configuration().pipe(
+      tap((conf) => {
+        this.expenses_accounts = conf.financial_tree.expenses.map((account) => account.key);
+        this.products_accounts = conf.financial_tree.revenues.map((account) => account.key);
+        this.p_and_l_classes = conf.financial_tree.classes;
+        this.revenue_classes = conf.financial_tree.revenues;
+        this.expense_classes = conf.financial_tree.expenses
+      }),
+      switchMap((conf) => combineLatest([this.route.queryParams, this.bookService.list_book_entries$(conf.season)]))
+    )
+      .subscribe(([params, book_entries]) => {
 
-        this.expenses_accounts = configuration.financial_tree.expenses.map((account) => account.key);
-        this.products_accounts = configuration.financial_tree.revenues.map((account) => account.key);
-
-        this.p_and_l_classes = configuration.financial_tree.classes;
-        this.revenue_classes = configuration.financial_tree.revenues;
-        this.expense_classes = configuration.financial_tree.expenses;
 
         this.type = params['type'];
         this.key = params['key'];

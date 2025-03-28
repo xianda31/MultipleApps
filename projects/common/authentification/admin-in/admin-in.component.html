@@ -9,9 +9,9 @@
     <button [disabled]="loginForm.invalid" class=" btn btn-success" type="submit" (click)="signIn()">Login</button>
   </div>
 </div>
-<div *ngIf="logged_member" class="row align-items-end">
+<div *ngIf="logged_member" class="row align-items-center">
   <div class="col-auto"> {{logged_member.firstname}} </div>
   <div class="col-auto">
-    <button class=" btn btn-success" type="btn" (click)="signOut()">Logout</button>
+    <button class=" btn btn-outline-success btn-sm" type="btn" (click)="signOut()">Logout</button>
   </div>
 </div>

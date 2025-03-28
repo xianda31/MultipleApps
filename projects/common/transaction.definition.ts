@@ -299,7 +299,19 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
     cash: 'none',
     cheque: 'out',
   },
-
+  [ENTRY_TYPE.debt_forwarding]: {
+    label: 'report de dettes antérieures',
+    class: BOOK_ENTRY_CLASS.f_BALANCE_SHEET,
+    financial_accounts: [...balance_sheet_accounts, ...financial_credits],
+    financial_accounts_to_charge: [BALANCE_ACCOUNT.BAL_debit, CUSTOMER_ACCOUNT.DEBT_credit],
+    // optional_accounts: balance_sheet_accounts,
+    nominative: true,
+    pure_financial: true,
+    is_of_profit_type: false,
+    require_deposit_ref: false,
+    cash: 'none',
+    cheque: 'none',
+  },
 
   // F. achat , dépenses
   // ****  CLASS = EXPENSE ****

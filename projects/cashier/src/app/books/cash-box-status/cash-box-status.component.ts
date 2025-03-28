@@ -44,29 +44,29 @@ export class CashBoxStatusComponent {
     this.systemDataService.get_configuration().subscribe((conf) => {
       this.banks = conf.banks;
       this.season = conf.season;
-    });
-    this.bookService.list_book_entries$().subscribe((book_entries) => {
-      this.book_entries = book_entries;
-      this.current_cash_amount = this.bookService.get_cashbox_movements_amount();
+      this.bookService.list_book_entries$(this.season).subscribe((book_entries) => {
+        this.book_entries = book_entries;
+        this.current_cash_amount = this.bookService.get_cashbox_movements_amount();
 
-      // filtre les chèques à déposer
-      this.cheques_for_deposit = book_entries
-        .filter(book_entry => get_transaction(book_entry.bank_op_type).cheque === 'in')
-        .filter(book_entry => book_entry.cheque_ref !== undefined && (book_entry.deposit_ref === '' || book_entry.deposit_ref === null));
+        // filtre les chèques à déposer
+        this.cheques_for_deposit = book_entries
+          .filter(book_entry => get_transaction(book_entry.bank_op_type).cheque === 'in')
+          .filter(book_entry => book_entry.cheque_ref !== undefined && (book_entry.deposit_ref === '' || book_entry.deposit_ref === null));
 
-      // énumère les bordereaux de dépot chèque en temp_
-      this.temp_refs.clear();
-      this.book_entries
-        .filter(book_entry => get_transaction(book_entry.bank_op_type).cheque === 'in')
-        .forEach(book_entry => {
-          if (book_entry.deposit_ref && book_entry.deposit_ref.startsWith('temp_')) {
-            this.temp_refs.set(book_entry.deposit_ref, {
-              amount: (this.temp_refs.get(book_entry.deposit_ref)?.amount ?? 0) + (book_entry.amounts?.[this.CHEQUE_IN_ACCOUNT] ?? 0),
-              cheque_qty: (this.temp_refs.get(book_entry.deposit_ref)?.cheque_qty ?? 0) + 1,
-              new_ref: ''
-            });
-          }
-        });
+        // énumère les bordereaux de dépot chèque en temp_
+        this.temp_refs.clear();
+        this.book_entries
+          .filter(book_entry => get_transaction(book_entry.bank_op_type).cheque === 'in')
+          .forEach(book_entry => {
+            if (book_entry.deposit_ref && book_entry.deposit_ref.startsWith('temp_')) {
+              this.temp_refs.set(book_entry.deposit_ref, {
+                amount: (this.temp_refs.get(book_entry.deposit_ref)?.amount ?? 0) + (book_entry.amounts?.[this.CHEQUE_IN_ACCOUNT] ?? 0),
+                cheque_qty: (this.temp_refs.get(book_entry.deposit_ref)?.cheque_qty ?? 0) + 1,
+                new_ref: ''
+              });
+            }
+          });
+      });
     });
   }
 

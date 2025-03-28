@@ -87,6 +87,9 @@ export class SysConfComponent {
     this.systemDataService.save_configuration(configuration);
   }
 
+  get season() {
+    return this.systemFormGroup.get('season')?.value;
+  }
   get expenses() {
     return this.systemFormGroup.get('financial_tree')?.get('expenses') as FormArray;
   }
@@ -152,6 +155,19 @@ export class SysConfComponent {
       // let json = JSON.parse(text);
       // this.loadDataInFormGroup(JSON.parse(text));
     }
+  }
+
+  prev_season() {
+    let current_season = this.systemFormGroup.get('season')?.value;
+    let prev_season = this.systemDataService.previous_season(current_season);
+    this.systemFormGroup.get('season')?.setValue(prev_season);
+    this.systemFormGroup.markAsTouched();
+  }
+  next_season() {
+    let current_season = this.systemFormGroup.get('season')?.value;
+    let next_season = this.systemDataService.next_season(current_season);
+    this.systemFormGroup.get('season')?.setValue(next_season);
+    this.systemFormGroup.markAsTouched();
 
   }
 

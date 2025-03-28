@@ -1,187 +1,193 @@
 <div class="container">
-    <form [formGroup]="systemFormGroup">
-
-        <div *ngIf="loaded" class="card mt-2">
-            <div class="card-header">
-                <div class="row justify-content-around">
-                    <div class="col-md-6">
-                        <h5>paramétrage applications</h5>
-                    </div>
-                    <div class="col-md-6 text-end">
-                        <div class="row">
-                            <div class="col">
-                                <button class=" btn btn-outline-success btn-sm">
-                                    <i class=" bi-file-earmark-arrow-up-fill"></i>
-                                    <a [href]="fileUrl" style="text-decoration: none; color: var(--bs-success);"
-                                        download="conf.txt">export
-                                        .txt</a>
-                                </button>
-                            </div>
-                            <div class="col">
-                                <button class=" btn btn-outline-success btn-sm" (click)="fileInput.click()">
-                                    <i class=" bi-file-earmark-arrow-down-fill"></i>
-                                    import.txt</button>
-                                <input #fileInput type="file" style="display:none" class="form-control form-control-sm"
-                                    (change)="onInput($event)">
-                            </div>
-                            <div class="col">
-                                <button class=" btn btn-outline-success btn-sm" (click)="save_configuration()">
-                                    <i class="bi-cloud-arrow-up-fill"></i>
-                                    sauvegarder</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+  <form [formGroup]="systemFormGroup">
+    <!-- {{systemFormGroup.pristine}}
+    {{systemFormGroup.touched}} -->
+    <div *ngIf="loaded" class="card mt-2">
+      <div class="card-header">
+        <div class="row justify-content-around">
+          <div class="col-md-6">
+            <h5>paramétrage applications</h5>
+          </div>
+          <div class="col-md-6 text-end">
+            <div class="row">
+              <div class="col">
+                <button class=" btn btn-outline-success btn-sm">
+                  <i class=" bi-file-earmark-arrow-up-fill"></i>
+                  <a [href]="fileUrl" style="text-decoration: none; color: var(--bs-success);"
+                    download="conf.txt">export
+                    .txt</a>
+                </button>
+              </div>
+              <div class="col">
+                <button class=" btn btn-outline-success btn-sm" (click)="fileInput.click()">
+                  <i class=" bi-file-earmark-arrow-down-fill"></i>
+                  import.txt</button>
+                <input #fileInput type="file" style="display:none"
+                  class="form-control form-control-sm  align-self-center" (change)="onInput($event)">
+              </div>
+              <div class="col">
+                <button
+                  [class]="systemFormGroup.touched ? 'btn btn-success btn-sm' : 'btn btn-outline-success btn-sm'  "
+                  (click)="save_configuration()">
+                  <i class="bi-cloud-arrow-up-fill"></i>
+                  sauvegarder</button>
+              </div>
             </div>
-            <div class="card-body">
-                <!-- paramètres divers -->
-                <div class="card  mt-2">
-                    <h5 class="card-header">divers</h5>
-                    <div class="card-body">
-
-                        <div class="row mt-2">
-
-                            <div class="col-md-6">
-                                <div class="card">
-                                    <h6 class="card-header">développeur</h6>
-                                    <div class="card-body">
-                                        <div class="input-group ">
-                                            <span class="input-group-text">dev</span>
-                                            <input type="text" class="form-control" formControlName="dev_mode">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <div class="card">
-                                    <h6 class="card-header">prix (€) tournoi (utiliser un . et non une ,)</h6>
-                                    <div class="card-body">
-                                        <div class="row">
-
-                                            <div class="col input-group ">
-                                                <span class="input-group-text">adhérent</span>
-                                                <input type="text" class="form-control"
-                                                    formControlName="member_trn_price">
-                                            </div>
-                                            <div class="col input-group ">
-                                                <span class="input-group-text">non adhérent</span>
-                                                <input type="text" class="form-control"
-                                                    formControlName="non_member_trn_price">
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                        </div>
-                    </div>
-                </div>
-                <!-- paramètres comptabilité -->
-                <div class="card mt-2">
-                    <h5 class="card-header">comptabilité</h5>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-3 pe-3">
-                                <div class="input-group">
-                                    <span class="input-group-text">saison</span>
-                                    <input type="text" class="form-control" formControlName="season">
-                                </div>
-                            </div>
-                            <div class="offset-3 col-md-6 pe-3">
-                                <div class="row  align-items-center">
-                                    <div class="col-4">
-                                        <div class="input-group">
-                                            <span class="input-group-text">banque Club</span>
-                                            <input type="text" class="form-control" formControlName="club_bank_key">
-                                        </div>
-                                    </div>
-                                    <div class="col">{{get_club_bank()}}</div>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- structure comptes de résultats -->
-                        <div class="card mt-2">
-                            <h6 class="card-header">comptes de résultats</h6>
-                            <div class="card-body" formGroupName="financial_tree">
-                                <div *ngFor="let class of classes.controls">
-                                    <h6 class="col-2"> {{class.get('description')?.value }}</h6>
-                                    <div class="row my-2 offset-2">
-                                        <div class="col-6">
-                                            <div class="card h-100 bg-body-secondary" formArrayName="expenses">
-                                                <div class="card-body">
-                                                    <div *ngFor="let expense of expenses.controls; let i = index">
-                                                        <div class="input-group" [formGroupName]=" i"
-                                                            *ngIf="expense.get('class')?.value === class.get('key')?.value">
-                                                            <input type="text" class="form-control w-25"
-                                                                formControlName="key">
-                                                            <input type="text" class="form-control w-75"
-                                                                formControlName="description">
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="col-6">
-                                            <div class="card h-100 bg-body-tertiary" formArrayName="revenues">
-                                                <div class="card-body">
-                                                    <div *ngFor="let revenue of revenues.controls; let i = index">
-                                                        <div class="input-group" [formGroupName]=" i"
-                                                            *ngIf="revenue.get('class')?.value === class.get('key')?.value">
-                                                            <input type="text" class="form-control w-25"
-                                                                formControlName="key">
-                                                            <input type="text" class="form-control w-75"
-                                                                formControlName="description">
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card mt-2">
-                        <h6 class="card-header">codes banques</h6>
-                        <div class="card-body">
-                            <div class="row " formArrayName="banks">
-                                <div class="col-md-4" *ngFor="let bank of banks.controls; let i = index">
-                                    <div class="input-group" [formGroupName]=" i">
-                                        <span class="input-group-text">#</span>
-                                        <input type="text" class="form-control" formControlName="key">
-                                        <input type="text" class="form-control" formControlName="name">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-            <!-- paramètres UE site -->
-            <div class="card mt-2">
-                <h5 class="card-header">site</h5>
-                <div class="card-body">
-                    <h6> recadrage des vignettes stockées du site</h6>
-                    <div class="row" formGroupName="thumbnail">
-                        <div class="col input-group">
-                            <span class="input-group-text">largeur (en pixel)</span>
-                            <input type="text" class="form-control" formControlName="width">
-                        </div>
-                        <div class="col input-group">
-                            <span class="input-group-text">hauteur (en pixel)</span>
-                            <input type="text" class="form-control" formControlName="height">
-                        </div>
-                        <div class="col input-group">
-                            <span class="input-group-text">ratio</span>
-                            <input type="text" class="form-control" formControlName="ratio">
-                        </div>
-                    </div>
-                </div>
-            </div>
+          </div>
         </div>
-    </form>
+      </div>
+      <div class="card-body">
+        <!-- paramètres divers -->
+        <div class="card  mt-2">
+          <h5 class="card-header">divers</h5>
+          <div class="card-body">
+
+            <div class="row mt-2">
+
+              <div class="col-md-6">
+                <div class="card">
+                  <h6 class="card-header">développeur</h6>
+                  <div class="card-body">
+                    <div class="input-group ">
+                      <span class="input-group-text">dev</span>
+                      <input type="text" class="form-control" formControlName="dev_mode">
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="card">
+                  <h6 class="card-header">prix (€) tournoi (utiliser un . et non une ,)</h6>
+                  <div class="card-body">
+                    <div class="row">
+
+                      <div class="col input-group ">
+                        <span class="input-group-text">adhérent</span>
+                        <input type="text" class="form-control" formControlName="member_trn_price">
+                      </div>
+                      <div class="col input-group ">
+                        <span class="input-group-text">non adhérent</span>
+                        <input type="text" class="form-control" formControlName="non_member_trn_price">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+        <!-- paramètres comptabilité -->
+        <div class="card mt-2">
+          <h5 class="card-header">comptabilité</h5>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-3 pe-3">
+                <div class="input-group">
+                  <span class="input-group-text">saison</span>
+                  <button class="btn btn-outline-secondary" type="button" (click)="prev_season()">
+                    <i class="bi-caret-left-fill"></i>
+                  </button>
+                  <span class="mx-2 col-auto input-group-text">
+                    {{season}}
+                  </span>
+                  <!-- <input type="text" class="form-control" formControlName="season"> -->
+                  <button class="btn btn-outline-secondary" type="button" (click)="next_season()">
+                    <i class="bi-caret-right-fill"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="offset-3 col-md-6 pe-3">
+                <div class="row  align-items-center">
+                  <div class="col-4">
+                    <div class="input-group">
+                      <span class="input-group-text">banque Club</span>
+                      <input type="text" class="form-control" formControlName="club_bank_key">
+                    </div>
+                  </div>
+                  <div class="col">{{get_club_bank()}}</div>
+                </div>
+              </div>
+            </div>
+            <!-- structure comptes de résultats -->
+            <div class="card mt-2">
+              <h6 class="card-header">comptes de résultats</h6>
+              <div class="card-body" formGroupName="financial_tree">
+                <div *ngFor="let class of classes.controls">
+                  <h6 class="col-2"> {{class.get('description')?.value }}</h6>
+                  <div class="row my-2 offset-2">
+                    <div class="col-6">
+                      <div class="card h-100 bg-body-secondary" formArrayName="expenses">
+                        <div class="card-body">
+                          <div *ngFor="let expense of expenses.controls; let i = index">
+                            <div class="input-group" [formGroupName]=" i"
+                              *ngIf="expense.get('class')?.value === class.get('key')?.value">
+                              <input type="text" class="form-control w-25" formControlName="key">
+                              <input type="text" class="form-control w-75" formControlName="description">
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="col-6">
+                      <div class="card h-100 bg-body-tertiary" formArrayName="revenues">
+                        <div class="card-body">
+                          <div *ngFor="let revenue of revenues.controls; let i = index">
+                            <div class="input-group" [formGroupName]=" i"
+                              *ngIf="revenue.get('class')?.value === class.get('key')?.value">
+                              <input type="text" class="form-control w-25" formControlName="key">
+                              <input type="text" class="form-control w-75" formControlName="description">
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+          <div class="card mt-2">
+            <h6 class="card-header">codes banques</h6>
+            <div class="card-body">
+              <div class="row " formArrayName="banks">
+                <div class="col-md-4" *ngFor="let bank of banks.controls; let i = index">
+                  <div class="input-group" [formGroupName]=" i">
+                    <span class="input-group-text">#</span>
+                    <input type="text" class="form-control" formControlName="key">
+                    <input type="text" class="form-control" formControlName="name">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <!-- paramètres UE site -->
+      <div class="card mt-2">
+        <h5 class="card-header">site</h5>
+        <div class="card-body">
+          <h6> recadrage des vignettes stockées du site</h6>
+          <div class="row" formGroupName="thumbnail">
+            <div class="col input-group">
+              <span class="input-group-text">largeur (en pixel)</span>
+              <input type="text" class="form-control" formControlName="width">
+            </div>
+            <div class="col input-group">
+              <span class="input-group-text">hauteur (en pixel)</span>
+              <input type="text" class="form-control" formControlName="height">
+            </div>
+            <div class="col input-group">
+              <span class="input-group-text">ratio</span>
+              <input type="text" class="form-control" formControlName="ratio">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
 </div>
