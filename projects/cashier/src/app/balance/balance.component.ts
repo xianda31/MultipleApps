@@ -7,12 +7,13 @@ import { BALANCE_ACCOUNT, Balance_sheet, BOOK_ENTRY_CLASS, BookEntry, CUSTOMER_A
 import { combineLatest, forkJoin, switchMap, tap } from 'rxjs';
 import { BookService } from '../book.service';
 import { FileService } from '../../../../common/services/files.service';
+import { ParenthesisPipe } from '../../../../common/pipes/parenthesis.pipe';
 import { get_transaction } from '../../../../common/transaction.definition';
 
 @Component({
   selector: 'app-balance',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, ParenthesisPipe],
   templateUrl: './balance.component.html',
   styleUrl: './balance.component.scss'
 })

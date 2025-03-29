@@ -137,38 +137,42 @@
                   <ng-container [ngTemplateOutlet]="trend"
                     [ngTemplateOutletContext]="{value:-get_outstandings_evolution()}"></ng-container>
                 </td>
-                <td class="text-start">ENCOURS</td>
+                <td class="text-start">(ENCOURS)</td>
                 <td>
-                  {{total_current_outstandings() | number:truncature:'fr'}} </td>
+                  {{total_current_outstandings() | number:truncature:'fr'| parenthesis}} </td>
                 <td>&#8205;</td>
-                <td class="variation">{{get_outstandings_evolution()| number:truncature:'fr'}}</td>
+                <td class="variation">{{get_outstandings_evolution()| number:truncature:'fr'| parenthesis}}</td>
                 <td>&#8205;</td>
 
                 <td class="table-secondary fs-5">{{total_previous_outstandings() |
-                  number:truncature:'fr'}}
+                  number:truncature:'fr'| parenthesis}}
                 </td>
               </tr>
               <tr class="fw-light fs-6">
                 <td>&#8205;</td>
                 <td>chèques non encaissés</td>
-                <td>{{-current_balance_sheet.outstanding_expenses | number:truncature:'fr'}}</td>
+                <td>{{-current_balance_sheet.outstanding_expenses | number:truncature:'fr'| parenthesis}}</td>
                 <td>&#8205;</td>
-                <td>&#8205;</td>
+                <td class="variation">
+                  {{-(current_balance_sheet.outstanding_expenses-prev_balance_sheet.outstanding_expenses) |
+                  number:truncature:'fr'| parenthesis}}</td>
                 <td>&#8205;</td>
 
                 <td class="table-secondary">
-                  {{-prev_balance_sheet.outstanding_expenses | number:truncature:'fr'}}
+                  {{-prev_balance_sheet.outstanding_expenses | number:truncature:'fr'| parenthesis}}
                 </td>
               </tr>
               <tr class="fw-light fs-6">
                 <td>&#8205;</td>
                 <td>avoirs, chèques-cadeaux</td>
-                <td class="variation"> {{-current_balance_sheet.gift_vouchers | number:truncature:'fr'}}</td>
+                <td> {{-current_balance_sheet.gift_vouchers | number:truncature:'fr' | parenthesis}}</td>
                 <td>&#8205;</td>
-                <td>&#8205;</td>
+                <td class="variation"> {{-(current_balance_sheet.gift_vouchers-prev_balance_sheet.gift_vouchers) |
+                  number:truncature:'fr' | parenthesis}}</td>
 
                 <td>&#8205;</td>
-                <td class="table-secondary">{{-prev_balance_sheet.gift_vouchers | number:truncature:'fr'}}</td>
+                <td class="table-secondary">{{-prev_balance_sheet.gift_vouchers | number:truncature:'fr'| parenthesis}}
+                </td>
               </tr>
 
               <tr class="table-primary fw-bold">
@@ -179,7 +183,7 @@
                 <td class="text-start ">TOTAL ACTIF</td>
                 <td> {{total_current_net_asset()| number:truncature:'fr'}} </td>
                 <td class="table-light">&#8205;</td>
-                <td class="variation">{{get_net_asset_evolution() | number:truncature:'fr'}}</td>
+                <td class="variation">{{get_net_asset_evolution() | number:truncature:'fr' | parenthesis}}</td>
                 <td class="table-light">&#8205;</td>
                 <td class="table-secondary">{{total_previous_net_asset()|
                   number:truncature:'fr'}}</td>

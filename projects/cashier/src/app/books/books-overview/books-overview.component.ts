@@ -16,6 +16,7 @@ interface EntryValue { total: number, entries: BookEntry[] };
   styleUrl: './books-overview.component.scss'
 })
 export class BooksOverviewComponent {
+  truncature = '1.2-2';  // '1.0-0';// '1.2-2';  //
 
 
   expenses_accounts !: string[];
@@ -29,6 +30,7 @@ export class BooksOverviewComponent {
   bank_book_entries: BookEntry[] = [];
 
   current_cash_movements: number = 0;
+  current_bank_movements: number = 0;
   current_assets_amount: number = 0;
   current_debt_amount: number = 0;
 
@@ -64,6 +66,7 @@ export class BooksOverviewComponent {
         this.build_arrays();
 
         this.current_cash_movements = this.bookService.get_cashbox_movements_amount();
+        this.current_bank_movements = this.bookService.get_bank_movements_amount();
         this.debts = this.bookService.get_debts();
         this.assets = this.bookService.get_customers_assets();
         this.assets_entries = Object.fromEntries(this.assets.entries());

@@ -78,7 +78,12 @@
 <div class="card mt-2">
   <!-- <div class="card"> -->
   <div class="card-header">
-    <h5>mouvements compte bancaire</h5>
+    <div class="row align-items-center">
+      <h5 class="col-auto"> solde courant de la banque : {{initial_liquidities.bank +current_bank_movements |
+        number:truncature:'fr'}}€</h5>
+      <h6 class="col-auto">(total mouvements : {{current_bank_movements}}€) </h6>
+    </div>
+
   </div>
   <div class="card-body">
     <table class="table table-sm">
