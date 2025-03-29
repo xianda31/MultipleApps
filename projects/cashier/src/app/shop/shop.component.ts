@@ -63,7 +63,6 @@ export class ShopComponent {
       this.bookService.list_book_entries$(conf.season).subscribe((book_entry) => {
         this.book_entries = book_entry;
         this.sales_of_the_day = this.bookService.get_revenues_from_members().filter((revenue) => revenue.date === this.session.date);
-        // this.sales_to_members.set(this.bookService.get_revenues_from_members());
       });
     })
   }

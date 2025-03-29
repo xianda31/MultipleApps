@@ -1,10 +1,16 @@
 <div class="card mt-2">
-  <h5 class="card-header">comptes de résultats</h5>
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h5>Comptes de résultats</h5>
+    <h5>
+      {{get_profit_and_loss_result()>0 ? 'bénéfice net :' : 'perte nette :'}}
+      {{get_profit_and_loss_result() | number:'1.2-2':'fr'}} €
+    </h5>
+  </div>
   <div class="card-body">
     <table class="table table-sm table-borderless table-responsive">
       <thead>
         <tr>
-          <th class="col-2">Classe</th>
+          <th class="col-2">Catégorie</th>
           <th class="col-4">Dépenses</th>
           <th class="col-2"></th>
           <th class="col-4">Recettes</th>
@@ -55,11 +61,5 @@
         </tr>
       </tfoot>
     </table>
-  </div>
-  <div class="card-footer">
-    <h5 class="ms-3">
-      {{get_profit_and_loss_result()>0 ? 'bénéfice net :' : 'perte nette :'}}
-      {{get_profit_and_loss_result() | number:'1.2-2':'fr'}} €
-    </h5>
   </div>
 </div>
