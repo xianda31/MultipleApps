@@ -135,7 +135,9 @@ export class AuthentificationService {
 
   async signOut(): Promise<any> {
     let promise = new Promise((resolve, reject) => {
-      signOut()
+      signOut(
+        // { global: true } // true pour se déconnecter de tous les appareils  // ne résoud pas le pb de persistence de la session
+      )
         .catch((err) => {
           this.toastService.showInfoToast('sign out', err.message);
           reject(err);

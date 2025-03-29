@@ -2,10 +2,9 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthentificationService } from '../authentification.service';
-import { MembersService } from '../../../admin-dashboard/src/app/members/service/members.service';
 import { ToastService } from '../../toaster/toast.service';
-import { Observable } from 'rxjs';
 import { Member } from '../../member.interface';
+
 
 @Component({
   selector: 'app-admin-in',
@@ -25,7 +24,6 @@ export class AdminInComponent {
   constructor(
     private fb: FormBuilder,
     private auth: AuthentificationService,
-    private membersService: MembersService,
     private toastService: ToastService,
 
   ) {
@@ -48,13 +46,10 @@ export class AdminInComponent {
 
   signOut() {
     this.auth.signOut();
+
   }
 
   async signIn() {
     this.auth.signIn(this.email!.value, this.password!.value);
-    // .then((member_id) => {      })
-    // .catch((err) => {
-    //   console.log("sign in error", err);
-    // })
   }
 }

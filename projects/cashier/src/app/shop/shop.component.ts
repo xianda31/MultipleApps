@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { FormGroup, FormControl, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { MembersService } from '../../../../admin-dashboard/src/app/members/service/members.service';
 import { Member } from '../../../../common/member.interface';
@@ -7,7 +7,6 @@ import { CartService } from './cart/cart.service';
 import { Product } from '../../../../admin-dashboard/src/app/sales/products/product.interface';
 import { CommonModule } from '@angular/common';
 import { InputMemberComponent } from '../input-member/input-member.component';
-import { SessionService } from './session.service';
 import { BookEntry, Revenue, Session } from '../../../../common/accounting.interface';
 import { BookService } from '../book.service';
 import { CartComponent } from "./cart/cart.component";
@@ -29,24 +28,20 @@ export class ShopComponent {
 
   cart_is_valid = true;
 
-  session !: Session;
+  session!: Session;
   debt_amount = 0;
   asset_amount = 0;
 
   products_array: Map<string, Product[]> = new Map();
+  book_entries: BookEntry[] = [];
+  sales_of_the_day: Revenue[] = [];
 
-
-  sales: BookEntry[] = [];
-
-  day = signal(new Date().toISOString().split('T')[0]);
-  sales_to_members = signal<Revenue[]>([]);
-  sales_of_the_day = computed(() => {
-    return this.sales_to_members().filter((revenue) => revenue.date === this.day());
-  });
 
   buyerForm: FormGroup = new FormGroup({
     buyer: new FormControl(null, Validators.required),
   });
+
+
   get buyer() { return this.buyerForm.get('buyer')?.value as Member | null }
 
 
@@ -55,19 +50,23 @@ export class ShopComponent {
     private membersService: MembersService,
     private toastService: ToastService,
     private bookService: BookService,
-    private sessionService: SessionService,
     private productService: ProductService,
     private systemDataService: SystemDataService
   ) {
+    this.session = {
+      season: '',
+      date: new Date().toISOString().split('T')[0],
+    };
 
     this.systemDataService.get_configuration().subscribe((conf: SystemConfiguration) => {
+      this.session.season = conf.season;
       this.bookService.list_book_entries$(conf.season).subscribe((book_entry) => {
-        this.sales = book_entry;
-        this.sales_to_members.set(this.bookService.get_revenues_from_members());
+        this.book_entries = book_entry;
+        this.sales_of_the_day = this.bookService.get_revenues_from_members().filter((revenue) => revenue.date === this.session.date);
+        // this.sales_to_members.set(this.bookService.get_revenues_from_members());
       });
     })
   }
-
 
   ngOnInit(): void {
     this.productService.listProducts().subscribe((products) => {
@@ -78,9 +77,7 @@ export class ShopComponent {
       this.members = members;
     });
 
-    this.sessionService.current_session.subscribe((session) => {
-      this.session = session;
-    });
+
 
     this.buyerForm.valueChanges.subscribe(async (value) => {
       const buyer: Member | null = value['buyer'];
@@ -104,18 +101,6 @@ export class ShopComponent {
 
   }
 
-  find_debt(payer: Member): Promise<number> {
-    let name = payer.lastname + ' ' + payer.firstname;
-    let due = this.bookService.find_member_debt(name);
-    return Promise.resolve(due);
-  }
-
-  find_assets(payer: Member): Promise<number> {
-    let name = payer.lastname + ' ' + payer.firstname;
-    let due = this.bookService.find_assets(name);
-    return Promise.resolve(due);
-  }
-
   on_product_click(product: Product) {
 
     if (!this.buyerForm.valid) {
@@ -134,13 +119,10 @@ export class ShopComponent {
     }
   }
 
-
-
   cart_confirmed(): void {
     this.cartService.save_sale(this.session, this.buyer!)
-      .then((sale) => {
+      .then(() => {
         this.toastService.showSuccessToast('vente', (this.debt_amount > 0) ? 'achats et dette enregistrés' : 'achats enregistrés');
-        this.sales_to_members.set(this.bookService.get_revenues_from_members());
       })
       .catch((error) => {
         console.error('error saving sale', error);
@@ -156,10 +138,9 @@ export class ShopComponent {
   }
 
   date_change(date: any) {
-    this.session.date = date;
-    this.day.set(date);
+    this.session.date = new Date(date).toISOString().split('T')[0]; //new Date().toISOString().split('T')[0])
+    this.sales_of_the_day = this.bookService.get_revenues_from_members().filter((revenue) => revenue.date === this.session.date);
 
-    this.sessionService.set_current_session(this.session);
     this.cartService.clearCart();
     this.buyerForm.reset();
   }
@@ -170,39 +151,33 @@ export class ShopComponent {
   }
 
   sale_amount(sale: Revenue): number {
-    let book_entry = this.sales.find((entry) => entry.id === sale.id);
+    let book_entry = this.book_entries.find((entry) => entry.id === sale.id);
     if (!book_entry) throw new Error('sale not found');
     return (book_entry.amounts?.['cashbox_in'] ?? 0) + (book_entry.amounts?.['bank_in'] ?? 0);
-    // return book_entry.operations.reduce((acc, op) => {
-    //   return acc + (op.values['cashbox_in'] ?? 0) + (op.values['bank_in'] ?? 0);
-    // }, 0);
   }
 
   standalone_sale(index: number): boolean {
     if (index === 0) return true;
-    let sale = this.sales_of_the_day()[index];
-    let prev = this.sales_of_the_day()[index - 1];
+    let sale = this.sales_of_the_day[index];
+    let prev = this.sales_of_the_day[index - 1];
     return sale.id !== prev.id;
   }
-
-  debt_paied(sale: Revenue): number {
-    let book_entry = this.sales.find((entry) => entry.id === sale.id);
-    if (!book_entry) throw new Error('sale not found');
-    return book_entry.operations.reduce((acc, op) => {
-      return acc + (op.values['creance_out'] ?? 0);
-    }, 0);
-  }
-  asset_used(sale: Revenue): number {
-    let book_entry = this.sales.find((entry) => entry.id === sale.id);
-    if (!book_entry) throw new Error('sale not found');
-    return book_entry.operations.reduce((acc, op) => {
-      return acc + (op.values['avoir_in'] ?? 0);
-    }, 0);
-  }
-
   payment_type(sale: Revenue): string {
-    let book_entry = this.sales.find((entry) => entry.id === sale.id);
+    let book_entry = this.book_entries.find((entry) => entry.id === sale.id);
     if (!book_entry) throw new Error('sale not found');
     return get_transaction(book_entry.bank_op_type).label;
+  }
+
+
+  find_debt(payer: Member): Promise<number> {
+    let name = payer.lastname + ' ' + payer.firstname;
+    let due = this.bookService.find_member_debt(name);
+    return Promise.resolve(due);
+  }
+
+  find_assets(payer: Member): Promise<number> {
+    let name = payer.lastname + ' ' + payer.firstname;
+    let due = this.bookService.find_assets(name);
+    return Promise.resolve(due);
   }
 }
