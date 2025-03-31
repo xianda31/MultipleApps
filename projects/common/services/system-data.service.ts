@@ -77,10 +77,10 @@ export class SystemDataService {
   }
 
   get_season(date: Date): string {
-    const month = date.getMonth();
+    const month = 1 + date.getMonth();  // ! zero-based method ...
     const year = date.getFullYear();
-    if (month < 7) return `${year - 1}-${year}`;
-    return `${year}-${year + 1}`;
+    if (month < 7) return `${year - 1}/${year}`;
+    return `${year}/${year + 1}`;
   }
 
   get_season_months(date: Date): string[] {
@@ -107,11 +107,11 @@ export class SystemDataService {
   }
 
   previous_season(season: string) {
-    return (+season.slice(0, 4) - 1).toString() + '-' + (+season.slice(0, 4)).toString();
+    return (+season.slice(0, 4) - 1).toString() + '/' + (+season.slice(0, 4)).toString();
   }
 
   next_season(season: string) {
-    return (+season.slice(5, 9)).toString() + '-' + (+season.slice(5, 9) + 1).toString();
+    return (+season.slice(5, 9)).toString() + '/' + (+season.slice(5, 9) + 1).toString();
   }
 
   closout_date(season: string): string {

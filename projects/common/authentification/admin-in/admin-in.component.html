@@ -1,8 +1,8 @@
 <div *ngIf="!(logged_member)" class="row align-items-center">
   <form [formGroup]="loginForm" class="col-8">
-    <input class="form-control form-control-sm" type="mail" placeholder="Mail" aria-label="Mail"
+    <input class="form-control form-control-sm" type="mail" placeholder="Mél" id="username" autocomplete="username"
       formControlName="email">
-    <input class="form-control form-control-sm" type="password" placeholder="Mot de passe" aria-label="Mpassword"
+    <input class="form-control form-control-sm" type="password" placeholder="Mot de passe" id="password"
       autocomplete="current-password" formControlName="password">
   </form>
   <div class="col-4">

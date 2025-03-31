@@ -1,5 +1,5 @@
-<div *ngIf="init" class="container-md">
-    <app-navbar [season]="season"></app-navbar>
-    <router-outlet></router-outlet>
-    <app-toaster></app-toaster>
+<div *ngIf="season" class="container-md">
+  <app-navbar [season]="season"></app-navbar>
+  <router-outlet></router-outlet>
+  <app-toaster></app-toaster>
 </div>

@@ -19,7 +19,6 @@ import { BookService } from './book.service';
 })
 export class AppComponent {
 
-  init: boolean = false;
   season !: string;
   constructor(
     private systemDataService: SystemDataService,
@@ -33,9 +32,9 @@ export class AppComponent {
 
     this.systemDataService.get_configuration().subscribe((conf) => {
       this.season = conf.season;
-      this.bookService.list_book_entries$(this.season).subscribe((sales) => {
-        this.init = true;
-      });
+      // this.bookService.list_book_entries$(this.season).subscribe((sales) => {
+      //   this.init = true;
+      // });
 
     });
 

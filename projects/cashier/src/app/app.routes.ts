@@ -10,6 +10,7 @@ import { BankReconciliationComponent } from './bank-reconciliation/bank-reconcil
 import { BalanceComponent } from './balance/balance.component';
 import { ProfitAndLossComponent } from './profit-and-loss/profit-and-loss.component';
 import { ProfitAndLossDetailsComponent } from './profit-and-loss/profit-and-loss-details/profit-and-loss-details.component';
+import { ImportExcelComponent } from './excel/import-excel/import-excel.component';
 
 export const routes: Routes = [
   { path: 'shop', component: ShopComponent },   //, canActivate: [loggedInGuard]
@@ -19,7 +20,7 @@ export const routes: Routes = [
   { path: 'books/cash-box-status', component: CashBoxStatusComponent },
   { path: 'fees/collector', component: FeesCollectorComponent },
   { path: 'fees/editor', component: FeesEditorComponent },
-  // { path: 'excel/import', component: ImportExcelComponent },
+  { path: 'excel/import', component: ImportExcelComponent },
   { path: 'bank-reconciliation', component: BankReconciliationComponent },
   { path: 'balance-sheet', component: BalanceComponent },
   { path: 'profit-and-loss', component: ProfitAndLossComponent },

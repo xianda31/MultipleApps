@@ -3,7 +3,7 @@ import { generateClient } from 'aws-amplify/api';
 
 import { BookEntry, Revenue, FINANCIAL_ACCOUNT, Expense, BOOK_ENTRY_CLASS, CUSTOMER_ACCOUNT, ENTRY_TYPE, bank_values, Operation, Liquidity } from '../../../common/accounting.interface';
 import { Schema } from '../../../../amplify/data/resource';
-import { BehaviorSubject, from, map, Observable, of, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, combineLatest, from, map, Observable, of, switchMap, tap } from 'rxjs';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { ToastService } from '../../../common/toaster/toast.service';
 
@@ -17,7 +17,7 @@ type BookEntry_output = BookEntry & {
 })
 export class BookService {
 
-  private _book_entries!: BookEntry[];
+  private _book_entries: BookEntry[] = [];
   private _book_entries$ = new BehaviorSubject<BookEntry[]>(this._book_entries);
   constructor(
     private systemDataService: SystemDataService,
@@ -50,6 +50,15 @@ export class BookService {
   }
 
   // CRUD(L) BookEntry
+
+  bulk_create_book_entries$(book_entries: BookEntry[]): Observable<any> {
+    let observables: Observable<any>[] = [];
+    observables = book_entries.map(
+      (book_entry) => {
+        return from(this.create_book_entry(book_entry));
+      });
+    return combineLatest(observables);
+  }
 
   async create_book_entry(book_entry: BookEntry) {
     const client = generateClient<Schema>();

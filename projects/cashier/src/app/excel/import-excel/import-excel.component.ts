@@ -5,8 +5,10 @@ import { ENTRY_TYPE, BookEntry, FINANCIAL_ACCOUNT, operation_values, Operation, 
 import { Member } from '../../../../../common/member.interface';
 import { MembersService } from '../../../../../admin-dashboard/src/app/members/service/members.service';
 import { BookService } from '../../book.service';
-import { CommonModule } from '@angular/common';
+import { CommonModule, formatDate } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { SystemDataService } from '../../../../../common/services/system-data.service';
+import { get_transaction, Transaction } from '../../../../../common/transaction.definition';
 
 @Component({
   selector: 'app-import-excel',
@@ -22,10 +24,10 @@ export class ImportExcelComponent {
   worksheet !: ExcelJS.Worksheet;
   worksheets!: ExcelJS.Worksheet[];
 
-  book_entrys: BookEntry[] = [];
+  book_entries: BookEntry[] = [];
 
   members: Member[] = [];
-  season: string = '2024/2025';
+  current_season: string = '';
   loaded = false;
   excel_uploaded: boolean = false;
   verbose = signal<string>('');
@@ -36,7 +38,13 @@ export class ImportExcelComponent {
   constructor(
     private bookService: BookService,
     private membersService: MembersService,
+    private systemDataService: SystemDataService,
   ) {
+
+    this.systemDataService.get_configuration().subscribe((conf) => {
+      this.current_season = conf.season;
+    });
+
     this.membersService.listMembers().subscribe((members) => {
       this.members = members;
     });
@@ -48,13 +56,15 @@ export class ImportExcelComponent {
     this.excel_uploaded = false;
     const file = event.target.files[0];
     let workbook = new ExcelJS.Workbook();
-
     workbook.xlsx.load(file).then((workbook) => {
       this.verbose.set('\n');
       this.workbook = workbook;
       this.worksheets = workbook.worksheets;
-
-    });
+      console.log('worksheets', this.worksheets);
+    })
+      .catch((error) => {
+        console.log('error', error);
+      });
   }
 
   select_sheet() {
@@ -68,7 +78,7 @@ export class ImportExcelComponent {
   process_exel_file(worksheet: ExcelJS.Worksheet) {
     this.worksheet = worksheet;
     console.log('processing worksheet ', this.worksheet.name);
-    this.book_entrys = [];
+    this.book_entries = [];
 
     // recherche balise ?999
 
@@ -113,7 +123,7 @@ export class ImportExcelComponent {
     Object.entries(meta_rows).forEach(([master, cells]) => {
       this.convert_to_book_entry(master, cells)
         .then((book_entry) => {
-          this.book_entrys.push(book_entry);
+          this.book_entries.push(book_entry);
         })
         .catch((error) => {
           console.log('error at  %s', master, error);
@@ -123,25 +133,61 @@ export class ImportExcelComponent {
         );
     });
 
-    console.log('%s écritures prêtes à être importées', this.book_entrys.length);
 
 
   }
-
   upload_data() {
-    this.book_entrys.forEach((book_entry, index) => {
-      this.bookService.create_book_entry(book_entry).then(() => {
-        this.create_progress = Math.round((index + 1) / this.book_entrys.length * 100);
-        this.progress_style = 'width: ' + this.create_progress + '%';
-        if (this.create_progress === 100) {
-          this.data_uploading = false;
-          this.verbose.set(this.verbose() + 'import terminé');
+
+    let progress = (index: number) => {
+      this.create_progress = Math.round((index) / this.book_entries.length * 100);
+      this.progress_style = 'width: ' + this.create_progress + '%';
+      if (index === this.book_entries.length) {
+        this.data_uploading = false;
+        this.verbose.set(this.verbose() + 'import terminé');
+      }
+    }
+
+    this.data_uploading = true;
+    let nb_create = 0;
+    this.verbose.set(this.verbose() + 'uploading .. \n');
+    this.bookService.bulk_create_book_entries$(this.book_entries).subscribe((responses) => {
+      progress(nb_create++);
+      console.log('%s => %s', responses)
+    });
+  }
+
+  old_upload_data() {
+    let progress = (index: number) => {
+      this.create_progress = Math.round((index) / this.book_entries.length * 100);
+      this.progress_style = 'width: ' + this.create_progress + '%';
+      if (index === this.book_entries.length) {
+        this.data_uploading = false;
+        this.verbose.set(this.verbose() + 'import terminé');
+      }
+    }
+
+
+    this.data_uploading = true;
+    let nb_create = 0;
+    this.verbose.set(this.verbose() + 'uploading .. \n');
+    this.book_entries.forEach((book_entry, index) => {
+      this.bookService.create_book_entry(book_entry)
+        .then(() => {
+          progress(index + 1);
         }
-      }
-      ).catch((error) => {
-        console.log('error', error);
-      }
-      );
+        ).catch((error) => {
+          progress(index + 1);
+          console.log('error', error);
+        }
+        );
+    });
+
+  }
+
+  show_data() {
+    this.verbose.set(this.verbose() + 'viewing .. \n');
+    this.book_entries.forEach((book_entry, index) => {
+      this.verbose.set(this.verbose() + JSON.stringify(book_entry) + '\n');
     });
   }
 
@@ -149,46 +195,31 @@ export class ImportExcelComponent {
   async convert_to_book_entry(master: string, cells: string[]): Promise<BookEntry> {
 
     let promise = new Promise<BookEntry>((resolve, reject) => {
-      // create sale (master)
+      // initializing book_entry
       let row_number = +this.worksheet.getCell(master).row;
-
-      // console.log('processing row %s', row_number);
       let master_row = this.worksheet.getRow(row_number);
       let date = master_row.getCell(MAP.date).value?.toString() || '';
-
-      let cell_chrono = master_row.getCell(MAP.chrono).value?.toString() || '';
-      if (cell_chrono.startsWith('C')) {
-        let cell_member = master_row.getCell(MAP.intitulé).value?.toString() || '';
-        if (cell_member !== '') {
-          let member = this.retrieve_member(master_row.number, cell_member);
-          if (member === null) {
-            console.log('member not found', row_number);
-            reject('member not found');
-            return
-          } else {
-            // console.log('bénéficiaire', member.lastname + ' ' + member.firstname);
-          }
-        }
-      }
-
-      // let cell_nature = master_row.getCell(MAP['nature']).value;
 
       let cell_chèque = master_row.getCell(MAP['n° chèque']).value;
       let cell_bordereau = master_row.getCell(MAP['bordereau']).value;
       let cell_nature = master_row.getCell(MAP['nature']).value;
+      let cell_info_sup = master_row.getCell(MAP['info']).value;
 
+      let bank_op_type = this.convert_to_bank_op_type(cell_nature?.toString() as string);
+      let transaction = get_transaction(bank_op_type)
 
       let book_entry: BookEntry = {
-        season: this.season,
-        date: new Date(date).toISOString().split('T')[0],
+        season: this.systemDataService.get_season(new Date(date)),
+        date: formatDate(new Date(date), 'yyyy-MM-dd', 'en'),
         id: '',
         amounts: {},
         operations: [],
-        bank_op_type: this.convert_to_bank_op_type(cell_nature?.toString() as string),
-        class: cell_chrono.startsWith('C') ? BOOK_ENTRY_CLASS.a_REVENUE_FROM_MEMBER
-          : (cell_chrono.startsWith('K') ? BOOK_ENTRY_CLASS.c_OTHER_REVENUE : BOOK_ENTRY_CLASS.b_OTHER_EXPENSE)
-
+        bank_op_type: bank_op_type,
+        class: transaction.class,
       };
+      if (cell_info_sup?.toString()) {
+        book_entry.tag = cell_info_sup?.toString() as string;
+      }
 
       if (cell_chèque?.toString()) { book_entry.cheque_ref = cell_chèque?.toString() as string; }
       if (cell_bordereau?.toString()) { book_entry.deposit_ref = cell_bordereau?.toString() as string; }
@@ -204,15 +235,22 @@ export class ImportExcelComponent {
 
       // construct products operation side
 
-      cells.forEach((cell) => {
+      cells.forEach((cell, index) => {
         let row_number = +this.worksheet.getCell(cell).row;
         let row = this.worksheet.getRow(row_number);
-        let operation = this.compute_operation_amounts(row);
+
+
+        let operation = this.compute_operation_amounts(transaction, row);
+        if (operation === null) {
+          console.log('operation translation went wrong', row_number);
+          reject('operation translation went wrong');
+          return;
+        }
 
         book_entry.operations.push(operation);
       });
 
-      if (!this.control_amounts_balance(book_entry)) {
+      if (!this.control_amounts_balance(row_number, book_entry)) {
         reject('amounts not balanced');
       } else {
         resolve(book_entry);
@@ -248,11 +286,15 @@ export class ImportExcelComponent {
       case 'chrono vente':
 
         switch (nature) {
-          case 'virement':
-            return ENTRY_TYPE.transfer_receipt;
+          case 'virement reçu':
+            return ENTRY_TYPE.payment_by_transfer;
           case 'chèque':
-            return ENTRY_TYPE.cheque_deposit;
+            return ENTRY_TYPE.payment_by_cheque;
+          case 'espèces':
+            return ENTRY_TYPE.payment_in_cash;
           default:
+            console.log('erreur de nature', nature);
+            throw new Error('erreur de nature ' + nature);
             return ENTRY_TYPE.cash_receipt;
         }
 
@@ -264,7 +306,7 @@ export class ImportExcelComponent {
         return ENTRY_TYPE.cash_receipt;
     }
   }
-  control_amounts_balance(book_entry: BookEntry): boolean {
+  control_amounts_balance(row_nbr: number, book_entry: BookEntry): boolean {
     let debit_keys: FINANCIAL_ACCOUNT[] = Object.keys(book_entry.amounts).filter((key): key is FINANCIAL_ACCOUNT => key.includes('in'));
     let total_debit = debit_keys.reduce((acc, key) => acc + (book_entry.amounts[key] || 0), 0);
 
@@ -288,7 +330,7 @@ export class ImportExcelComponent {
     if (total !== (products_sum - expenses_sum)) {
       console.log('amounts not equal', total_debit, total_credit, products_sum, expenses_sum);
       console.log('book_entry', book_entry);
-      this.verbose.set(this.verbose() + 'montants non égaux : ' + total_debit + ' vs ' + total_credit + '\n');
+      this.verbose.set(this.verbose() + '[' + row_nbr + '] montants non égaux : ' + total_debit + ' vs ' + total_credit + '\n');
       return false;
     }
     // console.log('amounts are equal', total_debit, total_credit, products_sum, expenses_sum);
@@ -296,32 +338,40 @@ export class ImportExcelComponent {
     return true;
   }
 
-  compute_operation_amounts(row: ExcelJS.Row): Operation {
-    let operation!: Operation;
-    let revenues = this.get_revenues_amounts(row);
-    let cell_chrono = row.getCell(MAP.chrono).value?.toString() || '';
-    if (Object.keys(revenues).length > 0) {
-      operation = {
-        label: row.getCell(MAP.intitulé).value?.toString() as string,
-        // class: cell_chrono.startsWith('C') ? BOOK_ENTRY_CLASS.a_REVENUE_FROM_MEMBER : BOOK_ENTRY_CLASS.c_OTHER_REVENUE,
-        values: revenues,
-      };
-    } else {
-      let expenses = this.get_expenses_amounts(row);
-      if (Object.keys(expenses).length > 0) {
-        operation = {
-          label: row.getCell(MAP.intitulé).value?.toString() as string,
-          // class: BOOK_ENTRY_CLASS.EXPENSE,
-          values: expenses,
-        };
-      } else {
-        operation = {
-          label: row.getCell(MAP.intitulé).value?.toString() as string,
-          // class: BOOK_ENTRY_CLASS.e_MOVEMENT,
-          values: {},
-        };
-      }
+  compute_operation_amounts(transaction: Transaction, row: ExcelJS.Row): Operation {
+    let operation: Operation = {
+      values: {}
+    };
+    switch (transaction.class) {
+      case BOOK_ENTRY_CLASS.a_REVENUE_FROM_MEMBER:
+      case BOOK_ENTRY_CLASS.c_OTHER_REVENUE:
+        operation.values = this.get_revenues_amounts(row);
+        break;
+      case BOOK_ENTRY_CLASS.b_OTHER_EXPENSE:
+        operation.values = this.get_expenses_amounts(row);
+        break;
+      case BOOK_ENTRY_CLASS.e_MOVEMENT:
+        operation.values = {};
+        break;
     }
+
+    switch (transaction.nominative) {
+      case true:
+        let cell_member = row.getCell(MAP.intitulé).value?.toString() || '';
+        let member = this.retrieve_member(row.number, cell_member);
+        if (member === null) {
+          console.log('member not found', row.number);
+          return operation;
+        } else {
+          operation.member = member.lastname + ' ' + member.firstname;
+          operation.label = 'vente adhérent';
+        }
+        break;
+      case false:
+        operation.label = row.getCell(MAP.intitulé).value?.toString() as string;
+        break;
+    }
+
     return operation;
 
   }
