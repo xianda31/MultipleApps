@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { SystemConfiguration } from '../system-conf.interface';
-import { BehaviorSubject, from, map, Observable, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, catchError, from, map, Observable, of, switchMap, tap } from 'rxjs';
 import { Balance_sheet, Liquidities } from '../accounting.interface';
 import { FileService } from './files.service';
 import { formatDate } from '@angular/common';
@@ -36,7 +36,13 @@ export class SystemDataService {
   }
 
   get_balance_history(): Observable<Balance_sheet[]> {
-    return from(this.fileService.download_json_file('accounting/balance_history.txt'));
+    return from(this.fileService.download_json_file('accounting/balance_history.txt')).pipe(
+      map((data) => data as Balance_sheet[]),
+      catchError((error) => {
+        console.log('Error fetching balance history:', error);
+        return of([] as Balance_sheet[]);
+      })
+    );
   }
 
 

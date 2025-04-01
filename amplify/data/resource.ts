@@ -6,8 +6,7 @@ import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
 const schema = a.schema({
 
 
-
-  // comptabilité 
+  // comptabilité
 
   Operation: a.customType({
     label: a.string().required(),

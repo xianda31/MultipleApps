@@ -22,11 +22,11 @@ import { ToastService } from '../../../../common/toaster/toast.service';
   styleUrl: './members.component.scss'
 })
 export class MembersComponent implements OnInit {
-  members !: Member[];
+  members: Member[] = [];
   filteredMembers: Member[] = [];
   // missingMembers: Member[] = [];
   thisSeasonMembersNbr: number = 0;
-  licensees !: FFB_licensee[];
+  licensees: FFB_licensee[] = [];
   new_player!: FFBplayer;
   season: string = '';
 
