@@ -52,6 +52,12 @@ export class BookService {
   // CRUD(L) BookEntry
 
   bulk_create_book_entries$(book_entries: BookEntry[]): Observable<any> {
+
+    // TODO : workaround for thge fact that no former subscribe has yet initialised this._book_entries
+    if (!this._book_entries) {
+      this._book_entries = [] as BookEntry[];
+    }
+
     let observables: Observable<any>[] = [];
     observables = book_entries.map(
       (book_entry) => {
@@ -87,7 +93,7 @@ export class BookService {
     try {
       const response = await client.models.BookEntry.get(
         { id: entry_id },
-        { selectionSet: ['id', 'season', 'date', 'amounts', 'operations.*', 'class', 'bank_op_type', 'cheque_ref', 'deposit_ref', 'bank_report'] }
+        { selectionSet: ['id', 'season', 'tag', 'date', 'amounts', 'operations.*', 'class', 'bank_op_type', 'cheque_ref', 'deposit_ref', 'bank_report'] }
       );
       if (response.errors) {
         console.error('error', response.errors);
@@ -223,7 +229,8 @@ export class BookService {
             ...op,
             season: book_entry.season,
             date: book_entry.date,
-            id: book_entry.id,
+            book_entry_id: book_entry.id,
+            tag: book_entry.tag ?? undefined
           } as Revenue));
         return [...acc, ...revenues];
       }, [] as (Revenue | Expense)[]);
@@ -238,7 +245,8 @@ export class BookService {
             ...op,
             season: book_entry.season,
             date: book_entry.date,
-            id: book_entry.id,
+            book_entry_id: book_entry.id,
+            tag: book_entry.tag ?? undefined
           } as Revenue));
         return [...acc, ...revenues];
       }, [] as Revenue[]);
@@ -269,7 +277,8 @@ export class BookService {
             ...op,
             season: book_entry.season,
             date: book_entry.date,
-            id: book_entry.id,
+            book_entry_id: book_entry.id,
+            tag: book_entry.tag ?? undefined
           } as Revenue));
         return [...acc, ...revenues];
       }, [] as Revenue[]);
@@ -409,7 +418,8 @@ export class BookService {
             ...op,
             season: book_entry.season,
             date: book_entry.date,
-            id: book_entry.id,
+            book_entry_id: book_entry.id,
+            tag: book_entry.tag ?? undefined
           } as Expense));
         return [...acc, ...expenses];
       }, [] as Expense[]);
@@ -439,9 +449,9 @@ export class BookService {
     let amounts: bank_values = {};
     amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] = fees_amount;
 
-    let operation: Operation = { values: {} };
-    operation.values['DdT'] = fees_amount;
-    operation.label = 'droits de table';
+    let operation: Operation = { label: 'droits de table', values: { 'DdT': fees_amount } };
+    // operation.values['DdT'] = fees_amount;
+    // operation.label = 'droits de table';
 
     let seasonValue = this.systemDataService.get_season(new Date(date));
     const entry: BookEntry = {

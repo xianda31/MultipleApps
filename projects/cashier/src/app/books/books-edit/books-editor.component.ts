@@ -75,14 +75,6 @@ export class BooksEditorComponent {
 
   ) { }
 
-
-  // ngAfterViewInit() {
-  //   var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-  //   var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-  //     return new Tooltip(tooltipTriggerEl)
-  //   });
-  // }
-
   ngOnInit() {
 
 
@@ -149,6 +141,7 @@ export class BooksEditorComponent {
       'op_class': ['', Validators.required],
       'op_type': ['', Validators.required],
       'amounts': new FormArray([]),
+      'tag': [''],
       'bank_name': [''],
       'cheque_number': [''],
       'deposit_ref': [''],
@@ -171,6 +164,7 @@ export class BooksEditorComponent {
       date: book_entry.date,
       op_class: book_entry.class,
       op_type: book_entry.bank_op_type,
+      tag: book_entry.tag,
       bank_name: book_entry.cheque_ref?.slice(0, 3),
       cheque_number: book_entry.cheque_ref?.slice(3),
       deposit_ref: book_entry.deposit_ref,
@@ -473,7 +467,8 @@ export class BooksEditorComponent {
       id: this.form.controls['id'].value,
       bank_op_type: this.form.controls['op_type'].value,
       cheque_ref: this.form.controls['bank_name'].value?.toString() + this.form.controls['cheque_number'].value?.toString(),
-      deposit_ref: this.form.controls['deposit_ref'].value ?? null,
+      deposit_ref: this.form.controls['deposit_ref'].value ?? undefined,
+      tag: this.form.controls['tag'].value ?? undefined,
       amounts: amounts,
       class: this.form.controls['op_class'].value,
       operations: operations

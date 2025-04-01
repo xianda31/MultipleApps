@@ -28,8 +28,7 @@ export class ImportExcelComponent {
 
   members: Member[] = [];
   current_season: string = '';
-  loaded = false;
-  excel_uploaded: boolean = false;
+  excel_data_loaded: boolean = false;
   verbose = signal<string>('');
   progress_style = 'width: 0%';
   create_progress = 0;
@@ -52,8 +51,7 @@ export class ImportExcelComponent {
   }
 
   onFileChange(event: any) {
-    this.loaded = false;
-    this.excel_uploaded = false;
+    this.excel_data_loaded = false;
     const file = event.target.files[0];
     let workbook = new ExcelJS.Workbook();
     workbook.xlsx.load(file).then((workbook) => {
@@ -69,8 +67,7 @@ export class ImportExcelComponent {
 
   select_sheet() {
     this.process_exel_file(this.worksheet);
-    this.loaded = true;
-    this.excel_uploaded = true;
+    this.excel_data_loaded = true;
 
   }
 
@@ -151,38 +148,38 @@ export class ImportExcelComponent {
     let nb_create = 0;
     this.verbose.set(this.verbose() + 'uploading .. \n');
     this.bookService.bulk_create_book_entries$(this.book_entries).subscribe((responses) => {
-      progress(nb_create++);
-      console.log('%s => %s', responses)
+      progress(this.book_entries.length);
+      console.log('%s => %s', nb_create, JSON.stringify(responses));
     });
   }
 
-  old_upload_data() {
-    let progress = (index: number) => {
-      this.create_progress = Math.round((index) / this.book_entries.length * 100);
-      this.progress_style = 'width: ' + this.create_progress + '%';
-      if (index === this.book_entries.length) {
-        this.data_uploading = false;
-        this.verbose.set(this.verbose() + 'import terminé');
-      }
-    }
+  // old_upload_data() {
+  //   let progress = (index: number) => {
+  //     this.create_progress = Math.round((index) / this.book_entries.length * 100);
+  //     this.progress_style = 'width: ' + this.create_progress + '%';
+  //     if (index === this.book_entries.length) {
+  //       this.data_uploading = false;
+  //       this.verbose.set(this.verbose() + 'import terminé');
+  //     }
+  //   }
 
 
-    this.data_uploading = true;
-    let nb_create = 0;
-    this.verbose.set(this.verbose() + 'uploading .. \n');
-    this.book_entries.forEach((book_entry, index) => {
-      this.bookService.create_book_entry(book_entry)
-        .then(() => {
-          progress(index + 1);
-        }
-        ).catch((error) => {
-          progress(index + 1);
-          console.log('error', error);
-        }
-        );
-    });
+  //   this.data_uploading = true;
+  //   let nb_create = 0;
+  //   this.verbose.set(this.verbose() + 'uploading .. \n');
+  //   this.book_entries.forEach((book_entry, index) => {
+  //     this.bookService.create_book_entry(book_entry)
+  //       .then(() => {
+  //         progress(index + 1);
+  //       }
+  //       ).catch((error) => {
+  //         progress(index + 1);
+  //         console.log('error', error);
+  //       }
+  //       );
+  //   });
 
-  }
+  // }
 
   show_data() {
     this.verbose.set(this.verbose() + 'viewing .. \n');
@@ -217,7 +214,7 @@ export class ImportExcelComponent {
         bank_op_type: bank_op_type,
         class: transaction.class,
       };
-      if (cell_info_sup?.toString()) {
+      if (cell_info_sup?.toString().startsWith('#')) {
         book_entry.tag = cell_info_sup?.toString() as string;
       }
 
@@ -340,6 +337,7 @@ export class ImportExcelComponent {
 
   compute_operation_amounts(transaction: Transaction, row: ExcelJS.Row): Operation {
     let operation: Operation = {
+      label: row.getCell(MAP.intitulé).value?.toString() as string,
       values: {}
     };
     switch (transaction.class) {

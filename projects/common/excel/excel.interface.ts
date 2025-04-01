@@ -72,7 +72,7 @@ export type ACCOUNTS_COL = { [key: string]: string }
 
 export const PRODUCTS_COL: ACCOUNTS_COL = {
   'BIB': 'G',
-  'FET': 'H',
+  'PAF': 'H',
   'INI': 'I',
   'PER': 'J',
   'AUT': 'K',

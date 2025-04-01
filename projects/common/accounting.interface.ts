@@ -84,7 +84,7 @@ export enum BOOK_ENTRY_CLASS {
 
 export type operation_values = { [key: string]: number };
 export interface Operation {
-  label?: string;          // libellé de l'opération
+  label: string;          // libellé de l'opération
   member?: string;        // nom de l'adhérent
   values: operation_values;
 }
@@ -94,11 +94,17 @@ export interface Session {
   // vendor: string;
   date: string;
 }
-export interface Revenue extends Operation, Session {
-  id: string;
+export interface Revenue extends Operation {
+  book_entry_id: string;
+  season: string;
+  date: string;
+  tag?: string;
 }// comptes de produits
-export interface Expense extends Operation, Session {
-  id: string;
+export interface Expense extends Operation {
+  book_entry_id: string;
+  season: string;
+  date: string;
+  tag?: string;
 }; // comptes de charges
 
 

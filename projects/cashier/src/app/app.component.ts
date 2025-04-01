@@ -7,6 +7,7 @@ import { ToasterComponent } from '../../../common/toaster/components/toaster/toa
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { BookService } from './book.service';
+import { switchMap, tap } from 'rxjs';
 
 
 
@@ -30,17 +31,12 @@ export class AppComponent {
     registerLocaleData(localeFr);
 
 
-    this.systemDataService.get_configuration().subscribe((conf) => {
-      this.season = conf.season;
-      // this.bookService.list_book_entries$(this.season).subscribe((sales) => {
-      //   this.init = true;
-      // });
-
+    this.systemDataService.get_configuration().pipe(
+      tap((conf) => this.season = conf.season),
+      switchMap((conf) => this.bookService.list_book_entries$(conf.season))
+    ).subscribe((book_entries) => {
+      // console.log('%s écritures en base pour la saison %s', book_entries.length, this.season);
     });
-
-
-
-
 
 
   }

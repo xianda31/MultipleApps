@@ -54,7 +54,11 @@
         </div>
       </ng-container>
     </div>
-
+    <!-- info tag si présente -->
+    <div class="col-3">
+      <ng-container [ngTemplateOutlet]="tag" [ngTemplateOutletContext]="{inputFormGroup: form}">
+      </ng-container>
+    </div>
 
     <!-- bandeau opération(s) -->
     <div class="mt-3" *ngIf="transaction">
@@ -122,12 +126,25 @@
       </div>
     </div>
 
-    form.status : {{form.status}}<br>
-    operations.status : {{form.get('operations')?.status}}
-
-
+    <!-- form.status : {{form.status}}<br>
+    operations.status : {{form.get('operations')?.status}} -->
+    <div class="card mt-3 bg-body-secondary">
+      <div class="card-body">
+        <span class="fst-italic">
+          {{selected_book_entry | json}}
+        </span>
+      </div>
+    </div>
 
     <!-- ng-templates -->
+
+    <!-- formulaire tag -->
+    <ng-template #tag let-inputFormGroup="inputFormGroup">
+      <ng-container [formGroup]="inputFormGroup">
+        <label for="label">tag</label>
+        <input type="text" class="form-control" formControlName="tag">
+      </ng-container>
+    </ng-template>
     <!-- formulaire intitulé -->
     <ng-template #label let-inputFormGroup="inputFormGroup">
       <ng-container [formGroup]="inputFormGroup">

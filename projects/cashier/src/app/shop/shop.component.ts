@@ -149,8 +149,8 @@ export class ShopComponent {
     return member ? member.lastname + ' ' + member.firstname : '???';
   }
 
-  sale_amount(sale: Revenue): number {
-    let book_entry = this.book_entries.find((entry) => entry.id === sale.id);
+  sale_amount(revenue: Revenue): number {
+    let book_entry = this.book_entries.find((entry) => entry.id === revenue.book_entry_id);
     if (!book_entry) throw new Error('sale not found');
     return (book_entry.amounts?.['cashbox_in'] ?? 0) + (book_entry.amounts?.['bank_in'] ?? 0);
   }
@@ -159,10 +159,10 @@ export class ShopComponent {
     if (index === 0) return true;
     let sale = this.sales_of_the_day[index];
     let prev = this.sales_of_the_day[index - 1];
-    return sale.id !== prev.id;
+    return sale.book_entry_id !== prev.book_entry_id;
   }
-  payment_type(sale: Revenue): string {
-    let book_entry = this.book_entries.find((entry) => entry.id === sale.id);
+  payment_type(revenue: Revenue): string {
+    let book_entry = this.book_entries.find((entry) => entry.id === revenue.book_entry_id);
     if (!book_entry) throw new Error('sale not found');
     return get_transaction(book_entry.bank_op_type).label;
   }
