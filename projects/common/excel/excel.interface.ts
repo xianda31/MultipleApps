@@ -90,7 +90,7 @@ export const EXPENSES_COL: ACCOUNTS_COL = {
   'BRP': 'R',
   'FOR': 'S',
   'MAT': 'T',
-  'WEB': 'U',
+  'COM': 'U',
   'CMP': 'V',
   'REU': 'W',
   'FET': 'X',

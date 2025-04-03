@@ -13,5 +13,6 @@ import { AdminInComponent } from "../../../../common/authentification/admin-in/a
 })
 export class NavbarComponent {
   @Input() season: string = '';
+  @Input() entries_nbr: number = 0;
 
 }

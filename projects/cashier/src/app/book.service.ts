@@ -54,10 +54,10 @@ export class BookService {
   bulk_create_book_entries$(book_entries: BookEntry[]): Observable<any> {
 
     // TODO : workaround for thge fact that no former subscribe has yet initialised this._book_entries
-    if (!this._book_entries) {
-      this._book_entries = [] as BookEntry[];
-    }
-
+    // if (!this._book_entries) {
+    //   this._book_entries = [] as BookEntry[];
+    // }
+    // book_entries initialized by app component
     let observables: Observable<any>[] = [];
     observables = book_entries.map(
       (book_entry) => {
@@ -221,6 +221,10 @@ export class BookService {
 
   // utility functions
 
+  get_book_entries(): BookEntry[] {
+    return this._book_entries;
+  }
+
   get_operations(): (Revenue | Expense)[] {
     return this._book_entries
       .reduce((acc, book_entry) => {
@@ -305,6 +309,8 @@ export class BookService {
       return acc + (book_entry.amounts[FINANCIAL_ACCOUNT.SAVING_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.SAVING_credit] || 0);
     }, 0));
   }
+
+
 
   get_debts(): Map<string, number> {
     let debt = new Map<string, number>();
@@ -423,6 +429,15 @@ export class BookService {
           } as Expense));
         return [...acc, ...expenses];
       }, [] as Expense[]);
+  }
+  get_expenses_movements_amount(): number {
+    return this.Round(this.get_expenses().reduce((acc, op) => {
+      return acc + this.sum_values(op.values);
+    }
+      , 0));
+  }
+  sum_values(values: { [key: string]: number }): number {
+    return Object.values(values).reduce((acc, value) => acc + value, 0);
   }
 
   update_deposit_refs(deposit_ref: string, new_deposit_ref: string) {

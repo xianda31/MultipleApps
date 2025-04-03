@@ -184,7 +184,7 @@ export class ImportExcelComponent {
   show_data() {
     this.verbose.set(this.verbose() + 'viewing .. \n');
     this.book_entries.forEach((book_entry, index) => {
-      this.verbose.set(this.verbose() + JSON.stringify(book_entry) + '\n');
+      this.verbose.set(this.verbose() + index.toString() + JSON.stringify(book_entry) + '\n');
     });
   }
 
@@ -277,6 +277,7 @@ export class ImportExcelComponent {
             return ENTRY_TYPE.saving_deposit;
           default:
             console.log('erreur de nature', nature);
+            throw new Error('erreur de nature ' + nature);
             return ENTRY_TYPE.cash_receipt;
         }
 

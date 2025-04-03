@@ -33,6 +33,7 @@ export class BooksOverviewComponent {
   current_bank_movements: number = 0;
   current_assets_amount: number = 0;
   current_debt_amount: number = 0;
+  current_expenses_operations_amount: number = 0;
 
   initial_liquidities: Liquidities = { cash: 0, bank: 0, savings: 0 };
 
@@ -73,6 +74,8 @@ export class BooksOverviewComponent {
 
         this.current_debt_amount = this.debts.size > 0 ? Array.from(this.debts.values()).reduce((acc, debt) => acc + debt, 0) : 0;
         this.current_assets_amount = this.assets.size > 0 ? Array.from(this.assets.values()).reduce((acc, asset) => acc + asset.total, 0) : 0;
+
+        this.current_expenses_operations_amount = this.bookService.get_expenses_movements_amount();
 
       });
     });

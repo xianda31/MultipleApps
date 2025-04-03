@@ -1,21 +1,19 @@
-<div class="top-bar">
-  <div class="container">
-    <div class="row-cols-lg-auto row">
-      <h4 class="col">
-        <span class="inline-block">
-          <i class="fs-4 bi-piggy-bank"></i>
-          Comptabilité Bridge Club Saint-Orens
-          <span class="fs-4">
-            (saison {{season}})
-          </span>
-        </span>
+<div class="container">
+  <div class="row top-bar">
+    <div class="col-10">
+      <h4>
+        <i class="fs-4 bi-piggy-bank"></i>
+        Comptabilité Bridge Club Saint-Orens
+        <span class="fs-4"> (saison {{season}}) </span>
       </h4>
     </div>
+    <div class="col-2 self-align-end fst-italic fs-6 text-end">
+      {{entries_nbr}} enregistrements
+    </div>
   </div>
-</div>
 
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
-  <div class="container">
+  <nav class="navbar navbar-expand-lg navbar-light bg-light mx-0">
+    <!-- <div class="container"> -->
     <!-- <a class="navbar-brand" routerLink="/home">
             <i class="fs-4 bi-table"></i> <span class="ms-1 d-none d-sm-inline">Home</span>
         </a> -->
@@ -60,6 +58,7 @@
           <ul class="dropdown-menu" aria-labelledby="navbarDropdown1">
             <li><a class="dropdown-item  " routerLink="/books/editor">écriture</a></li>
             <li><a class="dropdown-item  " routerLink="/books/overview">vue générale</a></li>
+            <li><a class="dropdown-item  " routerLink="/books/list">base de données</a></li>
             <li><a class="dropdown-item  " routerLink="/books/cash-box-status">gestion caisse</a></li>
             <li><a class="dropdown-item  " routerLink="/fees/editor">droits de table</a></li>
 
@@ -86,5 +85,6 @@
       </ul>
 
     </div>
-  </div>
-</nav>
+    <!-- </div> -->
+  </nav>
+</div>

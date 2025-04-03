@@ -1,0 +1,60 @@
+<div class="card mt-2">
+
+  <div class="card-header">
+    <div class="d-flex justify-content-between align-items-center">
+      <h5>contenu de la base</h5>
+      <!-- <h6>(écritures pour la saison {{ season }} uniquement)</h6> -->
+      <span class="text-mute"> {{book_entries.length}} écritures en {{season}}</span>
+    </div>
+  </div>
+
+  <div class="card-body">
+    <div class="d-flex text-mute mb-2">
+      <span class="text-muted">tri :&nbsp; </span>
+      <span *ngFor="let criteria of criterias" class="text-muted me-2">{{criteria}} </span>
+      <span class="text-muted">
+        <i class="bi bi-arrow-counterclockwise" (click)="sort_clear()"></i>
+      </span>
+    </div>
+    <table class="table table-responsive table-sm table-striped table-hover">
+      <thead>
+        <tr>
+          <!-- <th class="col"># </th> -->
+          <th class="col th_hover" (click)="sort_by('date')">date </th>
+          <th class="col th_hover" (click)="sort_by('in/out')">in/out </th>
+          <th class="col th_hover" (click)="sort_by('amount')"> montant</th>
+          <!-- <th class="col"> tag</th> -->
+          <th class="col th_hover" (click)="sort_by('class')">classe </th>
+          <th class="col th_hover" (click)="sort_by('type')"> type</th>
+          <!-- <th class="col"><i class="bi bi-person-fill"></i> </th> -->
+          <th class="col">libellé</th>
+          <th class="col">opération</th>
+          <!-- <th class="col"><i class="bi bi-search"></i> </th> -->
+        </tr>
+      </thead>
+
+      <tbody>
+        <ng-container *ngFor="let entry of book_entries , let i = index ">
+          <tr *ngFor="let operation of entry.operations, , let first=first" (click)="show_book_entry(entry.id)">
+            <td *ngIf="first" [rowSpan]="entry.operations.length"> {{entry.date | date: 'dd/MM'}} </td>
+            <td *ngIf="first" [rowSpan]="entry.operations.length"> {{in_out(entry)?'recette':'dépense'}} </td>
+            <td *ngIf="first" [rowSpan]="entry.operations.length" class="text-end pe-3"> {{total_amounts(entry) |
+              number:truncature:'fr'}}
+            </td>
+            <td *ngIf="first" [rowSpan]="entry.operations.length"> {{entry.class }} </td>
+            <td *ngIf="first" [rowSpan]="entry.operations.length">{{entry.bank_op_type}}</td>
+            <!-- <td><i [class]="operation.member ?'bi bi-person-fill': 'bi bi-box'"></i></td> -->
+            <td>{{operation.member ? operation.member : operation.label}}</td>
+            <!-- <td>{{operation.member}}</td> -->
+            <td>{{operation.values | json}}</td>
+            <!-- <td *ngIf="first" [rowSpan]="entry.operations.length">
+              <i class="bi bi-search"></i>
+            </td> -->
+          </tr>
+        </ng-container>
+      </tbody>
+
+    </table>
+  </div>
+
+</div>

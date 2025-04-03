@@ -11,11 +11,13 @@ import { BalanceComponent } from './balance/balance.component';
 import { ProfitAndLossComponent } from './profit-and-loss/profit-and-loss.component';
 import { ProfitAndLossDetailsComponent } from './profit-and-loss/profit-and-loss-details/profit-and-loss-details.component';
 import { ImportExcelComponent } from './excel/import-excel/import-excel.component';
+import { BooksListComponent } from './books/books-list/books-list.component';
 
 export const routes: Routes = [
   { path: 'shop', component: ShopComponent },   //, canActivate: [loggedInGuard]
   { path: 'books/overview', component: BooksOverviewComponent },
   { path: 'books/editor', component: BooksEditorComponent },
+  { path: 'books/list', component: BooksListComponent },
   { path: 'books/editor/:id', component: BooksEditorComponent },
   { path: 'books/cash-box-status', component: CashBoxStatusComponent },
   { path: 'fees/collector', component: FeesCollectorComponent },
