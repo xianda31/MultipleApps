@@ -35,6 +35,8 @@ interface Account {
   styleUrl: './books-editor.component.scss'
 })
 export class BooksEditorComponent {
+  NumberRegexPattern: string = '[+-]?([0-9]{1,})[.,]([0-9]{1,})';
+
   book_entry_id!: string;
   banks !: Bank[];
   club_bank!: Bank;
@@ -323,7 +325,7 @@ export class BooksEditorComponent {
     let operationForm: FormGroup = this.fb.group({
       'label': [label.toLocaleLowerCase()],
       'values': this.fb.array(
-        (profit_and_loss_accounts.map(account => new FormControl<string>((operation_initial?.values?.[account.key]?.toString() ?? ''), [Validators.pattern(/^\d+(\.\d+)?$/)])) as unknown[]),
+        (profit_and_loss_accounts.map(account => new FormControl<string>((operation_initial?.values?.[account.key]?.toString() ?? ''), [Validators.pattern(this.NumberRegexPattern)])) as unknown[]),
         { validators: [this.atLeastOneFieldValidator] }),
     });
     if (transaction.nominative) {
@@ -331,7 +333,7 @@ export class BooksEditorComponent {
       if (transaction.optional_accounts !== undefined) {
         this.optional_accounts = transaction.optional_accounts;
         operationForm.addControl('optional_accounts', this.fb.array(
-          this.optional_accounts.map((account_def) => new FormControl<string>((operation_initial?.values?.[account_def.key]?.toString() ?? ''), [Validators.pattern(/^\d+(\.\d+)?$/)]))
+          this.optional_accounts.map((account_def) => new FormControl<string>((operation_initial?.values?.[account_def.key]?.toString() ?? ''), [Validators.pattern(this.NumberRegexPattern)]))
         ));
       }
     }
@@ -351,10 +353,10 @@ export class BooksEditorComponent {
     this.financial_accounts = transaction.financial_accounts;
     this.financial_accounts.forEach((account) => {
       if (transaction.financial_accounts_to_charge.includes(account.key as FINANCIAL_ACCOUNT | CUSTOMER_ACCOUNT)) {
-        this.amounts.push(new FormControl('', [Validators.required, Validators.pattern(/^\d+(\.\d+)?$/)]));
+        this.amounts.push(new FormControl('', [Validators.required, Validators.pattern(this.NumberRegexPattern)]));
       }
       else {
-        this.amounts.push(new FormControl({ value: '', disabled: true }, [Validators.pattern(/^\d+(\.\d+)?$/)]));
+        this.amounts.push(new FormControl({ value: '', disabled: true }, [Validators.pattern(this.NumberRegexPattern)]));
       }
     });
   }
@@ -362,7 +364,7 @@ export class BooksEditorComponent {
   handle_financial_accounts_enabling(transaction: Transaction) {
     this.financial_accounts.forEach((account, index) => {
       if (transaction.financial_accounts_to_charge.includes(account.key as FINANCIAL_ACCOUNT | CUSTOMER_ACCOUNT)) {
-        this.amounts.controls[index].setValidators([Validators.required, Validators.pattern(/^\d+(\.\d+)?$/)]);
+        this.amounts.controls[index].setValidators([Validators.required, Validators.pattern(this.NumberRegexPattern)]);
         this.amounts.controls[index].enable();
       } else {
         this.amounts.controls[index].disable();

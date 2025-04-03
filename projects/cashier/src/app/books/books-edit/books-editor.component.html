@@ -191,6 +191,7 @@
             <label>{{ financial_accounts[i].label }}</label>
             <input (dblclick)="double_click(amount)" type="text" class="form-control" [formControlName]="i"
               [id]="'amount' + i">
+            <label>{{amount.errors | json}}</label>
             <div *ngIf="amount.invalid && !amount.pristine" class="text-danger">
               <small>Le montant doit être un nombre</small>
             </div>
