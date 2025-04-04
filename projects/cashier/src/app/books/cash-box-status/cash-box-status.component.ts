@@ -86,7 +86,7 @@ export class CashBoxStatusComponent {
     let cash_out: BookEntry = {
       season: this.season,
       date: new Date().toISOString().split('T')[0],
-      class: BOOK_ENTRY_CLASS.e_MOVEMENT,
+      class: BOOK_ENTRY_CLASS.MOVEMENT,
       bank_op_type: ENTRY_TYPE.cash_deposit,
       amounts: {
         [FINANCIAL_ACCOUNT.CASHBOX_credit]: amount,
@@ -134,7 +134,7 @@ export class CashBoxStatusComponent {
     let cheque_deposit: BookEntry = {
       season: this.season,
       date: new Date().toISOString().split('T')[0],
-      class: BOOK_ENTRY_CLASS.e_MOVEMENT,
+      class: BOOK_ENTRY_CLASS.MOVEMENT,
       bank_op_type: ENTRY_TYPE.cheque_deposit,
       amounts: {
         [FINANCIAL_ACCOUNT.CASHBOX_credit]: value,

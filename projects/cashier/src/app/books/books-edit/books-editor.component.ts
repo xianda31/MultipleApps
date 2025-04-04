@@ -7,12 +7,11 @@ import { BookEntry, operation_values, BOOK_ENTRY_CLASS, Operation, FINANCIAL_ACC
 import { Bank } from '../../../../../common/system-conf.interface';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { ToastService } from '../../../../../common/toaster/toast.service';
-import { Transaction, get_transaction, class_types, Account_def, class_definitions } from '../../../../../common/transaction.definition';
+import { Transaction, get_transaction, class_to_types, Account_def, Class_descriptions } from '../../../../../common/transaction.definition';
 import { MembersService } from '../../../../../admin-dashboard/src/app/members/service/members.service';
 import { Member } from '../../../../../common/member.interface';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { Tooltip } from 'bootstrap';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 interface Operation_initial_values {
@@ -51,7 +50,7 @@ export class BooksEditorComponent {
   op_types !: ENTRY_TYPE[];
 
   transaction_classes = Object(BOOK_ENTRY_CLASS);
-  class_definitions = class_definitions;
+  class_descriptions = Object(Class_descriptions);
 
   form!: FormGroup;
 
@@ -79,6 +78,7 @@ export class BooksEditorComponent {
 
   ngOnInit() {
 
+    // console.log('books-editor component init', this.class_definitions);
 
     this.membersService.listMembers().subscribe((members) => {
       this.members = members;
@@ -157,7 +157,7 @@ export class BooksEditorComponent {
     // console.log('chargement de :', book_entry);
 
     this.transaction = get_transaction(book_entry.bank_op_type);
-    this.op_types = class_types(book_entry.class);
+    this.op_types = class_to_types(book_entry.class);
 
     this.financial_accounts = this.transaction.financial_accounts;
 
@@ -215,7 +215,7 @@ export class BooksEditorComponent {
     // form.op_class change handler
     this.form.controls['op_class'].valueChanges.subscribe((op_class) => {
       this.transaction = undefined!;
-      this.op_types = class_types(op_class);
+      this.op_types = class_to_types(op_class);
       this.financial_accounts_locked = true;
     });
 
@@ -323,7 +323,7 @@ export class BooksEditorComponent {
     // let label = operation_initial?.label ?? transaction.label;
 
     let operationForm: FormGroup = this.fb.group({
-      'label': [operation_initial?.label ?? undefined],
+      'label': [operation_initial?.label ?? ''],
       'values': this.fb.array(
         (profit_and_loss_accounts.map(account => new FormControl<string>((operation_initial?.values?.[account.key]?.toString() ?? ''), [Validators.pattern(this.NumberRegexPattern)])) as unknown[]),
         { validators: [this.atLeastOneFieldValidator] }),

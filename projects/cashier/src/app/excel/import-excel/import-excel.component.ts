@@ -68,6 +68,7 @@ export class ImportExcelComponent {
   select_sheet() {
     this.process_exel_file(this.worksheet);
     this.excel_data_loaded = true;
+    this.verbose.set(this.verbose() + this.book_entries.length + 'lignes comptables prêtes à importer \n');
 
   }
 
@@ -153,33 +154,6 @@ export class ImportExcelComponent {
     });
   }
 
-  // old_upload_data() {
-  //   let progress = (index: number) => {
-  //     this.create_progress = Math.round((index) / this.book_entries.length * 100);
-  //     this.progress_style = 'width: ' + this.create_progress + '%';
-  //     if (index === this.book_entries.length) {
-  //       this.data_uploading = false;
-  //       this.verbose.set(this.verbose() + 'import terminé');
-  //     }
-  //   }
-
-
-  //   this.data_uploading = true;
-  //   let nb_create = 0;
-  //   this.verbose.set(this.verbose() + 'uploading .. \n');
-  //   this.book_entries.forEach((book_entry, index) => {
-  //     this.bookService.create_book_entry(book_entry)
-  //       .then(() => {
-  //         progress(index + 1);
-  //       }
-  //       ).catch((error) => {
-  //         progress(index + 1);
-  //         console.log('error', error);
-  //       }
-  //       );
-  //   });
-
-  // }
 
   show_data() {
     this.verbose.set(this.verbose() + 'viewing .. \n');
@@ -319,9 +293,9 @@ export class ImportExcelComponent {
     book_entry.operations.forEach((operation) => {
       sum += Object.values(operation.values).reduce((acc, value) => acc + value, 0);
     });
-    if (book_entry.class === BOOK_ENTRY_CLASS.a_REVENUE_FROM_MEMBER || book_entry.class === BOOK_ENTRY_CLASS.c_OTHER_REVENUE) {
+    if (book_entry.class === BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER || book_entry.class === BOOK_ENTRY_CLASS.OTHER_REVENUE) {
       products_sum += sum;
-    } else if (book_entry.class === BOOK_ENTRY_CLASS.b_OTHER_EXPENSE) {
+    } else if (book_entry.class === BOOK_ENTRY_CLASS.OTHER_EXPENSE) {
       expenses_sum += sum;
     }
 
@@ -342,14 +316,14 @@ export class ImportExcelComponent {
       values: {}
     };
     switch (transaction.class) {
-      case BOOK_ENTRY_CLASS.a_REVENUE_FROM_MEMBER:
-      case BOOK_ENTRY_CLASS.c_OTHER_REVENUE:
+      case BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER:
+      case BOOK_ENTRY_CLASS.OTHER_REVENUE:
         operation.values = this.get_revenues_amounts(row);
         break;
-      case BOOK_ENTRY_CLASS.b_OTHER_EXPENSE:
+      case BOOK_ENTRY_CLASS.OTHER_EXPENSE:
         operation.values = this.get_expenses_amounts(row);
         break;
-      case BOOK_ENTRY_CLASS.e_MOVEMENT:
+      case BOOK_ENTRY_CLASS.MOVEMENT:
         operation.values = {};
         break;
     }
@@ -424,4 +398,11 @@ export class ImportExcelComponent {
     }
   }
 
+  clear_db() {
+    this.verbose.set(this.verbose() + 'raz de la base de données \n');
+    this.bookService.clear_book_entries$(this.current_season).subscribe((response) => {
+      console.log('response', response);
+      this.verbose.set(this.verbose() + 'raz de la base de données terminée \n');
+    });
+  }
 }

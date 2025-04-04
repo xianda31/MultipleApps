@@ -73,15 +73,17 @@ export const Cashbox_accounts: { [key in Partial<FINANCIAL_ACCOUNT>]?: string } 
 }
 
 
-
+// ordre des rubriques (dans l'éditeur) régi par l'ordre alphabétique
 export enum BOOK_ENTRY_CLASS {
-  a_REVENUE_FROM_MEMBER = 'vente adhérent',
-  b_OTHER_EXPENSE = 'toutes dépenses',
-  c_OTHER_REVENUE = 'recettes hors vente adhérent',
-  d_EXPENSE_FOR_MEMBER = 'dépense adhérent',
-  e_MOVEMENT = 'mouvement bancaire',
-  f_BALANCE_SHEET = 'spécifique bilan',
+  REVENUE_FROM_MEMBER = 'in_member',
+  OTHER_REVENUE = 'in_other',
+  EXPENSE_FOR_MEMBER = 'out_member',
+  OTHER_EXPENSE = 'out_other',
+  MOVEMENT = 'xfer_bank',
+  BALANCE = 'xfer_closure',
 }
+
+
 
 export type operation_values = { [key: string]: number };
 export interface Operation {

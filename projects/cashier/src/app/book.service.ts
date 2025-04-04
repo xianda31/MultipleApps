@@ -187,7 +187,7 @@ export class BookService {
     return this._book_entries ? this._book_entries$.asObservable() : remote_load$;
   }
 
-  clear_book_entries$(season: string) {
+  clear_book_entries$(season: string): Observable<any> {
 
     const fetchBookentries = async (season: string) => {
       const client = generateClient<Schema>();
@@ -207,7 +207,7 @@ export class BookService {
       return Promise.all(promises);
     };
 
-    from(fetchBookentries(season)).pipe(
+    return from(fetchBookentries(season)).pipe(
       switchMap((entries) => deleteBookentries(entries)),
       tap((response) => {
         if (response.some((res) => res.errors)) {
@@ -216,8 +216,9 @@ export class BookService {
         }
         this._book_entries = this._book_entries.filter((entry) => entry.season !== season); // remove all entries from the season
         this._book_entries$.next(this._book_entries);
+        return "deltion of `${season}' records completed";
       })
-    ).subscribe();
+    );
 
   }
 
@@ -244,7 +245,7 @@ export class BookService {
 
   get_revenues(): Revenue[] {
     return this._book_entries
-      .filter(book_entry => book_entry.class === BOOK_ENTRY_CLASS.a_REVENUE_FROM_MEMBER || book_entry.class === BOOK_ENTRY_CLASS.c_OTHER_REVENUE)
+      .filter(book_entry => book_entry.class === BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER || book_entry.class === BOOK_ENTRY_CLASS.OTHER_REVENUE)
       .reduce((acc, book_entry) => {
         const revenues = book_entry.operations
           .map(op => ({
@@ -260,7 +261,7 @@ export class BookService {
 
   // list_revenues_from_members$(): Observable<Revenue[]> {
   //   return this._book_entries$.pipe(
-  //     map(book_entries => book_entries.filter(book_entry => book_entry.class === BOOK_ENTRY_CLASS.a_REVENUE_FROM_MEMBER)
+  //     map(book_entries => book_entries.filter(book_entry => book_entry.class === BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER)
   //       .reduce((acc, book_entry) => {
   //         const revenues = book_entry.operations
   //           .map(op => ({
@@ -276,7 +277,7 @@ export class BookService {
 
   get_revenues_from_members(): Revenue[] {
     return this._book_entries
-      .filter(book_entry => book_entry.class === BOOK_ENTRY_CLASS.a_REVENUE_FROM_MEMBER)
+      .filter(book_entry => book_entry.class === BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER)
       .reduce((acc, book_entry) => {
         const revenues = book_entry.operations
           .map(op => ({
@@ -419,7 +420,7 @@ export class BookService {
 
   get_expenses(): Expense[] {
     return this._book_entries
-      .filter(book_entry => book_entry.class === BOOK_ENTRY_CLASS.b_OTHER_EXPENSE || book_entry.class === BOOK_ENTRY_CLASS.d_EXPENSE_FOR_MEMBER)
+      .filter(book_entry => book_entry.class === BOOK_ENTRY_CLASS.OTHER_EXPENSE || book_entry.class === BOOK_ENTRY_CLASS.EXPENSE_FOR_MEMBER)
       .reduce((acc, book_entry) => {
         const expenses = book_entry.operations
           .map(op => ({
@@ -477,7 +478,7 @@ export class BookService {
       date: date,
       amounts: amounts,
       operations: [operation],
-      class: BOOK_ENTRY_CLASS.c_OTHER_REVENUE,
+      class: BOOK_ENTRY_CLASS.OTHER_REVENUE,
       bank_op_type: ENTRY_TYPE.cash_receipt,
     };
     return this.create_book_entry(entry);

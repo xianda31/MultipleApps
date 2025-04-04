@@ -22,12 +22,11 @@
           <!-- <th class="col"># </th> -->
           <th class="col th_hover" (click)="sort_by('date')">date </th>
           <th class="col">libellé</th>
-          <th class="col">opération</th>
+          <th class="col">produits/charges</th>
+          <th class="col th_hover" (click)="sort_by('montant')"> montant</th>
           <th class="col th_hover" (click)="sort_by('tag')"> tag </th>
-          <th class="col th_hover" (click)="sort_by('in_out')">in/out </th>
-          <th class="col th_hover" (click)="sort_by('amount')"> montant</th>
-          <th class="col th_hover" (click)="sort_by('class')">classe </th>
-          <th class="col th_hover" (click)="sort_by('type')"> type</th>
+          <th class="col th_hover" (click)="sort_by('classe')">classe </th>
+          <th class="col th_hover" (click)="sort_by('transaction')"> type</th>
         </tr>
       </thead>
 
@@ -37,13 +36,12 @@
             <td *ngIf="first" [rowSpan]="entry.operations.length"> {{entry.date | date: 'dd/MM'}} </td>
             <td>{{operation.member ? operation.member : operation.label}}</td>
             <td>{{operation.values | json}}</td>
-            <td *ngIf="first" [rowSpan]="entry.operations.length"> {{entry.tag}} </td>
-            <td *ngIf="first" [rowSpan]="entry.operations.length"> {{in_out(entry)?'recette':'dépense'}} </td>
             <td *ngIf="first" [rowSpan]="entry.operations.length" class="text-end pe-3"> {{total_amounts(entry) |
               number:truncature:'fr'}}
             </td>
-            <td *ngIf="first" [rowSpan]="entry.operations.length"> {{entry.class }} </td>
-            <td *ngIf="first" [rowSpan]="entry.operations.length">{{entry.bank_op_type}}</td>
+            <td *ngIf="first" [rowSpan]="entry.operations.length"> {{entry.tag}} </td>
+            <td *ngIf="first" [rowSpan]="entry.operations.length"> {{class_descriptions[entry.class] }} </td>
+            <td *ngIf="first" [rowSpan]="entry.operations.length">{{transaction_label(entry)}}</td>
           </tr>
         </ng-container>
       </tbody>

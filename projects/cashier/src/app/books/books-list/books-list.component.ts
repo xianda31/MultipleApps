@@ -5,9 +5,9 @@ import { Router } from '@angular/router';
 import { BookEntry } from '../../../../../common/accounting.interface';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { BookService } from '../../book.service';
-import { get_transaction } from '../../../../../common/transaction.definition';
+import { Class_descriptions, get_transaction } from '../../../../../common/transaction.definition';
 
-type Fields = 'date' | 'in_out' | 'class' | 'type' | 'amount' | 'tag'
+type Fields = 'date' | 'classe' | 'transaction' | 'montant' | 'tag'
 @Component({
   selector: 'app-books-list',
   standalone: true,
@@ -19,6 +19,7 @@ export class BooksListComponent {
 
   season: string = '';
   book_entries: BookEntry[] = [];
+  class_descriptions = Object(Class_descriptions);
   truncature = '1.2-2';  // '1.0-0';// '1.2-2';  //
 
   constructor(
@@ -46,12 +47,11 @@ export class BooksListComponent {
 
   criterias: Set<Fields> = new Set();
   sort_directions: { [key in Fields]: number } = {
-    date: 1,
-    'in_out': 1,
-    class: 1,
-    type: 1,
-    amount: 1,
-    tag: 1,
+    'date': 1,
+    'classe': 1,
+    'transaction': 1,
+    'montant': 1,
+    'tag': 1,
   };
   sort_clear() {
     this.criterias.clear();
@@ -72,28 +72,21 @@ export class BooksListComponent {
             return 0;
           });
           break;
-        case 'in_out':
-          this.book_entries.sort((a, b) => {
-            if (this.in_out(a) < this.in_out(b)) return -this.sort_directions[criteria];
-            if (this.in_out(a) > this.in_out(b)) return this.sort_directions[criteria];
-            return 0;
-          });
-          break;
-        case 'class':
+        case 'classe':
           this.book_entries.sort((a, b) => {
             if (a.class < b.class) return -this.sort_directions[criteria];
             if (a.class > b.class) return this.sort_directions[criteria];
             return 0;
           });
           break;
-        case 'type':
+        case 'transaction':
           this.book_entries.sort((a, b) => {
-            if (a.bank_op_type < b.bank_op_type) return -this.sort_directions[criteria];
-            if (a.bank_op_type > b.bank_op_type) return this.sort_directions[criteria];
+            if (this.transaction_label(a) < this.transaction_label(b)) return -this.sort_directions[criteria];
+            if (this.transaction_label(a) > this.transaction_label(b)) return this.sort_directions[criteria];
             return 0;
           });
           break;
-        case 'amount':
+        case 'montant':
           this.book_entries.sort((a, b) => {
             if (this.total_amounts(a) < this.total_amounts(b)) return -this.sort_directions[criteria];
             if (this.total_amounts(a) > this.total_amounts(b)) return this.sort_directions[criteria];
@@ -112,13 +105,22 @@ export class BooksListComponent {
   }
 
 
-  in_out(book_entry: BookEntry): boolean {
+  // in_out(book_entry: BookEntry): boolean {
+  //   let transaction = get_transaction(book_entry.bank_op_type);
+  //   if (transaction === undefined) {
+  //     console.log('oops , there is a problem', book_entry);
+  //     return false;
+  //   }
+  //   return transaction.is_of_profit_type;
+  // }
+
+  transaction_label(book_entry: BookEntry): string {
     let transaction = get_transaction(book_entry.bank_op_type);
     if (transaction === undefined) {
       console.log('oops , there is a problem', book_entry);
-      return false;
+      return '???';
     }
-    return transaction.is_of_profit_type;
+    return transaction.label;
   }
 
   show_book_entry(book_entry_id: string) {

@@ -13,7 +13,7 @@
         <label for="op_type">Classe d'opération</label>
         <select class="form-control" id="op_class" formControlName="op_class">
           <option value="undefined" hidden disabled>néant</option>
-          <option *ngFor="let class of class_definitions | keyvalue" [value]="class.key">
+          <option *ngFor="let class of class_descriptions | keyvalue" [value]="class.key">
             {{class.value}}
           </option>
         </select>
@@ -52,11 +52,11 @@
             </div>
           </div>
         </div>
-      </ng-container>
-    </div>
-    <!-- info tag si présente -->
-    <div class="col-3">
-      <ng-container [ngTemplateOutlet]="tag" [ngTemplateOutletContext]="{inputFormGroup: form}">
+        <!-- info tag si présente -->
+        <div class="col-3">
+          <ng-container [ngTemplateOutlet]="tag" [ngTemplateOutletContext]="{inputFormGroup: form}">
+          </ng-container>
+        </div>
       </ng-container>
     </div>
 
@@ -68,7 +68,7 @@
           <div class="col-12 mt-4">
             <!-- opération d'une transaction non nominative -->
             <div class="row align-items-end"
-              *ngIf="transaction.class === transaction_classes.b_OTHER_EXPENSE || transaction.class === transaction_classes.c_OTHER_REVENUE">
+              *ngIf="transaction.class === transaction_classes.OTHER_EXPENSE || transaction.class === transaction_classes.OTHER_REVENUE">
               <div class="col-2">
                 <div [ngTemplateOutlet]="label" [ngTemplateOutletContext]="{inputFormGroup: operation}">
                 </div>
@@ -126,8 +126,8 @@
       </div>
     </div>
 
-    form.status : {{form.status}}<br>
-    operations.status : {{form.get('operations')?.status}}
+    <!-- form.status : {{form.status}}<br>
+    operations.status : {{form.get('operations')?.status}} -->
 
     <div class="card mt-3 bg-body-secondary">
       <div class="card-body">
@@ -192,7 +192,7 @@
             <label>{{ financial_accounts[i].label }}</label>
             <input (dblclick)="double_click(amount)" type="text" class="form-control" [formControlName]="i"
               [id]="'amount' + i">
-            <label>{{amount.errors | json}}</label>
+            <!-- <label>{{amount.errors | json}}</label> -->
             <div *ngIf="amount.invalid && !amount.pristine" class="text-danger">
               <small>Le montant doit être un nombre</small>
             </div>

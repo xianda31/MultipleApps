@@ -84,7 +84,7 @@ export class CartService {
         ...session,
         id: '',
         bank_op_type: this.payment_mode2bank_op_type(this._payment.mode),
-        class: BOOK_ENTRY_CLASS.a_REVENUE_FROM_MEMBER,
+        class: BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER,
         amounts: this.payments2fValue(this._payment.mode),
         operations: this.cart2Operations(),
         cheque_ref: this.payments2cheque_ref(this._payment),
