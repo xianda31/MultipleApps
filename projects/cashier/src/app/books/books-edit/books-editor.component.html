@@ -126,8 +126,9 @@
       </div>
     </div>
 
-    <!-- form.status : {{form.status}}<br>
-    operations.status : {{form.get('operations')?.status}} -->
+    form.status : {{form.status}}<br>
+    operations.status : {{form.get('operations')?.status}}
+
     <div class="card mt-3 bg-body-secondary">
       <div class="card-body">
         <span class="fst-italic">
@@ -150,7 +151,7 @@
       <ng-container [formGroup]="inputFormGroup">
 
         <label for="label">Intitulé</label>
-        <input type="text" class="form-control" formControlName="label">
+        <input type="text" placeholder="intitulé" class="form-control" formControlName="label">
       </ng-container>
     </ng-template>
 

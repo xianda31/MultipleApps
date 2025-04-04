@@ -35,7 +35,7 @@ interface Account {
   styleUrl: './books-editor.component.scss'
 })
 export class BooksEditorComponent {
-  NumberRegexPattern: string = '[+-]?([0-9]{1,})[.,]([0-9]{1,})';
+  NumberRegexPattern: string = '([0-9]+([.,][0-9]*)?|[.][0-9]+)';
 
   book_entry_id!: string;
   banks !: Bank[];
@@ -320,10 +320,10 @@ export class BooksEditorComponent {
   add_operation(transaction: Transaction, operation_initial?: Operation) {
 
     let profit_and_loss_accounts = this.which_profit_and_loss_accounts(transaction);
-    let label = operation_initial?.label ?? transaction.label;
+    // let label = operation_initial?.label ?? transaction.label;
 
     let operationForm: FormGroup = this.fb.group({
-      'label': [label.toLocaleLowerCase()],
+      'label': [operation_initial?.label ?? undefined],
       'values': this.fb.array(
         (profit_and_loss_accounts.map(account => new FormControl<string>((operation_initial?.values?.[account.key]?.toString() ?? ''), [Validators.pattern(this.NumberRegexPattern)])) as unknown[]),
         { validators: [this.atLeastOneFieldValidator] }),

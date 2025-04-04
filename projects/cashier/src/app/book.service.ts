@@ -79,7 +79,9 @@ export class BookService {
       }
       const created_entry = this.parsed_entry(response.data as unknown as BookEntry_output);
       this._book_entries.push(created_entry);
-      this._book_entries$.next(this._book_entries.sort((a, b) => a.date.localeCompare(b.date)));
+      this._book_entries$.next(this._book_entries.sort((b, a) => {
+        return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
+      }));
       return (created_entry);
     } catch (error) {
       console.error('error', error);
@@ -115,8 +117,8 @@ export class BookService {
       }
       const updated_entry = this.parsed_entry(response.data as unknown as BookEntry_output);
       this._book_entries = this._book_entries.map((entry) => entry.id === updated_entry.id ? updated_entry : entry);
-      this._book_entries$.next(this._book_entries.sort((a, b) => {
-        return a.date.localeCompare(b.date) // === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
+      this._book_entries$.next(this._book_entries.sort((b, a) => {
+        return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
       }));
       return updated_entry;
     } catch (error) {
@@ -137,7 +139,7 @@ export class BookService {
           throw new Error(JSON.stringify(response.errors));
         }
         this._book_entries = this._book_entries.filter((entry) => entry.id !== entry_id);
-        this._book_entries$.next(this._book_entries.sort((a, b) => {
+        this._book_entries$.next(this._book_entries.sort((b, a) => {
           return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
         }));
         return response;
@@ -167,7 +169,7 @@ export class BookService {
       map((entries) => {
         this._book_entries = entries
           .map((entry) => this.parsed_entry(entry as BookEntry_output))
-          .sort((a, b) => {
+          .sort((b, a) => {
             return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
           });
         // console.log('book_entries %s element(s) loaded from AWS', this._book_entries.length);

@@ -320,6 +320,20 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
   // F. achat , dépenses
   // ****  CLASS = EXPENSE ****
 
+  // achat en espèces d'une prestation ou service
+  [ENTRY_TYPE.cash_emit]: {
+    label: 'petite dépense en espèces',
+    class: BOOK_ENTRY_CLASS.b_OTHER_EXPENSE,
+    financial_accounts: financial_credits,
+    financial_accounts_to_charge: [FINANCIAL_ACCOUNT.CASHBOX_credit],
+    nominative: false,
+    pure_financial: false,
+    is_of_profit_type: false,
+    require_deposit_ref: false,
+    cash: 'out',
+    cheque: 'none',
+  },
+
   // paiement par chèque d'une prestation ou service
   [ENTRY_TYPE.cheque_emit]: {
     label: 'CHEQUE EMIS',

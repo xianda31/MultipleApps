@@ -61,9 +61,7 @@ export class BooksOverviewComponent {
       });
 
       this.bookService.list_book_entries$(conf.season).subscribe((book_entries) => {
-
         this.book_entries = book_entries;
-        console.log('book_entries', this.book_entries);
         this.build_arrays();
 
         this.current_cash_movements = this.bookService.get_cashbox_movements_amount();

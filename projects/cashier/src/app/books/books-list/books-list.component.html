@@ -21,15 +21,13 @@
         <tr>
           <!-- <th class="col"># </th> -->
           <th class="col th_hover" (click)="sort_by('date')">date </th>
-          <th class="col th_hover" (click)="sort_by('in_out')">in/out </th>
-          <th class="col th_hover" (click)="sort_by('amount')"> montant</th>
-          <!-- <th class="col"> tag</th> -->
-          <th class="col th_hover" (click)="sort_by('class')">classe </th>
-          <th class="col th_hover" (click)="sort_by('type')"> type</th>
-          <!-- <th class="col"><i class="bi bi-person-fill"></i> </th> -->
           <th class="col">libellé</th>
           <th class="col">opération</th>
-          <!-- <th class="col"><i class="bi bi-search"></i> </th> -->
+          <th class="col th_hover" (click)="sort_by('tag')"> tag </th>
+          <th class="col th_hover" (click)="sort_by('in_out')">in/out </th>
+          <th class="col th_hover" (click)="sort_by('amount')"> montant</th>
+          <th class="col th_hover" (click)="sort_by('class')">classe </th>
+          <th class="col th_hover" (click)="sort_by('type')"> type</th>
         </tr>
       </thead>
 
@@ -37,19 +35,15 @@
         <ng-container *ngFor="let entry of book_entries , let i = index ">
           <tr *ngFor="let operation of entry.operations, , let first=first" (click)="show_book_entry(entry.id)">
             <td *ngIf="first" [rowSpan]="entry.operations.length"> {{entry.date | date: 'dd/MM'}} </td>
+            <td>{{operation.member ? operation.member : operation.label}}</td>
+            <td>{{operation.values | json}}</td>
+            <td *ngIf="first" [rowSpan]="entry.operations.length"> {{entry.tag}} </td>
             <td *ngIf="first" [rowSpan]="entry.operations.length"> {{in_out(entry)?'recette':'dépense'}} </td>
             <td *ngIf="first" [rowSpan]="entry.operations.length" class="text-end pe-3"> {{total_amounts(entry) |
               number:truncature:'fr'}}
             </td>
             <td *ngIf="first" [rowSpan]="entry.operations.length"> {{entry.class }} </td>
             <td *ngIf="first" [rowSpan]="entry.operations.length">{{entry.bank_op_type}}</td>
-            <!-- <td><i [class]="operation.member ?'bi bi-person-fill': 'bi bi-box'"></i></td> -->
-            <td>{{operation.member ? operation.member : operation.label}}</td>
-            <!-- <td>{{operation.member}}</td> -->
-            <td>{{operation.values | json}}</td>
-            <!-- <td *ngIf="first" [rowSpan]="entry.operations.length">
-              <i class="bi bi-search"></i>
-            </td> -->
           </tr>
         </ng-container>
       </tbody>
