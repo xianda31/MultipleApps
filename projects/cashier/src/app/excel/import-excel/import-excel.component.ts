@@ -52,13 +52,19 @@ export class ImportExcelComponent {
 
   onFileChange(event: any) {
     this.excel_data_loaded = false;
+    this.worksheets = [];
     const file = event.target.files[0];
+    this.verbose.set('lecture du fichier `${file.name} ...\n');
+    this.book_entries = [];
+    this.progress_style = 'width: 0%';
+    this.create_progress = 0;
+    this.data_uploading = false;
     let workbook = new ExcelJS.Workbook();
     workbook.xlsx.load(file).then((workbook) => {
-      this.verbose.set('\n');
+      // this.verbose.set('\n');
       this.workbook = workbook;
       this.worksheets = workbook.worksheets;
-      console.log('worksheets', this.worksheets);
+      // console.log('worksheets', this.worksheets);
     })
       .catch((error) => {
         console.log('error', error);
@@ -68,7 +74,6 @@ export class ImportExcelComponent {
   select_sheet() {
     this.process_exel_file(this.worksheet);
     this.excel_data_loaded = true;
-    this.verbose.set(this.verbose() + this.book_entries.length + 'lignes comptables prêtes à importer \n');
 
   }
 
@@ -141,16 +146,16 @@ export class ImportExcelComponent {
       this.progress_style = 'width: ' + this.create_progress + '%';
       if (index === this.book_entries.length) {
         this.data_uploading = false;
-        this.verbose.set(this.verbose() + 'import terminé');
+        this.verbose.set(this.verbose() + '... terminé \n');
       }
     }
 
     this.data_uploading = true;
     let nb_create = 0;
-    this.verbose.set(this.verbose() + 'uploading .. \n');
+    this.verbose.set(this.verbose() + 'uploading ...');
     this.bookService.bulk_create_book_entries$(this.book_entries).subscribe((responses) => {
       progress(this.book_entries.length);
-      console.log('%s => %s', nb_create, JSON.stringify(responses));
+      // console.log('%s => %s', nb_create, JSON.stringify(responses));
     });
   }
 
@@ -271,7 +276,16 @@ export class ImportExcelComponent {
         }
 
       case 'droits de table':
-        return ENTRY_TYPE.cash_receipt;
+
+        switch (nature) {
+          case 'espèces':
+            return ENTRY_TYPE.cash_receipt;
+          // case 'erreur caisse':
+          //   return ENTRY_TYPE.cash_emit;
+          default:
+            console.log('nature non reconnue', nature);
+            throw new Error('erreur de nature ' + nature);
+        }
 
       default:
         console.log('erreur de feuille', this.worksheet.name);
@@ -399,10 +413,10 @@ export class ImportExcelComponent {
   }
 
   clear_db() {
-    this.verbose.set(this.verbose() + 'raz de la base de données \n');
+    this.verbose.set(this.verbose() + 'raz de la base de données ');
     this.bookService.clear_book_entries$(this.current_season).subscribe((response) => {
-      console.log('response', response);
-      this.verbose.set(this.verbose() + 'raz de la base de données terminée \n');
+      // console.log('response', response);
+      this.verbose.set(this.verbose() + '... effectuée \n');
     });
   }
 }

@@ -1,3 +1,12 @@
+<div class="row align-items-center mt-3">
+  <div class="ms-2 col-auto">
+    <button (click)="clear_db()" class="btn btn-danger btn-sm">
+      <i class="bi bi-database-exclamation"></i>
+    </button>
+  </div>
+  <span class="col-auto ms-1">raz db : attention, toutes les données seront supprimées</span>
+</div>
+
 <div class="row align-items-end ">
   <div class="col-4">
     <h4>importer un fichier excel</h4>
@@ -24,24 +33,24 @@
   <h6 class="col-6 ">
     {{book_entries.length}} écritures prêtes pour chargement en base de données
   </h6>
-  <span class="" ms-3>
+  <span class="ms-3">
     upload :
     <button (click)="upload_data()" class="btn btn-warning btn-sm">
       <i class="bi bi-cloud-upload"></i>
     </button>
   </span>
-  <span class="" ms-3>
+  <span class="ms-3">
     show :
-    <button (click)="show_data()" class="btn btn-warning btn-sm">
+    <button (click)="show_data()" class="btn btn-primary btn-sm">
       <i class="bi bi-search"></i>
     </button>
   </span>
-  <span class="" ms-3>
+  <!-- <span class="ms-3">
     raz db :
-    <button (click)="clear_db()" class="btn btn-warning btn-sm">
-      <i class="bi bi-search"></i>
+    <button (click)="clear_db()" class="btn btn-danger btn-sm">
+      <i class="bi bi-database-exclamation"></i>
     </button>
-  </span>
+  </span> -->
 
   <div *ngIf="data_uploading" class="col-6">
 

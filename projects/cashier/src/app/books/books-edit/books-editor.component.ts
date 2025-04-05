@@ -34,7 +34,8 @@ interface Account {
   styleUrl: './books-editor.component.scss'
 })
 export class BooksEditorComponent {
-  NumberRegexPattern: string = '([0-9]+([.,][0-9]*)?|[.][0-9]+)';
+  NumberRegexPattern: string = '([-,+]?[0-9]+([.,][0-9]*)?|[.][0-9]+)';
+  // NumberRegexPattern: string = '([0-9]+([.,][0-9]*)?|[.][0-9]+)';
 
   book_entry_id!: string;
   banks !: Bank[];
@@ -431,6 +432,22 @@ export class BooksEditorComponent {
     this.save_book_entry(amounts, operations);
   }
 
+  negative_number_acceptable(bookEntry: BookEntry): boolean {
+    // true if bank_op_type = cash_receipt or all numbers are positive
+    if (bookEntry.bank_op_type === ENTRY_TYPE.cash_receipt) return true;
+    let negative = false;
+    Object.entries(bookEntry.amounts).forEach(([key, amount]: [string, number]) => {
+      if (amount < 0) negative = true;
+    }, 0);
+    bookEntry.operations.forEach((operation) => {
+      let values = operation.values;
+      Object.entries(values).forEach(([key, amount]: [string, number]) => {
+        if (amount < 0) negative = true;
+      });
+    });
+    return !negative;
+  }
+
   book_entry_balanced(bookEntry: BookEntry): boolean {
     let total_profit_and_loss = 0;
     let total_financial = 0;
@@ -478,6 +495,10 @@ export class BooksEditorComponent {
 
     if (!this.book_entry_balanced(booking)) {
       this.toastService.showWarningToast('erreur', 'total des dépenses différent du total financier');
+      return;
+    }
+    if (!this.negative_number_acceptable(booking)) {
+      this.toastService.showWarningToast('erreur', 'montant négatif non autorisé');
       return;
     }
 
