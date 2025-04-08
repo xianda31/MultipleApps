@@ -3,7 +3,7 @@ import { BookEntry, ENTRY_TYPE, BOOK_ENTRY_CLASS, FINANCIAL_ACCOUNT } from '../.
 import { BookService } from '../../book.service';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { _CHEQUE_IN_ACCOUNT, _CHEQUE_IN_CASHBOX, get_transaction } from '../../../../../common/transaction.definition';
+import { _CHEQUE_IN_ACCOUNT, _CHEQUES_FIRST_IN_CASHBOX, get_transaction } from '../../../../../common/transaction.definition';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { Bank } from '../../../../../common/system-conf.interface';
 
@@ -46,12 +46,19 @@ export class CashBoxStatusComponent {
       this.season = conf.season;
       this.bookService.list_book_entries$(this.season).subscribe((book_entries) => {
         this.book_entries = book_entries;
-        this.current_cash_amount = this.bookService.get_cashbox_movements_amount();
 
         // filtre les chèques à déposer
         this.cheques_for_deposit = book_entries
           .filter(book_entry => get_transaction(book_entry.bank_op_type).cheque === 'in')
           .filter(book_entry => book_entry.cheque_ref !== undefined && (book_entry.deposit_ref === '' || book_entry.deposit_ref === null));
+
+        // calcule le montant total des chèques à déposer & le liquide disponible
+        let total_cheques = this.cheques_for_deposit.reduce((acc, book_entry) => {
+          return acc + (book_entry.amounts['cashbox_in'] ?? 0);
+        }
+          , 0);
+        this.current_cash_amount = this.bookService.get_cashbox_movements_amount() - total_cheques;
+
 
         // énumère les bordereaux de dépot chèque en temp_
         this.temp_refs.clear();
@@ -124,8 +131,8 @@ export class CashBoxStatusComponent {
         this.bookService.update_book_entry(entry);
       }
     });
-    // création du mouvement de dépôt si _CHEQUE_IN_CASHBOX
-    if (_CHEQUE_IN_CASHBOX) {
+    // création du mouvement de dépôt si _CHEQUES_FIRST_IN_CASHBOX
+    if (_CHEQUES_FIRST_IN_CASHBOX) {
       this.create_cheque_deposit_entry(ref.value.amount, ref.value.new_ref);
     }
   }

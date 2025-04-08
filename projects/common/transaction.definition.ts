@@ -1,8 +1,19 @@
 import { FINANCIAL_ACCOUNT, BOOK_ENTRY_CLASS, ENTRY_TYPE, CUSTOMER_ACCOUNT, BALANCE_ACCOUNT } from './accounting.interface';
 
-export const _CHEQUE_IN_CASHBOX: boolean = true;     // flag to indicate if cheques are first deposited in cashbox
 
-export const _CHEQUE_IN_ACCOUNT: FINANCIAL_ACCOUNT = _CHEQUE_IN_CASHBOX ? FINANCIAL_ACCOUNT.CASHBOX_debit : FINANCIAL_ACCOUNT.BANK_debit;
+// choix de configuration Majeur !!!
+// le dépôt de chèques peut se fait d'abord dans la caisse ou directement dans le compte bancaire ....
+// si _CHEQUES_FIRST_IN_CASHBOX = true, les chèques sont d'abord déposés dans la caisse
+// // puis tranferrés dans le compte bancaire => une transaction[ENTRY_TYPE.cheque_deposit] est alors nécessaire
+// sinon, ils sont directement déposés dans le compte bancaire [bank_in]
+//
+// choix :  _CHEQUES_FIRST_IN_CASHBOX = true;
+//
+export const _CHEQUES_FIRST_IN_CASHBOX: boolean = true;
+export const _CHEQUE_IN_ACCOUNT: FINANCIAL_ACCOUNT = _CHEQUES_FIRST_IN_CASHBOX ? FINANCIAL_ACCOUNT.CASHBOX_debit : FINANCIAL_ACCOUNT.BANK_debit;
+//
+//
+
 
 export type Account_def = {
   key: string //FINANCIAL_ACCOUNT | CUSTOMER_ACCOUNT | BALANCE_SHEET_ACCOUNT
@@ -83,7 +94,7 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
     class: BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER,
     financial_accounts: financial_debits,
     optional_accounts: customer_assets,
-    financial_accounts_to_charge: _CHEQUE_IN_CASHBOX ? [FINANCIAL_ACCOUNT.CASHBOX_debit] : [FINANCIAL_ACCOUNT.BANK_debit],
+    financial_accounts_to_charge: _CHEQUES_FIRST_IN_CASHBOX ? [FINANCIAL_ACCOUNT.CASHBOX_debit] : [FINANCIAL_ACCOUNT.BANK_debit],
     nominative: true,
     pure_financial: false,
     is_of_profit_type: true,
@@ -142,7 +153,7 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
     label: 'paiement par chèque',
     class: BOOK_ENTRY_CLASS.OTHER_REVENUE,
     financial_accounts: financial_debits,
-    financial_accounts_to_charge: _CHEQUE_IN_CASHBOX ? [FINANCIAL_ACCOUNT.CASHBOX_debit] : [FINANCIAL_ACCOUNT.BANK_debit],
+    financial_accounts_to_charge: _CHEQUES_FIRST_IN_CASHBOX ? [FINANCIAL_ACCOUNT.CASHBOX_debit] : [FINANCIAL_ACCOUNT.BANK_debit],
     nominative: false,
     pure_financial: false,
     is_of_profit_type: true,

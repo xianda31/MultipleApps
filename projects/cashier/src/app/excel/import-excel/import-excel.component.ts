@@ -40,6 +40,7 @@ export class ImportExcelComponent {
     private systemDataService: SystemDataService,
   ) {
 
+
     this.systemDataService.get_configuration().subscribe((conf) => {
       this.current_season = conf.season;
     });
@@ -54,7 +55,7 @@ export class ImportExcelComponent {
     this.excel_data_loaded = false;
     this.worksheets = [];
     const file = event.target.files[0];
-    this.verbose.set('lecture du fichier `${file.name} ...\n');
+    this.verbose.set('lecture du fichier ' + file.name + ' ...\n');
     this.book_entries = [];
     this.progress_style = 'width: 0%';
     this.create_progress = 0;
@@ -175,12 +176,13 @@ export class ImportExcelComponent {
       let row_number = +this.worksheet.getCell(master).row;
       let master_row = this.worksheet.getRow(row_number);
       let date = master_row.getCell(MAP.date).value?.toString() || '';
+      let cell_pointage = master_row.getCell(MAP['pointage']).value?.toString() || undefined;
 
       let cell_chèque = master_row.getCell(MAP['n° chèque']).value;
       let cell_bordereau = master_row.getCell(MAP['bordereau']).value;
-      let cell_nature = master_row.getCell(MAP['nature']).value;
       let cell_info_sup = master_row.getCell(MAP['info']).value;
 
+      let cell_nature = master_row.getCell(MAP['nature']).value;
       let bank_op_type = this.convert_to_bank_op_type(cell_nature?.toString() as string);
       let transaction = get_transaction(bank_op_type)
 
@@ -192,6 +194,8 @@ export class ImportExcelComponent {
         operations: [],
         bank_op_type: bank_op_type,
         class: transaction.class,
+        bank_report: (cell_pointage) ? this.format_bank_report(cell_pointage.toString(), this.current_season) : undefined,
+
       };
       if (cell_info_sup?.toString().startsWith('#')) {
         book_entry.tag = cell_info_sup?.toString() as string;
@@ -233,6 +237,24 @@ export class ImportExcelComponent {
       }
     });
     return promise;
+  }
+
+  format_bank_report(pointage: string, season: string): string | null {
+    // convert R007 to bank_reports[0] ... R012 to bank_reports[5] ... R101 to bank_reports[6] ...R106 to bank_reports[11]
+    let month: number = +pointage.slice(2, 4);
+    console.log('pointage : %s month %s', pointage, month);
+    if (month < 1 || month > 12) return null;
+    let Y = season.slice(0, 4).slice(-2); // yyYY-zzZZ
+    let Z = season.slice(5, 9).slice(-2); // yyYY-zzZZ
+    switch (pointage.slice(0, 2)) {
+      case 'R0':
+        return Y + '-' + month.toString().padStart(2, '0')
+      case 'R1':
+        return Z + '-' + month.toString().padStart(2, '0')
+      default:
+        return null;
+    }
+
   }
 
   convert_to_bank_op_type(nature: string): ENTRY_TYPE {

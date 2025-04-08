@@ -190,12 +190,13 @@
         <div formArrayName="amounts" class="row ">
           <div class="col-4 gx-1" *ngFor="let amount of amounts.controls ; let i = index">
             <label>{{ financial_accounts[i].label }}</label>
-            <input (dblclick)="double_click(amount)" type="text" class="form-control" [formControlName]="i"
-              [id]="'amount' + i">
+            <input (dblclick)="double_click(amount)" type="text"
+              [class]="(amount.invalid && !amount.pristine) ? 'form-control border-danger' : 'form-control'"
+              [formControlName]="i" [id]="'amount' + i">
             <!-- <label>{{amount.errors | json}}</label> -->
-            <div *ngIf="amount.invalid && !amount.pristine" class="text-danger">
+            <!-- <div *ngIf="amount.invalid && !amount.pristine" class="text-danger">
               <small>Le montant doit être un nombre</small>
-            </div>
+            </div> -->
           </div>
         </div>
       </ng-container>
@@ -208,10 +209,11 @@
           <div class="col gx-1" *ngFor="let account of inputFormGroup.get('values').controls ; let i = index">
             <label [ngbTooltip]="profit_and_loss_accounts[i].description" tooltipClass="my-custom-class"
               placement="top">{{profit_and_loss_accounts[i].key}}</label>
-            <input type="text" class="form-control" [formControlName]="i" [id]="'value' + i">
-            <div *ngIf="account.invalid" class="text-danger">
+            <input type="text" [class]="account.invalid ? 'form-control border-danger' : 'form-control'"
+              [formControlName]="i" [id]="'value' + i">
+            <!-- <div *ngIf="account.invalid" class="text-danger">
               <small>Le montant doit être un nombre</small>
-            </div>
+            </div> -->
           </div>
         </div>
       </ng-container>
@@ -226,10 +228,11 @@
             *ngFor="let account of inputFormGroup.get('optional_accounts').controls ; let i = index">
             <label [ngbTooltip]="optional_accounts[i].description" tooltipClass="my-custom-class"
               placement="top">{{optional_accounts[i].label}}</label>
-            <input type="text" class="form-control" [formControlName]="i" [id]="'customer_account' + i">
-            <div *ngIf="account.invalid" class="text-danger">
+            <input type="text" [class]="account.invalid ? 'form-control border-danger' : 'form-control'"
+              [formControlName]="i" [id]="'customer_account' + i">
+            <!-- <div *ngIf="account.invalid" class="text-danger">
               <small>Le montant doit être un nombre</small>
-            </div>
+            </div> -->
           </div>
         </div>
       </ng-container>
