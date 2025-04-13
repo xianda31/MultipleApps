@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, ElementRef, signal } from '@angular/core';
 import * as ExcelJS from 'exceljs';
 import { EXPENSES_COL, FINANCIAL_COL, MAP, PRODUCTS_COL } from '../../../../../common/excel/excel.interface';
 import { ENTRY_TYPE, BookEntry, FINANCIAL_ACCOUNT, operation_values, Operation, BOOK_ENTRY_CLASS } from '../../../../../common/accounting.interface';
@@ -20,6 +20,9 @@ import { get_transaction, Transaction } from '../../../../../common/transaction.
 
 
 export class ImportExcelComponent {
+onFileSelect($event: Event) {
+throw new Error('Method not implemented.');
+}
   workbook!: ExcelJS.Workbook;
   worksheet !: ExcelJS.Worksheet;
   worksheets!: ExcelJS.Worksheet[];
@@ -28,7 +31,7 @@ export class ImportExcelComponent {
 
   members: Member[] = [];
   current_season: string = '';
-  excel_data_loaded: boolean = false;
+  worksheet_processed: boolean = false;
   verbose = signal<string>('');
   progress_style = 'width: 0%';
   create_progress = 0;
@@ -52,7 +55,7 @@ export class ImportExcelComponent {
   }
 
   onFileChange(event: any) {
-    this.excel_data_loaded = false;
+    this.worksheet_processed = false;
     this.worksheets = [];
     const file = event.target.files[0];
     this.verbose.set('lecture du fichier ' + file.name + ' ...\n');
@@ -74,10 +77,8 @@ export class ImportExcelComponent {
 
   select_sheet() {
     this.process_exel_file(this.worksheet);
-    this.excel_data_loaded = true;
-
+    this.worksheet_processed = true;
   }
-
 
   process_exel_file(worksheet: ExcelJS.Worksheet) {
     this.worksheet = worksheet;
@@ -90,6 +91,7 @@ export class ImportExcelComponent {
     console.log('cell_999', cell_999);
     if (!cell_999) {
       console.log('balise 999 non trouvée');
+      this.verbose.set('balise 999 non trouvée' + ' ...\n');
       return;
     }
 
@@ -131,15 +133,14 @@ export class ImportExcelComponent {
         })
         .catch((error) => {
           console.log('error at  %s', master, error);
-          console.log('import abandonné');
+          this.verbose.set(this.verbose() + error + ' ' +  master + ' \n');
           return;
         }
         );
     });
-
-
-
   }
+
+
   upload_data() {
 
     let progress = (index: number) => {
@@ -152,11 +153,11 @@ export class ImportExcelComponent {
     }
 
     this.data_uploading = true;
-    let nb_create = 0;
+
     this.verbose.set(this.verbose() + 'uploading ...');
-    this.bookService.bulk_create_book_entries$(this.book_entries).subscribe((responses) => {
-      progress(this.book_entries.length);
-      // console.log('%s => %s', nb_create, JSON.stringify(responses));
+
+    this.bookService.book_entries_bulk_create$(this.book_entries).subscribe((number) => {
+      progress(number);
     });
   }
 
@@ -184,6 +185,11 @@ export class ImportExcelComponent {
 
       let cell_nature = master_row.getCell(MAP['nature']).value;
       let bank_op_type = this.convert_to_bank_op_type(cell_nature?.toString() as string);
+      if (bank_op_type === null) {
+        // console.log('erreur de nature', cell_nature);
+        reject('erreur de nature ' + cell_nature);
+        return;
+      }
       let transaction = get_transaction(bank_op_type)
 
       let book_entry: BookEntry = {
@@ -240,6 +246,9 @@ export class ImportExcelComponent {
   }
 
   format_bank_report(pointage: string, season: string): string | null {
+
+    return pointage;
+
     // convert R007 to bank_reports[0] ... R012 to bank_reports[5] ... R101 to bank_reports[6] ...R106 to bank_reports[11]
     let month: number = +pointage.slice(2, 4);
     console.log('pointage : %s month %s', pointage, month);
@@ -257,14 +266,20 @@ export class ImportExcelComponent {
 
   }
 
-  convert_to_bank_op_type(nature: string): ENTRY_TYPE {
+  convert_to_bank_op_type(nature: string): ENTRY_TYPE | null{
     switch (this.worksheet.name) {
       case 'chrono banque':
 
         switch (nature) {
-          case 'dépôt':
+          case 'versement espèces':
+            return ENTRY_TYPE.cash_raising;
+          case 'versement chèques':
+            return ENTRY_TYPE.cheques_raising;
+          case 'remise espèces':
             return ENTRY_TYPE.cash_deposit;
-          case 'chèque':
+          case 'remise chèques':
+            return ENTRY_TYPE.cheque_deposit;
+          case 'chèque émis':
             return ENTRY_TYPE.cheque_emit;
           case 'virement reçu':
             return ENTRY_TYPE.transfer_receipt;
@@ -276,10 +291,15 @@ export class ImportExcelComponent {
             return ENTRY_TYPE.card_payment;
           case 'versement compte épargne':
             return ENTRY_TYPE.saving_deposit;
+            case 'versement épargne':
+            return ENTRY_TYPE.saving_deposit;
+            case 'retrait épargne':
+            return ENTRY_TYPE.saving_withdraw;
+          case 'intérêts':
+            return ENTRY_TYPE.saving_interest;
           default:
             console.log('erreur de nature', nature);
-            throw new Error('erreur de nature ' + nature);
-            return ENTRY_TYPE.cash_receipt;
+            return null
         }
 
       case 'chrono vente':
@@ -287,14 +307,13 @@ export class ImportExcelComponent {
         switch (nature) {
           case 'virement reçu':
             return ENTRY_TYPE.payment_by_transfer;
-          case 'chèque':
+          case 'paiement par chèque':
             return ENTRY_TYPE.payment_by_cheque;
-          case 'espèces':
+          case 'paiement en espèces':
             return ENTRY_TYPE.payment_in_cash;
           default:
             console.log('erreur de nature', nature);
-            throw new Error('erreur de nature ' + nature);
-            return ENTRY_TYPE.cash_receipt;
+            return null
         }
 
       case 'droits de table':
@@ -305,13 +324,13 @@ export class ImportExcelComponent {
           // case 'erreur caisse':
           //   return ENTRY_TYPE.cash_emit;
           default:
-            console.log('nature non reconnue', nature);
-            throw new Error('erreur de nature ' + nature);
+            console.log('erreur de nature', nature);
+            return null
         }
 
       default:
         console.log('erreur de feuille', this.worksheet.name);
-        return ENTRY_TYPE.cash_receipt;
+        return null;
     }
   }
   control_amounts_balance(row_nbr: number, book_entry: BookEntry): boolean {
@@ -369,7 +388,7 @@ export class ImportExcelComponent {
         let cell_member = row.getCell(MAP.intitulé).value?.toString() || '';
         let member = this.retrieve_member(row.number, cell_member);
         if (member === null) {
-          console.log('member not found', row.number);
+          console.log('%s member not found at row %s ',cell_member, row.number);
           return operation;
         } else {
           operation.member = member.lastname + ' ' + member.firstname;
@@ -436,9 +455,8 @@ export class ImportExcelComponent {
 
   clear_db() {
     this.verbose.set(this.verbose() + 'raz de la base de données ');
-    this.bookService.clear_book_entries$(this.current_season).subscribe((response) => {
-      // console.log('response', response);
-      this.verbose.set(this.verbose() + '... effectuée \n');
+    this.bookService.book_entries_bulk_delete$(this.current_season).subscribe((nbr) => {
+      this.verbose.set(this.verbose() + '...' + nbr + ' écritures supprimées \n');
     });
   }
 }

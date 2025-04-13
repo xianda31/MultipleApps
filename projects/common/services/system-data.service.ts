@@ -4,6 +4,7 @@ import { BehaviorSubject, catchError, from, map, Observable, of, switchMap, tap 
 import { Balance_sheet, Liquidities } from '../accounting.interface';
 import { FileService } from './files.service';
 import { formatDate } from '@angular/common';
+import { ToastService } from '../toaster/toast.service';
 
 
 
@@ -14,7 +15,8 @@ export class SystemDataService {
   private _system_configuration !: SystemConfiguration;
   private _system_configuration$: BehaviorSubject<SystemConfiguration> = new BehaviorSubject(this._system_configuration);
   constructor(
-    private fileService: FileService
+    private fileService: FileService,
+    private toastService: ToastService,
 
   ) { }
 
@@ -52,7 +54,13 @@ export class SystemDataService {
     return this.get_balance_history().pipe(
       map((balance_sheets: Balance_sheet[]) => {
         let prev_balance_sheet = balance_sheets.find((sheet) => sheet.season === this.previous_season(season));
-        return prev_balance_sheet ? prev_balance_sheet.liquidities : { cash: 0, bank: 0, savings: 0 };
+        if (prev_balance_sheet === undefined) {
+          this.toastService.showWarningToast('historique','Aucune donnée disponible pour la saison ' + season);
+          return { cash: 0, bank: 0, savings: 0 };
+        }else {
+
+          return  prev_balance_sheet.liquidities ;
+        }
       }),
     );
   }

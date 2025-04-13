@@ -40,8 +40,8 @@ export class BooksListComponent {
     });
   }
 
-  total_amounts(entry: BookEntry): number {
-    return Object.values(entry.amounts).reduce((a, b) => a + b, 0);
+  total_amount(entry: BookEntry): number {
+    return this.bookService.get_total_amount(entry);
   }
 
 
@@ -88,8 +88,8 @@ export class BooksListComponent {
           break;
         case 'montant':
           this.book_entries.sort((a, b) => {
-            if (this.total_amounts(a) < this.total_amounts(b)) return -this.sort_directions[criteria];
-            if (this.total_amounts(a) > this.total_amounts(b)) return this.sort_directions[criteria];
+            if (this.bookService.get_total_amount(a) < this.bookService.get_total_amount(b)) return -this.sort_directions[criteria];
+            if (this.bookService.get_total_amount(a) > this.bookService.get_total_amount(b)) return this.sort_directions[criteria];
             return 0;
           });
           break

@@ -36,7 +36,7 @@
             <td *ngIf="first" [rowSpan]="entry.operations.length"> {{entry.date | date: 'dd/MM'}} </td>
             <td>{{operation.member ? operation.member : operation.label}}</td>
             <td>{{operation.values | json}}</td>
-            <td *ngIf="first" [rowSpan]="entry.operations.length" class="text-end pe-3"> {{total_amounts(entry) |
+            <td *ngIf="first" [rowSpan]="entry.operations.length" class="text-end pe-3"> {{total_amount(entry) |
               number:truncature:'fr'}}
             </td>
             <td *ngIf="first" [rowSpan]="entry.operations.length"> {{entry.tag}} </td>

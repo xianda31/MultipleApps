@@ -107,7 +107,7 @@ export class FileService {
 
 
 
-  get_file_url(obj: any): SafeResourceUrl {
+  json_to_blob(obj: any): SafeResourceUrl {
     const json = JSON.stringify(obj);
     const blob = new Blob([json], { type: 'text/plain' });
     return this.sanitizer.bypassSecurityTrustResourceUrl(window.URL.createObjectURL(blob));

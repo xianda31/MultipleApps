@@ -174,27 +174,7 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
     cheque: 'none',
   },
 
-  // C. depense pour adhérent ****
-  // ****  CLASS = EXPENS_FOR_MEMBER ****
-
-  // émission d'avoir à un adhérent
-  [ENTRY_TYPE.asset_emit]: {
-    label: 'attribution d\'avoir(s) nominatif(s)',
-    class: BOOK_ENTRY_CLASS.EXPENSE_FOR_MEMBER,
-    financial_accounts: [],
-    optional_accounts: [{ key: CUSTOMER_ACCOUNT.ASSET_credit, label: 'Avoir', description: 'valeur de l\'avoir attribué' }],
-    financial_accounts_to_charge: [CUSTOMER_ACCOUNT.ASSET_credit],
-    nominative: true,
-    pure_financial: false,
-    is_of_profit_type: false,
-    require_deposit_ref: false,
-    cash: 'none',
-    cheque: 'none',
-  },
-
-
-
-  // D. reception groupée de fond de tiers  ****
+  // C. reception groupée de fond de tiers  ****
   // ****  CLASS = OTHER_REVENUE ****
 
   // dépot de fonds en espèces
@@ -225,7 +205,21 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
     cash: 'none',
     cheque: 'none',
   },
-  // E.  mouvements de fonds ****
+    // interet de l'épargne
+    [ENTRY_TYPE.saving_interest]: {
+      label: 'INTERÊT D\'ÉPARGNE',
+      class: BOOK_ENTRY_CLASS.OTHER_REVENUE,
+      financial_accounts: financial_debits,
+      financial_accounts_to_charge: [FINANCIAL_ACCOUNT.SAVING_debit],
+      nominative: false,
+      pure_financial: false,
+      is_of_profit_type: true,
+      require_deposit_ref: false,
+      cash: 'none',
+      cheque: 'none',
+    },
+
+  // D.  mouvements de fonds ****
   // ****  CLASS = MOVEMENT ****
 
   // dépot d'espèces (de la caisse) en banque
@@ -284,13 +278,16 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
     cheque: 'none',
   },
 
-  // E. opérations spécifiques bilan
-  // ****  CLASS = BALANCE_SHEET ****
 
-  [ENTRY_TYPE.asset_forwarding]: {
-    label: 'report d\'avoir',
-    class: BOOK_ENTRY_CLASS.BALANCE,
-    financial_accounts: [{ key: BALANCE_ACCOUNT.BAL_debit, label: 'report_in', description: 'passif' }],
+
+  // E depense pour adhérent ****
+  // ****  CLASS = EXPENS_FOR_MEMBER ****
+
+  // émission d'avoir à un adhérent
+  [ENTRY_TYPE.asset_emit]: {
+    label: 'attribution d\'avoir(s) nominatif(s)',
+    class: BOOK_ENTRY_CLASS.EXPENSE_FOR_MEMBER,
+    financial_accounts: [],
     optional_accounts: [{ key: CUSTOMER_ACCOUNT.ASSET_credit, label: 'Avoir', description: 'valeur de l\'avoir attribué' }],
     financial_accounts_to_charge: [CUSTOMER_ACCOUNT.ASSET_credit],
     nominative: true,
@@ -300,35 +297,8 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
     cash: 'none',
     cheque: 'none',
   },
-  // report d'encours paiement par chèque d'une prestation ou service
-  [ENTRY_TYPE.cheque_forwarding]: {
-    label: 'report de chèque',
-    class: BOOK_ENTRY_CLASS.BALANCE,
-    financial_accounts: [...balance_sheet_accounts, ...financial_credits],
-    financial_accounts_to_charge: [BALANCE_ACCOUNT.BAL_debit, FINANCIAL_ACCOUNT.BANK_credit],
-    // optional_accounts: balance_sheet_accounts,
-    nominative: false,
-    pure_financial: true,
-    is_of_profit_type: false,
-    require_deposit_ref: false,
-    cash: 'none',
-    cheque: 'out',
-  },
-  [ENTRY_TYPE.debt_forwarding]: {
-    label: 'report de dette',
-    class: BOOK_ENTRY_CLASS.BALANCE,
-    financial_accounts: [...balance_sheet_accounts, ...financial_credits],
-    financial_accounts_to_charge: [BALANCE_ACCOUNT.BAL_debit, CUSTOMER_ACCOUNT.DEBT_credit],
-    // optional_accounts: balance_sheet_accounts,
-    nominative: true,
-    pure_financial: true,
-    is_of_profit_type: false,
-    require_deposit_ref: false,
-    cash: 'none',
-    cheque: 'none',
-  },
 
-  // F. achat , dépenses
+ // F. achat , dépenses
   // ****  CLASS = EXPENSE ****
 
   // achat en espèces d'une prestation ou service
@@ -399,6 +369,51 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
     cheque: 'none',
   },
 
+  // G. opérations spécifiques bilan
+  // ****  CLASS = BALANCE_SHEET ****
+
+  [ENTRY_TYPE.asset_forwarding]: {
+    label: 'report d\'avoir',
+    class: BOOK_ENTRY_CLASS.BALANCE,
+    financial_accounts: [{ key: BALANCE_ACCOUNT.BAL_debit, label: 'report_in', description: 'passif' }],
+    optional_accounts: [{ key: CUSTOMER_ACCOUNT.ASSET_credit, label: 'Avoir', description: 'valeur de l\'avoir attribué' }],
+    financial_accounts_to_charge: [CUSTOMER_ACCOUNT.ASSET_credit],
+    nominative: true,
+    pure_financial: false,
+    is_of_profit_type: false,
+    require_deposit_ref: false,
+    cash: 'none',
+    cheque: 'none',
+  },
+  // report d'encours paiement par chèque d'une prestation ou service
+  [ENTRY_TYPE.cheque_forwarding]: {
+    label: 'report de chèque',
+    class: BOOK_ENTRY_CLASS.BALANCE,
+    financial_accounts: [...balance_sheet_accounts, ...financial_credits],
+    financial_accounts_to_charge: [BALANCE_ACCOUNT.BAL_debit, FINANCIAL_ACCOUNT.BANK_credit],
+    // optional_accounts: balance_sheet_accounts,
+    nominative: false,
+    pure_financial: true,
+    is_of_profit_type: false,
+    require_deposit_ref: false,
+    cash: 'none',
+    cheque: 'out',
+  },
+  [ENTRY_TYPE.debt_forwarding]: {
+    label: 'report de dette',
+    class: BOOK_ENTRY_CLASS.BALANCE,
+    financial_accounts: [...balance_sheet_accounts, ...financial_credits],
+    financial_accounts_to_charge: [BALANCE_ACCOUNT.BAL_debit, CUSTOMER_ACCOUNT.DEBT_credit],
+    // optional_accounts: balance_sheet_accounts,
+    nominative: true,
+    pure_financial: true,
+    is_of_profit_type: false,
+    require_deposit_ref: false,
+    cash: 'none',
+    cheque: 'none',
+  },
+
+ 
 
 
 }

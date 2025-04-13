@@ -20,7 +20,7 @@ export class SysConfComponent {
 
   systemFormGroup!: FormGroup;
   loaded!: boolean;
-  fileUrl: any;
+  export_file_url: any;
 
   constructor(
     private systemDataService: SystemDataService,
@@ -76,7 +76,7 @@ export class SysConfComponent {
   ngOnInit(): void {
     this.systemDataService.get_configuration().subscribe((configuration) => {
       this.loadDataInFormGroup(configuration);
-      this.fileUrl = this.fileService.get_file_url(configuration);
+      this.export_file_url = this.fileService.json_to_blob(configuration);
       this.loaded = true;
     });
   }

@@ -21,12 +21,19 @@ import { threedigitsPipe } from '../../../../common/pipes/three_digits.pipe';
   styleUrl: './bank-reconciliation.component.scss'
 })
 export class BankReconciliationComponent {
+  truncature = '1.2-2';// '1.2-2';  //
 
   current_season!: string;
   initial_liquidities: Liquidities = { cash: 0, bank: 0, savings: 0 };
   bank_book_entries: BookEntry[] = [];
-  bank_accounts = Object.values(Bank_accounts) as FINANCIAL_ACCOUNT[];
-  bank_reports: string[] = [];
+  // bank_accounts = Object.values(Bank_accounts).slice().reverse() as FINANCIAL_ACCOUNT[];
+  bank_accounts : FINANCIAL_ACCOUNT[] = [
+     FINANCIAL_ACCOUNT.BANK_credit,
+     FINANCIAL_ACCOUNT.BANK_debit,
+    // [FINANCIAL_ACCOUNT.SAVING_debit]: 'saving_in',
+    // [FINANCIAL_ACCOUNT.SAVING_credit]: 'saving_out',
+];
+    bank_reports: string[] = [];
 
   constructor(
     private bookService: BookService,
@@ -51,7 +58,11 @@ export class BankReconciliationComponent {
       .subscribe(([liquidities, book_entries]) => {
         this.initial_liquidities = liquidities;
         console.log('initial_liquidities', this.initial_liquidities);
-        this.bank_book_entries = book_entries.filter(book_entry => this.bank_accounts.some(op => book_entry.amounts[op] !== undefined));
+        this.bank_book_entries = book_entries
+        .filter(book_entry => this.bank_accounts.some(op => book_entry.amounts[op] !== undefined))
+        .sort((a, b) => {
+          return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
+        });;
       });
   }
 

@@ -12,21 +12,12 @@
           <h5> bilan de l'exercice </h5>
         </div>
         <div class="col-auto">
-          <select [(ngModel)]="selected_season" (ngModelChange)="select_sheet()" type="text" class="form-control"
+          <select [(ngModel)]="selected_season" (ngModelChange)="select_season()" type="text" class="form-control"
             placeholder="saison">
             <option *ngFor="let season of seasons" [value]="season" [selected]="season === selected_season">
               {{season}}
             </option>
           </select>
-        </div>
-        <div *ngIf="selected_season === current_season" class="col-auto">
-          <button class="btn btn-outline-success btn-sm" (click)="update_balance_sheet_figures()">
-            <i class="fs-5 bi-gear"></i>
-          </button>
-
-          <button class="btn btn-outline-success btn-sm" (click)="to_next_balance_sheet()">
-            <i class="fs-5 bi-check-circle-fill"></i>
-          </button>
         </div>
         <div class="col mx-auto">&#8205;</div>
         <div class="col-auto">
@@ -41,7 +32,7 @@
             <i class=" bi-file-earmark-arrow-down-fill"></i>
             import.txt</button>
           <input #fileInput type="file" style="display:none" class="form-control form-control-sm text-end"
-            (change)="onInput($event)">
+            (change)="file_import($event)">
         </div>
         <div class="col-auto">
           <button class=" btn btn-outline-success btn-sm" (click)="save_balance_sheets()">
@@ -236,6 +227,23 @@
         </div>
       </div>
     </div>
+    <div class="card-footer">
+      <div *ngIf="selected_season === current_season" class="row">
+        <div class="col-auto">
+          update figures
+          <button class="btn btn-outline-success btn-sm" (click)="update_balance_sheet_figures()">
+            <i class="fs-5 bi-gear"></i>
+          </button>
+        </div>
+        <div class="col-auto">
+          initialisation de nouvelle saison 
+          <button class="btn btn-outline-success btn-sm" (click)="to_next_balance_sheet()">
+            <i class="fs-5 bi-check-circle-fill"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 <ng-template #trend let-value="value">

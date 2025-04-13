@@ -124,7 +124,7 @@ export class BalanceComponent {
         this.current_season = conf.season;
         this.balance_sheets = balance_sheets.sort((a, b) => b.season.localeCompare(a.season));
         this.seasons = this.balance_sheets.map((sheet) => sheet.season);
-        this.select_sheet();
+        this.select_season();
         this.bookService.list_book_entries$(conf.season).subscribe((entries) => {
           this.book_entries = entries;
           this.update_balance_sheet_figures();
@@ -136,15 +136,17 @@ export class BalanceComponent {
 
   }
 
-  previous_season(season: string) {
-    return (+season.slice(0, 4) - 1).toString() + '-' + (+season.slice(0, 4)).toString();
-  }
+  // previous_season(season: string) {
+  //   return (+season.slice(0, 4) - 1).toString() + '/' + (+season.slice(0, 4)).toString();
+  // }
 
-  select_sheet() {
+  select_season() {
     this.current_balance_sheet = this.balance_sheets.find((sheet) => sheet.season === this.selected_season) ?? this.create_balance_sheet(this.selected_season);
-    this.prev_balance_sheet = this.balance_sheets.find((sheet) => sheet.season === this.previous_season(this.selected_season)) ?? this.create_balance_sheet(this.previous_season(this.previous_season(this.selected_season)));
-
-    this.fileUrl = this.fileService.get_file_url(this.balance_sheets);
+    this.prev_balance_sheet = this.balance_sheets.find((sheet) => sheet.season === this.systemDataService.previous_season(this.selected_season)) ?? this.create_balance_sheet(this.systemDataService.previous_season(this.systemDataService.previous_season(this.selected_season)));
+    if(this.current_balance_sheet === undefined) {
+      this.toatService.showErrorToast('erreur', 'saison précédente non trouvée dans l\'historique');
+    }
+    this.fileUrl = this.fileService.json_to_blob(this.balance_sheets);
     // this.other_seasons = this.seasons.filter((season) => season !== this.selected_season);
   }
 
@@ -169,13 +171,13 @@ export class BalanceComponent {
     this.systemDataService.save_balance_history(this.balance_sheets);
   }
 
-  async onInput(event: any) {
+  async file_import(event: any) {
     const file = event.target.files[0];
     if (file) {
       const text = await file.text();
       try {
         this.balance_sheets = JSON.parse(text);
-        this.select_sheet();
+        this.select_season();
         this.toatService.showSuccessToast('fichier de configuration chargé', 'les données sont prêtes à être enregistrées');
       } catch (error) {
         console.error('error', error);
@@ -190,7 +192,7 @@ export class BalanceComponent {
 
     // 0. raz eventuelles données pré-existantes
 
-    this.bookService.clear_book_entries$(next_season);
+    this.bookService.book_entries_bulk_delete$(next_season);
 
 
 

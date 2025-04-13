@@ -51,19 +51,31 @@ export class BookService {
 
   // CRUD(L) BookEntry
 
-  bulk_create_book_entries$(book_entries: BookEntry[]): Observable<any> {
+  book_entries_bulk_create$(book_entries: BookEntry[]): Observable<number> {
 
-    // TODO : workaround for thge fact that no former subscribe has yet initialised this._book_entries
-    // if (!this._book_entries) {
-    //   this._book_entries = [] as BookEntry[];
-    // }
-    // book_entries initialized by app component
-    let observables: Observable<any>[] = [];
-    observables = book_entries.map(
-      (book_entry) => {
-        return from(this.create_book_entry(book_entry));
-      });
-    return combineLatest(observables);
+    // const createBookEntries = async (book_entries: BookEntry[]) => {
+    const client = generateClient<Schema>();
+
+    const promises = book_entries.map(book_entry => {
+      let jsonified_entry: BookEntry_input = this.jsonified_entry(book_entry);
+      const { id, ...jsonified_entry_without_id } = jsonified_entry;
+      return client.models.BookEntry.create(jsonified_entry_without_id);
+    });
+
+
+    return from(Promise.all(promises)).pipe(
+      map((json_created_entries) => {
+        const created_entries = json_created_entries.map((json) => this.parsed_entry(json as unknown as BookEntry_output));
+        this._book_entries = this._book_entries.concat(created_entries);
+        this._book_entries = this._book_entries.sort((b, a) => { return a.date.localeCompare(b.date); });
+        this._book_entries$.next(this._book_entries);
+        return created_entries.length;
+      }),
+      catchError((error) => {
+        console.error('Error creating book entries:', error);
+        return of(0);
+      })
+    );
   }
 
   async create_book_entry(book_entry: BookEntry) {
@@ -155,7 +167,9 @@ export class BookService {
     const fetchBookentries = async () => {
       const client = generateClient<Schema>();
       const { data, errors } = await client.models.BookEntry.list({
-        filter: { season: { eq: season } }
+        filter: { season: { eq: season } },
+        limit: 1000,
+        nextToken: null,
       });
       if (errors) {
         console.error(errors);
@@ -187,37 +201,72 @@ export class BookService {
     return this._book_entries ? this._book_entries$.asObservable() : remote_load$;
   }
 
-  clear_book_entries$(season: string): Observable<any> {
+  book_entries_bulk_delete$(season: string): Observable<number> {
 
-    const fetchBookentries = async (season: string) => {
-      const client = generateClient<Schema>();
-      const { data, errors } = await client.models.BookEntry.list({
-        filter: { season: { eq: season } }
-      });
-      if (errors) {
-        console.error(errors);
-        throw new Error(JSON.stringify(errors));
-      }
-      return data as unknown as BookEntry_output[];
-    };
-
-    const deleteBookentries = async (entries: BookEntry_output[]) => {
-      const client = generateClient<Schema>();
-      const promises = entries.map(entry => client.models.BookEntry.delete({ id: entry.id }));
-      return Promise.all(promises);
-    };
-
-    return from(fetchBookentries(season)).pipe(
-      switchMap((entries) => deleteBookentries(entries)),
-      tap((response) => {
-        if (response.some((res) => res.errors)) {
-          console.error('error', response);
-          throw new Error(JSON.stringify(response));
+    const fetchBookentriesIds = async (_season: string) => {
+      try {
+        const client = generateClient<Schema>();
+        let token: any = null;
+        let nbloops = 0;
+        let entriesIds: string[] = [];
+        do {
+          const { data, nextToken, errors } = await client.models.BookEntry.list({
+            filter: { season: { eq: _season } },
+            limit: 100,   // this is the default value anyway
+            nextToken: token,
+          });
+          if (errors) {
+            console.error(errors);
+            throw new Error(JSON.stringify(errors));
+          }
+          let json_entries: BookEntry[] = data as unknown as BookEntry_output[];
+          entriesIds = [...entriesIds, ...json_entries.map((entry) => this.parsed_entry(entry as unknown as BookEntry_output).id)];
+          // console.log('fetchBookEntries return : %s entries i.e. %s', entriesIds.length, nextToken === null ? 'completed' : 'to continue ..');
+          token = nextToken;
+        } while (token !== null && nbloops++ < 10); // 10 loops max to avoid infinite loop
+        if (token !== null) {
+          this.toastService.showWarningToast('base comptabilité', 'beaucoup trop d\'entrées à supprimer , veuillez répeter l\'opération');
         }
-        this._book_entries = this._book_entries.filter((entry) => entry.season !== season); // remove all entries from the season
+
+        return entriesIds;
+      }
+      catch (error) {
+        console.error('error', error);
+        throw new Error(error instanceof Error ? error.message : String(error));
+      }
+    };
+
+    const deleteBookentries = async (ids: string[]): Promise<BookEntry[]> => {
+      const client = generateClient<Schema>();
+      const promises = ids.map(id => {
+        return client.models.BookEntry.delete({ id: id })
+      });
+
+      return Promise.all(promises).then(results => {
+        return results.map(result => {
+          if (result.errors) {
+            throw new Error(JSON.stringify(result.errors));
+          }
+          return this.parsed_entry(result.data as unknown as BookEntry_output);
+        });
+      });
+    };
+
+    return from(fetchBookentriesIds(season)).pipe(
+      switchMap((ids) => from(deleteBookentries(ids))),
+      tap((deleted_entries) => {
+        deleted_entries.forEach((deleted_entry) => {
+          this._book_entries = this._book_entries.filter((entry) => entry.id !== deleted_entry.id); // remove 
+        });
         this._book_entries$.next(this._book_entries);
-        return "deltion of `${season}' records completed";
-      })
+      }),
+      map((deleted_entries) => {
+        return deleted_entries.length;
+      }),
+      catchError((error) => {
+        throw Error('Error deleting book entries:' + error);
+      }
+      )
     );
 
   }
@@ -439,6 +488,7 @@ export class BookService {
     }
       , 0));
   }
+
   sum_values(values: { [key: string]: number }): number {
     return Object.values(values).reduce((acc, value) => acc + value, 0);
   }
@@ -509,6 +559,13 @@ export class BookService {
     } else {
       return this.get_expenses().reduce((acc, expense) => acc + (expense.values[key] ? expense.values[key] : 0), 0);
     }
+  }
+
+  get_total_amount(entry: BookEntry): number {
+    let _in = Object.entries(entry.amounts).reduce((acc, [key, value]: [string, number]) => acc + (key.includes('in') ? value : 0), 0);
+    let _out = Object.entries(entry.amounts).reduce((acc, [key, value]: [string, number]) => acc + (key.includes('out') ? value : 0), 0);
+
+    return (_in === 0) ? _out : _in;
   }
 
   get_profit_and_loss_result(): number {

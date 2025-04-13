@@ -11,24 +11,41 @@
         <div ngbAccordionItem [collapsed]="!last" *ngFor="let bank_report of bank_reports ;  let last = last">
           <div ngbAccordionHeader>
             <button ngbAccordionButton>
-              <table class="w-75">
+
+              <div class="row w-100 justify-content-start align-items-center">
+                <div class="col-5 text-start"> 
+                  <b>
+                    relevé de banque n° {{bank_report}}
+                    <span class="text-muted small ">
+                      (compte épargne :
+                      {{balance(bank_report).savings| threedigits}} €)
+                    </span>
+                  </b>
+                </div>
+                <div class="col-5 text-center">
+                  <b>compte courant : {{balance(bank_report).bank | threedigits}} €</b>
+                </div>
+              </div>
+
+              <!-- <table class="w-75">
                 <thead>
                   <tr>
                     <th class="col-4">Relevé </th>
-                    <th class="col-3 text-center"> compte courant : </th>
                     <th class="col-3 text-center"> compte épargne : </th>
+                    <th class="col-3 text-center"> compte courant : </th>
                   </tr>
                 </thead>
                 <tbody class="fw-bold">
                   <tr>
                     <td> relevé de banque n° {{bank_report}}</td>
-                    <td class="text-center"><b>{{balance(bank_report).bank | threedigits}} €</b>
-                    </td>
                     <td class="text-center"> <b>{{balance(bank_report).savings| threedigits}} €</b>
+                    </td>
+                    <td class="text-center"><b>{{balance(bank_report).bank | threedigits}} €</b>
                     </td>
                   </tr>
                 </tbody>
-              </table>
+              </table>  -->
+
             </button>
           </div>
           <div ngbAccordionCollapse>
@@ -57,9 +74,10 @@
     <thead>
       <tr>
         <th class="col-1">Date </th>
-        <th class="col-3">opération </th>
-        <!-- <th class="col-1 text-start">n° chèque </th> -->
-        <th class="col text-center" *ngFor="let account of bank_accounts ">{{account}} </th>
+        <th class="col-4">opération </th>
+        <!-- <th class="col text-center" *ngFor="let account of bank_accounts ">{{account}} </th> -->
+        <th class="col-2 text-center">Débit </th>
+        <th class="col-2 text-center">Crédit</th>
         <th class="col-2 text-end ">{{bank_report ? bank_report : 'relevé'}}</th>
         <th class="col-1 "> </th>
       </tr>
@@ -70,11 +88,14 @@
 
         <tr *ngIf="book_entry.bank_report === bank_report">
           <td>{{book_entry.date | date: 'dd/MM/yyyy'}}</td>
-          <td>{{transaction_label(book_entry.bank_op_type)}}
-            {{book_entry.cheque_ref}} {{book_entry.deposit_ref}}</td>
-          <td *ngFor=" let account of bank_accounts " class="text-center">
+          <td>
+            {{transaction_label(book_entry.bank_op_type)}}
+             {{book_entry.deposit_ref}}</td>
+             <td class="col-2 text-center">{{book_entry.amounts['bank_out'] ? (book_entry.amounts['bank_out'] | number: truncature) : '' }}</td>
+          <td class="col-2 text-center">{{book_entry.amounts['bank_in'] ? (book_entry.amounts['bank_in'] | number:truncature) : ''}}</td>
+          <!-- <td *ngFor=" let account of bank_accounts " class="text-center">
             {{book_entry.amounts[account] }}
-          </td>
+          </td> -->
           <td class="col-2 text-end">
             <div *ngIf="bank_report !== null" class="form-check form-switch form-check-inline">
               <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault"
@@ -98,11 +119,11 @@
     </tbody>
     <tfoot class="table-group-divider">
       <tr class="table-light">
-        <td colspan="2">totaux</td>
-        <td class="text-center"> {{movement_in(bank_report).bank | threedigits}} </td>
-        <td class="text-center"> {{movement_out(bank_report).bank | threedigits}} </td>
-        <td class="text-center"> {{movement_in(bank_report).savings | threedigits}} </td>
-        <td class="text-center"> {{movement_out(bank_report).savings | threedigits}} </td>
+        <td colspan="2">totaux &nbsp;{{bank_report}}</td>
+        <td class="col-2 text-center"> {{movement_out(bank_report).bank | number:truncature:'fr' }} </td>
+        <td class="col-2 text-center"> {{movement_in(bank_report).bank | number:truncature:'fr'}} </td>
+        <!-- <td class="text-center"> {{movement_in(bank_report).savings | threedigits}} </td>
+        <td class="text-center"> {{movement_out(bank_report).savings | threedigits}} </td> -->
         <td colspan="2"> </td>
 
       </tr>

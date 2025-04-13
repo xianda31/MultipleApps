@@ -12,6 +12,7 @@ export enum ENTRY_TYPE {
   cheque_deposit = 'cheque_deposit',
   saving_deposit = 'saving_deposit',
   saving_withdraw = 'saving_withdraw',
+  saving_interest = 'saving_interest',
   asset_emit = 'asset_emit',
   cash_emit = 'cash_emit',
   cheque_emit = 'cheque_emit',
