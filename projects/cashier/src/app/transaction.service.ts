@@ -30,7 +30,7 @@ get_transaction(entry_type: ENTRY_TYPE): Transaction {
   if (check) {
     return TRANSACTIONS[entry_type];
   } else {
-    this.toastService.showErrorToast('service transaction', `transaction ${entry_type} not found`);
+    this.toastService.showErrorToast('écriture comptable corrompue', `transaction " ${entry_type} " inconnue`);
     throw new Error(`transaction ${entry_type} not found`);
   }
 }

@@ -255,7 +255,7 @@ export class BooksEditorComponent {
     // form.deposit_ref change handler
     this.form.controls['deposit_ref'].valueChanges.subscribe((deposit_ref) => {
       if (!this.creation) {
-        if (this.form.controls['op_type'].value === ENTRY_TYPE.cheque_deposit) {
+        if (this.form.controls['op_type'].value === ENTRY_TYPE.dépôt_caisse_chèques) {
           this.deposit_ref_changed = true;
         }
       };
@@ -435,8 +435,8 @@ export class BooksEditorComponent {
   }
 
   negative_number_acceptable(bookEntry: BookEntry): boolean {
-    // true if bank_op_type = cash_receipt or all numbers are positive
-    if (bookEntry.bank_op_type === ENTRY_TYPE.cash_receipt) return true;
+    // true if bank_op_type = vente_en_espèces or all numbers are positive
+    if (bookEntry.bank_op_type === ENTRY_TYPE.vente_en_espèces) return true;
     let negative = false;
     Object.entries(bookEntry.amounts).forEach(([key, amount]: [string, number]) => {
       if (amount < 0) negative = true;
@@ -520,7 +520,7 @@ export class BooksEditorComponent {
 
         if (booking.deposit_ref !== null
           && booking.deposit_ref !== this.selected_book_entry.deposit_ref
-          && booking.bank_op_type === ENTRY_TYPE.cheque_deposit) {
+          && booking.bank_op_type === ENTRY_TYPE.dépôt_caisse_chèques) {
           this.bookService.update_deposit_refs(this.selected_book_entry.deposit_ref!, booking.deposit_ref!);
         }
 

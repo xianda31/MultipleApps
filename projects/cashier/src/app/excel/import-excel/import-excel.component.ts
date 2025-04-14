@@ -274,31 +274,31 @@ throw new Error('Method not implemented.');
 
         switch (nature) {
           case 'versement espèces':
-            return ENTRY_TYPE.cash_raising;
+            return ENTRY_TYPE.dépôt_collecte_espèces;
           case 'versement chèques':
-            return ENTRY_TYPE.cheques_raising;
+            return ENTRY_TYPE.dépôt_collecte_chèques;
           case 'remise espèces':
-            return ENTRY_TYPE.cash_deposit;
+            return ENTRY_TYPE.dépôt_caisse_espèces;
           case 'remise chèques':
-            return ENTRY_TYPE.cheque_deposit;
+            return ENTRY_TYPE.dépôt_caisse_chèques;
           case 'chèque émis':
-            return ENTRY_TYPE.cheque_emit;
+            return ENTRY_TYPE.dépense_par_chèque;
           case 'virement reçu':
-            return ENTRY_TYPE.transfer_receipt;
+            return ENTRY_TYPE.vente_par_virement;
           case 'virement emis':
-            return ENTRY_TYPE.transfer_emit;
+            return ENTRY_TYPE.dépense_par_virement;
           case 'prélèvement':
-            return ENTRY_TYPE.bank_debiting;
+            return ENTRY_TYPE.dépense_par_prélèvement;
           case 'carte':
-            return ENTRY_TYPE.card_payment;
+            return ENTRY_TYPE.dépense_par_carte;
           case 'versement compte épargne':
-            return ENTRY_TYPE.saving_deposit;
+            return ENTRY_TYPE.virement_banque_vers_épargne;
             case 'versement épargne':
-            return ENTRY_TYPE.saving_deposit;
+            return ENTRY_TYPE.virement_banque_vers_épargne;
             case 'retrait épargne':
-            return ENTRY_TYPE.saving_withdraw;
+            return ENTRY_TYPE.retrait_épargne_vers_banque;
           case 'intérêts':
-            return ENTRY_TYPE.saving_interest;
+            return ENTRY_TYPE.intérêt_épargne;
           default:
             console.log('erreur de nature', nature);
             return null
@@ -308,11 +308,11 @@ throw new Error('Method not implemented.');
 
         switch (nature) {
           case 'virement reçu':
-            return ENTRY_TYPE.payment_by_transfer;
+            return ENTRY_TYPE.achat_adhérent_par_virement;
           case 'paiement par chèque':
-            return ENTRY_TYPE.payment_by_cheque;
+            return ENTRY_TYPE.achat_adhérent_par_chèque;
           case 'paiement en espèces':
-            return ENTRY_TYPE.payment_in_cash;
+            return ENTRY_TYPE.achat_adhérent_en_espèces;
           default:
             console.log('erreur de nature', nature);
             return null
@@ -322,9 +322,9 @@ throw new Error('Method not implemented.');
 
         switch (nature) {
           case 'espèces':
-            return ENTRY_TYPE.cash_receipt;
+            return ENTRY_TYPE.vente_en_espèces;
           // case 'erreur caisse':
-          //   return ENTRY_TYPE.cash_emit;
+          //   return ENTRY_TYPE.dépense_en_espèces;
           default:
             console.log('erreur de nature', nature);
             return null

@@ -514,7 +514,7 @@ export class BookService {
       amounts: amounts,
       operations: [operation],
       class: BOOK_ENTRY_CLASS.OTHER_REVENUE,
-      bank_op_type: ENTRY_TYPE.cash_receipt,
+      bank_op_type: ENTRY_TYPE.vente_en_espèces,
     };
     return this.create_book_entry(entry);
   }

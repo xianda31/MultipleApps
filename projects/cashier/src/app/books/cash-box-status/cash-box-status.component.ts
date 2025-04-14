@@ -96,7 +96,7 @@ export class CashBoxStatusComponent {
       season: this.season,
       date: new Date().toISOString().split('T')[0],
       class: BOOK_ENTRY_CLASS.MOVEMENT,
-      bank_op_type: ENTRY_TYPE.cash_deposit,
+      bank_op_type: ENTRY_TYPE.dépôt_caisse_espèces,
       amounts: {
         [FINANCIAL_ACCOUNT.CASHBOX_credit]: amount,
         [FINANCIAL_ACCOUNT.BANK_debit]: amount
@@ -135,16 +135,16 @@ export class CashBoxStatusComponent {
     });
     // création du mouvement de dépôt si _CHEQUES_FIRST_IN_CASHBOX
     if (_CHEQUES_FIRST_IN_CASHBOX) {
-      this.create_cheque_deposit_entry(ref.value.amount, ref.value.new_ref);
+      this.create_dépôt_caisse_chèques_entry(ref.value.amount, ref.value.new_ref);
     }
   }
 
-  create_cheque_deposit_entry(value: number, ref: string) {
-    let cheque_deposit: BookEntry = {
+  create_dépôt_caisse_chèques_entry(value: number, ref: string) {
+    let dépôt_caisse_chèques: BookEntry = {
       season: this.season,
       date: new Date().toISOString().split('T')[0],
       class: BOOK_ENTRY_CLASS.MOVEMENT,
-      bank_op_type: ENTRY_TYPE.cheque_deposit,
+      bank_op_type: ENTRY_TYPE.dépôt_caisse_chèques,
       amounts: {
         [FINANCIAL_ACCOUNT.CASHBOX_credit]: value,
         [FINANCIAL_ACCOUNT.BANK_debit]: value
@@ -153,7 +153,7 @@ export class CashBoxStatusComponent {
       operations: [],
       id: ''
     }
-    this.bookService.create_book_entry(cheque_deposit);
+    this.bookService.create_book_entry(dépôt_caisse_chèques);
   }
 
 

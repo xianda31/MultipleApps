@@ -215,7 +215,7 @@ export class BalanceComponent {
         season: next_season,
         date: this.systemDataService.closout_date(this.selected_season),
         class: BOOK_ENTRY_CLASS.BALANCE,
-        bank_op_type: ENTRY_TYPE.asset_forwarding,
+        bank_op_type: ENTRY_TYPE.report_avoir,
         amounts: { [BALANCE_ACCOUNT.BAL_debit]: total },
         operations: operations,
       };
@@ -226,7 +226,7 @@ export class BalanceComponent {
     }
 
     // B. report des chèques non encaissés
-    this.book_entries.filter((entry) => ((entry.bank_op_type === ENTRY_TYPE.cheque_forwarding) || (entry.bank_op_type === ENTRY_TYPE.cheque_emit)) && entry.bank_report === null)
+    this.book_entries.filter((entry) => ((entry.bank_op_type === ENTRY_TYPE.report_chèque) || (entry.bank_op_type === ENTRY_TYPE.dépense_par_chèque)) && entry.bank_report === null)
       .forEach((entry) => {
         let amount = entry.amounts[FINANCIAL_ACCOUNT.BANK_credit];
         if (!amount) throw Error('montant du chèque non défini !?!?')
@@ -237,7 +237,7 @@ export class BalanceComponent {
           season: next_season,
           date: this.systemDataService.closout_date(this.selected_season),
           class: BOOK_ENTRY_CLASS.BALANCE,
-          bank_op_type: ENTRY_TYPE.cheque_forwarding,
+          bank_op_type: ENTRY_TYPE.report_chèque,
           amounts: { [FINANCIAL_ACCOUNT.BANK_credit]: amount },
           cheque_ref: entry.cheque_ref,
           operations: [{ label: label, values: { [BALANCE_ACCOUNT.BAL_debit]: amount } }],
@@ -265,7 +265,7 @@ export class BalanceComponent {
         season: next_season,
         date: this.systemDataService.closout_date(this.selected_season),
         class: BOOK_ENTRY_CLASS.BALANCE,
-        bank_op_type: ENTRY_TYPE.debt_forwarding,
+        bank_op_type: ENTRY_TYPE.report_dette,
         amounts: { [BALANCE_ACCOUNT.BAL_credit]: total },
         operations: operations,
       };

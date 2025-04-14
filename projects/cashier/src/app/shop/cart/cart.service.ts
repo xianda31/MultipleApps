@@ -172,17 +172,17 @@ export class CartService {
 
   payment_mode2bank_op_type(payment_mode: PaymentMode): ENTRY_TYPE {
     if (payment_mode === PaymentMode.CREDIT) {
-      return ENTRY_TYPE.payment_in_cash;
+      return ENTRY_TYPE.achat_adhérent_en_espèces;
     }
 
     if (payment_mode === PaymentMode.CHEQUE) {
-      return ENTRY_TYPE.payment_by_cheque;
+      return ENTRY_TYPE.achat_adhérent_par_chèque;
     } else {
       if (payment_mode === PaymentMode.TRANSFER) {
-        return ENTRY_TYPE.payment_by_transfer;
+        return ENTRY_TYPE.achat_adhérent_par_virement;
       }
     }
-    return ENTRY_TYPE.payment_in_cash;
+    return ENTRY_TYPE.achat_adhérent_en_espèces;
   }
 
   payments2cheque_ref(payment: Payment): string {
