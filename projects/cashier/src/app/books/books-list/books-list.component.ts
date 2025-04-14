@@ -5,7 +5,8 @@ import { Router } from '@angular/router';
 import { BookEntry } from '../../../../../common/accounting.interface';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { BookService } from '../../book.service';
-import { Class_descriptions, get_transaction } from '../../../../../common/transaction.definition';
+import { Class_descriptions, Transaction} from '../../../../../common/transaction.definition';
+import { TransactionService } from '../../transaction.service';
 
 type Fields = 'date' | 'classe' | 'transaction' | 'montant' | 'tag'
 @Component({
@@ -24,6 +25,7 @@ export class BooksListComponent {
 
   constructor(
     private bookService: BookService,
+    private transactionService: TransactionService,
     private systemDataService: SystemDataService,
     private router: Router,
 
@@ -115,7 +117,7 @@ export class BooksListComponent {
   // }
 
   transaction_label(book_entry: BookEntry): string {
-    let transaction = get_transaction(book_entry.bank_op_type);
+    let transaction = this.transactionService.get_transaction(book_entry.bank_op_type);
     if (transaction === undefined) {
       console.log('oops , there is a problem', book_entry);
       return '???';

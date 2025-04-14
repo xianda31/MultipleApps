@@ -308,21 +308,6 @@ export class BookService {
       }, [] as Revenue[]);
   }
 
-  // list_revenues_from_members$(): Observable<Revenue[]> {
-  //   return this._book_entries$.pipe(
-  //     map(book_entries => book_entries.filter(book_entry => book_entry.class === BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER)
-  //       .reduce((acc, book_entry) => {
-  //         const revenues = book_entry.operations
-  //           .map(op => ({
-  //             ...op,
-  //             season: book_entry.season,
-  //             date: book_entry.date,
-  //             id: book_entry.id,
-  //           } as Revenue));
-  //         return [...acc, ...revenues];
-  //       }, [] as Revenue[]))
-  //   );
-  // }
 
   get_revenues_from_members(): Revenue[] {
     return this._book_entries

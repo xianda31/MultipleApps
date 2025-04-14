@@ -5,7 +5,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { Router } from '@angular/router';
-import { get_transaction } from '../../../../../common/transaction.definition';
+import { TransactionService } from '../../transaction.service';
 
 interface EntryValue { total: number, entries: BookEntry[] };
 @Component({
@@ -46,6 +46,7 @@ export class BooksOverviewComponent {
 
   constructor(
     private bookService: BookService,
+    private transactionService: TransactionService,
     private systemDataService: SystemDataService,
     private router: Router,
   ) { }
@@ -83,7 +84,7 @@ export class BooksOverviewComponent {
   // utilities
 
   transaction_label(op_type: ENTRY_TYPE): string {
-    return get_transaction(op_type).label;
+    return this.transactionService.get_transaction(op_type).label;
   }
 
 

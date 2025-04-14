@@ -1,7 +1,7 @@
 export enum ENTRY_TYPE {
   payment_in_cash = 'payment_in_cash',
   payment_by_cheque = 'payment_by_cheque',
-  payment_on_credit = 'payment_on_credit',
+  // payment_on_credit = 'payment_on_credit',
   payment_by_transfer = 'payment_by_transfer',
   cash_receipt = 'cash_receipt',
   cheque_receipt = 'cheque_receipt',

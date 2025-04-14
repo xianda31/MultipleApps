@@ -32,13 +32,13 @@ export const financial_credits: Account_def[] = [
   { key: FINANCIAL_ACCOUNT.SAVING_credit, label: 'Epargne_out', description: ' ' },
 
 ]
-export const customer_assets: Account_def[] = [
+export const customer_options: Account_def[] = [
   { key: CUSTOMER_ACCOUNT.ASSET_debit, label: '-AVOIR', description: 'déduction d\'un avoir' },
   { key: CUSTOMER_ACCOUNT.DEBT_credit, label: '+DETTE', description: 'remboursement d\'une dette' },
+  { key: CUSTOMER_ACCOUNT.DEBT_debit, label: 'CREDIT', description: 'montant du"crédit"' },
 ]
-export const customer_debt: Account_def[] = [
-  { key: CUSTOMER_ACCOUNT.ASSET_debit, label: '-Avoir', description: 'utilisation d\'un avoir' },
-  { key: CUSTOMER_ACCOUNT.DEBT_debit, label: 'DETTE', description: 'montant du"crédit"' },
+export const customer_asset_credit: Account_def[] = [
+  { key: CUSTOMER_ACCOUNT.ASSET_credit, label: 'AVOIR', description: 'attribution bon d\'achat' },
 ]
 
 export const balance_sheet_accounts: Account_def[] = [
@@ -79,7 +79,7 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
     label: 'paiement en espèces',
     class: BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER,
     financial_accounts: financial_debits,
-    optional_accounts: customer_assets,
+    optional_accounts: customer_options,
     financial_accounts_to_charge: [FINANCIAL_ACCOUNT.CASHBOX_debit],
     nominative: true,
     pure_financial: false,
@@ -93,7 +93,7 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
     label: 'paiement par chèque',
     class: BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER,
     financial_accounts: financial_debits,
-    optional_accounts: customer_assets,
+    optional_accounts: customer_options,
     financial_accounts_to_charge: _CHEQUES_FIRST_IN_CASHBOX ? [FINANCIAL_ACCOUNT.CASHBOX_debit] : [FINANCIAL_ACCOUNT.BANK_debit],
     nominative: true,
     pure_financial: false,
@@ -103,25 +103,25 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
     cheque: 'in',
   },
   // vente à crédit (créance) à un adhérent
-  [ENTRY_TYPE.payment_on_credit]: {
-    label: 'paiement à \"crédit\"',
-    class: BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER,
-    financial_accounts: [],
-    optional_accounts: customer_debt,
-    financial_accounts_to_charge: [CUSTOMER_ACCOUNT.DEBT_debit],
-    nominative: true,
-    pure_financial: false,
-    is_of_profit_type: true,
-    require_deposit_ref: false,
-    cash: 'none',
-    cheque: 'none',
-  },
+  // [ENTRY_TYPE.payment_on_credit]: {
+  //   label: 'paiement à \"crédit\"',
+  //   class: BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER,
+  //   financial_accounts: financial_debits,
+  //   optional_accounts: customer_debt,
+  //   financial_accounts_to_charge: [CUSTOMER_ACCOUNT.DEBT_debit],
+  //   nominative: true,
+  //   pure_financial: false,
+  //   is_of_profit_type: true,
+  //   require_deposit_ref: false,
+  //   cash: 'none',
+  //   cheque: 'none',
+  // },
   // paiement par virement d'un adhérent
   [ENTRY_TYPE.payment_by_transfer]: {
     label: 'VIREMENT EN NOTRE FAVEUR',
     class: BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER,
     financial_accounts: financial_debits,
-    optional_accounts: customer_assets,
+    optional_accounts: customer_options,
     financial_accounts_to_charge: [FINANCIAL_ACCOUNT.BANK_debit],
     nominative: true,
     pure_financial: false,
@@ -288,7 +288,7 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
     label: 'attribution d\'avoir(s) nominatif(s)',
     class: BOOK_ENTRY_CLASS.EXPENSE_FOR_MEMBER,
     financial_accounts: [],
-    optional_accounts: [{ key: CUSTOMER_ACCOUNT.ASSET_credit, label: 'Avoir', description: 'valeur de l\'avoir attribué' }],
+    optional_accounts: customer_asset_credit,
     financial_accounts_to_charge: [CUSTOMER_ACCOUNT.ASSET_credit],
     nominative: true,
     pure_financial: false,
@@ -420,23 +420,23 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
 
 
 
-export function class_to_types(op_class: BOOK_ENTRY_CLASS): ENTRY_TYPE[] {
-  let check = Object.values(BOOK_ENTRY_CLASS).includes(op_class);
-  if (check) {
-    return Object.entries(TRANSACTIONS)
-      .filter(([key, transaction]) => transaction.class === op_class)
-      .map(([key, transaction]) => key as ENTRY_TYPE);
-  } else {
-    console.log('%s n\'est pas une clef de %s', op_class, JSON.stringify(Object.entries(BOOK_ENTRY_CLASS)));
-    throw new Error(`class ${op_class} not found`);
-  }
-}
+// export function class_to_types(op_class: BOOK_ENTRY_CLASS): ENTRY_TYPE[] {
+//   let check = Object.values(BOOK_ENTRY_CLASS).includes(op_class);
+//   if (check) {
+//     return Object.entries(TRANSACTIONS)
+//       .filter(([key, transaction]) => transaction.class === op_class)
+//       .map(([key, transaction]) => key as ENTRY_TYPE);
+//   } else {
+//     console.log('%s n\'est pas une clef de %s', op_class, JSON.stringify(Object.entries(BOOK_ENTRY_CLASS)));
+//     throw new Error(`class ${op_class} not found`);
+//   }
+// }
 
-export function get_transaction(entry_type: ENTRY_TYPE): Transaction {
-  let check = Object.keys(TRANSACTIONS).includes(entry_type);
-  if (check) {
-    return TRANSACTIONS[entry_type];
-  } else {
-    throw new Error(`transaction ${entry_type} not found`);
-  }
-}
+// export function get_transaction(entry_type: ENTRY_TYPE): Transaction {
+//   let check = Object.keys(TRANSACTIONS).includes(entry_type);
+//   if (check) {
+//     return TRANSACTIONS[entry_type];
+//   } else {
+//     throw new Error(`transaction ${entry_type} not found`);
+//   }
+// }

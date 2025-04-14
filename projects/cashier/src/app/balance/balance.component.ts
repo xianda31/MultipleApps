@@ -8,7 +8,6 @@ import { combineLatest, forkJoin, switchMap, tap } from 'rxjs';
 import { BookService } from '../book.service';
 import { FileService } from '../../../../common/services/files.service';
 import { ParenthesisPipe } from '../../../../common/pipes/parenthesis.pipe';
-import { get_transaction } from '../../../../common/transaction.definition';
 
 @Component({
   selector: 'app-balance',

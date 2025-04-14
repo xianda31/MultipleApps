@@ -4,13 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { Bank_accounts, BookEntry, ENTRY_TYPE, FINANCIAL_ACCOUNT, Liquidities } from '../../../../common/accounting.interface';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 import { BookService } from '../book.service';
-import { get_transaction } from '../../../../common/transaction.definition';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { Router } from '@angular/router';
 import { ToastService } from '../../../../common/toaster/toast.service';
 import { tap, switchMap, combineLatest } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { threedigitsPipe } from '../../../../common/pipes/three_digits.pipe';
+import { TransactionService } from '../transaction.service';
 
 @Component({
   selector: 'app-bank-reconciliation',
@@ -37,6 +37,7 @@ export class BankReconciliationComponent {
 
   constructor(
     private bookService: BookService,
+    private transactionService: TransactionService,
     private router: Router,
     private ToastService: ToastService,
     private systemDataService: SystemDataService,
@@ -70,11 +71,11 @@ export class BankReconciliationComponent {
   // utilities
 
   transaction_label(op_type: ENTRY_TYPE): string {
-    return get_transaction(op_type).label;
+    return this.transactionService.get_transaction(op_type).label;
   }
 
   book_label(book_entry: BookEntry): string {
-    let transaction = get_transaction(book_entry.bank_op_type);
+    let transaction = this.transactionService.get_transaction(book_entry.bank_op_type);
     if (transaction.require_deposit_ref) {
       return book_entry.deposit_ref!;
     } else {

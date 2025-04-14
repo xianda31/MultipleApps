@@ -8,7 +8,8 @@ import { BookService } from '../../book.service';
 import { CommonModule, formatDate } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
-import { get_transaction, Transaction } from '../../../../../common/transaction.definition';
+import {  Transaction } from '../../../../../common/transaction.definition';
+import { TransactionService } from '../../transaction.service';
 
 @Component({
   selector: 'app-import-excel',
@@ -39,6 +40,7 @@ throw new Error('Method not implemented.');
 
   constructor(
     private bookService: BookService,
+    private transactionService: TransactionService,
     private membersService: MembersService,
     private systemDataService: SystemDataService,
   ) {
@@ -190,7 +192,7 @@ throw new Error('Method not implemented.');
         reject('erreur de nature ' + cell_nature);
         return;
       }
-      let transaction = get_transaction(bank_op_type)
+      let transaction = this.transactionService.get_transaction(bank_op_type)
 
       let book_entry: BookEntry = {
         season: this.systemDataService.get_season(new Date(date)),

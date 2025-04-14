@@ -11,9 +11,9 @@ import { BookEntry, Revenue, Session } from '../../../../common/accounting.inter
 import { BookService } from '../book.service';
 import { CartComponent } from "./cart/cart.component";
 import { ProductService } from '../../../../common/services/product.service';
-import { get_transaction } from '../../../../common/transaction.definition';
 import { SystemConfiguration } from '../../../../common/system-conf.interface';
 import { SystemDataService } from '../../../../common/services/system-data.service';
+import { TransactionService } from '../transaction.service';
 
 
 @Component({
@@ -50,6 +50,7 @@ export class ShopComponent {
     private membersService: MembersService,
     private toastService: ToastService,
     private bookService: BookService,
+    private transactionService: TransactionService,
     private productService: ProductService,
     private systemDataService: SystemDataService
   ) {
@@ -164,7 +165,7 @@ export class ShopComponent {
   payment_type(revenue: Revenue): string {
     let book_entry = this.book_entries.find((entry) => entry.id === revenue.book_entry_id);
     if (!book_entry) throw new Error('sale not found');
-    return get_transaction(book_entry.bank_op_type).label;
+    return this.transactionService.get_transaction(book_entry.bank_op_type).label;
   }
 
 

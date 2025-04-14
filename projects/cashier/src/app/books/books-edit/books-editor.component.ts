@@ -7,12 +7,13 @@ import { BookEntry, operation_values, BOOK_ENTRY_CLASS, Operation, FINANCIAL_ACC
 import { Bank } from '../../../../../common/system-conf.interface';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { ToastService } from '../../../../../common/toaster/toast.service';
-import { Transaction, get_transaction, class_to_types, Account_def, Class_descriptions } from '../../../../../common/transaction.definition';
+import { Transaction,  Account_def, Class_descriptions } from '../../../../../common/transaction.definition';
 import { MembersService } from '../../../../../admin-dashboard/src/app/members/service/members.service';
 import { Member } from '../../../../../common/member.interface';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { TransactionService } from '../../transaction.service';
 
 interface Operation_initial_values {
   optional_accounts?: string[];
@@ -69,6 +70,7 @@ export class BooksEditorComponent {
   constructor(
     private fb: FormBuilder,
     private bookService: BookService,
+    private transactionService: TransactionService,
     private systemDataService: SystemDataService,
     private membersService: MembersService,
     private toastService: ToastService,
@@ -157,8 +159,8 @@ export class BooksEditorComponent {
 
     // console.log('chargement de :', book_entry);
 
-    this.transaction = get_transaction(book_entry.bank_op_type);
-    this.op_types = class_to_types(book_entry.class);
+    this.transaction = this.transactionService.get_transaction(book_entry.bank_op_type);
+    this.op_types = this.transactionService.class_to_types(book_entry.class);
 
     this.financial_accounts = this.transaction.financial_accounts;
 
@@ -216,13 +218,13 @@ export class BooksEditorComponent {
     // form.op_class change handler
     this.form.controls['op_class'].valueChanges.subscribe((op_class) => {
       this.transaction = undefined!;
-      this.op_types = class_to_types(op_class);
+      this.op_types = this.transactionService.class_to_types(op_class);
       this.financial_accounts_locked = true;
     });
 
     // form.op_type change handler
     this.form.controls['op_type'].valueChanges.subscribe((op_type) => {
-      this.transaction = get_transaction(op_type);
+      this.transaction = this.transactionService.get_transaction(op_type);
 
       // initialisation form operations si en mode création
 
@@ -389,7 +391,7 @@ export class BooksEditorComponent {
   onSubmit() {
     let operations: Operation[] = [];
     let amounts: { [key: string]: number } = {};
-    let transaction = get_transaction(this.op_type);
+    let transaction = this.transactionService.get_transaction(this.op_type);
 
     // constructions des montants
 
@@ -451,7 +453,7 @@ export class BooksEditorComponent {
   book_entry_balanced(bookEntry: BookEntry): boolean {
     let total_profit_and_loss = 0;
     let total_financial = 0;
-    let transaction = get_transaction(bookEntry.bank_op_type);
+    let transaction = this.transactionService.get_transaction(bookEntry.bank_op_type);
 
     Object.entries(bookEntry.amounts).forEach(([key, amount]: [string, number]) => {
       if (key.endsWith('_in')) total_financial += amount;
@@ -578,20 +580,20 @@ export class BooksEditorComponent {
   }
 
   transaction_label(op_type: ENTRY_TYPE): string {
-    return get_transaction(op_type).label;
+    return this.transactionService.get_transaction(op_type).label;
   }
   transaction_with_cheque(op_type: ENTRY_TYPE): boolean {
-    return get_transaction(op_type).cheque !== 'none';
+    return this.transactionService.get_transaction(op_type).cheque !== 'none';
   }
   transaction_with_cheque_in(op_type: ENTRY_TYPE): boolean {
-    return (get_transaction(op_type).cheque === 'in');
+    return (this.transactionService.get_transaction(op_type).cheque === 'in');
   }
   transaction_with_cheque_out(op_type: ENTRY_TYPE): boolean {
-    return (get_transaction(op_type).cheque === 'out');
+    return (this.transactionService.get_transaction(op_type).cheque === 'out');
   }
 
   transaction_with_deposit(op_type: ENTRY_TYPE): boolean {
-    return get_transaction(op_type).require_deposit_ref;
+    return this.transactionService.get_transaction(op_type).require_deposit_ref;
   }
 
   parse_to_string(value: number): string {

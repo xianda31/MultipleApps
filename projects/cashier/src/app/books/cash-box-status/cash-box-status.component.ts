@@ -3,9 +3,10 @@ import { BookEntry, ENTRY_TYPE, BOOK_ENTRY_CLASS, FINANCIAL_ACCOUNT } from '../.
 import { BookService } from '../../book.service';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { _CHEQUE_IN_ACCOUNT, _CHEQUES_FIRST_IN_CASHBOX, get_transaction } from '../../../../../common/transaction.definition';
+import { _CHEQUE_IN_ACCOUNT, _CHEQUES_FIRST_IN_CASHBOX} from '../../../../../common/transaction.definition';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { Bank } from '../../../../../common/system-conf.interface';
+import { TransactionService } from '../../transaction.service';
 
 @Component({
   selector: 'app-cash-box-status',
@@ -32,6 +33,7 @@ export class CashBoxStatusComponent {
 
   constructor(
     private bookService: BookService,
+    private transactionService: TransactionService,
     private systemDataService: SystemDataService,
     private fb: FormBuilder
   ) { }
@@ -49,7 +51,7 @@ export class CashBoxStatusComponent {
 
         // filtre les chèques à déposer
         this.cheques_for_deposit = book_entries
-          .filter(book_entry => get_transaction(book_entry.bank_op_type).cheque === 'in')
+          .filter(book_entry => this.transactionService.get_transaction(book_entry.bank_op_type).cheque === 'in')
           .filter(book_entry => book_entry.cheque_ref !== undefined && (book_entry.deposit_ref === '' || book_entry.deposit_ref === null));
 
         // calcule le montant total des chèques à déposer & le liquide disponible
@@ -63,7 +65,7 @@ export class CashBoxStatusComponent {
         // énumère les bordereaux de dépot chèque en temp_
         this.temp_refs.clear();
         this.book_entries
-          .filter(book_entry => get_transaction(book_entry.bank_op_type).cheque === 'in')
+          .filter(book_entry => this.transactionService.get_transaction(book_entry.bank_op_type).cheque === 'in')
           .forEach(book_entry => {
             if (book_entry.deposit_ref && book_entry.deposit_ref.startsWith('temp_')) {
               this.temp_refs.set(book_entry.deposit_ref, {

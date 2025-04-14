@@ -172,7 +172,7 @@ export class CartService {
 
   payment_mode2bank_op_type(payment_mode: PaymentMode): ENTRY_TYPE {
     if (payment_mode === PaymentMode.CREDIT) {
-      return ENTRY_TYPE.payment_on_credit;
+      return ENTRY_TYPE.payment_in_cash;
     }
 
     if (payment_mode === PaymentMode.CHEQUE) {
