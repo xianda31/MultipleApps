@@ -76,8 +76,8 @@ export class BooksListComponent {
           break;
         case 'classe':
           this.book_entries.sort((a, b) => {
-            if (a.class < b.class) return -this.sort_directions[criteria];
-            if (a.class > b.class) return this.sort_directions[criteria];
+            if (this.class_label(a) < this.class_label(b)) return -this.sort_directions[criteria];
+            if (this.class_label(a) > this.class_label(b)) return this.sort_directions[criteria];
             return 0;
           });
           break;
@@ -108,7 +108,7 @@ export class BooksListComponent {
 
 
   // in_out(book_entry: BookEntry): boolean {
-  //   let transaction = get_transaction(book_entry.bank_op_type);
+  //   let transaction = get_transaction(book_entry.transaction);
   //   if (transaction === undefined) {
   //     console.log('oops , there is a problem', book_entry);
   //     return false;
@@ -117,13 +117,23 @@ export class BooksListComponent {
   // }
 
   transaction_label(book_entry: BookEntry): string {
-    let transaction = this.transactionService.get_transaction(book_entry.bank_op_type);
+    let transaction = this.transactionService.get_transaction(book_entry.transaction);
     if (transaction === undefined) {
       console.log('oops , there is a problem', book_entry);
       return '???';
     }
     return transaction.label;
   }
+
+  class_label(book_entry: BookEntry): string {
+    let transaction = this.transactionService.get_transaction(book_entry.transaction);
+    if (transaction === undefined) {
+      console.log('oops , there is a problem', book_entry);
+      return '???';
+    }
+    return transaction.class;
+  }
+
 
   show_book_entry(book_entry_id: string) {
     this.router.navigate(['/books/editor', book_entry_id]);

@@ -3,7 +3,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { Cart, CartItem, Payment, PaymentMode, SALE_ACCOUNTS } from './cart.interface';
 import { Member } from '../../../../../common/member.interface';
 import { BookService } from '../../book.service';
-import { ENTRY_TYPE, bank_values, BookEntry, operation_values, Operation, BOOK_ENTRY_CLASS, Session, FINANCIAL_ACCOUNT, CUSTOMER_ACCOUNT } from '../../../../../common/accounting.interface';
+import { TRANSACTION_ENUM, bank_values, BookEntry, operation_values, Operation, TRANSACTION_CLASS, Session, FINANCIAL_ACCOUNT, CUSTOMER_ACCOUNT } from '../../../../../common/accounting.interface';
 import { Product } from '../../../../../admin-dashboard/src/app/sales/products/product.interface';
 import { FeesEditorService } from '../../fees/fees-editor/fees-editor.service';
 
@@ -15,6 +15,7 @@ export class CartService {
   private _cart: Cart = { items: [], debt: null, asset: null, buyer_name: '' };
   private _payment!: Payment;
   private _cart$: BehaviorSubject<Cart> = new BehaviorSubject<Cart>(this._cart);
+  private seller: string = '';
 
   constructor(
     private bookService: BookService,
@@ -67,6 +68,10 @@ export class CartService {
     this._cart$.next(this._cart);
   }
 
+  setSeller(seller_name: string): void {
+    this.seller = seller_name;
+  }
+
   getCartAmount(): number {
     // console.log('getCartAmount', this._cart.debt, this._cart.asset);
     return this._cart.items.reduce((total, item) => total + item.paied, 0) + (this._cart.debt?.amount || 0) - (this._cart.asset?.amount || 0);
@@ -83,15 +88,15 @@ export class CartService {
       const sale: BookEntry = {
         ...session,
         id: '',
-        bank_op_type: this.payment_mode2bank_op_type(this._payment.mode),
-        class: BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER,
+        transaction: this.payment_mode2bank_op_type(this._payment.mode),
+        // class: TRANSACTION_CLASS.REVENUE_FROM_MEMBER,
         amounts: this.payments2fValue(this._payment.mode),
         operations: this.cart2Operations(),
         cheque_ref: this.payments2cheque_ref(this._payment),
       };
       let bank_op_type = this.payment_mode2bank_op_type(this._payment.mode);
       if (bank_op_type) {
-        sale.bank_op_type = bank_op_type;
+        sale.transaction = bank_op_type;
       }
 
       this.bookService.create_book_entry(sale)
@@ -159,7 +164,7 @@ export class CartService {
         op_values[CUSTOMER_ACCOUNT.DEBT_debit] = this.getCartAmount();
       }
       let operation = {
-        label: 'vente adhérent',
+        label: 'vendu par ' + this.seller,  
         member: payee,
         values: op_values,
       };
@@ -170,19 +175,19 @@ export class CartService {
     return operations;
   }
 
-  payment_mode2bank_op_type(payment_mode: PaymentMode): ENTRY_TYPE {
+  payment_mode2bank_op_type(payment_mode: PaymentMode): TRANSACTION_ENUM {
     if (payment_mode === PaymentMode.CREDIT) {
-      return ENTRY_TYPE.achat_adhérent_en_espèces;
+      return TRANSACTION_ENUM.achat_adhérent_en_espèces;
     }
 
     if (payment_mode === PaymentMode.CHEQUE) {
-      return ENTRY_TYPE.achat_adhérent_par_chèque;
+      return TRANSACTION_ENUM.achat_adhérent_par_chèque;
     } else {
       if (payment_mode === PaymentMode.TRANSFER) {
-        return ENTRY_TYPE.achat_adhérent_par_virement;
+        return TRANSACTION_ENUM.achat_adhérent_par_virement;
       }
     }
-    return ENTRY_TYPE.achat_adhérent_en_espèces;
+    return TRANSACTION_ENUM.achat_adhérent_en_espèces;
   }
 
   payments2cheque_ref(payment: Payment): string {

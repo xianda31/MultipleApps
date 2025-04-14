@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
 import { generateClient } from 'aws-amplify/api';
 
-import { BookEntry, Revenue, FINANCIAL_ACCOUNT, Expense, BOOK_ENTRY_CLASS, CUSTOMER_ACCOUNT, ENTRY_TYPE, bank_values, Operation, Liquidity } from '../../../common/accounting.interface';
+import { BookEntry, Revenue, FINANCIAL_ACCOUNT, Expense, TRANSACTION_CLASS, CUSTOMER_ACCOUNT, TRANSACTION_ENUM, bank_values, Operation, Liquidity } from '../../../common/accounting.interface';
 import { Schema } from '../../../../amplify/data/resource';
 import { BehaviorSubject, catchError, combineLatest, from, map, Observable, of, switchMap, tap } from 'rxjs';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { ToastService } from '../../../common/toaster/toast.service';
+import { TransactionService } from './transaction.service';
 
 type BookEntry_input = Schema['BookEntry']['type'];
 type BookEntry_output = BookEntry & {
@@ -21,7 +22,8 @@ export class BookService {
   private _book_entries$ = new BehaviorSubject<BookEntry[]>(this._book_entries);
   constructor(
     private systemDataService: SystemDataService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private transactionService: TransactionService,
   ) { }
 
   jsonified_entry(entry: BookEntry): BookEntry_input {
@@ -107,7 +109,7 @@ export class BookService {
     try {
       const response = await client.models.BookEntry.get(
         { id: entry_id },
-        { selectionSet: ['id', 'season', 'tag', 'date', 'amounts', 'operations.*', 'class', 'bank_op_type', 'cheque_ref', 'deposit_ref', 'bank_report'] }
+        { selectionSet: ['id', 'season', 'tag', 'date', 'amounts', 'operations.*',  'transaction', 'cheque_ref', 'deposit_ref', 'bank_report'] }
       );
       if (response.errors) {
         console.error('error', response.errors);
@@ -294,7 +296,7 @@ export class BookService {
 
   get_revenues(): Revenue[] {
     return this._book_entries
-      .filter(book_entry => book_entry.class === BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER || book_entry.class === BOOK_ENTRY_CLASS.OTHER_REVENUE)
+      .filter(book_entry => [TRANSACTION_CLASS.OTHER_REVENUE,TRANSACTION_CLASS.REVENUE_FROM_MEMBER].includes( this.transactionService.transaction_to_class(book_entry.transaction)) )
       .reduce((acc, book_entry) => {
         const revenues = book_entry.operations
           .map(op => ({
@@ -311,8 +313,8 @@ export class BookService {
 
   get_revenues_from_members(): Revenue[] {
     return this._book_entries
-      .filter(book_entry => book_entry.class === BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER)
-      .reduce((acc, book_entry) => {
+    .filter(book_entry => [TRANSACTION_CLASS.REVENUE_FROM_MEMBER].includes( this.transactionService.transaction_to_class(book_entry.transaction)) )
+    .reduce((acc, book_entry) => {
         const revenues = book_entry.operations
           .map(op => ({
             ...op,
@@ -454,7 +456,7 @@ export class BookService {
 
   get_expenses(): Expense[] {
     return this._book_entries
-      .filter(book_entry => book_entry.class === BOOK_ENTRY_CLASS.OTHER_EXPENSE || book_entry.class === BOOK_ENTRY_CLASS.EXPENSE_FOR_MEMBER)
+      .filter(book_entry => [TRANSACTION_CLASS.OTHER_EXPENSE ,TRANSACTION_CLASS.EXPENSE_FOR_MEMBER].includes(this.transactionService.transaction_to_class(book_entry.transaction) ))
       .reduce((acc, book_entry) => {
         const expenses = book_entry.operations
           .map(op => ({
@@ -513,8 +515,8 @@ export class BookService {
       date: date,
       amounts: amounts,
       operations: [operation],
-      class: BOOK_ENTRY_CLASS.OTHER_REVENUE,
-      bank_op_type: ENTRY_TYPE.vente_en_espèces,
+      // class: TRANSACTION_CLASS.OTHER_REVENUE,
+      transaction: TRANSACTION_ENUM.vente_en_espèces,
     };
     return this.create_book_entry(entry);
   }

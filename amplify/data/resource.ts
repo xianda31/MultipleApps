@@ -21,8 +21,8 @@ const schema = a.schema({
     amounts: a.json().required(),
     operations: a.ref('Operation').array().required(),
 
-    class: a.string().required(),
-    bank_op_type: a.string().required(),
+    // class: a.string().required(),
+    transaction: a.string().required(),
     cheque_ref: a.string(),
     deposit_ref: a.string(),
     bank_report: a.string(),

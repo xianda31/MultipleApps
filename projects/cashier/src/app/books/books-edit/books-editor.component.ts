@@ -3,7 +3,7 @@ import { Component, ViewEncapsulation } from '@angular/core';
 import { Location } from '@angular/common';
 import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { BookService } from '../../book.service';
-import { BookEntry, operation_values, BOOK_ENTRY_CLASS, Operation, FINANCIAL_ACCOUNT, ENTRY_TYPE, CUSTOMER_ACCOUNT } from '../../../../../common/accounting.interface';
+import { BookEntry, operation_values, TRANSACTION_CLASS, Operation, FINANCIAL_ACCOUNT, TRANSACTION_ENUM, CUSTOMER_ACCOUNT } from '../../../../../common/accounting.interface';
 import { Bank } from '../../../../../common/system-conf.interface';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { ToastService } from '../../../../../common/toaster/toast.service';
@@ -49,9 +49,9 @@ export class BooksEditorComponent {
   financial_accounts !: Account_def[];
   optional_accounts !: Account_def[];
 
-  op_types !: ENTRY_TYPE[];
+  op_types !: TRANSACTION_ENUM[];
 
-  transaction_classes = Object(BOOK_ENTRY_CLASS);
+  transaction_classes = Object(TRANSACTION_CLASS);
   class_descriptions = Object(Class_descriptions);
 
   form!: FormGroup;
@@ -159,16 +159,16 @@ export class BooksEditorComponent {
 
     // console.log('chargement de :', book_entry);
 
-    this.transaction = this.transactionService.get_transaction(book_entry.bank_op_type);
-    this.op_types = this.transactionService.class_to_types(book_entry.class);
+    this.transaction = this.transactionService.get_transaction(book_entry.transaction);
+    // this.op_types = this.transactionService.class_to_types(book_entry.class);
 
     this.financial_accounts = this.transaction.financial_accounts;
 
     this.form.patchValue({
       id: book_entry.id,
       date: book_entry.date,
-      op_class: book_entry.class,
-      op_type: book_entry.bank_op_type,
+      op_class: this.transactionService.transaction_to_class(book_entry.transaction),
+      op_type: book_entry.transaction,
       tag: book_entry.tag,
       bank_name: book_entry.cheque_ref?.slice(0, 3),
       cheque_number: book_entry.cheque_ref?.slice(3),
@@ -255,7 +255,7 @@ export class BooksEditorComponent {
     // form.deposit_ref change handler
     this.form.controls['deposit_ref'].valueChanges.subscribe((deposit_ref) => {
       if (!this.creation) {
-        if (this.form.controls['op_type'].value === ENTRY_TYPE.dépôt_caisse_chèques) {
+        if (this.form.controls['op_type'].value === TRANSACTION_ENUM.dépôt_caisse_chèques) {
           this.deposit_ref_changed = true;
         }
       };
@@ -436,7 +436,7 @@ export class BooksEditorComponent {
 
   negative_number_acceptable(bookEntry: BookEntry): boolean {
     // true if bank_op_type = vente_en_espèces or all numbers are positive
-    if (bookEntry.bank_op_type === ENTRY_TYPE.vente_en_espèces) return true;
+    if (bookEntry.transaction === TRANSACTION_ENUM.vente_en_espèces) return true;
     let negative = false;
     Object.entries(bookEntry.amounts).forEach(([key, amount]: [string, number]) => {
       if (amount < 0) negative = true;
@@ -453,7 +453,7 @@ export class BooksEditorComponent {
   book_entry_balanced(bookEntry: BookEntry): boolean {
     let total_profit_and_loss = 0;
     let total_financial = 0;
-    let transaction = this.transactionService.get_transaction(bookEntry.bank_op_type);
+    let transaction = this.transactionService.get_transaction(bookEntry.transaction);
 
     Object.entries(bookEntry.amounts).forEach(([key, amount]: [string, number]) => {
       if (key.endsWith('_in')) total_financial += amount;
@@ -486,12 +486,12 @@ export class BooksEditorComponent {
       season: this.systemDataService.get_season(new Date(this.form.controls['date'].value)),
       date: this.form.controls['date'].value,
       id: this.form.controls['id'].value,
-      bank_op_type: this.form.controls['op_type'].value,
+      transaction: this.form.controls['op_type'].value,
       cheque_ref: this.form.controls['bank_name'].value?.toString() + this.form.controls['cheque_number'].value?.toString(),
       deposit_ref: this.form.controls['deposit_ref'].value ?? undefined,
       tag: this.form.controls['tag'].value ?? undefined,
       amounts: amounts,
-      class: this.form.controls['op_class'].value,
+      // class: this.form.controls['op_class'].value,
       operations: operations
     };
 
@@ -520,7 +520,7 @@ export class BooksEditorComponent {
 
         if (booking.deposit_ref !== null
           && booking.deposit_ref !== this.selected_book_entry.deposit_ref
-          && booking.bank_op_type === ENTRY_TYPE.dépôt_caisse_chèques) {
+          && booking.transaction === TRANSACTION_ENUM.dépôt_caisse_chèques) {
           this.bookService.update_deposit_refs(this.selected_book_entry.deposit_ref!, booking.deposit_ref!);
         }
 
@@ -551,10 +551,10 @@ export class BooksEditorComponent {
   // getters
 
 
-  get op_type(): ENTRY_TYPE {
+  get op_type(): TRANSACTION_ENUM {
     return this.form.get('op_type')?.value;
   }
-  get op_class(): BOOK_ENTRY_CLASS {
+  get op_class(): TRANSACTION_CLASS {
     return this.form.get('op_class')?.value;
   }
   get operations(): FormArray {
@@ -579,20 +579,20 @@ export class BooksEditorComponent {
     return transaction.is_of_profit_type ? this.products_accounts : this.expenses_accounts;
   }
 
-  transaction_label(op_type: ENTRY_TYPE): string {
+  transaction_label(op_type: TRANSACTION_ENUM): string {
     return this.transactionService.get_transaction(op_type).label;
   }
-  transaction_with_cheque(op_type: ENTRY_TYPE): boolean {
+  transaction_with_cheque(op_type: TRANSACTION_ENUM): boolean {
     return this.transactionService.get_transaction(op_type).cheque !== 'none';
   }
-  transaction_with_cheque_in(op_type: ENTRY_TYPE): boolean {
+  transaction_with_cheque_in(op_type: TRANSACTION_ENUM): boolean {
     return (this.transactionService.get_transaction(op_type).cheque === 'in');
   }
-  transaction_with_cheque_out(op_type: ENTRY_TYPE): boolean {
+  transaction_with_cheque_out(op_type: TRANSACTION_ENUM): boolean {
     return (this.transactionService.get_transaction(op_type).cheque === 'out');
   }
 
-  transaction_with_deposit(op_type: ENTRY_TYPE): boolean {
+  transaction_with_deposit(op_type: TRANSACTION_ENUM): boolean {
     return this.transactionService.get_transaction(op_type).require_deposit_ref;
   }
 

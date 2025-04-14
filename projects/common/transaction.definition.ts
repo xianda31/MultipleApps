@@ -1,10 +1,10 @@
-import { FINANCIAL_ACCOUNT, BOOK_ENTRY_CLASS, ENTRY_TYPE, CUSTOMER_ACCOUNT, BALANCE_ACCOUNT } from './accounting.interface';
+import { FINANCIAL_ACCOUNT, TRANSACTION_CLASS, TRANSACTION_ENUM, CUSTOMER_ACCOUNT, BALANCE_ACCOUNT } from './accounting.interface';
 
 
 // choix de configuration Majeur !!!
 // le dépôt de chèques peut se fait d'abord dans la caisse ou directement dans le compte bancaire ....
 // si _CHEQUES_FIRST_IN_CASHBOX = true, les chèques sont d'abord déposés dans la caisse
-// // puis tranferrés dans le compte bancaire => une transaction[ENTRY_TYPE.dépôt_caisse_chèques] est alors nécessaire
+// // puis tranferrés dans le compte bancaire => une transaction[TRANSACTION_ENUM.dépôt_caisse_chèques] est alors nécessaire
 // sinon, ils sont directement déposés dans le compte bancaire [bank_in]
 //
 // choix :  _CHEQUES_FIRST_IN_CASHBOX = true;
@@ -46,17 +46,17 @@ export const balance_sheet_accounts: Account_def[] = [
   { key: BALANCE_ACCOUNT.BAL_debit, label: 'BAL_debit', description: 'report année N-1' },
 ]
 
-export const Class_descriptions: { [key in BOOK_ENTRY_CLASS]: string } = {
-  [BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER]: 'recette produit adhérent',
-  [BOOK_ENTRY_CLASS.OTHER_EXPENSE]: 'toute dépense',
-  [BOOK_ENTRY_CLASS.OTHER_REVENUE]: 'recette hors produit adhérent',
-  [BOOK_ENTRY_CLASS.EXPENSE_FOR_MEMBER]: 'dépense pour adhérent',
-  [BOOK_ENTRY_CLASS.MOVEMENT]: 'mouvement bancaire',
-  [BOOK_ENTRY_CLASS.BALANCE]: 'spécifique bilan',
+export const Class_descriptions: { [key in TRANSACTION_CLASS]: string } = {
+  [TRANSACTION_CLASS.REVENUE_FROM_MEMBER]: 'recette produit adhérent',
+  [TRANSACTION_CLASS.OTHER_EXPENSE]: 'toute dépense',
+  [TRANSACTION_CLASS.OTHER_REVENUE]: 'recette hors produit adhérent',
+  [TRANSACTION_CLASS.EXPENSE_FOR_MEMBER]: 'dépense pour adhérent',
+  [TRANSACTION_CLASS.MOVEMENT]: 'mouvement bancaire',
+  [TRANSACTION_CLASS.BALANCE]: 'spécifique bilan',
 }
 
 export type Transaction = {
-  class: BOOK_ENTRY_CLASS,
+  class: TRANSACTION_CLASS,
   label: string,
   financial_accounts: Account_def[],
   optional_accounts?: Account_def[],
@@ -69,15 +69,15 @@ export type Transaction = {
   cheque: 'in' | 'out' | 'none'
 };
 
-export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
+export const Transactions_definition: { [key in TRANSACTION_ENUM]: Transaction } = {
 
   // A.  vente à  adhérent ****
   // ****  CLASS = REVENUE_FROM_MEMBER ****
 
   // paiement en espèces par un adhérent
-  [ENTRY_TYPE.achat_adhérent_en_espèces]: {
+  [TRANSACTION_ENUM.achat_adhérent_en_espèces]: {
     label: 'paiement en espèces',
-    class: BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER,
+    class: TRANSACTION_CLASS.REVENUE_FROM_MEMBER,
     financial_accounts: financial_debits,
     optional_accounts: customer_options,
     financial_accounts_to_charge: [FINANCIAL_ACCOUNT.CASHBOX_debit],
@@ -89,9 +89,9 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
     cheque: 'none',
   },
   // paiement par chèque par un adhérent
-  [ENTRY_TYPE.achat_adhérent_par_chèque]: {
+  [TRANSACTION_ENUM.achat_adhérent_par_chèque]: {
     label: 'paiement par chèque',
-    class: BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER,
+    class: TRANSACTION_CLASS.REVENUE_FROM_MEMBER,
     financial_accounts: financial_debits,
     optional_accounts: customer_options,
     financial_accounts_to_charge: _CHEQUES_FIRST_IN_CASHBOX ? [FINANCIAL_ACCOUNT.CASHBOX_debit] : [FINANCIAL_ACCOUNT.BANK_debit],
@@ -103,9 +103,9 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
     cheque: 'in',
   },
   // vente à crédit (créance) à un adhérent
-  // [ENTRY_TYPE.payment_on_credit]: {
+  // [TRANSACTION_ENUM.payment_on_credit]: {
   //   label: 'paiement à \"crédit\"',
-  //   class: BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER,
+  //   class: TRANSACTION_CLASS.REVENUE_FROM_MEMBER,
   //   financial_accounts: financial_debits,
   //   optional_accounts: customer_debt,
   //   financial_accounts_to_charge: [CUSTOMER_ACCOUNT.DEBT_debit],
@@ -117,9 +117,9 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
   //   cheque: 'none',
   // },
   // paiement par virement d'un adhérent
-  [ENTRY_TYPE.achat_adhérent_par_virement]: {
+  [TRANSACTION_ENUM.achat_adhérent_par_virement]: {
     label: 'VIREMENT EN NOTRE FAVEUR',
-    class: BOOK_ENTRY_CLASS.REVENUE_FROM_MEMBER,
+    class: TRANSACTION_CLASS.REVENUE_FROM_MEMBER,
     financial_accounts: financial_debits,
     optional_accounts: customer_options,
     financial_accounts_to_charge: [FINANCIAL_ACCOUNT.BANK_debit],
@@ -135,9 +135,9 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
   // ****  CLASS = OTHER_REVENUE ****
 
   // reception d'espèces de la par d'autres qu'un adhérent
-  [ENTRY_TYPE.vente_en_espèces]: {
+  [TRANSACTION_ENUM.vente_en_espèces]: {
     label: 'paiement en espèces',
-    class: BOOK_ENTRY_CLASS.OTHER_REVENUE,
+    class: TRANSACTION_CLASS.OTHER_REVENUE,
     financial_accounts: financial_debits,
     financial_accounts_to_charge: [FINANCIAL_ACCOUNT.CASHBOX_debit],
     nominative: false,
@@ -149,9 +149,9 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
   },
 
   // réception de chèque(s) de la par d'autres qu'un adhérent
-  [ENTRY_TYPE.vente_par_chèque]: {
+  [TRANSACTION_ENUM.vente_par_chèque]: {
     label: 'paiement par chèque',
-    class: BOOK_ENTRY_CLASS.OTHER_REVENUE,
+    class: TRANSACTION_CLASS.OTHER_REVENUE,
     financial_accounts: financial_debits,
     financial_accounts_to_charge: _CHEQUES_FIRST_IN_CASHBOX ? [FINANCIAL_ACCOUNT.CASHBOX_debit] : [FINANCIAL_ACCOUNT.BANK_debit],
     nominative: false,
@@ -161,9 +161,9 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
     cash: 'none',
     cheque: 'in',
   },
-  [ENTRY_TYPE.vente_par_virement]: {
+  [TRANSACTION_ENUM.vente_par_virement]: {
     label: 'VIREMENT EN NOTRE FAVEUR',
-    class: BOOK_ENTRY_CLASS.OTHER_REVENUE,
+    class: TRANSACTION_CLASS.OTHER_REVENUE,
     financial_accounts: financial_debits,
     financial_accounts_to_charge: [FINANCIAL_ACCOUNT.BANK_debit],
     nominative: false,
@@ -178,9 +178,9 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
   // ****  CLASS = OTHER_REVENUE ****
 
   // dépot de fonds en espèces
-  [ENTRY_TYPE.dépôt_collecte_espèces]: {
+  [TRANSACTION_ENUM.dépôt_collecte_espèces]: {
     label: 'VERSEMENT D\'ESPÈCES',
-    class: BOOK_ENTRY_CLASS.OTHER_REVENUE,
+    class: TRANSACTION_CLASS.OTHER_REVENUE,
     financial_accounts: financial_debits,
     financial_accounts_to_charge: [FINANCIAL_ACCOUNT.BANK_debit],
     nominative: false,
@@ -193,9 +193,9 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
 
   // virement en notre faveur reçu d'une autre entité
   // dépot de fonds en chèques (non tracés)
-  [ENTRY_TYPE.dépôt_collecte_chèques]: {
+  [TRANSACTION_ENUM.dépôt_collecte_chèques]: {
     label: 'REMISE DE CHÈQUES',
-    class: BOOK_ENTRY_CLASS.OTHER_REVENUE,
+    class: TRANSACTION_CLASS.OTHER_REVENUE,
     financial_accounts: financial_debits,
     financial_accounts_to_charge: [FINANCIAL_ACCOUNT.BANK_debit],
     nominative: false,
@@ -206,9 +206,9 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
     cheque: 'none',
   },
     // interet de l'épargne
-    [ENTRY_TYPE.intérêt_épargne]: {
+    [TRANSACTION_ENUM.intérêt_épargne]: {
       label: 'INTERÊT D\'ÉPARGNE',
-      class: BOOK_ENTRY_CLASS.OTHER_REVENUE,
+      class: TRANSACTION_CLASS.OTHER_REVENUE,
       financial_accounts: financial_debits,
       financial_accounts_to_charge: [FINANCIAL_ACCOUNT.SAVING_debit],
       nominative: false,
@@ -223,9 +223,9 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
   // ****  CLASS = MOVEMENT ****
 
   // dépot d'espèces (de la caisse) en banque
-  [ENTRY_TYPE.dépôt_caisse_espèces]: {
+  [TRANSACTION_ENUM.dépôt_caisse_espèces]: {
     label: 'VERSEMENT D\'ESPÈCES',
-    class: BOOK_ENTRY_CLASS.MOVEMENT,
+    class: TRANSACTION_CLASS.MOVEMENT,
     financial_accounts: [...financial_credits, ...financial_debits],
     financial_accounts_to_charge: [FINANCIAL_ACCOUNT.CASHBOX_credit, FINANCIAL_ACCOUNT.BANK_debit],
     nominative: false,
@@ -236,9 +236,9 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
     cheque: 'none',
   },
   // dépot de chèques (receptionnés en caisse) en banque
-  [ENTRY_TYPE.dépôt_caisse_chèques]: {
+  [TRANSACTION_ENUM.dépôt_caisse_chèques]: {
     label: 'REMISE DE CHÈQUES',
-    class: BOOK_ENTRY_CLASS.MOVEMENT,
+    class: TRANSACTION_CLASS.MOVEMENT,
     financial_accounts: [...financial_credits, ...financial_debits],
     // profit_and_loss_accounts: FINANCIAL_ACCOUNT.BANK_debit,
     financial_accounts_to_charge: [FINANCIAL_ACCOUNT.CASHBOX_credit, FINANCIAL_ACCOUNT.BANK_debit],
@@ -250,9 +250,9 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
     cheque: 'none',
   },
   // versement sur compte épargne
-  [ENTRY_TYPE.virement_banque_vers_épargne]: {
+  [TRANSACTION_ENUM.virement_banque_vers_épargne]: {
     label: 'VERSEMENT SUR COMPTE ÉPARGNE',
-    class: BOOK_ENTRY_CLASS.MOVEMENT,
+    class: TRANSACTION_CLASS.MOVEMENT,
     financial_accounts: [...financial_credits, ...financial_debits],
     // profit_and_loss_accounts: FINANCIAL_ACCOUNT.SAVING_debit,
     financial_accounts_to_charge: [FINANCIAL_ACCOUNT.BANK_credit, FINANCIAL_ACCOUNT.SAVING_debit],
@@ -264,9 +264,9 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
     cheque: 'none',
   },
   // retrait du compte épargne
-  [ENTRY_TYPE.retrait_épargne_vers_banque]: {
+  [TRANSACTION_ENUM.retrait_épargne_vers_banque]: {
     label: 'RETRAIT DU COMPTE ÉPARGNE',
-    class: BOOK_ENTRY_CLASS.MOVEMENT,
+    class: TRANSACTION_CLASS.MOVEMENT,
     // profit_and_loss_accounts: FINANCIAL_ACCOUNT.BANK_debit,
     financial_accounts: [...financial_credits, ...financial_debits],
     financial_accounts_to_charge: [FINANCIAL_ACCOUNT.BANK_debit, FINANCIAL_ACCOUNT.SAVING_credit],
@@ -284,9 +284,9 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
   // ****  CLASS = EXPENS_FOR_MEMBER ****
 
   // émission d'avoir à un adhérent
-  [ENTRY_TYPE.dépense_en_avoir]: {
+  [TRANSACTION_ENUM.dépense_en_avoir]: {
     label: 'attribution d\'avoir(s) nominatif(s)',
-    class: BOOK_ENTRY_CLASS.EXPENSE_FOR_MEMBER,
+    class: TRANSACTION_CLASS.EXPENSE_FOR_MEMBER,
     financial_accounts: [],
     optional_accounts: customer_asset_credit,
     financial_accounts_to_charge: [CUSTOMER_ACCOUNT.ASSET_credit],
@@ -302,9 +302,9 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
   // ****  CLASS = EXPENSE ****
 
   // achat en espèces d'une prestation ou service
-  [ENTRY_TYPE.dépense_en_espèces]: {
+  [TRANSACTION_ENUM.dépense_en_espèces]: {
     label: 'achat en espèces',
-    class: BOOK_ENTRY_CLASS.OTHER_EXPENSE,
+    class: TRANSACTION_CLASS.OTHER_EXPENSE,
     financial_accounts: financial_credits,
     financial_accounts_to_charge: [FINANCIAL_ACCOUNT.CASHBOX_credit],
     nominative: false,
@@ -316,9 +316,9 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
   },
 
   // paiement par chèque d'une prestation ou service
-  [ENTRY_TYPE.dépense_par_chèque]: {
+  [TRANSACTION_ENUM.dépense_par_chèque]: {
     label: 'CHEQUE EMIS',
-    class: BOOK_ENTRY_CLASS.OTHER_EXPENSE,
+    class: TRANSACTION_CLASS.OTHER_EXPENSE,
     financial_accounts: financial_credits,
     financial_accounts_to_charge: [FINANCIAL_ACCOUNT.BANK_credit],
     // optional_accounts: balance_sheet_accounts,
@@ -330,9 +330,9 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
     cheque: 'out',
   },
   // paiement à un tiers d'une prestation ou service par virement
-  [ENTRY_TYPE.dépense_par_virement]: {
+  [TRANSACTION_ENUM.dépense_par_virement]: {
     label: 'VIREMENT EMIS',
-    class: BOOK_ENTRY_CLASS.OTHER_EXPENSE,
+    class: TRANSACTION_CLASS.OTHER_EXPENSE,
     financial_accounts: financial_credits,
     financial_accounts_to_charge: [FINANCIAL_ACCOUNT.BANK_credit],
     nominative: false,
@@ -343,9 +343,9 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
     cheque: 'none',
   },
   // paiement par carte bancaire d'une prestation ou de marchandises
-  [ENTRY_TYPE.dépense_par_carte]: {
+  [TRANSACTION_ENUM.dépense_par_carte]: {
     label: 'PAIEMENT PAR CARTE',
-    class: BOOK_ENTRY_CLASS.OTHER_EXPENSE,
+    class: TRANSACTION_CLASS.OTHER_EXPENSE,
     financial_accounts: financial_credits,
     financial_accounts_to_charge: [FINANCIAL_ACCOUNT.BANK_credit],
     nominative: false,
@@ -356,9 +356,9 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
     cheque: 'none',
   },
   // prélèvement sur le compte bancaire par une autre entité
-  [ENTRY_TYPE.dépense_par_prélèvement]: {
+  [TRANSACTION_ENUM.dépense_par_prélèvement]: {
     label: 'PRÉLÈVEMENT',
-    class: BOOK_ENTRY_CLASS.OTHER_EXPENSE,
+    class: TRANSACTION_CLASS.OTHER_EXPENSE,
     financial_accounts: financial_credits,
     financial_accounts_to_charge: [FINANCIAL_ACCOUNT.BANK_credit],
     nominative: false,
@@ -372,9 +372,9 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
   // G. opérations spécifiques bilan
   // ****  CLASS = BALANCE_SHEET ****
 
-  [ENTRY_TYPE.report_avoir]: {
+  [TRANSACTION_ENUM.report_avoir]: {
     label: 'report d\'avoir',
-    class: BOOK_ENTRY_CLASS.BALANCE,
+    class: TRANSACTION_CLASS.BALANCE,
     financial_accounts: [{ key: BALANCE_ACCOUNT.BAL_debit, label: 'report_in', description: 'passif' }],
     optional_accounts: [{ key: CUSTOMER_ACCOUNT.ASSET_credit, label: 'Avoir', description: 'valeur de l\'avoir attribué' }],
     financial_accounts_to_charge: [CUSTOMER_ACCOUNT.ASSET_credit],
@@ -386,9 +386,9 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
     cheque: 'none',
   },
   // report d'encours paiement par chèque d'une prestation ou service
-  [ENTRY_TYPE.report_chèque]: {
+  [TRANSACTION_ENUM.report_chèque]: {
     label: 'report de chèque',
-    class: BOOK_ENTRY_CLASS.BALANCE,
+    class: TRANSACTION_CLASS.BALANCE,
     financial_accounts: [...balance_sheet_accounts, ...financial_credits],
     financial_accounts_to_charge: [BALANCE_ACCOUNT.BAL_debit, FINANCIAL_ACCOUNT.BANK_credit],
     // optional_accounts: balance_sheet_accounts,
@@ -399,9 +399,9 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
     cash: 'none',
     cheque: 'out',
   },
-  [ENTRY_TYPE.report_dette]: {
+  [TRANSACTION_ENUM.report_dette]: {
     label: 'report de dette',
-    class: BOOK_ENTRY_CLASS.BALANCE,
+    class: TRANSACTION_CLASS.BALANCE,
     financial_accounts: [...balance_sheet_accounts, ...financial_credits],
     financial_accounts_to_charge: [BALANCE_ACCOUNT.BAL_debit, CUSTOMER_ACCOUNT.DEBT_credit],
     // optional_accounts: balance_sheet_accounts,
@@ -420,22 +420,22 @@ export const TRANSACTIONS: { [key in ENTRY_TYPE]: Transaction } = {
 
 
 
-// export function class_to_types(op_class: BOOK_ENTRY_CLASS): ENTRY_TYPE[] {
-//   let check = Object.values(BOOK_ENTRY_CLASS).includes(op_class);
+// export function class_to_types(op_class: TRANSACTION_CLASS): TRANSACTION_ENUM[] {
+//   let check = Object.values(TRANSACTION_CLASS).includes(op_class);
 //   if (check) {
-//     return Object.entries(TRANSACTIONS)
+//     return Object.entries(Transactions_definition)
 //       .filter(([key, transaction]) => transaction.class === op_class)
-//       .map(([key, transaction]) => key as ENTRY_TYPE);
+//       .map(([key, transaction]) => key as TRANSACTION_ENUM);
 //   } else {
-//     console.log('%s n\'est pas une clef de %s', op_class, JSON.stringify(Object.entries(BOOK_ENTRY_CLASS)));
+//     console.log('%s n\'est pas une clef de %s', op_class, JSON.stringify(Object.entries(TRANSACTION_CLASS)));
 //     throw new Error(`class ${op_class} not found`);
 //   }
 // }
 
-// export function get_transaction(entry_type: ENTRY_TYPE): Transaction {
-//   let check = Object.keys(TRANSACTIONS).includes(entry_type);
+// export function get_transaction(entry_type: TRANSACTION_ENUM): Transaction {
+//   let check = Object.keys(Transactions_definition).includes(entry_type);
 //   if (check) {
-//     return TRANSACTIONS[entry_type];
+//     return Transactions_definition[entry_type];
 //   } else {
 //     throw new Error(`transaction ${entry_type} not found`);
 //   }

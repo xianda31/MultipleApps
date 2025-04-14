@@ -1,7 +1,7 @@
 import { Component, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Bank_accounts, BookEntry, ENTRY_TYPE, FINANCIAL_ACCOUNT, Liquidities } from '../../../../common/accounting.interface';
+import { Bank_accounts, BookEntry, TRANSACTION_ENUM, FINANCIAL_ACCOUNT, Liquidities } from '../../../../common/accounting.interface';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 import { BookService } from '../book.service';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
@@ -70,12 +70,12 @@ export class BankReconciliationComponent {
 
   // utilities
 
-  transaction_label(op_type: ENTRY_TYPE): string {
+  transaction_label(op_type: TRANSACTION_ENUM): string {
     return this.transactionService.get_transaction(op_type).label;
   }
 
   book_label(book_entry: BookEntry): string {
-    let transaction = this.transactionService.get_transaction(book_entry.bank_op_type);
+    let transaction = this.transactionService.get_transaction(book_entry.transaction);
     if (transaction.require_deposit_ref) {
       return book_entry.deposit_ref!;
     } else {

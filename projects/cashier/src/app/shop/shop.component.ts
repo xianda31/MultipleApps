@@ -14,6 +14,7 @@ import { ProductService } from '../../../../common/services/product.service';
 import { SystemConfiguration } from '../../../../common/system-conf.interface';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 import { TransactionService } from '../transaction.service';
+import { AuthentificationService } from '../../../../common/authentification/authentification.service';
 
 
 @Component({
@@ -36,7 +37,7 @@ export class ShopComponent {
   book_entries: BookEntry[] = [];
   sales_of_the_day: Revenue[] = [];
 
-
+  logged_member: Member | null = null;
   buyerForm: FormGroup = new FormGroup({
     buyer: new FormControl(null, Validators.required),
   });
@@ -52,7 +53,8 @@ export class ShopComponent {
     private bookService: BookService,
     private transactionService: TransactionService,
     private productService: ProductService,
-    private systemDataService: SystemDataService
+    private systemDataService: SystemDataService,
+    private auth : AuthentificationService,
   ) {
     this.session = {
       season: '',
@@ -75,6 +77,11 @@ export class ShopComponent {
 
     this.membersService.listMembers().subscribe((members) => {
       this.members = members;
+    });
+
+    this.auth.logged_member$.subscribe((member) => {
+      this.logged_member = member;
+      this.cartService.setSeller( member?.firstname ?? 'unknown');
     });
 
 
@@ -165,7 +172,7 @@ export class ShopComponent {
   payment_type(revenue: Revenue): string {
     let book_entry = this.book_entries.find((entry) => entry.id === revenue.book_entry_id);
     if (!book_entry) throw new Error('sale not found');
-    return this.transactionService.get_transaction(book_entry.bank_op_type).label;
+    return this.transactionService.get_transaction(book_entry.transaction).label;
   }
 
 

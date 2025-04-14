@@ -89,7 +89,7 @@
         <tr *ngIf="book_entry.bank_report === bank_report">
           <td>{{book_entry.date | date: 'dd/MM/yyyy'}}</td>
           <td>
-            {{transaction_label(book_entry.bank_op_type)}}
+            {{transaction_label(book_entry.transaction)}}
              {{book_entry.deposit_ref}}</td>
              <td class="col-2 text-center">{{book_entry.amounts['bank_out'] ? (book_entry.amounts['bank_out'] | number: truncature) : '' }}</td>
           <td class="col-2 text-center">{{book_entry.amounts['bank_in'] ? (book_entry.amounts['bank_in'] | number:truncature) : ''}}</td>

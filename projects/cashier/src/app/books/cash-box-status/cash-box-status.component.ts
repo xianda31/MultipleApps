@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { BookEntry, ENTRY_TYPE, BOOK_ENTRY_CLASS, FINANCIAL_ACCOUNT } from '../../../../../common/accounting.interface';
+import { BookEntry, TRANSACTION_ENUM, TRANSACTION_CLASS, FINANCIAL_ACCOUNT } from '../../../../../common/accounting.interface';
 import { BookService } from '../../book.service';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -51,7 +51,7 @@ export class CashBoxStatusComponent {
 
         // filtre les chèques à déposer
         this.cheques_for_deposit = book_entries
-          .filter(book_entry => this.transactionService.get_transaction(book_entry.bank_op_type).cheque === 'in')
+          .filter(book_entry => this.transactionService.get_transaction(book_entry.transaction).cheque === 'in')
           .filter(book_entry => book_entry.cheque_ref !== undefined && (book_entry.deposit_ref === '' || book_entry.deposit_ref === null));
 
         // calcule le montant total des chèques à déposer & le liquide disponible
@@ -65,7 +65,7 @@ export class CashBoxStatusComponent {
         // énumère les bordereaux de dépot chèque en temp_
         this.temp_refs.clear();
         this.book_entries
-          .filter(book_entry => this.transactionService.get_transaction(book_entry.bank_op_type).cheque === 'in')
+          .filter(book_entry => this.transactionService.get_transaction(book_entry.transaction).cheque === 'in')
           .forEach(book_entry => {
             if (book_entry.deposit_ref && book_entry.deposit_ref.startsWith('temp_')) {
               this.temp_refs.set(book_entry.deposit_ref, {
@@ -95,8 +95,8 @@ export class CashBoxStatusComponent {
     let cash_out: BookEntry = {
       season: this.season,
       date: new Date().toISOString().split('T')[0],
-      class: BOOK_ENTRY_CLASS.MOVEMENT,
-      bank_op_type: ENTRY_TYPE.dépôt_caisse_espèces,
+      // class: TRANSACTION_CLASS.MOVEMENT,
+      transaction: TRANSACTION_ENUM.dépôt_caisse_espèces,
       amounts: {
         [FINANCIAL_ACCOUNT.CASHBOX_credit]: amount,
         [FINANCIAL_ACCOUNT.BANK_debit]: amount
@@ -143,8 +143,8 @@ export class CashBoxStatusComponent {
     let dépôt_caisse_chèques: BookEntry = {
       season: this.season,
       date: new Date().toISOString().split('T')[0],
-      class: BOOK_ENTRY_CLASS.MOVEMENT,
-      bank_op_type: ENTRY_TYPE.dépôt_caisse_chèques,
+      // class: TRANSACTION_CLASS.MOVEMENT,
+      transaction: TRANSACTION_ENUM.dépôt_caisse_chèques,
       amounts: {
         [FINANCIAL_ACCOUNT.CASHBOX_credit]: value,
         [FINANCIAL_ACCOUNT.BANK_debit]: value
@@ -162,7 +162,7 @@ export class CashBoxStatusComponent {
   // cash_balance(entries: BookEntry[]): number {
   //   // calculer le montant disponible en espèces
   //   return entries.reduce((acc, book_entry) => {
-  //     let transaction = get_transaction(book_entry.bank_op_type);
+  //     let transaction = get_transaction(book_entry.transaction);
   //     if (transaction.cash === 'none') {
   //       return acc;
   //     } else {

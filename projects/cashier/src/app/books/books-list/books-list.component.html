@@ -40,7 +40,7 @@
               number:truncature:'fr'}}
             </td>
             <td *ngIf="first" [rowSpan]="entry.operations.length"> {{entry.tag}} </td>
-            <td *ngIf="first" [rowSpan]="entry.operations.length"> {{class_descriptions[entry.class] }} </td>
+            <td *ngIf="first" [rowSpan]="entry.operations.length"> {{class_label(entry) }} </td>
             <td *ngIf="first" [rowSpan]="entry.operations.length">{{transaction_label(entry)}}</td>
           </tr>
         </ng-container>
