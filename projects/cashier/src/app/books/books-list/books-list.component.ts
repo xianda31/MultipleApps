@@ -5,7 +5,6 @@ import { Router } from '@angular/router';
 import { BookEntry } from '../../../../../common/accounting.interface';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { BookService } from '../../book.service';
-import { Class_descriptions, Transaction} from '../../../../../common/transaction.definition';
 import { TransactionService } from '../../transaction.service';
 
 type Fields = 'date' | 'classe' | 'transaction' | 'montant' | 'tag'
@@ -20,7 +19,6 @@ export class BooksListComponent {
 
   season: string = '';
   book_entries: BookEntry[] = [];
-  class_descriptions = Object(Class_descriptions);
   truncature = '1.2-2';  // '1.0-0';// '1.2-2';  //
 
   constructor(
@@ -117,7 +115,7 @@ export class BooksListComponent {
   // }
 
   transaction_label(book_entry: BookEntry): string {
-    let transaction = this.transactionService.get_transaction(book_entry.transaction);
+    let transaction = this.transactionService.get_transaction(book_entry.transaction_id);
     if (transaction === undefined) {
       console.log('oops , there is a problem', book_entry);
       return '???';
@@ -126,7 +124,7 @@ export class BooksListComponent {
   }
 
   class_label(book_entry: BookEntry): string {
-    let transaction = this.transactionService.get_transaction(book_entry.transaction);
+    let transaction = this.transactionService.get_transaction(book_entry.transaction_id);
     if (transaction === undefined) {
       console.log('oops , there is a problem', book_entry);
       return '???';

@@ -3,8 +3,8 @@ import { Component } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 import { ToastService } from '../../../../common/toaster/toast.service';
-import { BALANCE_ACCOUNT, Balance_sheet, TRANSACTION_CLASS, BookEntry, CUSTOMER_ACCOUNT, TRANSACTION_ENUM, FINANCIAL_ACCOUNT, Liquidity, Operation, operation_values } from '../../../../common/accounting.interface';
-import { combineLatest, forkJoin, switchMap, tap } from 'rxjs';
+import { BALANCE_ACCOUNT, Balance_sheet,  BookEntry, CUSTOMER_ACCOUNT, TRANSACTION_ID, FINANCIAL_ACCOUNT, Liquidity, Operation } from '../../../../common/accounting.interface';
+import { combineLatest, forkJoin } from 'rxjs';
 import { BookService } from '../book.service';
 import { FileService } from '../../../../common/services/files.service';
 import { ParenthesisPipe } from '../../../../common/pipes/parenthesis.pipe';
@@ -214,8 +214,7 @@ export class BalanceComponent {
         id: '',
         season: next_season,
         date: this.systemDataService.closout_date(this.selected_season),
-        // class: TRANSACTION_CLASS.BALANCE,
-        transaction: TRANSACTION_ENUM.report_avoir,
+        transaction_id: TRANSACTION_ID.report_avoir,
         amounts: { [BALANCE_ACCOUNT.BAL_debit]: total },
         operations: operations,
       };
@@ -226,7 +225,7 @@ export class BalanceComponent {
     }
 
     // B. report des chèques non encaissés
-    this.book_entries.filter((entry) => ((entry.transaction === TRANSACTION_ENUM.report_chèque) || (entry.transaction === TRANSACTION_ENUM.dépense_par_chèque)) && entry.bank_report === null)
+    this.book_entries.filter((entry) => ((entry.transaction_id === TRANSACTION_ID.report_chèque) || (entry.transaction_id === TRANSACTION_ID.dépense_par_chèque)) && entry.bank_report === null)
       .forEach((entry) => {
         let amount = entry.amounts[FINANCIAL_ACCOUNT.BANK_credit];
         if (!amount) throw Error('montant du chèque non défini !?!?')
@@ -236,8 +235,7 @@ export class BalanceComponent {
           id: '',
           season: next_season,
           date: this.systemDataService.closout_date(this.selected_season),
-          // class: TRANSACTION_CLASS.BALANCE,
-          transaction: TRANSACTION_ENUM.report_chèque,
+          transaction_id: TRANSACTION_ID.report_chèque,
           amounts: { [FINANCIAL_ACCOUNT.BANK_credit]: amount },
           cheque_ref: entry.cheque_ref,
           operations: [{ label: label, values: { [BALANCE_ACCOUNT.BAL_debit]: amount } }],
@@ -264,8 +262,7 @@ export class BalanceComponent {
         id: '',
         season: next_season,
         date: this.systemDataService.closout_date(this.selected_season),
-        // class: TRANSACTION_CLASS.BALANCE,
-        transaction: TRANSACTION_ENUM.report_dette,
+        transaction_id: TRANSACTION_ID.report_dette,
         amounts: { [BALANCE_ACCOUNT.BAL_credit]: total },
         operations: operations,
       };

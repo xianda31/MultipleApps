@@ -172,7 +172,7 @@ export class ShopComponent {
   payment_type(revenue: Revenue): string {
     let book_entry = this.book_entries.find((entry) => entry.id === revenue.book_entry_id);
     if (!book_entry) throw new Error('sale not found');
-    return this.transactionService.get_transaction(book_entry.transaction).label;
+    return this.transactionService.get_transaction(book_entry.transaction_id).label;
   }
 
 

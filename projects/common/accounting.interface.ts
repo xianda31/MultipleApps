@@ -1,4 +1,4 @@
-export enum TRANSACTION_ENUM {
+export enum TRANSACTION_ID {
   achat_adhérent_en_espèces = 'achat_adhérent_en_espèces',
   achat_adhérent_par_chèque = 'achat_adhérent_par_chèque',
   achat_adhérent_par_virement = 'achat_adhérent_par_virement',
@@ -73,16 +73,6 @@ export const Cashbox_accounts: { [key in Partial<FINANCIAL_ACCOUNT>]?: string } 
 }
 
 
-// ordre des rubriques (dans l'éditeur) régi par l'ordre alphabétique
-export enum TRANSACTION_CLASS {
-  REVENUE_FROM_MEMBER = 'in_member',
-  OTHER_REVENUE = 'in_other',
-  EXPENSE_FOR_MEMBER = 'out_member',
-  OTHER_EXPENSE = 'out_other',
-  MOVEMENT = 'xfer_bank',
-  BALANCE = 'xfer_closure',
-}
-
 
 
 export type operation_values = { [key: string]: number };
@@ -120,8 +110,7 @@ export interface BookEntry {
   season: string;
   date: string;
   tag?: string;
-  // _class: TRANSACTION_CLASS;
-  transaction: TRANSACTION_ENUM;   // type d'opération bancaire
+  transaction_id: TRANSACTION_ID;   // type d'opération bancaire
   amounts: bank_values
   cheque_ref?: string;        // code banque + numéro de chèque
   bank_report?: string | null;       // (mois) relevé bancaire

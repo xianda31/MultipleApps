@@ -3,7 +3,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { Cart, CartItem, Payment, PaymentMode, SALE_ACCOUNTS } from './cart.interface';
 import { Member } from '../../../../../common/member.interface';
 import { BookService } from '../../book.service';
-import { TRANSACTION_ENUM, bank_values, BookEntry, operation_values, Operation, TRANSACTION_CLASS, Session, FINANCIAL_ACCOUNT, CUSTOMER_ACCOUNT } from '../../../../../common/accounting.interface';
+import { TRANSACTION_ID, bank_values, BookEntry, operation_values, Operation, Session, FINANCIAL_ACCOUNT, CUSTOMER_ACCOUNT } from '../../../../../common/accounting.interface';
 import { Product } from '../../../../../admin-dashboard/src/app/sales/products/product.interface';
 import { FeesEditorService } from '../../fees/fees-editor/fees-editor.service';
 
@@ -88,15 +88,14 @@ export class CartService {
       const sale: BookEntry = {
         ...session,
         id: '',
-        transaction: this.payment_mode2bank_op_type(this._payment.mode),
-        // class: TRANSACTION_CLASS.REVENUE_FROM_MEMBER,
+        transaction_id: this.payment_mode2bank_op_type(this._payment.mode),
         amounts: this.payments2fValue(this._payment.mode),
         operations: this.cart2Operations(),
         cheque_ref: this.payments2cheque_ref(this._payment),
       };
       let bank_op_type = this.payment_mode2bank_op_type(this._payment.mode);
       if (bank_op_type) {
-        sale.transaction = bank_op_type;
+        sale.transaction_id = bank_op_type;
       }
 
       this.bookService.create_book_entry(sale)
@@ -175,19 +174,19 @@ export class CartService {
     return operations;
   }
 
-  payment_mode2bank_op_type(payment_mode: PaymentMode): TRANSACTION_ENUM {
+  payment_mode2bank_op_type(payment_mode: PaymentMode): TRANSACTION_ID {
     if (payment_mode === PaymentMode.CREDIT) {
-      return TRANSACTION_ENUM.achat_adhérent_en_espèces;
+      return TRANSACTION_ID.achat_adhérent_en_espèces;
     }
 
     if (payment_mode === PaymentMode.CHEQUE) {
-      return TRANSACTION_ENUM.achat_adhérent_par_chèque;
+      return TRANSACTION_ID.achat_adhérent_par_chèque;
     } else {
       if (payment_mode === PaymentMode.TRANSFER) {
-        return TRANSACTION_ENUM.achat_adhérent_par_virement;
+        return TRANSACTION_ID.achat_adhérent_par_virement;
       }
     }
-    return TRANSACTION_ENUM.achat_adhérent_en_espèces;
+    return TRANSACTION_ID.achat_adhérent_en_espèces;
   }
 
   payments2cheque_ref(payment: Payment): string {

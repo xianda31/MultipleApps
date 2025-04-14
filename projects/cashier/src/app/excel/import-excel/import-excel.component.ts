@@ -1,14 +1,14 @@
 import { Component, ElementRef, signal } from '@angular/core';
 import * as ExcelJS from 'exceljs';
 import { EXPENSES_COL, FINANCIAL_COL, MAP, PRODUCTS_COL } from '../../../../../common/excel/excel.interface';
-import { TRANSACTION_ENUM, BookEntry, FINANCIAL_ACCOUNT, operation_values, Operation, TRANSACTION_CLASS } from '../../../../../common/accounting.interface';
+import { TRANSACTION_ID, BookEntry, FINANCIAL_ACCOUNT, operation_values, Operation } from '../../../../../common/accounting.interface';
 import { Member } from '../../../../../common/member.interface';
 import { MembersService } from '../../../../../admin-dashboard/src/app/members/service/members.service';
 import { BookService } from '../../book.service';
 import { CommonModule, formatDate } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
-import {  Transaction } from '../../../../../common/transaction.definition';
+import {  Transaction, TRANSACTION_CLASS } from '../../../../../common/transaction.definition';
 import { TransactionService } from '../../transaction.service';
 
 @Component({
@@ -200,7 +200,7 @@ throw new Error('Method not implemented.');
         id: '',
         amounts: {},
         operations: [],
-        transaction: bank_op_type,
+        transaction_id: bank_op_type,
         // class: transaction.class,
         bank_report: (cell_pointage) ? this.format_bank_report(cell_pointage.toString(), this.current_season) : undefined,
 
@@ -268,37 +268,37 @@ throw new Error('Method not implemented.');
 
   }
 
-  convert_to_bank_op_type(nature: string): TRANSACTION_ENUM | null{
+  convert_to_bank_op_type(nature: string): TRANSACTION_ID | null{
     switch (this.worksheet.name) {
       case 'chrono banque':
 
         switch (nature) {
           case 'versement espèces':
-            return TRANSACTION_ENUM.dépôt_collecte_espèces;
+            return TRANSACTION_ID.dépôt_collecte_espèces;
           case 'versement chèques':
-            return TRANSACTION_ENUM.dépôt_collecte_chèques;
+            return TRANSACTION_ID.dépôt_collecte_chèques;
           case 'remise espèces':
-            return TRANSACTION_ENUM.dépôt_caisse_espèces;
+            return TRANSACTION_ID.dépôt_caisse_espèces;
           case 'remise chèques':
-            return TRANSACTION_ENUM.dépôt_caisse_chèques;
+            return TRANSACTION_ID.dépôt_caisse_chèques;
           case 'chèque émis':
-            return TRANSACTION_ENUM.dépense_par_chèque;
+            return TRANSACTION_ID.dépense_par_chèque;
           case 'virement reçu':
-            return TRANSACTION_ENUM.vente_par_virement;
+            return TRANSACTION_ID.vente_par_virement;
           case 'virement emis':
-            return TRANSACTION_ENUM.dépense_par_virement;
+            return TRANSACTION_ID.dépense_par_virement;
           case 'prélèvement':
-            return TRANSACTION_ENUM.dépense_par_prélèvement;
+            return TRANSACTION_ID.dépense_par_prélèvement;
           case 'carte':
-            return TRANSACTION_ENUM.dépense_par_carte;
+            return TRANSACTION_ID.dépense_par_carte;
           case 'versement compte épargne':
-            return TRANSACTION_ENUM.virement_banque_vers_épargne;
+            return TRANSACTION_ID.virement_banque_vers_épargne;
             case 'versement épargne':
-            return TRANSACTION_ENUM.virement_banque_vers_épargne;
+            return TRANSACTION_ID.virement_banque_vers_épargne;
             case 'retrait épargne':
-            return TRANSACTION_ENUM.retrait_épargne_vers_banque;
+            return TRANSACTION_ID.retrait_épargne_vers_banque;
           case 'intérêts':
-            return TRANSACTION_ENUM.intérêt_épargne;
+            return TRANSACTION_ID.intérêt_épargne;
           default:
             console.log('erreur de nature', nature);
             return null
@@ -308,11 +308,11 @@ throw new Error('Method not implemented.');
 
         switch (nature) {
           case 'virement reçu':
-            return TRANSACTION_ENUM.achat_adhérent_par_virement;
+            return TRANSACTION_ID.achat_adhérent_par_virement;
           case 'paiement par chèque':
-            return TRANSACTION_ENUM.achat_adhérent_par_chèque;
+            return TRANSACTION_ID.achat_adhérent_par_chèque;
           case 'paiement en espèces':
-            return TRANSACTION_ENUM.achat_adhérent_en_espèces;
+            return TRANSACTION_ID.achat_adhérent_en_espèces;
           default:
             console.log('erreur de nature', nature);
             return null
@@ -322,9 +322,9 @@ throw new Error('Method not implemented.');
 
         switch (nature) {
           case 'espèces':
-            return TRANSACTION_ENUM.vente_en_espèces;
+            return TRANSACTION_ID.vente_en_espèces;
           // case 'erreur caisse':
-          //   return TRANSACTION_ENUM.dépense_en_espèces;
+          //   return TRANSACTION_ID.dépense_en_espèces;
           default:
             console.log('erreur de nature', nature);
             return null
@@ -350,10 +350,17 @@ throw new Error('Method not implemented.');
     book_entry.operations.forEach((operation) => {
       sum += Object.values(operation.values).reduce((acc, value) => acc + value, 0);
     });
-    if ([TRANSACTION_CLASS.REVENUE_FROM_MEMBER, TRANSACTION_CLASS.OTHER_REVENUE].includes(this.transactionService.transaction_to_class(book_entry.transaction)))  {
-      products_sum += sum;
-    } else if (this.transactionService.transaction_to_class(book_entry.transaction) === TRANSACTION_CLASS.OTHER_EXPENSE) {
-      expenses_sum += sum;
+    
+    switch (this.transactionService.transaction_class(book_entry.transaction_id)) {
+      case TRANSACTION_CLASS.REVENUE_FROM_MEMBER:
+      case TRANSACTION_CLASS.OTHER_REVENUE:
+        products_sum += sum;
+        break;
+      case TRANSACTION_CLASS.OTHER_EXPENSE:
+        expenses_sum += sum;
+        break
+      case TRANSACTION_CLASS.MOVEMENT:
+        break;
     }
 
     if (total !== (products_sum - expenses_sum)) {

@@ -22,7 +22,7 @@ const schema = a.schema({
     operations: a.ref('Operation').array().required(),
 
     // class: a.string().required(),
-    transaction: a.string().required(),
+    transaction_id: a.string().required(),
     cheque_ref: a.string(),
     deposit_ref: a.string(),
     bank_report: a.string(),

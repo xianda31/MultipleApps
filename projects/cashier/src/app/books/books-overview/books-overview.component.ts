@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Expense, BookEntry, FINANCIAL_ACCOUNT, Revenue, TRANSACTION_ENUM, Cashbox_accounts, Bank_accounts, Liquidities } from '../../../../../common/accounting.interface';
+import { Expense, BookEntry, FINANCIAL_ACCOUNT, Revenue, TRANSACTION_ID, Cashbox_accounts, Bank_accounts, Liquidities } from '../../../../../common/accounting.interface';
 import { BookService } from '../../book.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -83,7 +83,7 @@ export class BooksOverviewComponent {
 
   // utilities
 
-  transaction_label(op_type: TRANSACTION_ENUM): string {
+  transaction_label(op_type: TRANSACTION_ID): string {
     return this.transactionService.get_transaction(op_type).label;
   }
 

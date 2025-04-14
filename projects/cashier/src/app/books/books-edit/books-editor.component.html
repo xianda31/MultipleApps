@@ -8,20 +8,20 @@
 
     <!-- bandeau selection transaction et affichage comptes financiers -->
     <div class="row  align-items-start">
-      <!-- classe opération -->
+      <!-- classe transaction -->
       <div class="col-3">
-        <label for="op_type">Classe d'opération</label>
-        <select class="form-control" id="op_class" formControlName="op_class">
+        <label >Classe de transaction</label>
+        <select class="form-control" id="transac_class" formControlName="transac_class">
           <option value="undefined" hidden disabled>néant</option>
-          <option *ngFor="let class of class_descriptions | keyvalue" [value]="class.key">
+          <option *ngFor="let class of transaction_classes | keyvalue" [value]="class.value">
             {{class.value}}
           </option>
         </select>
       </div>
-      <!-- opération -->
-      <ng-container *ngIf="op_types && op_types.length > 0">
+      <!-- transaction -->
+      <ng-container *ngIf="transaction_enums && transaction_enums.length > 0">
         <div class="col-4">
-          <ng-container [ngTemplateOutlet]="select_operation_type"></ng-container>
+          <ng-container [ngTemplateOutlet]="select_transaction"></ng-container>
         </div>
 
         <!-- financial accounts -->
@@ -40,14 +40,14 @@
           <div class="row">
             <div class="col-8">
               <ng-container [ngTemplateOutlet]="cheque_definition"
-                *ngIf="transaction && transaction_with_cheque_in(op_type)">
+                *ngIf="transaction && transaction_with_cheque_in(transaction_id)">
               </ng-container>
               <ng-container [ngTemplateOutlet]="cheque_club"
-                *ngIf="transaction && transaction_with_cheque_out(op_type)">
+                *ngIf="transaction && transaction_with_cheque_out(transaction_id)">
               </ng-container>
             </div>
             <div class="col-4">
-              <ng-container [ngTemplateOutlet]="deposit" *ngIf="transaction && transaction_with_deposit(op_type)">
+              <ng-container [ngTemplateOutlet]="deposit" *ngIf="transaction && transaction_with_deposit(transaction_id)">
               </ng-container>
             </div>
           </div>
@@ -60,15 +60,15 @@
       </ng-container>
     </div>
 
-    <!-- bandeau opération(s) -->
+    <!-- bandeau transaction(s) -->
     <div class="mt-3" *ngIf="transaction">
       <div formArrayName="operations">
-        <!-- pour chaque opérations de la transaction -->
+        <!-- pour chaque transaction_enums de la transaction -->
         <div class="row align-items-end" *ngFor="let operation of operations.controls; let i = index ; let last = last">
           <div class="col-12 mt-4">
-            <!-- opération d'une transaction non nominative -->
+            <!-- transaction d'une transaction non nominative -->
             <div class="row align-items-end"
-              *ngIf="transaction.class === transaction_classes.OTHER_EXPENSE || transaction.class === transaction_classes.OTHER_REVENUE">
+              *ngIf="!transaction.nominative ">
               <div class="col-2">
                 <div [ngTemplateOutlet]="label" [ngTemplateOutletContext]="{inputFormGroup: operation}">
                 </div>
@@ -78,7 +78,7 @@
                   [ngTemplateOutletContext]="{inputFormGroup: operation}"></ng-container>
               </div>
             </div>
-            <!-- opération d'une transaction nominative -->
+            <!-- transaction d'une transaction nominative -->
             <div *ngIf="transaction.nominative" class="row align-items-end">
               <div class="col-2">
                 <ng-container [ngTemplateOutlet]="member"
@@ -101,7 +101,7 @@
 
           </div>
         </div>
-        <!-- bouton ajout opération nominative -->
+        <!-- bouton ajout transaction nominative -->
         <div *ngIf="transaction.nominative" class="row mt-4">
           <span>
             Ajout bénéficiaire :
@@ -129,7 +129,7 @@
     <!-- form.status : {{form.status}}<br>
     operations.status : {{form.get('operations')?.status}} -->
 
-    <div class="card mt-3 bg-body-secondary">
+    <div *ngIf="selected_book_entry " class="card mt-3 bg-body-secondary">
       <div class="card-body">
         <span class="fst-italic">
           {{selected_book_entry | json}}
@@ -172,13 +172,14 @@
       </ng-container>
     </ng-template>
 
-    <!-- formulaire type opération  -->
-    <ng-template #select_operation_type>
-      <label for="op_type">Opération</label>
-      <div class="form-check" *ngFor="let op_type of op_types">
-        <input class="form-check-input" type="radio" [value]="op_type" formControlName="op_type">
-        <label class="form-check-label" for="op_type">
-          {{transaction_label(op_type)}}
+    <!-- formulaire selection transactions  -->
+    <ng-template #select_transaction>
+      <label >transaction</label>
+      <div class="form-check" *ngFor="let transaction_id of transaction_enums">
+        <input class="form-check-input" type="radio" [value]="transaction_id" formControlName="transaction_id">
+        <label class="form-check-label" for="transaction_id" [ngbTooltip]="transaction_tooltip(transaction_id)" tooltipClass="my-custom-class"
+        placement="right">
+          {{transaction_label(transaction_id)}}
         </label>
       </div>
 
