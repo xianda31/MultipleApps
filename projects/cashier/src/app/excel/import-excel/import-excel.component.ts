@@ -145,6 +145,8 @@ throw new Error('Method not implemented.');
 
   upload_data() {
 
+   
+
     let progress = (index: number) => {
       this.create_progress = Math.round((index) / this.book_entries.length * 100);
       this.progress_style = 'width: ' + this.create_progress + '%';
@@ -161,6 +163,17 @@ throw new Error('Method not implemented.');
     this.bookService.book_entries_bulk_create$(this.book_entries).subscribe((number) => {
       progress(number);
     });
+  }
+
+  extra_sanity_check() {
+    // check all book entries have a transaction id
+    this.verbose.set(this.verbose() + 'vérification des écritures \n');
+    this.book_entries.forEach((book_entry, index) => {
+      if (book_entry.transaction_id === undefined || book_entry.transaction_id === null) {
+        this.verbose.set(this.verbose() + '[' + index + '] ' + 'transaction id non renseigné \n');
+      }
+    });
+    this.verbose.set(this.verbose() + 'vérification terminée \n');
   }
 
 

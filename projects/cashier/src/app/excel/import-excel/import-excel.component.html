@@ -30,7 +30,7 @@
 <pre>{{verbose()}}</pre>
 
 <div *ngIf="worksheet_processed" class=" align-items-center">
-  <h6 class="col-6 ">
+  <h6 class="col-3 ">
     {{book_entries.length}} écritures prêtes pour chargement en base de données
   </h6>
   <span class="ms-3">
@@ -43,6 +43,12 @@
     show :
     <button (click)="show_data()" class="btn btn-primary btn-sm">
       <i class="bi bi-search"></i>
+    </button>
+  </span>
+  <span class="ms-3">
+    check :
+    <button (click)="extra_sanity_check()" class="btn btn-primary btn-sm">
+      <i class="bi bi-check2-circle"></i>
     </button>
   </span>
   <!-- <span class="ms-3">

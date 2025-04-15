@@ -21,7 +21,7 @@ export class ProfitAndLossComponent {
   p_and_l_classes: { key: string, description: string }[] = [];
   revenue_classes: Sub_class[] = [];
   expense_classes: Sub_class[] = [];
-
+  loaded: boolean = false;
   revenues!: Revenue[] ;
   expenses!: Revenue[] ;
 
@@ -48,6 +48,7 @@ export class ProfitAndLossComponent {
     ).subscribe((entries) => {
       this.revenues = this.bookService.get_revenues();
       this.expenses = this.bookService.get_expenses();
+      this.loaded = true;
     });
 
   }

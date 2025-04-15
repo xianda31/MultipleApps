@@ -79,10 +79,11 @@ trace_on(): boolean {
     return from(Promise.all(promises)).pipe(
       map((json_created_entries) => {
         const created_entries = json_created_entries.map((json) => this.parsed_entry(json as unknown as BookEntry_output));
-        this._book_entries = [...this._book_entries, ...created_entries];
+        // this._book_entries = [...this._book_entries, ...created_entries];
+        this._book_entries = this._book_entries.concat(created_entries);
         // .sort((b, a) => { return a.date.localeCompare(b.date); });
-        // this._book_entries = this._book_entries.concat(created_entries);
         // this._book_entries = this._book_entries.sort((b, a) => { return a.date.localeCompare(b.date); });
+        this.extra_sanity_check(this._book_entries);
         this._book_entries$.next(this._book_entries);
         return created_entries.length;
       }),
@@ -91,6 +92,17 @@ trace_on(): boolean {
         return of(0);
       })
     );
+  }
+
+  extra_sanity_check(entries: BookEntry[]) {
+    // check all book entries have a transaction id
+    entries.forEach((book_entry, index) => {
+      if (book_entry.transaction_id === undefined || book_entry.transaction_id === null) {
+        console.error('book entry nbr %s has a bad transaction id', index, book_entry.transaction_id);
+        throw new Error('book entry has no transaction id');
+      }
+    });
+    console.log('all book entries have a transaction id');
   }
 
   // create
@@ -309,10 +321,16 @@ trace_on(): boolean {
   // utility functions
 
   get_book_entries(): BookEntry[] {
-    return this._book_entries;
+    
+    return this._book_entries ?? []; // if no book entries are loaded yet
   }
 
   get_operations(): (Revenue | Expense)[] {
+    if(!this._book_entries) { // if no book entries are loaded yet
+      return [] as (Revenue | Expense)[]  
+    }
+
+
     return this._book_entries
       .reduce((acc, book_entry) => {
         const revenues = book_entry.operations
@@ -328,6 +346,11 @@ trace_on(): boolean {
   }
 
   get_revenues(): Revenue[] {
+  
+    if(!this._book_entries) { // if no book entries are loaded yet
+      return [] as Revenue[]  
+    }
+
     return this._book_entries
       .filter(book_entry => [TRANSACTION_CLASS.OTHER_REVENUE, TRANSACTION_CLASS.REVENUE_FROM_MEMBER].includes(this.transactionService.transaction_class(book_entry.transaction_id)))
       .reduce((acc, book_entry) => {
@@ -345,6 +368,11 @@ trace_on(): boolean {
 
 
   get_revenues_from_members(): Revenue[] {
+
+    if(!this._book_entries) { // if no book entries are loaded yet
+      return [] as Revenue[]  
+    }
+
     return this._book_entries
       .filter(book_entry => [TRANSACTION_CLASS.REVENUE_FROM_MEMBER].includes(this.transactionService.transaction_class(book_entry.transaction_id)))
       .reduce((acc, book_entry) => {
@@ -488,6 +516,9 @@ trace_on(): boolean {
 
 
   get_expenses(): Expense[] {
+    if(!this._book_entries) { // if no book entries are loaded yet
+      return [] as Expense[]  
+    }
     return this._book_entries
       .filter(book_entry => [TRANSACTION_CLASS.OTHER_EXPENSE, TRANSACTION_CLASS.EXPENSE_FOR_MEMBER].includes(this.transactionService.transaction_class(book_entry.transaction_id)))
       .reduce((acc, book_entry) => {
