@@ -189,11 +189,11 @@ export class CartService {
     return TRANSACTION_ID.achat_adhérent_en_espèces;
   }
 
-  payments2cheque_ref(payment: Payment): string {
+  payments2cheque_ref(payment: Payment): string | undefined {
     if (payment.mode === PaymentMode.CHEQUE) {
       return payment.bank + payment.cheque_no;
     } else {
-      return '';
+      return  undefined;
     }
   }
 

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { generateClient } from 'aws-amplify/api';
 
-import { BookEntry, Revenue, FINANCIAL_ACCOUNT, Expense,  CUSTOMER_ACCOUNT, TRANSACTION_ID, bank_values, Operation, Liquidity } from '../../../common/accounting.interface';
+import { BookEntry, Revenue, FINANCIAL_ACCOUNT, Expense, CUSTOMER_ACCOUNT, TRANSACTION_ID, bank_values, Operation, Liquidity } from '../../../common/accounting.interface';
 import { Schema } from '../../../../amplify/data/resource';
 import { BehaviorSubject, catchError, combineLatest, from, map, Observable, of, switchMap, tap } from 'rxjs';
 import { SystemDataService } from '../../../common/services/system-data.service';
@@ -21,11 +21,19 @@ export class BookService {
 
   private _book_entries!: BookEntry[];
   private _book_entries$ = new BehaviorSubject<BookEntry[]>(this._book_entries);
+
+  // trace_on: boolean = false; 
+
   constructor(
     private systemDataService: SystemDataService,
     private toastService: ToastService,
     private transactionService: TransactionService,
-  ) { }
+  ) {
+  }
+
+trace_on(): boolean {
+    return this.systemDataService.trace_on();
+  }
 
   jsonified_entry(entry: BookEntry): BookEntry_input {
     const replacer = (key: string, value: any) => {
@@ -54,6 +62,8 @@ export class BookService {
 
   // CRUD(L) BookEntry
 
+  // bulk create
+
   book_entries_bulk_create$(book_entries: BookEntry[]): Observable<number> {
 
     // const createBookEntries = async (book_entries: BookEntry[]) => {
@@ -69,8 +79,10 @@ export class BookService {
     return from(Promise.all(promises)).pipe(
       map((json_created_entries) => {
         const created_entries = json_created_entries.map((json) => this.parsed_entry(json as unknown as BookEntry_output));
-        this._book_entries = this._book_entries.concat(created_entries);
-        this._book_entries = this._book_entries.sort((b, a) => { return a.date.localeCompare(b.date); });
+        this._book_entries = [...this._book_entries, ...created_entries];
+        // .sort((b, a) => { return a.date.localeCompare(b.date); });
+        // this._book_entries = this._book_entries.concat(created_entries);
+        // this._book_entries = this._book_entries.sort((b, a) => { return a.date.localeCompare(b.date); });
         this._book_entries$.next(this._book_entries);
         return created_entries.length;
       }),
@@ -81,11 +93,12 @@ export class BookService {
     );
   }
 
+  // create
+
   async create_book_entry(book_entry: BookEntry) {
     const client = generateClient<Schema>();
     let jsonified_entry: BookEntry_input = this.jsonified_entry(book_entry);
     const { id, ...jsonified_entry_without_id } = jsonified_entry;
-    // console.log('jsonified_entry', jsonified_entry);
     try {
       const response = await client.models.BookEntry.create(jsonified_entry_without_id);
       if (response.errors) {
@@ -104,13 +117,15 @@ export class BookService {
     }
   }
 
+  // read 
+
   async read_book_entry(entry_id: string) {
     const client = generateClient<Schema>();
 
     try {
       const response = await client.models.BookEntry.get(
         { id: entry_id },
-        { selectionSet: ['id', 'season', 'tag', 'date', 'amounts', 'operations.*',  'transaction_id', 'cheque_ref', 'deposit_ref', 'bank_report'] }
+        { selectionSet: ['id', 'season', 'tag', 'date', 'amounts', 'operations.*', 'transaction_id', 'cheque_ref', 'deposit_ref', 'bank_report'] }
       );
       if (response.errors) {
         console.error('error', response.errors);
@@ -122,6 +137,9 @@ export class BookService {
       throw new Error(error instanceof Error ? error.message : String(error));
     }
   }
+
+  // update
+
   async update_book_entry(book_entry: BookEntry) {
     const client = generateClient<Schema>();
     try {
@@ -142,7 +160,7 @@ export class BookService {
     }
   }
 
-
+  // delete
 
   delete_book_entry(entry_id: string) {
     const client = generateClient<Schema>();
@@ -165,43 +183,58 @@ export class BookService {
       });
   }
 
+  // list
+
   list_book_entries$(season: string): Observable<BookEntry[]> {
 
-    const fetchBookentries = async () => {
-      const client = generateClient<Schema>();
-      const { data, errors } = await client.models.BookEntry.list({
-        filter: { season: { eq: season } },
-        limit: 1000,
-        nextToken: null,
-      });
-      if (errors) {
-        console.error(errors);
-        throw new Error(JSON.stringify(errors));
-      }
-      return data as unknown as BookEntry_output[];
-    };
-
-    // console.log('fetching book_entries from ', this._book_entries ? 'cache' : 'server');
-    let remote_load$ = from(fetchBookentries()).pipe(
-      map((entries) => {
-        this._book_entries = entries
-          .map((entry) => this.parsed_entry(entry as BookEntry_output))
-          .sort((b, a) => {
-            return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
+    const fetchBookentries = async (_season: string): Promise<BookEntry[]> => {
+      try {
+        const client = generateClient<Schema>();
+        let token: any = null;
+        let nbloops = 0;
+        let entries: BookEntry[] = [];
+        do {
+          const { data, nextToken, errors } = await client.models.BookEntry.list({
+            filter: { season: { eq: _season } },
+            limit: 100,
+            nextToken: token,
           });
-        // console.log('book_entries %s element(s) loaded from AWS', this._book_entries.length);
-        this._book_entries$.next(this._book_entries);
-        return entries;
-      }),
-      switchMap(() => this._book_entries$.asObservable()),
-      catchError((error) => {
-        console.error('Error fetching book entries:', error);
-        this._book_entries$.next([]);
-        return of([] as BookEntry[]);
-      })
-    )
+          if (errors) {
+            console.error(errors);
+            throw new Error(JSON.stringify(errors));
+          }
+          let new_jsoned_entries = data as unknown as BookEntry_output[];
+          entries = [...entries, ...new_jsoned_entries.map((entry) => this.parsed_entry(entry))];
+          token = nextToken;
 
-    return this._book_entries ? this._book_entries$.asObservable() : remote_load$;
+        } while (token !== null && nbloops++ < 10)
+
+        if (token !== null) {
+          this.toastService.showWarningToast('base comptabilité', 'beaucoup trop d\'entrées à charger , veuillez répeter l\'opération');
+        }
+        return entries;
+      }
+      catch (error) {
+        console.error('error', error);
+        throw new Error(error instanceof Error ? error.message : String(error));
+      }
+    }
+
+    if (this._book_entries) {
+      if (this.trace_on()) console.log('%s book entries retrieved from cache', this._book_entries.length);
+    } else {
+      this._book_entries$.next([] as BookEntry[]);   // initialize behaviorSubject until the S3 fetch complete
+      from(fetchBookentries(season)).subscribe((entries) => {
+        this._book_entries = entries.sort((b, a) => {
+          return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
+        });
+        this._book_entries$.next(this._book_entries);
+        if (this.trace_on()) console.log('book entries loaded from S3', entries.length);
+      });
+    }
+
+    return this._book_entries$.asObservable();
+
   }
 
   book_entries_bulk_delete$(season: string): Observable<number> {
@@ -224,7 +257,6 @@ export class BookService {
           }
           let json_entries: BookEntry[] = data as unknown as BookEntry_output[];
           entriesIds = [...entriesIds, ...json_entries.map((entry) => this.parsed_entry(entry as unknown as BookEntry_output).id)];
-          // console.log('fetchBookEntries return : %s entries i.e. %s', entriesIds.length, nextToken === null ? 'completed' : 'to continue ..');
           token = nextToken;
         } while (token !== null && nbloops++ < 10); // 10 loops max to avoid infinite loop
         if (token !== null) {
@@ -297,7 +329,7 @@ export class BookService {
 
   get_revenues(): Revenue[] {
     return this._book_entries
-      .filter(book_entry => [TRANSACTION_CLASS.OTHER_REVENUE,TRANSACTION_CLASS.REVENUE_FROM_MEMBER].includes( this.transactionService.transaction_class(book_entry.transaction_id)) )
+      .filter(book_entry => [TRANSACTION_CLASS.OTHER_REVENUE, TRANSACTION_CLASS.REVENUE_FROM_MEMBER].includes(this.transactionService.transaction_class(book_entry.transaction_id)))
       .reduce((acc, book_entry) => {
         const revenues = book_entry.operations
           .map(op => ({
@@ -314,8 +346,8 @@ export class BookService {
 
   get_revenues_from_members(): Revenue[] {
     return this._book_entries
-    .filter(book_entry => [TRANSACTION_CLASS.REVENUE_FROM_MEMBER].includes( this.transactionService.transaction_class(book_entry.transaction_id)) )
-    .reduce((acc, book_entry) => {
+      .filter(book_entry => [TRANSACTION_CLASS.REVENUE_FROM_MEMBER].includes(this.transactionService.transaction_class(book_entry.transaction_id)))
+      .reduce((acc, book_entry) => {
         const revenues = book_entry.operations
           .map(op => ({
             ...op,
@@ -457,7 +489,7 @@ export class BookService {
 
   get_expenses(): Expense[] {
     return this._book_entries
-      .filter(book_entry => [TRANSACTION_CLASS.OTHER_EXPENSE ,TRANSACTION_CLASS.EXPENSE_FOR_MEMBER].includes(this.transactionService.transaction_class(book_entry.transaction_id) ))
+      .filter(book_entry => [TRANSACTION_CLASS.OTHER_EXPENSE, TRANSACTION_CLASS.EXPENSE_FOR_MEMBER].includes(this.transactionService.transaction_class(book_entry.transaction_id)))
       .reduce((acc, book_entry) => {
         const expenses = book_entry.operations
           .map(op => ({
@@ -470,6 +502,8 @@ export class BookService {
         return [...acc, ...expenses];
       }, [] as Expense[]);
   }
+
+
   get_expenses_movements_amount(): number {
     return this.Round(this.get_expenses().reduce((acc, op) => {
       return acc + this.sum_values(op.values);

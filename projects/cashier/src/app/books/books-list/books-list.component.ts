@@ -1,11 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { BookEntry } from '../../../../../common/accounting.interface';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { BookService } from '../../book.service';
 import { TransactionService } from '../../transaction.service';
+import { map, Subscription, switchMap, tap } from 'rxjs';
 
 type Fields = 'date' | 'classe' | 'transaction' | 'montant' | 'tag'
 @Component({
@@ -15,12 +16,12 @@ type Fields = 'date' | 'classe' | 'transaction' | 'montant' | 'tag'
   templateUrl: './books-list.component.html',
   styleUrl: './books-list.component.scss'
 })
-export class BooksListComponent {
-
+export class BooksListComponent implements OnDestroy {
+  loaded: boolean = false;
   season: string = '';
-  book_entries: BookEntry[] = [];
+  book_entries!: BookEntry[] ;
   truncature = '1.2-2';  // '1.0-0';// '1.2-2';  //
-
+  book_subscription !: Subscription ;
   constructor(
     private bookService: BookService,
     private transactionService: TransactionService,
@@ -31,13 +32,30 @@ export class BooksListComponent {
 
   ngOnInit() {
 
-    this.systemDataService.get_configuration().subscribe((conf) => {
-      this.season = conf.season
+    this.loaded=false;
+    this.book_subscription=this.systemDataService.get_configuration().pipe(
+      tap((conf) => {
+        this.season = conf.season;
+        // console.log('got %s , then switchMap to season\'s entries', this.season);
+      }),
+      map((conf) => conf.season),
+      switchMap((season) => this.bookService.list_book_entries$(season)),
+      )
+      .subscribe(
+        (book_entries) => {
+          this.book_entries = [...book_entries];
+          // console.log('....got %s book entries', this.book_entries.length);
+          this.loaded = true;
+        }
+      )
 
-      this.bookService.list_book_entries$(this.season).subscribe((book_entries) => {
-        this.book_entries = [...book_entries];
-      });
-    });
+  }
+
+  ngOnDestroy() {
+    if (this.book_subscription) {
+      console.log('unsubscribing from book entries');
+      this.book_subscription.unsubscribe();
+    }
   }
 
   total_amount(entry: BookEntry): number {
@@ -105,14 +123,6 @@ export class BooksListComponent {
   }
 
 
-  // in_out(book_entry: BookEntry): boolean {
-  //   let transaction = get_transaction(book_entry.transaction);
-  //   if (transaction === undefined) {
-  //     console.log('oops , there is a problem', book_entry);
-  //     return false;
-  //   }
-  //   return transaction.is_of_profit_type;
-  // }
 
   transaction_label(book_entry: BookEntry): string {
     let transaction = this.transactionService.get_transaction(book_entry.transaction_id);

@@ -33,8 +33,15 @@ export class SystemDataService {
       }),
       switchMap(() => this._system_configuration$.asObservable())
     );
-
-    return (this._system_configuration !== undefined) ? this._system_configuration$.asObservable() : remote_load$;
+    
+    if(this._system_configuration !== undefined) {
+      // this._system_configuration$.next(this._system_configuration);
+      if (this.trace_on()) console.log(' configuration from cache', this._system_configuration);
+      return this._system_configuration$.asObservable();
+    }else {
+      return remote_load$;
+    }
+    // return (this._system_configuration !== undefined) ? this._system_configuration$.asObservable() : remote_load$;
   }
 
   get_balance_history(): Observable<Balance_sheet[]> {

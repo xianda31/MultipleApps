@@ -336,6 +336,14 @@ throw new Error('Method not implemented.');
     }
   }
   control_amounts_balance(row_nbr: number, book_entry: BookEntry): boolean {
+
+    if (book_entry.amounts === undefined  || book_entry.amounts === null || book_entry.operations.length === 0) {
+      console.log('book_entry amounts undefined', book_entry);
+      this.verbose.set(this.verbose() + '[' + row_nbr + '] ' + 'montants non renseignés : ' + '\n');
+      return false;
+    }
+  
+
     let debit_keys: FINANCIAL_ACCOUNT[] = Object.keys(book_entry.amounts).filter((key): key is FINANCIAL_ACCOUNT => key.includes('in'));
     let total_debit = debit_keys.reduce((acc, key) => acc + (book_entry.amounts[key] || 0), 0);
 
@@ -376,7 +384,7 @@ throw new Error('Method not implemented.');
 
   compute_operation_amounts(transaction: Transaction, row: ExcelJS.Row): Operation {
     let operation: Operation = {
-      label: row.getCell(MAP.intitulé).value?.toString() as string,
+      label: row.getCell(MAP.intitulé).result?.toString() as string,
       values: {}
     };
     switch (transaction.class) {

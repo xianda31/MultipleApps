@@ -21,11 +21,13 @@ import { switchMap, tap } from 'rxjs';
 export class AppComponent {
 
   season !: string;
-  entries_nbr: number = 0;
+  entries_nbr!: number ;
   constructor(
     private systemDataService: SystemDataService,
     private bookService: BookService
-  ) { }
+  ) { 
+
+  }
 
   ngOnInit(): void {
     registerLocaleData(localeFr);
@@ -38,6 +40,7 @@ export class AppComponent {
       this.entries_nbr = book_entries.length;
       // console.log('%s écritures en base pour la saison %s', book_entries.length, this.season);
     });
+
   }
 
 }

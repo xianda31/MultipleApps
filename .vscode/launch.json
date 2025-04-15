@@ -14,8 +14,8 @@
     {
       "type": "chrome",
       "request": "launch",
-      "name": "debug localhost:57366",
-      "url": "http://localhost:57366",
+      "name": "debug localhost:61619",
+      "url": "http://localhost:61619",
       "webRoot": "${workspaceFolder}"
     }
   ]
