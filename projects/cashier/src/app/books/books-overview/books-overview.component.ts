@@ -23,7 +23,7 @@ enum CASHBOX_FILTER {
 }
 
 interface Deposit_checked {
-  ref:string;
+  ref: string;
   out_date?: string;
   cheques_nbr: number;
   amount: number;
@@ -58,17 +58,53 @@ export class BooksOverviewComponent {
 
   cashbox_book_entries: BookEntry[] = [];
   cashbox_filters = Object(CASHBOX_FILTER);
-  selected_cashbox_filter = signal<string>(CASHBOX_FILTER.CASH_ONLY);
+
+  // signals to manage the cashbox filtering and sorting and computations
+  selected_cashbox_filter = signal<string>('');
+
   cashbox_book_entries_filtered = computed(() => {
-    return this.filter_cashbox(this.selected_cashbox_filter());
+    const _filter = (filter: any): BookEntry[] => {
+      if (filter === CASHBOX_FILTER.CHEQUES_ONLY) {
+        return this.cashbox_book_entries.filter((book_entry) =>
+          this.transactionService.get_transaction(book_entry.transaction_id).cheque === 'in' ||
+          (book_entry.transaction_id) === TRANSACTION_ID.dépôt_caisse_chèques);
+
+      } else if (filter === CASHBOX_FILTER.CASH_ONLY) {
+        return this.cashbox_book_entries
+          .filter((book_entry) => this.transactionService.get_transaction(book_entry.transaction_id).cash !== 'none')
+          .sort((a, b) => {
+            return (a.date.localeCompare(b.date) === 0) ? (a.transaction_id === TRANSACTION_ID.dépôt_caisse_espèces?1:-1) : a.date.localeCompare(b.date)
+          })
+          ;
+          
+      } else {
+        return this.cashbox_book_entries;
+      }
+    }
+    return _filter(this.selected_cashbox_filter());
   });
+
   cashbox_book_entries_filtered_total_value = computed(() => {
     return this.Round(this.cashbox_book_entries_filtered().reduce((acc, book_entry) => {
       return acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0);
     }, 0));
   });
+
   cheques_deposits = computed(() => {
     return this.sort_deposits(this.cashbox_book_entries_filtered());
+  });
+
+  cash_acc = computed(() => {
+    let acc: number[] = [];
+    this.cashbox_book_entries_filtered().forEach((book_entry, index) => {
+      let delta = (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0)
+      if (index === 0) {
+        acc.push(this.Round(this.initial_liquidities.cash) + delta);
+      } else {
+        acc.push(this.Round(acc[index -1 ] + delta));
+      }
+    });
+    return acc;
   });
 
   bank_book_entries: BookEntry[] = [];
@@ -128,39 +164,18 @@ export class BooksOverviewComponent {
       this.current_expenses_operations_amount = this.bookService.get_expenses_movements_amount();
 
       this.cashbox_book_entries = this.book_entries.filter(book_entry => this.cashbox_accounts.some(op => book_entry.amounts[op] !== undefined));;
-      this.selected_cashbox_filter.set(CASHBOX_FILTER.CHEQUES_ONLY);
+      this.selected_cashbox_filter.set(CASHBOX_FILTER.CASH_ONLY);
     });
 
   }
 
-  filter_cashbox(filter: any): BookEntry[] {
-
-    if (filter === CASHBOX_FILTER.CHEQUES_ONLY) {
-      return this.cashbox_book_entries.filter((book_entry) =>
-        this.transactionService.get_transaction(book_entry.transaction_id).cheque !== 'none');
-    } else if (filter === CASHBOX_FILTER.CASH_ONLY) {
-      return this.cashbox_book_entries.filter((book_entry) =>
-        this.transactionService.get_transaction(book_entry.transaction_id).cash !== 'none');
-    } else {
-      return this.cashbox_book_entries;
-    }
-  }
-
-  balanced(entries: BookEntry[]): boolean {
-    let total = 0;
-    entries.forEach((book_entry) => {
-      total += this.Round(book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - this.Round(book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0);
-    });
-    return total === 0;
-  }
 
 
-  // utilities
-
-  sort_deposits(entries: BookEntry[]): { [key: string]: Deposit_checked } {
 
 
-    let deposit_check = (ref:string,entries: BookEntry[]): Deposit_checked => {
+  sort_deposits(entries: BookEntry[]): Deposit_checked[] {
+
+    const deposit_check = (ref: string, entries: BookEntry[]): Deposit_checked => {
       {
         let cheques_nbr = entries.filter((book_entry) => {
           return this.transactionService.get_transaction(book_entry.transaction_id).cheque === 'in';
@@ -174,31 +189,31 @@ export class BooksOverviewComponent {
         }, 0);
 
         let out_entry = (entries.find((book_entry) => {
-          return this.transactionService.get_transaction(book_entry.transaction_id).cheque === 'out';
+          return book_entry.transaction_id === TRANSACTION_ID.dépôt_caisse_chèques;
         }));
-        let out_date = out_entry?.date || undefined;
-    
-        let result = { ref:ref,out_date: out_date, cheques_nbr: cheques_nbr, amount: credit, complete: (out_date !== undefined),balanced: (credit === debit) };
+        let out_date = out_entry?.date ?? undefined;
+
+        let result = { ref: ref, out_date: out_date, cheques_nbr: cheques_nbr, amount: debit, complete: (out_date !== undefined), balanced: (credit === debit) };
         return { ...result, entries };
       }
     }
 
+    // group entries by deposit_ref
     let deposit_refs = new Map<string, BookEntry[]>();
     entries.forEach((book_entry) => {
-      // if (book_entry.deposit_ref !== undefined) {
-        let deposit_ref = book_entry.deposit_ref ?? 'non déposé'; //.split('_')[0];
-        if (!deposit_refs.has(deposit_ref)) {
-          deposit_refs.set(deposit_ref, [book_entry]);
-        }else {
+      let deposit_ref = book_entry.deposit_ref ?? 'non déposé'; //.split('_')[0];
+      if (!deposit_refs.has(deposit_ref)) {
+        deposit_refs.set(deposit_ref, [book_entry]);
+      } else {
         deposit_refs.get(deposit_ref)!.push(book_entry);
-        }
-      // }
+      }
     });
 
-    let deposits: { [key: string]: Deposit_checked } = {};
-    deposit_refs.forEach((entries, ref) => {
-      let check = deposit_check(ref,entries);
-      deposits[check.out_date??'non déposé'] = check;
+    // sort grouped entries by date
+    let deposits: Deposit_checked[] = [];
+    Array.from(deposit_refs.entries()).reverse().forEach(([ref, entries]) => {
+      let check = deposit_check(ref, entries);
+      deposits.push(check);
     });
     return deposits;
   }

@@ -262,7 +262,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     is_of_profit_type: false,
     require_deposit_ref: true,
     cash: 'none',
-    cheque: 'out',
+    cheque: 'none',
   },
   // versement sur compte épargne
   [TRANSACTION_ID.virement_banque_vers_épargne]: {
