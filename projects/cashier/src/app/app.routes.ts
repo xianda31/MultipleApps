@@ -8,10 +8,10 @@ import { CashBoxStatusComponent } from './books/cash-box-status/cash-box-status.
 import { FeesEditorComponent } from './fees/fees-editor/fees-editor.component';
 import { BankReconciliationComponent } from './bank-reconciliation/bank-reconciliation.component';
 import { BalanceComponent } from './balance/balance.component';
-import { ProfitAndLossComponent } from './profit-and-loss/profit-and-loss.component';
-import { ProfitAndLossDetailsComponent } from './profit-and-loss/profit-and-loss-details/profit-and-loss-details.component';
 import { ImportExcelComponent } from './excel/import-excel/import-excel.component';
 import { BooksListComponent } from './books/books-list/books-list.component';
+import { ExpenseAndRevenueComponent } from './expense-and-revenue/expense-and-revenue.component';
+import { ExpenseAndRevenueDetailsComponent } from './expense-and-revenue/expense-and-revenue-details/expense-and-revenue-details.component';
 
 export const routes: Routes = [
   { path: 'shop', component: ShopComponent },   //, canActivate: [loggedInGuard]
@@ -25,8 +25,8 @@ export const routes: Routes = [
   { path: 'excel/import', component: ImportExcelComponent },
   { path: 'bank-reconciliation', component: BankReconciliationComponent },
   { path: 'balance-sheet', component: BalanceComponent },
-  { path: 'profit-and-loss', component: ProfitAndLossComponent },
-  { path: 'profit-and-loss/details', component: ProfitAndLossDetailsComponent },
+  { path: 'expense-and-revenue', component: ExpenseAndRevenueComponent },
+  { path: 'expense-and-revenue/details', component: ExpenseAndRevenueDetailsComponent },
   { path: '', component: HomeComponent },
   // {
   //     path: 'authentification',

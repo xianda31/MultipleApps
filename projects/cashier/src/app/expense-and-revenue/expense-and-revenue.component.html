@@ -1,0 +1,65 @@
+<div *ngIf="loaded" class="card mt-2">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h5>Comptes de résultats</h5>
+    <h5>
+      {{get_profit_and_loss_result()>0 ? 'bénéfice net :' : 'perte nette :'}}
+      {{get_profit_and_loss_result() | number:truncature:'fr'}} €
+    </h5>
+  </div>
+  <div class="card-body">
+    <table class="table table-sm table-borderless table-responsive">
+      <thead>
+        <tr>
+          <th class="col-2">Catégorie</th>
+          <th class="col-4">Charges</th>
+          <th class="col-2"></th>
+          <th class="col-4">Recettes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let section of p_and_l_sections ">
+          <td class="col-2 fw-bolder">{{section.description }}</td>
+          <td class="col-4">
+            <table class="table table-sm table-borderless table-hover table-responsive">
+              <tbody>
+                <ng-container *ngFor="let definition of expense_definitions">
+                  <tr class="tr_hoverable" *ngIf="definition.section === section.key"
+                    (click)="show_details('expense', definition.key)">
+                    <td class="col-1">{{definition.key}} </td>
+                    <td class="col-9">{{definition.description}}</td>
+                    <td class="col-2 text-end">{{get_total_expenses(definition.key) |
+                      number:truncature:'fr'}}</td>
+                  </tr>
+                </ng-container>
+              </tbody>
+            </table>
+          </td>
+          <td class="col-2"></td>
+          <td class="col-4">
+            <table class="table table-sm table-borderless table-responsive">
+              <tbody>
+                <ng-container *ngFor="let definition of revenue_definitions">
+                  <tr class="tr_hoverable" *ngIf="definition.section === section.key"
+                    (click)="show_details('revenue',definition.key)">
+                    <td class="col-1">{{definition.key}} </td>
+                    <td class="col-9">{{definition.description}}</td>
+                    <td class="col-2 text-end">{{get_total_revenues(definition.key) |
+                      number:truncature:'fr'}}</td>
+                  </tr>
+                </ng-container>
+              </tbody>
+            </table>
+          </td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr class="fw-bold bg-body-secondary">
+          <td class="col-2">TOTAUX :</td>
+          <td class="col-4 text-end">{{get_total_expenses() | number:truncature:'fr'}}</td>
+          <td class="col-2"> </td>
+          <td class="col-4 text-end">{{get_total_revenues() | number:truncature:'fr'}}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>

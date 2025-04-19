@@ -31,14 +31,14 @@ export class SysConfComponent {
 
     this.systemFormGroup = this.fb.group({
       club_identifier: [''],
-      dev_mode: [''],
+      trace_mode: [false],
       season: [''],
       club_bank_key: [''],
       member_trn_price: 3,
       non_member_trn_price: 4,
 
-      financial_tree: this.fb.group({
-        classes: this.fb.array([
+      revenue_and_expense_tree: this.fb.group({
+        sections: this.fb.array([
           this.fb.group({
             key: [''],
             description: ['']
@@ -87,19 +87,23 @@ export class SysConfComponent {
     this.systemDataService.save_configuration(configuration);
   }
 
+  get_trace_mode() {
+    return this.systemFormGroup.get('trace_mode')?.value;
+  }
+
   get season() {
     return this.systemFormGroup.get('season')?.value;
   }
   get expenses() {
-    return this.systemFormGroup.get('financial_tree')?.get('expenses') as FormArray;
+    return this.systemFormGroup.get('revenue_and_expense_tree')?.get('expenses') as FormArray;
   }
 
   get revenues() {
-    return this.systemFormGroup.get('financial_tree')?.get('revenues') as FormArray;
+    return this.systemFormGroup.get('revenue_and_expense_tree')?.get('revenues') as FormArray;
   }
 
-  get classes() {
-    return this.systemFormGroup.get('financial_tree')?.get('classes') as FormArray;
+  get sections() {
+    return this.systemFormGroup.get('revenue_and_expense_tree')?.get('sections') as FormArray;
   }
 
   get banks() {
@@ -114,18 +118,18 @@ export class SysConfComponent {
   loadDataInFormGroup(configuration: SystemConfiguration) {
     this.systemFormGroup.patchValue(configuration);
     // patchValue doest not work for FormArray ; work-around method : clear and re-populate
-    this.classes.clear();
+    this.sections.clear();
     this.expenses.clear();
     this.revenues.clear();
 
-    configuration.financial_tree.classes.forEach((account: any) => {
-      this.classes!.push(this.fb.group(account));
+    configuration.revenue_and_expense_tree.sections.forEach((account: any) => {
+      this.sections!.push(this.fb.group(account));
     });
-    configuration.financial_tree.expenses.forEach((account: any) => {
+    configuration.revenue_and_expense_tree.expenses.forEach((account: any) => {
       this.expenses.push(this.fb.group(account));
     }
     );
-    configuration.financial_tree.revenues.forEach((account: any) => {
+    configuration.revenue_and_expense_tree.revenues.forEach((account: any) => {
       this.revenues.push(this.fb.group(account));
     });
 

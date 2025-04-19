@@ -16,24 +16,24 @@ export interface ImageSize {
 }
 
 
-export interface Sub_class {
+export interface Revenue_and_expense_definition {
     key: string;
-    class: string;
+    section: string;
     description: string;
 }
-export interface Financial_tree {
-    classes: { key: string, description: string }[];
-    revenues: Sub_class[];
-    expenses: Sub_class[];
+export interface Revenue_and_expense_tree {
+    sections: { key: string, description: string }[];
+    revenues: Revenue_and_expense_definition[];
+    expenses: Revenue_and_expense_definition[];
 }
 export interface SystemConfiguration {
     club_identifier: string;
-    dev_mode: string;
+    trace_mode: boolean;
     season: string;
     club_bank_key: string;
     member_trn_price: number;
     non_member_trn_price: number;
-    financial_tree: Financial_tree;
+    revenue_and_expense_tree: Revenue_and_expense_tree;
     banks: Bank[];
     thumbnailSize: ImageSize;
 }

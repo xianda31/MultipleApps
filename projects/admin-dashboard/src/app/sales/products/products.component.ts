@@ -30,7 +30,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
 
     this.accounts$ = this.systemDataService.get_configuration().pipe(
-      map((configuration) => configuration.financial_tree!.revenues),
+      map((configuration) => configuration.revenue_and_expense_tree!.revenues),
       map((credit_accounts) => credit_accounts.map((account) => account.key)
       )
     );

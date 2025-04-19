@@ -46,7 +46,9 @@ export class SystemDataService {
 
   get_balance_history(): Observable<Balance_sheet[]> {
     return from(this.fileService.download_json_file('accounting/balance_history.txt')).pipe(
-      map((data) => data as Balance_sheet[]),
+      map((data) => {
+        console.log('balance history downloaded', data);
+        return data as Balance_sheet[]}),
       catchError((error) => {
         console.log('Error fetching balance history:', error);
         return of([] as Balance_sheet[]);
@@ -94,7 +96,7 @@ export class SystemDataService {
   // utilities functions
 
   trace_on() {
-    return this._system_configuration.dev_mode === 'trace';
+    return this._system_configuration.trace_mode ;
   }
 
   get_season(date: Date): string {

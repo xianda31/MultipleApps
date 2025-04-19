@@ -75,7 +75,7 @@ export class ProductService {
     sorted_products(products: Product[]): Observable<Product[]> {
         return this.systemDataService.get_configuration().pipe(
             map((conf) => {
-                const products_accounts = conf.financial_tree.revenues.map((account) => account.key);
+                const products_accounts = conf.revenue_and_expense_tree.revenues.map((account) => account.key);
                 const sorted_products: Product[] = [];
                 products_accounts.forEach((key) => {
                     sorted_products.push(...products.filter((product) => product.account === key));

@@ -142,7 +142,7 @@
               <tr class="fw-light fs-6">
                 <td>&#8205;</td>
                 <td>chèques non encaissés</td>
-                <td>{{-current_balance_sheet.outstanding_expenses | number:truncature:'fr'| parenthesis}}</td>
+                <td (click)="show_outstandings('oustandings')">{{-current_balance_sheet.outstanding_expenses | number:truncature:'fr'| parenthesis}}</td>
                 <td>&#8205;</td>
                 <td class="variation">
                   {{-(current_balance_sheet.outstanding_expenses-prev_balance_sheet.outstanding_expenses) |

@@ -15,6 +15,9 @@
   <div class="col-4">
     <div class="input-group">
       <input #fileInput type="file" class="form-control" (change)="onFileChange($event)">
+      <button class="btn btn-outline-secondary" type="button" (click)="fileInput.value = ''">
+        <i class="bi bi-arrow-clockwise"></i>
+      </button>
     </div>
   </div>
 
@@ -46,9 +49,9 @@
     </button>
   </span>
   <span class="ms-3">
-    check :
-    <button (click)="extra_sanity_check()" class="btn btn-primary btn-sm">
-      <i class="bi bi-check2-circle"></i>
+    log :
+    <button (click)="clear_verbose()" class="btn btn-primary btn-sm">
+      <i class="bi bi-trash"></i>
     </button>
   </span>
   <!-- <span class="ms-3">

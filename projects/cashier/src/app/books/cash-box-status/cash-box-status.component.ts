@@ -1,12 +1,13 @@
 import { Component } from '@angular/core';
-import { BookEntry, TRANSACTION_ID,  FINANCIAL_ACCOUNT } from '../../../../../common/accounting.interface';
+import { BookEntry, TRANSACTION_ID, FINANCIAL_ACCOUNT, Liquidities } from '../../../../../common/accounting.interface';
 import { BookService } from '../../book.service';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { _CHEQUE_IN_ACCOUNT, _CHEQUES_FIRST_IN_CASHBOX} from '../../../../../common/transaction.definition';
+import { _CHEQUE_IN_ACCOUNT, _CHEQUES_FIRST_IN_CASHBOX } from '../../../../../common/transaction.definition';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { Bank } from '../../../../../common/system-conf.interface';
 import { TransactionService } from '../../transaction.service';
+import { combineLatest, switchMap } from 'rxjs';
 
 @Component({
   selector: 'app-cash-box-status',
@@ -24,6 +25,8 @@ export class CashBoxStatusComponent {
   cash_out_amount: number = 0;
   temp_refs: Map<string, { cheque_qty: number, amount: number, new_ref: string }> = new Map<string, { cheque_qty: number, amount: number, new_ref: string }>();
   banks !: Bank[];
+  initial_liquidities: Liquidities = { cash: 0, bank: 0, savings: 0 };
+
 
   CHEQUE_IN_ACCOUNT = _CHEQUE_IN_ACCOUNT;
 
@@ -43,10 +46,16 @@ export class CashBoxStatusComponent {
 
     this.init_cashForm();
 
-    this.systemDataService.get_configuration().subscribe((conf) => {
-      this.banks = conf.banks;
-      this.season = conf.season;
-      this.bookService.list_book_entries$(this.season).subscribe((book_entries) => {
+    this.systemDataService.get_configuration().pipe(
+      switchMap((conf) => {
+        this.banks = conf.banks;
+        this.season = conf.season;
+        return combineLatest([
+          this.systemDataService.get_balance_sheet_initial_amounts(conf.season),
+          this.bookService.list_book_entries$(conf.season)
+        ])
+      }))
+      .subscribe(([liquidities, book_entries]) => {
         this.book_entries = book_entries;
 
         // filtre les chèques à déposer
@@ -57,9 +66,8 @@ export class CashBoxStatusComponent {
         // calcule le montant total des chèques à déposer & le liquide disponible
         let total_cheques = this.cheques_for_deposit.reduce((acc, book_entry) => {
           return acc + (book_entry.amounts['cashbox_in'] ?? 0);
-        }
-          , 0);
-        this.current_cash_amount = this.bookService.get_cashbox_movements_amount() - total_cheques;
+        }          , 0);
+        this.current_cash_amount = liquidities.cash + this.bookService.get_cashbox_movements_amount() - total_cheques;
 
 
         // énumère les bordereaux de dépot chèque en temp_
@@ -76,7 +84,6 @@ export class CashBoxStatusComponent {
             }
           });
       });
-    });
   }
 
 

@@ -94,14 +94,14 @@ export class BalanceComponent {
     let cashbox_movements = this.bookService.get_cashbox_movements_amount();
     let bank_movements = this.bookService.get_bank_movements_amount();
     let savings_movements = this.bookService.get_savings_movements_amount();
-    let bank_outstanding_expenses = this.bookService.get_bank_outstanding_expenses();
+    let bank_outstanding_expenses_amount = this.bookService.get_bank_outstanding_expenses_amount();
     let gift_vouchers = this.bookService.get_customers_assets_amount();
     let client_debts = this.bookService.get_clients_debit_value();
 
     this.current_balance_sheet.liquidities.cash = this.prev_balance_sheet.liquidities.cash + cashbox_movements;
     this.current_balance_sheet.liquidities.bank = this.prev_balance_sheet.liquidities.bank + bank_movements;
     this.current_balance_sheet.liquidities.savings = this.prev_balance_sheet.liquidities.savings + savings_movements;
-    this.current_balance_sheet.outstanding_expenses = bank_outstanding_expenses;
+    this.current_balance_sheet.outstanding_expenses = bank_outstanding_expenses_amount;
     this.current_balance_sheet.gift_vouchers = gift_vouchers;
     this.current_balance_sheet.client_debts = client_debts;
 
@@ -111,7 +111,8 @@ export class BalanceComponent {
   }
 
 
-  test_nbr: number = 0;
+
+
   ngOnInit() {
 
     combineLatest([
@@ -135,9 +136,11 @@ export class BalanceComponent {
 
   }
 
-  // previous_season(season: string) {
-  //   return (+season.slice(0, 4) - 1).toString() + '/' + (+season.slice(0, 4)).toString();
-  // }
+  show_outstandings(key: string) {
+    let book_entries = this.bookService.get_bank_outstanding_expenses();
+    let label = this.current_balance_sheet.season + ': ' + key + ' : ' + book_entries.length;
+    this.toatService.showInfoToast(label, 'solde de la caisse');
+  }
 
   select_season() {
     this.current_balance_sheet = this.balance_sheets.find((sheet) => sheet.season === this.selected_season) ?? this.create_balance_sheet(this.selected_season);
@@ -146,7 +149,6 @@ export class BalanceComponent {
       this.toatService.showErrorToast('erreur', 'saison précédente non trouvée dans l\'historique');
     }
     this.fileUrl = this.fileService.json_to_blob(this.balance_sheets);
-    // this.other_seasons = this.seasons.filter((season) => season !== this.selected_season);
   }
 
   create_balance_sheet(season: string) {

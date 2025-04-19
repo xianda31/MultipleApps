@@ -20,7 +20,7 @@ type BookEntry_output = BookEntry & {
 export class BookService {
 
   private _book_entries!: BookEntry[];
-  private _book_entries$ = new BehaviorSubject<BookEntry[]>(this._book_entries);
+  private _book_entries$ = new BehaviorSubject<BookEntry[]>([]);
 
   // trace_on: boolean = false; 
 
@@ -66,24 +66,32 @@ trace_on(): boolean {
 
   book_entries_bulk_create$(book_entries: BookEntry[]): Observable<number> {
 
-    // const createBookEntries = async (book_entries: BookEntry[]) => {
     const client = generateClient<Schema>();
 
-    const promises = book_entries.map(book_entry => {
+    const create_entry = async (book_entry: BookEntry): Promise<BookEntry> => {
       let jsonified_entry: BookEntry_input = this.jsonified_entry(book_entry);
       const { id, ...jsonified_entry_without_id } = jsonified_entry;
-      return client.models.BookEntry.create(jsonified_entry_without_id);
-    });
-
+  
+      try {
+        const response = await client.models.BookEntry.create(jsonified_entry_without_id);
+        if (response.errors) {
+          console.error('error creating', this.jsonified_entry(book_entry), response.errors);
+          return Promise.reject(JSON.stringify(response.errors));
+        }
+        const created_entry = this.parsed_entry(response.data as unknown as BookEntry_output);
+        return Promise.resolve(created_entry);
+      } catch (error) {
+        console.error('error', error);
+        return Promise.reject(error instanceof Error ? error.message : String(error));
+      }
+    }
+    
+    const promises = book_entries.map(book_entry => create_entry(book_entry));
 
     return from(Promise.all(promises)).pipe(
-      map((json_created_entries) => {
-        const created_entries = json_created_entries.map((json) => this.parsed_entry(json as unknown as BookEntry_output));
-        // this._book_entries = [...this._book_entries, ...created_entries];
-        this._book_entries = this._book_entries.concat(created_entries);
-        // .sort((b, a) => { return a.date.localeCompare(b.date); });
-        // this._book_entries = this._book_entries.sort((b, a) => { return a.date.localeCompare(b.date); });
-        this.extra_sanity_check(this._book_entries);
+      map((created_entries) => {
+        this._book_entries = this._book_entries.concat(created_entries)
+        .sort((b, a) => { return a.date.localeCompare(b.date); });
         this._book_entries$.next(this._book_entries);
         return created_entries.length;
       }),
@@ -94,16 +102,17 @@ trace_on(): boolean {
     );
   }
 
-  extra_sanity_check(entries: BookEntry[]) {
-    // check all book entries have a transaction id
-    entries.forEach((book_entry, index) => {
-      if (book_entry.transaction_id === undefined || book_entry.transaction_id === null) {
-        console.error('book entry nbr %s has a bad transaction id', index, book_entry.transaction_id);
-        throw new Error('book entry has no transaction id');
-      }
-    });
-    console.log('all book entries have a transaction id');
-  }
+  // extra_sanity_check(entries: BookEntry[]) {
+  //   // check all book entries have a transaction id
+  //   entries.forEach((book_entry, index) => {
+  //     let transaction_id = book_entry.transaction_id;
+  //     if (!transaction_id) {
+  //       console.error('book entry nbr %s has a bad transaction id', index, book_entry.transaction_id);
+  //       throw new Error('book entry has no transaction id');
+  //     }
+  //   });
+  //   console.log('all book entries have a transaction id');
+  // }
 
   // create
 
@@ -208,7 +217,7 @@ trace_on(): boolean {
         do {
           const { data, nextToken, errors } = await client.models.BookEntry.list({
             filter: { season: { eq: _season } },
-            limit: 100,
+            limit: 300,
             nextToken: token,
           });
           if (errors) {
@@ -216,6 +225,7 @@ trace_on(): boolean {
             throw new Error(JSON.stringify(errors));
           }
           let new_jsoned_entries = data as unknown as BookEntry_output[];
+          // if (this.trace_on()) console.log('+ %s entries incrementally loaded from S3', data.length);
           entries = [...entries, ...new_jsoned_entries.map((entry) => this.parsed_entry(entry))];
           token = nextToken;
 
@@ -235,13 +245,13 @@ trace_on(): boolean {
     if (this._book_entries) {
       if (this.trace_on()) console.log('%s book entries retrieved from cache', this._book_entries.length);
     } else {
-      this._book_entries$.next([] as BookEntry[]);   // initialize behaviorSubject until the S3 fetch complete
+      // this._book_entries$.next([] as BookEntry[]);   // initialize behaviorSubject until the S3 fetch complete
       from(fetchBookentries(season)).subscribe((entries) => {
-        this._book_entries = entries.sort((b, a) => {
+        this._book_entries = entries.sort((a, b) => {
           return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
         });
         this._book_entries$.next(this._book_entries);
-        if (this.trace_on()) console.log('book entries loaded from S3', entries.length);
+        if (this.trace_on()) console.log('%s book entries loaded from S3', entries.length);
       });
     }
 
@@ -389,31 +399,73 @@ trace_on(): boolean {
   }
 
   get_cashbox_movements_amount(): number {
+    if(this._book_entries === undefined) { // if no book entries are loaded yet
+      return 0; 
+    }
+
+    // debug purpoise
+
+    // let _in = this._book_entries.reduce((acc, book_entry) => {
+    //   return acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0);
+    // }, 0);
+    // let nb_in = this._book_entries.reduce((acc, book_entry) => {
+    //   return acc + ((book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) > 0 ? 1 : 0);
+    // }, 0);
+    
+    // let _out = this._book_entries.reduce((acc, book_entry) => {
+    //   return acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0);
+    // }, 0);
+    // console.log('nb_in', nb_in, 'in : ', _in, 'out : ', _out, 'total : ', _in - _out);
+
+    // end debug purpoise
+
     return this.Round(this._book_entries.reduce((acc, book_entry) => {
       return acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0);
     }, 0));
   }
   get_bank_movements_amount(): number {
+    if(this._book_entries === undefined) { // if no book entries are loaded yet
+      return 0; // no outstanding expenses
+    }
     return this.Round(this._book_entries.reduce((acc, book_entry) => {
       return acc + (book_entry.amounts[FINANCIAL_ACCOUNT.BANK_debit] || 0) - (((book_entry.bank_report !== null) ? (book_entry.amounts[FINANCIAL_ACCOUNT.BANK_credit] || 0) : 0));
     }, 0));
   }
-  get_bank_outstanding_expenses(): number {
+  get_bank_outstanding_expenses_amount(): number {
+    if(this._book_entries === undefined) { // if no book entries are loaded yet
+      return 0; // no outstanding expenses
+    }
     return this.Round(this._book_entries.reduce((acc, book_entry) => {
-      return acc + ((book_entry.bank_report === null) ? (book_entry.amounts[FINANCIAL_ACCOUNT.BANK_credit] || 0) : 0);
+      return acc + (((book_entry.bank_report === null)&& (book_entry.transaction_id === TRANSACTION_ID.dépense_par_chèque) ) ? (book_entry.amounts[FINANCIAL_ACCOUNT.BANK_credit] || 0) : 0);
     }, 0));
   }
 
   get_savings_movements_amount(): number {
+    if(this._book_entries === undefined) { // if no book entries are loaded yet
+      return 0; // no outstanding expenses
+    }
     return this.Round(this._book_entries.reduce((acc, book_entry) => {
       return acc + (book_entry.amounts[FINANCIAL_ACCOUNT.SAVING_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.SAVING_credit] || 0);
     }, 0));
   }
 
-
+  get_bank_outstanding_expenses():  BookEntry[] {
+    if(this._book_entries === undefined) { // if no book entries are loaded yet
+      return []; 
+    }
+    let entries = (this._book_entries.filter((book_entry) => {
+       ((!book_entry.bank_report || book_entry.bank_report === null) && (book_entry.transaction_id === TRANSACTION_ID.dépense_par_chèque) );
+    }));
+    return entries;
+  }
 
   get_debts(): Map<string, number> {
     let debt = new Map<string, number>();
+
+    if(this._book_entries === undefined) { // if no book entries are loaded yet
+      return debt; 
+    }
+    
     this._book_entries.forEach((book_entry) => {
       book_entry.operations.forEach((op) => {
         if (op.values[CUSTOMER_ACCOUNT.DEBT_debit]) {
@@ -435,6 +487,10 @@ trace_on(): boolean {
 
 
   get_clients_debit_value(): number {  // dettes clients
+
+    if(this._book_entries === undefined) { // if no book entries are loaded yet
+      return 0; // no outstanding expenses
+    }
     let value = 0;
     // console.log(':::', this._book_entries);
     this._book_entries.forEach((book_entry) => {
@@ -453,6 +509,11 @@ trace_on(): boolean {
 
   // avoir clients :
   get_customers_assets(): Map<string, { total: number, entries: BookEntry[] }> {
+
+    if(this._book_entries === undefined) { // if no book entries are loaded yet
+      return new Map<string, { total: number, entries: BookEntry[] }>(); // no outstanding expenses
+    }
+
     let assets = new Map<string, { total: number, entries: BookEntry[] }>();
     this._book_entries.forEach((book_entry) => {
 

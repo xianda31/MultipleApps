@@ -89,8 +89,8 @@ export class BooksEditorComponent {
     this.systemDataService.get_configuration().subscribe((conf) => {
       this.banks = conf.banks;
       this.club_bank = this.banks.find(bank => bank.key === conf.club_bank_key)!;
-      this.expenses_accounts = conf.financial_tree.expenses;
-      this.products_accounts = conf.financial_tree.revenues;
+      this.expenses_accounts = conf.revenue_and_expense_tree.expenses;
+      this.products_accounts = conf.revenue_and_expense_tree.revenues;
     });
 
     this.init_form();
@@ -323,7 +323,8 @@ export class BooksEditorComponent {
   add_operation(transaction: Transaction, operation_initial?: Operation) {
 
     let profit_and_loss_accounts = this.which_profit_and_loss_accounts(transaction);
-    // let label = operation_initial?.label ?? transaction.label;
+
+    if (profit_and_loss_accounts.length === 0) {      return;}   // pure financial transaction
 
     let operationForm: FormGroup = this.fb.group({
       'label': [operation_initial?.label ?? ''],
@@ -574,7 +575,7 @@ export class BooksEditorComponent {
     return grand_total;
   }
   which_profit_and_loss_accounts(transaction: Transaction): Account[] {
-    if (transaction.is_of_profit_type === undefined) return [];
+    if (transaction.pure_financial ) return [];
     return transaction.is_of_profit_type ? this.products_accounts : this.expenses_accounts;
   }
 
