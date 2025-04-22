@@ -145,8 +145,12 @@
 <div *ngIf="selected_report === reports.CAISSE " class="card mt-2">
   <div class="card-header">
     <div class="row align-items-center">
-      <h5 class="col-auto"> solde courant de la caisse : {{initial_liquidities.cash +current_cash_movements}}€</h5>
-      <h6 class="col-auto">(total mouvements : {{current_cash_movements}}€) </h6>
+      <h5 class="col-auto">
+         état de la caisse : 
+         chèque( {{cashbox_status.cheques.nbr}} ) : {{cashbox_status.cheques.amount | number:truncature:'fr'}} €
+         &nbsp;
+         espèces : 
+         {{(cashbox_status.cash)| number:truncature:'fr'}}€</h5>
     </div>
 
     <div class="row  justify-content-start">
@@ -214,6 +218,9 @@
 
   <!-- Caisse_espèces  -->
   <div class="card-body" *ngIf=" selected_cashbox_filter() === cashbox_filters.CASH_ONLY">
+    
+    <app-cash-graph [serie]="cash_acc()"></app-cash-graph>
+    
     {{ cashbox_book_entries_filtered().length }} écritures de caisse (espèces) <br>
     <table class="table table-sm">
       <thead>
@@ -237,7 +244,7 @@
 
           </td>
 
-          <td class="text-end" > {{cash_acc()[i] | number:truncature : 'fr'}}</td>
+          <td class="text-end" > {{cash_acc()[i].value | number:truncature : 'fr'}}</td>
           <td>
             <i class="bi bi-search" (click)="show_book_entry(book_entry.id)"></i>
           </td>

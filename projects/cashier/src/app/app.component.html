@@ -1,4 +1,4 @@
-<div *ngIf="entries_nbr>0" class="container-md">
+<div *ngIf="book_entries_loaded" class="container-md">
   <app-navbar [season]="season" [entries_nbr]="entries_nbr"></app-navbar>
   <router-outlet></router-outlet>
   <app-toaster></app-toaster>

@@ -8,6 +8,7 @@ import { Router } from '@angular/router';
 import { TransactionService } from '../../transaction.service';
 import { combineLatest, Observable, switchMap, tap } from 'rxjs';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { CashGraphComponent } from "../graphs/cash-graph/cash-graph.component";
 
 enum REPORTS {
   PRODUITS = 'compte produits',
@@ -36,7 +37,7 @@ interface EntryValue { total: number, entries: BookEntry[] };
 @Component({
   selector: 'app-books-overview',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgbModule],
+  imports: [CommonModule, FormsModule, NgbModule, CashGraphComponent],
   templateUrl: './books-overview.component.html',
   styleUrl: './books-overview.component.scss'
 })
@@ -57,7 +58,10 @@ export class BooksOverviewComponent {
 
 
   cashbox_book_entries: BookEntry[] = [];
+  cashbox_cash: BookEntry[] = [];
+  cashbox_cheques: BookEntry[] = [];
   cashbox_filters = Object(CASHBOX_FILTER);
+  cashbox_status: { cash: number; cheques: { nbr: number; amount: number; }; } = { cash: 0, cheques: { nbr: 0, amount: 0 } };
 
   // signals to manage the cashbox filtering and sorting and computations
   selected_cashbox_filter = signal<string>('');
@@ -65,18 +69,11 @@ export class BooksOverviewComponent {
   cashbox_book_entries_filtered = computed(() => {
     const _filter = (filter: any): BookEntry[] => {
       if (filter === CASHBOX_FILTER.CHEQUES_ONLY) {
-        return this.cashbox_book_entries.filter((book_entry) =>
-          this.transactionService.get_transaction(book_entry.transaction_id).cheque === 'in' ||
-          (book_entry.transaction_id) === TRANSACTION_ID.dépôt_caisse_chèques);
-
+        return this.cashbox_cheques;
+        
       } else if (filter === CASHBOX_FILTER.CASH_ONLY) {
-        return this.cashbox_book_entries
-          .filter((book_entry) => this.transactionService.get_transaction(book_entry.transaction_id).cash !== 'none')
-          .sort((a, b) => {
-            return (a.date.localeCompare(b.date) === 0) ? (a.transaction_id === TRANSACTION_ID.dépôt_caisse_espèces?1:-1) : a.date.localeCompare(b.date)
-          })
-          ;
-          
+        return this.cashbox_cash;
+
       } else {
         return this.cashbox_book_entries;
       }
@@ -86,7 +83,7 @@ export class BooksOverviewComponent {
 
   cashbox_book_entries_filtered_total_value = computed(() => {
     return this.Round(this.cashbox_book_entries_filtered().reduce((acc, book_entry) => {
-      return acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0);
+      return acc + ((book_entry.amounts?.[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts?.[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0));
     }, 0));
   });
 
@@ -95,17 +92,18 @@ export class BooksOverviewComponent {
   });
 
   cash_acc = computed(() => {
-    let acc: number[] = [];
+    let acc: { name: string, value: number }[] = [];
     this.cashbox_book_entries_filtered().forEach((book_entry, index) => {
       let delta = (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0)
       if (index === 0) {
-        acc.push(this.Round(this.initial_liquidities.cash) + delta);
+        acc.push({ name: book_entry.date, value: this.Round(this.initial_liquidities.cash) + delta });
       } else {
-        acc.push(this.Round(acc[index -1 ] + delta));
+        acc.push({ name: book_entry.date, value: this.Round(acc[index - 1].value + delta) });
       }
     });
     return acc;
   });
+
 
   bank_book_entries: BookEntry[] = [];
 
@@ -164,11 +162,31 @@ export class BooksOverviewComponent {
       this.current_expenses_operations_amount = this.bookService.get_expenses_movements_amount();
 
       this.cashbox_book_entries = this.book_entries.filter(book_entry => this.cashbox_accounts.some(op => book_entry.amounts[op] !== undefined));;
-      this.selected_cashbox_filter.set(CASHBOX_FILTER.CASH_ONLY);
+
+      this.cashbox_cheques = this.cashbox_book_entries.filter((book_entry) =>
+        this.transactionService.get_transaction(book_entry.transaction_id).cheque === 'in' ||
+        (book_entry.transaction_id) === TRANSACTION_ID.dépôt_caisse_chèques);
+
+      this.cashbox_cash = this.cashbox_book_entries.filter((book_entry) => this.transactionService.get_transaction(book_entry.transaction_id).cash !== 'none')
+        .sort((a, b) => {
+          return (a.date.localeCompare(b.date) === 0) ? (a.transaction_id === TRANSACTION_ID.dépôt_caisse_espèces ? 1 : -1) : a.date.localeCompare(b.date)
+        });
+
+
+        // calcul du montant total des chèques à déposer 
+      let not_deposit = this.sort_deposits(this.cashbox_cheques)
+      .find((deposit: Deposit_checked) => deposit.out_date  === undefined );
+      if (not_deposit) {
+        this.cashbox_status.cheques = {nbr: not_deposit.cheques_nbr, amount: not_deposit.amount};
+        };
+      this.cashbox_status.cash = this.initial_liquidities.cash + this.Round(this.cashbox_cash.reduce((acc, book_entry) => {
+        return acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0);  
+      },0));
+
+      // this.selected_cashbox_filter.set(CASHBOX_FILTER.CASH_ONLY);
     });
 
   }
-
 
 
 
@@ -217,6 +235,9 @@ export class BooksOverviewComponent {
     });
     return deposits;
   }
+
+
+
 
 
   transaction_label(op_type: TRANSACTION_ID): string {

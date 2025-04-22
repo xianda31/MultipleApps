@@ -397,13 +397,13 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
 
   [TRANSACTION_ID.report_avoir]: {
     label: 'report d\'avoir',
-    tooltip: 'report d\'avoir adhérent d\'une année sur l\'autre',
+    tooltip: 'report d\'avoir adhérent',
     class: TRANSACTION_CLASS.BALANCE,
     financial_accounts: [{ key: BALANCE_ACCOUNT.BAL_debit, label: 'report_in', description: 'passif' }],
     optional_accounts: [{ key: CUSTOMER_ACCOUNT.ASSET_credit, label: 'Avoir', description: 'valeur de l\'avoir attribué' }],
-    financial_accounts_to_charge: [CUSTOMER_ACCOUNT.ASSET_credit],
+    financial_accounts_to_charge: [ BALANCE_ACCOUNT.BAL_debit],
     nominative: true,
-    pure_financial: false,
+    pure_financial: true,
     is_of_profit_type: false,
     require_deposit_ref: false,
     cash: 'none',

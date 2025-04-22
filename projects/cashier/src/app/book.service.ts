@@ -22,7 +22,6 @@ export class BookService {
   private _book_entries!: BookEntry[];
   private _book_entries$ = new BehaviorSubject<BookEntry[]>([]);
 
-  // trace_on: boolean = false; 
 
   constructor(
     private systemDataService: SystemDataService,
@@ -31,11 +30,11 @@ export class BookService {
   ) {
   }
 
-trace_on(): boolean {
+private trace_on(): boolean {
     return this.systemDataService.trace_on();
   }
 
-  jsonified_entry(entry: BookEntry): BookEntry_input {
+  private   jsonified_entry(entry: BookEntry): BookEntry_input {
     const replacer = (key: string, value: any) => {
       if (key === 'amounts' || key === 'values') {
         return JSON.stringify(value);
@@ -47,7 +46,7 @@ trace_on(): boolean {
     return JSON.parse(stringified) as BookEntry_input;
   }
 
-  parsed_entry(entry: BookEntry_output): BookEntry {
+  private   parsed_entry(entry: BookEntry_output): BookEntry {
     const replacer = (key: string, value: any) => {
       if (key === 'amounts' || key === 'values') {
         return JSON.parse(value);
@@ -102,17 +101,6 @@ trace_on(): boolean {
     );
   }
 
-  // extra_sanity_check(entries: BookEntry[]) {
-  //   // check all book entries have a transaction id
-  //   entries.forEach((book_entry, index) => {
-  //     let transaction_id = book_entry.transaction_id;
-  //     if (!transaction_id) {
-  //       console.error('book entry nbr %s has a bad transaction id', index, book_entry.transaction_id);
-  //       throw new Error('book entry has no transaction id');
-  //     }
-  //   });
-  //   console.log('all book entries have a transaction id');
-  // }
 
   // create
 
@@ -225,7 +213,6 @@ trace_on(): boolean {
             throw new Error(JSON.stringify(errors));
           }
           let new_jsoned_entries = data as unknown as BookEntry_output[];
-          // if (this.trace_on()) console.log('+ %s entries incrementally loaded from S3', data.length);
           entries = [...entries, ...new_jsoned_entries.map((entry) => this.parsed_entry(entry))];
           token = nextToken;
 
@@ -398,27 +385,20 @@ trace_on(): boolean {
       }, [] as Revenue[]);
   }
 
-  get_cashbox_movements_amount(): number {
+  get_cashbox_movements_amount(selection?:'cash' | 'cheques'): number {
     if(this._book_entries === undefined) { // if no book entries are loaded yet
       return 0; 
     }
-
-    // debug purpoise
-
-    // let _in = this._book_entries.reduce((acc, book_entry) => {
-    //   return acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0);
-    // }, 0);
-    // let nb_in = this._book_entries.reduce((acc, book_entry) => {
-    //   return acc + ((book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) > 0 ? 1 : 0);
-    // }, 0);
-    
-    // let _out = this._book_entries.reduce((acc, book_entry) => {
-    //   return acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0);
-    // }, 0);
-    // console.log('nb_in', nb_in, 'in : ', _in, 'out : ', _out, 'total : ', _in - _out);
-
-    // end debug purpoise
-
+    if(selection === 'cheques') {
+      return this.Round(this._book_entries.reduce((acc, book_entry) => {
+        return acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0);
+      }, 0));
+    }
+    if(selection === 'cash') {
+      return this.Round(this._book_entries.reduce((acc, book_entry) => {
+        return acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0);
+      }, 0));
+    }
     return this.Round(this._book_entries.reduce((acc, book_entry) => {
       return acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0);
     }, 0));

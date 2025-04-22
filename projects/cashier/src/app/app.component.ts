@@ -22,6 +22,8 @@ export class AppComponent {
 
   season !: string;
   entries_nbr!: number ;
+book_entries_loaded: boolean = false;
+
   constructor(
     private systemDataService: SystemDataService,
     private bookService: BookService
@@ -37,8 +39,8 @@ export class AppComponent {
       tap((conf) => this.season = conf.season),
       switchMap((conf) => this.bookService.list_book_entries$(conf.season))
     ).subscribe((book_entries) => {
+      this.book_entries_loaded = true;
       this.entries_nbr = book_entries.length;
-      // console.log('%s écritures en base pour la saison %s', book_entries.length, this.season);
     });
 
   }

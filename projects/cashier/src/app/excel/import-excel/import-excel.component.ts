@@ -1,6 +1,6 @@
 import { Component, ElementRef, signal } from '@angular/core';
 import * as ExcelJS from 'exceljs';
-import { EXPENSES_COL, FINANCIAL_COL, MAP, PRODUCTS_COL } from '../../../../../common/excel/excel.interface';
+import { EXPENSES_COL,  EXTRA_CUSTOMER_IN, EXTRA_CUSTOMER_OUT, FINANCIAL_COL, MAP, PRODUCTS_COL } from '../../../../../common/excel/excel.interface';
 import { TRANSACTION_ID, BookEntry, FINANCIAL_ACCOUNT, operation_values, Operation } from '../../../../../common/accounting.interface';
 import { Member } from '../../../../../common/member.interface';
 import { MembersService } from '../../../../../admin-dashboard/src/app/members/service/members.service';
@@ -33,6 +33,7 @@ export class ImportExcelComponent {
   revenue_definitions: Revenue_and_expense_definition[] = [];
   expense_definitions: Revenue_and_expense_definition[] = [];
   op_value_keys: string[] = [];
+  financial_accounts = Object.values(FINANCIAL_ACCOUNT);
 
   members: Member[] = [];
   current_season: string = '';
@@ -54,7 +55,7 @@ export class ImportExcelComponent {
       this.current_season = configuration.season;
       let revenue_keys = configuration.revenue_and_expense_tree.revenues.map((revenue) => revenue.key);
       let expense_keys = configuration.revenue_and_expense_tree.expenses.map((expense) => expense.key);
-      this.op_value_keys = [...revenue_keys, ...expense_keys];;
+      this.op_value_keys = [...revenue_keys, ...expense_keys,...Object.keys(EXTRA_CUSTOMER_IN), ...Object.keys(EXTRA_CUSTOMER_OUT)];;
     });
 
     this.membersService.listMembers().subscribe((members) => {
@@ -94,7 +95,7 @@ export class ImportExcelComponent {
     this.worksheet_processed = true;
   }
 
-  process_exel_file(worksheet: ExcelJS.Worksheet) {
+  async process_exel_file(worksheet: ExcelJS.Worksheet) {
     this.worksheet = worksheet;
     console.log('processing worksheet ', this.worksheet.name);
     this.book_entries = [];
@@ -160,378 +161,420 @@ export class ImportExcelComponent {
     // traitement lignes du tableau meta_rows (bloc de cellules mergées)
 
     Object.entries(meta_rows).forEach(([master, cells]) => {
-  this.convert_to_book_entry(master, cells)
-    .then((book_entry) => {
-      this.book_entries.push(book_entry);
-    })
-    .catch((error) => {
-      console.log('error at  %s', master, error);
-      this.verbose.set(this.verbose() + error + ' ' + master + ' \n');
-      return;
-    }
-    );
-});
+      let entry = this.convert_to_book_entry(master, cells)
+      if (entry === null) {
+        this.verbose.set(this.verbose() + 'erreur de conversion de l\'écriture : ' + master + '\n');
+        return;
+      }
+      this.book_entries.push(entry);
+      this.verbose.set(this.verbose() + '.');
+
+    });
   }
 
 
-upload_data() {
+  upload_data() {
 
 
 
-  let progress = (index: number) => {
-    this.create_progress = Math.round((index) / this.book_entries.length * 100);
-    this.progress_style = 'width: ' + this.create_progress + '%';
-    if (index === this.book_entries.length) {
-      this.data_uploading = false;
-      this.verbose.set(this.verbose() + '... terminé \n');
+    let progress = (index: number) => {
+      this.create_progress = Math.round((index) / this.book_entries.length * 100);
+      this.progress_style = 'width: ' + this.create_progress + '%';
+      if (index === this.book_entries.length) {
+        this.data_uploading = false;
+        this.verbose.set(this.verbose() + '... terminé \n');
+      }
     }
+
+    this.data_uploading = true;
+
+    this.verbose.set(this.verbose() + 'uploading ...');
+
+    this.bookService.book_entries_bulk_create$(this.book_entries).subscribe((number) => {
+      progress(number);
+    });
   }
 
-  this.data_uploading = true;
+  extra_sanity_check() {
+    // check all book entries have a transaction id
+    this.verbose.set(this.verbose() + 'vérification des écritures \n');
+    this.book_entries.forEach((book_entry, index) => {
+      if (book_entry.transaction_id === undefined || book_entry.transaction_id === null) {
+        this.verbose.set(this.verbose() + '[' + index + '] ' + 'transaction id non renseigné \n');
+      }
+    });
+    this.verbose.set(this.verbose() + 'vérification terminée \n');
 
-  this.verbose.set(this.verbose() + 'uploading ...');
+    // check all book entries operation.values have known keys
+    this.verbose.set(this.verbose() + 'vérification des opérations \n');
+    this.book_entries.forEach((book_entry, index) => {
+      book_entry.operations.forEach((operation, index_op) => {
+        Object.keys(operation.values).forEach((key) => {
+          if (!this.op_value_keys.includes(key)) {
+            console.log(' unknown %s within \n %s ', key, JSON.stringify(book_entry));
+            this.verbose.set(this.verbose() + '[' + index + '][' + index_op + '] ' + 'clé inconnue : ' + key + '\n');
+          }
+        });
+      });
+    });
 
-  this.bookService.book_entries_bulk_create$(this.book_entries).subscribe((number) => {
-    progress(number);
-  });
-}
+    // checks all book entries amounts have known keys
 
-extra_sanity_check() {
-  // check all book entries have a transaction id
-  this.verbose.set(this.verbose() + 'vérification des écritures \n');
-  this.book_entries.forEach((book_entry, index) => {
-    if (book_entry.transaction_id === undefined || book_entry.transaction_id === null) {
-      this.verbose.set(this.verbose() + '[' + index + '] ' + 'transaction id non renseigné \n');
-    }
-  });
-  this.verbose.set(this.verbose() + 'vérification terminée \n');
-
-  // check all book entries operation.values have known keys
-  this.verbose.set(this.verbose() + 'vérification des opérations \n');
-  this.book_entries.forEach((book_entry, index) => {
-    book_entry.operations.forEach((operation, index_op) => {
-      Object.keys(operation.values).forEach((key) => {
-        if (!this.op_value_keys.includes(key)) {
+    this.verbose.set(this.verbose() + 'vérification des montants \n');
+    this.book_entries.forEach((book_entry, index) => {
+      Object.keys(book_entry.amounts).forEach((key) => {
+        if (!this.financial_accounts.includes(key as FINANCIAL_ACCOUNT)) {
           console.log(' unknown %s within \n %s ', key, JSON.stringify(book_entry));
-          this.verbose.set(this.verbose() + '[' + index + '][' + index_op + '] ' + 'clé inconnue : ' + key + '\n');
+          this.verbose.set(this.verbose() + '[' + index + '] ' + 'clé inconnue : ' + key + '\n');
         }
       });
     });
-  });
-  this.verbose.set(this.verbose() + 'vérification terminée \n');
-}
+    this.verbose.set(this.verbose() + 'vérification terminée \n');
+  }
 
 
-show_data() {
-  this.verbose.set(this.verbose() + 'viewing .. \n');
-  this.book_entries.forEach((book_entry, index) => {
-    this.verbose.set(this.verbose() + index.toString() + JSON.stringify(book_entry) + '\n');
-  });
-}
-
-
-  async convert_to_book_entry(master: string, cells: string[]): Promise < BookEntry > {
-
-  let promise = new Promise<BookEntry>((resolve, reject) => {
-    // initializing book_entry
-    let row_number = +this.worksheet.getCell(master).row;
-    let master_row = this.worksheet.getRow(row_number);
-    let date = master_row.getCell(MAP.date).value?.toString() || '';
-    let cell_pointage = master_row.getCell(MAP['pointage']).value?.toString() || undefined;
-
-    let cell_chèque = master_row.getCell(MAP['n° chèque']).value;
-    let cell_bordereau = master_row.getCell(MAP['bordereau']).value;
-    let cell_info_sup = master_row.getCell(MAP['info']).value;
-
-    let cell_nature = master_row.getCell(MAP['nature']).value;
-    let bank_op_type = this.convert_to_bank_op_type(cell_nature?.toString() as string);
-    if (bank_op_type === null) {
-      // console.log('erreur de nature', cell_nature);
-      reject('erreur de nature ' + cell_nature);
-      return;
-    }
-    let transaction = this.transactionService.get_transaction(bank_op_type)
-
-    let book_entry: BookEntry = {
-      season: this.systemDataService.get_season(new Date(date)),
-      date: formatDate(new Date(date), 'yyyy-MM-dd', 'en'),
-      id: '',
-      amounts: {},
-      operations: [],
-      transaction_id: bank_op_type,
-      // class: transaction.class,
-      bank_report: (cell_pointage) ? this.format_bank_report(cell_pointage.toString(), this.current_season) : undefined,
-
-    };
-    if (cell_info_sup?.toString().startsWith('#')) {
-      book_entry.tag = cell_info_sup?.toString() as string;
-    }
-
-    if (cell_chèque?.toString()) { book_entry.cheque_ref = cell_chèque?.toString() as string; }
-    if (cell_bordereau?.toString()) { book_entry.deposit_ref = cell_bordereau?.toString() as string; }
-
-    // book_entry.amounts
-
-    Object.entries(FINANCIAL_COL).forEach((entry) => {
-      let [name, col] = entry;
-      let cell = master_row.getCell(col).value;
-      if (!cell?.valueOf()) { return; }
-      book_entry.amounts[name as FINANCIAL_ACCOUNT] = cell.valueOf() as number;
+  show_data() {
+    this.verbose.set(this.verbose() + 'viewing .. \n');
+    this.book_entries.forEach((book_entry, index) => {
+      this.verbose.set(this.verbose() + index.toString() + JSON.stringify(book_entry) + '\n');
     });
-
-    // construct products operation side
-
-    cells.forEach((cell, index) => {
-      let row_number = +this.worksheet.getCell(cell).row;
-      let row = this.worksheet.getRow(row_number);
+  }
 
 
-      let operation = this.compute_operation_amounts(transaction, row);
-      if (operation === null) {
-        console.log('operation translation went wrong', row_number);
-        reject('operation translation went wrong');
-        return;
+   convert_to_book_entry(master: string, cells: string[]): BookEntry | null {
+
+    // let promise = new Promise<BookEntry>((resolve, reject) => {
+      // initializing book_entry
+      let row_number = +this.worksheet.getCell(master).row;
+      let master_row = this.worksheet.getRow(row_number);
+      let date = master_row.getCell(MAP.date).value?.toString() || '';
+      let cell_pointage = master_row.getCell(MAP['pointage']).value?.toString() || undefined;
+
+      let cell_chèque = master_row.getCell(MAP['n° chèque']).value;
+      let cell_bordereau = master_row.getCell(MAP['bordereau']).value;
+      let cell_info_sup = master_row.getCell(MAP['info']).value;
+
+      let cell_nature = master_row.getCell(MAP['nature']).value;
+      let bank_op_type = this.convert_to_bank_op_type(cell_nature?.toString() as string);
+      if (bank_op_type === null) {
+        // console.log('erreur de nature', cell_nature);
+        // reject('erreur de nature ' + cell_nature);
+        return(null);
+      }
+      let transaction = this.transactionService.get_transaction(bank_op_type)
+
+      let book_entry: BookEntry = {
+        season: this.systemDataService.get_season(new Date(date)),
+        date: formatDate(new Date(date), 'yyyy-MM-dd', 'en'),
+        id: '',
+        amounts: {},
+        operations: [],
+        transaction_id: bank_op_type,
+        // class: transaction.class,
+        bank_report: (cell_pointage) ? this.format_bank_report(cell_pointage.toString(), this.current_season) : undefined,
+
+      };
+      if (cell_info_sup?.toString().startsWith('#')) {
+        book_entry.tag = cell_info_sup?.toString() as string;
       }
 
-      book_entry.operations.push(operation);
-    });
+      if (cell_chèque?.toString()) { book_entry.cheque_ref = cell_chèque?.toString() as string; }
+      if (cell_bordereau?.toString()) { book_entry.deposit_ref = cell_bordereau?.toString() as string; }
 
-    if (!this.control_amounts_balance(row_number, book_entry)) {
-      reject('amounts not balanced');
-    } else {
-      resolve(book_entry);
-    }
-  });
-  return promise;
-}
+      // book_entry.amounts
 
-format_bank_report(pointage: string, season: string): string | null {
+      Object.entries(FINANCIAL_COL).forEach((entry) => {
+        let [name, col] = entry;
+        let cell = master_row.getCell(col).value;
+        if (!cell?.valueOf()) { return; }
+        book_entry.amounts[name as FINANCIAL_ACCOUNT] = cell.valueOf() as number;
+      });
 
-  return pointage;
+      // construct products operation side
 
-  // convert R007 to bank_reports[0] ... R012 to bank_reports[5] ... R101 to bank_reports[6] ...R106 to bank_reports[11]
-  let month: number = +pointage.slice(2, 4);
-  console.log('pointage : %s month %s', pointage, month);
-  if (month < 1 || month > 12) return null;
-  let Y = season.slice(0, 4).slice(-2); // yyYY-zzZZ
-  let Z = season.slice(5, 9).slice(-2); // yyYY-zzZZ
-  switch (pointage.slice(0, 2)) {
-    case 'R0':
-      return Y + '-' + month.toString().padStart(2, '0')
-    case 'R1':
-      return Z + '-' + month.toString().padStart(2, '0')
-    default:
-      return null;
-  }
+      cells.forEach((cell) => {
+        let row_number = +this.worksheet.getCell(cell).row;
+        let row = this.worksheet.getRow(row_number);
 
-}
+        let operation = this.compute_operation_values(transaction, row);
+        
+        if (operation === null) {
+          console.log('operation translation went wrong', row_number);
+          // reject('operation translation went wrong');
+          // return (null);
+        } else {
+          book_entry.operations.push(operation);
+        }
 
-convert_to_bank_op_type(nature: string): TRANSACTION_ID | null {
-  switch (this.worksheet.name) {
-    case 'chrono banque':
+      });
 
-      switch (nature) {
-        case 'versement espèces':
-          return TRANSACTION_ID.dépôt_collecte_espèces;
-        case 'versement chèques':
-          return TRANSACTION_ID.dépôt_collecte_chèques;
-        case 'remise espèces':
-          return TRANSACTION_ID.dépôt_caisse_espèces;
-        case 'remise chèques':
-          return TRANSACTION_ID.dépôt_caisse_chèques;
-        case 'chèque émis':
-          return TRANSACTION_ID.dépense_par_chèque;
-        case 'virement reçu':
-          return TRANSACTION_ID.vente_par_virement;
-        case 'virement emis':
-          return TRANSACTION_ID.dépense_par_virement;
-        case 'prélèvement':
-          return TRANSACTION_ID.dépense_par_prélèvement;
-        case 'carte':
-          return TRANSACTION_ID.dépense_par_carte;
-        case 'versement compte épargne':
-          return TRANSACTION_ID.virement_banque_vers_épargne;
-        case 'versement épargne':
-          return TRANSACTION_ID.virement_banque_vers_épargne;
-        case 'retrait épargne':
-          return TRANSACTION_ID.retrait_épargne_vers_banque;
-        case 'intérêts':
-          return TRANSACTION_ID.intérêt_épargne;
-        default:
-          console.log('erreur de nature', nature);
-          return null
-      }
-
-    case 'chrono vente':
-
-      switch (nature) {
-        case 'virement reçu':
-          return TRANSACTION_ID.achat_adhérent_par_virement;
-        case 'paiement par chèque':
-          return TRANSACTION_ID.achat_adhérent_par_chèque;
-        case 'paiement en espèces':
-          return TRANSACTION_ID.achat_adhérent_en_espèces;
-        default:
-          console.log('erreur de nature', nature);
-          return null
-      }
-
-    case 'droits de table':
-
-      switch (nature) {
-        case 'espèces':
-          return TRANSACTION_ID.vente_en_espèces;
-        // case 'erreur caisse':
-        //   return TRANSACTION_ID.dépense_en_espèces;
-        default:
-          console.log('erreur de nature', nature);
-          return null
-      }
-
-    default:
-      console.log('erreur de feuille', this.worksheet.name);
-      return null;
-  }
-}
-control_amounts_balance(row_nbr: number, book_entry: BookEntry): boolean {
-
-  if (book_entry.amounts === undefined || book_entry.amounts === null || book_entry.operations.length === 0) {
-    console.log('book_entry amounts undefined', book_entry);
-    this.verbose.set(this.verbose() + '[' + row_nbr + '] ' + 'montants non renseignés : ' + '\n');
-    return false;
-  }
-
-
-  let debit_keys: FINANCIAL_ACCOUNT[] = Object.keys(book_entry.amounts).filter((key): key is FINANCIAL_ACCOUNT => key.includes('in'));
-  let total_debit = debit_keys.reduce((acc, key) => acc + (book_entry.amounts[key] || 0), 0);
-
-  let credit_keys: FINANCIAL_ACCOUNT[] = Object.keys(book_entry.amounts).filter((key): key is FINANCIAL_ACCOUNT => key.includes('out'));
-  let total_credit = credit_keys.reduce((acc, key) => acc + (book_entry.amounts[key] || 0), 0);
-
-  let total = total_debit - total_credit;
-
-  let products_sum = 0;
-  let expenses_sum = 0;
-  let sum = 0;
-  book_entry.operations.forEach((operation) => {
-    sum += Object.values(operation.values).reduce((acc, value) => acc + value, 0);
-  });
-
-  switch (this.transactionService.transaction_class(book_entry.transaction_id)) {
-    case TRANSACTION_CLASS.REVENUE_FROM_MEMBER:
-    case TRANSACTION_CLASS.OTHER_REVENUE:
-      products_sum += sum;
-      break;
-    case TRANSACTION_CLASS.OTHER_EXPENSE:
-      expenses_sum += sum;
-      break
-    case TRANSACTION_CLASS.MOVEMENT:
-      break;
-  }
-
-  if (total !== (products_sum - expenses_sum)) {
-    console.log('amounts not equal', total_debit, total_credit, products_sum, expenses_sum);
-    console.log('book_entry', book_entry);
-    this.verbose.set(this.verbose() + '[' + row_nbr + '] montants non égaux : ' + total_debit + ' vs ' + total_credit + '\n');
-    return false;
-  }
-  // console.log('amounts are equal', total_debit, total_credit, products_sum, expenses_sum);
-
-  return true;
-}
-
-compute_operation_amounts(transaction: Transaction, row: ExcelJS.Row): Operation {
-  let operation: Operation = {
-    label: row.getCell(MAP.intitulé).result?.toString() as string,
-    values: {}
-  };
-  switch (transaction.class) {
-    case TRANSACTION_CLASS.REVENUE_FROM_MEMBER:
-    case TRANSACTION_CLASS.OTHER_REVENUE:
-      operation.values = this.get_revenues_amounts(row);
-      break;
-    case TRANSACTION_CLASS.OTHER_EXPENSE:
-      operation.values = this.get_expenses_amounts(row);
-      break;
-    case TRANSACTION_CLASS.MOVEMENT:
-      operation.values = {};
-      break;
-  }
-
-  switch (transaction.nominative) {
-    case true:
-      let cell_member = row.getCell(MAP.intitulé).value?.toString() || '';
-      let member = this.retrieve_member(row.number, cell_member);
-      if (member === null) {
-        console.log('%s member not found at row %s ', cell_member, row.number);
-        return operation;
+      if (!this.control_amounts_balance(row_number, book_entry)) {
+        // reject('amounts not balanced');
+        return (null)
       } else {
-        operation.member = member.lastname + ' ' + member.firstname;
-        operation.label = 'vente adhérent';
+        return(book_entry);
       }
-      break;
-    case false:
-      operation.label = row.getCell(MAP.intitulé).value?.toString() as string;
-      break;
+    // });
+    // return promise;
   }
 
-  return operation;
+  format_bank_report(pointage: string, season: string): string | null {
 
-}
+    return pointage;
 
-get_revenues_amounts(row: ExcelJS.Row): operation_values {
-
-  let values: operation_values = {};
-  Object.entries(PRODUCTS_COL).forEach(element => {
-    let [account, col] = element;
-    let cellValue = row.getCell(col).value;
-    if (cellValue !== null && cellValue !== undefined) {
-      let price = cellValue.valueOf() as number;
-      values[account] = price;
+    // convert R007 to bank_reports[0] ... R012 to bank_reports[5] ... R101 to bank_reports[6] ...R106 to bank_reports[11]
+    let month: number = +pointage.slice(2, 4);
+    console.log('pointage : %s month %s', pointage, month);
+    if (month < 1 || month > 12) return null;
+    let Y = season.slice(0, 4).slice(-2); // yyYY-zzZZ
+    let Z = season.slice(5, 9).slice(-2); // yyYY-zzZZ
+    switch (pointage.slice(0, 2)) {
+      case 'R0':
+        return Y + '-' + month.toString().padStart(2, '0')
+      case 'R1':
+        return Z + '-' + month.toString().padStart(2, '0')
+      default:
+        return null;
     }
-  });
-  return values;
-}
 
-get_expenses_amounts(row: ExcelJS.Row): operation_values {
-  let values: operation_values = {};
-  Object.entries(EXPENSES_COL).forEach((expense) => {
-    let [account, col] = expense;
-    let cellValue = row.getCell(col).value;
-    if (cellValue !== null && cellValue !== undefined) {
-      let price = cellValue.valueOf() as number;
-      values[account] = price;
+  }
+
+  convert_to_bank_op_type(nature: string): TRANSACTION_ID | null {
+    switch (this.worksheet.name) {
+      case 'chrono banque':
+
+        switch (nature) {
+          case 'versement espèces':
+            return TRANSACTION_ID.dépôt_collecte_espèces;
+          case 'versement chèques':
+            return TRANSACTION_ID.dépôt_collecte_chèques;
+          case 'remise espèces':
+            return TRANSACTION_ID.dépôt_caisse_espèces;
+          case 'remise chèques':
+            return TRANSACTION_ID.dépôt_caisse_chèques;
+          case 'chèque émis':
+            return TRANSACTION_ID.dépense_par_chèque;
+          case 'virement reçu':
+            return TRANSACTION_ID.vente_par_virement;
+          case 'virement emis':
+            return TRANSACTION_ID.dépense_par_virement;
+          case 'prélèvement':
+            return TRANSACTION_ID.dépense_par_prélèvement;
+          case 'carte':
+            return TRANSACTION_ID.dépense_par_carte;
+          case 'versement compte épargne':
+            return TRANSACTION_ID.virement_banque_vers_épargne;
+          case 'versement épargne':
+            return TRANSACTION_ID.virement_banque_vers_épargne;
+          case 'retrait épargne':
+            return TRANSACTION_ID.retrait_épargne_vers_banque;
+          case 'intérêts':
+            return TRANSACTION_ID.intérêt_épargne;
+          default:
+            console.log('erreur de nature', nature);
+            return null
+        }
+
+      case 'chrono vente':
+
+        switch (nature) {
+          case 'virement reçu':
+            return TRANSACTION_ID.achat_adhérent_par_virement;
+          case 'paiement par chèque':
+            return TRANSACTION_ID.achat_adhérent_par_chèque;
+          case 'paiement en espèces':
+            return TRANSACTION_ID.achat_adhérent_en_espèces;
+          default:
+            console.log('erreur de nature', nature);
+            return null
+        }
+
+      case 'droits de table':
+
+        switch (nature) {
+          case 'espèces':
+            return TRANSACTION_ID.vente_en_espèces;
+          // case 'erreur caisse':
+          //   return TRANSACTION_ID.dépense_en_espèces;
+          default:
+            console.log('erreur de nature', nature);
+            return null
+        }
+
+      default:
+        console.log('erreur de feuille', this.worksheet.name);
+        return null;
     }
-  });
+  }
+  control_amounts_balance(row_nbr: number, book_entry: BookEntry): boolean {
 
-  return values;
-}
+    // check if the amounts are defined and not null
+
+    if (book_entry.amounts === undefined || book_entry.amounts === null || book_entry.operations.length === 0) {
+      console.log('book_entry amounts undefined', book_entry);
+      this.verbose.set(this.verbose() + '[' + row_nbr + '] ' + 'montants non renseignés : ' + '\n');
+      return false;
+    }
+
+// calcul des montants encaissés ou décaissés
+    let debit_keys: FINANCIAL_ACCOUNT[] = Object.keys(book_entry.amounts).filter((key): key is FINANCIAL_ACCOUNT => key.includes('in'));
+    let amount_total_debit = debit_keys.reduce((acc, key) => acc + (book_entry.amounts[key] || 0), 0);
+
+    let credit_keys: FINANCIAL_ACCOUNT[] = Object.keys(book_entry.amounts).filter((key): key is FINANCIAL_ACCOUNT => key.includes('out'));
+    let amount_total_credit = credit_keys.reduce((acc, key) => acc + (book_entry.amounts[key] || 0), 0);
+
+    
+    // calcul des avoir et dettes exercés
+    let debt_asset_debit_keys: string[] = Object.keys(EXTRA_CUSTOMER_IN);
+    let total_debt_asset_debit = book_entry.operations.reduce((acc, operation) => {
+      return acc + debt_asset_debit_keys.reduce((sum, key) => sum + (operation.values[key] || 0), 0);
+    }    , 0);
+
+    let debt_asset_credit_keys: string[] = Object.keys(EXTRA_CUSTOMER_OUT);
+    let total_debt_asset_credit = book_entry.operations.reduce((acc, operation) => {
+      return acc + debt_asset_credit_keys.reduce((sum, key) => sum + (operation.values[key] || 0), 0);
+    }, 0);
+
+// calcul des produits et dépenses
+let total_sale_credit = 0;
+let total_sale_debit = 0;
 
 
-retrieve_member(row_nbr: number, name: string): Member | null {
-  if (name === null || name === undefined || name === '') {
-    // this.verbose.set(this.verbose() + '[' + row_nbr + '] ' + 'nom non renseigné : ' + '\n');
-    return null;
+switch (this.transactionService.transaction_class(book_entry.transaction_id)) {
+  case TRANSACTION_CLASS.REVENUE_FROM_MEMBER:
+    case TRANSACTION_CLASS.OTHER_REVENUE:
+      let product_keys =  Object.keys(PRODUCTS_COL);
+      total_sale_credit = book_entry.operations.reduce((acc, operation) => {
+        return acc + product_keys.reduce((sum, key) => sum + (operation.values[key] || 0), 0);
+      }, 0);
+      break;
+      case TRANSACTION_CLASS.OTHER_EXPENSE:
+        let expense_keys = Object.keys(EXPENSES_COL);
+         total_sale_debit = book_entry.operations.reduce((acc, operation) => {
+          return acc + expense_keys.reduce((sum, key) => sum + (operation.values[key] || 0), 0);
+        }, 0);
+        break
+      case TRANSACTION_CLASS.MOVEMENT:
+        break;
+    }
+
+let check_sum = amount_total_debit + total_debt_asset_debit  + total_sale_debit - amount_total_credit - total_debt_asset_credit - total_sale_credit;
+
+
+
+    if (check_sum !== 0) {
+      console.log('amounts not equal \n debit : %s,%s,%s \n crédits : %s,%s,%s',
+         amount_total_debit, total_debt_asset_debit , total_sale_debit ,
+          amount_total_credit , total_debt_asset_credit , total_sale_credit);
+          
+      console.log('book_entry', book_entry);
+      this.verbose.set(this.verbose() + '[' + row_nbr + '] montants non égaux \n');
+      return false;
+    }
+    // console.log('amounts are equal', amount_total_debit, amount_total_credit, products_sum, expenses_sum);
+
+    return true;
   }
 
-  let concat = (name: string) => {
-    return name.split('').filter(char => (char !== ' ' && char !== '-')).join('').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  };
 
-  const member = this.members.find((member) => (concat(member.lastname + member.firstname)) === concat(name));
+  compute_operation_values(transaction: Transaction, row: ExcelJS.Row): Operation {
+    let operation: Operation = {
+      label: row.getCell(MAP.intitulé).result?.toString() as string,
+      values: {}
+    };
+    switch (transaction.class) {
+      case TRANSACTION_CLASS.REVENUE_FROM_MEMBER:
+      case TRANSACTION_CLASS.OTHER_REVENUE:
+        operation.values = this.get_revenues_values(row);
+        break;
+      case TRANSACTION_CLASS.OTHER_EXPENSE:
+        operation.values = this.get_expenses_values(row);
+        break;
+      case TRANSACTION_CLASS.MOVEMENT:
+        operation.values = {};
+        break;
+    }
 
-  if (member) {
-    return member
-  } else {
-    this.verbose.set(this.verbose() + '[' + row_nbr + '] ' + name + ' n\'est pas un(e) adhérent(e) connu(e) : ' + '\n');
-    return null;
+    switch (transaction.nominative) {
+      case true:
+        let cell_member = row.getCell(MAP.intitulé).value?.toString() || '';
+        let member = this.retrieve_member(row.number, cell_member);
+        if (member === null) {
+          console.log('%s member not found at row %s ', cell_member, row.number);
+          return operation;
+        } else {
+          operation.member = member.lastname + ' ' + member.firstname;
+          operation.label = 'vente adhérent';
+        }
+        break;
+      case false:
+        operation.label = row.getCell(MAP.intitulé).value?.toString() as string;
+        break;
+    }
+
+    return operation;
+
   }
-}
 
-clear_db() {
-  this.verbose.set(this.verbose() + 'raz de la base de données ');
-  this.bookService.book_entries_bulk_delete$(this.current_season).subscribe((nbr) => {
-    this.verbose.set(this.verbose() + '...' + nbr + ' écritures supprimées \n');
-  });
-}
+  get_revenues_values(row: ExcelJS.Row): operation_values {
+
+    let values: operation_values = {};
+    Object.entries(PRODUCTS_COL)
+    .concat(Object.entries(EXTRA_CUSTOMER_IN))
+    .concat(Object.entries(EXTRA_CUSTOMER_OUT))
+    .forEach(element => {
+      let [account, col] = element;
+      let cellValue = row.getCell(col).value;
+      if (cellValue !== null && cellValue !== undefined) {
+        let price = cellValue.valueOf() as number;
+        values[account] = price;
+      }
+    });
+    return values;
+  }
+
+  get_expenses_values(row: ExcelJS.Row): operation_values {
+    let values: operation_values = {};
+    Object.entries(EXPENSES_COL)
+    .concat(Object.entries(EXTRA_CUSTOMER_IN))
+    .concat(Object.entries(EXTRA_CUSTOMER_OUT))
+    .forEach((expense) => {
+      let [account, col] = expense;
+      let cellValue = row.getCell(col).value;
+      if (cellValue !== null && cellValue !== undefined) {
+        let price = cellValue.valueOf() as number;
+        values[account] = price;
+      }
+    });
+
+    return values;
+  }
+
+
+  retrieve_member(row_nbr: number, name: string): Member | null {
+    if (name === null || name === undefined || name === '') {
+      // this.verbose.set(this.verbose() + '[' + row_nbr + '] ' + 'nom non renseigné : ' + '\n');
+      return null;
+    }
+
+    let concat = (name: string) => {
+      return name.split('').filter(char => (char !== ' ' && char !== '-')).join('').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    };
+
+    const member = this.members.find((member) => (concat(member.lastname + member.firstname)) === concat(name));
+
+    if (member) {
+      return member
+    } else {
+      this.verbose.set(this.verbose() + '[' + row_nbr + '] ' + name + ' n\'est pas un(e) adhérent(e) connu(e) : ' + '\n');
+      return null;
+    }
+  }
+
+  clear_db() {
+    this.verbose.set(this.verbose() + 'raz de la base de données ');
+    this.bookService.book_entries_bulk_delete$(this.current_season).subscribe((nbr) => {
+      this.verbose.set(this.verbose() + '...' + nbr + ' écritures supprimées \n');
+    });
+  }
 }

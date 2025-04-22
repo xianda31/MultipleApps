@@ -2,6 +2,7 @@ import { ApplicationConfig, LOCALE_ID, provideZoneChangeDetection } from '@angul
 import { InMemoryScrollingOptions, provideRouter, withInMemoryScrolling } from '@angular/router';
 
 import { routes } from './app.routes';
+import { provideAnimations } from '@angular/platform-browser/animations';
 
 const scrollConfig: InMemoryScrollingOptions = {
   scrollPositionRestoration: 'enabled'
@@ -9,6 +10,7 @@ const scrollConfig: InMemoryScrollingOptions = {
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
+    provideAnimations(),
     provideRouter(routes, withInMemoryScrolling(scrollConfig)),
     { provide: LOCALE_ID, useValue: 'fr-FR' }
   ]

@@ -84,6 +84,15 @@ export const PRODUCTS_COL: ACCOUNTS_COL = {
   //  'BNQ': 'X',
 }
 
+export const EXTRA_CUSTOMER_IN: { [key in CUSTOMER_ACCOUNT]?: string } = {
+  'creance_in': 'AB',
+  'avoir_in': 'AC',
+}
+export const EXTRA_CUSTOMER_OUT: { [key in CUSTOMER_ACCOUNT]?: string } = {
+  'creance_out': 'AG',
+  'avoir_out': 'AH',
+}
+
 export const EXPENSES_COL: ACCOUNTS_COL = {
   'LIC': 'P',
   'FFB': 'Q',
@@ -99,14 +108,10 @@ export const EXPENSES_COL: ACCOUNTS_COL = {
   'BNQ': 'AA',
 }
 
-export const FINANCIAL_COL: { [key in FINANCIAL_ACCOUNT | CUSTOMER_ACCOUNT]?: string } = {
-  'creance_in': 'AB',
-  'avoir_in': 'AC',
+export const FINANCIAL_COL: { [key in FINANCIAL_ACCOUNT ]: string } = {
   'cashbox_in': 'AD',
   'bank_in': 'AE',
   'saving_in': 'AF',
-  'creance_out': 'AG',
-  'avoir_out': 'AH',
   'cashbox_out': 'AI',
   'bank_out': 'AJ',
   'saving_out': 'AK',

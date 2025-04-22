@@ -10,7 +10,7 @@
     <div class="row  align-items-start">
       <!-- classe transaction -->
       <div class="col-3">
-        <label >Classe de transaction</label>
+        <label>Classe de transaction</label>
         <select class="form-control" id="transac_class" formControlName="transac_class">
           <option value="undefined" hidden disabled>néant</option>
           <option *ngFor="let class of transaction_classes | keyvalue" [value]="class.value">
@@ -47,7 +47,8 @@
               </ng-container>
             </div>
             <div class="col-4">
-              <ng-container [ngTemplateOutlet]="deposit" *ngIf="transaction && transaction_with_deposit(transaction_id)">
+              <ng-container [ngTemplateOutlet]="deposit"
+                *ngIf="transaction && transaction_with_deposit(transaction_id)">
               </ng-container>
             </div>
           </div>
@@ -63,19 +64,18 @@
     <!-- bandeau transaction(s) -->
     <div class="mt-3" *ngIf="transaction">
       <div formArrayName="operations">
-        <!-- pour chaque transaction_enums de la transaction -->
+        <!-- pour chaque operation de la transaction -->
         <div class="row align-items-end" *ngFor="let operation of operations.controls; let i = index ; let last = last">
           <div class="col-12 mt-4">
             <!-- transaction d'une transaction non nominative -->
-            <div class="row align-items-end"
-              *ngIf="!transaction.nominative ">
+            <div class="row align-items-end" *ngIf="!transaction.nominative ">
               <div class="col-2">
                 <div [ngTemplateOutlet]="label" [ngTemplateOutletContext]="{inputFormGroup: operation}">
                 </div>
               </div>
               <div class="col-8">
                 <ng-container [ngTemplateOutlet]="profit_and_loss"
-                  [ngTemplateOutletContext]="{inputFormGroup: operation}"></ng-container>
+                  [ngTemplateOutletContext]="{inputFormGroup: operation, transaction: transaction}"></ng-container>
               </div>
             </div>
             <!-- transaction d'une transaction nominative -->
@@ -85,7 +85,7 @@
                   [ngTemplateOutletContext]="{inputFormGroup: operation, transaction: transaction}">
                 </ng-container>
               </div>
-              <div class="col-6">
+              <div *ngIf="!transaction.pure_financial " class="col-6">
                 <div [ngTemplateOutlet]="profit_and_loss" [ngTemplateOutletContext]="{inputFormGroup: operation}">
                 </div>
               </div>
@@ -174,11 +174,11 @@
 
     <!-- formulaire selection transactions  -->
     <ng-template #select_transaction>
-      <label >transaction</label>
+      <label>transaction</label>
       <div class="form-check" *ngFor="let transaction_id of transaction_enums">
         <input class="form-check-input" type="radio" [value]="transaction_id" formControlName="transaction_id">
-        <label class="form-check-label" for="transaction_id" [ngbTooltip]="transaction_tooltip(transaction_id)" tooltipClass="my-custom-class"
-        placement="right">
+        <label class="form-check-label" for="transaction_id" [ngbTooltip]="transaction_tooltip(transaction_id)"
+          tooltipClass="my-custom-class" placement="right">
           {{transaction_label(transaction_id)}}
         </label>
       </div>
@@ -204,12 +204,13 @@
     </ng-template>
 
     <!-- formulaire recette_dépense -->
-    <ng-template #profit_and_loss let-inputFormGroup="inputFormGroup">
+    <ng-template #profit_and_loss let-inputFormGroup="inputFormGroup" let-transaction="transaction">
       <ng-container [formGroup]="inputFormGroup">
         <div formArrayName="values" class="row ">
           <div class="col gx-1" *ngFor="let account of inputFormGroup.get('values').controls ; let i = index">
-            <label [ngbTooltip]="profit_and_loss_accounts[i].description" tooltipClass="my-custom-class"
-              placement="top">{{profit_and_loss_accounts[i].key}}</label>
+            <label [ngbTooltip]="which_profit_and_loss_accounts(transaction)[i].description"
+              tooltipClass="my-custom-class"
+              placement="top">{{which_profit_and_loss_accounts(transaction)[i].key}}</label>
             <input type="text" [class]="account.invalid ? 'form-control border-danger' : 'form-control'"
               [formControlName]="i" [id]="'value' + i">
             <!-- <div *ngIf="account.invalid" class="text-danger">

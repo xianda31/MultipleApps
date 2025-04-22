@@ -44,7 +44,7 @@ export class BooksEditorComponent {
   members!: Member[];
   expenses_accounts !: Account[];
   products_accounts !: Account[];
-  profit_and_loss_accounts !: Account[];
+  // profit_and_loss_accounts !: Account[];
 
   financial_accounts !: Account_def[];
   optional_accounts !: Account_def[];
@@ -187,7 +187,7 @@ export class BooksEditorComponent {
 
     // création des champs operations
     this.operations.clear();
-    this.profit_and_loss_accounts = this.which_profit_and_loss_accounts(this.transaction);
+    // this.profit_and_loss_accounts = this.which_profit_and_loss_accounts(this.transaction);
 
     book_entry.operations.forEach((operation) => {
       this.add_operation(this.transaction!, operation);
@@ -230,10 +230,10 @@ export class BooksEditorComponent {
 
       if (this.creation) {
         this.operations.clear();
-        this.profit_and_loss_accounts = this.which_profit_and_loss_accounts(this.transaction);
-        if (!this.transaction.pure_financial) {  // les transactions type mouvement ne nécessite pas d'opération
+        // this.profit_and_loss_accounts = this.which_profit_and_loss_accounts(this.transaction);
+        // if (!this.transaction.pure_financial) {  // les transactions type mouvement ne nécessite pas d'opération
           this.add_operation(this.transaction);
-        }
+        // }
         // this.init_operation(this.transaction);
       }
 
@@ -324,14 +324,21 @@ export class BooksEditorComponent {
 
     let profit_and_loss_accounts = this.which_profit_and_loss_accounts(transaction);
 
-    if (profit_and_loss_accounts.length === 0) {      return;}   // pure financial transaction
+    if (profit_and_loss_accounts.length === 0 && !transaction.nominative) {      return;}   // pure financial transaction
 
     let operationForm: FormGroup = this.fb.group({
       'label': [operation_initial?.label ?? ''],
-      'values': this.fb.array(
-        (profit_and_loss_accounts.map(account => new FormControl<string>((operation_initial?.values?.[account.key]?.toString() ?? ''), [Validators.pattern(this.NumberRegexPattern)])) as unknown[]),
-        { validators: [this.atLeastOneFieldValidator] }),
+      // 'values': this.fb.array(
+      //   (profit_and_loss_accounts.map(account => new FormControl<string>((operation_initial?.values?.[account.key]?.toString() ?? ''), [Validators.pattern(this.NumberRegexPattern)])) as unknown[]),
+      //   { validators: [this.atLeastOneFieldValidator] }),
     });
+
+    if (profit_and_loss_accounts.length !== 0) { 
+      operationForm.addControl('values', this.fb.array(
+        profit_and_loss_accounts.map((account_def) => new FormControl<string>((operation_initial?.values?.[account_def.key]?.toString() ?? ''), [Validators.pattern(this.NumberRegexPattern)])),
+        { validators: [this.atLeastOneFieldValidator] }));
+    } 
+    
     if (transaction.nominative) {
       operationForm.addControl('member', new FormControl(operation_initial?.member ?? '', Validators.required));
       if (transaction.optional_accounts !== undefined) {
@@ -393,7 +400,7 @@ export class BooksEditorComponent {
     let operations: Operation[] = [];
     let amounts: { [key: string]: number } = {};
     let transaction = this.transactionService.get_transaction(this.transaction_id);
-
+    let profit_and_loss_accounts = this.which_profit_and_loss_accounts(transaction);
     // constructions des montants
 
     this.financial_accounts.forEach((account: Account_def, index: number) => {
@@ -408,7 +415,7 @@ export class BooksEditorComponent {
     operations = this.operations.controls.map((operation) => {
       let op_values: operation_values = {};
 
-      this.profit_and_loss_accounts.forEach((account: Account, index: number) => {
+      profit_and_loss_accounts.forEach((account: Account, index: number) => {
         let value = this.parse_to_float((operation as FormGroup).controls['values'].value[index]);
         if (value && value !== 0) {
           op_values[account.key] = value;
@@ -575,7 +582,7 @@ export class BooksEditorComponent {
     return grand_total;
   }
   which_profit_and_loss_accounts(transaction: Transaction): Account[] {
-    if (transaction.pure_financial ) return [];
+    if (transaction.pure_financial ) return  [];
     return transaction.is_of_profit_type ? this.products_accounts : this.expenses_accounts;
   }
 
