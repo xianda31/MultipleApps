@@ -63,7 +63,7 @@ export class BooksEditorComponent {
   deposit_ref_changed = false;
   selected_book_entry!: BookEntry;
 
-  transaction?: Transaction;
+  selected_transaction: Transaction | undefined = undefined;
 
   operations_valueChanges_subscription!: Subscription;
 
@@ -81,6 +81,7 @@ export class BooksEditorComponent {
 
   ngOnInit() {
 
+    this.transaction_enums = [];
     this.transaction_classes = this.transactionService.list_transaction_classes();
     this.membersService.listMembers().subscribe((members) => {
       this.members = members;
@@ -118,15 +119,10 @@ export class BooksEditorComponent {
 
   }
 
-  operations_valueChanges_subscribe() {
-
-    // operation change handler pour le calcul du total
-
+  operations_valueChanges_subscribe() { // operation change handler pour le calcul du total
     this.operations_valueChanges_subscription = this.operations.valueChanges.subscribe((op_values) => {
-
-
       op_values.forEach((values: Operation_initial_values, index: number) => {
-        let total: number = this.sum_operation_values(this.transaction!, values);
+        let total: number = this.sum_operation_values(this.selected_transaction!, values);
         (this.operations.at(index) as FormGroup).controls['total'].setValue(total, { emitEvent: false });
       });
     });
@@ -136,9 +132,7 @@ export class BooksEditorComponent {
 
   init_form() {
     const today = formatDate(new Date(), 'yyyy-MM-dd', 'en');
-    this.transaction = undefined!;
-    this.transaction_enums = [];
-
+    this.selected_transaction = undefined;
     this.form = this.fb.group({
       'id': [''],
       'date': [today, Validators.required],
@@ -156,11 +150,10 @@ export class BooksEditorComponent {
 
   set_form(book_entry: BookEntry) {
 
-    this.transaction = this.transactionService.get_transaction(book_entry.transaction_id);
+    this.selected_transaction = this.transactionService.get_transaction(book_entry.transaction_id);
+    let transac_class = this.selected_transaction.class;
+    this.financial_accounts = this.selected_transaction.financial_accounts;
 
-    this.financial_accounts = this.transaction.financial_accounts;
-
-    let transac_class = this.transactionService.transaction_class(book_entry.transaction_id);
 
     this.form.patchValue({
       id: book_entry.id,
@@ -178,7 +171,7 @@ export class BooksEditorComponent {
     this.form.get('transac_class')?.disable();   // bloque le changment de la classe d'opération
 
     // création des champs amounts
-    this.init_financial_accounts(this.transaction);
+    this.init_financial_accounts(this.selected_transaction);
 
     this.financial_accounts.forEach((account) => {
       let value = book_entry.amounts[account.key as FINANCIAL_ACCOUNT] ?? '';
@@ -190,12 +183,12 @@ export class BooksEditorComponent {
     // this.profit_and_loss_accounts = this.which_profit_and_loss_accounts(this.transaction);
 
     book_entry.operations.forEach((operation) => {
-      this.add_operation(this.transaction!, operation);
+      this.add_operation(this.selected_transaction!, operation);
     });
     this.operations_valueChanges_subscribe();
 
 
-    if (this.transaction.cheque === 'out') {
+    if (this.selected_transaction.cheque === 'out') {
       this.form.controls['bank_name'].disable();
     }
 
@@ -205,7 +198,7 @@ export class BooksEditorComponent {
 
   reset_form() {
     const today = formatDate(new Date(), 'yyyy-MM-dd', 'en');
-    this.transaction = undefined!;
+    this.selected_transaction = undefined;
     this.transaction_enums = [];
     this.form.controls['date'].setValue(formatDate(new Date(), 'yyyy-MM-dd', 'en'));
     this.financial_accounts_locked = true;
@@ -217,14 +210,14 @@ export class BooksEditorComponent {
   valueChanges_subscribe() {
     // form.transaction_class change handler
     this.form.controls['transac_class'].valueChanges.subscribe((op_class) => {
-      this.transaction = undefined!;
+      this.selected_transaction = undefined;
       this.transaction_enums = this.transactionService.class_to_enums(op_class);
       this.financial_accounts_locked = true;
     });
 
     // form.transaction_id change handler
     this.form.controls['transaction_id'].valueChanges.subscribe((transaction_id) => {
-      this.transaction = this.transactionService.get_transaction(transaction_id);
+      this.selected_transaction = this.transactionService.get_transaction(transaction_id);
 
       // initialisation form operations si en mode création
 
@@ -232,7 +225,7 @@ export class BooksEditorComponent {
         this.operations.clear();
         // this.profit_and_loss_accounts = this.which_profit_and_loss_accounts(this.transaction);
         // if (!this.transaction.pure_financial) {  // les transactions type mouvement ne nécessite pas d'opération
-          this.add_operation(this.transaction);
+          this.add_operation(this.selected_transaction);
         // }
         // this.init_operation(this.transaction);
       }
@@ -242,13 +235,13 @@ export class BooksEditorComponent {
 
       // gestion des validators pour les champs bank_name et cheque_ref
 
-      this.handle_cheque_info_validators(this.transaction);
-      this.handled_deposit_ref_validators(this.transaction);
+      this.handle_cheque_info_validators(this.selected_transaction);
+      this.handled_deposit_ref_validators(this.selected_transaction);
 
       // création des champs amounts
       if (this.creation) {
         this.amounts.clear();
-        this.init_financial_accounts(this.transaction);
+        this.init_financial_accounts(this.selected_transaction);
       }
     });
 
@@ -392,7 +385,7 @@ export class BooksEditorComponent {
       this.financial_accounts_locked = false;
     } else {
       this.financial_accounts_locked = true;
-      this.handle_financial_accounts_enabling(this.transaction!);
+      this.handle_financial_accounts_enabling(this.selected_transaction!);
     }
   }
 
@@ -579,9 +572,10 @@ export class BooksEditorComponent {
     this.operations.controls.forEach((operation) => {
       grand_total += parseFloat((operation as FormGroup).controls['total'].value);
     });
-    return grand_total;
+    return grand_total <0 ? -grand_total : grand_total;
   }
   which_profit_and_loss_accounts(transaction: Transaction): Account[] {
+    if (transaction === undefined) {throw new Error('transaction is undefined');};
     if (transaction.pure_financial ) return  [];
     return transaction.is_of_profit_type ? this.products_accounts : this.expenses_accounts;
   }

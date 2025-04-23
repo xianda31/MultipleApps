@@ -1,6 +1,6 @@
 import { Component, ElementRef, signal } from '@angular/core';
 import * as ExcelJS from 'exceljs';
-import { EXPENSES_COL,  EXTRA_CUSTOMER_IN, EXTRA_CUSTOMER_OUT, FINANCIAL_COL, MAP, PRODUCTS_COL } from '../../../../../common/excel/excel.interface';
+import { EXPENSES_COL, EXTRA_CUSTOMER_IN, EXTRA_CUSTOMER_OUT, FINANCIAL_COL, MAP, PRODUCTS_COL } from '../../../../../common/excel/excel.interface';
 import { TRANSACTION_ID, BookEntry, FINANCIAL_ACCOUNT, operation_values, Operation } from '../../../../../common/accounting.interface';
 import { Member } from '../../../../../common/member.interface';
 import { MembersService } from '../../../../../admin-dashboard/src/app/members/service/members.service';
@@ -43,6 +43,8 @@ export class ImportExcelComponent {
   create_progress = 0;
   data_uploading = false;
 
+  balise999: string = '';
+
   constructor(
     private bookService: BookService,
     private transactionService: TransactionService,
@@ -55,7 +57,7 @@ export class ImportExcelComponent {
       this.current_season = configuration.season;
       let revenue_keys = configuration.revenue_and_expense_tree.revenues.map((revenue) => revenue.key);
       let expense_keys = configuration.revenue_and_expense_tree.expenses.map((expense) => expense.key);
-      this.op_value_keys = [...revenue_keys, ...expense_keys,...Object.keys(EXTRA_CUSTOMER_IN), ...Object.keys(EXTRA_CUSTOMER_OUT)];;
+      this.op_value_keys = [...revenue_keys, ...expense_keys, ...Object.keys(EXTRA_CUSTOMER_IN), ...Object.keys(EXTRA_CUSTOMER_OUT)];;
     });
 
     this.membersService.listMembers().subscribe((members) => {
@@ -109,6 +111,7 @@ export class ImportExcelComponent {
       return;
     } else {
       this.verbose.set(this.verbose() + 'balise 999 trouvée :' + cell_999.valueOf() + ' \n');
+      this.balise999 = cell_999.toString();
     }
 
 
@@ -241,79 +244,79 @@ export class ImportExcelComponent {
   }
 
 
-   convert_to_book_entry(master: string, cells: string[]): BookEntry | null {
+  convert_to_book_entry(master: string, cells: string[]): BookEntry | null {
 
     // let promise = new Promise<BookEntry>((resolve, reject) => {
-      // initializing book_entry
-      let row_number = +this.worksheet.getCell(master).row;
-      let master_row = this.worksheet.getRow(row_number);
-      let date = master_row.getCell(MAP.date).value?.toString() || '';
-      let cell_pointage = master_row.getCell(MAP['pointage']).value?.toString() || undefined;
+    // initializing book_entry
+    let row_number = +this.worksheet.getCell(master).row;
+    let master_row = this.worksheet.getRow(row_number);
+    let date = master_row.getCell(MAP.date).value?.toString() || '';
+    let cell_pointage = master_row.getCell(MAP['pointage']).value?.toString() || undefined;
 
-      let cell_chèque = master_row.getCell(MAP['n° chèque']).value;
-      let cell_bordereau = master_row.getCell(MAP['bordereau']).value;
-      let cell_info_sup = master_row.getCell(MAP['info']).value;
+    let cell_chèque = master_row.getCell(MAP['n° chèque']).value;
+    let cell_bordereau = master_row.getCell(MAP['bordereau']).value;
+    let cell_info_sup = master_row.getCell(MAP['info']).value;
 
-      let cell_nature = master_row.getCell(MAP['nature']).value;
-      let bank_op_type = this.convert_to_bank_op_type(cell_nature?.toString() as string);
-      if (bank_op_type === null) {
-        // console.log('erreur de nature', cell_nature);
-        // reject('erreur de nature ' + cell_nature);
-        return(null);
-      }
-      let transaction = this.transactionService.get_transaction(bank_op_type)
+    let cell_nature = master_row.getCell(MAP['nature']).value;
+    let bank_op_type = this.convert_to_bank_op_type(cell_nature?.toString() as string);
+    if (bank_op_type === null) {
+      // console.log('erreur de nature', cell_nature);
+      // reject('erreur de nature ' + cell_nature);
+      return (null);
+    }
+    let transaction = this.transactionService.get_transaction(bank_op_type)
 
-      let book_entry: BookEntry = {
-        season: this.systemDataService.get_season(new Date(date)),
-        date: formatDate(new Date(date), 'yyyy-MM-dd', 'en'),
-        id: '',
-        amounts: {},
-        operations: [],
-        transaction_id: bank_op_type,
-        // class: transaction.class,
-        bank_report: (cell_pointage) ? this.format_bank_report(cell_pointage.toString(), this.current_season) : undefined,
+    let book_entry: BookEntry = {
+      season: this.systemDataService.get_season(new Date(date)),
+      date: formatDate(new Date(date), 'yyyy-MM-dd', 'en'),
+      id: '',
+      amounts: {},
+      operations: [],
+      transaction_id: bank_op_type,
+      // class: transaction.class,
+      bank_report: (cell_pointage) ? this.format_bank_report(cell_pointage.toString(), this.current_season) : undefined,
 
-      };
-      if (cell_info_sup?.toString().startsWith('#')) {
-        book_entry.tag = cell_info_sup?.toString() as string;
-      }
+    };
+    if (cell_info_sup?.toString().startsWith('#')) {
+      book_entry.tag = cell_info_sup?.toString() as string;
+    }
 
-      if (cell_chèque?.toString()) { book_entry.cheque_ref = cell_chèque?.toString() as string; }
-      if (cell_bordereau?.toString()) { book_entry.deposit_ref = cell_bordereau?.toString() as string; }
+    if (cell_chèque?.toString()) { book_entry.cheque_ref = cell_chèque?.toString() as string; }
+    if (cell_bordereau?.toString()) { book_entry.deposit_ref = cell_bordereau?.toString() as string; }
 
-      // book_entry.amounts
+    // book_entry.amounts
 
-      Object.entries(FINANCIAL_COL).forEach((entry) => {
-        let [name, col] = entry;
-        let cell = master_row.getCell(col).value;
-        if (!cell?.valueOf()) { return; }
-        book_entry.amounts[name as FINANCIAL_ACCOUNT] = cell.valueOf() as number;
-      });
+    Object.entries(FINANCIAL_COL).forEach((entry) => {
+      let [name, col] = entry;
+      let cell = master_row.getCell(col).value;
+      if (!cell?.valueOf()) { return; }
+      book_entry.amounts[name as FINANCIAL_ACCOUNT] = cell.valueOf() as number;
+    });
 
-      // construct products operation side
+    // construct products operation side
 
-      cells.forEach((cell) => {
-        let row_number = +this.worksheet.getCell(cell).row;
-        let row = this.worksheet.getRow(row_number);
+    cells.forEach((cell) => {
+      let row_number = +this.worksheet.getCell(cell).row;
+      let row = this.worksheet.getRow(row_number);
 
-        let operation = this.compute_operation_values(transaction, row);
-        
-        if (operation === null) {
-          console.log('operation translation went wrong', row_number);
-          // reject('operation translation went wrong');
-          // return (null);
-        } else {
-          book_entry.operations.push(operation);
-        }
+      let operation = this.compute_operation_values(transaction, row);
 
-      });
-
-      if (!this.control_amounts_balance(row_number, book_entry)) {
-        // reject('amounts not balanced');
-        return (null)
+      if (operation === null) {
+        console.log('operation translation went wrong', row_number);
+        // reject('operation translation went wrong');
+        // return (null);
       } else {
-        return(book_entry);
+        book_entry.operations.push(operation);
       }
+
+    });
+
+    if (!this.control_amounts_balance(row_number, book_entry)) {
+      // reject('amounts not balanced');
+      return (null)
+    } else {
+      return (book_entry);
+    }
     // });
     // return promise;
   }
@@ -340,8 +343,8 @@ export class ImportExcelComponent {
   }
 
   convert_to_bank_op_type(nature: string): TRANSACTION_ID | null {
-    switch (this.worksheet.name) {
-      case 'chrono banque':
+    switch (this.balise999) {
+      case 'B999':  // type chrono banque
 
         switch (nature) {
           case 'versement espèces':
@@ -375,7 +378,7 @@ export class ImportExcelComponent {
             return null
         }
 
-      case 'chrono vente':
+      case 'C999': // type 'chrono vente':
 
         switch (nature) {
           case 'virement reçu':
@@ -384,12 +387,14 @@ export class ImportExcelComponent {
             return TRANSACTION_ID.achat_adhérent_par_chèque;
           case 'paiement en espèces':
             return TRANSACTION_ID.achat_adhérent_en_espèces;
+          case 'attribution avoir':
+            return TRANSACTION_ID.attribution_avoir;
           default:
             console.log('erreur de nature', nature);
             return null
         }
 
-      case 'droits de table':
+      case 'K999':   // droits de table':
 
         switch (nature) {
           case 'espèces':
@@ -416,57 +421,62 @@ export class ImportExcelComponent {
       return false;
     }
 
-// calcul des montants encaissés ou décaissés
+    // calcul des montants encaissés ou décaissés
     let debit_keys: FINANCIAL_ACCOUNT[] = Object.keys(book_entry.amounts).filter((key): key is FINANCIAL_ACCOUNT => key.includes('in'));
     let amount_total_debit = debit_keys.reduce((acc, key) => acc + (book_entry.amounts[key] || 0), 0);
 
     let credit_keys: FINANCIAL_ACCOUNT[] = Object.keys(book_entry.amounts).filter((key): key is FINANCIAL_ACCOUNT => key.includes('out'));
     let amount_total_credit = credit_keys.reduce((acc, key) => acc + (book_entry.amounts[key] || 0), 0);
 
-    
+
     // calcul des avoir et dettes exercés
     let debt_asset_debit_keys: string[] = Object.keys(EXTRA_CUSTOMER_IN);
     let total_debt_asset_debit = book_entry.operations.reduce((acc, operation) => {
       return acc + debt_asset_debit_keys.reduce((sum, key) => sum + (operation.values[key] || 0), 0);
-    }    , 0);
+    }, 0);
 
     let debt_asset_credit_keys: string[] = Object.keys(EXTRA_CUSTOMER_OUT);
     let total_debt_asset_credit = book_entry.operations.reduce((acc, operation) => {
       return acc + debt_asset_credit_keys.reduce((sum, key) => sum + (operation.values[key] || 0), 0);
     }, 0);
 
-// calcul des produits et dépenses
-let total_sale_credit = 0;
-let total_sale_debit = 0;
+    // calcul des produits et dépenses
+    let total_sale_credit = 0;
+    let total_sale_debit = 0;
 
 
-switch (this.transactionService.transaction_class(book_entry.transaction_id)) {
-  case TRANSACTION_CLASS.REVENUE_FROM_MEMBER:
-    case TRANSACTION_CLASS.OTHER_REVENUE:
-      let product_keys =  Object.keys(PRODUCTS_COL);
-      total_sale_credit = book_entry.operations.reduce((acc, operation) => {
-        return acc + product_keys.reduce((sum, key) => sum + (operation.values[key] || 0), 0);
-      }, 0);
-      break;
+    switch (this.transactionService.transaction_class(book_entry.transaction_id)) {
+      case TRANSACTION_CLASS.REVENUE_FROM_MEMBER:
+      case TRANSACTION_CLASS.OTHER_REVENUE:
+        let product_keys = Object.keys(PRODUCTS_COL);
+        total_sale_credit = book_entry.operations.reduce((acc, operation) => {
+          return acc + product_keys.reduce((sum, key) => sum + (operation.values[key] || 0), 0);
+        }, 0);
+        break;
+      case TRANSACTION_CLASS.EXPENSE_FOR_MEMBER:
       case TRANSACTION_CLASS.OTHER_EXPENSE:
         let expense_keys = Object.keys(EXPENSES_COL);
-         total_sale_debit = book_entry.operations.reduce((acc, operation) => {
+        total_sale_debit = book_entry.operations.reduce((acc, operation) => {
           return acc + expense_keys.reduce((sum, key) => sum + (operation.values[key] || 0), 0);
         }, 0);
         break
       case TRANSACTION_CLASS.MOVEMENT:
         break;
+      default:
+        console.log('erreur de classe', this.transactionService.transaction_class(book_entry.transaction_id));
+        this.verbose.set(this.verbose() + '[' + row_nbr + '] ' + 'erreur de classe : ' + this.transactionService.transaction_class(book_entry.transaction_id) + '\n');
+        return false;
     }
 
-let check_sum = amount_total_debit + total_debt_asset_debit  + total_sale_debit - amount_total_credit - total_debt_asset_credit - total_sale_credit;
+    let check_sum = amount_total_debit + total_debt_asset_debit + total_sale_debit - amount_total_credit - total_debt_asset_credit - total_sale_credit;
 
 
 
     if (check_sum !== 0) {
       console.log('amounts not equal \n debit : %s,%s,%s \n crédits : %s,%s,%s',
-         amount_total_debit, total_debt_asset_debit , total_sale_debit ,
-          amount_total_credit , total_debt_asset_credit , total_sale_credit);
-          
+        amount_total_debit, total_debt_asset_debit, total_sale_debit,
+        amount_total_credit, total_debt_asset_credit, total_sale_credit);
+
       console.log('book_entry', book_entry);
       this.verbose.set(this.verbose() + '[' + row_nbr + '] montants non égaux \n');
       return false;
@@ -487,6 +497,7 @@ let check_sum = amount_total_debit + total_debt_asset_debit  + total_sale_debit 
       case TRANSACTION_CLASS.OTHER_REVENUE:
         operation.values = this.get_revenues_values(row);
         break;
+      case TRANSACTION_CLASS.EXPENSE_FOR_MEMBER:
       case TRANSACTION_CLASS.OTHER_EXPENSE:
         operation.values = this.get_expenses_values(row);
         break;
@@ -520,32 +531,32 @@ let check_sum = amount_total_debit + total_debt_asset_debit  + total_sale_debit 
 
     let values: operation_values = {};
     Object.entries(PRODUCTS_COL)
-    .concat(Object.entries(EXTRA_CUSTOMER_IN))
-    .concat(Object.entries(EXTRA_CUSTOMER_OUT))
-    .forEach(element => {
-      let [account, col] = element;
-      let cellValue = row.getCell(col).value;
-      if (cellValue !== null && cellValue !== undefined) {
-        let price = cellValue.valueOf() as number;
-        values[account] = price;
-      }
-    });
+      .concat(Object.entries(EXTRA_CUSTOMER_IN))
+      .concat(Object.entries(EXTRA_CUSTOMER_OUT))
+      .forEach(element => {
+        let [account, col] = element;
+        let cellValue = row.getCell(col).value;
+        if (cellValue !== null && cellValue !== undefined) {
+          let price = cellValue.valueOf() as number;
+          values[account] = price;
+        }
+      });
     return values;
   }
 
   get_expenses_values(row: ExcelJS.Row): operation_values {
     let values: operation_values = {};
     Object.entries(EXPENSES_COL)
-    .concat(Object.entries(EXTRA_CUSTOMER_IN))
-    .concat(Object.entries(EXTRA_CUSTOMER_OUT))
-    .forEach((expense) => {
-      let [account, col] = expense;
-      let cellValue = row.getCell(col).value;
-      if (cellValue !== null && cellValue !== undefined) {
-        let price = cellValue.valueOf() as number;
-        values[account] = price;
-      }
-    });
+      .concat(Object.entries(EXTRA_CUSTOMER_IN))
+      .concat(Object.entries(EXTRA_CUSTOMER_OUT))
+      .forEach((expense) => {
+        let [account, col] = expense;
+        let cellValue = row.getCell(col).value;
+        if (cellValue !== null && cellValue !== undefined) {
+          let price = cellValue.valueOf() as number;
+          values[account] = price;
+        }
+      });
 
     return values;
   }

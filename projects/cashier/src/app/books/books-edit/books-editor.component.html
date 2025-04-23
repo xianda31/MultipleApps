@@ -25,7 +25,7 @@
         </div>
 
         <!-- financial accounts -->
-        <div *ngIf="transaction" class="col-5">
+        <div *ngIf="selected_transaction" class="col-5">
           <div class="row align-items-center">
             <div class="col-8">
               <ng-container [ngTemplateOutlet]="financial_amounts"
@@ -40,15 +40,15 @@
           <div class="row">
             <div class="col-8">
               <ng-container [ngTemplateOutlet]="cheque_definition"
-                *ngIf="transaction && transaction_with_cheque_in(transaction_id)">
+                *ngIf="selected_transaction && transaction_with_cheque_in(transaction_id)">
               </ng-container>
               <ng-container [ngTemplateOutlet]="cheque_club"
-                *ngIf="transaction && transaction_with_cheque_out(transaction_id)">
+                *ngIf="selected_transaction && transaction_with_cheque_out(transaction_id)">
               </ng-container>
             </div>
             <div class="col-4">
               <ng-container [ngTemplateOutlet]="deposit"
-                *ngIf="transaction && transaction_with_deposit(transaction_id)">
+                *ngIf="selected_transaction && transaction_with_deposit(transaction_id)">
               </ng-container>
             </div>
           </div>
@@ -62,31 +62,31 @@
     </div>
 
     <!-- bandeau transaction(s) -->
-    <div class="mt-3" *ngIf="transaction">
+    <div class="mt-3" *ngIf="selected_transaction">
       <div formArrayName="operations">
         <!-- pour chaque operation de la transaction -->
         <div class="row align-items-end" *ngFor="let operation of operations.controls; let i = index ; let last = last">
           <div class="col-12 mt-4">
             <!-- transaction d'une transaction non nominative -->
-            <div class="row align-items-end" *ngIf="!transaction.nominative ">
+            <div class="row align-items-end" *ngIf="!selected_transaction.nominative ">
               <div class="col-2">
                 <div [ngTemplateOutlet]="label" [ngTemplateOutletContext]="{inputFormGroup: operation}">
                 </div>
               </div>
               <div class="col-8">
                 <ng-container [ngTemplateOutlet]="profit_and_loss"
-                  [ngTemplateOutletContext]="{inputFormGroup: operation, transaction: transaction}"></ng-container>
+                  [ngTemplateOutletContext]="{inputFormGroup: operation, transaction: selected_transaction}"></ng-container>
               </div>
             </div>
             <!-- transaction d'une transaction nominative -->
-            <div *ngIf="transaction.nominative" class="row align-items-end">
+            <div *ngIf="selected_transaction.nominative" class="row align-items-end">
               <div class="col-2">
                 <ng-container [ngTemplateOutlet]="member"
-                  [ngTemplateOutletContext]="{inputFormGroup: operation, transaction: transaction}">
+                  [ngTemplateOutletContext]="{inputFormGroup: operation, transaction: selected_transaction}">
                 </ng-container>
               </div>
-              <div *ngIf="!transaction.pure_financial " class="col-6">
-                <div [ngTemplateOutlet]="profit_and_loss" [ngTemplateOutletContext]="{inputFormGroup: operation}">
+              <div *ngIf="!selected_transaction.pure_financial " class="col-6">
+                <div [ngTemplateOutlet]="profit_and_loss" [ngTemplateOutletContext]="{inputFormGroup: operation, transaction: selected_transaction}">
                 </div>
               </div>
               <div class="offset-1 col-2">
@@ -102,10 +102,10 @@
           </div>
         </div>
         <!-- bouton ajout transaction nominative -->
-        <div *ngIf="transaction.nominative" class="row mt-4">
+        <div *ngIf="selected_transaction.nominative" class="row mt-4">
           <span>
             Ajout bénéficiaire :
-            <i (click)="add_operation(transaction)" class="h3 text-primary bi-person-fill-add"></i>
+            <i (click)="add_operation(selected_transaction)" class="h3 text-primary bi-person-fill-add"></i>
           </span>
         </div>
 

@@ -301,7 +301,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
   // ****  CLASS = EXPENS_FOR_MEMBER ****
 
   // émission d'avoir à un adhérent
-  [TRANSACTION_ID.dépense_en_avoir]: {
+  [TRANSACTION_ID.attribution_avoir]: {
     label: 'attribution d\'avoir(s) nominatif(s)',
     tooltip: 'attribution d\'avoir(s) nominatif(s)',
     class: TRANSACTION_CLASS.EXPENSE_FOR_MEMBER,
