@@ -44,7 +44,7 @@ export class BooksListComponent implements OnDestroy {
       .subscribe(
         (book_entries) => {
           this.book_entries = [...book_entries];
-          // console.log('....got %s book entries', this.book_entries.length);
+          console.log('....got %s book entries', this.book_entries.length);
           this.loaded = true;
         }
       )

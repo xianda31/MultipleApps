@@ -199,15 +199,15 @@ export class BalanceComponent {
 
     // A. report des avoirs client
     let assets = this.bookService.get_customers_assets();
-    {
+    
       let operations: Operation[] = [];
-      let total = 0;
+      let grand_total = 0;
 
       Array.from(assets)
         .filter(([member, { total, entries }]: [string, { total: number; entries: BookEntry[] }]) => total > 0)
         .forEach(([member, { total, entries }]: [string, { total: number; entries: BookEntry[] }]) => {
           operations.push({ member: member, label: 'report avoir antérieur', values: { [CUSTOMER_ACCOUNT.ASSET_credit]: total } });
-          total += total;
+          grand_total += total;
         }
         );
 
@@ -215,16 +215,17 @@ export class BalanceComponent {
       let book_entry: BookEntry = {
         id: '',
         season: next_season,
-        date: this.systemDataService.closout_date(this.selected_season),
+        date: this.systemDataService.closout_date(next_season),
         transaction_id: TRANSACTION_ID.report_avoir,
-        amounts: { [BALANCE_ACCOUNT.BAL_debit]: total },
+        amounts: { [BALANCE_ACCOUNT.BAL_debit]: grand_total },
         operations: operations,
       };
 
       console.log('report d\'avoir', book_entry);
+      this.toatService.showInfoToast('report d\'avoir',  (grand_total + ' € reportés sur la saison ' + next_season));
       next_season_entries.push(book_entry);
 
-    }
+    
 
     // B. report des chèques non encaissés
     this.book_entries.filter((entry) => ((entry.transaction_id === TRANSACTION_ID.report_chèque) || (entry.transaction_id === TRANSACTION_ID.dépense_par_chèque)) && entry.bank_report === null)
