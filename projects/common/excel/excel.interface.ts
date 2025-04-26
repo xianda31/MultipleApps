@@ -104,7 +104,7 @@ export const EXPENSES_COL: ACCOUNTS_COL = {
   'REU': 'W',
   'FET': 'X',
   'KFE': 'Y',
-  'DIV': 'Z',
+  'AUT': 'Z',
   'BNQ': 'AA',
 }
 

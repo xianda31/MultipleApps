@@ -1,14 +1,14 @@
 import { Component, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Bank_accounts, BookEntry, TRANSACTION_ID, FINANCIAL_ACCOUNT, Liquidities } from '../../../../common/accounting.interface';
+import { BookEntry, TRANSACTION_ID, FINANCIAL_ACCOUNT, Liquidities } from '../../../../common/accounting.interface';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 import { BookService } from '../book.service';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { Router } from '@angular/router';
 import { ToastService } from '../../../../common/toaster/toast.service';
-import { tap, switchMap, combineLatest } from 'rxjs';
-import { filter, map } from 'rxjs/operators';
+import { switchMap, combineLatest } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { threedigitsPipe } from '../../../../common/pipes/three_digits.pipe';
 import { TransactionService } from '../transaction.service';
 
@@ -16,7 +16,7 @@ import { TransactionService } from '../transaction.service';
   selector: 'app-bank-reconciliation',
   standalone: true,
   encapsulation: ViewEncapsulation.None,   // nécessaire pour que les tooltips fonctionnent
-  imports: [CommonModule, FormsModule, NgbModule, threedigitsPipe],
+  imports: [CommonModule, FormsModule, NgbModule],
   templateUrl: './bank-reconciliation.component.html',
   styleUrl: './bank-reconciliation.component.scss'
 })
@@ -70,8 +70,9 @@ export class BankReconciliationComponent {
 
   // utilities
 
-  transaction_label(op_type: TRANSACTION_ID): string {
-    return this.transactionService.get_transaction(op_type).label;
+  transaction_label(book_entry: BookEntry): string {
+    let transaction = this.transactionService.get_transaction(book_entry.transaction_id);
+    return transaction.label + (book_entry.cheque_ref ? ' - ' + book_entry.cheque_ref : '');
   }
 
   book_label(book_entry: BookEntry): string {
@@ -79,7 +80,7 @@ export class BankReconciliationComponent {
     if (transaction.require_deposit_ref) {
       return book_entry.deposit_ref!;
     } else {
-      return (book_entry.operations[0]?.label ?? '');
+      return (book_entry.operations? book_entry.operations[0].label : '');
     }
   }
   show_book_entry(book_entry_id: string) {

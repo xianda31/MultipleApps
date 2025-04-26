@@ -137,9 +137,17 @@ export class SystemDataService {
     return (+season.slice(5, 9)).toString() + '/' + (+season.slice(5, 9) + 1).toString();
   }
 
-  closout_date(season: string): string {
-    let date = new Date('01/07/' + season.slice(5, 9));
-    return formatDate(date, 'yyyy-MM-dd', 'en')
+  start_date(season: string): string {
+    return season.slice(5, 9) + '-07-01';
+    // let date = new Date('01/07/' + season.slice(5, 9));
+    // return formatDate(date, 'yyyy-MM-dd', 'en')
     // return '01/07/' + season.slice(5, 9);
+  }
+
+  date_in_season(date: string, season: string): boolean {
+    let start_date = new Date(season.slice(0, 4) + '-07-01');
+    let end_date = new Date(season.slice(5, 9) + '-06-30');
+    let date_obj = new Date(date);
+    return (date_obj >= start_date && date_obj <= end_date);
   }
 }

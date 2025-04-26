@@ -1,10 +1,15 @@
 <div *ngIf="form_ready" class="mt-2">
   <form [formGroup]="form" (ngSubmit)="onSubmit()">
-
-    <div class="col-2">
-      <label for="date">Date</label>
-      <input type="date" class="form-control" id="date" formControlName="date">
-    </div>
+<div class="row align-items-end">
+  <div class="col-2">
+    <label for="date">Date</label>
+    <input type="date" class="form-control" id="date" formControlName="date">
+  </div>
+<div *ngIf="!date_in_season(date?.value)" class="col-3 text-danger">
+  <i class="bi bi-exclamation-circle"></i>
+  <span>  cette date est hors saison actuelle</span>
+</div>
+</div>
 
     <!-- bandeau selection transaction et affichage comptes financiers -->
     <div class="row  align-items-start">
@@ -66,14 +71,14 @@
       <div formArrayName="operations">
         <!-- pour chaque operation de la transaction -->
         <div class="row align-items-end" *ngFor="let operation of operations.controls; let i = index ; let last = last">
-          <div class="col-12 mt-4">
+          <div class="col-12 mt-2">
             <!-- transaction d'une transaction non nominative -->
             <div class="row align-items-end" *ngIf="!selected_transaction.nominative ">
               <div class="col-2">
                 <div [ngTemplateOutlet]="label" [ngTemplateOutletContext]="{inputFormGroup: operation}">
                 </div>
               </div>
-              <div class="col-8">
+              <div *ngIf="!selected_transaction.pure_financial" class="col-8">
                 <ng-container [ngTemplateOutlet]="profit_and_loss"
                   [ngTemplateOutletContext]="{inputFormGroup: operation, transaction: selected_transaction}"></ng-container>
               </div>
@@ -127,7 +132,7 @@
     </div>
 
     form.status : {{form.status}}<br>
-    operations.status : {{form.get('operations')?.status}}
+    operations.status : {{form.get('operations')?.status}}<br>
 
     <div *ngIf="selected_book_entry " class="card mt-3 bg-body-secondary">
       <div class="card-body">

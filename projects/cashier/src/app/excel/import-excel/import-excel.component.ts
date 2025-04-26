@@ -99,7 +99,7 @@ export class ImportExcelComponent {
 
   async process_exel_file(worksheet: ExcelJS.Worksheet) {
     this.worksheet = worksheet;
-    console.log('processing worksheet ', this.worksheet.name);
+    this.verbose.set('\n traitement de l\'onglet '+ this.worksheet.name);
     this.book_entries = [];
 
     // recherche balise ?999
@@ -177,8 +177,6 @@ export class ImportExcelComponent {
 
 
   upload_data() {
-
-
 
     let progress = (index: number) => {
       this.create_progress = Math.round((index) / this.book_entries.length * 100);
@@ -281,7 +279,7 @@ export class ImportExcelComponent {
       book_entry.tag = cell_info_sup?.toString() as string;
     }
 
-    if (cell_chèque?.toString()) { book_entry.cheque_ref = cell_chèque?.toString() as string; }
+    if (cell_chèque?.toString()&& (bank_op_type===TRANSACTION_ID.vente_par_chèque || bank_op_type===TRANSACTION_ID.dépense_par_chèque)) { book_entry.cheque_ref = cell_chèque?.toString() as string; }
     if (cell_bordereau?.toString()) { book_entry.deposit_ref = cell_bordereau?.toString() as string; }
 
     // book_entry.amounts
@@ -308,17 +306,13 @@ export class ImportExcelComponent {
       } else {
         book_entry.operations.push(operation);
       }
-
     });
 
     if (!this.control_amounts_balance(row_number, book_entry)) {
-      // reject('amounts not balanced');
-      return (null)
+      return (null) // reject('amounts not balanced');
     } else {
       return (book_entry);
     }
-    // });
-    // return promise;
   }
 
   format_bank_report(pointage: string, season: string): string | null {
@@ -326,19 +320,19 @@ export class ImportExcelComponent {
     return pointage;
 
     // convert R007 to bank_reports[0] ... R012 to bank_reports[5] ... R101 to bank_reports[6] ...R106 to bank_reports[11]
-    let month: number = +pointage.slice(2, 4);
-    console.log('pointage : %s month %s', pointage, month);
-    if (month < 1 || month > 12) return null;
-    let Y = season.slice(0, 4).slice(-2); // yyYY-zzZZ
-    let Z = season.slice(5, 9).slice(-2); // yyYY-zzZZ
-    switch (pointage.slice(0, 2)) {
-      case 'R0':
-        return Y + '-' + month.toString().padStart(2, '0')
-      case 'R1':
-        return Z + '-' + month.toString().padStart(2, '0')
-      default:
-        return null;
-    }
+    // let month: number = +pointage.slice(2, 4);
+    // console.log('pointage : %s month %s', pointage, month);
+    // if (month < 1 || month > 12) return null;
+    // let Y = season.slice(0, 4).slice(-2); // yyYY-zzZZ
+    // let Z = season.slice(5, 9).slice(-2); // yyYY-zzZZ
+    // switch (pointage.slice(0, 2)) {
+    //   case 'R0':
+    //     return Y + '-' + month.toString().padStart(2, '0')
+    //   case 'R1':
+    //     return Z + '-' + month.toString().padStart(2, '0')
+    //   default:
+    //     return null;
+    // }
 
   }
 
@@ -488,8 +482,22 @@ export class ImportExcelComponent {
 
 
   compute_operation_values(transaction: Transaction, row: ExcelJS.Row): Operation {
+    let label ='';
+    let label_cell = row.getCell(MAP.intitulé);
+    if(label_cell.formula) {
+      label = label_cell.result!.toString() as string;
+    } else {
+      label = label_cell.value!.toString() as string;
+    }
+    if(transaction.cash === 'out') {
+    console.log('label  type is', typeof label);
+    }
+    if(typeof label === 'object') {
+      console.log('label is an object', label);
+    }
+
     let operation: Operation = {
-      label: row.getCell(MAP.intitulé).result?.toString() as string,
+      label: label,
       values: {}
     };
     switch (transaction.class) {

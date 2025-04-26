@@ -21,7 +21,8 @@ export class BookService {
 
   private _book_entries!: BookEntry[];
   private _book_entries$ = new BehaviorSubject<BookEntry[]>([]);
-
+  private season_filter: string = '';
+  private force_reload: boolean = false; // force reload of book entries if true
 
   constructor(
     private systemDataService: SystemDataService,
@@ -229,7 +230,12 @@ private trace_on(): boolean {
       }
     }
 
-    if (this._book_entries) {
+    if (this.season_filter !== season) {
+      this.season_filter = season;
+      this.force_reload = true; // force reload of book entries if season changed
+    }else {this.force_reload = false;}
+
+    if (this._book_entries && !this.force_reload) {
       if (this.trace_on()) console.log('%s book entries retrieved from cache', this._book_entries.length);
     } else {
       // this._book_entries$.next([] as BookEntry[]);   // initialize behaviorSubject until the S3 fetch complete
@@ -274,6 +280,7 @@ private trace_on(): boolean {
 
         return entriesIds;
       }
+      
       catch (error) {
         console.error('error', error);
         throw new Error(error instanceof Error ? error.message : String(error));
@@ -670,5 +677,14 @@ private trace_on(): boolean {
     const neat = +(Math.abs(value).toPrecision(15));
     const rounded = Math.round(neat * 100) / 100;
     return rounded * Math.sign(value);
+  }
+
+  // persistence of overview selected_report
+  overview_selected_report:string = 'none'; // default value
+  set_report(report: string) {
+    this.overview_selected_report = report;
+  }
+  get_report(): string {
+    return this.overview_selected_report;
   }
 }

@@ -23,21 +23,9 @@ export class AppComponent {
   init: boolean = false;
 
   constructor(
-    private membersService: MembersService,
-    private systemDataService: SystemDataService,
   ) {
     registerLocaleData(localeFr);
-    // combineLatest([
-    //   this.membersService.listMembers(),
-    //   this.systemDataService.get_configuration(),
-
-    // ]).subscribe(([members, conf]) => {
-    //   // this.season = conf.season;
-    //   // this.bookService.f_list_sales$(this.season).subscribe((sales) => {
-    //   //   this.init = true;
-    //   // });
-
-    // });
+  
   }
 
 }

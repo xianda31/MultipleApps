@@ -3,8 +3,8 @@ import { Component } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 import { ToastService } from '../../../../common/toaster/toast.service';
-import { BALANCE_ACCOUNT, Balance_sheet,  BookEntry, CUSTOMER_ACCOUNT, TRANSACTION_ID, FINANCIAL_ACCOUNT, Liquidity, Operation } from '../../../../common/accounting.interface';
-import { combineLatest, forkJoin } from 'rxjs';
+import { BALANCE_ACCOUNT, Balance_sheet, BookEntry, CUSTOMER_ACCOUNT, TRANSACTION_ID, FINANCIAL_ACCOUNT, Liquidity, Operation } from '../../../../common/accounting.interface';
+import { combineLatest, forkJoin, switchMap, tap } from 'rxjs';
 import { BookService } from '../book.service';
 import { FileService } from '../../../../common/services/files.service';
 import { ParenthesisPipe } from '../../../../common/pipes/parenthesis.pipe';
@@ -145,7 +145,7 @@ export class BalanceComponent {
   select_season() {
     this.current_balance_sheet = this.balance_sheets.find((sheet) => sheet.season === this.selected_season) ?? this.create_balance_sheet(this.selected_season);
     this.prev_balance_sheet = this.balance_sheets.find((sheet) => sheet.season === this.systemDataService.previous_season(this.selected_season)) ?? this.create_balance_sheet(this.systemDataService.previous_season(this.systemDataService.previous_season(this.selected_season)));
-    if(this.current_balance_sheet === undefined) {
+    if (this.current_balance_sheet === undefined) {
       this.toatService.showErrorToast('erreur', 'saison précédente non trouvée dans l\'historique');
     }
     this.fileUrl = this.fileService.json_to_blob(this.balance_sheets);
@@ -186,49 +186,81 @@ export class BalanceComponent {
       }
     }
   }
-  to_next_balance_sheet() {
+  // to_next_balance_sheet() {
 
+  //   let next_season = this.systemDataService.next_season(this.selected_season);
+
+  //   // 0. raz eventuelles données pré-existantes
+
+  //   this.bookService.book_entries_bulk_delete$(next_season).pipe(
+  //     tap((result) => {
+  //       console.log('%s écritures supprimées', result);
+  //       this.toatService.showSuccessToast('raz', 'les écritures de la saison ' + next_season + ' ont été supprimées');
+  //     }),
+  //     switchMap((result) => {
+  //       // formatage des écritures de la saison suivante
+  //       let next_season_entries = this.prepare_next_season_entries(next_season);
+  //       // .. et écriture en dynamoDB
+  //       const promises = next_season_entries.map((entry) => this.bookService.create_book_entry(entry));
+  //       return combineLatest(promises)
+  //     })
+  //   ).subscribe((result) => {
+  //     this.toatService.showSuccessToast('cloture saison', 'dettes, avoir et chèques non encaissées ont été reportés');
+  //     // finalisation  : passage à la nouvelle saison
+  //     this.systemDataService.to_next_season();
+  //   });
+
+  // }
+
+  transfer_to_next_balance_sheet() {
     let next_season = this.systemDataService.next_season(this.selected_season);
+
+    let next_season_entries = this.prepare_next_season_entries(next_season);
+    const promises = next_season_entries.map((entry) => this.bookService.create_book_entry(entry));
+    combineLatest(promises)
+      .subscribe((result) => {
+        this.toatService.showSuccessToast('cloture saison', 'dettes, avoir et chèques non encaissées ont été reportés');
+        // finalisation  : passage à la nouvelle saison
+        this.systemDataService.to_next_season();
+      });
+  }
+
+
+  private prepare_next_season_entries(next_season: string): BookEntry[] {
     let next_season_entries: BookEntry[] = [];
-
-    // 0. raz eventuelles données pré-existantes
-
-    this.bookService.book_entries_bulk_delete$(next_season);
-
-
 
     // A. report des avoirs client
     let assets = this.bookService.get_customers_assets();
-    
-      let operations: Operation[] = [];
-      let grand_total = 0;
 
-      Array.from(assets)
-        .filter(([member, { total, entries }]: [string, { total: number; entries: BookEntry[] }]) => total > 0)
-        .forEach(([member, { total, entries }]: [string, { total: number; entries: BookEntry[] }]) => {
-          operations.push({ member: member, label: 'report avoir antérieur', values: { [CUSTOMER_ACCOUNT.ASSET_credit]: total } });
-          grand_total += total;
-        }
-        );
+    let operations: Operation[] = [];
+    let grand_total = 0;
+
+    Array.from(assets)
+      .filter(([member, { total, entries }]: [string, { total: number; entries: BookEntry[] }]) => total > 0)
+      .forEach(([member, { total, entries }]: [string, { total: number; entries: BookEntry[] }]) => {
+        operations.push({ member: member, label: 'report avoir antérieur', values: { [CUSTOMER_ACCOUNT.ASSET_credit]: total } });
+        grand_total += total;
+      }
+      );
 
 
-      let book_entry: BookEntry = {
-        id: '',
-        season: next_season,
-        date: this.systemDataService.closout_date(next_season),
-        transaction_id: TRANSACTION_ID.report_avoir,
-        amounts: { [BALANCE_ACCOUNT.BAL_debit]: grand_total },
-        operations: operations,
-      };
+    let book_entry: BookEntry = {
+      id: '',
+      season: next_season,
+      date: this.systemDataService.start_date(next_season),
+      transaction_id: TRANSACTION_ID.report_avoir,
+      amounts: { [BALANCE_ACCOUNT.BAL_debit]: grand_total },
+      operations: operations,
+    };
 
-      console.log('report d\'avoir', book_entry);
-      this.toatService.showInfoToast('report d\'avoir',  (grand_total + ' € reportés sur la saison ' + next_season));
-      next_season_entries.push(book_entry);
+    console.log('report d\'avoir', book_entry);
+    this.toatService.showInfoToast('report d\'avoir', (grand_total + ' € reportés sur la saison ' + next_season));
+    next_season_entries.push(book_entry);
 
-    
 
-    // B. report des chèques non encaissés
-    this.book_entries.filter((entry) => ((entry.transaction_id === TRANSACTION_ID.report_chèque) || (entry.transaction_id === TRANSACTION_ID.dépense_par_chèque)) && entry.bank_report === null)
+
+    // B.1 report des chèques  non pointés
+    this.book_entries.filter((entry) => ((entry.transaction_id === TRANSACTION_ID.dépense_par_chèque)) && entry.bank_report === null)
       .forEach((entry) => {
         let amount = entry.amounts[FINANCIAL_ACCOUNT.BANK_credit];
         if (!amount) throw Error('montant du chèque non défini !?!?')
@@ -237,11 +269,11 @@ export class BalanceComponent {
         let book_entry: BookEntry = {
           id: '',
           season: next_season,
-          date: this.systemDataService.closout_date(this.selected_season),
-          transaction_id: TRANSACTION_ID.report_chèque,
-          amounts: { [FINANCIAL_ACCOUNT.BANK_credit]: amount },
+          date: this.systemDataService.start_date(this.selected_season),
+          transaction_id: TRANSACTION_ID.dépense_par_chèque,
+          amounts: { [FINANCIAL_ACCOUNT.BANK_credit]: amount , [BALANCE_ACCOUNT.BAL_debit]: amount},
           cheque_ref: entry.cheque_ref,
-          operations: [{ label: label, values: { [BALANCE_ACCOUNT.BAL_debit]: amount } }],
+          operations: [{ label: label, values: {  } }],
         }
 
         // console.log('report des chèque', book_entry);
@@ -249,24 +281,46 @@ export class BalanceComponent {
 
       });
 
+          // B.2 report des prélèvements (charges constatées d'avance) non pointés
+    this.book_entries.filter((entry) => ((entry.transaction_id === TRANSACTION_ID.dépense_par_prélèvement) ) && entry.bank_report === null)
+    .forEach((entry) => {
+      let amount = entry.amounts[FINANCIAL_ACCOUNT.BANK_credit];
+      if (!amount) throw Error('montant du chèque non défini !?!?')
+      let label = entry.operations.reduce((acc, op) => { return acc + op.label + ' ' }, entry.date.toString() + ':');;
+
+      let book_entry: BookEntry = {
+        id: '',
+        season: next_season,
+        date: this.systemDataService.start_date(this.selected_season),
+        transaction_id: TRANSACTION_ID.dépense_par_prélèvement,
+        amounts: { [FINANCIAL_ACCOUNT.BANK_credit]: amount,[BALANCE_ACCOUNT.BAL_debit]: amount  },
+        // cheque_ref: entry.cheque_ref,
+        operations: [{ label: label, values: { } }],
+      }
+
+      // console.log('report des chèque', book_entry);
+      next_season_entries.push(book_entry);
+
+    });
+
     // C. report des dettes clients
-    {
-      let debts = this.bookService.get_debts();
+    let debts = this.bookService.get_debts();
+    if (Array.from(debts).length !== 0) {
       let operations: Operation[] = [];
-      let total = 0;
+      let grand_total = 0;
       Array.from(debts)
         .filter(([member, value]: [string, number]) => value > 0)
         .forEach(([member, value]: [string, number]) => {
-          total += value;
+          grand_total += value;
           operations.push({ member: member, label: 'report dette', values: { [CUSTOMER_ACCOUNT.DEBT_debit]: value } });
         });
 
       let book_entry: BookEntry = {
         id: '',
         season: next_season,
-        date: this.systemDataService.closout_date(this.selected_season),
+        date: this.systemDataService.start_date(this.selected_season),
         transaction_id: TRANSACTION_ID.report_dette,
-        amounts: { [BALANCE_ACCOUNT.BAL_credit]: total },
+        amounts: { [BALANCE_ACCOUNT.BAL_credit]: grand_total },
         operations: operations,
       };
 
@@ -274,15 +328,9 @@ export class BalanceComponent {
       next_season_entries.push(book_entry);
     }
 
-    // écriture next_entries
-    const promises = next_season_entries.map((entry) => this.bookService.create_book_entry(entry));
-    forkJoin(promises).subscribe((results) => {
-      this.toatService.showSuccessToast('cloture saison', 'dettes, avoir et chèques non encaissées ont été reportés');
-    }
-    );
-
-    // finalisation  : passage à la nouvelle saison
-    this.systemDataService.to_next_season();
+    return next_season_entries;
   }
+
+
 
 }

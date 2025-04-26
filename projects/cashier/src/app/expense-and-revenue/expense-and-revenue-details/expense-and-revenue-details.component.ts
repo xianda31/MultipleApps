@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Revenue_and_expense_definition } from '../../../../../common/system-conf.interface';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { BookService } from '../../book.service';
 import { Revenue, Expense, BookEntry } from '../../../../../common/accounting.interface';
@@ -39,6 +39,8 @@ export class ExpenseAndRevenueDetailsComponent {
     private bookService: BookService,
     private systemDataService: SystemDataService,
     private router: Router,
+    private location: Location
+
 
   ) { }
 
@@ -78,5 +80,9 @@ export class ExpenseAndRevenueDetailsComponent {
 
   show_book_entry(book_entry_id: string) {
     this.router.navigate(['/books/editor', book_entry_id]);
+  }
+
+  back_to_parent_page() {
+    this.location.back();
   }
 }

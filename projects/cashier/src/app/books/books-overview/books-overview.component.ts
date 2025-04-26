@@ -45,7 +45,8 @@ export class BooksOverviewComponent {
   truncature = '1.2-2';  // '1.0-0';// '1.2-2';  //
 
   reports = Object(REPORTS)
-  selected_report: string = REPORTS.CAISSE;
+  selected_report!: string ; //= REPORTS.CAISSE;
+  show_all_assets = false;
 
 
   expenses_accounts !: string[];
@@ -130,6 +131,8 @@ export class BooksOverviewComponent {
   ) { }
 
   ngOnInit() {
+
+this.selected_report = this.bookService.get_report();
 
     this.systemDataService.get_configuration().pipe(
       tap((conf) => {
@@ -256,12 +259,15 @@ export class BooksOverviewComponent {
 
   show(selection: string) {
     let id = selection.split(' : ')[1];
-    console.log(id);
     this.router.navigate(['/books/editor', id]);
   }
   Round(value: number) {
     const neat = +(Math.abs(value).toPrecision(15));
     const rounded = Math.round(neat * 100) / 100;
     return rounded * Math.sign(value);
+  }
+
+  set_report(report:string) {
+    this.bookService.set_report(report);
   }
 }
