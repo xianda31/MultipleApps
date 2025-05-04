@@ -1,15 +1,61 @@
-<div class="card mt-2">
+<!-- <div class="card mt-2">
   <div class="card-body bg-body-secondary">
-    <div class="row  justify-content-start">
+    <div class="row  justify-content-around">
       <div class="col-auto form-check form-check-inline" *ngFor="let report of reports | keyvalue">
-        <input class="form-check_input" type="radio" (ngModelChange)="set_report($event)" [(ngModel)]="selected_report"
+        <input class="form-check_input" type="radio" (ngModelChange)="go_report($event)" [(ngModel)]="selected_report"
           [value]="report.value">
         <label class="form-check-label">{{report.value}}</label>
       </div>
     </div>
+  </div>
+</div> -->
 
+<div class="card-group mt-2">
+  <div *ngFor="let report of reports_values" class="card ">
+    <div class="card-header text-center">
+      <div class="d-inline-block justify-content-around align-items-center">
+        <span>{{report}} </span>
+        <span class="ps-2">
+          <i (click)="go_report(null)" *ngIf="selected_report === report" class="bi bi-check-circle-fill"></i>
+          <i (click)="go_report(report)" *ngIf="selected_report !== report" class="bi bi-circle"></i>
+        </span>
+      </div>
+    </div>
+    <div class="card-body text-center">
+      <ng-template [ngTemplateOutlet]="report_summary" [ngTemplateOutletContext]="{report: report}"></ng-template>
+    </div>
   </div>
 </div>
+
+<ng-template #report_summary let-report="report">
+  <div class="row justify-content-center align-items-center">
+    <div class="col-auto" [ngSwitch]="report">
+      <ng-container *ngSwitchCase="reports.PRODUITS">
+        {{ current_products_operations_amount | number:truncature:'fr' }} €
+      </ng-container>
+      <ng-container *ngSwitchCase="reports.CHARGES">
+        {{ current_expenses_operations_amount | number:truncature:'fr' }} €
+      </ng-container>
+      <ng-container *ngSwitchCase="reports.BANQUE">
+        {{ initial_liquidities.bank + current_bank_movements | number:truncature:'fr' }} €
+      </ng-container>
+      <ng-container *ngSwitchCase="reports.EPARGNE">
+        {{ initial_liquidities.savings + current_savings_movements | number:truncature:'fr' }} €
+      </ng-container>
+      <ng-container *ngSwitchCase="reports.CAISSE_CASH">
+        {{ initial_liquidities.cash + cashbox_status.cash.amount | number:truncature:'fr' }} €
+      </ng-container>
+      <ng-container *ngSwitchCase="reports.CAISSE_CHEQUES">
+        {{ cashbox_status.cheques.amount | number:truncature:'fr' }} €
+        <!-- <i class="h4 bi-card-heading " *ngIf="cashbox_status.cheques.nbr > 0"></i> -->
+       <i class="h6 bi-exclamation-triangle-fill text-danger" *ngIf="cashbox_status.cheques.anomaly"></i>
+      </ng-container>
+      <ng-container *ngSwitchCase="reports.DETTES_ET_AVOIRS">
+        {{ current_debt_amount }} €
+      </ng-container>
+    </div>
+  </div>
+</ng-template>
 
 <!-- compte produits -->
 
@@ -101,8 +147,8 @@
         number:truncature:'fr'}}€</h5>
       <h6 class="col-auto">(total mouvements : {{current_bank_movements}}€) </h6>
     </div>
-
   </div>
+
   <div class="card-body">
     <table class="table table-sm">
       <thead>
@@ -141,123 +187,147 @@
 </div>
 
 
-<!-- Caisse -->
 
-<div *ngIf="selected_report === reports.CAISSE " class="card mt-2">
+
+<!-- épargne -->
+<div *ngIf="selected_report === reports.EPARGNE" class="card mt-2">
   <div class="card-header">
     <div class="row align-items-center">
-      <h5 class="col-auto">
-        état de la caisse :
-        chèque( {{cashbox_status.cheques.nbr}} ) : {{cashbox_status.cheques.amount | number:truncature:'fr'}} €
-        &nbsp;
-        espèces :
-        {{(cashbox_status.cash)| number:truncature:'fr'}}€</h5>
-    </div>
+      <h5 class="col-auto"> solde courant du compte épargne : {{initial_liquidities.savings +current_savings_movements |
+        number:truncature:'fr'}}€</h5>
+      <h6 class="col-auto">(total mouvements : {{current_savings_movements}}€) </h6>
 
-    <div class="row  justify-content-start">
-      <div class="col-auto form-check form-check-inline" *ngFor="let cashbox_filter of cashbox_filters | keyvalue">
-        <input class="form-check_input" type="radio" (ngModelChange)="selected_cashbox_filter.set($event)"
-          [ngModel]="selected_cashbox_filter()" [value]="cashbox_filter.value">
-        <label class="form-check-label">{{cashbox_filter.value}}</label>
-      </div>
     </div>
   </div>
 
-  <!-- Caisse_chèques  -->
-
-  <div class="card-body " *ngIf=" selected_cashbox_filter() === cashbox_filters.CHEQUES_ONLY">
-    <div class="ps-2">
-      valeur chèques : {{cashbox_book_entries_filtered_total_value() | number:truncature:'fr'}} € <br>
-    </div>
-
-    <div class="ps-2 row fw-bolder">
-      <div class="col-2 ps-4">Date</div>
-      <div class="col-2 text-end">Montant</div>
-      <div class="col-2"></div>
-      <div class="col-3">chèque</div>
-      <div class="col-3">info</div>
-    </div>
-
-    <div ngbAccordion>
-      <ng-container *ngFor="let deposit of cheques_deposits() ">
-
-        <div ngbAccordionItem [collapsed]="deposit.complete && deposit.balanced">
-          <div ngbAccordionHeader>
-            <button ngbAccordionButton
-              [class]="deposit.complete ? (deposit.balanced ?'bg-light':'bg-danger') :'bg-warning'">
-              <div class="ps-1 row w-100 justify-content-between align-items-center">
-                <div class="col-2">
-                  {{(deposit.out_date !== undefined) ? ( deposit.out_date | date: 'dd/MM/yyyy') : 'non déposé'}}
-                </div>
-                <div class="col-2 text-end ">
-                  {{deposit.amount | number:truncature:'fr'}}
-                </div>
-                <div class="offset-2 col-3">
-                  {{deposit.cheques_nbr}} chèque(s)
-                </div>
-                <div class=" col-3 ">
-                  {{deposit.ref}}
-                </div>
-                <!-- <div class="col-2">
-                  {{deposit.value.valid ? 'validé' : 'non validé'}}
-                </div> -->
-              </div>
-
-            </button>
-          </div>
-          <div ngbAccordionCollapse>
-            <div ngbAccordionBody>
-              <ng-container *ngTemplateOutlet="cheques_by_deposit ; context: {entries: deposit.entries}"></ng-container>
-            </div>
-          </div>
-        </div>
-      </ng-container>
-    </div>
-
-
-  </div>
-
-  <!-- Caisse_espèces  -->
-  <div class="card-body" *ngIf=" selected_cashbox_filter() === cashbox_filters.CASH_ONLY">
-
-    <app-cash-graph [serie]="cash_acc()"></app-cash-graph>
-
-    {{ cashbox_book_entries_filtered().length }} écritures de caisse (espèces) <br>
+  <div class="card-body">
     <table class="table table-sm">
       <thead>
         <tr>
-          <th class="col">Date </th>
-          <th class="col text-center"> Montant </th>
-          <th class="col">cumul</th>
-          <th class="col"> </th>
+          <th class="col-1">Date </th>
+          <th class="col-3">opération </th>
+          <th class="col-1 text-start">tag</th>
+          <th class="col-2 text-end" *ngFor="let account of savings_accounts ">{{account}} </th>
+          <th class="col-1"> </th>
+          <th class="col-1">relevé </th>
+          <th class="col-1"> </th>
         </tr>
       </thead>
 
       <tbody>
 
-        <tr *ngFor="let book_entry of cashbox_book_entries_filtered() ; let i = index">
-
+        <tr *ngFor="let book_entry of savings_book_entries">
           <td>{{book_entry.date | date: 'dd/MM/yyyy'}}</td>
-          <td>
-            <div class="pe-3">
-              {{ ((book_entry.amounts['cashbox_in']??0) - (book_entry.amounts['cashbox_out']??0)) |
-              number:truncature:'fr'}}
-            </div>
-
+          <td>{{transaction_label (book_entry.transaction_id)}}</td>
+          <td>{{book_entry.tag}}</td>
+          <td *ngFor=" let account of savings_accounts " class="text-end">
+            {{book_entry.amounts[account] | number:truncature:'fr'}}
           </td>
-
-          <td class="text-end"> {{cash_acc()[i].value | number:truncature : 'fr'}}</td>
+          <td>&nbsp;</td>
+          <td>{{book_entry.bank_report}}</td>
           <td>
             <i class="bi bi-search" (click)="show_book_entry(book_entry.id)"></i>
           </td>
-
         </tr>
       </tbody>
     </table>
   </div>
+</div>
+
+
+<!-- Caisse_chèques  -->
+
+<div class="card mt-2 " *ngIf="selected_report === reports.CAISSE_CHEQUES ">
+
+  <div class="ps-2 row fw-bolder">
+    <div class="col-2 ps-4">Date</div>
+    <div class="col-2 text-end">Montant</div>
+    <div class="col-2"></div>
+    <div class="col-3">chèque</div>
+    <div class="col-3">info</div>
+  </div>
+
+  <div ngbAccordion>
+    <ng-container *ngFor="let deposit of cheques_deposits ">
+
+      <div ngbAccordionItem [collapsed]="deposit.complete && deposit.balanced">
+        <div ngbAccordionHeader>
+          <button ngbAccordionButton
+            [class]="deposit.complete ? (deposit.balanced ?'bg-light':'bg-danger') :'bg-warning'">
+            <div class="ps-1 row w-100 justify-content-between align-items-center">
+              <div class="col-2">
+                {{(deposit.out_date !== undefined) ? ( deposit.out_date | date: 'dd/MM/yyyy') : 'non déposé'}}
+              </div>
+              <div class="col-2 text-end ">
+                {{deposit.amount | number:truncature:'fr'}}
+              </div>
+              <div class="offset-2 col-3">
+                {{deposit.cheques_nbr}} chèque(s)
+              </div>
+              <div class=" col-3 ">
+                {{deposit.ref}}
+              </div>
+              <!-- <div class="col-2">
+                  {{deposit.value.valid ? 'validé' : 'non validé'}}
+                </div> -->
+            </div>
+
+          </button>
+        </div>
+        <div ngbAccordionCollapse>
+          <div ngbAccordionBody>
+            <ng-container *ngTemplateOutlet="cheques_by_deposit ; context: {entries: deposit.entries}"></ng-container>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+  </div>
 
 
 </div>
+
+<!-- Caisse_espèces  -->
+<div class="card mt-2 " *ngIf="selected_report === reports.CAISSE_CASH ">
+
+  <!-- <app-cash-graph [serie]="cash_acc()"></app-cash-graph> -->
+
+  {{ cashbox_cash.length }} écritures de caisse (espèces) <br>
+  <table class="table table-sm">
+    <thead>
+      <tr class="text-center">
+        <th scope="col" class="text-start">Date </th>
+        <th scope="col" class="text-start">transaction </th>
+        <th scope="col" class="pe-5 text-end"> Montant </th>
+        <th scope="col " class="pe-5 text-end">cumul</th>
+        <th scope="col"># </th>
+      </tr>
+    </thead>
+
+    <tbody>
+
+      <tr *ngFor="let book_entry of cashbox_cash ; let i = index">
+
+        <td>{{book_entry.date | date: 'dd/MM/yyyy'}}</td>
+        <td class="text-start"> {{book_entry.transaction_id}}
+        <td>
+          <div class="pe-5 text-end">
+            {{ ((book_entry.amounts['cashbox_in']??0) - (book_entry.amounts['cashbox_out']??0)) |
+            number:truncature:'fr'}}
+          </div>
+
+        </td>
+
+        <td class="text-end pe-5"> {{cash_cumulated[i].value | number:truncature : 'fr'}}</td>
+        <td class="text-center">
+          <i class="bi bi-search" (click)="show_book_entry(book_entry.id)"></i>
+        </td>
+
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+
 
 
 

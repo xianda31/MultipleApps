@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { BookEntry, TRANSACTION_ID, FINANCIAL_ACCOUNT, Liquidities } from '../../../../../common/accounting.interface';
+import { BookEntry, TRANSACTION_ID, FINANCIAL_ACCOUNT } from '../../../../../common/accounting.interface';
 import { BookService } from '../../book.service';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -8,6 +8,7 @@ import { SystemDataService } from '../../../../../common/services/system-data.se
 import { Bank } from '../../../../../common/system-conf.interface';
 import { TransactionService } from '../../transaction.service';
 import { combineLatest, switchMap } from 'rxjs';
+import { FinancialReportService } from '../../financial_report.service';
 
 @Component({
   selector: 'app-cash-box-status',
@@ -25,7 +26,7 @@ export class CashBoxStatusComponent {
   cash_out_amount: number = 0;
   temp_refs: Map<string, { cheque_qty: number, amount: number, new_ref: string }> = new Map<string, { cheque_qty: number, amount: number, new_ref: string }>();
   banks !: Bank[];
-  initial_liquidities: Liquidities = { cash: 0, bank: 0, savings: 0 };
+  // initial_liquidities: Liquidities = { cash: 0, bank: 0, savings: 0 };
 
 
   CHEQUE_IN_ACCOUNT = _CHEQUE_IN_ACCOUNT;
@@ -38,6 +39,7 @@ export class CashBoxStatusComponent {
     private bookService: BookService,
     private transactionService: TransactionService,
     private systemDataService: SystemDataService,
+    private financialService : FinancialReportService,
     private fb: FormBuilder
   ) { }
 
@@ -51,11 +53,11 @@ export class CashBoxStatusComponent {
         this.banks = conf.banks;
         this.season = conf.season;
         return combineLatest([
-          this.systemDataService.get_balance_sheet_initial_amounts(conf.season),
+          this.financialService.read_balance_sheet(conf.season),
           this.bookService.list_book_entries$(conf.season)
         ])
       }))
-      .subscribe(([liquidities, book_entries]) => {
+      .subscribe(([balance_sheet, book_entries]) => {
         this.book_entries = book_entries;
 
         // filtre les chèques à déposer
@@ -67,7 +69,7 @@ export class CashBoxStatusComponent {
         let total_cheques = this.cheques_for_deposit.reduce((acc, book_entry) => {
           return acc + (book_entry.amounts['cashbox_in'] ?? 0);
         }          , 0);
-        this.current_cash_amount = liquidities.cash + this.bookService.get_cashbox_movements_amount() - total_cheques;
+        this.current_cash_amount = balance_sheet.cash + this.bookService.get_cashbox_movements_amount() - total_cheques;
 
 
         // énumère les bordereaux de dépot chèque en temp_
@@ -75,7 +77,7 @@ export class CashBoxStatusComponent {
         this.book_entries
           .filter(book_entry => this.transactionService.get_transaction(book_entry.transaction_id).cheque === 'in')
           .forEach(book_entry => {
-            if (book_entry.deposit_ref && book_entry.deposit_ref.startsWith('temp_')) {
+            if (book_entry.deposit_ref && book_entry.deposit_ref.startsWith('TEMP_')) {
               this.temp_refs.set(book_entry.deposit_ref, {
                 amount: (this.temp_refs.get(book_entry.deposit_ref)?.amount ?? 0) + (book_entry.amounts?.[this.CHEQUE_IN_ACCOUNT] ?? 0),
                 cheque_qty: (this.temp_refs.get(book_entry.deposit_ref)?.cheque_qty ?? 0) + 1,
@@ -118,7 +120,7 @@ export class CashBoxStatusComponent {
   // 1. marquage en temporaire des chèques à déposer :
   //     les chèques sont listés et marqués (ref temporaire) en attente du bordereau de dépôt
   cheques_check_out() {
-    let temp_ref = 'temp_' + new Date().toISOString();
+    let temp_ref = 'TEMP_' + new Date().toISOString();
     this.cheques_for_deposit.forEach((book_entry) => {
       if (typeof book_entry.deposit_ref === "boolean" && book_entry.deposit_ref === true) {
         book_entry.deposit_ref = temp_ref;
@@ -180,7 +182,7 @@ export class CashBoxStatusComponent {
     if (ref === undefined) {
       throw new Error('get_date_of_temporary_deposit_ref : ref is undefined');
     }
-    let date = ref.split('temp_')[1].split('T')[0];
+    let date = ref.split('TEMP_')[1].split('T')[0];
     return new Date(date).toLocaleDateString();
   }
 

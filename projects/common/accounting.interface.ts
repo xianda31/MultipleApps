@@ -68,6 +68,12 @@ export const Bank_accounts: { [key in Partial<FINANCIAL_ACCOUNT>]?: string } = {
   [FINANCIAL_ACCOUNT.SAVING_debit]: 'saving_in',
   [FINANCIAL_ACCOUNT.SAVING_credit]: 'saving_out',
 }
+
+export const Savings_accounts : { [key in Partial<FINANCIAL_ACCOUNT>]?: string } = {
+  [FINANCIAL_ACCOUNT.SAVING_debit]: 'saving_in',
+  [FINANCIAL_ACCOUNT.SAVING_credit]: 'saving_out',
+}
+
 export const Cashbox_accounts: { [key in Partial<FINANCIAL_ACCOUNT>]?: string } = {
   [FINANCIAL_ACCOUNT.CASHBOX_debit]: 'cashbox_in',
   [FINANCIAL_ACCOUNT.CASHBOX_credit]: 'cashbox_out',
@@ -102,7 +108,7 @@ export interface Expense extends Operation {
 }; // comptes de charges
 
 
-export type bank_values = { [key in FINANCIAL_ACCOUNT | BALANCE_ACCOUNT]?: number; };
+export type AMOUNTS = { [key in BALANCE_ACCOUNT | FINANCIAL_ACCOUNT  ]?: number; };
 
 
 export interface BookEntry {
@@ -112,7 +118,7 @@ export interface BookEntry {
   date: string;
   tag?: string;
   transaction_id: TRANSACTION_ID;   // type d'opération bancaire
-  amounts: bank_values
+  amounts: AMOUNTS
   cheque_ref?: string;        // code banque + numéro de chèque
   bank_report?: string | null;       // (mois) relevé bancaire
   deposit_ref?: string;       //  référence bordereau de dépôt
@@ -120,19 +126,4 @@ export interface BookEntry {
 }
 
 
-export interface Balance_sheet {
-  season: string;
-  stock: number; // stocks
-  client_debts: number; // créances
-  liquidities: Liquidities
-  outstanding_expenses: number; // dettes,charges à payer
-  gift_vouchers: number; // chèques cadeaux
-  // balance_forward: number; // report à nouveau
-}
-export interface Liquidities {
-  cash: number;
-  bank: number;
-  savings: number;
-}
-export type Liquidity = keyof Liquidities;
 

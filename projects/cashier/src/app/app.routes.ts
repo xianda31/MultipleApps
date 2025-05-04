@@ -16,6 +16,7 @@ import { ExpenseAndRevenueDetailsComponent } from './expense-and-revenue/expense
 export const routes: Routes = [
   { path: 'shop', component: ShopComponent },   //, canActivate: [loggedInGuard]
   { path: 'books/overview', component: BooksOverviewComponent },
+  { path: 'books/overview/:report', component: BooksOverviewComponent },
   { path: 'books/editor', component: BooksEditorComponent },
   { path: 'books/list', component: BooksListComponent },
   { path: 'books/editor/:id', component: BooksEditorComponent },
@@ -24,7 +25,7 @@ export const routes: Routes = [
   { path: 'fees/editor', component: FeesEditorComponent },
   { path: 'excel/import', component: ImportExcelComponent },
   { path: 'bank-reconciliation', component: BankReconciliationComponent },
-  { path: 'balance-sheet', component: BalanceComponent },
+  { path: 'balance', component: BalanceComponent },
   { path: 'expense-and-revenue', component: ExpenseAndRevenueComponent },
   { path: 'expense-and-revenue/details', component: ExpenseAndRevenueDetailsComponent },
   { path: '', component: HomeComponent },

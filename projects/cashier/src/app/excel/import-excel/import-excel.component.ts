@@ -11,6 +11,7 @@ import { SystemDataService } from '../../../../../common/services/system-data.se
 import { Transaction, TRANSACTION_CLASS } from '../../../../../common/transaction.definition';
 import { TransactionService } from '../../transaction.service';
 import { Revenue_and_expense_definition } from '../../../../../common/system-conf.interface';
+import { json } from 'd3';
 
 @Component({
   selector: 'app-import-excel',
@@ -37,11 +38,12 @@ export class ImportExcelComponent {
 
   members: Member[] = [];
   current_season: string = '';
-  worksheet_processed: boolean = false;
+  // worksheet_processed: boolean = false;
   verbose = signal<string>('');
   progress_style = 'width: 0%';
   create_progress = 0;
   data_uploading = false;
+  loadable = false;
 
   balise999: string = '';
 
@@ -67,7 +69,7 @@ export class ImportExcelComponent {
   }
 
   onFileChange(event: any) {
-    this.worksheet_processed = false;
+    // this.worksheet_processed = false;
     this.worksheets = [];
     const file = event.target.files[0];
     this.verbose.set('lecture du fichier ' + file.name + ' ...\n');
@@ -77,10 +79,8 @@ export class ImportExcelComponent {
     this.data_uploading = false;
     let workbook = new ExcelJS.Workbook();
     workbook.xlsx.load(file).then((workbook) => {
-      // this.verbose.set('\n');
       this.workbook = workbook;
       this.worksheets = workbook.worksheets;
-      // console.log('worksheets', this.worksheets);
     })
       .catch((error) => {
         console.log('error', error);
@@ -92,14 +92,18 @@ export class ImportExcelComponent {
   }
 
   select_sheet() {
-    this.process_exel_file(this.worksheet);
-    this.extra_sanity_check();
-    this.worksheet_processed = true;
+    let processed_ok = this.process_exel_file(this.worksheet);
+    if (!processed_ok) {
+      this.verbose.set(this.verbose() + 'traitement de données arrété \n');
+      return;
+    }
+    this.loadable = this.extra_sanity_check();
+    // this.worksheet_processed = true;
   }
+  process_exel_file(worksheet: ExcelJS.Worksheet): boolean {
 
-  async process_exel_file(worksheet: ExcelJS.Worksheet) {
     this.worksheet = worksheet;
-    this.verbose.set('\n traitement de l\'onglet '+ this.worksheet.name);
+    this.verbose.set('\n traitement de l\'onglet "' + this.worksheet.name + '" \n');
     this.book_entries = [];
 
     // recherche balise ?999
@@ -108,71 +112,74 @@ export class ImportExcelComponent {
     if (!cell_999) {
       console.log('balise 999 non trouvée');
       this.verbose.set('balise 999 non trouvée' + ' ...\n');
-      return;
-    } else {
-      this.verbose.set(this.verbose() + 'balise 999 trouvée :' + cell_999.valueOf() + ' \n');
-      this.balise999 = cell_999.toString();
+      return false;
     }
+    this.balise999 = cell_999.toString();
 
+
+    // filtrage des lignes à traiter (balise 999, mois comptable, cellules mergées)
 
     let meta_rows: { [master: string]: string[] } = {};
     let col_nature = this.worksheet.getColumn(MAP.nature);
 
     // recherche des cellules mergées (colonne Nature) => meta_rows
 
-    let balise999_reached = false;
+
+    let _999reached = false;
     col_nature.eachCell((cell, rowNumber) => {
-      if (balise999_reached) { return; }
+      if (_999reached) return;
+
       let cell_chrono = this.worksheet.getCell(MAP.chrono + rowNumber).toString();
       let cell_month = this.worksheet.getCell(MAP.mois + rowNumber).toString();
 
       // tant que la balise 999 n'est pas atteinte, on traite les cellules de la colonne Nature
-      if (cell_chrono === cell_999!.toString()) {
-        balise999_reached = true;
+      if (cell_chrono === this.balise999) {
+        this.verbose.set(this.verbose() + ' (info) : ligne [' + rowNumber + '] balise 999 atteinte \n');
+        _999reached = true; // set flag to stop further processing
         return;
-      };
+      }
+
       // si le chrono n'est pas le même que la balise 999, on ignore la ligne
-      if (!cell_chrono.startsWith(cell_999!.toString().substring(0, 1))) {
+      if (!cell_chrono.startsWith(this.balise999.substring(0, 1))) {
         this.verbose.set(this.verbose() + ' (info) : ligne [' + rowNumber + '] chrono :<' + cell_chrono + '> ignorée \n');
-        return;
-      }
-
-      // si le mois finit en N-1 ou N-2, on ignore la ligne
-      if (cell_month.endsWith('N-1') || cell_month.endsWith('N-2')) {
-        this.verbose.set(this.verbose() + ' (info) : ligne [' + rowNumber + '] mois comptable :<' + cell_month + '> ignorée \n');
-        return;
-      }
-
-      if (cell.isMerged) {
-        let merge = cell.master.address;
-        if (meta_rows[merge]) {
-          meta_rows[merge].push(cell.address);
-        } else {
-          meta_rows[merge] = [cell.address];
-        }
       } else {
-        if (meta_rows[cell.address]) {
-          meta_rows[cell.address].push(cell.address);
+
+        // si le mois finit en N-1 ou N-2, on ignore la ligne
+        if (cell_month.endsWith('N-1') || cell_month.endsWith('N-2')) {
+          this.verbose.set(this.verbose() + ' (info) : ligne [' + rowNumber + '] mois comptable :<' + cell_month + '> ignorée \n');
         } else {
-          meta_rows[cell.address] = [cell.address];
+          if (cell.isMerged) {
+            let merge = cell.master.address;
+            if (meta_rows[merge]) {
+              meta_rows[merge].push(cell.address);
+            } else {
+              meta_rows[merge] = [cell.address];
+            }
+          } else {
+            if (meta_rows[cell.address]) {
+              meta_rows[cell.address].push(cell.address);
+            } else {
+              meta_rows[cell.address] = [cell.address];
+            }
+          }
         }
       }
-
-
     });
 
     // traitement lignes du tableau meta_rows (bloc de cellules mergées)
-
+    let error = false;
     Object.entries(meta_rows).forEach(([master, cells]) => {
       let entry = this.convert_to_book_entry(master, cells)
       if (entry === null) {
-        this.verbose.set(this.verbose() + 'erreur de conversion de l\'écriture : ' + master + '\n');
-        return;
+        this.verbose.set(this.verbose() + 'erreur de conversion ligne ' + this.worksheet.getCell(master).row + '\n');
+        error = true;
+        return ;
       }
       this.book_entries.push(entry);
-      this.verbose.set(this.verbose() + '.');
-
+      // this.verbose.set(this.verbose() + '.');
     });
+
+    return !error;
   }
 
 
@@ -196,15 +203,19 @@ export class ImportExcelComponent {
     });
   }
 
-  extra_sanity_check() {
-    // check all book entries have a transaction id
+  extra_sanity_check(): boolean {
+
+    let loadable = true;
+
+    // check all book entries have a valid transaction id
     this.verbose.set(this.verbose() + 'vérification des écritures \n');
     this.book_entries.forEach((book_entry, index) => {
       if (book_entry.transaction_id === undefined || book_entry.transaction_id === null) {
-        this.verbose.set(this.verbose() + '[' + index + '] ' + 'transaction id non renseigné \n');
+        this.verbose.set(this.verbose() + '~[' + index + '] ' + 'transaction id non renseigné \n');
+        loadable = false;
       }
     });
-    this.verbose.set(this.verbose() + 'vérification terminée \n');
+
 
     // check all book entries operation.values have known keys
     this.verbose.set(this.verbose() + 'vérification des opérations \n');
@@ -213,7 +224,8 @@ export class ImportExcelComponent {
         Object.keys(operation.values).forEach((key) => {
           if (!this.op_value_keys.includes(key)) {
             console.log(' unknown %s within \n %s ', key, JSON.stringify(book_entry));
-            this.verbose.set(this.verbose() + '[' + index + '][' + index_op + '] ' + 'clé inconnue : ' + key + '\n');
+            this.verbose.set(this.verbose() + '~[' + index + '][' + index_op + '] ' + 'clé inconnue : ' + key + '\n');
+            loadable = false;
           }
         });
       });
@@ -226,11 +238,39 @@ export class ImportExcelComponent {
       Object.keys(book_entry.amounts).forEach((key) => {
         if (!this.financial_accounts.includes(key as FINANCIAL_ACCOUNT)) {
           console.log(' unknown %s within \n %s ', key, JSON.stringify(book_entry));
-          this.verbose.set(this.verbose() + '[' + index + '] ' + 'clé inconnue : ' + key + '\n');
+          this.verbose.set(this.verbose() + '~[' + index + '] ' + 'clé inconnue : ' + key + '\n');
+          loadable = false;
         }
       });
     });
-    this.verbose.set(this.verbose() + 'vérification terminée \n');
+
+
+    // check if no book entry has a bank deposit ref starting with 'temp_'
+    this.verbose.set(this.verbose() + 'vérification des références de dépôt \n');
+    this.book_entries.forEach((book_entry, index) => {
+      if (book_entry.deposit_ref?.startsWith('temp_')) {
+        this.verbose.set(this.verbose() + '~[' + index + '] ' + 'référence de dépôt temporaire : ' + book_entry.deposit_ref + '\n');
+        loadable = false;
+      }
+    });
+
+    // check if dates are within season
+    this.verbose.set(this.verbose() + 'vérification des dates \n');
+    this.book_entries.forEach((book_entry, index) => {
+      let date = new Date(book_entry.date).toISOString().slice(0, 10);
+      if (!this.systemDataService.date_in_season(date, this.current_season)) {
+        this.verbose.set(this.verbose() + '~[' + index + '] ' + 'date hors saison : ' + book_entry.date + '\n');
+        loadable = false;
+      }
+    });
+
+    if (loadable) {
+      this.verbose.set(this.verbose() + 'toutes les écritures sont valides \n');
+    }
+    else {
+      this.verbose.set(this.verbose() + 'veuillez corriger les erreurs détectées \n');
+    }
+    return loadable;
   }
 
 
@@ -271,15 +311,14 @@ export class ImportExcelComponent {
       amounts: {},
       operations: [],
       transaction_id: bank_op_type,
-      // class: transaction.class,
       bank_report: (cell_pointage) ? this.format_bank_report(cell_pointage.toString(), this.current_season) : undefined,
 
     };
-    if (cell_info_sup?.toString().startsWith('#')) {
+    if (cell_info_sup?.toString()) { //}.startsWith('#')) {
       book_entry.tag = cell_info_sup?.toString() as string;
     }
 
-    if (cell_chèque?.toString()&& (bank_op_type===TRANSACTION_ID.vente_par_chèque || bank_op_type===TRANSACTION_ID.dépense_par_chèque)) { book_entry.cheque_ref = cell_chèque?.toString() as string; }
+    if (cell_chèque?.toString() && transaction.cheque !== 'none') { book_entry.cheque_ref = cell_chèque?.toString() as string; }
     if (cell_bordereau?.toString()) { book_entry.deposit_ref = cell_bordereau?.toString() as string; }
 
     // book_entry.amounts
@@ -480,26 +519,31 @@ export class ImportExcelComponent {
     return true;
   }
 
+  cell_value(cell: ExcelJS.Cell): string {
+    if (cell.value === null || cell.value === undefined) {
+      return '';
+    } else if (typeof cell.value === 'string') {
+      return cell.value;
+    } else if (typeof cell.value === 'number') {
+      return cell.value.toString();
+    } else if (typeof cell.value === 'object' && cell.result) {
+      return cell.result.toString() as string;
+    } else {
+      return JSON.stringify(cell.value);
+    }
+  }
 
   compute_operation_values(transaction: Transaction, row: ExcelJS.Row): Operation {
-    let label ='';
-    let label_cell = row.getCell(MAP.intitulé);
-    if(label_cell.formula) {
-      label = label_cell.result!.toString() as string;
-    } else {
-      label = label_cell.value!.toString() as string;
-    }
-    if(transaction.cash === 'out') {
-    console.log('label  type is', typeof label);
-    }
-    if(typeof label === 'object') {
-      console.log('label is an object', label);
-    }
+
+
+    let label = this.cell_value(row.getCell(MAP.intitulé));
 
     let operation: Operation = {
       label: label,
       values: {}
     };
+
+
     switch (transaction.class) {
       case TRANSACTION_CLASS.REVENUE_FROM_MEMBER:
       case TRANSACTION_CLASS.OTHER_REVENUE:
@@ -514,21 +558,16 @@ export class ImportExcelComponent {
         break;
     }
 
-    switch (transaction.nominative) {
-      case true:
-        let cell_member = row.getCell(MAP.intitulé).value?.toString() || '';
-        let member = this.retrieve_member(row.number, cell_member);
-        if (member === null) {
-          console.log('%s member not found at row %s ', cell_member, row.number);
-          return operation;
-        } else {
-          operation.member = member.lastname + ' ' + member.firstname;
-          operation.label = 'vente adhérent';
-        }
-        break;
-      case false:
-        operation.label = row.getCell(MAP.intitulé).value?.toString() as string;
-        break;
+    if (transaction.nominative) {
+      let cell_member = row.getCell(MAP.intitulé).value?.toString() || '';
+      let member = this.retrieve_member(row.number, cell_member);
+      if (member === null) {
+        console.log('%s member not found at row %s ', cell_member, row.number);
+        return operation;
+      } else {
+        operation.member = member.lastname + ' ' + member.firstname;
+        operation.label = 'vente adhérent';
+      }
     }
 
     return operation;

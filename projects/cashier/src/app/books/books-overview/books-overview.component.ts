@@ -1,21 +1,24 @@
 import { Component, computed, signal } from '@angular/core';
-import { Expense, BookEntry, FINANCIAL_ACCOUNT, Revenue, TRANSACTION_ID, Cashbox_accounts, Bank_accounts, Liquidities } from '../../../../../common/accounting.interface';
+import { Expense, BookEntry, FINANCIAL_ACCOUNT, Revenue, TRANSACTION_ID, Cashbox_accounts, Bank_accounts,  Savings_accounts, BALANCE_ACCOUNT } from '../../../../../common/accounting.interface';
 import { BookService } from '../../book.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TransactionService } from '../../transaction.service';
 import { combineLatest, Observable, switchMap, tap } from 'rxjs';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { CashGraphComponent } from "../graphs/cash-graph/cash-graph.component";
+import { FinancialReportService } from '../../financial_report.service';
 
 enum REPORTS {
-  PRODUITS = 'compte produits',
-  CHARGES = 'compte de charges',
-  BANQUE = 'compte en banque',
-  CAISSE = 'caisse',
+  CHARGES = 'charges',
+  PRODUITS = 'produits',
   DETTES_ET_AVOIRS = 'dettes et avoirs',
+  CAISSE_CASH = 'espèces',
+  CAISSE_CHEQUES = 'chèques',
+  BANQUE = 'banque',
+  EPARGNE = 'épargne',
 }
 
 enum CASHBOX_FILTER {
@@ -45,7 +48,8 @@ export class BooksOverviewComponent {
   truncature = '1.2-2';  // '1.0-0';// '1.2-2';  //
 
   reports = Object(REPORTS)
-  selected_report!: string ; //= REPORTS.CAISSE;
+  reports_values = Object.values(REPORTS);
+  selected_report!: string; //= REPORTS.CAISSE;
   show_all_assets = false;
 
 
@@ -62,61 +66,35 @@ export class BooksOverviewComponent {
   cashbox_cash: BookEntry[] = [];
   cashbox_cheques: BookEntry[] = [];
   cashbox_filters = Object(CASHBOX_FILTER);
-  cashbox_status: { cash: number; cheques: { nbr: number; amount: number; }; } = { cash: 0, cheques: { nbr: 0, amount: 0 } };
+  cashbox_status: {
+    cash: {
+      amount : number;   // cash en caisse
+      delta: number;   // cumul des mouvements de caisse
+    },
+    cheques: {      // chèques en caisse
+      nbr: number;  // nombre de chèques en caisse
+      amount: number; // montant total des chèques en caisse
+      anomaly : boolean; // anomalie de dépôt
+    };
+  } = { cash: {amount:0, delta:0}, cheques: { nbr: 0, amount: 0 , anomaly:false} };
 
-  // signals to manage the cashbox filtering and sorting and computations
-  selected_cashbox_filter = signal<string>('');
-
-  cashbox_book_entries_filtered = computed(() => {
-    const _filter = (filter: any): BookEntry[] => {
-      if (filter === CASHBOX_FILTER.CHEQUES_ONLY) {
-        return this.cashbox_cheques;
-        
-      } else if (filter === CASHBOX_FILTER.CASH_ONLY) {
-        return this.cashbox_cash;
-
-      } else {
-        return this.cashbox_book_entries;
-      }
-    }
-    return _filter(this.selected_cashbox_filter());
-  });
-
-  cashbox_book_entries_filtered_total_value = computed(() => {
-    return this.Round(this.cashbox_book_entries_filtered().reduce((acc, book_entry) => {
-      return acc + ((book_entry.amounts?.[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts?.[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0));
-    }, 0));
-  });
-
-  cheques_deposits = computed(() => {
-    return this.sort_deposits(this.cashbox_book_entries_filtered());
-  });
-
-  cash_acc = computed(() => {
-    let acc: { name: string, value: number }[] = [];
-    this.cashbox_book_entries_filtered().forEach((book_entry, index) => {
-      let delta = (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0)
-      if (index === 0) {
-        acc.push({ name: book_entry.date, value: this.Round(this.initial_liquidities.cash) + delta });
-      } else {
-        acc.push({ name: book_entry.date, value: this.Round(acc[index - 1].value + delta) });
-      }
-    });
-    return acc;
-  });
 
 
   bank_book_entries: BookEntry[] = [];
+  savings_book_entries: BookEntry[] = [];
 
   current_cash_movements: number = 0;
   current_bank_movements: number = 0;
+  current_savings_movements: number = 0;
   current_assets_amount: number = 0;
   current_debt_amount: number = 0;
   current_expenses_operations_amount: number = 0;
+  current_products_operations_amount: number = 0;
 
-  initial_liquidities: Liquidities = { cash: 0, bank: 0, savings: 0 };
+  initial_liquidities: {cash:number, bank : number, savings:number} = { cash: 0, bank: 0, savings: 0 };
 
   bank_accounts = Object.values(Bank_accounts) as FINANCIAL_ACCOUNT[];
+  savings_accounts = Object.values(Savings_accounts) as FINANCIAL_ACCOUNT[];
   cashbox_accounts = Object.values(Cashbox_accounts) as FINANCIAL_ACCOUNT[];
 
   debts: Map<string, number> = new Map();
@@ -127,12 +105,22 @@ export class BooksOverviewComponent {
     private bookService: BookService,
     private transactionService: TransactionService,
     private systemDataService: SystemDataService,
+    private financialService: FinancialReportService,
     private router: Router,
+    private route: ActivatedRoute,
   ) { }
 
   ngOnInit() {
 
-this.selected_report = this.bookService.get_report();
+    this.route.params.subscribe(params => {
+      console.log('params', params);
+      let report = params['report'];
+      if (report && Object.values(REPORTS).includes(report)) {
+        this.selected_report = report;
+      }
+    }
+    );
+
 
     this.systemDataService.get_configuration().pipe(
       tap((conf) => {
@@ -141,20 +129,27 @@ this.selected_report = this.bookService.get_report();
       }),
       switchMap((conf) => {
         return combineLatest([
-          this.systemDataService.get_balance_sheet_initial_amounts(conf.season),
+          this.financialService.read_balance_sheet(this.systemDataService.previous_season(conf.season)),
           this.bookService.list_book_entries$(conf.season)
         ]);
       }),
-    ).subscribe(([liquidities, book_entries]) => {
-      this.initial_liquidities = liquidities;
+    ).subscribe(([prev_balance_sheet, book_entries]) => {
+      this.initial_liquidities = {
+        cash : prev_balance_sheet.cash,
+        bank : prev_balance_sheet.in_bank_total,
+        savings : prev_balance_sheet.savings,
+        };
       this.book_entries = book_entries;
 
       this.bank_book_entries = this.book_entries.filter(book_entry => this.bank_accounts.some(op => book_entry.amounts[op] !== undefined));
       this.revenues = this.bookService.get_revenues();
       this.expenses = this.bookService.get_expenses();
 
+      this.savings_book_entries = this.book_entries.filter(book_entry => this.savings_accounts.some(op => book_entry.amounts[op] !== undefined));
+
       this.current_cash_movements = this.bookService.get_cashbox_movements_amount();
       this.current_bank_movements = this.bookService.get_bank_movements_amount();
+      this.current_savings_movements = this.bookService.get_savings_movements_amount();
       this.debts = this.bookService.get_debts();
       this.assets = this.bookService.get_customers_assets();
       this.assets_entries = Object.fromEntries(this.assets.entries());
@@ -162,37 +157,71 @@ this.selected_report = this.bookService.get_report();
       this.current_debt_amount = this.debts.size > 0 ? Array.from(this.debts.values()).reduce((acc, debt) => acc + debt, 0) : 0;
       this.current_assets_amount = this.assets.size > 0 ? Array.from(this.assets.values()).reduce((acc, asset) => acc + asset.total, 0) : 0;
 
-      this.current_expenses_operations_amount = this.bookService.get_expenses_movements_amount();
+      this.current_expenses_operations_amount = this.bookService.get_total_expenses();
+      this.current_products_operations_amount = this.bookService.get_total_revenues();
 
       this.cashbox_book_entries = this.book_entries.filter(book_entry => this.cashbox_accounts.some(op => book_entry.amounts[op] !== undefined));;
 
-      this.cashbox_cheques = this.cashbox_book_entries.filter((book_entry) =>
-        this.transactionService.get_transaction(book_entry.transaction_id).cheque === 'in' ||
-        (book_entry.transaction_id) === TRANSACTION_ID.dépôt_caisse_chèques);
+      this.manage_cheques_deposits();
 
       this.cashbox_cash = this.cashbox_book_entries.filter((book_entry) => this.transactionService.get_transaction(book_entry.transaction_id).cash !== 'none')
-        .sort((a, b) => {
-          return (a.date.localeCompare(b.date) === 0) ? (a.transaction_id === TRANSACTION_ID.dépôt_caisse_espèces ? 1 : -1) : a.date.localeCompare(b.date)
-        });
+      // .sort((a, b) => {
+      //   return (a.date.localeCompare(b.date) === 0) ? (a.transaction_id === TRANSACTION_ID.dépôt_caisse_espèces ? 1 : -1) : a.date.localeCompare(b.date)
+      // });
+      this.cash_cumul();
 
+      this.cashbox_status.cash.delta = this.bookService.get_cashbox_movements_amount('cash');
 
-        // calcul du montant total des chèques à déposer 
-      let not_deposit = this.sort_deposits(this.cashbox_cheques)
-      .find((deposit: Deposit_checked) => deposit.out_date  === undefined );
-      if (not_deposit) {
-        this.cashbox_status.cheques = {nbr: not_deposit.cheques_nbr, amount: not_deposit.amount};
-        };
-      this.cashbox_status.cash = this.initial_liquidities.cash + this.Round(this.cashbox_cash.reduce((acc, book_entry) => {
-        return acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0);  
-      },0));
-
-      // this.selected_cashbox_filter.set(CASHBOX_FILTER.CASH_ONLY);
+      // this.verify_amounts();
     });
 
   }
 
+  // verify_amounts() {
+  //   let total = this.book_entries.reduce((accumulator, book_entry) => {
+  //     let debit = 
+  //       (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) 
+  //     + (book_entry.amounts[FINANCIAL_ACCOUNT.BANK_debit] || 0) 
+  //     + (book_entry.amounts[FINANCIAL_ACCOUNT.SAVING_debit] || 0)
+  //     + (book_entry.amounts[BALANCE_ACCOUNT.BAL_debit] || 0);
+
+  //     let credit = 
+  //       (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0)
+  //     + (book_entry.amounts[FINANCIAL_ACCOUNT.BANK_credit] || 0)
+  //     + (book_entry.amounts[FINANCIAL_ACCOUNT.SAVING_credit] || 0)
+  //     + (book_entry.amounts[BALANCE_ACCOUNT.BAL_credit] || 0);
+
+  //     return {
+  //       debit: accumulator.debit + debit,
+  //       credit: accumulator.credit + credit
+  //     };
+  //   }, { debit: 0, credit: 0 });
+
+  //   console.log('total movements', total.debit-total.credit, 'debit', total.debit, 'credit', total.credit);
+  // }
+
+  // utilitaires pour visualisation des chèques et leur status de dépôt
+
+  cheques_deposits: Deposit_checked[] = [];
+
+  manage_cheques_deposits() {
+
+    this.cashbox_cheques = this.cashbox_book_entries.filter((book_entry) =>
+      this.transactionService.get_transaction(book_entry.transaction_id).cheque !== 'none');
+
+    this.cheques_deposits = this.sort_deposits(this.cashbox_cheques);
+  
+    this.cashbox_status.cheques.anomaly = this.cheques_deposits.some((chked_deposit) =>!chked_deposit.balanced && chked_deposit.complete); ;
+    console.log('anomaly', this.cashbox_status.cheques.anomaly);  
+    let outstanding_deposits = this.cheques_deposits.find((deposit: Deposit_checked) => deposit.out_date === undefined);
+
+    if (outstanding_deposits) {
+      this.cashbox_status.cheques.nbr = outstanding_deposits.cheques_nbr;
+      this.cashbox_status.cheques.amount = outstanding_deposits.amount ;
+    };
 
 
+  }
 
   sort_deposits(entries: BookEntry[]): Deposit_checked[] {
 
@@ -221,6 +250,7 @@ this.selected_report = this.bookService.get_report();
 
     // group entries by deposit_ref
     let deposit_refs = new Map<string, BookEntry[]>();
+
     entries.forEach((book_entry) => {
       let deposit_ref = book_entry.deposit_ref ?? 'non déposé'; //.split('_')[0];
       if (!deposit_refs.has(deposit_ref)) {
@@ -239,8 +269,27 @@ this.selected_report = this.bookService.get_report();
     return deposits;
   }
 
+  // utilitaires pour visualisation des espèces
 
 
+  get cash_entries(): BookEntry[] {
+    return this.cashbox_book_entries.filter((book_entry) => this.transactionService.get_transaction(book_entry.transaction_id).cash !== 'none');
+  }
+
+  cash_cumulated: { name: string, value: number }[] = [];
+  cash_cumul() {
+    let cash_delta : number = 0;
+    this.cashbox_cash.forEach((book_entry, index) => {
+      let delta = (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0)
+cash_delta +=delta;
+      if (index === 0) {
+        this.cash_cumulated.push({ name: book_entry.date, value: this.Round(this.initial_liquidities.cash) + delta });
+      } else {
+        this.cash_cumulated.push({ name: book_entry.date, value: this.Round(this.cash_cumulated[index - 1].value + delta) });
+      }
+    });
+    console.log('cash movements', cash_delta);
+  }
 
 
   transaction_label(op_type: TRANSACTION_ID): string {
@@ -267,7 +316,11 @@ this.selected_report = this.bookService.get_report();
     return rounded * Math.sign(value);
   }
 
-  set_report(report:string) {
-    this.bookService.set_report(report);
+  go_report(report: string | null) {
+    if (report === null) {
+      this.router.navigate(['/books/overview']);
+    } else {
+      this.router.navigate(['/books/overview', report]);
+    }
   }
 }

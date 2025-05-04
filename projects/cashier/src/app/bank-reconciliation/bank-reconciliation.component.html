@@ -1,12 +1,19 @@
 <div class="container">
   <div class="card mt-2">
     <div class="card-header">
-      <div class="row justify-content-evenly">
-
+      <div class=" d-flex d-inline-block align-items-center justify-content-between">
         <h5>compte bancaire</h5>
+        <div class="d-inline justify-content-around text-muted small pe-5">
+          situation initiale :
+          <span class="ps-5">compte courant : {{former_balance_sheet.bank | number:truncature:'fr'}} €</span>
+          <span class="ps-5">épargne : {{former_balance_sheet.savings | number:truncature:'fr'}} €</span>
+        </div>
       </div>
     </div>
+
+
     <div class="card-body">
+
 
       <div class="row align-items-center px-4 fw-bolder">
         <div class="col-4 text-start">
@@ -25,8 +32,10 @@
         </div>
       </div>
       <br />
+
       <div ngbAccordion>
-        <div ngbAccordionItem [collapsed]="!last" *ngFor="let bank_report of bank_reports ;  let last = last">
+        <div ngbAccordionItem [collapsed]="!last || always_collapsed"
+          *ngFor="let bank_report of bank_reports ;  let last = last">
           <div ngbAccordionHeader>
             <button ngbAccordionButton>
 
@@ -45,7 +54,7 @@
                 </div>
 
                 <div class="col-2 text-end pe-4  text-muted small">
-                  <!-- (épargne : {{balance(bank_report).savings| threedigits}} €) -->
+                  (épargne : {{balance(bank_report).savings| number:truncature:'fr'}} €)
                 </div>
               </div>
 
@@ -60,7 +69,15 @@
 
         <div ngbAccordionItem [collapsed]="false">
           <h2 ngbAccordionHeader>
-            <button ngbAccordionButton>opérations non pointées</button>
+            <button ngbAccordionButton>
+              <div class="col-4 text-start fw-bolder">
+                opérations non pointées
+              </div>
+              <div class="offset-2 col-2 text-end pe-4">
+                {{movement_out(null).bank | number:truncature:'fr' }}
+              </div>
+              <div class="col-4"></div>
+            </button>
           </h2>
           <div ngbAccordionCollapse>
             <div ngbAccordionBody>
@@ -89,7 +106,7 @@
     <tbody class="fst-italic">
       <ng-container *ngFor="let book_entry of bank_book_entries">
 
-        <tr class="g-0 p-0" *ngIf="book_entry.bank_report === bank_report" (click)="show_book_entry(book_entry.id)">
+        <tr class="g-0 p-0" *ngIf="book_entry.bank_report === bank_report">
           <td class="col-1">{{book_entry.date | date: 'dd/MM/yyyy'}}</td>
           <td class="col-3"> {{transaction_label(book_entry)}} </td>
           <td class="col-2 text-start"> {{book_label(book_entry)}}</td>
@@ -111,8 +128,9 @@
             </div>
           </td>
           <td class="col-1 text-end">
-            <i [ngbTooltip]="book_label(book_entry)" tooltipClass="my-custom-class" placement="end"
-              class="bi bi-info-circle"></i>
+            <i (click)="show_book_entry(book_entry.id)" class="bi bi-info-circle"></i>
+            <!-- <i [ngbTooltip]="book_label(book_entry)" tooltipClass="my-custom-class" placement="end"
+              class="bi bi-info-circle"></i> -->
           </td>
         </tr>
       </ng-container>

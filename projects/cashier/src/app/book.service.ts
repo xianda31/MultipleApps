@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { generateClient } from 'aws-amplify/api';
 
-import { BookEntry, Revenue, FINANCIAL_ACCOUNT, Expense, CUSTOMER_ACCOUNT, TRANSACTION_ID, bank_values, Operation, Liquidity } from '../../../common/accounting.interface';
+import { BookEntry, Revenue, FINANCIAL_ACCOUNT,BALANCE_ACCOUNT, Expense, CUSTOMER_ACCOUNT, TRANSACTION_ID,  Operation,  AMOUNTS } from '../../../common/accounting.interface';
 import { Schema } from '../../../../amplify/data/resource';
 import { BehaviorSubject, catchError, combineLatest, from, map, Observable, of, switchMap, tap } from 'rxjs';
 import { SystemDataService } from '../../../common/services/system-data.service';
@@ -31,11 +31,11 @@ export class BookService {
   ) {
   }
 
-private trace_on(): boolean {
+  private trace_on(): boolean {
     return this.systemDataService.trace_on();
   }
 
-  private   jsonified_entry(entry: BookEntry): BookEntry_input {
+  private jsonified_entry(entry: BookEntry): BookEntry_input {
     const replacer = (key: string, value: any) => {
       if (key === 'amounts' || key === 'values') {
         return JSON.stringify(value);
@@ -47,7 +47,7 @@ private trace_on(): boolean {
     return JSON.parse(stringified) as BookEntry_input;
   }
 
-  private   parsed_entry(entry: BookEntry_output): BookEntry {
+  private parsed_entry(entry: BookEntry_output): BookEntry {
     const replacer = (key: string, value: any) => {
       if (key === 'amounts' || key === 'values') {
         return JSON.parse(value);
@@ -71,7 +71,7 @@ private trace_on(): boolean {
     const create_entry = async (book_entry: BookEntry): Promise<BookEntry> => {
       let jsonified_entry: BookEntry_input = this.jsonified_entry(book_entry);
       const { id, ...jsonified_entry_without_id } = jsonified_entry;
-  
+
       try {
         const response = await client.models.BookEntry.create(jsonified_entry_without_id);
         if (response.errors) {
@@ -85,13 +85,13 @@ private trace_on(): boolean {
         return Promise.reject(error instanceof Error ? error.message : String(error));
       }
     }
-    
+
     const promises = book_entries.map(book_entry => create_entry(book_entry));
 
     return from(Promise.all(promises)).pipe(
       map((created_entries) => {
         this._book_entries = this._book_entries.concat(created_entries)
-        .sort((b, a) => { return a.date.localeCompare(b.date); });
+          .sort((b, a) => { return a.date.localeCompare(b.date); });
         this._book_entries$.next(this._book_entries);
         return created_entries.length;
       }),
@@ -198,11 +198,12 @@ private trace_on(): boolean {
   list_book_entries$(season: string): Observable<BookEntry[]> {
 
     const fetchBookentries = async (_season: string): Promise<BookEntry[]> => {
+      let entries: BookEntry[] = [];
       try {
         const client = generateClient<Schema>();
         let token: any = null;
         let nbloops = 0;
-        let entries: BookEntry[] = [];
+        // let entries: BookEntry[] = [];
         do {
           const { data, nextToken, errors } = await client.models.BookEntry.list({
             filter: { season: { eq: _season } },
@@ -217,39 +218,51 @@ private trace_on(): boolean {
           entries = [...entries, ...new_jsoned_entries.map((entry) => this.parsed_entry(entry))];
           token = nextToken;
 
+          // if (this.trace_on()) console.log('loop %s => %s', nbloops,entries.length);
         } while (token !== null && nbloops++ < 10)
 
         if (token !== null) {
           this.toastService.showWarningToast('base comptabilité', 'beaucoup trop d\'entrées à charger , veuillez répeter l\'opération');
         }
-        return entries;
       }
       catch (error) {
         console.error('error', error);
         throw new Error(error instanceof Error ? error.message : String(error));
+      }
+      finally {
+        return entries;
       }
     }
 
     if (this.season_filter !== season) {
       this.season_filter = season;
       this.force_reload = true; // force reload of book entries if season changed
-    }else {this.force_reload = false;}
+    } else { this.force_reload = false; }
 
     if (this._book_entries && !this.force_reload) {
       if (this.trace_on()) console.log('%s book entries retrieved from cache', this._book_entries.length);
+      return this._book_entries$.asObservable();
     } else {
-      // this._book_entries$.next([] as BookEntry[]);   // initialize behaviorSubject until the S3 fetch complete
-      from(fetchBookentries(season)).subscribe((entries) => {
-        this._book_entries = entries.sort((a, b) => {
-          return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
-        });
-        this._book_entries$.next(this._book_entries);
-        if (this.trace_on()) console.log('%s book entries loaded from S3', entries.length);
-      });
+
+      return from(fetchBookentries(season)).pipe(
+        map((entries) => {
+          this._book_entries = entries.sort((a, b) => {
+            return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
+          });
+          return this._book_entries;
+        }),
+        switchMap((entries) => {
+          this._book_entries$.next(this._book_entries);
+          if (this.trace_on()) console.log('%s book entries loaded from S3', entries.length);
+          return this._book_entries$.asObservable();
+        }),
+        catchError((error) => {
+          console.error('Error fetching book entries:', error);
+          this.toastService.showErrorToast('base comptabilité', 'Erreur de chargement des opérations comptables : ' + (typeof error === 'object' && error instanceof Error ? error.message : String(error)));
+          return of([] as BookEntry[]);
+        })
+      );
     }
-
-    return this._book_entries$.asObservable();
-
   }
 
   book_entries_bulk_delete$(season: string): Observable<number> {
@@ -280,7 +293,7 @@ private trace_on(): boolean {
 
         return entriesIds;
       }
-      
+
       catch (error) {
         console.error('error', error);
         throw new Error(error instanceof Error ? error.message : String(error));
@@ -325,13 +338,13 @@ private trace_on(): boolean {
   // utility functions
 
   get_book_entries(): BookEntry[] {
-    
+
     return this._book_entries ?? []; // if no book entries are loaded yet
   }
 
   get_operations(): (Revenue | Expense)[] {
-    if(!this._book_entries) { // if no book entries are loaded yet
-      return [] as (Revenue | Expense)[]  
+    if (!this._book_entries) { // if no book entries are loaded yet
+      return [] as (Revenue | Expense)[]
     }
 
 
@@ -350,9 +363,9 @@ private trace_on(): boolean {
   }
 
   get_revenues(): Revenue[] {
-  
-    if(!this._book_entries) { // if no book entries are loaded yet
-      return [] as Revenue[]  
+
+    if (!this._book_entries) { // if no book entries are loaded yet
+      return [] as Revenue[]
     }
 
     return this._book_entries
@@ -373,8 +386,8 @@ private trace_on(): boolean {
 
   get_revenues_from_members(): Revenue[] {
 
-    if(!this._book_entries) { // if no book entries are loaded yet
-      return [] as Revenue[]  
+    if (!this._book_entries) { // if no book entries are loaded yet
+      return [] as Revenue[]
     }
 
     return this._book_entries
@@ -392,43 +405,53 @@ private trace_on(): boolean {
       }, [] as Revenue[]);
   }
 
-  get_cashbox_movements_amount(selection?:'cash' | 'cheques'): number {
-    if(this._book_entries === undefined) { // if no book entries are loaded yet
-      return 0; 
+  get_cashbox_movements_amount(selection?: 'cash' | 'cheques'): number {
+    if (this._book_entries === undefined) { // if no book entries are loaded yet
+      return 0;
     }
-    if(selection === 'cheques') {
-      return this.Round(this._book_entries.reduce((acc, book_entry) => {
-        return acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0);
-      }, 0));
+    if (selection === 'cheques') {
+      return this.Round(this._book_entries
+        .filter((book_entry) =>  this.transactionService.get_transaction(book_entry.transaction_id).cheque !== 'none' )
+        .reduce((acc, book_entry) =>  acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0), 0));
     }
-    if(selection === 'cash') {
-      return this.Round(this._book_entries.reduce((acc, book_entry) => {
-        return acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0);
-      }, 0));
+    if (selection === 'cash') {
+
+      return this.Round(this._book_entries
+        .filter((book_entry) =>  this.transactionService.get_transaction(book_entry.transaction_id).cash !== 'none' )
+        .reduce((acc, book_entry) =>  acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0), 0));
     }
-    return this.Round(this._book_entries.reduce((acc, book_entry) => {
-      return acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0);
-    }, 0));
-  }
-  get_bank_movements_amount(): number {
-    if(this._book_entries === undefined) { // if no book entries are loaded yet
-      return 0; // no outstanding expenses
-    }
-    return this.Round(this._book_entries.reduce((acc, book_entry) => {
-      return acc + (book_entry.amounts[FINANCIAL_ACCOUNT.BANK_debit] || 0) - (((book_entry.bank_report !== null) ? (book_entry.amounts[FINANCIAL_ACCOUNT.BANK_credit] || 0) : 0));
-    }, 0));
-  }
-  get_bank_outstanding_expenses_amount(): number {
-    if(this._book_entries === undefined) { // if no book entries are loaded yet
-      return 0; // no outstanding expenses
-    }
-    return this.Round(this._book_entries.reduce((acc, book_entry) => {
-      return acc + (((book_entry.bank_report === null)&& (book_entry.transaction_id === TRANSACTION_ID.dépense_par_chèque) ) ? (book_entry.amounts[FINANCIAL_ACCOUNT.BANK_credit] || 0) : 0);
-    }, 0));
+    return this.Round(this._book_entries.reduce((acc, book_entry) => 
+       acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0) , 0));
   }
 
+  get_cash_movements_amount(): number {
+    return this.get_cashbox_movements_amount('cash');
+  }
+
+  get_bank_movements_amount(): number {
+    if (this._book_entries === undefined) { // if no book entries are loaded yet
+      return 0; // no outstanding expenses
+    }
+    return this.Round(this._book_entries
+      .filter((entry) => (entry.bank_report !== null && entry.bank_report !== undefined))
+      .reduce((acc, book_entry) => 
+      acc + (book_entry.amounts[FINANCIAL_ACCOUNT.BANK_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.BANK_credit] || 0)    , 0));
+  }
+
+  get_uncashed_cheques_amount(): number {
+    if (this._book_entries === undefined) { // if no book entries are loaded yet
+      return 0; // no outstanding expenses
+    }
+    return this.Round(this._book_entries
+      .filter((book_entry) =>
+        this.transactionService.get_transaction(book_entry.transaction_id).cheque !== 'none')
+      .filter((book_entry) => book_entry.deposit_ref === null || book_entry.deposit_ref === undefined)
+      .reduce((acc, book_entry) =>        acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0)     , 0));
+  }
+
+
   get_savings_movements_amount(): number {
-    if(this._book_entries === undefined) { // if no book entries are loaded yet
+    if (this._book_entries === undefined) { // if no book entries are loaded yet
       return 0; // no outstanding expenses
     }
     return this.Round(this._book_entries.reduce((acc, book_entry) => {
@@ -436,23 +459,40 @@ private trace_on(): boolean {
     }, 0));
   }
 
-  get_bank_outstanding_expenses():  BookEntry[] {
-    if(this._book_entries === undefined) { // if no book entries are loaded yet
-      return []; 
+  private _is_bankable (book_entry: BookEntry): boolean  {
+    return (book_entry.transaction_id === TRANSACTION_ID.dépense_par_chèque
+      || book_entry.transaction_id === TRANSACTION_ID.dépense_par_prélèvement
+      || book_entry.transaction_id === TRANSACTION_ID.dépense_par_virement
+      || book_entry.transaction_id === TRANSACTION_ID.dépense_par_carte
+     || book_entry.transaction_id === TRANSACTION_ID.report_chèque
+      || book_entry.transaction_id === TRANSACTION_ID.report_prélèvement
+    )
+  }
+  get_bank_outstanding_expenses_amount(): number {
+    if (this._book_entries === undefined) { // if no book entries are loaded yet
+      return 0; // no outstanding expenses
     }
-    let entries = (this._book_entries.filter((book_entry) => {
-       ((!book_entry.bank_report || book_entry.bank_report === null) && (book_entry.transaction_id === TRANSACTION_ID.dépense_par_chèque) );
-    }));
-    return entries;
+    return this.Round(this._book_entries.reduce((acc, book_entry) => {
+      return acc + ((!book_entry.bank_report || book_entry.bank_report === null) && this._is_bankable(book_entry) ? (book_entry.amounts[FINANCIAL_ACCOUNT.BANK_credit] || 0) : 0);
+    }, 0));
+  }
+
+
+  get_bank_outstanding_expenses(): BookEntry[] {
+    if (this._book_entries === undefined) { // if no book entries are loaded yet
+      return [];
+    }
+    return this._book_entries.filter((book_entry) => 
+      !book_entry.bank_report || book_entry.bank_report === null && this._is_bankable(book_entry)  );
   }
 
   get_debts(): Map<string, number> {
     let debt = new Map<string, number>();
 
-    if(this._book_entries === undefined) { // if no book entries are loaded yet
-      return debt; 
+    if (this._book_entries === undefined) { // if no book entries are loaded yet
+      return debt;
     }
-    
+
     this._book_entries.forEach((book_entry) => {
       book_entry.operations.forEach((op) => {
         if (op.values[CUSTOMER_ACCOUNT.DEBT_debit]) {
@@ -475,7 +515,7 @@ private trace_on(): boolean {
 
   get_clients_debit_value(): number {  // dettes clients
 
-    if(this._book_entries === undefined) { // if no book entries are loaded yet
+    if (this._book_entries === undefined) { // if no book entries are loaded yet
       return 0; // no outstanding expenses
     }
     let value = 0;
@@ -485,8 +525,28 @@ private trace_on(): boolean {
         if (op.values[CUSTOMER_ACCOUNT.DEBT_debit]) {
           value += op.values[CUSTOMER_ACCOUNT.DEBT_debit];
         }
+        // if (op.values[CUSTOMER_ACCOUNT.DEBT_credit]) {
+        //   value -= op.values[CUSTOMER_ACCOUNT.DEBT_credit];
+        // }
+      });
+    });
+    return value;
+  }
+
+  get_clients_credit_value(): number {  // dettes clients
+
+    if (this._book_entries === undefined) { // if no book entries are loaded yet
+      return 0; // no outstanding expenses
+    }
+    let value = 0;
+    // console.log(':::', this._book_entries);
+    this._book_entries.forEach((book_entry) => {
+      book_entry.operations.forEach((op) => {
+        // if (op.values[CUSTOMER_ACCOUNT.DEBT_debit]) {
+        //   value += op.values[CUSTOMER_ACCOUNT.DEBT_debit];
+        // }
         if (op.values[CUSTOMER_ACCOUNT.DEBT_credit]) {
-          value -= op.values[CUSTOMER_ACCOUNT.DEBT_credit];
+          value += op.values[CUSTOMER_ACCOUNT.DEBT_credit];
         }
       });
     });
@@ -497,7 +557,7 @@ private trace_on(): boolean {
   // avoir clients :
   get_customers_assets(): Map<string, { total: number, entries: BookEntry[] }> {
 
-    if(this._book_entries === undefined) { // if no book entries are loaded yet
+    if (this._book_entries === undefined) { // if no book entries are loaded yet
       return new Map<string, { total: number, entries: BookEntry[] }>(); // no outstanding expenses
     }
 
@@ -564,8 +624,8 @@ private trace_on(): boolean {
 
 
   get_expenses(): Expense[] {
-    if(!this._book_entries) { // if no book entries are loaded yet
-      return [] as Expense[]  
+    if (!this._book_entries) { // if no book entries are loaded yet
+      return [] as Expense[]
     }
     return this._book_entries
       .filter(book_entry => [TRANSACTION_CLASS.OTHER_EXPENSE, TRANSACTION_CLASS.EXPENSE_FOR_MEMBER].includes(this.transactionService.transaction_class(book_entry.transaction_id)))
@@ -583,16 +643,9 @@ private trace_on(): boolean {
   }
 
 
-  get_expenses_movements_amount(): number {
-    return this.Round(this.get_expenses().reduce((acc, op) => {
-      return acc + this.sum_values(op.values);
-    }
-      , 0));
-  }
-
-  sum_values(values: { [key: string]: number }): number {
-    return Object.values(values).reduce((acc, value) => acc + value, 0);
-  }
+  // private _sum_values(values: { [key: string]: number }): number {
+  //   return Object.values(values).reduce((acc, value) => acc + value, 0);
+  // }
 
   update_deposit_refs(deposit_ref: string, new_deposit_ref: string) {
     let new_entries: BookEntry[] = [];
@@ -615,7 +668,7 @@ private trace_on(): boolean {
   }
 
   create_tournament_fees_entry(date: string, fees_amount: number) {
-    let amounts: bank_values = {};
+    let amounts: AMOUNTS = {};
     amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] = fees_amount;
 
     let operation: Operation = { label: 'droits de table', values: { 'DdT': fees_amount } };
@@ -639,7 +692,6 @@ private trace_on(): boolean {
   get_total_revenues(key?: string): number {
     let total = (values: { [key: string]: number }): number => {
       return Object.entries(values).reduce((acc, [key, value]) => acc + ((!Object.values(CUSTOMER_ACCOUNT).includes(key as CUSTOMER_ACCOUNT)) ? value : 0), 0);
-      // return Object.values(values).reduce((acc, value) => acc + value, 0);
     }
 
     if (!key) {
@@ -653,7 +705,6 @@ private trace_on(): boolean {
   get_total_expenses(key?: string): number {
     let total = (values: { [key: string]: number }): number => {
       return Object.entries(values).reduce((acc, [key, value]) => acc + ((!Object.values(CUSTOMER_ACCOUNT).includes(key as CUSTOMER_ACCOUNT)) ? value : 0), 0);
-      // return Object.values(values).reduce((acc, value) => acc + value, 0);
     }
     if (!key) {
       return this.get_expenses().reduce((acc, expense) => acc + total(expense.values), 0);
@@ -669,9 +720,117 @@ private trace_on(): boolean {
     return (_in === 0) ? _out : _in;
   }
 
-  get_profit_and_loss_result(): number {
+  get_trading_result(): number {
     return this.Round(this.get_total_revenues() - this.get_total_expenses());
   }
+
+
+// génération des écritures de report cloture
+
+ generate_next_season_entries(next_season: string): Observable<number> {
+  let next_season_entries: BookEntry[] = [];
+
+  // A. report des avoirs client
+  let assets = this.get_customers_assets();
+
+  let operations: Operation[] = [];
+  let grand_total = 0;
+
+  Array.from(assets)
+    .filter(([member, { total, entries }]: [string, { total: number; entries: BookEntry[] }]) => total > 0)
+    .forEach(([member, { total, entries }]: [string, { total: number; entries: BookEntry[] }]) => {
+      operations.push({ member: member, label: 'report avoir antérieur', values: { [CUSTOMER_ACCOUNT.ASSET_credit]: total } });
+      grand_total += total;
+    }
+    );
+
+
+  let book_entry: BookEntry = {
+    id: '',
+    season: next_season,
+    date: this.systemDataService.start_date(next_season),
+    transaction_id: TRANSACTION_ID.report_avoir,
+    amounts: { [BALANCE_ACCOUNT.BAL_debit]: grand_total },
+    operations: operations,
+  };
+
+  console.log('report d\'avoir', book_entry);
+  this.toastService.showInfoToast('report d\'avoir', (grand_total + ' € reportés sur la saison ' + next_season));
+  next_season_entries.push(book_entry);
+
+
+
+  // B.1 report des chèques  non pointés
+  this._book_entries.filter((entry) => ((entry.transaction_id === TRANSACTION_ID.dépense_par_chèque)) && entry.bank_report === null)
+    .forEach((entry) => {
+      let amount = entry.amounts[FINANCIAL_ACCOUNT.BANK_credit];
+      if (!amount) throw Error('montant du chèque non défini !?!?')
+      let label = entry.operations.reduce((acc, op) => { return acc + op.label + ' ' }, entry.date.toString() + ':');;
+
+      let book_entry: BookEntry = {
+        id: '',
+        season: next_season,
+        date: this.systemDataService.start_date(next_season),
+        transaction_id: TRANSACTION_ID.report_chèque,
+        amounts: { [FINANCIAL_ACCOUNT.BANK_credit]: amount, [BALANCE_ACCOUNT.BAL_debit]: amount },
+        cheque_ref: entry.cheque_ref,
+        operations: [{ label: label, values: {} }],
+      }
+
+      // console.log('report des chèque', book_entry);
+      next_season_entries.push(book_entry);
+
+    });
+
+  // B.2 report des prélèvements (charges constatées d'avance) non pointés
+  this._book_entries.filter((entry) => ((entry.transaction_id === TRANSACTION_ID.dépense_par_prélèvement)) && entry.bank_report === null)
+    .forEach((entry) => {
+      let amount = entry.amounts[FINANCIAL_ACCOUNT.BANK_credit];
+      if (!amount) throw Error('montant du chèque non défini !?!?')
+      let label = entry.operations.reduce((acc, op) => { return acc + op.label + ' ' }, entry.date.toString() + ':');;
+
+      let book_entry: BookEntry = {
+        id: '',
+        season: next_season,
+        date: this.systemDataService.start_date(next_season),
+        transaction_id: TRANSACTION_ID.report_prélèvement,
+        amounts: { [FINANCIAL_ACCOUNT.BANK_credit]: amount, [BALANCE_ACCOUNT.BAL_debit]: amount },
+        // cheque_ref: entry.cheque_ref,
+        operations: [{ label: label, values: {} }],
+      }
+
+      // console.log('report des chèque', book_entry);
+      next_season_entries.push(book_entry);
+
+    });
+
+  // C. report des dettes clients
+  let debts = this.get_debts();
+  if (Array.from(debts).length !== 0) {
+    let operations: Operation[] = [];
+    let grand_total = 0;
+    Array.from(debts)
+      .filter(([member, value]: [string, number]) => value > 0)
+      .forEach(([member, value]: [string, number]) => {
+        grand_total += value;
+        operations.push({ member: member, label: 'report dette', values: { [CUSTOMER_ACCOUNT.DEBT_debit]: value } });
+      });
+
+    let book_entry: BookEntry = {
+      id: '',
+      season: next_season,
+      date: this.systemDataService.start_date(next_season),
+      transaction_id: TRANSACTION_ID.report_dette,
+      amounts: { [BALANCE_ACCOUNT.BAL_credit]: grand_total },
+      operations: operations,
+    };
+
+    // console.log('report de dettes', book_entry);
+    next_season_entries.push(book_entry);
+  }
+
+  return this.book_entries_bulk_create$(next_season_entries);
+}
 
   Round(value: number) {
     const neat = +(Math.abs(value).toPrecision(15));
@@ -679,12 +838,4 @@ private trace_on(): boolean {
     return rounded * Math.sign(value);
   }
 
-  // persistence of overview selected_report
-  overview_selected_report:string = 'none'; // default value
-  set_report(report: string) {
-    this.overview_selected_report = report;
-  }
-  get_report(): string {
-    return this.overview_selected_report;
-  }
 }

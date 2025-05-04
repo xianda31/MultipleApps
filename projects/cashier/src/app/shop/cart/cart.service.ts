@@ -3,7 +3,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { Cart, CartItem, Payment, PaymentMode, SALE_ACCOUNTS } from './cart.interface';
 import { Member } from '../../../../../common/member.interface';
 import { BookService } from '../../book.service';
-import { TRANSACTION_ID, bank_values, BookEntry, operation_values, Operation, Session, FINANCIAL_ACCOUNT, CUSTOMER_ACCOUNT } from '../../../../../common/accounting.interface';
+import { TRANSACTION_ID,  BookEntry, operation_values, Operation, Session, FINANCIAL_ACCOUNT, CUSTOMER_ACCOUNT, AMOUNTS } from '../../../../../common/accounting.interface';
 import { Product } from '../../../../../admin-dashboard/src/app/sales/products/product.interface';
 import { FeesEditorService } from '../../fees/fees-editor/fees-editor.service';
 
@@ -197,8 +197,8 @@ export class CartService {
     }
   }
 
-  payments2fValue(payment_mode: PaymentMode): bank_values {
-    let f_amounts: bank_values = {};
+  payments2fValue(payment_mode: PaymentMode): AMOUNTS {
+    let f_amounts: AMOUNTS = {};
     if (Object.values(FINANCIAL_ACCOUNT).includes(SALE_ACCOUNTS[payment_mode] as FINANCIAL_ACCOUNT)) {
       const account = SALE_ACCOUNTS[payment_mode] as FINANCIAL_ACCOUNT;
       f_amounts[account] = this.getCartAmount();

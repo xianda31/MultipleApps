@@ -193,12 +193,12 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     label: 'VERSEMENT D\'ESPÈCES',
     tooltip: 'collecte d\'espèces directement déposé en banque',
     class: TRANSACTION_CLASS.OTHER_REVENUE,
-    financial_accounts: financial_debits,
+    financial_accounts: [{ key: FINANCIAL_ACCOUNT.BANK_debit, label: 'Banque_in', description: '' }],
     financial_accounts_to_charge: [FINANCIAL_ACCOUNT.BANK_debit],
     nominative: false,
     pure_financial: false,
     is_of_profit_type: true,
-    require_deposit_ref: true,
+    require_deposit_ref: false, // was true ... to be checked
     cash: 'none',
     cheque: 'none',
   },
@@ -262,7 +262,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     is_of_profit_type: false,
     require_deposit_ref: true,
     cash: 'none',
-    cheque: 'none',
+    cheque: 'out',
   },
   // versement sur compte épargne
   [TRANSACTION_ID.virement_banque_vers_épargne]: {

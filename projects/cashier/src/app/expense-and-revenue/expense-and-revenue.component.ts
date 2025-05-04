@@ -25,7 +25,7 @@ export class ExpenseAndRevenueComponent {
   revenues!: Revenue[] ;
   expenses!: Revenue[] ;
 
-  truncature = '1.0-0';// '1.2-2';  //
+  truncature = '1.2-2';// '1.2-2';  //
 
 
   constructor(
@@ -62,8 +62,8 @@ get_total_revenues(key ?: string): number {
 get_total_expenses(key ?: string): number {
   return this.bookService.get_total_expenses(key);
 }
-get_profit_and_loss_result(): number {
-  return this.bookService.get_profit_and_loss_result();
+get_trading_result(): number {
+  return this.bookService.get_trading_result();
 }
 
 show_details(expense_or_revenue: 'expense' | 'revenue', key: string) {

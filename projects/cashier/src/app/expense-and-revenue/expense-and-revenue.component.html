@@ -2,8 +2,8 @@
   <div class="card-header d-flex justify-content-between align-items-center">
     <h5>Comptes de résultats</h5>
     <h5>
-      {{get_profit_and_loss_result()>0 ? 'bénéfice net :' : 'perte nette :'}}
-      {{get_profit_and_loss_result() | number:truncature:'fr'}} €
+      {{get_trading_result()>0 ? 'bénéfice net :' : 'perte nette :'}}
+      {{get_trading_result() | number:truncature:'fr'}} €
     </h5>
   </div>
   <div class="card-body">

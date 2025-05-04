@@ -32,13 +32,13 @@
 
 <pre>{{verbose()}}</pre>
 
-<div *ngIf="worksheet_processed" class=" align-items-center">
+<div  class=" align-items-center">
   <h6 class="col-3 ">
     {{book_entries.length}} écritures prêtes pour chargement en base de données
   </h6>
   <span class="ms-3">
     upload :
-    <button (click)="upload_data()" class="btn btn-warning btn-sm">
+    <button [disabled]="!loadable" (click)="upload_data()" class="btn btn-primary btn-sm">
       <i class="bi bi-cloud-upload"></i>
     </button>
   </span>

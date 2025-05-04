@@ -1,10 +1,7 @@
 import { Injectable } from '@angular/core';
 import { SystemConfiguration } from '../system-conf.interface';
-import { BehaviorSubject, catchError, from, map, Observable, of, switchMap, tap } from 'rxjs';
-import { Balance_sheet, Liquidities } from '../accounting.interface';
+import { BehaviorSubject, from, Observable, switchMap, tap } from 'rxjs';
 import { FileService } from './files.service';
-import { formatDate } from '@angular/common';
-import { ToastService } from '../toaster/toast.service';
 
 
 
@@ -16,7 +13,6 @@ export class SystemDataService {
   private _system_configuration$: BehaviorSubject<SystemConfiguration> = new BehaviorSubject(this._system_configuration);
   constructor(
     private fileService: FileService,
-    private toastService: ToastService,
 
   ) { }
 
@@ -35,50 +31,13 @@ export class SystemDataService {
     );
     
     if(this._system_configuration !== undefined) {
-      // this._system_configuration$.next(this._system_configuration);
       if (this.trace_on()) console.log(' configuration from cache', this._system_configuration);
       return this._system_configuration$.asObservable();
     }else {
       return remote_load$;
     }
-    // return (this._system_configuration !== undefined) ? this._system_configuration$.asObservable() : remote_load$;
   }
 
-  get_balance_history(): Observable<Balance_sheet[]> {
-    return from(this.fileService.download_json_file('accounting/balance_history.txt')).pipe(
-      map((data) => {
-        console.log('balance history downloaded', data);
-        return data as Balance_sheet[]}),
-      catchError((error) => {
-        console.log('Error fetching balance history:', error);
-        return of([] as Balance_sheet[]);
-      })
-    );
-  }
-
-
-
-
-  get_balance_sheet_initial_amounts(season: string): Observable<Liquidities> {
-    return this.get_balance_history().pipe(
-      map((balance_sheets: Balance_sheet[]) => {
-        let prev_balance_sheet = balance_sheets.find((sheet) => sheet.season === this.previous_season(season));
-        if (prev_balance_sheet === undefined) {
-          this.toastService.showWarningToast('historique','Aucune donnée disponible pour la saison ' + season);
-          return { cash: 0, bank: 0, savings: 0 };
-        }else {
-
-          return  prev_balance_sheet.liquidities ;
-        }
-      }),
-    );
-  }
-
-
-  save_balance_history(balance_sheets: Balance_sheet[]) {
-    return this.fileService.upload_to_S3(balance_sheets, 'accounting/', 'balance_history.txt')
-
-  }
 
   async save_configuration(conf: SystemConfiguration) {
     this.fileService.upload_to_S3(conf, 'system/', 'system_configuration.txt').then((data) => {
@@ -138,10 +97,7 @@ export class SystemDataService {
   }
 
   start_date(season: string): string {
-    return season.slice(5, 9) + '-07-01';
-    // let date = new Date('01/07/' + season.slice(5, 9));
-    // return formatDate(date, 'yyyy-MM-dd', 'en')
-    // return '01/07/' + season.slice(5, 9);
+    return season.slice(0, 4) + '-07-01';
   }
 
   date_in_season(date: string, season: string): boolean {

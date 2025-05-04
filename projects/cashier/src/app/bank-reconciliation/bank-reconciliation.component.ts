@@ -1,7 +1,7 @@
 import { Component, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { BookEntry, TRANSACTION_ID, FINANCIAL_ACCOUNT, Liquidities } from '../../../../common/accounting.interface';
+import { BookEntry, TRANSACTION_ID, FINANCIAL_ACCOUNT } from '../../../../common/accounting.interface';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 import { BookService } from '../book.service';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
@@ -9,8 +9,9 @@ import { Router } from '@angular/router';
 import { ToastService } from '../../../../common/toaster/toast.service';
 import { switchMap, combineLatest } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { threedigitsPipe } from '../../../../common/pipes/three_digits.pipe';
 import { TransactionService } from '../transaction.service';
+import { FinancialReportService } from '../financial_report.service';
+import { Balance_sheet } from '../../../../common/balance.interface';
 
 @Component({
   selector: 'app-bank-reconciliation',
@@ -22,9 +23,9 @@ import { TransactionService } from '../transaction.service';
 })
 export class BankReconciliationComponent {
   truncature = '1.2-2';// '1.2-2';  //
-
+  always_collapsed = true;
   current_season!: string;
-  initial_liquidities: Liquidities = { cash: 0, bank: 0, savings: 0 };
+  former_balance_sheet !: Balance_sheet;
   bank_book_entries: BookEntry[] = [];
   // bank_accounts = Object.values(Bank_accounts).slice().reverse() as FINANCIAL_ACCOUNT[];
   bank_accounts : FINANCIAL_ACCOUNT[] = [
@@ -41,6 +42,7 @@ export class BankReconciliationComponent {
     private router: Router,
     private ToastService: ToastService,
     private systemDataService: SystemDataService,
+    private financialService: FinancialReportService,
   ) { }
 
   ngOnInit() {
@@ -53,12 +55,11 @@ export class BankReconciliationComponent {
         return conf.season;
       }),
       switchMap((season) => combineLatest([
-        this.systemDataService.get_balance_sheet_initial_amounts(season),
+        this.financialService.read_balance_sheet(this.systemDataService.previous_season(season)),
         this.bookService.list_book_entries$(season)
       ])))
-      .subscribe(([liquidities, book_entries]) => {
-        this.initial_liquidities = liquidities;
-        console.log('initial_liquidities', this.initial_liquidities);
+      .subscribe(([former_balance_sheet, book_entries]) => {
+        this.former_balance_sheet = former_balance_sheet;
         this.bank_book_entries = book_entries
         .filter(book_entry => this.bank_accounts.some(op => book_entry.amounts[op] !== undefined))
         .sort((a, b) => {
@@ -69,6 +70,10 @@ export class BankReconciliationComponent {
 
 
   // utilities
+
+  previous_season(season: string): string {
+    return this.systemDataService.previous_season(season);
+  }
 
   transaction_label(book_entry: BookEntry): string {
     let transaction = this.transactionService.get_transaction(book_entry.transaction_id);
@@ -118,7 +123,7 @@ export class BankReconciliationComponent {
     return { bank, savings };
   }
 
-  movement_out(report: string): { bank: number, savings: number } {
+  movement_out(report: string | null): { bank: number, savings: number } {
     let book_entries = this.bank_book_entries.filter(book_entry => book_entry.bank_report === report);
     let bank = book_entries.reduce((acc, book_entry) => {
       return acc + (book_entry.amounts[FINANCIAL_ACCOUNT.BANK_credit] ?? 0);
@@ -128,13 +133,15 @@ export class BankReconciliationComponent {
     }, 0);
     return { bank, savings };
   }
+
+
   balance(report: string): { bank: number, savings: number } {
     return this.bank_reports.filter(r => r.localeCompare(report) <= 0).reduce((acc, report) => {
       let in_ = this.movement_in(report);
       let out = this.movement_out(report);
       return { bank: acc.bank + in_.bank - out.bank, savings: acc.savings + in_.savings - out.savings };
     }
-      , { bank: this.initial_liquidities.bank, savings: this.initial_liquidities.savings });
+      , { bank: this.former_balance_sheet.bank, savings: this.former_balance_sheet.savings });
   }
 
 
