@@ -41,10 +41,10 @@
               <tr class="table-primary">
                 <!-- <th width="9%" class="table-light text-start"></th> -->
                 <th width="30%" class="text-start">ACTIF </th>
-                <th width="24%"> {{ balance_board.current.season }}</th>
-                <th width="2%" class="table-light"></th>
+                <th width="20%"> {{ balance_board.current.season }}</th>
+                <th width="5%" class="table-light"></th>
                 <th width="18%" class="variation">écart</th>
-                <th width="2%" class="table-light"></th>
+                <th width="5%" class="table-light"></th>
                 <th width="20%" class="table-secondary fs-5"> {{ balance_board.previous.season }}</th>
               </tr>
             </thead>
@@ -116,24 +116,24 @@
               <tr class="fw-light fs-6">
                 <td>dettes adhérents</td>
                 <td>{{balance_board.current.client_debts | number:truncature:'fr' | parenthesis}}</td>
-                <td>&#8205;</td>
-                <td class="variation">
+                <td class="text-start"> <i (click)="show_details('client_debts')" class="h6 bi-search"></i>
+                  <td class="variation">
                   {{balance_board.delta.client_debts | number:truncature:'fr'}}
                 </td>
                 <td>&#8205;</td>
                 <td class="table-secondary ">{{balance_board.previous.client_debts| number:truncature:'fr'}}</td>
               </tr>
 
-              <tr class="fw-light fs-6">
+              <!-- <tr class="fw-light fs-6">
                 <td>créance adhérents</td>
                 <td>{{balance_board.current.client_assets | number:truncature:'fr' | parenthesis}}</td>
-                <td>&#8205;</td>
-                <td class="variation">
+                <td class="text-start"> <i (click)="show_details('client_debts')" class="h6 bi-search"></i>
+                  <td class="variation">
                   {{balance_board.delta.client_assets | number:truncature:'fr'}}
                 </td>
                 <td>&#8205;</td>
                 <td class="table-secondary ">{{balance_board.previous.client_assets| number:truncature:'fr'}}</td>
-              </tr>
+              </tr> -->
               <tr class="fw-bolder">
                 <td class="text-start">ENCOURS</td>
                 <td> {{balance_board.current.wip_total| number:truncature:'fr'}} </td>
@@ -173,9 +173,10 @@
                 </td>
               </tr>
               <tr class="fw-light fs-6">
-                <td>distribution d'avoirs</td>
+                <td>avoirs valides </td>
                 <td> {{balance_board.current.gift_vouchers | number:truncature:'fr' | parenthesis}}</td>
-                <td>&#8205;</td>
+                <td class="text-start"> <i (click)="show_details('gift_vouchers')" class="h6 bi-search"></i>
+                </td>
                 <td class="variation"> {{balance_board.delta.gift_vouchers |
                   number:truncature:'fr' | parenthesis}}</td>
 
@@ -222,19 +223,19 @@
                 <td>&#8205;</td>
                 <td>&#8205;</td>
               </tr>
-              
+
               <tr class="table-primary fw-bold">
                 <td class="text-start ">EXERCICE
                   {{trading_result < 0?'DEFICITAIRE':'BENEFICIAIRE'}}</td>
-                  <td>{{trading_result | number:truncature:'fr'}}</td>
-                </tr>
-                
-                <tr *ngFor="let n of cashbox_lines" class="fw-light fs-6">
-                  <td>&#8205;</td>
-                  <td>&#8205;</td>
-                </tr>
-                
-                <tr class="fw-bold">  <!--alignement ligne ENCOURS-->
+                <td>{{trading_result | number:truncature:'fr'}}</td>
+              </tr>
+
+              <tr *ngFor="let n of cashbox_lines" class="fw-light fs-6">
+                <td>&#8205;</td>
+                <td>&#8205;</td>
+              </tr>
+
+              <tr class="fw-bold"> <!--alignement ligne ENCOURS-->
                 <td>&#8205;</td>
                 <td>&#8205;</td>
               </tr>

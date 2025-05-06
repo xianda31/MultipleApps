@@ -1,5 +1,5 @@
 import { Component, computed, signal } from '@angular/core';
-import { Expense, BookEntry, FINANCIAL_ACCOUNT, Revenue, TRANSACTION_ID, Cashbox_accounts, Bank_accounts,  Savings_accounts, BALANCE_ACCOUNT } from '../../../../../common/accounting.interface';
+import { Expense, BookEntry, FINANCIAL_ACCOUNT, Revenue, TRANSACTION_ID, Cashbox_accounts, Bank_accounts, Savings_accounts, BALANCE_ACCOUNT } from '../../../../../common/accounting.interface';
 import { BookService } from '../../book.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -14,11 +14,12 @@ import { FinancialReportService } from '../../financial_report.service';
 enum REPORTS {
   CHARGES = 'charges',
   PRODUITS = 'produits',
-  DETTES_ET_AVOIRS = 'dettes et avoirs',
+  DETTES_ET_AVOIRS = 'dettes et crédits',
   CAISSE_CASH = 'espèces',
   CAISSE_CHEQUES = 'chèques',
   BANQUE = 'banque',
   EPARGNE = 'épargne',
+  AVOIRS_ADHERENTS = 'avoirs',
 }
 
 enum CASHBOX_FILTER {
@@ -40,7 +41,7 @@ interface EntryValue { total: number, entries: BookEntry[] };
 @Component({
   selector: 'app-books-overview',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgbModule, CashGraphComponent],
+  imports: [CommonModule, FormsModule, NgbModule],
   templateUrl: './books-overview.component.html',
   styleUrl: './books-overview.component.scss'
 })
@@ -68,17 +69,17 @@ export class BooksOverviewComponent {
   cashbox_filters = Object(CASHBOX_FILTER);
   cashbox_status: {
     cash: {
-      amount : number;   // cash en caisse
-      delta: number;   // cumul des mouvements de caisse
+      amount: number;   // cash en caisse
+      mouvements: number;   // cumul des mouvements de caisse
     },
     cheques: {      // chèques en caisse
       nbr: number;  // nombre de chèques en caisse
       amount: number; // montant total des chèques en caisse
-      anomaly : boolean; // anomalie de dépôt
+      anomaly: boolean; // anomalie de dépôt
     };
-  } = { cash: {amount:0, delta:0}, cheques: { nbr: 0, amount: 0 , anomaly:false} };
+  } = { cash: { amount: 0, mouvements: 0 }, cheques: { nbr: 0, amount: 0, anomaly: false } };
 
-
+  vouchers_amount: number = 0; // chèques cadeaux
 
   bank_book_entries: BookEntry[] = [];
   savings_book_entries: BookEntry[] = [];
@@ -91,13 +92,13 @@ export class BooksOverviewComponent {
   current_expenses_operations_amount: number = 0;
   current_products_operations_amount: number = 0;
 
-  initial_liquidities: {cash:number, bank : number, savings:number} = { cash: 0, bank: 0, savings: 0 };
+  initial_liquidities: { cash: number, bank: number, savings: number } = { cash: 0, bank: 0, savings: 0 };
 
   bank_accounts = Object.values(Bank_accounts) as FINANCIAL_ACCOUNT[];
   savings_accounts = Object.values(Savings_accounts) as FINANCIAL_ACCOUNT[];
   cashbox_accounts = Object.values(Cashbox_accounts) as FINANCIAL_ACCOUNT[];
 
-  debts: Map<string, number> = new Map();
+  debts: Map<string, EntryValue> = new Map();
   assets: Map<string, EntryValue> = new Map();
   assets_entries: { [key: string]: EntryValue } = {};
 
@@ -135,10 +136,10 @@ export class BooksOverviewComponent {
       }),
     ).subscribe(([prev_balance_sheet, book_entries]) => {
       this.initial_liquidities = {
-        cash : prev_balance_sheet.cash,
-        bank : prev_balance_sheet.in_bank_total,
-        savings : prev_balance_sheet.savings,
-        };
+        cash: prev_balance_sheet.cash,
+        bank: prev_balance_sheet.bank,
+        savings: prev_balance_sheet.savings,
+      };
       this.book_entries = book_entries;
 
       this.bank_book_entries = this.book_entries.filter(book_entry => this.bank_accounts.some(op => book_entry.amounts[op] !== undefined));
@@ -154,7 +155,9 @@ export class BooksOverviewComponent {
       this.assets = this.bookService.get_customers_assets();
       this.assets_entries = Object.fromEntries(this.assets.entries());
 
-      this.current_debt_amount = this.debts.size > 0 ? Array.from(this.debts.values()).reduce((acc, debt) => acc + debt, 0) : 0;
+      this.vouchers_amount = this.bookService.get_customers_assets_amount();
+
+      this.current_debt_amount = this.debts.size > 0 ? Array.from(this.debts.values()).reduce((acc, debt) => acc + debt.total, 0) : 0;
       this.current_assets_amount = this.assets.size > 0 ? Array.from(this.assets.values()).reduce((acc, asset) => acc + asset.total, 0) : 0;
 
       this.current_expenses_operations_amount = this.bookService.get_total_expenses();
@@ -170,7 +173,7 @@ export class BooksOverviewComponent {
       // });
       this.cash_cumul();
 
-      this.cashbox_status.cash.delta = this.bookService.get_cashbox_movements_amount('cash');
+      this.cashbox_status.cash.mouvements = this.bookService.get_cashbox_movements_amount('cash');
 
       // this.verify_amounts();
     });
@@ -210,14 +213,14 @@ export class BooksOverviewComponent {
       this.transactionService.get_transaction(book_entry.transaction_id).cheque !== 'none');
 
     this.cheques_deposits = this.sort_deposits(this.cashbox_cheques);
-  
-    this.cashbox_status.cheques.anomaly = this.cheques_deposits.some((chked_deposit) =>!chked_deposit.balanced && chked_deposit.complete); ;
-    console.log('anomaly', this.cashbox_status.cheques.anomaly);  
+
+    this.cashbox_status.cheques.anomaly = this.cheques_deposits.some((chked_deposit) => !chked_deposit.balanced && chked_deposit.complete);;
+    console.log('anomaly', this.cashbox_status.cheques.anomaly);
     let outstanding_deposits = this.cheques_deposits.find((deposit: Deposit_checked) => deposit.out_date === undefined);
 
     if (outstanding_deposits) {
       this.cashbox_status.cheques.nbr = outstanding_deposits.cheques_nbr;
-      this.cashbox_status.cheques.amount = outstanding_deposits.amount ;
+      this.cashbox_status.cheques.amount = outstanding_deposits.amount;
     };
 
 
@@ -278,10 +281,10 @@ export class BooksOverviewComponent {
 
   cash_cumulated: { name: string, value: number }[] = [];
   cash_cumul() {
-    let cash_delta : number = 0;
+    let cash_delta: number = 0;
     this.cashbox_cash.forEach((book_entry, index) => {
       let delta = (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0)
-cash_delta +=delta;
+      cash_delta += delta;
       if (index === 0) {
         this.cash_cumulated.push({ name: book_entry.date, value: this.Round(this.initial_liquidities.cash) + delta });
       } else {

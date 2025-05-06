@@ -33,7 +33,7 @@
             {{revenue.values[account] | number:truncature:'fr'}}
           </td>
           <td>
-            <i class="bi bi-search"></i>
+            <i (click)="show_book_entry(revenue.book_entry_id)" class="bi bi-eye"></i>
           </td>
         </tr>
       </tbody>
@@ -64,7 +64,7 @@
             {{expense.values[account] | number:truncature:'fr'}}
           </td>
           <td>
-            <i class="bi bi-search" (click)="show_book_entry(expense.book_entry_id)"></i>
+            <i class="bi bi-eye" (click)="show_book_entry(expense.book_entry_id)"></i>
           </td>
         </tr>
       </tbody>

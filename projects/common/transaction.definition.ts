@@ -316,6 +316,22 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     cheque: 'none',
   },
 
+  // annulation d'une dette adhérent
+  [TRANSACTION_ID.annulation_dette_adhérent]: {
+    label: 'annulation d\'une dette',
+    tooltip: 'annulation d\'une dette adhérent',
+    class: TRANSACTION_CLASS.EXPENSE_FOR_MEMBER,
+    financial_accounts: [],
+    optional_accounts: customer_options,
+    financial_accounts_to_charge: [CUSTOMER_ACCOUNT.DEBT_credit],
+    nominative: true,
+    pure_financial: false,
+    is_of_profit_type: false,
+    require_deposit_ref: false,
+    cash: 'none',
+    cheque: 'none',
+  },
+
  // F. achat , dépenses
   // ****  CLASS = EXPENSE ****
 

@@ -43,7 +43,7 @@
         {{ initial_liquidities.savings + current_savings_movements | number:truncature:'fr' }} €
       </ng-container>
       <ng-container *ngSwitchCase="reports.CAISSE_CASH">
-        {{ initial_liquidities.cash + cashbox_status.cash.amount | number:truncature:'fr' }} €
+        {{ initial_liquidities.cash + cashbox_status.cash.mouvements | number:truncature:'fr' }} €
       </ng-container>
       <ng-container *ngSwitchCase="reports.CAISSE_CHEQUES">
         {{ cashbox_status.cheques.amount | number:truncature:'fr' }} €
@@ -52,6 +52,9 @@
       </ng-container>
       <ng-container *ngSwitchCase="reports.DETTES_ET_AVOIRS">
         {{ current_debt_amount }} €
+      </ng-container>
+      <ng-container *ngSwitchCase ="reports.AVOIRS_ADHERENTS">
+        {{ vouchers_amount }} €
       </ng-container>
     </div>
   </div>

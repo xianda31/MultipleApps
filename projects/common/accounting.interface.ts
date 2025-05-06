@@ -13,6 +13,7 @@ export enum TRANSACTION_ID {
   virement_banque_vers_épargne = 'virement_banque_vers_épargne',
   retrait_épargne_vers_banque = 'retrait_épargne_vers_banque',
   attribution_avoir = 'attribution_avoir',
+  annulation_dette_adhérent = 'annulation_dette',
   dépense_en_espèces = 'dépense_en_espèces',
   dépense_par_chèque = 'dépense_par_chèque',
   dépense_par_virement = 'dépense_par_virement',

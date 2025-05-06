@@ -8,7 +8,7 @@ export interface Balance_record {
     outstanding_expenses: number; // dettes,charges à payer
     gift_vouchers: number; // chèques cadeaux
     client_debts: number; // dettes clients
-    client_assets: number; // créances clients
+    // client_assets: number; // créances clients
   }
 export interface Balance_sheet  extends Balance_record {
     in_bank_total: number; // total banque (livret + compte courant)

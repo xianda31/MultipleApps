@@ -65,6 +65,12 @@ export class SysConfComponent {
           name: ['']
         })
       ]),
+
+      profit_and_loss: this.fb.group({
+      debit_key: [''],
+      credit_key: [''],
+      }),
+
       thumbnail: this.fb.group({
         width: [300],
         height: [200],
@@ -109,10 +115,21 @@ export class SysConfComponent {
   get banks() {
     return this.systemFormGroup.get('banks') as FormArray;
   }
-  get_club_bank(): string {
+  get club_bank(): string {
     let key = this.systemFormGroup.get('club_bank_key')?.value;
     let cntrl = this.banks.controls.find((bank) => bank.value.key === key);
     return cntrl?.value.name ?? '???';
+  }
+
+  get loss_account_key(): string {
+    let key = this.systemFormGroup.get('profit_and_loss')?.get('loss_account_key')?.value;
+    let cntrl = this.expenses.controls.find((account) => account.value.key === key);
+    return cntrl?.value.description ?? '???';
+  }
+  get profit_account_key(): string {
+    let key = this.systemFormGroup.get('profit_and_loss')?.get('profit_account_key')?.value;
+    let cntrl = this.revenues.controls.find((account) => account.value.key === key);
+    return cntrl?.value.description ?? '???';
   }
 
   loadDataInFormGroup(configuration: SystemConfiguration) {

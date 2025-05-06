@@ -452,8 +452,9 @@ export class BooksEditorComponent {
   }
 
   negative_number_acceptable(bookEntry: BookEntry): boolean {
-    // true if bank_transaction_id = vente_en_espèces or all numbers are positive
+    // true if bank_transaction_id = vente_en_espèces || achat_adherent_en espece or all numbers are positive
     if (bookEntry.transaction_id === TRANSACTION_ID.vente_en_espèces) return true;
+    if (bookEntry.transaction_id === TRANSACTION_ID.achat_adhérent_en_espèces) return true;
     let negative = false;
     Object.entries(bookEntry.amounts).forEach(([key, amount]: [string, number]) => {
       if (amount < 0) negative = true;

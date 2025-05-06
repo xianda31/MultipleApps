@@ -2,10 +2,9 @@ import { Injectable } from '@angular/core';
 import { Balance_board, Balance_record, Balance_sheet } from '../../../common/balance.interface';
 import { FileService } from '../../../common/services/files.service';
 import { ToastService } from '../../../common/toaster/toast.service';
-import { from, map, catchError, of, Observable, tap, BehaviorSubject, switchMap, combineLatest } from 'rxjs';
+import { from, map, catchError, of, Observable, BehaviorSubject, switchMap } from 'rxjs';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { BookService } from './book.service';
-import { BALANCE_ACCOUNT, BookEntry, CUSTOMER_ACCOUNT, FINANCIAL_ACCOUNT, Operation, TRANSACTION_ID } from '../../../common/accounting.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -27,10 +26,9 @@ export class FinancialReportService {
   balance_sheets_upload_to_S3(): Observable<Balance_sheet[]> {
     try {
       let balance_records: Balance_record[] = this._balance_sheets.map((sheet) => {
-        const { in_bank_total, wip_total, actif_total, ...record } = sheet;
+        const { in_bank_total, wip_total, actif_total,cashbox, ...record } = sheet;
         return record as Balance_record;
-      }
-      );
+      });
     }
     catch (error) {
       this.toastService.showErrorToast('sauvegarde des bilans', error instanceof Error ? error.message : String(error));
@@ -109,7 +107,7 @@ export class FinancialReportService {
         let balance_records = data as Balance_record[];
         this._balance_sheets = balance_records.map((record) => {
           let in_bank_total = record.bank + record.savings;
-          let cashbox = record.cash + record.client_debts + record.client_assets;
+          let cashbox = record.cash + record.client_debts ;
           let wip_total =  record.uncashed_cheques + record.outstanding_expenses + record.gift_vouchers ;
           let actif_total = in_bank_total +  cashbox + wip_total;
 
@@ -155,10 +153,12 @@ export class FinancialReportService {
     let savings = previous_balance_sheet.savings + this.bookService.get_savings_movements_amount();
     let bank = previous_balance_sheet.bank + this.bookService.get_bank_movements_amount();
     let uncashed_cheques = this.bookService.get_uncashed_cheques_amount();
+    let client_debts = this.bookService.get_clients_debts_value();
+    
     let outstanding_expenses = -this.bookService.get_bank_outstanding_expenses_amount();
     let gift_vouchers = -this.bookService.get_customers_assets_amount();
-    let client_debts = this.bookService.get_clients_debit_value();
-    let client_assets = -this.bookService.get_clients_credit_value();
+    let client_assets = 0;
+    
     let in_bank_total = bank + savings;
     let cashbox = cash + client_debts + client_assets;
     let wip_total =  uncashed_cheques  + outstanding_expenses + gift_vouchers ;
@@ -203,7 +203,7 @@ export class FinancialReportService {
 
 
   _balance_diff(a: Balance_sheet, b: Balance_sheet): Balance_sheet {
-    // let balance_sheet = JSON.parse(JSON.stringify(previous_balance_sheet)) as Balance_sheet;
+    
     let diff: Balance_sheet = {
       season: '',
       cash: a.cash - b.cash,
@@ -213,7 +213,6 @@ export class FinancialReportService {
       outstanding_expenses: a.outstanding_expenses - b.outstanding_expenses,
       gift_vouchers: a.gift_vouchers - b.gift_vouchers,
       client_debts: a.client_debts - b.client_debts,
-      client_assets: a.client_assets - b.client_assets,
       in_bank_total: a.in_bank_total - b.in_bank_total,
       cashbox: a.cashbox - b.cashbox,
       wip_total: a.wip_total - b.wip_total,

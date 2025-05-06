@@ -54,6 +54,12 @@ export class SystemDataService {
 
   // utilities functions
 
+  get_profit_and_loss_keys(): any {
+    return this._system_configuration.profit_and_loss;
+  }
+
+  // around season and date 
+
   trace_on() {
     return this._system_configuration.trace_mode ;
   }

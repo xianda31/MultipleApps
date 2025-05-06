@@ -55,7 +55,7 @@
                         <label class="form-check-label mx-2 ">{{get_trace_mode() ? 'activé' : 'désactivé'}}</label>
                       </div>
                     </div>
-                   
+
                   </div>
                 </div>
               </div>
@@ -86,33 +86,66 @@
         <div class="card mt-2">
           <h5 class="card-header">comptabilité</h5>
           <div class="card-body">
-            <div class="row">
-              <div class="col-lg-6 col-md-3">
-                <div class="input-group">
-                  <span class="input-group-text">saison </span>
-                  <button class="btn btn-outline-secondary" type="button" (click)="prev_season()">
-                    <i class="bi-caret-left-fill"></i>
-                  </button>
-                  <span class="mx-0 col-auto input-group-text">
-                    {{season}}
-                  </span>
-                  <!-- <input type="text" class="form-control" formControlName="season"> -->
-                  <button class="btn btn-outline-secondary" type="button" (click)="next_season()">
-                    <i class="bi-caret-right-fill"></i>
-                  </button>
-                </div>
+            <div class="card mt-2">
+              <div class="card-header">
+                paramètres généraux
               </div>
-              <div class="col-lg-6  col-md-6">
-                <div class="row  align-items-center">
-                  <div class="col">
-                    <div class="input-group">
-                      <span class="input-group-text">banque Club</span>
-                      <input type="text" class="form-control" formControlName="club_bank_key">
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col-lg-6 col-md-3">
+                      <div class="input-group">
+                        <span class="input-group-text">saison </span>
+                        <button class="btn btn-outline-secondary" type="button" (click)="prev_season()">
+                          <i class="bi-caret-left-fill"></i>
+                        </button>
+                        <span class="mx-0 col-auto input-group-text">
+                          {{season}}
+                        </span>
+                        <!-- <input type="text" class="form-control" formControlName="season"> -->
+                        <button class="btn btn-outline-secondary" type="button" (click)="next_season()">
+                          <i class="bi-caret-right-fill"></i>
+                        </button>
+                      </div>
+                    </div>
+                    <div class="col-lg-6  col-md-6">
+                      <div class="row  align-items-center">
+                        <div class="col">
+                          <div class="input-group">
+                            <span class="input-group-text">banque Club</span>
+                            <input type="text" class="form-control" formControlName="club_bank_key">
+                          </div>
+                        </div>
+                        <div class="col">{{club_bank}}</div>
+                      </div>
                     </div>
                   </div>
-                  <div class="col">{{get_club_bank()}}</div>
+
+                  <div class="mt-3">
+                    comptes pertes et profits :
+                  </div>
+                  <div class="row my-2" formGroupName="profit_and_loss">
+                    <div class=" col col-md-3">
+                      <div class="row  align-items-center">
+                        <div class="col">
+                          <div class="input-group">
+                            <span class="input-group-text">charge/débit</span>
+                            <input type="text" class="form-control" formControlName="debit_key">
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class=" col col-md-3">
+                      <div class="row  align-items-center">
+                        <div class="col">
+                          <div class="input-group">
+                            <span class="input-group-text">recette/crédit</span>
+                            <input type="text" class="form-control" formControlName="credit_key">
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
             </div>
             <!-- structure comptes de résultats -->
             <div class="card mt-2">
@@ -129,7 +162,7 @@
                     recettes
                   </div>
                 </div>
-                </h6>
+              </h6>
               <div class="card-body" formGroupName="revenue_and_expense_tree">
                 <div *ngFor="let section of sections.controls">
                   <h6 class="col-2"> {{section.get('description')?.value }}</h6>

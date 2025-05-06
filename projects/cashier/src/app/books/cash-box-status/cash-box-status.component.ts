@@ -26,7 +26,7 @@ export class CashBoxStatusComponent {
   cash_out_amount: number = 0;
   temp_refs: Map<string, { cheque_qty: number, amount: number, new_ref: string }> = new Map<string, { cheque_qty: number, amount: number, new_ref: string }>();
   banks !: Bank[];
-  // initial_liquidities: Liquidities = { cash: 0, bank: 0, savings: 0 };
+  truncature = '1.2-2';  // '1.0-0';// '1.2-2';  //
 
 
   CHEQUE_IN_ACCOUNT = _CHEQUE_IN_ACCOUNT;
@@ -53,11 +53,11 @@ export class CashBoxStatusComponent {
         this.banks = conf.banks;
         this.season = conf.season;
         return combineLatest([
-          this.financialService.read_balance_sheet(conf.season),
+          this.financialService.read_balance_sheet(this.systemDataService.previous_season(conf.season)),
           this.bookService.list_book_entries$(conf.season)
         ])
       }))
-      .subscribe(([balance_sheet, book_entries]) => {
+      .subscribe(([prev_balance_sheet, book_entries]) => {
         this.book_entries = book_entries;
 
         // filtre les chèques à déposer
@@ -69,7 +69,9 @@ export class CashBoxStatusComponent {
         let total_cheques = this.cheques_for_deposit.reduce((acc, book_entry) => {
           return acc + (book_entry.amounts['cashbox_in'] ?? 0);
         }          , 0);
-        this.current_cash_amount = balance_sheet.cash + this.bookService.get_cashbox_movements_amount() - total_cheques;
+
+
+        this.current_cash_amount = prev_balance_sheet.cash + this.bookService.get_cashbox_movements_amount('cash');
 
 
         // énumère les bordereaux de dépot chèque en temp_
@@ -94,7 +96,9 @@ export class CashBoxStatusComponent {
       this.create_cash_out_entry(this.cash_out_amount);
       this.cash_out_amount = 0;
     }
-    // this.cheques_check_out();
+  }
+  cash_out_amount_valid() : boolean{
+    return (this.cash_out_amount <= this.current_cash_amount) && (this.cash_out_amount >= 0);
   }
 
   // gestion des espèces en caisse
@@ -186,8 +190,8 @@ export class CashBoxStatusComponent {
     return new Date(date).toLocaleDateString();
   }
 
-  some_cheque_selected_for_deposit(): boolean {
-    return this.cheques_for_deposit.some(book_entry => typeof book_entry.deposit_ref === "boolean" && book_entry.deposit_ref === true);
+  selected_for_deposit(): number {
+    return this.cheques_for_deposit.filter(book_entry => typeof book_entry.deposit_ref === "boolean" && book_entry.deposit_ref === true).length;
   }
 
   develop_bank_ref(ref: string | undefined): string {
@@ -196,7 +200,7 @@ export class CashBoxStatusComponent {
     }
     let bank = this.banks.find(bank => ref.startsWith(bank.key));
     if (bank) {
-      return bank.name + ' n°' + ref.split(bank.key)[1];
+      return bank.name  ; //+ ' n°' + ref.split(bank.key)[1];
     }
     return ref;
   }

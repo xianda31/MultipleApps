@@ -9,6 +9,7 @@ import { FileService } from '../../../../common/services/files.service';
 import { ParenthesisPipe } from '../../../../common/pipes/parenthesis.pipe';
 import { FinancialReportService } from '../financial_report.service';
 import { Balance_board } from '../../../../common/balance.interface';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-balance',
@@ -36,6 +37,7 @@ export class BalanceComponent {
     private toastService: ToastService,
     private fileService: FileService,
     private financialService: FinancialReportService,
+    private router: Router,
   ) { }
 
 
@@ -58,17 +60,17 @@ export class BalanceComponent {
   }
 
 
-   get  cashbox_lines() :string[]{
-   let lines : string[]=  ['fond de caisse'];
-   if (this.balance_board.current.client_debts !== 0) {
+  get cashbox_lines(): string[] {
+    let lines: string[] = ['fond de caisse'];
+    if (this.balance_board.current.client_debts !== 0) {
       lines.push('dettes clients');
     }
-    if (this.balance_board.current.client_assets !== 0) {
-      lines.push('avoirs clients');
-    }
+    // if (this.balance_board.current.client_assets !== 0) {
+    //   lines.push('avoirs clients');
+    // }
 
     return lines;
-   }
+  }
 
   check_balance_vs_profit_and_loss() {
     this.trading_result = this.bookService.get_trading_result();
@@ -104,13 +106,30 @@ export class BalanceComponent {
     this.financialService.import_balance_sheet(file);
   }
 
+  show_details(account: 'gift_vouchers' | 'client_debts') {
+    switch (account) {
+      case 'gift_vouchers':
+        this.router.navigate(['/details/assets']);
+        break;
+      case 'client_debts':
+        this.router.navigate(['/details/debts']);
+        break;
+      default:
+        console.error('Unknown account type:', account);
+        break;
+    }
+  }
 
-
-
-  // Round(value: number) {
-  //   const neat = +(Math.abs(value).toPrecision(15));
-  //   const rounded = Math.round(neat * 100) / 100;
-  //   return rounded * Math.sign(value);
-  // }
-
+  download_file() {
+    if (this.fileUrl) {
+      const link = document.createElement('a');
+      link.href = this.fileUrl;
+      link.download = 'balance_sheet.json';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else {
+      console.error('No file URL available for download.');
+    }
+  }
 }

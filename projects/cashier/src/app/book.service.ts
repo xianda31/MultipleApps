@@ -8,6 +8,7 @@ import { SystemDataService } from '../../../common/services/system-data.service'
 import { ToastService } from '../../../common/toaster/toast.service';
 import { TransactionService } from './transaction.service';
 import { TRANSACTION_CLASS } from '../../../common/transaction.definition';
+import { Profit_and_loss } from '../../../common/system-conf.interface';
 
 type BookEntry_input = Schema['BookEntry']['type'];
 type BookEntry_output = BookEntry & {
@@ -486,8 +487,8 @@ export class BookService {
       !book_entry.bank_report || book_entry.bank_report === null && this._is_bankable(book_entry)  );
   }
 
-  get_debts(): Map<string, number> {
-    let debt = new Map<string, number>();
+  get_debts(): Map<string, { total: number, entries: BookEntry[] }> {
+    let debt = new Map<string, { total: number, entries: BookEntry[] }>();
 
     if (this._book_entries === undefined) { // if no book entries are loaded yet
       return debt;
@@ -498,12 +499,16 @@ export class BookService {
         if (op.values[CUSTOMER_ACCOUNT.DEBT_debit]) {
           let name = op.member;   // member is the name of the debt owner & payee
           if (!name) throw new Error('no member name found');
-          debt.set(name, (debt.get(name) || 0) + op.values[CUSTOMER_ACCOUNT.DEBT_debit]);
+          debt.set(name, {
+            total:(debt.get(name)?.total || 0) + op.values[CUSTOMER_ACCOUNT.DEBT_debit],
+            entries: [...(debt.get(name)?.entries || []), book_entry]});
         }
         if (op.values[CUSTOMER_ACCOUNT.DEBT_credit]) {
           let name = op.member;   // member is the name of the debt owner & payee
           if (!name) throw new Error('no member name found');
-          debt.set(name, (debt.get(name) || 0) - op.values[CUSTOMER_ACCOUNT.DEBT_credit]);
+          debt.set(name, {
+            total: (debt.get(name)?.total || 0) - op.values[CUSTOMER_ACCOUNT.DEBT_credit],
+            entries: [...(debt.get(name)?.entries || []), book_entry]});
         }
       });
     });
@@ -513,7 +518,7 @@ export class BookService {
   }
 
 
-  get_clients_debit_value(): number {  // dettes clients
+  get_clients_debts_value(): number {  // dettes clients
 
     if (this._book_entries === undefined) { // if no book entries are loaded yet
       return 0; // no outstanding expenses
@@ -525,13 +530,33 @@ export class BookService {
         if (op.values[CUSTOMER_ACCOUNT.DEBT_debit]) {
           value += op.values[CUSTOMER_ACCOUNT.DEBT_debit];
         }
-        // if (op.values[CUSTOMER_ACCOUNT.DEBT_credit]) {
-        //   value -= op.values[CUSTOMER_ACCOUNT.DEBT_credit];
-        // }
+        if (op.values[CUSTOMER_ACCOUNT.DEBT_credit]) {
+          value -= op.values[CUSTOMER_ACCOUNT.DEBT_credit];
+        }
       });
     });
     return value;
   }
+
+  // get_clients_debit_value(): number {  // dettes clients
+
+  //   if (this._book_entries === undefined) { // if no book entries are loaded yet
+  //     return 0; // no outstanding expenses
+  //   }
+  //   let value = 0;
+  //   // console.log(':::', this._book_entries);
+  //   this._book_entries.forEach((book_entry) => {
+  //     book_entry.operations.forEach((op) => {
+  //       if (op.values[CUSTOMER_ACCOUNT.DEBT_debit]) {
+  //         value += op.values[CUSTOMER_ACCOUNT.DEBT_debit];
+  //       }
+  //       // if (op.values[CUSTOMER_ACCOUNT.DEBT_credit]) {
+  //       //   value -= op.values[CUSTOMER_ACCOUNT.DEBT_credit];
+  //       // }
+  //     });
+  //   });
+  //   return value;
+  // }
 
   get_clients_credit_value(): number {  // dettes clients
 
@@ -597,7 +622,7 @@ export class BookService {
     let debts = this.get_debts();
 
     // console.log('%s debt is : ', member_full_name, debt.get(member_full_name) || 0);
-    return debts.get(member_full_name) || 0;
+    return debts.get(member_full_name)?.total || 0;
 
   }
 
@@ -724,6 +749,66 @@ export class BookService {
     return this.Round(this.get_total_revenues() - this.get_total_expenses());
   }
 
+  // générer une écriture d'annulation d'avoir adhérent
+  asset_cancelation(date: string, member: string, value: number): Promise<BookEntry> {
+
+    if(value <= 0) {
+      this.toastService.showWarningToast('base comptabilité', 'corrigez l\'écriture comptable pour éviter cette valeur négative');
+      return Promise.resolve({} as BookEntry);
+    }
+
+    let pl_keys : Profit_and_loss = this.systemDataService.get_profit_and_loss_keys();
+
+    let  amounts : AMOUNTS = {[FINANCIAL_ACCOUNT.CASHBOX_debit] : 0};
+    let operation: Operation = {
+         label: 'annulation avoir adhérent',
+          values: {[CUSTOMER_ACCOUNT.ASSET_debit]: value, [pl_keys.credit_key]: value } ,
+          member: member
+        };
+
+    let season = this.systemDataService.get_season(new Date(date));
+
+    const entry: BookEntry = {
+      id: '',
+      tag: 'annulation avoir adhérent',
+      season: season,
+      date: date,
+      amounts: amounts,
+      operations: [operation],
+      transaction_id: TRANSACTION_ID.achat_adhérent_en_espèces,
+    };
+    return this.create_book_entry( entry);
+  }
+  // générer une écriture d'annulation d'une dette adhérent 
+  debt_cancelation(date: string, member: string, value: number): Promise<BookEntry> {
+
+    if(value <= 0) {
+      this.toastService.showWarningToast('base comptabilité', 'corrigez l\'écriture comptable pour éviter cette valeur négative');
+      return Promise.resolve({} as BookEntry);
+    }
+
+    let pl_keys : Profit_and_loss = this.systemDataService.get_profit_and_loss_keys();
+
+    let  amounts : AMOUNTS = {[FINANCIAL_ACCOUNT.CASHBOX_debit] : 0};
+    let operation: Operation = {
+         label: 'annulation dette adhérent',
+          values: {[CUSTOMER_ACCOUNT.DEBT_credit]: value, [pl_keys.debit_key]: value } ,
+          member: member
+        };
+
+    let season = this.systemDataService.get_season(new Date(date));
+
+    const entry: BookEntry = {
+      id: '',
+      tag: 'annulation dette adhérent',
+      season: season,
+      date: date,
+      amounts: amounts,
+      operations: [operation],
+      transaction_id: TRANSACTION_ID.annulation_dette_adhérent,
+    };
+    return this.create_book_entry( entry);
+  }
 
 // génération des écritures de report cloture
 
@@ -810,10 +895,10 @@ export class BookService {
     let operations: Operation[] = [];
     let grand_total = 0;
     Array.from(debts)
-      .filter(([member, value]: [string, number]) => value > 0)
-      .forEach(([member, value]: [string, number]) => {
-        grand_total += value;
-        operations.push({ member: member, label: 'report dette', values: { [CUSTOMER_ACCOUNT.DEBT_debit]: value } });
+      .filter(([member, value]: [string, { total: number; entries: BookEntry[] }]) => value.total > 0)
+      .forEach(([member, value]: [string, { total: number; entries: BookEntry[] }]) => {
+        grand_total += value.total;
+        operations.push({ member: member, label: 'report dette', values: { [CUSTOMER_ACCOUNT.DEBT_debit]: value.total } });
       });
 
     let book_entry: BookEntry = {

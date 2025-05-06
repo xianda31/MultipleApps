@@ -1,0 +1,51 @@
+<div class="card mt-3 shadow-lg">
+  <div class="card-header">
+    <div class="row justify-content-between align-items-center">
+      <h5 class="col">avoir adhérents : {{assets_amount}} €</h5>
+      <div class="col-auto form-check form-switch ">
+        <input class="form-check-input" type="checkbox" id="flexSwitchCheckChecked" [checked]="show_all_assets"
+          (change)="show_all_assets = !show_all_assets">
+        <label class="form-check-label" for="flexSwitchCheckChecked">tout mouvement</label>
+      </div>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="offset-md-2 col-md-8">
+      <table class="table table-sm table-responsive table-borderless table-hover">
+        <thead>
+          <tr>
+            <th scope="col">adhérent </th>
+            <th scope="col text-center"> montant </th>
+            <th scope="col">origine </th>
+            <th scope="col text-center"> effacer</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <ng-container *ngFor="let asset of assets | keyvalue">
+
+            <tr *ngIf="show_all_assets || $any(asset.value).total !== 0">
+              <td>{{asset.key}}</td>
+              <td class="text-end pe-3">
+                {{ $any(asset.value).total | number:truncature:'fr'}}
+              </td>
+              <td>
+                <select #choice (change)="show_origin(choice.value)" class="form-select form-select-sm">
+                  <option hidden></option>
+                  <option *ngFor="let book of $any(asset.value).entries ; let i = index">
+                    {{book.date}} : {{book.id}}</option>
+                </select>
+                <!-- <i class="bi bi-search" (click)="show_map_asset(asset)"></i> -->
+              </td>
+              <td class="text-center">
+                <button [disabled]="show_all_assets" class="btn btn-sm btn-warning" (click)="compensate(asset.key)">
+                  <i class="h6 bi-trash"></i>
+                </button>
+              </td>
+            </tr>
+          </ng-container>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
