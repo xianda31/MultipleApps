@@ -1,11 +1,14 @@
 <div class="card mt-3 shadow-lg">
     <div class="card-header">
         <div class="row justify-content-between align-items-center">
-            <h5 class="col">dettes adhérents : {{current_debt_amount}} €</h5>
-            <div class="col-auto form-check form-switch ">
-                <input class="form-check-input" type="checkbox" id="flexSwitchCheckChecked" [checked]="show_all_debts"
-                    (change)="show_all_debts = !show_all_debts">
-                <label class="form-check-label" for="flexSwitchCheckChecked">tout mouvement</label>
+            <h5 class="col-auto">dettes adhérents : {{current_debt_amount}} €</h5>
+            <div class="col form-check form-switch form-check-reverse">
+                <input class="form-check-input" type="checkbox" id="switch" [checked]="show_all_debts"
+                (change)="show_all_debts = !show_all_debts">
+                <label class="form-check-label" for="switch">tout mouvement:</label>
+            </div>
+            <div class="mx-auto col-1 text-end">
+                <back></back>
             </div>
         </div>
     </div>

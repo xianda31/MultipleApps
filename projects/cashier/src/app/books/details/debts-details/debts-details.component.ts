@@ -5,12 +5,13 @@ import { tap, switchMap } from 'rxjs';
 import { SystemDataService } from '../../../../../../common/services/system-data.service';
 import { BookService } from '../../../book.service';
 import { BookEntry } from '../../../../../../common/accounting.interface';
+import { BackComponent } from '../../../../../../common/back/back.component';
 interface EntryValue { total: number, entries: BookEntry[] };
 
 @Component({
   selector: 'app-debts-details',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, BackComponent],
   templateUrl: './debts-details.component.html',
   styleUrl: './debts-details.component.scss'
 })

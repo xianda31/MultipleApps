@@ -146,7 +146,8 @@
 
               <tr class="fw-light fs-6">
                 <td>chèques à déposer</td>
-                <td class="hoverable">{{balance_board.current.uncashed_cheques | number:truncature:'fr'| parenthesis}}
+
+                <td >{{balance_board.current.uncashed_cheques | number:truncature:'fr'| parenthesis}}
                 </td>
                 <td>&#8205;</td>
                 <td class="variation">
@@ -159,7 +160,8 @@
 
               <tr class="fw-light fs-6">
                 <td>paiements engagés</td>
-                <td class="hoverable">{{balance_board.current.outstanding_expenses | number:truncature:'fr'|
+
+                <td >{{balance_board.current.outstanding_expenses | number:truncature:'fr'|
                   parenthesis}}
                 </td>
                 <td>&#8205;</td>

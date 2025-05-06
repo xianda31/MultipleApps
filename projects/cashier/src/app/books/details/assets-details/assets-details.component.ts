@@ -5,12 +5,13 @@ import { SystemDataService } from '../../../../../../common/services/system-data
 import { BookService } from '../../../book.service';
 import { switchMap, tap } from 'rxjs';
 import { Router } from '@angular/router';
+import { BackComponent } from '../../../../../../common/back/back.component';
 interface EntryValue { total: number, entries: BookEntry[] };
 
 @Component({
   selector: 'app-assets-details',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule,BackComponent],
   templateUrl: './assets-details.component.html',
   styleUrl: './assets-details.component.scss'
 })

@@ -2,11 +2,14 @@
   <div class="card-header">
     <div class="row justify-content-between align-items-center">
       <h5 class="col">avoir adhérents : {{assets_amount}} €</h5>
-      <div class="col-auto form-check form-switch ">
+      <div class="col form-check form-switch form-check-reverse">
         <input class="form-check-input" type="checkbox" id="flexSwitchCheckChecked" [checked]="show_all_assets"
           (change)="show_all_assets = !show_all_assets">
-        <label class="form-check-label" for="flexSwitchCheckChecked">tout mouvement</label>
+        <label class="form-check-label" for="flexSwitchCheckChecked">tout mouvement:</label>
       </div>
+      <div class="mx-auto col-1 text-end">
+        <back></back>
+    </div>
     </div>
   </div>
   <div class="card-body">
