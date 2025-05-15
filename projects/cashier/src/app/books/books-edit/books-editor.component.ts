@@ -14,6 +14,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TransactionService } from '../../transaction.service';
+import { BackComponent } from '../../../../../common/back/back.component';
 
 interface Operation_initial_values {
   optional_accounts?: string[];
@@ -30,7 +31,7 @@ interface Account {
   selector: 'app-booking',
   standalone: true,
   encapsulation: ViewEncapsulation.None,   // nécessaire pour que les CSS des tooltips fonctionnent
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbTooltipModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbTooltipModule,BackComponent],
   templateUrl: './books-editor.component.html',
   styleUrl: './books-editor.component.scss'
 })
@@ -44,12 +45,12 @@ export class BooksEditorComponent {
   members!: Member[];
   expenses_accounts !: Account[];
   products_accounts !: Account[];
-  // profit_and_loss_accounts !: Account[];
+  // expense_or_revenue_accounts !: Account[];
 
   financial_accounts !: Account_def[];
   optional_accounts !: Account_def[];
 
-  transaction_enums !: TRANSACTION_ID[];
+  transaction_ids !: TRANSACTION_ID[];
 
   transaction_classes !: TRANSACTION_CLASS[];
   // class_descriptions = Object(Class_descriptions);
@@ -82,7 +83,7 @@ export class BooksEditorComponent {
 
   ngOnInit() {
 
-    this.transaction_enums = [];
+    this.transaction_ids = [];
     this.transaction_classes = this.transactionService.list_transaction_classes();
     this.membersService.listMembers().subscribe((members) => {
       this.members = members;
@@ -172,7 +173,7 @@ export class BooksEditorComponent {
       deposit_ref: book_entry.deposit_ref,
     });
 
-    this.transaction_enums = this.transactionService.class_to_enums(transac_class);
+    this.transaction_ids = this.transactionService.class_to_ids(transac_class);
 
     this.form.get('transac_class')?.disable();   // bloque le changment de la classe d'opération
 
@@ -186,7 +187,7 @@ export class BooksEditorComponent {
 
     // création des champs operations
     this.operations.clear();
-    // this.profit_and_loss_accounts = this.which_profit_and_loss_accounts(this.transaction);
+    // this.expense_or_revenue_accounts = this.which_expense_or_revenue_accounts(this.transaction);
 
     book_entry.operations.forEach((operation) => {
       this.add_operation(this.selected_transaction!, operation);
@@ -206,7 +207,7 @@ export class BooksEditorComponent {
   reset_form() {
     const today = formatDate(new Date(), 'yyyy-MM-dd', 'en');
     this.selected_transaction = undefined;
-    this.transaction_enums = [];
+    this.transaction_ids = [];
     this.form.controls['date'].setValue(formatDate(new Date(), 'yyyy-MM-dd', 'en'));
     this.financial_accounts_locked = true;
     this.operations.clear();
@@ -218,7 +219,7 @@ export class BooksEditorComponent {
     // form.transaction_class change handler
     this.form.controls['transac_class'].valueChanges.subscribe((op_class) => {
       this.selected_transaction = undefined;
-      this.transaction_enums = this.transactionService.class_to_enums(op_class);
+      this.transaction_ids = this.transactionService.class_to_ids(op_class);
       this.financial_accounts_locked = true;
     });
 
@@ -241,7 +242,7 @@ export class BooksEditorComponent {
       // gestion des validators pour les champs bank_name et cheque_ref
 
       this.handle_cheque_info_validators(this.selected_transaction);
-      this.handled_deposit_ref_validators(this.selected_transaction);
+      // this.handled_deposit_ref_validators(this.selected_transaction);
 
       // création des champs amounts
       if (this.creation) {
@@ -264,8 +265,8 @@ export class BooksEditorComponent {
   sum_operation_values(transaction: Transaction, values: Operation_initial_values): number {
 
     let total: number = 0;
-    let profit_and_loss_accounts = this.which_profit_and_loss_accounts(transaction);
-    profit_and_loss_accounts.forEach((account, index) => {
+    let expense_or_revenue_accounts = this.expense_or_revenue_accounts(transaction);
+    expense_or_revenue_accounts.forEach((account, index) => {
       let value = this.parse_to_float(values.values?.[index]?.toString() ?? '');
       total += value;
     });
@@ -273,7 +274,7 @@ export class BooksEditorComponent {
     if (optional_accounts !== undefined) {
       optional_accounts.forEach((account, index) => {
         let value = this.parse_to_float(values.optional_accounts?.[index]?.toString() ?? '');
-        if (!transaction.is_of_profit_type) { value = -value; }
+        if (!transaction.revenue_account_to_show) { value = -value; }
         if (account.key.endsWith('_in')) { total -= value; }
         if (account.key.endsWith('_out')) { total += value; }
       });
@@ -305,14 +306,14 @@ export class BooksEditorComponent {
     this.form.controls['cheque_number'].updateValueAndValidity();
   }
 
-  handled_deposit_ref_validators(transaction: Transaction) {
-    if (transaction.require_deposit_ref) {
-      this.form.controls['deposit_ref'].setValidators([Validators.required]);
-    } else {
-      this.form.controls['deposit_ref'].clearValidators();
-    }
-    this.form.controls['deposit_ref'].updateValueAndValidity();
-  }
+  // handled_deposit_ref_validators(transaction: Transaction) {
+  //   if (transaction.require_deposit_ref) {
+  //     this.form.controls['deposit_ref'].setValidators([Validators.required]);
+  //   } else {
+  //     this.form.controls['deposit_ref'].clearValidators();
+  //   }
+  //   this.form.controls['deposit_ref'].updateValueAndValidity();
+  // }
 
   delete_operation(index: number) {
     this.operations.removeAt(index);
@@ -320,14 +321,14 @@ export class BooksEditorComponent {
 
   add_operation(transaction: Transaction, operation_initial?: Operation) {
 
-    let profit_and_loss_accounts = this.which_profit_and_loss_accounts(transaction);
+    let expense_or_revenue_accounts = this.expense_or_revenue_accounts(transaction);
 
 
     let operationForm: FormGroup = this.fb.group({
       'label': [operation_initial?.label ?? ''],
       'total': {value : (operation_initial?.values ? this.sum_operation_values(transaction, operation_initial) : ''), disabled: true},
       // 'values': this.fb.array(
-      //   (profit_and_loss_accounts.map(account => new FormControl<string>((operation_initial?.values?.[account.key]?.toString() ?? ''), [Validators.pattern(this.NumberRegexPattern)])) as unknown[]),
+      //   (expense_or_revenue_accounts.map(account => new FormControl<string>((operation_initial?.values?.[account.key]?.toString() ?? ''), [Validators.pattern(this.NumberRegexPattern)])) as unknown[]),
       //   { validators: [this.atLeastOneFieldValidator] }),
     });
 
@@ -347,14 +348,14 @@ export class BooksEditorComponent {
       }
     }
 
-    if (profit_and_loss_accounts.length !== 0)
+    if (expense_or_revenue_accounts.length !== 0)
     {
       operationForm.addControl('values', this.fb.array(
-        profit_and_loss_accounts.map((account_def) => new FormControl<string>((operation_initial?.values?.[account_def.key]?.toString() ?? ''), [Validators.pattern(this.NumberRegexPattern)])),
+        expense_or_revenue_accounts.map((account_def) => new FormControl<string>((operation_initial?.values?.[account_def.key]?.toString() ?? ''), [Validators.pattern(this.NumberRegexPattern)])),
         { validators: [this.atLeastOneFieldValidator] }));
     }
 
-    // if (profit_and_loss_accounts.length === 0 && !transaction.nominative) {
+    // if (expense_or_revenue_accounts.length === 0 && !transaction.nominative) {
     //   this.operations.push(operationForm);
     //   return;
     // }   // pure financial transaction
@@ -408,7 +409,7 @@ export class BooksEditorComponent {
     let operations: Operation[] = [];
     let amounts: { [key: string]: number } = {};
     let transaction = this.transactionService.get_transaction(this.transaction_id);
-    let profit_and_loss_accounts = this.which_profit_and_loss_accounts(transaction);
+    let expense_or_revenue_accounts = this.expense_or_revenue_accounts(transaction);
     // constructions des montants
 
     this.financial_accounts.forEach((account: Account_def, index: number) => {
@@ -424,7 +425,7 @@ export class BooksEditorComponent {
     operations = this.operations.controls.map((operation) => {
       let op_values: operation_values = {};
 
-      profit_and_loss_accounts.forEach((account: Account, index: number) => {
+      expense_or_revenue_accounts.forEach((account: Account, index: number) => {
         let value = this.parse_to_float((operation as FormGroup).controls['values'].value[index]);
         if (value && value !== 0) {
           op_values[account.key] = value;
@@ -455,6 +456,7 @@ export class BooksEditorComponent {
     // true if bank_transaction_id = vente_en_espèces || achat_adherent_en espece or all numbers are positive
     if (bookEntry.transaction_id === TRANSACTION_ID.vente_en_espèces) return true;
     if (bookEntry.transaction_id === TRANSACTION_ID.achat_adhérent_en_espèces) return true;
+    if (this.transactionService.get_transaction(bookEntry.transaction_id).class === TRANSACTION_CLASS.REIMBURSEMENT) return true;
     let negative = false;
     Object.entries(bookEntry.amounts).forEach(([key, amount]: [string, number]) => {
       if (amount < 0) negative = true;
@@ -469,7 +471,7 @@ export class BooksEditorComponent {
   }
 
   book_entry_balanced(bookEntry: BookEntry): boolean {
-    let total_profit_and_loss = 0;
+    let total_expense_or_revenue = 0;
     let total_financial = 0;
     let transaction = this.transactionService.get_transaction(bookEntry.transaction_id);
 
@@ -483,16 +485,16 @@ export class BooksEditorComponent {
       Object.entries(values).forEach(([key, amount]: [string, number]) => {
         if (key.endsWith('_in')) total_financial += amount;
         if (key.endsWith('_out')) total_financial -= amount;
-        if (!key.endsWith('_in') && !key.endsWith('_out')) total_profit_and_loss += amount;
+        if (!key.endsWith('_in') && !key.endsWith('_out')) total_expense_or_revenue += amount;
       });
     }
     );
 
-    if (!transaction.is_of_profit_type) {
-      total_profit_and_loss = -total_profit_and_loss;
+    if (!transaction.revenue_account_to_show) {
+      total_expense_or_revenue = -total_expense_or_revenue;
     }
 
-    return total_financial === total_profit_and_loss;
+    return total_financial === total_expense_or_revenue;
   }
 
 
@@ -595,10 +597,10 @@ export class BooksEditorComponent {
     });
     return grand_total < 0 ? -grand_total : grand_total;
   }
-  which_profit_and_loss_accounts(transaction: Transaction): Account[] {
+  expense_or_revenue_accounts(transaction: Transaction): Account[] {
     if (transaction === undefined) { throw new Error('transaction is undefined'); };
     if (transaction.pure_financial) return [];
-    return transaction.is_of_profit_type ? this.products_accounts : this.expenses_accounts;
+    return transaction.revenue_account_to_show ? this.products_accounts : this.expenses_accounts;
   }
 
   transaction_label(transaction_id: TRANSACTION_ID): string {

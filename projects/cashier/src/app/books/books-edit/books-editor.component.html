@@ -1,15 +1,21 @@
 <div *ngIf="form_ready" class="mt-2">
   <form [formGroup]="form" (ngSubmit)="onSubmit()">
-<div class="row align-items-end">
-  <div class="col-2">
-    <label for="date">Date</label>
-    <input type="date" class="form-control" id="date" formControlName="date">
-  </div>
-<div *ngIf="!date_in_season(date?.value)" class="col-3 text-danger">
-  <i class="bi bi-exclamation-circle"></i>
-  <span>  cette date est hors saison actuelle</span>
-</div>
-</div>
+
+    <div class="row justify-content-between align-items-center">
+      <div class="col-2">
+        <label for="date">
+          Date
+          <span *ngIf="!date_in_season(date?.value)" class="col-3 text-danger">
+            <i class="bi bi-exclamation-circle"></i>
+            <span>  hors saison actuelle</span>
+          </span>
+        </label>
+        <input type="date" [class]="!date_in_season(date.value)?'form-control border-danger':'form-control'" id="date" formControlName="date">
+      </div>
+      <div class="col-1 align-self-end text-end" (click)="cancel()">
+        <back></back>
+      </div>
+    </div>
 
     <!-- bandeau selection transaction et affichage comptes financiers -->
     <div class="row  align-items-start">
@@ -24,7 +30,7 @@
         </select>
       </div>
       <!-- transaction -->
-      <ng-container *ngIf="transaction_enums && transaction_enums.length > 0">
+      <ng-container *ngIf="transaction_ids && transaction_ids.length > 0">
         <div class="col-4">
           <ng-container [ngTemplateOutlet]="select_transaction"></ng-container>
         </div>
@@ -91,7 +97,8 @@
                 </ng-container>
               </div>
               <div *ngIf="!selected_transaction.pure_financial " class="col-6">
-                <div [ngTemplateOutlet]="profit_and_loss" [ngTemplateOutletContext]="{inputFormGroup: operation, transaction: selected_transaction}">
+                <div [ngTemplateOutlet]="profit_and_loss"
+                  [ngTemplateOutletContext]="{inputFormGroup: operation, transaction: selected_transaction}">
                 </div>
               </div>
               <div class="offset-1 col-2">
@@ -123,9 +130,9 @@
         <button [disabled]="form.invalid || !financial_accounts_locked " type="submit" class="btn btn-primary">
           {{!creation?'Modifier':'Créer'}}</button>
       </div>
-      <div *ngIf="!creation" class="col-1">
+      <!-- <div *ngIf="!creation" class="col-1">
         <button type="button" class="btn btn-primary" (click)="cancel()">Abandon</button>
-      </div>
+      </div> -->
       <div *ngIf="!creation" class="col-1">
         <button type="button" class="btn btn-warning " (click)="delete_book_entry()">Supprimer</button>
       </div>
@@ -180,7 +187,7 @@
     <!-- formulaire selection transactions  -->
     <ng-template #select_transaction>
       <label>transaction</label>
-      <div class="form-check" *ngFor="let transaction_id of transaction_enums">
+      <div class="form-check" *ngFor="let transaction_id of transaction_ids">
         <input class="form-check-input" type="radio" [value]="transaction_id" formControlName="transaction_id">
         <label class="form-check-label" for="transaction_id" [ngbTooltip]="transaction_tooltip(transaction_id)"
           tooltipClass="my-custom-class" placement="right">
@@ -213,9 +220,9 @@
       <ng-container [formGroup]="inputFormGroup">
         <div formArrayName="values" class="row ">
           <div class="col gx-1" *ngFor="let account of inputFormGroup.get('values').controls ; let i = index">
-            <label [ngbTooltip]="which_profit_and_loss_accounts(transaction)[i].description"
+            <label [ngbTooltip]="expense_or_revenue_accounts(transaction)[i].description"
               tooltipClass="my-custom-class"
-              placement="top">{{which_profit_and_loss_accounts(transaction)[i].key}}</label>
+              placement="top">{{expense_or_revenue_accounts(transaction)[i].key}}</label>
             <input type="text" [class]="account.invalid ? 'form-control border-danger' : 'form-control'"
               [formControlName]="i" [id]="'value' + i">
             <!-- <div *ngIf="account.invalid" class="text-danger">
@@ -230,6 +237,7 @@
     <!-- formulaire credit_avoir client -->
     <ng-template #optional_accounts_form let-inputFormGroup="inputFormGroup">
       <ng-container [formGroup]="inputFormGroup">
+      <ng-container *ngIf="optional_accounts && optional_accounts.length > 0">
         <div formArrayName="optional_accounts" class="row ">
           <div class="col-4 gx-1"
             *ngFor="let account of inputFormGroup.get('optional_accounts').controls ; let i = index">
@@ -242,6 +250,7 @@
             </div> -->
           </div>
         </div>
+        </ng-container>
       </ng-container>
     </ng-template>
 

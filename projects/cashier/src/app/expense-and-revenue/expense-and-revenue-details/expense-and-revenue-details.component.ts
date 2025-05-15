@@ -7,12 +7,13 @@ import { BookService } from '../../book.service';
 import { Revenue, Expense, BookEntry } from '../../../../../common/accounting.interface';
 import { combineLatest, tap, switchMap } from 'rxjs';
 import { Router } from '@angular/router';
+import { BackComponent } from '../../../../../common/back/back.component';
 
 
 @Component({
   selector: 'app-expense-and-revenue-details',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, BackComponent],
   templateUrl: './expense-and-revenue-details.component.html',
   styleUrl: './expense-and-revenue-details.component.scss'
 })

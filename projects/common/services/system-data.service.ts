@@ -106,6 +106,10 @@ export class SystemDataService {
     return season.slice(0, 4) + '-07-01';
   }
 
+  last_date(season: string): string {
+    return season.slice(5, 9) + '-06-30';
+  }
+
   date_in_season(date: string, season: string): boolean {
     let start_date = new Date(season.slice(0, 4) + '-07-01');
     let end_date = new Date(season.slice(5, 9) + '-06-30');

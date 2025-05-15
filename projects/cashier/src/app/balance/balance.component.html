@@ -12,10 +12,10 @@
           <h5> bilan de l'exercice {{current_season}}</h5>
         </div>
         <div class="col mx-auto">&#8205;</div>
-        <div class="col-auto">
+        <!-- <div class="col-auto">
           <button class=" btn btn-outline-success btn-sm">
             <i class=" bi-file-earmark-arrow-up-fill"></i>
-            <a [href]="fileUrl" style="text-decoration: none; color: var(--bs-success);"
+            <a [href]="export_url" style="text-decoration: none; color: var(--bs-success);"
               download="bilan.txt">export.txt</a>
           </button>
         </div>
@@ -25,7 +25,7 @@
             import.txt</button>
           <input #fileInput type="file" style="display:none" class="form-control form-control-sm text-end"
             (change)="file_import($event)">
-        </div>
+        </div> -->
         <div class="col-auto">
           <button class=" btn btn-outline-success btn-sm" (click)="save_balance_sheet()">
             <i class="bi-cloud-arrow-up-fill"></i>
@@ -117,7 +117,7 @@
                 <td>dettes adhérents</td>
                 <td>{{balance_board.current.client_debts | number:truncature:'fr' | parenthesis}}</td>
                 <td class="text-start"> <i (click)="show_details('client_debts')" class="h6 bi-search"></i>
-                  <td class="variation">
+                <td class="variation">
                   {{balance_board.delta.client_debts | number:truncature:'fr'}}
                 </td>
                 <td>&#8205;</td>
@@ -147,7 +147,7 @@
               <tr class="fw-light fs-6">
                 <td>chèques à déposer</td>
 
-                <td >{{balance_board.current.uncashed_cheques | number:truncature:'fr'| parenthesis}}
+                <td>{{balance_board.current.uncashed_cheques | number:truncature:'fr'| parenthesis}}
                 </td>
                 <td>&#8205;</td>
                 <td class="variation">
@@ -161,7 +161,7 @@
               <tr class="fw-light fs-6">
                 <td>paiements engagés</td>
 
-                <td >{{balance_board.current.outstanding_expenses | number:truncature:'fr'|
+                <td>{{balance_board.current.outstanding_expenses | number:truncature:'fr'|
                   parenthesis}}
                 </td>
                 <td>&#8205;</td>
@@ -258,20 +258,42 @@
       </div>
     </div>
     <div class="card-footer">
-      <div *ngIf="selected_season === current_season">
+      <div class="row justify-content-between align-items-center">
+
         <div *ngIf="balance_error" class="col-auto text-danger">
           <i class="fs-5 bi-exclamation-triangle"></i>
           <span class="text-danger"> incohérence bilan & compte de résultats de ({{balance_error |
             number:truncature2:'fr'}} €)</span>
         </div>
-        <div class="col-auto">
+
+        <div *ngIf="!balance_error" class="col-auto">
           report des encours sur la saison suivante
           <button class="btn btn-outline-success btn-sm" (click)="transfer_to_next_balance_sheet()">
             <i class="fs-5 bi-gear"></i>
           </button>
         </div>
+
+        <div *ngIf="trace_on" class="col-auto">
+          <div class="row">
+            utilitaires import/export historique bilan:
+            <div class="col-auto">
+              <button class=" btn btn-outline-success btn-sm">
+                <i class=" bi-file-earmark-arrow-up-fill"></i>
+                <a [href]="export_url" style="text-decoration: none; color: var(--bs-success);"
+                download="bilan.txt">export.txt</a>
+              </button>
+            </div>
+            
+            <div class="col-auto">
+              <button class=" btn btn-outline-success btn-sm" (click)="fileInput.click()">
+                <i class=" bi-file-earmark-arrow-down-fill"></i>
+                import.txt</button>
+                <input #fileInput type="file" style="display:none" class="form-control form-control-sm text-end"
+                (change)="file_import($event)">
+              </div>
+            </div>
+        </div>
       </div>
     </div>
-
   </div>
 </div>

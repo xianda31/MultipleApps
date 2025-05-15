@@ -22,13 +22,39 @@ export class FinancialReportService {
 
   ) { }
 
+private _sheets_to_records(sheets: Balance_sheet[]): Balance_record[] {
+    return sheets.map((sheet) => {
+      const { in_bank_total, wip_total, actif_total, cashbox, ...record } = sheet;
+      return record as Balance_record;
+    }
+    );
+  }
+ private  _records_to_sheets(records: Balance_record[]): Balance_sheet[] {
+    return records.map((record) => {
+      let in_bank_total = record.bank + record.savings;
+      let cashbox = record.cash + record.client_debts;
+      let wip_total = record.uncashed_cheques + record.outstanding_expenses + record.gift_vouchers;
+      let actif_total = in_bank_total + cashbox + wip_total;
+
+      return {
+        ...record,
+        in_bank_total: record.bank + record.savings,
+        wip_total: wip_total,
+        cashbox: cashbox,
+        actif_total: actif_total,
+      } as Balance_sheet;
+    });
+  }
+
+  export_balance_sheets(): any {
+    let balance_records = this._sheets_to_records(this._balance_sheets);
+    return this.fileService.json_to_blob(balance_records);
+  }
 
   balance_sheets_upload_to_S3(): Observable<Balance_sheet[]> {
     try {
-      let balance_records: Balance_record[] = this._balance_sheets.map((sheet) => {
-        const { in_bank_total, wip_total, actif_total,cashbox, ...record } = sheet;
-        return record as Balance_record;
-      });
+      let balance_records = this._sheets_to_records(this._balance_sheets);
+      this.fileService.upload_to_S3(balance_records,'accounting/','balance_history.txt' );
     }
     catch (error) {
       this.toastService.showErrorToast('sauvegarde des bilans', error instanceof Error ? error.message : String(error));
@@ -78,7 +104,23 @@ export class FinancialReportService {
     if (balance_sheet) {
       return (balance_sheet);
     } else {
-      throw new Error(`Balance sheet for season ${season} not found`);
+      let new_balance_sheet = {
+        season: season,
+        cash: 0,
+        bank: 0,
+        savings: 0,
+        uncashed_cheques: 0,
+        outstanding_expenses: 0,
+        gift_vouchers: 0,
+        client_debts: 0,
+        client_assets: 0,
+        in_bank_total: 0,
+        cashbox: 0,
+        wip_total: 0,
+        actif_total: 0
+      } as Balance_sheet;
+      this.toastService.showInfoToast('historique bilans', `création d'un bilan ${season} vierge`);
+      return (new_balance_sheet);
     }
   }
 
@@ -107,9 +149,9 @@ export class FinancialReportService {
         let balance_records = data as Balance_record[];
         this._balance_sheets = balance_records.map((record) => {
           let in_bank_total = record.bank + record.savings;
-          let cashbox = record.cash + record.client_debts ;
-          let wip_total =  record.uncashed_cheques + record.outstanding_expenses + record.gift_vouchers ;
-          let actif_total = in_bank_total +  cashbox + wip_total;
+          let cashbox = record.cash + record.client_debts;
+          let wip_total = record.uncashed_cheques + record.outstanding_expenses + record.gift_vouchers;
+          let actif_total = in_bank_total + cashbox + wip_total;
 
           return {
             ...record,
@@ -154,15 +196,15 @@ export class FinancialReportService {
     let bank = previous_balance_sheet.bank + this.bookService.get_bank_movements_amount();
     let uncashed_cheques = this.bookService.get_uncashed_cheques_amount();
     let client_debts = this.bookService.get_clients_debts_value();
-    
+
     let outstanding_expenses = -this.bookService.get_bank_outstanding_expenses_amount();
     let gift_vouchers = -this.bookService.get_customers_assets_amount();
     let client_assets = 0;
-    
+
     let in_bank_total = bank + savings;
     let cashbox = cash + client_debts + client_assets;
-    let wip_total =  uncashed_cheques  + outstanding_expenses + gift_vouchers ;
-    let actif_total = in_bank_total + cashbox +  wip_total;
+    let wip_total = uncashed_cheques + outstanding_expenses + gift_vouchers;
+    let actif_total = in_bank_total + cashbox + wip_total;
 
     let current_balance_sheet = {
       season: season,
@@ -175,7 +217,7 @@ export class FinancialReportService {
       client_debts: client_debts,
       client_assets: client_assets,
       in_bank_total: bank + savings,
-      cashbox : cashbox,
+      cashbox: cashbox,
       wip_total: wip_total,
       actif_total: actif_total
     } as Balance_sheet;
@@ -203,7 +245,7 @@ export class FinancialReportService {
 
 
   _balance_diff(a: Balance_sheet, b: Balance_sheet): Balance_sheet {
-    
+
     let diff: Balance_sheet = {
       season: '',
       cash: a.cash - b.cash,
@@ -223,11 +265,12 @@ export class FinancialReportService {
   }
 
   // import export .txt files
-  async import_balance_sheet(file: File) {
+  async import_balance_sheets(file: File) {
 
-    const text = await file.text();
     try {
-      this._balance_sheets = JSON.parse(text);
+      const text = await file.text();
+      let records = JSON.parse(text) as Balance_record[];
+      this._balance_sheets = this._records_to_sheets(records);
       this._balance_sheets$.next(this._balance_sheets);
       // this.toatService.showSuccessToast('fichier de configuration chargé', 'les données sont prêtes à être enregistrées');
     } catch (error) {

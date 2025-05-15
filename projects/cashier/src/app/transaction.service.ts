@@ -13,7 +13,7 @@ export class TransactionService {
   ) { }
 
 
-class_to_enums(_class: TRANSACTION_CLASS): TRANSACTION_ID[] {
+class_to_ids(_class: TRANSACTION_CLASS): TRANSACTION_ID[] {
   let check = Object.values(TRANSACTION_CLASS).includes(_class);
   if (check) {
     return Object.entries(TRANSACTION_DIRECTORY)
@@ -36,14 +36,14 @@ transaction_class(id: TRANSACTION_ID): TRANSACTION_CLASS {
 }
 
 list_transaction_classes(): TRANSACTION_CLASS[] {
- return [
-   TRANSACTION_CLASS.REVENUE_FROM_MEMBER,
-  TRANSACTION_CLASS.OTHER_REVENUE,
-  TRANSACTION_CLASS.EXPENSE_FOR_MEMBER,
-  TRANSACTION_CLASS.OTHER_EXPENSE,
-  TRANSACTION_CLASS.MOVEMENT,
-  TRANSACTION_CLASS.BALANCE
- ]
+  let classes = new Map<string, TRANSACTION_CLASS>();
+  Object.entries(TRANSACTION_DIRECTORY).forEach(([key, transaction]) => {
+    if (!classes.has(transaction.class)) {
+      classes.set(transaction.class, transaction.class);
+    }
+  });
+  return Array.from(classes.values());
+
 }
 
 get_transaction(id: TRANSACTION_ID): Transaction {

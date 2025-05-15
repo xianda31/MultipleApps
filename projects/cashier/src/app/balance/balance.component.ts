@@ -19,7 +19,8 @@ import { Router } from '@angular/router';
   styleUrl: './balance.component.scss'
 })
 export class BalanceComponent {
-  fileUrl: any;
+
+  export_url: any;
   selected_season!: string;
   current_season!: string;
   trading_result = 0;
@@ -52,9 +53,10 @@ export class BalanceComponent {
       switchMap((season) => this.bookService.list_book_entries$(season)),
       switchMap(() => this.financialService.list_balance_sheets())
     ).subscribe((balance_sheets) => {
-      this.fileUrl = this.fileService.json_to_blob(balance_sheets);
       this.balance_board = this.financialService.compute_balance_board(this.current_season);
       this.check_balance_vs_profit_and_loss();
+
+      this.export_url = this.financialService.export_balance_sheets()
       this.loaded = true;
     });
   }
@@ -74,7 +76,7 @@ export class BalanceComponent {
 
   check_balance_vs_profit_and_loss() {
     this.trading_result = this.bookService.get_trading_result();
-    this.balance_error = (this.balance_board.delta.actif_total - this.trading_result);
+    this.balance_error = this.Round(this.balance_board.delta.actif_total - this.trading_result);
     if (this.balance_error !== 0) {
       console.log('incohérence entre résultat et bilan', this.balance_error, this.balance_board.delta.actif_total, this.trading_result);
       this.toastService.showWarningToast('consolidation financière', 'incohérence entre résultat et bilan');
@@ -103,7 +105,7 @@ export class BalanceComponent {
 
   async file_import(event: any) {
     const file = event.target.files[0];
-    this.financialService.import_balance_sheet(file);
+    this.financialService.import_balance_sheets(file);
   }
 
   show_details(account: 'gift_vouchers' | 'client_debts') {
@@ -120,10 +122,23 @@ export class BalanceComponent {
     }
   }
 
-  download_file() {
-    if (this.fileUrl) {
+  get trace_on() {
+    return this.systemDataService.trace_on();
+  }
+
+  Round(value: number) {
+    const neat = +(Math.abs(value).toPrecision(15));
+    const rounded = Math.round(neat * 100) / 100;
+    return rounded * Math.sign(value);
+  }
+
+
+private  download_file() {
+
+    if (this.export_url) {
       const link = document.createElement('a');
-      link.href = this.fileUrl;
+
+      link.href = this.export_url;
       link.download = 'balance_sheet.json';
       document.body.appendChild(link);
       link.click();

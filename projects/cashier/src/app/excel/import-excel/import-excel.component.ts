@@ -1,7 +1,7 @@
 import { Component, ElementRef, signal } from '@angular/core';
 import * as ExcelJS from 'exceljs';
 import { EXPENSES_COL, EXTRA_CUSTOMER_IN, EXTRA_CUSTOMER_OUT, FINANCIAL_COL, MAP, PRODUCTS_COL } from '../../../../../common/excel/excel.interface';
-import { TRANSACTION_ID, BookEntry, FINANCIAL_ACCOUNT, operation_values, Operation } from '../../../../../common/accounting.interface';
+import { TRANSACTION_ID, BookEntry, FINANCIAL_ACCOUNT, operation_values, Operation, BALANCE_ACCOUNT } from '../../../../../common/accounting.interface';
 import { Member } from '../../../../../common/member.interface';
 import { MembersService } from '../../../../../admin-dashboard/src/app/members/service/members.service';
 import { BookService } from '../../book.service';
@@ -34,7 +34,7 @@ export class ImportExcelComponent {
   revenue_definitions: Revenue_and_expense_definition[] = [];
   expense_definitions: Revenue_and_expense_definition[] = [];
   op_value_keys: string[] = [];
-  financial_accounts = Object.values(FINANCIAL_ACCOUNT);
+  financial_accounts = Object.values(FINANCIAL_ACCOUNT).concat(Object.values(BALANCE_ACCOUNT) as unknown as FINANCIAL_ACCOUNT[]);
 
   members: Member[] = [];
   current_season: string = '';
@@ -173,7 +173,7 @@ export class ImportExcelComponent {
       if (entry === null) {
         this.verbose.set(this.verbose() + 'erreur de conversion ligne ' + this.worksheet.getCell(master).row + '\n');
         error = true;
-        return ;
+        return;
       }
       this.book_entries.push(entry);
       // this.verbose.set(this.verbose() + '.');
@@ -265,10 +265,10 @@ export class ImportExcelComponent {
     });
 
     if (loadable) {
-      this.verbose.set(this.verbose() + 'toutes les écritures sont valides \n');
+      this.verbose.set(this.verbose() + '\n ☑ toutes les écritures sont valides \n');
     }
     else {
-      this.verbose.set(this.verbose() + 'veuillez corriger les erreurs détectées \n');
+      this.verbose.set(this.verbose() + '\n ❌ veuillez corriger les erreurs détectées \n');
     }
     return loadable;
   }
@@ -330,6 +330,7 @@ export class ImportExcelComponent {
       book_entry.amounts[name as FINANCIAL_ACCOUNT] = cell.valueOf() as number;
     });
 
+
     // construct products operation side
 
     cells.forEach((cell) => {
@@ -382,17 +383,26 @@ export class ImportExcelComponent {
         switch (nature) {
           case 'versement espèces':
             return TRANSACTION_ID.dépôt_collecte_espèces;
+          case 'fond en espèces':
+            return TRANSACTION_ID.dépôt_collecte_espèces;
           case 'versement chèques':
             return TRANSACTION_ID.dépôt_collecte_chèques;
           case 'remise espèces':
             return TRANSACTION_ID.dépôt_caisse_espèces;
           case 'remise chèques':
             return TRANSACTION_ID.dépôt_caisse_chèques;
+          case 'vente en espèces':
+            return TRANSACTION_ID.vente_en_espèces;
+          case 'vente par chèque': // pas adhérent , attention
+            return TRANSACTION_ID.vente_par_chèque;
           case 'chèque émis':
             return TRANSACTION_ID.dépense_par_chèque;
+
           case 'virement reçu':
             return TRANSACTION_ID.vente_par_virement;
-          case 'virement emis':
+          case 'achat en espèces':
+            return TRANSACTION_ID.dépense_en_espèces;
+          case 'virement émis':
             return TRANSACTION_ID.dépense_par_virement;
           case 'prélèvement':
             return TRANSACTION_ID.dépense_par_prélèvement;
@@ -422,6 +432,8 @@ export class ImportExcelComponent {
             return TRANSACTION_ID.achat_adhérent_en_espèces;
           case 'attribution avoir':
             return TRANSACTION_ID.attribution_avoir;
+          case 'remboursement par chèque':
+            return TRANSACTION_ID.remboursement_achat_adhérent_par_chèque;
           default:
             console.log('erreur de nature', nature);
             return null
@@ -434,10 +446,21 @@ export class ImportExcelComponent {
             return TRANSACTION_ID.vente_en_espèces;
           // case 'erreur caisse':
           //   return TRANSACTION_ID.dépense_en_espèces;
+          case 'chèque':
+            return TRANSACTION_ID.vente_par_chèque;
+          case 'remise espèces':
+            return TRANSACTION_ID.dépôt_caisse_espèces;
+
           default:
             console.log('erreur de nature', nature);
             return null
         }
+
+      case 'R999': // les reports
+      case 'report chèque':
+        return TRANSACTION_ID.report_chèque;
+      case 'report prélèvement':
+        return TRANSACTION_ID.report_prélèvement;
 
       default:
         console.log('erreur de feuille', this.worksheet.name);
@@ -455,10 +478,10 @@ export class ImportExcelComponent {
     }
 
     // calcul des montants encaissés ou décaissés
-    let debit_keys: FINANCIAL_ACCOUNT[] = Object.keys(book_entry.amounts).filter((key): key is FINANCIAL_ACCOUNT => key.includes('in'));
+    let debit_keys: FINANCIAL_ACCOUNT[] = Object.keys(book_entry.amounts).filter((key): key is FINANCIAL_ACCOUNT => key.includes('_in'));
     let amount_total_debit = debit_keys.reduce((acc, key) => acc + (book_entry.amounts[key] || 0), 0);
 
-    let credit_keys: FINANCIAL_ACCOUNT[] = Object.keys(book_entry.amounts).filter((key): key is FINANCIAL_ACCOUNT => key.includes('out'));
+    let credit_keys: FINANCIAL_ACCOUNT[] = Object.keys(book_entry.amounts).filter((key): key is FINANCIAL_ACCOUNT => key.includes('_out'));
     let amount_total_credit = credit_keys.reduce((acc, key) => acc + (book_entry.amounts[key] || 0), 0);
 
 
@@ -481,6 +504,7 @@ export class ImportExcelComponent {
     switch (this.transactionService.transaction_class(book_entry.transaction_id)) {
       case TRANSACTION_CLASS.REVENUE_FROM_MEMBER:
       case TRANSACTION_CLASS.OTHER_REVENUE:
+      case TRANSACTION_CLASS.REIMBURSEMENT:
         let product_keys = Object.keys(PRODUCTS_COL);
         total_sale_credit = book_entry.operations.reduce((acc, operation) => {
           return acc + product_keys.reduce((sum, key) => sum + (operation.values[key] || 0), 0);
@@ -494,6 +518,7 @@ export class ImportExcelComponent {
         }, 0);
         break
       case TRANSACTION_CLASS.MOVEMENT:
+      case TRANSACTION_CLASS.BALANCE:
         break;
       default:
         console.log('erreur de classe', this.transactionService.transaction_class(book_entry.transaction_id));
@@ -511,7 +536,7 @@ export class ImportExcelComponent {
         amount_total_credit, total_debt_asset_credit, total_sale_credit);
 
       console.log('book_entry', book_entry);
-      this.verbose.set(this.verbose() + '[' + row_nbr + '] montants non égaux \n');
+      this.verbose.set(this.verbose() + '[' + row_nbr + '] =>' + book_entry.date + '(' + book_entry.operations[0].member + ')' + ' montants non égaux \n');
       return false;
     }
     // console.log('amounts are equal', amount_total_debit, amount_total_credit, products_sum, expenses_sum);
@@ -547,6 +572,7 @@ export class ImportExcelComponent {
     switch (transaction.class) {
       case TRANSACTION_CLASS.REVENUE_FROM_MEMBER:
       case TRANSACTION_CLASS.OTHER_REVENUE:
+      case TRANSACTION_CLASS.REIMBURSEMENT:
         operation.values = this.get_revenues_values(row);
         break;
       case TRANSACTION_CLASS.EXPENSE_FOR_MEMBER:

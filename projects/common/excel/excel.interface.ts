@@ -1,6 +1,6 @@
 // compta.xls file definition
 
-import { CUSTOMER_ACCOUNT, FINANCIAL_ACCOUNT } from "../accounting.interface";
+import { BALANCE_ACCOUNT, CUSTOMER_ACCOUNT, FINANCIAL_ACCOUNT } from "../accounting.interface";
 
 
 
@@ -47,6 +47,9 @@ export enum COL {
   AN = 40,
   AO = 41,
   AP = 42,
+  AQ = 43,
+  AR = 44,
+  AS = 45,
 }
 
 export const MAP = {
@@ -61,11 +64,11 @@ export const MAP = {
   // 'expenses': 'P:AB',
   // 'book_entry': 'AC:AL',
 
-  'pointage': 'AL',
-  'n° chèque': 'AM',
-  'bordereau': 'AN',
-  'verif balance': 'AO',
-  'nature': 'AP',
+  'pointage': 'AN',
+  'n° chèque': 'AO',
+  'bordereau': 'AP',
+  'verif balance': 'AQ',
+  'nature': 'AR',
 }
 
 export type ACCOUNTS_COL = { [key: string]: string }
@@ -84,14 +87,6 @@ export const PRODUCTS_COL: ACCOUNTS_COL = {
   //  'BNQ': 'X',
 }
 
-export const EXTRA_CUSTOMER_IN: { [key in CUSTOMER_ACCOUNT]?: string } = {
-  'creance_in': 'AB',
-  'avoir_in': 'AC',
-}
-export const EXTRA_CUSTOMER_OUT: { [key in CUSTOMER_ACCOUNT]?: string } = {
-  'creance_out': 'AG',
-  'avoir_out': 'AH',
-}
 
 export const EXPENSES_COL: ACCOUNTS_COL = {
   'LIC': 'P',
@@ -108,13 +103,24 @@ export const EXPENSES_COL: ACCOUNTS_COL = {
   'BNQ': 'AA',
 }
 
-export const FINANCIAL_COL: { [key in FINANCIAL_ACCOUNT ]: string } = {
+export const EXTRA_CUSTOMER_IN: { [key in CUSTOMER_ACCOUNT]?: string } = {
+  'creance_in': 'AB',
+  'avoir_in': 'AC',
+}
+export const EXTRA_CUSTOMER_OUT: { [key in CUSTOMER_ACCOUNT]?: string } = {
+  'creance_out': 'AH',
+  'avoir_out': 'AI',
+}
+export const FINANCIAL_COL: { [key in FINANCIAL_ACCOUNT | BALANCE_ACCOUNT]: string } = {
   'cashbox_in': 'AD',
   'bank_in': 'AE',
   'saving_in': 'AF',
-  'cashbox_out': 'AI',
-  'bank_out': 'AJ',
-  'saving_out': 'AK',
+  'report_in': 'AG',
+
+  'cashbox_out': 'AJ',
+  'bank_out': 'AK',
+  'saving_out': 'AL',
+  'report_out': 'AM',
 }
 
 

@@ -10,19 +10,15 @@
   </div>
 </div> -->
 
-<div class="card-group mt-2">
-  <div *ngFor="let report of reports_values" class="card ">
-    <div class="card-header text-center">
-      <div class="d-inline-block justify-content-around align-items-center">
-        <span>{{report}} </span>
-        <span class="ps-2">
-          <i (click)="go_report(null)" *ngIf="selected_report === report" class="bi bi-check-circle-fill"></i>
-          <i (click)="go_report(report)" *ngIf="selected_report !== report" class="bi bi-circle"></i>
-        </span>
+<div class="mt-2 row row-cols-1 row-cols-md-4 g-4 ">
+  <div class="col" *ngFor="let report of reports_values ">
+    <div [class]="selected_report === report ? 'card border-primary ' : 'card' " (click)="go_report(report)">
+      <div class="card-header text-center">{{report}} </div>
+      <div class="card-body text-center">
+        <div class="card-text">
+          <ng-template [ngTemplateOutlet]="report_summary" [ngTemplateOutletContext]="{report: report}"></ng-template>
+        </div>
       </div>
-    </div>
-    <div class="card-body text-center">
-      <ng-template [ngTemplateOutlet]="report_summary" [ngTemplateOutletContext]="{report: report}"></ng-template>
     </div>
   </div>
 </div>
@@ -48,12 +44,12 @@
       <ng-container *ngSwitchCase="reports.CAISSE_CHEQUES">
         {{ cashbox_status.cheques.amount | number:truncature:'fr' }} €
         <!-- <i class="h4 bi-card-heading " *ngIf="cashbox_status.cheques.nbr > 0"></i> -->
-       <i class="h6 bi-exclamation-triangle-fill text-danger" *ngIf="cashbox_status.cheques.anomaly"></i>
+        <i class="h6 bi-exclamation-triangle-fill text-danger" *ngIf="cashbox_status.cheques.anomaly"></i>
       </ng-container>
       <ng-container *ngSwitchCase="reports.DETTES_ET_AVOIRS">
         {{ current_debt_amount }} €
       </ng-container>
-      <ng-container *ngSwitchCase ="reports.AVOIRS_ADHERENTS">
+      <ng-container *ngSwitchCase="reports.AVOIRS_ADHERENTS">
         {{ vouchers_amount }} €
       </ng-container>
     </div>

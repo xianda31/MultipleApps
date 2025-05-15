@@ -34,12 +34,12 @@ book_entries_loaded: boolean = false;
   ngOnInit(): void {
     registerLocaleData(localeFr);
 
-    console.log(' pif');
+    // chargement de la configuration et des livres de comptes de S3 et dynamoDB
+    // toutes les app ont auront besoin ....
 
     this.systemDataService.get_configuration().pipe(
       tap((conf) => {
         this.season = conf.season ;
-        console.log('paf');
       }),
       switchMap((conf) => this.bookService.list_book_entries$(conf.season))
     ).subscribe((book_entries) => {

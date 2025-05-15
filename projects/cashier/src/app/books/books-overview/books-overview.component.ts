@@ -12,13 +12,13 @@ import { CashGraphComponent } from "../graphs/cash-graph/cash-graph.component";
 import { FinancialReportService } from '../../financial_report.service';
 
 enum REPORTS {
-  CHARGES = 'charges',
-  PRODUITS = 'produits',
-  DETTES_ET_AVOIRS = 'dettes et crédits',
-  CAISSE_CASH = 'espèces',
-  CAISSE_CHEQUES = 'chèques',
-  BANQUE = 'banque',
+  CHARGES = 'dépenses / charges',
+  PRODUITS = 'vente / produits',
+  BANQUE = 'compte en banque',
   EPARGNE = 'épargne',
+  DETTES_ET_AVOIRS = 'crédits & dettes',
+  CAISSE_CASH = 'espèces en caisse',
+  CAISSE_CHEQUES = 'dépôt chèques',
   AVOIRS_ADHERENTS = 'avoirs',
 }
 
@@ -286,7 +286,7 @@ export class BooksOverviewComponent {
       let delta = (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0)
       cash_delta += delta;
       if (index === 0) {
-        this.cash_cumulated.push({ name: book_entry.date, value: this.Round(this.initial_liquidities.cash) + delta });
+        this.cash_cumulated.push({ name: book_entry.date, value: this.Round(this.initial_liquidities.cash + delta) });
       } else {
         this.cash_cumulated.push({ name: book_entry.date, value: this.Round(this.cash_cumulated[index - 1].value + delta) });
       }
@@ -319,11 +319,18 @@ export class BooksOverviewComponent {
     return rounded * Math.sign(value);
   }
 
-  go_report(report: string | null) {
-    if (report === null) {
+  go_report(report: string ) {
+    if(report === this.selected_report) {
       this.router.navigate(['/books/overview']);
-    } else {
-      this.router.navigate(['/books/overview', report]);
+    }else  {
+      this.selected_report = report!;
+      this.router.navigate(['/books/overview', this.selected_report]);
     }
+
+    // if (report === null) {
+    //   this.router.navigate(['/books/overview']);
+    // } else {
+    //   this.router.navigate(['/books/overview', report]);
+    // }
   }
 }

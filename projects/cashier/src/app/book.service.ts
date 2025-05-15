@@ -277,7 +277,7 @@ export class BookService {
         do {
           const { data, nextToken, errors } = await client.models.BookEntry.list({
             filter: { season: { eq: _season } },
-            limit: 100,   // this is the default value anyway
+            limit: 300,   
             nextToken: token,
           });
           if (errors) {
@@ -370,7 +370,7 @@ export class BookService {
     }
 
     return this._book_entries
-      .filter(book_entry => [TRANSACTION_CLASS.OTHER_REVENUE, TRANSACTION_CLASS.REVENUE_FROM_MEMBER].includes(this.transactionService.transaction_class(book_entry.transaction_id)))
+      .filter(book_entry => [TRANSACTION_CLASS.OTHER_REVENUE, TRANSACTION_CLASS.REVENUE_FROM_MEMBER, TRANSACTION_CLASS.REIMBURSEMENT].includes(this.transactionService.transaction_class(book_entry.transaction_id)))
       .reduce((acc, book_entry) => {
         const revenues = book_entry.operations
           .map(op => ({

@@ -47,11 +47,18 @@ export class BankReconciliationComponent {
 
   ngOnInit() {
 
-    this.bank_reports = this.systemDataService.get_season_months(new Date());
-
+    
     this.systemDataService.get_configuration().pipe(
       map((conf) => {
         this.current_season = conf.season;
+        let today = new Date();
+        let season_last_date = this.systemDataService.last_date(conf.season);
+        if (new Date(season_last_date) < today) {
+          this.bank_reports = this.systemDataService.get_season_months(new Date(season_last_date));
+        }
+        else {
+          this.bank_reports = this.systemDataService.get_season_months(today);
+        }
         return conf.season;
       }),
       switchMap((season) => combineLatest([
