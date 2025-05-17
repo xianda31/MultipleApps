@@ -7,7 +7,7 @@ import { ToasterComponent } from '../../../common/toaster/components/toaster/toa
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { BookService } from './book.service';
-import { switchMap, tap } from 'rxjs';
+import { catchError, switchMap, tap } from 'rxjs';
 
 
 
@@ -45,7 +45,12 @@ book_entries_loaded: boolean = false;
     ).subscribe((book_entries) => {
       this.book_entries_loaded = true;
       this.entries_nbr = book_entries.length;
-    });
+    })
+    catchError((err) => {
+      console.error('Error loading book entries:', err);
+      this.book_entries_loaded = false;
+      return [];
+    })
 
   }
 

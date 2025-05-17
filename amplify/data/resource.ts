@@ -21,7 +21,6 @@ const schema = a.schema({
     amounts: a.json().required(),
     operations: a.ref('Operation').array().required(),
 
-    // class: a.string().required(),
     transaction_id: a.string().required(),
     cheque_ref: a.string(),
     deposit_ref: a.string(),

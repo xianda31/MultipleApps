@@ -3,7 +3,7 @@ import { generateClient } from 'aws-amplify/api';
 
 import { BookEntry, Revenue, FINANCIAL_ACCOUNT,BALANCE_ACCOUNT, Expense, CUSTOMER_ACCOUNT, TRANSACTION_ID,  Operation,  AMOUNTS } from '../../../common/accounting.interface';
 import { Schema } from '../../../../amplify/data/resource';
-import { BehaviorSubject, catchError, combineLatest, from, map, Observable, of, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, catchError, combineLatest, from, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { ToastService } from '../../../common/toaster/toast.service';
 import { TransactionService } from './transaction.service';
@@ -199,6 +199,7 @@ export class BookService {
   list_book_entries$(season: string): Observable<BookEntry[]> {
 
     const fetchBookentries = async (_season: string): Promise<BookEntry[]> => {
+      let failed = false;
       let entries: BookEntry[] = [];
       try {
         const client = generateClient<Schema>();
@@ -212,26 +213,26 @@ export class BookService {
             nextToken: token,
           });
           if (errors) {
-            console.error(errors);
+            console.error('client.models.BookEntry.list failed !! : ' ,errors);
+            failed = true;
             throw new Error(JSON.stringify(errors));
           }
           let new_jsoned_entries = data as unknown as BookEntry_output[];
           entries = [...entries, ...new_jsoned_entries.map((entry) => this.parsed_entry(entry))];
           token = nextToken;
-
+          
           // if (this.trace_on()) console.log('loop %s => %s', nbloops,entries.length);
-        } while (token !== null && nbloops++ < 10)
-
+        } while (token !== null && nbloops++ < 10 && !failed)
+          
         if (token !== null) {
           this.toastService.showWarningToast('base comptabilité', 'beaucoup trop d\'entrées à charger , veuillez répeter l\'opération');
         }
+        return entries;
       }
       catch (error) {
-        console.error('error', error);
+        // failed = true;
+        // console.error('error', error);
         throw new Error(error instanceof Error ? error.message : String(error));
-      }
-      finally {
-        return entries;
       }
     }
 
@@ -259,7 +260,7 @@ export class BookService {
         }),
         catchError((error) => {
           console.error('Error fetching book entries:', error);
-          this.toastService.showErrorToast('base comptabilité', 'Erreur de chargement des opérations comptables : ' + (typeof error === 'object' && error instanceof Error ? error.message : String(error)));
+          this.toastService.showErrorToast('base comptabilité', 'Erreur de chargement de la base de données' );
           return of([] as BookEntry[]);
         })
       );

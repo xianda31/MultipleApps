@@ -62,17 +62,17 @@ export class BalanceComponent {
   }
 
 
-  get cashbox_lines(): string[] {
-    let lines: string[] = ['fond de caisse'];
-    if (this.balance_board.current.client_debts !== 0) {
-      lines.push('dettes clients');
-    }
-    // if (this.balance_board.current.client_assets !== 0) {
-    //   lines.push('avoirs clients');
-    // }
+  // get cashbox_lines(): string[] {
+  //   let lines: string[] = ['fond de caisse'];
+  //   if (this.balance_board.current.client_debts !== 0) {
+  //     lines.push('dettes clients');
+  //   }
+  //   // if (this.balance_board.current.client_assets !== 0) {
+  //   //   lines.push('avoirs clients');
+  //   // }
 
-    return lines;
-  }
+  //   return lines;
+  // }
 
   check_balance_vs_profit_and_loss() {
     this.trading_result = this.bookService.get_trading_result();
@@ -108,13 +108,16 @@ export class BalanceComponent {
     this.financialService.import_balance_sheets(file);
   }
 
-  show_details(account: 'gift_vouchers' | 'client_debts') {
+  show_details(account: 'gift_vouchers' | 'client_debts' | 'commited_payments') {
     switch (account) {
       case 'gift_vouchers':
         this.router.navigate(['/details/assets']);
         break;
       case 'client_debts':
         this.router.navigate(['/details/debts']);
+        break;
+        case 'commited_payments':
+        this.router.navigate(['/bank-reconciliation']);
         break;
       default:
         console.error('Unknown account type:', account);

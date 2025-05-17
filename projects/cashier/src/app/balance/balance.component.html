@@ -38,29 +38,16 @@
         <div class=" col-8">
           <table class="table table-sm table-borderless table-responsive text-end fs-5 align-middle">
             <thead>
-              <tr class="table-primary">
-                <!-- <th width="9%" class="table-light text-start"></th> -->
+              <tr >
                 <th width="30%" class="text-start">ACTIF </th>
-                <th width="20%"> {{ balance_board.current.season }}</th>
-                <th width="5%" class="table-light"></th>
-                <th width="18%" class="variation">écart</th>
-                <th width="5%" class="table-light"></th>
+                <th width="20%" class="table-primary"> {{ balance_board.current.season }}</th>
+                <th width="5%"  ></th>
+                <th width="18%" class="table-primary variation">mouvements</th>
+                <th width="5%" ></th>
                 <th width="20%" class="table-secondary fs-5"> {{ balance_board.previous.season }}</th>
               </tr>
             </thead>
             <tbody>
-
-              <!-- <tr class="fw-bolder">
-                <td class="text-start ">CREANCES</td>
-                <td>{{balance_board.current.client_debts | number:truncature:'fr'}}</td>
-                <td>&#8205;</td>
-                <td class="variation">
-                  {{delta_balance.client_debts | number:truncature:'fr'}}
-                </td>
-                <td>&#8205;</td>
-                <td class="table-secondary fs-5">{{prev_balance.client_debts |
-                  number:truncature:'fr'}}</td>
-              </tr> -->
 
               <tr class="fw-bolder">
                 <td class="text-start">COMPTES EN BANQUE</td>
@@ -115,8 +102,9 @@
               </tr>
               <tr class="fw-light fs-6">
                 <td>dettes adhérents</td>
-                <td>{{balance_board.current.client_debts | number:truncature:'fr' | parenthesis}}</td>
-                <td class="text-start"> <i (click)="show_details('client_debts')" class="h6 bi-search"></i>
+                <td class="hoverable" (click)="show_details('client_debts')">{{balance_board.current.client_debts |
+                  number:truncature:'fr' | parenthesis}}</td>
+                  <td>&#8205;</td>
                 <td class="variation">
                   {{balance_board.delta.client_debts | number:truncature:'fr'}}
                 </td>
@@ -124,16 +112,6 @@
                 <td class="table-secondary ">{{balance_board.previous.client_debts| number:truncature:'fr'}}</td>
               </tr>
 
-              <!-- <tr class="fw-light fs-6">
-                <td>créance adhérents</td>
-                <td>{{balance_board.current.client_assets | number:truncature:'fr' | parenthesis}}</td>
-                <td class="text-start"> <i (click)="show_details('client_debts')" class="h6 bi-search"></i>
-                  <td class="variation">
-                  {{balance_board.delta.client_assets | number:truncature:'fr'}}
-                </td>
-                <td>&#8205;</td>
-                <td class="table-secondary ">{{balance_board.previous.client_assets| number:truncature:'fr'}}</td>
-              </tr> -->
               <tr class="fw-bolder">
                 <td class="text-start">ENCOURS</td>
                 <td> {{balance_board.current.wip_total| number:truncature:'fr'}} </td>
@@ -161,24 +139,21 @@
               <tr class="fw-light fs-6">
                 <td>paiements engagés</td>
 
-                <td>{{balance_board.current.outstanding_expenses | number:truncature:'fr'|
-                  parenthesis}}
-                </td>
+                <td class="hoverable" (click)="show_details('commited_payments')">
+                  {{balance_board.current.outstanding_expenses | number:truncature:'fr'| parenthesis}} </td>
                 <td>&#8205;</td>
-                <td class="variation">
-                  {{balance_board.delta.outstanding_expenses |
-                  number:truncature:'fr'| parenthesis}}</td>
+                <td class="variation"> {{balance_board.delta.outstanding_expenses | number:truncature:'fr'|
+                  parenthesis}}</td>
                 <td>&#8205;</td>
-
                 <td class="table-secondary">
                   {{balance_board.previous.outstanding_expenses | number:truncature:'fr'| parenthesis}}
                 </td>
               </tr>
               <tr class="fw-light fs-6">
-                <td>avoirs valides </td>
-                <td> {{balance_board.current.gift_vouchers | number:truncature:'fr' | parenthesis}}</td>
-                <td class="text-start"> <i (click)="show_details('gift_vouchers')" class="h6 bi-search"></i>
-                </td>
+                <td>avoirs distribués </td>
+                <td class="hoverable" (click)="show_details('gift_vouchers')"> {{balance_board.current.gift_vouchers |
+                  number:truncature:'fr' | parenthesis}}</td>
+                <td>&#8205;</td>
                 <td class="variation"> {{balance_board.delta.gift_vouchers |
                   number:truncature:'fr' | parenthesis}}</td>
 
@@ -191,12 +166,12 @@
 
 
 
-              <tr class="table-primary fw-bold">
-                <td class="text-start ">TOTAL ACTIF</td>
-                <td> {{balance_board.current.actif_total| number:truncature:'fr'}} </td>
-                <td class="table-light">&#8205;</td>
-                <td class="variation">{{balance_board.delta.actif_total | number:truncature:'fr' | parenthesis}}</td>
-                <td class="table-light">&#8205;</td>
+              <tr class=" fw-bold">
+                <td class="table-primary text-start ">TOTAL ACTIF</td>
+                <td class="table-primary"> {{balance_board.current.actif_total| number:truncature:'fr'}} </td>
+                <td >&#8205;</td>
+                <td class="table-primary variation">{{balance_board.delta.actif_total | number:truncature:'fr' | parenthesis}}</td>
+                <td >&#8205;</td>
                 <td class="table-secondary">{{balance_board.previous.actif_total|
                   number:truncature:'fr'}}</td>
               </tr>
@@ -219,8 +194,6 @@
                 <td>{{balance_board.previous.actif_total | number:truncature:'fr'}}</td>
               </tr>
               <!-- alignment with "TRESORERIE" -->
-              <!-- <tr>
-              </tr> -->
               <tr *ngFor="let n of [1, 2]" class="fw-light fs-6">
                 <td>&#8205;</td>
                 <td>&#8205;</td>
@@ -232,7 +205,7 @@
                 <td>{{trading_result | number:truncature:'fr'}}</td>
               </tr>
 
-              <tr *ngFor="let n of cashbox_lines" class="fw-light fs-6">
+              <tr *ngFor="let n of [1, 2]" class="fw-light fs-6">
                 <td>&#8205;</td>
                 <td>&#8205;</td>
               </tr>
@@ -280,18 +253,18 @@
               <button class=" btn btn-outline-success btn-sm">
                 <i class=" bi-file-earmark-arrow-up-fill"></i>
                 <a [href]="export_url" style="text-decoration: none; color: var(--bs-success);"
-                download="bilan.txt">export.txt</a>
+                  download="bilan.txt">export.txt</a>
               </button>
             </div>
-            
+
             <div class="col-auto">
               <button class=" btn btn-outline-success btn-sm" (click)="fileInput.click()">
                 <i class=" bi-file-earmark-arrow-down-fill"></i>
                 import.txt</button>
-                <input #fileInput type="file" style="display:none" class="form-control form-control-sm text-end"
+              <input #fileInput type="file" style="display:none" class="form-control form-control-sm text-end"
                 (change)="file_import($event)">
-              </div>
             </div>
+          </div>
         </div>
       </div>
     </div>
