@@ -5,9 +5,6 @@ import { ToasterComponent } from '../../../common/toaster/components/toaster/toa
 import { ToastEvent } from '../../../common/toaster/models/toast-event';
 import { CommonModule, registerLocaleData } from '@angular/common';
 import localeFr from '@angular/common/locales/fr'; // Import the 'localeFr' variable
-import { combineLatest } from 'rxjs';
-import { SystemDataService } from '../../../common/services/system-data.service';
-import { MembersService } from './members/service/members.service';
 
 @Component({
   selector: 'app-root',

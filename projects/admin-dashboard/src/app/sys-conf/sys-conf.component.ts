@@ -80,11 +80,18 @@ export class SysConfComponent {
   }
 
   ngOnInit(): void {
-    this.systemDataService.get_configuration().subscribe((configuration) => {
+    this.systemDataService.get_configuration()
+    .subscribe({
+      next : (configuration) => {
       this.loadDataInFormGroup(configuration);
       this.export_file_url = this.fileService.json_to_blob(configuration);
       this.loaded = true;
-    });
+    },
+      error: (error) => {
+        console.error('error', error);
+        this.toatService.showErrorToast('erreur de chargement de la configuration', 'vérifiez la connexion internet');
+      }
+  });
   }
 
   save_configuration() {
