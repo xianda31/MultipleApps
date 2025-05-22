@@ -31,7 +31,7 @@ interface Account {
   selector: 'app-booking',
   standalone: true,
   encapsulation: ViewEncapsulation.None,   // nécessaire pour que les CSS des tooltips fonctionnent
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbTooltipModule,BackComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbTooltipModule, BackComponent],
   templateUrl: './books-editor.component.html',
   styleUrl: './books-editor.component.scss'
 })
@@ -326,7 +326,7 @@ export class BooksEditorComponent {
 
     let operationForm: FormGroup = this.fb.group({
       'label': [operation_initial?.label ?? ''],
-      'total': {value : (operation_initial?.values ? this.sum_operation_values(transaction, operation_initial) : ''), disabled: true},
+      'total': { value: (operation_initial?.values ? this.sum_operation_values(transaction, operation_initial) : ''), disabled: true },
       // 'values': this.fb.array(
       //   (expense_or_revenue_accounts.map(account => new FormControl<string>((operation_initial?.values?.[account.key]?.toString() ?? ''), [Validators.pattern(this.NumberRegexPattern)])) as unknown[]),
       //   { validators: [this.atLeastOneFieldValidator] }),
@@ -348,8 +348,7 @@ export class BooksEditorComponent {
       }
     }
 
-    if (expense_or_revenue_accounts.length !== 0)
-    {
+    if (expense_or_revenue_accounts.length !== 0) {
       operationForm.addControl('values', this.fb.array(
         expense_or_revenue_accounts.map((account_def) => new FormControl<string>((operation_initial?.values?.[account_def.key]?.toString() ?? ''), [Validators.pattern(this.NumberRegexPattern)])),
         { validators: [this.atLeastOneFieldValidator] }));
@@ -529,7 +528,10 @@ export class BooksEditorComponent {
 
     if (this.creation) {
       this.bookService.create_book_entry(booking).then(() =>
-        this.toastService.showSuccessToast('création', 'écriture enregistrée'));
+        this.toastService.showSuccessToast('création', 'écriture enregistrée'))
+        .catch((error) => {
+          this.toastService.showErrorToast('erreur', 'écriture non enregistrée');
+        });
       this.reset_form();
     } else {
       booking.id = this.book_entry_id;

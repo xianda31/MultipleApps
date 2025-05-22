@@ -110,21 +110,34 @@ export class BookService {
     const client = generateClient<Schema>();
     let jsonified_entry: BookEntry_input = this.jsonified_entry(book_entry);
     const { id, ...jsonified_entry_without_id } = jsonified_entry;
+
     try {
-      const response = await client.models.BookEntry.create(jsonified_entry_without_id);
-      if (response.errors) {
-        console.error('error creating', this.jsonified_entry(book_entry), response.errors);
-        throw new Error(JSON.stringify(response.errors));
-      }
-      const created_entry = this.parsed_entry(response.data as unknown as BookEntry_output);
+      const {data,errors} = await client.models.BookEntry.create(
+        jsonified_entry_without_id,
+        {authMode:'userPool'}
+      );
+      if (errors) {        throw errors;      }
+
+      const created_entry = this.parsed_entry(data as unknown as BookEntry_output);
       this._book_entries.push(created_entry);
       this._book_entries$.next(this._book_entries.sort((b, a) => {
         return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
       }));
       return (created_entry);
     } catch (error) {
-      console.error('error', error);
-      throw new Error(error instanceof Error ? error.message : String(error));
+
+      let errorType: string = '.. erreur inattendue';
+        if (Array.isArray(error) && error.length > 0 && typeof error[0] === 'object' && error[0] !== null && 'errorType' in error[0]) {
+          errorType = (error[0] as { errorType: string, message: string }).errorType;
+        }
+        switch (errorType) {
+          case 'Unauthorized':
+            this.toastService.showWarningToast('base comptabilité', 'Vous n\'êtes pas autorisé à créer une entrée comptable');
+            break;
+          default:
+            this.toastService.showErrorToast('base comptabilité', 'Erreur de création de l\'écriture comptable : ' + errorType);
+        }
+      throw errorType;
     }
   }
 
@@ -154,7 +167,9 @@ export class BookService {
   async update_book_entry(book_entry: BookEntry) {
     const client = generateClient<Schema>();
     try {
-      const response = await client.models.BookEntry.update(this.jsonified_entry(book_entry));
+      const response = await client.models.BookEntry.update(
+        this.jsonified_entry(book_entry),
+        {authMode:'userPool'});
       if (response.errors) {
         console.error('error', response.errors);
         throw new Error(JSON.stringify(response.errors));
@@ -166,8 +181,18 @@ export class BookService {
       }));
       return updated_entry;
     } catch (error) {
-      console.error('error', error);
-      throw new Error(error instanceof Error ? error.message : String(error));
+            let errorType: string = '.. erreur inattendue';
+        if (Array.isArray(error) && error.length > 0 && typeof error[0] === 'object' && error[0] !== null && 'errorType' in error[0]) {
+          errorType = (error[0] as { errorType: string, message: string }).errorType;
+        }
+        switch (errorType) {
+          case 'Unauthorized':
+            this.toastService.showWarningToast('base comptabilité', 'Vous n\'êtes pas autorisé à créer une entrée comptable');
+            break;
+          default:
+            this.toastService.showErrorToast('base comptabilité', 'Erreur de création de l\'écriture comptable : ' + errorType);
+        }
+      throw errorType;
     }
   }
 
@@ -176,7 +201,8 @@ export class BookService {
   delete_book_entry(entry_id: string) {
     const client = generateClient<Schema>();
 
-    return client.models.BookEntry.delete({ id: entry_id })
+    return client.models.BookEntry.delete({ id: entry_id },
+        {authMode:'userPool'})
       .then((response) => {
         if (response.errors) {
           console.error('error', response.errors);
@@ -189,8 +215,18 @@ export class BookService {
         return response;
       })
       .catch((error) => {
-        console.error('error', error);
-        throw new Error(error)
+             let errorType: string = '.. erreur inattendue';
+        if (Array.isArray(error) && error.length > 0 && typeof error[0] === 'object' && error[0] !== null && 'errorType' in error[0]) {
+          errorType = (error[0] as { errorType: string, message: string }).errorType;
+        }
+        switch (errorType) {
+          case 'Unauthorized':
+            this.toastService.showWarningToast('base comptabilité', 'Vous n\'êtes pas autorisé à créer une entrée comptable');
+            break;
+          default:
+            this.toastService.showErrorToast('base comptabilité', 'Erreur de création de l\'écriture comptable : ' + errorType);
+        }
+      throw errorType;
       });
   }
 
@@ -242,7 +278,7 @@ export class BookService {
     } else { this.force_reload = false; }
 
     if (this._book_entries && !this.force_reload) {
-      if (this.trace_on()) console.log('%s book entries retrieved from cache', this._book_entries.length);
+      // if (this.trace_on()) console.log('%s book entries retrieved from cache', this._book_entries.length);
       return this._book_entries$.asObservable();
     } else {
 
@@ -255,7 +291,7 @@ export class BookService {
         }),
         switchMap((entries) => {
           this._book_entries$.next(this._book_entries);
-          if (this.trace_on()) console.log('%s book entries loaded from S3', entries.length);
+          // if (this.trace_on()) console.log('%s book entries loaded from S3', entries.length);
           return this._book_entries$.asObservable();
         }),
         catchError((error) => {

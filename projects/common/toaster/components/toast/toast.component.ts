@@ -24,7 +24,7 @@ export class ToastComponent implements OnChanges {
   toast!: Toast;
 
   // toast!: Toast;
-  class: string = 'toast  align-items-center border-0 text-bg-primary ';
+  class: string = 'toast  align-items-center border-0 text-bg-primary shadow-sm';
 
   constructor() {
   }
@@ -51,7 +51,7 @@ export class ToastComponent implements OnChanges {
   show() {
     this.toast = new Toast(
       this.toastEl.nativeElement,
-      this.event.type === EventTypes.Error ? { autohide: false, } : { delay: 2000, });
+      this.event.type === EventTypes.Error ? { autohide: false, } : { delay: 6000, });
 
     fromEvent(this.toastEl.nativeElement, 'hidden.bs.toast')
       .pipe(take(1))

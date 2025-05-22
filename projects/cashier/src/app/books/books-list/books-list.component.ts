@@ -44,7 +44,6 @@ export class BooksListComponent implements OnDestroy {
       .subscribe(
         (book_entries) => {
           this.book_entries = [...book_entries];
-          console.log('....got %s book entries', this.book_entries.length);
           this.loaded = true;
         }
       )
@@ -53,7 +52,7 @@ export class BooksListComponent implements OnDestroy {
 
   ngOnDestroy() {
     if (this.book_subscription) {
-      console.log('unsubscribing from book entries');
+      // console.log('unsubscribing from book entries');
       this.book_subscription.unsubscribe();
     }
   }

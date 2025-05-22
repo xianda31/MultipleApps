@@ -26,8 +26,10 @@ const schema = a.schema({
     deposit_ref: a.string(),
     bank_report: a.string(),
 
-  }).authorization((allow) => [allow.publicApiKey()]),
-
+  }).authorization((allow) => [
+    allow.publicApiKey().to(['read']),
+    allow.group('Expert'),
+  ]),
   // Adhérents et produits Club
 
   Game_credit: a.customType({

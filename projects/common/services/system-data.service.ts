@@ -31,7 +31,7 @@ export class SystemDataService {
     );
     
     if(this._system_configuration !== undefined) {
-      if (this.trace_on()) console.log(' configuration from cache', this._system_configuration);
+      // if (this.trace_on()) console.log(' configuration from cache', this._system_configuration);
       return this._system_configuration$.asObservable();
     }else {
       return remote_load$;

@@ -215,7 +215,7 @@ export class BooksOverviewComponent {
     this.cheques_deposits = this.sort_deposits(this.cashbox_cheques);
 
     this.cashbox_status.cheques.anomaly = this.cheques_deposits.some((chked_deposit) => !chked_deposit.balanced && chked_deposit.complete);;
-    console.log('anomaly', this.cashbox_status.cheques.anomaly);
+    // console.log('anomaly', this.cashbox_status.cheques.anomaly);
     let outstanding_deposits = this.cheques_deposits.find((deposit: Deposit_checked) => deposit.out_date === undefined);
 
     if (outstanding_deposits) {
@@ -291,7 +291,7 @@ export class BooksOverviewComponent {
         this.cash_cumulated.push({ name: book_entry.date, value: this.Round(this.cash_cumulated[index - 1].value + delta) });
       }
     });
-    console.log('cash movements', cash_delta);
+    // console.log('cash movements', cash_delta);
   }
 
 
