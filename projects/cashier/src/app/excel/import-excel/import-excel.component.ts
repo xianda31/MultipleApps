@@ -381,6 +381,10 @@ export class ImportExcelComponent {
       case 'B999':  // type chrono banque
 
         switch (nature) {
+          case 'report prélèvement':
+            return TRANSACTION_ID.report_prélèvement;
+            case 'report chèque': 
+            return TRANSACTION_ID.report_chèque;
           case 'versement espèces':
             return TRANSACTION_ID.dépôt_collecte_espèces;
           case 'fond en espèces':
@@ -424,6 +428,8 @@ export class ImportExcelComponent {
       case 'C999': // type 'chrono vente':
 
         switch (nature) {
+          case 'report avoir':
+            return TRANSACTION_ID.report_avoir;
           case 'virement reçu':
             return TRANSACTION_ID.achat_adhérent_par_virement;
           case 'paiement par chèque':
@@ -577,6 +583,7 @@ export class ImportExcelComponent {
         break;
       case TRANSACTION_CLASS.EXPENSE_FOR_MEMBER:
       case TRANSACTION_CLASS.OTHER_EXPENSE:
+        case TRANSACTION_CLASS.BALANCE:
         operation.values = this.get_expenses_values(row);
         break;
       case TRANSACTION_CLASS.MOVEMENT:

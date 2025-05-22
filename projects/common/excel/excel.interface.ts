@@ -50,6 +50,11 @@ export enum COL {
   AQ = 43,
   AR = 44,
   AS = 45,
+  AT = 46,
+  AU = 47,
+  AV = 48,
+  AW = 49,
+  AX = 50,
 }
 
 export const MAP = {
@@ -64,11 +69,11 @@ export const MAP = {
   // 'expenses': 'P:AB',
   // 'book_entry': 'AC:AL',
 
-  'pointage': 'AN',
-  'n° chèque': 'AO',
-  'bordereau': 'AP',
-  'verif balance': 'AQ',
-  'nature': 'AR',
+  'pointage': 'AS',
+  'n° chèque': 'AT',
+  'bordereau': 'AU',
+  'verif balance': 'AV',
+  'nature': 'AW',
 }
 
 export type ACCOUNTS_COL = { [key: string]: string }
@@ -83,44 +88,47 @@ export const PRODUCTS_COL: ACCOUNTS_COL = {
   'LIC': 'M',
   'DdT': 'N',
   'CAR': 'O',
-  //  'KFE': 'K',
-  //  'BNQ': 'X',
+   'KFE': 'P',
+   'DON': 'Q',
+   'BNQ': 'R',
 }
 
 
 export const EXPENSES_COL: ACCOUNTS_COL = {
-  'LIC': 'P',
-  'FFB': 'Q',
-  'BRP': 'R',
-  'FOR': 'S',
-  'MAT': 'T',
-  'COM': 'U',
-  'CMP': 'V',
-  'REU': 'W',
-  'FET': 'X',
-  'KFE': 'Y',
-  'AUT': 'Z',
-  'BNQ': 'AA',
+  'LIC': 'S',
+  'FFB': 'T',
+  'BRP': 'U',
+  'FOR': 'V',
+  'MAT': 'W',
+  'COM': 'X',
+  'CMP': 'Y',
+  'REU': 'Z',
+  'FET': 'AA',
+  'KFE': 'AB',
+  'AUT': 'AC',
+  'BIB': 'AD',
+  'CAF': 'AE',
+  'BNQ': 'AF',
 }
 
 export const EXTRA_CUSTOMER_IN: { [key in CUSTOMER_ACCOUNT]?: string } = {
-  'creance_in': 'AB',
-  'avoir_in': 'AC',
+  'creance_in': 'AG',
+  'avoir_in': 'AH',
 }
 export const EXTRA_CUSTOMER_OUT: { [key in CUSTOMER_ACCOUNT]?: string } = {
-  'creance_out': 'AH',
-  'avoir_out': 'AI',
+  'creance_out': 'AM',
+  'avoir_out': 'AN',
 }
 export const FINANCIAL_COL: { [key in FINANCIAL_ACCOUNT | BALANCE_ACCOUNT]: string } = {
-  'cashbox_in': 'AD',
-  'bank_in': 'AE',
-  'saving_in': 'AF',
-  'report_in': 'AG',
+  'cashbox_in': 'AI',
+  'bank_in': 'AJ',
+  'saving_in': 'AK',
+  'report_in': 'AL',
 
-  'cashbox_out': 'AJ',
-  'bank_out': 'AK',
-  'saving_out': 'AL',
-  'report_out': 'AM',
+  'cashbox_out': 'AO',
+  'bank_out': 'AP',
+  'saving_out': 'AQ',
+  'report_out': 'AR',
 }
 
 

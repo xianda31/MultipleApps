@@ -12,14 +12,14 @@ import { CashGraphComponent } from "../graphs/cash-graph/cash-graph.component";
 import { FinancialReportService } from '../../financial_report.service';
 
 enum REPORTS {
-  CHARGES = 'dépenses / charges',
-  PRODUITS = 'vente / produits',
+  CHARGES = 'dépenses,charges',
+  PRODUITS = 'recettes,produits',
   BANQUE = 'compte en banque',
   EPARGNE = 'épargne',
   DETTES_ET_AVOIRS = 'crédits & dettes',
   CAISSE_CASH = 'espèces en caisse',
-  CAISSE_CHEQUES = 'dépôt chèques',
-  AVOIRS_ADHERENTS = 'avoirs',
+  CAISSE_CHEQUES = 'chèques à déposer',
+  AVOIRS_ADHERENTS = 'avoirs adhérents',
 }
 
 enum CASHBOX_FILTER {

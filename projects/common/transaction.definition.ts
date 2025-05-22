@@ -476,7 +476,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
   },
   // report d'encours paiement par chèque d'une prestation ou service
   [TRANSACTION_ID.report_chèque]: {
-    label: 'report de chèque',
+    label: 'REPORT CHEQUE',
     tooltip: 'report d\'un chèque non encaissé sur l\'année suivante',
     class: TRANSACTION_CLASS.BALANCE,
     financial_accounts: [...balance_sheet_accounts, ...financial_credits],
