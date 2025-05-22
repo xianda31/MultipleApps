@@ -5,7 +5,6 @@ import { Process_flow } from './authentification_interface';
 import { ToastService } from '../toaster/toast.service';
 import { MembersService } from '../../admin-dashboard/src/app/members/service/members.service';
 import { Member } from '../member.interface';
-import { custom_resources } from 'aws-cdk-lib';
 
 @Injectable({
   providedIn: 'root'
@@ -108,6 +107,8 @@ export class AuthentificationService {
                 this.toastService.showInfoToast('sign up', err.message);
                 break;
             }
+            this._mode = Process_flow.SIGN_IN;
+            this._mode$.next(this._mode);
           } else {
             this.toastService.showInfoToast('sign up', err.message);
           }

@@ -1,4 +1,3 @@
-import { CommonModule, JsonPipe } from '@angular/common';
 import { Component } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { MembersService } from '../../../admin-dashboard/src/app/members/service/members.service';
@@ -92,7 +91,7 @@ export class SignInComponent {
         this.toastService.showErrorToast('sign in', 'erreur imprévue');
         return;
       }
-      console.log("member_id", member_id);
+      // console.log("member_id", member_id);
       const me = await this.membersService.readMember(member_id);
       // this.auth.whoAmI = me;
       this.toastService.showSuccessToast('identification', 'Bonjour ' + me!.firstname);
@@ -120,6 +119,9 @@ export class SignInComponent {
       // .catch((err) => this.toastService.showInfoToast('sign up', err.message))
       .then(({ isSignUpComplete, nextStep }) => {
         this.sign_up_sent = true;
+      })
+      .catch((err) => {
+        // console.log("sign up error", err);
       });
   }
 
@@ -150,7 +152,10 @@ export class SignInComponent {
   }
 
   resetPassword() {
-    if (this.email.invalid) return;
+    if (this.email.invalid) {
+      this.toastService.showWarningToast('reset mdp', 'adresse mail non valide');
+       return;
+    }
     this.auth.resetPassword(this.email.value);
   }
 
