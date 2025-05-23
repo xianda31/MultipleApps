@@ -106,7 +106,7 @@ export class CartService {
           this.clearCart();
         })
         .catch((error) => {
-          console.error('error saving sale', error);
+          // console.error('error saving sale', error);
           reject(error);
         });
     });

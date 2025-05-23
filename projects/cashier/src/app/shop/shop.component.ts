@@ -132,7 +132,7 @@ export class ShopComponent {
         this.toastService.showSuccessToast('vente', (this.debt_amount > 0) ? 'achats et dette enregistrés' : 'achats enregistrés');
       })
       .catch((error) => {
-        console.error('error saving sale', error);
+        // console.error('error saving sale', error);
       });
     this.buyerForm.reset();
   }

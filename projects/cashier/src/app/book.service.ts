@@ -124,9 +124,10 @@ export class BookService {
         return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
       }));
       return (created_entry);
+      
     } catch (error) {
 
-      let errorType: string = '.. erreur inattendue';
+      let errorType: string = '.. accès refusé ... êtes-vous bien connecté ?';
         if (Array.isArray(error) && error.length > 0 && typeof error[0] === 'object' && error[0] !== null && 'errorType' in error[0]) {
           errorType = (error[0] as { errorType: string, message: string }).errorType;
         }
@@ -135,7 +136,7 @@ export class BookService {
             this.toastService.showWarningToast('base comptabilité', 'Vous n\'êtes pas autorisé à créer une entrée comptable');
             break;
           default:
-            this.toastService.showErrorToast('base comptabilité', 'Erreur de création de l\'écriture comptable : ' + errorType);
+            this.toastService.showErrorToast('base comptabilité',  errorType);
         }
       throw errorType;
     }

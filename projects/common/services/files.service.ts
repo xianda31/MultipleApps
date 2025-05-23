@@ -75,12 +75,12 @@ export class FileService {
         }
       }).result
         .then((result) => {
-          this.toastService.showSuccessToast(file.name, 'sauvegarde réussie');
+          this.toastService.showSuccessToast('upload '+ directory, 'sauvegarde réussie');
           resolve(result);
         })
         .catch((error) => {
           console.log('error', error);
-          this.toastService.showErrorToast(file.name, 'erreur de chargement');
+          this.toastService.showErrorToast('upload '+ directory, 'échec de la sauvegarde');
           reject(error);
         });
     });

@@ -35,6 +35,7 @@ export class BankReconciliationComponent {
     // [FINANCIAL_ACCOUNT.SAVING_credit]: 'saving_out',
 ];
     bank_reports: string[] = [];
+    db_loaded: boolean = false;
 
   constructor(
     private bookService: BookService,
@@ -71,7 +72,8 @@ export class BankReconciliationComponent {
         .filter(book_entry => this.bank_accounts.some(op => book_entry.amounts[op] !== undefined))
         .sort((a, b) => {
           return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
-        });;
+        });
+        this.db_loaded = true;
       });
   }
 
