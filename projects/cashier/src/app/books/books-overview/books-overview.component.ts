@@ -1,14 +1,13 @@
-import { Component, computed, signal } from '@angular/core';
-import { Expense, BookEntry, FINANCIAL_ACCOUNT, Revenue, TRANSACTION_ID, Cashbox_accounts, Bank_accounts, Savings_accounts, BALANCE_ACCOUNT } from '../../../../../common/accounting.interface';
+import { Component } from '@angular/core';
+import { Expense, BookEntry, FINANCIAL_ACCOUNT, Revenue, TRANSACTION_ID, Cashbox_accounts, Bank_accounts, Savings_accounts } from '../../../../../common/accounting.interface';
 import { BookService } from '../../book.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TransactionService } from '../../transaction.service';
-import { combineLatest, Observable, switchMap, tap } from 'rxjs';
+import { combineLatest, switchMap, tap } from 'rxjs';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { CashGraphComponent } from "../graphs/cash-graph/cash-graph.component";
 import { FinancialReportService } from '../../financial_report.service';
 
 enum REPORTS {
@@ -16,7 +15,7 @@ enum REPORTS {
   PRODUITS = 'recettes,produits',
   BANQUE = 'compte en banque',
   EPARGNE = 'épargne',
-  DETTES_ET_AVOIRS = 'crédits & dettes',
+  DETTES_ET_CREDITS = 'dettes & crédits',
   CAISSE_CASH = 'espèces en caisse',
   CAISSE_CHEQUES = 'chèques à déposer',
   AVOIRS_ADHERENTS = 'avoirs adhérents',
@@ -114,13 +113,11 @@ export class BooksOverviewComponent {
   ngOnInit() {
 
     this.route.params.subscribe(params => {
-      console.log('params', params);
       let report = params['report'];
       if (report && Object.values(REPORTS).includes(report)) {
         this.selected_report = report;
       }
-    }
-    );
+    });
 
 
     this.systemDataService.get_configuration().pipe(
@@ -151,6 +148,7 @@ export class BooksOverviewComponent {
       this.current_cash_movements = this.bookService.get_cashbox_movements_amount();
       this.current_bank_movements = this.bookService.get_bank_movements_amount();
       this.current_savings_movements = this.bookService.get_savings_movements_amount();
+
       this.debts = this.bookService.get_debts();
       this.assets = this.bookService.get_customers_assets();
       this.assets_entries = Object.fromEntries(this.assets.entries());
@@ -180,28 +178,6 @@ export class BooksOverviewComponent {
 
   }
 
-  // verify_amounts() {
-  //   let total = this.book_entries.reduce((accumulator, book_entry) => {
-  //     let debit = 
-  //       (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) 
-  //     + (book_entry.amounts[FINANCIAL_ACCOUNT.BANK_debit] || 0) 
-  //     + (book_entry.amounts[FINANCIAL_ACCOUNT.SAVING_debit] || 0)
-  //     + (book_entry.amounts[BALANCE_ACCOUNT.BAL_debit] || 0);
-
-  //     let credit = 
-  //       (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0)
-  //     + (book_entry.amounts[FINANCIAL_ACCOUNT.BANK_credit] || 0)
-  //     + (book_entry.amounts[FINANCIAL_ACCOUNT.SAVING_credit] || 0)
-  //     + (book_entry.amounts[BALANCE_ACCOUNT.BAL_credit] || 0);
-
-  //     return {
-  //       debit: accumulator.debit + debit,
-  //       credit: accumulator.credit + credit
-  //     };
-  //   }, { debit: 0, credit: 0 });
-
-  //   console.log('total movements', total.debit-total.credit, 'debit', total.debit, 'credit', total.credit);
-  // }
 
   // utilitaires pour visualisation des chèques et leur status de dépôt
 
@@ -299,6 +275,11 @@ export class BooksOverviewComponent {
     return this.transactionService.get_transaction(op_type).label;
   }
 
+  Round(value: number) {
+    const neat = +(Math.abs(value).toPrecision(15));
+    const rounded = Math.round(neat * 100) / 100;
+    return rounded * Math.sign(value);
+  }
 
   delete_book_entry(book_entry: BookEntry) {
     this.bookService.delete_book_entry(book_entry.id!).then((book_entry) => {
@@ -313,24 +294,15 @@ export class BooksOverviewComponent {
     let id = selection.split(' : ')[1];
     this.router.navigate(['/books/editor', id]);
   }
-  Round(value: number) {
-    const neat = +(Math.abs(value).toPrecision(15));
-    const rounded = Math.round(neat * 100) / 100;
-    return rounded * Math.sign(value);
-  }
 
-  go_report(report: string ) {
-    if(report === this.selected_report) {
-      this.router.navigate(['/books/overview']);
-    }else  {
-      this.selected_report = report!;
-      this.router.navigate(['/books/overview', this.selected_report]);
+  go_report(report: string) {
+    if (report === this.selected_report) {
+      // this.router.navigate(['/books/overview']);
+      this.selected_report = '';
+    } else {
+      this.selected_report = report;
+      // this.router.navigate(['/books/overview', this.selected_report]);
     }
 
-    // if (report === null) {
-    //   this.router.navigate(['/books/overview']);
-    // } else {
-    //   this.router.navigate(['/books/overview', report]);
-    // }
   }
 }

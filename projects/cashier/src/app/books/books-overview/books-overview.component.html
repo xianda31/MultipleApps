@@ -1,14 +1,3 @@
-<!-- <div class="card mt-2">
-  <div class="card-body bg-body-secondary">
-    <div class="row  justify-content-around">
-      <div class="col-auto form-check form-check-inline" *ngFor="let report of reports | keyvalue">
-        <input class="form-check_input" type="radio" (ngModelChange)="go_report($event)" [(ngModel)]="selected_report"
-          [value]="report.value">
-        <label class="form-check-label">{{report.value}}</label>
-      </div>
-    </div>
-  </div>
-</div> -->
 
 <div class="mt-2 row row-cols-1 row-cols-md-4 g-4 ">
   <div class="col" *ngFor="let report of reports_values ">
@@ -46,7 +35,7 @@
         <!-- <i class="h4 bi-card-heading " *ngIf="cashbox_status.cheques.nbr > 0"></i> -->
         <i class="h6 bi-exclamation-triangle-fill text-danger" *ngIf="cashbox_status.cheques.anomaly"></i>
       </ng-container>
-      <ng-container *ngSwitchCase="reports.DETTES_ET_AVOIRS">
+      <ng-container *ngSwitchCase="reports.DETTES_ET_CREDITS">
         {{ current_debt_amount }} €
       </ng-container>
       <ng-container *ngSwitchCase="reports.AVOIRS_ADHERENTS">
@@ -309,7 +298,7 @@
 
         <td>{{book_entry.date | date: 'dd/MM/yyyy'}}</td>
         <td class="text-start"> {{book_entry.transaction_id}}
-          <td class="text-start"> {{book_entry.operations[0].label}}</td>
+        <td class="text-start"> {{book_entry.operations[0].label}}</td>
         <td>
           <div class="pe-5 text-end">
             {{ ((book_entry.amounts['cashbox_in']??0) - (book_entry.amounts['cashbox_out']??0)) |
@@ -328,19 +317,20 @@
 </div>
 
 
-
-
-
-<!-- dettes et avoirs -->
-<div *ngIf="selected_report === reports.DETTES_ET_AVOIRS" class="row mt-2 justify-content-center">
-  <div class="col-md-5">
+<!-- dettes & crédits  -->
+<div *ngIf="selected_report === reports.DETTES_ET_CREDITS" class="row mt-2 justify-content-center">
+  <div class="col col-md-8">
     <div
-      *ngTemplateOutlet="dettes_et_avoirs ; context: {title:'avoir adhérents', balance:current_assets_amount, map: assets_entries}">
+      *ngTemplateOutlet="debts_and_assets_report ; context: {title:selected_report, balance:current_debt_amount,  map: debts}">
     </div>
   </div>
-  <div class="col-md-5">
+</div>
+
+<!-- avoirs adhérents -->
+<div *ngIf="selected_report === reports.AVOIRS_ADHERENTS" class="row mt-2 justify-content-center">
+  <div class="col col-md-8">
     <div
-      *ngTemplateOutlet="other_report ; context: {title:'dettes adhérents', balance:current_debt_amount,  map: debts}">
+      *ngTemplateOutlet="debts_and_assets_report ; context: {title:selected_report, balance:current_assets_amount, map: assets_entries}">
     </div>
   </div>
 </div>
@@ -373,40 +363,55 @@
 </ng-template>
 
 
-<ng-template #other_report let-title="title" let-balance="balance" let-map="map">
+<ng-template #debts_and_assets_report let-title="title" let-balance="balance" let-map="map">
   <div class="card">
-    <div class="card-header">
-      <h5>{{title}} : {{balance}} €</h5>
+        <div class="card-header">
+      <div class="row justify-content-between align-items-center">
+        <h5 class="col">{{title}} : {{balance}} €</h5>
+        <div class="col-auto form-check form-switch ">
+          <input class="form-check-input" type="checkbox" id="flexSwitchCheckChecked" [checked]="show_all_assets"
+            (change)="show_all_assets = !show_all_assets">
+          <label class="form-check-label" for="flexSwitchCheckChecked">tout mouvement</label>
+        </div>
+      </div>
     </div>
     <div class="card-body">
       <table class="table table-sm">
         <thead>
           <tr>
-            <th class="col">adhérent </th>
-            <th class="col text-center"> montant </th>
-            <th class="col"> </th>
+            <th class="col-4">adhérent </th>
+            <th class="col-4 text-end pe-5"> montant </th>
+            <th class="col-4 text-center">origine </th>
           </tr>
         </thead>
 
         <tbody>
 
-          <tr *ngFor="let entry of map | keyvalue">
-            <td>{{entry.key}}</td>
-            <td class="text-center">
-              {{ entry.value }}
-            </td>
-            <td>
+          <ng-container *ngFor="let entry of map | keyvalue">
 
-              <!-- <i class="bi bi-search" (click)="show_map_entry(entry)"></i> -->
-            </td>
-          </tr>
+            <tr *ngIf="show_all_assets || $any(entry.value).total !== 0">
+
+              <td>{{entry.key}}</td>
+              <td class="text-end pe-5">
+                {{ $any(entry.value).total  | number:truncature:'fr'}}
+              </td>
+              <td>
+                <select #choice (change)="show(choice.value)" class="form-select form-select-sm">
+                  <option hidden></option>
+                  <option *ngFor="let book of $any(entry.value).entries ; let i = index">
+                    {{book.date}} : {{book.id}}</option>
+                  </select>
+                  <!-- <i class="bi bi-search" (click)="show_map_entry(entry)"></i> -->
+                </td>
+              </tr>
+            </ng-container>
         </tbody>
       </table>
     </div>
   </div>
 </ng-template>
 
-<ng-template #dettes_et_avoirs let-title="title" let-balance="balance" let-map="map">
+<!-- <ng-template #customers_assets_report let-title="title" let-balance="balance" let-map="map">
   <div class="card">
     <div class="card-header">
       <div class="row justify-content-between align-items-center">
@@ -422,9 +427,9 @@
       <table class="table table-sm">
         <thead>
           <tr>
-            <th class="col">adhérent </th>
-            <th class="col text-center"> montant </th>
-            <th class="col"> </th>
+            <th class="col-4">adhérent </th>
+            <th class="col-4 text-center"> montant </th>
+            <th class="col-4">origine </th>
           </tr>
         </thead>
 
@@ -442,7 +447,6 @@
                   <option *ngFor="let book of $any(entry.value).entries ; let i = index">
                     {{book.date}} : {{book.id}}</option>
                 </select>
-                <!-- <i class="bi bi-search" (click)="show_map_entry(entry)"></i> -->
               </td>
             </tr>
           </ng-container>
@@ -450,4 +454,4 @@
       </table>
     </div>
   </div>
-</ng-template>
+</ng-template> -->
