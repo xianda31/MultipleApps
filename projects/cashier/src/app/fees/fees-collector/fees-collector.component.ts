@@ -7,6 +7,7 @@ import { FeesCollectorService } from './fees-collector.service';
 import { Observable } from 'rxjs';
 import { Game } from '../fees.interface';
 import { FeesEditorService } from '../fees-editor/fees-editor.service';
+import { PdfService } from '../../../../../common/services/pdf.service';
 
 
 
@@ -21,13 +22,14 @@ export class FeesCollectorComponent {
   
   back_days : number = 0;
   next_tournaments: Observable<club_tournament[]>;
-  // selected_tournament: club_tournament | null = null;
+  selected_tournament: club_tournament | null = null;
   game!: Game;
 
   constructor(
     private tournamentService: TournamentService,
     private feesCollectorService: FeesCollectorService,
-    private feesEditorService: FeesEditorService
+    private feesEditorService: FeesEditorService,
+    private pdfService : PdfService
 
 
   ) {
@@ -42,8 +44,13 @@ export class FeesCollectorComponent {
     this.next_tournaments = this.tournamentService.list_next_tournaments(this.back_days);
   }
 
+  print_to_pdf() {
+    let fname = this.selected_tournament!.date + '_' + this.selected_tournament!.tournament_name + '.pdf';
+    this.pdfService.generatePDF("print_zone",fname);
+  }
+
   tournament_selected(tournament: any) {
-    // this.selected_tournament = tournament;
+    this.selected_tournament = tournament;
     console.log('tournament', tournament);
     this.feesCollectorService.set_tournament(tournament);
   };

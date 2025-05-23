@@ -1,4 +1,4 @@
-<div class="container-md">
+<div id="print_zone" class="container-md">
     <!-- bandeau tournoi (date, mode rr) -->
     <div class="row bg-light mt-2 mb-3 p-3 justify-content-around align-items-center">
         <div class="col-4 ">
@@ -56,6 +56,16 @@
             </div>
         </div>
         <!-- </div> -->
+    </div>
+</div>
+<div class="mt-4 align-content-end">
+    <div class="row">
+        <div class="col"></div>
+        <div class="col-auto align-self-end">
+            <button [disabled]="!selected_tournament" class="btn btn-sm btn-primary align-self-end" (click)="print_to_pdf()">
+                <i class="bi-printer"></i>
+            </button>
+        </div>
     </div>
 </div>
 
