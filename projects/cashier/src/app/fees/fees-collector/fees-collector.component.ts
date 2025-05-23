@@ -10,7 +10,6 @@ import { FeesEditorService } from '../fees-editor/fees-editor.service';
 
 
 
-
 @Component({
   selector: 'app-fees-collector',
   standalone: true,
@@ -19,7 +18,8 @@ import { FeesEditorService } from '../fees-editor/fees-editor.service';
   styleUrl: './fees-collector.component.scss'
 })
 export class FeesCollectorComponent {
-
+  
+  back_days : number = 0;
   next_tournaments: Observable<club_tournament[]>;
   // selected_tournament: club_tournament | null = null;
   game!: Game;
@@ -31,10 +31,15 @@ export class FeesCollectorComponent {
 
 
   ) {
-    this.next_tournaments = this.tournamentService.list_next_tournaments();
+    this.next_tournaments = this.tournamentService.list_next_tournaments(this.back_days);
     this.feesCollectorService.game$.subscribe((game) => {
       this.game = game;
     });
+  }
+
+  one_week_back() {
+    this.back_days += 7;
+    this.next_tournaments = this.tournamentService.list_next_tournaments(this.back_days);
   }
 
   tournament_selected(tournament: any) {

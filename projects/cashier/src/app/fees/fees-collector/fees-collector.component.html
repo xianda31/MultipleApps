@@ -1,14 +1,20 @@
 <div class="container-md">
     <!-- bandeau tournoi (date, mode rr) -->
-    <div class="row bg-light mt-2 mb-3 p-3 justify-content-around align-content-center">
-        <div class="col-4">
-            <div class=" input-group input-group-sm">
+    <div class="row bg-light mt-2 mb-3 p-3 justify-content-around align-items-center">
+        <div class="col-4 ">
+            <div class=" input-group input-group-sm align-items-center">
                 tournoi du :&nbsp;
                 <select class="form-select form-select-sm" [(ngModel)]="game.tournament"
                     (ngModelChange)="tournament_selected($event)">
                     <option *ngFor="let trn of next_tournaments | async" [ngValue]="trn">
                         {{ trn.date | date:'dd/MM/yyyy' }} &nbsp; {{ trn.time }}</option>
                 </select>
+                <span class="ms-2" >
+
+                    <button class="btn btn-sm btn-primary" (click)="one_week_back()">
+                        <i class="bi bi-skip-backward"></i>
+                    </button>
+                </span>
             </div>
         </div>
         <div class="col-8">
@@ -38,7 +44,7 @@
 
         <button class="col btn btn-sm btn-primary me-2" (click)="check_all_members()">
             <i class="fa-solid fa-check"></i> valider tous les adhérents</button>
-        <button class="col btn btn-sm btn-primary me-2" (click)="save_fees()">enregistrer le tournoi</button>
+        <button class="col btn btn-sm btn-primary me-2" (click)="save_fees()">valider les droits de tables</button>
     </div>
 
     <div *ngIf="game" class="row">
