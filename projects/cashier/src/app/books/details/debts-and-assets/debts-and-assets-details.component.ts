@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Router } from '@angular/router';
 import { tap, switchMap } from 'rxjs';
 import { SystemDataService } from '../../../../../../common/services/system-data.service';
@@ -9,17 +9,20 @@ import { BackComponent } from '../../../../../../common/back/back.component';
 interface EntryValue { total: number, entries: BookEntry[] };
 
 @Component({
-  selector: 'app-debts-details',
+  selector: 'app-debts-and-assets-details',
   standalone: true,
-  imports: [CommonModule, BackComponent],
-  templateUrl: './debts-details.component.html',
-  styleUrl: './debts-details.component.scss'
+  imports: [CommonModule],
+  templateUrl: './debts-and-assets-details.component.html',
+  styleUrl: './debts-and-assets-details.component.scss'
 })
-export class DebtsDetailsComponent {
-  debts: Map<string, EntryValue> = new Map();
-  current_debt_amount = 0;
-  show_all_debts = false;
+export class DebtsAndAssetsDetailsComponent {
+  dues: Map<string, EntryValue> = new Map();
+  dues_amount = 0;
+  show_all_dues = false;
   truncature = '1.2-2';  // '1.0-0';// '1.2-2';  //
+  @Input() due: 'dettes'|'avoirs' = 'dettes';
+  @Input() expert_mode = false;
+  @Output() close = new EventEmitter<void>();
   constructor(
     private bookService: BookService,
     private systemDataService: SystemDataService,
@@ -27,18 +30,38 @@ export class DebtsDetailsComponent {
 
   ) { }
 
+  ngOnChanges() {
+    this.prep_data();
+  }
+
+  prep_data() {
+    switch (this.due) {
+      case 'dettes':
+    this.dues = this.bookService.get_debts();
+    break;
+      case 'avoirs':
+    this.dues = this.bookService.get_customers_assets();
+    break;
+      default:
+        throw new Error('Invalid due type');
+    }
+    this.dues_amount = this.dues.size > 0 ? Array.from(this.dues.values()).reduce((acc, debt) => acc + debt.total, 0) : 0;
+  }
+
   ngOnInit() {
 
     this.systemDataService.get_configuration().pipe(
       switchMap((conf) => this.bookService.list_book_entries$(conf.season)))
       .subscribe((book_entries) => {
         // this.book_entries = book_entries;
-
-        this.debts = this.bookService.get_debts();
-        this.current_debt_amount = this.debts.size > 0 ? Array.from(this.debts.values()).reduce((acc, debt) => acc + debt.total, 0) : 0;
+        this.prep_data();
 
       });
 
+  }
+
+  onClose() {
+    this.close.emit();
   }
   show_origin(selection: string) {
     let id = selection.split(' : ')[1];
@@ -46,7 +69,7 @@ export class DebtsDetailsComponent {
   }
 
   compensate(key: string) {
-    let amount = this.debts.get(key)!.total;
+    let amount = this.dues.get(key)!.total;
     let date = new Date().toISOString().split('T')[0]; // Format YYYY-MM-DD
     let member = key;
     console.log('cancel', date, member, amount);

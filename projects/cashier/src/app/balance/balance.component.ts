@@ -10,11 +10,12 @@ import { ParenthesisPipe } from '../../../../common/pipes/parenthesis.pipe';
 import { FinancialReportService } from '../financial_report.service';
 import { Balance_board } from '../../../../common/balance.interface';
 import { Router } from '@angular/router';
+import { DebtsAndAssetsDetailsComponent } from "../books/details/debts-and-assets/debts-and-assets-details.component";
 
 @Component({
   selector: 'app-balance',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, ParenthesisPipe],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, ParenthesisPipe, DebtsAndAssetsDetailsComponent],
   templateUrl: './balance.component.html',
   styleUrl: './balance.component.scss'
 })
@@ -28,6 +29,8 @@ export class BalanceComponent {
   balance_board!: Balance_board;
   balance_error: number = 0;
 
+show_details_flag = false;
+due: 'dettes'|'avoirs' = 'dettes';
 
   truncature = '1.2-2';// '1.2-2';  //
   truncature2 = '1.2-2';// '1.2-2';  //
@@ -111,10 +114,14 @@ export class BalanceComponent {
   show_details(account: 'gift_vouchers' | 'client_debts' | 'commited_payments') {
     switch (account) {
       case 'gift_vouchers':
-        this.router.navigate(['/details/assets']);
+        this.show_details_flag = true;
+        this.due = 'avoirs';
+        // this.router.navigate(['/balance/details']);
         break;
-      case 'client_debts':
-        this.router.navigate(['/details/debts']);
+        case 'client_debts':
+        this.show_details_flag = true;
+        this.due = 'dettes';
+        // this.router.navigate(['/details/debts']);
         break;
         case 'commited_payments':
         this.router.navigate(['/bank-reconciliation']);

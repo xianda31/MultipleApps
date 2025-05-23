@@ -1,46 +1,50 @@
 <div class="card mt-3 shadow-lg">
     <div class="card-header">
         <div class="row justify-content-between align-items-center">
-            <h5 class="col-auto">dettes adhérents : {{current_debt_amount}} €</h5>
+            <h5 class="col-auto">{{due}} adhérents : {{dues_amount}} €</h5>
             <div class="col form-check form-switch form-check-reverse">
-                <input class="form-check-input" type="checkbox" id="switch" [checked]="show_all_debts"
-                (change)="show_all_debts = !show_all_debts">
+                <input class="form-check-input" type="checkbox" id="switch" [checked]="show_all_dues"
+                (change)="show_all_dues = !show_all_dues">
                 <label class="form-check-label" for="switch">tout mouvement:</label>
             </div>
             <div class="mx-auto col-1 text-end">
-                <back></back>
+                <div>
+  <button   type="button"  class="btn btn-light"  (click)="onClose()">
+    <i class="bi-x-circle"></i>
+  </button>
+</div>
             </div>
         </div>
     </div>
     <div class="card-body">
-        <div class="offset-md-2 col-md-8">
+        <div class="col-12">
             <table class="table table-sm">
                 <thead>
                     <tr>
-                        <th class="col">adhérent </th>
-                        <th class="col text-center"> montant </th>
-                        <th class="col">origine </th>
-                        <th class="col">effacer </th>
+                        <th class="col-4">adhérent </th>
+                        <th class="col-3 text-end pe-5"> montant </th>
+                        <th class="col-4">origine </th>
+                        <th class="col-1">effacer </th>
                     </tr>
                 </thead>
 
                 <tbody>
-                    <ng-container *ngFor="let debt of debts | keyvalue">
-                        <tr *ngIf="show_all_debts || $any(debt.value).total !== 0">
-                            <td>{{debt.key}}</td>
-                            <td class="text-center">
-                                {{ debt.value.total | number:truncature:'fr'}}
+                    <ng-container *ngFor="let due of dues | keyvalue">
+                        <tr *ngIf="show_all_dues || $any(due.value).total !== 0">
+                            <td>{{due.key}}</td>
+                            <td class="text-end pe-5">
+                                {{ due.value.total | number:truncature:'fr'}}
                             </td>
                             <td>
                                 <select #choice (change)="show_origin(choice.value)" class="form-select form-select-sm">
                                     <option hidden></option>
-                                    <option *ngFor="let book of $any(debt.value).entries ; let i = index">
+                                    <option *ngFor="let book of $any(due.value).entries ; let i = index">
                                         {{book.date}} : {{book.id}}</option>
                                 </select>
                                 <!-- <i class="bi bi-search" (click)="show_map_asset(asset)"></i> -->
                             </td>
                             <td class="text-center">
-                                <button class="btn btn-sm btn-warning" (click)="compensate(debt.key)">
+                                <button [disabled]="!expert_mode" class="btn btn-sm btn-warning" (click)="compensate(due.key)">
                                     <i class="h6 bi-trash"></i>
                                 </button>
                             </td>

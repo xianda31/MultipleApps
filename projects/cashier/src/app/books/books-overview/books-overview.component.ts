@@ -9,6 +9,7 @@ import { TransactionService } from '../../transaction.service';
 import { combineLatest, switchMap, tap } from 'rxjs';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { FinancialReportService } from '../../financial_report.service';
+import { DebtsAndAssetsDetailsComponent } from "../details/debts-and-assets/debts-and-assets-details.component";
 
 enum REPORTS {
   CHARGES = 'dépenses,charges',
@@ -40,7 +41,7 @@ interface EntryValue { total: number, entries: BookEntry[] };
 @Component({
   selector: 'app-books-overview',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgbModule],
+  imports: [CommonModule, FormsModule, NgbModule, DebtsAndAssetsDetailsComponent],
   templateUrl: './books-overview.component.html',
   styleUrl: './books-overview.component.scss'
 })
@@ -99,7 +100,7 @@ export class BooksOverviewComponent {
 
   debts: Map<string, EntryValue> = new Map();
   assets: Map<string, EntryValue> = new Map();
-  assets_entries: { [key: string]: EntryValue } = {};
+  // assets_entries: { [key: string]: EntryValue } = {};
 
   constructor(
     private bookService: BookService,
@@ -151,7 +152,7 @@ export class BooksOverviewComponent {
 
       this.debts = this.bookService.get_debts();
       this.assets = this.bookService.get_customers_assets();
-      this.assets_entries = Object.fromEntries(this.assets.entries());
+      // this.assets_entries = Object.fromEntries(this.assets.entries());
 
       this.vouchers_amount = this.bookService.get_customers_assets_amount();
 

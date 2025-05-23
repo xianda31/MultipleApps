@@ -318,21 +318,26 @@
 
 
 <!-- dettes & crédits  -->
-<div *ngIf="selected_report === reports.DETTES_ET_CREDITS" class="row mt-2 justify-content-center">
+ 
+<div *ngIf="selected_report === reports.DETTES_ET_CREDITS" class="col-md-8 offset-md-2">
+  <app-debts-and-assets-details (close)="selected_report=''" due="dettes"></app-debts-and-assets-details>
+</div>
+<!-- <div *ngIf="selected_report === reports.DETTES_ET_CREDITS" class="row mt-2 justify-content-center">
   <div class="col col-md-8">
     <div
-      *ngTemplateOutlet="debts_and_assets_report ; context: {title:selected_report, balance:current_debt_amount,  map: debts}">
-    </div>
+    *ngTemplateOutlet="debts_and_assets_report ; context: {title:selected_report, balance:current_debt_amount,  map: debts}">
   </div>
 </div>
+</div> -->
 
 <!-- avoirs adhérents -->
-<div *ngIf="selected_report === reports.AVOIRS_ADHERENTS" class="row mt-2 justify-content-center">
-  <div class="col col-md-8">
+<div *ngIf="selected_report === reports.AVOIRS_ADHERENTS" class="col-md-8 offset-md-2">
+  <app-debts-and-assets-details (close)="selected_report=''" due="avoirs"></app-debts-and-assets-details>
+  <!-- <div class="col col-md-8">
     <div
-      *ngTemplateOutlet="debts_and_assets_report ; context: {title:selected_report, balance:current_assets_amount, map: assets_entries}">
+      *ngTemplateOutlet="debts_and_assets_report ; context: {title:selected_report, balance:current_assets_amount, map: assets}">
     </div>
-  </div>
+  </div> -->
 </div>
 
 
