@@ -62,6 +62,7 @@ const schema = a.schema({
     price: a.float().required(),
     paired: a.boolean().required(),
     active: a.boolean().required(),
+    info1: a.string(),
   })
     .authorization((allow) => [allow.publicApiKey()]),
 
