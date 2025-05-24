@@ -63,6 +63,13 @@ export class MembersService {
     return this._members.find((m) => m.id === id) || null;
   }
 
+  last_then_first_name(member: Member ): string {
+    return `${member.lastname} ${member.firstname}`;
+  }
+  first_then_last_name(member: Member ): string {
+    return `${member.firstname} ${member.lastname}`;
+  }
+
   async createMember(member: Member) {
     const client = generateClient<Schema>();
     let { id, ...memberCreateInput } = member;

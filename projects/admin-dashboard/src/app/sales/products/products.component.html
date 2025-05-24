@@ -6,8 +6,9 @@
                 <thead>
                     <tr>
                         <th class="col-2">Produit</th>
-                        <th class="col-4">Description</th>
-                        <th class="col-1">Compte</th>
+                        <th class="col-3">Description</th>
+                        <th class="col-1">Info1</th>
+                        <th class="col-1 text-center">Compte</th>
                         <th class="col-1 text-center">Prix</th>
                         <!-- <th class="col-2">couleur</th> -->
                         <th class="col-2 text-center">couple</th>
@@ -19,6 +20,7 @@
                     <tr *ngFor="let product of products">
                         <td>{{ product.glyph }}</td>
                         <td>{{ product.description }}</td>
+                        <td>{{ product.info1 }}</td>
                         <td class="text-center">{{ product.account }}</td>
                         <td class="text-end">{{ product.price | currency:'€':'symbol':'2.2-2':'fr' }}</td>
                         <!-- <td>{{ product.color }}</td> -->
@@ -46,6 +48,7 @@
                     <tr>
                         <td> <input type="text" class="form-control" formControlName="glyph"> </td>
                         <td> <input type="text" class="form-control" formControlName="description"> </td>
+                        <td> <input type="text" class="form-control" formControlName="info1"> </td>
                         <td> <input list="datalist" type="text" class="form-control" formControlName="account">
                             <datalist id="datalist">
                                 <option *ngFor="let account of accounts$ | async" [value]="account">

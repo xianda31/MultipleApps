@@ -44,6 +44,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
       id: new FormControl(),
       glyph: new FormControl('', Validators.required),
       description: new FormControl('', Validators.required),
+      info1: new FormControl(''),
       price: new FormControl('', [Validators.required, Validators.min(0)]),
       account: new FormControl('', Validators.required),
       paired: new FormControl<boolean>(false, { nonNullable: true }),

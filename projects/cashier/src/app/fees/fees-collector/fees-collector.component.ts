@@ -8,6 +8,7 @@ import { Observable } from 'rxjs';
 import { Game } from '../fees.interface';
 import { FeesEditorService } from '../fees-editor/fees-editor.service';
 import { PdfService } from '../../../../../common/services/pdf.service';
+import { Member } from '../../../../../common/member.interface';
 
 
 
@@ -73,8 +74,8 @@ export class FeesCollectorComponent {
     this.feesCollectorService.save_fees();
   }
 
-  get_current_game_credit(member_id: string): number {
-    return this.feesEditorService.get_current_game_credit(member_id);
+  get_current_game_credit(member: Member): number {
+    return this.feesEditorService.get_current_game_credit(member);
   }
 
 }

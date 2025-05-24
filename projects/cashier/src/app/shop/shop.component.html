@@ -9,18 +9,12 @@
     </div>
   </div>
 
-  <!-- sale editor -->
-
+  <!-- cart editor -->
   <div class="card">
     <div class="card-body">
-
       <div class="row justify-content-evenly">
-
         <!-- colonne keypad -->
         <div class="col-3 mt-2 p-3">
-          <!-- <div class="row"> -->
-          <!-- product keypad -->
-          <!-- <div class="col-8 "> -->
           <div class="row" *ngFor="let products of products_array | keyvalue ">
             <div class="card-group">
               <div *ngFor="let product of products.value"
@@ -39,7 +33,7 @@
         <!-- colonne cart & vente du jour -->
         <div class="col-9  fs-6 font-monospace  ">
           <div class="container h-100 d-flex flex-column">
-            <div class="">
+            <!-- <div class=""> -->
               <!-- buyer -->
               <div class="col-4 ">
                 <div [formGroup]="buyerForm" class="align-items-center ">
@@ -57,34 +51,30 @@
               <div class=" col-12 mt-2">
                 <app-cart (complete)="cart_confirmed()"></app-cart>
               </div>
-            </div>
+            <!-- </div> -->
 
             <!--  sales_of_the_day -->
-            <div class="row mt-auto p-3">
+            <div class="col-12 mt-2">
               <div class="card">
-                <strong>encaissements du jour : </strong>
-                <table class="table table-striped  table-borderless table-primary align-middle">
-                  <tr *ngFor="let sale of sales_of_the_day , let i = index">
-                    <td>
-                      {{sale.member}} :
-                      <ng-container *ngFor="let value of sale.values | keyvalue">
-                        {{value.key}} [{{value.value}}]
-                      </ng-container>
-                      <!-- <ng-container *ngIf="debt_paied(sale)>0">
-                                                +dette [{{debt_paied(sale)}}]
-                                            </ng-container> -->
-                      <!-- <ng-container *ngIf="asset_used(sale)>0">
-                                                -avoir [{{asset_used(sale)}}]
-                                            </ng-container> -->
-                    </td>
-                    <td *ngIf="standalone_sale(i)">
-                      {{payment_type(sale)}}
-                    </td>
-                    <td *ngIf="standalone_sale(i)" class="text-end">
-                      {{sale_amount(sale) | currency:'€':'symbol':'2.2-2':'fr'}}
-                    </td>
-                  </tr>
-                </table>
+                <div class="card-body">
+                  <strong>Encaissements du jour : </strong>
+                  <table class="table table-striped  table-borderless table-primary align-middle">
+                    <tr *ngFor="let sale of sales_of_the_day , let i = index">
+                      <td>
+                        {{sale.member}} :
+                        <ng-container *ngFor="let value of sale.values | keyvalue">
+                          {{value.key}} [{{value.value}}]
+                        </ng-container>
+                      </td>
+                      <td *ngIf="standalone_sale(i)">
+                        {{payment_type(sale)}}
+                      </td>
+                      <td *ngIf="standalone_sale(i)" class="text-end">
+                        {{sale_amount(sale) | currency:'€':'symbol':'2.2-2':'fr'}}
+                      </td>
+                    </tr>
+                  </table>
+                </div>
               </div>
             </div>
           </div>
@@ -92,4 +82,10 @@
       </div>
     </div>
   </div>
+
+  <!-- game bookkeeper -->
+   <div class="card mt-3">
+     <app-games-book-keeper></app-games-book-keeper>
+
+   </div>
 </div>

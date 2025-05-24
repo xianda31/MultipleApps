@@ -15,12 +15,13 @@ import { SystemConfiguration } from '../../../../common/system-conf.interface';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 import { TransactionService } from '../transaction.service';
 import { AuthentificationService } from '../../../../common/authentification/authentification.service';
+import { GamesBookKeeperComponent } from './games-book-keeper/games-book-keeper.component';
 
 
 @Component({
   selector: 'app-shop',
   standalone: true,
-  imports: [ReactiveFormsModule, CommonModule, FormsModule, InputMemberComponent, CartComponent],
+  imports: [ReactiveFormsModule, CommonModule, FormsModule, InputMemberComponent, CartComponent, GamesBookKeeperComponent],
   templateUrl: './shop.component.html',
   styleUrl: './shop.component.scss'
 })
@@ -127,12 +128,14 @@ export class ShopComponent {
   }
 
   cart_confirmed(): void {
+    let full_name = this.membersService.first_then_last_name(this.buyer!);
     this.cartService.save_sale(this.session, this.buyer!)
       .then(() => {
-        this.toastService.showSuccessToast('vente', (this.debt_amount > 0) ? 'achats et dette enregistrés' : 'achats enregistrés');
+        this.toastService.showSuccessToast('vente à '+ full_name, (this.debt_amount > 0) ? 'achats et dette enregistrés' : 'achats enregistrés');
       })
       .catch((error) => {
-        // console.error('error saving sale', error);
+        console.error('error saving sale', error);
+        this.toastService.showErrorToast('vente', 'erreur lors de l\'enregistrement de la vente');
       });
     this.buyerForm.reset();
   }

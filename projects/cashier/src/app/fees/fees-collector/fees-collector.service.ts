@@ -81,7 +81,7 @@ export class FeesCollectorService {
     let in_euro = !is_member;
     let price = is_member ? this.game.member_trn_price : this.game.non_member_trn_price;
 
-    let game_credits = (is_member !== undefined) ? this.feesEditorService.get_current_game_credit(is_member.id) : 0;
+    let game_credits = (is_member !== undefined) ? this.feesEditorService.get_current_game_credit(is_member) : 0;
 
     return {
       license: license,
@@ -171,7 +171,7 @@ export class FeesCollectorService {
       if (!gamer.in_euro) {
         let member = gamer.is_member as Member;
         let amount = gamer.price;
-        this.feesEditorService.add_game_credit('tournoi du' + this.game.tournament!.date, member.id, this.game.fees_doubled ? 2 : 1);
+        this.feesEditorService.add_game_credit('tournoi du' + this.game.tournament!.date, member, this.game.fees_doubled ? 2 : 1);
       }
     });
 

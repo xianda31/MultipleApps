@@ -3,9 +3,11 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { Cart, CartItem, Payment, PaymentMode, SALE_ACCOUNTS } from './cart.interface';
 import { Member } from '../../../../../common/member.interface';
 import { BookService } from '../../book.service';
-import { TRANSACTION_ID,  BookEntry, operation_values, Operation, Session, FINANCIAL_ACCOUNT, CUSTOMER_ACCOUNT, AMOUNTS } from '../../../../../common/accounting.interface';
+import { TRANSACTION_ID, BookEntry, operation_values, Operation, Session, FINANCIAL_ACCOUNT, CUSTOMER_ACCOUNT, AMOUNTS } from '../../../../../common/accounting.interface';
 import { Product } from '../../../../../admin-dashboard/src/app/sales/products/product.interface';
 import { FeesEditorService } from '../../fees/fees-editor/fees-editor.service';
+import { ProductService } from '../../../../../common/services/product.service';
+import { MembersService } from '../../../../../admin-dashboard/src/app/members/service/members.service';
 
 @Injectable({
   providedIn: 'root'
@@ -20,6 +22,9 @@ export class CartService {
   constructor(
     private bookService: BookService,
     private feesService: FeesEditorService,
+        private productService: ProductService,
+        private membersService: MembersService,
+    
   ) { }
 
   set payment(payment: Payment) {
@@ -163,7 +168,7 @@ export class CartService {
         op_values[CUSTOMER_ACCOUNT.DEBT_debit] = this.getCartAmount();
       }
       let operation = {
-        label: 'vendu par ' + this.seller,  
+        label: 'vendu par ' + this.seller,
         member: payee,
         values: op_values,
       };
@@ -193,7 +198,7 @@ export class CartService {
     if (payment.mode === PaymentMode.CHEQUE) {
       return payment.bank + payment.cheque_no;
     } else {
-      return  undefined;
+      return undefined;
     }
   }
 
@@ -210,7 +215,17 @@ export class CartService {
   save_fees_credits(session: Session) {
     this._cart.items.forEach((cartitem) => {
       if (cartitem.product_account === 'CAR') {
-        this.feesService.tournament_card_sold(session.date, cartitem.payee!, cartitem.paied);
+        if (!cartitem.payee || cartitem.payee === null) {
+          console.warn('no payee for CAR product', cartitem);
+          return;
+        }
+        let product = this.productService.getProduct( cartitem.product_id);
+        let member = this.membersService.getMemberbyName(cartitem.payee_name);
+        if (!product || !member) {
+          console.warn('product or member not found for CAR product', cartitem);
+          return;
+        }
+        this.feesService.tournament_card_sold(session.date, member, +product.info1!);
       }
     });
   }

@@ -35,24 +35,24 @@ export class FeesEditorComponent {
   }
 
 
-  add_game_credit(event: string, member_id: string, amount: number) {
-    this.feesEditorService.add_game_credit(event, member_id, amount);
+  add_game_credit(event: string, member:Member, amount: number) {
+    this.feesEditorService.add_game_credit(event, member, amount);
   }
 
-  // get_game_credits(member_id: string): Game_credit[] {
-  //   return this.feesEditorService.get_game_credits(member_id);
+  // get_game_credits(member:Member): Game_credit[] {
+  //   return this.feesEditorService.get_game_credits(member);
   // }
 
-  get_current_game_credit(member_id: string): number {
-    return this.feesEditorService.get_current_game_credit(member_id);
+  get_current_game_credit(member:Member): number {
+    return this.feesEditorService.get_current_game_credit(member);
   }
 
-  update_member_game_credits(member_id: string, credits: Game_credit[]) {
-    this.feesEditorService.update_member_game_credits(member_id, credits);
+  update_member_game_credits(member:Member, credits: Game_credit[]) {
+    this.feesEditorService.update_member_game_credits(member, credits);
   }
 
-  show_game_credits(member_id: string) {
-    let credits = this.feesEditorService.get_game_credits(member_id);
+  show_game_credits(member:Member) {
+    let credits = this.feesEditorService.get_game_credits(member);
     credits.forEach(credit => {
       console.log(credit.tag, credit.amount);
     });

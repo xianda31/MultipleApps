@@ -21,32 +21,27 @@ export class FeesEditorService {
     });
   }
 
-  add_game_credit(event: string, member_id: string, amount: number) {
+  add_game_credit(event: string, member:Member, amount: number) {
     let game_credit: Game_credit = {
       tag: event + ' ' + new Date().toLocaleDateString('fr-FR').split('/').slice(0, 2).join('-'),
-      amount: amount + this.get_current_game_credit(member_id)
+      amount: amount + this.get_current_game_credit(member)
     };
-    let credits = this.get_game_credits(member_id);
+    let credits = this.get_game_credits(member);
     credits.push(game_credit);
     if (credits.length > MAX_CREDITS_HISTORY) {
       credits.shift();
     }
-    this.update_member_game_credits(member_id, credits);
+    this.update_member_game_credits(member, credits);
+    this.toastService.showSuccessToast('Gestion des cartes tournoi', this.membersService.first_then_last_name(member) + ' : '+ amount + ' parties créditées');
 
   }
 
-  get_game_credits(member_id: string): Game_credit[] {
-    let member = this.members.find(member => member.id == member_id);
-    if (member) {
-      return member.game_credits ?? [];
-    } else {
-      console.log('member not found', member_id);
-      throw new Error('member not found');
-    }
+  get_game_credits(member:Member): Game_credit[] {
+    return member.game_credits ?? [];
   }
 
-  get_current_game_credit(member_id: string): number {
-    let credits = this.get_game_credits(member_id);
+  get_current_game_credit(member:Member): number {
+    let credits = this.get_game_credits(member);
     if (credits.length > 0) {
       return credits[credits.length - 1].amount;
     } else {
@@ -54,25 +49,17 @@ export class FeesEditorService {
     }
   }
 
-  update_member_game_credits(member_id: string, credits: Game_credit[]) {
-    let member = this.members.find(member => member.id == member_id);
-    if (member) {
+  update_member_game_credits(member:Member, credits: Game_credit[]) {
       member.game_credits = credits;
       // console.log('save member', member);
       this.membersService.updateMember(member)
-        .then(() => {
-          this.toastService.showSuccessToast(member.lastname + ' ' + member.firstname, 'solde mis à jour');
-        });
-    } else {
-      console.log('member not found', member_id);
-      throw new Error('member not found');
-    }
+        .then(() => {this.toastService.showSuccessToast(member.lastname + ' ' + member.firstname, 'solde mis à jour');        })
+  .catch((err) => {
+      this.toastService.showErrorToast('Gestion des cartes tournoi', 'Erreur lors de la mise à jour du solde');
+    });
   }
 
-  // TODO : à améliorer en terme de configurabilité des constantes
-  tournament_card_sold(date: string, member: Member, paied: number) {
-    if (member) {
-      this.add_game_credit('vente du ' + date, member.id, paied === 15 ? 6 : 12);
-    }
+  tournament_card_sold(date: string, member: Member, qty: number) {
+      this.add_game_credit('vente du ' + date, member, qty);
   }
 }

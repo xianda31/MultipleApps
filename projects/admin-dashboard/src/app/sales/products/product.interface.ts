@@ -7,6 +7,7 @@ export interface Product {
     paired: boolean;
     active: boolean;
     color?: string;
+    info1?: string;
     // createdAt?: any;
     // updatedAt?: any;
 }

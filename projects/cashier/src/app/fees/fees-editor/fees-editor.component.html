@@ -16,19 +16,19 @@
                 <tbody>
                     <ng-container *ngFor="let member of members">
 
-                        <tr (click)="show_game_credits(member.id)">
+                        <tr (click)="show_game_credits(member)">
                             <td>{{member.lastname}} {{member.firstname}}</td>
-                            <td class="text-center"> {{get_current_game_credit(member.id)}} </td>
+                            <td class="text-center"> {{get_current_game_credit(member)}} </td>
                             <td class="text-start ">
                                 <i class="bi bi-plus-square-fill text-primary"
-                                    (click)="add_game_credit('manuel',member.id, 1)"></i>
+                                    (click)="add_game_credit('manuel',member, 1)"></i>
                                 <i class="bi bi-dash-square-fill text-primary"
-                                    (click)="add_game_credit('manuel',member.id, -1)"></i>
+                                    (click)="add_game_credit('manuel',member, -1)"></i>
                                 <!-- </div> -->
                             </td>
                             <td class="text-center">
                                 <i class="bi bi-grid-3x3-gap-fill text-primary"
-                                    (click)="add_game_credit('manuel',member.id, 12)"></i>
+                                    (click)="add_game_credit('manuel',member, 12)"></i>
                             </td>
                         </tr>
                     </ng-container>
