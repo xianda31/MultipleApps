@@ -39,9 +39,9 @@ export class FeesEditorComponent {
     this.feesEditorService.add_game_credit(event, member_id, amount);
   }
 
-  get_game_credits(member_id: string): Game_credit[] {
-    return this.feesEditorService.get_game_credits(member_id);
-  }
+  // get_game_credits(member_id: string): Game_credit[] {
+  //   return this.feesEditorService.get_game_credits(member_id);
+  // }
 
   get_current_game_credit(member_id: string): number {
     return this.feesEditorService.get_current_game_credit(member_id);
@@ -51,5 +51,11 @@ export class FeesEditorComponent {
     this.feesEditorService.update_member_game_credits(member_id, credits);
   }
 
+  show_game_credits(member_id: string) {
+    let credits = this.feesEditorService.get_game_credits(member_id);
+    credits.forEach(credit => {
+      console.log(credit.tag, credit.amount);
+    });
+  }
 
 }
