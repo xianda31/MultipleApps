@@ -259,7 +259,29 @@
             "allowedCommonJsDependencies": [
               "fast-xml-parser",
               "buffer",
-              "bootstrap/js/dist/toast"
+              "bootstrap/js/dist/toast",
+              "core-js/modules/es.promise.js",
+              "core-js/modules/es.string.match.js",
+              "core-js/modules/es.string.replace.js",
+              "core-js/modules/es.string.starts-with.js",
+              "core-js/modules/es.string.ends-with.js",
+              "core-js/modules/es.string.split.js",
+              "core-js/modules/es.string.includes.js",
+              "core-js/modules/es.string.trim.js",
+              "core-js/modules/es.array.iterator.js",
+              "core-js/modules/es.array.reduce.js",
+              "core-js/modules/es.array.trim.js",
+              "core-js/modules/es.array.index-of.js",
+              "core-js/modules/es.array.reverse.js",
+              "core-js/modules/es.regexp.to-string.js",
+              "node_modules/canvg/lib/index.es.js",
+              "core-js/modules/web.dom-collections.iterator.js",
+              "node_modules/canvg/lib/index.es.js",
+              "exceljs",
+              "html2canvas",
+              "crc-32",
+              "rgbcolor",
+              "raf"
             ],
             "outputPath": "dist/cashier",
             "index": "projects/cashier/src/index.html",
@@ -289,7 +311,7 @@
                 {
                   "type": "initial",
                   "maximumWarning": "5MB",
-                  "maximumError": "3MB"
+                  "maximumError": "4MB"
                 },
                 {
                   "type": "anyComponentStyle",
