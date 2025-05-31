@@ -157,11 +157,11 @@ export class AuthentificationService {
     let promise = new Promise((resolve, reject) => {
       resetPassword({ username: email })
         .catch((err) => {
-          this.toastService.showErrorToast('reset password', err.message);
+          // this.toastService.showErrorToast('reset password', err.message);
           reject(err);
         })
         .then((res) => {
-          this.toastService.showSuccessToast('reset password', 'mot de passe réinitialisé');
+          // this.toastService.showSuccessToast('reset password', 'mot de passe réinitialisé');
           this._mode = Process_flow.CONFIRM_RESET_PASSWORD;
           this._mode$.next(this._mode);
           resolve(res);

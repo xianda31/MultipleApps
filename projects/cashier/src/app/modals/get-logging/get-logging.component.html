@@ -1,0 +1,65 @@
+<div class="modal-header pb-0 ">
+    <div class="col justify-content-between">
+        <div class="row align-items-center">
+            <h5 class="col-10 modal-title">
+                Bonjour <span class="fw-bolder">{{member.firstname}} </span>
+            </h5>
+            <div class="col-1 text-center">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                    (click)="close()"></button>
+            </div>
+        </div>
+        <div class="row mt-3 my-auto">
+            <p class="text-muted">
+                Vous pouvez
+                <span class="text-primary" (click)="create_account=false">réinitialiser votre mot de passe</span>
+                ou
+                <span class="text-primary" (click)="create_account=true">créer un compte</span>
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="modal-body">
+    <ng-container *ngIf="!create_account">
+        <h5> Réinitialisation du mot de passe </h5>
+        <p class="text-muted">Un code vous sera envoyé par email, à saisir avec votre nouveau mot de passe.
+            <button type="button" (click)="resetPassword()" class="btn btn-primary btn-sm">m'envoyer le code</button>
+        </p>
+    </ng-container>
+    <ng-container *ngIf="create_account">
+        <h5>Création de compte </h5>
+        <p class="text-muted">Un code vous sera envoyé par email, à saisir avec votre mot de passe.</p>
+        <p class="text-muted">Si vous avez déjà un compte, vous pouvez le réinitialiser.</p>
+        <button type="button" (click)="signUp()" class="btn btn-primary btn-sm">envoyer le code</button>
+    </ng-container>
+
+    <form [formGroup]="loggingForm">
+        <div class="mb-3">
+            <label class="form-label" for="google_dont_autofill_code">Code</label>
+            <input type="text" class="form-control" formControlName="secret_code" placeholder="code reçu par mel" name="google_dont_autofill_code">
+        </div>
+        <div class="mb-3">
+            <label for="password" class="form-label">Nouveau mot de passe</label>
+            <div class="input-group mb-3">
+                <input class="form-control form-control-sm" placeholder="Nouveau mot de passe"
+                    [type]="show_password?'text':'password'" formControlName="password">
+                <span class="input-group-text">
+                    <i [class]="show_password?'bi bi-eye-slash':'bi bi-eye'"
+                        (click)="show_password = !show_password"></i>
+                </span>
+            </div>
+        </div>
+    </form>
+
+    <!-- </ng-container> -->
+
+</div>
+<div class="modal-footer">
+    <div class="justify-content-between">
+        {{loggingForm.valid ? 'Formulaire valide' : 'Formulaire incomplet'}}
+        <button type="button" class="btn btn-primary btn-sm" [disabled]="!loggingForm.valid"
+            (click)="got_it()">OK</button>
+
+    </div>
+</div>

@@ -1,10 +1,16 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { AuthentificationService } from '../authentification.service';
 import { ToastService } from '../../toaster/toast.service';
 import { Member } from '../../member.interface';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { GetLoggingComponent } from '../../../cashier/src/app/modals/get-logging/get-logging.component';
+import { Observable, of, delay, switchMap, from, map, tap } from 'rxjs';
+import { MembersService } from '../../../admin-dashboard/src/app/members/service/members.service';
 
+const EMAIL_PATTERN = "^[_A-Za-z0-9-\+]+(\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\.[A-Za-z0-9]+)*(\.[A-Za-z]{2,})$";
+const PSW_PATTERN = '^(?!\\s+)(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[\\^$*.[\\]{}()?"!@#%&/\\\\,><\': ;| _~`=+-]).{8,256}(?<!\\s)$';
 
 @Component({
   selector: 'app-admin-in',
@@ -15,23 +21,32 @@ import { Member } from '../../member.interface';
 })
 export class AdminInComponent {
 
+
+
   loginForm !: FormGroup;
-  get email() { return this.loginForm.get('email'); }
-  get password() { return this.loginForm.get('password') };
   logged_member: Member | null = null;
+  show_login: boolean = false;
+    show_password: boolean = false;
+    member : Member | null = null;
 
 
   constructor(
     private fb: FormBuilder,
     private auth: AuthentificationService,
     private toastService: ToastService,
+    private modalService: NgbModal,
+    private membersService: MembersService
+
 
   ) {
     this.loginForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
+      email: ['',
+        {
+          validators: [Validators.required, Validators.email],
+          asyncValidators: this.emailValidator,
+        }],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
-
   }
 
   ngOnInit() {
@@ -43,13 +58,39 @@ export class AdminInComponent {
       }
     });
   }
+  get email() { return this.loginForm.get('email')!; }
+  get password() { return this.loginForm.get('password') };
 
   signOut() {
     this.auth.signOut();
+    this.show_login = false;
 
   }
 
   async signIn() {
     this.auth.signIn(this.email!.value, this.password!.value);
   }
+
+  need_reset() {
+    this.show_login = false;
+    const modalRef = this.modalService.open(GetLoggingComponent, { centered: true });
+    modalRef.componentInstance.email = this.email.value;
+    modalRef.componentInstance.member = this.member;
+    modalRef.result.then((response: any) => {
+      if (response) {
+        console.log('response', response);
+      }
+    });
+  }
+
+  emailValidator = (control: AbstractControl): Observable<ValidationErrors | null> => {
+
+    if (!control.value.match(EMAIL_PATTERN)) return of(null);
+    return of(control.value).pipe(
+      switchMap((email) => from(this.membersService.getMemberByEmail(email))),
+      tap((member) => this.member = member),
+      map((member) => { return member? null : { not_member:  false }; })
+    )
+  }
+
 }
