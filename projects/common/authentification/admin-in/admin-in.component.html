@@ -1,43 +1,44 @@
-<button *ngIf="!show_login" class="btn btn-primary btn-sm" type="button" (click)="show_login = !show_login">
-  <i class="bi bi-person-circle"></i>
-  Mon Espace
-</button>
-<div *ngIf="show_login" class="row align-items-center">
+<!-- <button *ngIf="!logged_member" class="btn btn-primary btn-sm" type="button">
+  <i class="bi bi-person-circle"></i> Mon Espace</button> -->
 
+<!-- <div *ngIf="show_login" class="row align-items-center"> -->
+  <!-- formulaire 1er niveau de login -->
   <div *ngIf="!(logged_member)" class="row align-items-center">
+    <!-- saisies de mail + pwd -->
     <div class="col-8">
       <form [formGroup]="loginForm">
-
         <input class="form-control form-control-sm" type="mail" placeholder="Mél" id="username" autocomplete="username"
           formControlName="email">
 
         <div class="input-group">
           <input class="form-control form-control-sm" placeholder="Mot de passe" autocomplete="current-password"
             [type]="show_password?'text':'password'" formControlName="password">
-          <span class="input-group-text">
+          <!-- <span class="input-group-text">
             <i [class]="show_password?'bi bi-eye-slash':'bi bi-eye'" (click)="show_password = !show_password"></i>
-          </span>
+          </span> -->
         </div>
       </form>
     </div>
-
+    <!-- boutons login ou reset -->
     <div class="col-4">
       <button [disabled]="loginForm.invalid" class=" btn btn-success btn-sm" type="submit"
         (click)="signIn()">Login</button>
       <button class=" btn btn-warning btn-sm" type="submit" (click)="need_reset()">Reset</button>
     </div>
-    <!-- form status : {{loginForm.status}} <br>
-    password status : {{loginForm.get('password')?.status}} <br>
-    email status : {{loginForm.get('email')?.status}} <br>
-    email errors : {{loginForm.get('email')?.errors | json}} <br> -->
 
-    <span *ngIf="loginForm.invalid" class="text-danger">Formulaire incomplet</span>
   </div>
 
+  <!-- si loggé affichage prénom et bouton logOut -->
   <div *ngIf="logged_member" class="row align-items-center">
-    <div class="col-auto"> {{logged_member.firstname}} </div>
-    <div class="col-auto">
-      <button class=" btn btn-outline-success btn-sm" type="btn" (click)="signOut()">Logout</button>
+    <div class="dropdown">
+      <button class="btn btn-primary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton1"
+        data-bs-toggle="dropdown" aria-expanded="false">
+        {{logged_member.firstname}}
+      </button>
+      <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+        <li><a class="dropdown-item" href="#" (click)="signOut()">Log out</a></li>
+        <li><a class="dropdown-item" href="#">Another action</a></li>
+      </ul>
     </div>
   </div>
-</div>
+<!-- </div> -->

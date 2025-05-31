@@ -25,9 +25,9 @@ export class AdminInComponent {
 
   loginForm !: FormGroup;
   logged_member: Member | null = null;
-  show_login: boolean = false;
-    show_password: boolean = false;
-    member : Member | null = null;
+  applying_member: Member | null = null;
+  // show_login: boolean = false;
+  show_password: boolean = false;
 
 
   constructor(
@@ -53,7 +53,7 @@ export class AdminInComponent {
     this.auth.logged_member$.subscribe((member) => {
       this.logged_member = null;
       if (member !== null) {
-        this.toastService.showSuccessToast('identification', 'Bonjour ' + member.firstname);
+        // this.toastService.showSuccessToast('identification', 'Bonjour ' + member.firstname);
         this.logged_member = member;
       }
     });
@@ -63,7 +63,7 @@ export class AdminInComponent {
 
   signOut() {
     this.auth.signOut();
-    this.show_login = false;
+    // this.show_login = false;
 
   }
 
@@ -72,24 +72,23 @@ export class AdminInComponent {
   }
 
   need_reset() {
-    this.show_login = false;
+    // this.show_login = false;
     const modalRef = this.modalService.open(GetLoggingComponent, { centered: true });
     modalRef.componentInstance.email = this.email.value;
-    modalRef.componentInstance.member = this.member;
+    modalRef.componentInstance.member = this.applying_member;
     modalRef.result.then((response: any) => {
-      if (response) {
-        console.log('response', response);
-      }
+      // if (response) {
+      //   console.log('response', response);
+      // }
     });
   }
 
   emailValidator = (control: AbstractControl): Observable<ValidationErrors | null> => {
-
     if (!control.value.match(EMAIL_PATTERN)) return of(null);
     return of(control.value).pipe(
       switchMap((email) => from(this.membersService.getMemberByEmail(email))),
-      tap((member) => this.member = member),
-      map((member) => { return member? null : { not_member:  false }; })
+      tap((member) => this.applying_member = member),
+      map((member) => { return member ? null : { not_member: false }; })
     )
   }
 

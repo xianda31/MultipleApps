@@ -15,13 +15,12 @@ import { SystemConfiguration } from '../../../../common/system-conf.interface';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 import { TransactionService } from '../transaction.service';
 import { AuthentificationService } from '../../../../common/authentification/authentification.service';
-import { GamesBookKeeperComponent } from './games-book-keeper/games-book-keeper.component';
 
 
 @Component({
   selector: 'app-shop',
   standalone: true,
-  imports: [ReactiveFormsModule, CommonModule, FormsModule, InputMemberComponent, CartComponent, GamesBookKeeperComponent],
+  imports: [ReactiveFormsModule, CommonModule, FormsModule, InputMemberComponent, CartComponent],
   templateUrl: './shop.component.html',
   styleUrl: './shop.component.scss'
 })
