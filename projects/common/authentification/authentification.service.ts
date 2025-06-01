@@ -1,10 +1,14 @@
 import { Injectable } from '@angular/core';
 import { confirmSignUp, signIn, signUp, signOut, AuthError, SignInInput, getCurrentUser, SignUpOutput, resetPassword, confirmResetPassword, fetchUserAttributes } from 'aws-amplify/auth';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { Process_flow } from './authentification_interface';
+import { AuthEvent, Process_flow } from './authentification_interface';
 import { ToastService } from '../toaster/toast.service';
 import { MembersService } from '../../admin-dashboard/src/app/members/service/members.service';
 import { Member } from '../member.interface';
+import { Hub } from 'aws-amplify/utils';
+
+
+
 
 @Injectable({
   providedIn: 'root'
@@ -13,12 +17,34 @@ export class AuthentificationService {
 
   private _mode: Process_flow = Process_flow.SIGN_IN;
   private _mode$: BehaviorSubject<Process_flow> = new BehaviorSubject(this._mode);
+
+  private _auth_event$: BehaviorSubject<AuthEvent> = new BehaviorSubject<AuthEvent>({ event: '' });
+
+
   // private _logged_member: Member | null = null;
   private _logged_member$: BehaviorSubject<Member | null> = new BehaviorSubject<Member | null>(null);
   constructor(
     private toastService: ToastService,
     private memberService: MembersService
   ) {
+
+
+    const hubListener = (event: any) => {
+      let authEvent: AuthEvent = event.payload;
+      switch (authEvent.event) {
+        case 'signedIn':
+        case 'signedOut':
+        case 'signedUp':
+          console.log('Auth event:', authEvent);
+          this._auth_event$.next(authEvent);
+          break;
+        default:
+          console.warn('Unhandled auth event:', authEvent.event);
+          break;
+      }
+    }
+    Hub.listen('auth', hubListener);
+
     this.getCurrentUser();    // recherche si un user est déjà connecté (application mémoire locale)
   }
 
@@ -28,6 +54,10 @@ export class AuthentificationService {
 
   get logged_member$(): Observable<Member | null> {
     return this._logged_member$ as Observable<Member | null>;
+  }
+
+  get auth_event$(): Observable<AuthEvent> {
+    return this._auth_event$ as Observable<AuthEvent>;
   }
 
 
@@ -43,12 +73,12 @@ export class AuthentificationService {
       {
         try {
           let { isSignedIn, nextStep } = await signIn(signInInput);
-          // console.log("isSignedIn: %s nextStep : %s", isSignedIn, nextStep);
+          console.log("isSignedIn: %s nextStep : %s", isSignedIn, nextStep);
 
           const attributes = await fetchUserAttributes();
-          // console.log('attributes', attributes);
+          console.log('attributes', attributes);
           let member_id = attributes['custom:member_id'];
-          // console.log('member_id', member_id);
+          console.log('member_id', member_id);
           if (!member_id) {
             reject('local storage invalid');
           } else {
@@ -137,7 +167,7 @@ export class AuthentificationService {
   async signOut(): Promise<any> {
     let promise = new Promise((resolve, reject) => {
       signOut(
-        // { global: true } // true pour se déconnecter de tous les appareils  // ne résoud pas le pb de persistence de la session
+        { global: true }  // est-ce que cela clear les données de l'utilisateur dans le local storage ?
       )
         .catch((err) => {
           this.toastService.showInfoToast('sign out', err.message);

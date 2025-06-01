@@ -9,21 +9,21 @@ export const storage = defineStorage({
         ],
         'thumbnails/*': [
             allow.guest.to(['read']),
-            allow.groups(['Expert']).to(['read', 'write', 'delete']),
+            allow.authenticated.to(['read', 'write', 'delete']),
 
         ],
         'albums/*': [
             allow.guest.to(['read']),
-            allow.groups(['Expert']).to(['read', 'write', 'delete']),
+            allow.authenticated.to(['read', 'write', 'delete']),
 
         ],
         'system/*': [
             allow.guest.to(['read']),
-            allow.groups(['Expert']).to(['read', 'write', 'delete']),
+            allow.authenticated.to(['read', 'write', 'delete']),
         ],
         'accounting/*': [
             allow.guest.to(['read']),
-            allow.groups(['Expert']).to(['read', 'write', 'delete']),
+            allow.authenticated.to(['read', 'write', 'delete'])
         ],
     })
 })

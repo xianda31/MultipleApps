@@ -23,7 +23,10 @@ export class MembersService {
       const client = generateClient<Schema>();
       // console.log('fetching members ... 300 max');
       const { data: members, errors } = await client.models.Member.list(
-        { limit: 300 }
+        { limit: 300 ,
+          authMode: 'identityPool' // use identity pool to allow unauthenticated access
+        },
+
       );
       if (errors) {
         console.error('Member.list error', errors);
@@ -63,10 +66,10 @@ export class MembersService {
     return this._members.find((m) => m.id === id) || null;
   }
 
-  last_then_first_name(member: Member ): string {
+  last_then_first_name(member: Member): string {
     return `${member.lastname} ${member.firstname}`;
   }
-  first_then_last_name(member: Member ): string {
+  first_then_last_name(member: Member): string {
     return `${member.firstname} ${member.lastname}`;
   }
 
@@ -106,7 +109,8 @@ export class MembersService {
       const { data, errors } = await client.models.Member.list({
         filter: {
           email: { eq: email }
-        }
+        },
+        authMode: 'identityPool' // use identity pool to allow unauthenticated access
       });
       if (errors) {
         console.error(errors);

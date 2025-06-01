@@ -248,6 +248,7 @@ export class BookService {
             filter: { season: { eq: _season } },
             limit: 300,
             nextToken: token,
+            authMode: 'identityPool' // use identity pool to allow unauthenticated access
           });
           if (errors) {
             console.error('client.models.BookEntry.list failed !! : ' ,errors);

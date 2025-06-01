@@ -8,6 +8,10 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { BookService } from './book.service';
 import { catchError, switchMap, tap } from 'rxjs';
+import { AuthentificationService } from '../../../common/authentification/authentification.service';
+import { AuthEvent } from '../../../common/authentification/authentification_interface';
+import { Hub } from 'aws-amplify/utils';
+import { storage } from '../../../../amplify/storage/resource';
 
 
 
@@ -21,25 +25,28 @@ import { catchError, switchMap, tap } from 'rxjs';
 export class AppComponent {
 
   season !: string;
-  entries_nbr!: number ;
-book_entries_loaded: boolean = false;
+  entries_nbr!: number;
+  book_entries_loaded: boolean = false;
 
   constructor(
     private systemDataService: SystemDataService,
-    private bookService: BookService
-  ) { 
+    private bookService: BookService,
+    private authService: AuthentificationService
+  ) {
 
   }
 
   ngOnInit(): void {
     registerLocaleData(localeFr);
 
+    localStorage.clear(); // clear local storage on app start
+
     // chargement de la configuration et des livres de comptes de S3 et dynamoDB
     // toutes les app ont auront besoin ....
 
     this.systemDataService.get_configuration().pipe(
       tap((conf) => {
-        this.season = conf.season ;
+        this.season = conf.season;
       }),
       switchMap((conf) => this.bookService.list_book_entries$(conf.season))
     ).subscribe((book_entries) => {
@@ -51,7 +58,6 @@ book_entries_loaded: boolean = false;
       this.book_entries_loaded = false;
       return [];
     })
-
   }
 
 }

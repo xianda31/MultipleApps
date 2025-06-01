@@ -13,9 +13,9 @@ export const auth = defineAuth({
   userAttributes: {
     "custom:member_id": {
       dataType: "String",
-      // mutable: true,
+      mutable: true,
     }
   },
 
-  groups: ["Expert", "Member"],
+  // groups: ["Expert", "Member"],
 });

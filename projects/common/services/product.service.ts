@@ -60,7 +60,11 @@ export class ProductService {
     listProducts(): Observable<Product[]> {
         const _listProducts = (): Observable<Product[]> => {
             const client = generateClient<Schema>();
-            return from(client.models.Product.list())
+            return from(client.models.Product.list(
+                {
+                    authMode: 'identityPool' // use identity pool to allow unauthenticated access
+                }
+            ))
                 .pipe(
                     map((response) => response.data as unknown as Product[]),
                     map((products) => products.filter((product) => product.active)),

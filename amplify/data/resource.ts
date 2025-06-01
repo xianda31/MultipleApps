@@ -26,10 +26,11 @@ const schema = a.schema({
     deposit_ref: a.string(),
     bank_report: a.string(),
 
-  }).authorization((allow) => [
-    allow.publicApiKey().to(['read']),
-    allow.group('Expert'),
-  ]),
+  })
+    .authorization((allow) => [
+      allow.guest().to(['read']),
+      allow.authenticated()
+      ]),
   // Adhérents et produits Club
 
   Game_credit: a.customType({
@@ -53,7 +54,10 @@ const schema = a.schema({
     license_taken_at: a.string(),
     game_credits: a.ref('Game_credit').array(),
   })
-    .authorization((allow) => [allow.publicApiKey()]),
+      .authorization((allow) => [
+      allow.guest().to(['read','create']),
+      allow.authenticated().to([ 'create',  'update','read', 'delete']),
+      ]),
 
   Product: a.model({
     glyph: a.string().required(),
@@ -64,7 +68,10 @@ const schema = a.schema({
     active: a.boolean().required(),
     info1: a.string(),
   })
-    .authorization((allow) => [allow.publicApiKey()]),
+     .authorization((allow) => [
+      allow.guest().to(['read']),
+      allow.authenticated()
+      ]),
 
   // Site web
 
@@ -78,8 +85,10 @@ const schema = a.schema({
     pageId: a.id(),
     page: a.belongsTo('Page', 'pageId'),
   })
-    .authorization((allow) => [allow.publicApiKey()]),
-
+    .authorization((allow) => [
+      allow.guest().to(['read']),
+      allow.authenticated()
+      ]),
 
   Page: a.model({
     link: a.string().required(),
@@ -90,7 +99,10 @@ const schema = a.schema({
     menu: a.belongsTo('Menu', 'menuId'),
     articles: a.hasMany('Article', 'pageId'),
   })
-    .authorization((allow) => [allow.publicApiKey()]),
+     .authorization((allow) => [
+      allow.guest().to(['read']),
+      allow.authenticated()
+      ]),
 
 
   Menu: a.model({
@@ -99,7 +111,10 @@ const schema = a.schema({
     rank: a.integer(),
     pages: a.hasMany('Page', 'menuId'),
   })
-    .authorization((allow) => [allow.publicApiKey()]),
+    .authorization((allow) => [
+      allow.guest().to(['read']),
+      allow.authenticated()
+      ]),
 
 });
 
@@ -110,7 +125,8 @@ export type Schema = ClientSchema<typeof schema>;
 export const data = defineData({
   schema,
   authorizationModes: {
-    defaultAuthorizationMode: 'apiKey',
+    defaultAuthorizationMode: 'userPool',
     apiKeyAuthorizationMode: { expiresInDays: 30 }
   },
+    // apiKeyAuthorizationMode: { expiresInDays: 2}
 });
