@@ -1,7 +1,4 @@
-<!-- <button *ngIf="!logged_member" class="btn btn-primary btn-sm" type="button">
-  <i class="bi bi-person-circle"></i> Mon Espace</button> -->
 
-<!-- <div *ngIf="show_login" class="row align-items-center"> -->
 <!-- formulaire 1er niveau de login -->
 <div *ngIf="!(logged_member)" class="row align-items-center">
   <!-- saisies de mail + pwd -->
@@ -28,7 +25,7 @@
 
 </div>
 
-<!-- si loggé affichage prénom et bouton logOut -->
+<!-- si loggé affichage prénom et droplist = [ logOut,...] -->
 <div *ngIf="logged_member" class="row align-items-center">
   <div class="dropdown">
     <button class="btn btn-primary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton1"

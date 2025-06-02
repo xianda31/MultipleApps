@@ -17,7 +17,7 @@
                     </td>
                 </tr>
 
-                <!-- assett if any -->
+                <!-- asset if any -->
                 <tr *ngIf="asset_amount > 0" class="table-warning">
                     <td colspan="3"> avoir </td>
                     <td class="text-end"> {{asset_amount | currency:'€':'symbol':'2.2-2':'fr'}}</td>
@@ -37,11 +37,17 @@
                             [members]="members" [(ngModel)]="item.payee"
                             (ngModelChange)="payeeChanged(i)"></app-input-member>
                     <td>
-                    <td class="text-end">
+                    <td *ngIf="!item.mutable" class="text-end">
                         {{item.paied | currency:'€':'symbol':'2.2-2':'fr'}}
                     </td>
+                    <td *ngIf="item.mutable" class="text-end">
+                        <input type="number" class="form-control form-control-sm" [(ngModel)]="item.paied"
+                            (keydown.enter)="updateCartItem(item)">
+                    </td>
                     <td class=" text-center text-danger">
-                        <i class="bi bi-trash3" (click)="removeFromCart(item)"></i>
+                        <i class="bi bi-pencil-fill" (click)="item.mutable= true"></i>
+                        &nbsp;
+                        <i class="bi bi-trash3" (click)="deleteCartItem(item)"></i>
                     </td>
                 </tr>
 

@@ -76,8 +76,13 @@ export class CartComponent {
     return product?.description || '???';
   }
 
-  removeFromCart(cart_item: CartItem) {
-    this.cartService.removeFromCart(cart_item);
+  deleteCartItem(cart_item: CartItem) {
+    this.cartService.deleteCartItem(cart_item);
+  }
+
+  updateCartItem(cart_item: CartItem) {
+    this.cartService.updateCartItem(cart_item);
+    cart_item.mutable = false;
   }
 
   some_payee_cleared(): boolean {

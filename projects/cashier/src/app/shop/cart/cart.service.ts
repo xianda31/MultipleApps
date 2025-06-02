@@ -43,11 +43,20 @@ export class CartService {
     this._cart$.next(this._cart);
   }
 
-  removeFromCart(CartItem: CartItem): void {
+  deleteCartItem(CartItem: CartItem): void {
     const index = this._cart.items.indexOf(CartItem);
     if (index > -1) {
       this._cart.items.splice(index, 1);
       this._cart$.next(this._cart);
+    }
+  }
+  updateCartItem(CartItem: CartItem): void {
+    const index = this._cart.items.findIndex(item => item.product_id === CartItem.product_id);
+    if (index > -1) {
+      this._cart.items[index] = CartItem;
+      this._cart$.next(this._cart);
+    } else {
+      console.warn('CartItem not found in cart', CartItem);
     }
   }
 
@@ -106,7 +115,7 @@ export class CartService {
       this.bookService.create_book_entry(sale)
         .then((sale) => {
           resolve(sale);
-          console.log('sale saved', sale);
+          // console.log('sale saved', sale);
           this.save_fees_credits(session);
           this.clearCart();
         })
@@ -122,6 +131,7 @@ export class CartService {
     const cartItem: CartItem = {
       product_id: product.id,
       paied: product.price,
+      mutable:false,
       product_account: product.account,
       payee_name: payee === null ? '' : payee.lastname + ' ' + payee.firstname
     };
@@ -144,12 +154,12 @@ export class CartService {
     // push debt_credit and asset_debit as "CartItems"
     if (this._cart.debt) {
       let items = payees.get(this._cart.debt.name) ?? [];
-      items.push({ paied: this._cart.debt.amount, product_account: CUSTOMER_ACCOUNT.DEBT_credit, payee_name: this._cart.debt.name, product_id: '' });
+      items.push({ paied: this._cart.debt.amount, mutable:false,product_account: CUSTOMER_ACCOUNT.DEBT_credit, payee_name: this._cart.debt.name, product_id: '' });
       payees.set(this._cart.debt.name, items);
     }
     if (this._cart.asset) {
       let items = payees.get(this._cart.asset.name) ?? [];
-      items.push({ paied: this._cart.asset.amount, product_account: CUSTOMER_ACCOUNT.ASSET_debit, payee_name: this._cart.asset.name, product_id: '' });
+      items.push({ paied: this._cart.asset.amount, mutable:false,product_account: CUSTOMER_ACCOUNT.ASSET_debit, payee_name: this._cart.asset.name, product_id: '' });
       payees.set(this._cart.asset.name, items);
     }
 

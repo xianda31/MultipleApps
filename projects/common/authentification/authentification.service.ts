@@ -76,9 +76,9 @@ export class AuthentificationService {
           console.log("isSignedIn: %s nextStep : %s", isSignedIn, nextStep);
 
           const attributes = await fetchUserAttributes();
-          console.log('attributes', attributes);
+          // console.log('attributes', attributes);
           let member_id = attributes['custom:member_id'];
-          console.log('member_id', member_id);
+          // console.log('member_id', member_id);
           if (!member_id) {
             reject('local storage invalid');
           } else {

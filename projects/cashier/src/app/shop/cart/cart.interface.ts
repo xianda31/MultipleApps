@@ -34,6 +34,7 @@ export interface Payment {
 export interface CartItem {
   payee?: Member | null;    // null => 2nd payee to fill-in
   paied: number;
+  mutable : boolean; // true => item can be modified
   // payee_id: string;
   product_id: string;
   product_account: string;
