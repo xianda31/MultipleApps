@@ -1,0 +1,55 @@
+<div class="container offset-md-2 col-md-8">
+    <div class=" card mt-3 g-0">
+        <div class="card-header">
+            <div class="row">
+                <h4 class="col-8">
+                    <span class="ms-1 d-none d-sm-inline">Gestion des cartes de tournoi</span>
+                </h4>
+                <h5 class="col-4 text-end">
+                    <div class="row text-success">
+                        <i class="bi bi-file-earmark-plus" (click)="createGameCard()">
+                            création d'une carte
+                        </i>
+                    </div>
+                </h5>
+            </div>
+        </div>
+        <div class="card-body">
+            <table class="table  table-sm table-striped table-responsive">
+                <thead>
+                    <tr>
+                        <th>création</th>
+                        <th class="text-start">titulaire(s)</th>
+                        <th class="text-center">crédit</th>
+                        <th class="text-center">actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <ng-container *ngFor="let card of cards ; let i = index">
+                        <tr>
+                            <td>{{card.createdAt |  date}}</td>
+                            <td class="text-start">
+                                <span *ngFor="let owner of card.owners; let j = index">
+                                    <span *ngIf="j > 0"> &nbsp; et &nbsp; </span>
+                                    {{owner.lastname}} {{owner.firstname}}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <span >{{card.initial_qty - stamps_number(card) }}</span>
+                            </td>
+                            <td class="text-center ">
+                                <button class="btn btn-sm btn-primary me-1" (click)="editGameCard(card)">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger" (click)="deleteGameCard(card)">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                                </td>
+                        </tr>
+                    </ng-container>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>

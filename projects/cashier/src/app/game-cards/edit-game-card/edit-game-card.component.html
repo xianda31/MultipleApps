@@ -1,0 +1,52 @@
+<div class="modal-header pb-0 ">
+    <div class="col justify-content-between">
+        <div class="row align-items-center">
+            <h5 class="col-10 modal-title">
+                Carte de  {{card.initial_qty}} tournois
+            </h5>
+            <div class="col-1 text-center">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                    (click)="close()"></button>
+            </div>
+        </div>
+        <div class="text-muted">
+            <span class="fw-bolder">titulaire(s) :</span>
+            <span *ngFor="let owner of card.owners; let j = index">
+                <span *ngIf="j > 0"> &nbsp;et&nbsp; </span>
+                {{owner.lastname}} {{owner.firstname}}
+            </span>
+        </div>
+        <div class="row justify-content-between  align-items-center mb-2">
+            <div class="col-5 text-muted">
+                <span class="fw-bolder me-1">créée le :</span>
+                <span >{{card.createdAt |date}} </span>
+            </div>
+            <div class="col-5 text-muted">
+                <span class="fw-bolder me-1">crédit restant :</span>
+                <span class="badge bg-success">{{free_places_nbr}}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-body">
+
+    <div class="row row-cols-1 row-cols-md-4 g-0">
+        <div *ngFor="let place of stamp_places ; let i = index" class="col">
+            <div [class]=" place.free ? 'card h-100' :'card h-100 bg-light'" (click)="stamp(i)">
+                <div class="card-body text-center">
+                    <small [class]=" place.free ? 'text-muted' :'  fw-bolder'"> {{place.stamp}}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- </ng-container> -->
+
+<div class="modal-footer">
+    <div class="justify-content-between">
+        <button type="button" class="btn btn-primary btn-sm" (click)="got_it()">OK</button>
+
+    </div>
+</div>

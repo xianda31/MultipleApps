@@ -29,8 +29,22 @@ const schema = a.schema({
   })
     .authorization((allow) => [
       allow.guest().to(['read']),
-      allow.authenticated()
-      ]),
+      allow.authenticated('identityPool')
+    ]),
+
+  // cartes de parties 
+
+  TwelveGameCard: a.model({
+    id: a.id().required(),
+    initial_qty: a.integer().required(),
+    licenses: a.string().array().required(),
+    stamps: a.string().array().required(),
+  })
+    .authorization((allow) => [
+      allow.guest().to(['create','read']),
+      allow.authenticated('identityPool').to(['create','read', 'update',  'delete']),
+    ]),
+
   // Adhérents et produits Club
 
   Game_credit: a.customType({
@@ -39,7 +53,7 @@ const schema = a.schema({
   }),
 
   Member: a.model({
-    license_number: a.id().required(),
+    license_number: a.string().required(),
     gender: a.string(),
     firstname: a.string(),
     lastname: a.string(),
@@ -54,10 +68,10 @@ const schema = a.schema({
     license_taken_at: a.string(),
     game_credits: a.ref('Game_credit').array(),
   })
-      .authorization((allow) => [
-      allow.guest().to(['read','create']),
-      allow.authenticated().to([ 'create',  'update','read', 'delete']),
-      ]),
+    .authorization((allow) => [
+      allow.guest().to(['read', 'create']),
+      allow.authenticated('identityPool').to(['create','read', 'update',  'delete']),
+    ]),
 
   Product: a.model({
     glyph: a.string().required(),
@@ -68,10 +82,10 @@ const schema = a.schema({
     active: a.boolean().required(),
     info1: a.string(),
   })
-     .authorization((allow) => [
+    .authorization((allow) => [
       allow.guest().to(['read']),
-      allow.authenticated()
-      ]),
+      allow.authenticated('identityPool')
+    ]),
 
   // Site web
 
@@ -87,8 +101,8 @@ const schema = a.schema({
   })
     .authorization((allow) => [
       allow.guest().to(['read']),
-      allow.authenticated()
-      ]),
+      allow.authenticated('identityPool')
+    ]),
 
   Page: a.model({
     link: a.string().required(),
@@ -99,10 +113,10 @@ const schema = a.schema({
     menu: a.belongsTo('Menu', 'menuId'),
     articles: a.hasMany('Article', 'pageId'),
   })
-     .authorization((allow) => [
+    .authorization((allow) => [
       allow.guest().to(['read']),
-      allow.authenticated()
-      ]),
+      allow.authenticated('identityPool')
+    ]),
 
 
   Menu: a.model({
@@ -113,8 +127,8 @@ const schema = a.schema({
   })
     .authorization((allow) => [
       allow.guest().to(['read']),
-      allow.authenticated()
-      ]),
+      allow.authenticated('identityPool')
+    ]),
 
 });
 
@@ -125,8 +139,8 @@ export type Schema = ClientSchema<typeof schema>;
 export const data = defineData({
   schema,
   authorizationModes: {
-    defaultAuthorizationMode: 'userPool',
+    defaultAuthorizationMode: 'identityPool',
     apiKeyAuthorizationMode: { expiresInDays: 30 }
   },
-    // apiKeyAuthorizationMode: { expiresInDays: 2}
+  // apiKeyAuthorizationMode: { expiresInDays: 2}
 });

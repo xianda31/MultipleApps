@@ -4,6 +4,7 @@ import { BehaviorSubject, from, Observable, tap, switchMap } from 'rxjs';
 import { Schema } from '../../../../../../amplify/data/resource';
 import { Member } from '../../../../../common/member.interface';
 import { ToastService } from '../../../../../common/toaster/toast.service';
+import { auth } from '../../../../../../amplify/auth/resource';
 
 @Injectable({
   providedIn: 'root'
@@ -95,7 +96,7 @@ export class MembersService {
 
   async readMember(id: string): Promise<Member | null> {
     const client = generateClient<Schema>();
-    const { data, errors } = await client.models.Member.get({ id: id });
+    const { data, errors } = await client.models.Member.get({ id: id }, { authMode: 'identityPool' }); // use identity pool to allow unauthenticated access
     if (errors) {
       console.error(errors);
       return null;
@@ -109,6 +110,24 @@ export class MembersService {
       const { data, errors } = await client.models.Member.list({
         filter: {
           email: { eq: email }
+        },
+        authMode: 'identityPool' // use identity pool to allow unauthenticated access
+      });
+      if (errors) {
+        console.error(errors);
+        reject(null);
+      }
+      resolve(data[0] as Member);   // array of only one element, hopefully !!!
+    });
+    return promise;
+  }
+
+  async searchMemberByLicense(license_number: string): Promise<Member | null> {
+    let promise = new Promise<Member | null>(async (resolve, reject) => {
+      const client = generateClient<Schema>();
+      const { data, errors } = await client.models.Member.list({
+        filter: {
+          license_number: { eq: license_number }
         },
         authMode: 'identityPool' // use identity pool to allow unauthenticated access
       });

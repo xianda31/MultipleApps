@@ -12,6 +12,7 @@ import { ImportExcelComponent } from './excel/import-excel/import-excel.componen
 import { BooksListComponent } from './books/books-list/books-list.component';
 import { ExpenseAndRevenueComponent } from './expense-and-revenue/expense-and-revenue.component';
 import { ExpenseAndRevenueDetailsComponent } from './expense-and-revenue/expense-and-revenue-details/expense-and-revenue-details.component';
+import { GameCardsEditorComponent } from './game-cards/game-cards-editor/game-cards-editor.component';
 
 export const routes: Routes = [
   { path: 'shop', component: ShopComponent },   //, canActivate: [loggedInGuard]
@@ -23,6 +24,7 @@ export const routes: Routes = [
   { path: 'books/cash-box-status', component: CashBoxStatusComponent },
   { path: 'fees/collector', component: FeesCollectorComponent },
   { path: 'fees/editor', component: FeesEditorComponent },
+  { path: 'game-cards/editor', component: GameCardsEditorComponent },
   { path: 'excel/import', component: ImportExcelComponent },
   { path: 'bank-reconciliation', component: BankReconciliationComponent },
   { path: 'balance', component: BalanceComponent },
