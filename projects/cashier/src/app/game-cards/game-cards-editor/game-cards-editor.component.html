@@ -1,9 +1,9 @@
 <div class="container offset-md-2 col-md-8">
-    <div class=" card mt-3 g-0">
+    <div class=" card shadow-lg mt-3 g-0">
         <div class="card-header">
             <div class="row">
-                <h4 class="col-8">
-                    <span class="ms-1 d-none d-sm-inline">Gestion des cartes de tournoi</span>
+                <h4 class="col-md-9">
+                    <span class="ms-1 d-none d-sm-inline">Gestion des cartes d'admission tournoi</span>
                 </h4>
                 <h5 class="col-4 text-end">
                     <div class="row text-success">
@@ -18,8 +18,8 @@
             <table class="table  table-sm table-striped table-responsive">
                 <thead>
                     <tr>
-                        <th>création</th>
                         <th class="text-start">titulaire(s)</th>
+                        <th>création</th>
                         <th class="text-center">crédit</th>
                         <th class="text-center">actions</th>
                     </tr>
@@ -27,13 +27,13 @@
                 <tbody>
                     <ng-container *ngFor="let card of cards ; let i = index">
                         <tr>
-                            <td>{{card.createdAt |  date}}</td>
                             <td class="text-start">
                                 <span *ngFor="let owner of card.owners; let j = index">
                                     <span *ngIf="j > 0"> &nbsp; et &nbsp; </span>
                                     {{owner.lastname}} {{owner.firstname}}
                                 </span>
                             </td>
+                            <td>{{card.createdAt |  date}}</td>
                             <td class="text-center">
                                 <span >{{card.initial_qty - stamps_number(card) }}</span>
                             </td>

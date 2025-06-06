@@ -5,9 +5,9 @@ import { Member } from '../../../../../common/member.interface';
 import { BookService } from '../../book.service';
 import { TRANSACTION_ID, BookEntry, operation_values, Operation, Session, FINANCIAL_ACCOUNT, CUSTOMER_ACCOUNT, AMOUNTS } from '../../../../../common/accounting.interface';
 import { Product } from '../../../../../admin-dashboard/src/app/sales/products/product.interface';
-import { FeesEditorService } from '../../fees/fees-editor/fees-editor.service';
 import { ProductService } from '../../../../../common/services/product.service';
 import { MembersService } from '../../../../../admin-dashboard/src/app/members/service/members.service';
+import { GameCardService } from '../../game-card.service';
 
 @Injectable({
   providedIn: 'root'
@@ -21,9 +21,9 @@ export class CartService {
 
   constructor(
     private bookService: BookService,
-    private feesService: FeesEditorService,
         private productService: ProductService,
         private membersService: MembersService,
+        private gameCardService: GameCardService
     
   ) { }
 
@@ -116,7 +116,7 @@ export class CartService {
         .then((sale) => {
           resolve(sale);
           // console.log('sale saved', sale);
-          this.save_fees_credits(session);
+          this.handle_game_card(session);
           this.clearCart();
         })
         .catch((error) => {
@@ -222,7 +222,7 @@ export class CartService {
   }
 
 
-  save_fees_credits(session: Session) {
+  handle_game_card(session: Session) {
     this._cart.items.forEach((cartitem) => {
       if (cartitem.product_account === 'CAR') {
         if (!cartitem.payee || cartitem.payee === null) {
@@ -235,7 +235,10 @@ export class CartService {
           console.warn('product or member not found for CAR product', cartitem);
           return;
         }
-        this.feesService.tournament_card_sold(session.date, member, +product.info1!);
+        this.gameCardService.createCard([member], +product.info1!).catch(error => {
+          console.error('Error à la création de la carte', member.firstname, member.lastname, error);
+        });
+        
       }
     });
   }

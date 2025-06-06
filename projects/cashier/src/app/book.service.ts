@@ -74,7 +74,7 @@ export class BookService {
       const { id, ...jsonified_entry_without_id } = jsonified_entry;
 
       try {
-        const response = await client.models.BookEntry.create(jsonified_entry_without_id);
+        const response = await client.models.BookEntry.create(jsonified_entry_without_id, { authMode: 'identityPool' });
         if (response.errors) {
           console.error('error creating', this.jsonified_entry(book_entry), response.errors);
           return Promise.reject(JSON.stringify(response.errors));
@@ -114,7 +114,7 @@ export class BookService {
     try {
       const {data,errors} = await client.models.BookEntry.create(
         jsonified_entry_without_id,
-        {authMode:'userPool'}
+        {authMode:'identityPool'}
       );
       if (errors) {        throw errors;      }
 

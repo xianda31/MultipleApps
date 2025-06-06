@@ -1,113 +1,159 @@
-<div id="print_zone" class="container-md">
-    <!-- bandeau tournoi (date, mode rr) -->
-    <div class="row bg-light mt-2 mb-3 p-3 justify-content-around align-items-center">
-        <div class="col-4 ">
-            <div class=" input-group input-group-sm align-items-center">
-                tournoi du :&nbsp;
-                <select class="form-select form-select-sm" [(ngModel)]="game.tournament"
-                    (ngModelChange)="tournament_selected($event)">
-                    <option *ngFor="let trn of next_tournaments | async" [ngValue]="trn">
-                        {{ trn.date | date:'dd/MM/yyyy' }} &nbsp; {{ trn.time }}</option>
-                </select>
-                <span class="ms-2" >
+<div id="print_zone">
+    <div class="card shadow-lg mt-3 g-0">
+        <div class="card-header">
+            <!-- bandeau tournoi (date, mode roy rené , abandon -->
+            <div class="row  justify-content-start align-items-center">
 
-                    <button class="btn btn-sm btn-primary" (click)="one_week_back()">
-                        <i class="bi bi-skip-backward"></i>
-                    </button>
-                </span>
-            </div>
-        </div>
-        <div class="col-8">
-            <div *ngIf="game.tournament " class="row justify-content-between text-muted">
                 <div class="col-auto">
+                    <h5 class="ms-1 d-none d-sm-inline">Droits de table</h5>
+                </div>
+
+                <div *ngIf="!selected_tournament" class="col-auto">
+                    <div class=" input-group input-group-sm align-items-center">
+                        <select class="form-select form-select-sm" [(ngModel)]="selected_tournament"
+                            (ngModelChange)="tournament_selected($event)">
+                            <option *ngFor="let trn of next_tournaments$ | async" [ngValue]="trn">
+                                {{ trn.date | date:'dd/MM/yyyy' }} &nbsp; {{ trn.time }}</option>
+                        </select>
+                        <span class="ms-2">
+                            <button class="btn btn-sm btn-primary" (click)="one_week_back()">
+                                <i class="bi bi-skip-backward"></i>
+                            </button>
+                        </span>
+                    </div>
+                </div>
+                <div *ngIf="selected_tournament" class="col-auto">
+                    <span>
+                        {{selected_tournament.date | date:'dd/MM/yyyy'}}
+                        &nbsp; {{ selected_tournament.time }}</span>
+                </div>
+
+                <div *ngIf="game.tournament" class="col-auto">
                     {{game.tournament.tournament_name}}
                 </div>
-                <div class="col-auto">
+
+
+                <div *ngIf="game.tournament" class="col-auto">
                     <span class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" [checked]="game.fees_doubled" role="switch"
-                            [checked]="game.fees_doubled" (change)="toggle_fee()">
-                        <label class="form-check-label">droit doublé</label>
+                            (change)="toggle_fee()">
+                        <label class="form-check-label">droits doublés</label>
                     </span>
                 </div>
-            </div>
-        </div>
-    </div>
-    <!-- bandeau présentation et validation -->
 
-    <div *ngIf="game" class="row bg-light mb-3 p-3 justify-content-around align-items-center">
-
-        <span class="col form-check form-switch">
-            <input class="form-check-input" type="checkbox" role="switch" [checked]="game.alphabetic_sort"
-                (change)="toggle_sort()">
-            <label class="form-check-label">tri alphabétique</label>
-        </span>
-
-        <button class="col btn btn-sm btn-primary me-2" (click)="check_all_members()">
-            <i class="fa-solid fa-check"></i> valider tous les adhérents</button>
-        <button class="col btn btn-sm btn-primary me-2" (click)="save_fees()">valider les droits de tables</button>
-    </div>
-
-    <div *ngIf="game" class="row">
-        <!-- <div class="col-12"> -->
-        <div class="row row-cols-1 row-cols-md-4 g-1">
-            <div class="col" *ngFor="let gamer of game.gamers">
-                <ng-container
-                    *ngTemplateOutlet="fee_editor; context:{gamer: gamer, doubled: (game.fees_doubled)}"></ng-container>
-            </div>
-        </div>
-        <!-- </div> -->
-    </div>
-</div>
-<div class="mt-4 align-content-end">
-    <div class="row">
-        <div class="col"></div>
-        <div class="col-auto align-self-end">
-            <button [disabled]="!selected_tournament" class="btn btn-sm btn-primary align-self-end" (click)="print_to_pdf()">
-                <i class="bi-printer"></i>
-            </button>
-        </div>
-    </div>
-</div>
-
-<ng-template #fee_editor ; let-gamer="gamer" ; let-doubled="doubled">
-    <div [class]="gamer.is_member ? 'card h-100': 'card h-100 text-bg-warning'">
-        <!-- <div [class]="'card h-100'+ gamer.is_member? 'border-primary':'border-secondary'"> -->
-        <div class="card-body py-0 px-1">
-            <div class="row">
-                <div class="col-6">
-                    <h6 class="p-0 mb-0">{{gamer.lastname}} </h6>
-                    <span class="text-muted">{{gamer.firstname}} </span>
-                    <!-- <div class="text-muted" *ngIf="gamer.is_member"> crédit : {{gamer.credit}}</div>
-                    <div class="text-muted" *ngIf="!gamer.is_member"> droit de table : 4€</div> -->
-                </div>
-
-                <div class="col-4 align-content-center">
-                    <div *ngIf="gamer.is_member" class="form-check form-check-reverse">
-                        <!-- [ngClass]="((gamer.games_credit <= 2)) ? 'form-check warning-radio' : 'form-check'"> -->
-                        <input class="form-check-input" type="radio" [name]="'card_or_euro' + gamer.index"
-                            [id]="'pass-radio'+ gamer.index" [value]="false" [(ngModel)]="gamer.in_euro" />
-                        <label class="form-check-label" [ngStyle]="{'color': (gamer.game_credits<=2) ? 'red' : 'black'}"
-                            [for]="'pass-radio'+ gamer.index">
-                            {{gamer.game_credits}}
-                            <i class="bi-pass"></i>
-                            <i *ngIf="doubled" class="bi-pass"></i>
-
-
-                            <!-- <i [class]="doubled?'bi-pass-fill': 'bi-pass'"></i> -->
-                        </label>
-                    </div>
-
-                    <div class="form-check form-check-reverse">
-                        <input class="form-check-input" type="radio" [name]="'card_or_euro' + gamer.index"
-                            [id]="'euro_radio'+ gamer.index" [value]="true" [(ngModel)]="gamer.in_euro" />
-                        <label class="form-check-label" [for]="'euro_radio'+ gamer.index"> {{gamer.price}}€ </label>
+                <div *ngIf="game.tournament" class="mx-auto col-auto text-end">
+                    <div class="row justify-content-end align-items-center">
+                        <div class="mx-auto col-auto">
+                            sortie sans sauvegarde :
+                        </div>
+                        <div class="col-auto">
+                                <back class="float-right"></back>
+                        </div>
                     </div>
                 </div>
-                <div class="col-2 align-content-center justify-content-end">
-                    <input class="form-check-input" type="checkbox" [(ngModel)]="gamer.validated"
-                        [id]="'valid' + gamer.index">
+            </div>
+        </div>
+
+        <div *ngIf="game.tournament" class="card-body">
+
+            <span class="col form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch" [checked]="game.alphabetic_sort"
+                    (change)="toggle_sort()">
+                <label class="form-check-label">tri alphabétique</label>
+            </span>
+
+            <!-- loop sur les gamers -->
+            <div *ngIf="game" class="row">
+                <div class="row row-cols-1 row-cols-md-4 g-1">
+                    <div class="col" *ngFor="let gamer of game.gamers">
+                        <ng-container
+                            *ngTemplateOutlet="fee_editor; context:{gamer: gamer, doubled: (game.fees_doubled)}"></ng-container>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- footer -->
+        <div *ngIf="game.tournament" class="card-footer">
+            <!-- validation recettes -->
+            <div class="row justify-content-end align-items-center">
+                <div class="col-auto">
+                    clôture saisie droits de tables
+                </div>
+                <div class="col-auto">
+                    <button [disabled]="!all_gamers_validated()" class="btn btn-sm btn-primary"
+                        (click)="validate_fees()">
+                        <i class="h6 bi-check-lg"></i>
+                    </button>
                 </div>
             </div>
         </div>
     </div>
-</ng-template>
+
+
+    <div class="mt-4 align-content-end">
+        <div class="row">
+            <div class="col"></div>
+            <div class="col-auto align-self-end">
+                <button [disabled]="!selected_tournament" class="btn btn-sm btn-primary align-self-end"
+                    (click)="print_to_pdf()">
+                    <i class="bi-printer"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <ng-template #fee_editor ; let-gamer="gamer" ; let-doubled="doubled">
+        <div [class]=" gamer_class(gamer) ">
+            <div class="card-body py-0 ">
+                <div class="row">
+                    <div class="col form-check form-switch">
+                        <input class="form-check-input" type="checkbox" [checked]="gamer.enabled" role="switch"
+                            (change)="gamer.enabled = !gamer.enabled">
+                        <label class="form-check-label">présence</label>
+                    </div>
+                    <!-- validation présence -->
+                    <div class="col form-check form-switch form-check-reverse">
+                        <label class="form-check-label">validation :</label>
+                        <input class="form-check-input" type="checkbox" role="switch"
+                            [disabled]="!gamer.enabled || !gamer_solvent(gamer)" [(ngModel)]="gamer.validated"
+                            [id]="'valid' + gamer.index">
+                    </div>
+                </div>
+
+
+                <div class="row">
+                    <!-- nom et prénom du joueur -->
+                    <div class="col-6">
+                        <h6 class="p-0 mb-0">{{gamer.lastname}} </h6>
+                        <span class="text-muted">{{gamer.firstname}} </span>
+                    </div>
+
+                    <!-- mode de réglement -->
+                    <div class="col-4 align-content-center">
+                        <!-- si adhérent club , affichage choix carte -->
+                        <div *ngIf="gamer.is_member" class="form-check form-check-reverse">
+                            <input [disabled]="gamer.validated || gamer.disabled " class="form-check-input" type="radio"
+                                [name]="'card_or_euro' + gamer.index" [id]="'pass-radio'+ gamer.index" [value]="false"
+                                [(ngModel)]="gamer.in_euro" />
+                            <label class="form-check-label"
+                                [ngStyle]="{'color': (gamer.game_credits<=2) ? 'red' : 'black'}"
+                                [for]="'pass-radio'+ gamer.index">
+                                {{gamer.game_credits}}
+                                <i class="bi-pass"></i>
+                                <i *ngIf="doubled" class="bi-pass"></i>
+                            </label>
+                        </div>
+                        <!-- affichage choix en cash -->
+                        <div class="form-check form-check-reverse">
+                            <input [disabled]="gamer.validated || gamer.disabled " class="form-check-input" type="radio"
+                                [name]="'card_or_euro' + gamer.index" [id]="'euro_radio'+ gamer.index" [value]="true"
+                                [(ngModel)]="gamer.in_euro" />
+                            <label class="form-check-label" [for]="'euro_radio'+ gamer.index"> {{gamer.price}}€ </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </ng-template>

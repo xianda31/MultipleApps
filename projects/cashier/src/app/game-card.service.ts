@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { generateClient } from 'aws-amplify/api';
+import { generateClient, get } from 'aws-amplify/api';
 import { Schema } from '../../../../amplify/data/resource';
 import { BehaviorSubject, from, map, Observable, switchMap } from 'rxjs';
 import { GameCard, MAX_STAMPS } from './game-cards/game-card.interface';
@@ -25,18 +25,74 @@ export class GameCardService {
 
   // interfaces haut niveau
 
-  
+
+
+
+  check_solvencies(members: Member[]): Observable<Map<string, number>> {
+    let solvencies = new Map<string, number>()
+    let card_set = new Set<GameCard>([]);
+
+    const share = (card: GameCard, member: Member, members: Member[]): number => {
+      let count = card.owners.reduce((acc, owner) => acc += members.find(m => m.id === owner.id) ? 1 : 0, 0);
+      if (count === 0) { throw new Error('algorithm failure !!!'); }
+      return count;
+    }
+
+    const member_credit = (member: Member): number => {
+      return Array.from(card_set)
+        .filter(card => card.owners.some(owner => owner.license_number === member.license_number))
+        .reduce((total, card) => total + (card.initial_qty - card.stamps.length)/share(card,member,members), 0);
+    };
+
+    return this.gameCards$.pipe(
+      map((cards) => {
+        card_set.clear();
+        // recherche des cartes de membres
+        members.forEach(member => {
+          const memberCards = cards.filter(card => card.owners.some(owner => owner.license_number === member.license_number));
+          if (memberCards.length > 0) {             memberCards.forEach(card => card_set.add(card))            }
+        })
+
+        // calcul du solde de chaque membre
+
+        members.forEach(member => {
+          const credit = member_credit(member);
+          solvencies.set(member.license_number, credit);
+        });
+
+        return solvencies;
+      })
+    );
+  }
+
+
+  get_member_credit(member: Member): number {
+    return this._gameCards
+      .filter(c => c.owners.some(owner => owner.license_number === member.license_number))
+      .reduce((total, card) => total + (card.initial_qty - card.stamps.length), 0);
+  }
+
+  stamp_member_card(member: Member, stamp_date: string): void {
+    const card = this._gameCards.find(c => c.owners.some(owner => (owner.license_number === member.license_number) && (c.stamps.length < c.initial_qty)));
+    if (card) {
+      card.stamps.push(stamp_date);
+      this.updateCard(card).catch(error => {
+        console.error('Error stamping member card:', error);
+      });
+    }
+  }
+
   //  interfaces editeur
-  
+
   get gameCards(): Observable<GameCard[]> {
     return this._gameCards ? this.gameCards$.asObservable() : this.listCards().pipe(
       switchMap(() => this.gameCards$.asObservable()));
   }
 
-  async createCard(owners: Member[]): Promise<GameCard> {
+  async createCard(owners: Member[], qty ?:number): Promise<GameCard> {
     const input_card: Omit<TwelveGameCard, 'id' | 'createdAt' | 'updatedAt'> = {
       licenses: owners.map((member) => member.license_number),
-      initial_qty: MAX_STAMPS,
+      initial_qty: qty ?? MAX_STAMPS,
       stamps: [],
     };
     try {
@@ -49,9 +105,10 @@ export class GameCardService {
         createdAt: createdCard.createdAt,
         updatedAt: createdCard.updatedAt
       };
-
+      if(this._gameCards) {   // cache update if exists
       this._gameCards.push(new_card);
       this.gameCards$.next(this._gameCards);
+      }
       return new_card;
     } catch (error) {
       console.error('Error creating game card:', error);
@@ -66,11 +123,14 @@ export class GameCardService {
         licenses: card.owners.map((owner) => owner.license_number),
         initial_qty: card.initial_qty,
         stamps: card.stamps,
-        createdAt:  '',
+        createdAt: '',
         updatedAt: ''
       };
 
       const updatedCard = await this.updateTwelveGameCard(updatedCardData);
+      if (!updatedCard) {
+        throw new Error('Failed to update game card');
+      }
       const updatedGameCard: GameCard = {
         id: updatedCard.id,
         owners: card.owners,
@@ -79,11 +139,10 @@ export class GameCardService {
         createdAt: updatedCard.createdAt,
         updatedAt: updatedCard.updatedAt
       };
-
-      const index = this._gameCards.findIndex(c => c.id === card.id);
-      if (index !== -1) {
-        this._gameCards[index] = updatedGameCard;
-      }
+      this._gameCards = this._gameCards.filter(c => c.id !== card.id);
+      this._gameCards.push(updatedGameCard);
+      this._gameCards.sort((a, b) => a.owners[0].lastname.localeCompare(b.owners[0].lastname));
+      
       this.gameCards$.next(this._gameCards);
       return updatedGameCard;
     } catch (error) {
@@ -98,7 +157,6 @@ export class GameCardService {
       const done = await this.deleteTwelveGameCard(card.id);
       if (done) {
         this._gameCards = this._gameCards.filter(c => c.id !== card.id);
-        console.log('GameCardService.deleteCard', card.id, 'deleted', this._gameCards.length, 'cards remaining');
         this.gameCards$.next(this._gameCards);
         return true;
       }
@@ -114,7 +172,6 @@ export class GameCardService {
     return this.membersService.listMembers().pipe(
       map((members) => {
         this.members = members;
-        console.log('%s members loaded', this.members.length);
       }),
       switchMap(() => this.listTwelveGameCards()),
       map((cards) => {
@@ -124,7 +181,7 @@ export class GameCardService {
             .filter((owner): owner is Member => owner !== undefined);
           return {
             id: card.id,
-            owners : owners,
+            owners: owners,
             initial_qty: card.initial_qty,
             stamps: (card.stamps ?? []).filter((stamp): stamp is string => stamp !== null),
             createdAt: card.createdAt,

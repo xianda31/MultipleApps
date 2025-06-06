@@ -98,7 +98,6 @@ export class MembersComponent implements OnInit {
           license_taken_at: 'BCSTO',
           license_status: 'unknown',
           is_sympathisant: false,
-          game_credits: [],
         }
         this.membersService.createMember(new_member).then((_member) => {
           this.toastService.showSuccessToast('Nouveau membre non licencié', new_member.lastname + ' ' + new_member.firstname);
@@ -132,7 +131,6 @@ export class MembersComponent implements OnInit {
       license_taken_at: "BCSTO",
       license_status: "unknown",
       is_sympathisant: false,
-      game_credits: [],
     }
   }
 
@@ -201,7 +199,6 @@ export class MembersComponent implements OnInit {
       license_status: licensee.license_id ? (licensee.free ? 'free' : 'paied') : 'unpaied',
       is_sympathisant: licensee.is_sympathisant ?? false,
 
-      game_credits: member.game_credits,
 
     }
     let is: { [key: string]: any } = member;
@@ -233,7 +230,6 @@ export class MembersComponent implements OnInit {
       is_sympathisant: licensee.is_sympathisant ?? false,
       license_status: licensee.license_id ? (licensee.free ? 'free' : 'paied') : 'unpaied',
       license_taken_at: licensee.orga_license_name ?? 'BCSTO',
-      game_credits: [],
     }
 
   }

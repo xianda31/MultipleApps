@@ -1,14 +1,14 @@
-<div class="container-md ">
+<div class="container-md  container-sm-fluid">
 
   <div class="row bg-light shadow-sm mt-2">
-    <div class="col-10">
+    <div class="col-md-10 col-sm-12 col-12">
       <h4>
         <i class="fs-4 bi-piggy-bank"></i>
         Comptabilité Bridge Club Saint-Orens
         <span class="fs-4"> (saison {{season}}) </span>
       </h4>
     </div>
-    <div class="col-2 self-align-end fst-italic fs-6 text-end">
+    <div class="col-md-2 col-sm-12 col-12 self-align-end fst-italic fs-6 text-end">
       {{entries_nbr}} enregistrements
     </div>
 
@@ -32,12 +32,22 @@
             </a>
           </li>
 
-          <li class="nav-item me-5">
-            <a class="nav-link" [routerLink]="['/fees/collector']">
-              <i class="fs-4 bi-person-video2"></i>
-              <span class="ms-1 d-none d-sm-inline">Tournoi</span>
+
+
+          <li class="nav-item dropdown me-5">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown1" role="button" data-bs-toggle="dropdown"
+              aria-expanded="false">
+              <i class="fs-4 bi-person-video2"></i> <span class="ms-1 d-none d-sm-inline">Tournois</span>
             </a>
+            <ul class="dropdown-menu" aria-labelledby="navbarDropdown1">
+              <li><a class="dropdown-item  " routerLink="/tournois/droits-de-table">droits de table</a></li>
+              <li><a class="dropdown-item  " routerLink="/tournois/cartes-admission">cartes admission</a></li>
+
+            </ul>
           </li>
+
+
+
 
           <li class="nav-item dropdown me-5">
             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown1" role="button" data-bs-toggle="dropdown"
@@ -61,7 +71,6 @@
               <li><a class="dropdown-item  " routerLink="/books/overview">vue générale</a></li>
               <li><a class="dropdown-item  " routerLink="/books/list">base de données</a></li>
               <li><a class="dropdown-item  " routerLink="/books/cash-box-status">gestion caisse</a></li>
-              <li><a class="dropdown-item  " routerLink="/game-cards/editor">cartes tournoi</a></li>
 
             </ul>
           </li>

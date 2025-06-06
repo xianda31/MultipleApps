@@ -2,15 +2,14 @@ import { Injectable } from '@angular/core';
 import { MembersService } from '../../../../../admin-dashboard/src/app/members/service/members.service';
 import { TournamentService } from '../../../../../common/services/tournament.service';
 import { Person, Player, Team, TournamentTeams } from '../../../../../common/ffb/interface/tournament_teams.interface';
-import { BehaviorSubject, map, Observable, of, tap } from 'rxjs';
+import { BehaviorSubject, map, Observable, Subscription } from 'rxjs';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
-import { ProductService } from '../../../../../common/services/product.service';
-import { Game_credit, Member } from '../../../../../common/member.interface';
+import { Member } from '../../../../../common/member.interface';
 import { Game, Gamer } from '../fees.interface';
 import { ToastService } from '../../../../../common/toaster/toast.service';
 import { club_tournament } from '../../../../../common/ffb/interface/club_tournament.interface';
-import { FeesEditorService } from '../fees-editor/fees-editor.service';
 import { BookService } from '../../book.service';
+import { GameCardService } from '../../game-card.service';
 
 
 
@@ -30,7 +29,7 @@ export class FeesCollectorService {
   };
   _game$: BehaviorSubject<Game> = new BehaviorSubject<Game>(this.game);
   members: Member[] = [];
-
+  // game_cards:  GameCard[] = [];
 
 
   constructor(
@@ -38,7 +37,7 @@ export class FeesCollectorService {
     private membersService: MembersService,
     private tournamentService: TournamentService,
     private systemDataService: SystemDataService,
-    private feesEditorService: FeesEditorService,
+    private gameCardService: GameCardService,
     private BookService: BookService
 
 
@@ -57,8 +56,12 @@ export class FeesCollectorService {
         gamers: [],
         tournament: null,
       };
-
     });
+
+    this.gameCardService.gameCards.subscribe((cards) => {
+      // this.game_cards = cards;
+    });
+
 
   }
 
@@ -69,6 +72,8 @@ export class FeesCollectorService {
   private is_member(license: string): Member | undefined {
     return this.members.find((member) => member.license_number === license);
   }
+
+
 
   person2gamer(person: Person, index: number): Gamer {
 
@@ -81,7 +86,7 @@ export class FeesCollectorService {
     let in_euro = !is_member;
     let price = is_member ? this.game.member_trn_price : this.game.non_member_trn_price;
 
-    let game_credits = (is_member !== undefined) ? this.feesEditorService.get_current_game_credit(is_member) : 0;
+    let game_credits = (is_member !== undefined) ? this.gameCardService.get_member_credit(is_member) : 0;
 
     return {
       license: license,
@@ -92,7 +97,8 @@ export class FeesCollectorService {
       in_euro: in_euro,
       index: index,
       price: price,
-      validated: false
+      validated: false,
+      enabled: true
     };
   }
 
@@ -121,7 +127,25 @@ export class FeesCollectorService {
     this._game$.next(this.game)
   }
 
+  subscription: Subscription | undefined;
 
+  subscribe_to_members_solvencies() {
+
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
+    let members = this.get_members();
+    this.subscription = this.gameCardService.check_solvencies(members).subscribe((solvencies) => {
+      this.game.gamers.forEach((gamer) => {
+        if (gamer.is_member) {
+          let member = gamer.is_member as Member;
+          let credit = solvencies.get(member.license_number) ?? 0;
+          gamer.game_credits = credit;
+        }
+      });
+      this._game$.next(this.game);
+    });
+  }
 
   set_tournament(tournament: club_tournament) {
 
@@ -136,18 +160,29 @@ export class FeesCollectorService {
     ).subscribe((persons: Person[]) => {
       this.game.gamers = persons.map((person, index) => this.person2gamer(person, index));
       this.game.tournament = tournament;
-      this._game$.next(this.game)
+
+      // this._game$.next(this.game)
+      this.subscribe_to_members_solvencies();   // will update gamers game_credits & trigger _game$.next(this.game)
     }
     );
   }
 
+  get_members(): Member[] {
+    return this.game.gamers
+      .filter((gamer) => gamer.is_member)
+      .map((gamer) => gamer.is_member as Member);
+  }
+
   save_fees() {
+
+    let check_ok = true;
     // console.log('save_fees', this.game);
 
     // check if all non-members have been validated
     let non_members = this.game.gamers.filter((gamer) => !gamer.is_member);
     let non_members_validated = non_members.every((gamer) => gamer.validated);
     if (!non_members_validated) {
+      check_ok = false;
       this.toastService.showWarningToast('droits de table', 'tous les non-adhérents doivent être validés');
       return;
     }
@@ -156,24 +191,37 @@ export class FeesCollectorService {
     let members = this.game.gamers.filter((gamer) => gamer.is_member);
     let members_validated = members.every((gamer) => gamer.validated);
     if (!members_validated) {
+      check_ok = false;
       this.toastService.showWarningToast('droits de table', 'tous les adhérents doivent être validés');
     }
-    // sum-up non-members and members fees in euros
-    let non_members_euros = non_members.reduce((acc, gamer) => acc + gamer.price, 0);
-    let members_euros = members.reduce((acc, gamer) => acc + (gamer.in_euro ? gamer.price : 0), 0);
-    console.log('non_members_euros', non_members_euros);
-    console.log('members_euros', members_euros);
 
-    this.BookService.create_tournament_fees_entry(this.game.tournament!.date, non_members_euros + members_euros);
-    // charge members game_credits
+    // check if all members have enough game credits
 
-    members.forEach((gamer) => {
-      if (!gamer.in_euro) {
-        let member = gamer.is_member as Member;
-        let amount = gamer.price;
-        this.feesEditorService.add_game_credit('tournoi du' + this.game.tournament!.date, member, this.game.fees_doubled ? 2 : 1);
-      }
-    });
+
+
+
+
+    if (check_ok) {
+      // sum-up non-members and members fees in euros
+      let non_members_euros = non_members.reduce((acc, gamer) => acc + gamer.price, 0);
+      let members_euros = members.reduce((acc, gamer) => acc + (gamer.in_euro ? gamer.price : 0), 0);
+      console.log('non_members_euros', non_members_euros);
+      console.log('members_euros', members_euros);
+
+
+
+      // charge members game_credits
+      members.forEach((gamer) => {
+        if (!gamer.in_euro) {
+          let member = gamer.is_member as Member;
+          let amount = gamer.price;
+          this.gameCardService.stamp_member_card(member, this.game.tournament!.date);
+          if (this.game.fees_doubled) this.gameCardService.stamp_member_card(member, this.game.tournament!.date);
+        }
+      });
+      // save cashier fees entry
+      this.BookService.create_tournament_fees_entry(this.game.tournament!.date, non_members_euros + members_euros);
+    }
 
   }
 

@@ -1,7 +1,7 @@
 import { club_tournament } from "../../../../common/ffb/interface/club_tournament.interface";
-import { Game_credit, Member } from "../../../../common/member.interface";
+import {  Member } from "../../../../common/member.interface";
 
-export const MAX_CREDITS_HISTORY = 10;
+// export const MAX_CREDITS_HISTORY = 10;
 
 interface Fees_context {
     season: string;
@@ -25,4 +25,5 @@ export interface Gamer {
     in_euro: boolean;
     price: number;
     validated: boolean;
+    enabled: boolean;
 }

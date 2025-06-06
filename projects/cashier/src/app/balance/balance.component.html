@@ -1,31 +1,12 @@
-<div class="container">
+<!-- <div class="container g-0"> -->
 
-  <div class="col-md-6 text-end">
-    <div class="row mt-3">
-
-    </div>
-  </div>
-  <div class="card mt-1">
+  <div class="card mt-3 shadow ">
     <div class="card-header">
       <div class="row align-items-center">
         <div class="col-auto">
           <h5> bilan de l'exercice {{current_season}}</h5>
         </div>
         <div class="col mx-auto">&#8205;</div>
-        <!-- <div class="col-auto">
-          <button class=" btn btn-outline-success btn-sm">
-            <i class=" bi-file-earmark-arrow-up-fill"></i>
-            <a [href]="export_url" style="text-decoration: none; color: var(--bs-success);"
-              download="bilan.txt">export.txt</a>
-          </button>
-        </div>
-        <div class="col-auto">
-          <button class=" btn btn-outline-success btn-sm" (click)="fileInput.click()">
-            <i class=" bi-file-earmark-arrow-down-fill"></i>
-            import.txt</button>
-          <input #fileInput type="file" style="display:none" class="form-control form-control-sm text-end"
-            (change)="file_import($event)">
-        </div> -->
         <div class="col-auto">
           <button class=" btn btn-outline-success btn-sm" (click)="save_balance_sheet()">
             <i class="bi-cloud-arrow-up-fill"></i>
@@ -274,4 +255,4 @@
     [due]="due"
     [expert_mode]="true"
     (close)="show_details_flag = false"></app-debts-and-assets-details>
-</div>
+<!-- </div> -->

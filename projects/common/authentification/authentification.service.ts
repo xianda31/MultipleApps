@@ -35,7 +35,7 @@ export class AuthentificationService {
         case 'signedIn':
         case 'signedOut':
         case 'signedUp':
-          console.log('Auth event:', authEvent);
+          // console.log('Auth event:', authEvent);
           this._auth_event$.next(authEvent);
           break;
         default:
@@ -73,7 +73,6 @@ export class AuthentificationService {
       {
         try {
           let { isSignedIn, nextStep } = await signIn(signInInput);
-          console.log("isSignedIn: %s nextStep : %s", isSignedIn, nextStep);
 
           const attributes = await fetchUserAttributes();
           // console.log('attributes', attributes);

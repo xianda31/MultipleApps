@@ -47,10 +47,6 @@ const schema = a.schema({
 
   // Adhérents et produits Club
 
-  Game_credit: a.customType({
-    tag: a.string().required(),
-    amount: a.integer().required(),
-  }),
 
   Member: a.model({
     license_number: a.string().required(),
@@ -66,7 +62,7 @@ const schema = a.schema({
     is_sympathisant: a.boolean(),
     license_status: a.string(),
     license_taken_at: a.string(),
-    game_credits: a.ref('Game_credit').array(),
+    
   })
     .authorization((allow) => [
       allow.guest().to(['read', 'create']),
