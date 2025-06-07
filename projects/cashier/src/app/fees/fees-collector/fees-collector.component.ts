@@ -36,9 +36,9 @@ export class FeesCollectorComponent {
     
     this.feesCollectorService.game$.subscribe((game) => {
       this.game = game;   
-      console.log('game$ subscription',this.game?.tournament)
+      // console.log('game$ subscription',this.game?.tournament)
       this.selected_tournament = game.tournament;
-      console.log('selected tournament:', this.selected_tournament?.date);
+      // console.log('selected tournament:', this.selected_tournament?.date);
     });
   }
 

@@ -1,12 +1,12 @@
 
 <!-- cart editor -->
-<div class="card mx-0 shadow-lg mt-3 g-0">
+<div class="card shadow-lg mt-3">
   <div class="card-header">
     <h5 class="row justify-content-around align-items-center">
-      <div class="col-7">
+      <div class="col-md-9 col-sm-7">
         Achats adhérents
       </div>
-      <div class="col-5 text-end">
+      <div class="col-md-3 col-sm-5 text-end">
         <input type="date" class="col form-control form-control-sm" (ngModelChange)="date_change($event)" [(ngModel)]="session.date">
 
       </div>
@@ -51,7 +51,7 @@
             </div>
           </div>
           <!-- cart  -->
-          <div class="col-md-12 col-sm-12 mt-2">
+          <div  *ngIf="buyer" class="col-md-12 col-sm-12 mt-2">
             <app-cart (complete)="cart_confirmed()"></app-cart>
           </div>
           <!-- </div> -->
