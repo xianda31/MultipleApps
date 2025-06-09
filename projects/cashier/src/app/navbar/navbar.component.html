@@ -21,23 +21,23 @@
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class=" navbar-nav  me-auto mb-md-2 mb-lg-0  align-items-start">
 
-        <li class="nav-item me-md-5 me-sm-1">
-          <a class="nav-link" [routerLink]="['/shop']">
-            <i class="fs-4 bi-cart"></i>
-            <span class="ms-1 d-none d-sm-inline">Achat adhérents</span>
-          </a>
-        </li>
 
         <li class="nav-item dropdown me-md-5 me-sm-1">
           <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown1" role="button" data-bs-toggle="dropdown"
             aria-expanded="false">
-            <i class="fs-4 bi-person-video2"></i> <span class="ms-1 d-none d-sm-inline">Tournois</span>
+            <i class="fs-4 bi-cart"></i> <span class="ms-1 d-none d-sm-inline">Ventes</span>
           </a>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdown1">
-            <li><a class="dropdown-item  " routerLink="/tournois/droits-de-table">droits de table</a></li>
-            <li><a class="dropdown-item  " routerLink="/tournois/cartes-admission">cartes admission</a></li>
-
+            <li><a class="dropdown-item  " routerLink="/shop">vente à adhérents</a></li>
+            <li><a class="dropdown-item  " routerLink="/tournois/droits-de-table">droits tournoi</a></li>
           </ul>
+        </li>
+
+        <li class="nav-item me-md-5 me-sm-1">
+          <a class="nav-link" [routerLink]="['/buy']">
+            <i class="fs-4 bi-wallet2"></i>
+            <span class="ms-1 d-none d-sm-inline">Ecritures</span>
+          </a>
         </li>
 
         <li class="nav-item dropdown me-md-5 me-sm-1">
@@ -62,6 +62,7 @@
             <li><a class="dropdown-item  " routerLink="/books/overview">vue générale</a></li>
             <li><a class="dropdown-item  " routerLink="/books/list">base de données</a></li>
             <li><a class="dropdown-item  " routerLink="/books/cash-box-status">gestion caisse</a></li>
+            <li><a class="dropdown-item  " routerLink="/tournois/cartes-admission">cartes admission</a></li>
 
           </ul>
         </li>

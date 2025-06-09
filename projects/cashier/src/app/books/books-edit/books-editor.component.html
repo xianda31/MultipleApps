@@ -1,26 +1,21 @@
 <div *ngIf="form_ready" class="mt-2">
   <form [formGroup]="form" (ngSubmit)="onSubmit()">
-
-    <div class="row justify-content-between align-items-center">
-      <div class="col-2">
+    <!-- 1ere ligne : date , classe transaction , transaction , chèque ref (si applicable) , booutton back -->
+    <div class="row justify-content-start align-items-end">
+      <!-- date -->
+      <div class="col-md-2 col-sm-3">
         <label for="date">
-          Date
+          Date opération
           <span *ngIf="!date_in_season(date?.value)" class="col-3 text-danger">
             <i class="bi bi-exclamation-circle"></i>
-            <span>  hors saison actuelle</span>
+            <span> hors saison actuelle</span>
           </span>
         </label>
-        <input type="date" [class]="!date_in_season(date.value)?'form-control border-danger':'form-control'" id="date" formControlName="date">
+        <input type="date" [class]="!date_in_season(date.value)?'form-control border-danger':'form-control'" id="date"
+          formControlName="date">
       </div>
-      <div class="col-1 align-self-end text-end" (click)="cancel()">
-        <back></back>
-      </div>
-    </div>
-
-    <!-- bandeau selection transaction et affichage comptes financiers -->
-    <div class="row  align-items-start">
-      <!-- classe transaction -->
-      <div class="col-3">
+      <!-- choix classe transaction -->
+      <div class="col-md-3 col-sm-5">
         <label>Classe de transaction</label>
         <select class="form-control" id="transac_class" formControlName="transac_class">
           <option value="undefined" hidden disabled>néant</option>
@@ -29,48 +24,66 @@
           </option>
         </select>
       </div>
-      <!-- transaction -->
-      <ng-container *ngIf="transaction_ids && transaction_ids.length > 0">
-        <div class="col-4">
-          <ng-container [ngTemplateOutlet]="select_transaction"></ng-container>
-        </div>
 
-        <!-- financial accounts -->
-        <div *ngIf="selected_transaction" class="col-5">
-          <div class="row align-items-center">
-            <div class="col-8">
-              <ng-container [ngTemplateOutlet]="financial_amounts"
-                [ngTemplateOutletContext]="{inputFormGroup: form}"></ng-container>
-            </div>
-            <div *ngIf="financial_accounts.length>0" class="col-4  text-start">
-              <i [class]="financial_accounts_locked ? 'fs-4 bi-lock-fill' : 'fs-4 bi-unlock-fill'"
-                (click)="lock_unlock_financial_accounts()"></i>
-            </div>
-          </div>
-          <!-- cheque reference -->
-          <div class="row">
-            <div class="col-8">
-              <ng-container [ngTemplateOutlet]="cheque_definition"
-                *ngIf="selected_transaction && transaction_with_cheque_in(transaction_id)">
-              </ng-container>
-              <ng-container [ngTemplateOutlet]="cheque_club"
-                *ngIf="selected_transaction && transaction_with_cheque_out(transaction_id)">
-              </ng-container>
-            </div>
-            <div class="col-4">
-              <ng-container [ngTemplateOutlet]="deposit"
-                *ngIf="selected_transaction && transaction_with_deposit(transaction_id)">
-              </ng-container>
-            </div>
-          </div>
-        </div>
-        <!-- info tag si présente -->
-        <div class="col-3">
-          <ng-container [ngTemplateOutlet]="tag" [ngTemplateOutletContext]="{inputFormGroup: form}">
-          </ng-container>
-        </div>
-      </ng-container>
+      <!-- choix de la transaction -->
+      <div *ngIf="transaction_ids && transaction_ids.length > 0" class="col-md-3 col-sm-4">
+        <label>Transaction</label>
+        <select class="form-control" id="transaction_id" formControlName="transaction_id">
+          <option value="undefined" hidden disabled>sélectionner une transaction</option>
+          <option *ngFor="let transaction_id of transaction_ids" [value]="transaction_id">
+            {{transaction_label(transaction_id)}}
+          </option>
+        </select>
+      </div>
+
+      <!-- cheque reference -->
+      <div *ngIf="transaction_id" class="col-md-3 col-sm-3">
+        <ng-container *ngIf="transaction_with_cheque_in(transaction_id)"
+          [ngTemplateOutlet]="cheque_definition"></ng-container>
+        <ng-container *ngIf="transaction_with_cheque_out(transaction_id)"
+          [ngTemplateOutlet]="cheque_club"></ng-container>
+      </div>
+      <!-- back -->
+      <div *ngIf="!protected_mode" class="d-flex col-1 ms-auto align-self-end text-end" (click)="cancel()">
+        <back></back>
+      </div>
     </div>
+
+
+    <!-- 2eme ligne comptes financiers , tag, bordereau (si applicabe) -->
+
+    <div *ngIf="selected_transaction" class="mt-2 row justify-content-start align-items-end">
+
+      <!--  affichage comptes financiers -->
+      <div class="col-md-5 col-sm-4">
+        <div class="row align-items-center">
+          <div class="col-8">
+            <ng-container [ngTemplateOutlet]="financial_amounts"
+              [ngTemplateOutletContext]="{inputFormGroup: form}"></ng-container>
+          </div>
+          <div class="col-4 text-start" *ngIf="financial_accounts.length>0  && !protected_mode" >
+            <i [class]="financial_accounts_locked ? 'fs-4 bi-lock-fill' : 'fs-4 bi-unlock-fill'"
+              (click)="lock_unlock_financial_accounts()"></i>
+          </div>
+        </div>
+      </div>
+      
+      <!-- info tag si présente -->
+      <div class="col-3">
+        <ng-container [ngTemplateOutlet]="tag" [ngTemplateOutletContext]="{inputFormGroup: form}">
+        </ng-container>
+      </div>
+
+      <!-- bordereau -->
+      <div *ngIf="!protected_mode && transaction_with_deposit(transaction_id)"
+        class="offset-md-4 col-md-2 offset-sm-3 col-sm-3 ">
+          <label for="deposit_ref">Bordereau</label>
+          <input type="text" class="form-control" id="deposit_ref" formControlName="deposit_ref">
+      </div>
+
+    </div>
+
+    <!-- 3eme ligne et suivante(s) -->
 
     <!-- bandeau transaction(s) -->
     <div class="mt-3" *ngIf="selected_transaction">
@@ -85,7 +98,7 @@
                 </div>
               </div>
               <div *ngIf="!selected_transaction.pure_financial" class="col-8">
-                <ng-container [ngTemplateOutlet]="profit_and_loss"
+                <ng-container [ngTemplateOutlet]="costs_and_revenues"
                   [ngTemplateOutletContext]="{inputFormGroup: operation, transaction: selected_transaction}"></ng-container>
               </div>
             </div>
@@ -97,7 +110,7 @@
                 </ng-container>
               </div>
               <div *ngIf="!selected_transaction.pure_financial " class="col-6">
-                <div [ngTemplateOutlet]="profit_and_loss"
+                <div [ngTemplateOutlet]="costs_and_revenues"
                   [ngTemplateOutletContext]="{inputFormGroup: operation, transaction: selected_transaction}">
                 </div>
               </div>
@@ -130,16 +143,10 @@
         <button [disabled]="form.invalid || !financial_accounts_locked " type="submit" class="btn btn-primary">
           {{!creation?'Modifier':'Créer'}}</button>
       </div>
-      <!-- <div *ngIf="!creation" class="col-1">
-        <button type="button" class="btn btn-primary" (click)="cancel()">Abandon</button>
-      </div> -->
       <div *ngIf="!creation" class="col-1">
         <button type="button" class="btn btn-warning " (click)="delete_book_entry()">Supprimer</button>
       </div>
     </div>
-
-    form.status : {{form.status}}<br>
-    operations.status : {{form.get('operations')?.status}}<br>
 
     <div *ngIf="selected_book_entry " class="card mt-3 bg-body-secondary">
       <div class="card-body">
@@ -194,14 +201,13 @@
           {{transaction_label(transaction_id)}}
         </label>
       </div>
-
     </ng-template>
 
     <!-- formulaire montants financiers -->
     <ng-template #financial_amounts let-inputFormGroup="inputFormGroup">
       <ng-container [formGroup]="inputFormGroup">
         <div formArrayName="amounts" class="row ">
-          <div class="col-4 gx-1" *ngFor="let amount of amounts.controls ; let i = index">
+          <div class="col-4" *ngFor="let amount of amounts.controls ; let i = index">
             <label>{{ financial_accounts[i].label }}</label>
             <input (dblclick)="double_click(amount)" type="text"
               [class]="(amount.invalid && !amount.pristine) ? 'form-control border-danger' : 'form-control'"
@@ -216,12 +222,11 @@
     </ng-template>
 
     <!-- formulaire recette_dépense -->
-    <ng-template #profit_and_loss let-inputFormGroup="inputFormGroup" let-transaction="transaction">
+    <ng-template #costs_and_revenues let-inputFormGroup="inputFormGroup" let-transaction="transaction">
       <ng-container [formGroup]="inputFormGroup">
         <div formArrayName="values" class="row ">
           <div class="col gx-1" *ngFor="let account of inputFormGroup.get('values').controls ; let i = index">
-            <label [ngbTooltip]="expense_or_revenue_accounts(transaction)[i].description"
-              tooltipClass="my-custom-class"
+            <label [ngbTooltip]="expense_or_revenue_accounts(transaction)[i].description" tooltipClass="my-custom-class"
               placement="top">{{expense_or_revenue_accounts(transaction)[i].key}}</label>
             <input type="text" [class]="account.invalid ? 'form-control border-danger' : 'form-control'"
               [formControlName]="i" [id]="'value' + i">
@@ -237,19 +242,19 @@
     <!-- formulaire credit_avoir client -->
     <ng-template #optional_accounts_form let-inputFormGroup="inputFormGroup">
       <ng-container [formGroup]="inputFormGroup">
-      <ng-container *ngIf="optional_accounts && optional_accounts.length > 0">
-        <div formArrayName="optional_accounts" class="row ">
-          <div class="col-4 gx-1"
-            *ngFor="let account of inputFormGroup.get('optional_accounts').controls ; let i = index">
-            <label [ngbTooltip]="optional_accounts[i].description" tooltipClass="my-custom-class"
-              placement="top">{{optional_accounts[i].label}}</label>
-            <input type="text" [class]="account.invalid ? 'form-control border-danger' : 'form-control'"
-              [formControlName]="i" [id]="'customer_account' + i">
-            <!-- <div *ngIf="account.invalid" class="text-danger">
+        <ng-container *ngIf="optional_accounts && optional_accounts.length > 0">
+          <div formArrayName="optional_accounts" class="row ">
+            <div class="col-4 gx-1"
+              *ngFor="let account of inputFormGroup.get('optional_accounts').controls ; let i = index">
+              <label [ngbTooltip]="optional_accounts[i].description" tooltipClass="my-custom-class"
+                placement="top">{{optional_accounts[i].label}}</label>
+              <input type="text" [class]="account.invalid ? 'form-control border-danger' : 'form-control'"
+                [formControlName]="i" [id]="'customer_account' + i">
+              <!-- <div *ngIf="account.invalid" class="text-danger">
               <small>Le montant doit être un nombre</small>
             </div> -->
+            </div>
           </div>
-        </div>
         </ng-container>
       </ng-container>
     </ng-template>
@@ -264,38 +269,43 @@
       </ng-container>
     </ng-template>
 
+    <!-- formulaire bordereau -->
+    <ng-template #deposit>
+      <div>
+        <label for="deposit_ref">Bordereau</label>
+        <input type="text" class="form-control" id="deposit_ref" formControlName="deposit_ref">
+      </div>
+    </ng-template>
+
     <!-- formulaire chèque -->
     <ng-template #cheque_definition>
-      <div class="row align-items-end">
-        <div class="col">
-          <label for="bank_name">Banque</label>
+        <label>Banque et n° de chèque</label>
+        <div class="input-group">
           <select class="form-control" formControlName="bank_name" required>
             <option *ngFor="let bank of banks " [value]="bank.key">
               {{bank.name}}
             </option>
           </select>
-        </div>
-        <div class="col">
-          <label for="cheque_number">n° de chèque</label>
           <input type="text" class="form-control" id="cheque_number" formControlName="cheque_number">
         </div>
-      </div>
     </ng-template>
-
-    <!-- formulaire bordereau -->
-    <ng-template #deposit>
-      <div class="col align-items-end">
-        <label for="deposit_ref">Bordereau</label>
-        <input type="text" class="form-control" id="deposit_ref" formControlName="deposit_ref">
-      </div>
-      <!-- <label *ngIf="this.deposit_ref_changed">nb : modification globale</label> -->
-
-    </ng-template>
-
 
     <!-- formulaire chèque Club -->
     <ng-template #cheque_club>
-      <div class="col align-items-end">
+
+        <label>Banque et n° de chèque</label>
+        <div class="input-group">
+          <input readonly class="form-control" formControlName="bank_name">
+          <!-- <select class="form-control" formControlName="bank_name" required>
+            <option *ngFor="let bank of banks " [value]="bank.key">
+              {{bank.name}}
+            </option>
+          </select> -->
+          <input type="text" class="form-control" id="cheque_number" formControlName="cheque_number">
+        </div>
+
+
+      <!-- <div class="row align-items-end">
         <div class="col-6">
           <label for="bank_name">Banque</label>
           <input readonly class="form-control" formControlName="bank_name">
@@ -304,7 +314,8 @@
           <label for="cheque_number">n° de chèque</label>
           <input type="text" class="form-control" id="cheque_number" formControlName="cheque_number">
         </div>
-      </div>
+      </div> -->
+
     </ng-template>
 
   </form>

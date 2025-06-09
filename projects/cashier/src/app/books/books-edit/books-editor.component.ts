@@ -1,5 +1,5 @@
 import { CommonModule, formatDate } from '@angular/common';
-import { Component, ViewEncapsulation } from '@angular/core';
+import { Component, Input, ViewEncapsulation } from '@angular/core';
 import { Location } from '@angular/common';
 import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { BookService } from '../../book.service';
@@ -38,6 +38,7 @@ interface Account {
 export class BooksEditorComponent {
   NumberRegexPattern: string = '([-,+]?[0-9]+([.,][0-9]*)?|[.][0-9]+)';
   // NumberRegexPattern: string = '([0-9]+([.,][0-9]*)?|[.][0-9]+)';
+  @Input() protected_mode: boolean = false; // pour le mode protégé
 
   book_entry_id!: string;
   banks !: Bank[];
@@ -178,41 +179,36 @@ export class BooksEditorComponent {
     this.form.get('transac_class')?.disable();   // bloque le changment de la classe d'opération
 
     // création des champs amounts
-    this.init_financial_accounts(this.selected_transaction);
+    this.init_financial_accounts(this.selected_transaction, this.protected_mode);
 
     this.financial_accounts.forEach((account) => {
       let value = book_entry.amounts[account.key as FINANCIAL_ACCOUNT] ?? '';
       (this.form.controls['amounts'] as FormArray).controls[this.financial_accounts.indexOf(account)].setValue(value);
     });
 
+
     // création des champs operations
     this.operations.clear();
-    // this.expense_or_revenue_accounts = this.which_expense_or_revenue_accounts(this.transaction);
-
     book_entry.operations.forEach((operation) => {
       this.add_operation(this.selected_transaction!, operation);
     });
-
     this.operations_valueChanges_subscribe();
 
-
-    if (this.selected_transaction.cheque === 'out') {
-      this.form.controls['bank_name'].disable();
-    }
 
   };
 
 
 
   reset_form() {
-    const today = formatDate(new Date(), 'yyyy-MM-dd', 'en');
+
+    this.financial_accounts_locked = true;
     this.selected_transaction = undefined;
     this.transaction_ids = [];
-    this.form.controls['date'].setValue(formatDate(new Date(), 'yyyy-MM-dd', 'en'));
-    this.financial_accounts_locked = true;
+    this.form.reset();
     this.operations.clear();
     this.amounts.clear();
     this.operations_valueChanges_subscription.unsubscribe();
+    this.form.controls['date'].setValue(formatDate(new Date(), 'yyyy-MM-dd', 'en'));
   }
 
   valueChanges_subscribe() {
@@ -226,6 +222,10 @@ export class BooksEditorComponent {
     // form.transaction_id change handler
     this.form.controls['transaction_id'].valueChanges.subscribe((transaction_id) => {
       this.selected_transaction = this.transactionService.get_transaction(transaction_id);
+
+      if (this.selected_transaction.cheque === 'out') {
+        this.form.controls['bank_name'].disable();
+      }
 
       // initialisation form operations si en mode création
 
@@ -247,7 +247,7 @@ export class BooksEditorComponent {
       // création des champs amounts
       if (this.creation) {
         this.amounts.clear();
-        this.init_financial_accounts(this.selected_transaction);
+        this.init_financial_accounts(this.selected_transaction, this.protected_mode);
       }
     });
 
@@ -327,17 +327,9 @@ export class BooksEditorComponent {
     let operationForm: FormGroup = this.fb.group({
       'label': [operation_initial?.label ?? ''],
       'total': { value: (operation_initial?.values ? this.sum_operation_values(transaction, operation_initial) : ''), disabled: true },
-      // 'values': this.fb.array(
-      //   (expense_or_revenue_accounts.map(account => new FormControl<string>((operation_initial?.values?.[account.key]?.toString() ?? ''), [Validators.pattern(this.NumberRegexPattern)])) as unknown[]),
-      //   { validators: [this.atLeastOneFieldValidator] }),
     });
 
-    // let total = '';
-    // if (operation_initial) {
-    //   total = this.sum_operation_values(transaction, operationForm.value).toString();
-    // }
-    // operationForm.addControl('total', new FormControl({ value: total, disabled: true }));
-
+ 
     if (transaction.nominative) {
       operationForm.addControl('member', new FormControl(operation_initial?.member ?? '', Validators.required));
       if (transaction.optional_accounts !== undefined) {
@@ -354,22 +346,20 @@ export class BooksEditorComponent {
         { validators: [this.atLeastOneFieldValidator] }));
     }
 
-    // if (expense_or_revenue_accounts.length === 0 && !transaction.nominative) {
-    //   this.operations.push(operationForm);
-    //   return;
-    // }   // pure financial transaction
-
-
-
-
-
-
     this.operations.push(operationForm);
 
   }
 
-  init_financial_accounts(transaction: Transaction) {
-    this.financial_accounts = transaction.financial_accounts;
+  init_financial_accounts(transaction: Transaction, protected_mode: boolean) {
+
+    if (protected_mode) {
+      // Map keys to Account_def objects
+      this.financial_accounts = transaction.financial_accounts.filter(account =>
+        (transaction.financial_accounts_to_charge as (FINANCIAL_ACCOUNT | BALANCE_ACCOUNT)[]).includes(account.key as FINANCIAL_ACCOUNT | BALANCE_ACCOUNT)
+      );
+    } else {
+      this.financial_accounts = transaction.financial_accounts;
+    }
     this.financial_accounts.forEach((account) => {
       if (transaction.financial_accounts_to_charge.includes(account.key as FINANCIAL_ACCOUNT | BALANCE_ACCOUNT)) {
         this.amounts.push(new FormControl('', [Validators.required, Validators.pattern(this.NumberRegexPattern)]));
@@ -522,8 +512,6 @@ export class BooksEditorComponent {
       return;
     }
 
-
-
     if (booking.cheque_ref === '') delete booking.cheque_ref;
 
     if (this.creation) {
@@ -575,9 +563,7 @@ export class BooksEditorComponent {
   get transaction_id(): TRANSACTION_ID {
     return this.form.get('transaction_id')?.value;
   }
-  // get op_class(): TRANSACTION_CLASS {
-  //   return this.form.get('transac_class')?.value;
-  // }
+
   get operations(): FormArray {
     return this.form.get('operations') as FormArray;
   }
