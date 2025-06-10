@@ -29,7 +29,7 @@ const schema = a.schema({
   })
     .authorization((allow) => [
       allow.guest().to(['read']),
-      allow.authenticated('identityPool')
+      allow.authenticated('identityPool').to(['create','read', 'update',  'delete']),
     ]),
 
   // cartes de parties 

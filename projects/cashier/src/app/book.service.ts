@@ -170,7 +170,7 @@ export class BookService {
     try {
       const response = await client.models.BookEntry.update(
         this.jsonified_entry(book_entry),
-        { authMode: 'userPool' });
+        { authMode: 'identityPool' });
       if (response.errors) {
         console.error('error', response.errors);
         throw new Error(JSON.stringify(response.errors));
@@ -192,8 +192,10 @@ export class BookService {
   delete_book_entry(entry_id: string) {
     const client = generateClient<Schema>();
 
-    return client.models.BookEntry.delete({ id: entry_id },
-      { authMode: 'userPool' })
+    return client.models.BookEntry.delete(
+      { id: entry_id },
+      { authMode: 'identityPool' }
+    )
       .then((response) => {
         if (response.errors) {
           console.error('error', response.errors);
