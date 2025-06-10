@@ -6,6 +6,7 @@ import { CommonModule } from '@angular/common';
 import { Member } from '../../../../../common/member.interface';
 import { Observable } from 'rxjs';
 import { InputMemberComponent } from '../../input-member/input-member.component';
+import { MAX_STAMPS } from '../game-card.interface';
 @Component({
   selector: 'app-get-game-cards-owners',
   standalone: true,
@@ -15,8 +16,8 @@ import { InputMemberComponent } from '../../input-member/input-member.component'
 })
 export class GetGameCardsOwnersComponent {
   ownersForm!: FormGroup;
-  // members$ !: Observable<Member[]>;
   members: Member[] = [];
+  max_stamps : number = MAX_STAMPS;
 constructor(
     private activeModal: NgbActiveModal,
     private formbuilder: FormBuilder,
@@ -31,6 +32,7 @@ constructor(
     });
 
     this.ownersForm = this.formbuilder.group({
+      quantity: [MAX_STAMPS, [Validators.required, Validators.min(1), Validators.max(MAX_STAMPS)]],
       owner1: [null, Validators.required],
       owner2: [null],
     });
@@ -40,15 +42,18 @@ constructor(
   get owner1() { return this.ownersForm.get('owner1')!; }
   get owner2() { return this.ownersForm.get('owner2')!; }
 
-  got_it() {
-    const owners: Member[] = [];
+  create() {
+    let response: { owners: Member[], qty: number } = {
+      owners: [],
+      qty: this.ownersForm.value.quantity
+    };
     if (this.ownersForm.value.owner1) {
-      owners.push(this.ownersForm.value.owner1);
+      response.owners.push(this.ownersForm.value.owner1);
     }
     if (this.ownersForm.value.owner2) {
-      owners.push(this.ownersForm.value.owner2);
+      response.owners.push(this.ownersForm.value.owner2);
     }
-    this.activeModal.close(owners);
+    this.activeModal.close(response);
   }
   close() {
     this.activeModal.close(null);

@@ -2,7 +2,7 @@
     <div class="col justify-content-between">
         <div class="row align-items-center">
             <h5 class="col-10 modal-title">
-                Création d'une carte de 12 tournois
+                Création d'une carte d'admissions
             </h5>
             <div class="col-1 text-center">
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
@@ -15,13 +15,17 @@
 <div class="modal-body">
 
     <form [formGroup]="ownersForm">
-        <div class="mb-3">
-            <label for="owner1" class="form-label">Adhérent</label>
+        <div class="mb-1 col-6">
+            <label for="card_name" class="form-label">Nombre d'admissions ({{max_stamps}} max) </label>
+            <input type="text" class="form-control form-control-sm" formControlName="quantity">
+        </div>
+        <div class="mb-1">
+            <label for="owner1" class="form-label">titulaire</label>
             <app-input-member class="form-control form-control-sm" [members]="(members) || []"
                 formControlName="owner1"></app-input-member>
         </div>
-        <div class="mb-3">
-               <label for="owner2" class="form-label">Adhérent</label>
+        <div class="mb-1">
+               <label for="owner2" class="form-label">co-titulaire (optionnel)</label>
             <app-input-member class="form-control form-control-sm" [members]="(members) || []"
                 formControlName="owner2"></app-input-member>
         </div>
@@ -32,9 +36,9 @@
 </div>
 <div class="modal-footer">
     <div class="justify-content-between">
-        {{ownersForm.valid ? 'Formulaire valide' : 'Formulaire incomplet'}}
+        <!-- {{ownersForm.valid ? 'Formulaire valide' : 'Formulaire incomplet'}} -->
         <button type="button" class="btn btn-primary btn-sm" [disabled]="!ownersForm.valid"
-            (click)="got_it()">OK</button>
+            (click)="create()">OK</button>
 
     </div>
 </div>

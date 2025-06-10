@@ -21,6 +21,7 @@ export class EditGameCardComponent implements OnInit {
   @Input() card!: GameCard;
   stamp_places !: Stamp_place[];
   free_places_nbr !: number;
+  stamped : boolean = false;
 
   constructor(
     private activeModal: NgbActiveModal,
@@ -33,7 +34,7 @@ export class EditGameCardComponent implements OnInit {
   }
 
   initialize_stamp_places() {
-    this.stamp_places = Array.from({ length: MAX_STAMPS }, (_, index) => {
+    this.stamp_places = Array.from({ length: this.card.initial_qty }, (_, index) => {
       const stamp = this.card.stamps[index];
       return {
         free: !stamp,
@@ -56,16 +57,18 @@ export class EditGameCardComponent implements OnInit {
   stamp(index : number) {
     if(this.stamp_places[index].free) {
       const today = new Date().toLocaleDateString();
-      this.stamp_places[index] = {stamp : today, free:false}; 
+      this.stamp_places[index] = {stamp : today, free:false};
+      this.free_places_nbr--; 
+      this.stamped = true;
     }
-    this.free_places_nbr = this.stamp_places.reduce((acc, place) => acc + (place.free ? 1 : 0), 0);
   }
 
 
   got_it() {
+    if(this.stamped) {
     this.activeModal.close(this.updated_card());
-  }
-  close() {
-    this.activeModal.close(null);
+    } else {
+      this.activeModal.close(null);
+    }
   }
 }

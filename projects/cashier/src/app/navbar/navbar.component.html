@@ -1,17 +1,17 @@
 <!-- <div class="container-md  container-sm-fluid"> -->
 
-<div class="row bg-light shadow-sm mt-2 align-items-center">
-  <div class="col-md-auto col-sm-12">
-    <h4> <i class="fs-4 bi-piggy-bank"></i> Comptabilité Bridge Club Saint-Orens </h4>
-  </div>
-  <div class="col-md-auto col-sm-12">
-    <h5>
+<div class="row bg-light shadow-sm align-items-end">
+  <h4 class="col-md-auto col-sm-12 mt-2">
+      <i class="fs-4 bi-piggy-bank nav-link" [routerLink]="['']">
+        Comptabilité Bridge Club Saint-Orens 
+      </i>
+    </h4>
+  <h5 class="col-md-auto col-sm-12">
       <span class="fs-5"> (saison {{season}}) </span>
       <span class="h6 ms-5 d-none d-sm-inline align-self-end">
         <span class="ms-auto badge bg-dark">{{entries_nbr}}</span>
       </span>
-    </h5>
-  </div>
+  </h5>
 
   <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
@@ -20,58 +20,61 @@
     </button>
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class=" navbar-nav  me-auto mb-md-2 mb-lg-0  align-items-start">
-
-
+        
+        
         <li class="nav-item dropdown me-md-5 me-sm-1">
           <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown1" role="button" data-bs-toggle="dropdown"
-            aria-expanded="false">
-            <i class="fs-4 bi-cart"></i> <span class="ms-1 d-none d-sm-inline">Ventes</span>
-          </a>
-          <ul class="dropdown-menu" aria-labelledby="navbarDropdown1">
-            <li><a class="dropdown-item  " routerLink="/shop">vente à adhérents</a></li>
-            <li><a class="dropdown-item  " routerLink="/tournois/droits-de-table">droits tournoi</a></li>
+          aria-expanded="false">
+          <i class="fs-4 bi-cart"></i> <span class="ms-1 d-none d-sm-inline">Ventes</span>
+        </a>
+        <ul class="dropdown-menu" aria-labelledby="navbarDropdown1">
+          <li><a class="dropdown-item  " routerLink="/boutique/articles">vente à adhérents</a></li>
+          <li><a class="dropdown-item  " routerLink="/boutique/droits-de-table">droits tournoi</a></li>
+        </ul>
+      </li>
+      
+      <li class="nav-item me-md-5 me-sm-1">
+        <a class="nav-link" [routerLink]="['/adhérents']">
+          <i class="fs-4 bi-people"></i>
+          <span class="ms-1 d-none d-sm-inline">Adhérents</span>
+        </a>
+      </li>
+
+      <li class="nav-item dropdown me-md-5 me-sm-1">
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown1" role="button" data-bs-toggle="dropdown"
+        aria-expanded="false">
+        <i class="fs-4 bi-wallet2"></i> <span class="ms-1 d-none d-sm-inline">Ecritures</span>
+      </a>
+      <ul class="dropdown-menu" aria-labelledby="navbarDropdown1">
+        <li><a class="dropdown-item  " routerLink="/compta/cartes-admission">cartes admission</a></li>
+        <li><a class="dropdown-item  " routerLink="/compta/cash-box-status">gestion caisse</a></li>
+          <li><a class="dropdown-item  " routerLink="/compta/toutes-ecritures">écritures courantes</a></li>
           </ul>
         </li>
 
-        <li class="nav-item me-md-5 me-sm-1">
-          <a class="nav-link" [routerLink]="['/buy']">
-            <i class="fs-4 bi-wallet2"></i>
-            <span class="ms-1 d-none d-sm-inline">Ecritures</span>
-          </a>
-        </li>
 
         <li class="nav-item dropdown me-md-5 me-sm-1">
           <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown1" role="button" data-bs-toggle="dropdown"
             aria-expanded="false">
-            <i class="fs-4 bi-journal"></i> <span class="ms-1 d-none d-sm-inline">Etats</span>
+            <i class="fs-4 bi-journal"></i> <span class="ms-1 d-none d-sm-inline">Finance</span>
           </a>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdown1">
-            <li><a class="dropdown-item  " routerLink="/bank-reconciliation">rapprochement bancaire</a></li>
-            <li><a class="dropdown-item  " routerLink="/expense-and-revenue">résultats</a></li>
-            <li><a class="dropdown-item  " routerLink="/balance">bilan</a></li>
+            <li><a class="dropdown-item  " routerLink="/finance/bank-reconciliation">rapprochement bancaire</a></li>
+            <li><a class="dropdown-item  " routerLink="/finance/expense-and-revenue">résultats</a></li>
+            <li><a class="dropdown-item  " routerLink="/finance/balance">bilan</a></li>
+            <li><a class="dropdown-item  " routerLink="/finance/books/editor">écriture</a></li>
+            <li><a class="dropdown-item  " routerLink="/finance/books/base-comptable">synthèse</a></li>
+            <li><a class="dropdown-item  " routerLink="/finance/books/list">base de données</a></li>
           </ul>
         </li>
 
         <li class="nav-item dropdown me-md-5 me-sm-1">
           <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown1" role="button" data-bs-toggle="dropdown"
             aria-expanded="false">
-            <i class="fs-4 bi-mortarboard-fill"></i> <span class="ms-1 d-none d-sm-inline">Expert</span>
+            <i class="fs-4 bi-tools"></i> <span class="ms-1 d-none d-sm-inline">Outils</span>
           </a>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdown1">
-            <li><a class="dropdown-item  " routerLink="/books/editor">écriture</a></li>
-            <li><a class="dropdown-item  " routerLink="/books/overview">vue générale</a></li>
             <li><a class="dropdown-item  " routerLink="/books/list">base de données</a></li>
-            <li><a class="dropdown-item  " routerLink="/books/cash-box-status">gestion caisse</a></li>
-            <li><a class="dropdown-item  " routerLink="/tournois/cartes-admission">cartes admission</a></li>
-
-          </ul>
-        </li>
-        <li class="nav-item dropdown me-md-5 me-sm-1">
-          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown1" role="button" data-bs-toggle="dropdown"
-            aria-expanded="false">
-            <i class="fs-4 bi-file-earmark-spreadsheet"></i> <span class="ms-1 d-none d-sm-inline">Excel</span>
-          </a>
-          <ul class="dropdown-menu" aria-labelledby="navbarDropdown1">
             <li><a class="dropdown-item  " routerLink="/excel/import">import</a></li>
             <li><a class="dropdown-item  ">export</a></li>
 

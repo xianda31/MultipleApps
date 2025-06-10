@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { generateClient } from 'aws-amplify/api';
 
-import { BookEntry, Revenue, FINANCIAL_ACCOUNT,BALANCE_ACCOUNT, Expense, CUSTOMER_ACCOUNT, TRANSACTION_ID,  Operation,  AMOUNTS } from '../../../common/accounting.interface';
+import { BookEntry, Revenue, FINANCIAL_ACCOUNT, BALANCE_ACCOUNT, Expense, CUSTOMER_ACCOUNT, TRANSACTION_ID, Operation, AMOUNTS } from '../../../common/accounting.interface';
 import { Schema } from '../../../../amplify/data/resource';
 import { BehaviorSubject, catchError, combineLatest, from, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
 import { SystemDataService } from '../../../common/services/system-data.service';
@@ -112,11 +112,11 @@ export class BookService {
     const { id, ...jsonified_entry_without_id } = jsonified_entry;
 
     try {
-      const {data,errors} = await client.models.BookEntry.create(
+      const { data, errors } = await client.models.BookEntry.create(
         jsonified_entry_without_id,
-        {authMode:'identityPool'}
+        { authMode: 'identityPool' }
       );
-      if (errors) {        throw errors;      }
+      if (errors) { throw errors; }
 
       const created_entry = this.parsed_entry(data as unknown as BookEntry_output);
       this._book_entries.push(created_entry);
@@ -124,20 +124,20 @@ export class BookService {
         return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
       }));
       return (created_entry);
-      
+
     } catch (error) {
 
       let errorType: string = '.. accès refusé ... êtes-vous bien connecté ?';
-        if (Array.isArray(error) && error.length > 0 && typeof error[0] === 'object' && error[0] !== null && 'errorType' in error[0]) {
-          errorType = (error[0] as { errorType: string, message: string }).errorType;
-        }
-        switch (errorType) {
-          case 'Unauthorized':
-            this.toastService.showWarningToast('base comptabilité', 'Vous n\'êtes pas autorisé à créer une entrée comptable');
-            break;
-          default:
-            this.toastService.showErrorToast('base comptabilité',  errorType);
-        }
+      if (Array.isArray(error) && error.length > 0 && typeof error[0] === 'object' && error[0] !== null && 'errorType' in error[0]) {
+        errorType = (error[0] as { errorType: string, message: string }).errorType;
+      }
+      switch (errorType) {
+        case 'Unauthorized':
+          this.toastService.showWarningToast('base comptabilité', 'Vous n\'êtes pas autorisé à créer une entrée comptable');
+          break;
+        default:
+          this.toastService.showErrorToast('base comptabilité', errorType);
+      }
       throw errorType;
     }
   }
@@ -170,7 +170,7 @@ export class BookService {
     try {
       const response = await client.models.BookEntry.update(
         this.jsonified_entry(book_entry),
-        {authMode:'userPool'});
+        { authMode: 'userPool' });
       if (response.errors) {
         console.error('error', response.errors);
         throw new Error(JSON.stringify(response.errors));
@@ -181,20 +181,10 @@ export class BookService {
         return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
       }));
       return updated_entry;
-    } catch (error) {
-            let errorType: string = '.. erreur inattendue';
-        if (Array.isArray(error) && error.length > 0 && typeof error[0] === 'object' && error[0] !== null && 'errorType' in error[0]) {
-          errorType = (error[0] as { errorType: string, message: string }).errorType;
-        }
-        switch (errorType) {
-          case 'Unauthorized':
-            this.toastService.showWarningToast('base comptabilité', 'Vous n\'êtes pas autorisé à créer une entrée comptable');
-            break;
-          default:
-            this.toastService.showErrorToast('base comptabilité', 'Erreur de création de l\'écriture comptable : ' + errorType);
-        }
-      throw errorType;
-    }
+    } catch (error: any) {
+      this.toastService.showWarningToast('base comptabilité', 'Vous n\'êtes pas autorisé à créer une entrée comptable');
+      throw error;
+    };
   }
 
   // delete
@@ -203,7 +193,7 @@ export class BookService {
     const client = generateClient<Schema>();
 
     return client.models.BookEntry.delete({ id: entry_id },
-        {authMode:'userPool'})
+      { authMode: 'userPool' })
       .then((response) => {
         if (response.errors) {
           console.error('error', response.errors);
@@ -216,18 +206,8 @@ export class BookService {
         return response;
       })
       .catch((error) => {
-             let errorType: string = '.. erreur inattendue';
-        if (Array.isArray(error) && error.length > 0 && typeof error[0] === 'object' && error[0] !== null && 'errorType' in error[0]) {
-          errorType = (error[0] as { errorType: string, message: string }).errorType;
-        }
-        switch (errorType) {
-          case 'Unauthorized':
-            this.toastService.showWarningToast('base comptabilité', 'Vous n\'êtes pas autorisé à créer une entrée comptable');
-            break;
-          default:
-            this.toastService.showErrorToast('base comptabilité', 'Erreur de création de l\'écriture comptable : ' + errorType);
-        }
-      throw errorType;
+        this.toastService.showWarningToast('base comptabilité', 'Vous n\'êtes pas autorisé à supprimer une entrée comptable');
+        throw error instanceof Error ? error.message : String(error);
       });
   }
 
@@ -251,17 +231,17 @@ export class BookService {
             authMode: 'identityPool' // use identity pool to allow unauthenticated access
           });
           if (errors) {
-            console.error('client.models.BookEntry.list failed !! : ' ,errors);
+            console.error('client.models.BookEntry.list failed !! : ', errors);
             failed = true;
             throw new Error(JSON.stringify(errors));
           }
           let new_jsoned_entries = data as unknown as BookEntry_output[];
           entries = [...entries, ...new_jsoned_entries.map((entry) => this.parsed_entry(entry))];
           token = nextToken;
-          
+
           // if (this.trace_on()) console.log('loop %s => %s', nbloops,entries.length);
         } while (token !== null && nbloops++ < 10 && !failed)
-          
+
         if (token !== null) {
           this.toastService.showWarningToast('base comptabilité', 'beaucoup trop d\'entrées à charger , veuillez répeter l\'opération');
         }
@@ -298,7 +278,7 @@ export class BookService {
         }),
         catchError((error) => {
           console.error('Error fetching book entries:', error);
-          this.toastService.showErrorToast('base comptabilité', 'Erreur de chargement de la base de données' );
+          this.toastService.showErrorToast('base comptabilité', 'Erreur de chargement de la base de données');
           return of([] as BookEntry[]);
         })
       );
@@ -316,7 +296,7 @@ export class BookService {
         do {
           const { data, nextToken, errors } = await client.models.BookEntry.list({
             filter: { season: { eq: _season } },
-            limit: 300,   
+            limit: 300,
             nextToken: token,
           });
           if (errors) {
@@ -451,17 +431,17 @@ export class BookService {
     }
     if (selection === 'cheques') {
       return this.Round(this._book_entries
-        .filter((book_entry) =>  this.transactionService.get_transaction(book_entry.transaction_id).cheque !== 'none' )
-        .reduce((acc, book_entry) =>  acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0), 0));
+        .filter((book_entry) => this.transactionService.get_transaction(book_entry.transaction_id).cheque !== 'none')
+        .reduce((acc, book_entry) => acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0), 0));
     }
     if (selection === 'cash') {
 
       return this.Round(this._book_entries
-        .filter((book_entry) =>  this.transactionService.get_transaction(book_entry.transaction_id).cash !== 'none' )
-        .reduce((acc, book_entry) =>  acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0), 0));
+        .filter((book_entry) => this.transactionService.get_transaction(book_entry.transaction_id).cash !== 'none')
+        .reduce((acc, book_entry) => acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0), 0));
     }
-    return this.Round(this._book_entries.reduce((acc, book_entry) => 
-       acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0) , 0));
+    return this.Round(this._book_entries.reduce((acc, book_entry) =>
+      acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0), 0));
   }
 
   get_cash_movements_amount(): number {
@@ -474,8 +454,8 @@ export class BookService {
     }
     return this.Round(this._book_entries
       .filter((entry) => (entry.bank_report !== null && entry.bank_report !== undefined))
-      .reduce((acc, book_entry) => 
-      acc + (book_entry.amounts[FINANCIAL_ACCOUNT.BANK_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.BANK_credit] || 0)    , 0));
+      .reduce((acc, book_entry) =>
+        acc + (book_entry.amounts[FINANCIAL_ACCOUNT.BANK_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.BANK_credit] || 0), 0));
   }
 
   get_uncashed_cheques_amount(): number {
@@ -486,7 +466,7 @@ export class BookService {
       .filter((book_entry) =>
         this.transactionService.get_transaction(book_entry.transaction_id).cheque !== 'none')
       .filter((book_entry) => book_entry.deposit_ref === null || book_entry.deposit_ref === undefined)
-      .reduce((acc, book_entry) =>        acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0)     , 0));
+      .reduce((acc, book_entry) => acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0), 0));
   }
 
 
@@ -499,12 +479,12 @@ export class BookService {
     }, 0));
   }
 
-  private _is_bankable (book_entry: BookEntry): boolean  {
+  private _is_bankable(book_entry: BookEntry): boolean {
     return (book_entry.transaction_id === TRANSACTION_ID.dépense_par_chèque
       || book_entry.transaction_id === TRANSACTION_ID.dépense_par_prélèvement
       || book_entry.transaction_id === TRANSACTION_ID.dépense_par_virement
       || book_entry.transaction_id === TRANSACTION_ID.dépense_par_carte
-     || book_entry.transaction_id === TRANSACTION_ID.report_chèque
+      || book_entry.transaction_id === TRANSACTION_ID.report_chèque
       || book_entry.transaction_id === TRANSACTION_ID.report_prélèvement
     )
   }
@@ -522,8 +502,8 @@ export class BookService {
     if (this._book_entries === undefined) { // if no book entries are loaded yet
       return [];
     }
-    return this._book_entries.filter((book_entry) => 
-      !book_entry.bank_report || book_entry.bank_report === null && this._is_bankable(book_entry)  );
+    return this._book_entries.filter((book_entry) =>
+      !book_entry.bank_report || book_entry.bank_report === null && this._is_bankable(book_entry));
   }
 
   get_debts(): Map<string, { total: number, entries: BookEntry[] }> {
@@ -539,15 +519,17 @@ export class BookService {
           let name = op.member;   // member is the name of the debt owner & payee
           if (!name) throw new Error('no member name found');
           debt.set(name, {
-            total:(debt.get(name)?.total || 0) + op.values[CUSTOMER_ACCOUNT.DEBT_debit],
-            entries: [...(debt.get(name)?.entries || []), book_entry]});
+            total: (debt.get(name)?.total || 0) + op.values[CUSTOMER_ACCOUNT.DEBT_debit],
+            entries: [...(debt.get(name)?.entries || []), book_entry]
+          });
         }
         if (op.values[CUSTOMER_ACCOUNT.DEBT_credit]) {
           let name = op.member;   // member is the name of the debt owner & payee
           if (!name) throw new Error('no member name found');
           debt.set(name, {
             total: (debt.get(name)?.total || 0) - op.values[CUSTOMER_ACCOUNT.DEBT_credit],
-            entries: [...(debt.get(name)?.entries || []), book_entry]});
+            entries: [...(debt.get(name)?.entries || []), book_entry]
+          });
         }
       });
     });
@@ -791,19 +773,19 @@ export class BookService {
   // générer une écriture d'annulation d'avoir adhérent
   asset_cancelation(date: string, member: string, value: number): Promise<BookEntry> {
 
-    if(value <= 0) {
+    if (value <= 0) {
       this.toastService.showWarningToast('base comptabilité', 'corrigez l\'écriture comptable pour éviter cette valeur négative');
       return Promise.resolve({} as BookEntry);
     }
 
-    let pl_keys : Profit_and_loss = this.systemDataService.get_profit_and_loss_keys();
+    let pl_keys: Profit_and_loss = this.systemDataService.get_profit_and_loss_keys();
 
-    let  amounts : AMOUNTS = {[FINANCIAL_ACCOUNT.CASHBOX_debit] : 0};
+    let amounts: AMOUNTS = { [FINANCIAL_ACCOUNT.CASHBOX_debit]: 0 };
     let operation: Operation = {
-         label: 'annulation avoir adhérent',
-          values: {[CUSTOMER_ACCOUNT.ASSET_debit]: value, [pl_keys.credit_key]: value } ,
-          member: member
-        };
+      label: 'annulation avoir adhérent',
+      values: { [CUSTOMER_ACCOUNT.ASSET_debit]: value, [pl_keys.credit_key]: value },
+      member: member
+    };
 
     let season = this.systemDataService.get_season(new Date(date));
 
@@ -816,24 +798,24 @@ export class BookService {
       operations: [operation],
       transaction_id: TRANSACTION_ID.achat_adhérent_en_espèces,
     };
-    return this.create_book_entry( entry);
+    return this.create_book_entry(entry);
   }
   // générer une écriture d'annulation d'une dette adhérent 
   debt_cancelation(date: string, member: string, value: number): Promise<BookEntry> {
 
-    if(value <= 0) {
+    if (value <= 0) {
       this.toastService.showWarningToast('base comptabilité', 'corrigez l\'écriture comptable pour éviter cette valeur négative');
       return Promise.resolve({} as BookEntry);
     }
 
-    let pl_keys : Profit_and_loss = this.systemDataService.get_profit_and_loss_keys();
+    let pl_keys: Profit_and_loss = this.systemDataService.get_profit_and_loss_keys();
 
-    let  amounts : AMOUNTS = {[FINANCIAL_ACCOUNT.CASHBOX_debit] : 0};
+    let amounts: AMOUNTS = { [FINANCIAL_ACCOUNT.CASHBOX_debit]: 0 };
     let operation: Operation = {
-         label: 'annulation dette adhérent',
-          values: {[CUSTOMER_ACCOUNT.DEBT_credit]: value, [pl_keys.debit_key]: value } ,
-          member: member
-        };
+      label: 'annulation dette adhérent',
+      values: { [CUSTOMER_ACCOUNT.DEBT_credit]: value, [pl_keys.debit_key]: value },
+      member: member
+    };
 
     let season = this.systemDataService.get_season(new Date(date));
 
@@ -846,115 +828,115 @@ export class BookService {
       operations: [operation],
       transaction_id: TRANSACTION_ID.annulation_dette_adhérent,
     };
-    return this.create_book_entry( entry);
+    return this.create_book_entry(entry);
   }
 
-// génération des écritures de report cloture
+  // génération des écritures de report cloture
 
- generate_next_season_entries(next_season: string): Observable<number> {
-  let next_season_entries: BookEntry[] = [];
+  generate_next_season_entries(next_season: string): Observable<number> {
+    let next_season_entries: BookEntry[] = [];
 
-  // A. report des avoirs client
-  let assets = this.get_customers_assets();
+    // A. report des avoirs client
+    let assets = this.get_customers_assets();
 
-  let operations: Operation[] = [];
-  let grand_total = 0;
-
-  Array.from(assets)
-    .filter(([member, { total, entries }]: [string, { total: number; entries: BookEntry[] }]) => total > 0)
-    .forEach(([member, { total, entries }]: [string, { total: number; entries: BookEntry[] }]) => {
-      operations.push({ member: member, label: 'report avoir antérieur', values: { [CUSTOMER_ACCOUNT.ASSET_credit]: total } });
-      grand_total += total;
-    }
-    );
-
-
-  let book_entry: BookEntry = {
-    id: '',
-    season: next_season,
-    date: this.systemDataService.start_date(next_season),
-    transaction_id: TRANSACTION_ID.report_avoir,
-    amounts: { [BALANCE_ACCOUNT.BAL_debit]: grand_total },
-    operations: operations,
-  };
-
-  console.log('report d\'avoir', book_entry);
-  this.toastService.showInfoToast('report d\'avoir', (grand_total + ' € reportés sur la saison ' + next_season));
-  next_season_entries.push(book_entry);
-
-
-
-  // B.1 report des chèques  non pointés
-  this._book_entries.filter((entry) => ((entry.transaction_id === TRANSACTION_ID.dépense_par_chèque)) && entry.bank_report === null)
-    .forEach((entry) => {
-      let amount = entry.amounts[FINANCIAL_ACCOUNT.BANK_credit];
-      if (!amount) throw Error('montant du chèque non défini !?!?')
-      let label = entry.operations.reduce((acc, op) => { return acc + op.label + ' ' }, entry.date.toString() + ':');;
-
-      let book_entry: BookEntry = {
-        id: '',
-        season: next_season,
-        date: this.systemDataService.start_date(next_season),
-        transaction_id: TRANSACTION_ID.report_chèque,
-        amounts: { [FINANCIAL_ACCOUNT.BANK_credit]: amount, [BALANCE_ACCOUNT.BAL_debit]: amount },
-        cheque_ref: entry.cheque_ref,
-        operations: [{ label: label, values: {} }],
-      }
-
-      // console.log('report des chèque', book_entry);
-      next_season_entries.push(book_entry);
-
-    });
-
-  // B.2 report des prélèvements (charges constatées d'avance) non pointés
-  this._book_entries.filter((entry) => ((entry.transaction_id === TRANSACTION_ID.dépense_par_prélèvement)) && entry.bank_report === null)
-    .forEach((entry) => {
-      let amount = entry.amounts[FINANCIAL_ACCOUNT.BANK_credit];
-      if (!amount) throw Error('montant du chèque non défini !?!?')
-      let label = entry.operations.reduce((acc, op) => { return acc + op.label + ' ' }, entry.date.toString() + ':');;
-
-      let book_entry: BookEntry = {
-        id: '',
-        season: next_season,
-        date: this.systemDataService.start_date(next_season),
-        transaction_id: TRANSACTION_ID.report_prélèvement,
-        amounts: { [FINANCIAL_ACCOUNT.BANK_credit]: amount, [BALANCE_ACCOUNT.BAL_debit]: amount },
-        // cheque_ref: entry.cheque_ref,
-        operations: [{ label: label, values: {} }],
-      }
-
-      // console.log('report des chèque', book_entry);
-      next_season_entries.push(book_entry);
-
-    });
-
-  // C. report des dettes clients
-  let debts = this.get_debts();
-  if (Array.from(debts).length !== 0) {
     let operations: Operation[] = [];
     let grand_total = 0;
-    Array.from(debts)
-      .filter(([member, value]: [string, { total: number; entries: BookEntry[] }]) => value.total > 0)
-      .forEach(([member, value]: [string, { total: number; entries: BookEntry[] }]) => {
-        grand_total += value.total;
-        operations.push({ member: member, label: 'report dette', values: { [CUSTOMER_ACCOUNT.DEBT_debit]: value.total } });
-      });
+
+    Array.from(assets)
+      .filter(([member, { total, entries }]: [string, { total: number; entries: BookEntry[] }]) => total > 0)
+      .forEach(([member, { total, entries }]: [string, { total: number; entries: BookEntry[] }]) => {
+        operations.push({ member: member, label: 'report avoir antérieur', values: { [CUSTOMER_ACCOUNT.ASSET_credit]: total } });
+        grand_total += total;
+      }
+      );
+
 
     let book_entry: BookEntry = {
       id: '',
       season: next_season,
       date: this.systemDataService.start_date(next_season),
-      transaction_id: TRANSACTION_ID.report_dette,
-      amounts: { [BALANCE_ACCOUNT.BAL_credit]: grand_total },
+      transaction_id: TRANSACTION_ID.report_avoir,
+      amounts: { [BALANCE_ACCOUNT.BAL_debit]: grand_total },
       operations: operations,
     };
 
-    // console.log('report de dettes', book_entry);
+    console.log('report d\'avoir', book_entry);
+    this.toastService.showInfoToast('report d\'avoir', (grand_total + ' € reportés sur la saison ' + next_season));
     next_season_entries.push(book_entry);
-  }
 
-  return this.book_entries_bulk_create$(next_season_entries);
-}
+
+
+    // B.1 report des chèques  non pointés
+    this._book_entries.filter((entry) => ((entry.transaction_id === TRANSACTION_ID.dépense_par_chèque)) && entry.bank_report === null)
+      .forEach((entry) => {
+        let amount = entry.amounts[FINANCIAL_ACCOUNT.BANK_credit];
+        if (!amount) throw Error('montant du chèque non défini !?!?')
+        let label = entry.operations.reduce((acc, op) => { return acc + op.label + ' ' }, entry.date.toString() + ':');;
+
+        let book_entry: BookEntry = {
+          id: '',
+          season: next_season,
+          date: this.systemDataService.start_date(next_season),
+          transaction_id: TRANSACTION_ID.report_chèque,
+          amounts: { [FINANCIAL_ACCOUNT.BANK_credit]: amount, [BALANCE_ACCOUNT.BAL_debit]: amount },
+          cheque_ref: entry.cheque_ref,
+          operations: [{ label: label, values: {} }],
+        }
+
+        // console.log('report des chèque', book_entry);
+        next_season_entries.push(book_entry);
+
+      });
+
+    // B.2 report des prélèvements (charges constatées d'avance) non pointés
+    this._book_entries.filter((entry) => ((entry.transaction_id === TRANSACTION_ID.dépense_par_prélèvement)) && entry.bank_report === null)
+      .forEach((entry) => {
+        let amount = entry.amounts[FINANCIAL_ACCOUNT.BANK_credit];
+        if (!amount) throw Error('montant du chèque non défini !?!?')
+        let label = entry.operations.reduce((acc, op) => { return acc + op.label + ' ' }, entry.date.toString() + ':');;
+
+        let book_entry: BookEntry = {
+          id: '',
+          season: next_season,
+          date: this.systemDataService.start_date(next_season),
+          transaction_id: TRANSACTION_ID.report_prélèvement,
+          amounts: { [FINANCIAL_ACCOUNT.BANK_credit]: amount, [BALANCE_ACCOUNT.BAL_debit]: amount },
+          // cheque_ref: entry.cheque_ref,
+          operations: [{ label: label, values: {} }],
+        }
+
+        // console.log('report des chèque', book_entry);
+        next_season_entries.push(book_entry);
+
+      });
+
+    // C. report des dettes clients
+    let debts = this.get_debts();
+    if (Array.from(debts).length !== 0) {
+      let operations: Operation[] = [];
+      let grand_total = 0;
+      Array.from(debts)
+        .filter(([member, value]: [string, { total: number; entries: BookEntry[] }]) => value.total > 0)
+        .forEach(([member, value]: [string, { total: number; entries: BookEntry[] }]) => {
+          grand_total += value.total;
+          operations.push({ member: member, label: 'report dette', values: { [CUSTOMER_ACCOUNT.DEBT_debit]: value.total } });
+        });
+
+      let book_entry: BookEntry = {
+        id: '',
+        season: next_season,
+        date: this.systemDataService.start_date(next_season),
+        transaction_id: TRANSACTION_ID.report_dette,
+        amounts: { [BALANCE_ACCOUNT.BAL_credit]: grand_total },
+        operations: operations,
+      };
+
+      // console.log('report de dettes', book_entry);
+      next_season_entries.push(book_entry);
+    }
+
+    return this.book_entries_bulk_create$(next_season_entries);
+  }
 
   Round(value: number) {
     const neat = +(Math.abs(value).toPrecision(15));

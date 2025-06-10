@@ -43,10 +43,6 @@
         <ng-container *ngIf="transaction_with_cheque_out(transaction_id)"
           [ngTemplateOutlet]="cheque_club"></ng-container>
       </div>
-      <!-- back -->
-      <div *ngIf="!protected_mode" class="d-flex col-1 ms-auto align-self-end text-end" (click)="cancel()">
-        <back></back>
-      </div>
     </div>
 
 
@@ -68,7 +64,7 @@
         </div>
       </div>
       
-      <!-- info tag si présente -->
+      <!-- info tag  -->
       <div class="col-3">
         <ng-container [ngTemplateOutlet]="tag" [ngTemplateOutletContext]="{inputFormGroup: form}">
         </ng-container>
@@ -76,7 +72,7 @@
 
       <!-- bordereau -->
       <div *ngIf="!protected_mode && transaction_with_deposit(transaction_id)"
-        class="offset-md-4 col-md-2 offset-sm-3 col-sm-3 ">
+        class=" col-md-3  col-sm-3 ">
           <label for="deposit_ref">Bordereau</label>
           <input type="text" class="form-control" id="deposit_ref" formControlName="deposit_ref">
       </div>

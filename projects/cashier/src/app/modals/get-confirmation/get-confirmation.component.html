@@ -1,0 +1,14 @@
+<div class="modal-header">
+    <h5 class="modal-title">
+        {{title}}
+        <br>
+        <h6 *ngIf="subtitle" class="modal-title">{{subtitle}}</h6>
+    </h5>
+</div>
+<div class="modal-body">
+    <p>Confirmez vous cette action ?</p>
+    <div class="d-flex justify-content-around">
+        <button type="button" class="btn btn-outline-primary" (click)="respond(false)">Non</button>
+        <button type="button" class="btn btn-outline-primary" (click)="respond(true)">Oui</button>
+    </div>
+</div>

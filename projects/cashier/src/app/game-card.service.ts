@@ -108,6 +108,7 @@ export class GameCardService {
       if(this._gameCards) {   // cache update if exists
       this._gameCards.push(new_card);
       this.gameCards$.next(this._gameCards);
+      this.toastService.showSuccessToast('Gestion des cartes', 'La carte de tournoi a été créée avec succès');
       }
       return new_card;
     } catch (error) {
@@ -144,6 +145,7 @@ export class GameCardService {
       this._gameCards.sort((a, b) => a.owners[0].lastname.localeCompare(b.owners[0].lastname));
       
       this.gameCards$.next(this._gameCards);
+      this.toastService.showSuccessToast('Gestion des cartes', 'La carte de tournoi a été mise à jour avec succès');
       return updatedGameCard;
     } catch (error) {
       this.toastService.showErrorToast('Gestion des cartes', 'La mise à jour de la carte de tournoi a échoué');
@@ -158,6 +160,7 @@ export class GameCardService {
       if (done) {
         this._gameCards = this._gameCards.filter(c => c.id !== card.id);
         this.gameCards$.next(this._gameCards);
+        this.toastService.showSuccessToast('Gestion des cartes', 'La carte de tournoi a été supprimée avec succès');
         return true;
       }
       return false;

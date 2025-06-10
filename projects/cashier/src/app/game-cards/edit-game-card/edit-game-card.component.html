@@ -4,10 +4,6 @@
             <h5 class="col-10 modal-title">
                 Carte de  {{card.initial_qty}} tournois
             </h5>
-            <div class="col-1 text-center">
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
-                    (click)="close()"></button>
-            </div>
         </div>
         <div class="text-muted">
             <span class="fw-bolder">titulaire(s) :</span>
@@ -21,7 +17,7 @@
                 <span class="fw-bolder me-1">créée le :</span>
                 <span >{{card.createdAt |date}} </span>
             </div>
-            <div class="col-5 text-muted">
+            <div class="col-7 text-muted text-center">
                 <span class="fw-bolder me-1">crédit restant :</span>
                 <span class="badge bg-success">{{free_places_nbr}}</span>
             </div>
@@ -30,7 +26,6 @@
 </div>
 
 <div class="modal-body">
-
     <div class="row row-cols-1 row-cols-md-4 g-0">
         <div *ngFor="let place of stamp_places ; let i = index" class="col">
             <div [class]=" place.free ? 'card h-100' :'card h-100 bg-light'" (click)="stamp(i)">
@@ -47,6 +42,5 @@
 <div class="modal-footer">
     <div class="justify-content-between">
         <button type="button" class="btn btn-primary btn-sm" (click)="got_it()">OK</button>
-
     </div>
 </div>

@@ -6,36 +6,52 @@ import { RouterLink } from '@angular/router';
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss'
 })
 export class HomeComponent {
+_icons: { [key: string]: string } = {
+    'Adhérent': 'bi bi-person-raised-hand',
+    'Admin': 'bi bi-shield-shaded',
+    'Expert': 'bi bi-mortarboard-fill'
+  };
 
   topics: {
     title: string,
     subtitle: string,
-    description: string,
-    link1: { route: string, label: string },
-    link2?: { route: string, label: string }
+    descriptions: string[],
+    accreditation : string
   }[] = [
       {
-        title: 'Gestion des ventes du Club',
-        subtitle: 'Accès à la base des articles en ventes',
-        description: 'Ouvrir une session de vente, et enregistrer les achats dans la base',
-        link1: { route: '/sales', label: 'vente' },
-      },
+        title: 'Boutique et Tournois',
+        subtitle: 'Enregistrement des ventes d\'articles et des droits de table',
+        descriptions: ['Ouvrir une session de vente et enregistrer les achats des adhérents','Ouvrir un tournoi et enregistrer les droits de table'],
+        accreditation: 'Adhérent'},
+
+        {title: 'Base adhérents',
+        subtitle: 'Gestion des adhérents et des licences FFB',
+        descriptions: ['Lister les adhérents du Club, déclarer les nouveaux adhérents, vérifier leur cotisation interne et FFB.',
+                   'Accéder au détail de leur paiement, de leur licence FFB et de leur carte d\'admission tournoi'],
+        accreditation: 'Adhérent'},
       {
-        title: 'Gestion des droits de table',
-        subtitle: 'Accès à la base des droits de table vendus et de leur usage',
-        description: 'Editer une feuille de tournois, et débiter les droits de table (droit acquis ou espèces)',
-        link1: { route: '/fees', label: 'Droits de table' },
-      },
+        title: 'Ecritures comptables',
+        subtitle: 'Opérations de caisse et sur le compte en banque, gestion des cartes d\'admission tournoi',
+        descriptions: ['Enregistrer des écritures comptables simples de mouvement bancaire, de recettes ou de dépenses',
+         'Créer/modifier des cartes d\'admission tournoi'],  
+        accreditation: 'Admin'  },
       {
-        title: 'Gestion comptable',
-        subtitle: 'Gestion données financières ',
-        description: 'Editer les reçus, les avoirs, les relevés de compte ...',
-        link1: { route: '/books', label: 'Comptes' },
-      }
+        title: 'Etats financiers',
+        subtitle: 'Synthèse des données financières ',
+        descriptions: ['Afficher l\'état à date des comptes de résultats courants et du bilan.',
+          'Réconcilier le compte courant et les relevés de banque...',
+        'Effectuer des opérations comptables complexes, incluant les écritures de fin d\'exercice',],
+        accreditation: 'Admin'},
+      {
+        title: 'Outils',
+        subtitle: 'Outils de maintenance des base de données',
+        descriptions: ['sauvegarder la base de données, exporter les données',
+          ' importer des données, ...'],
+        accreditation: 'Expert'}
     ];
 }

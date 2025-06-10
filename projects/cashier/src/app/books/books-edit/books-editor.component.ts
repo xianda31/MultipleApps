@@ -14,7 +14,6 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TransactionService } from '../../transaction.service';
-import { BackComponent } from '../../../../../common/back/back.component';
 
 interface Operation_initial_values {
   optional_accounts?: string[];
@@ -31,7 +30,7 @@ interface Account {
   selector: 'app-booking',
   standalone: true,
   encapsulation: ViewEncapsulation.None,   // nécessaire pour que les CSS des tooltips fonctionnent
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbTooltipModule, BackComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbTooltipModule],
   templateUrl: './books-editor.component.html',
   styleUrl: './books-editor.component.scss'
 })
@@ -306,15 +305,6 @@ export class BooksEditorComponent {
     this.form.controls['cheque_number'].updateValueAndValidity();
   }
 
-  // handled_deposit_ref_validators(transaction: Transaction) {
-  //   if (transaction.require_deposit_ref) {
-  //     this.form.controls['deposit_ref'].setValidators([Validators.required]);
-  //   } else {
-  //     this.form.controls['deposit_ref'].clearValidators();
-  //   }
-  //   this.form.controls['deposit_ref'].updateValueAndValidity();
-  // }
-
   delete_operation(index: number) {
     this.operations.removeAt(index);
   }
@@ -322,8 +312,6 @@ export class BooksEditorComponent {
   add_operation(transaction: Transaction, operation_initial?: Operation) {
 
     let expense_or_revenue_accounts = this.expense_or_revenue_accounts(transaction);
-
-
     let operationForm: FormGroup = this.fb.group({
       'label': [operation_initial?.label ?? ''],
       'total': { value: (operation_initial?.values ? this.sum_operation_values(transaction, operation_initial) : ''), disabled: true },
