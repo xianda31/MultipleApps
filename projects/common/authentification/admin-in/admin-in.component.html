@@ -1,8 +1,7 @@
-
 <!-- formulaire 1er niveau de login -->
 <div *ngIf="!(logged_member)" class="row align-items-center">
   <!-- saisies de mail + pwd -->
-  <div class="col-8">
+  <div class="col-7">
     <form [formGroup]="loginForm">
       <input class="form-control form-control-sm" type="mail" placeholder="Mél" id="username" autocomplete="username"
         formControlName="email">
@@ -17,10 +16,19 @@
     </form>
   </div>
   <!-- boutons login ou reset -->
-  <div class="col-4">
-    <button [disabled]="loginForm.invalid" class=" btn btn-success btn-sm" type="submit"
+  <div class="col-5">
+    <button [disabled]="loginForm.invalid" class="col-12  btn btn-success btn-sm" type="submit"
       (click)="signIn()">Login</button>
-    <button class=" btn btn-warning btn-sm" type="submit" (click)="need_reset()">Reset</button>
+    <!-- <button class=" btn btn-warning btn-sm" type="submit" (click)="resetPassword()">Reset</button> -->
+
+    <div class="dropdown">
+      <button [disabled]="email.invalid" class=" col-12 btn btn-primary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton1"
+        data-bs-toggle="dropdown" aria-expanded="false"> autre </button>
+      <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+        <li><a class="dropdown-item" href="#" (click)="signUp()">Créer un compte</a></li>
+        <li><a class="dropdown-item" href="#" (click)="resetPassword()">Réinitialiser mot de passe</a></li>
+      </ul>
+    </div>
   </div>
 
 </div>

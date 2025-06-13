@@ -1,9 +1,59 @@
 import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
+import { addUserToGroup } from './add-user-to-group/resource';
+import { listUsersInGroup } from './list-users-in-group/resource';
+import { removeUserFromGroup } from './remove-user-from-group/resource';
 
 
 
 
 const schema = a.schema({
+
+// custom mutation
+
+  addUserToGroup: a
+    .mutation()
+    .arguments({
+      userId: a.string().required(),
+      groupName: a.string().required(),
+    })
+    .authorization((allow) => [
+      allow.group("Systeme"),
+      allow.group("Administrateur"),
+      allow.group("Contributeur")
+    ]) // requires { defaultAuthorizationMode: 'userPool' } to work
+    .handler(a.handler.function(addUserToGroup))
+  .returns(a.json()),
+
+  removeUserFromGroup: a
+    .mutation()
+    .arguments({
+      userId: a.string().required(),
+      groupName: a.string().required(),
+    })
+    .authorization((allow) => [
+      allow.group("Systeme"),
+      allow.group("Administrateur"),
+      allow.group("Contributeur"),]) // requires { defaultAuthorizationMode: 'userPool' } to work
+    .handler(a.handler.function(removeUserFromGroup))
+    .returns(a.json()),
+
+    listUsersInGroup: a
+      .mutation()
+      .arguments({
+        groupName: a.string().required(),
+      })
+      .authorization((allow) => [
+        allow.group("Systeme"),
+        allow.group("Administrateur"),
+        allow.group("Contributeur"),
+      ]) // requires { defaultAuthorizationMode: 'userPool' } to work
+      // fails (401 unauthorized) when { defaultAuthorizationMode: 'identityPool' } *see note1 below
+
+      .handler(a.handler.function(listUsersInGroup))
+      .returns(a.json()),
+
+
+
 
 
   // comptabilité
@@ -29,7 +79,11 @@ const schema = a.schema({
   })
     .authorization((allow) => [
       allow.guest().to(['read']),
-      allow.authenticated('identityPool').to(['create','read', 'update',  'delete']),
+      allow.group("Systeme").to(['read', 'create', 'update', 'delete']),
+      allow.group("Administrateur").to(['read', 'create', 'update']),
+      allow.group("Contributeur").to(['read', 'create']),
+      allow.group("Membre").to(['read']),
+
     ]),
 
   // cartes de parties 
@@ -41,8 +95,12 @@ const schema = a.schema({
     stamps: a.string().array().required(),
   })
     .authorization((allow) => [
-      allow.guest().to(['create','read']),
-      allow.authenticated('identityPool').to(['create','read', 'update',  'delete']),
+      allow.guest().to(['read']),
+      allow.group("Systeme").to(['read', 'create', 'update', 'delete']),
+      allow.group("Administrateur").to(['read', 'create', 'update']),
+      allow.group("Contributeur").to(['read', 'create']),
+      allow.group("Membre").to(['read']),
+
     ]),
 
   // Adhérents et produits Club
@@ -62,11 +120,15 @@ const schema = a.schema({
     is_sympathisant: a.boolean(),
     license_status: a.string(),
     license_taken_at: a.string(),
-    
+
   })
     .authorization((allow) => [
-      allow.guest().to(['read', 'create']),
-      allow.authenticated('identityPool').to(['create','read', 'update',  'delete']),
+      allow.guest().to(['read']),
+      allow.group("Systeme").to(['read', 'create', 'update', 'delete']),
+      allow.group("Administrateur").to(['read', 'create', 'update']),
+      allow.group("Contributeur").to(['read', 'create']),
+      allow.group("Membre").to(['read']),
+
     ]),
 
   Product: a.model({
@@ -80,7 +142,11 @@ const schema = a.schema({
   })
     .authorization((allow) => [
       allow.guest().to(['read']),
-      allow.authenticated('identityPool')
+      allow.group("Systeme").to(['read', 'create', 'update', 'delete']),
+      allow.group("Administrateur").to(['read', 'create', 'update']),
+      allow.group("Contributeur").to(['read', 'create']),
+      allow.group("Membre").to(['read']),
+
     ]),
 
   // Site web
@@ -97,7 +163,11 @@ const schema = a.schema({
   })
     .authorization((allow) => [
       allow.guest().to(['read']),
-      allow.authenticated('identityPool')
+      allow.group("Systeme").to(['read', 'create', 'update', 'delete']),
+      allow.group("Administrateur").to(['read', 'create', 'update']),
+      allow.group("Contributeur").to(['read', 'create']),
+      allow.group("Membre").to(['read']),
+
     ]),
 
   Page: a.model({
@@ -111,7 +181,11 @@ const schema = a.schema({
   })
     .authorization((allow) => [
       allow.guest().to(['read']),
-      allow.authenticated('identityPool')
+      allow.group("Systeme").to(['read', 'create', 'update', 'delete']),
+      allow.group("Administrateur").to(['read', 'create', 'update']),
+      allow.group("Contributeur").to(['read', 'create']),
+      allow.group("Membre").to(['read']),
+
     ]),
 
 
@@ -123,7 +197,11 @@ const schema = a.schema({
   })
     .authorization((allow) => [
       allow.guest().to(['read']),
-      allow.authenticated('identityPool')
+      allow.group("Systeme").to(['read', 'create', 'update', 'delete']),
+      allow.group("Administrateur").to(['read', 'create', 'update']),
+      allow.group("Contributeur").to(['read', 'create']),
+      allow.group("Membre").to(['read']),
+
     ]),
 
 });
@@ -135,8 +213,8 @@ export type Schema = ClientSchema<typeof schema>;
 export const data = defineData({
   schema,
   authorizationModes: {
-    defaultAuthorizationMode: 'identityPool',
-    apiKeyAuthorizationMode: { expiresInDays: 30 }
+    defaultAuthorizationMode: 'userPool',
+    // apiKeyAuthorizationMode: { expiresInDays: 30 }
   },
   // apiKeyAuthorizationMode: { expiresInDays: 2}
 });

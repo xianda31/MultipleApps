@@ -71,11 +71,30 @@ export class AdminInComponent {
     this.auth.signIn(this.email!.value, this.password!.value);
   }
 
-  need_reset() {
+  async signUp() {
+    if (this.applying_member) {
+const modalRef = this.modalService.open(GetLoggingComponent, { centered: true });
+    modalRef.componentInstance.email = this.email.value;
+    modalRef.componentInstance.member = this.applying_member;
+    modalRef.componentInstance.mode = 'create_account';
+    modalRef.result.then((response: any) => {
+      // if (response) {
+        //   console.log('response', response);
+        // }
+      });
+      
+      // this.auth.signUp(this.applying_member.email, this.password!.value, this.applying_member.id);
+    } else {
+      this.toastService.showErrorToast('Création compte', 'Mel non répertorié dans la base de données adhérents');
+    }
+  }
+  
+  resetPassword() {
     // this.show_login = false;
     const modalRef = this.modalService.open(GetLoggingComponent, { centered: true });
     modalRef.componentInstance.email = this.email.value;
     modalRef.componentInstance.member = this.applying_member;
+    modalRef.componentInstance.mode = 'reset_password';
     modalRef.result.then((response: any) => {
       // if (response) {
       //   console.log('response', response);
@@ -87,6 +106,7 @@ export class AdminInComponent {
     if (!control.value.match(EMAIL_PATTERN)) return of(null);
     return of(control.value).pipe(
       switchMap((email) => from(this.membersService.getMemberByEmail(email))),
+      tap((member) => {console.log('emailValidator member', member); }),
       tap((member) => this.applying_member = member),
       map((member) => { return member ? null : { not_member: false }; })
     )

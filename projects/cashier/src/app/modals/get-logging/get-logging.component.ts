@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastService } from '../../../../../common/toaster/toast.service';
@@ -14,70 +14,72 @@ import { Member } from '../../../../../common/member.interface';
   templateUrl: './get-logging.component.html',
   styleUrl: './get-logging.component.scss'
 })
-export class GetLoggingComponent {
+export class GetLoggingComponent implements OnInit {
   @Input() email: string = '';
   @Input() member !: Member;
+  @Input() mode !: 'create_account' | 'reset_password';
   loggingForm!: FormGroup;
   selected_form: string = '';
-  create_account: boolean = false;
-      show_password: boolean = false;
+  show_password: boolean = false;
 
 
- constructor(
+  constructor(
     private activeModal: NgbActiveModal,
     private formbuilder: FormBuilder,
     private toastService: ToastService,
-        private auth: AuthentificationService,
-    
-  ) {
+    private auth: AuthentificationService,
+
+  ) { }
+
+  ngOnInit() {
+
     this.loggingForm = this.formbuilder.group({
-      secret_code: [{disabled:true,value:''}, Validators.required],
-      password: [{disabled:true,value:''}, Validators.required],
+      secret_code: [{ disabled: true, value: '' }, Validators.required],
+      password: [{ disabled: false, value: '' }, Validators.required],
     });
+
   }
 
   get secret_code() { return this.loggingForm.get('secret_code')!; }
   get password() { return this.loggingForm.get('password')!; }
-  
 
-// select_template(template: string) {
-//   console.log('select_template', template);
-//   this.selected_form = template;
-// }
-
-resetPassword() {
-  this.auth.resetPassword(this.email).then(() => {
-    this.toastService.showSuccessToast('Réinitialisation du mot de passe', 'Demande de code de réinitialisation envoyée ');
-    this.secret_code.setValue('');
-    this.secret_code.enable();
-    this.password.setValue('');
-    this.password.enable();
-  }).catch((error) => {
-    this.toastService.showErrorToast('Erreur de réinitialisation', error.message || 'Une erreur est survenue lors de la réinitialisation du mot de passe.');
-  });
-}
-
- signUp() {
-    // this.create_account = true;
-    // this.auth.signUp(this.email, this.password.value).then(() => {
-    //   this.toastService.showSuccessToast('Inscription', 'Compte créé avec succès. Un email de confirmation a été envoyé.');
-    //   this.secret_code.enable();
-    //   this.password.enable();
-    // }).catch((error) => {
-    //   this.toastService.showErrorToast('Erreur d\'inscription', error.message || 'Une erreur est survenue lors de la création du compte.');
-    // });
+  resetPassword() {
+    this.auth.resetPassword(this.email).then(() => {
+      this.toastService.showSuccessToast('Réinitialisation du mot de passe', 'Demande de code de réinitialisation envoyée ');
+      this.secret_code.setValue('');
+      this.secret_code.enable();
+      this.password.setValue('');
+      this.password.enable();
+    }).catch((error) => {
+      this.toastService.showErrorToast('Erreur de réinitialisation', error.message || 'Une erreur est survenue lors de la réinitialisation du mot de passe.');
+    });
   }
-  
+
+  signUp() {
+    this.auth.signUp(this.email, this.password.value, this.member.id).then(() => {
+      this.toastService.showSuccessToast('Inscription', 'Demande de compte effectuée. Un email de confirmation a été envoyé.');
+      this.secret_code.enable();
+    }).catch((error) => {
+      this.toastService.showErrorToast('Erreur d\'inscription', error.message || 'Une erreur est survenue lors de la création du compte.');
+    });
+  }
+
   got_it() {
-    if(!this.create_account) {
-      this.auth.newPassword(this.email, this.secret_code.value, this.password.value);
+    switch (this.mode) {
+      case 'reset_password':
+        this.auth.resetPassword(this.email);
+        break;
+      case 'create_account':
+        this.auth.confirmSignUp(this.email, this.secret_code.value);
+        break;
+      default:
+        this.toastService.showErrorToast('Erreur', 'Mode non reconnu');
+        return;
     }
     this.activeModal.close(this.loggingForm.value);
   }
   close() {
     this.activeModal.close(null);
   }
-
-   
 }
 

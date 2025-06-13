@@ -67,7 +67,7 @@ get_trading_result(): number {
 }
 
 show_details(expense_or_revenue: 'expense' | 'revenue', key: string) {
-  this.router.navigate(['/expense-and-revenue/details'], { queryParams: { type: expense_or_revenue, key: key } });
+  this.router.navigate(['/finance/expense-and-revenue/details'], { queryParams: { type: expense_or_revenue, key: key } });
 }
   // show_details_extended(event: MouseEvent, expense_or_revenue: 'expense' | 'revenue', key: string) {
   //   console.log('key pressed', event)

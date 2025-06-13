@@ -116,15 +116,13 @@ due: 'dettes'|'avoirs' = 'dettes';
       case 'gift_vouchers':
         this.show_details_flag = true;
         this.due = 'avoirs';
-        // this.router.navigate(['/balance/details']);
         break;
         case 'client_debts':
         this.show_details_flag = true;
         this.due = 'dettes';
-        // this.router.navigate(['/details/debts']);
         break;
         case 'commited_payments':
-        this.router.navigate(['/bank-reconciliation']);
+        this.router.navigate(['/finance/bank-reconciliation']);
         break;
       default:
         console.error('Unknown account type:', account);

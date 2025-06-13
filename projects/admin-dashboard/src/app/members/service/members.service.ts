@@ -96,7 +96,7 @@ export class MembersService {
 
   async readMember(id: string): Promise<Member | null> {
     const client = generateClient<Schema>();
-    const { data, errors } = await client.models.Member.get({ id: id }, { authMode: 'identityPool' }); // use identity pool to allow unauthenticated access
+    const { data, errors } = await client.models.Member.get({ id: id }, { authMode: 'userPool' }); // use identity pool to allow unauthenticated access
     if (errors) {
       console.error(errors);
       return null;

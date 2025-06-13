@@ -98,7 +98,7 @@ export class BankReconciliationComponent {
     }
   }
   show_book_entry(book_entry_id: string) {
-    this.router.navigate(['/books/editor', book_entry_id]);
+    this.router.navigate(['finance/books/editor', book_entry_id]);
   }
 
   set_bank_report(book_entry: BookEntry, report: string) {

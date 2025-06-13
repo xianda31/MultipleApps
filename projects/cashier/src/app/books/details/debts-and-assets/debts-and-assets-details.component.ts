@@ -65,7 +65,7 @@ export class DebtsAndAssetsDetailsComponent {
   }
   show_origin(selection: string) {
     let id = selection.split(' : ')[1];
-    this.router.navigate(['/books/editor', id]);
+    this.router.navigate(['finance/books/editor', id]);
   }
 
   compensate(key: string) {

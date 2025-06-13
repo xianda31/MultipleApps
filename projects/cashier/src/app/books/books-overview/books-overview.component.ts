@@ -298,11 +298,9 @@ export class BooksOverviewComponent {
 
   go_report(report: string) {
     if (report === this.selected_report) {
-      // this.router.navigate(['/books/overview']);
       this.selected_report = '';
     } else {
       this.selected_report = report;
-      // this.router.navigate(['/books/overview', this.selected_report]);
     }
 
   }

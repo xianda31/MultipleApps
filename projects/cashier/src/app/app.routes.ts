@@ -38,6 +38,7 @@ export const routes: Routes = [
 
   { path: 'excel/import', component: ImportExcelComponent },
   { path: '', component: HomeComponent },
+  { path: 'home', component: HomeComponent },
   // {
   //     path: 'authentification',
   //     loadChildren: () => import('../../../common/authentification/authentification.module').then(m => m.AuthentificationModule),
