@@ -1,3 +1,5 @@
+import { Schema } from "../../../../../../amplify/data/resource";
+
 export interface Product {
     id: string;
     glyph: string;
@@ -11,3 +13,5 @@ export interface Product {
     // createdAt?: any;
     // updatedAt?: any;
 }
+
+export type Product_input = Omit<Schema['Product']['type'], 'id'>;

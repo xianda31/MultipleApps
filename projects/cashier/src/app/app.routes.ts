@@ -15,16 +15,18 @@ import { GameCardsEditorComponent } from './game-cards/game-cards-editor/game-ca
 import { BuyComponent } from './buy/buy.component';
 import { MembersComponent } from '../../../admin-dashboard/src/app/members/members.component';
 import { PageNotFoundComponent } from './page-not-found/page-not-found.component';
+import { ProductsComponent } from '../../../admin-dashboard/src/app/sales/products/products.component';
 
 export const routes: Routes = [
-  { path: 'boutique/articles', component: ShopComponent },   //, canActivate: [loggedInGuard]
-  { path: 'boutique/droits-de-table', component: FeesCollectorComponent },
+  { path: 'vente/produits', component: ShopComponent },   //, canActivate: [loggedInGuard]
+  { path: 'vente/droits-de-table', component: FeesCollectorComponent },
 
   { path: 'adhérents', component: MembersComponent },
 
-  { path: 'compta/cartes-admission', component: GameCardsEditorComponent },
-  { path: 'compta/toutes-ecritures', component: BuyComponent }, //, canActivate: [loggedInGuard]
-  { path: 'compta/cash-box-status', component: CashBoxStatusComponent },
+  { path: 'admin/cartes-admission', component: GameCardsEditorComponent },
+  { path: 'admin/toutes-ecritures', component: BuyComponent }, //, canActivate: [loggedInGuard]
+  { path: 'admin/produits', component: ProductsComponent }, //, canActivate: [loggedInGuard]
+  { path: 'admin/cash-box-status', component: CashBoxStatusComponent },
 
   { path: 'finance/bank-reconciliation', component: BankReconciliationComponent },
   { path: 'finance/expense-and-revenue', component: ExpenseAndRevenueComponent },

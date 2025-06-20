@@ -5,19 +5,33 @@ import { registerLocaleData } from '@angular/common';
 import * as fr from '@angular/common/locales/fr';
 import { Amplify } from 'aws-amplify';
 import outputs from '../../../amplify_outputs.json';
+import { fetchAuthSession } from 'aws-amplify/auth'
 
 
 
 registerLocaleData(fr.default);
+
 Amplify.configure(outputs);
-const existingConfig = Amplify.getConfig();
-Amplify.configure({
-  ...existingConfig,
-  API: {
-    ...existingConfig.API,
-    REST: outputs.custom.API,
+const amplifyConfig = Amplify.getConfig();
+Amplify.configure(
+  {
+    ...amplifyConfig,
+    API: {
+      ...amplifyConfig.API,
+      REST: outputs.custom.API,
+    },
   },
-});
+  {
+    API: {
+      REST: {
+        headers: async () => {
+          const session = await fetchAuthSession();
+          return { Authorization: session.tokens?.idToken ? session.tokens.idToken.toString() : '' };
+        }
+      },
+    }
+  }
+);
 
 
 bootstrapApplication(AppComponent, appConfig)

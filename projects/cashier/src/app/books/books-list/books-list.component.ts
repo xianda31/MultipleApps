@@ -6,7 +6,7 @@ import { BookEntry } from '../../../../../common/accounting.interface';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { BookService } from '../../book.service';
 import { TransactionService } from '../../transaction.service';
-import { map, Subscription, switchMap, tap } from 'rxjs';
+import { map, Subscription, switchMap, tap, catchError, of } from 'rxjs';
 
 type Fields = 'date' | 'classe' | 'transaction' | 'montant' | 'tag'
 @Component({
@@ -19,9 +19,9 @@ type Fields = 'date' | 'classe' | 'transaction' | 'montant' | 'tag'
 export class BooksListComponent implements OnDestroy {
   loaded: boolean = false;
   season: string = '';
-  book_entries!: BookEntry[] ;
+  book_entries!: BookEntry[];
   truncature = '1.2-2';  // '1.0-0';// '1.2-2';  //
-  book_subscription !: Subscription ;
+  book_subscription !: Subscription;
   constructor(
     private bookService: BookService,
     private transactionService: TransactionService,
@@ -31,23 +31,21 @@ export class BooksListComponent implements OnDestroy {
   ) { }
 
   ngOnInit() {
-
-    this.loaded=false;
-    this.book_subscription=this.systemDataService.get_configuration().pipe(
-      tap((conf) => {
-        this.season = conf.season;
-        // console.log('got %s , then switchMap to season\'s entries', this.season);
-      }),
-      map((conf) => conf.season),
-      switchMap((season) => this.bookService.list_book_entries$(season)),
-      )
-      .subscribe(
-        (book_entries) => {
-          this.book_entries = [...book_entries];
-          this.loaded = true;
-        }
-      )
-
+    this.loaded = false;
+    this.book_subscription = this.systemDataService.get_configuration().pipe(
+      tap((conf) => { this.season = conf.season; }),
+      switchMap((conf) => this.bookService.list_book_entries$(conf.season)),
+      catchError((err) => {
+        console.error('Error loading book entries:', err);
+        this.loaded = true; // still loaded, but no entries
+        return of([]);
+      })
+    ).subscribe(
+      (book_entries) => {
+        this.book_entries = [...book_entries];
+        this.loaded = true;
+      }
+    );
   }
 
   ngOnDestroy() {

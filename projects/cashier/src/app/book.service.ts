@@ -9,6 +9,7 @@ import { ToastService } from '../../../common/toaster/toast.service';
 import { TransactionService } from './transaction.service';
 import { TRANSACTION_CLASS } from '../../../common/transaction.definition';
 import { Profit_and_loss } from '../../../common/system-conf.interface';
+import { DBhandler } from './graphQL.service';
 
 type BookEntry_input = Schema['BookEntry']['type'];
 type BookEntry_output = BookEntry & {
@@ -29,6 +30,7 @@ export class BookService {
     private systemDataService: SystemDataService,
     private toastService: ToastService,
     private transactionService: TransactionService,
+    private dbHandler: DBhandler
   ) {
   }
 
@@ -107,26 +109,15 @@ export class BookService {
   // create
 
   async create_book_entry(book_entry: BookEntry) {
-    const client = generateClient<Schema>();
-    let jsonified_entry: BookEntry_input = this.jsonified_entry(book_entry);
-    const { id, ...jsonified_entry_without_id } = jsonified_entry;
 
     try {
-      const { data, errors } = await client.models.BookEntry.create(
-        jsonified_entry_without_id,
-        { authMode: 'identityPool' }
-      );
-      if (errors) { throw errors; }
-
-      const created_entry = this.parsed_entry(data as unknown as BookEntry_output);
+      let created_entry = await this.dbHandler.createBookEntry(book_entry);
       this._book_entries.push(created_entry);
       this._book_entries$.next(this._book_entries.sort((b, a) => {
         return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
       }));
       return (created_entry);
-
     } catch (error) {
-
       let errorType: string = '.. accès refusé ... êtes-vous bien connecté ?';
       if (Array.isArray(error) && error.length > 0 && typeof error[0] === 'object' && error[0] !== null && 'errorType' in error[0]) {
         errorType = (error[0] as { errorType: string, message: string }).errorType;
@@ -166,125 +157,76 @@ export class BookService {
   // update
 
   async update_book_entry(book_entry: BookEntry) {
-    const client = generateClient<Schema>();
     try {
-      const response = await client.models.BookEntry.update(
-        this.jsonified_entry(book_entry),
-        { authMode: 'identityPool' });
-      if (response.errors) {
-        console.error('error', response.errors);
-        throw new Error(JSON.stringify(response.errors));
-      }
-      const updated_entry = this.parsed_entry(response.data as unknown as BookEntry_output);
+      let updated_entry = await this.dbHandler.updateBookEntry(book_entry);
       this._book_entries = this._book_entries.map((entry) => entry.id === updated_entry.id ? updated_entry : entry);
       this._book_entries$.next(this._book_entries.sort((b, a) => {
         return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
       }));
       return updated_entry;
     } catch (error: any) {
-      this.toastService.showWarningToast('base comptabilité', 'Vous n\'êtes pas autorisé à créer une entrée comptable');
-      throw error;
+      let errorType: string = '.. accès refusé ... êtes-vous bien connecté ?';
+      if (Array.isArray(error) && error.length > 0 && typeof error[0] === 'object' && error[0] !== null && 'errorType' in error[0]) {
+        errorType = (error[0] as { errorType: string, message: string }).errorType;
+      }
+      switch (errorType) {
+        case 'Unauthorized':
+          this.toastService.showWarningToast('base comptabilité', 'Vous n\'êtes pas autorisé à modifier une entrée comptable');
+          break;
+        default:
+          this.toastService.showErrorToast('base comptabilité', errorType);
+      }
+      throw errorType;
     };
   }
 
   // delete
 
-  delete_book_entry(entry_id: string) {
-    const client = generateClient<Schema>();
-
-    return client.models.BookEntry.delete(
-      { id: entry_id },
-      { authMode: 'identityPool' }
-    )
-      .then((response) => {
-        if (response.errors) {
-          console.error('error', response.errors);
-          throw new Error(JSON.stringify(response.errors));
-        }
-        this._book_entries = this._book_entries.filter((entry) => entry.id !== entry_id);
+  async delete_book_entry(book_entry: BookEntry) {
+    try {
+      let done = await this.dbHandler.deleteBookEntry(book_entry);
+      if (done) {
+        this._book_entries = this._book_entries.filter((entry) => entry.id !== book_entry.id);
         this._book_entries$.next(this._book_entries.sort((b, a) => {
           return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
         }));
-        return response;
-      })
-      .catch((error) => {
-        this.toastService.showWarningToast('base comptabilité', 'Vous n\'êtes pas autorisé à supprimer une entrée comptable');
-        throw error instanceof Error ? error.message : String(error);
-      });
+      }
+    } catch (error) {
+      console.error('error', error);
+      this.toastService.showErrorToast('base comptabilité', 'Vous n\'êtes pas autorisé à supprimer une entrée comptable');
+      throw error instanceof Error ? error.message : String(error);
+    }
   }
 
   // list
 
   list_book_entries$(season: string): Observable<BookEntry[]> {
 
-    const fetchBookentries = async (_season: string): Promise<BookEntry[]> => {
-      let failed = false;
-      let entries: BookEntry[] = [];
-      try {
-        const client = generateClient<Schema>();
-        let token: any = null;
-        let nbloops = 0;
-        // let entries: BookEntry[] = [];
-        do {
-          const { data, nextToken, errors } = await client.models.BookEntry.list({
-            filter: { season: { eq: _season } },
-            limit: 300,
-            nextToken: token,
-            authMode: 'identityPool' // use identity pool to allow unauthenticated access
+    let remote_load$ = this.dbHandler.listBookEntries(season).pipe(
+      tap((entries) => {
+        this._book_entries = entries.sort((a, b) => {
+            return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
           });
-          if (errors) {
-            console.error('client.models.BookEntry.list failed !! : ', errors);
-            failed = true;
-            throw new Error(JSON.stringify(errors));
-          }
-          let new_jsoned_entries = data as unknown as BookEntry_output[];
-          entries = [...entries, ...new_jsoned_entries.map((entry) => this.parsed_entry(entry))];
-          token = nextToken;
-
-          // if (this.trace_on()) console.log('loop %s => %s', nbloops,entries.length);
-        } while (token !== null && nbloops++ < 10 && !failed)
-
-        if (token !== null) {
-          this.toastService.showWarningToast('base comptabilité', 'beaucoup trop d\'entrées à charger , veuillez répeter l\'opération');
-        }
-        return entries;
-      }
-      catch (error) {
-        // failed = true;
-        // console.error('error', error);
-        throw new Error(error instanceof Error ? error.message : String(error));
-      }
-    }
+        this._book_entries$.next(this._book_entries);
+        if (this.trace_on()) console.log('%s book entries retrieved from AWS', this._book_entries.length);
+      }),
+      switchMap(() => this._book_entries$.asObservable()),
+      catchError((error) => {
+        console.error('Error fetching book entries:', error);
+        this.toastService.showErrorToast('base comptabilité', 'Erreur de chargement de la base de données');
+        return of([] as BookEntry[]);
+      })
+    );
 
     if (this.season_filter !== season) {
       this.season_filter = season;
+      // this._book_entries = null!;
       this.force_reload = true; // force reload of book entries if season changed
-    } else { this.force_reload = false; }
-
-    if (this._book_entries && !this.force_reload) {
-      // if (this.trace_on()) console.log('%s book entries retrieved from cache', this._book_entries.length);
-      return this._book_entries$.asObservable();
     } else {
-
-      return from(fetchBookentries(season)).pipe(
-        map((entries) => {
-          this._book_entries = entries.sort((a, b) => {
-            return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
-          });
-          return this._book_entries;
-        }),
-        switchMap((entries) => {
-          this._book_entries$.next(this._book_entries);
-          // if (this.trace_on()) console.log('%s book entries loaded from S3', entries.length);
-          return this._book_entries$.asObservable();
-        }),
-        catchError((error) => {
-          console.error('Error fetching book entries:', error);
-          this.toastService.showErrorToast('base comptabilité', 'Erreur de chargement de la base de données');
-          return of([] as BookEntry[]);
-        })
-      );
+      this.force_reload = false;
     }
+
+    return (this._book_entries ) ?  this._book_entries$.asObservable() : remote_load$ ;
   }
 
   book_entries_bulk_delete$(season: string): Observable<number> {

@@ -11,7 +11,7 @@ import {
 } from "aws-cdk-lib/aws-apigatewayv2-authorizers";
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import { Policy, PolicyStatement } from "aws-cdk-lib/aws-iam";
-import { myApiFunction } from "./functions/ffb-proxy/resource";
+import { ffbProxy } from "./functions/ffb-proxy/resource";
 import { auth } from "./auth/resource";
 import { data } from "./data/resource";
 import { storage } from "./storage/resource";
@@ -20,44 +20,36 @@ const backend = defineBackend({
   auth,
   data,
   storage,
-  myApiFunction,
+  ffbProxy,
 });
 
 // create a new API stack
 const apiStack = backend.createStack("api-stack");
 
-// create a IAM authorizer
-const iamAuthorizer = new HttpIamAuthorizer();
-
 // create a User Pool authorizer
 const userPoolAuthorizer = new HttpUserPoolAuthorizer(
   "userPoolAuth",
   backend.auth.resources.userPool,
-  {
-    userPoolClients: [backend.auth.resources.userPoolClient],
-  }
+  { userPoolClients: [backend.auth.resources.userPoolClient] }
 );
 
 // create a new HTTP Lambda integration
 const httpLambdaIntegration = new HttpLambdaIntegration(
   "LambdaIntegration",
-  backend.myApiFunction.resources.lambda
+  backend.ffbProxy.resources.lambda
 );
 
 // create a new HTTP API with IAM as default authorizer
 const httpApi = new HttpApi(apiStack, "HttpApi", {
-  apiName: "myHttpApi",
+  apiName: "ffbProxyApi",
   corsPreflight: {
-    // Modify the CORS settings below to match your specific requirements
     allowMethods: [
       CorsHttpMethod.GET,
       CorsHttpMethod.POST,
       CorsHttpMethod.PUT,
       CorsHttpMethod.DELETE,
     ],
-    // Restrict this to domains you trust
     allowOrigins: ["*"],
-    // Specify only the headers you need to allow
     allowHeaders: ["*"],
   },
   createDefaultStage: true,
@@ -66,46 +58,15 @@ const httpApi = new HttpApi(apiStack, "HttpApi", {
 // add routes to the API with a IAM authorizer and different methods
 httpApi.addRoutes({
   path: "/v1/{proxy+}",
-  methods: [HttpMethod.GET, HttpMethod.PUT, HttpMethod.POST, HttpMethod.DELETE],
+  methods: [ HttpMethod.PUT, HttpMethod.POST, HttpMethod.DELETE],
   integration: httpLambdaIntegration,
-  authorizer: iamAuthorizer,
+  authorizer: userPoolAuthorizer,
 });
-
-// httpApi.addRoutes({
-//   path: "/members/{proxy+}",
-//   methods: [HttpMethod.GET],
-//   integration: httpLambdaIntegration,
-//   authorizer: iamAuthorizer,
-// });
-// httpApi.addRoutes({
-//   path: "/search-members",
-//   methods: [HttpMethod.GET],
-//   integration: httpLambdaIntegration,
-//   authorizer: iamAuthorizer,
-// });
-
-// // add a proxy resource path to the API
-// httpApi.addRoutes({
-//   path: "/items/{proxy+}",
-//   methods: [HttpMethod.ANY],
-//   integration: httpLambdaIntegration,
-//   authorizer: iamAuthorizer,
-// });
-
-// // add the options method to the route
-// httpApi.addRoutes({
-//   path: "/items/{proxy+}",
-//   methods: [HttpMethod.OPTIONS],
-//   integration: httpLambdaIntegration,
-// });
-
-// // add route to the API with a User Pool authorizer
-// httpApi.addRoutes({
-//   path: "/cognito-auth-path",
-//   methods: [HttpMethod.GET],
-//   integration: httpLambdaIntegration,
-//   authorizer: userPoolAuthorizer,
-// });
+httpApi.addRoutes({
+  path: "/v1/{proxy+}",
+  methods: [HttpMethod.GET],
+  integration: httpLambdaIntegration,
+});
 
 // create a new IAM policy to allow Invoke access to the API
 const apiPolicy = new Policy(apiStack, "ApiPolicy", {
@@ -114,11 +75,6 @@ const apiPolicy = new Policy(apiStack, "ApiPolicy", {
       actions: ["execute-api:Invoke"],
       resources: [
         `${httpApi.arnForExecuteApi("*", "/v1/*")}`,        // `${httpApi.arnForExecuteApi("*", "/items")}`,
-        // `${httpApi.arnForExecuteApi("*", "/items")}`,
-        // `${httpApi.arnForExecuteApi("*", "/items/*")}`,
-        // `${httpApi.arnForExecuteApi("*", "/members/*")}`,
-        // `${httpApi.arnForExecuteApi("*", "/search-members")}`,
-        // `${httpApi.arnForExecuteApi("*", "/cognito-auth-path")}`,
       ],
     }),
   ],

@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { TournamentService } from '../../../../../common/services/tournament.service';
 import { club_tournament } from '../../../../../common/ffb/interface/club_tournament.interface';
@@ -7,14 +7,13 @@ import { FeesCollectorService } from './fees-collector.service';
 import { Observable } from 'rxjs';
 import { Game, Gamer } from '../fees.interface';
 import { PdfService } from '../../../../../common/services/pdf.service';
-import { BackComponent } from '../../../../../common/back/back.component';
 
 
 
 @Component({
   selector: 'app-fees-collector',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, BackComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule],
   templateUrl: './fees-collector.component.html',
   styleUrl: './fees-collector.component.scss'
 })
@@ -28,17 +27,15 @@ export class FeesCollectorComponent {
   constructor(
     private tournamentService: TournamentService,
     private feesCollectorService: FeesCollectorService,
-    private pdfService: PdfService
-
+    private pdfService: PdfService,
+    private location: Location
 
   ) {
     this.next_tournaments$ = this.tournamentService.list_next_tournaments(this.back_days);
-    
+
     this.feesCollectorService.game$.subscribe((game) => {
-      this.game = game;   
-      // console.log('game$ subscription',this.game?.tournament)
+      this.game = game;
       this.selected_tournament = game.tournament;
-      // console.log('selected tournament:', this.selected_tournament?.date);
     });
   }
 
@@ -46,6 +43,8 @@ export class FeesCollectorComponent {
     this.back_days += 7;
     this.next_tournaments$ = this.tournamentService.list_next_tournaments(this.back_days);
   }
+
+
 
   print_to_pdf() {
     let fname = this.selected_tournament!.date + '_' + this.selected_tournament!.tournament_name + '.pdf';
@@ -57,6 +56,11 @@ export class FeesCollectorComponent {
     this.feesCollectorService.set_tournament(tournament);
   };
 
+  back_to_parent_page() {
+    this.selected_tournament = null;
+    this.feesCollectorService.clear_tournament();
+    this.location.back();
+  }
 
   toggle_sort() {
     this.feesCollectorService.toggle_sort();

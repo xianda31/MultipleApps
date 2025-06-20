@@ -9,9 +9,6 @@ import { SystemDataService } from '../../../common/services/system-data.service'
 import { BookService } from './book.service';
 import { catchError, switchMap, tap } from 'rxjs';
 import { AuthentificationService } from '../../../common/authentification/authentification.service';
-import { AuthEvent } from '../../../common/authentification/authentification_interface';
-import { Hub } from 'aws-amplify/utils';
-import { storage } from '../../../../amplify/storage/resource';
 
 
 
@@ -47,6 +44,7 @@ export class AppComponent {
     this.systemDataService.get_configuration().pipe(
       tap((conf) => {
         this.season = conf.season;
+        console.log('AppComponent.ngOnInit: system configuration loaded', conf);
       }),
       switchMap((conf) => this.bookService.list_book_entries$(conf.season))
     ).subscribe((book_entries) => {

@@ -4,6 +4,7 @@ import { BehaviorSubject, from, map, Observable, of, switchMap, tap } from 'rxjs
 import { data, Schema } from '../../../amplify/data/resource';
 import { generateClient } from 'aws-amplify/api';
 import { SystemDataService } from './system-data.service';
+import { DBhandler } from '../../cashier/src/app/graphQL.service';
 
 
 @Injectable({
@@ -14,7 +15,8 @@ export class ProductService {
     products_keys: string[] = [];
 
     constructor(
-        private systemDataService: SystemDataService
+        private systemDataService: SystemDataService,
+        private dbHandler: DBhandler
     ) { }
 
 
@@ -58,22 +60,14 @@ export class ProductService {
 
     // Retrieve all products
     listProducts(): Observable<Product[]> {
-        const _listProducts = (): Observable<Product[]> => {
-            const client = generateClient<Schema>();
-            return from(client.models.Product.list(
-                {
-                    authMode: 'identityPool' // use identity pool to allow unauthenticated access
-                }
-            ))
-                .pipe(
-                    map((response) => response.data as unknown as Product[]),
-                    map((products) => products.filter((product) => product.active)),
-                    map((products) => products.sort((a, b) => b.price - a.price)),
-                    switchMap((products) => this.sorted_products(products)),
-                    tap((products) => this._products = products),
-                );
-        }
-        return this._products ? of(this._products) : _listProducts();
+
+        const _listProducts = this.dbHandler.listProducts().pipe(
+            map((products) => products.filter((product) => product.active)),
+            map((products) => products.sort((a, b) => b.price - a.price)),
+            switchMap((products) => this.sorted_products(products)),
+            tap((products) => this._products = products),
+        );
+        return this._products ? of(this._products) : _listProducts;
     }
 
     sorted_products(products: Product[]): Observable<Product[]> {

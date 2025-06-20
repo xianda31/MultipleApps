@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { generateClient } from 'aws-amplify/api';
-import { BehaviorSubject, from, Observable, tap, switchMap } from 'rxjs';
+import { BehaviorSubject, Observable, tap, switchMap } from 'rxjs';
 import { Schema } from '../../../../../../amplify/data/resource';
 import { Member } from '../../../../../common/member.interface';
 import { ToastService } from '../../../../../common/toaster/toast.service';
-import { auth } from '../../../../../../amplify/auth/resource';
+import { DBhandler } from '../../../../../cashier/src/app/graphQL.service';
 
 @Injectable({
   providedIn: 'root'
@@ -14,43 +14,20 @@ export class MembersService {
   private _members$: BehaviorSubject<Member[]> = new BehaviorSubject(this._members);
 
   constructor(
-    private toastService: ToastService
+    private toastService: ToastService,
+    private dbHandler: DBhandler
   ) { }
 
 
   listMembers(): Observable<Member[]> {
-
-    const fetchMembers = async () => {
-      const client = generateClient<Schema>();
-      // console.log('fetching members ... 300 max');
-      const { data: members, errors } = await client.models.Member.list(
-        { limit: 300 ,
-          authMode: 'identityPool' // use identity pool to allow unauthenticated access
-        },
-
-      );
-      if (errors) {
-        console.error('Member.list error', errors);
-        return [];
-      }
-      this._members = members as Member[];
-      this._members = this._members.sort((a, b) => a.lastname.localeCompare(b.lastname))
-        .map((member) => {
-          member.lastname = member.lastname.toUpperCase();
-          return member;
-        });
-      return this._members as Member[];
-    };
-    // console.log('fetching members from ', this._members ? 'cache' : 'AWS');
-
-    let remote_load$ = from(fetchMembers()).pipe(
+    let remote_load$ = this.dbHandler.listMembers().pipe(
       tap((members) => {
         this._members = members;
+        this._members = this._members.sort((a, b) => a.lastname.localeCompare(b.lastname))
         this._members$.next(this._members);
       }),
       switchMap(() => this._members$.asObservable())
     )
-
     return this._members ? this._members$.asObservable() : remote_load$;
   }
 
@@ -157,22 +134,19 @@ export class MembersService {
     }
   }
 
-  async deleteMember(license_number: string) {
-    const client = generateClient<Schema>();
-    const { data: deletedMember, errors } = await client.models.Member.delete({ id: license_number });
-    if (errors) {
-      console.error(errors);
-      return;
-    }
-    if (!deletedMember) {
-      console.error('Member not deleted');
-      return;
-    } else {
-      this._members = this._members.filter((m) => m.license_number !== deletedMember.license_number);
-      this.toastService.showSuccessToast('Membre supprimé', `${deletedMember.lastname} ${deletedMember.firstname}`);
-      this._members$.next(this._members);
+  async deleteMember(member: Member) {
+
+    try {
+      let done = await this.dbHandler.deleteMember(member.id)
+      if (done) {
+        this._members = this._members.filter((m) => m.id !== member.id);
+        this._members$.next(this._members);
+        this.toastService.showSuccessToast('Service adhérent', `${member.lastname} ${member.firstname} supprimé`);
+      }
+    } catch (error) {
+      console.error('Error deleting member:', error);
+      this.toastService.showErrorToast('Service adhérent', 'Erreur de suppression');
     }
   }
-
-
 }
+

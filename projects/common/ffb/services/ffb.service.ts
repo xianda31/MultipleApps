@@ -18,7 +18,7 @@ export class FFB_proxyService {
     }
     try {
       const restOperation = get({
-        apiName: 'myHttpApi',
+        apiName: 'ffbProxyApi',
         path: 'v1/search-members',
         options: {
           queryParams: { search: search }
@@ -37,7 +37,7 @@ export class FFB_proxyService {
   async searchPlayersSuchAs(hint: string): Promise<FFBplayer[]> {
     try {
       const restOperation = get({
-        apiName: 'myHttpApi',
+        apiName: 'ffbProxyApi',
         path: 'v1/subscription-search-members',
         options: {
           queryParams: {
@@ -60,7 +60,7 @@ export class FFB_proxyService {
   }
   _getTournaments(): Observable<Tournament[]> {
     const restOperation = get({
-      apiName: 'myHttpApi',
+      apiName: 'ffbProxyApi',
       path: 'v1/organizations/1438/club_tournament',
     });
 
@@ -73,7 +73,7 @@ export class FFB_proxyService {
   // async getTournaments(): Promise<club_tournament[]> {
   //   try {
   //     const restOperation = get({
-  //       apiName: 'myHttpApi',
+  //       apiName: 'ffbProxyApi',
   //       path: 'v1/organizations/1438/club_tournament',
   //     });
   //     const { body } = await restOperation.response;
@@ -90,7 +90,7 @@ export class FFB_proxyService {
   async getAdherents(): Promise<FFB_licensee[]> {
     try {
       const restOperation = get({
-        apiName: 'myHttpApi',
+        apiName: 'ffbProxyApi',
         path: 'v1/organizations/1438/members',
       });
       const { body } = await restOperation.response;
@@ -112,7 +112,7 @@ export class FFB_proxyService {
     });
     try {
       const restOperation = post({
-        apiName: 'myHttpApi',
+        apiName: 'ffbProxyApi',
         path: 'v1/organizations/1438/tournament',
         options: {
           body: { players: players },
@@ -134,7 +134,7 @@ export class FFB_proxyService {
   async deleteTeam(tournamentId: string, teamId: string): Promise<boolean | null> {
     try {
       const restOperation = del({
-        apiName: 'myHttpApi',
+        apiName: 'ffbProxyApi',
         path: 'v1/organizations/1438/tournament',
         options: {
           queryParams: {
@@ -159,7 +159,7 @@ export class FFB_proxyService {
     let promise: Promise<TournamentTeams> = new Promise(async (resolve, reject) => {
       try {
         const restOperation = get({
-          apiName: 'myHttpApi',
+          apiName: 'ffbProxyApi',
           path: 'v1/organizations/1438/tournament',
           options: { queryParams: { id: id } }
         });

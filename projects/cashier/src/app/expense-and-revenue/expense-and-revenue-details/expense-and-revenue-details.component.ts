@@ -80,7 +80,7 @@ export class ExpenseAndRevenueDetailsComponent {
 
 
   show_book_entry(book_entry_id: string) {
-    this.router.navigate(['/books/editor', book_entry_id]);
+    this.router.navigate(['finance/books/editor', book_entry_id]);
   }
 
   back_to_parent_page() {

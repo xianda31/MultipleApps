@@ -1,3 +1,4 @@
+import { Schema } from "../../amplify/data/resource";
 
 export interface Member {
     id: string;
@@ -15,3 +16,5 @@ export interface Member {
     license_status: string
     license_taken_at: string
 }
+
+export type Member_input = Omit<Schema['Member']['type'], 'id'>;

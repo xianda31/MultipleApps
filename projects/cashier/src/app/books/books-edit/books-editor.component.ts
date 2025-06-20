@@ -317,7 +317,7 @@ export class BooksEditorComponent {
       'total': { value: (operation_initial?.values ? this.sum_operation_values(transaction, operation_initial) : ''), disabled: true },
     });
 
- 
+
     if (transaction.nominative) {
       operationForm.addControl('member', new FormControl(operation_initial?.member ?? '', Validators.required));
       if (transaction.optional_accounts !== undefined) {
@@ -500,7 +500,7 @@ export class BooksEditorComponent {
       return;
     }
 
-    if (booking.cheque_ref === '') delete booking.cheque_ref;
+    if (!booking.cheque_ref || booking.cheque_ref === 'undefined') delete booking.cheque_ref;
 
     if (this.creation) {
       this.bookService.create_book_entry(booking).then(() =>
@@ -526,11 +526,16 @@ export class BooksEditorComponent {
     }
   }
 
-  delete_book_entry() {
-    this.bookService.delete_book_entry(this.book_entry_id).then(() =>
-      this.toastService.showSuccessToast('suppression', 'écriture supprimée'));
-    this.location.back();
-  }
+  async delete_book_entry() {
+    try {
+      this.bookService.delete_book_entry(this.selected_book_entry);
+      this.toastService.showSuccessToast('écriture BD', 'écriture supprimée');
+      this.location.back();
+    }
+    catch (error) {
+      this.toastService.showErrorToast('écriture BD', 'vous ne pouvez pas supprimer cette écriture');
+    }
+}
 
 
 

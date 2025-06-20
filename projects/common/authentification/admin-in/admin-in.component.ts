@@ -6,11 +6,14 @@ import { ToastService } from '../../toaster/toast.service';
 import { Member } from '../../member.interface';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { GetLoggingComponent } from '../../../cashier/src/app/modals/get-logging/get-logging.component';
-import { Observable, of, delay, switchMap, from, map, tap } from 'rxjs';
+import { Observable, of, switchMap, from, map, tap } from 'rxjs';
 import { MembersService } from '../../../admin-dashboard/src/app/members/service/members.service';
+import { GroupService } from '../group.service';
+import { Group_icons, Group_names } from '../group.interface';
 
 const EMAIL_PATTERN = "^[_A-Za-z0-9-\+]+(\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\.[A-Za-z0-9]+)*(\.[A-Za-z]{2,})$";
 const PSW_PATTERN = '^(?!\\s+)(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[\\^$*.[\\]{}()?"!@#%&/\\\\,><\': ;| _~`=+-]).{8,256}(?<!\\s)$';
+const GROUP_ICONS = Group_icons;
 
 @Component({
   selector: 'app-admin-in',
@@ -26,13 +29,15 @@ export class AdminInComponent {
   loginForm !: FormGroup;
   logged_member: Member | null = null;
   applying_member: Member | null = null;
-  // show_login: boolean = false;
+  my_group: Group_names | null = null;
+  group_icon : string ="bi bi-bug";
   show_password: boolean = false;
 
 
   constructor(
     private fb: FormBuilder,
     private auth: AuthentificationService,
+    private groupService: GroupService,
     private toastService: ToastService,
     private modalService: NgbModal,
     private membersService: MembersService
@@ -49,12 +54,18 @@ export class AdminInComponent {
     });
   }
 
-  ngOnInit() {
-    this.auth.logged_member$.subscribe((member) => {
+  async ngOnInit() {
+    this.auth.logged_member$.subscribe(async (member) => {
       this.logged_member = null;
       if (member !== null) {
         // this.toastService.showSuccessToast('identification', 'Bonjour ' + member.firstname);
         this.logged_member = member;
+        let groups = await this.groupService.getCurrentUserGroups();
+        if (groups.length > 0) {
+          this.my_group = groups[0] as Group_names;
+          this.group_icon = GROUP_ICONS[this.my_group];
+        }
+
       }
     });
   }
@@ -63,8 +74,6 @@ export class AdminInComponent {
 
   signOut() {
     this.auth.signOut();
-    // this.show_login = false;
-
   }
 
   async signIn() {
@@ -78,12 +87,8 @@ const modalRef = this.modalService.open(GetLoggingComponent, { centered: true })
     modalRef.componentInstance.member = this.applying_member;
     modalRef.componentInstance.mode = 'create_account';
     modalRef.result.then((response: any) => {
-      // if (response) {
-        //   console.log('response', response);
-        // }
       });
       
-      // this.auth.signUp(this.applying_member.email, this.password!.value, this.applying_member.id);
     } else {
       this.toastService.showErrorToast('Création compte', 'Mel non répertorié dans la base de données adhérents');
     }
@@ -106,7 +111,7 @@ const modalRef = this.modalService.open(GetLoggingComponent, { centered: true })
     if (!control.value.match(EMAIL_PATTERN)) return of(null);
     return of(control.value).pipe(
       switchMap((email) => from(this.membersService.getMemberByEmail(email))),
-      tap((member) => {console.log('emailValidator member', member); }),
+      // tap((member) => {console.log('emailValidator member', member); }),
       tap((member) => this.applying_member = member),
       map((member) => { return member ? null : { not_member: false }; })
     )

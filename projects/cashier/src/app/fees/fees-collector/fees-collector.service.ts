@@ -69,6 +69,23 @@ export class FeesCollectorService {
     return this._game$.asObservable();
   }
 
+  clear_tournament() {
+    this.game  = {
+    season: '',
+    member_trn_price: 0,
+    non_member_trn_price: 0,
+    alphabetic_sort: false,
+    fees_doubled: false,
+    gamers: [],
+    tournament: null,
+  };
+    this._game$.next(this.game);
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+      this.subscription = undefined;
+    }
+  }
+
   private is_member(license: string): Member | undefined {
     return this.members.find((member) => member.license_number === license);
   }

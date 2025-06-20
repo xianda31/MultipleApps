@@ -3,7 +3,6 @@
   <div class="card-header">
     <div class="d-flex justify-content-between align-items-center">
       <h5>contenu de la base</h5>
-      <!-- <h6>(écritures pour la saison {{ season }} uniquement)</h6> -->
       <span class="text-mute"> {{book_entries.length}} écritures en {{season}}</span>
     </div>
   </div>
@@ -19,7 +18,6 @@
     <table class="table table-responsive table-sm table-striped table-hover">
       <thead>
         <tr>
-          <!-- <th class="col"># </th> -->
           <th class="col th_hover" (click)="sort_by('date')">date </th>
           <th class="col">libellé</th>
           <th class="col">produits/charges</th>

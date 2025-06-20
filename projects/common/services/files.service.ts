@@ -99,6 +99,8 @@ export class FileService {
           resolve(data);
         })
         .catch((error) => {
+          this.toastService.showErrorToast('Configuration système', 'Impossible de charger le fichier ' + path);
+          console.warn('impossible de charger le fichier %s', path);
           reject(error);
         });
     });

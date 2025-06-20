@@ -2,15 +2,15 @@
 
 <div class="row bg-light shadow-sm align-items-end">
   <h4 class="col-md-auto col-sm-12 mt-2">
-      <i class="fs-4 bi-piggy-bank nav-link" [routerLink]="['']">
-        Comptabilité Bridge Club Saint-Orens 
-      </i>
-    </h4>
+    <i class="fs-4 bi-piggy-bank nav-link" [routerLink]="['']">
+      Comptabilité Bridge Club Saint-Orens
+    </i>
+  </h4>
   <h5 class="col-md-auto col-sm-12">
-      <span class="fs-5"> (saison {{season}}) </span>
-      <span class="h6 ms-5 d-none d-sm-inline align-self-end">
-        <span class="ms-auto badge bg-dark">{{entries_nbr}}</span>
-      </span>
+    <span class="fs-5"> (saison {{season}}) </span>
+    <span class="h6 ms-5 d-none d-sm-inline align-self-end">
+      <span class="ms-auto badge bg-dark">{{entries_nbr}}</span>
+    </span>
   </h5>
 
   <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
@@ -20,35 +20,36 @@
     </button>
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class=" navbar-nav  me-auto mb-md-2 mb-lg-0  align-items-start">
-        
-        
+
+
         <li class="nav-item dropdown me-md-5 me-sm-1">
           <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown1" role="button" data-bs-toggle="dropdown"
-          aria-expanded="false">
-          <i class="fs-4 bi-cart"></i> <span class="ms-1 d-none d-sm-inline">Ventes</span>
-        </a>
-        <ul class="dropdown-menu" aria-labelledby="navbarDropdown1">
-          <li><a class="dropdown-item  " routerLink="/boutique/articles">vente à adhérents</a></li>
-          <li><a class="dropdown-item  " routerLink="/boutique/droits-de-table">droits tournoi</a></li>
-        </ul>
-      </li>
-      
-      <li class="nav-item me-md-5 me-sm-1">
-        <a class="nav-link" [routerLink]="['/adhérents']">
-          <i class="fs-4 bi-people"></i>
-          <span class="ms-1 d-none d-sm-inline">Adhérents</span>
-        </a>
-      </li>
+            aria-expanded="false">
+            <i class="fs-4 bi-cart"></i> <span class="ms-1 d-none d-sm-inline">Ventes</span>
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdown1">
+            <li><a class="dropdown-item  " routerLink="/vente/produits">vente à adhérents</a></li>
+            <li><a class="dropdown-item  " routerLink="/vente/droits-de-table">droits tournoi</a></li>
+          </ul>
+        </li>
 
-      <li class="nav-item dropdown me-md-5 me-sm-1">
-        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown1" role="button" data-bs-toggle="dropdown"
-        aria-expanded="false">
-        <i class="fs-4 bi-wallet2"></i> <span class="ms-1 d-none d-sm-inline">Ecritures</span>
-      </a>
-      <ul class="dropdown-menu" aria-labelledby="navbarDropdown1">
-        <li><a class="dropdown-item  " routerLink="/compta/cartes-admission">cartes admission</a></li>
-        <li><a class="dropdown-item  " routerLink="/compta/cash-box-status">gestion caisse</a></li>
-          <li><a class="dropdown-item  " routerLink="/compta/toutes-ecritures">écritures courantes</a></li>
+        <li class="nav-item me-md-5 me-sm-1">
+          <a class="nav-link" [routerLink]="['/adhérents']">
+            <i class="fs-4 bi-people"></i>
+            <span class="ms-1 d-none d-sm-inline">Adhérents</span>
+          </a>
+        </li>
+
+        <li class="nav-item dropdown me-md-5 me-sm-1">
+          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown1" role="button" data-bs-toggle="dropdown"
+            aria-expanded="false">
+            <i class="fs-4 bi-inboxes"></i> <span class="ms-1 d-none d-sm-inline">Administratif</span>
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdown1">
+            <li><a class="dropdown-item  " routerLink="/admin/cartes-admission">cartes admission</a></li>
+            <li><a class="dropdown-item  " routerLink="/admin/produits">produits à la vente</a></li>
+            <li><a class="dropdown-item  " routerLink="/admin/cash-box-status">gestion caisse</a></li>
+            <li><a class="dropdown-item  " routerLink="/admin/toutes-ecritures">écritures courantes</a></li>
           </ul>
         </li>
 
@@ -90,8 +91,6 @@
       </ul>
 
     </div>
-    <!-- </div> -->
   </nav>
 
 </div>
-<!-- </div> -->

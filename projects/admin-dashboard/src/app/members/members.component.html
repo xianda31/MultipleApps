@@ -1,4 +1,4 @@
-<div class="p-2 col col-md-8 mx-auto">
+<div class="mt-2">
   <div class="card">
     <div class="card-header">
 
@@ -21,7 +21,7 @@
 
         <!-- ajout d'un adhérent licencié supplémentaire -->
         <div class="col-md-6">
-          <h6>ajout d'adhérent :</h6>
+          <h5>ajout anticipé d'adhérent :</h5>
           <label><strong>NON licencié </strong>(ex. débutant) :
             <i class="fs-6 bi-person-square" (click)="add_newbee()"></i>
           </label>
@@ -44,7 +44,7 @@
           <h6>
             mise à jour base BCSTO à partir de la base FFB :
             <button class="btn btn-primary btn-sm" (click)="getMembersfromFFB()">
-              <i class="fa-solid fa-gear"></i>
+              <i class="bi bi-database-add"></i>
             </button>
           </h6>
           <pre> {{verbose}} </pre>
@@ -69,7 +69,7 @@
       </div>
 
       <div class="col-md-12">
-        <table class="table table-striped">
+        <table class="table table-striped table-sm table-responsive">
           <thead>
             <tr>
               <!-- <th>#</th> -->
@@ -105,7 +105,7 @@
               <td class="text-center">{{(member.license_taken_at === 'BCSTO') ? '':
                 member.license_taken_at}}</td>
               <td class="action text-center">
-                <i class="fa-regular fa-trash-can" (click)="deleteMember(member)"></i>
+                <i class="bi bi-trash" (click)="deleteMember(member)"></i>
                 <!-- <i class="bi bi-person-fill-add" (click)="createMember(member)"></i> -->
               </td>
             </tr>

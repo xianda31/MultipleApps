@@ -117,6 +117,7 @@ export type AMOUNTS = { [key in BALANCE_ACCOUNT | FINANCIAL_ACCOUNT  ]?: number;
 
 export interface BookEntry {
   id: string;
+  createdAt?: string;
   updatedAt?: string;
   season: string;
   date: string;

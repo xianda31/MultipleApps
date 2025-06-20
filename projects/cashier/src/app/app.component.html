@@ -1,3 +1,8 @@
+<div *ngIf="!book_entries_loaded" class="d-flex justify-content-center align-items-center vh-100">
+    <div class="spinner-border text-success" role="status">
+    </div>
+    <span class="ms-3">... chargement base de données comptabilité...</span>
+</div>
 <div *ngIf="book_entries_loaded" class="container-md container-sm-fluid">
   <app-navbar [season]="season" [entries_nbr]="entries_nbr"></app-navbar>
   <router-outlet></router-outlet>

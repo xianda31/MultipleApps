@@ -283,8 +283,12 @@ export class BooksOverviewComponent {
   }
 
   delete_book_entry(book_entry: BookEntry) {
-    this.bookService.delete_book_entry(book_entry.id!).then((book_entry) => {
-    });
+    try {
+    this.bookService.delete_book_entry(book_entry)
+    }
+    catch (error) {
+      console.error('Error deleting book entry:', error); 
+    };
   }
 
   show_book_entry(book_entry_id: string) {

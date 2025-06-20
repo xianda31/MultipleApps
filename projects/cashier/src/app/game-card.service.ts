@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import { generateClient, get } from 'aws-amplify/api';
 import { Schema } from '../../../../amplify/data/resource';
 import { BehaviorSubject, from, map, Observable, switchMap } from 'rxjs';
-import { GameCard, MAX_STAMPS } from './game-cards/game-card.interface';
+import { GameCard, MAX_STAMPS, PlayBook_input } from './game-cards/game-card.interface';
 import { Member } from '../../../common/member.interface';
 import { MembersService } from '../../../admin-dashboard/src/app/members/service/members.service';
 import { ToastService } from '../../../common/toaster/toast.service';
+import { DBhandler } from './graphQL.service';
 
-type TwelveGameCard = Schema['TwelveGameCard']['type'];
+type PlayBook = Schema['PlayBook']['type'];
 
 @Injectable({
   providedIn: 'root'
@@ -20,11 +21,11 @@ export class GameCardService {
 
   constructor(
     private membersService: MembersService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private dbHandler: DBhandler
   ) { }
 
   // interfaces haut niveau
-
 
 
 
@@ -41,7 +42,7 @@ export class GameCardService {
     const member_credit = (member: Member): number => {
       return Array.from(card_set)
         .filter(card => card.owners.some(owner => owner.license_number === member.license_number))
-        .reduce((total, card) => total + (card.initial_qty - card.stamps.length)/share(card,member,members), 0);
+        .reduce((total, card) => total + (card.initial_qty - card.stamps.length) / share(card, member, members), 0);
     };
 
     return this.gameCards$.pipe(
@@ -50,7 +51,7 @@ export class GameCardService {
         // recherche des cartes de membres
         members.forEach(member => {
           const memberCards = cards.filter(card => card.owners.some(owner => owner.license_number === member.license_number));
-          if (memberCards.length > 0) {             memberCards.forEach(card => card_set.add(card))            }
+          if (memberCards.length > 0) { memberCards.forEach(card => card_set.add(card)) }
         })
 
         // calcul du solde de chaque membre
@@ -80,6 +81,8 @@ export class GameCardService {
         console.error('Error stamping member card:', error);
       });
     }
+    // Ensure all code paths return a value or throw
+    throw new Error('Unexpected error in updateCard');
   }
 
   //  interfaces editeur
@@ -89,74 +92,76 @@ export class GameCardService {
       switchMap(() => this.gameCards$.asObservable()));
   }
 
-  async createCard(owners: Member[], qty ?:number): Promise<GameCard> {
-    const input_card: Omit<TwelveGameCard, 'id' | 'createdAt' | 'updatedAt'> = {
+  async createCard(owners: Member[], qty?: number): Promise<GameCard> {
+    const card_input: PlayBook_input = {
       licenses: owners.map((member) => member.license_number),
       initial_qty: qty ?? MAX_STAMPS,
-      stamps: [],
+      stamps: []
     };
     try {
-      const createdCard = await this.createTwelveGameCard(input_card);
+      const createdPlayBook = await this.dbHandler.createPlayBook(card_input);
       const new_card: GameCard = {
-        id: createdCard.id,
+        id: createdPlayBook.id,
         owners: owners,
-        initial_qty: createdCard.initial_qty,
-        stamps: createdCard.stamps.filter((stamp): stamp is string => stamp !== null),
-        createdAt: createdCard.createdAt,
-        updatedAt: createdCard.updatedAt
+        initial_qty: createdPlayBook.initial_qty,
+        stamps: createdPlayBook.stamps.filter((stamp): stamp is string => stamp !== null),
+        licenses: createdPlayBook.licenses,
+        // createdAt: createdPlayBook.createdAt,
+        // updatedAt: createdPlayBook.updatedAt
       };
-      if(this._gameCards) {   // cache update if exists
-      this._gameCards.push(new_card);
-      this.gameCards$.next(this._gameCards);
-      this.toastService.showSuccessToast('Gestion des cartes', 'La carte de tournoi a été créée avec succès');
+      if (this._gameCards) {   // cache update if exists
+        this._gameCards.push(new_card);
+        this.gameCards$.next(this._gameCards);
+        this.toastService.showSuccessToast('Gestion des cartes', 'La carte de tournoi a été créée avec succès');
       }
       return new_card;
-    } catch (error) {
-      console.error('Error creating game card:', error);
-      throw error;
+    } catch (errors) {
+      if (Array.isArray(errors) && errors.length > 0 && typeof errors[0] === 'object' && errors[0] !== null && 'errorType' in errors[0]) {
+        if ((errors[0] as any).errorType === 'Unauthorized') {
+          this.toastService.showErrorToast('Gestion des cartes', 'Vous n\'êtes pas autorisé à créer une carte de tournoi');
+          return Promise.reject('Unauthorized');
+        }
+      }
+
+      this.toastService.showErrorToast('Gestion des cartes', 'Une erreur est survenue lors de la modifier de la carte de tournoi');
+      return Promise.reject('Error updating game card');
     }
   }
 
   async updateCard(card: GameCard): Promise<GameCard> {
     try {
-      const updatedCardData: TwelveGameCard = {
-        id: card.id,
-        licenses: card.owners.map((owner) => owner.license_number),
-        initial_qty: card.initial_qty,
-        stamps: card.stamps,
-        createdAt: '',
-        updatedAt: ''
-      };
-
-      const updatedCard = await this.updateTwelveGameCard(updatedCardData);
-      if (!updatedCard) {
-        throw new Error('Failed to update game card');
-      }
+      const { owners, ...playBook } = card; // Destructure to remove owners
+      const updatedBook = await this.dbHandler.updatePlayBook(playBook);
       const updatedGameCard: GameCard = {
-        id: updatedCard.id,
+        id: updatedBook.id,
+        licenses: updatedBook.licenses.filter((license): license is string => license !== null),
+        stamps: updatedBook.stamps.filter((stamp): stamp is string => stamp !== null),
         owners: card.owners,
-        initial_qty: updatedCard.initial_qty,
-        stamps: updatedCard.stamps.filter((stamp): stamp is string => stamp !== null),
-        createdAt: updatedCard.createdAt,
-        updatedAt: updatedCard.updatedAt
+        initial_qty: updatedBook.initial_qty,
       };
       this._gameCards = this._gameCards.filter(c => c.id !== card.id);
       this._gameCards.push(updatedGameCard);
       this._gameCards.sort((a, b) => a.owners[0].lastname.localeCompare(b.owners[0].lastname));
-      
+
       this.gameCards$.next(this._gameCards);
       this.toastService.showSuccessToast('Gestion des cartes', 'La carte de tournoi a été mise à jour avec succès');
       return updatedGameCard;
-    } catch (error) {
-      this.toastService.showErrorToast('Gestion des cartes', 'La mise à jour de la carte de tournoi a échoué');
-      console.error('Error updating game card:', error);
-      throw error;
+
+    } catch (errors) {
+      if (Array.isArray(errors) && errors.length > 0 && typeof errors[0] === 'object' && errors[0] !== null && 'errorType' in errors[0]) {
+        if ((errors[0] as any).errorType === 'Unauthorized') {
+          this.toastService.showErrorToast('Gestion des cartes', 'Vous n\'êtes pas autorisé à modifier une carte de tournoi');
+          return Promise.reject('Unauthorized');
+        }
+      }
+      this.toastService.showErrorToast('Gestion des cartes', 'Une erreur est survenue lors de la modification de la carte de tournoi');
+      return Promise.reject('Error updating game card');
     }
   }
 
   async deleteCard(card: GameCard): Promise<boolean> {
     try {
-      const done = await this.deleteTwelveGameCard(card.id);
+      const done = await this.dbHandler.deletePlayBook(card);
       if (done) {
         this._gameCards = this._gameCards.filter(c => c.id !== card.id);
         this.gameCards$.next(this._gameCards);
@@ -176,10 +181,11 @@ export class GameCardService {
       map((members) => {
         this.members = members;
       }),
-      switchMap(() => this.listTwelveGameCards()),
+      switchMap(() => this.dbHandler.listPlayBooks()),
       map((cards) => {
         this._gameCards = cards.map(card => {
           const owners = card.licenses
+            .filter((license): license is string => license !== null)
             .map((license) => this.members.find(member => member.license_number === license))
             .filter((owner): owner is Member => owner !== undefined);
           return {
@@ -187,6 +193,7 @@ export class GameCardService {
             owners: owners,
             initial_qty: card.initial_qty,
             stamps: (card.stamps ?? []).filter((stamp): stamp is string => stamp !== null),
+            licenses: card.licenses.filter((license): license is string => license !== null),
             createdAt: card.createdAt,
             updatedAt: card.updatedAt
           };
@@ -200,51 +207,4 @@ export class GameCardService {
     );
   }
 
-
-
-  // AWS handlers
-
-  // CREATE
-  async createTwelveGameCard(card: Omit<TwelveGameCard, 'id' | 'createdAt' | 'updatedAt'>): Promise<TwelveGameCard> {
-    const client = generateClient<Schema>();
-    const { data, errors } = await client.models.TwelveGameCard.create(card, { authMode: 'identityPool' });
-    if (errors) throw errors;
-    return data as TwelveGameCard;
-  }
-
-  // READ (single)
-  async getTwelveGameCard(id: string): Promise<TwelveGameCard | null> {
-    const client = generateClient<Schema>();
-    const { data, errors } = await client.models.TwelveGameCard.get({ id });
-    if (errors) throw errors;
-    return data as TwelveGameCard;
-  }
-
-  // UPDATE
-  async updateTwelveGameCard(card: TwelveGameCard): Promise<TwelveGameCard> {
-    const client = generateClient<Schema>();
-    const { data, errors } = await client.models.TwelveGameCard.update(card);
-    if (errors) throw errors;
-    return data as TwelveGameCard;
-  }
-
-  // DELETE
-  async deleteTwelveGameCard(id: string): Promise<boolean> {
-    const client = generateClient<Schema>();
-    const { errors } = await client.models.TwelveGameCard.delete({ id });
-    if (errors) throw errors;
-    return true;
-  }
-
-  // LIST (all)
-  listTwelveGameCards(): Observable<TwelveGameCard[]> {
-    const client = generateClient<Schema>();
-    return from(
-      client.models.TwelveGameCard.list({ authMode: 'identityPool' })
-        .then(({ data, errors }) => {
-          if (errors) throw errors;
-          return data as TwelveGameCard[];
-        })
-    );
-  }
 }

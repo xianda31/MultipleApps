@@ -2,9 +2,14 @@ import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
 import { addUserToGroup } from './add-user-to-group/resource';
 import { listUsersInGroup } from './list-users-in-group/resource';
 import { removeUserFromGroup } from './remove-user-from-group/resource';
+// import { Group_names } from '../../projects/common/authentification/group.interface';
 
-
-
+enum Group_names {
+  System = 'Systeme',
+  Admin = 'Administrateur',
+  Support = 'Contributeur',
+  Member = 'Membre'
+}
 
 const schema = a.schema({
 
@@ -17,10 +22,10 @@ const schema = a.schema({
       groupName: a.string().required(),
     })
     .authorization((allow) => [
-      allow.group("Systeme"),
-      allow.group("Administrateur"),
-      allow.group("Contributeur")
-    ]) // requires { defaultAuthorizationMode: 'userPool' } to work
+      allow.group(Group_names.System),
+      allow.group(Group_names.Admin),
+      allow.group(Group_names.Support)
+    ]) 
     .handler(a.handler.function(addUserToGroup))
   .returns(a.json()),
 
@@ -31,9 +36,9 @@ const schema = a.schema({
       groupName: a.string().required(),
     })
     .authorization((allow) => [
-      allow.group("Systeme"),
-      allow.group("Administrateur"),
-      allow.group("Contributeur"),]) // requires { defaultAuthorizationMode: 'userPool' } to work
+      allow.group(Group_names.System),
+      allow.group(Group_names.Admin),
+      allow.group(Group_names.Support),]) 
     .handler(a.handler.function(removeUserFromGroup))
     .returns(a.json()),
 
@@ -43,12 +48,10 @@ const schema = a.schema({
         groupName: a.string().required(),
       })
       .authorization((allow) => [
-        allow.group("Systeme"),
-        allow.group("Administrateur"),
-        allow.group("Contributeur"),
-      ]) // requires { defaultAuthorizationMode: 'userPool' } to work
-      // fails (401 unauthorized) when { defaultAuthorizationMode: 'identityPool' } *see note1 below
-
+        allow.group(Group_names.System),
+        allow.group(Group_names.Admin) ,
+        allow.group(Group_names.Support),
+      ]) 
       .handler(a.handler.function(listUsersInGroup))
       .returns(a.json()),
 
@@ -79,16 +82,16 @@ const schema = a.schema({
   })
     .authorization((allow) => [
       allow.guest().to(['read']),
-      allow.group("Systeme").to(['read', 'create', 'update', 'delete']),
-      allow.group("Administrateur").to(['read', 'create', 'update']),
-      allow.group("Contributeur").to(['read', 'create']),
-      allow.group("Membre").to(['read']),
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Admin).to(['read', 'create', 'update']),
+      allow.group(Group_names.Support).to(['read', 'create']),
+      allow.group(Group_names.Member).to(['read']),
 
     ]),
 
-  // cartes de parties 
+  // carnet de parties 
 
-  TwelveGameCard: a.model({
+  PlayBook: a.model({
     id: a.id().required(),
     initial_qty: a.integer().required(),
     licenses: a.string().array().required(),
@@ -96,10 +99,10 @@ const schema = a.schema({
   })
     .authorization((allow) => [
       allow.guest().to(['read']),
-      allow.group("Systeme").to(['read', 'create', 'update', 'delete']),
-      allow.group("Administrateur").to(['read', 'create', 'update']),
-      allow.group("Contributeur").to(['read', 'create']),
-      allow.group("Membre").to(['read']),
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Support).to(['read', 'create']),
+      allow.group(Group_names.Member).to(['read']),
 
     ]),
 
@@ -124,14 +127,14 @@ const schema = a.schema({
   })
     .authorization((allow) => [
       allow.guest().to(['read']),
-      allow.group("Systeme").to(['read', 'create', 'update', 'delete']),
-      allow.group("Administrateur").to(['read', 'create', 'update']),
-      allow.group("Contributeur").to(['read', 'create']),
-      allow.group("Membre").to(['read']),
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Support).to(['read', 'create', 'update']),
+      allow.group(Group_names.Member).to(['read']),
 
     ]),
 
-  Product: a.model({
+  Product: a.model({ 
     glyph: a.string().required(),
     description: a.string().required(),
     account: a.string().required(),
@@ -142,10 +145,10 @@ const schema = a.schema({
   })
     .authorization((allow) => [
       allow.guest().to(['read']),
-      allow.group("Systeme").to(['read', 'create', 'update', 'delete']),
-      allow.group("Administrateur").to(['read', 'create', 'update']),
-      allow.group("Contributeur").to(['read', 'create']),
-      allow.group("Membre").to(['read']),
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Admin).to(['read', 'create', 'update','delete']),
+      allow.group(Group_names.Support).to(['read', 'create']),
+      allow.group(Group_names.Member).to(['read']),
 
     ]),
 
@@ -163,10 +166,10 @@ const schema = a.schema({
   })
     .authorization((allow) => [
       allow.guest().to(['read']),
-      allow.group("Systeme").to(['read', 'create', 'update', 'delete']),
-      allow.group("Administrateur").to(['read', 'create', 'update']),
-      allow.group("Contributeur").to(['read', 'create']),
-      allow.group("Membre").to(['read']),
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Admin).to(['read', 'create', 'update']),
+      allow.group(Group_names.Support).to(['read', 'create']),
+      allow.group(Group_names.Member).to(['read']),
 
     ]),
 
@@ -181,10 +184,10 @@ const schema = a.schema({
   })
     .authorization((allow) => [
       allow.guest().to(['read']),
-      allow.group("Systeme").to(['read', 'create', 'update', 'delete']),
-      allow.group("Administrateur").to(['read', 'create', 'update']),
-      allow.group("Contributeur").to(['read', 'create']),
-      allow.group("Membre").to(['read']),
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Admin).to(['read', 'create', 'update']),
+      allow.group(Group_names.Support).to(['read', 'create']),
+      allow.group(Group_names.Member).to(['read']),
 
     ]),
 
@@ -197,10 +200,10 @@ const schema = a.schema({
   })
     .authorization((allow) => [
       allow.guest().to(['read']),
-      allow.group("Systeme").to(['read', 'create', 'update', 'delete']),
-      allow.group("Administrateur").to(['read', 'create', 'update']),
-      allow.group("Contributeur").to(['read', 'create']),
-      allow.group("Membre").to(['read']),
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Admin).to(['read', 'create', 'update']),
+      allow.group(Group_names.Support).to(['read', 'create']),
+      allow.group(Group_names.Member).to(['read']),
 
     ]),
 

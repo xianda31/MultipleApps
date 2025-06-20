@@ -234,7 +234,7 @@ export class MembersComponent implements OnInit {
 
   }
   deleteMember(member: Member) {
-    this.membersService.deleteMember(member.id);
+    this.membersService.deleteMember(member);
   }
 
   license_status_logo(status: string): string {

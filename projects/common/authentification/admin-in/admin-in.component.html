@@ -38,9 +38,11 @@
   <div class="dropdown">
     <button class="btn btn-primary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton1"
       data-bs-toggle="dropdown" aria-expanded="false">
+      <i [class]="group_icon"></i>
       {{logged_member.firstname}}
     </button>
     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+      <li><a class="dropdown-item" href="#" >{{my_group}}</a></li>
       <li><a class="dropdown-item" href="#" (click)="signOut()">Log out</a></li>
       <li><a class="dropdown-item" href="#">Another action</a></li>
     </ul>

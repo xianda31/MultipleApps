@@ -1,20 +1,22 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ProductService } from '../../../../../common/services/product.service';
-import { FormGroup, ReactiveFormsModule, Form, FormControl, Validators } from '@angular/forms';
+import { FormGroup, ReactiveFormsModule, Form, FormControl, Validators, FormsModule } from '@angular/forms';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { Product } from './product.interface';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { map, Observable } from 'rxjs';
 @Component({
   selector: 'app-products',
-  standalone: false,
-  // imports: [CurrencyPipe],
+    standalone: true,
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, ],
+
   templateUrl: './products.component.html',
   styleUrl: './products.component.scss'
 })
 export class ProductsComponent implements OnInit, OnDestroy {
   products_subscription: any;
   products: Product[] = [];
+  
   productForm!: FormGroup;
   product_selected: boolean = false;
   accounts$ !: Observable<string[]>;
