@@ -15,6 +15,9 @@ export interface Member {
     is_sympathisant: boolean
     license_status: string
     license_taken_at: string
+      createdAt?: string;
+  updatedAt?: string;
+
 }
 
-export type Member_input = Omit<Schema['Member']['type'], 'id'>;
+export type Member_input = Omit<Schema['Member']['type'], 'id' | 'createdAt' | 'updatedAt'> ;

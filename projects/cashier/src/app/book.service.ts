@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { generateClient } from 'aws-amplify/api';
 
 import { BookEntry, Revenue, FINANCIAL_ACCOUNT, BALANCE_ACCOUNT, Expense, CUSTOMER_ACCOUNT, TRANSACTION_ID, Operation, AMOUNTS } from '../../../common/accounting.interface';
-import { Schema } from '../../../../amplify/data/resource';
+// import { Schema } from '../../../../amplify/data/resource';
 import { BehaviorSubject, catchError, combineLatest, from, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { ToastService } from '../../../common/toaster/toast.service';
@@ -11,11 +11,6 @@ import { TRANSACTION_CLASS } from '../../../common/transaction.definition';
 import { Profit_and_loss } from '../../../common/system-conf.interface';
 import { DBhandler } from './graphQL.service';
 
-type BookEntry_input = Schema['BookEntry']['type'];
-type BookEntry_output = BookEntry & {
-  createdAt: Date,
-  updatedAt: Date,
-}
 @Injectable({
   providedIn: 'root'
 })
@@ -38,60 +33,16 @@ export class BookService {
     return this.systemDataService.trace_on();
   }
 
-  private jsonified_entry(entry: BookEntry): BookEntry_input {
-    const replacer = (key: string, value: any) => {
-      if (key === 'amounts' || key === 'values') {
-        return JSON.stringify(value);
-      }
-      return value;
-    }
-
-    let stringified = JSON.stringify(entry, replacer);
-    return JSON.parse(stringified) as BookEntry_input;
-  }
-
-  private parsed_entry(entry: BookEntry_output): BookEntry {
-    const replacer = (key: string, value: any) => {
-      if (key === 'amounts' || key === 'values') {
-        return JSON.parse(value);
-      }
-      return value
-    }
-
-    let destringified = JSON.stringify(entry, replacer);
-    return JSON.parse(destringified) as BookEntry;
-
-  }
 
   // CRUD(L) BookEntry
 
   // bulk create
 
   book_entries_bulk_create$(book_entries: BookEntry[]): Observable<number> {
+    
+    const promises = book_entries.map(book_entry => this.dbHandler.createBookEntry(book_entry));
 
-    const client = generateClient<Schema>();
-
-    const create_entry = async (book_entry: BookEntry): Promise<BookEntry> => {
-      let jsonified_entry: BookEntry_input = this.jsonified_entry(book_entry);
-      const { id, ...jsonified_entry_without_id } = jsonified_entry;
-
-      try {
-        const response = await client.models.BookEntry.create(jsonified_entry_without_id, { authMode: 'identityPool' });
-        if (response.errors) {
-          console.error('error creating', this.jsonified_entry(book_entry), response.errors);
-          return Promise.reject(JSON.stringify(response.errors));
-        }
-        const created_entry = this.parsed_entry(response.data as unknown as BookEntry_output);
-        return Promise.resolve(created_entry);
-      } catch (error) {
-        console.error('error', error);
-        return Promise.reject(error instanceof Error ? error.message : String(error));
-      }
-    }
-
-    const promises = book_entries.map(book_entry => create_entry(book_entry));
-
-    return from(Promise.all(promises)).pipe(
+       return from(Promise.all(promises)).pipe(
       map((created_entries) => {
         this._book_entries = this._book_entries.concat(created_entries)
           .sort((b, a) => { return a.date.localeCompare(b.date); });
@@ -135,22 +86,23 @@ export class BookService {
 
   // read 
 
-  async read_book_entry(entry_id: string) {
-    const client = generateClient<Schema>();
+  async read_book_entry(entry_id: string): Promise<BookEntry> {
 
     try {
-      const response = await client.models.BookEntry.get(
-        { id: entry_id },
-        { selectionSet: ['id', 'season', 'tag', 'date', 'amounts', 'operations.*', 'transaction_id', 'cheque_ref', 'deposit_ref', 'bank_report'] }
-      );
-      if (response.errors) {
-        console.error('error', response.errors);
-        throw new Error(JSON.stringify(response.errors));
-      }
-      return this.parsed_entry(response.data as unknown as BookEntry_output);
+      return await this.dbHandler.readBookEntry(entry_id);
     } catch (error) {
-      console.error('error', error);
-      throw new Error(error instanceof Error ? error.message : String(error));
+      let errorType: string = '.. accès refusé ... êtes-vous bien connecté ?';
+      if (Array.isArray(error) && error.length > 0 && typeof error[0] === 'object' && error[0] !== null && 'errorType' in error[0]) {
+        errorType = (error[0] as { errorType: string, message: string }).errorType;
+      }
+      switch (errorType) {
+        case 'Unauthorized':
+          this.toastService.showWarningToast('base comptabilité', 'Vous n\'êtes pas autorisé à créer une entrée comptable');
+          break;
+        default:
+          this.toastService.showErrorToast('base comptabilité', errorType);
+      }
+      throw errorType;
     }
   }
 
@@ -184,7 +136,7 @@ export class BookService {
 
   async delete_book_entry(book_entry: BookEntry) {
     try {
-      let done = await this.dbHandler.deleteBookEntry(book_entry);
+      let done = await this.dbHandler.deleteBookEntry(book_entry.id);
       if (done) {
         this._book_entries = this._book_entries.filter((entry) => entry.id !== book_entry.id);
         this._book_entries$.next(this._book_entries.sort((b, a) => {
@@ -205,8 +157,8 @@ export class BookService {
     let remote_load$ = this.dbHandler.listBookEntries(season).pipe(
       tap((entries) => {
         this._book_entries = entries.sort((a, b) => {
-            return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
-          });
+          return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
+        });
         this._book_entries$.next(this._book_entries);
         if (this.trace_on()) console.log('%s book entries retrieved from AWS', this._book_entries.length);
       }),
@@ -226,71 +178,11 @@ export class BookService {
       this.force_reload = false;
     }
 
-    return (this._book_entries ) ?  this._book_entries$.asObservable() : remote_load$ ;
+    return (this._book_entries) ? this._book_entries$.asObservable() : remote_load$;
   }
 
   book_entries_bulk_delete$(season: string): Observable<number> {
-
-    const fetchBookentriesIds = async (_season: string) => {
-      try {
-        const client = generateClient<Schema>();
-        let token: any = null;
-        let nbloops = 0;
-        let entriesIds: string[] = [];
-        do {
-          const { data, nextToken, errors } = await client.models.BookEntry.list({
-            filter: { season: { eq: _season } },
-            limit: 300,
-            nextToken: token,
-          });
-          if (errors) {
-            console.error(errors);
-            throw new Error(JSON.stringify(errors));
-          }
-          let json_entries: BookEntry[] = data as unknown as BookEntry_output[];
-          entriesIds = [...entriesIds, ...json_entries.map((entry) => this.parsed_entry(entry as unknown as BookEntry_output).id)];
-          token = nextToken;
-        } while (token !== null && nbloops++ < 10); // 10 loops max to avoid infinite loop
-        if (token !== null) {
-          this.toastService.showWarningToast('base comptabilité', 'beaucoup trop d\'entrées à supprimer , veuillez répeter l\'opération');
-        }
-
-        return entriesIds;
-      }
-
-      catch (error) {
-        console.error('error', error);
-        throw new Error(error instanceof Error ? error.message : String(error));
-      }
-    };
-
-    const deleteBookentries = async (ids: string[]): Promise<BookEntry[]> => {
-      const client = generateClient<Schema>();
-      const promises = ids.map(id => {
-        return client.models.BookEntry.delete({ id: id })
-      });
-
-      return Promise.all(promises).then(results => {
-        return results.map(result => {
-          if (result.errors) {
-            throw new Error(JSON.stringify(result.errors));
-          }
-          return this.parsed_entry(result.data as unknown as BookEntry_output);
-        });
-      });
-    };
-
-    return from(fetchBookentriesIds(season)).pipe(
-      switchMap((ids) => from(deleteBookentries(ids))),
-      tap((deleted_entries) => {
-        deleted_entries.forEach((deleted_entry) => {
-          this._book_entries = this._book_entries.filter((entry) => entry.id !== deleted_entry.id); // remove 
-        });
-        this._book_entries$.next(this._book_entries);
-      }),
-      map((deleted_entries) => {
-        return deleted_entries.length;
-      }),
+    return this.dbHandler.bulkDeleteBookEntries(season).pipe(
       catchError((error) => {
         throw Error('Error deleting book entries:' + error);
       }
@@ -503,25 +395,6 @@ export class BookService {
     return value;
   }
 
-  // get_clients_debit_value(): number {  // dettes clients
-
-  //   if (this._book_entries === undefined) { // if no book entries are loaded yet
-  //     return 0; // no outstanding expenses
-  //   }
-  //   let value = 0;
-  //   // console.log(':::', this._book_entries);
-  //   this._book_entries.forEach((book_entry) => {
-  //     book_entry.operations.forEach((op) => {
-  //       if (op.values[CUSTOMER_ACCOUNT.DEBT_debit]) {
-  //         value += op.values[CUSTOMER_ACCOUNT.DEBT_debit];
-  //       }
-  //       // if (op.values[CUSTOMER_ACCOUNT.DEBT_credit]) {
-  //       //   value -= op.values[CUSTOMER_ACCOUNT.DEBT_credit];
-  //       // }
-  //     });
-  //   });
-  //   return value;
-  // }
 
   get_clients_credit_value(): number {  // dettes clients
 
@@ -648,7 +521,7 @@ export class BookService {
     if (new_entries.length > 0) {
       let n = new_entries.length;
       new_entries.forEach((entry) => {
-        this.update_book_entry(entry);
+        this.dbHandler.updateBookEntry(entry);
       });
       this.toastService.showSuccessToast('base comptabilité', `${n} références de dépôt mises à jour`);
       this._book_entries$.next(this._book_entries);
@@ -675,9 +548,16 @@ export class BookService {
       // class: TRANSACTION_CLASS.OTHER_REVENUE,
       transaction_id: TRANSACTION_ID.vente_en_espèces,
     };
-    return this.create_book_entry(entry);
+    return this.dbHandler.createBookEntry(entry);
   }
 
+
+  search_tournament_fees_entry(date: string): BookEntry | undefined {
+    return this._book_entries.find((entry) => {
+      return entry.date === date && entry.transaction_id === TRANSACTION_ID.vente_en_espèces &&
+        entry.operations.some(op => op.label === 'droits de table' && op.values['DdT'] !== undefined);
+    });
+  }
 
   get_total_revenues(key?: string): number {
     let total = (values: { [key: string]: number }): number => {
@@ -772,7 +652,7 @@ export class BookService {
       operations: [operation],
       transaction_id: TRANSACTION_ID.annulation_dette_adhérent,
     };
-    return this.create_book_entry(entry);
+    return this.dbHandler.createBookEntry(entry);
   }
 
   // génération des écritures de report cloture

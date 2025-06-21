@@ -1,10 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Product } from '../../admin-dashboard/src/app/sales/products/product.interface';
-import { BehaviorSubject, from, map, Observable, of, switchMap, tap } from 'rxjs';
-import { data, Schema } from '../../../amplify/data/resource';
-import { generateClient } from 'aws-amplify/api';
+import { map, Observable, of, switchMap, tap } from 'rxjs';
 import { SystemDataService } from './system-data.service';
 import { DBhandler } from '../../cashier/src/app/graphQL.service';
+import { ToastService } from '../toaster/toast.service';
 
 
 @Injectable({
@@ -16,6 +15,7 @@ export class ProductService {
 
     constructor(
         private systemDataService: SystemDataService,
+        private toastService: ToastService,
         private dbHandler: DBhandler
     ) { }
 
@@ -38,24 +38,25 @@ export class ProductService {
     // CL(R)UD Product
 
     // Create a new product
-    createProduct(product: Product): Promise<Product> {
-        let promise: Promise<Product> = new Promise<Product>((resolve, reject) => {
-            let { id, ...productCreateInput } = product;
-            const client = generateClient<Schema>();
-            client.models.Product.create(productCreateInput)
-                .then((response) => {
-                    let _product = response.data as unknown as Product;
-                    // this.products.push(_product);
-                    // this.products = [...this.products, _product];
-                    this._products.push(_product);
-                    resolve(_product);
-                })
-                .catch((error) => {
-                    console.error("error : ", error);
-                    reject(error);
-                });
-        });
-        return promise;
+    async createProduct(product: Product): Promise<Product> {
+        const { id, ...product_input } = product;
+
+        try {
+            const createdProduct = await this.dbHandler.createProduct(product_input);
+            this._products.push(createdProduct as Product);
+            this._products = this._products.sort((a, b) => b.price - a.price);
+            return createdProduct;
+        } catch (errors) {
+            if (Array.isArray(errors) && errors.length > 0 && typeof errors[0] === 'object' && errors[0] !== null && 'errorType' in errors[0]) {
+                if ((errors[0] as any).errorType === 'Unauthorized') {
+                    this.toastService.showErrorToast('Gestion des produits', 'Vous n\'êtes pas autorisé à créer un produit à la vente');
+                    return Promise.reject('Unauthorized');
+                }
+            }
+
+            this.toastService.showErrorToast('Gestion des cartes', 'Une erreur est survenue lors de la création d\'un produit à la vente');
+            return Promise.reject('Error updating product');
+        }
     }
 
     // Retrieve all products
@@ -85,41 +86,43 @@ export class ProductService {
 
 
     // Update a product by ID
-    updateProduct(product: Product): Promise<Product> {
-        let promise: Promise<Product> = new Promise<Product>((resolve, reject) => {
-            const client = generateClient<Schema>();
-            client.models.Product.update(product)
-                .then((response) => {
-                    const index = this._products.findIndex((p) => p.id === product.id);
-                    this._products[index] = product;
-                    let _product = response.data as unknown as Product;
-                    resolve(_product);
-                })
-                .catch((error) => {
-                    console.error("error : ", error);
-                    reject(error);
-                });
-        });
-        return promise;
+    async updateProduct(product: Product): Promise<Product> {
+        try {
+            const createdProduct = await this.dbHandler.updateProduct(product);
+            this._products.push(createdProduct as Product);
+            this._products = this._products.sort((a, b) => b.price - a.price);
+            return createdProduct;
+        } catch (errors) {
+            if (Array.isArray(errors) && errors.length > 0 && typeof errors[0] === 'object' && errors[0] !== null && 'errorType' in errors[0]) {
+                if ((errors[0] as any).errorType === 'Unauthorized') {
+                    this.toastService.showErrorToast('Gestion des produits', 'Vous n\'êtes pas autorisé à modifier un produit à la vente');
+                    return Promise.reject('Update not authorized');
+                }
+            }
+
+            this.toastService.showErrorToast('Gestion des cartes', 'Une erreur est survenue lors de la modifier d\'un produit à la vente');
+            return Promise.reject('Error updating product');
+        }
     }
 
     // Delete a product by ID
-    deleteProduct(product: Product): Promise<Product> {
-        let promise: Promise<Product> = new Promise<Product>((resolve, reject) => {
-            const client = generateClient<Schema>();
-            client.models.Product.delete({ id: product.id })
-                .then((response) => {
-                    const index = this._products.findIndex((p) => p.id === product.id);
-                    this._products.splice(index, 1);
-                    let _product = response.data as unknown as Product;
-                    resolve(_product);
-                })
-                .catch((error) => {
-                    console.error("error : ", error);
-                    reject(error);
-                });
-        });
-        return promise;
+    deleteProduct(product: Product): Promise<boolean> {
+        try {
+            let done = this.dbHandler.deleteProduct(product.id);
+            this._products = this._products.filter((p) => p.id !== product.id);
+            this._products = this._products.sort((a, b) => b.price - a.price);
+            return Promise.resolve(true);
+        } catch (errors) {
+            if (Array.isArray(errors) && errors.length > 0 && typeof errors[0] === 'object' && errors[0] !== null && 'errorType' in errors[0]) {
+                if ((errors[0] as any).errorType === 'Unauthorized') {
+                    this.toastService.showErrorToast('Gestion des produits', 'Vous n\'êtes pas autorisé à supprimer un produit à la vente');
+                    return Promise.reject('Delete not authorized');
+                }
+            }
+
+            this.toastService.showErrorToast('Gestion des cartes', 'Une erreur est survenue lors de la suppression d\'un produit à la vente');
+            return Promise.reject('Error updating product');
+        }
     }
 
 

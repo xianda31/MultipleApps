@@ -10,8 +10,8 @@ export interface Product {
     active: boolean;
     color?: string;
     info1?: string;
-    // createdAt?: any;
-    // updatedAt?: any;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
-export type Product_input = Omit<Schema['Product']['type'], 'id'>;
+export type Product_input = Omit<Schema['Product']['type'], 'id' | 'createdAt' | 'updatedAt'> ;

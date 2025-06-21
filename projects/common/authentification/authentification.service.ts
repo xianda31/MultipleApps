@@ -89,7 +89,7 @@ export class AuthentificationService {
 
           if (err.name === 'UserAlreadyAuthenticatedException') {
             const user = await getCurrentUser();
-            let member = await this.memberService.getMemberByEmail(user.signInDetails?.loginId!);
+            let member = await this.memberService.searchMemberByEmail(user.signInDetails?.loginId!);
             if (member) {
               this._logged_member$.next(member);
               resolve(member.id);

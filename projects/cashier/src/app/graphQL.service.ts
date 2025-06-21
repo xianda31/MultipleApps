@@ -81,6 +81,34 @@ export class DBhandler {
     )
   }
 
+  // MEMBER SEARCH BY LICENSE NUMBER
+  async searchMemberByLicense(license_number: string): Promise<Member | null> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode: authMode });
+    const { data, errors } = await client.models.Member.list({
+      filter: { license_number: { eq: license_number } }
+    });
+    if (errors) {
+      console.error(errors);
+      return null;
+    }
+    return data[0] as Member;   // array of only one element, hopefully !!!
+  }
+
+  // MEMBER SEARCH BY EMAIL
+  async searchMemberByEmail(email: string): Promise<Member | null> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode: authMode });
+    const { data, errors } = await client.models.Member.list({
+      filter: { email: { eq: email } }
+    });
+    if (errors) {
+      console.error(errors);
+      return null;
+    }
+    return data[0] as Member;   // array of only one element, hopefully !!!
+  }
+
 
   // PRODUCTS SERVICE
 
@@ -231,9 +259,10 @@ export class DBhandler {
     return JSON.parse(destringified) as BookEntry;
 
   }
-  // CREATE PROMISE  (userPool authMode only)   !validated
+  // CREATE PROMISE    !validated
   async createBookEntry(book_entry: BookEntry): Promise<BookEntry> {
-    const client = generateClient<Schema>({ authMode: 'userPool' });
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode: authMode });
     let jsonified_entry = this.jsonified_entry(book_entry);
     delete jsonified_entry.id; // Ensure id is not included in the input type
     const { data, errors } = await client.models.BookEntry.create(jsonified_entry);
@@ -242,74 +271,106 @@ export class DBhandler {
   }
 
   // READ (single)
-  async readBookEntry(id: string): Promise<Schema['BookEntry']['type'] | null> {
-    const client = generateClient<Schema>();
-    const { data, errors } = await client.models.BookEntry.get({ id });
+  async readBookEntry(id: string): Promise<BookEntry> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode: authMode });
+    const { data, errors } = await client.models.BookEntry.get(
+      { id: id },
+      { selectionSet: ['id', 'season', 'tag', 'date', 'amounts', 'operations.*', 'transaction_id', 'cheque_ref', 'deposit_ref', 'bank_report'] }
+
+    );
     if (errors) throw errors;
-    return data as Schema['BookEntry']['type'];
+    return this.parsed_entry(data as BookEntry);
   }
 
   // UPDATE PROMISE (userPool authMode only)   !validated
   async updateBookEntry(entry: BookEntry): Promise<BookEntry> {
-    const client = generateClient<Schema>({ authMode: 'userPool' });
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode: authMode });
     let jsonified_entry = this.jsonified_entry(entry);
     const { data, errors } = await client.models.BookEntry.update(jsonified_entry);
     if (errors) return Promise.reject(errors);
     return this.parsed_entry(data as BookEntry);
   }
 
-  // DELETE PROMISE (userPool authMode only) !validated
-  async deleteBookEntry(entry: BookEntry): Promise<boolean> {
-    const client = generateClient<Schema>({ authMode: 'userPool' });
-    const { data, errors } = await client.models.BookEntry.delete({ id: entry.id });
+  // DELETE PROMISE  
+  async deleteBookEntry(entry_id: string): Promise<string> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode: authMode });
+    const { data, errors } = await client.models.BookEntry.delete({ id: entry_id });
     if (errors) return Promise.reject(errors);
-    return true;
+    return entry_id;
   }
 
-  // LIST (all) OBSERVABLE  !validated
-  listBookEntries(season: string): Observable<BookEntry[]> {
+  // LIST (all) OBSERVABLE  
 
-    const fetchBookentries = async (authMode: 'userPool' | 'identityPool', _season: string): Promise<BookEntry[]> => {
-      let failed = false;
-      let entries: BookEntry[] = [];
-      try {
-        const client = generateClient<Schema>({ authMode: authMode });
-        let token: any = null;
-        let nbloops = 0;
-        do {
-          const { data, nextToken, errors } = await client.models.BookEntry.list({
-            filter: { season: { eq: _season } },
-            limit: 300,
-            nextToken: token,
-          });
-          if (errors) {
-            console.error('client.models.BookEntry.list failed !! : ', errors);
-            failed = true;
-            throw new Error(JSON.stringify(errors));
-          }
-          let new_jsoned_entries = data as unknown as BookEntry[];
-          entries = [...entries, ...new_jsoned_entries.map((entry) => this.parsed_entry(entry))];
-          token = nextToken;
-
-        } while (token !== null && nbloops++ < 10 && !failed)
-
-
-        if (token !== null) {
-          console.warn('listBookEntries : too many entries to load, only %s loaded', entries.length);
-          // this.toastService.showWarningToast('base comptabilité', 'beaucoup trop d\'entrées à charger , veuillez répeter l\'opération');
+  private fetchBookentries = async (authMode: 'userPool' | 'identityPool', _season: string): Promise<BookEntry[]> => {
+    let failed = false;
+    let entries: BookEntry[] = [];
+    try {
+      const client = generateClient<Schema>({ authMode: authMode });
+      let token: any = null;
+      let nbloops = 0;
+      do {
+        const { data, nextToken, errors } = await client.models.BookEntry.list({
+          filter: { season: { eq: _season } },
+          limit: 300,
+          nextToken: token,
+        });
+        if (errors) {
+          console.error('client.models.BookEntry.list failed !! : ', errors);
+          failed = true;
+          throw new Error(JSON.stringify(errors));
         }
-        return entries;
-      }
-      catch (error) {
-        throw new Error(error instanceof Error ? error.message : String(error));
-      }
-    }
+        let new_jsoned_entries = data as unknown as BookEntry[];
+        entries = [...entries, ...new_jsoned_entries.map((entry) => this.parsed_entry(entry))];
+        token = nextToken;
 
+      } while (token !== null && nbloops++ < 10 && !failed)
+
+
+      if (token !== null) {
+        console.warn('listBookEntries : too many entries to load, only %s loaded', entries.length);
+        // this.toastService.showWarningToast('base comptabilité', 'beaucoup trop d\'entrées à charger , veuillez répeter l\'opération');
+      }
+      return entries;
+    }
+    catch (error) {
+      throw new Error(error instanceof Error ? error.message : String(error));
+    }
+  }
+
+  listBookEntries(season: string): Observable<BookEntry[]> {
     return this._authMode().pipe(
       switchMap((authMode) => {
-        return from(fetchBookentries(authMode, season))
+        return from(this.fetchBookentries(authMode, season))
       })
     );
   }
 
+  bulkDeleteBookEntries(season: string): Observable<number> {
+    return this._authMode().pipe(
+      switchMap((authMode) => {
+        return from(this.fetchBookentries(authMode, season)).pipe(
+          switchMap((entries) => {
+            if (entries.length === 0) {
+              return of(0);
+            }
+            const client = generateClient<Schema>({ authMode: authMode });
+            return from(
+              Promise.all(entries.map((entry) => client.models.BookEntry.delete({ id: entry.id })))
+                .then(() => entries.length)
+                .catch((error) => {
+                  console.error('Error deleting book entries:', error);
+                  return 0;
+                })
+            );
+          })
+        );
+      })
+    );
+  }
+
+
+  
 }

@@ -6,7 +6,7 @@ import { ToastService } from '../../toaster/toast.service';
 import { Member } from '../../member.interface';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { GetLoggingComponent } from '../../../cashier/src/app/modals/get-logging/get-logging.component';
-import { Observable, of, switchMap, from, map, tap } from 'rxjs';
+import { Observable, of, switchMap, from, map, tap, catchError } from 'rxjs';
 import { MembersService } from '../../../admin-dashboard/src/app/members/service/members.service';
 import { GroupService } from '../group.service';
 import { Group_icons, Group_names } from '../group.interface';
@@ -101,19 +101,16 @@ const modalRef = this.modalService.open(GetLoggingComponent, { centered: true })
     modalRef.componentInstance.member = this.applying_member;
     modalRef.componentInstance.mode = 'reset_password';
     modalRef.result.then((response: any) => {
-      // if (response) {
-      //   console.log('response', response);
-      // }
     });
   }
 
   emailValidator = (control: AbstractControl): Observable<ValidationErrors | null> => {
     if (!control.value.match(EMAIL_PATTERN)) return of(null);
     return of(control.value).pipe(
-      switchMap((email) => from(this.membersService.getMemberByEmail(email))),
-      // tap((member) => {console.log('emailValidator member', member); }),
+      switchMap((email) => from(this.membersService.searchMemberByEmail(email))),
       tap((member) => this.applying_member = member),
-      map((member) => { return member ? null : { not_member: false }; })
+      map((member) => { return member ? null : { not_member: false }; }),
+      catchError((error) => {console.error('Error in emailValidator:', error); return of(null); })
     )
   }
 

@@ -39,7 +39,7 @@ export class SignInComponent {
     if (!control.value.match(EMAIL_PATTERN)) return of(null);
     return of(control.value).pipe(
       delay(100),
-      switchMap((email) => from(this.membersService.getMemberByEmail(email))),
+      switchMap((email) => from(this.membersService.searchMemberByEmail(email))),
       // tap((member) => console.log("member", member?.lastname)),
       map((member) => {
         if (!member) return { not_member: true };
@@ -109,7 +109,7 @@ export class SignInComponent {
   async signUp() {
 
     if (this.loggerForm.invalid) return;
-    let member = await this.membersService.getMemberByEmail(this.email.value);
+    let member = await this.membersService.searchMemberByEmail(this.email.value);
     if (!member) {
       this.toastService.showErrorToast('sign up', 'erreur imprévue');
       return;
@@ -134,7 +134,7 @@ export class SignInComponent {
           return;
         } else {
           this.toastService.showSuccessToast('création compte', 'compte créé');
-          this.membersService.getMemberByEmail(this.email.value)
+          this.membersService.searchMemberByEmail(this.email.value)
             .then((member) => {
               if (!member) {
                 this.toastService.showErrorToast('sign up', 'erreur imprévue');

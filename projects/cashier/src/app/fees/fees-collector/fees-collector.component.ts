@@ -23,18 +23,19 @@ export class FeesCollectorComponent {
   next_tournaments$: Observable<club_tournament[]>;
   selected_tournament: club_tournament | null = null;
   game!: Game;
+  already_charged: boolean = false;
 
   constructor(
     private tournamentService: TournamentService,
     private feesCollectorService: FeesCollectorService,
     private pdfService: PdfService,
-    private location: Location
 
   ) {
     this.next_tournaments$ = this.tournamentService.list_next_tournaments(this.back_days);
 
     this.feesCollectorService.game$.subscribe((game) => {
       this.game = game;
+      this.already_charged = this.feesCollectorService.already_charged();
       this.selected_tournament = game.tournament;
     });
   }
@@ -44,7 +45,12 @@ export class FeesCollectorComponent {
     this.next_tournaments$ = this.tournamentService.list_next_tournaments(this.back_days);
   }
 
-
+euros_collected(): number {
+    return this.feesCollectorService.euros_collected();
+}
+stamps_collected(): number {
+    return this.feesCollectorService.stamps_collected();
+}
 
   print_to_pdf() {
     let fname = this.selected_tournament!.date + '_' + this.selected_tournament!.tournament_name + '.pdf';
@@ -56,10 +62,9 @@ export class FeesCollectorComponent {
     this.feesCollectorService.set_tournament(tournament);
   };
 
-  back_to_parent_page() {
+  clear_session() {
     this.selected_tournament = null;
-    this.feesCollectorService.clear_tournament();
-    this.location.back();
+    this.feesCollectorService.init_tournament();
   }
 
   toggle_sort() {
@@ -81,7 +86,7 @@ export class FeesCollectorComponent {
   }
 
   gamer_solvent(gamer: Gamer): boolean {
-    return !gamer.is_member || gamer.in_euro || (gamer.game_credits >= gamer.price);
+    return !gamer.is_member || gamer.in_euro || (gamer.game_credits >= (this.game.fees_doubled ? 2 : 1));  
   }
 
   gamer_class(gamer: Gamer): string {

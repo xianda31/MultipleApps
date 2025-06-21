@@ -10,6 +10,7 @@ import { ToastService } from '../../../../../common/toaster/toast.service';
 import { club_tournament } from '../../../../../common/ffb/interface/club_tournament.interface';
 import { BookService } from '../../book.service';
 import { GameCardService } from '../../game-card.service';
+import { SystemConfiguration } from '../../../../../common/system-conf.interface';
 
 
 
@@ -29,8 +30,7 @@ export class FeesCollectorService {
   };
   _game$: BehaviorSubject<Game> = new BehaviorSubject<Game>(this.game);
   members: Member[] = [];
-  // game_cards:  GameCard[] = [];
-
+  sys_conf !: SystemConfiguration;
 
   constructor(
     private toastService: ToastService,
@@ -47,15 +47,9 @@ export class FeesCollectorService {
     });
 
     this.systemDataService.get_configuration().subscribe((sys_conf) => {
-      this.game = {
-        season: sys_conf.season,
-        member_trn_price: +sys_conf.member_trn_price,
-        non_member_trn_price: +sys_conf.non_member_trn_price,
-        alphabetic_sort: false,
-        fees_doubled: false,
-        gamers: [],
-        tournament: null,
-      };
+      this.sys_conf = sys_conf;
+
+      this.init_tournament();
     });
 
     this.gameCardService.gameCards.subscribe((cards) => {
@@ -69,16 +63,16 @@ export class FeesCollectorService {
     return this._game$.asObservable();
   }
 
-  clear_tournament() {
-    this.game  = {
-    season: '',
-    member_trn_price: 0,
-    non_member_trn_price: 0,
-    alphabetic_sort: false,
-    fees_doubled: false,
-    gamers: [],
-    tournament: null,
-  };
+  init_tournament() {
+    this.game = {
+      season: this.sys_conf.season,
+      member_trn_price: +this.sys_conf.member_trn_price,
+      non_member_trn_price: +this.sys_conf.non_member_trn_price,
+      alphabetic_sort: false,
+      fees_doubled: false,
+      gamers: [],
+      tournament: null,
+    };
     this._game$.next(this.game);
     if (this.subscription) {
       this.subscription.unsubscribe();
@@ -190,13 +184,25 @@ export class FeesCollectorService {
       .map((gamer) => gamer.is_member as Member);
   }
 
-  save_fees() {
+
+  euros_collected(): number {
+    return this.game.gamers
+      .filter((gamer) => gamer.in_euro && gamer.enabled && gamer.validated)
+      .reduce((acc, gamer) => acc + gamer.price, 0);
+  }
+  stamps_collected(): number {
+    return this.game.gamers
+      .filter((gamer) => !gamer.in_euro && gamer.enabled && gamer.validated)
+      .reduce((acc, gamer) => acc + (this.game.fees_doubled ? 2 : 1), 0);
+  }
+
+  async save_fees() {
 
     let check_ok = true;
     // console.log('save_fees', this.game);
 
     // check if all non-members have been validated
-    let non_members = this.game.gamers.filter((gamer) => !gamer.is_member);
+    let non_members = this.game.gamers.filter((gamer) => !gamer.is_member && gamer.enabled);
     let non_members_validated = non_members.every((gamer) => gamer.validated);
     if (!non_members_validated) {
       check_ok = false;
@@ -205,7 +211,7 @@ export class FeesCollectorService {
     }
 
     // check if all members have been validated
-    let members = this.game.gamers.filter((gamer) => gamer.is_member);
+    let members = this.game.gamers.filter((gamer) => gamer.is_member && gamer.enabled);
     let members_validated = members.every((gamer) => gamer.validated);
     if (!members_validated) {
       check_ok = false;
@@ -215,31 +221,39 @@ export class FeesCollectorService {
     // check if all members have enough game credits
 
 
-
-
-
     if (check_ok) {
       // sum-up non-members and members fees in euros
       let non_members_euros = non_members.reduce((acc, gamer) => acc + gamer.price, 0);
       let members_euros = members.reduce((acc, gamer) => acc + (gamer.in_euro ? gamer.price : 0), 0);
-      console.log('non_members_euros', non_members_euros);
-      console.log('members_euros', members_euros);
-
 
 
       // charge members game_credits
       members.forEach((gamer) => {
         if (!gamer.in_euro) {
           let member = gamer.is_member as Member;
-          let amount = gamer.price;
-          this.gameCardService.stamp_member_card(member, this.game.tournament!.date);
-          if (this.game.fees_doubled) this.gameCardService.stamp_member_card(member, this.game.tournament!.date);
+          this.gameCardService.stamp_member_card(member, this.game.tournament!.date,this.game.fees_doubled);
         }
       });
-      // save cashier fees entry
-      this.BookService.create_tournament_fees_entry(this.game.tournament!.date, non_members_euros + members_euros);
+
+      // create bookEntry for tournament fees
+      try {
+        let total = non_members_euros + members_euros;
+        await this.BookService.create_tournament_fees_entry(this.game.tournament!.date, total)
+        this.toastService.showSuccessToast('droits de table', total +' € de droits de table enregistrés');
+      }
+      catch (error: unknown) {
+        this.toastService.showErrorToast('droits de table', 'Erreur lors de l\'enregistrement des droits de table');
+      }
     }
 
+  }
+
+  already_charged(): boolean {
+    if (!this.game.tournament) {
+      return false;
+    }
+    const charged = this.BookService.search_tournament_fees_entry(this.game.tournament.date) !== undefined;
+    return charged;
   }
 
 

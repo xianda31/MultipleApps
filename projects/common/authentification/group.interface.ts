@@ -28,7 +28,7 @@ export const Group_priorities: { [K in Group_names]: number } = {
 
 export const Group_icons: { [K in Group_names]: string } = {
   [Group_names.Member]: 'bi bi-person-fill',
-  [Group_names.Support]: 'bi bi-person-fill-gear',
+  [Group_names.Support]: 'bi bi-person-check-fill',
   [Group_names.Admin]: 'bi bi-mortarboard-fill',
   [Group_names.System]: 'bi bi-incognito'
 };

@@ -1,7 +1,5 @@
 import { Injectable } from '@angular/core';
-import { generateClient } from 'aws-amplify/api';
 import { BehaviorSubject, Observable, tap, switchMap } from 'rxjs';
-import { Schema } from '../../../../../../amplify/data/resource';
 import { Member } from '../../../../../common/member.interface';
 import { ToastService } from '../../../../../common/toaster/toast.service';
 import { DBhandler } from '../../../../../cashier/src/app/graphQL.service';
@@ -52,85 +50,68 @@ export class MembersService {
   }
 
   async createMember(member: Member) {
-    const client = generateClient<Schema>();
-    let { id, ...memberCreateInput } = member;
-    const { data: newMember, errors } = await client.models.Member.create(memberCreateInput);
-    if (errors) {
-      console.error(errors);
-      return;
-    }
-    if (!newMember) {
-      console.error('Member not created');
-      return;
-    } else {
+    const { createdAt, updatedAt, id, ...member_input } = member;
+    try {
+      const newMember = await this.dbHandler.createMember(member_input);
       this.toastService.showSuccessToast('Membre créé', `${newMember.lastname} ${newMember.firstname}`);
-      // console.log('Member created', newMember);
       this._members.push(newMember as Member);
       this._members$.next(this._members);
+    }
+    catch (errors) {
+      if (Array.isArray(errors) && errors.length > 0 && typeof errors[0] === 'object' && errors[0] !== null && 'errorType' in errors[0]) {
+        if ((errors[0] as any).errorType === 'Unauthorized') {
+          this.toastService.showErrorToast('Gestion des membres', 'Vous n\'êtes pas autorisé à modifier une fiche adhérent');
+          return Promise.reject('Unauthorized');
+        }
+      }
+      this.toastService.showErrorToast('Gestion des membres', 'Une erreur est survenue lors de la modification de la fiche adhérent');
+      return Promise.reject('Error updating member');
+
     }
 
   }
 
   async readMember(id: string): Promise<Member | null> {
-    const client = generateClient<Schema>();
-    const { data, errors } = await client.models.Member.get({ id: id }, { authMode: 'userPool' }); // use identity pool to allow unauthenticated access
-    if (errors) {
-      console.error(errors);
+    try {
+      let member = await this.dbHandler.readMember(id);
+      // if (member) {
+      //   this._members = this._members.map((m) => m.id === id ? member : m);
+      //   this._members$.next(this._members);
+      // }
+      return member;
+    }
+    catch (error) {
+      console.error('Error reading member:', error);
+      this.toastService.showErrorToast('Service adhérent', 'impossible de lire la fiche adhérent');
       return null;
     }
-    return data as Member;
+
   }
 
-  async getMemberByEmail(email: string): Promise<Member | null> {
-    let promise = new Promise<Member | null>(async (resolve, reject) => {
-      const client = generateClient<Schema>();
-      const { data, errors } = await client.models.Member.list({
-        filter: {
-          email: { eq: email }
-        },
-        authMode: 'identityPool' // use identity pool to allow unauthenticated access
-      });
-      if (errors) {
-        console.error(errors);
-        reject(null);
-      }
-      resolve(data[0] as Member);   // array of only one element, hopefully !!!
-    });
-    return promise;
+  async searchMemberByEmail(email: string): Promise<Member | null> {
+    return this.dbHandler.searchMemberByEmail(email);
   }
 
   async searchMemberByLicense(license_number: string): Promise<Member | null> {
-    let promise = new Promise<Member | null>(async (resolve, reject) => {
-      const client = generateClient<Schema>();
-      const { data, errors } = await client.models.Member.list({
-        filter: {
-          license_number: { eq: license_number }
-        },
-        authMode: 'identityPool' // use identity pool to allow unauthenticated access
-      });
-      if (errors) {
-        console.error(errors);
-        reject(null);
-      }
-      resolve(data[0] as Member);   // array of only one element, hopefully !!!
-    });
-    return promise;
+    return this.dbHandler.searchMemberByLicense(license_number)
   }
 
   async updateMember(member: Member) {
-    const client = generateClient<Schema>();
-    const { data: updatedMember, errors } = await client.models.Member.update(member);
-    if (errors) {
-      console.error(errors);
-      return;
-    }
-    if (!updatedMember) {
-      console.error('Member not updated');
-      return;
-    } else {
-      // console.log('Member updated', updatedMember.lastname);
-      this._members = this._members.map((m) => m.license_number === member.license_number ? member : m);
+    try {
+      const newMember = await this.dbHandler.updateMember(member);
+      this.toastService.showSuccessToast('Membre mis à jour', `${newMember.lastname} ${newMember.firstname}`);
+      this._members.push(newMember as Member);
       this._members$.next(this._members);
+    }
+    catch (errors) {
+      if (Array.isArray(errors) && errors.length > 0 && typeof errors[0] === 'object' && errors[0] !== null && 'errorType' in errors[0]) {
+        if ((errors[0] as any).errorType === 'Unauthorized') {
+          this.toastService.showErrorToast('Gestion des membres', 'Vous n\'êtes pas autorisé à modifier une fiche adhérent');
+          return Promise.reject('Unauthorized');
+        }
+      }
+      this.toastService.showErrorToast('Gestion des membres', 'Une erreur est survenue lors de la modification de la fiche adhérent');
+      return Promise.reject('Error updating member');
     }
   }
 
@@ -143,9 +124,16 @@ export class MembersService {
         this._members$.next(this._members);
         this.toastService.showSuccessToast('Service adhérent', `${member.lastname} ${member.firstname} supprimé`);
       }
-    } catch (error) {
-      console.error('Error deleting member:', error);
-      this.toastService.showErrorToast('Service adhérent', 'Erreur de suppression');
+    }
+    catch (errors) {
+      if (Array.isArray(errors) && errors.length > 0 && typeof errors[0] === 'object' && errors[0] !== null && 'errorType' in errors[0]) {
+        if ((errors[0] as any).errorType === 'Unauthorized') {
+          this.toastService.showErrorToast('Gestion des membres', 'Vous n\'êtes pas autorisé à supprimer une fiche adhérent');
+          return Promise.reject('Unauthorized');
+        }
+      }
+      this.toastService.showErrorToast('Gestion des membres', 'Une erreur est survenue lors de la suppression de la fiche adhérent');
+      return Promise.reject('Error deleting member');
     }
   }
 }

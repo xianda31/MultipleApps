@@ -1,14 +1,11 @@
 import { Injectable } from '@angular/core';
-import { generateClient, get } from 'aws-amplify/api';
-import { Schema } from '../../../../amplify/data/resource';
-import { BehaviorSubject, from, map, Observable, switchMap } from 'rxjs';
+import { BehaviorSubject, map, Observable, switchMap } from 'rxjs';
 import { GameCard, MAX_STAMPS, PlayBook_input } from './game-cards/game-card.interface';
 import { Member } from '../../../common/member.interface';
 import { MembersService } from '../../../admin-dashboard/src/app/members/service/members.service';
 import { ToastService } from '../../../common/toaster/toast.service';
 import { DBhandler } from './graphQL.service';
 
-type PlayBook = Schema['PlayBook']['type'];
 
 @Injectable({
   providedIn: 'root'
@@ -73,16 +70,17 @@ export class GameCardService {
       .reduce((total, card) => total + (card.initial_qty - card.stamps.length), 0);
   }
 
-  stamp_member_card(member: Member, stamp_date: string): void {
+  stamp_member_card(member: Member, stamp_date: string, double:boolean): void {
     const card = this._gameCards.find(c => c.owners.some(owner => (owner.license_number === member.license_number) && (c.stamps.length < c.initial_qty)));
     if (card) {
       card.stamps.push(stamp_date);
+      if( double) {
+        card.stamps.push(stamp_date); // add a second stamp if double
+      }
       this.updateCard(card).catch(error => {
         console.error('Error stamping member card:', error);
       });
     }
-    // Ensure all code paths return a value or throw
-    throw new Error('Unexpected error in updateCard');
   }
 
   //  interfaces editeur
@@ -106,8 +104,6 @@ export class GameCardService {
         initial_qty: createdPlayBook.initial_qty,
         stamps: createdPlayBook.stamps.filter((stamp): stamp is string => stamp !== null),
         licenses: createdPlayBook.licenses,
-        // createdAt: createdPlayBook.createdAt,
-        // updatedAt: createdPlayBook.updatedAt
       };
       if (this._gameCards) {   // cache update if exists
         this._gameCards.push(new_card);
@@ -144,7 +140,8 @@ export class GameCardService {
       this._gameCards.sort((a, b) => a.owners[0].lastname.localeCompare(b.owners[0].lastname));
 
       this.gameCards$.next(this._gameCards);
-      this.toastService.showSuccessToast('Gestion des cartes', 'La carte de tournoi a été mise à jour avec succès');
+      let ownersNames = updatedGameCard.owners.map(owner => `${owner.firstname} ${owner.lastname}`).join(', ');
+      this.toastService.showSuccessToast('Gestion des cartes', 'Carte de ' + ownersNames + ' mise à jour');
       return updatedGameCard;
 
     } catch (errors) {
