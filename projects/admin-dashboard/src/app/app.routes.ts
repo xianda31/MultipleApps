@@ -21,7 +21,7 @@ export const routes: Routes = [
     { path: 'article/:id', component: ArticleComponent },
     { path: 'imagemgr', component: ImageMgrComponent },
     { path: 'albums', component: AlbumsComponent },
-    { path: 'sales', loadChildren: () => import('./sales/sales.module').then(m => m.SalesModule) },
+    // { path: 'sales', loadChildren: () => import('./sales/sales.module').then(m => m.SalesModule) },
     { path: 'sysconf', component: SysConfComponent },
     // { path: 'xls_import', component: XlsImportComponent },
 
