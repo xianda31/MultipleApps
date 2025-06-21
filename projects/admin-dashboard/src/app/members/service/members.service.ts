@@ -42,6 +42,10 @@ export class MembersService {
     return this._members.find((m) => m.id === id) || null;
   }
 
+full_name(member: Member): string {
+    return this.last_then_first_name(member);
+}
+
   last_then_first_name(member: Member): string {
     return `${member.lastname} ${member.firstname}`;
   }

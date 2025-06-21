@@ -104,11 +104,14 @@ export class GameCardService {
         initial_qty: createdPlayBook.initial_qty,
         stamps: createdPlayBook.stamps.filter((stamp): stamp is string => stamp !== null),
         licenses: createdPlayBook.licenses,
+        createdAt: createdPlayBook.createdAt,
       };
       if (this._gameCards) {   // cache update if exists
         this._gameCards.push(new_card);
         this.gameCards$.next(this._gameCards);
-        this.toastService.showSuccessToast('Gestion des cartes', 'La carte de tournoi a été créée avec succès');
+              let ownersNames = new_card.owners.map(owner => `${owner.firstname} ${owner.lastname}`).join(', ');
+
+        this.toastService.showSuccessToast('Gestion des cartes', 'Carte de ' + ownersNames + ' créée');
       }
       return new_card;
     } catch (errors) {
@@ -162,7 +165,10 @@ export class GameCardService {
       if (done) {
         this._gameCards = this._gameCards.filter(c => c.id !== card.id);
         this.gameCards$.next(this._gameCards);
-        this.toastService.showSuccessToast('Gestion des cartes', 'La carte de tournoi a été supprimée avec succès');
+              let ownersNames = card.owners.map(owner => `${owner.firstname} ${owner.lastname}`).join(', ');
+
+        this.toastService.showSuccessToast('Gestion des cartes', 'La carte de '+ ownersNames + ' a été supprimée');
+        this.toastService.showInfoToast('Gestion des cartes', 'Supprimez la recette associée si nécessaire');
         return true;
       }
       return false;

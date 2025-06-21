@@ -1,9 +1,10 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { AdminInComponent } from "../../../../common/authentification/admin-in/admin-in.component";
-import { Group_names, Group_priorities } from '../../../../common/authentification/group.interface';
+import { Group_priorities } from '../../../../common/authentification/group.interface';
+import { ToastService } from '../../../../common/toaster/toast.service';
 
 @Component({
   selector: 'app-navbar',
@@ -12,12 +13,19 @@ import { Group_names, Group_priorities } from '../../../../common/authentificati
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.scss'
 })
-export class NavbarComponent {
+export class NavbarComponent implements OnInit {
   @Input() season: string = '';
   @Input() entries_nbr: number = 0;
-  @Input() accreditation_level: number = 0;
-    accreditation_levels = Group_priorities;
+  @Input() accreditation_level!: number ;
+  accreditation_levels = Group_priorities;
 
+  constructor(
+    private toastService: ToastService
+  ) {  }
 
-  test : string = 'test';
+  ngOnInit(): void {
+    if (this.accreditation_level === undefined || this.accreditation_level <= 0) {
+      this.toastService.showInfoToast('Administration', 'Veuillez vous connecter pour utilser cette application.');
+    }
+  }
 }

@@ -456,6 +456,8 @@ export class BookService {
 
   }
 
+
+
   find_member_debt(member_full_name: string): number {
     let debts = this.get_debts();
 

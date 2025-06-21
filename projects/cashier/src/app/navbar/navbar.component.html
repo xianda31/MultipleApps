@@ -40,8 +40,9 @@
             <span class="ms-1 d-none d-sm-inline">Adhérents</span>
           </a>
           <ul *ngIf="accreditation_level >= accreditation_levels.Contributeur" class="dropdown-menu" aria-labelledby="navbarDropdown1">
-            <li><a class="dropdown-item  " routerLink="/adhérents">base de données</a></li>
-            <li><a class="dropdown-item disabled " routerLink="#"  >détails adhérent</a></li>
+            <li><a class="dropdown-item  " routerLink="/members/database">répertoire</a></li>
+            <li><a class="dropdown-item  " routerLink="/members/cartes-admission"  >cartes admission</a></li>
+            <li><a class="dropdown-item  " routerLink="/members/historique"  >historique</a></li>
           </ul>
         </li>
 
@@ -52,7 +53,6 @@
             <span class="ms-1 d-none d-sm-inline">Administratif</span>
           </a>
           <ul *ngIf="accreditation_level >= accreditation_levels.Administrateur" class="dropdown-menu" aria-labelledby="navbarDropdown1">
-            <li><a class="dropdown-item  " routerLink="/admin/cartes-admission">cartes admission</a></li>
             <li><a class="dropdown-item  " routerLink="/admin/produits">produits à la vente</a></li>
             <li><a class="dropdown-item  " routerLink="/admin/cash-box-status">gestion caisse</a></li>
             <li><a class="dropdown-item  " routerLink="/admin/toutes-ecritures">écritures courantes</a></li>

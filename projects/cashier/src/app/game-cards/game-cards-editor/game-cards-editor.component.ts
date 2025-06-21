@@ -54,17 +54,20 @@ stamps_number(card: GameCard): number {
     this.gameCardService.updateCard(card)
   }
 
-  deleteGameCard(card: GameCard) {
-const modalRef = this.modalService.open(GetConfirmationComponent, { centered: true });
-const owners = card.owners.reduce((acc, owner) => acc + owner.firstname + ' ' + owner.lastname.toUpperCase() + ' ', '');
-    modalRef.componentInstance.title = `Suppression d'une carte d'admission `; 
-    modalRef.componentInstance.subtitle = `détenteur(s) :${owners} `; 
+  deleteGameCard(card: GameCard, event?: Event) {
+    const opener = event?.target as HTMLElement;
+    
+    const modalRef = this.modalService.open(GetConfirmationComponent, { centered: true });
+    const owners = card.owners.reduce((acc, owner) => acc + owner.firstname + ' ' + owner.lastname.toUpperCase() + ' ', '');
+    modalRef.componentInstance.title = `Suppression d'une carte d'admission `;
+    modalRef.componentInstance.subtitle = `détenteur(s) :${owners} `;
     modalRef.result.then((answer: boolean) => {
       if (answer) {
-        this.gameCardService.deleteCard(card)
+        this.gameCardService.deleteCard(card);
       }
+      // Restore focus to the opener button
+      opener?.focus();
     });
-
   }
 
 

@@ -62,7 +62,7 @@
         <!--  paiement -->
         <div *ngIf="(cart.items.length > 0 || debt_amount > 0)" class="row mt-2">
             <div class="col-3">
-                <strong>Total :  {{total_amount() | currency:'€':'symbol':'2.2-2':'fr'}}
+                <strong>Total : {{total_amount() | currency:'€':'symbol':'2.2-2':'fr'}}
                 </strong>
             </div>
 
@@ -119,7 +119,7 @@
         <div class="mt-4">
             <button type="button" class="btn btn-success nice_shadow"
                 [disabled]=" !selected_payment.mode || (cart.items.length === 0 && !(total_amount()>0)) || (total_amount()<0)"
-                 (click)="validate_sale()">confirmation
+                (click)="validate_sale()">confirmation
                 du panier</button>
         </div>
     </div>

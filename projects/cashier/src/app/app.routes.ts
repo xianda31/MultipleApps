@@ -16,14 +16,17 @@ import { BuyComponent } from './buy/buy.component';
 import { MembersComponent } from '../../../admin-dashboard/src/app/members/members.component';
 import { PageNotFoundComponent } from './page-not-found/page-not-found.component';
 import { ProductsComponent } from '../../../admin-dashboard/src/app/sales/products/products.component';
+import { MemberSalesComponent } from './member-sales/member-sales.component';
 
 export const routes: Routes = [
   { path: 'vente/produits', component: ShopComponent },   //, canActivate: [loggedInGuard]
   { path: 'vente/droits-de-table', component: FeesCollectorComponent },
 
-  { path: 'adhérents', component: MembersComponent },
+  { path: 'members/database', component: MembersComponent },
+  { path: 'members/cartes-admission', component: GameCardsEditorComponent },
+  { path: 'members/historique', component: MemberSalesComponent },
 
-  { path: 'admin/cartes-admission', component: GameCardsEditorComponent },
+
   { path: 'admin/toutes-ecritures', component: BuyComponent }, //, canActivate: [loggedInGuard]
   { path: 'admin/produits', component: ProductsComponent }, //, canActivate: [loggedInGuard]
   { path: 'admin/cash-box-status', component: CashBoxStatusComponent },

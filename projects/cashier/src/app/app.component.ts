@@ -11,6 +11,7 @@ import { catchError, switchMap, tap } from 'rxjs';
 import { AuthentificationService } from '../../../common/authentification/authentification.service';
 import { GroupService } from '../../../common/authentification/group.service';
 import { Group_names, Group_priorities } from '../../../common/authentification/group.interface';
+import { ToastService } from '../../../common/toaster/toast.service';
 
 
 
@@ -32,7 +33,7 @@ export class AppComponent {
     private systemDataService: SystemDataService,
     private bookService: BookService,
     private auth: AuthentificationService,
-    private groupService: GroupService
+    private groupService: GroupService,
   ) {
 
   }
