@@ -2,8 +2,8 @@
 
 <div class="row bg-light shadow-sm align-items-end">
   <h4 class="col-md-auto col-sm-12 mt-2">
-    <i class="fs-4 bi-piggy-bank nav-link" [routerLink]="['']">
-      Comptabilité Bridge Club Saint-Orens
+    <i class="fs-4 bi-bank nav-link" [routerLink]="['']">
+      Administration Bridge Club Saint-Orens
     </i>
   </h4>
   <h5 class="col-md-auto col-sm-12">
@@ -27,25 +27,31 @@
             aria-expanded="false">
             <i class="fs-4 bi-cart"></i> <span class="ms-1 d-none d-sm-inline">Boutique</span>
           </a>
-          <ul class="dropdown-menu" aria-labelledby="navbarDropdown1">
+          <ul *ngIf="accreditation_level >= accreditation_levels.Contributeur" class="dropdown-menu" aria-labelledby="navbarDropdown1">
             <li><a class="dropdown-item  " routerLink="/vente/produits">vente à adhérents</a></li>
             <li><a class="dropdown-item  " routerLink="/vente/droits-de-table">enregistrement tournoi</a></li>
           </ul>
         </li>
 
-        <li class="nav-item me-md-5 me-sm-1">
-          <a class="nav-link" [routerLink]="['/adhérents']">
+        <li class="nav-item dropdown me-md-5 me-sm-1">
+          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown1" role="button" data-bs-toggle="dropdown"
+            aria-expanded="false">
             <i class="fs-4 bi-people"></i>
             <span class="ms-1 d-none d-sm-inline">Adhérents</span>
           </a>
+          <ul *ngIf="accreditation_level >= accreditation_levels.Contributeur" class="dropdown-menu" aria-labelledby="navbarDropdown1">
+            <li><a class="dropdown-item  " routerLink="/adhérents">base de données</a></li>
+            <li><a class="dropdown-item disabled " routerLink="#"  >détails adhérent</a></li>
+          </ul>
         </li>
 
         <li class="nav-item dropdown me-md-5 me-sm-1">
           <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown1" role="button" data-bs-toggle="dropdown"
             aria-expanded="false">
-            <i class="fs-4 bi-inboxes"></i> <span class="ms-1 d-none d-sm-inline">Administratif</span>
+            <i class="fs-4 bi-inboxes"></i> 
+            <span class="ms-1 d-none d-sm-inline">Administratif</span>
           </a>
-          <ul class="dropdown-menu" aria-labelledby="navbarDropdown1">
+          <ul *ngIf="accreditation_level >= accreditation_levels.Administrateur" class="dropdown-menu" aria-labelledby="navbarDropdown1">
             <li><a class="dropdown-item  " routerLink="/admin/cartes-admission">cartes admission</a></li>
             <li><a class="dropdown-item  " routerLink="/admin/produits">produits à la vente</a></li>
             <li><a class="dropdown-item  " routerLink="/admin/cash-box-status">gestion caisse</a></li>
@@ -59,7 +65,7 @@
             aria-expanded="false">
             <i class="fs-4 bi-journal"></i> <span class="ms-1 d-none d-sm-inline">Finance</span>
           </a>
-          <ul class="dropdown-menu" aria-labelledby="navbarDropdown1">
+          <ul *ngIf="accreditation_level >= accreditation_levels.Administrateur" class="dropdown-menu" aria-labelledby="navbarDropdown1">
             <li><a class="dropdown-item  " routerLink="/finance/bank-reconciliation">rapprochement bancaire</a></li>
             <li><a class="dropdown-item  " routerLink="/finance/expense-and-revenue">résultats</a></li>
             <li><a class="dropdown-item  " routerLink="/finance/balance">bilan</a></li>
@@ -70,15 +76,14 @@
         </li>
 
         <li class="nav-item dropdown me-md-5 me-sm-1">
-          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown1" role="button" data-bs-toggle="dropdown"
+          <a  class="nav-link dropdown-toggle" href="#" id="navbarDropdown1" role="button" data-bs-toggle="dropdown"
             aria-expanded="false">
             <i class="fs-4 bi-tools"></i> <span class="ms-1 d-none d-sm-inline">Outils</span>
           </a>
-          <ul class="dropdown-menu" aria-labelledby="navbarDropdown1">
-            <li><a class="dropdown-item  " routerLink="/books/list">base de données</a></li>
+          <ul *ngIf="accreditation_level >= accreditation_levels.Systeme" class="dropdown-menu" aria-labelledby="navbarDropdown1">
+            <li><a class="dropdown-item " routerLink="/books/list">base de données</a></li>
             <li><a class="dropdown-item  " routerLink="/excel/import">import</a></li>
             <li><a class="dropdown-item  ">export</a></li>
-
           </ul>
         </li>
 
@@ -92,5 +97,4 @@
 
     </div>
   </nav>
-
 </div>

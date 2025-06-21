@@ -30,7 +30,7 @@ export const Group_icons: { [K in Group_names]: string } = {
   [Group_names.Member]: 'bi bi-person-fill',
   [Group_names.Support]: 'bi bi-person-check-fill',
   [Group_names.Admin]: 'bi bi-mortarboard-fill',
-  [Group_names.System]: 'bi bi-incognito'
+  [Group_names.System]: 'bi bi-tools'
 };
 
  export enum UserAttributes {

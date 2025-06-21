@@ -20,8 +20,6 @@ export class AuthentificationService {
 
   private _auth_event$: BehaviorSubject<AuthEvent> = new BehaviorSubject<AuthEvent>({ event: '' });
 
-
-  // private _logged_member: Member | null = null;
   private _logged_member$: BehaviorSubject<Member | null> = new BehaviorSubject<Member | null>(null);
   constructor(
     private toastService: ToastService,

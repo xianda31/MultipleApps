@@ -9,6 +9,8 @@ import { SystemDataService } from '../../../common/services/system-data.service'
 import { BookService } from './book.service';
 import { catchError, switchMap, tap } from 'rxjs';
 import { AuthentificationService } from '../../../common/authentification/authentification.service';
+import { GroupService } from '../../../common/authentification/group.service';
+import { Group_names, Group_priorities } from '../../../common/authentification/group.interface';
 
 
 
@@ -24,11 +26,13 @@ export class AppComponent {
   season !: string;
   entries_nbr!: number;
   book_entries_loaded: boolean = false;
+  accreditation_level: number = -1;
 
   constructor(
     private systemDataService: SystemDataService,
     private bookService: BookService,
-    private authService: AuthentificationService
+    private auth: AuthentificationService,
+    private groupService: GroupService
   ) {
 
   }
@@ -44,7 +48,6 @@ export class AppComponent {
     this.systemDataService.get_configuration().pipe(
       tap((conf) => {
         this.season = conf.season;
-        console.log('AppComponent.ngOnInit: system configuration loaded', conf);
       }),
       switchMap((conf) => this.bookService.list_book_entries$(conf.season))
     ).subscribe((book_entries) => {
@@ -56,6 +59,20 @@ export class AppComponent {
       this.book_entries_loaded = false;
       return [];
     })
+
+
+    // chargement de l'accréditation
+
+    this.auth.logged_member$.subscribe(async (member) => {
+      this.accreditation_level = -1; 
+         if (member !== null) {
+           let groups = await this.groupService.getCurrentUserGroups();
+           if (groups.length > 0) {
+            let group = groups[0] as Group_names;
+             this.accreditation_level = Group_priorities[group];
+           }
+         }
+       });
   }
 
 }

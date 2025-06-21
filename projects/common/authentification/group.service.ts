@@ -115,7 +115,7 @@ export class GroupService {
 
 
 
-  async getCurrentUserGroups(): Promise<string[]> {
+  async getCurrentUserGroups(): Promise<Group_names[]> {
     const session = await fetchAuthSession();
     let groupsRaw = session?.tokens?.accessToken?.payload['cognito:groups'];
     let groups: string[] = [];
@@ -125,7 +125,7 @@ export class GroupService {
       groups = [groupsRaw];
     }
     return groups.sort((a, b) => {
-        return Group_priorities[b as Group_names] - Group_priorities[a as Group_names]});
+        return Group_priorities[b as Group_names] - Group_priorities[a as Group_names]}) as Group_names[]; // Sort by priority
   }
 
 
