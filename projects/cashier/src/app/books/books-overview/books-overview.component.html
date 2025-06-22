@@ -1,7 +1,6 @@
-
-<div class="mt-2 row row-cols-1 row-cols-md-4 g-4 ">
+<div class="mt-2 row row-cols-1 row-cols-md-4 g-2 ">
   <div class="col" *ngFor="let report of reports_values ">
-    <div [class]="selected_report === report ? 'card border-primary ' : 'card' " (click)="go_report(report)">
+    <div [class]="selected_report === report ? 'card shadow-sm border-primary ' : 'card shadow-sm' " (click)="go_report(report)">
       <div class="card-header text-center">{{report}} </div>
       <div class="card-body text-center">
         <div class="card-text">
@@ -52,33 +51,36 @@
     <h5>compte produits</h5>
   </div>
   <div class="card-body">
-    <table class="table table-sm">
-      <thead>
-        <tr>
-          <th class="col">Date </th>
-          <th class="col">libellé </th>
-          <th class="col"> bénéficiaire</th>
+    <div class="table-responsive table-responsive-sticky">
+      <table class="table table-sm">
+        <thead >
+          <tr>
+            <th class="col">Date </th>
+            <th class="col">libellé </th>
+            <th class="col"> bénéficiaire</th>
 
-          <th class="col text-center" *ngFor="let account of products_accounts ">{{account}}
-          </th>
-        </tr>
-      </thead>
+            <th class="col text-center" *ngFor="let account of products_accounts ">{{account}}
+            </th>
+            <th class="col"> </th>
+          </tr>
+        </thead>
 
-      <tbody>
-        <tr *ngFor="let revenue of revenues">
-          <td> {{revenue.date | date: 'dd/MM/yyyy'}} </td>
-          <td>{{revenue.label}}</td>
-          <td>{{revenue.member}}</td>
+        <tbody>
+          <tr *ngFor="let revenue of revenues">
+            <td> {{revenue.date | date: 'dd/MM/yyyy'}} </td>
+            <td>{{revenue.label}}</td>
+            <td>{{revenue.member}}</td>
 
-          <td *ngFor="let account of products_accounts " class="text-center">
-            {{revenue.values[account]}}
-          </td>
-          <td>
-            <i class="bi bi-search" (click)="show_book_entry(revenue.book_entry_id)"></i>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+            <td *ngFor="let account of products_accounts " class="text-end">
+              {{revenue.values[account] | number:truncature:'fr'}}
+            </td>
+            <td>
+              <i class="bi bi-search" (click)="show_book_entry(revenue.book_entry_id)"></i>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 
@@ -93,35 +95,37 @@
 
   </div>
   <div class="card-body">
-    <table class="table table-sm">
-      <thead>
-        <tr>
-          <th class="col">Date </th>
-          <th class="col">libellé </th>
-          <!-- <th class="col"> bénéficiaire</th> -->
-          <th class="col text-center" *ngFor="let account of expenses_accounts ">{{account}}
-          </th>
-          <th></th>
-        </tr>
-      </thead>
+    <div class="table-responsive table-responsive-sticky">
+      <table class="table table-sm table-responsive">
+        <thead>
+          <tr>
+            <th class="col">Date </th>
+            <th class="col">libellé </th>
+            <!-- <th class="col"> bénéficiaire</th> -->
+            <th class="col text-center" *ngFor="let account of expenses_accounts ">{{account}}
+            </th>
+            <th></th>
+          </tr>
+        </thead>
 
-      <tbody>
+        <tbody>
 
-        <tr *ngFor="let expense of expenses">
-          <td>
-            {{expense.date | date: 'dd/MM/yyyy'}}
-          </td>
-          <td>{{expense.label}}</td>
-          <!-- <td>{{expense.member}}</td> -->
-          <td *ngFor="let account of expenses_accounts " class="text-center">
-            {{expense.values[account]}}
-          </td>
-          <td>
-            <i class="bi bi-search" (click)="show_book_entry(expense.book_entry_id)"></i>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+          <tr *ngFor="let expense of expenses">
+            <td>
+              {{expense.date | date: 'dd/MM/yyyy'}}
+            </td>
+            <td>{{expense.label}}</td>
+            <!-- <td>{{expense.member}}</td> -->
+            <td *ngFor="let account of expenses_accounts " class="text-end">
+              {{expense.values[account] | number:truncature:'fr'}}
+            </td>
+            <td>
+              <i class="bi bi-search" (click)="show_book_entry(expense.book_entry_id)"></i>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 
@@ -279,7 +283,6 @@
 
   <!-- <app-cash-graph [serie]="cash_acc()"></app-cash-graph> -->
 
-  {{ cashbox_cash.length }} écritures de caisse (espèces) <br>
   <table class="table table-sm">
     <thead>
       <tr class="text-center">
@@ -405,11 +408,11 @@
                   <option hidden></option>
                   <option *ngFor="let book of $any(entry.value).entries ; let i = index">
                     {{book.date}} : {{book.id}}</option>
-                  </select>
-                  <!-- <i class="bi bi-search" (click)="show_map_entry(entry)"></i> -->
-                </td>
-              </tr>
-            </ng-container>
+                </select>
+                <!-- <i class="bi bi-search" (click)="show_map_entry(entry)"></i> -->
+              </td>
+            </tr>
+          </ng-container>
         </tbody>
       </table>
     </div>

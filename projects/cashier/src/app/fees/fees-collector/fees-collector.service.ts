@@ -152,6 +152,7 @@ export class FeesCollectorService {
           let member = gamer.is_member as Member;
           let credit = solvencies.get(member.license_number) ?? 0;
           gamer.game_credits = credit;
+
         }
       });
       this._game$.next(this.game);
@@ -171,6 +172,12 @@ export class FeesCollectorService {
     ).subscribe((persons: Person[]) => {
       this.game.gamers = persons.map((person, index) => this.person2gamer(person, index));
       this.game.tournament = tournament;
+
+      let factor = this.game.fees_doubled ? 2 : 1;
+      this.game.gamers.forEach((gamer) => {
+        gamer.price = gamer.is_member ? this.game.member_trn_price * factor : this.game.non_member_trn_price * factor;
+      });
+
 
       // this._game$.next(this.game)
       this.subscribe_to_members_solvencies();   // will update gamers game_credits & trigger _game$.next(this.game)
@@ -231,7 +238,7 @@ export class FeesCollectorService {
       members.forEach((gamer) => {
         if (!gamer.in_euro) {
           let member = gamer.is_member as Member;
-          this.gameCardService.stamp_member_card(member, this.game.tournament!.date,this.game.fees_doubled);
+          this.gameCardService.stamp_member_card(member, this.game.tournament!.date, this.game.fees_doubled);
         }
       });
 
@@ -239,7 +246,7 @@ export class FeesCollectorService {
       try {
         let total = non_members_euros + members_euros;
         await this.BookService.create_tournament_fees_entry(this.game.tournament!.date, total)
-        this.toastService.showSuccessToast('droits de table', total +' € de droits de table enregistrés');
+        this.toastService.showSuccessToast('droits de table', total + ' € de droits de table enregistrés');
       }
       catch (error: unknown) {
         this.toastService.showErrorToast('droits de table', 'Erreur lors de l\'enregistrement des droits de table');

@@ -25,7 +25,9 @@ export const storage = defineStorage({
         ],
         'accounting/*': [
             allow.guest.to(['read']),
-            allow.authenticated.to(['read', 'write', 'delete'])
+            allow.groups(['Systeme','Administrateur']).to(['read', 'write', 'delete']),
+            allow.groups(['Contributeur','Membre']).to(['read']),
+            // allow.authenticated.to(['read', 'write', 'delete'])
         ],
     })
 })

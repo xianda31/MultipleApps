@@ -1,3 +1,13 @@
-//  .collapsed{
-//   background-color: yellow !important;
-// }
+/* Sticky table header for native <th> elements */
+th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #f5f5f5;
+}
+
+/* Responsive scrollable table wrapper */
+.table-responsive-sticky {
+  max-height: 70vh;
+  overflow-y: auto;
+}

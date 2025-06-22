@@ -550,7 +550,7 @@ export class BookService {
       // class: TRANSACTION_CLASS.OTHER_REVENUE,
       transaction_id: TRANSACTION_ID.vente_en_espèces,
     };
-    return this.dbHandler.createBookEntry(entry);
+    return this.create_book_entry(entry);
   }
 
 
