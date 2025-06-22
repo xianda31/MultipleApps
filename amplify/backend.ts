@@ -6,7 +6,7 @@ import {
   HttpMethod,
 } from "aws-cdk-lib/aws-apigatewayv2";
 import {
-  HttpIamAuthorizer,
+  // HttpIamAuthorizer,
   HttpUserPoolAuthorizer,
 } from "aws-cdk-lib/aws-apigatewayv2-authorizers";
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
@@ -89,7 +89,7 @@ backend.auth.resources.unauthenticatedUserIamRole.attachInlinePolicy(apiPolicy);
 backend.addOutput({
   custom: {
     API: {
-      [httpApi.httpApiName!]: {
+      [httpApi.httpApiName as string]: {
         endpoint: httpApi.url,
         region: Stack.of(httpApi).region,
         apiName: httpApi.httpApiName,
