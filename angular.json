@@ -23,6 +23,7 @@
               "js-cookie",
               "classnames",
               "cookie",
+              "crc-32",
               "camelcase-keys",
               "fast-xml-parser",
               "buffer",

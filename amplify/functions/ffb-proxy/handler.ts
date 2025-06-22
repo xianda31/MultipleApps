@@ -5,16 +5,6 @@ const token = "Bearer eyJhbGciOiJSUzI1NiJ9.eyJyb2xlcyI6WyJST0xFX1dPUktBUkVBX1VTR
 
 export const handler : Handler = async (event) => {
     try {
-        // fetch is available in Node.js 18 and later runtimes
-
-        // const res = await fetch(url);
-        // return res.json();
-
-        // return JSON.stringify({
-        //     queryParameters: event.queryStringParameters || {},
-        //     pathParameters: event.pathParameters || {},
-        // });
-
         let path = event.pathParameters?.proxy || "";
         switch (path) {
             case "members":

@@ -10,7 +10,7 @@ import {
   HttpUserPoolAuthorizer,
 } from "aws-cdk-lib/aws-apigatewayv2-authorizers";
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
-import { Policy, PolicyStatement } from "aws-cdk-lib/aws-iam";
+import { Policy, PolicyStatement, Effect } from "aws-cdk-lib/aws-iam";
 import { ffbProxy } from "./functions/ffb-proxy/resource";
 import { auth } from "./auth/resource";
 import { data } from "./data/resource";
@@ -72,6 +72,7 @@ httpApi.addRoutes({
 const apiPolicy = new Policy(apiStack, "ApiPolicy", {
   statements: [
     new PolicyStatement({
+      effect: Effect.ALLOW,
       actions: ["execute-api:Invoke"],
       resources: [
         `${httpApi.arnForExecuteApi("*", "/v1/*")}`,        // `${httpApi.arnForExecuteApi("*", "/items")}`,
