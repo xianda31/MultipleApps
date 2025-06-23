@@ -540,8 +540,8 @@ export class BookService {
 
   create_cashbox_deposit(date: string, amount: number): Promise<BookEntry> {
     let amounts: AMOUNTS = {};
-    amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] = amount;
-    amounts[FINANCIAL_ACCOUNT.BANK_credit] = amount;
+    amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] = amount;
+    amounts[FINANCIAL_ACCOUNT.BANK_debit] = amount;
     let operation: Operation = { label: 'dépôt espèces en banque', values: {} };
     let seasonValue = this.systemDataService.get_season(new Date(date));
     const entry: BookEntry = {
