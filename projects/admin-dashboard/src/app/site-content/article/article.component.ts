@@ -82,7 +82,7 @@ export class ArticleComponent implements OnChanges {
     if (this.articleForm.invalid || !this.articleForm.touched) return;
     let article: Article = this.articleForm.getRawValue();
     this.articlesService.updateArticle(article).then((updatedArticle) => {
-      this.ToastService.showSuccessToast('gestion des articles', 'article mis à jour');
+      this.ToastService.showSuccess('gestion des articles', 'article mis à jour');
     });
     this.articleUpdated.emit(article);
   }

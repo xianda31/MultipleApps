@@ -19,7 +19,7 @@ export class ToastService {
    * @param title Toast title
    * @param message Toast message
    */
-  showSuccessToast(title: string, message: string) {
+  showSuccess(title: string, message: string) {
     this._toastEvents.next({
       message,
       title,

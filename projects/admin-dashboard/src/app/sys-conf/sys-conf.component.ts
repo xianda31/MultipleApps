@@ -175,7 +175,7 @@ export class SysConfComponent {
       try {
         let json = JSON.parse(text);
         this.loadDataInFormGroup(json);
-        this.toatService.showSuccessToast('fichier de configuration chargé', 'les données sont prêtes à être enregistrées');
+        this.toatService.showSuccess('fichier de configuration chargé', 'les données sont prêtes à être enregistrées');
       } catch (error) {
         console.error('error', error);
         this.toatService.showErrorToast('erreur chargement fichier de configuration', 'vérifiez la syntaxe');

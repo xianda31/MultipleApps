@@ -111,7 +111,7 @@ export class GameCardService {
         this.gameCards$.next(this._gameCards);
               let ownersNames = new_card.owners.map(owner => `${owner.firstname} ${owner.lastname}`).join(', ');
 
-        this.toastService.showSuccessToast('Gestion des cartes', 'Carte de ' + ownersNames + ' créée');
+        this.toastService.showSuccess('Gestion des cartes', 'Carte de ' + ownersNames + ' créée');
       }
       return new_card;
     } catch (errors) {
@@ -144,7 +144,7 @@ export class GameCardService {
 
       this.gameCards$.next(this._gameCards);
       let ownersNames = updatedGameCard.owners.map(owner => `${owner.firstname} ${owner.lastname}`).join(', ');
-      this.toastService.showSuccessToast('Gestion des cartes', 'Carte de ' + ownersNames + ' mise à jour');
+      this.toastService.showSuccess('Gestion des cartes', 'Carte de ' + ownersNames + ' mise à jour');
       return updatedGameCard;
 
     } catch (errors) {
@@ -167,7 +167,7 @@ export class GameCardService {
         this.gameCards$.next(this._gameCards);
               let ownersNames = card.owners.map(owner => `${owner.firstname} ${owner.lastname}`).join(', ');
 
-        this.toastService.showSuccessToast('Gestion des cartes', 'La carte de '+ ownersNames + ' a été supprimée');
+        this.toastService.showSuccess('Gestion des cartes', 'La carte de '+ ownersNames + ' a été supprimée');
         this.toastService.showInfoToast('Gestion des cartes', 'Supprimez la recette associée si nécessaire');
         return true;
       }

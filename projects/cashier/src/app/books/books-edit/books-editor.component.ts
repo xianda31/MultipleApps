@@ -508,7 +508,7 @@ export class BooksEditorComponent {
 
     if (this.creation) {
       this.bookService.create_book_entry(booking).then(() => {
-        this.toastService.showSuccessToast('création', 'écriture enregistrée');
+        this.toastService.showSuccess('création', 'écriture enregistrée');
         this.reset_form();
       })
         .catch((error) => {
@@ -518,7 +518,7 @@ export class BooksEditorComponent {
       booking.id = this.book_entry_id;
       this.bookService.update_book_entry(booking).then(() => {
         // changement de toutes les références de dépôt associées au mouvement de chèque
-        this.toastService.showSuccessToast('correction', 'écriture modifiée');
+        this.toastService.showSuccess('correction', 'écriture modifiée');
 
         if (booking.deposit_ref !== null
           && booking.deposit_ref !== this.selected_book_entry.deposit_ref
@@ -534,7 +534,7 @@ export class BooksEditorComponent {
   async delete_book_entry() {
     try {
       this.bookService.delete_book_entry(this.selected_book_entry);
-      this.toastService.showSuccessToast('écriture BD', 'écriture supprimée');
+      this.toastService.showSuccess('écriture BD', 'écriture supprimée');
       this.location.back();
     }
     catch (error) {

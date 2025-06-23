@@ -53,9 +53,9 @@
             <span class="ms-1 d-none d-sm-inline">Administratif</span>
           </a>
           <ul *ngIf="accreditation_level >= accreditation_levels.Administrateur" class="dropdown-menu" aria-labelledby="navbarDropdown1">
-            <li><a class="dropdown-item  " routerLink="/admin/produits">produits à la vente</a></li>
-            <li><a class="dropdown-item  " routerLink="/admin/cash-box-status">gestion caisse</a></li>
-            <li><a class="dropdown-item  " routerLink="/admin/toutes-ecritures">écritures courantes</a></li>
+            <li><a class="dropdown-item  " routerLink="/admin/products">produits à la vente</a></li>
+            <li><a class="dropdown-item  " routerLink="/admin/cashbox">gestion caisse</a></li>
+            <li><a class="dropdown-item  " routerLink="/admin/transaction">écritures courantes</a></li>
           </ul>
         </li>
 
@@ -70,7 +70,7 @@
             <li><a class="dropdown-item  " routerLink="/finance/expense-and-revenue">résultats</a></li>
             <li><a class="dropdown-item  " routerLink="/finance/balance">bilan</a></li>
             <li><a class="dropdown-item  " routerLink="/finance/books/editor">écriture</a></li>
-            <li><a class="dropdown-item  " routerLink="/finance/books/base-comptable">synthèse</a></li>
+            <li><a class="dropdown-item  " routerLink="/finance/books/overview">synthèse</a></li>
             <!-- <li><a class="dropdown-item  " routerLink="/finance/books/list">base de données</a></li> -->
           </ul>
         </li>
@@ -81,7 +81,7 @@
             <i class="fs-4 bi-tools"></i> <span class="ms-1 d-none d-sm-inline">Outils</span>
           </a>
           <ul *ngIf="accreditation_level >= accreditation_levels.Systeme" class="dropdown-menu" aria-labelledby="navbarDropdown1">
-            <li><a class="dropdown-item " routerLink="/books/list">base de données</a></li>
+            <li><a class="dropdown-item " routerLink="finance/books/list">base de données</a></li>
             <li><a class="dropdown-item  " routerLink="/excel/import">import</a></li>
             <li><a class="dropdown-item  ">export</a></li>
           </ul>

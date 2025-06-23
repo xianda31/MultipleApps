@@ -147,7 +147,7 @@ export class AuthentificationService {
             if (output.nextStep.signUpStep === 'CONFIRM_SIGN_UP') {
               this._mode = Process_flow.CONFIRM_SIGN_UP;
               this._mode$.next(this._mode);
-              this.toastService.showSuccessToast('création compte', 'un mail vous a été envoyé');
+              this.toastService.showSuccess('création compte', 'un mail vous a été envoyé');
               resolve({ isSignUpComplete: res.isSignUpComplete, nextStep: res.nextStep });
             } else {
               this.toastService.showInfoToast('sign up', 'erreur imprévue');
@@ -173,7 +173,7 @@ export class AuthentificationService {
         .then((res) => {
           // this._logged_member = null;
           this._logged_member$.next(null);
-          // this.toastService.showSuccessToast('sign out', 'success');
+          // this.toastService.showSuccess('sign out', 'success');
           resolve(res);
         });
     });
@@ -188,7 +188,7 @@ export class AuthentificationService {
           reject(err);
         })
         .then((res) => {
-          // this.toastService.showSuccessToast('reset password', 'mot de passe réinitialisé');
+          // this.toastService.showSuccess('reset password', 'mot de passe réinitialisé');
           this._mode = Process_flow.CONFIRM_RESET_PASSWORD;
           this._mode$.next(this._mode);
           resolve(res);
@@ -205,7 +205,7 @@ export class AuthentificationService {
           reject(err);
         })
         .then((res) => {
-          this.toastService.showSuccessToast('new password', 'mot de passe réinitialisé');
+          this.toastService.showSuccess('new password', 'mot de passe réinitialisé');
           this._mode = Process_flow.SIGN_IN;
           this._mode$.next(this._mode);
           resolve(res);
@@ -219,7 +219,7 @@ export class AuthentificationService {
       confirmSignUp({ username: email, confirmationCode: code })
         .then(({ isSignUpComplete, nextStep }) => {
 
-          this.toastService.showSuccessToast('sign up', 'confirmed');
+          this.toastService.showSuccess('sign up', 'confirmed');
           this._mode = Process_flow.SIGN_IN;
           resolve({ isSignUpComplete, nextStep });
         }

@@ -135,7 +135,7 @@ export class TournamentComponent implements OnInit {
   createTeam(license_pair: string[]) {
     this.TournamentService.createTeam(this.team_tournament_id.toString(), license_pair)
       .then((data) => {
-        this.toastService.showSuccessToast("tournoi", "enregistré !");
+        this.toastService.showSuccess("tournoi", "enregistré !");
         this.team_update$.next(true);
       })
       .catch((error) => { console.log('TeamsComponent.createTeam', error); });
@@ -145,7 +145,7 @@ export class TournamentComponent implements OnInit {
 
     this.TournamentService.deleteTeam(this.team_tournament_id.toString(), team.id.toString())
       .then((data) => {
-        this.toastService.showSuccessToast("tournoi", "supprimé !");
+        this.toastService.showSuccess("tournoi", "supprimé !");
         this.team_update$.next(true);
       })
       .catch((error) => { console.log('TeamsComponent.deleteTeam', error); });
