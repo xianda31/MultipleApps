@@ -10,6 +10,7 @@ import { combineLatest, switchMap, tap } from 'rxjs';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { FinancialReportService } from '../../financial_report.service';
 import { DebtsAndAssetsDetailsComponent } from "../details/debts-and-assets/debts-and-assets-details.component";
+import { TruncatePipe } from '../../../../../common/pipes/truncate.pipe';
 
 enum REPORTS {
   CHARGES = 'dépenses,charges',
@@ -41,12 +42,13 @@ interface EntryValue { total: number, entries: BookEntry[] };
 @Component({
   selector: 'app-books-overview',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgbModule, DebtsAndAssetsDetailsComponent],
+  imports: [CommonModule, FormsModule, NgbModule, DebtsAndAssetsDetailsComponent, TruncatePipe],
   templateUrl: './books-overview.component.html',
   styleUrl: './books-overview.component.scss'
 })
 export class BooksOverviewComponent {
   truncature = '1.2-2';  // '1.0-0';// '1.2-2';  //
+  SLICE_SIZE = 15;
 
   reports = Object(REPORTS)
   reports_values = Object.values(REPORTS);
@@ -101,6 +103,8 @@ export class BooksOverviewComponent {
   debts: Map<string, EntryValue> = new Map();
   assets: Map<string, EntryValue> = new Map();
   // assets_entries: { [key: string]: EntryValue } = {};
+
+  slice_start = -this.SLICE_SIZE; // pour le slice des opérations
 
   constructor(
     private bookService: BookService,
@@ -167,11 +171,7 @@ export class BooksOverviewComponent {
       this.manage_cheques_deposits();
 
       this.cashbox_cash = this.cashbox_book_entries.filter((book_entry) => this.transactionService.get_transaction(book_entry.transaction_id).cash !== 'none')
-      // .sort((a, b) => {
-      //   return (a.date.localeCompare(b.date) === 0) ? (a.transaction_id === TRANSACTION_ID.dépôt_caisse_espèces ? 1 : -1) : a.date.localeCompare(b.date)
-      // });
       this.cash_cumul();
-
       this.cashbox_status.cash.mouvements = this.bookService.get_cashbox_movements_amount('cash');
 
       // this.verify_amounts();
@@ -179,6 +179,9 @@ export class BooksOverviewComponent {
 
   }
 
+  toggle_slice() {
+    this.slice_start = (this.slice_start === 0) ? -this.SLICE_SIZE : 0;
+  }
 
   // utilitaires pour visualisation des chèques et leur status de dépôt
 
@@ -271,6 +274,9 @@ export class BooksOverviewComponent {
     // console.log('cash movements', cash_delta);
   }
 
+
+
+  // utilitaires pour visualisation des opérations
 
   transaction_label(op_type: TRANSACTION_ID): string {
     return this.transactionService.get_transaction(op_type).label;

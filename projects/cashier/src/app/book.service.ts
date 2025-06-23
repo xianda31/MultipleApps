@@ -39,10 +39,10 @@ export class BookService {
   // bulk create
 
   book_entries_bulk_create$(book_entries: BookEntry[]): Observable<number> {
-    
+
     const promises = book_entries.map(book_entry => this.dbHandler.createBookEntry(book_entry));
 
-       return from(Promise.all(promises)).pipe(
+    return from(Promise.all(promises)).pipe(
       map((created_entries) => {
         this._book_entries = this._book_entries.concat(created_entries)
           .sort((b, a) => { return a.date.localeCompare(b.date); });
@@ -59,12 +59,12 @@ export class BookService {
 
   // create
 
-  async create_book_entry(book_entry: BookEntry) {
+  async create_book_entry(book_entry: BookEntry): Promise<BookEntry> {
 
     try {
       let created_entry = await this.dbHandler.createBookEntry(book_entry);
       this._book_entries.push(created_entry);
-      this._book_entries$.next(this._book_entries.sort((b, a) => {
+      this._book_entries$.next(this._book_entries.sort((a, b) => {
         return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
       }));
       return (created_entry);
@@ -112,7 +112,7 @@ export class BookService {
     try {
       let updated_entry = await this.dbHandler.updateBookEntry(book_entry);
       this._book_entries = this._book_entries.map((entry) => entry.id === updated_entry.id ? updated_entry : entry);
-      this._book_entries$.next(this._book_entries.sort((b, a) => {
+      this._book_entries$.next(this._book_entries.sort((a, b) => {
         return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
       }));
       return updated_entry;
@@ -139,7 +139,7 @@ export class BookService {
       let done = await this.dbHandler.deleteBookEntry(book_entry.id);
       if (done) {
         this._book_entries = this._book_entries.filter((entry) => entry.id !== book_entry.id);
-        this._book_entries$.next(this._book_entries.sort((b, a) => {
+        this._book_entries$.next(this._book_entries.sort((a, b) => {
           return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
         }));
       }

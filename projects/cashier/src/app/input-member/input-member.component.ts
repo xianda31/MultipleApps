@@ -50,7 +50,8 @@ export class InputMemberComponent implements ControlValueAccessor {
     this.onTouch();
     const substring = input.split('\u00A0');
     // console.log(substring);
-    const member = this.members.find((m) => (m.lastname === substring[0] && m.firstname === substring[1])) ?? null;
+    const member = this.members.find((m) => (m.lastname.toUpperCase() === substring[0] && m.firstname === substring[1])) ?? null;
+    if(!member) {console.warn('InputMemberComponent.setValue: member not found for input', input) }
     this.onChange(member);
   }
 

@@ -14,6 +14,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TransactionService } from '../../transaction.service';
+import { BackComponent } from '../../../../../common/back/back.component';
 
 interface Operation_initial_values {
   optional_accounts?: string[];
@@ -30,7 +31,7 @@ interface Account {
   selector: 'app-booking',
   standalone: true,
   encapsulation: ViewEncapsulation.None,   // nécessaire pour que les CSS des tooltips fonctionnent
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbTooltipModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbTooltipModule, BackComponent],
   templateUrl: './books-editor.component.html',
   styleUrl: './books-editor.component.scss'
 })
@@ -68,6 +69,10 @@ export class BooksEditorComponent {
   selected_transaction: Transaction | undefined = undefined;
 
   operations_valueChanges_subscription!: Subscription;
+
+  // Store subscriptions for valueChanges
+  transacClassSubscription!: Subscription;
+  transactionIdSubscription!: Subscription;
 
   constructor(
     private fb: FormBuilder,
@@ -203,23 +208,29 @@ export class BooksEditorComponent {
     this.financial_accounts_locked = true;
     this.selected_transaction = undefined;
     this.transaction_ids = [];
+    // Unsubscribe from valueChanges before reset
+    this.transacClassSubscription?.unsubscribe();
+    this.transactionIdSubscription?.unsubscribe();
+    this.operations_valueChanges_subscription?.unsubscribe();
     this.form.reset();
     this.operations.clear();
     this.amounts.clear();
-    this.operations_valueChanges_subscription.unsubscribe();
     this.form.controls['date'].setValue(formatDate(new Date(), 'yyyy-MM-dd', 'en'));
+    // Re-subscribe after reset
+    this.valueChanges_subscribe();
+    this.operations_valueChanges_subscribe();
   }
 
   valueChanges_subscribe() {
     // form.transaction_class change handler
-    this.form.controls['transac_class'].valueChanges.subscribe((op_class) => {
+    this.transacClassSubscription = this.form.controls['transac_class'].valueChanges.subscribe((op_class) => {
       this.selected_transaction = undefined;
       this.transaction_ids = this.transactionService.class_to_ids(op_class);
       this.financial_accounts_locked = true;
     });
 
     // form.transaction_id change handler
-    this.form.controls['transaction_id'].valueChanges.subscribe((transaction_id) => {
+    this.transactionIdSubscription = this.form.controls['transaction_id'].valueChanges.subscribe((transaction_id) => {
       this.selected_transaction = this.transactionService.get_transaction(transaction_id);
 
       if (this.selected_transaction.cheque === 'out') {
@@ -227,22 +238,16 @@ export class BooksEditorComponent {
       }
 
       // initialisation form operations si en mode création
-
       if (this.creation) {
         this.operations.clear();
         this.add_operation(this.selected_transaction);
       }
 
       // operations valueChanges subscription s'il y a des valeurs charges ou produits
-      // if(this.operations.controls['values'] !== undefined ) {
       this.operations_valueChanges_subscribe();
-      // }
 
       // gestion des validators pour les champs bank_name et cheque_ref
-
       this.handle_cheque_info_validators(this.selected_transaction);
-      // this.handled_deposit_ref_validators(this.selected_transaction);
-
       // création des champs amounts
       if (this.creation) {
         this.amounts.clear();
@@ -258,7 +263,6 @@ export class BooksEditorComponent {
         }
       };
     });
-
   }
 
   sum_operation_values(transaction: Transaction, values: Operation_initial_values): number {
@@ -426,7 +430,7 @@ export class BooksEditorComponent {
       };
     });
 
-    this.save_book_entry(amounts, operations);
+   this.save_book_entry(amounts, operations);
   }
 
   negative_number_acceptable(bookEntry: BookEntry): boolean {
@@ -503,12 +507,13 @@ export class BooksEditorComponent {
     if (!booking.cheque_ref || booking.cheque_ref === 'undefined') delete booking.cheque_ref;
 
     if (this.creation) {
-      this.bookService.create_book_entry(booking).then(() =>
-        this.toastService.showSuccessToast('création', 'écriture enregistrée'))
+      this.bookService.create_book_entry(booking).then(() => {
+        this.toastService.showSuccessToast('création', 'écriture enregistrée');
+        this.reset_form();
+      })
         .catch((error) => {
           this.toastService.showErrorToast('erreur', 'écriture non enregistrée');
         });
-      this.reset_form();
     } else {
       booking.id = this.book_entry_id;
       this.bookService.update_book_entry(booking).then(() => {
@@ -535,7 +540,7 @@ export class BooksEditorComponent {
     catch (error) {
       this.toastService.showErrorToast('écriture BD', 'vous ne pouvez pas supprimer cette écriture');
     }
-}
+  }
 
 
 

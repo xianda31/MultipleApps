@@ -69,8 +69,8 @@ export const Financial_credit_accounts: { [key in Partial<FINANCIAL_ACCOUNT>]?: 
 export const Bank_accounts: { [key in Partial<FINANCIAL_ACCOUNT>]?: string } = {
   [FINANCIAL_ACCOUNT.BANK_debit]: 'bank_in',
   [FINANCIAL_ACCOUNT.BANK_credit]: 'bank_out',
-  [FINANCIAL_ACCOUNT.SAVING_debit]: 'saving_in',
-  [FINANCIAL_ACCOUNT.SAVING_credit]: 'saving_out',
+  // [FINANCIAL_ACCOUNT.SAVING_debit]: 'saving_in',
+  // [FINANCIAL_ACCOUNT.SAVING_credit]: 'saving_out',
 }
 
 export const Savings_accounts : { [key in Partial<FINANCIAL_ACCOUNT>]?: string } = {
