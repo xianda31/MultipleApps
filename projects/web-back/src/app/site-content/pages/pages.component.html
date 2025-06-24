@@ -1,0 +1,74 @@
+<div *ngIf=" layout_loaded" class="container ">
+    <h5>Les pages</h5>
+    <form [formGroup]="pageGroup">
+        <table class="table">
+
+            <thead>
+
+                <tr>
+                    <!-- <th class="col-2">id menu</th> -->
+                    <th class="col-3">menu</th>
+                    <th class="col-3">sous-menu</th>
+                    <th class="col-3">template</th>
+                    <!-- <th class="col-3"> rang </th> -->
+                    <th class="col-3 text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let page of pages">
+                    <!-- <td [class]="getMenuLabel(page.menuId)?'table-info':'table-warning'">...{{page.menuId | slice:-8}}
+                    </td> -->
+                    <td [class]="getMenuLabel(page.menuId)?'':'table-warning'">{{getMenuLabel(page.menuId)??
+                        'orpheline' }}</td>
+                    <td>{{page.link}}</td>
+                    <td>{{page.template}}</td>
+                    <!-- <td>{{page.rank}}</td> -->
+                    <!-- <td>{{page.title}}</td> -->
+                    <!-- <td>{{page.articles?.length}}</td> -->
+                    <!-- <td>{{page.rootpage}}</td>
+                    <td>{{page.subpages?.length ?? 0}}</td> -->
+                    <td class="col-2 text-end">
+                        <div class=" btn-group role=group">
+
+                            <button class="btn btn-sm btn-primary" (click)="onEdit(page)">Edit</button>
+                            <button class="btn btn-sm btn-warning ms-1" (click)="onDelete(page)">delete</button>
+                        </div>
+                    </td>
+                </tr>
+                <tr></tr>
+                <!-- bandeau creation/modification -->
+                <tr>
+                    <!-- 
+                    <td>
+                        <input type="text" class="form-control" formControlName="menuId">
+                    </td> -->
+
+                    <td>
+                        <app-input-menu formControlName="menu" [menus]="menus"></app-input-menu>
+                    </td>
+                    <td>
+                        <input type="text" class="form-control" formControlName="link">
+                    </td>
+                    <td>
+                        <!-- <input type="text" class="form-control" formControlName="template"> -->
+                        <select type="text" class="form-control" id="template" formControlName="template">
+                            <option *ngFor="let value of templates_values" [value]="value">{{value}}</option>
+                        </select>
+                    </td>
+
+                    <!-- <td> <input type="text" class="form-control" formControlName="rank"> </td> -->
+
+                    <td class="col-2">
+                        <div class=" btn-group role=group">
+                            <button class="btn btn-sm btn-primary" (click)="onSave()">Save</button>
+                            <!-- <button class="btn btn-sm btn-light" disabled></button> -->
+                            <button class="btn btn-sm btn-warning ms-1" (click)="onClear()">clear</button>
+                        </div>
+                    </td>
+
+
+                </tr>
+            </tbody>
+        </table>
+    </form>
+</div>

@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
-import { MembersService } from '../../../admin-dashboard/src/app/members/service/members.service';
+import { MembersService } from '../../../web-back/src/app/members/service/members.service';
 import { delay, from, map, Observable, of, switchMap, tap } from 'rxjs';
 import { ToastService } from '../../toaster/toast.service';
 import { Process_flow } from '../authentification_interface';
@@ -116,7 +116,7 @@ export class SignInComponent {
     } else {      // console.log("member", member);
     }
     await this.auth.signUp(this.email.value, this.password.value, member!.id)
-      // .catch((err) => this.toastService.showInfoToast('sign up', err.message))
+      // .catch((err) => this.toastService.showInfo('sign up', err.message))
       .then(({ isSignUpComplete, nextStep }) => {
         this.sign_up_sent = true;
       })
@@ -153,7 +153,7 @@ export class SignInComponent {
 
   resetPassword() {
     if (this.email.invalid) {
-      this.toastService.showWarningToast('reset mdp', 'adresse mail non valide');
+      this.toastService.showWarning('reset mdp', 'adresse mail non valide');
        return;
     }
     this.auth.resetPassword(this.email.value);

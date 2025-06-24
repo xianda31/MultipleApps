@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
-import { Product } from '../../admin-dashboard/src/app/sales/products/product.interface';
+import { Product } from '../../web-back/src/app/sales/products/product.interface';
 import { map, Observable, of, switchMap, tap } from 'rxjs';
 import { SystemDataService } from './system-data.service';
-import { DBhandler } from '../../cashier/src/app/graphQL.service';
+import { DBhandler } from '../../admin/src/app/graphQL.service';
 import { ToastService } from '../toaster/toast.service';
 
 

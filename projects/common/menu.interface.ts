@@ -1,4 +1,4 @@
-import { PagesComponent } from "../admin-dashboard/src/app/site-content/pages/pages.component";
+import { PagesComponent } from "../web-back/src/app/site-content/pages/pages.component";
 
 export interface Menu {
     id: string;

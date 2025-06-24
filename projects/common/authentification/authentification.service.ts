@@ -3,7 +3,7 @@ import { confirmSignUp, signIn, signUp, signOut, AuthError, SignInInput, getCurr
 import { BehaviorSubject, Observable } from 'rxjs';
 import { AuthEvent, Process_flow } from './authentification_interface';
 import { ToastService } from '../toaster/toast.service';
-import { MembersService } from '../../admin-dashboard/src/app/members/service/members.service';
+import { MembersService } from '../../web-back/src/app/members/service/members.service';
 import { Member } from '../member.interface';
 import { Hub } from 'aws-amplify/utils';
 
@@ -122,22 +122,22 @@ export class AuthentificationService {
           if (err instanceof AuthError) {
             switch (err.name) {
               case 'UserAlreadyAuthenticatedException':
-                this.toastService.showInfoToast('sign up', 'vous êtes déjà inscrit');
+                this.toastService.showInfo('sign up', 'vous êtes déjà inscrit');
                 break;
               case 'UsernameExistsException':
-                this.toastService.showInfoToast('sign up', 'vous êtes déjà inscrit');
+                this.toastService.showInfo('sign up', 'vous êtes déjà inscrit');
                 break;
               case 'InvalidPasswordException':
-                this.toastService.showInfoToast('sign up', 'mot de passe non conforme');
+                this.toastService.showInfo('sign up', 'mot de passe non conforme');
                 break;
               default:
-                this.toastService.showInfoToast('sign up', err.message);
+                this.toastService.showInfo('sign up', err.message);
                 break;
             }
             this._mode = Process_flow.SIGN_IN;
             this._mode$.next(this._mode);
           } else {
-            this.toastService.showInfoToast('sign up', err.message);
+            this.toastService.showInfo('sign up', err.message);
           }
           reject(err);
         })
@@ -150,7 +150,7 @@ export class AuthentificationService {
               this.toastService.showSuccessToast('création compte', 'un mail vous a été envoyé');
               resolve({ isSignUpComplete: res.isSignUpComplete, nextStep: res.nextStep });
             } else {
-              this.toastService.showInfoToast('sign up', 'erreur imprévue');
+              this.toastService.showInfo('sign up', 'erreur imprévue');
               reject(res);
             }
           }
@@ -167,7 +167,7 @@ export class AuthentificationService {
         { global: true }  // est-ce que cela clear les données de l'utilisateur dans le local storage ?
       )
         .catch((err) => {
-          this.toastService.showInfoToast('sign out', err.message);
+          this.toastService.showInfo('sign out', err.message);
           reject(err);
         })
         .then((res) => {

@@ -1,0 +1,51 @@
+<div class="container">
+    <h5>Les articles</h5>
+    <!-- <div class="row"> -->
+    <div class="col-md-8 offset-2">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th class="col-5">title</th>
+                    <th class="col-2">template</th>
+                    <th class="col-1 text-center">en vedette</th>
+                    <th class="col-3">page</th>
+                    <!-- <th class="col-1 text-center">rang</th> -->
+                    <th class="col-1">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let article of articles" (click)="onEdit(article)">
+                    <!-- <td >...{{article.id | slice:-8}}</td> -->
+                    <td> {{article.title}}</td>
+                    <td>{{article.template }}</td>
+                    <td class="text-center">
+                        <input type="checkbox" [(ngModel)]="article.featured"
+                            (ngModelChange)="onFeaturedSelect(article)">
+                    </td>
+                    <td>
+                        <select class="form-select" [(ngModel)]="article.pageId"
+                            (ngModelChange)="onPageSelect(article)">
+                            <option *ngFor="let page of pages" [value]="page.id">{{page.link}}</option>
+                        </select>
+                    </td>
+                    <!-- <td>
+                        <input class="form-control  text-center" [(ngModel)]="article.rank"
+                            (ngModelChange)="onRankChange(article)">
+                    </td> -->
+                    <td>
+                        <div class=" btn-group role=group">
+                            <button class="btn btn-sm btn-warning ms-1" (click)="onDelete(article.id!)">delete</button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <button class="btn btn-sm btn-primary" (click)="onAdd()">Ajout</button>
+    </div>
+    <br>
+    <div *ngIf="articleToEdit" class="col-md-12">
+        <app-article [articleToEdit]="articleToEdit" (articleUpdated)="onDone()"></app-article>
+        <!-- </div> -->
+    </div>
+
+</div>
