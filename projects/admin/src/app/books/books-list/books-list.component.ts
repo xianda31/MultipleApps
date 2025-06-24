@@ -10,11 +10,10 @@ import { map, Subscription, switchMap, tap, catchError, of } from 'rxjs';
 
 type Fields = 'date' | 'classe' | 'transaction' | 'montant' | 'tag'
 @Component({
-  selector: 'app-books-list',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './books-list.component.html',
-  styleUrl: './books-list.component.scss'
+    selector: 'app-books-list',
+    imports: [CommonModule, FormsModule],
+    templateUrl: './books-list.component.html',
+    styleUrl: './books-list.component.scss'
 })
 export class BooksListComponent implements OnDestroy {
   loaded: boolean = false;

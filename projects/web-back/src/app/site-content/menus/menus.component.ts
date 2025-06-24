@@ -6,11 +6,10 @@ import { PagesComponent } from "../pages/pages.component";
 import { SiteLayoutService } from '../../../../../common/services/site-layout.service';
 
 @Component({
-  selector: 'app-menus',
-  standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
-  templateUrl: './menus.component.html',
-  styleUrl: './menus.component.scss'
+    selector: 'app-menus',
+    imports: [CommonModule, FormsModule, ReactiveFormsModule],
+    templateUrl: './menus.component.html',
+    styleUrl: './menus.component.scss'
 })
 export class MenusComponent {
   menus: Menu[] = [];

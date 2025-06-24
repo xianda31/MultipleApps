@@ -5,11 +5,10 @@ import { signOut } from 'aws-amplify/auth';
 import { AdminInComponent } from '../../../../common/authentification/admin-in/admin-in.component';
 
 @Component({
-  selector: 'app-navbar',
-  standalone: true,
-  imports: [CommonModule, RouterLink, AdminInComponent],
-  templateUrl: './navbar.component.html',
-  styleUrl: './navbar.component.scss'
+    selector: 'app-navbar',
+    imports: [CommonModule, RouterLink, AdminInComponent],
+    templateUrl: './navbar.component.html',
+    styleUrl: './navbar.component.scss'
 })
 export class NavbarComponent {
   async logOut() {

@@ -11,11 +11,10 @@ import { combineLatest, switchMap } from 'rxjs';
 import { FinancialReportService } from '../../financial_report.service';
 
 @Component({
-  selector: 'app-cash-box-status',
-  standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
-  templateUrl: './cash-box-status.component.html',
-  styleUrl: './cash-box-status.component.scss'
+    selector: 'app-cash-box-status',
+    imports: [CommonModule, FormsModule, ReactiveFormsModule],
+    templateUrl: './cash-box-status.component.html',
+    styleUrl: './cash-box-status.component.scss'
 })
 export class CashBoxStatusComponent {
 

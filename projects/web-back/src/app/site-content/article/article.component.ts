@@ -10,11 +10,10 @@ import { S3Item } from '../../../../../common/file.interface'; // Import the S3i
 import { ToastService } from '../../../../../common/toaster/toast.service';
 
 @Component({
-  selector: 'app-article',
-  standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RenderArticleComponent],
-  templateUrl: './article.component.html',
-  styleUrl: './article.component.scss'
+    selector: 'app-article',
+    imports: [CommonModule, FormsModule, ReactiveFormsModule, RenderArticleComponent],
+    templateUrl: './article.component.html',
+    styleUrl: './article.component.scss'
 })
 export class ArticleComponent implements OnChanges {
   id: string = '';

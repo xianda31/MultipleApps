@@ -9,11 +9,10 @@ import { ArticleComponent } from "../article/article.component";
 import { ToastService } from '../../../../../common/toaster/toast.service';
 
 @Component({
-  selector: 'app-articles',
-  standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, ArticleComponent],
-  templateUrl: './articles.component.html',
-  styleUrl: './articles.component.scss'
+    selector: 'app-articles',
+    imports: [CommonModule, FormsModule, ReactiveFormsModule, ArticleComponent],
+    templateUrl: './articles.component.html',
+    styleUrl: './articles.component.scss'
 })
 export class ArticlesComponent implements OnDestroy {
   articles: Article[] = [];

@@ -7,11 +7,10 @@ import { CommonModule } from '@angular/common';
 import { Player } from '../../../../../common/ffb/interface/tournament_teams.interface';
 
 @Component({
-  selector: 'app-team-registration',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, InputPlayerComponent],
-  templateUrl: './team-registration.component.html',
-  styleUrl: './team-registration.component.scss'
+    selector: 'app-team-registration',
+    imports: [CommonModule, ReactiveFormsModule, FormsModule, InputPlayerComponent],
+    templateUrl: './team-registration.component.html',
+    styleUrl: './team-registration.component.scss'
 })
 export class TeamRegistrationComponent implements OnInit {
   @Input() isolated_player!: Player;

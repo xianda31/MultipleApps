@@ -5,11 +5,10 @@ import { RouterLink } from '@angular/router';
 import { Group_icons, Group_names } from '../../../../common/authentification/group.interface';
 
 @Component({
-  selector: 'app-home',
-  standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
-  templateUrl: './home.component.html',
-  styleUrl: './home.component.scss'
+    selector: 'app-home',
+    imports: [CommonModule, FormsModule, ReactiveFormsModule],
+    templateUrl: './home.component.html',
+    styleUrl: './home.component.scss'
 })
 export class HomeComponent {
 

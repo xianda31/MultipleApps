@@ -15,11 +15,10 @@ import { GetNewbeeComponent } from '../modals/get-newbee/get-newbee.component';
 import { ToastService } from '../../../../common/toaster/toast.service';
 
 @Component({
-  selector: 'app-members',
-  standalone: true,
-  imports: [FormsModule, CommonModule, ReactiveFormsModule, UpperCasePipe, PhonePipe, InputPlayerComponent],
-  templateUrl: './members.component.html',
-  styleUrl: './members.component.scss'
+    selector: 'app-members',
+    imports: [FormsModule, CommonModule, ReactiveFormsModule, UpperCasePipe, PhonePipe, InputPlayerComponent],
+    templateUrl: './members.component.html',
+    styleUrl: './members.component.scss'
 })
 export class MembersComponent implements OnInit {
   members: Member[] = [];

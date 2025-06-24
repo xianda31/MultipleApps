@@ -4,18 +4,17 @@ import { Menu } from '../../../../../common/menu.interface';
 import { CommonModule } from '@angular/common';
 
 @Component({
-  selector: 'app-input-menu',
-  standalone: true,
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => InputMenuComponent),
-      multi: true
-    }
-  ],
-  imports: [CommonModule, FormsModule],
-  templateUrl: './input-menu.component.html',
-  styleUrl: './input-menu.component.scss'
+    selector: 'app-input-menu',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => InputMenuComponent),
+            multi: true
+        }
+    ],
+    imports: [CommonModule, FormsModule],
+    templateUrl: './input-menu.component.html',
+    styleUrl: './input-menu.component.scss'
 })
 export class InputMenuComponent implements ControlValueAccessor {
   @Input() menus: Menu[] = [];

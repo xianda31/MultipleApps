@@ -7,11 +7,10 @@ import { SiteLayoutService } from '../../../../../common/services/site-layout.se
 import { InputMenuComponent } from "../input-menu/input-menu.component";
 
 @Component({
-  selector: 'app-pages',
-  standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, InputMenuComponent],
-  templateUrl: './pages.component.html',
-  styleUrl: './pages.component.scss'
+    selector: 'app-pages',
+    imports: [CommonModule, FormsModule, ReactiveFormsModule, InputMenuComponent],
+    templateUrl: './pages.component.html',
+    styleUrl: './pages.component.scss'
 })
 export class PagesComponent {
 

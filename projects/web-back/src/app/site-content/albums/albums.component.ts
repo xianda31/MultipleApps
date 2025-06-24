@@ -7,11 +7,10 @@ import { CommonModule } from '@angular/common';
 import { FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 
 @Component({
-  selector: 'app-albums',
-  standalone: true,
-  imports: [ImgUploadComponent, ReplacePipe, CommonModule, FormsModule, ReactiveFormsModule],
-  templateUrl: './albums.component.html',
-  styleUrl: './albums.component.scss'
+    selector: 'app-albums',
+    imports: [ImgUploadComponent, ReplacePipe, CommonModule, FormsModule, ReactiveFormsModule],
+    templateUrl: './albums.component.html',
+    styleUrl: './albums.component.scss'
 })
 export class AlbumsComponent {
   album_name: string = '';

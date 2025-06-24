@@ -8,11 +8,10 @@ import { SystemDataService } from '../../../../../../common/services/system-data
 import { ImageSize } from '../../../../../../common/system-conf.interface';
 
 @Component({
-  selector: 'app-img-upload',
-  standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
-  templateUrl: './img-upload.component.html',
-  styleUrl: './img-upload.component.scss'
+    selector: 'app-img-upload',
+    imports: [CommonModule, FormsModule, ReactiveFormsModule],
+    templateUrl: './img-upload.component.html',
+    styleUrl: './img-upload.component.scss'
 })
 export class ImgUploadComponent {
   @Input() directory: string = '';

@@ -9,11 +9,10 @@ import { BackComponent } from '../../../../../../common/back/back.component';
 interface EntryValue { total: number, entries: BookEntry[] };
 
 @Component({
-  selector: 'app-debts-and-assets-details',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './debts-and-assets-details.component.html',
-  styleUrl: './debts-and-assets-details.component.scss'
+    selector: 'app-debts-and-assets-details',
+    imports: [CommonModule],
+    templateUrl: './debts-and-assets-details.component.html',
+    styleUrl: './debts-and-assets-details.component.scss'
 })
 export class DebtsAndAssetsDetailsComponent {
   dues: Map<string, EntryValue> = new Map();

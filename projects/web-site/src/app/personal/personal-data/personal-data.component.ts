@@ -8,11 +8,10 @@ import { AuthentificationService } from '../../../../../common/authentification/
 import { MembersService } from '../../../../../web-back/src/app/members/service/members.service';
 
 @Component({
-  selector: 'app-personal-data',
-  standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
-  templateUrl: './personal-data.component.html',
-  styleUrl: './personal-data.component.scss'
+    selector: 'app-personal-data',
+    imports: [CommonModule, FormsModule, ReactiveFormsModule],
+    templateUrl: './personal-data.component.html',
+    styleUrl: './personal-data.component.scss'
 })
 export class PersonalDataComponent implements OnInit {
   me: Member | null = null;

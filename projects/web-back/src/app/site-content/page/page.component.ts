@@ -19,11 +19,10 @@ import { FileService } from '../../../../../common/services/files.service';
 
 
 @Component({
-  selector: 'app-page',
-  standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, InputMenuComponent, DragDropModule, ArticleComponent],
-  templateUrl: './page.component.html',
-  styleUrl: './page.component.scss'
+    selector: 'app-page',
+    imports: [CommonModule, FormsModule, ReactiveFormsModule, InputMenuComponent, DragDropModule, ArticleComponent],
+    templateUrl: './page.component.html',
+    styleUrl: './page.component.scss'
 })
 export class PageComponent implements OnInit, OnChanges {
 

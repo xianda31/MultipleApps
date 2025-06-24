@@ -10,11 +10,10 @@ import { FileService } from '../../../../common/services/files.service';
 
 
 @Component({
-  selector: 'app-sys-conf',
-  standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
-  templateUrl: './sys-conf.component.html',
-  styleUrl: './sys-conf.component.scss'
+    selector: 'app-sys-conf',
+    imports: [CommonModule, FormsModule, ReactiveFormsModule],
+    templateUrl: './sys-conf.component.html',
+    styleUrl: './sys-conf.component.scss'
 })
 export class SysConfComponent {
 

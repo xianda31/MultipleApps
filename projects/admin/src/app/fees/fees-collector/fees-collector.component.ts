@@ -11,11 +11,10 @@ import { PdfService } from '../../../../../common/services/pdf.service';
 
 
 @Component({
-  selector: 'app-fees-collector',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
-  templateUrl: './fees-collector.component.html',
-  styleUrl: './fees-collector.component.scss'
+    selector: 'app-fees-collector',
+    imports: [CommonModule, ReactiveFormsModule, FormsModule],
+    templateUrl: './fees-collector.component.html',
+    styleUrl: './fees-collector.component.scss'
 })
 export class FeesCollectorComponent {
 

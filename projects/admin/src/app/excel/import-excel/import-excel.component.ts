@@ -14,11 +14,10 @@ import { Revenue_and_expense_definition } from '../../../../../common/system-con
 import { json } from 'd3';
 
 @Component({
-  selector: 'app-import-excel',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './import-excel.component.html',
-  styleUrl: './import-excel.component.scss'
+    selector: 'app-import-excel',
+    imports: [CommonModule, FormsModule],
+    templateUrl: './import-excel.component.html',
+    styleUrl: './import-excel.component.scss'
 })
 
 

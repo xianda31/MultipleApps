@@ -10,11 +10,10 @@ import { PageComponent } from '../page/page.component';
 import { FormsModule } from '@angular/forms';
 
 @Component({
-  selector: 'app-layout',
-  standalone: true,
-  imports: [CommonModule, FormsModule, DragDropModule, PageComponent], // Add DragDropModule to the imports array
-  templateUrl: './layout.component.html',
-  styleUrl: './layout.component.scss'
+    selector: 'app-layout',
+    imports: [CommonModule, FormsModule, DragDropModule, PageComponent], // Add DragDropModule to the imports array
+    templateUrl: './layout.component.html',
+    styleUrl: './layout.component.scss'
 })
 export class LayoutComponent implements OnDestroy {
   menus!: Menu[];

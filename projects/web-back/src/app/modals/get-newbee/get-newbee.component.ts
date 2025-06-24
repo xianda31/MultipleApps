@@ -4,11 +4,10 @@ import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
-  selector: 'app-get-newbee',
-  standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
-  templateUrl: './get-newbee.component.html',
-  styleUrl: './get-newbee.component.scss'
+    selector: 'app-get-newbee',
+    imports: [CommonModule, FormsModule, ReactiveFormsModule],
+    templateUrl: './get-newbee.component.html',
+    styleUrl: './get-newbee.component.scss'
 })
 export class GetNewbeeComponent {
   newbee!: FormGroup;

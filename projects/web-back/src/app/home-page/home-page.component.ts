@@ -5,11 +5,10 @@ import { RouterLink } from '@angular/router';
 import { RenderingModeEnum } from '../../../../common/menu.interface';
 
 @Component({
-  selector: 'app-home-page',
-  standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink],
-  templateUrl: './home-page.component.html',
-  styleUrl: './home-page.component.scss'
+    selector: 'app-home-page',
+    imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink],
+    templateUrl: './home-page.component.html',
+    styleUrl: './home-page.component.scss'
 })
 export class HomePageComponent {
   renderMode = RenderingModeEnum;

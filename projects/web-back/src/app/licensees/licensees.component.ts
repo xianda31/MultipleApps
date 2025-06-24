@@ -6,11 +6,10 @@ import { LicenseesService } from './services/licensees.service';
 import { MembersService } from '../members/service/members.service';
 
 @Component({
-  selector: 'app-members',
-  standalone: true,
-  imports: [ReactiveFormsModule, FormsModule, CommonModule, UpperCasePipe],
-  templateUrl: './licensees.component.html',
-  styleUrl: './licensees.component.scss'
+    selector: 'app-members',
+    imports: [ReactiveFormsModule, FormsModule, CommonModule, UpperCasePipe],
+    templateUrl: './licensees.component.html',
+    styleUrl: './licensees.component.scss'
 })
 export class LicenseesComponent implements OnInit {
   licensees!: FFB_licensee[];

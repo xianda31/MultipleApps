@@ -5,12 +5,11 @@ import { CommonModule } from '@angular/common';
 import { ToastComponent } from '../toast/toast.component';
 
 @Component({
-  selector: 'app-toaster',
-  standalone: true,
-  imports: [CommonModule, ToastComponent],
-  templateUrl: './toaster.component.html',
-  styleUrls: ['./toaster.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-toaster',
+    imports: [CommonModule, ToastComponent],
+    templateUrl: './toaster.component.html',
+    styleUrls: ['./toaster.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ToasterComponent implements OnInit {
   currentToasts: ToastEvent[] = [];

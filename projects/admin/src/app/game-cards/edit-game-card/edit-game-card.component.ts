@@ -11,11 +11,10 @@ interface Stamp_place {
 } 
 
 @Component({
-  selector: 'app-edit-game-card',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './edit-game-card.component.html',
-  styleUrl: './edit-game-card.component.scss'
+    selector: 'app-edit-game-card',
+    imports: [CommonModule],
+    templateUrl: './edit-game-card.component.html',
+    styleUrl: './edit-game-card.component.scss'
 })
 export class EditGameCardComponent implements OnInit {
   @Input() card!: GameCard;

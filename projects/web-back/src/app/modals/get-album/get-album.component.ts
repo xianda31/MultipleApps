@@ -7,11 +7,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
-  selector: 'app-get-album',
-  standalone: true,
-  imports: [CommonModule, ReplacePipe, FormsModule, ReactiveFormsModule],
-  templateUrl: './get-album.component.html',
-  styleUrl: './get-album.component.scss'
+    selector: 'app-get-album',
+    imports: [CommonModule, ReplacePipe, FormsModule, ReactiveFormsModule],
+    templateUrl: './get-album.component.html',
+    styleUrl: './get-album.component.scss'
 })
 export class GetAlbumComponent {
   @Input() folders!: Set<string>;

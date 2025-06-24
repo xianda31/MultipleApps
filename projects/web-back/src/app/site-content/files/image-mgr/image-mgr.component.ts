@@ -11,11 +11,10 @@ import { Article } from '../../../../../../common/menu.interface';
 
 
 @Component({
-  selector: 'app-image-mgr',
-  standalone: true,
-  imports: [CommonModule, ImgUploadComponent, ReplacePipe],
-  templateUrl: './image-mgr.component.html',
-  styleUrl: './image-mgr.component.scss'
+    selector: 'app-image-mgr',
+    imports: [CommonModule, ImgUploadComponent, ReplacePipe],
+    templateUrl: './image-mgr.component.html',
+    styleUrl: './image-mgr.component.scss'
 })
 export class ImageMgrComponent implements OnInit {
   S3Items!: S3Item[];
