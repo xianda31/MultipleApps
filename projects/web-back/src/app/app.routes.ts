@@ -9,7 +9,7 @@ import { ArticlesComponent } from './site-content/articles/articles.component';
 import { ArticleComponent } from './site-content/article/article.component';
 import { ImageMgrComponent } from './site-content/files/image-mgr/image-mgr.component';
 import { AlbumsComponent } from './site-content/albums/albums.component';
-import { SysConfComponent } from './sys-conf/sys-conf.component';
+import { SysConfComponent } from '../../../admin/src/app/sys-conf/sys-conf.component';
 
 export const routes: Routes = [
     { path: 'auth', component: AuthComponent },

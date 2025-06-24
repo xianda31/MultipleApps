@@ -21,7 +21,7 @@
     "@angular/router": "^19.2.14",
     "@aws-amplify/ui-angular": "^5.0.18",
     "@aws-sdk/client-cognito-identity-provider": "^3.651.0",
-    "@ng-bootstrap/ng-bootstrap": "^17.0.1",
+    "@ng-bootstrap/ng-bootstrap": "^18.0.0",
     "@popperjs/core": "^2.11.8",
     "@swimlane/ngx-charts": "^22.0.0-alpha.1",
     "@types/bootstrap": "^5.2.10",
