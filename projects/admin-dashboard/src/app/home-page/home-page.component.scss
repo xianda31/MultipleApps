@@ -1,0 +1,45 @@
+.bkgrd {
+    position: absolute;
+    height: 100vh-17vh;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.bkgrd::before {
+    content: "";
+    background-image: url("../../../public/images/admin-cockpit.jpeg");
+    background-size: cover;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0.35;
+    z-index: -1;
+}
+
+.centered {
+    width: 100%;
+    height: 50%;
+    // background-color: red;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: auto;
+}
+
+.card {
+    background-color: #f8f9fa;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+    opacity: 0.6;
+}
+
+.card:hover {
+    opacity: 1;
+}

@@ -3,15 +3,15 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "site-conf": {
+    "admin-dashboard": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
           "style": "scss"
         }
       },
-      "root": "projects/site-conf",
-      "sourceRoot": "projects/site-conf/src",
+      "root": "projects/admin-dashboard",
+      "sourceRoot": "projects/admin-dashboard/src",
       "prefix": "app",
       "architect": {
         "build": {
@@ -33,23 +33,23 @@
               "style-dictionary/lib/utils/flattenProperties.js",
               "style-dictionary/lib/utils/deepExtend.js"
             ],
-            "outputPath": "dist/site-conf",
-            "index": "projects/site-conf/src/index.html",
-            "browser": "projects/site-conf/src/main.ts",
+            "outputPath": "dist/admin-dashboard",
+            "index": "projects/admin-dashboard/src/index.html",
+            "browser": "projects/admin-dashboard/src/main.ts",
             "polyfills": [
               "zone.js",
               "@angular/localize/init",
-              "projects/site-conf/src/polyfills.ts"
+              "projects/admin-dashboard/src/polyfills.ts"
             ],
-            "tsConfig": "projects/site-conf/tsconfig.app.json",
+            "tsConfig": "projects/admin-dashboard/tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "assets": [
               {
                 "glob": "**/*",
-                "input": "projects/site-conf/public"
+                "input": "projects/admin-dashboard/public"
               }
             ],
-            "styles": ["projects/site-conf/src/styles.scss"],
+            "styles": ["projects/admin-dashboard/src/styles.scss"],
             "scripts": []
           },
           "configurations": {
@@ -82,8 +82,8 @@
               "sourceMap": true,
               "fileReplacements": [
                 {
-                  "replace": "projects/site-conf/src/environments/environment.ts",
-                  "with": "projects/site-conf/src/environments/environment.development.ts"
+                  "replace": "projects/admin-dashboard/src/environments/environment.ts",
+                  "with": "projects/admin-dashboard/src/environments/environment.development.ts"
                 }
               ]
             }
@@ -94,10 +94,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "site-conf:build:production"
+              "buildTarget": "admin-dashboard:build:production"
             },
             "development": {
-              "buildTarget": "site-conf:build:development"
+              "buildTarget": "admin-dashboard:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -113,15 +113,15 @@
               "zone.js/testing",
               "@angular/localize/init"
             ],
-            "tsConfig": "projects/site-conf/tsconfig.spec.json",
+            "tsConfig": "projects/admin-dashboard/tsconfig.spec.json",
             "inlineStyleLanguage": "scss",
             "assets": [
               {
                 "glob": "**/*",
-                "input": "projects/site-conf/public"
+                "input": "projects/admin-dashboard/public"
               }
             ],
-            "styles": ["projects/site-conf/src/styles.scss"],
+            "styles": ["projects/admin-dashboard/src/styles.scss"],
             "scripts": []
           }
         }
@@ -243,15 +243,15 @@
         }
       }
     },
-    "admin": {
+    "cashier": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
           "style": "scss"
         }
       },
-      "root": "projects/admin",
-      "sourceRoot": "projects/admin/src",
+      "root": "projects/cashier",
+      "sourceRoot": "projects/cashier/src",
       "prefix": "app",
       "architect": {
         "build": {
@@ -284,20 +284,20 @@
               "rgbcolor",
               "raf"
             ],
-            "outputPath": "dist/admin",
-            "index": "projects/admin/src/index.html",
-            "browser": "projects/admin/src/main.ts",
+            "outputPath": "dist/cashier",
+            "index": "projects/cashier/src/index.html",
+            "browser": "projects/cashier/src/main.ts",
             "polyfills": [
               "zone.js",
               "@angular/localize/init",
-              "projects/admin/src/polyfills.ts"
+              "projects/cashier/src/polyfills.ts"
             ],
-            "tsConfig": "projects/admin/tsconfig.app.json",
+            "tsConfig": "projects/cashier/tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "assets": [
               {
                 "glob": "**/*",
-                "input": "projects/admin/public"
+                "input": "projects/cashier/public"
               }
             ],
             "styles": [
@@ -342,10 +342,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "admin:build:production"
+              "buildTarget": "cashier:build:production"
             },
             "development": {
-              "buildTarget": "admin:build:development"
+              "buildTarget": "cashier:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -357,15 +357,15 @@
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
             "polyfills": ["zone.js", "zone.js/testing"],
-            "tsConfig": "projects/admin/tsconfig.spec.json",
+            "tsConfig": "projects/cashier/tsconfig.spec.json",
             "inlineStyleLanguage": "scss",
             "assets": [
               {
                 "glob": "**/*",
-                "input": "projects/admin/public"
+                "input": "projects/cashier/public"
               }
             ],
-            "styles": ["projects/admin/src/styles.scss"],
+            "styles": ["projects/cashier/src/styles.scss"],
             "scripts": []
           }
         }

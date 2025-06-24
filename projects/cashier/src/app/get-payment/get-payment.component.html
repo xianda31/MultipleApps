@@ -1,0 +1,52 @@
+<form [formGroup]="saleForm">
+    <div class="modal-header">
+        <!-- <div class="col-12"> -->
+        <h5>Mode de paiement</h5>
+        <div class="col  text-end">
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                (click)="close()"></button>
+        </div>
+        <!-- </div> -->
+    </div>
+
+    <div class="modal-body">
+        <!-- <div class="row"> -->
+        <div class="col col-md-6 mb-3">
+            <select id="payment_mode" class="form-select form-select-sm" formControlName="payment_mode">
+                <option [value]="paymentMode.CASH">Espèce</option>
+                <option [value]="paymentMode.CHEQUE">Chèque</option>
+                <option [value]="paymentMode.TRANSFER">Virement</option>
+                <option [value]="paymentMode.DEBT">Dette</option>
+            </select>
+        </div>
+        <div *ngIf="payment_mode.value === paymentMode.CHEQUE" class="col-sm-12  col-md-6 mb-3">
+            <div class="row">
+
+                <div class="col-6 px-2">
+                    <label for="bank" class="form-label">Banque</label>
+                    <select list="banks" type="text" id="bank_names" class="form-select form-select-sm"
+                        formControlName="bank">
+                        <option id="bank_names" *ngFor="let bank of banks " [value]="bank.key">
+                            {{bank.name}}
+                        </option>
+                    </select>
+                    <div *ngIf="bank.touched && bank.invalid " class="text-danger">
+                        le nom de la banque doit être renseigné.
+                    </div>
+                </div>
+
+
+                <div class="col-6 px-2">
+                    <label for="cheque_no" class="form-label">N° Chèque</label>
+                    <input type="text" id="cheque_no" class="form-control form-control-sm" formControlName="cheque_no">
+                    <div *ngIf="cheque_no.touched && cheque_no.invalid " class="text-danger">
+                        <span *ngIf="cheque_no.errors?.['required']">le n° de chèque doit être renseigné. </span>
+                        <span *ngIf="cheque_no.errors?.['pattern']">le n° de chèque doit avoir 6 digits. </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button [disabled]="!saleForm.valid && payment_mode.value === 'check'" type="submit"
+            class="btn btn-primary btn-sm align-self-end" (click)="got_it()">OK</button>
+    </div>
+</form>

@@ -5,7 +5,7 @@ import { first, last } from 'rxjs';
 import { auth } from '../../../../../../amplify/auth/resource';
 import { CommonModule } from '@angular/common';
 import { AuthentificationService } from '../../../../../common/authentification/authentification.service';
-import { MembersService } from '../../../../../web-back/src/app/members/service/members.service';
+import { MembersService } from '../../../../../admin-dashboard/src/app/members/service/members.service';
 
 @Component({
   selector: 'app-personal-data',
