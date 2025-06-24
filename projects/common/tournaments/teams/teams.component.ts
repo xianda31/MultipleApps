@@ -15,11 +15,10 @@ import { Member } from '../../member.interface';
 // interface LicensePair { player1: string, player2: string }
 
 @Component({
-  selector: 'app-teams',
-  standalone: true,
-  imports: [UpperCasePipe, CommonModule, FormsModule, ReactiveFormsModule, InputPlayerLicenseComponent],
-  templateUrl: './teams.component.html',
-  styleUrl: './teams.component.scss'
+    selector: 'app-teams',
+    imports: [UpperCasePipe, CommonModule, FormsModule, ReactiveFormsModule, InputPlayerLicenseComponent],
+    templateUrl: './teams.component.html',
+    styleUrl: './teams.component.scss'
 })
 export class TeamsComponent implements OnInit {
 

@@ -10,11 +10,10 @@ import { switchMap, tap } from 'rxjs';
 
 
 @Component({
-  selector: 'app-expense-and-revenue',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './expense-and-revenue.component.html',
-  styleUrl: './expense-and-revenue.component.scss'
+    selector: 'app-expense-and-revenue',
+    imports: [CommonModule],
+    templateUrl: './expense-and-revenue.component.html',
+    styleUrl: './expense-and-revenue.component.scss'
 })
 export class ExpenseAndRevenueComponent {
 

@@ -18,11 +18,10 @@ import { AuthentificationService } from '../../../../common/authentification/aut
 
 
 @Component({
-  selector: 'app-shop',
-  standalone: true,
-  imports: [ReactiveFormsModule, CommonModule, FormsModule, InputMemberComponent, CartComponent],
-  templateUrl: './shop.component.html',
-  styleUrl: './shop.component.scss'
+    selector: 'app-shop',
+    imports: [ReactiveFormsModule, CommonModule, FormsModule, InputMemberComponent, CartComponent],
+    templateUrl: './shop.component.html',
+    styleUrl: './shop.component.scss'
 })
 export class ShopComponent {
   members!: Member[];

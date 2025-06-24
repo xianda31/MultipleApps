@@ -17,11 +17,10 @@ const PSW_PATTERN = '^(?!\\s+)(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[\\^$*.[\\]{
 const GROUP_ICONS = Group_icons;
 
 @Component({
-  selector: 'app-admin-in',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
-  templateUrl: './admin-in.component.html',
-  styleUrl: './admin-in.component.scss'
+    selector: 'app-admin-in',
+    imports: [CommonModule, ReactiveFormsModule, FormsModule],
+    templateUrl: './admin-in.component.html',
+    styleUrl: './admin-in.component.scss'
 })
 export class AdminInComponent {
 

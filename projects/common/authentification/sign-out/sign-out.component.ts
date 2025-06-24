@@ -3,11 +3,10 @@ import { Router } from '@angular/router';
 import { AuthentificationService } from '../authentification.service';
 
 @Component({
-  selector: 'app-sign-out',
-  standalone: true,
-  imports: [],
-  templateUrl: './sign-out.component.html',
-  styleUrl: './sign-out.component.scss'
+    selector: 'app-sign-out',
+    imports: [],
+    templateUrl: './sign-out.component.html',
+    styleUrl: './sign-out.component.scss'
 })
 export class SignOutComponent implements OnInit {
 

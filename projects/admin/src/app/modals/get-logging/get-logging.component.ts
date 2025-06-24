@@ -8,11 +8,10 @@ import { delay, from, map, Observable, of, switchMap } from 'rxjs';
 import { Member } from '../../../../../common/member.interface';
 
 @Component({
-  selector: 'app-get-logging',
-  standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
-  templateUrl: './get-logging.component.html',
-  styleUrl: './get-logging.component.scss'
+    selector: 'app-get-logging',
+    imports: [CommonModule, FormsModule, ReactiveFormsModule],
+    templateUrl: './get-logging.component.html',
+    styleUrl: './get-logging.component.scss'
 })
 export class GetLoggingComponent implements OnInit {
   @Input() email: string = '';

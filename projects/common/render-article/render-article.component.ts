@@ -7,11 +7,10 @@ import { HeadPipe } from '../pipes/trail.pipe';
 import { TrailPipe } from '../pipes/head.pipe';
 
 @Component({
-  selector: 'app-render-article',
-  standalone: true,
-  imports: [CommonModule, ReplacePipe, HeadPipe, TrailPipe],
-  templateUrl: './render-article.component.html',
-  styleUrl: './render-article.component.scss'
+    selector: 'app-render-article',
+    imports: [CommonModule, ReplacePipe, HeadPipe, TrailPipe],
+    templateUrl: './render-article.component.html',
+    styleUrl: './render-article.component.scss'
 })
 export class RenderArticleComponent implements OnChanges {
   @Input() article!: Article;

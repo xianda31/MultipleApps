@@ -14,12 +14,11 @@ import { FinancialReportService } from '../financial_report.service';
 import { Balance_sheet } from '../../../../common/balance.interface';
 
 @Component({
-  selector: 'app-bank-reconciliation',
-  standalone: true,
-  encapsulation: ViewEncapsulation.None,   // nécessaire pour que les tooltips fonctionnent
-  imports: [CommonModule, FormsModule, NgbModule],
-  templateUrl: './bank-reconciliation.component.html',
-  styleUrl: './bank-reconciliation.component.scss'
+    selector: 'app-bank-reconciliation',
+    encapsulation: ViewEncapsulation.None, // nécessaire pour que les tooltips fonctionnent
+    imports: [CommonModule, FormsModule, NgbModule],
+    templateUrl: './bank-reconciliation.component.html',
+    styleUrl: './bank-reconciliation.component.scss'
 })
 export class BankReconciliationComponent {
   truncature = '1.2-2';// '1.2-2';  //

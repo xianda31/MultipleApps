@@ -3,11 +3,10 @@ import { Component, Input } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
-  selector: 'app-get-confirmation',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './get-confirmation.component.html',
-  styleUrl: './get-confirmation.component.scss'
+    selector: 'app-get-confirmation',
+    imports: [CommonModule],
+    templateUrl: './get-confirmation.component.html',
+    styleUrl: './get-confirmation.component.scss'
 })
 export class GetConfirmationComponent {
   @Input() title: string = '';

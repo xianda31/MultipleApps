@@ -11,11 +11,10 @@ import { BackComponent } from '../../../../../common/back/back.component';
 
 
 @Component({
-  selector: 'app-expense-and-revenue-details',
-  standalone: true,
-  imports: [CommonModule, BackComponent],
-  templateUrl: './expense-and-revenue-details.component.html',
-  styleUrl: './expense-and-revenue-details.component.scss'
+    selector: 'app-expense-and-revenue-details',
+    imports: [CommonModule, BackComponent],
+    templateUrl: './expense-and-revenue-details.component.html',
+    styleUrl: './expense-and-revenue-details.component.scss'
 })
 export class ExpenseAndRevenueDetailsComponent {
   key: string = '';

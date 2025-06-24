@@ -16,11 +16,10 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { BooksEditorComponent } from "../books/books-edit/books-editor.component";
 
 @Component({
-  selector: 'app-buy',
-  standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbTooltipModule,  BooksEditorComponent],
-  templateUrl: './buy.component.html',
-  styleUrl: './buy.component.scss'
+    selector: 'app-buy',
+    imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbTooltipModule, BooksEditorComponent],
+    templateUrl: './buy.component.html',
+    styleUrl: './buy.component.scss'
 })
 export class BuyComponent implements OnInit {
   transaction_classes = [TRANSACTION_CLASS.EXPENSE_FOR_MEMBER, TRANSACTION_CLASS.OTHER_EXPENSE, TRANSACTION_CLASS.OTHER_REVENUE];

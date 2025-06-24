@@ -9,11 +9,10 @@ import Toast from 'bootstrap/js/dist/toast';
 // import { Toast } from 'bootstrap';
 
 @Component({
-  selector: 'app-toast',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './toast.component.html',
-  styleUrls: ['./toast.component.scss'],
+    selector: 'app-toast',
+    imports: [CommonModule],
+    templateUrl: './toast.component.html',
+    styleUrls: ['./toast.component.scss']
 })
 export class ToastComponent implements OnChanges {
   @Output() disposeEvent = new EventEmitter();

@@ -11,11 +11,10 @@ import { data } from '../../../../amplify/data/resource';
 import { ReplacePipe } from "../../pipes/replace.pipe";
 
 @Component({
-  selector: 'app-tournaments',
-  standalone: true,
-  imports: [RouterModule, CommonModule, TeamsComponent],
-  templateUrl: './tournaments.component.html',
-  styleUrl: './tournaments.component.scss'
+    selector: 'app-tournaments',
+    imports: [RouterModule, CommonModule, TeamsComponent],
+    templateUrl: './tournaments.component.html',
+    styleUrl: './tournaments.component.scss'
 })
 export class TournamentsComponent implements OnInit, OnDestroy {
 

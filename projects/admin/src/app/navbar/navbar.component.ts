@@ -7,11 +7,10 @@ import { Group_priorities } from '../../../../common/authentification/group.inte
 import { ToastService } from '../../../../common/toaster/toast.service';
 
 @Component({
-  selector: 'app-navbar',
-  standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, ReactiveFormsModule, AdminInComponent],
-  templateUrl: './navbar.component.html',
-  styleUrl: './navbar.component.scss'
+    selector: 'app-navbar',
+    imports: [CommonModule, RouterLink, FormsModule, ReactiveFormsModule, AdminInComponent],
+    templateUrl: './navbar.component.html',
+    styleUrl: './navbar.component.scss'
 })
 export class NavbarComponent implements OnInit {
   @Input() season: string = '';
