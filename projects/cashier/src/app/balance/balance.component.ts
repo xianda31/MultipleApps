@@ -82,7 +82,7 @@ due: 'dettes'|'avoirs' = 'dettes';
     this.balance_error = this.Round(this.balance_board.delta.actif_total - this.trading_result);
     if (this.balance_error !== 0) {
       console.log('incohérence entre résultat et bilan', this.balance_error, this.balance_board.delta.actif_total, this.trading_result);
-      this.toastService.showWarning('consolidation financière', 'incohérence entre résultat et bilan');
+      this.toastService.showWarningToast('consolidation financière', 'incohérence entre résultat et bilan');
     }
   }
 

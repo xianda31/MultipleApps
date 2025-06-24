@@ -54,7 +54,7 @@ export class ShopComponent {
     private transactionService: TransactionService,
     private productService: ProductService,
     private systemDataService: SystemDataService,
-    private auth: AuthentificationService,
+    private auth : AuthentificationService,
   ) {
     this.session = {
       season: '',
@@ -81,7 +81,7 @@ export class ShopComponent {
 
     this.auth.logged_member$.subscribe((member) => {
       this.logged_member = member;
-      this.cartService.setSeller(member?.firstname ?? 'unknown');
+      this.cartService.setSeller( member?.firstname ?? 'unknown');
     });
 
 
@@ -94,20 +94,16 @@ export class ShopComponent {
 
       this.debt_amount = await this.find_debt(buyer);
       if (this.debt_amount !== 0) {
-        this.toastService.showWarning('dette', 'cette personne a une dette de ' + this.debt_amount.toFixed(2) + ' €');
+        this.toastService.showWarningToast('dette', 'cette personne a une dette de ' + this.debt_amount.toFixed(2) + ' €');
         this.cartService.setDebt(buyer.lastname + ' ' + buyer.firstname, this.debt_amount);
       }
 
       this.asset_amount = await this.find_assets(buyer);
       if (this.asset_amount !== 0) {
-        this.toastService.showInfo('avoir', 'cette personne a un avoir de ' + this.asset_amount.toFixed(2) + ' €');
+        this.toastService.showInfoToast('avoir', 'cette personne a un avoir de ' + this.asset_amount.toFixed(2) + ' €');
         this.cartService.setAsset(buyer.lastname + ' ' + buyer.firstname, this.asset_amount);
       }
 
-      if (!(buyer.license_status === 'paied' || buyer.is_sympathisant)) {
-        this.toastService.showWarning('licence et adhésion', 'cette personne n\'est pas à jour de sa licence ou de son adhésion');
-
-      }
     });
 
   }
@@ -115,7 +111,7 @@ export class ShopComponent {
   on_product_click(product: Product) {
 
     if (!this.buyerForm.valid) {
-      this.toastService.showWarning('saisie achat', 'selectionner un acheteur');
+      this.toastService.showWarningToast('saisie achat', 'selectionner un acheteur');
       return;
     }
 
@@ -134,7 +130,7 @@ export class ShopComponent {
     let full_name = this.membersService.first_then_last_name(this.buyer!);
     this.cartService.save_sale(this.session, this.buyer!)
       .then(() => {
-        this.toastService.showSuccess('vente à ' + full_name, (this.debt_amount > 0) ? 'achats et dette enregistrés' : 'achats enregistrés');
+        this.toastService.showSuccess('vente à '+ full_name, (this.debt_amount > 0) ? 'achats et dette enregistrés' : 'achats enregistrés');
       })
       .catch((error) => {
         console.error('error saving sale', error);

@@ -122,22 +122,22 @@ export class AuthentificationService {
           if (err instanceof AuthError) {
             switch (err.name) {
               case 'UserAlreadyAuthenticatedException':
-                this.toastService.showInfo('sign up', 'vous êtes déjà inscrit');
+                this.toastService.showInfoToast('sign up', 'vous êtes déjà inscrit');
                 break;
               case 'UsernameExistsException':
-                this.toastService.showInfo('sign up', 'vous êtes déjà inscrit');
+                this.toastService.showInfoToast('sign up', 'vous êtes déjà inscrit');
                 break;
               case 'InvalidPasswordException':
-                this.toastService.showInfo('sign up', 'mot de passe non conforme');
+                this.toastService.showInfoToast('sign up', 'mot de passe non conforme');
                 break;
               default:
-                this.toastService.showInfo('sign up', err.message);
+                this.toastService.showInfoToast('sign up', err.message);
                 break;
             }
             this._mode = Process_flow.SIGN_IN;
             this._mode$.next(this._mode);
           } else {
-            this.toastService.showInfo('sign up', err.message);
+            this.toastService.showInfoToast('sign up', err.message);
           }
           reject(err);
         })
@@ -150,7 +150,7 @@ export class AuthentificationService {
               this.toastService.showSuccess('création compte', 'un mail vous a été envoyé');
               resolve({ isSignUpComplete: res.isSignUpComplete, nextStep: res.nextStep });
             } else {
-              this.toastService.showInfo('sign up', 'erreur imprévue');
+              this.toastService.showInfoToast('sign up', 'erreur imprévue');
               reject(res);
             }
           }
@@ -167,7 +167,7 @@ export class AuthentificationService {
         { global: true }  // est-ce que cela clear les données de l'utilisateur dans le local storage ?
       )
         .catch((err) => {
-          this.toastService.showInfo('sign out', err.message);
+          this.toastService.showInfoToast('sign out', err.message);
           reject(err);
         })
         .then((res) => {

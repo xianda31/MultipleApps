@@ -496,11 +496,11 @@ export class BooksEditorComponent {
     };
 
     if (!this.book_entry_balanced(booking)) {
-      this.toastService.showWarning('erreur', 'total des dépenses différent du total financier');
+      this.toastService.showWarningToast('erreur', 'total des dépenses différent du total financier');
       return;
     }
     if (!this.negative_number_acceptable(booking)) {
-      this.toastService.showWarning('erreur', 'montant négatif non autorisé');
+      this.toastService.showWarningToast('erreur', 'montant négatif non autorisé');
       return;
     }
 
