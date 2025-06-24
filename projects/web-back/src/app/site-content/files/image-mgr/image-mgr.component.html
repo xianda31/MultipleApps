@@ -1,0 +1,31 @@
+<div *ngIf="S3Items" class="container">
+    <h5>La base d'images pour illustration des articles</h5>
+    <div class="col-md-6 ">
+        ajouter une image à la collection :
+        <app-img-upload directory="thumbnails/" (uploaded)="addItem($event)"></app-img-upload>
+    </div>
+
+    <div class="card p-3">
+        <div class="row row-cols-4 row-cols-md-6 ">
+            <div class="col" *ngFor="let item of S3Items  ; let i = index">
+                <div class="position-relative">
+                    <img [src]="item.url | async" [alt]="item.path" class="img-fluid">
+                    <span class="badge ">
+                        <!-- <span class="visually-hidden">New alerts</span> -->
+                        <i (click)="onDelete(item)" class="bi bi-trash trash"></i>
+                    </span>
+                    <span class="position-absolute top-100 start-0 translate-middle badge rounded-pill bg-primary">
+                        {{item.usage}}
+                        <span class="visually-hidden">unread messages</span>
+                    </span>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        {{item.path | replace:'thumbnails/':''}}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>

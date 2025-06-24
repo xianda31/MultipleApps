@@ -1,0 +1,83 @@
+<form [formGroup]="pageGroup">
+    <!-- <div class="row "> -->
+    <div class="row mt-5">
+        <div class="col-md-5">
+            <!-- <label>Libellé menu</label> -->
+            <div class="input-group">
+                <input type="text" class="form-control " id="link" formControlName="link">
+                <button (click)="onDeletePage()" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-trash3"></i>
+                </button>
+            </div>
+        </div>
+        <div class="col-md-7 align-content-end">
+            <div class="form-group">
+                <div class="row ">
+                    <div class="col align-self-end ">
+                        <div class=" form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" formControlName="member_only">
+                            <label class="form-check-label">Réservé aux membres</label>
+                        </div>
+                    </div>
+
+                    <div class="col align-self-center">
+                        <div class="input-group">
+                            <label class="input-group-text">Modèle</label>
+                            <select type="text" class="form-control" id="template" formControlName="template">
+                                <option *ngFor="let value of templates_values" [value]="value">{{value}}</option>
+                            </select>
+                            <ng-container *ngIf="is_an_album()">
+                                <button (click)="album_auto_fill()" class="btn btn-sm btn-outline-primary">
+                                    <i class="fa-solid fa-gears"></i></button>
+                            </ng-container>
+                        </div>
+                    </div>
+
+                    <div class="col align-self-center">
+                        <button [disabled]="!touched && !dirty" class="btn btn-sm btn-primary"
+                            (click)="onSavePage()">Enregistrer</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-4">
+            <!-- <div class="card-body"> -->
+            <div class="list-group list-group-vertical align-items-center" cdkDropList cdkDropListOrientation="vertical"
+                (cdkDropListDropped)="onDropArticle($event)">
+                <div class=" list-group-item m-1 w-75 bg-primary-subtle text-dark border-1 border-secondary  " cdkDrag
+                    *ngFor="let article of filtered_articles$(page.id) | async" (dblclick)="onDblClick(article)">
+                    <span>
+                        {{article.title}}
+                        <i class="bi bi-trash3 btn-warning float-end " (click)="onDeleteArticle(article)"></i>
+                    </span>
+                    <!-- {{article.title}} -->
+                    <div *cdkDragPreview>
+                        <i class="bi bi-1-square"></i>
+                    </div>
+                </div>
+            </div>
+            <!-- </div> -->
+            <div class="align-items-center">
+                <button class="btn btn-sm btn-outline-primary float-end" (click)="onCreateArticle()">Ajout d'un
+                    article</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+
+        <app-article *ngIf="selectedArticle" (articleUpdated)="submitArticle($event)"
+            [articleToEdit]="selectedArticle"></app-article>
+    </div>
+
+    <!-- </div> -->
+
+
+
+    <!-- <label> Articles</label> -->
+    <div class="col-md-6">
+    </div>
+</form>

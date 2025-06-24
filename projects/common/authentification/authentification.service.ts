@@ -3,9 +3,9 @@ import { confirmSignUp, signIn, signUp, signOut, AuthError, SignInInput, getCurr
 import { BehaviorSubject, Observable } from 'rxjs';
 import { AuthEvent, Process_flow } from './authentification_interface';
 import { ToastService } from '../toaster/toast.service';
-import { MembersService } from '../../admin-dashboard/src/app/members/service/members.service';
 import { Member } from '../member.interface';
 import { Hub } from 'aws-amplify/utils';
+import { MembersService } from '../../web-back/src/app/members/service/members.service';
 
 
 

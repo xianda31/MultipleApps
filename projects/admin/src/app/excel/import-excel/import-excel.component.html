@@ -1,0 +1,76 @@
+<div class="row align-items-center mt-3">
+  <div class="ms-2 col-auto">
+    <button (click)="clear_db()" class="btn btn-danger btn-sm">
+      <i class="bi bi-database-exclamation"></i>
+    </button>
+  </div>
+  <span class="col-auto ms-1">raz db : attention, toutes les données seront supprimées</span>
+</div>
+
+<div class="row align-items-end ">
+  <div class="col-4">
+    <h4>importer un fichier excel</h4>
+  </div>
+
+  <div class="col-4">
+    <div class="input-group">
+      <input #fileInput type="file" class="form-control" (change)="onFileChange($event)">
+      <button class="btn btn-outline-secondary" type="button" (click)="fileInput.value = ''">
+        <i class="bi bi-arrow-clockwise"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="col-4">
+    <label>feuille excel</label>
+    <select class="form-select" [(ngModel)]="worksheet" (ngModelChange)="select_sheet()">
+      <option>----------</option>
+      <option *ngFor="let sheet of worksheets" [ngValue]="sheet">{{sheet.name}}</option>
+    </select>
+  </div>
+</div>
+
+<pre>{{verbose()}}</pre>
+
+<div  class=" align-items-center">
+  <h6 class="col-3 ">
+    {{book_entries.length}} écritures prêtes pour chargement en base de données
+  </h6>
+  <span class="ms-3">
+    upload :
+    <button [disabled]="!loadable" (click)="upload_data()" class="btn btn-primary btn-sm">
+      <i class="bi bi-cloud-upload"></i>
+    </button>
+  </span>
+  <span class="ms-3">
+    show :
+    <button (click)="show_data()" class="btn btn-primary btn-sm">
+      <i class="bi bi-search"></i>
+    </button>
+  </span>
+  <span class="ms-3">
+    log :
+    <button (click)="clear_verbose()" class="btn btn-primary btn-sm">
+      <i class="bi bi-trash"></i>
+    </button>
+  </span>
+  <!-- <span class="ms-3">
+    raz db :
+    <button (click)="clear_db()" class="btn btn-danger btn-sm">
+      <i class="bi bi-database-exclamation"></i>
+    </button>
+  </span> -->
+
+  <div *ngIf="data_uploading" class="col-6">
+
+    <div *ngIf="create_progress === 0">
+      Préparation des données en cours ...
+      <span class="spinner-border text-primary" role="status"></span>
+    </div>
+
+    <h6 *ngIf="create_progress > 0" class="text-center"> Sauvegarde des données en cours ... </h6>
+    <div class="progress" role="progressbar" aria-valuenow=create_progress aria-valuemin="0" aria-valuemax="100">
+      <div [style]="progress_style" class="progress-bar progress-bar-striped progress-bar-animated"></div>
+    </div>
+  </div>
+</div>

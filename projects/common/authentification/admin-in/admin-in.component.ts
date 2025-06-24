@@ -5,11 +5,12 @@ import { AuthentificationService } from '../authentification.service';
 import { ToastService } from '../../toaster/toast.service';
 import { Member } from '../../member.interface';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { GetLoggingComponent } from '../../../cashier/src/app/modals/get-logging/get-logging.component';
+import { GetLoggingComponent } from '../../../admin/src/app/modals/get-logging/get-logging.component';
 import { Observable, of, switchMap, from, map, tap, catchError } from 'rxjs';
-import { MembersService } from '../../../admin-dashboard/src/app/members/service/members.service';
+// import { MembersService } from '../../../web-back/src/app/members/service/members.service';
 import { GroupService } from '../group.service';
 import { Group_icons, Group_names } from '../group.interface';
+import { MembersService } from '../../../web-back/src/app/members/service/members.service';
 
 const EMAIL_PATTERN = "^[_A-Za-z0-9-\+]+(\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\.[A-Za-z0-9]+)*(\.[A-Za-z]{2,})$";
 const PSW_PATTERN = '^(?!\\s+)(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[\\^$*.[\\]{}()?"!@#%&/\\\\,><\': ;| _~`=+-]).{8,256}(?<!\\s)$';

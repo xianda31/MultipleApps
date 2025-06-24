@@ -1,0 +1,147 @@
+<!-- <form [formGroup]="payment_form"> -->
+<div class="card">
+    <div class="card-body">
+        <strong>Panier : </strong>
+        <div class="table-responsive">
+            <table class="table  table-sm  align-middle caption-top">
+                <!-- debt if any -->
+                <caption *ngIf="debt_amount > 0">
+                    <span class="text-muted"> Dette :{{debt_amount | currency:'€':'symbol':'2.2-2':'fr'}} </span>
+                </caption>
+
+                <!-- asset if any -->
+                <caption *ngIf="asset_amount > 0">
+                    <span class="text-muted"> Avoir :{{asset_amount | currency:'€':'symbol':'2.2-2':'fr'}} </span>
+                </caption>
+
+                <thead>
+                    <tr class="table-primary">
+                        <th class="text-start">produit</th>
+                        <th class="text-start">adhérent</th>
+                        <th class="text-end">montant</th>
+                        <th class="text-center">actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr *ngFor="let item of cart.items ; let i = index ">
+                        <!-- descriptif produit -->
+                        <td>
+                            {{get_product_description(item.product_id)}}
+                        </td>
+
+                        <td>
+                            <div class="input-group input-group-sm">
+
+                                <button (click)="item.payee=null" class="btn btn-sm btn-outline-secondary"
+                                    type="button">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                                <app-input-member [ngClass]="!item.payee?'to-fill-in':''"
+                                    class="form-control form-control-sm" [members]="members" [(ngModel)]="item.payee"
+                                    (ngModelChange)="payeeChanged(i)"></app-input-member>
+                            </div>
+                        </td>
+
+                        <td class="text-end">
+                            <span *ngIf="!item.mutable">{{item.paied | currency:'€':'symbol':'2.2-2':'fr'}}</span>
+                            <input *ngIf="item.mutable" type="number" class="form-control form-control-sm"
+                                [(ngModel)]="item.paied" (keydown.enter)="updateCartItem(item)">
+                        </td>
+
+                        <td class=" text-center text-primary">
+                            <i *ngIf="!item.mutable" class="bi bi-pencil-fill" (click)="item.mutable= true"></i>
+                            <i *ngIf="item.mutable" class="bi bi-check-lg" (click)="updateCartItem(item)"></i>
+                            &nbsp;
+                            <i class="bi bi-trash3" (click)="deleteCartItem(item)"></i>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <!--  paiement -->
+        <div *ngIf="(cart.items.length > 0 || debt_amount > 0)" class="row mt-2">
+            <div class="col-3">
+                <strong>Total : {{total_amount() | currency:'€':'symbol':'2.2-2':'fr'}}
+                </strong>
+            </div>
+
+            <div class="col-4 ">
+                <div class="form-check form-check-inline">
+                    <input class="form-check_input" type="radio" [(ngModel)]="selected_payment.mode"
+                        (ngModelChange)="payment_mode_change()" [value]="paymentMode.CASH">
+                    <label class="form-check-label">espèces</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check_input" type="radio" [(ngModel)]="selected_payment.mode"
+                        (ngModelChange)="payment_mode_change()" [value]="paymentMode.CHEQUE">
+                    <label class="form-check-label">chèque</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check_input" type="radio" [(ngModel)]="selected_payment.mode"
+                        (ngModelChange)="payment_mode_change()" [value]="paymentMode.CREDIT">
+                    <label class="form-check-label">crédit</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check_input" type="radio" [(ngModel)]="selected_payment.mode"
+                        (ngModelChange)="payment_mode_change()" [value]="paymentMode.TRANSFER">
+                    <label class="form-check-label">virement</label>
+                </div>
+            </div>
+
+            <!-- <ng-container *ngIf="selected_payment.mode === paymentMode.CHEQUE"> -->
+            <div *ngIf="selected_payment.mode === paymentMode.CHEQUE" class="col-5">
+                <div class="d-flex flex-column justify-content-between">
+                    <div>
+                        <select [ngClass]="!selected_payment.bank?'to-fill-in':''" class="form-control form-control-sm"
+                            [(ngModel)]="selected_payment.bank" required>
+                            <option value="undefined" hidden disabled>banque</option>
+                            <option *ngFor="let bank of banks$ | async " [value]="bank.key">
+                                {{bank.name}}
+                            </option>
+                        </select>
+                    </div>
+                    <div>
+                        <input [ngClass]="!selected_payment.cheque_no?'to-fill-in':''" placeholder="N° de chèque"
+                            type="text" id="cheque_no" class="form-control form-control-sm"
+                            [(ngModel)]="selected_payment.cheque_no">
+                    </div>
+                </div>
+            </div>
+            <!-- </ng-container> -->
+        </div>
+
+
+
+        <!-- validation  //-->
+
+        <!-- nbre éléments : {{cart.items.length}} -->
+        <div class="mt-4">
+            <button type="button" class="btn btn-success nice_shadow"
+                [disabled]=" !selected_payment.mode || (cart.items.length === 0 && !(total_amount()>0)) || (total_amount()<0)"
+                (click)="validate_sale()">confirmation
+                du panier</button>
+        </div>
+    </div>
+</div>
+<!-- </form> -->
+
+<ng-template #payment_info let-payment="payment">
+
+
+    <ng-container *ngIf="payment.mode === paymentMode.CHEQUE">
+        <td colspan="3">
+            <select [ngClass]="!payment.bank?'to-fill-in':''" class="form-control form-control-sm"
+                [(ngModel)]="payment.bank" required>
+                <option value="undefined" hidden disabled>banque</option>
+                <option *ngFor="let bank of banks$ | async " [value]="bank.key">
+                    {{bank.name}}
+                </option>
+            </select>
+        </td>
+        <td colspan="3">
+            <input [ngClass]="!payment.cheque_no?'to-fill-in':''" placeholder="N° de chèque" type="text" id="cheque_no"
+                class="form-control form-control-sm" [(ngModel)]="payment.cheque_no">
+        </td>
+    </ng-container>
+</ng-template>

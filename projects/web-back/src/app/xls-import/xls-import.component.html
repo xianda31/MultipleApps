@@ -1,0 +1,33 @@
+<div class="container">
+
+    <div class="input-group mb-3">
+        <input #fileInput type="file" class="form-control" (change)="onChange($event)">
+    </div>
+
+    <div *ngIf="excel_uploaded" class=" align-items-center">
+        <h6 class="col-6 ">
+            mise à jour de la base (toutes les données actuelles seront écrasées) :
+            <button class="btn btn-danger btn-sm" (click)="data_store()">
+                <i class="bi bi-cloud-upload"></i>
+            </button>
+        </h6>
+
+        <div *ngIf="data_uploading" class="col-6">
+
+            <div *ngIf="create_progress === 0">
+                Préparation des données en cours ...
+                <span class="spinner-border text-primary" role="status"></span>
+            </div>
+
+            <h6 *ngIf="create_progress > 0" class="text-center"> Sauvegarde des données en cours ... </h6>
+            <div class="progress" role="progressbar" aria-valuenow=create_progress aria-valuemin="0"
+                aria-valuemax="100">
+                <div [style]="progress_style" class="progress-bar progress-bar-striped progress-bar-animated"></div>
+            </div>
+        </div>
+    </div>
+
+    <pre> {{verbose()}} </pre>
+    <app-sales-viewer *ngIf="loaded" [sales]="sales"> </app-sales-viewer>
+
+</div>

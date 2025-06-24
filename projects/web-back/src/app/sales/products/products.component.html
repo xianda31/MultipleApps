@@ -1,0 +1,103 @@
+<div class="container">
+    <h5>Les produits</h5>
+    <form [formGroup]="productForm">
+        <div class="col-md-8 offset-2">
+            <table *ngIf="products" class="table">
+                <thead>
+                    <tr>
+                        <th class="col-2">Produit</th>
+                        <th class="col-3">Description</th>
+                        <th class="col-1">Info1</th>
+                        <th class="col-1 text-center">Compte</th>
+                        <th class="col-1 text-center">Prix</th>
+                        <!-- <th class="col-2">couleur</th> -->
+                        <th class="col-2 text-center">couple</th>
+                        <th class="col-1">actif</th>
+                        <th class="col-1">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let product of products">
+                        <td>{{ product.glyph }}</td>
+                        <td>{{ product.description }}</td>
+                        <td>{{ product.info1 }}</td>
+                        <td class="text-center">{{ product.account }}</td>
+                        <td class="text-end">{{ product.price | currency:'€':'symbol':'2.2-2':'fr' }}</td>
+                        <!-- <td>{{ product.color }}</td> -->
+                        <td class="text-center">
+                            <div class="mx-auto form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch"
+                                    [(ngModel)]="product.paired" [ngModelOptions]="{standalone: true}" disabled>
+                            </div>
+                        </td>
+                        <td>
+                            <div class=" form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch"
+                                    [(ngModel)]="product.active" [ngModelOptions]="{standalone: true}"
+                                    (ngModelChange)="onModProduct(product)">
+                            </div>
+                        </td>
+                        <!-- <td> <input type="checkbox" input="product.active"> </td> -->
+                        <td class="text-center ">
+                            <button class="btn btn-outline-primary" (click)="onReadProduct(product)">
+                                <i class="bi bi-pen"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr></tr>
+                    <tr>
+                        <td> <input type="text" class="form-control" formControlName="glyph"> </td>
+                        <td> <input type="text" class="form-control" formControlName="description"> </td>
+                        <td> <input type="text" class="form-control" formControlName="info1"> </td>
+                        <td> <input list="datalist" type="text" class="form-control" formControlName="account">
+                            <datalist id="datalist">
+                                <option *ngFor="let account of accounts$ | async" [value]="account">
+                                </option>
+                            </datalist>
+                        </td>
+                        <td> <input type="text" class="form-control" formControlName="price"> </td>
+
+                        <td class="text-center">
+                            <div class="mx-auto  form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" formControlName="paired">
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <div class=" form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" formControlName="active">
+                            </div>
+                        </td>
+                        <td class="text-center ">
+                            <button class="btn btn-outline-primary btn-sm" [disabled]="!product_form_filled()"
+                                (click)="product_selected ? onUpdateProduct() :onCreateProduct()">
+                                <i class="bi bi-check2-square"></i></button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </form>
+</div>
+
+
+<!-- <ng-template #productFormTemplate>
+    <td>
+        <input type="text" class="form-control" formControlName="name">
+    </td>
+    <td>
+        <input type="text" class="form-control" formControlName="price">
+    </td>
+    <td>
+        <input type="text" class="form-control" formControlName="description">
+    </td>
+    <td>
+        <input type="text" class="form-control" formControlName="category">
+    </td>
+    <td>
+        <input type="checkbox" formControlName="active">
+    </td>
+    <td>
+        <button (click)="onAddProduct()">Ajouter un produit</button>
+        <button (click)="onSaveProduct()">Enregistrer</button>
+    </td>
+</ng-template> -->
