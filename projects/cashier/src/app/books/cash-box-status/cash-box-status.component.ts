@@ -9,7 +9,6 @@ import { Bank } from '../../../../../common/system-conf.interface';
 import { TransactionService } from '../../transaction.service';
 import { combineLatest, switchMap } from 'rxjs';
 import { FinancialReportService } from '../../financial_report.service';
-import { ToastService } from '../../../../../common/toaster/toast.service';
 
 @Component({
   selector: 'app-cash-box-status',
@@ -41,7 +40,6 @@ export class CashBoxStatusComponent {
     private transactionService: TransactionService,
     private systemDataService: SystemDataService,
     private financialService : FinancialReportService,
-    private toastService: ToastService,
     private fb: FormBuilder
   ) { }
 
@@ -106,17 +104,19 @@ export class CashBoxStatusComponent {
   // gestion des espèces en caisse
   //   choix du montant à retirer et création d'un mouvement de dépot
 
-  async create_cash_out_entry(amount: number) {
-
-    try {
-
-      await this.bookService.create_cashbox_deposit(new Date().toISOString().split('T')[0], amount);
-      this.toastService.showSuccess('Gestion caisse','Mouvement de dépôt créé avec succès');
-    } catch (error) {
-      console.error('Error creating cash out entry:', error); 
-      throw new Error('Erreur lors de la création du mouvement de dépôt : ' + error);
-    }  
-
+  create_cash_out_entry(amount: number) {
+    let cash_out: BookEntry = {
+      season: this.season,
+      date: new Date().toISOString().split('T')[0],
+      transaction_id: TRANSACTION_ID.dépôt_caisse_espèces,
+      amounts: {
+        [FINANCIAL_ACCOUNT.CASHBOX_credit]: amount,
+        [FINANCIAL_ACCOUNT.BANK_debit]: amount
+      },
+      operations: [],
+      id: ''
+    }
+    this.bookService.create_book_entry(cash_out);
   }
 
   // gestion des chèques à déposer

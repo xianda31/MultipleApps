@@ -126,7 +126,7 @@ export class XlsImportComponent {
         if (this.create_progress === this.sales.length) {
           this.data_uploading = false;
           this.excel_uploaded = false;
-          this.toastservice.showSuccess('ventes importées', 'ventes importées avec succès');
+          this.toastservice.showSuccessToast('ventes importées', 'ventes importées avec succès');
         }
       });
     });

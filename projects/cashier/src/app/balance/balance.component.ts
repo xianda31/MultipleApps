@@ -94,7 +94,7 @@ due: 'dettes'|'avoirs' = 'dettes';
 
     this.bookService.generate_next_season_entries(next_season)
       .subscribe((nbr) => {
-        this.toastService.showSuccess('cloture saison', nbr + 'écritures de report générées pour la saison ' + next_season);
+        this.toastService.showSuccessToast('cloture saison', nbr + 'écritures de report générées pour la saison ' + next_season);
         // finalisation  : passage à la nouvelle saison
         this.systemDataService.to_next_season();
       });
@@ -102,7 +102,7 @@ due: 'dettes'|'avoirs' = 'dettes';
 
   save_balance_sheet() {
     this.financialService.save_balance_sheet(this.balance_board.current).subscribe((result) => {
-      this.toastService.showSuccess('sauvegarde bilan', 'sauvegarde du bilan effectuée avec succès');
+      this.toastService.showSuccessToast('sauvegarde bilan', 'sauvegarde du bilan effectuée avec succès');
     });
   }
 

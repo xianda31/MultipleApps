@@ -57,7 +57,7 @@ full_name(member: Member): string {
     const { createdAt, updatedAt, id, ...member_input } = member;
     try {
       const newMember = await this.dbHandler.createMember(member_input);
-      this.toastService.showSuccess('Membre créé', `${newMember.lastname} ${newMember.firstname}`);
+      this.toastService.showSuccessToast('Membre créé', `${newMember.lastname} ${newMember.firstname}`);
       this._members.push(newMember as Member);
       this._members$.next(this._members);
     }
@@ -103,7 +103,7 @@ full_name(member: Member): string {
   async updateMember(member: Member) {
     try {
       const newMember = await this.dbHandler.updateMember(member);
-      this.toastService.showSuccess('Membre mis à jour', `${newMember.lastname} ${newMember.firstname}`);
+      this.toastService.showSuccessToast('Membre mis à jour', `${newMember.lastname} ${newMember.firstname}`);
       this._members.push(newMember as Member);
       this._members$.next(this._members);
     }
@@ -126,7 +126,7 @@ full_name(member: Member): string {
       if (done) {
         this._members = this._members.filter((m) => m.id !== member.id);
         this._members$.next(this._members);
-        this.toastService.showSuccess('Service adhérent', `${member.lastname} ${member.firstname} supprimé`);
+        this.toastService.showSuccessToast('Service adhérent', `${member.lastname} ${member.firstname} supprimé`);
       }
     }
     catch (errors) {

@@ -261,7 +261,7 @@ export class BookService {
       }, [] as Revenue[]);
   }
 
-  get_cashbox_movements_amount(selection: 'cash' | 'cheques'): number {
+  get_cashbox_movements_amount(selection?: 'cash' | 'cheques'): number {
     if (this._book_entries === undefined) { // if no book entries are loaded yet
       return 0;
     }
@@ -272,15 +272,10 @@ export class BookService {
     }
     if (selection === 'cash') {
 
-
-      let amount = (
-        this._book_entries
-          .filter((book_entry) => this.transactionService.get_transaction(book_entry.transaction_id).cash !== 'none')
-          .reduce((acc, book_entry) => acc + ((book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0)), 0));
-
-      return amount;
+      return this.Round(this._book_entries
+        .filter((book_entry) => this.transactionService.get_transaction(book_entry.transaction_id).cash !== 'none')
+        .reduce((acc, book_entry) => acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0), 0));
     }
-    throw new Error('get_cashbox_movements_amount: selection must be "cash" or "cheques"');
     return this.Round(this._book_entries.reduce((acc, book_entry) =>
       acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0), 0));
   }
@@ -530,30 +525,11 @@ export class BookService {
       new_entries.forEach((entry) => {
         this.dbHandler.updateBookEntry(entry);
       });
-      this.toastService.showSuccess('base comptabilité', `${n} références de dépôt mises à jour`);
+      this.toastService.showSuccessToast('base comptabilité', `${n} références de dépôt mises à jour`);
       this._book_entries$.next(this._book_entries);
     } else {
       throw Error('enable to find any entry with deposit_ref : ' + deposit_ref);
     }
-  }
-
-
-  create_cashbox_deposit(date: string, amount: number): Promise<BookEntry> {
-    let amounts: AMOUNTS = {};
-    amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] = amount;
-    amounts[FINANCIAL_ACCOUNT.BANK_credit] = amount;
-    let operation: Operation = { label: 'dépôt espèces en banque', values: {} };
-    let seasonValue = this.systemDataService.get_season(new Date(date));
-    const entry: BookEntry = {
-      id: '',
-      season: seasonValue,
-      date: date,
-      amounts: amounts,
-      operations: [operation],
-      // deposit_ref: ref,
-      transaction_id: TRANSACTION_ID.dépôt_caisse_espèces,
-    };
-    return this.create_book_entry(entry);
   }
 
   create_tournament_fees_entry(date: string, fees_amount: number) {

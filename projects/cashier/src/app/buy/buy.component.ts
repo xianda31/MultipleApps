@@ -18,7 +18,7 @@ import { BooksEditorComponent } from "../books/books-edit/books-editor.component
 @Component({
   selector: 'app-buy',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbTooltipModule,  BooksEditorComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbTooltipModule, BackComponent, BooksEditorComponent],
   templateUrl: './buy.component.html',
   styleUrl: './buy.component.scss'
 })
@@ -43,8 +43,11 @@ export class BuyComponent implements OnInit {
   selected_transaction: Transaction | undefined = undefined;
   constructor(
     private fb: FormBuilder,
+    private bookService: BookService,
     private transactionService: TransactionService,
     private systemDataService: SystemDataService,
+    private toastService: ToastService,
+    private route: ActivatedRoute,
     private location: Location
 
   ) { }
@@ -93,13 +96,35 @@ export class BuyComponent implements OnInit {
         this.operations.clear();
         this.add_operation(this.selected_transaction);
 
+      // operations valueChanges subscription s'il y a des valeurs charges ou produits
+      // if(this.operations.controls['values'] !== undefined ) {
+      // this.operations_valueChanges_subscribe();
+      // }
+
+      // gestion des validators pour les champs bank_name et cheque_ref
+
+      // this.handle_cheque_info_validators(this.selected_transaction);
+
+      // création des champs amounts
         this.amounts.clear();
+        // this.init_financial_accounts(this.selected_transaction);
     });
 
+    // form.deposit_ref change handler
+    // this.buyForm.controls['deposit_ref'].valueChanges.subscribe((deposit_ref) => {
+    //   if (!this.creation) {
+    //     if (this.buyForm.controls['transaction_id'].value === TRANSACTION_ID.dépôt_caisse_chèques) {
+    //       this.deposit_ref_changed = true;
+    //     }
+    //   };
+    // });
 
   }
 
    add_operation(transaction: Transaction) {
+  
+      // let expense_or_revenue_accounts = this.expense_or_revenue_accounts(transaction);
+  
   
       let operationForm: FormGroup = this.fb.group({
         'label':  [''],
@@ -113,7 +138,7 @@ export class BuyComponent implements OnInit {
   
       if (this.expense_or_revenue_accounts.length !== 0) {
         operationForm.addControl('values', this.fb.array(
-          this.expense_or_revenue_accounts.map(() => new FormControl<string>((''), [Validators.pattern(this.NumberRegexPattern)])),
+          this.expense_or_revenue_accounts.map((account_def) => new FormControl<string>((''), [Validators.pattern(this.NumberRegexPattern)])),
           { validators: [this.atLeastOneFieldValidator] }));
       }
   

@@ -27,9 +27,9 @@ export const routes: Routes = [
   { path: 'members/historique', component: MemberSalesComponent },
 
 
-  { path: 'admin/transaction', component: BuyComponent }, //, canActivate: [loggedInGuard]
-  { path: 'admin/products', component: ProductsComponent }, //, canActivate: [loggedInGuard]
-  { path: 'admin/cashbox', component: CashBoxStatusComponent },
+  { path: 'admin/toutes-ecritures', component: BuyComponent }, //, canActivate: [loggedInGuard]
+  { path: 'admin/produits', component: ProductsComponent }, //, canActivate: [loggedInGuard]
+  { path: 'admin/cash-box-status', component: CashBoxStatusComponent },
 
   { path: 'finance/bank-reconciliation', component: BankReconciliationComponent },
   { path: 'finance/expense-and-revenue', component: ExpenseAndRevenueComponent },
@@ -37,8 +37,8 @@ export const routes: Routes = [
   { path: 'finance/balance', component: BalanceComponent },
   { path: 'finance/books/editor', component: BooksEditorComponent },
   { path: 'finance/books/editor/:id', component: BooksEditorComponent },
-  { path: 'finance/books/overview', component: BooksOverviewComponent },
-  { path: 'finance/books/overview/:report', component: BooksOverviewComponent },
+  { path: 'finance/books/base-comptable', component: BooksOverviewComponent },
+  { path: 'finance/books/base-comptable/:report', component: BooksOverviewComponent },
   { path: 'finance/books/list', component: BooksListComponent },
 
   { path: 'excel/import', component: ImportExcelComponent },
