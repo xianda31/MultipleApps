@@ -75,7 +75,7 @@ export class BookService {
       }
       switch (errorType) {
         case 'Unauthorized':
-          this.toastService.showWarningToast('base comptabilité', 'Vous n\'êtes pas autorisé à créer une entrée comptable');
+          this.toastService.showWarning('base comptabilité', 'Vous n\'êtes pas autorisé à créer une entrée comptable');
           break;
         default:
           this.toastService.showErrorToast('base comptabilité', errorType);
@@ -97,7 +97,7 @@ export class BookService {
       }
       switch (errorType) {
         case 'Unauthorized':
-          this.toastService.showWarningToast('base comptabilité', 'Vous n\'êtes pas autorisé à créer une entrée comptable');
+          this.toastService.showWarning('base comptabilité', 'Vous n\'êtes pas autorisé à créer une entrée comptable');
           break;
         default:
           this.toastService.showErrorToast('base comptabilité', errorType);
@@ -123,7 +123,7 @@ export class BookService {
       }
       switch (errorType) {
         case 'Unauthorized':
-          this.toastService.showWarningToast('base comptabilité', 'Vous n\'êtes pas autorisé à modifier une entrée comptable');
+          this.toastService.showWarning('base comptabilité', 'Vous n\'êtes pas autorisé à modifier une entrée comptable');
           break;
         default:
           this.toastService.showErrorToast('base comptabilité', errorType);
@@ -624,7 +624,7 @@ export class BookService {
   asset_cancelation(date: string, member: string, value: number): Promise<BookEntry> {
 
     if (value <= 0) {
-      this.toastService.showWarningToast('base comptabilité', 'corrigez l\'écriture comptable pour éviter cette valeur négative');
+      this.toastService.showWarning('base comptabilité', 'corrigez l\'écriture comptable pour éviter cette valeur négative');
       return Promise.resolve({} as BookEntry);
     }
 
@@ -654,7 +654,7 @@ export class BookService {
   debt_cancelation(date: string, member: string, value: number): Promise<BookEntry> {
 
     if (value <= 0) {
-      this.toastService.showWarningToast('base comptabilité', 'corrigez l\'écriture comptable pour éviter cette valeur négative');
+      this.toastService.showWarning('base comptabilité', 'corrigez l\'écriture comptable pour éviter cette valeur négative');
       return Promise.resolve({} as BookEntry);
     }
 
@@ -711,7 +711,7 @@ export class BookService {
     };
 
     console.log('report d\'avoir', book_entry);
-    this.toastService.showInfoToast('report d\'avoir', (grand_total + ' € reportés sur la saison ' + next_season));
+    this.toastService.showInfo('report d\'avoir', (grand_total + ' € reportés sur la saison ' + next_season));
     next_season_entries.push(book_entry);
 
 

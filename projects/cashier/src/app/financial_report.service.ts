@@ -119,7 +119,7 @@ private _sheets_to_records(sheets: Balance_sheet[]): Balance_record[] {
         wip_total: 0,
         actif_total: 0
       } as Balance_sheet;
-      this.toastService.showInfoToast('historique bilans', `création d'un bilan ${season} vierge`);
+      this.toastService.showInfo('historique bilans', `création d'un bilan ${season} vierge`);
       return (new_balance_sheet);
     }
   }

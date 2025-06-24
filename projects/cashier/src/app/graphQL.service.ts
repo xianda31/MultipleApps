@@ -331,7 +331,7 @@ export class DBhandler {
 
       if (token !== null) {
         console.warn('listBookEntries : too many entries to load, only %s loaded', entries.length);
-        // this.toastService.showWarningToast('base comptabilité', 'beaucoup trop d\'entrées à charger , veuillez répeter l\'opération');
+        // this.toastService.showWarning('base comptabilité', 'beaucoup trop d\'entrées à charger , veuillez répeter l\'opération');
       }
       return entries;
     }

@@ -113,7 +113,7 @@ export class BankReconciliationComponent {
     let date = book_entry.date.slice(2, 7);
     let report = book_entry.bank_report;
     if (report && report < date) {
-      this.ToastService.showWarningToast('pointage annulé', 'le relevé ne peut être antérieur à l\'opération');
+      this.ToastService.showWarning('pointage annulé', 'le relevé ne peut être antérieur à l\'opération');
       book_entry.bank_report = null;
     }
     this.bookService.update_book_entry(book_entry);

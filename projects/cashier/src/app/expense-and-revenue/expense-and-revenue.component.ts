@@ -41,7 +41,7 @@ export class ExpenseAndRevenueComponent {
     this.systemDataService.get_configuration().pipe(
       tap((configuration) => {
         if (!configuration) {
-          this.toatService.showWarningToast('Configuration not found', 'Please check the configuration of the system');
+          this.toatService.showWarning('Configuration not found', 'Please check the configuration of the system');
         }
         this.p_and_l_sections = configuration.revenue_and_expense_tree.sections;
         this.revenue_definitions = configuration.revenue_and_expense_tree.revenues;

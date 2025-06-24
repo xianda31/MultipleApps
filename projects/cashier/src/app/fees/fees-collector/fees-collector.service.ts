@@ -213,7 +213,7 @@ export class FeesCollectorService {
     let non_members_validated = non_members.every((gamer) => gamer.validated);
     if (!non_members_validated) {
       check_ok = false;
-      this.toastService.showWarningToast('droits de table', 'tous les non-adhérents doivent être validés');
+      this.toastService.showWarning('droits de table', 'tous les non-adhérents doivent être validés');
       return;
     }
 
@@ -222,7 +222,7 @@ export class FeesCollectorService {
     let members_validated = members.every((gamer) => gamer.validated);
     if (!members_validated) {
       check_ok = false;
-      this.toastService.showWarningToast('droits de table', 'tous les adhérents doivent être validés');
+      this.toastService.showWarning('droits de table', 'tous les adhérents doivent être validés');
     }
 
     // check if all members have enough game credits

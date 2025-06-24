@@ -168,7 +168,7 @@ export class GameCardService {
               let ownersNames = card.owners.map(owner => `${owner.firstname} ${owner.lastname}`).join(', ');
 
         this.toastService.showSuccess('Gestion des cartes', 'La carte de '+ ownersNames + ' a été supprimée');
-        this.toastService.showInfoToast('Gestion des cartes', 'Supprimez la recette associée si nécessaire');
+        this.toastService.showInfo('Gestion des cartes', 'Supprimez la recette associée si nécessaire');
         return true;
       }
       return false;

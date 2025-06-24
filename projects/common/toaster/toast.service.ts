@@ -32,7 +32,7 @@ export class ToastService {
    * @param title Toast title
    * @param message Toast message
    */
-  showInfoToast(title: string, message: string) {
+  showInfo(title: string, message: string) {
     this._toastEvents.next({
       message,
       title,
@@ -45,7 +45,7 @@ export class ToastService {
    * @param title Toast title
    * @param message Toast message
    */
-  showWarningToast(title: string, message: string) {
+  showWarning(title: string, message: string) {
     this._toastEvents.next({
       message,
       title,

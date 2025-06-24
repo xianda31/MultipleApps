@@ -182,8 +182,6 @@ export class MembersComponent implements OnInit {
 
 
   compare(member: Member, licensee: FFB_licensee): Member | null {
-
-
     let nextMember: Member = {
       id: member.id,
       license_number: licensee.license_number,
@@ -198,9 +196,8 @@ export class MembersComponent implements OnInit {
       license_taken_at: licensee.orga_license_name ?? 'BCSTO',
       license_status: licensee.license_id ? (licensee.free ? 'free' : 'paied') : 'unpaied',
       is_sympathisant: licensee.is_sympathisant ?? false,
-
-
     }
+
     let is: { [key: string]: any } = member;
     let next: { [key: string]: any } = nextMember;
     let diff: boolean = false;
@@ -220,7 +217,7 @@ export class MembersComponent implements OnInit {
       id: '',
       gender: licensee.gender,
       firstname: licensee.firstname,
-      lastname: licensee.lastname,
+      lastname: licensee.lastname.toUpperCase(),
       license_number: licensee.license_number,
       birthdate: licensee.birthdate,
       city: this.capitalize_first(licensee.city?.toLowerCase()),
