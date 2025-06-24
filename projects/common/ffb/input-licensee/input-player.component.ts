@@ -7,17 +7,18 @@ import { FFB_licensee } from '../interface/licensee.interface';
 import { Player } from '../interface/tournament_teams.interface';
 
 @Component({
-    selector: 'app-input-player',
-    providers: [
-        {
-            provide: NG_VALUE_ACCESSOR,
-            useExisting: forwardRef(() => InputPlayerComponent),
-            multi: true
-        }
-    ],
-    imports: [ReactiveFormsModule, FormsModule, CommonModule],
-    templateUrl: './input-player.component.html',
-    styleUrl: './input-player.component.scss'
+  selector: 'app-input-player',
+  standalone: true,
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => InputPlayerComponent),
+      multi: true
+    }
+  ],
+  imports: [ReactiveFormsModule, FormsModule, CommonModule],
+  templateUrl: './input-player.component.html',
+  styleUrl: './input-player.component.scss'
 })
 export class InputPlayerComponent implements ControlValueAccessor {
   @Input() listeId!: string;

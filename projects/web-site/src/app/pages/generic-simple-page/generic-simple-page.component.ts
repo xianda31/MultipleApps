@@ -6,10 +6,11 @@ import { CommonModule } from '@angular/common';
 import { RenderArticleComponent } from '../../../../../common/render-article/render-article.component';
 
 @Component({
-    selector: 'app-generic-simple-page',
-    imports: [CommonModule, RenderArticleComponent],
-    templateUrl: './generic-simple-page.component.html',
-    styleUrl: './generic-simple-page.component.scss'
+  selector: 'app-generic-simple-page',
+  standalone: true,
+  imports: [CommonModule, RenderArticleComponent],
+  templateUrl: './generic-simple-page.component.html',
+  styleUrl: './generic-simple-page.component.scss'
 })
 export class GenericSimplePageComponent {
   path!: string;

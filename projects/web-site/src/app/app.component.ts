@@ -10,10 +10,11 @@ import { ToasterComponent } from '../../../common/toaster/components/toaster/toa
 
 
 @Component({
-    selector: 'app-root',
-    imports: [CommonModule, RouterOutlet, NavbarComponent, ToasterComponent],
-    templateUrl: './app.component.html',
-    styleUrl: './app.component.scss'
+  selector: 'app-root',
+  standalone: true,
+  imports: [CommonModule, RouterOutlet, NavbarComponent, ToasterComponent],
+  templateUrl: './app.component.html',
+  styleUrl: './app.component.scss'
 })
 export class AppComponent implements OnInit, OnDestroy {
   title = 'web-site';

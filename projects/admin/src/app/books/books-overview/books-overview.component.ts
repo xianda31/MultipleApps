@@ -40,10 +40,11 @@ interface Deposit_checked {
 
 interface EntryValue { total: number, entries: BookEntry[] };
 @Component({
-    selector: 'app-books-overview',
-    imports: [CommonModule, FormsModule, NgbModule, DebtsAndAssetsDetailsComponent, TruncatePipe],
-    templateUrl: './books-overview.component.html',
-    styleUrl: './books-overview.component.scss'
+  selector: 'app-books-overview',
+  standalone: true,
+  imports: [CommonModule, FormsModule, NgbModule, DebtsAndAssetsDetailsComponent, TruncatePipe],
+  templateUrl: './books-overview.component.html',
+  styleUrl: './books-overview.component.scss'
 })
 export class BooksOverviewComponent {
   truncature = '1.2-2';  // '1.0-0';// '1.2-2';  //

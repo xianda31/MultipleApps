@@ -7,10 +7,11 @@ import { RenderArticleComponent } from '../../../../../common/render-article/ren
 import { Router } from '@angular/router';
 
 @Component({
-    selector: 'app-home-page',
-    imports: [CommonModule, ReactiveFormsModule, RenderArticleComponent],
-    templateUrl: './home-page.component.html',
-    styleUrl: './home-page.component.scss'
+  selector: 'app-home-page',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule, RenderArticleComponent],
+  templateUrl: './home-page.component.html',
+  styleUrl: './home-page.component.scss'
 })
 export class HomePageComponent implements OnDestroy {
   pages !: Page[];

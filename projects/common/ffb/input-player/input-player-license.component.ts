@@ -5,17 +5,18 @@ import { FFB_proxyService } from '../services/ffb.service';
 import { CommonModule } from '@angular/common';
 
 @Component({
-    selector: 'app-input-player-license',
-    providers: [
-        {
-            provide: NG_VALUE_ACCESSOR,
-            useExisting: forwardRef(() => InputPlayerLicenseComponent),
-            multi: true
-        }
-    ],
-    imports: [ReactiveFormsModule, FormsModule, CommonModule],
-    templateUrl: './input-player-license.component.html',
-    styleUrl: './input-player-license.component.scss'
+  selector: 'app-input-player-license',
+  standalone: true,
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => InputPlayerLicenseComponent),
+      multi: true
+    }
+  ],
+  imports: [ReactiveFormsModule, FormsModule, CommonModule],
+  templateUrl: './input-player-license.component.html',
+  styleUrl: './input-player-license.component.scss'
 })
 export class InputPlayerLicenseComponent implements ControlValueAccessor {
   @Input() listeId!: string;

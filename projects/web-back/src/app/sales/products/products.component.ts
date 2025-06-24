@@ -6,10 +6,12 @@ import { Product } from './product.interface';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { map, Observable } from 'rxjs';
 @Component({
-    selector: 'app-products',
-    imports: [CommonModule, FormsModule, ReactiveFormsModule,],
-    templateUrl: './products.component.html',
-    styleUrl: './products.component.scss'
+  selector: 'app-products',
+    standalone: true,
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, ],
+
+  templateUrl: './products.component.html',
+  styleUrl: './products.component.scss'
 })
 export class ProductsComponent implements OnInit, OnDestroy {
   products_subscription: any;

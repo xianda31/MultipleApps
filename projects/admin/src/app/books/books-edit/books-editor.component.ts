@@ -28,11 +28,12 @@ interface Account {
   description: string;
 }
 @Component({
-    selector: 'app-booking',
-    encapsulation: ViewEncapsulation.None, // nécessaire pour que les CSS des tooltips fonctionnent
-    imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbTooltipModule, BackComponent],
-    templateUrl: './books-editor.component.html',
-    styleUrl: './books-editor.component.scss'
+  selector: 'app-booking',
+  standalone: true,
+  encapsulation: ViewEncapsulation.None,   // nécessaire pour que les CSS des tooltips fonctionnent
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbTooltipModule, BackComponent],
+  templateUrl: './books-editor.component.html',
+  styleUrl: './books-editor.component.scss'
 })
 export class BooksEditorComponent {
   NumberRegexPattern: string = '([-,+]?[0-9]+([.,][0-9]*)?|[.][0-9]+)';

@@ -10,12 +10,11 @@ import { AuthentificationService } from '../authentification.service';
 const EMAIL_PATTERN = "^[_A-Za-z0-9-\+]+(\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\.[A-Za-z0-9]+)*(\.[A-Za-z]{2,})$";
 const PSW_PATTERN = '^(?!\\s+)(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[\\^$*.[\\]{}()?"!@#%&/\\\\,><\': ;| _~`=+-]).{8,256}(?<!\\s)$';
 @Component({
-    selector: 'app-sign-in',
-    // standalone: true,
-    // imports: [CommonModule, JsonPipe, FormsModule, ReactiveFormsModule],
-    templateUrl: './sign-in.component.html',
-    styleUrl: './sign-in.component.scss',
-    standalone: false
+  selector: 'app-sign-in',
+  // standalone: true,
+  // imports: [CommonModule, JsonPipe, FormsModule, ReactiveFormsModule],
+  templateUrl: './sign-in.component.html',
+  styleUrl: './sign-in.component.scss'
 })
 export class SignInComponent {
 

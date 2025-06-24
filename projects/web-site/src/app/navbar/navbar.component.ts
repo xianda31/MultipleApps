@@ -10,10 +10,11 @@ import { Observable } from 'rxjs';
 
 
 @Component({
-    selector: 'app-navbar',
-    imports: [CommonModule, RouterLink, ReplacePipe],
-    templateUrl: './navbar.component.html',
-    styleUrl: './navbar.component.scss'
+  selector: 'app-navbar',
+  standalone: true,
+  imports: [CommonModule,  RouterLink,  ReplacePipe],
+  templateUrl: './navbar.component.html',
+  styleUrl: './navbar.component.scss'
 })
 export class NavbarComponent {
   @Input() isSignedIn: boolean = false;

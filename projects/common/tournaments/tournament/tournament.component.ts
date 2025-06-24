@@ -12,10 +12,11 @@ import { TournamentService } from '../../services/tournament.service';
 import { InputPlayerLicenseComponent } from '../../ffb/input-player/input-player-license.component';
 
 @Component({
-    selector: 'app-tournament',
-    imports: [UpperCasePipe, InputPlayerLicenseComponent, CommonModule, FormsModule, ReactiveFormsModule],
-    templateUrl: './tournament.component.html',
-    styleUrl: './tournament.component.scss'
+  selector: 'app-tournament',
+  standalone: true,
+  imports: [UpperCasePipe, InputPlayerLicenseComponent, CommonModule, FormsModule, ReactiveFormsModule],
+  templateUrl: './tournament.component.html',
+  styleUrl: './tournament.component.scss'
 })
 export class TournamentComponent implements OnInit {
 

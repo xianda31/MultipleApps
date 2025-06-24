@@ -8,10 +8,11 @@ import { Observable } from 'rxjs';
 import { InputMemberComponent } from '../../input-member/input-member.component';
 import { MAX_STAMPS } from '../game-card.interface';
 @Component({
-    selector: 'app-get-game-cards-owners',
-    imports: [CommonModule, FormsModule, ReactiveFormsModule, InputMemberComponent],
-    templateUrl: './get-game-cards-owners.component.html',
-    styleUrl: './get-game-cards-owners.component.scss'
+  selector: 'app-get-game-cards-owners',
+  standalone: true,
+  imports: [CommonModule,FormsModule,ReactiveFormsModule,InputMemberComponent],
+  templateUrl: './get-game-cards-owners.component.html',
+  styleUrl: './get-game-cards-owners.component.scss'
 })
 export class GetGameCardsOwnersComponent {
   ownersForm!: FormGroup;

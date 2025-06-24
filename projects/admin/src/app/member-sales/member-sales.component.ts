@@ -12,10 +12,11 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 @Component({
-    selector: 'app-member-sales',
-    imports: [CommonModule, FormsModule, InputMemberComponent],
-    templateUrl: './member-sales.component.html',
-    styleUrl: './member-sales.component.scss'
+  selector: 'app-member-sales',
+  standalone: true,
+  imports: [CommonModule, FormsModule, InputMemberComponent],
+  templateUrl: './member-sales.component.html',
+  styleUrl: './member-sales.component.scss'
 })
 export class MemberSalesComponent {
   loaded: boolean = false;

@@ -13,10 +13,11 @@ import { Bank } from '../../../../../common/system-conf.interface';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 
 @Component({
-    selector: 'app-cart',
-    imports: [CommonModule, FormsModule, ReactiveFormsModule, InputMemberComponent, CurrencyPipe],
-    templateUrl: './cart.component.html',
-    styleUrl: './cart.component.scss'
+  selector: 'app-cart',
+  standalone: true,
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, InputMemberComponent, CurrencyPipe],
+  templateUrl: './cart.component.html',
+  styleUrl: './cart.component.scss'
 })
 export class CartComponent {
   @Output() complete = new EventEmitter<void>();

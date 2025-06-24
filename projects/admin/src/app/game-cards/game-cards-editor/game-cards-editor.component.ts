@@ -9,10 +9,11 @@ import { EditGameCardComponent } from '../edit-game-card/edit-game-card.componen
 import { GetConfirmationComponent } from '../../modals/get-confirmation/get-confirmation.component';
 
 @Component({
-    selector: 'app-game-cards-editor',
-    imports: [CommonModule],
-    templateUrl: './game-cards-editor.component.html',
-    styleUrl: './game-cards-editor.component.scss'
+  selector: 'app-game-cards-editor',
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './game-cards-editor.component.html',
+  styleUrl: './game-cards-editor.component.scss'
 })
 export class GameCardsEditorComponent implements OnInit {
 

@@ -13,10 +13,11 @@ import { Router } from '@angular/router';
 import { DebtsAndAssetsDetailsComponent } from "../books/details/debts-and-assets/debts-and-assets-details.component";
 
 @Component({
-    selector: 'app-balance',
-    imports: [CommonModule, FormsModule, ReactiveFormsModule, ParenthesisPipe, DebtsAndAssetsDetailsComponent],
-    templateUrl: './balance.component.html',
-    styleUrl: './balance.component.scss'
+  selector: 'app-balance',
+  standalone: true,
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, ParenthesisPipe, DebtsAndAssetsDetailsComponent],
+  templateUrl: './balance.component.html',
+  styleUrl: './balance.component.scss'
 })
 export class BalanceComponent {
 
