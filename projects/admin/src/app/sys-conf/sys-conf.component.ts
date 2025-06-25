@@ -5,6 +5,7 @@ import { SystemDataService } from '../../../../common/services/system-data.servi
 import { SystemConfiguration } from '../../../../common/system-conf.interface';
 import { ToastService } from '../../../../common/toaster/toast.service';
 import { FileService } from '../../../../common/services/files.service';
+import { BookService } from '../book.service';
 
 
 
@@ -21,6 +22,7 @@ export class SysConfComponent {
   systemFormGroup!: FormGroup;
   loaded!: boolean;
   export_file_url: any;
+  current_season: string = '';
 
   constructor(
     private systemDataService: SystemDataService,
@@ -83,6 +85,7 @@ export class SysConfComponent {
     this.systemDataService.get_configuration()
     .subscribe({
       next : (configuration) => {
+        this.current_season = configuration.season;
       this.loadDataInFormGroup(configuration);
       this.export_file_url = this.fileService.json_to_blob(configuration);
       this.loaded = true;
@@ -95,9 +98,12 @@ export class SysConfComponent {
   }
 
   save_configuration() {
-    const configuration = this.systemFormGroup.value;
-    console.log('configuration', configuration);
-    this.systemDataService.save_configuration(configuration);
+    const new_configuration : SystemConfiguration = this.systemFormGroup.value;
+    if (new_configuration.season !== this.current_season) { // if season has changed
+      this.systemDataService.change_to_new_season(new_configuration.season);   // trigger next season observable
+    }
+    console.log('nouvelle configuration', new_configuration);
+    this.systemDataService.save_configuration(new_configuration);
   }
 
   get_trace_mode() {

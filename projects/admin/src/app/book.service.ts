@@ -139,9 +139,10 @@ export class BookService {
       let done = await this.dbHandler.deleteBookEntry(book_entry.id);
       if (done) {
         this._book_entries = this._book_entries.filter((entry) => entry.id !== book_entry.id);
-        this._book_entries$.next(this._book_entries.sort((a, b) => {
-          return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
-        }));
+        this._book_entries$.next(this._book_entries);
+        // .sort((a, b) => {
+        //   return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
+        // }));
       }
     } catch (error) {
       console.error('error', error);
@@ -178,17 +179,19 @@ export class BookService {
       this.force_reload = false;
     }
 
-    return (this._book_entries) ? this._book_entries$.asObservable() : remote_load$;
+    return (this._book_entries && !this.force_reload) ? this._book_entries$.asObservable() : remote_load$;
   }
 
   book_entries_bulk_delete$(season: string): Observable<number> {
     return this.dbHandler.bulkDeleteBookEntries(season).pipe(
+      tap((deleted_count) => {
+        this._book_entries = []; // reset book entries after deletion
+        this._book_entries$.next(this._book_entries);
+      }),
       catchError((error) => {
         throw Error('Error deleting book entries:' + error);
-      }
-      )
+      })
     );
-
   }
 
   // utility functions
@@ -196,6 +199,52 @@ export class BookService {
   get_book_entries(): BookEntry[] {
 
     return this._book_entries ?? []; // if no book entries are loaded yet
+  }
+
+  private _book_entry_balanced(bookEntry: BookEntry): boolean {
+    let total_expense_or_revenue = 0;
+    let total_financial = 0;
+    let transaction = this.transactionService.get_transaction(bookEntry.transaction_id);
+
+    Object.entries(bookEntry.amounts).forEach(([key, amount]: [string, number]) => {
+      if (key.endsWith('_in')) total_financial += amount;
+      if (key.endsWith('_out')) total_financial -= amount;
+    }, 0);
+
+    bookEntry.operations.forEach((operation) => {
+      let values = operation.values;
+      Object.entries(values).forEach(([key, amount]: [string, number]) => {
+        if (key.endsWith('_in')) total_financial += amount;
+        if (key.endsWith('_out')) total_financial -= amount;
+        if (!key.endsWith('_in') && !key.endsWith('_out')) total_expense_or_revenue += amount;
+      });
+    }
+    );
+
+    if (!transaction.revenue_account_to_show) {
+      total_expense_or_revenue = -total_expense_or_revenue;
+    }
+
+    return total_financial === total_expense_or_revenue;
+  }
+
+  check_book_entries_loaded(): boolean {
+    let error = false;
+    console.log('checking book entries loaded');
+    this._book_entries.forEach((entry) => {
+      if (!this._book_entry_balanced(entry)) {
+        error = true;
+        this.toastService.showErrorToast('base comptabilité', `L'écriture comptable du ${entry.date} n'est pas équilibrée`);
+      }
+
+    });
+
+    if (error) {
+      console.error('Some book entries are not balanced');
+      return false;
+    } else {
+      return true;
+    }
   }
 
   get_operations(): (Revenue | Expense)[] {

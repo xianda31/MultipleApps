@@ -11,6 +11,7 @@ import { map, Subscription, switchMap, tap, catchError, of } from 'rxjs';
 type Fields = 'date' | 'classe' | 'transaction' | 'montant' | 'tag'
 @Component({
     selector: 'app-books-list',
+    standalone: true,
     imports: [CommonModule, FormsModule],
     templateUrl: './books-list.component.html',
     styleUrl: './books-list.component.scss'
@@ -141,5 +142,9 @@ export class BooksListComponent implements OnDestroy {
 
   show_book_entry(book_entry_id: string) {
     this.router.navigate(['/finance/books/editor', book_entry_id]);
+  }
+
+  async delete_book_entry(book_entry: BookEntry) {
+    await this.bookService.delete_book_entry(book_entry);
   }
 }

@@ -25,13 +25,14 @@
           <th class="col th_hover" (click)="sort_by('tag')"> tag </th>
           <th class="col th_hover" (click)="sort_by('classe')">classe </th>
           <th class="col th_hover" (click)="sort_by('transaction')"> type</th>
+          <th class="col">#</th>
         </tr>
       </thead>
 
       <tbody>
         <ng-container *ngFor="let entry of book_entries , let i = index ">
-          <tr *ngFor="let operation of entry.operations, , let first=first" (click)="show_book_entry(entry.id)">
-            <td *ngIf="first" [rowSpan]="entry.operations.length"> {{entry.date | date: 'dd/MM'}} </td>
+          <tr *ngFor="let operation of entry.operations, , let first=first" >
+            <td *ngIf="first" (click)="show_book_entry(entry.id)" [rowSpan]="entry.operations.length"> {{entry.date | date: 'dd/MM'}} </td>
             <td>{{operation.member ? operation.member : operation.label}}</td>
             <td>{{operation.values | json}}</td>
             <td *ngIf="first" [rowSpan]="entry.operations.length" class="text-end pe-3"> {{total_amount(entry) |
@@ -40,6 +41,11 @@
             <td *ngIf="first" [rowSpan]="entry.operations.length"> {{entry.tag}} </td>
             <td *ngIf="first" [rowSpan]="entry.operations.length"> {{class_label(entry) }} </td>
             <td *ngIf="first" [rowSpan]="entry.operations.length">{{transaction_label(entry)}}</td>
+            <td *ngIf="first" [rowSpan]="entry.operations.length">
+              <button class="btn btn-sm btn-outline-warning" (click)="delete_book_entry(entry)">
+                <i class="bi bi-trash3"></i>
+              </button>
+            </td>
           </tr>
         </ng-container>
       </tbody>

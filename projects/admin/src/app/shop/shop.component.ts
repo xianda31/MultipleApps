@@ -103,7 +103,7 @@ export class ShopComponent {
         this.cartService.setAsset(buyer.lastname + ' ' + buyer.firstname, this.asset_amount);
       }
 
-      if((this.buyer?.license_status !== 'paied') || (!this.buyer?.is_sympathisant)) {
+      if((this.buyer?.license_status !== 'paied') && (!this.buyer?.is_sympathisant)) {
         this.toastService.showWarning('licence, adhésion', 'la personne n\'est pas à jour pour la licence ou l\'adhésion');
       }
 

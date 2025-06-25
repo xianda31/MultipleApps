@@ -13,10 +13,10 @@ import { Router } from '@angular/router';
 import { DebtsAndAssetsDetailsComponent } from "../books/details/debts-and-assets/debts-and-assets-details.component";
 
 @Component({
-    selector: 'app-balance',
-    imports: [CommonModule, FormsModule, ReactiveFormsModule, ParenthesisPipe, DebtsAndAssetsDetailsComponent],
-    templateUrl: './balance.component.html',
-    styleUrl: './balance.component.scss'
+  selector: 'app-balance',
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, ParenthesisPipe, DebtsAndAssetsDetailsComponent],
+  templateUrl: './balance.component.html',
+  styleUrl: './balance.component.scss'
 })
 export class BalanceComponent {
 
@@ -28,8 +28,8 @@ export class BalanceComponent {
   balance_board!: Balance_board;
   balance_error: number = 0;
 
-show_details_flag = false;
-due: 'dettes'|'avoirs' = 'dettes';
+  show_details_flag = false;
+  due: 'dettes' | 'avoirs' = 'dettes';
 
   truncature = '1.2-2';// '1.2-2';  //
   truncature2 = '1.2-2';// '1.2-2';  //
@@ -64,17 +64,6 @@ due: 'dettes'|'avoirs' = 'dettes';
   }
 
 
-  // get cashbox_lines(): string[] {
-  //   let lines: string[] = ['fond de caisse'];
-  //   if (this.balance_board.current.client_debts !== 0) {
-  //     lines.push('dettes clients');
-  //   }
-  //   // if (this.balance_board.current.client_assets !== 0) {
-  //   //   lines.push('avoirs clients');
-  //   // }
-
-  //   return lines;
-  // }
 
   check_balance_vs_profit_and_loss() {
     this.trading_result = this.bookService.get_trading_result();
@@ -82,7 +71,11 @@ due: 'dettes'|'avoirs' = 'dettes';
     if (this.balance_error !== 0) {
       console.log('incohérence entre résultat et bilan', this.balance_error, this.balance_board.delta.actif_total, this.trading_result);
       this.toastService.showWarning('consolidation financière', 'incohérence entre résultat et bilan');
+
+      // this.bookService.check_book_entries_loaded();
     }
+
+
   }
 
   // cloture comptable : initialisation des reports financiers
@@ -95,7 +88,7 @@ due: 'dettes'|'avoirs' = 'dettes';
       .subscribe((nbr) => {
         this.toastService.showSuccessToast('cloture saison', nbr + 'écritures de report générées pour la saison ' + next_season);
         // finalisation  : passage à la nouvelle saison
-        this.systemDataService.to_next_season();
+        this.systemDataService.change_to_new_season(next_season);
       });
   }
 
@@ -116,11 +109,11 @@ due: 'dettes'|'avoirs' = 'dettes';
         this.show_details_flag = true;
         this.due = 'avoirs';
         break;
-        case 'client_debts':
+      case 'client_debts':
         this.show_details_flag = true;
         this.due = 'dettes';
         break;
-        case 'commited_payments':
+      case 'commited_payments':
         this.router.navigate(['/finance/bank-reconciliation']);
         break;
       default:
@@ -140,7 +133,7 @@ due: 'dettes'|'avoirs' = 'dettes';
   }
 
 
-private  download_file() {
+  private download_file() {
 
     if (this.export_url) {
       const link = document.createElement('a');

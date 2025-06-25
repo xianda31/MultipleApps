@@ -40,8 +40,8 @@ export const routes: Routes = [
   { path: 'finance/books/editor/:id', component: BooksEditorComponent },
   { path: 'finance/books/base-comptable', component: BooksOverviewComponent },
   { path: 'finance/books/base-comptable/:report', component: BooksOverviewComponent },
+  
   { path: 'finance/books/list', component: BooksListComponent },
-
   { path: 'sysconf', component: SysConfComponent },
 
   { path: 'excel/import', component: ImportExcelComponent },

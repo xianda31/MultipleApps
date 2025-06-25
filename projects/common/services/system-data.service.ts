@@ -19,7 +19,7 @@ export class SystemDataService {
   // S3 download / upload
 
 
-  get_configuration(): Observable<SystemConfiguration> {
+   get_configuration(): Observable<SystemConfiguration> {
 
     let remote_load$ = from(this.fileService.download_json_file('system/system_configuration.txt')).pipe(
       tap((conf) => {
@@ -44,11 +44,11 @@ export class SystemDataService {
     });
   }
 
-  async to_next_season() {
-    this._system_configuration.season = this.next_season(this._system_configuration.season);
-    console.log('next season', this._system_configuration.season);
-    this._system_configuration$.next(this._system_configuration);
+  async change_to_new_season(season: string) {
+    this._system_configuration.season = season;
+    console.log('new season', this._system_configuration.season);
     this.save_configuration(this._system_configuration);
+    this._system_configuration$.next(this._system_configuration);
   }
 
 
