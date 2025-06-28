@@ -20,6 +20,7 @@ export class BookService {
   private _book_entries$ = new BehaviorSubject<BookEntry[]>([]);
   private season_filter: string = '';
   private force_reload: boolean = false; // force reload of book entries if true
+  private higlighting: { [key: string]: boolean } = {};
 
   constructor(
     private systemDataService: SystemDataService,
@@ -817,6 +818,24 @@ export class BookService {
     const neat = +(Math.abs(value).toPrecision(15));
     const rounded = Math.round(neat * 100) / 100;
     return rounded * Math.sign(value);
+  }
+
+
+  // utilitaire pour surligner les opérations bancaires (reconciliation bancaire)
+   init_highlighting() {
+  this._book_entries
+  .filter(book_entry => Object.values(FINANCIAL_ACCOUNT).some(op => book_entry.amounts[op] !== undefined))
+  .forEach(book_entry => {
+    this.higlighting[book_entry.id] = false;
+  });
+}
+
+highlight_book_entry(book_entry: BookEntry) {
+    this.higlighting[book_entry.id] = !this.higlighting[book_entry.id];
+  }
+
+  highlighted(book_entry: BookEntry): boolean {
+    return this.higlighting[book_entry.id] ?? false;
   }
 
 }

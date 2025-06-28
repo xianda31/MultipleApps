@@ -127,8 +127,8 @@ export class MembersComponent implements OnInit {
       season: player.last_season,
       email: '?',
       phone_one: '?',
-      license_taken_at: "BCSTO",
-      license_status: "unknown",
+      license_taken_at: player.last_club ?? '??',
+      license_status: player.is_current_season ? 'paied' : 'unknown',
       is_sympathisant: false,
     }
   }

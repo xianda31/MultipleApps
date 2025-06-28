@@ -22,10 +22,10 @@
         <div class="col-2 text-start">
           solde
         </div>
-        <div class="col-2 text-end pe-5">
+        <div class="col-3 text-end pe-4">
           Débit
         </div>
-        <div class="col-2 text-end pe-5">
+        <div class="col-1 text-end pe-4">
           Crédit
         </div>
         <div class="col-2">
@@ -46,10 +46,10 @@
                 <div class="col-2 text-start fw-bolder">
                   {{balance(bank_report).bank | number:truncature:'fr'}}
                 </div>
-                <div class="col-2 text-end pe-4">
+                <div class="col-3 text-end pe-2">
                   {{movement_out(bank_report).bank | number:truncature:'fr' }}
                 </div>
-                <div class="col-2 text-end pe-4">
+                <div class="col-1 text-end pe-2">
                   {{movement_in(bank_report).bank | number:truncature:'fr'}}
                 </div>
 
@@ -106,18 +106,17 @@
     <tbody class="fst-italic">
       <ng-container *ngFor="let book_entry of bank_book_entries">
 
-        <tr class="g-0 p-0" *ngIf="book_entry.bank_report === bank_report">
+        <tr [class]="highlight_class(book_entry)" *ngIf="book_entry.bank_report === bank_report">
           <td class="col-1">{{book_entry.date | date: 'dd/MM/yyyy'}}</td>
           <td class="col-3"> {{transaction_label(book_entry)}} </td>
-          <td class="col-2 text-start"> {{book_label(book_entry)}}</td>
-          <td class="col-2 text-end pe-3">{{book_entry.amounts['bank_out'] ? (book_entry.amounts['bank_out'] | number:
+          <td class="col-4 text-start"> {{book_label(book_entry)}}</td>
+          <td class="col-1 text-end pe-3">{{book_entry.amounts['bank_out'] ? (book_entry.amounts['bank_out'] | number:
             truncature) : '' }}</td>
-          <td class="col-2 text-end pe-3">{{book_entry.amounts['bank_in'] ? (book_entry.amounts['bank_in'] |
+          <td class="col-1 text-end pe-3">{{book_entry.amounts['bank_in'] ? (book_entry.amounts['bank_in'] |
             number:truncature) : ''}}
           </td>
 
-
-          <td class="col-2 text-end">
+          <td class="col-1 text-end">
             <div *ngIf="bank_report !== null" class="form-check form-switch form-check-inline">
               <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault"
                 [checked]="book_entry.bank_report !== null" (change)="set_bank_report(book_entry,bank_report)">
@@ -132,6 +131,7 @@
           </td>
           <td class="col-1 text-end">
             <i (click)="show_book_entry(book_entry.id)" class="bi bi-info-circle"></i>
+            <i (click)="highlight(book_entry)" class="bi bi-highlighter ms-5"></i>
             <!-- <i [ngbTooltip]="book_label(book_entry)" tooltipClass="my-custom-class" placement="end"
               class="bi bi-info-circle"></i> -->
           </td>

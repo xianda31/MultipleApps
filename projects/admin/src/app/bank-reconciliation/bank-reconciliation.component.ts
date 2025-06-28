@@ -14,11 +14,11 @@ import { FinancialReportService } from '../financial_report.service';
 import { Balance_sheet } from '../../../../common/balance.interface';
 
 @Component({
-    selector: 'app-bank-reconciliation',
-    encapsulation: ViewEncapsulation.None, // nécessaire pour que les tooltips fonctionnent
-    imports: [CommonModule, FormsModule, NgbModule],
-    templateUrl: './bank-reconciliation.component.html',
-    styleUrl: './bank-reconciliation.component.scss'
+  selector: 'app-bank-reconciliation',
+  encapsulation: ViewEncapsulation.None, // nécessaire pour que les tooltips fonctionnent
+  imports: [CommonModule, FormsModule, NgbModule],
+  templateUrl: './bank-reconciliation.component.html',
+  styleUrl: './bank-reconciliation.component.scss'
 })
 export class BankReconciliationComponent {
   truncature = '1.2-2';// '1.2-2';  //
@@ -27,14 +27,18 @@ export class BankReconciliationComponent {
   former_balance_sheet !: Balance_sheet;
   bank_book_entries: BookEntry[] = [];
   // bank_accounts = Object.values(Bank_accounts).slice().reverse() as FINANCIAL_ACCOUNT[];
-  bank_accounts : FINANCIAL_ACCOUNT[] = [
-     FINANCIAL_ACCOUNT.BANK_credit,
-     FINANCIAL_ACCOUNT.BANK_debit,
+  bank_accounts: FINANCIAL_ACCOUNT[] = [
+    FINANCIAL_ACCOUNT.BANK_credit,
+    FINANCIAL_ACCOUNT.BANK_debit,
     // [FINANCIAL_ACCOUNT.SAVING_debit]: 'saving_in',
     // [FINANCIAL_ACCOUNT.SAVING_credit]: 'saving_out',
-];
-    bank_reports: string[] = [];
-    db_loaded: boolean = false;
+  ];
+
+
+  bank_reports: string[] = [];
+
+
+  db_loaded: boolean = false;
 
   constructor(
     private bookService: BookService,
@@ -47,7 +51,7 @@ export class BankReconciliationComponent {
 
   ngOnInit() {
 
-    
+
     this.systemDataService.get_configuration().pipe(
       map((conf) => {
         this.current_season = conf.season;
@@ -68,16 +72,24 @@ export class BankReconciliationComponent {
       .subscribe(([former_balance_sheet, book_entries]) => {
         this.former_balance_sheet = former_balance_sheet;
         this.bank_book_entries = book_entries
-        .filter(book_entry => this.bank_accounts.some(op => book_entry.amounts[op] !== undefined))
-        .sort((a, b) => {
-          return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
-        });
+          .filter(book_entry => this.bank_accounts.some(op => book_entry.amounts[op] !== undefined))
+          .sort((a, b) => {
+            return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
+          });
         this.db_loaded = true;
       });
   }
 
 
   // utilities
+
+highlight(book_entry: BookEntry) {
+    this.bookService.highlight_book_entry(book_entry);
+  }
+
+  highlight_class(book_entry: BookEntry): string {
+    return this.bookService.highlighted(book_entry) ? 'g-0 p-0 table-info' : 'g-0 p-0';
+  }
 
   previous_season(season: string): string {
     return this.systemDataService.previous_season(season);
@@ -93,7 +105,7 @@ export class BankReconciliationComponent {
     if (transaction.require_deposit_ref) {
       return book_entry.deposit_ref!;
     } else {
-      return (book_entry.operations? book_entry.operations[0].label : '');
+      return (book_entry.operations ? book_entry.operations[0].label : '');
     }
   }
   show_book_entry(book_entry_id: string) {

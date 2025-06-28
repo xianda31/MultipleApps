@@ -16,7 +16,7 @@
     </div>
     <div *ngIf="loaded" class="card-body">
       <div class="row mx-2">
-        <div class=" col-8">
+        <div class=" col-7">
           <table class="table table-sm table-borderless table-responsive text-end fs-5 align-middle">
             <thead>
               <tr >
@@ -161,7 +161,7 @@
         </div>
 
         <!-- PASSIF -->
-        <div class="col-4">
+        <div class="col-5">
           <table class="table table-sm table-borderless table-responsive text-end fs-5">
             <thead>
               <tr class="table-primary">
@@ -174,8 +174,8 @@
                 <td class="text-start">REPORT A NOUVEAU</td>
                 <td>{{balance_board.previous.actif_total | number:truncature:'fr'}}</td>
               </tr>
-              <!-- alignment with "TRESORERIE" -->
-              <tr *ngFor="let n of [1, 2]" class="fw-light fs-6">
+              <!-- alignment with "FOND DE CAISSE" -->
+              <tr *ngFor="let n of [1, 2,3]" class="fw-light fs-6">
                 <td>&#8205;</td>
                 <td>&#8205;</td>
               </tr>
