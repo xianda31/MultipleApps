@@ -88,7 +88,7 @@ export class TeamsComponent implements OnInit {
     // this.ffbService.postTeam(this.tournament.team_tournament_id.toString(), license_pair)
     //   .then((data) => {
     //     console.log('inscription done', JSON.stringify(data));
-    //     this.toastService.showSuccessToast("tournoi","paire enregistrée");
+    //     this.toastService.showSuccess("tournoi","paire enregistrée");
     //     this.listTeams();
     //   })
     //   .catch((error) => { console.log('TeamsComponent.createTeam', error); });

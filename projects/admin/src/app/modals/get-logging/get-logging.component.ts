@@ -44,7 +44,7 @@ export class GetLoggingComponent implements OnInit {
 
   resetPassword() {
     this.auth.resetPassword(this.email).then(() => {
-      this.toastService.showSuccessToast('Réinitialisation du mot de passe', 'Demande de code de réinitialisation envoyée ');
+      this.toastService.showSuccess('Réinitialisation du mot de passe', 'Demande de code de réinitialisation envoyée ');
       this.secret_code.setValue('');
       this.secret_code.enable();
       this.password.setValue('');
@@ -56,7 +56,7 @@ export class GetLoggingComponent implements OnInit {
 
   signUp() {
     this.auth.signUp(this.email, this.password.value, this.member.id).then(() => {
-      this.toastService.showSuccessToast('Inscription', 'Demande de compte effectuée. Un email de confirmation a été envoyé.');
+      this.toastService.showSuccess('Inscription', 'Demande de compte effectuée. Un email de confirmation a été envoyé.');
       this.secret_code.enable();
     }).catch((error) => {
       this.toastService.showErrorToast('Erreur d\'inscription', error.message || 'Une erreur est survenue lors de la création du compte.');

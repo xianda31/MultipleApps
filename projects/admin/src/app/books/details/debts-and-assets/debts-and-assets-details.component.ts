@@ -6,25 +6,27 @@ import { SystemDataService } from '../../../../../../common/services/system-data
 import { BookService } from '../../../book.service';
 import { BookEntry } from '../../../../../../common/accounting.interface';
 import { BackComponent } from '../../../../../../common/back/back.component';
+import { ToastService } from '../../../../../../common/toaster/toast.service';
 interface EntryValue { total: number, entries: BookEntry[] };
 
 @Component({
-    selector: 'app-debts-and-assets-details',
-    imports: [CommonModule],
-    templateUrl: './debts-and-assets-details.component.html',
-    styleUrl: './debts-and-assets-details.component.scss'
+  selector: 'app-debts-and-assets-details',
+  imports: [CommonModule],
+  templateUrl: './debts-and-assets-details.component.html',
+  styleUrl: './debts-and-assets-details.component.scss'
 })
 export class DebtsAndAssetsDetailsComponent {
   dues: Map<string, EntryValue> = new Map();
   dues_amount = 0;
   show_all_dues = false;
   truncature = '1.2-2';  // '1.0-0';// '1.2-2';  //
-  @Input() due: 'dettes'|'avoirs' = 'dettes';
-  @Input() expert_mode = false;
+  @Input() due: 'dettes' | 'avoirs' = 'dettes';
+  @Input() expert_mode = true;
   @Output() close = new EventEmitter<void>();
   constructor(
     private bookService: BookService,
     private systemDataService: SystemDataService,
+    private toastService : ToastService,
     private router: Router,
 
   ) { }
@@ -36,11 +38,11 @@ export class DebtsAndAssetsDetailsComponent {
   prep_data() {
     switch (this.due) {
       case 'dettes':
-    this.dues = this.bookService.get_debts();
-    break;
+        this.dues = this.bookService.get_debts();
+        break;
       case 'avoirs':
-    this.dues = this.bookService.get_customers_assets();
-    break;
+        this.dues = this.bookService.get_customers_assets();
+        break;
       default:
         throw new Error('Invalid due type');
     }
@@ -67,13 +69,16 @@ export class DebtsAndAssetsDetailsComponent {
     this.router.navigate(['finance/books/editor', id]);
   }
 
-  compensate(key: string) {
+  async compensate(key: string) {
     let amount = this.dues.get(key)!.total;
     let date = new Date().toISOString().split('T')[0]; // Format YYYY-MM-DD
     let member = key;
     console.log('cancel', date, member, amount);
     try {
-      let entry = this.bookService.debt_cancelation(date, member, amount);
+      let entry = await this.bookService.debt_cancelation(date, member, amount);
+      this.dues.delete(key);
+      this.toastService.showSuccess('Gestion dettes et crédits', `La compensation de ${amount} € pour ${member} a été enregistrée.`);
+
     }
     catch (error) {
       console.error('Error during asset compensation:', error);

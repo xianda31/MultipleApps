@@ -58,7 +58,7 @@ export class AdminInComponent {
     this.auth.logged_member$.subscribe(async (member) => {
       this.logged_member = null;
       if (member !== null) {
-        // this.toastService.showSuccessToast('identification', 'Bonjour ' + member.firstname);
+        // this.toastService.showSuccess('identification', 'Bonjour ' + member.firstname);
         this.logged_member = member;
         let groups = await this.groupService.getCurrentUserGroups();
         if (groups.length > 0) {

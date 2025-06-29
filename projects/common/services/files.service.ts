@@ -75,7 +75,7 @@ export class FileService {
         }
       }).result
         .then((result) => {
-          this.toastService.showSuccessToast('upload '+ directory, 'sauvegarde réussie');
+          this.toastService.showSuccess('upload '+ directory, 'sauvegarde réussie');
           resolve(result);
         })
         .catch((error) => {

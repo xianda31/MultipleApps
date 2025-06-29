@@ -86,7 +86,7 @@ export class BalanceComponent {
 
     this.bookService.generate_next_season_entries(next_season)
       .subscribe((nbr) => {
-        this.toastService.showSuccessToast('cloture saison', nbr + 'écritures de report générées pour la saison ' + next_season);
+        this.toastService.showSuccess('cloture saison', nbr + 'écritures de report générées pour la saison ' + next_season);
         // finalisation  : passage à la nouvelle saison
         this.systemDataService.change_to_new_season(next_season);
       });
@@ -94,7 +94,7 @@ export class BalanceComponent {
 
   save_balance_sheet() {
     this.financialService.save_balance_sheet(this.balance_board.current).subscribe((result) => {
-      this.toastService.showSuccessToast('sauvegarde bilan', 'sauvegarde du bilan effectuée avec succès');
+      this.toastService.showSuccess('sauvegarde bilan', 'sauvegarde du bilan effectuée avec succès');
     });
   }
 

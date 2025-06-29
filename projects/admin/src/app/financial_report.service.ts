@@ -272,7 +272,7 @@ private _sheets_to_records(sheets: Balance_sheet[]): Balance_record[] {
       let records = JSON.parse(text) as Balance_record[];
       this._balance_sheets = this._records_to_sheets(records);
       this._balance_sheets$.next(this._balance_sheets);
-      // this.toatService.showSuccessToast('fichier de configuration chargé', 'les données sont prêtes à être enregistrées');
+      // this.toatService.showSuccess('fichier de configuration chargé', 'les données sont prêtes à être enregistrées');
     } catch (error) {
       console.error('error', error);
       // this.toatService.showErrorToast('erreur chargement fichier de configuration', 'vérifiez la syntaxe');

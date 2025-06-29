@@ -20,18 +20,18 @@
           <table class="table table-sm table-borderless table-responsive text-end fs-5 align-middle">
             <thead>
               <tr >
-                <th width="30%" class="text-start">ACTIF </th>
+                <th width="36%" class="table-primary text-start">ACTIF </th>
                 <th width="20%" class="table-primary"> {{ balance_board.current.season }}</th>
-                <th width="5%"  ></th>
-                <th width="18%" class="table-primary variation">mouvements</th>
-                <th width="5%" ></th>
+                <th width="2%"  ></th>
+                <th width="18%" class="table-primary variation">variations</th>
+                <th width="2%" ></th>
                 <th width="20%" class="table-secondary fs-5"> {{ balance_board.previous.season }}</th>
               </tr>
             </thead>
             <tbody>
 
               <tr class="fw-bolder">
-                <td class="text-start">COMPTES EN BANQUE</td>
+                <td class="text-start">BANQUE</td>
 
                 <td> {{balance_board.current.in_bank_total | number:truncature:'fr'}}
                 </td>
@@ -175,7 +175,7 @@
                 <td>{{balance_board.previous.actif_total | number:truncature:'fr'}}</td>
               </tr>
               <!-- alignment with "FOND DE CAISSE" -->
-              <tr *ngFor="let n of [1, 2,3]" class="fw-light fs-6">
+              <tr *ngFor="let n of [1, 2]" class="fw-light fs-6">
                 <td>&#8205;</td>
                 <td>&#8205;</td>
               </tr>

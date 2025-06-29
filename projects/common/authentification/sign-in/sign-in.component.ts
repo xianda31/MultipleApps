@@ -77,7 +77,7 @@ export class SignInComponent {
         if (member_id) {
           const me = await this.membersService.readMember(member_id);
           // this.auth.whoAmI = me;
-          this.toastService.showSuccessToast('identification', 'Bonjour ' + me!.firstname);
+          this.toastService.showSuccess('identification', 'Bonjour ' + me!.firstname);
           this.router.navigate(['/']);
         }
       })
@@ -95,7 +95,7 @@ export class SignInComponent {
       // console.log("member_id", member_id);
       const me = await this.membersService.readMember(member_id);
       // this.auth.whoAmI = me;
-      this.toastService.showSuccessToast('identification', 'Bonjour ' + me!.firstname);
+      this.toastService.showSuccess('identification', 'Bonjour ' + me!.firstname);
       this.router.navigate(['/']);
 
     } catch (err: any) {
@@ -134,7 +134,7 @@ export class SignInComponent {
           this.toastService.showErrorToast('sign up', 'erreur imprévue');
           return;
         } else {
-          this.toastService.showSuccessToast('création compte', 'compte créé');
+          this.toastService.showSuccess('création compte', 'compte créé');
           this.membersService.searchMemberByEmail(this.email.value)
             .then((member) => {
               if (!member) {
@@ -143,7 +143,7 @@ export class SignInComponent {
               } else {
                 // member.has_account = true;
                 this.membersService.updateMember(member);
-                this.toastService.showSuccessToast('création compte', 'Bienvenue ' + member.firstname);
+                this.toastService.showSuccess('création compte', 'Bienvenue ' + member.firstname);
                 this.auth.changeMode(Process_flow.SIGN_IN);
               };
               this.router.navigate(['/']);

@@ -246,7 +246,7 @@ export class FeesCollectorService {
       try {
         let total = non_members_euros + members_euros;
         await this.BookService.create_tournament_fees_entry(this.game.tournament!.date, total)
-        this.toastService.showSuccessToast('droits de table', total + ' € de droits de table enregistrés');
+        this.toastService.showSuccess('droits de table', total + ' € de droits de table enregistrés');
       }
       catch (error: unknown) {
         this.toastService.showErrorToast('droits de table', 'Erreur lors de l\'enregistrement des droits de table');

@@ -14,10 +14,10 @@ import { Revenue_and_expense_definition } from '../../../../../common/system-con
 import { json } from 'd3';
 
 @Component({
-    selector: 'app-import-excel',
-    imports: [CommonModule, FormsModule],
-    templateUrl: './import-excel.component.html',
-    styleUrl: './import-excel.component.scss'
+  selector: 'app-import-excel',
+  imports: [CommonModule, FormsModule],
+  templateUrl: './import-excel.component.html',
+  styleUrl: './import-excel.component.scss'
 })
 
 
@@ -99,7 +99,13 @@ export class ImportExcelComponent {
     this.loadable = this.extra_sanity_check();
     // this.worksheet_processed = true;
   }
+
   process_exel_file(worksheet: ExcelJS.Worksheet): boolean {
+
+
+    let is_valid_data = (chrono: string): boolean => {
+      return (chrono.length === 4 && (['B', 'C', 'K'].includes(chrono.slice(0, 1))))
+    }
 
     this.worksheet = worksheet;
     this.verbose.set('\n traitement de l\'onglet "' + this.worksheet.name + '" \n');
@@ -123,7 +129,6 @@ export class ImportExcelComponent {
 
     // recherche des cellules mergées (colonne Nature) => meta_rows
 
-
     let _999reached = false;
     col_nature.eachCell((cell, rowNumber) => {
       if (_999reached) return;
@@ -138,8 +143,7 @@ export class ImportExcelComponent {
         return;
       }
 
-      // si le chrono n'est pas le même que la balise 999, on ignore la ligne
-      if (!cell_chrono.startsWith(this.balise999.substring(0, 1))) {
+      if (!is_valid_data(cell_chrono)) {
         this.verbose.set(this.verbose() + ' (info) : ligne [' + rowNumber + '] chrono :<' + cell_chrono + '> ignorée \n');
       } else {
 
@@ -147,6 +151,7 @@ export class ImportExcelComponent {
         if (cell_month.endsWith('N-1') || cell_month.endsWith('N-2')) {
           this.verbose.set(this.verbose() + ' (info) : ligne [' + rowNumber + '] mois comptable :<' + cell_month + '> ignorée \n');
         } else {
+
           if (cell.isMerged) {
             let merge = cell.master.address;
             if (meta_rows[merge]) {
@@ -165,6 +170,8 @@ export class ImportExcelComponent {
       }
     });
 
+
+
     // traitement lignes du tableau meta_rows (bloc de cellules mergées)
     let error = false;
     Object.entries(meta_rows).forEach(([master, cells]) => {
@@ -180,6 +187,7 @@ export class ImportExcelComponent {
 
     return !error;
   }
+
 
 
   upload_data() {
@@ -290,12 +298,14 @@ export class ImportExcelComponent {
     let date = master_row.getCell(MAP.date).value?.toString() || '';
     let cell_pointage = master_row.getCell(MAP['pointage']).value?.toString() || undefined;
 
+    let cell_chrono = master_row.getCell(MAP.chrono).value?.toString() || '';
+
     let cell_chèque = master_row.getCell(MAP['n° chèque']).value;
     let cell_bordereau = master_row.getCell(MAP['bordereau']).value;
     let cell_info_sup = master_row.getCell(MAP['info']).value;
 
     let cell_nature = master_row.getCell(MAP['nature']).value;
-    let bank_op_type = this.convert_to_bank_op_type(cell_nature?.toString() as string);
+    let bank_op_type = this.convert_to_bank_op_type(cell_chrono, cell_nature?.toString() as string);
     if (bank_op_type === null) {
       // console.log('erreur de nature', cell_nature);
       // reject('erreur de nature ' + cell_nature);
@@ -375,14 +385,16 @@ export class ImportExcelComponent {
 
   }
 
-  convert_to_bank_op_type(nature: string): TRANSACTION_ID | null {
-    switch (this.balise999) {
-      case 'B999':  // type chrono banque
+  convert_to_bank_op_type(chrono: string, nature: string): TRANSACTION_ID | null {
+
+    let wk_type = chrono.slice(0, 1);
+    switch (wk_type) {
+      case 'B':  // type chrono banque
 
         switch (nature) {
           case 'report prélèvement':
             return TRANSACTION_ID.report_prélèvement;
-            case 'report chèque': 
+          case 'report chèque':
             return TRANSACTION_ID.report_chèque;
           case 'versement espèces':
             return TRANSACTION_ID.dépôt_collecte_espèces;
@@ -400,7 +412,8 @@ export class ImportExcelComponent {
             return TRANSACTION_ID.vente_par_chèque;
           case 'chèque émis':
             return TRANSACTION_ID.dépense_par_chèque;
-
+          case 'attribution_avoir':
+            return TRANSACTION_ID.attribution_avoir;
           case 'virement reçu':
             return TRANSACTION_ID.vente_par_virement;
           case 'achat en espèces':
@@ -424,7 +437,7 @@ export class ImportExcelComponent {
             return null
         }
 
-      case 'C999': // type 'chrono vente':
+      case 'C': // type 'chrono vente':
 
         switch (nature) {
           case 'report avoir':
@@ -444,7 +457,7 @@ export class ImportExcelComponent {
             return null
         }
 
-      case 'K999':   // droits de table':
+      case 'K':   // droits de table':
 
         switch (nature) {
           case 'espèces':
@@ -461,11 +474,11 @@ export class ImportExcelComponent {
             return null
         }
 
-      case 'R999': // les reports
-      case 'report chèque':
-        return TRANSACTION_ID.report_chèque;
-      case 'report prélèvement':
-        return TRANSACTION_ID.report_prélèvement;
+      // case 'R999': // les reports
+      // case 'report chèque':
+      //   return TRANSACTION_ID.report_chèque;
+      // case 'report prélèvement':
+      //   return TRANSACTION_ID.report_prélèvement;
 
       default:
         console.log('erreur de feuille', this.worksheet.name);
@@ -582,7 +595,7 @@ export class ImportExcelComponent {
         break;
       case TRANSACTION_CLASS.EXPENSE_FOR_MEMBER:
       case TRANSACTION_CLASS.OTHER_EXPENSE:
-        case TRANSACTION_CLASS.BALANCE:
+      case TRANSACTION_CLASS.BALANCE:
         operation.values = this.get_expenses_values(row);
         break;
       case TRANSACTION_CLASS.MOVEMENT:

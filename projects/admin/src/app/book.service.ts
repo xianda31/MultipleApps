@@ -575,7 +575,7 @@ export class BookService {
       new_entries.forEach((entry) => {
         this.dbHandler.updateBookEntry(entry);
       });
-      this.toastService.showSuccessToast('base comptabilité', `${n} références de dépôt mises à jour`);
+      this.toastService.showSuccess('base comptabilité', `${n} références de dépôt mises à jour`);
       this._book_entries$.next(this._book_entries);
     } else {
       throw Error('enable to find any entry with deposit_ref : ' + deposit_ref);

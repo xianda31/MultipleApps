@@ -48,7 +48,7 @@ export class ArticlesComponent implements OnDestroy {
   onPageSelect(article: Article) {
     this.articlesService.updateArticle(article)
       .then((article) => {
-        this.toastService.showSuccessToast('article', 'Article mis à jour');
+        this.toastService.showSuccess('article', 'Article mis à jour');
         // console.log('article updated', article);
       })
       .catch((error) => {
@@ -60,7 +60,7 @@ export class ArticlesComponent implements OnDestroy {
   onFeaturedSelect(article: Article) {
     this.articlesService.updateArticle(article)
       .then((article) => {
-        this.toastService.showSuccessToast('articles', 'Article mis à jour');
+        this.toastService.showSuccess('articles', 'Article mis à jour');
       })
       .catch((error) => {
         console.error('article update error', error);

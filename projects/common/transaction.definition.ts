@@ -186,6 +186,19 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     cash: 'none',
     cheque: 'none',
   },
+  //   [TRANSACTION_ID.debit_avoir]: {
+  //   label: 'DEBIT D\'UN AVOIR',
+  //   tooltip: 'débit d\'un avoir',
+  //   class: TRANSACTION_CLASS.OTHER_REVENUE,
+  //   financial_accounts: financial_debits,
+  //   financial_accounts_to_charge: [CUSTOMER_ACCOUNT.ASSET_debit],
+  //   nominative: false,
+  //   pure_financial: false,
+  //   revenue_account_to_show: true,
+  //   require_deposit_ref: false,
+  //   cash: 'none',
+  //   cheque: 'none',
+  // },
 
   // C. reception groupée de fond de tiers  ****
   // ****  CLASS = OTHER_REVENUE ****

@@ -177,14 +177,14 @@ export class PageComponent implements OnInit, OnChanges {
     }
     this.articlesService.createArticle(newArticle).then((article) => {
       this.selectedArticle = article;
-      this.toastService.showSuccessToast('edition layout', 'Nouvel article à renseigner');
+      this.toastService.showSuccess('edition layout', 'Nouvel article à renseigner');
       // console.log('new article', article);
     });
   }
 
   submitArticle(article: Article): void {
     if (this.selectedArticle) {
-      // this.toastService.showSuccessToast('edition layout', 'Article mis à jour');
+      // this.toastService.showSuccess('edition layout', 'Article mis à jour');
       this.selectedArticle = null;
     } else {
       console.error('%s update error', article.title);
@@ -193,7 +193,7 @@ export class PageComponent implements OnInit, OnChanges {
 
   updatePage(page: Page): void {
     this.siteLayoutService.updatePage(page).then((updatedPage) => {
-      this.toastService.showSuccessToast('edition layout', 'Page mise à jour');
+      this.toastService.showSuccess('edition layout', 'Page mise à jour');
     }).catch((error) => {
       console.error('page update error', error);
     });
@@ -210,7 +210,7 @@ export class PageComponent implements OnInit, OnChanges {
 
     const promise = combineLatest(promises).subscribe((articles) => {
       // console.log('articles updated', articles);
-      this.toastService.showSuccessToast('edition layout', 'Order des articles mis à jour');
+      this.toastService.showSuccess('edition layout', 'Order des articles mis à jour');
       promise.unsubscribe();
     });
 

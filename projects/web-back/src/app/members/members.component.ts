@@ -99,7 +99,7 @@ export class MembersComponent implements OnInit {
           is_sympathisant: false,
         }
         this.membersService.createMember(new_member).then((_member) => {
-          this.toastService.showSuccessToast('Nouveau membre non licencié', new_member.lastname + ' ' + new_member.firstname);
+          this.toastService.showSuccess('Nouveau membre non licencié', new_member.lastname + ' ' + new_member.firstname);
         });
       }
 

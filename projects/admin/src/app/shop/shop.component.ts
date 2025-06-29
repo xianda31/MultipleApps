@@ -133,7 +133,7 @@ export class ShopComponent {
     let full_name = this.membersService.first_then_last_name(this.buyer!);
     this.cartService.save_sale(this.session, this.buyer!)
       .then(() => {
-        this.toastService.showSuccessToast('vente à '+ full_name, (this.debt_amount > 0) ? 'achats et dette enregistrés' : 'achats enregistrés');
+        this.toastService.showSuccess('vente à '+ full_name, (this.debt_amount > 0) ? 'achats et dette enregistrés' : 'achats enregistrés');
       })
       .catch((error) => {
         console.error('error saving sale', error);
