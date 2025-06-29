@@ -1,0 +1,25 @@
+<div class="card shadow-sm">
+    <div class="card-header">
+        Encaissements du jour ({{today | date :'shortDate'}} )
+    </div>
+    <div class="card-body">
+        <table class="table table-striped  table-borderless table-primary align-middle">
+            <tr *ngFor="let sale of sales_of_the_day , let i = index">
+                <td>
+                    {{sale.member}} 
+                </td>
+                <td>
+                    <ng-container *ngFor="let value of sale.values | keyvalue">
+                        {{value.key}} [{{value.value}}]
+                    </ng-container>
+                </td>
+                <td *ngIf="standalone_sale(i)">
+                    {{payment_type(sale)}}
+                </td>
+                <td *ngIf="standalone_sale(i)" class="text-end">
+                    {{sale_amount(sale) | currency:'€':'symbol':'2.2-2':'fr'}}
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>

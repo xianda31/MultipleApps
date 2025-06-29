@@ -18,19 +18,16 @@ export class PdfService {
     console.error("Element with id 'contentToConvert' not found.");
     return;
   }
+  const margin_x = 10;
+  const margin_y = 10;
+  const imgWidth = 208- margin_x * 2; // A4 width in mm minus margins
+  const pdf = new jsPDF('p', 'mm', 'a4'); // A4 size page of PDF
+
   html2canvas(data).then(canvas => {
-    const imgWidth = 208;
-    const pageHeight = 295;
     const imgHeight = canvas.height * imgWidth / canvas.width;
-    const heightLeft = imgHeight;
-
     const contentDataURL = canvas.toDataURL('image/png');
-    const pdf = new jsPDF('p', 'mm', 'a4'); // A4 size page of PDF
-
-    let position = 0;
-    pdf.addImage(contentDataURL, 'PNG', 0, position, imgWidth, imgHeight);
-
-    pdf.save(filename); // Generated PDF
+    pdf.addImage(contentDataURL, 'PNG', margin_x, margin_y, imgWidth, imgHeight);
+    pdf.save(filename); 
   });
 }
 }

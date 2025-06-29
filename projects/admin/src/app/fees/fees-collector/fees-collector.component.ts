@@ -7,12 +7,13 @@ import { FeesCollectorService } from './fees-collector.service';
 import { Observable } from 'rxjs';
 import { Game, Gamer } from '../fees.interface';
 import { PdfService } from '../../../../../common/services/pdf.service';
+import { TodaysBooksComponent } from "../../shop/todays-books/todays-books.component";
 
 
 
 @Component({
     selector: 'app-fees-collector',
-    imports: [CommonModule, ReactiveFormsModule, FormsModule],
+    imports: [CommonModule, ReactiveFormsModule, FormsModule, TodaysBooksComponent],
     templateUrl: './fees-collector.component.html',
     styleUrl: './fees-collector.component.scss'
 })
