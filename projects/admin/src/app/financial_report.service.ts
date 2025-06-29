@@ -202,8 +202,8 @@ private _sheets_to_records(sheets: Balance_sheet[]): Balance_record[] {
     let client_assets = 0;
 
     let in_bank_total = bank + savings;
-    let cashbox = cash + client_debts + client_assets;
-    let wip_total = uncashed_cheques + outstanding_expenses + gift_vouchers;
+    let cashbox = cash + client_debts + client_assets + uncashed_cheques ;
+    let wip_total =  outstanding_expenses + gift_vouchers;
     let actif_total = in_bank_total + cashbox + wip_total;
 
     let current_balance_sheet = {

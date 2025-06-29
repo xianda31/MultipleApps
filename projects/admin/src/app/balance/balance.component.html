@@ -1,258 +1,258 @@
 <!-- <div class="container g-0"> -->
 
-  <div class="card mt-3 shadow ">
-    <div class="card-header">
-      <div class="row align-items-center">
-        <div class="col-auto">
-          <h5> bilan de l'exercice {{current_season}}</h5>
-        </div>
-        <div class="col mx-auto">&#8205;</div>
-        <div class="col-auto">
-          <button class=" btn btn-outline-success btn-sm" (click)="save_balance_sheet()">
-            <i class="bi-cloud-arrow-up-fill"></i>
-            sauvegarder</button>
-        </div>
+<div class="card mt-3 shadow ">
+  <div class="card-header">
+    <div class="row align-items-center">
+      <div class="col-auto">
+        <h5> bilan de l'exercice {{current_season}}</h5>
+      </div>
+      <div class="col mx-auto">&#8205;</div>
+      <div class="col-auto">
+        <button class=" btn btn-outline-success btn-sm" (click)="save_balance_sheet()">
+          <i class="bi-cloud-arrow-up-fill"></i>
+          sauvegarder</button>
       </div>
     </div>
-    <div *ngIf="loaded" class="card-body">
-      <div class="row mx-2">
-        <div class=" col-7">
-          <table class="table table-sm table-borderless table-responsive text-end fs-5 align-middle">
-            <thead>
-              <tr >
-                <th width="36%" class="table-primary text-start">ACTIF </th>
-                <th width="20%" class="table-primary"> {{ balance_board.current.season }}</th>
-                <th width="2%"  ></th>
-                <th width="18%" class="table-primary variation">variations</th>
-                <th width="2%" ></th>
-                <th width="20%" class="table-secondary fs-5"> {{ balance_board.previous.season }}</th>
-              </tr>
-            </thead>
-            <tbody>
+  </div>
+  <div *ngIf="loaded" class="card-body">
+    <div class="row mx-2">
+      <div class=" col-7">
+        <table class="table table-sm table-borderless table-responsive text-end fs-5 align-middle">
+          <thead>
+            <tr>
+              <th width="36%" class="table-primary text-start">ACTIF </th>
+              <th width="20%" class="table-primary"> {{ balance_board.current.season }}</th>
+              <th width="2%"></th>
+              <th width="18%" class="table-primary variation">variations</th>
+              <th width="2%"></th>
+              <th width="20%" class="table-secondary fs-5"> {{ balance_board.previous.season }}</th>
+            </tr>
+          </thead>
+          <tbody>
 
-              <tr class="fw-bolder">
-                <td class="text-start">BANQUE</td>
+            <tr class="fw-bolder">
+              <td class="text-start">BANQUE</td>
 
-                <td> {{balance_board.current.in_bank_total | number:truncature:'fr'}}
-                </td>
-                <td>&#8205;</td>
-                <td class="variation">{{balance_board.delta.in_bank_total|
-                  number:truncature:'fr'}}</td>
-                <td>&#8205;</td>
-                <td class="table-secondary fs-5">{{balance_board.previous.in_bank_total |
-                  number:truncature:'fr'}} </td>
-              </tr>
+              <td> {{balance_board.current.in_bank_total | number:truncature:'fr'}}
+              </td>
+              <td>&#8205;</td>
+              <td class="variation">{{balance_board.delta.in_bank_total|
+                number:truncature:'fr'}}</td>
+              <td>&#8205;</td>
+              <td class="table-secondary fs-5">{{balance_board.previous.in_bank_total |
+                number:truncature:'fr'}} </td>
+            </tr>
 
-              <tr class="fw-light fs-6">
-                <td>compte épargne</td>
-                <td> {{balance_board.current.savings | number:truncature:'fr'}}</td>
-                <td>&#8205;</td>
-                <td class="variation">{{balance_board.delta.savings| number:truncature:'fr'}}</td>
-                <td>&#8205;</td>
-                <td class="table-secondary"> {{balance_board.previous.savings | number:truncature:'fr'}}</td>
-              </tr>
+            <tr class="fw-light fs-6">
+              <td>compte épargne</td>
+              <td> {{balance_board.current.savings | number:truncature:'fr'}}</td>
+              <td>&#8205;</td>
+              <td class="variation">{{balance_board.delta.savings| number:truncature:'fr'}}</td>
+              <td>&#8205;</td>
+              <td class="table-secondary"> {{balance_board.previous.savings | number:truncature:'fr'}}</td>
+            </tr>
 
-              <tr class="fw-light fs-6">
-                <td>compte courant</td>
-                <td> {{balance_board.current.bank | number:truncature:'fr'}}</td>
-                <td>&#8205;</td>
-                <td class="variation">{{balance_board.delta.bank | number:truncature:'fr'}}</td>
-                <td>&#8205;</td>
-                <td class="table-secondary"> {{balance_board.previous.bank}} </td>
-              </tr>
+            <tr class="fw-light fs-6">
+              <td>compte courant</td>
+              <td> {{balance_board.current.bank | number:truncature:'fr'}}</td>
+              <td>&#8205;</td>
+              <td class="variation">{{balance_board.delta.bank | number:truncature:'fr'}}</td>
+              <td>&#8205;</td>
+              <td class="table-secondary"> {{balance_board.previous.bank}} </td>
+            </tr>
 
-              <tr class="fw-bolder">
-                <td class="text-start">FOND DE CAISSE</td>
+            <tr class="fw-bolder">
+              <td class="text-start">FOND DE CAISSE</td>
 
-                <td> {{balance_board.current.cashbox | number:truncature:'fr'}}
-                </td>
-                <td>&#8205;</td>
-                <td class="variation">{{balance_board.delta.cashbox|
-                  number:truncature:'fr'}}</td>
-                <td>&#8205;</td>
-                <td class="table-secondary fs-5">{{balance_board.previous.cashbox |
-                  number:truncature:'fr'}} </td>
-              </tr>
-              <tr class="fw-light fs-6">
-                <td>fond de caisse</td>
-                <td> {{balance_board.current.cash | number:truncature:'fr'}}</td>
-                <td>&#8205;</td>
-                <td class="variation">{{balance_board.delta.cash| number:truncature:'fr'}}</td>
-                <td>&#8205;</td>
-                <td class="table-secondary"> {{balance_board.previous.cash | number:truncature:'fr'}}</td>
-              </tr>
-              <tr class="fw-light fs-6">
-                <td>dettes adhérents</td>
-                <td class="hoverable" (click)="show_details('client_debts')">{{balance_board.current.client_debts |
-                  number:truncature:'fr' | parenthesis}}</td>
-                  <td>&#8205;</td>
-                <td class="variation">
-                  {{balance_board.delta.client_debts | number:truncature:'fr'}}
-                </td>
-                <td>&#8205;</td>
-                <td class="table-secondary ">{{balance_board.previous.client_debts| number:truncature:'fr'}}</td>
-              </tr>
+              <td> {{balance_board.current.cashbox | number:truncature:'fr'}}
+              </td>
+              <td>&#8205;</td>
+              <td class="variation">{{balance_board.delta.cashbox|
+                number:truncature:'fr'}}</td>
+              <td>&#8205;</td>
+              <td class="table-secondary fs-5">{{balance_board.previous.cashbox |
+                number:truncature:'fr'}} </td>
+            </tr>
+            <tr class="fw-light fs-6">
+              <td>espèces</td>
+              <td> {{balance_board.current.cash | number:truncature:'fr'}}</td>
+              <td>&#8205;</td>
+              <td class="variation">{{balance_board.delta.cash| number:truncature:'fr'}}</td>
+              <td>&#8205;</td>
+              <td class="table-secondary"> {{balance_board.previous.cash | number:truncature:'fr'}}</td>
+            </tr>
+            
+            <tr class="fw-light fs-6">
+              <td>chèques à déposer</td>
+              
+              <td>{{balance_board.current.uncashed_cheques | number:truncature:'fr'| parenthesis}}
+              </td>
+              <td>&#8205;</td>
+              <td class="variation">
+                {{balance_board.delta.uncashed_cheques | number:truncature:'fr'| parenthesis}}</td>
+              <td>&#8205;</td>
+              <td class="table-secondary"> {{balance_board.previous.uncashed_cheques | number:truncature:'fr'|
+                parenthesis}}
+              </td>
+            </tr>
+            
+            <tr class="fw-light fs-6">
+              <td>dettes adhérents</td>
+              <td class="hoverable" (click)="show_details('client_debts')">{{balance_board.current.client_debts |
+                number:truncature:'fr' | parenthesis}}</td>
+              <td>&#8205;</td>
+              <td class="variation">
+                {{balance_board.delta.client_debts | number:truncature:'fr'}}
+              </td>
+              <td>&#8205;</td>
+              <td class="table-secondary ">{{balance_board.previous.client_debts| number:truncature:'fr'}}</td>
+            </tr>
 
-              <tr class="fw-bolder">
-                <td class="text-start">ENCOURS</td>
-                <td> {{balance_board.current.wip_total| number:truncature:'fr'}} </td>
-                <td>&#8205;</td>
-                <td class="variation">{{balance_board.delta.wip_total| number:truncature:'fr'}}</td>
-                <td>&#8205;</td>
-                <td class="table-secondary fs-5">{{balance_board.previous.wip_total| number:truncature:'fr'}} </td>
-              </tr>
-
-
-              <tr class="fw-light fs-6">
-                <td>chèques à déposer</td>
-
-                <td>{{balance_board.current.uncashed_cheques | number:truncature:'fr'| parenthesis}}
-                </td>
-                <td>&#8205;</td>
-                <td class="variation">
-                  {{balance_board.delta.uncashed_cheques | number:truncature:'fr'| parenthesis}}</td>
-                <td>&#8205;</td>
-                <td class="table-secondary"> {{balance_board.previous.uncashed_cheques | number:truncature:'fr'|
-                  parenthesis}}
-                </td>
-              </tr>
-
-              <tr class="fw-light fs-6">
-                <td>paiements engagés</td>
-
-                <td class="hoverable" (click)="show_details('commited_payments')">
-                  {{balance_board.current.outstanding_expenses | number:truncature:'fr'| parenthesis}} </td>
-                <td>&#8205;</td>
-                <td class="variation"> {{balance_board.delta.outstanding_expenses | number:truncature:'fr'|
-                  parenthesis}}</td>
-                <td>&#8205;</td>
-                <td class="table-secondary">
-                  {{balance_board.previous.outstanding_expenses | number:truncature:'fr'| parenthesis}}
-                </td>
-              </tr>
-              <tr class="fw-light fs-6">
-                <td>avoirs distribués </td>
-                <td class="hoverable" (click)="show_details('gift_vouchers')"> {{balance_board.current.gift_vouchers |
-                  number:truncature:'fr' | parenthesis}}</td>
-                <td>&#8205;</td>
-                <td class="variation"> {{balance_board.delta.gift_vouchers |
-                  number:truncature:'fr' | parenthesis}}</td>
-
-                <td>&#8205;</td>
-                <td class="table-secondary">{{balance_board.previous.gift_vouchers | number:truncature:'fr'|
-                  parenthesis}}
-                </td>
-              </tr>
+            <tr class="fw-bolder">
+              <td class="text-start">ENCOURS</td>
+              <td> {{balance_board.current.wip_total| number:truncature:'fr'}} </td>
+              <td>&#8205;</td>
+              <td class="variation">{{balance_board.delta.wip_total| number:truncature:'fr'}}</td>
+              <td>&#8205;</td>
+              <td class="table-secondary fs-5">{{balance_board.previous.wip_total| number:truncature:'fr'}} </td>
+            </tr>
 
 
+            <tr class="fw-light fs-6">
+              <td>paiements engagés</td>
+
+              <td class="hoverable" (click)="show_details('commited_payments')">
+                {{balance_board.current.outstanding_expenses | number:truncature:'fr'| parenthesis}} </td>
+              <td>&#8205;</td>
+              <td class="variation"> {{balance_board.delta.outstanding_expenses | number:truncature:'fr'|
+                parenthesis}}</td>
+              <td>&#8205;</td>
+              <td class="table-secondary">
+                {{balance_board.previous.outstanding_expenses | number:truncature:'fr'| parenthesis}}
+              </td>
+            </tr>
+            <tr class="fw-light fs-6">
+              <td>avoirs distribués </td>
+              <td class="hoverable" (click)="show_details('gift_vouchers')"> {{balance_board.current.gift_vouchers |
+                number:truncature:'fr' | parenthesis}}</td>
+              <td>&#8205;</td>
+              <td class="variation"> {{balance_board.delta.gift_vouchers |
+                number:truncature:'fr' | parenthesis}}</td>
+
+              <td>&#8205;</td>
+              <td class="table-secondary">{{balance_board.previous.gift_vouchers | number:truncature:'fr'|
+                parenthesis}}
+              </td>
+            </tr>
 
 
-              <tr class=" fw-bold">
-                <td class="table-primary text-start ">TOTAL ACTIF</td>
-                <td class="table-primary"> {{balance_board.current.actif_total| number:truncature:'fr'}} </td>
-                <td >&#8205;</td>
-                <td class="table-primary variation">{{balance_board.delta.actif_total | number:truncature:'fr' | parenthesis}}</td>
-                <td >&#8205;</td>
-                <td class="table-secondary">{{balance_board.previous.actif_total|
-                  number:truncature:'fr'}}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- PASSIF -->
-        <div class="col-5">
-          <table class="table table-sm table-borderless table-responsive text-end fs-5">
-            <thead>
-              <tr class="table-primary">
-                <th width="65%" class="text-start">PASSIF </th>
-                <th width="35%"> {{ balance_board.current.season }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr class="fw-bolder">
-                <td class="text-start">REPORT A NOUVEAU</td>
-                <td>{{balance_board.previous.actif_total | number:truncature:'fr'}}</td>
-              </tr>
-              <!-- alignment with "FOND DE CAISSE" -->
-              <tr *ngFor="let n of [1, 2]" class="fw-light fs-6">
-                <td>&#8205;</td>
-                <td>&#8205;</td>
-              </tr>
-
-              <tr class="table-primary fw-bold">
-                <td class="text-start ">EXERCICE
-                  {{trading_result < 0?'DEFICITAIRE':'BENEFICIAIRE'}}</td>
-                <td>{{trading_result | number:truncature:'fr'}}</td>
-              </tr>
-
-              <tr *ngFor="let n of [1, 2]" class="fw-light fs-6">
-                <td>&#8205;</td>
-                <td>&#8205;</td>
-              </tr>
-
-              <tr class="fw-bold"> <!--alignement ligne ENCOURS-->
-                <td>&#8205;</td>
-                <td>&#8205;</td>
-              </tr>
-
-              <tr *ngFor="let n of [1, 2,3]" class="fw-light fs-6">
-                <td>&#8205;</td>
-                <td>&#8205;</td>
-              </tr>
 
 
-              <tr class="table-primary fw-bold">
-                <td class="text-start ">TOTAL PASSIF</td>
-                <td> {{balance_board.previous.actif_total + trading_result | number:truncature:'fr'}} </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+            <tr class=" fw-bold">
+              <td class="table-primary text-start ">TOTAL ACTIF</td>
+              <td class="table-primary"> {{balance_board.current.actif_total| number:truncature:'fr'}} </td>
+              <td>&#8205;</td>
+              <td class="table-primary variation">{{balance_board.delta.actif_total | number:truncature:'fr' |
+                parenthesis}}</td>
+              <td>&#8205;</td>
+              <td class="table-secondary">{{balance_board.previous.actif_total|
+                number:truncature:'fr'}}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- PASSIF -->
+      <div class="col-5">
+        <table class="table table-sm table-borderless table-responsive text-end fs-5">
+          <thead>
+            <tr class="table-primary">
+              <th width="65%" class="text-start">PASSIF </th>
+              <th width="35%"> {{ balance_board.current.season }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="fw-bolder">
+              <td class="text-start">REPORT A NOUVEAU</td>
+              <td>{{balance_board.previous.actif_total | number:truncature:'fr'}}</td>
+            </tr>
+            <!-- alignment with "FOND DE CAISSE" -->
+            <tr *ngFor="let n of [1, 2]" class="fw-light fs-6">
+              <td>&#8205;</td>
+              <td>&#8205;</td>
+            </tr>
+
+            <tr class="table-primary fw-bold">
+              <td class="text-start ">EXERCICE
+                {{trading_result < 0?'DEFICITAIRE':'BENEFICIAIRE'}}</td>
+              <td>{{trading_result | number:truncature:'fr'}}</td>
+            </tr>
+
+            <tr *ngFor="let n of [1, 2]" class="fw-light fs-6">
+              <td>&#8205;</td>
+              <td>&#8205;</td>
+            </tr>
+
+            <tr class="fw-bold"> <!--alignement ligne ENCOURS-->
+              <td>&#8205;</td>
+              <td>&#8205;</td>
+            </tr>
+
+            <tr *ngFor="let n of [1, 2,3]" class="fw-light fs-6">
+              <td>&#8205;</td>
+              <td>&#8205;</td>
+            </tr>
+
+
+            <tr class="table-primary fw-bold">
+              <td class="text-start ">TOTAL PASSIF</td>
+              <td> {{balance_board.previous.actif_total + trading_result | number:truncature:'fr'}} </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
-    <div class="card-footer">
-      <div class="row justify-content-between align-items-center">
+  </div>
+  <div class="card-footer">
+    <div class="row justify-content-between align-items-center">
 
-        <div *ngIf="balance_error" class="col-auto text-danger">
-          <i class="fs-5 bi-exclamation-triangle"></i>
-          <span class="text-danger"> incohérence bilan & compte de résultats de ({{balance_error |
-            number:truncature2:'fr'}} €)</span>
-        </div>
+      <div *ngIf="balance_error" class="col-auto text-danger">
+        <i class="fs-5 bi-exclamation-triangle"></i>
+        <span class="text-danger"> incohérence bilan & compte de résultats de ({{balance_error |
+          number:truncature:'fr'}} €)</span>
+      </div>
 
-        <div *ngIf="!balance_error" class="col-auto">
-          report des encours sur la saison suivante
-          <button class="btn btn-outline-success btn-sm" (click)="transfer_to_next_balance_sheet()">
-            <i class="fs-5 bi-gear"></i>
-          </button>
-        </div>
+      <div *ngIf="!balance_error" class="col-auto">
+        report des encours sur la saison suivante
+        <button class="btn btn-outline-success btn-sm" (click)="transfer_to_next_balance_sheet()">
+          <i class="fs-5 bi-gear"></i>
+        </button>
+      </div>
 
-        <div *ngIf="trace_on" class="col-auto">
-          <div class="row">
-            utilitaires import/export historique bilan:
-            <div class="col-auto">
-              <button class=" btn btn-outline-success btn-sm">
-                <i class=" bi-file-earmark-arrow-up-fill"></i>
-                <a [href]="export_url" style="text-decoration: none; color: var(--bs-success);"
-                  download="bilan.txt">export.txt</a>
-              </button>
-            </div>
+      <div *ngIf="trace_on" class="col-auto">
+        <div class="row">
+          utilitaires import/export historique bilan:
+          <div class="col-auto">
+            <button class=" btn btn-outline-success btn-sm">
+              <i class=" bi-file-earmark-arrow-up-fill"></i>
+              <a [href]="export_url" style="text-decoration: none; color: var(--bs-success);"
+                download="bilan.txt">export.txt</a>
+            </button>
+          </div>
 
-            <div class="col-auto">
-              <button class=" btn btn-outline-success btn-sm" (click)="fileInput.click()">
-                <i class=" bi-file-earmark-arrow-down-fill"></i>
-                import.txt</button>
-              <input #fileInput type="file" style="display:none" class="form-control form-control-sm text-end"
-                (change)="file_import($event)">
-            </div>
+          <div class="col-auto">
+            <button class=" btn btn-outline-success btn-sm" (click)="fileInput.click()">
+              <i class=" bi-file-earmark-arrow-down-fill"></i>
+              import.txt</button>
+            <input #fileInput type="file" style="display:none" class="form-control form-control-sm text-end"
+              (change)="file_import($event)">
           </div>
         </div>
       </div>
     </div>
   </div>
+</div>
 
-  <app-debts-and-assets-details *ngIf="show_details_flag"
-    [due]="due"
-    [expert_mode]="true"
-    (close)="show_details_flag = false"></app-debts-and-assets-details>
+<app-debts-and-assets-details *ngIf="show_details_flag" [due]="due" [expert_mode]="true"
+  (close)="show_details_flag = false"></app-debts-and-assets-details>
 <!-- </div> -->

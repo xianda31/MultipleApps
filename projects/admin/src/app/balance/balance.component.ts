@@ -31,14 +31,13 @@ export class BalanceComponent {
   show_details_flag = false;
   due: 'dettes' | 'avoirs' = 'dettes';
 
-  truncature = '1.2-2';// '1.2-2';  //
-  truncature2 = '1.2-2';// '1.2-2';  //
+  truncature = '1.2-2';// '1.0-0';  //
+  // truncature2 = '1.2-2';// '1.2-2';  //
 
   constructor(
     private systemDataService: SystemDataService,
     private bookService: BookService,
     private toastService: ToastService,
-    private fileService: FileService,
     private financialService: FinancialReportService,
     private router: Router,
   ) { }

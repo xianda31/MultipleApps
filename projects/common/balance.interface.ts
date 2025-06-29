@@ -12,8 +12,8 @@ export interface Balance_record {
   }
 export interface Balance_sheet  extends Balance_record {
     in_bank_total: number; // total banque (livret + compte courant)
-    cashbox: number; // liquidités (caisse + dettes ou petits avoirs clients)
-    wip_total: number; // total en cours (fond de caisse + dettes_créances + chèques non encaissés + chèques cadeaux + paiements en cours)
+    cashbox: number; // liquidités (caisse + dettes ou petits avoirs clients + chèques non encaissés)
+    wip_total: number; // total en cours (fond de caisse + dettes_créances  + chèques cadeaux + paiements en cours)
     actif_total: number; // total actif (total banque + total caisse + créances + chèques non encaissés + chèques cadeaux + paiements en cours)
   }
 
