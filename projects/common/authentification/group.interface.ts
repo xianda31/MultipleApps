@@ -36,12 +36,13 @@ export const Group_icons: { [K in Group_names]: string } = {
  export enum UserAttributes {
   email = 'email',
   email_verified = 'email_verified',
+  member_id ="custom:member_id",
   sub = 'sub'
 }
 
 export interface UserInGroup {
   // Username: string;
-  Attributes: { Name: UserAttributes, Value: string }[];
+  Attributes: { Name:UserAttributes, Value: string }[];
   Username: string;
   UserStatus: string;
 

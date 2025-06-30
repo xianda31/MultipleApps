@@ -24,7 +24,6 @@ const schema = a.schema({
     .authorization((allow) => [
       allow.group(Group_names.System),
       allow.group(Group_names.Admin),
-      allow.group(Group_names.Support)
     ]) 
     .handler(a.handler.function(addUserToGroup))
   .returns(a.json()),
@@ -38,7 +37,7 @@ const schema = a.schema({
     .authorization((allow) => [
       allow.group(Group_names.System),
       allow.group(Group_names.Admin),
-      allow.group(Group_names.Support),]) 
+    ])
     .handler(a.handler.function(removeUserFromGroup))
     .returns(a.json()),
 

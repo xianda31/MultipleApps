@@ -107,7 +107,7 @@ export class AuthentificationService {
 
 
   async signUp(email: string, password: string, member_id: string): Promise<SignUpOutput> {
-    console.log('sign up', email, password, member_id);
+    // console.log('sign up', email, password, member_id);
     let promise = new Promise<SignUpOutput>((resolve, reject) => {
       signUp({
         username: email,

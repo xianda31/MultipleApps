@@ -75,10 +75,16 @@
           </ul>
         </li>
 
+        <li class="nav-item me-md-5 me-sm-1">
+          <a class="nav-link " [routerLink]=" (accreditation_level >= accreditation_levels.Contributeur)? '/groups':'/'">
+            <i class="fs-4 bi-person-badge"></i> <span class="ms-1 d-none d-sm-inline">Accès</span>
+          </a>
+        </li>
+
         <li class="nav-item dropdown me-md-5 me-sm-1">
           <a  class="nav-link dropdown-toggle" href="#" id="navbarDropdown1" role="button" data-bs-toggle="dropdown"
             aria-expanded="false">
-            <i class="fs-4 bi-tools"></i> <span class="ms-1 d-none d-sm-inline">Outils</span>
+            <i class="fs-4 bi-database-fill-gear"></i> <span class="ms-1 d-none d-sm-inline">Outils</span>
           </a>
           <ul *ngIf="accreditation_level >= accreditation_levels.Systeme" class="dropdown-menu" aria-labelledby="navbarDropdown1">
             <li><a class="dropdown-item " routerLink="/finance/books/list">base de données</a></li>

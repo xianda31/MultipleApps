@@ -18,6 +18,7 @@ import { PageNotFoundComponent } from './page-not-found/page-not-found.component
 import { ProductsComponent } from '../../../web-back/src/app/sales/products/products.component';
 import { MemberSalesComponent } from './member-sales/member-sales.component';
 import { SysConfComponent } from './sys-conf/sys-conf.component';
+import { GroupsListComponent } from './groups/groups-list/groups-list.component';
 
 export const routes: Routes = [
   { path: 'vente/produits', component: ShopComponent },   //, canActivate: [loggedInGuard]
@@ -40,6 +41,8 @@ export const routes: Routes = [
   { path: 'finance/books/editor/:id', component: BooksEditorComponent },
   { path: 'finance/books/base-comptable', component: BooksOverviewComponent },
   { path: 'finance/books/base-comptable/:report', component: BooksOverviewComponent },
+  
+  { path: 'groups', component: GroupsListComponent },
   
   { path: 'finance/books/list', component: BooksListComponent },
   { path: 'sysconf', component: SysConfComponent },

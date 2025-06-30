@@ -45,6 +45,12 @@ export class HomeComponent {
         'Effectuer des opérations comptables complexes, incluant les écritures de fin d\'exercice',],
         accreditation: Group_names.Admin},
       {
+        title: 'Accès',
+        subtitle: 'Gestion des accréditations des utilisateurs',
+        descriptions: ['Afficher la liste des adhérents ayant ouvert un compte.',
+          'Permet de changer les droits (niveau d\'accréditation) '],
+        accreditation: Group_names.Admin},
+      {
         title: 'Outils',
         subtitle: 'Outils de maintenance des base de données',
         descriptions: ['sauvegarder la base de données, exporter les données',
