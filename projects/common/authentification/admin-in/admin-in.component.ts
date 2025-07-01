@@ -45,6 +45,7 @@ export class AdminInComponent {
 
   ) {
     this.loginForm = this.fb.group({
+      username: [''],
       email: ['',
         {
           validators: [Validators.required, Validators.email],

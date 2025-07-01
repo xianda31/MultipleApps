@@ -3,15 +3,12 @@
   <!-- saisies de mail + pwd -->
   <div class="col-7">
     <form [formGroup]="loginForm">
-      <input class="form-control form-control-sm" type="mail" placeholder="Mél" id="username" autocomplete="username"
+      <input class="form-control form-control-sm" type="email" placeholder="Mél" id="email" autocomplete="username"
         formControlName="email">
 
       <div class="input-group">
         <input class="form-control form-control-sm" placeholder="Mot de passe" autocomplete="current-password"
-          [type]="show_password?'text':'password'" formControlName="password">
-        <!-- <span class="input-group-text">
-            <i [class]="show_password?'bi bi-eye-slash':'bi bi-eye'" (click)="show_password = !show_password"></i>
-          </span> -->
+          [type]="show_password?'text':'password'" formControlName="password" id="password">
       </div>
     </form>
   </div>

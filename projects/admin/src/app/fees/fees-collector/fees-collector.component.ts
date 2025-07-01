@@ -8,14 +8,13 @@ import { Observable } from 'rxjs';
 import { Game, Gamer } from '../fees.interface';
 import { PdfService } from '../../../../../common/services/pdf.service';
 import { TodaysBooksComponent } from "../../shop/todays-books/todays-books.component";
-
-
+import { PDF_table } from '../../../../../common/pdf-table.interface';
 
 @Component({
-    selector: 'app-fees-collector',
-    imports: [CommonModule, ReactiveFormsModule, FormsModule, TodaysBooksComponent],
-    templateUrl: './fees-collector.component.html',
-    styleUrl: './fees-collector.component.scss'
+  selector: 'app-fees-collector',
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, TodaysBooksComponent],
+  templateUrl: './fees-collector.component.html',
+  styleUrl: './fees-collector.component.scss'
 })
 export class FeesCollectorComponent {
 
@@ -26,10 +25,16 @@ export class FeesCollectorComponent {
   already_charged: boolean = false;
   pdfLoading = false;
 
+  sales_of_the_day_table: PDF_table = {
+    headers: [],
+    rows: []
+  };
+
   constructor(
     private tournamentService: TournamentService,
     private feesCollectorService: FeesCollectorService,
     private pdfService: PdfService,
+
 
   ) {
     this.next_tournaments$ = this.tournamentService.list_next_tournaments(this.back_days);
@@ -46,20 +51,16 @@ export class FeesCollectorComponent {
     this.next_tournaments$ = this.tournamentService.list_next_tournaments(this.back_days);
   }
 
-euros_collected(): number {
+  euros_collected(): number {
     return this.feesCollectorService.euros_collected();
-}
-stamps_collected(): number {
+  }
+  stamps_collected(): number {
     return this.feesCollectorService.stamps_collected();
-}
-
-  print_to_pdf() {
-    let fname = this.selected_tournament!.date + '_' + this.selected_tournament!.tournament_name + '.pdf';
-    this.pdfLoading = true;
+  }
 
 
-    this.pdfService.generatePDF(".print_zone", fname)
-    
+  get_table(table: PDF_table){
+    console.log(`Generating today's books PDF`, table);
   }
 
   tournament_selected(tournament: any) {
@@ -91,7 +92,7 @@ stamps_collected(): number {
   }
 
   gamer_solvent(gamer: Gamer): boolean {
-    return !gamer.is_member || gamer.in_euro || (gamer.game_credits >= (this.game.fees_doubled ? 2 : 1));  
+    return !gamer.is_member || gamer.in_euro || (gamer.game_credits >= (this.game.fees_doubled ? 2 : 1));
   }
 
   gamer_class(gamer: Gamer): string {
@@ -116,4 +117,41 @@ stamps_collected(): number {
   get totalPayants(): number {
     return this.game && this.game.gamers ? this.game.gamers.filter(g => g.enabled).length : 0;
   }
+
+  print_table_to_pdf() {
+    if (!this.game || !this.game.gamers) return;
+    const headers = ['Nom', 'Prénom', 'Payant', 'Validation'];
+    const rows = this.game.gamers.map(gamer => [
+      gamer.lastname,
+      gamer.firstname,
+      gamer.enabled ? 'Oui' : 'Non',
+      gamer.validated ? 'Oui' : 'Non'
+    ]);
+    let fname = this.selected_tournament
+      ? `${this.selected_tournament.date}_${this.selected_tournament.tournament_name}.pdf`
+      : 'feuille_presence.pdf';
+
+      let table: PDF_table = {
+        headers: headers,
+        rows: rows
+      };
+    this.pdfService.generateTablePDF([this.sales_of_the_day_table], fname);
+  }
+
+
+  generate_fees_table(): PDF_table | null {
+    if (!this.game || !this.game.gamers) return null;
+    const headers = ['Nom', 'Prénom', 'Payant', 'Validation'];
+    const rows = this.game.gamers.map(gamer => [
+      gamer.lastname,
+      gamer.firstname,
+      gamer.enabled ? 'Oui' : 'Non',
+      gamer.validated ? 'Oui' : 'Non'
+    ]);
+    return {
+      headers: headers,
+      rows: rows
+    };
+  }
+
 }
