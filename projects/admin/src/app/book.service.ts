@@ -799,6 +799,8 @@ export class BookService {
           operations.push({ member: member, label: 'report dette', values: { [CUSTOMER_ACCOUNT.DEBT_debit]: value.total } });
         });
 
+
+      if (grand_total !== 0) {
       let book_entry: BookEntry = {
         id: '',
         season: next_season,
@@ -810,6 +812,7 @@ export class BookService {
 
       // console.log('report de dettes', book_entry);
       next_season_entries.push(book_entry);
+    }
     }
 
     return this.book_entries_bulk_create$(next_season_entries);

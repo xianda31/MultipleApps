@@ -28,7 +28,6 @@ export class LicenseesService {
       return this._licensees;
     };
 
-    console.log('fetching licensees from ', this._licensees ? 'cache' : 'AWS');
 
     let remote_load$ = from(fetchLicensees()).pipe(
       tap((licensees) => {
