@@ -1,7 +1,9 @@
-<div class="container">
-    <h5>Les produits</h5>
-    <form [formGroup]="productForm">
-        <div class="col-md-8 offset-2">
+<div class="card shadow-sm mt-3">
+    <div class="card-header">
+        <h5>Les produits</h5>
+    </div>
+    <div class="card-body">
+        <form [formGroup]="productForm">
             <table *ngIf="products" class="table">
                 <thead>
                     <tr>
@@ -75,29 +77,7 @@
                     </tr>
                 </tbody>
             </table>
-        </div>
-    </form>
+        </form>
+
+    </div>
 </div>
-
-
-<!-- <ng-template #productFormTemplate>
-    <td>
-        <input type="text" class="form-control" formControlName="name">
-    </td>
-    <td>
-        <input type="text" class="form-control" formControlName="price">
-    </td>
-    <td>
-        <input type="text" class="form-control" formControlName="description">
-    </td>
-    <td>
-        <input type="text" class="form-control" formControlName="category">
-    </td>
-    <td>
-        <input type="checkbox" formControlName="active">
-    </td>
-    <td>
-        <button (click)="onAddProduct()">Ajouter un produit</button>
-        <button (click)="onSaveProduct()">Enregistrer</button>
-    </td>
-</ng-template> -->

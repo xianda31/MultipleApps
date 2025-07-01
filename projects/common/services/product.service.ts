@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Product } from '../../web-back/src/app/sales/products/product.interface';
-import { map, Observable, of, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, map, Observable, of, switchMap, tap } from 'rxjs';
 import { SystemDataService } from './system-data.service';
 import { DBhandler } from '../../admin/src/app/graphQL.service';
 import { ToastService } from '../toaster/toast.service';
@@ -11,6 +11,7 @@ import { ToastService } from '../toaster/toast.service';
 })
 export class ProductService {
     private _products!: Product[];
+    private _products$ = new BehaviorSubject<Product[]>([]);
     products_keys: string[] = [];
 
     constructor(
@@ -44,7 +45,8 @@ export class ProductService {
         try {
             const createdProduct = await this.dbHandler.createProduct(product_input);
             this._products.push(createdProduct as Product);
-            this._products = this._products.sort((a, b) => b.price - a.price);
+            // this._products = this._products.sort((a, b) => b.price - a.price);
+            this._products$.next(this._products);
             return createdProduct;
         } catch (errors) {
             if (Array.isArray(errors) && errors.length > 0 && typeof errors[0] === 'object' && errors[0] !== null && 'errorType' in errors[0]) {
@@ -64,11 +66,15 @@ export class ProductService {
 
         const _listProducts = this.dbHandler.listProducts().pipe(
             map((products) => products.filter((product) => product.active)),
-            map((products) => products.sort((a, b) => b.price - a.price)),
+            // map((products) => products.sort((a, b) => b.price - a.price)),
             switchMap((products) => this.sorted_products(products)),
-            tap((products) => this._products = products),
+            map((products) => {
+                this._products = products;
+                this._products$.next(products);
+            }),
+            switchMap(() => this._products$.asObservable())
         );
-        return this._products ? of(this._products) : _listProducts;
+        return this._products ? this._products$.asObservable() : _listProducts;
     }
 
     sorted_products(products: Product[]): Observable<Product[]> {
@@ -89,8 +95,11 @@ export class ProductService {
     async updateProduct(product: Product): Promise<Product> {
         try {
             const createdProduct = await this.dbHandler.updateProduct(product);
+            // Update the local products array
+            this._products = this._products.filter((p) => p.id !== createdProduct.id);
             this._products.push(createdProduct as Product);
-            this._products = this._products.sort((a, b) => b.price - a.price);
+            // this._products = this._products.sort((a, b) => b.price - a.price);
+            this._products$.next(this._products);
             return createdProduct;
         } catch (errors) {
             if (Array.isArray(errors) && errors.length > 0 && typeof errors[0] === 'object' && errors[0] !== null && 'errorType' in errors[0]) {
@@ -111,6 +120,7 @@ export class ProductService {
             let done = this.dbHandler.deleteProduct(product.id);
             this._products = this._products.filter((p) => p.id !== product.id);
             this._products = this._products.sort((a, b) => b.price - a.price);
+            this._products$.next(this._products);
             return Promise.resolve(true);
         } catch (errors) {
             if (Array.isArray(errors) && errors.length > 0 && typeof errors[0] === 'object' && errors[0] !== null && 'errorType' in errors[0]) {
