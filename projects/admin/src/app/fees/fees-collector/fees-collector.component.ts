@@ -24,6 +24,7 @@ export class FeesCollectorComponent {
   selected_tournament: club_tournament | null = null;
   game!: Game;
   already_charged: boolean = false;
+  pdfLoading = false;
 
   constructor(
     private tournamentService: TournamentService,
@@ -54,7 +55,11 @@ stamps_collected(): number {
 
   print_to_pdf() {
     let fname = this.selected_tournament!.date + '_' + this.selected_tournament!.tournament_name + '.pdf';
-    this.pdfService.generatePDF("print_zone", fname);
+    this.pdfLoading = true;
+
+
+    this.pdfService.generatePDF(".print_zone", fname)
+    
   }
 
   tournament_selected(tournament: any) {
@@ -106,5 +111,9 @@ stamps_collected(): number {
       }
     }
     return card_class
+  }
+
+  get totalPayants(): number {
+    return this.game && this.game.gamers ? this.game.gamers.filter(g => g.enabled).length : 0;
   }
 }

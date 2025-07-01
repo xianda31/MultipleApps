@@ -1,149 +1,172 @@
-<div class="wrapper">
-    <div id="print_zone">
-        <div class="card shadow-lg mt-3 g-0">
-            <div class="card-header">
-                <!-- bandeau tournoi (date, mode roy rené , alread_charges ? , print -->
-                <div class="row  justify-content-start align-items-center">
+<!-- <div class="wrapper"> -->
+<!-- <div *ngIf="pdfLoading" class="d-flex justify-content-center align-items-center vh-100">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Chargement PDF...</span>
+    </div>
+</div> -->
+<!-- <div id="print_zone"> -->
+<div class="card shadow-lg mt-3 g-0">
+    <div class="card-header">
+        <!-- bandeau tournoi (date, mode roy rené , alread_charges ? , print -->
+        <div class="row  justify-content-start align-items-center">
 
-                    <div class="col-auto">
-                        <h5 class="ms-1 d-none d-sm-inline">Droits de table</h5>
-                    </div>
-
-                    <div *ngIf="!selected_tournament" class="col-auto">
-                        <div class=" input-group input-group-sm align-items-center">
-                            <select class="form-select form-select-sm" [(ngModel)]="selected_tournament"
-                                (ngModelChange)="tournament_selected($event)">
-                                <option *ngFor="let trn of next_tournaments$ | async" [ngValue]="trn">
-                                    {{ trn.date | date:'dd/MM/yyyy' }} &nbsp; {{ trn.time }}</option>
-                            </select>
-                            <span class="ms-2">
-                                <button class="btn btn-sm btn-primary" (click)="one_week_back()">
-                                    <i class="bi bi-skip-backward"></i>
-                                </button>
-                            </span>
-                        </div>
-                    </div>
-                    <div *ngIf="selected_tournament" class="col-auto">
-                        <span>
-                            {{selected_tournament.date | date:'dd/MM/yyyy'}}
-                            &nbsp; {{ selected_tournament.time }}</span>
-                    </div>
-
-                    <div *ngIf="game.tournament" class="col-auto">
-                        {{game.tournament.tournament_name}}
-                    </div>
-
-
-                    <div *ngIf="game.tournament" class="col-auto">
-                        <span class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" [checked]="game.fees_doubled" role="switch"
-                                (change)="toggle_fee()">
-                            <label class="form-check-label">droits doublés</label>
-                        </span>
-                    </div>
-
-                    <div *ngIf="game.tournament" class="mx-auto col-auto">
-                        <span *ngIf="already_charged" class="text-warning">
-                            <i class="bi bi-info-circle-fill"></i>
-                            ce tournoi a peut-être déjà été traité !
-                        </span>
-                    </div>
-
-                    <div class="col-auto ms-auto">
-                        <button class="btn btn-sm btn-primary align-self-end" (click)="print_to_pdf()">
-                            <i class="bi-printer"></i>
-                        </button>
-                    </div>
-
-                </div>
-
+            <div class="col-auto">
+                <h5 class="ms-1 d-none d-sm-inline">Droits de table</h5>
             </div>
 
-            <div *ngIf="game.tournament" class="card-body">
-
-                <span class="col form-check form-switch">
-                    <input class="form-check-input" type="checkbox" role="switch" [checked]="game.alphabetic_sort"
-                        (change)="toggle_sort()">
-                    <label class="form-check-label">tri alphabétique</label>
-                </span>
-
-                <!-- loop sur les gamers -->
-                <div *ngIf="game" class="row">
-                    <div class="row row-cols-1 row-cols-md-4 g-1">
-                        <div class="col" *ngFor="let gamer of game.gamers">
-                            <ng-container
-                                *ngTemplateOutlet="fee_editor; context:{gamer: gamer, doubled: (game.fees_doubled)}"></ng-container>
-                        </div>
-                    </div>
-                </div>
-
-                <div *ngIf="game.tournament" class="col-auto mt-2">
-                    <span class="text-muted">
-                        <strong>
-                            recettes :
-                            {{stamps_collected()}} tampon(s) et
-                            <!-- <i class="bi bi-pass"></i> -->
-                            {{euros_collected()}}
-                            € collecté(s)
-
-                        </strong>
+            <div *ngIf="!selected_tournament" class="col-auto">
+                <div class=" input-group input-group-sm align-items-center">
+                    <select class="form-select form-select-sm" [(ngModel)]="selected_tournament"
+                        (ngModelChange)="tournament_selected($event)">
+                        <option *ngFor="let trn of next_tournaments$ | async" [ngValue]="trn">
+                            {{ trn.date | date:'dd/MM/yyyy' }} &nbsp; {{ trn.time }}</option>
+                    </select>
+                    <span class="ms-2">
+                        <button class="btn btn-sm btn-primary" (click)="one_week_back()">
+                            <i class="bi bi-skip-backward"></i>
+                        </button>
                     </span>
                 </div>
-
+            </div>
+            <div *ngIf="selected_tournament" class="col-auto">
+                <span>
+                    {{selected_tournament.date | date:'dd/MM/yyyy'}}
+                    &nbsp; {{ selected_tournament.time }}</span>
             </div>
 
-            <!-- footer -->
-            <div *ngIf="game.tournament" class="card-footer">
-                <div class="row justify-content-between align-items-center">
-                    <!-- validation recettes -->
-                    <div class="col-auto">
-                        <div class="row">
-                            <div class="col-auto">
-                                clôture saisie droits de tables
-                            </div>
-                            <div class="col-auto">
-                                <button [disabled]="!all_gamers_validated()" class="btn btn-sm btn-primary"
-                                    (click)="validate_fees()">
-                                    <i class="h6 bi-check-lg"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-auto">
-                        <div class="row">
-                            <div class="mx-auto col-auto">
-                                abandon (aucune sauvegarde) :
-                            </div>
-                            <div class="col-auto">
-                                <button type="button" class="btn btn-sm btn-outline-warning" (click)="clear_session()">
-                                    <i class="bi-trash3-fill"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
+            <ng-container *ngIf="game.tournament">
+                <div class="col-auto">
+                    {{game.tournament.tournament_name}}
                 </div>
-            </div>
-        </div>
+                <div class="col-auto">
+                    <span class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" [checked]="game.fees_doubled" role="switch"
+                            (change)="toggle_fee()">
+                        <label class="form-check-label">droits doublés</label>
+                    </span>
+                </div>
+                <div class="mx-auto col-auto">
+                    <span *ngIf="already_charged" class="text-warning">
+                        <i class="bi bi-info-circle-fill"></i>
+                        ce tournoi a peut-être déjà été traité !
+                    </span>
+                </div>
+            </ng-container>
 
-        <div class="bottom_div">
-            <app-todays-books></app-todays-books>
-        </div>
-
-    </div>
-
-    <!-- <div class="mt-4 align-content-end">
-        <div class="row">
-            <div class="col"></div>
-            <div class="col-auto align-self-end">
+            <div class="col-auto ms-auto">
                 <button class="btn btn-sm btn-primary align-self-end" (click)="print_to_pdf()">
                     <i class="bi-printer"></i>
                 </button>
             </div>
+
         </div>
-    </div> -->
+
+    </div>
+
+    <div *ngIf="game.tournament" class="card-body">
+
+        <span class="col form-check form-switch">
+            <input class="form-check-input" type="checkbox" role="switch" [checked]="game.alphabetic_sort"
+                (change)="toggle_sort()">
+            <label class="form-check-label">tri alphabétique</label>
+        </span>
+
+        <!-- loop sur les gamers -->
+        <div class="row">
+            <div class="row row-cols-1 row-cols-md-4 g-1">
+                <div class="col" *ngFor="let gamer of game.gamers">
+                    <ng-container
+                        *ngTemplateOutlet="fee_editor; context:{gamer: gamer, doubled: (game.fees_doubled)}"></ng-container>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-auto mt-2">
+            <span class="text-muted">
+                <strong>
+                    recettes :
+                    {{stamps_collected()}} tampon(s) et
+                    {{euros_collected()}}
+                    € collecté(s)
+
+                </strong>
+            </span>
+        </div>
+
+    </div>
+
+    <!-- footer -->
+    <div *ngIf="game.tournament" class="card-footer">
+        <div class="row justify-content-between align-items-center">
+            <!-- validation recettes -->
+            <div class="col-auto">
+                <div class="row">
+                    <div class="col-auto">
+                        clôture saisie droits de tables
+                    </div>
+                    <div class="col-auto">
+                        <button [disabled]="!all_gamers_validated()" class="btn btn-sm btn-primary"
+                            (click)="validate_fees()">
+                            <i class="h6 bi-check-lg"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-auto">
+                <div class="row">
+                    <div class="mx-auto col-auto">
+                        abandon (aucune sauvegarde) :
+                    </div>
+                    <div class="col-auto">
+                        <button type="button" class="btn btn-sm btn-outline-warning" (click)="clear_session()">
+                            <i class="bi-trash3-fill"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
 </div>
+<!-- </div> -->
+
+<div class="print_zone" id="print_zone">
+    <div style="padding: 2rem; font-size: 1.2rem;">
+        <h2>Feuille de présence tournoi</h2>
+        <div *ngIf="selected_tournament">
+            <div>Date : {{selected_tournament.date | date:'dd/MM/yyyy'}} à {{selected_tournament.time}}</div>
+            <div>Tournoi : {{game.tournament?.tournament_name}}</div>
+        </div>
+        <table class="table table-bordered mt-3" *ngIf="game">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Prénom</th>
+                    <th>Payant</th>
+                    <th>Validation</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let gamer of game.gamers">
+                    <td>{{gamer.lastname}}</td>
+                    <td>{{gamer.firstname}}</td>
+                    <td>{{gamer.enabled ? 'Oui' : 'Non'}}</td>
+                    <td>{{gamer.validated ? 'Oui' : 'Non'}}</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="mt-3">
+            <strong>Total payants : {{ totalPayants }}</strong>
+        </div>
+    </div>
+</div>
+
+<div class="bottom_div">
+    <app-todays-books></app-todays-books>
+</div>
+
+
 
 
 <ng-template #fee_editor ; let-gamer="gamer" ; let-doubled="doubled">
