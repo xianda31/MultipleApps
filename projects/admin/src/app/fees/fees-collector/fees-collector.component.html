@@ -48,7 +48,7 @@
                 </ng-container>
 
                 <div class="col-auto ms-auto">
-                    <button class="btn btn-sm btn-primary align-self-end" (click)="print_table_to_pdf()">
+                    <button class="btn btn-sm btn-primary align-self-end" (click)="tables_to_pdf()">
                         <i class="bi-printer"></i>
                     </button>
                 </div>
@@ -125,7 +125,7 @@
     </div>
 
     <div class="bottom_div">
-        <app-todays-books (pdf_table)="get_table($event)"></app-todays-books>
+        <app-todays-books (pdf_table)="get_sales_table($event)"></app-todays-books>
     </div>
 
 </div>

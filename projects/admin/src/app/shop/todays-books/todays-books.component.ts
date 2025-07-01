@@ -39,6 +39,7 @@ export class TodaysBooksComponent {
         this.book_entries = book_entries;
         this.sales_of_the_day = this.bookService.get_revenues_from_members().filter((revenue) => revenue.date === this.today);
         this.pdf_table.emit(this.construct_pdf_table());
+        console.log('sales of the day', this.sales_of_the_day);
       }
     );
   }

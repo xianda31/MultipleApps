@@ -726,24 +726,25 @@ export class BookService {
       }
       );
 
+    if (grand_total !== 0) {
 
-    let book_entry: BookEntry = {
-      id: '',
-      season: next_season,
-      date: this.systemDataService.start_date(next_season),
-      transaction_id: TRANSACTION_ID.report_avoir,
-      amounts: { [BALANCE_ACCOUNT.BAL_debit]: grand_total },
-      operations: operations,
-    };
+      let book_entry: BookEntry = {
+        id: '',
+        season: next_season,
+        date: this.systemDataService.start_date(next_season),
+        transaction_id: TRANSACTION_ID.report_avoir,
+        amounts: { [BALANCE_ACCOUNT.BAL_debit]: grand_total },
+        operations: operations,
+      };
 
-    console.log('report d\'avoir', book_entry);
-    this.toastService.showInfo('report d\'avoir', (grand_total + ' € reportés sur la saison ' + next_season));
-    next_season_entries.push(book_entry);
+      console.log('report d\'avoir', book_entry);
+      this.toastService.showInfo('report d\'avoir', (grand_total + ' € reportés sur la saison ' + next_season));
+      next_season_entries.push(book_entry);
 
+    }
 
-
-    // B.1 report des chèques  non pointés
-    this._book_entries.filter((entry) => ((entry.transaction_id === TRANSACTION_ID.dépense_par_chèque)) && entry.bank_report === null)
+    // B.1 report des chèques (ou carte)  non pointés
+    this._book_entries.filter((entry) => ((entry.transaction_id === TRANSACTION_ID.dépense_par_chèque) || (entry.transaction_id === TRANSACTION_ID.dépense_par_carte)) && entry.bank_report === null)
       .forEach((entry) => {
         let amount = entry.amounts[FINANCIAL_ACCOUNT.BANK_credit];
         if (!amount) throw Error('montant du chèque non défini !?!?')
@@ -822,15 +823,15 @@ export class BookService {
 
 
   // utilitaire pour surligner les opérations bancaires (reconciliation bancaire)
-   init_highlighting() {
-  this._book_entries
-  .filter(book_entry => Object.values(FINANCIAL_ACCOUNT).some(op => book_entry.amounts[op] !== undefined))
-  .forEach(book_entry => {
-    this.higlighting[book_entry.id] = false;
-  });
-}
+  init_highlighting() {
+    this._book_entries
+      .filter(book_entry => Object.values(FINANCIAL_ACCOUNT).some(op => book_entry.amounts[op] !== undefined))
+      .forEach(book_entry => {
+        this.higlighting[book_entry.id] = false;
+      });
+  }
 
-highlight_book_entry(book_entry: BookEntry) {
+  highlight_book_entry(book_entry: BookEntry) {
     this.higlighting[book_entry.id] = !this.higlighting[book_entry.id];
   }
 

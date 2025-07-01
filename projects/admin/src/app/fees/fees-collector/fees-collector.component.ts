@@ -59,8 +59,8 @@ export class FeesCollectorComponent {
   }
 
 
-  get_table(table: PDF_table){
-    console.log(`Generating today's books PDF`, table);
+  get_sales_table(table: PDF_table) {
+    this.sales_of_the_day_table = table;
   }
 
   tournament_selected(tournament: any) {
@@ -114,44 +114,49 @@ export class FeesCollectorComponent {
     return card_class
   }
 
-  get totalPayants(): number {
-    return this.game && this.game.gamers ? this.game.gamers.filter(g => g.enabled).length : 0;
-  }
+  // get totalPayants(): number {
+  //   return this.game && this.game.gamers ? this.game.gamers.filter(g => g.enabled).length : 0;
+  // }
 
-  print_table_to_pdf() {
-    if (!this.game || !this.game.gamers) return;
-    const headers = ['Nom', 'Prénom', 'Payant', 'Validation'];
-    const rows = this.game.gamers.map(gamer => [
-      gamer.lastname,
-      gamer.firstname,
-      gamer.enabled ? 'Oui' : 'Non',
-      gamer.validated ? 'Oui' : 'Non'
-    ]);
+  tables_to_pdf() {
+
+    const gamers_table = this.build_gamers_table();
+
     let fname = this.selected_tournament
       ? `${this.selected_tournament.date}_${this.selected_tournament.tournament_name}.pdf`
       : 'feuille_presence.pdf';
 
-      let table: PDF_table = {
-        headers: headers,
-        rows: rows
-      };
-    this.pdfService.generateTablePDF([this.sales_of_the_day_table], fname);
+
+    this.pdfService.generateTablePDF([gamers_table, this.sales_of_the_day_table], fname);
+
   }
 
+  build_gamers_table(): PDF_table {
 
-  generate_fees_table(): PDF_table | null {
-    if (!this.game || !this.game.gamers) return null;
-    const headers = ['Nom', 'Prénom', 'Payant', 'Validation'];
-    const rows = this.game.gamers.map(gamer => [
-      gamer.lastname,
-      gamer.firstname,
-      gamer.enabled ? 'Oui' : 'Non',
-      gamer.validated ? 'Oui' : 'Non'
-    ]);
-    return {
-      headers: headers,
-      rows: rows
-    };
+    let payment = (gamer:Gamer) => {
+      if (!gamer.validated) return '??';
+      if (gamer.enabled) {
+        return gamer.in_euro ? (gamer.price .toFixed(2) + ' €') :((this.game.fees_doubled ? 2 : 1)+ 'tampon(s)') ;
+      } else {
+        return 'Carte';
+      }
+    }
+
+    if (!this.game || !this.game.gamers) return { headers: [], rows: [] };
+    const headers = ['Joueur1', 'Paiement1', 'Joueur2', 'Paiement2'];
+    const rows: any[] = [];
+    for (let i = 0; i < this.game.gamers.length; i += 2) {
+      const gamer1 = this.game.gamers[i];
+      const gamer2 = this.game.gamers[i + 1];
+      rows.push([
+        gamer1 ? gamer1.lastname + ' ' + gamer1.firstname : '',
+        gamer1 ? payment(gamer1) : '',
+        gamer2 ? gamer2.lastname + ' ' + gamer2.firstname : '',
+        gamer2 ? payment(gamer2) : ''
+      ]);
+    }
+    return { headers, rows };
   }
+
 
 }

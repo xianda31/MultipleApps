@@ -13,6 +13,7 @@ import { CartComponent } from "./cart/cart.component";
 import { ProductService } from '../../../../common/services/product.service';
 import { AuthentificationService } from '../../../../common/authentification/authentification.service';
 import { TodaysBooksComponent } from './todays-books/todays-books.component';
+import { SystemDataService } from '../../../../common/services/system-data.service';
 
 
 @Component({
@@ -26,7 +27,7 @@ export class ShopComponent {
 
   cart_is_valid = true;
 
-  session!: Session;
+  session: Session = {    date: '',     season: '',  };
   debt_amount = 0;
   asset_amount = 0;
 
@@ -48,15 +49,18 @@ export class ShopComponent {
     private bookService: BookService,
     private productService: ProductService,
     private auth : AuthentificationService,
+    private systemDataService: SystemDataService
   ) {
-    this.session = {
-      season: '',
-      date: new Date().toISOString().split('T')[0],
-    };
-
+    
   }
-
+  
   ngOnInit(): void {
+    
+    let today : Date = new Date();
+    this.session.date = today.toISOString().split('T')[0]; // format YYYY-MM
+    this.session.season = this.systemDataService.get_season(today);
+
+
     this.productService.listProducts().subscribe((products) => {
       this.products_array = this.productService.products_by_accounts(products);
     });
