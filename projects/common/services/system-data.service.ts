@@ -84,8 +84,9 @@ export class SystemDataService {
         let m = (i).toString().padStart(2, '0');
         months.push(year.toString().slice(-2) + '-' + m);
       }
-    } else {
-      for (let i = 1; i <= month; i++) {
+    }
+    else {
+      for (let i = 7; i <= month; i++) {
         let m = (i).toString().padStart(2, '0');
         months.push(year.toString().slice(-2) + '-' + m);
       }
