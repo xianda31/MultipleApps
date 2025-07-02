@@ -22,10 +22,10 @@ export class CartComponent {
   @Output() complete = new EventEmitter<void>();
 
   debt_amount = 0;
-  asset_amount = 0;
+  asset_available = 0;
   total_amount = signal(0);
 
-  cart: Cart = { items: [], debt: null, asset: null, buyer_name: '' };
+  cart: Cart = { items: [], debt: null, asset_available: null, asset_used:null,buyer_name: '' };
   members!: Member[];
   products!: Product[];
 
@@ -60,7 +60,7 @@ export class CartComponent {
     this.cartService.cart$.subscribe((cart) => {
       this.cart = cart;
       this.debt_amount = cart.debt?.amount || 0;
-      this.asset_amount = cart.asset?.amount || 0;
+      this.asset_available = cart.asset_available?.amount || 0;
 
       if (this.cart.items.length === 0) {
         this.clear_payment();
@@ -115,7 +115,7 @@ export class CartComponent {
     this.complete.emit();
     this.clear_payment();
     this.debt_amount = 0;
-    this.asset_amount = 0;
+    this.asset_available = 0;
 
   }
 }

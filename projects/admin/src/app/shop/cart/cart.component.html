@@ -10,8 +10,8 @@
                 </caption>
 
                 <!-- asset if any -->
-                <caption *ngIf="asset_amount > 0">
-                    <span class="text-muted"> Avoir :{{asset_amount | currency:'€':'symbol':'2.2-2':'fr'}} </span>
+                <caption *ngIf="asset_available > 0">
+                    <span class="text-muted"> Avoir disponible:{{asset_available | currency:'€':'symbol':'2.2-2':'fr'}} </span>
                 </caption>
 
                 <thead>

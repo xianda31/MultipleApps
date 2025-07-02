@@ -44,7 +44,8 @@ export interface CartItem {
 export interface Cart {
   items: CartItem[];
   debt: { name: string, amount: number } | null;
-  asset: { name: string, amount: number } | null;
+  asset_available: { name: string, amount: number } | null;
+  asset_used: { name: string, amount: number } | null;
   buyer_name: string;
 }
 

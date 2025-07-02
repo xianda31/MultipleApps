@@ -14,17 +14,17 @@ import { GameCardService } from '../../game-card.service';
 })
 
 export class CartService {
-  private _cart: Cart = { items: [], debt: null, asset: null, buyer_name: '' };
+  private _cart: Cart = { items: [], debt: null, asset_available: null, asset_used: null, buyer_name: '' };
   private _payment!: Payment;
   private _cart$: BehaviorSubject<Cart> = new BehaviorSubject<Cart>(this._cart);
   private seller: string = '';
 
   constructor(
     private bookService: BookService,
-        private productService: ProductService,
-        private membersService: MembersService,
-        private gameCardService: GameCardService
-    
+    private productService: ProductService,
+    private membersService: MembersService,
+    private gameCardService: GameCardService
+
   ) { }
 
   set payment(payment: Payment) {
@@ -63,7 +63,8 @@ export class CartService {
   clearCart(): void {
     this._cart.items = [];
     this._cart.debt = null;
-    this._cart.asset = null;
+    this._cart.asset_available = null;
+    this._cart.asset_used = null;
     this._cart$.next(this._cart);
   }
 
@@ -73,7 +74,7 @@ export class CartService {
 
   }
   setAsset(name: string, amount: number): void {
-    this._cart.asset = { name: name, amount: amount };
+    this._cart.asset_available = { name: name, amount: amount };
     this._cart$.next(this._cart);
   }
 
@@ -88,7 +89,17 @@ export class CartService {
 
   getCartAmount(): number {
     // console.log('getCartAmount', this._cart.debt, this._cart.asset);
-    return this._cart.items.reduce((total, item) => total + item.paied, 0) + (this._cart.debt?.amount || 0) - (this._cart.asset?.amount || 0);
+    let due = this._cart.items.reduce((total, item) => total + item.paied, 0) + (this._cart.debt?.amount || 0);
+
+    if (this._cart.asset_available && this._cart.asset_available.amount > 0) {
+      let asset_available = this._cart.asset_available.amount;
+      let asset_used = (asset_available > due) ? due : asset_available;
+      this._cart.asset_used = { name: this._cart.asset_available.name, amount: asset_used };
+      due -= asset_used;
+    }
+
+    return due
+
   }
 
 
@@ -131,7 +142,7 @@ export class CartService {
     const cartItem: CartItem = {
       product_id: product.id,
       paied: product.price,
-      mutable:false,
+      mutable: false,
       product_account: product.account,
       payee_name: payee === null ? '' : payee.lastname + ' ' + payee.firstname
     };
@@ -154,13 +165,13 @@ export class CartService {
     // push debt_credit and asset_debit as "CartItems"
     if (this._cart.debt) {
       let items = payees.get(this._cart.debt.name) ?? [];
-      items.push({ paied: this._cart.debt.amount, mutable:false,product_account: CUSTOMER_ACCOUNT.DEBT_credit, payee_name: this._cart.debt.name, product_id: '' });
+      items.push({ paied: this._cart.debt.amount, mutable: false, product_account: CUSTOMER_ACCOUNT.DEBT_credit, payee_name: this._cart.debt.name, product_id: '' });
       payees.set(this._cart.debt.name, items);
     }
-    if (this._cart.asset) {
-      let items = payees.get(this._cart.asset.name) ?? [];
-      items.push({ paied: this._cart.asset.amount, mutable:false,product_account: CUSTOMER_ACCOUNT.ASSET_debit, payee_name: this._cart.asset.name, product_id: '' });
-      payees.set(this._cart.asset.name, items);
+    if (this._cart.asset_used) {
+      let items = payees.get(this._cart.asset_used.name) ?? [];
+      items.push({ paied: this._cart.asset_used.amount, mutable: false, product_account: CUSTOMER_ACCOUNT.ASSET_debit, payee_name: this._cart.asset_used.name, product_id: '' });
+      payees.set(this._cart.asset_used.name, items);
     }
 
     for (let [payee, cartitems] of payees) {
@@ -229,7 +240,7 @@ export class CartService {
           console.warn('no payee for CAR product', cartitem);
           return;
         }
-        let product = this.productService.getProduct( cartitem.product_id);
+        let product = this.productService.getProduct(cartitem.product_id);
         let member = this.membersService.getMemberbyName(cartitem.payee_name);
         if (!product || !member) {
           console.warn('product or member not found for CAR product', cartitem);
@@ -238,7 +249,7 @@ export class CartService {
         this.gameCardService.createCard([member], +product.info1!).catch(error => {
           console.error('Error à la création de la carte', member.firstname, member.lastname, error);
         });
-        
+
       }
     });
   }
