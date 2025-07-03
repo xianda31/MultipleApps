@@ -8,7 +8,7 @@ import { Observable } from 'rxjs';
 import { Game, Gamer } from '../fees.interface';
 import { PdfService } from '../../../../../common/services/pdf.service';
 import { TodaysBooksComponent } from "../../shop/todays-books/todays-books.component";
-import { PDF_table } from '../../../../../common/pdf-table.interface';
+import { HorizontalAlignment, PDF_table } from '../../../../../common/pdf-table.interface';
 
 @Component({
   selector: 'app-fees-collector',
@@ -26,7 +26,9 @@ export class FeesCollectorComponent {
   pdfLoading = false;
 
   sales_of_the_day_table: PDF_table = {
+    title: '',
     headers: [],
+    alignments: [],
     rows: []
   };
 
@@ -82,6 +84,7 @@ export class FeesCollectorComponent {
   }
 
   validate_fees() {
+    this.tables_to_pdf();
     this.feesCollectorService.save_fees();
     this.selected_tournament = null;
     this.game.tournament = null;
@@ -142,8 +145,10 @@ export class FeesCollectorComponent {
       }
     }
 
-    if (!this.game || !this.game.gamers) return { headers: [], rows: [] };
+    if (!this.game || !this.game.gamers) return { title:'',headers: [],alignments:[], rows: [] };
+    const title = 'recettes : ' + this.stamps_collected() +' tampon(s) et '+ this.euros_collected()+ ' €';
     const headers = ['Joueur1', 'Paiement1', 'Joueur2', 'Paiement2'];
+    const alignments: HorizontalAlignment[] = ['left', 'right', 'left', 'right'];
     const rows: any[] = [];
     for (let i = 0; i < this.game.gamers.length; i += 2) {
       const gamer1 = this.game.gamers[i];
@@ -155,7 +160,7 @@ export class FeesCollectorComponent {
         gamer2 ? payment(gamer2) : ''
       ]);
     }
-    return { headers, rows };
+    return { title,headers,alignments, rows };
   }
 
 

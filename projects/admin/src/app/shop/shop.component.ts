@@ -14,20 +14,22 @@ import { ProductService } from '../../../../common/services/product.service';
 import { AuthentificationService } from '../../../../common/authentification/authentification.service';
 import { TodaysBooksComponent } from './todays-books/todays-books.component';
 import { SystemDataService } from '../../../../common/services/system-data.service';
+import { PDF_table } from '../../../../common/pdf-table.interface';
+import { PdfService } from '../../../../common/services/pdf.service';
 
 
 @Component({
-    selector: 'app-shop',
-    imports: [ReactiveFormsModule, CommonModule, FormsModule, InputMemberComponent, CartComponent,TodaysBooksComponent],
-    templateUrl: './shop.component.html',
-    styleUrl: './shop.component.scss'
+  selector: 'app-shop',
+  imports: [ReactiveFormsModule, CommonModule, FormsModule, InputMemberComponent, CartComponent, TodaysBooksComponent],
+  templateUrl: './shop.component.html',
+  styleUrl: './shop.component.scss'
 })
 export class ShopComponent {
   members!: Member[];
 
   cart_is_valid = true;
 
-  session: Session = {    date: '',     season: '',  };
+  session: Session = { date: '', season: '', };
   debt_amount = 0;
   asset_amount = 0;
 
@@ -38,6 +40,12 @@ export class ShopComponent {
     buyer: new FormControl(null, Validators.required),
   });
 
+  sales_of_the_day_table: PDF_table = {
+    title: '',
+    headers: [],
+    alignments: [],
+    rows: []
+  };
 
   get buyer() { return this.buyerForm.get('buyer')?.value as Member | null }
 
@@ -48,15 +56,17 @@ export class ShopComponent {
     private toastService: ToastService,
     private bookService: BookService,
     private productService: ProductService,
-    private auth : AuthentificationService,
-    private systemDataService: SystemDataService
+    private auth: AuthentificationService,
+    private systemDataService: SystemDataService,
+    private pdfService: PdfService,
+
   ) {
-    
+
   }
-  
+
   ngOnInit(): void {
-    
-    let today : Date = new Date();
+
+    let today: Date = new Date();
     this.session.date = today.toISOString().split('T')[0]; // format YYYY-MM
     this.session.season = this.systemDataService.get_season(today);
 
@@ -71,7 +81,7 @@ export class ShopComponent {
 
     this.auth.logged_member$.subscribe((member) => {
       this.logged_member = member;
-      this.cartService.setSeller( member?.firstname ?? 'unknown');
+      this.cartService.setSeller(member?.firstname ?? 'unknown');
     });
 
 
@@ -94,7 +104,7 @@ export class ShopComponent {
         this.cartService.setAsset(buyer.lastname + ' ' + buyer.firstname, this.asset_amount);
       }
 
-      if((this.buyer?.license_status !== 'paied') && (!this.buyer?.is_sympathisant)) {
+      if ((this.buyer?.license_status !== 'paied') && (!this.buyer?.is_sympathisant)) {
         this.toastService.showWarning('licence, adhésion', 'la personne n\'est pas à jour pour la licence ou l\'adhésion');
       }
 
@@ -124,7 +134,7 @@ export class ShopComponent {
     let full_name = this.membersService.first_then_last_name(this.buyer!);
     this.cartService.save_sale(this.session, this.buyer!)
       .then(() => {
-        this.toastService.showSuccess('vente à '+ full_name, (this.debt_amount > 0) ? 'achats et dette enregistrés' : 'achats enregistrés');
+        this.toastService.showSuccess('vente à ' + full_name, (this.debt_amount > 0) ? 'achats et dette enregistrés' : 'achats enregistrés');
       })
       .catch((error) => {
         console.error('error saving sale', error);
@@ -162,5 +172,17 @@ export class ShopComponent {
     let name = payer.lastname + ' ' + payer.firstname;
     let due = this.bookService.find_assets(name);
     return Promise.resolve(due);
+  }
+
+  get_sales_table(table: PDF_table) {
+    this.sales_of_the_day_table = table;
+  }
+
+  tables_to_pdf() {
+
+
+    let fname = `boutique ${this.session.date}.pdf`;
+    this.pdfService.generateTablePDF([this.sales_of_the_day_table], fname);
+
   }
 }

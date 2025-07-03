@@ -6,7 +6,7 @@ import { BookService } from '../../book.service';
 import { TransactionService } from '../../transaction.service';
 import { BookEntry, Revenue } from '../../../../../common/accounting.interface';
 import { CommonModule } from '@angular/common';
-import { PDF_table } from '../../../../../common/pdf-table.interface'
+import { HorizontalAlignment, PDF_table } from '../../../../../common/pdf-table.interface'
 
 @Component({
   selector: 'app-todays-books',
@@ -15,7 +15,7 @@ import { PDF_table } from '../../../../../common/pdf-table.interface'
   styleUrl: './todays-books.component.scss'
 })
 export class TodaysBooksComponent {
-  @Input() today : string = new Date().toISOString().split('T')[0];
+  @Input() today: string = new Date().toISOString().split('T')[0];
   @Output() pdf_table = new EventEmitter<PDF_table>();
   book_entries: BookEntry[] = [];
   sales_of_the_day: Revenue[] = [];
@@ -62,23 +62,34 @@ export class TodaysBooksComponent {
     return (book_entry.amounts?.['cashbox_in'] ?? 0) + (book_entry.amounts?.['bank_in'] ?? 0);
   }
 
-  construct_pdf_table() : PDF_table {
-    
-      const headers = ['Date', 'Transaction', 'Member', 'Amount'] ;
-      const rows = this.sales_of_the_day.map((revenue) => {
-        let book_entry = this.book_entries.find((entry) => entry.id === revenue.book_entry_id);
-        if (!book_entry) throw new Error('sale not found');
-        return [
-          revenue.date,
-          this.transactionService.get_transaction(book_entry.transaction_id).label,
-          revenue.member,
-          this.sale_amount(revenue).toFixed(2)
-        ];
-      })
 
-      return {
-        headers: headers,
-        rows: rows
+
+
+  construct_pdf_table(): PDF_table {
+    // Format this.today (YYYY-MM-DD) to DD/MM/YYYY (French style)
+    const [year, month, day] = this.today.split('-');
+    const todayFr = `${day}/${month}/${year}`;
+    const title = 'recettes du ' + todayFr;
+    
+    const headers = ['Montant', 'Transaction', 'Adhérent', 'Articles'];
+    const alignments: HorizontalAlignment[] = ['right', 'left', 'left', 'left'];
+    const book_entries = this.book_entries.filter((entry) => entry.date === this.today);
+
+    const rows = book_entries.map((book_entry) => {
+      let transaction = this.transactionService.get_transaction(book_entry.transaction_id);
+      let amount = (book_entry.amounts?.['cashbox_in'] ?? 0) + (book_entry.amounts?.['bank_in'] ?? 0);
+      return [
+        amount.toFixed(2) + ' €',
+        transaction.label + (book_entry.cheque_ref ? ' (' + book_entry.cheque_ref + ')' : ''),
+        book_entry.operations.map(op => op.member).join('\n'),
+        book_entry.operations.map(op => Object.entries(op.values).reduce((acc, [key, value]) => acc + (key + '[' + value + '] '), '')).join('\n')
+      ]
+    });
+    return {
+      title: title,
+      headers: headers,
+      alignments: alignments,
+      rows: rows
     };
 
   }

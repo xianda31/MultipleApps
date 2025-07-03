@@ -2,14 +2,22 @@
 <div class="card shadow-lg mt-3">
   <div class="card-header">
     <h5 class="row justify-content-around align-items-center">
-      <div class="col-md-9 col-sm-7">
+
+      <div class="col-auto">
         Achats adhérents
       </div>
+
       <div class="col-md-3 col-sm-5 text-end">
         <input type="date" class="col form-control form-control-sm" (ngModelChange)="date_change($event)"
           [(ngModel)]="session.date">
-
       </div>
+
+      <div class="col-auto ms-auto">
+        <button class="btn btn-sm btn-primary align-self-end" (click)="tables_to_pdf()">
+          <i class="bi-printer"></i>
+        </button>
+      </div>
+
     </h5>
   </div>
 
@@ -63,7 +71,7 @@
   </div>
 </div>
 <div class="mt-2">
-  <app-todays-books></app-todays-books>
+  <app-todays-books (pdf_table)="get_sales_table($event)"></app-todays-books>
 </div>
 
 <!-- </div> -->
