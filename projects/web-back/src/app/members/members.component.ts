@@ -219,7 +219,7 @@ export class MembersComponent implements OnInit {
       id: '',
       gender: licensee.gender,
       firstname: licensee.firstname,
-      lastname: licensee.lastname,
+      lastname: licensee.lastname.toUpperCase(),
       license_number: licensee.license_number,
       birthdate: licensee.birthdate,
       city: this.capitalize_first(licensee.city?.toLowerCase()),
