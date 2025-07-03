@@ -11,7 +11,7 @@ import { MembersService } from '../../../web-back/src/app/members/service/member
 import { GroupService } from '../group.service';
 import { Group_icons, Group_names } from '../group.interface';
 
-const EMAIL_PATTERN = "^[_A-Za-z0-9-\+]+(\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\.[A-Za-z0-9]+)*(\.[A-Za-z]{2,})$";
+const EMAIL_PATTERN = '^[\\w.-]+@[A-Za-z0-9-]+\\.[A-Za-z]{2,}(\\.[A-Za-z]{2,})*$';
 const PSW_PATTERN = '^(?!\\s+)(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[\\^$*.[\\]{}()?"!@#%&/\\\\,><\': ;| _~`=+-]).{8,256}(?<!\\s)$';
 const GROUP_ICONS = Group_icons;
 
@@ -106,6 +106,7 @@ const modalRef = this.modalService.open(GetLoggingComponent, { centered: true })
   }
 
   emailValidator = (control: AbstractControl): Observable<ValidationErrors | null> => {
+    if (!control.value) return of(null);
     if (!control.value.match(EMAIL_PATTERN)) return of(null);
     return of(control.value).pipe(
       switchMap((email) => from(this.membersService.searchMemberByEmail(email))),

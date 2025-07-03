@@ -192,7 +192,7 @@ export class MembersComponent implements OnInit {
       birthdate: licensee.birthdate,
       city: this.capitalize_first(licensee.city?.toLowerCase()),
       season: licensee.season ?? '',
-      email: licensee.email ?? '',
+      email: licensee.email?.trim().toLowerCase() ?? '',
       phone_one: licensee.phone_one,
       license_taken_at: licensee.orga_license_name ?? 'BCSTO',
       license_status: licensee.license_id ? (licensee.free ? 'free' : 'paied') : 'unpaied',

@@ -54,7 +54,6 @@ export class MemberSalesComponent {
     if (this.selected_member) {
       let full_name = this.memberService.full_name(this.selected_member);
       this.revenues = this.operations.filter((op) => op.member === full_name)
-      console.log('MemberSalesComponent.member_selected', this.selected_member, this.revenues);
     }
   }
 

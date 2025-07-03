@@ -97,14 +97,18 @@ export class DBhandler {
 
   // MEMBER SEARCH BY EMAIL
   async searchMemberByEmail(email: string): Promise<Member | null> {
+    const normalizedEmail = email.trim().toLowerCase();
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode: authMode });
     const { data, errors } = await client.models.Member.list({
-      filter: { email: { eq: email } }
+      filter: { email: { eq: normalizedEmail } }
     });
     if (errors) {
       console.error(errors);
       return null;
+    }
+    if (data.length === 0) {
+      return null; // No member found with the given email
     }
     return data[0] as Member;   // array of only one element, hopefully !!!
   }

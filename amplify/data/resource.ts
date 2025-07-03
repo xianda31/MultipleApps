@@ -116,7 +116,7 @@ const schema = a.schema({
     birthdate: a.string(),
     city: a.string(),
     season: a.string(),
-    email: a.string(),
+    email: a.string().required(),
     phone_one: a.string(),
     orga_license_name: a.string(),
     is_sympathisant: a.boolean(),
