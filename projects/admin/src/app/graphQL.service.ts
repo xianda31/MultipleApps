@@ -86,7 +86,8 @@ export class DBhandler {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode: authMode });
     const { data, errors } = await client.models.Member.list({
-      filter: { license_number: { eq: license_number } }
+      filter: { license_number: { eq: license_number } },
+      limit : 300
     });
     if (errors) {
       console.error(errors);
@@ -101,7 +102,8 @@ export class DBhandler {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode: authMode });
     const { data, errors } = await client.models.Member.list({
-      filter: { email: { eq: normalizedEmail } }
+      filter: { email: { eq: normalizedEmail } },
+      limit :300
     });
     if (errors) {
       console.error(errors);
