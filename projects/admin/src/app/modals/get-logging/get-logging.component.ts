@@ -1,11 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input, OnInit } from '@angular/core';
-import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastService } from '../../../../../common/toaster/toast.service';
 import { AuthentificationService } from '../../../../../common/authentification/authentification.service';
-import { delay, from, map, Observable, of, switchMap } from 'rxjs';
 import { Member } from '../../../../../common/member.interface';
+
+const PSW_PATTERN = '^(?!\\s+)(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[\\^$*.[\\]{}()?"!@#%&/\\\\,><\': ;| _~`=+-]).{8,256}(?<!\\s)$';
 
 @Component({
     selector: 'app-get-logging',
@@ -13,6 +14,7 @@ import { Member } from '../../../../../common/member.interface';
     templateUrl: './get-logging.component.html',
     styleUrl: './get-logging.component.scss'
 })
+
 export class GetLoggingComponent implements OnInit {
   @Input() email: string = '';
   @Input() member !: Member;
@@ -34,7 +36,7 @@ export class GetLoggingComponent implements OnInit {
 
     this.loggingForm = this.formbuilder.group({
       secret_code: [{ disabled: true, value: '' }, Validators.required],
-      password: [{ disabled: false, value: '' }, Validators.required],
+      password: [{ disabled: false, value: '' },  Validators.pattern(PSW_PATTERN)],
     });
 
   }

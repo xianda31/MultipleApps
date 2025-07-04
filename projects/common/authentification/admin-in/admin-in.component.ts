@@ -12,7 +12,6 @@ import { GroupService } from '../group.service';
 import { Group_icons, Group_names } from '../group.interface';
 
 const EMAIL_PATTERN = '^[\\w.-]+@[A-Za-z0-9-]+\\.[A-Za-z]{2,}(\\.[A-Za-z]{2,})*$';
-const PSW_PATTERN = '^(?!\\s+)(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[\\^$*.[\\]{}()?"!@#%&/\\\\,><\': ;| _~`=+-]).{8,256}(?<!\\s)$';
 const GROUP_ICONS = Group_icons;
 
 @Component({

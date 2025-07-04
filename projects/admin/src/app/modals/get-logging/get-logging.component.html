@@ -20,20 +20,23 @@
     <form [formGroup]="loggingForm">
 
         <ng-container *ngIf="mode==='reset_password'">
+
             <p class="text-muted">Un code vous sera envoyé par email, à saisir avec votre nouveau mot de passe.
-                <button type="button" (click)="resetPassword()" class="btn btn-primary btn-sm">m'envoyer le
-                    code</button>
+                <button type="button" (click)="resetPassword()" class="btn btn-primary btn-sm">
+                    m'envoyer le code
+                </button>
             </p>
 
             <ng-container *ngTemplateOutlet="pwd"></ng-container>
             <ng-container *ngTemplateOutlet="code"></ng-container>
+
         </ng-container>
 
         <ng-container *ngIf="mode==='create_account'">
             <ng-container *ngTemplateOutlet="pwd"></ng-container>
-            <p class="text-muted">confirmez l'ouverture de compte ; \n un code vous sera envoyé
+            <p class="text-muted">confirmez l'ouverture de compte ; un code vous sera envoyé
                 <button [disabled]="password.invalid" type="button" (click)="signUp()"
-                    class="btn btn-primary btn-sm">envoyer le code</button>
+                    class="btn btn-primary btn-sm">confirmez</button>
             </p>
             <ng-container *ngTemplateOutlet="code"></ng-container>
         </ng-container>
@@ -41,7 +44,8 @@
         <ng-template #pwd>
             <div class="mb-3">
                 <label for="password" class="form-label">Renseignez votre mot de passe : </label>
-                <div class="input-group mb-3">
+                <div
+                    [ngClass]="(password.invalid && (password.dirty || password.touched)) ? 'input-group border-danger mb-3' : 'input-group mb-3'">
                     <input class="form-control form-control-sm" placeholder="Mot de passe"
                         [type]="show_password?'text':'password'" formControlName="password">
                     <span class="input-group-text">
@@ -49,12 +53,18 @@
                             (click)="show_password = !show_password"></i>
                     </span>
                 </div>
+                <div *ngIf="password.invalid && (password.dirty || password.touched)">
+                    <div *ngIf="password.errors?.['pattern']" class="form-text text-danger">
+                        au moins 8 caractères dont une majuscule, une minuscule, un chiffre et un caractère spécial.
+                    </div>
+                </div>
             </div>
         </ng-template>
+
         <ng-template #code>
             <div class="mb-3">
                 <label class="form-label" for="google_dont_autofill_code">Renseignez le code reçu par mèl</label>
-                <input type="text" class="form-control" formControlName="secret_code" placeholder="code reçu par mel"
+                <input type="text" class="form-control" formControlName="secret_code" placeholder="code reçu par mèl"
                     name="google_dont_autofill_code">
             </div>
         </ng-template>
