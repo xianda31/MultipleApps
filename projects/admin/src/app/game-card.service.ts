@@ -70,11 +70,11 @@ export class GameCardService {
       .reduce((total, card) => total + (card.initial_qty - card.stamps.length), 0);
   }
 
-  stamp_member_card(member: Member, stamp_date: string, double:boolean): void {
+  stamp_member_card(member: Member, stamp_date: string, double: boolean): void {
     const card = this._gameCards.find(c => c.owners.some(owner => (owner.license_number === member.license_number) && (c.stamps.length < c.initial_qty)));
     if (card) {
       card.stamps.push(stamp_date);
-      if( double) {
+      if (double) {
         card.stamps.push(stamp_date); // add a second stamp if double
       }
       this.updateCard(card).catch(error => {
@@ -109,7 +109,7 @@ export class GameCardService {
       if (this._gameCards) {   // cache update if exists
         this._gameCards.push(new_card);
         this.gameCards$.next(this._gameCards);
-              let ownersNames = new_card.owners.map(owner => `${owner.firstname} ${owner.lastname}`).join(', ');
+        let ownersNames = new_card.owners.map(owner => `${owner.firstname} ${owner.lastname}`).join(', ');
 
         this.toastService.showSuccess('Gestion des cartes', 'Carte de ' + ownersNames + ' créée');
       }
@@ -165,9 +165,9 @@ export class GameCardService {
       if (done) {
         this._gameCards = this._gameCards.filter(c => c.id !== card.id);
         this.gameCards$.next(this._gameCards);
-              let ownersNames = card.owners.map(owner => `${owner.firstname} ${owner.lastname}`).join(', ');
+        let ownersNames = card.owners.map(owner => `${owner.firstname} ${owner.lastname}`).join(', ');
 
-        this.toastService.showSuccess('Gestion des cartes', 'La carte de '+ ownersNames + ' a été supprimée');
+        this.toastService.showSuccess('Gestion des cartes', 'La carte de ' + ownersNames + ' a été supprimée');
         this.toastService.showInfo('Gestion des cartes', 'Supprimez la recette associée si nécessaire');
         return true;
       }
@@ -191,6 +191,10 @@ export class GameCardService {
             .filter((license): license is string => license !== null)
             .map((license) => this.members.find(member => member.license_number === license))
             .filter((owner): owner is Member => owner !== undefined);
+
+          if (owners.length === 0) {
+            console.warn(`No owners found for card with ID ${card.id}. `)
+            }
           return {
             id: card.id,
             owners: owners,

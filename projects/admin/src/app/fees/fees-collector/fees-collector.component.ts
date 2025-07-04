@@ -91,7 +91,7 @@ export class FeesCollectorComponent {
   }
 
   all_gamers_validated(): boolean {
-    return this.game && this.game.gamers.every(gamer => (gamer.validated || !gamer.enabled));
+    return !!(this.selected_tournament && this.game && this.game.gamers.every(gamer => (gamer.validated || !gamer.enabled)));
   }
 
   gamer_solvent(gamer: Gamer): boolean {

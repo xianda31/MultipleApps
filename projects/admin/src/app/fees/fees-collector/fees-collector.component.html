@@ -1,4 +1,16 @@
 <div class="wrapper">
+
+    <div [class]="all_gamers_validated() ? 'card shadow-lg mt-3 g-0 bg-warning' : 'card shadow-lg mt-3 g-0 bg-info'">
+        <div class="card-body">
+            <div class="row align-items-center justify-content-between">
+                <div [class]="'col-auto text-center fw-bolder ' + (all_gamers_validated() ? 'blink' : '')">
+                        ATTENTION : N'OUBLIEZ PAS DE SAUVEGARDER DÈS QUE TOUS LES JOUEURS SONT POINTÉS.
+                </div>
+                <ng-container *ngTemplateOutlet="save_dialog"></ng-container>
+            </div>
+        </div>
+    </div>
+
     <div class="card shadow-lg mt-3 g-0">
         <div class="card-header">
             <!-- bandeau tournoi (date, mode roy rené , alread_charges ? , print -->
@@ -40,7 +52,6 @@
                         </span>
                     </div>
 
-                    <ng-container *ngTemplateOutlet="save_dialog"></ng-container>
 
                 </ng-container>
 
@@ -186,10 +197,10 @@
     <div class="mx-auto col-auto">
         <!-- validation recettes -->
         <div class="row align-items-end">
-            <h6 class="col-auto"> validation saisie droits de tables </h6>
+            <h6 class="col-auto"> sauvegarde et impression pdf </h6>
             <div class="col-auto ">
                 <button [disabled]="!all_gamers_validated()" class="btn btn-sm btn-primary" (click)="validate_fees()">
-                    <i class="bi bi-check-lg"></i>
+                    <i class="bi bi-cloud-upload-fill"></i>
                 </button>
             </div>
         </div>
