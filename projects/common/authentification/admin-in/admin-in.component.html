@@ -3,7 +3,7 @@
   <!-- saisies de mail + pwd -->
   <div class="col-auto">
     <form [formGroup]="loginForm">
-      <input class="form-control form-control-sm" type="email" placeholder="Mél" id="email" autocomplete="username"
+      <input class="form-control form-control-sm" type="email" placeholder="Mél" id="email" complete="username"
         formControlName="email">
 
       <div class="input-group">
@@ -14,18 +14,20 @@
   </div>
   <!-- boutons login ou reset -->
   <div class="col-auto">
-    <button [disabled]="loginForm.invalid" class="col-12  btn btn-success btn-sm" type="submit"
-      (click)="signIn()">Login</button>
-    <!-- <button class=" btn btn-warning btn-sm" type="submit" (click)="resetPassword()">Reset</button> -->
+
+    <button [disabled]="loginForm.invalid" class="btn btn-success btn-sm" type="submit"
+      (click)="signIn()">Se connecter
+    </button>
 
     <div class="dropdown">
-      <button [disabled]="email.invalid" class=" col-12 btn btn-primary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton1"
-        data-bs-toggle="dropdown" aria-expanded="false"> autre </button>
+      <button [disabled]="email.invalid" class="w-100 btn btn-primary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton1"
+        data-bs-toggle="dropdown" aria-expanded="false"> options </button>
       <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
         <li><a class="dropdown-item" href="#" (click)="signUp()">Créer un compte</a></li>
         <li><a class="dropdown-item" href="#" (click)="resetPassword()">Réinitialiser mot de passe</a></li>
       </ul>
     </div>
+
   </div>
 
 </div>

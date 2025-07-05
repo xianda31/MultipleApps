@@ -25,7 +25,7 @@ export class SystemDataService {
       tap((conf) => {
         this._system_configuration = conf;
         this._system_configuration$.next(this._system_configuration);
-        if (this.trace_on()) console.log(' configuration from S3', this._system_configuration);
+        // if (this.trace_on()) console.log(' configuration from S3', this._system_configuration);
       }),
       switchMap(() => this._system_configuration$.asObservable())
     );

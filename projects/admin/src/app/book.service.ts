@@ -162,7 +162,7 @@ export class BookService {
           return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
         });
         this._book_entries$.next(this._book_entries);
-        if (this.trace_on()) console.log('%s book entries retrieved from AWS', this._book_entries.length);
+        // if (this.trace_on()) console.log('%s book entries retrieved from AWS', this._book_entries.length);
       }),
       switchMap(() => this._book_entries$.asObservable()),
       catchError((error) => {
