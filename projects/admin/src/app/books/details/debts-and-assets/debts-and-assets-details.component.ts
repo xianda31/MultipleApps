@@ -75,9 +75,16 @@ export class DebtsAndAssetsDetailsComponent {
     let member = key;
     console.log('cancel', date, member, amount);
     try {
+      if(this.due === 'dettes') {
+        // For debts, we create a debt cancelation entry
       let entry = await this.bookService.debt_cancelation(date, member, amount);
+      this.toastService.showSuccess('Avoir', `La dette de ${amount} € de ${member} a été supprimée.`);
       this.dues.delete(key);
-      this.toastService.showSuccess('Gestion dettes et crédits', `La compensation de ${amount} € pour ${member} a été enregistrée.`);
+      }else if(this.due === 'avoirs') {
+        let entry = await this.bookService.asset_cancelation(date, member, amount);
+        this.dues.delete(key);
+        this.toastService.showSuccess('Avoir', `L\'avoir de ${amount} € de ${member} a été supprimé.`);
+      }
 
     }
     catch (error) {
