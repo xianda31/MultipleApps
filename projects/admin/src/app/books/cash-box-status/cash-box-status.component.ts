@@ -30,9 +30,9 @@ export class CashBoxStatusComponent {
 
   CHEQUE_IN_ACCOUNT = _CHEQUE_IN_ACCOUNT;
 
-  cashForm!: FormGroup;
-  coins = ['2€', '1€', '0,50€', '0,20€', '0,10€'];
-
+  // cashForm!: FormGroup;
+  // coins = ['2€', '1€', '0,50€', '0,20€', '0,10€'];
+cashBoxForm!: FormGroup;
 
   constructor(
     private bookService: BookService,
@@ -45,7 +45,6 @@ export class CashBoxStatusComponent {
 
   ngOnInit() {
 
-    this.init_cashForm();
 
     this.systemDataService.get_configuration().pipe(
       switchMap((conf) => {
@@ -70,7 +69,7 @@ export class CashBoxStatusComponent {
         }          , 0);
 
 
-        this.current_cash_amount = prev_balance_sheet.cash + this.bookService.get_cashbox_movements_amount('cash');
+        this.current_cash_amount = prev_balance_sheet.cash + this.bookService.get_cash_movements_amount();
 
 
         // énumère les bordereaux de dépot chèque en temp_
@@ -90,15 +89,6 @@ export class CashBoxStatusComponent {
   }
 
 
-  cash_out() {
-    if (this.cash_out_amount !== 0) {
-      this.create_cash_out_entry(this.cash_out_amount);
-      this.cash_out_amount = 0;
-    }
-  }
-  cash_out_amount_valid() : boolean{
-    return (this.cash_out_amount <= this.current_cash_amount) && (this.cash_out_amount >= 0);
-  }
 
   // gestion des espèces en caisse
   //   choix du montant à retirer et création d'un mouvement de dépot
@@ -113,6 +103,7 @@ export class CashBoxStatusComponent {
         [FINANCIAL_ACCOUNT.BANK_debit]: amount
       },
       operations: [],
+      deposit_ref: 'TEMP_' + new Date().toISOString(),
       id: ''
     }
     this.bookService.create_book_entry(cash_out);
@@ -169,17 +160,25 @@ export class CashBoxStatusComponent {
 
   // utilitaires
 
-  // cash_balance(entries: BookEntry[]): number {
-  //   // calculer le montant disponible en espèces
-  //   return entries.reduce((acc, book_entry) => {
-  //     let transaction = get_transaction(book_entry.transaction);
-  //     if (transaction.cash === 'none') {
-  //       return acc;
-  //     } else {
-  //       return (acc + (book_entry.amounts?.['cashbox_in'] ?? 0) - (book_entry.amounts?.['cashbox_out'] ?? 0));
-  //     }
-  //   }, 0);
-  // }
+
+  cash_out() {
+    if (this.cash_out_amount !== 0) {
+      this.create_cash_out_entry(this.cash_out_amount);
+      this.cash_out_amount = 0;
+    }
+  }
+  cash_out_amount_valid(): boolean {
+    return (
+      this.cash_out_amount !== null &&
+      this.cash_out_amount !== undefined &&
+      typeof this.cash_out_amount === 'number' &&
+      isFinite(this.cash_out_amount) &&
+      this.cash_out_amount <= this.current_cash_amount &&
+      this.cash_out_amount >= 0
+    );
+  }
+
+
 
   get_date_of_temporary_deposit_ref(ref: string | undefined): string {
     if (ref === undefined) {
@@ -204,14 +203,4 @@ export class CashBoxStatusComponent {
     return ref;
   }
 
-  // inventaire monnaie en caisse
-  init_cashForm() {
-    this.cashForm = this.fb.group({
-      '2€': [0],
-      '1€': [0],
-      '0,50€': [0],
-      '0,20€': [0],
-      '0,10€': [0],
-    });
-  }
 }

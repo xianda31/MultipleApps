@@ -260,7 +260,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     nominative: false,
     pure_financial: true,
     revenue_account_to_show: false,
-    require_deposit_ref: false,
+    require_deposit_ref: true,
     cash: 'out',
     cheque: 'none',
   },

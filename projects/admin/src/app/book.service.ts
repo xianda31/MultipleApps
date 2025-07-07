@@ -311,27 +311,33 @@ export class BookService {
       }, [] as Revenue[]);
   }
 
-  get_cashbox_movements_amount(selection?: 'cash' | 'cheques'): number {
-    if (this._book_entries === undefined) { // if no book entries are loaded yet
-      return 0;
-    }
-    if (selection === 'cheques') {
-      return this.Round(this._book_entries
-        .filter((book_entry) => this.transactionService.get_transaction(book_entry.transaction_id).cheque !== 'none')
-        .reduce((acc, book_entry) => acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0), 0));
-    }
-    if (selection === 'cash') {
+  get_cash_movements_amount(): number {
 
-      return this.Round(this._book_entries
-        .filter((book_entry) => this.transactionService.get_transaction(book_entry.transaction_id).cash !== 'none')
-        .reduce((acc, book_entry) => acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0), 0));
-    }
-    return this.Round(this._book_entries.reduce((acc, book_entry) =>
-      acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0), 0));
+    return this.Round(this.get_cash_movements()
+      .reduce((acc, book_entry) => acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0), 0));
   }
 
-  get_cash_movements_amount(): number {
-    return this.get_cashbox_movements_amount('cash');
+  get_cash_movements(): BookEntry[] {
+    if (this._book_entries === undefined) { // if no book entries are loaded yet
+      return []; // no outstanding expenses
+    }
+    let in_cashbox = (entry: BookEntry) => {
+      if (this.transactionService.get_transaction(entry.transaction_id).cash === 'none') return false
+      if (entry.deposit_ref === null && entry.deposit_ref === undefined) return true
+      if (entry.deposit_ref && entry.bank_report) return true; // cash  deposited => cashbox_out applicable
+      if (entry.deposit_ref && !entry.bank_report) return false; // cash not deposited
+      return true;
+    }
+    return this._book_entries
+      .filter((book_entry) => in_cashbox(book_entry))
+  }
+
+
+
+  get_cashbox_movements_amount(): number {
+    return this.Round(this._book_entries.reduce((acc, book_entry) =>
+      acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0), 0));
+    // return this.get_cashbox_movements_amount('cash');
   }
 
   get_bank_movements_amount(): number {
@@ -351,8 +357,7 @@ export class BookService {
     return this.Round(this._book_entries
       .filter((book_entry) =>
         this.transactionService.get_transaction(book_entry.transaction_id).cheque !== 'none')
-      .filter((book_entry) => book_entry.deposit_ref === null || book_entry.deposit_ref === undefined)
-      .reduce((acc, book_entry) => acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0), 0));
+      .reduce((acc, book_entry) => acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.bank_report?(book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0):0), 0));
   }
 
 
@@ -801,18 +806,18 @@ export class BookService {
 
 
       if (grand_total !== 0) {
-      let book_entry: BookEntry = {
-        id: '',
-        season: next_season,
-        date: this.systemDataService.start_date(next_season),
-        transaction_id: TRANSACTION_ID.report_dette,
-        amounts: { [BALANCE_ACCOUNT.BAL_credit]: grand_total },
-        operations: operations,
-      };
+        let book_entry: BookEntry = {
+          id: '',
+          season: next_season,
+          date: this.systemDataService.start_date(next_season),
+          transaction_id: TRANSACTION_ID.report_dette,
+          amounts: { [BALANCE_ACCOUNT.BAL_credit]: grand_total },
+          operations: operations,
+        };
 
-      // console.log('report de dettes', book_entry);
-      next_season_entries.push(book_entry);
-    }
+        // console.log('report de dettes', book_entry);
+        next_season_entries.push(book_entry);
+      }
     }
 
     return this.book_entries_bulk_create$(next_season_entries);

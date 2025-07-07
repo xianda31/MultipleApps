@@ -293,7 +293,7 @@
         <tr class="text-center">
           <th scope="col" class="text-start">Date </th>
           <th scope="col" class="text-start">transaction </th>
-          <th scope="col" class="text-start">label</th>
+          <!-- <th scope="col" class="text-start">label</th> -->
           <th scope="col" class="pe-3 text-end"> Montant </th>
           <th scope="col " class="pe-3 text-end">cumul</th>
           <th scope="col"> </th>
@@ -306,7 +306,7 @@
 
           <td>{{book_entry.date | date: 'dd/MM/yyyy'}}</td>
           <td class="text-start"> {{book_entry.transaction_id}}
-          <td class="text-start"> {{book_entry.operations[0].label}}</td>
+          <!-- <td class="text-start"> {{book_entry.operations[0].label}}</td> -->
           <td>
             <div class="pe-3 text-end">
               {{ ((book_entry.amounts['cashbox_in']??0) - (book_entry.amounts['cashbox_out']??0)) |

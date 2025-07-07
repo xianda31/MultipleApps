@@ -169,9 +169,9 @@ export class BooksOverviewComponent {
 
       this.manage_cheques_deposits();
 
-      this.cashbox_cash = this.cashbox_book_entries.filter((book_entry) => this.transactionService.get_transaction(book_entry.transaction_id).cash !== 'none')
+      this.cashbox_cash = this.bookService.get_cash_movements();
       this.cash_cumul();
-      this.cashbox_status.cash.mouvements = this.bookService.get_cashbox_movements_amount('cash');
+      this.cashbox_status.cash.mouvements = this.bookService.get_cash_movements_amount();
 
       // this.verify_amounts();
     });
