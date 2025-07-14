@@ -7,6 +7,7 @@ import { SystemDataService } from '../../../../../common/services/system-data.se
 import { BookService } from '../../book.service';
 import { TransactionService } from '../../transaction.service';
 import { map, Subscription, switchMap, tap, catchError, of } from 'rxjs';
+import { ExportExcelService } from '../../excel/export-excel.service';
 
 type Fields = 'date' | 'classe' | 'transaction' | 'montant' | 'tag'
 @Component({
@@ -27,6 +28,7 @@ export class BooksListComponent implements OnDestroy {
     private transactionService: TransactionService,
     private systemDataService: SystemDataService,
     private router: Router,
+    private exportExcelService: ExportExcelService
 
   ) { }
 
@@ -53,6 +55,10 @@ export class BooksListComponent implements OnDestroy {
       // console.log('unsubscribing from book entries');
       this.book_subscription.unsubscribe();
     }
+  }
+
+  exportExcel() {
+    this.exportExcelService.downloadToExcel();
   }
 
   total_amount(entry: BookEntry): number {

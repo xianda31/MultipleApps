@@ -1,23 +1,19 @@
+import { Injectable } from '@angular/core';
 import { Component } from '@angular/core';
 import { tap, switchMap, catchError, of } from 'rxjs';
-import { BookEntry } from '../../../../../common/accounting.interface';
-import { SystemDataService } from '../../../../../common/services/system-data.service';
-import { BookService } from '../../book.service';
-import { TransactionService } from '../../transaction.service';
 import * as ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
-import { SystemConfiguration } from '../../../../../common/system-conf.interface';
-import { COL, CUSTOMER_COL, EXPENSES_COL, EXTRA_CUSTOMER_IN, EXTRA_CUSTOMER_OUT, FINANCIAL_COL, FINANCIAL_COL_in, FINANCIAL_COL_out, MAP, MAP_end, MAP_start, PRODUCTS_COL, TRANSACTION_ID_TO_CHRONO, TRANSACTION_ID_TO_NATURE } from '../../../../../common/excel/excel.interface';
+import { SystemConfiguration } from '../../../../common/system-conf.interface';
+import { BookEntry } from '../../../../common/accounting.interface';
+import { SystemDataService } from '../../../../common/services/system-data.service';
+import { BookService } from '../book.service';
+import { TransactionService } from '../transaction.service';
+import { PRODUCTS_COL, COL, EXPENSES_COL, MAP_start, EXTRA_CUSTOMER_IN, FINANCIAL_COL_in, EXTRA_CUSTOMER_OUT, FINANCIAL_COL_out, MAP_end, TRANSACTION_ID_TO_CHRONO, CUSTOMER_COL, FINANCIAL_COL, MAP, TRANSACTION_ID_TO_NATURE } from '../../../../common/excel/excel.interface';
 
-
-
-@Component({
-  selector: 'app-export-excel',
-  imports: [],
-  templateUrl: './export-excel.component.html',
-  styleUrl: './export-excel.component.scss'
+@Injectable({
+  providedIn: 'root'
 })
-export class ExportExcelComponent {
+export class ExportExcelService {
   loaded: boolean = false;
   conf !: SystemConfiguration;
   season: string = '';
@@ -34,9 +30,7 @@ export class ExportExcelComponent {
     private systemDataService: SystemDataService,
     private transactionService: TransactionService,
 
-  ) { }
-
-  ngOnInit() {
+  ) {
     this.loaded = false;
     this.systemDataService.get_configuration().pipe(
       tap((conf) => { this.conf = conf; this.season = conf.season; }),

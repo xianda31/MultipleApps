@@ -239,3 +239,32 @@ export const TRANSACTION_ID_TO_NATURE: { [key in TRANSACTION_ID]?: string } = {
   // [TRANSACTION_ID.vente_en_espèces]: 'espèces',
   // [TRANSACTION_ID.vente_par_chèque]: 'chèque',
 };
+
+export const TRANSACTION_ID_TO_CHRONO: { [key in TRANSACTION_ID]?: string } = {
+  [TRANSACTION_ID.report_prélèvement]: 'B',
+  [TRANSACTION_ID.report_chèque]: 'B',
+  [TRANSACTION_ID.dépôt_collecte_espèces]: 'B', // or 'fond en espèces'
+  [TRANSACTION_ID.dépôt_collecte_chèques]: 'B',
+  [TRANSACTION_ID.dépôt_caisse_espèces]: 'B',
+  [TRANSACTION_ID.dépôt_caisse_chèques]: 'B',
+  [TRANSACTION_ID.vente_en_espèces]: 'K',
+  [TRANSACTION_ID.vente_par_chèque]: 'C',
+  [TRANSACTION_ID.dépense_par_chèque]: 'B',
+  [TRANSACTION_ID.attribution_avoir]: 'B',
+  [TRANSACTION_ID.vente_par_virement]: 'C',
+  [TRANSACTION_ID.dépense_en_espèces]: 'K',
+  [TRANSACTION_ID.dépense_par_virement]: 'B',
+  [TRANSACTION_ID.dépense_par_prélèvement]: 'B',
+  [TRANSACTION_ID.dépense_par_carte]: 'B',
+  [TRANSACTION_ID.virement_banque_vers_épargne]: 'B', 
+  [TRANSACTION_ID.retrait_épargne_vers_banque]: 'B',
+  [TRANSACTION_ID.intérêt_épargne]: 'B',
+  [TRANSACTION_ID.report_avoir]: 'C',
+  [TRANSACTION_ID.achat_adhérent_par_virement]: 'C',
+  [TRANSACTION_ID.achat_adhérent_par_chèque]: 'C',
+  [TRANSACTION_ID.achat_adhérent_en_espèces]: 'C',
+  [TRANSACTION_ID.remboursement_achat_adhérent_par_chèque]: 'C',
+  // [TRANSACTION_ID.vente_en_espèces]: 'espèces',
+  // [TRANSACTION_ID.vente_par_chèque]: 'chèque',
+};
+
