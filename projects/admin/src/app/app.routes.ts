@@ -19,10 +19,12 @@ import { ProductsComponent } from '../../../web-back/src/app/sales/products/prod
 import { MemberSalesComponent } from './member-sales/member-sales.component';
 import { SysConfComponent } from './sys-conf/sys-conf.component';
 import { GroupsListComponent } from './groups/groups-list/groups-list.component';
+import { ExportExcelComponent } from './excel/export-excel/export-excel.component';
 
 export const routes: Routes = [
-  { path: 'vente/produits', component: ShopComponent },   //, canActivate: [loggedInGuard]
-  { path: 'vente/droits-de-table', component: FeesCollectorComponent },
+  { path: 'caisse/produits', component: ShopComponent },   //, canActivate: [loggedInGuard]
+  { path: 'caisse/droits-de-table', component: FeesCollectorComponent },
+  { path: 'caisse/état-de-caisse', component: CashBoxStatusComponent },
 
   { path: 'members/database', component: MembersComponent },
   { path: 'members/cartes-admission', component: GameCardsEditorComponent },
@@ -31,7 +33,6 @@ export const routes: Routes = [
 
   { path: 'admin/toutes-ecritures', component: BuyComponent }, //, canActivate: [loggedInGuard]
   { path: 'admin/produits', component: ProductsComponent }, //, canActivate: [loggedInGuard]
-  { path: 'admin/cash-box-status', component: CashBoxStatusComponent },
 
   { path: 'finance/bank-reconciliation', component: BankReconciliationComponent },
   { path: 'finance/expense-and-revenue', component: ExpenseAndRevenueComponent },
@@ -48,6 +49,7 @@ export const routes: Routes = [
   { path: 'sysconf', component: SysConfComponent },
 
   { path: 'excel/import', component: ImportExcelComponent },
+  { path: 'excel/export', component: ExportExcelComponent },
   { path: '', component: HomeComponent },
   { path: 'home', component: HomeComponent },
   // {

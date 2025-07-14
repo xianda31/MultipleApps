@@ -1,6 +1,6 @@
 import { Component, ElementRef, signal } from '@angular/core';
 import * as ExcelJS from 'exceljs';
-import { EXPENSES_COL, EXTRA_CUSTOMER_IN, EXTRA_CUSTOMER_OUT, FINANCIAL_COL, MAP, PRODUCTS_COL } from '../../../../../common/excel/excel.interface';
+import { EXPENSES_COL, EXTRA_CUSTOMER_IN, EXTRA_CUSTOMER_OUT, FINANCIAL_COL, MAP, PRODUCTS_COL, TRANSACTION_ID_TO_NATURE } from '../../../../../common/excel/excel.interface';
 import { TRANSACTION_ID, BookEntry, FINANCIAL_ACCOUNT, operation_values, Operation, BALANCE_ACCOUNT } from '../../../../../common/accounting.interface';
 import { Member } from '../../../../../common/member.interface';
 import { MembersService } from '../../../../../web-back/src/app/members/service/members.service';
@@ -387,6 +387,11 @@ export class ImportExcelComponent {
 
   convert_to_bank_op_type(chrono: string, nature: string): TRANSACTION_ID | null {
 
+   const transactionId = (Object.keys(TRANSACTION_ID_TO_NATURE) as Array<keyof typeof TRANSACTION_ID_TO_NATURE>)
+  .find(key => TRANSACTION_ID_TO_NATURE[key] === nature) as TRANSACTION_ID | undefined;
+
+    
+
     let wk_type = chrono.slice(0, 1);
     switch (wk_type) {
       case 'B':  // type chrono banque
@@ -396,6 +401,8 @@ export class ImportExcelComponent {
             return TRANSACTION_ID.report_prélèvement;
           case 'report chèque':
             return TRANSACTION_ID.report_chèque;
+          case 'report avoir':
+            return TRANSACTION_ID.report_avoir;
           case 'versement espèces':
             return TRANSACTION_ID.dépôt_collecte_espèces;
           case 'fond en espèces':
@@ -461,10 +468,10 @@ export class ImportExcelComponent {
 
         switch (nature) {
           case 'espèces':
+          case 'vente en espèces':
             return TRANSACTION_ID.vente_en_espèces;
-          // case 'erreur caisse':
-          //   return TRANSACTION_ID.dépense_en_espèces;
           case 'chèque':
+          case 'vente par chèque':
             return TRANSACTION_ID.vente_par_chèque;
           case 'remise espèces':
             return TRANSACTION_ID.dépôt_caisse_espèces;

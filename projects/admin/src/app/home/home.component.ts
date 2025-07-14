@@ -23,7 +23,9 @@ export class HomeComponent {
       {
         title: 'Boutique et Tournois',
         subtitle: 'Enregistrement des ventes d\'articles et des droits de table',
-        descriptions: ['Ouvrir une session de vente et enregistrer les achats des adhérents','Ouvrir un tournoi et enregistrer les droits de table'],
+        descriptions: ['Ouvrir une session de vente et enregistrer les achats des adhérents',
+          'Ouvrir un tournoi et enregistrer les droits de table',
+          'Faire un état de caisse '],
         accreditation: Group_names.Support},
 
         {title: 'Base adhérents',

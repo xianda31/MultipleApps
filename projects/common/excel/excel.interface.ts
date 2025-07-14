@@ -1,6 +1,6 @@
 // compta.xls file definition
 
-import { BALANCE_ACCOUNT, CUSTOMER_ACCOUNT, FINANCIAL_ACCOUNT } from "../accounting.interface";
+import { BALANCE_ACCOUNT, CUSTOMER_ACCOUNT, FINANCIAL_ACCOUNT, TRANSACTION_ID } from "../accounting.interface";
 
 
 
@@ -57,23 +57,27 @@ export enum COL {
   AX = 50,
 }
 
-export const MAP = {
+export const MAP_start = {
   'chrono': 'A',
   'date': 'B',
   'mois': 'C',
   'intitulé': 'D',
   'info': 'E',
   'n° carte': 'F',
+}
 
-  // 'products': 'G:O',
-  // 'expenses': 'P:AB',
-  // 'book_entry': 'AC:AL',
+export const MAP_end = {
 
   'pointage': 'AS',
   'n° chèque': 'AT',
   'bordereau': 'AU',
   'verif balance': 'AV',
   'nature': 'AW',
+}
+
+export const MAP = {
+...MAP_start,
+  ... MAP_end
 }
 
 export type ACCOUNTS_COL = { [key: string]: string }
@@ -111,6 +115,13 @@ export const EXPENSES_COL: ACCOUNTS_COL = {
   'BNQ': 'AF',
 }
 
+export const CUSTOMER_COL : { [key in CUSTOMER_ACCOUNT]: string } = {
+  'creance_in': 'AG',
+  'avoir_in': 'AH',
+  'creance_out': 'AM',
+  'avoir_out': 'AN',
+}
+
 export const EXTRA_CUSTOMER_IN: { [key in CUSTOMER_ACCOUNT]?: string } = {
   'creance_in': 'AG',
   'avoir_in': 'AH',
@@ -119,6 +130,21 @@ export const EXTRA_CUSTOMER_OUT: { [key in CUSTOMER_ACCOUNT]?: string } = {
   'creance_out': 'AM',
   'avoir_out': 'AN',
 }
+
+export const FINANCIAL_COL_in : { [key in FINANCIAL_ACCOUNT | BALANCE_ACCOUNT]?: string } = {
+  'cashbox_in': 'AI',
+  'bank_in': 'AJ',
+  'saving_in': 'AK',
+  'report_in': 'AL',
+} 
+
+export const FINANCIAL_COL_out: { [key in FINANCIAL_ACCOUNT | BALANCE_ACCOUNT]?: string } = {
+  'cashbox_out': 'AO',
+  'bank_out': 'AP',
+  'saving_out': 'AQ',
+  'report_out': 'AR',
+}
+
 export const FINANCIAL_COL: { [key in FINANCIAL_ACCOUNT | BALANCE_ACCOUNT]: string } = {
   'cashbox_in': 'AI',
   'bank_in': 'AJ',
@@ -186,3 +212,30 @@ export const xls_header = [
   // 'verif caisse',
 ];
 
+export const TRANSACTION_ID_TO_NATURE: { [key in TRANSACTION_ID]?: string } = {
+  [TRANSACTION_ID.report_prélèvement]: 'report prélèvement',
+  [TRANSACTION_ID.report_chèque]: 'report chèque',
+  [TRANSACTION_ID.dépôt_collecte_espèces]: 'versement espèces', // or 'fond en espèces'
+  [TRANSACTION_ID.dépôt_collecte_chèques]: 'versement chèques',
+  [TRANSACTION_ID.dépôt_caisse_espèces]: 'remise espèces',
+  [TRANSACTION_ID.dépôt_caisse_chèques]: 'remise chèques',
+  [TRANSACTION_ID.vente_en_espèces]: 'vente en espèces',
+  [TRANSACTION_ID.vente_par_chèque]: 'vente par chèque',
+  [TRANSACTION_ID.dépense_par_chèque]: 'chèque émis',
+  [TRANSACTION_ID.attribution_avoir]: 'attribution_avoir',
+  [TRANSACTION_ID.vente_par_virement]: 'virement reçu',
+  [TRANSACTION_ID.dépense_en_espèces]: 'achat en espèces',
+  [TRANSACTION_ID.dépense_par_virement]: 'virement émis',
+  [TRANSACTION_ID.dépense_par_prélèvement]: 'prélèvement',
+  [TRANSACTION_ID.dépense_par_carte]: 'carte',
+  [TRANSACTION_ID.virement_banque_vers_épargne]: 'versement compte épargne', // or 'versement épargne'
+  [TRANSACTION_ID.retrait_épargne_vers_banque]: 'retrait épargne',
+  [TRANSACTION_ID.intérêt_épargne]: 'intérêts',
+  [TRANSACTION_ID.report_avoir]: 'report avoir',
+  [TRANSACTION_ID.achat_adhérent_par_virement]: 'virement reçu',
+  [TRANSACTION_ID.achat_adhérent_par_chèque]: 'paiement par chèque',
+  [TRANSACTION_ID.achat_adhérent_en_espèces]: 'paiement en espèces',
+  [TRANSACTION_ID.remboursement_achat_adhérent_par_chèque]: 'remboursement par chèque',
+  // [TRANSACTION_ID.vente_en_espèces]: 'espèces',
+  // [TRANSACTION_ID.vente_par_chèque]: 'chèque',
+};

@@ -1,0 +1,14 @@
+<div class="card mt-2">
+  <div class="card-header">
+    <div class="d-flex justify-content-between align-items-center">
+      <h5>contenu de la base</h5>
+      <span class="text-mute"> {{book_entries.length}} écritures en {{season}}</span>
+    </div>
+  </div>
+    <div class="card-body">
+        <p>Cette fonctionnalité permet de télécharger les données de la base sous forme de fichier Excel.</p>
+        <button class="btn btn-primary" (click)="downloadToExcel()">
+    <i class="bi bi-cloud-download-fill"> </i></button>
+    </div>
+
+</div>

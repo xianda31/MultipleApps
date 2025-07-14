@@ -29,8 +29,9 @@
           </a>
           <ul *ngIf="accreditation_level >= accreditation_levels.Contributeur" class="dropdown-menu"
             aria-labelledby="navbarDropdown1">
-            <li><a class="dropdown-item  " routerLink="/vente/produits">vente à adhérents</a></li>
-            <li><a class="dropdown-item  " routerLink="/vente/droits-de-table">tournoi en présentiel</a></li>
+            <li><a class="dropdown-item  " routerLink="/caisse/produits">vente à adhérents</a></li>
+            <li><a class="dropdown-item  " routerLink="/caisse/droits-de-table">tournoi en présentiel</a></li>
+            <li><a class="dropdown-item  " routerLink="/caisse/état-de-caisse">état de caisse</a></li>
           </ul>
         </li>
 
@@ -57,7 +58,6 @@
           <ul *ngIf="accreditation_level >= accreditation_levels.Administrateur" class="dropdown-menu"
             aria-labelledby="navbarDropdown1">
             <li><a class="dropdown-item  " routerLink="/admin/produits">produits à la vente</a></li>
-            <li><a class="dropdown-item  " routerLink="/admin/cash-box-status">gestion caisse</a></li>
             <li><a class="dropdown-item  " routerLink="/admin/toutes-ecritures">écritures courantes</a></li>
           </ul>
         </li>
@@ -95,7 +95,8 @@
             <li><a class="dropdown-item " routerLink="/finance/books/list">base de données</a></li>
             <li><a class="dropdown-item " routerLink="/sysconf">configuration</a></li>
             <li><a class="dropdown-item  " routerLink="/finance/books/editor">écriture</a></li>
-            <li><a class="dropdown-item  " routerLink="/excel/import">import</a></li>
+            <li><a class="dropdown-item  " routerLink="/excel/import">import excel</a></li>
+            <li><a class="dropdown-item  " routerLink="/excel/export">export excel</a></li>
           </ul>
         </li>
 
