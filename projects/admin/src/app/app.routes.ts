@@ -19,7 +19,6 @@ import { ProductsComponent } from '../../../web-back/src/app/sales/products/prod
 import { MemberSalesComponent } from './member-sales/member-sales.component';
 import { SysConfComponent } from './sys-conf/sys-conf.component';
 import { GroupsListComponent } from './groups/groups-list/groups-list.component';
-import { ExportExcelComponent } from './excel/export-excel/export-excel.component';
 
 export const routes: Routes = [
   { path: 'caisse/produits', component: ShopComponent },   //, canActivate: [loggedInGuard]
@@ -49,7 +48,6 @@ export const routes: Routes = [
   { path: 'sysconf', component: SysConfComponent },
 
   { path: 'excel/import', component: ImportExcelComponent },
-  { path: 'excel/export', component: ExportExcelComponent },
   { path: '', component: HomeComponent },
   { path: 'home', component: HomeComponent },
   // {
