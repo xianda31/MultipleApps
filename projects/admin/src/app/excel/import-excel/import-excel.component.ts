@@ -364,6 +364,10 @@ export class ImportExcelComponent {
     }
   }
 
+  myfonction() {
+    return 'ok';
+  }
+
   format_bank_report(pointage: string, season: string): string | null {
 
     return pointage;
