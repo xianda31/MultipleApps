@@ -278,10 +278,13 @@ export class ExportExcelService {
     const newRows = this.worksheet.addRows(rows);
 
     // merge cells if there are multiple rows
+
     if (rows.length > 1 && newRows.length > 0) {
+
       let start_row = newRows[0].number;
       let end_row = start_row + rows.length - 1;
-      Object.values({ ...FINANCIAL_COL, ...MAP_end }).forEach(element => {
+
+      Object.values({...{'info': 'E'}, ...FINANCIAL_COL, ...MAP_end }).forEach(element => {
         this.worksheet.mergeCells(
           start_row,
           COL[element as keyof typeof COL],

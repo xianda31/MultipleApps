@@ -2,27 +2,30 @@ import { Component } from '@angular/core';
 import { BookEntry, TRANSACTION_ID, FINANCIAL_ACCOUNT } from '../../../../../common/accounting.interface';
 import { BookService } from '../../book.service';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { _CHEQUE_IN_ACCOUNT, _CHEQUES_FIRST_IN_CASHBOX } from '../../../../../common/transaction.definition';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { Bank } from '../../../../../common/system-conf.interface';
 import { TransactionService } from '../../transaction.service';
 import { combineLatest, switchMap } from 'rxjs';
 import { FinancialReportService } from '../../financial_report.service';
+import { ToastService } from '../../../../../common/toaster/toast.service';
 
 @Component({
-    selector: 'app-cash-box-status',
-    imports: [CommonModule, FormsModule, ReactiveFormsModule],
-    templateUrl: './cash-box-status.component.html',
-    styleUrl: './cash-box-status.component.scss'
+  selector: 'app-cash-box-status',
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  templateUrl: './cash-box-status.component.html',
+  styleUrl: './cash-box-status.component.scss'
 })
 export class CashBoxStatusComponent {
 
   season!: string;
   book_entries: BookEntry[] = [];
   cheques_for_deposit: BookEntry[] = [];
+  cheques_for_deposit_amount: number = 0;
   current_cash_amount: number = 0;
-  cash_out_amount: number = 0;
+  cash_for_deposit: BookEntry[] = [];
+  // cash_out_amount!: number ;
   temp_refs: Map<string, { cheque_qty: number, amount: number, new_ref: string }> = new Map<string, { cheque_qty: number, amount: number, new_ref: string }>();
   banks !: Bank[];
   truncature = '1.2-2';  // '1.0-0';// '1.2-2';  //
@@ -30,21 +33,25 @@ export class CashBoxStatusComponent {
 
   CHEQUE_IN_ACCOUNT = _CHEQUE_IN_ACCOUNT;
 
-  // cashForm!: FormGroup;
+  cashForm!: FormGroup;
   // coins = ['2€', '1€', '0,50€', '0,20€', '0,10€'];
-cashBoxForm!: FormGroup;
+  cashBoxForm!: FormGroup;
 
   constructor(
     private bookService: BookService,
     private transactionService: TransactionService,
     private systemDataService: SystemDataService,
-    private financialService : FinancialReportService,
+    private financialService: FinancialReportService,
+    private toastService: ToastService,
     private fb: FormBuilder
   ) { }
 
 
   ngOnInit() {
 
+    this.cashForm = this.fb.group({
+      cash_out_amount: ['', this.cash_out_validator]
+    });
 
     this.systemDataService.get_configuration().pipe(
       switchMap((conf) => {
@@ -63,14 +70,18 @@ cashBoxForm!: FormGroup;
           .filter(book_entry => this.transactionService.get_transaction(book_entry.transaction_id).cheque === 'in')
           .filter(book_entry => book_entry.cheque_ref !== undefined && (book_entry.deposit_ref === '' || book_entry.deposit_ref === null));
 
+        this.cheques_for_deposit_amount = this.cheques_for_deposit.reduce((acc, book_entry) => {
+          return acc + (book_entry.amounts['cashbox_in'] ?? 0);
+        }, 0);
+
+
         // calcule le montant total des chèques à déposer & le liquide disponible
         let total_cheques = this.cheques_for_deposit.reduce((acc, book_entry) => {
           return acc + (book_entry.amounts['cashbox_in'] ?? 0);
-        }          , 0);
+        }, 0);
 
-
+        // calcule le montant en caisse (cheques + espèces  )
         this.current_cash_amount = prev_balance_sheet.cash + this.bookService.get_cash_movements_amount();
-
 
         // énumère les bordereaux de dépot chèque en temp_
         this.temp_refs.clear();
@@ -85,9 +96,17 @@ cashBoxForm!: FormGroup;
               });
             }
           });
+
+
+          //énumère les retraits espèces sans reference de dépôt
+        this.cash_for_deposit = this.book_entries
+          .filter(book_entry => book_entry.transaction_id === TRANSACTION_ID.dépôt_caisse_espèces)
+          // .filter(book_entry => book_entry.deposit_ref || book_entry.deposit_ref === '')
       });
   }
-
+get cash_out_amount(): FormControl {
+    return this.cashForm.get('cash_out_amount') as FormControl;
+  }
 
 
   // gestion des espèces en caisse
@@ -103,10 +122,12 @@ cashBoxForm!: FormGroup;
         [FINANCIAL_ACCOUNT.BANK_debit]: amount
       },
       operations: [],
-      deposit_ref: 'TEMP_' + new Date().toISOString(),
+      deposit_ref: 'retrait caisse du ' + new Date().toISOString().split('T')[0],
       id: ''
     }
-    this.bookService.create_book_entry(cash_out);
+    this.bookService.create_book_entry(cash_out).then(() => {
+      this.toastService.showSuccess('Retrait de caisse consigné', `Montant : ${amount.toFixed(2)} €`);
+    });
   }
 
   // gestion des chèques à déposer
@@ -121,6 +142,7 @@ cashBoxForm!: FormGroup;
         this.bookService.update_book_entry(book_entry);
       }
     });
+
   }
 
   // 2. validation du dépôt des chèques
@@ -158,25 +180,38 @@ cashBoxForm!: FormGroup;
   }
 
 
-  // utilitaires
+  // calls HTML
 
 
   cash_out() {
-    if (this.cash_out_amount !== 0) {
-      this.create_cash_out_entry(this.cash_out_amount);
-      this.cash_out_amount = 0;
+    if (this.cash_out_amount.value !== 0) {
+      this.create_cash_out_entry(this.cash_out_amount.value);
+      this.cashForm.reset();
     }
   }
-  cash_out_amount_valid(): boolean {
-    return (
-      this.cash_out_amount !== null &&
-      this.cash_out_amount !== undefined &&
-      typeof this.cash_out_amount === 'number' &&
-      isFinite(this.cash_out_amount) &&
-      this.cash_out_amount <= this.current_cash_amount &&
-      this.cash_out_amount >= 0
-    );
+
+  cash_out_validator = (control: AbstractControl): { [key: string]: boolean } | null => {
+    if (!control.value) {return null}; 
+    const cash_out_amount = control.value;
+    // if (cash_out_amount === null || cash_out_amount === undefined || typeof cash_out_amount !== 'number' ) {
+    //   return { invalid: true };
+    // }
+    if (cash_out_amount > this.current_cash_amount || cash_out_amount < 0) {
+      return { out_of_bounds: true };
+    } 
+    return null;
   }
+  
+  // cash_out_amount_valid(): boolean {
+  //   return (
+  //     this.cash_out_amount !== null &&
+  //     this.cash_out_amount !== undefined &&
+  //     typeof this.cash_out_amount === 'number' &&
+  //     isFinite(this.cash_out_amount) &&
+  //     this.cash_out_amount <= this.current_cash_amount &&
+  //     this.cash_out_amount >= 0
+  //   );
+  // }
 
 
 
@@ -198,7 +233,7 @@ cashBoxForm!: FormGroup;
     }
     let bank = this.banks.find(bank => ref.startsWith(bank.key));
     if (bank) {
-      return bank.name  ; //+ ' n°' + ref.split(bank.key)[1];
+      return bank.name; //+ ' n°' + ref.split(bank.key)[1];
     }
     return ref;
   }

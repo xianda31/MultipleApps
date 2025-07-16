@@ -325,7 +325,7 @@ export class BookService {
       if (this.transactionService.get_transaction(entry.transaction_id).cash === 'none') return false
       if (entry.deposit_ref === null && entry.deposit_ref === undefined) return true
       if (entry.deposit_ref && entry.bank_report) return true; // cash  deposited => cashbox_out applicable
-      if (entry.deposit_ref && !entry.bank_report) return false; // cash not deposited
+      if (entry.deposit_ref && !entry.bank_report) return true; // cash not deposited => cashbox_out applicable
       return true;
     }
     return this._book_entries
