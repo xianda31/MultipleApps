@@ -98,10 +98,10 @@ export class CashBoxStatusComponent {
           });
 
 
-          //énumère les retraits espèces sans reference de dépôt
+          //énumère les retraits espèces sans reference de relevé bancaire
         this.cash_for_deposit = this.book_entries
           .filter(book_entry => book_entry.transaction_id === TRANSACTION_ID.dépôt_caisse_espèces)
-          // .filter(book_entry => book_entry.deposit_ref || book_entry.deposit_ref === '')
+          .filter(book_entry => !book_entry.bank_report )
       });
   }
 get cash_out_amount(): FormControl {
