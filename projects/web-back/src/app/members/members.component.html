@@ -13,15 +13,15 @@
 
     <div class="card-body">
       <!-- ajout d'un adhérent licencié supplémentaire -->
-      <div class="card">
+      <div class="card bg-light">
         <div class="card-body">
           <div class=" row justify-content-around align-items-end mb-2">
             <div class="col-md-3">
-              <h6 class="fw-bold">ajouter une personne :</h6>
+              <h6 class="fw-bold">ajout de personne :</h6>
             </div>
             <div class="col-md-4">
               <div class="input-group input-group-sm">
-                <span class="input-group-text" id="inputGroup-sizing-sm"><strong>NON licencié </strong>(ex. débutant)
+                <span class="input-group-text" id="inputGroup-sizing-sm"><strong>SANS licence </strong>(ex. débutant(e))
                   :</span>
                 <button class="btn  btn-primary btn-sm" (click)="add_newbee()">
                   <i class="bi bi-person-square"></i>
@@ -30,7 +30,7 @@
             </div>
             <div class="col-5">
               <div class="input-group input-group-sm mt-2">
-                <span class="input-group-text" id="inputGroup-sizing-sm"><strong>licencié </strong>(futur adhérent)
+                <span class="input-group-text" id="inputGroup-sizing-sm"><strong>licenciée </strong>(futur adhérent(e))
                   :</span>
                 <app-input-player listeId="new_guest" placeholder="nom ou prénom" type="text"
                   class="form-control form-control-sm" [(ngModel)]="new_player"
@@ -56,7 +56,7 @@
                 {{filter}}
               </ng-container>
             </p>
-            <p class="col-md-4 mx-auto">
+            <p class="col-md-4 mx-auto fw-bold">
                {{filteredMembers.length}} adhérents affichés
             </p>
 
