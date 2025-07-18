@@ -234,8 +234,10 @@ export class CartService {
 
 
   handle_game_card(session: Session) {
+    let members: Member[] = [];
     this._cart.items.forEach((cartitem) => {
       if (cartitem.product_account === 'CAR') {
+
         if (!cartitem.payee || cartitem.payee === null) {
           console.warn('no payee for CAR product', cartitem);
           return;
@@ -246,12 +248,15 @@ export class CartService {
           console.warn('product or member not found for CAR product', cartitem);
           return;
         }
-        this.gameCardService.createCard([member], +product.info1!).catch(error => {
-          console.error('Error à la création de la carte', member.firstname, member.lastname, error);
-        });
+        members.push(member);
 
-      }
+        if ((product.paired && members.length === 2) || !product.paired) {
+          // create game card
+          this.gameCardService.createCard(members, ( +product.info1! *members.length )).catch(error => {
+            console.error('Error à la création de la carte', member.firstname, member.lastname, error);
+          });
+        }
+      };
     });
   }
-
 }
