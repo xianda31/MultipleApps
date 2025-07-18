@@ -110,21 +110,6 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     cash: 'none',
     cheque: 'in',
   },
-  // vente à crédit (créance) à un adhérent
-  // [TRANSACTION_ID.payment_on_credit]: {
-  //   label: 'paiement à \"crédit\"',
-  // tooltip: 'paiement en espèces',  
-  // class: TRANSACTION_CLASS.REVENUE_FROM_MEMBER,
-  //   financial_accounts: financial_debits,
-  //   optional_accounts: customer_debt,
-  //   financial_accounts_to_charge: [CUSTOMER_ACCOUNT.DEBT_debit],
-  //   nominative: true,
-  //   pure_financial: false,
-  //   revenue_account_to_show: true,
-  //   require_deposit_ref: false,
-  //   cash: 'none',
-  //   cheque: 'none',
-  // },
   // paiement par virement d'un adhérent
   [TRANSACTION_ID.achat_adhérent_par_virement]: {
     label: 'VIREMENT EN NOTRE FAVEUR',
@@ -498,9 +483,24 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     nominative: false,
     pure_financial: true,
     revenue_account_to_show: false,
-    require_deposit_ref: false,
+    require_deposit_ref: true,
     cash: 'none',
     cheque: 'out',
+  },
+  // report d'encours paiement par carte d'une prestation ou service
+  [TRANSACTION_ID.report_carte]: {
+    label: 'REPORT CARTE',
+    tooltip: 'report d\'une carte non encaissée l\'année précédente',
+    class: TRANSACTION_CLASS.BALANCE,
+    financial_accounts: [...balance_sheet_accounts, ...financial_credits],
+    financial_accounts_to_charge: [BALANCE_ACCOUNT.BAL_debit, FINANCIAL_ACCOUNT.BANK_credit],
+    // optional_accounts: balance_sheet_accounts,
+    nominative: false,
+    pure_financial: true,
+    revenue_account_to_show: false,
+    require_deposit_ref: false,
+    cash: 'none',
+    cheque: 'none',
   },
   [TRANSACTION_ID.report_dette]: {
     label: 'report de dette',

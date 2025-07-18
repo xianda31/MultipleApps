@@ -24,6 +24,7 @@ export enum TRANSACTION_ID {
  dépense_par_prélèvement = 'dépense_par_prélèvement',
   report_avoir = 'report_avoir',
   report_chèque = 'report_chèque',
+  report_carte = 'report_carte',
   report_dette = 'report_dette',
   report_prélèvement = 'report_prélèvement',
 

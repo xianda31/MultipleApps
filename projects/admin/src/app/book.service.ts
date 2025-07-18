@@ -376,6 +376,7 @@ export class BookService {
       || book_entry.transaction_id === TRANSACTION_ID.dépense_par_virement
       || book_entry.transaction_id === TRANSACTION_ID.dépense_par_carte
       || book_entry.transaction_id === TRANSACTION_ID.report_chèque
+      || book_entry.transaction_id === TRANSACTION_ID.report_carte
       || book_entry.transaction_id === TRANSACTION_ID.report_prélèvement
     )
   }
@@ -754,14 +755,14 @@ export class BookService {
         let amount = entry.amounts[FINANCIAL_ACCOUNT.BANK_credit];
         if (!amount) throw Error('montant du chèque non défini !?!?')
         let label = entry.operations.reduce((acc, op) => { return acc + op.label + ' ' }, entry.date.toString() + ':');;
-
+        let cheque_not_credit_card = entry.transaction_id === TRANSACTION_ID.dépense_par_chèque;
         let book_entry: BookEntry = {
           id: '',
           season: next_season,
           date: this.systemDataService.start_date(next_season),
-          transaction_id: TRANSACTION_ID.report_chèque,
+          transaction_id: cheque_not_credit_card ? TRANSACTION_ID.report_chèque : TRANSACTION_ID.report_carte,
           amounts: { [FINANCIAL_ACCOUNT.BANK_credit]: amount, [BALANCE_ACCOUNT.BAL_debit]: amount },
-          cheque_ref: entry.cheque_ref,
+          cheque_ref:   cheque_not_credit_card ? entry.cheque_ref : undefined,
           operations: [{ label: label, values: {} }],
         }
 
