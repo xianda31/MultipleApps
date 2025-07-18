@@ -51,17 +51,14 @@ export class MembersComponent implements OnInit {
     this.radioButtonGroup.valueChanges.subscribe(() => {
       this.selection_filter();
     });
+    let today = new Date();
+    this.season = this.sysConfService.get_season(today);
 
-
-    this.sysConfService.get_configuration().pipe(
-      switchMap((conf) => {
-        this.season = conf.season;
-        return combineLatest([
+   combineLatest([
           this.membersService.listMembers(),
           this.licenseesService.list_FFB_licensees$()
-        ]);
-      })
-    ).subscribe(([members, licensees]) => {
+        ])
+    .subscribe(([members, licensees]) => {
       this.members = members;
       this.licensees = licensees;
       this.check_licenses(this.season);
