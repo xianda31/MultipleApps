@@ -1,7 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { MembersService } from './service/members.service';
 import { LicenseesService } from '../licensees/services/licensees.service';
-import { combineLatest } from 'rxjs';
+import { combineLatest, map, switchMap } from 'rxjs';
 import { Member } from '../../../../common/member.interface';
 import { FFB_licensee } from '../../../../common/ffb/interface/licensee.interface';
 import { FormControl, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
@@ -10,21 +10,20 @@ import { PhonePipe } from '../../../../common/pipes/phone.pipe';
 import { InputPlayerComponent } from '../../../../common/ffb/input-licensee/input-player.component';
 import { FFBplayer } from '../../../../common/ffb/interface/FFBplayer.interface';
 import { SystemDataService } from '../../../../common/services/system-data.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { GetNewbeeComponent } from '../modals/get-newbee/get-newbee.component';
 import { ToastService } from '../../../../common/toaster/toast.service';
 
 @Component({
-    selector: 'app-members',
-    imports: [FormsModule, CommonModule, ReactiveFormsModule, UpperCasePipe, PhonePipe, InputPlayerComponent],
-    templateUrl: './members.component.html',
-    styleUrl: './members.component.scss'
+  selector: 'app-members',
+  encapsulation: ViewEncapsulation.None, // nécessaire pour que les CSS des tooltips fonctionnent
+  imports: [FormsModule, CommonModule, ReactiveFormsModule, UpperCasePipe, PhonePipe, InputPlayerComponent, NgbTooltipModule],
+  templateUrl: './members.component.html',
+  styleUrl: './members.component.scss'
 })
 export class MembersComponent implements OnInit {
   members: Member[] = [];
   filteredMembers: Member[] = [];
-  // missingMembers: Member[] = [];
-  thisSeasonMembersNbr: number = 0;
   licensees: FFB_licensee[] = [];
   new_player!: FFBplayer;
   season: string = '';
@@ -53,23 +52,36 @@ export class MembersComponent implements OnInit {
       this.selection_filter();
     });
 
-    this.licenseesService.list_FFB_licensees$().subscribe((licensees) => {
+
+    this.sysConfService.get_configuration().pipe(
+      switchMap((conf) => {
+        this.season = conf.season;
+        return combineLatest([
+          this.membersService.listMembers(),
+          this.licenseesService.list_FFB_licensees$()
+        ]);
+      })
+    ).subscribe(([members, licensees]) => {
+      this.members = members;
       this.licensees = licensees;
-      // console.log('MembersComponent.ngOnInit licensees', licensees);
-    });
-    combineLatest([this.sysConfService.get_configuration(), this.membersService.listMembers()]).subscribe(([conf, members]) => {
-      this.season = conf.season;
+      this.check_licenses(this.season);
 
-      this.members = members.sort((a, b) => a.lastname.localeCompare(b.lastname));
-      this.thisSeasonMembersNbr = this.members.reduce((acc, member) => {
-        return (member.season === this.season || member.is_sympathisant) ? acc + 1 : acc;
-      }, 0);
-
+      this.updateDBfromFFB();
       this.filteredMembers = this.members;
-    });
+    }
+    );
   }
 
 
+  async check_licenses(season: string) {
+    for (const member of this.members) {
+      if (member.season !== season && member.license_status !== 'unpaied') {
+        member.license_status = 'unpaied';
+        await this.membersService.updateMember(member);
+        this.toastService.showWarning('Licences', `Licence de ${member.lastname} ${member.firstname} obsolète `);
+      }
+    }
+  }
 
   add_licensee(player: FFBplayer) {
     if (player) {
@@ -133,7 +145,7 @@ export class MembersComponent implements OnInit {
     }
   }
 
-  getMembersfromFFB() {
+  updateDBfromFFB() {
     this.verbose = '';
     this.licensees.forEach((licensee) => {
       this.createOrUpdateMember(licensee);
@@ -150,9 +162,9 @@ export class MembersComponent implements OnInit {
         case this.filters[0]: //'Tous':
           return member;
         case this.filters[1]: //'à jour':
-          return (member.season === this.season || member.is_sympathisant) ? member : false;
+          return (member.season === this.season) ? member : false;
         case this.filters[2]: //'non à jour':
-          return (member.season !== this.season && !member.is_sympathisant) ? member : false;
+          return (member.season !== this.season) ? member : false;
       }
       return member;
     });
@@ -182,7 +194,6 @@ export class MembersComponent implements OnInit {
 
   compare(member: Member, licensee: FFB_licensee): Member | null {
 
-
     let nextMember: Member = {
       id: member.id,
       license_number: licensee.license_number,
@@ -191,11 +202,11 @@ export class MembersComponent implements OnInit {
       lastname: licensee.lastname.toUpperCase(),
       birthdate: licensee.birthdate,
       city: this.capitalize_first(licensee.city?.toLowerCase()),
-      season: licensee.season ?? '',
+      season: licensee.season ?? (licensee.register ? this.season : ''),
       email: licensee.email?.trim().toLowerCase() ?? '',
       phone_one: licensee.phone_one,
       license_taken_at: licensee.orga_license_name ?? 'BCSTO',
-      license_status: licensee.license_id ? (licensee.free ? 'free' : 'paied') : 'unpaied',
+      license_status: licensee.license_id ? (licensee.free ? 'offerte' : 'paied') : 'unpaied',
       is_sympathisant: licensee.is_sympathisant ?? false,
 
 
@@ -206,7 +217,6 @@ export class MembersComponent implements OnInit {
 
     for (let key in next) {
       if (next[key] !== is[key]) {
-        // console.log('diff on', key, is[key], next[key]);
         this.verbose += 'updating ' + member.lastname + ' ' + member.firstname + ' (' + key + ')' + '\n';
         diff = true;
       }
@@ -223,11 +233,11 @@ export class MembersComponent implements OnInit {
       license_number: licensee.license_number,
       birthdate: licensee.birthdate,
       city: this.capitalize_first(licensee.city?.toLowerCase()),
-      season: licensee.season ?? '',
+      season: licensee.season ?? (licensee.register ? this.season : ''),
       email: licensee.email ?? '',
       phone_one: licensee.phone_one,
       is_sympathisant: licensee.is_sympathisant ?? false,
-      license_status: licensee.license_id ? (licensee.free ? 'free' : 'paied') : 'unpaied',
+      license_status: licensee.license_id ? (licensee.free ? 'offerte' : 'réglée') : 'à payer',
       license_taken_at: licensee.orga_license_name ?? 'BCSTO',
     }
 
@@ -236,17 +246,5 @@ export class MembersComponent implements OnInit {
     this.membersService.deleteMember(member);
   }
 
-  license_status_logo(status: string): string {
-    switch (status) {
-      case 'free':
-        return '✔';
-      case 'paied':
-        return '☑';
-      case 'unpaied':
-        return '❌';
-      default:
-        return '?';
-    }
-  }
 }
 

@@ -1,3 +1,7 @@
-.action {
-    color: red;
+.my-custom-class .tooltip-inner {
+  background-color: #007bff !important;
+  color: #fff !important;
+}
+.my-custom-class .arrow::before {
+  border-top-color: #007bff !important;
 }

@@ -42,9 +42,9 @@ export class MembersService {
     return this._members.find((m) => m.id === id) || null;
   }
 
-full_name(member: Member): string {
+  full_name(member: Member): string {
     return this.last_then_first_name(member);
-}
+  }
 
   last_then_first_name(member: Member): string {
     return `${member.lastname} ${member.firstname}`;
@@ -59,6 +59,7 @@ full_name(member: Member): string {
       const newMember = await this.dbHandler.createMember(member_input);
       this.toastService.showSuccess('Membre créé', `${newMember.lastname} ${newMember.firstname}`);
       this._members.push(newMember as Member);
+      this._members = this._members.sort((a, b) => a.lastname.localeCompare(b.lastname))
       this._members$.next(this._members);
     }
     catch (errors) {
@@ -104,7 +105,9 @@ full_name(member: Member): string {
     try {
       const newMember = await this.dbHandler.updateMember(member);
       this.toastService.showSuccess('Membre mis à jour', `${newMember.lastname} ${newMember.firstname}`);
+      this._members = this._members.filter((m) => m.id !== newMember.id);
       this._members.push(newMember as Member);
+      this._members = this._members.sort((a, b) => a.lastname.localeCompare(b.lastname))
       this._members$.next(this._members);
     }
     catch (errors) {
