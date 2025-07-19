@@ -124,10 +124,10 @@ export class CartService {
       }
 
       this.bookService.create_book_entry(sale)
-        .then((sale) => {
+        .then(async (sale) => {
           resolve(sale);
           // console.log('sale saved', sale);
-          this.handle_game_card(session);
+          await this.handle_game_card(session);
           this.clearCart();
         })
         .catch((error) => {
@@ -233,30 +233,32 @@ export class CartService {
   }
 
 
-  handle_game_card(session: Session) {
+  async handle_game_card(session: Session) {
     let members: Member[] = [];
-    this._cart.items.forEach((cartitem) => {
+    for (const cartitem of this._cart.items) {
       if (cartitem.product_account === 'CAR') {
 
         if (!cartitem.payee || cartitem.payee === null) {
           console.warn('no payee for CAR product', cartitem);
-          return;
+          continue;
         }
         let product = this.productService.getProduct(cartitem.product_id);
         let member = this.membersService.getMemberbyName(cartitem.payee_name);
         if (!product || !member) {
           console.warn('product or member not found for CAR product', cartitem);
-          return;
+          continue;
         }
         members.push(member);
 
         if ((product.paired && members.length === 2) || !product.paired) {
           // create game card
-          this.gameCardService.createCard(members, ( +product.info1! *members.length )).catch(error => {
-            console.error('Error à la création de la carte', member.firstname, member.lastname, error);
-          });
+          await this.gameCardService.createCard(members, (+product.info1! * members.length))
+            .catch(error => {
+              console.error('Error à la création de la carte', member.firstname, member.lastname, error);
+            })
+            .finally(() => { members = [] }); // reset members array after processing
         }
-      };
-    });
+      }
+    }
   }
 }
