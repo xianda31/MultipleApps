@@ -1,48 +1,59 @@
-<div *ngIf="loaded" class="card mt-2">
-    <div class="card-header">
-        <div class="d-flex justify-content-between align-items-center">
-            <h5>saison {{season}} : interrogation achats membre </h5>
-        </div>
-    </div>
-    <div class="card-body">
-        <div class="row mb-2 align-items-center">
-            <div class="col-auto">
-                <span class="text-muted">adhérent : </span>
-            </div>
-            <div class="col-auto">
-                <div class="input-group">
-                    <app-input-member class="form-control form-control-sm" [members]="(members$ | async) ?? []"
-                        [(ngModel)]="selected_member" (ngModelChange)="member_selected()"></app-input-member>
-                    <button class="btn btn-sm " (click)="member_clear()">
-                        <i class="bi bi-x-circle"></i>
-                    </button>
+<div class="row  mt-3">
+    <div *ngIf="loaded" class="col-md-9">
+        <div class="card shadow-sm ">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5>saison {{season}} : interrogation achats membre </h5>
                 </div>
             </div>
-            <!-- <div class="col-auto">
-                <i class="bi bi-x-circle" (click)="member_clear()"></i>
-            </div> -->
+            <div class="card-body">
+                <div class="row mb-2 align-items-center">
+                    <div class="col-auto">
+                        <span class="text-muted">recherche par adhérent : </span>
+                    </div>
+                    <div class="col-auto">
+                        <div class="input-group">
+                            <app-input-member class="form-control form-control-sm" [members]="members"
+                                [(ngModel)]="selected_member" (ngModelChange)="member_selected()"></app-input-member>
+                            <button class="btn btn-sm " (click)="member_clear()">
+                                <i class="bi bi-x-circle"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col">
+                        <table class="table table-sm table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>date</th>
+                                    <th>libellé</th>
+                                    <th>achats</th>
+                                    <th>tag</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let revenue of revenues">
+                                    <td>{{revenue.date | date: 'dd/MM/YYYY'}}</td>
+                                    <td>{{revenue.label}}</td>
+                                    <td>{{revenue.values | json}}</td>
+                                    <td>{{revenue.tag}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="row">
-            <div class="col">
-                <table class="table table-sm table-striped table-hover">
-                    <thead>
-                        <tr>
-                            <th>date</th>
-                            <th>libellé</th>
-                            <th>achats</th>
-                            <th>tag</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr *ngFor="let revenue of revenues">
-                            <td>{{revenue.date | date: 'dd/MM/YYYY'}}</td>
-                            <td>{{revenue.label}}</td>
-                            <td>{{revenue.values | json}}</td>
-                            <td>{{revenue.tag}}</td>
-                        </tr>
-                    </tbody>
-                </table>
+    </div>
+    <div *ngIf="missing_registration" class="col-md-3">
+        <div class="card text-dark bg-warning shadow-sm">
+            <div class="card-header">adhérents à déclarer à la FFB</div>
+            <div class="card-body">
+                <!-- <h5 class="card-title"></h5> -->
+                <pre class="card-text">{{verbose()}}</pre>
             </div>
         </div>
     </div>

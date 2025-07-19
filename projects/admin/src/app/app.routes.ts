@@ -27,7 +27,7 @@ export const routes: Routes = [
 
   { path: 'members/database', component: MembersComponent },
   { path: 'members/cartes-admission', component: GameCardsEditorComponent },
-  { path: 'members/historique', component: MemberSalesComponent },
+  { path: 'members/payments', component: MemberSalesComponent },
 
 
   { path: 'admin/toutes-ecritures', component: BuyComponent }, //, canActivate: [loggedInGuard]
