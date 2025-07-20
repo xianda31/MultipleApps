@@ -25,7 +25,8 @@ export class MemberSalesComponent {
   revenues: Revenue[] = [];
 
   verbose = signal<string>('');
- missing_registration : boolean = false;
+//  missing_registration : boolean = false;
+ unregistrated : number = 0;
 
   members: Member[] = [];
   selected_member: Member | null = null;
@@ -55,7 +56,6 @@ export class MemberSalesComponent {
     ).subscribe(
       (entries) => {
         this.operations = this.bookService.get_operations();
-        this.missing_registration = false;
         this.check_membership_payments();
         this.loaded = true;
       }
@@ -66,6 +66,7 @@ export class MemberSalesComponent {
 
   check_membership_payments() {
 
+    this.unregistrated = 0;
     this.members.forEach((member) => {
       if (member.license_status === 'unpaied') {
         let full_name = this.memberService.full_name(member);
@@ -75,7 +76,7 @@ export class MemberSalesComponent {
 
         if (paied) {
           this.verbose.set(this.verbose() + `${member.firstname} ${member.lastname} \n`);
-          this.missing_registration = true;
+          this.unregistrated++;
         }
       }
     });

@@ -48,9 +48,9 @@
         </div>
 
     </div>
-    <div *ngIf="missing_registration" class="col-md-3">
+    <div *ngIf="unregistrated > 0" class="col-md-3">
         <div class="card text-dark bg-warning shadow-sm">
-            <div class="card-header">adhérents à déclarer à la FFB</div>
+            <div class="card-header"> {{unregistrated}} adhérent(s) à déclarer à la FFB</div>
             <div class="card-body">
                 <!-- <h5 class="card-title"></h5> -->
                 <pre class="card-text">{{verbose()}}</pre>
