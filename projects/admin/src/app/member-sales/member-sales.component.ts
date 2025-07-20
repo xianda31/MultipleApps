@@ -34,7 +34,6 @@ export class MemberSalesComponent {
     private bookService: BookService,
     private systemDataService: SystemDataService,
     private memberService: MembersService,
-    private toastService: ToastService,
 
   ) { }
   ngOnInit() {
