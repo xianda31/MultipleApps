@@ -1,5 +1,5 @@
 <div class="row  mt-3">
-    <div *ngIf="loaded" class="col-md-9">
+    <div *ngIf="loaded" class="col-md-8">
         <div class="card shadow-sm ">
             <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center">
@@ -48,9 +48,12 @@
         </div>
 
     </div>
-    <div *ngIf="unregistrated > 0" class="col-md-3">
+    <div *ngIf="unregistrated > 0" class="col-md-4">
         <div class="card text-dark bg-warning shadow-sm">
-            <div class="card-header"> {{unregistrated}} adhérent(s) à déclarer à la FFB</div>
+            <div class="card-header"> Vérification paiements licences entre BCSTO et FFB</div>
+            <!-- <div class="card-title">
+{{unregistrated}} désalignement(s) bases BCSTO vs FFB
+            </div> -->
             <div class="card-body">
                 <!-- <h5 class="card-title"></h5> -->
                 <pre class="card-text">{{verbose()}}</pre>

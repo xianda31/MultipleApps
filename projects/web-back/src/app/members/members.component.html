@@ -72,7 +72,7 @@
 
             <td class="text-center">
               <span
-                ngbTooltip="{{member.license_taken_at === 'BCSTO' ? 'Adhérent' : 'Sympathisant licencié au ' + member.license_taken_at}}"
+                ngbTooltip="{{member.license_taken_at === 'BCSTO' ? 'licencié au Club' : 'Sympathisant licencié au ' + member.license_taken_at}}"
                 tooltipClass="my-custom-class" placement="right">
                 <i
                   [class]="member.license_status === 'paied' ? (member.license_taken_at !== 'BCSTO' ? 'bi bi-tencent-qq' : 'bi bi-person-square'):'bi '"></i>

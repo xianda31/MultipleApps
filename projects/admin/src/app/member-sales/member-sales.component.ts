@@ -25,8 +25,8 @@ export class MemberSalesComponent {
   revenues: Revenue[] = [];
 
   verbose = signal<string>('');
-//  missing_registration : boolean = false;
- unregistrated : number = 0;
+  //  missing_registration : boolean = false;
+  unregistrated: number = 0;
 
   members: Member[] = [];
   selected_member: Member | null = null;
@@ -70,12 +70,15 @@ export class MemberSalesComponent {
     this.members.forEach((member) => {
       if (member.license_status === 'unpaied') {
         let full_name = this.memberService.full_name(member);
-        const paied = this.operations
+        // const adh_paied = this.operations
+        //   .filter((op) => op.member === full_name)
+        //   .some((op) => op.values['ADH']);
+        const lic_paied = this.operations
           .filter((op) => op.member === full_name)
-          .some((op) => op.values['ADH'] );
+          .some((op) => op.values['LIC']);
 
-        if (paied) {
-          this.verbose.set(this.verbose() + `${member.firstname} ${member.lastname} \n`);
+        if (lic_paied) {
+          this.verbose.set(this.verbose() + `${member.firstname} ${member.lastname} nous a payé la licence FFB\n`);
           this.unregistrated++;
         }
       }
