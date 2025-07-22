@@ -6,7 +6,6 @@ import { LicenseStatus, Member } from '../../../../common/member.interface';
 import { FFB_licensee } from '../../../../common/ffb/interface/licensee.interface';
 import { FormControl, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule, UpperCasePipe } from '@angular/common';
-import { PhonePipe } from '../../../../common/pipes/phone.pipe';
 import { InputPlayerComponent } from '../../../../common/ffb/input-licensee/input-player.component';
 import { FFBplayer } from '../../../../common/ffb/interface/FFBplayer.interface';
 import { SystemDataService } from '../../../../common/services/system-data.service';
@@ -25,6 +24,7 @@ export class MembersComponent implements OnInit {
   members: Member[] = [];
   filteredMembers: Member[] = [];
   licensees: FFB_licensee[] = [];
+  sympatisants_number: number = 0;
   new_player!: FFBplayer;
   season: string = '';
 
@@ -66,6 +66,9 @@ export class MembersComponent implements OnInit {
     this.licenseesService.list_FFB_licensees$().pipe(
       tap((licensees) => {
         this.licensees = licensees;
+        this.sympatisants_number = this.licensees.reduce((count, licensee) => {
+          return count + (licensee.is_sympathisant ? 1 : 0);
+        }, 0);
       }),
       switchMap(() => this.membersService.listMembers()),
       // take(1),
