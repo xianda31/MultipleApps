@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, signal } from '@angular/core';
+import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { CartService } from './cart.service';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { Product } from '../../../../../web-back/src/app/sales/products/product.interface';
@@ -20,6 +20,7 @@ import { SystemDataService } from '../../../../../common/services/system-data.se
 })
 export class CartComponent {
   @Output() complete = new EventEmitter<void>();
+  @Input() message: string = '';
 
   debt_amount = 0;
   asset_available = 0;

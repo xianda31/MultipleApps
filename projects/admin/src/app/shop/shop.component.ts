@@ -1,13 +1,13 @@
 import { Component } from '@angular/core';
 import { FormGroup, FormControl, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { MembersService } from '../../../../web-back/src/app/members/service/members.service';
-import { Member } from '../../../../common/member.interface';
+import { LicenseStatus, Member } from '../../../../common/member.interface';
 import { ToastService } from '../../../../common/toaster/toast.service';
 import { CartService } from './cart/cart.service';
 import { Product } from '../../../../web-back/src/app/sales/products/product.interface';
 import { CommonModule } from '@angular/common';
 import { InputMemberComponent } from '../input-member/input-member.component';
-import { Session } from '../../../../common/accounting.interface';
+import { Expense, Revenue, Session } from '../../../../common/accounting.interface';
 import { BookService } from '../book.service';
 import { CartComponent } from "./cart/cart.component";
 import { ProductService } from '../../../../common/services/product.service';
@@ -28,10 +28,15 @@ export class ShopComponent {
   members!: Member[];
 
   cart_is_valid = true;
+  license_paied = false;
+  membership_paied = false;
+  message: string = '';
 
   session: Session = { date: '', season: '', };
   debt_amount = 0;
   asset_amount = 0;
+
+  operations: (Revenue | Expense)[] = [];
 
   products_array: Map<string, Product[]> = new Map();
 
@@ -69,7 +74,9 @@ export class ShopComponent {
     let today: Date = new Date();
     this.session.date = today.toISOString().split('T')[0]; // format YYYY-MM
     this.session.season = this.systemDataService.get_season(today);
-
+    this.bookService.list_book_entries().subscribe((book_entries) => {
+      this.operations = this.bookService.get_operations();
+    });
 
     this.productService.listProducts().subscribe((products) => {
       this.products_array = this.productService.products_by_accounts(products);
@@ -104,8 +111,31 @@ export class ShopComponent {
         this.cartService.setAsset(buyer.lastname + ' ' + buyer.firstname, this.asset_amount);
       }
 
-      if ((this.buyer?.license_status !== 'paied') && (!this.buyer?.is_sympathisant)) {
-        this.toastService.showWarning('licence, adhésion', 'la personne n\'est pas à jour pour la licence ou l\'adhésion');
+      this.license_paied = (buyer.license_status === LicenseStatus.DULY_REGISTERED);
+      if (!this.license_paied) {
+        this.toastService.showWarning('licence', `${buyer.firstname} ${buyer.lastname} n\'a pas de licence pour cette saison`);
+      }
+
+      // Check if the buyer has paid the license fee
+      let full_name = this.membersService.full_name(buyer);
+      this.membership_paied = this.operations
+        .filter((op) => op.member === full_name)
+        .some((op) => op.values['ADH']);
+
+      if (!this.membership_paied) {
+        this.toastService.showWarning('adhésion', `${buyer.firstname} ${buyer.lastname} n\'a pas payé l\'adhésion au Club`);
+      }
+
+      // generate aggregatred message
+      this.message ="";
+      if(!this.license_paied && !this.membership_paied) {
+        this.message = `Adhésion et licence à prendre`;
+      }
+      else if(!this.license_paied) {
+        this.message = `Licence à prendre`;
+      }
+      else if(!this.membership_paied) {
+        this.message = `Adhésion à prendre`;
       }
 
     });

@@ -21,3 +21,10 @@ export interface Member {
 }
 
 export type Member_input = Omit<Schema['Member']['type'], 'id' | 'createdAt' | 'updatedAt'> ;
+
+
+export enum LicenseStatus {
+  DULY_REGISTERED = 'duly_registered',
+  PROMOTED_ONLY = 'promoted_only',
+  UNREGISTERED = 'unregistered',
+}

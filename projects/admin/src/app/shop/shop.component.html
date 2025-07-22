@@ -47,8 +47,8 @@
 
           <!-- buyer -->
           <div class="col-md-8 col-sm-12  mt-2">
-            <div [formGroup]="buyerForm" class="align-items-center ">
-              <div class="col-md-4 col-sm-12 input-group input-group-sm">
+            <div [formGroup]="buyerForm" class="d-flex align-items-center justify-content-between">
+              <div class="input-group input-group-sm flex-grow-1 me-2">
                 <span class="input-group-text"> Adhérent </span>
                 <app-input-member class="form-control form-control-sm" [members]="members"
                   formControlName="buyer"></app-input-member>
@@ -56,22 +56,22 @@
                   <i class="bi bi-x-circle" (click)="clear_sale()"></i>
                 </span>
               </div>
+              
             </div>
-          </div>
-          <!-- cart  -->
-          <div *ngIf="buyer" class="col-md-12 col-sm-12 mt-2">
-            <app-cart (complete)="cart_confirmed()"></app-cart>
-          </div>
+            <!-- cart  -->
+            <div *ngIf="buyer" class="col-md-12 col-sm-12 mt-2">
+              <app-cart [message]="message" (complete)="cart_confirmed()"></app-cart>
+            </div>
 
+          </div>
         </div>
-      </div>
 
-      <!--  sales_of_the_day -->
+        <!--  sales_of_the_day -->
+      </div>
     </div>
   </div>
-</div>
-<div class="mt-2">
-  <app-todays-books (pdf_table)="get_sales_table($event)"></app-todays-books>
-</div>
+  <div class="mt-2">
+    <app-todays-books (pdf_table)="get_sales_table($event)"></app-todays-books>
+  </div>
 
-<!-- </div> -->
+  <!-- </div> -->

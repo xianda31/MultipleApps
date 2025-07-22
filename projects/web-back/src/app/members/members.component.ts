@@ -2,7 +2,7 @@ import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { MembersService } from './service/members.service';
 import { LicenseesService } from '../licensees/services/licensees.service';
 import { combineLatest, map, switchMap, take, tap } from 'rxjs';
-import { Member } from '../../../../common/member.interface';
+import { LicenseStatus, Member } from '../../../../common/member.interface';
 import { FFB_licensee } from '../../../../common/ffb/interface/licensee.interface';
 import { FormControl, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule, UpperCasePipe } from '@angular/common';
@@ -36,7 +36,8 @@ export class MembersComponent implements OnInit {
     // 'offered': 'Offerte',
   };
 
-  filters: string[] = ['Tous', ' de cette saison', ' non encore à jour'];
+
+  
   selection: string = '';
 
   radioButtonGroup: FormGroup = new FormGroup({
@@ -105,7 +106,7 @@ export class MembersComponent implements OnInit {
           email: newbee.email ?? '',
           phone_one: newbee.phone ?? '',
           license_taken_at: 'BCSTO',
-          license_status: 'unregistred',
+          license_status: LicenseStatus.UNREGISTERED,
           is_sympathisant: false,
         }
         this.membersService.createMember(new_member).then((_member) => {
@@ -136,7 +137,7 @@ export class MembersComponent implements OnInit {
       email: '?',
       phone_one: '?',
       license_taken_at: player.last_club ?? '??',
-      license_status: player.is_current_season ? 'duly_registered' : 'unregistered',
+      license_status: player.is_current_season ? LicenseStatus.DULY_REGISTERED : LicenseStatus.UNREGISTERED,
       is_sympathisant: false,
     }
   }
@@ -150,8 +151,8 @@ export class MembersComponent implements OnInit {
   async reset_license_statuses() {
     for (const member of this.members) {
       if (!this.licensees.some((l) => l.license_number === member.license_number)) {
-        if (member.license_status !== 'unregistered') {
-          member.license_status = 'unregistered';
+        if (member.license_status !== LicenseStatus.UNREGISTERED) {
+          member.license_status = LicenseStatus.UNREGISTERED;
           this.membersService.updateMember(member);
           this.toastService.showWarning('Licences', `Licence de ${member.lastname} ${member.firstname} obsolète `);
         }
@@ -165,9 +166,9 @@ export class MembersComponent implements OnInit {
     this.filteredMembers = this.members.filter((member: Member) => {
       switch (status) {
         case "registered": //'à jour':
-          return (member.license_status === 'duly_registered' || member.license_status === 'promoted_only');
+          return (member.license_status === LicenseStatus.DULY_REGISTERED || member.license_status === LicenseStatus.PROMOTED_ONLY);
         case "unregistered": //'non à jour':
-          return (member.license_status === 'unregistered');
+          return (member.license_status === LicenseStatus.UNREGISTERED);
         case "all": //'Tous':
         default: //'Tous':
           return true;
@@ -207,7 +208,7 @@ export class MembersComponent implements OnInit {
       email: licensee.email?.trim().toLowerCase() ?? '',
       phone_one: licensee.phone_one,
       license_taken_at: licensee.orga_license_name ?? 'BCSTO',
-      license_status: licensee.register ? (licensee.license_id ? 'duly_registered' : 'promoted_only') : 'unregistered',
+      license_status: licensee.register ? (licensee.license_id ? LicenseStatus.DULY_REGISTERED : LicenseStatus.PROMOTED_ONLY) : LicenseStatus.UNREGISTERED,
       is_sympathisant: licensee.is_sympathisant ?? false,
 
 
@@ -242,7 +243,7 @@ let verbose = '';
       email: licensee.email ?? '',
       phone_one: licensee.phone_one,
       is_sympathisant: licensee.is_sympathisant ?? false,
-      license_status: licensee.register ? (licensee.license_id ? 'duly_registered' : 'promoted_only') : 'unregistered',
+      license_status: licensee.register ? (licensee.license_id ? LicenseStatus.DULY_REGISTERED : LicenseStatus.PROMOTED_ONLY) : LicenseStatus.UNREGISTERED,
       license_taken_at: licensee.orga_license_name ?? 'BCSTO',
     }
 

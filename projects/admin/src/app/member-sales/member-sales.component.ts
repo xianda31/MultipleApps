@@ -4,7 +4,7 @@ import { Expense, Revenue } from '../../../../common/accounting.interface';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 import { BookService } from '../book.service';
 import { MembersService } from '../../../../web-back/src/app/members/service/members.service';
-import { Member } from '../../../../common/member.interface';
+import { LicenseStatus, Member } from '../../../../common/member.interface';
 import { InputMemberComponent } from '../input-member/input-member.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -64,7 +64,7 @@ export class MemberSalesComponent {
 
     this.unregistrated = 0;
     this.members.forEach((member) => {
-      if (member.license_status !== 'duly_registered') {
+      if (member.license_status !== LicenseStatus.DULY_REGISTERED ) {
         let full_name = this.memberService.full_name(member);
         // const adh_paied = this.operations
         //   .filter((op) => op.member === full_name)

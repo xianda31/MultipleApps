@@ -1,6 +1,10 @@
 <!-- <form [formGroup]="payment_form"> -->
 <div class="card">
     <div class="card-body">
+<div *ngIf="message" class="warning mb-3">
+    <strong class="text-danger blinking"> Message : {{message.toUpperCase()}}</strong>
+</div>
+
         <strong>Panier : </strong>
         <div class="table-responsive">
             <table class="table  table-sm  align-middle caption-top">
