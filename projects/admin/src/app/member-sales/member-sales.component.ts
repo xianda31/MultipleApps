@@ -68,7 +68,7 @@ export class MemberSalesComponent {
 
     this.unregistrated = 0;
     this.members.forEach((member) => {
-      if (member.license_status === 'unpaied') {
+      if (member.license_status !== 'duly_registered') {
         let full_name = this.memberService.full_name(member);
         // const adh_paied = this.operations
         //   .filter((op) => op.member === full_name)
