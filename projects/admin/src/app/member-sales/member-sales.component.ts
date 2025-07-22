@@ -1,16 +1,13 @@
 import { Component, signal } from '@angular/core';
-import { Router } from '@angular/router';
-import { Subscription, tap, switchMap, catchError, of, Observable } from 'rxjs';
+import { tap, switchMap, catchError, of } from 'rxjs';
 import { Expense, Revenue } from '../../../../common/accounting.interface';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 import { BookService } from '../book.service';
-import { TransactionService } from '../transaction.service';
 import { MembersService } from '../../../../web-back/src/app/members/service/members.service';
 import { Member } from '../../../../common/member.interface';
 import { InputMemberComponent } from '../input-member/input-member.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ToastService } from '../../../../common/toaster/toast.service';
 
 @Component({
   selector: 'app-member-sales',
@@ -25,7 +22,6 @@ export class MemberSalesComponent {
   revenues: Revenue[] = [];
 
   verbose = signal<string>('');
-  //  missing_registration : boolean = false;
   unregistrated: number = 0;
 
   members: Member[] = [];
