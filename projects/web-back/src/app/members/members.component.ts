@@ -73,7 +73,9 @@ export class MembersComponent implements OnInit {
         this.reset_license_statuses();
       }),
     ).subscribe(() => {
+      this.updateDBfromFFB();
       this.filteredMembers = this.members;
+      console.log(this.members);
     });
   }
 
@@ -153,6 +155,7 @@ export class MembersComponent implements OnInit {
           this.membersService.updateMember(member);
           this.toastService.showWarning('Licences', `Licence de ${member.lastname} ${member.firstname} obsolète `);
         }
+      }else{
       }
     }
   }
@@ -179,12 +182,11 @@ export class MembersComponent implements OnInit {
       let member = this.compare(existingMember, licensee);
       if (member !== null) {
         // this.verbose += 'modification : ' + member.lastname + ' ' + member.firstname + '\n';
-        console.log('%s updated to %s', existingMember.lastname, member.lastname);
         await this.membersService.updateMember(member);
+      }else{
       }
 
     } else {
-      // console.log('MembersComponent.createOrUpdateMember create');
       let newMember = this.createNewMember(licensee);
       await this.membersService.createMember(newMember);
     }
@@ -213,11 +215,16 @@ export class MembersComponent implements OnInit {
     let is: { [key: string]: any } = member;
     let next: { [key: string]: any } = nextMember;
     let diff: boolean = false;
-
+let verbose = '';
     for (let key in next) {
       if (next[key] !== is[key]) {
         diff = true;
+        verbose += `\n${key} changed from ${is[key]} to ${next[key]}`;
       }
+    }
+
+    if(diff) {
+      console.log('Member %s %s has changed', member.lastname, member.firstname, verbose);
     }
     return diff ? nextMember : null;
   }

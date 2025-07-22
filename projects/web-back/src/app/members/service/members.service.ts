@@ -105,8 +105,9 @@ export class MembersService {
     try {
       const newMember = await this.dbHandler.updateMember(member);
       this.toastService.showSuccess('Membre mis à jour', `${newMember.lastname} ${newMember.firstname}`);
-      this._members = this._members.filter((m) => m.id !== newMember.id);
-      this._members.push(newMember as Member);
+      this._members = this._members.map((m) => m.id === newMember.id ? newMember : m);
+      // this._members = this._members.filter((m) => m.id !== newMember.id);
+      // this._members.push(newMember as Member);
       this._members = this._members.sort((a, b) => a.lastname.localeCompare(b.lastname))
       this._members$.next(this._members);
     }
