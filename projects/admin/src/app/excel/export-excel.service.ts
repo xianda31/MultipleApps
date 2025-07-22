@@ -32,23 +32,24 @@ export class ExportExcelService {
 
   ) {
     this.loaded = false;
-    this.systemDataService.get_configuration().pipe(
-      tap((conf) => { this.conf = conf; this.season = conf.season; }),
-      switchMap((conf) => this.bookService.list_book_entries$(conf.season)),
-      catchError((err) => {
-        console.error('Error loading book entries:', err);
-        this.loaded = true; // still loaded, but no entries
-        return of([]);
-      })
-    ).subscribe(
+    this.systemDataService.get_configuration().subscribe(
+      (conf) => {
+        this.conf = conf;
+        this.season = conf.season;
+      });
+
+    this.bookService.list_book_entries().subscribe(
       (book_entries) => {
         this.book_entries = book_entries;
         this.loaded = true;
         this.revenue_keys = this.conf.revenue_and_expense_tree.revenues.map((item) => item.key);
         this.expense_keys = this.conf.revenue_and_expense_tree.expenses.map((item) => item.key);
-
-      }
-    );
+      }),
+      catchError((err) => {
+        console.error('Error loading book entries:', err);
+        this.loaded = true; // still loaded, but no entries
+        return of([]);
+      });
   }
 
   downloadToExcel() {
@@ -284,7 +285,7 @@ export class ExportExcelService {
       let start_row = newRows[0].number;
       let end_row = start_row + rows.length - 1;
 
-      Object.values({...{'info': 'E'}, ...FINANCIAL_COL, ...MAP_end }).forEach(element => {
+      Object.values({ ...{ 'info': 'E' }, ...FINANCIAL_COL, ...MAP_end }).forEach(element => {
         this.worksheet.mergeCells(
           start_row,
           COL[element as keyof typeof COL],

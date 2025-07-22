@@ -43,7 +43,7 @@ export class MemberSalesComponent {
       tap((conf) => {
         this.season = conf.season;
       }),
-      switchMap((conf) => this.bookService.list_book_entries$(conf.season)),
+      switchMap((conf) => this.bookService.list_book_entries()),
       catchError((err) => {
         console.error('Error loading book entries:', err);
         this.loaded = true; // still loaded, but no entries

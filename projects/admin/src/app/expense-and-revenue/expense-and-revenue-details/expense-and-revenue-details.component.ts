@@ -54,7 +54,7 @@ export class ExpenseAndRevenueDetailsComponent {
         this.revenue_definitions = conf.revenue_and_expense_tree.revenues;
         this.expense_definitions = conf.revenue_and_expense_tree.expenses
       }),
-      switchMap((conf) => combineLatest([this.route.queryParams, this.bookService.list_book_entries$(conf.season)]))
+      switchMap((conf) => combineLatest([this.route.queryParams, this.bookService.list_book_entries()]))
     )
       .subscribe(([params, book_entries]) => {
 

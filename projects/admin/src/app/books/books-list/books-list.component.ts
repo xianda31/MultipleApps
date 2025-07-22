@@ -11,18 +11,17 @@ import { ExportExcelService } from '../../excel/export-excel.service';
 
 type Fields = 'date' | 'classe' | 'transaction' | 'montant' | 'tag'
 @Component({
-    selector: 'app-books-list',
-    standalone: true,
-    imports: [CommonModule, FormsModule],
-    templateUrl: './books-list.component.html',
-    styleUrl: './books-list.component.scss'
+  selector: 'app-books-list',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './books-list.component.html',
+  styleUrl: './books-list.component.scss'
 })
-export class BooksListComponent implements OnDestroy {
+export class BooksListComponent  {
   loaded: boolean = false;
   season: string = '';
   book_entries!: BookEntry[];
   truncature = '1.2-2';  // '1.0-0';// '1.2-2';  //
-  book_subscription !: Subscription;
   constructor(
     private bookService: BookService,
     private transactionService: TransactionService,
@@ -34,27 +33,23 @@ export class BooksListComponent implements OnDestroy {
 
   ngOnInit() {
     this.loaded = false;
-    this.book_subscription = this.systemDataService.get_configuration().pipe(
-      tap((conf) => { this.season = conf.season; }),
-      switchMap((conf) => this.bookService.list_book_entries$(conf.season)),
-      catchError((err) => {
-        console.error('Error loading book entries:', err);
-        this.loaded = true; // still loaded, but no entries
-        return of([]);
-      })
-    ).subscribe(
-      (book_entries) => {
-        this.book_entries = [...book_entries];
-        this.loaded = true;
-      }
+    this.systemDataService.get_configuration().subscribe(
+      (conf) => { this.season = conf.season; }
     );
-  }
 
-  ngOnDestroy() {
-    if (this.book_subscription) {
-      // console.log('unsubscribing from book entries');
-      this.book_subscription.unsubscribe();
-    }
+
+    this.bookService.list_book_entries()
+      .subscribe(
+        (book_entries) => {
+          this.book_entries = [...book_entries];
+          this.loaded = true;
+        }),
+        (err: any) => {
+          console.error('Error loading book entries:', err);
+          this.loaded = true; // still loaded, but no entries
+          return of([]);
+        }
+      
   }
 
   exportExcel() {

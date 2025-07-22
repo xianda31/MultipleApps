@@ -51,12 +51,9 @@ export class DebtsAndAssetsDetailsComponent {
 
   ngOnInit() {
 
-    this.systemDataService.get_configuration().pipe(
-      switchMap((conf) => this.bookService.list_book_entries$(conf.season)))
-      .subscribe((book_entries) => {
-        // this.book_entries = book_entries;
-        this.prep_data();
 
+      this.bookService.list_book_entries().subscribe((book_entries) => {
+        this.prep_data();
       });
 
   }

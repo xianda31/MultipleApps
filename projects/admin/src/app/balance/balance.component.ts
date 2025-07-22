@@ -45,13 +45,14 @@ export class BalanceComponent {
 
   ngOnInit() {
 
-    this.systemDataService.get_configuration().pipe(
-      map((configuration) => {
+    this.systemDataService.get_configuration().subscribe(
+      (configuration) => {
         this.selected_season = configuration.season;
         this.current_season = configuration.season;
         return configuration.season;
-      }),
-      switchMap((season) => this.bookService.list_book_entries$(season)),
+      });
+
+      this.bookService.list_book_entries().pipe(
       switchMap(() => this.financialService.list_balance_sheets())
     ).subscribe((balance_sheets) => {
       this.balance_board = this.financialService.compute_balance_board(this.current_season);

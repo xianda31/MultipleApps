@@ -18,6 +18,7 @@ export class BookService {
 
   private _book_entries!: BookEntry[];
   private _book_entries$ = new BehaviorSubject<BookEntry[]>([]);
+  season: string = '';
   private season_filter: string = '';
   private force_reload: boolean = false; // force reload of book entries if true
   private higlighting: { [key: string]: boolean } = {};
@@ -28,11 +29,12 @@ export class BookService {
     private transactionService: TransactionService,
     private dbHandler: DBhandler
   ) {
+
+    this.systemDataService.get_configuration().subscribe((conf) => {
+      this.season = conf.season;
+    });
   }
 
-  private trace_on(): boolean {
-    return this.systemDataService.trace_on();
-  }
 
 
   // CRUD(L) BookEntry
@@ -154,15 +156,14 @@ export class BookService {
 
   // list
 
-  list_book_entries$(season: string): Observable<BookEntry[]> {
 
-    let remote_load$ = this.dbHandler.listBookEntries(season).pipe(
+  private remote_load(season: string): Observable<BookEntry[]> {
+    return this.dbHandler.listBookEntries(season).pipe(
       tap((entries) => {
         this._book_entries = entries.sort((a, b) => {
           return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
         });
         this._book_entries$.next(this._book_entries);
-        // if (this.trace_on()) console.log('%s book entries retrieved from AWS', this._book_entries.length);
       }),
       switchMap(() => this._book_entries$.asObservable()),
       catchError((error) => {
@@ -171,16 +172,25 @@ export class BookService {
         return of([] as BookEntry[]);
       })
     );
+  }
 
-    if (this.season_filter !== season) {
-      this.season_filter = season;
-      // this._book_entries = null!;
-      this.force_reload = true; // force reload of book entries if season changed
-    } else {
-      this.force_reload = false;
-    }
+  list_book_entries(): Observable<BookEntry[]> {
 
-    return (this._book_entries && !this.force_reload) ? this._book_entries$.asObservable() : remote_load$;
+    return this.systemDataService.get_configuration().pipe(
+      switchMap((conf) => {
+        let season = conf.season;
+        if (this.season_filter !== season) {
+          this.season_filter = season;
+          // this._book_entries = null!;
+          this.force_reload = true; // force reload of book entries if season changed
+        } else {
+          this.force_reload = false;
+        }
+
+        return (this._book_entries && !this.force_reload) ? this._book_entries$.asObservable() : this.remote_load(season);
+      })
+    );
+
   }
 
   book_entries_bulk_delete$(season: string): Observable<number> {
@@ -357,7 +367,7 @@ export class BookService {
     return this.Round(this._book_entries
       .filter((book_entry) =>
         this.transactionService.get_transaction(book_entry.transaction_id).cheque !== 'none')
-      .reduce((acc, book_entry) => acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.bank_report?(book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0):0), 0));
+      .reduce((acc, book_entry) => acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.bank_report ? (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0) : 0), 0));
   }
 
 
@@ -762,7 +772,7 @@ export class BookService {
           date: this.systemDataService.start_date(next_season),
           transaction_id: cheque_not_credit_card ? TRANSACTION_ID.report_chèque : TRANSACTION_ID.report_carte,
           amounts: { [FINANCIAL_ACCOUNT.BANK_credit]: amount, [BALANCE_ACCOUNT.BAL_debit]: amount },
-          cheque_ref:   cheque_not_credit_card ? entry.cheque_ref : undefined,
+          cheque_ref: cheque_not_credit_card ? entry.cheque_ref : undefined,
           operations: [{ label: label, values: {} }],
         }
 

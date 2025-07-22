@@ -29,18 +29,17 @@ export class TodaysBooksComponent {
   ) { }
 
   ngOnInit() {
-    this.systemDataService.get_configuration().pipe(
-      switchMap((conf) => this.bookService.list_book_entries$(conf.season)),
-      catchError((err) => {
-        return of([]);
-      })
-    ).subscribe(
+    
+      this.bookService.list_book_entries().subscribe(
       (book_entries) => {
         this.book_entries = book_entries;
         this.sales_of_the_day = this.bookService.get_revenues_from_members().filter((revenue) => revenue.date === this.today);
         this.pdf_table.emit(this.construct_pdf_table());
-      }
-    );
+      }),
+      catchError((err) => {
+        console.error('Error loading book entries:', err);
+        return of([]);
+      });
   }
 
 

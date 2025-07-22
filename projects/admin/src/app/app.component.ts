@@ -11,7 +11,6 @@ import { catchError, switchMap, tap } from 'rxjs';
 import { AuthentificationService } from '../../../common/authentification/authentification.service';
 import { GroupService } from '../../../common/authentification/group.service';
 import { Group_names, Group_priorities } from '../../../common/authentification/group.interface';
-import { ToastService } from '../../../common/toaster/toast.service';
 
 
 
@@ -45,16 +44,15 @@ export class AppComponent {
     // chargement de la configuration et des livres de comptes de S3 et dynamoDB
     // toutes les app ont auront besoin ....
 
-    this.systemDataService.get_configuration().pipe(
-      tap((conf) => {
+    this.systemDataService.get_configuration().subscribe((conf) => {
         this.season = conf.season;
-      }),
-      switchMap((conf) => this.bookService.list_book_entries$(conf.season))
-    ).subscribe((book_entries) => {
+    });
+
+    this.bookService.list_book_entries().subscribe((book_entries) => {
       this.book_entries_loaded = true;
       this.entries_nbr = book_entries.length;
-    })
-    catchError((err) => {
+    }),
+     catchError((err) => {
       console.error('Error loading book entries:', err);
       this.book_entries_loaded = false;
       return [];

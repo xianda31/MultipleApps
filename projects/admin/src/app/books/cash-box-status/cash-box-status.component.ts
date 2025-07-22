@@ -25,7 +25,6 @@ export class CashBoxStatusComponent {
   cheques_for_deposit_amount: number = 0;
   current_cash_amount: number = 0;
   cash_for_deposit: BookEntry[] = [];
-  // cash_out_amount!: number ;
   temp_refs: Map<string, { cheque_qty: number, amount: number, new_ref: string }> = new Map<string, { cheque_qty: number, amount: number, new_ref: string }>();
   banks !: Bank[];
   truncature = '1.2-2';  // '1.0-0';// '1.2-2';  //
@@ -59,7 +58,7 @@ export class CashBoxStatusComponent {
         this.season = conf.season;
         return combineLatest([
           this.financialService.read_balance_sheet(this.systemDataService.previous_season(conf.season)),
-          this.bookService.list_book_entries$(conf.season)
+          this.bookService.list_book_entries()
         ])
       }))
       .subscribe(([prev_balance_sheet, book_entries]) => {

@@ -67,7 +67,7 @@ export class BankReconciliationComponent {
       }),
       switchMap((season) => combineLatest([
         this.financialService.read_balance_sheet(this.systemDataService.previous_season(season)),
-        this.bookService.list_book_entries$(season)
+        this.bookService.list_book_entries()
       ])))
       .subscribe(([former_balance_sheet, book_entries]) => {
         this.former_balance_sheet = former_balance_sheet;
