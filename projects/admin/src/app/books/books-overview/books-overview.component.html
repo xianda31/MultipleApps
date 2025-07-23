@@ -161,7 +161,8 @@
         <tr *ngFor="let book_entry of bank_book_entries | slice : slice_start">
           <td>{{book_entry.date | date: 'dd/MM/yyyy'}}</td>
           <td>{{transaction_label (book_entry.transaction_id)}}</td>
-          <td>{{book_entry.operations[0].label  | truncate : 20}}</td>
+          <td *ngIf="book_entry.operations[0]">{{book_entry.operations[0].label  | truncate : 20}}</td>
+          <td *ngIf="!book_entry.operations[0]"></td>
           <!-- <td>{{book_entry.tag}}</td> -->
           <td *ngFor=" let account of bank_accounts " class="text-end pe-2">
             {{book_entry.amounts[account] | number:truncature:'fr'}}

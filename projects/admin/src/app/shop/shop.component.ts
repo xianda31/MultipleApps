@@ -116,7 +116,7 @@ export class ShopComponent {
         this.toastService.showWarning('licence', `${buyer.firstname} ${buyer.lastname} n\'a pas de licence pour cette saison`);
       }
 
-      // Check if the buyer has paid the license fee
+      // Check if the buyer has paid the membership fee
       let full_name = this.membersService.full_name(buyer);
       this.membership_paied = this.operations
         .filter((op) => op.member === full_name)
