@@ -1,3 +1,14 @@
+.stripes {
+  background: repeating-linear-gradient(
+    135deg,
+    #f8f9fa,
+    #f8f9fa 10px,
+    #10c06e 10px,
+    #02c76b 20px
+  );
+  color: #0c0101;
+  border: 1px solid #ced4da;
+}
 .warning-radio .form-check-input {
     background-color: coral;
     border-color: coral;

@@ -9,10 +9,14 @@ import { Game, Gamer } from '../fees.interface';
 import { PdfService } from '../../../../../common/services/pdf.service';
 import { TodaysBooksComponent } from "../../shop/todays-books/todays-books.component";
 import { HorizontalAlignment, PDF_table } from '../../../../../common/pdf-table.interface';
+import { FFBplayer } from '../../../../../common/ffb/interface/FFBplayer.interface';
+import { InputPlayerComponent } from '../../../../../common/ffb/input-licensee/input-player.component';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { GetConfirmationComponent } from '../../modals/get-confirmation/get-confirmation.component';
 
 @Component({
   selector: 'app-fees-collector',
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, TodaysBooksComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, TodaysBooksComponent,InputPlayerComponent],
   templateUrl: './fees-collector.component.html',
   styleUrl: './fees-collector.component.scss'
 })
@@ -24,6 +28,8 @@ export class FeesCollectorComponent {
   game!: Game;
   already_charged: boolean = false;
   pdfLoading = false;
+    new_player!: FFBplayer | null;
+
 
   sales_of_the_day_table: PDF_table = {
     title: '',
@@ -36,6 +42,7 @@ export class FeesCollectorComponent {
     private tournamentService: TournamentService,
     private feesCollectorService: FeesCollectorService,
     private pdfService: PdfService,
+    private modalService: NgbModal,
 
 
   ) {
@@ -70,6 +77,28 @@ export class FeesCollectorComponent {
     this.feesCollectorService.set_tournament(tournament);
   };
 
+  clear_added_player() {
+    this.new_player = null; // or this.new_player = undefined;
+  }
+
+check_status() {
+    console.log('check_status called', this.all_gamers_validated());
+
+    if(this.all_gamers_validated()) {
+
+          
+          const modalRef = this.modalService.open(GetConfirmationComponent, { centered: true });
+          modalRef.componentInstance.title = `Vous avez pointé tous les joueurs `;
+          modalRef.componentInstance.subtitle = `Vous allez maintenant valider tampons et droits de table`;
+          modalRef.result.then((answer: boolean) => {
+            if (answer) {
+              this.validate_fees();
+            }
+          });
+    }
+
+  }
+
   clear_session() {
     this.selected_tournament = null;
     this.feesCollectorService.init_tournament();
@@ -90,8 +119,12 @@ export class FeesCollectorComponent {
     this.game.tournament = null;
   }
 
+  add_player(player: FFBplayer | null) {
+    if (player) this.feesCollectorService.add_player(player);
+  }
+
   all_gamers_validated(): boolean {
-    return !!(this.selected_tournament && this.game && this.game.gamers.every(gamer => (gamer.validated || !gamer.enabled)));
+    return !!this.selected_tournament && !!this.game && this.game.gamers.every(gamer => (gamer.validated || !gamer.enabled));
   }
 
   gamer_solvent(gamer: Gamer): boolean {
@@ -101,7 +134,7 @@ export class FeesCollectorComponent {
   gamer_class(gamer: Gamer): string {
     let card_class = 'card h-100';
     if (!gamer.enabled) {
-      card_class += ' bg-light text-secondary border-secondary';
+      card_class += ' stripes';
       return card_class;
     }
 
@@ -116,10 +149,6 @@ export class FeesCollectorComponent {
     }
     return card_class
   }
-
-  // get totalPayants(): number {
-  //   return this.game && this.game.gamers ? this.game.gamers.filter(g => g.enabled).length : 0;
-  // }
 
   tables_to_pdf() {
 
@@ -137,7 +166,7 @@ export class FeesCollectorComponent {
   build_gamers_table(): PDF_table {
 
     let payment = (gamer:Gamer) => {
-      if (!gamer.validated) return '??';
+      if (!gamer.validated) return 'dispense';
       if (gamer.enabled) {
         return gamer.in_euro ? (gamer.price .toFixed(2) + ' €') :((this.game.fees_doubled ? 2 : 1)+ 'tampon(s)') ;
       } else {

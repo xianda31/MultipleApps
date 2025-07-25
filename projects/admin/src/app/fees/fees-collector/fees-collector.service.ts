@@ -11,6 +11,7 @@ import { club_tournament } from '../../../../../common/ffb/interface/club_tourna
 import { BookService } from '../../book.service';
 import { GameCardService } from '../../game-card.service';
 import { SystemConfiguration } from '../../../../../common/system-conf.interface';
+import { FFBplayer } from '../../../../../common/ffb/interface/FFBplayer.interface';
 
 
 
@@ -184,6 +185,25 @@ export class FeesCollectorService {
     }
     );
   }
+
+  add_player(player: FFBplayer) {
+    if (player) {
+      let new_gamer: Gamer = {
+        license: player.license_number,
+        firstname: player.firstname,
+        lastname: player.lastname.toUpperCase(),
+        is_member: this.is_member(player.license_number),
+        game_credits: 0,
+        index: this.game.gamers.length,
+        in_euro: true, // default to euro
+        price: this.game.non_member_trn_price,
+        validated: false,
+        enabled: true
+      };
+      this.game.gamers.push(new_gamer);
+      this.subscribe_to_members_solvencies();   // will update gamers game_credits & trigger _game$.next(this.game)
+    }
+  } 
 
   get_members(): Member[] {
     return this.game.gamers

@@ -35,9 +35,9 @@ export class InputPlayerComponent implements ControlValueAccessor {
   ) { }
 
   writeValue(input: any): void {
-    if (input === undefined || input === null) {
-      return;
-    }
+    // if (input === undefined || input === null) {
+    //   return;
+    // }
     // this.input.setValue('#' + input);
     this.str_player = input;
     // console.log('writeValue', input);

@@ -1,19 +1,19 @@
-<div class="wrapper">
+<!-- <div class="wrapper"> -->
 
-    <div [class]="all_gamers_validated() ? 'card shadow-lg mt-3 g-0 bg-warning' : 'card shadow-lg mt-3 g-0 bg-info'">
+    <!-- <div [class]="all_gamers_validated() ? 'card shadow-lg mt-3 g-0 bg-warning' : 'card shadow-lg mt-3 g-0 bg-info'">
         <div class="card-body">
             <div class="row align-items-center justify-content-between">
                 <div [class]="'col-auto text-center fw-bolder ' + (all_gamers_validated() ? 'blink' : '')">
-                        ATTENTION : N'OUBLIEZ PAS DE SAUVEGARDER DÈS QUE TOUS LES JOUEURS SONT POINTÉS.
+                    ATTENTION : N'OUBLIEZ PAS DE SAUVEGARDER DÈS QUE TOUS LES JOUEURS SONT POINTÉS.
                 </div>
                 <ng-container *ngTemplateOutlet="save_dialog"></ng-container>
             </div>
         </div>
-    </div>
+    </div> -->
 
     <div class="card shadow-lg mt-3 g-0">
         <div class="card-header">
-            <!-- bandeau tournoi (date, mode roy rené , alread_charges ? , print -->
+            <!-- bandeau tournoi (date, mode roy rené , alread_charges ? , add_team -->
             <div class="row  justify-content-start align-items-center">
 
                 <div class="col-auto">
@@ -52,15 +52,20 @@
                         </span>
                     </div>
 
-
+                    <div class="col-auto align-self-end ms-auto">
+                        <div class="input-group input-group-sm flex-grow-1 me-2">
+                            <span class="input-group-text">ajouter une personne :</span>
+                            <app-input-player listeId="new_guest" placeholder="nom ou prénom" type="text"
+                                class="form-control form-control-sm" [(ngModel)]="new_player"
+                                (ngModelChange)="add_player(new_player)"></app-input-player>
+                            <span class="input-group-text">
+                                <i class="bi bi-x-circle" (click)="clear_added_player()"></i>
+                            </span>
+                        </div>
+                    </div>
                 </ng-container>
 
 
-                <!-- <div class="col-auto ms-auto">
-                    <button class="btn btn-sm btn-primary align-self-end" (click)="tables_to_pdf()">
-                        <i class="bi-printer"></i>
-                    </button>
-                </div> -->
 
             </div>
 
@@ -101,20 +106,6 @@
         <!-- footer -->
         <div *ngIf="game.tournament" class="card-footer">
             <div class="row justify-content-between align-items-center">
-                <!-- validation recettes -->
-                <!-- <div class="col-auto">
-                    <div class="row">
-                        <div class="col-auto">
-                            clôture saisie droits de tables
-                        </div>
-                        <div class="col-auto">
-                            <button [disabled]="!all_gamers_validated()" class="btn btn-sm btn-primary"
-                                (click)="validate_fees()">
-                                <i class="h6 bi-check-lg"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div> -->
                 <ng-container *ngTemplateOutlet="save_dialog"></ng-container>
 
                 <div class="col-auto">
@@ -138,7 +129,7 @@
         <app-todays-books (pdf_table)="get_sales_table($event)"></app-todays-books>
     </div>
 
-</div>
+<!-- </div> -->
 
 
 <ng-template #fee_editor ; let-gamer="gamer" ; let-doubled="doubled">
@@ -147,7 +138,7 @@
             <div class="row">
                 <div class="col form-check form-switch">
                     <input class="form-check-input" type="checkbox" [checked]="gamer.enabled" role="switch"
-                        (change)="gamer.enabled = !gamer.enabled">
+                        (change)="gamer.enabled = !gamer.enabled ; check_status()">
                     <label class="form-check-label">payant</label>
                 </div>
                 <!-- validation présence -->
@@ -155,7 +146,7 @@
                     <label class="form-check-label">validation :</label>
                     <input class="form-check-input" type="checkbox" role="switch"
                         [disabled]="!gamer.enabled || !gamer_solvent(gamer)" [(ngModel)]="gamer.validated"
-                        [id]="'valid' + gamer.index">
+                        [id]="'valid' + gamer.index"    (change)="check_status()">
                 </div>
             </div>
 
@@ -196,14 +187,14 @@
 <ng-template #save_dialog>
     <div class="mx-auto col-auto">
         <!-- validation recettes -->
-        <div class="row align-items-end">
+        <!-- <div class="row align-items-end">
             <h6 class="col-auto"> sauvegarde et impression pdf </h6>
             <div class="col-auto ">
                 <button [disabled]="!all_gamers_validated()" class="btn btn-sm btn-primary" (click)="validate_fees()">
                     <i class="bi bi-cloud-upload-fill"></i>
                 </button>
             </div>
-        </div>
+        </div> -->
         <!-- warning -->
         <div *ngIf="already_charged" class="row text-danger align-items-center">
             <i class="bi bi-info-circle-fill">
