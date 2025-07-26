@@ -79,7 +79,7 @@ export class MembersComponent implements OnInit {
     ).subscribe(() => {
       this.updateDBfromFFB();
       this.filteredMembers = this.members;
-      console.log(this.members);
+      // console.log(this.members);
     });
   }
 
