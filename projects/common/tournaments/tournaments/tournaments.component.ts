@@ -4,7 +4,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { club_tournament } from '../../ffb/interface/club_tournament.interface';
 import { FFB_proxyService } from '../../ffb/services/ffb.service';
 import { TeamsComponent } from '../teams/teams.component';
-import { environment } from '../../../web-site/src/environments/environment.development';
+import { environment } from '../../../admin/src/environments/environment.development';
 import { ToastService } from '../../toaster/toast.service';
 import { TournamentService } from '../../services/tournament.service';
 import { data } from '../../../../amplify/data/resource';

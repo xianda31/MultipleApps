@@ -282,7 +282,10 @@
               "html2canvas",
               "crc-32",
               "rgbcolor",
-              "raf"
+              "raf",
+              "file-saver",
+              "mnemonist/lru-cache",
+              "bowser"
             ],
             "outputPath": "dist/admin",
             "index": "projects/admin/src/index.html",
@@ -302,7 +305,7 @@
             ],
             "styles": [
               "node_modules/bootstrap/dist/css/bootstrap.min.css",
-              "projects/web-site/src/styles.scss"
+              "projects/admin/src/styles.scss"
             ],
             "scripts": []
           },
@@ -328,12 +331,24 @@
                   "inlineCritical": false
                 },
                 "fonts": true
-              }
+              },
+              "fileReplacements": [
+                {
+                  "replace": "projects/admin/src/environments/environment.ts",
+                  "with": "projects/admin/src/environments/environment.production.ts"
+                }
+              ]
             },
             "development": {
               "optimization": false,
               "extractLicenses": false,
-              "sourceMap": true
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "projects/admin/src/environments/environment.ts",
+                  "with": "projects/admin/src/environments/environment.development.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"

@@ -50,10 +50,9 @@ export const routes: Routes = [
   { path: 'excel/import', component: ImportExcelComponent },
   { path: '', component: HomeComponent },
   { path: 'home', component: HomeComponent },
-  // {
-  //     path: 'authentification',
-  //     loadChildren: () => import('../../../common/authentification/authentification.module').then(m => m.AuthentificationModule),
-  // },
-  // { path: 'test', component: TestComponent },
+  {
+      path: 'maintenance',
+      loadChildren: () => import('./maintenance/maintenance.module').then(m => m.CloneDBModule),
+  },
   { path: '**', component: PageNotFoundComponent },
 ];

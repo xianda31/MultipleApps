@@ -10,6 +10,7 @@
     <span class="fs-5"> (saison {{season}}) </span>
     <span class="h6 ms-5 d-none d-sm-inline align-self-end">
       <span class="ms-auto badge bg-dark">{{entries_nbr}}</span>
+      <span *ngIf="!production_mode" class="ms-auto badge bg-dark">dev</span>
     </span>
   </h5>
 
@@ -96,6 +97,7 @@
             <li><a class="dropdown-item " routerLink="/sysconf">configuration</a></li>
             <li><a class="dropdown-item  " routerLink="/finance/books/editor">écriture</a></li>
             <li><a class="dropdown-item  " routerLink="/excel/import">import excel</a></li>
+            <li *ngIf="!production_mode"><a class="dropdown-item  " routerLink="/maintenance/cloneDB">clone DB</a></li>
           </ul>
         </li>
 
