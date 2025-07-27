@@ -25,6 +25,8 @@ export class CashBoxStatusComponent {
   cheques_for_deposit_amount: number = 0;
   current_cash_amount: number = 0;
   cash_for_deposit: BookEntry[] = [];
+  cash_for_deposit_amount: number = 0;
+  cash_to_deposit_amount: number = 0;
   temp_refs: Map<string, { cheque_qty: number, amount: number, new_ref: string }> = new Map<string, { cheque_qty: number, amount: number, new_ref: string }>();
   banks !: Bank[];
   truncature = '1.2-2';  // '1.0-0';// '1.2-2';  //
@@ -97,13 +99,17 @@ export class CashBoxStatusComponent {
           });
 
 
-          //énumère les retraits espèces sans reference de relevé bancaire
+        //énumère les retraits espèces sans reference de relevé bancaire
         this.cash_for_deposit = this.book_entries
           .filter(book_entry => book_entry.transaction_id === TRANSACTION_ID.dépôt_caisse_espèces)
-          .filter(book_entry => !book_entry.bank_report )
+          .filter(book_entry => !book_entry.bank_report);
+        this.cash_for_deposit_amount = this.cash_for_deposit.reduce((acc, book_entry) => {
+          return acc + (book_entry.amounts['cashbox_out'] ?? 0);
+        }, 0);
+
       });
   }
-get cash_out_amount(): FormControl {
+  get cash_out_amount(): FormControl {
     return this.cashForm.get('cash_out_amount') as FormControl;
   }
 
@@ -190,17 +196,17 @@ get cash_out_amount(): FormControl {
   }
 
   cash_out_validator = (control: AbstractControl): { [key: string]: boolean } | null => {
-    if (!control.value) {return null}; 
+    if (!control.value) { return null };
     const cash_out_amount = control.value;
     // if (cash_out_amount === null || cash_out_amount === undefined || typeof cash_out_amount !== 'number' ) {
     //   return { invalid: true };
     // }
     if (cash_out_amount > this.current_cash_amount || cash_out_amount < 0) {
       return { out_of_bounds: true };
-    } 
+    }
     return null;
   }
-  
+
   // cash_out_amount_valid(): boolean {
   //   return (
   //     this.cash_out_amount !== null &&

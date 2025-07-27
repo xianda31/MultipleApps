@@ -321,12 +321,7 @@ export class BookService {
       }, [] as Revenue[]);
   }
 
-  get_cash_movements_amount(): number {
-
-    return this.Round(this.get_cash_movements()
-      .reduce((acc, book_entry) => acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0), 0));
-  }
-
+  
   get_cash_movements(): BookEntry[] {
     if (this._book_entries === undefined) { // if no book entries are loaded yet
       return []; // no outstanding expenses
@@ -335,13 +330,17 @@ export class BookService {
       if (this.transactionService.get_transaction(entry.transaction_id).cash === 'none') return false
       if (entry.deposit_ref === null && entry.deposit_ref === undefined) return true
       if (entry.deposit_ref && entry.bank_report) return true; // cash  deposited => cashbox_out applicable
-      if (entry.deposit_ref && !entry.bank_report) return true; // cash not deposited => cashbox_out applicable
+      if (entry.deposit_ref && !entry.bank_report) return false; // cash not deposited => cashbox_out not applicable
       return true;
     }
     return this._book_entries
-      .filter((book_entry) => in_cashbox(book_entry))
+    .filter((book_entry) => in_cashbox(book_entry))
   }
-
+  
+  get_cash_movements_amount(): number {
+    return this.Round(this.get_cash_movements()
+      .reduce((acc, book_entry) => acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0), 0));
+  }
 
 
   get_cashbox_movements_amount(): number {

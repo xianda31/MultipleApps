@@ -19,7 +19,7 @@
                                     <div class="input-group">
                                         <span class="input-group-text">montant à déposer</span>
                                         <input type="number"
-                                            [placeholder]="(current_cash_amount | number:truncature:'fr') + ' max'"
+                                            [placeholder]="((current_cash_amount - cash_for_deposit_amount) | number:truncature:'fr') + ' max'"
                                             class="form-control text-end" formControlName="cash_out_amount">
                                         <button class="btn btn-sm btn-primary"
                                             [disabled]="cashForm.get('cash_out_amount')?.invalid">
