@@ -299,6 +299,17 @@ export class BookService {
       }, [] as Revenue[]);
   }
 
+book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
+    return book_entries.map(book_entry => {
+      return book_entry.operations.map(op => ({
+        ...op,
+        season: book_entry.season,
+        date: book_entry.date,
+        book_entry_id: book_entry.id,
+        tag: book_entry.tag ?? undefined
+      } as Revenue));
+    }).flat();
+  }
 
   get_revenues_from_members(): Revenue[] {
 
@@ -321,7 +332,14 @@ export class BookService {
       }, [] as Revenue[]);
   }
 
-  
+  get_sales_of_the_day(the_day : string) : Observable<BookEntry[]> {
+    return this.list_book_entries().pipe(
+      map((book_entries) => {
+        return book_entries.filter((entry) => entry.date === the_day && this.transactionService.transaction_class(entry.transaction_id) === TRANSACTION_CLASS.REVENUE_FROM_MEMBER);
+      })
+    );
+  }
+
   get_cash_movements(): BookEntry[] {
     if (this._book_entries === undefined) { // if no book entries are loaded yet
       return []; // no outstanding expenses
@@ -857,4 +875,5 @@ export class BookService {
     return this.higlighting[book_entry.id] ?? false;
   }
 
+  
 }

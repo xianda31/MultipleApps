@@ -125,7 +125,7 @@
         </div>
     </div>
 
-    <div class="bottom_div">
+    <div class="bottom_div" [class.d-none]="true">   // invisible mais active pour calcul pdf_table
         <app-todays-books (pdf_table)="get_sales_table($event)"></app-todays-books>
     </div>
 
@@ -186,15 +186,6 @@
 </ng-template>
 <ng-template #save_dialog>
     <div class="mx-auto col-auto">
-        <!-- validation recettes -->
-        <!-- <div class="row align-items-end">
-            <h6 class="col-auto"> sauvegarde et impression pdf </h6>
-            <div class="col-auto ">
-                <button [disabled]="!all_gamers_validated()" class="btn btn-sm btn-primary" (click)="validate_fees()">
-                    <i class="bi bi-cloud-upload-fill"></i>
-                </button>
-            </div>
-        </div> -->
         <!-- warning -->
         <div *ngIf="already_charged" class="row text-danger align-items-center">
             <i class="bi bi-info-circle-fill">

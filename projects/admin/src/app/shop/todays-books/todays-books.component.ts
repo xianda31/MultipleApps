@@ -7,6 +7,7 @@ import { TransactionService } from '../../transaction.service';
 import { BookEntry, Revenue } from '../../../../../common/accounting.interface';
 import { CommonModule } from '@angular/common';
 import { HorizontalAlignment, PDF_table } from '../../../../../common/pdf-table.interface'
+import { TRANSACTION_CLASS } from '../../../../../common/transaction.definition';
 
 @Component({
   selector: 'app-todays-books',
@@ -17,24 +18,23 @@ import { HorizontalAlignment, PDF_table } from '../../../../../common/pdf-table.
 export class TodaysBooksComponent {
   @Input() today: string = new Date().toISOString().split('T')[0];
   @Output() pdf_table = new EventEmitter<PDF_table>();
-  book_entries: BookEntry[] = [];
+  today_book_entries: BookEntry[] = [];
   sales_of_the_day: Revenue[] = [];
 
   constructor(
     private bookService: BookService,
-    private systemDataService: SystemDataService,
     private transactionService: TransactionService,
 
 
   ) { }
 
   ngOnInit() {
-    
-      this.bookService.list_book_entries().subscribe(
+
+    this.bookService.get_sales_of_the_day(this.today).subscribe(
       (book_entries) => {
-        this.book_entries = book_entries;
-        this.sales_of_the_day = this.bookService.get_revenues_from_members().filter((revenue) => revenue.date === this.today);
-        this.pdf_table.emit(this.construct_pdf_table());
+        this.today_book_entries = book_entries
+        this.sales_of_the_day = this.bookService.book_entries_to_revenues(book_entries);
+        this.pdf_table.emit(this.construct_pdf_table(this.today_book_entries));
       }),
       catchError((err) => {
         console.error('Error loading book entries:', err);
@@ -50,13 +50,13 @@ export class TodaysBooksComponent {
     return sale.book_entry_id !== prev.book_entry_id;
   }
   payment_type(revenue: Revenue): string {
-    let book_entry = this.book_entries.find((entry) => entry.id === revenue.book_entry_id);
+    let book_entry = this.today_book_entries.find((entry) => entry.id === revenue.book_entry_id);
     if (!book_entry) throw new Error('sale not found');
     return this.transactionService.get_transaction(book_entry.transaction_id).label;
   }
 
   sale_amount(revenue: Revenue): number {
-    let book_entry = this.book_entries.find((entry) => entry.id === revenue.book_entry_id);
+    let book_entry = this.today_book_entries.find((entry) => entry.id === revenue.book_entry_id);
     if (!book_entry) throw new Error('sale not found');
     return (book_entry.amounts?.['cashbox_in'] ?? 0) + (book_entry.amounts?.['bank_in'] ?? 0);
   }
@@ -64,15 +64,14 @@ export class TodaysBooksComponent {
 
 
 
-  construct_pdf_table(): PDF_table {
+  construct_pdf_table(book_entries: BookEntry[]): PDF_table {
     // Format this.today (YYYY-MM-DD) to DD/MM/YYYY (French style)
     const [year, month, day] = this.today.split('-');
     const todayFr = `${day}/${month}/${year}`;
     const title = 'recettes du ' + todayFr;
-    
+
     const headers = ['Montant', 'Transaction', 'Adhérent', 'Articles'];
     const alignments: HorizontalAlignment[] = ['right', 'left', 'left', 'left'];
-    const book_entries = this.book_entries.filter((entry) => entry.date === this.today);
 
     const rows = book_entries.map((book_entry) => {
       let transaction = this.transactionService.get_transaction(book_entry.transaction_id);
