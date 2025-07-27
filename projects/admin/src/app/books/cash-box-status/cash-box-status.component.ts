@@ -51,7 +51,8 @@ export class CashBoxStatusComponent {
   ngOnInit() {
 
     this.cashForm = this.fb.group({
-      cash_out_amount: ['', this.cash_out_validator]
+      cash_out_amount: ['', this.cash_out_validator],
+      cash_real_amount: ['', [Validators.required, Validators.min(0)]]
     });
 
     this.systemDataService.get_configuration().pipe(
@@ -187,6 +188,22 @@ export class CashBoxStatusComponent {
 
   // calls HTML
 
+  cash_align() {
+    if (this.cashForm.get('cash_real_amount')?.value !== null) {
+      let correction = this.cashForm.get('cash_real_amount')?.value - (this.current_cash_amount - this.cash_for_deposit_amount);
+      if (correction !== 0) {
+        this.bookService.cashbox_alignment(correction).then(() => {
+          this.toastService.showSuccess('Alignement caisse consigné', `Montant : ${correction.toFixed(2)} €`);
+        })
+        .catch((err) => {
+          this.toastService.showErrorToast('Erreur lors de l\'alignement de la caisse', `Erreur : ${err.message}`);
+        })
+        .finally(() => {
+          this.cashForm.reset();
+        });
+      }
+    } 
+  }
 
   cash_out() {
     if (this.cash_out_amount.value !== 0) {

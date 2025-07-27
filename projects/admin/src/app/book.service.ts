@@ -8,7 +8,7 @@ import { SystemDataService } from '../../../common/services/system-data.service'
 import { ToastService } from '../../../common/toaster/toast.service';
 import { TransactionService } from './transaction.service';
 import { TRANSACTION_CLASS } from '../../../common/transaction.definition';
-import { Profit_and_loss } from '../../../common/system-conf.interface';
+import { Profit_and_loss, SystemConfiguration } from '../../../common/system-conf.interface';
 import { DBhandler } from './graphQL.service';
 
 @Injectable({
@@ -18,6 +18,7 @@ export class BookService {
 
   private _book_entries!: BookEntry[];
   private _book_entries$ = new BehaviorSubject<BookEntry[]>([]);
+  private configuration !: SystemConfiguration ;
   season: string = '';
   private season_filter: string = '';
   private force_reload: boolean = false; // force reload of book entries if true
@@ -31,6 +32,7 @@ export class BookService {
   ) {
 
     this.systemDataService.get_configuration().subscribe((conf) => {
+      this.configuration = conf;
       this.season = conf.season;
     });
   }
@@ -677,6 +679,34 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
 
   get_trading_result(): number {
     return this.Round(this.get_total_revenues() - this.get_total_expenses());
+  }
+
+// écriture d'alignement de la caisse
+  cashbox_alignment( value: number): Promise<BookEntry> {
+
+    let today = new Date();
+    if(value === 0) {
+      this.toastService.showWarning('base comptabilité', 'la valeur de l\'alignement de caisse ne peut pas être nulle');
+      return Promise.resolve({} as BookEntry);
+    }
+    
+   let pl_keys: Profit_and_loss = this.systemDataService.get_profit_and_loss_keys();
+
+    const entry: BookEntry = {
+      id: '',
+      tag: 'alignement caisse',
+      season: this.systemDataService.get_season(today),
+      date: today.toISOString().split('T')[0],
+      amounts: (value<0) ? { [FINANCIAL_ACCOUNT.CASHBOX_credit]: value } : { [FINANCIAL_ACCOUNT.CASHBOX_debit]: value },
+      operations: [
+        {
+          label: (value<0) ? 'alignement caisse (manque)' : 'alignement caisse (excédent)',
+          values: (value<0) ?{ [pl_keys.debit_key]: Math.abs(value) } : { [pl_keys.credit_key]: Math.abs(value) },
+        }
+      ],
+      transaction_id: (value < 0) ? TRANSACTION_ID.dépense_en_espèces : TRANSACTION_ID.vente_en_espèces,
+    };
+    return this.create_book_entry(entry);
   }
 
   // générer une écriture d'annulation d'avoir adhérent

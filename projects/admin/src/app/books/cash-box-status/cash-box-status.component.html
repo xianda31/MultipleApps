@@ -17,13 +17,23 @@
                                     </h6>
                                     <!-- <div class="w-100 d-flex align-items-center mt-3"> -->
                                     <div class="input-group">
-                                        <span class="input-group-text">montant à déposer</span>
+                                        <span class="input-group-text w-75">montant à prélever pour dépôt</span>
                                         <input type="number"
                                             [placeholder]="((current_cash_amount - cash_for_deposit_amount) | number:truncature:'fr') + ' max'"
                                             class="form-control text-end" formControlName="cash_out_amount">
                                         <button class="btn btn-sm btn-primary"
                                             [disabled]="cashForm.get('cash_out_amount')?.invalid">
                                             <i (click)="cash_out()" class="bi-check2"></i>
+                                        </button>
+                                    </div>
+
+                                    <div class="input-group mt-2">
+                                        <span class="input-group-text w-75">montant réel courant</span>
+                                        <input type="number"
+                                            class="form-control text-end" formControlName="cash_real_amount">
+                                        <button class="btn btn-sm btn-primary"
+                                            [disabled]="cashForm.get('cash_real_amount')?.invalid">
+                                            <i (click)="cash_align()" class="bi-check2"></i>
                                         </button>
                                     </div>
                                     <!-- </div> -->
@@ -82,11 +92,11 @@
                     <div class="col">
                         <div class="card h-100">
                             <div class="card-header">
-                                prélèvements caisse
+                                prélèvements en cours de dépôt
                             </div>
                             <div class="card-body">
                                 <h6 class="me-3 mb-0 fw-bolder">
-                                    Liquidités en cours de dépôt
+                                    Liquidités
                                 </h6>
                                 <!-- <div class="w-100 d-flex align-items-center mt-3"> -->
                                     <div *ngFor="let book_entry of cash_for_deposit">
@@ -94,7 +104,7 @@
                                     </div>
                                     
                                     <h6 class="mt-3 mb-0 fw-bolder">
-                                        Chèques en cours de dépôt
+                                        Chèques
                                     </h6>
                                                      <table class="table table-sm align-middle  ">
                                     <tbody>
