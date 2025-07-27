@@ -3,7 +3,6 @@ import { Component, OnInit } from '@angular/core';
 import { BackComponent } from '../../../../common/back/back.component';
 import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { MembersService } from '../../../../web-back/src/app/members/service/members.service';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 import { ToastService } from '../../../../common/toaster/toast.service';
 import { BookService } from '../book.service';
@@ -13,7 +12,7 @@ import { BookEntry, TRANSACTION_ID } from '../../../../common/accounting.interfa
 import { Transaction, TRANSACTION_CLASS } from '../../../../common/transaction.definition';
 import { Account, Bank } from '../../../../common/system-conf.interface';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { BooksEditorComponent } from "../books/books-edit/books-editor.component";
+import { BooksEditorComponent } from '../books/books-edit/books-editor.component';
 
 @Component({
     selector: 'app-buy',
@@ -42,11 +41,8 @@ export class BuyComponent implements OnInit {
   selected_transaction: Transaction | undefined = undefined;
   constructor(
     private fb: FormBuilder,
-    private bookService: BookService,
     private transactionService: TransactionService,
     private systemDataService: SystemDataService,
-    private toastService: ToastService,
-    private route: ActivatedRoute,
     private location: Location
 
   ) { }
@@ -137,7 +133,7 @@ export class BuyComponent implements OnInit {
   
       if (this.expense_or_revenue_accounts.length !== 0) {
         operationForm.addControl('values', this.fb.array(
-          this.expense_or_revenue_accounts.map((account_def) => new FormControl<string>((''), [Validators.pattern(this.NumberRegexPattern)])),
+          this.expense_or_revenue_accounts.map(() => new FormControl<string>((''), [Validators.pattern(this.NumberRegexPattern)])),
           { validators: [this.atLeastOneFieldValidator] }));
       }
   

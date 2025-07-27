@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
-import { FFB_licensee } from '../../../../../common/ffb/interface/licensee.interface';
 import { BehaviorSubject, Observable, from } from 'rxjs';
 import { filter, switchMap, tap } from 'rxjs/operators';
-import { FFB_proxyService } from '../../../../../common/ffb/services/ffb.service';
+import { FFB_licensee } from '../../ffb/interface/licensee.interface';
+import { FFB_proxyService } from '../../ffb/services/ffb.service';
 
 @Injectable({
   providedIn: 'root'

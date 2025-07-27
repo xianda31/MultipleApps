@@ -1,10 +1,10 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ProductService } from '../../../../../common/services/product.service';
-import { FormGroup, ReactiveFormsModule, Form, FormControl, Validators, FormsModule } from '@angular/forms';
-import { CommonModule, CurrencyPipe } from '@angular/common';
+import { FormGroup, ReactiveFormsModule, FormControl, Validators, FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 import { Product } from './product.interface';
-import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { map, Observable } from 'rxjs';
+import { ProductService } from '../../../../common/services/product.service';
+import { SystemDataService } from '../../../../common/services/system-data.service';
 @Component({
     selector: 'app-products',
     imports: [CommonModule, FormsModule, ReactiveFormsModule,],

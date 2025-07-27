@@ -1,12 +1,12 @@
 import { Component } from '@angular/core';
 import { FormGroup, FormBuilder, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { MembersService } from '../../../../../web-back/src/app/members/service/members.service';
 import { CommonModule } from '@angular/common';
 import { Member } from '../../../../../common/member.interface';
 import { Observable } from 'rxjs';
 import { InputMemberComponent } from '../../input-member/input-member.component';
 import { MAX_STAMPS } from '../game-card.interface';
+import { MembersService } from '../../../../../common/members/service/members.service';
 @Component({
     selector: 'app-get-game-cards-owners',
     imports: [CommonModule, FormsModule, ReactiveFormsModule, InputMemberComponent],

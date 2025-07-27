@@ -1,21 +1,21 @@
 import { Component } from '@angular/core';
 import { FormGroup, FormControl, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
-import { MembersService } from '../../../../web-back/src/app/members/service/members.service';
 import { LicenseStatus, Member } from '../../../../common/member.interface';
 import { ToastService } from '../../../../common/toaster/toast.service';
 import { CartService } from './cart/cart.service';
-import { Product } from '../../../../web-back/src/app/sales/products/product.interface';
 import { CommonModule } from '@angular/common';
 import { InputMemberComponent } from '../input-member/input-member.component';
 import { Expense, Revenue, Session } from '../../../../common/accounting.interface';
 import { BookService } from '../book.service';
-import { CartComponent } from "./cart/cart.component";
 import { ProductService } from '../../../../common/services/product.service';
 import { AuthentificationService } from '../../../../common/authentification/authentification.service';
 import { TodaysBooksComponent } from './todays-books/todays-books.component';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 import { PDF_table } from '../../../../common/pdf-table.interface';
 import { PdfService } from '../../../../common/services/pdf.service';
+import { Product } from '../products/product.interface';
+import { MembersService } from '../../../../common/members/service/members.service';
+import { CartComponent } from './cart/cart.component';
 
 
 @Component({

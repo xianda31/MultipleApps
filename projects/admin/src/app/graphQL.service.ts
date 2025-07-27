@@ -4,9 +4,9 @@ import { Schema } from '../../../../amplify/data/resource';
 import { catchError, from, lastValueFrom, map, Observable, of, switchMap, tap } from 'rxjs';
 import { Member, Member_input } from '../../../common/member.interface';
 import { getCurrentUser } from 'aws-amplify/auth';
-import { Product, Product_input } from '../../../web-back/src/app/sales/products/product.interface';
 import { BookEntry } from '../../../common/accounting.interface';
 import { PlayBook, PlayBook_input } from './game-cards/game-card.interface';
+import { Product, Product_input } from './products/product.interface';
 
 
 

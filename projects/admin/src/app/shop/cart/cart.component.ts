@@ -1,16 +1,16 @@
 import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { CartService } from './cart.service';
 import { CommonModule, CurrencyPipe } from '@angular/common';
-import { Product } from '../../../../../web-back/src/app/sales/products/product.interface';
 import { map, Observable } from 'rxjs';
 import { Cart, CartItem, Payment, PaymentMode } from './cart.interface';
 import { ProductService } from '../../../../../common/services/product.service';
-import { MembersService } from '../../../../../web-back/src/app/members/service/members.service';
 import { InputMemberComponent } from '../../input-member/input-member.component';
 import { Member } from '../../../../../common/member.interface';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Bank } from '../../../../../common/system-conf.interface';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
+import { Product } from '../../products/product.interface';
+import { MembersService } from '../../../../../common/members/service/members.service';
 
 @Component({
     selector: 'app-cart',

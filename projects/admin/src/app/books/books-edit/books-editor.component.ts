@@ -8,13 +8,13 @@ import { Bank } from '../../../../../common/system-conf.interface';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { ToastService } from '../../../../../common/toaster/toast.service';
 import { Transaction, Account_def, TRANSACTION_CLASS } from '../../../../../common/transaction.definition';
-import { MembersService } from '../../../../../web-back/src/app/members/service/members.service';
 import { Member } from '../../../../../common/member.interface';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TransactionService } from '../../transaction.service';
 import { BackComponent } from '../../../../../common/back/back.component';
+import { MembersService } from '../../../../../common/members/service/members.service';
 
 interface Operation_initial_values {
   optional_accounts?: string[];

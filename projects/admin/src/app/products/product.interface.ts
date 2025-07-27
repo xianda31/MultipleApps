@@ -1,4 +1,4 @@
-import { Schema } from "../../../../../../amplify/data/resource";
+import { Schema } from "../../../../../amplify/data/resource";
 
 export interface Product {
     id: string;

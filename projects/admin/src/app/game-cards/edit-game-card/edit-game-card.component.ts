@@ -1,8 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { FormBuilder } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { MembersService } from '../../../../../web-back/src/app/members/service/members.service';
-import { GameCard, MAX_STAMPS } from '../game-card.interface';
+import { GameCard } from '../game-card.interface';
 import { CommonModule } from '@angular/common';
 
 interface Stamp_place {

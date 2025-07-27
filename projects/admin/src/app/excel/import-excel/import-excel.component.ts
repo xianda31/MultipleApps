@@ -3,7 +3,6 @@ import * as ExcelJS from 'exceljs';
 import { EXPENSES_COL, EXTRA_CUSTOMER_IN, EXTRA_CUSTOMER_OUT, FINANCIAL_COL, MAP, PRODUCTS_COL, TRANSACTION_ID_TO_NATURE } from '../../../../../common/excel/excel.interface';
 import { TRANSACTION_ID, BookEntry, FINANCIAL_ACCOUNT, operation_values, Operation, BALANCE_ACCOUNT } from '../../../../../common/accounting.interface';
 import { Member } from '../../../../../common/member.interface';
-import { MembersService } from '../../../../../web-back/src/app/members/service/members.service';
 import { BookService } from '../../book.service';
 import { CommonModule, formatDate } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -12,6 +11,7 @@ import { Transaction, TRANSACTION_CLASS } from '../../../../../common/transactio
 import { TransactionService } from '../../transaction.service';
 import { Revenue_and_expense_definition } from '../../../../../common/system-conf.interface';
 import { json } from 'd3';
+import { MembersService } from '../../../../../common/members/service/members.service';
 
 @Component({
   selector: 'app-import-excel',

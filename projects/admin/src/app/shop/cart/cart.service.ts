@@ -4,10 +4,10 @@ import { Cart, CartItem, Payment, PaymentMode, SALE_ACCOUNTS } from './cart.inte
 import { Member } from '../../../../../common/member.interface';
 import { BookService } from '../../book.service';
 import { TRANSACTION_ID, BookEntry, operation_values, Operation, Session, FINANCIAL_ACCOUNT, CUSTOMER_ACCOUNT, AMOUNTS } from '../../../../../common/accounting.interface';
-import { Product } from '../../../../../web-back/src/app/sales/products/product.interface';
 import { ProductService } from '../../../../../common/services/product.service';
-import { MembersService } from '../../../../../web-back/src/app/members/service/members.service';
 import { GameCardService } from '../../game-card.service';
+import { MembersService } from '../../../../../common/members/service/members.service';
+import { Product } from '../../products/product.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -131,7 +131,6 @@ export class CartService {
           this.clearCart();
         })
         .catch((error) => {
-          // console.error('error saving sale', error);
           reject(error);
         });
     });

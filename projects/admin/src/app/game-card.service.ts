@@ -2,9 +2,9 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, map, Observable, switchMap } from 'rxjs';
 import { GameCard, MAX_STAMPS, PlayBook_input } from './game-cards/game-card.interface';
 import { Member } from '../../../common/member.interface';
-import { MembersService } from '../../../web-back/src/app/members/service/members.service';
 import { ToastService } from '../../../common/toaster/toast.service';
 import { DBhandler } from './graphQL.service';
+import { MembersService } from '../../../common/members/service/members.service';
 
 
 @Injectable({

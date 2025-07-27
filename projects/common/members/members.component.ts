@@ -1,17 +1,17 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { MembersService } from './service/members.service';
 import { LicenseesService } from '../licensees/services/licensees.service';
-import { combineLatest, map, switchMap, take, tap } from 'rxjs';
-import { LicenseStatus, Member } from '../../../../common/member.interface';
-import { FFB_licensee } from '../../../../common/ffb/interface/licensee.interface';
+import { switchMap, tap } from 'rxjs';
 import { FormControl, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule, UpperCasePipe } from '@angular/common';
-import { InputPlayerComponent } from '../../../../common/ffb/input-licensee/input-player.component';
-import { FFBplayer } from '../../../../common/ffb/interface/FFBplayer.interface';
-import { SystemDataService } from '../../../../common/services/system-data.service';
 import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { GetNewbeeComponent } from '../modals/get-newbee/get-newbee.component';
-import { ToastService } from '../../../../common/toaster/toast.service';
+import { InputPlayerComponent } from '../ffb/input-licensee/input-player.component';
+import { FFBplayer } from '../ffb/interface/FFBplayer.interface';
+import { FFB_licensee } from '../ffb/interface/licensee.interface';
+import { Member, LicenseStatus } from '../member.interface';
+import { SystemDataService } from '../services/system-data.service';
+import { ToastService } from '../toaster/toast.service';
 
 @Component({
   selector: 'app-members',

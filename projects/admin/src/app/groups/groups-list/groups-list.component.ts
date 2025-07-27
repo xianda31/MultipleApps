@@ -5,8 +5,8 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { generateClient } from 'aws-amplify/data';
 import { Schema } from '../../../../../../amplify/data/resource';
 import { Member } from '../../../../../common/member.interface';
-import { MembersService } from '../../../../../web-back/src/app/members/service/members.service';
 import { ToastService } from '../../../../../common/toaster/toast.service';
+import { MembersService } from '../../../../../common/members/service/members.service';
 
 interface Profil extends UserInGroup {
   member: Member;

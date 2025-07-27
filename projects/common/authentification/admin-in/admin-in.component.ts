@@ -7,9 +7,9 @@ import { Member } from '../../member.interface';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { GetLoggingComponent } from '../../../admin/src/app/modals/get-logging/get-logging.component';
 import { Observable, of, switchMap, from, map, tap, catchError } from 'rxjs';
-import { MembersService } from '../../../web-back/src/app/members/service/members.service';
 import { GroupService } from '../group.service';
 import { Group_icons, Group_names } from '../group.interface';
+import { MembersService } from '../../members/service/members.service';
 
 const EMAIL_PATTERN = '^[\\w.-]+@[A-Za-z0-9-]+\\.[A-Za-z]{2,}(\\.[A-Za-z]{2,})*$';
 const GROUP_ICONS = Group_icons;

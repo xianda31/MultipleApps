@@ -13,12 +13,12 @@ import { ExpenseAndRevenueComponent } from './expense-and-revenue/expense-and-re
 import { ExpenseAndRevenueDetailsComponent } from './expense-and-revenue/expense-and-revenue-details/expense-and-revenue-details.component';
 import { GameCardsEditorComponent } from './game-cards/game-cards-editor/game-cards-editor.component';
 import { BuyComponent } from './buy/buy.component';
-import { MembersComponent } from '../../../web-back/src/app/members/members.component';
+import { MembersComponent } from '../../../common/members/members.component';
 import { PageNotFoundComponent } from './page-not-found/page-not-found.component';
-import { ProductsComponent } from '../../../web-back/src/app/sales/products/products.component';
 import { MemberSalesComponent } from './member-sales/member-sales.component';
 import { SysConfComponent } from './sys-conf/sys-conf.component';
 import { GroupsListComponent } from './groups/groups-list/groups-list.component';
+import { ProductsComponent } from './products/products.component';
 
 export const routes: Routes = [
   { path: 'caisse/produits', component: ShopComponent },   //, canActivate: [loggedInGuard]

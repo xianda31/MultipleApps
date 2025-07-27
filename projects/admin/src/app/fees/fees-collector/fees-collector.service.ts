@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { MembersService } from '../../../../../web-back/src/app/members/service/members.service';
 import { TournamentService } from '../../../../../common/services/tournament.service';
 import { Person, Player, Team, TournamentTeams } from '../../../../../common/ffb/interface/tournament_teams.interface';
 import { BehaviorSubject, map, Observable, Subscription } from 'rxjs';
@@ -12,6 +11,7 @@ import { BookService } from '../../book.service';
 import { GameCardService } from '../../game-card.service';
 import { SystemConfiguration } from '../../../../../common/system-conf.interface';
 import { FFBplayer } from '../../../../../common/ffb/interface/FFBplayer.interface';
+import { MembersService } from '../../../../../common/members/service/members.service';
 
 
 

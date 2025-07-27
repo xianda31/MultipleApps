@@ -3,11 +3,11 @@ import { tap, switchMap, catchError, of } from 'rxjs';
 import { Expense, Revenue } from '../../../../common/accounting.interface';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 import { BookService } from '../book.service';
-import { MembersService } from '../../../../web-back/src/app/members/service/members.service';
 import { LicenseStatus, Member } from '../../../../common/member.interface';
 import { InputMemberComponent } from '../input-member/input-member.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MembersService } from '../../../../common/members/service/members.service';
 
 @Component({
   selector: 'app-member-sales',
