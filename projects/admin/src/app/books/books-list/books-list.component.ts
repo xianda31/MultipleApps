@@ -1,12 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy } from '@angular/core';
+import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { BookEntry } from '../../../../../common/accounting.interface';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { BookService } from '../../book.service';
 import { TransactionService } from '../../transaction.service';
-import { map, Subscription, switchMap, tap, catchError, of } from 'rxjs';
+import { of } from 'rxjs';
 import { ExportExcelService } from '../../excel/export-excel.service';
 
 type Fields = 'date' | 'classe' | 'transaction' | 'montant' | 'tag'
@@ -18,6 +18,9 @@ type Fields = 'date' | 'classe' | 'transaction' | 'montant' | 'tag'
   styleUrl: './books-list.component.scss'
 })
 export class BooksListComponent  {
+  SLICE_SIZE = 15;
+    slice_start = -this.SLICE_SIZE; // pour le slice des opérations
+
   loaded: boolean = false;
   season: string = '';
   book_entries!: BookEntry[];
@@ -148,4 +151,9 @@ export class BooksListComponent  {
   async delete_book_entry(book_entry: BookEntry) {
     await this.bookService.delete_book_entry(book_entry);
   }
+
+   toggle_slice() {
+    this.slice_start = (this.slice_start === 0) ? -this.SLICE_SIZE : 0;
+  }
+
 }
