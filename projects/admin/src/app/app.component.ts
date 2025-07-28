@@ -7,7 +7,7 @@ import { ToasterComponent } from '../../../common/toaster/components/toaster/toa
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { BookService } from './services/book.service';
-import { catchError, switchMap, tap } from 'rxjs';
+import { catchError } from 'rxjs';
 import { AuthentificationService } from '../../../common/authentification/authentification.service';
 import { GroupService } from '../../../common/authentification/group.service';
 import { Group_names, Group_priorities } from '../../../common/authentification/group.interface';

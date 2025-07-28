@@ -13,7 +13,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { BackComponent } from '../../../../../common/back/back.component';
-import { MembersService } from '../../../../../common/members/service/members.service';
+import { MembersService } from '../../../../../common/members/services/members.service';
 import { TransactionService } from '../../services/transaction.service';
 
 interface Operation_initial_values {

@@ -176,7 +176,7 @@ private _sheets_to_records(sheets: Balance_sheet[]): Balance_record[] {
     );
 
     if (this._balance_sheets) {
-      if (this.trace_on()) console.log(' balance history from cache', this._balance_sheets);
+      // if (this.trace_on()) console.log(' balance history from cache', this._balance_sheets);
       return this._balance_sheets$.asObservable();
     }
     else {

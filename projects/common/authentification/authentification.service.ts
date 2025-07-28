@@ -5,7 +5,7 @@ import { AuthEvent, Process_flow } from './authentification_interface';
 import { ToastService } from '../toaster/toast.service';
 import { Member } from '../member.interface';
 import { Hub } from 'aws-amplify/utils';
-import { MembersService } from '../members/service/members.service';
+import { MembersService } from '../members/services/members.service';
 
 
 

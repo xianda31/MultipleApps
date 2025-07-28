@@ -14,7 +14,7 @@ import { SystemDataService } from '../../../../common/services/system-data.servi
 import { PDF_table } from '../../../../common/pdf-table.interface';
 import { PdfService } from '../../../../common/services/pdf.service';
 import { Product } from '../products/product.interface';
-import { MembersService } from '../../../../common/members/service/members.service';
+import { MembersService } from '../../../../common/members/services/members.service';
 import { CartComponent } from './cart/cart.component';
 
 

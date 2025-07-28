@@ -8,7 +8,7 @@ import { SystemDataService } from '../../../../common/services/system-data.servi
 import { ToastService } from '../../../../common/toaster/toast.service';
 import { TRANSACTION_CLASS } from '../../../../common/transaction.definition';
 import { Profit_and_loss, SystemConfiguration } from '../../../../common/system-conf.interface';
-import { DBhandler } from './graphQL.service';
+import { DBhandler } from '../../../../common/members/services/graphQL.service';
 import { TransactionService } from './transaction.service';
 
 @Injectable({

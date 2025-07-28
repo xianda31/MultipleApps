@@ -6,7 +6,7 @@ import { generateClient } from 'aws-amplify/data';
 import { Schema } from '../../../../../../amplify/data/resource';
 import { Member } from '../../../../../common/member.interface';
 import { ToastService } from '../../../../../common/toaster/toast.service';
-import { MembersService } from '../../../../../common/members/service/members.service';
+import { MembersService } from '../../../../../common/members/services/members.service';
 
 interface Profil extends UserInGroup {
   member: Member;

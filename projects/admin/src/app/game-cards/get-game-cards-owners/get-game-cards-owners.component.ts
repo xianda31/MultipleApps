@@ -6,7 +6,7 @@ import { Member } from '../../../../../common/member.interface';
 import { Observable } from 'rxjs';
 import { InputMemberComponent } from '../../input-member/input-member.component';
 import { MAX_STAMPS } from '../game-card.interface';
-import { MembersService } from '../../../../../common/members/service/members.service';
+import { MembersService } from '../../../../../common/members/services/members.service';
 @Component({
     selector: 'app-get-game-cards-owners',
     imports: [CommonModule, FormsModule, ReactiveFormsModule, InputMemberComponent],

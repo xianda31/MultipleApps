@@ -2,11 +2,11 @@ import { Injectable } from '@angular/core';
 import { generateClient } from 'aws-amplify/api';
 import { catchError, from, lastValueFrom, map, Observable, of, switchMap, tap } from 'rxjs';
 import { getCurrentUser } from 'aws-amplify/auth';
-import { Member, Member_input } from '../../../../common/member.interface';
-import { Schema } from '../../../../../amplify/data/resource';
-import { Product, Product_input } from '../products/product.interface';
-import { BookEntry } from '../../../../common/accounting.interface';
-import { PlayBook_input, PlayBook } from '../game-cards/game-card.interface';
+import { Member, Member_input } from '../../member.interface';
+import { Schema } from '../../../../amplify/data/resource';
+import { Product, Product_input } from '../../../admin/src/app/products/product.interface';
+import { BookEntry } from '../../accounting.interface';
+import { PlayBook_input, PlayBook } from '../../../admin/src/app/game-cards/game-card.interface';
 
 
 

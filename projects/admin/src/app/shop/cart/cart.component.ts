@@ -10,7 +10,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Bank } from '../../../../../common/system-conf.interface';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { Product } from '../../products/product.interface';
-import { MembersService } from '../../../../../common/members/service/members.service';
+import { MembersService } from '../../../../../common/members/services/members.service';
 
 @Component({
     selector: 'app-cart',
