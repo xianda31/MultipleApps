@@ -1,14 +1,26 @@
-.stripes {
-  background: repeating-linear-gradient(
-    135deg,
-    #f8f9fa,
-    #f8f9fa 10px,
-    #10c06e 10px,
-    #02c76b 20px
-  );
-  color: #0c0101;
-  border: 1px solid #ced4da;
+// Non-participant style
+.NP {
+  position: relative;
 }
+
+.NP::after {
+  content: 'NP';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #0d6efd; /* Bootstrap 5 bg-primary text color */
+  font-weight: bold;
+  font-size: 3em;
+  padding: 0;
+  border-radius: 0;
+  pointer-events: none;
+  z-index: 2;
+  background: none;
+}
+
+
+
 .warning-radio .form-check-input {
     background-color: coral;
     border-color: coral;

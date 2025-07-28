@@ -161,7 +161,7 @@
                 <!-- mode de réglement -->
                 <div class="col-4 align-content-center">
                     <!-- si adhérent club , affichage choix carte -->
-                    <div *ngIf="gamer.is_member" class="form-check form-check-reverse">
+                    <div *ngIf="gamer.is_member && gamer.enabled" class="form-check form-check-reverse">
                         <input [disabled]="gamer.validated || gamer.disabled " class="form-check-input" type="radio"
                             [name]="'card_or_euro' + gamer.index" [id]="'pass-radio'+ gamer.index" [value]="false"
                             [(ngModel)]="gamer.in_euro" />
@@ -173,7 +173,7 @@
                         </label>
                     </div>
                     <!-- affichage choix en cash -->
-                    <div class="form-check form-check-reverse">
+                    <div *ngIf=" gamer.enabled" class="form-check form-check-reverse">
                         <input [disabled]="gamer.validated || gamer.disabled " class="form-check-input" type="radio"
                             [name]="'card_or_euro' + gamer.index" [id]="'euro_radio'+ gamer.index" [value]="true"
                             [(ngModel)]="gamer.in_euro" />

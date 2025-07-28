@@ -134,7 +134,7 @@ check_status() {
   gamer_class(gamer: Gamer): string {
     let card_class = 'card h-100';
     if (!gamer.enabled) {
-      card_class += ' stripes';
+      card_class += 'bg-success shadow-lg text-bg-success NP';
       return card_class;
     }
 
