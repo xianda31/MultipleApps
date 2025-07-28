@@ -162,7 +162,7 @@ private _sheets_to_records(sheets: Balance_sheet[]): Balance_record[] {
           } as Balance_sheet;
 
         });
-        if (this.trace_on()) console.log(' balance history from S3', this._balance_sheets);
+        // if (this.trace_on()) console.log(' balance history from S3', this._balance_sheets);
         return this._balance_sheets;
       }),
       switchMap((sheets) => {
