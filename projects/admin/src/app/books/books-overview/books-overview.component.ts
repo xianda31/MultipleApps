@@ -297,12 +297,12 @@ export class BooksOverviewComponent {
   }
 
   show_book_entry(book_entry_id: string) {
-    this.router.navigate(['/finance/books/editor', book_entry_id]);
+    this.router.navigate(['./admin/finance/books/editor', book_entry_id]);
   }
 
   show(selection: string) {
     let id = selection.split(' : ')[1];
-    this.router.navigate(['/finance/books/editor', id]);
+    this.router.navigate(['./admin/finance/books/editor', id]);
   }
 
   go_report(report: string) {
