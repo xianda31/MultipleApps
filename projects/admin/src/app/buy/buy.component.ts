@@ -5,14 +5,14 @@ import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, FormsM
 import { ActivatedRoute } from '@angular/router';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 import { ToastService } from '../../../../common/toaster/toast.service';
-import { BookService } from '../book.service';
-import { TransactionService } from '../transaction.service';
+import { BookService } from '../services/book.service';
 import { Location } from '@angular/common';
 import { BookEntry, TRANSACTION_ID } from '../../../../common/accounting.interface';
 import { Transaction, TRANSACTION_CLASS } from '../../../../common/transaction.definition';
 import { Account, Bank } from '../../../../common/system-conf.interface';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { BooksEditorComponent } from '../books/books-edit/books-editor.component';
+import { TransactionService } from '../services/transaction.service';
 
 @Component({
     selector: 'app-buy',

@@ -3,7 +3,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Router } from '@angular/router';
 import { tap, switchMap } from 'rxjs';
 import { SystemDataService } from '../../../../../../common/services/system-data.service';
-import { BookService } from '../../../book.service';
+import { BookService } from '../../../services/book.service';
 import { BookEntry } from '../../../../../../common/accounting.interface';
 import { BackComponent } from '../../../../../../common/back/back.component';
 import { ToastService } from '../../../../../../common/toaster/toast.service';

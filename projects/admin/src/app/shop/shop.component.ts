@@ -6,7 +6,7 @@ import { CartService } from './cart/cart.service';
 import { CommonModule } from '@angular/common';
 import { InputMemberComponent } from '../input-member/input-member.component';
 import { Expense, Revenue, Session } from '../../../../common/accounting.interface';
-import { BookService } from '../book.service';
+import { BookService } from '../services/book.service';
 import { ProductService } from '../../../../common/services/product.service';
 import { AuthentificationService } from '../../../../common/authentification/authentification.service';
 import { TodaysBooksComponent } from './todays-books/todays-books.component';

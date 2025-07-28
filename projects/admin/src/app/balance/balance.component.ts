@@ -4,13 +4,13 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 import { ToastService } from '../../../../common/toaster/toast.service';
 import { map, switchMap } from 'rxjs';
-import { BookService } from '../book.service';
+import { BookService } from '../services/book.service';
 import { FileService } from '../../../../common/services/files.service';
 import { ParenthesisPipe } from '../../../../common/pipes/parenthesis.pipe';
-import { FinancialReportService } from '../financial_report.service';
 import { Balance_board } from '../../../../common/balance.interface';
 import { Router } from '@angular/router';
 import { DebtsAndAssetsDetailsComponent } from "../books/details/debts-and-assets/debts-and-assets-details.component";
+import { FinancialReportService } from '../services/financial_report.service';
 
 @Component({
   selector: 'app-balance',

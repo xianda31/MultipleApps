@@ -2,7 +2,7 @@ import { Component, signal } from '@angular/core';
 import { tap, switchMap, catchError, of } from 'rxjs';
 import { Expense, Revenue } from '../../../../common/accounting.interface';
 import { SystemDataService } from '../../../../common/services/system-data.service';
-import { BookService } from '../book.service';
+import { BookService } from '../services/book.service';
 import { LicenseStatus, Member } from '../../../../common/member.interface';
 import { InputMemberComponent } from '../input-member/input-member.component';
 import { CommonModule } from '@angular/common';

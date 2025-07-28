@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
-import { Product } from '../../web-back/src/app/sales/products/product.interface';
-import { MembersService } from '../../web-back/src/app/members/service/members.service';
-import { ExcelService } from '../../admin/src/app/excel.service';
+import { ExcelService } from '../../admin/src/app/services/excel.service';
 import { ProductService } from '../services/product.service';
 import { xls_header } from './excel.interface';
-import { f_payments, f_products, f_Sale, PaymentMode, Sale } from '../../admin/src/app/shop/old_sales.interface';
+import { MembersService } from '../members/service/members.service';
+import { Product } from '../../admin/src/app/products/product.interface';
+import { PaymentMode } from '../../admin/src/app/shop/cart/cart.interface';
 
 @Injectable({
   providedIn: 'root'

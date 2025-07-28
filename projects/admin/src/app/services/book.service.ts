@@ -1,15 +1,15 @@
 import { Injectable } from '@angular/core';
 import { generateClient } from 'aws-amplify/api';
 
-import { BookEntry, Revenue, FINANCIAL_ACCOUNT, BALANCE_ACCOUNT, Expense, CUSTOMER_ACCOUNT, TRANSACTION_ID, Operation, AMOUNTS } from '../../../common/accounting.interface';
+import { BookEntry, Revenue, FINANCIAL_ACCOUNT, BALANCE_ACCOUNT, Expense, CUSTOMER_ACCOUNT, TRANSACTION_ID, Operation, AMOUNTS } from '../../../../common/accounting.interface';
 // import { Schema } from '../../../../amplify/data/resource';
 import { BehaviorSubject, catchError, combineLatest, from, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
-import { SystemDataService } from '../../../common/services/system-data.service';
-import { ToastService } from '../../../common/toaster/toast.service';
-import { TransactionService } from './transaction.service';
-import { TRANSACTION_CLASS } from '../../../common/transaction.definition';
-import { Profit_and_loss, SystemConfiguration } from '../../../common/system-conf.interface';
+import { SystemDataService } from '../../../../common/services/system-data.service';
+import { ToastService } from '../../../../common/toaster/toast.service';
+import { TRANSACTION_CLASS } from '../../../../common/transaction.definition';
+import { Profit_and_loss, SystemConfiguration } from '../../../../common/system-conf.interface';
 import { DBhandler } from './graphQL.service';
+import { TransactionService } from './transaction.service';
 
 @Injectable({
   providedIn: 'root'

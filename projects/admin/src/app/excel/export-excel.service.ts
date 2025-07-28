@@ -6,9 +6,9 @@ import { saveAs } from 'file-saver';
 import { SystemConfiguration } from '../../../../common/system-conf.interface';
 import { BookEntry } from '../../../../common/accounting.interface';
 import { SystemDataService } from '../../../../common/services/system-data.service';
-import { BookService } from '../book.service';
-import { TransactionService } from '../transaction.service';
+import { BookService } from '../services/book.service';
 import { PRODUCTS_COL, COL, EXPENSES_COL, MAP_start, EXTRA_CUSTOMER_IN, FINANCIAL_COL_in, EXTRA_CUSTOMER_OUT, FINANCIAL_COL_out, MAP_end, TRANSACTION_ID_TO_CHRONO, CUSTOMER_COL, FINANCIAL_COL, MAP, TRANSACTION_ID_TO_NATURE } from '../../../../common/excel/excel.interface';
+import { TransactionService } from '../services/transaction.service';
 
 @Injectable({
   providedIn: 'root'

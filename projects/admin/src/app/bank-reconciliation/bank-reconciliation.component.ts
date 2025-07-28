@@ -3,15 +3,15 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BookEntry, TRANSACTION_ID, FINANCIAL_ACCOUNT } from '../../../../common/accounting.interface';
 import { SystemDataService } from '../../../../common/services/system-data.service';
-import { BookService } from '../book.service';
+import { BookService } from '../services/book.service';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { Router } from '@angular/router';
 import { ToastService } from '../../../../common/toaster/toast.service';
 import { switchMap, combineLatest } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { TransactionService } from '../transaction.service';
-import { FinancialReportService } from '../financial_report.service';
 import { Balance_sheet } from '../../../../common/balance.interface';
+import { FinancialReportService } from '../services/financial_report.service';
+import { TransactionService } from '../services/transaction.service';
 
 @Component({
   selector: 'app-bank-reconciliation',

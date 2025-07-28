@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, tap, switchMap } from 'rxjs';
-import { DBhandler } from '../../../admin/src/app/graphQL.service';
 import { Member } from '../../member.interface';
 import { ToastService } from '../../toaster/toast.service';
+import { DBhandler } from '../../../admin/src/app/services/graphQL.service';
 
 @Injectable({
   providedIn: 'root'

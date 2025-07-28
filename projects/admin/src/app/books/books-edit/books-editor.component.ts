@@ -2,7 +2,7 @@ import { CommonModule, formatDate } from '@angular/common';
 import { Component, Input, ViewEncapsulation } from '@angular/core';
 import { Location } from '@angular/common';
 import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
-import { BookService } from '../../book.service';
+import { BookService } from '../../services/book.service';
 import { BookEntry, operation_values, Operation, FINANCIAL_ACCOUNT, TRANSACTION_ID, CUSTOMER_ACCOUNT, BALANCE_ACCOUNT } from '../../../../../common/accounting.interface';
 import { Bank } from '../../../../../common/system-conf.interface';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
@@ -12,9 +12,9 @@ import { Member } from '../../../../../common/member.interface';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { TransactionService } from '../../transaction.service';
 import { BackComponent } from '../../../../../common/back/back.component';
 import { MembersService } from '../../../../../common/members/service/members.service';
+import { TransactionService } from '../../services/transaction.service';
 
 interface Operation_initial_values {
   optional_accounts?: string[];

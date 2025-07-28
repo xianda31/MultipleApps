@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { GameCardService } from '../../game-card.service';
+import { GameCardService } from '../../services/game-card.service';
 import { CommonModule } from '@angular/common';
 import { GameCard } from '../game-card.interface';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';

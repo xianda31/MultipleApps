@@ -3,15 +3,15 @@ import * as ExcelJS from 'exceljs';
 import { EXPENSES_COL, EXTRA_CUSTOMER_IN, EXTRA_CUSTOMER_OUT, FINANCIAL_COL, MAP, PRODUCTS_COL, TRANSACTION_ID_TO_NATURE } from '../../../../../common/excel/excel.interface';
 import { TRANSACTION_ID, BookEntry, FINANCIAL_ACCOUNT, operation_values, Operation, BALANCE_ACCOUNT } from '../../../../../common/accounting.interface';
 import { Member } from '../../../../../common/member.interface';
-import { BookService } from '../../book.service';
+import { BookService } from '../../services/book.service';
 import { CommonModule, formatDate } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { Transaction, TRANSACTION_CLASS } from '../../../../../common/transaction.definition';
-import { TransactionService } from '../../transaction.service';
 import { Revenue_and_expense_definition } from '../../../../../common/system-conf.interface';
 import { json } from 'd3';
 import { MembersService } from '../../../../../common/members/service/members.service';
+import { TransactionService } from '../../services/transaction.service';
 
 @Component({
   selector: 'app-import-excel',

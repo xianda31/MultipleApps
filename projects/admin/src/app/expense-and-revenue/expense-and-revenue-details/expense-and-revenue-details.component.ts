@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Revenue_and_expense_definition } from '../../../../../common/system-conf.interface';
 import { CommonModule, Location } from '@angular/common';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
-import { BookService } from '../../book.service';
+import { BookService } from '../../services/book.service';
 import { Revenue, Expense, BookEntry } from '../../../../../common/accounting.interface';
 import { combineLatest, tap, switchMap } from 'rxjs';
 import { Router } from '@angular/router';

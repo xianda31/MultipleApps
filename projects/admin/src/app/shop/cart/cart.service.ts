@@ -2,10 +2,10 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Cart, CartItem, Payment, PaymentMode, SALE_ACCOUNTS } from './cart.interface';
 import { Member } from '../../../../../common/member.interface';
-import { BookService } from '../../book.service';
+import { BookService } from '../../services/book.service';
 import { TRANSACTION_ID, BookEntry, operation_values, Operation, Session, FINANCIAL_ACCOUNT, CUSTOMER_ACCOUNT, AMOUNTS } from '../../../../../common/accounting.interface';
 import { ProductService } from '../../../../../common/services/product.service';
-import { GameCardService } from '../../game-card.service';
+import { GameCardService } from '../../services/game-card.service';
 import { MembersService } from '../../../../../common/members/service/members.service';
 import { Product } from '../../products/product.interface';
 

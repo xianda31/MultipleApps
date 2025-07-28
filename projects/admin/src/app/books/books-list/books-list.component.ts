@@ -4,10 +4,10 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { BookEntry } from '../../../../../common/accounting.interface';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
-import { BookService } from '../../book.service';
-import { TransactionService } from '../../transaction.service';
+import { BookService } from '../../services/book.service';
 import { of } from 'rxjs';
 import { ExportExcelService } from '../../excel/export-excel.service';
+import { TransactionService } from '../../services/transaction.service';
 
 type Fields = 'date' | 'classe' | 'transaction' | 'montant' | 'tag'
 @Component({

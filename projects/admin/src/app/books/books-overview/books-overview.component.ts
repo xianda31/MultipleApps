@@ -1,16 +1,16 @@
 import { Component } from '@angular/core';
 import { Expense, BookEntry, FINANCIAL_ACCOUNT, Revenue, TRANSACTION_ID, Cashbox_accounts, Bank_accounts, Savings_accounts } from '../../../../../common/accounting.interface';
-import { BookService } from '../../book.service';
+import { BookService } from '../../services/book.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SystemDataService } from '../../../../../common/services/system-data.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { TransactionService } from '../../transaction.service';
 import { combineLatest, switchMap, tap } from 'rxjs';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { FinancialReportService } from '../../financial_report.service';
 import { DebtsAndAssetsDetailsComponent } from "../details/debts-and-assets/debts-and-assets-details.component";
 import { TruncatePipe } from '../../../../../common/pipes/truncate.pipe';
+import { FinancialReportService } from '../../services/financial_report.service';
+import { TransactionService } from '../../services/transaction.service';
 
 enum REPORTS {
   CHARGES = 'dépenses,charges',

@@ -5,7 +5,7 @@ import { SystemDataService } from '../../../../common/services/system-data.servi
 import { SystemConfiguration } from '../../../../common/system-conf.interface';
 import { ToastService } from '../../../../common/toaster/toast.service';
 import { FileService } from '../../../../common/services/files.service';
-import { BookService } from '../book.service';
+import { BookService } from '../services/book.service';
 
 
 
