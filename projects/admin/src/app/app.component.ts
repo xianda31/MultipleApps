@@ -11,7 +11,7 @@ import { catchError } from 'rxjs';
 import { AuthentificationService } from '../../../common/authentification/authentification.service';
 import { GroupService } from '../../../common/authentification/group.service';
 import { Group_names, Group_priorities } from '../../../common/authentification/group.interface';
-import { LocalStorageService } from './local-storage.service';
+import { LocalStorageService } from './services/local-storage.service';
 
 
 
