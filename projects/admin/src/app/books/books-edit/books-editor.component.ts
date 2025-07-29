@@ -37,7 +37,8 @@ interface Account {
 export class BooksEditorComponent {
   NumberRegexPattern: string = '([-,+]?[0-9]+([.,][0-9]*)?|[.][0-9]+)';
   // NumberRegexPattern: string = '([0-9]+([.,][0-9]*)?|[.][0-9]+)';
-  @Input() protected_mode: boolean = false; // pour le mode protégé
+
+  protected_mode: boolean = false; // pour le mode protégé
 
   book_entry_id!: string;
   banks !: Bank[];
@@ -103,9 +104,16 @@ export class BooksEditorComponent {
 
     this.init_form();
 
+    // Access both params and data from ActivatedRoute
     this.route.params.subscribe(params => {
       this.book_entry_id = params['id']; // Access the 'id' parameter from the URL
       this.creation = (this.book_entry_id === undefined);
+
+      // Access custom route data (e.g., 'access')
+      this.route.data.subscribe(data => {
+        let access = data['access'];
+        this.protected_mode = !(access && (access === 'full'));
+      });
 
       if (!this.creation) {
         this.bookService.read_book_entry(this.book_entry_id)
@@ -121,7 +129,6 @@ export class BooksEditorComponent {
       }
 
       this.form_ready = true;
-
     });
 
   }

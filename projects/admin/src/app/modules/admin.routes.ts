@@ -12,7 +12,7 @@ import { BooksListComponent } from '../books/books-list/books-list.component';
 import { ExpenseAndRevenueComponent } from '../expense-and-revenue/expense-and-revenue.component';
 import { ExpenseAndRevenueDetailsComponent } from '../expense-and-revenue/expense-and-revenue-details/expense-and-revenue-details.component';
 import { GameCardsEditorComponent } from '../game-cards/game-cards-editor/game-cards-editor.component';
-import { BuyComponent } from '../buy/buy.component';
+// import { BuyComponent } from '../buy/buy.component';
 import { PageNotFoundComponent } from '../page-not-found/page-not-found.component';
 import { MemberSalesComponent } from '../member-sales/member-sales.component';
 import { SysConfComponent } from '../sys-conf/sys-conf.component';
@@ -20,6 +20,7 @@ import { GroupsListComponent } from '../groups/groups-list/groups-list.component
 import { ProductsComponent } from '../products/products.component';
 import { MembersComponent } from '../../../../common/members/members.component';
 import { AdminComponent } from '../admin/admin.component';
+import { CloneDBComponent } from '../maintenance/clone-DB/clone-db.component';
 
 export const routes: Routes = [
   {
@@ -33,32 +34,29 @@ export const routes: Routes = [
       { path: 'members/cartes-admission', component: GameCardsEditorComponent },
       { path: 'members/payments', component: MemberSalesComponent },
 
-      { path: 'groups', component: GroupsListComponent },
-
+      
       { path: 'finance/bank-reconciliation', component: BankReconciliationComponent },
       { path: 'finance/expense-and-revenue', component: ExpenseAndRevenueComponent },
-      { path: 'finance/toutes-ecritures', component: BuyComponent },
+      { path: 'finance/toutes-ecritures', component: BooksEditorComponent },
       { path: 'finance/expense-and-revenue/details', component: ExpenseAndRevenueDetailsComponent },
       { path: 'finance/balance', component: BalanceComponent },
       { path: 'finance/books/base-comptable', component: BooksOverviewComponent },
       { path: 'finance/books/base-comptable/:report', component: BooksOverviewComponent },
-
+      
       { path: 'finance/books/list', component: BooksListComponent },
-      { path: 'finance/books/editor', component: BooksEditorComponent },
-      { path: 'finance/books/editor/:id', component: BooksEditorComponent },
-
+      { path: 'finance/books/editor', component: BooksEditorComponent, data: { access: 'full' } },
+      { path: 'finance/books/editor/:id', component: BooksEditorComponent, data: { access: 'full' } },
+      
       { path: 'outils/produits', component: ProductsComponent },
       { path: 'outils/sysconf', component: SysConfComponent },
       { path: 'outils/excel_import', component: ImportExcelComponent },
-      
+      { path: 'outils/groups', component: GroupsListComponent },
+      { path: 'outils/cloneDB', component: CloneDBComponent },
+
       { path: 'home', component: HomeComponent },
       { path: '', component: HomeComponent },
       { path: '**', component: PageNotFoundComponent },
-      {
-        path: 'maintenance',
-        loadChildren: () => import('../maintenance/maintenance.module').then(m => m.CloneDBModule),
-      },
-      { path: '', redirectTo: 'caisse/produits', pathMatch: 'full' },
+      // { path: '', redirectTo: 'caisse/produits', pathMatch: 'full' },
     ]
   }
 ];

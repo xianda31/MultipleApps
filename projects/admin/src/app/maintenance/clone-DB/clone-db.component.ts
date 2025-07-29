@@ -3,6 +3,7 @@ import { BatchService } from '../SDK_v3.service';
 import { DescribeTableOutput } from '@aws-sdk/client-dynamodb';
 import { environment } from '../../../environments/environment';
 import { combineLatest, map, Observable, of, switchMap } from 'rxjs';
+import { CommonModule } from '@angular/common';
 
 
 type Table = {
@@ -13,7 +14,7 @@ type Table = {
 
 @Component({
   selector: 'app-clone-db',
-  standalone: false,
+  imports:[CommonModule],
   templateUrl: './clone-db.component.html',
   styleUrl: './clone-db.component.scss'
 })

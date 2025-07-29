@@ -13,7 +13,6 @@ import { MemberSalesComponent } from '../member-sales/member-sales.component';
 import { BankReconciliationComponent } from '../bank-reconciliation/bank-reconciliation.component';
 import { ExpenseAndRevenueComponent } from '../expense-and-revenue/expense-and-revenue.component';
 import { ExpenseAndRevenueDetailsComponent } from '../expense-and-revenue/expense-and-revenue-details/expense-and-revenue-details.component';
-import { BuyComponent } from '../buy/buy.component';
 import { BooksOverviewComponent } from '../books/books-overview/books-overview.component';
 import { BooksEditorComponent } from '../books/books-edit/books-editor.component';
 import { BooksListComponent } from '../books/books-list/books-list.component';
@@ -24,6 +23,7 @@ import { SysConfComponent } from '../sys-conf/sys-conf.component';
 import { ImportExcelComponent } from '../excel/import-excel/import-excel.component';
 import { HomeComponent } from '../home/home.component';
 import { PageNotFoundComponent } from '../page-not-found/page-not-found.component';
+import { CloneDBComponent } from '../maintenance/clone-DB/clone-db.component';
 
 
 
@@ -44,7 +44,6 @@ import { PageNotFoundComponent } from '../page-not-found/page-not-found.componen
     BankReconciliationComponent,
     ExpenseAndRevenueComponent,
     ExpenseAndRevenueDetailsComponent,
-    BuyComponent,
     BooksOverviewComponent,
     BooksEditorComponent,
     BooksListComponent,
@@ -54,7 +53,8 @@ import { PageNotFoundComponent } from '../page-not-found/page-not-found.componen
     SysConfComponent,
     ImportExcelComponent,
     HomeComponent,
-    PageNotFoundComponent
+    PageNotFoundComponent,
+    CloneDBComponent
   ],
   exports: [
     RouterModule,

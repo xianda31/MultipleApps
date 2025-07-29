@@ -15,16 +15,10 @@ import { LocalStorageService } from './services/local-storage.service';
 })
 export class AppComponent {
 
-  season !: string;
-  entries_nbr!: number;
-  book_entries_loaded: boolean = false;
-  accreditation_level: number = -1;
-
   constructor(
     private localStorageService: LocalStorageService,
     private router: Router
   ) {
-
   }
 
   ngOnInit(): void {
@@ -39,40 +33,13 @@ export class AppComponent {
       });
     } else {
       console.log('No entry point found in local storage, navigating to default route.');
+      this.router.navigate(['admin']).catch(err => {
+        console.error('Error navigating to entry point:', err);
+      });
       this.localStorageService.setItem('entry_point', 'admin');
     }
 
 
-    // chargement de la configuration et des livres de comptes de S3 et dynamoDB
-    // toutes les app ont auront besoin ....
-
-    // this.systemDataService.get_configuration().subscribe((conf) => {
-    //   this.season = conf.season;
-    // });
-
-    // this.bookService.list_book_entries().subscribe((book_entries) => {
-    //   this.book_entries_loaded = true;
-    //   this.entries_nbr = book_entries.length;
-    // }),
-    //   catchError((err) => {
-    //     console.error('Error loading book entries:', err);
-    //     this.book_entries_loaded = false;
-    //     return [];
-    //   })
-
-
-    // // chargement de l'accréditation
-
-    // this.auth.logged_member$.subscribe(async (member) => {
-    //   this.accreditation_level = -1;
-    //   if (member !== null) {
-    //     let groups = await this.groupService.getCurrentUserGroups();
-    //     if (groups.length > 0) {
-    //       let group = groups[0] as Group_names;
-    //       this.accreditation_level = Group_priorities[group];
-    //     }
-    //   }
-    // });
   }
 
 }

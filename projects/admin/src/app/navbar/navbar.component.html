@@ -2,7 +2,7 @@
 
 <div class="row bg-light shadow-sm align-items-end">
   <h4 class="col-md-auto col-sm-12 mt-2">
-    <i class="fs-4 bi-bank nav-link" [routerLink]="['']">
+    <i class="fs-4 bi-bank nav-link" routerLink="./">
       Administration Bridge Club Saint-Orens
     </i>
   </h4>
@@ -78,12 +78,12 @@
           </ul>
         </li>
 
-        <li class="nav-item me-md-3 me-sm-1">
+        <!-- <li class="nav-item me-md-3 me-sm-1">
           <a class="nav-link "
             [routerLink]=" (accreditation_level >= accreditation_levels.Contributeur)? '/groups':'/'">
             <i class="fs-4 bi-person-badge"></i> <span class="ms-1 d-none d-sm-inline">Accès</span>
           </a>
-        </li>
+        </li> -->
 
         <li class="nav-item dropdown me-md-3 me-sm-1">
           <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown1" role="button" data-bs-toggle="dropdown"
@@ -95,10 +95,10 @@
             <li><a class="dropdown-item  " routerLink="./outils/produits">produits à la vente</a></li>
             <li><a class="dropdown-item " routerLink="./finance/books/list">base de données</a></li>
             <li><a class="dropdown-item  " routerLink="./finance/books/editor">écriture</a></li>
-
-            <li><a class="dropdown-item " routerLink="./sysconf">configuration</a></li>
+            <li><a class="dropdown-item " routerLink="./outils/groups">droits d'accès</a></li>
+            <li><a class="dropdown-item " routerLink="./outils/sysconf">configuration</a></li>
             <li><a class="dropdown-item  " routerLink="./outils/excel_import">import excel</a></li>
-            <li *ngIf="!production_mode"><a class="dropdown-item  " routerLink="./maintenance/cloneDB">clone DB</a></li>
+            <li *ngIf="!production_mode"><a class="dropdown-item  " routerLink="./outils/cloneDB">clone DB</a></li>
           </ul>
         </li>
 
