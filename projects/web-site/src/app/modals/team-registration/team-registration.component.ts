@@ -1,10 +1,10 @@
 import { Component, input, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { club_tournament } from '../../../../../common/ffb/interface/club_tournament.interface';
+import { club_tournament } from '../../../common/ffb/interface/club_tournament.interface';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { InputPlayerComponent } from '../../../../../common/ffb/input-player/input-player-license.component';
+import { InputPlayerComponent } from '../../../common/ffb/input-player/input-player-license.component';
 import { CommonModule } from '@angular/common';
-import { Player } from '../../../../../common/ffb/interface/tournament_teams.interface';
+import { Player } from '../../../common/ffb/interface/tournament_teams.interface';
 
 @Component({
     selector: 'app-team-registration',

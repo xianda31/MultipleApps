@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators, Form, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { Member } from '../../../../../common/member.interface';
+import { Member } from '../../../common/member.interface';
 import { first, last } from 'rxjs';
 import { auth } from '../../../../../../amplify/auth/resource';
 import { CommonModule } from '@angular/common';
-import { AuthentificationService } from '../../../../../common/authentification/authentification.service';
+import { AuthentificationService } from '../../../common/authentification/authentification.service';
 import { MembersService } from '../../../../../web-back/src/app/members/service/members.service';
 
 @Component({

@@ -3,7 +3,7 @@ import { Component } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import localeFr from '@angular/common/locales/fr';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { LocalStorageService } from './services/local-storage.service';
+import { LocalStorageService } from './back/services/local-storage.service';
 
 
 

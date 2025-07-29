@@ -2,8 +2,8 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import { Menu, Page, PageTemplateEnum } from '../../../../../common/menu.interface';
-import { SiteLayoutService } from '../../../../../common/services/site-layout.service';
+import { Menu, Page, PageTemplateEnum } from '../../../common/menu.interface';
+import { SiteLayoutService } from '../../../common/services/site-layout.service';
 import { InputMenuComponent } from "../input-menu/input-menu.component";
 
 @Component({

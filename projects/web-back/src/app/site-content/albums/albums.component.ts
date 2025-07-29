@@ -1,8 +1,8 @@
 import { Component } from '@angular/core';
-import { FileService } from '../../../../../common/services/files.service';
-import { S3Item } from '../../../../../common/file.interface';
+import { FileService } from '../../../common/services/files.service';
+import { S3Item } from '../../../common/file.interface';
 import { ImgUploadComponent } from '../files/img-upload/img-upload.component';
-import { ReplacePipe } from '../../../../../common/pipes/replace.pipe';
+import { ReplacePipe } from '../../../common/pipes/replace.pipe';
 import { CommonModule } from '@angular/common';
 import { FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 

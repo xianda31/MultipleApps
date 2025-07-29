@@ -1,9 +1,9 @@
 import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { SiteLayoutService } from '../../../../../common/services/site-layout.service';
-import { Article, PageTemplateEnum, Page, RenderingModeEnum } from '../../../../../common/menu.interface';
+import { SiteLayoutService } from '../../../common/services/site-layout.service';
+import { Article, PageTemplateEnum, Page, RenderingModeEnum } from '../../../common/menu.interface';
 import { CommonModule } from '@angular/common';
-import { RenderArticleComponent } from '../../../../../common/render-article/render-article.component';
+import { RenderArticleComponent } from '../../../common/render-article/render-article.component';
 
 @Component({
     selector: 'app-generic-simple-page',

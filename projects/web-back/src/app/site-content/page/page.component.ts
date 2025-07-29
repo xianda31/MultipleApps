@@ -1,12 +1,12 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import { Article, ArticleTemplateEnum, Menu, Page, PageTemplateEnum } from '../../../../../common/menu.interface';
+import { Article, ArticleTemplateEnum, Menu, Page, PageTemplateEnum } from '../../../common/menu.interface';
 import { InputMenuComponent } from "../input-menu/input-menu.component";
 import { CommonModule } from '@angular/common';
-import { SiteLayoutService } from '../../../../../common/services/site-layout.service';
-import { ToastService } from '../../../../../common/toaster/toast.service';
-import { ArticlesService } from '../../../../../common/services/articles.service';
+import { SiteLayoutService } from '../../../common/services/site-layout.service';
+import { ToastService } from '../../../common/services/toast.service';
+import { ArticlesService } from '../../../common/services/articles.service';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop'; // Import DragDropModule
 import { combineLatest, map, Observable } from 'rxjs';
 import { ArticleComponent } from '../article/article.component';
@@ -14,8 +14,8 @@ import { a } from '@aws-amplify/backend';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { GetAlbumComponent } from '../../modals/get-album/get-album.component';
 import { S3 } from 'aws-cdk-lib/aws-ses-actions';
-import { S3Item } from '../../../../../common/file.interface';
-import { FileService } from '../../../../../common/services/files.service';
+import { S3Item } from '../../../common/file.interface';
+import { FileService } from '../../../common/services/files.service';
 
 
 @Component({

@@ -1,0 +1,146 @@
+<div class="container">
+    <ng-container *ngIf="app === 'web-back';then admin_dashboard  else web_site ">
+    </ng-container>
+</div>
+
+
+<ng-template #web_site>
+    <h5> Les prochains tournois de régularité ouverts à l'inscription</h5>
+    <div class="container pt-3">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card my-1" *ngFor="let t of tournaments" [routerLink]="['/tournaments',t.id]" [queryParams]="{
+                    team_tournament_id: t.team_tournament_id,
+                    tournament_name : t.tournament_name,
+                    }">
+                    <div [class]="tournamentClass(t.tournament_name).card"
+                        style="box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;">
+                        <span class="stamp">
+                            <i [class]="tournamentClass(t.tournament_name).icon"></i>
+                        </span>
+                        <div class="card-body">
+                            <div class="card-title">
+                                <div class="row text-center">
+                                    <h6>{{t.date }} &nbsp;{{t.time}}</h6>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <small>
+                                        {{((t.nbr_inscrit-t.nbr_inscrit%2)/2)}} paire(s) inscrite(s)
+                                    </small>
+
+                                </div>
+                                <div class="col">
+                                    <!-- <div class="row"> -->
+                                    <small *ngIf="t.has_isolated_player">
+                                        <i class="bi bi-person-arms-up"> </i>
+                                        <span class="text-info-emphasis">cherche partenaire </span>
+                                    </small>
+                                    <!-- </div> -->
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <router-outlet></router-outlet>
+            </div>
+        </div>
+
+
+    </div>
+</ng-template>
+
+<ng-template #admin_dashboard2>
+    <div class="row">
+        <div class="p-2 col col-md-4 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Les prochains tournois ouverts à l'inscription</h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <!-- <th>Tournoi</th> -->
+                                    <th>Heure</th>
+                                    <th class="text-center">nb paires</th>
+                                    <th class="text-center"><i class="bi bi-person-arms-up"></i></th>
+                                    <!-- <th>Action</th> -->
+
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let t of tournaments" (click)="clickOnTournament(t)">
+                                    <td>{{t.date}}</td>
+                                    <!-- <td>{{t.tournament_name }}  </td> -->
+                                    <td>{{t.time}}</td>
+                                    <td class="text-center">{{((t.nbr_inscrit-t.nbr_inscrit%2)/2)}}</td>
+                                    <td class="text-center"><i *ngIf="t.has_isolated_player"
+                                            class="bi bi-person-arms-up"></i>
+                                    </td>
+                                    <!-- <td class="text-center">
+                                        <h4 class="action">
+                                            <i (click)="clickOnTournament(t)" *ngIf="!tournamentSelected"
+                                                class="bi bi-eye"></i>
+                                            <i (click)="clickOnTournament(t)" *ngIf="tournamentSelected"
+                                                class="bi bi-eye-slash"></i>
+                                        </h4>
+                                    </td> -->
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div *ngIf="tournamentSelected">
+                        <app-teams [tournament]="selectedTournament"></app-teams>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <router-outlet></router-outlet>
+        </div>
+    </div>
+
+</ng-template>
+
+
+<ng-template #admin_dashboard>
+    <!-- <div class="container pt-3"> -->
+    <h5> Les prochains tournois de régularité ouverts à l'inscription</h5>
+    <div class="container-fluid">
+        <div class="row flex-wrap">
+            <div class="col-auto col-md-3 px-sm-2 px-0 ">
+                <div class="d-flex flex-column align-items-center align-items-sm-start px-3 pt-2  min-vh-100">
+                    <ul class="nav nav-pills flex-column mb-sm-auto mb-0 align-items-center align-items-sm-start"
+                        id="menu">
+
+                        <li>
+                            <!-- <a data-bs-toggle="collapse" class="nav-link px-0 align-middle">
+                                <i class="fs-4 bi-grid"></i> <span class="ms-1 d-none d-sm-inline">Products</span> </a> -->
+
+                            <ul class=" navbar-nav flex-column ms-1" id="submenu3" data-bs-parent="#menu">
+                                <li class="nav-item" *ngFor="let t of tournaments">
+                                    <a class="nav-link  px-0" [routerLink]="['/tournaments',t.id]"
+                                        [queryParams]="{                    team_tournament_id: t.team_tournament_id,                    tournament_name : t.tournament_name}">
+                                        <span class="d-none d-sm-inline">{{t.date }} &nbsp;{{t.time}}</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <!-- </nav> -->
+            <div class="col-md-9">
+                <router-outlet></router-outlet>
+            </div>
+        </div>
+    </div>
+    <!-- </div> -->
+</ng-template>

@@ -1,0 +1,39 @@
+
+export interface FFB_licensee {
+    committee_school_id: any
+    committee_school_label: any
+    committee_school_city: any
+    person_id: number
+    gender: string
+    firstname: string
+    lastname: string
+    license_number: string
+    birthdate: string
+    city?: string
+    season_id: number
+    season?: string
+    license_id?: number
+    license_name?: string
+    license_parent_id?: number
+    license_parent_name?: string
+    register: boolean
+    free: boolean
+    register_date?: string
+    email?: string
+    phone_one: string
+    phone_two?: string
+    has_valid_email: boolean
+    is_email_verified: boolean
+    letter?: string
+    is_alive: boolean
+    school_year: any
+    paid_amount?: number
+    is_suspended: boolean
+    is_online_license: boolean
+    allow_notification: boolean
+    warning_message: any
+    orga_license_id?: number
+    orga_license_code?: string
+    orga_license_name?: string
+    is_sympathisant?: boolean
+}

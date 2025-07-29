@@ -1,0 +1,8 @@
+<input type="text" style="outline:none;border:none;width: 100%; " [attr.list]="listeId" [(ngModel)]="str_player"
+    (ngModelChange)="setValue(str_player)" [placeholder]="placeholder">
+<datalist [id]="listeId">
+    <option *ngFor="let partner of partners ">
+        {{partner.firstname}} {{partner.lastname}} ({{partner.license_number}})
+    </option>
+</datalist>
+<!-- {{str_player | json}} -->

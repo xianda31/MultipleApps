@@ -1,0 +1,118 @@
+<div class="container ">
+    <form [formGroup]="loggerForm">
+        <div class="col-md-8 offset-md-2">
+
+            <div class="card p-5">
+                <img class=" nice_shadow w-25 align-self-center" src="images/bcsto.jpg">
+                <div class="card-body">
+                    <div class="row">
+
+                        <div class=" col-md-6 text-muted p-5">
+
+                            <ng-container [ngTemplateOutlet]="show_form"> </ng-container>
+
+                            <ng-container [ngSwitch]="mode$ | async">
+                                <ng-container *ngSwitchCase="process_flow.SIGN_UP"
+                                    [ngTemplateOutlet]="sign_up"></ng-container>
+                                <ng-container *ngSwitchCase="process_flow.CONFIRM_SIGN_UP"
+                                    [ngTemplateOutlet]="confirm_sign_up"></ng-container>
+                                <ng-container *ngSwitchCase="process_flow.CONFIRM_RESET_PASSWORD"
+                                    [ngTemplateOutlet]="confirm_reset_password"></ng-container>
+                                <ng-container *ngSwitchCase="process_flow.SIGN_IN"
+                                    [ngTemplateOutlet]="sign_in"></ng-container>
+                            </ng-container>
+                        </div>
+
+                        <div class="col-md-6">
+                            <img class="img-fluid photo" src="images/ai3.jpg">
+                            <p class="text-center text-muted mt-3">En vous connectant, vous pourrez accéder à des
+                                services
+                                et informations
+                                réservés aux adhérents du Club</p>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <ng-template #sign_in>
+            <div class="row mt-5">
+                <button class="btn btn-success " type="button" (click)="signIn()"
+                    [disabled]="!loggerForm.valid">Login</button>
+            </div>
+            <div class="row mt-3">
+                <button class="btn btn-link" type="button" (click)="resetPassword()">Mot de passe oublié</button>
+                <button class="btn btn-link" type="button" (click)="signOut()">se déconnecter</button>
+                <button class="btn btn-link" type="button" (click)="goSignUp()">Créer un compte</button>
+            </div>
+
+        </ng-template>
+
+
+        <ng-template #confirm_reset_password>
+            <div class="row mt-3">
+                <label> Renseignez le code envoyé par email : </label>
+                <input type="text" (keyup.enter)="setPassword()" class="form-control bg-outline-primary "
+                    formControlName="code" placeholder="code reçu par mail">
+            </div>
+            <div class="row mt-5">
+                <button class="btn btn-success " type="button" (click)="setPassword()"
+                    [disabled]="!loggerForm.valid">Nouveau mot de passe</button>
+            </div>
+
+        </ng-template>
+
+        <ng-template #sign_up>
+            <div class="row mt-5">
+                <button class="btn btn-success " type="button" (click)="signUp()" [disabled]="!loggerForm.valid">
+                    Créer mon compte</button>
+            </div>
+            <div *ngIf="sign_up_sent" class="row mt-3">
+                <label> Renseignez le code qui vous a été envoyé : </label>
+                <input type="text" (keyup.enter)="confirmSignUp()" class="form-control" formControlName="code"
+                    placeholder="code reçu par mail">
+            </div>
+        </ng-template>
+
+
+
+        <ng-template #confirm_sign_up>
+            <div class="row mt-3">
+                <label> Renseignez le code envoyé par email : </label>
+                <input type="text" (keyup.enter)="confirmSignUp()" class="form-control bg-outline-primary "
+                    formControlName="code" placeholder="code reçu par mail">
+            </div>
+        </ng-template>
+
+        <ng-template #show_form>
+            <h5 *ngIf="mode === process_flow.SIGN_IN">Connexion au compte</h5>
+            <h5 *ngIf="mode === process_flow.SIGN_UP">Création de compte</h5>
+            <br>
+            <div class="row mt-3 ">
+                <label for="email">adresse mail</label>
+                <input class="form-control me-2" autocomplete="email" type="text" id="email" formControlName="email">
+                <span *ngIf="email.dirty && email.hasError('not_member')" class="text-danger">
+                    adresse mail non répertoriée au Club</span>
+                <span
+                    *ngIf=" mode !== process_flow.SIGN_UP && email.dirty && !email.hasError('not_member') && email.hasError('no_account')"
+                    class="text-danger">
+                    créez votre compte d'abord</span>
+            </div>
+            <div class="row mt-3">
+                <label for="password">mot de passe</label>
+                <div class="input-group">
+                    <input class="form-control me-2" autocomplete="password" (keyup.enter)="signIn()"
+                        [type]="show_password?'text':'password'" id="password" formControlName="password">
+                    <i [class]="show_password?'bi bi-eye-slash':'bi bi-eye'"
+                        (click)="show_password = !show_password"></i>
+                </div>
+                <span *ngIf="password.dirty && password.hasError('pattern')" class="text-danger">
+                    complexité mot de passe insuffisante
+                </span>
+            </div>
+        </ng-template>
+
+    </form>
+</div>

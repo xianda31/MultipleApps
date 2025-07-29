@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { CanActivateFn } from '@angular/router';
-import { AuthentificationService } from '../../../../common/authentification/authentification.service';
+import { AuthentificationService } from '../../common/authentification/authentification.service';
 import { map, take, tap } from 'rxjs';
 
 

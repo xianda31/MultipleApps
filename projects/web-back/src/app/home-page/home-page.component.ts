@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { RenderingModeEnum } from '../../../../common/menu.interface';
+import { RenderingModeEnum } from '../../common/menu.interface';
 
 @Component({
     selector: 'app-home-page',
