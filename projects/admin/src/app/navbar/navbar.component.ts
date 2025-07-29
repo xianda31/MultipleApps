@@ -34,7 +34,6 @@ export class NavbarComponent implements OnInit {
   ngOnInit(): void {
 
     this.accreditation_level = -1;
-    this.toastService.showInfo('Administration', 'Veuillez vous connecter pour utilser cette application.');
 
     this.auth.logged_member$.subscribe(async (member) => {
       if (member !== null) {

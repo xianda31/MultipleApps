@@ -22,10 +22,10 @@ export class HomeComponent {
   }[] = [
       {
         title: 'Boutique',
-        subtitle: 'Enregistrement des ventes, droits de table et gestion caisse',
+        subtitle: 'Vente, droits de table et gestion caisse',
         descriptions: ['Ouvrir une session de vente et enregistrer les achats des adhérents',
           'Ouvrir un tournoi et enregistrer les droits de table',
-          'Accéder à la base de données des articles en vente',
+          'Accéder à la base des articles en vente',
           'Faire un état de caisse '
         ],
         accreditation: Group_names.Support

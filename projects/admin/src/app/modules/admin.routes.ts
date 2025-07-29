@@ -30,6 +30,9 @@ export const routes: Routes = [
       { path: 'caisse/produits', component: ShopComponent },
       { path: 'caisse/droits-de-table', component: FeesCollectorComponent },
       { path: 'caisse/état-de-caisse', component: CashBoxStatusComponent },
+      { path: 'caisse/produits', component: ProductsComponent },
+
+      
       { path: 'members/database', component: MembersComponent },
       { path: 'members/cartes-admission', component: GameCardsEditorComponent },
       { path: 'members/payments', component: MemberSalesComponent },
@@ -47,7 +50,6 @@ export const routes: Routes = [
       { path: 'finance/books/editor', component: BooksEditorComponent, data: { access: 'full' } },
       { path: 'finance/books/editor/:id', component: BooksEditorComponent, data: { access: 'full' } },
       
-      { path: 'outils/produits', component: ProductsComponent },
       { path: 'outils/sysconf', component: SysConfComponent },
       { path: 'outils/excel_import', component: ImportExcelComponent },
       { path: 'outils/groups', component: GroupsListComponent },
