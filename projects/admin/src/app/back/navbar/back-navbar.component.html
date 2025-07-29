@@ -9,11 +9,13 @@
     <span *ngIf="!production_mode" class="badge bg-dark" style="font-size: 0.6rem;">dev</span>
     <span class="fs-4 ms-1"> Administration Bridge Club
       <span style="white-space:nowrap">Saint&ndash;Orens</span>
-      </span>
-      <span>
+    </span>
+    <span>
       (saison {{season}}) </span>
+
+    <!-- backdoor to front -->
     <span class="h6 ms-auto d-none d-sm-inline align-self-end">
-      <i class="bi bi-door-open-fill"></i>
+      <i class="bi bi-door-open-fill" routerLink="/front"></i>
     </span>
   </h4>
   <!-- <h5 class="col-md-auto col-sm-12">

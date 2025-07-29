@@ -1,26 +1,26 @@
 import { Routes } from '@angular/router';
-import { ShopComponent } from '../shop/shop.component';
-import { FeesCollectorComponent } from '../fees/fees-collector/fees-collector.component';
-import { HomeComponent } from '../home/home.component';
-import { BooksOverviewComponent } from '../books/books-overview/books-overview.component';
-import { BooksEditorComponent } from '../books/books-edit/books-editor.component';
-import { CashBoxStatusComponent } from '../books/cash-box-status/cash-box-status.component';
-import { BankReconciliationComponent } from '../bank-reconciliation/bank-reconciliation.component';
-import { BalanceComponent } from '../balance/balance.component';
-import { ImportExcelComponent } from '../excel/import-excel/import-excel.component';
-import { BooksListComponent } from '../books/books-list/books-list.component';
-import { ExpenseAndRevenueComponent } from '../expense-and-revenue/expense-and-revenue.component';
-import { ExpenseAndRevenueDetailsComponent } from '../expense-and-revenue/expense-and-revenue-details/expense-and-revenue-details.component';
-import { GameCardsEditorComponent } from '../game-cards/game-cards-editor/game-cards-editor.component';
-// import { BuyComponent } from '../buy/buy.component';
-import { PageNotFoundComponent } from '../page-not-found/page-not-found.component';
-import { MemberSalesComponent } from '../member-sales/member-sales.component';
-import { SysConfComponent } from '../sys-conf/sys-conf.component';
-import { GroupsListComponent } from '../groups/groups-list/groups-list.component';
-import { ProductsComponent } from '../products/products.component';
-import { MembersComponent } from '../../common/members/members.component';
-import { CloneDBComponent } from '../maintenance/clone-DB/clone-db.component';
-import { AdminComponent } from '../admin/admin.component';
+import { ShopComponent } from './shop/shop.component';
+import { FeesCollectorComponent } from './fees/fees-collector/fees-collector.component';
+import { HomeComponent } from './home/home.component';
+import { BooksOverviewComponent } from './books/books-overview/books-overview.component';
+import { BooksEditorComponent } from './books/books-edit/books-editor.component';
+import { CashBoxStatusComponent } from './books/cash-box-status/cash-box-status.component';
+import { BankReconciliationComponent } from './bank-reconciliation/bank-reconciliation.component';
+import { BalanceComponent } from './balance/balance.component';
+import { ImportExcelComponent } from './excel/import-excel/import-excel.component';
+import { BooksListComponent } from './books/books-list/books-list.component';
+import { ExpenseAndRevenueComponent } from './expense-and-revenue/expense-and-revenue.component';
+import { ExpenseAndRevenueDetailsComponent } from './expense-and-revenue/expense-and-revenue-details/expense-and-revenue-details.component';
+import { GameCardsEditorComponent } from './game-cards/game-cards-editor/game-cards-editor.component';
+// import { BuyComponent } from './buy/buy.component';
+import { PageNotFoundComponent } from '../common/page-not-found/page-not-found.component';
+import { MemberSalesComponent } from './member-sales/member-sales.component';
+import { SysConfComponent } from './sys-conf/sys-conf.component';
+import { GroupsListComponent } from './groups/groups-list/groups-list.component';
+import { ProductsComponent } from './products/products.component';
+import { MembersComponent } from '../common/members/members.component';
+import { CloneDBComponent } from './maintenance/clone-DB/clone-db.component';
+import { AdminComponent } from './admin/admin.component';
 
 export const routes: Routes = [
   {

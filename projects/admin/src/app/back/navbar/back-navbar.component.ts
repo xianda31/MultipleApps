@@ -10,13 +10,13 @@ import { ToastService } from '../../common/services/toast.service';
 import { environment } from '../../../environments/environment';
 
 @Component({
-  selector: 'app-navbar',
+  selector: 'app-back-navbar',
   standalone: true,
   imports: [CommonModule, RouterLink, FormsModule, ReactiveFormsModule, AdminInComponent],
-  templateUrl: './navbar.component.html',
-  styleUrl: './navbar.component.scss'
+  templateUrl: './back-navbar.component.html',
+  styleUrl: './back-navbar.component.scss'
 })
-export class NavbarComponent implements OnInit {
+export class BackNavbarComponent implements OnInit {
   @Input() season: string = '';
   @Input() entries_nbr: number = 0;
    accreditation_level!: number;

@@ -25,19 +25,9 @@ export class AppComponent {
     registerLocaleData(localeFr);
 
 
-    const entry_point = this.localStorageService.getItem('entry_point');
-    if (entry_point) {
-      console.log('Entry point found in local storage:', entry_point);
-      this.router.navigate(['admin']).catch(err => {
-        console.error('Error navigating to entry point:', err);
-      });
-    } else {
-      console.log('No entry point found in local storage, navigating to default route.');
-      this.router.navigate(['admin']).catch(err => {
-        console.error('Error navigating to entry point:', err);
-      });
-      this.localStorageService.setItem('entry_point', 'admin');
-    }
+    let entry_point = this.localStorageService.getItem('entry_point');
+    entry_point = entry_point ? entry_point : 'front';
+    this.router.navigate([entry_point]);
 
 
   }

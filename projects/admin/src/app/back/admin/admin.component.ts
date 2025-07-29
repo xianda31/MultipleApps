@@ -2,16 +2,17 @@ import { Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { NavbarComponent } from '../navbar/navbar.component';
+import { BackNavbarComponent } from '../navbar/back-navbar.component';
 import { ToasterComponent } from '../../common/toaster/components/toaster/toaster.component';
 import { catchError } from 'rxjs';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { BookService } from '../services/book.service';
+import { LocalStorageService } from '../services/local-storage.service';
 
 @Component({
   selector: 'app-admin',
   standalone: true,
-  imports: [RouterModule, ReactiveFormsModule, NavbarComponent, ToasterComponent, CommonModule, FormsModule],
+  imports: [RouterModule, ReactiveFormsModule, BackNavbarComponent, ToasterComponent, CommonModule, FormsModule],
   templateUrl: './admin.component.html',
   styleUrls: ['./admin.component.scss']
 })
@@ -23,10 +24,14 @@ export class AdminComponent {
 
   constructor(
     private systemDataService: SystemDataService,
-    private bookService: BookService  ) {
+    private bookService: BookService,
+    private localStorageService: LocalStorageService,
+  ) {
 
   }
   ngOnInit(): void {
+
+    this.localStorageService.setItem('entry_point', 'front');
 
     this.systemDataService.get_configuration().subscribe((conf) => {
       this.season = conf.season;
@@ -45,6 +50,6 @@ export class AdminComponent {
         this.entries_nbr = book_entries.length;
       });
 
-    
+
   }
 }
