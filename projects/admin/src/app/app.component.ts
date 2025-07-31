@@ -4,12 +4,13 @@ import { Router, RouterModule } from '@angular/router';
 import localeFr from '@angular/common/locales/fr';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { LocalStorageService } from './back/services/local-storage.service';
+import { SharedModule } from './common/shared.module';
 
 
 
 @Component({
   selector: 'app-root',
-  imports: [RouterModule, ReactiveFormsModule, CommonModule, FormsModule],
+  imports: [RouterModule, ReactiveFormsModule, CommonModule, FormsModule,SharedModule],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })

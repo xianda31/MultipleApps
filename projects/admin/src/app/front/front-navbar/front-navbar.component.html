@@ -1,12 +1,12 @@
-<div class="row bg-light shadow-sm align-items-end">
-  <h4 class="d-flex d-inline align-items-end mt-2">
-    <span class="position-relative">
-      <!-- <i class="fs-4 bi-bank nav-link" routerLink="/admin"></i> -->
-    </span>
-    <span class="fs-4 ms-1"> Bridge Club
-      <span style="white-space:nowrap">Saint&ndash;Orens</span>
-    </span>
+<div class="row bg-light shadow-sm ">
 
+  <h4 class="d-flex d-inline align-items-center mt-2">
+    <a class="navbar-brand">
+      <img class="brand-img me-2" src="bcsto_ffb.jpg">
+    </a>
+    <span class="fs-3 ms-1"> Bridge Club de Saint-Orens
+      <!-- <span style="white-space:nowrap">Saint&ndash;Orens</span> -->
+    </span>
     <!-- backdoor to back -->
     <span class="h6 ms-auto d-none d-sm-inline align-self-end">
       <a [routerLink]="'/admin'">
@@ -14,4 +14,66 @@
       </a>
     </span>
   </h4>
-  </div>
+
+  <nav class="navbar navbar-expand-lg navbar-light ">
+    <div class="container">
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <a routerLink="/authentification/sign-in">
+                    <button class="btn btn-success align-items-center nice_shadow" type="button">
+                        <i class="bi bi-person-fill"></i>
+                        <span class="ms-2">Espace membre</span>
+                    </button>
+                </a>
+        </ul>
+      </div>
+    </div>
+  </nav>
+</div>
+
+
+<!--           <ng-container *ngFor="let menu of siteMenus">
+                        <li *ngIf="menu.pages && menu.pages.length >= 1" class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                                {{menu.label}}
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <ng-container *ngFor="let page of menu.pages">
+                                    <li *ngIf="(logged_member$ | async) || !page.member_only">
+                                        <a class="dropdown-item"
+                                            routerLink="{{'/' + page.link | replace : ' ':'-'}}">{{page.link}}</a>
+                                    </li>
+                                </ng-container>
+                            </ul>
+                        </li>
+                    </ng-container>
+
+                    <li *ngIf="logged_member$ | async" class="nav-item">
+                        <a class="nav-link" routerLink="/tournaments">Tournois</a>
+                    </li>
+                </ul>
+                <ul *ngIf="logged_member$ | async" class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            {{(logged_member$ | async)?.firstname}}
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <li> <a class="dropdown-item" routerLink="/personal/data">Mes données</a></li>
+                            <li> <a class="dropdown-item" routerLink="/authentification/sign-out">Déconnexion</a></li>
+
+                        </ul>
+                    </li>
+                </ul>
+                <a *ngIf="!(logged_member$ | async)" routerLink="/authentification/sign-in">
+                    <button class="btn btn-success align-items-center nice_shadow" type="button">
+                        <i class="bi bi-person-fill"></i>
+                        <span class="ms-2">Espace membre</span>
+                    </button>
+                </a> -->

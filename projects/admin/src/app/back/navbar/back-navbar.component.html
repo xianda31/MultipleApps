@@ -15,7 +15,9 @@
 
     <!-- backdoor to front -->
     <span class="h6 ms-auto d-none d-sm-inline align-self-end">
-      <i class="bi bi-door-open-fill" routerLink="/front"></i>
+      <a [routerLink]="'/front'">
+      <i class="bi bi-door-open-fill" ></i>
+      </a>
     </span>
   </h4>
   <!-- <h5 class="col-md-auto col-sm-12">
@@ -27,8 +29,8 @@
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      
       <ul class=" navbar-nav  me-auto mb-md-0 mb-lg-0  align-items-start">
-
 
         <li *ngIf="accreditation_level >= accreditation_levels.Contributeur" class="nav-item dropdown me-md-3 me-sm-1">
           <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown1" role="button" data-bs-toggle="dropdown"

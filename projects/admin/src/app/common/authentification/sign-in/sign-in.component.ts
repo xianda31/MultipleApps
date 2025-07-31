@@ -1,11 +1,11 @@
 import { Component } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
-import { MembersService } from '../../../web-back/src/app/members/service/members.service';
 import { delay, from, map, Observable, of, switchMap, tap } from 'rxjs';
 import { ToastService } from '../../services/toast.service';
 import { Process_flow } from '../authentification_interface';
 import { Router } from '@angular/router';
 import { AuthentificationService } from '../authentification.service';
+import { MembersService } from '../../members/services/members.service';
 
 const EMAIL_PATTERN = "^[_A-Za-z0-9-\+]+(\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\.[A-Za-z0-9]+)*(\.[A-Za-z]{2,})$";
 const PSW_PATTERN = '^(?!\\s+)(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[\\^$*.[\\]{}()?"!@#%&/\\\\,><\': ;| _~`=+-]).{8,256}(?<!\\s)$';

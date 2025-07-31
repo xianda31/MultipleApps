@@ -72,8 +72,14 @@ export class AdminInComponent {
   get email() { return this.loginForm.get('email')!; }
   get password() { return this.loginForm.get('password') };
 
-  signOut() {
-    this.auth.signOut();
+  async signOut() {
+    try {
+      sessionStorage.clear();  // clear session storage
+      this.logged_member = null;
+      await this.auth.signOut();  // sign out will redirect to the login page
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   }
 
   async signIn() {
