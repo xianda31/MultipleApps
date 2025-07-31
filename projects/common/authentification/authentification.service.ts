@@ -162,22 +162,7 @@ export class AuthentificationService {
   }
 
   async signOut(): Promise<any> {
-    let promise = new Promise((resolve, reject) => {
-      signOut(
-        { global: true }  // est-ce que cela clear les données de l'utilisateur dans le local storage ?
-      )
-        .catch((err) => {
-          this.toastService.showInfo('sign out', err.message);
-          reject(err);
-        })
-        .then((res) => {
-          // this._logged_member = null;
-          this._logged_member$.next(null);
-          // this.toastService.showSuccess('sign out', 'success');
-          resolve(res);
-        });
-    });
-    return promise;
+    return signOut({ global: true });
   }
 
   async resetPassword(email: string): Promise<any> {

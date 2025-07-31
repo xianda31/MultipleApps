@@ -73,6 +73,8 @@ export class AdminInComponent {
   get password() { return this.loginForm.get('password') };
 
   signOut() {
+    sessionStorage.clear();
+    this.logged_member = null;
     this.auth.signOut();
   }
 
