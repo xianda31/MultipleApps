@@ -7,7 +7,7 @@ export const routes: Routes = [
   { path: '',
     //  component: FrontComponent,
      children: [
-      { path: 'authentification/sign-in', component: SignInComponent },
+      { path: 'authentification', component: SignInComponent },
        { path: '', component: FrontComponent }
      ]
    },
