@@ -31,7 +31,7 @@ export class AdminComponent {
   }
   ngOnInit(): void {
 
-    this.localStorageService.setItem('entry_point', 'front');
+    this.localStorageService.setItem('entry_point', 'admin');
 
     this.systemDataService.get_configuration().subscribe((conf) => {
       this.season = conf.season;
