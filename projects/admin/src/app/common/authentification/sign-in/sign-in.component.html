@@ -1,13 +1,13 @@
 <div class="container ">
     <form [formGroup]="loggerForm">
-        <div class="col-md-8 offset-md-2">
+        <!-- <div class="col-md-8 offset-md-2"> -->
 
-            <div class="card p-5">
-                <img class=" nice_shadow w-25 align-self-center" src="bcsto.jpg">
+            <div class="card ">
+                <!-- <img class=" nice_shadow w-25 align-self-center" src="bcsto.jpg"> -->
                 <div class="card-body">
                     <div class="row">
 
-                        <div class=" col-md-6 text-muted p-5">
+                        <div class=" col-md-12 text-muted p-5">
 
                             <ng-container [ngTemplateOutlet]="show_form"> </ng-container>
 
@@ -22,7 +22,7 @@
                                     [ngTemplateOutlet]="sign_in"></ng-container>
                             </ng-container>
                         </div>
-
+<!-- 
                         <div class="col-md-6">
                             <img class="img-fluid photo" src="ai3.jpg">
                             <p class="text-center text-muted mt-3">En vous connectant, vous pourrez accéder à des
@@ -30,11 +30,11 @@
                                 et informations
                                 réservés aux adhérents du Club</p>
 
-                        </div>
+                        </div> -->
                     </div>
                 </div>
             </div>
-        </div>
+        <!-- </div> -->
 
 
         <ng-template #sign_in>

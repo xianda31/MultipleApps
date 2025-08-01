@@ -22,21 +22,21 @@ export class GroupService {
 
   constructor() {
 
-    const hubListener = (event: any) => {
-      let authEvent: AuthEvent = event.payload;
-      switch (authEvent.event) {
-        case 'signedIn':
-        case 'signedOut':
-        case 'signedUp':
-          // console.log('Auth event:', authEvent);
-          this._auth_event$.next(authEvent);
-          break;
-        default:
-          console.warn('Unhandled auth event:', authEvent.event);
-          break;
-      }
-    }
-    Hub.listen('auth', hubListener);
+    // const hubListener = (event: any) => {
+    //   let authEvent: AuthEvent = event.payload;
+    //   switch (authEvent.event) {
+    //     case 'signedIn':
+    //     case 'signedOut':
+    //     case 'signedUp':
+    //       // console.log('Auth event:', authEvent);
+    //       this._auth_event$.next(authEvent);
+    //       break;
+    //     default:
+    //       console.warn('Unhandled auth event:', authEvent.event);
+    //       break;
+    //   }
+    // }
+    // Hub.listen('auth', hubListener);
   }
 
   get authEvent$() {

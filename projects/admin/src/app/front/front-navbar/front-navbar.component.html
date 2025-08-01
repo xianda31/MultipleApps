@@ -1,40 +1,72 @@
-<div class="row bg-light shadow-sm ">
+<!-- <div class="row align-items-center"> -->
+  
+  <!-- <div class="col-auto"> -->
+    <nav class="navbar navbar-expand-lg  ">
+ 
 
-  <h4 class="d-flex d-inline align-items-center mt-2">
-    <a class="navbar-brand">
-      <img class="brand-img me-2" src="bcsto_ffb.jpg">
-    </a>
-    <span class="fs-3 ms-1"> Bridge Club de Saint-Orens
-      <!-- <span style="white-space:nowrap">Saint&ndash;Orens</span> -->
-    </span>
-    <!-- backdoor to back -->
-    <span class="h6 ms-auto d-none d-sm-inline align-self-end">
-      <a [routerLink]="'/admin'">
-        <i class="bi bi-door-open-fill"></i>
-      </a>
-    </span>
-  </h4>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+      aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
 
-  <nav class="navbar navbar-expand-lg navbar-light ">
-    <div class="container">
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
-        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <!-- <div class="justify-content-between"> -->
 
-      <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-            <a [routerLink]="'authentification'">
-                    <button class="btn btn-success align-items-center nice_shadow" type="button">
-                        <i class="bi bi-person-fill"></i>
-                        <span class="ms-2">Espace membre</span>
-                    </button>
-                </a>
-        </ul>
-      </div>
+      <!-- les menus -->
+      <ul class="navbar-nav  align-items-start">
+        <li class="nav-item  me-md-2 me-sm-1">
+          <a class="nav-link" routerLink="authentification"> Accueil </a>
+        </li>
+      </ul>
+
+      <!-- en dernier , login = "/authentification" -->
+      <ul class="navbar-nav ms-auto d-flex align-items-center justify-content-end">
+
+        <!-- <li class="nav-item  me-md-2 me-sm-1">
+          <a routerLink="authentification">
+            <button class="btn btn-sm btn-success align-items-center nice_shadow" type="button">
+              <i class="bi bi-person-fill"></i>
+              <span class="ms-2">Espace membre</span>
+            </button>
+          </a>
+        </li> -->
+
+        <button *ngIf="!logged_member" class="btn btn-success btn-sm" type="button" data-bs-toggle="offcanvas" data-bs-target="#loggingOffCanvas" aria-controls="loggingOffCanvas">
+          Espace membre
+        </button>
+
+        <li *ngIf="logged_member" class="nav-item dropdown">
+          <button class="nav-link dropdown-toggle btn btn-link" id="navbarDropdown" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            {{logged_member.firstname}}
+          </button>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+            <li> <a class="dropdown-item" routerLink="/personal/data">Mes données</a></li>
+            <li> <a class="dropdown-item" routerLink="/authentification/sign-out">Déconnexion</a></li>
+          </ul>
+        </li>
+      </ul>
+
     </div>
+    <!-- </div> -->
   </nav>
+
+
+
+<div class="offcanvas offcanvas-end" data-bs-backdrop="static" tabindex="-1" id="loggingOffCanvas" aria-labelledby="staticBackdropLabel">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title" id="staticBackdropLabel">Se connecter</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body">
+    <app-sign-in></app-sign-in>
+  </div>
 </div>
+
+
+
+
+  <!-- </div> -->
+<!-- </div> -->
 
 
 <!--           <ng-container *ngFor="let menu of siteMenus">
