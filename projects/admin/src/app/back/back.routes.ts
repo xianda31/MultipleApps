@@ -27,7 +27,7 @@ export const routes: Routes = [
     path: '',
     component: AdminComponent,
     children: [
-      { path: 'caisse/produits', component: ShopComponent },
+      { path: 'caisse/ventes', component: ShopComponent },
       { path: 'caisse/droits-de-table', component: FeesCollectorComponent },
       { path: 'caisse/état-de-caisse', component: CashBoxStatusComponent },
       { path: 'caisse/produits', component: ProductsComponent },
