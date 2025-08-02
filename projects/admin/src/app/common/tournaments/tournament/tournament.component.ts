@@ -1,86 +1,70 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { ToastService } from '../../services/toast.service';
 import { AuthentificationService } from '../../authentification/authentification.service';
-import { Player, Team, TournamentTeams } from '../../ffb/interface/tournament_teams.interface';
+import { Player, Team } from '../../ffb/interface/tournament_teams.interface';
 import { Member } from '../../member.interface';
-import { FormControl, Validators, Form, FormsModule, ReactiveFormsModule, ValidationErrors, AbstractControl } from '@angular/forms';
-import { CommonModule, UpperCasePipe } from '@angular/common';
-import { BehaviorSubject, combineLatest, from, map, Observable, of, switchMap } from 'rxjs';
-import { FFB_proxyService } from '../../ffb/services/ffb.service';
+import { FormControl, Validators, FormsModule, ReactiveFormsModule, ValidationErrors, AbstractControl, FormBuilder } from '@angular/forms';
+import { CommonModule, Location, UpperCasePipe } from '@angular/common';
 import { TournamentService } from '../../services/tournament.service';
 import { InputPlayerLicenseComponent } from '../../ffb/input-player/input-player-license.component';
+import { Observable } from 'rxjs';
+import { map, switchMap, tap } from 'rxjs/operators';
 
 @Component({
-    selector: 'app-tournament',
-    imports: [UpperCasePipe, InputPlayerLicenseComponent, CommonModule, FormsModule, ReactiveFormsModule],
-    templateUrl: './tournament.component.html',
-    styleUrl: './tournament.component.scss'
+  selector: 'app-tournament',
+  imports: [UpperCasePipe, InputPlayerLicenseComponent, CommonModule, FormsModule, ReactiveFormsModule],
+  templateUrl: './tournament.component.html',
+  styleUrl: './tournament.component.scss'
 })
 export class TournamentComponent implements OnInit {
 
   team_tournament_id!: string;
   tournament_name = '';
+  tournament_date = '';
   teams!: Team[];
-  team_update$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  // team_update$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   whoAmI: Member | null = null;
   subscription_authorized = false;
-  player2: FormControl = new FormControl(null, Validators.required);
+  subscription_authorized$!: Observable<boolean>;
+  player2!: FormControl;
 
   constructor(
-    private ffbService: FFB_proxyService,
     private TournamentService: TournamentService,
     private toastService: ToastService,
     private auth: AuthentificationService,
+    private fb: FormBuilder,
     private route: ActivatedRoute,
-    private router: Router
+    private location: Location
   ) { }
   ngOnInit(): void {
 
-    console.log('ngOnInit');
-    this.player2.setValidators([this.player2_validator]);
+    this.player2 = this.fb.control(null, [Validators.required, this.player2_validator]);
+
+    this.subscription_authorized$ = this.auth.logged_member$.pipe(
+      map((member) => {
+        if (member === null) {
+          return false;
+        } else {
+          return !this.has_subscribed(Number(member.license_number));
+        }
+      })
+    );
 
     this.route.queryParams.subscribe((params) => {
       this.team_tournament_id = params['team_tournament_id'];
       this.tournament_name = params['tournament_name'];
+      this.tournament_date = params['tournament_date'];
 
       console.log('subscribing to id', this.team_tournament_id);
 
-      this.TournamentService.getTeams(this.team_tournament_id).subscribe((tteams) => {
-        this.teams = tteams.teams;
-
-      });
-
-      this.auth.logged_member$.subscribe((member) => {
+      this.TournamentService.getTeams(this.team_tournament_id).pipe(
+                tap((tteams) => {        this.teams = tteams.teams;      }),
+                switchMap(() => this.auth.logged_member$)
+      ).subscribe((member) => {
         this.whoAmI = member;
-        if (this.whoAmI == null) {
-          this.subscription_authorized = false;
-          console.log('oups ! on ne devrait pas être là');
-        } else {
-          this.subscription_authorized = !this.has_subscribed(Number(this.whoAmI.license_number));
-        }
-        // console.log('logged member', this.whoAmI);
+        this.subscription_authorized = !this.has_subscribed(Number(member?.license_number));
       });
-
-      // let tournament_teams$: Observable<TournamentTeams> = from(this.ffbService.getTournamentTeams(this.team_tournament_id));
-
-      // combineLatest([this.team_update$, this.auth.logged_member$]).pipe(
-      //   switchMap(([team_updated, member]) => {
-      //     this.whoAmI = member;
-      //     return from(this.ffbService.getTournamentTeams(this.team_tournament_id))
-      //   }))
-      //   .subscribe((t_teams) => {
-      //     this.teams = t_teams.teams;
-      //     if (this.whoAmI == null) {
-      //       this.subscription_authorized = false;
-      //       console.log('oups ! on ne devrait pas être là');
-      //     } else {
-      //       this.subscription_authorized = !this.has_subscribed(Number(this.whoAmI.license_number));
-      //     }
-      //     console.log('%s équipes ;  %s ; subscript. :', this.teams.length, this.whoAmI?.lastname, this.subscription_authorized);
-      //   });
-
-
     });
   }
 
@@ -93,7 +77,7 @@ export class TournamentComponent implements OnInit {
 
   has_subscribed(license_nbr: number): boolean {
     if (this.teams === undefined) {
-      console.log('TeamsComponent.has_subscribed', 'no teams');
+      // console.log('TeamsComponent.has_subscribed', 'no teams');
       return false;
     }
 
@@ -128,14 +112,16 @@ export class TournamentComponent implements OnInit {
   subscribeSolo() {
     let license_pair: string[] = [];
     license_pair.push(this.whoAmI!.license_number.toString());
-    this.createTeam(license_pair);
+    this.createTeam(license_pair, 'solo');
   }
 
-  createTeam(license_pair: string[]) {
+  createTeam(license_pair: string[], solo?: string) {
+
     this.TournamentService.createTeam(this.team_tournament_id.toString(), license_pair)
       .then((data) => {
-        this.toastService.showSuccess("tournoi", "enregistré !");
-        this.team_update$.next(true);
+        const msg = (solo === 'solo') ? "vous êtes inscrit(e) en solo" : "vous êtes inscrit(e) en équipe";
+        this.toastService.showSuccess("tournoi du " + this.tournament_date, msg);
+        // this.team_update$.next(true);
       })
       .catch((error) => { console.log('TeamsComponent.createTeam', error); });
   }
@@ -144,14 +130,14 @@ export class TournamentComponent implements OnInit {
 
     this.TournamentService.deleteTeam(this.team_tournament_id.toString(), team.id.toString())
       .then((data) => {
-        this.toastService.showSuccess("tournoi", "supprimé !");
-        this.team_update$.next(true);
+        this.toastService.showSuccess("tournoi", "vous êtes désinscrit(s) !");
+        // this.team_update$.next(true);
       })
       .catch((error) => { console.log('TeamsComponent.deleteTeam', error); });
   }
 
   exit() {
-    this.router.navigate(['/tournaments']);
+    this.location.back();
   }
 
 

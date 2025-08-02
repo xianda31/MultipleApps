@@ -33,7 +33,6 @@ export class FrontNavbarComponent {
     this.logged_member$ = this.auth.logged_member$;
 
     this.auth.logged_member$.subscribe(async (member) => {
-      console.log('FrontNavbarComponent: member', member);
       if (member !== null) {
         this.user_accreditation = await this.groupService.getUserAccreditation();
         this.force_canvas_to_close();
@@ -57,6 +56,16 @@ export class FrontNavbarComponent {
           document.body.classList.remove('offcanvas-backdrop', 'show', 'modal-open');
         }, 300); // Wait for Bootstrap animation
       }
+    }
+  }
+
+    async signOut() {
+    try {
+      sessionStorage.clear();  // clear session storage
+      // this.logged_member = null;
+      await this.auth.signOut();  // sign out will redirect to the login page
+    } catch (error) {
+      console.error('Error signing out:', error);
     }
   }
 }

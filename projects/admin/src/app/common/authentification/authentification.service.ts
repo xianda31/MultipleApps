@@ -163,6 +163,7 @@ export class AuthentificationService {
   }
 
   async signOut(): Promise<void> {
+    this._logged_member$.next(null);
     return signOut({ global: true } );
   }
 
