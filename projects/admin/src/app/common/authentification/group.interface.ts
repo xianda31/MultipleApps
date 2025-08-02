@@ -48,3 +48,9 @@ export interface UserInGroup {
 
   // add other properties if needed
 }
+
+export interface Accreditation {
+  level: number;
+  group_name: Group_names;
+  icon: string;
+}

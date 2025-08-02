@@ -1,15 +1,37 @@
+<!-- <nav class="navbar navbar-expand-lg  ">
+
+
+  <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+    aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+    <ul class="navbar-nav  align-items-start">
+
+      <li ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
+        <a class="nav-link dropdown-toggle" ngbDropdownToggle>
+          <i class="fs-4 bi-cart"></i> <span class="ms-1 d-none d-sm-inline">Accueil</span>
+        </a>
+        <ul ngbDropdownMenu class="dropdown-menu">
+          <li><a class="dropdown-item" routerLink="#">vente à adhérents</a></li>
+          <li><a class="dropdown-item" routerLink="#">tournoi en présentiel</a></li>
+          <li><a class="dropdown-item" routerLink="#">état de caisse</a></li>
+          <li><a class="dropdown-item" routerLink="#">produits à la vente</a></li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+</nav> -->
+
+
+
+
 <div class="container-fluid front-root-bg">
   <div class="row bg-success text-white">
-    <!-- <img class="brand-img" src="bcsto_ffb.jpg"> -->
-    <div class="offset-2 col-8 text-center">
-      <span class=" ms-1"> Bridge Club de Saint-Orens </span>
-    </div>
-    <!-- ... et backdoor -->
-    <div class="col-2  text-end">
-      <a [routerLink]="'/admin'">
-        <i class="bi bi-door-open-fill text-dark"></i>
-      </a>
-    </div>
+    <!-- <div class="text-center"> -->
+      <h4 class="mt-1 mb-0 text-center"> Bridge Club de Saint-Orens </h4>
+    <!-- </div> -->
   </div>
 
   <div class="row align-items-center justify-content-end nice_shadow ">
@@ -21,24 +43,20 @@
     <div class="col-8">
       <app-front-navbar></app-front-navbar>
     </div>
-<div class="col-2"></div>
+    <div class="col-2"></div>
   </div>
 
 
 
   <div class="row mt-2">
-    <!-- laterale gauche -->
-    <div class="col-2"> blabla</div>
+    <div class="col-2"> &nbsp;</div>
 
-    <!-- centrale -->
     <div class=" col-8">
       <div class=" card bg-light h-100">
         <router-outlet></router-outlet>
       </div>
     </div>
 
-    <!-- laterale droite -->
-    <div class="col-2"> bleubleu</div>
+    <div class="col-2">  &nbsp;</div>
   </div>
 </div>
-

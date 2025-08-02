@@ -25,15 +25,15 @@
 
 
 .brand-img {
-  max-width: 120px;
+  max-width: 150px;
   height: auto;
   box-shadow: 3px 3px 4px rgba(0, 0, 0, 0.6);
-  margin-right: 10px;
+  // margin-right: 10px;
   position: absolute;
   top: 10px;
-  left: 10px;
+  left: 15px;
   z-index: 10;
-  pointer-events: none;
+  // pointer-events: none;
 }
 
 .row.nice_shadow {

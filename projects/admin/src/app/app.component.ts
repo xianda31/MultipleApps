@@ -4,13 +4,13 @@ import { Router, RouterModule } from '@angular/router';
 import localeFr from '@angular/common/locales/fr';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { LocalStorageService } from './back/services/local-storage.service';
-import { SharedModule } from './common/shared.module';
+import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 
 
 
 @Component({
   selector: 'app-root',
-  imports: [RouterModule, ReactiveFormsModule, CommonModule, FormsModule,SharedModule],
+  imports: [RouterModule, ReactiveFormsModule, CommonModule, FormsModule],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })

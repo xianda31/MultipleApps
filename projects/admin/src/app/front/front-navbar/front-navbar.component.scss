@@ -1,14 +1,15 @@
-// .brand-img {
-//     max-inline-size: 100px;
-//     box-shadow: 3px 3px 4px rgba(0, 0, 0, 0.6);
-//     margin-right: 10px;
-// }
+
 .brand-img {
     max-inline-size: 70px;
     box-shadow: 3px 3px 4px rgba(0, 0, 0, 0.6);
-    // margin-right: 10px;
-    // position: absolute;
-    // top: 10px;
-    // left: 50px;
-    // z-index: 2;
+
+}
+// get dropdown menu to work  on hover
+.dropdown:hover>.dropdown-menu {
+    display: block;
+}
+
+.dropdown>.dropdown-toggle:active {
+    /*Without this, clicking will make it sticky*/
+    pointer-events: none;
 }

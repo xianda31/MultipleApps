@@ -4,7 +4,7 @@ import { getCurrentUser, fetchAuthSession } from '@aws-amplify/auth';
 import { Hub } from 'aws-amplify/utils';
 import { BehaviorSubject } from 'rxjs';
 import { AuthData, AuthEvent } from './authentification_interface';
-import { Group_names, Group_priorities, UserInGroup } from './group.interface';
+import { Accreditation, Group_icons, Group_names, Group_priorities, UserInGroup } from './group.interface';
 import { Schema } from '../../../../../../amplify/data/resource';
 // import { UserType } from '@aws-sdk/client-cognito-identity-provider';
 
@@ -127,8 +127,35 @@ export class GroupService {
     return groups.sort((a, b) => {
         return Group_priorities[b as Group_names] - Group_priorities[a as Group_names]}) as Group_names[]; // Sort by priority
   }
+  
+  async getUserAccreditation(): Promise<Accreditation> {
+    const session = await fetchAuthSession();
+    let groupsRaw = session?.tokens?.accessToken?.payload['cognito:groups'];
+    let groups: string[] = [];
+    if (Array.isArray(groupsRaw)) {
+      groups = groupsRaw.map(String);
+    } else if (typeof groupsRaw === 'string') {
+      groups = [groupsRaw];
+    }
+
+    groups = groups.sort((a, b) => {
+        return Group_priorities[b as Group_names] - Group_priorities[a as Group_names]}) as Group_names[]; // Sort by priority
+
+    if (groups.length > 0) {
+      let group = groups[0] as Group_names;
+      return { level: Group_priorities[group], group_name: group, icon: this.get_group_icon(group) };
+    }else {
+      throw new Error('No groups found for the current user');
+    }
+  }
+  
 
 
+// utilitaires
+
+get_group_icon(group: Group_names): string  {
+    return Group_icons[group];
+  }
 
 
 }
