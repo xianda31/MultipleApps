@@ -24,6 +24,7 @@ import { ShopComponent } from './back/shop/shop.component';
 import { SysConfComponent } from './back/sys-conf/sys-conf.component';
 import { routes } from './back/back.routes';
 import { AdminComponent } from './back/admin/admin.component';
+import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 
 
 
@@ -34,6 +35,7 @@ import { AdminComponent } from './back/admin/admin.component';
     CommonModule,
     FormsModule,
     RouterModule.forChild(routes),
+    NgbDropdownModule,
     AdminComponent,
     ShopComponent,
     FeesCollectorComponent,
@@ -58,6 +60,7 @@ import { AdminComponent } from './back/admin/admin.component';
   ],
   exports: [
     RouterModule,
+    NgbDropdownModule,
     AdminComponent
     // Export components if needed
   ],

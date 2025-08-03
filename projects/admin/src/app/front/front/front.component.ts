@@ -16,7 +16,7 @@ import { filter } from 'rxjs/operators';
 export class FrontComponent {
   dayAndMonthFr = '';
   force_refresh = 0; // Flag to force refresh on route activation
-
+tournaments_loaded = false; // Flag to indicate if tournaments are loaded
 
   constructor(
     private localStorageService: LocalStorageService,
@@ -32,10 +32,8 @@ export class FrontComponent {
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe(() => {
         // This runs every time the route is activated (including after the first load)
-        console.log('Navigated to FrontComponent');
         this.force_refresh++; // Set the flag to true to force refresh
       });
       
-      console.log('FrontComponent.ngOnInit', today); 
   }
 }

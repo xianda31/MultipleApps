@@ -1,5 +1,3 @@
-
-
 <div class="container-fluid front-root-bg">
   <div class="row bg-success text-white justify-content-between align-items-center">
     <div class="col-auto mx-auto">
@@ -11,31 +9,37 @@
   </div>
 
   <app-toaster></app-toaster>
-  <div class="row align-items-center justify-content-end nice_shadow ">
-    <div class="col-2">
 
-      <img class="brand-img" src="bcsto_ffb.jpg">
+  <!-- bandeau navigation -->
+  <div class="row align-items-center justify-content-end nice_shadow ">
+    <div class="col col-md-2">
+      <img class="brand-img d-none d-md-block" src="bcsto_ffb.jpg">
     </div>
 
-    <div class="col-8">
+    <div class="col-sm-12 col-md-8">
       <app-front-navbar></app-front-navbar>
     </div>
-    <div class="col-2"></div>
+    <div class="col-sm-auto col-md-2"></div>
   </div>
 
-
-
+  <!-- bandeau de contenu -->
+  <!-- latéral gauche -->
   <div class="row mt-2">
-    <div class="col-2"> &nbsp;</div>
-
-    <div class=" col-8">
-      <div class=" card bg-light h-100">
+    <div class="col-sm-12 col-md-2"> &nbsp;</div>
+    <!-- central -->
+    <div class=" col-sm-12 col-md-8">
+      <div *ngIf="!tournaments_loaded" class="d-flex justify-content-center align-items-center vh-100">
+        <div class="spinner-border text-success" role="status">
+        </div>
+        <span class="ms-3">... chargement des tournois...</span>
+      </div>
+      <div *ngIf="tournaments_loaded" class="container-md container-sm-fluid">
         <router-outlet></router-outlet>
       </div>
     </div>
-
-    <div class="col-2"> 
-      <app-tournaments [refresh]="force_refresh"></app-tournaments> 
+    <!-- latéral droit -->
+    <div class="col-12 col-md-2">
+      <app-tournaments [refresh]="force_refresh"  (loaded)="tournaments_loaded = $event"></app-tournaments>
     </div>
   </div>
 </div>

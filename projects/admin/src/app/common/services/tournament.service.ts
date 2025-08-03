@@ -8,24 +8,12 @@ import { TournamentTeams } from '../ffb/interface/tournament_teams.interface';
     providedIn: 'root',
 })
 export class TournamentService {
-    // private _tournaments!: Tournament[];
-    // private tteams!: TournamentTeams;
-    // private tteams$!: BehaviorSubject<TournamentTeams>;
-    // private current_tteam_id!: string;
-
 
     private _tournamenttTeams: TournamentTeams[] = [];
     private _tournamenttTeams$ = new BehaviorSubject<TournamentTeams[]>([]);
 
     constructor(private ffbService: FFB_proxyService) {
     }
-
-
-    // listTournaments(): Observable<Tournament[]> {
-    //     return this._tournaments ? of(this._tournaments) : this.ffbService._getTournaments().pipe(
-    //         tap((tournaments) => { this._tournaments = tournaments; })
-    //     );
-    // }
 
     list_next_tournaments(days_back: number): Observable<club_tournament[]> {
         const today = new Date();
@@ -117,21 +105,4 @@ export class TournamentService {
         }
 
     }
-
-    // private remote_loadTeams(tteams_id: string): Observable<TournamentTeams> {
-    //     return from(this.ffbService.getTournamentTeams(tteams_id)).pipe(
-    //         tap((tteams) => {
-    //             this.tteams = tteams;
-    //             this.tteams$ = new BehaviorSubject<TournamentTeams>(tteams);
-    //             // this.tteams$.next(tteams);
-    //         }),
-    //         switchMap(() => this.tteams$.asObservable())
-    //     );
-    // }
-
-    // getTeams(tteams_id: string): Observable<TournamentTeams> {
-    //     const force_reload = (this.current_tteam_id !== tteams_id || !this.tteams);
-
-    //     return force_reload ? this.remote_loadTeams(tteams_id) : this.tteams$.asObservable();
-    // }
 }

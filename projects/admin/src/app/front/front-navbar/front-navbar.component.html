@@ -9,11 +9,11 @@
     <!-- <div class="justify-content-between"> -->
 
     <!-- les menus -->
-    <ul class="navbar-nav align-items-center w-100 ">
+    <ul class="navbar-nav justify-content-between align-items-center">
 
       <li ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
-        <a class="nav-link dropdown-toggle" ngbDropdownToggle >
-          <i class="fs-4 bi-shop"></i>  <span class="ms-1 d-none d-sm-inline">Le Club</span>
+        <a class="nav-link dropdown-toggle" ngbDropdownToggle>
+          <i class="fs-4 bi-shop"></i> <span class="ms-1 d-none d-sm-inline">Le Club</span>
         </a>
         <ul ngbDropdownMenu class="dropdown-menu shadow">
           <li><a class="dropdown-item" routerLink="#">les news</a></li>
@@ -23,7 +23,7 @@
       </li>
 
       <li ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
-        <a class="nav-link dropdown-toggle" ngbDropdownToggle >
+        <a class="nav-link dropdown-toggle" ngbDropdownToggle>
           <i class="fs-4 bi-suit-club"></i> <span class="ms-1 d-none d-sm-inline">Tournois</span>
         </a>
         <ul ngbDropdownMenu class="dropdown-menu shadow">
@@ -34,7 +34,7 @@
       </li>
 
       <li ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
-        <a class="nav-link dropdown-toggle" ngbDropdownToggle >
+        <a class="nav-link dropdown-toggle" ngbDropdownToggle>
           <i class="fs-4 bi-bag"></i> <span class="ms-1 d-none d-sm-inline">Mes achats</span>
         </a>
         <ul ngbDropdownMenu class="dropdown-menu shadow">
@@ -46,40 +46,37 @@
 
       <!-- en dernier , login = "/authentification" -->
 
-      <li class="ms-auto d-flex align-items-center">
-        <ng-container *ngIf="!(logged_member$ | async)">
-          <button class="btn btn-success btn-sm shadow-sm" type="button" data-bs-toggle="offcanvas"
-            data-bs-target="#loggingOffCanvas" aria-controls="loggingOffCanvas">
-            Espace membre
-          </button>
-        </ng-container>
-        <ng-container *ngIf="logged_member$ | async as member">
-          <div ngbDropdown class="nav-item dropdown">
-            <button class="nav-link dropdown-toggle btn btn-link" id="navbarDropdown" type="button" ngbDropdownToggle>
-              {{member.firstname}}
-            </button>
-            <ul ngbDropdownMenu class="dropdown-menu shadow" aria-labelledby="navbarDropdown">
-              <li> <a class="dropdown-item" routerLink="/user/profile">
-                <i class="bi bi-person-gear"></i>
-                Mes données
-              </a></li>
-              <li> <a class="dropdown-item" routerLink="/user/purchases">
-                <i class="bi bi-bag"></i>
-                Mes achats
-              </a></li>
-              <li *ngIf="user_accreditation && user_accreditation.level > 0">
-                <a class="dropdown-item" routerLink="../admin">
-                  <i [class]="user_accreditation.icon"></i>
-                  {{ user_accreditation.group_name }}
-                </a>
-              </li>
-              <li> <a class="dropdown-item" (click)="signOut()">
-                <i class="bi bi-box-arrow-right"></i>
-                Déconnexion
-              </a></li>
-            </ul>
-          </div>
-        </ng-container>
+      <li *ngIf="!(logged_member$ | async)" ngbDropdown class="nav-item  ms-auto me-md-3 me-sm-1">
+        <button  class="btn btn-success btn-sm shadow-sm" type="button"
+          data-bs-toggle="offcanvas" data-bs-target="#loggingOffCanvas" aria-controls="loggingOffCanvas">
+          Espace membre
+        </button>
+      </li>
+
+      <li *ngIf="logged_member$ | async as member" ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
+        <a class="nav-link dropdown-toggle " id="navbarDropdown" type="a" ngbDropdownToggle>
+          <i class="fs-4 bi-person-check"></i><span class="ms-1 d-none d-sm-inline"> {{member.firstname}}</span>
+        </a>
+        <ul ngbDropdownMenu class="dropdown-menu shadow" >
+          <li> <a class="dropdown-item" routerLink="/user/profile">
+              <i class="bi bi-person-gear"></i>
+              Mes données
+            </a></li>
+          <li> <a class="dropdown-item" routerLink="/user/purchases">
+              <i class="bi bi-bag"></i>
+              Mes achats
+            </a></li>
+          <li *ngIf="user_accreditation && user_accreditation.level > 0">
+            <a class="dropdown-item" routerLink="../admin">
+              <i [class]="user_accreditation.icon"></i>
+              {{ user_accreditation.group_name }}
+            </a>
+          </li>
+          <li> <a class="dropdown-item" (click)="signOut()">
+              <i class="bi bi-box-arrow-right"></i>
+              Déconnexion
+            </a></li>
+        </ul>
       </li>
 
 

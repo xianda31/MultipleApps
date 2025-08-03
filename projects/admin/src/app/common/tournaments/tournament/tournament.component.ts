@@ -38,9 +38,7 @@ export class TournamentComponent implements OnInit {
     private auth: AuthentificationService,
     private fb: FormBuilder,
     private route: ActivatedRoute,
-    private router: Router,
-    private location: Location
-  ) { }
+    private router: Router  ) { }
   ngOnInit(): void {
 
     this.route.paramMap.subscribe(params => {
@@ -54,13 +52,10 @@ export class TournamentComponent implements OnInit {
           });
       });
 
-    // this.tteam_tournament_id = this.route.snapshot.paramMap.get('id') || '';
-
 
     this.auth.logged_member$.subscribe((member) => {
       this.whoAmI = member;
       this.already_subscribed = this.has_subscribed(Number(this.whoAmI?.license_number));
-
     });
 
     this.player2 = this.fb.control(null, [Validators.required, this.player2_validator]);

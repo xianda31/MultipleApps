@@ -8,11 +8,12 @@ import { AuthentificationService } from '../../common/authentification/authentif
 import { GroupService } from '../../common/authentification/group.service';
 import { ToastService } from '../../common/services/toast.service';
 import { environment } from '../../../environments/environment';
+import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   selector: 'app-back-navbar',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, ReactiveFormsModule, AdminInComponent],
+  imports: [CommonModule, RouterLink, FormsModule, ReactiveFormsModule,NgbDropdownModule, AdminInComponent],
   templateUrl: './back-navbar.component.html',
   styleUrl: './back-navbar.component.scss'
 })
