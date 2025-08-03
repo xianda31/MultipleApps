@@ -146,7 +146,7 @@ export class FFB_proxyService {
       // const { body } = await restOperation.response;
       // const data = await body.json();
       // const data2 = data as unknown as TournamentTeams;
-      console.log('DELETE call succeeded: ', restOperation.response);
+      // console.log('DELETE call succeeded: ', restOperation.response);
       return true;
     } catch (error) {
       console.log('DELETE call failed: ', error);

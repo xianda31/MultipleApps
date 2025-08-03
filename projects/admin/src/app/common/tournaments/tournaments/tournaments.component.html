@@ -8,34 +8,35 @@
     <div class="row">
         <h5 class="text-center"> 
             Les prochains tournois au Club 
-            <i class="ms-1 bi-arrow-clockwise" (click)="loadTournaments()"></i></h5>
+            <i class="ms-1 bi-arrow-clockwise" (click)="loadTournamentTeams()"></i></h5>
     </div>
     <div class="container ">
         <!-- <div class="row"> -->
             <!-- <div class="col-md-4"> -->
-                <div class="card my-1" *ngFor="let t of tournaments" (click)="goToTournament(t)"
+                <div class="card my-1" *ngFor="let t of next_tournament_teams" (click)="goToTournamentTeams(t)"
                         style="cursor: pointer;">
-                    <div [class]="tournamentClass(t.tournament_name).card"
+                    <div [class]="tournamentClass(t.subscription_tournament.organization_club_tournament.tournament_name).card"
                         style="box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;">
                         <span class="stamp">
-                            <i [class]="tournamentClass(t.tournament_name).icon"></i>
+                            <i [class]="tournamentClass(t.subscription_tournament.organization_club_tournament.tournament_name).icon"></i>
                         </span>
                         <div class="card-body">
                             <div class="card-title">
                                 <div class="row text-center">
-                                    <h6>{{t.date }}</h6>
-                                    <h6 class="text-center">{{t.tournament_name}}</h6>
+                                    <h6>{{t.subscription_tournament.organization_club_tournament.date }}</h6>
+                                    <h6 class="text-center">{{t.subscription_tournament.organization_club_tournament.tournament_name}}</h6>
                                 </div>
                             </div>
                             <div class="card-text">
                                 <div >
                                     <small>
-                                      paires inscrites :  {{((t.nbr_inscrit-t.nbr_inscrit%2)/2)}} 
+                                      paires inscrites :  {{(t.teams.length - t.isolated_player_count)}} 
                                     </small>
 
                                 </div>
-                                <div *ngIf="t.has_isolated_player">
+                                <div *ngIf="t.isolated_player_count > 0" class="text-center">
                                     <small >
+                                        {{t.isolated_player_count}}
                                         <i class="bi bi-person-arms-up"> </i>
                                         <span class="text-info-emphasis">cherche partenaire </span>
                                     </small>
@@ -52,35 +53,3 @@
 </ng-template>
 
 
-
-<ng-template #admin_dashboard>
-    <!-- <div class="container pt-3"> -->
-    <h5> Les prochains tournois de régularité ouverts à l'inscription</h5>
-    <div class="container-fluid">
-        <div class="row flex-wrap">
-            <div class="col-auto col-md-3 px-sm-2 px-0 ">
-                <div class="d-flex flex-column align-items-center align-items-sm-start px-3 pt-2  min-vh-100">
-                    <ul class="nav nav-pills flex-column mb-sm-auto mb-0 align-items-center align-items-sm-start"
-                        id="menu">
-
-                        <li>
-                            <!-- <a data-bs-toggle="collapse" class="nav-link px-0 align-middle">
-                                <i class="fs-4 bi-grid"></i> <span class="ms-1 d-none d-sm-inline">Products</span> </a> -->
-
-                            <ul class=" navbar-nav flex-column ms-1" id="submenu3" data-bs-parent="#menu">
-                                <li class="nav-item" *ngFor="let t of tournaments">
-                                    <a class="nav-link  px-0" [routerLink]="['/tournaments',t.id]"
-                                        [queryParams]="{                    team_tournament_id: t.team_tournament_id,                    tournament_name : t.tournament_name}">
-                                        <span class="d-none d-sm-inline">{{t.date }} &nbsp;{{t.time}}</span>
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-            <!-- </nav> -->
-        </div>
-    </div>
-    <!-- </div> -->
-</ng-template>

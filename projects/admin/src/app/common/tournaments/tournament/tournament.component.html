@@ -31,7 +31,7 @@
                     </td>
                     <ng-container *ngIf="team.is_isolated_player">
                         <td></td>
-                        <td *ngIf="subscription_authorized" class="text-start align-content-center">
+                        <td *ngIf="!already_subscribed && (is_member$ | async)" class="text-start align-content-center">
                             <button [disabled]="!whoAmI" class="btn btn-sm btn-primary"
                                 (click)="completeTeam(team.players[0])">completer
                                 l'équipe</button>
@@ -46,10 +46,11 @@
                         </div>
                     </td>
                 </tr>
-
+            </tbody>
+            <tfoot *ngIf="(!already_subscribed && (is_member$ | async))" class=" table-primary table-sm">
+                <tr style="border-top: 2px solid #2b66a1;"> </tr>
                 <!-- bandeau inscription -->
-
-                <tr *ngIf="subscription_authorized$ | async" class="table-primary table-sm">
+                <tr>
                     <td class="align-middle">{{teams.length + 1}}</td>
                     <td class="align-middle">
                         {{whoAmI?.firstname}} {{whoAmI?.lastname}}
@@ -65,20 +66,18 @@
                     <!-- validation  inscription -->
                     <td class="col-3 align-middle">
                         <div *ngIf="player2.valid">
-                            <button  class="btn btn-primary btn-sm"
-                                (click)="subscribeWithPlayer2()">
+                            <button class="btn btn-primary btn-sm" (click)="subscribeWithPlayer2()">
                                 enregistrer l'équipe
                             </button>
                         </div>
                         <div *ngIf="!player2.valid">
-                            <button  class="btn btn-primary btn-sm"
-                                (click)="subscribeSolo()">
+                            <button class="btn btn-primary btn-sm" (click)="subscribeSolo()">
                                 s'inscrire seul
                             </button>
                         </div>
                     </td>
                 </tr>
-            </tbody>
+            </tfoot>
         </table>
 
     </div>
