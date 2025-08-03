@@ -16,7 +16,7 @@
         <div class="card-body">
             <div class="card-title">
                 <div class="row text-center">
-                    <h6>{{t.subscription_tournament.organization_club_tournament.date }}</h6>
+                    <h6>{{ t.subscription_tournament.organization_club_tournament.date | date:'EEEE d MMMM y':'':'fr-FR' }}</h6>
                     <h6 class="text-center">{{t.subscription_tournament.organization_club_tournament.tournament_name}}
                     </h6>
                 </div>
@@ -31,7 +31,8 @@
                     <small>
                         + {{t.isolated_player_count}}
                         <i class="bi bi-person-arms-up"> </i>
-                        <span class="text-info-emphasis">cherche partenaire </span>
+                        <span *ngIf="t.isolated_player_count === 1" class="text-info-emphasis">cherche un partenaire </span>
+                        <span *ngIf="t.isolated_player_count > 1" class="text-info-emphasis">cherchent un partenaire </span>
                     </small>
                 </div>
             </div>
