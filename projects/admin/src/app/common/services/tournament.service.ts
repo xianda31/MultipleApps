@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { club_tournament, Tournament } from '../ffb/interface/club_tournament.interface';
-import { BehaviorSubject, from, map, Observable, of, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, combineLatest, from, map, merge, Observable, of, scan, switchMap, tap } from 'rxjs';
 import { FFB_proxyService } from '../ffb/services/ffb.service';
 import { TournamentTeams } from '../ffb/interface/tournament_teams.interface';
 
@@ -9,8 +9,8 @@ import { TournamentTeams } from '../ffb/interface/tournament_teams.interface';
 })
 export class TournamentService {
 
-    private _tournamenttTeams: TournamentTeams[] = [];
-    private _tournamenttTeams$ = new BehaviorSubject<TournamentTeams[]>([]);
+    private _tournamentTeams: TournamentTeams[] = [];
+    private _tournamentTeams$ = new BehaviorSubject<TournamentTeams[]>([]);
 
     constructor(private ffbService: FFB_proxyService) {
     }
@@ -29,22 +29,27 @@ export class TournamentService {
     list_next_tournament_teams(days_back: number): Observable<TournamentTeams[]> {
         return this.list_next_tournaments(days_back).pipe(
             switchMap((tournaments) => {
-                const tournamentTeamsObservables = tournaments.map((tournament) => {
-                    return this.ffbService.getTournamentTeams(tournament.team_tournament_id.toString());
-                });
-                return from(Promise.all(tournamentTeamsObservables));
+                const tournamentTeamsObservables = tournaments.map((tournament) =>
+                    from(this.ffbService.getTournamentTeams(tournament.team_tournament_id.toString()))
+                );
+                return merge(...tournamentTeamsObservables).pipe(
+                    scan((acc: TournamentTeams[], t: TournamentTeams) => {
+                        const idx = acc.findIndex(tt => tt.subscription_tournament.id === t.subscription_tournament.id);
+                        if (idx > -1) acc[idx] = t;
+                        else acc.push(t);
+                        this._tournamentTeams = [...acc];
+                        this._tournamentTeams$.next(this._tournamentTeams);
+                        return acc;
+                    }, [])
+                );
             }),
-            switchMap((teamsArray) => {
-                this._tournamenttTeams = teamsArray;
-                this._tournamenttTeams$.next(this._tournamenttTeams);
-                return this._tournamenttTeams$.asObservable();
-            })
+            switchMap(() => this._tournamentTeams$.asObservable())
         );
     }
 
     getTournamentTeams(tteams_id: string): Observable<TournamentTeams> {
 
-        return this._tournamenttTeams$.asObservable().pipe(
+        return this._tournamentTeams$.asObservable().pipe(
             map((tteams) => {
                 if (tteams && tteams.length > 0) {
                     let existingTeams = tteams.find(t => t.subscription_tournament.id.toString() === tteams_id);
@@ -58,7 +63,7 @@ export class TournamentService {
 
 
     private find_tournamentTeamsById(tteams_id: string): TournamentTeams | undefined {
-        return this._tournamenttTeams.find(t => t.subscription_tournament.id.toString() === tteams_id);
+        return this._tournamentTeams.find(t => t.subscription_tournament.id.toString() === tteams_id);
     }
 
 
@@ -75,7 +80,7 @@ export class TournamentService {
                 tteams.isolated_player_count = tteams.teams.reduce((acc, team) => {
                     return acc + (team.players.length === 1 ? 1 : 0);
                 }, 0);
-                this._tournamenttTeams$.next(this._tournamenttTeams);
+                this._tournamentTeams$.next(this._tournamentTeams);
             }
         } catch (error) {
             console.error('Error creating team:', error);
@@ -98,7 +103,7 @@ export class TournamentService {
                 tteams.isolated_player_count = tteams.teams.reduce((acc, team) => {
                     return acc + (team.players.length === 1 ? 1 : 0);
                 }, 0);
-                this._tournamenttTeams$.next(this._tournamenttTeams);
+                this._tournamentTeams$.next(this._tournamentTeams);
             } catch (error) {
                 console.error('Error deleting team:', error);
             }
