@@ -1,11 +1,11 @@
 <div class="row">
     <h5 class="text-center">
-        Les prochains tournois au Club
+        Les prochains tournois
         <i class="ms-1 bi-arrow-clockwise" (click)="loadTournamentTeams()"></i>
     </h5>
 </div>
 
-<div class="card my-1 w-100" *ngFor="let t of next_tournament_teams" (click)="goToTournamentTeams(t)"
+<div class="card my-1 mx-sm-2" *ngFor="let t of next_tournament_teams" (click)="goToTournamentTeams(t)"
     style="cursor: pointer;">
     <div [class]="tournamentClass(t.subscription_tournament.organization_club_tournament.tournament_name).card"
         style="box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;">

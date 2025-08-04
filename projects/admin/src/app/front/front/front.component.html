@@ -27,19 +27,12 @@
   <div class="row mt-2">
     <div class="col-sm-12 col-md-2"> &nbsp;</div>
     <!-- central -->
-    <div class=" col-sm-12 col-md-8">
-      <div *ngIf="!tournaments_loaded" class="d-flex justify-content-center align-items-center vh-100">
-        <div class="spinner-border text-success" role="status">
-        </div>
-        <span class="ms-3">... chargement des tournois...</span>
-      </div>
-      <div *ngIf="tournaments_loaded" class="container-md container-sm-fluid">
-      </div>
+    <div class=" col-sm-12 col-md-8 ">
       <router-outlet></router-outlet>
     </div>
     <!-- latéral droit -->
     <div class="col-12 col-md-2">
-      <app-tournaments [refresh]="force_refresh" (loaded)="tournaments_loaded = $event"></app-tournaments>
+      <app-tournaments ></app-tournaments>
     </div>
   </div>
 

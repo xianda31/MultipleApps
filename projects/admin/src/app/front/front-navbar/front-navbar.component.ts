@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AuthentificationService } from '../../common/authentification/authentification.service';
 import { GroupService } from '../../common/authentification/group.service';
-import { Accreditation, Group_names, Group_priorities } from '../../common/authentification/group.interface';
+import { Accreditation } from '../../common/authentification/group.interface';
 import { Member } from '../../common/member.interface';
 import { Offcanvas } from 'bootstrap';
 import { SignInComponent } from '../../common/authentification/sign-in/sign-in.component';

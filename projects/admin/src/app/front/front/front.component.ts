@@ -9,19 +9,19 @@ import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-front',
-  imports: [CommonModule,FrontNavbarComponent, RouterModule, TournamentsComponent,ToasterComponent],
+  imports: [CommonModule, RouterModule, FrontNavbarComponent, TournamentsComponent, ToasterComponent],
   templateUrl: './front.component.html',
   styleUrl: './front.component.scss'
 })
 export class FrontComponent {
   dayAndMonthFr = '';
   force_refresh = 0; // Flag to force refresh on route activation
-tournaments_loaded = false; // Flag to indicate if tournaments are loaded
+  tournaments_loaded = false; // Flag to indicate if tournaments are loaded
 
   constructor(
     private localStorageService: LocalStorageService,
     private router: Router
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.localStorageService.setItem('entry_point', 'front');
@@ -34,6 +34,6 @@ tournaments_loaded = false; // Flag to indicate if tournaments are loaded
         // This runs every time the route is activated (including after the first load)
         this.force_refresh++; // Set the flag to true to force refresh
       });
-      
+
   }
 }

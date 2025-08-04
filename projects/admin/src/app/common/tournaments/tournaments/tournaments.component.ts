@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnInit, OnChanges, SimpleChanges, Output, EventEmitter } from '@angular/core';
+import { Component } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TournamentService } from '../../services/tournament.service';
 import { TournamentTeams } from '../../ffb/interface/tournament_teams.interface';
@@ -10,9 +10,7 @@ import { TournamentTeams } from '../../ffb/interface/tournament_teams.interface'
   templateUrl: './tournaments.component.html',
   styleUrls: ['./tournaments.component.scss']
 })
-export class TournamentsComponent implements OnInit, OnChanges {
-  @Input() refresh: number = 0; // Used to force refresh of tournaments
-  @Output() loaded = new EventEmitter<boolean>();
+export class TournamentsComponent  {
 
   next_tournament_teams: TournamentTeams[] = [];
 
@@ -25,16 +23,10 @@ export class TournamentsComponent implements OnInit, OnChanges {
   ngOnInit(): void {
     this.loadTournamentTeams();
   }
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['refresh']) {
-      this.loadTournamentTeams();
-    }
-  }
 
   loadTournamentTeams() {
     this.tournamentService.list_next_tournament_teams(0).subscribe((next_tournament_teams: TournamentTeams[]) => {
       this.next_tournament_teams = next_tournament_teams;
-      this.loaded.emit(true); // Emit loaded event when tournaments are loaded
     });
   }
 

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { club_tournament, Tournament } from '../ffb/interface/club_tournament.interface';
-import { BehaviorSubject, combineLatest, from, map, merge, Observable, of, scan, switchMap, tap } from 'rxjs';
+import { club_tournament } from '../ffb/interface/club_tournament.interface';
+import { BehaviorSubject, from, map, merge, Observable, scan, switchMap } from 'rxjs';
 import { FFB_proxyService } from '../ffb/services/ffb.service';
 import { TournamentTeams } from '../ffb/interface/tournament_teams.interface';
 
@@ -38,7 +38,9 @@ export class TournamentService {
                         if (idx > -1) acc[idx] = t;
                         else acc.push(t);
                         this._tournamentTeams = [...acc];
-                        this._tournamentTeams$.next(this._tournamentTeams);
+                        this._tournamentTeams$.next(this._tournamentTeams.sort((a, b) => {
+                            return new Date(a.subscription_tournament.organization_club_tournament.date).getTime() - new Date(b.subscription_tournament.organization_club_tournament.date).getTime();
+                        }));
                         return acc;
                     }, [])
                 );
