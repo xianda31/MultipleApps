@@ -5,6 +5,7 @@ import { SignInComponent } from '../common/authentification/sign-in/sign-in.comp
 import { FrontPageComponent } from './front-page/front-page.component';
 import { TournamentComponent } from '../common/tournaments/tournament/tournament.component';
 import { PurchasesComponent } from './purchases/purchases.component';
+import { GameCardsOwnedComponent } from './game-cards-owned/game-cards-owned.component';
 
 export const routes: Routes = [
   { path: '',
@@ -13,6 +14,7 @@ export const routes: Routes = [
       { path: 'authentification', component: SignInComponent },
       { path: 'tournaments/:id', component: TournamentComponent },
       { path: 'purchases', component: PurchasesComponent },
+      { path: 'tickets', component: GameCardsOwnedComponent },
       { path: '', component: FrontPageComponent },
       { path: '**', component: PageNotFoundComponent },
      ]

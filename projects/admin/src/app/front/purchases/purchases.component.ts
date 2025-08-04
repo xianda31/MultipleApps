@@ -70,7 +70,6 @@ export class PurchasesComponent {
         });
 
         this.achats_ventes = [...achats, ...ventes].sort((b,a) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        console.log(this.achats_ventes);
       }
       );
   }
