@@ -22,7 +22,7 @@
         </ul>
       </li>
 
-      <li ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
+      <!-- <li ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
         <a class="nav-link dropdown-toggle" ngbDropdownToggle>
           <i class="fs-4 bi-suit-club"></i> <span class="ms-1 d-none d-sm-inline">Tournois</span>
         </a>
@@ -31,14 +31,14 @@
           <li><a class="dropdown-item" routerLink="#">le bureau</a></li>
           <li><a class="dropdown-item" routerLink="#">contacts</a></li>
         </ul>
-      </li>
+      </li> -->
 
-      <li ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
+      <li *ngIf="logged_member$ | async as member" ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
         <a class="nav-link dropdown-toggle" ngbDropdownToggle>
           <i class="fs-4 bi-bag"></i> <span class="ms-1 d-none d-sm-inline">Mes achats</span>
         </a>
         <ul ngbDropdownMenu class="dropdown-menu shadow">
-          <li><a class="dropdown-item" routerLink="#">cette saison</a></li>
+          <li><a class="dropdown-item" routerLink="purchases">cette saison</a></li>
           <li><a class="dropdown-item" routerLink="#">carnet tournoi</a></li>
         </ul>
       </li>

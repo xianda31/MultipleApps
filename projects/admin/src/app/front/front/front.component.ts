@@ -14,7 +14,7 @@ import { filter } from 'rxjs/operators';
   styleUrl: './front.component.scss'
 })
 export class FrontComponent {
-  dayAndMonthFr = '';
+  today = new Date();
   force_refresh = 0; // Flag to force refresh on route activation
   tournaments_loaded = false; // Flag to indicate if tournaments are loaded
 
@@ -26,7 +26,6 @@ export class FrontComponent {
   ngOnInit(): void {
     this.localStorageService.setItem('entry_point', 'front');
     let today = new Date();
-    this.dayAndMonthFr = formatDate(today, 'EEEE d MMMM', 'fr-FR');
 
     this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))

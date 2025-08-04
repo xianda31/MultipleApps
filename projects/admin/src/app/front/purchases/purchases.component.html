@@ -1,0 +1,39 @@
+<div class="offset-md-2 col-md-8 mt-3 ">
+    <div *ngIf="achats_ventes && achats_ventes.length > 0" class="card shadow-sm ">
+        <div class="card-header">
+            <h5 class="card-title">Votre historique de cette saison</h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-borderless table-sm table-striped">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Opérations</th>
+                        <th>Remarque</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let achat_vente of achats_ventes">
+                        <td>
+                            {{ achat_vente.date | date:'EEEE d MMMM y':'':'fr-FR' }}
+                        </td>
+                        <td>
+                            <span *ngFor="let item of achat_vente.items">
+                                <span *ngIf="item.type === 'revenue'">
+                                    {{ item.description }} : {{ item.amount | currency:'EUR':'symbol':'1.2-2' }}
+                                </span>
+                            </span>
+                        </td>
+                        <td>
+                            <span *ngFor="let item of achat_vente.items">
+                                <span *ngIf="item.type === 'bancaire'">
+                                    {{ item.description }} : {{ item.amount | currency:'EUR':'symbol':'1.2-2' }}
+                                </span>
+                            </span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

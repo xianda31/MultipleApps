@@ -1,13 +1,12 @@
 import { Injectable } from '@angular/core';
-import { generateClient } from 'aws-amplify/api';
 
 import { BookEntry, Revenue, FINANCIAL_ACCOUNT, BALANCE_ACCOUNT, Expense, CUSTOMER_ACCOUNT, TRANSACTION_ID, Operation, AMOUNTS } from '../../common/accounting.interface';
 // import { Schema } from '../../../../amplify/data/resource';
-import { BehaviorSubject, catchError, combineLatest, from, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
+import { BehaviorSubject, catchError, from, map, Observable, of, switchMap, tap } from 'rxjs';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { ToastService } from '../../common/services/toast.service';
 import { TRANSACTION_CLASS } from '../../common/transaction.definition';
-import { Profit_and_loss, SystemConfiguration } from '../../common/system-conf.interface';
+import { Profit_and_loss } from '../../common/system-conf.interface';
 import { DBhandler } from '../../common/members/services/graphQL.service';
 import { TransactionService } from './transaction.service';
 
@@ -18,7 +17,6 @@ export class BookService {
 
   private _book_entries!: BookEntry[];
   private _book_entries$ = new BehaviorSubject<BookEntry[]>([]);
-  private configuration !: SystemConfiguration ;
   season: string = '';
   private season_filter: string = '';
   private force_reload: boolean = false; // force reload of book entries if true
@@ -32,7 +30,6 @@ export class BookService {
   ) {
 
     this.systemDataService.get_configuration().subscribe((conf) => {
-      this.configuration = conf;
       this.season = conf.season;
     });
   }
@@ -197,7 +194,7 @@ export class BookService {
 
   book_entries_bulk_delete$(season: string): Observable<number> {
     return this.dbHandler.bulkDeleteBookEntries(season).pipe(
-      tap((deleted_count) => {
+      tap(() => {
         this._book_entries = []; // reset book entries after deletion
         this._book_entries$.next(this._book_entries);
       }),
@@ -332,6 +329,27 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
           } as Revenue));
         return [...acc, ...revenues];
       }, [] as Revenue[]);
+  }
+  
+  get_expenses_for_members(): Expense[] {
+
+    if (!this._book_entries) { // if no book entries are loaded yet
+      return [] as Expense[]
+    }
+
+    return this._book_entries
+      .filter(book_entry => [TRANSACTION_CLASS.EXPENSE_FOR_MEMBER].includes(this.transactionService.transaction_class(book_entry.transaction_id)))
+      .reduce((acc, book_entry) => {
+        const expenses = book_entry.operations
+          .map(op => ({
+            ...op,
+            season: book_entry.season,
+            date: book_entry.date,
+            book_entry_id: book_entry.id,
+            tag: book_entry.tag ?? undefined
+          } as Expense));
+        return [...acc, ...expenses];
+      }, [] as Expense[]);
   }
 
   get_sales_of_the_day(the_day : string) : Observable<BookEntry[]> {
@@ -782,8 +800,8 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
     let grand_total = 0;
 
     Array.from(assets)
-      .filter(([member, { total, entries }]: [string, { total: number; entries: BookEntry[] }]) => total > 0)
-      .forEach(([member, { total, entries }]: [string, { total: number; entries: BookEntry[] }]) => {
+      .filter(([, { total }]: [string, { total: number; entries: BookEntry[] }]) => total > 0)
+      .forEach(([member, { total }]: [string, { total: number; entries: BookEntry[] }]) => {
         operations.push({ member: member, label: 'report avoir antérieur', values: { [CUSTOMER_ACCOUNT.ASSET_credit]: total } });
         grand_total += total;
       }
@@ -856,7 +874,7 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
       let operations: Operation[] = [];
       let grand_total = 0;
       Array.from(debts)
-        .filter(([member, value]: [string, { total: number; entries: BookEntry[] }]) => value.total > 0)
+        .filter(([, value]: [string, { total: number; entries: BookEntry[] }]) => value.total > 0)
         .forEach(([member, value]: [string, { total: number; entries: BookEntry[] }]) => {
           grand_total += value.total;
           operations.push({ member: member, label: 'report dette', values: { [CUSTOMER_ACCOUNT.DEBT_debit]: value.total } });
