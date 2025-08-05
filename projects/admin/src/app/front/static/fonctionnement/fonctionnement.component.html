@@ -1,0 +1,21 @@
+<div class="row row-cols-1 row-cols-md-3 g-4">
+    <div *ngFor="let topic of topics" class="col">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header">
+                <h5 class="card-title">{{topic.title}}</h5>
+            </div>
+            <div class="card-body">
+                <h6> <span class="fw-bold"> Public concerné : </span>{{topic.students}}</h6>
+
+                <h6> <span class="fw-bold"> Déroulement : </span>
+                    <li class="my-0" *ngFor="let content of topic.contents">{{content}}</li>
+                </h6>
+
+                <h6> <span class="fw-bold"> Horaires : </span>
+                    <li *ngFor="let schedule of topic.schedules">{{schedule}}</li>
+                </h6>
+            </div>
+
+        </div>
+    </div>
+</div>

@@ -22,20 +22,30 @@
         </ul>
       </li>
 
+      <li ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
+        <a class="nav-link dropdown-toggle text-white" ngbDropdownToggle [class.active]="isNavItemActive('ecole')">
+          <span class="ms-1 d-none d-sm-inline">L'école de Bridge</span>
+        </a>
+        <ul ngbDropdownMenu class="dropdown-menu shadow">
+          <li><a class="dropdown-item" routerLink="fonctionnement" routerLinkActive="active">fonctionnement</a></li>
+          <li><a class="dropdown-item" routerLink="enseignants" routerLinkActive="active">les enseignants</a></li>
+        </ul>
+      </li>
+
       <li class="nav-item me-md-3 me-sm-1">
-        <a class="nav-link text-white" routerLink="tournaments">
+        <a class="nav-link text-white" routerLink="tournaments" [class.active]="isNavItemActive('tournaments')">
           <span class="ms-1 d-none d-sm-inline">Les Tournois</span>
         </a>
       </li>
 
 
       <li *ngIf="logged_member$ | async as member" ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
-        <a class="nav-link dropdown-toggle text-white" ngbDropdownToggle>
-           <span class="ms-1 d-none d-sm-inline">Mes achats</span>
+        <a class="nav-link dropdown-toggle text-white" ngbDropdownToggle [class.active]="isNavItemActive('achats')">
+          <span class="ms-1 d-none d-sm-inline">Mes achats</span>
         </a>
         <ul ngbDropdownMenu class="dropdown-menu shadow">
-          <li><a class="dropdown-item" routerLink="purchases">historique</a></li>
-          <li><a class="dropdown-item" routerLink="tickets">carnet tournoi</a></li>
+          <li><a class="dropdown-item" routerLink="purchases" routerLinkActive="active">historique</a></li>
+          <li><a class="dropdown-item" routerLink="tickets" routerLinkActive="active">carnet tournoi</a></li>
         </ul>
       </li>
 
@@ -44,8 +54,8 @@
       <div class="d-flex flex-grow-1"></div>
       <ng-container *ngIf="!(logged_member$ | async)">
         <li ngbDropdown class="nav-link align-self-end me-md-3 me-sm-1 ms-auto">
-          <button  class="btn btn-outline-success  shadow-sm" type="button"
-            data-bs-toggle="offcanvas" data-bs-target="#loggingOffCanvas" aria-controls="loggingOffCanvas">
+          <button class="btn btn-sepia shadow-sm" type="button" data-bs-toggle="offcanvas"
+            data-bs-target="#loggingOffCanvas" aria-controls="loggingOffCanvas">
             Espace membre
           </button>
         </li>
@@ -55,7 +65,7 @@
           <a class="nav-link dropdown-toggle text-white" id="navbarDropdown" type="a" ngbDropdownToggle>
             <span class="ms-1 d-none d-sm-inline"> {{member.firstname}}</span>
           </a>
-          <ul ngbDropdownMenu class="dropdown-menu shadow" >
+          <ul ngbDropdownMenu class="dropdown-menu shadow">
             <li> <a class="dropdown-item" routerLink="/user/profile">
                 <i class="bi bi-person-gear"></i>
                 Mes données
@@ -96,5 +106,3 @@
     <app-sign-in></app-sign-in>
   </div>
 </div>
-
-
