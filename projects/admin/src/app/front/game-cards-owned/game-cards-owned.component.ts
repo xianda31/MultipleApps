@@ -5,6 +5,7 @@ import { AuthentificationService } from '../../common/authentification/authentif
 import { MembersService } from '../../common/members/services/members.service';
 import { map, Observable, switchMap } from 'rxjs';
 import { CommonModule } from '@angular/common';
+import { TitleService } from '../title.service';
 
 interface Extended_GameCard extends GameCard {
   free_places_nbr: number;
@@ -24,10 +25,13 @@ export class GameCardsOwnedComponent {
   constructor(
     private gameCardService: GameCardService,
     private auth: AuthentificationService,
-    private memberService: MembersService
+    private memberService: MembersService,
+    private titleService: TitleService
   ) { }
 
   ngOnInit(): void {
+
+    this.titleService.setTitle('Droits de table');
 
     this.cards$ = this.auth.logged_member$.pipe(
       map(member => {

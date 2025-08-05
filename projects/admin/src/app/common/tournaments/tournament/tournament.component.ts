@@ -25,8 +25,6 @@ export class TournamentComponent implements OnInit {
   tournament_name = '';
   tournament_date = '';
   teams: Team[] = [];
-  // teams$: Observable<Team[]> = new Observable<Team[]>();
-  // team_update$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   whoAmI: Member | null = null;
   already_subscribed = false;
   is_member$!: Observable<boolean>;
@@ -38,19 +36,19 @@ export class TournamentComponent implements OnInit {
     private auth: AuthentificationService,
     private fb: FormBuilder,
     private route: ActivatedRoute,
-    private router: Router  ) { }
+    private location: Location) { }
   ngOnInit(): void {
 
     this.route.paramMap.subscribe(params => {
-        this.tteam_tournament_id = params.get('id') || '';
-        this.TournamentService.getTournamentTeams(this.tteam_tournament_id)
-          .subscribe((tteams) => {
-            this.teams = tteams.teams;
-            this.tournament_date = tteams.subscription_tournament.organization_club_tournament.date;
-            this.tournament_name = tteams.subscription_tournament.organization_club_tournament.tournament_name;
-            this.already_subscribed = this.has_subscribed(Number(this.whoAmI?.license_number));
-          });
-      });
+      this.tteam_tournament_id = params.get('id') || '';
+      this.TournamentService.getTournamentTeams(this.tteam_tournament_id)
+        .subscribe((tteams) => {
+          this.teams = tteams.teams;
+          this.tournament_date = tteams.subscription_tournament.organization_club_tournament.date;
+          this.tournament_name = tteams.subscription_tournament.organization_club_tournament.tournament_name;
+          this.already_subscribed = this.has_subscribed(Number(this.whoAmI?.license_number));
+        });
+    });
 
 
     this.auth.logged_member$.subscribe((member) => {
@@ -118,7 +116,6 @@ export class TournamentComponent implements OnInit {
       .then((data) => {
         const msg = (solo === 'solo') ? "vous êtes inscrit(e) en solo" : "vous êtes inscrit(e) en équipe";
         this.toastService.showSuccess("tournoi du " + this.tournament_date, msg);
-        // this.team_update$.next(true);
       })
       .catch((error) => { console.log('TeamsComponent.createTeam', error); });
   }
@@ -128,14 +125,12 @@ export class TournamentComponent implements OnInit {
     this.TournamentService.deleteTeam(this.tteam_tournament_id.toString(), team.id.toString())
       .then((data) => {
         this.toastService.showSuccess("tournoi", "vous êtes désinscrit(s) !");
-        // this.team_update$.next(true);
       })
       .catch((error) => { console.log('TeamsComponent.deleteTeam', error); });
   }
 
   exit() {
-    // this.location.back();
-    this.router.navigate(['front']);
+    this.location.back();
   }
 
 

@@ -6,12 +6,14 @@ import { FrontPageComponent } from './front-page/front-page.component';
 import { TournamentComponent } from '../common/tournaments/tournament/tournament.component';
 import { PurchasesComponent } from './purchases/purchases.component';
 import { GameCardsOwnedComponent } from './game-cards-owned/game-cards-owned.component';
+import { TournamentsComponent } from '../common/tournaments/tournaments/tournaments.component';
 
 export const routes: Routes = [
   { path: '',
      component: FrontComponent,
      children: [
       { path: 'authentification', component: SignInComponent },
+      {path : 'tournaments', component: TournamentsComponent},
       { path: 'tournaments/:id', component: TournamentComponent },
       { path: 'purchases', component: PurchasesComponent },
       { path: 'tickets', component: GameCardsOwnedComponent },

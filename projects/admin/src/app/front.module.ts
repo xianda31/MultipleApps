@@ -11,6 +11,7 @@ import { ToasterComponent } from './common/toaster/components/toaster/toaster.co
 import { routes } from './front/front.routes';
 import { PurchasesComponent } from './front/purchases/purchases.component';
 import { GameCardsOwnedComponent } from './front/game-cards-owned/game-cards-owned.component';
+import { TitleComponent } from './front/title/title.component';
 
 @NgModule({
   declarations: [],
@@ -23,7 +24,8 @@ import { GameCardsOwnedComponent } from './front/game-cards-owned/game-cards-own
     FrontNavbarComponent,
     TournamentsComponent,
     PurchasesComponent,
-    GameCardsOwnedComponent
+    GameCardsOwnedComponent,
+    TitleComponent
   ],
   exports: [
     CommonModule,
@@ -32,7 +34,8 @@ import { GameCardsOwnedComponent } from './front/game-cards-owned/game-cards-own
     NgbDropdownModule,
     TournamentsComponent,
     PurchasesComponent,
-    GameCardsOwnedComponent
+    GameCardsOwnedComponent,
+    TitleComponent
 
   ],
 })

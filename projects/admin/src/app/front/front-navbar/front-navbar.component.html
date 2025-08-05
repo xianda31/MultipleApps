@@ -13,7 +13,7 @@
 
       <li ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
         <a class="nav-link dropdown-toggle text-white" ngbDropdownToggle>
-          <i class="fs-4 bi-shop"></i> <span class="ms-1 d-none d-sm-inline">Le Club</span>
+          <span class="ms-1 d-none d-sm-inline">Le Club</span>
         </a>
         <ul ngbDropdownMenu class="dropdown-menu shadow">
           <li><a class="dropdown-item" routerLink="#">les news</a></li>
@@ -22,23 +22,19 @@
         </ul>
       </li>
 
-      <!-- <li ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
-        <a class="nav-link dropdown-toggle" ngbDropdownToggle>
-          <i class="fs-4 bi-suit-club"></i> <span class="ms-1 d-none d-sm-inline">Tournois</span>
+      <li class="nav-item me-md-3 me-sm-1">
+        <a class="nav-link text-white" routerLink="tournaments">
+          <span class="ms-1 d-none d-sm-inline">Les Tournois</span>
         </a>
-        <ul ngbDropdownMenu class="dropdown-menu shadow">
-          <li><a class="dropdown-item" routerLink="#">les news</a></li>
-          <li><a class="dropdown-item" routerLink="#">le bureau</a></li>
-          <li><a class="dropdown-item" routerLink="#">contacts</a></li>
-        </ul>
-      </li> -->
+      </li>
+
 
       <li *ngIf="logged_member$ | async as member" ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
         <a class="nav-link dropdown-toggle text-white" ngbDropdownToggle>
-          <i class="fs-4 bi-bag"></i> <span class="ms-1 d-none d-sm-inline">Mes achats</span>
+           <span class="ms-1 d-none d-sm-inline">Mes achats</span>
         </a>
         <ul ngbDropdownMenu class="dropdown-menu shadow">
-          <li><a class="dropdown-item" routerLink="purchases">cette saison</a></li>
+          <li><a class="dropdown-item" routerLink="purchases">historique</a></li>
           <li><a class="dropdown-item" routerLink="tickets">carnet tournoi</a></li>
         </ul>
       </li>
@@ -48,7 +44,7 @@
       <div class="d-flex flex-grow-1"></div>
       <ng-container *ngIf="!(logged_member$ | async)">
         <li ngbDropdown class="nav-link align-self-end me-md-3 me-sm-1 ms-auto">
-          <button  class="btn btn-success btn-sm shadow-sm" type="button"
+          <button  class="btn btn-outline-success  shadow-sm" type="button"
             data-bs-toggle="offcanvas" data-bs-target="#loggingOffCanvas" aria-controls="loggingOffCanvas">
             Espace membre
           </button>
@@ -57,7 +53,7 @@
       <ng-container *ngIf="logged_member$ | async as member">
         <li ngbDropdown class="nav-item align-self-end dropdown me-md-3 me-sm-1 ms-auto">
           <a class="nav-link dropdown-toggle text-white" id="navbarDropdown" type="a" ngbDropdownToggle>
-            <i class="fs-4 bi-person-check"></i><span class="ms-1 d-none d-sm-inline"> {{member.firstname}}</span>
+            <span class="ms-1 d-none d-sm-inline"> {{member.firstname}}</span>
           </a>
           <ul ngbDropdownMenu class="dropdown-menu shadow" >
             <li> <a class="dropdown-item" routerLink="/user/profile">
@@ -102,49 +98,3 @@
 </div>
 
 
-
-
-<!-- </div> -->
-<!-- </div> -->
-
-
-<!--           <ng-container *ngFor="let menu of siteMenus">
-                        <li *ngIf="menu.pages && menu.pages.length >= 1" class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
-                                data-bs-toggle="dropdown" aria-expanded="false">
-                                {{menu.label}}
-                            </a>
-                            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                <ng-container *ngFor="let page of menu.pages">
-                                    <li *ngIf="(logged_member$ | async) || !page.member_only">
-                                        <a class="dropdown-item"
-                                            routerLink="{{'/' + page.link | replace : ' ':'-'}}">{{page.link}}</a>
-                                    </li>
-                                </ng-container>
-                            </ul>
-                        </li>
-                    </ng-container>
-
-                    <li *ngIf="logged_member$ | async" class="nav-item">
-                        <a class="nav-link" routerLink="/tournaments">Tournois</a>
-                    </li>
-                </ul>
-                <ul *ngIf="logged_member$ | async" class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
-                            data-bs-toggle="dropdown" aria-expanded="false">
-                            {{(logged_member$ | async)?.firstname}}
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <li> <a class="dropdown-item" routerLink="/personal/data">Mes données</a></li>
-                            <li> <a class="dropdown-item" routerLink="/authentification/sign-out">Déconnexion</a></li>
-
-                        </ul>
-                    </li>
-                </ul>
-                <a *ngIf="!(logged_member$ | async)" routerLink="/authentification/sign-in">
-                    <button class="btn btn-success align-items-center nice_shadow" type="button">
-                        <i class="bi bi-person-fill"></i>
-                        <span class="ms-2">Espace membre</span>
-                    </button>
-                </a> -->

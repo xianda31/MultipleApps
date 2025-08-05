@@ -3,13 +3,14 @@ import { FrontNavbarComponent } from '../front-navbar/front-navbar.component';
 import { LocalStorageService } from '../../back/services/local-storage.service';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { CommonModule, formatDate } from '@angular/common';
-import { TournamentsComponent } from '../../common/tournaments/tournaments/tournaments.component';
 import { ToasterComponent } from '../../common/toaster/components/toaster/toaster.component';
 import { filter } from 'rxjs/operators';
+import { Title } from '@angular/platform-browser';
+import { TitleComponent } from '../title/title.component';
 
 @Component({
   selector: 'app-front',
-  imports: [CommonModule, RouterModule, FrontNavbarComponent, TournamentsComponent, ToasterComponent],
+  imports: [CommonModule, RouterModule, FrontNavbarComponent, TitleComponent, ToasterComponent],
   templateUrl: './front.component.html',
   styleUrl: './front.component.scss'
 })

@@ -1,15 +1,13 @@
 
-// .card.bg-light.h-100 {
-//   min-height: 80vh;
-//   height: 100%;
-//   box-sizing: border-box;
-// }
 
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap');
+// @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Amarante&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Emblema+One&display=swap');
+// @import url('https://fonts.googleapis.com/css2?family=Martian+Mono:wght@400;500;700&display=swap');
   
 .root-bg {
-  font-family: 'Space Grotesk', sans-serif;
-  background-color: rgba(66, 70, 66, 0.658);
+  font-family: 'Amarante', serif;
+  // background-color: rgba(66, 70, 66, 0.658);
   min-height: 100vh;
   padding-left: 0;
   display: flex;
@@ -18,12 +16,30 @@
   justify-content: flex-start;
 }
 
+.brand-bg {
+  background-color: rgb(46, 51, 45);
+  color: white;
+  box-shadow: rgba(0, 0, 0, 0.15) 0px 3px 3px 0px;
+}
+
 .navbar-bg {
   background-color: rgb(63, 73, 61);
   color: white
   // box-shadow: rgba(0, 0, 0, 0.15) 0px 3px 3px 0px;
 }
 
+.title-bg {
+  font-family: 'Emblema One', cursive;
+  background-color: rgb(46, 51, 45);
+  color: white;
+  font-size: 3.5em;
+  
+ 
+}
+
+.content-bg {
+  background-color: rgb(239, 241, 239);
+}
 
 
 

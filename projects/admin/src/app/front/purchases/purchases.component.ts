@@ -5,6 +5,8 @@ import { map, switchMap } from 'rxjs';
 import { MembersService } from '../../common/members/services/members.service';
 import { Expense, Revenue } from '../../common/accounting.interface';
 import { CommonModule } from '@angular/common';
+import { TitleService } from '../title.service';
+import { SystemDataService } from '../../common/services/system-data.service';
 
 
 interface Item {
@@ -28,14 +30,21 @@ export class PurchasesComponent {
 
   member_full_name: string = '';
   achats_ventes !: Achat_Vente[];
+  season: string = '2023-2024'; // This should be dynamic based on the current season
 
   constructor(
     private bookService: BookService,
     private auth: AuthentificationService,
-    private memberService: MembersService
+    private memberService: MembersService,
+    private titleService: TitleService,
+    private systemDataService: SystemDataService  
   ) { }
 
   ngOnInit() {
+
+    this.season = this.systemDataService.get_season(new Date());
+
+    this.titleService.setTitle('Achats ' + this.season);
 
     this.auth.logged_member$.pipe(
       map(member => {

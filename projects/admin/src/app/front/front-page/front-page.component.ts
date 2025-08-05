@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { TitleService } from '../title.service';
 
 @Component({
   selector: 'app-front-page',
@@ -7,5 +8,11 @@ import { Component } from '@angular/core';
   styleUrl: './front-page.component.scss'
 })
 export class FrontPageComponent {
+
+  constructor(
+    private titleService: TitleService
+  ) { 
+    this.titleService.setTitle('Page d\'Accueil');
+  }
 
 }
