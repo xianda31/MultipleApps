@@ -1,7 +1,7 @@
 <div *ngIf="form_ready" class="mt-2">
   <form [formGroup]="form" (ngSubmit)="onSubmit()">
     <!-- 1ere ligne : date , classe transaction , transaction , chèque ref (si applicable) , booutton back -->
-    <div class="row justify-content-start align-items-end">
+    <div class="row justify-content-start align-items-end mx-0">
       <!-- date -->
       <div class="col-md-2 col-sm-3">
         <label for="date">
@@ -51,11 +51,11 @@
 
     <!-- 2eme ligne comptes financiers , tag, bordereau (si applicabe) -->
 
-    <div *ngIf="selected_transaction" class="mt-2 row justify-content-start align-items-end">
+    <div *ngIf="selected_transaction" class="mt-2 row justify-content-start align-items-end mx-0">
 
       <!--  affichage comptes financiers -->
       <div class="col-md-5 col-sm-4">
-        <div class="row align-items-center">
+        <div class="row align-items-center mx-0">
           <div class="col-8">
             <ng-container [ngTemplateOutlet]="financial_amounts"
               [ngTemplateOutletContext]="{inputFormGroup: form}"></ng-container>
@@ -88,10 +88,10 @@
     <div class="mt-3" *ngIf="selected_transaction">
       <div formArrayName="operations">
         <!-- pour chaque operation de la transaction -->
-        <div class="row align-items-end" *ngFor="let operation of operations.controls; let i = index ; let last = last">
+        <div class="row align-items-end mx-0" *ngFor="let operation of operations.controls; let i = index ; let last = last">
           <div class="col-12 mt-2">
             <!-- transaction d'une transaction non nominative -->
-            <div class="row align-items-end" *ngIf="!selected_transaction.nominative ">
+            <div class="row align-items-end mx-0" *ngIf="!selected_transaction.nominative ">
               <div class="col-2">
                 <div [ngTemplateOutlet]="label" [ngTemplateOutletContext]="{inputFormGroup: operation}">
                 </div>
@@ -102,7 +102,7 @@
               </div>
             </div>
             <!-- transaction d'une transaction nominative -->
-            <div *ngIf="selected_transaction.nominative" class="row align-items-end">
+            <div *ngIf="selected_transaction.nominative" class="row align-items-end mx-0">
               <div class="col-2">
                 <ng-container [ngTemplateOutlet]="member"
                   [ngTemplateOutletContext]="{inputFormGroup: operation, transaction: selected_transaction}">
@@ -126,7 +126,7 @@
           </div>
         </div>
         <!-- bouton ajout transaction nominative -->
-        <div *ngIf="selected_transaction.nominative" class="row mt-4">
+        <div *ngIf="selected_transaction.nominative" class="row mt-4 mx-0">
           <span>
             Ajout bénéficiaire :
             <i (click)="add_operation(selected_transaction)" class="h3 text-primary bi-person-fill-add"></i>
@@ -137,7 +137,7 @@
 
     </div>
 
-    <div class="row mt-5">
+    <div class="row mt-5 mx-0">
       <div class="col-1">
         <button [disabled]="form.invalid || !financial_accounts_locked " type="submit" class="btn btn-primary">
           {{!creation?'Modifier':'Créer'}}</button>

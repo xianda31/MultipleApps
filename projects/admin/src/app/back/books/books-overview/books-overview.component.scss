@@ -1,3 +1,8 @@
+/* Prevent horizontal scrollbar */
+:host {
+  overflow-x: hidden;
+}
+
 /* Sticky table header for native <th> elements */
 th {
   position: sticky;
@@ -10,4 +15,5 @@ th {
 .table-responsive-sticky {
   max-height: 70vh;
   overflow-y: auto;
+  overflow-x: hidden;
 }

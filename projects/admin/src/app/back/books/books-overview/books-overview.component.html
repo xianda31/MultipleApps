@@ -1,4 +1,4 @@
-<div class="mt-2 row row-cols-1 row-cols-md-4 g-2 ">
+<div class="mt-2 row row-cols-1 row-cols-md-4 g-2 mx-0">
   <div class="col" *ngFor="let report of reports_values ">
     <div [class]="selected_report === report ? 'card shadow-sm border-primary ' : 'card shadow-sm' "
       (click)="go_report(report)">
@@ -13,7 +13,7 @@
 </div>
 
 <ng-template #report_summary let-report="report">
-  <div class="row justify-content-center align-items-center">
+  <div class="row justify-content-center align-items-center mx-0">
     <div class="col-auto" [ngSwitch]="report">
       <ng-container *ngSwitchCase="reports.PRODUITS">
         {{ current_products_operations_amount | number:truncature:'fr' }} €
@@ -98,7 +98,7 @@
 
   <div class="card-body">
     <div class="table-responsive table-responsive-sticky">
-      <table class="table table-sm table-responsive">
+      <table class="table table-sm">
         <thead>
           <tr>
             <th class="col">Date </th>
@@ -186,7 +186,7 @@
 <!-- épargne -->
 <div *ngIf="selected_report === reports.EPARGNE" class="card mt-2">
   <div class="card-header">
-    <div class="row align-items-center">
+    <div class="row align-items-center mx-0">
       <h5 class="col-auto"> solde courant du compte épargne : {{initial_liquidities.savings +current_savings_movements |
         number:truncature:'fr'}}€</h5>
       <h6 class="col-auto">(total mouvements : {{current_savings_movements}}€) </h6>
@@ -233,7 +233,7 @@
 
 <div class="card mt-2 " *ngIf="selected_report === reports.CAISSE_CHEQUES ">
 
-  <div class="ps-2 row fw-bolder">
+  <div class="ps-2 row fw-bolder mx-0">
     <div class="col-2 ps-4">Date</div>
     <div class="col-2 text-end">Montant</div>
     <div class="col-2"></div>
@@ -248,7 +248,7 @@
         <div ngbAccordionHeader>
           <button ngbAccordionButton
             [class]="deposit.complete ? (deposit.balanced ?'bg-light':'bg-danger') :'bg-warning'">
-            <div class="ps-1 row w-100 justify-content-between align-items-center">
+            <div class="ps-1 row w-100 justify-content-between align-items-center mx-0">
               <div class="col-2">
                 {{(deposit.out_date !== undefined) ? ( deposit.out_date | date: 'dd/MM/yyyy') : 'non déposé'}}
               </div>
@@ -289,7 +289,7 @@
   </div>
 
   <div class="table-responsive table-responsive-sticky">
-    <table class="table table-sm table-responsive">
+    <table class="table table-sm">
       <thead>
         <tr class="text-center">
           <th scope="col" class="text-start">Date </th>
@@ -369,7 +369,7 @@
 <ng-template #debts_and_assets_report let-title="title" let-balance="balance" let-map="map">
   <div class="card">
     <div class="card-header">
-      <div class="row justify-content-between align-items-center">
+      <div class="row justify-content-between align-items-center mx-0">
         <h5 class="col">{{title}} : {{balance}} €</h5>
         <div class="col-auto form-check form-switch ">
           <input class="form-check-input" type="checkbox" id="flexSwitchCheckChecked" [checked]="show_all_assets"

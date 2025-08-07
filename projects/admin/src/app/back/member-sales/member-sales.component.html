@@ -1,4 +1,4 @@
-<div class="row  mt-3">
+<div class="row mt-3 mx-0">
     <div *ngIf="loaded" class="col-md-8">
         <div class="card shadow-sm ">
             <div class="card-header">
@@ -7,7 +7,7 @@
                 </div>
             </div>
             <div class="card-body">
-                <div class="row mb-2 align-items-center">
+                <div class="row mb-2 align-items-center mx-0">
                     <div class="col-auto">
                         <span class="text-muted">recherche par adhérent : </span>
                     </div>
@@ -22,26 +22,28 @@
                     </div>
                 </div>
 
-                <div class="row">
-                    <div class="col">
-                        <table class="table table-sm table-striped table-hover">
-                            <thead>
-                                <tr>
-                                    <th>date</th>
-                                    <th>libellé</th>
-                                    <th>achats</th>
-                                    <th>tag</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr *ngFor="let revenue of revenues">
-                                    <td>{{revenue.date | date: 'dd/MM/YYYY'}}</td>
-                                    <td>{{revenue.label}}</td>
-                                    <td>{{revenue.values | json}}</td>
-                                    <td>{{revenue.tag}}</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                <div class="row mx-0">
+                    <div class="col px-0">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>date</th>
+                                        <th>libellé</th>
+                                        <th>achats</th>
+                                        <th>tag</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngFor="let revenue of revenues">
+                                        <td>{{revenue.date | date: 'dd/MM/YYYY'}}</td>
+                                        <td>{{revenue.label}}</td>
+                                        <td>{{revenue.values | json}}</td>
+                                        <td>{{revenue.tag}}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
