@@ -12,7 +12,7 @@ import { AuthentificationService } from '../../authentification/authentification
   templateUrl: './tournaments.component.html',
   styleUrls: ['./tournaments.component.scss']
 })
-export class TournamentsComponent  {
+export class TournamentsComponent {
 
   next_tournament_teams: TournamentTeams[] = [];
   license_nbr = 0; // License number of the logged member
@@ -26,22 +26,24 @@ export class TournamentsComponent  {
 
   ngOnInit(): void {
 
-this.titleService.setTitle('Les Tournois');
+    this.titleService.setTitle('Les Tournois');
     this.loadTournamentTeams();
-    
+
     this.auth.logged_member$.subscribe((member) => {
       const whoAmI = member;
       this.license_nbr = whoAmI ? Number(whoAmI.license_number) : 0;
       console.log('Logged member license number:', this.license_nbr);
     });
-    
+
   }
-    loadTournamentTeams() {
-      this.tournamentService.list_next_tournament_teams(0).subscribe((next_tournament_teams: TournamentTeams[]) => {
-        this.next_tournament_teams = next_tournament_teams;
-      });
-    }
-    
+
+
+  loadTournamentTeams() {
+    this.tournamentService.list_next_tournament_teams().subscribe((next_tournament_teams: TournamentTeams[]) => {
+      this.next_tournament_teams = next_tournament_teams;
+    });
+  }
+
   date_of(tTeams: TournamentTeams): string {
     return tTeams.subscription_tournament.organization_club_tournament.date;
   }

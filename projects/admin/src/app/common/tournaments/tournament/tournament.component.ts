@@ -1,5 +1,5 @@
-import { Component, Input, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { ToastService } from '../../services/toast.service';
 import { AuthentificationService } from '../../authentification/authentification.service';
 import { Player, Team } from '../../ffb/interface/tournament_teams.interface';
@@ -8,8 +8,8 @@ import { FormControl, Validators, FormsModule, ReactiveFormsModule, ValidationEr
 import { CommonModule, Location, UpperCasePipe } from '@angular/common';
 import { TournamentService } from '../../services/tournament.service';
 import { InputPlayerLicenseComponent } from '../../ffb/input-player/input-player-license.component';
-import { combineLatest, Observable } from 'rxjs';
-import { map, switchMap, tap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-tournament',
@@ -19,7 +19,6 @@ import { map, switchMap, tap } from 'rxjs/operators';
 })
 export class TournamentComponent implements OnInit {
 
-  // @Input('id') tteam_tournament_id!: string;
 
   tteam_tournament_id!: string;
   tournament_name = '';

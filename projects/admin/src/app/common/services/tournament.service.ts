@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { club_tournament } from '../ffb/interface/club_tournament.interface';
-import { BehaviorSubject, from, map, merge, Observable, scan, switchMap } from 'rxjs';
+import { BehaviorSubject, from, map, merge, Observable, scan, switchMap, tap } from 'rxjs';
 import { FFB_proxyService } from '../ffb/services/ffb.service';
 import { TournamentTeams } from '../ffb/interface/tournament_teams.interface';
 
@@ -26,23 +26,24 @@ export class TournamentService {
         );
     }
 
-    list_next_tournament_teams(days_back: number): Observable<TournamentTeams[]> {
+    list_next_tournament_teams(days_back: number = 0): Observable<TournamentTeams[]> {
         return this.list_next_tournaments(days_back).pipe(
             switchMap((tournaments) => {
                 const tournamentTeamsObservables = tournaments.map((tournament) =>
                     from(this.ffbService.getTournamentTeams(tournament.team_tournament_id.toString()))
                 );
                 return merge(...tournamentTeamsObservables).pipe(
-                    scan((acc: TournamentTeams[], t: TournamentTeams) => {
-                        const idx = acc.findIndex(tt => tt.subscription_tournament.id === t.subscription_tournament.id);
-                        if (idx > -1) acc[idx] = t;
-                        else acc.push(t);
-                        this._tournamentTeams = [...acc];
-                        this._tournamentTeams$.next(this._tournamentTeams.sort((a, b) => {
-                            return new Date(a.subscription_tournament.organization_club_tournament.date).getTime() - new Date(b.subscription_tournament.organization_club_tournament.date).getTime();
-                        }));
-                        return acc;
-                    }, [])
+                    tap((t: TournamentTeams) => {
+                        const idx = this._tournamentTeams.findIndex(tt => tt.subscription_tournament.id ===
+                            t.subscription_tournament.id);
+                        if (idx > -1) this._tournamentTeams[idx] = t;
+                        else this._tournamentTeams.push(t);
+
+                        this._tournamentTeams.sort((a, b) => {
+                            return new Date(this.date_of(a)).getTime() - new Date(this.date_of(b)).getTime();
+                        });
+                        this._tournamentTeams$.next(this._tournamentTeams);
+                    }),
                 );
             }),
             switchMap(() => this._tournamentTeams$.asObservable())
@@ -57,8 +58,8 @@ export class TournamentService {
                     let existingTeams = tteams.find(t => t.subscription_tournament.id.toString() === tteams_id);
                     if (existingTeams) {
                         return (existingTeams);
-                    } else { throw new Error(`TournamentTeams with id ${tteams_id} not found in cached data.`); }
-                } else { throw new Error(`TournamentTeams with id ${tteams_id} not found in cached data.`); }
+                    } else { throw new Error(`TournamentTeams with id ${tteams_id} not found in cached data. (1/2)`); }
+                } else { throw new Error(`TournamentTeams with id ${tteams_id} not found in cached data. (2/2)`); }
             })
         );
     }
@@ -68,6 +69,9 @@ export class TournamentService {
         return this._tournamentTeams.find(t => t.subscription_tournament.id.toString() === tteams_id);
     }
 
+    private date_of(tTeams: TournamentTeams): string {
+        return tTeams.subscription_tournament.organization_club_tournament.date;
+    }
 
     // C(RU)DL Team
 
