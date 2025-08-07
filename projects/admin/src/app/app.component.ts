@@ -36,7 +36,7 @@ export class AppComponent {
     // Vérifier si l'URL est vide et rediriger vers l'entrée point
     if (routeSnapshot.url.length === 0) {
       let entry_point = this.localStorageService.getItem('entry_point');
-      entry_point = entry_point ? entry_point : 'front';
+      entry_point = entry_point ? entry_point : 'back';
       console.log('Empty URL detected, redirecting to ', entry_point);
       this.router.navigate([entry_point]);
     }else {
