@@ -1,0 +1,47 @@
+<div class="row">
+    <h5 class="text-center">
+        Les prochains tournois
+        <i class="ms-1 bi-arrow-clockwise" (click)="loadTournamentTeams()"></i>
+    </h5>
+</div>
+<div class="row row-cols-2 row-cols-md-4 g-4 justify-content-center">
+    <div class="col" *ngFor="let t of next_tournament_teams">
+        <div class="card my-1 mx-sm-2 tournament-card h-100 shadow" (click)="goToTournamentTeams(t)">
+
+            <h4 class="card-header">
+                <span class="stamp">
+                    <i [class]="icon_for(t)"></i> </span>
+                <div class="text-center">
+                    {{ date_of(t) | date:'EEEE d MMMM y':'':'fr-FR' }}
+                    <h6 class="text-center"> {{name_of(t)}} </h6>
+                </div>
+            </h4>
+
+            <div class="card-body">
+                <div class="card-text">
+                    <div *ngIf="t.teams && t.teams.length > 0">
+                        <small>
+                            paires inscrites : {{(t.teams.length - t.isolated_player_count)}}
+                        </small>
+                    </div>
+                    <div *ngIf="t.isolated_player_count > 0">
+                        <small>
+                            + {{t.isolated_player_count}}
+                            <i class="bi bi-person-arms-up"> </i>
+                            <span *ngIf="t.isolated_player_count === 1" class="text-info-emphasis">cherche un
+                                partenaire </span>
+                            <span *ngIf="t.isolated_player_count > 1" class="text-info-emphasis">cherchent un
+                                partenaire </span>
+                        </small>
+                    </div>
+                </div>
+
+                <div *ngIf="registrated_in(t) " class="card-text">
+                    <hr />
+                    Vous êtes inscrit(e) à ce tournoi.
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

@@ -1,0 +1,94 @@
+<div class="row mt-3 justify-content-center">
+    <div class="col-md-8 col-12">
+        <div class="card w-100 shadow-sm" *ngIf="teams">
+            <div class="card-header">
+                <div class="row justify-content-between">
+                    <div class="col-auto ">
+                        <div class="row card-title align-items-center">
+                            <p class="fw-bolder mb-0 col-auto">{{tournament_date | date:'EEEE d MMMM y':'':'fr-FR'}}</p>
+                            <p class="ms-2 mb-0 col-auto">{{tournament_name}}</p>
+                        </div>
+                    </div>
+                    <div class="col-auto ms-auto">
+                        <button type="button" class="btn-close" aria-label="Close" (click)="exit()"></button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless table-sm table-striped table-responsive">
+                    <thead>
+                        <tr>
+                            <th class="col-1"></th>
+                            <th class="col-4"></th>
+                            <th class="col-4"></th>
+                            <th class="col-3"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let team of teams,let i=index">
+                            <td>{{i+1}}</td>
+                            <td *ngFor="let player of team.players">
+                                {{player.person.firstname}}
+                                {{player.person.lastname | uppercase}}
+                            </td>
+                            <ng-container *ngIf="team.is_isolated_player">
+                                <td></td>
+                                <td *ngIf="!already_subscribed && (is_member$ | async)"
+                                    class="text-start align-content-center">
+                                    <button [disabled]="!whoAmI" class="btn btn-sm btn-primary"
+                                        (click)="completeTeam(team.players[0])">completer
+                                        l'équipe</button>
+                                </td>
+                            </ng-container>
+                            <td>
+                                <div class=" text-center">
+                                    <button *ngIf="is_in_team(whoAmI?.license_number,team)" (click)="deleteTeam(team)"
+                                        class="btn btn-sm  bg-warning">
+                                        Désinscription
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tfoot *ngIf="(!already_subscribed && (is_member$ | async))" class=" table-primary table-sm">
+                        <tr style="border-top: 2px solid #2b66a1;"> </tr>
+                        <!-- bandeau inscription -->
+                        <tr>
+                            <td class="align-middle">{{teams.length + 1}}</td>
+                            <td class="align-middle">
+                                {{whoAmI?.firstname}} {{whoAmI?.lastname}}
+                            </td>
+                            <!-- partenaire potentiel -->
+                            <td class="align-middle">
+                                <app-input-player-license listeId="player2" type="text"
+                                    class="form-control form-control-sm" [formControl]="player2" required>
+                                </app-input-player-license>
+                                <span *ngIf="player2.errors?.['already_engaged'] && player2.touched"
+                                    class="text-danger">Ce
+                                    joueur est déjà inscrit</span>
+                            </td>
+                            <!-- validation  inscription -->
+                            <td class="col-3 align-middle">
+                                <div *ngIf="player2.valid">
+                                    <button class="btn btn-primary btn-sm" (click)="subscribeWithPlayer2()">
+                                        enregistrer l'équipe
+                                    </button>
+                                </div>
+                                <div *ngIf="!player2.valid">
+                                    <button class="btn btn-primary btn-sm" (click)="subscribeSolo()">
+                                        s'inscrire seul
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+            </div>
+            <ng-template #add_team>
+
+
+            </ng-template>
+        </div>
+    </div>
+</div>

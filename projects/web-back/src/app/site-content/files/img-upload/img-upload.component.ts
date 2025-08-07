@@ -4,8 +4,8 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { uploadData } from 'aws-amplify/storage';
 // import { ImageSize } from '../../../const';
 import { map } from 'rxjs';
-import { SystemDataService } from '../../../../../../common/services/system-data.service';
-import { ImageSize } from '../../../../../../common/system-conf.interface';
+import { SystemDataService } from '../../../../common/services/system-data.service';
+import { ImageSize } from '../../../../common/system-conf.interface';
 
 @Component({
     selector: 'app-img-upload',

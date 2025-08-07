@@ -1,0 +1,96 @@
+
+// Style pour nav-item actif
+.nav-link.active {
+  border-bottom: 4px solid #eb9a87;
+  padding-bottom: 1px;
+}
+
+.nav-link:hover {
+  border-bottom: 2px solid rgba(139, 69, 19, 0.6);
+  padding-bottom: 4px;
+}
+
+// Bouton personnalisé sépia outline
+.btn-sepia {
+  background-color: transparent;
+  border: 1px solid #eb9a87;
+  color: #eb9a87;
+  
+  &:hover {
+    background-color: #eb9a87;
+    border-color: #eb9a87;
+    color: white;
+  }
+  
+  &:active, &:focus {
+    background-color: #d88873;
+    border-color: #d88873;
+    color: white;
+    box-shadow: 0 0 0 0.2rem rgba(235, 154, 135, 0.25);
+  }
+}
+
+// get dropdown menu to work on hover with better UX
+.dropdown {
+  &:hover > .dropdown-menu {
+    display: block;
+    animation: fadeIn 0.2s ease-in;
+  }
+  
+  // Ajouter une zone invisible pour faciliter la navigation
+  &::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: 10px;
+    background: transparent;
+    z-index: 1000;
+    pointer-events: none;
+  }
+}
+
+// Spécifique pour le menu utilisateur (membre connecté)
+.nav-item.dropdown {
+  position: relative;
+  overflow: visible;
+  
+  &:hover > .dropdown-menu {
+    display: block !important;
+    animation: fadeIn 0.2s ease-in;
+  }
+  
+  // Zone tampon pour le menu utilisateur - sans déborder
+  &::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: 10px;
+    background: transparent;
+    z-index: 1000;
+    pointer-events: none;
+  }
+}
+
+.dropdown-menu {
+  // Ajouter une transition et un délai avant fermeture
+  transition: opacity 0.2s ease-in-out;
+  margin-top: 0;
+  
+  &:hover {
+    display: block !important;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdown > .dropdown-toggle:active {
+    /*Without this, clicking will make it sticky*/
+    pointer-events: none;
+}

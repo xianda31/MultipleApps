@@ -1,0 +1,200 @@
+<ng-container [ngSwitch]="rendering">
+    <!-- mode vignette  -->
+    <ng-container *ngSwitchCase="renderMode.Thumbnail">
+        <ng-container [ngSwitch]=" article.template">
+            <ng-container *ngSwitchCase="articleTemplateEnum.IDcard"
+                [ngTemplateOutlet]="thumbnail_IDcard"></ng-container>
+            <ng-container *ngSwitchCase="articleTemplateEnum.header"
+                [ngTemplateOutlet]="thumbnail_default"></ng-container>
+            <ng-container *ngSwitchCase="articleTemplateEnum.letter"
+                [ngTemplateOutlet]="thumbnail_default"></ng-container>
+            <ng-container *ngSwitchDefault [ngTemplateOutlet]="thumbnail_default"></ng-container>
+        </ng-container>
+
+        <ng-template #thumbnail_IDcard>
+            <div class="card h-100">
+                <div class="card-img-top" *ngIf="signedUrl">
+                    <div class="row g-0 justify-content-end">
+                        <div class="col-md-6">
+                            <img [src]="signedUrl | async" alt="Card image cap">
+                        </div>
+                        <div class="col-md-6  align-self-center ">
+                            <!-- <div class="d-flex  "> -->
+                            <div class="card-body text-center ">
+                                <h5 class="card-title ">{{article.title}}</h5>
+                                <span [innerHTML]="article.content | head"></span>
+                            </div>
+                            <!-- </div> -->
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <span [innerHTML]="article.content | trail"></span>
+                    </div>
+                </div>
+                <div (click)="onFollow(article)" class="card-footer">
+                    <small class=" text-uppercase">voir plus</small>
+                </div>
+            </div>
+        </ng-template>
+        <ng-template #thumbnail_default>
+            <div class="card h-100">
+                <div *ngIf="signedUrl">
+                    <img class="card-img-top" [src]="signedUrl | async" alt="Card image cap">
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{article.title}}</h5>
+                    <div class="card-text">
+                        <span [innerHTML]="article.content | head"></span>
+                    </div>
+                </div>
+                <div (click)="onFollow(article)" class="card-footer">
+                    <small class=" text-uppercase">voir plus</small>
+                </div>
+            </div>
+        </ng-template>
+    </ng-container>
+
+    <!-- </ng-container> -->
+
+    <!-- mode "normal" ie Full   -->
+    <ng-container *ngSwitchCase="renderMode.Full">
+        <ng-container [ngSwitch]=" article.template">
+            <ng-container *ngSwitchCase="articleTemplateEnum.IDcard" [ngTemplateOutlet]="full_IDcard"></ng-container>
+            <ng-container *ngSwitchCase="articleTemplateEnum.header" [ngTemplateOutlet]="full_header"></ng-container>
+            <ng-container *ngSwitchCase="articleTemplateEnum.letter" [ngTemplateOutlet]="full_letter"></ng-container>
+            <ng-container *ngSwitchCase="articleTemplateEnum.photo" [ngTemplateOutlet]="full_photo"></ng-container>
+
+            <ng-container *ngSwitchDefault [ngTemplateOutlet]="full_default"></ng-container>
+        </ng-container>
+
+        <!-- pleine page / article de type IDcard-side -->
+        <ng-template #full_IDcard>
+            <div class="card h-100 nice_shadow bigger_on_hover show_on_hover">
+                <div *ngIf="signedUrl" class="card-image-top">
+                    <div class="row g-0">
+                        <div class="col-md-3  ">
+                            <img class="img-fluid rounded-start w-100" [src]="signedUrl | async" [alt]="article.title">
+                        </div>
+                        <div class="col-md-9   ">
+                            <div class="card-body g-0">
+                                <h5>{{article.title}}</h5>
+                                <span [innerHTML]="article.content | head "></span>
+                                <small class=" masked fst-italic" [innerHTML]="article.content | trail "> </small>
+                            </div>
+                            <!-- <div class=""> -->
+                            <!-- </div> -->
+                            <!-- <div class="card-text show_on_hover">
+                                    <p class=" masked lh-sm fst-italic" [innerHTML]="article.content| trail ">
+                                    </p>
+                                </div> -->
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
+        </ng-template>
+        <!-- pleine page / article de type event -->
+        <ng-template #full_photo>
+            <div class="align-content-center">
+                <div class="card no-border ">
+                    <img class="img-fluid nice_shadow w-75 align-self-center" [src]="signedUrl | async"
+                        alt="Card image cap">
+                    <div class=" card-body p-3 ">
+                        <div class="row">
+                            <!-- <div class="text-center mb-2">
+                                <h5 class="card-title article-title">{{article.title | uppercase}}</h5>
+                            </div> -->
+                        </div>
+                        <!-- <div class="offset-md-2 justify-content-center align-content-center">
+        
+                            <span [innerHTML]="article.content | replace:'|':'' "></span>
+                        </div> -->
+                    </div>
+                </div>
+            </div>
+        </ng-template>
+
+        <!-- pleine page / article de type event -->
+        <ng-template #full_header>
+            <div class="align-content-center">
+                <div class="card no-border ">
+                    <img class="img-fluid nice_shadow w-50 align-self-center" [src]="signedUrl | async"
+                        alt="Card image cap">
+                    <div class=" card-body p-3 ">
+                        <div class="row">
+                            <div class="text-center mb-2">
+                                <h5 class="card-title article-title">{{article.title | uppercase}}</h5>
+                            </div>
+                            <!-- <div class="col-2">
+                            </div> -->
+                        </div>
+                        <div class="offset-md-2 justify-content-center align-content-center">
+
+                            <span [innerHTML]="article.content | replace:'|':'' "></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </ng-template>
+        <!-- pleine page / article de type letter -->
+        <ng-template #full_letter>
+            <div class="align-content-center">
+                <div class="card no-border">
+                    <div class=" card-body p-3 ">
+                        <div class="row">
+
+                            <h6>Bridge Club de Saint-Orens</h6>
+                            <div class="col-3">
+                                <img class="img-fluid nice_shadow" [src]="signedUrl | async" alt="Card image cap">
+                            </div>
+                            <div class="col-4 offset-5 ">
+                                <div class="fs-6">Espace Marcaissonne</div>
+                                <div class="fs-6">31650 Saint-Orens</div>
+                                <div class="fs-6">05 61 20 10 09 </div>
+                                <a href="mailto:bridge.saintorens&#64;free.fr">bridge.saintorens&#64;free.fr</a>
+                            </div>
+                        </div>
+
+                        <h2 class="text-center m-5 text-body-emphasis">
+                            {{article.title | uppercase}}</h2>
+
+                        <span [innerHTML]="article.content | replace:'|':'' "></span>
+                    </div>
+                </div>
+            </div>
+        </ng-template>
+
+        <!-- pleine page / modele article de defaut -->
+        <ng-template #full_default>
+            <div class=" align-content-center">
+                <div class="card no-border">
+                    <div class=" card-body p-3 ">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <h6 class="card-title article-title">{{article.title | uppercase}}</h6>
+                                <img class="img-fluid nice_shadow" [src]="signedUrl | async" alt="Card image cap">
+                            </div>
+                            <div class="col-md-9 justify-content-center align-content-center">
+                                <span [innerHTML]="article.content | replace:'|':'' "></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </ng-template>
+
+    </ng-container>
+
+    <!-- mode "image et titre"    (principalement pour les sidebars)-->
+    <ng-container *ngSwitchCase="renderMode.Image_and_title">
+        <div class="side-img">
+            <div *ngIf="signedUrl" class="card-image-top">
+                <img class="img-fluid w-75" [src]="signedUrl | async" alt="Card image cap">
+                <!-- <div class="card-body"> -->
+                <p class="text-muted text-center">{{article.title}}</p>
+                <!-- </div> -->
+            </div>
+        </div>
+    </ng-container>
+</ng-container>

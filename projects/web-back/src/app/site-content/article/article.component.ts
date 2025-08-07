@@ -1,13 +1,13 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { ArticlesService } from '../../../../../common/services/articles.service';
+import { ArticlesService } from '../../../common/services/articles.service';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Article, ArticleTemplateEnum, RenderingModeEnum } from '../../../../../common/menu.interface';
-import { RenderArticleComponent } from '../../../../../common/render-article/render-article.component';
-import { FileService } from '../../../../../common/services/files.service';
-import { S3Item } from '../../../../../common/file.interface'; // Import the S3item type from the appropriate module
-import { ToastService } from '../../../../../common/toaster/toast.service';
+import { Article, ArticleTemplateEnum, RenderingModeEnum } from '../../../common/menu.interface';
+import { RenderArticleComponent } from '../../../common/render-article/render-article.component';
+import { FileService } from '../../../common/services/files.service';
+import { S3Item } from '../../../common/file.interface'; // Import the S3item type from the appropriate module
+import { ToastService } from '../../../common/services/toast.service';
 
 @Component({
     selector: 'app-article',

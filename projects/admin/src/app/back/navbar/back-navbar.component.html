@@ -1,0 +1,101 @@
+<!-- <div class="container-md  container-sm-fluid"> -->
+
+<div class="row bg-light shadow-sm align-items-end">
+  <h4 class="d-flex d-inline align-items-end mt-2">
+    <span class="position-relative">
+      <i class="fs-4 bi-bank nav-link" routerLink="./"></i>
+    </span>
+    <span class=" badge  bg-success" style="font-size: 0.6rem;">{{entries_nbr}}</span>
+    <span *ngIf="!production_mode" class="badge bg-dark" style="font-size: 0.6rem;">dev</span>
+    <span class="fs-4 ms-1"> Administration Bridge Club
+      <span style="white-space:nowrap">Saint&ndash;Orens</span>
+    </span>
+    <span>
+      (saison {{season}}) </span>
+
+    <!-- backdoor to front -->
+    <span class="h6 ms-auto d-none d-sm-inline align-self-end">
+      <a [routerLink]="'/front'">
+      <i class="bi bi-door-open-fill" ></i>
+      </a>
+    </span>
+  </h4>
+  <!-- <h5 class="col-md-auto col-sm-12">
+  </h5> -->
+
+  <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+      aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      
+      <ul class=" navbar-nav  me-auto mb-md-0 mb-lg-0  align-items-start">
+
+        <li *ngIf="accreditation_level >= accreditation_levels.Contributeur" 
+          ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
+          <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
+            <i class="fs-4 bi-cart"></i> <span class="ms-1 d-none d-sm-inline">Boutique</span>
+          </a>
+          <ul ngbDropdownMenu class="dropdown-menu">
+            <li><a class="dropdown-item" routerLink="./caisse/ventes">vente à adhérents</a></li>
+            <li><a class="dropdown-item" routerLink="./caisse/droits-de-table">tournoi en présentiel</a></li>
+            <li><a class="dropdown-item" routerLink="./caisse/état-de-caisse">état de caisse</a></li>
+            <li><a class="dropdown-item" routerLink="./caisse/produits">produits à la vente</a></li>
+          </ul>
+        </li>
+
+        <li *ngIf="accreditation_level >= accreditation_levels.Contributeur" ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
+          <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
+            <i class="fs-4 bi-people"></i>
+            <span class="ms-1 d-none d-sm-inline">Adhérents</span>
+          </a>
+          <ul ngbDropdownMenu class="dropdown-menu">
+            <li><a class="dropdown-item" routerLink="./members/database">répertoire</a></li>
+            <li><a class="dropdown-item" routerLink="./members/cartes-admission">cartes admission</a></li>
+            <li><a class="dropdown-item" routerLink="./members/payments">paiements</a></li>
+          </ul>
+        </li>
+
+
+        <li *ngIf="accreditation_level >= accreditation_levels.Administrateur" ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
+          <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
+            <i class="fs-4 bi-journal"></i> <span class="ms-1 d-none d-sm-inline">Finance</span>
+          </a>
+          <ul ngbDropdownMenu class="dropdown-menu">
+            <li><a class="dropdown-item" routerLink="./finance/toutes-ecritures">écritures courantes</a></li>
+            <li><a class="dropdown-item" routerLink="./finance/books/base-comptable">synthèse</a></li>
+            <li><a class="dropdown-item" routerLink="./finance/bank-reconciliation">rapprochement bancaire</a></li>
+            <li><a class="dropdown-item" routerLink="./finance/expense-and-revenue">résultats</a></li>
+            <li><a class="dropdown-item" routerLink="./finance/balance">bilan</a></li>
+          </ul>
+        </li>
+
+        <!-- Outils -->
+        <li *ngIf="accreditation_level >= accreditation_levels.Systeme" ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
+          <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
+            <i class="fs-4 bi-database-fill-gear"></i> <span class="ms-1 d-none d-sm-inline">Outils</span>
+          </a>
+          <ul ngbDropdownMenu class="dropdown-menu">
+            <li><a class="dropdown-item" routerLink="./finance/books/list">base de données</a></li>
+            <li><a class="dropdown-item" routerLink="./finance/books/editor">écriture</a></li>
+            <li><a class="dropdown-item" routerLink="./outils/groups">droits d'accès</a></li>
+            <li><a class="dropdown-item" routerLink="./outils/sysconf">configuration</a></li>
+            <li><a class="dropdown-item" routerLink="./outils/excel_import">import excel</a></li>
+            <li *ngIf="!production_mode"><a class="dropdown-item" routerLink="./outils/cloneDB">clone DB</a></li>
+          </ul>
+        </li>
+
+      </ul>
+
+      <ul class=" navbar-nav align-self-center  ">
+        <li class="nav-item  me-md-2 me-sm-1">
+          <app-admin-in></app-admin-in>
+        </li>
+      </ul>
+
+    </div>
+  </nav>
+</div>

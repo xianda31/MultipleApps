@@ -1,9 +1,9 @@
 import { Component, OnDestroy } from '@angular/core';
-import { SiteLayoutService } from '../../../../../common/services/site-layout.service';
-import { Article, Page, RenderingModeEnum } from '../../../../../common/menu.interface';
+import { SiteLayoutService } from '../../../common/services/site-layout.service';
+import { Article, Page, RenderingModeEnum } from '../../../common/menu.interface';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
-import { RenderArticleComponent } from '../../../../../common/render-article/render-article.component';
+import { RenderArticleComponent } from '../../../common/render-article/render-article.component';
 import { Router } from '@angular/router';
 
 @Component({

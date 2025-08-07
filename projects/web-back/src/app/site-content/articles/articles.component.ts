@@ -1,12 +1,12 @@
 import { Component, OnDestroy } from '@angular/core';
-import { ArticlesService } from '../../../../../common/services/articles.service';
+import { ArticlesService } from '../../../common/services/articles.service';
 import { CommonModule } from '@angular/common';
-import { Article, Page, ArticleTemplateEnum } from '../../../../../common/menu.interface';
+import { Article, Page, ArticleTemplateEnum } from '../../../common/menu.interface';
 import { Router } from '@angular/router';
-import { SiteLayoutService } from '../../../../../common/services/site-layout.service';
+import { SiteLayoutService } from '../../../common/services/site-layout.service';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArticleComponent } from "../article/article.component";
-import { ToastService } from '../../../../../common/toaster/toast.service';
+import { ToastService } from '../../../common/services/toast.service';
 
 @Component({
     selector: 'app-articles',

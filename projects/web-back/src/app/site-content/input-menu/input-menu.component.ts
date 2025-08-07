@@ -1,6 +1,6 @@
 import { Component, forwardRef, Input } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR, ReactiveFormsModule } from '@angular/forms';
-import { Menu } from '../../../../../common/menu.interface';
+import { Menu } from '../../../common/menu.interface';
 import { CommonModule } from '@angular/common';
 
 @Component({

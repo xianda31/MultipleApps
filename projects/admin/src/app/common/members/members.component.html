@@ -1,0 +1,107 @@
+<div class="mt-2">
+  <div class="card">
+    <div class="card-header">
+      <div class="row justify-content-between align-items-end">
+        <h5 class="col">
+          Répertoire des {{members.length}} personnes
+        </h5>
+        <div class="col text-muted">
+           base FFB {{season}} :  Membres :  {{licensees.length - sympatisants_number}} licenciés + {{sympatisants_number}} sympathisants
+        </div>
+      </div>
+    </div>
+
+    <div class="card-body">
+      <!-- ajout d'un adhérent licencié supplémentaire -->
+      <h6 class="fw-bold">ajout de personne :</h6>
+      <div class=" row justify-content-around align-items-end">
+        <!-- <div class="col-md-4">
+        </div> -->
+        <div class="col-md-6 ">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text" id="inputGroup-sizing-sm"><strong>SANS licence </strong>(ex. débutant(e))
+              :</span>
+            <button class="btn  btn-primary btn-sm" (click)="add_newbee()">
+              <i class="bi bi-person-square"></i>
+            </button>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="input-group input-group-sm ">
+            <span class="input-group-text" id="inputGroup-sizing-sm"><strong>licenciée </strong>(futur adhérent(e))
+              :</span>
+            <app-input-player listeId="new_guest" placeholder="nom ou prénom" type="text"
+              class="form-control form-control-sm" [(ngModel)]="new_player"
+              (ngModelChange)="add_licensee(new_player)"></app-input-player>
+          </div>
+        </div>
+      </div>
+
+      <hr class="my-3">
+
+      <table class="table table-striped table-sm table-responsive">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Nom</th>
+            <th>Prénom</th>
+            <!-- <th>No licence</th> -->
+            <!-- <th>saison</th> -->
+            <th class="text-center">
+              Status FFB
+              <div ngbDropdown class="btn-group">
+                <span class="dropdown-toggle dropdown-toggle-split" ngbDropdownToggle></span>
+                <ul ngbDropdownMenu class="dropdown-menu">
+                  <li *ngFor="let status of licenses_status | keyvalue">
+                    <a class="dropdown-item" (click)="onSelectLicence(status.key)">{{status.value}}</a>
+                  </li>
+                </ul>
+              </div>
+            </th>
+            <!-- <th>téléphone</th> -->
+            <th>mail</th>
+            <th>Ville</th>
+            <th class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let member of filteredMembers; let i = index">
+            <td>{{i + 1}}</td>
+            <td>{{member.lastname | uppercase}}</td>
+            <td>{{member.firstname}}</td>
+
+            <ng-container [ngSwitch]="member.license_status">
+              <ng-container *ngSwitchCase="'duly_registered'">
+                <td class="text-center">
+                  <span
+                    ngbTooltip="{{member.license_taken_at === 'BCSTO' ? 'licencié au Club' : 'Sympathisant licencié au ' + member.license_taken_at}}"
+                    tooltipClass="my-custom-class" placement="right">
+                    <i
+                      [class]="member.license_taken_at !== 'BCSTO' ? 'bi bi-tencent-qq' : 'bi bi-person-square'"></i>
+                  </span>
+                </td>
+              </ng-container>
+
+              <ng-container *ngSwitchCase="'promoted_only'">
+                <td class="text-center text-danger">
+                  <span ngbTooltip="{{ 'Sympathisant non licencié ' }}" tooltipClass="my-custom-class"
+                    placement="right">
+                    <i class="bi bi-tencent-qq"></i>
+                  </span>
+                </td>
+              </ng-container>
+              <ng-container *ngSwitchDefault>
+                <td class="text-center"></td>
+              </ng-container>
+            </ng-container>
+            <td>{{member.email}}</td>
+            <td>{{member.city }}</td>
+            <td class="text-center">
+              <i class="bi bi-trash" (click)="deleteMember(member)"></i>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+    </div>
+  </div>

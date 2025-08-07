@@ -1,9 +1,9 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Menu } from '../../../../../common/menu.interface';
+import { Menu } from '../../../common/menu.interface';
 import { PagesComponent } from "../pages/pages.component";
-import { SiteLayoutService } from '../../../../../common/services/site-layout.service';
+import { SiteLayoutService } from '../../../common/services/site-layout.service';
 
 @Component({
     selector: 'app-menus',

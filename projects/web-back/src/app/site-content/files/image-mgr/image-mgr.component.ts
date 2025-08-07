@@ -1,13 +1,13 @@
 import { Component, OnInit } from '@angular/core';
-import { S3Item } from '../../../../../../common/file.interface';
+import { S3Item } from '../../../../common/file.interface';
 import { getUrl, list } from 'aws-amplify/storage';
 import { CommonModule } from '@angular/common';
-import { FileService } from '../../../../../../common/services/files.service';
+import { FileService } from '../../../../common/services/files.service';
 import { Observable } from 'rxjs';
 import { ImgUploadComponent } from '../img-upload/img-upload.component';
-import { ReplacePipe } from '../../../../../../common/pipes/replace.pipe';
-import { ArticlesService } from '../../../../../../common/services/articles.service';
-import { Article } from '../../../../../../common/menu.interface';
+import { ReplacePipe } from '../../../../common/pipes/replace.pipe';
+import { ArticlesService } from '../../../../common/services/articles.service';
+import { Article } from '../../../../common/menu.interface';
 
 
 @Component({
