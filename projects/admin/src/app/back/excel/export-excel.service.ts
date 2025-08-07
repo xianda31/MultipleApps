@@ -232,7 +232,7 @@ export class ExportExcelService {
             Object.entries(EXPENSES_COL).forEach(([key, col], index) => {
               if (op.values[key] !== undefined) {
                 let column = COL[col as keyof typeof COL];
-                row[column] = op.values[key];
+                row[column-1] = op.values[key];
               }
             });
           }
