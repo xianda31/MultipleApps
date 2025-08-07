@@ -215,7 +215,8 @@ export const xls_header = [
 export const TRANSACTION_ID_TO_NATURE: { [key in TRANSACTION_ID]?: string } = {
   [TRANSACTION_ID.report_prélèvement]: 'report prélèvement',
   [TRANSACTION_ID.report_chèque]: 'report chèque',
-  [TRANSACTION_ID.report_carte]: 'report carte',  
+  [TRANSACTION_ID.report_carte]: 'report carte',
+  [TRANSACTION_ID.annulation_dette_adhérent]: 'annulation dette adhérent',
   [TRANSACTION_ID.dépôt_collecte_espèces]: 'versement espèces', // or 'fond en espèces'
   [TRANSACTION_ID.dépôt_collecte_chèques]: 'versement chèques',
   [TRANSACTION_ID.dépôt_caisse_espèces]: 'remise espèces',
@@ -233,6 +234,7 @@ export const TRANSACTION_ID_TO_NATURE: { [key in TRANSACTION_ID]?: string } = {
   [TRANSACTION_ID.retrait_épargne_vers_banque]: 'retrait épargne',
   [TRANSACTION_ID.intérêt_épargne]: 'intérêts',
   [TRANSACTION_ID.report_avoir]: 'report avoir',
+  [TRANSACTION_ID.report_dette]: 'report dette',
   [TRANSACTION_ID.achat_adhérent_par_virement]: 'virement reçu',
   [TRANSACTION_ID.achat_adhérent_par_chèque]: 'paiement par chèque',
   [TRANSACTION_ID.achat_adhérent_en_espèces]: 'paiement en espèces',
@@ -265,6 +267,7 @@ export const TRANSACTION_ID_TO_CHRONO: { [key in TRANSACTION_ID]?: string } = {
   [TRANSACTION_ID.achat_adhérent_par_chèque]: 'C',
   [TRANSACTION_ID.achat_adhérent_en_espèces]: 'C',
   [TRANSACTION_ID.remboursement_achat_adhérent_par_chèque]: 'C',
+  [TRANSACTION_ID.annulation_dette_adhérent]: 'C',
   // [TRANSACTION_ID.vente_en_espèces]: 'espèces',
   // [TRANSACTION_ID.vente_par_chèque]: 'chèque',
 };
