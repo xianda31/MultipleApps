@@ -15,7 +15,7 @@ export class EnseignantsComponent {
   title: string;
   photo: string;
 }[] = [
-    { name: 'Didier Carral', title: 'maître-assistant et moniteur', photo: 'spidey.png' },
+    { name: 'Didier Carral', title: 'moniteur maître-assistant', photo: 'spidey.png' },
     { name: 'Dominique Cassagne', title: 'monitrice', photo: 'ghost-spider.png' },
     { name: 'Anne-Marie Godard', title: 'monitrice', photo: 'ghost-spider.png' },
     { name: 'Jacques Louis Merat', title: 'moniteur', photo: 'spidey.png' },

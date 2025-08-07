@@ -1,6 +1,6 @@
 import { registerLocaleData, CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import localeFr from '@angular/common/locales/fr';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { LocalStorageService } from './back/services/local-storage.service';
@@ -18,17 +18,30 @@ export class AppComponent {
 
   constructor(
     private localStorageService: LocalStorageService,
-    private router: Router
+    private router: Router,
+    private activatedRoute: ActivatedRoute
   ) {
   }
 
   ngOnInit(): void {
     registerLocaleData(localeFr);
 
+    // Obtenir les informations de la route active
+    const routeSnapshot = this.activatedRoute.snapshot;
+    // console.log('Current route URL:', JSON.stringify(routeSnapshot.url));
+    // console.log('Route params:', routeSnapshot.params);
+    // console.log('Query params:', routeSnapshot.queryParams);
+    // console.log('Route data:', routeSnapshot.data);
 
-    let entry_point = this.localStorageService.getItem('entry_point');
-    entry_point = entry_point ? entry_point : 'front';
-    this.router.navigate([entry_point]);
+    // Vérifier si l'URL est vide et rediriger vers l'entrée point
+    if (routeSnapshot.url.length === 0) {
+      let entry_point = this.localStorageService.getItem('entry_point');
+      entry_point = entry_point ? entry_point : 'front';
+      console.log('Empty URL detected, redirecting to ', entry_point);
+      this.router.navigate([entry_point]);
+    }else {
+      console.log('Current URL is not empty (' + routeSnapshot.url + '), no redirection needed.');
+    }
 
 
   }

@@ -51,9 +51,9 @@
 
 
       <!-- en dernier , login = "/authentification" -->
-      <div class="d-flex flex-grow-1"></div>
+      <!-- <div class="d-flex flex-grow-1"></div> -->
       <ng-container *ngIf="!(logged_member$ | async)">
-        <li ngbDropdown class="nav-link align-self-end me-md-3 me-sm-1 ms-auto">
+        <li ngbDropdown class="nav-link align-self-end me-md-5 me-sm-1 ms-auto">
           <button class="btn btn-sepia shadow-sm" type="button" data-bs-toggle="offcanvas"
             data-bs-target="#loggingOffCanvas" aria-controls="loggingOffCanvas">
             Espace membre
@@ -61,7 +61,7 @@
         </li>
       </ng-container>
       <ng-container *ngIf="logged_member$ | async as member">
-        <li ngbDropdown class="nav-item align-self-end dropdown me-md-3 me-sm-1 ms-auto">
+        <li ngbDropdown class="nav-item align-self-end dropdown me-md-5 me-sm-1 ms-auto">
           <a class="nav-link dropdown-toggle text-white" id="navbarDropdown" type="a" ngbDropdownToggle>
             <span class="ms-1 d-none d-sm-inline"> {{member.firstname}}</span>
           </a>

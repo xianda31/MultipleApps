@@ -19,10 +19,10 @@
       (click)="signIn()">Se connecter
     </button>
 
-    <div class="dropdown">
-      <button [disabled]="email.invalid" class="w-100 btn btn-primary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton1"
-        data-bs-toggle="dropdown" aria-expanded="false"> options </button>
-      <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+    <div ngbDropdown class="dropdown">
+      <button [disabled]="email.invalid" class="w-100 btn btn-primary btn-sm dropdown-toggle" type="button" 
+        ngbDropdownToggle> options </button>
+      <ul ngbDropdownMenu class="dropdown-menu">
         <li><a class="dropdown-item" href="#" (click)="signUp()">Créer un compte</a></li>
         <li><a class="dropdown-item" href="#" (click)="resetPassword()">Réinitialiser mot de passe</a></li>
       </ul>
@@ -34,13 +34,13 @@
 
 <!-- si loggé affichage prénom et droplist = [ logOut,...] -->
 <div *ngIf="logged_member" class="row align-items-center">
-  <div class="dropdown">
-    <button class="btn btn-primary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton1"
-      data-bs-toggle="dropdown" aria-expanded="false">
+  <div ngbDropdown class="dropdown">
+    <button class="btn btn-primary btn-sm dropdown-toggle" type="button" 
+      ngbDropdownToggle>
       <i [class]="group_icon"></i>
       {{logged_member.firstname}}
     </button>
-    <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+    <ul ngbDropdownMenu class="dropdown-menu">
       <li><a class="dropdown-item" href="#" >{{my_group}}</a></li>
       <li><a class="dropdown-item" href="#" (click)="signOut()">Log out</a></li>
       <li><a class="dropdown-item" href="#">Another action</a></li>

@@ -49,9 +49,9 @@
             <!-- <th>saison</th> -->
             <th class="text-center">
               Status FFB
-              <div class="btn-group">
-                <span class=" dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown"></span>
-                <ul class="dropdown-menu">
+              <div ngbDropdown class="btn-group">
+                <span class="dropdown-toggle dropdown-toggle-split" ngbDropdownToggle></span>
+                <ul ngbDropdownMenu class="dropdown-menu">
                   <li *ngFor="let status of licenses_status | keyvalue">
                     <a class="dropdown-item" (click)="onSelectLicence(status.key)">{{status.value}}</a>
                   </li>

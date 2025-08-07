@@ -47,6 +47,31 @@
     height: 10px;
     background: transparent;
     z-index: 1000;
+    pointer-events: none;
+  }
+}
+
+// Spécifique pour le menu utilisateur (membre connecté)
+.nav-item.dropdown {
+  position: relative;
+  overflow: visible;
+  
+  &:hover > .dropdown-menu {
+    display: block !important;
+    animation: fadeIn 0.2s ease-in;
+  }
+  
+  // Zone tampon pour le menu utilisateur - sans déborder
+  &::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: 10px;
+    background: transparent;
+    z-index: 1000;
+    pointer-events: none;
   }
 }
 

@@ -3,7 +3,7 @@ import { Component } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { AuthentificationService } from '../authentification.service';
 import { Member } from '../../member.interface';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, of, switchMap, from, map, tap, catchError } from 'rxjs';
 import { GroupService } from '../group.service';
 import { Group_icons, Group_names } from '../group.interface';
@@ -17,7 +17,7 @@ const GROUP_ICONS = Group_icons;
 @Component({
     selector: 'app-admin-in',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, FormsModule],
+    imports: [CommonModule, ReactiveFormsModule, FormsModule, NgbDropdownModule],
     templateUrl: './admin-in.component.html',
     styleUrl: './admin-in.component.scss'
 })

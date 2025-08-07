@@ -4,7 +4,7 @@ import { LicenseesService } from '../licensees/services/licensees.service';
 import { switchMap, tap } from 'rxjs';
 import { FormControl, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule, UpperCasePipe } from '@angular/common';
-import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltipModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { GetNewbeeComponent } from '../modals/get-newbee/get-newbee.component';
 import { InputPlayerComponent } from '../ffb/input-licensee/input-player.component';
 import { FFBplayer } from '../ffb/interface/FFBplayer.interface';
@@ -16,7 +16,7 @@ import { ToastService } from '../services/toast.service';
 @Component({
   selector: 'app-members',
   encapsulation: ViewEncapsulation.None, // nécessaire pour que les CSS des tooltips fonctionnent
-  imports: [FormsModule, CommonModule, ReactiveFormsModule, UpperCasePipe, InputPlayerComponent, NgbTooltipModule],
+  imports: [FormsModule, CommonModule, ReactiveFormsModule, UpperCasePipe, InputPlayerComponent, NgbTooltipModule, NgbDropdownModule],
   templateUrl: './members.component.html',
   styleUrl: './members.component.scss'
 })
