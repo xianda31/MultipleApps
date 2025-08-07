@@ -215,6 +215,7 @@ export const xls_header = [
 export const TRANSACTION_ID_TO_NATURE: { [key in TRANSACTION_ID]?: string } = {
   [TRANSACTION_ID.report_prélèvement]: 'report prélèvement',
   [TRANSACTION_ID.report_chèque]: 'report chèque',
+  [TRANSACTION_ID.report_carte]: 'report carte',  
   [TRANSACTION_ID.dépôt_collecte_espèces]: 'versement espèces', // or 'fond en espèces'
   [TRANSACTION_ID.dépôt_collecte_chèques]: 'versement chèques',
   [TRANSACTION_ID.dépôt_caisse_espèces]: 'remise espèces',
