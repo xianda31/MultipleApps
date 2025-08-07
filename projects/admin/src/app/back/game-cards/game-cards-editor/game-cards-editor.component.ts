@@ -18,6 +18,7 @@ export class GameCardsEditorComponent implements OnInit {
 
   cards: GameCard[] = [];
   total_asset: number = 0;
+  loaded: boolean = false;
 
   constructor(
     private gameCardService: GameCardService,
@@ -30,6 +31,7 @@ export class GameCardsEditorComponent implements OnInit {
     this.gameCardService.gameCards.subscribe(cards => {
       this.cards = cards;
       this.total_asset = cards.reduce((acc, card) => acc + card.initial_qty-card.stamps.length, 0);
+      this.loaded = true;
     });
   }
 
