@@ -9,7 +9,7 @@ import { BooksEditorComponent } from './back/books/books-edit/books-editor.compo
 import { BooksListComponent } from './back/books/books-list/books-list.component';
 import { BooksOverviewComponent } from './back/books/books-overview/books-overview.component';
 import { CashBoxStatusComponent } from './back/books/cash-box-status/cash-box-status.component';
-import { ImportExcelComponent } from './back/excel/import-excel/import-excel.component';
+import { ImportExcelComponent } from './back/books/import-excel/import-excel.component';
 import { ExpenseAndRevenueDetailsComponent } from './back/expense-and-revenue/expense-and-revenue-details/expense-and-revenue-details.component';
 import { ExpenseAndRevenueComponent } from './back/expense-and-revenue/expense-and-revenue.component';
 import { FeesCollectorComponent } from './back/fees/fees-collector/fees-collector.component';

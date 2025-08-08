@@ -6,7 +6,7 @@ import { BookEntry } from '../../../common/accounting.interface';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { BookService } from '../../services/book.service';
 import { of } from 'rxjs';
-import { ExportExcelService } from '../../excel/export-excel.service';
+import { BooksExportExcelService } from '../books-export-excel.service';
 import { TransactionService } from '../../services/transaction.service';
 
 type Fields = 'date' | 'classe' | 'transaction' | 'montant' | 'tag'
@@ -30,7 +30,7 @@ export class BooksListComponent  {
     private transactionService: TransactionService,
     private systemDataService: SystemDataService,
     private router: Router,
-    private exportExcelService: ExportExcelService
+    private exportExcelService: BooksExportExcelService
 
   ) { }
 

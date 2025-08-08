@@ -6,7 +6,7 @@ import { BooksEditorComponent } from './books/books-edit/books-editor.component'
 import { CashBoxStatusComponent } from './books/cash-box-status/cash-box-status.component';
 import { BankReconciliationComponent } from './bank-reconciliation/bank-reconciliation.component';
 import { BalanceComponent } from './balance/balance.component';
-import { ImportExcelComponent } from './excel/import-excel/import-excel.component';
+import { ImportExcelComponent } from './books/import-excel/import-excel.component';
 import { BooksListComponent } from './books/books-list/books-list.component';
 import { ExpenseAndRevenueComponent } from './expense-and-revenue/expense-and-revenue.component';
 import { ExpenseAndRevenueDetailsComponent } from './expense-and-revenue/expense-and-revenue-details/expense-and-revenue-details.component';

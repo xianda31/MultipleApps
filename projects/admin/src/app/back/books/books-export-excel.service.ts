@@ -13,7 +13,7 @@ import { TransactionService } from '../services/transaction.service';
 @Injectable({
   providedIn: 'root'
 })
-export class ExportExcelService {
+export class BooksExportExcelService {
   loaded: boolean = false;
   conf !: SystemConfiguration;
   season: string = '';
