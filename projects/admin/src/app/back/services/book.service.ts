@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 
-import { BookEntry, Revenue, FINANCIAL_ACCOUNT, BALANCE_ACCOUNT, Expense, CUSTOMER_ACCOUNT, TRANSACTION_ID, Operation, AMOUNTS } from '../../common/accounting.interface';
+import { BookEntry, Revenue, FINANCIAL_ACCOUNT, BALANCE_ACCOUNT, Expense, CUSTOMER_ACCOUNT, TRANSACTION_ID, Operation, AMOUNTS,  Formatted_purchase, Item } from '../../common/accounting.interface';
 // import { Schema } from '../../../../amplify/data/resource';
 import { BehaviorSubject, catchError, from, map, Observable, of, switchMap, tap } from 'rxjs';
 import { SystemDataService } from '../../common/services/system-data.service';
@@ -207,8 +207,52 @@ export class BookService {
   // utility functions
 
   get_book_entries(): BookEntry[] {
-
     return this._book_entries ?? []; // if no book entries are loaded yet
+  }
+
+  private format_data(revenues: Revenue[], expenses: Expense[]) : Formatted_purchase[] {
+
+      let transform_key = (key: string): string => {    // solution provisoire
+        if (key === 'creance_in') {
+          return 'achat à crédit';
+        } else if (key === 'creance_out') {
+          return 'remboursement crédit';
+        } else if (key === 'avoir_in') {
+          return 'utilisation avoir';
+        } else if (key === 'avoir_out') {
+          return 'attribution avoir';
+        }
+        return key;
+      }
+  
+  
+      const achats = revenues.map((operation) => {
+        let items: Item[] = Object.entries(operation.values).map(([key, value]: [string, number]) => {
+          let type: Item["type"] = (key.startsWith('creance') || key.startsWith('avoir')) ? 'bancaire' : 'revenue';
+          return { type: type, description: (transform_key(key)), amount: value };
+        });
+        return { date: operation.date, items: items };
+      });
+  
+  
+      const ventes = expenses.map((operation) => {
+        let items: Item[] = Object.entries(operation.values).map(([key, value]: [string, number]) => {
+          let type: Item["type"] = (key.startsWith('creance') || key.startsWith('avoir')) ? 'bancaire' : 'expense';
+          return { type: type, description: (transform_key(key)), amount: value };
+        });
+        return { date: operation.date, items: items };
+      });
+  
+      return [...achats, ...ventes].sort((b, a) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }
+    
+
+  get_formated_buy_operations(member_full_name: string): Formatted_purchase[] {
+    let revenues = this.get_revenues_from_members().filter((revenue) => revenue.member === member_full_name);
+    let expenses = this.get_expenses_for_members().filter((expense) => expense.member === member_full_name);
+
+    return this.format_data(revenues,expenses)
+
   }
 
   private _book_entry_balanced(bookEntry: BookEntry): boolean {

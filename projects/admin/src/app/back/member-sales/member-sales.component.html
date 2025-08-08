@@ -26,22 +26,34 @@
                     <div class="col px-0">
                         <div class="table-responsive">
                             <table class="table table-sm table-striped table-hover mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>date</th>
-                                        <th>libellé</th>
-                                        <th>achats</th>
-                                        <th>tag</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr *ngFor="let revenue of revenues">
-                                        <td>{{revenue.date | date: 'dd/MM/YYYY'}}</td>
-                                        <td>{{revenue.label}}</td>
-                                        <td>{{revenue.values | json}}</td>
-                                        <td>{{revenue.tag}}</td>
-                                    </tr>
-                                </tbody>
+                               <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Achat</th>
+                        <th>Remarque</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let achat_vente of achats_ventes">
+                        <td>
+                            {{ achat_vente.date | date:'EEEE d MMMM y':'':'fr-FR' }}
+                        </td>
+                        <td>
+                            <span *ngFor="let item of achat_vente.items">
+                                <span *ngIf="item.type === 'revenue'">
+                                    {{ item.description }} : {{ item.amount | currency:'EUR':'symbol':'1.2-2' }}
+                                </span>
+                            </span>
+                        </td>
+                        <td>
+                            <span *ngFor="let item of achat_vente.items">
+                                <span *ngIf="item.type === 'bancaire'">
+                                    {{ item.description }} : {{ item.amount | currency:'EUR':'symbol':'1.2-2' }}
+                                </span>
+                            </span>
+                        </td>
+                    </tr>
+                </tbody>
                             </table>
                         </div>
                     </div>

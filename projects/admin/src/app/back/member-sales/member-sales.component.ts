@@ -1,6 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { tap, switchMap, catchError, of } from 'rxjs';
-import { Expense, Revenue } from '../../common/accounting.interface';
+import { Expense, Formatted_purchase, Revenue } from '../../common/accounting.interface';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { BookService } from '../services/book.service';
 import { LicenseStatus, Member } from '../../common/member.interface';
@@ -8,6 +8,8 @@ import { InputMemberComponent } from '../input-member/input-member.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MembersService } from '../../common/members/services/members.service';
+
+
 
 @Component({
   selector: 'app-member-sales',
@@ -20,6 +22,8 @@ export class MemberSalesComponent {
   season: string = '';
   operations: (Revenue | Expense)[] = [];
   revenues: Revenue[] = [];
+    achats_ventes !: Formatted_purchase[];
+
 
   verbose = signal<string>('');
   unregistrated: number = 0;
@@ -64,7 +68,7 @@ export class MemberSalesComponent {
 
     this.unregistrated = 0;
     this.members.forEach((member) => {
-      if (member.license_status !== LicenseStatus.DULY_REGISTERED ) {
+      if (member.license_status !== LicenseStatus.DULY_REGISTERED) {
         let full_name = this.memberService.full_name(member);
         // const adh_paied = this.operations
         //   .filter((op) => op.member === full_name)
@@ -85,9 +89,13 @@ export class MemberSalesComponent {
   member_selected() {
     if (this.selected_member) {
       let full_name = this.memberService.full_name(this.selected_member);
-      this.revenues = this.operations.filter((op) => op.member === full_name)
+      // this.revenues = this.operations.filter((op) => op.member === full_name);
+       
+      this.achats_ventes = this.bookService.get_formated_buy_operations(full_name)
     }
   }
+
+ 
 
   member_clear() {
     this.selected_member = null;
