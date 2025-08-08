@@ -1,7 +1,6 @@
 import { Routes } from '@angular/router';
 import { ShopComponent } from './shop/shop.component';
 import { FeesCollectorComponent } from './fees/fees-collector/fees-collector.component';
-import { HomeComponent } from './home/home.component';
 import { BooksOverviewComponent } from './books/books-overview/books-overview.component';
 import { BooksEditorComponent } from './books/books-edit/books-editor.component';
 import { CashBoxStatusComponent } from './books/cash-box-status/cash-box-status.component';
@@ -21,6 +20,7 @@ import { ProductsComponent } from './products/products.component';
 import { MembersComponent } from '../common/members/members.component';
 import { CloneDBComponent } from './maintenance/clone-DB/clone-db.component';
 import { AdminComponent } from './admin/admin.component';
+import { BackPageComponent } from './back-page/back-page.component';
 
 export const routes: Routes = [
   {
@@ -55,8 +55,8 @@ export const routes: Routes = [
       { path: 'outils/groups', component: GroupsListComponent },
       { path: 'outils/cloneDB', component: CloneDBComponent },
 
-      { path: 'home', component: HomeComponent },
-      { path: '', component: HomeComponent },
+      { path: 'home', component: BackPageComponent },
+      { path: '', component: BackPageComponent },
       { path: '**', component: PageNotFoundComponent },
       // { path: '', redirectTo: 'caisse/produits', pathMatch: 'full' },
     ]

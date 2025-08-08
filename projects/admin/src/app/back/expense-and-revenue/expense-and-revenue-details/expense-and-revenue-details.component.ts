@@ -7,7 +7,7 @@ import { BookService } from '../../services/book.service';
 import { Revenue, Expense, BookEntry } from '../../../common/accounting.interface';
 import { combineLatest, tap, switchMap } from 'rxjs';
 import { Router } from '@angular/router';
-import { BackComponent } from '../../../common/back/back.component';
+import { BackComponent } from '../../../common/loc-back/loc-back.component';
 
 
 @Component({

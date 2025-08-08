@@ -2,10 +2,10 @@ import { CommonModule , Location} from '@angular/common';
 import { Component } from '@angular/core';
 
 @Component({
-    selector: 'back',
+    selector: 'loc-back',
     imports: [CommonModule],
-    templateUrl: './back.component.html',
-    styleUrl: './back.component.scss'
+    templateUrl: './loc-back.component.html',
+    styleUrl: './loc-back.component.scss'
 })
 export class BackComponent {
  constructor(

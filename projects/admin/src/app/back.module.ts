@@ -15,7 +15,6 @@ import { ExpenseAndRevenueComponent } from './back/expense-and-revenue/expense-a
 import { FeesCollectorComponent } from './back/fees/fees-collector/fees-collector.component';
 import { GameCardsEditorComponent } from './back/game-cards/game-cards-editor/game-cards-editor.component';
 import { GroupsListComponent } from './back/groups/groups-list/groups-list.component';
-import { HomeComponent } from './back/home/home.component';
 import { CloneDBComponent } from './back/maintenance/clone-DB/clone-db.component';
 import { MemberSalesComponent } from './back/member-sales/member-sales.component';
 import { PageNotFoundComponent } from './common/page-not-found/page-not-found.component';
@@ -54,7 +53,6 @@ import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
     ProductsComponent,
     SysConfComponent,
     ImportExcelComponent,
-    HomeComponent,
     PageNotFoundComponent,
     CloneDBComponent
   ],
