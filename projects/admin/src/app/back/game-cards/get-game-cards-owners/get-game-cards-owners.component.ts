@@ -3,7 +3,6 @@ import { FormGroup, FormBuilder, Validators, FormsModule, ReactiveFormsModule } 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { CommonModule } from '@angular/common';
 import { Member } from '../../../common/member.interface';
-import { Observable } from 'rxjs';
 import { InputMemberComponent } from '../../input-member/input-member.component';
 import { MAX_STAMPS } from '../game-card.interface';
 import { MembersService } from '../../../common/members/services/members.service';

@@ -7,6 +7,7 @@ import { GetGameCardsOwnersComponent } from '../get-game-cards-owners/get-game-c
 import { Member } from '../../../common/member.interface';
 import { EditGameCardComponent } from '../edit-game-card/edit-game-card.component';
 import { GetConfirmationComponent } from '../../modals/get-confirmation/get-confirmation.component';
+import { GcardsExcelExportService } from '../gcards-excel-export.service';
 
 @Component({
     selector: 'app-game-cards-editor',
@@ -23,6 +24,7 @@ export class GameCardsEditorComponent implements OnInit {
   constructor(
     private gameCardService: GameCardService,
     private modalService: NgbModal,
+    private exportService : GcardsExcelExportService 
   ) { }
 
 
@@ -79,6 +81,21 @@ stamps_number(card: GameCard): number {
       if (new_card) {
         console.log('GameCardsEditorComponent.editGameCard', new_card);
         this.updateGameCard(new_card);
+      }
+    });
+  }
+
+  exportToExcel() {
+    this.exportService.exportGameCardsToExcel(this.cards);
+  }
+
+  deleteNulls() {
+    const modalRef = this.modalService.open(GetConfirmationComponent, { centered: true });
+    modalRef.componentInstance.title = `Suppression de toutes les cartes terminées`;
+    modalRef.componentInstance.subtitle = `Êtes-vous sûr de vouloir effacer cette historique`;
+    modalRef.result.then((answer: boolean) => {
+      if (answer) {
+        this.gameCardService.deleteNullCards();
       }
     });
   }

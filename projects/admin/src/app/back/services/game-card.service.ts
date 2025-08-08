@@ -87,145 +87,156 @@ export class GameCardService {
           cards.shift(); // remove the card if it is full
         }
       });
-  
-  if(double) { // add a second stamp if double
-    cards[0].stamps.push(stamp_date); 
-    await this.updateCard(cards[0])
-      .catch(error => {
-        console.error('Error stamping member card:', error);
-      });
+
+    if (double) { // add a second stamp if double
+      cards[0].stamps.push(stamp_date);
+      await this.updateCard(cards[0])
+        .catch(error => {
+          console.error('Error stamping member card:', error);
+        });
+    }
   }
-}
 
   //  interfaces editeur
 
-  get gameCards(): Observable < GameCard[] > {
-  return this._gameCards ? this.gameCards$.asObservable() : this.listCards().pipe(
-    switchMap(() => this.gameCards$.asObservable()));
-}
-
-  async createCard(owners: Member[], qty ?: number): Promise < GameCard > {
-  const card_input: PlayBook_input = {
-    licenses: owners.map((member) => member.license_number),
-    initial_qty: qty ?? MAX_STAMPS,
-    stamps: []
-  };
-  try {
-    const createdPlayBook = await this.dbHandler.createPlayBook(card_input);
-    const new_card: GameCard = {
-      id: createdPlayBook.id,
-      owners: owners,
-      initial_qty: createdPlayBook.initial_qty,
-      stamps: createdPlayBook.stamps.filter((stamp): stamp is string => stamp !== null),
-      licenses: createdPlayBook.licenses,
-      createdAt: createdPlayBook.createdAt,
-    };
-    if(this._gameCards) {   // cache update if exists
-  this._gameCards.push(new_card);
-  this.gameCards$.next(this._gameCards);
-  let ownersNames = new_card.owners.map(owner => `${owner.firstname} ${owner.lastname}`).join(', ');
-
-  this.toastService.showSuccess('Gestion des cartes', 'Carte de ' + ownersNames + ' créée');
-}
-return new_card;
-    } catch (errors) {
-  if (Array.isArray(errors) && errors.length > 0 && typeof errors[0] === 'object' && errors[0] !== null && 'errorType' in errors[0]) {
-    if ((errors[0] as any).errorType === 'Unauthorized') {
-      this.toastService.showErrorToast('Gestion des cartes', 'Vous n\'êtes pas autorisé à créer une carte de tournoi');
-      return Promise.reject('Unauthorized');
-    }
+  get gameCards(): Observable<GameCard[]> {
+    return this._gameCards ? this.gameCards$.asObservable() : this.listCards().pipe(
+      switchMap(() => this.gameCards$.asObservable()));
   }
 
-  this.toastService.showErrorToast('Gestion des cartes', 'Une erreur est survenue lors de la modifier de la carte de tournoi');
-  return Promise.reject('Error updating game card');
-}
-  }
-
-  async updateCard(card: GameCard): Promise < GameCard > {
-  try {
-    const { owners, ...playBook } = card; // Destructure to remove owners
-    const updatedBook = await this.dbHandler.updatePlayBook(playBook);
-    const updatedGameCard: GameCard = {
-      id: updatedBook.id,
-      licenses: updatedBook.licenses.filter((license): license is string => license !== null),
-      stamps: updatedBook.stamps.filter((stamp): stamp is string => stamp !== null),
-      owners: card.owners,
-      initial_qty: updatedBook.initial_qty,
+  async createCard(owners: Member[], qty?: number): Promise<GameCard> {
+    const card_input: PlayBook_input = {
+      licenses: owners.map((member) => member.license_number),
+      initial_qty: qty ?? MAX_STAMPS,
+      stamps: []
     };
-    this._gameCards = this._gameCards.filter(c => c.id !== card.id);
-    this._gameCards.push(updatedGameCard);
-    this._gameCards.sort((a, b) => a.owners[0].lastname.localeCompare(b.owners[0].lastname));
+    try {
+      const createdPlayBook = await this.dbHandler.createPlayBook(card_input);
+      const new_card: GameCard = {
+        id: createdPlayBook.id,
+        owners: owners,
+        initial_qty: createdPlayBook.initial_qty,
+        stamps: createdPlayBook.stamps.filter((stamp): stamp is string => stamp !== null),
+        licenses: createdPlayBook.licenses,
+        createdAt: createdPlayBook.createdAt,
+      };
+      if (this._gameCards) {   // cache update if exists
+        this._gameCards.push(new_card);
+        this.gameCards$.next(this._gameCards);
+        let ownersNames = new_card.owners.map(owner => `${owner.firstname} ${owner.lastname}`).join(', ');
 
-    this.gameCards$.next(this._gameCards);
-    let ownersNames = updatedGameCard.owners.map(owner => `${owner.firstname} ${owner.lastname}`).join(', ');
-    this.toastService.showSuccess('Gestion des cartes', 'Carte de ' + ownersNames + ' mise à jour');
-    return updatedGameCard;
-
-  } catch(errors) {
-    if (Array.isArray(errors) && errors.length > 0 && typeof errors[0] === 'object' && errors[0] !== null && 'errorType' in errors[0]) {
-      if ((errors[0] as any).errorType === 'Unauthorized') {
-        this.toastService.showErrorToast('Gestion des cartes', 'Vous n\'êtes pas autorisé à modifier une carte de tournoi');
-        return Promise.reject('Unauthorized');
+        this.toastService.showSuccess('Gestion des cartes', 'Carte de ' + ownersNames + ' créée');
       }
-    }
-    this.toastService.showErrorToast('Gestion des cartes', 'Une erreur est survenue lors de la modification de la carte de tournoi');
-    return Promise.reject('Error updating game card');
-  }
-}
-
-  async deleteCard(card: GameCard): Promise < boolean > {
-  try {
-    const done = await this.dbHandler.deletePlayBook(card);
-    if(done) {
-      this._gameCards = this._gameCards.filter(c => c.id !== card.id);
-      this.gameCards$.next(this._gameCards);
-      let ownersNames = card.owners.map(owner => `${owner.firstname} ${owner.lastname}`).join(', ');
-
-      this.toastService.showSuccess('Gestion des cartes', 'La carte de ' + ownersNames + ' a été supprimée');
-      this.toastService.showInfo('Gestion des cartes', 'Supprimez la recette associée si nécessaire');
-      return true;
-    }
-      return false;
-  } catch(error) {
-    this.toastService.showErrorToast('Gestion des cartes', 'La suppression de la carte de tournoi a échoué');
-    console.error('Error deleting game card:', error);
-    throw error;
-  }
-}
-
-listCards(): Observable < GameCard[] > {
-  return this.membersService.listMembers().pipe(
-    map((members) => {
-      this.members = members;
-    }),
-    switchMap(() => this.dbHandler.listPlayBooks()),
-    map((cards) => {
-      this._gameCards = cards.map(card => {
-        const owners = card.licenses
-          .filter((license): license is string => license !== null)
-          .map((license) => this.members.find(member => member.license_number === license))
-          .filter((owner): owner is Member => owner !== undefined);
-
-        if (owners.length === 0) {
-          console.warn(`No owners found for card with ID ${card.id}. `)
+      return new_card;
+    } catch (errors) {
+      if (Array.isArray(errors) && errors.length > 0 && typeof errors[0] === 'object' && errors[0] !== null && 'errorType' in errors[0]) {
+        if ((errors[0] as any).errorType === 'Unauthorized') {
+          this.toastService.showErrorToast('Gestion des cartes', 'Vous n\'êtes pas autorisé à créer une carte de tournoi');
+          return Promise.reject('Unauthorized');
         }
-        return {
-          id: card.id,
-          owners: owners,
-          initial_qty: card.initial_qty,
-          stamps: (card.stamps ?? []).filter((stamp): stamp is string => stamp !== null),
-          licenses: card.licenses.filter((license): license is string => license !== null),
-          createdAt: card.createdAt,
-          updatedAt: card.updatedAt
-        };
-      });
+      }
 
+      this.toastService.showErrorToast('Gestion des cartes', 'Une erreur est survenue lors de la modifier de la carte de tournoi');
+      return Promise.reject('Error updating game card');
+    }
+  }
+
+  async updateCard(card: GameCard): Promise<GameCard> {
+    try {
+      const { owners, ...playBook } = card; // Destructure to remove owners
+      const updatedBook = await this.dbHandler.updatePlayBook(playBook);
+      const updatedGameCard: GameCard = {
+        id: updatedBook.id,
+        licenses: updatedBook.licenses.filter((license): license is string => license !== null),
+        stamps: updatedBook.stamps.filter((stamp): stamp is string => stamp !== null),
+        owners: card.owners,
+        initial_qty: updatedBook.initial_qty,
+      };
+      this._gameCards = this._gameCards.filter(c => c.id !== card.id);
+      this._gameCards.push(updatedGameCard);
       this._gameCards.sort((a, b) => a.owners[0].lastname.localeCompare(b.owners[0].lastname));
 
       this.gameCards$.next(this._gameCards);
-      return this._gameCards;
-    }),
-  );
-}
+      let ownersNames = updatedGameCard.owners.map(owner => `${owner.firstname} ${owner.lastname}`).join(', ');
+      this.toastService.showSuccess('Gestion des cartes', 'Carte de ' + ownersNames + ' mise à jour');
+      return updatedGameCard;
+
+    } catch (errors) {
+      if (Array.isArray(errors) && errors.length > 0 && typeof errors[0] === 'object' && errors[0] !== null && 'errorType' in errors[0]) {
+        if ((errors[0] as any).errorType === 'Unauthorized') {
+          this.toastService.showErrorToast('Gestion des cartes', 'Vous n\'êtes pas autorisé à modifier une carte de tournoi');
+          return Promise.reject('Unauthorized');
+        }
+      }
+      this.toastService.showErrorToast('Gestion des cartes', 'Une erreur est survenue lors de la modification de la carte de tournoi');
+      return Promise.reject('Error updating game card');
+    }
+  }
+
+  async deleteCard(card: GameCard): Promise<boolean> {
+    try {
+      const done = await this.dbHandler.deletePlayBook(card);
+      if (done) {
+        this._gameCards = this._gameCards.filter(c => c.id !== card.id);
+        this.gameCards$.next(this._gameCards);
+        let ownersNames = card.owners.map(owner => `${owner.firstname} ${owner.lastname}`).join(', ');
+
+        this.toastService.showSuccess('Gestion des cartes', 'La carte de ' + ownersNames + ' a été supprimée');
+        this.toastService.showInfo('Gestion des cartes', 'Supprimez la recette associée si nécessaire');
+        return true;
+      }
+      return false;
+    } catch (error) {
+      this.toastService.showErrorToast('Gestion des cartes', 'La suppression de la carte de tournoi a échoué');
+      console.error('Error deleting game card:', error);
+      throw error;
+    }
+  }
+
+  async deleteNullCards(): Promise<void> {
+    const delNullPromises : Promise<boolean>[] = this._gameCards.filter(card => card.stamps.length === card.initial_qty).map(async (card) => {
+      return this.deleteCard(card);
+    });
+    if (delNullPromises.length === 0) {
+      this.toastService.showInfo('Gestion des cartes', 'Aucune carte vide à supprimer');
+      return;
+    }
+    await Promise.all(delNullPromises);
+  }
+
+  listCards(): Observable<GameCard[]> {
+    return this.membersService.listMembers().pipe(
+      map((members) => {
+        this.members = members;
+      }),
+      switchMap(() => this.dbHandler.listPlayBooks()),
+      map((cards) => {
+        this._gameCards = cards.map(card => {
+          const owners = card.licenses
+            .filter((license): license is string => license !== null)
+            .map((license) => this.members.find(member => member.license_number === license))
+            .filter((owner): owner is Member => owner !== undefined);
+
+          if (owners.length === 0) {
+            console.warn(`No owners found for card with ID ${card.id}. `)
+          }
+          return {
+            id: card.id,
+            owners: owners,
+            initial_qty: card.initial_qty,
+            stamps: (card.stamps ?? []).filter((stamp): stamp is string => stamp !== null),
+            licenses: card.licenses.filter((license): license is string => license !== null),
+            createdAt: card.createdAt,
+            updatedAt: card.updatedAt
+          };
+        });
+
+        this._gameCards.sort((a, b) => a.owners[0].lastname.localeCompare(b.owners[0].lastname));
+
+        this.gameCards$.next(this._gameCards);
+        return this._gameCards;
+      }),
+    );
+  }
 
 }

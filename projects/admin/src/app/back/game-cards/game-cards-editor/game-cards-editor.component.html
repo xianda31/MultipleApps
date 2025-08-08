@@ -4,15 +4,32 @@
             <div class="row justify-content-between align-items-center">
                 <div class="col-auto">
                     <h4 class="ms-1 d-none d-sm-inline">Gestion des cartes d'admission tournoi</h4>
+                </div>
+                <div class="col-auto">
                     <h6 class="text-muted">({{total_asset}} admissions sur {{cards.length}} cartes )</h6>
                 </div>
-                <div class="col-auto text-end">
-                    <button class="btn btn-sm btn-primary" (click)="createGameCard()">
-                        <i class="bi bi-plus-lg"></i>
-                    </button>
-                    : création d'une carte
-                </div>
             </div>
+            <hr>
+            <div class="row justify-content-between align-items-center">
+                <p class="text-muted mb-0"> utilitaires : </p>
+                <div class="col-auto">
+                    <button class="btn btn-sm btn-primary" (click)="createGameCard()">
+                        création carte
+                    </button>
+                </div>
+                <div class="col-auto">
+                    <button class="btn btn-sm btn-warning" (click)="deleteNulls()">
+                        suppression cartes terminées
+                    </button>
+                </div>
+                <div class="col-auto">
+                    <button class="btn btn-sm btn-success" (click)="exportToExcel()">
+                        Export Excel
+                    </button>
+                </div>
+
+            </div>
+            <!-- </div> -->
         </div>
         <div class="card-body">
             <table class="table  table-sm table-striped table-responsive">
@@ -50,6 +67,6 @@
                 </tbody>
             </table>
         </div>
-    </div>
 
+    </div>
 </div>

@@ -11,7 +11,6 @@ import { BooksListComponent } from './books/books-list/books-list.component';
 import { ExpenseAndRevenueComponent } from './expense-and-revenue/expense-and-revenue.component';
 import { ExpenseAndRevenueDetailsComponent } from './expense-and-revenue/expense-and-revenue-details/expense-and-revenue-details.component';
 import { GameCardsEditorComponent } from './game-cards/game-cards-editor/game-cards-editor.component';
-// import { BuyComponent } from './buy/buy.component';
 import { PageNotFoundComponent } from '../common/page-not-found/page-not-found.component';
 import { MemberSalesComponent } from './member-sales/member-sales.component';
 import { SysConfComponent } from './sys-conf/sys-conf.component';

@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Component } from '@angular/core';
-import { tap, switchMap, catchError, of } from 'rxjs';
+import { catchError, of } from 'rxjs';
 import * as ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { SystemConfiguration } from '../../common/system-conf.interface';
