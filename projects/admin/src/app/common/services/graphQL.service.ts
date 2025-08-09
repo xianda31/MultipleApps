@@ -6,8 +6,8 @@ import { Member, Member_input } from '../interfaces/member.interface';
 import { BookEntry } from '../interfaces/accounting.interface';
 import { Schema } from '../../../../../../amplify/data/resource';
 import { Product, Product_input } from '../../back/products/product.interface';
-import { Snippet, Snippet_input } from '../../back/snippets/snippet.interface';
 import { PlayBook, PlayBook_input } from '../../back/game-cards/game-card.interface';
+import { Snippet, Snippet_input } from '../interfaces/snippet.interface';
 
 
 @Injectable({

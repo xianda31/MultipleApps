@@ -9,6 +9,7 @@ import { GameCardsOwnedComponent } from './game-cards-owned/game-cards-owned.com
 import { TournamentsComponent } from '../common/tournaments/tournaments/tournaments.component';
 import { FonctionnementComponent } from './static/fonctionnement/fonctionnement.component';
 import { EnseignantsComponent } from './static/enseignants/enseignants.component';
+import { NewsComponent } from './static/news/news.component';
 
 export const routes: Routes = [
   { path: '',
@@ -22,6 +23,9 @@ export const routes: Routes = [
 
       { path: 'fonctionnement', component: FonctionnementComponent },
       { path: 'enseignants', component: EnseignantsComponent },
+
+      {path : 'news', component: NewsComponent },
+      
       { path: '', component: FrontPageComponent },
       { path: '**', component: PageNotFoundComponent },
      ]

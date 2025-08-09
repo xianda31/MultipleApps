@@ -14,3 +14,10 @@ export interface Snippet {
 }
 
 export type Snippet_input = Omit<Schema['Snippet']['type'], 'id' | 'createdAt' | 'updatedAt'> ;
+
+
+export enum SNIPPET_TEMPLATES {
+    NEWS = 'news',
+    TEMPLATE2 = 'template2',
+    TEMPLATE3 = 'template3',
+}
