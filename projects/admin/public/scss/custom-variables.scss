@@ -1,10 +1,9 @@
-$primary: #c29b32;
-$secondary: #277bc5;
+$primary: rgb(63, 73, 61);
+$secondary: #c29b32;
+$success: rgb(8, 98, 23);
+$danger: rgb(220, 53, 69);
+$warning: rgb(255, 193, 7);
+$info: rgb(13, 202, 240);
+$light: rgb(248, 249, 250);
+$dark: rgb(75, 80, 87);
 
-$dark: #4b5057; // your custom dark color
-
-$light: #f8f9fa; // your custom light color
-
-.bg-custom {
-  background-color: #ff6600 !important; // Remplacez par la couleur de votre choix
-}
