@@ -1,6 +1,6 @@
 // compta.xls file definition
 
-import { BALANCE_ACCOUNT, CUSTOMER_ACCOUNT, FINANCIAL_ACCOUNT, TRANSACTION_ID } from "../accounting.interface";
+import { BALANCE_ACCOUNT, CUSTOMER_ACCOUNT, FINANCIAL_ACCOUNT, TRANSACTION_ID } from "../interfaces/accounting.interface";
 
 
 

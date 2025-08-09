@@ -6,7 +6,7 @@ import { MembersService } from '../../common/services/members.service';
 import { CommonModule } from '@angular/common';
 import { TitleService } from '../title.service';
 import { SystemDataService } from '../../common/services/system-data.service';
-import { Formatted_purchase } from '../../common/accounting.interface';
+import { Formatted_purchase } from '../../common/interfaces/accounting.interface';
 
 
 

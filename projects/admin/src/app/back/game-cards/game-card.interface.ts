@@ -1,5 +1,5 @@
 import { Schema } from "../../../../../../amplify/data/resource";
-import { Member } from "../../common/member.interface";
+import { Member } from "../../common/interfaces/member.interface";
 
 export interface GameCard extends PlayBook {
   owners: Member[];

@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { FormGroup, FormBuilder, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { CommonModule } from '@angular/common';
-import { Member } from '../../../common/member.interface';
+import { Member } from '../../../common/interfaces/member.interface';
 import { InputMemberComponent } from '../../input-member/input-member.component';
 import { MAX_STAMPS } from '../game-card.interface';
 import { MembersService } from '../../../common/services/members.service';

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Menu, Page } from '../menu.interface';
+import { Menu, Page } from '../interfaces/menu.interface';
 import { BehaviorSubject, combineLatest, from, map, Observable, of, tap } from 'rxjs';
 import { generateClient } from 'aws-amplify/api';
 import { data, Schema } from '../../../amplify/data/resource';

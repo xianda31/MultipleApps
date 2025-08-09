@@ -3,7 +3,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Router } from '@angular/router';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 import { BookService } from '../../../services/book.service';
-import { BookEntry } from '../../../../common/accounting.interface';
+import { BookEntry } from '../../../../common/interfaces/accounting.interface';
 import { ToastService } from '../../../../common/services/toast.service';
 interface EntryValue { total: number, entries: BookEntry[] };
 

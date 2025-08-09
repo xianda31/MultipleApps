@@ -3,7 +3,7 @@ import { Group_icons, Group_names, UserInGroup } from '../../../common/authentif
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { generateClient } from 'aws-amplify/data';
-import { Member } from '../../../common/member.interface';
+import { Member } from '../../../common/interfaces/member.interface';
 import { ToastService } from '../../../common/services/toast.service';
 import { MembersService } from '../../../common/services/members.service';
 import { Schema } from '../../../../../../../amplify/data/resource';

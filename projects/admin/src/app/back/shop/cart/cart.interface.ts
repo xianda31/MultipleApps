@@ -1,6 +1,6 @@
-import { CUSTOMER_ACCOUNT, FINANCIAL_ACCOUNT } from "../../../common/accounting.interface";
-import { Member } from "../../../common/member.interface";
-import { _CHEQUES_FIRST_IN_CASHBOX } from "../../../common/transaction.definition";
+import { CUSTOMER_ACCOUNT, FINANCIAL_ACCOUNT } from "../../../common/interfaces/accounting.interface";
+import { Member } from "../../../common/interfaces/member.interface";
+import { _CHEQUES_FIRST_IN_CASHBOX } from "../../../common/interfaces/transaction.definition";
 
 
 export enum PaymentMode {

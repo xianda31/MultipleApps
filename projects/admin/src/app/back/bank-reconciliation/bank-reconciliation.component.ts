@@ -1,7 +1,7 @@
 import { Component, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { BookEntry, TRANSACTION_ID, FINANCIAL_ACCOUNT } from '../../common/accounting.interface';
+import { BookEntry, TRANSACTION_ID, FINANCIAL_ACCOUNT } from '../../common/interfaces/accounting.interface';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { BookService } from '../services/book.service';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
@@ -9,7 +9,7 @@ import { Router } from '@angular/router';
 import { ToastService } from '../../common/services/toast.service';
 import { switchMap, combineLatest } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Balance_sheet } from '../../common/balance.interface';
+import { Balance_sheet } from '../../common/interfaces/balance.interface';
 import { FinancialReportService } from '../services/financial_report.service';
 import { TransactionService } from '../services/transaction.service';
 

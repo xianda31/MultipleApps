@@ -7,7 +7,7 @@ import { Router } from '@angular/router';
 import { AuthentificationService } from '../authentification.service';
 import { MembersService } from '../../services/members.service';
 import { GroupService } from '../group.service';
-import { Member } from '../../member.interface';
+import { Member } from '../../interfaces/member.interface';
 import { Group_icons, Group_names } from '../group.interface';
 import { CommonModule } from '@angular/common';
 

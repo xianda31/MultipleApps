@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ToastService } from '../../common/services/toast.service';
-import { TRANSACTION_ID } from '../../common/accounting.interface';
-import { TRANSACTION_CLASS, TRANSACTION_DIRECTORY, Transaction } from '../../common/transaction.definition';
+import { TRANSACTION_ID } from '../../common/interfaces/accounting.interface';
+import { TRANSACTION_CLASS, TRANSACTION_DIRECTORY, Transaction } from '../../common/interfaces/transaction.definition';
 
 @Injectable({
   providedIn: 'root'

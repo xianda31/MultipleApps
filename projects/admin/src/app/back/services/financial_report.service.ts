@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { from, map, catchError, of, Observable, BehaviorSubject, switchMap } from 'rxjs';
-import { Balance_board, Balance_record, Balance_sheet } from '../../common/balance.interface';
+import { Balance_board, Balance_record, Balance_sheet } from '../../common/interfaces/balance.interface';
 import { FileService } from '../../common/services/files.service';
 import { ToastService } from '../../common/services/toast.service';
 import { SystemDataService } from '../../common/services/system-data.service';

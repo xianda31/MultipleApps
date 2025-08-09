@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Expense, BookEntry, FINANCIAL_ACCOUNT, Revenue, TRANSACTION_ID, Cashbox_accounts, Bank_accounts, Savings_accounts } from '../../../common/accounting.interface';
+import { Expense, BookEntry, FINANCIAL_ACCOUNT, Revenue, TRANSACTION_ID, Cashbox_accounts, Bank_accounts, Savings_accounts } from '../../../common/interfaces/accounting.interface';
 import { BookService } from '../../services/book.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';

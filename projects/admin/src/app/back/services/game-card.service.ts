@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, map, Observable, switchMap } from 'rxjs';
 import { GameCard, MAX_STAMPS, PlayBook_input } from '../game-cards/game-card.interface';
-import { Member } from '../../common/member.interface';
+import { Member } from '../../common/interfaces/member.interface';
 import { ToastService } from '../../common/services/toast.service';
 import { MembersService } from '../../common/services/members.service';
-import { DBhandler } from '../../common/DBhandler/graphQL.service';
+import { DBhandler } from '../../common/services/graphQL.service';
 
 
 @Injectable({

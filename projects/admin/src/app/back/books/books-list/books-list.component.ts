@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { BookEntry } from '../../../common/accounting.interface';
+import { BookEntry } from '../../../common/interfaces/accounting.interface';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { BookService } from '../../services/book.service';
 import { of } from 'rxjs';

@@ -1,11 +1,11 @@
 import { Component } from '@angular/core';
-import { BookEntry, TRANSACTION_ID, FINANCIAL_ACCOUNT } from '../../../common/accounting.interface';
+import { BookEntry, TRANSACTION_ID, FINANCIAL_ACCOUNT } from '../../../common/interfaces/accounting.interface';
 import { BookService } from '../../services/book.service';
 import { CommonModule } from '@angular/common';
 import { AbstractControl, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { _CHEQUE_IN_ACCOUNT, _CHEQUES_FIRST_IN_CASHBOX } from '../../../common/transaction.definition';
+import { _CHEQUE_IN_ACCOUNT, _CHEQUES_FIRST_IN_CASHBOX } from '../../../common/interfaces/transaction.definition';
 import { SystemDataService } from '../../../common/services/system-data.service';
-import { Bank } from '../../../common/system-conf.interface';
+import { Bank } from '../../../common/interfaces/system-conf.interface';
 import { combineLatest, switchMap } from 'rxjs';
 import { FinancialReportService } from '../../services/financial_report.service';
 import { TransactionService } from '../../services/transaction.service';

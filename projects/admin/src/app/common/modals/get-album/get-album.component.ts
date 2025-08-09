@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FileService } from '../../../common/services/files.service';
-import { S3Item } from '../../../common/file.interface';
+import { S3Item } from '../../interfaces/file.interface';
 import { ReplacePipe } from '../../../common/pipes/replace.pipe';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';

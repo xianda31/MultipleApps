@@ -8,7 +8,7 @@ import { Observable } from 'rxjs';
 import { Game, Gamer } from '../fees.interface';
 import { PdfService } from '../../../common/services/pdf.service';
 import { TodaysBooksComponent } from "../../shop/todays-books/todays-books.component";
-import { HorizontalAlignment, PDF_table } from '../../../common/pdf-table.interface';
+import { HorizontalAlignment, PDF_table } from '../../../common/interfaces/pdf-table.interface';
 import { FFBplayer } from '../../../common/ffb/interface/FFBplayer.interface';
 import { InputPlayerComponent } from '../../../common/ffb/input-licensee/input-player.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';

@@ -1,9 +1,9 @@
 import { Component, signal } from '@angular/core';
 import { tap, switchMap, catchError, of } from 'rxjs';
-import { Expense, Formatted_purchase, Revenue } from '../../common/accounting.interface';
+import { Expense, Formatted_purchase, Revenue } from '../../common/interfaces/accounting.interface';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { BookService } from '../services/book.service';
-import { LicenseStatus, Member } from '../../common/member.interface';
+import { LicenseStatus, Member } from '../../common/interfaces/member.interface';
 import { InputMemberComponent } from '../input-member/input-member.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';

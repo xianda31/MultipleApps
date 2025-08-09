@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { SystemConfiguration } from '../system-conf.interface';
+import { SystemConfiguration } from '../interfaces/system-conf.interface';
 import { BehaviorSubject, from, Observable, switchMap, tap } from 'rxjs';
 import { FileService } from './files.service';
 

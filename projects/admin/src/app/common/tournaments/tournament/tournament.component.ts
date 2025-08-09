@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ToastService } from '../../services/toast.service';
 import { AuthentificationService } from '../../authentification/authentification.service';
 import { Player, Team } from '../../ffb/interface/tournament_teams.interface';
-import { Member } from '../../member.interface';
+import { Member } from '../../interfaces/member.interface';
 import { FormControl, Validators, FormsModule, ReactiveFormsModule, ValidationErrors, AbstractControl, FormBuilder } from '@angular/forms';
 import { CommonModule, Location, UpperCasePipe } from '@angular/common';
 import { TournamentService } from '../../services/tournament.service';

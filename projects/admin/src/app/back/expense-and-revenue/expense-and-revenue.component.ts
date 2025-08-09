@@ -1,9 +1,9 @@
 import { Component } from '@angular/core';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { BookService } from '../services/book.service';
-import { Revenue_and_expense_definition } from '../../common/system-conf.interface';
+import { Revenue_and_expense_definition } from '../../common/interfaces/system-conf.interface';
 import { CommonModule } from '@angular/common';
-import { Revenue } from '../../common/accounting.interface';
+import { Revenue } from '../../common/interfaces/accounting.interface';
 import { Router } from '@angular/router';
 import { ToastService } from '../../common/services/toast.service';
 

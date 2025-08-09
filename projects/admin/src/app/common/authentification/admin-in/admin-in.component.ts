@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { AuthentificationService } from '../authentification.service';
-import { Member } from '../../member.interface';
+import { Member } from '../../interfaces/member.interface';
 import { NgbModal, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, of, switchMap, from, map, tap, catchError } from 'rxjs';
 import { GroupService } from '../group.service';

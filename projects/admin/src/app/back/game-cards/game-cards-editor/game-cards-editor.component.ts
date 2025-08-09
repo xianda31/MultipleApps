@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { GameCard } from '../game-card.interface';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { GetGameCardsOwnersComponent } from '../get-game-cards-owners/get-game-cards-owners.component';
-import { Member } from '../../../common/member.interface';
+import { Member } from '../../../common/interfaces/member.interface';
 import { EditGameCardComponent } from '../edit-game-card/edit-game-card.component';
 import { GetConfirmationComponent } from '../../modals/get-confirmation/get-confirmation.component';
 import { GcardsExcelExportService } from '../gcards-excel-export.service';

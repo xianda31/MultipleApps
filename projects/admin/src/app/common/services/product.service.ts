@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, map, Observable, of, switchMap, tap } from 'rxjs';
 import { SystemDataService } from './system-data.service';
 import { ToastService } from '../services/toast.service';
-import { DBhandler } from '../DBhandler/graphQL.service';
+import { DBhandler } from './graphQL.service';
 import { Product } from '../../back/products/product.interface';
 
 

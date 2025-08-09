@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { getUrl, list, remove } from 'aws-amplify/storage';
-import { S3Item } from '../file.interface';
+import { S3Item } from '../interfaces/file.interface';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { downloadData, uploadData } from 'aws-amplify/storage';
 import { ToastService } from '../services/toast.service';

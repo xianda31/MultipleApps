@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { jsPDF, } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { HorizontalAlignment, PDF_table } from '../pdf-table.interface';
+import { HorizontalAlignment, PDF_table } from '../interfaces/pdf-table.interface';
 
 @Injectable({
   providedIn: 'root'

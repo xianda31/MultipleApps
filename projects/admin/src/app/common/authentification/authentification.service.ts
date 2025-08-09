@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { confirmSignUp, signIn, signUp, signOut, AuthError, SignInInput, getCurrentUser, SignUpOutput, resetPassword, confirmResetPassword, fetchUserAttributes } from 'aws-amplify/auth';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { AuthEvent, Process_flow } from './authentification_interface';
-import { Member } from '../member.interface';
+import { Member } from '../interfaces/member.interface';
 import { Hub } from 'aws-amplify/utils';
 import { MembersService } from '../services/members.service';
 import { ToastService } from '../services/toast.service';

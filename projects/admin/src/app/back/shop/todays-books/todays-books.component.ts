@@ -3,10 +3,10 @@ import { Router } from '@angular/router';
 import { tap, switchMap, catchError, of } from 'rxjs';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { BookService } from '../../services/book.service';
-import { BookEntry, Revenue } from '../../../common/accounting.interface';
+import { BookEntry, Revenue } from '../../../common/interfaces/accounting.interface';
 import { CommonModule } from '@angular/common';
-import { HorizontalAlignment, PDF_table } from '../../../common/pdf-table.interface'
-import { TRANSACTION_CLASS } from '../../../common/transaction.definition';
+import { HorizontalAlignment, PDF_table } from '../../../common/interfaces/pdf-table.interface'
+import { TRANSACTION_CLASS } from '../../../common/interfaces/transaction.definition';
 import { TransactionService } from '../../services/transaction.service';
 
 @Component({

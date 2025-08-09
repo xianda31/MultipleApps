@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { SystemDataService } from '../../common/services/system-data.service';
-import { SystemConfiguration } from '../../common/system-conf.interface';
+import { SystemConfiguration } from '../../common/interfaces/system-conf.interface';
 import { ToastService } from '../../common/services/toast.service';
 import { FileService } from '../../common/services/files.service';
 import { BookService } from '../services/book.service';

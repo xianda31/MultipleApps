@@ -6,7 +6,7 @@ import { ToastService } from '../../common/services/toast.service';
 import { switchMap } from 'rxjs';
 import { BookService } from '../services/book.service';
 import { ParenthesisPipe } from '../../common/pipes/parenthesis.pipe';
-import { Balance_board } from '../../common/balance.interface';
+import { Balance_board } from '../../common/interfaces/balance.interface';
 import { Router } from '@angular/router';
 import { DebtsAndAssetsDetailsComponent } from "../books/details/debts-and-assets/debts-and-assets-details.component";
 import { FinancialReportService } from '../services/financial_report.service';

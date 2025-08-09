@@ -1,5 +1,5 @@
 import { club_tournament } from "../../common/ffb/interface/club_tournament.interface";
-import {  Member } from "../../common/member.interface";
+import {  Member } from "../../common/interfaces/member.interface";
 
 // export const MAX_CREDITS_HISTORY = 10;
 

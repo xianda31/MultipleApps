@@ -9,7 +9,7 @@ import { GetNewbeeComponent } from '../modals/get-newbee/get-newbee.component';
 import { InputPlayerComponent } from '../ffb/input-licensee/input-player.component';
 import { FFBplayer } from '../ffb/interface/FFBplayer.interface';
 import { FFB_licensee } from '../ffb/interface/licensee.interface';
-import { Member, LicenseStatus } from '../member.interface';
+import { Member, LicenseStatus } from '../interfaces/member.interface';
 import { SystemDataService } from '../services/system-data.service';
 import { ToastService } from '../services/toast.service';
 
