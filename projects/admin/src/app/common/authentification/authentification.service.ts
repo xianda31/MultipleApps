@@ -4,7 +4,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { AuthEvent, Process_flow } from './authentification_interface';
 import { Member } from '../member.interface';
 import { Hub } from 'aws-amplify/utils';
-import { MembersService } from '../members/services/members.service';
+import { MembersService } from '../services/members.service';
 import { ToastService } from '../services/toast.service';
 
 

@@ -10,7 +10,7 @@ import { BookService } from '../../services/book.service';
 import { GameCardService } from '../../services/game-card.service';
 import { SystemConfiguration } from '../../../common/system-conf.interface';
 import { FFBplayer } from '../../../common/ffb/interface/FFBplayer.interface';
-import { MembersService } from '../../../common/members/services/members.service';
+import { MembersService } from '../../../common/services/members.service';
 import { ToastService } from '../../../common/services/toast.service';
 
 

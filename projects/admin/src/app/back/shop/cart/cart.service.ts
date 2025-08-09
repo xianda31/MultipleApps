@@ -6,7 +6,7 @@ import { BookService } from '../../services/book.service';
 import { TRANSACTION_ID, BookEntry, operation_values, Operation, Session, FINANCIAL_ACCOUNT, CUSTOMER_ACCOUNT, AMOUNTS } from '../../../common/accounting.interface';
 import { ProductService } from '../../../common/services/product.service';
 import { GameCardService } from '../../services/game-card.service';
-import { MembersService } from '../../../common/members/services/members.service';
+import { MembersService } from '../../../common/services/members.service';
 import { Product } from '../../products/product.interface';
 
 @Injectable({

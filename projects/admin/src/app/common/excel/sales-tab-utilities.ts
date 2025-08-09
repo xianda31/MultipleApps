@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { ExcelService } from '../../admin/src/app/services/excel.service';
 import { ProductService } from '../services/product.service';
 import { xls_header } from './excel.interface';
-import { MembersService } from '../members/services/members.service';
+import { MembersService } from '../services/members.service';
 import { Product } from '../../admin/src/app/products/product.interface';
 import { PaymentMode } from '../../admin/src/app/shop/cart/cart.interface';
 

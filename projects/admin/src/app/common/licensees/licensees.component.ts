@@ -3,7 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { FFB_licensee } from '../../common/ffb/interface/licensee.interface';
 import { FormControl, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { LicenseesService } from './services/licensees.service';
-import { MembersService } from '../members/services/members.service';
+import { MembersService } from '../services/members.service';
 
 @Component({
     selector: 'app-members',

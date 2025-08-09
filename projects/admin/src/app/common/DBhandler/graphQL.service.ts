@@ -2,11 +2,12 @@ import { Injectable } from '@angular/core';
 import { generateClient } from 'aws-amplify/api';
 import { catchError, from, lastValueFrom, map, Observable, of, switchMap, tap } from 'rxjs';
 import { getCurrentUser } from 'aws-amplify/auth';
-import { Member, Member_input } from '../../member.interface';
-import { BookEntry } from '../../accounting.interface';
-import { Schema } from '../../../../../../../amplify/data/resource';
-import { Product, Product_input } from '../../../back/products/product.interface';
-import { PlayBook, PlayBook_input } from '../../../back/game-cards/game-card.interface';
+import { Member, Member_input } from '../member.interface';
+import { BookEntry } from '../accounting.interface';
+import { Schema } from '../../../../../../amplify/data/resource';
+import { Product, Product_input } from '../../back/products/product.interface';
+import { Snippet, Snippet_input } from '../../back/snippets/snippet.interface';
+import { PlayBook, PlayBook_input } from '../../back/game-cards/game-card.interface';
 
 
 @Injectable({
@@ -113,6 +114,69 @@ export class DBhandler {
     }
     return data[0] as Member;   // array of only one element, hopefully !!!
   }
+
+
+  // SNIPPETS SERVICE
+
+  // SNIPPET CREATE PROMISE
+  async createSnippet(snippet: Snippet_input): Promise<Snippet> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode: authMode });
+    const { data, errors } = await client.models.Snippet.create(snippet);
+    if (errors) throw errors;
+    return data as Snippet;
+  }
+
+  // SNIPPET READ (single) PROMISE
+  async readSnippet(id: string): Promise<Snippet> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode: authMode });
+    const { data, errors } = await client.models.Snippet.get({ id });
+    if (errors) throw errors;
+    return data as Snippet;
+  }
+
+  // SNIPPET UPDATE PROMISE
+  async updateSnippet(snippet: Snippet): Promise<Snippet> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode: authMode });
+    const { data, errors } = await client.models.Snippet.update(snippet);
+    if (errors) throw errors;
+    return data as Snippet;
+  }
+
+  // SNIPPET DELETE PROMISE
+  async deleteSnippet(id: string): Promise<boolean> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode: authMode });
+    const { errors } = await client.models.Snippet.delete({ id });
+    if (errors) throw errors;
+    return true;
+  }
+
+  // SNIPPET LIST (all) OBSERVABLE
+  listSnippets(): Observable<Snippet[]> {
+    return this._authMode().pipe(
+      switchMap((authMode) => {
+        const client = generateClient<Schema>({ authMode: authMode });
+        return from(
+          client.models.Snippet.list({ limit: 300 })
+            .then(({ data, errors }) => {
+              if (errors) {
+                console.error('Snippet.list error', errors);
+                return [];
+              }
+              return data as Snippet[];
+            })
+        );
+      })
+    );
+  }
+
+
+
+
+
 
 
   // PRODUCTS SERVICE

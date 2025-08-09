@@ -2,6 +2,7 @@ import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
 import { addUserToGroup } from './add-user-to-group/resource';
 import { listUsersInGroup } from './list-users-in-group/resource';
 import { removeUserFromGroup } from './remove-user-from-group/resource';
+import { image, rank } from 'd3';
 // import { Group_names } from '../../projects/common/authentification/group.interface';
 
 enum Group_names {
@@ -153,58 +154,78 @@ const schema = a.schema({
 
   // Site web
 
-  Article: a.model({
+  Snippet: a.model({
     title: a.string().required(),
-    template: a.string().required(),
+    subtitle: a.string().required(),
     content: a.string().required(),
+    template: a.string().required(),
     featured: a.boolean().required(),
     rank: a.integer().required(),
-    image: a.string(),
-    pageId: a.id(),
-    page: a.belongsTo('Page', 'pageId'),
+    image: a.string().required(),
   })
     .authorization((allow) => [
       allow.guest().to(['read']),
       allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
-      allow.group(Group_names.Admin).to(['read', 'create', 'update']),
-      allow.group(Group_names.Support).to(['read', 'create']),
-      allow.group(Group_names.Member).to(['read']),
-
-    ]),
-
-  Page: a.model({
-    link: a.string().required(),
-    template: a.string(),
-    rank: a.integer(),
-    member_only: a.boolean(),
-    menuId: a.id(),
-    menu: a.belongsTo('Menu', 'menuId'),
-    articles: a.hasMany('Article', 'pageId'),
-  })
-    .authorization((allow) => [
-      allow.guest().to(['read']),
-      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
-      allow.group(Group_names.Admin).to(['read', 'create', 'update']),
-      allow.group(Group_names.Support).to(['read', 'create']),
+      allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Support).to(['read']),
       allow.group(Group_names.Member).to(['read']),
 
     ]),
 
 
-  Menu: a.model({
-    label: a.string().required(),
-    // summary: a.string(),
-    rank: a.integer(),
-    pages: a.hasMany('Page', 'menuId'),
-  })
-    .authorization((allow) => [
-      allow.guest().to(['read']),
-      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
-      allow.group(Group_names.Admin).to(['read', 'create', 'update']),
-      allow.group(Group_names.Support).to(['read', 'create']),
-      allow.group(Group_names.Member).to(['read']),
 
-    ]),
+  // Article: a.model({
+  //   title: a.string().required(),
+  //   template: a.string().required(),
+  //   content: a.string().required(),
+  //   featured: a.boolean().required(),
+  //   rank: a.integer().required(),
+  //   image: a.string(),
+  //   pageId: a.id(),
+  //   page: a.belongsTo('Page', 'pageId'),
+  // })
+  //   .authorization((allow) => [
+  //     allow.guest().to(['read']),
+  //     allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+  //     allow.group(Group_names.Admin).to(['read', 'create', 'update']),
+  //     allow.group(Group_names.Support).to(['read', 'create']),
+  //     allow.group(Group_names.Member).to(['read']),
+
+  //   ]),
+
+  // Page: a.model({
+  //   link: a.string().required(),
+  //   template: a.string(),
+  //   rank: a.integer(),
+  //   member_only: a.boolean(),
+  //   menuId: a.id(),
+  //   menu: a.belongsTo('Menu', 'menuId'),
+  //   articles: a.hasMany('Article', 'pageId'),
+  // })
+  //   .authorization((allow) => [
+  //     allow.guest().to(['read']),
+  //     allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+  //     allow.group(Group_names.Admin).to(['read', 'create', 'update']),
+  //     allow.group(Group_names.Support).to(['read', 'create']),
+  //     allow.group(Group_names.Member).to(['read']),
+
+  //   ]),
+
+
+  // Menu: a.model({
+  //   label: a.string().required(),
+  //   // summary: a.string(),
+  //   rank: a.integer(),
+  //   pages: a.hasMany('Page', 'menuId'),
+  // })
+  //   .authorization((allow) => [
+  //     allow.guest().to(['read']),
+  //     allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+  //     allow.group(Group_names.Admin).to(['read', 'create', 'update']),
+  //     allow.group(Group_names.Support).to(['read', 'create']),
+  //     allow.group(Group_names.Member).to(['read']),
+
+  //   ]),
 
 });
 

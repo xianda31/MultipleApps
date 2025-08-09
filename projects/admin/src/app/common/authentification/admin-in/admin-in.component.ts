@@ -7,7 +7,7 @@ import { NgbModal, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, of, switchMap, from, map, tap, catchError } from 'rxjs';
 import { GroupService } from '../group.service';
 import { Group_icons, Group_names } from '../group.interface';
-import { MembersService } from '../../members/services/members.service';
+import { MembersService } from '../../services/members.service';
 import { ToastService } from '../../services/toast.service';
 import { GetLoggingComponent } from '../../../back/modals/get-logging/get-logging.component';
 

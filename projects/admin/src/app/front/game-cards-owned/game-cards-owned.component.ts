@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { GameCard } from '../../back/game-cards/game-card.interface';
 import { GameCardService } from '../../back/services/game-card.service';
 import { AuthentificationService } from '../../common/authentification/authentification.service';
-import { MembersService } from '../../common/members/services/members.service';
+import { MembersService } from '../../common/services/members.service';
 import { map, Observable, switchMap } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { TitleService } from '../title.service';

@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { MembersService } from '../../common/members/services/members.service';
+import { MembersService } from '../../common/services/members.service';
 import { AuthentificationService } from '../../common/authentification/authentification.service';
 import { Member } from '../../common/member.interface';
 import { Observable } from 'rxjs';

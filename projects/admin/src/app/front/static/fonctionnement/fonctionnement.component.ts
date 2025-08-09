@@ -12,12 +12,14 @@ export class FonctionnementComponent {
 
   topics: {
     title: string;
+    subtitle: string;
     students: string;
     contents: string[];
     schedules: string[];
   }[] = [
       {
         title: 'Cours d\'initiation',
+        subtitle:'les mardis',
         students: 
         'Ces cours s’adressent aux débutants ou à des joueurs ayant déjà joué il y a longtemps et qui ont (presque) tout oublié.',
         contents: [
@@ -33,6 +35,7 @@ export class FonctionnementComponent {
       },
       {
         title: 'Cours de perfectionnement',
+        subtitle: 'les jeudis et vendredis',
         students: 'Ces cours s’adressent aux joueurs qui ont déjà acquis les bases du bridge et qui souhaitent approfondir leurs connaissances.',
         contents: [
           'Un thème différent est abordé à chaque séance, ensuite les participants jouent 12 donnes préparées avec l\'aide de l\'animateur.',
@@ -46,6 +49,7 @@ export class FonctionnementComponent {
       },
       {
         title: 'Tournoi d\'accession',
+        subtitle: 'les mercredis',
         students: 'Ce tournoi est destiné aux joueurs qui ont suivi les deux années du cours d\'initiation ou à d\'anciens joueurs ayant conservé de bonnes bases désirant approfondir leur connaissances et progresser au jeu de la carte. L\'indice maximum de chaque joueur pour participer est de 3K.',
         contents: [
           'Les participants jouent de 12 à 16 donnes préparées. L\'animateur est disponible pour aider.',

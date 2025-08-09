@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
-import { MembersService } from './services/members.service';
+import { MembersService } from '../../common/services/members.service';
 import { LicenseesService } from '../licensees/services/licensees.service';
 import { switchMap, tap } from 'rxjs';
 import { FormControl, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';

@@ -88,6 +88,18 @@
           </ul>
         </li>
 
+        <!-- site -->
+                 <li *ngIf="accreditation_level >= accreditation_levels.Administrateur" ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
+          <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
+            <i class="fs-4 bi-globe2"></i> <span class="ms-1 d-none d-sm-inline">Site web</span>
+          </a>
+          <ul ngbDropdownMenu class="dropdown-menu">
+            <li><a class="dropdown-item" routerLink="./site/articles">articles</a></li>
+          </ul>
+        </li>
+
+
+
       </ul>
 
       <ul class=" navbar-nav align-self-center  ">

@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { BookService } from '../../back/services/book.service';
 import { AuthentificationService } from '../../common/authentification/authentification.service';
 import { map, switchMap } from 'rxjs';
-import { MembersService } from '../../common/members/services/members.service';
+import { MembersService } from '../../common/services/members.service';
 import { CommonModule } from '@angular/common';
 import { TitleService } from '../title.service';
 import { SystemDataService } from '../../common/services/system-data.service';

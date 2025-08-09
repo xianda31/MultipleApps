@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { GameCard } from './game-card.interface';
 import * as ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
-import { MembersService } from '../../common/members/services/members.service';
+import { MembersService } from '../../common/services/members.service';
 @Injectable({
   providedIn: 'root'
 })

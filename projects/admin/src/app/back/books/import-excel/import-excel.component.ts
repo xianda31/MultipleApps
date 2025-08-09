@@ -10,7 +10,7 @@ import { SystemDataService } from '../../../common/services/system-data.service'
 import { Transaction, TRANSACTION_CLASS } from '../../../common/transaction.definition';
 import { Revenue_and_expense_definition } from '../../../common/system-conf.interface';
 import { json } from 'd3';
-import { MembersService } from '../../../common/members/services/members.service';
+import { MembersService } from '../../../common/services/members.service';
 import { TransactionService } from '../../services/transaction.service';
 
 @Component({

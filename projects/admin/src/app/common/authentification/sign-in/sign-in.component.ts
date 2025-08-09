@@ -5,7 +5,7 @@ import { ToastService } from '../../services/toast.service';
 import { Process_flow } from '../authentification_interface';
 import { Router } from '@angular/router';
 import { AuthentificationService } from '../authentification.service';
-import { MembersService } from '../../members/services/members.service';
+import { MembersService } from '../../services/members.service';
 import { GroupService } from '../group.service';
 import { Member } from '../../member.interface';
 import { Group_icons, Group_names } from '../group.interface';

@@ -20,6 +20,7 @@ import { MembersComponent } from '../common/members/members.component';
 import { CloneDBComponent } from './maintenance/clone-DB/clone-db.component';
 import { AdminComponent } from './admin/admin.component';
 import { BackPageComponent } from './back-page/back-page.component';
+import { SnippetsComponent } from '../common/site/snippets/snippets.component';
 
 export const routes: Routes = [
   {
@@ -53,6 +54,8 @@ export const routes: Routes = [
       { path: 'outils/excel_import', component: ImportExcelComponent },
       { path: 'outils/groups', component: GroupsListComponent },
       { path: 'outils/cloneDB', component: CloneDBComponent },
+
+      { path: 'site/articles', component: SnippetsComponent },
 
       { path: 'home', component: BackPageComponent },
       { path: '', component: BackPageComponent },
