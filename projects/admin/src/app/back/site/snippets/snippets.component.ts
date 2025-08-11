@@ -16,7 +16,7 @@ import { SnippetModalEditorComponent } from '../snippet-modal-editor/snippet-mod
 export class SnippetsComponent {
   snippets: Snippet[] = [];
   snippetForm!: FormGroup;
-  snippet_selected = false;
+  modification_mode = false;
   templates = Object.values(SNIPPET_TEMPLATES);
   selected_snippet!: Snippet;
 
@@ -27,10 +27,10 @@ export class SnippetsComponent {
   ) {
     this.snippetForm = this.fb.group({
       id: [''],
-      title: ['',Validators.required],
-      subtitle: ['',Validators.required],
+      title: ['', Validators.required],
+      subtitle: ['', Validators.required],
       content: ['Contenu de l\'article'],
-      template: ['',Validators.required],
+      template: ['', Validators.required],
       featured: [false],
       rank: [0],
       image: ['']
@@ -39,7 +39,9 @@ export class SnippetsComponent {
 
   ngOnInit() {
     this.snippetService.listSnippets().subscribe((snippets) => {
-      this.snippets = snippets;
+      this.snippets = snippets
+        .sort((a, b) => a.rank - b.rank)
+        .sort((a, b) => a.template.localeCompare(b.template));
     });
   }
 
@@ -48,39 +50,49 @@ export class SnippetsComponent {
   }
 
   onSaveSnippet() {
-     let snippet = this.snippetForm.getRawValue();
-     if(this.snippet_selected) {
-       this.snippetService.updateSnippet(snippet);
-     } else {
-       this.snippetService.createSnippet(snippet);
-     }
-    this.snippet_selected = false;
-    this.snippetForm.reset();
+    let snippet = this.snippetForm.getRawValue();
+    if (this.modification_mode) {
+      this.snippetService.updateSnippet(snippet);
+    } else {
+      this.snippetService.createSnippet(snippet);
+    }
+    this.modification_mode = false;
+    // Reset à des valeurs par défaut
+    this.snippetForm.reset({
+      id: '',
+      title: '',
+      subtitle: '',
+      content: ['Contenu de l\'article'],
+      template: '',
+      featured: false,
+      rank: 100,
+      image: ''
+    });
   }
 
 
   onSelectSnippet(snippet: Snippet) {
     this.snippetForm.patchValue(snippet);
-    this.snippet_selected = true;
+    if (snippet.content === '') {
+      this.snippetForm.patchValue({ content: ['Article vide'] });
+    }
+    this.modification_mode = true;
   }
-  
+
   onModalEditSnippetContent() {
-    const modalRef = this.modalService.open(SnippetModalEditorComponent,{centered: true});
+    const modalRef = this.modalService.open(SnippetModalEditorComponent, { centered: true });
     modalRef.componentInstance.snippet = this.snippetForm.getRawValue();
     modalRef.result.then((result) => {
-      console.log('Modal result:', result);
       if (result) {
         this.snippetForm.patchValue(result);
       }
     });
   }
 
-
   onDeleteSnippet(snippet: Snippet) {
-    this.snippetService.deleteSnippet(snippet);
-    this.snippet_selected = false;
-    this.snippetForm.patchValue(snippet);   
+    this.snippetService.deleteSnippet(snippet).then(() => {
+      this.snippets = this.snippets.filter(s => s.id !== snippet.id);
+    });
   }
-
 
 }

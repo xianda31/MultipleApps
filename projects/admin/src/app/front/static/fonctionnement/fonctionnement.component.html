@@ -1,21 +1,12 @@
 <div class="offset-md-1 col-md-10 justify-content-center">
     <div class="row row-cols-1 row-cols-md-3 g-4">
-        <div *ngFor="let topic of topics" class="col">
+        <div *ngFor="let snippet of snippets" class="col">
             <div class="card h-100 nice_shadow">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="card-title">{{topic.title}}</h5>
-                    <h6 class="card-subtitle">{{topic.subtitle}}</h6>
+                    <h5 class="card-title">{{snippet.title}}</h5>
+                    <h6 class="card-subtitle">{{snippet.subtitle}}</h6>
                 </div>
-                <div class="card-body">
-                    <h6> <span class="fw-bold"> Public concerné : </span>{{topic.students}}</h6>
-
-                    <h6> <span class="fw-bold"> Déroulement : </span>
-                        <li class="my-0" *ngFor="let content of topic.contents">{{content}}</li>
-                    </h6>
-
-                    <h6> <span class="fw-bold"> Horaires : </span>
-                        <li *ngFor="let schedule of topic.schedules">{{schedule}}</li>
-                    </h6>
+                <div class="card-body" [innerHTML]="snippet.content">
                 </div>
             </div>
         </div>

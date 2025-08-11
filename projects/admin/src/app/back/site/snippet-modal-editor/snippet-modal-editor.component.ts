@@ -30,7 +30,8 @@ export class SnippetModalEditorComponent implements AfterViewInit {
 
   ngOnInit(): void {
     this.edjsParser = edjsHTML();
-    this.initial_html = this.snippet.content;
+    this.initial_html = this.snippet.content === '' ? '<p></p>' : this.snippet.content;
+    console.log('initial content', this.initial_html);
   }
 
   ngAfterViewInit(): void {

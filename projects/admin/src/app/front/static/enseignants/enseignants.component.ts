@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { TitleService } from '../../title.service';
+import { SnippetService } from '../../../common/services/snippet.service';
+import { Snippet, SNIPPET_TEMPLATES } from '../../../common/interfaces/snippet.interface';
 
 @Component({
   selector: 'app-enseignants',
@@ -10,24 +12,17 @@ import { TitleService } from '../../title.service';
 })
 export class EnseignantsComponent {
 
-  enseignants : {
-    name: string;
-  title: string;
-  photo: string;
-}[] = [
-    { name: 'Didier Carral', title: 'moniteur maître-assistant', photo: 'spidey.png' },
-    { name: 'Dominique Cassagne', title: 'monitrice', photo: 'ghost-spider.png' },
-    { name: 'Anne-Marie Godard', title: 'monitrice', photo: 'ghost-spider.png' },
-    { name: 'Jacques Louis Merat', title: 'moniteur', photo: 'spidey.png' },
-    { name: 'Pierre Gros', title: 'moniteur', photo: 'spidey.png' },
-    { name: 'André Ayral', title: 'moniteur', photo: 'spidey.png' },
-    { name: 'François Sovran', title: 'initiateur', photo: 'spidey.png' },
-  ];
+    snippets: Snippet[] = [];
 
   constructor(
-    private titleService: TitleService
+    private titleService: TitleService,
+        private snippetService: SnippetService,
+    
   ) {
 
-  this.titleService.setTitle('Les enseignants');
+  this.titleService.setTitle('Ecole de bridge -Les enseignants');
+      this.snippetService.listSnippets().subscribe((snippets) => {
+        this.snippets = snippets.filter(snippet => snippet.template === SNIPPET_TEMPLATES.ENSEIGNANTS);
+      });
  }
 }

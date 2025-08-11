@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { SnippetService } from '../../../common/services/snippet.service';
 import { Snippet, SNIPPET_TEMPLATES } from '../../../common/interfaces/snippet.interface';
+import { TitleService } from '../../title.service';
 
 @Component({
   selector: 'app-news',
@@ -12,18 +13,17 @@ import { Snippet, SNIPPET_TEMPLATES } from '../../../common/interfaces/snippet.i
 export class NewsComponent {
   snippets: Snippet[] = [];
   constructor(
-    private snippetService: SnippetService
+    private snippetService: SnippetService,
+    private titleService: TitleService
   ) { }
 
   ngOnInit(): void {
+
+    this.titleService.setTitle('Les news');
 
     this.snippetService.listSnippets().subscribe((snippets) => {
       this.snippets = snippets.filter(snippet => snippet.template === SNIPPET_TEMPLATES.NEWS);
     });
   }
-
-
-
-  // Additional methods for handling news-related functionality can be added here
 
 }

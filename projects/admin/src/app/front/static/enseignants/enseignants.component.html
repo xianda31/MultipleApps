@@ -1,19 +1,19 @@
 <div class="col offset-md-2 col-md-8 mt-3 mb-5">
 
     <div class="row row-cols-1 row-cols-md-5 g-3">
-        <div *ngFor="let enseignant of enseignants" class="col">
+        <div *ngFor="let snippet of snippets" class="col">
             <div class="card h-100 shadow-sm">
                 <div class="row g-0">
                     <div class="col-4">
-                        <img [src]="enseignant.photo" style="max-height: 150px; object-fit: cover;"
-                            alt="{{enseignant.name}}" class="img-fluid rounded-start">
+                        <img [src]="snippet.image" style="max-height: 150px; object-fit: cover;"
+                            alt="{{snippet.title}}" class="img-fluid rounded-start">
 
                     </div>
                     <div class="col-8">
                         <div class="card-body">
-                            <h5 class="card-title">{{enseignant.name}}</h5>
+                            <h5 class="card-title">{{snippet.title}}</h5>
                             <div class="card-text mt-4">
-                                <h6 class="fw-bold"> {{enseignant.title}}</h6>
+                                <h6 class="fw-bold"> {{snippet.subtitle}}</h6>
                             </div>
                         </div>
 

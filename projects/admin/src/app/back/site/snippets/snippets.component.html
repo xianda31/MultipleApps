@@ -11,7 +11,7 @@
                             <th>Contenu</th>
                             <th>Page</th>
                             <th>1ere page</th>
-                            <!-- <th>rang</th> -->
+                            <th>rang</th>
                             <th>image</th>
                             <th>Actions</th>
                         </tr>
@@ -28,24 +28,30 @@
                                         [checked]="snippet.featured" disabled>
                                 </div>
                             </td>
-                            <!-- <td class="text-center">{{ snippet.rank }}</td> -->
+                            <td class="text-center">{{ snippet.rank }}</td>
                             <td class="text-start">
                                 <img *ngIf="snippet.image" [src]="snippet.image" alt="{{ snippet.title }}"
-                                    class="img-fluid">
+                                    class="img-fluid snippet-img-limited">
                             </td>
                             <td class="text-center ">
-                                <button class="btn btn-outline-primary">
-                                    <i (click)="onSelectSnippet(snippet)" class="bi bi-pen"></i>
-                                </button>
+                                <div class="d-flex gap-2 justify-content-center">
+                                    <button class="btn btn-outline-primary btn-sm">
+                                        <i (click)="onSelectSnippet(snippet)" class="bi bi-pen"></i>
+                                    </button>
+                                    <button class="btn btn-outline-danger btn-sm">
+                                        <i (click)="onDeleteSnippet(snippet)" class="bi bi-trash"></i>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                         <tr></tr>
-                        <tr>
+                        <tr class="table-secondary">
                             <td> <input type="text" class="form-control" formControlName="title"> </td>
                             <td> <input type="text" class="form-control" formControlName="subtitle"> </td>
                             <td (click)="onModalEditSnippetContent()"> <input type="text" class="form-control"
                                     formControlName="content"> </td>
-                            <td class="text-start"> <input list="datalist" type="text" class="form-control" formControlName="template">
+                            <td class="text-start"> <input list="datalist" type="text" class="form-control"
+                                    formControlName="template">
                                 <datalist id="datalist">
                                     <option *ngFor="let template of templates" [value]="template">
                                         {{ template }}
@@ -58,7 +64,7 @@
                                         formControlName="featured">
                                 </div>
                             </td>
-                            <!-- <td> <input type="text" class="form-control" formControlName="rank"> </td> -->
+                            <td> <input type="text" class="form-control" formControlName="rank"> </td>
                             <td> <input type="text" class="form-control" formControlName="image"> </td>
 
                             <td class="text-center ">
