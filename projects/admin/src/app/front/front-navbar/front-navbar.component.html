@@ -10,7 +10,7 @@
 
       <li ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
         <a class="nav-link dropdown-toggle text-white" ngbDropdownToggle>
-          <span class="ms-1 d-none d-sm-inline">Le Club</span>
+          <span class="ms-1">Le Club</span>
         </a>
         <ul ngbDropdownMenu class="dropdown-menu shadow">
           <li><a class="dropdown-item" routerLink="news" routerLinkActive="active">les news</a></li>
@@ -20,7 +20,7 @@
 
       <li ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
         <a class="nav-link dropdown-toggle text-white" ngbDropdownToggle [class.active]="isNavItemActive('ecole')">
-          <span class="ms-1 d-none d-sm-inline">L'école de Bridge</span>
+          <span class="ms-1">L'école de Bridge</span>
         </a>
         <ul ngbDropdownMenu class="dropdown-menu shadow">
           <li><a class="dropdown-item" routerLink="fonctionnement" routerLinkActive="active">fonctionnement</a></li>
@@ -30,14 +30,14 @@
 
       <li class="nav-item me-md-3 me-sm-1">
         <a class="nav-link text-white" routerLink="tournaments" [class.active]="isNavItemActive('tournaments')">
-          <span class="ms-1 d-none d-sm-inline">Les Tournois</span>
+          <span class="ms-1">Les Tournois</span>
         </a>
       </li>
 
 
       <li *ngIf="logged_member$ | async as member" ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
         <a class="nav-link dropdown-toggle text-white" ngbDropdownToggle [class.active]="isNavItemActive('achats')">
-          <span class="ms-1 d-none d-sm-inline">Mes achats</span>
+          <span class="ms-1">Mes achats</span>
         </a>
         <ul ngbDropdownMenu class="dropdown-menu shadow">
           <li><a class="dropdown-item" routerLink="purchases" routerLinkActive="active">historique</a></li>
@@ -59,7 +59,7 @@
       <ng-container *ngIf="logged_member$ | async as member">
         <li ngbDropdown class="nav-item align-self-end dropdown me-md-5 me-sm-1 ms-auto">
           <a class="nav-link dropdown-toggle text-white" id="navbarDropdown" type="a" ngbDropdownToggle>
-            <span class="ms-1 d-none d-sm-inline"> {{member.firstname}}</span>
+            <span class="ms-1"> {{member.firstname}}</span>
           </a>
           <ul ngbDropdownMenu class="dropdown-menu shadow">
             <li> <a class="dropdown-item" routerLink="/user/profile">
