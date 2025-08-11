@@ -31,7 +31,7 @@
               "xstate/lib/waitFor.js",
               "style-dictionary/lib/utils/references/usesReference.js",
               "style-dictionary/lib/utils/flattenProperties.js",
-              "style-dictionary/lib/utils/deepExtend.js"
+              "style-dictionary/lib/utils/deepExtend.js",
             ],
             "outputPath": "dist/web-back",
             "index": "projects/web-back/src/index.html",
@@ -49,7 +49,9 @@
                 "input": "projects/web-back/public"
               }
             ],
-            "styles": ["projects/web-back/src/styles.scss"],
+            "styles": [
+              "projects/web-back/src/styles.scss"
+            ],
             "scripts": []
           },
           "configurations": {
@@ -121,7 +123,9 @@
                 "input": "projects/web-back/public"
               }
             ],
-            "styles": ["projects/web-back/src/styles.scss"],
+            "styles": [
+              "projects/web-back/src/styles.scss"
+            ],
             "scripts": []
           }
         }
@@ -237,7 +241,9 @@
                 "input": "projects/web-site/public"
               }
             ],
-            "styles": ["projects/web-site/src/styles.scss"],
+            "styles": [
+              "projects/web-site/src/styles.scss"
+            ],
             "scripts": []
           }
         }
@@ -285,7 +291,8 @@
               "raf",
               "file-saver",
               "mnemonist/lru-cache",
-              "bowser"
+              "bowser",
+              "editorjs-html"
             ],
             "outputPath": "dist/admin",
             "index": "projects/admin/src/index.html",
@@ -370,7 +377,10 @@
         "test": {
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
-            "polyfills": ["zone.js", "zone.js/testing"],
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ],
             "tsConfig": "projects/admin/tsconfig.spec.json",
             "inlineStyleLanguage": "scss",
             "assets": [
@@ -379,7 +389,9 @@
                 "input": "projects/admin/public"
               }
             ],
-            "styles": ["projects/admin/src/styles.scss"],
+            "styles": [
+              "projects/admin/src/styles.scss"
+            ],
             "scripts": []
           }
         }
