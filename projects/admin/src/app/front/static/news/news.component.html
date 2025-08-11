@@ -3,12 +3,15 @@
         <div *ngFor="let snippet of snippets" class="col">
             <div class="card h-100 nice_shadow">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="card-title">{{snippet.title}}</h5>
+                    <h4 class="card-title">{{snippet.title}}</h4>
                     <h6 class="card-subtitle">{{snippet.subtitle}}</h6>
                 </div>
                 <div class="card-body">
                     <p class="card-text" [innerHTML]="snippet.content"></p>
                     <img *ngIf="snippet.image" [src]="snippet.image" alt="{{snippet.title}}" class="img-fluid">
+                </div>
+                <div class="card-footer">
+                    <small class="text-muted">Publié le {{snippet.updatedAt| date:'shortDate'}}</small>
                 </div>
             </div>
         </div>

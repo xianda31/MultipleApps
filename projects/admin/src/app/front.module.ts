@@ -25,7 +25,7 @@ import { TitleComponent } from './front/title/title.component';
     TournamentsComponent,
     PurchasesComponent,
     GameCardsOwnedComponent,
-    TitleComponent
+    TitleComponent,
   ],
   exports: [
     CommonModule,

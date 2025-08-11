@@ -2,7 +2,6 @@ import { Routes } from '@angular/router';
 import { FrontComponent } from './front/front.component';
 import { PageNotFoundComponent } from '../common/page-not-found/page-not-found.component';
 import { SignInComponent } from '../common/authentification/sign-in/sign-in.component';
-import { FrontPageComponent } from './front-page/front-page.component';
 import { TournamentComponent } from '../common/tournaments/tournament/tournament.component';
 import { PurchasesComponent } from './purchases/purchases.component';
 import { GameCardsOwnedComponent } from './game-cards-owned/game-cards-owned.component';
@@ -10,6 +9,7 @@ import { TournamentsComponent } from '../common/tournaments/tournaments/tourname
 import { FonctionnementComponent } from './static/fonctionnement/fonctionnement.component';
 import { EnseignantsComponent } from './static/enseignants/enseignants.component';
 import { NewsComponent } from './static/news/news.component';
+import { FrontPageComponent } from './static/front-page/front-page.component';
 
 export const routes: Routes = [
   { path: '',
