@@ -20,7 +20,7 @@ import { MembersComponent } from '../common/members/members.component';
 import { CloneDBComponent } from './maintenance/clone-DB/clone-db.component';
 import { AdminComponent } from './admin/admin.component';
 import { BackPageComponent } from './back-page/back-page.component';
-import { SnippetsComponent } from '../common/site/snippets/snippets.component';
+import { SnippetsComponent } from './site/snippets/snippets.component';
 
 export const routes: Routes = [
   {

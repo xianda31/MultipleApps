@@ -7,7 +7,7 @@
                     <h6 class="card-subtitle">{{snippet.subtitle}}</h6>
                 </div>
                 <div class="card-body">
-                    <p class="card-text">{{snippet.content}}</p>
+                    <p class="card-text" [innerHTML]="snippet.content"></p>
                     <img *ngIf="snippet.image" [src]="snippet.image" alt="{{snippet.title}}" class="img-fluid">
                 </div>
             </div>

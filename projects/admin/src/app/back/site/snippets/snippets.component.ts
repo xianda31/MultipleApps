@@ -1,12 +1,13 @@
 import { Component } from '@angular/core';
-import { Snippet, SNIPPET_TEMPLATES } from '../../interfaces/snippet.interface';
-import { SnippetService } from '../../services/snippet.service';
+import { Snippet, SNIPPET_TEMPLATES } from '../../../common/interfaces/snippet.interface';
+import { SnippetService } from '../../../common/services/snippet.service';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { SnippetEditorComponent } from "../snippet-editor/snippet-editor.component";
 
 @Component({
   selector: 'app-snippets',
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, SnippetEditorComponent],
   templateUrl: './snippets.component.html',
   styleUrl: './snippets.component.scss'
 })
@@ -15,6 +16,7 @@ export class SnippetsComponent {
   snippetForm!: FormGroup;
   snippet_selected = false;
   templates = Object.values(SNIPPET_TEMPLATES);
+  selected_snippet!: Snippet;
 
   constructor(
     private snippetService: SnippetService,
@@ -53,6 +55,9 @@ onCreateSnippet() {
     this.snippetForm.patchValue(snippet);
     this.snippet_selected = true;
   }
+  onEditSnippet() {
+    this.selected_snippet = this.snippetForm.getRawValue();
+  }
 
   onModSnippet(snippet: Snippet) {
     // console.log('mod snippet', snippet);
@@ -71,7 +76,16 @@ onCreateSnippet() {
     this.snippet_selected = false;
     // let { ...deleted_snippet } = snippet;
     this.snippetForm.patchValue(snippet);   // permet de réafficher le produit supprimé
+  }
 
+  onSnippetChange(snippet: Snippet | null): void {
+    if (snippet) {
+      this.selected_snippet = snippet;
+      console.log('Snippet changed:', JSON.stringify(snippet));
+      this.snippetService.updateSnippet(snippet);
+    this.snippet_selected = false;
+    this.snippetForm.reset();
+    }
   }
 
 }
