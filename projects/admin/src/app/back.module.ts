@@ -24,6 +24,8 @@ import { SysConfComponent } from './back/sys-conf/sys-conf.component';
 import { routes } from './back/back.routes';
 import { AdminComponent } from './back/admin/admin.component';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
+import { RmbracketsPipe } from './common/pipes/rmbrackets.pipe';
+import { SnippetsComponent } from './back/site/snippets/snippets.component';
 
 
 
@@ -54,12 +56,16 @@ import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
     SysConfComponent,
     ImportExcelComponent,
     PageNotFoundComponent,
-    CloneDBComponent
+    CloneDBComponent,
+    SnippetsComponent,
+    RmbracketsPipe
   ],
   exports: [
     RouterModule,
     NgbDropdownModule,
-    AdminComponent
+    AdminComponent,
+    RmbracketsPipe,
+    SnippetsComponent
     // Export components if needed
   ],
 })

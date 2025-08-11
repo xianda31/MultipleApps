@@ -1,13 +1,15 @@
 import { Component } from '@angular/core';
+import { RmbracketsPipe } from '../../../common/pipes/rmbrackets.pipe';
 import { Snippet, SNIPPET_TEMPLATES } from '../../../common/interfaces/snippet.interface';
 import { SnippetService } from '../../../common/services/snippet.service';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { SnippetEditorComponent } from "../snippet-editor/snippet-editor.component";
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { SnippetModalEditorComponent } from '../snippet-modal-editor/snippet-modal-editor.component';
 
 @Component({
   selector: 'app-snippets',
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, SnippetEditorComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RmbracketsPipe],
   templateUrl: './snippets.component.html',
   styleUrl: './snippets.component.scss'
 })
@@ -20,19 +22,20 @@ export class SnippetsComponent {
 
   constructor(
     private snippetService: SnippetService,
-  private fb: FormBuilder
+    private modalService: NgbModal,
+    private fb: FormBuilder
   ) {
     this.snippetForm = this.fb.group({
       id: [''],
-      title: [''],
-      subtitle: [''],
-      content: [''],
-      template: [''],
+      title: ['',Validators.required],
+      subtitle: ['',Validators.required],
+      content: ['Contenu de l\'article'],
+      template: ['',Validators.required],
       featured: [false],
       rank: [0],
       image: ['']
     });
- }
+  }
 
   ngOnInit() {
     this.snippetService.listSnippets().subscribe((snippets) => {
@@ -40,52 +43,44 @@ export class SnippetsComponent {
     });
   }
 
-    get form_valid() {
-      return this.snippetForm.valid;
-    }
-
-onCreateSnippet() {
-    let new_snippet = this.snippetForm.getRawValue();
-    this.snippetService.createSnippet(new_snippet);
-    this.snippetForm.reset();
-    this.snippet_selected = false;
+  get form_valid() {
+    return this.snippetForm.valid;
   }
 
-  onReadSnippet(snippet: Snippet) {
+  onSaveSnippet() {
+     let snippet = this.snippetForm.getRawValue();
+     if(this.snippet_selected) {
+       this.snippetService.updateSnippet(snippet);
+     } else {
+       this.snippetService.createSnippet(snippet);
+     }
+    this.snippet_selected = false;
+    this.snippetForm.reset();
+  }
+
+
+  onSelectSnippet(snippet: Snippet) {
     this.snippetForm.patchValue(snippet);
     this.snippet_selected = true;
   }
-  onEditSnippet() {
-    this.selected_snippet = this.snippetForm.getRawValue();
+  
+  onModalEditSnippetContent() {
+    const modalRef = this.modalService.open(SnippetModalEditorComponent,{centered: true});
+    modalRef.componentInstance.snippet = this.snippetForm.getRawValue();
+    modalRef.result.then((result) => {
+      console.log('Modal result:', result);
+      if (result) {
+        this.snippetForm.patchValue(result);
+      }
+    });
   }
 
-  onModSnippet(snippet: Snippet) {
-    // console.log('mod snippet', snippet);
-    this.snippetService.updateSnippet(snippet);
-
-  }
-  onUpdateSnippet() {
-    let snippet = this.snippetForm.getRawValue();
-    this.snippetService.updateSnippet(snippet);
-    this.snippet_selected = false;
-    this.snippetForm.reset();
-  }
 
   onDeleteSnippet(snippet: Snippet) {
     this.snippetService.deleteSnippet(snippet);
     this.snippet_selected = false;
-    // let { ...deleted_snippet } = snippet;
-    this.snippetForm.patchValue(snippet);   // permet de réafficher le produit supprimé
+    this.snippetForm.patchValue(snippet);   
   }
 
-  onSnippetChange(snippet: Snippet | null): void {
-    if (snippet) {
-      this.selected_snippet = snippet;
-      console.log('Snippet changed:', JSON.stringify(snippet));
-      this.snippetService.updateSnippet(snippet);
-    this.snippet_selected = false;
-    this.snippetForm.reset();
-    }
-  }
 
 }

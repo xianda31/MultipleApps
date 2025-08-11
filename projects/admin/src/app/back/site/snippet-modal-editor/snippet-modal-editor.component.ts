@@ -1,17 +1,20 @@
 import { AfterViewInit, Component, EventEmitter, Input, Output } from '@angular/core';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Snippet } from '../../../common/interfaces/snippet.interface';
 import EditorJS from '@editorjs/editorjs';
 import edjsHTML from 'editorjs-html'
 import Header from '@editorjs/header';
 import List from '@editorjs/list';
+import { CommonModule } from '@angular/common';
+
 
 @Component({
-  selector: 'app-snippet-editor',
-  imports: [],
-  templateUrl: './snippet-editor.component.html',
-  styleUrl: './snippet-editor.component.scss'
+  selector: 'app-snippet-modal-editor',
+  imports: [CommonModule],
+  templateUrl: './snippet-modal-editor.component.html',
+  styleUrl: './snippet-modal-editor.component.scss'
 })
-export class SnippetEditorComponent implements AfterViewInit {
+export class SnippetModalEditorComponent implements AfterViewInit {
   @Input() snippet!: Snippet;
   @Output() snippetChange = new EventEmitter<Snippet | null>();
   editor!: EditorJS;
@@ -19,6 +22,11 @@ export class SnippetEditorComponent implements AfterViewInit {
   // initial_data!: any;
   initial_html!: any;
   output_html!: string;
+
+   constructor(
+    private activeModal: NgbActiveModal,
+  ) {
+  }
 
   ngOnInit(): void {
     this.edjsParser = edjsHTML();
@@ -47,7 +55,6 @@ export class SnippetEditorComponent implements AfterViewInit {
       });
 
     this.editor.isReady.then(async () => {
-      console.log('EditorJS is ready');
       await this.editor.blocks.renderFromHTML(this.initial_html);
     });
   }
@@ -56,14 +63,13 @@ export class SnippetEditorComponent implements AfterViewInit {
     // console.log('current block index:', data.blocks.getCurrentBlockIndex());
     this.editor.save()
       .then(data => {
-        console.log('EditorJS output data:', (data));
         this.output_html = this.edjsParser.parse(data);
       });
   }
 
    saveSnippet(): void {
-    let snippet = { ...this.snippet };
-    snippet.content = this.output_html;
-    this.snippetChange.emit(snippet);
+      let snippet = { ...this.snippet };
+      snippet.content = this.output_html;
+      this.activeModal.close(snippet);
   }
 }

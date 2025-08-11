@@ -18,6 +18,8 @@ export type Snippet_input = Omit<Schema['Snippet']['type'], 'id' | 'createdAt' |
 
 export enum SNIPPET_TEMPLATES {
     NEWS = 'news',
-    TEMPLATE2 = 'template2',
-    TEMPLATE3 = 'template3',
+    BUREAU = 'bureau',
+    CONTACTS = 'contacts',
+    FONCTIONNEMENT = 'fonctionnement',
+    ENSEIGNANTS = 'enseignants'
 }

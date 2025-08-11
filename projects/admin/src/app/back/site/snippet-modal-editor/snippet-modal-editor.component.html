@@ -1,0 +1,27 @@
+<div class="modal-header pb-0 ">
+    <div class="col justify-content-between">
+        <div class="row align-items-center">
+            <h5 class="col-10 modal-title">
+                Editeur contenu article
+            </h5>
+        </div>
+ 
+        <div class="row justify-content-between  align-items-center mb-2">
+            <div class="col-5 text-muted">
+                <span class="fw-bolder me-1">{{snippet.title}} </span>
+                <span >{{snippet.subtitle}} </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-body">
+    <div id="editorjs">
+</div>
+
+
+<div class="modal-footer">
+    <div class="justify-content-between">
+        <button type="button" class="btn btn-primary btn-sm" (click)="saveSnippet()">OK</button>
+    </div>
+</div>
