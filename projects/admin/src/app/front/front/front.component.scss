@@ -1,3 +1,12 @@
+// Responsive image width: max 25% at sm and up
+.img-quarter-sm {
+  width: 100%;
+  max-width: 100%;
+  @media (min-width: 576px) {
+    width: 25%;
+    max-width: 25vw;
+  }
+}
 
 
 // @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap');

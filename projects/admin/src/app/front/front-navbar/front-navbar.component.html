@@ -1,15 +1,12 @@
-<nav class="navbar navbar-expand-lg  ">
-
-  <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
-    aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+<nav class="ms-3 navbar navbar-expand-lg">
+  <button class="navbar-toggler" type="button" (click)="toggleCollapse()" [attr.aria-expanded]="!isCollapsed" aria-controls="navbarSupportedContent" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
   </button>
-
-  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+  <div [ngbCollapse]="isCollapsed" class="navbar-collapse" id="navbarSupportedContent">
     <!-- <div class="justify-content-between"> -->
 
     <!-- les menus -->
-    <ul class="navbar-nav w-100 d-flex align-items-center">
+    <ul class="navbar-nav w-100 d-flex align-items-start ">
 
       <li ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
         <a class="nav-link dropdown-toggle text-white" ngbDropdownToggle>
