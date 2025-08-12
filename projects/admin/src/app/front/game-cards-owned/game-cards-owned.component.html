@@ -4,7 +4,7 @@
         <div class="card-header">
             <h5 class="card-title">Vos carnets de droits de table :
                 <span class="text-muted small">
-                    Votre compte est de {{total_free_places((cards$ | async) || [])}} droits de table.
+                    il vous en reste {{total_free_places((cards$ | async) || [])}} 
                 </span>
             </h5>
         </div>
@@ -18,7 +18,7 @@
 
 </div>
 <ng-template #game_card let-card>
-    <div class="card w-75 mx-auto mb-3 shadow-sm">
+    <div class="card  mx-auto mb-3 nice_shadow">
         <div class="card-header pb-0 ">
             <div class="col justify-content-between">
                 <div class="row align-items-center">
@@ -47,11 +47,11 @@
         </div>
 
         <div class="card-body">
-            <div class="row row-cols-1 row-cols-md-4 g-0">
+            <div class="row row-cols-3 row-cols-md-6 g-0">
                 <div *ngFor="let place of card.stamp_places ; let i = index" class="col">
                     <div [class]=" place.free ? 'card h-100' :'card h-100 bg-light'">
                         <div class="card-body text-center">
-                            <small [class]=" place.free ? 'text-muted' :'  fw-bolder'"> {{place.stamp}}</small>
+                            <small [class]=" place.free ? 'text-muted' :'  fw-bolder'"> {{place.free ? place.stamp :place.stamp | date}}</small>
                         </div>
                     </div>
                 </div>
