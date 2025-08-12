@@ -37,7 +37,7 @@
         <li *ngIf="accreditation_level >= accreditation_levels.Contributeur" 
           ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
           <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
-            <i class="fs-4 bi-cart"></i> <span class="ms-1 d-none d-sm-inline">Boutique</span>
+            <i class="fs-4 bi-cart"></i> <span class="ms-1">Boutique</span>
           </a>
           <ul ngbDropdownMenu class="dropdown-menu">
             <li><a class="dropdown-item" routerLink="./caisse/ventes">vente à adhérents</a></li>
@@ -50,7 +50,7 @@
         <li *ngIf="accreditation_level >= accreditation_levels.Contributeur" ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
           <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
             <i class="fs-4 bi-people"></i>
-            <span class="ms-1 d-none d-sm-inline">Adhérents</span>
+            <span class="ms-1">Adhérents</span>
           </a>
           <ul ngbDropdownMenu class="dropdown-menu">
             <li><a class="dropdown-item" routerLink="./members/database">répertoire</a></li>
@@ -62,7 +62,7 @@
 
         <li *ngIf="accreditation_level >= accreditation_levels.Administrateur" ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
           <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
-            <i class="fs-4 bi-journal"></i> <span class="ms-1 d-none d-sm-inline">Finance</span>
+            <i class="fs-4 bi-journal"></i> <span class="ms-1">Finance</span>
           </a>
           <ul ngbDropdownMenu class="dropdown-menu">
             <li><a class="dropdown-item" routerLink="./finance/toutes-ecritures">écritures courantes</a></li>
@@ -76,7 +76,7 @@
         <!-- Outils -->
         <li *ngIf="accreditation_level >= accreditation_levels.Systeme" ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
           <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
-            <i class="fs-4 bi-database-fill-gear"></i> <span class="ms-1 d-none d-sm-inline">Outils</span>
+            <i class="fs-4 bi-database-fill-gear"></i> <span class="ms-1">Outils</span>
           </a>
           <ul ngbDropdownMenu class="dropdown-menu">
             <li><a class="dropdown-item" routerLink="./finance/books/list">base de données</a></li>
@@ -91,7 +91,7 @@
         <!-- site -->
                  <li *ngIf="accreditation_level >= accreditation_levels.Administrateur" ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
           <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
-            <i class="fs-4 bi-globe2"></i> <span class="ms-1 d-none d-sm-inline">Site web</span>
+            <i class="fs-4 bi-globe2"></i> <span class="ms-1">Site web</span>
           </a>
           <ul ngbDropdownMenu class="dropdown-menu">
             <li><a class="dropdown-item" routerLink="./site/articles">articles</a></li>
