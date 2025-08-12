@@ -1,0 +1,8 @@
+.card-wide {
+	width: 100%;
+	@media (min-width: 768px) {
+		padding-left: 40vh;
+        // width: 60vw;
+		// max-width: 60vw;
+	}
+}
