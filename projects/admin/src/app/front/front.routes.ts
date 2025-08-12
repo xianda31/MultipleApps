@@ -10,6 +10,7 @@ import { FonctionnementComponent } from './static/fonctionnement/fonctionnement.
 import { EnseignantsComponent } from './static/enseignants/enseignants.component';
 import { NewsComponent } from './static/news/news.component';
 import { FrontPageComponent } from './static/front-page/front-page.component';
+import { DocumentsComponent } from './static/documents/documents.component';
 
 export const routes: Routes = [
   { path: '',
@@ -25,6 +26,7 @@ export const routes: Routes = [
       { path: 'enseignants', component: EnseignantsComponent },
 
       {path : 'news', component: NewsComponent },
+      {path : 'documents', component: DocumentsComponent },
       
       { path: '', component: FrontPageComponent },
       { path: '**', component: PageNotFoundComponent },

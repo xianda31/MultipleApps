@@ -7,11 +7,12 @@ export const storage = defineStorage({
             allow.guest.to(['read']),
             allow.entity('identity').to(['read', 'write', 'delete'])
         ],
-        'thumbnails/*': [
+        'documents/*': [
             allow.guest.to(['read']),
-            allow.authenticated.to(['read', 'write', 'delete']),
-
+            allow.groups(['Systeme','Administrateur']).to(['read', 'write', 'delete']),
+            allow.groups(['Contributeur','Membre']).to(['read']),
         ],
+
         'albums/*': [
             allow.guest.to(['read']),
             allow.authenticated.to(['read', 'write', 'delete']),

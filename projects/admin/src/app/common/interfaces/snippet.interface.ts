@@ -21,5 +21,6 @@ export enum SNIPPET_TEMPLATES {
     BUREAU = 'bureau',
     CONTACTS = 'contacts',
     FONCTIONNEMENT = 'fonctionnement',
-    ENSEIGNANTS = 'enseignants'
+    ENSEIGNANTS = 'enseignants',
+    DOCUMENTS = 'documents',
 }

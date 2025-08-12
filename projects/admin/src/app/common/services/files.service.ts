@@ -115,5 +115,10 @@ export class FileService {
     return this.sanitizer.bypassSecurityTrustResourceUrl(window.URL.createObjectURL(blob));
   }
 
+
+  async downloadBlob(path: string): Promise<Blob> {
+    const result = await downloadData({ path: path }).result;
+    return result.body.blob()
+  }
 }
 
