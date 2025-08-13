@@ -4,10 +4,11 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { BackNavbarComponent } from '../navbar/back-navbar.component';
 import { ToasterComponent } from '../../common/toaster/components/toaster/toaster.component';
-import { catchError } from 'rxjs';
+import { catchError, map, Observable } from 'rxjs';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { BookService } from '../services/book.service';
 import { LocalStorageService } from '../services/local-storage.service';
+import { BookEntry } from '../../common/interfaces/accounting.interface';
 
 @Component({
   selector: 'app-admin',
@@ -17,10 +18,9 @@ import { LocalStorageService } from '../services/local-storage.service';
   styleUrls: ['./admin.component.scss']
 })
 export class AdminComponent {
-  season !: string;
-  entries_nbr!: number;
-  book_entries_loaded: boolean = false;
-  accreditation_level: number = -1;
+  season$ = new Observable<string>();
+  book_entries_number$ = new Observable<number>();
+
 
   constructor(
     private systemDataService: SystemDataService,
@@ -33,22 +33,9 @@ export class AdminComponent {
 
     this.localStorageService.setItem('entry_point', 'admin');
 
-    this.systemDataService.get_configuration().subscribe((conf) => {
-      this.season = conf.season;
-    });
+    this.book_entries_number$ = this.bookService.list_book_entries().pipe(map((entries) => entries.length));
 
-    this.bookService.list_book_entries()
-      .pipe(
-        catchError((err) => {
-          console.error('Error loading book entries:', err);
-          this.book_entries_loaded = false;
-          return [];
-        })
-      )
-      .subscribe((book_entries) => {
-        this.book_entries_loaded = true;
-        this.entries_nbr = book_entries.length;
-      });
+    this.season$ = this.systemDataService.get_configuration().pipe(map((conf) => conf.season));
 
 
   }
