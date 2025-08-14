@@ -1,82 +1,85 @@
-<div class="mt-3">
-    <div class="card shadow-sm">
-        <h5 class="card-header">Les articles</h5>
-        <div class="card-body">
-            <form [formGroup]="snippetForm">
-                <table *ngIf="snippets" class="table">
-                    <thead>
-                        <tr>
-                            <th>Titre</th>
-                            <th>Sous-titre</th>
-                            <th>Contenu</th>
-                            <th>Page</th>
-                            <th>1ere page</th>
-                            <th>rang</th>
-                            <th>image</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr *ngFor="let snippet of snippets">
-                            <td>{{ snippet.title }}</td>
-                            <td>{{ snippet.subtitle }}</td>
-                            <td>{{ snippet.content | rmbrackets }}</td>
-                            <td class="text-start">{{ snippet.template }}</td>
-                            <td class="text-center">
-                                <div class="mx-auto form-switch">
-                                    <input class="form-check-input" type="checkbox" role="switch"
-                                        [checked]="snippet.featured" disabled>
-                                </div>
-                            </td>
-                            <td class="text-center">{{ snippet.rank }}</td>
-                            <td class="text-start">
-                                <img *ngIf="snippet.image" [src]="snippet.image" alt="{{ snippet.title }}"
-                                    class="img-fluid snippet-img-limited">
-                            </td>
-                            <td class="text-center ">
-                                <div class="d-flex gap-2 justify-content-center">
-                                    <button class="btn btn-outline-primary btn-sm">
-                                        <i (click)="onSelectSnippet(snippet)" class="bi bi-pen"></i>
-                                    </button>
-                                    <button class="btn btn-outline-danger btn-sm">
-                                        <i (click)="onDeleteSnippet(snippet)" class="bi bi-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr></tr>
-                        <tr class="table-secondary">
-                            <td> <input type="text" class="form-control" formControlName="title"> </td>
-                            <td> <input type="text" class="form-control" formControlName="subtitle"> </td>
-                            <td (click)="onModalEditSnippetContent()"> <input type="text" class="form-control"
-                                    formControlName="content"> </td>
-                            <td class="text-start"> <input list="datalist" type="text" class="form-control"
-                                    formControlName="template">
-                                <datalist id="datalist">
-                                    <option *ngFor="let template of templates" [value]="template">
-                                        {{ template }}
-                                    </option>
-                                </datalist>
-                            </td>
-                            <td class="text-center">
-                                <div class="mx-auto  form-switch">
-                                    <input class="form-check-input" type="checkbox" role="switch"
-                                        formControlName="featured">
-                                </div>
-                            </td>
-                            <td> <input type="text" class="form-control" formControlName="rank"> </td>
-                            <td> <input type="text" class="form-control" formControlName="image"> </td>
+    <form [formGroup]="snippetForm" >
+        <table class="table table-sm table-responsive mt-2">
+            <thead>
+                <tr>
+                    <th class=" sticky-top">Modèle</th>
+                    <th class=" sticky-top">Titre</th>
+                    <th class=" sticky-top">Sous-titre</th>
+                    <th class=" sticky-top">Contenu</th>
+                    <th class=" text-center sticky-top">1ere</th>
+                    <th class=" text-center sticky-top">rang</th>
+                    <th class=" sticky-top">image</th>
+                    <th class=" sticky-top">fichier</th>
+                    <th class=" sticky-top">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="table-secondary" #snippetsEditor>
+                    <td class="text-start"> <input list="datalist" type="text" class="form-control"
+                            formControlName="template">
+                        <datalist id="datalist">
+                            <option *ngFor="let template of templates" [value]="template">
+                                {{ template }}
+                            </option>
+                        </datalist>
+                    </td>
+                    <td> <input type="text" class="form-control" formControlName="title"> </td>
+                    <td> <input type="text" class="form-control" formControlName="subtitle"> </td>
+                    <td (click)="onModalEditSnippetContent()"> <input type="text" class="form-control"
+                            formControlName="content"> </td>
+                    <td class="text-center">
+                        <div class="mx-auto form-switch ">
+                            <input class="form-check-input" type="checkbox" role="switch" formControlName="featured">
+                        </div>
+                    </td>
+                    <td class="text-center"> <input type="text" class="form-control text-center" formControlName="rank"> </td>
+                    <td> <input type="text" class="form-control" formControlName="image"> </td>
+                    <td> <input type="text" list="file_datalist" class="form-control" formControlName="file">
+                        <datalist id="file_datalist">
+                            <option *ngFor="let path of file_paths$ | async" [value]="path">
+                                {{ path }}
+                            </option>
+                        </datalist>
+                    </td>
 
-                            <td class="text-center ">
-                                <button class="btn btn-primary btn-sm" [disabled]="!form_valid"
-                                    (click)="onSaveSnippet()">
-                                    <i class="bi bi-check2-square"></i></button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </form>
+                    <td class="text-center ">
+                        <button class="btn btn-primary btn-sm" [disabled]="!form_valid" (click)="onSaveSnippet()">
+                            <i class="bi bi-check2-square"></i></button>
+                    </td>
+                </tr>
+            </tbody>
+                <tbody class="overflow-y-scroll">
+                    <tr *ngFor="let snippet of snippets">
+                        <td class="text-start">{{ snippet.template }}</td>
+                        <td>{{ snippet.title }}</td>
+                        <td>{{ snippet.subtitle }}</td>
+                        <td>{{ snippet.content | rmbrackets | truncate : 50}}</td>
+                        <td class="text-center">
+                            <div class="mx-auto form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch"
+                                    [checked]="snippet.featured" disabled>
+                            </div>
+                        </td>
+                        <td class="text-center">{{ snippet.rank }}</td>
+                        <td class="text-start">
+                            <img *ngIf="snippet.image" [src]="snippet.image" alt="{{ snippet.title }}"
+                                class="img-fluid snippet-img-limited">
+                        </td>
+                        <td>{{snippet.file}}</td>
+                        <td class="text-center ">
+                            <div class="d-flex gap-2 justify-content-center">
+                                <button class="btn btn-outline-primary btn-sm">
+                                    <i (click)="onSelectSnippet(snippet); scrollToTableEnd(snippetsEditor)"
+                                        class="bi bi-pen"></i>
+                                </button>
+                                <button class="btn btn-outline-danger btn-sm">
+                                    <i (click)="onDeleteSnippet(snippet)" class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr></tr>
 
-        </div>
-    </div>
-</div>
+                </tbody>
+        </table>
+    </form>

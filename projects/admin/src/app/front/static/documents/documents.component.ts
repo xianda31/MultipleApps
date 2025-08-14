@@ -39,9 +39,9 @@ ngOnInit():void {
     this.snippets = snippets.filter(snippet => snippet.template === SNIPPET_TEMPLATES.DOCUMENTS);
     this.documents = this.snippets.map(snippet => ({
       name: snippet.title,
-      url: this.documents_path + snippet.subtitle,
+      url: snippet.file,
       summary: snippet.content,
-      icon: this.doc_icon(snippet.subtitle)
+      icon: this.doc_icon(snippet.file)
     }));
   });
 }

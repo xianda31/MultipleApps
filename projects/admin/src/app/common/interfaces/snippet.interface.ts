@@ -9,6 +9,7 @@ export interface Snippet {
     featured: boolean;
     rank: number;
     image: string;
+    file: string;
     createdAt?: string;
     updatedAt?: string;
 }

@@ -21,6 +21,7 @@ import { CloneDBComponent } from './maintenance/clone-DB/clone-db.component';
 import { AdminComponent } from './admin/admin.component';
 import { BackPageComponent } from './back-page/back-page.component';
 import { SnippetsComponent } from './site/snippets/snippets.component';
+import { FilemgrComponent } from './files/filemgr/filemgr.component';
 
 export const routes: Routes = [
   {
@@ -55,7 +56,8 @@ export const routes: Routes = [
       { path: 'outils/groups', component: GroupsListComponent },
       { path: 'outils/cloneDB', component: CloneDBComponent },
 
-      { path: 'site/articles', component: SnippetsComponent },
+      { path: 'site/thumbnails', component: SnippetsComponent },
+      { path: 'site/files', component: FilemgrComponent },
 
       { path: 'home', component: BackPageComponent },
       { path: '', component: BackPageComponent },

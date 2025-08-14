@@ -1,3 +1,4 @@
+
 import { Component } from '@angular/core';
 import { RmbracketsPipe } from '../../../common/pipes/rmbrackets.pipe';
 import { Snippet, SNIPPET_TEMPLATES } from '../../../common/interfaces/snippet.interface';
@@ -6,10 +7,13 @@ import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } 
 import { CommonModule } from '@angular/common';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { SnippetModalEditorComponent } from '../snippet-modal-editor/snippet-modal-editor.component';
+import { FileService } from '../../../common/services/files.service';
+import { map, Observable } from 'rxjs';
+import { TruncatePipe } from '../../../common/pipes/truncate.pipe';
 
 @Component({
   selector: 'app-snippets',
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RmbracketsPipe],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RmbracketsPipe, TruncatePipe],
   templateUrl: './snippets.component.html',
   styleUrl: './snippets.component.scss'
 })
@@ -19,9 +23,11 @@ export class SnippetsComponent {
   modification_mode = false;
   templates = Object.values(SNIPPET_TEMPLATES);
   selected_snippet!: Snippet;
+  file_paths$ !: Observable<string[]>;
 
   constructor(
     private snippetService: SnippetService,
+    private fileService: FileService,
     private modalService: NgbModal,
     private fb: FormBuilder
   ) {
@@ -33,11 +39,17 @@ export class SnippetsComponent {
       template: ['', Validators.required],
       featured: [false],
       rank: [0],
-      image: ['']
+      image: [''],
+      file: ['']
     });
   }
 
   ngOnInit() {
+
+    this.file_paths$ = this.fileService.list_files('documents/').pipe(
+      map((S3items) => S3items.map(item => item.path))
+    );
+
     this.snippetService.listSnippets().subscribe((snippets) => {
       this.snippets = snippets
         .sort((a, b) => a.rank - b.rank)
@@ -95,4 +107,9 @@ export class SnippetsComponent {
     });
   }
 
+  scrollToTableEnd(table: HTMLElement) {
+    setTimeout(() => {
+      table.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }, 0);
+  }
 }

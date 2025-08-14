@@ -161,7 +161,8 @@ const schema = a.schema({
     template: a.string().required(),
     featured: a.boolean().required(),
     rank: a.integer().required(),
-    image: a.string().required(),
+    image: a.string(),
+    file: a.string(),
   })
     .authorization((allow) => [
       allow.guest().to(['read']),

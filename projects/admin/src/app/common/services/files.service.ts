@@ -1,11 +1,14 @@
 import { Injectable } from '@angular/core';
 import { getUrl, list, remove } from 'aws-amplify/storage';
 import { S3Item } from '../interfaces/file.interface';
-import { BehaviorSubject, Observable } from 'rxjs';
+
+// Add FileSystem interface with index signature
+
 import { downloadData, uploadData } from 'aws-amplify/storage';
 import { ToastService } from '../services/toast.service';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-
+import { FileSystem } from '../interfaces/file.interface';
+import { Observable, of } from 'rxjs';
 
 
 @Injectable({
@@ -32,26 +35,38 @@ export class FileService {
     });
   }
 
-  list(directory: string): Promise<S3Item[]> {
-    let promise = new Promise<S3Item[]>((resolve, reject) => {
+  list_files(directory: string): Observable<S3Item[]> {
+    return new Observable<S3Item[]>(subscriber => {
       list({ path: directory, options: { listAll: true } })
-        .then((data) => {
-          resolve(data.items);
+        .then(result => {
+          subscriber.next(result.items.filter(item => item.size !== 0));
+          subscriber.complete();
+        })
+        .catch(error => subscriber.error(error));
+    });
+  }
+
+  upload_file(file: File, directory: string): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      uploadData({
+        data: file,
+        path: directory + file.name,
+        options: {
+          contentType: file.type,
         }
-        ).catch((error) => {
-          console.log(error);
+      }).result
+        .then(() => {
+          resolve();
+        })
+        .catch((error) => {
           reject(error);
         });
     });
-    return promise;
   }
 
-
-  delete(path: string) {
+  delete_file(path: string) {
     remove({ path: path })
       .then((data) => {
-        // console.log(data);
-        // this.listFiles();
       })
       .catch((error) => {
         console.log(error);
@@ -64,27 +79,7 @@ export class FileService {
     const json = JSON.stringify(data);
     const blob = new Blob([json], { type: 'text/plain' });
     const file = new File([blob], filename);
-    let promise = new Promise((resolve, reject) => {
-      uploadData({
-        data: blob,
-        path: directory + file.name,
-        // bucket: 'publicBucket'
-        options: {
-          contentType: 'text/plain;charset=utf-8',
-          metadata: { customKey: 'bcsto' },
-        }
-      }).result
-        .then((result) => {
-          this.toastService.showSuccess('upload '+ directory, 'sauvegarde réussie');
-          resolve(result);
-        })
-        .catch((error) => {
-          console.log('error', error);
-          this.toastService.showErrorToast('upload '+ directory, 'échec de la sauvegarde');
-          reject(error);
-        });
-    });
-    return promise;
+    return this.upload_file(file, directory);
   }
 
 
