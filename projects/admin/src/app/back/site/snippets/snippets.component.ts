@@ -8,7 +8,7 @@ import { CommonModule } from '@angular/common';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { SnippetModalEditorComponent } from '../snippet-modal-editor/snippet-modal-editor.component';
 import { FileService } from '../../../common/services/files.service';
-import { map, Observable } from 'rxjs';
+import { catchError, from, map, Observable, of, tap } from 'rxjs';
 import { TruncatePipe } from '../../../common/pipes/truncate.pipe';
 
 @Component({
@@ -24,6 +24,7 @@ export class SnippetsComponent {
   templates = Object.values(SNIPPET_TEMPLATES);
   selected_snippet!: Snippet;
   file_paths$ !: Observable<string[]>;
+  thumbnails$ !: Observable<string[]>;
 
   constructor(
     private snippetService: SnippetService,
@@ -47,6 +48,9 @@ export class SnippetsComponent {
   ngOnInit() {
 
     this.file_paths$ = this.fileService.list_files('documents/').pipe(
+      map((S3items) => S3items.map(item => item.path))
+    );
+    this.thumbnails$ = this.fileService.list_files('images/vignettes/').pipe(
       map((S3items) => S3items.map(item => item.path))
     );
 
@@ -82,6 +86,14 @@ export class SnippetsComponent {
     });
   }
 
+  // presigned_url(image_path: string): Observable<string> {
+  //   return (this.fileService.getPresignedUrl(image_path)).pipe(
+  //     catchError(err => {
+  //       console.error('Error fetching presigned URL:', err);
+  //       return of('bcsto_ffb.jpg');
+  //     })
+  //   );
+  // }
 
   onSelectSnippet(snippet: Snippet) {
     this.snippetForm.patchValue(snippet);

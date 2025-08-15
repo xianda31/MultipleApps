@@ -4,6 +4,7 @@ import { SystemDataService } from './system-data.service';
 import { ToastService } from '../services/toast.service';
 import { DBhandler } from './graphQL.service';
 import { Snippet, Snippet_input } from '../interfaces/snippet.interface';
+import { FileService } from './files.service';
 
 @Injectable({
     providedIn: 'root'
@@ -15,6 +16,7 @@ export class SnippetService {
 
     constructor(
         private systemDataService: SystemDataService,
+        private fileService: FileService,
         private toastService: ToastService,
         private dbHandler: DBhandler
     ) { }
@@ -24,7 +26,8 @@ export class SnippetService {
     async createSnippet(snippet: Snippet): Promise<Snippet> {
         const { id, ...snippet_input } = snippet;
         try {
-            const createdSnippet = await this.dbHandler.createSnippet(snippet_input as Snippet_input);
+            let createdSnippet = await this.dbHandler.createSnippet(snippet_input as Snippet_input);
+            createdSnippet = this.add_image_url(createdSnippet);
             this._snippets.push(createdSnippet as Snippet);
             this._snippets$.next(this._snippets);
             return createdSnippet;
@@ -45,8 +48,8 @@ export class SnippetService {
             map((snippets) => snippets),
             switchMap((snippets) => this.sorted_snippets(snippets)),
             map((snippets) => {
-                this._snippets = snippets;
-                this._snippets$.next(snippets);
+                this._snippets = snippets.map(snippet => this.add_image_url(snippet));
+                this._snippets$.next(this._snippets);
             }),
             switchMap(() => this._snippets$.asObservable())
         );
@@ -60,7 +63,8 @@ export class SnippetService {
 
     async updateSnippet(snippet: Snippet): Promise<Snippet> {
         try {
-            const updatedSnippet = await this.dbHandler.updateSnippet(snippet);
+            let updatedSnippet = await this.dbHandler.updateSnippet(snippet);
+            updatedSnippet = this.add_image_url(updatedSnippet);
             this._snippets = this._snippets.filter((s) => s.id !== updatedSnippet.id);
             this._snippets.push(updatedSnippet as Snippet);
             this._snippets$.next(this._snippets);
@@ -97,5 +101,12 @@ export class SnippetService {
 
     getSnippet(snippet_id: string): Snippet {
         return this._snippets.find((snippet) => snippet.id === snippet_id) as Snippet;
+    }
+
+    add_image_url(snippet: Snippet): Snippet {
+        if(snippet.image) {
+            return {...snippet, image_url: this.fileService.getPresignedUrl(snippet.image)};
+        }
+        return snippet;
     }
 }

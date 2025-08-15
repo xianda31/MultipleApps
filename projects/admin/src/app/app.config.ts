@@ -1,5 +1,5 @@
 import { ApplicationConfig, LOCALE_ID, provideZoneChangeDetection } from '@angular/core';
-import { InMemoryScrollingOptions, provideRouter, withInMemoryScrolling } from '@angular/router';
+import { InMemoryScrollingOptions, provideRouter, withComponentInputBinding, withInMemoryScrolling } from '@angular/router';
 
 import { routes } from './app.routes';
 import { provideAnimations } from '@angular/platform-browser/animations';
@@ -11,7 +11,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideAnimations(),
-    provideRouter(routes, withInMemoryScrolling(scrollConfig)),
+    provideRouter(routes, withInMemoryScrolling(scrollConfig), withComponentInputBinding()),
     { provide: LOCALE_ID, useValue: 'fr-FR' }
   ]
 };

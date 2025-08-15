@@ -7,7 +7,6 @@ import { S3Item } from '../interfaces/file.interface';
 import { downloadData, uploadData } from 'aws-amplify/storage';
 import { ToastService } from '../services/toast.service';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { FileSystem } from '../interfaces/file.interface';
 import { Observable, of } from 'rxjs';
 
 
@@ -21,16 +20,16 @@ export class FileService {
     private sanitizer: DomSanitizer
   ) { }
 
-  getPresignedUrl(path: string): Promise<URL> {
-    return new Promise<URL>((resolve, reject) => {
-      getUrl({ path: path, options: { validateObjectExistence: false } })
-        .then((linkToStorageFile) => {
-          // console.log('linkToStorageFile', linkToStorageFile);
-          resolve(linkToStorageFile.url);
+  getPresignedUrl(path: string): Observable<string> {
+    return new Observable<string>((subscriber) => {
+      getUrl({ path: path, options: { validateObjectExistence: true } })
+        .then(getUrlOutput => {
+          subscriber.next(getUrlOutput.url.href);
+          subscriber.complete();
         })
-        .catch((error) => {
+        .catch(error => {
           console.log(error);
-          reject(error);
+          subscriber.error(error);
         });
     });
   }

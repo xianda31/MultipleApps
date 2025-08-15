@@ -15,16 +15,23 @@
             <div *ngFor="let snippet of snippets" class="col">
                 <div class="card border-0" id="{{snippet.title}}">
                     <div class="card-body">
-                        <h2 class="card-title">
-                            {{snippet.title}}
-                            <div class="fs-5 text-muted">{{snippet.subtitle}}</div>
-                        </h2>
-                        <img src="bcsto_ffb.jpg" alt="{{snippet.title}}" class="card-img-top ">
-                        <small class="text-muted">Publié le {{snippet.updatedAt| date:'shortDate'}} </small>
+                        <div class="row">
+                            <div class="col-5">
+                                <img [src]="snippet.image_url | async" alt="{{snippet.title}}" class="card-img-top ">
+                            </div>
+                            <div class="col-7">
+                                <h2 class="card-title">
+                                    {{snippet.title}}
+                                    <div class="fs-5 text-muted">{{snippet.subtitle}}</div>
+                                </h2>
+                                <small class="text-muted">Publié le {{snippet.updatedAt| date:'shortDate'}} </small>
+                            </div>
+                        </div>
                         <div class="card-text mt-3">
                             <h4 class="card-text" [innerHTML]="snippet.content"></h4>
                         </div>
                     </div>
                 </div>
+                <hr class="bg-secondary">
             </div>
         </div>

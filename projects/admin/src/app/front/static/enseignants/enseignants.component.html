@@ -5,7 +5,7 @@
             <div class="card h-100 shadow-sm">
                 <div class="row g-0">
                     <div class="col-4">
-                        <img [src]="snippet.image" style="max-height: 150px; object-fit: cover;"
+                        <img [src]="snippet.image_url | async" style="max-height: 150px; object-fit: cover;"
                             alt="{{snippet.title}}" class="img-fluid rounded-start">
 
                     </div>

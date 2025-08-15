@@ -1,3 +1,4 @@
+import { Observable } from "rxjs";
 import { Schema } from "../../../../../../amplify/data/resource";
 
 export interface Snippet {
@@ -10,6 +11,7 @@ export interface Snippet {
     rank: number;
     image: string;
     file: string;
+    image_url?: Observable<string>;
     createdAt?: string;
     updatedAt?: string;
 }

@@ -1,6 +1,8 @@
+<div *ngIf="snippets" class="mt-3">
+
     <form [formGroup]="snippetForm" >
-        <table class="table table-sm table-responsive mt-2">
-            <thead>
+        <table class="table table-sm table-responsive" style="z-index: 1;">
+            <thead >
                 <tr>
                     <th class=" sticky-top">Modèle</th>
                     <th class=" sticky-top">Titre</th>
@@ -33,7 +35,13 @@
                         </div>
                     </td>
                     <td class="text-center"> <input type="text" class="form-control text-center" formControlName="rank"> </td>
-                    <td> <input type="text" class="form-control" formControlName="image"> </td>
+                    <td> <input type="text" list="image_datalist" class="form-control" formControlName="image"> 
+                        <datalist id="image_datalist">
+                            <option *ngFor="let path of thumbnails$ | async" [value]="path">
+                                {{ path }}
+                            </option>
+                        </datalist>
+                    </td>
                     <td> <input type="text" list="file_datalist" class="form-control" formControlName="file">
                         <datalist id="file_datalist">
                             <option *ngFor="let path of file_paths$ | async" [value]="path">
@@ -61,9 +69,13 @@
                             </div>
                         </td>
                         <td class="text-center">{{ snippet.rank }}</td>
-                        <td class="text-start">
-                            <img *ngIf="snippet.image" [src]="snippet.image" alt="{{ snippet.title }}"
+                        <td *ngIf="snippet.image" class="text-start">
+                            <!-- {{presigned_url(snippet.image) | async}} -->
+                            <img *ngIf="snippet.image" [src]="snippet.image_url| async" alt="{{ snippet.title }}"
                                 class="img-fluid snippet-img-limited">
+                        </td>
+                        <td *ngIf="!snippet.image" class="text-start">
+                            <span class="text-muted">Aucune image</span>
                         </td>
                         <td>{{snippet.file}}</td>
                         <td class="text-center ">
@@ -83,3 +95,4 @@
                 </tbody>
         </table>
     </form>
+</div>

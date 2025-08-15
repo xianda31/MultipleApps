@@ -57,7 +57,8 @@ export const routes: Routes = [
       { path: 'outils/cloneDB', component: CloneDBComponent },
 
       { path: 'site/thumbnails', component: SnippetsComponent },
-      { path: 'site/files', component: FilemgrComponent },
+      { path: 'site/filemgr/:type', component: FilemgrComponent },
+      // { path: 'site/images', component: FilemgrComponent, data: { type: 'images' } },
 
       { path: 'home', component: BackPageComponent },
       { path: '', component: BackPageComponent },
