@@ -68,32 +68,18 @@ export class SnippetsComponent {
   onSaveSnippet() {
     let snippet = this.snippetForm.getRawValue();
     if (this.modification_mode) {
-      this.snippetService.updateSnippet(snippet);
+      this.snippetService.updateSnippet(snippet).then(() => {
+        this.snippetForm.reset();
+        this.modification_mode = false;
+      });
     } else {
-      this.snippetService.createSnippet(snippet);
+      this.snippetService.createSnippet(snippet).then(() => {
+        this.snippetForm.reset();
+        this.modification_mode = false;
+      });
     }
-    this.modification_mode = false;
-    // Reset à des valeurs par défaut
-    this.snippetForm.reset({
-      id: '',
-      title: '',
-      subtitle: '',
-      content: ['Contenu de l\'article'],
-      template: '',
-      featured: false,
-      rank: 100,
-      image: ''
-    });
   }
 
-  // presigned_url(image_path: string): Observable<string> {
-  //   return (this.fileService.getPresignedUrl(image_path)).pipe(
-  //     catchError(err => {
-  //       console.error('Error fetching presigned URL:', err);
-  //       return of('bcsto_ffb.jpg');
-  //     })
-  //   );
-  // }
 
   onSelectSnippet(snippet: Snippet) {
     this.snippetForm.patchValue(snippet);

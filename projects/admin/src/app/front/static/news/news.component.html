@@ -11,7 +11,7 @@
         </div>
 
         <div class="col-md-7">
-            <h2>L'actualité</h2>
+            <h2></h2>
             <div *ngFor="let snippet of snippets" class="col">
                 <div class="card border-0" id="{{snippet.title}}">
                     <div class="card-body">
@@ -24,7 +24,7 @@
                                     {{snippet.title}}
                                     <div class="fs-5 text-muted">{{snippet.subtitle}}</div>
                                 </h2>
-                                <small class="text-muted">Publié le {{snippet.updatedAt| date:'shortDate'}} </small>
+                                <small class="text-muted">Publié le {{snippet.createdAt | date:'shortDate'}} </small>
                             </div>
                         </div>
                         <div class="card-text mt-3">

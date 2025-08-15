@@ -18,28 +18,22 @@ export class SnippetModalEditorComponent implements AfterViewInit {
   @Input() snippet!: Snippet;
   @Output() snippetChange = new EventEmitter<Snippet | null>();
   editor!: EditorJS;
-  edjsParser!: any;
-  // initial_data!: any;
-  initial_html!: any;
+  edjsParser = edjsHTML();
   output_html!: string;
 
-   constructor(
+  constructor(
     private activeModal: NgbActiveModal,
-  ) {
-  }
+  ) { }
 
-  ngOnInit(): void {
-    this.edjsParser = edjsHTML();
-    this.initial_html = this.snippet.content === '' ? '<p></p>' : this.snippet.content;
-    console.log('initial content', this.initial_html);
-  }
 
   ngAfterViewInit(): void {
+
+    const initialData = this.htmlToEditorJsBlocks(this.snippet.content);     // Convertit le HTML initial en blocks EditorJS
 
     this.editor = new EditorJS(
       {
         holder: 'editorjs',
-        placeholder: 'Start writing your content here...',
+        placeholder: 'Ecrire votre texte ici...',
         autofocus: true,
         tools: {
           header: {
@@ -51,26 +45,56 @@ export class SnippetModalEditorComponent implements AfterViewInit {
             inlineToolbar: true
           },
         },
-
-        onChange: (data) => this.onDataChanges(data),
+        data: initialData,
       });
 
-    this.editor.isReady.then(async () => {
-      await this.editor.blocks.renderFromHTML(this.initial_html);
-    });
   }
 
-  private onDataChanges(data: any): void {
-    // console.log('current block index:', data.blocks.getCurrentBlockIndex());
-    this.editor.save()
-      .then(data => {
-        this.output_html = this.edjsParser.parse(data);
-      });
-  }
+  closeModal(): void {
+      this.activeModal.close(null);
+    }
 
-   saveSnippet(): void {
+  async saveSnippet(): Promise<void> {
+    try {
+      const data = await this.editor.save();
+      this.output_html = this.edjsParser.parse(data); // Convertit les blocks EditorJS en HTML
       let snippet = { ...this.snippet };
       snippet.content = this.output_html;
       this.activeModal.close(snippet);
+    } catch (error) {
+      console.error('Error saving snippet:', error);
+      this.activeModal.close(this.snippet);
+      return;
+    }
+
+  }
+
+
+  htmlToEditorJsBlocks(html: string): any {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    const blocks: any[] = [];
+    div.childNodes.forEach(node => {
+      if (node.nodeType === 1) { // Element
+        const tag = (node as HTMLElement).tagName;
+        if (/^H[1-6]$/.test(tag)) {
+          blocks.push({
+            type: 'header',
+            data: {
+              text: (node as HTMLElement).innerHTML,
+              level: Number(tag[1])
+            }
+          });
+        } else if (tag === 'P') {
+          blocks.push({
+            type: 'paragraph',
+            data: {
+              text: (node as HTMLElement).innerHTML
+            }
+          });
+        }
+      }
+    });
+    return { blocks };
   }
 }
