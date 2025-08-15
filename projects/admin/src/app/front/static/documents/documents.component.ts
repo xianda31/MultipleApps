@@ -15,9 +15,9 @@ import { TitleService } from '../../title.service';
 export class DocumentsComponent {
 
   snippets: Snippet[] = [];
-  documents : { name: string; url: string ; summary: string ; icon: string }[] = [];
+  documents: { name: string; url: string; summary: string; icon: string }[] = [];
   documents_path = 'documents/';
-  icons: {[key: string]: string} = {
+  icons: { [key: string]: string } = {
     pdf: 'bi-file-earmark-pdf-fill',
     word: 'bi-file-earmark-word-fill',
     excel: 'bi-file-earmark-excel-fill',
@@ -26,31 +26,31 @@ export class DocumentsComponent {
   };
 
   constructor(
-    private snippetService : SnippetService,
+    private snippetService: SnippetService,
     private titleService: TitleService,
     private fileService: FileService,
     private toastService: ToastService
   ) { }
 
-ngOnInit():void {
- this.titleService.setTitle('Le Club - documents');
+  ngOnInit(): void {
+    this.titleService.setTitle('Le Club - documents');
 
-  this.snippetService.listSnippets().subscribe(snippets => {
-    this.snippets = snippets.filter(snippet => snippet.template === SNIPPET_TEMPLATES.DOCUMENTS);
-    this.documents = this.snippets.map(snippet => ({
-      name: snippet.title,
-      url: snippet.file,
-      summary: snippet.content,
-      icon: this.doc_icon(snippet.file)
-    }));
-  });
-}
+    this.snippetService.listSnippets().subscribe(snippets => {
+      this.snippets = snippets.filter(snippet => snippet.template === SNIPPET_TEMPLATES.DOCUMENTS);
+      this.documents = this.snippets.map(snippet => ({
+        name: snippet.title,
+        url: snippet.file,
+        summary: snippet.content,
+        icon: this.doc_icon(snippet.file)
+      }));
+    });
+  }
 
-doc_icon(file: string): string {
-  const fileType = file.split('.').pop() || '';
-  const icon = Object.keys(this.icons).find(key => key === fileType);
-  return icon ? this.icons[icon] : this.icons['unknown'];
-}
+  doc_icon(file: string): string {
+    const fileType = file.split('.').pop() || '';
+    const icon = Object.keys(this.icons).find(key => key === fileType);
+    return icon ? this.icons[icon] : this.icons['unknown'];
+  }
 
   async downloadDocument(docItem: { name: string; url: string }) {
     try {

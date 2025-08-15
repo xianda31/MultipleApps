@@ -1,19 +1,30 @@
-<div class="offset-md-1 col-md-10 justify-content-center">
-    <div class="row row-cols-1 row-cols-md-3 g-4">
-        <div *ngFor="let snippet of snippets" class="col">
-            <div class="card h-100 nice_shadow">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="card-title">{{snippet.title}}</h4>
-                    <h6 class="card-subtitle">{{snippet.subtitle}}</h6>
-                </div>
-                <div class="card-body">
-                    <p class="card-text" [innerHTML]="snippet.content"></p>
-                    <img *ngIf="snippet.image" [src]="snippet.image" alt="{{snippet.title}}" class="img-fluid">
-                </div>
-                <div class="card-footer">
-                    <small class="text-muted">Publié le {{snippet.updatedAt| date:'shortDate'}}</small>
+<div class="offset-md-2 col-md-8 justify-content-center">
+
+    <div class="row">
+        <div class="col-md-3">
+            <div class="position-sticky" style="top: 0; z-index: 2; background: #fff;">
+                <h2 class="mb-3">Sommaire</h2>
+                <div *ngFor="let snippet of snippets" (click)="scrollToElement(snippet.title)"
+                    class="fs-4 text-secondary hover-title">{{snippet.title}}
                 </div>
             </div>
         </div>
-    </div>
-</div>
+
+        <div class="col-md-7">
+            <h2>L'actualité</h2>
+            <div *ngFor="let snippet of snippets" class="col">
+                <div class="card border-0" id="{{snippet.title}}">
+                    <div class="card-body">
+                        <h2 class="card-title">
+                            {{snippet.title}}
+                            <div class="fs-5 text-muted">{{snippet.subtitle}}</div>
+                        </h2>
+                        <img src="bcsto_ffb.jpg" alt="{{snippet.title}}" class="card-img-top ">
+                        <small class="text-muted">Publié le {{snippet.updatedAt| date:'shortDate'}} </small>
+                        <div class="card-text mt-3">
+                            <h4 class="card-text" [innerHTML]="snippet.content"></h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>

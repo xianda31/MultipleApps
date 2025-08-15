@@ -12,6 +12,7 @@ import { TitleService } from '../../title.service';
 })
 export class NewsComponent {
   snippets: Snippet[] = [];
+
   constructor(
     private snippetService: SnippetService,
     private titleService: TitleService
@@ -26,4 +27,13 @@ export class NewsComponent {
     });
   }
 
+
+    scrollToElement(title: string) {
+    setTimeout(() => {
+      const element = document.getElementById(title);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block:  'start' });
+      }
+    }, 0);
+  }
 }
