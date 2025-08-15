@@ -38,7 +38,7 @@ export class SnippetsComponent {
       subtitle: ['', Validators.required],
       content: ['Contenu de l\'article'],
       template: ['', Validators.required],
-      featured: [false],
+      public: [false],
       rank: [0],
       image: [''],
       file: ['']

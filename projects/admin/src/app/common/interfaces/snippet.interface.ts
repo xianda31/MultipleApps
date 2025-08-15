@@ -7,7 +7,7 @@ export interface Snippet {
     subtitle: string;
     content: string;
     template: string;
-    featured: boolean;
+    public: boolean;
     rank: number;
     image: string;
     file: string;

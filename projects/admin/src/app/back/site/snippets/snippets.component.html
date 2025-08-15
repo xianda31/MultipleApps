@@ -8,7 +8,7 @@
                     <th class=" sticky-top">Titre</th>
                     <th class=" sticky-top">Sous-titre</th>
                     <th class=" sticky-top">Contenu</th>
-                    <th class=" text-center sticky-top">1ere</th>
+                    <th class=" text-center sticky-top">public</th>
                     <th class=" text-center sticky-top">rang</th>
                     <th class=" sticky-top">image</th>
                     <th class=" sticky-top">fichier</th>
@@ -31,7 +31,7 @@
                             formControlName="content"> </td>
                     <td class="text-center">
                         <div class="mx-auto form-switch ">
-                            <input class="form-check-input" type="checkbox" role="switch" formControlName="featured">
+                            <input class="form-check-input" type="checkbox" role="switch" formControlName="public">
                         </div>
                     </td>
                     <td class="text-center"> <input type="text" class="form-control text-center" formControlName="rank"> </td>
@@ -65,7 +65,7 @@
                         <td class="text-center">
                             <div class="mx-auto form-switch">
                                 <input class="form-check-input" type="checkbox" role="switch"
-                                    [checked]="snippet.featured" disabled>
+                                    [checked]="snippet.public" disabled>
                             </div>
                         </td>
                         <td class="text-center">{{ snippet.rank }}</td>

@@ -5,6 +5,7 @@ import { ToastService } from '../../../common/services/toast.service';
 import { Snippet, SNIPPET_TEMPLATES } from '../../../common/interfaces/snippet.interface';
 import { SnippetService } from '../../../common/services/snippet.service';
 import { TitleService } from '../../title.service';
+import { AuthentificationService } from '../../../common/authentification/authentification.service';
 
 @Component({
   selector: 'app-documents',
@@ -25,7 +26,10 @@ export class DocumentsComponent {
     unknown: 'bi-file-earmark-fill'
   };
 
+  only_public = true;
+
   constructor(
+    private auth: AuthentificationService,
     private snippetService: SnippetService,
     private titleService: TitleService,
     private fileService: FileService,
@@ -35,15 +39,23 @@ export class DocumentsComponent {
   ngOnInit(): void {
     this.titleService.setTitle('Le Club - documents');
 
-    this.snippetService.listSnippets().subscribe(snippets => {
-      this.snippets = snippets.filter(snippet => snippet.template === SNIPPET_TEMPLATES.DOCUMENTS);
-      this.documents = this.snippets.map(snippet => ({
-        name: snippet.title,
-        url: snippet.file,
-        summary: snippet.content,
-        icon: this.doc_icon(snippet.file)
-      }));
+    this.auth.logged_member$.subscribe(member => {
+      this.only_public = !member;
+
+      this.snippetService.listSnippets().subscribe(snippets => {
+        this.snippets = snippets.filter(snippet => snippet.template === SNIPPET_TEMPLATES.DOCUMENTS);
+        if (this.only_public) { this.snippets = this.snippets.filter(snippet => snippet.public); }
+
+        this.documents = this.snippets.map(snippet => ({
+          name: snippet.title,
+          url: snippet.file,
+          summary: snippet.content,
+          icon: this.doc_icon(snippet.file)
+        }));
+      });
+
     });
+
   }
 
   doc_icon(file: string): string {
