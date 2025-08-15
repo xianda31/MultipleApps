@@ -63,18 +63,19 @@
             <span class="ms-1"> {{member.firstname}}</span>
           </a>
           <ul ngbDropdownMenu class="dropdown-menu shadow">
-            <li> <a class="dropdown-item" routerLink="/user/profile">
+            <!-- <li> <a class="dropdown-item" routerLink="/user/profile">
                 <i class="bi bi-person-gear"></i>
                 Mes données
               </a></li>
             <li> <a class="dropdown-item" routerLink="/user/purchases">
                 <i class="bi bi-bag"></i>
                 Mes achats
-              </a></li>
+              </a></li> -->
             <li *ngIf="user_accreditation && user_accreditation.level > 0">
               <a class="dropdown-item" routerLink="../admin">
                 <i [class]="user_accreditation.icon"></i>
-                {{ user_accreditation.group_name }}
+                  administration
+                <!-- {{ user_accreditation.group_name }} -->
               </a>
             </li>
             <li> <a class="dropdown-item" (click)="signOut()">
