@@ -763,7 +763,7 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
       operations: [
         {
           label: (value<0) ? 'alignement caisse (manque)' : 'alignement caisse (excédent)',
-          values: (value<0) ?{ [pl_keys.debit_key]: Math.abs(value) } : { [pl_keys.credit_key]: Math.abs(value) },
+          values: (value<0) ?{ [pl_keys.debit_key]: -value } : { [pl_keys.credit_key]: value},
         }
       ],
       transaction_id: (value < 0) ? TRANSACTION_ID.dépense_en_espèces : TRANSACTION_ID.vente_en_espèces,
