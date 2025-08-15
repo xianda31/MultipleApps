@@ -756,10 +756,10 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
 
     const entry: BookEntry = {
       id: '',
-      tag: 'alignement caisse',
+      tag: 'reconciliation caisse',
       season: this.systemDataService.get_season(today),
       date: today.toISOString().split('T')[0],
-      amounts: (value<0) ? { [FINANCIAL_ACCOUNT.CASHBOX_credit]: value } : { [FINANCIAL_ACCOUNT.CASHBOX_debit]: value },
+      amounts: (value<0) ? { [FINANCIAL_ACCOUNT.CASHBOX_credit]: -value } : { [FINANCIAL_ACCOUNT.CASHBOX_debit]: value },
       operations: [
         {
           label: (value<0) ? 'alignement caisse (manque)' : 'alignement caisse (excédent)',

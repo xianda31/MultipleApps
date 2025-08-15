@@ -190,7 +190,8 @@ export class CashBoxStatusComponent {
 
   cash_align() {
     if (this.cashForm.get('cash_real_amount')?.value !== null) {
-      let correction = this.cashForm.get('cash_real_amount')?.value - (this.current_cash_amount - this.cash_for_deposit_amount);
+  let correction = this.cashForm.get('cash_real_amount')?.value - (this.current_cash_amount - this.cash_for_deposit_amount);
+  correction = Math.round(correction * 100) / 100;
       if (correction !== 0) {
         this.bookService.cashbox_alignment(correction).then(() => {
           this.toastService.showSuccess('Alignement caisse consigné', `Montant : ${correction.toFixed(2)} €`);
