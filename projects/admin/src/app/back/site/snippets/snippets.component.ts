@@ -38,7 +38,7 @@ export class SnippetsComponent {
       subtitle: ['', Validators.required],
       content: ['Contenu de l\'article'],
       template: ['', Validators.required],
-      public: [false],
+      public: [true],
       rank: [0],
       image: [''],
       file: ['']
@@ -56,7 +56,7 @@ export class SnippetsComponent {
 
     this.snippetService.listSnippets().subscribe((snippets) => {
       this.snippets = snippets
-        .sort((a, b) => a.rank - b.rank)
+        .sort((a, b) => a.rank.localeCompare(b.rank))
         .sort((a, b) => a.template.localeCompare(b.template));
     });
   }

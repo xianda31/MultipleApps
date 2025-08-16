@@ -1,8 +1,8 @@
 <div class="col offset-md-2 col-md-8 mt-3 mb-5">
 
-    <div class="row row-cols-sm-2 row-cols-md-3 row-cols-xl-5 g-3">
+    <div class="row  justify-content-center row-cols-sm-2 row-cols-md-3 row-cols-xl-5 g-3">
         <div *ngFor="let snippet of snippets" class="col">
-            <div class="card h-100 shadow-sm">
+            <div class="card h-100 nice_shadow">
                 <div class="row g-0">
                     <div class="col-4">
                         <img [src]="snippet.image_url | async" style="max-height: 150px; object-fit: cover;"

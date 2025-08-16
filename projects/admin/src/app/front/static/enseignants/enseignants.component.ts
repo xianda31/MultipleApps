@@ -22,7 +22,9 @@ export class EnseignantsComponent {
 
   this.titleService.setTitle('Ecole de bridge -Les enseignants');
       this.snippetService.listSnippets().subscribe((snippets) => {
-        this.snippets = snippets.filter(snippet => snippet.template === SNIPPET_TEMPLATES.ENSEIGNANTS);
+        this.snippets = snippets
+        .filter(snippet => snippet.template === SNIPPET_TEMPLATES.ENSEIGNANTS)
+        .sort((b,a) => a.rank.localeCompare(b.rank));
       });
  }
 }

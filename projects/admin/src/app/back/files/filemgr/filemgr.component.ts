@@ -57,7 +57,7 @@ export class FilemgrComponent {
     const file = event.target.files[0];
     if (file) {
       this.fileService.upload_file(file, this.path).then(() => {
-        this.files$.update(files => [...files, { path: file.name }]);
+        this.files$.update(files => [...files, { path: file.name , url: this.presigned_url(file.name) }]);
         this.toastService.showSuccess('Upload', 'Fichier téléchargé avec succès');
       }).catch((error) => {
         this.toastService.showErrorToast('Upload', 'Échec du téléchargement du fichier');

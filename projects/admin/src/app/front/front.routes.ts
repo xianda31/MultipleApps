@@ -11,6 +11,8 @@ import { EnseignantsComponent } from './static/enseignants/enseignants.component
 import { NewsComponent } from './static/news/news.component';
 import { FrontPageComponent } from './static/front-page/front-page.component';
 import { DocumentsComponent } from './static/documents/documents.component';
+import { ActorsComponent } from './static/actors/actors.component';
+import { PageInConstructionComponent } from '../common/page-in-construction/page-in-construction.component';
 
 export const routes: Routes = [
   { path: '',
@@ -22,12 +24,13 @@ export const routes: Routes = [
       { path: 'purchases', component: PurchasesComponent },
       { path: 'tickets', component: GameCardsOwnedComponent },
 
-      { path: 'fonctionnement', component: FonctionnementComponent },
-      { path: 'enseignants', component: EnseignantsComponent },
+      { path: 'école/fonctionnement', component: FonctionnementComponent },
+      { path: 'école/inscription', component: PageInConstructionComponent },
 
       {path : 'news', component: NewsComponent },
       {path : 'documents', component: DocumentsComponent },
-      
+      // {path : 'acteurs', component: ActorsComponent },
+
       { path: '', component: FrontPageComponent },
       { path: '**', component: PageNotFoundComponent },
      ]

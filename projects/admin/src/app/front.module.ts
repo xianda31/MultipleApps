@@ -12,6 +12,9 @@ import { routes } from './front/front.routes';
 import { PurchasesComponent } from './front/purchases/purchases.component';
 import { GameCardsOwnedComponent } from './front/game-cards-owned/game-cards-owned.component';
 import { TitleComponent } from './front/title/title.component';
+import { FonctionnementComponent } from './front/static/fonctionnement/fonctionnement.component';
+import { ActorsComponent } from './front/static/actors/actors.component';
+import { EnseignantsComponent } from './front/static/enseignants/enseignants.component';
 
 @NgModule({
   declarations: [],
@@ -26,6 +29,9 @@ import { TitleComponent } from './front/title/title.component';
     PurchasesComponent,
     GameCardsOwnedComponent,
     TitleComponent,
+    FonctionnementComponent,
+    ActorsComponent,
+    EnseignantsComponent
   ],
   exports: [
     CommonModule,
@@ -35,7 +41,11 @@ import { TitleComponent } from './front/title/title.component';
     TournamentsComponent,
     PurchasesComponent,
     GameCardsOwnedComponent,
-    TitleComponent
+    TitleComponent,
+    FonctionnementComponent,
+    ActorsComponent,
+    EnseignantsComponent
+
 
   ],
 })

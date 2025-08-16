@@ -47,8 +47,6 @@ export class DocumentsComponent {
           icon: this.doc_icon(snippet.file)
         }));
       });
-
-
   }
 
   doc_icon(file: string): string {

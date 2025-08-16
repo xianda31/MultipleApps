@@ -1,14 +1,19 @@
 <div class="offset-md-1 col-md-10 justify-content-center">
-    <div class="row row-cols-1 row-cols-md-3 g-4">
+    <div class="row row-cols-1 row-cols-md-3 g-2">
         <div *ngFor="let snippet of snippets" class="col">
             <div class="card h-100 nice_shadow">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="card-title">{{snippet.title}}</h5>
-                    <h6 class="card-subtitle">{{snippet.subtitle}}</h6>
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="card-title col fs-4">{{snippet.title}}</div>
+                            <div class="card-title col fs-4 text-end">{{snippet.subtitle}}</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body" [innerHTML]="snippet.content">
+                <div class="card-text ps-3" [innerHTML]="snippet.content">
                 </div>
             </div>
         </div>
     </div>
 </div>
+<app-enseignants></app-enseignants>

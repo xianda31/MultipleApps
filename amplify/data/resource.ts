@@ -161,7 +161,7 @@ const schema = a.schema({
     template: a.string().required(),
     // featured: a.boolean(),
     public: a.boolean().required(),
-    rank: a.integer().required(),
+    rank: a.string().required(),
     image: a.string(),
     file: a.string(),
   })

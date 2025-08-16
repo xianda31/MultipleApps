@@ -3,10 +3,11 @@ import { TitleService } from '../../title.service';
 import { CommonModule } from '@angular/common';
 import { Snippet, SNIPPET_TEMPLATES } from '../../../common/interfaces/snippet.interface';
 import { SnippetService } from '../../../common/services/snippet.service';
+import { EnseignantsComponent } from '../enseignants/enseignants.component';
 
 @Component({
   selector: 'app-fonctionnement',
-  imports: [CommonModule],
+  imports: [CommonModule,EnseignantsComponent],
   templateUrl: './fonctionnement.component.html',
   styleUrl: './fonctionnement.component.scss'
 })
@@ -24,7 +25,9 @@ export class FonctionnementComponent {
     this.titleService.setTitle('Ecole de bridge -Fonctionnement');
 
  this.snippetService.listSnippets().subscribe((snippets) => {
-      this.snippets = snippets.filter(snippet => snippet.template === SNIPPET_TEMPLATES.FONCTIONNEMENT);
+      this.snippets = snippets
+      .filter(snippet => snippet.template === SNIPPET_TEMPLATES.FONCTIONNEMENT)
+      .sort((a,b) => a.rank.localeCompare(b.rank));
     });
 
   }

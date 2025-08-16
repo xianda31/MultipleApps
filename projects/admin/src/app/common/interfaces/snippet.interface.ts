@@ -8,7 +8,7 @@ export interface Snippet {
     content: string;
     template: string;
     public: boolean;
-    rank: number;
+    rank: string;
     image: string;
     file: string;
     image_url?: Observable<string>;
@@ -16,7 +16,7 @@ export interface Snippet {
     updatedAt?: string;
 }
 
-export type Snippet_input = Omit<Schema['Snippet']['type'], 'id' | 'createdAt' | 'updatedAt'> ;
+export type Snippet_input = Omit<Schema['Snippet']['type'], 'id' | 'createdAt' | 'updatedAt'>;
 
 
 export enum SNIPPET_TEMPLATES {
@@ -26,4 +26,5 @@ export enum SNIPPET_TEMPLATES {
     FONCTIONNEMENT = 'fonctionnement',
     ENSEIGNANTS = 'enseignants',
     DOCUMENTS = 'documents',
+    // ACTEURS = 'acteurs',
 }
