@@ -3,7 +3,6 @@ import { Component } from '@angular/core';
 import { SnippetService } from '../../../common/services/snippet.service';
 import { Snippet, SNIPPET_TEMPLATES } from '../../../common/interfaces/snippet.interface';
 import { TitleService } from '../../title.service';
-import { AuthentificationService } from '../../../common/authentification/authentification.service';
 
 @Component({
   selector: 'app-news',
@@ -15,7 +14,6 @@ export class NewsComponent {
   snippets: Snippet[] = [];
 
   constructor(
-    private auth: AuthentificationService,
     private snippetService: SnippetService,
     private titleService: TitleService
   ) { }
@@ -23,14 +21,8 @@ export class NewsComponent {
   ngOnInit(): void {
 
     this.titleService.setTitle('Les news');
-
-    this.auth.logged_member$.subscribe(member => {
-      const only_public = !member;
-
-      this.snippetService.listSnippets().subscribe((snippets) => {
-        this.snippets = snippets.filter(snippet => snippet.template === SNIPPET_TEMPLATES.NEWS);
-        if (only_public) { this.snippets = this.snippets.filter(snippet => snippet.public); }
-      });
+    this.snippetService.listSnippets().subscribe((snippets) => {
+      this.snippets = snippets.filter(snippet => snippet.template === SNIPPET_TEMPLATES.NEWS);
     });
   }
 

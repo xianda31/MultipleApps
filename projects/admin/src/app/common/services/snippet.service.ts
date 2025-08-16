@@ -5,6 +5,8 @@ import { ToastService } from '../services/toast.service';
 import { DBhandler } from './graphQL.service';
 import { Snippet, Snippet_input } from '../interfaces/snippet.interface';
 import { FileService } from './files.service';
+import { AuthentificationService } from '../authentification/authentification.service';
+import { FargatePlatformVersion } from 'aws-cdk-lib/aws-ecs';
 
 @Injectable({
     providedIn: 'root'
@@ -13,13 +15,25 @@ export class SnippetService {
     private _snippets!: Snippet[];
     private _snippets$ = new BehaviorSubject<Snippet[]>([]);
     snippets_keys: string[] = [];
+    logged: boolean = false;
 
     constructor(
         private systemDataService: SystemDataService,
+        private auth : AuthentificationService,
         private fileService: FileService,
         private toastService: ToastService,
         private dbHandler: DBhandler
-    ) { }
+    ) {
+        this.auth.logged_member$.subscribe(user => {
+            if (user) {
+                this.logged=true;
+                this._snippets$.next(this._snippets.filter((s) => s.public || this.logged));
+
+            } else {
+                console.log('not logged');
+            }
+        });
+    }
 
     // CL(R)UD Snippet
 
@@ -29,7 +43,7 @@ export class SnippetService {
             let createdSnippet = await this.dbHandler.createSnippet(snippet_input as Snippet_input);
             createdSnippet = this.add_image_url(createdSnippet);
             this._snippets.push(createdSnippet as Snippet);
-            this._snippets$.next(this._snippets);
+            this._snippets$.next(this._snippets.filter((s) => s.public || this.logged));
             return createdSnippet;
         } catch (errors) {
             if (Array.isArray(errors) && errors.length > 0 && typeof errors[0] === 'object' && errors[0] !== null && 'errorType' in errors[0]) {
@@ -49,7 +63,7 @@ export class SnippetService {
             switchMap((snippets) => this.sorted_snippets(snippets)),
             map((snippets) => {
                 this._snippets = snippets.map(snippet => this.add_image_url(snippet));
-                this._snippets$.next(this._snippets);
+                this._snippets$.next(this._snippets.filter((s) => s.public || this.logged));
             }),
             switchMap(() => this._snippets$.asObservable())
         );
@@ -67,7 +81,7 @@ export class SnippetService {
             updatedSnippet = this.add_image_url(updatedSnippet);
             this._snippets = this._snippets.filter((s) => s.id !== updatedSnippet.id);
             this._snippets.push(updatedSnippet as Snippet);
-            this._snippets$.next(this._snippets);
+            this._snippets$.next(this._snippets.filter((s) => s.public || this.logged));
             return updatedSnippet;
         } catch (errors) {
             if (Array.isArray(errors) && errors.length > 0 && typeof errors[0] === 'object' && errors[0] !== null && 'errorType' in errors[0]) {
@@ -85,7 +99,7 @@ export class SnippetService {
         try {
             let done = this.dbHandler.deleteSnippet(snippet.id);
             this._snippets = this._snippets.filter((s) => s.id !== snippet.id);
-            this._snippets$.next(this._snippets);
+            this._snippets$.next(this._snippets.filter((s) => s.public || this.logged));
             return Promise.resolve(true);
         } catch (errors) {
             if (Array.isArray(errors) && errors.length > 0 && typeof errors[0] === 'object' && errors[0] !== null && 'errorType' in errors[0]) {
