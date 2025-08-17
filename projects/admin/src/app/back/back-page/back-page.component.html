@@ -1,11 +1,7 @@
-<div class="d-flex justify-content-center" style="padding-top: 15vh;">
-    <div>
-        <div *ngIf="logged_member$ | async as logged_member" class="text-center">
-            <h1>Bonjour {{ logged_member.firstname }}</h1>
-        </div>
-        <div *ngIf="!(logged_member$ | async)" class="text-center">
-            <h1>Bienvenue sur la page d'administration</h1>
-            <p>Veuillez vous connecter pour accéder aux fonctionnalités d'administration.</p>
-        </div>
-    </div>
+<div *ngIf="logged_member$ | async as logged_member" class="text-center">
+    <h1>Bonjour {{ logged_member.firstname }}</h1>
+</div>
+<div *ngIf="!(logged_member$ | async)" class="text-center">
+    <h1>Bienvenue sur la page d'administration</h1>
+    <p>Veuillez vous connecter pour accéder aux fonctionnalités .</p>
 </div>

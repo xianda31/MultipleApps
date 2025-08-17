@@ -27,22 +27,6 @@ export class AuthentificationService {
   ) {
 
 
-    // const hubListener = (event: any) => {
-    //   let authEvent: AuthEvent = event.payload;
-    //   switch (authEvent.event) {
-    //     case 'signedIn':
-    //     case 'signedOut':
-    //     case 'signedUp':
-    //       // console.log('Auth event:', authEvent);
-    //       this._auth_event$.next(authEvent);
-    //       break;
-    //     default:
-    //       console.warn('Unhandled auth event:', authEvent.event);
-    //       break;
-    //   }
-    // }
-    // Hub.listen('auth', hubListener);
-
     this.getCurrentUser();    // recherche si un user est déjà connecté (application mémoire locale)
   }
 
@@ -64,6 +48,7 @@ export class AuthentificationService {
     this._mode$.next(this._mode);
   }
 
+  
   async signIn(email: string, password: string): Promise<any> {
 
     let signInInput: SignInInput = { username: email, password: password };
@@ -96,7 +81,7 @@ export class AuthentificationService {
               reject(err);
             }
           } else {
-            this.toastService.showErrorToast('erreur identification', err.message);
+            // this.toastService.showErrorToast('erreur identification', err.message);
             reject(err);
           }
         }
@@ -125,7 +110,7 @@ export class AuthentificationService {
                 this.toastService.showInfo('sign up', 'vous êtes déjà inscrit');
                 break;
               case 'UsernameExistsException':
-                this.toastService.showInfo('sign up', 'vous êtes déjà inscrit');
+                this.toastService.showInfo('création de compte', 'vous avez déjà un compte');
                 break;
               case 'InvalidPasswordException':
                 this.toastService.showInfo('sign up', 'mot de passe non conforme');

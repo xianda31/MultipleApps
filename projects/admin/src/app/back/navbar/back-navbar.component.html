@@ -7,35 +7,37 @@
     </span>
     <span class=" badge  bg-success" style="font-size: 0.6rem;">{{entries_nbr}}</span>
     <span *ngIf="!production_mode" class="badge bg-dark" style="font-size: 0.6rem;">dev</span>
-    <span class="fs-4 ms-1"> Administration Bridge Club
-      <span style="white-space:nowrap">Saint&ndash;Orens</span>
+
+    <span class="d-sm-inline d-md-none fs-4 ms-1">BSTO {{season}}</span>
+    <span class="d-none d-md-inline fs-4 ms-1">
+      Bridge Club
+      <span style="white-space:nowrap">Saint-Orens</span>
+      (saison {{season}})
     </span>
-    <span>
-      (saison {{season}}) </span>
 
     <!-- backdoor to front -->
     <span class="h6 ms-auto d-none d-sm-inline align-self-end">
       <a [routerLink]="'/front'">
-      <i class="bi bi-door-open-fill" ></i>
+        <i class="bi bi-door-open-fill"></i>
       </a>
     </span>
   </h4>
   <!-- <h5 class="col-md-auto col-sm-12">
   </h5> -->
 
-  <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm" >
+  <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm ps-2">
 
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
-      aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <button class="navbar-toggler" type="button" (click)="toggleCollapse()" [attr.aria-expanded]="!isCollapsed"
+      aria-controls="navbarSupportedContent" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
 
-    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-      
-      <ul class=" navbar-nav  me-auto mb-md-0 mb-lg-0  align-items-start">
+    <div [ngbCollapse]="isCollapsed" class="collapse navbar-collapse" id="navbarSupportedContent">
 
-        <li *ngIf="accreditation_level >= accreditation_levels.Contributeur" 
-          ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
+      <ul class="navbar-nav me-auto mb-md-0 mb-lg-0 align-items-start ">
+
+        <li *ngIf="accreditation_level >= accreditation_levels.Contributeur" ngbDropdown
+          class="nav-item dropdown me-md-3 me-sm-1">
           <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
             <i class="fs-4 bi-cart"></i> <span class="ms-1">Boutique</span>
           </a>
@@ -47,7 +49,8 @@
           </ul>
         </li>
 
-        <li *ngIf="accreditation_level >= accreditation_levels.Contributeur" ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
+        <li *ngIf="accreditation_level >= accreditation_levels.Contributeur" ngbDropdown
+          class="nav-item dropdown me-md-3 me-sm-1">
           <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
             <i class="fs-4 bi-people"></i>
             <span class="ms-1">Adhérents</span>
@@ -60,7 +63,8 @@
         </li>
 
 
-        <li *ngIf="accreditation_level >= accreditation_levels.Administrateur" ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
+        <li *ngIf="accreditation_level >= accreditation_levels.Administrateur" ngbDropdown
+          class="nav-item dropdown me-md-3 me-sm-1">
           <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
             <i class="fs-4 bi-journal"></i> <span class="ms-1">Finance</span>
           </a>
@@ -74,7 +78,8 @@
         </li>
 
         <!-- Outils -->
-        <li *ngIf="accreditation_level >= accreditation_levels.Systeme" ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
+        <li *ngIf="accreditation_level >= accreditation_levels.Systeme" ngbDropdown
+          class="nav-item dropdown me-md-3 me-sm-1">
           <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
             <i class="fs-4 bi-database-fill-gear"></i> <span class="ms-1">Outils</span>
           </a>
@@ -89,7 +94,8 @@
         </li>
 
         <!-- site -->
-                 <li *ngIf="accreditation_level >= accreditation_levels.Administrateur" ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
+        <li *ngIf="accreditation_level >= accreditation_levels.Administrateur" ngbDropdown
+          class="nav-item dropdown me-md-3 me-sm-1">
           <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
             <i class="fs-4 bi-globe2"></i> <span class="ms-1">Site web</span>
           </a>
@@ -100,16 +106,56 @@
           </ul>
         </li>
 
+        <!-- connexion -->
 
-
-      </ul>
-
-      <ul class=" navbar-nav align-self-center  ">
-        <li class="nav-item  me-md-2 me-sm-1">
-          <app-admin-in></app-admin-in>
+        <li *ngIf="!(logged_member$ | async)" ngbDropdown>
+          <button class="btn btn-secondary shadow-sm" type="button" data-bs-toggle="offcanvas" data-bs-target="#loggingOffCanvas"
+            aria-controls="loggingOffCanvas">
+            connexion
+          </button>
         </li>
+
+        <li *ngIf="(logged_member$ | async) " ngbDropdown>
+          <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
+            <!-- <span class="d-none d-sm-inline"> -->
+            <i class="fs-4 bi-person-circle"></i>
+            <span class="ms-1">{{ (logged_member$ | async)?.firstname }}</span>
+            <!-- </span>
+            <span class="d-inline d-sm-none">
+              <i class="fs-4 bi-person-circle"></i> -->
+            <!-- </span> -->
+          </a>
+          <ul ngbDropdownMenu class="dropdown-menu">
+            <li> <a class="dropdown-item" (click)="signOut()">
+                <i class="bi bi-box-arrow-right"></i>
+                Déconnexion
+              </a></li>
+          </ul>
+        </li>
+
       </ul>
+
+
+      <!-- <div class="d-flex justify-content-end w-100">
+        <ul class="navbar-nav ms-auto mb-md-0 mb-lg-0 align-items-end">
+          </li>
+        </ul>
+      </div> -->
+
 
     </div>
   </nav>
+
+
+  <div class="offcanvas offcanvas-end" data-bs-backdrop="static" tabindex="-1" id="loggingOffCanvas"
+    aria-labelledby="staticBackdropLabel">
+    <div class="offcanvas-header">
+      <h5 class="offcanvas-title" id="staticBackdropLabel">Se connecter</h5>
+      <button (click)="onCanvasClose()" type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+      <app-connexion></app-connexion>
+    </div>
+  </div>
+
 </div>

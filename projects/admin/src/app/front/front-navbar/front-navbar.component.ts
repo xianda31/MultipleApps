@@ -6,21 +6,21 @@ import { GroupService } from '../../common/authentification/group.service';
 import { Accreditation } from '../../common/authentification/group.interface';
 import { Member } from '../../common/interfaces/member.interface';
 import { Offcanvas } from 'bootstrap';
-import { SignInComponent } from '../../common/authentification/sign-in/sign-in.component';
+import { ConnexionComponent } from '../../common/authentification/connexion/connexion.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbDropdownModule, NgbCollapseModule } from '@ng-bootstrap/ng-bootstrap';
 import { Observable } from 'rxjs';
-import { filter } from 'rxjs/operators';
+import { Process_flow } from '../../common/authentification/authentification_interface';
 
 @Component({
   selector: 'app-front-navbar',
-  imports: [CommonModule, FormsModule,ReactiveFormsModule,NgbDropdownModule, NgbCollapseModule, RouterLink,SignInComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbDropdownModule, NgbCollapseModule, RouterLink, ConnexionComponent],
   templateUrl: './front-navbar.component.html',
   styleUrl: './front-navbar.component.scss'
 })
 export class FrontNavbarComponent {
-  logged_member$ : Observable<Member | null> = new Observable<Member | null>();
-  user_accreditation: Accreditation | null = null; 
+  logged_member$: Observable<Member | null> = new Observable<Member | null>();
+  user_accreditation: Accreditation | null = null;
   lastActiveNavItem: string = '';
   isCollapsed = true;
 
@@ -32,25 +32,12 @@ export class FrontNavbarComponent {
 
   ngOnInit(): void {
     this.logged_member$ = this.auth.logged_member$;
-    this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd)
-    ).subscribe((event: NavigationEnd) => {
-      const url = event.urlAfterRedirects || event.url;
-      if (url.includes('tournaments')) {
-        this.lastActiveNavItem = 'tournaments';
-      } else if (url.includes('fonctionnement') || url.includes('enseignants')) {
-        this.lastActiveNavItem = 'ecole';
-      } else if (url.includes('purchases') || url.includes('tickets')) {
-        this.lastActiveNavItem = 'achats';
-      }
-      localStorage.setItem('lastActiveNavItem', this.lastActiveNavItem);
-    });
-    this.lastActiveNavItem = localStorage.getItem('lastActiveNavItem') || '';
+
     this.auth.logged_member$.subscribe(async (member) => {
       if (member !== null) {
         this.user_accreditation = await this.groupService.getUserAccreditation();
         this.force_canvas_to_close();
-      } 
+      }
     });
   }
 
@@ -61,6 +48,11 @@ export class FrontNavbarComponent {
   toggleCollapse() {
     this.isCollapsed = !this.isCollapsed;
   }
+   onCanvasClose() {
+      console.log('Canvas closed');
+      this.auth.changeMode(Process_flow.SIGN_IN);
+    }
+  
 
   force_canvas_to_close() {
     const canvas = document.getElementById('loggingOffCanvas');
