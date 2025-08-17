@@ -11,23 +11,27 @@ import { NewsComponent } from './static/news/news.component';
 import { FrontPageComponent } from './static/front-page/front-page.component';
 import { DocumentsComponent } from './static/documents/documents.component';
 import { PageInConstructionComponent } from '../common/page-in-construction/page-in-construction.component';
+import { ActorsComponent } from './static/actors/actors.component';
 
 export const routes: Routes = [
   { path: '',
      component: FrontComponent,
      children: [
-      { path: 'authentification', component: ConnexionComponent},
-      {path : 'tournaments', component: TournamentsComponent},
-      { path: 'tournaments/:id', component: TournamentComponent },
+       {path : 'news', component: NewsComponent },
+       {path : 'documents', component: DocumentsComponent },
+       {path : 'acteurs', component: ActorsComponent },
+
+       { path: 'école/fonctionnement', component: FonctionnementComponent },
+       { path: 'école/inscription', component: PageInConstructionComponent },
+       
+       {path : 'tournaments', component: TournamentsComponent},
+       { path: 'tournaments/:id', component: TournamentComponent },
+       
       { path: 'purchases', component: PurchasesComponent },
       { path: 'tickets', component: GameCardsOwnedComponent },
 
-      { path: 'école/fonctionnement', component: FonctionnementComponent },
-      { path: 'école/inscription', component: PageInConstructionComponent },
-
-      {path : 'news', component: NewsComponent },
-      {path : 'documents', component: DocumentsComponent },
-
+      { path: 'authentification', component: ConnexionComponent},
+      
       { path: '', component: FrontPageComponent },
       { path: '**', component: PageNotFoundComponent },
      ]
