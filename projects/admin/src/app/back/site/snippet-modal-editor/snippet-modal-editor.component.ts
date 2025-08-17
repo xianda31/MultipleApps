@@ -29,6 +29,8 @@ export class SnippetModalEditorComponent implements AfterViewInit {
   ngAfterViewInit(): void {
 
     const initialData = this.htmlToEditorJsBlocks(this.snippet.content);     // Convertit le HTML initial en blocks EditorJS
+    console.log('Snippet Content:', this.snippet.content);
+    console.log('Initial Data:', initialData);
 
     this.editor = new EditorJS(
       {
@@ -71,6 +73,7 @@ export class SnippetModalEditorComponent implements AfterViewInit {
 
 
   htmlToEditorJsBlocks(html: string): any {
+ 
     const div = document.createElement('div');
     div.innerHTML = html;
     const blocks: any[] = [];
@@ -90,6 +93,18 @@ export class SnippetModalEditorComponent implements AfterViewInit {
             type: 'paragraph',
             data: {
               text: (node as HTMLElement).innerHTML
+            }
+          });
+        } else if (tag === 'UL' || tag === 'OL') {
+          const items: string[] = [];
+          (node as HTMLElement).querySelectorAll('li').forEach(li => {
+            items.push(li.innerHTML);
+          });
+          blocks.push({
+            type: 'list',
+            data: {
+              style: tag === 'UL' ? 'unordered' : 'ordered',
+              items
             }
           });
         }

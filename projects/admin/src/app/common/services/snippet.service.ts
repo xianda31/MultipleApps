@@ -27,7 +27,7 @@ export class SnippetService {
         this.auth.logged_member$.subscribe(user => {
             if (user) {
                 this.logged=true;
-                this._snippets$.next(this._snippets.filter((s) => s.public || this.logged));
+                if(this._snippets) this._snippets$.next(this._snippets.filter((s) => s.public || this.logged));
 
             } else {
                 console.log('not logged');
