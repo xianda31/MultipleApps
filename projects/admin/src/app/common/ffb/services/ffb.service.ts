@@ -12,27 +12,27 @@ export class FFB_proxyService {
 
   constructor() { }
 
-  async getLicenceeDetails(search: string): Promise<FFB_licensee | null> {
-    if (search === '') {
-      return null;
-    }
-    try {
-      const restOperation = get({
-        apiName: 'ffbProxyApi',
-        path: 'v1/search-members',
-        options: {
-          queryParams: { search: search }
-        }
-      });
-      const { body } = await restOperation.response;
-      // console.log('GET call succeeded: ', await body.text());
-      const data = await body.json();
-      return data as unknown as FFB_licensee;
-    } catch (error) {
-      console.log('GET call failed: ', error);
-      return null;
-    }
-  }
+  // async getLicenceeDetails(search: string): Promise<FFB_licensee | null> {
+  //   if (search === '') {
+  //     return null;
+  //   }
+  //   try {
+  //     const restOperation = get({
+  //       apiName: 'ffbProxyApi',
+  //       path: 'v1/search-members',
+  //       options: {
+  //         queryParams: { search: search }
+  //       }
+  //     });
+  //     const { body } = await restOperation.response;
+  //     // console.log('GET call succeeded: ', await body.text());
+  //     const data = await body.json();
+  //     return data as unknown as FFB_licensee;
+  //   } catch (error) {
+  //     console.log('GET call failed: ', error);
+  //     return null;
+  //   }
+  // }
 
   async searchPlayersSuchAs(hint: string): Promise<FFBplayer[]> {
     try {

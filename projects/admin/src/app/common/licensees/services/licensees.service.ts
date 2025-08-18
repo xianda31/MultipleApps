@@ -42,9 +42,9 @@ export class LicenseesService {
     return this._licensees ? this._licensees$.asObservable() : remote_load$;
   }
 
-  getLicenseeByLicense(license: string): Observable<FFB_licensee> {
-    return from(this.FFBService.getLicenceeDetails(license)).pipe(
-      filter((licensee): licensee is FFB_licensee => licensee !== null)
-    );
-  }
+  // getLicenseeByLicense(license: string): Observable<FFB_licensee> {
+  //   return from(this.FFBService.getLicenceeDetails(license)).pipe(
+  //     filter((licensee): licensee is FFB_licensee => licensee !== null)
+  //   );
+  // }
 }
