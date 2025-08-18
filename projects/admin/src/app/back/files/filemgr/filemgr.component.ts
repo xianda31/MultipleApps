@@ -15,9 +15,9 @@ import { ActivatedRoute } from '@angular/router';
 export class FilemgrComponent {
   @Input() type: 'documents' | 'image_vignettes' = 'documents';
 
-  documents_path = 'documents/'
-  image_vignettes_path = 'images/vignettes/'
-  path = '';
+  documents_directory = 'documents/'
+  image_vignettes_directory = 'images/vignettes/'
+  directory = '';
 
   files$: WritableSignal<S3Item[]> = signal<S3Item[]>([]);
 
@@ -33,16 +33,15 @@ export class FilemgrComponent {
       console.log('Invalid type provided:', this.type);
       return
     }
-    this.path = this.type === 'documents' ? this.documents_path : this.image_vignettes_path;
-    // console.log('FilemgrComponent initialized with type:', this.type, this.path);
+    this.directory = this.type === 'documents' ? this.documents_directory : this.image_vignettes_directory;
 
-    this.fileService.list_files(this.path).subscribe({
+    this.fileService.list_files(this.directory).subscribe({
       next: (files) => {
         files.forEach(file => (file.url = this.presigned_url(file.path)));
         this.files$.set(files);
       },
       error: (error) => {
-        this.toastService.showErrorToast('Erreur', `Impossible d\'accceder au répertoire '${this.path}' des fichiers`);
+        this.toastService.showErrorToast('Erreur', `Impossible d\'accceder au répertoire '${this.directory}' des fichiers`);
         console.error('Error listing files:', error);
       }
     });
@@ -56,8 +55,8 @@ export class FilemgrComponent {
   upload_file(event: any) {
     const file = event.target.files[0];
     if (file) {
-      this.fileService.upload_file(file, this.path).then(() => {
-        this.files$.update(files => [...files, { path: file.name , url: this.presigned_url(file.name) }]);
+      this.fileService.upload_file(file, this.directory).then(() => {
+        this.files$.update(files => [...files, { path: this.directory + file.name , url: this.presigned_url(this.directory + file.name) }]);
         this.toastService.showSuccess('Upload', 'Fichier téléchargé avec succès');
       }).catch((error) => {
         this.toastService.showErrorToast('Upload', 'Échec du téléchargement du fichier');
@@ -67,6 +66,9 @@ export class FilemgrComponent {
 
   presigned_url(image_path: string): Observable<string> {
     return (this.fileService.getPresignedUrl(image_path)).pipe(
+      map((url: string) => {
+        return url;
+      }),
       catchError(err => {
         console.error('Error fetching presigned URL:', err);
         return of('bcsto_ffb.jpg');
