@@ -4,6 +4,9 @@
             <h5 class="col-10 modal-title">
                 Carte de  {{card.initial_qty}} tournois
             </h5>
+            <span class="col-2 text-center">
+                <button (click)="close()" type="button" class="btn btn-sm btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </span>
         </div>
         <div class="text-muted">
             <span class="fw-bolder">titulaire(s) :</span>
@@ -41,6 +44,6 @@
 
 <div class="modal-footer">
     <div class="justify-content-between">
-        <button type="button" class="btn btn-primary btn-sm" (click)="got_it()">OK</button>
+        <button type="button" class="btn btn-primary btn-sm" (click)="got_it()">valider</button>
     </div>
 </div>

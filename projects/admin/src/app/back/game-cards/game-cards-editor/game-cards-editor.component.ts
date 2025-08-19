@@ -19,6 +19,7 @@ export class GameCardsEditorComponent implements OnInit {
 
   cards: GameCard[] = [];
   total_asset: number = 0;
+  total_null_cards: number = 0;
   loaded: boolean = false;
 
   constructor(
@@ -33,6 +34,8 @@ export class GameCardsEditorComponent implements OnInit {
     this.gameCardService.gameCards.subscribe(cards => {
       this.cards = cards;
       this.total_asset = cards.reduce((acc, card) => acc + card.initial_qty-card.stamps.length, 0);
+      this.total_null_cards = cards.reduce((acc, card) => acc + ((card.initial_qty-card.stamps.length) === 0 ? 1 : 0), 0);
+      console.log('GameCardsEditorComponent.ngOnInit',  this.total_null_cards);
       this.loaded = true;
     });
   }
@@ -81,6 +84,9 @@ stamps_number(card: GameCard): number {
       if (new_card) {
         console.log('GameCardsEditorComponent.editGameCard', new_card);
         this.updateGameCard(new_card);
+        if (new_card.stamps.length === 0) {
+          this.total_null_cards++;
+        }
       }
     });
   }

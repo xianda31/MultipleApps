@@ -151,6 +151,7 @@ export class GameCardService {
         stamps: updatedBook.stamps.filter((stamp): stamp is string => stamp !== null),
         owners: card.owners,
         initial_qty: updatedBook.initial_qty,
+        createdAt: updatedBook.createdAt,
       };
       this._gameCards = this._gameCards.filter(c => c.id !== card.id);
       this._gameCards.push(updatedGameCard);

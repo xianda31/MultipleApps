@@ -57,6 +57,10 @@ export class EditGameCardComponent implements OnInit {
       this.stamp_places[index] = {stamp : today, free:false};
       this.free_places_nbr--; 
       this.stamped = true;
+    }else {
+      this.stamp_places[index] = {stamp : 'restitué', free:true};
+      this.free_places_nbr++;
+      this.stamped = true;
     }
   }
 
@@ -67,5 +71,9 @@ export class EditGameCardComponent implements OnInit {
     } else {
       this.activeModal.close(null);
     }
+  }
+
+  close() {
+    this.activeModal.close(null);
   }
 }
