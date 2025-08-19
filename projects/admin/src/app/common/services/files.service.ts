@@ -45,7 +45,7 @@ export class FileService {
     });
   }
 
-  upload_file(file: File, directory: string): Promise<void> {
+  upload_file(file: File, directory = ''): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       uploadData({
         data: file,
@@ -71,6 +71,14 @@ export class FileService {
         console.log(error);
       });
   }
+
+
+  async download_file(path: string): Promise<Blob> {
+    const result = await downloadData({ path: path }).result;
+    return result.body.blob();
+  }
+
+
 
   // json upload/download utilities
 

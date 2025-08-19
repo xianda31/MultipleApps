@@ -26,11 +26,13 @@ import { AdminComponent } from './back/admin/admin.component';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { RmbracketsPipe } from './common/pipes/rmbrackets.pipe';
 import { SnippetsComponent } from './back/site/snippets/snippets.component';
+import { FilemgrComponent } from './back/files/filemgr/filemgr.component';
 
 
 
 @NgModule({
   declarations: [
+    
   ],
   imports: [
     CommonModule,
@@ -58,6 +60,7 @@ import { SnippetsComponent } from './back/site/snippets/snippets.component';
     PageNotFoundComponent,
     CloneDBComponent,
     SnippetsComponent,
+    FilemgrComponent,
     RmbracketsPipe
   ],
   exports: [
@@ -65,7 +68,8 @@ import { SnippetsComponent } from './back/site/snippets/snippets.component';
     NgbDropdownModule,
     AdminComponent,
     RmbracketsPipe,
-    SnippetsComponent
+    SnippetsComponent,
+    FilemgrComponent,
     // Export components if needed
   ],
 })

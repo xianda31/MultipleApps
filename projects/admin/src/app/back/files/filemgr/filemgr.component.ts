@@ -5,6 +5,8 @@ import { CommonModule } from '@angular/common';
 import { catchError, from, map, Observable, of, tap } from 'rxjs';
 import { ToastService } from '../../../common/services/toast.service';
 import { ActivatedRoute } from '@angular/router';
+import { threedigitsPipe } from '../../../common/pipes/three_digits.pipe';
+import { ImageService } from '../../../common/services/image.service';
 
 @Component({
   selector: 'app-filemgr',
@@ -13,10 +15,8 @@ import { ActivatedRoute } from '@angular/router';
   styleUrl: './filemgr.component.scss'
 })
 export class FilemgrComponent {
-  @Input() type: 'documents' | 'image_vignettes' = 'documents';
+  @Input() type: 'documents' | 'images' = 'documents';
 
-  documents_directory = 'documents/'
-  image_vignettes_directory = 'images/vignettes/'
   directory = '';
 
   files$: WritableSignal<S3Item[]> = signal<S3Item[]>([]);
@@ -24,20 +24,17 @@ export class FilemgrComponent {
   constructor(
     private fileService: FileService,
     private toastService: ToastService,
+    private imageService: ImageService,
     private route: ActivatedRoute
   ) { }
 
   ngOnInit() {
 
-    if (this.type !== 'documents' && this.type !== 'image_vignettes') {
-      console.log('Invalid type provided:', this.type);
-      return
-    }
-    this.directory = this.type === 'documents' ? this.documents_directory : this.image_vignettes_directory;
+    this.directory = this.type === 'images' ? 'images/vignettes/' : 'documents/';
 
     this.fileService.list_files(this.directory).subscribe({
       next: (files) => {
-        files.forEach(file => (file.url = this.presigned_url(file.path)));
+         files.forEach(file => (file.url = this.presigned_url(file.path)));
         this.files$.set(files);
       },
       error: (error) => {
@@ -75,4 +72,38 @@ export class FilemgrComponent {
       })
     );
   }
+
+  image_process(file: S3Item) {
+      this.fileService.download_file(file.path).then((blob) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64 = reader.result as string;
+          this.imageService.resizeImage(base64).then((resizedBase64) => {
+            // console.log('Image resized:', resizedBase64);
+            this.imageService.getBase64Dimensions(resizedBase64).then((dimensions) => {
+              const wh = dimensions.width.toString() +'x' + dimensions.height.toString();
+              let new_blob = this.imageService.base64ToBlob(resizedBase64);
+
+              let resized_file = new File([new_blob], this.add_wh(this.get_filename(file.path), wh), { type: new_blob.type });
+              this.fileService.upload_file(resized_file, this.directory).then(() => {
+                this.files$.update(files => [...files, { path: this.directory + resized_file.name , url: this.presigned_url(this.directory + resized_file.name) }]);
+
+              });
+            });
+          });
+        };
+        reader.readAsDataURL(blob);
+      });
+  }
+
+  get_filename(path: string): string {
+    const parts = path.split('/');
+    return parts.pop() || '';
+  }
+
+  add_wh(path:string, wh:string): string {
+    const newFilename = path.replace('.', `_${wh}.`);
+    return newFilename;
+  }
+   
 }

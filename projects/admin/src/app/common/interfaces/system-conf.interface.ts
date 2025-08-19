@@ -10,8 +10,8 @@ export interface Bank {
 }
 
 export interface ImageSize {
-    max_width: number;
-    max_height: number;
+    width: number;
+    height: number;
     ratio: number;
 }
 
@@ -40,6 +40,6 @@ export interface SystemConfiguration {
     profit_and_loss: Profit_and_loss;
     revenue_and_expense_tree: Revenue_and_expense_tree;
     banks: Bank[];
-    thumbnailSize: ImageSize;
+    thumbnail: ImageSize;
 }
 
