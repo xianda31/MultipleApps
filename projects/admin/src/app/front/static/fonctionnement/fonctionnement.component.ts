@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { TitleService } from '../../title.service';
 import { CommonModule } from '@angular/common';
-import { Snippet, SNIPPET_TEMPLATES } from '../../../common/interfaces/snippet.interface';
+import { MENU_TITLES, Snippet } from '../../../common/interfaces/page_snippet.interface';
 import { SnippetService } from '../../../common/services/snippet.service';
 import { EnseignantsComponent } from '../enseignants/enseignants.component';
 
@@ -26,7 +26,7 @@ export class FonctionnementComponent {
 
  this.snippetService.listSnippets().subscribe((snippets) => {
       this.snippets = snippets
-      .filter(snippet => snippet.template === SNIPPET_TEMPLATES.FONCTIONNEMENT)
+      .filter(snippet => snippet.template === MENU_TITLES.FONCTIONNEMENT)
       .sort((a,b) => a.rank.localeCompare(b.rank));
     });
 

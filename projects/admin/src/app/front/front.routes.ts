@@ -12,16 +12,19 @@ import { FrontPageComponent } from './static/front-page/front-page.component';
 import { DocumentsComponent } from './static/documents/documents.component';
 import { PageInConstructionComponent } from '../common/page-in-construction/page-in-construction.component';
 import { ActorsComponent } from './static/actors/actors.component';
+import { GenericPageComponent } from './static/generic-page/generic-page.component';
+import { MENU_TITLES } from '../common/interfaces/page_snippet.interface';
 
 export const routes: Routes = [
   { path: '',
      component: FrontComponent,
      children: [
-       {path : 'news', component: NewsComponent },
-       {path : 'documents', component: DocumentsComponent },
-       {path : 'acteurs', component: ActorsComponent },
+      //  {path : 'news', component: NewsComponent },
+       {path : 'news', component: GenericPageComponent, data: { menu_title: MENU_TITLES.NEWS } },
+       {path : 'documents', component: GenericPageComponent, data: { menu_title: MENU_TITLES.DOCUMENTS } },
+       {path : 'acteurs', component: GenericPageComponent, data: { menu_title: MENU_TITLES.ACTEURS } },
 
-       { path: 'école/fonctionnement', component: FonctionnementComponent },
+       { path: 'école/fonctionnement', component: GenericPageComponent, data: { menu_title: MENU_TITLES.FONCTIONNEMENT }},
        { path: 'école/inscription', component: PageInConstructionComponent },
        
        {path : 'tournaments', component: TournamentsComponent},

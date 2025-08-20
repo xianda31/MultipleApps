@@ -14,7 +14,7 @@ enum Group_names {
 
 const schema = a.schema({
 
-// custom mutation
+  // custom mutation
 
   addUserToGroup: a
     .mutation()
@@ -25,9 +25,9 @@ const schema = a.schema({
     .authorization((allow) => [
       allow.group(Group_names.System),
       allow.group(Group_names.Admin),
-    ]) 
+    ])
     .handler(a.handler.function(addUserToGroup))
-  .returns(a.json()),
+    .returns(a.json()),
 
   removeUserFromGroup: a
     .mutation()
@@ -42,18 +42,18 @@ const schema = a.schema({
     .handler(a.handler.function(removeUserFromGroup))
     .returns(a.json()),
 
-    listUsersInGroup: a
-      .mutation()
-      .arguments({
-        groupName: a.string().required(),
-      })
-      .authorization((allow) => [
-        allow.group(Group_names.System),
-        allow.group(Group_names.Admin) ,
-        allow.group(Group_names.Support),
-      ]) 
-      .handler(a.handler.function(listUsersInGroup))
-      .returns(a.json()),
+  listUsersInGroup: a
+    .mutation()
+    .arguments({
+      groupName: a.string().required(),
+    })
+    .authorization((allow) => [
+      allow.group(Group_names.System),
+      allow.group(Group_names.Admin),
+      allow.group(Group_names.Support),
+    ])
+    .handler(a.handler.function(listUsersInGroup))
+    .returns(a.json()),
 
 
 
@@ -134,7 +134,7 @@ const schema = a.schema({
 
     ]),
 
-  Product: a.model({ 
+  Product: a.model({
     glyph: a.string().required(),
     description: a.string().required(),
     account: a.string().required(),
@@ -146,7 +146,7 @@ const schema = a.schema({
     .authorization((allow) => [
       allow.guest().to(['read']),
       allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
-      allow.group(Group_names.Admin).to(['read', 'create', 'update','delete']),
+      allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
       allow.group(Group_names.Support).to(['read', 'create']),
       allow.group(Group_names.Member).to(['read']),
 
@@ -154,12 +154,12 @@ const schema = a.schema({
 
   // Site web
 
+ 
   Snippet: a.model({
     title: a.string().required(),
     subtitle: a.string().required(),
     content: a.string().required(),
     template: a.string().required(),
-    // featured: a.boolean(),
     public: a.boolean().required(),
     rank: a.string().required(),
     image: a.string(),
@@ -175,59 +175,21 @@ const schema = a.schema({
     ]),
 
 
+  Page: a.model({
+    title: a.string().required(),
+    template: a.string().required(),
+    snippet_ids: a.string().array().required(),
+  })
+    .authorization((allow) => [
+      allow.guest().to(['read']),
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Support).to(['read']),
+      allow.group(Group_names.Member).to(['read']),
 
-  // Article: a.model({
-  //   title: a.string().required(),
-  //   template: a.string().required(),
-  //   content: a.string().required(),
-  //   featured: a.boolean().required(),
-  //   rank: a.integer().required(),
-  //   image: a.string(),
-  //   pageId: a.id(),
-  //   page: a.belongsTo('Page', 'pageId'),
-  // })
-  //   .authorization((allow) => [
-  //     allow.guest().to(['read']),
-  //     allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
-  //     allow.group(Group_names.Admin).to(['read', 'create', 'update']),
-  //     allow.group(Group_names.Support).to(['read', 'create']),
-  //     allow.group(Group_names.Member).to(['read']),
+    ]),
 
-  //   ]),
-
-  // Page: a.model({
-  //   link: a.string().required(),
-  //   template: a.string(),
-  //   rank: a.integer(),
-  //   member_only: a.boolean(),
-  //   menuId: a.id(),
-  //   menu: a.belongsTo('Menu', 'menuId'),
-  //   articles: a.hasMany('Article', 'pageId'),
-  // })
-  //   .authorization((allow) => [
-  //     allow.guest().to(['read']),
-  //     allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
-  //     allow.group(Group_names.Admin).to(['read', 'create', 'update']),
-  //     allow.group(Group_names.Support).to(['read', 'create']),
-  //     allow.group(Group_names.Member).to(['read']),
-
-  //   ]),
-
-
-  // Menu: a.model({
-  //   label: a.string().required(),
-  //   // summary: a.string(),
-  //   rank: a.integer(),
-  //   pages: a.hasMany('Page', 'menuId'),
-  // })
-  //   .authorization((allow) => [
-  //     allow.guest().to(['read']),
-  //     allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
-  //     allow.group(Group_names.Admin).to(['read', 'create', 'update']),
-  //     allow.group(Group_names.Support).to(['read', 'create']),
-  //     allow.group(Group_names.Member).to(['read']),
-
-  //   ]),
+ 
 
 });
 

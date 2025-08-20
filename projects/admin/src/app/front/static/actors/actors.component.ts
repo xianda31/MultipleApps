@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Snippet, SNIPPET_TEMPLATES } from '../../../common/interfaces/snippet.interface';
+import { MENU_TITLES, Snippet} from '../../../common/interfaces/page_snippet.interface';
 import { FileService } from '../../../common/services/files.service';
 import { SnippetService } from '../../../common/services/snippet.service';
 import { ToastService } from '../../../common/services/toast.service';
@@ -26,11 +26,11 @@ e_snippets: Snippet[] = [];
   
         this.snippetService.listSnippets().subscribe(snippets => {
           this.b_snippets = snippets
-          .filter(snippet => snippet.template === SNIPPET_TEMPLATES.BUREAU)
+          .filter(snippet => snippet.template === MENU_TITLES.BUREAU)
           .sort((a, b) => a.rank.localeCompare(b.rank));
 
           this.e_snippets = snippets
-          .filter(snippet => (snippet.template === SNIPPET_TEMPLATES.ENSEIGNANTS && this.not_already_selected(snippet)))
+          .filter(snippet => (snippet.template === MENU_TITLES.ENSEIGNANTS && this.not_already_selected(snippet)))
           .sort((a, b) => a.rank.localeCompare(b.rank));
         });
     }

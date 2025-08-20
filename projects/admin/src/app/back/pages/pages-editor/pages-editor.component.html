@@ -1,0 +1,55 @@
+<div class="container">
+    <h2>Pages</h2>
+    <form [formGroup]="pagesForm">
+        <div formArrayName="pagesArray">
+            <div ngbAccordion>
+                <div ngbAccordionItem [collapsed]="true" *ngFor="let page of pageGroups; let p = index"
+                    [formGroup]="page">
+                    <div ngbAccordionHeader >
+                        <button ngbAccordionButton>
+
+                            <div class="row  justify-content-start align-items-center">
+                                <div class="col-auto fs-4">{{ page.get('title')?.value }}</div>
+                                <div class="col-auto ">
+                                    <div class="input-group input-group-sm">
+                                        <div class="input-group-prepend"> <span
+                                                class="input-group-text">Présentation</span>
+                                        </div>
+                                        <select class="form-select form-select-sm" formControlName="template"
+                                            (change)="page.markAsTouched()">
+                                            <option *ngFor="let template of pageTemplates" [value]="template">
+                                                {{template}}
+                                            </option>
+                                        </select>
+                                    </div> 
+                                </div>
+                                <div class="col-auto">
+                                    <button class="btn btn-sm btn-primary" (click)="savePage(page)">
+                                        sauvegarder
+                                    </button>
+                                </div>
+                            </div>
+                        </button>
+                        <div ngbAccordionCollapse>
+                            <div class="row row-cols-3 row-cols-md-6 g-1 mt-2 mb-2 justify-content-center">
+                                <div class="col" *ngFor="let snippet of page.get('snippets')?.value">
+                                    <ng-container *ngTemplateOutlet="viewSnippet; context: { snippet: snippet }"></ng-container>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<ng-template #viewSnippet let-snippet="snippet">
+<div class="card h-100">
+    <div class="card-body">
+        <h5 class="card-title">{{ snippet.title }}</h5>
+        <h6 class="card-subtitle mb-2 text-muted">{{ snippet.subtitle }}</h6>
+        <!-- <p class="card-text">{{ snippet.content }}</p> -->
+    </div>
+</div>
+</ng-template>

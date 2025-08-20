@@ -4,7 +4,7 @@
         <table class="table table-sm table-responsive" style="z-index: 1;">
             <thead >
                 <tr>
-                    <th class=" sticky-top">Modèle</th>
+                    <th class=" sticky-top">Menu</th>
                     <th class=" sticky-top">Titre</th>
                     <th class=" sticky-top">Sous-titre</th>
                     <th class=" sticky-top">Contenu</th>
@@ -20,8 +20,8 @@
                     <td class="text-start"> <input list="datalist" type="text" class="form-control"
                             formControlName="template">
                         <datalist id="datalist">
-                            <option *ngFor="let template of templates" [value]="template">
-                                {{ template }}
+                            <option *ngFor="let menu of menus" [value]="menu">
+                                {{ menu }}
                             </option>
                         </datalist>
                     </td>

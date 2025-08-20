@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { TitleService } from '../../title.service';
 import { SnippetService } from '../../../common/services/snippet.service';
-import { Snippet, SNIPPET_TEMPLATES } from '../../../common/interfaces/snippet.interface';
+import { MENU_TITLES, Snippet } from '../../../common/interfaces/page_snippet.interface';
 
 @Component({
   selector: 'app-enseignants',
@@ -23,7 +23,7 @@ export class EnseignantsComponent {
   this.titleService.setTitle('Ecole de bridge -Les enseignants');
       this.snippetService.listSnippets().subscribe((snippets) => {
         this.snippets = snippets
-        .filter(snippet => snippet.template === SNIPPET_TEMPLATES.ENSEIGNANTS)
+        .filter(snippet => snippet.template === MENU_TITLES.ENSEIGNANTS)
         .sort((b,a) => a.rank.localeCompare(b.rank));
       });
  }

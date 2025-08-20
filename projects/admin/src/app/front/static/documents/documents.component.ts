@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { FileService } from '../../../common/services/files.service';
 import { CommonModule } from '@angular/common';
 import { ToastService } from '../../../common/services/toast.service';
-import { Snippet, SNIPPET_TEMPLATES } from '../../../common/interfaces/snippet.interface';
+import { MENU_TITLES, Snippet } from '../../../common/interfaces/page_snippet.interface';
 import { SnippetService } from '../../../common/services/snippet.service';
 import { TitleService } from '../../title.service';
 
@@ -38,7 +38,7 @@ export class DocumentsComponent {
 
 
       this.snippetService.listSnippets().subscribe(snippets => {
-        this.snippets = snippets.filter(snippet => snippet.template === SNIPPET_TEMPLATES.DOCUMENTS);
+        this.snippets = snippets.filter(snippet => snippet.template === MENU_TITLES.DOCUMENTS);
 
         this.documents = this.snippets.map(snippet => ({
           name: snippet.title,

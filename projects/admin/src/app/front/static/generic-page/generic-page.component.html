@@ -1,0 +1,128 @@
+<ng-container *ngIf="page" [ngSwitch]="page.template">
+
+    <div *ngSwitchCase="PAGE_TEMPLATES.JOURNAL">
+        <ng-container *ngTemplateOutlet="journal; context: { snippets: snippets }"></ng-container>
+    </div>
+    <div *ngSwitchCase="PAGE_TEMPLATES.LOADABLE">
+        <ng-container *ngTemplateOutlet="loadable; context: { snippets: snippets }"></ng-container>
+    </div>
+    <div *ngSwitchCase="PAGE_TEMPLATES.FACEBOOK">
+        <ng-container *ngTemplateOutlet="facebook; context: { snippets: snippets }"></ng-container>
+    </div>
+    <div *ngSwitchDefault>
+        <ng-container *ngTemplateOutlet="journal; context: { snippets: snippets }"></ng-container>
+    </div>
+
+</ng-container>
+
+<ng-template #journal let-snippets="snippets">
+    <div class="offset-md-2 col-md-8 justify-content-center">
+
+        <div class="row">
+            <div class="col-md-3">
+                <div class="position-sticky" style="top: 0; z-index: 2; background: #fff;">
+                    <h2 class="mb-3">Sommaire</h2>
+                    <div *ngFor="let snippet of snippets" (click)="scrollToElement(snippet.title)"
+                        class="fs-4 text-secondary hover-title">{{snippet.title}}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <h2></h2>
+                <div *ngFor="let snippet of snippets" class="col">
+                    <div class="card border-0" id="{{snippet.title}}">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-5">
+                                    <img [src]="snippet.image_url | async" alt="{{snippet.title}}"
+                                        class="card-img-top ">
+                                </div>
+                                <div class="col-7">
+                                    <h2 class="card-title">
+                                        {{snippet.title}}
+                                        <div class="fs-5 text-muted">{{snippet.subtitle}}</div>
+                                    </h2>
+                                    <small class="text-muted">Publié le {{snippet.createdAt | date:'shortDate'}}
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="card-text mt-3">
+                                <h4 class="card-text" [innerHTML]="snippet.content"></h4>
+                            </div>
+                        </div>
+                    </div>
+                    <hr class="bg-secondary">
+                </div>
+            </div>
+        </div>
+    </div>
+</ng-template>
+
+<ng-template #loadable let-snippets="snippets">
+    <div class="offset-md-3  col-md-6 justify-content-start">
+        <div *ngIf="snippets.length === 0 " class="text-start mt-5">
+            <h1 class="display-3">Désolé...</h1>
+            <div class="lead">
+                <p>Il n'y a pas de snippets publiés pour le moment.</p>
+                <p>... mais peut-être vous n'êtes pas connecté...</p>
+                <p>Sinon, veuillez contacter l'administrateur.</p>
+            </div>
+        </div>
+
+        <div *ngFor="let snippet of snippets" class="card mb-3 nice_shadow bg-dark">
+            <div class="row g-0  align-items-center">
+                <div class="col-md-2 text-secondary">
+                    <i [class]="doc_icon(snippet.file)" style="font-size: 6rem;"></i>
+                </div>
+                <div class="col-md-10">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+
+                            <div class="col-6 ">
+                                <h3 class="fw-bolder"> {{ snippet.title}} </h3>
+                                <div>
+                                    <button class="btn  btn-outline-primary nice_shadow"
+                                        (click)="downloadDocument(snippet); $event.preventDefault()">
+                                        Télécharger le document
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="col-6 ">
+                                <p>
+                                    <span class="fw-bold">Contenu :</span>
+                                    <span [innerHTML]="snippet.content"></span>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</ng-template>
+
+<ng-template #facebook let-snippets="snippets">
+    <div class="offset-md-3  col-md-6 justify-content-start">
+
+    <h4 class="mt-3">Le Bureau</h4>
+    <div class="row row-cols-sm-2 row-cols-md-3 row-cols-xl-5 g-3">
+        <div *ngFor="let snippet of snippets" class="col">
+            <div class="card h-100 nice_shadow">
+                <img [src]="snippet.image_url | async" style="max-height: 20vh; object-fit: cover;"
+                    alt="{{snippet.title}}" class="img-fluid rounded-start">
+
+                <div class="card-body text-center">
+                    <h5 class="card-title">{{snippet.title}}</h5>
+                    <div class="card-text mt-4">
+                        <h6 class="fw-bold"> {{snippet.subtitle}}</h6>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+    </ng-template>

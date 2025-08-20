@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, EventEmitter, Input, Output } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { Snippet } from '../../../common/interfaces/snippet.interface';
+import { Snippet } from '../../../common/interfaces/page_snippet.interface';
 import EditorJS from '@editorjs/editorjs';
 import edjsHTML from 'editorjs-html'
 import Header from '@editorjs/header';

@@ -3,7 +3,7 @@ import { BehaviorSubject, map, Observable, of, switchMap, tap } from 'rxjs';
 import { SystemDataService } from './system-data.service';
 import { ToastService } from '../services/toast.service';
 import { DBhandler } from './graphQL.service';
-import { Snippet, Snippet_input } from '../interfaces/snippet.interface';
+import { Snippet, Snippet_input } from '../interfaces/page_snippet.interface';
 import { FileService } from './files.service';
 import { AuthentificationService } from '../authentification/authentification.service';
 import { FargatePlatformVersion } from 'aws-cdk-lib/aws-ecs';
@@ -30,7 +30,7 @@ export class SnippetService {
                 if(this._snippets) this._snippets$.next(this._snippets.filter((s) => s.public || this.logged));
 
             } else {
-                console.log('not logged');
+                // console.log('not logged');
             }
         });
     }

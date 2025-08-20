@@ -1,0 +1,5 @@
+// Limite la hauteur des images à environ deux lignes de tableau
+.snippet-img-limited {
+	max-height: 3.5em;
+	object-fit: contain;
+}

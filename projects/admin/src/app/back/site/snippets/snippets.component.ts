@@ -1,14 +1,14 @@
 
 import { Component } from '@angular/core';
 import { RmbracketsPipe } from '../../../common/pipes/rmbrackets.pipe';
-import { Snippet, SNIPPET_TEMPLATES } from '../../../common/interfaces/snippet.interface';
+import { MENU_TITLES, Snippet } from '../../../common/interfaces/page_snippet.interface';
 import { SnippetService } from '../../../common/services/snippet.service';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { SnippetModalEditorComponent } from '../snippet-modal-editor/snippet-modal-editor.component';
 import { FileService } from '../../../common/services/files.service';
-import { catchError, from, map, Observable, of, tap } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { TruncatePipe } from '../../../common/pipes/truncate.pipe';
 
 @Component({
@@ -21,7 +21,7 @@ export class SnippetsComponent {
   snippets: Snippet[] = [];
   snippetForm!: FormGroup;
   modification_mode = false;
-  templates = Object.values(SNIPPET_TEMPLATES);
+  menus = Object.values(MENU_TITLES);
   selected_snippet!: Snippet;
   file_paths$ !: Observable<string[]>;
   thumbnails$ !: Observable<string[]>;

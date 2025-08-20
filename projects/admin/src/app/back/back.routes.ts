@@ -22,6 +22,7 @@ import { AdminComponent } from './admin/admin.component';
 import { BackPageComponent } from './back-page/back-page.component';
 import { SnippetsComponent } from './site/snippets/snippets.component';
 import { FilemgrComponent } from './files/filemgr/filemgr.component';
+import { PagesEditorComponent } from './pages/pages-editor/pages-editor.component';
 
 export const routes: Routes = [
   {
@@ -59,6 +60,7 @@ export const routes: Routes = [
       { path: 'site/thumbnails', component: SnippetsComponent },
       { path: 'site/filemgr/documents', component: FilemgrComponent, data: { type: 'documents' } },
       { path: 'site/filemgr/images', component: FilemgrComponent, data: { type: 'images' } },
+      { path: 'site/pages', component: PagesEditorComponent },
 
       { path: 'home', component: BackPageComponent },
       { path: '', component: BackPageComponent },

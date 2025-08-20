@@ -1,3 +1,4 @@
+
 import { Injectable } from '@angular/core';
 import { generateClient } from 'aws-amplify/api';
 import { catchError, from, lastValueFrom, map, Observable, of, switchMap, tap } from 'rxjs';
@@ -7,7 +8,7 @@ import { BookEntry } from '../interfaces/accounting.interface';
 import { Schema } from '../../../../../../amplify/data/resource';
 import { Product, Product_input } from '../../back/products/product.interface';
 import { PlayBook, PlayBook_input } from '../../back/game-cards/game-card.interface';
-import { Snippet, Snippet_input } from '../interfaces/snippet.interface';
+import { Page, Page_input, Snippet, Snippet_input } from '../interfaces/page_snippet.interface';
 
 
 @Injectable({
@@ -23,6 +24,65 @@ export class DBhandler {
       catchError(() => { return from(['identityPool' as const]); })
     );
   }
+
+
+
+  // PAGE SERVICE
+
+// PAGE CREATE PROMISE
+async createPage(page: Page_input): Promise<Page> {
+  const authMode = await lastValueFrom(this._authMode());
+  const client = generateClient<Schema>({ authMode: authMode });
+  const { data : pageData, errors } = await client.models.Page.create(page);
+  if (errors) throw errors;
+  return pageData as unknown as Page;
+}
+
+// PAGE READ (single) PROMISE
+async readPage(id: string): Promise<Page> {
+  const authMode = await lastValueFrom(this._authMode());
+  const client = generateClient<Schema>({ authMode: authMode });
+  const { data: pageData, errors } = await client.models.Page.get({ id });
+  if (errors) throw errors;
+  return pageData as unknown as Page;
+}
+
+// PAGE UPDATE PROMISE
+async updatePage(page: Page): Promise<Page> {
+  const authMode = await lastValueFrom(this._authMode());
+  const client = generateClient<Schema>({ authMode: authMode });
+  const { data: updatedPage, errors } = await client.models.Page.update(page);
+  if (errors) throw errors;
+  return updatedPage as unknown as Page;
+}
+
+// PAGE DELETE PROMISE
+async deletePage(id: string): Promise<boolean> {
+  const authMode = await lastValueFrom(this._authMode());
+  const client = generateClient<Schema>({ authMode: authMode });
+  const { errors } = await client.models.Page.delete({ id });
+  if (errors) throw errors;
+  return true;
+}
+
+// PAGE LIST (all) OBSERVABLE
+listPages(): Observable<Page[]> {
+  return this._authMode().pipe(
+    switchMap((authMode) => {
+      const client = generateClient<Schema>({ authMode: authMode });
+      return from(
+        client.models.Page.list({ limit: 300 })
+          .then(({ data, errors }) => {
+            if (errors) {
+              console.error('Page.list error', errors);
+              return [];
+            }
+            return data as unknown as Page[];
+          })
+      );
+    })
+  );
+}
 
   // Members Service
 

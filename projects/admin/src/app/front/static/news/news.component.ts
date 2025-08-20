@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { SnippetService } from '../../../common/services/snippet.service';
-import { Snippet, SNIPPET_TEMPLATES } from '../../../common/interfaces/snippet.interface';
+import { MENU_TITLES, Snippet } from '../../../common/interfaces/page_snippet.interface';
 import { TitleService } from '../../title.service';
 
 @Component({
@@ -22,7 +22,7 @@ export class NewsComponent {
 
     this.titleService.setTitle('Les news');
     this.snippetService.listSnippets().subscribe((snippets) => {
-      this.snippets = snippets.filter(snippet => snippet.template === SNIPPET_TEMPLATES.NEWS);
+      this.snippets = snippets.filter(snippet => snippet.template === MENU_TITLES.NEWS);
     });
   }
 
