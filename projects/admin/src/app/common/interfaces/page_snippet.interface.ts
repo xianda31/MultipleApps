@@ -43,19 +43,19 @@ export type Page_input = Omit<Schema['Page']['type'], 'id' | 'createdAt' | 'upda
 
 export enum MENU_TITLES {
     NEWS = 'news',
-    BUREAU = 'bureau',
-    CONTACTS = 'contacts',
-    FONCTIONNEMENT = 'fonctionnement',
-    ENSEIGNANTS = 'enseignants',
-    DOCUMENTS = 'documents',
     ACTEURS = 'acteurs',
+    BUREAU = 'bureau',
+    DOCUMENTS = 'documents',
+    ENSEIGNANTS = 'enseignants',
+    FORMULES = 'formules',
+    // CONTACTS = 'contacts',
 }
 
 export enum PAGE_TEMPLATES {
     JOURNAL = 'journal',
-    FACEBOOK = 'facebook',
+    TROMBINOSCOPE = 'trombinoscope',
     LOADABLE = 'téléchargement',
+    ENCARTS = 'encarts',
     X_DEFAULT = 'journal',
-    NEWS = 'news',
 }
 

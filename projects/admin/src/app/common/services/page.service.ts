@@ -8,7 +8,7 @@ import { Page, Page_input } from '../interfaces/page_snippet.interface';
   providedIn: 'root'
 })
 export class PageService {
-  private _pages!: Page[] ;
+  private _pages: Page[] = [];
   private _pages$ = new BehaviorSubject<Page[]>([]);
 
   constructor(
@@ -34,6 +34,7 @@ export class PageService {
     }
   }
 
+
   // List
   listPages(): Observable<Page[]> {
     const _listPages = this.dbHandler.listPages().pipe(
@@ -43,7 +44,7 @@ export class PageService {
       }),
       switchMap(() => this._pages$.asObservable())
     );
-    return this._pages ? this._pages$.asObservable() : _listPages;
+    return (this._pages && this._pages.length > 0) ? this._pages$.asObservable() : _listPages;
   }
 
   // Get one

@@ -47,7 +47,6 @@ export class GenericPageComponent {
         this.page = page;
         this.titleService.setTitle(this.page.title);
 
-        console.log('Page loaded:', this.page);
       }),
       switchMap(() => this.snippetService.listSnippets())
      )

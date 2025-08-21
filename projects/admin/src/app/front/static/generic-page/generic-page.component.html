@@ -6,8 +6,11 @@
     <div *ngSwitchCase="PAGE_TEMPLATES.LOADABLE">
         <ng-container *ngTemplateOutlet="loadable; context: { snippets: snippets }"></ng-container>
     </div>
-    <div *ngSwitchCase="PAGE_TEMPLATES.FACEBOOK">
-        <ng-container *ngTemplateOutlet="facebook; context: { snippets: snippets }"></ng-container>
+    <div *ngSwitchCase="PAGE_TEMPLATES.TROMBINOSCOPE">
+        <ng-container *ngTemplateOutlet="trombinoscope; context: { snippets: snippets }"></ng-container>
+    </div>
+    <div *ngSwitchCase="PAGE_TEMPLATES.ENCARTS">
+        <ng-container *ngTemplateOutlet="cards; context: { snippets: snippets }"></ng-container>
     </div>
     <div *ngSwitchDefault>
         <ng-container *ngTemplateOutlet="journal; context: { snippets: snippets }"></ng-container>
@@ -103,26 +106,46 @@
     </div>
 </ng-template>
 
-<ng-template #facebook let-snippets="snippets">
+<ng-template #trombinoscope let-snippets="snippets">
     <div class="offset-md-3  col-md-6 justify-content-start">
 
-    <h4 class="mt-3">Le Bureau</h4>
-    <div class="row row-cols-sm-2 row-cols-md-3 row-cols-xl-5 g-3">
+        <h4 class="mt-3">Le Bureau</h4>
+        <div class="row row-cols-sm-2 row-cols-md-3 row-cols-xl-5 g-3">
+            <div *ngFor="let snippet of snippets" class="col">
+                <div class="card h-100 nice_shadow">
+                    <img [src]="snippet.image_url | async" style="max-height: 20vh; object-fit: cover;"
+                        alt="{{snippet.title}}" class="img-fluid rounded-start">
+
+                    <div class="card-body text-center">
+                        <h5 class="card-title">{{snippet.title}}</h5>
+                        <div class="card-text mt-4">
+                            <h6 class="fw-bold"> {{snippet.subtitle}}</h6>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+</ng-template>
+
+<ng-template #cards let-snippets="snippets">
+ <div class="row row-cols-1 row-cols-md-3 g-3">
         <div *ngFor="let snippet of snippets" class="col">
             <div class="card h-100 nice_shadow">
-                <img [src]="snippet.image_url | async" style="max-height: 20vh; object-fit: cover;"
-                    alt="{{snippet.title}}" class="img-fluid rounded-start">
-
-                <div class="card-body text-center">
-                    <h5 class="card-title">{{snippet.title}}</h5>
-                    <div class="card-text mt-4">
-                        <h6 class="fw-bold"> {{snippet.subtitle}}</h6>
+                <div class="card-header bg-primary text-white">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="card-title col fs-4">{{snippet.title}}</div>
+                            <div class="card-title col fs-4 text-end">{{snippet.subtitle}}</div>
+                        </div>
                     </div>
                 </div>
-
+                <div class="card-text ps-3" [innerHTML]="snippet.content">
+                </div>
             </div>
         </div>
     </div>
 
-</div>
-    </ng-template>
+</ng-template>

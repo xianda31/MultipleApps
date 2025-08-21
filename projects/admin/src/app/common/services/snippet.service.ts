@@ -76,13 +76,14 @@ export class SnippetService {
     }
 
     async updateSnippet(snippet: Snippet): Promise<Snippet> {
+        if(snippet.image_url) delete snippet.image_url; // Remove image_url if it exists to avoid sending it to the backend
         try {
             let updatedSnippet = await this.dbHandler.updateSnippet(snippet);
             updatedSnippet = this.add_image_url(updatedSnippet);
             this._snippets = this._snippets.filter((s) => s.id !== updatedSnippet.id);
             this._snippets.push(updatedSnippet as Snippet);
             this._snippets$.next(this._snippets.filter((s) => s.public || this.logged));
-            return updatedSnippet;
+            return Promise.resolve(updatedSnippet);
         } catch (errors) {
             if (Array.isArray(errors) && errors.length > 0 && typeof errors[0] === 'object' && errors[0] !== null && 'errorType' in errors[0]) {
                 if ((errors[0] as any).errorType === 'Unauthorized') {

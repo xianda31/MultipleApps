@@ -1,55 +1,98 @@
-<div class="container">
-    <h2>Pages</h2>
-    <form [formGroup]="pagesForm">
-        <div formArrayName="pagesArray">
-            <div ngbAccordion>
-                <div ngbAccordionItem [collapsed]="true" *ngFor="let page of pageGroups; let p = index"
-                    [formGroup]="page">
-                    <div ngbAccordionHeader >
-                        <button ngbAccordionButton>
-
-                            <div class="row  justify-content-start align-items-center">
-                                <div class="col-auto fs-4">{{ page.get('title')?.value }}</div>
-                                <div class="col-auto ">
-                                    <div class="input-group input-group-sm">
-                                        <div class="input-group-prepend"> <span
-                                                class="input-group-text">Présentation</span>
-                                        </div>
-                                        <select class="form-select form-select-sm" formControlName="template"
-                                            (change)="page.markAsTouched()">
-                                            <option *ngFor="let template of pageTemplates" [value]="template">
-                                                {{template}}
-                                            </option>
-                                        </select>
-                                    </div> 
-                                </div>
-                                <div class="col-auto">
-                                    <button class="btn btn-sm btn-primary" (click)="savePage(page)">
-                                        sauvegarder
-                                    </button>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col col-md-9">
+            <h2>Editeur pages configurables</h2>
+            <form [formGroup]="pagesForm">
+                <div formArrayName="pagesArray">
+                    <div *ngFor="let page of pageGroups; let p = index" [formGroup]="page" class="mb-4">
+                        <div class="row align-items-center mb-2">
+                            <div class="col-auto fs-4">{{ page.get('title')?.value }}</div>
+                            <div class="col-auto">
+                                <div class="input-group input-group-sm">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">Présentation</span>
+                                    </div>
+                                    <select class="form-select form-select-sm" formControlName="template"
+                                        (change)="page.markAsTouched()">
+                                        <option *ngFor="let template of pageTemplates" [value]="template">{{template}}
+                                        </option>
+                                    </select>
                                 </div>
                             </div>
-                        </button>
-                        <div ngbAccordionCollapse>
-                            <div class="row row-cols-3 row-cols-md-6 g-1 mt-2 mb-2 justify-content-center">
-                                <div class="col" *ngFor="let snippet of page.get('snippets')?.value">
-                                    <ng-container *ngTemplateOutlet="viewSnippet; context: { snippet: snippet }"></ng-container>
+                            <div class="col-auto">
+                                <button class="btn btn-sm btn-primary" (click)="savePage(page)">
+                                    sauvegarder
+                                </button>
+                            </div>
+                        </div>
+                        <div class="row row-cols-3 row-cols-md-6 g-1 mt-2 mb-2 justify-content-center">
+                            <div class="col" *ngFor="let snippet of page.get('snippets')?.value">
+                                <div class="card h-100" (mouseenter)="onHover(snippet)">
+                                    <div (click)="onSnippetClick(snippet)" class="card-body">
+                                        <h5 class="card-title">{{ snippet.title }}</h5>
+                                        <h6 class="card-subtitle mb-2 text-muted">{{ snippet.subtitle }}</h6>
+                                    </div>
                                 </div>
-
                             </div>
                         </div>
                     </div>
                 </div>
+            </form>
+        </div>
+        <div class="col col-md-3">
+            <div *ngIf="selected_snippet" class="card centered-card">
+                <div class="card-header">
+                    <div class="row">
+                        <div class="col-9">
+                            <h5>{{selected_snippet.title}}</h5>
+                            <h6 class=" text-muted">{{selected_snippet.subtitle}}</h6>
+
+                        </div>
+                        <div class="col-3 text-center">
+                            <img *ngIf="selected_snippet.image_url" [src]="selected_snippet.image_url | async"
+                                alt="{{ selected_snippet.title }}" class="img-fluid snippet-img-limited">
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="card-text">
+                        <span (click)="onSnippetContentClick(selected_snippet)"
+                            [innerHTML]="selected_snippet.content"></span>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="form-check form-switch">
+                        <input (click)="onPublicToggle()" class="form-check-input " type="checkbox" role="switch">
+                        <label class="form-check-label text-muted ">Public</label>
+                    </div>
+                    <div class="input-group input-group-sm mt-1">
+                        <span class="input-group-text">Image</span>
+                        <input type="text" list="image_datalist" class="form-control"
+                            [placeholder]="selected_snippet.image" [(ngModel)]="selected_snippet_image">
+                        <datalist id="image_datalist">
+                            <option *ngFor="let path of thumbnails$ | async" [value]="path">
+                                {{ path }}
+                            </option>
+                        </datalist>
+                        <button class="btn btn-sm btn-outline-primary" (click)="onImageChange()">
+                            <i class="bi bi-check-square-fill"></i>
+                        </button>
+                    </div>
+                    <div class="input-group input-group-sm mt-1">
+                        <span class="input-group-text">Fichier</span>
+                        <input type="text" list="file_datalist" class="form-control"
+                            [placeholder]="selected_snippet.file" [(ngModel)]="selected_snippet_file">
+                        <datalist id="file_datalist">
+                            <option *ngFor="let path of file_paths$ | async" [value]="path">
+                                {{ path }}
+                            </option>
+                        </datalist>
+                        <button class="btn btn-sm btn-outline-primary" (click)="onFileChange()">
+                            <i class="bi bi-check-square-fill"></i>
+                        </button>
+                    </div>
+
+                </div>
             </div>
         </div>
-    </form>
-</div>
-<ng-template #viewSnippet let-snippet="snippet">
-<div class="card h-100">
-    <div class="card-body">
-        <h5 class="card-title">{{ snippet.title }}</h5>
-        <h6 class="card-subtitle mb-2 text-muted">{{ snippet.subtitle }}</h6>
-        <!-- <p class="card-text">{{ snippet.content }}</p> -->
     </div>
-</div>
-</ng-template>
