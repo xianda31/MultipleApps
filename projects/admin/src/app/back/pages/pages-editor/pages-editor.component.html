@@ -62,7 +62,7 @@
                 </div>
                 <div class="card-footer">
                     <div class="form-check form-switch">
-                        <input (click)="onPublicToggle()" class="form-check-input " type="checkbox" role="switch">
+                        <input (ngModelChange)="onPublicChange()"   [(ngModel)]="selected_snippet.public" class="form-check-input " type="checkbox" role="switch">
                         <label class="form-check-label text-muted ">Public</label>
                     </div>
                     <div class="input-group input-group-sm mt-1">

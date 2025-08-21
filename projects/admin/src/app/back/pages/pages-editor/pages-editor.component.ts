@@ -193,9 +193,9 @@ export class PagesEditorComponent {
       }
     }
 
-    onPublicToggle() {
+    onPublicChange() {
       if (this.selected_snippet) {
-        this.selected_snippet.public = !this.selected_snippet.public;
+        // this.selected_snippet.public = !this.selected_snippet.public;
         this.snippetService.updateSnippet(this.selected_snippet)
           .then((snippet) => {
             this.selected_snippet = snippet; // force refresh
