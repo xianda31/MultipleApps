@@ -1,3 +1,25 @@
+.fixed-trash-height {
+  min-height: 7.5rem;
+  height: 7.5rem;
+  transition: none !important;
+}
+.card.cdk-drag-placeholder {
+  background: repeating-linear-gradient(135deg, #e0e7ef 0px, #e0e7ef 10px, #f8fafc 10px, #f8fafc 20px);
+  border: 2px dashed #6c757d;
+//   min-height: 5em;
+  opacity: 0.5 !important;
+//   box-shadow: none !important;
+//   margin-left: 3em !important;
+//   margin-right: 3em !important;
+}
+
+.card.dashed_border {
+  border: 2px dashed #6c757d;
+  background: #f8fafc;
+  height: 100%;
+}
+
+
 // Limite la hauteur des images à environ deux lignes de tableau
 .snippet-img-limited {
 	max-height: 5em;
