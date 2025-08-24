@@ -9,7 +9,7 @@
     <div *ngSwitchCase="PAGE_TEMPLATES.TROMBINOSCOPE">
         <ng-container *ngTemplateOutlet="trombinoscope; context: { snippets: snippets }"></ng-container>
     </div>
-    <div *ngSwitchCase="PAGE_TEMPLATES.ENCARTS">
+    <div *ngSwitchCase="PAGE_TEMPLATES.CARDS">
         <ng-container *ngTemplateOutlet="cards; context: { snippets: snippets }"></ng-container>
     </div>
     <div *ngSwitchDefault>
@@ -109,7 +109,6 @@
 <ng-template #trombinoscope let-snippets="snippets">
     <div class="offset-md-3  col-md-6 justify-content-start">
 
-        <h4 class="mt-3">Le Bureau</h4>
         <div class="row row-cols-sm-2 row-cols-md-3 row-cols-xl-5 g-3">
             <div *ngFor="let snippet of snippets" class="col">
                 <div class="card h-100 nice_shadow">
@@ -131,18 +130,24 @@
 </ng-template>
 
 <ng-template #cards let-snippets="snippets">
- <div class="row row-cols-1 row-cols-md-3 g-3">
-        <div *ngFor="let snippet of snippets" class="col">
-            <div class="card h-100 nice_shadow">
-                <div class="card-header bg-primary text-white">
-                    <div class="card-body">
-                        <div class="row align-items-center">
-                            <div class="card-title col fs-4">{{snippet.title}}</div>
-                            <div class="card-title col fs-4 text-end">{{snippet.subtitle}}</div>
+    <div class="offset-md-2  col-md-8 justify-content-start">
+
+        <div class="row row-cols-1 row-cols-md-3 justify-content-center g-5">
+            <div *ngFor="let snippet of snippets" class="col">
+                <div class="card h-100 shadow">
+                    <img *ngIf="snippet.image" [src]="snippet.image_url | async"
+                        style="height: 10vh ; object-fit: cover;" alt="{{snippet.title}}"
+                        class="img-fluid rounded-2 p-2 align-self-center">
+                    <div class="card-header bg-primary text-white">
+                        <div class="card-body">
+                            <!-- <div class="row align-items-center"> -->
+                                <div class="card-title fs-4">{{snippet.title}}</div>
+                                <div class="card-title fs-5">{{snippet.subtitle}}</div>
+                            <!-- </div> -->
                         </div>
                     </div>
-                </div>
-                <div class="card-text ps-3" [innerHTML]="snippet.content">
+                    <div class="card-text ps-3" [innerHTML]="snippet.content">
+                    </div>
                 </div>
             </div>
         </div>

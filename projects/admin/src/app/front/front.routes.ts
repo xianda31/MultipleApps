@@ -22,8 +22,7 @@ export const routes: Routes = [
        {path : 'club/documents', component: GenericPageComponent, data: { menu_title: MENU_TITLES.DOCUMENTS } },
        {path : 'club/bureau', component: GenericPageComponent, data: { menu_title: MENU_TITLES.BUREAU } },
 
-       { path: 'école/formules', component: GenericPageComponent, data: { menu_title: MENU_TITLES.FORMULES }},
-       { path: 'école/enseignants', component: GenericPageComponent, data: { menu_title: MENU_TITLES.ENSEIGNANTS }},
+       { path: 'école/cours', component: GenericPageComponent, data: { menu_title: MENU_TITLES.COURS }},
        { path: 'école/inscription', component: PageInConstructionComponent },
        
        {path : 'tournaments', component: TournamentsComponent},

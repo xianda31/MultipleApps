@@ -4,12 +4,10 @@
         <table class="table table-sm table-responsive" style="z-index: 1;">
             <thead >
                 <tr>
-                    <th class=" sticky-top">Menu</th>
                     <th class=" sticky-top">Titre</th>
                     <th class=" sticky-top">Sous-titre</th>
                     <th class=" sticky-top">Contenu</th>
                     <th class=" text-center sticky-top">public</th>
-                    <th class=" text-center sticky-top">rang</th>
                     <th class=" sticky-top">image</th>
                     <th class=" sticky-top">fichier</th>
                     <th class=" sticky-top">Actions</th>
@@ -17,14 +15,6 @@
             </thead>
             <tbody>
                 <tr class="table-secondary" #snippetsEditor>
-                    <td class="text-start"> <input list="datalist" type="text" class="form-control"
-                            formControlName="template">
-                        <datalist id="datalist">
-                            <option *ngFor="let menu of menus" [value]="menu">
-                                {{ menu }}
-                            </option>
-                        </datalist>
-                    </td>
                     <td> <input type="text" class="form-control" formControlName="title"> </td>
                     <td> <input type="text" class="form-control" formControlName="subtitle"> </td>
                     <td (click)="onModalEditSnippetContent()"> <input type="text" class="form-control"
@@ -34,7 +24,6 @@
                             <input class="form-check-input" type="checkbox" role="switch" formControlName="public">
                         </div>
                     </td>
-                    <td class="text-center"> <input type="text" class="form-control text-center" formControlName="rank"> </td>
                     <td> <input type="text" list="image_datalist" class="form-control" formControlName="image"> 
                         <datalist id="image_datalist">
                             <option *ngFor="let path of thumbnails$ | async" [value]="path">
@@ -58,7 +47,6 @@
             </tbody>
                 <tbody class="overflow-y-scroll">
                     <tr *ngFor="let snippet of snippets">
-                        <td class="text-start">{{ snippet.template }}</td>
                         <td>{{ snippet.title }}</td>
                         <td>{{ snippet.subtitle }}</td>
                         <td>{{ snippet.content | rmbrackets | truncate : 50}}</td>
@@ -68,7 +56,6 @@
                                     [checked]="snippet.public" disabled>
                             </div>
                         </td>
-                        <td class="text-center">{{ snippet.rank }}</td>
                         <td *ngIf="snippet.image" class="text-start">
                             <!-- {{presigned_url(snippet.image) | async}} -->
                             <img *ngIf="snippet.image" [src]="snippet.image_url| async" alt="{{ snippet.title }}"

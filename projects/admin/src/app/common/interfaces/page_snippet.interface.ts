@@ -31,23 +31,14 @@ export interface Page {
 
 export type Page_input = Omit<Schema['Page']['type'], 'id' | 'createdAt' | 'updatedAt'>;
 
-// export enum SNIPPET_TEMPLATES {
-//     NEWS = 'news',
-//     BUREAU = 'bureau',
-//     CONTACTS = 'contacts',
-//     FONCTIONNEMENT = 'fonctionnement',
-//     ENSEIGNANTS = 'enseignants',
-//     DOCUMENTS = 'documents',
-//     // ACTEURS = 'acteurs',
-// }
 
 export enum MENU_TITLES {
     NEWS = 'news',
     ACTEURS = 'acteurs',
     BUREAU = 'bureau',
     DOCUMENTS = 'documents',
-    ENSEIGNANTS = 'enseignants',
-    FORMULES = 'formules',
+    COURS = 'cours',
+    POUBELLE = 'poubelle',
     // CONTACTS = 'contacts',
 }
 
@@ -55,7 +46,7 @@ export enum PAGE_TEMPLATES {
     JOURNAL = 'journal',
     TROMBINOSCOPE = 'trombinoscope',
     LOADABLE = 'téléchargement',
-    ENCARTS = 'encarts',
+    CARDS = 'fiches',
     X_DEFAULT = 'journal',
 }
 

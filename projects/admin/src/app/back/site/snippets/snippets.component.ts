@@ -55,9 +55,7 @@ export class SnippetsComponent {
     );
 
     this.snippetService.listSnippets().subscribe((snippets) => {
-      this.snippets = snippets
-        .sort((a, b) => a.rank.localeCompare(b.rank))
-        .sort((a, b) => a.template.localeCompare(b.template));
+      this.snippets = snippets;
     });
   }
 

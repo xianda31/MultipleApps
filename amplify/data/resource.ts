@@ -159,9 +159,7 @@ const schema = a.schema({
     title: a.string().required(),
     subtitle: a.string().required(),
     content: a.string().required(),
-    template: a.string().required(),
     public: a.boolean().required(),
-    rank: a.string().required(),
     image: a.string(),
     file: a.string(),
   })
@@ -179,6 +177,8 @@ const schema = a.schema({
     title: a.string().required(),
     template: a.string().required(),
     snippet_ids: a.string().array().required(),
+    header: a.string(),
+    trailer : a.string(),
   })
     .authorization((allow) => [
       allow.guest().to(['read']),
