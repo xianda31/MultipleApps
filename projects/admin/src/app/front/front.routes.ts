@@ -25,11 +25,11 @@ export const routes: Routes = [
        { path: 'école/cours', component: GenericPageComponent, data: { menu_title: MENU_TITLES.COURS }},
        { path: 'école/inscription', component: PageInConstructionComponent },
        
-       {path : 'tournaments', component: TournamentsComponent},
-       { path: 'tournaments/:id', component: TournamentComponent },
+       {path : 'tournaments/next', component: TournamentsComponent},
+       { path: 'tournaments/next/:id', component: TournamentComponent },
+       {path : 'tournaments/fees', component: GameCardsOwnedComponent},
        
-      { path: 'purchases', component: PurchasesComponent },
-      { path: 'tickets', component: GameCardsOwnedComponent },
+      { path: 'orders/history', component: PurchasesComponent },
 
       { path: 'authentification', component: ConnexionComponent},
       

@@ -32,9 +32,7 @@ export class TournamentsComponent {
     this.auth.logged_member$.subscribe((member) => {
       const whoAmI = member;
       this.license_nbr = whoAmI ? Number(whoAmI.license_number) : 0;
-      console.log('Logged member license number:', this.license_nbr);
     });
-
   }
 
 
@@ -70,15 +68,6 @@ export class TournamentsComponent {
     }
     return false;
   }
-
-  // tournamentClass(name: string): { card: string, icon: string } {
-  //   const _class = "card my-1 mx-sm-2 tournament-card h-100";
-  //   // Normalisation pour enlever les accents
-  //   const _name = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "");
-  //   if (_name.includes('roy')) return { card: _class + 'border-primary', icon: 'bi bi-award' };
-  //   if (_name.includes('eleve')) return { card: _class + 'border-success', icon: 'bi bi-mortarboard-fill' };
-  //   return { card: _class, icon: '' };
-  // }
 
   goToTournamentTeams(tournamentTeams: TournamentTeams) {
     this.router.navigate(['.', tournamentTeams.subscription_tournament.id],
