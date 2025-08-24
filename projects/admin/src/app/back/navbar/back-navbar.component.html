@@ -44,11 +44,10 @@
           <ul ngbDropdownMenu class="dropdown-menu">
             <li><a class="dropdown-item" routerLink="./caisse/ventes">vente à adhérents</a></li>
             <li><a class="dropdown-item" routerLink="./caisse/droits-de-table">tournoi en présentiel</a></li>
-            <li><a class="dropdown-item" routerLink="./caisse/état-de-caisse">état de caisse</a></li>
             <li><a class="dropdown-item" routerLink="./caisse/produits">produits à la vente</a></li>
           </ul>
         </li>
-
+        
         <li *ngIf="accreditation_level >= accreditation_levels.Contributeur" ngbDropdown
           class="nav-item dropdown me-md-3 me-sm-1">
           <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
@@ -61,14 +60,15 @@
             <li><a class="dropdown-item" routerLink="./members/payments">paiements</a></li>
           </ul>
         </li>
-
-
+        
+        
         <li *ngIf="accreditation_level >= accreditation_levels.Administrateur" ngbDropdown
           class="nav-item dropdown me-md-3 me-sm-1">
           <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
             <i class="fs-4 bi-journal"></i> <span class="ms-1">Finance</span>
           </a>
           <ul ngbDropdownMenu class="dropdown-menu">
+            <li><a class="dropdown-item" routerLink="./finance/état-de-caisse">état de caisse</a></li>
             <li><a class="dropdown-item" routerLink="./finance/toutes-ecritures">écritures courantes</a></li>
             <li><a class="dropdown-item" routerLink="./finance/books/base-comptable">synthèse</a></li>
             <li><a class="dropdown-item" routerLink="./finance/bank-reconciliation">rapprochement bancaire</a></li>

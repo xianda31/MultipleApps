@@ -31,15 +31,15 @@ export const routes: Routes = [
     children: [
       { path: 'caisse/ventes', component: ShopComponent },
       { path: 'caisse/droits-de-table', component: FeesCollectorComponent },
-      { path: 'caisse/état-de-caisse', component: CashBoxStatusComponent },
       { path: 'caisse/produits', component: ProductsComponent },
-
+      
       
       { path: 'members/database', component: MembersComponent },
       { path: 'members/cartes-admission', component: GameCardsEditorComponent },
       { path: 'members/payments', component: MemberSalesComponent },
-
       
+      
+      { path: 'finance/état-de-caisse', component: CashBoxStatusComponent },
       { path: 'finance/bank-reconciliation', component: BankReconciliationComponent },
       { path: 'finance/expense-and-revenue', component: ExpenseAndRevenueComponent },
       { path: 'finance/toutes-ecritures', component: BooksEditorComponent },
