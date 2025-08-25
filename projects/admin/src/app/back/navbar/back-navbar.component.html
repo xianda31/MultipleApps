@@ -88,7 +88,7 @@
             <li><a class="dropdown-item" routerLink="./finance/books/editor">écriture</a></li>
             <li><a class="dropdown-item" routerLink="./outils/groups">droits d'accès</a></li>
             <li><a class="dropdown-item" routerLink="./outils/sysconf">configuration</a></li>
-            <li><a class="dropdown-item" routerLink="./outils/excel_import">import excel</a></li>
+            <li *ngIf="!production_mode"><a class="dropdown-item" routerLink="./outils/excel_import">import excel</a></li>
             <li *ngIf="!production_mode"><a class="dropdown-item" routerLink="./outils/cloneDB">clone DB</a></li>
           </ul>
         </li>

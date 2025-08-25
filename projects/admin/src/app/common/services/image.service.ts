@@ -12,9 +12,7 @@ export class ImageService {
       private systemDataService: SystemDataService
     ) {
       this.systemDataService.get_configuration().subscribe((configuration) => {
-        console.log('ImageService configuration:', configuration);
         this.thumbnailSize = configuration.thumbnail;
-        console.log('ImageService initialized with thumbnail size:', this.thumbnailSize);
       });
   
     }
