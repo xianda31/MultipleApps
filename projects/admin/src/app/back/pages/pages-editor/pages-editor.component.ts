@@ -199,9 +199,6 @@ export class PagesEditorComponent {
       file: '',
       image: '',
       public: true,
-
-      template: 'n/a',
-      rank: 'n/a',
     };
     this.snippetService.createSnippet(snippet).then((new_snippet) => {
       // this.toastService.showSuccess('Snippets', 'Snippet créé avec succès');

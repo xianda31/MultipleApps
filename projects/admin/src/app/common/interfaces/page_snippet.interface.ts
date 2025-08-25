@@ -6,9 +6,7 @@ export interface Snippet {
     title: string;
     subtitle: string;
     content: string;
-    template: string;
     public: boolean;
-    rank: string;
     image: string;
     file: string;
     image_url?: Observable<string>;
