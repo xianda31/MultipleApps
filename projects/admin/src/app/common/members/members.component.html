@@ -1,12 +1,14 @@
 <div class="mt-2">
   <div class="card">
     <div class="card-header">
-      <div class="row justify-content-between align-items-end">
-        <h5 class="col">
-          Répertoire Club ( {{members.length}} personnes )
+      <div class="row justify-content-between align-items-center">
+  <h5 class="col-12 col-sm">
+          Répertoire Club :
+          <span> {{members.length}} personnes</span>
         </h5>
-        <h5 class="col ">
-           base FFB  :    {{licensees.length - sympatisants_number}} licenciés + {{sympatisants_number}} sympathisants
+  <h5 class="col-12 col-sm">
+           Base FFB :
+           <span > {{licensees.length - sympatisants_number}} licenciés + {{sympatisants_number}} sympathisants </span>
         </h5>
       </div>
     </div>
@@ -45,8 +47,6 @@
             <th>#</th>
             <th>Nom</th>
             <th>Prénom</th>
-            <!-- <th>No licence</th> -->
-            <!-- <th>saison</th> -->
             <th class="text-center">
               Status FFB
               <div ngbDropdown class="btn-group">
@@ -58,9 +58,8 @@
                 </ul>
               </div>
             </th>
-            <!-- <th>téléphone</th> -->
-            <th>mail</th>
-            <th>Ville</th>
+            <th class="d-none d-sm-table-cell">mail</th>
+            <th class="d-none d-sm-table-cell">Ville</th>
             <th class="text-center">Actions</th>
           </tr>
         </thead>
@@ -94,8 +93,8 @@
                 <td class="text-center"></td>
               </ng-container>
             </ng-container>
-            <td>{{member.email}}</td>
-            <td>{{member.city }}</td>
+            <td class="d-none d-sm-table-cell">{{member.email}}</td>
+            <td class="d-none d-sm-table-cell">{{member.city }}</td>
             <td class="text-center">
               <i class="bi bi-trash" (click)="deleteMember(member)"></i>
             </td>

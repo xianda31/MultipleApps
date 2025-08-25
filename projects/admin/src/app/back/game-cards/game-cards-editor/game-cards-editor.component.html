@@ -1,4 +1,4 @@
-<div *ngIf="loaded" class="container offset-md-2 col-md-8">
+<div *ngIf="loaded" >
     <div class=" card shadow-lg mt-3 g-0">
         <div class="card-header">
             <div class="row justify-content-between align-items-center">
@@ -10,10 +10,7 @@
                 </div>
             </div>
             <hr>
-            <div class="row justify-content-start align-items-start">
-                <div class="col-auto ms-2">
-                    <p class="text-muted mb-0"> utilitaires : </p>
-                </div>
+            <div class="row justify-content-between align-items-start">
                 <div class="col-auto ms-2">
                     <button class="btn btn-sm btn-outline-primary btn-animated" (click)="createGameCard()">
                         Création carte
@@ -49,10 +46,10 @@
                             <td class="text-start">
                                 <span *ngFor="let owner of card.owners; let j = index">
                                     <span *ngIf="j > 0"> &nbsp; et &nbsp; </span>
-                                    {{owner.lastname}} {{owner.firstname}}
+                                    {{owner.lastname}} <span class="d-none d-sm-inline">{{owner.firstname}}</span>
                                 </span>
                             </td>
-                            <td>{{card.createdAt | date}}</td>
+                            <td>{{card.createdAt | date:'dd/MM'}}</td>
                             <td class="text-center">
                                 <span>{{card.initial_qty - stamps_number(card) }}</span>
                             </td>

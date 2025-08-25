@@ -1,4 +1,4 @@
-<div *ngIf="db_loaded" class="container">
+<div *ngIf="db_loaded" >
   <div class="card mt-2">
     <div class="card-header">
       <div class=" d-flex d-inline-block align-items-center justify-content-between">
@@ -22,10 +22,10 @@
         <div class="col-2 text-start">
           solde
         </div>
-        <div class="col-3 text-end pe-4">
+        <div class="col-2 text-end pe-4">
           Débit
         </div>
-        <div class="col-1 text-end pe-4">
+        <div class="col-2 text-end pe-4">
           Crédit
         </div>
         <div class="col-2">
@@ -46,10 +46,10 @@
                 <div class="col-2 text-start fw-bolder">
                   {{balance(bank_report).bank | number:truncature:'fr'}}
                 </div>
-                <div class="col-3 text-end pe-2">
+                <div class="col-2 text-end pe-2">
                   {{movement_out(bank_report).bank | number:truncature:'fr' }}
                 </div>
-                <div class="col-1 text-end pe-2">
+                <div class="col-2 text-end pe-2">
                   {{movement_in(bank_report).bank | number:truncature:'fr'}}
                 </div>
 
