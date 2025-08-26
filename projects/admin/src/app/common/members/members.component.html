@@ -48,12 +48,12 @@
             <th>Nom</th>
             <th>Prénom</th>
             <th class="text-center">
-              Status FFB
+              {{licenses_status[selected_status]}}
               <div ngbDropdown class="btn-group">
                 <span class="dropdown-toggle dropdown-toggle-split" ngbDropdownToggle></span>
                 <ul ngbDropdownMenu class="dropdown-menu">
                   <li *ngFor="let status of licenses_status | keyvalue">
-                    <a class="dropdown-item" (click)="onSelectLicence(status.key)">{{status.value}}</a>
+                    <a class="dropdown-item" (click)="filterOnStatus(status.key)">{{status.value}}</a>
                   </li>
                 </ul>
               </div>

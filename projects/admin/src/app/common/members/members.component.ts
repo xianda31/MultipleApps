@@ -30,19 +30,19 @@ export class MembersComponent implements OnInit {
 
   // selected_filter: string = 'Tous';
   licenses_status: { [key: string]: string } = {
-    'registered': 'Déclaré à la FFB',
-    'unregistered': 'Non déclaré à la FFB',
-    'all': 'Tout le répertoire BCSTO',
+    'registered': 'à la FFB',
+    'unregistered': 'pas à la FFB',
+    'all': 'tous',
     // 'offered': 'Offerte',
   };
+  selected_status: string = 'registered';
 
 
-  
-  selection: string = '';
 
-  radioButtonGroup: FormGroup = new FormGroup({
-    radioButton: new FormControl('Tous')
-  });
+
+  // radioButtonGroup: FormGroup = new FormGroup({
+  //   radioButton: new FormControl('Tous')
+  // });
 
   constructor(
     private licenseesService: LicenseesService,
@@ -55,9 +55,9 @@ export class MembersComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.radioButtonGroup.valueChanges.subscribe(() => {
-      this.onSelectLicence(this.radioButtonGroup.value.radioButton);
-    });
+    // this.radioButtonGroup.valueChanges.subscribe(() => {
+    //   this.onSelectLicence(this.radioButtonGroup.value.radioButton);
+    // });
 
     let today = new Date();
     this.season = this.sysConfService.get_season(today);
@@ -78,7 +78,7 @@ export class MembersComponent implements OnInit {
       }),
     ).subscribe(() => {
       this.updateDBfromFFB();
-      this.filteredMembers = this.members;
+      this.filterOnStatus(this.selected_status);
       // console.log(this.members);
     });
   }
@@ -159,13 +159,14 @@ export class MembersComponent implements OnInit {
           this.membersService.updateMember(member);
           this.toastService.showWarning('Licences', `Licence de ${member.lastname} ${member.firstname} obsolète `);
         }
-      }else{
+      } else {
       }
     }
   }
 
 
-  onSelectLicence(status: string) {
+  filterOnStatus(status: string) {
+    this.selected_status = status;
     this.filteredMembers = this.members.filter((member: Member) => {
       switch (status) {
         case "registered": //'à jour':
@@ -187,7 +188,7 @@ export class MembersComponent implements OnInit {
       if (member !== null) {
         // this.verbose += 'modification : ' + member.lastname + ' ' + member.firstname + '\n';
         await this.membersService.updateMember(member);
-      }else{
+      } else {
       }
 
     } else {
@@ -219,7 +220,7 @@ export class MembersComponent implements OnInit {
     let is: { [key: string]: any } = member;
     let next: { [key: string]: any } = nextMember;
     let diff: boolean = false;
-let verbose = '';
+    let verbose = '';
     for (let key in next) {
       if (next[key] !== is[key]) {
         diff = true;
@@ -227,7 +228,7 @@ let verbose = '';
       }
     }
 
-    if(diff) {
+    if (diff) {
       console.log('Member %s %s has changed', member.lastname, member.firstname, verbose);
     }
     return diff ? nextMember : null;
