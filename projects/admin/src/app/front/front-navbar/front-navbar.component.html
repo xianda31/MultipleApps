@@ -20,9 +20,9 @@
           <span class="ms-1">Le Club</span>
         </a>
         <ul ngbDropdownMenu class="dropdown-menu shadow">
-          <li><a class="dropdown-item" routerLink="club/acteurs" (click)="dropdownClub.close(); $event.stopPropagation()">les acteurs</a></li>
-          <li><a class="dropdown-item" routerLink="club/documents" (click)="dropdownClub.close(); $event.stopPropagation()">documents</a></li>
-          <li><a class="dropdown-item" routerLink="club/bureau" routerLinkActive="active" (click)="dropdownClub.close(); $event.stopPropagation()">le bureau</a></li>
+          <li><a class="dropdown-item" routerLink="club/acteurs" (click)="dropdownClub.close(); closeBurger(); $event.stopPropagation()">les acteurs</a></li>
+          <li><a class="dropdown-item" routerLink="club/documents" (click)="dropdownClub.close(); closeBurger(); $event.stopPropagation()">documents</a></li>
+          <li><a class="dropdown-item" routerLink="club/bureau" routerLinkActive="active" (click)="dropdownClub.close(); closeBurger(); $event.stopPropagation()">le bureau</a></li>
         </ul>
       </li>
 
@@ -31,8 +31,8 @@
           <span class="ms-1">L'école de Bridge</span>
         </a>
         <ul ngbDropdownMenu class="dropdown-menu shadow">
-          <li><a class="dropdown-item" routerLink="école/cours" routerLinkActive="active" (click)="dropdownEcole.close(); $event.stopPropagation()">cours</a></li>
-          <li><a class="dropdown-item" routerLink="école/inscription" (click)="dropdownEcole.close(); $event.stopPropagation()">inscription</a></li>
+          <li><a class="dropdown-item" routerLink="école/cours" routerLinkActive="active" (click)="dropdownEcole.close(); closeBurger(); $event.stopPropagation()">cours</a></li>
+          <li><a class="dropdown-item" routerLink="école/inscription" (click)="dropdownEcole.close(); closeBurger(); $event.stopPropagation()">inscription</a></li>
         </ul>
       </li>
 
@@ -42,8 +42,8 @@
           <span class="ms-1">Les tournois</span>
         </a>
         <ul ngbDropdownMenu class="dropdown-menu shadow">
-          <li><a class="dropdown-item" routerLink="tournaments/next" routerLinkActive="active" (click)="dropdownTournois.close(); $event.stopPropagation()">prochainement</a></li>
-          <li><a class="dropdown-item" routerLink="tournaments/fees" routerLinkActive="active" (click)="dropdownTournois.close(); $event.stopPropagation()">ma carte</a></li>
+          <li><a class="dropdown-item" routerLink="tournaments/next" routerLinkActive="active" (click)="dropdownTournois.close(); closeBurger(); $event.stopPropagation()">prochainement</a></li>
+          <li><a class="dropdown-item" routerLink="tournaments/fees" routerLinkActive="active" (click)="dropdownTournois.close(); closeBurger(); $event.stopPropagation()">ma carte</a></li>
         </ul>
       </li>
 
@@ -52,7 +52,7 @@
           <span class="ms-1">Mes achats</span>
         </a>
         <ul ngbDropdownMenu class="dropdown-menu shadow">
-          <li><a class="dropdown-item" routerLink="orders/history" routerLinkActive="active" (click)="dropdownAchats.close(); $event.stopPropagation()">historique</a></li>
+          <li><a class="dropdown-item" routerLink="orders/history" routerLinkActive="active" (click)="dropdownAchats.close(); closeBurger(); $event.stopPropagation()">historique</a></li>
         </ul>
       </li>
 
@@ -74,12 +74,12 @@
           </a>
           <ul ngbDropdownMenu class="dropdown-menu shadow">
             <li *ngIf="user_accreditation && user_accreditation.level > 0">
-              <a class="dropdown-item" routerLink="../admin" (click)="dropdownUser.close(); $event.stopPropagation()">
+              <a class="dropdown-item" routerLink="../admin" (click)="dropdownUser.close(); closeBurger(); $event.stopPropagation()">
                 <i [class]="user_accreditation.icon"></i>
                 back office
               </a>
             </li>
-            <li> <a class="dropdown-item" (click)="signOut(); dropdownUser.close(); $event.stopPropagation()">
+            <li> <a class="dropdown-item" (click)="signOut(); dropdownUser.close(); closeBurger(); $event.stopPropagation()">
                 <i class="bi bi-box-arrow-right"></i>
                 Déconnexion
               </a></li>

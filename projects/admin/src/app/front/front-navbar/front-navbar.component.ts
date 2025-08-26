@@ -27,12 +27,11 @@ export class FrontNavbarComponent {
   constructor(
     private auth: AuthentificationService,
     private groupService: GroupService,
-    private router: Router
   ) { }
-
+  
   ngOnInit(): void {
     this.logged_member$ = this.auth.logged_member$;
-
+    
     this.auth.logged_member$.subscribe(async (member) => {
       if (member !== null) {
         this.user_accreditation = await this.groupService.getUserAccreditation();
@@ -40,7 +39,12 @@ export class FrontNavbarComponent {
       }
     });
   }
-
+  closeBurger() {
+    if (window.innerWidth < 576) {
+      this.isCollapsed = true;
+    }
+  }
+  
   isNavItemActive(navItem: string): boolean {
     return this.lastActiveNavItem === navItem;
   }
