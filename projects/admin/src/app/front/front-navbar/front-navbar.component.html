@@ -15,44 +15,44 @@
         </a>
       </li>
 
-      <li ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
+  <li ngbDropdown #dropdownClub="ngbDropdown" class="nav-item dropdown me-md-3 me-sm-1">
         <a class="nav-link dropdown-toggle text-white" ngbDropdownToggle>
           <span class="ms-1">Le Club</span>
         </a>
         <ul ngbDropdownMenu class="dropdown-menu shadow">
-          <li><a class="dropdown-item" routerLink="club/acteurs">les acteurs</a></li>
-          <li><a class="dropdown-item" routerLink="club/documents">documents</a></li>
-          <li><a class="dropdown-item" routerLink="club/bureau" routerLinkActive="active">le bureau</a></li>
+          <li><a class="dropdown-item" routerLink="club/acteurs" (click)="dropdownClub.close(); $event.stopPropagation()">les acteurs</a></li>
+          <li><a class="dropdown-item" routerLink="club/documents" (click)="dropdownClub.close(); $event.stopPropagation()">documents</a></li>
+          <li><a class="dropdown-item" routerLink="club/bureau" routerLinkActive="active" (click)="dropdownClub.close(); $event.stopPropagation()">le bureau</a></li>
         </ul>
       </li>
 
-      <li ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
+  <li ngbDropdown #dropdownEcole="ngbDropdown" class="nav-item dropdown me-md-3 me-sm-1">
         <a class="nav-link dropdown-toggle text-white" ngbDropdownToggle [class.active]="isNavItemActive('ecole')">
           <span class="ms-1">L'école de Bridge</span>
         </a>
         <ul ngbDropdownMenu class="dropdown-menu shadow">
-          <li><a class="dropdown-item" routerLink="école/cours" routerLinkActive="active">cours</a></li>
-          <li><a class="dropdown-item" routerLink="école/inscription" >inscription</a></li>
+          <li><a class="dropdown-item" routerLink="école/cours" routerLinkActive="active" (click)="dropdownEcole.close(); $event.stopPropagation()">cours</a></li>
+          <li><a class="dropdown-item" routerLink="école/inscription" (click)="dropdownEcole.close(); $event.stopPropagation()">inscription</a></li>
         </ul>
       </li>
 
 
-      <li  ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
+  <li ngbDropdown #dropdownTournois="ngbDropdown" class="nav-item dropdown me-md-3 me-sm-1">
         <a class="nav-link dropdown-toggle text-white" ngbDropdownToggle [class.active]="isNavItemActive('achats')">
           <span class="ms-1">Les tournois</span>
         </a>
         <ul ngbDropdownMenu class="dropdown-menu shadow">
-          <li><a class="dropdown-item" routerLink="tournaments/next" routerLinkActive="active">prochainement</a></li>
-          <li><a class="dropdown-item" routerLink="tournaments/fees" routerLinkActive="active">ma carte</a></li>
+          <li><a class="dropdown-item" routerLink="tournaments/next" routerLinkActive="active" (click)="dropdownTournois.close(); $event.stopPropagation()">prochainement</a></li>
+          <li><a class="dropdown-item" routerLink="tournaments/fees" routerLinkActive="active" (click)="dropdownTournois.close(); $event.stopPropagation()">ma carte</a></li>
         </ul>
       </li>
 
-      <li *ngIf="logged_member$ | async as member" ngbDropdown class="nav-item dropdown me-md-3 me-sm-1">
+  <li *ngIf="logged_member$ | async as member" ngbDropdown #dropdownAchats="ngbDropdown" class="nav-item dropdown me-md-3 me-sm-1">
         <a class="nav-link dropdown-toggle text-white" ngbDropdownToggle [class.active]="isNavItemActive('achats')">
           <span class="ms-1">Mes achats</span>
         </a>
         <ul ngbDropdownMenu class="dropdown-menu shadow">
-          <li><a class="dropdown-item" routerLink="orders/history" routerLinkActive="active">historique</a></li>
+          <li><a class="dropdown-item" routerLink="orders/history" routerLinkActive="active" (click)="dropdownAchats.close(); $event.stopPropagation()">historique</a></li>
         </ul>
       </li>
 
@@ -68,18 +68,18 @@
         </li>
       </ng-container>
       <ng-container *ngIf="logged_member$ | async as member">
-        <li ngbDropdown class="nav-item align-self-end dropdown me-md-5 me-sm-1 ms-auto">
+  <li ngbDropdown #dropdownUser="ngbDropdown" class="nav-item align-self-end dropdown me-md-5 me-sm-1 ms-auto">
           <a class="nav-link dropdown-toggle text-white" id="navbarDropdown" type="a" ngbDropdownToggle>
             <span class="ms-1"> {{member.firstname}}</span>
           </a>
           <ul ngbDropdownMenu class="dropdown-menu shadow">
             <li *ngIf="user_accreditation && user_accreditation.level > 0">
-              <a class="dropdown-item" routerLink="../admin">
+              <a class="dropdown-item" routerLink="../admin" (click)="dropdownUser.close(); $event.stopPropagation()">
                 <i [class]="user_accreditation.icon"></i>
                 back office
               </a>
             </li>
-            <li> <a class="dropdown-item" (click)="signOut()">
+            <li> <a class="dropdown-item" (click)="signOut(); dropdownUser.close(); $event.stopPropagation()">
                 <i class="bi bi-box-arrow-right"></i>
                 Déconnexion
               </a></li>

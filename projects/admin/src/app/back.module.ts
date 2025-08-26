@@ -22,7 +22,7 @@ import { ProductsComponent } from './back/products/products.component';
 import { ShopComponent } from './back/shop/shop.component';
 import { SysConfComponent } from './back/sys-conf/sys-conf.component';
 import { routes } from './back/back.routes';
-import { AdminComponent } from './back/admin/admin.component';
+import { AdminComponent } from './back/admin/back.component';
 import { NgbDropdownModule, NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
 import { RmbracketsPipe } from './common/pipes/rmbrackets.pipe';
 import { SnippetsComponent } from './back/site/snippets/snippets.component';
@@ -32,14 +32,14 @@ import { FilemgrComponent } from './back/files/filemgr/filemgr.component';
 
 @NgModule({
   declarations: [
-    
+
   ],
   imports: [
     CommonModule,
     FormsModule,
     RouterModule.forChild(routes),
-  NgbDropdownModule,
-  NgbAccordionModule,
+    NgbDropdownModule,
+    NgbAccordionModule,
     AdminComponent,
     ShopComponent,
     FeesCollectorComponent,

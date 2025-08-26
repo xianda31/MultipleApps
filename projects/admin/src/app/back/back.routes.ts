@@ -18,7 +18,7 @@ import { GroupsListComponent } from './groups/groups-list/groups-list.component'
 import { ProductsComponent } from './products/products.component';
 import { MembersComponent } from '../common/members/members.component';
 import { CloneDBComponent } from './maintenance/clone-DB/clone-db.component';
-import { AdminComponent } from './admin/admin.component';
+import { AdminComponent } from './admin/back.component';
 import { BackPageComponent } from './back-page/back-page.component';
 import { SnippetsComponent } from './site/snippets/snippets.component';
 import { FilemgrComponent } from './files/filemgr/filemgr.component';
