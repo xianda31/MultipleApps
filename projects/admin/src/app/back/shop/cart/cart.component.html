@@ -1,9 +1,9 @@
 <!-- <form [formGroup]="payment_form"> -->
-<div class="card">
-    <div class="card-body">
-<div *ngIf="message" class="warning mb-3">
-    <strong class="text-danger blinking"> Message : {{message.toUpperCase()}}</strong>
-</div>
+<div class="card w-100">
+    <div class="card-body g-0">
+        <div *ngIf="message" class="warning mb-3">
+            <strong class="text-danger blinking"> Message : {{message.toUpperCase()}}</strong>
+        </div>
 
         <strong>Panier : </strong>
         <div class="table-responsive">
@@ -15,7 +15,8 @@
 
                 <!-- asset if any -->
                 <caption *ngIf="asset_available > 0">
-                    <span class="text-muted"> Avoir disponible:{{asset_available | currency:'€':'symbol':'2.2-2':'fr'}} </span>
+                    <span class="text-muted"> Avoir disponible:{{asset_available | currency:'€':'symbol':'2.2-2':'fr'}}
+                    </span>
                 </caption>
 
                 <thead>
@@ -64,13 +65,13 @@
             </table>
         </div>
         <!--  paiement -->
-        <div *ngIf="(cart.items.length > 0 || debt_amount > 0)" class="row mt-2">
-            <div class="col-3">
+    <div *ngIf="(cart.items.length > 0 || debt_amount > 0)" class="row mt-2 ">
+            <div class="col-3 ">
                 <strong>Total : {{total_amount() | currency:'€':'symbol':'2.2-2':'fr'}}
                 </strong>
             </div>
 
-            <div class="col-4 ">
+            <div class="col-5 p-0 d-flex flex-column">
                 <div class="form-check form-check-inline">
                     <input class="form-check_input" type="radio" [(ngModel)]="selected_payment.mode"
                         (ngModelChange)="payment_mode_change()" [value]="paymentMode.CASH">
@@ -83,18 +84,18 @@
                 </div>
                 <div class="form-check form-check-inline">
                     <input class="form-check_input" type="radio" [(ngModel)]="selected_payment.mode"
-                        (ngModelChange)="payment_mode_change()" [value]="paymentMode.CREDIT">
-                    <label class="form-check-label">crédit</label>
+                    (ngModelChange)="payment_mode_change()" [value]="paymentMode.TRANSFER">
+                    <label class="form-check-label">virement</label>
                 </div>
                 <div class="form-check form-check-inline">
                     <input class="form-check_input" type="radio" [(ngModel)]="selected_payment.mode"
-                        (ngModelChange)="payment_mode_change()" [value]="paymentMode.TRANSFER">
-                    <label class="form-check-label">virement</label>
+                        (ngModelChange)="payment_mode_change()" [value]="paymentMode.CREDIT">
+                    <label class="form-check-label fst-italic">avance</label>
                 </div>
             </div>
 
             <!-- <ng-container *ngIf="selected_payment.mode === paymentMode.CHEQUE"> -->
-            <div *ngIf="selected_payment.mode === paymentMode.CHEQUE" class="col-5">
+            <div *ngIf="selected_payment.mode === paymentMode.CHEQUE" class="col-4 p-0">
                 <div class="d-flex flex-column justify-content-between">
                     <div>
                         <select [ngClass]="!selected_payment.bank?'to-fill-in':''" class="form-control form-control-sm"
@@ -107,7 +108,7 @@
                     </div>
                     <div>
                         <input [ngClass]="!selected_payment.cheque_no?'to-fill-in':''" placeholder="N° de chèque"
-                            type="text" id="cheque_no" class="form-control form-control-sm"
+                            type="text" id="cheque_no" class="form-control form-control-sm mt-2"
                             [(ngModel)]="selected_payment.cheque_no">
                     </div>
                 </div>
@@ -120,7 +121,7 @@
         <!-- validation  //-->
 
         <!-- nbre éléments : {{cart.items.length}} -->
-        <div class="mt-4">
+        <div class="justify-content-center mt-4">
             <button type="button" class="btn btn-success nice_shadow"
                 [disabled]=" !selected_payment.mode || (cart.items.length === 0 && !(total_amount()>0)) || (total_amount()<0)"
                 (click)="validate_sale()">confirmation

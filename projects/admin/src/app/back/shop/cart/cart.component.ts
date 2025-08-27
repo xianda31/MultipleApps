@@ -13,10 +13,10 @@ import { Product } from '../../products/product.interface';
 import { MembersService } from '../../../common/services/members.service';
 
 @Component({
-    selector: 'app-cart',
-    imports: [CommonModule, FormsModule, ReactiveFormsModule, InputMemberComponent, CurrencyPipe],
-    templateUrl: './cart.component.html',
-    styleUrl: './cart.component.scss'
+  selector: 'app-cart',
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, InputMemberComponent, CurrencyPipe],
+  templateUrl: './cart.component.html',
+  styleUrl: './cart.component.scss'
 })
 export class CartComponent {
   @Output() complete = new EventEmitter<void>();
@@ -26,7 +26,7 @@ export class CartComponent {
   asset_available = 0;
   total_amount = signal(0);
 
-  cart: Cart = { items: [], debt: null, asset_available: null, asset_used:null,buyer_name: '' };
+  cart: Cart = { items: [], debt: null, asset_available: null, asset_used: null, buyer_name: '' };
   members!: Member[];
   products!: Product[];
 

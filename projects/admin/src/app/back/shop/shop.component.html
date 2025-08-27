@@ -1,5 +1,5 @@
 <!-- cart editor -->
-<div class="card shadow-lg mt-3">
+<div class="card w-100 mt-3">
   <div class="card-header">
     <h5 class="row justify-content-around align-items-center">
 
@@ -43,35 +43,37 @@
 
       <!-- colonne acheteur et cart  -->
       <div class="col-md-9 col-sm-9 fs-6 font-monospace  ">
-        <div class="container h-100 d-flex flex-column">
+        <!-- <div class="container h-100 d-flex flex-column"> -->
+
+        <div class="col-md-8 col-sm-12  mt-2">
 
           <!-- buyer -->
-          <div class="col-md-8 col-sm-12  mt-2">
-            <div [formGroup]="buyerForm" class="d-flex align-items-center justify-content-between">
-              <div class="input-group input-group-sm flex-grow-1 me-2">
-                <span class="input-group-text"> Adhérent </span>
-                <app-input-member class="form-control form-control-sm" [members]="members"
-                  formControlName="buyer"></app-input-member>
-                <span class="input-group-text">
-                  <i class="bi bi-x-circle" (click)="clear_sale()"></i>
-                </span>
-              </div>
-              
+          <div [formGroup]="buyerForm" class="d-flex align-items-center justify-content-between">
+            <div class="input-group input-group-sm flex-grow-1 me-2">
+              <span class="input-group-text"> Adhérent </span>
+              <app-input-member class="form-control form-control-sm" [members]="members"
+                formControlName="buyer"></app-input-member>
+              <span class="input-group-text">
+                <i class="bi bi-x-circle" (click)="clear_sale()"></i>
+              </span>
             </div>
-            <!-- cart  -->
-            <div *ngIf="buyer" class="col-md-12 col-sm-12 mt-2">
-              <app-cart [message]="message" (complete)="cart_confirmed()"></app-cart>
-            </div>
-
           </div>
         </div>
 
-        <!--  sales_of_the_day -->
+        <!-- cart  -->
+        <div *ngIf="buyer" class="mt-2">
+          <app-cart [message]="message" (complete)="cart_confirmed()"></app-cart>
+        </div>
+
+        <!-- </div> -->
+
       </div>
     </div>
   </div>
-  <div class="mt-2">
-    <app-todays-books (pdf_table)="get_sales_table($event)"></app-todays-books>
-  </div>
+</div>
 
-  <!-- </div> -->
+
+<!--  sales_of_the_day -->
+<div class="mt-5 shadow_sm">
+  <app-todays-books (pdf_table)="get_sales_table($event)"></app-todays-books>
+</div>
