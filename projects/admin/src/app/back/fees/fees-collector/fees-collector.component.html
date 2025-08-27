@@ -81,7 +81,7 @@
 
             <!-- loop sur les gamers -->
             <div class="row">
-                <div class="row row-cols-1 row-cols-md-4 g-1">
+                <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-2">
                     <div class="col" *ngFor="let gamer of game.gamers">
                         <ng-container
                             *ngTemplateOutlet="fee_editor; context:{gamer: gamer, doubled: (game.fees_doubled)}"></ng-container>
