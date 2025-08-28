@@ -27,11 +27,11 @@ export class AppComponent {
     this.router.events.subscribe(event => {
       if (event instanceof NavigationEnd) {
         const segments = this.router.url.split('/').filter(Boolean); // Segments réels de l'URL
-        console.log('Current URL segments:', segments);
+        // console.log('Current URL segments:', segments);
         // Si l'URL est vide => rediriger vers l'entrée point
         if (segments.length === 0) {
           let entry_point = this.localStorageService.getItem('entry_point');
-          console.log('No entry point found, redirecting to stored:', entry_point);
+          // console.log('No entry point found, redirecting to stored:', entry_point);
           entry_point = entry_point ? entry_point : 'front';
           this.router.navigate([entry_point]);
         }
