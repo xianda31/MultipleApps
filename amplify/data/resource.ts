@@ -106,6 +106,36 @@ const schema = a.schema({
 
     ]),
 
+
+
+  // tournois joués
+
+  
+  Game: a.model({
+    gameId: a.id().required(),
+    season: a.string().required(),
+    member_trn_price: a.float().required(),
+    non_member_trn_price: a.float().required(),
+    fees_doubled: a.boolean().required(),
+    alphabetic_sort: a.boolean().required(),
+    tournament: a.customType({
+      id: a.integer().required(),
+      name: a.string().required(),
+      date: a.string().required(),
+      time: a.string().required()
+    }),
+    gamers: a.json().required(),
+  })
+  .identifier(['gameId'])
+    .authorization((allow) => [
+      allow.guest().to(['read']),
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Support).to(['read', 'create', 'update']),
+      allow.group(Group_names.Member).to(['read']),
+
+    ]),
+
   // Adhérents et produits Club
 
 
@@ -154,7 +184,7 @@ const schema = a.schema({
 
   // Site web
 
- 
+
   Snippet: a.model({
     title: a.string().required(),
     subtitle: a.string().required(),
@@ -178,7 +208,7 @@ const schema = a.schema({
     template: a.string().required(),
     snippet_ids: a.string().array().required(),
     header: a.string(),
-    trailer : a.string(),
+    trailer: a.string(),
   })
     .authorization((allow) => [
       allow.guest().to(['read']),
@@ -189,7 +219,7 @@ const schema = a.schema({
 
     ]),
 
- 
+
 
 });
 

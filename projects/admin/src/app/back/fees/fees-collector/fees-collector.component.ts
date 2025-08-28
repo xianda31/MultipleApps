@@ -13,6 +13,11 @@ import { FFBplayer } from '../../../common/ffb/interface/FFBplayer.interface';
 import { InputPlayerComponent } from '../../../common/ffb/input-licensee/input-player.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { GetConfirmationComponent } from '../../modals/get-confirmation/get-confirmation.component';
+import { LocalStorageService } from '../../services/local-storage.service';
+import { ToastService } from '../../../common/services/toast.service';
+import {DBhandler} from "../../../common/services/graphQL.service";
+import { SystemDataService } from '../../../common/services/system-data.service';
+
 
 @Component({
   selector: 'app-fees-collector',
@@ -22,9 +27,11 @@ import { GetConfirmationComponent } from '../../modals/get-confirmation/get-conf
 })
 export class FeesCollectorComponent {
 
-  back_days: number = 0;
+  selected_tournament!: club_tournament ;
+
+  days_back: number = 0;
   next_tournaments$: Observable<club_tournament[]>;
-  selected_tournament: club_tournament | null = null;
+  // selected_tournament: club_tournament | null = null;
   game!: Game;
   already_charged: boolean = false;
   pdfLoading = false;
@@ -43,21 +50,41 @@ export class FeesCollectorComponent {
     private feesCollectorService: FeesCollectorService,
     private pdfService: PdfService,
     private modalService: NgbModal,
-
+    private toastService: ToastService,
+    private DBhandler: DBhandler,
+    private systemDataService : SystemDataService
 
   ) {
-    this.next_tournaments$ = this.tournamentService.list_next_tournaments(this.back_days);
-
+    this.next_tournaments$ = this.tournamentService.list_next_tournaments(this.days_back);
+    
     this.feesCollectorService.game$.subscribe((game) => {
-      this.game = game;
-      this.already_charged = this.feesCollectorService.already_charged();
-      this.selected_tournament = game.tournament;
+      if(this.selected_tournament) {   // TODO : cleanup !! : (selected_tournament triggers new game$)
+        this.game = game;
+        this.already_charged = this.feesCollectorService.already_charged();
+        if(this.already_charged && game.tournament) this.toastService.showInfo(game.tournament.name,'les droits pour ce tournoi ont été enregistrés !');
+      }
+      else {
+        console.log('No tournament selected, game update ignored.', game);  // TODO : avoid these empty updates
+      }
     });
   }
+  
+  async tournament_selected(tournament: club_tournament) {
+    // this.game.tournament = {id: tournament.id, tournament_name: tournament.tournament_name, date: tournament.date, time: tournament.time};
+    // const game = this.restore_temp_storage(tournament.id);
+    const season = this.systemDataService.get_season(new Date());
+    const game = await this.DBhandler.readGame(season, tournament.id);
+    if(game) {
+      this.feesCollectorService.restore_game(game);
+      this.toastService.showSuccess('tournois','la saisie de ce tournoi a été restaurée');
+    }else {
+      this.feesCollectorService.set_tournament(tournament);
+    }
+  };
 
   one_week_back() {
-    this.back_days += 7;
-    this.next_tournaments$ = this.tournamentService.list_next_tournaments(this.back_days);
+    this.days_back += 7;
+    this.next_tournaments$ = this.tournamentService.list_next_tournaments(this.days_back);
   }
 
   euros_collected(): number {
@@ -72,26 +99,22 @@ export class FeesCollectorComponent {
     this.sales_of_the_day_table = table;
   }
 
-  tournament_selected(tournament: any) {
-    this.selected_tournament = tournament;
-    this.feesCollectorService.set_tournament(tournament);
-  };
 
   clear_added_player() {
     this.new_player = null; // or this.new_player = undefined;
   }
 
 check_status() {
-    console.log('check_status called', this.all_gamers_validated());
+
+  this.store_temp_storage();
 
     if(this.all_gamers_validated()) {
-
-          
           const modalRef = this.modalService.open(GetConfirmationComponent, { centered: true });
           modalRef.componentInstance.title = `Vous avez pointé tous les joueurs `;
           modalRef.componentInstance.subtitle = `Vous allez maintenant valider tampons et droits de table`;
           modalRef.result.then((answer: boolean) => {
             if (answer) {
+              // this.clear_temp_storage(this.game.tournament!.id);
               this.validate_fees();
             }
           });
@@ -100,7 +123,8 @@ check_status() {
   }
 
   clear_session() {
-    this.selected_tournament = null;
+    this.game.tournament = null;
+    this.selected_tournament = null!;
     this.feesCollectorService.init_tournament();
   }
 
@@ -112,19 +136,21 @@ check_status() {
     this.feesCollectorService.toggle_fee();
   }
 
-  validate_fees() {
+  async validate_fees() {
     this.tables_to_pdf();
-    this.feesCollectorService.save_fees();
-    this.selected_tournament = null;
-    this.game.tournament = null;
+    await this.feesCollectorService.save_fees() 
+    this.clear_session();
   }
 
   add_player(player: FFBplayer | null) {
-    if (player) this.feesCollectorService.add_player(player);
+    if (player) {
+      this.feesCollectorService.add_player(player);
+        this.store_temp_storage();
+    }
   }
 
   all_gamers_validated(): boolean {
-    return !!this.selected_tournament && !!this.game && this.game.gamers.every(gamer => (gamer.validated || !gamer.enabled));
+    return !!this.game.tournament && !!this.game && this.game.gamers.every(gamer => (gamer.validated || !gamer.enabled));
   }
 
   gamer_solvent(gamer: Gamer): boolean {
@@ -150,12 +176,54 @@ check_status() {
     return card_class
   }
 
+  async store_temp_storage() {
+  console.log('Temporary data stored:', this.game);
+  // this.localStorageService.setItem('tournoi n°'+ this.game.tournament!.id, JSON.stringify(this.game));
+
+  try {
+    const game = await this.DBhandler.readGame(this.game.season, this.game.tournament!.id);
+    // Handle the retrieved game data
+      if (game) {
+        await this.DBhandler.updateGame(this.game);
+        // this.feesCollectorService.restore_game(game);
+        // this.toastService.showSuccess('tournois','la saisie de ce tournoi a été restaurée');
+      }else {
+        await this.DBhandler.createGame(this.game);
+      }
+  } catch (error) {
+    console.error('Error storing game:', error);
+  }
+
+  }
+
+  async restore_temp_storage(trn_id : number) : Promise<Game | null> {
+    try {
+      const game = await this.DBhandler.readGame(this.game.season, trn_id);
+      return game;
+    } catch (error) {
+      console.error('Error restoring game:', error);
+      return null
+    }
+    // let game : Game | null = null;
+    // const temp_data = this.localStorageService.getItem('tournoi n°' + trn_id);
+    // if (temp_data) {
+    //   game = JSON.parse(temp_data);
+    //   console.log('Temporary data restored:', game);
+    // }
+    // return game;
+  }
+
+  // clear_temp_storage(trn_id : number) {
+  //   console.log('Temporary data cleared for tournament id:', trn_id);
+  //   this.localStorageService.removeItem('tournoi n°' + trn_id);
+  // }
+
   tables_to_pdf() {
 
     const gamers_table = this.build_gamers_table();
 
-    let fname = this.selected_tournament
-      ? `${this.selected_tournament.date}_${this.selected_tournament.tournament_name}.pdf`
+    let fname = this.game.tournament
+      ? `${this.game.tournament.date}_${this.game.tournament.name}.pdf`
       : 'feuille_presence.pdf';
 
 

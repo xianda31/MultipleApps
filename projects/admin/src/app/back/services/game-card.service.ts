@@ -64,9 +64,9 @@ export class GameCardService {
   }
 
 
-  get_member_credit(member: Member): number {
+  get_member_credit(member_license: string): number {
     return this._gameCards
-      .filter(c => c.owners.some(owner => owner.license_number === member.license_number))
+      .filter(c => c.owners.some(owner => owner.license_number === member_license))
       .reduce((total, card) => total + (card.initial_qty - card.stamps.length), 0);
   }
 

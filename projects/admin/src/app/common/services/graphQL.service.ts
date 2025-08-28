@@ -9,6 +9,7 @@ import { Schema } from '../../../../../../amplify/data/resource';
 import { Product, Product_input } from '../../back/products/product.interface';
 import { PlayBook, PlayBook_input } from '../../back/game-cards/game-card.interface';
 import { Page, Page_input, Snippet, Snippet_input } from '../interfaces/page_snippet.interface';
+import { Game, Game_input } from '../../back/fees/fees.interface';
 
 
 @Injectable({
@@ -299,6 +300,87 @@ listPages(): Observable<Page[]> {
     );
   }
 
+
+  // GAME SERVICE
+
+create_custom_key(season : string, trn_id:number) : string{
+  return season + '_' + trn_id;
+}
+
+   // CREATE PROMISE   ! validated
+  async createGame(game: Game): Promise<Game> {
+    const game_id = this.create_custom_key(game.season, game.tournament!.id);
+
+    let game_input : Game_input = {
+      gameId: game_id,
+      season: game.season,
+      member_trn_price: game.member_trn_price,
+      non_member_trn_price: game.non_member_trn_price,
+      fees_doubled: game.fees_doubled,
+      alphabetic_sort: game.alphabetic_sort,
+      tournament: game.tournament,
+      gamers: JSON.stringify(game.gamers)
+    };
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode: authMode });
+    const { data : game_output, errors } = await client.models.Game.create(game_input);
+    if (errors) throw errors;
+    let created_game = game_output
+      ? {
+          ...game_output,
+          gamers: typeof game_output.gamers === 'string'
+            ? JSON.parse(game_output.gamers)
+            : game_output.gamers
+        }
+      : null;
+    if (!created_game) throw new Error('Game creation failed: game_output is null');
+    return created_game;
+  }
+
+  async readGame(season : string, trn_id:number): Promise<Game | null> {
+    let game_id = this.create_custom_key(season, trn_id);
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode: authMode });
+    const { data : game_output, errors } = await client.models.Game.get({ gameId: game_id });
+    if (errors) throw errors;
+    let read_game = game_output
+    ? {
+      ...game_output,
+      gamers: typeof game_output.gamers === 'string'
+        ? JSON.parse(game_output.gamers)
+        : game_output.gamers
+    }
+    : null;
+    return read_game;
+  }
+
+  async updateGame(game: Game): Promise<Game> {
+    // const game_id = this.create_custom_key(game.season, game.tournament!.id);
+    let game_input : Game_input = {
+      gameId: game.gameId!,
+      season: game.season,
+      member_trn_price: game.member_trn_price,
+      non_member_trn_price: game.non_member_trn_price,
+      fees_doubled: game.fees_doubled,
+      alphabetic_sort: game.alphabetic_sort,
+      tournament: game.tournament,
+      gamers: JSON.stringify(game.gamers)
+    };
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode: authMode });
+    const { data : game_output, errors } = await client.models.Game.update( game_input);
+    if (errors) throw errors;
+    let updated_game = game_output
+      ? {
+          ...game_output,
+          gamers: typeof game_output.gamers === 'string'
+            ? JSON.parse(game_output.gamers)
+            : game_output.gamers
+        }
+      : null;
+    if (!updated_game) throw new Error('Game update failed: game_output is null');
+    return updated_game;
+  }
 
   // PLAYBOOK SERVICE
 

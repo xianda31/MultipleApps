@@ -1,15 +1,3 @@
-<!-- <div class="wrapper"> -->
-
-    <!-- <div [class]="all_gamers_validated() ? 'card shadow-lg mt-3 g-0 bg-warning' : 'card shadow-lg mt-3 g-0 bg-info'">
-        <div class="card-body">
-            <div class="row align-items-center justify-content-between">
-                <div [class]="'col-auto text-center fw-bolder ' + (all_gamers_validated() ? 'blink' : '')">
-                    ATTENTION : N'OUBLIEZ PAS DE SAUVEGARDER DÈS QUE TOUS LES JOUEURS SONT POINTÉS.
-                </div>
-                <ng-container *ngTemplateOutlet="save_dialog"></ng-container>
-            </div>
-        </div>
-    </div> -->
 
     <div class="card shadow-lg mt-3 g-0">
         <div class="card-header">
@@ -20,10 +8,10 @@
                     <h5 class="ms-1 d-none d-sm-inline">Droits de table</h5>
                 </div>
 
-                <div *ngIf="!selected_tournament" class="col-auto">
+                <div *ngIf="!selected_tournament || selected_tournament === undefined" class="col-auto">
                     <div class=" input-group input-group-sm align-items-center">
-                        <select class="form-select form-select-sm" [(ngModel)]="selected_tournament"
-                            (ngModelChange)="tournament_selected($event)" id="tournament_select">
+                        <select class="form-select form-select-sm" 
+                            [(ngModel)]="selected_tournament" (change)="tournament_selected(selected_tournament)" id="tournament_select">
                             <option *ngFor="let trn of next_tournaments$ | async" [ngValue]="trn">
                                 {{ trn.date | date:'dd/MM/yyyy' }} &nbsp; {{ trn.time }}</option>
                         </select>
@@ -34,15 +22,15 @@
                         </span>
                     </div>
                 </div>
-                <div *ngIf="selected_tournament" class="col-auto">
+                <div *ngIf="game && game.tournament" class="col-auto">
                     <span>
-                        {{selected_tournament.date | date:'dd/MM/yyyy'}}
-                        &nbsp; {{ selected_tournament.time }}</span>
+                        {{game.tournament.date | date:'dd/MM/yyyy'}}
+                        &nbsp; {{ game.tournament.time }}</span>
                 </div>
 
-                <ng-container *ngIf="game.tournament">
+                <ng-container *ngIf="game && game.tournament">
                     <div class="col-auto">
-                        {{game.tournament.tournament_name}}
+                        {{game.tournament.name}}
                     </div>
                     <div class="col-auto">
                         <span class="form-check form-switch">
@@ -71,7 +59,7 @@
 
         </div>
 
-        <div *ngIf="game.tournament" class="card-body">
+        <div *ngIf="game &&game.tournament" class="card-body">
 
             <span class="col form-check form-switch">
                 <input class="form-check-input" type="checkbox" role="switch" [checked]="game.alphabetic_sort"
@@ -104,7 +92,7 @@
         </div>
 
         <!-- footer -->
-        <div *ngIf="game.tournament" class="card-footer">
+        <div *ngIf="game && game.tournament" class="card-footer">
             <div class="row justify-content-between align-items-center">
                 <ng-container *ngTemplateOutlet="save_dialog"></ng-container>
 
@@ -189,7 +177,7 @@
         <!-- warning -->
         <div *ngIf="already_charged" class="row text-danger align-items-center">
             <i class="bi bi-info-circle-fill">
-                ce tournoi a peut-être déjà été traité !
+                les droits pour ce tournoi ont été enregistrés !
             </i>
         </div>
     </div>
