@@ -21,7 +21,7 @@ export class AppComponent {
   ) { }
 
   ngOnInit(): void {
-    
+
     registerLocaleData(localeFr);
 
     this.router.events.subscribe(event => {

@@ -30,7 +30,7 @@ export class AdminComponent {
   }
   ngOnInit(): void {
 
-    this.localStorageService.setItem('entry_point', 'admin');
+    this.localStorageService.setItem('entry_point', 'back');
 
     this.book_entries_number$ = this.bookService.list_book_entries().pipe(map((entries) => entries.length));
 
