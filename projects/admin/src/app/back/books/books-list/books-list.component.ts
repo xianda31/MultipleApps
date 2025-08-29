@@ -145,7 +145,7 @@ export class BooksListComponent  {
 
 
   show_book_entry(book_entry_id: string) {
-    this.router.navigate(['./admin/finance/books/editor', book_entry_id]);
+    this.router.navigate(['./back/finance/books/editor', book_entry_id]);
   }
 
   async delete_book_entry(book_entry: BookEntry) {
