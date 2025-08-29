@@ -32,10 +32,11 @@ export class GameCardsEditorComponent implements OnInit {
   ngOnInit(): void {
 
     this.gameCardService.gameCards.subscribe(cards => {
-      this.cards = cards;
+      this.cards = cards.sort((a, b) => {
+        return a.owners[0].lastname.localeCompare(b.owners[0].lastname);
+      });
       this.total_asset = cards.reduce((acc, card) => acc + card.initial_qty-card.stamps.length, 0);
       this.total_null_cards = cards.reduce((acc, card) => acc + ((card.initial_qty-card.stamps.length) === 0 ? 1 : 0), 0);
-      console.log('GameCardsEditorComponent.ngOnInit',  this.total_null_cards);
       this.loaded = true;
     });
   }
