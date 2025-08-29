@@ -74,7 +74,7 @@
           </a>
           <ul ngbDropdownMenu class="dropdown-menu shadow">
             <li *ngIf="user_accreditation && user_accreditation.level > 0">
-              <a class="dropdown-item" routerLink="../admin" (click)="dropdownUser.close(); closeBurger(); $event.stopPropagation()">
+              <a class="dropdown-item" routerLink="../back" (click)="dropdownUser.close(); closeBurger(); $event.stopPropagation()">
                 <i [class]="user_accreditation.icon"></i>
                 back office
               </a>
