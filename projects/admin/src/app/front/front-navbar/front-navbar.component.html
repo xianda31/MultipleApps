@@ -1,10 +1,9 @@
 <nav class="ms-3 navbar navbar-expand-lg">
-  <button class="navbar-toggler navbar-toggler-sm d-block d-md-none" type="button" (click)="toggleCollapse()"
+  <button class="navbar-toggler navbar-toggler-sm  d-block d-md-none" type="button" (click)="toggleCollapse()"
     [attr.aria-expanded]="!isCollapsed" aria-controls="navbarSupportedContent" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
   </button>
   <div [ngbCollapse]="isCollapsed" class="navbar-collapse" id="navbarSupportedContent">
-    <!-- <div class="justify-content-between"> -->
 
     <!-- les menus -->
   <ul class="navbar-nav w-100 d-flex align-items-start menu-sm-tight">

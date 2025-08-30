@@ -1,24 +1,12 @@
 .img-quarter-sm {
-  // ...existing code...
-  @media (max-width: 369.98px) {
+  width: 20% !important;
+  max-width: 100px !important;
+  @media (max-width: 420px) {
     display: none !important;
   }
 }
-.img-quarter-sm {
-  width: 20% !important;
-  max-width: 100px !important;
-  @media (max-width: 768px) {
-    width: 40px !important;
-    max-width: 40px !important;
-  }
-}
 
 
-// @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Amarante&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Emblema+One&display=swap');
-// @import url('https://fonts.googleapis.com/css2?family=Martian+Mono:wght@400;500;700&display=swap');
-  
 .root-bg {
   font-family: 'Amarante', serif;
   // background-color: rgba(66, 70, 66, 0.658);
