@@ -12,7 +12,7 @@ import { SystemConfiguration } from '../../../common/interfaces/system-conf.inte
 import { FFBplayer } from '../../../common/ffb/interface/FFBplayer.interface';
 import { MembersService } from '../../../common/services/members.service';
 import { ToastService } from '../../../common/services/toast.service';
-import {DBhandler} from "../../../common/services/graphQL.service";
+import { DBhandler } from "../../../common/services/graphQL.service";
 
 
 
@@ -21,16 +21,10 @@ import {DBhandler} from "../../../common/services/graphQL.service";
   providedIn: 'root'
 })
 export class FeesCollectorService {
-  game: Game = {
-    season: '',
-    member_trn_price: 0,
-    non_member_trn_price: 0,
-    alphabetic_sort: false,
-    fees_doubled: false,
-    gamers: [],
-    tournament: null,
-  };
-  _game$: Subject<Game> = new Subject<Game>();
+  tournament: club_tournament | null = null;
+
+  game!: Game ;
+  _game$: BehaviorSubject<Game> = new BehaviorSubject<Game>(this.game);
   members: Member[] = [];
   sys_conf !: SystemConfiguration;
 
@@ -41,7 +35,7 @@ export class FeesCollectorService {
     private systemDataService: SystemDataService,
     private gameCardService: GameCardService,
     private BookService: BookService,
-    private DBhandler : DBhandler
+    private DBhandler: DBhandler
 
 
   ) {
@@ -51,12 +45,11 @@ export class FeesCollectorService {
 
     this.systemDataService.get_configuration().subscribe((sys_conf) => {
       this.sys_conf = sys_conf;
-      // console.log('System configuration loaded in FeesCollectorService:', this.sys_conf);
-      this.init_tournament();
+      this.init_game();
     });
 
     this.gameCardService.gameCards.subscribe((cards) => {
-      // this.game_cards = cards;
+      // initialize game cards from dynamoDB for next usages
     });
 
 
@@ -65,8 +58,9 @@ export class FeesCollectorService {
   get game$(): Observable<Game> {
     return this._game$.asObservable();
   }
+  
 
-  init_tournament() {
+  private init_game() {
     this.game = {
       season: this.sys_conf.season,
       member_trn_price: +this.sys_conf.member_trn_price,
@@ -76,59 +70,7 @@ export class FeesCollectorService {
       gamers: [],
       tournament: null,
     };
-    // this._game$.next(this.game);
-    if (this.subscription) {
-      this.subscription.unsubscribe();
-      this.subscription = undefined;
-    }
   }
-
-  private is_member(license: string): boolean {
-    return this.members.some((member) => member.license_number === license);
-  }
-
-
-    get_members(): Member[] {
-    const members = this.game.gamers
-      .filter((gamer) => gamer.is_member)
-      .map((gamer) => this.members.find((member) => member.license_number === gamer.license))
-      .filter((member): member is Member => member !== undefined);
-    return members;
-  }
-
-
-  re_init_game(game : Game) {
-    this.game = game;
-    this._game$.next(this.game);
-  }
-
-  person2gamer(person: Person, index: number): Gamer {
-
-    let to_string = (license_number: number): string => {
-      return ('00' + license_number).slice(-8);
-    }
-
-    let license = to_string(person.license_number);
-    let is_member = this.is_member(license);
-    let in_euro = !is_member;
-    let price = is_member ? this.game.member_trn_price : this.game.non_member_trn_price;
-
-    let game_credits = (is_member ) ? this.gameCardService.get_member_credit(license) : 0;
-
-    return {
-      license: license,
-      firstname: person.firstname,
-      lastname: person.lastname.toUpperCase(),
-      is_member: is_member,
-      game_credits: game_credits,
-      in_euro: in_euro,
-      index: index,
-      price: price,
-      validated: false,
-      enabled: true
-    };
-  }
-
 
   toggle_fee() {
     this.game.fees_doubled = !this.game.fees_doubled;
@@ -149,33 +91,61 @@ export class FeesCollectorService {
     this._game$.next(this.game)
   }
 
-  check_all_members() {
-    this.game.gamers.forEach((gamer) => gamer.validated = gamer.is_member ? true : false);
-    this._game$.next(this.game)
+  async log_game_state() {
+    try {
+      const game = await this.DBhandler.readGame(this.game.season, this.game.tournament!.id);
+      // Handle the retrieved game data
+      if (game) {
+        await this.DBhandler.updateGame(this.game);
+      } else {
+        await this.DBhandler.createGame(this.game);
+      }
+    } catch (error) {
+      console.error('Error storing game:', error);
+    }
   }
 
-  subscription: Subscription | undefined;
-
-  subscribe_to_members_solvencies() {
-
-    if (this.subscription) {
-      this.subscription.unsubscribe();
-    }
+  private update_members_credits() {
     let members = this.get_members();
-    this.subscription = this.gameCardService.check_solvencies(members).subscribe((solvencies) => {
-      this.game.gamers.forEach((gamer) => {
-        if (gamer.is_member) {
-          // let member = gamer.is_member as Member;
-          let credit = solvencies.get(gamer.license) ?? 0;
-          gamer.game_credits = credit;
 
-        }
-      });
-      this._game$.next(this.game);
+    const subscription = this.gameCardService.check_solvencies(members).subscribe({
+      next: (solvencies) => {
+        this.game.gamers.forEach((gamer) => {
+          if (gamer.is_member) {
+            let credit = solvencies.get(gamer.license) ?? 0;
+            gamer.game_credits = credit;
+          }
+        });
+        this._game$.next(this.game);
+      },
+      complete: () => {
+        subscription.unsubscribe();
+      }
     });
   }
 
-  set_tournament(tournament: club_tournament) {
+
+
+  clear_tournament() {
+    this.tournament = null;
+  }
+
+  get_tournament(): club_tournament | null {
+    return this.tournament;
+  }
+
+  async set_tournament(tournament: club_tournament) {
+    this.tournament = tournament;
+
+    // check if tournament fees have been already worked on
+    const season = this.systemDataService.get_season(new Date());
+    const game = await this.DBhandler.readGame(season, tournament.id);
+    if (game) {
+      this.game = game;
+      this.toastService.showSuccess('tournois', 'dernier état de saisie de ce tournoi restauré');
+      this.update_members_credits();   // will update gamers game_credits & trigger _game$.next(this.game)
+      return
+    }
 
     this.game.fees_doubled = tournament.tournament_name.includes('ROY') ? true : false;
 
@@ -193,31 +163,18 @@ export class FeesCollectorService {
         name: tournament.tournament_name,
         date: tournament.date,
         time: tournament.time
-      }; 
+      };
 
       let factor = this.game.fees_doubled ? 2 : 1;
       this.game.gamers.forEach((gamer) => {
         gamer.price = gamer.is_member ? this.game.member_trn_price * factor : this.game.non_member_trn_price * factor;
       });
 
-
-      // this._game$.next(this.game)
-      this.subscribe_to_members_solvencies();   // will update gamers game_credits & trigger _game$.next(this.game)
+      this.update_members_credits();   // will update gamers game_credits & trigger _game$.next(this.game)
     }
     );
   }
 
-  restore_game(game: Game) {
-    this.game = game;
-    this._game$.next(this.game);
-  }
-
-  // // GAME CRUD
-
-  // create_game(game : Game) {
-  //   this.DBhandler.createGame(game);
-  //   return;
-  // }
 
   add_player(player: FFBplayer) {
     if (player) {
@@ -234,11 +191,51 @@ export class FeesCollectorService {
         enabled: true
       };
       this.game.gamers.push(new_gamer);
-      this.subscribe_to_members_solvencies();   // will update gamers game_credits & trigger _game$.next(this.game)
+      this.update_members_credits();   // will update gamers game_credits & trigger _game$.next(this.game)
     }
-  } 
+  }
+
+  private is_member(license: string): boolean {
+    return this.members.some((member) => member.license_number === license);
+  }
 
 
+  private get_members(): Member[] {
+    const members = this.game.gamers
+      .filter((gamer) => gamer.is_member)
+      .map((gamer) => this.members.find((member) => member.license_number === gamer.license))
+      .filter((member): member is Member => member !== undefined);
+    return members;
+  }
+
+
+
+  private person2gamer(person: Person, index: number): Gamer {
+
+    let to_string = (license_number: number): string => {
+      return ('00' + license_number).slice(-8);
+    }
+
+    let license = to_string(person.license_number);
+    let is_member = this.is_member(license);
+    let in_euro = !is_member;
+    let price = is_member ? this.game.member_trn_price : this.game.non_member_trn_price;
+
+    let game_credits = (is_member) ? this.gameCardService.get_member_credit(license) : 0;
+
+    return {
+      license: license,
+      firstname: person.firstname,
+      lastname: person.lastname.toUpperCase(),
+      is_member: is_member,
+      game_credits: game_credits,
+      in_euro: in_euro,
+      index: index,
+      price: price,
+      validated: false,
+      enabled: true
+    };
+  }
 
   euros_collected(): number {
     return this.game.gamers
@@ -288,7 +285,7 @@ export class FeesCollectorService {
           let member = this.members.find((member) => member.license_number === gamer.license);
           if (member) {
             this.gameCardService.stamp_member_card(member, this.game.tournament!.date, this.game.fees_doubled);
-          }else {throw new Error('Member not found !!!!');}
+          } else { throw new Error('Member not found !!!!'); }
         }
       });
 

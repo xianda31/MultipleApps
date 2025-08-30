@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { CommonModule, Location } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { TournamentService } from '../../../common/services/tournament.service';
 import { club_tournament } from '../../../common/ffb/interface/club_tournament.interface';
@@ -13,29 +13,27 @@ import { FFBplayer } from '../../../common/ffb/interface/FFBplayer.interface';
 import { InputPlayerComponent } from '../../../common/ffb/input-licensee/input-player.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { GetConfirmationComponent } from '../../modals/get-confirmation/get-confirmation.component';
-import { LocalStorageService } from '../../services/local-storage.service';
 import { ToastService } from '../../../common/services/toast.service';
-import {DBhandler} from "../../../common/services/graphQL.service";
+import { DBhandler } from "../../../common/services/graphQL.service";
 import { SystemDataService } from '../../../common/services/system-data.service';
 
 
 @Component({
   selector: 'app-fees-collector',
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, TodaysBooksComponent,InputPlayerComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, TodaysBooksComponent, InputPlayerComponent],
   templateUrl: './fees-collector.component.html',
   styleUrl: './fees-collector.component.scss'
 })
 export class FeesCollectorComponent {
 
-  selected_tournament!: club_tournament ;
+  selected_tournament: club_tournament | null = null;
 
   days_back: number = 0;
   next_tournaments$: Observable<club_tournament[]>;
-  // selected_tournament: club_tournament | null = null;
   game!: Game;
   already_charged: boolean = false;
   pdfLoading = false;
-    new_player!: FFBplayer | null;
+  new_player!: FFBplayer | null;
 
 
   sales_of_the_day_table: PDF_table = {
@@ -51,35 +49,29 @@ export class FeesCollectorComponent {
     private pdfService: PdfService,
     private modalService: NgbModal,
     private toastService: ToastService,
-    private DBhandler: DBhandler,
-    private systemDataService : SystemDataService
 
   ) {
     this.next_tournaments$ = this.tournamentService.list_next_tournaments(this.days_back);
-    
+  }
+
+  ngOnInit() {
+    this.selected_tournament = this.feesCollectorService.get_tournament();  // persisté par le service
+
     this.feesCollectorService.game$.subscribe((game) => {
-      if(this.selected_tournament) {   // TODO : cleanup !! : (selected_tournament triggers new game$)
+      if (this.selected_tournament) {   // selected_tournament triggers new game$
         this.game = game;
         this.already_charged = this.feesCollectorService.already_charged();
-        if(this.already_charged && game.tournament) this.toastService.showInfo(game.tournament.name,'les droits pour ce tournoi ont été enregistrés !');
+        if (this.already_charged && game.tournament) this.toastService.showInfo(game.tournament.name, 'les droits pour ce tournoi ont été enregistrés !');
       }
-      else {
-        console.log('No tournament selected, game update ignored.', game);  // TODO : avoid these empty updates
-      }
+      // else {
+      //   console.log('No tournament selected, game update ignored.', game);  // TODO : avoid these dummy updates
+      // }
     });
   }
-  
-  async tournament_selected(tournament: club_tournament) {
-    // this.game.tournament = {id: tournament.id, tournament_name: tournament.tournament_name, date: tournament.date, time: tournament.time};
-    // const game = this.restore_temp_storage(tournament.id);
-    const season = this.systemDataService.get_season(new Date());
-    const game = await this.DBhandler.readGame(season, tournament.id);
-    if(game) {
-      this.feesCollectorService.restore_game(game);
-      this.toastService.showSuccess('tournois','la saisie de ce tournoi a été restaurée');
-    }else {
-      this.feesCollectorService.set_tournament(tournament);
-    }
+
+  async tournament_selected(tournament: club_tournament | null) {
+    if (!tournament) { return; }
+    this.feesCollectorService.set_tournament(tournament);
   };
 
   one_week_back() {
@@ -104,20 +96,19 @@ export class FeesCollectorComponent {
     this.new_player = null; // or this.new_player = undefined;
   }
 
-check_status() {
+  check_status() {
 
-  this.store_temp_storage();
+    this.log_game_state();
 
-    if(this.all_gamers_validated()) {
-          const modalRef = this.modalService.open(GetConfirmationComponent, { centered: true });
-          modalRef.componentInstance.title = `Vous avez pointé tous les joueurs `;
-          modalRef.componentInstance.subtitle = `Vous allez maintenant valider tampons et droits de table`;
-          modalRef.result.then((answer: boolean) => {
-            if (answer) {
-              // this.clear_temp_storage(this.game.tournament!.id);
-              this.validate_fees();
-            }
-          });
+    if (this.all_gamers_validated()) {
+      const modalRef = this.modalService.open(GetConfirmationComponent, { centered: true });
+      modalRef.componentInstance.title = `Vous avez pointé tous les joueurs `;
+      modalRef.componentInstance.subtitle = `Vous allez maintenant valider tampons et droits de table`;
+      modalRef.result.then((answer: boolean) => {
+        if (answer) {
+          this.validate_fees();
+        }
+      });
     }
 
   }
@@ -125,7 +116,7 @@ check_status() {
   clear_session() {
     this.game.tournament = null;
     this.selected_tournament = null!;
-    this.feesCollectorService.init_tournament();
+    this.feesCollectorService.clear_tournament();
   }
 
   toggle_sort() {
@@ -138,14 +129,14 @@ check_status() {
 
   async validate_fees() {
     this.tables_to_pdf();
-    await this.feesCollectorService.save_fees() 
+    await this.feesCollectorService.save_fees()
     this.clear_session();
   }
 
   add_player(player: FFBplayer | null) {
     if (player) {
       this.feesCollectorService.add_player(player);
-        this.store_temp_storage();
+      this.log_game_state();
     }
   }
 
@@ -176,47 +167,9 @@ check_status() {
     return card_class
   }
 
-  async store_temp_storage() {
-  console.log('Temporary data stored:', this.game);
-  // this.localStorageService.setItem('tournoi n°'+ this.game.tournament!.id, JSON.stringify(this.game));
-
-  try {
-    const game = await this.DBhandler.readGame(this.game.season, this.game.tournament!.id);
-    // Handle the retrieved game data
-      if (game) {
-        await this.DBhandler.updateGame(this.game);
-        // this.feesCollectorService.restore_game(game);
-        // this.toastService.showSuccess('tournois','la saisie de ce tournoi a été restaurée');
-      }else {
-        await this.DBhandler.createGame(this.game);
-      }
-  } catch (error) {
-    console.error('Error storing game:', error);
+  async log_game_state() {
+    return this.feesCollectorService.log_game_state();
   }
-
-  }
-
-  async restore_temp_storage(trn_id : number) : Promise<Game | null> {
-    try {
-      const game = await this.DBhandler.readGame(this.game.season, trn_id);
-      return game;
-    } catch (error) {
-      console.error('Error restoring game:', error);
-      return null
-    }
-    // let game : Game | null = null;
-    // const temp_data = this.localStorageService.getItem('tournoi n°' + trn_id);
-    // if (temp_data) {
-    //   game = JSON.parse(temp_data);
-    //   console.log('Temporary data restored:', game);
-    // }
-    // return game;
-  }
-
-  // clear_temp_storage(trn_id : number) {
-  //   console.log('Temporary data cleared for tournament id:', trn_id);
-  //   this.localStorageService.removeItem('tournoi n°' + trn_id);
-  // }
 
   tables_to_pdf() {
 
@@ -233,17 +186,17 @@ check_status() {
 
   build_gamers_table(): PDF_table {
 
-    let payment = (gamer:Gamer) => {
+    let payment = (gamer: Gamer) => {
       if (!gamer.validated) return 'dispense';
       if (gamer.enabled) {
-        return gamer.in_euro ? (gamer.price .toFixed(2) + ' €') :((this.game.fees_doubled ? 2 : 1)+ 'tampon(s)') ;
+        return gamer.in_euro ? (gamer.price.toFixed(2) + ' €') : ((this.game.fees_doubled ? 2 : 1) + 'tampon(s)');
       } else {
         return 'Carte';
       }
     }
 
-    if (!this.game || !this.game.gamers) return { title:'',headers: [],alignments:[], rows: [] };
-    const title = 'recettes : ' + this.stamps_collected() +' tampon(s) et '+ this.euros_collected()+ ' €';
+    if (!this.game || !this.game.gamers) return { title: '', headers: [], alignments: [], rows: [] };
+    const title = 'recettes : ' + this.stamps_collected() + ' tampon(s) et ' + this.euros_collected() + ' €';
     const headers = ['Joueur1', 'Paiement1', 'Joueur2', 'Paiement2'];
     const alignments: HorizontalAlignment[] = ['left', 'right', 'left', 'right'];
     const rows: any[] = [];
@@ -257,7 +210,7 @@ check_status() {
         gamer2 ? payment(gamer2) : ''
       ]);
     }
-    return { title,headers,alignments, rows };
+    return { title, headers, alignments, rows };
   }
 
 
