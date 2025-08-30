@@ -73,6 +73,13 @@ export class GenericPageComponent {
     return icon ? this.icons[icon] : this.icons['unknown'];
   }
 
+
+  // special documents
+
+  isMobile() {
+    return window.innerWidth < 576;
+  }
+
   async downloadDocument(snippet: Snippet) {
     const docItem = { name: snippet.title, url: snippet.file };
     try {

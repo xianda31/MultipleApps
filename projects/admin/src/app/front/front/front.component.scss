@@ -1,3 +1,21 @@
+.container-fluid.root-bg {
+  padding-right: 0 !important;
+  padding-left: 0 !important;
+  margin-right: 0 !important;
+  margin-left: 0 !important;
+  width: 100vw;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100vw;
+  overflow-x: hidden;
+}
+
+.row {
+  margin-right: 0 !important;
+  margin-left: 0 !important;
+}
 .img-quarter-sm {
   width: 20% !important;
   max-width: 100px !important;
