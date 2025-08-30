@@ -63,7 +63,7 @@
 </ng-template>
 
 <ng-template #loadable let-snippets="snippets">
-    <div class="container-fluid p-0 justify-content-start">
+    <div class="container-sm-fluid container p-md-5 p-0 justify-content-start">
         <div *ngIf="snippets.length === 0 " class="text-center mt-5">
             <h1 class="display-3">.... Désolé ....</h1>
             <div class="lead">
@@ -72,8 +72,9 @@
                 <p>Sinon, veuillez contacter l'administrateur.</p>
             </div>
         </div>
+        <ng-container *ngIf="!isMobile()">
         <div *ngFor="let snippet of snippets" class="card mb-3 nice_shadow bg-dark">
-            <div *ngIf="!isMobile()" class="row g-0  align-items-center">
+            <div  class="row g-0  align-items-center">
                 <div class="col-md-2 text-secondary">
                     <i [class]="doc_icon(snippet.file)" style="font-size: 6rem;"></i>
                 </div>
@@ -101,7 +102,11 @@
                     </div>
                 </div>
             </div>
-            <div *ngIf="isMobile()" class="card-body">
+        </div>
+        </ng-container>
+        <ng-container *ngIf="isMobile()">
+        <div *ngFor="let snippet of snippets" class="card mb-3 nice_shadow bg-dark">
+            <div  class="card-body">
                 <div class="row text-secondary">
                     <h3 class="fw-bolder">
                         <i [class]="doc_icon(snippet.file)" style="font-size: 3rem;"></i>
@@ -118,6 +123,8 @@
                 </button>
             </div>
         </div>
+        </ng-container>
+
     </div>
 </ng-template>
 
