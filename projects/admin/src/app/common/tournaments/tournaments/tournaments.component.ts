@@ -26,7 +26,7 @@ export class TournamentsComponent {
 
   ngOnInit(): void {
 
-    this.titleService.setTitle('Les Tournois');
+    this.titleService.setTitle('Les prochains tournois');
     this.loadTournamentTeams();
 
     this.auth.logged_member$.subscribe((member) => {

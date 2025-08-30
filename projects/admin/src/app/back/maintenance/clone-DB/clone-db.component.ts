@@ -4,6 +4,7 @@ import { DescribeTableOutput } from '@aws-sdk/client-dynamodb';
 import { combineLatest, map, Observable, of, switchMap } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { environment } from '../../../../environments/environment';
+import { ToastService } from '../../../common/services/toast.service';
 
 
 type Table = {
@@ -27,7 +28,8 @@ export class CloneDBComponent {
   source_table_description!: DescribeTableOutput | null;
 
   constructor(
-    private batchService: BatchService
+    private batchService: BatchService,
+    private toastService: ToastService
   ) { }
 
 
@@ -100,10 +102,12 @@ copy_table(source_table: string, destination_table: string) {
     ).subscribe({
       next: () => {
         console.log(`Items copied from ${source_table} to ${destination_table}`);
+        this.toastService.showSuccess('Clone BDD', `Table ${this.name(source_table)} clonée avec succès`);
         this.started = false;
       },
       error: (error) => {
         console.error('Error copying items:', error);
+        this.toastService.showErrorToast('Clone BDD', `Erreur lors du clonage de la table ${this.name(source_table)}`);
         this.started = false;
       }
     });

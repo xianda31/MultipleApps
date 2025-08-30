@@ -109,7 +109,7 @@
 <ng-template #trombinoscope let-snippets="snippets">
     <div class="offset-md-3  col-md-6 justify-content-start">
 
-    <div class="row row-cols-sm-2 row-cols-md-3 row-cols-xl-5 g-3">
+        <div class="row row-cols-sm-2 row-cols-md-3 row-cols-xl-5 g-3">
             <div *ngFor="let snippet of snippets" class="col">
                 <div class="card h-100 nice_shadow">
                     <img [src]="snippet.image_url | async" style="max-width: 100%; max-height: 20vh; object-fit: cover;"
@@ -136,15 +136,16 @@
             <div *ngFor="let snippet of snippets" class="col">
                 <div class="card h-100 shadow">
                     <img *ngIf="snippet.image" [src]="snippet.image_url | async"
-                            style="max-height: 20vh; width: 100%; height: auto; object-fit: cover;" alt="{{snippet.title}}"
-                            class="img-fluid card-img-top">
-                    <!-- <div class="card-header bg-primary text-white"> -->
-                        <div class="card-body">
-                                <div class="card-title ">{{snippet.title}}</div>
-                                <div class="card-subtitle ">{{snippet.subtitle}}</div>
+                        style="max-height: 20vh; width: 100%; height: auto; object-fit: cover;" alt="{{snippet.title}}"
+                        class="img-fluid card-img-top">
+
+                    <div class="card-body">
+                        <div class="fs-3 card-title ">
+                            {{snippet.title}} <br>
+                            <span class="fs-4  ">{{snippet.subtitle}}</span>
+                            <hr>
                         </div>
-                    <!-- </div> -->
-                    <div class="card-text ps-3" [innerHTML]="snippet.content">
+                        <div class="card-text ps-3" [innerHTML]="snippet.content"> </div>
                     </div>
                 </div>
             </div>
