@@ -1,3 +1,36 @@
+@media (min-width: 768px) and (orientation: landscape) {
+  .navbar,
+  .navbar-collapse,
+  .navbar-nav,
+  .nav-link,
+  .dropdown-menu {
+    font-size: 0.95rem !important;
+    line-height: 1.1 !important;
+  }
+}
+@media (min-width: 768px) and (orientation: landscape) {
+  .navbar,
+  .navbar-collapse {
+    min-height: 40px !important;
+    height: 40px !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+}
+@media (min-width: 768px) and (orientation: landscape) {
+  .navbar,
+  .navbar-collapse {
+    display: flex !important;
+    visibility: visible !important;
+    min-height: 56px;
+    opacity: 1 !important;
+  }
+  .navbar-nav {
+    flex-direction: row !important;
+    align-items: center !important;
+    width: 100%;
+  }
+}
 // Burger parfaitement centré dans son bouton
 .navbar-toggler-sm {
   display: flex;
