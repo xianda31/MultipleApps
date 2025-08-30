@@ -40,9 +40,7 @@ export class FrontNavbarComponent {
     });
   }
   closeBurger() {
-    if (window.innerWidth < 576) {
-      this.isCollapsed = true;
-    }
+    this.isCollapsed = true;
   }
   
   isNavItemActive(navItem: string): boolean {

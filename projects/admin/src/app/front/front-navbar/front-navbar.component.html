@@ -6,7 +6,7 @@
   <div [ngbCollapse]="isCollapsed" class="navbar-collapse" id="navbarSupportedContent">
 
     <!-- les menus -->
-  <ul class="navbar-nav w-100 d-flex align-items-start menu-sm-tight">
+  <ul class="navbar-nav menu-sm-tight">
 
       <li class="nav-item me-md-3 me-sm-1">
         <a class="nav-link text-white" routerLink="news" [class.active]="isNavItemActive('news')">
@@ -65,7 +65,7 @@
       </li>
 
       <li ngbDropdown *ngIf="!(logged_member$ | async)" class="nav-link align-self-end me-md-5 me-sm-1 ms-auto">
-        <button class="btn btn-sepia shadow-sm" type="button" data-bs-toggle="offcanvas"
+        <button class="btn  btn-sm btn-sepia shadow-sm" type="button" data-bs-toggle="offcanvas"
           data-bs-target="#loggingOffCanvas" aria-controls="loggingOffCanvas">
           Espace membre
         </button>

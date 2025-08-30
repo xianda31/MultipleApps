@@ -1,28 +1,30 @@
-@media (min-width: 768px) and (orientation: landscape) {
   .navbar,
   .navbar-collapse,
-  .navbar-nav,
-  .nav-link,
-  .dropdown-menu {
-    font-size: 0.95rem !important;
-    line-height: 1.1 !important;
-  }
-}
-@media (min-width: 768px) and (orientation: landscape) {
-  .navbar,
-  .navbar-collapse {
-    min-height: 40px !important;
-    height: 40px !important;
+  .navbar-nav {
+    height: auto !important;
+    min-height: 0 !important;
     padding-top: 0 !important;
     padding-bottom: 0 !important;
   }
-}
+  .navbar-nav > .nav-item,
+  .navbar-nav > .dropdown,
+  .navbar-nav > .nav-link {
+    padding-top: 0.05rem !important;
+    padding-bottom: 0.05rem !important;
+    min-height: 0 !important;
+  }
+  .nav-link {
+    font-size: 0.9rem !important;
+    padding-top: 0.08rem !important;
+    padding-bottom: 0.08rem !important;
+    min-height: 0 !important;
+  }
 @media (min-width: 768px) and (orientation: landscape) {
   .navbar,
   .navbar-collapse {
     display: flex !important;
     visibility: visible !important;
-    min-height: 56px;
+    min-height: 68px;
     opacity: 1 !important;
   }
   .navbar-nav {
@@ -30,89 +32,7 @@
     align-items: center !important;
     width: 100%;
   }
-}
-// Burger parfaitement centré dans son bouton
-.navbar-toggler-sm {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  font-size: 1rem;
-  border: 1px solid #eb9a87;
-}
-
-.navbar-toggler-icon {
-  color:#eb9a87;
-}
-
-.navbar-toggler-sm .navbar-toggler-icon {
-  margin: 0 auto;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-// Style pour nav-item actif
-.nav-link.active {
-  border-bottom: 4px solid #eb9a87;
-  padding-bottom: 1px;
-}
-
-.nav-link:hover {
-  border-bottom: 2px solid rgba(139, 69, 19, 0.6);
-  padding-bottom: 4px;
-}
-
-// Bouton personnalisé sépia outline
-.btn-sepia {
-  background-color: transparent;
-  border: 1px solid #eb9a87;
-  color: #eb9a87;
-  
-  &:hover {
-    background-color: #eb9a87;
-    border-color: #eb9a87;
-    color: white;
-  }
-  
-  &:active, &:focus {
-    background-color: #d88873;
-    border-color: #d88873;
-    color: white;
-    box-shadow: 0 0 0 0.2rem rgba(235, 154, 135, 0.25);
-  }
-}
-
-// Dropdown on hover uniquement à partir de md (desktop)
-// Menu vertical plus serré en sm
-@media (max-width: 767.98px) {
-  .menu-sm-tight > .nav-item,
-  .menu-sm-tight > .dropdown,
-  .menu-sm-tight > .nav-link {
-    margin-bottom: 0.1rem !important;
-    padding-top: 0.1rem !important;
-    padding-bottom: 0.1rem !important;
-  font-size: 0.95rem !important;
-  line-height: 1.1 !important;
-  }
-  .menu-sm-tight .dropdown-menu {
-    margin-top: 0 !important;
-    padding-top: 0.1rem !important;
-    padding-bottom: 0.1rem !important;
-  font-size: 0.95rem !important;
-  line-height: 1.1 !important;
-  }
-}
-@media (min-width: 768px) {
   .dropdown {
-    &:hover > .dropdown-menu {
-      display: block;
-      animation: fadeIn 0.2s ease-in;
-    }
     &::after {
       content: '';
       position: absolute;
@@ -128,10 +48,6 @@
   .nav-item.dropdown {
     position: relative;
     overflow: visible;
-    &:hover > .dropdown-menu {
-      display: block !important;
-      animation: fadeIn 0.2s ease-in;
-    }
     &::after {
       content: '';
       position: absolute;
@@ -146,13 +62,128 @@
   }
 }
 
+.navbar-toggler-icon {
+  color: #eb9a87;
+}
+
+.navbar-toggler-sm .navbar-toggler-icon {
+  margin: 0 auto;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  display: block;
+
+  // Style pour nav-item actif
+  .nav-link.active {
+    border-bottom: 4px solid #eb9a87;
+    padding-bottom: 1px;
+  }
+}
+
+.nav-link:hover {
+  border-bottom: 2px solid rgba(139, 69, 19, 0.6);
+  padding-bottom: 4px;
+}
+
+// Bouton personnalisé sépia outline
+.btn-sepia {
+  background-color: transparent;
+  border: 1px solid #eb9a87;
+  color: #eb9a87;
+
+  &:hover {
+    background-color: #eb9a87;
+    border-color: #eb9a87;
+    color: white;
+  }
+
+  &:active,
+  &:focus {
+    background-color: #d88873;
+    border-color: #d88873;
+    color: white;
+    box-shadow: 0 0 0 0.2rem rgba(235, 154, 135, 0.25);
+  }
+}
+
+// Dropdown on hover uniquement à partir de md (desktop)
+// Menu vertical plus serré en sm
+@media (max-width: 767.98px) {
+
+  .menu-sm-tight>.nav-item,
+  .menu-sm-tight>.dropdown,
+  .menu-sm-tight>.nav-link {
+    margin-bottom: 0.1rem !important;
+    padding-top: 0.1rem !important;
+    padding-bottom: 0.1rem !important;
+    font-size: 0.95rem !important;
+    line-height: 1.1 !important;
+  }
+
+  .menu-sm-tight .dropdown-menu {
+    margin-top: 0 !important;
+    padding-top: 0.1rem !important;
+    padding-bottom: 0.1rem !important;
+    font-size: 0.95rem !important;
+    line-height: 1.1 !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .dropdown {
+    &:hover>.dropdown-menu {
+      animation: fadeIn 0.2s ease-in;
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      height: 10px;
+      background: transparent;
+      z-index: 1000;
+      pointer-events: none;
+    }
+  }
+
+  .nav-item.dropdown {
+    position: relative;
+    overflow: visible;
+    &::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      height: 10px;
+      background: transparent;
+      z-index: 1000;
+      pointer-events: none;
+    }
+  }
+  .navbar,
+  .navbar-collapse {
+    align-items: center !important;
+  }
+}
+
 .dropdown-menu {
   transition: opacity 0.2s ease-in-out;
   margin-top: 0;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-5px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
 
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -1,9 +1,26 @@
-@media (min-width: 768px) and (orientation: landscape) {
-  .navbar-bg {
-    min-height: 40px !important;
-    height: 40px !important;
+  .row.navbar-bg {
+    min-height: 0 !important;
+    height: auto !important;
     padding-top: 0 !important;
     padding-bottom: 0 !important;
+  }
+  .row.navbar-bg {
+    height: auto !important;
+    min-height: unset !important;
+  }
+  app-front-navbar {
+    height: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+@media (min-width: 768px) and (orientation: landscape) {
+  .navbar-bg {
+    min-height: 0 !important;
+    height: auto !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    display: flex !important;
+    align-items: center !important;
   }
   .title-bg, app-title {
     display: none !important;
