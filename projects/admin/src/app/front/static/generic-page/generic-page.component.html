@@ -136,16 +136,14 @@
             <div *ngFor="let snippet of snippets" class="col">
                 <div class="card h-100 shadow">
                     <img *ngIf="snippet.image" [src]="snippet.image_url | async"
-                        style="height: 10vh ; object-fit: cover;" alt="{{snippet.title}}"
-                        class="img-fluid rounded-2 p-2 align-self-center">
-                    <div class="card-header bg-primary text-white">
+                            style="max-height: 20vh; width: 100%; height: auto; object-fit: cover;" alt="{{snippet.title}}"
+                            class="img-fluid card-img-top">
+                    <!-- <div class="card-header bg-primary text-white"> -->
                         <div class="card-body">
-                            <!-- <div class="row align-items-center"> -->
-                                <div class="card-title fs-4">{{snippet.title}}</div>
-                                <div class="card-title fs-5">{{snippet.subtitle}}</div>
-                            <!-- </div> -->
+                                <div class="card-title ">{{snippet.title}}</div>
+                                <div class="card-subtitle ">{{snippet.subtitle}}</div>
                         </div>
-                    </div>
+                    <!-- </div> -->
                     <div class="card-text ps-3" [innerHTML]="snippet.content">
                     </div>
                 </div>
