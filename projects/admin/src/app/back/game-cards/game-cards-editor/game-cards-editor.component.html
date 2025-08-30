@@ -44,10 +44,10 @@
                     <ng-container *ngFor="let card of cards ; let i = index">
                         <tr>
                             <td class="text-start">
-                                <span *ngFor="let owner of card.owners; let j = index">
-                                    <span *ngIf="j > 0"> &nbsp; et &nbsp; </span>
+                                <div *ngFor="let owner of card.owners; let j = index">
+                                    <!-- <span *ngIf="j > 0"> &nbsp; et &nbsp; </span> -->
                                     {{owner.lastname}} <span class="d-none d-sm-inline">{{owner.firstname}}</span>
-                                </span>
+                                </div>
                             </td>
                             <td>{{card.createdAt | date:'dd/MM'}}</td>
                             <td class="text-center">

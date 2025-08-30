@@ -34,7 +34,7 @@
 
     <div [ngbCollapse]="isCollapsed" class="collapse navbar-collapse" id="navbarSupportedContent">
 
-      <ul class="navbar-nav me-auto mb-md-0 mb-lg-0 align-items-start ">
+  <ul class="navbar-nav me-auto mb-md-0 mb-lg-0 align-items-start menu-sm-tight">
 
         <li *ngIf="accreditation_level >= accreditation_levels.Contributeur" ngbDropdown
           class="nav-item dropdown me-md-3 me-sm-1">
@@ -42,9 +42,9 @@
             <i class="fs-4 bi-cart"></i> <span class="ms-1">Boutique</span>
           </a>
           <ul ngbDropdownMenu class="dropdown-menu">
-            <li><a class="dropdown-item" routerLink="./caisse/ventes">vente à adhérents</a></li>
-            <li><a class="dropdown-item" routerLink="./caisse/droits-de-table">tournoi en présentiel</a></li>
-            <li><a class="dropdown-item" routerLink="./caisse/produits">produits à la vente</a></li>
+            <li><a class="dropdown-item" routerLink="./caisse/ventes" (click)="closeBurger()">vente à adhérents</a></li>
+            <li><a class="dropdown-item" routerLink="./caisse/droits-de-table" (click)="closeBurger()">tournoi en présentiel</a></li>
+            <li><a class="dropdown-item" routerLink="./caisse/produits" (click)="closeBurger()">produits à la vente</a></li>
           </ul>
         </li>
         
@@ -55,9 +55,9 @@
             <span class="ms-1">Adhérents</span>
           </a>
           <ul ngbDropdownMenu class="dropdown-menu">
-            <li><a class="dropdown-item" routerLink="./members/database">répertoire</a></li>
-            <li><a class="dropdown-item" routerLink="./members/cartes-admission">cartes admission</a></li>
-            <li><a class="dropdown-item" routerLink="./members/payments">paiements</a></li>
+            <li><a class="dropdown-item" routerLink="./members/database" (click)="closeBurger()">répertoire</a></li>
+            <li><a class="dropdown-item" routerLink="./members/cartes-admission" (click)="closeBurger()">cartes admission</a></li>
+            <li><a class="dropdown-item" routerLink="./members/payments" (click)="closeBurger()">paiements</a></li>
           </ul>
         </li>
         
@@ -68,12 +68,12 @@
             <i class="fs-4 bi-journal"></i> <span class="ms-1">Finance</span>
           </a>
           <ul ngbDropdownMenu class="dropdown-menu">
-            <li><a class="dropdown-item" routerLink="./finance/état-de-caisse">état de caisse</a></li>
-            <li><a class="dropdown-item" routerLink="./finance/toutes-ecritures">écritures courantes</a></li>
-            <li><a class="dropdown-item" routerLink="./finance/books/base-comptable">synthèse</a></li>
-            <li><a class="dropdown-item" routerLink="./finance/bank-reconciliation">rapprochement bancaire</a></li>
-            <li><a class="dropdown-item" routerLink="./finance/expense-and-revenue">résultats</a></li>
-            <li><a class="dropdown-item" routerLink="./finance/balance">bilan</a></li>
+            <li><a class="dropdown-item" routerLink="./finance/état-de-caisse" (click)="closeBurger()">état de caisse</a></li>
+            <li><a class="dropdown-item" routerLink="./finance/toutes-ecritures" (click)="closeBurger()">écritures courantes</a></li>
+            <li><a class="dropdown-item" routerLink="./finance/books/base-comptable" (click)="closeBurger()">synthèse</a></li>
+            <li><a class="dropdown-item" routerLink="./finance/bank-reconciliation" (click)="closeBurger()">rapprochement bancaire</a></li>
+            <li><a class="dropdown-item" routerLink="./finance/expense-and-revenue" (click)="closeBurger()">résultats</a></li>
+            <li><a class="dropdown-item" routerLink="./finance/balance" (click)="closeBurger()">bilan</a></li>
           </ul>
         </li>
 
@@ -84,12 +84,12 @@
             <i class="fs-4 bi-database-fill-gear"></i> <span class="ms-1">Outils</span>
           </a>
           <ul ngbDropdownMenu class="dropdown-menu">
-            <li><a class="dropdown-item" routerLink="./finance/books/list">base de données</a></li>
-            <li><a class="dropdown-item" routerLink="./finance/books/editor">écriture</a></li>
-            <li><a class="dropdown-item" routerLink="./outils/groups">droits d'accès</a></li>
-            <li><a class="dropdown-item" routerLink="./outils/sysconf">configuration</a></li>
-            <li *ngIf="!production_mode"><a class="dropdown-item" routerLink="./outils/excel_import">import excel</a></li>
-            <li *ngIf="!production_mode"><a class="dropdown-item" routerLink="./outils/cloneDB">clone DB</a></li>
+            <li><a class="dropdown-item" routerLink="./finance/books/list" (click)="closeBurger()">base de données</a></li>
+            <li><a class="dropdown-item" routerLink="./finance/books/editor" (click)="closeBurger()">écriture</a></li>
+            <li><a class="dropdown-item" routerLink="./outils/groups" (click)="closeBurger()">droits d'accès</a></li>
+            <li><a class="dropdown-item" routerLink="./outils/sysconf" (click)="closeBurger()">configuration</a></li>
+            <li *ngIf="!production_mode"><a class="dropdown-item" routerLink="./outils/excel_import" (click)="closeBurger()">import excel</a></li>
+            <li *ngIf="!production_mode"><a class="dropdown-item" routerLink="./outils/cloneDB" (click)="closeBurger()">clone DB</a></li>
           </ul>
         </li>
 
@@ -101,12 +101,13 @@
           </a>
           <ul ngbDropdownMenu class="dropdown-menu">
             <!-- <li><a class="dropdown-item" routerLink="./site/thumbnails">vignettes</a></li> -->
-            <li><a class="dropdown-item" routerLink="./site/pages">pages</a></li>
+            <li><a class="dropdown-item" routerLink="/front" (click)="closeBurger()">site</a></li>
+            <li><a class="dropdown-item" routerLink="./site/pages" (click)="closeBurger()">pages</a></li>
               <li ngbDropdown class="dropdown-submenu">
                 <a class="dropdown-item dropdown-toggle" ngbDropdownToggle href="#">fichiers</a>
                 <ul ngbDropdownMenu class="dropdown-menu ms-2">
-                  <li><a class="dropdown-item" routerLink="./site/filemgr/documents">documents</a></li>
-                  <li><a class="dropdown-item" routerLink="./site/filemgr/images">images</a></li>
+                  <li><a class="dropdown-item" routerLink="./site/filemgr/documents" (click)="closeBurger()">documents</a></li>
+                  <li><a class="dropdown-item" routerLink="./site/filemgr/images" (click)="closeBurger()">images</a></li>
                 </ul>
               </li>
           </ul>

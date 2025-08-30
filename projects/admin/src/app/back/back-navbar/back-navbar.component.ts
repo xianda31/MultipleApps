@@ -25,6 +25,12 @@ import { Process_flow } from '../../common/authentification/authentification_int
   styleUrl: './back-navbar.component.scss'
 })
 export class BackNavbarComponent implements OnInit {
+
+  closeBurger(): void {
+    if (window.innerWidth < 768) {
+      this.isCollapsed = true;
+    }
+  }
   @Input() season: string = '';
   @Input() entries_nbr: number = 0;
   accreditation_level!: number;

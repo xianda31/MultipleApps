@@ -23,13 +23,8 @@ import { CdkDrag, CdkDropList, CdkDragDrop, moveItemInArray, transferArrayItem, 
 export class PagesEditorComponent {
   @ViewChild('scrollable') scrollable!: ElementRef;
 
+  resolution_too_small = false;
 
-  getNextSnippetGroup(page: FormGroup): FormGroup {
-    return page.get('next_snippet') as FormGroup;
-  }
-  get dropListIds(): string[] {
-    return ['trash_'].concat(this.pageGroups.map((_, i) => 'dropList_' + i));
-  }
   pages: Page[] = [];
   bin_page_index: number | null = null;
 
@@ -62,6 +57,10 @@ export class PagesEditorComponent {
 
   ngOnInit(): void {
 
+    if (window.innerWidth < 768) {
+      this.resolution_too_small = true;
+    }
+  
 
     this.file_paths$ = this.fileService.list_files('documents/').pipe(
       map((S3items) => S3items.map(item => item.path))
@@ -109,9 +108,15 @@ export class PagesEditorComponent {
     });
   }
 
-
-
   //getters
+
+  getNextSnippetGroup(page: FormGroup): FormGroup {
+    return page.get('next_snippet') as FormGroup;
+  }
+  get dropListIds(): string[] {
+    return ['trash_'].concat(this.pageGroups.map((_, i) => 'dropList_' + i));
+  }
+
   get pagesFormArray(): FormArray {
     return this.pagesForm.get('pagesArray') as FormArray;
   }
