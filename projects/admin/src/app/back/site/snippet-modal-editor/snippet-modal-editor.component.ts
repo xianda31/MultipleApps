@@ -7,6 +7,7 @@ import '../../../common/editorjs-link-relative.js';
 import edjsHTML from 'editorjs-html'
 import Header from '@editorjs/header';
 import List from '@editorjs/list';
+import Table from '@editorjs/table';
 import { CommonModule } from '@angular/common';
 
 
@@ -24,6 +25,16 @@ export class SnippetModalEditorComponent implements AfterViewInit {
     linkTool: (block: any) => {
       const url = block.data.link;
       return `<a href="${url}">${url}</a>`;
+    },
+    table: (block: any) => {
+      const rows = block.data.content;
+      if (!rows || !Array.isArray(rows)) return '';
+      let html = '<table class="table table-bordered"><tbody>';
+      for (const row of rows) {
+        html += '<tr>' + row.map((cell: string) => `<td>${cell}</td>`).join('') + '</tr>';
+      }
+      html += '</tbody></table>';
+      return html;
     }
   });
   output_html!: string;
@@ -57,6 +68,10 @@ export class SnippetModalEditorComponent implements AfterViewInit {
             class: (window as any).LinkToolRelative,
             inlineToolbar: true
           },
+          table: {
+            class: Table as any,
+            inlineToolbar: true
+          }
         },
         data: initialData,
       });
@@ -71,7 +86,6 @@ export class SnippetModalEditorComponent implements AfterViewInit {
       const data = await this.editor.save();
       this.output_html = this.edjsParser.parse(data); // Convertit les blocks EditorJS en HTML
 
-      console.log('%s => %s:',JSON.stringify(data), this.output_html);
       let snippet = { ...this.snippet };
       snippet.content = this.output_html;
       this.activeModal.close(snippet);
@@ -117,6 +131,21 @@ export class SnippetModalEditorComponent implements AfterViewInit {
             data: {
               style: tag === 'UL' ? 'unordered' : 'ordered',
               items
+            }
+          });
+        } else if (tag === 'TABLE') {
+          const rows: string[][] = [];
+          (node as HTMLElement).querySelectorAll('tr').forEach(tr => {
+            const cells: string[] = [];
+            tr.querySelectorAll('td,th').forEach(cell => {
+              cells.push(cell.innerHTML);
+            });
+            rows.push(cells);
+          });
+          blocks.push({
+            type: 'table',
+            data: {
+              content: rows
             }
           });
         }
