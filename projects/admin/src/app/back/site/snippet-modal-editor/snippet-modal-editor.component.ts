@@ -2,6 +2,8 @@ import { AfterViewInit, Component, EventEmitter, Input, Output } from '@angular/
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Snippet } from '../../../common/interfaces/page_snippet.interface';
 import EditorJS from '@editorjs/editorjs';
+// @ts-ignore
+import '../../../common/editorjs-link-relative.js';
 import edjsHTML from 'editorjs-html'
 import Header from '@editorjs/header';
 import List from '@editorjs/list';
@@ -18,7 +20,12 @@ export class SnippetModalEditorComponent implements AfterViewInit {
   @Input() snippet!: Snippet;
   @Output() snippetChange = new EventEmitter<Snippet | null>();
   editor!: EditorJS;
-  edjsParser = edjsHTML();
+  edjsParser = edjsHTML({
+    linkTool: (block: any) => {
+      const url = block.data.link;
+      return `<a href="${url}">${url}</a>`;
+    }
+  });
   output_html!: string;
 
   constructor(
@@ -35,7 +42,7 @@ export class SnippetModalEditorComponent implements AfterViewInit {
     this.editor = new EditorJS(
       {
         holder: 'editorjs',
-        placeholder: 'Ecrire votre texte ici...',
+        placeholder: 'Votre texte ici...',
         autofocus: true,
         tools: {
           header: {
@@ -46,10 +53,13 @@ export class SnippetModalEditorComponent implements AfterViewInit {
             class: List as any,
             inlineToolbar: true
           },
+          linkTool: {
+            class: (window as any).LinkToolRelative,
+            inlineToolbar: true
+          },
         },
         data: initialData,
       });
-
   }
 
   closeModal(): void {
@@ -60,6 +70,8 @@ export class SnippetModalEditorComponent implements AfterViewInit {
     try {
       const data = await this.editor.save();
       this.output_html = this.edjsParser.parse(data); // Convertit les blocks EditorJS en HTML
+
+      console.log('%s => %s:',JSON.stringify(data), this.output_html);
       let snippet = { ...this.snippet };
       snippet.content = this.output_html;
       this.activeModal.close(snippet);

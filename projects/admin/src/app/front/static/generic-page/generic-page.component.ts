@@ -1,4 +1,5 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, Renderer2, ElementRef } from '@angular/core';
+import { Router } from '@angular/router';
 import { MENU_TITLES, Page, PAGE_TEMPLATES, Snippet } from '../../../common/interfaces/page_snippet.interface';
 import { SnippetService } from '../../../common/services/snippet.service';
 import { TitleService } from '../../title.service';
@@ -35,24 +36,46 @@ export class GenericPageComponent {
     private pageService: PageService,
     private titleService: TitleService,
     private toastService: ToastService,
-    private fileService: FileService
+    private fileService: FileService,
+    private router: Router,
+    private renderer: Renderer2,
+    private el: ElementRef
   ) { }
 
   ngOnInit(): void {
+    // Intercept link clicks for relative URLs
+    this.renderer.listen(this.el.nativeElement, 'click', (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (target.tagName === 'A') {
+        const href = target.getAttribute('href');
+        if (href && (/^\/|^\.\/|^\.\./.test(href))) {
+          event.preventDefault();
+          this.router.navigateByUrl(href);
+        } else if (href && (/^#/.test(href))) { // Handle internal anchor links
+          event.preventDefault();
+          const id = href.substring(1);
+          const element = document.getElementById(id);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth' }); // Smooth scroll to element
+          }
+        } else if (href) {   // Handle external links
+          event.preventDefault();
+          window.open(href, '_blank');
+        }
+      }
+    });
 
-    
     this.pageService.getPageByTitle(this.menu_title).pipe(
       map(page => {
         if (!page) { throw new Error(this.menu_title + ' page not found' ) }
         this.page = page;
         this.titleService.setTitle(this.page.title);
-
       }),
       switchMap(() => this.snippetService.listSnippets())
-     )
-     .subscribe((snippets) => {
+    )
+    .subscribe((snippets) => {
       this.snippets = this.page.snippet_ids.map(id => snippets.find(snippet => snippet.id === id))
-      .filter(snippet => snippet !== undefined) as Snippet[];
+        .filter(snippet => snippet !== undefined) as Snippet[];
     });
   }
 
