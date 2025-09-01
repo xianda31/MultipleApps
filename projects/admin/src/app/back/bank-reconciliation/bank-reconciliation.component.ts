@@ -109,7 +109,7 @@ highlight(book_entry: BookEntry) {
     }
   }
   show_book_entry(book_entry_id: string) {
-    this.router.navigate(['./admin/finance/books/editor', book_entry_id]);
+    this.router.navigate(['./back/finance/books/editor', book_entry_id]);
   }
 
   set_bank_report(book_entry: BookEntry, report: string) {
