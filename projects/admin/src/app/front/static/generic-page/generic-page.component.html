@@ -9,8 +9,14 @@
     <div *ngSwitchCase="PAGE_TEMPLATES.TROMBINOSCOPE">
         <ng-container *ngTemplateOutlet="trombinoscope; context: { snippets: snippets }"></ng-container>
     </div>
-    <div *ngSwitchCase="PAGE_TEMPLATES.CARDS">
-        <ng-container *ngTemplateOutlet="cards; context: { snippets: snippets }"></ng-container>
+    <div *ngSwitchCase="PAGE_TEMPLATES.CARDS_top">
+        <ng-container *ngTemplateOutlet="cards_img_top; context: { snippets: snippets }"></ng-container>
+    </div>
+    <div *ngSwitchCase="PAGE_TEMPLATES.CARDS_top">
+        <ng-container *ngTemplateOutlet="cards_img_top; context: { snippets: snippets }"></ng-container>
+    </div>
+    <div *ngSwitchCase="PAGE_TEMPLATES.CARDS_bottom">
+        <ng-container *ngTemplateOutlet="cards_img_bottom; context: { snippets: snippets }"></ng-container>
     </div>
     <div *ngSwitchDefault>
         <ng-container *ngTemplateOutlet="journal; context: { snippets: snippets }"></ng-container>
@@ -151,16 +157,17 @@
     </div>
 </ng-template>
 
-<ng-template #cards let-snippets="snippets">
+<ng-template #cards_img_top let-snippets="snippets">
     <div class=" col-md-12 offset-xl-1  col-xl-10 justify-content-start">
 
-        <div class="row row-cols-1 row-cols-md-3 justify-content-center g-2">
+        <div class="row row-cols-1 row-cols-md-3 justify-content-center  gy-5 g-md-2 ">
             <div *ngFor="let snippet of snippets" class="col">
-                <div class="card h-100 shadow">
+                <div class="card h-100 nice_shadow">
+
                     <img *ngIf="snippet.image" [src]="snippet.image_url | async"
                         style="max-height: 20vh; width: 100%; height: auto; object-fit: cover;" alt="{{snippet.title}}"
                         class="img-fluid card-img-top">
-
+                    
                     <div class="card-body">
                         <div class="fs-3 card-title ">
                             {{snippet.title}} <br>
@@ -169,6 +176,34 @@
                         </div>
                         <div class="card-text ps-3" [innerHTML]="snippet.content"> </div>
                     </div>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+
+</ng-template>
+
+<ng-template #cards_img_bottom let-snippets="snippets">
+    <div class=" col-md-12 offset-xl-1  col-xl-10 justify-content-start">
+
+        <div class="row row-cols-1 row-cols-md-3 justify-content-center  gy-5 g-md-2 ">
+            <div *ngFor="let snippet of snippets" class="col">
+                <div class="card h-100 nice_shadow">
+
+                    
+                    <div class="card-body">
+                        <div class="fs-3 card-title ">
+                            {{snippet.title}} <br>
+                            <span class="fs-4  ">{{snippet.subtitle}}</span>
+                            <hr>
+                        </div>
+                        <div class="card-text ps-3" [innerHTML]="snippet.content"> </div>
+                    </div>
+                    
+                    <img *ngIf="snippet.image" [src]="snippet.image_url | async"
+                        style="max-height: 20vh; width: 100%; height: auto; object-fit: cover;" alt="{{snippet.title}}"
+                        class="img-fluid card-img-bottom">
                 </div>
             </div>
         </div>

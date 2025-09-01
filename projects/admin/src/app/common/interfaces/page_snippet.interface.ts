@@ -44,7 +44,8 @@ export enum PAGE_TEMPLATES {
     JOURNAL = 'journal',
     TROMBINOSCOPE = 'trombinoscope',
     LOADABLE = 'téléchargement',
-    CARDS = 'fiches',
+    CARDS_top = 'fiches img haut',
+    CARDS_bottom = 'fiches img bas',
     X_DEFAULT = 'journal',
 }
 
