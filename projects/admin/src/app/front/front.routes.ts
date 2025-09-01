@@ -29,7 +29,7 @@ export const routes: Routes = [
        { path: 'tournaments/next/:id', component: TournamentComponent },
        {path : 'tournaments/fees', component: GameCardsOwnedComponent},
        
-      { path: 'orders/history', component: PurchasesComponent },
+      { path: 'achats/historique', component: PurchasesComponent },
 
       { path: 'authentification', component: ConnexionComponent},
       

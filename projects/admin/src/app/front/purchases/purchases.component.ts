@@ -20,7 +20,7 @@ export class PurchasesComponent {
 
   member_full_name: string = '';
   achats_ventes !: Formatted_purchase[];
-  season: string = '2023-2024'; // This should be dynamic based on the current season
+  season!: string;
 
   constructor(
     private bookService: BookService,
