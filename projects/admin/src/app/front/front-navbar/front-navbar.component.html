@@ -6,7 +6,7 @@
   <div [ngbCollapse]="isCollapsed" class="navbar-collapse" id="navbarSupportedContent">
 
     <!-- les menus -->
-  <ul class="navbar-nav menu-sm-tight">
+  <ul class="navbar-nav menu-sm-tight" (click)="dropdownClub.close(); closeBurger(); $event.stopPropagation()" >
 
       <li class="nav-item me-md-3 me-sm-1">
         <a class="nav-link text-white" routerLink="news" [class.active]="isNavItemActive('news')">

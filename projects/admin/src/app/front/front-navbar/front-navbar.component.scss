@@ -1,3 +1,16 @@
+@media (max-width: 767.98px) {
+  .navbar-nav.menu-sm-tight {
+    flex-direction: column !important;
+    gap: 0.25rem !important;
+  }
+  .navbar-nav.menu-sm-tight > .nav-item,
+  .navbar-nav.menu-sm-tight > .dropdown,
+  .navbar-nav.menu-sm-tight > .nav-link {
+    margin-bottom: 0.25rem !important;
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
+  }
+}
   .navbar,
   .navbar-collapse,
   .navbar-nav {
