@@ -7,50 +7,50 @@
         </h5>
     </div> -->
 
-    
-    <div class="row row-cols-2 row-cols-md-4 g-2  ">
+
+    <div class="row row-cols-sm-1 row-cols-md-4 row-cols-xl-6 g-2">
 
         <div class="col" *ngFor="let t of next_tournament_teams">
 
-            <div class="card  tournament-card h-100 " (click)="goToTournamentTeams(t)">
+            <div class="card h-100 " (click)="goToTournamentTeams(t)">
 
                 <h4 class="card-header">
                     <span class="stamp">
-                    <i [class]="icon_for(t)"></i> </span>
-                <div class="text-center">
-                    {{ date_of(t) | date:'EEEE d MMMM':'':'fr-FR' }}
-                    <h6 class="text-center"> {{name_of(t)}} </h6>
-                </div>
+                        <i [class]="icon_for(t)"></i> </span>
+                    <div class="text-center">
+                        {{ date_of(t) | date:'EEEE d MMMM':'':'fr-FR' }}
+                        <h6 class="text-center"> {{name_of(t)}} </h6>
+                    </div>
                 </h4>
 
                 <div class="card-body">
                     <div class="card-text">
-                    <div *ngIf="t.teams && t.teams.length > 0">
-                        <small>
-                            paires inscrites : {{(t.teams.length - t.isolated_player_count)}}
-                        </small>
+                        <div *ngIf="t.teams && t.teams.length > 0">
+                            <small>
+                                paires inscrites : {{(t.teams.length - t.isolated_player_count)}}
+                            </small>
+                        </div>
+                        <div *ngIf="!t.teams || t.teams.length === 0">
+                            <small>
+                                aucune inscription
+                            </small>
+                        </div>
+                        <div *ngIf="t.isolated_player_count > 0">
+                            <small>
+                                + {{t.isolated_player_count}}
+                                <i class="bi bi-person-arms-up"> </i>
+                                <span *ngIf="t.isolated_player_count === 1" class="text-info-emphasis">cherche un
+                                    partenaire </span>
+                                <span *ngIf="t.isolated_player_count > 1" class="text-info-emphasis">cherchent un
+                                    partenaire </span>
+                            </small>
+                        </div>
                     </div>
-                    <div *ngIf="!t.teams || t.teams.length === 0">
-                        <small>
-                            aucune inscription
-                        </small>
-                    </div>
-                    <div *ngIf="t.isolated_player_count > 0">
-                        <small>
-                            + {{t.isolated_player_count}}
-                            <i class="bi bi-person-arms-up"> </i>
-                            <span *ngIf="t.isolated_player_count === 1" class="text-info-emphasis">cherche un
-                                partenaire </span>
-                            <span *ngIf="t.isolated_player_count > 1" class="text-info-emphasis">cherchent un
-                                partenaire </span>
-                        </small>
-                    </div>
-                </div>
 
-                <div *ngIf="registrated_in(t) " class="card-text">
-                    <hr />
-                    Vous êtes inscrit(e) à ce tournoi.
-                </div>
+                    <div *ngIf="registrated_in(t) " class="card-text">
+                        <hr />
+                        Vous êtes inscrit(e) à ce tournoi.
+                    </div>
                 </div>
 
             </div>

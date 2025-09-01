@@ -51,7 +51,6 @@ export class FrontNavbarComponent {
     this.isCollapsed = !this.isCollapsed;
   }
    onCanvasClose() {
-      console.log('Canvas closed');
       this.auth.changeMode(Process_flow.SIGN_IN);
     }
   
