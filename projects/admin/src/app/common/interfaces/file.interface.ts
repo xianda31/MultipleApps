@@ -9,9 +9,6 @@ export interface S3Item {
     // usage?: number;
 }
 
-export  interface FileSystemItem {
-    __data: any;
-    [key: string]: FileSystemItem | any;
-  }
-
-export  type FileSystem = { [key: string]: FileSystemItem };
+export  interface FileSystemNode {
+      [key: string]: FileSystemNode | { __data: S3Item };
+    }

@@ -1,13 +1,12 @@
 import { Injectable } from '@angular/core';
 import { getUrl, list, remove } from 'aws-amplify/storage';
-import { S3Item } from '../interfaces/file.interface';
+import { FileSystemNode, S3Item } from '../interfaces/file.interface';
 
-// Add FileSystem interface with index signature
 
 import { downloadData, uploadData } from 'aws-amplify/storage';
 import { ToastService } from '../services/toast.service';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 
 
 @Injectable({
@@ -44,6 +43,38 @@ export class FileService {
         .catch(error => subscriber.error(error));
     });
   }
+
+  list_files_full(directory: string): Observable<S3Item[]> {
+    return new Observable<S3Item[]>(subscriber => {
+      list({ path: directory, options: { listAll: true } })
+        .then(result => {
+          subscriber.next(result.items);
+          subscriber.complete();
+        })
+        .catch(error => subscriber.error(error));
+    });
+  }
+
+  processStorageList(response: S3Item[]): FileSystemNode {
+    const filesystem: FileSystemNode = {};
+
+    const add = (source: string, target: FileSystemNode, item: S3Item): void => {
+      const elements: string[] = source.split('/');
+      const element: string | undefined = elements.shift();
+      if (!element) return; // blank
+      target[element] = target[element] || { __data: item };
+      if (elements.length) {
+        target[element] =
+          typeof target[element] === 'object' ? target[element] : {};
+        add(elements.join('/'), target[element] as FileSystemNode, item);
+      }
+    };
+
+
+    response.forEach((item) => add(item.path, filesystem, item));
+    return filesystem;
+  }
+
 
   upload_file(file: File, directory = ''): Promise<void> {
     return new Promise<void>((resolve, reject) => {

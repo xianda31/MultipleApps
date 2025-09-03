@@ -2,10 +2,9 @@ import { Component, Input, signal, WritableSignal } from '@angular/core';
 import { FileService } from '../../../common/services/files.service';
 import { S3Item } from '../../../common/interfaces/file.interface';
 import { CommonModule } from '@angular/common';
-import { catchError, from, map, Observable, of, tap } from 'rxjs';
+import { catchError, map, Observable, of } from 'rxjs';
 import { ToastService } from '../../../common/services/toast.service';
 import { ActivatedRoute } from '@angular/router';
-import { threedigitsPipe } from '../../../common/pipes/three_digits.pipe';
 import { ImageService } from '../../../common/services/image.service';
 
 @Component({

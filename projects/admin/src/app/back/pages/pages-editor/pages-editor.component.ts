@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, Signal, signal } from '@angular/core';
 import { ViewChild, ElementRef } from '@angular/core';
 import { PageService } from '../../../common/services/page.service';
 import { SnippetService } from '../../../common/services/snippet.service';
@@ -7,11 +7,12 @@ import { CommonModule } from '@angular/common';
 import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ToastService } from '../../../common/services/toast.service';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { combineLatest, map, Observable, take } from 'rxjs';
+import { combineLatest, map, Observable, take, tap } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { SnippetModalEditorComponent } from '../../site/snippet-modal-editor/snippet-modal-editor.component';
 import { FileService } from '../../../common/services/files.service';
 import { CdkDrag, CdkDropList, CdkDragDrop, moveItemInArray, transferArrayItem, CdkDropListGroup } from '@angular/cdk/drag-drop';
+import { FileSystemNode } from '../../../common/interfaces/file.interface';
 
 
 @Component({
@@ -40,7 +41,10 @@ export class PagesEditorComponent {
 
 
   file_paths$ !: Observable<string[]>;
+  fileSystemNode !: FileSystemNode;
   thumbnails$ !: Observable<string[]>;
+  level : number = 0;
+  current_root: Signal<FileSystemNode> = signal({} as FileSystemNode);
 
   constructor(
     private pageService: PageService,
@@ -61,10 +65,20 @@ export class PagesEditorComponent {
       this.resolution_too_small = true;
     }
   
+    console.log('Window width:', window.innerWidth);
+
+    this.fileService.list_files_full('documents/').pipe(
+      map((S3items) => this.fileService.processStorageList(S3items)),
+    ).subscribe((fileSystemNode) => {
+      this.fileSystemNode = (fileSystemNode);
+      this.current_root = signal(fileSystemNode);
+    });
+
 
     this.file_paths$ = this.fileService.list_files('documents/').pipe(
       map((S3items) => S3items.map(item => item.path))
     );
+
     this.thumbnails$ = this.fileService.list_files('images/vignettes/').pipe(
       map((S3items) => S3items.map(item => item.path))
     );
@@ -107,6 +121,12 @@ export class PagesEditorComponent {
         });
     });
   }
+
+
+  // filesystem utilities
+
+
+
 
   //getters
 
