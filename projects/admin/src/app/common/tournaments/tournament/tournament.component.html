@@ -4,7 +4,7 @@
             <div class="card-header">
                 <div class="row justify-content-between">
                     <div class="col-auto ">
-                        <div class="row card-title align-items-center">
+                        <div class="col card-title align-items-center">
                             <p class="fw-bolder mb-0 col-auto">{{tournament_date | date:'EEEE d MMMM y':'':'fr-FR'}}</p>
                             <p class="ms-2 mb-0 col-auto">{{tournament_name}}</p>
                         </div>
@@ -14,14 +14,14 @@
                     </div>
                 </div>
             </div>
-            <div class="card-body">
-                <table class="table table-borderless table-sm table-striped table-responsive">
+            <div class="card-body px-0">
+                <table class="table table-borderless table-sm table-striped table-responsive p-0">
                     <thead>
                         <tr>
-                            <th class="col-1"></th>
-                            <th class="col-4"></th>
-                            <th class="col-4"></th>
-                            <th class="col-3"></th>
+                            <th scope="col"></th>
+                            <th scope="col" class="col-5"></th>
+                            <th scope="col" class="col-5"></th>
+                            <th scope="col" ></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -36,15 +36,15 @@
                                 <td *ngIf="!already_subscribed && (is_member$ | async)"
                                     class="text-start align-content-center">
                                     <button [disabled]="!whoAmI" class="btn btn-sm btn-primary"
-                                        (click)="completeTeam(team.players[0])">completer
-                                        l'équipe</button>
+                                        (click)="completeTeam(team.players[0])">Compléter
+                                        </button>
                                 </td>
                             </ng-container>
                             <td>
                                 <div class=" text-center">
                                     <button *ngIf="is_in_team(whoAmI?.license_number,team)" (click)="deleteTeam(team)"
                                         class="btn btn-sm  bg-warning">
-                                        Désinscription
+                                        Annuler
                                     </button>
                                 </div>
                             </td>
