@@ -59,8 +59,11 @@ export const routes: Routes = [
 
       { path: 'site/thumbnails', component: SnippetsComponent },
       { path: 'site/filemgr/documents', component: FilemgrComponent, data: { type: 'documents' } },
-      { path: 'site/filemgr/images', component: FilemgrComponent, data: { type: 'images' } },
+      { path: 'site/filemgr/vignettes', component: FilemgrComponent, data: { type: 'vignettes' } },
+      { path: 'site/filemgr/photos', component: FilemgrComponent, data: { type: 'photos' } },
       { path: 'site/pages', component: PagesEditorComponent },
+
+   
 
       { path: 'home', component: BackPageComponent },
       { path: '', component: BackPageComponent },

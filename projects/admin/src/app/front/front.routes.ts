@@ -10,31 +10,35 @@ import { FrontPageComponent } from './static/front-page/front-page.component';
 import { PageInConstructionComponent } from '../common/page-in-construction/page-in-construction.component';
 import { GenericPageComponent } from './static/generic-page/generic-page.component';
 import { MENU_TITLES } from '../common/interfaces/page_snippet.interface';
+import { AlbumComponent } from './album/album.component';
 
 export const routes: Routes = [
-  { path: '',
-     component: FrontComponent,
-     children: [
+  {
+    path: '',
+    component: FrontComponent,
+    children: [
       //  {path : 'news', component: NewsComponent },
-       {path : 'news', component: GenericPageComponent, data: { menu_title: MENU_TITLES.NEWS } },
+      { path: 'news', component: GenericPageComponent, data: { menu_title: MENU_TITLES.NEWS } },
 
-       {path : 'club/acteurs', component: GenericPageComponent, data: { menu_title: MENU_TITLES.ACTEURS } },
-       {path : 'club/documents', component: GenericPageComponent, data: { menu_title: MENU_TITLES.DOCUMENTS } },
-       {path : 'club/bureau', component: GenericPageComponent, data: { menu_title: MENU_TITLES.BUREAU } },
+      { path: 'club/acteurs', component: GenericPageComponent, data: { menu_title: MENU_TITLES.ACTEURS } },
+      { path: 'club/documents', component: GenericPageComponent, data: { menu_title: MENU_TITLES.DOCUMENTS } },
+      { path: 'club/bureau', component: GenericPageComponent, data: { menu_title: MENU_TITLES.BUREAU } },
 
-       { path: 'école/cours', component: GenericPageComponent, data: { menu_title: MENU_TITLES.COURS }},
-       { path: 'école/inscription', component: PageInConstructionComponent },
-       
-       {path : 'tournaments/next', component: TournamentsComponent},
-       { path: 'tournaments/next/:id', component: TournamentComponent },
-       {path : 'tournaments/fees', component: GameCardsOwnedComponent},
-       
+      { path: 'école/cours', component: GenericPageComponent, data: { menu_title: MENU_TITLES.COURS } },
+      { path: 'école/inscription', component: PageInConstructionComponent },
+
+      { path: 'tournaments/next', component: TournamentsComponent },
+      { path: 'tournaments/next/:id', component: TournamentComponent },
+      { path: 'tournaments/fees', component: GameCardsOwnedComponent },
+
       { path: 'achats/historique', component: PurchasesComponent },
 
-      { path: 'authentification', component: ConnexionComponent},
-      
+      { path: 'albums/:id', component: AlbumComponent },
+
+      { path: 'authentification', component: ConnexionComponent },
+
       { path: '', component: FrontPageComponent },
       { path: '**', component: PageNotFoundComponent },
-     ]
-   },
+    ]
+  },
 ];

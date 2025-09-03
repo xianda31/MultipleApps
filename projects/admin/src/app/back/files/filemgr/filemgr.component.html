@@ -12,7 +12,8 @@
         <thead>
             <tr>
                 <th>Chemin</th>
-                <th class="text-center" *ngIf="type === 'images'">Image</th>
+                <th class="text-center" *ngIf="type === 'vignettes'">Vignette</th>
+                <th class="text-center" *ngIf="type === 'photos'">Photo</th>
                 <th class="text-end me-4">Taille</th>
                 <th class="text-center">Actions</th>
             </tr>
@@ -20,13 +21,17 @@
         <tbody>
             <tr *ngFor="let file of files$()">
                 <td>{{ file.path }}</td>
-                <td *ngIf="type === 'images'">
+                <td *ngIf="type === 'vignettes'">
+                    <img  [src]="file.url | async" alt="{{ file.path }}" class="img-fluid"
+                        style="max-height: 100px; max-width: 100px;">
+                </td>
+                <td *ngIf="type === 'photos'">
                     <img  [src]="file.url | async" alt="{{ file.path }}" class="img-fluid"
                         style="max-height: 100px; max-width: 100px;">
                 </td>
                 <td class="text-end">{{file.size | number}} octets</td>
                 <td class="text-center ">
-                    <button *ngIf="type === 'images'" class="btn btn-sm btn-outline-primary" (click)="image_process(file)">
+                    <button *ngIf="type === 'vignettes'" class="btn btn-sm btn-outline-primary" (click)="image_process(file)">
                         <i class="bi bi-balloon-fill"></i>
                     </button>
                     <button class="btn btn-sm btn-outline-primary ms-1" (click)="delete_file(file)">

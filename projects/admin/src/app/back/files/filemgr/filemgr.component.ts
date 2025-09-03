@@ -15,7 +15,7 @@ import { ImageService } from '../../../common/services/image.service';
   styleUrl: './filemgr.component.scss'
 })
 export class FilemgrComponent {
-  @Input() type: 'documents' | 'images' = 'documents';
+  @Input() type: 'documents' | 'photos' | 'vignettes' = 'documents';
 
   directory = '';
 
@@ -30,7 +30,7 @@ export class FilemgrComponent {
 
   ngOnInit() {
 
-    this.directory = this.type === 'images' ? 'images/vignettes/' : 'documents/';
+    this.directory = this.type === 'documents' ? 'documents/' : this.type === 'photos' ? 'images/photos/' : 'images/vignettes/';
 
     this.fileService.list_files(this.directory).subscribe({
       next: (files) => {

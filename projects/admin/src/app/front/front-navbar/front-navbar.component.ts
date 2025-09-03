@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, NavigationEnd } from '@angular/router';
 import { AuthentificationService } from '../../common/authentification/authentification.service';
@@ -19,6 +19,7 @@ import { Process_flow } from '../../common/authentification/authentification_int
   styleUrl: './front-navbar.component.scss'
 })
 export class FrontNavbarComponent {
+  @Input() albums: string[] = [];
   logged_member$: Observable<Member | null> = new Observable<Member | null>();
   user_accreditation: Accreditation | null = null;
   lastActiveNavItem: string = '';
@@ -39,6 +40,9 @@ export class FrontNavbarComponent {
       }
     });
   }
+
+
+  
   closeBurger() {
     this.isCollapsed = true;
   }
