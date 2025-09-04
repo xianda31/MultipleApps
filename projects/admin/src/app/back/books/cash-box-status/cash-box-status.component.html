@@ -43,7 +43,7 @@
                                 </form>
 
                                 <h6 *ngIf="cheques_for_deposit.length >0" class="mt-3 fw-bolder">
-                                    Chèques en caisse pour un montant de
+                                    {{cheques_for_deposit.length}} chèque(s) en caisse pour un montant global de
                                     {{cheques_for_deposit_amount | number:truncature:'fr'}} €
                                 </h6>
                                 <h6 *ngIf="cheques_for_deposit.length === 0" class="mt-3 fw-bolder">
@@ -54,7 +54,8 @@
                                     <table class="table table-sm  table-responsive table-bordered ">
                                         <tbody class="fs-6">
                                             <tr *ngFor="let book_entry of cheques_for_deposit">
-                                                <td class="text-center">{{develop_bank_ref(book_entry.cheque_ref)}}</td>
+                                                <td class="text-center">{{develop_bank_ref(book_entry.cheque_ref).num}}</td>
+                                                <td class="text-start">{{develop_bank_ref(book_entry.cheque_ref).bank}}</td>
                                                 <td class="text-center"> {{ book_entry.amounts[CHEQUE_IN_ACCOUNT] }}€
                                                 </td>
                                                 <td class="text-start">{{(book_entry.operations.length !== 0) ?

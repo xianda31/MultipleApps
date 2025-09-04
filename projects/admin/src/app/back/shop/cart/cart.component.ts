@@ -119,4 +119,14 @@ export class CartComponent {
     this.asset_available = 0;
 
   }
+
+
+  cart_is_not_valid(): boolean {
+    return !this.selected_payment.mode 
+      || (this.cart.items.length === 0 && !(this.total_amount()>0))
+      || (this.total_amount()<0)
+      || (this.selected_payment.mode === PaymentMode.CHEQUE && (  !this.selected_payment.bank || !this.selected_payment.cheque_no) )
+      || this.cart.items.some((item) => !item.payee);
+  }
+
 }

@@ -123,9 +123,10 @@
         <!-- nbre éléments : {{cart.items.length}} -->
         <div class="justify-content-center mt-4">
             <button type="button" class="btn btn-success nice_shadow"
-                [disabled]=" !selected_payment.mode || (cart.items.length === 0 && !(total_amount()>0)) || (total_amount()<0)"
-                (click)="validate_sale()">confirmation
-                du panier</button>
+                [disabled]=" cart_is_not_valid() "
+                (click)="validate_sale()">confirmation du panier</button>
+
+              <!-- {{check_cart()}}   -->
         </div>
     </div>
 </div>

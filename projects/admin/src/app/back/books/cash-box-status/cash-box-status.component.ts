@@ -250,15 +250,15 @@ export class CashBoxStatusComponent {
     return this.cheques_for_deposit.filter(book_entry => typeof book_entry.deposit_ref === "boolean" && book_entry.deposit_ref === true).length;
   }
 
-  develop_bank_ref(ref: string | undefined): string {
+  develop_bank_ref(ref: string | undefined): {num:string,bank:string} {
     if (ref === undefined) {
       throw new Error('develop_bank_ref : ref is undefined');
     }
     let bank = this.banks.find(bank => ref.startsWith(bank.key));
     if (bank) {
-      return bank.name; //+ ' n°' + ref.split(bank.key)[1];
+      return { num: ref.split(bank.key)[1] , bank: bank.name };
     }
-    return ref;
+    return { num: ref, bank: '' };
   }
 
 }
