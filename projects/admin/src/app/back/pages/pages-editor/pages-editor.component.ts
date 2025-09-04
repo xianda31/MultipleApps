@@ -1,4 +1,4 @@
-import { Component, Signal, signal } from '@angular/core';
+import { Component, computed, signal } from '@angular/core';
 import { ViewChild, ElementRef } from '@angular/core';
 import { PageService } from '../../../common/services/page.service';
 import { SnippetService } from '../../../common/services/snippet.service';
@@ -12,7 +12,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { SnippetModalEditorComponent } from '../../site/snippet-modal-editor/snippet-modal-editor.component';
 import { FileService } from '../../../common/services/files.service';
 import { CdkDrag, CdkDropList, CdkDragDrop, moveItemInArray, transferArrayItem, CdkDropListGroup } from '@angular/cdk/drag-drop';
-import { FileSystemNode } from '../../../common/interfaces/file.interface';
+import { FileSystemNode, getChildNodes, isFolder, S3Item } from '../../../common/interfaces/file.interface';
 
 
 @Component({
@@ -43,8 +43,10 @@ export class PagesEditorComponent {
   file_paths$ !: Observable<string[]>;
   fileSystemNode !: FileSystemNode;
   thumbnails$ !: Observable<string[]>;
-  level : number = 0;
-  current_root: Signal<FileSystemNode> = signal({} as FileSystemNode);
+  level: number = 0;
+  current_node_childs = signal<FileSystemNode | null>(null);
+  node_stack: FileSystemNode[] = [];
+  // parent_node = signal<FileSystemNode | null>(null);
 
   constructor(
     private pageService: PageService,
@@ -64,14 +66,17 @@ export class PagesEditorComponent {
     if (window.innerWidth < 768) {
       this.resolution_too_small = true;
     }
-  
+
     console.log('Window width:', window.innerWidth);
 
     this.fileService.list_files_full('documents/').pipe(
       map((S3items) => this.fileService.processStorageList(S3items)),
     ).subscribe((fileSystemNode) => {
       this.fileSystemNode = (fileSystemNode);
-      this.current_root = signal(fileSystemNode);
+      this.open_node(fileSystemNode);
+       this.node_stack.push(fileSystemNode);
+
+      console.log('File system loaded:', this.fileSystemNode);
     });
 
 
@@ -126,7 +131,37 @@ export class PagesEditorComponent {
   // filesystem utilities
 
 
+  open_node(node: FileSystemNode): void {
+    const childs: FileSystemNode | null = getChildNodes(node);
+    // if (childs === null) return;
+    this.current_node_childs.set(childs)
+    // if node is a directory
+    console.log('stack:', this.node_stack)
+    
+  }
+  
+  push_node(key: string, value: FileSystemNode | { __data: S3Item }) {
+    // regenerate FileSystemNode from html (loop on current_node_childs() | keyvalue)
+    const node: FileSystemNode = { [key]: value };
+    this.open_node(node)
+    if (isFolder(node)) this.node_stack.push(node);
+  }
 
+  pop_node() {
+     this.node_stack.pop();
+    const parent = this.node_stack[this.node_stack.length - 1];
+    if(parent === null) return;
+    console.log('Popping node, new current:', parent);
+    this.open_node(parent);
+  }
+
+  get_icon(node: any): string {
+    return node['__data'] && node['__data'].size > 0 ? 'bi bi-file' : 'bi bi-folder';
+  }
+
+  get_button_class(node: any): string {
+    return node['__data'] && node['__data'].size > 0 ? 'btn btn-outline-primary' : 'btn btn-outline-secondary';
+  }
 
   //getters
 
@@ -335,7 +370,7 @@ export class PagesEditorComponent {
   }
 
 
-    forceScrollDown(event?: any): void {
+  forceScrollDown(event?: any): void {
     if (this.scrollable && this.scrollable.nativeElement) {
       const el = this.scrollable.nativeElement;
       // scroll down if near bottom or pointer near bottom

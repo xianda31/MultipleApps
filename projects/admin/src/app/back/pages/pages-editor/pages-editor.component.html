@@ -1,3 +1,20 @@
+<!-- // test filesystem recursion -->
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col">
+            <h3>Explorateur de fichiers (test récursivité)</h3>
+
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
 <div *ngIf="resolution_too_small" class="container-fluid">
     L'édition des pages n'est pas disponible sur les écrans de petite taille.
 </div>
@@ -64,7 +81,8 @@
                                                     <div (click)="onSnippetClick(snippet)" class="card-body">
                                                         <h5 class="card-title">{{ snippet.title }}
                                                         </h5>
-                                                        <h6 class="card-subtitle mb-2 text-muted">{{ snippet.subtitle }}
+                                                        <h6 class="card-subtitle mb-2 text-muted">{{
+                                                            snippet.subtitle }}
                                                         </h6>
                                                     </div>
                                                 </div>
@@ -184,18 +202,24 @@
     </div>
 </div>
 
-<!-- // test filesystem recursion -->
 
-<div class="container mt-4">
-    <div class="row">
-        <div class="col">
-            <h3>Explorateur de fichiers (test récursivité)</h3>
-            <div *ngIf="current_root() ">
-                {{current_root()}}
-            </div>
-            <div *ngIf="!current_root()">
-                Chargement du système de fichiers...
-            </div>
-        </div>
-    </div>
-    </div>
+
+<div *ngIf="current_node_childs()">
+
+    <ng-container *ngFor="let sub_node of current_node_childs() | keyvalue">
+        <button (click)="push_node(sub_node.key,sub_node.value)" [class]="get_button_class(sub_node.value) + ' mx-1'">
+            <i [class]="get_icon(sub_node.value)"></i>
+            {{sub_node.key}}
+        </button>
+        <br>
+        {{ sub_node.value | json }} <br>
+    </ng-container>
+    <!-- //add back_node button -->
+    <button (click)="pop_node()" class="btn btn-outline-secondary">
+        <i class="bi-arrow-up-short"></i>
+        Retour
+    </button>
+</div>
+<div *ngIf="!current_node_childs()">
+    Chargement du système de fichiers...
+</div>

@@ -37,7 +37,7 @@ export class FileService {
     return new Observable<S3Item[]>(subscriber => {
       list({ path: directory, options: { listAll: true } })
         .then(result => {
-          subscriber.next(result.items.filter(item => item.size !== 0));
+          subscriber.next(result.items.map(item => ({ ...item, size: item.size ?? 0 })).filter(item => item.size !== 0));
           subscriber.complete();
         })
         .catch(error => subscriber.error(error));
@@ -48,7 +48,7 @@ export class FileService {
     return new Observable<S3Item[]>(subscriber => {
       list({ path: directory, options: { listAll: true } })
         .then(result => {
-          subscriber.next(result.items);
+          subscriber.next(result.items.map(item => ({ ...item, size: item.size ?? 0 })));
           subscriber.complete();
         })
         .catch(error => subscriber.error(error));

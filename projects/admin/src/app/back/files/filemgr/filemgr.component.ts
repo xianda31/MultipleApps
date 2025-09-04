@@ -52,7 +52,14 @@ export class FilemgrComponent {
     const file = event.target.files[0];
     if (file) {
       this.fileService.upload_file(file, this.directory).then(() => {
-        this.files$.update(files => [...files, { path: this.directory + file.name , url: this.presigned_url(this.directory + file.name) }]);
+        this.files$.update(files => [
+          ...files,
+          {
+            path: this.directory + file.name,
+            size: file.size,
+            url: this.presigned_url(this.directory + file.name)
+          }
+        ]);
         this.toastService.showSuccess('Upload', 'Fichier téléchargé avec succès');
       }).catch((error) => {
         this.toastService.showErrorToast('Upload', 'Échec du téléchargement du fichier');
@@ -85,7 +92,14 @@ export class FilemgrComponent {
 
               let resized_file = new File([new_blob], this.add_wh(this.get_filename(file.path), wh), { type: new_blob.type });
               this.fileService.upload_file(resized_file, this.directory).then(() => {
-                this.files$.update(files => [...files, { path: this.directory + resized_file.name , url: this.presigned_url(this.directory + resized_file.name) }]);
+                this.files$.update(files => [
+                  ...files,
+                  {
+                    path: this.directory + resized_file.name,
+                    size: resized_file.size,
+                    url: this.presigned_url(this.directory + resized_file.name)
+                  }
+                ]);
 
               });
             });
