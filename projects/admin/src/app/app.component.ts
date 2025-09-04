@@ -18,6 +18,7 @@ export class AppComponent {
   constructor(
     private localStorageService: LocalStorageService,
     private router: Router,
+    private route: ActivatedRoute,
   ) { }
 
   ngOnInit(): void {
@@ -33,7 +34,7 @@ export class AppComponent {
           let entry_point = this.localStorageService.getItem('entry_point');
           // console.log('No entry point found, redirecting to stored:', entry_point);
           entry_point = entry_point ? entry_point : 'front';
-          this.router.navigate([entry_point]);
+          this.router.navigate([entry_point],{ relativeTo: this.route});
         }
       };
     });
