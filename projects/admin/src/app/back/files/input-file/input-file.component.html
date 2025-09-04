@@ -1,0 +1,13 @@
+<input type="text" list="file_datalist" class="form-control" 
+    [(ngModel)]="input" (ngModelChange)="setValue(input)">
+
+<datalist id="file_datalist">
+    <option *ngFor="let sub_node of current_node_childs() | keyvalue" [value]="sub_node.key">
+        {{ sub_node.key }}
+    </option>
+</datalist>
+
+<!-- <button class="btn btn-sm " (click)="input = ''">
+    <i class="bi bi-x-circle"></i>
+</button> -->
+

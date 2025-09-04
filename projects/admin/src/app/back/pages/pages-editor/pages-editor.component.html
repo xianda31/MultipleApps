@@ -1,5 +1,29 @@
 <!-- // test filesystem recursion -->
 
+
+<h2> Test </h2>
+<!-- <input type="text" list="file_datalist" class="form-control" 
+    [(ngModel)]="returned_value" (keydown.enter)="select_node(returned_value)">
+
+<datalist id="file_datalist">
+    <option *ngFor="let sub_node of current_node_childs() | keyvalue" [value]="sub_node">
+        {{ sub_node.key }}
+    </option>
+</datalist>
+
+<button class="btn btn-sm " (click)="returned_value = ''">
+    <i class="bi bi-x-circle"></i>
+</button> -->
+
+<app-input-file *ngIf="fileSystemNode" [fileSystemNode]="fileSystemNode" 
+    [(ngModel)]="returned_value" (ngModelChange)="select_node(returned_value)"></app-input-file>
+
+page_edit : {{returned_value   | json}}
+
+
+
+
+
 <div class="container mt-4">
     <div class="row">
         <div class="col">
@@ -8,11 +32,6 @@
         </div>
     </div>
 </div>
-
-
-
-
-
 
 
 <div *ngIf="resolution_too_small" class="container-fluid">
@@ -204,6 +223,7 @@
 
 
 
+<!-- 
 <div *ngIf="current_node_childs()">
 
     <ng-container *ngFor="let sub_node of current_node_childs() | keyvalue">
@@ -214,7 +234,6 @@
         <br>
         {{ sub_node.value | json }} <br>
     </ng-container>
-    <!-- //add back_node button -->
     <button (click)="pop_node()" class="btn btn-outline-secondary">
         <i class="bi-arrow-up-short"></i>
         Retour
@@ -222,4 +241,4 @@
 </div>
 <div *ngIf="!current_node_childs()">
     Chargement du système de fichiers...
-</div>
+</div> -->

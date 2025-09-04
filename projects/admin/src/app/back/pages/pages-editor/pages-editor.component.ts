@@ -13,11 +13,12 @@ import { SnippetModalEditorComponent } from '../../site/snippet-modal-editor/sni
 import { FileService } from '../../../common/services/files.service';
 import { CdkDrag, CdkDropList, CdkDragDrop, moveItemInArray, transferArrayItem, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { FileSystemNode, getChildNodes, isFolder, S3Item } from '../../../common/interfaces/file.interface';
+import { InputFileComponent } from "../../files/input-file/input-file.component";
 
 
 @Component({
   selector: 'app-pages-editor',
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbModule, CdkDrag, CdkDropList, CdkDropListGroup],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbModule, CdkDrag, CdkDropList, CdkDropListGroup, InputFileComponent],
   templateUrl: './pages-editor.component.html',
   styleUrl: './pages-editor.component.scss'
 })
@@ -43,10 +44,11 @@ export class PagesEditorComponent {
   file_paths$ !: Observable<string[]>;
   fileSystemNode !: FileSystemNode;
   thumbnails$ !: Observable<string[]>;
-  level: number = 0;
+  
+  
   current_node_childs = signal<FileSystemNode | null>(null);
   node_stack: FileSystemNode[] = [];
-  // parent_node = signal<FileSystemNode | null>(null);
+  returned_value : any;
 
   constructor(
     private pageService: PageService,
@@ -67,14 +69,12 @@ export class PagesEditorComponent {
       this.resolution_too_small = true;
     }
 
-    console.log('Window width:', window.innerWidth);
-
     this.fileService.list_files_full('documents/').pipe(
       map((S3items) => this.fileService.processStorageList(S3items)),
     ).subscribe((fileSystemNode) => {
       this.fileSystemNode = (fileSystemNode);
-      this.open_node(fileSystemNode);
-       this.node_stack.push(fileSystemNode);
+      // this.open_node(fileSystemNode);
+      //  this.node_stack.push(fileSystemNode);
 
       console.log('File system loaded:', this.fileSystemNode);
     });
@@ -130,6 +130,10 @@ export class PagesEditorComponent {
 
   // filesystem utilities
 
+select_node(node:FileSystemNode){
+  console.log('selected',node)
+}
+
 
   open_node(node: FileSystemNode): void {
     const childs: FileSystemNode | null = getChildNodes(node);
@@ -137,7 +141,6 @@ export class PagesEditorComponent {
     this.current_node_childs.set(childs)
     // if node is a directory
     console.log('stack:', this.node_stack)
-    
   }
   
   push_node(key: string, value: FileSystemNode | { __data: S3Item }) {
