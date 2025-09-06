@@ -51,9 +51,6 @@ export class ConnexionComponent {
   
   async ngOnInit() {
         this.mode$ = this.auth.mode$;
-    // this.mode$.subscribe((mode) => {
-    //   this.mode = mode;
-    // });
   }
 
   async signIn() {
@@ -63,7 +60,8 @@ export class ConnexionComponent {
          this.logging_msg ='';
         })
       .catch((err) => {
-        this.logging_msg = 'mot de passe/adresse email incorrecte ou compte inexistant';
+        console.log('sign in erreur', err);
+        this.logging_msg = 'mel/mdp incorrect \n ou compte inexistant';
       });
   }
 
@@ -81,6 +79,9 @@ export class ConnexionComponent {
       .catch((err) => {
         if(err.name !== 'UsernameExistsException') {
           console.warn('sign up erreur imprévue',err);
+        }else{
+          this.logging_msg = 'vous avez déjà un compte, veuillez vous connecter';
+          this.auth.changeMode(Process_flow.SIGN_IN);
         }
       });
   }
@@ -91,19 +92,19 @@ export class ConnexionComponent {
     await this.auth.confirmSignUp(this.email.value, this.code.value)
       .then(({ isSignUpComplete, nextStep }) => {
         if (!isSignUpComplete) {
-          this.toastService.showErrorToast('sign up', 'erreur imprévue');
+          this.toastService.showErrorToast('sign up', 'erreur imprévue anomalie confirmSignUp');
           this.signup_msg = 'erreur à la confirmation';
           return;
         } else {
-          this.toastService.showSuccess('création compte', 'compte créé');
+          // this.toastService.showSuccess('création compte', 'compte créé');
           this.membersService.searchMemberByEmail(this.email.value)
             .then((member) => {
               if (!member) {
-                this.toastService.showErrorToast('sign up', 'erreur imprévue');
+                this.toastService.showErrorToast('sign up', 'erreur imprévue ; anomalie membre');
                 return;
               } else {
                 this.signup_msg ='';
-                this.membersService.updateMember(member);
+                // this.membersService.updateMember(member);
                 this.toastService.showSuccess('création compte', 'Bienvenue ' + member.firstname);
                 this.auth.changeMode(Process_flow.SIGN_IN);
               };

@@ -30,7 +30,8 @@
             </div>
         </div>
         <div class="text-muted" style="font-size: 0.75em;">
-            {{mode$ | async}}
+            <!-- {{mode$ | async}} :  -->
+            en cas de problème persistant, contactez le webmestre
         </div>
         <!-- </div> -->
 
@@ -41,7 +42,7 @@
             </div>
             <div class="row mt-2">
                 <button class="btn btn-success " type="button" (click)="signIn()"
-                    [disabled]="!loggerForm.valid">Login</button>
+                    [disabled]="!loggerForm.valid">Connexion</button>
             </div>
 
             <div class="row mt-3 g-2">
@@ -107,7 +108,7 @@
         <ng-template #show_form>
             <br>
             <div class="row mt-3 ">
-                <label for="email">adresse mail</label>
+                <label for="email">adresse mèl</label>
                 <input class="form-control me-2" autocomplete="email" type="text" id="email" formControlName="email">
                 <span *ngIf="email.dirty && email.hasError('not_member')" class="text-danger">
                     adresse mail non répertoriée au Club</span>
@@ -125,7 +126,7 @@
                         (click)="show_password = !show_password"></i> -->
                 </div>
                 <span *ngIf="password.dirty && password.hasError('pattern')" class="text-danger">
-                    complexité mot de passe insuffisante
+                    complexité mot de passe insuffisante (8 caractères mini, 1 majuscule, 1 chiffre, 1 caractère spécial)
                 </span>
             </div>
         </ng-template>

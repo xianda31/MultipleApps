@@ -190,7 +190,7 @@ export class AuthentificationService {
       confirmSignUp({ username: email, confirmationCode: code })
         .then(({ isSignUpComplete, nextStep }) => {
 
-          this.toastService.showSuccess('sign up', 'confirmed');
+          // this.toastService.showSuccess('sign up', 'confirmed');
           this._mode = Process_flow.SIGN_IN;
           resolve({ isSignUpComplete, nextStep });
         }
