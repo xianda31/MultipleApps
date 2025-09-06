@@ -4,6 +4,8 @@ import { AuthentificationService } from '../../common/authentification/authentif
 import { Member } from '../../common/interfaces/member.interface';
 import { Observable } from 'rxjs';
 import { CommonModule } from '@angular/common';
+import { Accreditation } from '../../common/authentification/group.interface';
+import { GroupService } from '../../common/authentification/group.service';
 
 @Component({
   selector: 'app-back-page',
@@ -13,14 +15,23 @@ import { CommonModule } from '@angular/common';
 })
 export class BackPageComponent {
 
-  logged_member$ !:Observable<Member | null>;
+  logged_member$ !: Observable<Member | null>;
+  user_accreditation: Accreditation | null = null;
+
   constructor(
     private auth: AuthentificationService,
-    private membersService: MembersService,
+    private groupService: GroupService,
+
   ) { }
-  
-  
+
+
   ngOnInit(): void {
-   this.logged_member$ = this.auth.logged_member$;
-  } 
-}
+    this.logged_member$ = this.auth.logged_member$;
+
+    this.auth.logged_member$.subscribe(async (member) => {
+      if (member !== null) {
+        this.user_accreditation = await this.groupService.getUserAccreditation();
+      }
+    });
+  }
+} 

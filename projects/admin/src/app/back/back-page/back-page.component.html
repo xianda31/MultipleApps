@@ -1,5 +1,18 @@
 <div *ngIf="logged_member$ | async as logged_member" class="text-center">
-    <h1>Bonjour {{ logged_member.firstname }}</h1>
+    <h2>Bonjour {{ logged_member.firstname }}</h2>
+
+    <p *ngIf="user_accreditation && user_accreditation.level === 0">
+        Vous êtes membre du Club, mais non accrédité pour accéder à ces fonctionnalités.<br>
+        Veuillez contacter le secrétariat pour obtenir une accréditation.
+    </p>
+    <p *ngIf="user_accreditation && user_accreditation.level > 0">
+        Votre accréditation :
+        <i [class]="user_accreditation.icon"></i>
+        {{ user_accreditation.group_name }} <br>
+        vous permet d'accéder à toutes ou partie des fonctionnalités d'administration.<br>
+        <br>
+        Merci pour votre engagement envers le Club.
+    </p>
 </div>
 <div *ngIf="!(logged_member$ | async)" class="text-center">
     <h1>Bienvenue sur la page d'administration</h1>
