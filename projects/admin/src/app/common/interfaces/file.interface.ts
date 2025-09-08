@@ -2,10 +2,11 @@ import { Observable } from "rxjs";
 
 export interface S3Item {
   path: string;
-  etag?: string;
-  lastModified?: Date | undefined;
+  // etag?: string;
+  // lastModified?: Date | undefined;
   size: number;
   url?: Observable<string>;
+  folded?: boolean;
   // usage?: number;
 }
 

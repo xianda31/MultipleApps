@@ -23,6 +23,7 @@ import { BackPageComponent } from './back-page/back-page.component';
 import { SnippetsComponent } from './site/snippets/snippets.component';
 import { FilemgrComponent } from './files/filemgr/filemgr.component';
 import { PagesEditorComponent } from './pages/pages-editor/pages-editor.component';
+import { FilemgrFullComponent } from './files/filemgr-full/filemgr-full.component';
 
 export const routes: Routes = [
   {
@@ -60,7 +61,7 @@ export const routes: Routes = [
       { path: 'site/thumbnails', component: SnippetsComponent },
       { path: 'site/filemgr/documents', component: FilemgrComponent, data: { type: 'documents' } },
       { path: 'site/filemgr/vignettes', component: FilemgrComponent, data: { type: 'vignettes' } },
-      { path: 'site/filemgr/photos', component: FilemgrComponent, data: { type: 'photos' } },
+      { path: 'site/filemgr/albums', component: FilemgrFullComponent, data: { type: 'albums' } },
       { path: 'site/pages', component: PagesEditorComponent },
 
    

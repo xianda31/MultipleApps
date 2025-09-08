@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { ViewChild, ElementRef } from '@angular/core';
 import { PageService } from '../../../common/services/page.service';
 import { SnippetService } from '../../../common/services/snippet.service';
@@ -7,18 +7,18 @@ import { CommonModule } from '@angular/common';
 import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ToastService } from '../../../common/services/toast.service';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { combineLatest, map, Observable, take, tap } from 'rxjs';
+import { combineLatest, map, Observable, take } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { SnippetModalEditorComponent } from '../../site/snippet-modal-editor/snippet-modal-editor.component';
 import { FileService } from '../../../common/services/files.service';
 import { CdkDrag, CdkDropList, CdkDragDrop, moveItemInArray, transferArrayItem, CdkDropListGroup } from '@angular/cdk/drag-drop';
-import { FileSystemNode, getChildNodes, isFolder, S3Item } from '../../../common/interfaces/file.interface';
+import { FileSystemNode, S3Item } from '../../../common/interfaces/file.interface';
 import { InputFileComponent } from "../../files/input-file/input-file.component";
 
 
 @Component({
   selector: 'app-pages-editor',
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbModule, CdkDrag, CdkDropList, CdkDropListGroup, InputFileComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbModule, CdkDrag, CdkDropList, CdkDropListGroup],
   templateUrl: './pages-editor.component.html',
   styleUrl: './pages-editor.component.scss'
 })
@@ -47,8 +47,8 @@ export class PagesEditorComponent {
   
   
   current_node_childs = signal<FileSystemNode | null>(null);
-  node_stack: FileSystemNode[] = [];
-  returned_value : any;
+  // node_stack: FileSystemNode[] = [];
+  // returned_value : any;
 
   constructor(
     private pageService: PageService,
@@ -69,15 +69,7 @@ export class PagesEditorComponent {
       this.resolution_too_small = true;
     }
 
-    this.fileService.list_files_full('documents/').pipe(
-      map((S3items) => this.fileService.processStorageList(S3items)),
-    ).subscribe((fileSystemNode) => {
-      this.fileSystemNode = (fileSystemNode);
-      // this.open_node(fileSystemNode);
-      //  this.node_stack.push(fileSystemNode);
-
-      console.log('File system loaded:', this.fileSystemNode);
-    });
+ 
 
 
     this.file_paths$ = this.fileService.list_files('documents/').pipe(
@@ -130,41 +122,41 @@ export class PagesEditorComponent {
 
   // filesystem utilities
 
-select_node(node:FileSystemNode){
-  console.log('selected',node)
-}
+// select_node(node:FileSystemNode){
+//   console.log('selected',node)
+// }
 
 
-  open_node(node: FileSystemNode): void {
-    const childs: FileSystemNode | null = getChildNodes(node);
-    // if (childs === null) return;
-    this.current_node_childs.set(childs)
-    // if node is a directory
-    console.log('stack:', this.node_stack)
-  }
+//   open_node(node: FileSystemNode): void {
+//     const childs: FileSystemNode | null = getChildNodes(node);
+//     // if (childs === null) return;
+//     this.current_node_childs.set(childs)
+//     // if node is a directory
+//     console.log('stack:', this.node_stack)
+//   }
   
-  push_node(key: string, value: FileSystemNode | { __data: S3Item }) {
-    // regenerate FileSystemNode from html (loop on current_node_childs() | keyvalue)
-    const node: FileSystemNode = { [key]: value };
-    this.open_node(node)
-    if (isFolder(node)) this.node_stack.push(node);
-  }
+//   push_node(key: string, value: FileSystemNode | { __data: S3Item }) {
+//     // regenerate FileSystemNode from html (loop on current_node_childs() | keyvalue)
+//     const node: FileSystemNode = { [key]: value };
+//     this.open_node(node)
+//     if (isFolder(node)) this.node_stack.push(node);
+//   }
 
-  pop_node() {
-     this.node_stack.pop();
-    const parent = this.node_stack[this.node_stack.length - 1];
-    if(parent === null) return;
-    console.log('Popping node, new current:', parent);
-    this.open_node(parent);
-  }
+//   pop_node() {
+//      this.node_stack.pop();
+//     const parent = this.node_stack[this.node_stack.length - 1];
+//     if(parent === null) return;
+//     console.log('Popping node, new current:', parent);
+//     this.open_node(parent);
+//   }
 
-  get_icon(node: any): string {
-    return node['__data'] && node['__data'].size > 0 ? 'bi bi-file' : 'bi bi-folder';
-  }
+//   get_icon(node: any): string {
+//     return node['__data'] && node['__data'].size > 0 ? 'bi bi-file' : 'bi bi-folder';
+//   }
 
-  get_button_class(node: any): string {
-    return node['__data'] && node['__data'].size > 0 ? 'btn btn-outline-primary' : 'btn btn-outline-secondary';
-  }
+//   get_button_class(node: any): string {
+//     return node['__data'] && node['__data'].size > 0 ? 'btn btn-outline-primary' : 'btn btn-outline-secondary';
+//   }
 
   //getters
 

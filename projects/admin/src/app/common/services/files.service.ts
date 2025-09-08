@@ -37,43 +37,66 @@ export class FileService {
     return new Observable<S3Item[]>(subscriber => {
       list({ path: directory, options: { listAll: true } })
         .then(result => {
-          subscriber.next(result.items.map(item => ({ ...item, size: item.size ?? 0 })).filter(item => item.size !== 0));
+          subscriber.next(result.items.map(item => ({ ...item, size: item.size ?? 0, url: this.getPresignedUrl(item.path) }))
+          // .filter(item => item.size !== 0)
+          );
           subscriber.complete();
         })
         .catch(error => subscriber.error(error));
     });
   }
 
-  list_files_full(directory: string): Observable<S3Item[]> {
-    return new Observable<S3Item[]>(subscriber => {
-      list({ path: directory, options: { listAll: true } })
-        .then(result => {
-          subscriber.next(result.items.map(item => ({ ...item, size: item.size ?? 0 })));
-          subscriber.complete();
-        })
-        .catch(error => subscriber.error(error));
-    });
-  }
 
   processStorageList(response: S3Item[]): FileSystemNode {
-    const filesystem: FileSystemNode = {};
-
-    const add = (source: string, target: FileSystemNode, item: S3Item): void => {
-      const elements: string[] = source.split('/');
-      const element: string | undefined = elements.shift();
-      if (!element) return; // blank
-      target[element] = target[element] || { __data: item };
-      if (elements.length) {
-        target[element] =
-          typeof target[element] === 'object' ? target[element] : {};
-        add(elements.join('/'), target[element] as FileSystemNode, item);
+    // Build and prune in a single pass
+    function insertAndPrune(items: S3Item[], prefix: string = ""): FileSystemNode | null {
+      // Group items by their next path segment
+      const groups: { [key: string]: S3Item[] } = {};
+      for (const item of items) {
+        const relPath = item.path.slice(prefix.length);
+        const [head, ...tail] = relPath.split('/').filter(Boolean);
+        if (!head) continue;
+        const groupKey = head;
+        if (!groups[groupKey]) groups[groupKey] = [];
+        groups[groupKey].push(item);
       }
-    };
-
-
-    response.forEach((item) => add(item.path, filesystem, item));
-    return filesystem;
+      let hasData = false;
+      const node: FileSystemNode = {};
+      for (const key of Object.keys(groups)) {
+        // Find S3Item for this node (folder or file)
+        const exact = groups[key].find(item => {
+          const relPath = item.path.slice(prefix.length);
+          return relPath === key || relPath === key + '/';
+        });
+        // Recurse for children
+        const childTails = groups[key].filter(item => {
+          const relPath = item.path.slice(prefix.length);
+          return relPath !== key && relPath !== key + '/';
+        });
+        let childNode: FileSystemNode | null = null;
+        if (childTails.length > 0) {
+          childNode = insertAndPrune(childTails, prefix + key + '/');
+        }
+        if (exact || childNode) {
+          node[key] = {};
+          if (exact) {
+            (node[key] as any)['__data'] = exact;
+          } else if (childNode) {
+            // Generate default __data for folder
+            (node[key] as any)['__data'] = { path: prefix + key + '/', size: 0 };
+          }
+          if (childNode) {
+            Object.assign(node[key], childNode);
+          }
+          hasData = true;
+        }
+      }
+      return hasData ? node : null;
+    }
+    const tree = insertAndPrune(response);
+    return tree || {};
   }
+
 
 
   upload_file(file: File, directory = ''): Promise<void> {
