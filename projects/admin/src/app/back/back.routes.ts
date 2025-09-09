@@ -21,7 +21,6 @@ import { CloneDBComponent } from './maintenance/clone-DB/clone-db.component';
 import { AdminComponent } from './admin/back.component';
 import { BackPageComponent } from './back-page/back-page.component';
 import { SnippetsComponent } from './site/snippets/snippets.component';
-import { FilemgrComponent } from './files/filemgr/filemgr.component';
 import { PagesEditorComponent } from './pages/pages-editor/pages-editor.component';
 import { FilemgrWindowsComponent } from './files/filemgr/filemgr-windows.component';
 

@@ -32,20 +32,17 @@ export class FilemgrWindowsComponent {
 
     ngOnInit() {
 
-        this.fileService.list_files(this.root_directory).pipe(
-        ).subscribe((S3items) => {
+        this.fileService.list_files(this.root_directory).subscribe((S3items) => {
             this.S3items = S3items;
-            this.fileSystemNode = this.fileService.processStorageList(this.S3items);
+            this.fileSystemNode = this.fileService.generate_filesystem(this.S3items);
             this.current_node = this.fileSystemNode;
-            console.log('current_node :', this.current_node);
         });
     }
 
 
     regenerate_navigation_point(root_path: string) {
 
-        console.log('Regenerate navigation point for :', root_path);
-        this.fileSystemNode = this.fileService.processStorageList(this.S3items);
+        this.fileSystemNode = this.fileService.generate_filesystem(this.S3items);
         if (!this.fileSystemNode) { throw new Error('File system undefined after upload'); }
         this.current_node = this.fileSystemNode;
         // move from root down to parent folder
@@ -62,9 +59,15 @@ export class FilemgrWindowsComponent {
                 throw new Error(`'${root_path}' folder not found during navigation after upload`);
             }
         });
-        console.log('After navigation, current_node :', this.current_node);
     }
 
+    windows_add_folder(parent: S3Item, folder_name: string) {
+        if (!folder_name || folder_name.trim() === '') {
+            this.toastService.showErrorToast('Nouveau dossier', 'Le nom du dossier ne peut pas être vide');
+            return;
+        }
+        this.create_virtual_folder(parent, folder_name);
+    }
 
     window_delete_file(item: S3Item) {
         this.fileService.delete_file(item.path).then(() => {
@@ -89,7 +92,7 @@ export class FilemgrWindowsComponent {
         });
     }
 
-    async add_file_lighter(item: S3Item) {
+    async add_file_lighten(item: S3Item) {
         const folder = item.path.split('/').slice(0, -1).join('/') + '/';
         this.image_lighter(item).then((file) => {
             this.upload_and_add_file(file, folder).then((lighter_item) => {
@@ -97,6 +100,15 @@ export class FilemgrWindowsComponent {
                 this.selected_item = lighter_item;
             });
         });
+    }
+
+    create_virtual_folder(parent: S3Item, folder_name: string) {
+        const newItem: S3Item = {
+                path:  parent.path + folder_name + '/',
+                size: 0,
+            };
+            this.S3items.push(newItem);
+            this.regenerate_navigation_point(parent.path);
     }
 
     upload_and_add_file(file: File, path: string): Promise<S3Item> {
@@ -217,7 +229,6 @@ export class FilemgrWindowsComponent {
                 reader.onloadend = () => {
                     const base64 = reader.result as string;
                     this.imageService.resizeImage(base64).then((resizedBase64) => {
-                        // console.log('Image resized:', resizedBase64);
                         this.imageService.getBase64Dimensions(resizedBase64).then((dimensions) => {
                             const wh = dimensions.width.toString() + 'x' + dimensions.height.toString();
                             let new_blob = this.imageService.base64ToBlob(resizedBase64);

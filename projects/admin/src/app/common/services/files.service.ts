@@ -47,7 +47,7 @@ export class FileService {
   }
 
 
-  processStorageList(response: S3Item[]): FileSystemNode {
+  generate_filesystem(response: S3Item[]): FileSystemNode {
     // Build and prune in a single pass
     function insertAndPrune(items: S3Item[], prefix: string = ""): FileSystemNode | null {
       // Group items by their next path segment

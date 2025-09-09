@@ -1,56 +1,67 @@
-<div class="card mt-3" *ngIf="current_node">
-    <div class="card-header">
-        <div class="row">
-            <div class="col-6">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb">
-                        <ng-container *ngIf="current_node_data as data">
-                            <ng-container *ngFor="let segment of data.path?.split('/'); let i = index">
-                                <li (click)="pop_folder(i)" class="breadcrumb-item">{{ segment }}</li>
+<div class="offset-md-1 col-md-10 offset-xl-2 col-xl-8 ">
+
+    <div class="card mt-3" *ngIf="current_node">
+        <div class="card-header">
+            <div class="row justify-content-around align-items-center">
+                <div class="col-auto col-md-5">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <ng-container *ngIf="current_node_data as data">
+                                <ng-container *ngFor="let segment of data.path?.split('/'); let i = index">
+                                    <li (click)="pop_folder(i)" class="breadcrumb-item">{{ segment }}</li>
+                                </ng-container>
                             </ng-container>
-                        </ng-container>
-                    </ol>
-                </nav>
-            </div>
-            <div class="col-6">
-                <label class="btn btn-sm btn-outline-secondary ms-2 mb-0" *ngIf="current_node_data as data">
-                    Ajout fichiers
-                      <input #fileInput type="file" multiple style="display:none" (change)="windows_add_file(data, $event)">
-                </label>
-            </div>
-        </div>
-    </div>
-    <div class="card-body">
-        <div class="row">
-            <div class="col-9">
-                <div class="windows-grid">
-                    <ng-container *ngFor="let root of current_node | keyvalue">
-                        <ng-container *ngFor="let child of root.value | keyvalue">
-                            <ng-container
-                                *ngTemplateOutlet="iconize; context:{ key: child.key, value: child.value }"></ng-container>
-                        </ng-container>
-                    </ng-container>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="col-auto">
+                    <label class="btn btn-sm btn-outline-secondary ms-2 mb-0" *ngIf="current_node_data as data">
+                        Ajout fichiers
+                        <input #fileInput type="file" multiple style="display:none"
+                            (change)="windows_add_file(data, $event)">
+                    </label>
+                </div>
+                <div class="col-auto">
+                    <div class="input-group input-group-sm mb-0 align-items-center" *ngIf="current_node_data as data">
+                        <span class="input-group-text">Nouveau dossier</span>
+                        <input #folderInput type="text" class="form-control"
+                            (keydown.enter)="windows_add_folder(data, folderInput.value); folderInput.value=''">
+                    </div>
                 </div>
             </div>
-            <div class="col-3 ps-3">
-                <div *ngIf="selected_item">
-                    <img [src]="selected_item.url | async" alt="{{ selected_item.path }}" class="img-fluid"
-                        style="max-height: 200px; max-width: 200px;" (load)="onImgLoad($event, selected_item.path)">
-                    <div class="text-muted" style="font-size: 12px;">
-                        <div>Chemin : {{ selected_item.path }}</div>
-                        <div>Taille : {{ selected_item.size | number }} octets</div>
-                        <div *ngIf="imgDimensions[selected_item.path]">
-                            Dimensions : {{ imgDimensions[selected_item.path].width }} x {{
-                            imgDimensions[selected_item.path].height }} px
-                        </div>
-                        <div *ngIf="!imgDimensions[selected_item.path]">Dimensions : ...</div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-9">
+                    <div class="windows-grid">
+                        <ng-container *ngFor="let root of current_node | keyvalue">
+                            <ng-container *ngFor="let child of root.value | keyvalue">
+                                <ng-container
+                                    *ngTemplateOutlet="iconize; context:{ key: child.key, value: child.value }"></ng-container>
+                            </ng-container>
+                        </ng-container>
                     </div>
-                    <button class="btn btn-sm btn-outline-primary mt-2" (click)="window_delete_file(selected_item)">
-                        <i class="bi bi-trash"></i> Supprimer
-                    </button>
-                    <button class="btn btn-sm btn-outline-primary mt-2" (click)="add_file_lighter(selected_item)">
-                        <i class="bi bi bi-balloon-fill"></i> Alléger
-                    </button>
+                </div>
+                <div class="col-3 ps-3">
+                    <div *ngIf="selected_item">
+                        <img [src]="selected_item.url | async" alt="{{ selected_item.path }}" class="img-fluid"
+                            style="max-height: 200px; max-width: 200px;" (load)="onImgLoad($event, selected_item.path)">
+                        <div class="text-muted" style="font-size: 12px;">
+                            <div>Chemin : {{ selected_item.path }}</div>
+                            <div>Taille : {{ selected_item.size | number }} octets</div>
+                            <div *ngIf="imgDimensions[selected_item.path]">
+                                Dimensions : {{ imgDimensions[selected_item.path].width }} x {{
+                                imgDimensions[selected_item.path].height }} px
+                            </div>
+                            <div *ngIf="!imgDimensions[selected_item.path]">Dimensions : ...</div>
+                        </div>
+                        <button class="btn btn-sm btn-outline-primary mt-2" (click)="window_delete_file(selected_item)">
+                            <i class="bi bi-trash"></i> Supprimer
+                        </button>
+                        <button class="btn btn-sm btn-outline-primary mt-2" (click)="add_file_lighten(selected_item)">
+                            <i class="bi bi bi-balloon-fill"></i> Alléger
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
