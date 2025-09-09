@@ -1,0 +1,19 @@
+<div class="container">
+  <div class="row mb-2">
+    <div class="col-auto">
+      <label>Vue :</label>
+      <select [(ngModel)]="viewStyle" class="form-select form-select-sm d-inline-block w-auto ms-2">
+        <option value="windows">Windows</option>
+        <option value="recursive">Arborescence</option>
+      </select>
+    </div>
+  </div>
+  <app-filemgr-windows *ngIf="viewStyle === 'windows'"
+  ></app-filemgr-windows>
+  <app-filemgr-recursive *ngIf="viewStyle === 'Arborescence'"
+    [fileSystemNode]="fileSystemNode"
+    [currentNode]="current_node"
+    [nodeStack]="node_stack"
+    [selectedItem]="selected_item"
+  ></app-filemgr-recursive>
+</div>

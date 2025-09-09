@@ -6,7 +6,7 @@ import { FileSystemNode, S3Item } from '../interfaces/file.interface';
 import { downloadData, uploadData } from 'aws-amplify/storage';
 import { ToastService } from '../services/toast.service';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 
 
 @Injectable({
@@ -97,6 +97,19 @@ export class FileService {
     return tree || {};
   }
 
+  delete_file(path: string): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      remove({ path: path })
+        .then((data) => {
+          resolve();
+        })
+        .catch((error) => {
+          console.log(error);
+          reject(error);
+        });
+    });
+  }
+
 
 
   upload_file(file: File, directory = ''): Promise<void> {
@@ -117,14 +130,6 @@ export class FileService {
     });
   }
 
-  delete_file(path: string) {
-    remove({ path: path })
-      .then((data) => {
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  }
 
 
   async download_file(path: string): Promise<Blob> {

@@ -23,7 +23,7 @@ import { BackPageComponent } from './back-page/back-page.component';
 import { SnippetsComponent } from './site/snippets/snippets.component';
 import { FilemgrComponent } from './files/filemgr/filemgr.component';
 import { PagesEditorComponent } from './pages/pages-editor/pages-editor.component';
-import { FilemgrFullComponent } from './files/filemgr-full/filemgr-full.component';
+import { FilemgrWindowsComponent } from './files/filemgr/filemgr-windows.component';
 
 export const routes: Routes = [
   {
@@ -59,9 +59,8 @@ export const routes: Routes = [
       { path: 'outils/cloneDB', component: CloneDBComponent },
 
       { path: 'site/thumbnails', component: SnippetsComponent },
-      { path: 'site/filemgr/documents', component: FilemgrComponent, data: { type: 'documents' } },
-      { path: 'site/filemgr/vignettes', component: FilemgrComponent, data: { type: 'vignettes' } },
-      { path: 'site/filemgr/albums', component: FilemgrFullComponent, data: { type: 'albums' } },
+      { path: 'site/filemgr/documents', component: FilemgrWindowsComponent, data: { root_directory: 'documents/' } },
+      { path: 'site/filemgr/images', component: FilemgrWindowsComponent , data:{root_directory: 'images/'}},
       { path: 'site/pages', component: PagesEditorComponent },
 
    
