@@ -1,8 +1,9 @@
 import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { map, Observable, switchMap, forkJoin } from 'rxjs';
+import { map, Observable, switchMap, forkJoin, tap } from 'rxjs';
 import { FileService } from '../../common/services/files.service';
 import { CommonModule } from '@angular/common';
+import { SiteLayoutService } from '../../common/services/site-layout.service';
 
 
 @Component({
@@ -12,27 +13,32 @@ import { CommonModule } from '@angular/common';
   styleUrl: './album.component.scss'
 })
 export class AlbumComponent {
-  album_name!: string;
+  album_path!: string;
   photos_url$: Observable<string[]> = new Observable<string[]>();
 
   constructor(
     private route: ActivatedRoute,
-    private fileService: FileService
+    private fileService: FileService,
+    private siteLayoutService: SiteLayoutService
   ) {
 
   }
 
   ngOnInit() {
+    const albums_path = this.siteLayoutService.albums_path;
 
     this.route.paramMap.subscribe(params => {
-      this.album_name = params.get('id')!;
-      // You can now use this.album_name in your component
-      this.photos_url$ = this.fileService.list_files('images/albums/' + this.album_name + '/').pipe(
+      // For multi-segment path, Angular provides the full path as a string
+      this.album_path = params.get('path')!;
+
+      // If you want to split into segments: const segments = this.album_path.split('/');
+      this.photos_url$ = this.fileService.list_files(albums_path + this.album_path + '/').pipe(
+        map((S3items) => S3items.filter(item => item.size !== 0)),
+        tap((S3items) => console.log('S3 items:', S3items)),
         switchMap((S3items) =>
-          forkJoin(S3items.map(item => this.fileService.getPresignedUrl(item.path)))
+          forkJoin(S3items.map(item => item.url = this.fileService.getPresignedUrl(item.path)))
         )
       );
     });
-
   }
 }

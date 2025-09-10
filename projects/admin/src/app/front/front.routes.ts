@@ -33,7 +33,7 @@ export const routes: Routes = [
 
       { path: 'achats/historique', component: PurchasesComponent },
 
-      { path: 'albums/:id', component: AlbumComponent },
+      { path: 'albums/:path', component: AlbumComponent },
 
       { path: 'authentification', component: ConnexionComponent },
 
