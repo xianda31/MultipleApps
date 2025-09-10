@@ -10,7 +10,7 @@ const scrollConfig: InMemoryScrollingOptions = {
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
-    provideAnimations(),
+    // provideAnimations(),
     provideRouter(routes, withInMemoryScrolling(scrollConfig), withComponentInputBinding()),
     { provide: LOCALE_ID, useValue: 'fr-FR' }
   ]

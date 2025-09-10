@@ -20,9 +20,7 @@ export class AlbumComponent {
     private route: ActivatedRoute,
     private fileService: FileService,
     private siteLayoutService: SiteLayoutService
-  ) {
-
-  }
+  ) {}
 
   ngOnInit() {
     const albums_path = this.siteLayoutService.albums_path;
@@ -34,7 +32,6 @@ export class AlbumComponent {
       // If you want to split into segments: const segments = this.album_path.split('/');
       this.photos_url$ = this.fileService.list_files(albums_path + this.album_path + '/').pipe(
         map((S3items) => S3items.filter(item => item.size !== 0)),
-        tap((S3items) => console.log('S3 items:', S3items)),
         switchMap((S3items) =>
           forkJoin(S3items.map(item => item.url = this.fileService.getPresignedUrl(item.path)))
         )
