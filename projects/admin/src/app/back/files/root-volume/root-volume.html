@@ -1,0 +1,31 @@
+<div class="offset-md-1 col-md-10 offset-xl-2 col-xl-8 ">
+    <div class="card mt-3">
+        <div class="card-header">
+            <div class="row justify-content-start align-items-center">
+                <div class="col-auto col-md-5 ">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            {{volume_name}}
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-9">
+                    <div class="windows-grid">
+                        <div *ngFor="let root_folder of root_folders"
+                            class="d-flex flex-column align-items-center my-0 mx-2">
+                            <i class="bi bi-folder-fill text-success" (click)="select_root_folder(root_folder)"
+                                style="font-size: 40px; line-height: 1; margin-bottom:0; padding-bottom:0;"></i>
+                            <span class="text-center"
+                                style="font-size: 12px; margin-top:-1px; padding-top:0; line-height:1;">{{ root_folder
+                                }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

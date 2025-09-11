@@ -1,41 +1,39 @@
-import { Component } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { map, Observable, switchMap, forkJoin, tap } from 'rxjs';
+
+import { Component, Input } from '@angular/core';
+import { map, Observable } from 'rxjs';
 import { FileService } from '../../common/services/files.service';
 import { CommonModule } from '@angular/common';
-import { SiteLayoutService } from '../../common/services/site-layout.service';
+import { NgbCarouselModule } from '@ng-bootstrap/ng-bootstrap';
+import { S3Item } from '../../common/interfaces/file.interface';
+import { Snippet } from '../../common/interfaces/page_snippet.interface';
+import { Router } from '@angular/router';
 
 
 @Component({
   selector: 'app-album',
-  imports: [CommonModule],
+  imports: [CommonModule, NgbCarouselModule],
   templateUrl: './album.component.html',
   styleUrl: './album.component.scss'
 })
 export class AlbumComponent {
-  album_path!: string;
-  photos_url$: Observable<string[]> = new Observable<string[]>();
+  @Input() album!: Snippet;
+  photos$: Observable<S3Item[]> = new Observable<S3Item[]>();
 
   constructor(
-    private route: ActivatedRoute,
     private fileService: FileService,
-    private siteLayoutService: SiteLayoutService
-  ) {}
+    private route : Router
+  ) { }
 
   ngOnInit() {
-    const albums_path = this.siteLayoutService.albums_path;
-
-    this.route.paramMap.subscribe(params => {
-      // For multi-segment path, Angular provides the full path as a string
-      this.album_path = params.get('path')!;
-
-      // If you want to split into segments: const segments = this.album_path.split('/');
-      this.photos_url$ = this.fileService.list_files(albums_path + this.album_path + '/').pipe(
-        map((S3items) => S3items.filter(item => item.size !== 0)),
-        switchMap((S3items) =>
-          forkJoin(S3items.map(item => item.url = this.fileService.getPresignedUrl(item.path)))
-        )
-      );
-    });
+    console.log('AlbumComponent album_path:', this.album.folder);
+    this.photos$ = this.fileService.list_files(this.album.folder + '/').pipe(
+      map((S3items) => S3items.filter(item => item.size !== 0)),
+      map((S3items) => (S3items.map(item => ({ ...item, url: this.fileService.getPresignedUrl(item.path) })))
+      )
+    );
   }
+
+  openCarousel() {
+    this.route.navigate(['/front/albums', this.album.id]);
+}
 }

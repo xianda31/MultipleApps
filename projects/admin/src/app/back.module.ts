@@ -27,6 +27,7 @@ import { NgbDropdownModule, NgbAccordionModule } from '@ng-bootstrap/ng-bootstra
 import { RmbracketsPipe } from './common/pipes/rmbrackets.pipe';
 import { SnippetsComponent } from './back/site/snippets/snippets.component';
 import { FilemgrWindowsComponent } from './back/files/filemgr/filemgr-windows.component';
+import { RootVolumeComponent } from './back/files/root-volume/root-volume';
 
 
 
@@ -62,6 +63,7 @@ import { FilemgrWindowsComponent } from './back/files/filemgr/filemgr-windows.co
     CloneDBComponent,
     SnippetsComponent,
     FilemgrWindowsComponent,
+    RootVolumeComponent,
     RmbracketsPipe
   ],
   exports: [
@@ -71,6 +73,7 @@ import { FilemgrWindowsComponent } from './back/files/filemgr/filemgr-windows.co
     RmbracketsPipe,
     SnippetsComponent,
     FilemgrWindowsComponent,
+    RootVolumeComponent,
     // Export components if needed
   ],
 })

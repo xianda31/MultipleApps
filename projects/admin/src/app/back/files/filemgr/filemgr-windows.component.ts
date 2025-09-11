@@ -2,9 +2,10 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FileSystemNode, S3Item } from '../../../common/interfaces/file.interface';
-import { FileService } from '../../../common/services/files.service';
+import { FileService, S3_BUCKET } from '../../../common/services/files.service';
 import { ImageService } from '../../../common/services/image.service';
 import { ToastService } from '../../../common/services/toast.service';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
     selector: 'app-filemgr-windows',
@@ -18,7 +19,8 @@ export class FilemgrWindowsComponent {
     S3items: S3Item[] = [];
     selected_item: S3Item | null = null;
     current_node !: FileSystemNode;
-    @Input() root_directory = 'images/';
+   root_folder !: string;
+   volume_name !: string;
 
     node_stack: FileSystemNode[] = [];
     imgDimensions: { [key: string]: { width: number, height: number } } = {};
@@ -27,16 +29,27 @@ export class FilemgrWindowsComponent {
         private fileService: FileService,
         private toastService: ToastService,
         private imageService: ImageService,
-    ) { }
+        private route: ActivatedRoute,
+            private router: Router,
+
+    ) { 
+            this.volume_name = S3_BUCKET;
+
+    }
 
 
     ngOnInit() {
-
-        this.fileService.list_files(this.root_directory).subscribe((S3items) => {
-            this.S3items = S3items;
-            this.fileSystemNode = this.fileService.generate_filesystem(this.S3items);
-            this.current_node = this.fileSystemNode;
-        });
+        // retrieve root_folder from route param if exists
+        const root_folder = this.route.snapshot.paramMap.get('root_folder');
+        if (root_folder) {
+            this.root_folder = root_folder + '/';
+            this.fileService.list_files(this.root_folder).subscribe((S3items) => {
+                this.S3items = S3items;
+                this.fileSystemNode = this.fileService.generate_filesystem(this.S3items);
+                this.current_node = this.fileSystemNode;
+            });
+        }
+        else{throw new Error('No root_folder parameter in route');}
     }
 
 
@@ -175,6 +188,10 @@ export class FilemgrWindowsComponent {
         return item.size === 0;
     }
 
+    back_to_volume() {
+        
+        this.router.navigate(['back/site/disk']);
+    }
 
     click_on_node(key: string, data: S3Item) {
 

@@ -14,7 +14,8 @@ import { GameCardsOwnedComponent } from './front/game-cards-owned/game-cards-own
 import { TitleComponent } from './front/title/title.component';
 
 @NgModule({
-  declarations: [],
+  declarations: [
+  ],
   imports: [
     CommonModule,
     RouterModule.forChild(routes),

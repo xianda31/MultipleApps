@@ -15,6 +15,9 @@
 @case (PAGE_TEMPLATES.CARDS_bottom) {
 <ng-container *ngTemplateOutlet="cards_img_bottom; context: { snippets: snippets }"></ng-container>
 }
+@case (PAGE_TEMPLATES.ALBUMS) {
+<ng-container *ngTemplateOutlet="albums; context: { snippets: snippets }"></ng-container>
+}
 @default {
 <ng-container *ngTemplateOutlet="journal; context: { snippets: snippets }"></ng-container>
 }
@@ -209,5 +212,17 @@
             }
         </div>
     </div>
+</ng-template>
 
+<ng-template #albums let-snippets="snippets">
+    <div class="offset-md-2 col-md-8 text-center mb-3">
+        <h2>Albums </h2>
+
+        <!-- <div > -->
+            @for (snippet of snippets; track snippet) {
+   
+            <app-album [album]="snippet"></app-album>
+            }
+        <!-- </div> -->
+    </div>
 </ng-template>

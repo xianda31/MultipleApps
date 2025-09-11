@@ -7,10 +7,10 @@ import { CommonModule } from '@angular/common';
 import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ToastService } from '../../../common/services/toast.service';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { combineLatest, map, Observable, take } from 'rxjs';
+import { combineLatest, map, Observable, take, tap } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { SnippetModalEditorComponent } from '../../site/snippet-modal-editor/snippet-modal-editor.component';
-import { FileService } from '../../../common/services/files.service';
+import { FileService, S3_ROOT_FOLDERS } from '../../../common/services/files.service';
 import { CdkDrag, CdkDropList, CdkDragDrop, moveItemInArray, transferArrayItem, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { FileSystemNode } from '../../../common/interfaces/file.interface';
 
@@ -40,11 +40,12 @@ export class PagesEditorComponent {
   pageTemplates = Object.values(PAGE_TEMPLATES);
 
 
-  file_paths$ !: Observable<string[]>;
   fileSystemNode !: FileSystemNode;
+  file_paths$ !: Observable<string[]>;
   thumbnails$ !: Observable<string[]>;
-  
-  
+  albums$ !: Observable<string[]>;
+
+
   current_node_childs = signal<FileSystemNode | null>(null);
   // node_stack: FileSystemNode[] = [];
   // returned_value : any;
@@ -68,16 +69,16 @@ export class PagesEditorComponent {
       this.resolution_too_small = true;
     }
 
- 
 
-
-    this.file_paths$ = this.fileService.list_files('documents/').pipe(
+    this.file_paths$ = this.fileService.list_files(S3_ROOT_FOLDERS.DOCUMENTS + '/').pipe(
       map((S3items) => S3items.map(item => item.path))
     );
 
-    this.thumbnails$ = this.fileService.list_files('images/vignettes/').pipe(
+    this.thumbnails$ = this.fileService.list_files(S3_ROOT_FOLDERS.IMAGES + '/').pipe(
       map((S3items) => S3items.map(item => item.path))
     );
+
+    this.albums$ = this.fileService.list_folders(S3_ROOT_FOLDERS.ALBUMS + '/')    ;
 
 
     this.pageService.listPages().pipe(take(1)).subscribe(pages => {
@@ -95,7 +96,7 @@ export class PagesEditorComponent {
             snippet_ids: [],
 
           });
-          this.toastService.showInfo('Pages', `La page "${title}" manquait, et à été créée`);
+          this.toastService.showInfo('Pages', `La page "${title}" manquait, et a été créée`);
         }
       });
       // subscribe "normally"
@@ -121,41 +122,41 @@ export class PagesEditorComponent {
 
   // filesystem utilities
 
-// select_node(node:FileSystemNode){
-//   console.log('selected',node)
-// }
+  // select_node(node:FileSystemNode){
+  //   console.log('selected',node)
+  // }
 
 
-//   open_node(node: FileSystemNode): void {
-//     const childs: FileSystemNode | null = getChildNodes(node);
-//     // if (childs === null) return;
-//     this.current_node_childs.set(childs)
-//     // if node is a directory
-//     console.log('stack:', this.node_stack)
-//   }
-  
-//   push_node(key: string, value: FileSystemNode | { __data: S3Item }) {
-//     // regenerate FileSystemNode from html (loop on current_node_childs() | keyvalue)
-//     const node: FileSystemNode = { [key]: value };
-//     this.open_node(node)
-//     if (isFolder(node)) this.node_stack.push(node);
-//   }
+  //   open_node(node: FileSystemNode): void {
+  //     const childs: FileSystemNode | null = getChildNodes(node);
+  //     // if (childs === null) return;
+  //     this.current_node_childs.set(childs)
+  //     // if node is a directory
+  //     console.log('stack:', this.node_stack)
+  //   }
 
-//   pop_node() {
-//      this.node_stack.pop();
-//     const parent = this.node_stack[this.node_stack.length - 1];
-//     if(parent === null) return;
-//     console.log('Popping node, new current:', parent);
-//     this.open_node(parent);
-//   }
+  //   push_node(key: string, value: FileSystemNode | { __data: S3Item }) {
+  //     // regenerate FileSystemNode from html (loop on current_node_childs() | keyvalue)
+  //     const node: FileSystemNode = { [key]: value };
+  //     this.open_node(node)
+  //     if (isFolder(node)) this.node_stack.push(node);
+  //   }
 
-//   get_icon(node: any): string {
-//     return node['__data'] && node['__data'].size > 0 ? 'bi bi-file' : 'bi bi-folder';
-//   }
+  //   pop_node() {
+  //      this.node_stack.pop();
+  //     const parent = this.node_stack[this.node_stack.length - 1];
+  //     if(parent === null) return;
+  //     console.log('Popping node, new current:', parent);
+  //     this.open_node(parent);
+  //   }
 
-//   get_button_class(node: any): string {
-//     return node['__data'] && node['__data'].size > 0 ? 'btn btn-outline-primary' : 'btn btn-outline-secondary';
-//   }
+  //   get_icon(node: any): string {
+  //     return node['__data'] && node['__data'].size > 0 ? 'bi bi-file' : 'bi bi-folder';
+  //   }
+
+  //   get_button_class(node: any): string {
+  //     return node['__data'] && node['__data'].size > 0 ? 'btn btn-outline-primary' : 'btn btn-outline-secondary';
+  //   }
 
   //getters
 
@@ -252,6 +253,7 @@ export class PagesEditorComponent {
       content: '<p>Nouvelle vignette</p>',
       file: '',
       image: '',
+      folder: '',
       public: true,
     };
     this.snippetService.createSnippet(snippet).then((new_snippet) => {

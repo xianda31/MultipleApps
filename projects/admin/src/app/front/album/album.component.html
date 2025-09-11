@@ -1,25 +1,22 @@
-<div class="offset-md-2 col-md-8 text-center">
-    <h2>{{album_path}}</h2>
-
-    <div id="carouselExampleAutoplaying" class="carousel slide" data-bs-ride="carousel"
-        *ngIf="photos_url$ | async as photos_url">
-        <div class="carousel-inner">
-            <ng-container *ngFor="let photo_url of photos_url ; let i = index">
-                <div class="carousel-item" [ngClass]="{'active': i === 0}">
-                    <img [src]="photo_url" class="d-block w-100" alt="Photo" />
+<!-- <div class="offset-md-2 col-md-8  text-center mb-3"> -->
+    <!-- <div class="col"> -->
+         <div class="row justify-content-start align-items-center mt-3">
+                <div class="col-auto fw-bold">{{album.title}}</div>
+                <div class="col-auto text-muted"> {{album.subtitle}} </div>
+            </div>
+        <div class="row row-cols-2 row-cols-md-6 g-2">
+            @if (photos$ | async; as photos) {
+            @for (photo of photos; track $index) {
+            <div class="col">
+                <div (click)="openCarousel()" class="card h-100">
+                    <div class="card-body h-100  p-1">
+                        <img [src]="photo.url | async" class="card-img-top album-grid-img" [alt]="photo.path" />
+                    </div>
                 </div>
-            </ng-container>
+            </div>
+            }
+            }
         </div>
 
-        <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleAutoplaying"
-            data-bs-slide="prev">
-            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Previous</span>
-        </button>
-        <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleAutoplaying"
-            data-bs-slide="next">
-            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Next</span>
-        </button>
-    </div>
-</div>
+        
+    <!-- </div> -->

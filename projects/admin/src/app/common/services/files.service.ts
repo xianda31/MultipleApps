@@ -8,11 +8,18 @@ import { ToastService } from '../services/toast.service';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Observable, of } from 'rxjs';
 
+export const S3_BUCKET = 'Bcsto-drive';
+export enum S3_ROOT_FOLDERS {
+  IMAGES = 'images',
+  DOCUMENTS = 'documents',
+  ALBUMS = 'albums'
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class FileService {
+
 
   constructor(
     private toastService: ToastService,
@@ -38,7 +45,7 @@ export class FileService {
       list({ path: directory, options: { listAll: true } })
         .then(result => {
           subscriber.next(result.items.map(item => ({ ...item, size: item.size ?? 0, url: this.getPresignedUrl(item.path) }))
-          // .filter(item => item.size !== 0)
+            // .filter(item => item.size !== 0)
           );
           subscriber.complete();
         })
@@ -46,6 +53,35 @@ export class FileService {
     });
   }
 
+  list_folders(directory: string): Observable<string[]> {
+
+    const filter_folders = (s3items: S3Item[]): string[] => {
+      let folders = new Set<string>();
+      s3items.forEach((s3item) => {
+        if (s3item.size) {
+          // sometimes files declare a folder with a / within then
+          let possibleFolder = s3item.path.split('/').slice(0, -1).join('/');
+          if (possibleFolder) folders.add(possibleFolder);
+        } else {
+          //remove trailing /
+          if (s3item.path !== directory) {
+            folders.add(s3item.path.replace(/\/$/, ''));}
+        }
+      });
+      console.log('folders : ', Array.from(folders));
+      return Array.from(folders);
+    }
+
+    return new Observable<string[]>(subscriber => {
+      list({ path: directory, options: { listAll: true } })
+        .then(result => {
+          const folders = filter_folders(result.items as S3Item[]);
+          subscriber.next(folders);
+          subscriber.complete();
+        })
+        .catch(error => subscriber.error(error));
+    });
+  }
 
   generate_filesystem(response: S3Item[]): FileSystemNode {
     // Build and prune in a single pass

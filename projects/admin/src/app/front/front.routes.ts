@@ -9,24 +9,10 @@ import { FrontPageComponent } from './static/front-page/front-page.component';
 import { PageInConstructionComponent } from '../common/page-in-construction/page-in-construction.component';
 import { GenericPageComponent } from './static/generic-page/generic-page.component';
 import { MENU_TITLES } from '../common/interfaces/page_snippet.interface';
-import { AlbumComponent } from './album/album.component';
 import { FrontComponent } from './front/front.component';
+import { Carousel } from './carousel/carousel';
 
 
-// WORK-AROUND : Angular 20.2.2  looks not supporting multi-segment parameters in routes.
-// Custom matcher for multi-segment albums route
-export function albumsMatcher(segments: UrlSegment[]) {
-  if (segments.length >= 2 && segments[0].path === 'albums') {
-    // Join all segments after 'albums/' as the album path
-    return {
-      consumed: segments,
-      posParams: {
-        path: new UrlSegment(segments.slice(1).map(s => s.path).join('/'), {})
-      }
-    };
-  }
-  return null;
-}
 
 export const routes: Routes = [
   {
@@ -43,11 +29,10 @@ export const routes: Routes = [
       { path: 'tournaments/next/:id', component: TournamentComponent },
       { path: 'tournaments/fees', component: GameCardsOwnedComponent },
       { path: 'achats/historique', component: PurchasesComponent },
-      {
-        matcher: albumsMatcher,
-        component: AlbumComponent
-      },
+      { path: 'albums', component: GenericPageComponent, data: { menu_title: MENU_TITLES.ALBUMS } },
+      { path: 'albums/:snippet_id', component: Carousel },
       { path: 'authentification', component: ConnexionComponent },
+      { path: 'home', component: FrontPageComponent },
       { path: '', component: FrontPageComponent },
       { path: '**', component: PageNotFoundComponent },
     ]

@@ -2,15 +2,14 @@
 
     <div class="card mt-3" *ngIf="current_node">
         <div class="card-header">
-            <div class="row justify-content-around align-items-center">
+            <div class="row justify-content-start align-items-center">
                 <div class="col-auto col-md-5">
-                    <nav aria-label="breadcrumb">
+                    <nav *ngIf="current_node_data as data" aria-label="breadcrumb">
                         <ol class="breadcrumb">
-                            <ng-container *ngIf="current_node_data as data">
-                                <ng-container *ngFor="let segment of data.path?.split('/'); let i = index">
-                                    <li (click)="pop_folder(i)" class="breadcrumb-item">{{ segment }}</li>
-                                </ng-container>
-                            </ng-container>
+                                <li class="breadcrumb-item" (click)="back_to_volume()"> {{ volume_name }} </li>
+                                <li *ngFor="let segment of data.path?.split('/'); let i = index" class="breadcrumb-item" (click)="pop_folder(i)">
+                                    {{ segment }}
+                                </li>
                         </ol>
                     </nav>
                 </div>

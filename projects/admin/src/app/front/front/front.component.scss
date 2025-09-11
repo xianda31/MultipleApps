@@ -1,3 +1,9 @@
+
+@media (max-width: 767.98px) {
+  .title-bg, app-title {
+    display: none !important;
+  }
+}
   .row.navbar-bg {
     min-height: 0 !important;
     height: auto !important;
@@ -22,9 +28,7 @@
     display: flex !important;
     align-items: center !important;
   }
-  .title-bg, app-title {
-    display: none !important;
-  }
+
 }
 .container-fluid.root-bg {
   padding-right: 0 !important;

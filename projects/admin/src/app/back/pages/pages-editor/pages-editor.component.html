@@ -190,6 +190,23 @@ page_edit : {{returned_value   | json}}
                             <i class="bi bi-x-circle"></i>
                         </button>
                     </div>
+                    <!-- folder url input -->
+                    <div class="input-group input-group-sm mt-1">
+                        <span class="input-group-text">Dossier</span>
+                        <input type="text" list="folder_datalist" class="form-control"
+                            [placeholder]="selected_snippet.folder" [(ngModel)]="selected_snippet.folder"
+                            (keydown.enter)="saveSnippetSelected()">
+
+                        <datalist id="folder_datalist">
+                            <option *ngFor="let path of albums$ | async" [value]="path">
+                                {{ path }}
+                            </option>
+                        </datalist>
+
+                        <button class="btn btn-sm " (click)="selected_snippet.folder = ''">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
+                    </div>
 
                 </div>
             </div>
