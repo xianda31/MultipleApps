@@ -12,8 +12,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { SnippetModalEditorComponent } from '../../site/snippet-modal-editor/snippet-modal-editor.component';
 import { FileService } from '../../../common/services/files.service';
 import { CdkDrag, CdkDropList, CdkDragDrop, moveItemInArray, transferArrayItem, CdkDropListGroup } from '@angular/cdk/drag-drop';
-import { FileSystemNode, S3Item } from '../../../common/interfaces/file.interface';
-import { InputFileComponent } from "../../files/input-file/input-file.component";
+import { FileSystemNode } from '../../../common/interfaces/file.interface';
 
 
 @Component({

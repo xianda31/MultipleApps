@@ -29,8 +29,6 @@ export class FrontComponent {
 
      this.siteLayoutService.getAlbums().subscribe((albums) => {
       this.albums = albums;
-      console.log('Albums loaded:', this.albums);
-      
     });
   }
 }

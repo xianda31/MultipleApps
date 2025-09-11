@@ -1,28 +1,25 @@
-<ng-container *ngIf="page" [ngSwitch]="page.template">
-
-    <div *ngSwitchCase="PAGE_TEMPLATES.JOURNAL">
-        <ng-container *ngTemplateOutlet="journal; context: { snippets: snippets }"></ng-container>
-    </div>
-    <div *ngSwitchCase="PAGE_TEMPLATES.LOADABLE">
-        <ng-container *ngTemplateOutlet="loadable; context: { snippets: snippets }"></ng-container>
-    </div>
-    <div *ngSwitchCase="PAGE_TEMPLATES.TROMBINOSCOPE">
-        <ng-container *ngTemplateOutlet="trombinoscope; context: { snippets: snippets }"></ng-container>
-    </div>
-    <div *ngSwitchCase="PAGE_TEMPLATES.CARDS_top">
-        <ng-container *ngTemplateOutlet="cards_img_top; context: { snippets: snippets }"></ng-container>
-    </div>
-    <div *ngSwitchCase="PAGE_TEMPLATES.CARDS_top">
-        <ng-container *ngTemplateOutlet="cards_img_top; context: { snippets: snippets }"></ng-container>
-    </div>
-    <div *ngSwitchCase="PAGE_TEMPLATES.CARDS_bottom">
-        <ng-container *ngTemplateOutlet="cards_img_bottom; context: { snippets: snippets }"></ng-container>
-    </div>
-    <div *ngSwitchDefault>
-        <ng-container *ngTemplateOutlet="journal; context: { snippets: snippets }"></ng-container>
-    </div>
-
-</ng-container>
+@if (page) {
+@switch (page.template) {
+@case (PAGE_TEMPLATES.JOURNAL) {
+<ng-container *ngTemplateOutlet="journal; context: { snippets: snippets }"></ng-container>
+}
+@case (PAGE_TEMPLATES.LOADABLE) {
+<ng-container *ngTemplateOutlet="loadable; context: { snippets: snippets }"></ng-container>
+}
+@case (PAGE_TEMPLATES.TROMBINOSCOPE) {
+<ng-container *ngTemplateOutlet="trombinoscope; context: { snippets: snippets }"></ng-container>
+}
+@case (PAGE_TEMPLATES.CARDS_top) {
+<ng-container *ngTemplateOutlet="cards_img_top; context: { snippets: snippets }"></ng-container>
+}
+@case (PAGE_TEMPLATES.CARDS_bottom) {
+<ng-container *ngTemplateOutlet="cards_img_bottom; context: { snippets: snippets }"></ng-container>
+}
+@default {
+<ng-container *ngTemplateOutlet="journal; context: { snippets: snippets }"></ng-container>
+}
+}
+}
 
 <ng-template #journal let-snippets="snippets">
     <div class="offset-md-2 col-md-8 justify-content-center">
@@ -31,15 +28,17 @@
             <div class="col-md-3">
                 <div class="position-sticky" style="top: 0; z-index: 2; background: #fff;">
                     <h2 class="mb-3">Sommaire</h2>
-                    <div *ngFor="let snippet of snippets" (click)="scrollToElement(snippet.title)"
-                        class="fs-4 text-secondary hover-title">{{snippet.title}}
-                    </div>
+                    @for (snippet of snippets; track snippet) {
+                    <div (click)="scrollToElement(snippet.title)" class="fs-4 text-secondary hover-title">
+                        {{snippet.title}}</div>
+                    }
                 </div>
             </div>
 
             <div class="col-md-7">
                 <h2></h2>
-                <div *ngFor="let snippet of snippets" class="col">
+                @for (snippet of snippets; track snippet) {
+                <div class="col">
                     <div class="card border-0" id="{{snippet.title}}">
                         <div class="card-body">
                             <div class="row">
@@ -52,8 +51,7 @@
                                         {{snippet.title}}
                                         <div class="fs-5 text-muted">{{snippet.subtitle}}</div>
                                     </h2>
-                                    <small class="text-muted">Publié le {{snippet.createdAt | date:'shortDate'}}
-                                    </small>
+                                    <small class="text-muted">Publié le {{snippet.createdAt | date:'shortDate'}}</small>
                                 </div>
                             </div>
                             <div class="card-text mt-3">
@@ -63,6 +61,7 @@
                     </div>
                     <hr class="bg-secondary">
                 </div>
+                }
             </div>
         </div>
     </div>
@@ -70,7 +69,8 @@
 
 <ng-template #loadable let-snippets="snippets">
     <div class="container-sm-fluid container p-md-5 p-0 justify-content-start">
-        <div *ngIf="snippets.length === 0 " class="text-center mt-5">
+        @if (snippets.length === 0) {
+        <div class="text-center mt-5">
             <h1 class="display-3">.... Désolé ....</h1>
             <div class="lead">
                 <p>Il n'y a aucune publication disponible sous cette section.</p>
@@ -78,16 +78,17 @@
                 <p>Sinon, veuillez contacter l'administrateur.</p>
             </div>
         </div>
-        <ng-container *ngIf="!isMobile()">
-        <div *ngFor="let snippet of snippets" class="card mb-3 nice_shadow bg-dark">
-            <div  class="row g-0  align-items-center">
+        }
+        @if (!isMobile()) {
+        @for (snippet of snippets; track snippet) {
+        <div class="card mb-3 nice_shadow bg-dark">
+            <div class="row g-0  align-items-center">
                 <div class="col-md-2 text-secondary">
                     <i [class]="doc_icon(snippet.file)" style="font-size: 6rem;"></i>
                 </div>
                 <div class="col-md-10">
                     <div class="card-body">
                         <div class="row align-items-center">
-
                             <div class="col-6 ">
                                 <h3 class="fw-bolder"> {{ snippet.title}} </h3>
                                 <div>
@@ -97,40 +98,40 @@
                                     </button>
                                 </div>
                             </div>
-
                             <div class="col-6 ">
                                 <p>
                                     <span class="fw-bold">Contenu :</span>
                                     <span [innerHTML]="snippet.content"></span>
                             </div>
-
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        </ng-container>
-        <ng-container *ngIf="isMobile()">
-        <div *ngFor="let snippet of snippets" class="card mb-3 nice_shadow bg-dark">
-            <div  class="card-body">
+        }
+        }
+        @if (isMobile()) {
+        @for (snippet of snippets; track snippet) {
+        <div class="card mb-3 nice_shadow bg-dark">
+            <div class="card-body">
                 <div class="row text-secondary">
                     <h3 class="fw-bolder">
                         <i [class]="doc_icon(snippet.file)" style="font-size: 3rem;"></i>
-                         {{ snippet.title}} </h3>
+                        {{ snippet.title}}
+                    </h3>
                 </div>
                 <div class="row align-items-center">
                     <span class="fw-bold">Contenu :</span>
                     <span [innerHTML]="snippet.content"></span>
                 </div>
-
                 <button class="btn  btn-outline-primary nice_shadow"
                     (click)="downloadDocument(snippet); $event.preventDefault()">
                     Télécharger le document
                 </button>
             </div>
         </div>
-        </ng-container>
-
+        }
+        }
     </div>
 </ng-template>
 
@@ -138,20 +139,20 @@
     <div class="offset-md-1 col-md-10 offset-xl-3 col-xl-6 justify-content-start">
 
         <div class="row row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-3">
-            <div *ngFor="let snippet of snippets" class="col">
+            @for (snippet of snippets; track snippet) {
+            <div class="col">
                 <div class="card h-100 nice_shadow">
                     <img [src]="snippet.image_url | async" style="max-width: 100%; max-height: 20vh; object-fit: cover;"
                         alt="{{snippet.title}}" class="img-fluid rounded-start">
-
                     <div class="card-body text-center">
                         <h5 class="card-title">{{snippet.title}}</h5>
                         <div class="card-text mt-4">
                             <h6 class="fw-bold"> {{snippet.subtitle}}</h6>
                         </div>
                     </div>
-
                 </div>
             </div>
+            }
         </div>
 
     </div>
@@ -161,13 +162,12 @@
     <div class=" col-md-12 offset-xl-1  col-xl-10 justify-content-start">
 
         <div class="row row-cols-1 row-cols-md-3 justify-content-center  gy-5 g-md-2 ">
-            <div *ngFor="let snippet of snippets" class="col">
+            @for (snippet of snippets; track snippet) {
+            <div class="col">
                 <div class="card h-100 nice_shadow">
-
                     <img *ngIf="snippet.image" [src]="snippet.image_url | async"
                         style="max-height: 20vh; width: 100%; height: auto; object-fit: cover;" alt="{{snippet.title}}"
                         class="img-fluid card-img-top">
-                    
                     <div class="card-body">
                         <div class="fs-3 card-title ">
                             {{snippet.title}} <br>
@@ -176,9 +176,9 @@
                         </div>
                         <div class="card-text ps-3" [innerHTML]="snippet.content"> </div>
                     </div>
-                    
                 </div>
             </div>
+            }
         </div>
     </div>
 
@@ -188,10 +188,9 @@
     <div class=" col-md-12 offset-xl-1  col-xl-10 justify-content-start">
 
         <div class="row row-cols-1 row-cols-md-3 justify-content-center  gy-5 g-md-2 ">
-            <div *ngFor="let snippet of snippets" class="col">
+            @for (snippet of snippets; track snippet) {
+            <div class="col">
                 <div class="card h-100 nice_shadow">
-
-                    
                     <div class="card-body">
                         <div class="fs-3 card-title ">
                             {{snippet.title}} <br>
@@ -200,12 +199,14 @@
                         </div>
                         <div class="card-text ps-3" [innerHTML]="snippet.content"> </div>
                     </div>
-                    
-                    <img *ngIf="snippet.image" [src]="snippet.image_url | async"
+                    @if (snippet.image) {
+                    <img [src]="snippet.image_url | async"
                         style="max-height: 20vh; width: 100%; height: auto; object-fit: cover;" alt="{{snippet.title}}"
                         class="img-fluid card-img-bottom">
+                    }
                 </div>
             </div>
+            }
         </div>
     </div>
 

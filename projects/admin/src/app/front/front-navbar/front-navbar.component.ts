@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink, NavigationEnd } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { AuthentificationService } from '../../common/authentification/authentification.service';
 import { GroupService } from '../../common/authentification/group.service';
 import { Accreditation } from '../../common/authentification/group.interface';

@@ -21,12 +21,10 @@ export class SiteLayoutService {
       map((S3items) => this.get_folders(S3items)),
       map((folders) => folders.map(folder => {return folder.replace(this.albums_path, '').replace(/\/$/, '');      })),
       map((folders) => folders.filter(folder => folder !== '')),
-      tap((folders) => console.log('Albums found:', folders))
     );
   }
   get_folders(S3items: any[]): string[] {
     const folderSet = new Set<string>();
-    console.log('All S3 items:', S3items);
     S3items.forEach(item => {
       let folderPath = '';
       if (item.size === 0) {
