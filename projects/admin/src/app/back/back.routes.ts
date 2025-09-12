@@ -21,8 +21,9 @@ import { CloneDBComponent } from './maintenance/clone-DB/clone-db.component';
 import { AdminComponent } from './admin/back.component';
 import { BackPageComponent } from './back-page/back-page.component';
 import { SnippetsComponent } from './site/snippets/snippets.component';
-import { FilemgrComponent } from './files/filemgr/filemgr.component';
 import { PagesEditorComponent } from './pages/pages-editor/pages-editor.component';
+import { FilemgrWindowsComponent } from './files/filemgr/filemgr-windows.component';
+import { RootVolumeComponent } from './files/root-volume/root-volume';
 
 export const routes: Routes = [
   {
@@ -58,9 +59,13 @@ export const routes: Routes = [
       { path: 'outils/cloneDB', component: CloneDBComponent },
 
       { path: 'site/thumbnails', component: SnippetsComponent },
-      { path: 'site/filemgr/documents', component: FilemgrComponent, data: { type: 'documents' } },
-      { path: 'site/filemgr/images', component: FilemgrComponent, data: { type: 'images' } },
+      { path: 'site/disk', component: RootVolumeComponent },
+      { path: 'site/disk/:root_folder', component: FilemgrWindowsComponent },
+      // { path: 'site/filemgr/documents', component: FilemgrWindowsComponent, data: { root_directory: 'documents/' } },
+      // { path: 'site/filemgr/images', component: FilemgrWindowsComponent , data:{root_directory: 'images/'}},
       { path: 'site/pages', component: PagesEditorComponent },
+
+   
 
       { path: 'home', component: BackPageComponent },
       { path: '', component: BackPageComponent },

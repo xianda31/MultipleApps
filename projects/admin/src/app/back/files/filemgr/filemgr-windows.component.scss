@@ -1,0 +1,19 @@
+ .windows-grid {
+     display: grid;
+     width: 100%;
+     grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+     gap: 0.5rem 1.5rem;
+     justify-items: center;
+     align-items: start;
+     box-sizing: border-box;
+ }
+
+ .card-header .breadcrumb {
+    padding-top: 0.15rem !important;
+    padding-bottom: 0.15rem !important;
+    margin-bottom: 0 !important;
+}
+.card-header {
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
+}

@@ -26,7 +26,8 @@ import { AdminComponent } from './back/admin/back.component';
 import { NgbDropdownModule, NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
 import { RmbracketsPipe } from './common/pipes/rmbrackets.pipe';
 import { SnippetsComponent } from './back/site/snippets/snippets.component';
-import { FilemgrComponent } from './back/files/filemgr/filemgr.component';
+import { FilemgrWindowsComponent } from './back/files/filemgr/filemgr-windows.component';
+import { RootVolumeComponent } from './back/files/root-volume/root-volume';
 
 
 
@@ -61,7 +62,8 @@ import { FilemgrComponent } from './back/files/filemgr/filemgr.component';
     PageNotFoundComponent,
     CloneDBComponent,
     SnippetsComponent,
-    FilemgrComponent,
+    FilemgrWindowsComponent,
+    RootVolumeComponent,
     RmbracketsPipe
   ],
   exports: [
@@ -70,7 +72,8 @@ import { FilemgrComponent } from './back/files/filemgr/filemgr.component';
     AdminComponent,
     RmbracketsPipe,
     SnippetsComponent,
-    FilemgrComponent,
+    FilemgrWindowsComponent,
+    RootVolumeComponent,
     // Export components if needed
   ],
 })

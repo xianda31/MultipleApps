@@ -6,7 +6,13 @@
   <div [ngbCollapse]="isCollapsed" class="navbar-collapse" id="navbarSupportedContent">
 
     <!-- les menus -->
-  <ul class="navbar-nav menu-sm-tight">
+    <ul class="navbar-nav menu-sm-tight">
+
+      <li class="nav-item me-md-3 me-sm-1">
+        <a class="nav-link text-white" routerLink="home" [class.active]="isNavItemActive('home')">
+          <span class="ms-1">Maison</span>
+        </a>
+      </li>
 
       <li class="nav-item me-md-3 me-sm-1">
         <a class="nav-link text-white" routerLink="news" [class.active]="isNavItemActive('news')">
@@ -18,39 +24,54 @@
         <a class="nav-link dropdown-toggle text-white" ngbDropdownToggle>
           <span class="ms-1">Le Club</span>
         </a>
-    <ul ngbDropdownMenu class="dropdown-menu shadow">
-      <li><a class="dropdown-item" routerLink="club/acteurs"
-        (click)="dropdownClub.close(); closeBurger()">les acteurs</a></li>
-      <li><a class="dropdown-item" routerLink="club/documents"
-        (click)="dropdownClub.close(); closeBurger()">documents</a></li>
-      <li><a class="dropdown-item" routerLink="club/bureau" routerLinkActive="active"
-        (click)="dropdownClub.close(); closeBurger()">le bureau</a></li>
-    </ul>
+        <ul ngbDropdownMenu class="dropdown-menu shadow">
+          <li><a class="dropdown-item" routerLink="club/acteurs" (click)="dropdownClub.close(); closeBurger()">les
+              acteurs</a></li>
+          <li><a class="dropdown-item" routerLink="club/documents"
+              (click)="dropdownClub.close(); closeBurger()">documents</a></li>
+          <li><a class="dropdown-item" routerLink="club/bureau" 
+              (click)="dropdownClub.close(); closeBurger()">le bureau</a></li>
+        </ul>
       </li>
 
       <li ngbDropdown #dropdownEcole="ngbDropdown" class="nav-item dropdown me-md-3 me-sm-1">
         <a class="nav-link dropdown-toggle text-white" ngbDropdownToggle [class.active]="isNavItemActive('ecole')">
           <span class="ms-1">L'école de Bridge</span>
         </a>
-    <ul ngbDropdownMenu class="dropdown-menu shadow">
-      <li><a class="dropdown-item" routerLink="école/cours" routerLinkActive="active"
-        (click)="dropdownEcole.close(); closeBurger()">cours</a></li>
-      <li><a class="dropdown-item" routerLink="école/inscription"
-        (click)="dropdownEcole.close(); closeBurger()">inscription</a></li>
-    </ul>
+        <ul ngbDropdownMenu class="dropdown-menu shadow">
+          <li><a class="dropdown-item" routerLink="école/cours" 
+              (click)="dropdownEcole.close(); closeBurger()">cours</a></li>
+          <li><a class="dropdown-item" routerLink="école/inscription"
+              (click)="dropdownEcole.close(); closeBurger()">inscription</a></li>
+        </ul>
       </li>
 
 
       <li ngbDropdown #dropdownTournois="ngbDropdown" class="nav-item dropdown me-md-3 me-sm-1">
-        <a class="nav-link dropdown-toggle text-white" ngbDropdownToggle [class.active]="isNavItemActive('achats')">
+        <a class="nav-link dropdown-toggle text-white" ngbDropdownToggle [class.active]="isNavItemActive('tournois')">
           <span class="ms-1">Les tournois</span>
         </a>
-    <ul ngbDropdownMenu class="dropdown-menu shadow">
-      <li><a class="dropdown-item" routerLink="tournaments/next" routerLinkActive="active"
-        (click)="dropdownTournois.close(); closeBurger()">prochainement</a></li>
-      <li><a class="dropdown-item" routerLink="tournaments/fees" routerLinkActive="active"
-        (click)="dropdownTournois.close(); closeBurger()">ma carte</a></li>
-    </ul>
+        <ul ngbDropdownMenu class="dropdown-menu shadow">
+          <li><a class="dropdown-item" routerLink="tournaments/next" 
+              (click)="dropdownTournois.close(); closeBurger()">prochainement</a></li>
+          <li><a class="dropdown-item" routerLink="tournaments/fees" 
+              (click)="dropdownTournois.close(); closeBurger()">ma carte</a></li>
+        </ul>
+      </li>
+<!-- 
+      <li ngbDropdown #dropdownAlbums="ngbDropdown" class="nav-item dropdown me-md-3 me-sm-1">
+        <a class="nav-link dropdown-toggle text-white" ngbDropdownToggle [class.active]="isNavItemActive('albums')">
+          <span class="ms-1">Les albums</span>
+        </a>
+        <ul ngbDropdownMenu class="dropdown-menu shadow">
+          <li *ngFor="let album of albums"><a class="dropdown-item" routerLink="albums/{{ album }}" 
+              (click)="dropdownAlbums.close(); closeBurger()">{{ album }}</a></li>
+        </ul>
+      </li> -->
+            <li class="nav-item me-md-3 me-sm-1">
+        <a class="nav-link text-white" routerLink="albums" [class.active]="isNavItemActive('albums')">
+          <span class="ms-1">Les albums</span>
+        </a>
       </li>
 
       <li *ngIf="logged_member$ | async as member" ngbDropdown #dropdownAchats="ngbDropdown"
@@ -59,7 +80,7 @@
           <span class="ms-1">Mes achats</span>
         </a>
         <ul ngbDropdownMenu class="dropdown-menu shadow">
-          <li><a class="dropdown-item" routerLink="achats/historique" routerLinkActive="active"
+          <li><a class="dropdown-item" routerLink="achats/historique" 
               (click)="dropdownAchats.close(); closeBurger()">historique</a></li>
         </ul>
       </li>
@@ -78,14 +99,12 @@
         </a>
         <ul ngbDropdownMenu class="dropdown-menu shadow">
           <li *ngIf="user_accreditation && user_accreditation.level > 0">
-            <a class="dropdown-item" routerLink="../back"
-              (click)="dropdownUser.close(); closeBurger()">
+            <a class="dropdown-item" routerLink="../back" (click)="dropdownUser.close(); closeBurger()">
               <i [class]="user_accreditation.icon"></i>
               back office
             </a>
           </li>
-          <li> <a class="dropdown-item"
-              (click)="signOut(); dropdownUser.close(); closeBurger()">
+          <li> <a class="dropdown-item" (click)="signOut(); dropdownUser.close(); closeBurger()">
               <i class="bi bi-box-arrow-right"></i>
               Déconnexion
             </a></li>

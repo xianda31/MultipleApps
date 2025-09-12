@@ -56,6 +56,7 @@ export class SnippetService {
             return Promise.reject('Error creating snippet');
         }
     }
+    
 
     listSnippets(): Observable<Snippet[]> {
         const _listSnippets = this.dbHandler.listSnippets().pipe(
@@ -69,6 +70,7 @@ export class SnippetService {
         );
         return this._snippets ? this._snippets$.asObservable() : _listSnippets;
     }
+
 
     sorted_snippets(snippets: Snippet[]): Observable<Snippet[]> {
         // Adapter selon le besoin métier

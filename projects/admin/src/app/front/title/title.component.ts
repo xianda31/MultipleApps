@@ -10,15 +10,18 @@ import { CommonModule } from '@angular/common';
   styleUrl: './title.component.scss'
 })
 export class TitleComponent {
-  title$!: Observable<string> ;
+  title$!: Observable<string>;
 
   // Inject the TitleService to get the title
-constructor(
+  constructor(
+    private titleService: TitleService
+  ) { }
 
-  private titleService: TitleService
-) { 
-
-  this.title$ = this.titleService.Title$;
+  ngOnInit(): void {
+    this.title$ = this.titleService.Title$;
+    this.title$.subscribe(title => {
+      console.log('TitleComponent title updated:', title);
+    });
   }
 
 }

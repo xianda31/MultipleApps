@@ -1,0 +1,22 @@
+<!-- <div class="offset-md-2 col-md-8  text-center mb-3"> -->
+    <!-- <div class="col"> -->
+         <div class="row justify-content-start align-items-center mt-3">
+                <div class="col-auto fw-bold">{{album.title}}</div>
+                <div class="col-auto text-muted"> {{album.subtitle}} </div>
+            </div>
+        <div class="row row-cols-2 row-cols-md-6 g-2">
+            @if (photos$ | async; as photos) {
+            @for (photo of photos; track $index) {
+            <div class="col">
+                <div (click)="openCarousel()" class="card h-100">
+                    <div class="card-body h-100  p-1">
+                        <img [src]="photo.url | async" class="card-img-top album-grid-img" [alt]="photo.path" />
+                    </div>
+                </div>
+            </div>
+            }
+            }
+        </div>
+
+        
+    <!-- </div> -->

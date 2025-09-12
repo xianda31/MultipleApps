@@ -1,0 +1,49 @@
+// Carousel control button style variables
+$carousel-btn-size: 3rem;
+$carousel-btn-bg: rgba(197, 92, 31, 0.7);
+$carousel-btn-radius: 50%;
+$carousel-btn-shadow: 0 0 0.5rem #0003;
+
+// Shared style for both prev and next buttons
+.carousel-control-btn {
+	position: absolute;
+	top: 50%;
+	z-index: 2;
+	width: $carousel-btn-size;
+	height: $carousel-btn-size;
+	opacity: 1;
+	background: $carousel-btn-bg;
+	border-radius: $carousel-btn-radius;
+	filter: none;
+	transition: background 0.2s;
+	// transform: translateY(-50%);
+	box-shadow: $carousel-btn-shadow;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border: none;
+	padding: 0;
+}
+.carousel-control-btn:focus {
+	outline: 2px solid #a67c52;
+}
+.carousel-control-btn .carousel-control-prev-icon,
+.carousel-control-btn .carousel-control-next-icon {
+	filter: invert(1) sepia(1) saturate(5) hue-rotate(-20deg) brightness(1.2);
+}
+.carousel-control-btn.prev {
+	left: 25rem;
+	right: auto;
+	transform: translateY(-50%) translateX(-30%);
+}
+.carousel-control-btn.next {
+	right: 25rem;
+	left: auto;
+	transform: translateY(-50%) translateX(30%);
+}
+
+
+.album-carousel-img {
+	height: 30rem;
+	object-fit:cover;
+}

@@ -8,10 +8,11 @@ import { PageService } from '../../../common/services/page.service';
 import { map, switchMap } from 'rxjs';
 import { ToastService } from '../../../common/services/toast.service';
 import { FileService } from '../../../common/services/files.service';
+import { AlbumComponent } from '../../album/album.component';
 
 @Component({
   selector: 'app-generic-page',
-  imports: [CommonModule],
+  imports: [CommonModule, AlbumComponent],
   templateUrl: './generic-page.component.html',
   styleUrl: './generic-page.component.scss'
 })
@@ -43,7 +44,61 @@ export class GenericPageComponent {
   ) { }
 
   ngOnInit(): void {
-    // Intercept link clicks for relative URLs
+
+    
+   this.init_relative_links_handler();
+
+    this.pageService.getPageByTitle(this.menu_title).pipe(
+      map(page => {
+        if (!page) { throw new Error(this.menu_title + ' page not found' ) }
+        this.page = page;
+        this.titleService.setTitle(this.page.title);
+      }),
+      switchMap(() => this.snippetService.listSnippets())
+    )
+    .subscribe((snippets) => {
+      this.snippets = this.page.snippet_ids.map(id => snippets.find(snippet => snippet.id === id))
+        .filter(snippet => snippet !== undefined) as Snippet[];
+
+        console.log('GenericPageComponent snippets:', this.snippets);
+    });
+  }
+
+  // special for albums
+
+  
+
+  
+  // special for documents
+  
+  
+  doc_icon(file: string): string {
+   const fileType = file.split('.').pop() || '';
+   const icon = Object.keys(this.icons).find(key => key === fileType);
+   return icon ? this.icons[icon] : this.icons['unknown'];
+ }
+  async downloadDocument(snippet: Snippet) {
+    const docItem = { name: snippet.title, url: snippet.file };
+    try {
+      const blob = await this.fileService.downloadBlob(docItem.url);
+      const a = window.document.createElement('a');
+      a.href = window.URL.createObjectURL(blob);
+      a.download = docItem.name;
+      window.document.body.appendChild(a);
+      a.click();
+      window.document.body.removeChild(a);
+      window.URL.revokeObjectURL(a.href);
+    } catch (error) {
+      this.toastService.showErrorToast('Erreur lors du téléchargement', docItem.name + ' n\'est pas disponible');
+    }
+  }
+
+
+  // handling of DOM events
+
+  // Intercept link clicks for relative URLs
+  init_relative_links_handler() {
+        
     this.renderer.listen(this.el.nativeElement, 'click', (event: MouseEvent) => {
       const target = event.target as HTMLElement;
       if (target.tagName === 'A') {
@@ -64,22 +119,9 @@ export class GenericPageComponent {
         }
       }
     });
-
-    this.pageService.getPageByTitle(this.menu_title).pipe(
-      map(page => {
-        if (!page) { throw new Error(this.menu_title + ' page not found' ) }
-        this.page = page;
-        this.titleService.setTitle(this.page.title);
-      }),
-      switchMap(() => this.snippetService.listSnippets())
-    )
-    .subscribe((snippets) => {
-      this.snippets = this.page.snippet_ids.map(id => snippets.find(snippet => snippet.id === id))
-        .filter(snippet => snippet !== undefined) as Snippet[];
-    });
   }
 
-
+  
   scrollToElement(title: string) {
     setTimeout(() => {
       const element = document.getElementById(title);
@@ -89,33 +131,9 @@ export class GenericPageComponent {
     }, 0);
   }
 
-
-   doc_icon(file: string): string {
-    const fileType = file.split('.').pop() || '';
-    const icon = Object.keys(this.icons).find(key => key === fileType);
-    return icon ? this.icons[icon] : this.icons['unknown'];
-  }
-
-
-  // special documents
-
   isMobile() {
     return window.innerWidth < 576;
   }
 
-  async downloadDocument(snippet: Snippet) {
-    const docItem = { name: snippet.title, url: snippet.file };
-    try {
-      const blob = await this.fileService.downloadBlob(docItem.url);
-      const a = window.document.createElement('a');
-      a.href = window.URL.createObjectURL(blob);
-      a.download = docItem.name;
-      window.document.body.appendChild(a);
-      a.click();
-      window.document.body.removeChild(a);
-      window.URL.revokeObjectURL(a.href);
-    } catch (error) {
-      this.toastService.showErrorToast('Erreur lors du téléchargement', docItem.name + ' n\'est pas disponible');
-    }
-  }
+  
 }

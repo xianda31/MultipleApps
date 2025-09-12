@@ -22,24 +22,23 @@
       </div>
 
       <div class="row navbar-bg shadow px-2 align-items-center h-auto text-white flex-grow-1 g-0">
-        <app-front-navbar></app-front-navbar>
+        <app-front-navbar [albums]="albums"></app-front-navbar>
       </div>
 
     </div>
 
   </div>
 
-
   <div class="row justify-content-center title-bg align-items-center p-3">
     <div class="text-center g-0 ">
-      <app-title></app-title>
-    </div>
+    <app-title></app-title>
   </div>
+</div>
 
-  <app-toaster></app-toaster>
+<app-toaster></app-toaster>
 
 
-  <div class="row mt-3  justify-content-center" style="max-height: 70vh; overflow-y: auto;">
+<div class="row mt-3  justify-content-center" style="max-height: 70vh; overflow-y: auto;">
     <router-outlet></router-outlet>
   </div>
 

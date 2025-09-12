@@ -9,6 +9,7 @@ export interface Snippet {
     public: boolean;
     image: string;
     file: string;
+    folder:string
     image_url?: Observable<string>;
     pageId?: string;
     createdAt?: string;
@@ -36,6 +37,7 @@ export enum MENU_TITLES {
     BUREAU = 'bureau',
     DOCUMENTS = 'documents',
     COURS = 'cours',
+    ALBUMS = 'albums',
     POUBELLE = 'poubelle',
     // CONTACTS = 'contacts',
 }
@@ -46,6 +48,7 @@ export enum PAGE_TEMPLATES {
     LOADABLE = 'téléchargement',
     CARDS_top = 'fiches img haut',
     CARDS_bottom = 'fiches img bas',
+    ALBUMS = 'albums',
     X_DEFAULT = 'journal',
 }
 
