@@ -41,15 +41,14 @@ export class FeesCollectorService {
   ) {
     this.membersService.listMembers().subscribe((members) => {
       this.members = members;
+      this.gameCardService.gameCards.subscribe((cards) => {
+        // initialize game cards from dynamoDB for next usages
+      });
     });
 
     this.systemDataService.get_configuration().subscribe((sys_conf) => {
       this.sys_conf = sys_conf;
       this.init_game();
-    });
-
-    this.gameCardService.gameCards.subscribe((cards) => {
-      // initialize game cards from dynamoDB for next usages
     });
 
 

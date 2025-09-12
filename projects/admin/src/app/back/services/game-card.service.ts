@@ -20,7 +20,11 @@ export class GameCardService {
     private membersService: MembersService,
     private toastService: ToastService,
     private dbHandler: DBhandler
-  ) { }
+  ) { 
+    this.membersService.listMembers().subscribe((members) => {
+        this.members = members;
+      });
+  }
 
   // interfaces haut niveau
 
@@ -205,12 +209,9 @@ export class GameCardService {
     await Promise.all(delNullPromises);
   }
 
+// use of query Observable  !!! //
   listCards(): Observable<GameCard[]> {
-    return this.membersService.listMembers().pipe(
-      map((members) => {
-        this.members = members;
-      }),
-      switchMap(() => this.dbHandler.listPlayBooks()),
+    return this.dbHandler.queryPlayBooks().pipe(
       map((cards) => {
         this._gameCards = cards.map(card => {
           const owners = card.licenses
@@ -219,6 +220,7 @@ export class GameCardService {
             .filter((owner): owner is Member => owner !== undefined);
 
           if (owners.length === 0) {
+            this.toastService.showWarning('Gestion des cartes', `Aucun propriétaire trouvé pour la carte ID ${card.id}`);
             console.warn(`No owners found for card with ID ${card.id}. `)
           }
           return {

@@ -442,6 +442,19 @@ create_custom_key(season : string, trn_id:number) : string{
       })
     );
   }
+  // QUERY (all) OBSERVABLE
+  queryPlayBooks(): Observable<PlayBook[]> {
+    return this._authMode().pipe(
+      switchMap((authMode) => {
+        const client = generateClient<Schema>({ authMode: authMode });
+        return  client.models.PlayBook.observeQuery().pipe(
+          map(({ items }) => {
+            return items as PlayBook[];
+          })
+        );
+      })
+    );
+  }
 
   // BOOKINGS SERVICE
   private jsonified_entry(entry: BookEntry): any {
