@@ -20,11 +20,7 @@ export class GameCardService {
     private membersService: MembersService,
     private toastService: ToastService,
     private dbHandler: DBhandler
-  ) { 
-    this.membersService.listMembers().subscribe((members) => {
-        this.members = members;
-      });
-  }
+  ) { }
 
   // interfaces haut niveau
 
@@ -199,7 +195,7 @@ export class GameCardService {
   }
 
   async deleteNullCards(): Promise<void> {
-    const delNullPromises : Promise<boolean>[] = this._gameCards.filter(card => card.stamps.length === card.initial_qty).map(async (card) => {
+    const delNullPromises: Promise<boolean>[] = this._gameCards.filter(card => card.stamps.length === card.initial_qty).map(async (card) => {
       return this.deleteCard(card);
     });
     if (delNullPromises.length === 0) {
@@ -209,36 +205,41 @@ export class GameCardService {
     await Promise.all(delNullPromises);
   }
 
-// use of query Observable  !!! //
+  // use of query Observable  !!! //
   listCards(): Observable<GameCard[]> {
-    return this.dbHandler.queryPlayBooks().pipe(
-      map((cards) => {
-        this._gameCards = cards.map(card => {
-          const owners = card.licenses
-            .filter((license): license is string => license !== null)
-            .map((license) => this.members.find(member => member.license_number === license))
-            .filter((owner): owner is Member => owner !== undefined);
+    return this.membersService.listMembers().pipe(
+      switchMap((members) => {
+        this.members = members;
+        return this.dbHandler.queryPlayBooks().pipe(
+          map((cards) => {
+            this._gameCards = cards.map(card => {
+              const owners = card.licenses
+                .filter((license): license is string => license !== null)
+                .map((license) => this.members.find(member => member.license_number === license))
+                .filter((owner): owner is Member => owner !== undefined);
 
-          if (owners.length === 0) {
-            this.toastService.showWarning('Gestion des cartes', `Aucun propriétaire trouvé pour la carte ID ${card.id}`);
-            console.warn(`No owners found for card with ID ${card.id}. `)
-          }
-          return {
-            id: card.id,
-            owners: owners,
-            initial_qty: card.initial_qty,
-            stamps: (card.stamps ?? []).filter((stamp): stamp is string => stamp !== null),
-            licenses: card.licenses.filter((license): license is string => license !== null),
-            createdAt: card.createdAt,
-            updatedAt: card.updatedAt
-          };
-        });
+              if (owners.length === 0) {
+                this.toastService.showWarning('Gestion des cartes', `Aucun propriétaire trouvé pour la carte ID ${card.id}`);
+                console.warn(`No owners found for card with ID ${card.id}. `)
+              }
+              return {
+                id: card.id,
+                owners: owners,
+                initial_qty: card.initial_qty,
+                stamps: (card.stamps ?? []).filter((stamp): stamp is string => stamp !== null),
+                licenses: card.licenses.filter((license): license is string => license !== null),
+                createdAt: card.createdAt,
+                updatedAt: card.updatedAt
+              };
+            });
 
-        this._gameCards.sort((a, b) => a.owners[0].lastname.localeCompare(b.owners[0].lastname));
+            this._gameCards.sort((a, b) => a.owners[0].lastname.localeCompare(b.owners[0].lastname));
 
-        this.gameCards$.next(this._gameCards);
-        return this._gameCards;
-      }),
+            this.gameCards$.next(this._gameCards);
+            return this._gameCards;
+          })
+        );
+      })
     );
   }
 
