@@ -23,7 +23,7 @@ export class FrontNavbarComponent {
   logged_member$: Observable<Member | null> = new Observable<Member | null>();
   user_accreditation: Accreditation | null = null;
   lastActiveNavItem: string = '';
-  isCollapsed = true;
+  sidebarOpen = false;
 
   constructor(
     private auth: AuthentificationService,
@@ -44,15 +44,11 @@ export class FrontNavbarComponent {
 
   
   closeBurger() {
-    this.isCollapsed = true;
+    this.sidebarOpen = false;
   }
   
   isNavItemActive(navItem: string): boolean {
     return this.lastActiveNavItem === navItem;
-  }
-
-  toggleCollapse() {
-    this.isCollapsed = !this.isCollapsed;
   }
    onCanvasClose() {
       this.auth.changeMode(Process_flow.SIGN_IN);
