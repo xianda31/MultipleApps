@@ -12,7 +12,7 @@ export class FrontPageComponent {
   constructor(
     private titleService: TitleService
   ) { 
-    this.titleService.setTitle('Page d\'Accueil');
+    this.titleService.setTitle('Accueil');
   }
 
 }

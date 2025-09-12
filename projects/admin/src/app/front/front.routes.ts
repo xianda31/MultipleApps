@@ -33,6 +33,7 @@ export const routes: Routes = [
       { path: 'albums/:snippet_id', component: Carousel },
       { path: 'authentification', component: ConnexionComponent },
       { path: 'home', component: FrontPageComponent },
+      { path: 'legals', component: GenericPageComponent, data: { menu_title: MENU_TITLES.LEGALS } },
       { path: '', component: FrontPageComponent },
       { path: '**', component: PageNotFoundComponent },
     ]

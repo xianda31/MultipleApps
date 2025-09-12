@@ -38,6 +38,7 @@ export enum MENU_TITLES {
     DOCUMENTS = 'documents',
     COURS = 'cours',
     ALBUMS = 'albums',
+    LEGALS = 'mentions légales',
     POUBELLE = 'poubelle',
     // CONTACTS = 'contacts',
 }

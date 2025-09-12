@@ -20,7 +20,6 @@ export class TitleComponent {
   ngOnInit(): void {
     this.title$ = this.titleService.Title$;
     this.title$.subscribe(title => {
-      console.log('TitleComponent title updated:', title);
     });
   }
 
