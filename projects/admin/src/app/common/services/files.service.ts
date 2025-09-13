@@ -12,7 +12,8 @@ export const S3_BUCKET = 'Bcsto-drive';
 export enum S3_ROOT_FOLDERS {
   IMAGES = 'images',
   DOCUMENTS = 'documents',
-  ALBUMS = 'albums'
+  ALBUMS = 'albums',
+  THUMBNAILS = 'thumbnails'
 }
 
 @Injectable({

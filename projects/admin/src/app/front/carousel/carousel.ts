@@ -9,11 +9,12 @@ import { ActivatedRoute } from '@angular/router';
 import { SnippetService } from '../../common/services/snippet.service';
 import { Snippet } from '../../common/interfaces/page_snippet.interface';
 import { TitleService } from '../title.service';
+import { BackComponent } from "../../common/loc-back/loc-back.component";
 
 
 @Component({
   selector: 'app-carousel',
-  imports: [CommonModule,NgbCarouselModule],
+  imports: [CommonModule, NgbCarouselModule, BackComponent],
   templateUrl: './carousel.html',
   styleUrl: './carousel.scss'
 })

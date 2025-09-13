@@ -41,12 +41,18 @@ export class FilemgrWindowsComponent {
     ngOnInit() {
         // retrieve root_folder from route param if exists
         const root_folder = this.route.snapshot.paramMap.get('root_folder');
+
         if (root_folder) {
             this.root_folder = root_folder + '/';
             this.fileService.list_files(this.root_folder).subscribe((S3items) => {
                 this.S3items = S3items;
+                
                 this.fileSystemNode = this.fileService.generate_filesystem(this.S3items);
-                this.current_node = this.fileSystemNode;
+                if (Object.keys(this.fileSystemNode).length === 0) {
+                    this.toastService.showInfo('Aucun fichier', 'Le dossier est vide');
+                }else{
+                    this.current_node = this.fileSystemNode;
+                }
             });
         }
         else{throw new Error('No root_folder parameter in route');}
@@ -245,7 +251,7 @@ export class FilemgrWindowsComponent {
                 const reader = new FileReader();
                 reader.onloadend = () => {
                     const base64 = reader.result as string;
-                    this.imageService.resizeImage(base64).then((resizedBase64) => {
+                    this.imageService.resizeBase64Image(base64,true).then((resizedBase64) => {
                         this.imageService.getBase64Dimensions(resizedBase64).then((dimensions) => {
                             const wh = dimensions.width.toString() + 'x' + dimensions.height.toString();
                             let new_blob = this.imageService.base64ToBlob(resizedBase64);

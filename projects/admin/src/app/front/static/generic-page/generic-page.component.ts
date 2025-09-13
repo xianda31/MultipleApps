@@ -60,7 +60,6 @@ export class GenericPageComponent {
       this.snippets = this.page.snippet_ids.map(id => snippets.find(snippet => snippet.id === id))
         .filter(snippet => snippet !== undefined) as Snippet[];
 
-        console.log('GenericPageComponent snippets:', this.snippets);
     });
   }
 

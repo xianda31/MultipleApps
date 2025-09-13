@@ -1,4 +1,5 @@
 
+
 import { Component, Input } from '@angular/core';
 import { map, Observable } from 'rxjs';
 import { FileService } from '../../common/services/files.service';
@@ -19,13 +20,17 @@ export class AlbumComponent {
   @Input() album!: Snippet;
   photos$: Observable<S3Item[]> = new Observable<S3Item[]>();
 
+  getThumbnailUrl(originalUrl: string): string {
+    // Adapt this replacement to your S3 structure
+    return originalUrl.replace('/albums/', '/thumbnails/');
+  }
+
   constructor(
     private fileService: FileService,
     private route : Router
   ) { }
 
   ngOnInit() {
-    console.log('AlbumComponent album_path:', this.album.folder);
     this.photos$ = this.fileService.list_files(this.album.folder + '/').pipe(
       map((S3items) => S3items.filter(item => item.size !== 0)),
       map((S3items) => (S3items.map(item => ({ ...item, url: this.fileService.getPresignedUrl(item.path) })))
@@ -35,5 +40,5 @@ export class AlbumComponent {
 
   openCarousel() {
     this.route.navigate(['/front/albums', this.album.id]);
-}
+  }
 }

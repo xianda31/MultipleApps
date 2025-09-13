@@ -14,7 +14,6 @@ get Title$() {
   }
 
   setTitle(title: string): void {
-    console.log('Setting title to:', title);
     this._title$.next(title);
   }
 
