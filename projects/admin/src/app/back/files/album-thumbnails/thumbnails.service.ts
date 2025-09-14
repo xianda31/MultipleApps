@@ -1,10 +1,8 @@
 import { Injectable } from '@angular/core';
 import { FileService, S3_ROOT_FOLDERS } from '../../../common/services/files.service';
 import { S3Item } from '../../../common/interfaces/file.interface';
-import { S3 } from 'aws-cdk-lib/aws-ses-actions';
-import { from, map, mergeMap, Observable, of } from 'rxjs';
+import { from, map, mergeMap, Observable, of, Subject } from 'rxjs';
 import { ImageService } from '../../../common/services/image.service';
-import { ToastService } from '../../../common/services/toast.service';
 
 @Injectable({
   providedIn: 'root'
@@ -17,13 +15,13 @@ export class ThumbnailsService {
   constructor(
     private fileService: FileService,
     private imageService: ImageService,
-    private toastService: ToastService
   ) { }
 
-  process() {
+  progress$ = new Subject<number>();
+  
+  process() :void {
     // Logic to regenerate album thumbnails
 
-    this.toastService.showInfo('Albums' ,'Regéneration des vignettes démarrée...');
 
     // clear album_thumbnails folder
 
@@ -49,8 +47,9 @@ export class ThumbnailsService {
                   })
                   .finally(() => {
                     processed++;
+                    this.progress$.next((processed / total) * 100);
                     if (processed === total) {
-                      this.toastService.showSuccess('Albums', 'Regéneration des vignettes terminée');
+                      
                     }
                   });
               });
@@ -58,7 +57,6 @@ export class ThumbnailsService {
               console.log(item.path);
               processed++;
               if (processed === total) {
-                this.toastService.showSuccess('Albums', 'Regéneration des vignettes terminée');
               }
             }
           });

@@ -22,61 +22,67 @@ export class ImageService {
   }
 
   private resize(img: HTMLImageElement, sizing: ImageSize, both: boolean): string {
-
-    let canvas = document.createElement('canvas');
-    let width = img.width;
-    let height = img.height;
-    let sx = 0, sy = 0;
-    let sw = width, sh = height;
-    let dw, dh;
-
-    // 1. Rogner au ratio sizing.ratio (landscape) ou 1/ratio (portrait), centré
-    let targetRatio: number;
+    const width = img.width;
+    const height = img.height;
     const imgRatio = width / height;
-    if (imgRatio >= 1) {
-      // Landscape or square: use sizing.ratio
-      targetRatio = sizing.ratio;
-    } else {
-      // Portrait: use 1/ratio
-      targetRatio = 1 / sizing.ratio;
-    }
-    if (imgRatio > targetRatio) {
-      // Image trop large, crop horizontal
-      sw = height * targetRatio;
-      sh = height;
-      sx = (width - sw) / 2;
-      sy = 0;
-    } else {
-      // Image trop haute, crop vertical
-      sw = width;
-      sh = width / targetRatio;
-      sx = 0;
-      sy = (height - sh) / 2;
-    }
-
-    // 2. Réduire la largeur à sizing.width
-    if (sw > sizing.width) {
-      dw = sizing.width;
-      dh = sh * (dw / sw);
-    } else {
-      dw = sw;
-      dh = sh;
-    }
-
-    // 3. Si both=true, réduire aussi la hauteur à sizing.height
-    if (both && dh > sizing.height) {
-      dh = sizing.height;
-      dw = sw * (dh / sh);
-    }
-
-    canvas.width = Math.round(dw);
-    canvas.height = Math.round(dh);
-
+    let canvas = document.createElement('canvas');
     let ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, dw, dh);
+
+    if (imgRatio >= 1) { // LANDSCAPE
+      // Centrer l'image sur un fond transparent sizing.width x sizing.height
+      canvas.width = sizing.width;
+      canvas.height = sizing.height;
+      if (ctx) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Calculer la taille réduite de l'image pour tenir dans sizing.width x sizing.height
+        let scale = Math.min(sizing.width / width, sizing.height / height);
+        let dw = width * scale;
+        let dh = height * scale;
+        let dx = (sizing.width - dw) / 2;
+        let dy = (sizing.height - dh) / 2;
+        ctx.drawImage(img, 0, 0, width, height, dx, dy, dw, dh);
+      }
+      return canvas.toDataURL('image/png', 0.95); // PNG pour transparence
+    } else { // PORTRAIT
+      if (!both) {
+        // 1. Rogner au centre pour obtenir le ratio 1/sizing.ratio
+        const targetRatio = 1 / sizing.ratio;
+        let cropWidth = width;
+        let cropHeight = height;
+        let sx = 0, sy = 0;
+        if (imgRatio > targetRatio) {
+          cropWidth = height * targetRatio;
+          sx = (width - cropWidth) / 2;
+        } else {
+          cropHeight = width / targetRatio;
+          sy = (height - cropHeight) / 2;
+        }
+        // 2. Réduire la hauteur à sizing.height
+        const dh = sizing.height;
+        const dw = cropWidth * (dh / cropHeight);
+        canvas.width = Math.round(dw);
+        canvas.height = Math.round(dh);
+        if (ctx) {
+          ctx.drawImage(img, sx, sy, cropWidth, cropHeight, 0, 0, dw, dh);
+        }
+        return canvas.toDataURL('image/jpeg', 0.8);
+      } else {
+        // 1. Centrer l'image sur un fond transparent de taille sizing.width x sizing.height
+        canvas.width = sizing.width;
+        canvas.height = sizing.height;
+        if (ctx) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          // Calculer la taille réduite de l'image pour tenir dans sizing.width x sizing.height
+          let scale = Math.min(sizing.width / width, sizing.height / height);
+          let dw = width * scale;
+          let dh = height * scale;
+          let dx = (sizing.width - dw) / 2;
+          let dy = (sizing.height - dh) / 2;
+          ctx.drawImage(img, 0, 0, width, height, dx, dy, dw, dh);
+        }
+        return canvas.toDataURL('image/png', 0.95); // PNG pour transparence
+      }
     }
-    return canvas.toDataURL('image/jpeg', 0.8);
   }
 
   resizeImageAtUrl(url: string, toggle: boolean): Promise<string> {

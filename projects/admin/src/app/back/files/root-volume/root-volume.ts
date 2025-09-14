@@ -2,7 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FileService, S3_BUCKET, S3_ROOT_FOLDERS } from '../../../common/services/files.service';
-import { ThumbnailsService } from '../album-thumbnails/album-thumbnails';
+import { ThumbnailsService } from '../album-thumbnails/thumbnails.service';
+import { ToastService } from '../../../common/services/toast.service';
 
 @Component({
   selector: 'app-root-volume',
@@ -13,13 +14,18 @@ import { ThumbnailsService } from '../album-thumbnails/album-thumbnails';
 export class RootVolumeComponent {
   volume_name !: string;
   root_folders !: string[];
+  progress : number = 0;
+
   constructor(
     private router: Router,
     private route: ActivatedRoute,
-    private thumbnailsService: ThumbnailsService
-  ) { 
+    private thumbnailsService: ThumbnailsService,
+        private toastService: ToastService
+
+  ) {
     this.volume_name = S3_BUCKET;
-    this.root_folders = Object.values(S3_ROOT_FOLDERS);
+    this.root_folders = Object.values(S3_ROOT_FOLDERS)
+      .filter(folder => folder !== S3_ROOT_FOLDERS.THUMBNAILS); // mask thumbnails folder
   }
 
 
@@ -28,7 +34,18 @@ export class RootVolumeComponent {
   }
 
   updateAlbumThumbnail() {
-  this.thumbnailsService.process();
+    this.thumbnailsService.process();
+    
+    this.toastService.showInfo('Albums' ,'Regéneration des vignettes démarrée...');
+    this.thumbnailsService.progress$.subscribe(progress => {
+      this.progress = progress;
+      if(progress === 100){
+      // wait 1 second before clearing progress
+      setTimeout(() => {
+        this.progress = 0;
+      }, 1000);
+      this.toastService.showSuccess('Albums', 'Regéneration des vignettes terminée');
+      }
+    });
   }
 }
-

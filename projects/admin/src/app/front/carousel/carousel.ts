@@ -21,6 +21,7 @@ import { BackComponent } from "../../common/loc-back/loc-back.component";
 export class Carousel {
   album!: Snippet;
   photos$: Observable<S3Item[]> = new Observable<S3Item[]>();
+  photoIndex: number = 0;
 
 
   constructor(
@@ -33,6 +34,7 @@ export class Carousel {
   ngOnInit() {
     // Retrieve album_path from route parameters
     this.route.paramMap.subscribe(params => {
+      this.photoIndex = +params.get('startAt')!;
       const snippet_id = params.get('snippet_id');
       if (snippet_id) {
         this.snippetService.listSnippets().subscribe((snippets) => {

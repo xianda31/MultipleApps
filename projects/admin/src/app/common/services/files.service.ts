@@ -13,7 +13,7 @@ export enum S3_ROOT_FOLDERS {
   IMAGES = 'images',
   DOCUMENTS = 'documents',
   ALBUMS = 'albums',
-  THUMBNAILS = 'thumbnails'
+  THUMBNAILS = 'thumbnails',
 }
 
 @Injectable({
@@ -28,7 +28,6 @@ export class FileService {
   ) { }
 
   getPresignedUrl$(path: string): Observable<string> {
-    console.log('Getting presigned URL for path:', path);
     return new Observable<string>((subscriber) => {
       getUrl({ path: path, options: { validateObjectExistence: true } })
         .then(getUrlOutput => {
@@ -41,19 +40,6 @@ export class FileService {
         });
     });
   }
-  // getPresignedUrl(path: string): Observable<string> {
-  //   return new Observable<string>((subscriber) => {
-  //     getUrl({ path: path, options: { validateObjectExistence: true } })
-  //       .then(getUrlOutput => {
-  //         subscriber.next(getUrlOutput.url.href);
-  //         subscriber.complete();
-  //       })
-  //       .catch(error => {
-  //         console.log(error);
-  //         subscriber.error(error);
-  //       });
-  //   });
-  // }
 
   list_files(directory: string): Observable<S3Item[]> {
     return new Observable<S3Item[]>(subscriber => {

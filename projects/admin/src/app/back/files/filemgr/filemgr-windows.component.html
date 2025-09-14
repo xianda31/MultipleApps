@@ -16,7 +16,7 @@
                 <div class="col-auto">
                     <label class="btn btn-sm btn-outline-secondary ms-2 mb-0" *ngIf="current_node_data as data">
                         Ajout fichiers
-                        <input #fileInput type="file" multiple style="display:none"
+                        <input #fileInput type="file" multiple [attr.accept]="getAcceptFilter()" style="display:none"
                             (change)="windows_add_file(data, $event)">
                     </label>
                 </div>

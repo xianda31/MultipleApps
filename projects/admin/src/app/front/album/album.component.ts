@@ -1,8 +1,5 @@
-import { combineLatest, forkJoin } from 'rxjs';
-import { map, switchMap, tap } from 'rxjs/operators';
-
-
-
+import { combineLatest } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
 import { Component, Input } from '@angular/core';
 import {  Observable } from 'rxjs';
 import { FileService, S3_ROOT_FOLDERS } from '../../common/services/files.service';
@@ -51,7 +48,7 @@ export class AlbumComponent {
     );
   }
 
-  openCarousel() {
-    this.route.navigate(['/front/albums', this.album.id]);
+  openCarousel(index:number  ) {
+    this.route.navigate(['/front/albums', this.album.id, { startAt: index }]);
   }
 }

@@ -1,8 +1,9 @@
 
+
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FileSystemNode, S3Item } from '../../../common/interfaces/file.interface';
-import { FileService, S3_BUCKET } from '../../../common/services/files.service';
+import { FileService, S3_BUCKET, S3_ROOT_FOLDERS } from '../../../common/services/files.service';
 import { ImageService } from '../../../common/services/image.service';
 import { ToastService } from '../../../common/services/toast.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -15,12 +16,17 @@ import { ActivatedRoute, Router } from '@angular/router';
     styleUrls: ['./filemgr-windows.component.scss']
 })
 export class FilemgrWindowsComponent {
+    /**
+     * Retourne le filtre d'acceptation pour l'input file selon le dossier courant.
+     * Par exemple : images pour 'images', PDF pour 'pdfs', etc.
+     */
+
     fileSystemNode: FileSystemNode = {};
     S3items: S3Item[] = [];
     selected_item: S3Item | null = null;
     current_node !: FileSystemNode;
-   root_folder !: string;
-   volume_name !: string;
+    root_folder !: S3_ROOT_FOLDERS;
+    volume_name !: string;
 
     node_stack: FileSystemNode[] = [];
     imgDimensions: { [key: string]: { width: number, height: number } } = {};
@@ -30,10 +36,10 @@ export class FilemgrWindowsComponent {
         private toastService: ToastService,
         private imageService: ImageService,
         private route: ActivatedRoute,
-            private router: Router,
+        private router: Router,
 
-    ) { 
-            this.volume_name = S3_BUCKET;
+    ) {
+        this.volume_name = S3_BUCKET;
 
     }
 
@@ -41,23 +47,37 @@ export class FilemgrWindowsComponent {
     ngOnInit() {
         // retrieve root_folder from route param if exists
         const root_folder = this.route.snapshot.paramMap.get('root_folder');
+        if (Object.values(S3_ROOT_FOLDERS).includes(root_folder as S3_ROOT_FOLDERS)) {
+            this.root_folder = root_folder as S3_ROOT_FOLDERS;
+        }
 
-        if (root_folder) {
-            this.root_folder = root_folder + '/';
-            this.fileService.list_files(this.root_folder).subscribe((S3items) => {
+        if (this.root_folder) {
+            this.fileService.list_files(this.root_folder + '/').subscribe((S3items) => {
                 this.S3items = S3items;
-                
+
                 this.fileSystemNode = this.fileService.generate_filesystem(this.S3items);
                 if (Object.keys(this.fileSystemNode).length === 0) {
                     this.toastService.showInfo('Aucun fichier', 'Le dossier est vide');
-                }else{
+                } else {
                     this.current_node = this.fileSystemNode;
                 }
             });
         }
-        else{throw new Error('No root_folder parameter in route');}
+        else { throw new Error('No root_folder parameter in route'); }
     }
 
+
+    getAcceptFilter(): string {
+        switch (this.root_folder) {
+            case S3_ROOT_FOLDERS.DOCUMENTS:
+                return 'application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+            case S3_ROOT_FOLDERS.ALBUMS:
+            case S3_ROOT_FOLDERS.IMAGES:
+                return 'image/*';
+            default:
+                return '*/*';
+        }
+    }
 
     regenerate_navigation_point(root_path: string) {
 
@@ -123,11 +143,11 @@ export class FilemgrWindowsComponent {
 
     create_virtual_folder(parent: S3Item, folder_name: string) {
         const newItem: S3Item = {
-                path:  parent.path + folder_name + '/',
-                size: 0,
-            };
-            this.S3items.push(newItem);
-            this.regenerate_navigation_point(parent.path);
+            path: parent.path + folder_name + '/',
+            size: 0,
+        };
+        this.S3items.push(newItem);
+        this.regenerate_navigation_point(parent.path);
     }
 
     upload_and_add_file(file: File, path: string): Promise<S3Item> {
@@ -195,7 +215,7 @@ export class FilemgrWindowsComponent {
     }
 
     back_to_volume() {
-        
+
         this.router.navigate(['back/site/disk']);
     }
 
@@ -228,14 +248,14 @@ export class FilemgrWindowsComponent {
 
     // Utilities for image processing
 
-    
+
     onImgLoad(event: Event, key: string) {
         const img = event.target as HTMLImageElement;
         this.imgDimensions[key] = { width: img.naturalWidth, height: img.naturalHeight };
     }
-    
+
     image_lighter(file: S3Item): Promise<File> {
-        
+
         const add_wh = (path: string, wh: string): string => {
             const newFilename = path.replace('.', `_${wh}.`);
             return newFilename;
@@ -251,7 +271,7 @@ export class FilemgrWindowsComponent {
                 const reader = new FileReader();
                 reader.onloadend = () => {
                     const base64 = reader.result as string;
-                    this.imageService.resizeBase64Image(base64,true).then((resizedBase64) => {
+                    this.imageService.resizeBase64Image(base64, true).then((resizedBase64) => {
                         this.imageService.getBase64Dimensions(resizedBase64).then((dimensions) => {
                             const wh = dimensions.width.toString() + 'x' + dimensions.height.toString();
                             let new_blob = this.imageService.base64ToBlob(resizedBase64);
