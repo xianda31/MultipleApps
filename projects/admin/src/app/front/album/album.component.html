@@ -1,4 +1,3 @@
-
 <div class="row justify-content-start align-items-center mt-3">
     <div class="col-auto fw-bold">{{album.title}}</div>
     <div class="col-auto text-muted"> {{album.subtitle}} </div>
@@ -6,17 +5,13 @@
 
 <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-1 custom-row-cols-lg-10">
 
-
-    @if (photos$ | async; as photos) {
+    @if ( photos$ | async; as photos) {
     @for (photo of photos; track $index) {
     <div class="col">
-        <div (click)="openCarousel()" class="card h-100 nice_shadow">
-            <div class="card-body h-100 p-1">
+        <div (click)="openCarousel()" class="card  nice_shadow">
+            <div class="card-body  p-1">
                 <div class="album-thumb-wrapper">
-                    <img [src]="getThumbnailUrl((photo.url | async) ?? '')"
-                        [srcset]="getThumbnailUrl((photo.url | async) ?? '') + ' 400w, ' + ((photo.url | async) ?? '') + ' 1200w'"
-                        sizes="(max-width: 600px) 400px, 1200px" loading="lazy" [alt]="photo.path || 'photo'"
-                        class="album-thumb-img" />
+                    <img [src]="photo.url" class="album-thumb-img" />
                 </div>
             </div>
 
@@ -25,4 +20,3 @@
     }
     }
 </div>
-

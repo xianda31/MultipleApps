@@ -122,7 +122,7 @@ export class SnippetService {
 
     add_image_url(snippet: Snippet): Snippet {
         if(snippet.image) {
-            return {...snippet, image_url: this.fileService.getPresignedUrl(snippet.image)};
+            return {...snippet, image_url: this.fileService.getPresignedUrl$(snippet.image)};
         }
         return snippet;
     }

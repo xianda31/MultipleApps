@@ -29,8 +29,8 @@
     overflow: hidden;
 }
 .album-thumb-img {
-    max-height: 100%;
+    max-height: 100px;
     max-width: 100%;
-    object-fit: contain;
+    object-fit: cover;
     display: block;
 }

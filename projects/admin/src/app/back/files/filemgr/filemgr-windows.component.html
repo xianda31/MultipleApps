@@ -43,7 +43,7 @@
                 </div>
                 <div class="col-3 ps-3">
                     <div *ngIf="selected_item">
-                        <img [src]="selected_item.url | async" alt="{{ selected_item.path }}" class="img-fluid"
+                        <img [src]="selected_item.url$ | async" alt="{{ selected_item.path }}" class="img-fluid"
                             style="max-height: 200px; max-width: 200px;" (load)="onImgLoad($event, selected_item.path)">
                         <div class="text-muted" style="font-size: 12px;">
                             <div>Chemin : {{ selected_item.path }}</div>

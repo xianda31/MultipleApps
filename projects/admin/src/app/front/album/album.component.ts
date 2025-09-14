@@ -1,8 +1,11 @@
+import { combineLatest, forkJoin } from 'rxjs';
+import { map, switchMap, tap } from 'rxjs/operators';
+
 
 
 import { Component, Input } from '@angular/core';
-import { map, Observable } from 'rxjs';
-import { FileService } from '../../common/services/files.service';
+import {  Observable } from 'rxjs';
+import { FileService, S3_ROOT_FOLDERS } from '../../common/services/files.service';
 import { CommonModule } from '@angular/common';
 import { NgbCarouselModule } from '@ng-bootstrap/ng-bootstrap';
 import { S3Item } from '../../common/interfaces/file.interface';
@@ -21,20 +24,30 @@ export class AlbumComponent {
   photos$: Observable<S3Item[]> = new Observable<S3Item[]>();
 
   getThumbnailUrl(originalUrl: string): string {
-    // Adapt this replacement to your S3 structure
-    return originalUrl.replace('/albums/', '/thumbnails/');
+    return    S3_ROOT_FOLDERS.THUMBNAILS + '/' + originalUrl;
   }
 
   constructor(
     private fileService: FileService,
-    private route : Router
+    private route: Router
   ) { }
 
   ngOnInit() {
+
     this.photos$ = this.fileService.list_files(this.album.folder + '/').pipe(
       map((S3items) => S3items.filter(item => item.size !== 0)),
-      map((S3items) => (S3items.map(item => ({ ...item, url: this.fileService.getPresignedUrl(item.path) })))
-      )
+      switchMap((S3items) => {
+        return combineLatest(
+          S3items.map(item => this.fileService.getPresignedUrl$(this.getThumbnailUrl(item.path)))
+        ).pipe(
+          map(urls => {
+            S3items.forEach((item, index) => {
+              item.url = (urls[index]); 
+            });
+            return S3items;
+          }),
+        );
+      })
     );
   }
 

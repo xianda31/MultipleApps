@@ -43,7 +43,7 @@ export class Carousel {
           this.titleService.setTitle(this.album.title);
           this.photos$ = this.fileService.list_files(this.album.folder + '/').pipe(
             map((S3items) => S3items.filter(item => item.size !== 0)),
-            map((S3items) => S3items.map(item => ({ ...item, url: this.fileService.getPresignedUrl(item.path) })))
+            // map((S3items) => S3items.map(item => ({ ...item, url: this.fileService.getPresignedUrl$(item.path) })))
           );
         }
       });

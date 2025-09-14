@@ -39,11 +39,11 @@ export class ThumbnailsService {
           let processed = 0;
           const total = this.S3items.length;
           this.S3items.forEach(item => {
-            const thumbnailPath = S3_ROOT_FOLDERS.THUMBNAILS + '/' + item.path.split('/').pop();
+            const thumbnailPath = item.path.replace(S3_ROOT_FOLDERS.ALBUMS, S3_ROOT_FOLDERS.THUMBNAILS);
             if (!this.S3items.find(i => i.path === thumbnailPath)) {
               // Generate thumbnail & upload to S3
               this.generate_thumbnail(item.path).subscribe(async (file) => {
-                await this.fileService.upload_file(file, thumbnailPath)
+                await this.fileService.upload_file(file, S3_ROOT_FOLDERS.THUMBNAILS+'/')
                   .catch((err) => {
                     console.error(`Error uploading thumbnail for ${item.path}: ${err}`);
                   })
@@ -77,21 +77,21 @@ export class ThumbnailsService {
       return newFilename;
     }
 
-    const get_filename = (path: string): string => {
-      const parts = path.split('/');
-      return parts.pop() || '';
-    }
+    // const get_filename = (path: string): string => {
+    //   const parts = path.split('/');
+    //   return parts.pop() || '';
+    // }
     // Logic to generate a thumbnail for the given imagePath
     return new Observable<File>((subscriber) => {
-      this.fileService.getPresignedUrl(imagePath).subscribe({
+      this.fileService.getPresignedUrl$(imagePath).subscribe({
         next: async (url) => {
 
-            await this.imageService.resizeImageAtUrl(url,false).then(async (resizedBase64) => {
+            await this.imageService.resizeImageAtUrl(url,true).then(async (resizedBase64) => {
               await this.imageService.getBase64Dimensions(resizedBase64).then((dimensions) => {
                 const wh = dimensions.width.toString() + 'x' + dimensions.height.toString();
                 let new_blob = this.imageService.base64ToBlob(resizedBase64);
 
-                let resized_file = new File([new_blob], get_filename(imagePath), { type: new_blob.type });
+                let resized_file = new File([new_blob], (imagePath), { type: new_blob.type });
                 subscriber.next(resized_file);
               });
             });

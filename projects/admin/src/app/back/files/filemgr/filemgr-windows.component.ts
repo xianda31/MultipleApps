@@ -135,7 +135,7 @@ export class FilemgrWindowsComponent {
             const newItem: S3Item = {
                 path: path + file.name,
                 size: file.size,
-                url: this.fileService.getPresignedUrl(path + file.name)
+                url$: this.fileService.getPresignedUrl$(path + file.name)
             };
             this.S3items.push(newItem);
             this.regenerate_navigation_point(path);

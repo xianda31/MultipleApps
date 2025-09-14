@@ -5,7 +5,8 @@ export interface S3Item {
   // etag?: string;
   // lastModified?: Date | undefined;
   size: number;
-  url?: Observable<string>;
+  url$?: Observable<string>;
+  url? : string;
   folded?: boolean;
   // usage?: number;
 }

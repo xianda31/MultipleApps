@@ -27,7 +27,8 @@ export class FileService {
     private sanitizer: DomSanitizer
   ) { }
 
-  getPresignedUrl(path: string): Observable<string> {
+  getPresignedUrl$(path: string): Observable<string> {
+    console.log('Getting presigned URL for path:', path);
     return new Observable<string>((subscriber) => {
       getUrl({ path: path, options: { validateObjectExistence: true } })
         .then(getUrlOutput => {
@@ -40,12 +41,25 @@ export class FileService {
         });
     });
   }
+  // getPresignedUrl(path: string): Observable<string> {
+  //   return new Observable<string>((subscriber) => {
+  //     getUrl({ path: path, options: { validateObjectExistence: true } })
+  //       .then(getUrlOutput => {
+  //         subscriber.next(getUrlOutput.url.href);
+  //         subscriber.complete();
+  //       })
+  //       .catch(error => {
+  //         console.log(error);
+  //         subscriber.error(error);
+  //       });
+  //   });
+  // }
 
   list_files(directory: string): Observable<S3Item[]> {
     return new Observable<S3Item[]>(subscriber => {
       list({ path: directory, options: { listAll: true } })
         .then(result => {
-          subscriber.next(result.items.map(item => ({ ...item, size: item.size ?? 0, url: this.getPresignedUrl(item.path) }))
+          subscriber.next(result.items.map(item => ({ ...item, size: item.size ?? 0, url$: this.getPresignedUrl$(item.path) }))
             // .filter(item => item.size !== 0)
           );
           subscriber.complete();
@@ -66,7 +80,8 @@ export class FileService {
         } else {
           //remove trailing /
           if (s3item.path !== directory) {
-            folders.add(s3item.path.replace(/\/$/, ''));}
+            folders.add(s3item.path.replace(/\/$/, ''));
+          }
         }
       });
       console.log('folders : ', Array.from(folders));

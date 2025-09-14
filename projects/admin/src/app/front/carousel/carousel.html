@@ -13,7 +13,7 @@
                 @if (photos$ | async; as photos) {
                     @for (photo of photos; track $index) {
                         <div [class]="' carousel-item ' + ($index === 0 ? 'active' : '')">
-                            <img [src]="photo.url | async" class="d-block mx-auto album-carousel-img" alt="Photo" />
+                            <img [src]="photo.url$ | async" class="d-block mx-auto album-carousel-img" alt="Photo" />
                         </div>
                     }
                 }
