@@ -1,0 +1,11 @@
+// Resserre l'interligne entre le titre et le sous-titre dans les cartes
+.card-title {
+	line-height: 1.1;
+	margin-bottom: 0.2rem;
+}
+.card-title .text-muted,
+.card-title .fs-5,
+.card-title span {
+	line-height: 1;
+	margin-top: 0;
+}
