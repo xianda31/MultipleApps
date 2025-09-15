@@ -32,12 +32,12 @@ export class Carousel {
   ) { }
 
   ngOnInit() {
-    // Retrieve album_path from route parameters
+    // Retrieve snippet_id and viewing parameters
     this.route.paramMap.subscribe(params => {
       this.photoIndex = +params.get('startAt')!;
       this.autoWrapped = params.get('autoWrapped') !== null ? params.get('autoWrapped') === 'true' : true;
-
       const snippet_id = params.get('snippet_id');
+      
       if (snippet_id) {
         this.snippetService.listSnippets().subscribe((snippets) => {
           const snippet = snippets.find(s => s.id === snippet_id);

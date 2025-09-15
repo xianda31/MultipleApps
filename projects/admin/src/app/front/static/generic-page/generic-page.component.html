@@ -1,28 +1,31 @@
-@if (page) {
-@switch (page.template) {
+<div class="px-1 mt-1">
+
+    @if (page) {
+        @switch (page.template) {
 @case (PAGE_TEMPLATES.JOURNAL) {
-<ng-container *ngTemplateOutlet="journal; context: { snippets: snippets }"></ng-container>
+    <ng-container *ngTemplateOutlet="journal; context: { snippets: snippets }"></ng-container>
 }
 @case (PAGE_TEMPLATES.LOADABLE) {
-<ng-container *ngTemplateOutlet="loadable; context: { snippets: snippets }"></ng-container>
+    <ng-container *ngTemplateOutlet="loadable; context: { snippets: snippets }"></ng-container>
 }
 @case (PAGE_TEMPLATES.TROMBINOSCOPE) {
-<ng-container *ngTemplateOutlet="trombinoscope; context: { snippets: snippets }"></ng-container>
+    <ng-container *ngTemplateOutlet="trombinoscope; context: { snippets: snippets }"></ng-container>
 }
 @case (PAGE_TEMPLATES.CARDS_top) {
-<ng-container *ngTemplateOutlet="cards_img_top; context: { snippets: snippets }"></ng-container>
+    <ng-container *ngTemplateOutlet="cards_img_top; context: { snippets: snippets }"></ng-container>
 }
 @case (PAGE_TEMPLATES.CARDS_bottom) {
-<ng-container *ngTemplateOutlet="cards_img_bottom; context: { snippets: snippets }"></ng-container>
+    <ng-container *ngTemplateOutlet="cards_img_bottom; context: { snippets: snippets }"></ng-container>
 }
 @case (PAGE_TEMPLATES.ALBUMS) {
-<ng-container *ngTemplateOutlet="albums; context: { snippets: snippets }"></ng-container>
+    <ng-container *ngTemplateOutlet="albums; context: { snippets: snippets }"></ng-container>
 }
 @default {
-<ng-container *ngTemplateOutlet="journal; context: { snippets: snippets }"></ng-container>
+    <ng-container *ngTemplateOutlet="journal; context: { snippets: snippets }"></ng-container>
 }
 }
 }
+</div>
 
 <ng-template #journal let-snippets="snippets">
     <div class="offset-md-2 col-md-8 justify-content-center">
