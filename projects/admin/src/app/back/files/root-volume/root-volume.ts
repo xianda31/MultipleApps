@@ -4,10 +4,11 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { FileService, S3_BUCKET, S3_ROOT_FOLDERS } from '../../../common/services/files.service';
 import { ThumbnailsService } from '../album-thumbnails/thumbnails.service';
 import { ToastService } from '../../../common/services/toast.service';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-root-volume',
-  imports: [CommonModule],
+  imports: [CommonModule,FormsModule],
   templateUrl: './root-volume.html',
   styleUrl: './root-volume.scss'
 })
@@ -15,6 +16,7 @@ export class RootVolumeComponent {
   volume_name !: string;
   root_folders !: string[];
   progress : number = 0;
+  showThumbnails: boolean = false;
 
   constructor(
     private router: Router,
@@ -28,6 +30,15 @@ export class RootVolumeComponent {
       .filter(folder => folder !== S3_ROOT_FOLDERS.THUMBNAILS); // mask thumbnails folder
   }
 
+toggleThumbnails() {
+    this.showThumbnails = !this.showThumbnails;
+    if (this.showThumbnails) {
+      this.root_folders = Object.values(S3_ROOT_FOLDERS);
+    } else {
+      this.root_folders = Object.values(S3_ROOT_FOLDERS)
+        .filter(folder => folder !== S3_ROOT_FOLDERS.THUMBNAILS); // mask thumbnails folder
+    }
+  }
 
   select_root_folder(folder: string) {
     this.router.navigate(['../disk', folder], { relativeTo: this.route });

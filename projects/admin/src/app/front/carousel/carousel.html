@@ -1,31 +1,25 @@
-@if(album ) {
-    <div class="row justify-content-center align-items-center mt-3">
-        <div class="col-auto fw-bold">{{album.title}}</div>
-        <div class="col-auto text-muted"> {{album.subtitle}} </div>
-        <div class="col-auto">
-            <loc-back></loc-back>
-        </div>
-    </div>
-    <div class="row mt-4" style="height: 30rem;">
-        <div class=" carousel slide carousel-fade" id="carouselExampleFade">
-            <div class="carousel-inner">
-                
-                @if (photos$ | async; as photos) {
-                    @for (photo of photos; track $index) {
-                        <div [class]="' carousel-item ' + ($index === photoIndex ? 'active' : '')">
-                            <img [src]="photo.url$ | async" class="d-block mx-auto album-carousel-img" alt="Photo" />
-                        </div>
-                    }
-                }
+<div [class]="autoWrapped ? 'carousel-viewport ' : ''">
+
+    @if (photos$ | async; as photos) {
+
+    <div class="carousel slide carousel-fade" id="myCarousel">
+        <div class="carousel-inner">
+            @for (photo of photos; track $index) {
+            <div [class]="' carousel-item ' + ($index === photoIndex ? 'active' : '')">
+                <img [src]="photo.url$ | async" class="d-block w-100" [alt]="'photo'+$index"
+                    style="max-height: 80vh; object-fit: contain;" />
             </div>
-            <button class="carousel-control-btn prev" type="button" data-bs-target="#carouselExampleFade" data-bs-slide="prev">
-                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                <span class="visually-hidden">Previous</span>
-            </button>
-            <button class="carousel-control-btn next" type="button" data-bs-target="#carouselExampleFade" data-bs-slide="next">
-                <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                <span class="visually-hidden">Next</span>
-            </button>
+            }
         </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#myCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#myCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+        </button>
     </div>
-}
+
+    }
+</div>

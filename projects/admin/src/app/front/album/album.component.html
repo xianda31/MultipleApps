@@ -4,17 +4,13 @@
     <div class="col-auto">{{(photos$ | async)?.length}} photos</div>
 </div>
 
-<div class="mt-1 row row-cols-1 row-cols-sm-2 row-cols-md-4 g-1 custom-row-cols-lg-10">
+<div class="mt-1 row row-cols-3 row-cols-sm-3 row-cols-md-4 g-1 custom-row-cols-lg-10">
 
     @if ( photos$ | async; as photos) {
     @for (photo of photos; track $index) {
     <div class="col">
         <div (click)="openCarousel($index)" class="card bg-dark nice_shadow">
             <img [src]="photo.url" class="card-img-top" />
-            <!-- <div class="card-body  p-1">
-                <div class="album-thumb-wrapper">
-                </div>
-            </div> -->
 
         </div>
     </div>

@@ -15,13 +15,21 @@ export class ImageService {
   ) {
     this.systemDataService.get_configuration().subscribe((configuration) => {
       this.thumbnailSize = configuration.thumbnail;
-      this.album_thumbnailSize = { width: this.thumbnailSize.width / 2, height: this.thumbnailSize.height / 2, ratio: this.thumbnailSize.ratio };
+      this.album_thumbnailSize = configuration.thumbnail;
 
     });
 
   }
 
   private resize(img: HTMLImageElement, sizing: ImageSize, both: boolean): string {
+
+// spec:
+// Landscape : crop centré au ratio sizing.ratio puis réduction à sizing.width.
+// Portrait :
+// both=false : crop centré au ratio 1/sizing.ratio puis réduction à sizing.height.
+// both=true : image centrée sur un fond transparent de taille sizing.width × sizing.height.
+
+
     const width = img.width;
     const height = img.height;
     const imgRatio = width / height;
@@ -29,20 +37,27 @@ export class ImageService {
     let ctx = canvas.getContext('2d');
 
     if (imgRatio >= 1) { // LANDSCAPE
-      // Centrer l'image sur un fond transparent sizing.width x sizing.height
-      canvas.width = sizing.width;
-      canvas.height = sizing.height;
-      if (ctx) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        // Calculer la taille réduite de l'image pour tenir dans sizing.width x sizing.height
-        let scale = Math.min(sizing.width / width, sizing.height / height);
-        let dw = width * scale;
-        let dh = height * scale;
-        let dx = (sizing.width - dw) / 2;
-        let dy = (sizing.height - dh) / 2;
-        ctx.drawImage(img, 0, 0, width, height, dx, dy, dw, dh);
+      // 1. Crop centré au ratio sizing.ratio
+      const targetRatio = sizing.ratio;
+      let cropWidth = width;
+      let cropHeight = height;
+      let sx = 0, sy = 0;
+      if (imgRatio > targetRatio) {
+        cropWidth = height * targetRatio;
+        sx = (width - cropWidth) / 2;
+      } else {
+        cropHeight = width / targetRatio;
+        sy = (height - cropHeight) / 2;
       }
-      return canvas.toDataURL('image/png', 0.95); // PNG pour transparence
+      // 2. Réduire la largeur à sizing.width
+      const dw = sizing.width;
+      const dh = cropHeight * (dw / cropWidth);
+      canvas.width = Math.round(dw);
+      canvas.height = Math.round(dh);
+      if (ctx) {
+        ctx.drawImage(img, sx, sy, cropWidth, cropHeight, 0, 0, dw, dh);
+      }
+      return canvas.toDataURL('image/jpeg', 0.8);
     } else { // PORTRAIT
       if (!both) {
         // 1. Rogner au centre pour obtenir le ratio 1/sizing.ratio
