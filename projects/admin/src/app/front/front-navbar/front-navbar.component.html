@@ -54,8 +54,7 @@
         <ul ngbDropdownMenu class="dropdown-menu shadow">
           <li><a class="dropdown-item" routerLink="tournaments/next"
               (click)="dropdownTournois.close(); closeBurger()">prochainement</a></li>
-          <li><a class="dropdown-item" routerLink="tournaments/fees"
-              (click)="dropdownTournois.close(); closeBurger()">ma carte</a></li>
+
         </ul>
 
       </li>
@@ -72,7 +71,9 @@
         </a>
         <ul ngbDropdownMenu class="dropdown-menu shadow">
           <li><a class="dropdown-item" routerLink="achats/historique"
-              (click)="dropdownAchats.close(); closeBurger()">historique</a></li>
+              (click)="dropdownAchats.close(); closeBurger()">relevé</a></li>
+
+          <li><a class="dropdown-item" routerLink="achats/carte" (click)="dropdownAchats.close(); closeBurger()">droits de table</a></li>
         </ul>
       </li>
 

@@ -1,3 +1,9 @@
+// Réduit l'interligne et la marge des <p> générés par [innerHTML]
+:host ::ng-deep .innerHTML p {
+	margin-top: 0.3em;
+	margin-bottom: 0.3em;
+	line-height: 1.2;
+}
 // Resserre l'interligne entre le titre et le sous-titre dans les cartes
 .card-title {
 	line-height: 1.1;

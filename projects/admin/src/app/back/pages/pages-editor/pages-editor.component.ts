@@ -1,3 +1,4 @@
+
 import { Component, signal } from '@angular/core';
 import { ViewChild, ElementRef } from '@angular/core';
 import { PageService } from '../../../common/services/page.service';
@@ -32,6 +33,72 @@ export class PagesEditorComponent {
   snippets: Snippet[] = [];
   selected_snippet: Snippet | null = null;
 
+  
+
+  // Pour détecter si Ctrl est enfoncé globalement
+  ctrlPressed = false;
+
+  ngOnInit(): void {
+    window.addEventListener('keydown', this.ctrlKeyListener, true);
+    window.addEventListener('keyup', this.ctrlKeyListener, true);
+    // --- logique métier existante ---
+    if (window.innerWidth < 768) {
+      this.resolution_too_small = true;
+    }
+
+    this.file_paths$ = this.fileService.list_files(S3_ROOT_FOLDERS.DOCUMENTS + '/').pipe(
+      map((S3items) => S3items.map(item => item.path))
+    );
+
+    this.thumbnails$ = this.fileService.list_files(S3_ROOT_FOLDERS.IMAGES + '/').pipe(
+      map((S3items) => S3items.map(item => item.path))
+    );
+
+    this.albums$ = this.fileService.list_folders(S3_ROOT_FOLDERS.ALBUMS + '/');
+
+    this.pageService.listPages().pipe(take(1)).subscribe(pages => {
+      // check if all mandatory pages exist
+      const requiredTitles = Object.values(MENU_TITLES);
+      requiredTitles.forEach(title => {
+        const pageExists = pages.some(page => page.title === title);
+        if (!pageExists) {
+          this.pageService.createPage({
+            id: '',
+            title: title,
+            template: PAGE_TEMPLATES.PUBLICATIONS,
+            snippet_ids: [],
+          });
+          this.toastService.showInfo('Pages', `La page "${title}" manquait, et a été créée`);
+        }
+      });
+      // subscribe "normally"
+      combineLatest([this.pageService.listPages(), this.snippetService.listSnippets()])
+        .subscribe(([pages, snippets]) => {
+          this.pages = pages;
+          this.snippets = snippets;
+          this.pages.forEach(page => {
+            page.snippets = this.getPageSnippets(page);
+          });
+          // force bin_page to be the first page
+          const binPage = this.pages.find(page => page.title === MENU_TITLES.POUBELLE);
+          if (binPage) {
+            this.pages = [binPage].concat(this.pages.filter(page => page !== binPage));
+          }
+          this.bin_page_index = this.pages.findIndex(page => page.title === MENU_TITLES.POUBELLE);
+          this.initFormArray(this.pages);
+        });
+    });
+  }
+
+  ngOnDestroy(): void {
+    window.removeEventListener('keydown', this.ctrlKeyListener, true);
+    window.removeEventListener('keyup', this.ctrlKeyListener, true);
+  }
+
+  ctrlKeyListener = (event: KeyboardEvent) => {
+    this.ctrlPressed = event.ctrlKey;
+  };
+
   view_snippet = signal<boolean>(true);
   freeze_view_snippet = signal<boolean>(false);
   show_trash = false;
@@ -63,108 +130,23 @@ export class PagesEditorComponent {
     });
   }
 
-  ngOnInit(): void {
-
-    if (window.innerWidth < 768) {
-      this.resolution_too_small = true;
-    }
 
 
-    this.file_paths$ = this.fileService.list_files(S3_ROOT_FOLDERS.DOCUMENTS + '/').pipe(
-      map((S3items) => S3items.map(item => item.path))
-    );
-
-    this.thumbnails$ = this.fileService.list_files(S3_ROOT_FOLDERS.IMAGES + '/').pipe(
-      map((S3items) => S3items.map(item => item.path))
-    );
-
-    this.albums$ = this.fileService.list_folders(S3_ROOT_FOLDERS.ALBUMS + '/')    ;
-
-
-    this.pageService.listPages().pipe(take(1)).subscribe(pages => {
-
-      // check if all mandatory pages exist
-
-      const requiredTitles = Object.values(MENU_TITLES);
-      requiredTitles.forEach(title => {
-        const pageExists = pages.some(page => page.title === title);
-        if (!pageExists) {
-          this.pageService.createPage({
-            id: '',
-            title: title,
-            template: PAGE_TEMPLATES.X_DEFAULT,
-            snippet_ids: [],
-
-          });
-          this.toastService.showInfo('Pages', `La page "${title}" manquait, et a été créée`);
-        }
-      });
-      // subscribe "normally"
-
-      combineLatest([this.pageService.listPages(), this.snippetService.listSnippets()])
-        .subscribe(([pages, snippets]) => {
-          this.pages = pages;
-          this.snippets = snippets;
-          this.pages.forEach(page => {
-            page.snippets = this.getPageSnippets(page);
-          });
-          // force bin_page to be the first page
-          const binPage = this.pages.find(page => page.title === MENU_TITLES.POUBELLE);
-          if (binPage) {
-            this.pages = [binPage].concat(this.pages.filter(page => page !== binPage));
-          }
-          this.bin_page_index = this.pages.findIndex(page => page.title === MENU_TITLES.POUBELLE);
-          this.initFormArray(this.pages);
-        });
-    });
-  }
-
-
-  // filesystem utilities
-
-  // select_node(node:FileSystemNode){
-  //   console.log('selected',node)
-  // }
-
-
-  //   open_node(node: FileSystemNode): void {
-  //     const childs: FileSystemNode | null = getChildNodes(node);
-  //     // if (childs === null) return;
-  //     this.current_node_childs.set(childs)
-  //     // if node is a directory
-  //     console.log('stack:', this.node_stack)
-  //   }
-
-  //   push_node(key: string, value: FileSystemNode | { __data: S3Item }) {
-  //     // regenerate FileSystemNode from html (loop on current_node_childs() | keyvalue)
-  //     const node: FileSystemNode = { [key]: value };
-  //     this.open_node(node)
-  //     if (isFolder(node)) this.node_stack.push(node);
-  //   }
-
-  //   pop_node() {
-  //      this.node_stack.pop();
-  //     const parent = this.node_stack[this.node_stack.length - 1];
-  //     if(parent === null) return;
-  //     console.log('Popping node, new current:', parent);
-  //     this.open_node(parent);
-  //   }
-
-  //   get_icon(node: any): string {
-  //     return node['__data'] && node['__data'].size > 0 ? 'bi bi-file' : 'bi bi-folder';
-  //   }
-
-  //   get_button_class(node: any): string {
-  //     return node['__data'] && node['__data'].size > 0 ? 'btn btn-outline-primary' : 'btn btn-outline-secondary';
-  //   }
-
+ 
   //getters
 
   getNextSnippetGroup(page: FormGroup): FormGroup {
     return page.get('next_snippet') as FormGroup;
   }
   get dropListIds(): string[] {
-    return ['trash_'].concat(this.pageGroups.map((_, i) => 'dropList_' + i));
+    // On ne garde que les pages effectivement affichées (hors corbeille si masquée)
+    const ids: string[] = ['trash_'];
+    this.pageGroups.forEach((page, i) => {
+      // Si la page est la corbeille et qu'elle n'est pas affichée, on saute
+      if (this.is_trash_page(page) && !this.show_trash) return;
+      ids.push('dropList_' + i);
+    });
+    return ids;
   }
 
   get pagesFormArray(): FormArray {
@@ -325,18 +307,42 @@ export class PagesEditorComponent {
       const originSnippets = this.pageGroups[originPageIndex].get('snippets')?.value;
       const targetSnippets = this.pageGroups[pageIndex].get('snippets')?.value;
       if (originSnippets && targetSnippets) {
-        // Utilise transferArrayItem pour déplacer l'item
-
-        transferArrayItem(
-          originSnippets,
-          targetSnippets,
-          event.previousIndex,
-          event.currentIndex
-        );
-        this.pageGroups[originPageIndex].get('snippets')?.setValue(originSnippets);
-        this.pageGroups[pageIndex].get('snippets')?.setValue(targetSnippets);
-        this.updateSnippetList(originPageIndex);
-        this.updateSnippetList(pageIndex);
+        if (this.ctrlPressed) {
+          // COPY: créer un vrai nouveau snippet
+          const original = originSnippets[event.previousIndex];
+          const copy: Snippet = {
+           id: '',
+           title: original.title ,
+           subtitle: original.subtitle,
+           content: original.content,
+           public: original.public,
+           file: original.file, 
+           image: original.image,
+           folder: original.folder,
+           //
+          };
+          this.snippetService.createSnippet(copy)
+          .then((new_snippet) => {
+            targetSnippets.splice(event.currentIndex, 0, new_snippet);
+            this.pageGroups[pageIndex].get('snippets')?.setValue(targetSnippets);
+            this.updateSnippetList(pageIndex);
+          })
+          .catch(error => {
+            console.error('Error copying snippet:', error);
+          });
+        } else {
+          // MOVE: comportement normal
+          transferArrayItem(
+            originSnippets,
+            targetSnippets,
+            event.previousIndex,
+            event.currentIndex
+          );
+          this.pageGroups[originPageIndex].get('snippets')?.setValue(originSnippets);
+          this.updateSnippetList(originPageIndex);
+          this.pageGroups[pageIndex].get('snippets')?.setValue(targetSnippets);
+          this.updateSnippetList(pageIndex);
+        }
       }
     }
   }

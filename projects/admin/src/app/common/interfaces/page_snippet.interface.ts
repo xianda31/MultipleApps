@@ -30,9 +30,20 @@ export interface Page {
 
 export type Page_input = Omit<Schema['Page']['type'], 'id' | 'createdAt' | 'updatedAt'>;
 
+export enum PAGE_TEMPLATES {
+    PUBLICATIONS = 'publications',
+    A_LA_UNE = 'à la une',
+    TROMBINOSCOPE = 'trombinoscope',
+    LOADABLE = 'téléchargement',
+    CARDS_top = 'fiches img haut',
+    CARDS_bottom = 'fiches img bas',
+    ALBUMS = 'albums',
+    // X_DEFAULT = 'journal',
+}
 
 export enum MENU_TITLES {
     NEWS = 'news',
+    HIGHLIGHTS = 'à la une',
     ACTEURS = 'acteurs',
     BUREAU = 'bureau',
     DOCUMENTS = 'documents',
@@ -42,13 +53,11 @@ export enum MENU_TITLES {
     // CONTACTS = 'contacts',
 }
 
-export enum PAGE_TEMPLATES {
-    JOURNAL = 'journal',
-    TROMBINOSCOPE = 'trombinoscope',
-    LOADABLE = 'téléchargement',
-    CARDS_top = 'fiches img haut',
-    CARDS_bottom = 'fiches img bas',
-    ALBUMS = 'albums',
-    X_DEFAULT = 'journal',
-}
+// export enum ALIAS_TITLES {
+//     HIGHLIGHTS = 'à la une',
+// }
+// export const ALIAS_REDIRECTIONS: { [key in ALIAS_TITLES]: {title: MENU_TITLES, template: PAGE_TEMPLATES} } = {
+//     [ALIAS_TITLES.HIGHLIGHTS]: { title: MENU_TITLES.NEWS, template: PAGE_TEMPLATES.A_LA_UNE },  
+// }
+
 
