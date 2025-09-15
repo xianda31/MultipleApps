@@ -9,12 +9,12 @@ import { FileService, S3_ROOT_FOLDERS } from '../../../common/services/files.ser
 import { map, Observable } from 'rxjs';
 
 @Component({
-  selector: 'app-front-page',
+  selector: 'app-contacts',
   imports: [CommonModule],
-  templateUrl: './front-page.component.html',
-  styleUrl: './front-page.component.scss'
+  templateUrl: './contacts.component.html',
+  styleUrl: './contacts.component.scss'
 })
-export class FrontPageComponent implements AfterViewInit, AfterViewChecked {
+export class ContactsComponent implements AfterViewInit, AfterViewChecked {
   @ViewChild('carouselEl') carouselEl?: ElementRef;
   private carouselInitialized = false;
 
