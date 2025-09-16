@@ -48,8 +48,11 @@
         </a>
         <ul ngbDropdownMenu class="dropdown-menu shadow">
           <li><a class="dropdown-item" routerLink="tournaments/next"
-              (click)="dropdownTournois.close(); closeBurger()">prochainement</a></li>
-
+              (click)="dropdownTournois.close(); closeBurger()">prochainement au Club</a></li>
+          <li><a class="dropdown-item" routerLink="tournaments/resultats_ffb"
+              (click)="dropdownTournois.close(); closeBurger()">FFB : résultats récents</a></li>
+          <li><a class="dropdown-item" href="https://www.bridgeplus.com/nos-simultanes/resultats/?res=sim" target="_blank" rel="noopener"
+              (click)="dropdownTournois.close(); closeBurger()">Roy René : résultats récents</a></li>
         </ul>
 
       </li>

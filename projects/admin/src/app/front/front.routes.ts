@@ -1,3 +1,4 @@
+import { ExternalRedirectComponent } from './front/external-redirect/external-redirect.component';
 import { Routes } from '@angular/router';
 import { PageNotFoundComponent } from '../common/page-not-found/page-not-found.component';
 import { ConnexionComponent } from '../common/authentification/connexion/connexion.component';
@@ -20,24 +21,20 @@ export const routes: Routes = [
     path: '',
     component: FrontComponent,
     children: [
-      // { path: 'club/acteurs', component: GenericPageComponent, data: { menu_title: MENU_TITLES.ACTEURS } },
-      // { path: 'club/documents', component: GenericPageComponent, data: { menu_title: MENU_TITLES.DOCUMENTS } },
-      // { path: 'club/bureau', component: GenericPageComponent, data: { menu_title: MENU_TITLES.BUREAU } },
-      // { path: 'école/cours', component: GenericPageComponent, data: { menu_title: MENU_TITLES.COURS } },
-      // { path: 'news/:title', component: GenericPageComponent, data: { menu_title: MENU_TITLES.NEWS  } },
-      // { path: 'albums', component: GenericPageComponent, data: { menu_title: MENU_TITLES.ALBUMS } },
 
+      
       { path: 'home', component: HomePage },
       { path: 'tournaments/next', component: TournamentsComponent },
+  { path: 'tournaments/resultats_ffb', component: ExternalRedirectComponent, data: { site : 'FFB' } },
+  // { path: 'tournaments/resultats_royrene', component: ExternalRedirectComponent, data: { site : 'RoyRené' } },
       { path: 'tournaments/:id', component: TournamentComponent },
       { path: 'achats/historique', component: PurchasesComponent },
       { path: 'achats/carte', component: GameCardsOwnedComponent },
       { path: 'albums/:snippet_id', component: Carousel },
       { path: 'authentification', component: ConnexionComponent },
       { path: 'contacts', component: ContactsComponent },
-      { path: 'legals', component: GenericPageComponent, data: { menu_title: MENU_TITLES.LEGALS } },
       { path: '', redirectTo: 'home', pathMatch: 'full' },
-      {path: '404', component: PageNotFoundComponent },
+      { path: '404', component: PageNotFoundComponent },
       { path: '**', component: CustomRouter },
     ]
   },

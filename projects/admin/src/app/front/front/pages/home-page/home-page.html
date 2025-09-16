@@ -1,20 +1,20 @@
 <div class="offset-md-2 col-md-8 justify-content-center">
-    <div class="card  mt-3">
+
+    <div class="card border-0 mt-3">
+        <div class="card-header text-uppercase">
+            Les dernières nouvelles
+        </div>
+        <div class="card-body p-0">
+            <app-generic-page [menu_title]="highlights"></app-generic-page>
+        </div>
+    </div>
+
+    <div class="card border-0 mt-3">
         <div class="card-header text-uppercase">
             Les prochains tournois de régularité
         </div>
         <div class="card-body">
             <app-tournaments (tournamentSelected)="onTournamentSelected($event)"></app-tournaments>
         </div>
-    </div>
-
-    <div class="card  mt-3">
-        <div class="card-header text-uppercase">
-            Les dernières nouvelles
-        </div>
-        <div class="card-body">
-            <app-generic-page [menu_title]="highlights"></app-generic-page>
-        </div>
-
     </div>
 </div>

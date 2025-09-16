@@ -1,3 +1,4 @@
+import { ExternalRedirectComponent } from './front/front/external-redirect/external-redirect.component';
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -26,7 +27,8 @@ import { TitleComponent } from './front/title/title.component';
     TournamentsComponent,
     PurchasesComponent,
     GameCardsOwnedComponent,
-    TitleComponent,
+  TitleComponent,
+  ExternalRedirectComponent,
   ],
   exports: [
     CommonModule,
@@ -36,9 +38,8 @@ import { TitleComponent } from './front/title/title.component';
     TournamentsComponent,
     PurchasesComponent,
     GameCardsOwnedComponent,
-    TitleComponent,
-
-
+  TitleComponent,
+  ExternalRedirectComponent,
   ],
 })
 export class FrontModule { }
