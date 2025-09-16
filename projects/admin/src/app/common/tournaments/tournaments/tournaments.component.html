@@ -6,14 +6,14 @@
 
             <div class="card h-100 " (click)="selectTournament(t.subscription_tournament.id)">
 
-                <h4 class="card-header">
+                <h6 class="card-header">
                     <span class="stamp">
                         <i [class]="icon_for(t)"></i> </span>
                     <div class="text-center">
                         {{ date_of(t) | date:'EEEE d MMMM':'':'fr-FR' }}
-                        <h6 class="text-center"> {{name_of(t)}} </h6>
+                        <div class="text-center"> {{name_of(t)}} </div>
                     </div>
-                </h4>
+                </h6>
 
                 <div class="card-body">
                     <div class="card-text">

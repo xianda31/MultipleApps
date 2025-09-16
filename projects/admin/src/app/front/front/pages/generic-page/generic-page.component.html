@@ -87,10 +87,10 @@
                                         class="card-img-top ">
                                 </div>
                                 <div class="col-9">
-                                    <h3 class="card-title">
+                                    <h5 class="card-title">
                                         {{snippet.title}}
                                         <div class=" text-muted">{{snippet.subtitle}}</div>
-                                    </h3>
+                                    </h5>
                                     <small class="text-muted">Publié le {{snippet.createdAt | date:'shortDate'}}</small>
                                     <div class="card-text mt-3">
                                         <span class="card-text innerHTML" [innerHTML]="snippet.content | truncate:300"></span>
@@ -122,18 +122,18 @@
         }
         @if (!isMobile()) {
         @for (snippet of snippets; track snippet.id) {
-        <div class="card mb-3 nice_shadow bg-dark">
+        <div class="card mb-1">
             <div class="row g-0  align-items-center">
                 <div class="col-md-2 text-secondary">
-                    <i [class]="doc_icon(snippet.file)" style="font-size: 6rem;"></i>
+                    <i [class]="doc_icon(snippet.file)" style="font-size: 4rem;"></i>
                 </div>
                 <div class="col-md-10">
                     <div class="card-body">
                         <div class="row align-items-center">
                             <div class="col-6 ">
-                                <h3 class="fw-bolder"> {{ snippet.title}} </h3>
+                                <h5 class="fw-bolder"> {{ snippet.title}} </h5>
                                 <div>
-                                    <button class="btn  btn-outline-primary nice_shadow"
+                                    <button class="btn  btn-outline-primar1"
                                         (click)="downloadDocument(snippet); $event.preventDefault()">
                                         Télécharger le document
                                     </button>
@@ -153,13 +153,13 @@
         }
         @if (isMobile()) {
         @for (snippet of snippets; track snippet.id) {
-        <div class="card mb-3 nice_shadow bg-dark">
+        <div class="card mb-1">
             <div class="card-body">
                 <div class="row text-secondary">
-                    <h3 class="fw-bolder">
+                    <h5 class="fw-bolder">
                         <i [class]="doc_icon(snippet.file)" style="font-size: 3rem;"></i>
                         {{ snippet.title}}
-                    </h3>
+                    </h5>
                 </div>
                 <div class="row align-items-center">
                     <span class="fw-bold">Contenu :</span>
