@@ -46,6 +46,7 @@ export enum MENU_TITLES {
     NEWS = 'news',
     ACTEURS = 'acteurs',
     BUREAU = 'bureau',
+    HISTOIRE = 'histoire',
     DOCUMENTS = 'documents',
     COURS = 'cours',
     ALBUMS = 'albums',

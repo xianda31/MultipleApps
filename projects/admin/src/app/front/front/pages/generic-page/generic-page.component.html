@@ -33,7 +33,6 @@
         <div class="row">
             <div class="col-md-3">
                 <div class="position-sticky" style="top: 0; z-index: 2; background: #fff;">
-                    <h2 class="mb-3">Sommaire</h2>
                     @for (snippet of snippets; track snippet.id) {
                     <div (click)="scrollToElement(snippet.title)" class="fs-4 text-secondary hover-title">
                         {{snippet.title}}</div>
