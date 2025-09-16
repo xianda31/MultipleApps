@@ -2,7 +2,7 @@ import { Component, Input, Renderer2, ElementRef, OnChanges, SimpleChanges, OnIn
 import { map, switchMap } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import {  EXTRA_TITLES, MENU_TITLES, Page, PAGE_TEMPLATES, Snippet } from '../../../../common/interfaces/page_snippet.interface';
+import { EXTRA_TITLES, MENU_TITLES, Page, PAGE_TEMPLATES, Snippet } from '../../../../common/interfaces/page_snippet.interface';
 import { FileService } from '../../../../common/services/files.service';
 import { PageService } from '../../../../common/services/page.service';
 import { SnippetService } from '../../../../common/services/snippet.service';
@@ -17,16 +17,18 @@ import { TruncatePipe } from '../../../../common/pipes/truncate.pipe';
   templateUrl: './generic-page.component.html',
   styleUrl: './generic-page.component.scss'
 })
-export class GenericPageComponent implements OnInit,OnChanges{
+export class GenericPageComponent implements OnInit, OnChanges {
   @Input() menu_title!: MENU_TITLES | EXTRA_TITLES;
+  @Input() snippet_title?: string; // for news, the title of the selected snippet
   page!: Page;
   pageTemplate!: PAGE_TEMPLATES;
   PAGE_TEMPLATES = PAGE_TEMPLATES;
   snippets: Snippet[] = [];
+  // selectedSnippetTitle: string | null = null;
 
 
   // def for documents
-   icons: { [key: string]: string } = {
+  icons: { [key: string]: string } = {
     pdf: 'bi-file-earmark-pdf-fill',
     word: 'bi-file-earmark-word-fill',
     excel: 'bi-file-earmark-excel-fill',
@@ -47,30 +49,44 @@ export class GenericPageComponent implements OnInit,OnChanges{
   ) { }
 
   ngOnChanges(changes: SimpleChanges): void {
-   if (changes['menu_title'] && changes['menu_title'].currentValue) {
-     this.menu_title = changes['menu_title'].currentValue;
-     this.loadPageAndSnippets();
-   }
- }
-  ngOnInit(): void {
-   this.init_relative_links_handler();
-   this.loadPageAndSnippets();
+    if (changes['menu_title'] && changes['menu_title'].currentValue) {
+      this.menu_title = changes['menu_title'].currentValue;
+      this.loadPageAndSnippets();
+
+      this.snippet_title = changes['snippet_title']?.currentValue ? changes['snippet_title'].currentValue : null;
+
+
+    }
   }
-  
+  ngOnInit(): void {
+    this.init_relative_links_handler();
+    this.loadPageAndSnippets();
+  }
+
   loadPageAndSnippets() {
 
     this.pageService.getPageByTitle(((this.menu_title === EXTRA_TITLES.HIGHLIGHTS) ? MENU_TITLES.NEWS : this.menu_title)).pipe(
-       map(page => {
-          if (!page) { throw new Error(this.menu_title + ' page not found' ) }
-          this.page = page;
-          this.titleService.setTitle(this.page.title);
-        }),
-        switchMap(() => this.snippetService.listSnippets())
-      )
+      map(page => {
+        if (!page) { throw new Error(this.menu_title + ' page not found') }
+        this.page = page;
+        this.titleService.setTitle(this.page.title);
+      }),
+      switchMap(() => this.snippetService.listSnippets())
+    )
       .subscribe((snippets) => {
         this.snippets = this.page.snippet_ids.map(id => snippets.find(snippet => snippet.id === id))
-        .filter(snippet => snippet !== undefined) as Snippet[];
-        this.pageTemplate = this.page.template as PAGE_TEMPLATES;
+          .filter(snippet => snippet !== undefined) as Snippet[];
+
+
+        const template = this.page.template;
+        if (!Object.values(PAGE_TEMPLATES).includes(template)) {
+          console.warn('ATTENTION: page.template n\'est pas une valeur valide de PAGE_TEMPLATES:', template);
+          this.pageTemplate = PAGE_TEMPLATES.PUBLICATIONS; // valeur par défaut
+        } else {
+          this.pageTemplate = template as PAGE_TEMPLATES;
+        }
+
+
         this.special_handling();
       });
   }
@@ -81,35 +97,36 @@ export class GenericPageComponent implements OnInit,OnChanges{
   }
 
   // special for news
-special_handling() {
+  special_handling() {
 
-  if(this.menu_title === EXTRA_TITLES.HIGHLIGHTS) {
-    this.snippets = this.snippets.filter(s => s.featured)
-    .sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''));
-    this.pageTemplate = PAGE_TEMPLATES.A_LA_UNE;
-  }
-  
-  if(this.menu_title === MENU_TITLES.NEWS && this.snippets.length > 0) {
-    const title = this.route.snapshot.paramMap.get('title');
-    if(title) {
-      const snippet = this.snippets.find(s => s.title === title);
-      if (snippet) {
-        console.log('Scrolling to snippet with title:', title, snippet.title);
-        this.scrollToElement(snippet.title);
+    if (this.menu_title === EXTRA_TITLES.HIGHLIGHTS) {
+      this.snippets = this.snippets.filter(s => s.featured)
+        .sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''));
+      this.pageTemplate = PAGE_TEMPLATES.A_LA_UNE;
+    }
+
+    if (this.menu_title === MENU_TITLES.NEWS && this.snippets.length > 0) {
+
+
+      const title = this.snippet_title;
+      if (title) {
+        const snippet = this.snippets.find(s => s.title === title);
+        if (snippet) {
+          this.scrollToElement(snippet.title);
+        }
       }
     }
   }
-}
 
-  
+
   // special for documents
-  
-  
+
+
   doc_icon(file: string): string {
-   const fileType = file.split('.').pop() || '';
-   const icon = Object.keys(this.icons).find(key => key === fileType);
-   return icon ? this.icons[icon] : this.icons['unknown'];
- }
+    const fileType = file.split('.').pop() || '';
+    const icon = Object.keys(this.icons).find(key => key === fileType);
+    return icon ? this.icons[icon] : this.icons['unknown'];
+  }
   async downloadDocument(snippet: Snippet) {
     const docItem = { name: snippet.title, url: snippet.file };
     try {
@@ -131,7 +148,7 @@ special_handling() {
 
   // Intercept link clicks for relative URLs
   init_relative_links_handler() {
-        
+
     this.renderer.listen(this.el.nativeElement, 'click', (event: MouseEvent) => {
       const target = event.target as HTMLElement;
       if (target.tagName === 'A') {
@@ -154,7 +171,7 @@ special_handling() {
     });
   }
 
-  
+
   scrollToElement(title: string) {
     setTimeout(() => {
       const element = document.getElementById(title);
@@ -168,5 +185,5 @@ special_handling() {
     return window.innerWidth < 576;
   }
 
-  
+
 }
