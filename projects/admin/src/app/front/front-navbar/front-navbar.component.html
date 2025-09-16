@@ -1,11 +1,11 @@
 <nav class="ms-3 navbar navbar-expand-lg">
-  <button class="navbar-toggler navbar-toggler-sm  d-block d-md-none" type="button" (click)="toggleCollapse()"
-    [attr.aria-expanded]="!isCollapsed" aria-controls="navbarSupportedContent" aria-label="Toggle navigation">
+  <!-- Hamburger for mobile -->
+  <button class="navbar-toggler navbar-toggler-sm d-block d-md-none" type="button" (click)="sidebarOpen = true"
+    aria-label="Ouvrir le menu">
     <span class="navbar-toggler-icon"></span>
   </button>
-  <div [ngbCollapse]="isCollapsed" class="navbar-collapse" id="navbarSupportedContent">
-
-    <!-- les menus -->
+  <!-- Menu horizontal desktop -->
+  <div class="navbar-collapse d-none d-md-block">
     <ul class="navbar-nav menu-sm-tight">
 
       <li class="nav-item me-md-3 me-sm-1">
@@ -14,11 +14,6 @@
         </a>
       </li>
 
-      <!-- <li class="nav-item me-md-3 me-sm-1">
-        <a class="nav-link text-white" routerLink="news" [class.active]="isNavItemActive('news')">
-          <span class="ms-1">Les infos</span>
-        </a>
-      </li> -->
 
       <li ngbDropdown #dropdownClub="ngbDropdown" class="nav-item dropdown me-md-3 me-sm-1">
         <a class="nav-link dropdown-toggle text-white" ngbDropdownToggle>
@@ -73,7 +68,8 @@
           <li><a class="dropdown-item" routerLink="achats/historique"
               (click)="dropdownAchats.close(); closeBurger()">relevé</a></li>
 
-          <li><a class="dropdown-item" routerLink="achats/carte" (click)="dropdownAchats.close(); closeBurger()">droits de table</a></li>
+          <li><a class="dropdown-item" routerLink="achats/carte" (click)="dropdownAchats.close(); closeBurger()">droits
+              de table</a></li>
         </ul>
       </li>
 
@@ -98,24 +94,28 @@
           <span class="ms-1"> {{member.firstname}}</span>
         </a>
         <ul ngbDropdownMenu class="dropdown-menu shadow">
+
           <li *ngIf="user_accreditation && user_accreditation.level > 0">
             <a class="dropdown-item" routerLink="../back" (click)="dropdownUser.close(); closeBurger()">
               <i [class]="user_accreditation.icon"></i>
               back office
             </a>
           </li>
+          <li><a class="dropdown-item" href="https://www.ffbridge.fr/user/dashboard" target="_blank" rel="noopener"
+              (click)="dropdownTournois.close(); closeBurger()">FFB : tableau de bord</a></li>
           <li> <a class="dropdown-item" (click)="signOut(); dropdownUser.close(); closeBurger()">
               <i class="bi bi-box-arrow-right"></i>
               Déconnexion
             </a></li>
         </ul>
       </li>
-
-
     </ul>
-
   </div>
+
+
+
 </nav>
+
 
 
 

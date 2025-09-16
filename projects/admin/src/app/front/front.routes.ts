@@ -35,6 +35,7 @@ export const routes: Routes = [
       { path: 'albums/:snippet_id', component: Carousel },
       { path: 'authentification', component: ConnexionComponent },
       { path: 'contacts', component: ContactsComponent },
+      { path: 'legals', component: GenericPageComponent, data: { menu_title: MENU_TITLES.LEGALS } },
       { path: '', redirectTo: 'home', pathMatch: 'full' },
       {path: '404', component: PageNotFoundComponent },
       { path: '**', component: CustomRouter },
