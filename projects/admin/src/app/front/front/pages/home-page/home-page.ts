@@ -3,7 +3,7 @@ import { TitleService } from '../../../title/title.service';
 import { GenericPageComponent } from '../generic-page/generic-page.component';
 import { TournamentsComponent } from '../../../../common/tournaments/tournaments/tournaments.component';
 import { Router, ActivatedRoute } from '@angular/router';
-import { MENU_TITLES } from '../../../../common/interfaces/page_snippet.interface';
+import { EXTRA_TITLES, MENU_TITLES } from '../../../../common/interfaces/page_snippet.interface';
 
 @Component({
   selector: 'app-home-page',
@@ -12,7 +12,7 @@ import { MENU_TITLES } from '../../../../common/interfaces/page_snippet.interfac
   styleUrl: './home-page.scss'
 })
 export class HomePage {
-   news_page = MENU_TITLES.HIGHLIGHTS;
+   highlights = EXTRA_TITLES.HIGHLIGHTS;
   constructor(
     private titleService: TitleService,
         private router: Router,

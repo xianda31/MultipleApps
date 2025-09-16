@@ -33,15 +33,44 @@ export class PagesEditorComponent {
   snippets: Snippet[] = [];
   selected_snippet: Snippet | null = null;
 
-  
-
-  // Pour détecter si Ctrl est enfoncé globalement
   ctrlPressed = false;
+
+  view_snippet = signal<boolean>(true);
+  freeze_view_snippet = signal<boolean>(false);
+  show_trash = false;
+
+  pagesForm !: FormGroup;
+  pageTemplates = Object.values(PAGE_TEMPLATES);
+
+  fileSystemNode !: FileSystemNode;
+  file_paths$ !: Observable<string[]>;
+  thumbnails$ !: Observable<string[]>;
+  albums$ !: Observable<string[]>;
+
+
+  current_node_childs = signal<FileSystemNode | null>(null);
+  // node_stack: FileSystemNode[] = [];
+  // returned_value : any;
+
+  constructor(
+    private pageService: PageService,
+    private snippetService: SnippetService,
+    private fb: FormBuilder,
+    private toastService: ToastService,
+    private modalService: NgbModal,
+    private fileService: FileService
+  ) {
+    this.pagesForm = this.fb.group({
+      pagesArray: this.fb.array([])   // pour eviter les erreurs DOM à l'initialisation
+    });
+  }
+
 
   ngOnInit(): void {
     window.addEventListener('keydown', this.ctrlKeyListener, true);
     window.addEventListener('keyup', this.ctrlKeyListener, true);
-    // --- logique métier existante ---
+    
+    
     if (window.innerWidth < 768) {
       this.resolution_too_small = true;
     }
@@ -85,6 +114,7 @@ export class PagesEditorComponent {
             this.pages = [binPage].concat(this.pages.filter(page => page !== binPage));
           }
           this.bin_page_index = this.pages.findIndex(page => page.title === MENU_TITLES.POUBELLE);
+          
           this.initFormArray(this.pages);
         });
     });
@@ -98,39 +128,6 @@ export class PagesEditorComponent {
   ctrlKeyListener = (event: KeyboardEvent) => {
     this.ctrlPressed = event.ctrlKey;
   };
-
-  view_snippet = signal<boolean>(true);
-  freeze_view_snippet = signal<boolean>(false);
-  show_trash = false;
-
-  pagesForm !: FormGroup;
-  pageTemplates = Object.values(PAGE_TEMPLATES);
-
-
-  fileSystemNode !: FileSystemNode;
-  file_paths$ !: Observable<string[]>;
-  thumbnails$ !: Observable<string[]>;
-  albums$ !: Observable<string[]>;
-
-
-  current_node_childs = signal<FileSystemNode | null>(null);
-  // node_stack: FileSystemNode[] = [];
-  // returned_value : any;
-
-  constructor(
-    private pageService: PageService,
-    private snippetService: SnippetService,
-    private fb: FormBuilder,
-    private toastService: ToastService,
-    private modalService: NgbModal,
-    private fileService: FileService
-  ) {
-    this.pagesForm = this.fb.group({
-      pagesArray: this.fb.array([])   // pour eviter les erreurs DOM à l'initialisation
-    });
-  }
-
-
 
  
   //getters
@@ -236,6 +233,7 @@ export class PagesEditorComponent {
       file: '',
       image: '',
       folder: '',
+      featured: false,
       public: true,
     };
     this.snippetService.createSnippet(snippet).then((new_snippet) => {
@@ -319,6 +317,7 @@ export class PagesEditorComponent {
            file: original.file, 
            image: original.image,
            folder: original.folder,
+            featured: original.featured,
            //
           };
           this.snippetService.createSnippet(copy)

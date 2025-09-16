@@ -1,7 +1,7 @@
 <div class="px-1 mt-1">
 
     @if (page) {
-        @switch (page.template) {
+        @switch (pageTemplate) {
 @case (PAGE_TEMPLATES.PUBLICATIONS) {
     <ng-container *ngTemplateOutlet="publications; context: { snippets: snippets }"></ng-container>
 }

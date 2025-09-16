@@ -10,6 +10,7 @@ export interface Snippet {
     image: string;
     file: string;
     folder:string
+    featured: boolean;
     image_url?: Observable<string>;
     pageId?: string;
     createdAt?: string;
@@ -43,7 +44,6 @@ export enum PAGE_TEMPLATES {
 
 export enum MENU_TITLES {
     NEWS = 'news',
-    HIGHLIGHTS = 'à la une',
     ACTEURS = 'acteurs',
     BUREAU = 'bureau',
     DOCUMENTS = 'documents',
@@ -51,6 +51,9 @@ export enum MENU_TITLES {
     ALBUMS = 'albums',
     POUBELLE = 'poubelle',
     // CONTACTS = 'contacts',
+}
+export enum EXTRA_TITLES {
+    HIGHLIGHTS = 'à la une',
 }
 
 // export enum ALIAS_TITLES {

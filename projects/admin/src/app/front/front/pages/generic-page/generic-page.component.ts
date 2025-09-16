@@ -2,7 +2,7 @@ import { Component, Input, Renderer2, ElementRef, OnChanges, SimpleChanges, OnIn
 import { map, switchMap } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import {  MENU_TITLES, Page, PAGE_TEMPLATES, Snippet } from '../../../../common/interfaces/page_snippet.interface';
+import {  EXTRA_TITLES, MENU_TITLES, Page, PAGE_TEMPLATES, Snippet } from '../../../../common/interfaces/page_snippet.interface';
 import { FileService } from '../../../../common/services/files.service';
 import { PageService } from '../../../../common/services/page.service';
 import { SnippetService } from '../../../../common/services/snippet.service';
@@ -18,8 +18,9 @@ import { TruncatePipe } from '../../../../common/pipes/truncate.pipe';
   styleUrl: './generic-page.component.scss'
 })
 export class GenericPageComponent implements OnInit,OnChanges{
-  @Input() menu_title!: MENU_TITLES ;
+  @Input() menu_title!: MENU_TITLES | EXTRA_TITLES;
   page!: Page;
+  pageTemplate!: PAGE_TEMPLATES;
   PAGE_TEMPLATES = PAGE_TEMPLATES;
   snippets: Snippet[] = [];
 
@@ -57,8 +58,8 @@ export class GenericPageComponent implements OnInit,OnChanges{
   }
   
   loadPageAndSnippets() {
-    
-    this.pageService.getPageByTitle(this.menu_title).pipe(
+
+    this.pageService.getPageByTitle(((this.menu_title === EXTRA_TITLES.HIGHLIGHTS) ? MENU_TITLES.NEWS : this.menu_title)).pipe(
        map(page => {
           if (!page) { throw new Error(this.menu_title + ' page not found' ) }
           this.page = page;
@@ -69,6 +70,7 @@ export class GenericPageComponent implements OnInit,OnChanges{
       .subscribe((snippets) => {
         this.snippets = this.page.snippet_ids.map(id => snippets.find(snippet => snippet.id === id))
         .filter(snippet => snippet !== undefined) as Snippet[];
+        this.pageTemplate = this.page.template as PAGE_TEMPLATES;
         this.special_handling();
       });
   }
@@ -80,6 +82,12 @@ export class GenericPageComponent implements OnInit,OnChanges{
 
   // special for news
 special_handling() {
+
+  if(this.menu_title === EXTRA_TITLES.HIGHLIGHTS) {
+    this.snippets = this.snippets.filter(s => s.featured)
+    .sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''));
+    this.pageTemplate = PAGE_TEMPLATES.A_LA_UNE;
+  }
   
   if(this.menu_title === MENU_TITLES.NEWS && this.snippets.length > 0) {
     const title = this.route.snapshot.paramMap.get('title');

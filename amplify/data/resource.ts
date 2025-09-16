@@ -190,6 +190,7 @@ const schema = a.schema({
     subtitle: a.string().required(),
     content: a.string().required(),
     public: a.boolean().required(),
+    featured: a.boolean(),
     image: a.string(),
     file: a.string(),
     folder: a.string(),
