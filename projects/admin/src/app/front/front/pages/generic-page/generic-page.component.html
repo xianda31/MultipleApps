@@ -34,7 +34,7 @@
             <div class="col-md-3">
                 <div class="position-sticky" style="top: 0; z-index: 2; background: #fff;">
                     <h2 class="mb-3">Sommaire</h2>
-                    @for (snippet of snippets; track snippet) {
+                    @for (snippet of snippets; track snippet.id) {
                     <div (click)="scrollToElement(snippet.title)" class="fs-4 text-secondary hover-title">
                         {{snippet.title}}</div>
                     }
@@ -43,7 +43,7 @@
 
             <div class="col-md-7">
                 <h2></h2>
-                @for (snippet of snippets; track snippet) {
+                @for (snippet of snippets; track snippet.id) {
                 <div class="col">
                     <div class="card border-0" id="{{snippet.title}}">
                         <div class="card-body">
@@ -78,7 +78,7 @@
 
         <div class="row">
                 <div class="col">
-                @for (snippet of snippets; track snippet) {
+                @for (snippet of snippets; track snippet.id) {
                     <div class="card border-0" id="{{snippet.title}}">
                         <div class="card-body">
                             <div class="row">
@@ -121,7 +121,7 @@
         </div>
         }
         @if (!isMobile()) {
-        @for (snippet of snippets; track snippet) {
+        @for (snippet of snippets; track snippet.id) {
         <div class="card mb-3 nice_shadow bg-dark">
             <div class="row g-0  align-items-center">
                 <div class="col-md-2 text-secondary">
@@ -152,7 +152,7 @@
         }
         }
         @if (isMobile()) {
-        @for (snippet of snippets; track snippet) {
+        @for (snippet of snippets; track snippet.id) {
         <div class="card mb-3 nice_shadow bg-dark">
             <div class="card-body">
                 <div class="row text-secondary">
@@ -180,7 +180,7 @@
     <div class="offset-md-1 col-md-10 offset-xl-3 col-xl-6 justify-content-start">
 
         <div class="row row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-3">
-            @for (snippet of snippets; track snippet) {
+            @for (snippet of snippets; track snippet.id) {
             <div class="col">
                 <div class="card h-100 nice_shadow">
                     <img [src]="snippet.image_url | async" style="max-width: 100%; max-height: 20vh; object-fit: cover;"
@@ -203,7 +203,7 @@
     <div class=" col-md-12  justify-content-start">
 
         <div class="row row-cols-1 row-cols-md-3 justify-content-center  gy-5 g-md-2 ">
-            @for (snippet of snippets; track snippet) {
+            @for (snippet of snippets; track snippet.id) {
             <div class="col">
                 <div class="card h-100 nice_shadow">
                     <img *ngIf="snippet.image" [src]="snippet.image_url | async"
@@ -229,7 +229,7 @@
     <div class=" col-md-12  justify-content-start">
 
         <div class="row row-cols-1 row-cols-md-3 justify-content-center  gy-5 g-md-2 ">
-            @for (snippet of snippets; track snippet) {
+            @for (snippet of snippets; track snippet.id) {
             <div class="col">
                 <div class="card h-100 nice_shadow">
                     <div class="card-body">
@@ -257,7 +257,7 @@
         <h2>Albums </h2>
 
         <!-- <div > -->
-            @for (snippet of snippets; track snippet) {
+            @for (snippet of snippets; track snippet.id) {
    
             <app-album [album]="snippet"></app-album>
             }

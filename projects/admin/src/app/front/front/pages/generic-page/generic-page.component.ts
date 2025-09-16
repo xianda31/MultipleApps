@@ -1,4 +1,4 @@
-import { Component, Input, Renderer2, ElementRef } from '@angular/core';
+import { Component, Input, Renderer2, ElementRef, OnChanges, SimpleChanges, OnInit } from '@angular/core';
 import { map, switchMap } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -8,7 +8,7 @@ import { PageService } from '../../../../common/services/page.service';
 import { SnippetService } from '../../../../common/services/snippet.service';
 import { ToastService } from '../../../../common/services/toast.service';
 import { AlbumComponent } from '../../../album/album.component';
-import { TitleService } from '../../../title.service';
+import { TitleService } from '../../../title/title.service';
 import { TruncatePipe } from '../../../../common/pipes/truncate.pipe';
 
 @Component({
@@ -17,7 +17,7 @@ import { TruncatePipe } from '../../../../common/pipes/truncate.pipe';
   templateUrl: './generic-page.component.html',
   styleUrl: './generic-page.component.scss'
 })
-export class GenericPageComponent {
+export class GenericPageComponent implements OnInit,OnChanges{
   @Input() menu_title!: MENU_TITLES ;
   page!: Page;
   PAGE_TEMPLATES = PAGE_TEMPLATES;
@@ -45,26 +45,32 @@ export class GenericPageComponent {
     private el: ElementRef
   ) { }
 
+  ngOnChanges(changes: SimpleChanges): void {
+   if (changes['menu_title'] && changes['menu_title'].currentValue) {
+     this.menu_title = changes['menu_title'].currentValue;
+     this.loadPageAndSnippets();
+   }
+ }
   ngOnInit(): void {
-
-    
    this.init_relative_links_handler();
-
-   
-   this.pageService.getPageByTitle(this.menu_title).pipe(
-     map(page => {
-        if (!page) { throw new Error(this.menu_title + ' page not found' ) }
-        this.page = page;
-        this.titleService.setTitle(this.page.title);
-      }),
-      switchMap(() => this.snippetService.listSnippets())
-    )
-    .subscribe((snippets) => {
-      this.snippets = this.page.snippet_ids.map(id => snippets.find(snippet => snippet.id === id))
-      .filter(snippet => snippet !== undefined) as Snippet[];
-      console.log('snippets for page', this.page.title, this.snippets); 
-      this.special_handling();
-    });
+   this.loadPageAndSnippets();
+  }
+  
+  loadPageAndSnippets() {
+    
+    this.pageService.getPageByTitle(this.menu_title).pipe(
+       map(page => {
+          if (!page) { throw new Error(this.menu_title + ' page not found' ) }
+          this.page = page;
+          this.titleService.setTitle(this.page.title);
+        }),
+        switchMap(() => this.snippetService.listSnippets())
+      )
+      .subscribe((snippets) => {
+        this.snippets = this.page.snippet_ids.map(id => snippets.find(snippet => snippet.id === id))
+        .filter(snippet => snippet !== undefined) as Snippet[];
+        this.special_handling();
+      });
   }
 
   // special pour news

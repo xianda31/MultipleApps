@@ -1,7 +1,7 @@
 import { AfterViewInit, AfterViewChecked, ViewChild, ElementRef } from '@angular/core';
 declare var bootstrap: any;
 import { Component } from '@angular/core';
-import { TitleService } from '../../../title.service';
+import { TitleService } from '../../../title/title.service';
 import { Carousel } from "../../../carousel/carousel";
 import { S3Item } from '../../../../common/interfaces/file.interface';
 import { CommonModule } from '@angular/common';

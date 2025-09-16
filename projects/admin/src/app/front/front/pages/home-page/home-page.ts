@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { TitleService } from '../../../title.service';
+import { TitleService } from '../../../title/title.service';
 import { GenericPageComponent } from '../generic-page/generic-page.component';
 import { TournamentsComponent } from '../../../../common/tournaments/tournaments/tournaments.component';
 import { Router, ActivatedRoute } from '@angular/router';

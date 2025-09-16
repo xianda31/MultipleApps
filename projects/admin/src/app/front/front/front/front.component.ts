@@ -1,11 +1,11 @@
 import { Component } from '@angular/core';
-import { FrontNavbarComponent } from '../front-navbar/front-navbar.component';
-import { LocalStorageService } from '../../back/services/local-storage.service';
+import { FrontNavbarComponent } from '../../front-navbar/front-navbar.component';
+import { LocalStorageService } from '../../../back/services/local-storage.service';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { ToasterComponent } from '../../common/toaster/components/toaster/toaster.component';
-import { TitleComponent } from '../title/title.component';
-import { SiteLayoutService } from '../../common/services/site-layout.service';
+import { ToasterComponent } from '../../../common/toaster/components/toaster/toaster.component';
+import { TitleComponent } from '../../title/title.component';
+import { SiteLayoutService } from '../../../common/services/site-layout.service';
 import { Observable, of } from 'rxjs';
 
 @Component({

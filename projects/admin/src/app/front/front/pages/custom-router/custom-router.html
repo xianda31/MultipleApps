@@ -1,0 +1,8 @@
+<p>custom-router works!</p>
+@if (matchedRoute) {
+  <p>Matched Route: {{matchedRoute.path}}</p>
+  <app-generic-page [menu_title]="matchedRoute.menu_title">
+   </app-generic-page>
+} @else {
+  <p>No matching route found.</p>
+}
