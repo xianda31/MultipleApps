@@ -1,9 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { Component, EventEmitter, Output } from '@angular/core';
+import { RouterModule } from '@angular/router';
 import { TournamentService } from '../../services/tournament.service';
 import { TournamentTeams } from '../../ffb/interface/tournament_teams.interface';
-import { TitleService } from '../../../front/title.service';
 import { AuthentificationService } from '../../authentification/authentification.service';
 
 @Component({
@@ -15,18 +14,17 @@ import { AuthentificationService } from '../../authentification/authentification
 export class TournamentsComponent {
 
   next_tournament_teams: TournamentTeams[] = [];
+  @Output() tournamentSelected = new EventEmitter<number>();
+
   license_nbr = 0; // License number of the logged member
   constructor(
-    private router: Router,
-    private route: ActivatedRoute,
     private tournamentService: TournamentService,
     private auth: AuthentificationService,
-    private titleService: TitleService
   ) { }
 
   ngOnInit(): void {
 
-    this.titleService.setTitle('Les prochains tournois');
+    // this.titleService.setTitle('Les prochains tournois');
     this.loadTournamentTeams();
 
     this.auth.logged_member$.subscribe((member) => {
@@ -69,8 +67,8 @@ export class TournamentsComponent {
     return false;
   }
 
-  goToTournamentTeams(tournamentTeams: TournamentTeams) {
-    this.router.navigate(['.', tournamentTeams.subscription_tournament.id],
-      { relativeTo: this.route });
+  selectTournament(tournamentId: number) {
+    this.tournamentSelected.emit(tournamentId);
   }
+
 }

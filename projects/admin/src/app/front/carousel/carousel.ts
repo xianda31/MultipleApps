@@ -8,7 +8,7 @@ import { S3Item } from '../../common/interfaces/file.interface';
 import { ActivatedRoute } from '@angular/router';
 import { SnippetService } from '../../common/services/snippet.service';
 import { Snippet } from '../../common/interfaces/page_snippet.interface';
-import { TitleService } from '../title.service';
+import { TitleService } from '../title/title.service';
 
 
 @Component({

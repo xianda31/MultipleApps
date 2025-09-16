@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { TitleService } from '../title.service';
+import { TitleService } from './title.service';
 import { Observable } from 'rxjs';
 import { CommonModule } from '@angular/common';
 

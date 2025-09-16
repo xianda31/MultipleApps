@@ -1,24 +1,19 @@
 <nav class="ms-3 navbar navbar-expand-lg">
-  <button class="navbar-toggler navbar-toggler-sm  d-block d-md-none" type="button" (click)="toggleCollapse()"
-    [attr.aria-expanded]="!isCollapsed" aria-controls="navbarSupportedContent" aria-label="Toggle navigation">
+  <!-- Hamburger for mobile -->
+  <button class="navbar-toggler navbar-toggler-sm d-block d-md-none" type="button" (click)="sidebarOpen = true"
+    aria-label="Ouvrir le menu">
     <span class="navbar-toggler-icon"></span>
   </button>
-  <div [ngbCollapse]="isCollapsed" class="navbar-collapse" id="navbarSupportedContent">
-
-    <!-- les menus -->
+  <!-- Menu horizontal desktop -->
+  <div class="navbar-collapse d-none d-md-block">
     <ul class="navbar-nav menu-sm-tight">
 
       <li class="nav-item me-md-3 me-sm-1">
         <a class="nav-link text-white" routerLink="home" [class.active]="isNavItemActive('home')">
-          <span class="ms-1">Maison</span>
+          <span class="ms-1">Accueil</span>
         </a>
       </li>
 
-      <li class="nav-item me-md-3 me-sm-1">
-        <a class="nav-link text-white" routerLink="news" [class.active]="isNavItemActive('news')">
-          <span class="ms-1">Les infos</span>
-        </a>
-      </li>
 
       <li ngbDropdown #dropdownClub="ngbDropdown" class="nav-item dropdown me-md-3 me-sm-1">
         <a class="nav-link dropdown-toggle text-white" ngbDropdownToggle>
@@ -29,8 +24,8 @@
               acteurs</a></li>
           <li><a class="dropdown-item" routerLink="club/documents"
               (click)="dropdownClub.close(); closeBurger()">documents</a></li>
-          <li><a class="dropdown-item" routerLink="club/bureau" 
-              (click)="dropdownClub.close(); closeBurger()">le bureau</a></li>
+          <li><a class="dropdown-item" routerLink="club/bureau" (click)="dropdownClub.close(); closeBurger()">le
+              bureau</a></li>
         </ul>
       </li>
 
@@ -39,8 +34,8 @@
           <span class="ms-1">L'école de Bridge</span>
         </a>
         <ul ngbDropdownMenu class="dropdown-menu shadow">
-          <li><a class="dropdown-item" routerLink="école/cours" 
-              (click)="dropdownEcole.close(); closeBurger()">cours</a></li>
+          <li><a class="dropdown-item" routerLink="école/cours" (click)="dropdownEcole.close(); closeBurger()">cours</a>
+          </li>
           <li><a class="dropdown-item" routerLink="école/inscription"
               (click)="dropdownEcole.close(); closeBurger()">inscription</a></li>
         </ul>
@@ -52,23 +47,16 @@
           <span class="ms-1">Les tournois</span>
         </a>
         <ul ngbDropdownMenu class="dropdown-menu shadow">
-          <li><a class="dropdown-item" routerLink="tournaments/next" 
-              (click)="dropdownTournois.close(); closeBurger()">prochainement</a></li>
-          <li><a class="dropdown-item" routerLink="tournaments/fees" 
-              (click)="dropdownTournois.close(); closeBurger()">ma carte</a></li>
+          <li><a class="dropdown-item" routerLink="tournaments/next"
+              (click)="dropdownTournois.close(); closeBurger()">prochainement au Club</a></li>
+          <li><a class="dropdown-item" routerLink="tournaments/resultats_ffb"
+              (click)="dropdownTournois.close(); closeBurger()">FFB : résultats récents</a></li>
+          <li><a class="dropdown-item" href="https://www.bridgeplus.com/nos-simultanes/resultats/?res=sim" target="_blank" rel="noopener"
+              (click)="dropdownTournois.close(); closeBurger()">Roy René : résultats récents</a></li>
         </ul>
+
       </li>
-<!-- 
-      <li ngbDropdown #dropdownAlbums="ngbDropdown" class="nav-item dropdown me-md-3 me-sm-1">
-        <a class="nav-link dropdown-toggle text-white" ngbDropdownToggle [class.active]="isNavItemActive('albums')">
-          <span class="ms-1">Les albums</span>
-        </a>
-        <ul ngbDropdownMenu class="dropdown-menu shadow">
-          <li *ngFor="let album of albums"><a class="dropdown-item" routerLink="albums/{{ album }}" 
-              (click)="dropdownAlbums.close(); closeBurger()">{{ album }}</a></li>
-        </ul>
-      </li> -->
-            <li class="nav-item me-md-3 me-sm-1">
+      <li class="nav-item me-md-3 me-sm-1">
         <a class="nav-link text-white" routerLink="albums" [class.active]="isNavItemActive('albums')">
           <span class="ms-1">Les albums</span>
         </a>
@@ -80,10 +68,21 @@
           <span class="ms-1">Mes achats</span>
         </a>
         <ul ngbDropdownMenu class="dropdown-menu shadow">
-          <li><a class="dropdown-item" routerLink="achats/historique" 
-              (click)="dropdownAchats.close(); closeBurger()">historique</a></li>
+          <li><a class="dropdown-item" routerLink="achats/historique"
+              (click)="dropdownAchats.close(); closeBurger()">relevé</a></li>
+
+          <li><a class="dropdown-item" routerLink="achats/carte" (click)="dropdownAchats.close(); closeBurger()">droits
+              de table</a></li>
         </ul>
       </li>
+
+      <li class="nav-item me-md-3 me-sm-1">
+        <a class="nav-link text-white" routerLink="contacts" [class.active]="isNavItemActive('albums')">
+          <span class="ms-1">contacts</span>
+        </a>
+      </li>
+
+
 
       <li ngbDropdown *ngIf="!(logged_member$ | async)" class="nav-link me-md-3 me-sm-1">
         <button class="btn  btn-sm btn-sepia shadow-sm" type="button" data-bs-toggle="offcanvas"
@@ -98,24 +97,28 @@
           <span class="ms-1"> {{member.firstname}}</span>
         </a>
         <ul ngbDropdownMenu class="dropdown-menu shadow">
+
           <li *ngIf="user_accreditation && user_accreditation.level > 0">
             <a class="dropdown-item" routerLink="../back" (click)="dropdownUser.close(); closeBurger()">
               <i [class]="user_accreditation.icon"></i>
               back office
             </a>
           </li>
+          <li><a class="dropdown-item" href="https://www.ffbridge.fr/user/dashboard" target="_blank" rel="noopener"
+              (click)="dropdownTournois.close(); closeBurger()">FFB : tableau de bord</a></li>
           <li> <a class="dropdown-item" (click)="signOut(); dropdownUser.close(); closeBurger()">
               <i class="bi bi-box-arrow-right"></i>
               Déconnexion
             </a></li>
         </ul>
       </li>
-
-
     </ul>
-
   </div>
+
+
+
 </nav>
+
 
 
 

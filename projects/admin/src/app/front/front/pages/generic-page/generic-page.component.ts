@@ -1,24 +1,26 @@
-import { Component, Input, Renderer2, ElementRef } from '@angular/core';
-import { Router } from '@angular/router';
-import { MENU_TITLES, Page, PAGE_TEMPLATES, Snippet } from '../../../common/interfaces/page_snippet.interface';
-import { SnippetService } from '../../../common/services/snippet.service';
-import { TitleService } from '../../title.service';
-import { CommonModule } from '@angular/common';
-import { PageService } from '../../../common/services/page.service';
+import { Component, Input, Renderer2, ElementRef, OnChanges, SimpleChanges, OnInit } from '@angular/core';
 import { map, switchMap } from 'rxjs';
-import { ToastService } from '../../../common/services/toast.service';
-import { FileService } from '../../../common/services/files.service';
-import { AlbumComponent } from '../../album/album.component';
+import { ActivatedRoute, Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import {  EXTRA_TITLES, MENU_TITLES, Page, PAGE_TEMPLATES, Snippet } from '../../../../common/interfaces/page_snippet.interface';
+import { FileService } from '../../../../common/services/files.service';
+import { PageService } from '../../../../common/services/page.service';
+import { SnippetService } from '../../../../common/services/snippet.service';
+import { ToastService } from '../../../../common/services/toast.service';
+import { AlbumComponent } from '../../../album/album.component';
+import { TitleService } from '../../../title/title.service';
+import { TruncatePipe } from '../../../../common/pipes/truncate.pipe';
 
 @Component({
   selector: 'app-generic-page',
-  imports: [CommonModule, AlbumComponent],
+  imports: [CommonModule, AlbumComponent, TruncatePipe],
   templateUrl: './generic-page.component.html',
   styleUrl: './generic-page.component.scss'
 })
-export class GenericPageComponent {
-  @Input() menu_title!: MENU_TITLES;
+export class GenericPageComponent implements OnInit,OnChanges{
+  @Input() menu_title!: MENU_TITLES | EXTRA_TITLES;
   page!: Page;
+  pageTemplate!: PAGE_TEMPLATES;
   PAGE_TEMPLATES = PAGE_TEMPLATES;
   snippets: Snippet[] = [];
 
@@ -39,33 +41,65 @@ export class GenericPageComponent {
     private toastService: ToastService,
     private fileService: FileService,
     private router: Router,
+    private route: ActivatedRoute,
     private renderer: Renderer2,
     private el: ElementRef
   ) { }
 
+  ngOnChanges(changes: SimpleChanges): void {
+   if (changes['menu_title'] && changes['menu_title'].currentValue) {
+     this.menu_title = changes['menu_title'].currentValue;
+     this.loadPageAndSnippets();
+   }
+ }
   ngOnInit(): void {
-
-    
    this.init_relative_links_handler();
+   this.loadPageAndSnippets();
+  }
+  
+  loadPageAndSnippets() {
 
-    this.pageService.getPageByTitle(this.menu_title).pipe(
-      map(page => {
-        if (!page) { throw new Error(this.menu_title + ' page not found' ) }
-        this.page = page;
-        this.titleService.setTitle(this.page.title);
-      }),
-      switchMap(() => this.snippetService.listSnippets())
-    )
-    .subscribe((snippets) => {
-      this.snippets = this.page.snippet_ids.map(id => snippets.find(snippet => snippet.id === id))
+    this.pageService.getPageByTitle(((this.menu_title === EXTRA_TITLES.HIGHLIGHTS) ? MENU_TITLES.NEWS : this.menu_title)).pipe(
+       map(page => {
+          if (!page) { throw new Error(this.menu_title + ' page not found' ) }
+          this.page = page;
+          this.titleService.setTitle(this.page.title);
+        }),
+        switchMap(() => this.snippetService.listSnippets())
+      )
+      .subscribe((snippets) => {
+        this.snippets = this.page.snippet_ids.map(id => snippets.find(snippet => snippet.id === id))
         .filter(snippet => snippet !== undefined) as Snippet[];
-
-    });
+        this.pageTemplate = this.page.template as PAGE_TEMPLATES;
+        this.special_handling();
+      });
   }
 
-  // special for albums
+  // special pour news
+  readMore(snippet: Snippet) {
+    this.router.navigate(['/front/news', snippet.title]);
+  }
 
+  // special for news
+special_handling() {
+
+  if(this.menu_title === EXTRA_TITLES.HIGHLIGHTS) {
+    this.snippets = this.snippets.filter(s => s.featured)
+    .sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''));
+    this.pageTemplate = PAGE_TEMPLATES.A_LA_UNE;
+  }
   
+  if(this.menu_title === MENU_TITLES.NEWS && this.snippets.length > 0) {
+    const title = this.route.snapshot.paramMap.get('title');
+    if(title) {
+      const snippet = this.snippets.find(s => s.title === title);
+      if (snippet) {
+        console.log('Scrolling to snippet with title:', title, snippet.title);
+        this.scrollToElement(snippet.title);
+      }
+    }
+  }
+}
 
   
   // special for documents

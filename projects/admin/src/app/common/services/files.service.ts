@@ -70,7 +70,7 @@ export class FileService {
           }
         }
       });
-      console.log('folders : ', Array.from(folders));
+      // console.log('folders : ', Array.from(folders));
       return Array.from(folders);
     }
 

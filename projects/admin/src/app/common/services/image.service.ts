@@ -123,12 +123,12 @@ export class ImageService {
 
   resizeBase64Image(base64Str: string, toggle: boolean): Promise<string> {
     return new Promise((resolve) => {
-      let img = new Image()
-      img.src = base64Str
-
-      resolve(this.resize(img, this.thumbnailSize, toggle))
-
-    })
+      let img = new Image();
+      img.onload = () => {
+        resolve(this.resize(img, this.thumbnailSize, toggle));
+      };
+      img.src = base64Str;
+    });
   }
 
   getBase64Dimensions(base64: string): Promise<{ width: number, height: number }> {

@@ -5,7 +5,7 @@ import { AuthentificationService } from '../../common/authentification/authentif
 import { MembersService } from '../../common/services/members.service';
 import { map, Observable, switchMap } from 'rxjs';
 import { CommonModule } from '@angular/common';
-import { TitleService } from '../title.service';
+import { TitleService } from '../title/title.service';
 
 interface Extended_GameCard extends GameCard {
   free_places_nbr: number;

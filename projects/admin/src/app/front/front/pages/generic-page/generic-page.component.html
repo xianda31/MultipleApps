@@ -1,9 +1,12 @@
 <div class="px-1 mt-1">
 
     @if (page) {
-        @switch (page.template) {
-@case (PAGE_TEMPLATES.JOURNAL) {
-    <ng-container *ngTemplateOutlet="journal; context: { snippets: snippets }"></ng-container>
+        @switch (pageTemplate) {
+@case (PAGE_TEMPLATES.PUBLICATIONS) {
+    <ng-container *ngTemplateOutlet="publications; context: { snippets: snippets }"></ng-container>
+}
+@case (PAGE_TEMPLATES.A_LA_UNE) {
+    <ng-container *ngTemplateOutlet="a_la_une; context: { snippets: snippets }"></ng-container>
 }
 @case (PAGE_TEMPLATES.LOADABLE) {
     <ng-container *ngTemplateOutlet="loadable; context: { snippets: snippets }"></ng-container>
@@ -20,21 +23,18 @@
 @case (PAGE_TEMPLATES.ALBUMS) {
     <ng-container *ngTemplateOutlet="albums; context: { snippets: snippets }"></ng-container>
 }
-@default {
-    <ng-container *ngTemplateOutlet="journal; context: { snippets: snippets }"></ng-container>
-}
 }
 }
 </div>
 
-<ng-template #journal let-snippets="snippets">
+<ng-template #publications let-snippets="snippets">
     <div class="offset-md-2 col-md-8 justify-content-center">
 
         <div class="row">
             <div class="col-md-3">
                 <div class="position-sticky" style="top: 0; z-index: 2; background: #fff;">
                     <h2 class="mb-3">Sommaire</h2>
-                    @for (snippet of snippets; track snippet) {
+                    @for (snippet of snippets; track snippet.id) {
                     <div (click)="scrollToElement(snippet.title)" class="fs-4 text-secondary hover-title">
                         {{snippet.title}}</div>
                     }
@@ -43,7 +43,7 @@
 
             <div class="col-md-7">
                 <h2></h2>
-                @for (snippet of snippets; track snippet) {
+                @for (snippet of snippets; track snippet.id) {
                 <div class="col">
                     <div class="card border-0" id="{{snippet.title}}">
                         <div class="card-body">
@@ -61,7 +61,7 @@
                                 </div>
                             </div>
                             <div class="card-text mt-3">
-                                <h4 class="card-text" [innerHTML]="snippet.content"></h4>
+                                <span class="card-text" [innerHTML]="snippet.content"></span>
                             </div>
                         </div>
                     </div>
@@ -69,6 +69,41 @@
                 </div>
                 }
             </div>
+        </div>
+    </div>
+</ng-template>
+
+<ng-template #a_la_une let-snippets="snippets">
+    <div class="justify-content-center">
+
+        <div class="row">
+                <div class="col">
+                @for (snippet of snippets; track snippet.id) {
+                    <div class="card border-0" id="{{snippet.title}}">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-3">
+                                    <img [src]="snippet.image_url | async" alt="{{snippet.title}}"
+                                        class="card-img-top ">
+                                </div>
+                                <div class="col-9">
+                                    <h5 class="card-title">
+                                        {{snippet.title}}
+                                        <span class=" text-muted">{{snippet.subtitle}}</span>
+                                    </h5>
+                                    <small class="text-muted">Publié le {{snippet.createdAt | date:'shortDate'}}</small>
+                                    <div class="card-text mt-3">
+                                        <span class="card-text innerHTML" [innerHTML]="snippet.content | truncate:300"></span>
+                                        <span (click)="readMore(snippet)"class="text-info">... lire plus </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- <hr class="bg-secondary"> -->
+                }
+            </div>
+            <!-- </div> -->
         </div>
     </div>
 </ng-template>
@@ -86,19 +121,19 @@
         </div>
         }
         @if (!isMobile()) {
-        @for (snippet of snippets; track snippet) {
-        <div class="card mb-3 nice_shadow bg-dark">
+        @for (snippet of snippets; track snippet.id) {
+        <div class="card mb-1">
             <div class="row g-0  align-items-center">
                 <div class="col-md-2 text-secondary">
-                    <i [class]="doc_icon(snippet.file)" style="font-size: 6rem;"></i>
+                    <i [class]="doc_icon(snippet.file)" style="font-size: 4rem;"></i>
                 </div>
                 <div class="col-md-10">
                     <div class="card-body">
                         <div class="row align-items-center">
                             <div class="col-6 ">
-                                <h3 class="fw-bolder"> {{ snippet.title}} </h3>
+                                <h5 class="fw-bolder"> {{ snippet.title}} </h5>
                                 <div>
-                                    <button class="btn  btn-outline-primary nice_shadow"
+                                    <button class="btn  btn-outline-primar1"
                                         (click)="downloadDocument(snippet); $event.preventDefault()">
                                         Télécharger le document
                                     </button>
@@ -117,14 +152,14 @@
         }
         }
         @if (isMobile()) {
-        @for (snippet of snippets; track snippet) {
-        <div class="card mb-3 nice_shadow bg-dark">
+        @for (snippet of snippets; track snippet.id) {
+        <div class="card mb-1">
             <div class="card-body">
                 <div class="row text-secondary">
-                    <h3 class="fw-bolder">
+                    <h5 class="fw-bolder">
                         <i [class]="doc_icon(snippet.file)" style="font-size: 3rem;"></i>
                         {{ snippet.title}}
-                    </h3>
+                    </h5>
                 </div>
                 <div class="row align-items-center">
                     <span class="fw-bold">Contenu :</span>
@@ -145,7 +180,7 @@
     <div class="offset-md-1 col-md-10 offset-xl-3 col-xl-6 justify-content-start">
 
         <div class="row row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-3">
-            @for (snippet of snippets; track snippet) {
+            @for (snippet of snippets; track snippet.id) {
             <div class="col">
                 <div class="card h-100 nice_shadow">
                     <img [src]="snippet.image_url | async" style="max-width: 100%; max-height: 20vh; object-fit: cover;"
@@ -168,7 +203,7 @@
     <div class=" col-md-12  justify-content-start">
 
         <div class="row row-cols-1 row-cols-md-3 justify-content-center  gy-5 g-md-2 ">
-            @for (snippet of snippets; track snippet) {
+            @for (snippet of snippets; track snippet.id) {
             <div class="col">
                 <div class="card h-100 nice_shadow">
                     <img *ngIf="snippet.image" [src]="snippet.image_url | async"
@@ -194,7 +229,7 @@
     <div class=" col-md-12  justify-content-start">
 
         <div class="row row-cols-1 row-cols-md-3 justify-content-center  gy-5 g-md-2 ">
-            @for (snippet of snippets; track snippet) {
+            @for (snippet of snippets; track snippet.id) {
             <div class="col">
                 <div class="card h-100 nice_shadow">
                     <div class="card-body">
@@ -222,7 +257,7 @@
         <h2>Albums </h2>
 
         <!-- <div > -->
-            @for (snippet of snippets; track snippet) {
+            @for (snippet of snippets; track snippet.id) {
    
             <app-album [album]="snippet"></app-album>
             }
