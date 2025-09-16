@@ -50,8 +50,8 @@ export enum MENU_TITLES {
     COURS = 'cours',
     ALBUMS = 'albums',
     LEGALS = 'mentions légales',
+    CONTACTS = 'contacts',
     POUBELLE = 'poubelle',
-    // CONTACTS = 'contacts',
 }
 export enum EXTRA_TITLES {
     HIGHLIGHTS = 'à la une',

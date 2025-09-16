@@ -20,9 +20,22 @@ export class ExternalRedirectComponent {
 
   ngOnInit(): void {
     this.site = this.route.snapshot.data['site'];
-    if (this.site === 'FFB') {
-      this.titleService.setTitle('Redirection vers la FFB - Résultats récents');
-      // window.location.href = this.url;
+    switch (this.site) {
+      case 'FFB':
+        this.url = 'https://www.ffbridge.fr/competitions/resultats-recent/';
+        this.titleService.setTitle('Redirection vers la FFB - Résultats récents');
+        // window.location.href = this.url;
+        break;
+      case 'FFB_dashboard':
+        this.url = 'https://www.ffbridge.fr/user/dashboard/';
+        this.titleService.setTitle('Redirection vers votre dashboard FFB');
+        // window.location.href = this.url;
+        break;
+      default:
+        this.url = '/front/404';
+        this.titleService.setTitle('Page non trouvée');
+        // window.location.href = this.url;
+        break;
     }
     } 
   

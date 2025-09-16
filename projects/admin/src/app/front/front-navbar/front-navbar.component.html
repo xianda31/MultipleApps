@@ -78,7 +78,7 @@
 
       <li class="nav-item me-md-3 me-sm-1">
         <a class="nav-link text-white" routerLink="contacts" [class.active]="isNavItemActive('albums')">
-          <span class="ms-1">contacts</span>
+          <span class="ms-1">Contacts</span>
         </a>
       </li>
 
@@ -104,7 +104,7 @@
               back office
             </a>
           </li>
-          <li><a class="dropdown-item" href="https://www.ffbridge.fr/user/dashboard" target="_blank" rel="noopener"
+          <li><a class="dropdown-item" routerLink="ffb_dashboard"
               (click)="dropdownTournois.close(); closeBurger()">FFB : tableau de bord</a></li>
           <li> <a class="dropdown-item" (click)="signOut(); dropdownUser.close(); closeBurger()">
               <i class="bi bi-box-arrow-right"></i>
