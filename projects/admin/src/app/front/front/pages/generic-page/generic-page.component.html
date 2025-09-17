@@ -31,27 +31,19 @@
 </div>
 
 <ng-template #sequential let-snippets="snippets">
-    <div class="offset-md-2 col-md-8 justify-content-center">
-
-        <div class="row">
-
+    <div class="offset-md-4 col-md-4 justify-content-center">
             @for (snippet of snippets; track snippet.id) {
-            <div class="card border-0" id="{{snippet.title}}">
-                <div class="card-body">
-                    <div class="row card-text">
-                        <div class="col-9">
-                            {{snippet.title}}
-                            <span class=" text-muted">{{snippet.subtitle}}</span>
-                            <span class="card-text" [innerHTML]="snippet.content"></span>
-                        </div>
-                            <div class="col-3 d-flex align-items-start justify-content-center">
-                                <img [src]="snippet.image_url | async" alt="{{snippet.title}}" class="card-img-top snippet-img-fit">
-                            </div>
-                        </div>
+            <div id="{{snippet.title}}" class="">
+                {{snippet.title}} : 
+                <span class="text-muted">{{snippet.subtitle}}</span>
+                <div class="ms-2 snippet-float-box">
+                    <div class="snippet-float-img text-center">
+                        <img [src]="snippet.image_url | async" alt="{{snippet.title}}" class="card-img-top">
+                    </div>
+                    <span class="snippet-float-text" [innerHTML]="snippet.content"></span>
                 </div>
             </div>
             }
-        </div>
     </div>
 </ng-template>
 <ng-template #publications let-snippets="snippets">
