@@ -7,11 +7,16 @@
                     il vous en reste {{total_free_places((cards$ | async) || [])}} 
                 </span>
                 <span *ngIf="total_free_places((cards$ | async) || []) === 0" class="text-muted small">
-                    il ne vous reste plus.  ; Pensez à acheter une nouvelle carte !
+                    Vous n'avez plus de droits de table d'avance.
                 </span>
             </h5>
         </div>
-        <div class="card-body">
+
+        <div *ngIf="total_free_places((cards$ | async) || []) === 0" class="card-body">
+             Pensez à acheter une nouvelle carte !
+        </div>
+
+        <div *ngIf="total_free_places((cards$ | async) || []) > 0"  class="card-body">
 
             <div *ngFor="let card of cards$ | async" class="mt-2">
                 <ng-container *ngTemplateOutlet="game_card; context: { $implicit: card }"></ng-container>
