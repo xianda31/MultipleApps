@@ -1,32 +1,59 @@
 <div class="px-1 mt-1">
 
     @if (page) {
-        @switch (pageTemplate) {
-@case (PAGE_TEMPLATES.PUBLICATIONS) {
+    @switch (pageTemplate) {
+    @case (PAGE_TEMPLATES.SEQUENTIAL) {
+    <ng-container *ngTemplateOutlet="sequential; context: { snippets: snippets }"></ng-container>
+    }
+    @case (PAGE_TEMPLATES.PUBLICATIONS) {
     <ng-container *ngTemplateOutlet="publications; context: { snippets: snippets }"></ng-container>
-}
-@case (PAGE_TEMPLATES.A_LA_UNE) {
+    }
+    @case (PAGE_TEMPLATES.A_LA_UNE) {
     <ng-container *ngTemplateOutlet="a_la_une; context: { snippets: snippets }"></ng-container>
-}
-@case (PAGE_TEMPLATES.LOADABLE) {
+    }
+    @case (PAGE_TEMPLATES.LOADABLE) {
     <ng-container *ngTemplateOutlet="loadable; context: { snippets: snippets }"></ng-container>
-}
-@case (PAGE_TEMPLATES.TROMBINOSCOPE) {
+    }
+    @case (PAGE_TEMPLATES.TROMBINOSCOPE) {
     <ng-container *ngTemplateOutlet="trombinoscope; context: { snippets: snippets }"></ng-container>
-}
-@case (PAGE_TEMPLATES.CARDS_top) {
+    }
+    @case (PAGE_TEMPLATES.CARDS_top) {
     <ng-container *ngTemplateOutlet="cards_img_top; context: { snippets: snippets }"></ng-container>
-}
-@case (PAGE_TEMPLATES.CARDS_bottom) {
+    }
+    @case (PAGE_TEMPLATES.CARDS_bottom) {
     <ng-container *ngTemplateOutlet="cards_img_bottom; context: { snippets: snippets }"></ng-container>
-}
-@case (PAGE_TEMPLATES.ALBUMS) {
+    }
+    @case (PAGE_TEMPLATES.ALBUMS) {
     <ng-container *ngTemplateOutlet="albums; context: { snippets: snippets }"></ng-container>
-}
-}
-}
+    }
+    }
+    }
 </div>
 
+<ng-template #sequential let-snippets="snippets">
+    <div class="offset-md-2 col-md-8 justify-content-center">
+
+        <div class="row">
+
+            @for (snippet of snippets; track snippet.id) {
+            <div class="card border-0" id="{{snippet.title}}">
+                <div class="card-body">
+                    <div class="row card-text">
+                        <div class="col-9">
+                                <span class="card-text" [innerHTML]="snippet.content"></span>
+                        </div>
+                        <div class="col-3 text-center">
+                            {{snippet.title}}
+                            <div class=" text-muted">{{snippet.subtitle}}</div>
+                            <img [src]="snippet.image_url | async" alt="{{snippet.title}}" class="card-img-top ">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            }
+        </div>
+    </div>
+</ng-template>
 <ng-template #publications let-snippets="snippets">
     <div class="offset-md-2 col-md-8 justify-content-center">
 
@@ -41,7 +68,6 @@
             </div>
 
             <div class="col-md-7">
-                <h2></h2>
                 @for (snippet of snippets; track snippet.id) {
                 <div class="col">
                     <div class="card border-0" id="{{snippet.title}}">
@@ -76,30 +102,30 @@
     <div class="justify-content-center">
 
         <div class="row">
-                <div class="col">
+            <div class="col">
                 @for (snippet of snippets; track snippet.id) {
-                    <div class="card border-0" id="{{snippet.title}}">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-3">
-                                    <img [src]="snippet.image_url | async" alt="{{snippet.title}}"
-                                        class="card-img-top ">
-                                </div>
-                                <div class="col-9">
-                                    <h5 class="card-title">
-                                        {{snippet.title}}
-                                        <span class=" text-muted">{{snippet.subtitle}}</span>
-                                    </h5>
-                                    <small class="text-muted">Publié le {{snippet.createdAt | date:'shortDate'}}</small>
-                                    <div class="card-text mt-3">
-                                        <span class="card-text innerHTML" [innerHTML]="snippet.content | truncate:300"></span>
-                                        <span (click)="readMore(snippet)"class="text-info">... lire plus </span>
-                                    </div>
+                <div class="card border-0" id="{{snippet.title}}">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-3">
+                                <img [src]="snippet.image_url | async" alt="{{snippet.title}}" class="card-img-top ">
+                            </div>
+                            <div class="col-9">
+                                <h5 class="card-title">
+                                    {{snippet.title}}
+                                    <span class=" text-muted">{{snippet.subtitle}}</span>
+                                </h5>
+                                <small class="text-muted">Publié le {{snippet.createdAt | date:'shortDate'}}</small>
+                                <div class="card-text mt-3">
+                                    <span class="card-text innerHTML"
+                                        [innerHTML]="snippet.content | truncate:300"></span>
+                                    <span (click)="readMore(snippet)" class="text-info">... lire plus </span>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <!-- <hr class="bg-secondary"> -->
+                </div>
+                <!-- <hr class="bg-secondary"> -->
                 }
             </div>
             <!-- </div> -->
@@ -210,7 +236,7 @@
                         class="img-fluid card-img-top">
                     <div class="card-body">
                         <div class="fs-4 card-title ">
-                            {{snippet.title}} 
+                            {{snippet.title}}
                             <div class="text-muted ">{{snippet.subtitle}}</div>
                             <hr>
                         </div>
@@ -233,7 +259,7 @@
                 <div class="card h-100 nice_shadow">
                     <div class="card-body">
                         <div class="fs-4 card-title ">
-                            {{snippet.title}} 
+                            {{snippet.title}}
                             <div class="text-muted ">{{snippet.subtitle}}</div>
                             <hr>
                         </div>
@@ -256,10 +282,10 @@
         <h2>Albums </h2>
 
         <!-- <div > -->
-            @for (snippet of snippets; track snippet.id) {
-   
-            <app-album [album]="snippet"></app-album>
-            }
+        @for (snippet of snippets; track snippet.id) {
+
+        <app-album [album]="snippet"></app-album>
+        }
         <!-- </div> -->
     </div>
 </ng-template>

@@ -32,6 +32,7 @@ export interface Page {
 export type Page_input = Omit<Schema['Page']['type'], 'id' | 'createdAt' | 'updatedAt'>;
 
 export enum PAGE_TEMPLATES {
+    SEQUENTIAL = 'séquentiel',
     PUBLICATIONS = 'publications',
     A_LA_UNE = 'à la une',
     TROMBINOSCOPE = 'trombinoscope',
