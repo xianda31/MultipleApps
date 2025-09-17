@@ -21,6 +21,7 @@ export class PurchasesComponent {
   member_full_name: string = '';
   achats_ventes !: Formatted_purchase[];
   season!: string;
+  avoirs:number=0;
 
   constructor(
     private bookService: BookService,
@@ -46,6 +47,7 @@ export class PurchasesComponent {
         return this.bookService.list_book_entries().pipe(
           map(entries => {
             this.achats_ventes = this.bookService.get_formated_buy_operations(full_name);
+            this.avoirs = this.bookService.find_assets(this.member_full_name);
           })
         );
       }))

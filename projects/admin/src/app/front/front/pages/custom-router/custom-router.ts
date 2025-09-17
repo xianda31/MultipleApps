@@ -56,6 +56,7 @@ export class CustomRouter implements OnInit {
     { path: 'club/acteurs', menu_title: MENU_TITLES.ACTEURS },
     { path: 'club/documents', menu_title: MENU_TITLES.DOCUMENTS },
     { path: 'club/bureau', menu_title: MENU_TITLES.BUREAU },
+    { path: 'club/historique', menu_title: MENU_TITLES.HISTOIRE },
     { path: 'école/cours', menu_title: MENU_TITLES.COURS },
     { path: 'news', menu_title: MENU_TITLES.NEWS },
     { path: 'news/:title', menu_title: MENU_TITLES.NEWS },

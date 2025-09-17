@@ -1,10 +1,10 @@
 <div class="offset-md-1 col-md-10 offset-xl-3 col-xl-6 mt-3 ">
     <div *ngIf="achats_ventes && achats_ventes.length > 0" class="card nice-shadow">
-        <div class="card-header">
-            <h5 class="card-title">Paiements de cette saison</h5>
-        </div>
         <div class="card-body">
-            <table class="table table-borderless table-sm table-striped">
+            <strong class="card-title">
+                <i class="bi bi-cart"></i>
+                Achats de cette saison :</strong>
+            <table class="table  table-sm table-striped table-responsive">
                 <thead>
                     <tr>
                         <th>Date</th>
@@ -34,6 +34,12 @@
                     </tr>
                 </tbody>
             </table>
+
+            <div *ngIf="avoirs > 0" class="mt-2">
+                <strong>
+                    <i class="bi bi-wallet2"></i>
+                    Vous disposez d'un avoir de {{ avoirs | currency:'EUR':'symbol':'1.2-2' }}</strong>
+            </div>
         </div>
     </div>
 </div>
