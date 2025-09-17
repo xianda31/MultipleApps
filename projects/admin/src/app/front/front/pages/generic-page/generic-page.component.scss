@@ -1,3 +1,50 @@
+// Réduit l'interligne du texte dans l'innerHTML du template #sequential
+.snippet-float-text,
+.snippet-float-text p {
+	line-height: 1.2 !important;
+	margin-top: 0.2em;
+	margin-bottom: 0.2em;
+}
+// Effet d'incrustation image/titre à gauche, texte à droite
+.snippet-float-box {
+	position: relative;
+	/* plus de min-height ni overflow */
+}
+.snippet-float-img {
+	float: left;
+	width: 140px;
+	margin-right: 1.5rem;
+	text-align: center;
+}
+.snippet-float-img img {
+	width: 100%;
+	max-width: 100%;
+	max-height: 110px;
+	height: auto;
+	margin-top: 0.5rem;
+	display: block;
+	object-fit: contain;
+	aspect-ratio: auto;
+}
+.snippet-float-box {
+	min-height: 0;
+	overflow: hidden;
+}
+.snippet-float-text {
+	display: block;
+	/* pas d'overflow ni min-height pour permettre au texte de passer sous l'image */
+}
+@media (max-width: 600px) {
+	.snippet-float-img {
+		float: none;
+		width: 100%;
+		margin-right: 0;
+		margin-bottom: 1rem;
+	}
+	.snippet-float-text {
+		min-height: 0;
+	}
+}
 // Réduit l'interligne et la marge des <p> générés par [innerHTML]
 :host ::ng-deep .innerHTML p {
 	margin-top: 0.3em;
