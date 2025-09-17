@@ -40,14 +40,14 @@
                 <div class="card-body">
                     <div class="row card-text">
                         <div class="col-9">
-                                <span class="card-text" [innerHTML]="snippet.content"></span>
-                        </div>
-                        <div class="col-3 text-center">
                             {{snippet.title}}
-                            <div class=" text-muted">{{snippet.subtitle}}</div>
-                            <img [src]="snippet.image_url | async" alt="{{snippet.title}}" class="card-img-top ">
+                            <span class=" text-muted">{{snippet.subtitle}}</span>
+                            <span class="card-text" [innerHTML]="snippet.content"></span>
                         </div>
-                    </div>
+                            <div class="col-3 d-flex align-items-start justify-content-center">
+                                <img [src]="snippet.image_url | async" alt="{{snippet.title}}" class="card-img-top snippet-img-fit">
+                            </div>
+                        </div>
                 </div>
             </div>
             }

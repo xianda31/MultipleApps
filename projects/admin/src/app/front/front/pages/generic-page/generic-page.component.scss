@@ -1,3 +1,16 @@
+// Limite la hauteur de l'image à la hauteur du texte voisin (col-9)
+.snippet-img-fit {
+	max-height: 80%;
+	object-fit: contain;
+	width: auto;
+	max-width: 100%;
+	display: block;
+}
+
+// Pour que la row prenne la hauteur du contenu texte
+.card-text .row {
+	align-items: stretch;
+}
 // Réduit l'interligne et la marge des <p> générés par [innerHTML]
 :host ::ng-deep .innerHTML p {
 	margin-top: 0.3em;
