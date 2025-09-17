@@ -3,8 +3,11 @@
     <div class="card" mt-3>
         <div class="card-header">
             <h5 class="card-title">Droits de table :
-                <span class="text-muted small">
+                <span *ngIf="total_free_places((cards$ | async) || []) > 0" class="text-muted small">
                     il vous en reste {{total_free_places((cards$ | async) || [])}} 
+                </span>
+                <span *ngIf="total_free_places((cards$ | async) || []) === 0" class="text-muted small">
+                    il ne vous reste plus.  ; Pensez à acheter une nouvelle carte !
                 </span>
             </h5>
         </div>

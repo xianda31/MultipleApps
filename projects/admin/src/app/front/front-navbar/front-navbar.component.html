@@ -33,6 +33,16 @@
                 target="_blank" rel="noopener">Roy René : résultats récents</a></li>
           </ul>
         </li>
+
+        <li *ngIf="logged_member$ | async as member" ngbDropdown class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" ngbDropdownToggle id="achatsDropdown">Mes achats</a>
+          <ul ngbDropdownMenu class="dropdown-menu" aria-labelledby="achatsDropdown">
+            <li><a class="dropdown-item" routerLink="achats/historique">Mon relevé</a></li>
+            <li><a class="dropdown-item" routerLink="achats/carte">Mes droits de table</a>
+            </li>
+          </ul>
+        </li>
+
         <li class="nav-item"><a class="nav-link" routerLink="albums">Les albums</a></li>
         <li class="nav-item"><a class="nav-link" routerLink="contacts">Contacts</a></li>
         <li *ngIf="!(logged_member$ | async)" class="nav-item">
@@ -110,6 +120,16 @@
                   target="_blank" rel="noopener">Roy René : résultats récents</a></li>
             </ul>
           </li>
+          <li *ngIf="logged_member$ | async as member" ngbDropdown class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" ngbDropdownToggle id="achatsDropdownMobile">Mes achats</a>
+            <ul ngbDropdownMenu class="dropdown-menu" aria-labelledby="achatsDropdownMobile">
+              <li><a class="dropdown-item" routerLink="achats/historique" data-bs-dismiss="offcanvas">Mon relevé</a>
+              </li>
+              <li><a class="dropdown-item" routerLink="achats/carte" data-bs-dismiss="offcanvas">Mes droits de table</a>
+              </li>
+            </ul>
+          </li>
+
           <li class="nav-item"><a class="nav-link" routerLink="albums" data-bs-dismiss="offcanvas">Les albums</a></li>
           <li class="nav-item"><a class="nav-link" routerLink="contacts" data-bs-dismiss="offcanvas">Contacts</a></li>
         </ul>
