@@ -133,6 +133,7 @@ export class GenericPageComponent implements OnInit, OnChanges {
       a.click();
       window.document.body.removeChild(a);
       window.URL.revokeObjectURL(a.href);
+       this.toastService.showSuccess('Documents', docItem.name + ' a bien été téléchargé');
     } catch (error) {
       this.toastService.showErrorToast('Erreur lors du téléchargement', docItem.name + ' n\'est pas disponible');
     }
