@@ -134,7 +134,7 @@
 </ng-template>
 
 <ng-template #loadable let-snippets="snippets">
-    <div class="container-sm-fluid container p-md-5 p-0 justify-content-start">
+    <div class="offset-md-2 col-md-8  justify-content-start">
         @if (snippets.length === 0) {
         <div class="text-center mt-5">
             <h1 class="display-3">.... Désolé ....</h1>
@@ -145,59 +145,28 @@
             </div>
         </div>
         }
-        @if (!isMobile()) {
-        @for (snippet of snippets; track snippet.id) {
-        <div class="card mb-1">
-            <div class="row g-0  align-items-center">
-                <div class="col-md-2 text-secondary">
-                    <i [class]="doc_icon(snippet.file)" style="font-size: 4rem;"></i>
-                </div>
-                <div class="col-md-10">
-                    <div class="card-body">
-                        <div class="row align-items-center">
-                            <div class="col-6 ">
-                                <h5 class="fw-bolder"> {{ snippet.title}} </h5>
-                                <div>
-                                    <button class="btn  btn-outline-primar1"
-                                        (click)="downloadDocument(snippet); $event.preventDefault()">
-                                        Télécharger le document
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="col-6 ">
-                                <p>
-                                    <span class="fw-bold">Contenu :</span>
-                                    <span [innerHTML]="snippet.content"></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        }
-        }
-        @if (isMobile()) {
-        @for (snippet of snippets; track snippet.id) {
-        <div class="card mb-1">
-            <div class="card-body">
-                <div class="row text-secondary">
-                    <h5 class="fw-bolder">
-                        <i [class]="doc_icon(snippet.file)" style="font-size: 3rem;"></i>
-                        {{ snippet.title}}
-                    </h5>
-                </div>
-                <div class="row align-items-center">
-                    <span class="fw-bold">Contenu :</span>
-                    <span [innerHTML]="snippet.content"></span>
-                </div>
-                <button class="btn  btn-outline-primary nice_shadow"
-                    (click)="downloadDocument(snippet); $event.preventDefault()">
-                    Télécharger le document
-                </button>
-            </div>
-        </div>
-        }
-        }
+        <table class="table table-borderless align-middle mb-0 w-100">
+            <tbody>
+                @for (snippet of snippets; track snippet.id) {
+                <tr>
+                    <td class="align-top text-start" style="width: 1%; white-space: nowrap;">
+                        <i [class]="doc_icon(snippet.file)"></i>
+                    </td>
+                    <td class="align-middle text-start" style="width: 60%;">
+                        <div class="fw-bold">{{ snippet.title }}</div>
+                        <span [innerHTML]="snippet.content"></span>
+                    </td>
+                    <td class="align-middle text-center" style="width: 1%; white-space: nowrap;">
+                        <button class="btn btn-outline-primary nice_shadow w-auto"
+                            (click)="downloadDocument(snippet); $event.preventDefault()">
+                            <span class="bi bi-download"></span>
+                            <span class="d-none d-sm-inline">Télécharger</span>
+                        </button>
+                    </td>
+                </tr>
+                }
+            </tbody>
+        </table>
     </div>
 </ng-template>
 

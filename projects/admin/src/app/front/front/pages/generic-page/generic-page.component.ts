@@ -10,10 +10,11 @@ import { ToastService } from '../../../../common/services/toast.service';
 import { AlbumComponent } from '../../../album/album.component';
 import { TitleService } from '../../../title/title.service';
 import { TruncatePipe } from '../../../../common/pipes/truncate.pipe';
+import { NgbDropdownModule, NgbModule, NgbTooltipModule } from "@ng-bootstrap/ng-bootstrap";
 
 @Component({
   selector: 'app-generic-page',
-  imports: [CommonModule, AlbumComponent, TruncatePipe],
+  imports: [CommonModule, AlbumComponent, TruncatePipe, NgbModule, NgbTooltipModule, NgbDropdownModule],
   templateUrl: './generic-page.component.html',
   styleUrl: './generic-page.component.scss'
 })
