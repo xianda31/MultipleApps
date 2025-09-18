@@ -27,4 +27,9 @@ export class HomePage {
         this.router.navigate(['/front/tournaments', tournamentId],
       { relativeTo: this.route });
   }
+
+  goToNews(event: Event) {
+    event.preventDefault();
+    this.router.navigate(['/front/news']);
+  }
 }

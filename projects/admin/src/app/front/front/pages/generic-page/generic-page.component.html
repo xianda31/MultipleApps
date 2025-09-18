@@ -32,34 +32,36 @@
 
 <ng-template #sequential let-snippets="snippets">
     <div class="offset-md-4 col-md-4 justify-content-center">
-            @for (snippet of snippets; track snippet.id) {
-            <div id="{{snippet.title}}" class="">
-                {{snippet.title}} : 
-                <span class="text-muted">{{snippet.subtitle}}</span>
-                <div class="ms-2 snippet-float-box">
-                    <div class="snippet-float-img text-center">
-                        <img [src]="snippet.image_url | async" alt="{{snippet.title}}" class="card-img-top">
-                    </div>
-                    <span class="snippet-float-text" [innerHTML]="snippet.content"></span>
+        @for (snippet of snippets; track snippet.id) {
+        <div id="{{snippet.title}}" class="">
+            {{snippet.title}} :
+            <span class="text-muted">{{snippet.subtitle}}</span>
+            <div class="ms-2 snippet-float-box">
+                <div class="snippet-float-img text-center">
+                    <img [src]="snippet.image_url | async" alt="{{snippet.title}}" class="card-img-top">
                 </div>
+                <span class="snippet-float-text" [innerHTML]="snippet.content"></span>
             </div>
-            }
+        </div>
+        }
     </div>
 </ng-template>
 <ng-template #publications let-snippets="snippets">
-    <div class="offset-md-2 col-md-8 justify-content-center">
+    <div class="offset-md-1 col-md-8 justify-content-center">
 
         <div class="row">
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <div class="position-sticky" style="top: 0; z-index: 2; background: #fff;">
                     @for (snippet of snippets; track snippet.id) {
-                    <div (click)="scrollToElement(snippet.title)" class="fs-4 text-secondary hover-title">
-                        {{snippet.title}}</div>
+                    <div (click)="scrollToElement(snippet.title)" class="fs-5 text-secondary hover-title">
+                        {{snippet.title}}
+                    <span *ngIf="snippet.featured"><i class="bi bi-star-fill text-info" ></i></span>
+                    </div>
                     }
                 </div>
             </div>
 
-            <div class="col-md-7">
+            <div class="col-md-8">
                 @for (snippet of snippets; track snippet.id) {
                 <div class="col">
                     <div class="card border-0" id="{{snippet.title}}">
@@ -109,9 +111,15 @@
                                 </h5>
                                 <small class="text-muted">Publié le {{snippet.createdAt | date:'shortDate'}}</small>
                                 <div class="card-text mt-3">
-                                    <span class="card-text innerHTML"
-                                        [innerHTML]="snippet.content | truncate:300"></span>
-                                    <span (click)="readMore(snippet)" class="text-info">... lire plus </span>
+                                    <ng-container *ngIf="snippet.content.length > TRUNCATE_LIMIT + TRUNCATE_HYSTERISIS">
+                                        <span  class="card-text innerHTML"
+                                            [innerHTML]="snippet.content | truncate:TRUNCATE_LIMIT">
+                                        </span>
+                                        <span (click)="readMore(snippet)" class="text-info">... lire plus </span>
+
+                                    </ng-container>
+                                    <span *ngIf="!(snippet.content.length > TRUNCATE_LIMIT + TRUNCATE_HYSTERISIS)" class="card-text innerHTML"
+                                        [innerHTML]="snippet.content"></span>
                                 </div>
                             </div>
                         </div>
@@ -271,7 +279,6 @@
 
 <ng-template #albums let-snippets="snippets">
     <div class="offset-md-2 col-md-8 text-center mb-3">
-        <h2>Albums </h2>
 
         <!-- <div > -->
         @for (snippet of snippets; track snippet.id) {

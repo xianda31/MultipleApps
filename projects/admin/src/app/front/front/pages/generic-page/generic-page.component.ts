@@ -1,6 +1,6 @@
 import { Component, Input, Renderer2, ElementRef, OnChanges, SimpleChanges, OnInit } from '@angular/core';
 import { map, switchMap } from 'rxjs';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { EXTRA_TITLES, MENU_TITLES, Page, PAGE_TEMPLATES, Snippet } from '../../../../common/interfaces/page_snippet.interface';
 import { FileService } from '../../../../common/services/files.service';
@@ -24,8 +24,9 @@ export class GenericPageComponent implements OnInit, OnChanges {
   pageTemplate!: PAGE_TEMPLATES;
   PAGE_TEMPLATES = PAGE_TEMPLATES;
   snippets: Snippet[] = [];
-  // selectedSnippetTitle: string | null = null;
 
+  TRUNCATE_LIMIT = 300; //  truncating news content
+  TRUNCATE_HYSTERISIS = 50; // threshold to show "Read more" link
 
   // def for documents
   icons: { [key: string]: string } = {
@@ -43,7 +44,6 @@ export class GenericPageComponent implements OnInit, OnChanges {
     private toastService: ToastService,
     private fileService: FileService,
     private router: Router,
-    private route: ActivatedRoute,
     private renderer: Renderer2,
     private el: ElementRef
   ) { }
@@ -51,11 +51,8 @@ export class GenericPageComponent implements OnInit, OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['menu_title'] && changes['menu_title'].currentValue) {
       this.menu_title = changes['menu_title'].currentValue;
-      this.loadPageAndSnippets();
-
       this.snippet_title = changes['snippet_title']?.currentValue ? changes['snippet_title'].currentValue : null;
-
-
+      this.loadPageAndSnippets();
     }
   }
   ngOnInit(): void {
@@ -69,25 +66,16 @@ export class GenericPageComponent implements OnInit, OnChanges {
       map(page => {
         if (!page) { throw new Error(this.menu_title + ' page not found') }
         this.page = page;
-        this.titleService.setTitle(this.page.title);
       }),
       switchMap(() => this.snippetService.listSnippets())
     )
       .subscribe((snippets) => {
-        this.snippets = this.page.snippet_ids.map(id => snippets.find(snippet => snippet.id === id))
-          .filter(snippet => snippet !== undefined) as Snippet[];
+        // get the snippets for this page
+        this.snippets = this.page.snippet_ids
+          .map(id => snippets.find(snippet => snippet.id === id))  // check for correct loading of  page's snippets
+          .filter(snippet => snippet !== undefined) as Snippet[];  // filter out undefined values
 
-
-        const template = this.page.template;
-        if (!Object.values(PAGE_TEMPLATES).includes(template)) {
-          console.warn('ATTENTION: page.template n\'est pas une valeur valide de PAGE_TEMPLATES:', template);
-          this.pageTemplate = PAGE_TEMPLATES.PUBLICATIONS; // valeur par défaut
-        } else {
-          this.pageTemplate = template as PAGE_TEMPLATES;
-        }
-
-
-        this.special_handling();
+        this.page_post_handling();
       });
   }
 
@@ -96,30 +84,36 @@ export class GenericPageComponent implements OnInit, OnChanges {
     this.router.navigate(['/front/news', snippet.title]);
   }
 
-  // special for news
-  special_handling() {
+  page_post_handling() {
 
-    if (this.menu_title === EXTRA_TITLES.HIGHLIGHTS) {
-      this.snippets = this.snippets.filter(s => s.featured)
-        .sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''));
-      this.pageTemplate = PAGE_TEMPLATES.A_LA_UNE;
-    }
-
-    if (this.menu_title === MENU_TITLES.NEWS && this.snippets.length > 0) {
-
-
-      const title = this.snippet_title;
-      if (title) {
-        const snippet = this.snippets.find(s => s.title === title);
-        if (snippet) {
-          this.scrollToElement(snippet.title);
+    switch (this.menu_title) {
+      case MENU_TITLES.NEWS:
+        // NEWS.1 : sort by createdAt desc
+        this.snippets = this.snippets.sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
+        // NEWS.2 : scroll to snippet if snippet_title is provided
+        if (this.snippet_title) {
+          const snippet = this.snippets.find(s => s.title === this.snippet_title);
+          if (snippet) { this.scrollToElement(snippet.title); }
         }
-      }
+        this.titleService.setTitle(this.page.title );
+        this.pageTemplate = this.page.template ;
+        break;
+      case EXTRA_TITLES.HIGHLIGHTS:
+        // HIGHLIGHTS.1: filter "featured" snippets (got from news)  and sort by updatedAt desc
+        this.snippets = this.snippets.filter(s => s.featured)
+          .sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''));
+        // HIGHLIGHTS.2: set pageTemplate to A_LA_UNE
+        this.pageTemplate = PAGE_TEMPLATES.A_LA_UNE;
+        break;
+      default:
+        this.titleService.setTitle(this.page.title );
+        this.pageTemplate = this.page.template ;
+        break;
     }
+
   }
 
 
-  // special for documents
 
 
   doc_icon(file: string): string {

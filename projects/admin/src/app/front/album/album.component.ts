@@ -1,5 +1,5 @@
 import { combineLatest } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { map, switchMap, tap } from 'rxjs/operators';
 import { Component, Input } from '@angular/core';
 import {  Observable } from 'rxjs';
 import { FileService, S3_ROOT_FOLDERS } from '../../common/services/files.service';
@@ -33,6 +33,7 @@ export class AlbumComponent {
 
     this.photos$ = this.fileService.list_files(this.album.folder + '/').pipe(
       map((S3items) => S3items.filter(item => item.size !== 0)),
+      tap((items) => {if(items.length === 0) console.log('Album %s is empty', this.album.title);}),
       switchMap((S3items) => {
         return combineLatest(
           S3items.map(item => this.fileService.getPresignedUrl$(this.getThumbnailUrl(item.path)))
