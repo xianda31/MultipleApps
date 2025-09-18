@@ -30,6 +30,7 @@ export const routes: Routes = [
     path: '',
     component: AdminComponent,
     children: [
+
       { path: 'caisse/ventes', component: ShopComponent },
       { path: 'caisse/droits-de-table', component: FeesCollectorComponent },
       { path: 'caisse/produits', component: ProductsComponent },

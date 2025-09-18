@@ -2,65 +2,26 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { MembersComponent } from './common/members/members.component';
-import { BalanceComponent } from './back/balance/balance.component';
-import { BankReconciliationComponent } from './back/bank-reconciliation/bank-reconciliation.component';
-import { BooksEditorComponent } from './back/books/books-edit/books-editor.component';
-import { BooksListComponent } from './back/books/books-list/books-list.component';
-import { BooksOverviewComponent } from './back/books/books-overview/books-overview.component';
-import { CashBoxStatusComponent } from './back/books/cash-box-status/cash-box-status.component';
-import { ImportExcelComponent } from './back/books/import-excel/import-excel.component';
-import { ExpenseAndRevenueDetailsComponent } from './back/expense-and-revenue/expense-and-revenue-details/expense-and-revenue-details.component';
-import { ExpenseAndRevenueComponent } from './back/expense-and-revenue/expense-and-revenue.component';
-import { FeesCollectorComponent } from './back/fees/fees-collector/fees-collector.component';
-import { GameCardsEditorComponent } from './back/game-cards/game-cards-editor/game-cards-editor.component';
-import { GroupsListComponent } from './back/groups/groups-list/groups-list.component';
-import { CloneDBComponent } from './back/maintenance/clone-DB/clone-db.component';
-import { MemberSalesComponent } from './back/member-sales/member-sales.component';
-import { PageNotFoundComponent } from './common/page-not-found/page-not-found.component';
-import { ProductsComponent } from './back/products/products.component';
-import { ShopComponent } from './back/shop/shop.component';
-import { SysConfComponent } from './back/sys-conf/sys-conf.component';
 import { routes } from './back/back.routes';
+import { DragDropModule } from '@angular/cdk/drag-drop';
+import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { AdminComponent } from './back/admin/back.component';
-import { NgbDropdownModule, NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
-import { RmbracketsPipe } from './common/pipes/rmbrackets.pipe';
 import { SnippetsComponent } from './back/site/snippets/snippets.component';
 import { FilemgrWindowsComponent } from './back/files/filemgr/filemgr-windows.component';
 import { RootVolumeComponent } from './back/files/root-volume/root-volume';
-
-
+import { RmbracketsPipe } from './common/pipes/rmbrackets.pipe';
 
 @NgModule({
   declarations: [
-
+    // aucun pipe ou composant non-standalone
   ],
   imports: [
     CommonModule,
     FormsModule,
     RouterModule.forChild(routes),
     NgbDropdownModule,
-    NgbAccordionModule,
+    DragDropModule,
     AdminComponent,
-    ShopComponent,
-    FeesCollectorComponent,
-    CashBoxStatusComponent,
-    MembersComponent,
-    GameCardsEditorComponent,
-    MemberSalesComponent,
-    BankReconciliationComponent,
-    ExpenseAndRevenueComponent,
-    ExpenseAndRevenueDetailsComponent,
-    BooksOverviewComponent,
-    BooksEditorComponent,
-    BooksListComponent,
-    BalanceComponent,
-    GroupsListComponent,
-    ProductsComponent,
-    SysConfComponent,
-    ImportExcelComponent,
-    PageNotFoundComponent,
-    CloneDBComponent,
     SnippetsComponent,
     FilemgrWindowsComponent,
     RootVolumeComponent,
@@ -73,8 +34,7 @@ import { RootVolumeComponent } from './back/files/root-volume/root-volume';
     RmbracketsPipe,
     SnippetsComponent,
     FilemgrWindowsComponent,
-    RootVolumeComponent,
-    // Export components if needed
+    RootVolumeComponent
   ],
 })
 export class BackModule { }

@@ -1,3 +1,57 @@
+.drag-preview-bi {
+  font-size: 2.5rem !important;
+  color: #007bff !important;
+  display: inline-block;
+  width: 2.5rem;
+  height: 2.5rem;
+  line-height: 2.5rem;
+  text-align: center;
+}
+.drag-preview-icon {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  opacity: 0.95;
+  font-size: 2.5rem;
+  color: #007bff;
+  border: 2px solid #007bff;
+  pointer-events: none;
+  z-index: 1000;
+}
+.cdk-drag-preview {
+  height: 90px !important;
+  min-height: 90px !important;
+  max-height: 120px !important;
+  width: 220px !important;
+  display: block !important;
+  overflow: hidden !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  border-radius: 0.5rem;
+  background: white;
+  opacity: 0.95;
+  pointer-events: none;
+  z-index: 1000;
+}
+// Correction de la distorsion lors du drag & drop des cards
+.drag-preview {
+  width: 220px;
+  height: 90px;
+  min-height: unset;
+  max-height: 120px;
+  max-width: 100%;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  border-radius: 0.5rem;
+  background: white;
+  opacity: 0.95;
+  pointer-events: none;
+  display: block;
+  overflow: hidden;
+}
 .fixed-trash-height {
   min-height: 7.5rem;
   height: 7.5rem;

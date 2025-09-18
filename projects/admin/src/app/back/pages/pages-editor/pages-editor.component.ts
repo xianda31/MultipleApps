@@ -28,19 +28,22 @@ export class PagesEditorComponent {
   resolution_too_small = false;
 
   pages: Page[] = [];
-  bin_page_index: number | null = null;
-
+  
   snippets: Snippet[] = [];
   selected_snippet: Snippet | null = null;
-
+  
   ctrlPressed = false;
-
+  
   view_snippet = signal<boolean>(true);
   freeze_view_snippet = signal<boolean>(false);
   show_trash = false;
-
+  
   pagesForm !: FormGroup;
   pageTemplates = Object.values(PAGE_TEMPLATES);
+  pageTitles = Object.values(MENU_TITLES);
+  pageTitles_but_BIN = this.pageTitles.filter(title => title !== MENU_TITLES.POUBELLE);
+  selected_pageTitle : string | null = null;
+  bin_page_index: number | null = null;
 
   fileSystemNode !: FileSystemNode;
   file_paths$ !: Observable<string[]>;
@@ -49,8 +52,6 @@ export class PagesEditorComponent {
 
 
   current_node_childs = signal<FileSystemNode | null>(null);
-  // node_stack: FileSystemNode[] = [];
-  // returned_value : any;
 
   constructor(
     private pageService: PageService,
@@ -87,8 +88,8 @@ export class PagesEditorComponent {
 
     this.pageService.listPages().pipe(take(1)).subscribe(pages => {
       // check if all mandatory pages exist
-      const requiredTitles = Object.values(MENU_TITLES);
-      requiredTitles.forEach(title => {
+      // const requiredTitles = Object.values(MENU_TITLES);
+      this.pageTitles.forEach(title => {
         const pageExists = pages.some(page => page.title === title);
         if (!pageExists) {
           this.pageService.createPage({
@@ -108,10 +109,10 @@ export class PagesEditorComponent {
           this.pages.forEach(page => {
             page.snippets = this.getPageSnippets(page);
           });
-          // force bin_page to be the first page
+          // force bin_page to be the last page
           const binPage = this.pages.find(page => page.title === MENU_TITLES.POUBELLE);
           if (binPage) {
-            this.pages = [binPage].concat(this.pages.filter(page => page !== binPage));
+            this.pages = this.pages.filter(page => page !== binPage).concat(binPage);
           }
           this.bin_page_index = this.pages.findIndex(page => page.title === MENU_TITLES.POUBELLE);
           
@@ -129,7 +130,11 @@ export class PagesEditorComponent {
     this.ctrlPressed = event.ctrlKey;
   };
 
- 
+ onPageChange(event: any) { 
+
+  this.selected_pageTitle = event;
+  console.log('Selected page changed to:', this.selected_pageTitle);
+ }
   //getters
 
   getNextSnippetGroup(page: FormGroup): FormGroup {
@@ -141,7 +146,10 @@ export class PagesEditorComponent {
     this.pageGroups.forEach((page, i) => {
       // Si la page est la corbeille et qu'elle n'est pas affichée, on saute
       if (this.is_trash_page(page) && !this.show_trash) return;
-      ids.push('dropList_' + i);
+      // si la page est la page sélectionnée (ou si aucune n'est sélectionnée), on l'ajoute
+      if (this.is_trash_page(page) || page.get('title')?.value === this.selected_pageTitle) {
+        ids.push('dropList_' + i);
+      }
     });
     return ids;
   }
