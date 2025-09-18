@@ -65,7 +65,7 @@
     </div>
 
     <!-- Sidebar for mobile -->
-    <div class="offcanvas offcanvas-start d-md-none bg-white text-dark" tabindex="-1" id="sidebarMenu"
+    <div class="offcanvas offcanvas-start d-md-none bg-white text-dark align-items-start " tabindex="-1" id="sidebarMenu"
       aria-labelledby="sidebarMenuLabel">
       <div class="offcanvas-header">
         <h5 class="offcanvas-title" id="sidebarMenuLabel">Menu</h5>
@@ -74,7 +74,7 @@
       <div class="offcanvas-body">
         <ul class="navbar-nav">
           <li *ngIf="!(logged_member$ | async)" class="nav-item mb-2">
-            <button class="btn btn-sm btn-sepia shadow-sm w-100" type="button" data-bs-toggle="offcanvas"
+            <button class="btn btn-sm btn-secondary shadow-sm w-100" type="button" data-bs-toggle="offcanvas"
               data-bs-target="#loggingOffCanvas" aria-controls="loggingOffCanvas">
               Espace membre
             </button>
