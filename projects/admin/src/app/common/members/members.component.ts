@@ -12,11 +12,12 @@ import { FFB_licensee } from '../ffb/interface/licensee.interface';
 import { Member, LicenseStatus } from '../interfaces/member.interface';
 import { SystemDataService } from '../services/system-data.service';
 import { ToastService } from '../services/toast.service';
+import { PhonePipe } from '../pipes/phone.pipe';
 
 @Component({
   selector: 'app-members',
   encapsulation: ViewEncapsulation.None, // nécessaire pour que les CSS des tooltips fonctionnent
-  imports: [FormsModule, CommonModule, ReactiveFormsModule, UpperCasePipe, InputPlayerComponent, NgbTooltipModule, NgbDropdownModule],
+  imports: [FormsModule, CommonModule, ReactiveFormsModule, UpperCasePipe, InputPlayerComponent, NgbTooltipModule, NgbDropdownModule, PhonePipe],
   templateUrl: './members.component.html',
   styleUrl: './members.component.scss'
 })

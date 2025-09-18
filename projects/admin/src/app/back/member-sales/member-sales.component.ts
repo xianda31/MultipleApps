@@ -25,8 +25,8 @@ export class MemberSalesComponent {
     achats_ventes !: Formatted_purchase[];
 
 
-  verbose = signal<string>('');
-  unregistrated: number = 0;
+  collectedLicenses : string[] = [];
+  missingMembership : string[] = [];
 
   members: Member[] = [];
   selected_member: Member | null = null;
@@ -56,7 +56,8 @@ export class MemberSalesComponent {
     ).subscribe(
       (entries) => {
         this.operations = this.bookService.get_operations();
-        this.check_membership_payments();
+        this.check_license_declared();
+        this.check_membership_paied();
         this.loaded = true;
       }
     );
@@ -64,22 +65,33 @@ export class MemberSalesComponent {
 
 
 
-  check_membership_payments() {
-
-    this.unregistrated = 0;
+    check_membership_paied() {
+      this.missingMembership = [];
+      this.members.forEach((member) => {
+        if (member.license_status !== LicenseStatus.UNREGISTERED) {
+          let full_name = this.memberService.full_name(member);
+          const adh_paied = this.operations
+          .filter((op) => op.member === full_name)
+          .some((op) => op.values['ADH']);
+          
+        if (!adh_paied  ) {
+          this.missingMembership.push(full_name);
+        }
+      }
+    });
+  }
+  
+  check_license_declared() {
+    this.collectedLicenses = [];
     this.members.forEach((member) => {
       if (member.license_status !== LicenseStatus.DULY_REGISTERED) {
         let full_name = this.memberService.full_name(member);
-        // const adh_paied = this.operations
-        //   .filter((op) => op.member === full_name)
-        //   .some((op) => op.values['ADH']);
         const lic_paied = this.operations
           .filter((op) => op.member === full_name)
           .some((op) => op.values['LIC']);
 
         if (lic_paied) {
-          this.verbose.set(this.verbose() + `${member.firstname} ${member.lastname} nous a payé la licence FFB\n`);
-          this.unregistrated++;
+          this.collectedLicenses.push(full_name);
         }
       }
     });
@@ -89,7 +101,6 @@ export class MemberSalesComponent {
   member_selected() {
     if (this.selected_member) {
       let full_name = this.memberService.full_name(this.selected_member);
-      // this.revenues = this.operations.filter((op) => op.member === full_name);
        
       this.achats_ventes = this.bookService.get_formated_buy_operations(full_name)
     }
