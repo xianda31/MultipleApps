@@ -10,12 +10,14 @@ import { SnippetsComponent } from './back/site/snippets/snippets.component';
 import { FilemgrWindowsComponent } from './back/files/filemgr/filemgr-windows.component';
 import { RootVolumeComponent } from './back/files/root-volume/root-volume';
 import { RmbracketsPipe } from './common/pipes/rmbrackets.pipe';
+import { MoveToEndPipe } from './common/pipes/move-to-end.pipe';
 
 @NgModule({
   declarations: [
     // aucun pipe ou composant non-standalone
   ],
   imports: [
+    MoveToEndPipe,
     CommonModule,
     FormsModule,
     RouterModule.forChild(routes),
@@ -32,6 +34,7 @@ import { RmbracketsPipe } from './common/pipes/rmbrackets.pipe';
     NgbDropdownModule,
     AdminComponent,
     RmbracketsPipe,
+    MoveToEndPipe,
     SnippetsComponent,
     FilemgrWindowsComponent,
     RootVolumeComponent

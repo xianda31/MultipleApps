@@ -26,15 +26,22 @@
     <div class="row justify-content-evenly">
       <!-- colonne keypad -->
       <div class="col-md-3 col-sm-3 mt-2 ">
-        <div class="row" *ngFor="let products of products_array | keyvalue ">
-          <div class="card-group">
-            <div *ngFor="let product of products.value" class=" card text-white bg-primary nice_shadow  bigger-on-hover"
-              (click)="on_product_click(product)">
-              <div class="card-body text-center px-0 py-1">
-                <strong>{{product.glyph}}</strong>
-                <p>
-                  <small>{{product.price.toFixed(2)}} €</small>
-                </p>
+        <div class="row" *ngFor="let products of products_array | keyvalue | moveToEnd:'LIC'">
+          <div class="row g-2">
+            <div *ngFor="let product of products.value" class="col-12 col-sm-6 col-md-6 col-lg">
+              <div [style]="product_color_style(product)" class="card text-white nice_shadow bigger-on-hover h-100" (click)="on_product_click(product)" style="position: relative;">
+                <div class="card-body text-center px-0 py-1">
+                  <strong>{{product.glyph}}</strong>
+                  <ng-container class="ms-auto" *ngIf="product.paired">
+                    <i class="bi bi-people-fill ms-1" style="font-size: 1em; vertical-align: middle;"></i>
+                  </ng-container>
+                  <p>
+                    <small>
+                      {{product.price.toFixed(2)}} €
+                      {{product.paired ? ' x2':''}}
+                    </small>
+                  </p>
+                </div>
               </div>
             </div>
           </div>

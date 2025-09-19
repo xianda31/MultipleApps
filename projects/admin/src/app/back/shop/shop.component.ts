@@ -16,11 +16,12 @@ import { Product } from '../products/product.interface';
 import { CartComponent } from './cart/cart.component';
 import { MembersService } from '../../common/services/members.service';
 import { ToastService } from '../../common/services/toast.service';
+import { MoveToEndPipe } from '../../common/pipes/move-to-end.pipe';
 
 
 @Component({
   selector: 'app-shop',
-  imports: [ReactiveFormsModule, CommonModule, FormsModule, InputMemberComponent, CartComponent, TodaysBooksComponent],
+  imports: [ReactiveFormsModule, CommonModule, FormsModule, InputMemberComponent, CartComponent, TodaysBooksComponent, MoveToEndPipe],
   templateUrl: './shop.component.html',
   styleUrl: './shop.component.scss'
 })
@@ -208,11 +209,12 @@ export class ShopComponent {
     this.sales_of_the_day_table = table;
   }
 
+  product_color_style(product: Product): string {
+    return this.productService.product_color_style(product);
+  }
+
   tables_to_pdf() {
-
-
     let fname = `boutique ${this.session.date}.pdf`;
     this.pdfService.generateTablePDF([this.sales_of_the_day_table], fname);
-
   }
 }

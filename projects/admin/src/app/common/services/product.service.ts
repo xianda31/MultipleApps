@@ -4,6 +4,7 @@ import { SystemDataService } from './system-data.service';
 import { ToastService } from '../services/toast.service';
 import { DBhandler } from './graphQL.service';
 import { Product } from '../../back/products/product.interface';
+import { RGBColor } from 'd3';
 
 
 @Injectable({
@@ -28,11 +29,40 @@ export class ProductService {
         const accounts = products.filter((product) => product.active).map((product) => product.account);
         const products_accounts = [...new Set(accounts)];
 
-        let array = new Map();
+        // Build a Map of account -> sorted products (paired last)
+        const accountMap = new Map<string, Product[]>();
         products_accounts.forEach((account) => {
-            array.set(account, products.filter((product) => product.account === account));
+            accountMap.set(
+                account,
+                products
+                    .filter((product) => product.account === account)
+                    .sort((a, b) => {
+                        // Place .paired products last
+                        if (a.paired && !b.paired) return 1;
+                        if (!a.paired && b.paired) return -1;
+                        return 0;
+                    })
+            );
         });
-        return array;
+
+        return accountMap;
+    }
+
+    product_color_style(product: Product): string {
+        // Generate a color based on product account with more variance
+        const str = product.account || 'default';
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            hash = str.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        // Use HSL for moderate variance
+        const hue = Math.abs(hash) % 360;
+        const sat = 60 + (Math.abs(hash >> 8) % 15); // 60-75%
+        let light = 55 + (Math.abs(hash >> 16) % 15); // 55-70%
+        if (product.paired) {
+            light = Math.max(30, light - 10); // make it darker for paired
+        }
+        return `background-color: hsl(${hue}, ${sat}%, ${light}%)`;
     }
 
 
