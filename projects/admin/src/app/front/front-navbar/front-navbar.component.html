@@ -16,7 +16,7 @@
             <li><a class="dropdown-item" routerLink="club/documents">Documents</a></li>
             <li><a class="dropdown-item" routerLink="club/bureau">Le bureau</a></li>
             <li><a class="dropdown-item" routerLink="club/historique">L'historique</a></li>
-            <li><a class="dropdown-item" routerLink="contacts" data-bs-dismiss="offcanvas">Nous contacter</a></li>
+            <li><a class="dropdown-item" routerLink="contacts" >Nous contacter</a></li>
           </ul>
         </li>
         <li ngbDropdown class="nav-item dropdown">
@@ -46,7 +46,9 @@
 
         <li class="nav-item"><a class="nav-link" routerLink="albums">Les albums</a></li>
 
-          <li *ngIf="(logged_member$ | async)  && user_accreditation && user_accreditation.level > 0" class="nav-item"><a class="nav-link" routerLink="../back" data-bs-dismiss="offcanvas">Administration</a></li>
+          <li *ngIf="user_accreditation && user_accreditation.level > 0" class="nav-item">
+            <a class="nav-link" routerLink="../back" data-bs-dismiss="offcanvas">Administration</a>
+          </li>
 
           <li *ngIf="!(logged_member$ | async)" class="nav-item">
           <button class="btn btn-sm btn-sepia shadow-sm" type="button" data-bs-toggle="offcanvas"
@@ -130,7 +132,9 @@
 
           <li class="nav-item"><a class="nav-link" routerLink="albums" data-bs-dismiss="offcanvas">Les albums</a></li>
 
-          <li *ngIf=" (logged_member$ | async) && user_accreditation && user_accreditation.level > 0" class="nav-item"><a class="nav-link" routerLink="../back" data-bs-dismiss="offcanvas">Administration</a></li>
+          <li *ngIf=" user_accreditation && user_accreditation.level > 0" class="nav-item">
+            <a class="nav-link" routerLink="../back" data-bs-dismiss="offcanvas">Administration</a>
+          </li>
 
         </ul>
       </div>
