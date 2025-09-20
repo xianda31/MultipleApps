@@ -1,244 +1,112 @@
-@if (resolution_too_small) {
-<div class="container-fluid">
-    L'édition des pages n'est pas disponible sur les écrans de petite taille.
-</div>
-} @else {
-<div class="container-fluid">
-    <div class="row scroll-container" #scrollable cdkScrollable style="max-height: 80vh; overflow-y: auto;">
-        <!-- liste des pages -->
-        <div class="col col-md-8">
-            <div class="d-flex align-items-center justify-content-between mb-2">
-                <h2 class="mb-0">Editeur du contenu des pages</h2>
+<div class="container-fluid ps-1">
 
+    <!-- <h2 class="mb-0">Editeur pages</h2> -->
+
+
+    <div class=" offset-xl-2 col-xl-8 ">
+
+        <!-- select page -->
+        <div class="col-12 col-sm-6 col-md-3">
+
+            <div class="input-group input-group-sm">
+                <span class="input-group-text">Page</span>
+                <select class="form-select form-select-sm " [(ngModel)]="selected_pageTitle" (change)="onPageTitleChange($event)">
+                    <option *ngFor="let title of pageTitles_but_BIN" [value]="title">
+                        {{ title }}
+                    </option>
+                </select>
             </div>
-            <div class="col-md-4 mb-3">
-                <div class="input-group input-group-sm">
-                    <div class="input-group-prepend">
-                        <span class="input-group-text">Page</span>
-                    </div>
-                    <select class="form-select form-select-sm " [(ngModel)]="selected_pageTitle">
-                        <option *ngFor="let title of pageTitles_but_BIN" [value]="title">
-                            {{ title }}
-                        </option>
-                    </select>
-                </div>
-            </div>
+        </div>
 
-            <form [formGroup]="pagesForm">
-                <div class="row">
-                    <!-- colonne 1 : l'icone poubelle -->
-                    <div class="col-1 justify-content-center align-items-center d-flex">
-                        <div class="">
-                            <div cdkDropList [id]="'trash_'" cdkDropListGroup (cdkDropListDropped)="binSnippet($event)"
-                                class="card dash_border align-items-center justify-content-center fs-3"
-                                style="width: 3.5rem; height: 3.5rem;">
-                                <i (click)="show_trash = !show_trash"
-                                    [class]="is_trash_empty() ? 'bi bi-trash' : 'bi bi-trash-fill' "></i>
-                            </div>
-                        </div>
-                    </div>
+        <div class="mt-2 row justify-content-between">
+            <div class="col-12 col-md-6">
+                <form [formGroup]="pagesForm">
+                    <div formArrayName="pagesArray">
 
-                    <!-- colonne 2 : les pages -->
-                    <div class="col-11">
-                        <div formArrayName="pagesArray">
-                            <div *ngFor="let page of pageGroups; let p = index" [formGroup]="page" class="mb-4">
-                                @if ((!is_trash_page(page) && page.get('title')?.value === selected_pageTitle) ||
-                                ( is_trash_page(page) && show_trash))
-                                {
-                                <div [class]="is_trash_page(page) ? 'card p-2 dashed_border' : 'p-2'">
-                                    <!-- entête de la page -->
-                                    <div class="row align-items-center mb-2">
-                                        <div class="col-auto fs-4">{{ page.get('title')?.value }}</div>
-                                        <!-- affichage modèle de présentation (si ce n'est pas la poubelle)-->
-                                        <div *ngIf="!is_trash_page(page)" class="col-auto">
-                                            <div class="input-group input-group-sm">
-                                                <div class="input-group-prepend">
-                                                    <span class="input-group-text">Présentation</span>
-                                                </div>
-                                                <select class="form-select form-select-sm" formControlName="template"
-                                                    (change)="savePage(page)">
-                                                    <option *ngFor="let template of pageTemplates" [value]="template">
-                                                        {{template}}
-                                                    </option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <!-- affiche l'icone de recyclage (si c'est la poubelle) -->
-                                        <div *ngIf="is_trash_page(page)" class="col-auto">
-                                            <div class="d-flex align-items-end">
-                                                <span>Effacement définitif :</span>
-                                                <button class="btn btn-sm btn-outline-primary ms-2" (click)="emptyBin()"
-                                                    [disabled]="is_trash_empty()">
-                                                    <i class="bi bi-recycle"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <!-- liste des snippets de la page -->
-                                    <div class="row">
-                                        <div class="">
-                                            <div cdkDropList [id]="'dropList_' + p" cdkDropListOrientation="mixed"
-                                                (cdkDropListDropped)="dropSnippet($event, p)" cdkDropListGroup
-                                                [cdkDropListConnectedTo]="dropListIds"
-                                                class="row row-cols-3 row-cols-md-6 g-1 mt-2 mb-2 justify-content-start">
+                        <div *ngFor="let page of pageGroups; let p = index" [formGroup]="page">
+                            @if (((p === bin_page_index) || page.get('title')?.value === selected_pageTitle) )
+                            {
 
+                            <div *ngIf="p !== bin_page_index" class="">
 
-                                                <!-- affichage snippets de la page -->
-                                                <div class="col" *ngFor="let snippet of page.get('snippets')?.value">
-                                                    <div cdkDrag class="card h-100" (mouseenter)="onHover(snippet)"
-                                                        (click)="onSnippetClick(snippet)">
-                                                        <div class="card-body">
-                                                            <p class="card-title">{{ snippet.title }} </p>
-                                                            <p class="card-subtitle text-muted">{{ snippet.subtitle }} </p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <!-- add snippet -->
-                                                <div *ngIf="!is_trash_page(page)" class="col">
-                                                    <form [formGroup]="getNextSnippetGroup(page)">
-                                                        <div class="card h-100 dashed_border">
-                                                            <div class="card-body">
-                                                                <div class="row align-items-end">
-                                                                    <div [formGroup]="getNextSnippetGroup(page)">
-                                                                        <input class="form-control form-control-sm"
-                                                                            placeholder="Titre"
-                                                                            formControlName="next_title"
-                                                                            (keydown.enter)="getNextSnippetGroup(page).valid && addSnippet(page)">
-                                                                        <input class="form-control form-control-sm mt-1"
-                                                                            placeholder="sous-titre"
-                                                                            formControlName="next_subtitle"
-                                                                            (keydown.enter)="getNextSnippetGroup(page).valid && addSnippet(page)">
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </form>
-                                                </div>
-
-
-                                            </div>
-                                        </div>
+                                <!-- affichage modèle de présentation (si ce n'est pas la poubelle) -->
+                                <div *ngIf="!(p === bin_page_index)" class="col-auto">
+                                    <div class="input-group input-group-sm">
+                                        <!-- <div class="input-group-prepend"> -->
+                                        <span class="input-group-text">Présentation</span>
+                                        <!-- </div> -->
+                                        <select class="form-select form-select-sm" formControlName="template"
+                                            (change)="savePage(page)">
+                                            <option *ngFor="let template of pageTemplates" [value]="template">
+                                                {{template}}
+                                            </option>
+                                        </select>
                                     </div>
                                 </div>
-                                }
                             </div>
-                        </div>
-                    </div>
-                </div>
-
-            </form>
-        </div>
-
-        <!-- affichage snippet sélectionné -->
-
-        <div class="col col-md-4">
-            @if (selected_snippet && (view_snippet() || freeze_view_snippet())) {
-            <div class="card centered-card">
-                <div class="card-header">
-                    <div class="row">
-                        <div class="col-8">
-                            <input type="text" [(ngModel)]="selected_snippet.title"
-                                class="form-control form-control-lg fw-bold mb-1" style="font-size:1.25rem;"
-                                (keydown.enter)="saveSnippetSelected()">
-                            <input type="text" [(ngModel)]="selected_snippet.subtitle"
-                                class="form-control form-control-sm text-muted" style="font-size:1rem;"
-                                (keydown.enter)="saveSnippetSelected()">
-                        </div>
-                        <div class="col-1 align-items-start">
-                            <i (click)="toggleFreezeViewSnippet()" *ngIf="freeze_view_snippet()"
-                                class="bi bi-pin-angle-fill"></i>
 
 
-                        </div>
-                        <div class="col-3 text-center">
-                            <img *ngIf="selected_snippet.image_url" [src]="selected_snippet.image_url | async"
-                                alt="{{ selected_snippet.title }}" class="img-fluid snippet-img-limited">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card-body">
-                    <div class="card-text">
-                        <span (click)="onSnippetContentClick(selected_snippet)"
-                            [innerHTML]="selected_snippet.content"></span>
-                    </div>
-                </div>
-
-                <div class="card-footer">
-                    <div class="row">
-
-                        <!-- toggle public visibility -->
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="form-check form-switch mb-0">
-                                <input (ngModelChange)="saveSnippetSelected()" [(ngModel)]="selected_snippet.public"
-                                    class="form-check-input" type="checkbox" role="switch">
-                                <label class="form-check-label text-muted">Public</label>
+                            <div *ngIf="(p === bin_page_index)" class="row align-items-start mb-2">
+                                <div class="col d-flex align-items-center">
+                                    <i (click)="show_trash = !show_trash"
+                                    [class]="bin_empty ? 'bi bi-inbox' : 'bi bi-inbox-fill' "></i>
+                                    <span class="ms-2">Clipboard</span>
+                                </div>
                             </div>
-                            <div class="form-check form-switch mb-0">
-                                <input (ngModelChange)="saveSnippetSelected()" [(ngModel)]="selected_snippet.featured"
-                                    class="form-check-input" type="checkbox" role="switch">
-                                <label class="form-check-label text-muted">à la une</label>
-                            </div>
+
+
+                            <!-- liste des snippets de la page -->
+
+                            <table cdkDropList [id]="'dropList_' + p" cdkDropListOrientation="mixed"
+                                (cdkDropListDropped)="dropSnippet($event, p)" cdkDropListGroup
+                                [cdkDropListConnectedTo]="dropListIds"
+                                class=" mt-4 table able-responsive table-sm table-striped">
+                                <tbody>
+                                    <tr *ngFor="let snippet of page.get('snippets')?.value" cdkDrag>
+                                        <td (mouseenter)="onHover(snippet)" (click)="onSnippetClick(snippet)">
+                                            {{snippet.title}}
+                                        </td>
+                                        <td (mouseenter)="onHover(snippet)" (click)="onSnippetClick(snippet)">
+                                            {{snippet.subtitle}}
+                                        </td>
+                                        <td *ngIf="!(p === bin_page_index)" class="text-center"><i
+                                                (click)="cutSnippet(p,snippet)" class="bi bi-inbox"></i></td>
+                                        <td *ngIf="(p === bin_page_index)" class="text-center"><i
+                                                (click)="deleteSnippet(p,snippet)" class="bi bi-recycle"></i>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                                <tfoot *ngIf="!(p === bin_page_index)">
+                                    <tr>
+                                        <td colspan="2" class="text-end text-muted ">
+                                            <small> ajouter un article </small>
+                                        </td>
+                                        <td class="text-center text-secondary">
+                                            <i (click)="addWhiteSnippet(page)" class="bi bi-plus-square-fill">
+                                            </i>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+
+                            }
                         </div>
-
                     </div>
+                </form>
 
-                    <!-- image url input -->
-                    <div class="input-group input-group-sm mt-1">
-                        <span class="input-group-text">Image</span>
-                        <input type="text" list="image_datalist" class="form-control"
-                            [placeholder]="selected_snippet.image" [(ngModel)]="selected_snippet.image"
-                            (keydown.enter)="saveSnippetSelected()">
-                        <datalist id="image_datalist">
-                            <option *ngFor="let path of thumbnails$ | async" [value]="path">
-                                {{ path }}
-                            </option>
-                        </datalist>
-                        <button class="btn btn-sm " (click)="selected_snippet.image = ''">
-                            <i class="bi bi-x-circle"></i>
-                        </button>
-                    </div>
 
-                    <!-- file url input -->
-                    <div class="input-group input-group-sm mt-1">
-                        <span class="input-group-text">Fichier</span>
-                        <input type="text" list="file_datalist" class="form-control"
-                            [placeholder]="selected_snippet.file" [(ngModel)]="selected_snippet.file"
-                            (keydown.enter)="saveSnippetSelected()">
-
-                        <datalist id="file_datalist">
-                            <option *ngFor="let path of file_paths$ | async" [value]="path">
-                                {{ path }}
-                            </option>
-                        </datalist>
-
-                        <button class="btn btn-sm " (click)="selected_snippet.file = ''">
-                            <i class="bi bi-x-circle"></i>
-                        </button>
-                    </div>
-                    <!-- folder url input -->
-                    <div class="input-group input-group-sm mt-1">
-                        <span class="input-group-text">Dossier</span>
-                        <input type="text" list="folder_datalist" class="form-control"
-                            [placeholder]="selected_snippet.folder" [(ngModel)]="selected_snippet.folder"
-                            (keydown.enter)="saveSnippetSelected()">
-
-                        <datalist id="folder_datalist">
-                            <option *ngFor="let path of albums$ | async" [value]="path">
-                                {{ path }}
-                            </option>
-                        </datalist>
-
-                        <button class="btn btn-sm " (click)="selected_snippet.folder = ''">
-                            <i class="bi bi-x-circle"></i>
-                        </button>
-                    </div>
-
-                </div>
             </div>
-            }
+
+
+            <!-- affichage snippet sélectionné -->
+            <div class="col-12 col-md-6">
+                @if (selected_snippet && (view_snippet() || snippetFreezed)) {
+                <app-snippet-editor [snippet]="selected_snippet"
+                    [(snippetFreezed)]="snippetFreezed"></app-snippet-editor>
+                }
+            </div>
         </div>
+
     </div>
+
 </div>
-}

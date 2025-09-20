@@ -1,0 +1,103 @@
+            <div class="card centered-card">
+                <div class="card-header">
+                    <div class="row">
+                        <div class="col-8">
+                            <input type="text" [(ngModel)]="snippet.title"
+                                class="form-control mb-1" 
+                                (keydown.enter)="saveSnippetSelected()">
+                            <input type="text" [(ngModel)]="snippet.subtitle"
+                                class="form-control form-control-sm text-muted" 
+                                (keydown.enter)="saveSnippetSelected()">
+                        </div>
+                        <div class="col-1 align-items-start">
+                            <i (click)="toggleFreezeViewSnippet()" *ngIf="snippetFreezed"
+                                class="bi bi-pin-angle-fill"></i>
+
+
+                        </div>
+                        <div class="col-3 text-center">
+                            <img *ngIf="snippet.image_url" [src]="snippet.image_url | async"
+                                alt="{{ snippet.title }}" class="img-fluid snippet-img-limited">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <div class="card-text">
+                        <span (click)="onSnippetContentClick(snippet)"
+                            [innerHTML]="snippet.content"></span>
+                    </div>
+                </div>
+
+                <div class="card-footer">
+                    <div class="row">
+
+                        <!-- toggle public visibility -->
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="form-check form-switch mb-0">
+                                <input (ngModelChange)="saveSnippetSelected()" [(ngModel)]="snippet.public"
+                                    class="form-check-input" type="checkbox" role="switch">
+                                <label class="form-check-label text-muted">Public</label>
+                            </div>
+                            <div class="form-check form-switch mb-0">
+                                <input (ngModelChange)="saveSnippetSelected()" [(ngModel)]="snippet.featured"
+                                    class="form-check-input" type="checkbox" role="switch">
+                                <label class="form-check-label text-muted">à la une</label>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- image url input -->
+                    <div class="input-group input-group-sm mt-1">
+                        <span class="input-group-text">Image</span>
+                        <input type="text" list="image_datalist" class="form-control"
+                            [placeholder]="snippet.image" [(ngModel)]="snippet.image"
+                            (keydown.enter)="saveSnippetSelected()" (change)="saveSnippetSelected()">
+                        <datalist id="image_datalist">
+                            <option *ngFor="let path of thumbnails$ | async" [value]="path">
+                                {{ path }}
+                            </option>
+                        </datalist>
+                        <button class="btn btn-sm " (click)="snippet.image = ''">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
+                    </div>
+
+                    <!-- file url input -->
+                    <div class="input-group input-group-sm mt-1">
+                        <span class="input-group-text">Fichier</span>
+                        <input type="text" list="file_datalist" class="form-control"
+                            [placeholder]="snippet.file" [(ngModel)]="snippet.file"
+                            (keydown.enter)="saveSnippetSelected()" (change)="saveSnippetSelected()">
+
+                        <datalist id="file_datalist">
+                            <option *ngFor="let path of file_paths$ | async" [value]="path">
+                                {{ path }}
+                            </option>
+                        </datalist>
+
+                        <button class="btn btn-sm " (click)="snippet.file = ''">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
+                    </div>
+                    <!-- folder url input -->
+                    <div class="input-group input-group-sm mt-1">
+                        <span class="input-group-text">Dossier</span>
+                        <input type="text" list="folder_datalist" class="form-control"
+                            [placeholder]="snippet.folder" [(ngModel)]="snippet.folder"
+                            (keydown.enter)="saveSnippetSelected()" (change)="saveSnippetSelected()">
+
+                        <datalist id="folder_datalist">
+                            <option *ngFor="let path of albums$ | async" [value]="path">
+                                {{ path }}
+                            </option>
+                        </datalist>
+
+                        <button class="btn btn-sm " (click)="snippet.folder = ''">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
+                    </div>
+
+                </div>
+            </div>
