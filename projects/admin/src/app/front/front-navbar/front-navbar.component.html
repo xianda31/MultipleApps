@@ -16,6 +16,7 @@
             <li><a class="dropdown-item" routerLink="club/documents">Documents</a></li>
             <li><a class="dropdown-item" routerLink="club/bureau">Le bureau</a></li>
             <li><a class="dropdown-item" routerLink="club/historique">L'historique</a></li>
+            <li><a class="dropdown-item" routerLink="contacts" data-bs-dismiss="offcanvas">Nous contacter</a></li>
           </ul>
         </li>
         <li ngbDropdown class="nav-item dropdown">
@@ -44,8 +45,10 @@
         </li>
 
         <li class="nav-item"><a class="nav-link" routerLink="albums">Les albums</a></li>
-        <li class="nav-item"><a class="nav-link" routerLink="contacts">Contacts</a></li>
-        <li *ngIf="!(logged_member$ | async)" class="nav-item">
+
+          <li *ngIf="(logged_member$ | async)  && user_accreditation && user_accreditation.level > 0" class="nav-item"><a class="nav-link" routerLink="../back" data-bs-dismiss="offcanvas">Administration</a></li>
+
+          <li *ngIf="!(logged_member$ | async)" class="nav-item">
           <button class="btn btn-sm btn-sepia shadow-sm" type="button" data-bs-toggle="offcanvas"
             data-bs-target="#loggingOffCanvas" aria-controls="loggingOffCanvas">
             Espace membre
@@ -54,9 +57,6 @@
         <li *ngIf="logged_member$ | async as member" ngbDropdown class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" ngbDropdownToggle id="userDropdown">{{member.firstname}}</a>
           <ul ngbDropdownMenu class="dropdown-menu" aria-labelledby="userDropdown">
-            <li *ngIf="user_accreditation && user_accreditation.level > 0">
-              <a class="dropdown-item" routerLink="../back"><i [class]="user_accreditation.icon"></i> back office</a>
-            </li>
             <li><a class="dropdown-item" routerLink="ffb_dashboard">FFB : tableau de bord</a></li>
             <li><a class="dropdown-item" (click)="signOut()"><i class="bi bi-box-arrow-right"></i> Déconnexion</a></li>
           </ul>
@@ -65,8 +65,8 @@
     </div>
 
     <!-- Sidebar for mobile -->
-    <div class="offcanvas offcanvas-start d-md-none bg-white text-dark align-items-start " tabindex="-1" id="sidebarMenu"
-      aria-labelledby="sidebarMenuLabel">
+    <div class="offcanvas offcanvas-start d-md-none bg-white text-dark align-items-start " tabindex="-1"
+      id="sidebarMenu" aria-labelledby="sidebarMenuLabel">
       <div class="offcanvas-header">
         <h5 class="offcanvas-title" id="sidebarMenuLabel">Menu</h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
@@ -84,9 +84,6 @@
           <li *ngIf="logged_member$ | async as member" ngbDropdown class="nav-item dropdown mb-2">
             <a class="nav-link dropdown-toggle" ngbDropdownToggle id="userDropdownMobile">{{member.firstname}}</a>
             <ul ngbDropdownMenu class="dropdown-menu" aria-labelledby="userDropdownMobile">
-              <li *ngIf="user_accreditation && user_accreditation.level > 0">
-                <a class="dropdown-item" routerLink="../back"><i [class]="user_accreditation.icon"></i> back office</a>
-              </li>
               <li><a class="dropdown-item" routerLink="ffb_dashboard">FFB : tableau de bord</a></li>
               <li><a class="dropdown-item" (click)="signOut()"><i class="bi bi-box-arrow-right"></i> Déconnexion</a>
               </li>
@@ -100,6 +97,7 @@
               <li><a class="dropdown-item" routerLink="club/documents" data-bs-dismiss="offcanvas">Documents</a></li>
               <li><a class="dropdown-item" routerLink="club/bureau" data-bs-dismiss="offcanvas">Le bureau</a></li>
               <li><a class="dropdown-item" routerLink="club/historique" data-bs-dismiss="offcanvas">L'historique</a>
+              <li><a class="dropdown-item" routerLink="contacts" data-bs-dismiss="offcanvas">Nous contacter</a>
               </li>
             </ul>
           </li>
@@ -120,7 +118,7 @@
                   target="_blank" rel="noopener">Roy René : résultats récents</a></li>
             </ul>
           </li>
-          <li *ngIf="logged_member$ | async as member" ngbDropdown class="nav-item dropdown">
+          <li *ngIf="logged_member$ | async " ngbDropdown class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" ngbDropdownToggle id="achatsDropdownMobile">Mes achats</a>
             <ul ngbDropdownMenu class="dropdown-menu" aria-labelledby="achatsDropdownMobile">
               <li><a class="dropdown-item" routerLink="achats/historique" data-bs-dismiss="offcanvas">Mon relevé</a>
@@ -131,7 +129,9 @@
           </li>
 
           <li class="nav-item"><a class="nav-link" routerLink="albums" data-bs-dismiss="offcanvas">Les albums</a></li>
-          <li class="nav-item"><a class="nav-link" routerLink="contacts" data-bs-dismiss="offcanvas">Contacts</a></li>
+
+          <li *ngIf=" (logged_member$ | async) && user_accreditation && user_accreditation.level > 0" class="nav-item"><a class="nav-link" routerLink="../back" data-bs-dismiss="offcanvas">Administration</a></li>
+
         </ul>
       </div>
     </div>
