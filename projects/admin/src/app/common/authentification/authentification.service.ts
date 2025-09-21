@@ -1,9 +1,9 @@
+
 import { Injectable } from '@angular/core';
 import { confirmSignUp, signIn, signUp, signOut, AuthError, SignInInput, getCurrentUser, SignUpOutput, resetPassword, confirmResetPassword, fetchUserAttributes } from 'aws-amplify/auth';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { AuthEvent, Process_flow } from './authentification_interface';
 import { Member } from '../interfaces/member.interface';
-import { Hub } from 'aws-amplify/utils';
 import { MembersService } from '../services/members.service';
 import { ToastService } from '../services/toast.service';
 
@@ -41,6 +41,7 @@ export class AuthentificationService {
   get auth_event$(): Observable<AuthEvent> {
     return this._auth_event$ as Observable<AuthEvent>;
   }
+
 
 
   changeMode(mode: Process_flow) {
@@ -223,4 +224,8 @@ export class AuthentificationService {
   }
 
 
+
+  isLoggedIn(): boolean {
+    return this._logged_member$ && this._logged_member$.getValue() !== null;
+  }
 }
