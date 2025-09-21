@@ -1,4 +1,4 @@
-<div class="offset-md-1 col-md-10 offset-xl-2 col-xl-8 ">
+<div class="offset-md-1 col-md-10 offset-xl-2 col-xl-8 px-1">
     <div class="card mt-3">
         <div class="card-header">
             <div class="row justify-content-start align-items-center">
@@ -23,12 +23,12 @@
                 <div class="">
                     <div class="row justify-content-start align-items-center">
                         <div *ngFor="let root_folder of root_folders"
-                            class="col-1">
-                            <i class="bi bi-folder-fill text-success" (click)="select_root_folder(root_folder)"
+                            class="col-4 col-md-3 justify-content-center text-center mb-3">
+                            <i class="bi bi-folder-fill text-success text-center" (click)="select_root_folder(root_folder)"
                                 style="font-size: 40px; line-height: 1; margin-bottom:0; padding-bottom:0;"></i>
-                            <span class="text-center"
+                            <div class="text-center"
                                 style="font-size: 12px; margin-top:-1px; padding-top:0; line-height:1;">{{ root_folder
-                                }}</span>
+                                }}</div>
                         </div>
                     </div>
                 </div>
@@ -37,7 +37,7 @@
         <div class="card-footer">
             <div class="row align-items-center justify-items-center ">
 
-                <div class="col-4">
+                <div class="d-flex align-items-center col-auto me-3">
                     <button class="btn btn-sm btn-secondary" (click)="updateAlbumThumbnail()">
                         <i class="bi bi-balloon-fill"></i>
                     </button>

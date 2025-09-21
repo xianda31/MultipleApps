@@ -1,34 +1,65 @@
-.dropdown-menu {
-    z-index: 1050 !important;
-    position: absolute;
+// Arrondir uniquement les coins inférieurs de la navbar
+
+// Réduction de la hauteur de la navbar desktop
+.navbar.navbar-expand-md {
+    padding-top: 0.10rem !important;
+    padding-bottom: 0.10rem !important;
+    min-height: 38px;
+    padding-left: 5.5em !important; // espace pour le logo qui déborde
 }
-// .title {
-//     // padding: .5rem 0;
-//     background: #b64040;
-// }
-
-// .top-bar a {
-//     color: #666666;
-// }
-
-// .navbar {
-//     background: #fff;
-//     box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
-//     padding:  0 0 !important;
-// }
-
-// get dropdown menu to work  on hover
-.menu-sm-tight.navbar-nav > .nav-item,
-.menu-sm-tight.navbar-nav > .dropdown,
-.menu-sm-tight.navbar-nav > .nav-link,
-.menu-sm-tight.navbar-nav .dropdown-menu,
-.menu-sm-tight.navbar-nav .dropdown-item {
-    margin-bottom: 0.1rem !important;
-    padding-top: 0.1rem !important;
-    padding-bottom: 0.1rem !important;
+.navbar-nav > .nav-item > .nav-link,
+.navbar-nav > .nav-item > .nav-link.dropdown-toggle {
+    padding-top: 0.10rem !important;
+    padding-bottom: 0.10rem !important;
+    min-height: 24px;
+}
+.navbar-collapse {
+    align-items: center;
+}
+// Taille du logo navbar 
+.logo-overlap {
+    width: 4em;
+    min-width: 4em;
+    height: 0;
+    display: inline-block;
+}
+.logo-navbar {
+    height: 4em;
+    max-height: 136px;
+    width: auto;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border-radius: 0.25em;
+    z-index: 10;
+}
+// Logo overlap styles
+.logo-overlap {
+    z-index: 2;
+    position: relative;
 }
 
+// Sidebar (offcanvas) custom styles for mobile
 @media (max-width: 767.98px) {
+    .offcanvas.offcanvas-start {
+        width: 80vw;
+        max-width: 320px;
+        background: #fff;
+        box-shadow: 2px 0 8px rgba(0,0,0,0.08);
+    }
+    .offcanvas-backdrop.show {
+        opacity: 0.25;
+    }
+    .offcanvas .navbar-nav {
+        padding-top: 1rem;
+    }
+    .offcanvas .dropdown-menu {
+        position: static;
+        float: none;
+        box-shadow: none;
+        margin-bottom: 0.5rem;
+    }
+        // .offcanvas .dropdown-toggle::after {
+        //     display: none;
+        // }
     .menu-sm-tight.navbar-nav > .nav-item,
     .menu-sm-tight.navbar-nav > .dropdown,
     .menu-sm-tight.navbar-nav > .nav-link {
@@ -43,11 +74,24 @@
         vertical-align: middle;
     }
 }
-.dropdown:hover>.dropdown-menu {
+
+// Dropdown menu z-index and hover fix
+.dropdown-menu {
+    z-index: 1050 !important;
+    position: absolute;
+}
+.menu-sm-tight.navbar-nav > .nav-item,
+.menu-sm-tight.navbar-nav > .dropdown,
+.menu-sm-tight.navbar-nav > .nav-link,
+.menu-sm-tight.navbar-nav .dropdown-menu,
+.menu-sm-tight.navbar-nav .dropdown-item {
+    margin-bottom: 0.1rem !important;
+    padding-top: 0.1rem !important;
+    padding-bottom: 0.1rem !important;
+}
+.dropdown:hover > .dropdown-menu {
     display: block;
 }
-
-.dropdown>.dropdown-toggle:active {
-    /*Without this, clicking will make it sticky*/
+.dropdown > .dropdown-toggle:active {
     pointer-events: none;
 }

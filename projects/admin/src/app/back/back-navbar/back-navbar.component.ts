@@ -27,6 +27,14 @@ import { Process_flow } from '../../common/authentification/authentification_int
 export class BackNavbarComponent implements OnInit {
 
   closeBurger(): void {
+    // Close Bootstrap offcanvas if open (for mobile sidebar)
+    const sidebar = document.getElementById('mobileSidebar');
+    if (sidebar && window.innerWidth < 768) {
+      const bsOffcanvas = Offcanvas.getInstance(sidebar);
+      if (bsOffcanvas) {
+        bsOffcanvas.hide();
+      }
+    }
     if (window.innerWidth < 768) {
       this.isCollapsed = true;
     }
