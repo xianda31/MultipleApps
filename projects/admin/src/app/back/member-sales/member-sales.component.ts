@@ -8,8 +8,9 @@ import { InputMemberComponent } from '../input-member/input-member.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MembersService } from '../../common/services/members.service';
+import { Revenue_and_expense_definition } from '../../common/interfaces/system-conf.interface';
 
-
+interface Payment {  [key: string]:  number };
 
 @Component({
   selector: 'app-member-sales',
@@ -22,11 +23,16 @@ export class MemberSalesComponent {
   season: string = '';
   operations: (Revenue | Expense)[] = [];
   revenues: Revenue[] = [];
-    achats_ventes !: Formatted_purchase[];
+  achats_ventes !: Formatted_purchase[];
 
+  accounts: Revenue_and_expense_definition[] = [];
+  selected_account: Revenue_and_expense_definition | null = null;
+  payments: { [key: string]: Payment } = {};
 
-  collectedLicenses : string[] = [];
-  missingMembership : string[] = [];
+  collectedLicenses: string[] = [];
+  missingMembership: string[] = [];
+
+  
 
   members: Member[] = [];
   selected_member: Member | null = null;
@@ -46,6 +52,8 @@ export class MemberSalesComponent {
       switchMap(() => this.systemDataService.get_configuration()),
       tap((conf) => {
         this.season = conf.season;
+        this.accounts = conf.revenue_and_expense_tree.revenues;
+        
       }),
       switchMap((conf) => this.bookService.list_book_entries()),
       catchError((err) => {
@@ -55,32 +63,32 @@ export class MemberSalesComponent {
       })
     ).subscribe(
       (entries) => {
-        this.operations = this.bookService.get_operations();
-        this.check_license_declared();
-        this.check_membership_paied();
-        this.loaded = true;
+  this.operations = this.bookService.get_revenues_from_members();
+  this.check_license_declared();
+  this.check_membership_paied();
+  this.loaded = true;
       }
     );
-  }
+  } 
 
 
 
-    check_membership_paied() {
-      this.missingMembership = [];
-      this.members.forEach((member) => {
-        if (member.license_status !== LicenseStatus.UNREGISTERED) {
-          let full_name = this.memberService.full_name(member);
-          const adh_paied = this.operations
+  check_membership_paied() {
+    this.missingMembership = [];
+    this.members.forEach((member) => {
+      if (member.license_status !== LicenseStatus.UNREGISTERED) {
+        let full_name = this.memberService.full_name(member);
+        const adh_paied = this.operations
           .filter((op) => op.member === full_name)
           .some((op) => op.values['ADH']);
-          
-        if (!adh_paied  ) {
+
+        if (!adh_paied) {
           this.missingMembership.push(full_name);
         }
       }
     });
   }
-  
+
   check_license_declared() {
     this.collectedLicenses = [];
     this.members.forEach((member) => {
@@ -97,19 +105,46 @@ export class MemberSalesComponent {
     });
   }
 
+  get_paiements(accountKey: string | null): { [key: string]: Payment } {
+    if (!accountKey) {
+      return {};
+    }
+    const paiements: { [key: string]: { [month: number]: number } } = {};
+    this.members.forEach((member) => {
+      let full_name = this.memberService.full_name(member);
+      const ops = this.operations
+        .filter((op) => op.member === full_name)
+        .filter((op) => op.values[accountKey] != null);
+      const monthMap: { [month: number]: number } = {};
+      ops.forEach((op) => {
+        const dateObj = new Date(op.date);
+        const month = dateObj.getMonth() + 1;
+        const amount = Number(op.values[accountKey]);
+        monthMap[month] = (monthMap[month] || 0) + amount;
+      });
+      if (Object.keys(monthMap).length > 0) {
+        paiements[full_name] = monthMap;
+      }
+    });
+    return paiements;
+  }
 
   member_selected() {
     if (this.selected_member) {
       let full_name = this.memberService.full_name(this.selected_member);
-       
       this.achats_ventes = this.bookService.get_formated_buy_operations(full_name)
     }
   }
 
- 
-
   member_clear() {
     this.selected_member = null;
     this.revenues = [];
+  }
+
+  onAccountKeyChange(event: Event) {
+    const select = event.target as HTMLSelectElement;
+    select.blur();
+    const account = this.selected_account;
+    this.payments = this.get_paiements(this.selected_account?.key || null);
   }
 }

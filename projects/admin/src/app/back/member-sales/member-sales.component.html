@@ -1,93 +1,138 @@
-<div *ngIf="loaded" class="offset-md-3 col-md-6 px-2">
+<div *ngIf="loaded" class="offset-md-2 col-md-8 px-2">
     <h5>Contrôle des licences FFB et adhésions</h5>
 
-    <div  class="mt-3">
-        <div [class]="' card shadow-sm ' + (collectedLicenses.length > 0 ? 'border-danger' : '')">
+    <div class="mt-3">
+        <div [class]="' card nice_shadow ' + (collectedLicenses.length > 0 ? 'border-danger' : '')">
             <div class="card-header">
                 <strong> [LIC]->FFB : </strong>
-                Licences perçues à enregistrer à la FFB  </div>
+                Licences perçues à enregistrer à la FFB
+            </div>
             <div class="card-body">
                 <ul *ngIf="collectedLicenses.length > 0">
-                        <li *ngFor="let full_name of collectedLicenses">{{full_name}}</li>
+                    <li *ngFor="let full_name of collectedLicenses">{{full_name}}</li>
                 </ul>
                 <div *ngIf="collectedLicenses.length === 0" class="text-muted">
                     <i class="bi bi-check-circle"></i> Toutes les licences perçues ont été déclarées à la FFB
+                </div>
             </div>
         </div>
-    </div>
 
-    <div  class="mt-3">
-        <div [class]="' card shadow-sm ' + (missingMembership.length > 0 ? 'border-danger' : '')">
-            <div class="card-header"> 
-                <strong> FFB->[ADH] : </strong>
-                licenciés FFB n'ayant pas réglé leur adhésion</div>
-            <div class="card-body">
-                <ul *ngIf="missingMembership.length > 0">
+        <div class="mt-3">
+            <div [class]="' card nice_shadow ' + (missingMembership.length > 0 ? 'border-danger' : '')">
+                <div class="card-header">
+                    <strong> FFB->[ADH] : </strong>
+                    licenciés FFB n'ayant pas réglé leur adhésion
+                </div>
+                <div class="card-body">
+                    <ul *ngIf="missingMembership.length > 0">
                         <li *ngFor="let full_name of missingMembership">{{full_name}}</li>
-                </ul>
-                <div *ngIf="missingMembership.length === 0" class="text-muted">
-                    <i class="bi bi-check-circle"></i> Tous les membres déclarés à la FFB sont à jour de leur adhésion
-            </div>
-        </div>
-    </div>
-
-        <div  class="mt-3">
-        <div class="card shadow-sm ">
-            <div class="card-header">
-                <div class="row mb-2 align-items-center mx-0">
-                    <div class="col-auto">
-                        <span class="text-muted">recherche par adhérent : </span>
-                    </div>
-                    <div class="col-auto">
-                        <div class="input-group">
-                            <app-input-member class="form-control form-control-sm" [members]="members"
-                                [(ngModel)]="selected_member" (ngModelChange)="member_selected()"></app-input-member>
-                            <button class="btn btn-sm " (click)="member_clear()">
-                                <i class="bi bi-x-circle"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body">
-
-                <div class="row mx-0">
-                    <div class="col px-0">
-                        <div class="table-responsive">
-                            <table class="table table-sm table-striped table-hover mb-0">
-                               <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Achat</th>
-                        <th>Remarque</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr *ngFor="let achat_vente of achats_ventes">
-                        <td>
-                            {{ achat_vente.date | date:'EEEE d MMMM y':'':'fr-FR' }}
-                        </td>
-                        <td>
-                            <span *ngFor="let item of achat_vente.items">
-                                <span *ngIf="item.type === 'revenue'">
-                                    {{ item.description }} : {{ item.amount | currency:'EUR':'symbol':'1.2-2' }}
-                                </span>
-                            </span>
-                        </td>
-                        <td>
-                            <span *ngFor="let item of achat_vente.items">
-                                <span *ngIf="item.type === 'bancaire'">
-                                    {{ item.description }} : {{ item.amount | currency:'EUR':'symbol':'1.2-2' }}
-                                </span>
-                            </span>
-                        </td>
-                    </tr>
-                </tbody>
-                            </table>
-                        </div>
+                    </ul>
+                    <div *ngIf="missingMembership.length === 0" class="text-muted">
+                        <i class="bi bi-check-circle"></i> Tous les membres déclarés à la FFB sont à jour de leur
+                        adhésion
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
+
+        <div class="mt-3">
+            <div class="card nice_shadow ">
+                <div class="card-header">
+                    <div class="row mb-2 align-items-center mx-0">
+                        <div class="col-auto">
+                            <strong >Paiements adhérent : </strong>
+                        </div>
+                        <div class="col-auto">
+                            <div class="input-group">
+                                <app-input-member class="form-control form-control-sm" [members]="members"
+                                    [(ngModel)]="selected_member"
+                                    (ngModelChange)="member_selected()"></app-input-member>
+                                <button class="btn btn-sm " (click)="member_clear()">
+                                    <i class="bi bi-x-circle"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+
+                    <div class="row mx-0">
+                        <div class="col px-0">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-striped table-hover mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Achat</th>
+                                            <th>Remarque</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr *ngFor="let achat_vente of achats_ventes">
+                                            <td>
+                                                {{ achat_vente.date | date:'EEEE d MMMM y':'':'fr-FR' }}
+                                            </td>
+                                            <td>
+                                                <span *ngFor="let item of achat_vente.items">
+                                                    <span *ngIf="item.type === 'revenue'">
+                                                        {{ item.description }} : {{ item.amount |
+                                                        currency:'EUR':'symbol':'1.2-2' }}
+                                                    </span>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span *ngFor="let item of achat_vente.items">
+                                                    <span *ngIf="item.type === 'bancaire'">
+                                                        {{ item.description }} : {{ item.amount |
+                                                        currency:'EUR':'symbol':'1.2-2' }}
+                                                    </span>
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-3">
+            <div class="card nice_shadow ">
+                <div class="card-header">
+                    <strong>Historique par compte de résultats</strong>
+                    <select class="form-select form-select-sm d-inline w-auto ms-2" [(ngModel)]="selected_account"
+                        (change)="onAccountKeyChange($event)">
+                        <option *ngFor="let account of accounts " [ngValue]="account">
+                            {{ account.key }}
+                        </option>
+                    </select>
+                   <span class="text-muted ms-2">{{selected_account?.description}}</span>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm table-striped table-hover mb-0 mt-2">
+                        <thead class="bg-light" style="position: sticky; top: 0; z-index: 2;">
+                            <tr>
+                                <th>[{{selected_account?.key}}] Adhérents</th>
+                                <th *ngFor="let month of [7, 8, 9, 10, 11, 12,1, 2, 3, 4, 5, 6 ]" class="text-center">{{ month < 10 ? ('0' + month) : month }}</th>
+                            </tr>
+                        </thead>
+                        <tbody *ngIf="selected_account">
+                            <tr *ngFor="let payment of payments | keyvalue">
+                                <td>
+                                    {{ payment.key }}
+                                </td>
+                                <ng-container>
+                                    <td *ngFor="let month of [7, 8, 9, 10, 11, 12,1, 2, 3, 4, 5, 6 ] " class="w-10 text-center">
+                                        <span *ngIf="payment.value[month]">{{ payment.value[month] }}</span>
+                                    </td>
+                                </ng-container>
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+        </div>
