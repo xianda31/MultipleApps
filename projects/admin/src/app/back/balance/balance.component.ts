@@ -8,6 +8,7 @@ import { BookService } from '../services/book.service';
 import { ParenthesisPipe } from '../../common/pipes/parenthesis.pipe';
 import { Balance_board } from '../../common/interfaces/balance.interface';
 import { Router } from '@angular/router';
+import { BackNavigationService } from '../services/back-navigation.service';
 import { DebtsAndAssetsDetailsComponent } from "../books/details/debts-and-assets/debts-and-assets-details.component";
 import { FinancialReportService } from '../services/financial_report.service';
 
@@ -39,6 +40,7 @@ export class BalanceComponent {
     private toastService: ToastService,
     private financialService: FinancialReportService,
     private router: Router,
+    private backNavigationService: BackNavigationService
   ) { }
 
 
@@ -102,6 +104,7 @@ export class BalanceComponent {
     this.financialService.import_balance_sheets(file);
   }
 
+
   show_details(account: 'gift_vouchers' | 'client_debts' | 'commited_payments') {
     switch (account) {
       case 'gift_vouchers':
@@ -113,7 +116,7 @@ export class BalanceComponent {
         this.due = 'dettes';
         break;
       case 'commited_payments':
-        this.router.navigate(['/finance/bank-reconciliation']);
+  this.backNavigationService.goToBankReconciliation();
         break;
       default:
         console.error('Unknown account type:', account);
