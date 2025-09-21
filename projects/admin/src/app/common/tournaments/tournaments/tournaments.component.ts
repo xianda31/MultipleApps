@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Output } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TournamentService } from '../../services/tournament.service';
 import { TournamentTeams } from '../../ffb/interface/tournament_teams.interface';
 import { AuthentificationService } from '../../authentification/authentification.service';
@@ -14,12 +14,14 @@ import { AuthentificationService } from '../../authentification/authentification
 export class TournamentsComponent {
 
   next_tournament_teams: TournamentTeams[] = [];
-  @Output() tournamentSelected = new EventEmitter<number>();
 
   license_nbr = 0; // License number of the logged member
   constructor(
     private tournamentService: TournamentService,
     private auth: AuthentificationService,
+    private router: Router,
+    private route: ActivatedRoute,
+
   ) { }
 
   ngOnInit(): void {
@@ -68,7 +70,8 @@ export class TournamentsComponent {
   }
 
   selectTournament(tournamentId: number) {
-    this.tournamentSelected.emit(tournamentId);
+    this.router.navigate(['/front/tournaments', tournamentId],
+      { relativeTo: this.route });
   }
 
 }
