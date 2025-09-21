@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { Router } from '@angular/router';
-import { SystemDataService } from '../../../../common/services/system-data.service';
+import { BackNavigationService } from '../../../services/back-navigation.service';
 import { BookService } from '../../../services/book.service';
 import { BookEntry } from '../../../../common/interfaces/accounting.interface';
 import { ToastService } from '../../../../common/services/toast.service';
@@ -24,8 +23,7 @@ export class DebtsAndAssetsDetailsComponent {
   constructor(
     private bookService: BookService,
     private toastService : ToastService,
-    private router: Router,
-
+    private backNavigationService: BackNavigationService
   ) { }
 
   ngOnChanges() {
@@ -60,7 +58,7 @@ export class DebtsAndAssetsDetailsComponent {
   }
   show_origin(selection: string) {
     let id = selection.split(' : ')[1];
-    this.router.navigate(['/back/finance/books/editor', id]);
+    this.backNavigationService.goToBooksEditorFull(id);
   }
 
   async compensate(key: string) {

@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { BACK_ROUTE_PATHS } from './routes/back-route-paths';
 import { ShopComponent } from './shop/shop.component';
 import { FeesCollectorComponent } from './fees/fees-collector/fees-collector.component';
 import { BooksOverviewComponent } from './books/books-overview/books-overview.component';
@@ -31,44 +32,41 @@ export const routes: Routes = [
     component: AdminComponent,
     children: [
 
-      { path: 'caisse/ventes', component: ShopComponent },
-      { path: 'caisse/droits-de-table', component: FeesCollectorComponent },
-      { path: 'caisse/produits', component: ProductsComponent },
+  { path: BACK_ROUTE_PATHS.Shop, component: ShopComponent },
+  { path: BACK_ROUTE_PATHS.FeesCollector, component: FeesCollectorComponent },
+  { path: BACK_ROUTE_PATHS.Products, component: ProductsComponent },
       
       
-      { path: 'members/database', component: MembersComponent },
-      { path: 'members/cartes-admission', component: GameCardsEditorComponent },
-      { path: 'members/payments', component: MemberSalesComponent },
+  { path: BACK_ROUTE_PATHS.MembersDatabase, component: MembersComponent },
+  { path: BACK_ROUTE_PATHS.GameCardsEditor, component: GameCardsEditorComponent },
+  { path: BACK_ROUTE_PATHS.MemberSales, component: MemberSalesComponent },
       
       
-      { path: 'finance/état-de-caisse', component: CashBoxStatusComponent },
-      { path: 'finance/bank-reconciliation', component: BankReconciliationComponent },
-      { path: 'finance/expense-and-revenue', component: ExpenseAndRevenueComponent },
-      { path: 'finance/toutes-ecritures', component: BooksEditorComponent },
-      { path: 'finance/expense-and-revenue/details', component: ExpenseAndRevenueDetailsComponent },
-      { path: 'finance/balance', component: BalanceComponent },
-      { path: 'finance/books/base-comptable', component: BooksOverviewComponent },
-      { path: 'finance/books/base-comptable/:report', component: BooksOverviewComponent },
+  { path: BACK_ROUTE_PATHS.CashBoxStatus, component: CashBoxStatusComponent },
+  { path: BACK_ROUTE_PATHS.BankReconciliation, component: BankReconciliationComponent },
+  { path: BACK_ROUTE_PATHS.ExpenseAndRevenue, component: ExpenseAndRevenueComponent },
+  { path: BACK_ROUTE_PATHS.BooksEditor, component: BooksEditorComponent },
+  { path: BACK_ROUTE_PATHS.ExpenseAndRevenueDetails, component: ExpenseAndRevenueDetailsComponent },
+  { path: BACK_ROUTE_PATHS.Balance, component: BalanceComponent },
+  { path: BACK_ROUTE_PATHS.BooksOverview, component: BooksOverviewComponent },
+  { path: BACK_ROUTE_PATHS.BooksOverviewReport, component: BooksOverviewComponent },
       
-      { path: 'finance/books/list', component: BooksListComponent },
-      { path: 'finance/books/editor', component: BooksEditorComponent, data: { access: 'full' } },
-      { path: 'finance/books/editor/:id', component: BooksEditorComponent, data: { access: 'full' } },
+  { path: BACK_ROUTE_PATHS.BooksList, component: BooksListComponent },
+  { path: BACK_ROUTE_PATHS.BooksEditorFull, component: BooksEditorComponent, data: { access: 'full' } },
+  { path: BACK_ROUTE_PATHS.BooksEditorFullId, component: BooksEditorComponent, data: { access: 'full' } },
       
-      { path: 'outils/sysconf', component: SysConfComponent },
-      { path: 'outils/excel_import', component: ImportExcelComponent },
-      { path: 'outils/groups', component: GroupsListComponent },
-      { path: 'outils/cloneDB', component: CloneDBComponent },
+  { path: BACK_ROUTE_PATHS.SysConf, component: SysConfComponent },
+  { path: BACK_ROUTE_PATHS.ImportExcel, component: ImportExcelComponent },
+  { path: BACK_ROUTE_PATHS.GroupsList, component: GroupsListComponent },
+  { path: BACK_ROUTE_PATHS.CloneDB, component: CloneDBComponent },
 
-      { path: 'site/thumbnails', component: SnippetsComponent },
-      { path: 'site/disk', component: RootVolumeComponent },
-      { path: 'site/disk/:root_folder', component: FilemgrWindowsComponent },
-      // { path: 'site/filemgr/documents', component: FilemgrWindowsComponent, data: { root_directory: 'documents/' } },
-      // { path: 'site/filemgr/images', component: FilemgrWindowsComponent , data:{root_directory: 'images/'}},
-      { path: 'site/pages', component: PagesEditorComponent },
+  { path: BACK_ROUTE_PATHS.Snippets, component: SnippetsComponent },
+  { path: BACK_ROUTE_PATHS.RootVolume, component: RootVolumeComponent },
+  { path: BACK_ROUTE_PATHS.FilemgrWindows, component: FilemgrWindowsComponent },
+  { path: BACK_ROUTE_PATHS.PagesEditor, component: PagesEditorComponent },
+  { path: BACK_ROUTE_PATHS.Home, component: BackPageComponent },
 
-   
 
-      { path: 'home', component: BackPageComponent },
       { path: '', component: BackPageComponent },
       { path: '**', component: PageNotFoundComponent },
       // { path: '', redirectTo: 'caisse/produits', pathMatch: 'full' },

@@ -4,9 +4,9 @@ import { Revenue_and_expense_definition } from '../../../common/interfaces/syste
 import { CommonModule, Location } from '@angular/common';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { BookService } from '../../services/book.service';
-import { Revenue, Expense, BookEntry } from '../../../common/interfaces/accounting.interface';
+import { Revenue, Expense } from '../../../common/interfaces/accounting.interface';
 import { combineLatest, tap, switchMap } from 'rxjs';
-import { Router } from '@angular/router';
+import { BackNavigationService } from '../../services/back-navigation.service';
 import { BackComponent } from '../../../common/loc-back/loc-back.component';
 
 
@@ -38,10 +38,8 @@ export class ExpenseAndRevenueDetailsComponent {
     private route: ActivatedRoute,
     private bookService: BookService,
     private systemDataService: SystemDataService,
-    private router: Router,
-    private location: Location
-
-
+    private location: Location,
+    private backNavigationService: BackNavigationService
   ) { }
 
   ngOnInit(): void {
@@ -79,7 +77,7 @@ export class ExpenseAndRevenueDetailsComponent {
 
 
   show_book_entry(book_entry_id: string) {
-    this.router.navigate(['../../books/editor', book_entry_id], { relativeTo: this.route });
+    this.backNavigationService.goToBooksEditorFull(book_entry_id);
   }
 
   back_to_parent_page() {
