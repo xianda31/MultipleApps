@@ -5,6 +5,7 @@ import { Revenue_and_expense_definition } from '../../common/interfaces/system-c
 import { CommonModule } from '@angular/common';
 import { Revenue } from '../../common/interfaces/accounting.interface';
 import { ActivatedRoute, Router } from '@angular/router';
+import { BackNavigationService } from '../services/back-navigation.service';
 import { ToastService } from '../../common/services/toast.service';
 
 
@@ -32,6 +33,7 @@ export class ExpenseAndRevenueComponent {
     private router: Router,
     private route: ActivatedRoute,
     private toatService: ToastService,
+    private backNavigationService: BackNavigationService
   ) {
   }
 
@@ -66,7 +68,7 @@ export class ExpenseAndRevenueComponent {
   }
 
   show_details(expense_or_revenue: 'expense' | 'revenue', key: string) {
-    this.router.navigate(['../expense-and-revenue/details'], { relativeTo: this.route, queryParams: { type: expense_or_revenue, key: key } });
+    this.backNavigationService.goToExpenseAndRevenueDetails({ type: expense_or_revenue, key: key });
   }
   // show_details_extended(event: MouseEvent, expense_or_revenue: 'expense' | 'revenue', key: string) {
   //   console.log('key pressed', event)

@@ -6,6 +6,7 @@ import { SystemDataService } from '../../common/services/system-data.service';
 import { BookService } from '../services/book.service';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { Router } from '@angular/router';
+import { BackNavigationService } from '../services/back-navigation.service';
 import { ToastService } from '../../common/services/toast.service';
 import { switchMap, combineLatest } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -47,6 +48,7 @@ export class BankReconciliationComponent {
     private ToastService: ToastService,
     private systemDataService: SystemDataService,
     private financialService: FinancialReportService,
+    private backNavigationService: BackNavigationService
   ) { }
 
   ngOnInit() {
@@ -109,7 +111,7 @@ highlight(book_entry: BookEntry) {
     }
   }
   show_book_entry(book_entry_id: string) {
-    this.router.navigate(['./back/finance/books/editor', book_entry_id]);
+    this.backNavigationService.goToBooksEditorFull(book_entry_id);
   }
 
   set_bank_report(book_entry: BookEntry, report: string) {

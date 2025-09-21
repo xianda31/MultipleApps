@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { ActivatedRoute, Router } from '@angular/router';
+import { BackNavigationService } from '../../services/back-navigation.service';
 import { combineLatest, switchMap, tap } from 'rxjs';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { DebtsAndAssetsDetailsComponent } from "../details/debts-and-assets/debts-and-assets-details.component";
@@ -112,6 +113,7 @@ export class BooksOverviewComponent {
     private financialService: FinancialReportService,
     private router: Router,
     private route: ActivatedRoute,
+    private backNavigationService: BackNavigationService
   ) { }
 
   ngOnInit() {
@@ -297,12 +299,12 @@ export class BooksOverviewComponent {
   }
 
   show_book_entry(book_entry_id: string) {
-    this.router.navigate(['./admin/finance/books/editor', book_entry_id]);
+    this.backNavigationService.goToBooksEditorFull(book_entry_id);
   }
 
   show(selection: string) {
     let id = selection.split(' : ')[1];
-    this.router.navigate(['./admin/finance/books/editor', id]);
+    this.backNavigationService.goToBooksEditorFull(id);
   }
 
   go_report(report: string) {

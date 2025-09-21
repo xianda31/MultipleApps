@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { BackNavigationService } from '../../services/back-navigation.service';
 import { BookEntry } from '../../../common/interfaces/accounting.interface';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { BookService } from '../../services/book.service';
@@ -30,8 +31,8 @@ export class BooksListComponent  {
     private transactionService: TransactionService,
     private systemDataService: SystemDataService,
     private router: Router,
-    private exportExcelService: BooksExportExcelService
-
+    private exportExcelService: BooksExportExcelService,
+    private backNavigationService: BackNavigationService
   ) { }
 
   ngOnInit() {
@@ -145,7 +146,7 @@ export class BooksListComponent  {
 
 
   show_book_entry(book_entry_id: string) {
-    this.router.navigate(['./back/finance/books/editor', book_entry_id]);
+    this.backNavigationService.goToBooksEditorFull(book_entry_id);
   }
 
   async delete_book_entry(book_entry: BookEntry) {

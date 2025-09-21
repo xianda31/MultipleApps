@@ -7,6 +7,7 @@ import { FileService, S3_BUCKET, S3_ROOT_FOLDERS } from '../../../common/service
 import { ImageService } from '../../../common/services/image.service';
 import { ToastService } from '../../../common/services/toast.service';
 import { ActivatedRoute, Router } from '@angular/router';
+import { BackNavigationService } from '../../services/back-navigation.service';
 
 @Component({
     selector: 'app-filemgr-windows',
@@ -37,10 +38,9 @@ export class FilemgrWindowsComponent {
         private imageService: ImageService,
         private route: ActivatedRoute,
         private router: Router,
-
+        private backNavigationService: BackNavigationService
     ) {
         this.volume_name = S3_BUCKET;
-
     }
 
 
@@ -215,8 +215,7 @@ export class FilemgrWindowsComponent {
     }
 
     back_to_volume() {
-
-        this.router.navigate(['back/site/disk']);
+        this.backNavigationService.goToRootVolume();
     }
 
     click_on_node(key: string, data: S3Item) {
