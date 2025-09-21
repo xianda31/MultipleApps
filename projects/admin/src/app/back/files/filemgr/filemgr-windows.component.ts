@@ -1,12 +1,12 @@
 
 
-import { Component, Input } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FileSystemNode, S3Item } from '../../../common/interfaces/file.interface';
 import { FileService, S3_BUCKET, S3_ROOT_FOLDERS } from '../../../common/services/files.service';
 import { ImageService } from '../../../common/services/image.service';
 import { ToastService } from '../../../common/services/toast.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { BackNavigationService } from '../../services/back-navigation.service';
 
 @Component({
@@ -37,7 +37,6 @@ export class FilemgrWindowsComponent {
         private toastService: ToastService,
         private imageService: ImageService,
         private route: ActivatedRoute,
-        private router: Router,
         private backNavigationService: BackNavigationService
     ) {
         this.volume_name = S3_BUCKET;

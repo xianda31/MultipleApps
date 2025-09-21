@@ -1,8 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
 import { BackNavigationService } from '../../services/back-navigation.service';
-import { FileService, S3_BUCKET, S3_ROOT_FOLDERS } from '../../../common/services/files.service';
+import { S3_BUCKET, S3_ROOT_FOLDERS } from '../../../common/services/files.service';
 import { ThumbnailsService } from '../album-thumbnails/thumbnails.service';
 import { ToastService } from '../../../common/services/toast.service';
 import { FormsModule } from '@angular/forms';
@@ -20,8 +19,6 @@ export class RootVolumeComponent {
   showThumbnails: boolean = false;
 
   constructor(
-    private router: Router,
-    private route: ActivatedRoute,
     private thumbnailsService: ThumbnailsService,
     private toastService: ToastService,
     private backNavigationService: BackNavigationService

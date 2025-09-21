@@ -30,8 +30,6 @@ export class ExpenseAndRevenueComponent {
   constructor(
     private systemDataService: SystemDataService,
     private bookService: BookService,
-    private router: Router,
-    private route: ActivatedRoute,
     private toatService: ToastService,
     private backNavigationService: BackNavigationService
   ) {
@@ -49,7 +47,7 @@ export class ExpenseAndRevenueComponent {
         this.expense_definitions = configuration.revenue_and_expense_tree.expenses;
       });
 
-    this.bookService.list_book_entries().subscribe((entries) => {
+    this.bookService.list_book_entries().subscribe(() => {
       this.revenues = this.bookService.get_revenues();
       this.expenses = this.bookService.get_expenses();
       this.loaded = true;

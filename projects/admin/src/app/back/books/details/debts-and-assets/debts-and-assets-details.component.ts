@@ -1,8 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { Router } from '@angular/router';
 import { BackNavigationService } from '../../../services/back-navigation.service';
-import { SystemDataService } from '../../../../common/services/system-data.service';
 import { BookService } from '../../../services/book.service';
 import { BookEntry } from '../../../../common/interfaces/accounting.interface';
 import { ToastService } from '../../../../common/services/toast.service';
@@ -25,7 +23,6 @@ export class DebtsAndAssetsDetailsComponent {
   constructor(
     private bookService: BookService,
     private toastService : ToastService,
-    private router: Router,
     private backNavigationService: BackNavigationService
   ) { }
 

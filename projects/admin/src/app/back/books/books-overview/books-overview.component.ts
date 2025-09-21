@@ -111,7 +111,6 @@ export class BooksOverviewComponent {
     private transactionService: TransactionService,
     private systemDataService: SystemDataService,
     private financialService: FinancialReportService,
-    private router: Router,
     private route: ActivatedRoute,
     private backNavigationService: BackNavigationService
   ) { }
