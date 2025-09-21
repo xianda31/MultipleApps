@@ -38,11 +38,14 @@
   <app-toaster></app-toaster>
 
 
-  <div class="row justify-content-center mt-1" style="height: 80vh; overflow-y: auto;">
+  <div class="row justify-content-center mt-1" style="height: 80vh; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none;">
     <router-outlet></router-outlet>
   </div>
-
-
+  <style>
+    .row.justify-content-center.mt-1::-webkit-scrollbar {
+      display: none;
+    }
+  </style>
 
   <!-- bandeau pied de page -->
 
@@ -70,3 +73,9 @@
   </div>
 
 </div>
+
+<style>
+    body {
+      overflow-y: hidden !important;
+    }
+  </style>
