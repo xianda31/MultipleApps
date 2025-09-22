@@ -1,3 +1,23 @@
+.snippet-block {
+		border-bottom: 1px solid #dee2e6;
+		border-radius: 0 0 0.5rem 0.5rem;
+		background: #f8f9fa; // Bootstrap bg-light
+		position: relative;
+}
+
+.snippet-block::after {
+		content: '';
+		position: absolute;
+		right: 0;
+		bottom: 0;
+		width: 0.52rem;
+		height: 0.52rem;
+		background: #fff;
+		border-bottom-right-radius: 0.5rem;
+		box-shadow: none;
+		pointer-events: none;
+}
+
 // Réduit l'interligne du texte dans l'innerHTML du template #sequential
 .snippet-float-text,
 .snippet-float-text p {

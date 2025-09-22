@@ -33,7 +33,7 @@ export type Page_input = Omit<Schema['Page']['type'], 'id' | 'createdAt' | 'upda
 
 export enum PAGE_TEMPLATES {
     SEQUENTIAL = 'séquentiel',
-    PUBLICATIONS = 'publications',
+    PUBLICATION = 'publication',
     A_LA_UNE = 'à la une',
     TROMBINOSCOPE = 'trombinoscope',
     LOADABLE = 'téléchargement',

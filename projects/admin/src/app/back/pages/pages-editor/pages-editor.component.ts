@@ -66,7 +66,7 @@ export class PagesEditorComponent {
           this.pageService.createPage({
             id: '',
             title: title,
-            template: PAGE_TEMPLATES.PUBLICATIONS,
+            template: PAGE_TEMPLATES.PUBLICATION,
             snippet_ids: [],
           });
           this.toastService.showInfo('Pages', `La page "${title}" manquait, et a été créée`);

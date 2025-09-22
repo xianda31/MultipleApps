@@ -5,8 +5,8 @@
     @case (PAGE_TEMPLATES.SEQUENTIAL) {
     <ng-container *ngTemplateOutlet="sequential; context: { snippets: snippets }"></ng-container>
     }
-    @case (PAGE_TEMPLATES.PUBLICATIONS) {
-    <ng-container *ngTemplateOutlet="publications; context: { snippets: snippets }"></ng-container>
+    @case (PAGE_TEMPLATES.PUBLICATION) {
+    <ng-container *ngTemplateOutlet="publication; context: { snippets: snippets }"></ng-container>
     }
     @case (PAGE_TEMPLATES.A_LA_UNE) {
     <ng-container *ngTemplateOutlet="a_la_une; context: { snippets: snippets }"></ng-container>
@@ -46,7 +46,7 @@
         }
     </div>
 </ng-template>
-<ng-template #publications let-snippets="snippets">
+<ng-template #publication let-snippets="snippets">
     <div class="offset-md-1 col-md-8 justify-content-center">
 
         <div class="row">
@@ -64,27 +64,41 @@
             <div class="col-md-8">
                 @for (snippet of snippets; track snippet.id) {
                 <div class="col">
-                    <div class="card border-0" id="{{snippet.title}}">
+                    <div class="card border-0 mt-1" id="{{snippet.title}}">
                         <div class="card-body">
-                            <div class="row">
-                                <div class="col-5">
+                            <div class="row flex-nowrap align-items-stretch snippet-block">
+                                <div class="col-5 d-flex align-items-center justify-content-start p-0">
                                     <img [src]="snippet.image_url | async" alt="{{snippet.title}}"
-                                        class="card-img-top ">
+                                        class="img-fluid rounded-start"
+                                        #imgRef
+                                        [style.max-height.px]="textHeight"
+                                        style="max-width:100%; width:auto; object-fit:contain; display:block;">
                                 </div>
-                                <div class="col-7">
-                                    <h2 class="card-title">
-                                        {{snippet.title}}
-                                        <div class="fs-5 text-muted">{{snippet.subtitle}}</div>
-                                    </h2>
-                                    <small class="text-muted">Publié le {{snippet.createdAt | date:'shortDate'}}</small>
+                                <div class="col-7 d-flex flex-column justify-content-center p-0" #textRef>
+                                    <div>
+                                        <h3 class="card-title">
+                                            {{snippet.title}}
+                                            <div class="fs-5 text-muted">{{snippet.subtitle}}</div>
+                                        </h3>
+                                        <small class="text-muted">Publié le {{snippet.createdAt | date:'shortDate'}} </small>
+                                    </div>
                                 </div>
+                                <script>
+                                // Synchronise la hauteur de l'image avec celle du texte
+                                setTimeout(() => {
+                                  const textDiv = document.querySelector('[#textRef]');
+                                  const img = document.querySelector('[#imgRef]');
+                                  if (textDiv && img) {
+                                    img.style.maxHeight = textDiv.offsetHeight + 'px';
+                                  }
+                                }, 100);
+                                </script>
                             </div>
                             <div class="card-text mt-3">
                                 <span class="card-text" [innerHTML]="snippet.content"></span>
                             </div>
                         </div>
                     </div>
-                    <hr class="bg-secondary">
                 </div>
                 }
             </div>

@@ -1,4 +1,4 @@
-import { Component, Input, Renderer2, ElementRef, OnChanges, SimpleChanges, OnInit } from '@angular/core';
+import { Component, Input, Renderer2, ElementRef, OnChanges, SimpleChanges, OnInit, ViewChild, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { map, switchMap } from 'rxjs';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -19,6 +19,10 @@ import { NgbDropdownModule, NgbModule, NgbTooltipModule } from "@ng-bootstrap/ng
   styleUrl: './generic-page.component.scss'
 })
 export class GenericPageComponent implements OnInit, OnChanges {
+  @ViewChild('textRef', { static: false }) textRef!: ElementRef;
+  textHeight: number = 0;
+
+
   @Input() menu_title!: MENU_TITLES | EXTRA_TITLES;
   @Input() snippet_title?: string; // for news, the title of the selected snippet
   page!: Page;
@@ -46,7 +50,8 @@ export class GenericPageComponent implements OnInit, OnChanges {
     private fileService: FileService,
     private router: Router,
     private renderer: Renderer2,
-    private el: ElementRef
+    private el: ElementRef,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -59,6 +64,26 @@ export class GenericPageComponent implements OnInit, OnChanges {
   ngOnInit(): void {
     this.init_relative_links_handler();
     this.loadPageAndSnippets();
+  }
+
+
+  // spécial recalage de la hauteur de l'image sur le texte (mode publication)
+    ngAfterViewInit() {
+    this.updateTextHeight();
+  }
+
+  ngAfterViewChecked() {
+    this.updateTextHeight();
+  }
+
+  updateTextHeight() {
+    if (this.textRef && this.textRef.nativeElement) {
+      const newHeight = this.textRef.nativeElement.offsetHeight;
+      if (this.textHeight !== newHeight) {
+        this.textHeight = newHeight;
+        this.cdr.detectChanges();
+      }
+    }
   }
 
   loadPageAndSnippets() {
