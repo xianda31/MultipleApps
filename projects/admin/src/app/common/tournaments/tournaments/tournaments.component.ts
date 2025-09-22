@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TournamentService } from '../../services/tournament.service';
 import { TournamentTeams } from '../../ffb/interface/tournament_teams.interface';
 import { AuthentificationService } from '../../authentification/authentification.service';
+import { TitleService } from '../../../front/title/title.service';
 
 @Component({
   selector: 'app-tournaments',
@@ -12,7 +13,7 @@ import { AuthentificationService } from '../../authentification/authentification
   styleUrls: ['./tournaments.component.scss']
 })
 export class TournamentsComponent {
-
+  @Input() displayTitle: boolean = true;
   next_tournament_teams: TournamentTeams[] = [];
 
   license_nbr = 0; // License number of the logged member
@@ -21,12 +22,13 @@ export class TournamentsComponent {
     private auth: AuthentificationService,
     private router: Router,
     private route: ActivatedRoute,
+    private titleService: TitleService
 
   ) { }
 
   ngOnInit(): void {
 
-    // this.titleService.setTitle('Les prochains tournois');
+    if(this.displayTitle) this.titleService.setTitle('Les prochains tournois');
     this.loadTournamentTeams();
 
     this.auth.logged_member$.subscribe((member) => {

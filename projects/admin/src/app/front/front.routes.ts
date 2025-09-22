@@ -21,7 +21,7 @@ export const routes: Routes = [
 
 
       { path: 'home', component: HomePage },
-      { path: 'tournaments/next', component: TournamentsComponent },
+      { path: 'tournaments/next', component: TournamentsComponent, data: { displayTitle: true } },
       { path: 'tournaments/resultats_ffb', component: ExternalRedirectComponent, data: { site: 'FFB' } },
       { path: 'ffb_dashboard', component: ExternalRedirectComponent, data: { site: 'FFB_dashboard' } },
       // { path: 'tournaments/resultats_royrene', component: ExternalRedirectComponent, data: { site : 'RoyRené' } },
