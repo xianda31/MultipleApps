@@ -105,6 +105,9 @@ highlight(book_entry: BookEntry) {
     if (transaction.require_deposit_ref) {
       return book_entry.deposit_ref!;
     } else {
+      if(transaction.nominative) {
+        return (book_entry.operations ? book_entry.operations[0].member ?? '' : '');
+      }
       return (book_entry.operations ? book_entry.operations[0].label : '');
     }
   }
