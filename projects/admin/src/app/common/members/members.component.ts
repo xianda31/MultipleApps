@@ -9,10 +9,11 @@ import { GetNewbeeComponent } from '../modals/get-newbee/get-newbee.component';
 import { InputPlayerComponent } from '../ffb/input-licensee/input-player.component';
 import { FFBplayer } from '../ffb/interface/FFBplayer.interface';
 import { FFB_licensee } from '../ffb/interface/licensee.interface';
-import { Member, LicenseStatus } from '../interfaces/member.interface';
+import { Member, LicenseStatus, Member_settings } from '../interfaces/member.interface';
 import { SystemDataService } from '../services/system-data.service';
 import { ToastService } from '../services/toast.service';
 import { PhonePipe } from '../pipes/phone.pipe';
+import { MemberSettingsService } from '../services/member-settings.service';
 
 @Component({
   selector: 'app-members',
@@ -50,15 +51,13 @@ export class MembersComponent implements OnInit {
     private membersService: MembersService,
     private sysConfService: SystemDataService,
     private modalService: NgbModal,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private memberSettingsService: MemberSettingsService
 
   ) {
   }
 
   ngOnInit(): void {
-    // this.radioButtonGroup.valueChanges.subscribe(() => {
-    //   this.onSelectLicence(this.radioButtonGroup.value.radioButton);
-    // });
 
     let today = new Date();
     this.season = this.sysConfService.get_season(today);
@@ -257,5 +256,8 @@ export class MembersComponent implements OnInit {
     this.membersService.deleteMember(member);
   }
 
-}
+  access_settings(member: Member) : void {
+     this.memberSettingsService.access_settings(member);
+  }
 
+}

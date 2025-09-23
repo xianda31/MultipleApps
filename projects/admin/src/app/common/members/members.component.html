@@ -2,13 +2,13 @@
   <div class="card">
     <div class="card-header">
       <div class="row justify-content-between align-items-center">
-  <h5 class="col-12 col-sm">
+        <h5 class="col-12 col-sm">
           Répertoire Club :
           <span> {{members.length}} personnes</span>
         </h5>
-  <h5 class="col-12 col-sm">
-           Base FFB :
-           <span > {{licensees.length - sympatisants_number}} licenciés + {{sympatisants_number}} sympathisants </span>
+        <h5 class="col-12 col-sm">
+          Base FFB :
+          <span> {{licensees.length - sympatisants_number}} licenciés + {{sympatisants_number}} sympathisants </span>
         </h5>
       </div>
     </div>
@@ -58,9 +58,12 @@
                 </ul>
               </div>
             </th>
+
+            
             <th class="d-none d-sm-table-cell">mail</th>
             <th class="d-none d-sm-table-cell"><i class="bi bi-telephone-fill"></i></th>
             <th class="d-none d-sm-table-cell">Ville</th>
+            <th class="text-center">Info</th>
             <th class="text-center">Actions</th>
           </tr>
         </thead>
@@ -76,8 +79,7 @@
                   <span
                     ngbTooltip="{{member.license_taken_at === 'BCSTO' ? 'licencié au Club' : 'Sympathisant licencié au ' + member.license_taken_at}}"
                     tooltipClass="my-custom-class" placement="right">
-                    <i
-                      [class]="member.license_taken_at !== 'BCSTO' ? 'bi bi-tencent-qq' : 'bi bi-person-square'"></i>
+                    <i [class]="member.license_taken_at !== 'BCSTO' ? 'bi bi-tencent-qq' : 'bi bi-person-square'"></i>
                   </span>
                 </td>
               </ng-container>
@@ -94,9 +96,11 @@
                 <td class="text-center"></td>
               </ng-container>
             </ng-container>
+            
             <td class="d-none d-sm-table-cell">{{member.email}}</td>
             <td class="d-none d-sm-table-cell">{{member.phone_one | phone}}</td>
             <td class="d-none d-sm-table-cell">{{member.city }}</td>
+            <td class="text-center"> <i (click)="access_settings(member)" class="bi bi-gear-fill"></i> </td>
             <td class="text-center">
               <i class="bi bi-trash" (click)="deleteMember(member)"></i>
             </td>

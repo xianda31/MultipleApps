@@ -120,7 +120,10 @@
 
         <li *ngIf="(logged_member$ | async)" class="nav-item dropdown  ms-auto me-5" ngbDropdown>
           <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
-            <i class="fs-4 bi-person-circle"></i>
+            <!-- <i class="fs-4 bi-person-circle"></i> -->
+            <img [src]="avatar$ | async" alt="avatar" class="rounded-circle"
+              style="width:28px; height:28px; max-width:28px; max-height:28px; object-fit:cover">
+
             <span class="ms-1">{{ (logged_member$ | async)?.firstname }}</span>
           </a>
           <ul ngbDropdownMenu class="dropdown-menu">

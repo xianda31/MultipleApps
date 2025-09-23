@@ -1,0 +1,56 @@
+<div class="modal-content">
+  <form [formGroup]="preferenceForm">
+    <div class="modal-header">
+      <div class="d-flex align-items-center justify-content-between w-100">
+        <div class="d-flex align-items-center">
+          <div>
+            <i class="bi-gear-fill me-2"></i>
+            Mes préférences
+          </div>
+        </div>
+        <button type="button" class="btn btn-close btn-sm" data-bs-dismiss="modal" aria-label="Close"
+          (click)="exit()"></button>
+      </div>
+    </div>
+    <div class="modal-body text-start">
+
+      <div class="mt-1 d-flex justify-content-between align-items-center">
+        <ng-container *ngIf="has_avatar">
+          <label class="form-label">Ma photo : </label>
+          <input type="file" #icoFileInput1 style="display:none" (change)="changeIco($event)" accept="image/*"
+            title="ma photo">
+          <label for="icoFileInput1" class="form-label visually-hidden">ma photo</label>
+          <img [src]="ico_url$ | async" alt="ico" class="rounded-circle"
+            style="width:64px; height:64px; max-width:64px; max-height:64px; object-fit:cover; cursor:pointer;"
+            (click)="icoFileInput1.click()">
+          <label class="form-label"></label>
+          <i class="ms-2 bi bi-x-circle" (click)="resetIco()"></i>
+        </ng-container>
+
+        <ng-container *ngIf="!has_avatar">
+          <label class="form-label">Aucune photo : </label>
+          <input type="file" #icoFileInput2 style="display:none" (change)="changeIco($event)" accept="image/*"
+            title="ma photo">
+            <button class="ms-2 btn btn-sm btn-outline-primary" (click)="icoFileInput2.click()">
+              <i class="bi bi-upload"></i> Charger une photo
+            </button>
+        </ng-container>
+      </div>
+
+      <div class="mt-2 d-flex align-items-center justify-content-between">
+        <label for="accept_mailing" class="form-label mb-0">Mailing du Club:</label>
+        <div class="form-check form-switch d-flex align-items-center ms-4 mb-0" style="min-height: 0;">
+          <input class="form-check-input me-2" type="checkbox" id="accept_mailing" formControlName="accept_mailing">
+          <label class="form-check-label mb-0" for="accept_mailing">
+            <span *ngIf="preferenceForm.get('accept_mailing')?.value">Oui, j'accepte</span>
+            <span *ngIf="!preferenceForm.get('accept_mailing')?.value">Non, je n'en veux pas</span>
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" (click)="exit()">Fermer</button>
+      <button type="button" class="btn btn-primary" (click)="save()">Enregistrer</button>
+    </div>
+  </form>
+</div>

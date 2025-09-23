@@ -14,6 +14,7 @@ import { Observable } from 'rxjs';
 import { Member } from '../../common/interfaces/member.interface';
 import { ConnexionComponent } from '../../common/authentification/connexion/connexion.component';
 import { Process_flow } from '../../common/authentification/authentification_interface';
+import { MembersService } from '../../common/services/members.service';
 
 
 
@@ -26,19 +27,6 @@ import { Process_flow } from '../../common/authentification/authentification_int
 })
 export class BackNavbarComponent implements OnInit {
 
-  closeBurger(): void {
-    // Close Bootstrap offcanvas if open (for mobile sidebar)
-    const sidebar = document.getElementById('mobileSidebar');
-    if (sidebar && window.innerWidth < 768) {
-      const bsOffcanvas = Offcanvas.getInstance(sidebar);
-      if (bsOffcanvas) {
-        bsOffcanvas.hide();
-      }
-    }
-    if (window.innerWidth < 768) {
-      this.isCollapsed = true;
-    }
-  }
   @Input() season: string = '';
   @Input() entries_nbr: number = 0;
   accreditation_level!: number;
@@ -46,14 +34,15 @@ export class BackNavbarComponent implements OnInit {
   production_mode: boolean = false;
   user_accreditation: Accreditation | null = null;
   logged_member$: Observable<Member | null> = new Observable<Member | null>();
-  isCollapsed = true;
+ 
+  avatar$ !: Observable<string>;
 
 
 
   constructor(
-    private toastService: ToastService,
     private auth: AuthentificationService,
     private groupService: GroupService,
+    private membersService: MembersService,
 
 
   ) { }
@@ -67,6 +56,8 @@ export class BackNavbarComponent implements OnInit {
       if (member !== null) {
         this.user_accreditation = await this.groupService.getUserAccreditation();
         this.force_canvas_to_close();
+
+        this.avatar$ = this.membersService.getMemberAvatar(member);
 
         let groups = await this.groupService.getCurrentUserGroups();
         if (groups.length > 0) {
@@ -114,7 +105,4 @@ export class BackNavbarComponent implements OnInit {
     }
   }
 
-   toggleCollapse() {
-    this.isCollapsed = !this.isCollapsed;
-  }
 }

@@ -13,6 +13,7 @@ export enum S3_ROOT_FOLDERS {
   IMAGES = 'images',
   DOCUMENTS = 'documents',
   ALBUMS = 'albums',
+  PORTRAITS = 'portraits',
   THUMBNAILS = 'thumbnails',
 }
 

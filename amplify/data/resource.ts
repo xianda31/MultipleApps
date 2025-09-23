@@ -110,7 +110,7 @@ const schema = a.schema({
 
   // tournois joués
 
-  
+
   Game: a.model({
     gameId: a.id().required(),
     season: a.string().required(),
@@ -126,7 +126,7 @@ const schema = a.schema({
     }),
     gamers: a.json().required(),
   })
-  .identifier(['gameId'])
+    .identifier(['gameId'])
     .authorization((allow) => [
       allow.guest().to(['read']),
       allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
@@ -136,23 +136,26 @@ const schema = a.schema({
 
     ]),
 
-  // Adhérents et produits Club
+  // Adhérents et personal data
 
 
   Member: a.model({
     license_number: a.string().required(),
+    email: a.string().required(),
     gender: a.string(),
     firstname: a.string(),
     lastname: a.string(),
     birthdate: a.string(),
     city: a.string(),
     season: a.string(),
-    email: a.string().required(),
     phone_one: a.string(),
     orga_license_name: a.string(),
     is_sympathisant: a.boolean(),
     license_status: a.string(),
     license_taken_at: a.string(),
+    has_avatar: a.boolean(),
+    accept_mailing: a.boolean(),
+
 
   })
     .authorization((allow) => [
@@ -160,9 +163,12 @@ const schema = a.schema({
       allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
       allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
       allow.group(Group_names.Support).to(['read', 'create', 'update']),
-      allow.group(Group_names.Member).to(['read']),
+      allow.group(Group_names.Member).to(['read','update']),
 
     ]),
+
+
+  // Produits à la vente
 
   Product: a.model({
     glyph: a.string().required(),

@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, tap, switchMap } from 'rxjs';
+import { BehaviorSubject, Observable, tap, switchMap, of } from 'rxjs';
 import { Member } from '../interfaces/member.interface';
 import { ToastService } from '../services/toast.service';
 import { DBhandler } from './graphQL.service';
+import { FileService, S3_ROOT_FOLDERS } from './files.service';
 
 @Injectable({
   providedIn: 'root'
@@ -13,7 +14,8 @@ export class MembersService {
 
   constructor(
     private toastService: ToastService,
-    private dbHandler: DBhandler
+    private dbHandler: DBhandler,
+    private fileService: FileService
   ) { }
 
 
@@ -144,5 +146,14 @@ export class MembersService {
       return Promise.reject('Error deleting member');
     }
   }
-}
 
+  // utilities functions (once members are loaded)
+
+  getMemberAvatar(member: Member): Observable<string> {
+    const avatar_path = S3_ROOT_FOLDERS.PORTRAITS + '/';
+    const avatar_file = avatar_path + this.full_name(member) + '.png';
+
+    return member.has_avatar ? this.fileService.getPresignedUrl$(avatar_file) : of('anybody.png');
+  }
+
+}
