@@ -1,3 +1,4 @@
+import { Observable } from "rxjs";
 import { Schema } from "../../../../../../amplify/data/resource";
 
 
@@ -25,6 +26,7 @@ export interface Gamer {
     price: number;
     validated: boolean;
     enabled: boolean;
+    photo_url$: Observable<string> | null;
 }
 
 export type Game_input = Omit<Schema['Game']['type'], 'id' | 'createdAt' | 'updatedAt'> ;

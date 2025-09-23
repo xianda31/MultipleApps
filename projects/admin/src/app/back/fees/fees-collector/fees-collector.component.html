@@ -122,9 +122,15 @@
 
 
 <ng-template #fee_editor ; let-gamer="gamer" ; let-doubled="doubled">
-    <div [class]=" gamer_class(gamer) ">
-        <div class="card-body py-0 ">
-            <div class="row">
+    <div [class]="gamer_class(gamer)" style="position: relative;">
+        <div class="card-body py-0 position-relative" style="z-index: 1;">
+            <!-- Avatar wrapper for centering -->
+            <div *ngIf="gamer.photo_url$ | async" class="position-absolute top-50 start-50 translate-middle d-flex justify-content-center align-items-center w-100 h-100" style="z-index: 0; pointer-events: none;">
+                <img [src]="gamer.photo_url$ | async" alt="{{ gamer.lastname }}" class="img-fluid"
+                    style="max-height: 60px; max-width: 60px;object-fit: cover;" (error)="gamer.photo_url = null">
+            </div>
+            <!-- ...existing code... -->
+            <div class="row" style="position: relative; z-index: 1;">
                 <div class="col form-check form-switch">
                     <input class="form-check-input" type="checkbox" [checked]="gamer.enabled" role="switch"
                         (change)="gamer.enabled = !gamer.enabled ; check_status()">
@@ -173,6 +179,7 @@
         </div>
     </div>
 </ng-template>
+
 <ng-template #save_dialog>
     <div class="mx-auto col-auto">
         <!-- warning -->

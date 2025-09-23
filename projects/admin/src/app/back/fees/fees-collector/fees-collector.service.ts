@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { TournamentService } from '../../../common/services/tournament.service';
 import { Person, Player, Team, TournamentTeams } from '../../../common/ffb/interface/tournament_teams.interface';
-import { BehaviorSubject, map, Observable, Subject, Subscription } from 'rxjs';
+import { BehaviorSubject, map, Observable, of, Subject, Subscription } from 'rxjs';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { Member } from '../../../common/interfaces/member.interface';
 import { Game, Gamer } from '../fees.interface';
@@ -23,7 +23,7 @@ import { DBhandler } from "../../../common/services/graphQL.service";
 export class FeesCollectorService {
   tournament: club_tournament | null = null;
 
-  game!: Game ;
+  game!: Game;
   _game$: BehaviorSubject<Game> = new BehaviorSubject<Game>(this.game);
   members: Member[] = [];
   sys_conf !: SystemConfiguration;
@@ -57,7 +57,7 @@ export class FeesCollectorService {
   get game$(): Observable<Game> {
     return this._game$.asObservable();
   }
-  
+
 
   private init_game() {
     this.game = {
@@ -104,7 +104,7 @@ export class FeesCollectorService {
     }
   }
 
-  private update_members_credits() {
+  private update_members_credits_and_avatar() {
     let members = this.get_members();
 
     const subscription = this.gameCardService.check_solvencies(members).subscribe({
@@ -113,6 +113,8 @@ export class FeesCollectorService {
           if (gamer.is_member) {
             let credit = solvencies.get(gamer.license) ?? 0;
             gamer.game_credits = credit;
+            gamer.photo_url$ = this.membersService.getMemberAvatar(this.membersService.getMemberbyLicense(gamer.license)!) ;
+
           }
         });
         this._game$.next(this.game);
@@ -142,7 +144,7 @@ export class FeesCollectorService {
     if (game) {
       this.game = game;
       this.toastService.showSuccess('tournois', 'dernier état de saisie de ce tournoi restauré');
-      this.update_members_credits();   // will update gamers game_credits & trigger _game$.next(this.game)
+      this.update_members_credits_and_avatar();   // will update gamers game_credits & trigger _game$.next(this.game)
       return
     }
 
@@ -169,7 +171,7 @@ export class FeesCollectorService {
         gamer.price = gamer.is_member ? this.game.member_trn_price * factor : this.game.non_member_trn_price * factor;
       });
 
-      this.update_members_credits();   // will update gamers game_credits & trigger _game$.next(this.game)
+      this.update_members_credits_and_avatar();   // will update gamers game_credits & trigger _game$.next(this.game)
     }
     );
   }
@@ -187,10 +189,11 @@ export class FeesCollectorService {
         in_euro: true, // default to euro
         price: this.game.non_member_trn_price,
         validated: false,
-        enabled: true
+        enabled: true,
+        photo_url$: this.is_member(player.license_number) ? this.membersService.getMemberAvatar(this.membersService.getMemberbyLicense(player.license_number)!) : null
       };
       this.game.gamers.push(new_gamer);
-      this.update_members_credits();   // will update gamers game_credits & trigger _game$.next(this.game)
+      this.update_members_credits_and_avatar();   // will update gamers game_credits & trigger _game$.next(this.game)
     }
   }
 
@@ -232,7 +235,8 @@ export class FeesCollectorService {
       index: index,
       price: price,
       validated: false,
-      enabled: true
+      enabled: true,
+      photo_url$: is_member ? this.membersService.getMemberAvatar(this.membersService.getMemberbyLicense(license)!) : null
     };
   }
 

@@ -153,7 +153,7 @@ export class MembersService {
     const avatar_path = S3_ROOT_FOLDERS.PORTRAITS + '/';
     const avatar_file = avatar_path + this.full_name(member) + '.png';
 
-    return member.has_avatar ? this.fileService.getPresignedUrl$(avatar_file) : of('anybody.png');
+    return member.has_avatar ? this.fileService.getPresignedUrl$(avatar_file) : of('');
   }
 
 }
