@@ -5,7 +5,6 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Group_names, Group_priorities } from '../../common/authentification/group.interface';
 import { AuthentificationService } from '../../common/authentification/authentification.service';
 import { GroupService } from '../../common/authentification/group.service';
-import { ToastService } from '../../common/services/toast.service';
 import { environment } from '../../../environments/environment';
 import { NgbCollapseModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { Offcanvas } from 'bootstrap';
@@ -15,6 +14,7 @@ import { Member } from '../../common/interfaces/member.interface';
 import { ConnexionComponent } from '../../common/authentification/connexion/connexion.component';
 import { Process_flow } from '../../common/authentification/authentification_interface';
 import { MembersService } from '../../common/services/members.service';
+import { MemberSettingsService } from '../../common/services/member-settings.service';
 
 
 
@@ -42,7 +42,7 @@ export class BackNavbarComponent implements OnInit {
   constructor(
     private auth: AuthentificationService,
     private groupService: GroupService,
-    private membersService: MembersService,
+    private memberSettingsService: MemberSettingsService
 
 
   ) { }
@@ -57,7 +57,11 @@ export class BackNavbarComponent implements OnInit {
         this.user_accreditation = await this.groupService.getUserAccreditation();
         this.force_canvas_to_close();
 
-        this.avatar$ = this.membersService.getMemberAvatar(member);
+        this.avatar$ = this.memberSettingsService.getAvatarUrl(member);
+        
+        this.memberSettingsService.settingsChange$().subscribe(() => {
+          this.avatar$ = this.memberSettingsService.getAvatarUrl(member);
+        });
 
         let groups = await this.groupService.getCurrentUserGroups();
         if (groups.length > 0) {

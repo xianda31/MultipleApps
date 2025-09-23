@@ -29,6 +29,7 @@ export class FileService {
   ) { }
 
   getPresignedUrl$(path: string): Observable<string> {
+    // console.log('getPresignedUrl$ for ', path);
     return new Observable<string>((subscriber) => {
       getUrl({ path: path, options: { validateObjectExistence: true } })
         .then(getUrlOutput => {

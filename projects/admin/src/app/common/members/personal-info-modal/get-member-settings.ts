@@ -8,6 +8,7 @@ import { of } from 'rxjs';
 import { MembersService } from '../../services/members.service';
 import { ImageService } from '../../services/image.service';
 import { ToastService } from '../../services/toast.service';
+import { MemberSettingsService } from '../../services/member-settings.service';
 
 
 @Component({
@@ -31,9 +32,10 @@ export class GetMemberSettingsComponent {
     private activeModal: NgbActiveModal,
     private formbuilder: FormBuilder,
     private fileService: FileService,
-    private memberService: MembersService,
     private imageService: ImageService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private memberSettingsService: MemberSettingsService,
+    private membersService: MembersService
 
   ) {
 
@@ -46,10 +48,10 @@ export class GetMemberSettingsComponent {
 
   ngOnInit(): void {
 
-    this.full_name = this.memberService.full_name(this.member);
+    this.full_name = this.membersService.full_name(this.member);
 
     this.preferenceForm.patchValue({
-      ico_url$: this.memberService.getMemberAvatar(this.member),
+      ico_url$: this.memberSettingsService.getAvatarUrl(this.member),
       accept_mailing: this.member.accept_mailing ?? false,
       has_avatar: this.member.has_avatar ?? false
     });
@@ -147,17 +149,17 @@ export class GetMemberSettingsComponent {
     return canvas.toDataURL('image/png', 0.95);
   }
 
-  delete_avatar_file() {
+  async delete_avatar_file() {
     const ico_file_name = this.full_name + '.png';
-    this.fileService.delete_file(this.avatar_path + ico_file_name).then(() => {
+    await this.fileService.delete_file(this.avatar_path + ico_file_name).then(() => {
       this.toastService.showSuccess(` préférences de ${this.full_name}`, 'Photo supprimée');
     });
   }
 
-  upload_avatar_file() {
+  async upload_avatar_file() {
     const ico_blob = this.imageService.base64ToBlob(this.base64_ico);
     const ico_file = new File([ico_blob], `${this.full_name}.png`, { type: 'image/png' });
-    this.fileService.upload_file(ico_file, 'portraits/').then(() => {
+    await this.fileService.upload_file(ico_file, 'portraits/').then(() => {
       this.toastService.showSuccess(` préférences de ${this.full_name}`, 'Photo mise à jour');
     });
   }

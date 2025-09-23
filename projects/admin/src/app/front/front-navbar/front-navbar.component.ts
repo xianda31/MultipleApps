@@ -11,6 +11,8 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbDropdownModule, NgbCollapseModule } from '@ng-bootstrap/ng-bootstrap';
 import { Observable } from 'rxjs';
 import { Process_flow } from '../../common/authentification/authentification_interface';
+import { MembersService } from '../../common/services/members.service';
+import { MemberSettingsService } from '../../common/services/member-settings.service';
 
 @Component({
   selector: 'app-front-navbar',
@@ -24,36 +26,44 @@ export class FrontNavbarComponent {
   user_accreditation: Accreditation | null = null;
   lastActiveNavItem: string = '';
   sidebarOpen = false;
+  avatar$ !: Observable<string>;
 
   constructor(
     private auth: AuthentificationService,
     private groupService: GroupService,
+    private memberSettingsService: MemberSettingsService,
+    // private membersService: MembersService,
   ) { }
-  
+
   ngOnInit(): void {
     this.logged_member$ = this.auth.logged_member$;
-    
+
     this.auth.logged_member$.subscribe(async (member) => {
       if (member !== null) {
         this.user_accreditation = await this.groupService.getUserAccreditation();
         this.force_canvas_to_close();
+        this.avatar$ = this.memberSettingsService.getAvatarUrl(member);
+
+        this.memberSettingsService.settingsChange$().subscribe(() => {
+          this.avatar$ = this.memberSettingsService.getAvatarUrl(member);
+        });
       }
     });
   }
 
 
-  
-  closeBurger() {
-    this.sidebarOpen = false;
-  }
-  
+
+  // closeBurger() {
+  //   this.sidebarOpen = false;
+  // }
+
   isNavItemActive(navItem: string): boolean {
     return this.lastActiveNavItem === navItem;
   }
-   onCanvasClose() {
-      this.auth.changeMode(Process_flow.SIGN_IN);
-    }
-  
+  onCanvasClose() {
+    this.auth.changeMode(Process_flow.SIGN_IN);
+  }
+
 
   force_canvas_to_close() {
     const canvas = document.getElementById('loggingOffCanvas');

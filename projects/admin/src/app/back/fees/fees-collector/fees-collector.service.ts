@@ -13,6 +13,7 @@ import { FFBplayer } from '../../../common/ffb/interface/FFBplayer.interface';
 import { MembersService } from '../../../common/services/members.service';
 import { ToastService } from '../../../common/services/toast.service';
 import { DBhandler } from "../../../common/services/graphQL.service";
+import { MemberSettingsService } from '../../../common/services/member-settings.service';
 
 
 
@@ -35,6 +36,7 @@ export class FeesCollectorService {
     private systemDataService: SystemDataService,
     private gameCardService: GameCardService,
     private BookService: BookService,
+    private membersSettingsService: MemberSettingsService,
     private DBhandler: DBhandler
 
 
@@ -113,7 +115,7 @@ export class FeesCollectorService {
           if (gamer.is_member) {
             let credit = solvencies.get(gamer.license) ?? 0;
             gamer.game_credits = credit;
-            gamer.photo_url$ = this.membersService.getMemberAvatar(this.membersService.getMemberbyLicense(gamer.license)!) ;
+            gamer.photo_url$ = this.membersSettingsService.getAvatarUrl(this.membersService.getMemberbyLicense(gamer.license)!) ;
 
           }
         });
@@ -190,7 +192,7 @@ export class FeesCollectorService {
         price: this.game.non_member_trn_price,
         validated: false,
         enabled: true,
-        photo_url$: this.is_member(player.license_number) ? this.membersService.getMemberAvatar(this.membersService.getMemberbyLicense(player.license_number)!) : null
+        photo_url$: this.is_member(player.license_number) ? this.membersSettingsService.getAvatarUrl(this.membersService.getMemberbyLicense(player.license_number)!) : null
       };
       this.game.gamers.push(new_gamer);
       this.update_members_credits_and_avatar();   // will update gamers game_credits & trigger _game$.next(this.game)
@@ -236,7 +238,7 @@ export class FeesCollectorService {
       price: price,
       validated: false,
       enabled: true,
-      photo_url$: is_member ? this.membersService.getMemberAvatar(this.membersService.getMemberbyLicense(license)!) : null
+      photo_url$: is_member ? this.membersSettingsService.getAvatarUrl(this.membersService.getMemberbyLicense(license)!) : null
     };
   }
 

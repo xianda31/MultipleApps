@@ -2,14 +2,14 @@ import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { MembersService } from '../../common/services/members.service';
 import { LicenseesService } from '../licensees/services/licensees.service';
 import { switchMap, tap } from 'rxjs';
-import { FormControl, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule, UpperCasePipe } from '@angular/common';
 import { NgbModal, NgbTooltipModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { GetNewbeeComponent } from '../modals/get-newbee/get-newbee.component';
 import { InputPlayerComponent } from '../ffb/input-licensee/input-player.component';
 import { FFBplayer } from '../ffb/interface/FFBplayer.interface';
 import { FFB_licensee } from '../ffb/interface/licensee.interface';
-import { Member, LicenseStatus, Member_settings } from '../interfaces/member.interface';
+import { Member, LicenseStatus } from '../interfaces/member.interface';
 import { SystemDataService } from '../services/system-data.service';
 import { ToastService } from '../services/toast.service';
 import { PhonePipe } from '../pipes/phone.pipe';
@@ -257,7 +257,7 @@ export class MembersComponent implements OnInit {
   }
 
   access_settings(member: Member) : void {
-     this.memberSettingsService.access_settings(member);
+    const setting_changed =  this.memberSettingsService.access_settings(member);
   }
 
 }

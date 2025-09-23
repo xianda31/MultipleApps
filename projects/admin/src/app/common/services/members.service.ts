@@ -107,11 +107,11 @@ export class MembersService {
     try {
       const newMember = await this.dbHandler.updateMember(member);
       this.toastService.showSuccess('Membre mis à jour', `${newMember.lastname} ${newMember.firstname}`);
-      this._members = this._members.map((m) => m.id === newMember.id ? newMember : m);
-      // this._members = this._members.filter((m) => m.id !== newMember.id);
-      // this._members.push(newMember as Member);
-      this._members = this._members.sort((a, b) => a.lastname.localeCompare(b.lastname))
-      this._members$.next(this._members);
+      if (this._members) {      // could be not loaded yet
+        this._members = this._members.map((m) => m.id === newMember.id ? newMember : m);
+        this._members = this._members.sort((a, b) => a.lastname.localeCompare(b.lastname))
+        this._members$.next(this._members);
+      }
     }
     catch (errors) {
       if (Array.isArray(errors) && errors.length > 0 && typeof errors[0] === 'object' && errors[0] !== null && 'errorType' in errors[0]) {
@@ -147,13 +147,5 @@ export class MembersService {
     }
   }
 
-  // utilities functions (once members are loaded)
-
-  getMemberAvatar(member: Member): Observable<string> {
-    const avatar_path = S3_ROOT_FOLDERS.PORTRAITS + '/';
-    const avatar_file = avatar_path + this.full_name(member) + '.png';
-
-    return member.has_avatar ? this.fileService.getPresignedUrl$(avatar_file) : of('');
-  }
 
 }

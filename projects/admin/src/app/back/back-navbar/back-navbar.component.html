@@ -118,13 +118,16 @@
           </button>
         </li>
 
-        <li *ngIf="(logged_member$ | async)" class="nav-item dropdown  ms-auto me-5" ngbDropdown>
-          <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
-            <!-- <i class="fs-4 bi-person-circle"></i> -->
-            <img [src]="avatar$ | async" alt="avatar" class="rounded-circle"
-              style="width:28px; height:28px; max-width:28px; max-height:28px; object-fit:cover">
-
-            <span class="ms-1">{{ (logged_member$ | async)?.firstname }}</span>
+        <li *ngIf="(logged_member$ | async) as member" class="nav-item dropdown ms-auto me-5" ngbDropdown>
+          <a class="nav-link dropdown-toggle d-flex align-items-center" ngbDropdownToggle href="#">
+            <ng-container *ngIf="member.has_avatar; else defaultIcon">
+              <img [src]="avatar$ | async" alt="avatar" class="rounded-circle align-self-center"
+                style="width:28px; height:28px; max-width:28px; max-height:28px; object-fit:cover;">
+            </ng-container>
+            <ng-template #defaultIcon>
+              <i class="fs-4 bi-person-circle align-self-center"></i>
+            </ng-template>
+            <span class="ms-1 align-self-center">{{ member.firstname }}</span>
           </a>
           <ul ngbDropdownMenu class="dropdown-menu">
             <li> <a class="dropdown-item" (click)="signOut()">
