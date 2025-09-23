@@ -256,8 +256,12 @@ export class MembersComponent implements OnInit {
     this.membersService.deleteMember(member);
   }
 
-  access_settings(member: Member) : void {
-    const setting_changed =  this.memberSettingsService.access_settings(member);
+  access_settings(member: Member): void {
+    this.memberSettingsService.access_settings(member).subscribe((settings_changed) => {
+      if (settings_changed) {
+        this.toastService.showSuccess(`Préférences de ${this.membersService.full_name(member)}`, 'Mise à jour effectuée');
+      }
+    });
   }
 
 }
