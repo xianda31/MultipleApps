@@ -37,7 +37,6 @@ private settings_change$: BehaviorSubject<number> = new BehaviorSubject<number>(
   }
 
   set_settingsChange() {
-    console.log('settings changed');
     this.settings_change$.next(this.settings_change$.getValue() + 1);
   }
 
