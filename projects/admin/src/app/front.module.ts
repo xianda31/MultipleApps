@@ -1,6 +1,9 @@
 import { ExternalRedirectComponent } from './front/front/external-redirect/external-redirect.component';
+import { AlbumComponent } from './front/album/album.component';
+import { Carousel } from './front/carousel/carousel';
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { SharedModule } from './common/shared.module';
 import { RouterModule } from '@angular/router';
 
 import { FrontComponent } from './front/front/front/front.component';
@@ -18,7 +21,8 @@ import { TitleComponent } from './front/title/title.component';
   declarations: [
   ],
   imports: [
-    CommonModule,
+  CommonModule,
+  SharedModule,
     RouterModule.forChild(routes),
     NgbDropdownModule,
     ToasterComponent,
@@ -27,8 +31,10 @@ import { TitleComponent } from './front/title/title.component';
     TournamentsComponent,
     PurchasesComponent,
     GameCardsOwnedComponent,
-  TitleComponent,
-  ExternalRedirectComponent,
+    TitleComponent,
+    ExternalRedirectComponent,
+    AlbumComponent,
+    Carousel
   ],
   exports: [
     CommonModule,
@@ -38,8 +44,10 @@ import { TitleComponent } from './front/title/title.component';
     TournamentsComponent,
     PurchasesComponent,
     GameCardsOwnedComponent,
-  TitleComponent,
-  ExternalRedirectComponent,
+    TitleComponent,
+    ExternalRedirectComponent,
+    AlbumComponent,
+    Carousel
   ],
 })
 export class FrontModule { }
