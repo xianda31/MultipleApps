@@ -8,6 +8,8 @@ import { BookService } from '../../services/book.service';
 import { of } from 'rxjs';
 import { BooksExportExcelService } from '../books-export-excel.service';
 import { TransactionService } from '../../services/transaction.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { GetConfirmationComponent } from '../../modals/get-confirmation/get-confirmation.component';
 
 type Fields = 'date' | 'classe' | 'transaction' | 'montant' | 'tag'
 @Component({
@@ -17,9 +19,9 @@ type Fields = 'date' | 'classe' | 'transaction' | 'montant' | 'tag'
   templateUrl: './books-list.component.html',
   styleUrl: './books-list.component.scss'
 })
-export class BooksListComponent  {
+export class BooksListComponent {
   SLICE_SIZE = 15;
-    slice_start = -this.SLICE_SIZE; // pour le slice des opérations
+  slice_start = -this.SLICE_SIZE; // pour le slice des opérations
 
   loaded: boolean = false;
   season: string = '';
@@ -30,7 +32,9 @@ export class BooksListComponent  {
     private transactionService: TransactionService,
     private systemDataService: SystemDataService,
     private exportExcelService: BooksExportExcelService,
-    private backNavigationService: BackNavigationService
+    private backNavigationService: BackNavigationService,
+    private modalService: NgbModal,
+
   ) { }
 
   ngOnInit() {
@@ -46,12 +50,12 @@ export class BooksListComponent  {
           this.book_entries = [...book_entries];
           this.loaded = true;
         }),
-        (err: any) => {
-          console.error('Error loading book entries:', err);
-          this.loaded = true; // still loaded, but no entries
-          return of([]);
-        }
-      
+      (err: any) => {
+        console.error('Error loading book entries:', err);
+        this.loaded = true; // still loaded, but no entries
+        return of([]);
+      }
+
   }
 
   exportExcel() {
@@ -148,10 +152,18 @@ export class BooksListComponent  {
   }
 
   async delete_book_entry(book_entry: BookEntry) {
-    await this.bookService.delete_book_entry(book_entry);
+
+    const modalRef = this.modalService.open(GetConfirmationComponent, { centered: true });
+    modalRef.componentInstance.title = 'Confirmer la suppression';
+    modalRef.componentInstance.subtitle = `Êtes-vous sûr de vouloir supprimer cette écriture comptable du ${book_entry.date} d'un montant de ${this.total_amount(book_entry).toFixed(2)} € ? Cette action est irréversible.`;
+    modalRef.result.then( async (answer: boolean) => {
+      if (answer) {
+        await this.bookService.delete_book_entry(book_entry);
+      }
+    });
   }
 
-   toggle_slice() {
+  toggle_slice() {
     this.slice_start = (this.slice_start === 0) ? -this.SLICE_SIZE : 0;
   }
 

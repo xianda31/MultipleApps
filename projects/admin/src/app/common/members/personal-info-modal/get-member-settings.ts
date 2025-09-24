@@ -107,7 +107,7 @@ export class GetMemberSettingsComponent {
 
   }
 
-  private resize_to_avatar(img: HTMLImageElement, diameter: number): string {
+  private resize_to_avatar(img: HTMLImageElement, side: number): string {
     // 1. Crop to square
     const width = img.width;
     const height = img.height;
@@ -118,35 +118,27 @@ export class GetMemberSettingsComponent {
       sx = (width - height) / 2;
       sy = 0;
     } else {
-      // Portrait : crop carré à partir du haut
+      // Portrait : crop carré à partir de (height-side)/4
       s = width;
       sx = 0;
-      sy = 0;
+      sy = Math.max(0, (height - side) / 4);
     }
 
-    // 2. Resize to diameter x diameter
+    // 2. Resize to side x side
     const canvas = document.createElement('canvas');
-    canvas.width = diameter;
-    canvas.height = diameter;
+    canvas.width = side;
+    canvas.height = side;
     const ctx = canvas.getContext('2d');
     if (!ctx) return '';
 
-    // 3. Coller sur fond transparent
-    ctx.clearRect(0, 0, diameter, diameter);
+  // 3. Coller sur fond transparent
+  ctx.clearRect(0, 0, side, side);
 
-    // 4. Masque circulaire
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(diameter / 2, diameter / 2, diameter / 2, 0, 2 * Math.PI);
-    ctx.closePath();
-    ctx.clip();
+  // 4. Dessiner l'image recadrée et redimensionnée (carré)
+  ctx.drawImage(img, sx, sy, s, s, 0, 0, side, side);
 
-    // 5. Dessiner l'image recadrée et redimensionnée
-    ctx.drawImage(img, sx, sy, s, s, 0, 0, diameter, diameter);
-    ctx.restore();
-
-    // 6. Retourner en base64 PNG (transparence)
-    return canvas.toDataURL('image/png', 0.95);
+  // 5. Retourner en base64 PNG (transparence)
+  return canvas.toDataURL('image/png', 0.95);
   }
 
   async delete_avatar_file() {
