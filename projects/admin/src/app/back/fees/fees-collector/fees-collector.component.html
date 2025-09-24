@@ -1,5 +1,4 @@
-
-    <div class="card shadow-lg mt-3 g-0">
+<div class="card shadow-lg mt-3 g-0">
         <div class="card-header">
             <!-- bandeau tournoi (date, mode roy rené , alread_charges ? , add_team -->
             <div class="row  justify-content-start align-items-center">
@@ -126,10 +125,9 @@
         <div class="card-body py-0 position-relative" style="z-index: 1;">
             <!-- Avatar wrapper for centering -->
             <div *ngIf="gamer.photo_url$ | async" class="position-absolute top-50 start-50 translate-middle d-flex justify-content-center align-items-center w-100 h-100" style="z-index: 0; pointer-events: none;">
-                <img [src]="gamer.photo_url$ | async" alt="{{ gamer.lastname }}" class="img-fluid"
-                    style="max-height: 60px; max-width: 60px;object-fit: cover;" (error)="gamer.photo_url = null">
+                <img [src]="gamer.photo_url$ | async" alt="{{ gamer.lastname }}" class="img-fluid rounded-circle"
+                    style="max-height: 60px; max-width: 60px; object-fit: cover;" (error)="gamer.photo_url = null">
             </div>
-            <!-- ...existing code... -->
             <div class="row" style="position: relative; z-index: 1;">
                 <div class="col form-check form-switch">
                     <input class="form-check-input" type="checkbox" [checked]="gamer.enabled" role="switch"
