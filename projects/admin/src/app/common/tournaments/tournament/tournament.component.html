@@ -19,8 +19,8 @@
                     <thead>
                         <tr>
                             <th scope="col"></th>
-                            <th scope="col" class="col-5"></th>
-                            <th scope="col" class="col-5"></th>
+                            <th scope="col" ></th>
+                            <th scope="col" ></th>
                             <th scope="col" ></th>
                         </tr>
                     </thead>
@@ -44,7 +44,7 @@
                                 <div class=" text-center">
                                     <button *ngIf="is_in_team(whoAmI?.license_number,team)" (click)="deleteTeam(team)"
                                         class="btn btn-sm  bg-warning">
-                                        Annuler
+                                        <i class="bi bi-trash3-fill"></i>
                                     </button>
                                 </div>
                             </td>
@@ -85,10 +85,6 @@
                 </table>
 
             </div>
-            <ng-template #add_team>
-
-
-            </ng-template>
         </div>
     </div>
 </div>
