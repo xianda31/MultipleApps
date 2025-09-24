@@ -42,7 +42,7 @@ export class GetMemberSettingsComponent {
     this.preferenceForm = this.formbuilder.group({
       ico_url$: [of(this.default_ico)],
       has_avatar: [false],
-      accept_mailing: [false],
+      accept_mailing: [true],
     });
   }
 
@@ -52,7 +52,7 @@ export class GetMemberSettingsComponent {
 
     this.preferenceForm.patchValue({
       ico_url$: this.memberSettingsService.getAvatarUrl(this.member),
-      accept_mailing: this.member.accept_mailing ?? false,
+      accept_mailing: this.member.accept_mailing ?? true,
       has_avatar: this.member.has_avatar ?? false
     });
   };
