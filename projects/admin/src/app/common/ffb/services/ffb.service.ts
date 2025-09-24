@@ -65,8 +65,21 @@ export class FFB_proxyService {
     });
 
     return from((async () => {
-      const response = await restOperation.response;
-      return response.body.json() as unknown as Tournament[];
+      try {
+        const response = await restOperation.response;
+        if (response.body && response.body.json) {
+          return response.body.json() as unknown as Tournament[];
+        } else {
+          throw new Error('Réponse serveur invalide');
+        }
+      } catch (error: any) {
+        if (error?.response?.statusCode === 500) {
+          console.error('Erreur serveur 500 lors de la récupération des tournois');
+        } else {
+          console.error('Erreur lors de la récupération des tournois:', error);
+        }
+        return [];
+      }
     })());
   }
 

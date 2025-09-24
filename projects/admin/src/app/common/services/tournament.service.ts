@@ -3,6 +3,7 @@ import { club_tournament } from '../ffb/interface/club_tournament.interface';
 import { BehaviorSubject, from, map, merge, Observable, scan, switchMap, tap } from 'rxjs';
 import { FFB_proxyService } from '../ffb/services/ffb.service';
 import { TournamentTeams } from '../ffb/interface/tournament_teams.interface';
+import { ToastService } from './toast.service';
 
 @Injectable({
     providedIn: 'root',
@@ -12,7 +13,10 @@ export class TournamentService {
     private _tournamentTeams: TournamentTeams[] = [];
     private _tournamentTeams$ = new BehaviorSubject<TournamentTeams[]>([]);
 
-    constructor(private ffbService: FFB_proxyService) {
+    constructor(
+        private ffbService: FFB_proxyService,
+    private toastService: ToastService
+    ) {
     }
 
     list_next_tournaments(days_back: number): Observable<club_tournament[]> {
@@ -21,7 +25,14 @@ export class TournamentService {
         const start_date = new Date(today);
         start_date.setDate(today.getDate() - days_back);
         return this.ffbService._getTournaments().pipe(
-            map((tournaments) => tournaments.filter((tournament) => new Date(tournament.date) >= start_date)),
+            map((tournaments) => {
+                if (!Array.isArray(tournaments)) {
+                    this.toastService.showErrorToast('connexion au serveur FFB','Erreur serveur FFB ou format inattendu lors de la récupération des tournois');
+                    console.error('Erreur serveur FFB ou format inattendu lors de la récupération des tournois');
+                    return [];
+                }
+                return tournaments.filter((tournament) => new Date(tournament.date) >= start_date);
+            }),
             // tap((tournaments) => { this._tournaments = tournaments; })
         );
     }
