@@ -224,12 +224,13 @@ export class MembersComponent implements OnInit {
     for (let key in next) {
       if (next[key] !== is[key]) {
         diff = true;
-        verbose += `\n${key} changed from ${is[key]} to ${next[key]}`;
+        verbose += `\n${key} est passé de ${is[key]} à ${next[key]}`;
       }
     }
 
     if (diff) {
-      console.log('Member %s %s has changed', member.lastname, member.firstname, verbose);
+      console.log('%s %s a changé ses données : %s', member.lastname, member.firstname, verbose);
+      this.toastService.showInfo(`Fiche de ${member.lastname} ${member.firstname}`, `${verbose}`);
     }
     return diff ? nextMember : null;
   }
