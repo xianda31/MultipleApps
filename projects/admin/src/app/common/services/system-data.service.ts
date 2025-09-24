@@ -64,6 +64,11 @@ export class SystemDataService {
     return this._system_configuration.trace_mode ;
   }
 
+  get_today_season(): string {
+    const today = new Date();
+    return this.get_season(today);
+  }
+
   get_season(date: Date): string {
     const month = 1 + date.getMonth();  // ! zero-based method ...
     const year = date.getFullYear();

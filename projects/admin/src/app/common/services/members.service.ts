@@ -14,9 +14,7 @@ export class MembersService {
 
   constructor(
     private toastService: ToastService,
-    private dbHandler: DBhandler,
-    private fileService: FileService
-  ) { }
+    private dbHandler: DBhandler  ) { }
 
 
   listMembers(): Observable<Member[]> {
