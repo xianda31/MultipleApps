@@ -12,7 +12,7 @@
           (click)="exit()"></button>
       </div>
     </div>
-    <div class="modal-body text-start">
+    <div class="modal-body text-start col-12 col-md-8 mx-auto">
 
       <div class="mt-1 d-flex justify-content-between align-items-center">
         <ng-container *ngIf="has_avatar">
@@ -32,7 +32,7 @@
           <input type="file" #icoFileInput2 style="display:none" (change)="changeIco($event)" accept="image/*"
             title="ma photo">
             <button class="ms-2 btn btn-sm btn-outline-primary" (click)="icoFileInput2.click()">
-              <i class="bi bi-upload"></i> Charger une photo
+              <i class="bi bi-upload"></i> charger une photo
             </button>
         </ng-container>
       </div>
