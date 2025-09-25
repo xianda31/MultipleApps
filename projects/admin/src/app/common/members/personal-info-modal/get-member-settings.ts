@@ -118,10 +118,10 @@ export class GetMemberSettingsComponent {
       sx = (width - height) / 2;
       sy = 0;
     } else {
-      // Portrait : crop carré à partir de (height-side)/4
+      // Portrait : crop carré à partir de (height-width)/2
       s = width;
       sx = 0;
-      sy = Math.max(0, (height - side) / 4);
+      sy = Math.max(0, (height - width) / 2);
     }
 
     // 2. Resize to side x side
