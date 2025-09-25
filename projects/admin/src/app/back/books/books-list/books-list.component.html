@@ -35,7 +35,7 @@
           <th class="col th_hover" (click)="sort_by('tag')"> tag </th>
           <th class="col th_hover" (click)="sort_by('classe')">classe </th>
           <th class="col th_hover" (click)="sort_by('transaction')"> type</th>
-          <th class="col">#</th>
+          <th class="col text-center">actions</th>
         </tr>
       </thead>
 
@@ -53,9 +53,14 @@
             <td *ngIf="first" [rowSpan]="entry.operations.length"> {{class_label(entry) }} </td>
             <td *ngIf="first" [rowSpan]="entry.operations.length">{{transaction_label(entry)}}</td>
             <td *ngIf="first" [rowSpan]="entry.operations.length">
-              <button class="btn btn-sm btn-outline-warning" (click)="delete_book_entry(entry)">
-                <i class="bi bi-trash3"></i>
-              </button>
+              <div class="d-flex justify-content-lg-around">
+                <button class="btn btn-sm btn-outline-primary" (click)="show_book_entry(entry.id)">
+                  <i class="bi bi-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-warning" (click)="delete_book_entry(entry)">
+                  <i class="bi bi-trash3"></i>
+                </button>
+              </div>
             </td>
           </tr>
         </ng-container>
