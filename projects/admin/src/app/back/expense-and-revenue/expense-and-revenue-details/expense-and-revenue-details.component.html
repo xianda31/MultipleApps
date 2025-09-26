@@ -26,7 +26,7 @@
       <tbody>
         <tr *ngFor="let revenue of revenues">
           <td> {{revenue.date | date: 'dd/MM/yyyy'}} </td>
-          <td>{{revenue.label}}</td>
+          <td>{{revenue.label === '' ? revenue.tag : revenue.label}}</td>
           <td>{{revenue.member}}</td>
 
           <td *ngFor="let account of products_accounts " class="text-end">
@@ -58,7 +58,7 @@
           <td>
             {{expense.date | date: 'dd/MM/yyyy'}}
           </td>
-          <td>{{expense.label }}</td>
+          <td>{{expense.label === '' ? expense.tag : expense.label}}</td>
           <!-- <td>{{expense.member}}</td> -->
           <td *ngFor="let account of expenses_accounts " class="text-end">
             {{expense.values[account] | number:truncature:'fr'}}
