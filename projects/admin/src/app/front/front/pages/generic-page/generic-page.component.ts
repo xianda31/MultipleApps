@@ -11,6 +11,8 @@ import { AlbumComponent } from '../../../album/album.component';
 import { TitleService } from '../../../title/title.service';
 import { TruncatePipe } from '../../../../common/pipes/truncate.pipe';
 import { NgbDropdownModule, NgbModule, NgbTooltipModule } from "@ng-bootstrap/ng-bootstrap";
+import { MembersService } from '../../../../common/services/members.service';
+import { Member } from '../../../../common/interfaces/member.interface';
 
 @Component({
   selector: 'app-generic-page',
@@ -18,12 +20,13 @@ import { NgbDropdownModule, NgbModule, NgbTooltipModule } from "@ng-bootstrap/ng
   templateUrl: './generic-page.component.html',
   styleUrl: './generic-page.component.scss'
 })
-export class GenericPageComponent implements OnInit, OnChanges {
+export class GenericPageComponent implements OnInit {
+
   @ViewChild('textRef', { static: false }) textRef!: ElementRef;
   textHeight: number = 0;
 
 
-  @Input() menu_title!: MENU_TITLES | EXTRA_TITLES;
+  @Input() page_title!: MENU_TITLES | EXTRA_TITLES;
   @Input() snippet_title?: string; // for news, the title of the selected snippet
   page!: Page;
   pageTemplate!: PAGE_TEMPLATES;
@@ -42,33 +45,144 @@ export class GenericPageComponent implements OnInit, OnChanges {
     unknown: 'bi-file-earmark-fill'
   };
 
+  FLIPPER_PERIOD = 10000; // ms
+  ROTATION_DURATION = 4000; // ms
+  currentIndex = 0;
+  flipperInterval: any;
+
   constructor(
     private snippetService: SnippetService,
     private pageService: PageService,
     private titleService: TitleService,
     private toastService: ToastService,
     private fileService: FileService,
+    private memberService: MembersService,
     private router: Router,
     private renderer: Renderer2,
     private el: ElementRef,
     private cdr: ChangeDetectorRef
   ) { }
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['menu_title'] && changes['menu_title'].currentValue) {
-      this.menu_title = changes['menu_title'].currentValue;
-      this.snippet_title = changes['snippet_title']?.currentValue ? changes['snippet_title'].currentValue : null;
-      this.loadPageAndSnippets();
-    }
-  }
   ngOnInit(): void {
     this.init_relative_links_handler();
-    this.loadPageAndSnippets();
+
+    this.loadPageAndSnippets(this.page_title);
   }
 
+  ngOnDestroy() {
+    if (this.flipperInterval) {
+      clearInterval(this.flipperInterval);
+    }
+  }
+
+  loadPageAndSnippets(page_title: MENU_TITLES | EXTRA_TITLES) {
+
+    const title = (page_title === EXTRA_TITLES.HIGHLIGHTS) ? MENU_TITLES.NEWS : page_title;
+    // load the page by its title, then load all snippets  for this page
+
+    this.pageService.getPageByTitle(title).pipe(
+      map(page => {
+        if (!page) { throw new Error(page_title + ' page not found') }
+        this.page = page;
+        return page;
+      }),
+      switchMap(() => this.snippetService.listSnippets())
+    )
+      .subscribe((snippets) => {
+        // get the snippets for this page
+        console.log('%s snippets loaded', snippets.length);
+        // check for correct loading of  page's snippets
+        this.snippets = this.page.snippet_ids
+          .map(id => snippets.find(snippet => snippet.id === id))
+          .filter(snippet => snippet !== undefined) as Snippet[];  // filter out undefined values
+
+        // post traitement de la page
+        if (this.snippets.length === 0) {
+          // throw new Error(`No snippets found for page ${this.page.title}`);
+          console.warn('%s snippets found for page %s: %o', this.snippets.length, this.page.title, this.page.snippet_ids);
+        }
+        this.page_post_handling();
+        // Flip automatique après chargement des snippets
+        if (this.pageTemplate === PAGE_TEMPLATES.FLIPPER && this.snippets.length > 1) {
+          if (this.flipperInterval) clearInterval(this.flipperInterval);
+          this.flipperInterval = setInterval(() => {
+            this.currentIndex = (this.currentIndex + 1) % this.snippets.length;
+          }, this.FLIPPER_PERIOD);
+        }
+      });
+  }
+
+  // post treatment of page after loading (sorting, filtering, special titles handling, setting pageTemplate, setting title, etc)
+  page_post_handling() {
+
+    switch (this.page_title) {
+      case MENU_TITLES.NEWS:
+        // NEWS.1 : sort by createdAt desc
+        this.snippets = this.snippets.sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
+        // NEWS.2 : scroll to snippet if snippet_title is provided
+        if (this.snippet_title) {
+          const snippet = this.snippets.find(s => s.title === this.snippet_title);
+          if (snippet) { this.scrollToElement(snippet.title); }
+        }
+        this.titleService.setTitle(this.page.title);
+        this.pageTemplate = this.page.template;
+        break;
+      case EXTRA_TITLES.HIGHLIGHTS:
+        // HIGHLIGHTS.1: filter "featured" snippets (got from news)  and sort by updatedAt desc
+        this.snippets = this.snippets.filter(s => s.featured)
+          .sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''));
+        // HIGHLIGHTS.2: set pageTemplate to A_LA_UNE
+        this.pageTemplate = PAGE_TEMPLATES.A_LA_UNE;
+        break;
+      case MENU_TITLES.BIRTHDAYS:
+
+        const snippet_model = this.snippets[0]; // use the first snippet as a model for birthdays snippets
+
+        this.memberService.get_birthdays_this_next_days(7).pipe(
+          map((result: { [day: string]: Member[]; }) => {
+            const days = Object.keys(result).sort();
+            if (days.length === 0) {
+              return [];
+            }
+            console.log('days', days);
+            return days.map(day => {
+              const members_in_day = result[day];
+
+              return {
+                id: `birthday_snippet_${day}`,
+                title: new Date(day).toLocaleDateString('fr-FR', { weekday: 'long', day: '2-digit' }),
+                content: members_in_day.map(member => `<p>${member.firstname} ${member.lastname}</p>`).join(''),
+                subtitle: 'Joyeux anniversaire',
+                public: false,
+                image: snippet_model.image,
+                image_url: snippet_model.image_url,
+                file: '',
+                folder: '',
+                featured: snippet_model?.featured || false,
+              };
+            });
+          })).subscribe(snippets => {
+            this.snippets = snippets;
+            this.pageTemplate = this.page.template;
+          });
+        break;
+      default:
+        this.titleService.setTitle(this.page.title);
+        this.pageTemplate = this.page.template;
+        break;
+    }
+
+  }
+
+  // special DOM event or handling
+
+  // special pour news
+  readMore(snippet: Snippet) {
+    this.router.navigate(['/front/news', snippet.title]);
+  }
 
   // spécial recalage de la hauteur de l'image sur le texte (mode publication)
-    ngAfterViewInit() {
+  ngAfterViewInit() {
     this.updateTextHeight();
   }
 
@@ -85,61 +199,6 @@ export class GenericPageComponent implements OnInit, OnChanges {
       }
     }
   }
-
-  loadPageAndSnippets() {
-
-    this.pageService.getPageByTitle(((this.menu_title === EXTRA_TITLES.HIGHLIGHTS) ? MENU_TITLES.NEWS : this.menu_title)).pipe(
-      map(page => {
-        if (!page) { throw new Error(this.menu_title + ' page not found') }
-        this.page = page;
-      }),
-      switchMap(() => this.snippetService.listSnippets())
-    )
-      .subscribe((snippets) => {
-        // get the snippets for this page
-        this.snippets = this.page.snippet_ids
-          .map(id => snippets.find(snippet => snippet.id === id))  // check for correct loading of  page's snippets
-          .filter(snippet => snippet !== undefined) as Snippet[];  // filter out undefined values
-
-        this.page_post_handling();
-      });
-  }
-
-  // special pour news
-  readMore(snippet: Snippet) {
-    this.router.navigate(['/front/news', snippet.title]);
-  }
-
-  page_post_handling() {
-
-    switch (this.menu_title) {
-      case MENU_TITLES.NEWS:
-        // NEWS.1 : sort by createdAt desc
-        this.snippets = this.snippets.sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
-        // NEWS.2 : scroll to snippet if snippet_title is provided
-        if (this.snippet_title) {
-          const snippet = this.snippets.find(s => s.title === this.snippet_title);
-          if (snippet) { this.scrollToElement(snippet.title); }
-        }
-        this.titleService.setTitle(this.page.title );
-        this.pageTemplate = this.page.template ;
-        break;
-      case EXTRA_TITLES.HIGHLIGHTS:
-        // HIGHLIGHTS.1: filter "featured" snippets (got from news)  and sort by updatedAt desc
-        this.snippets = this.snippets.filter(s => s.featured)
-          .sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''));
-        // HIGHLIGHTS.2: set pageTemplate to A_LA_UNE
-        this.pageTemplate = PAGE_TEMPLATES.A_LA_UNE;
-        break;
-      default:
-        this.titleService.setTitle(this.page.title );
-        this.pageTemplate = this.page.template ;
-        break;
-    }
-
-  }
-
-
 
 
   doc_icon(file: string): string {
@@ -158,7 +217,7 @@ export class GenericPageComponent implements OnInit, OnChanges {
       a.click();
       window.document.body.removeChild(a);
       window.URL.revokeObjectURL(a.href);
-       this.toastService.showSuccess('Documents', docItem.name + ' a bien été téléchargé');
+      this.toastService.showSuccess('Documents', docItem.name + ' a bien été téléchargé');
     } catch (error) {
       this.toastService.showErrorToast('Erreur lors du téléchargement', docItem.name + ' n\'est pas disponible');
     }
@@ -204,6 +263,17 @@ export class GenericPageComponent implements OnInit, OnChanges {
 
   isMobile() {
     return window.innerWidth < 576;
+  }
+
+  nextSnippet() {
+    if (this.snippets && this.snippets.length > 0) {
+      this.currentIndex = (this.currentIndex + 1) % this.snippets.length;
+    }
+  }
+  prevSnippet() {
+    if (this.snippets && this.snippets.length > 0) {
+      this.currentIndex = (this.currentIndex - 1 + this.snippets.length) % this.snippets.length;
+    }
   }
 
 

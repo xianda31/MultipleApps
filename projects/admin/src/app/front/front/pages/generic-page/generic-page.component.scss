@@ -66,19 +66,38 @@
 	}
 }
 // Réduit l'interligne et la marge des <p> générés par [innerHTML]
-:host ::ng-deep .innerHTML p {
+.tighter-html  {
 	margin-top: 0.3em;
 	margin-bottom: 0.3em;
 	line-height: 1.2;
 }
-// Resserre l'interligne entre le titre et le sous-titre dans les cartes
-.card-title {
-	line-height: 1.1;
-	margin-bottom: 0.2rem;
+.tighter-html,
+.tighter-html * {
+  line-height: 1 !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
 }
-.card-title .text-muted,
-.card-title .fs-5,
-.card-title span {
-	line-height: 1;
-	margin-top: 0;
+
+.rotating-snippet {
+	transition: transform 2s cubic-bezier(.68,-0.55,.27,1.55), opacity 2s;
+	transform: rotateY(90deg);
+	opacity: 0;
+	position: absolute;
+	width: 100%;
+}
+.rotating-snippet.show {
+  transform: rotateY(0deg);
+  opacity: 1;
+  position: relative;
+  z-index: 2;
+}
+.rotating-snippet.hide {
+  pointer-events: none;
+  z-index: 1;
+}
+.snippet-rotator {
+  position: relative;
+  min-height: 200px;
 }

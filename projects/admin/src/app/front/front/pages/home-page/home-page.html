@@ -3,19 +3,23 @@
     <div class="card border-0 mt-3">
         <div class="card-header d-flex justify-content-start align-items-center">
             <span class="text-uppercase col-3 ">bienvenue au club</span>
-            <span class=" p-0 ms-3 fs-5" >
-                  Nous sommes {{ licensees  }} licenciés,  dont {{ sympathisants }} sympathisants.
+            <span class=" p-0 ms-3 fs-5">
+                Nous sommes {{ licensees }} licenciés, dont {{ sympathisants }} sympathisants.
             </span>
         </div>
+        <div class="card-body p-0">
+            <app-generic-page [page_title]="MENU_TITLES.BIRTHDAYS"></app-generic-page>
+        </div>
     </div>
-    
+
     <div class="card border-0 mt-5">
         <div class="card-header d-flex justify-content-between align-items-center">
             <span class="text-uppercase ">Les dernières nouvelles</span>
-            <span class="text-info p-0 ms-2" (click)="goToNews($event)"> ... accéder à la totalité des informations </span>
+            <span class="text-info p-0 ms-2" (click)="goToNews($event)"> ... accéder à la totalité des informations
+            </span>
         </div>
         <div class="card-body p-0">
-            <app-generic-page [menu_title]="highlights"></app-generic-page>
+            <app-generic-page [page_title]="EXTRA_TITLES.HIGHLIGHTS"></app-generic-page>
         </div>
     </div>
 

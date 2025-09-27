@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, tap, switchMap, of } from 'rxjs';
+import { BehaviorSubject, Observable, tap, switchMap, of, map } from 'rxjs';
 import { Member } from '../interfaces/member.interface';
 import { ToastService } from '../services/toast.service';
 import { DBhandler } from './graphQL.service';
@@ -145,5 +145,50 @@ export class MembersService {
     }
   }
 
+// utilities
+
+get_birthdays_this_month(): Observable<Member[]> {
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+
+    return this.listMembers().pipe(
+        map(members => members.filter(m => {
+            if (m.birthdate) {
+                const birthMonth = new Date(m.birthdate).getMonth() + 1;
+                return birthMonth === currentMonth;
+            }
+            return false;
+        }))
+    );
+  }
+  get_birthdays_this_next_days(days_ahead: number): Observable<{ [key: string]: Member[]; }> {
+    const now = new Date();
+    const endDate = new Date();
+    endDate.setDate(now.getDate() + days_ahead);
+    return this.listMembers().pipe(
+      map(members => members.filter(m => {
+        if (m.birthdate) {
+          const birthDate = new Date(m.birthdate);
+          const thisYearBirthday = new Date(now.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+          return thisYearBirthday >= now && thisYearBirthday <= endDate;
+        }
+        return false;
+      })),
+      map(filteredMembers => {
+        const grouped: { [key: string]: Member[] } = {};
+        filteredMembers.forEach(member => {
+          const birthDate = new Date(member.birthdate);
+          const thisYearBirthday = new Date(now.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+          const key = thisYearBirthday.toISOString().slice(0, 10); // YY-MM-DD
+          if (!grouped[key]) {
+            grouped[key] = [];
+          }
+          grouped[key].push(member);
+        });
+        console.log('Grouped birthdays:', grouped);
+        return grouped;
+      })
+    );
+  }
 
 }

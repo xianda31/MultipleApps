@@ -53,16 +53,16 @@ export class CustomRouter implements OnInit {
   }
 
   customRoutes = [
-    { path: 'club/acteurs', menu_title: MENU_TITLES.ACTEURS },
-    { path: 'club/documents', menu_title: MENU_TITLES.DOCUMENTS },
-    { path: 'club/bureau', menu_title: MENU_TITLES.BUREAU },
-    { path: 'club/historique', menu_title: MENU_TITLES.HISTOIRE },
-    { path: 'école/cours', menu_title: MENU_TITLES.COURS },
-    { path: 'news', menu_title: MENU_TITLES.NEWS },
-    { path: 'news/:title', menu_title: MENU_TITLES.NEWS },
-    { path: 'albums', menu_title: MENU_TITLES.ALBUMS },
-    { path: 'contacts', menu_title: MENU_TITLES.CONTACTS },
-    { path: 'legals', menu_title: MENU_TITLES.LEGALS },
+    { path: 'club/acteurs', page_title: MENU_TITLES.ACTEURS },
+    { path: 'club/documents', page_title: MENU_TITLES.DOCUMENTS },
+    { path: 'club/bureau', page_title: MENU_TITLES.BUREAU },
+    { path: 'club/historique', page_title: MENU_TITLES.HISTOIRE },
+    { path: 'école/cours', page_title: MENU_TITLES.COURS },
+    { path: 'news', page_title: MENU_TITLES.NEWS },
+    { path: 'news/:title', page_title: MENU_TITLES.NEWS },
+    { path: 'albums', page_title: MENU_TITLES.ALBUMS },
+    { path: 'contacts', page_title: MENU_TITLES.CONTACTS },
+    { path: 'legals', page_title: MENU_TITLES.LEGALS },
   ];
 }
 
