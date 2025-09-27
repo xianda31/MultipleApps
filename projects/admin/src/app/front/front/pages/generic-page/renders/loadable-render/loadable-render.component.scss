@@ -1,0 +1,23 @@
+// Brief effect for download button
+.downloaded-effect {
+  background-color: #e2e6ea !important;
+  border: 2px solid #6c757d !important;
+  box-shadow: 0 0 0 0.2rem #6c757d66 !important;
+  color: #212529 !important;
+  transition: background-color 0.2s, box-shadow 0.2s, border 0.2s;
+}
+.loadable-wrapper {
+  .card {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  .card-title {
+    font-size: 1rem;
+    font-weight: 600;
+  }
+  .card-text {
+    font-size: 0.95rem;
+    line-height: 1.2;
+  }
+}

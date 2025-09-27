@@ -7,23 +7,44 @@ import { FileService } from '../../../../common/services/files.service';
 import { PageService } from '../../../../common/services/page.service';
 import { SnippetService } from '../../../../common/services/snippet.service';
 import { ToastService } from '../../../../common/services/toast.service';
-import { AlbumComponent } from '../../../album/album.component';
 import { TitleService } from '../../../title/title.service';
-import { TruncatePipe } from '../../../../common/pipes/truncate.pipe';
 import { NgbDropdownModule, NgbModule, NgbTooltipModule } from "@ng-bootstrap/ng-bootstrap";
 import { MembersService } from '../../../../common/services/members.service';
 import { Member } from '../../../../common/interfaces/member.interface';
+import { TrombinoscopeRenderComponent } from './renders/trombinoscope-render/trombinoscope-render.component';
+import { SequentialRenderComponent } from './renders/sequential-render/sequential-render.component';
+import { PublicationRenderComponent } from './renders/publication-render/publication-render.component';
+import { ALaUneRenderComponent } from './renders/a-la-une-render/a-la-une-render.component';
+import { LoadableRenderComponent } from './renders/loadable-render/loadable-render.component';
+import { CardsImgTopRenderComponent } from './renders/cards-img-top-render/cards-img-top-render.component';
+import { CardsImgBottomRenderComponent } from './renders/cards-img-bottom-render/cards-img-bottom-render.component';
+import { AlbumsRenderComponent } from './renders/albums-render/albums-render.component';
+import { FlipperRenderComponent } from './renders/flipper-render/flipper-render.component';
 
 @Component({
   selector: 'app-generic-page',
-  imports: [CommonModule, AlbumComponent, TruncatePipe, NgbModule, NgbTooltipModule, NgbDropdownModule],
+  imports: [
+    CommonModule,
+    NgbModule,
+    NgbTooltipModule,
+    NgbDropdownModule,
+    TrombinoscopeRenderComponent,
+    SequentialRenderComponent,
+    PublicationRenderComponent,
+    ALaUneRenderComponent,
+    LoadableRenderComponent,
+    CardsImgTopRenderComponent,
+    CardsImgBottomRenderComponent,
+    AlbumsRenderComponent,
+    FlipperRenderComponent
+  ],
   templateUrl: './generic-page.component.html',
   styleUrl: './generic-page.component.scss'
 })
-export class GenericPageComponent implements OnInit {
+export class GenericPageComponent implements OnInit,OnChanges {
 
-  @ViewChild('textRef', { static: false }) textRef!: ElementRef;
-  textHeight: number = 0;
+  // @ViewChild('textRef', { static: false }) textRef!: ElementRef;
+  // textHeight: number = 0;
 
 
   @Input() page_title!: MENU_TITLES | EXTRA_TITLES;
@@ -36,14 +57,7 @@ export class GenericPageComponent implements OnInit {
   TRUNCATE_LIMIT = 300; //  truncating news content
   TRUNCATE_HYSTERISIS = 50; // threshold to show "Read more" link
 
-  // def for documents
-  icons: { [key: string]: string } = {
-    pdf: 'bi-file-earmark-pdf-fill',
-    word: 'bi-file-earmark-word-fill',
-    excel: 'bi-file-earmark-excel-fill',
-    powerpoint: 'bi-file-earmark-powerpoint-fill',
-    unknown: 'bi-file-earmark-fill'
-  };
+ 
 
   FLIPPER_PERIOD = 10000; // ms
   ROTATION_DURATION = 4000; // ms
@@ -55,13 +69,24 @@ export class GenericPageComponent implements OnInit {
     private pageService: PageService,
     private titleService: TitleService,
     private toastService: ToastService,
-    private fileService: FileService,
     private memberService: MembersService,
     private router: Router,
     private renderer: Renderer2,
     private el: ElementRef,
-    private cdr: ChangeDetectorRef
+    // private cdr: ChangeDetectorRef
   ) { }
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['page_title'] && !changes['page_title'].firstChange) {
+      this.loadPageAndSnippets(this.page_title);
+    }
+    if (changes['snippet_title'] && !changes['snippet_title'].firstChange && this.page_title === MENU_TITLES.NEWS) {
+      // Scroll to the snippet if snippet_title changes
+      const snippet = this.snippets.find(s => s.title === this.snippet_title);
+      if (snippet) {
+        // this.scrollToElement(snippet.title);
+      }
+    }
+  }
 
   ngOnInit(): void {
     this.init_relative_links_handler();
@@ -122,7 +147,7 @@ export class GenericPageComponent implements OnInit {
         // NEWS.2 : scroll to snippet if snippet_title is provided
         if (this.snippet_title) {
           const snippet = this.snippets.find(s => s.title === this.snippet_title);
-          if (snippet) { this.scrollToElement(snippet.title); }
+          // if (snippet) { this.scrollToElement(snippet.title); }
         }
         this.titleService.setTitle(this.page.title);
         this.pageTemplate = this.page.template;
@@ -182,46 +207,24 @@ export class GenericPageComponent implements OnInit {
   }
 
   // spécial recalage de la hauteur de l'image sur le texte (mode publication)
-  ngAfterViewInit() {
-    this.updateTextHeight();
-  }
+  // ngAfterViewInit() {
+  //   this.updateTextHeight();
+  // }
 
-  ngAfterViewChecked() {
-    this.updateTextHeight();
-  }
+  // ngAfterViewChecked() {
+  //   this.updateTextHeight();
+  // }
 
-  updateTextHeight() {
-    if (this.textRef && this.textRef.nativeElement) {
-      const newHeight = this.textRef.nativeElement.offsetHeight;
-      if (this.textHeight !== newHeight) {
-        this.textHeight = newHeight;
-        this.cdr.detectChanges();
-      }
-    }
-  }
+  // updateTextHeight() {
+  //   if (this.textRef && this.textRef.nativeElement) {
+  //     const newHeight = this.textRef.nativeElement.offsetHeight;
+  //     if (this.textHeight !== newHeight) {
+  //       this.textHeight = newHeight;
+  //       this.cdr.detectChanges();
+  //     }
+  //   }
+  // }
 
-
-  doc_icon(file: string): string {
-    const fileType = file.split('.').pop() || '';
-    const icon = Object.keys(this.icons).find(key => key === fileType);
-    return icon ? this.icons[icon] : this.icons['unknown'];
-  }
-  async downloadDocument(snippet: Snippet) {
-    const docItem = { name: snippet.title, url: snippet.file };
-    try {
-      const blob = await this.fileService.downloadBlob(docItem.url);
-      const a = window.document.createElement('a');
-      a.href = window.URL.createObjectURL(blob);
-      a.download = docItem.name;
-      window.document.body.appendChild(a);
-      a.click();
-      window.document.body.removeChild(a);
-      window.URL.revokeObjectURL(a.href);
-      this.toastService.showSuccess('Documents', docItem.name + ' a bien été téléchargé');
-    } catch (error) {
-      this.toastService.showErrorToast('Erreur lors du téléchargement', docItem.name + ' n\'est pas disponible');
-    }
-  }
 
 
   // handling of DOM events
@@ -252,29 +255,32 @@ export class GenericPageComponent implements OnInit {
   }
 
 
-  scrollToElement(title: string) {
-    setTimeout(() => {
-      const element = document.getElementById(title);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }, 0);
-  }
+  // scrollToElement(title: string) {
+  //   setTimeout(() => {
+  //     const element = document.getElementById(title);
+  //     if (element) {
+  //       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  //     }
+  //   }, 0);
+  // }
 
-  isMobile() {
-    return window.innerWidth < 576;
-  }
+  // isMobile() {
+  //   return window.innerWidth < 576;
+  // }
 
-  nextSnippet() {
-    if (this.snippets && this.snippets.length > 0) {
-      this.currentIndex = (this.currentIndex + 1) % this.snippets.length;
-    }
-  }
-  prevSnippet() {
-    if (this.snippets && this.snippets.length > 0) {
-      this.currentIndex = (this.currentIndex - 1 + this.snippets.length) % this.snippets.length;
-    }
-  }
+  // nextSnippet() {
+  //   if (this.snippets && this.snippets.length > 0) {
+  //     this.currentIndex = (this.currentIndex + 1) % this.snippets.length;
+  //   }
+  // }
+  // prevSnippet() {
+  //   if (this.snippets && this.snippets.length > 0) {
+  //     this.currentIndex = (this.currentIndex - 1 + this.snippets.length) % this.snippets.length;
+  //   }
+  // }
 
+  isKnownTemplate(template: PAGE_TEMPLATES): boolean {
+    return Object.values(PAGE_TEMPLATES).includes(template);
+  }
 
 }

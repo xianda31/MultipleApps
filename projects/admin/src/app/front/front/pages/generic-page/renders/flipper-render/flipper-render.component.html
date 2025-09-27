@@ -1,0 +1,15 @@
+<div class="flipper-wrapper">
+  <div class="snippet-rotator">
+    <ng-container *ngFor="let snippet of snippets; let i = index; trackBy: trackById">
+      <div class="rotating-snippet" [class.show]="i === currentIndex" [class.hide]="i !== currentIndex">
+        <div class="card h-100">
+          <img [src]="snippet.image_url" class="card-img-top" alt="{{snippet.title}}">
+          <div class="card-body">
+            <h5 class="card-title">{{snippet.title}}</h5>
+            <div class="card-text tighter-html" [innerHTML]="snippet.content"></div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+</div>

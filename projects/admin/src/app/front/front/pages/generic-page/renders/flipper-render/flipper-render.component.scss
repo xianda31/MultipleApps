@@ -1,0 +1,23 @@
+.flipper-wrapper {
+  .snippet-rotator {
+    position: relative;
+    min-height: 200px;
+  }
+  .rotating-snippet {
+    transition: transform 2s cubic-bezier(.68,-0.55,.27,1.55), opacity 2s;
+    transform: rotateY(90deg);
+    opacity: 0;
+    position: absolute;
+    width: 100%;
+  }
+  .rotating-snippet.show {
+    transform: rotateY(0deg);
+    opacity: 1;
+    position: relative;
+    z-index: 2;
+  }
+  .rotating-snippet.hide {
+    pointer-events: none;
+    z-index: 1;
+  }
+}
