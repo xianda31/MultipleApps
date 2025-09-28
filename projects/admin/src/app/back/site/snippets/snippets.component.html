@@ -58,7 +58,7 @@
                         </td>
                         <td *ngIf="snippet.image" class="text-start">
                             <!-- {{presigned_url(snippet.image) | async}} -->
-                            <img *ngIf="snippet.image" [src]="snippet.image_url| async" alt="{{ snippet.title }}"
+                            <img *ngIf="snippet.image" [src]="snippet.image_url" alt="{{ snippet.title }}"
                                 class="img-fluid snippet-img-limited">
                         </td>
                         <td *ngIf="!snippet.image" class="text-start">
