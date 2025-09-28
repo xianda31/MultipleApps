@@ -15,13 +15,15 @@ export interface AuthEvent {
 export enum Group_names {
   System = 'Systeme',
   Admin = 'Administrateur',
+  Editor = 'Editeur',
   Support = 'Contributeur',
   Member = 'Membre'
 }
 
 export const Group_priorities: { [K in Group_names]: number } = {
-  [Group_names.System]: 3,
-  [Group_names.Admin]: 2,
+  [Group_names.System]: 4,
+  [Group_names.Admin]: 3,
+  [Group_names.Editor]: 2,
   [Group_names.Support]: 1,
   [Group_names.Member]: 0,
 };
@@ -29,6 +31,7 @@ export const Group_priorities: { [K in Group_names]: number } = {
 export const Group_icons: { [K in Group_names]: string } = {
   [Group_names.Member]: 'bi bi-person-fill',
   [Group_names.Support]: 'bi bi-person-check-fill',
+  [Group_names.Editor]: 'bi bi-pencil-square',
   [Group_names.Admin]: 'bi bi-mortarboard-fill',
   [Group_names.System]: 'bi bi-tools'
 };

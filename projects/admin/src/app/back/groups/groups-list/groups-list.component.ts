@@ -72,7 +72,7 @@ export class GroupsListComponent implements OnInit {
       .catch((error) => { this.toastService.showErrorToast('Gestion des accès', `Opération refusée: ${error}`); });
 
     this._addUserToGroup(user.Username, new_group) // Add to new group
-      .then(() => { this.toastService.showSuccess('Gestion des accès', `${user.member.firstname} ${user.member.lastname} ajouté au groupe ${new_group}`); })
+      .then(() => { this.toastService.showSuccess('Gestion des accès', `${user.member.firstname} ${user.member.lastname} mis dans le groupe ${new_group}`); })
       .catch((error) => { this.toastService.showErrorToast('Gestion des accès', `Opération refusée: ${error}`); });
 
   }

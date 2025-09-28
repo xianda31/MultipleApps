@@ -2,15 +2,18 @@ import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
 import { addUserToGroup } from './add-user-to-group/resource';
 import { listUsersInGroup } from './list-users-in-group/resource';
 import { removeUserFromGroup } from './remove-user-from-group/resource';
-import { image, rank } from 'd3';
-// import { Group_names } from '../../projects/common/authentification/group.interface';
 
-enum Group_names {
+
+// import { Group_names } from '../../projects/admin/src/app/common/authentification/group.interface';
+ enum Group_names {
   System = 'Systeme',
   Admin = 'Administrateur',
+  Editor = 'Editeur',
   Support = 'Contributeur',
   Member = 'Membre'
 }
+
+
 
 const schema = a.schema({
 
@@ -50,6 +53,7 @@ const schema = a.schema({
     .authorization((allow) => [
       allow.group(Group_names.System),
       allow.group(Group_names.Admin),
+      allow.group(Group_names.Editor),
       allow.group(Group_names.Support),
     ])
     .handler(a.handler.function(listUsersInGroup))
@@ -84,6 +88,7 @@ const schema = a.schema({
       allow.guest().to(['read']),
       allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
       allow.group(Group_names.Admin).to(['read', 'create', 'update']),
+      allow.group(Group_names.Editor).to(['read', 'create']),
       allow.group(Group_names.Support).to(['read', 'create']),
       allow.group(Group_names.Member).to(['read']),
 
@@ -100,8 +105,9 @@ const schema = a.schema({
     .authorization((allow) => [
       allow.guest().to(['read']),
       allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
-      allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
-      allow.group(Group_names.Support).to(['read', 'create']),
+      allow.group(Group_names.Admin).to(['read',  'update', 'delete']),
+      allow.group(Group_names.Editor).to(['read']),
+      allow.group(Group_names.Support).to(['read']),
       allow.group(Group_names.Member).to(['read']),
 
     ]),
@@ -131,8 +137,10 @@ const schema = a.schema({
       allow.guest().to(['read']),
       allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
       allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Editor).to(['read', 'create', 'update']),
       allow.group(Group_names.Support).to(['read', 'create', 'update']),
       allow.group(Group_names.Member).to(['read']),
+
 
     ]),
 
@@ -162,6 +170,7 @@ const schema = a.schema({
       allow.guest().to(['read']),
       allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
       allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Editor).to(['read', 'create', 'update']),
       allow.group(Group_names.Support).to(['read', 'create', 'update']),
       allow.group(Group_names.Member).to(['read','update']),
 
@@ -183,6 +192,7 @@ const schema = a.schema({
       allow.guest().to(['read']),
       allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
       allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Editor).to(['read', 'create']),
       allow.group(Group_names.Support).to(['read', 'create']),
       allow.group(Group_names.Member).to(['read']),
 
@@ -205,6 +215,7 @@ const schema = a.schema({
       allow.guest().to(['read']),
       allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
       allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Editor).to(['read', 'create', 'update', 'delete']),
       allow.group(Group_names.Support).to(['read']),
       allow.group(Group_names.Member).to(['read']),
 
@@ -222,6 +233,7 @@ const schema = a.schema({
       allow.guest().to(['read']),
       allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
       allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Editor).to(['read', 'create', 'update', 'delete']),
       allow.group(Group_names.Support).to(['read']),
       allow.group(Group_names.Member).to(['read']),
 

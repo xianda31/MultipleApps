@@ -1,17 +1,20 @@
 import { defineAuth } from '@aws-amplify/backend';
-import { data } from '../data/resource';
 import { postConfirmation } from './post-confirmation/resource';
 import { addUserToGroup } from '../data/add-user-to-group/resource';
 import { listUsersInGroup } from '../data/list-users-in-group/resource';
 import { removeUserFromGroup } from '../data/remove-user-from-group/resource';
 
-// import { Group_names } from '../../projects/common/authentification/group.interface';
-enum Group_names {
+// import { Group_names } from '../../projects/admin/src/app/common/authentification/group.interface';
+ enum Group_names {
   System = 'Systeme',
   Admin = 'Administrateur',
+  Editor = 'Editeur',
   Support = 'Contributeur',
   Member = 'Membre'
 }
+
+
+
 /**
  * Define and configure your auth resource
  * @see https://docs.amplify.aws/gen2/build-a-backend/auth
