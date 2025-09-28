@@ -133,8 +133,8 @@ export class GenericPageComponent implements OnInit, OnChanges {
               return {
                 id: `birthday_snippet_${day}`,
                 title: new Date(day).toLocaleDateString('fr-FR', { weekday: 'long', day: '2-digit', month: 'long' }),
-                content: `<p> Joyeux anniversaire à ` + members_in_day.map(member => `${member.firstname} ${member.lastname}`).join(' et ') + `</p>`,
-                subtitle: 'Joyeux anniversaire',
+                content: `<p>` + members_in_day.map(member => ` <span>${member.firstname} ${member.lastname}</span>`).join('<br>') + `</p>`,
+                subtitle: 'Joyeux anniversaire à ...',
                 public: false,
                 image: snippet_model.image,
                 image_url: snippet_model.image_url,

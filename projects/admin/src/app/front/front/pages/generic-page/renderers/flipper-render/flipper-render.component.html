@@ -1,7 +1,5 @@
 <div class="flipper-wrapper">
-  <div class="row offset-sm-3 col-sm-6">
-
-
+  <div class="row offset-sm-3 col-sm-6 p-2">
     <div class="snippet-rotator">
       <ng-container *ngFor="let snippet of snippets; let i = index; trackBy: trackById">
         <div class="rotating-snippet" [class.show]="i === currentIndex" [class.hide]="i !== currentIndex"
@@ -9,15 +7,15 @@
 
           <ng-container *ngIf="CARD_STYLE === 'lateral'; else topStyle">
             <div class="card w-100 h-100 border-0">
-              <div class="row g-0 h-100">
-                <div class="col-md-4 d-flex align-items-center justify-content-center p-2">
+              <div class="d-flex flex-row h-100">
+                <div class="col-4 d-flex align-items-center justify-content-center ">
                   <img [src]="snippet.image_url | async" alt="{{snippet.title}}" class="img-fluid rounded-start"
                     style="max-width:100%; max-height:20vh; object-fit:cover; display:block;">
                 </div>
-                <div class="col-md-8 d-flex flex-column justify-content-center p-2">
+                <div class="col-8 d-flex flex-column justify-content-center ">
                   <div>
                     <h5 class="card-title">{{snippet.title}}</h5>
-                    <!-- <h6 class="fw-bold text-muted">{{snippet.subtitle}}</h6> -->
+                    <h6 class="card-subtitle">{{snippet.subtitle}}</h6>
                     <div class="card-text tighter-html" [innerHTML]="snippet.content">
                       <!-- <h6 class="fw-bold">{{snippet.subtitle}}</h6> -->
                     </div>

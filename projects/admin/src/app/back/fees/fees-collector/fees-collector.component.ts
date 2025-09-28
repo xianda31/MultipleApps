@@ -14,8 +14,6 @@ import { InputPlayerComponent } from '../../../common/ffb/input-licensee/input-p
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { GetConfirmationComponent } from '../../modals/get-confirmation/get-confirmation.component';
 import { ToastService } from '../../../common/services/toast.service';
-import { DBhandler } from "../../../common/services/graphQL.service";
-import { SystemDataService } from '../../../common/services/system-data.service';
 
 
 @Component({
