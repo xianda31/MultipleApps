@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, map, Observable, of, switchMap } from 'rxjs';
+import { BehaviorSubject, map, Observable, of, switchMap, firstValueFrom } from 'rxjs';
 import { ToastService } from '../services/toast.service';
 import { DBhandler } from './graphQL.service';
 import { Snippet, Snippet_input } from '../interfaces/page_snippet.interface';
@@ -38,7 +38,7 @@ export class SnippetService {
         const { id, ...snippet_input } = snippet;
         try {
             let createdSnippet = await this.dbHandler.createSnippet(snippet_input as Snippet_input);
-            createdSnippet = this.add_image_url(createdSnippet);
+            createdSnippet = await this.add_image_url(createdSnippet);
             this._snippets.push(createdSnippet as Snippet);
             this._snippets$.next(this._snippets.filter((s) => s.public || this.logged));
             return createdSnippet;
@@ -59,8 +59,8 @@ export class SnippetService {
         const _listSnippets = this.dbHandler.listSnippets().pipe(
             map((snippets) => snippets),
             switchMap((snippets) => this.sorted_snippets(snippets)),
-            map((snippets) => {
-                this._snippets = snippets.map(snippet => this.add_image_url(snippet));
+            map(async (snippets) => {
+                this._snippets = await Promise.all(snippets.map(snippet => this.add_image_url(snippet)));
                 this._snippets$.next(this._snippets.filter((s) => s.public || this.logged));
             }),
             switchMap(() => this._snippets$.asObservable())
@@ -78,7 +78,7 @@ export class SnippetService {
         if(snippet.image_url) delete snippet.image_url; // Remove image_url if it exists to avoid sending it to the backend
         try {
             let updatedSnippet = await this.dbHandler.updateSnippet(snippet);
-            updatedSnippet = this.add_image_url(updatedSnippet);
+            updatedSnippet = await this.add_image_url(updatedSnippet);
             this._snippets = this._snippets.filter((s) => s.id !== updatedSnippet.id);
             this._snippets.push(updatedSnippet as Snippet);
             this._snippets$.next(this._snippets.filter((s) => s.public || this.logged));
@@ -117,9 +117,21 @@ export class SnippetService {
         return this._snippets.find((snippet) => snippet.id === snippet_id) as Snippet;
     }
 
-    add_image_url(snippet: Snippet): Snippet {
-        if(snippet.image) {
-            return {...snippet, image_url: this.fileService.getPresignedUrl$(snippet.image)};
+    // add_image_url_observable(snippet: Snippet): Snippet {
+    //     if(snippet.image) {
+    //         return {...snippet, image_url: this.fileService.getPresignedUrl$(snippet.image)};
+    //     }
+    //     return snippet;
+    // }
+
+    async add_image_url(snippet: Snippet): Promise<Snippet> {
+        if (snippet.image) {
+            try {
+                const url = await firstValueFrom(this.fileService.getPresignedUrl$(snippet.image));
+                return { ...snippet, image_url: url };
+            } catch (error) {
+                return snippet;
+            }
         }
         return snippet;
     }

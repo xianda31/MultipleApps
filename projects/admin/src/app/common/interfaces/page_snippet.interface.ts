@@ -11,7 +11,7 @@ export interface Snippet {
     file: string;
     folder:string
     featured: boolean;
-    image_url?: Observable<string>;
+    image_url?: string;
     pageId?: string;
     createdAt?: string;
     updatedAt?: string;
