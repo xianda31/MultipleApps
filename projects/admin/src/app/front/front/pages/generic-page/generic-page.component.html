@@ -1,4 +1,4 @@
-<div *ngIf="pageTemplate" class=" offset-md-2 col-md-8 offset-xl-3 col-xl-6 justify-content-center">
+<div *ngIf="pageTemplate" class="  justify-content-center">
   <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.SEQUENTIAL">
     <app-sequential-render [snippets]="snippets"></app-sequential-render>
   </ng-container>
@@ -6,7 +6,7 @@
     <app-publication-render [snippets]="snippets"></app-publication-render>
   </ng-container>
   <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.A_LA_UNE">
-    <app-a-la-une-render [snippets]="snippets"></app-a-la-une-render>
+    <app-a-la-une-render [snippets]="snippets" [selected_title]="snippet_title"></app-a-la-une-render>
   </ng-container>
   <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.LOADABLE">
     <app-loadable-render [snippets]="snippets"></app-loadable-render>
@@ -24,7 +24,7 @@
     <app-albums-render [snippets]="snippets"></app-albums-render>
   </ng-container>
   <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.FLIPPER">
-    <app-flipper-render [snippets]="snippets" [currentIndex]="currentIndex"></app-flipper-render>
+    <app-flipper-render [snippets]="snippets" ></app-flipper-render>
   </ng-container>
   <!-- gestion du template inconnu -->
   <ng-container *ngIf="!isKnownTemplate(pageTemplate)">

@@ -185,7 +185,6 @@ get_birthdays_this_month(): Observable<Member[]> {
           }
           grouped[key].push(member);
         });
-        console.log('Grouped birthdays:', grouped);
         return grouped;
       })
     );
