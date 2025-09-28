@@ -73,7 +73,6 @@ export class GenericPageComponent implements OnInit, OnChanges {
     this.loadPageAndSnippets(this.page_title);
   }
 
-
   loadPageAndSnippets(page_title: MENU_TITLES | EXTRA_TITLES) {
 
     const title = (page_title === EXTRA_TITLES.HIGHLIGHTS) ? MENU_TITLES.NEWS : page_title;
