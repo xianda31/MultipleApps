@@ -1,0 +1,10 @@
+      <div *ngFor="let snippet of snippets; trackBy: trackById" id="{{snippet.title}}">
+        {{snippet.title}} :
+        <span class="text-muted">{{snippet.subtitle}}</span>
+        <div class="ms-2 snippet-float-box">
+          <div class="snippet-float-img text-center">
+            <img [src]="snippet.image_url | async" alt="{{snippet.title}}" class="card-img-top">
+          </div>
+          <span class="snippet-float-text tighter-html" [innerHTML]="snippet.content"></span>
+        </div>
+      </div>

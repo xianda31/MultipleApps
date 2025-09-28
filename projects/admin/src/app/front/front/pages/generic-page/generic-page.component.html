@@ -1,273 +1,38 @@
-<div class="px-1 mt-1">
-
-    @if (page) {
-    @switch (pageTemplate) {
-    @case (PAGE_TEMPLATES.SEQUENTIAL) {
-    <ng-container *ngTemplateOutlet="sequential; context: { snippets: snippets }"></ng-container>
-    }
-    @case (PAGE_TEMPLATES.PUBLICATION) {
-    <ng-container *ngTemplateOutlet="publication; context: { snippets: snippets }"></ng-container>
-    }
-    @case (PAGE_TEMPLATES.A_LA_UNE) {
-    <ng-container *ngTemplateOutlet="a_la_une; context: { snippets: snippets }"></ng-container>
-    }
-    @case (PAGE_TEMPLATES.LOADABLE) {
-    <ng-container *ngTemplateOutlet="loadable; context: { snippets: snippets }"></ng-container>
-    }
-    @case (PAGE_TEMPLATES.TROMBINOSCOPE) {
-    <ng-container *ngTemplateOutlet="trombinoscope; context: { snippets: snippets }"></ng-container>
-    }
-    @case (PAGE_TEMPLATES.CARDS_top) {
-    <ng-container *ngTemplateOutlet="cards_img_top; context: { snippets: snippets }"></ng-container>
-    }
-    @case (PAGE_TEMPLATES.CARDS_bottom) {
-    <ng-container *ngTemplateOutlet="cards_img_bottom; context: { snippets: snippets }"></ng-container>
-    }
-    @case (PAGE_TEMPLATES.ALBUMS) {
-    <ng-container *ngTemplateOutlet="albums; context: { snippets: snippets }"></ng-container>
-    }
-    }
-    }
+<div *ngIf="pageTemplate" class="  justify-content-center">
+  <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.SEQUENTIAL">
+    <app-sequential-render [snippets]="snippets"></app-sequential-render>
+  </ng-container>
+  <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.PUBLICATION">
+    <app-publication-render [snippets]="snippets"></app-publication-render>
+  </ng-container>
+  <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.A_LA_UNE">
+    <app-a-la-une-render [snippets]="snippets" [selected_title]="snippet_title"></app-a-la-une-render>
+  </ng-container>
+  <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.LOADABLE">
+    <app-loadable-render [snippets]="snippets"></app-loadable-render>
+  </ng-container>
+  <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.TROMBINOSCOPE">
+    <app-trombinoscope-render [snippets]="snippets"></app-trombinoscope-render>
+  </ng-container>
+  <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.CARDS_top">
+    <app-cards-img-top-render [snippets]="snippets"></app-cards-img-top-render>
+  </ng-container>
+  <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.CARDS_bottom">
+    <app-cards-img-bottom-render [snippets]="snippets"></app-cards-img-bottom-render>
+  </ng-container>
+  <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.ALBUMS">
+    <app-albums-render [snippets]="snippets"></app-albums-render>
+  </ng-container>
+  <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.FLIPPER">
+    <app-flipper-render [snippets]="snippets" ></app-flipper-render>
+  </ng-container>
+  <!-- gestion du template inconnu -->
+  <ng-container *ngIf="!isKnownTemplate(pageTemplate)">
+    <div class="text-center mt-5">
+      <h1 class="display-3">.... Oups ....</h1>
+      <div class="lead">
+        <p>Le modèle de page "{{pageTemplate}}" n'est pas reconnu.</p>
+      </div>
+    </div>
+  </ng-container>
 </div>
-
-<ng-template #sequential let-snippets="snippets">
-    <div class="offset-md-4 col-md-4 justify-content-center">
-        @for (snippet of snippets; track snippet.id) {
-        <div id="{{snippet.title}}" class="">
-            {{snippet.title}} :
-            <span class="text-muted">{{snippet.subtitle}}</span>
-            <div class="ms-2 snippet-float-box">
-                <div class="snippet-float-img text-center">
-                    <img [src]="snippet.image_url | async" alt="{{snippet.title}}" class="card-img-top">
-                </div>
-                <span class="snippet-float-text" [innerHTML]="snippet.content"></span>
-            </div>
-        </div>
-        }
-    </div>
-</ng-template>
-<ng-template #publication let-snippets="snippets">
-    <div class="offset-md-1 col-md-8 justify-content-center">
-
-        <div class="row">
-            <div class="col-md-4">
-                <div class="position-sticky" style="top: 0; z-index: 2; background: #fff;">
-                    @for (snippet of snippets; track snippet.id) {
-                    <div (click)="scrollToElement(snippet.title)" class="fs-5 text-secondary hover-title">
-                        {{snippet.title}}
-                    <span *ngIf="snippet.featured"><i class="bi bi-star-fill text-info" ></i></span>
-                    </div>
-                    }
-                </div>
-            </div>
-
-            <div class="col-md-8">
-                @for (snippet of snippets; track snippet.id) {
-                <div class="col">
-                    <div class="card border-0 mt-1" id="{{snippet.title}}">
-                        <div class="card-body">
-                            <div class="row flex-nowrap align-items-stretch snippet-block">
-                                <div class="col-5 d-flex align-items-center justify-content-start p-0">
-                                    <img [src]="snippet.image_url | async" alt="{{snippet.title}}"
-                                        class="img-fluid rounded-start"
-                                        #imgRef
-                                        [style.max-height.px]="textHeight"
-                                        style="max-width:100%; width:auto; object-fit:contain; display:block;">
-                                </div>
-                                <div class="col-7 d-flex flex-column justify-content-center p-0" #textRef>
-                                    <div>
-                                        <h3 class="card-title">
-                                            {{snippet.title}}
-                                            <div class="fs-5 text-muted">{{snippet.subtitle}}</div>
-                                        </h3>
-                                        <small class="text-muted">Publié le {{snippet.createdAt | date:'shortDate'}} </small>
-                                    </div>
-                                </div>
-                                <script>
-                                // Synchronise la hauteur de l'image avec celle du texte
-                                setTimeout(() => {
-                                  const textDiv = document.querySelector('[#textRef]');
-                                  const img = document.querySelector('[#imgRef]');
-                                  if (textDiv && img) {
-                                    img.style.maxHeight = textDiv.offsetHeight + 'px';
-                                  }
-                                }, 100);
-                                </script>
-                            </div>
-                            <div class="card-text mt-3">
-                                <span class="card-text" [innerHTML]="snippet.content"></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                }
-            </div>
-        </div>
-    </div>
-</ng-template>
-
-<ng-template #a_la_une let-snippets="snippets">
-    <div class="justify-content-center">
-
-        <div class="row">
-            <div class="col">
-                @for (snippet of snippets; track snippet.id) {
-                <div class="card border-0" id="{{snippet.title}}">
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-3">
-                                <img [src]="snippet.image_url | async" alt="{{snippet.title}}" class="card-img-top ">
-                            </div>
-                            <div class="col-9">
-                                <h5 class="card-title">
-                                    {{snippet.title}}
-                                    <span class=" text-muted">{{snippet.subtitle}}</span>
-                                </h5>
-                                <small class="text-muted">Publié le {{snippet.createdAt | date:'shortDate'}}</small>
-                                <div class="card-text mt-3">
-                                    <ng-container *ngIf="snippet.content.length > TRUNCATE_LIMIT + TRUNCATE_HYSTERISIS">
-                                        <span  class="card-text innerHTML"
-                                            [innerHTML]="snippet.content | truncate:TRUNCATE_LIMIT">
-                                        </span>
-                                        <span (click)="readMore(snippet)" class="text-info">... lire plus </span>
-
-                                    </ng-container>
-                                    <span *ngIf="!(snippet.content.length > TRUNCATE_LIMIT + TRUNCATE_HYSTERISIS)" class="card-text innerHTML"
-                                        [innerHTML]="snippet.content"></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- <hr class="bg-secondary"> -->
-                }
-            </div>
-            <!-- </div> -->
-        </div>
-    </div>
-</ng-template>
-
-<ng-template #loadable let-snippets="snippets">
-    <div class="offset-md-2 col-md-8  justify-content-start">
-        @if (snippets.length === 0) {
-        <div class="text-center mt-5">
-            <h1 class="display-3">.... Désolé ....</h1>
-            <div class="lead">
-                <p>Il n'y a aucune publication disponible sous cette section.</p>
-                <p>... mais peut-être n'êtes-vous pas connecté ? ...</p>
-                <p>Sinon, veuillez contacter l'administrateur.</p>
-            </div>
-        </div>
-        }
-        <table class="table table-borderless align-middle mb-0 w-100">
-            <tbody>
-                @for (snippet of snippets; track snippet.id) {
-                <tr>
-                    <td class="align-top text-start" style="width: 1%; white-space: nowrap;">
-                        <i [class]="doc_icon(snippet.file)"></i>
-                    </td>
-                    <td class="align-middle text-start" style="width: 60%;">
-                        <div class="fw-bold">{{ snippet.title }}</div>
-                        <span [innerHTML]="snippet.content"></span>
-                    </td>
-                    <td class="align-middle text-center" style="width: 1%; white-space: nowrap;">
-                        <button class="btn btn-outline-primary nice_shadow w-auto"
-                            (click)="downloadDocument(snippet); $event.preventDefault()">
-                            <span class="bi bi-download"></span>
-                            <span class="d-none d-sm-inline">Télécharger</span>
-                        </button>
-                    </td>
-                </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-</ng-template>
-
-<ng-template #trombinoscope let-snippets="snippets">
-    <div class="offset-md-1 col-md-10 offset-xl-3 col-xl-6 justify-content-start">
-
-        <div class="row row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-3">
-            @for (snippet of snippets; track snippet.id) {
-            <div class="col">
-                <div class="card h-100 nice_shadow">
-                    <img [src]="snippet.image_url | async" style="max-width: 100%; max-height: 20vh; object-fit: cover;"
-                        alt="{{snippet.title}}" class="img-fluid rounded-start">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">{{snippet.title}}</h5>
-                        <div class="card-text mt-4">
-                            <h6 class="fw-bold"> {{snippet.subtitle}}</h6>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            }
-        </div>
-
-    </div>
-</ng-template>
-
-<ng-template #cards_img_top let-snippets="snippets">
-    <div class=" col-md-12  justify-content-start">
-
-        <div class="row row-cols-1 row-cols-md-3 justify-content-center  gy-5 g-md-2 ">
-            @for (snippet of snippets; track snippet.id) {
-            <div class="col">
-                <div class="card h-100 nice_shadow">
-                    <img *ngIf="snippet.image" [src]="snippet.image_url | async"
-                        style="max-height: 20vh; width: 100%; height: auto; object-fit: cover;" alt="{{snippet.title}}"
-                        class="img-fluid card-img-top">
-                    <div class="card-body">
-                        <div class="fs-4 card-title ">
-                            {{snippet.title}}
-                            <div class="text-muted ">{{snippet.subtitle}}</div>
-                            <hr>
-                        </div>
-                        <div class="card-text ps-3" [innerHTML]="snippet.content"> </div>
-                    </div>
-                </div>
-            </div>
-            }
-        </div>
-    </div>
-
-</ng-template>
-
-<ng-template #cards_img_bottom let-snippets="snippets">
-    <div class=" col-md-12  justify-content-start">
-
-        <div class="row row-cols-1 row-cols-md-3 justify-content-center  gy-5 g-md-2 ">
-            @for (snippet of snippets; track snippet.id) {
-            <div class="col">
-                <div class="card h-100 nice_shadow">
-                    <div class="card-body">
-                        <div class="fs-4 card-title ">
-                            {{snippet.title}}
-                            <div class="text-muted ">{{snippet.subtitle}}</div>
-                            <hr>
-                        </div>
-                        <div class="card-text ps-3" [innerHTML]="snippet.content"> </div>
-                    </div>
-                    @if (snippet.image) {
-                    <img [src]="snippet.image_url | async"
-                        style="max-height: 20vh; width: 100%; height: auto; object-fit: cover;" alt="{{snippet.title}}"
-                        class="img-fluid card-img-bottom">
-                    }
-                </div>
-            </div>
-            }
-        </div>
-    </div>
-</ng-template>
-
-<ng-template #albums let-snippets="snippets">
-    <div class="offset-md-2 col-md-8 text-center mb-3">
-
-        <!-- <div > -->
-        @for (snippet of snippets; track snippet.id) {
-
-        <app-album [album]="snippet"></app-album>
-        }
-        <!-- </div> -->
-    </div>
-</ng-template>

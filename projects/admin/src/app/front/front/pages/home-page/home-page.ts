@@ -3,9 +3,8 @@ import { TitleService } from '../../../title/title.service';
 import { GenericPageComponent } from '../generic-page/generic-page.component';
 import { TournamentsComponent } from '../../../../common/tournaments/tournaments/tournaments.component';
 import { Router, ActivatedRoute } from '@angular/router';
-import { EXTRA_TITLES } from '../../../../common/interfaces/page_snippet.interface';
+import { EXTRA_TITLES, MENU_TITLES } from '../../../../common/interfaces/page_snippet.interface';
 import { MembersService } from '../../../../common/services/members.service';
-import { LicenseStatus } from '../../../../common/interfaces/member.interface';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 
 @Component({
@@ -15,7 +14,9 @@ import { SystemDataService } from '../../../../common/services/system-data.servi
   styleUrl: './home-page.scss'
 })
 export class HomePage {
-  highlights = EXTRA_TITLES.HIGHLIGHTS;
+  EXTRA_TITLES = EXTRA_TITLES;
+  MENU_TITLES = MENU_TITLES;
+  // highlights = EXTRA_TITLES.HIGHLIGHTS;
   licensees = 0;
   sympathisants = 0;
   constructor(

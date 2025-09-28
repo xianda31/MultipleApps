@@ -1,12 +1,10 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, map, Observable, of, switchMap, tap } from 'rxjs';
-import { SystemDataService } from './system-data.service';
+import { BehaviorSubject, map, Observable, of, switchMap } from 'rxjs';
 import { ToastService } from '../services/toast.service';
 import { DBhandler } from './graphQL.service';
 import { Snippet, Snippet_input } from '../interfaces/page_snippet.interface';
 import { FileService } from './files.service';
 import { AuthentificationService } from '../authentification/authentification.service';
-import { FargatePlatformVersion } from 'aws-cdk-lib/aws-ecs';
 
 @Injectable({
     providedIn: 'root'
@@ -18,7 +16,6 @@ export class SnippetService {
     logged: boolean = false;
 
     constructor(
-        private systemDataService: SystemDataService,
         private auth : AuthentificationService,
         private fileService: FileService,
         private toastService: ToastService,

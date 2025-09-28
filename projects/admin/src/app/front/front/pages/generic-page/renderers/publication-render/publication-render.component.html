@@ -1,0 +1,39 @@
+<div class="row">
+    <div class="col-md-4" >
+    <div class="position-sticky" style="top: 0; z-index: 2; background: #fff;">
+            <ng-container *ngFor="let snippet of snippets; trackBy: trackById">
+                <div class="fs-5 text-secondary hover-title"
+                (click)="scrollTo(snippet.title)">
+                    {{snippet.title}}
+                    <span *ngIf="snippet.featured"><i class="bi bi-star-fill text-info"></i></span>
+                </div>
+            </ng-container>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="col" *ngFor="let snippet of snippets; trackBy: trackById">
+            <div class="card border-0 mt-1" id="{{snippet.title}}">
+                <div class="card-body">
+                    <div class="row flex-nowrap align-items-stretch snippet-block">
+                        <div class="col-5 d-flex align-items-center justify-content-start p-0">
+                            <img [src]="snippet.image_url | async" alt="{{snippet.title}}"
+                                class="img-fluid rounded-start" [style.max-height.px]="textHeights[snippet.id]"
+                                style="max-width:100%; width:auto; object-fit:contain; display:block;">
+                        </div>
+                        <div class="col-7 d-flex flex-column justify-content-center p-0">
+                            <div>
+                                <h3 class="card-title">{{snippet.title}}<div class="fs-5 text-muted">
+                                        {{snippet.subtitle}}</div>
+                                </h3>
+                                <small class="text-muted">Publié le {{snippet.createdAt | date:'shortDate'}}</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-text mt-3">
+                        <span class="card-text tighter-html" [innerHTML]="snippet.content" #textRef></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

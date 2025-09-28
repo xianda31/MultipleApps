@@ -1,0 +1,22 @@
+.albums-wrapper {
+  .card {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    text-align: center;
+  }
+  .card-img-top {
+    object-fit: cover;
+    height: 160px;
+    width: 100%;
+    background: #f8f9fa;
+  }
+  .card-title {
+    font-size: 1rem;
+    font-weight: 600;
+  }
+  .card-text {
+    font-size: 0.95rem;
+    line-height: 1.2;
+  }
+}

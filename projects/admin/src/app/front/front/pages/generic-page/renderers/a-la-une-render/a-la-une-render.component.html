@@ -1,0 +1,28 @@
+<!-- <div class="col"> -->
+    <div *ngFor="let snippet of snippets; trackBy: trackById" class="card border-0" id="{{snippet.title}}">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-3">
+            <img [src]="snippet.image_url | async" alt="{{snippet.title}}" class="card-img-top ">
+          </div>
+          <div class="col-9">
+            <h5 class="card-title">
+              {{snippet.title}}
+               <span class="text-muted">{{snippet.subtitle}}</span>
+              </h5>
+            <small class="text-muted">Publié le {{snippet.createdAt | date:'shortDate'}} </small>
+            <div class="card-text mt-3">
+              <ng-container
+                *ngIf="(read_more && (snippet.content.length > TRUNCATE_LIMIT + TRUNCATE_HYSTERISIS)); else noContentTruncate">
+                <span class="card-text tighter-html" [innerHTML]="snippet.content | truncate:TRUNCATE_LIMIT" style="display:inline"></span>
+                <span (click)="readMore(snippet)" class="text-info ms-1" style="cursor:pointer;display:inline">... Lire la suite</span>
+              </ng-container>
+              <ng-template #noContentTruncate>
+                <span class="card-text tighter-html" [innerHTML]="snippet.content"></span>
+              </ng-template>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+<!-- </div> -->

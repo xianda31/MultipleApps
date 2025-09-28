@@ -1,168 +1,163 @@
-import { Component, Input, Renderer2, ElementRef, OnChanges, SimpleChanges, OnInit, ViewChild, AfterViewInit, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, Renderer2, ElementRef, OnChanges, SimpleChanges, OnInit } from '@angular/core';
 import { map, switchMap } from 'rxjs';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { EXTRA_TITLES, MENU_TITLES, Page, PAGE_TEMPLATES, Snippet } from '../../../../common/interfaces/page_snippet.interface';
-import { FileService } from '../../../../common/services/files.service';
 import { PageService } from '../../../../common/services/page.service';
 import { SnippetService } from '../../../../common/services/snippet.service';
-import { ToastService } from '../../../../common/services/toast.service';
-import { AlbumComponent } from '../../../album/album.component';
 import { TitleService } from '../../../title/title.service';
-import { TruncatePipe } from '../../../../common/pipes/truncate.pipe';
-import { NgbDropdownModule, NgbModule, NgbTooltipModule } from "@ng-bootstrap/ng-bootstrap";
+import { MembersService } from '../../../../common/services/members.service';
+import { Member } from '../../../../common/interfaces/member.interface';
+import { TrombinoscopeRenderComponent } from './renderers/trombinoscope-render/trombinoscope-render.component';
+import { SequentialRenderComponent } from './renderers/sequential-render/sequential-render.component';
+import { PublicationRenderComponent } from './renderers/publication-render/publication-render.component';
+import { ALaUneRenderComponent } from './renderers/a-la-une-render/a-la-une-render.component';
+import { LoadableRenderComponent } from './renderers/loadable-render/loadable-render.component';
+import { CardsImgTopRenderComponent } from './renderers/cards-img-top-render/cards-img-top-render.component';
+import { CardsImgBottomRenderComponent } from './renderers/cards-img-bottom-render/cards-img-bottom-render.component';
+import { AlbumsRenderComponent } from './renderers/albums-render/albums-render.component';
+import { FlipperRenderComponent } from './renderers/flipper-render/flipper-render.component';
 
 @Component({
   selector: 'app-generic-page',
-  imports: [CommonModule, AlbumComponent, TruncatePipe, NgbModule, NgbTooltipModule, NgbDropdownModule],
+  imports: [
+    CommonModule,
+    TrombinoscopeRenderComponent,
+    SequentialRenderComponent,
+    PublicationRenderComponent,
+    ALaUneRenderComponent,
+    LoadableRenderComponent,
+    CardsImgTopRenderComponent,
+    CardsImgBottomRenderComponent,
+    AlbumsRenderComponent,
+    FlipperRenderComponent
+  ],
   templateUrl: './generic-page.component.html',
   styleUrl: './generic-page.component.scss'
 })
 export class GenericPageComponent implements OnInit, OnChanges {
-  @ViewChild('textRef', { static: false }) textRef!: ElementRef;
-  textHeight: number = 0;
 
-
-  @Input() menu_title!: MENU_TITLES | EXTRA_TITLES;
+  @Input() page_title!: MENU_TITLES | EXTRA_TITLES;
   @Input() snippet_title?: string; // for news, the title of the selected snippet
   page!: Page;
   pageTemplate!: PAGE_TEMPLATES;
   PAGE_TEMPLATES = PAGE_TEMPLATES;
   snippets: Snippet[] = [];
 
-  TRUNCATE_LIMIT = 300; //  truncating news content
-  TRUNCATE_HYSTERISIS = 50; // threshold to show "Read more" link
-
-  // def for documents
-  icons: { [key: string]: string } = {
-    pdf: 'bi-file-earmark-pdf-fill',
-    word: 'bi-file-earmark-word-fill',
-    excel: 'bi-file-earmark-excel-fill',
-    powerpoint: 'bi-file-earmark-powerpoint-fill',
-    unknown: 'bi-file-earmark-fill'
-  };
-
   constructor(
     private snippetService: SnippetService,
     private pageService: PageService,
     private titleService: TitleService,
-    private toastService: ToastService,
-    private fileService: FileService,
+    private memberService: MembersService,
     private router: Router,
     private renderer: Renderer2,
     private el: ElementRef,
-    private cdr: ChangeDetectorRef
   ) { }
 
+
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['menu_title'] && changes['menu_title'].currentValue) {
-      this.menu_title = changes['menu_title'].currentValue;
-      this.snippet_title = changes['snippet_title']?.currentValue ? changes['snippet_title'].currentValue : null;
-      this.loadPageAndSnippets();
+    if (changes['page_title'] && !changes['page_title'].firstChange) {
+      this.loadPageAndSnippets(this.page_title);
     }
-  }
-  ngOnInit(): void {
-    this.init_relative_links_handler();
-    this.loadPageAndSnippets();
-  }
-
-
-  // spécial recalage de la hauteur de l'image sur le texte (mode publication)
-    ngAfterViewInit() {
-    this.updateTextHeight();
-  }
-
-  ngAfterViewChecked() {
-    this.updateTextHeight();
-  }
-
-  updateTextHeight() {
-    if (this.textRef && this.textRef.nativeElement) {
-      const newHeight = this.textRef.nativeElement.offsetHeight;
-      if (this.textHeight !== newHeight) {
-        this.textHeight = newHeight;
-        this.cdr.detectChanges();
+    if (changes['snippet_title'] && !changes['snippet_title'].firstChange && this.page_title === MENU_TITLES.NEWS) {
+      // Scroll to the snippet if snippet_title changes
+      const snippet = this.snippets.find(s => s.title === this.snippet_title);
+      if (snippet) {
+        // this.scrollToElement(snippet.title);
       }
     }
   }
 
-  loadPageAndSnippets() {
+  ngOnInit(): void {
+    this.init_relative_links_handler();
+    this.loadPageAndSnippets(this.page_title);
+  }
 
-    this.pageService.getPageByTitle(((this.menu_title === EXTRA_TITLES.HIGHLIGHTS) ? MENU_TITLES.NEWS : this.menu_title)).pipe(
+
+  loadPageAndSnippets(page_title: MENU_TITLES | EXTRA_TITLES) {
+
+    const title = (page_title === EXTRA_TITLES.HIGHLIGHTS) ? MENU_TITLES.NEWS : page_title;
+    // load the page by its title, then load all snippets  for this page
+
+    this.pageService.getPageByTitle(title).pipe(
       map(page => {
-        if (!page) { throw new Error(this.menu_title + ' page not found') }
+        if (!page) { throw new Error(page_title + ' page not found') }
         this.page = page;
+        return page;
       }),
       switchMap(() => this.snippetService.listSnippets())
     )
       .subscribe((snippets) => {
-        // get the snippets for this page
         this.snippets = this.page.snippet_ids
-          .map(id => snippets.find(snippet => snippet.id === id))  // check for correct loading of  page's snippets
-          .filter(snippet => snippet !== undefined) as Snippet[];  // filter out undefined values
+          .map(id => snippets.find(snippet => snippet.id === id))
+          .filter(snippet => snippet !== undefined) as Snippet[];
 
+        // post traitement de la page
+        if (this.snippets.length === 0) {
+          console.warn('%s snippets found for page %s: %o', this.snippets.length, this.page.title, this.page.snippet_ids);
+        }
         this.page_post_handling();
       });
   }
 
-  // special pour news
-  readMore(snippet: Snippet) {
-    this.router.navigate(['/front/news', snippet.title]);
-  }
+
 
   page_post_handling() {
 
-    switch (this.menu_title) {
+    switch (this.page_title) {
       case MENU_TITLES.NEWS:
-        // NEWS.1 : sort by createdAt desc
         this.snippets = this.snippets.sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
-        // NEWS.2 : scroll to snippet if snippet_title is provided
-        if (this.snippet_title) {
-          const snippet = this.snippets.find(s => s.title === this.snippet_title);
-          if (snippet) { this.scrollToElement(snippet.title); }
-        }
-        this.titleService.setTitle(this.page.title );
-        this.pageTemplate = this.page.template ;
+        this.titleService.setTitle(this.page.title);
+        this.pageTemplate = this.page.template;
         break;
+
       case EXTRA_TITLES.HIGHLIGHTS:
-        // HIGHLIGHTS.1: filter "featured" snippets (got from news)  and sort by updatedAt desc
         this.snippets = this.snippets.filter(s => s.featured)
           .sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''));
-        // HIGHLIGHTS.2: set pageTemplate to A_LA_UNE
         this.pageTemplate = PAGE_TEMPLATES.A_LA_UNE;
         break;
+
+      case MENU_TITLES.BIRTHDAYS:
+
+        const snippet_model = this.snippets[0]; // use the first snippet as a model for birthdays snippets
+
+        this.memberService.get_birthdays_this_next_days(7).pipe(
+          map((result: { [day: string]: Member[]; }) => {
+            const days = Object.keys(result).sort();
+            if (days.length === 0) {
+              return [];
+            }
+            return days.map(day => {
+              const members_in_day = result[day];
+
+              return {
+                id: `birthday_snippet_${day}`,
+                title: new Date(day).toLocaleDateString('fr-FR', { weekday: 'long', day: '2-digit', month: 'long' }),
+                content: `<p> Joyeux anniversaire à ` + members_in_day.map(member => `${member.firstname} ${member.lastname}`).join(' et ') + `</p>`,
+                subtitle: 'Joyeux anniversaire',
+                public: false,
+                image: snippet_model.image,
+                image_url: snippet_model.image_url,
+                file: '',
+                folder: '',
+                featured: snippet_model?.featured || false,
+              };
+            });
+          })).subscribe(snippets => {
+            this.snippets = snippets;
+            this.pageTemplate = this.page.template;
+          });
+        break;
+
+
       default:
-        this.titleService.setTitle(this.page.title );
-        this.pageTemplate = this.page.template ;
+        this.titleService.setTitle(this.page.title);
+        this.pageTemplate = this.page.template;
         break;
     }
 
   }
 
-
-
-
-  doc_icon(file: string): string {
-    const fileType = file.split('.').pop() || '';
-    const icon = Object.keys(this.icons).find(key => key === fileType);
-    return icon ? this.icons[icon] : this.icons['unknown'];
-  }
-  async downloadDocument(snippet: Snippet) {
-    const docItem = { name: snippet.title, url: snippet.file };
-    try {
-      const blob = await this.fileService.downloadBlob(docItem.url);
-      const a = window.document.createElement('a');
-      a.href = window.URL.createObjectURL(blob);
-      a.download = docItem.name;
-      window.document.body.appendChild(a);
-      a.click();
-      window.document.body.removeChild(a);
-      window.URL.revokeObjectURL(a.href);
-       this.toastService.showSuccess('Documents', docItem.name + ' a bien été téléchargé');
-    } catch (error) {
-      this.toastService.showErrorToast('Erreur lors du téléchargement', docItem.name + ' n\'est pas disponible');
-    }
-  }
 
 
   // handling of DOM events
@@ -192,19 +187,8 @@ export class GenericPageComponent implements OnInit, OnChanges {
     });
   }
 
-
-  scrollToElement(title: string) {
-    setTimeout(() => {
-      const element = document.getElementById(title);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }, 0);
+  isKnownTemplate(template: PAGE_TEMPLATES): boolean {
+    return Object.values(PAGE_TEMPLATES).includes(template);
   }
-
-  isMobile() {
-    return window.innerWidth < 576;
-  }
-
 
 }

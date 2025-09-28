@@ -40,6 +40,7 @@ export enum PAGE_TEMPLATES {
     CARDS_top = 'fiches img haut',
     CARDS_bottom = 'fiches img bas',
     ALBUMS = 'albums',
+    FLIPPER = 'flipper',
     // X_DEFAULT = 'journal',
 }
 
@@ -54,6 +55,7 @@ export enum MENU_TITLES {
     LEGALS = 'mentions légales',
     CONTACTS = 'contacts',
     POUBELLE = 'poubelle',
+    BIRTHDAYS = 'anniversaires',
 }
 export enum EXTRA_TITLES {
     HIGHLIGHTS = 'à la une',
