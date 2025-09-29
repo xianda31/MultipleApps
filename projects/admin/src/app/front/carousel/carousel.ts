@@ -1,6 +1,6 @@
 
 import { Component } from '@angular/core';
-import { map, Observable } from 'rxjs';
+import { firstValueFrom, map, Observable } from 'rxjs';
 import { FileService } from '../../common/services/files.service';
 import { CommonModule } from '@angular/common';
 import { NgbCarouselModule } from '@ng-bootstrap/ng-bootstrap';
@@ -52,6 +52,26 @@ export class Carousel {
         }
       });
       }
+    });
+  }
+
+  download(photo: S3Item) {
+    
+    const get_name = (path: string): string => {
+      const segments = path.split('/');
+      return segments[segments.length - 1];
+    };
+
+    firstValueFrom(this.fileService.getPresignedUrl$(photo.path)).then(async (url) => {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = get_name(photo.path);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
     });
   }
 }

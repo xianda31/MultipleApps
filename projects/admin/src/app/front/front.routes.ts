@@ -31,7 +31,7 @@ export const routes: Routes = [
       { path: 'tournaments/:id', component: TournamentComponent },
       { path: 'achats/historique', component: PurchasesComponent },
       { path: 'achats/carte', component: GameCardsOwnedComponent },
-      { path: 'albums/:snippet_id', component: Carousel },
+      { path: 'albums/:snippet_id', component: Carousel, canActivate: [BackAuthGuard]},
       { path: 'authentification', component: ConnexionComponent },
       // { path: 'contacts', component: ContactsComponent },
       { path: '', redirectTo: 'home', pathMatch: 'full' },

@@ -3,4 +3,16 @@
 	max-height: calc(80vh);
 	overflow-y: auto;
 	background: #000;
+	position: relative;
+	z-index: 1;
 }
+
+.carousel-viewport .text-muted {
+	position: relative;
+	z-index: 10;
+	color: #fff !important;
+	font-size: 0.75em;
+	// font-weight: bold;
+	// text-shadow: 0 1px 4px #000;
+}
+

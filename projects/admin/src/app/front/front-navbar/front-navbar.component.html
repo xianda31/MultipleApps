@@ -28,7 +28,7 @@
         <li ngbDropdown class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" ngbDropdownToggle id="tournoisDropdown">Les tournois</a>
           <ul ngbDropdownMenu class="dropdown-menu" aria-labelledby="tournoisDropdown">
-            <li><a class="dropdown-item" routerLink="tournaments/next">Prochainement au Club</a></li>
+            <li><a class="dropdown-item" routerLink="tournaments/next">Régularité à venir</a></li>
             <li><a class="dropdown-item" routerLink="tournaments/resultats_ffb">FFB : résultats récents</a></li>
             <li><a class="dropdown-item" href="https://www.bridgeplus.com/nos-simultanes/resultats/?res=sim"
                 target="_blank" rel="noopener">Roy René : résultats récents</a></li>
@@ -44,7 +44,7 @@
           </ul>
         </li>
 
-        <li class="nav-item"><a class="nav-link" routerLink="albums">Les albums</a></li>
+        <li *ngIf="logged_member$ | async as member" class="nav-item"><a class="nav-link" routerLink="albums">Les albums</a></li>
 
         <li *ngIf="user_accreditation && user_accreditation.level > 0" class="nav-item">
           <a class="nav-link" routerLink="../back">Back office</a>
@@ -116,8 +116,7 @@
           <li ngbDropdown class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" ngbDropdownToggle id="tournoisDropdownMobile">Les tournois</a>
             <ul ngbDropdownMenu class="dropdown-menu" aria-labelledby="tournoisDropdownMobile">
-              <li><a class="dropdown-item" routerLink="tournaments/next" data-bs-dismiss="offcanvas">Prochainement au
-                  Club</a></li>
+              <li><a class="dropdown-item" routerLink="tournaments/next" data-bs-dismiss="offcanvas">Régularité à venir</a></li>
               <li><a class="dropdown-item" routerLink="tournaments/resultats_ffb" data-bs-dismiss="offcanvas">FFB :
                   résultats récents</a></li>
               <li><a class="dropdown-item" href="https://www.bridgeplus.com/nos-simultanes/resultats/?res=sim"
@@ -134,7 +133,7 @@
             </ul>
           </li>
 
-          <li class="nav-item"><a class="nav-link" routerLink="albums" data-bs-dismiss="offcanvas">Les albums</a></li>
+          <li  *ngIf="logged_member$ | async " class="nav-item"><a class="nav-link" routerLink="albums" data-bs-dismiss="offcanvas">Les albums</a></li>
 
           <li *ngIf=" user_accreditation && user_accreditation.level > 0" class="nav-item">
             <a class="nav-link" routerLink="../back" data-bs-dismiss="offcanvas">Back office</a>

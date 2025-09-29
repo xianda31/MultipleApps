@@ -1,7 +1,6 @@
 import { combineLatest } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
 import { Component, Input } from '@angular/core';
-import {  Observable } from 'rxjs';
 import { FileService, S3_ROOT_FOLDERS } from '../../common/services/files.service';
 import { CommonModule } from '@angular/common';
 import { NgbCarouselModule } from '@ng-bootstrap/ng-bootstrap';

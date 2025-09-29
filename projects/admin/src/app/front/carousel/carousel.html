@@ -7,7 +7,7 @@
             @for (photo of photos; track $index) {
             <div [class]="' carousel-item ' + ($index === photoIndex ? 'active' : '')">
                 <img [src]="photo.url$ | async" class="d-block w-100" [alt]="'photo'+$index"
-                    style="max-height: 80vh; object-fit: contain;" />
+                    style="max-height: 65vh; object-fit: contain;" (click)="download(photo)" />
             </div>
             }
         </div>
@@ -21,5 +21,7 @@
         </button>
     </div>
 
+    <span class="text-muted text-white ms-2 mb-2"> téléchargement de l'image possible en cliquant dessus
+    </span>
     }
 </div>
