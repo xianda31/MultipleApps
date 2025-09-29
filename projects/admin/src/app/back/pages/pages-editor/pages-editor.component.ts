@@ -12,11 +12,12 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { combineLatest, take } from 'rxjs';
 import { CdkDrag, CdkDropList, CdkDragDrop, moveItemInArray, transferArrayItem, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { SnippetEditor } from '../snippet-editor/snippet-editor';
+import { GenericPageComponent } from "../../../front/front/pages/generic-page/generic-page.component";
 
 
 @Component({
   selector: 'app-pages-editor',
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, SnippetEditor, NgbModule, CdkDrag, CdkDropList, CdkDropListGroup],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, SnippetEditor, NgbModule, CdkDrag, CdkDropList, CdkDropListGroup, GenericPageComponent],
   templateUrl: './pages-editor.component.html',
   styleUrl: './pages-editor.component.scss'
 })
@@ -38,7 +39,7 @@ export class PagesEditorComponent {
   pageTemplates = Object.values(PAGE_TEMPLATES);
   pageTitles = Object.values(MENU_TITLES);
   pageTitles_but_BIN = this.pageTitles.filter(title => title !== MENU_TITLES.POUBELLE);
-  selected_pageTitle: string | null = null;
+  selected_pageTitle: MENU_TITLES | null = null;
   bin_page_index: number | null = null;
   bin_empty: boolean = false;
 
@@ -196,14 +197,15 @@ export class PagesEditorComponent {
   }
 
   onHover(snippet?: Snippet) {
-    if (this.selected_snippet?.id !== snippet?.id && !this.snippetFreezed) {
-      this.selected_snippet = snippet || null;
-      // armer un timer qui etendra la visibilité du snippet
-      this.view_snippet.set(true);
-      setTimeout(() => {
-        this.view_snippet.set(false);
-      }, 5000);
-    }
+
+    // if (this.selected_snippet?.id !== snippet?.id && !this.snippetFreezed) {
+    //   this.selected_snippet = snippet || null;
+    //   // armer un timer qui etendra la visibilité du snippet
+    //   this.view_snippet.set(true);
+    //   setTimeout(() => {
+    //     this.view_snippet.set(false);
+    //   }, 5000);
+    // }
   }
 
 

@@ -1,9 +1,9 @@
-            <div class="card centered-card">
-                <div class="card-header">
+            <!-- <div class="card centered-card"> -->
+                <!-- <div class="card-header"> -->
                     <div class="row">
                         <div class="col-8">
                             <input type="text" [(ngModel)]="snippet.title"
-                                class="form-control mb-1" 
+                                class="form-control form-control-sm mb-1" 
                                 (keydown.enter)="saveSnippetSelected()">
                             <input type="text" [(ngModel)]="snippet.subtitle"
                                 class="form-control form-control-sm text-muted" 
@@ -20,16 +20,16 @@
                                 alt="{{ snippet.title }}" class="img-fluid snippet-img-limited">
                         </div>
                     </div>
-                </div>
+                <!-- </div> -->
 
-                <div class="card-body">
+                <!-- <div class="card-body"> -->
                     <div class="card-text">
                         <span (click)="onSnippetContentClick(snippet)"
                             [innerHTML]="snippet.content"></span>
                     </div>
-                </div>
+                <!-- </div> -->
 
-                <div class="card-footer">
+                <!-- <div class="card-footer"> -->
                     <div class="row">
 
                         <!-- toggle public visibility -->
@@ -99,5 +99,5 @@
                         </button>
                     </div>
 
-                </div>
-            </div>
+                <!-- </div> -->
+            <!-- </div> -->

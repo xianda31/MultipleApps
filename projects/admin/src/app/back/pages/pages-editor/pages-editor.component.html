@@ -2,111 +2,145 @@
 
     <!-- <h2 class="mb-0">Editeur pages</h2> -->
 
-
-    <div class=" offset-xl-2 col-xl-8 ">
-
+    <div class=" col ">
         <!-- select page -->
-        <div class="col-12 col-sm-6 col-md-3">
-
-            <div class="input-group input-group-sm">
-                <span class="input-group-text">Page</span>
-                <select class="form-select form-select-sm " [(ngModel)]="selected_pageTitle" (change)="onPageTitleChange($event)">
-                    <option *ngFor="let title of pageTitles_but_BIN" [value]="title">
-                        {{ title }}
-                    </option>
-                </select>
-            </div>
+        <div class="input-group input-group-sm w-25">
+            <span class="input-group-text">selectionner une page</span>
+            <select class="form-select form-select-sm " [(ngModel)]="selected_pageTitle">
+                <!-- (change)="onPageTitleChange($event)"> -->
+                <option *ngFor="let title of pageTitles_but_BIN" [value]="title">
+                    {{ title }}
+                </option>
+            </select>
         </div>
 
-        <div class="mt-2 row justify-content-between">
-            <div class="col-12 col-md-6">
-                <form [formGroup]="pagesForm">
-                    <div formArrayName="pagesArray">
+        <form [formGroup]="pagesForm">
+            <div formArrayName="pagesArray">
+                <div *ngFor="let page of pageGroups;" [formGroup]="page">
+
+                    <div *ngIf="(page.get('title')?.value === selected_pageTitle)" class="col-auto">
+
+                        <div class="input-group input-group-sm w-25">
+                            <!-- <div class="input-group-prepend"> -->
+                            <span class="input-group-text">Présentation</span>
+                            <!-- </div> -->
+                            <select class="form-select form-select-sm" formControlName="template"
+                                (change)="savePage(page)">
+                                <option *ngFor="let template of pageTemplates" [value]="template">
+                                    {{template}}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-2 row justify-content-between">
+                    <!-- colonne page & snippets -->
+                    <div class="col-12 col-sm-3 ">
 
                         <div *ngFor="let page of pageGroups; let p = index" [formGroup]="page">
                             @if (((p === bin_page_index) || page.get('title')?.value === selected_pageTitle) )
                             {
 
-                            <div *ngIf="p !== bin_page_index" class="">
-
-                                <!-- affichage modèle de présentation (si ce n'est pas la poubelle) -->
-                                <div *ngIf="!(p === bin_page_index)" class="col-auto">
-                                    <div class="input-group input-group-sm">
-                                        <!-- <div class="input-group-prepend"> -->
-                                        <span class="input-group-text">Présentation</span>
-                                        <!-- </div> -->
-                                        <select class="form-select form-select-sm" formControlName="template"
-                                            (change)="savePage(page)">
-                                            <option *ngFor="let template of pageTemplates" [value]="template">
-                                                {{template}}
-                                            </option>
-                                        </select>
+                            <div class="card nice_shadow mt-3">
+                                <div class="card-header">
+                                    <!-- affichage titre(si ce n'est pas la poubelle) -->
+                                    <div *ngIf="!(p === bin_page_index)" class="col-auto">
+                                        <div class="col d-flex align-items-center">
+                                            <i [class]="bin_empty ? 'bi bi-inbox' : 'bi-journal-richtext' "></i>
+                                            <span class="ms-2">{{page.get('title')?.value}}</span>
+                                        </div>
+    
                                     </div>
+    
+    
+                                    <div *ngIf="(p === bin_page_index)" class="row align-items-start mb-2">
+                                        <div class="col d-flex align-items-center">
+                                            <i [class]="bin_empty ? 'bi bi-inbox' : 'bi bi-inbox-fill' "></i>
+                                            <span class="ms-2">A traiter</span>
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div class="card-body">
+
+
+
+                                    <!-- liste des snippets de la page -->
+
+                                    <table cdkDropList [id]="'dropList_' + p" cdkDropListOrientation="mixed"
+                                        (cdkDropListDropped)="dropSnippet($event, p)" cdkDropListGroup
+                                        [cdkDropListConnectedTo]="dropListIds"
+                                        class=" mt-4 table able-responsive table-sm table-striped">
+                                        <tbody>
+                                            <tr *ngFor="let snippet of page.get('snippets')?.value" cdkDrag>
+                                                <td (mouseenter)="onHover(snippet)" (click)="onSnippetClick(snippet)">
+                                                    {{snippet.title}}
+                                                </td>
+                                                <td (mouseenter)="onHover(snippet)" (click)="onSnippetClick(snippet)">
+                                                    {{snippet.subtitle}}
+                                                </td>
+                                                <td *ngIf="!(p === bin_page_index)" class="text-center"><i
+                                                        (click)="cutSnippet(p,snippet)" class="bi bi-inbox"></i></td>
+                                                <td *ngIf="(p === bin_page_index)" class="text-center"><i
+                                                        (click)="deleteSnippet(p,snippet)" class="bi bi-trash"></i>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                        <tfoot *ngIf="!(p === bin_page_index)">
+                                            <tr>
+                                                <td colspan="2" class="text-end text-muted ">
+                                                    <small> ajouter un article </small>
+                                                </td>
+                                                <td class="text-center text-secondary">
+                                                    <i (click)="addWhiteSnippet(page)" class="bi bi-plus-square-fill">
+                                                    </i>
+                                                </td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
                                 </div>
                             </div>
-
-
-                            <div *ngIf="(p === bin_page_index)" class="row align-items-start mb-2">
-                                <div class="col d-flex align-items-center">
-                                    <i (click)="show_trash = !show_trash"
-                                    [class]="bin_empty ? 'bi bi-inbox' : 'bi bi-inbox-fill' "></i>
-                                    <span class="ms-2">Archives</span>
-                                </div>
-                            </div>
-
-
-                            <!-- liste des snippets de la page -->
-
-                            <table cdkDropList [id]="'dropList_' + p" cdkDropListOrientation="mixed"
-                                (cdkDropListDropped)="dropSnippet($event, p)" cdkDropListGroup
-                                [cdkDropListConnectedTo]="dropListIds"
-                                class=" mt-4 table able-responsive table-sm table-striped">
-                                <tbody>
-                                    <tr *ngFor="let snippet of page.get('snippets')?.value" cdkDrag>
-                                        <td (mouseenter)="onHover(snippet)" (click)="onSnippetClick(snippet)">
-                                            {{snippet.title}}
-                                        </td>
-                                        <td (mouseenter)="onHover(snippet)" (click)="onSnippetClick(snippet)">
-                                            {{snippet.subtitle}}
-                                        </td>
-                                        <td *ngIf="!(p === bin_page_index)" class="text-center"><i
-                                                (click)="cutSnippet(p,snippet)" class="bi bi-inbox"></i></td>
-                                        <td *ngIf="(p === bin_page_index)" class="text-center"><i
-                                                (click)="deleteSnippet(p,snippet)" class="bi bi-recycle"></i>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                                <tfoot *ngIf="!(p === bin_page_index)">
-                                    <tr>
-                                        <td colspan="2" class="text-end text-muted ">
-                                            <small> ajouter un article </small>
-                                        </td>
-                                        <td class="text-center text-secondary">
-                                            <i (click)="addWhiteSnippet(page)" class="bi bi-plus-square-fill">
-                                            </i>
-                                        </td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-
                             }
                         </div>
+
+
+
                     </div>
-                </form>
 
+                    <!-- colonne preview -->
+                    <div *ngIf="selected_pageTitle" class="col-12 col-sm-6 ">
+                        <div class="card nice_shadow mt-3">
+                            <div class="card-header">
+                                Visualisation de la page :
+                            </div>
+                            <div class="card-body">
+
+                                <app-generic-page [page_title]="selected_pageTitle">
+                                </app-generic-page>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- affichage snippet sélectionné -->
+
+                    <div class="col-12 col-sm-3">
+                        @if (selected_snippet && (view_snippet() || snippetFreezed)) {
+                        <div class="card nice_shadow mt-3">
+                            <div class="card-header">
+                                Paramètrage paragraphe
+                            </div>
+                            <div class="card-body">
+                                <app-snippet-editor [snippet]="selected_snippet"
+                                    [(snippetFreezed)]="snippetFreezed"></app-snippet-editor>
+                            </div>
+                        </div>
+                        }
+                    </div>
+                </div>
 
             </div>
-
-
-            <!-- affichage snippet sélectionné -->
-            <div class="col-12 col-md-6">
-                @if (selected_snippet && (view_snippet() || snippetFreezed)) {
-                <app-snippet-editor [snippet]="selected_snippet"
-                    [(snippetFreezed)]="snippetFreezed"></app-snippet-editor>
-                }
-            </div>
-        </div>
-
+        </form>
     </div>
-
 </div>
