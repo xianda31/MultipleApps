@@ -6,10 +6,14 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { EXTRA_TITLES, MENU_TITLES } from '../../../../common/interfaces/page_snippet.interface';
 import { MembersService } from '../../../../common/services/members.service';
 import { SystemDataService } from '../../../../common/services/system-data.service';
+import { Observable } from 'rxjs';
+import { Member } from '../../../../common/interfaces/member.interface';
+import { AuthentificationService } from '../../../../common/authentification/authentification.service';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-home-page',
-  imports: [GenericPageComponent, TournamentsComponent],
+  imports: [CommonModule,GenericPageComponent, TournamentsComponent],
   templateUrl: './home-page.html',
   styleUrl: './home-page.scss'
 })
@@ -18,22 +22,28 @@ export class HomePage {
   MENU_TITLES = MENU_TITLES;
   // highlights = EXTRA_TITLES.HIGHLIGHTS;
   licensees = 0;
-  sympathisants = 0;
+  // sympathisants = 0;
+  logged_member$: Observable<Member | null> = new Observable<Member | null>();
+
+
   constructor(
     private titleService: TitleService,
     private router: Router,
     private route: ActivatedRoute,
     private membersService: MembersService,
-    private systemDataService: SystemDataService
+    private systemDataService: SystemDataService,
+    private auth: AuthentificationService
 
   ) { }
   ngOnInit(): void {
+    this.logged_member$ = this.auth.logged_member$;
+
     this.titleService.setTitle('Accueil');
     const season = this.systemDataService.get_today_season();
 
     this.membersService.listMembers().subscribe((members) => {
       this.licensees = members.filter(m => m.season === season).length;
-      this.sympathisants = members.filter(m => (m.is_sympathisant === true) && (m.season === season)).length;
+      // this.sympathisants = members.filter(m => (m.is_sympathisant === true) && (m.season === season)).length;
     });
   }
 

@@ -11,7 +11,7 @@ import { AuthentificationService } from '../authentification/authentification.se
 })
 export class SnippetService {
     private _snippets!: Snippet[];
-    private _snippets$ = new BehaviorSubject<Snippet[]>([]);
+    private _snippets$!: BehaviorSubject<Snippet[]>;
     snippets_keys: string[] = [];
     logged: boolean = false;
 
@@ -55,17 +55,22 @@ export class SnippetService {
     }
     
 
-    listSnippets(): Observable<Snippet[]> {
+    listSnippets(): Observable<Snippet[]> {    // correctif copilot pour eviter une emission initiale array vide
         const _listSnippets = this.dbHandler.listSnippets().pipe(
             map((snippets) => snippets),
             switchMap((snippets) => this.sorted_snippets(snippets)),
-            map(async (snippets) => {
+            switchMap(async (snippets) => {
                 this._snippets = await Promise.all(snippets.map(snippet => this.add_image_url(snippet)));
-                this._snippets$.next(this._snippets.filter((s) => s.public || this.logged));
+                if (!this._snippets$) {
+                    this._snippets$ = new BehaviorSubject<Snippet[]>(this._snippets.filter((s) => s.public || this.logged));
+                } else {
+                    this._snippets$.next(this._snippets.filter((s) => s.public || this.logged));
+                }
+                return this._snippets$.asObservable();
             }),
-            switchMap(() => this._snippets$.asObservable())
+            switchMap(obs => obs)
         );
-        return this._snippets ? this._snippets$.asObservable() : _listSnippets;
+        return this._snippets$ ? this._snippets$.asObservable() : _listSnippets;
     }
 
 

@@ -7,7 +7,7 @@
                 Nous sommes {{ licensees }} adhérents licenciés.
             </span>
         </div>
-        <div class="card-body p-0 mt-3">
+        <div *ngIf="logged_member$ | async as logged_member" class="card-body p-0 mt-3">
             <app-generic-page [page_title]="MENU_TITLES.BIRTHDAYS"></app-generic-page>
         </div>
     </div>

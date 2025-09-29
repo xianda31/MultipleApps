@@ -1,30 +1,30 @@
 <div *ngIf="pageTemplate" class="  justify-content-center">
   <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.SEQUENTIAL">
-    <app-sequential-render [snippets]="snippets"></app-sequential-render>
+    <app-sequential-render [snippets]="page_snippets"></app-sequential-render>
   </ng-container>
   <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.PUBLICATION">
-    <app-publication-render [snippets]="snippets"></app-publication-render>
+    <app-publication-render [snippets]="page_snippets"></app-publication-render>
   </ng-container>
   <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.A_LA_UNE">
-    <app-a-la-une-render [snippets]="snippets" [selected_title]="snippet_title"></app-a-la-une-render>
+    <app-a-la-une-render [snippets]="page_snippets" [selected_title]="snippet_title"></app-a-la-une-render>
   </ng-container>
   <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.LOADABLE">
-    <app-loadable-render [snippets]="snippets"></app-loadable-render>
+    <app-loadable-render [snippets]="page_snippets"></app-loadable-render>
   </ng-container>
   <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.TROMBINOSCOPE">
-    <app-trombinoscope-render [snippets]="snippets"></app-trombinoscope-render>
+    <app-trombinoscope-render [snippets]="page_snippets"></app-trombinoscope-render>
   </ng-container>
   <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.CARDS_top">
-    <app-cards-img-top-render [snippets]="snippets"></app-cards-img-top-render>
+    <app-cards-img-top-render [snippets]="page_snippets"></app-cards-img-top-render>
   </ng-container>
   <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.CARDS_bottom">
-    <app-cards-img-bottom-render [snippets]="snippets"></app-cards-img-bottom-render>
+    <app-cards-img-bottom-render [snippets]="page_snippets"></app-cards-img-bottom-render>
   </ng-container>
   <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.ALBUMS">
-    <app-albums-render [snippets]="snippets"></app-albums-render>
+    <app-albums-render [snippets]="page_snippets"></app-albums-render>
   </ng-container>
   <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.FLIPPER">
-    <app-flipper-render [snippets]="snippets" ></app-flipper-render>
+    <app-flipper-render [snippets]="page_snippets" ></app-flipper-render>
   </ng-container>
   <!-- gestion du template inconnu -->
   <ng-container *ngIf="!isKnownTemplate(pageTemplate)">

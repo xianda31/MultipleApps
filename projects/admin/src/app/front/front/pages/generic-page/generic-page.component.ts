@@ -43,6 +43,7 @@ export class GenericPageComponent implements OnInit, OnChanges {
   pageTemplate!: PAGE_TEMPLATES;
   PAGE_TEMPLATES = PAGE_TEMPLATES;
   snippets: Snippet[] = [];
+  page_snippets: Snippet[] = [];
 
   constructor(
     private snippetService: SnippetService,
@@ -57,7 +58,7 @@ export class GenericPageComponent implements OnInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['page_title'] && !changes['page_title'].firstChange) {
-      this.loadPageAndSnippets(this.page_title);
+      this.filter_PageSnippets(this.page_title);
     }
     if (changes['snippet_title'] && !changes['snippet_title'].firstChange && this.page_title === MENU_TITLES.NEWS) {
       // Scroll to the snippet if snippet_title changes
@@ -70,10 +71,13 @@ export class GenericPageComponent implements OnInit, OnChanges {
 
   ngOnInit(): void {
     this.init_relative_links_handler();
-    this.loadPageAndSnippets(this.page_title);
+    this.snippetService.listSnippets().subscribe(snippets => {
+      this.snippets = snippets;
+      this.filter_PageSnippets(this.page_title);
+    });
   }
 
-  loadPageAndSnippets(page_title: MENU_TITLES | EXTRA_TITLES) {
+  filter_PageSnippets(page_title: MENU_TITLES | EXTRA_TITLES) {
 
     const title = (page_title === EXTRA_TITLES.HIGHLIGHTS) ? MENU_TITLES.NEWS : page_title;
     // load the page by its title, then load all snippets  for this page
@@ -84,15 +88,14 @@ export class GenericPageComponent implements OnInit, OnChanges {
         this.page = page;
         return page;
       }),
-      switchMap(() => this.snippetService.listSnippets())
     )
-      .subscribe((snippets) => {
-        this.snippets = this.page.snippet_ids
-          .map(id => snippets.find(snippet => snippet.id === id))
+      .subscribe((page) => {
+        this.page_snippets = page.snippet_ids
+          .map(id => this.snippets.find(snippet => snippet.id === id))
           .filter(snippet => snippet !== undefined) as Snippet[];
 
         // post traitement de la page
-        if (this.snippets.length === 0) {
+        if (this.page_snippets.length === 0) {
           console.warn('%s snippets found for page %s: %o', this.snippets.length, this.page.title, this.page.snippet_ids);
         }
         this.page_post_handling();
@@ -105,20 +108,20 @@ export class GenericPageComponent implements OnInit, OnChanges {
 
     switch (this.page_title) {
       case MENU_TITLES.NEWS:
-        this.snippets = this.snippets.sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
+        this.page_snippets = this.page_snippets.sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
         this.titleService.setTitle(this.page.title);
         this.pageTemplate = this.page.template;
         break;
 
       case EXTRA_TITLES.HIGHLIGHTS:
-        this.snippets = this.snippets.filter(s => s.featured)
+        this.page_snippets = this.page_snippets.filter(s => s.featured)
           .sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''));
         this.pageTemplate = PAGE_TEMPLATES.A_LA_UNE;
         break;
 
       case MENU_TITLES.BIRTHDAYS:
 
-        const snippet_model = this.snippets[0]; // use the first snippet as a model for birthdays snippets
+        const snippet_model = this.page_snippets[0]; // use the first snippet as a model for birthdays snippets
 
         this.memberService.get_birthdays_this_next_days(7).pipe(
           map((result: { [day: string]: Member[]; }) => {
@@ -143,7 +146,7 @@ export class GenericPageComponent implements OnInit, OnChanges {
               };
             });
           })).subscribe(snippets => {
-            this.snippets = snippets;
+            this.page_snippets = snippets;
             this.pageTemplate = this.page.template;
           });
         break;
