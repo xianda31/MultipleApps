@@ -53,6 +53,7 @@ export class CustomRouter implements OnInit {
   }
 
   customRoutes = [
+    { path: 'tournaments/dates', page_title: MENU_TITLES.DATES },
     { path: 'club/acteurs', page_title: MENU_TITLES.ACTEURS },
     { path: 'club/documents', page_title: MENU_TITLES.DOCUMENTS },
     { path: 'club/bureau', page_title: MENU_TITLES.BUREAU },
