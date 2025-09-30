@@ -25,7 +25,7 @@ export const routes: Routes = [
       { path: 'home', component: HomePage },
   { path: 'tournaments/next', component: TournamentsComponent, data: { displayTitle: true } },
   { path: 'tournaments/resultats_ffb', component: ExternalRedirectComponent, data: { site: 'FFB' } },
-  { path: 'tournaments/dates', component: CustomRouter },
+  { path: 'tournaments/autres_rdv', component: CustomRouter },
   { path: 'tournaments/:id', component: TournamentComponent },
       { path: 'my_settings', component: SettingsComponent,  canActivate: [BackAuthGuard] },
       { path: 'ffb_dashboard', component: ExternalRedirectComponent, data: { site: 'FFB_dashboard' } },
