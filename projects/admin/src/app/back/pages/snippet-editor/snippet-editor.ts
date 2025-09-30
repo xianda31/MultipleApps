@@ -1,7 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Snippet } from '../../../common/interfaces/page_snippet.interface';
 import { CommonModule } from '@angular/common';
-import { BackModule } from '../../../back.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { SnippetService } from '../../../common/services/snippet.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -17,8 +16,8 @@ import { FileService, S3_ROOT_FOLDERS } from '../../../common/services/files.ser
 })
 export class SnippetEditor {
 @Input () snippet !: Snippet;
-@Input() snippetFreezed : boolean = false;
-@Output() snippetFreezedChange = new EventEmitter<boolean>();
+// @Input() snippetFreezed : boolean = false;
+// @Output() snippetFreezedChange = new EventEmitter<boolean>();
 
   file_paths$ !: Observable<string[]>;
   thumbnails$ !: Observable<string[]>;
@@ -55,13 +54,13 @@ ngOnInit(): void {
       });
   }
 
-   toggleFreezeViewSnippet() {
-     this.snippetFreezed = !this.snippetFreezed;
-    this.snippetFreezedChange.emit(this.snippetFreezed);
-  }
-  onSnippetFreezeChange(freezed: boolean) {
-    this.snippetFreezed = freezed;
-  }
+  //  toggleFreezeViewSnippet() {
+  //    this.snippetFreezed = !this.snippetFreezed;
+  //   this.snippetFreezedChange.emit(this.snippetFreezed);
+  // }
+  // onSnippetFreezeChange(freezed: boolean) {
+  //   this.snippetFreezed = freezed;
+  // }
 
     onSnippetContentClick(snippet: Snippet) {
     const modalRef = this.modalService.open(SnippetModalEditorComponent, { centered: true });

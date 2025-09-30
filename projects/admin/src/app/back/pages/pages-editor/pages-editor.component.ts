@@ -198,14 +198,14 @@ export class PagesEditorComponent {
 
   onHover(snippet?: Snippet) {
 
-    // if (this.selected_snippet?.id !== snippet?.id && !this.snippetFreezed) {
-    //   this.selected_snippet = snippet || null;
-    //   // armer un timer qui etendra la visibilité du snippet
-    //   this.view_snippet.set(true);
-    //   setTimeout(() => {
-    //     this.view_snippet.set(false);
-    //   }, 5000);
-    // }
+    if (this.selected_snippet?.id !== snippet?.id && !this.snippetFreezed) {
+      this.selected_snippet = snippet || null;
+      // armer un timer qui etendra la visibilité du snippet
+      this.view_snippet.set(true);
+      setTimeout(() => {
+        this.view_snippet.set(false);
+      }, 5000);
+    }
   }
 
 

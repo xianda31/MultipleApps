@@ -1,7 +1,7 @@
             <!-- <div class="card centered-card"> -->
                 <!-- <div class="card-header"> -->
                     <div class="row">
-                        <div class="col-8">
+                        <div class="col-9">
                             <input type="text" [(ngModel)]="snippet.title"
                                 class="form-control form-control-sm mb-1" 
                                 (keydown.enter)="saveSnippetSelected()">
@@ -9,12 +9,10 @@
                                 class="form-control form-control-sm text-muted" 
                                 (keydown.enter)="saveSnippetSelected()">
                         </div>
-                        <div class="col-1 align-items-start">
+                        <!-- <div class="col-1 align-items-start">
                             <i (click)="toggleFreezeViewSnippet()" *ngIf="snippetFreezed"
                                 class="bi bi-pin-angle-fill"></i>
-
-
-                        </div>
+                        </div> -->
                         <div class="col-3 text-center">
                             <img *ngIf="snippet.image_url" [src]="snippet.image_url "
                                 alt="{{ snippet.title }}" class="img-fluid snippet-img-limited">
@@ -23,9 +21,11 @@
                 <!-- </div> -->
 
                 <!-- <div class="card-body"> -->
-                    <div class="card-text">
-                        <span (click)="onSnippetContentClick(snippet)"
-                            [innerHTML]="snippet.content"></span>
+                    <div class="border-1">
+                        <div class="border rounded p-2 bg-white" style="min-height:2em;">
+                            <span (click)="onSnippetContentClick(snippet)"
+                                [innerHTML]="snippet.content"></span>
+                        </div>
                     </div>
                 <!-- </div> -->
 
