@@ -169,6 +169,14 @@ export class FeesCollectorComponent {
     return this.feesCollectorService.log_game_state();
   }
 
+  printTable() {
+    this.pdfLoading = true;
+    setTimeout(() => {
+      this.tables_to_pdf();
+      this.pdfLoading = false;
+    }, 100);
+  }
+
   tables_to_pdf() {
 
     const gamers_table = this.build_gamers_table();
