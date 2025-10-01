@@ -7,7 +7,6 @@ import { FeesCollectorService } from './fees-collector.service';
 import { Observable } from 'rxjs';
 import { Game, Gamer } from '../fees.interface';
 import { PdfService } from '../../../common/services/pdf.service';
-import { TodaysBooksComponent } from "../../shop/todays-books/todays-books.component";
 import { HorizontalAlignment, PDF_table } from '../../../common/interfaces/pdf-table.interface';
 import { FFBplayer } from '../../../common/ffb/interface/FFBplayer.interface';
 import { InputPlayerComponent } from '../../../common/ffb/input-licensee/input-player.component';
@@ -18,7 +17,7 @@ import { ToastService } from '../../../common/services/toast.service';
 
 @Component({
   selector: 'app-fees-collector',
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, TodaysBooksComponent, InputPlayerComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule,  InputPlayerComponent],
   templateUrl: './fees-collector.component.html',
   styleUrl: './fees-collector.component.scss'
 })
