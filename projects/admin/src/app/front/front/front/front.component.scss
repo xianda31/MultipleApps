@@ -1,3 +1,13 @@
+.main-content {
+  height: 78vh;
+}
+
+@media (max-width: 576px) {
+  .main-content {
+    height: auto !important;
+    min-height: 90vh;
+  }
+}
 @media (max-width: 767.98px) {
   .title-bg, app-title {
     display: none !important;

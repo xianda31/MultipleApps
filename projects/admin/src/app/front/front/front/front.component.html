@@ -38,7 +38,7 @@
   <app-toaster></app-toaster>
 
 
-  <div class="offset-md-2 col-md-8 justify-content-center mt-1" style="height: 78vh; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none;">
+  <div class="offset-md-2 col-md-8 justify-content-center mt-1 main-content" style="overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none;">
     <router-outlet></router-outlet>
   </div>
   <!-- <style>
@@ -49,8 +49,8 @@
 
   <!-- bandeau pied de page -->
 
-  <div class="row bg-light text-center mt-auto  justify-content-between ">
-    <span class=" position-relative">
+  <div class="row bg-light text-center mt-auto justify-content-between flex-wrap">
+    <span class="position-relative d-none d-xl-inline">
       <img src="VilleDeStOrens.png" alt="Ville de Saint Orens" class="img-fluid img-quarter-sm shadow position-absolute"
         style="bottom: -30px; left: 30px; max-width: 130px;">
     </span>
@@ -66,7 +66,7 @@
       </div>
     </div>
 
-    <span class=" position-relative">
+    <span class="position-relative d-none d-xl-inline">
       <img src="bcsto_ffb.jpg" alt="logo" class="img-fluid img-quarter-sm shadow position-absolute"
         style="bottom: 20px; right: 20px; max-width: 130px;">
     </span>
