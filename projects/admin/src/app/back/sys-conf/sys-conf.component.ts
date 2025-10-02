@@ -104,6 +104,7 @@ export class SysConfComponent {
     }
     console.log('nouvelle configuration', new_configuration);
     this.systemDataService.save_configuration(new_configuration);
+    this.toatService.showSuccess('configuration sauvegardée', 'les nouvelles données ont été enregistrées');
   }
 
   get_trace_mode() {

@@ -68,11 +68,11 @@ export const MAP_start = {
 
 export const MAP_end = {
 
-  'pointage': 'AS',
-  'n° chèque': 'AT',
-  'bordereau': 'AU',
-  'verif balance': 'AV',
-  'nature': 'AW',
+  'pointage': 'AT',
+  'n° chèque': 'AU',
+  'bordereau': 'AV',
+  'verif balance': 'AW',
+  'nature': 'AX',
 }
 
 export const MAP = {
@@ -90,71 +90,72 @@ export const PRODUCTS_COL: ACCOUNTS_COL = {
   'AUT': 'K',
   'ADH': 'L',
   'LIC': 'M',
-  'DdT': 'N',
-  'CAR': 'O',
-   'KFE': 'P',
-   'DON': 'Q',
-   'BNQ': 'R',
+  'ACC': 'N',
+  'DdT': 'O',
+  'CAR': 'P',
+   'KFE': 'Q',
+   'DON': 'R',
+   'BNQ': 'S',
 }
 
 
 export const EXPENSES_COL: ACCOUNTS_COL = {
-  'LIC': 'S',
-  'FFB': 'T',
-  'BRP': 'U',
-  'FOR': 'V',
-  'MAT': 'W',
-  'COM': 'X',
-  'CMP': 'Y',
-  'REU': 'Z',
-  'FET': 'AA',
-  'KFE': 'AB',
-  'AUT': 'AC',
-  'BIB': 'AD',
-  'DON': 'AE',
-  'BNQ': 'AF',
+  'LIC': 'T',
+  'FFB': 'U',
+  'BRP': 'V',
+  'FOR': 'W',
+  'MAT': 'X',
+  'COM': 'Y',
+  'CMP': 'Z',
+  'REU': 'AA',
+  'FET': 'AB',
+  'KFE': 'AC',
+  'AUT': 'AD',
+  'BIB': 'AE',
+  'DON': 'AF',
+  'BNQ': 'AG',
 }
 
 export const CUSTOMER_COL : { [key in CUSTOMER_ACCOUNT]: string } = {
-  'creance_in': 'AG',
-  'avoir_in': 'AH',
-  'creance_out': 'AM',
-  'avoir_out': 'AN',
+  'creance_in': 'AH',
+  'avoir_in': 'AI',
+  'creance_out': 'AN',
+  'avoir_out': 'AO',
 }
 
 export const EXTRA_CUSTOMER_IN: { [key in CUSTOMER_ACCOUNT]?: string } = {
-  'creance_in': 'AG',
-  'avoir_in': 'AH',
+  'creance_in': 'AH',
+  'avoir_in': 'AI',
 }
 export const EXTRA_CUSTOMER_OUT: { [key in CUSTOMER_ACCOUNT]?: string } = {
-  'creance_out': 'AM',
-  'avoir_out': 'AN',
+  'creance_out': 'AN',
+  'avoir_out': 'AO',
 }
 
 export const FINANCIAL_COL_in : { [key in FINANCIAL_ACCOUNT | BALANCE_ACCOUNT]?: string } = {
-  'cashbox_in': 'AI',
-  'bank_in': 'AJ',
-  'saving_in': 'AK',
-  'report_in': 'AL',
+  'cashbox_in': 'AJ',
+  'bank_in': 'AK',
+  'saving_in': 'AL',
+  'report_in': 'AM',
 } 
 
 export const FINANCIAL_COL_out: { [key in FINANCIAL_ACCOUNT | BALANCE_ACCOUNT]?: string } = {
-  'cashbox_out': 'AO',
-  'bank_out': 'AP',
-  'saving_out': 'AQ',
-  'report_out': 'AR',
+  'cashbox_out': 'AP',
+  'bank_out': 'AQ',
+  'saving_out': 'AR',
+  'report_out': 'AS',
 }
 
 export const FINANCIAL_COL: { [key in FINANCIAL_ACCOUNT | BALANCE_ACCOUNT]: string } = {
-  'cashbox_in': 'AI',
-  'bank_in': 'AJ',
-  'saving_in': 'AK',
-  'report_in': 'AL',
+  'cashbox_in': 'AJ',
+  'bank_in': 'AK',
+  'saving_in': 'AL',
+  'report_in': 'AM',
 
-  'cashbox_out': 'AO',
-  'bank_out': 'AP',
-  'saving_out': 'AQ',
-  'report_out': 'AR',
+  'cashbox_out': 'AP',
+  'bank_out': 'AQ',
+  'saving_out': 'AR',
+  'report_out': 'AS',
 }
 
 
@@ -173,6 +174,7 @@ export const xls_header = [
   'BIB', //'autre',
   'PAF',
   'INI', //'initiation',
+  'ACC', //'accès',
   'PER', //'perfectionnement',
   'SUB', //'subvention',
   'ADH', //'adhésion',
