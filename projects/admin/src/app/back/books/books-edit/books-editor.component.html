@@ -56,7 +56,7 @@
       <!--  affichage comptes financiers -->
       <div class="col-md-5 col-sm-4">
         <div class="row align-items-center mx-0">
-          <div class="col-8">
+          <div class="col-sm-8">
             <ng-container [ngTemplateOutlet]="financial_amounts"
               [ngTemplateOutletContext]="{inputFormGroup: form}"></ng-container>
           </div>
@@ -68,7 +68,7 @@
       </div>
       
       <!-- info tag  -->
-      <div class="col-3">
+      <div class="col-sm-3">
         <ng-container [ngTemplateOutlet]="tag" [ngTemplateOutletContext]="{inputFormGroup: form}">
         </ng-container>
       </div>
@@ -92,33 +92,33 @@
           <div class="col-12 mt-2">
             <!-- transaction d'une transaction non nominative -->
             <div class="row align-items-end mx-0" *ngIf="!selected_transaction.nominative ">
-              <div class="col-2">
+              <div class="col-sm-2">
                 <div [ngTemplateOutlet]="label" [ngTemplateOutletContext]="{inputFormGroup: operation}">
                 </div>
               </div>
-              <div *ngIf="!selected_transaction.pure_financial" class="col-8">
+              <div *ngIf="!selected_transaction.pure_financial" class="col-sm-8">
                 <ng-container [ngTemplateOutlet]="costs_and_revenues"
                   [ngTemplateOutletContext]="{inputFormGroup: operation, transaction: selected_transaction}"></ng-container>
               </div>
             </div>
             <!-- transaction d'une transaction nominative -->
-            <div *ngIf="selected_transaction.nominative" class="row align-items-end mx-0">
-              <div class="col-2">
+            <div *ngIf="selected_transaction.nominative" class="row align-items-start mx-0 bg-light rounded">
+              <div class="col-sm-2">
                 <ng-container [ngTemplateOutlet]="member"
                   [ngTemplateOutletContext]="{inputFormGroup: operation, transaction: selected_transaction}">
                 </ng-container>
               </div>
-              <div *ngIf="!selected_transaction.pure_financial " class="col-6">
+              <div *ngIf="!selected_transaction.pure_financial " class="col-sm-6">
                 <div [ngTemplateOutlet]="costs_and_revenues"
                   [ngTemplateOutletContext]="{inputFormGroup: operation, transaction: selected_transaction}">
                 </div>
               </div>
-              <div class="offset-1 col-2">
+              <div class=" col-sm-3">
                 <div [ngTemplateOutlet]="optional_accounts_form"
                   [ngTemplateOutletContext]="{inputFormGroup: operation}">
                 </div>
               </div>
-              <div class=" col-1">
+              <div class=" col-sm-1">
                 <i (click)="delete_operation(i)" class="h3  text-danger bi-person-fill-dash"></i>
               </div>
             </div>
@@ -138,11 +138,11 @@
     </div>
 
     <div class="row mt-5 mx-0">
-      <div class="col-1">
+      <div class="col-auto">
         <button [disabled]="form.invalid || !financial_accounts_locked " type="submit" class="btn btn-primary">
           {{!creation?'Modifier':'Créer'}}</button>
       </div>
-      <div *ngIf="!creation" class="col-1">
+      <div *ngIf="!creation" class="col-auto">
         <button type="button" class="btn btn-warning " (click)="delete_book_entry()">Supprimer</button>
       </div>
     </div>
@@ -206,7 +206,7 @@
     <ng-template #financial_amounts let-inputFormGroup="inputFormGroup">
       <ng-container [formGroup]="inputFormGroup">
         <div formArrayName="amounts" class="row ">
-          <div class="col-4" *ngFor="let amount of amounts.controls ; let i = index">
+          <div class="col-sm-4" *ngFor="let amount of amounts.controls ; let i = index">
             <label>{{ financial_accounts[i].label }}</label>
             <input (dblclick)="double_click(amount)" type="text"
               [class]="(amount.invalid && !amount.pristine) ? 'form-control border-danger' : 'form-control'"
@@ -223,8 +223,8 @@
     <!-- formulaire recette_dépense -->
     <ng-template #costs_and_revenues let-inputFormGroup="inputFormGroup" let-transaction="transaction">
       <ng-container [formGroup]="inputFormGroup">
-        <div formArrayName="values" class="row ">
-          <div class="col gx-1" *ngFor="let account of inputFormGroup.get('values').controls ; let i = index">
+        <div formArrayName="values" class="row g-2">
+          <div class="col-4 col-sm-3 col-md-2 col-lg-1" *ngFor="let account of inputFormGroup.get('values').controls ; let i = index">
             <label [ngbTooltip]="expense_or_revenue_accounts(transaction)[i].description" tooltipClass="my-custom-class"
               placement="top">{{expense_or_revenue_accounts(transaction)[i].key}}</label>
             <input type="text" [class]="account.invalid ? 'form-control border-danger' : 'form-control'"
@@ -242,8 +242,8 @@
     <ng-template #optional_accounts_form let-inputFormGroup="inputFormGroup">
       <ng-container [formGroup]="inputFormGroup">
         <ng-container *ngIf="optional_accounts && optional_accounts.length > 0">
-          <div formArrayName="optional_accounts" class="row ">
-            <div class="col-4 gx-1"
+          <div formArrayName="optional_accounts" class="row g-2">
+            <div class="col-3 col-sm-3 col-md-4 col-lg-4"
               *ngFor="let account of inputFormGroup.get('optional_accounts').controls ; let i = index">
               <label [ngbTooltip]="optional_accounts[i].description" tooltipClass="my-custom-class"
                 placement="top">{{optional_accounts[i].label}}</label>
@@ -261,7 +261,7 @@
     <!-- formulaire total -->
     <ng-template #total let-inputFormGroup="inputFormGroup">
       <ng-container [formGroup]="inputFormGroup">
-        <div class="col">
+        <div class="col-auto">
           <label for="total">s/total</label>
           <input type="text" class="form-control" id="total" formControlName="total">
         </div>
