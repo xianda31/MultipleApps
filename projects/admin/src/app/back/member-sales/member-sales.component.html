@@ -36,6 +36,24 @@
         </div>
 
         <div class="mt-3">
+            <div [class]="' card nice_shadow ' + (buyWithoutMembership.length > 0 ? 'border-danger' : '')">
+                <div class="card-header">
+                    <strong> [*]->[ADH] : </strong>
+                    membres achetant sans avoir réglé leur adhésion
+                </div>
+                <div class="card-body">
+                    <ul *ngIf="buyWithoutMembership.length > 0">
+                        <li *ngFor="let full_name of buyWithoutMembership">{{full_name}}</li>
+                    </ul>
+                    <div *ngIf="buyWithoutMembership.length === 0" class="text-muted">
+                        <i class="bi bi-check-circle"></i> Tous les membres sont à jour de leur
+                        adhésion
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-3">
             <div class="card nice_shadow ">
                 <div class="card-header">
                     <div class="row mb-2 align-items-center mx-0">

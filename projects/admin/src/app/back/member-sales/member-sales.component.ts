@@ -31,6 +31,7 @@ export class MemberSalesComponent {
 
   collectedLicenses: string[] = [];
   missingMembership: string[] = [];
+  buyWithoutMembership: string[] = [];
 
   
 
@@ -66,12 +67,28 @@ export class MemberSalesComponent {
   this.operations = this.bookService.get_revenues_from_members();
   this.check_license_declared();
   this.check_membership_paied();
+  this.check_buy_without_membership();
   this.loaded = true;
       }
     );
   } 
 
+check_buy_without_membership() {
+  
+    this.buyWithoutMembership = [];
+    this.members.forEach((member) => {
+        let full_name = this.memberService.full_name(member);
+        const buy_op = this.operations
+          .filter((op) => op.member === full_name);
+          const hasAdh = buy_op.some(op => op.values['ADH']);
+          const hasOther = buy_op.some(op => Object.keys(op.values).some(key => key !== 'ADH'));
 
+
+        if (!hasAdh && hasOther) {
+          this.buyWithoutMembership.push(full_name);
+        }
+    });
+  }
 
   check_membership_paied() {
     this.missingMembership = [];
