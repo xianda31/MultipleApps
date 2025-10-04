@@ -1,8 +1,11 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, map, switchMap } from 'rxjs';
+import { BehaviorSubject, Observable, map, of, switchMap, tap } from 'rxjs';
+import { delay } from 'rxjs/operators';
 import { ToastService } from './toast.service';
 import { DBhandler } from './graphQL.service';
 import { NavItem, NavItem_input } from '../interfaces/navitem.interface';
+import { routes } from '../../front/front.routes';
+import { Routes } from '@angular/router';
 
 @Injectable({
   providedIn: 'root'
@@ -13,8 +16,15 @@ export class NavItemsService {
 
   constructor(
     private toastService: ToastService,
-    private dbHandler: DBhandler
+    private dbHandler: DBhandler,
   ) {}
+
+
+  buildFrontRoutes(): Observable<Routes> {
+    return of(routes);
+  }
+
+  // CRUDL NAVITEMS
 
   // Create
   async createNavItem(navItem: NavItem): Promise<NavItem> {
