@@ -5,7 +5,7 @@ import { removeUserFromGroup } from './remove-user-from-group/resource';
 
 
 // import { Group_names } from '../../projects/admin/src/app/common/authentification/group.interface';
- enum Group_names {
+enum Group_names {
   System = 'Systeme',
   Admin = 'Administrateur',
   Editor = 'Editeur',
@@ -105,7 +105,7 @@ const schema = a.schema({
     .authorization((allow) => [
       allow.guest().to(['read']),
       allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
-      allow.group(Group_names.Admin).to(['read',  'update', 'delete']),
+      allow.group(Group_names.Admin).to(['read', 'update', 'delete']),
       allow.group(Group_names.Editor).to(['read']),
       allow.group(Group_names.Support).to(['read']),
       allow.group(Group_names.Member).to(['read']),
@@ -172,7 +172,7 @@ const schema = a.schema({
       allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
       allow.group(Group_names.Editor).to(['read', 'create', 'update']),
       allow.group(Group_names.Support).to(['read', 'create', 'update']),
-      allow.group(Group_names.Member).to(['read','update']),
+      allow.group(Group_names.Member).to(['read', 'update']),
 
     ]),
 
@@ -226,8 +226,6 @@ const schema = a.schema({
     title: a.string().required(),
     template: a.string().required(),
     snippet_ids: a.string().array().required(),
-    header: a.string(),
-    trailer: a.string(),
   })
     .authorization((allow) => [
       allow.guest().to(['read']),
@@ -240,6 +238,24 @@ const schema = a.schema({
     ]),
 
 
+
+  NavItem: a.model({
+    top: a.boolean().required(),
+    parent_id: a.string(),
+    position: a.enum(['Navbar', 'Footer', 'Brand', 'Submenu']),
+    label: a.string().required(),
+    link: a.string().required(),
+    type: a.enum(['Dropdown', 'ExternalRedirect', 'PlugIn', 'InternalLink', 'CustomPage']),
+  })
+    .authorization((allow) => [
+      allow.guest().to(['read']),
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Editor).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Support).to(['read']),
+      allow.group(Group_names.Member).to(['read']),
+
+    ]),
 
 });
 

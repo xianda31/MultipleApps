@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
-import { Article, ArticleTemplateEnum, RenderingModeEnum } from '../interfaces/menu.interface';
+import { Article, ArticleTemplateEnum, RenderingModeEnum } from '../interfaces/navitem.interface';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { ReplacePipe } from '../pipes/replace.pipe';
 import { FileService } from '../services/files.service';

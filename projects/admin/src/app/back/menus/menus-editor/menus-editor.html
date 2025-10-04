@@ -1,0 +1,106 @@
+<div class="container-fluid">
+    <form [formGroup]="new_navitemGroup ">
+
+        <table *ngIf="navitems && navitems.length" class="table table-striped table-responsive table-sm">
+            <thead>
+                <tr>
+                    <th>libellé</th>
+                    <th> top menu </th>
+                    <th>link</th>
+                    <th>parent</th>
+                    <th>position</th>
+                    <th>type</th>
+                    <th class="text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let navitem of navitems; let i = index">
+                    <td> {{ navitem.label }} </td>
+                    <td>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" [checked]="navitem.top" disabled>
+                            <label class="form-check-label">top</label>
+                        </div>
+                    </td>
+                    <td> {{ navitem.link }} </td>
+                    <td> {{ get_parent(navitem.parent_id) }} </td>
+                    <td> {{ navitem.position }} </td>
+                    <td> {{ navitem.type }} </td>
+                    <!-- actions -->
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-secondary" (click)="editNavitem(navitem)">
+                            <i class="bi bi-pen"></i>
+                        </button>
+                        <button class="ms-2 btn btn-sm btn-outline-danger" (click)="onDeleteNavitem(navitem)">
+                            <i class="bi bi-trash3"></i>
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+            <tfoot class="table-group-divider">
+                <tr>
+                    <!-- libellé -->
+                    <td>
+                        <input type="text" class="form-control form-control-sm" placeholder="libellé"
+                            formControlName="label" />
+                        <div *ngIf="new_navitemGroup.get('label')?.invalid && new_navitemGroup.get('label')?.touched" class="text-danger small">
+                          Ce champ est obligatoire.
+                        </div>
+                    </td>
+                    <!-- menu vs sous-menu -->
+                    <td>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" formControlName="top">
+                            <label class="form-check-label">top</label>
+                        </div>
+                        <div *ngIf="new_navitemGroup.get('top')?.invalid && new_navitemGroup.get('top')?.touched" class="text-danger small">
+                          Ce champ est obligatoire.
+                        </div>
+                    </td>
+                    <!-- routerLink ou External link -->
+                                        <td>
+                                                <input class="form-control form-control-sm" formControlName="link" />
+                                                <div *ngIf="new_navitemGroup.get('link')?.invalid && new_navitemGroup.get('link')?.touched" class="text-danger small">
+                                                    Ce champ est obligatoire.
+                                                </div>
+                    </td>
+                    <!-- parent_id -->
+                    <td>
+                        <select class="form-control form-control-sm" formControlName="parent_id">
+                            <option value="">None</option>
+                            <option *ngFor="let item of top_items" [value]="item.id">{{ item.label }}</option>
+                        </select>
+                        <div *ngIf="new_navitemGroup.hasError('parentRequired') && new_navitemGroup.get('parent_id')?.touched" class="text-danger small">
+                          Le champ parent est obligatoire si le menu n'est pas top.
+                        </div>
+                    </td>
+                    <!-- position -->
+                    <td>
+                        <select class="form-control form-control-sm" formControlName="position">
+                            <option *ngFor="let p of NAVITEM_POSITION_ARRAY" [value]="p">{{ p }}</option>
+                        </select>
+                        <div *ngIf="new_navitemGroup.get('position')?.invalid && new_navitemGroup.get('position')?.touched" class="text-danger small">
+                          Ce champ est obligatoire.
+                        </div>
+                    </td>
+                    <!-- type -->
+                    <td>
+                        <select class="form-select form-select-sm" formControlName="type">
+                            <option *ngFor="let t of NAVITEM_TYPE_ARRAY" [value]="t">{{ t }}</option>
+                        </select>
+                        <div *ngIf="new_navitemGroup.get('type')?.invalid && new_navitemGroup.get('type')?.touched" class="text-danger small">
+                          Ce champ est obligatoire.
+                        </div>
+                    </td>
+                    <!-- actions -->
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-secondary" [disabled]="!form_filled()"
+                         (click)="navitem_selected ? onUpdateNavitem() : onCreateNavitem()">
+                            <i class="bi bi-floppy2-fill"></i> {{ navitem_selected ? 'Update' : 'Create' }}
+                        </button>
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+    </form>
+</div>
