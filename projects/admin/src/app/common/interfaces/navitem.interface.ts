@@ -12,20 +12,33 @@ export enum NAVITEM_TYPE {
 export enum NAVITEM_POSITION {
     NAVBAR = 'Navbar',
     FOOTER = 'Footer',
-    // SIDEBAR = 'Sidebar',
     BRAND = 'Brand',
-    SUBMENU = 'Submenu',
-
 }
+
+export type NAVITEM_TYPE_ICONS = { [key in NAVITEM_TYPE]: string };
+export const NAVITEM_TYPE_ICONS: NAVITEM_TYPE_ICONS = {
+    [NAVITEM_TYPE.DROPDOWN]: 'bi bi-chevron-down',
+    [NAVITEM_TYPE.EXTERNAL_REDIRECT]: 'bi bi-globe2',
+    [NAVITEM_TYPE.PLUGIN]: 'bi bi-gear-fill',
+    [NAVITEM_TYPE.INTERNAL_LINK]: 'bi bi-link-45deg',
+    [NAVITEM_TYPE.CUSTOM_PAGE]: 'bi bi-file-richtext',
+};
+
+
 
 export interface NavItem {
     id: string;
-    top: boolean;
-    parent_id?: string;
-    position: NAVITEM_POSITION;
     label: string;
-    link: string;
+    top: boolean;
+    path: string;
+    position: NAVITEM_POSITION;
     type: NAVITEM_TYPE;
+    // optional params
+    parent_id?: string;
+    page_id?: string;
+    external_url?: string;
+    plugin_name?: string;
+    // meta data
     createdAt?: string;
     updatedAt?: string;
 }

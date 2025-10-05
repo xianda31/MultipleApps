@@ -30,11 +30,15 @@ export class NavItemsService {
   async createNavItem(navItem: NavItem): Promise<NavItem> {
     const navItem_input: NavItem_input = {
       top: navItem.top,
-      parent_id: navItem.parent_id,
-      position: navItem.position,
       label: navItem.label,
-      link: navItem.link,
-      type: navItem.type
+      path: navItem.path,
+      position: navItem.position,
+      type: navItem.type,
+      // optional params
+      parent_id: navItem.parent_id,
+      page_id: navItem.page_id,
+      external_url: navItem.external_url,
+      plugin_name: navItem.plugin_name,
     };
     try {
       const createdNavItem = await this.dbHandler.createNavItem(navItem_input);

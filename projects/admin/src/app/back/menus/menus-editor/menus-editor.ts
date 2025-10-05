@@ -1,18 +1,15 @@
-function parentRequiredIfNotTop(group: AbstractControl) {
-  const top = group.get('top')?.value;
-  const parent_id = group.get('parent_id')?.value;
-  if (!top && !parent_id) {
-    return { parentRequired: true };
-  }
-  return null;
-}
 
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
+import { NgbOffcanvas } from '@ng-bootstrap/ng-bootstrap';
 import { ToastService } from '../../../common/services/toast.service';
 import { NavItemsService } from '../../../common/services/navitem.service';
-import { NavItem, NAVITEM_POSITION, NAVITEM_TYPE } from '../../../common/interfaces/navitem.interface';
-import { AbstractControl, Form, FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { NavItem, NAVITEM_POSITION, NAVITEM_TYPE, NAVITEM_TYPE_ICONS } from '../../../common/interfaces/navitem.interface';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { Routes } from '@angular/router';
+import { NAVITEM_PLUGIN } from '../../../common/interfaces/plugin.interface';
+import { PageService } from '../../../common/services/page.service';
+import { Page } from '../../../common/interfaces/page_snippet.interface';
 
 @Component({
   selector: 'app-menus-editor',
@@ -21,40 +18,56 @@ import { CommonModule } from '@angular/common';
   styleUrl: './menus-editor.scss'
 })
 export class MenusEditorComponent {
+  @ViewChild('editNavitemOffcanvas', { static: true }) editNavitemOffcanvas: any;
 
+  selectedNavitem: NavItem | null = null;
   navitems!: NavItem[];
   top_items!: NavItem[];
-  new_navitemGroup!: FormGroup;
 
-  navitem_selected = false;
+  NAVITEM_TYPE = NAVITEM_TYPE;
+  NAVITEM_TYPES = Object.values(NAVITEM_TYPE);
+  NAVITEM_POSITION = NAVITEM_POSITION;
+  NAVITEM_POSITIONS = Object.values(NAVITEM_POSITION);
+  NAVITEM_TYPE_ICONS = NAVITEM_TYPE_ICONS;
+  NAVITEM_PLUGIN = NAVITEM_PLUGIN;
+  NAVITEM_PLUGINS = Object.values(NAVITEM_PLUGIN);
 
-  NAVITEM_TYPE = NAVITEM_TYPE
-  NAVITEM_TYPE_ARRAY = Object.values(NAVITEM_TYPE);
-  NAVITEM_POSITION = NAVITEM_POSITION
-  NAVITEM_POSITION_ARRAY = Object.values(NAVITEM_POSITION);
+
+  front_routes!: Routes;
+  menus: { [key: string]: { parent: NavItem, childs: NavItem[] } } = {};
+  pages: Page[] = [];
 
   constructor(
     private navitemService: NavItemsService,
+    private pageService: PageService,
     private toastService: ToastService,
-    private fb: FormBuilder
-  ) {
-    this.init_form();
-    // Subscribe to changes on new_navitemGroup
-    this.new_navitemGroup.valueChanges.subscribe(() => {
-      this.navitemChange(this.new_navitemGroup);
-    });
-  }
+    private offcanvasService: NgbOffcanvas
+  ) { }
 
 
   ngOnInit(): void {
 
+
+    this.pageService.listPages().subscribe(pages => {
+      console.log('Pages loaded', pages);
+      this.pages = pages;
+    });
+
+    this.navitemService.buildFrontRoutes().subscribe(routes => {
+      this.front_routes = routes;
+      console.log('Front routes built', this.front_routes);
+    });
+
+
+
     this.navitemService.loadNavItems().subscribe({
       next: (navitems) => {
         this.navitems = navitems.sort((a, b) => {
-          return a.link.localeCompare(b.link);
+          return a.path.localeCompare(b.path);
         });
         this.top_items = navitems.filter(item => item.top);
-        console.log('Menus loaded', this.navitems);
+        this.menus = this.generate_ul();
+        console.log('Menus loaded', this.menus);
       },
       error: (err) => {
         this.toastService.showErrorToast('Error loading navitem', err.message);
@@ -62,102 +75,107 @@ export class MenusEditorComponent {
     });
   }
 
-  init_form() {
-    this.new_navitemGroup = new FormGroup({
-      id: new FormControl(''),
-      label: new FormControl('', Validators.required),
-      top: new FormControl(true, Validators.required),
-      parent_id: new FormControl(''),
-      position: new FormControl(NAVITEM_POSITION, Validators.required),
-      link: new FormControl(''),
-      type: new FormControl(NAVITEM_TYPE, Validators.required),
-    }, { validators: parentRequiredIfNotTop });
+
+  generate_ul(): { [key: string]: { parent: NavItem, childs: NavItem[] } } {
+    const ul: { [key: string]: { parent: NavItem, childs: NavItem[] } } = {};
+    this.navitems.forEach(item => {
+      if (!item.top) {
+        const parent = this.navitems.find(parent => parent.id === item.parent_id);
+        if (parent) {
+          if (!ul[parent.label]) {
+            ul[parent.label] = { parent: parent, childs: [] };
+          }
+          ul[parent.label].childs.push(item);
+        }
+      } else {
+        if (!ul[item.label]) {
+          ul[item.label] = { parent: item, childs: [] };
+        }
+      }
+    });
+    return ul;
+  }
+
+  editNavitem(navItem: any) {
+    this.selectedNavitem = { ...navItem };
+    this.offcanvasService.open(this.editNavitemOffcanvas, { position: 'end' });
+  }
+
+  types_allowed(top: boolean) {
+    return top ? this.NAVITEM_TYPES : this.NAVITEM_TYPES.filter(type => type !== NAVITEM_TYPE.DROPDOWN);
+  }
+
+  has_submenus(parent_label: string): boolean {
+    if (!parent_label) return false;
+    return this.menus[parent_label] && this.menus[parent_label].childs.length > 0;
   }
 
   get_parent(id: string | undefined): string {
-    if (!id) return '??';
+    if (!id) return 'n/a';
     const parent = this.navitems.find(item => item.id === id);
-    return parent ? parent.label : '??';
+    return parent ? parent.label : 'n/a';
   }
 
   private charsanitize(str: string): string {
     return str.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '');
   }
 
-  navitemChange(navitem: FormGroup) {
-    const navitemValue = navitem.value as NavItem;
 
-    // If top and type is dropdown, set link to 'label-sanitized'
-    if (navitemValue.top) {
-      navitem.patchValue({ parent_id: null }, { emitEvent: false });
-      if (navitemValue.type === NAVITEM_TYPE.DROPDOWN) {
-        navitem.patchValue({ link: this.charsanitize(navitemValue.label) }, { emitEvent: false });
-      } else {
-        navitem   .patchValue({ link: '' }, { emitEvent: false });
-      }
+  createSubNavitem(parent: NavItem) {
+    const new_navitem: NavItem = {
+      id: '',
 
-    } else {
-      //  traitement sous-menus
-
-      const parent = this.navitems.find(item => item.id === navitemValue.parent_id);
-      if (!parent) {
-        // this.toastService.showErrorToast('Parent menu not found', navitemValue.parent_id!);
-        return;
-      } else {
-        navitem.patchValue({
-          link: this.charsanitize(parent.label) + '/' + this.charsanitize(navitemValue.label),
-          position: parent.position,
-        }, { emitEvent: false });
-      }
-    }
-  }
-
-  editNavitem(navitem: NavItem) {
-    this.new_navitemGroup.patchValue({
-      id: navitem.id,
-      parent_id: navitem.parent_id,
-      top: navitem.top,
-      position: navitem.position,
-      label: navitem.label,
-      link: navitem.link,
-      type: navitem.type,
-    });
-    this.navitem_selected = true;
-  }
-
-
-  form_filled() {
-    return this.new_navitemGroup.valid;
-  }
-  onCreateNavitem() {
-    this.new_navitemGroup.markAllAsTouched();
-    if (this.new_navitemGroup.invalid) {
-      return;
-    }
-    let new_navitem = this.new_navitemGroup.getRawValue();
-    this.navitemService.createNavItem(new_navitem);
-    this.new_navitemGroup.reset();
-    this.navitem_selected = false;
-  }
-
-  onReadNavitem(navitem: NavItem) {
-    this.new_navitemGroup.patchValue(navitem);
-    this.navitem_selected = true;
-  }
-
-  onUpdateNavitem() {
-    let navitem = this.new_navitemGroup.getRawValue();
-    this.navitemService.updateNavItem(navitem);
-    this.navitem_selected = false;
-    this.new_navitemGroup.reset();
-  }
-  onDeleteNavitem(navitem: NavItem) {
-   this.navitemService.deleteNavItem(navitem).then(() => {
-      this.toastService.showSuccess('Gestion des menus', `Menu ${navitem.label} supprimé avec succès`);
-      this.navitem_selected = false;
-      this.new_navitemGroup.reset();
+      label: 'New sub-menu',
+      top: false,
+      path: this.charsanitize(parent.label) + '/' + this.charsanitize('New sub-menu'),
+      position: parent.position,
+      // optional params
+      parent_id: parent.id,
+      type: NAVITEM_TYPE.CUSTOM_PAGE,
+    };
+    this.navitemService.createNavItem(new_navitem).then((created) => {
+      this.toastService.showSuccess('Gestion des menus', `Menu ${created.label} créé avec succès`);
+      // this.editNavitem(created);
     }).catch(err => {
       this.toastService.showErrorToast('Gestion des menus', err.message);
     });
   }
+
+
+  createTopNavitem(position: NAVITEM_POSITION) {
+    const new_navitem: NavItem = {
+      id: '',
+      label: 'New menu',
+      top: true,
+      parent_id: undefined,
+      position: position,
+      path: '#',
+      type: NAVITEM_TYPE.INTERNAL_LINK,
+    };
+    this.navitemService.createNavItem(new_navitem).then((created) => {
+      this.toastService.showSuccess('Gestion des menus', `Menu ${created.label} créé avec succès`);
+      // this.editNavitem(created);
+    }).catch(err => {
+      this.toastService.showErrorToast('Gestion des menus', err.message);
+    });
+
   }
+
+
+  saveNavitem(selectedNavitem: NavItem) {
+    // Logique pour enregistrer les modifications du nav item
+    console.log('Saving nav item', selectedNavitem);
+    this.navitemService.updateNavItem(selectedNavitem!);
+    this.toastService.showSuccess('Paramètres menu', 'nav_item sauvegardé');
+  }
+
+  deleteNavitem(selectedNavitem: NavItem) {
+    // Logique pour supprimer le nav item
+    console.log('Deleting nav item', selectedNavitem);
+    this.navitemService.deleteNavItem(selectedNavitem).then(() => {
+      this.toastService.showSuccess('Paramètres menu', 'nav_item supprimé');
+    });
+  }
+
+
+}

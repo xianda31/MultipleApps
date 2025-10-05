@@ -240,12 +240,16 @@ const schema = a.schema({
 
 
   NavItem: a.model({
-    top: a.boolean().required(),
-    parent_id: a.string(),
-    position: a.enum(['Navbar', 'Footer', 'Brand', 'Submenu']),
     label: a.string().required(),
-    link: a.string().required(),
+    top: a.boolean().required(),
+    path: a.string().required(),
+    position: a.enum(['Navbar', 'Footer', 'Brand', 'Submenu']),
     type: a.enum(['Dropdown', 'ExternalRedirect', 'PlugIn', 'InternalLink', 'CustomPage']),
+    // optional params
+    parent_id: a.string(),
+    page_id: a.string(),
+    external_url: a.string(),
+    plugin_name: a.string(),
   })
     .authorization((allow) => [
       allow.guest().to(['read']),
