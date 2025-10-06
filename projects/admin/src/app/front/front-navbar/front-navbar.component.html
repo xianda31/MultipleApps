@@ -33,6 +33,8 @@
             <li><a class="dropdown-item" routerLink="tournaments/resultats_ffb">FFB : résultats récents</a></li>
             <li><a class="dropdown-item" href="https://www.bridgeplus.com/nos-simultanes/resultats/?res=sim"
                 target="_blank" rel="noopener">Roy René : résultats récents</a></li>
+            <li *ngIf="logged_member$ | async as member"><a class="dropdown-item" routerLink="ffb_dashboard">mon tableau de bord FFB</a></li>
+
           </ul>
         </li>
 
@@ -45,11 +47,9 @@
           </ul>
         </li>
 
-        <li *ngIf="logged_member$ | async as member" class="nav-item"><a class="nav-link" routerLink="albums">Les albums</a></li>
+        <li *ngIf="logged_member$ | async as member" class="nav-item"><a class="nav-link" routerLink="albums">Les
+            albums</a></li>
 
-        <li *ngIf="user_accreditation && user_accreditation.level > 0" class="nav-item">
-          <a class="nav-link" routerLink="../back">Back office</a>
-        </li>
 
         <li *ngIf="!(logged_member$ | async)" class="nav-item">
           <button class="btn btn-sm btn-sepia shadow-sm" type="button" data-bs-toggle="offcanvas"
@@ -64,7 +64,9 @@
             {{member.firstname}}</a>
           <ul ngbDropdownMenu class="dropdown-menu" aria-labelledby="userDropdown">
             <li><a class="dropdown-item" routerLink="my_settings">mes préférences</a></li>
-            <li><a class="dropdown-item" routerLink="ffb_dashboard">mon tableau de bord FFB</a></li>
+            <li *ngIf="user_accreditation && user_accreditation.level > 0">
+              <a class="dropdown-item" routerLink="../back">Back office</a>
+            </li>
             <li><a class="dropdown-item" (click)="signOut()"><i class="bi bi-box-arrow-right"></i> Déconnexion</a></li>
           </ul>
         </li>
@@ -91,7 +93,9 @@
           <li *ngIf="logged_member$ | async as member" ngbDropdown class="nav-item dropdown mb-2">
             <a class="nav-link dropdown-toggle" ngbDropdownToggle id="userDropdownMobile">{{member.firstname}}</a>
             <ul ngbDropdownMenu class="dropdown-menu" aria-labelledby="userDropdownMobile">
-              <li><a class="dropdown-item" routerLink="ffb_dashboard">FFB : tableau de bord</a></li>
+              <li *ngIf=" user_accreditation && user_accreditation.level > 0">
+                <a class="nav-link" routerLink="../back" data-bs-dismiss="offcanvas">Back office</a>
+              </li>
               <li><a class="dropdown-item" (click)="signOut()"><i class="bi bi-box-arrow-right"></i> Déconnexion</a>
               </li>
             </ul>
@@ -117,11 +121,13 @@
           <li ngbDropdown class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" ngbDropdownToggle id="tournoisDropdownMobile">Les tournois</a>
             <ul ngbDropdownMenu class="dropdown-menu" aria-labelledby="tournoisDropdownMobile">
-              <li><a class="dropdown-item" routerLink="tournaments/next" data-bs-dismiss="offcanvas">Régularité à venir</a></li>
+              <li><a class="dropdown-item" routerLink="tournaments/next" data-bs-dismiss="offcanvas">Régularité à
+                  venir</a></li>
               <li><a class="dropdown-item" routerLink="tournaments/resultats_ffb" data-bs-dismiss="offcanvas">FFB :
                   résultats récents</a></li>
               <li><a class="dropdown-item" href="https://www.bridgeplus.com/nos-simultanes/resultats/?res=sim"
                   target="_blank" rel="noopener">Roy René : résultats récents</a></li>
+              <li *ngIf="logged_member$ | async as member"><a class="dropdown-item" routerLink="ffb_dashboard">FFB : tableau de bord</a></li>
             </ul>
           </li>
           <li *ngIf="logged_member$ | async " ngbDropdown class="nav-item dropdown">
@@ -134,11 +140,10 @@
             </ul>
           </li>
 
-          <li  *ngIf="logged_member$ | async " class="nav-item"><a class="nav-link" routerLink="albums" data-bs-dismiss="offcanvas">Les albums</a></li>
+          <li *ngIf="logged_member$ | async " class="nav-item"><a class="nav-link" routerLink="albums"
+              data-bs-dismiss="offcanvas">Les albums</a></li>
 
-          <li *ngIf=" user_accreditation && user_accreditation.level > 0" class="nav-item">
-            <a class="nav-link" routerLink="../back" data-bs-dismiss="offcanvas">Back office</a>
-          </li>
+
 
         </ul>
       </div>
