@@ -9,7 +9,7 @@ import { DynamicRoutesService } from './common/services/dynamic-routes.service';
 export function preloadFrontRoutes(navitemService: NavItemsService, dynamicRoutesService: DynamicRoutesService) {
   return () =>
     new Promise<void>((resolve) => {
-      navitemService.buildFrontRoutes().subscribe({
+      navitemService.getFrontRoutes().subscribe({
         next: (routes) => {
           dynamicRoutesService.setRoutes(routes);
           resolve();

@@ -1,55 +1,111 @@
-<div class="row">
-    <div class="col">
-        <h5>Barre de navigation</h5>
-        <div class="row">
-            <ng-container *ngTemplateOutlet="list_menus; context:{positions: [NAVITEM_POSITION.NAVBAR]}"></ng-container>
+<div class="container">
+    <div class="row">
+        <div class="col-6 ">
+            <h6>Barre de navigation</h6>
+            <div class="row">
+                <ng-container *ngTemplateOutlet="list_NAVBAR_menus"></ng-container>
+            </div>
         </div>
-
+        <div class="col-6">
+            <h6>Autres points de navigation</h6>
+            <div class="row">
+                <ng-container
+                    *ngTemplateOutlet="list_menus; context:{positions: [NAVITEM_POSITION.FOOTER, NAVITEM_POSITION.BRAND]}"></ng-container>
+            </div>
+        </div>
     </div>
-    <div class="col">
-        <h5>Autres points de navigation</h5>
+    <div class="ms-2 ">
+        valider ce nouveau menu :
+        <i class="bi bi-gear-wide-connected ms-2" (click)="build_front_routes()"> calculer les routes</i>
         <div class="row">
-            <ng-container
-                *ngTemplateOutlet="list_menus; context:{positions: [NAVITEM_POSITION.FOOTER, NAVITEM_POSITION.BRAND]}"></ng-container>
-        </div>
+            <div class="col-6">
+                <div [innerText]="navbar_verbose"></div>
 
+            </div>
+            <div class="col-6">
+                <div [innerText]="front_route_verbose"></div>
+            </div>
+        </div>
     </div>
 </div>
 
-
-
-<ng-template #list_menus , let-positions="positions">
-    <div class="row g-2 flex-wrap">
-        <ng-container *ngFor="let menu of menus | keyvalue">
-            <ng-container *ngIf="positions.includes(menu.value.parent.position)">
-                <div class="col-auto">
-                    <div class="card h-100" style="width: 180px; min-width: 180px; max-width: 180px;">
-                        <div class="card-header text-center" (click)="editNavitem(menu.value.parent)">
-                            <span>{{ menu.key }}
-                                <i [class]="NAVITEM_TYPE_ICONS[menu.value.parent.type] + ' ms-1'"></i>
+<ng-template #list_NAVBAR_menus>
+    <div class="ms-2 row g-2 flex-wrap w-100">
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-2">
+            <ng-container *ngTemplateOutlet="show_menu; context:{menu: 'Accueil'}"></ng-container>
+        </div>
+        <div *ngFor="let menu of menus | keyvalue" class="col-12 col-sm-6 col-md-4 col-lg-3 mb-2">
+            <ng-container *ngIf="menu.value.parent.position === NAVITEM_POSITION.NAVBAR">
+                <div class="card h-100 w-100">
+                    <div class="card-header text-center" (click)="editNavitem(menu.value.parent)">
+                        <span>{{ menu.key }}
+                            <i [class]="NAVITEM_TYPE_ICONS[menu.value.parent.type] + ' ms-1'"></i>
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div *ngFor="let navitem of menu.value.childs" class="row" (click)="editNavitem(navitem)"
+                            style="cursor: pointer;">
+                            <span>{{ navitem.label }}
+                                <i [class]="NAVITEM_TYPE_ICONS[navitem.type] + ' ms-1'"></i>
                             </span>
                         </div>
-                        <div class="card-body">
-                            <div *ngFor="let child of menu.value.childs" class="row" (click)="editNavitem(child)"
-                                style="cursor: pointer;">
-                                <span>{{ child.label }}
-                                    <i [class]="NAVITEM_TYPE_ICONS[child.type] + ' ms-1'"></i>
-                                </span>
-                            </div>
-                            <i (click)="createSubNavitem(menu.value.parent)"
-                                class="text-secondary bi bi-plus-square-dotted"></i>
-                        </div>
+                        <i (click)="createSubNavitem(menu.value.parent)"
+                            class="text-secondary bi bi-plus-square-dotted"></i>
                     </div>
                 </div>
-
             </ng-container>
-        </ng-container>
-        <div class="col-auto d-flex align-items-start">
-            <i (click)="createTopNavitem(positions[0])" class="text-secondary bi bi-plus-square-dotted"
+        </div>
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-2">
+            <ng-container *ngTemplateOutlet="show_menu; context:{menu: 'Connexion'}"></ng-container>
+        </div>
+        <div class="mt-3 col-auto d-flex align-items-start">
+            <i (click)="createTopNavitem(NAVITEM_POSITION.NAVBAR)" class="text-secondary bi bi-plus-square-dotted"
                 style="cursor:pointer; font-size:1.5rem;"></i>
         </div>
     </div>
 </ng-template>
+
+<ng-template #show_menu , let-menu="menu">
+    <div class="card h-100 w-100 text-bg-secondary">
+        <div class="card-header text-center">
+            <span>{{ menu }}
+                <i [class]="NAVITEM_TYPE_ICONS[NAVITEM_TYPE.PLUGIN]+ ' ms-1'"></i>
+            </span>
+        </div>
+        <div class="card-body text-center align-items-center">
+            menu prédéfini
+        </div>
+    </div>
+</ng-template>
+
+
+<ng-template #list_menus , let-positions="positions">
+    <div class="ms-2 row g-2 flex-wrap w-100">
+        <div *ngFor="let menu of menus | keyvalue" class="col-12 col-sm-6 col-md-4 col-lg-3 mb-2"
+            >
+            <div  *ngIf="positions.includes(menu.value.parent.position)"class="card h-100 w-100">
+                <div class="card-header text-center" (click)="editNavitem(menu.value.parent)">
+                    <span>{{ menu.key }}
+                        <i [class]="NAVITEM_TYPE_ICONS[menu.value.parent.type] + ' ms-1'"></i>
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div *ngFor="let navitem of menu.value.childs" class="row" (click)="editNavitem(navitem)" style="cursor: pointer;">
+                        <span>{{ navitem.label }}
+                            <i [class]="NAVITEM_TYPE_ICONS[navitem.type] + ' ms-1'"></i>
+                        </span>
+                    </div>
+                    <i (click)="createSubNavitem(menu.value.parent)" class="text-secondary bi bi-plus-square-dotted"></i>
+                </div>
+            </div>
+        </div>
+        <div class="mt-3 col-auto d-flex align-items-start">
+            <i (click)="createTopNavitem(positions[0])" class="text-secondary bi bi-plus-square-dotted" style="cursor:pointer; font-size:1.5rem;"></i>
+        </div>
+    </div>
+</ng-template>
+
+
 <!-- Offcanvas latéral droit ng-bootstrap -->
 <ng-template #editNavitemOffcanvas let-offcanvas>
     <div class="offcanvas-header">
@@ -62,16 +118,19 @@
 
             <div class="mb-3">
                 <label for="navitemLabel" class="form-label">Libellé</label>
-                <input id="navitemLabel" class="form-control" [(ngModel)]="selectedNavitem.label" name="label">
+                <input id="navitemLabel" class="form-control" placeholder="Libellé" [(ngModel)]="selectedNavitem.label"
+                    name="label">
             </div>
-
-            <div class="mb-3">
-                <label for="navitemPath" class="form-label">Chemin</label>
-                <input id="navitemPath" class="form-control" [(ngModel)]="selectedNavitem.path" name="path" readonly>
+            <!-- selection root/path -->
+            <div class="mb-3 input-group">
+                <span class="input-group-text">root</span>
+                <input class="form-control" placeholder="root" [(ngModel)]="selectedNavitem.root" name="root"
+                    disabled="true">
+                <span class="input-group-text">path</span>
+                <input class="form-control" [(ngModel)]="selectedNavitem.path" name="path"
+                    [disabled]="selectedNavitem.top">
             </div>
-
-
-
+            <!-- selection type -->
             <div class="mb-3">
                 <label class="form-label">Type</label>
                 <div>
@@ -87,22 +146,22 @@
 
             <div *ngIf="selectedNavitem.type === NAVITEM_TYPE.EXTERNAL_REDIRECT || selectedNavitem.type === NAVITEM_TYPE.INTERNAL_LINK"
                 class="mb-3">
-                <label for="childLink" class="form-label">Lien (URL)</label>
-                <input id="childLink" class="form-control" [(ngModel)]="selectedNavitem.external_url" name="url">
+                <label for="navitemLink" class="form-label">Lien (URL)</label>
+                <input id="navitemLink" class="form-control" [(ngModel)]="selectedNavitem.external_url" name="url">
             </div>
-<!-- selection page -->
+            <!-- selection page -->
             <div *ngIf="selectedNavitem.type === NAVITEM_TYPE.CUSTOM_PAGE " class="mb-3">
-                <label for="childPage" class="form-label">Page</label>
-                <select id="childPage" class="form-control" [(ngModel)]="selectedNavitem.page_id" name="page_id">
+                <label for="navitemPage" class="form-label">Page</label>
+                <select id="navitemPage" class="form-control" [(ngModel)]="selectedNavitem.page_id" name="page_id">
                     <option *ngFor="let page of pages" [value]="page.id">
                         {{ page.title }}
                     </option>
                 </select>
             </div>
-<!-- selection plugin -->
+            <!-- selection plugin -->
             <div *ngIf="selectedNavitem.type === NAVITEM_TYPE.PLUGIN " class="mb-3">
-                <label for="childPage" class="form-label">Plugin</label>
-                <select id="childPage" class="form-control" [(ngModel)]="selectedNavitem.plugin_name"
+                <label for="navitemPage" class="form-label">Plugin</label>
+                <select id="navitemPage" class="form-control" [(ngModel)]="selectedNavitem.plugin_name"
                     name="plugin_name">
                     <option *ngFor="let plugin of NAVITEM_PLUGINS" [value]="plugin">
                         {{ plugin }}

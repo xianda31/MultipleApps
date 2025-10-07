@@ -32,6 +32,8 @@ export class MenusEditorComponent {
   NAVITEM_PLUGIN = NAVITEM_PLUGIN;
   NAVITEM_PLUGINS = Object.values(NAVITEM_PLUGIN);
 
+  navbar_verbose = '';
+  front_route_verbose = '';
 
   front_routes!: Routes;
   menus: { [key: string]: { parent: NavItem, childs: NavItem[] } } = {};
@@ -49,14 +51,9 @@ export class MenusEditorComponent {
 
 
     this.pageService.listPages().subscribe(pages => {
-      console.log('Pages loaded', pages);
       this.pages = pages;
     });
 
-    this.navitemService.buildFrontRoutes().subscribe(routes => {
-      this.front_routes = routes;
-      console.log('Front routes built', this.front_routes);
-    });
 
 
 
@@ -67,7 +64,6 @@ export class MenusEditorComponent {
         });
         this.top_items = navitems.filter(item => item.top);
         this.menus = this.generate_ul();
-        console.log('Menus loaded', this.menus);
       },
       error: (err) => {
         this.toastService.showErrorToast('Error loading navitem', err.message);
@@ -75,6 +71,58 @@ export class MenusEditorComponent {
     });
   }
 
+private add_to_navbar(navitem: NavItem, component: string) {
+  if (navitem.top) {
+  this.navbar_verbose += `<li ngbDropdown>  ${navitem.label} </li> \n`;
+  this.front_route_verbose += `{ path: '${navitem.root}', component: ${component} }, \n`;
+  }else {
+    this.navbar_verbose += `<li> routerLink="${navitem.root}/${navitem.path}"> ${navitem.label} </li> \n`;
+    this.front_route_verbose += `{ path: '${navitem.root}/${navitem.path}', component: ${component} }, \n`;
+  }
+
+  // console.log("<li> routerLink=\"%s\"> %s </li>", path, label);
+}
+
+private process_navitem(navitem: NavItem) {
+  switch (navitem.type) {
+    case NAVITEM_TYPE.DROPDOWN:
+     this.add_to_navbar(navitem, 'DropdownComponent');
+      break;
+    case NAVITEM_TYPE.CUSTOM_PAGE:
+      this.add_to_navbar(navitem, 'GenericPageComponent');
+      break;
+    case NAVITEM_TYPE.PLUGIN:
+      this.add_to_navbar(navitem, navitem.plugin_name!);
+      break;
+    case NAVITEM_TYPE.INTERNAL_LINK:
+      this.add_to_navbar(navitem, 'InternalLinkComponent');
+      break;
+    case NAVITEM_TYPE.EXTERNAL_REDIRECT:
+      this.add_to_navbar(navitem, 'ExternalRedirectComponent');
+      break;
+    default:
+      console.warn('Unknown menu type', navitem);
+      break;
+  }
+}
+
+
+  build_front_routes() {
+    // reset_plugin_routes();
+
+this.front_route_verbose = '';
+this.navbar_verbose = '';
+
+    for (const [key, value] of Object.entries(this.menus)) {
+      const { parent, childs } = value;
+      this.process_navitem(parent);
+      childs.forEach(child => {
+        this.process_navitem(child);
+      });
+    }
+
+    // console.log('Front routes built', plugin_routes);
+  }
 
   generate_ul(): { [key: string]: { parent: NavItem, childs: NavItem[] } } {
     const ul: { [key: string]: { parent: NavItem, childs: NavItem[] } } = {};
@@ -96,10 +144,7 @@ export class MenusEditorComponent {
     return ul;
   }
 
-  editNavitem(navItem: any) {
-    this.selectedNavitem = { ...navItem };
-    this.offcanvasService.open(this.editNavitemOffcanvas, { position: 'end' });
-  }
+
 
   types_allowed(top: boolean) {
     return top ? this.NAVITEM_TYPES : this.NAVITEM_TYPES.filter(type => type !== NAVITEM_TYPE.DROPDOWN);
@@ -117,17 +162,39 @@ export class MenusEditorComponent {
   }
 
   private charsanitize(str: string): string {
-    return str.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '');
+    // Supprime les accents mais garde la lettre (é → e)
+    return str
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .toLowerCase()
+      .replace(/\s+/g, '_')
+      .replace(/[^a-z0-9_]/g, '');
   }
 
+  gen_path(navitem: NavItem): string {
+      return this.charsanitize(navitem.path);
+  }
+
+  get_root(navitem: NavItem): string {
+    if (navitem.top) {
+      return this.charsanitize(navitem.label);
+    } else {
+      const parent = this.navitems.find(item => item.id === navitem.parent_id);
+      console.log('get_root: navitem', navitem, 'parent', parent);
+      return parent ? this.charsanitize(parent.label) : '?!?';
+    }
+  }
+    
+  
 
   createSubNavitem(parent: NavItem) {
     const new_navitem: NavItem = {
       id: '',
 
-      label: 'New sub-menu',
+      label: '',
       top: false,
-      path: this.charsanitize(parent.label) + '/' + this.charsanitize('New sub-menu'),
+      root: parent.root,
+      path: '#',
       position: parent.position,
       // optional params
       parent_id: parent.id,
@@ -145,10 +212,11 @@ export class MenusEditorComponent {
   createTopNavitem(position: NAVITEM_POSITION) {
     const new_navitem: NavItem = {
       id: '',
-      label: 'New menu',
+      label: '',
       top: true,
       parent_id: undefined,
       position: position,
+      root:this.charsanitize('New menu'),
       path: '#',
       type: NAVITEM_TYPE.INTERNAL_LINK,
     };
@@ -162,9 +230,33 @@ export class MenusEditorComponent {
   }
 
 
+    editNavitem(navItem: any) {
+      navItem.root = this.get_root(navItem);   // force update of root if any change of parent
+    this.selectedNavitem = { ...navItem };
+
+    this.offcanvasService.open(this.editNavitemOffcanvas, { position: 'end' });
+  }
+
   saveNavitem(selectedNavitem: NavItem) {
-    // Logique pour enregistrer les modifications du nav item
-    console.log('Saving nav item', selectedNavitem);
+
+    if (!selectedNavitem) return;
+
+    if(selectedNavitem.top) {
+      selectedNavitem.root = this.charsanitize(selectedNavitem.label);
+      // force childs root update
+     this.menus[selectedNavitem.label]?.childs.forEach(async child => {
+        if(child.root !== selectedNavitem.root) {
+          child.root = selectedNavitem.root;
+          await this.navitemService.updateNavItem(child);
+        }
+      });
+    } else {
+      // force path update if not set
+      if (selectedNavitem.path ==='#') {
+        selectedNavitem.path = this.gen_path(selectedNavitem);
+      }
+    }
+
     this.navitemService.updateNavItem(selectedNavitem!);
     this.toastService.showSuccess('Paramètres menu', 'nav_item sauvegardé');
   }

@@ -242,6 +242,7 @@ const schema = a.schema({
   NavItem: a.model({
     label: a.string().required(),
     top: a.boolean().required(),
+    root:a.string().required(),
     path: a.string().required(),
     position: a.enum(['Navbar', 'Footer', 'Brand', 'Submenu']),
     type: a.enum(['Dropdown', 'ExternalRedirect', 'PlugIn', 'InternalLink', 'CustomPage']),

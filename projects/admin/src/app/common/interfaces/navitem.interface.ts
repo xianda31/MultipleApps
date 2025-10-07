@@ -1,5 +1,6 @@
 
 import { Schema } from "../../../../../../amplify/data/resource";
+import { NAVITEM_PLUGIN } from "./plugin.interface";
 
 export enum NAVITEM_TYPE {
     DROPDOWN = 'Dropdown',
@@ -30,6 +31,7 @@ export interface NavItem {
     id: string;
     label: string;
     top: boolean;
+    root:string;
     path: string;
     position: NAVITEM_POSITION;
     type: NAVITEM_TYPE;
@@ -37,7 +39,7 @@ export interface NavItem {
     parent_id?: string;
     page_id?: string;
     external_url?: string;
-    plugin_name?: string;
+    plugin_name?: NAVITEM_PLUGIN;
     // meta data
     createdAt?: string;
     updatedAt?: string;

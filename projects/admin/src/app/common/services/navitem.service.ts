@@ -20,7 +20,7 @@ export class NavItemsService {
   ) {}
 
 
-  buildFrontRoutes(): Observable<Routes> {
+  getFrontRoutes(): Observable<Routes> {
     return of(routes);
   }
 
@@ -31,6 +31,7 @@ export class NavItemsService {
     const navItem_input: NavItem_input = {
       top: navItem.top,
       label: navItem.label,
+      root: navItem.root,
       path: navItem.path,
       position: navItem.position,
       type: navItem.type,
