@@ -1,13 +1,13 @@
 <div class="card shadow-lg mt-3 g-0">
     <div class="card-header">
         <!-- bandeau tournoi (date, mode roy rené , alread_charges ? , add_team -->
-        <div class="row  justify-content-start align-items-center">
 
-            <div class="col-auto">
-                <h5 class="ms-1 d-none d-sm-inline">Droits de table</h5>
-            </div>
-
-            <div *ngIf="!selected_tournament || selected_tournament === undefined" class="col-auto">
+        <div *ngIf="!selected_tournament || selected_tournament === undefined"
+            class="row justify-content-start align-items-center">
+            <h5 class="col-auto ms-1 d-none d-sm-inline">Droits de table</h5>
+            <span class="col-auto text-muted ms-2 d-none d-sm-inline">sélectionner un tournoi</span>
+            <!-- select tournoi -->
+            <div class="col-12 col-md-2">
                 <div class=" input-group input-group-sm align-items-center">
                     <select class="form-select form-select-sm" [(ngModel)]="selected_tournament"
                         (change)="tournament_selected(selected_tournament)" id="tournament_select">
@@ -22,36 +22,48 @@
                 </div>
             </div>
 
-            <div *ngIf="game && game.tournament" class="col-auto">
-                <span>
-                    {{game.tournament.date | date:'dd/MM/yyyy'}}
-                    &nbsp; {{ game.tournament.time }}</span>
+        </div>
+
+        <div *ngIf="game && game.tournament" class="row  justify-content-between align-items-center">
+            <!-- <ng-container class="row justify-content-between" > -->
+            <div class="col-12 col-md-5  fs-5">
+                <span class="d-none d-sm-inline">
+                    {{game.tournament.date | date:'EEEE dd MMMM' : 'fr-FR'}}
+                </span>
+                <span>&nbsp; {{ game.tournament.name }}</span>
             </div>
 
-            <ng-container *ngIf="game && game.tournament">
-                <div class="col-auto">
-                    {{game.tournament.name}}
+
+            <div class="col-12 col-md-2 border border-secondary rounded p-1">
+                <div *ngFor="let fee_rate of fee_rates" class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="inlineRadioOptions"
+                        [id]="'inlineRadio' + fee_rate" [value]="fee_rate" [(ngModel)]="game.fee_rate"
+                        (change)="fee_rate_changed(fee_rate)">
+                    <label class="form-check-label" [for]="'inlineRadio' + fee_rate">{{ fee_rate }}</label>
                 </div>
-                <div class="col-auto">
-                    <span class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" [checked]="game.fees_doubled" role="switch"
-                            (change)="toggle_fee()">
-                        <label class="form-check-label">droits doublés</label>
+            </div>
+
+
+            <div class="col-12 offset-md-1 col-md-2 ">
+                <span class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" [checked]="game.fees_doubled" role="switch"
+                        (change)="toggle_fee()">
+                    <label class="form-check-label">droits doublés</label>
+                </span>
+            </div>
+
+            <div class="ms-auto col-12 col-md-2">
+                <div class="input-group input-group-sm flex-grow-1 me-2">
+                    <span class="input-group-text">ajout joueur :</span>
+                    <app-input-player listeId="new_guest" placeholder="nom ou prénom" type="text"
+                        class="form-control form-control-sm" [(ngModel)]="new_player"
+                        (ngModelChange)="add_player(new_player)"></app-input-player>
+                    <span class="input-group-text">
+                        <i class="bi bi-x-circle" (click)="clear_added_player()"></i>
                     </span>
                 </div>
-
-                <div class="col-auto align-self-end ms-auto">
-                    <div class="input-group input-group-sm flex-grow-1 me-2">
-                        <span class="input-group-text">ajouter une personne :</span>
-                        <app-input-player listeId="new_guest" placeholder="nom ou prénom" type="text"
-                            class="form-control form-control-sm" [(ngModel)]="new_player"
-                            (ngModelChange)="add_player(new_player)"></app-input-player>
-                        <span class="input-group-text">
-                            <i class="bi bi-x-circle" (click)="clear_added_player()"></i>
-                        </span>
-                    </div>
-                </div>
-            </ng-container>
+            </div>
+            <!-- </ng-container> -->
 
 
 
@@ -103,13 +115,13 @@
 
             <div class="col-auto">
                 <!-- <div class="row"> -->
-                    <div class="col-auto">
-                        <span class="text-muted">pas d'enregistrement : </span>
-                        <button type="button" class="ms-1 btn btn-sm btn-outline-warning" (click)="clear_session()">
-                            <i class="bi bi-x-circle-fill"> sortir</i>
-                        </button>
+                <div class="col-auto">
+                    <span class="text-muted">sortir sans enregistrer : </span>
+                    <button type="button" class="ms-1 btn btn-sm btn-outline-warning" (click)="clear_session()">
+                        <i class="bi bi-x-circle-fill"> sortir</i>
+                    </button>
 
-                    </div>
+                </div>
                 <!-- </div> -->
             </div>
 
@@ -123,11 +135,14 @@
         <div [class]="gamer_class(gamer)" style="position: relative;">
             <div class="card-body py-0 position-relative" style="z-index: 1;">
                 <!-- Avatar wrapper for centering -->
-                <div *ngIf="gamer.photo_url$ | async"
-                    class="position-absolute top-50 start-50 translate-middle d-flex justify-content-center align-items-center w-100 h-100"
-                    style="z-index: 0; pointer-events: none;">
-                    <img [src]="gamer.photo_url$ | async" alt="{{ gamer.lastname }}" class="img-fluid rounded-circle"
-                        style="max-height: 60px; max-width: 60px; object-fit: cover;" (error)="gamer.photo_url = null">
+                <div *ngIf="(gamer.photo_url$ | async) as photoUrl">
+                    <ng-container *ngIf="photoUrl">
+                        <div class="position-absolute top-50 start-50 translate-middle d-flex justify-content-center align-items-center w-100 h-100"
+                            style="z-index: 0; pointer-events: none;">
+                            <img [src]="photoUrl" alt="{{ gamer.lastname }}" class="img-fluid rounded-circle"
+                                style="max-height: 60px; max-width: 60px; object-fit: cover;" (error)="gamer.photo_url = null">
+                        </div>
+                    </ng-container>
                 </div>
                 <div class="row" style="position: relative; z-index: 1;">
                     <div class="col form-check form-switch">
@@ -190,3 +205,4 @@
             </div>
         </div>
     </ng-template>
+</div>

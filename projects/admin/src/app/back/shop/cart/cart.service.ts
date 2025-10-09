@@ -8,6 +8,7 @@ import { ProductService } from '../../../common/services/product.service';
 import { GameCardService } from '../../services/game-card.service';
 import { MembersService } from '../../../common/services/members.service';
 import { Product } from '../../products/product.interface';
+import { OpsItemCategory } from 'aws-cdk-lib/aws-cloudwatch-actions';
 
 @Injectable({
   providedIn: 'root'
@@ -174,26 +175,40 @@ export class CartService {
     }
 
     for (let [payee, cartitems] of payees) {
-      let op_values: operation_values = {};
+      let ops : Operation[] = [];
+      let op_index = 0;
+       ops[0] = {
+         label: 'vendu par ' + this.seller,
+        member: payee,
+         values: {} as operation_values,
+      };
+
+      // génération d'une ligne operation si compte déjà utilisé même si même payee
+      // permet de detecter les achats multiples par un même adhérent
+      // ex: achat de 2 cartes de membre
+      // chaque carte est une ligne dans la bd
       cartitems.forEach((cartitem) => {
         let account = cartitem.product_account;
-        if (op_values[account]) {
-          op_values[account] += cartitem.paied;
+        if (ops[op_index].values[account]) {
+          op_index += 1;
+          ops[op_index] = {
+            label: 'vendu par ' + this.seller,
+            member: payee,
+            values: {} as operation_values,
+          };
+          ops[op_index].values[account] = cartitem.paied;
         } else {
-          op_values[account] = cartitem.paied;
+          ops[op_index].values[account] = cartitem.paied;
         }
       });
       // paiement du panier à crédit
       if (payee === this._cart.buyer_name && this.payment.mode === PaymentMode.CREDIT) {
-        op_values[CUSTOMER_ACCOUNT.DEBT_debit] = this.getCartAmount();
+        ops[0].values[CUSTOMER_ACCOUNT.DEBT_debit] = this.getCartAmount();
       }
-      let operation = {
-        label: 'vendu par ' + this.seller,
-        member: payee,
-        values: op_values,
-      };
       // console.log('operation', operation);
-      operations.push(operation);
+      ops.forEach((operation) => {
+        operations.push(operation);
+      });
     }
 
     return operations;

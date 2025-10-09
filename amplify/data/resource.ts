@@ -120,6 +120,7 @@ const schema = a.schema({
   Game: a.model({
     gameId: a.id().required(),
     season: a.string().required(),
+    fee_rate: a.string().required(),
     member_trn_price: a.float().required(),
     non_member_trn_price: a.float().required(),
     fees_doubled: a.boolean().required(),

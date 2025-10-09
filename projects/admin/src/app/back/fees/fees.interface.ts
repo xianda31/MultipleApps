@@ -5,6 +5,7 @@ import { Schema } from "../../../../../../amplify/data/resource";
 interface Fees_context {
     gameId?: string;  // optional during creation, will be set by the database
     season: string;
+    fee_rate: FEE_RATE;
     member_trn_price: number;
     non_member_trn_price: number;
     fees_doubled: boolean;
@@ -12,7 +13,14 @@ interface Fees_context {
 }
 export interface Game extends Fees_context {
     tournament : { id: number; name: string; date: string; time: string } | null;
+
     gamers: Gamer[];
+}
+
+export enum FEE_RATE {
+    STANDARD = 'standard',
+    ACCESSION = 'accession',
+    SUMMER = 'été'
 }
 
 export interface Gamer {
@@ -21,6 +29,7 @@ export interface Gamer {
     lastname: string;
     is_member: boolean;
     game_credits: number;
+    acc_credits: boolean;
     index: number;
     in_euro: boolean;
     price: number;

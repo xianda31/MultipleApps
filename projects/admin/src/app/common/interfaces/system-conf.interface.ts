@@ -1,3 +1,4 @@
+import { FEE_RATE } from "../../back/fees/fees.interface";
 
 export interface Account {
     key: string;
@@ -14,6 +15,12 @@ export interface ImageSize {
     height: number;
     ratio: number;
 }
+export interface Fee_rate {
+    key: FEE_RATE;
+    member_price: number;
+    non_member_price: number;
+};
+
 
 export interface Profit_and_loss {
     debit_key: string;       // loss = debit
@@ -35,8 +42,9 @@ export interface SystemConfiguration {
     trace_mode: boolean;
     season: string;
     club_bank_key: string;
-    member_trn_price: number;
-    non_member_trn_price: number;
+
+    fee_rates: Fee_rate[];
+
     profit_and_loss: Profit_and_loss;
     revenue_and_expense_tree: Revenue_and_expense_tree;
     banks: Bank[];

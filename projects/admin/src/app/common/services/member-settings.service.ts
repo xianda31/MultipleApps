@@ -33,7 +33,7 @@ private settings_change$: BehaviorSubject<number> = new BehaviorSubject<number>(
     const avatar_path = S3_ROOT_FOLDERS.PORTRAITS + '/';
     const avatar_file = avatar_path + this.membersService.full_name(member) + '.png';
 
-    return member.has_avatar ? this.fileService.getPresignedUrl$(avatar_file) : of('')
+    return member. has_avatar ? this.fileService.getPresignedUrl$(avatar_file) : of('')
   }
 
   set_settingsChange() {

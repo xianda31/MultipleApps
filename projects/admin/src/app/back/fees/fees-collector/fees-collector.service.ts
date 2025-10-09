@@ -4,11 +4,11 @@ import { Person, Player, Team, TournamentTeams } from '../../../common/ffb/inter
 import { BehaviorSubject, map, Observable, of, Subject, Subscription } from 'rxjs';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { Member } from '../../../common/interfaces/member.interface';
-import { Game, Gamer } from '../fees.interface';
+import { FEE_RATE, Game, Gamer } from '../fees.interface';
 import { club_tournament } from '../../../common/ffb/interface/club_tournament.interface';
 import { BookService } from '../../services/book.service';
 import { GameCardService } from '../../services/game-card.service';
-import { SystemConfiguration } from '../../../common/interfaces/system-conf.interface';
+import { Fee_rate, SystemConfiguration } from '../../../common/interfaces/system-conf.interface';
 import { FFBplayer } from '../../../common/ffb/interface/FFBplayer.interface';
 import { MembersService } from '../../../common/services/members.service';
 import { ToastService } from '../../../common/services/toast.service';
@@ -64,13 +64,42 @@ export class FeesCollectorService {
   private init_game() {
     this.game = {
       season: this.sys_conf.season,
-      member_trn_price: +this.sys_conf.member_trn_price,
-      non_member_trn_price: +this.sys_conf.non_member_trn_price,
-      alphabetic_sort: false,
+      fee_rate: FEE_RATE.STANDARD,
       fees_doubled: false,
+      member_trn_price: +this.get_fee_rate(FEE_RATE.STANDARD).member_price,
+      non_member_trn_price: +this.get_fee_rate(FEE_RATE.STANDARD).non_member_price,
+      alphabetic_sort: false,
       gamers: [],
       tournament: null,
     };
+  }
+
+  get_fee_rate(type: FEE_RATE): Fee_rate {
+    const ffe_rate = this.sys_conf.fee_rates.find((rate) => rate.key === type);
+    if (!ffe_rate) {
+      throw new Error(`Fee rate type ${type} not found`);
+    }
+    return ffe_rate;
+  }
+
+  change_fee_rate(new_rate: FEE_RATE) {
+    this.game.fee_rate = new_rate;
+    let fee_rate = this.get_fee_rate(new_rate);
+    this.game.member_trn_price = +fee_rate.member_price;
+    this.game.non_member_trn_price = +fee_rate.non_member_price;
+    let factor = this.game.fees_doubled ? 2 : 1;
+    this.game.gamers.forEach((gamer) => {
+      gamer.price = gamer.is_member ? this.game.member_trn_price * factor : this.game.non_member_trn_price * factor;
+    });
+    if (fee_rate.key === FEE_RATE.ACCESSION) {
+      // use acc_credits where possible
+      this.game.gamers.forEach((gamer) => {
+        if (gamer.is_member && gamer.acc_credits) {
+          gamer.enabled = false;
+        }
+      });
+    }
+    this._game$.next(this.game);
   }
 
   toggle_fee() {
@@ -106,7 +135,7 @@ export class FeesCollectorService {
     }
   }
 
-  private update_members_credits_and_avatar() {
+  private update_members_assets() {
     let members = this.get_members();
 
     const subscription = this.gameCardService.check_solvencies(members).subscribe({
@@ -115,10 +144,19 @@ export class FeesCollectorService {
           if (gamer.is_member) {
             let credit = solvencies.get(gamer.license) ?? 0;
             gamer.game_credits = credit;
-            gamer.photo_url$ = this.membersSettingsService.getAvatarUrl(this.membersService.getMemberbyLicense(gamer.license)!) ;
-
+            gamer.photo_url$ = this.membersSettingsService.getAvatarUrl(this.membersService.getMemberbyLicense(gamer.license)!);
           }
         });
+
+        if (this.game.fee_rate === FEE_RATE.ACCESSION) {
+          this.game.gamers.forEach((gamer) => {
+            if (gamer.is_member && gamer.acc_credits) {
+              gamer.enabled = false;
+              gamer.validated = true;
+            }
+          });
+        }
+
         this._game$.next(this.game);
       },
       complete: () => {
@@ -127,7 +165,14 @@ export class FeesCollectorService {
     });
   }
 
-
+  //     if (fee_rate.key === FEE_RATE.ACCESSION) {
+  // use acc_credits where possible
+  // this.game.gamers.forEach((gamer) => {
+  //   if (gamer.is_member && gamer.acc_credits) {
+  //     gamer.enabled = false;
+  //   }
+  // });
+  // }
 
   clear_tournament() {
     this.tournament = null;
@@ -146,11 +191,12 @@ export class FeesCollectorService {
     if (game) {
       this.game = game;
       this.toastService.showSuccess('tournois', 'dernier état de saisie de ce tournoi restauré');
-      this.update_members_credits_and_avatar();   // will update gamers game_credits & trigger _game$.next(this.game)
+      this.update_members_assets();   // will update gamers game_credits & trigger _game$.next(this.game)
       return
     }
 
     this.game.fees_doubled = tournament.tournament_name.includes('ROY') ? true : false;
+    this.game.fee_rate = tournament.tournament_name.includes('ELEVES') ? FEE_RATE.ACCESSION : FEE_RATE.STANDARD;
 
     this.tournamentService.readTeams(tournament!.team_tournament_id).pipe(
       map((tteams: TournamentTeams) => tteams.teams),
@@ -173,7 +219,7 @@ export class FeesCollectorService {
         gamer.price = gamer.is_member ? this.game.member_trn_price * factor : this.game.non_member_trn_price * factor;
       });
 
-      this.update_members_credits_and_avatar();   // will update gamers game_credits & trigger _game$.next(this.game)
+      this.update_members_assets();   // will update gamers game_credits & trigger _game$.next(this.game)
     }
     );
   }
@@ -187,6 +233,7 @@ export class FeesCollectorService {
         lastname: player.lastname.toUpperCase(),
         is_member: this.is_member(player.license_number),
         game_credits: 0,
+        acc_credits: (this.is_member(player.license_number)) ? this.check_acc(this.membersService.full_name(this.membersService.getMemberbyLicense(player.license_number)!)) : false,
         index: this.game.gamers.length,
         in_euro: true, // default to euro
         price: this.game.non_member_trn_price,
@@ -195,7 +242,7 @@ export class FeesCollectorService {
         photo_url$: this.is_member(player.license_number) ? this.membersSettingsService.getAvatarUrl(this.membersService.getMemberbyLicense(player.license_number)!) : null
       };
       this.game.gamers.push(new_gamer);
-      this.update_members_credits_and_avatar();   // will update gamers game_credits & trigger _game$.next(this.game)
+      this.update_members_assets();   // will update gamers game_credits & trigger _game$.next(this.game)
     }
   }
 
@@ -212,6 +259,39 @@ export class FeesCollectorService {
     return members;
   }
 
+  private check_acc(fullname: string): boolean {
+    const month_to_quarter = (month: number): number => {
+      if (month >= 7 && month <= 11) return 0;  //  juillet à novembre => T1
+      if (month === 12 || (month >= 1 && month <= 2)) return 1;  //  décembre à février => T2
+      if (month >= 3 && month <= 6) return 2;  //  mars à juin => T3
+      throw new Error('Invalid month');
+    }
+
+    const check_quarter = (index: number) => {
+      if (index > 3) { throw new Error('I quarter overflow'); };
+      if (!quarters[index]) {
+        quarters[index] = true
+      } else {
+        check_quarter(index + 1)
+      };
+    }
+
+    const this_quarter = () => {
+      const month = new Date().getMonth();
+      return month_to_quarter(month);
+    }
+
+    const acc_op_dates = this.BookService.find_member_acc_operations(fullname);
+    // associate payment dates to quarter
+    let quarters: boolean[] = [false, false, false]; // T1, T2, T3
+    acc_op_dates.forEach((date) => {
+      const month = new Date(date).getMonth();
+      const quarter = month_to_quarter(month);
+      check_quarter(quarter);
+    });
+
+    return quarters[this_quarter()];
+  }
 
 
   private person2gamer(person: Person, index: number): Gamer {
@@ -226,6 +306,7 @@ export class FeesCollectorService {
     let price = is_member ? this.game.member_trn_price : this.game.non_member_trn_price;
 
     let game_credits = (is_member) ? this.gameCardService.get_member_credit(license) : 0;
+    let acc_credits = (is_member) ? this.check_acc(this.membersService.full_name(this.membersService.getMemberbyLicense(license)!)) : false;
 
     return {
       license: license,
@@ -233,6 +314,7 @@ export class FeesCollectorService {
       lastname: person.lastname.toUpperCase(),
       is_member: is_member,
       game_credits: game_credits,
+      acc_credits: acc_credits,
       in_euro: in_euro,
       index: index,
       price: price,

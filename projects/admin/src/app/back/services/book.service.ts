@@ -604,6 +604,18 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
   }
 
 
+  find_member_acc_operations(member_full_name: string): Date[] {
+    let acc_op_dates: Date[] = [];
+    this._book_entries.forEach((book_entry) => {
+      let date = new Date(book_entry.date);
+      book_entry.operations.forEach((op) => {
+        if (op.values['ACC'] && op.member === member_full_name) {
+          acc_op_dates.push(date);
+        }
+      });
+      }); 
+    return acc_op_dates;
+  }
 
   find_member_debt(member_full_name: string): number {
     let debts = this.get_debts();

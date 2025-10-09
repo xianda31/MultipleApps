@@ -317,6 +317,7 @@ create_custom_key(season : string, trn_id:number) : string{
       member_trn_price: game.member_trn_price,
       non_member_trn_price: game.non_member_trn_price,
       fees_doubled: game.fees_doubled,
+      fee_rate: game.fee_rate,
       alphabetic_sort: game.alphabetic_sort,
       tournament: game.tournament,
       gamers: JSON.stringify(game.gamers)
@@ -330,7 +331,8 @@ create_custom_key(season : string, trn_id:number) : string{
           ...game_output,
           gamers: typeof game_output.gamers === 'string'
             ? JSON.parse(game_output.gamers)
-            : game_output.gamers
+            : game_output.gamers,
+          fee_rate: (game_output.fee_rate === null ? 'standard' : game_output.fee_rate) as Game['fee_rate']
         }
       : null;
     if (!created_game) throw new Error('Game creation failed: game_output is null');
@@ -344,13 +346,14 @@ create_custom_key(season : string, trn_id:number) : string{
     const { data : game_output, errors } = await client.models.Game.get({ gameId: game_id });
     if (errors) throw errors;
     let read_game = game_output
-    ? {
-      ...game_output,
-      gamers: typeof game_output.gamers === 'string'
-        ? JSON.parse(game_output.gamers)
-        : game_output.gamers
-    }
-    : null;
+      ? {
+          ...game_output,
+          gamers: typeof game_output.gamers === 'string'
+            ? JSON.parse(game_output.gamers)
+            : game_output.gamers,
+          fee_rate: (game_output.fee_rate === null ? 'standard' : game_output.fee_rate) as Game['fee_rate']
+        }
+      : null;
     return read_game;
   }
 
@@ -359,6 +362,7 @@ create_custom_key(season : string, trn_id:number) : string{
     let game_input : Game_input = {
       gameId: game.gameId!,
       season: game.season,
+      fee_rate: game.fee_rate,
       member_trn_price: game.member_trn_price,
       non_member_trn_price: game.non_member_trn_price,
       fees_doubled: game.fees_doubled,
@@ -375,7 +379,8 @@ create_custom_key(season : string, trn_id:number) : string{
           ...game_output,
           gamers: typeof game_output.gamers === 'string'
             ? JSON.parse(game_output.gamers)
-            : game_output.gamers
+            : game_output.gamers,
+          fee_rate: (game_output.fee_rate === null ? 'standard' : game_output.fee_rate) as Game['fee_rate']
         }
       : null;
     if (!updated_game) throw new Error('Game update failed: game_output is null');

@@ -6,16 +6,17 @@ import { SystemConfiguration } from '../../common/interfaces/system-conf.interfa
 import { ToastService } from '../../common/services/toast.service';
 import { FileService } from '../../common/services/files.service';
 import { BookService } from '../services/book.service';
+import { FEE_RATE } from '../fees/fees.interface';
 
 
 
 
 @Component({
-    selector: 'app-sys-conf',
-    standalone: true,
-    imports: [CommonModule, FormsModule, ReactiveFormsModule],
-    templateUrl: './sys-conf.component.html',
-    styleUrl: './sys-conf.component.scss'
+  selector: 'app-sys-conf',
+  standalone: true,
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  templateUrl: './sys-conf.component.html',
+  styleUrl: './sys-conf.component.scss'
 })
 export class SysConfComponent {
 
@@ -36,8 +37,15 @@ export class SysConfComponent {
       trace_mode: [false],
       season: [''],
       club_bank_key: [''],
-      member_trn_price: 3,
-      non_member_trn_price: 4,
+
+      fee_rates: this.fb.array([
+        this.fb.group({
+          key: ['standard'],
+          member_price: [0],
+          non_member_price: [0],
+        })
+      ]),
+
 
       revenue_and_expense_tree: this.fb.group({
         sections: this.fb.array([
@@ -69,8 +77,8 @@ export class SysConfComponent {
       ]),
 
       profit_and_loss: this.fb.group({
-      debit_key: [''],
-      credit_key: [''],
+        debit_key: [''],
+        credit_key: [''],
       }),
 
       thumbnail: this.fb.group({
@@ -83,22 +91,39 @@ export class SysConfComponent {
 
   ngOnInit(): void {
     this.systemDataService.get_configuration()
-    .subscribe({
-      next : (configuration) => {
-        this.current_season = configuration.season;
-      this.loadDataInFormGroup(configuration);
-      this.export_file_url = this.fileService.json_to_blob(configuration);
-      this.loaded = true;
-    },
-      error: (error) => {
-        console.error('error', error);
-        this.toatService.showErrorToast('erreur de chargement de la configuration', 'vérifiez la connexion internet');
-      }
-  });
+      .subscribe({
+        next: (configuration) => {
+          this.current_season = configuration.season;
+          // configuration.fee_rates=[
+          //   { key: FEE_RATE.STANDARD, member_price: 0, non_member_price: 0 },
+          //   { key: FEE_RATE.ACCESSION, member_price: 0, non_member_price: 0 },
+          //   { key: FEE_RATE.SUMMER, member_price: 0, non_member_price: 0 }
+          // ]
+          this.loadDataInFormGroup(configuration);
+          console.log('configuration', configuration);
+          // this.export_file_url = this.fileService.json_to_blob(configuration);
+          this.loaded = true;
+        },
+        error: (error) => {
+          console.error('error', error);
+          this.toatService.showErrorToast('erreur de chargement de la configuration', 'vérifiez la connexion internet');
+        }
+      });
+
+    // Met à jour le blob d'export à chaque modification du formulaire
+    this.systemFormGroup.valueChanges.subscribe(val => {
+      this.export_file_url = this.fileService.json_to_blob(val);
+    });
   }
 
+  // updateExportFileUrl() {
+  //   const new_configuration : SystemConfiguration = this.systemFormGroup.value;
+  //   console.log('new_configuration', new_configuration);
+  //         this.export_file_url = this.fileService.json_to_blob(new_configuration);
+  // }
+
   save_configuration() {
-    const new_configuration : SystemConfiguration = this.systemFormGroup.value;
+    const new_configuration: SystemConfiguration = this.systemFormGroup.value;
     if (new_configuration.season !== this.current_season) { // if season has changed
       this.systemDataService.change_to_new_season(new_configuration.season);   // trigger next season observable
     }
@@ -120,6 +145,10 @@ export class SysConfComponent {
 
   get revenues() {
     return this.systemFormGroup.get('revenue_and_expense_tree')?.get('revenues') as FormArray;
+  }
+
+  get fee_rates() {
+    return this.systemFormGroup.get('fee_rates') as FormArray;
   }
 
   get sections() {
@@ -152,6 +181,8 @@ export class SysConfComponent {
     this.sections.clear();
     this.expenses.clear();
     this.revenues.clear();
+    this.banks.clear();
+    this.fee_rates.clear();
 
     configuration.revenue_and_expense_tree.sections.forEach((account: any) => {
       this.sections!.push(this.fb.group(account));
@@ -164,8 +195,11 @@ export class SysConfComponent {
       this.revenues.push(this.fb.group(account));
     });
 
+    configuration.fee_rates.forEach((fee_rate: any) => {
+      this.fee_rates.push(this.fb.group(fee_rate));
+    });
 
-    this.banks.clear();
+
     configuration.banks.forEach((bank: any) => {
       this.banks.push(this.fb.group(bank));
     });
