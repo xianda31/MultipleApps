@@ -100,8 +100,8 @@ export class SysConfComponent {
           //   { key: FEE_RATE.SUMMER, member_price: 0, non_member_price: 0 }
           // ]
           this.loadDataInFormGroup(configuration);
-          console.log('configuration', configuration);
-          // this.export_file_url = this.fileService.json_to_blob(configuration);
+          // console.log('configuration', configuration);
+          this.export_file_url = this.fileService.json_to_blob(configuration);
           this.loaded = true;
         },
         error: (error) => {

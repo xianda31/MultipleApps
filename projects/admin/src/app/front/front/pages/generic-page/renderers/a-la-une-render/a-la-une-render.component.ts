@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Snippet } from '../../../../../../common/interfaces/page_snippet.interface';
+import { MENU_TITLES, Snippet } from '../../../../../../common/interfaces/page_snippet.interface';
 import { Router } from '@angular/router';
 import { TruncatePipe } from '../../../../../../common/pipes/truncate.pipe';
 
@@ -30,7 +30,7 @@ export class ALaUneRenderComponent implements OnChanges {
       // Scroll to the snippet if selected_title changes
       const snippet = this.snippets.find(s => s.title === this.selected_title);
       if (snippet) {
-        console.log('Scrolling to snippet:', snippet.title);
+        // console.log('Scrolling to snippet:', snippet.title);
         this.read_more = false
         this.scrollToElement(snippet.title);
       }
@@ -44,7 +44,13 @@ export class ALaUneRenderComponent implements OnChanges {
   }
 
   readMore(snippet: Snippet) {
-    this.router.navigate(['/front/news', snippet.title]);
+    // console.log('Navigating to page:', snippet.pageId);
+  // PATCH à CORRIGER ASAP
+    if(snippet.pageId === MENU_TITLES.NEWS) {
+      this.router.navigate(['/front/news', snippet.title]);
+    }else if(snippet.pageId === MENU_TITLES.AUTRES_RDV) {
+      this.router.navigate(['/front/tournaments/autres_rdv', snippet.title]);
+    }
   }
 
   scrollToElement(title: string): void {

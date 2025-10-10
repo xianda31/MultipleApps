@@ -81,6 +81,7 @@ export class SnippetService {
 
     async updateSnippet(snippet: Snippet): Promise<Snippet> {
         if(snippet.image_url) delete snippet.image_url; // Remove image_url if it exists to avoid sending it to the backend
+        if(snippet.pageId) delete snippet.pageId; // Remove pageId if it exists to avoid sending it to the backend
         try {
             let updatedSnippet = await this.dbHandler.updateSnippet(snippet);
             updatedSnippet = await this.add_image_url(updatedSnippet);
@@ -122,12 +123,6 @@ export class SnippetService {
         return this._snippets.find((snippet) => snippet.id === snippet_id) as Snippet;
     }
 
-    // add_image_url_observable(snippet: Snippet): Snippet {
-    //     if(snippet.image) {
-    //         return {...snippet, image_url: this.fileService.getPresignedUrl$(snippet.image)};
-    //     }
-    //     return snippet;
-    // }
 
     async add_image_url(snippet: Snippet): Promise<Snippet> {
         if (snippet.image) {

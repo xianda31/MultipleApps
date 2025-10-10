@@ -1,5 +1,5 @@
 import { Component, Input, Renderer2, ElementRef, OnChanges, SimpleChanges, OnInit } from '@angular/core';
-import { map, switchMap } from 'rxjs';
+import { map, switchMap, tap } from 'rxjs';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { EXTRA_TITLES, MENU_TITLES, Page, PAGE_TEMPLATES, Snippet } from '../../../../common/interfaces/page_snippet.interface';
@@ -40,6 +40,7 @@ export class GenericPageComponent implements OnInit, OnChanges {
   @Input() page_title!: MENU_TITLES | EXTRA_TITLES;
   @Input() snippet_title?: string; // for news, the title of the selected snippet
   page!: Page;
+  pages: Page[] = [];
   pageTemplate!: PAGE_TEMPLATES;
   PAGE_TEMPLATES = PAGE_TEMPLATES;
   snippets: Snippet[] = [];
@@ -71,35 +72,54 @@ export class GenericPageComponent implements OnInit, OnChanges {
 
   ngOnInit(): void {
     this.init_relative_links_handler();
-    this.snippetService.listSnippets().subscribe(snippets => {
-      this.snippets = snippets;
-      this.filter_PageSnippets(this.page_title);
-    });
+
+    this.pageService.listPages()
+      .subscribe(pages => {
+        this.pages = pages;
+        this.snippetService.listSnippets().subscribe(snippets => {
+          this.snippets = snippets;
+          // update pageId for all snippets
+          this.pages.forEach(page => {
+            page.snippet_ids.forEach(id => {
+              const snippet = this.snippets.find(s => s.id === id);
+              if (snippet) {
+                snippet.pageId = page.title;
+              }
+            });
+          });
+          this.filter_PageSnippets(this.page_title);
+        });
+      });
   }
 
   filter_PageSnippets(page_title: MENU_TITLES | EXTRA_TITLES) {
 
-    const title = (page_title === EXTRA_TITLES.HIGHLIGHTS) ? MENU_TITLES.NEWS : page_title;
+    if (page_title === EXTRA_TITLES.HIGHLIGHTS) {
+
+      this.page_snippets = this.snippets.filter(s => s.featured)
+        .sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''));
+      this.pageTemplate = PAGE_TEMPLATES.A_LA_UNE;
+      // update pageId for all snippets
+
+      return;
+    }
+
+    const title = page_title;
     // load the page by its title, then load all snippets  for this page
+    const page = this.pages.find(p => p.title === title);
+    if (!page) { throw new Error(page_title + ' page not found') }
+    this.page = page;
 
-    this.pageService.getPageByTitle(title).pipe(
-      map(page => {
-        if (!page) { throw new Error(page_title + ' page not found') }
-        this.page = page;
-        return page;
-      }),
-    )
-      .subscribe((page) => {
-        this.page_snippets = page.snippet_ids
-          .map(id => this.snippets.find(snippet => snippet.id === id))
-          .filter(snippet => snippet !== undefined) as Snippet[];
+    this.page_snippets = page.snippet_ids
+      .map(id => this.snippets.find(snippet => snippet.id === id))
+      .filter(snippet => snippet !== undefined) as Snippet[];
 
-        // post traitement de la page
-        if (this.page_snippets.length === 0) {
-          console.warn('%s snippets found for page %s: %o', this.snippets.length, this.page.title, this.page.snippet_ids);
-        }
-        this.page_post_handling();
-      });
+    // post traitement de la page
+    if (this.page_snippets.length === 0) {
+      console.warn('%s snippets found for page %s: %o', this.snippets.length, this.page.title, this.page.snippet_ids);
+    }
+    this.page_post_handling();
+
   }
 
 

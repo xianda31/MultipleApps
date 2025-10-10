@@ -54,6 +54,7 @@ export class CustomRouter implements OnInit {
 
   customRoutes = [
     { path: 'tournaments/autres_rdv', page_title: MENU_TITLES.AUTRES_RDV },
+    { path: 'tournaments/autres_rdv/:title', page_title: MENU_TITLES.AUTRES_RDV },
     { path: 'club/acteurs', page_title: MENU_TITLES.ACTEURS },
     { path: 'club/documents', page_title: MENU_TITLES.DOCUMENTS },
     { path: 'club/bureau', page_title: MENU_TITLES.BUREAU },
