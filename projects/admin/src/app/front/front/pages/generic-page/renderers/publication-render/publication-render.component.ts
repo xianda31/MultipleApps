@@ -52,4 +52,9 @@ export class PublicationRenderComponent implements AfterViewInit, AfterViewCheck
     }, 0);
   }
 
+  clampHeight(h?: number) {
+    const val = typeof h === 'number' && !isNaN(h) ? h : 100;
+    return Math.min(val, 100);
+  }
+
 }
