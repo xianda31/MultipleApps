@@ -196,7 +196,7 @@ export class FeesCollectorService {
     }
 
     this.game.fees_doubled = tournament.tournament_name.includes('ROY') ? true : false;
-    this.game.fee_rate = tournament.tournament_name.includes('ELEVES') ? FEE_RATE.ACCESSION : FEE_RATE.STANDARD;
+    this.game.fee_rate = (tournament.tournament_name.includes('ELEVES') || tournament.tournament_name.includes('ACCESSION')) ? FEE_RATE.ACCESSION : FEE_RATE.STANDARD;
 
     this.tournamentService.readTeams(tournament!.team_tournament_id).pipe(
       map((tteams: TournamentTeams) => tteams.teams),
