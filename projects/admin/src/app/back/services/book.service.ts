@@ -691,7 +691,7 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
     }
   }
 
-  create_tournament_fees_entry(date: string, fees_amount: number) {
+  create_tournament_fees_entry(date: string,tag:string, fees_amount: number) {
     let amounts: AMOUNTS = {};
     amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] = fees_amount;
 
@@ -703,6 +703,7 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
     const entry: BookEntry = {
       id: '',
       season: seasonValue,
+      tag: tag,
       date: date,
       amounts: amounts,
       operations: [operation],
@@ -713,9 +714,9 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
   }
 
 
-  search_tournament_fees_entry(date: string): BookEntry | undefined {
+  search_tournament_fees_entry(tag: string): BookEntry | undefined {
     return this._book_entries.find((entry) => {
-      return entry.date === date && entry.transaction_id === TRANSACTION_ID.vente_en_espèces &&
+      return entry.tag === tag && entry.transaction_id === TRANSACTION_ID.vente_en_espèces &&
         entry.operations.some(op => op.label === 'droits de table' && op.values['DdT'] !== undefined);
     });
   }

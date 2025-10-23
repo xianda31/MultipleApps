@@ -380,7 +380,7 @@ export class FeesCollectorService {
       // create bookEntry for tournament fees
       try {
         let total = non_members_euros + members_euros;
-        await this.BookService.create_tournament_fees_entry(this.game.tournament!.date, total)
+        await this.BookService.create_tournament_fees_entry(this.game.tournament!.date,this.game.tournament!.name, total)
         this.toastService.showSuccess('droits de table', total + ' € de droits de table enregistrés');
       }
       catch (error: unknown) {
@@ -394,7 +394,7 @@ export class FeesCollectorService {
     if (!this.game.tournament) {
       return false;
     }
-    const charged = this.BookService.search_tournament_fees_entry(this.game.tournament.date) !== undefined;
+    const charged = this.BookService.search_tournament_fees_entry(this.game.tournament.name) !== undefined;
     return charged;
   }
 
