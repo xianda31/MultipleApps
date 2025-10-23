@@ -220,7 +220,7 @@ export class GameCardService {
 
               if (owners.length === 0) {
                 this.toastService.showWarning('Gestion des cartes', `Aucun propriétaire trouvé pour la carte ID ${card.id}`);
-                console.warn(`No owners found for card with ID ${card.id}. `)
+                console.warn(`No owners found for card  ${card.licenses}. `)
               }
               return {
                 id: card.id,

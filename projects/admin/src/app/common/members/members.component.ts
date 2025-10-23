@@ -71,11 +71,10 @@ export class MembersComponent implements OnInit {
         }, 0);
       }),
       switchMap(() => this.membersService.listMembers()),
-      take(1),        // Prend le premier résultat et se désabonne
+      // take(1),        // Prend le premier résultat et se désabonne
       // map((members) => {
       // }),
     ).subscribe((members) => {
-      console.log('Membres chargés : ', members.length);
       this.members = members;
       this.reset_license_statuses();
       this.updateDBfromFFB();
