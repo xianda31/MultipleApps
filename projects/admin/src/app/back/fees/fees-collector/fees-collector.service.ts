@@ -226,6 +226,7 @@ export class FeesCollectorService {
 
 
   add_player(player: FFBplayer) {
+    let factor = this.game.fees_doubled ? 2 : 1;
     if (player) {
       let new_gamer: Gamer = {
         license: player.license_number,
@@ -236,7 +237,7 @@ export class FeesCollectorService {
         acc_credits: (this.is_member(player.license_number)) ? this.check_acc(this.membersService.full_name(this.membersService.getMemberbyLicense(player.license_number)!)) : false,
         index: this.game.gamers.length,
         in_euro: true, // default to euro
-        price: this.game.non_member_trn_price,
+        price: this.is_member(player.license_number) ? this.game.member_trn_price * factor : this.game.non_member_trn_price * factor,
         validated: false,
         enabled: true,
         photo_url$: this.is_member(player.license_number) ? this.membersSettingsService.getAvatarUrl(this.membersService.getMemberbyLicense(player.license_number)!) : null
