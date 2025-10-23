@@ -40,7 +40,8 @@ export class GroupsListComponent implements OnInit {
       for (const group of this.groups) {  // from highest to lowest 
         const users = await this._listUsersInGroup(group);
         for (const user of users) {
-          const member = await this.membersService.readMember(user.Attributes.find(attr => attr.Name === 'custom:member_id')?.Value || '');
+          const member = await this.membersService.searchMemberByEmail(user.Attributes.find(attr => attr.Name === 'email')?.Value || '');
+          // const member = await this.membersService.readMember(user.Attributes.find(attr => attr.Name === 'custom:member_id')?.Value || '');
           if (member) {
             const profil: Profil = { ...user, member, highest_group: group, prev_group: group };
             if (!_users.has(member.id)) {
