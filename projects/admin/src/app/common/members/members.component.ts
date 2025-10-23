@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { MembersService } from '../../common/services/members.service';
 import { LicenseesService } from '../licensees/services/licensees.service';
-import { switchMap, tap } from 'rxjs';
+import { map, switchMap, take, tap } from 'rxjs';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule, UpperCasePipe } from '@angular/common';
 import { NgbModal, NgbTooltipModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
@@ -71,12 +71,13 @@ export class MembersComponent implements OnInit {
         }, 0);
       }),
       switchMap(() => this.membersService.listMembers()),
-      // take(1),
-      tap((members) => {
-        this.members = members;
-        this.reset_license_statuses();
-      }),
-    ).subscribe(() => {
+      take(1),        // Prend le premier résultat et se désabonne
+      // map((members) => {
+      // }),
+    ).subscribe((members) => {
+      console.log('Membres chargés : ', members.length);
+      this.members = members;
+      this.reset_license_statuses();
       this.updateDBfromFFB();
       this.filterOnStatus(this.selected_status);
       // console.log(this.members);
