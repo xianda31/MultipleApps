@@ -44,6 +44,12 @@ export class GetMemberSettingsComponent {
       has_avatar: [false],
       accept_mailing: [true],
     });
+
+    this.preferenceForm.valueChanges.subscribe(values => {
+      if (values.has_avatar) {
+        this.member.has_avatar = this.has_avatar;
+      }
+    });
   }
 
   ngOnInit(): void {
@@ -55,6 +61,8 @@ export class GetMemberSettingsComponent {
       accept_mailing: this.member.accept_mailing ?? true,
       has_avatar: this.member.has_avatar ?? false
     });
+
+
   };
 
   get has_avatar() {
