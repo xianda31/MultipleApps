@@ -106,22 +106,24 @@
         <div class="row justify-content-between align-items-center">
             <ng-container *ngTemplateOutlet="save_dialog"></ng-container>
             <div class="col">
+                <span class="text-muted">imprimer la feuille de tournoi </span>
                 <button (click)="printTable()" type="button" class="btn btn-sm btn-outline-primary">
                     <i class="bi bi-printer"> imprimer</i>
                 </button>
             </div>
             <div *ngIf="tournament_status === 'progress'" class="col">
-                <button (click)="restore_trace()" type="button" class="btn btn-sm btn-outline-primary">
-                    <i class="bi bi-cassette-fill"> restauration</i>
+                <span class="text-muted">récupérer le dernier état </span>
+                <button (click)="restore_trace()" type="button" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-life-preserver"> restauration</i>
                 </button>
             </div>
 
             <div class="col-auto">
                 <!-- <div class="row"> -->
                 <div class="col-auto">
-                    <span class="text-muted">sortir sans enregistrer : </span>
+                    <span class="text-muted">fermer sans enregistrer : </span>
                     <button type="button" class="ms-1 btn btn-sm btn-outline-warning" (click)="clear_session()">
-                        <i class="bi bi-x-circle-fill"> sortir</i>
+                        <i class="bi bi-x-circle-fill"> fermer</i>
                     </button>
 
                 </div>
