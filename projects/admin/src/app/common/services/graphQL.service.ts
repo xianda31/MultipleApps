@@ -358,9 +358,9 @@ create_custom_key(season : string, trn_id:number) : string{
   }
 
   async updateGame(game: Game): Promise<Game> {
-    // const game_id = this.create_custom_key(game.season, game.tournament!.id);
+    const game_id = this.create_custom_key(game.season, game.tournament!.id);
     let game_input : Game_input = {
-      gameId: game.gameId!,
+      gameId: game_id,
       season: game.season,
       fee_rate: game.fee_rate,
       member_trn_price: game.member_trn_price,

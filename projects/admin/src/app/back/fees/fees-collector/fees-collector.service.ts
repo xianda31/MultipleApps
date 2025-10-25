@@ -22,9 +22,9 @@ import { MemberSettingsService } from '../../../common/services/member-settings.
   providedIn: 'root'
 })
 export class FeesCollectorService {
-  tournament: club_tournament | null = null;
+  private tournament: club_tournament | null = null;
 
-  game!: Game;
+  game: Game = {} as Game;
   _game$: BehaviorSubject<Game> = new BehaviorSubject<Game>(this.game);
   members: Member[] = [];
   sys_conf !: SystemConfiguration;
@@ -41,6 +41,11 @@ export class FeesCollectorService {
 
 
   ) {
+    this.systemDataService.get_configuration().subscribe((sys_conf) => {
+      this.sys_conf = sys_conf;
+      this.game.season = sys_conf.season;
+      // this.init_game();
+    });
     this.membersService.listMembers().subscribe((members) => {
       this.members = members;
       this.gameCardService.gameCards.subscribe((cards) => {
@@ -48,10 +53,6 @@ export class FeesCollectorService {
       });
     });
 
-    this.systemDataService.get_configuration().subscribe((sys_conf) => {
-      this.sys_conf = sys_conf;
-      this.init_game();
-    });
 
 
   }
@@ -61,25 +62,13 @@ export class FeesCollectorService {
   }
 
 
-  private init_game() {
-    this.game = {
-      season: this.sys_conf.season,
-      fee_rate: FEE_RATE.STANDARD,
-      fees_doubled: false,
-      member_trn_price: +this.get_fee_rate(FEE_RATE.STANDARD).member_price,
-      non_member_trn_price: +this.get_fee_rate(FEE_RATE.STANDARD).non_member_price,
-      alphabetic_sort: false,
-      gamers: [],
-      tournament: null,
-    };
-  }
 
   get_fee_rate(type: FEE_RATE): Fee_rate {
-    const ffe_rate = this.sys_conf.fee_rates.find((rate) => rate.key === type);
-    if (!ffe_rate) {
+    const fee_rate = this.sys_conf.fee_rates.find((rate) => rate.key === type);
+    if (!fee_rate) {
       throw new Error(`Fee rate type ${type} not found`);
     }
-    return ffe_rate;
+    return fee_rate;
   }
 
   change_fee_rate(new_rate: FEE_RATE) {
@@ -165,14 +154,6 @@ export class FeesCollectorService {
     });
   }
 
-  //     if (fee_rate.key === FEE_RATE.ACCESSION) {
-  // use acc_credits where possible
-  // this.game.gamers.forEach((gamer) => {
-  //   if (gamer.is_member && gamer.acc_credits) {
-  //     gamer.enabled = false;
-  //   }
-  // });
-  // }
 
   clear_tournament() {
     this.tournament = null;
@@ -182,21 +163,67 @@ export class FeesCollectorService {
     return this.tournament;
   }
 
-  async set_tournament(tournament: club_tournament) {
+  async set_tournament(tournament: club_tournament): Promise<'new' | 'progress' | 'charged'> {
     this.tournament = tournament;
 
-    // check if tournament fees have been already worked on
+    // check if tournament already traced
+    // not_traced => load_game()
+    // traced => check if already charged
+    //     - charged => inform user and load traced state
+    //    - not charged => load_game() but inform user there is a loadable previous state
+
     const season = this.systemDataService.get_season(new Date());
-    const game = await this.DBhandler.readGame(season, tournament.id);
+    let game = await this.DBhandler.readGame(season, tournament.id);
+    if (!game) {
+      this.set_game(tournament);
+      return 'new';
+    } else {
+      const already_charged = this.BookService.search_tournament_fees_entry(tournament.tournament_name) !== undefined;
+      if (already_charged) {
+        this.game = game; // restore previous game state
+        this._game$.next(this.game);
+        return 'charged';
+      } else {
+        this.set_game(tournament);
+        return 'progress';
+      }
+    }
+  }
+
+
+  async restore_game_state(): Promise<boolean> {
+    if (!this.tournament) {
+      this.toastService.showErrorToast('restauration', 'Aucun tournoi sélectionné pour la restauration');
+      return false;
+    }
+    const season = this.systemDataService.get_season(new Date());
+    let game = await this.DBhandler.readGame(season, this.tournament.id);
     if (game) {
       this.game = game;
-      this.toastService.showSuccess('tournois', 'dernier état de saisie de ce tournoi restauré');
-      this.update_members_assets();   // will update gamers game_credits & trigger _game$.next(this.game)
-      return
+      this.update_members_assets();
+      return true;
+    } else {
+      this.toastService.showErrorToast('restauration', 'Aucun état de saisie trouvé pour ce tournoi');
+      return false;
     }
+  }
 
+
+  set_game(tournament: club_tournament) {
+    this.game.season = this.sys_conf.season;
+    this.game.alphabetic_sort = false;
     this.game.fees_doubled = tournament.tournament_name.includes('ROY') ? true : false;
     this.game.fee_rate = (tournament.tournament_name.includes('ELEVES') || tournament.tournament_name.includes('ACCESSION')) ? FEE_RATE.ACCESSION : FEE_RATE.STANDARD;
+    this.game.member_trn_price = +this.get_fee_rate(this.game.fee_rate).member_price;
+    this.game.non_member_trn_price = +this.get_fee_rate(this.game.fee_rate).non_member_price;
+    this.game.tournament = {
+      id: tournament.id,
+      name: tournament.tournament_name,
+      date: tournament.date,
+      time: tournament.time
+    };
+
+    this.game.gamers = [];
 
     this.tournamentService.readTeams(tournament!.team_tournament_id).pipe(
       map((tteams: TournamentTeams) => tteams.teams),
@@ -207,12 +234,6 @@ export class FeesCollectorService {
     ).subscribe((persons: Person[]) => {
       this.game.gamers = persons.map((person, index) => this.person2gamer(person, index));
 
-      this.game.tournament = {
-        id: tournament.id,
-        name: tournament.tournament_name,
-        date: tournament.date,
-        time: tournament.time
-      };
 
       let factor = this.game.fees_doubled ? 2 : 1;
       this.game.gamers.forEach((gamer) => {
@@ -380,7 +401,7 @@ export class FeesCollectorService {
       // create bookEntry for tournament fees
       try {
         let total = non_members_euros + members_euros;
-        await this.BookService.create_tournament_fees_entry(this.game.tournament!.date,this.game.tournament!.name, total)
+        await this.BookService.create_tournament_fees_entry(this.game.tournament!.date, this.game.tournament!.name, total)
         this.toastService.showSuccess('droits de table', total + ' € de droits de table enregistrés');
       }
       catch (error: unknown) {
@@ -390,13 +411,13 @@ export class FeesCollectorService {
 
   }
 
-  already_charged(): boolean {
-    if (!this.game.tournament) {
-      return false;
-    }
-    const charged = this.BookService.search_tournament_fees_entry(this.game.tournament.name) !== undefined;
-    return charged;
-  }
+  // already_charged(): boolean {
+  //   if (!this.game.tournament) {
+  //     return false;
+  //   }
+  //   const charged = this.BookService.search_tournament_fees_entry(this.game.tournament.name) !== undefined;
+  //   return charged;
+  // }
 
 
 }

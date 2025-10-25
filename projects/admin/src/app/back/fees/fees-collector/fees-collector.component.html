@@ -1,6 +1,6 @@
 <div class="card shadow-lg mt-3 g-0">
     <div class="card-header">
-        <!-- bandeau tournoi (date, mode roy rené , alread_charges ? , add_team -->
+        <!-- bandeau tournoi date, mode roy rené , alread_charges ? , add_team -->
 
         <div *ngIf="!selected_tournament || selected_tournament === undefined"
             class="row justify-content-start align-items-center">
@@ -33,7 +33,7 @@
                 <span>&nbsp; {{ game.tournament.name }}</span>
             </div>
 
-            <div class="col-12 col-md-2 border border-secondary rounded p-1">
+            <div class="col-12 col-md-3 border border-secondary rounded p-1">
                 <div *ngFor="let fee_rate of fee_rates" class="form-check form-check-inline">
                     <input class="form-check-input" type="radio" name="inlineRadioOptions"
                         [id]="'inlineRadio' + fee_rate" [value]="fee_rate" [(ngModel)]="game.fee_rate"
@@ -43,8 +43,8 @@
             </div>
 
 
-            <div class="col-12 offset-md-1 col-md-2 ">
-                <span class="form-check form-switch">
+            <div class="col-12  col-md-2 ">
+                <span class="ms-1 form-check form-switch">
                     <input class="form-check-input" type="checkbox" [checked]="game.fees_doubled" role="switch"
                         (change)="toggle_fee()">
                     <label class="form-check-label">droits doublés</label>
@@ -91,10 +91,9 @@
         <div class="col-auto mt-2">
             <span class="text-muted">
                 <strong>
-                    recettes :
-                    {{stamps_collected()}} tampon(s) et
-                    {{euros_collected()}}
-                    € collecté(s)
+                    recette:
+                    {{stamps_collected()}} tampon(s)
+                    et {{euros_collected()}} €
 
                 </strong>
             </span>
@@ -109,6 +108,11 @@
             <div class="col">
                 <button (click)="printTable()" type="button" class="btn btn-sm btn-outline-primary">
                     <i class="bi bi-printer"> imprimer</i>
+                </button>
+            </div>
+            <div *ngIf="tournament_status === 'progress'" class="col">
+                <button (click)="restore_trace()" type="button" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-cassette-fill"> restauration</i>
                 </button>
             </div>
 
@@ -139,14 +143,15 @@
                         <div class="position-absolute top-50 start-50 translate-middle d-flex justify-content-center align-items-center w-100 h-100"
                             style="z-index: 0; pointer-events: none;">
                             <img [src]="photoUrl" alt="{{ gamer.lastname }}" class="img-fluid rounded-circle"
-                                style="max-height: 60px; max-width: 60px; object-fit: cover;" (error)="gamer.photo_url = null">
+                                style="max-height: 60px; max-width: 60px; object-fit: cover;"
+                                (error)="gamer.photo_url = null">
                         </div>
                     </ng-container>
                 </div>
                 <div class="row" style="position: relative; z-index: 1;">
                     <div class="col form-check form-switch">
                         <input class="form-check-input" type="checkbox" [checked]="gamer.enabled" role="switch"
-                            (change)="gamer.enabled = !gamer.enabled ; check_status()">
+                            (change)="gamer.enabled = !gamer.enabled ; log_game_state();check_status()">
                         <label class="form-check-label">payant</label>
                     </div>
                     <!-- validation présence -->
@@ -154,7 +159,7 @@
                         <label class="form-check-label">validation :</label>
                         <input class="form-check-input" type="checkbox" role="switch"
                             [disabled]="!gamer.enabled || !gamer_solvent(gamer)" [(ngModel)]="gamer.validated"
-                            [id]="'valid' + gamer.index" (change)="check_status()">
+                            [id]="'valid' + gamer.index" (change)="log_game_state();check_status()">
                     </div>
                 </div>
 
@@ -197,7 +202,7 @@
     <ng-template #save_dialog>
         <div class="mx-auto col-auto">
             <!-- warning -->
-            <div *ngIf="already_charged" class="row text-danger align-items-center">
+            <div *ngIf="tournament_status === 'charged'" class="row text-danger align-items-center">
                 <i class="bi bi-info-circle-fill">
                     les droits pour ce tournoi ont été enregistrés !
                 </i>
