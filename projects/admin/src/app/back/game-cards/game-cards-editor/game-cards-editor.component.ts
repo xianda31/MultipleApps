@@ -21,6 +21,7 @@ export class GameCardsEditorComponent implements OnInit {
   total_asset: number = 0;
   total_null_cards: number = 0;
   loaded: boolean = false;
+  non_null_cards_only: boolean = true;
 
   constructor(
     private gameCardService: GameCardService,
@@ -105,6 +106,10 @@ stamps_number(card: GameCard): number {
         this.gameCardService.deleteNullCards();
       }
     });
+  }
+
+  is_null(card: GameCard): boolean {
+    return (card.initial_qty - card.stamps.length) === 0;
   }
 
 }

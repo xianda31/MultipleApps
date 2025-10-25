@@ -1,4 +1,4 @@
-<div *ngIf="loaded" >
+<div *ngIf="loaded">
     <div class=" card shadow-lg mt-3 g-0">
         <div class="card-header">
             <div class="row justify-content-between align-items-center">
@@ -11,18 +11,30 @@
             </div>
             <hr>
             <div class="row justify-content-between align-items-start">
-                <div class="col-auto ms-2">
+                <div class="col col-md-3 ">
                     <button class="btn btn-sm btn-outline-primary btn-animated" (click)="createGameCard()">
                         Création carte
                     </button>
                 </div>
-                <div *ngIf="total_null_cards > 0" class="col-auto ms-2">
-                    <button class="btn btn-sm btn-outline-warning btn-animated" (click)="deleteNulls()">
-                        Suppression cartes terminées ({{total_null_cards}}) 
-                    </button>
+
+                <div class="col col-md-6">
+                    <div class="d-flex align-items-center flex-nowrap">
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" role="switch"
+                                [checked]="non_null_cards_only" (change)="non_null_cards_only = $event.target.checked">
+                            <label class="form-check-label mb-0 ms-2"> cartes non vides seulement </label>
+                        </div>
+
+                        <div *ngIf="total_null_cards > 0  && !non_null_cards_only" class="ms-5">
+                            <button class="btn btn-sm btn-outline-warning " (click)="deleteNulls()">
+                                Suppression cartes vides ({{total_null_cards}})
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-auto ms-2">
-                    <button class="btn btn-sm btn-outline-success btn-animated" (click)="exportToExcel()">
+
+                <div class="col col-md-3 text-end">
+                    <button class="btn btn-sm btn-outline-success " (click)="exportToExcel()">
                         Export Excel
                     </button>
                 </div>
@@ -41,10 +53,10 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <ng-container *ngFor="let card of cards ; let i = index">
-                        <tr>
+                    <ng-container *ngFor="let card of cards ">
+                        <tr *ngIf="!is_null(card) || !non_null_cards_only ">
                             <td class="text-start">
-                                <div *ngFor="let owner of card.owners; let j = index">
+                                <div *ngFor="let owner of card.owners">
                                     <!-- <span *ngIf="j > 0"> &nbsp; et &nbsp; </span> -->
                                     {{owner.lastname}} <span class="d-none d-sm-inline">{{owner.firstname}}</span>
                                 </div>

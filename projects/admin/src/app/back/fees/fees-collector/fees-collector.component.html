@@ -26,14 +26,14 @@
 
         <div *ngIf="game && game.tournament" class="row  justify-content-between align-items-center">
             <!-- <ng-container class="row justify-content-between" > -->
-            <div class="col-12 col-md-5  fs-5">
+            <div class="col-12 col-md-4">
                 <span class="d-none d-sm-inline">
                     {{game.tournament.date | date:'EEEE dd MMMM' : 'fr-FR'}}
                 </span>
                 <span>&nbsp; {{ game.tournament.name }}</span>
             </div>
 
-            <div class="col-12 col-md-3 border border-secondary rounded p-1">
+            <div class="col-12 col-md-3 border border-secondary rounded p-1 text-center">
                 <div *ngFor="let fee_rate of fee_rates" class="form-check form-check-inline">
                     <input class="form-check-input" type="radio" name="inlineRadioOptions"
                         [id]="'inlineRadio' + fee_rate" [value]="fee_rate" [(ngModel)]="game.fee_rate"
@@ -43,12 +43,12 @@
             </div>
 
 
-            <div class="col-12  col-md-2 ">
-                <span class="ms-1 form-check form-switch">
+            <div class="col-12 col-md-2 d-flex justify-content-center align-items-center">
+                <div class="form-check form-switch mb-0">
                     <input class="form-check-input" type="checkbox" [checked]="game.fees_doubled" role="switch"
                         (change)="toggle_fee()">
-                    <label class="form-check-label">droits doublés</label>
-                </span>
+                    <label class="form-check-label ms-2 mb-0">droits doublés</label>
+                </div>
             </div>
 
             <div class="ms-auto col-12 col-md-2">
