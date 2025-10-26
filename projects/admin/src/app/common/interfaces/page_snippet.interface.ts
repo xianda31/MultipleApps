@@ -38,6 +38,7 @@ export enum PAGE_TEMPLATES {
     TROMBINOSCOPE = 'trombinoscope',
     LOADABLE = 'téléchargement',
     CARDS_top = 'fiches img haut',
+    CARDS_top_left = 'fiches img haut-gauche',
     CARDS_bottom = 'fiches img bas',
     ALBUMS = 'albums',
     FLIPPER = 'flipper',

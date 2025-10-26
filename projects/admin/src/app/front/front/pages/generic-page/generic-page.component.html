@@ -17,6 +17,9 @@
   <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.CARDS_top">
     <app-cards-img-top-render [snippets]="page_snippets"></app-cards-img-top-render>
   </ng-container>
+  <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.CARDS_top_left">
+    <app-cards-img-top-left-render [snippets]="page_snippets"></app-cards-img-top-left-render>
+  </ng-container>
   <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.CARDS_bottom">
     <app-cards-img-bottom-render [snippets]="page_snippets"></app-cards-img-bottom-render>
   </ng-container>

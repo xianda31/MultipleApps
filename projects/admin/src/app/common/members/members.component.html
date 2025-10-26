@@ -60,6 +60,7 @@
             </th>
 
             
+            <th class="d-none d-sm-table-cell">licence</th>
             <th class="d-none d-sm-table-cell">mail</th>
             <th class="d-none d-sm-table-cell"><i class="bi bi-telephone-fill"></i></th>
             <th class="d-none d-sm-table-cell">Ville</th>
@@ -96,7 +97,8 @@
                 <td class="text-center"></td>
               </ng-container>
             </ng-container>
-            
+
+            <td class="d-none d-sm-table-cell">{{member.license_number}}</td>
             <td class="d-none d-sm-table-cell">{{member.email}}</td>
             <td class="d-none d-sm-table-cell">{{member.phone_one | phone}}</td>
             <td class="d-none d-sm-table-cell">{{member.city }}</td>

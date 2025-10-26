@@ -14,10 +14,10 @@
                 </div>
                 <div class="col-8 d-flex flex-column justify-content-center ">
                   <div>
-                    <h5 class="card-title">{{snippet.title}}</h5>
-                    <h6 class="card-subtitle">{{snippet.subtitle}}</h6>
+                    <div class="card-title">{{snippet.title}}</div>
+                    <div class="card-subtitle">{{snippet.subtitle}}</div>
                     <div class="card-text tighter-html" [innerHTML]="snippet.content">
-                      <!-- <h6 class="fw-bold">{{snippet.subtitle}}</h6> -->
+                      <!-- <div class="fw-bold">{{snippet.subtitle}}</div> -->
                     </div>
                   </div>
                 </div>
@@ -30,9 +30,9 @@
               <img [src]="snippet.image_url" class="mg-fluid rounded-start" alt="{{snippet.title}}"
                 style="max-width:100%; max-height:10vh;  object-fit:cover">
               <div class="card-body">
-                <h5 class="card-title">{{snippet.title}}</h5>
+                <div class="card-title">{{snippet.title}}</div>
                 <div class="card-text tighter-html" [innerHTML]="snippet.content">
-                  <!-- <h6 class="fw-bold">{{snippet.subtitle}}</h6> -->
+                  <!-- <div class="fw-bold">{{snippet.subtitle}}</div> -->
                 </div>
               </div>
             </div>

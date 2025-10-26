@@ -37,7 +37,7 @@ export class FileService {
           subscriber.complete();
         })
         .catch(error => {
-          console.log(error);
+          console.log('%s reading %s', error, path);
           subscriber.error(error);
         });
     });

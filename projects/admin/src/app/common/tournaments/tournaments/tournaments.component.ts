@@ -17,6 +17,8 @@ export class TournamentsComponent {
   next_tournament_teams: TournamentTeams[] = [];
 
   license_nbr = 0; // License number of the logged member
+  logged: boolean = false;
+
   constructor(
     private tournamentService: TournamentService,
     private auth: AuthentificationService,
@@ -34,6 +36,7 @@ export class TournamentsComponent {
     this.auth.logged_member$.subscribe((member) => {
       const whoAmI = member;
       this.license_nbr = whoAmI ? Number(whoAmI.license_number) : 0;
+      this.logged = !!whoAmI;
     });
   }
 
@@ -54,6 +57,9 @@ export class TournamentsComponent {
     const _name = tTeams.subscription_tournament.organization_club_tournament.tournament_name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "");
     if (_name.includes('roy')) return 'bi bi-award';
     if (_name.includes('eleve')) return 'bi bi-mortarboard-fill';
+    if (_name.includes('accession')) return 'bi bi-mortarboard-fill';
+    if (_name.includes('regularite')) return 'bi bi-gear-fill';
+    if (_name.includes('coupe')) return 'bi bi-trophy-fill';
     return '';
   }
 

@@ -17,6 +17,7 @@ import { CardsImgTopRenderComponent } from './renderers/cards-img-top-render/car
 import { CardsImgBottomRenderComponent } from './renderers/cards-img-bottom-render/cards-img-bottom-render.component';
 import { AlbumsRenderComponent } from './renderers/albums-render/albums-render.component';
 import { FlipperRenderComponent } from './renderers/flipper-render/flipper-render.component';
+import { CardsImgTopLeftRenderComponent } from './renderers/cards-img-top-left-render/cards-img-top-left-render.component';
 
 @Component({
   selector: 'app-generic-page',
@@ -28,6 +29,7 @@ import { FlipperRenderComponent } from './renderers/flipper-render/flipper-rende
     ALaUneRenderComponent,
     LoadableRenderComponent,
     CardsImgTopRenderComponent,
+    CardsImgTopLeftRenderComponent,
     CardsImgBottomRenderComponent,
     AlbumsRenderComponent,
     FlipperRenderComponent
@@ -98,7 +100,7 @@ export class GenericPageComponent implements OnInit, OnChanges {
 
       this.page_snippets = this.snippets.filter(s => s.featured)
         .sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''));
-      this.pageTemplate = PAGE_TEMPLATES.A_LA_UNE;
+      this.pageTemplate = PAGE_TEMPLATES.CARDS_top_left;
       // update pageId for all snippets
 
       return;
@@ -156,7 +158,7 @@ export class GenericPageComponent implements OnInit, OnChanges {
                 id: `birthday_snippet_${day}`,
                 title: new Date(day).toLocaleDateString('fr-FR', { weekday: 'long', day: '2-digit', month: 'long' }),
                 content: `<p>` + members_in_day.map(member => ` <span>${member.firstname} ${member.lastname}</span>`).join('<br>') + `</p>`,
-                subtitle: 'Joyeux anniversaire à ...',
+                subtitle: 'anniversaire de',
                 public: false,
                 image: snippet_model.image,
                 image_url: snippet_model.image_url,

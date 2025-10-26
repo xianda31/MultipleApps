@@ -1,34 +1,43 @@
-    <div class="card border-0 mt-3">
-        <div class="card-header d-flex justify-content-start align-items-center">
-            <span class="text-uppercase col-3 ">bienvenue au club</span>
-            <span class=" p-0 ms-3 fs-5">
-                Nous sommes {{ licensees }} adhérents licenciés.
-            </span>
-        </div>
-        <div *ngIf="logged_member$ | async as logged_member" class="card-body p-0 mt-3">
-            <app-generic-page [page_title]="MENU_TITLES.BIRTHDAYS"></app-generic-page>
-        </div>
-    </div>
-
-    <div class="card border-0 mt-3">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <span class="text-uppercase ">Les dernières nouvelles</span>
-            <span class="text-info p-0 ms-2" (click)="goToNews($event)"> ... accéder à la totalité des informations
-            </span>
-        </div>
-        <div class="card-body p-0">
-            <app-generic-page [page_title]="EXTRA_TITLES.HIGHLIGHTS"></app-generic-page>
-        </div>
-    </div>
-
-    <div class="card border-0 mt-3">
-        <div class="card-header text-uppercase">
-            Les prochains tournois de régularité au Club
-        </div>
-        <div class="card-body">
-            <div *ngIf="logged_member$ | async as logged_member" class="mb-4">
-                <span class="text-muted"><strong>Pour s'inscrire : </strong> il suffit de cliquer sur un tournoi et déclarer son coéquipier.</span>
+<!-- <div class="row row-cols-1"> -->
+<!-- <div class="col-12  col-md-8"> -->
+<!-- <div class="card border-1 mt-3"> -->
+    <div class="row mt-3">
+        <div class="col col-md-4">
+            <div class="card-body">
+                <span class="text-uppercase ">bienvenue au club</span>
+                <span class="text-muted d-block mb-3">
+                    Aujourd'hui, nous sommes {{ licensees }} adhérents licenciés.
+                </span>
             </div>
-            <app-tournaments [displayTitle]="false"></app-tournaments>
+
+        </div>
+        <div class="col col-md-4">
+            <img src="/marcaissonne.jpg" class="img-fluid rounded-2 " alt="marcaissonne" />
+        </div>
+        <div *ngIf="logged_member$ | async as logged_member" class="col col-md-4">
+            <div class="card-body">
+                <app-generic-page [page_title]="MENU_TITLES.BIRTHDAYS"></app-generic-page>
+            </div>
         </div>
     </div>
+<!-- </div> -->
+<!-- </div> -->
+
+<div class="row mt-3">
+    <div class="col d-flex justify-content-between align-items-center">
+        <span class="text-uppercase">Les dernières nouvelles</span>
+        <span class="text-info" (click)="goToNews($event)" style="cursor: pointer;">... accéder à la totalité des informations</span>
+    </div>
+</div>
+
+<div class="mt-1">
+    <app-generic-page [page_title]="EXTRA_TITLES.HIGHLIGHTS"></app-generic-page>
+</div>
+
+
+<div class="row mt-3">
+    <span class="text-uppercase ">Prochains tournois</span>
+</div>
+<div class="mb-4">
+    <app-tournaments [displayTitle]="false"></app-tournaments>
+</div>

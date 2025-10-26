@@ -1,7 +1,7 @@
 .flipper-wrapper {
   .snippet-rotator {
     position: relative;
-    min-height: 20vh;
+    // min-height: 20vh;
   }
   .rotating-snippet {
     transition: transform 2s cubic-bezier(.68,-0.55,.27,1.55), opacity 2s;

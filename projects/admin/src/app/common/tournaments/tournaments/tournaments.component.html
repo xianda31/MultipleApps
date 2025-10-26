@@ -1,9 +1,9 @@
 <div class="container-fluid">
 
-    <div class="mt-3 row row-cols-1 row-cols-sm-4  g-2 justify-content-center">
+    <div class="mt-3 row row-cols-1 row-cols-md-4  g-md-2 justify-content-center">
 
         <div class="col" *ngFor="let t of next_tournament_teams">
-            <div class="card h-100  nice_shadow" (click)="selectTournament(t.subscription_tournament.id)">
+            <div class="card h-100  nice_shadow" >
 
                 <h6 class="card-header">
                     <span class="stamp">
@@ -42,15 +42,15 @@
                         <hr />
                         Vous êtes inscrit(e) à ce tournoi.
                     </div>
+                    <div *ngIf="!registrated_in(t) && logged" class="text-info ms-1" style="cursor:pointer;display:inline"
+                    (click)="selectTournament(t.subscription_tournament.id)">
+                        ... s'inscrire
+                    </div>
                 </div>
 
             </div>
         </div>
     </div>
 
-        <div *ngIf="license_nbr !== 0" class="mt-3 row   g-2 justify-content-center">
-            <span class="text-muted"><strong>Pour s'inscrire : </strong> il suffit de cliquer sur un tournoi et déclarer
-                son coéquipier.</span>
-        </div>
 
 </div>
