@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Snippet } from '../../../../../../common/interfaces/page_snippet.interface';
+import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-flipper-render',
@@ -12,6 +13,7 @@ import { Snippet } from '../../../../../../common/interfaces/page_snippet.interf
 export class FlipperRenderComponent {
   @Input() snippets: Snippet[] = [];
   
+  constructor(private sanitizer: DomSanitizer) { }
     FLIPPER_PERIOD = 10000; // ms
     ROTATION_DURATION = 4000; // ms
 
@@ -35,5 +37,9 @@ export class FlipperRenderComponent {
         this.currentIndex = (this.currentIndex + 1) % this.snippets.length;
       }, this.FLIPPER_PERIOD);
     }
+  }
+
+    stringToSafeHtml(htmlString: string) {
+    return this.sanitizer.bypassSecurityTrustHtml(htmlString) ;
   }
 }

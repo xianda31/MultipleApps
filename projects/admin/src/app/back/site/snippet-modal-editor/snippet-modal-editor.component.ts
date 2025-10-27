@@ -8,7 +8,10 @@ import edjsHTML from 'editorjs-html'
 import Header from '@editorjs/header';
 import List from '@editorjs/list';
 import Table from '@editorjs/table';
+import ColorPicker from 'editorjs-color-picker';
+
 import { CommonModule } from '@angular/common';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 
 @Component({
@@ -37,18 +40,19 @@ export class SnippetModalEditorComponent implements AfterViewInit {
       return html;
     }
   });
-  output_html!: string;
+  output_html!: SafeHtml;
 
   constructor(
     private activeModal: NgbActiveModal,
+    private sanitizer:  DomSanitizer
   ) { }
 
 
   ngAfterViewInit(): void {
 
     const initialData = this.htmlToEditorJsBlocks(this.snippet.content);     // Convertit le HTML initial en blocks EditorJS
-    console.log('Snippet Content:', this.snippet.content);
-    console.log('Initial Data:', initialData);
+    // console.log('Snippet Content:', this.snippet.content);
+    // console.log('Initial Data:', initialData);
 
     this.editor = new EditorJS(
       {
@@ -71,7 +75,13 @@ export class SnippetModalEditorComponent implements AfterViewInit {
           table: {
             class: Table as any,
             inlineToolbar: true
-          }
+          },
+                ColorPicker: {
+            class: ColorPicker as any,
+            config: {
+              colors: ['#0d6efd', '#6c757d', '#198754', '#dc3545', '#ffc107', '#0dcaf0', '#f8f9fa', '#212529', '#eb9a87'],
+            }
+          },
         },
         data: initialData,
       });
@@ -84,10 +94,10 @@ export class SnippetModalEditorComponent implements AfterViewInit {
   async saveSnippet(): Promise<void> {
     try {
       const data = await this.editor.save();
-      this.output_html = this.edjsParser.parse(data); // Convertit les blocks EditorJS en HTML
-
+      const parsedHtml = this.edjsParser.parse(data); // Convertit les blocks EditorJS en HTML
+      this.output_html = this.sanitizer.bypassSecurityTrustHtml(parsedHtml);
       let snippet = { ...this.snippet };
-      snippet.content = this.output_html;
+      snippet.content = this.output_html.toString();
       this.activeModal.close(snippet);
     } catch (error) {
       console.error('Error saving snippet:', error);

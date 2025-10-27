@@ -5,6 +5,6 @@
           <div class="snippet-float-img text-center">
             <img [src]="snippet.image_url" alt="{{snippet.title}}" class="card-img-top">
           </div>
-          <span class="snippet-float-text tighter-html" [innerHTML]="snippet.content"></span>
+          <span class="snippet-float-text tighter-html" [innerHTML]="stringToSafeHtml(snippet.content)"></span>
         </div>
       </div>

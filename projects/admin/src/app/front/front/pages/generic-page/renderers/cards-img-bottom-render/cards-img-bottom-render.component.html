@@ -4,7 +4,7 @@
       <div class="card h-100">
         <div class="card-body">
           <h5 class="card-title">{{snippet.title}}</h5>
-          <div class="card-text tighter-html" [innerHTML]="snippet.content"></div>
+          <div class="card-text tighter-html" [innerHTML]="stringToSafeHtml(snippet.content)"></div>
         </div>
         <img [src]="snippet.image_url" class="card-img-bottom" alt="{{snippet.title}}">
       </div>

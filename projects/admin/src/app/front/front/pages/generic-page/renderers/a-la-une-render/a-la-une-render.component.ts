@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { MENU_TITLES, Snippet } from '../../../../../../common/interfaces/page_snippet.interface';
 import { Router } from '@angular/router';
 import { TruncatePipe } from '../../../../../../common/pipes/truncate.pipe';
+import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-a-la-une-render',
@@ -20,6 +21,7 @@ export class ALaUneRenderComponent implements OnChanges {
   TRUNCATE_HYSTERISIS = 50; // threshold to show "Read more" link
   constructor(
     private router: Router,
+    private sanitizer: DomSanitizer
 
   ) { }
 
@@ -59,6 +61,10 @@ export class ALaUneRenderComponent implements OnChanges {
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+  }
+
+    stringToSafeHtml(htmlString: string) {
+    return this.sanitizer.bypassSecurityTrustHtml(htmlString) ;
   }
 
 }

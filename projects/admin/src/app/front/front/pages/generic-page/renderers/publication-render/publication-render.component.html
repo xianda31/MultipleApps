@@ -29,7 +29,7 @@
                         </div>
                     </div>
                     <div class="card-text mt-3">
-                        <span class="card-text tighter-html" [innerHTML]="snippet.content" #textRef></span>
+                        <span class="card-text tighter-html" [innerHTML]="stringToSafeHtml(snippet.content)" #textRef></span>
                     </div>
                 </div>
             </div>

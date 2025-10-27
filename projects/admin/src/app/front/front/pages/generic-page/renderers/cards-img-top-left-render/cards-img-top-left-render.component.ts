@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { MENU_TITLES, Snippet } from '../../../../../../common/interfaces/page_snippet.interface';
 import { TruncatePipe } from '../../../../../../common/pipes/truncate.pipe';
 import { Router } from '@angular/router';
+import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-cards-img-top-left-render',
@@ -19,6 +20,7 @@ export class CardsImgTopLeftRenderComponent {
   TRUNCATE_HYSTERISIS = 50; // threshold to show "Read more" link
    constructor(
     private router: Router,
+  private sanitizer: DomSanitizer
 
   ) { }
 
@@ -34,5 +36,10 @@ export class CardsImgTopLeftRenderComponent {
         this.router.navigate(['/front/tournaments/autres_rdv', snippet.title]);
       }
     }
+
+      stringToSafeHtml(htmlString: string) {
+    return this.sanitizer.bypassSecurityTrustHtml(htmlString) ;
+  }
+
   
 }

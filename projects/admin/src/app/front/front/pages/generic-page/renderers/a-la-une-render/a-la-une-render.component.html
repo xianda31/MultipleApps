@@ -15,7 +15,7 @@
       <div class="card-text mt-3 col-12">
         <ng-container
           *ngIf="(read_more && (snippet.content.length > TRUNCATE_LIMIT + TRUNCATE_HYSTERISIS)); else noContentTruncate">
-          <span class="card-text tighter-html" [innerHTML]="snippet.content | truncate:TRUNCATE_LIMIT"
+          <span class="card-text tighter-html" [innerHTML]="stringToSafeHtml(snippet.content | truncate:TRUNCATE_LIMIT)"
             style="display:inline"></span>
           <span (click)="readMore(snippet)" class="text-info ms-1" style="cursor:pointer;display:inline">... Lire la
             suite</span>

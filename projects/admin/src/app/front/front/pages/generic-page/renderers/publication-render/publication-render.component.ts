@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, ElementRef, Input, QueryList, ViewChildren, AfterViewInit, AfterViewChecked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Snippet } from '../../../../../../common/interfaces/page_snippet.interface';
+import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-publication-render',
@@ -14,7 +15,10 @@ export class PublicationRenderComponent implements AfterViewInit, AfterViewCheck
   @ViewChildren('textRef') textRefs!: QueryList<ElementRef>;
   textHeights: { [id: string]: number } = {};
 
-  constructor(private cdr: ChangeDetectorRef) { }
+  constructor(
+    private cdr: ChangeDetectorRef,
+    private sanitizer: DomSanitizer
+  ) { }
 
   trackById(index: number, item: any) {
     return item.id;
@@ -56,5 +60,11 @@ export class PublicationRenderComponent implements AfterViewInit, AfterViewCheck
     const val = typeof h === 'number' && !isNaN(h) ? h : 100;
     return Math.min(val, 100);
   }
+
+  stringToSafeHtml(htmlString: string) {
+    return this.sanitizer.bypassSecurityTrustHtml(htmlString) ;
+  }
+
+  
 
 }

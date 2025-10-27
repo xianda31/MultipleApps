@@ -8,7 +8,7 @@
                     <div class="text-muted">{{snippet.subtitle}}</div>
                     <hr>
                 </div>
-                <div class="card-text tighter-html" [innerHTML]="snippet.content"></div>
+                <div class="card-text tighter-html" [innerHTML]="stringToSafeHtml(snippet.content)  "></div>
             </div>
         </div>
     </div>
