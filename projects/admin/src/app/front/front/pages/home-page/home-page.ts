@@ -10,6 +10,7 @@ import { Observable } from 'rxjs';
 import { Member } from '../../../../common/interfaces/member.interface';
 import { AuthentificationService } from '../../../../common/authentification/authentification.service';
 import { CommonModule } from '@angular/common';
+import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 
 @Component({
   selector: 'app-home-page',
@@ -24,7 +25,7 @@ export class HomePage {
   licensees = 0;
   // sympathisants = 0;
   logged_member$: Observable<Member | null> = new Observable<Member | null>();
-
+  isMdOrAbove: boolean = false;
 
   constructor(
     private titleService: TitleService,
@@ -32,9 +33,14 @@ export class HomePage {
     private route: ActivatedRoute,
     private membersService: MembersService,
     private systemDataService: SystemDataService,
-    private auth: AuthentificationService
-
-  ) { }
+    private auth: AuthentificationService,
+    private breakpointObserver: BreakpointObserver
+  ) {
+    this.breakpointObserver.observe([Breakpoints.Medium, Breakpoints.Large, Breakpoints.XLarge])
+      .subscribe(result => {
+        this.isMdOrAbove = result.matches;
+      });
+  }
   ngOnInit(): void {
     this.logged_member$ = this.auth.logged_member$;
 

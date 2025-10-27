@@ -1,43 +1,62 @@
-<!-- <div class="row row-cols-1"> -->
-<!-- <div class="col-12  col-md-8"> -->
-<!-- <div class="card border-1 mt-3"> -->
-    <div class="row mt-3">
-        <div class="col col-md-4">
-            <div class="card-body">
-                <span class="text-uppercase ">bienvenue au club</span>
-                <span class="text-muted d-block mb-3">
-                    Aujourd'hui, nous sommes {{ licensees }} adhérents licenciés.
-                </span>
-            </div>
+<div class="row mt-3 px-1">
+    <div class="col-xs-6 col-md-4">
+        <ng-container *ngTemplateOutlet="welcome"></ng-container>
+        <ng-container *ngIf="isMdOrAbove">
+            <ng-container  *ngTemplateOutlet="whoarewe"></ng-container>
+        </ng-container>
+    </div>
+    <div class="col-xs-6 col-md-4 d-flex justify-content-center">
+        <img src="/marcaissonne.jpg" class="img-fluid rounded-2" alt="marcaissonne" />
+    </div>
+    <div class="d-none d-md-block col-md-4">
+        <ng-container *ngTemplateOutlet="birthdays"></ng-container>
+    </div>
+</div>
+<div class="d-block d-md-none px-1">
+    <ng-container *ngTemplateOutlet="whoarewe"></ng-container>
+</div>
 
-        </div>
-        <div class="col col-md-4">
-            <img src="/marcaissonne.jpg" class="img-fluid rounded-2 " alt="marcaissonne" />
-        </div>
-        <div *ngIf="logged_member$ | async as logged_member" class="col col-md-4">
-            <div class="card-body">
-                <app-generic-page [page_title]="MENU_TITLES.BIRTHDAYS"></app-generic-page>
-            </div>
+<ng-template #welcome>
+    <div class="card-body">
+        <span class="text-uppercase text-success">Bienvenue au Bridge Club de Saint-Orens</span>
+        <span class="d-block mb-3">un club dynamique, et convivial.</span>
+    </div>
+</ng-template>
+<ng-template #whoarewe>
+    <span class="d-block mb-3">
+        <img src="/label-silver.svg" style="max-height:50px; float: left; margin-right: 0.5rem;" alt="silver_label" />
+        Son école de Bridge vous permettra de consolider votre technique, selon votre niveau.
+    </span>
+    <span class="d-block mb-3">Aujourd'hui, nous sommes {{ licensees }} adhérents licenciés.</span>
+</ng-template>
+
+<ng-template #birthdays>
+    <div *ngIf="logged_member$ | async as logged_member" class="d-none d-md-block">
+        <div class="card-body">
+            <app-generic-page [page_title]="MENU_TITLES.BIRTHDAYS"></app-generic-page>
         </div>
     </div>
-<!-- </div> -->
-<!-- </div> -->
+</ng-template>
+    
+<ng-template #imagegallery>
+        <img src="/marcaissonne.jpg" class="img-fluid rounded-2" alt="marcaissonne" />
+</ng-template>
 
-<div class="row mt-3">
+
+<div class="row mt-3 px-1">
     <div class="col d-flex justify-content-between align-items-center">
-        <span class="text-uppercase">Les dernières nouvelles</span>
-        <span class="text-info" (click)="goToNews($event)" style="cursor: pointer;">... accéder à la totalité des informations</span>
+        <span class="text-uppercase text-success">Les dernières nouvelles</span>
+        <span class="text-info" (click)="goToNews($event)" style="cursor: pointer;">... accéder à la totalité des
+            informations</span>
     </div>
 </div>
 
-<div class="mt-1">
+<div class="mt-1 px-1">
     <app-generic-page [page_title]="EXTRA_TITLES.HIGHLIGHTS"></app-generic-page>
 </div>
 
 
-<div class="row mt-3">
-    <span class="text-uppercase ">Prochains tournois</span>
-</div>
-<div class="mb-4">
+<div class="row mt-3 px-1 mb-4">
+    <span class="text-uppercase text-success">Prochains tournois</span>
     <app-tournaments [displayTitle]="false"></app-tournaments>
 </div>
