@@ -302,7 +302,7 @@ export class PagesEditorComponent {
       id: '',
       title: 'title',
       subtitle: 'subtitle',
-      content: '<p>Nouvelle vignette</p>',
+      content: '',
       file: '',
       image: '',
       folder: '',

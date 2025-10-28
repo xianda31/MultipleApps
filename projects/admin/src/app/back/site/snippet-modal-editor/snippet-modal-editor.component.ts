@@ -26,7 +26,7 @@ export class SnippetModalEditorComponent implements AfterViewInit {
   editor!: EditorJS;
   // Toggle to choose table column strategy in generated HTML
   // false => equal width columns (default), true => minimal width columns
-  useFitCols: boolean = false;
+  useFitCols: boolean = true;
   edjsParser = edjsHTML({
     linkTool: (block: any) => {
       const url = block.data.link;
