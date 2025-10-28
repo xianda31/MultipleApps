@@ -18,6 +18,14 @@
                 <span class="fw-bolder me-1">{{snippet.title}} </span>
                 <span >{{snippet.subtitle}} </span>
             </div>
+            <div class="col-7 text-end">
+                <div class="form-check form-switch d-inline-flex align-items-center gap-2">
+                    <input class="form-check-input" type="checkbox"
+                           [checked]="useFitCols"
+                           (change)="useFitCols = $event.target.checked">
+                    <label class="form-check-label small">Colonnes minimales</label>
+                </div>
+            </div>
         </div>
     </div>
 </div>

@@ -18,6 +18,7 @@ import { CardsImgBottomRenderComponent } from './renderers/cards-img-bottom-rend
 import { AlbumsRenderComponent } from './renderers/albums-render/albums-render.component';
 import { FlipperRenderComponent } from './renderers/flipper-render/flipper-render.component';
 import { CardsImgTopLeftRenderComponent } from './renderers/cards-img-top-left-render/cards-img-top-left-render.component';
+import { ɵɵDir } from "@angular/cdk/scrolling";
 
 @Component({
   selector: 'app-generic-page',
@@ -47,6 +48,7 @@ export class GenericPageComponent implements OnInit, OnChanges {
   PAGE_TEMPLATES = PAGE_TEMPLATES;
   snippets: Snippet[] = [];
   page_snippets: Snippet[] = [];
+  scroll_to_snippet?: Snippet;
 
   constructor(
     private snippetService: SnippetService,
@@ -67,6 +69,7 @@ export class GenericPageComponent implements OnInit, OnChanges {
       // Scroll to the snippet if snippet_title changes
       const snippet = this.snippets.find(s => s.title === this.snippet_title);
       if (snippet) {
+        this.scroll_to_snippet = snippet;
         // this.scrollToElement(snippet.title);
       }
     }
@@ -90,6 +93,13 @@ export class GenericPageComponent implements OnInit, OnChanges {
             });
           });
           this.filter_PageSnippets(this.page_title);
+          // If a target snippet title is provided initially (via route), set scroll_to_snippet now
+          if (this.page_title === MENU_TITLES.NEWS && this.snippet_title) {
+            const target = this.page_snippets.find(s => s.title === this.snippet_title);
+            if (target) {
+              this.scroll_to_snippet = target;
+            }
+          }
         });
       });
   }

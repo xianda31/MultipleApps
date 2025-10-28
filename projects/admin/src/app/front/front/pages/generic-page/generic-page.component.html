@@ -3,7 +3,7 @@
     <app-sequential-render [snippets]="page_snippets"></app-sequential-render>
   </ng-container>
   <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.PUBLICATION">
-    <app-publication-render [snippets]="page_snippets"></app-publication-render>
+    <app-publication-render [snippets]="page_snippets" [scroll_to_snippet]="scroll_to_snippet"></app-publication-render>
   </ng-container>
   <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.A_LA_UNE">
     <app-a-la-une-render [snippets]="page_snippets" [selected_title]="snippet_title"></app-a-la-une-render>

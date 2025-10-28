@@ -8,7 +8,7 @@ import edjsHTML from 'editorjs-html'
 import Header from '@editorjs/header';
 import List from '@editorjs/list';
 import Table from '@editorjs/table';
-import ColorPicker from 'editorjs-color-picker';
+import ColorPicker, { ColorPickerWithoutSanitize } from 'editorjs-color-picker';
 
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -24,6 +24,9 @@ export class SnippetModalEditorComponent implements AfterViewInit {
   @Input() snippet!: Snippet;
   @Output() snippetChange = new EventEmitter<Snippet | null>();
   editor!: EditorJS;
+  // Toggle to choose table column strategy in generated HTML
+  // false => equal width columns (default), true => minimal width columns
+  useFitCols: boolean = false;
   edjsParser = edjsHTML({
     linkTool: (block: any) => {
       const url = block.data.link;
@@ -32,7 +35,11 @@ export class SnippetModalEditorComponent implements AfterViewInit {
     table: (block: any) => {
       const rows = block.data.content;
       if (!rows || !Array.isArray(rows)) return '';
-      let html = '<table class="table table-bordered"><tbody>';
+      // Generate a compact, borderless table; class depends on toggle
+      const tableClass = this.useFitCols
+        ? 'table table-sm table-borderless fit-cols'
+        : 'table table-sm table-borderless equal-cols';
+      let html = `<table class="${tableClass}"><tbody>`;
       for (const row of rows) {
         html += '<tr>' + row.map((cell: string) => `<td>${cell}</td>`).join('') + '</tr>';
       }
@@ -51,8 +58,8 @@ export class SnippetModalEditorComponent implements AfterViewInit {
   ngAfterViewInit(): void {
 
     const initialData = this.htmlToEditorJsBlocks(this.snippet.content);     // Convertit le HTML initial en blocks EditorJS
-    // console.log('Snippet Content:', this.snippet.content);
-    // console.log('Initial Data:', initialData);
+    console.log('Snippet Content:', this.snippet.content);
+    console.log('Initial Data:', initialData);
 
     this.editor = new EditorJS(
       {
@@ -94,10 +101,14 @@ export class SnippetModalEditorComponent implements AfterViewInit {
   async saveSnippet(): Promise<void> {
     try {
       const data = await this.editor.save();
-      const parsedHtml = this.edjsParser.parse(data); // Convertit les blocks EditorJS en HTML
-      this.output_html = this.sanitizer.bypassSecurityTrustHtml(parsedHtml);
+      const parsed = this.edjsParser.parse(data); // Convertit les blocks EditorJS en HTML
+      // edjsHTML.parse peut retourner un tableau de fragments HTML; on les joint si nécessaire
+      const html = Array.isArray(parsed) ? parsed.join('') : String(parsed);
+      this.output_html = this.sanitizer.bypassSecurityTrustHtml(html);
+
       let snippet = { ...this.snippet };
-      snippet.content = this.output_html.toString();
+      snippet.content = html; // On persiste la chaîne HTML brute, PAS l'objet SafeHtml
+      console.log('Final Snippet to Save:', snippet.content);
       this.activeModal.close(snippet);
     } catch (error) {
       console.error('Error saving snippet:', error);

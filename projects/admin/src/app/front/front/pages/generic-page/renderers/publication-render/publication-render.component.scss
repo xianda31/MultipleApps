@@ -43,3 +43,61 @@
 	max-height: 100px; /* sensible default, can be overridden by [style.max-height.px] */
 	object-fit: contain;
 }
+
+/* Force tables inside rendered HTML ([innerHTML]) to be borderless and compact
+	 Note: Content injected via [innerHTML] does NOT get Angular's emulated encapsulation attributes.
+	 Use ::ng-deep to pierce encapsulation so these rules hit the generated nodes. */
+:host ::ng-deep .tighter-html table {
+	border-collapse: collapse;
+	font-size: 0.95rem; /* slightly smaller text */
+}
+
+/* Only stretch tables to full width when not using minimal-width columns */
+:host ::ng-deep .tighter-html table:not(.fit-cols) {
+	width: 100%;
+}
+
+/* Explicit behaviors for the two table modes inside rendered content */
+:host ::ng-deep .tighter-html table.equal-cols {
+	table-layout: fixed !important;
+	width: 100% !important;
+}
+
+:host ::ng-deep .tighter-html table.fit-cols {
+	table-layout: auto !important;    /* size from content */
+	width: max-content !important;    /* shrink to content width */
+	max-width: 100%;                  /* don’t overflow container */
+	display: inline-table !important; /* shrink-to-content instead of filling row */
+}
+
+:host ::ng-deep .tighter-html table.fit-cols th,
+:host ::ng-deep .tighter-html table.fit-cols td {
+	white-space: nowrap;   /* keep cells compact */
+	width: 1%;             /* hint minimal width */
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+:host ::ng-deep .tighter-html table,
+:host ::ng-deep .tighter-html table th,
+:host ::ng-deep .tighter-html table td,
+:host ::ng-deep .tighter-html table tr {
+	border: 0 !important; /* override bootstrap borders incl. table-bordered */
+}
+:host ::ng-deep .tighter-html table th,
+:host ::ng-deep .tighter-html table td {
+	padding: 0.125rem 0.25rem; /* tighter cell padding */
+	line-height: 1.1; /* compact row height */
+	vertical-align: middle;
+}
+
+/* Highlight effect for scrolled-to card */
+.scroll-highlight {
+	animation: pr-flash 3000ms ease-in-out;
+}
+
+@keyframes pr-flash {
+	0% { box-shadow: 0 0 0 rgba(13,110,253,0); background-color: rgba(13,110,253,0.08); }
+	30% { box-shadow: 0 0 0.75rem rgba(13,110,253,0.45); background-color: rgba(13,110,253,0.12); }
+	60% { box-shadow: 0 0 0.4rem rgba(13,110,253,0.25); background-color: rgba(13,110,253,0.06); }
+	100% { box-shadow: none; background-color: transparent; }
+}

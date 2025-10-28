@@ -56,14 +56,6 @@ export class SnippetEditor {
       });
   }
 
-  //  toggleFreezeViewSnippet() {
-  //    this.snippetFreezed = !this.snippetFreezed;
-  //   this.snippetFreezedChange.emit(this.snippetFreezed);
-  // }
-  // onSnippetFreezeChange(freezed: boolean) {
-  //   this.snippetFreezed = freezed;
-  // }
-
   onSnippetContentClick(snippet: Snippet) {
     const modalRef = this.modalService.open(SnippetModalEditorComponent, { centered: true });
     modalRef.componentInstance.snippet = snippet;
