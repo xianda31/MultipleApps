@@ -1,0 +1,16 @@
+/* Sequential fade single-image styling */
+.fade-seq {
+	position: relative;
+}
+.fade-img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	object-position: center;
+	transition: opacity 1500ms cubic-bezier(0.3, 0, 0.2, 1);
+	will-change: opacity, transform;
+	backface-visibility: hidden;
+	/* Slight zoom to avoid thin bands on some aspect ratios */
+	transform: translateZ(0) scale(1.03);
+}

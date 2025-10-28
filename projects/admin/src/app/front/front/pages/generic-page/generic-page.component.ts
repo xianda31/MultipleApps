@@ -18,7 +18,6 @@ import { CardsImgBottomRenderComponent } from './renderers/cards-img-bottom-rend
 import { AlbumsRenderComponent } from './renderers/albums-render/albums-render.component';
 import { FlipperRenderComponent } from './renderers/flipper-render/flipper-render.component';
 import { CardsImgTopLeftRenderComponent } from './renderers/cards-img-top-left-render/cards-img-top-left-render.component';
-import { ɵɵDir } from "@angular/cdk/scrolling";
 
 @Component({
   selector: 'app-generic-page',
@@ -70,7 +69,6 @@ export class GenericPageComponent implements OnInit, OnChanges {
       const snippet = this.snippets.find(s => s.title === this.snippet_title);
       if (snippet) {
         this.scroll_to_snippet = snippet;
-        // this.scrollToElement(snippet.title);
       }
     }
   }

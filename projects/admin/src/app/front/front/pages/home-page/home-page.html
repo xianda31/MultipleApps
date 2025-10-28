@@ -1,12 +1,12 @@
 <div class="row mt-3 px-1">
-    <div class="col-xs-6 col-md-4">
+    <div class="col-xs-6 col-md-5">
         <ng-container *ngTemplateOutlet="welcome"></ng-container>
         <ng-container *ngIf="isMdOrAbove">
-            <ng-container  *ngTemplateOutlet="whoarewe"></ng-container>
+            <ng-container *ngTemplateOutlet="whoarewe"></ng-container>
         </ng-container>
     </div>
-    <div class="col-xs-6 col-md-4 d-flex justify-content-center">
-        <img src="/marcaissonne.jpg" class="img-fluid rounded-2" alt="marcaissonne" />
+    <div class="col-xs-6 col-md-3 d-flex justify-content-center ">
+        <ng-container *ngTemplateOutlet="imagegallery"></ng-container>
     </div>
     <div class="d-none d-md-block col-md-4">
         <ng-container *ngTemplateOutlet="birthdays"></ng-container>
@@ -37,9 +37,12 @@
         </div>
     </div>
 </ng-template>
-    
+
 <ng-template #imagegallery>
-        <img src="/marcaissonne.jpg" class="img-fluid rounded-2" alt="marcaissonne" />
+    <div class=" rounded-2 overflow-hidden nice_shadow" style="flex: 1 1 0; height: 10rem;">
+        <img class="fade-img" [src]="photos[photo_index]" alt="photo" decoding="async" loading="eager"
+            [style.opacity]="opacity" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
+    </div>
 </ng-template>
 
 
@@ -51,7 +54,7 @@
     </div>
 </div>
 
-<div class="mt-1 px-1">
+<div class="mt-1 px-3">
     <app-generic-page [page_title]="EXTRA_TITLES.HIGHLIGHTS"></app-generic-page>
 </div>
 
