@@ -12,5 +12,18 @@
 	will-change: opacity, transform;
 	backface-visibility: hidden;
 	/* Slight zoom to avoid thin bands on some aspect ratios */
-	transform: translateZ(0) scale(1.03);
+	transform: translateZ(0) scale(1.01);
+}
+
+/* Aspect ratio utility for ~1.3 (13:10) */
+.ar-13 {
+	aspect-ratio: 13 / 10;
+}
+
+/* Aspect ratio utility for 16:9 */
+.ar-16_9 {
+	aspect-ratio: 16 / 9;
+}
+.ar-16_9 {
+    aspect-ratio: 16 / 9;
 }
