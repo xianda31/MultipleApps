@@ -7,13 +7,10 @@ import { AuthentificationService } from '../../common/authentification/authentif
 import { GroupService } from '../../common/authentification/group.service';
 import { environment } from '../../../environments/environment';
 import { NgbCollapseModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
-import { Offcanvas } from 'bootstrap';
 import { Accreditation } from '../../common/authentification/group.interface';
 import { Observable } from 'rxjs';
 import { Member } from '../../common/interfaces/member.interface';
 import { ConnexionComponent } from '../../common/authentification/connexion/connexion.component';
-import { Process_flow } from '../../common/authentification/authentification_interface';
-import { MembersService } from '../../common/services/members.service';
 import { MemberSettingsService } from '../../common/services/member-settings.service';
 
 
@@ -55,7 +52,7 @@ export class BackNavbarComponent implements OnInit {
     this.auth.logged_member$.subscribe(async (member) => {
       if (member !== null) {
         this.user_accreditation = await this.groupService.getUserAccreditation();
-        this.force_canvas_to_close();
+        // this.force_canvas_to_close();
 
         this.avatar$ = this.memberSettingsService.getAvatarUrl(member);
         
@@ -73,28 +70,28 @@ export class BackNavbarComponent implements OnInit {
     this.production_mode = environment.production;
   }
 
-  onCanvasClose() {
-    console.log('Canvas closed');
-    this.auth.changeMode(Process_flow.SIGN_IN);
-  }
+  // onCanvasClose() {
+  //   console.log('Canvas closed');
+  //   this.auth.changeMode(Process_flow.SIGN_IN);
+  // }
 
-  force_canvas_to_close() {
-    const canvas = document.getElementById('loggingOffCanvas');
-    if (canvas) {
-      const bsOffcanvas = Offcanvas.getInstance(canvas);
-      if (bsOffcanvas) {
-        bsOffcanvas.hide();
-        setTimeout(() => {
-          canvas.classList.remove('show');
-          const backdrop = document.querySelector('.offcanvas-backdrop');
-          if (backdrop) {
-            backdrop.parentNode?.removeChild(backdrop);
-          }
-          document.body.classList.remove('offcanvas-backdrop', 'show', 'modal-open');
-        }, 300);
-      }
-    }
-  }
+  // force_canvas_to_close() {
+  //   const canvas = document.getElementById('loggingOffCanvas');
+  //   if (canvas) {
+  //     const bsOffcanvas = Offcanvas.getInstance(canvas);
+  //     if (bsOffcanvas) {
+  //       bsOffcanvas.hide();
+  //       setTimeout(() => {
+  //         canvas.classList.remove('show');
+  //         const backdrop = document.querySelector('.offcanvas-backdrop');
+  //         if (backdrop) {
+  //           backdrop.parentNode?.removeChild(backdrop);
+  //         }
+  //         document.body.classList.remove('offcanvas-backdrop', 'show', 'modal-open');
+  //       }, 300);
+  //     }
+  //   }
+  // }
 
 
 

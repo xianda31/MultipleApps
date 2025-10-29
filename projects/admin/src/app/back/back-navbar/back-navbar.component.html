@@ -111,12 +111,12 @@
         </li>
 
         <!-- Connexion -->
-        <li *ngIf="!(logged_member$ | async)" ngbDropdown class="nav-item dropdown me-5">
+        <!-- <li *ngIf="!(logged_member$ | async)" ngbDropdown class="nav-item dropdown me-5">
           <button class="btn btn-success btn-sm shadow-sm" type="button" data-bs-toggle="offcanvas"
             data-bs-target="#loggingOffCanvas" aria-controls="loggingOffCanvas">
             connexion
           </button>
-        </li>
+        </li> -->
 
         <li *ngIf="(logged_member$ | async) as member" class="nav-item dropdown ms-auto me-5" ngbDropdown>
           <a class="nav-link dropdown-toggle d-flex align-items-center" ngbDropdownToggle href="#">
@@ -150,9 +150,9 @@
     </div>
     <div class="offcanvas-body p-0">
       <ul class="navbar-nav menu-sm-tight">
+        
+        
         <!-- Copy of the navigation menu for mobile -->
-
-
 
         <li *ngIf="accreditation_level >= accreditation_levels.Contributeur" ngbDropdown class="nav-item dropdown">
           <div class="d-flex align-items-center">
@@ -225,12 +225,12 @@
             <li><a class="dropdown-item" routerLink="/front" data-bs-dismiss="offcanvas">aller au site</a></li>
           </ul>
         </li>
-        <li *ngIf="!(logged_member$ | async)" ngbDropdown class="nav-item dropdown">
+        <!-- <li *ngIf="!(logged_member$ | async)" ngbDropdown class="nav-item dropdown">
           <button class="btn btn-success shadow-sm w-100 my-2" type="button" data-bs-toggle="offcanvas"
             data-bs-target="#loggingOffCanvas" aria-controls="loggingOffCanvas">
             connexion
           </button>
-        </li>
+        </li> -->
         <li *ngIf="(logged_member$ | async) " ngbDropdown class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
             <i class="fs-4 bi-person-circle"></i>
@@ -248,7 +248,7 @@
   </div>
 
 
-  <div class="offcanvas offcanvas-end" data-bs-backdrop="static" tabindex="-1" id="loggingOffCanvas"
+  <!-- <div class="offcanvas offcanvas-end" data-bs-backdrop="static" tabindex="-1" id="loggingOffCanvas"
     aria-labelledby="staticBackdropLabel">
     <div class="offcanvas-header">
       <h5 class="offcanvas-title" id="staticBackdropLabel">Se connecter</h5>
@@ -258,6 +258,6 @@
     <div class="offcanvas-body">
       <app-connexion></app-connexion>
     </div>
-  </div>
+  </div> -->
 
 </div>

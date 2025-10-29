@@ -6,10 +6,11 @@ import { Observable } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { Accreditation } from '../../common/authentification/group.interface';
 import { GroupService } from '../../common/authentification/group.service';
+import { ConnexionComponent } from '../../common/authentification/connexion/connexion.component';
 
 @Component({
   selector: 'app-back-page',
-  imports: [CommonModule],
+  imports: [CommonModule,ConnexionComponent],
   templateUrl: './back-page.component.html',
   styleUrl: './back-page.component.scss'
 })
