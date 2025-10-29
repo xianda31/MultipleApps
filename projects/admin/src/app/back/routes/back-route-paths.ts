@@ -1,3 +1,5 @@
+import { CloneDBComponent } from "../maintenance/clone-DB/clone-db.component";
+
 // Chemins relatifs pour le routing Angular (back.routes.ts)
 export const BACK_ROUTE_PATHS = {
   Shop: 'caisse/ventes',
@@ -21,6 +23,7 @@ export const BACK_ROUTE_PATHS = {
   ImportExcel: 'outils/excel_import',
   GroupsList: 'outils/groups',
   CloneDB: 'outils/cloneDB',
+  CloneS3: 'outils/cloneS3',
   Snippets: 'site/thumbnails',
   RootVolume: 'site/disk',
   FilemgrWindows: 'site/disk/:root_folder',

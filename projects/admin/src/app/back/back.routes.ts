@@ -26,6 +26,7 @@ import { PagesEditorComponent } from './pages/pages-editor/pages-editor.componen
 import { FilemgrWindowsComponent } from './files/filemgr/filemgr-windows.component';
 import { RootVolumeComponent } from './files/root-volume/root-volume';
 import { BackAuthGuard } from '../back-auth.guard';
+import { CloneS3Component } from './maintenance/clone-S3/clone-s3.component';
 
 export const routes: Routes = [
   {
@@ -60,6 +61,7 @@ export const routes: Routes = [
   { path: BACK_ROUTE_PATHS.ImportExcel, component: ImportExcelComponent, canActivate: [BackAuthGuard] },
   { path: BACK_ROUTE_PATHS.GroupsList, component: GroupsListComponent, canActivate: [BackAuthGuard] },
   { path: BACK_ROUTE_PATHS.CloneDB, component: CloneDBComponent, canActivate: [BackAuthGuard] },
+  { path: BACK_ROUTE_PATHS.CloneS3, component: CloneS3Component, canActivate: [BackAuthGuard] },
 
   { path: BACK_ROUTE_PATHS.Snippets, component: SnippetsComponent, canActivate: [BackAuthGuard] },
   { path: BACK_ROUTE_PATHS.RootVolume, component: RootVolumeComponent, canActivate: [BackAuthGuard] },

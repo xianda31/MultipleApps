@@ -66,7 +66,6 @@ export class BatchService {
     );
   }
 
-
   batchWriteItem(tableName: string, items: any[]): Observable<any> {
     let batchWrite = (items: any[], batch_nbr: number): Observable<any> => {
       // let records = [...items];

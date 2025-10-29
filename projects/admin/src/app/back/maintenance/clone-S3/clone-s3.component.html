@@ -1,0 +1,47 @@
+<div class="card mt-3">
+    <h4 class="card-header text-center">S3 clone ({{production_apid}} → {{sandbox_apid}})</h4>
+    <div class="card-body">
+        <div class="row g-2 align-items-end mb-3">
+            <div class="col-12 col-md-4">
+                <label class="form-label">Bucket source (production)</label>
+                <input class="form-control" [(ngModel)]="sourceBucket" placeholder="ex: my-prod-bucket">
+            </div>
+            <div class="col-12 col-md-4">
+                <label class="form-label">Bucket destination (sandbox)</label>
+                <input class="form-control" [(ngModel)]="destBucket" placeholder="ex: my-sandbox-bucket">
+            </div>
+            <div class="col-12 col-md-4 d-flex gap-2 justify-content-end">
+                <button class="btn btn-outline-secondary" (click)="refreshCounts()" [disabled]="started">Rafraîchir</button>
+                <button class="btn btn-primary" (click)="cloneSelected(true)" [disabled]="started">Cloner la sélection</button>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-sm align-middle">
+                <thead>
+                    <tr>
+                        <th class="text-center" style="width: 48px;">Sel.</th>
+                        <th>Racine</th>
+                        <th>Source (# fichiers)</th>
+                        <th>Destination (# fichiers)</th>
+                        <th class="text-center" style="width: 160px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let r of roots">
+                        <td class="text-center"><input type="checkbox" [(ngModel)]="r.selected"></td>
+                        <td><code>{{ r.key }}</code></td>
+                        <td>{{ r.sourceCount === null ? '…' : r.sourceCount }}</td>
+                        <td>{{ r.destCount === null ? '…' : r.destCount }}</td>
+                        <td class="text-center">
+                            <div class="d-flex flex-column gap-1">
+                                <button class="btn btn-sm btn-primary" (click)="cloneRoot(r.key, true)" [disabled]="started || r.cloning">Cloner</button>
+                                <div *ngIf="r.cloning" class="small text-muted">{{ r.progress }}% {{ r.errors ? '(' + r.errors + ' erreurs)' : '' }}</div>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -5,6 +5,8 @@ export const environment = {
     aws_secret_access_key: 'yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy',
     sandbox_apid: 'sandbox_apid_value',
     production_apid: 'production_apid_value',
+    s3_prod_bucket: '',
+    s3_sandbox_bucket: '',
     back_guard: true
 };
 
