@@ -18,7 +18,7 @@ import { MemberSettingsService } from '../../common/services/member-settings.ser
 @Component({
   selector: 'app-back-navbar',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, ReactiveFormsModule, NgbDropdownModule,NgbCollapseModule, ConnexionComponent],
+  imports: [CommonModule, RouterLink, FormsModule, ReactiveFormsModule, NgbDropdownModule,NgbCollapseModule],
   templateUrl: './back-navbar.component.html',
   styleUrl: './back-navbar.component.scss'
 })
