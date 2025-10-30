@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { BatchGetItemCommand, DescribeTableCommand, DescribeTableOutput, DynamoDBClient, ListTablesCommand, TransactGetItemsCommand, ScanCommand, PutItemCommand, BatchWriteItemCommand } from '@aws-sdk/client-dynamodb';
-import { catchError, concat, concatAll, from, map, Observable, of, concat as rxConcat, lastValueFrom, toArray } from 'rxjs';
+import { BatchGetItemCommand, DescribeTableCommand, DescribeTableOutput, DynamoDBClient, ListTablesCommand, TransactGetItemsCommand, ScanCommand, PutItemCommand, BatchWriteItemCommand, BatchWriteItemCommandOutput } from '@aws-sdk/client-dynamodb';
+import { catchError, from, map, Observable, of, concat as rxConcat, toArray, switchMap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 @Injectable({
@@ -49,101 +49,166 @@ export class BatchService {
   }
 
   scanTable(tableName: string, limit: number): Observable<any[]> {
-    const command = new ScanCommand({
-      TableName: tableName,
-      Limit: (limit === 0) ? undefined : limit,
-    });
-    return from(this.client.send(command)).pipe(
-      map((data) => {
-        console.log('Scan result:', data);
-        const items = data.Items || [];
+    // When limit === 0, fetch ALL items via pagination
+    if (limit === 0) {
+      const fetchAll = async (): Promise<any[]> => {
+        let items: any[] = [];
+        let lastEvaluatedKey: any = undefined;
+        do {
+          const command = new ScanCommand({
+            TableName: tableName,
+            ConsistentRead: true,
+            ExclusiveStartKey: lastEvaluatedKey,
+          });
+          const data = await this.client.send(command);
+          items = items.concat(data.Items || []);
+          lastEvaluatedKey = data.LastEvaluatedKey;
+        } while (lastEvaluatedKey);
         return items;
-      }),
-      catchError((error) => {
-        console.error('Error scanning table:', error);
-        return of([]);
-      })
-    );
+      };
+      return from(fetchAll()).pipe(
+        catchError((error) => {
+          console.error('Error scanning table (paginated):', error);
+          return of([]);
+        })
+      );
+    } else {
+      const command = new ScanCommand({
+        TableName: tableName,
+        ConsistentRead: true,
+        Limit: limit,
+      });
+      return from(this.client.send(command)).pipe(
+        map((data) => {
+          const items = data.Items || [];
+          return items;
+        }),
+        catchError((error) => {
+          console.error('Error scanning table:', error);
+          return of([]);
+        })
+      );
+    }
   }
 
   batchWriteItem(tableName: string, items: any[]): Observable<any> {
-    let batchWrite = (items: any[], batch_nbr: number): Observable<any> => {
-      // let records = [...items];
-      let records = items.map((item: any) => {
-        return item;
-      });
-      const batchWriteItemInput = {
-        RequestItems: {
-          [tableName]: records.map(item => ({
-            PutRequest: {
-              Item: item
-            }
-          }))
+    const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
+
+    const writeChunkWithRetries = (records: any[], batch_nbr: number): Observable<BatchWriteItemCommandOutput | null> => {
+      const run = async (): Promise<BatchWriteItemCommandOutput | null> => {
+        let request = {
+          RequestItems: {
+            [tableName]: records.map(item => ({ PutRequest: { Item: item } }))
+          }
+        } as any;
+        let attempt = 0;
+        const maxAttempts = 6;
+        let response: BatchWriteItemCommandOutput | null = null;
+        do {
+          try {
+            response = await this.client.send(new BatchWriteItemCommand(request));
+          } catch (err) {
+            console.error(`Batch write #${batch_nbr + 1} attempt ${attempt + 1} failed:`, err);
+            response = null;
+          }
+          const unprocessed = response?.UnprocessedItems?.[tableName] || [];
+          if (unprocessed.length > 0) {
+            // retry only unprocessed
+            request = { RequestItems: { [tableName]: unprocessed } } as any;
+            attempt++;
+            const delay = Math.min(1000 * Math.pow(2, attempt), 8000) + Math.floor(Math.random() * 200);
+            await sleep(delay);
+          } else {
+            break;
+          }
+        } while (attempt < 6);
+        if (response) {
+          console.log('Batch write n° %s complete (attempts: %s)', batch_nbr + 1, attempt + 1);
         }
+        return response;
       };
-      const command = new BatchWriteItemCommand(batchWriteItemInput);
-      return from(this.client.send(command)).pipe(
-        map((data) => {
-          console.log('Batch write n° %s complete', batch_nbr + 1);
-          return data;
-        }),
+      return from(run()).pipe(
         catchError((error) => {
-          console.error('Batch write n° %s failed :', batch_nbr + 1, error);
+          console.error('Batch write n° %s failed:', batch_nbr + 1, error);
           return of(null);
         })
       );
-    }
+    };
+
     // Split items into chunks of 25
     const chunkSize = 25;
-    const chunks = [];
+    const chunks: any[][] = [];
     for (let i = 0; i < items.length; i += chunkSize) {
       chunks.push(items.slice(i, i + chunkSize));
     }
     // Sequential execution, emit once at completion with all results
-    return rxConcat(...chunks.map((chunk, index) => batchWrite(chunk, index))).pipe(
-      toArray()
-    );
+    return rxConcat(...chunks.map((chunk, index) => writeChunkWithRetries(chunk, index))).pipe(toArray());
   }
 
   batchDeleteItem(tableName: string, items: any[]): Observable<any> {
-    let batchWrite = (items: any[], batch_nbr: number): Observable<any> => {
-      // let records = [...items];
-      let records = items.map((item: any) => {
-        return {id: item.id!};
-      });
-      const batchWriteItemInput = {
-        RequestItems: {
-          [tableName]: records.map(record => ({
-            DeleteRequest: {
-              Key: record
+    const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
+
+    // Fetch key schema to build proper Keys (supports composite keys)
+    return from(this.client.send(new DescribeTableCommand({ TableName: tableName }))).pipe(
+      switchMap(desc => {
+        const keySchema = desc.Table?.KeySchema || [];
+        const keyAttrs = keySchema.map(k => k.AttributeName as string);
+
+        const buildKey = (item: any) => {
+          const key: any = {};
+          for (const attr of keyAttrs) {
+            key[attr] = item[attr]; // attribute value map as-is
+          }
+          return key;
+        };
+
+        const deleteChunkWithRetries = (chunk: any[], batch_nbr: number): Observable<BatchWriteItemCommandOutput | null> => {
+          const run = async (): Promise<BatchWriteItemCommandOutput | null> => {
+            let request = {
+              RequestItems: {
+                [tableName]: chunk.map(it => ({ DeleteRequest: { Key: buildKey(it) } }))
+              }
+            } as any;
+            let attempt = 0;
+            let response: BatchWriteItemCommandOutput | null = null;
+            do {
+              try {
+                response = await this.client.send(new BatchWriteItemCommand(request));
+              } catch (err) {
+                console.error(`Batch delete #${batch_nbr + 1} attempt ${attempt + 1} failed:`, err);
+                response = null;
+              }
+              const unprocessed = response?.UnprocessedItems?.[tableName] || [];
+              if (unprocessed.length > 0) {
+                request = { RequestItems: { [tableName]: unprocessed } } as any;
+                attempt++;
+                const delay = Math.min(1000 * Math.pow(2, attempt), 8000) + Math.floor(Math.random() * 200);
+                await sleep(delay);
+              } else {
+                break;
+              }
+            } while (attempt < 6);
+            if (response) {
+              console.log('Batch delete n° %s complete (attempts: %s)', batch_nbr + 1, attempt + 1);
             }
-          }))
+            return response;
+          };
+          return from(run()).pipe(
+            catchError((error) => {
+              console.error('Batch delete n° %s failed:', batch_nbr + 1, error);
+              return of(null);
+            })
+          );
+        };
+
+        // Split items into chunks of 25
+        const chunkSize = 25;
+        const chunks: any[][] = [];
+        for (let i = 0; i < items.length; i += chunkSize) {
+          chunks.push(items.slice(i, i + chunkSize));
         }
-      };
-
-console.log('Batch delete n° %s', batch_nbr + 1, batchWriteItemInput);
-
-      const command = new BatchWriteItemCommand(batchWriteItemInput);
-      return from(this.client.send(command)).pipe(
-        map((data) => {
-          console.log('Batch delete n° %s complete', batch_nbr + 1);
-          return data;
-        }),
-        catchError((error) => {
-          console.error('Batch delete n° %s failed :', batch_nbr + 1, error);
-          return of(null);
-        })
-      );
-    }
-    // Split items into chunks of 25
-    const chunkSize = 25;
-    const chunks = [];
-    for (let i = 0; i < items.length; i += chunkSize) {
-      chunks.push(items.slice(i, i + chunkSize));
-    }
-    // Sequential execution, emit once at completion with all results
-    return rxConcat(...chunks.map((chunk, index) => batchWrite(chunk, index))).pipe(
-      toArray()
+        return rxConcat(...chunks.map((chunk, index) => deleteChunkWithRetries(chunk, index))).pipe(toArray());
+      })
     );
   }
 
