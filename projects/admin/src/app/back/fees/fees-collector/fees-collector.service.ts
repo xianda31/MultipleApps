@@ -181,6 +181,7 @@ export class FeesCollectorService {
       const already_charged = this.BookService.search_tournament_fees_entry(tournament.tournament_name) !== undefined;
       if (already_charged) {
         this.game = game; // restore previous game state
+        this.update_members_avatars();
         this._game$.next(this.game);
         return 'charged';
       } else {
@@ -201,11 +202,18 @@ export class FeesCollectorService {
     if (game) {
       this.game = game;
       this.update_members_assets();
+      this.update_members_avatars();
       return true;
     } else {
       this.toastService.showErrorToast('restauration', 'Aucun état de saisie trouvé pour ce tournoi');
       return false;
     }
+  }
+
+  update_members_avatars() {
+    this.game.gamers.forEach((gamer) => {
+      gamer.photo_url$ = this.is_member(gamer.license) ? this.membersSettingsService.getAvatarUrl(this.membersService.getMemberbyLicense(gamer.license)!) : null;
+    });
   }
 
 

@@ -78,7 +78,7 @@ export class HomePage {
          this.photo_count = this.photos.length;
          // prepare next index once photos are known
          this.next_index = (this.photo_index + 1) % this.photo_count;
-        console.log('Home photos loaded', this.photos.length);
+        // console.log('Home photos loaded', this.photos.length);
       });
 
     // start slideshow rotation with sequential fade (out then in)

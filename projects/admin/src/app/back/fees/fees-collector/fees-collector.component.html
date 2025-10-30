@@ -24,9 +24,9 @@
 
         </div>
 
-        <div *ngIf="game && game.tournament" class="row  justify-content-between align-items-center">
+        <div *ngIf="game " class="row  justify-content-between align-items-center">
             <!-- <ng-container class="row justify-content-between" > -->
-            <div class="col-12 col-md-4">
+            <div *ngIf="game && game.tournament" class="col-12 col-md-4">
                 <span class="d-none d-sm-inline">
                     {{game.tournament.date | date:'EEEE dd MMMM' : 'fr-FR'}}
                 </span>
@@ -70,7 +70,7 @@
 
     </div>
 
-    <div *ngIf="game &&game.tournament" class="card-body">
+    <div *ngIf="game " class="card-body">
 
         <span class="col form-check form-switch">
             <input class="form-check-input" type="checkbox" role="switch" [checked]="game.alphabetic_sort"
@@ -102,7 +102,7 @@
     </div>
 
     <!-- footer -->
-    <div *ngIf="game && game.tournament" class="card-footer">
+    <div *ngIf="game " class="card-footer">
         <div class="row justify-content-between align-items-center">
             <ng-container *ngTemplateOutlet="save_dialog"></ng-container>
             <div class="col">

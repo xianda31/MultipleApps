@@ -119,7 +119,7 @@ export class FeesCollectorComponent {
   }
 
   clear_session() {
-    this.game.tournament = null;
+    this.game = null!;
     this.selected_tournament = null!;
     this.feesCollectorService.clear_tournament();
   }
