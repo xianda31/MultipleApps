@@ -41,7 +41,7 @@
 
       <hr class="my-3">
 
-      <table class="table table-striped table-sm table-responsive">
+      <table class="table table-striped table-sm table-bordered table-responsive">
         <thead>
           <tr>
             <th>#</th>
@@ -61,6 +61,7 @@
 
             
             <th class="d-none d-sm-table-cell">licence</th>
+            <th class="d-none d-sm-table-cell">date de licence</th>
             <th class="d-none d-sm-table-cell">mail</th>
             <th class="d-none d-sm-table-cell"><i class="bi bi-telephone-fill"></i></th>
             <th class="d-none d-sm-table-cell">Ville</th>
@@ -99,6 +100,9 @@
             </ng-container>
 
             <td class="d-none d-sm-table-cell">{{member.license_number}}</td>
+            <td class="d-none d-sm-table-cell">
+              {{member.register_date ? (member.register_date | date:'dd/MM/yyyy') : ''}}
+            </td>
             <td class="d-none d-sm-table-cell">{{member.email}}</td>
             <td class="d-none d-sm-table-cell">{{member.phone_one | phone}}</td>
             <td class="d-none d-sm-table-cell">{{member.city }}</td>

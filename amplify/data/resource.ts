@@ -162,6 +162,7 @@ const schema = a.schema({
     is_sympathisant: a.boolean(),
     license_status: a.string(),
     license_taken_at: a.string(),
+    register_date: a.string(),
     has_avatar: a.boolean(),
     accept_mailing: a.boolean(),
 

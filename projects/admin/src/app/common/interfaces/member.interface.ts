@@ -20,6 +20,7 @@ export interface Member extends Member_settings{
   license_status: string
   license_taken_at: string
   orga_license_name?: string;
+  register_date?: string;
   // ico?: string;
   // accept_mailing?: boolean;
   createdAt?: string;

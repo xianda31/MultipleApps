@@ -32,9 +32,9 @@ export class MembersComponent implements OnInit {
 
   // selected_filter: string = 'Tous';
   licenses_status: { [key: string]: string } = {
-    'registered': 'à la FFB',
-    'unregistered': 'pas à la FFB',
-    'all': 'tous',
+    'registered': 'reg. FFB',
+    'unregistered': 'autres',
+    // 'all': 'tous',
     // 'offered': 'Offerte',
   };
   selected_status: string = 'registered';
@@ -140,6 +140,7 @@ export class MembersComponent implements OnInit {
       email: '?',
       phone_one: '?',
       license_taken_at: player.last_club ?? '??',
+      // register_date: ''
       license_status: player.is_current_season ? LicenseStatus.DULY_REGISTERED : LicenseStatus.UNREGISTERED,
       is_sympathisant: false,
     }
@@ -212,6 +213,7 @@ export class MembersComponent implements OnInit {
       email: licensee.email?.trim().toLowerCase() ?? '',
       phone_one: licensee.phone_one,
       license_taken_at: licensee.orga_license_name ?? 'BCSTO',
+      register_date: licensee.register_date ?? '',
       license_status: licensee.register ? (licensee.license_id ? LicenseStatus.DULY_REGISTERED : LicenseStatus.PROMOTED_ONLY) : LicenseStatus.UNREGISTERED,
       is_sympathisant: licensee.is_sympathisant ?? false,
 
@@ -260,7 +262,7 @@ export class MembersComponent implements OnInit {
   access_settings(member: Member): void {
     this.memberSettingsService.access_settings(member).subscribe((settings_changed) => {
       if (settings_changed) {
-        this.toastService.showSuccess(`Préférences de ${this.membersService.full_name(member)}`, 'Mise à jour effectuée');
+        // this.toastService.showSuccess(`Préférences de ${this.membersService.full_name(member)}`, 'Mise à jour effectuée');
       }
     });
   }
