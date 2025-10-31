@@ -40,13 +40,32 @@
 // Sidebar (offcanvas) custom styles for mobile
 @media (max-width: 767.98px) {
     .offcanvas.offcanvas-start {
-        width: 80vw;
-        max-width: 320px;
-        background: #fff;
-        box-shadow: 2px 0 8px rgba(0,0,0,0.08);
+        /* Slightly wider with a max to fit content */
+        width: 74vw;
+        max-width: 400px;
+
+        /* More transparency for a lighter glass effect */
+        background: rgba(111, 146, 113, 0.80);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+
+        /* Rounded outer edge and soft shadow */
+        border-radius: 0.75rem;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        border: 1px solid rgba(0,0,0,0.06);
+
+        /* Reduce height to about half the viewport */
+        top: 0.75rem !important;
+        bottom: auto !important;
+        height: 50vh !important;
+        overflow-x: hidden;
+        overflow-y: auto;
+
+        /* Smoothen slide-in/out */
+        transition: transform .25s ease, background-color .25s ease;
     }
     .offcanvas-backdrop.show {
-        opacity: 0.25;
+        opacity: 0.3;
     }
     .offcanvas .navbar-nav {
         padding-top: 1rem;
@@ -60,14 +79,24 @@
         // .offcanvas .dropdown-toggle::after {
         //     display: none;
         // }
+    /* Make mobile menu items less tight */
+    .navbar-nav.menu-sm-tight {
+        flex-direction: column !important;
+        gap: 0.35rem !important;
+    }
     .menu-sm-tight.navbar-nav > .nav-item,
     .menu-sm-tight.navbar-nav > .dropdown,
     .menu-sm-tight.navbar-nav > .nav-link {
-        font-size: 0.9rem !important;
-        line-height: 1 !important;
-        margin-bottom: 0.05rem !important;
-        padding-top: 0.05rem !important;
-        padding-bottom: 0.05rem !important;
+        font-size: 0.95rem !important;
+        line-height: 1.25 !important;
+        margin-bottom: 0.25rem !important;
+        padding-top: 0.35rem !important;
+        padding-bottom: 0.35rem !important;
+    }
+    .menu-sm-tight.navbar-nav .dropdown-menu,
+    .menu-sm-tight.navbar-nav .dropdown-item {
+        padding-top: 0.35rem !important;
+        padding-bottom: 0.35rem !important;
     }
     .menu-sm-tight.navbar-nav i[class^="bi-"] {
         font-size: 1.1rem !important;

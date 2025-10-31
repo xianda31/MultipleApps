@@ -1,7 +1,7 @@
 <div class="row bg-light  ">
   <div class="d-flex d-inline align-items-end  w-100 bg-dark  p-2  position-relative">
     <!-- Mobile sidebar toggle button -->
-    <button class="btn btn-outline-secondary d-md-none text-center" type="button" data-bs-toggle="offcanvas"
+    <button *ngIf="(logged_member$ | async)" class="btn btn-outline-secondary d-md-none text-center" type="button" data-bs-toggle="offcanvas"
       data-bs-target="#mobileSidebar" aria-controls="mobileSidebar">
       <i class="bi bi-list text-start"></i>
     </button>
@@ -38,6 +38,13 @@
       </ul> -->
       <ul class="navbar-nav  mb-md-0 mb-lg-0 justify-content-start align-items-end">
 
+        <li class="nav-item ms-md-1 ms-sm-1" *ngIf="accreditation_level >= accreditation_levels.Contributeur">
+          <a class="nav-link" routerLink="./caisse/droits-de-table">
+            <i class="fs-4 bi-card-checklist"></i>
+            <span class="ms-1">Tournoi</span>
+          </a>
+        </li>
+
         <li *ngIf="accreditation_level >= accreditation_levels.Contributeur" ngbDropdown
           class="nav-item dropdown ms-md-1 ms-sm-1">
           <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
@@ -45,7 +52,6 @@
           </a>
           <ul ngbDropdownMenu class="dropdown-menu">
             <li><a class="dropdown-item" routerLink="./caisse/ventes">vente à adhérents</a></li>
-            <li><a class="dropdown-item" routerLink="./caisse/droits-de-table">tournoi en présentiel</a></li>
             <li><a class="dropdown-item" routerLink="./caisse/produits">produits à la vente</a></li>
           </ul>
         </li>
@@ -58,7 +64,8 @@
           </a>
           <ul ngbDropdownMenu class="dropdown-menu">
             <li><a class="dropdown-item" routerLink="./members/database">répertoire</a></li>
-            <li *ngIf="accreditation_level >= accreditation_levels.Administrateur"><a class="dropdown-item" routerLink="./members/cartes-admission">cartes admission</a></li>
+            <li *ngIf="accreditation_level >= accreditation_levels.Administrateur"><a class="dropdown-item"
+                routerLink="./members/cartes-admission">cartes admission</a></li>
             <li><a class="dropdown-item" routerLink="./members/payments">paiements</a></li>
           </ul>
         </li>
@@ -146,14 +153,22 @@
   <div class="offcanvas offcanvas-start d-md-none" tabindex="-1" id="mobileSidebar"
     aria-labelledby="mobileSidebarLabel">
     <div class="offcanvas-header">
-      <h5 class="offcanvas-title" id="mobileSidebarLabel">Menu</h5>
+      <h5 class="offcanvas-title" id="mobileSidebarLabel">Back office</h5>
       <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
     <div class="offcanvas-body p-0">
       <ul class="navbar-nav menu-sm-tight">
-        
-        
+
+
         <!-- Copy of the navigation menu for mobile -->
+
+        <!-- Tournoi (single item) -->
+        <li class="nav-item" *ngIf="accreditation_level >= accreditation_levels.Contributeur">
+          <a class="nav-link d-flex align-items-center" routerLink="./caisse/droits-de-table" data-bs-dismiss="offcanvas">
+            <i class="fs-4 bi-card-checklist"></i>
+            <span class="ms-1">Tournoi</span>
+          </a>
+        </li>
 
         <li *ngIf="accreditation_level >= accreditation_levels.Contributeur" ngbDropdown class="nav-item dropdown">
           <div class="d-flex align-items-center">
@@ -163,9 +178,10 @@
             <a class="nav-link dropdown-toggle p-0" ngbDropdownToggle href="#" style="width:2em;"></a>
           </div>
           <ul ngbDropdownMenu class="dropdown-menu">
-            <li><a class="dropdown-item" routerLink="./caisse/ventes" data-bs-dismiss="offcanvas">vente à adhérents</a></li>
-            <li><a class="dropdown-item" routerLink="./caisse/droits-de-table" data-bs-dismiss="offcanvas">tournoi en présentiel</a></li>
-            <li><a class="dropdown-item" routerLink="./caisse/produits" data-bs-dismiss="offcanvas">produits à la vente</a></li>
+            <li><a class="dropdown-item" routerLink="./caisse/ventes" data-bs-dismiss="offcanvas">vente à adhérents</a>
+            </li>
+            <li><a class="dropdown-item" routerLink="./caisse/produits" data-bs-dismiss="offcanvas">produits à la
+                vente</a></li>
           </ul>
         </li>
         <li *ngIf="accreditation_level >= accreditation_levels.Contributeur" ngbDropdown class="nav-item dropdown">
@@ -177,7 +193,8 @@
           </div>
           <ul ngbDropdownMenu class="dropdown-menu">
             <li><a class="dropdown-item" routerLink="./members/database" data-bs-dismiss="offcanvas">répertoire</a></li>
-            <li><a class="dropdown-item" routerLink="./members/cartes-admission" data-bs-dismiss="offcanvas">cartes admission</a></li>
+            <li><a class="dropdown-item" routerLink="./members/cartes-admission" data-bs-dismiss="offcanvas">cartes
+                admission</a></li>
             <li><a class="dropdown-item" routerLink="./members/payments" data-bs-dismiss="offcanvas">paiements</a></li>
           </ul>
         </li>
@@ -189,11 +206,16 @@
             <a class="nav-link dropdown-toggle p-0" ngbDropdownToggle href="#" style="width:2em;"></a>
           </div>
           <ul ngbDropdownMenu class="dropdown-menu">
-            <li><a class="dropdown-item" routerLink="./finance/état-de-caisse" data-bs-dismiss="offcanvas">état de caisse</a></li>
-            <li><a class="dropdown-item" routerLink="./finance/toutes-ecritures" data-bs-dismiss="offcanvas">écritures courantes</a></li>
-            <li><a class="dropdown-item" routerLink="./finance/books/base-comptable" data-bs-dismiss="offcanvas">synthèse</a></li>
-            <li><a class="dropdown-item" routerLink="./finance/bank-reconciliation" data-bs-dismiss="offcanvas">rapprochement bancaire</a></li>
-            <li><a class="dropdown-item" routerLink="./finance/expense-and-revenue" data-bs-dismiss="offcanvas">résultats</a></li>
+            <li><a class="dropdown-item" routerLink="./finance/état-de-caisse" data-bs-dismiss="offcanvas">état de
+                caisse</a></li>
+            <li><a class="dropdown-item" routerLink="./finance/toutes-ecritures" data-bs-dismiss="offcanvas">écritures
+                courantes</a></li>
+            <li><a class="dropdown-item" routerLink="./finance/books/base-comptable"
+                data-bs-dismiss="offcanvas">synthèse</a></li>
+            <li><a class="dropdown-item" routerLink="./finance/bank-reconciliation"
+                data-bs-dismiss="offcanvas">rapprochement bancaire</a></li>
+            <li><a class="dropdown-item" routerLink="./finance/expense-and-revenue"
+                data-bs-dismiss="offcanvas">résultats</a></li>
             <li><a class="dropdown-item" routerLink="./finance/balance" data-bs-dismiss="offcanvas">bilan</a></li>
           </ul>
         </li>
@@ -205,12 +227,18 @@
             <a class="nav-link dropdown-toggle p-0" ngbDropdownToggle href="#" style="width:2em;"></a>
           </div>
           <ul ngbDropdownMenu class="dropdown-menu">
-            <li><a class="dropdown-item" routerLink="./finance/books/list" data-bs-dismiss="offcanvas">base de données</a></li>
-            <li><a class="dropdown-item" routerLink="./finance/books/editor" data-bs-dismiss="offcanvas">écriture</a></li>
-            <li><a class="dropdown-item" routerLink="./outils/groups" data-bs-dismiss="offcanvas">droits d'accès</a></li>
-            <li><a class="dropdown-item" routerLink="./outils/sysconf" data-bs-dismiss="offcanvas">configuration</a></li>
-            <li *ngIf="!production_mode"><a class="dropdown-item" routerLink="./outils/excel_import" data-bs-dismiss="offcanvas">import excel</a></li>
-            <li *ngIf="!production_mode"><a class="dropdown-item" routerLink="./outils/cloneDB" data-bs-dismiss="offcanvas">clone DB</a></li>
+            <li><a class="dropdown-item" routerLink="./finance/books/list" data-bs-dismiss="offcanvas">base de
+                données</a></li>
+            <li><a class="dropdown-item" routerLink="./finance/books/editor" data-bs-dismiss="offcanvas">écriture</a>
+            </li>
+            <li><a class="dropdown-item" routerLink="./outils/groups" data-bs-dismiss="offcanvas">droits d'accès</a>
+            </li>
+            <li><a class="dropdown-item" routerLink="./outils/sysconf" data-bs-dismiss="offcanvas">configuration</a>
+            </li>
+            <li *ngIf="!production_mode"><a class="dropdown-item" routerLink="./outils/excel_import"
+                data-bs-dismiss="offcanvas">import excel</a></li>
+            <li *ngIf="!production_mode"><a class="dropdown-item" routerLink="./outils/cloneDB"
+                data-bs-dismiss="offcanvas">clone DB</a></li>
           </ul>
         </li>
         <li *ngIf="accreditation_level >= accreditation_levels.Administrateur" ngbDropdown class="nav-item dropdown">
