@@ -1,7 +1,7 @@
 
 import { Injectable } from '@angular/core';
 import { generateClient } from 'aws-amplify/api';
-import { catchError, from, lastValueFrom, map, Observable, of, switchMap, tap } from 'rxjs';
+import { catchError, from, lastValueFrom, map, Observable, of, switchMap, tap, filter } from 'rxjs';
 import { getCurrentUser } from 'aws-amplify/auth';
 import { Member, Member_input } from '../interfaces/member.interface';
 import { BookEntry } from '../interfaces/accounting.interface';
@@ -448,15 +448,17 @@ create_custom_key(season : string, trn_id:number) : string{
     );
   }
   // QUERY (all) OBSERVABLE
-  queryPlayBooks(): Observable<PlayBook[]> {
+  // onlySynced=true: skip the initial partial page and emit when fully synced; keeps live updates
+  // onlySynced=false: emit immediately with partial results and continue with updates
+  queryPlayBooks(onlySynced: boolean = true): Observable<PlayBook[]> {
     return this._authMode().pipe(
       switchMap((authMode) => {
         const client = generateClient<Schema>({ authMode: authMode });
-        return  client.models.PlayBook.observeQuery().pipe(
-          map(({ items }) => {
-            return items as PlayBook[];
-          })
-        );
+        const stream = client.models.PlayBook.observeQuery();
+        return (onlySynced
+          ? stream.pipe(filter((payload: any) => payload?.isSynced === true))
+          : stream
+        ).pipe(map(({ items }: any) => items as PlayBook[]));
       })
     );
   }

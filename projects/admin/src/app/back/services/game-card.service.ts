@@ -206,7 +206,7 @@ export class GameCardService {
   }
 
   // use of query Observable  !!! //
-  listCards(): Observable<GameCard[]> {
+  private listCards(): Observable<GameCard[]> {
     return this.membersService.listMembers().pipe(
       switchMap((members) => {
         this.members = members;
@@ -219,11 +219,10 @@ export class GameCardService {
                 .filter((owner): owner is Member => owner !== undefined);
 
               if (owners.length === 0) {
-                this.toastService.showWarning('Gestion des cartes', `Aucun propriétaire trouvé pour la carte ID ${card.id}`);
-                console.warn(`No owners found for card  ${card.licenses}. `)
+                this.toastService.showWarning('Gestion des cartes', `Carte sans adhérent répertorié ${card.licenses}.`);
                 let unknownMember = {} as Member;
-                unknownMember.lastname = '@ '+card.licenses.join(',');
-                unknownMember.firstname = 'plus adhérent :o(';
+                unknownMember.lastname = '@_ORPHELINE';
+                unknownMember.firstname = card.licenses.join(',');
                 owners.push(unknownMember);
               }
               return {
