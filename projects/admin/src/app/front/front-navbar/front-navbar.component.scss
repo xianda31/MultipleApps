@@ -12,6 +12,43 @@
   background-image: url("data:image/svg+xml;charset=utf8,<svg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'><path stroke='%23eb9a87' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/></svg>");
 }
 @media (max-width: 767.98px) {
+  /* Ensure close button is aligned to the far right inside mobile offcanvas */
+  .offcanvas .offcanvas-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between !important;
+    width: 100%;
+    padding-right: 0.75rem;
+  }
+  .offcanvas .offcanvas-title {
+    flex: 0 1 auto;
+  }
+  .offcanvas .btn-close {
+    margin-left: auto !important;
+  }
+  /* Mobile offcanvas aesthetics */
+  .offcanvas.offcanvas-start {
+    width: 74vw;
+    max-width: 360px;
+    /* Sepia-tinted glass effect */
+    background: linear-gradient(
+      180deg,
+      rgba(235, 154, 135, 0.16) 0%,
+      rgba(235, 154, 135, 0.10) 100%
+    );
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border-radius: 0.75rem;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    border: 1px solid rgba(235, 154, 135, 0.20);
+    top: 0.75rem !important;
+    bottom: auto !important;
+    height: 50vh !important;
+    overflow-x: hidden;
+    overflow-y: auto;
+    transition: transform .25s ease, background-color .25s ease;
+  }
+  .offcanvas-backdrop.show { opacity: 0.3; }
   .navbar-nav.menu-sm-tight {
     flex-direction: column !important;
     gap: 0.25rem !important;
