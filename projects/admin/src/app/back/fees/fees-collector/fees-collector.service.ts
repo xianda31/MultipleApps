@@ -173,38 +173,38 @@ export class FeesCollectorService {
     let game = await this.DBhandler.readGame(season, tournament.id);
     if (!game) {
       this.set_game(tournament);
-      this.tournament.status = 'new';
+      this.tournament.status = 'initial';
       // return 'new';
     } else {
       const already_charged = this.BookService.search_tournament_fees_entry(tournament.tournament_name) !== undefined;
       if (already_charged) {
-        this.tournament.status = 'charged';
+        this.tournament.status = 'terminé';
         this.game = game; // restore previous game state
         this.generate_member_images();
         this._game$.next(this.game);
         // return 'charged';
       } else {
-        this.tournament.status = 'progress';
+        this.tournament.status = 'entamé';
         this.set_game(tournament);
         // return 'progress';
       }
     }
   }
-  async check_tournament_status(tournament: club_tournament): Promise<'new' | 'progress' | 'charged'> {
+  async check_tournament_status(tournament: club_tournament): Promise<'initial' | 'entamé' | 'terminé'> {
     const season = this.systemDataService.get_season(new Date());
     try {
       let game = await this.DBhandler.readGame(season, tournament.id);
       if (!game) {
-        return 'new';
+        return 'initial';
       }
       const already_charged = this.BookService.search_tournament_fees_entry(tournament.tournament_name) !== undefined;
       if (already_charged) {
-        return 'charged';
+        return 'terminé';
       }
-      return 'progress';
+      return 'entamé';
     } catch (error) {
       console.error('Error checking tournament status:', error);
-      return 'progress';
+      return 'entamé';
     }
   }
 

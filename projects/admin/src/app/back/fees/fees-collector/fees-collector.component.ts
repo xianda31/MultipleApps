@@ -1,9 +1,7 @@
 import { Component } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { TournamentService } from '../../../common/services/tournament.service';
-import { club_tournament } from '../../../common/ffb/interface/club_tournament.interface';
 import { FeesCollectorService } from './fees-collector.service';
 import { BehaviorSubject, from, Observable, of, switchMap } from 'rxjs';
 import { club_tournament_extended, FEE_RATE, Game, Gamer } from '../fees.interface';
@@ -80,7 +78,7 @@ export class FeesCollectorComponent {
   set_tournament(tournament: club_tournament_extended ) {
     this.selected_tournament = tournament;
     this.feesCollectorService.set_tournament(tournament);
-    if(tournament.status === 'progress') {
+    if(tournament.status === 'entamé') {
       this.toastService.showInfo('Gestion tournoi', 'Ce tournoi a partiellement été pointé; vous pouvez en restaurer le dernier état.');
     }
   }
@@ -109,13 +107,18 @@ export class FeesCollectorComponent {
   }
 
   check_status() {
-    if (this.selected_tournament && this.selected_tournament.status !== 'charged' && this.all_gamers_validated()) {
+    if (this.selected_tournament && this.selected_tournament.status !== 'terminé' && this.all_gamers_validated()) {
       const modalRef = this.modalService.open(GetConfirmationComponent, { centered: true });
       modalRef.componentInstance.title = `Vous avez pointé tous les joueurs `;
       modalRef.componentInstance.subtitle = `Vous allez maintenant valider tampons et droits de table`;
       modalRef.result.then((answer: boolean) => {
         if (answer) {
           this.validate_fees();
+          this.next_tournaments.map(t => {
+            if (t.id === this.selected_tournament?.id) {
+              t.status = 'terminé';
+            }
+          });
         }
       });
     }
@@ -179,19 +182,13 @@ export class FeesCollectorComponent {
   }
 
   async log_game_state() {
-    if (this.selected_tournament && this.selected_tournament.status === 'charged') return;
+    if (this.selected_tournament && this.selected_tournament.status === 'terminé') return;
     return this.feesCollectorService.log_game_state();
   }
 
   async restore_trace() {
     const restored = await this.feesCollectorService.restore_game_state();
   }
-
-  // async get_tournament_status(trn: club_tournament): Promise<'new' | 'progress' | 'charged'> {
-
-  //   // console.log('Checking tournament status for:', trn);
-  //   return this.feesCollectorService.check_tournament_status(trn);
-  // }
 
   // PDF generation 
 
