@@ -2,26 +2,57 @@
     <div class="card-header">
         <!-- bandeau tournoi date, mode roy rené , alread_charges ? , add_team -->
 
-        <div *ngIf="!selected_tournament || selected_tournament === undefined"
-            class="row justify-content-start align-items-center">
-            <h5 class="col-auto ms-1 d-none d-sm-inline">Droits de table</h5>
-            <span class="col-auto text-muted ms-2 d-none d-sm-inline">sélectionner un tournoi</span>
-            <!-- select tournoi -->
-            <div class="col-12 col-md-2">
-                <div class=" input-group input-group-sm align-items-center">
-                    <select class="form-select form-select-sm" [(ngModel)]="selected_tournament"
-                        (change)="tournament_selected(selected_tournament)" id="tournament_select">
-                        <option *ngFor="let trn of next_tournaments$ | async" [ngValue]="trn">
-                            {{ trn.date | date:'dd/MM/yyyy' }} &nbsp; {{ trn.time }}</option>
-                    </select>
-                    <span class="ms-2">
-                        <button class="btn btn-sm btn-primary" (click)="one_week_back()">
-                            <i class="bi bi-skip-backward"></i>
-                        </button>
-                    </span>
+        <div *ngIf="!selected_tournament || selected_tournament === undefined" class="row gy-2">
+            <div class="col-12 d-flex align-items-center">
+                <h5 class="mb-0 d-none d-sm-inline">Droits de table</h5>
+                <span class="text-muted ms-2 d-none d-sm-inline">sélectionner un tournoi</span>
+                <button class="btn btn-sm btn-primary ms-auto" (click)="one_week_back()" title="reculer d'une semaine">
+                    <i class="bi bi-skip-backward"></i>
+                </button>
+            </div>
+            <div class="col-12">
+                <div class="row row-cols-1 row-cols-md-4 g-2 justify-content-start">
+                    <div class="col" *ngFor="let trn of next_tournaments">
+                        <div class="card h-100 nice_shadow" role="button" style="cursor: pointer;"
+                            (click)="set_tournament(trn)">
+                            <h6 class="card-header text-center">
+                                {{ trn.date | date:'EEEE d MMMM':'':'fr-FR' }}
+                                <div class="small text-muted">{{ trn.time }}</div>
+                                <div class="text-center">{{ trn.tournament_name }}</div>
+                            </h6>
+                            <div class="card-body py-2">
+                                <div class="card-text text-center">
+                                    <div *ngIf="trn.nbr_inscrit > 0; else noInscrits">
+                                        <small>
+                                            paires inscrites :
+                                            {{ ((trn.nbr_inscrit - (trn.has_isolated_player ? 1 : 0)) / 2) |
+                                            number:'1.0-0' }}
+                                        </small>
+                                    </div>
+                                    <ng-template #noInscrits>
+                                        <small>aucune inscription</small>
+                                    </ng-template>
+
+                                    <div *ngIf="trn.has_isolated_player" class="mt-1">
+                                        <small>
+                                            + 1 <i class="bi bi-person-arms-up"></i>
+                                            <span class="text-info-emphasis">cherche un partenaire</span>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-footer text-center py-2">
+                                <span class="text-muted me-1">statut:</span>
+                                <span class="badge" [ngClass]="{
+                                            'bg-secondary': trn.status === 'new',
+                                            'bg-warning text-dark': trn.status === 'progress',
+                                            'bg-success': trn.status === 'charged'
+                                          }">{{ trn.status }}</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-
         </div>
 
         <div *ngIf="game " class="row  justify-content-between align-items-center">
@@ -111,7 +142,7 @@
                     <i class="bi bi-printer"> imprimer</i>
                 </button>
             </div>
-            <div *ngIf="tournament_status === 'progress'" class="col">
+            <div *ngIf="selected_tournament!.status === 'progress'" class="col">
                 <span class="text-muted">récupérer le dernier état </span>
                 <button (click)="restore_trace()" type="button" class="btn btn-sm btn-outline-secondary">
                     <i class="bi bi-life-preserver"> restauration</i>
@@ -121,8 +152,8 @@
             <div class="col-auto">
                 <!-- <div class="row"> -->
                 <div class="col-auto">
-                    <span class="text-muted">fermer sans enregistrer : </span>
-                    <button type="button" class="ms-1 btn btn-sm btn-outline-warning" (click)="clear_session()">
+                    <!-- <span class="text-muted">fermer sans enregistrer : </span> -->
+                    <button type="button" class="ms-1 btn btn-sm btn-outline-primary" (click)="clear_session()">
                         <i class="bi bi-x-circle-fill"> fermer</i>
                     </button>
 
@@ -204,7 +235,7 @@
     <ng-template #save_dialog>
         <div class="mx-auto col-auto">
             <!-- warning -->
-            <div *ngIf="tournament_status === 'charged'" class="row text-danger align-items-center">
+            <div *ngIf="selected_tournament!.status === 'charged'" class="row text-danger align-items-center">
                 <i class="bi bi-info-circle-fill">
                     les droits pour ce tournoi ont été enregistrés !
                 </i>

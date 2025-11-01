@@ -1,5 +1,6 @@
 import { Observable } from "rxjs";
 import { Schema } from "../../../../../../amplify/data/resource";
+import { club_tournament } from "../../common/ffb/interface/club_tournament.interface";
 
 
 interface Fees_context {
@@ -11,6 +12,11 @@ interface Fees_context {
     fees_doubled: boolean;
     alphabetic_sort: boolean;
 }
+
+export interface club_tournament_extended extends club_tournament {
+  status?: 'new' | 'progress' | 'charged';
+};
+
 export interface Game extends Fees_context {
     tournament : { id: number; name: string; date: string; time: string } | null;
 

@@ -339,11 +339,12 @@ create_custom_key(season : string, trn_id:number) : string{
     return created_game;
   }
 
-  async readGame(season : string, trn_id:number): Promise<Game | null> {
+  async  readGame(season : string, trn_id:number): Promise<Game | null> {
     let game_id = this.create_custom_key(season, trn_id);
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode: authMode });
     const { data : game_output, errors } = await client.models.Game.get({ gameId: game_id });
+    // console.log('Game.read output:', game_output);
     if (errors) throw errors;
     let read_game = game_output
       ? {
