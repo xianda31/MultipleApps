@@ -10,48 +10,49 @@
                     <i class="bi bi-skip-backward"></i>
                 </button>
             </div>
-            <div class="col-12">
+            <div *ngFor="let past of [true,false]; let i = index">
                 <div class="row row-cols-1 row-cols-md-6 g-2 justify-content-start">
-                    <div class="col" *ngFor="let trn of next_tournaments">
-                        <div class="card h-100 nice_shadow" role="button" style="cursor: pointer;"
-                            (click)="set_tournament(trn)">
-                            <h6 class="card-header text-center">
-                                {{ trn.date | date:'EEEE d MMMM':'':'fr-FR' }}
-                                <div class="small text-muted">{{ trn.time }}</div>
-                                <div class="text-center">{{ trn.tournament_name }}</div>
-                            </h6>
-                            <div class="card-body py-2">
-                                <div class="card-text text-center">
-                                    <div *ngIf="trn.nbr_inscrit > 0; else noInscrits">
-                                        <small>
-                                            paires inscrites :
-                                            {{ ((trn.nbr_inscrit - (trn.has_isolated_player ? 1 : 0)) / 2) |
-                                            number:'1.0-0' }}
-                                        </small>
-                                    </div>
-                                    <ng-template #noInscrits>
-                                        <small>aucune inscription</small>
-                                    </ng-template>
+                    <ng-container *ngFor="let trn of next_tournaments">
+                        <div class="col" *ngIf="trn.past_session === past">
+                            <div class="card h-100 nice_shadow" role="button" style="cursor: pointer;"
+                                (click)="set_tournament(trn)">
+                                <h6 class="card-header text-center position-relative">
+                                    <span class="badge position-absolute top-0 start-0 ms-1 mt-1" [ngClass]="{
+                                                'bg-secondary': trn.status === 'initial',
+                                                'bg-warning text-dark': trn.status === 'entamé',
+                                                'bg-success': trn.status === 'terminé'
+                                              }">{{ trn.status }}</span>
+                                    {{ trn.date | date:'EEEE d MMMM':'':'fr-FR' }}
+                                    <div class="small text-muted">{{ trn.time }}</div>
+                                    <div class="text-center">{{ trn.tournament_name }}</div>
+                                </h6>
+                                <div class="card-body py-2">
+                                    <div class="card-text text-center">
+                                        <div *ngIf="trn.nbr_inscrit > 0; else noInscrits">
+                                            <small>
+                                                paires inscrites :
+                                                {{ ((trn.nbr_inscrit - (trn.has_isolated_player ? 1 : 0)) / 2) |
+                                                number:'1.0-0' }}
+                                            </small>
+                                        </div>
+                                        <ng-template #noInscrits>
+                                            <small>aucune inscription</small>
+                                        </ng-template>
 
-                                    <div *ngIf="trn.has_isolated_player" class="mt-1">
-                                        <small>
-                                            + 1 <i class="bi bi-person-arms-up"></i>
-                                            <span class="text-info-emphasis">cherche un partenaire</span>
-                                        </small>
+                                        <div *ngIf="trn.has_isolated_player" class="mt-1">
+                                            <small>
+                                                + 1 <i class="bi bi-person-arms-up"></i>
+                                                <span class="text-info-emphasis">cherche un partenaire</span>
+                                            </small>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="card-footer text-start py-2">
-                                <span class="text-muted me-1">état:</span>
-                                <span class="badge" [ngClass]="{
-                                            'bg-secondary': trn.status === 'initial',
-                                            'bg-warning text-dark': trn.status === 'entamé',
-                                            'bg-success': trn.status === 'terminé'
-                                          }">{{ trn.status }}</span>
+
                             </div>
                         </div>
-                    </div>
+                    </ng-container>
                 </div>
+                <ng-container *ngIf="i === 0"><br /></ng-container>
             </div>
         </div>
 
@@ -65,7 +66,7 @@
             </div>
 
             <div class="col-12 col-md-3 border border-secondary rounded p-1 text-center">
-                <div *ngFor="let fee_rate of fee_rates" class="form-check form-check-inline">
+                <div *ngFor="let fee_rate of fee_rates" class="form-check form-check-inline me-2">
                     <input class="form-check-input" type="radio" name="inlineRadioOptions"
                         [id]="'inlineRadio' + fee_rate" [value]="fee_rate" [(ngModel)]="game.fee_rate"
                         (change)="fee_rate_changed(fee_rate)">
@@ -164,11 +165,17 @@
         </div>
     </div>
 
-
-
-
     <ng-template #fee_editor ; let-gamer="gamer" ; let-doubled="doubled">
         <div [class]="gamer_class(gamer)" style="position: relative;">
+            <!-- Bottom-left badges: NP (non payant) and member credits -->
+            <div class="position-absolute bottom-0 start-0 m-1 d-flex gap-1" style="z-index: 2;">
+                <span *ngIf="!gamer.enabled" class="badge bg-secondary">{{ (game.fee_rate === 'accession') ? 'ACC' :
+                    'NP' }}</span>
+                <span *ngIf="gamer.is_member" class="badge" [ngClass]="{ 'bg-info': gamer.game_credits > 2,
+          'bg-warning text-dark': gamer.game_credits <= 2 }">
+                    {{ gamer.game_credits }}
+                </span>
+            </div>
             <div class="card-body py-0 position-relative" style="z-index: 1;">
                 <!-- Avatar wrapper for centering -->
                 <div *ngIf="(gamer.photo_url$ | async) as photoUrl">
@@ -176,26 +183,11 @@
                         <div class="position-absolute top-50 start-50 translate-middle d-flex justify-content-center align-items-center w-100 h-100"
                             style="z-index: 0; pointer-events: none;">
                             <img [src]="photoUrl" alt="{{ gamer.lastname }}" class="img-fluid rounded-circle"
-                                style="max-height: 60px; max-width: 60px; object-fit: cover;"
+                                style="max-height: 90px; max-width: 90px; object-fit: cover; border: 2px solid #fff; box-shadow: 0 4px 14px rgba(0,0,0,0.25);"
                                 (error)="gamer.photo_url = null">
                         </div>
                     </ng-container>
                 </div>
-                <div class="row" style="position: relative; z-index: 1;">
-                    <div class="col form-check form-switch">
-                        <input class="form-check-input" type="checkbox" [checked]="gamer.enabled" role="switch"
-                            (change)="gamer.enabled = !gamer.enabled ; log_game_state();check_status()">
-                        <label class="form-check-label">payant</label>
-                    </div>
-                    <!-- validation présence -->
-                    <div class="col form-check form-switch form-check-reverse">
-                        <label class="form-check-label">validation :</label>
-                        <input class="form-check-input" type="checkbox" role="switch"
-                            [disabled]="!gamer.enabled || !gamer_solvent(gamer)" [(ngModel)]="gamer.validated"
-                            [id]="'valid' + gamer.index" (change)="log_game_state();check_status()">
-                    </div>
-                </div>
-
 
                 <div class="row">
                     <!-- nom et prénom du joueur -->
@@ -204,13 +196,25 @@
                         <span class="text-muted">{{gamer.firstname}} </span>
                     </div>
 
-                    <!-- mode de réglement -->
-                    <div class="col-4 align-content-center">
-                        <!-- si adhérent club , affichage choix carte -->
-                        <div *ngIf="gamer.is_member && gamer.enabled" class="form-check form-check-reverse">
-                            <input [disabled]="gamer.validated || gamer.disabled " class="form-check-input" type="radio"
-                                [name]="'card_or_euro' + gamer.index" [id]="'pass-radio'+ gamer.index" [value]="false"
-                                [(ngModel)]="gamer.in_euro" />
+                    <!-- mode de réglement (intègre "non payant") -->
+                    <div class="col-6 align-content-center d-grid gap-2">
+                        <!-- Non payant option -->
+                        <div class="form-check form-check-reverse mb-1">
+                            <input class="form-check-input" type="radio" [name]="'card_or_euro' + gamer.index"
+                                [id]="'none_radio'+ gamer.index" [value]="'none'"
+                                [checked]="gamer.validated && !gamer.enabled" [disabled]="gamer.disabled"
+                                (change)="gamer.enabled=false; gamer.in_euro=false; gamer.validated=true; log_game_state(); check_status()" />
+                            <label class="form-check-label" [for]="'none_radio'+ gamer.index">{{ (game.fee_rate ===
+                                'accession') ? 'forfait' : 'non payant' }}</label>
+                        </div>
+
+                        <!-- Carte (membres uniquement) -->
+                        <div *ngIf="gamer.is_member" class="form-check form-check-reverse mb-1">
+                            <input class="form-check-input" type="radio" [name]="'card_or_euro' + gamer.index"
+                                [id]="'pass-radio'+ gamer.index" [value]="'card'"
+                                [checked]="gamer.validated && gamer.enabled && !gamer.in_euro"
+                                [disabled]="gamer.disabled"
+                                (change)="gamer.enabled=true; gamer.in_euro=false; gamer.validated=true; log_game_state(); check_status()" />
                             <label class="form-check-label"
                                 [ngStyle]="{'color': (gamer.game_credits<=2) ? 'red' : 'black'}"
                                 [for]="'pass-radio'+ gamer.index">
@@ -219,11 +223,14 @@
                                 <i *ngIf="doubled" class="bi-pass"></i>
                             </label>
                         </div>
-                        <!-- affichage choix en cash -->
-                        <div *ngIf=" gamer.enabled" class="form-check form-check-reverse">
-                            <input [disabled]="gamer.validated || gamer.disabled " class="form-check-input" type="radio"
-                                [name]="'card_or_euro' + gamer.index" [id]="'euro_radio'+ gamer.index" [value]="true"
-                                [(ngModel)]="gamer.in_euro" />
+
+                        <!-- Euro -->
+                        <div class="form-check form-check-reverse mb-1">
+                            <input class="form-check-input" type="radio" [name]="'card_or_euro' + gamer.index"
+                                [id]="'euro_radio'+ gamer.index" [value]="'euro'"
+                                [checked]="gamer.validated && gamer.enabled && gamer.in_euro"
+                                [disabled]="gamer.disabled"
+                                (change)="gamer.enabled=true; gamer.in_euro=true; gamer.validated=true; log_game_state(); check_status()" />
                             <label class="form-check-label" [for]="'euro_radio'+ gamer.index"> {{gamer.price}}€ </label>
                         </div>
                     </div>

@@ -22,11 +22,11 @@ import { ToastService } from '../../../common/services/toast.service';
   styleUrl: './fees-collector.component.scss'
 })
 export class FeesCollectorComponent {
+  FEE_RATE = FEE_RATE;
   next_tournaments: club_tournament_extended[] = [];
   selected_tournament: club_tournament_extended | null = null;
   fee_rates = Object.values(FEE_RATE);
   selected_fee_rate: FEE_RATE = FEE_RATE.STANDARD;
-  // Replace signal with classic state + BehaviorSubject trigger
   days_back: number = 0;
   private daysBack$ = new BehaviorSubject<number>(0);
   game!: Game;
@@ -44,11 +44,12 @@ export class FeesCollectorComponent {
     private toastService: ToastService,
 
   ) {
-
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     this.daysBack$.pipe(
       switchMap(v => this.tournamentService.list_next_tournaments(v))
     ).subscribe(async (tournaments) => {
-      const withStatus: club_tournament_extended[] = tournaments.map(t => ({ ...t }));
+      const withStatus: club_tournament_extended[] = tournaments.map(t => ({ ...t , past_session: (t.date < today.toISOString().split('T')[0])}));
       const statuses = await Promise.all(withStatus.map(t => this.feesCollectorService.check_tournament_status(t)));
       withStatus.forEach((t, i) => (t.status = statuses[i]));
       this.next_tournaments = withStatus;
@@ -155,7 +156,7 @@ export class FeesCollectorComponent {
   }
 
   all_gamers_validated(): boolean {
-    return !!this.game.tournament && !!this.game && this.game.gamers.every(gamer => (gamer.validated || !gamer.enabled));
+    return !!this.game?.tournament && !!this.game && this.game.gamers.every(gamer => gamer.validated);
   }
 
   gamer_solvent(gamer: Gamer): boolean {
@@ -165,7 +166,7 @@ export class FeesCollectorComponent {
   gamer_class(gamer: Gamer): string {
     let card_class = 'card h-100';
     if (!gamer.enabled) {
-      card_class += 'bg-success shadow-lg text-bg-success NP';
+      card_class += ' bg-success shadow-lg text-bg-success';
       return card_class;
     }
 
@@ -226,9 +227,9 @@ export class FeesCollectorComponent {
     let payment = (gamer: Gamer) => {
       if (!gamer.validated) return 'dispense';
       if (gamer.enabled) {
-        return gamer.in_euro ? (gamer.price.toFixed(2) + ' €') : ((this.game.fees_doubled ? 2 : 1) + 'tampon(s)');
+        return gamer.in_euro ? (gamer.price.toFixed(2) + ' €') : ((this.game.fees_doubled ? 2 : 1) + ' tampon(s)');
       } else {
-        return 'Carte';
+        return 'non payant';
       }
     }
 
