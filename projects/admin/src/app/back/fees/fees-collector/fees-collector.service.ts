@@ -190,6 +190,8 @@ export class FeesCollectorService {
       }
     }
   }
+
+
   async check_tournament_status(tournament: club_tournament): Promise<'initial' | 'entamé' | 'terminé'> {
     const season = this.systemDataService.get_season(new Date());
     let game : Game | null = null;
@@ -209,6 +211,12 @@ export class FeesCollectorService {
     }
   }
 
+  async reset_tournament_state(tournament: club_tournament_extended) {
+    if (tournament.status !== 'entamé') return;
+    const season = this.systemDataService.get_season(new Date());
+    await this.DBhandler.deleteGame(season, tournament.id);
+    this.set_game(tournament);
+  }
 
   async restore_game_state(): Promise<boolean> {
     if (!this.tournament) {

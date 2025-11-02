@@ -87,7 +87,20 @@ export class FeesCollectorComponent {
     this.selected_tournament = tournament;
     this.feesCollectorService.set_tournament(tournament);
     if (tournament.status === 'entamé') {
-      this.toastService.showInfo('Gestion tournoi', 'Ce tournoi a partiellement été pointé et restauré dans son dernier état.');
+      this.toastService.showInfo('Gestion tournoi', 'Une restauration d\'un pointage partiel a été effectuée.');
+      const modalRef = this.modalService.open(GetConfirmationComponent, { centered: true });
+          modalRef.componentInstance.title = 'Ancien pointage récupéré';
+          modalRef.componentInstance.subtitle = `Vous pouvez aussi choisir de re-partir d'une feuille "blanche" (cliquer sur Non)`;
+          modalRef.result.then( async (answer: boolean) => {
+            if (!answer) {
+              await this.feesCollectorService.reset_tournament_state(tournament);
+              this.next_tournaments.map(t => {
+                if (t.id === this.selected_tournament?.id) {
+                  t.status = 'initial';
+                }   
+              });
+            }
+          });
     }
   }
 
@@ -129,11 +142,18 @@ export class FeesCollectorComponent {
           });
         }
       });
+    }else{
+      this.next_tournaments.map(t => {
+       if (t.id === this.selected_tournament?.id) {
+         t.status = 'terminé';
+       }
+     });
     }
 
   }
 
   clear_session() {
+
     this.game = null!;
     this.selected_tournament = null!;
     this.feesCollectorService.clear_tournament();
@@ -194,9 +214,9 @@ export class FeesCollectorComponent {
     return this.feesCollectorService.log_game_state();
   }
 
-  async restore_trace() {
-    const restored = await this.feesCollectorService.restore_game_state();
-  }
+  // async restore_trace() {
+  //   const restored = await this.feesCollectorService.restore_game_state();
+  // }
 
   // PDF generation 
 

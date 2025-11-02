@@ -17,11 +17,10 @@
                             <div class="card h-100 nice_shadow" [ngClass]="{'card-passedOrupcoming': trn.chrono !== 'today'}" role="button" style="cursor: pointer;"
                                 (click)="set_tournament(trn)">
                                 <h6 class="card-header text-center position-relative">
-                                    <span class="badge position-absolute top-0 start-0 ms-1 mt-1" [ngClass]="{
-                                                'bg-secondary': trn.status === 'initial',
-                                                'bg-warning text-dark': trn.status === 'entamé',
-                                                'bg-success': trn.status === 'terminé'
-                                              }">{{ trn.status }}</span>
+                                                                        <span *ngIf="trn.status !== 'initial'" class="badge position-absolute top-0 start-0 ms-1 mt-1" [ngClass]="{
+                                                                                                'text-bg-warning': trn.status === 'entamé',
+                                                                                                'text-bg-success': trn.status === 'terminé'
+                                                                                            }">{{ trn.status }}</span>
                                     {{ trn.date | date:'EEEE d MMMM':'':'fr-FR' }}
                                     <div class="small text-muted">{{ trn.time }}</div>
                                     <div class="text-center">{{ trn.tournament_name }}</div>
@@ -143,12 +142,6 @@
                     <i class="bi bi-printer"> imprimer</i>
                 </button>
             </div>
-            <!-- <div *ngIf="selected_tournament!.status === 'entamé'" class="col">
-                <span class="text-muted">récupérer le dernier état </span>
-                <button (click)="restore_trace()" type="button" class="btn btn-sm btn-outline-secondary">
-                    <i class="bi bi-life-preserver"> restauration</i>
-                </button>
-            </div> -->
 
             <div class="col-auto">
                 <!-- <div class="row"> -->
@@ -176,14 +169,14 @@
                     {{ gamer.game_credits }}
                 </span>
             </div>
-            <div class="card-body py-0 position-relative" style="z-index: 1;">
+            <div class="card-body py-0 position-relative" style="z-index: 1; overflow: hidden;">
                 <!-- Avatar wrapper for centering -->
                 <div *ngIf="(gamer.photo_url$ | async) as photoUrl">
                     <ng-container *ngIf="photoUrl">
                         <div class="position-absolute top-50 start-50 translate-middle d-flex justify-content-center align-items-center w-100 h-100"
                             style="z-index: 0; pointer-events: none;">
                             <img [src]="photoUrl" alt="{{ gamer.lastname }}" class="img-fluid rounded-circle"
-                                style="max-height: 90px; max-width: 90px; object-fit: cover; border: 2px solid #fff; box-shadow: 0 4px 14px rgba(0,0,0,0.25);"
+                                style="max-height: 120px; max-width: 120px; object-fit: cover; border: 2px solid #fff; box-shadow: 0 4px 14px rgba(0,0,0,0.25);"
                                 (error)="gamer.photo_url = null">
                         </div>
                     </ng-container>

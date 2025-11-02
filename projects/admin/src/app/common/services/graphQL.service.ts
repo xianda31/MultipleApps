@@ -388,6 +388,15 @@ create_custom_key(season : string, trn_id:number) : string{
     return updated_game;
   }
 
+  async deleteGame(season : string, trn_id:number): Promise<boolean> {
+    let  game_id = this.create_custom_key(season, trn_id);
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode: authMode });
+    const { errors } = await client.models.Game.delete({ gameId: game_id });
+    if (errors) throw errors;
+    return true;
+  }
+
   // PLAYBOOK SERVICE
 
   // CREATE PROMISE   ! validated
