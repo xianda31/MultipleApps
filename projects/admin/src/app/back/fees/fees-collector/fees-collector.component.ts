@@ -4,7 +4,7 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { TournamentService } from '../../../common/services/tournament.service';
 import { FeesCollectorService } from './fees-collector.service';
 import { BehaviorSubject, from, Observable, of, switchMap } from 'rxjs';
-import { club_tournament_extended, FEE_RATE, Game, Gamer } from '../fees.interface';
+import { club_tournament_extended, FEE_RATE, Game, Game_status, Gamer } from '../fees.interface';
 import { PdfService } from '../../../common/services/pdf.service';
 import { HorizontalAlignment, PDF_table } from '../../../common/interfaces/pdf-table.interface';
 import { FFBplayer } from '../../../common/ffb/interface/FFBplayer.interface';
@@ -22,6 +22,7 @@ import { ToastService } from '../../../common/services/toast.service';
   styleUrl: './fees-collector.component.scss'
 })
 export class FeesCollectorComponent {
+  GAME_STATUS = Game_status;
   FEE_RATE = FEE_RATE;
   next_tournaments: club_tournament_extended[] = [];
   selected_tournament: club_tournament_extended | null = null;
@@ -86,7 +87,7 @@ export class FeesCollectorComponent {
   set_tournament(tournament: club_tournament_extended) {
     this.selected_tournament = tournament;
     this.feesCollectorService.set_tournament(tournament);
-    if (tournament.status === 'entamé') {
+    if (tournament.status === 'récupéré') {
       this.toastService.showInfo('Gestion tournoi', 'Une restauration d\'un pointage partiel a été effectuée.');
       const modalRef = this.modalService.open(GetConfirmationComponent, { centered: true });
           modalRef.componentInstance.title = 'Ancien pointage récupéré';
@@ -96,7 +97,7 @@ export class FeesCollectorComponent {
               await this.feesCollectorService.reset_tournament_state(tournament);
               this.next_tournaments.map(t => {
                 if (t.id === this.selected_tournament?.id) {
-                  t.status = 'initial';
+                  t.status = Game_status.INITIAL;
                 }   
               });
             }
@@ -128,7 +129,7 @@ export class FeesCollectorComponent {
   }
 
   check_status() {
-    if (this.selected_tournament && this.selected_tournament.status !== 'terminé' && this.all_gamers_validated()) {
+    if (this.selected_tournament && this.selected_tournament.status !== Game_status.COMPLETED && this.all_gamers_validated()) {
       const modalRef = this.modalService.open(GetConfirmationComponent, { centered: true });
       modalRef.componentInstance.title = `Vous avez pointé tous les joueurs `;
       modalRef.componentInstance.subtitle = `Vous allez maintenant valider tampons et droits de table`;
@@ -137,7 +138,7 @@ export class FeesCollectorComponent {
           this.validate_fees();
           this.next_tournaments.map(t => {
             if (t.id === this.selected_tournament?.id) {
-              t.status = 'terminé';
+              t.status = Game_status.COMPLETED;
             }
           });
         }
@@ -145,7 +146,7 @@ export class FeesCollectorComponent {
     }else{
       this.next_tournaments.map(t => {
        if (t.id === this.selected_tournament?.id) {
-         t.status = 'terminé';
+         t.status = Game_status.COMPLETED;
        }
      });
     }

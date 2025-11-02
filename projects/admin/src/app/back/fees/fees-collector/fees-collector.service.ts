@@ -4,7 +4,7 @@ import { Person, Player, Team, TournamentTeams } from '../../../common/ffb/inter
 import { BehaviorSubject, map, Observable, of, Subject, Subscription } from 'rxjs';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { Member } from '../../../common/interfaces/member.interface';
-import { club_tournament_extended, FEE_RATE, Game, Gamer } from '../fees.interface';
+import { club_tournament_extended, FEE_RATE, Game, Game_status, Gamer } from '../fees.interface';
 import { club_tournament } from '../../../common/ffb/interface/club_tournament.interface';
 import { BookService } from '../../services/book.service';
 import { GameCardService } from '../../services/game-card.service';
@@ -173,16 +173,16 @@ export class FeesCollectorService {
     let game = await this.DBhandler.readGame(season, tournament.id);
     if (!game) {
       this.set_game(tournament);
-      this.tournament.status = 'initial';
+      this.tournament.status = Game_status.INITIAL;
     } else {
       const already_charged = this.BookService.search_tournament_fees_entry(tournament.tournament_name) !== undefined;
       if (already_charged) {
-        this.tournament.status = 'terminé';
+        this.tournament.status = Game_status.COMPLETED;
         this.game = game; // restore previous game state
         this.generate_member_images();
         this._game$.next(this.game);
       } else {
-        this.tournament.status = 'entamé';
+        this.tournament.status = Game_status.RECOVERED;
         this.game = game; // restore previous game state
         this.generate_member_images();
         this.update_members_assets();
@@ -192,27 +192,27 @@ export class FeesCollectorService {
   }
 
 
-  async check_tournament_status(tournament: club_tournament): Promise<'initial' | 'entamé' | 'terminé'> {
+  async check_tournament_status(tournament: club_tournament): Promise<Game_status> {
     const season = this.systemDataService.get_season(new Date());
     let game : Game | null = null;
     try {
       game = await this.DBhandler.readGame(season, tournament.id);
       if (!game) {
-        return 'initial';
+        return Game_status.INITIAL;
       }
       const already_charged = this.BookService.search_tournament_fees_entry(tournament.tournament_name) !== undefined;
       if (already_charged) {
-        return 'terminé';
+        return Game_status.COMPLETED;
       }
-      return 'entamé';
+      return Game_status.RECOVERED;
     } catch (error) {
       console.error('Error checking game %o status:%d', game, error);
-      return 'entamé';
+      return Game_status.RECOVERED;
     }
   }
 
   async reset_tournament_state(tournament: club_tournament_extended) {
-    if (tournament.status !== 'entamé') return;
+    if (tournament.status !== Game_status.RECOVERED) return;
     const season = this.systemDataService.get_season(new Date());
     await this.DBhandler.deleteGame(season, tournament.id);
     this.set_game(tournament);

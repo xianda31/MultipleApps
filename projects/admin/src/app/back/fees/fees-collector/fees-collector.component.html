@@ -17,9 +17,9 @@
                             <div class="card h-100 nice_shadow" [ngClass]="{'card-passedOrupcoming': trn.chrono !== 'today'}" role="button" style="cursor: pointer;"
                                 (click)="set_tournament(trn)">
                                 <h6 class="card-header text-center position-relative">
-                                                                        <span *ngIf="trn.status !== 'initial'" class="badge position-absolute top-0 start-0 ms-1 mt-1" [ngClass]="{
-                                                                                                'text-bg-warning': trn.status === 'entamé',
-                                                                                                'text-bg-success': trn.status === 'terminé'
+                                                                        <span *ngIf="trn.status !== GAME_STATUS.INITIAL" class="badge position-absolute top-0 start-0 ms-1 mt-1" [ngClass]="{
+                                                                                                'text-bg-warning': trn.status === GAME_STATUS.RECOVERED,
+                                                                                                'text-bg-success': trn.status === GAME_STATUS.COMPLETED
                                                                                             }">{{ trn.status }}</span>
                                     {{ trn.date | date:'EEEE d MMMM':'':'fr-FR' }}
                                     <div class="small text-muted">{{ trn.time }}</div>

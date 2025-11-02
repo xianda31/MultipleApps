@@ -12,9 +12,14 @@ interface Fees_context {
     fees_doubled: boolean;
     alphabetic_sort: boolean;
 }
+export enum Game_status {
+    INITIAL = 'initial',
+    RECOVERED = 'récupéré',
+    COMPLETED = 'terminé'
+}
 
 export interface club_tournament_extended extends club_tournament {
-  status?: 'initial' | 'entamé' | 'terminé';
+  status?: Game_status;
   chrono?: 'passed' | 'today' | 'upcoming';
 };
 
