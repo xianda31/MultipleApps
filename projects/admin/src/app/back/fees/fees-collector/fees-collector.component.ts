@@ -87,13 +87,13 @@ export class FeesCollectorComponent {
   set_tournament(tournament: club_tournament_extended) {
     this.selected_tournament = tournament;
     this.feesCollectorService.set_tournament(tournament);
-    if (tournament.status === 'récupéré') {
+    if (tournament.status === this.GAME_STATUS.RECOVERED) {
       this.toastService.showInfo('Gestion tournoi', 'Une restauration d\'un pointage partiel a été effectuée.');
       const modalRef = this.modalService.open(GetConfirmationComponent, { centered: true });
-          modalRef.componentInstance.title = 'Ancien pointage récupéré';
-          modalRef.componentInstance.subtitle = `Vous pouvez aussi choisir de re-partir d'une feuille "blanche" (cliquer sur Non)`;
+          modalRef.componentInstance.title = 'Voulez-vous plutôt repartir d\'une feuille blanche ?';
+          modalRef.componentInstance.subtitle = `Non : la restauration sera utilisée. Oui : nouvelle feuille blanche.`;
           modalRef.result.then( async (answer: boolean) => {
-            if (!answer) {
+            if (answer) {
               await this.feesCollectorService.reset_tournament_state(tournament);
               this.next_tournaments.map(t => {
                 if (t.id === this.selected_tournament?.id) {
@@ -146,7 +146,7 @@ export class FeesCollectorComponent {
     }else{
       this.next_tournaments.map(t => {
        if (t.id === this.selected_tournament?.id) {
-         t.status = Game_status.COMPLETED;
+         t.status = Game_status.RECOVERED;
        }
      });
     }
@@ -211,13 +211,9 @@ export class FeesCollectorComponent {
   }
 
   async log_game_state() {
-    if (this.selected_tournament && this.selected_tournament.status === 'terminé') return;
-    return this.feesCollectorService.log_game_state();
+    if (this.selected_tournament && this.selected_tournament.status === Game_status.COMPLETED) return;
+    await this.feesCollectorService.log_game_state();
   }
-
-  // async restore_trace() {
-  //   const restored = await this.feesCollectorService.restore_game_state();
-  // }
 
   // PDF generation 
 

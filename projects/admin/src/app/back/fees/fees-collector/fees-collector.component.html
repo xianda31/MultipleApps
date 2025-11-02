@@ -235,7 +235,7 @@
     <ng-template #save_dialog>
         <div class="mx-auto col-auto">
             <!-- warning -->
-            <div *ngIf="selected_tournament!.status === 'terminé'" class="row text-danger align-items-center">
+            <div *ngIf="selected_tournament!.status === GAME_STATUS.COMPLETED" class="row text-danger align-items-center">
                 <i class="bi bi-info-circle-fill">
                     les droits pour ce tournoi ont été enregistrés !
                 </i>
