@@ -31,3 +31,9 @@
     visibility: hidden;
   }
 }
+
+/* More visible gray for passed & upcoming tournaments */
+.card-passedOrupcoming {
+  background-color: #e9ecef !important; /* Bootstrap gray-200 */
+  border-color: #dee2e6 !important;     /* Bootstrap gray-300 */
+}

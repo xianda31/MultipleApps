@@ -15,7 +15,7 @@ interface Fees_context {
 
 export interface club_tournament_extended extends club_tournament {
   status?: 'initial' | 'entamé' | 'terminé';
-  past_session?: boolean;
+  chrono?: 'passed' | 'today' | 'upcoming';
 };
 
 export interface Game extends Fees_context {

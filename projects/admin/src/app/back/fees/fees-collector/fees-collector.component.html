@@ -5,16 +5,16 @@
         <div *ngIf="!selected_tournament || selected_tournament === undefined" class="row gy-2">
             <div class="col-12 d-flex align-items-center">
                 <h5 class="mb-0 d-none d-sm-inline">Droits de table</h5>
-                <span class="text-muted ms-2 d-none d-sm-inline">sélectionner un tournoi</span>
+                <span class="text-muted ms-2  d-sm-inline"> sélectionner le tournoi</span>
                 <button class="btn btn-sm btn-primary ms-auto" (click)="one_week_back()" title="reculer d'une semaine">
                     <i class="bi bi-skip-backward"></i>
                 </button>
             </div>
-            <div *ngFor="let past of [true,false]; let i = index">
+            <div *ngFor="let chrono of ['passed', 'today', 'upcoming']; let i = index">
                 <div class="row row-cols-1 row-cols-md-6 g-2 justify-content-start">
                     <ng-container *ngFor="let trn of next_tournaments">
-                        <div class="col" *ngIf="trn.past_session === past">
-                            <div class="card h-100 nice_shadow" role="button" style="cursor: pointer;"
+                        <div class="col" *ngIf="trn.chrono === chrono">
+                            <div class="card h-100 nice_shadow" [ngClass]="{'card-passedOrupcoming': trn.chrono !== 'today'}" role="button" style="cursor: pointer;"
                                 (click)="set_tournament(trn)">
                                 <h6 class="card-header text-center position-relative">
                                     <span class="badge position-absolute top-0 start-0 ms-1 mt-1" [ngClass]="{
@@ -143,12 +143,12 @@
                     <i class="bi bi-printer"> imprimer</i>
                 </button>
             </div>
-            <div *ngIf="selected_tournament!.status === 'entamé'" class="col">
+            <!-- <div *ngIf="selected_tournament!.status === 'entamé'" class="col">
                 <span class="text-muted">récupérer le dernier état </span>
                 <button (click)="restore_trace()" type="button" class="btn btn-sm btn-outline-secondary">
                     <i class="bi bi-life-preserver"> restauration</i>
                 </button>
-            </div>
+            </div> -->
 
             <div class="col-auto">
                 <!-- <div class="row"> -->
@@ -171,8 +171,8 @@
             <div class="position-absolute bottom-0 start-0 m-1 d-flex gap-1" style="z-index: 2;">
                 <span *ngIf="!gamer.enabled" class="badge bg-secondary">{{ (game.fee_rate === 'accession') ? 'ACC' :
                     'NP' }}</span>
-                <span *ngIf="gamer.is_member" class="badge" [ngClass]="{ 'bg-info': gamer.game_credits > 2,
-          'bg-warning text-dark': gamer.game_credits <= 2 }">
+            <span *ngIf="gamer.is_member" class="badge" [ngClass]="{ 'text-bg-secondary': gamer.game_credits > 2,
+        'text-bg-danger': gamer.game_credits <= 2 }">
                     {{ gamer.game_credits }}
                 </span>
             </div>
