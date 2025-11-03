@@ -14,10 +14,12 @@
                 <div class="row row-cols-1 row-cols-md-6 g-2 justify-content-start">
                     <ng-container *ngFor="let trn of next_tournaments">
                         <div class="col" *ngIf="trn.chrono === chrono">
-                            <div class="card h-100 nice_shadow" [ngClass]="{'card-passedOrupcoming': trn.chrono !== 'today'}" role="button" style="cursor: pointer;"
-                                (click)="set_tournament(trn)">
+                            <div class="card h-100 nice_shadow"
+                                [ngClass]="{'card-passedOrupcoming': trn.chrono !== 'today'}" role="button"
+                                style="cursor: pointer;" (click)="set_tournament(trn)">
                                 <h6 class="card-header text-center position-relative">
-                                                                        <span *ngIf="trn.status !== GAME_STATUS.INITIAL" class="badge position-absolute top-0 start-0 ms-1 mt-1" [ngClass]="{
+                                    <span *ngIf="trn.status !== GAME_STATUS.INITIAL"
+                                        class="badge position-absolute top-0 start-0 ms-1 mt-1" [ngClass]="{
                                                                                                 'text-bg-warning': trn.status === GAME_STATUS.RECOVERED,
                                                                                                 'text-bg-success': trn.status === GAME_STATUS.COMPLETED
                                                                                             }">{{ trn.status }}</span>
@@ -164,9 +166,9 @@
             <div class="position-absolute bottom-0 start-0 m-1 d-flex gap-1" style="z-index: 2;">
                 <span *ngIf="!gamer.enabled" class="badge bg-secondary">{{ (game.fee_rate === 'accession') ? 'ACC' :
                     'NP' }}</span>
-            <span *ngIf="gamer.is_member" class="badge" [ngClass]="{ 'text-bg-secondary': gamer.game_credits > 2,
+                <span *ngIf="gamer.is_member" class="badge" [ngClass]="{ 'text-bg-success': gamer.game_credits > 2,
         'text-bg-danger': gamer.game_credits <= 2 }">
-                    {{ gamer.game_credits }}
+                    {{ gamer.game_credits }} <i class="bi bi-pass"></i>
                 </span>
             </div>
             <div class="card-body py-0 position-relative" style="z-index: 1; overflow: hidden;">
@@ -206,14 +208,12 @@
                             <input class="form-check-input" type="radio" [name]="'card_or_euro' + gamer.index"
                                 [id]="'pass-radio'+ gamer.index" [value]="'card'"
                                 [checked]="gamer.validated && gamer.enabled && !gamer.in_euro"
-                                [disabled]="gamer.disabled"
+                                [disabled]="gamer.disabled || gamer.game_credits < (doubled ? 2 : 1)"
                                 (change)="gamer.enabled=true; gamer.in_euro=false; gamer.validated=true; log_game_state(); check_status()" />
                             <label class="form-check-label"
-                                [ngStyle]="{'color': (gamer.game_credits<=2) ? 'red' : 'black'}"
                                 [for]="'pass-radio'+ gamer.index">
-                                {{gamer.game_credits}}
-                                <i class="bi-pass"></i>
-                                <i *ngIf="doubled" class="bi-pass"></i>
+                                <i class="bi bi-pass"></i>
+                                ({{doubled ? 2 : 1}})
                             </label>
                         </div>
 
@@ -235,7 +235,8 @@
     <ng-template #save_dialog>
         <div class="mx-auto col-auto">
             <!-- warning -->
-            <div *ngIf="selected_tournament!.status === GAME_STATUS.COMPLETED" class="row text-danger align-items-center">
+            <div *ngIf="selected_tournament!.status === GAME_STATUS.COMPLETED"
+                class="row text-danger align-items-center">
                 <i class="bi bi-info-circle-fill">
                     les droits pour ce tournoi ont été enregistrés !
                 </i>
