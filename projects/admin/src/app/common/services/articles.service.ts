@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Article } from '../interfaces/menu.interface';
+import { Article } from '../interfaces/navitem.interface';
 import { BehaviorSubject } from 'rxjs';
 import { generateClient } from 'aws-amplify/api';
 import { Schema } from '../../../amplify/data/resource';

@@ -18,12 +18,13 @@ export class AppComponent {
   constructor(
     private localStorageService: LocalStorageService,
     private router: Router,
-    private route: ActivatedRoute,
-  ) { }
+    private route: ActivatedRoute  ) {
+  }
 
   ngOnInit(): void {
 
     registerLocaleData(localeFr);
+
 
     this.router.events.subscribe(event => {
       if (event instanceof NavigationEnd) {
@@ -33,7 +34,7 @@ export class AppComponent {
           let entry_point = this.localStorageService.getItem('entry_point');
           entry_point = entry_point ? entry_point : 'front';
           this.router.navigate([entry_point], { relativeTo: this.route });
-        }else{
+        } else {
           // console.log('Non empty URL, no redirection:', segments);
         }
       };

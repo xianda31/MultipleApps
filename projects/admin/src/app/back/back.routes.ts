@@ -26,6 +26,7 @@ import { PagesEditorComponent } from './pages/pages-editor/pages-editor.componen
 import { FilemgrWindowsComponent } from './files/filemgr/filemgr-windows.component';
 import { RootVolumeComponent } from './files/root-volume/root-volume';
 import { BackAuthGuard } from '../back-auth.guard';
+import { MenusEditorComponent } from './menus/menus-editor/menus-editor';
 import { CloneS3Component } from './maintenance/clone-S3/clone-s3.component';
 
 export const routes: Routes = [
@@ -66,6 +67,7 @@ export const routes: Routes = [
   { path: BACK_ROUTE_PATHS.Snippets, component: SnippetsComponent, canActivate: [BackAuthGuard] },
   { path: BACK_ROUTE_PATHS.RootVolume, component: RootVolumeComponent, canActivate: [BackAuthGuard] },
   { path: BACK_ROUTE_PATHS.FilemgrWindows, component: FilemgrWindowsComponent, canActivate: [BackAuthGuard] },
+  { path: BACK_ROUTE_PATHS.MenusEditor, component: MenusEditorComponent },
   { path: BACK_ROUTE_PATHS.PagesEditor, component: PagesEditorComponent, canActivate: [BackAuthGuard] },
   { path: BACK_ROUTE_PATHS.Home, component: BackPageComponent },
 

@@ -8,8 +8,9 @@ import { BookEntry } from '../interfaces/accounting.interface';
 import { Schema } from '../../../../../../amplify/data/resource';
 import { Product, Product_input } from '../../back/products/product.interface';
 import { PlayBook, PlayBook_input } from '../../back/game-cards/game-card.interface';
-import { Page, Page_input, Snippet, Snippet_input } from '../interfaces/page_snippet.interface';
+import {  Page, Page_input, Snippet, Snippet_input } from '../interfaces/page_snippet.interface';
 import { Game, Game_input } from '../../back/fees/fees.interface';
+import { NavItem, NavItem_input } from '../interfaces/navitem.interface';
 
 
 @Injectable({
@@ -84,6 +85,65 @@ listPages(): Observable<Page[]> {
     })
   );
 }
+
+
+// MENU SERVICE
+
+  // NAVITEM LIST (all) OBSERVABLE
+  listNavItems(): Observable<NavItem[]> {
+    return this._authMode().pipe(
+      switchMap((authMode) => {
+        const client = generateClient<Schema>({ authMode: authMode });
+        return from(
+          client.models.NavItem.list({ limit: 300 })
+            .then(({ data, errors }) => {
+              if (errors) {
+                console.error('NavItem.list error', errors);
+                return [];
+              }
+              return data as unknown as NavItem[];
+            })
+        );
+      })
+    );
+  }
+
+  // NAVITEM CREATE PROMISE
+  async createNavItem(navItem: NavItem_input): Promise<NavItem> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode: authMode });
+    const { data: navItemData, errors } = await client.models.NavItem.create(navItem);
+    if (errors) throw errors;
+    return navItemData as unknown as NavItem;
+  }
+
+  // NAVITEM READ (single) PROMISE
+  async readNavItem(id: string): Promise<NavItem> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode: authMode });
+    const { data: navItemData, errors } = await client.models.NavItem.get({ id });
+    if (errors) throw errors;
+    return navItemData as unknown as NavItem;
+  }
+
+  // NAVITEM UPDATE PROMISE
+  async updateNavItem(navItem: NavItem): Promise<NavItem> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode: authMode });
+    const { data: updatedNavItem, errors } = await client.models.NavItem.update(navItem);
+    if (errors) throw errors;
+    return updatedNavItem as unknown as NavItem;
+  }
+
+  // NAVITEM DELETE PROMISE
+  async deleteNavItem(id: string): Promise<boolean> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode: authMode });
+    const { errors } = await client.models.NavItem.delete({ id });
+    if (errors) throw errors;
+    return true;
+  }
+
 
   // Members Service
 
