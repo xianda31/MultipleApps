@@ -5,6 +5,8 @@ import { routes } from './app.routes';
 import { APP_INITIALIZER } from '@angular/core';
 import { NavItemsService } from './common/services/navitem.service';
 import { DynamicRoutesService } from './common/services/dynamic-routes.service';
+
+
 // Fonction d'initialisation pour précharger les routes dynamiques du front
 export function preloadFrontRoutes(navitemService: NavItemsService, dynamicRoutesService: DynamicRoutesService) {
   return () =>

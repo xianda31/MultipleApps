@@ -21,7 +21,7 @@ export class NavItemsService {
 
 
   getFrontRoutes(): Observable<Routes> {
-    return of(routes);
+    return of(routes);              // stub for development
   }
 
   // CRUDL NAVITEMS
@@ -29,10 +29,9 @@ export class NavItemsService {
   // Create
   async createNavItem(navItem: NavItem): Promise<NavItem> {
     const navItem_input: NavItem_input = {
-      top: navItem.top,
-      label: navItem.label,
-      root: navItem.root,
+      slug: navItem.slug,
       path: navItem.path,
+      label: navItem.label,
       position: navItem.position,
       type: navItem.type,
       // optional params

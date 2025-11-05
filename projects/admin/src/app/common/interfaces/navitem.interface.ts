@@ -29,12 +29,11 @@ export const NAVITEM_TYPE_ICONS: NAVITEM_TYPE_ICONS = {
 
 export interface NavItem {
     id: string;
+    type: NAVITEM_TYPE;
     label: string;
-    top: boolean;
-    root:string;
+    slug: string;
     path: string;
     position: NAVITEM_POSITION;
-    type: NAVITEM_TYPE;
     // optional params
     parent_id?: string;
     page_id?: string;
