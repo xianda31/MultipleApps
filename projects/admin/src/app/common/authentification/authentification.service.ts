@@ -1,6 +1,6 @@
 
 import { Injectable } from '@angular/core';
-import { confirmSignUp, signIn, signUp, signOut, AuthError, SignInInput, getCurrentUser, SignUpOutput, resetPassword, confirmResetPassword, fetchUserAttributes } from 'aws-amplify/auth';
+import { confirmSignUp, signIn, signUp, signOut, AuthError, SignInInput, getCurrentUser, SignUpOutput, resetPassword, confirmResetPassword, fetchUserAttributes, resendSignUpCode } from 'aws-amplify/auth';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { AuthEvent, Process_flow } from './authentification_interface';
 import { Member } from '../interfaces/member.interface';
@@ -49,6 +49,15 @@ export class AuthentificationService {
     this._mode$.next(this._mode);
   }
 
+  async resendConfirmationCode(email: string): Promise<void> {
+    try {
+      await resendSignUpCode({ username: email });
+    } catch (err: any) {
+      // Non bloquant, affichage informatif seulement
+      this.toastService.showInfo('confirmation', err?.message || 'Impossible de renvoyer le code');
+    }
+  }
+ 
   
   async signIn(email: string, password: string): Promise<any> {
 
@@ -81,6 +90,17 @@ export class AuthentificationService {
             else {
               reject(err);
             }
+          } else if (err.name === 'UserNotConfirmedException') {
+            // Compte non confirmé: rester en vérification par e-mail
+            await this.resendConfirmationCode(email);
+            this.changeMode(Process_flow.CONFIRM_SIGN_UP);
+            this.toastService.showInfo('connexion', 'Compte non confirmé : un code vous a été renvoyé par e-mail');
+            reject(err);
+          } else if (err.name === 'PasswordResetRequiredException') {
+            // Mot de passe à réinitialiser: envoyer le code par e-mail et basculer sur la confirmation
+            await this.resetPassword(email);
+            this.toastService.showInfo('connexion', 'Réinitialisation requise : un code vous a été envoyé par e-mail');
+            reject(err);
           } else {
             // this.toastService.showErrorToast('erreur identification', err.message);
             reject(err);

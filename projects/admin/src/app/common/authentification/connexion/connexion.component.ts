@@ -1,4 +1,6 @@
 import { Component } from '@angular/core';
+import { Location } from '@angular/common';
+import { Router } from '@angular/router';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { catchError, from, map, Observable, of, switchMap } from 'rxjs';
 import { ToastService } from '../../services/toast.service';
@@ -25,6 +27,9 @@ export class ConnexionComponent {
 
   logging_msg: string = '';
   signup_msg: string = '';
+  showPassword = false; // toggle for sign-in/sign-up password fields
+  showNewPassword = false; // toggle for reset new password
+  currentMode?: Process_flow;
 
   mode$!: Observable<Process_flow>;
   // mode: Process_flow = Process_flow.SIGN_IN;
@@ -40,17 +45,23 @@ export class ConnexionComponent {
     private toastService: ToastService,
     private auth: AuthentificationService,
     private fb: FormBuilder,
+    private location: Location,
+    private router: Router,
 
   ) {
     this.loggerForm = this.fb.group({
       email: ['', { validators: [Validators.required, Validators.pattern(EMAIL_PATTERN)], asyncValidators: this.emailValidator }],
       password: ['', [Validators.required, Validators.pattern(PSW_PATTERN)]],
+      // new password is only used in RESET PASSWORD flows; validators applied dynamically when needed
+      new_password: [''],
       code: [''],
     });
   }
   
   async ngOnInit() {
-        this.mode$ = this.auth.mode$;
+    this.mode$ = this.auth.mode$;
+    // Track current mode for navigation decisions
+    this.mode$.subscribe(m => this.currentMode = m);
   }
 
   async signIn() {
@@ -61,12 +72,27 @@ export class ConnexionComponent {
         })
       .catch((err) => {
         console.log('sign in erreur', err);
-        this.logging_msg = 'mel/mdp incorrect \n ou compte inexistant';
+        const name = err?.name || '';
+        if (name === 'UserNotConfirmedException') {
+          this.logging_msg = 'Compte non confirmé. Un code vous a été envoyé par e-mail.';
+        } else if (name === 'PasswordResetRequiredException') {
+          this.logging_msg = 'Réinitialisation requise. Un code vous a été envoyé par e-mail.';
+        } else if (name === 'NotAuthorizedException' || name === 'UserNotFoundException') {
+          this.logging_msg = "Compte introuvable ou mot de passe invalide. Création de compte proposée.";
+          // Basculer sur la création de compte si le compte est introuvable ou mdp invalide
+          this.toastService.showInfo('Connexion', 'Création de compte proposée.');
+          this.goSignUp();
+        } else {
+          this.logging_msg = err?.message || 'Connexion impossible';
+        }
       });
   }
 
 
   goSignUp() {
+    // Clear any previous sign-in error when switching to sign-up
+    this.logging_msg = '';
+    this.signup_msg = '';
     this.auth.changeMode(Process_flow.SIGN_UP);
   }
 
@@ -90,40 +116,71 @@ export class ConnexionComponent {
     if (this.loggerForm.invalid) return;
 
     await this.auth.confirmSignUp(this.email.value, this.code.value)
-      .then(({ isSignUpComplete, nextStep }) => {
-        if (!isSignUpComplete) {
-          this.toastService.showErrorToast('sign up', 'erreur imprévue anomalie confirmSignUp');
-          this.signup_msg = 'erreur à la confirmation';
-          return;
-        } else {
-          // this.toastService.showSuccess('création compte', 'compte créé');
-          this.membersService.searchMemberByEmail(this.email.value)
-            .then((member) => {
-              if (!member) {
-                this.toastService.showErrorToast('sign up', 'erreur imprévue ; anomalie membre');
-                return;
-              } else {
-                this.signup_msg ='';
-                // this.membersService.updateMember(member);
-                this.toastService.showSuccess('création compte', 'Bienvenue ' + member.firstname);
-                this.auth.changeMode(Process_flow.SIGN_IN);
-              };
-            });
-        }
+      .then(() => {
+        // Toute résolution est considérée comme succès de confirmation
+        this.signup_msg = '';
+        this.logging_msg = '';
+        this.toastService.showSuccess('création compte', 'Compte confirmé. Vous pouvez vous connecter.');
+        this.sign_up_sent = false;
+        this.auth.changeMode(Process_flow.SIGN_IN);
+      })
+      .catch((err) => {
+        // Erreur explicite en cas d'échec réel de confirmation
+        this.toastService.showErrorToast('sign up', err?.message || 'Confirmation impossible');
+        this.signup_msg = 'erreur à la confirmation';
       });
   }
 
   newPassword() {
+    if (this.email.invalid) {
+      this.logging_msg = 'Veuillez saisir une adresse mail valide';
+      this.email.markAsTouched();
+      return;
+    }
     this.loggerForm.controls['password'].setValue('');
+    this.showNewPassword = false;
+    // Require code and a strong new password in reset flow
     this.loggerForm.controls['code'].setValidators([Validators.required]);
+    this.loggerForm.controls['code'].updateValueAndValidity({ onlySelf: true, emitEvent: false });
+    this.loggerForm.controls['new_password'].setValidators([Validators.required, Validators.pattern(PSW_PATTERN)]);
+    this.loggerForm.controls['new_password'].updateValueAndValidity({ onlySelf: true, emitEvent: false });
     this.auth.changeMode(Process_flow.RESET_PASSWORD);
   }
   resetPassword() {
+    if (this.loggerForm.get('new_password')?.invalid) return;
+    this.auth.resetPassword(this.email.value);
+    // Lock the chosen new password so it can't be altered in the confirm step
+    this.loggerForm.get('new_password')?.disable({ emitEvent: false });
+  }
+  resendConfirmEmailCode() {
+    if (!this.email.value) return;
+    this.auth.resendConfirmationCode(this.email.value);
+  }
+  resendResetPasswordCode() {
+    if (!this.email.value) return;
     this.auth.resetPassword(this.email.value);
   }
   
   confirmPassword() {
-    this.auth.newPassword(this.email.value, this.code.value, this.password.value);
+    const newPwd = this.loggerForm.get('new_password')?.value;
+    this.auth.newPassword(this.email.value, this.code.value, newPwd);
+  }
+
+  goToSignIn() {
+    // Reset fields and modes to go back to login without resetting
+    this.loggerForm.get('code')?.reset('');
+    this.loggerForm.get('code')?.setValidators([]);
+    this.loggerForm.get('code')?.updateValueAndValidity({ onlySelf: true, emitEvent: false });
+    const newPwdCtrl = this.loggerForm.get('new_password');
+    if (newPwdCtrl?.disabled) newPwdCtrl.enable({ emitEvent: false });
+    newPwdCtrl?.reset('');
+    newPwdCtrl?.setValidators([]);
+    newPwdCtrl?.updateValueAndValidity({ onlySelf: true, emitEvent: false });
+    this.logging_msg = '';
+    this.signup_msg = '';
+    this.showPassword = false;
+    this.showNewPassword = false;
+    this.auth.changeMode(Process_flow.SIGN_IN);
   }
   
 
@@ -139,5 +196,27 @@ export class ConnexionComponent {
       map((member) => { return member ? null : { not_member: false }; }),
       catchError((error) => { console.error('Error in emailValidator:', error); return of(null); })
     )
+  }
+
+  togglePasswordVisibility() {
+    this.showPassword = !this.showPassword;
+  }
+
+  toggleNewPasswordVisibility() {
+    this.showNewPassword = !this.showNewPassword;
+  }
+
+  goBack() {
+    // If in a confirm or reset flow with entered data, optionally confirm before leaving
+    const riskyModes = [Process_flow.RESET_PASSWORD, Process_flow.CONFIRM_RESET_PASSWORD, Process_flow.SIGN_UP, Process_flow.CONFIRM_SIGN_UP];
+    const hasInput = !!(this.code?.value || this.loggerForm.get('new_password')?.value || this.sign_up_sent);
+    if (this.currentMode && riskyModes.includes(this.currentMode) && hasInput) {
+      const ok = window.confirm('Vous allez quitter cette étape. Les informations saisies non envoyées seront perdues. Continuer ?');
+      if (!ok) return;
+    }
+    // Reset to sign-in mode so returning to connexion starts clean
+    this.goToSignIn();
+    // Navigate explicitly to the app home (front)
+    this.router.navigate(['/front']);
   }
 }
