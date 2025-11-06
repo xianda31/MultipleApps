@@ -9,8 +9,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MembersService } from '../../common/services/members.service';
 import { Revenue_and_expense_definition } from '../../common/interfaces/system-conf.interface';
+import { FFB_proxyService } from '../../common/ffb/services/ffb.service';
+import { a } from '@aws-amplify/backend';
 
-interface Payment {  [key: string]:  number };
+interface Payment { [key: string]: number };
 
 @Component({
   selector: 'app-member-sales',
@@ -31,9 +33,11 @@ export class MemberSalesComponent {
 
   collectedLicenses: string[] = [];
   missingMembership: string[] = [];
+  membersNotDeclaredAtFFB: { full_name: string; license_number: string }[] = [];
+  membersToBeDeclaredAtFFB_nbr : number = 0;
   buyWithoutMembership: string[] = [];
 
-  
+
 
   members: Member[] = [];
   selected_member: Member | null = null;
@@ -42,6 +46,7 @@ export class MemberSalesComponent {
     private bookService: BookService,
     private systemDataService: SystemDataService,
     private memberService: MembersService,
+    private ffbService: FFB_proxyService
 
   ) { }
   ngOnInit() {
@@ -54,7 +59,7 @@ export class MemberSalesComponent {
       tap((conf) => {
         this.season = conf.season;
         this.accounts = conf.revenue_and_expense_tree.revenues;
-        
+
       }),
       switchMap((conf) => this.bookService.list_book_entries()),
       catchError((err) => {
@@ -64,29 +69,30 @@ export class MemberSalesComponent {
       })
     ).subscribe(
       (entries) => {
-  this.operations = this.bookService.get_revenues_from_members();
-  this.check_license_declared();
-  this.check_membership_paied();
-  this.check_buy_without_membership();
-  this.loaded = true;
+        this.operations = this.bookService.get_revenues_from_members();
+        this.check_license_declared();
+        this.check_membership_paied();
+        this.check_buy_without_membership();
+        this.check_membersNotDeclaredAtFFB();
+        this.loaded = true;
       }
     );
-  } 
+  }
 
-check_buy_without_membership() {
-  
+  check_buy_without_membership() {
+
     this.buyWithoutMembership = [];
     this.members.forEach((member) => {
-        let full_name = this.memberService.full_name(member);
-        const buy_op = this.operations
-          .filter((op) => op.member === full_name);
-          const hasAdh = buy_op.some(op => op.values['ADH']);
-          const hasOther = buy_op.some(op => Object.keys(op.values).some(key => key !== 'ADH'));
+      let full_name = this.memberService.full_name(member);
+      const buy_op = this.operations
+        .filter((op) => op.member === full_name);
+      const hasAdh = buy_op.some(op => op.values['ADH']);
+      const hasOther = buy_op.some(op => Object.keys(op.values).some(key => key !== 'ADH'));
 
 
-        if (!hasAdh && hasOther) {
-          this.buyWithoutMembership.push(full_name);
-        }
+      if (!hasAdh && hasOther) {
+        this.buyWithoutMembership.push(full_name);
+      }
     });
   }
 
@@ -104,6 +110,32 @@ check_buy_without_membership() {
         }
       }
     });
+  }
+
+  async check_membersNotDeclaredAtFFB() {
+    this.membersNotDeclaredAtFFB = [];
+    for (const member of this.members) {
+      if (member.license_status !== LicenseStatus.DULY_REGISTERED) {
+        let full_name = this.memberService.full_name(member);
+        const buy_op = this.operations
+          .filter((op) => op.member === full_name);
+        const hasAdh = buy_op.some(op => op.values['ADH']);
+        if (hasAdh) {
+
+          const possible_ffb_member = await this.ffbService.searchPlayersSuchAs(member.license_number);
+          if (possible_ffb_member.length === 1) {
+            this.membersNotDeclaredAtFFB.push({ full_name, license_number: member.license_number });
+          }
+          else {
+            this.membersNotDeclaredAtFFB.push({ full_name, license_number: 'none'});
+          }
+        }
+      }
+    };
+    this.membersNotDeclaredAtFFB.sort((a, b) => a.full_name.localeCompare(b.full_name))
+    .sort((a, b) => a.license_number === 'none' ? 1 : -1);
+
+    this.membersToBeDeclaredAtFFB_nbr = this.membersNotDeclaredAtFFB.filter(m => m.license_number !== 'none').length;
   }
 
   check_license_declared() {
