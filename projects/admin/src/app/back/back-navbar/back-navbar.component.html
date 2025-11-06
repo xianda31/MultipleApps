@@ -66,7 +66,7 @@
             <li><a class="dropdown-item" routerLink="./members/database">répertoire</a></li>
             <li *ngIf="accreditation_level >= accreditation_levels.Administrateur"><a class="dropdown-item"
                 routerLink="./members/cartes-admission">cartes admission</a></li>
-            <li><a class="dropdown-item" routerLink="./members/payments">paiements</a></li>
+            <li><a class="dropdown-item" routerLink="./members/controls">contrôles</a></li>
           </ul>
         </li>
 
@@ -196,7 +196,7 @@
             <li><a class="dropdown-item" routerLink="./members/database" data-bs-dismiss="offcanvas">répertoire</a></li>
             <li><a class="dropdown-item" routerLink="./members/cartes-admission" data-bs-dismiss="offcanvas">cartes
                 admission</a></li>
-            <li><a class="dropdown-item" routerLink="./members/payments" data-bs-dismiss="offcanvas">paiements</a></li>
+            <li><a class="dropdown-item" routerLink="./members/controls" data-bs-dismiss="offcanvas">contrôles</a></li>
           </ul>
         </li>
         <li *ngIf="accreditation_level >= accreditation_levels.Administrateur" ngbDropdown class="nav-item dropdown">

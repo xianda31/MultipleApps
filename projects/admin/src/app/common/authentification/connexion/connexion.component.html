@@ -234,7 +234,7 @@
         <div class="row mt-3 justify-content-center auth-row" *ngIf="(mode$ | async) === process_flow.SIGN_IN || (mode$ | async) === process_flow.SIGN_UP">
             <div class="col-10 mb-3">
                 <div class="form-floating">
-                    <input class="form-control sepia-input" placeholder="adresse mail (même que pour la FFB)" autocomplete="email" type="text" id="email" formControlName="email">
+                    <input class="form-control sepia-input"  autocomplete="email" type="text" id="email" formControlName="email">
                     <label for="email">adresse mail (le même que pour la FFB)</label>
                 </div>
                 <div>
@@ -250,7 +250,7 @@
         <div class="row mt-1 justify-content-center auth-row" *ngIf="(mode$ | async) === process_flow.SIGN_IN || (mode$ | async) === process_flow.SIGN_UP">
             <div class="col-10 mb-3">
                 <div class="form-floating position-relative">
-                    <input class="form-control sepia-input with-eye" placeholder="mot de passe" autocomplete="password" [type]="showPassword ? 'text' : 'password'" id="password"
+                    <input class="form-control sepia-input with-eye"  autocomplete="password" [type]="showPassword ? 'text' : 'password'" id="password"
                         formControlName="password">
                     <label for="password">mot de passe</label>
                     <button type="button" class="btn btn-sm toggle-psw" (click)="togglePasswordVisibility()" [attr.aria-label]="showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'">

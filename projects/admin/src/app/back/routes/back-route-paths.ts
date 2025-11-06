@@ -7,7 +7,7 @@ export const BACK_ROUTE_PATHS = {
   Products: 'caisse/produits',
   MembersDatabase: 'members/database',
   GameCardsEditor: 'members/cartes-admission',
-  MemberSales: 'members/payments',
+  MemberSales: 'members/controls',
   CashBoxStatus: 'finance/état-de-caisse',
   BankReconciliation: 'finance/bank-reconciliation',
   ExpenseAndRevenue: 'finance/expense-and-revenue',
