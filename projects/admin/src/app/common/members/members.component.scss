@@ -5,3 +5,29 @@
 .my-custom-class .arrow::before {
   border-top-color: #007bff !important;
 }
+
+/* Avatar images should not stretch row height */
+.table-avatar {
+  width: 32px;
+  height: 32px;
+  object-fit: cover;
+  display: inline-block;
+  vertical-align: middle;
+  transition: transform 0.15s ease-in-out;
+}
+
+.table-avatar:hover {
+  transform: scale(2); /* becomes 64x64 visually */
+  position: relative;
+  z-index: 10;
+}
+
+/* Ensure table rows keep compact height */
+table.table.table-sm tbody tr {
+  height: 38px; /* matches Bootstrap approx small row height */
+}
+table.table.table-sm tbody tr td {
+  padding-top: 0.35rem;
+  padding-bottom: 0.35rem;
+  vertical-align: middle;
+}

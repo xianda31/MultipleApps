@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { MembersService } from '../../common/services/members.service';
 import { LicenseesService } from '../licensees/services/licensees.service';
-import { map, switchMap, take, tap } from 'rxjs';
+import { Observable, switchMap, tap } from 'rxjs';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule, UpperCasePipe } from '@angular/common';
 import { NgbModal, NgbTooltipModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
@@ -39,8 +39,7 @@ export class MembersComponent implements OnInit {
   };
   selected_status: string = 'registered';
 
-
-
+    avatar_urls$: { [key: string]: Observable<string> } = {};
 
   // radioButtonGroup: FormGroup = new FormGroup({
   //   radioButton: new FormControl('Tous')
@@ -49,10 +48,10 @@ export class MembersComponent implements OnInit {
   constructor(
     private licenseesService: LicenseesService,
     private membersService: MembersService,
+    private memberSettingsService: MemberSettingsService, 
     private sysConfService: SystemDataService,
     private modalService: NgbModal,
-    private toastService: ToastService,
-    private memberSettingsService: MemberSettingsService
+    private toastService: ToastService
 
   ) {
   }
@@ -71,11 +70,10 @@ export class MembersComponent implements OnInit {
         }, 0);
       }),
       switchMap(() => this.membersService.listMembers()),
-      // take(1),        // Prend le premier résultat et se désabonne
-      // map((members) => {
-      // }),
+
     ).subscribe((members) => {
       this.members = members;
+      this.avatar_urls$ = this.collect_avatars(members);
       this.reset_license_statuses();
       this.updateDBfromFFB();
       this.filterOnStatus(this.selected_status);
@@ -83,6 +81,13 @@ export class MembersComponent implements OnInit {
     });
   }
 
+  collect_avatars(members : Member[]): { [key: string]: Observable<string> } {
+    const avatarUrls: { [key: string]: Observable<string> } = {};
+    members.forEach((member: Member) => {
+      avatarUrls[member.license_number] = this.memberSettingsService.getAvatarUrl(member);
+    });
+    return avatarUrls;
+  }
 
 
   add_licensee(player: FFBplayer) {

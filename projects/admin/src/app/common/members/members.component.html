@@ -47,6 +47,7 @@
             <th>#</th>
             <th>Nom</th>
             <th>Prénom</th>
+            <th class="text-center"></th>
             <th class="text-center">
               {{licenses_status[selected_status]}}
               <div ngbDropdown class="btn-group">
@@ -59,7 +60,7 @@
               </div>
             </th>
 
-            
+
             <th class="d-none d-sm-table-cell">licence</th>
             <th class="d-none d-sm-table-cell">date de licence</th>
             <th class="d-none d-sm-table-cell">mail</th>
@@ -74,7 +75,9 @@
             <td>{{i + 1}}</td>
             <td>{{member.lastname | uppercase}}</td>
             <td>{{member.firstname}}</td>
-
+            <td class="text-center align-middle">
+              <img *ngIf="avatar_urls$[member.license_number] | async as avatarUrl" [src]="avatarUrl" alt="avatar" class="rounded-circle table-avatar">
+            </td>
             <ng-container [ngSwitch]="member.license_status">
               <ng-container *ngSwitchCase="'duly_registered'">
                 <td class="text-center">
