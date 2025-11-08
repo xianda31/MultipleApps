@@ -91,7 +91,7 @@ export class FeesCollectorComponent {
       this.toastService.showInfo('Gestion tournoi', 'Une restauration d\'un pointage partiel a été effectuée.');
       const modalRef = this.modalService.open(GetConfirmationComponent, { centered: true });
           modalRef.componentInstance.title = 'Voulez-vous plutôt repartir d\'une feuille blanche ?';
-          modalRef.componentInstance.subtitle = `Non : la restauration sera utilisée. Oui : nouvelle feuille blanche.`;
+          modalRef.componentInstance.subtitle = `Oui : nouvelle feuille blanche  Non : la restauration sera utilisée. `;
           modalRef.result.then( async (answer: boolean) => {
             if (answer) {
               await this.feesCollectorService.reset_tournament_state(tournament);
