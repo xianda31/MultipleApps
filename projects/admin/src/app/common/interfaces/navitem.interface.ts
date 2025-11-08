@@ -46,3 +46,4 @@ export interface NavItem {
 
 export type NavItem_input = Omit<Schema['NavItem']['type'], 'id' | 'createdAt' | 'updatedAt'>;
 
+export interface MenuStructure { [key: string]: { parent: NavItem, childs: NavItem[] } }

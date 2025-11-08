@@ -3,6 +3,7 @@
         <div class="col-6 ">
             <h6>Barre de navigation</h6>
             <ng-container *ngTemplateOutlet="menu_table"></ng-container>
+            <ng-container *ngTemplateOutlet="show_routes"></ng-container>
         </div>
 
         <div class="col-6 ">
@@ -13,6 +14,15 @@
         </div>
     </div>
 </div>
+
+<ng-template #show_routes>
+        <h5>Routes front-end</h5>
+        <div *ngFor="let route of front_routes[0]?.children">
+            <strong>Path:</strong> {{ route.path }} 
+            <strong *ngIf="route.component">:</strong> {{ route.component?.name }} 
+            <strong *ngIf="route.data">:</strong> {{ route.data | json }} 
+        </div>
+</ng-template>
 
 <ng-template #navbar_simulation>
     <nav class="navbar navbar-expand-lg navbar-light bg-light mb-3">

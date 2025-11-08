@@ -3,7 +3,7 @@ import { Component, ViewChild } from '@angular/core';
 import { NgbOffcanvas, NgbOffcanvasRef } from '@ng-bootstrap/ng-bootstrap';
 import { ToastService } from '../../../common/services/toast.service';
 import { NavItemsService } from '../../../common/services/navitem.service';
-import { NavItem, NAVITEM_POSITION, NAVITEM_TYPE, NAVITEM_TYPE_ICONS } from '../../../common/interfaces/navitem.interface';
+import { MenuStructure, NavItem, NAVITEM_POSITION, NAVITEM_TYPE, NAVITEM_TYPE_ICONS } from '../../../common/interfaces/navitem.interface';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Routes } from '@angular/router';
@@ -39,11 +39,13 @@ export class MenusEditorComponent {
 
   front_routes!: Routes;
   navItems: NavItem[] = [];
-  menus: { [key: string]: { parent: NavItem, childs: NavItem[] } } = {};
+  menus: MenuStructure = {};
   pages: Page[] = [];
   selected_page: Page | null = null;
 
   navItemForm: FormGroup = new FormGroup({});
+  routes!: Routes;
+
   private offRef: NgbOffcanvasRef | null = null;
 
   
@@ -108,11 +110,15 @@ export class MenusEditorComponent {
       next: (navitems) => {
         console.log('Navitems loaded', navitems);
         this.navitems = navitems;
-        this.menus = this.generateMenuStructure(navitems);
+        this.menus = this.navitemService.getMenuStructure();
       },
       error: (err) => {
         this.toastService.showErrorToast('Error loading navitem', err.message);
       }
+    });
+
+    this.navitemService.getFrontRoutes().subscribe(routes => {
+      this.front_routes = routes;
     });
 
     // Charger les pages pour le type CustomPage
@@ -123,22 +129,22 @@ export class MenusEditorComponent {
   }
 
 
-generateMenuStructure(navitems: NavItem[]): { [key: string]: { parent: NavItem, childs: NavItem[] } } {
-    const menuStructure: { [key: string]: { parent: NavItem, childs: NavItem[] } } = {};
-    const parentItems = navitems.filter(n => !n.parent_id);
-    parentItems.forEach(parent => {
-        menuStructure[parent.id] = { parent, childs: [] };
-    });
-    navitems.forEach(child => {
-        if (child.parent_id) {
-            const parent = menuStructure[child.parent_id];
-            if (parent) {
-                parent.childs.push(child);
-            }
-        }
-    });
-    return menuStructure;
-} 
+// generateMenuStructure(navitems: NavItem[]): { [key: string]: { parent: NavItem, childs: NavItem[] } } {
+//     const menuStructure: { [key: string]: { parent: NavItem, childs: NavItem[] } } = {};
+//     const parentItems = navitems.filter(n => !n.parent_id);
+//     parentItems.forEach(parent => {
+//         menuStructure[parent.id] = { parent, childs: [] };
+//     });
+//     navitems.forEach(child => {
+//         if (child.parent_id) {
+//             const parent = menuStructure[child.parent_id];
+//             if (parent) {
+//                 parent.childs.push(child);
+//             }
+//         }
+//     });
+//     return menuStructure;
+// } 
 
   private charsanitize(str: string): string {
     // Supprime les accents mais garde la lettre (é → e)

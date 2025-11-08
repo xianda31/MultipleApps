@@ -3,7 +3,7 @@ import { BehaviorSubject, Observable, map, of, switchMap, tap } from 'rxjs';
 import { delay } from 'rxjs/operators';
 import { ToastService } from './toast.service';
 import { DBhandler } from './graphQL.service';
-import { NavItem, NavItem_input } from '../interfaces/navitem.interface';
+import { MenuStructure, NavItem, NavItem_input } from '../interfaces/navitem.interface';
 import { routes } from '../../front/front.routes';
 import { Routes } from '@angular/router';
 
@@ -20,9 +20,33 @@ export class NavItemsService {
   ) {}
 
 
-  getFrontRoutes(): Observable<Routes> {
+  getFrontRoutes_stub(): Observable<Routes> {
     return of(routes);              // stub for development
   }
+  getFrontRoutes(): Observable<Routes> {
+    return of(routes);              
+  }
+
+
+
+  getMenuStructure(): MenuStructure {
+    const menuStructure: MenuStructure = {};
+    this._navItems.forEach(item => {
+      if (!menuStructure[item.id]) {
+        menuStructure[item.id] = { parent: item, childs: [] };
+      }
+      if (item.parent_id) {
+        const parent = menuStructure[item.parent_id];
+        if (parent) {
+          parent.childs.push(item);
+        }
+      }
+    });
+    return menuStructure;
+  }
+
+  
+
 
   // CRUDL NAVITEMS
 
