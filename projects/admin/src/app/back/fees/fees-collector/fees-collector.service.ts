@@ -175,7 +175,7 @@ export class FeesCollectorService {
       this.set_game(tournament);
       this.tournament.status = Game_status.INITIAL;
     } else {
-      const already_charged = this.BookService.search_tournament_fees_entry(tournament.tournament_name) !== undefined;
+      const already_charged = this.BookService.search_tournament_fees_entry(tournament.date, tournament.tournament_name) !== undefined;
       if (already_charged) {
         this.tournament.status = Game_status.COMPLETED;
         this.game = game; // restore previous game state
@@ -200,7 +200,7 @@ export class FeesCollectorService {
       if (!game) {
         return Game_status.INITIAL;
       }
-      const already_charged = this.BookService.search_tournament_fees_entry(tournament.tournament_name) !== undefined;
+      const already_charged = this.BookService.search_tournament_fees_entry(tournament.date, tournament.tournament_name) !== undefined;
       if (already_charged) {
         return Game_status.COMPLETED;
       }
