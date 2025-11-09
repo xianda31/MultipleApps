@@ -1,22 +1,26 @@
-import { ApplicationConfig, LOCALE_ID, provideZoneChangeDetection } from '@angular/core';
+import { ApplicationConfig, LOCALE_ID, provideZoneChangeDetection, InjectionToken } from '@angular/core';
 import { InMemoryScrollingOptions, provideRouter, withComponentInputBinding, withInMemoryScrolling } from '@angular/router';
 
 import { routes } from './app.routes';
 import { APP_INITIALIZER } from '@angular/core';
 import { NavItemsService } from './common/services/navitem.service';
 import { DynamicRoutesService } from './common/services/dynamic-routes.service';
-
+import { SandboxService } from './common/services/sandbox.service';
 
 // Fonction d'initialisation pour précharger les routes dynamiques du front
-export function preloadFrontRoutes(navitemService: NavItemsService, dynamicRoutesService: DynamicRoutesService) {
-  return () =>
-    new Promise<void>((resolve) => {
-      navitemService.getFrontRoutes_stub().subscribe({
-        next: (routes) => {
-          dynamicRoutesService.setRoutes(routes);
-          resolve();
-        }
-      });
+export const APP_SANDBOX = new InjectionToken<boolean>('APP_SANDBOX');
+
+// Fonction d'initialisation pour précharger les routes dynamiques du front
+export function preloadFrontRoutes(navitemService: NavItemsService, dynamicRoutesService: DynamicRoutesService, sandboxService: SandboxService) {
+  return () => new Promise<void>((resolve) => {
+    const flag = sandboxService.value;
+    navitemService.getFrontRoutes(flag).subscribe({
+      next: (routes) => {
+        dynamicRoutesService.setRoutes(routes);
+        resolve();
+      },
+      error: () => { resolve(); }
+    });
   });
 }
 
@@ -32,8 +36,9 @@ export const appConfig: ApplicationConfig = {
     {
       provide: APP_INITIALIZER,
       useFactory: preloadFrontRoutes,
-      deps: [NavItemsService, DynamicRoutesService],
+      deps: [NavItemsService, DynamicRoutesService, SandboxService],
       multi: true
-    }
+    },
+    { provide: APP_SANDBOX, useFactory: (sandboxService: SandboxService) => sandboxService.value, deps: [SandboxService] }
   ]
 };

@@ -13,6 +13,9 @@ import { Observable } from 'rxjs';
 import { Process_flow } from '../../common/authentification/authentification_interface';
 import { MembersService } from '../../common/services/members.service';
 import { MemberSettingsService } from '../../common/services/member-settings.service';
+import { NavItemsService } from '../../common/services/navitem.service';
+import { MenuStructure, NAVITEM_POSITION, NAVITEM_TYPE } from '../../common/interfaces/navitem.interface';
+import { SandboxService } from '../../common/services/sandbox.service';
 
 @Component({
   selector: 'app-front-navbar',
@@ -27,12 +30,17 @@ export class FrontNavbarComponent {
   lastActiveNavItem: string = '';
   sidebarOpen = false;
   avatar$ !: Observable<string>;
+  add_menus: MenuStructure = {};
+    NAVITEM_POSITION = NAVITEM_POSITION;
+    NAVITEM_TYPE = NAVITEM_TYPE;
+     NAVITEM_TYPES = Object.values(NAVITEM_TYPE);
 
   constructor(
     private auth: AuthentificationService,
     private groupService: GroupService,
     private memberSettingsService: MemberSettingsService,
-    // private membersService: MembersService,
+    private navitemService : NavItemsService,
+  public sandboxService: SandboxService,
   ) { }
 
   ngOnInit(): void {
@@ -48,6 +56,13 @@ export class FrontNavbarComponent {
           this.avatar$ = this.memberSettingsService.getAvatarUrl(member);
         });
       }
+    });
+
+    this.add_menus = this.navitemService.getMenuStructure();
+    // Subscribe sandbox mode to force navbar visual indicator refresh if needed
+    this.sandboxService.sandbox$.subscribe(() => {
+      // trigger change detection by simple assignment if menus depend on mode later
+      this.add_menus = this.navitemService.getMenuStructure();
     });
   }
 

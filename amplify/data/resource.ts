@@ -246,6 +246,9 @@ const schema = a.schema({
     label:a.string().required(),
     slug: a.string().required(),
     path: a.string().required(),
+    rank: a.integer().required(),
+    public : a.boolean().required(),
+    group_level: a.integer().required(),
     position: a.enum(['Navbar', 'Footer', 'Brand']),
     // optional params
     parent_id: a.string(),

@@ -20,12 +20,10 @@ export class FrontComponent {
   today = new Date();
 
   constructor(
-    private localStorageService: LocalStorageService,
     private siteLayoutService: SiteLayoutService
   ) { }
 
   ngOnInit(): void {
-    this.localStorageService.setItem('entry_point', 'front');
 
      this.siteLayoutService.getAlbums().subscribe((albums) => {
       this.albums = albums;

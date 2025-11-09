@@ -8,6 +8,16 @@
 
         <div class="col-6 ">
             <h6>Aperçu</h6>
+            <div class="mb-3">
+                <div class="form-check form-switch sandbox-switch">
+                    <input class="form-check-input" type="checkbox" id="sandboxSwitch" [checked]="sandboxService.value"
+                        (change)="setSandbox($event.target.checked)">
+                    <label class="form-check-label" for="sandboxSwitch">
+                        Mode Sandbox <span class="state" [class.on]="sandboxService.value">({{ sandboxService.value ?
+                            'ON' : 'OFF' }})</span>
+                    </label>
+                </div>
+            </div>
             <ng-container *ngTemplateOutlet="navbar_simulation"></ng-container>
 
             <ng-container *ngTemplateOutlet="router_preview"></ng-container>
@@ -16,12 +26,12 @@
 </div>
 
 <ng-template #show_routes>
-        <h5>Routes front-end</h5>
-        <div *ngFor="let route of front_routes[0]?.children">
-            <strong>Path:</strong> {{ route.path }} 
-            <strong *ngIf="route.component">:</strong> {{ route.component?.name }} 
-            <strong *ngIf="route.data">:</strong> {{ route.data | json }} 
-        </div>
+    <h5>Routes front-end</h5>
+    <div *ngFor="let route of front_routes[0]?.children">
+        <strong>Path:</strong> {{ route.path }}
+        <strong *ngIf="route.component">:</strong> {{ route.component?.name }}
+        <strong *ngIf="route.data">:</strong> {{ route.data | json }}
+    </div>
 </ng-template>
 
 <ng-template #navbar_simulation>
@@ -37,14 +47,22 @@
                     <ng-container *ngFor="let entry of menus | keyvalue">
                         <ng-container *ngIf="entry.value.parent.position === NAVITEM_POSITION.NAVBAR">
                             <!-- Dropdown parent only if it actually has children; otherwise fall back to a simple link -->
-                            <ng-container *ngIf="entry.value.parent.type === NAVITEM_TYPE.DROPDOWN && (entry.value.childs?.length || 0) > 0; else simpleLink">
+                            <ng-container
+                                *ngIf="entry.value.parent.type === NAVITEM_TYPE.DROPDOWN && (entry.value.childs.length || 0) > 0; else simpleLink">
                                 <li class="nav-item dropdown ms-3" ngbDropdown>
-                                    <button class="nav-link dropdown-toggle btn btn-link p-0" type="button" ngbDropdownToggle id="nav-{{ entry.key }}">
+                                    <button class="nav-link dropdown-toggle btn btn-link p-0" type="button"
+                                        ngbDropdownToggle id="nav-{{ entry.key }}">
                                         {{ entry.value.parent.label }}
                                     </button>
-                                    <div class="dropdown-menu" ngbDropdownMenu [attr.aria-labelledby]="'nav-' + entry.key">
-                                        <button class="dropdown-item" *ngFor="let child of entry.value.childs" type="button" (click)="show_page(child)">
-                                            {{ child.label }}
+                                    <div class="dropdown-menu" ngbDropdownMenu
+                                        [attr.aria-labelledby]="'nav-' + entry.key" cdkDropList
+                                        [cdkDropListData]="entry.value.childs"
+                                        (cdkDropListDropped)="dropChild($event, entry.value.parent)">
+                                        <button class="dropdown-item d-flex align-items-center gap-2"
+                                            *ngFor="let child of entry.value.childs" type="button"
+                                            (click)="show_page(child)" cdkDrag>
+                                            <i class="bi bi-grip-vertical text-muted"></i>
+                                            <span>{{ child.label }}</span>
                                         </button>
                                     </div>
                                 </li>
@@ -52,7 +70,8 @@
                             <!-- Simple link parent (no dropdown) -->
                             <ng-template #simpleLink>
                                 <li class="nav-item ms-3">
-                                    <button class="nav-link btn btn-link p-0" type="button" (click)="show_page(entry.value.parent)">
+                                    <button class="nav-link btn btn-link p-0" type="button"
+                                        (click)="show_page(entry.value.parent)">
                                         {{ entry.value.parent.label }}
                                     </button>
                                 </li>
@@ -87,6 +106,7 @@
                 <th>Libellé</th>
                 <th>Type</th>
                 <th>Path</th>
+                <th>Rank</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -96,12 +116,13 @@
                 <td>{{ item.label }}</td>
                 <td>{{ item.type }}</td>
                 <td>{{ item.path }}</td>
+                <td>{{ item.rank }}</td>
                 <td><i (click)="editNavitem(item)" class="bi bi-pencil-square" role="button" title="Éditer"></i></td>
             </tr>
         </tbody>
         <tbody>
             <tr>
-                <td colspan="5" class="text-end">
+                <td colspan="6" class="text-end">
                     <button class="btn btn-sm btn-outline-primary" (click)="createNavItem()">
                         <i class="bi bi-plus-square-fill"></i> Ajouter un élément
                     </button>
@@ -112,7 +133,7 @@
 </ng-template>
 
 <!-- Offcanvas for editing nav items     -->
- <ng-template #editNavitemOffcanvas let-offcanvas>
+<ng-template #editNavitemOffcanvas let-offcanvas>
     <div class="offcanvas-header">
         <h5 class="offcanvas-title">Édition élément de menu</h5>
         <button type="button" class="btn-close text-reset" aria-label="Close" (click)="offcanvas.dismiss()"></button>
@@ -143,25 +164,21 @@
                     <label class="form-label">Parent (Dropdown)</label>
                     <select class="form-select" formControlName="parent_id">
                         <option [ngValue]="null">Aucun</option>
-                        <option *ngFor="let n of navitems" [ngValue]="n.id" [hidden]="n.type !== NAVITEM_TYPE.DROPDOWN">{{ n.path }}</option>
+                        <option *ngFor="let n of navitems" [ngValue]="n.id" [hidden]="n.type !== NAVITEM_TYPE.DROPDOWN">
+                            {{ n.path }}</option>
                     </select>
                 </div>
             </div>
 
             <div class="row g-2">
-                                <div class="col-6">
-                                        <label class="form-label">Segment (slug)</label>
-                                        <input
-                                            type="text"
-                                            class="form-control"
-                                            formControlName="slug"
-                                            placeholder="ex: club"
-                                            [class.is-invalid]="navItemForm.get('type')?.value !== NAVITEM_TYPE.DROPDOWN && navItemForm.get('slug')?.invalid && (navItemForm.get('slug')?.dirty || navItemForm.get('slug')?.touched)"
-                                        />
-                                        <div class="invalid-feedback">
-                                            Seuls les caractères minuscules, chiffres et '_' sont autorisés.
-                                        </div>
-                                </div>
+                <div class="col-6">
+                    <label class="form-label">Segment (slug)</label>
+                    <input type="text" class="form-control" formControlName="slug" placeholder="ex: club"
+                        [class.is-invalid]="navItemForm.get('type')?.value !== NAVITEM_TYPE.DROPDOWN && navItemForm.get('slug')?.invalid && (navItemForm.get('slug')?.dirty || navItemForm.get('slug')?.touched)" />
+                    <div class="invalid-feedback">
+                        Seuls les caractères minuscules, chiffres et '_' sont autorisés.
+                    </div>
+                </div>
                 <div class="col-6">
                     <label class="form-label">Path (auto)</label>
                     <input type="text" class="form-control" formControlName="path" readonly />
@@ -196,9 +213,11 @@
 
             <div class="d-flex gap-2 justify-content-end mt-3">
                 <button type="button" class="btn btn-outline-secondary" (click)="offcanvas.dismiss()">Annuler</button>
-                <button type="button" class="btn btn-danger" *ngIf="selectedNavitem?.id" (click)="deleteNavitem(selectedNavitem!)">Supprimer</button>
-                <button type="button" class="btn btn-primary" (click)="saveNavitem()" [disabled]="navItemForm.invalid">Enregistrer</button>
+                <button type="button" class="btn btn-danger" *ngIf="selectedNavitem?.id"
+                    (click)="deleteNavitem(selectedNavitem!)">Supprimer</button>
+                <button type="button" class="btn btn-primary" (click)="saveNavitem()"
+                    [disabled]="navItemForm.invalid">Enregistrer</button>
             </div>
         </form>
     </div>
- </ng-template>
+</ng-template>

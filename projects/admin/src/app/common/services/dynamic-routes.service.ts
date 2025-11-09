@@ -17,6 +17,7 @@ export class DynamicRoutesService {
     }
 
     getRoutes(): Routes {
+      console.log('DynamicRoutesService - Getting routes:', this._routes);  
       return this._routes;
     }
 }

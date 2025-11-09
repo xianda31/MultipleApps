@@ -1,5 +1,5 @@
 
-import { Component, ViewChild } from '@angular/core';
+import { Component, ViewChild, Inject } from '@angular/core';
 import { NgbOffcanvas, NgbOffcanvasRef } from '@ng-bootstrap/ng-bootstrap';
 import { ToastService } from '../../../common/services/toast.service';
 import { NavItemsService } from '../../../common/services/navitem.service';
@@ -11,11 +11,16 @@ import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { NAVITEM_PLUGIN } from '../../../common/interfaces/plugin.interface';
 import { PageService } from '../../../common/services/page.service';
 import { Page } from '../../../common/interfaces/page_snippet.interface';
+import { DragDropModule } from '@angular/cdk/drag-drop';
+import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+import { APP_SANDBOX } from '../../../app.config';
+import { SandboxService } from '../../../common/services/sandbox.service';
+import { DynamicRoutesService } from '../../../common/services/dynamic-routes.service';
 // import { path } from 'd3';
 
 @Component({
   selector: 'app-menus-editor',
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbDropdownModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbDropdownModule, DragDropModule],
   templateUrl: './menus-editor.html',
   styleUrl: './menus-editor.scss'
 })
@@ -45,18 +50,25 @@ export class MenusEditorComponent {
 
   navItemForm: FormGroup = new FormGroup({});
   routes!: Routes;
+  sandbox: boolean = false;
 
   private offRef: NgbOffcanvasRef | null = null;
+  // Auto-slug helpers
+  private slugManuallyEdited = false; // becomes true if user changes slug away from auto-generated value
+  private lastAutoSlug = '';
 
-  
+
 
   constructor(
     private navitemService: NavItemsService,
-    private fb : FormBuilder,
+    private fb: FormBuilder,
     private pageService: PageService,
     private toastService: ToastService,
-    private offcanvasService: NgbOffcanvas
-  ) { }
+    private offcanvasService: NgbOffcanvas,
+    @Inject(APP_SANDBOX) sandboxFlag: boolean,
+    public sandboxService: SandboxService,
+    private dynamicRoutesService: DynamicRoutesService,
+  ) { this.sandbox = sandboxFlag; }
 
 
   ngOnInit(): void {
@@ -75,36 +87,52 @@ export class MenusEditorComponent {
 
 
     // Dynamically require slug (segment) except for Dropdown + enforce allowed characters
-    const typeCtrl = this.navItemForm.get('type')!;
-    const segCtrl = this.navItemForm.get('slug')!;
-    const pathCtrl = this.navItemForm.get('path')!; // read-only preview
+  const typeCtrl = this.navItemForm.get('type')!;
+  const segCtrlV = this.navItemForm.get('slug')!; // for validators only
+  const pathCtrl = this.navItemForm.get('path')!; // read-only preview
     const applySegmentValidators = (t: NAVITEM_TYPE) => {
       if (t === NAVITEM_TYPE.DROPDOWN) {
-        segCtrl.clearValidators();
+        segCtrlV.clearValidators();
       } else {
-        segCtrl.setValidators([Validators.required, Validators.pattern(/^[a-z0-9_]+$/)]);
+        segCtrlV.setValidators([Validators.required, Validators.pattern(/^[a-z0-9_]+$/)]);
       }
-      segCtrl.updateValueAndValidity({ emitEvent: false });
+      segCtrlV.updateValueAndValidity({ emitEvent: false });
     };
 
-  applySegmentValidators(typeCtrl.value as NAVITEM_TYPE);
-  typeCtrl.valueChanges.subscribe((t: NAVITEM_TYPE) => applySegmentValidators(t));
+    applySegmentValidators(typeCtrl.value as NAVITEM_TYPE);
+    typeCtrl.valueChanges.subscribe((t: NAVITEM_TYPE) => applySegmentValidators(t));
 
-  // Auto-generate full path preview from parent.path + '/' + path (or slug(label) fallback)
-  const recompute = () => this.updateComputedPaths();
-  this.navItemForm.get('label')?.valueChanges.subscribe(recompute);
-  this.navItemForm.get('parent_id')?.valueChanges.subscribe(recompute);
-  this.navItemForm.get('slug')?.valueChanges.subscribe(recompute);
+    // Auto-generate slug & path preview.
+    // Strategy: while user has not manually edited slug (slugManuallyEdited=false),
+    // keep regenerating slug from label. If user edits slug, stop updating automatically.
+  const labelCtrl = this.navItemForm.get('label');
+  const parentCtrl = this.navItemForm.get('parent_id');
+  const segCtrl = this.navItemForm.get('slug');
 
-  // Sanitize slug on-the-fly to keep only [a-z0-9_]
-  this.navItemForm.get('slug')?.valueChanges.subscribe((v) => {
-    if (typeof v === 'string') {
-      const sanitized = this.charsanitize(v);
-      if (sanitized !== v) {
-        segCtrl.setValue(sanitized, { emitEvent: false });
+    labelCtrl?.valueChanges.subscribe(() => {
+      if (!this.slugManuallyEdited) {
+        const auto = this.charsanitize(labelCtrl.value || '');
+        this.lastAutoSlug = auto;
+        segCtrl?.setValue(auto, { emitEvent: false });
       }
-    }
-  });
+      this.updateComputedPaths();
+    });
+    parentCtrl?.valueChanges.subscribe(() => this.updateComputedPaths());
+
+    segCtrl?.valueChanges.subscribe((v) => {
+      if (typeof v === 'string') {
+        const sanitized = this.charsanitize(v);
+        if (sanitized !== v) {
+          segCtrl.setValue(sanitized, { emitEvent: false });
+          v = sanitized;
+        }
+        // Detect manual edit: differs from last auto slug
+        this.slugManuallyEdited = (this.lastAutoSlug !== '' && v !== this.lastAutoSlug);
+      }
+      this.updateComputedPaths();
+    });
+
+    // (Sanitization moved into unified slug valueChanges above)
 
     this.navitemService.loadNavItems().subscribe({
       next: (navitems) => {
@@ -117,7 +145,7 @@ export class MenusEditorComponent {
       }
     });
 
-    this.navitemService.getFrontRoutes().subscribe(routes => {
+    this.navitemService.getFrontRoutes(this.sandbox).subscribe(routes => {
       this.front_routes = routes;
     });
 
@@ -128,23 +156,16 @@ export class MenusEditorComponent {
 
   }
 
+  setSandbox(flag: boolean) {
+    this.sandboxService.setSandbox(flag);
+    this.sandbox = flag;
+    this.navitemService.getFrontRoutes(flag).subscribe(routes => {
+      this.front_routes = routes;
+      this.dynamicRoutesService.setRoutes(routes);
+      this.toastService.showSuccess('Sandbox', flag ? 'Mode sandbox activé' : 'Mode normal activé');
+    });
+  }
 
-// generateMenuStructure(navitems: NavItem[]): { [key: string]: { parent: NavItem, childs: NavItem[] } } {
-//     const menuStructure: { [key: string]: { parent: NavItem, childs: NavItem[] } } = {};
-//     const parentItems = navitems.filter(n => !n.parent_id);
-//     parentItems.forEach(parent => {
-//         menuStructure[parent.id] = { parent, childs: [] };
-//     });
-//     navitems.forEach(child => {
-//         if (child.parent_id) {
-//             const parent = menuStructure[child.parent_id];
-//             if (parent) {
-//                 parent.childs.push(child);
-//             }
-//         }
-//     });
-//     return menuStructure;
-// } 
 
   private charsanitize(str: string): string {
     // Supprime les accents mais garde la lettre (é → e)
@@ -176,16 +197,7 @@ export class MenusEditorComponent {
   private updateComputedPaths() {
     const label = this.navItemForm.get('label')?.value || '';
     const parent_id = this.navItemForm.get('parent_id')?.value || null;
-  const segCtrl = this.navItemForm.get('slug');
-    const currentSeg = segCtrl?.value as string;
-    // If user hasn't modified segment yet, propose a slug from label
-    if (segCtrl && (currentSeg == null || currentSeg === '') && segCtrl.pristine) {
-      const suggested = this.charsanitize(label);
-      if (suggested) {
-        segCtrl.setValue(suggested, { emitEvent: false });
-      }
-    }
-  const segment = (this.navItemForm.get('slug')?.value as string) || this.charsanitize(label);
+    const segment = (this.navItemForm.get('slug')?.value as string) || this.charsanitize(label);
     // Compute full path and update preview control
     const full = this.buildFullPath(segment, parent_id);
     this.navItemForm.get('path')?.setValue(full, { emitEvent: false });
@@ -195,8 +207,8 @@ export class MenusEditorComponent {
     this.editNavitem();
   }
 
-  editNavitem(navItem?: any) : void {
-    if(navItem) {
+  editNavitem(navItem?: any): void {
+    if (navItem) {
       this.selectedNavitem = { ...navItem };
     } else {
       this.selectedNavitem = {
@@ -205,6 +217,9 @@ export class MenusEditorComponent {
         label: '',
         slug: '',
         path: '',
+        rank: 0,
+        public: true,
+        group_level: 0,
         position: NAVITEM_POSITION.NAVBAR,
       };
     }
@@ -221,6 +236,9 @@ export class MenusEditorComponent {
       external_url: this.selectedNavitem!.external_url || null,
       plugin_name: this.selectedNavitem!.plugin_name || null,
     });
+    // Reset auto-slug tracking depending on existing slug
+    this.lastAutoSlug = this.charsanitize(this.navItemForm.get('label')?.value || '');
+    this.slugManuallyEdited = segment !== '' && segment !== this.lastAutoSlug;
     this.updateComputedPaths();
     this.offRef = this.offcanvasService.open(this.editNavitemOffcanvas, { position: 'end' });
   }
@@ -228,7 +246,7 @@ export class MenusEditorComponent {
   saveNavitem() {
     if (!this.selectedNavitem) return;
     const formValue = this.navItemForm.value;
-    const segment = formValue.slug || this.charsanitize(formValue.label || '');
+  const segment = formValue.slug || this.charsanitize(formValue.label || '');
     const fullPath = this.buildFullPath(segment, formValue.parent_id);
     const payload: NavItem = {
       id: this.selectedNavitem.id,
@@ -241,6 +259,9 @@ export class MenusEditorComponent {
       page_id: formValue.page_id || undefined,
       external_url: formValue.external_url || undefined,
       plugin_name: formValue.plugin_name || undefined,
+      rank: this.selectedNavitem.rank,
+      public: this.selectedNavitem.public,
+      group_level: this.selectedNavitem.group_level,
     } as NavItem;
 
     const op = payload.id ? this.navitemService.updateNavItem(payload) : this.navitemService.createNavItem(payload);
@@ -270,6 +291,35 @@ export class MenusEditorComponent {
     console.log('[navbar preview] show_page:', item);
 
     this.selected_page = item.page_id ? this.pages.find(p => p.id === item.page_id) || null : null;
+  }
+
+  // Drag-and-drop: reorder children within the same parent and persist rank (0-based)
+  dropChild(event: CdkDragDrop<NavItem[]>, parent: NavItem) {
+    if (!event.container || event.previousIndex === event.currentIndex) {
+      return; // nothing to do
+    }
+    const list = event.container.data; // the children array
+    moveItemInArray(list, event.previousIndex, event.currentIndex);
+
+    // Recompute ranks locally (0-based)
+    const updated = list.map((child, idx) => ({ ...child, rank: idx } as NavItem));
+
+    // Optimistic update of local menus snapshot
+    // Find the entry matching this parent in current menus and update its childs reference
+    const entry = Object.values(this.menus).find(e => e.parent.id === parent.id);
+    if (entry) {
+      entry.childs.splice(0, entry.childs.length, ...updated);
+    }
+
+    // Persist all updated children ranks
+    Promise.all(updated.map(child => this.navitemService.updateNavItem(child)))
+      .then(() => {
+        this.toastService.showSuccess('Menus', 'Ordre des sous-menus mis à jour');
+      })
+      .catch(err => {
+        this.toastService.showErrorToast('Menus', 'Échec mise à jour de l\'ordre');
+        console.error('DnD persist error:', err);
+      });
   }
 
 

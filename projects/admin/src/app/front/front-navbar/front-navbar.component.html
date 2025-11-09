@@ -1,14 +1,18 @@
 <nav class="navbar navbar-expand-md navbar-dark text-white d-flex align-items-center">
   <div class="container-fluid h-100 d-flex align-items-center">
-    <a class="navbar-brand d-flex align-items-center" routerLink="/home">Accueil</a>
+    <a class="navbar-brand d-flex align-items-center position-relative" routerLink="/home">Accueil</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"
       aria-controls="sidebarMenu">
       <span class="navbar-toggler-icon"></span>
     </button>
 
-    <div class="collapse navbar-collapse d-none d-md-flex align-items-center">
+    <div class="collapse navbar-collapse d-none d-md-flex align-items-center position-relative">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
         <!-- <li class="nav-item"><a class="nav-link" routerLink="home">Accueil</a></li> -->
+        <!-- test addmenu -->
+        <ng-container *ngTemplateOutlet="testmenu"></ng-container>
+
+
         <li ngbDropdown class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" ngbDropdownToggle id="clubDropdown">Le Club</a>
           <ul ngbDropdownMenu class="dropdown-menu" aria-labelledby="clubDropdown">
@@ -45,7 +49,8 @@
           </ul>
         </li>
 
-        <li *ngIf="logged_member$ | async as member" class="nav-item"><a class="nav-link" routerLink="albums">Les albums</a></li>
+        <li *ngIf="logged_member$ | async as member" class="nav-item"><a class="nav-link" routerLink="albums">Les
+            albums</a></li>
 
         <li *ngIf="user_accreditation && user_accreditation.level > 0" class="nav-item">
           <a class="nav-link" routerLink="../back">Back office</a>
@@ -117,7 +122,8 @@
           <li ngbDropdown class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" ngbDropdownToggle id="tournoisDropdownMobile">Les tournois</a>
             <ul ngbDropdownMenu class="dropdown-menu" aria-labelledby="tournoisDropdownMobile">
-              <li><a class="dropdown-item" routerLink="tournaments/next" data-bs-dismiss="offcanvas">Régularité à venir</a></li>
+              <li><a class="dropdown-item" routerLink="tournaments/next" data-bs-dismiss="offcanvas">Régularité à
+                  venir</a></li>
               <li><a class="dropdown-item" routerLink="tournaments/resultats_ffb" data-bs-dismiss="offcanvas">FFB :
                   résultats récents</a></li>
               <li><a class="dropdown-item" href="https://www.bridgeplus.com/nos-simultanes/resultats/?res=sim"
@@ -134,7 +140,8 @@
             </ul>
           </li>
 
-          <li  *ngIf="logged_member$ | async " class="nav-item"><a class="nav-link" routerLink="albums" data-bs-dismiss="offcanvas">Les albums</a></li>
+          <li *ngIf="logged_member$ | async " class="nav-item"><a class="nav-link" routerLink="albums"
+              data-bs-dismiss="offcanvas">Les albums</a></li>
 
           <li *ngIf=" user_accreditation && user_accreditation.level > 0" class="nav-item">
             <a class="nav-link" routerLink="../back" data-bs-dismiss="offcanvas">Back office</a>
@@ -143,6 +150,9 @@
         </ul>
       </div>
     </div>
+
+    <!-- Sandbox badge pushed to the far right inside navbar container -->
+    <div *ngIf="sandboxService.value" class="sandbox-badge ms-auto" aria-label="Mode sandbox">SANDBOX</div>
   </div>
 </nav>
 
@@ -160,3 +170,35 @@
     <app-connexion></app-connexion>
   </div>
 </div>
+
+
+<ng-template #testmenu>
+  <ng-container *ngFor="let entry of add_menus | keyvalue">
+    <ng-container *ngIf="entry.value.parent.position === NAVITEM_POSITION.NAVBAR">
+      <!-- Dropdown parent only if it actually has children; otherwise fall back to a simple link -->
+      <ng-container
+  *ngIf="entry.value.parent.type === NAVITEM_TYPE.DROPDOWN && (entry.value.childs.length || 0) > 0; else simpleLink">
+        <li class="nav-item dropdown ms-3" ngbDropdown>
+          <button class="nav-link dropdown-toggle btn btn-link p-0" type="button" ngbDropdownToggle
+            id="nav-{{ entry.key }}">
+            {{ entry.value.parent.label }}
+          </button>
+          <div class="dropdown-menu" ngbDropdownMenu [attr.aria-labelledby]="'nav-' + entry.key"             >
+            <button class="dropdown-item d-flex align-items-center gap-2" *ngFor="let child of entry.value.childs"
+              type="button" [routerLink]= "child.path " >
+              <span>{{ child.label }}</span>
+            </button>
+          </div>
+        </li>
+      </ng-container>
+      <!-- Simple link parent (no dropdown) -->
+      <ng-template #simpleLink>
+        <li class="nav-item ms-3">
+          <button class="nav-link btn btn-link p-0" type="button" [routerLink]= "entry.value.parent.path ">
+            {{ entry.value.parent.label }}
+          </button>
+        </li>
+      </ng-template>
+    </ng-container>
+  </ng-container>
+</ng-template>

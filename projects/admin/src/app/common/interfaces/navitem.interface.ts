@@ -33,6 +33,9 @@ export interface NavItem {
     label: string;
     slug: string;
     path: string;
+    rank: number;
+    public: boolean;
+    group_level: number;
     position: NAVITEM_POSITION;
     // optional params
     parent_id?: string;

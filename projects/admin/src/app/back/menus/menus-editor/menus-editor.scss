@@ -1,0 +1,62 @@
+/* Sandbox mode switch styling */
+.sandbox-switch {
+	.form-check-input {
+		width: 2.5rem;
+		height: 1.3rem;
+		cursor: pointer;
+		background-color: #ddd;
+		border: 1px solid #bbb;
+		transition: background-color .25s ease, box-shadow .25s ease;
+	}
+		.form-check-input:checked {
+			background-color: #198754; /* bootstrap success */
+			border-color: #198754;
+			box-shadow: 0 0 0 0.15rem rgba(25,135,84,0.35);
+		}
+	.form-check-label {
+		margin-left: .5rem;
+		font-weight: 500;
+	}
+	.state {
+		margin-left: .4rem;
+		font-size: .75rem;
+		font-weight: 600;
+		opacity: .65;
+		transition: color .2s ease, opacity .2s ease;
+	}
+		.state.on {
+			color: #198754;
+			opacity: 1;
+		}
+}
+/* Drag & Drop visual helpers */
+.dropdown-menu[cdkDropList] {
+	min-width: 14rem;
+	padding: .25rem 0;
+}
+
+.dropdown-item.cdk-drag-preview {
+	box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
+	background: #fff;
+	border: 1px solid #e1e1e1;
+}
+
+.cdk-drag-placeholder {
+	opacity: 0;
+}
+
+.dropdown-item.cdk-drag-animating {
+	transition: transform 200ms ease;
+}
+
+.dropdown-menu[cdkDropList] .dropdown-item + .dropdown-item {
+	border-top: 1px dashed #f1f1f1;
+}
+
+i.bi-grip-vertical {
+	cursor: grab;
+}
+
+i.bi-grip-vertical:active {
+	cursor: grabbing;
+}

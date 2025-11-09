@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, map, of, switchMap, tap } from 'rxjs';
-import { delay } from 'rxjs/operators';
 import { ToastService } from './toast.service';
 import { DBhandler } from './graphQL.service';
 import { MenuStructure, NavItem, NavItem_input } from '../interfaces/navitem.interface';
@@ -20,28 +19,37 @@ export class NavItemsService {
   ) {}
 
 
-  getFrontRoutes_stub(): Observable<Routes> {
-    return of(routes);              // stub for development
-  }
-  getFrontRoutes(): Observable<Routes> {
-    return of(routes);              
+  getFrontRoutes(sandbox?: boolean): Observable<Routes> {
+    // For now, same routes; switch if you need sandbox-specific routing
+    return of(routes);
   }
 
 
 
   getMenuStructure(): MenuStructure {
     const menuStructure: MenuStructure = {};
+    //create parent entries
     this._navItems.forEach(item => {
-      if (!menuStructure[item.id]) {
+      if (item.parent_id === null) {
         menuStructure[item.id] = { parent: item, childs: [] };
       }
+    });
+
+    // attach childs to their parents
+    this._navItems.forEach(item => {
       if (item.parent_id) {
-        const parent = menuStructure[item.parent_id];
-        if (parent) {
-          parent.childs.push(item);
+        const parentEntry = menuStructure[item.parent_id];
+        if (parentEntry) {
+          parentEntry.childs.push(item);
         }
       }
     });
+
+    // sort children by rank (ascending)
+    Object.values(menuStructure).forEach(entry => {
+      entry.childs.sort((a, b) => a.rank - b.rank);
+    });
+
     return menuStructure;
   }
 
@@ -58,6 +66,9 @@ export class NavItemsService {
       label: navItem.label,
       position: navItem.position,
       type: navItem.type,
+      rank: navItem.rank,
+      public: navItem.public,
+      group_level: navItem.group_level,
       // optional params
       parent_id: navItem.parent_id,
       page_id: navItem.page_id,
