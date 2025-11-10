@@ -242,6 +242,7 @@ const schema = a.schema({
 
 
   NavItem: a.model({
+    sandbox: a.boolean().required(),
     type: a.enum(['Dropdown', 'ExternalRedirect', 'PlugIn', 'InternalLink', 'CustomPage']),
     label:a.string().required(),
     slug: a.string().required(),
@@ -253,6 +254,7 @@ const schema = a.schema({
     // optional params
     parent_id: a.string(),
     page_id: a.string(),
+    page_title: a.string(),
     external_url: a.string(),
     plugin_name: a.string(),
   })

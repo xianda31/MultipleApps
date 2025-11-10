@@ -60,3 +60,22 @@ i.bi-grip-vertical {
 i.bi-grip-vertical:active {
 	cursor: grabbing;
 }
+
+/* Parent drag handle & preview styling */
+.drag-handle {
+	display: inline-flex;
+	align-items: center;
+	user-select: none;
+}
+
+.navbar-nav[cdkDropList] .cdk-drag-preview {
+	padding: .25rem .5rem;
+	background: #fff;
+	border: 1px solid #e1e1e1;
+	border-radius: .25rem;
+	box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
+}
+
+.navbar-nav[cdkDropList] .cdk-drag-placeholder {
+	opacity: 0;
+}

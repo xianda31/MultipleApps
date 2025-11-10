@@ -3,7 +3,7 @@
         <div class="col-6 ">
             <h6>Barre de navigation</h6>
             <ng-container *ngTemplateOutlet="menu_table"></ng-container>
-            <ng-container *ngTemplateOutlet="show_routes"></ng-container>
+            <!-- <ng-container *ngTemplateOutlet="show_routes"></ng-container> -->
         </div>
 
         <div class="col-6 ">
@@ -43,25 +43,26 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
-                    <ng-container *ngFor="let entry of menus | keyvalue">
-                        <ng-container *ngIf="entry.value.parent.position === NAVITEM_POSITION.NAVBAR">
+                <ul class="navbar-nav" cdkDropList [cdkDropListData]="navbarEntries" (cdkDropListDropped)="dropParent($event)">
+                    <ng-container *ngFor="let entry of navbarEntries">
+                        <ng-container *ngIf="entry.parent.position === NAVITEM_POSITION.NAVBAR">
                             <!-- Dropdown parent only if it actually has children; otherwise fall back to a simple link -->
                             <ng-container
-                                *ngIf="entry.value.parent.type === NAVITEM_TYPE.DROPDOWN && (entry.value.childs.length || 0) > 0; else simpleLink">
-                                <li class="nav-item dropdown ms-3" ngbDropdown>
+                                *ngIf="entry.parent.type === NAVITEM_TYPE.DROPDOWN && (entry.childs.length || 0) > 0; else simpleLink">
+                                <li class="nav-item dropdown ms-3 d-flex align-items-center" ngbDropdown cdkDrag>
+                                    <span class="drag-handle me-1" cdkDragHandle><i class="bi bi-grip-vertical text-muted"></i></span>
                                     <button class="nav-link dropdown-toggle btn btn-link p-0" type="button"
-                                        ngbDropdownToggle id="nav-{{ entry.key }}">
-                                        {{ entry.value.parent.label }}
+                                        ngbDropdownToggle id="nav-{{ entry.parent.id }}">
+                                        {{ entry.parent.label }}
                                     </button>
                                     <div class="dropdown-menu" ngbDropdownMenu
-                                        [attr.aria-labelledby]="'nav-' + entry.key" cdkDropList
-                                        [cdkDropListData]="entry.value.childs"
-                                        (cdkDropListDropped)="dropChild($event, entry.value.parent)">
+                                        [attr.aria-labelledby]="'nav-' + entry.parent.id" cdkDropList
+                                        [cdkDropListData]="entry.childs"
+                                        (cdkDropListDropped)="dropChild($event, entry.parent)">
                                         <button class="dropdown-item d-flex align-items-center gap-2"
-                                            *ngFor="let child of entry.value.childs" type="button"
+                                            *ngFor="let child of entry.childs" type="button"
                                             (click)="show_page(child)" cdkDrag>
-                                            <i class="bi bi-grip-vertical text-muted"></i>
+                                            <i class="bi bi-grip-vertical text-muted" cdkDragHandle></i>
                                             <span>{{ child.label }}</span>
                                         </button>
                                     </div>
@@ -69,10 +70,11 @@
                             </ng-container>
                             <!-- Simple link parent (no dropdown) -->
                             <ng-template #simpleLink>
-                                <li class="nav-item ms-3">
+                                <li class="nav-item ms-3 d-flex align-items-center" cdkDrag>
+                                    <span class="drag-handle me-1" cdkDragHandle><i class="bi bi-grip-vertical text-muted"></i></span>
                                     <button class="nav-link btn btn-link p-0" type="button"
-                                        (click)="show_page(entry.value.parent)">
-                                        {{ entry.value.parent.label }}
+                                        (click)="show_page(entry.parent)">
+                                        {{ entry.parent.label }}
                                     </button>
                                 </li>
                             </ng-template>
@@ -107,18 +109,33 @@
                 <th>Type</th>
                 <th>Path</th>
                 <th>Rank</th>
+                <th class="d-none d-sm-table-cell">Page</th>
                 <th>Actions</th>
             </tr>
         </thead>
         <tbody>
-            <tr *ngFor="let item of navitems ; let i = index">
-                <td>{{ i + 1 }}</td>
-                <td>{{ item.label }}</td>
-                <td>{{ item.type }}</td>
-                <td>{{ item.path }}</td>
-                <td>{{ item.rank }}</td>
-                <td><i (click)="editNavitem(item)" class="bi bi-pencil-square" role="button" title="Éditer"></i></td>
-            </tr>
+            <ng-container *ngFor="let entry of menus | keyvalue : compareMenuEntries; let i = index">
+                <!-- Parent row -->
+                <tr>
+                    <td>{{ i + 1 }}</td>
+                    <td><strong>{{ entry.value.parent.label }}</strong></td>
+                    <td>{{ entry.value.parent.type }}</td>
+                    <td>{{ entry.value.parent.path }}</td>
+                    <td>{{ entry.value.parent.rank }}</td>
+                    <td class="d-none d-sm-table-cell">{{ entry.value.parent.type === NAVITEM_TYPE.CUSTOM_PAGE ? entry.value.parent.page_title : '' }}</td>
+                    <td><i (click)="editNavitem(entry.value.parent)" class="bi bi-pencil-square" role="button" title="Éditer"></i></td>
+                </tr>
+                <!-- Child rows -->
+                <tr *ngFor="let child of entry.value.childs; let j = index">
+                    <td>{{ i + 1 }}.{{ j + 1 }}</td>
+                    <td class="ps-4"> {{ child.label }}</td>
+                    <td>{{ child.type }}</td>
+                    <td>{{ child.path }}</td>
+                    <td>{{ child.rank }}</td>
+                    <td class="d-none d-sm-table-cell">{{ child.type === NAVITEM_TYPE.CUSTOM_PAGE ? child.page_title : '' }}</td>
+                    <td><i (click)="editNavitem(child)" class="bi bi-pencil-square" role="button" title="Éditer"></i></td>
+                </tr>
+            </ng-container>
         </tbody>
         <tbody>
             <tr>

@@ -29,6 +29,7 @@ export const NAVITEM_TYPE_ICONS: NAVITEM_TYPE_ICONS = {
 
 export interface NavItem {
     id: string;
+    sandbox: boolean;
     type: NAVITEM_TYPE;
     label: string;
     slug: string;
@@ -37,6 +38,8 @@ export interface NavItem {
     public: boolean;
     group_level: number;
     position: NAVITEM_POSITION;
+    // runtime-only convenience, not persisted
+    page_title?: string;
     // optional params
     parent_id?: string;
     page_id?: string;
@@ -48,5 +51,6 @@ export interface NavItem {
 }
 
 export type NavItem_input = Omit<Schema['NavItem']['type'], 'id' | 'createdAt' | 'updatedAt'>;
+
 
 export interface MenuStructure { [key: string]: { parent: NavItem, childs: NavItem[] } }
