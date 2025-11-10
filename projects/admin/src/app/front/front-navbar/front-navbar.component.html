@@ -10,7 +10,7 @@
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
      
         <!-- test addmenu -->
-        <ng-container *ngTemplateOutlet="testmenu"></ng-container>
+        <ng-container *ngIf="active_menu_editor"><ng-container *ngTemplateOutlet="testmenu"></ng-container></ng-container>
 
 
         <li ngbDropdown class="nav-item dropdown">

@@ -10,11 +10,9 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbDropdownModule, NgbCollapseModule } from '@ng-bootstrap/ng-bootstrap';
 import { Observable } from 'rxjs';
 import { Process_flow } from '../../common/authentification/authentification_interface';
-import { MembersService } from '../../common/services/members.service';
 import { MemberSettingsService } from '../../common/services/member-settings.service';
-import { NavItemsService } from '../../common/services/navitem.service';
 import { MenuStructure, NAVITEM_POSITION, NAVITEM_TYPE } from '../../common/interfaces/navitem.interface';
-import { SandboxService } from '../../common/services/sandbox.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-front-navbar',
@@ -37,15 +35,20 @@ export class FrontNavbarComponent {
   sidebarOpen = false;
   avatar$ !: Observable<string>;
  
+  active_menu_editor : boolean = false;
 
   constructor(
     private auth: AuthentificationService,
     private groupService: GroupService,
     private memberSettingsService: MemberSettingsService,
+   
 
   ) { }
-
   ngOnInit(): void {
+
+      this.active_menu_editor = environment.active_menu_editor;
+
+    this.logged_member$ = this.auth.logged_member$;
     this.logged_member$ = this.auth.logged_member$;
 
     this.auth.logged_member$.subscribe(async (member) => {
