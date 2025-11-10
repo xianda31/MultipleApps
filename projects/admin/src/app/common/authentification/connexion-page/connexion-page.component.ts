@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { ConnexionComponent } from '../connexion/connexion.component';
 import { AuthentificationService } from '../authentification.service';
 import { Member } from '../../interfaces/member.interface';
@@ -18,11 +18,15 @@ logged_member!: Member | null;
   constructor(
     private titleService : TitleService,
     private auth: AuthentificationService,
+    private location: Location
   ) {
       this.titleService.setTitle('Authentification');  
      this.auth.logged_member$.subscribe(member => {
+      if(member) {
        this.logged_member = member;
        this.titleService.setTitle('');
+        this.location.back();
+      }
      });
   }
 }
