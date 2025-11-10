@@ -15,6 +15,7 @@ import { TransactionService } from '../../services/transaction.service';
 
 @Component({
   selector: 'app-import-excel',
+  standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './import-excel.component.html',
   styleUrl: './import-excel.component.scss'

@@ -10,6 +10,7 @@ import { S3CloneService } from '../s3-clone.service';
 
 @Component({
   selector: 'app-clone-s3',
+  standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './clone-s3.component.html',
   styleUrl: './clone-s3.component.scss'

@@ -13,6 +13,7 @@ import { ToastService } from '../../../common/services/toast.service';
 
 @Component({
   selector: 'app-cash-box-status',
+  standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './cash-box-status.component.html',
   styleUrl: './cash-box-status.component.scss'

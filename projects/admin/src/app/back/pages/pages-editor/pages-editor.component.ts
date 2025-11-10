@@ -17,6 +17,7 @@ import { GenericPageComponent } from "../../../front/front/pages/generic-page/ge
 
 @Component({
   selector: 'app-pages-editor',
+  standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule, SnippetEditor, NgbModule, CdkDrag, CdkDropList, CdkDropListGroup, GenericPageComponent],
   templateUrl: './pages-editor.component.html',
   styleUrl: './pages-editor.component.scss'

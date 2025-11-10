@@ -8,6 +8,7 @@ import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-root-volume',
+  standalone: true,
   imports: [CommonModule,FormsModule],
   templateUrl: './root-volume.html',
   styleUrl: './root-volume.scss'

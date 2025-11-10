@@ -23,6 +23,7 @@ import { charsanitize, buildFullPath, extractSegment } from '../../../common/uti
 
 @Component({
   selector: 'app-menus-editor',
+  standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbDropdownModule, DragDropModule],
   templateUrl: './menus-editor.html',
   styleUrl: './menus-editor.scss'

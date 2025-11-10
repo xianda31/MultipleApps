@@ -7,6 +7,7 @@ import { APP_SANDBOX } from './app.config';
 
 @Component({
   selector: 'app-root',
+  standalone: true,
   imports: [RouterModule, CommonModule],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'

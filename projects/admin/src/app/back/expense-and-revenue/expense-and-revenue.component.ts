@@ -11,6 +11,7 @@ import { ToastService } from '../../common/services/toast.service';
 
 @Component({
   selector: 'app-expense-and-revenue',
+  standalone: true,
   imports: [CommonModule],
   templateUrl: './expense-and-revenue.component.html',
   styleUrl: './expense-and-revenue.component.scss'

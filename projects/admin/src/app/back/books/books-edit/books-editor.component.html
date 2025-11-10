@@ -6,7 +6,7 @@
       <div class="col-md-2 col-sm-3">
         <label for="date">
           Date opération
-          <span *ngIf="!date_in_season(date?.value)" class="col-3 text-danger">
+          <span *ngIf="!date_in_season(date.value)" class="col-3 text-danger">
             <i class="bi bi-exclamation-circle"></i>
             <span> hors saison actuelle</span>
           </span>

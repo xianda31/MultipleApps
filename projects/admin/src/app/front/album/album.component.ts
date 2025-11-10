@@ -11,6 +11,7 @@ import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-album',
+  standalone: true,
   imports: [CommonModule, NgbCarouselModule],
   templateUrl: './album.component.html',
   styleUrl: './album.component.scss'

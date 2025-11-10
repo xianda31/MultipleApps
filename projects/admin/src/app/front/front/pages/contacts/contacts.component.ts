@@ -10,6 +10,7 @@ import { map, Observable } from 'rxjs';
 
 @Component({
   selector: 'app-contacts',
+  standalone: true,
   imports: [CommonModule],
   templateUrl: './contacts.component.html',
   styleUrl: './contacts.component.scss'

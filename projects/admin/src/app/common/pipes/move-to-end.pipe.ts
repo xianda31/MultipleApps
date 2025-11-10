@@ -1,7 +1,8 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({
-  name: 'moveToEnd'
+  name: 'moveToEnd',
+  standalone: true
 })
 /**
  * Pipe that moves the entry with a specified key to the end of a collection.
@@ -13,9 +14,7 @@ import { Pipe, PipeTransform } from '@angular/core';
  * @param keyToEnd - The key of the entry to move to the end of the collection.
  * @returns A new array with the specified entry moved to the end.
  */
-export class MoveToEndPipe
-
-implements PipeTransform {
+export class MoveToEndPipe implements PipeTransform {
 
 
 

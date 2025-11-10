@@ -21,6 +21,7 @@ import { MoveToEndPipe } from '../../common/pipes/move-to-end.pipe';
 
 @Component({
   selector: 'app-shop',
+  standalone: true,
   imports: [ReactiveFormsModule, CommonModule, FormsModule, InputMemberComponent, CartComponent, TodaysBooksComponent, MoveToEndPipe],
   templateUrl: './shop.component.html',
   styleUrl: './shop.component.scss'

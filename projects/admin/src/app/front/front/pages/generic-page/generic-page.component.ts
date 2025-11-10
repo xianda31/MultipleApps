@@ -21,6 +21,7 @@ import { CardsImgTopLeftRenderComponent } from './renderers/cards-img-top-left-r
 
 @Component({
   selector: 'app-generic-page',
+  standalone: true,
   imports: [
     CommonModule,
     TrombinoscopeRenderComponent,

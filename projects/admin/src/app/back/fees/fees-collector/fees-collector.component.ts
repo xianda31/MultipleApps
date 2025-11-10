@@ -17,6 +17,7 @@ import { ToastService } from '../../../common/services/toast.service';
 
 @Component({
   selector: 'app-fees-collector',
+  standalone: true,
   imports: [CommonModule, ReactiveFormsModule, FormsModule, InputPlayerComponent],
   templateUrl: './fees-collector.component.html',
   styleUrl: './fees-collector.component.scss'

@@ -18,6 +18,7 @@ import { SandboxService } from '../../common/services/sandbox.service';
 
 @Component({
   selector: 'app-front-navbar',
+  standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbDropdownModule, NgbCollapseModule, RouterLink],
   templateUrl: './front-navbar.component.html',
   styleUrl: './front-navbar.component.scss'

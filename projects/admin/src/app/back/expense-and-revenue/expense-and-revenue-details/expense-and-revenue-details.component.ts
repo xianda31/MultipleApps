@@ -11,7 +11,8 @@ import { BackComponent } from '../../../common/loc-back/loc-back.component';
 
 
 @Component({
-    selector: 'app-expense-and-revenue-details',
+  selector: 'app-expense-and-revenue-details',
+  standalone: true,
     imports: [CommonModule, BackComponent],
     templateUrl: './expense-and-revenue-details.component.html',
     styleUrl: './expense-and-revenue-details.component.scss'

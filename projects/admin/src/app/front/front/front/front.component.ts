@@ -13,6 +13,7 @@ import { NavItemsService } from '../../../common/services/navitem.service';
 
 @Component({
   selector: 'app-front',
+  standalone: true,
   imports: [CommonModule, RouterModule, FrontNavbarComponent, TitleComponent, ToasterComponent],
   templateUrl: './front.component.html',
   styleUrl: './front.component.scss'

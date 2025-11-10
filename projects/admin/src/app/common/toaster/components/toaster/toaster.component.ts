@@ -5,11 +5,12 @@ import { ToastComponent } from '../toast/toast.component';
 import { ToastService } from '../../../services/toast.service';
 
 @Component({
-    selector: 'app-toaster',
-    imports: [CommonModule, ToastComponent],
-    templateUrl: './toaster.component.html',
-    styleUrls: ['./toaster.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush
+  selector: 'app-toaster',
+  standalone: true,
+  imports: [CommonModule, ToastComponent],
+  templateUrl: './toaster.component.html',
+  styleUrls: ['./toaster.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ToasterComponent implements OnInit {
   currentToasts: ToastEvent[] = [];

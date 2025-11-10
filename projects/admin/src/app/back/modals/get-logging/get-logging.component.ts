@@ -9,10 +9,11 @@ import { Member } from '../../../common/interfaces/member.interface';
 const PSW_PATTERN = '^(?!\\s+)(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[\\^$*.[\\]{}()?"!@#%&/\\\\,><\': ;| _~`=+-]).{8,256}(?<!\\s)$';
 
 @Component({
-    selector: 'app-get-logging',
-    imports: [CommonModule, FormsModule, ReactiveFormsModule],
-    templateUrl: './get-logging.component.html',
-    styleUrl: './get-logging.component.scss'
+  selector: 'app-get-logging',
+  standalone: true,
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  templateUrl: './get-logging.component.html',
+  styleUrl: './get-logging.component.scss'
 })
 
 export class GetLoggingComponent implements OnInit {
