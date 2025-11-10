@@ -5,7 +5,7 @@ import { removeUserFromGroup } from './remove-user-from-group/resource';
 
 
 // import { Group_names } from '../../projects/admin/src/app/common/authentification/group.interface';
- enum Group_names {
+enum Group_names {
   System = 'Systeme',
   Admin = 'Administrateur',
   Editor = 'Editeur',
@@ -105,7 +105,7 @@ const schema = a.schema({
     .authorization((allow) => [
       allow.guest().to(['read']),
       allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
-      allow.group(Group_names.Admin).to(['read',  'update', 'delete']),
+      allow.group(Group_names.Admin).to(['read', 'update', 'delete']),
       allow.group(Group_names.Editor).to(['read']),
       allow.group(Group_names.Support).to(['read']),
       allow.group(Group_names.Member).to(['read']),
@@ -174,7 +174,7 @@ const schema = a.schema({
       allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
       allow.group(Group_names.Editor).to(['read', 'create', 'update']),
       allow.group(Group_names.Support).to(['read', 'create', 'update']),
-      allow.group(Group_names.Member).to(['read','update']),
+      allow.group(Group_names.Member).to(['read', 'update']),
 
     ]),
 
@@ -228,8 +228,6 @@ const schema = a.schema({
     title: a.string().required(),
     template: a.string().required(),
     snippet_ids: a.string().array().required(),
-    header: a.string(),
-    trailer: a.string(),
   })
     .authorization((allow) => [
       allow.guest().to(['read']),
@@ -242,6 +240,33 @@ const schema = a.schema({
     ]),
 
 
+
+  NavItem: a.model({
+    sandbox: a.boolean().required(),
+    type: a.enum(['Dropdown', 'ExternalRedirect', 'PlugIn', 'InternalLink', 'CustomPage']),
+    label:a.string().required(),
+    slug: a.string().required(),
+    path: a.string().required(),
+    rank: a.integer().required(),
+    public : a.boolean().required(),
+    group_level: a.integer().required(),
+    position: a.enum(['Navbar', 'Footer', 'Brand']),
+    // optional params
+    parent_id: a.string(),
+    page_id: a.string(),
+    page_title: a.string(),
+    external_url: a.string(),
+    plugin_name: a.string(),
+  })
+    .authorization((allow) => [
+      allow.guest().to(['read']),
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Editor).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Support).to(['read']),
+      allow.group(Group_names.Member).to(['read']),
+
+    ]),
 
 });
 

@@ -13,6 +13,7 @@ import { TruncatePipe } from '../../../common/pipes/truncate.pipe';
 
 @Component({
   selector: 'app-snippets',
+  standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule, RmbracketsPipe, TruncatePipe],
   templateUrl: './snippets.component.html',
   styleUrl: './snippets.component.scss'

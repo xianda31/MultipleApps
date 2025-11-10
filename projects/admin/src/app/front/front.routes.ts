@@ -10,8 +10,9 @@ import { Carousel } from './carousel/carousel';
 import { HomePage } from './front/pages/home-page/home-page';
 import { CustomRouter } from './front/pages/custom-router/custom-router';
 import { TournamentsComponent } from '../common/tournaments/tournaments/tournaments.component';
-import {  SettingsComponent } from '../common/members/settings/settings.component';
+import { SettingsComponent } from '../common/members/settings/settings.component';
 import { BackAuthGuard } from '../back-auth.guard';
+import { ConnexionPageComponent } from '../common/authentification/connexion-page/connexion-page.component';
 
 
 
@@ -23,17 +24,17 @@ export const routes: Routes = [
 
 
       { path: 'home', component: HomePage },
-  { path: 'tournaments/next', component: TournamentsComponent, data: { displayTitle: true } },
-  { path: 'tournaments/resultats_ffb', component: ExternalRedirectComponent, data: { site: 'FFB' } },
-  { path: 'tournaments/autres_rdv', component: CustomRouter },
-  { path: 'tournaments/:id', component: TournamentComponent },
-      { path: 'my_settings', component: SettingsComponent,  canActivate: [BackAuthGuard] },
+      { path: 'tournaments/next', component: TournamentsComponent, data: { displayTitle: true } },
+      { path: 'tournaments/resultats_ffb', component: ExternalRedirectComponent, data: { site: 'FFB' } },
+      { path: 'tournaments/autres_rdv', component: CustomRouter },
+      { path: 'tournaments/:id', component: TournamentComponent },
+      { path: 'my_settings', component: SettingsComponent, canActivate: [BackAuthGuard] },
       { path: 'ffb_dashboard', component: ExternalRedirectComponent, data: { site: 'FFB_dashboard' } },
       // { path: 'tournaments/resultats_royrene', component: ExternalRedirectComponent, data: { site : 'RoyRené' } },
       { path: 'achats/historique', component: PurchasesComponent },
       { path: 'achats/carte', component: GameCardsOwnedComponent },
-      { path: 'albums/:snippet_id', component: Carousel, canActivate: [BackAuthGuard]},
-      { path: 'authentification', component: ConnexionComponent },
+      { path: 'albums/:snippet_id', component: Carousel, canActivate: [BackAuthGuard] },
+      { path: 'connexion', component: ConnexionPageComponent},
       // { path: 'contacts', component: ContactsComponent },
       { path: '', redirectTo: 'home', pathMatch: 'full' },
       { path: '404', component: PageNotFoundComponent },

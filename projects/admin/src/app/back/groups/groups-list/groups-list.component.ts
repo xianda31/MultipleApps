@@ -16,6 +16,7 @@ interface Profil extends UserInGroup {
 
 @Component({
   selector: 'app-groups-list',
+  standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './groups-list.component.html',
   styleUrl: './groups-list.component.scss'

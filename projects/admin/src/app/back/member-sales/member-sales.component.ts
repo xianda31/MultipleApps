@@ -16,6 +16,7 @@ interface Payment { [key: string]: number };
 
 @Component({
   selector: 'app-member-sales',
+  standalone: true,
   imports: [CommonModule, FormsModule, InputMemberComponent],
   templateUrl: './member-sales.component.html',
   styleUrl: './member-sales.component.scss'

@@ -16,6 +16,7 @@ type Table = {
 
 @Component({
   selector: 'app-clone-db',
+  standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './clone-db.component.html',
   styleUrl: './clone-db.component.scss'

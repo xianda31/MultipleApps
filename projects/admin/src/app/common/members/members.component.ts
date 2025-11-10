@@ -17,6 +17,7 @@ import { MemberSettingsService } from '../services/member-settings.service';
 
 @Component({
   selector: 'app-members',
+  standalone: true,
   encapsulation: ViewEncapsulation.None, // nécessaire pour que les CSS des tooltips fonctionnent
   imports: [FormsModule, CommonModule, ReactiveFormsModule, UpperCasePipe, InputPlayerComponent, NgbTooltipModule, NgbDropdownModule, PhonePipe],
   templateUrl: './members.component.html',

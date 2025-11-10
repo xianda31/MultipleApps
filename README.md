@@ -25,3 +25,16 @@ Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To u
 ## Further help
 
 To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+
+## Architecture notes (standalone)
+
+- The app uses Angular standalone components (Angular 15+) across front and back.
+- Back area is lazy-loaded directly from the routes array:
+	- See `projects/admin/src/app/app.routes.ts` and `projects/admin/src/app/back/back.routes.ts`.
+	- `BackModule` was removed; each back component declares its own `imports`.
+- Front keeps a minimal `FrontModule` only to provide dynamic routes via `ROUTES` and `DynamicRoutesService`.
+- Common pipes are standalone and also bundled in `SharedModule` for convenience in module-based contexts.
+
+Tips:
+- When adding a new component, prefer `standalone: true` and list required imports in its decorator.
+- For new back routes, just add to `back/back.routes.ts` and import the standalone component.

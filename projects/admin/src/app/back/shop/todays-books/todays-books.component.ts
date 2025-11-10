@@ -11,6 +11,7 @@ import { TransactionService } from '../../services/transaction.service';
 
 @Component({
   selector: 'app-todays-books',
+  standalone: true,
   imports: [CommonModule],
   templateUrl: './todays-books.component.html',
   styleUrl: './todays-books.component.scss'

@@ -112,6 +112,7 @@
           </a>
           <ul ngbDropdownMenu class="dropdown-menu">
             <!-- <li><a class="dropdown-item" routerLink="./site/thumbnails">vignettes</a></li> -->
+            <li *ngIf="active_menu_editor"><a class="dropdown-item" routerLink="./site/menus">les menus</a></li>
             <li><a class="dropdown-item" routerLink="./site/pages">les pages</a></li>
             <li><a class="dropdown-item" routerLink="./site/disk">les données</a></li>
             <li><a class="dropdown-item" routerLink="/front">aller au site</a></li>
@@ -275,18 +276,5 @@
       </ul>
     </div>
   </div>
-
-
-  <!-- <div class="offcanvas offcanvas-end" data-bs-backdrop="static" tabindex="-1" id="loggingOffCanvas"
-    aria-labelledby="staticBackdropLabel">
-    <div class="offcanvas-header">
-      <h5 class="offcanvas-title" id="staticBackdropLabel">Se connecter</h5>
-      <button (click)="onCanvasClose()" type="button" class="btn-close" data-bs-dismiss="offcanvas"
-        aria-label="Close"></button>
-    </div>
-    <div class="offcanvas-body">
-      <app-connexion></app-connexion>
-    </div>
-  </div> -->
 
 </div>

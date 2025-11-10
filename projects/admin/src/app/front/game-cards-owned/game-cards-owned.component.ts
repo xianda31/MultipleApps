@@ -14,6 +14,7 @@ interface Extended_GameCard extends GameCard {
 
 @Component({
   selector: 'app-game-cards-owned',
+  standalone: true,
   imports: [CommonModule],
   templateUrl: './game-cards-owned.component.html',
   styleUrl: './game-cards-owned.component.scss'

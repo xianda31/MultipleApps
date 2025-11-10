@@ -16,6 +16,7 @@ const GROUP_ICONS = Group_icons;
 
 @Component({
   selector: 'app-connexion',
+  standalone: true,
   templateUrl: './connexion.component.html',
   styleUrl: './connexion.component.scss',
   imports: [CommonModule, FormsModule, ReactiveFormsModule],

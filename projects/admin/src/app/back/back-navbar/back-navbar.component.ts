@@ -33,7 +33,7 @@ export class BackNavbarComponent implements OnInit {
   logged_member$: Observable<Member | null> = new Observable<Member | null>();
  
   avatar$ !: Observable<string>;
-
+active_menu_editor : boolean = false;
 
 
   constructor(
@@ -45,6 +45,9 @@ export class BackNavbarComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
+      this.active_menu_editor = environment.active_menu_editor;
+
+
     this.logged_member$ = this.auth.logged_member$;
 
     this.accreditation_level = -1;

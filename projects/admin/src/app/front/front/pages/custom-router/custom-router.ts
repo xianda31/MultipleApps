@@ -5,6 +5,7 @@ import { MENU_TITLES } from '../../../../common/interfaces/page_snippet.interfac
 
 @Component({
   selector: 'app-custom-router',
+  standalone: true,
   imports: [GenericPageComponent],
   templateUrl: './custom-router.html',
   styleUrl: './custom-router.scss'

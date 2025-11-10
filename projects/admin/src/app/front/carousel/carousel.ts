@@ -13,6 +13,7 @@ import { TitleService } from '../title/title.service';
 
 @Component({
   selector: 'app-carousel',
+  standalone: true,
   imports: [CommonModule, NgbCarouselModule],
   templateUrl: './carousel.html',
   styleUrl: './carousel.scss'

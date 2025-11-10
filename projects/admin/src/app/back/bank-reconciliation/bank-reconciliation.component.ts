@@ -15,6 +15,7 @@ import { TransactionService } from '../services/transaction.service';
 
 @Component({
   selector: 'app-bank-reconciliation',
+  standalone: true,
   encapsulation: ViewEncapsulation.None, // nécessaire pour que les tooltips fonctionnent
   imports: [CommonModule, FormsModule, NgbModule],
   templateUrl: './bank-reconciliation.component.html',

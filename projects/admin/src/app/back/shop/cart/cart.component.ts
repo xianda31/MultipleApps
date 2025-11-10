@@ -14,6 +14,7 @@ import { MembersService } from '../../../common/services/members.service';
 
 @Component({
   selector: 'app-cart',
+  standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule, InputMemberComponent, CurrencyPipe],
   templateUrl: './cart.component.html',
   styleUrl: './cart.component.scss'

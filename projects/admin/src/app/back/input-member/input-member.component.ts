@@ -4,8 +4,9 @@ import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR, ReactiveFormsModu
 import { Member } from '../../common/interfaces/member.interface';
 
 @Component({
-    selector: 'app-input-member',
-    providers: [
+  selector: 'app-input-member',
+  standalone: true,
+  providers: [
         {
             provide: NG_VALUE_ACCESSOR,
             useExisting: forwardRef(() => InputMemberComponent),

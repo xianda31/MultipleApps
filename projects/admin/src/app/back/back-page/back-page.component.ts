@@ -10,7 +10,8 @@ import { ConnexionComponent } from '../../common/authentification/connexion/conn
 
 @Component({
   selector: 'app-back-page',
-  imports: [CommonModule,ConnexionComponent],
+  standalone: true,
+  imports: [CommonModule, ConnexionComponent],
   templateUrl: './back-page.component.html',
   styleUrl: './back-page.component.scss'
 })

@@ -1,0 +1,240 @@
+<div class="container">
+    <div class="row">
+        <div class="col-6 ">
+            <h6>Barre de navigation</h6>
+            <ng-container *ngTemplateOutlet="menu_table"></ng-container>
+            <!-- <ng-container *ngTemplateOutlet="show_routes"></ng-container> -->
+        </div>
+
+        <div class="col-6 ">
+            <h6>Aperçu</h6>
+            <div class="mb-3">
+                <div class="form-check form-switch sandbox-switch">
+                    <input class="form-check-input" type="checkbox" id="sandboxSwitch" [checked]="sandboxService.value"
+                        (change)="setSandbox($event.target.checked)">
+                    <label class="form-check-label" for="sandboxSwitch">
+                        Mode Sandbox <span class="state" [class.on]="sandboxService.value">({{ sandboxService.value ?
+                            'ON' : 'OFF' }})</span>
+                    </label>
+                </div>
+            </div>
+            <ng-container *ngTemplateOutlet="navbar_simulation"></ng-container>
+
+            <ng-container *ngTemplateOutlet="router_preview"></ng-container>
+        </div>
+    </div>
+</div>
+
+<ng-template #show_routes>
+    <h5>Routes front-end</h5>
+    <div *ngFor="let route of front_routes[0]?.children">
+        <strong>Path:</strong> {{ route.path }}
+        <strong *ngIf="route.component">:</strong> {{ route.component?.name }}
+        <strong *ngIf="route.data">:</strong> {{ route.data | json }}
+    </div>
+</ng-template>
+
+<ng-template #navbar_simulation>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-3">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">MonSite</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav" cdkDropList [cdkDropListData]="navbarEntries" (cdkDropListDropped)="dropParent($event)">
+                    <ng-container *ngFor="let entry of navbarEntries">
+                        <ng-container *ngIf="entry.parent.position === NAVITEM_POSITION.NAVBAR">
+                            <!-- Dropdown parent only if it actually has children; otherwise fall back to a simple link -->
+                            <ng-container
+                                *ngIf="entry.parent.type === NAVITEM_TYPE.DROPDOWN && (entry.childs.length || 0) > 0; else simpleLink">
+                                <li class="nav-item dropdown ms-3 d-flex align-items-center" ngbDropdown cdkDrag>
+                                    <span class="drag-handle me-1" cdkDragHandle><i class="bi bi-grip-vertical text-muted"></i></span>
+                                    <button class="nav-link dropdown-toggle btn btn-link p-0" type="button"
+                                        ngbDropdownToggle id="nav-{{ entry.parent.id }}">
+                                        {{ entry.parent.label }}
+                                    </button>
+                                    <div class="dropdown-menu" ngbDropdownMenu
+                                        [attr.aria-labelledby]="'nav-' + entry.parent.id" cdkDropList
+                                        [cdkDropListData]="entry.childs"
+                                        (cdkDropListDropped)="dropChild($event, entry.parent)">
+                                        <button class="dropdown-item d-flex align-items-center gap-2"
+                                            *ngFor="let child of entry.childs" type="button"
+                                            (click)="show_page(child)" cdkDrag>
+                                            <i class="bi bi-grip-vertical text-muted" cdkDragHandle></i>
+                                            <span>{{ child.label }}</span>
+                                        </button>
+                                    </div>
+                                </li>
+                            </ng-container>
+                            <!-- Simple link parent (no dropdown) -->
+                            <ng-template #simpleLink>
+                                <li class="nav-item ms-3 d-flex align-items-center" cdkDrag>
+                                    <span class="drag-handle me-1" cdkDragHandle><i class="bi bi-grip-vertical text-muted"></i></span>
+                                    <button class="nav-link btn btn-link p-0" type="button"
+                                        (click)="show_page(entry.parent)">
+                                        {{ entry.parent.label }}
+                                    </button>
+                                </li>
+                            </ng-template>
+                        </ng-container>
+                    </ng-container>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</ng-template>
+
+
+<ng-template #router_preview>
+    <div class="alert alert-secondary" role="alert">
+        {{ front_route_verbose }}
+
+        <div *ngIf="selected_page">
+            <h5>Page sélectionnée :</h5>
+            <p><strong>Titre :</strong> {{ selected_page.title }}</p>
+            <p><strong>Contenu :</strong></p>
+            <!-- <div [innerHTML]="stringToSafeHtml(selected_page.content)"></div> -->
+        </div>
+    </div>
+</ng-template>
+
+<ng-template #menu_table>
+    <table class="table table-striped table-sm">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Libellé</th>
+                <th>Type</th>
+                <th>Path</th>
+                <th>Rank</th>
+                <th class="d-none d-sm-table-cell">Page</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <ng-container *ngFor="let entry of menus | keyvalue : compareMenuEntries; let i = index">
+                <!-- Parent row -->
+                <tr>
+                    <td>{{ i + 1 }}</td>
+                    <td><strong>{{ entry.value.parent.label }}</strong></td>
+                    <td>{{ entry.value.parent.type }}</td>
+                    <td>{{ entry.value.parent.path }}</td>
+                    <td>{{ entry.value.parent.rank }}</td>
+                    <td class="d-none d-sm-table-cell">{{ entry.value.parent.type === NAVITEM_TYPE.CUSTOM_PAGE ? entry.value.parent.page_title : '' }}</td>
+                    <td><i (click)="editNavitem(entry.value.parent)" class="bi bi-pencil-square" role="button" title="Éditer"></i></td>
+                </tr>
+                <!-- Child rows -->
+                <tr *ngFor="let child of entry.value.childs; let j = index">
+                    <td>{{ i + 1 }}.{{ j + 1 }}</td>
+                    <td class="ps-4"> {{ child.label }}</td>
+                    <td>{{ child.type }}</td>
+                    <td>{{ child.path }}</td>
+                    <td>{{ child.rank }}</td>
+                    <td class="d-none d-sm-table-cell">{{ child.type === NAVITEM_TYPE.CUSTOM_PAGE ? child.page_title : '' }}</td>
+                    <td><i (click)="editNavitem(child)" class="bi bi-pencil-square" role="button" title="Éditer"></i></td>
+                </tr>
+            </ng-container>
+        </tbody>
+        <tbody>
+            <tr>
+                <td colspan="6" class="text-end">
+                    <button class="btn btn-sm btn-outline-primary" (click)="createNavItem()">
+                        <i class="bi bi-plus-square-fill"></i> Ajouter un élément
+                    </button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</ng-template>
+
+<!-- Offcanvas for editing nav items     -->
+<ng-template #editNavitemOffcanvas let-offcanvas>
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title">Édition élément de menu</h5>
+        <button type="button" class="btn-close text-reset" aria-label="Close" (click)="offcanvas.dismiss()"></button>
+    </div>
+    <div class="offcanvas-body">
+        <form [formGroup]="navItemForm" class="vstack gap-3">
+            <div class="row g-2">
+                <div class="col-6">
+                    <label class="form-label">Libellé</label>
+                    <input type="text" class="form-control" formControlName="label" placeholder="Texte du menu" />
+                </div>
+                <div class="col-6">
+                    <label class="form-label">Position</label>
+                    <select class="form-select" formControlName="position">
+                        <option *ngFor="let pos of NAVITEM_POSITIONS" [ngValue]="pos">{{ pos }}</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row g-2">
+                <div class="col-6">
+                    <label class="form-label">Type</label>
+                    <select class="form-select" formControlName="type">
+                        <option *ngFor="let t of NAVITEM_TYPES" [ngValue]="t">{{ t }}</option>
+                    </select>
+                </div>
+                <div class="col-6">
+                    <label class="form-label">Parent (Dropdown)</label>
+                    <select class="form-select" formControlName="parent_id">
+                        <option [ngValue]="null">Aucun</option>
+                        <option *ngFor="let n of navitems" [ngValue]="n.id" [hidden]="n.type !== NAVITEM_TYPE.DROPDOWN">
+                            {{ n.path }}</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row g-2">
+                <div class="col-6">
+                    <label class="form-label">Segment (slug)</label>
+                    <input type="text" class="form-control" formControlName="slug" placeholder="ex: club"
+                        [class.is-invalid]="navItemForm.get('type')?.value !== NAVITEM_TYPE.DROPDOWN && navItemForm.get('slug')?.invalid && (navItemForm.get('slug')?.dirty || navItemForm.get('slug')?.touched)" />
+                    <div class="invalid-feedback">
+                        Seuls les caractères minuscules, chiffres et '_' sont autorisés.
+                    </div>
+                </div>
+                <div class="col-6">
+                    <label class="form-label">Path (auto)</label>
+                    <input type="text" class="form-control" formControlName="path" readonly />
+                    <div class="form-text">Concatène le parent et le segment.</div>
+                </div>
+            </div>
+
+            <div class="row g-2" *ngIf="navItemForm.get('type')?.value === NAVITEM_TYPE.EXTERNAL_REDIRECT">
+                <div class="col-12">
+                    <label class="form-label">URL externe</label>
+                    <input type="url" class="form-control" formControlName="external_url" placeholder="https://..." />
+                </div>
+            </div>
+
+            <div class="row g-2" *ngIf="navItemForm.get('type')?.value === NAVITEM_TYPE.PLUGIN">
+                <div class="col-12">
+                    <label class="form-label">Plug-in</label>
+                    <select class="form-select" formControlName="plugin_name">
+                        <option *ngFor="let p of NAVITEM_PLUGINS" [ngValue]="p">{{ p }}</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row g-2" *ngIf="navItemForm.get('type')?.value === NAVITEM_TYPE.CUSTOM_PAGE">
+                <div class="col-12">
+                    <label class="form-label">Page</label>
+                    <select class="form-select" formControlName="page_id">
+                        <option *ngFor="let pg of pages" [ngValue]="pg.id">{{ pg.title }}</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 justify-content-end mt-3">
+                <button type="button" class="btn btn-outline-secondary" (click)="offcanvas.dismiss()">Annuler</button>
+                <button type="button" class="btn btn-danger" *ngIf="selectedNavitem?.id"
+                    (click)="deleteNavitem(selectedNavitem!)">Supprimer</button>
+                <button type="button" class="btn btn-primary" (click)="saveNavitem()"
+                    [disabled]="navItemForm.invalid">Enregistrer</button>
+            </div>
+        </form>
+    </div>
+</ng-template>

@@ -6,7 +6,8 @@ import { map, Observable } from 'rxjs';
 import { ProductService } from '../../common/services/product.service';
 import { SystemDataService } from '../../common/services/system-data.service';
 @Component({
-    selector: 'app-products',
+  selector: 'app-products',
+  standalone: true,
     imports: [CommonModule, FormsModule, ReactiveFormsModule,],
     templateUrl: './products.component.html',
     styleUrl: './products.component.scss'

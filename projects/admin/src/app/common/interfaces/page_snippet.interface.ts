@@ -1,4 +1,3 @@
-import { Observable } from "rxjs";
 import { Schema } from "../../../../../../amplify/data/resource";
 
 export interface Snippet {

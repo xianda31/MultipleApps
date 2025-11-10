@@ -11,6 +11,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-snippet-editor',
+  standalone: true,
   imports: [CommonModule, ReactiveFormsModule, FormsModule],
   templateUrl: './snippet-editor.html',
   styleUrl: './snippet-editor.scss'

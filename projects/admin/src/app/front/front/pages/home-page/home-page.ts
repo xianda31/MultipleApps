@@ -16,7 +16,8 @@ import { S3Item } from '../../../../common/interfaces/file.interface';
 
 @Component({
   selector: 'app-home-page',
-  imports: [CommonModule,GenericPageComponent, TournamentsComponent],
+  standalone: true,
+  imports: [CommonModule, GenericPageComponent, TournamentsComponent],
   templateUrl: './home-page.html',
   styleUrl: './home-page.scss'
 })

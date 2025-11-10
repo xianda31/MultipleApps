@@ -6,36 +6,49 @@ import { GroupService } from '../../common/authentification/group.service';
 import { Accreditation } from '../../common/authentification/group.interface';
 import { Member } from '../../common/interfaces/member.interface';
 import { Offcanvas } from 'bootstrap';
-import { ConnexionComponent } from '../../common/authentification/connexion/connexion.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbDropdownModule, NgbCollapseModule } from '@ng-bootstrap/ng-bootstrap';
 import { Observable } from 'rxjs';
 import { Process_flow } from '../../common/authentification/authentification_interface';
-import { MembersService } from '../../common/services/members.service';
 import { MemberSettingsService } from '../../common/services/member-settings.service';
+import { MenuStructure, NAVITEM_POSITION, NAVITEM_TYPE } from '../../common/interfaces/navitem.interface';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-front-navbar',
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbDropdownModule, NgbCollapseModule, RouterLink, ConnexionComponent],
+  standalone: true,
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbDropdownModule, NgbCollapseModule, RouterLink],
   templateUrl: './front-navbar.component.html',
   styleUrl: './front-navbar.component.scss'
 })
 export class FrontNavbarComponent {
   @Input() albums: string[] = [];
+  @Input() menus: MenuStructure = {};
+  @Input() sandboxMode: boolean = false;
+  NAVITEM_POSITION = NAVITEM_POSITION;
+  NAVITEM_TYPE = NAVITEM_TYPE;
+  NAVITEM_TYPES = Object.values(NAVITEM_TYPE);
+
   logged_member$: Observable<Member | null> = new Observable<Member | null>();
   user_accreditation: Accreditation | null = null;
   lastActiveNavItem: string = '';
   sidebarOpen = false;
   avatar$ !: Observable<string>;
+ 
+  active_menu_editor : boolean = false;
 
   constructor(
     private auth: AuthentificationService,
     private groupService: GroupService,
     private memberSettingsService: MemberSettingsService,
-    // private membersService: MembersService,
-  ) { }
+   
 
+  ) { }
   ngOnInit(): void {
+
+      this.active_menu_editor = environment.active_menu_editor;
+
+    this.logged_member$ = this.auth.logged_member$;
     this.logged_member$ = this.auth.logged_member$;
 
     this.auth.logged_member$.subscribe(async (member) => {
@@ -49,6 +62,8 @@ export class FrontNavbarComponent {
         });
       }
     });
+
+
   }
 
 

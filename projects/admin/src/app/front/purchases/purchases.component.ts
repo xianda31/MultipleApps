@@ -12,6 +12,7 @@ import { Formatted_purchase } from '../../common/interfaces/accounting.interface
 
 @Component({
   selector: 'app-purchases',
+  standalone: true,
   imports: [CommonModule],
   templateUrl: './purchases.component.html',
   styleUrl: './purchases.component.scss'

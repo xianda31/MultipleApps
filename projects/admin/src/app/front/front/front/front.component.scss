@@ -119,6 +119,20 @@ html, body {
 
 
 
+.sandbox-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: auto; /* push to the far right in the flex container */
+  background: #198754; /* Bootstrap success */
+  color: #fff;
+  font-size: 0.7rem;
+  letter-spacing: .06em;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.25rem; /* simple pill badge */
+  text-transform: uppercase;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
 
 
 

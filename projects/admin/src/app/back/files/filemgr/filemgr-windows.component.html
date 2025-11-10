@@ -7,7 +7,7 @@
                     <nav *ngIf="current_node_data as data" aria-label="breadcrumb">
                         <ol class="breadcrumb">
                                 <li class="breadcrumb-item" (click)="back_to_volume()"> {{ volume_name }} </li>
-                                <li *ngFor="let segment of data.path?.split('/'); let i = index" class="breadcrumb-item" (click)="pop_folder(i)">
+                                <li *ngFor="let segment of data.path.split('/'); let i = index" class="breadcrumb-item" (click)="pop_folder(i)">
                                     {{ segment }}
                                 </li>
                         </ol>

@@ -28,6 +28,7 @@ export const BACK_ROUTE_PATHS = {
   RootVolume: 'site/disk',
   FilemgrWindows: 'site/disk/:root_folder',
   PagesEditor: 'site/pages',
+  MenusEditor: 'site/menus',
   Home: 'home',
 };
 
