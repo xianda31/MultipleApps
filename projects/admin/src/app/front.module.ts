@@ -23,6 +23,7 @@ export function navitemRoutesFactory(dynamicRoutesService: DynamicRoutesService)
 }
 
 import { DynamicRoutesService } from './common/services/dynamic-routes.service';
+import { ConnexionComponent } from './common/authentification/connexion/connexion.component';
 
 @NgModule({
   declarations: [
@@ -41,6 +42,7 @@ import { DynamicRoutesService } from './common/services/dynamic-routes.service';
     TitleComponent,
     ExternalRedirectComponent,
     AlbumComponent,
+    ConnexionComponent,
     Carousel
   ],
   exports: [
@@ -54,6 +56,7 @@ import { DynamicRoutesService } from './common/services/dynamic-routes.service';
     TitleComponent,
     ExternalRedirectComponent,
     AlbumComponent,
+    ConnexionComponent,
     Carousel
   ],
   providers:[

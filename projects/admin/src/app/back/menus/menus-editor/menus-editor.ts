@@ -85,13 +85,14 @@ export class MenusEditorComponent implements OnDestroy {
 
     // Load navitems and pages together, then enrich once
     combineLatest([
-      this.navitemService.loadNavItems(this.sandbox_mode),
+      this.navitemService.loadNavItems(true),
       this.pageService.listPages()
     ])
-      .pipe(takeUntil(this.destroyed$))
+      // .pipe(takeUntil(this.destroyed$))
       .subscribe({
         next: ([navitems, pages]) => {
           this.pages = pages;
+          console.log('Navitems loaded for menu editor', navitems);
           this.navitems = this.enrichWithPageTitle(navitems);
           this.menus = this.navitemService.getMenuStructure();
           console.log('Menu structure', this.menus);

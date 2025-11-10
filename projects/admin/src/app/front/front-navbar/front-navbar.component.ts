@@ -6,7 +6,6 @@ import { GroupService } from '../../common/authentification/group.service';
 import { Accreditation } from '../../common/authentification/group.interface';
 import { Member } from '../../common/interfaces/member.interface';
 import { Offcanvas } from 'bootstrap';
-import { ConnexionComponent } from '../../common/authentification/connexion/connexion.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbDropdownModule, NgbCollapseModule } from '@ng-bootstrap/ng-bootstrap';
 import { Observable } from 'rxjs';
@@ -19,28 +18,30 @@ import { SandboxService } from '../../common/services/sandbox.service';
 
 @Component({
   selector: 'app-front-navbar',
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbDropdownModule, NgbCollapseModule, RouterLink, ConnexionComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbDropdownModule, NgbCollapseModule, RouterLink],
   templateUrl: './front-navbar.component.html',
   styleUrl: './front-navbar.component.scss'
 })
 export class FrontNavbarComponent {
   @Input() albums: string[] = [];
+  @Input() menus: MenuStructure = {};
+  @Input() sandboxMode: boolean = false;
+  NAVITEM_POSITION = NAVITEM_POSITION;
+  NAVITEM_TYPE = NAVITEM_TYPE;
+  NAVITEM_TYPES = Object.values(NAVITEM_TYPE);
+
   logged_member$: Observable<Member | null> = new Observable<Member | null>();
   user_accreditation: Accreditation | null = null;
   lastActiveNavItem: string = '';
   sidebarOpen = false;
   avatar$ !: Observable<string>;
-  add_menus: MenuStructure = {};
-    NAVITEM_POSITION = NAVITEM_POSITION;
-    NAVITEM_TYPE = NAVITEM_TYPE;
-     NAVITEM_TYPES = Object.values(NAVITEM_TYPE);
+ 
 
   constructor(
     private auth: AuthentificationService,
     private groupService: GroupService,
     private memberSettingsService: MemberSettingsService,
-    private navitemService : NavItemsService,
-  public sandboxService: SandboxService,
+
   ) { }
 
   ngOnInit(): void {
@@ -58,12 +59,7 @@ export class FrontNavbarComponent {
       }
     });
 
-    this.add_menus = this.navitemService.getMenuStructure();
-    // Subscribe sandbox mode to force navbar visual indicator refresh if needed
-    this.sandboxService.sandbox$.subscribe(() => {
-      // trigger change detection by simple assignment if menus depend on mode later
-      this.add_menus = this.navitemService.getMenuStructure();
-    });
+
   }
 
 

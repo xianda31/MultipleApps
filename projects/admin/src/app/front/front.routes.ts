@@ -12,6 +12,7 @@ import { CustomRouter } from './front/pages/custom-router/custom-router';
 import { TournamentsComponent } from '../common/tournaments/tournaments/tournaments.component';
 import { SettingsComponent } from '../common/members/settings/settings.component';
 import { BackAuthGuard } from '../back-auth.guard';
+import { ConnexionPageComponent } from '../common/authentification/connexion-page/connexion-page.component';
 
 
 
@@ -33,7 +34,7 @@ export const routes: Routes = [
       { path: 'achats/historique', component: PurchasesComponent },
       { path: 'achats/carte', component: GameCardsOwnedComponent },
       { path: 'albums/:snippet_id', component: Carousel, canActivate: [BackAuthGuard] },
-      { path: 'authentification', component: ConnexionComponent },
+      { path: 'connexion', component: ConnexionPageComponent},
       // { path: 'contacts', component: ContactsComponent },
       { path: '', redirectTo: 'home', pathMatch: 'full' },
       { path: '404', component: PageNotFoundComponent },

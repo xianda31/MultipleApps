@@ -22,7 +22,7 @@
       </div>
 
       <div class="row navbar-bg shadow px-2 align-items-center h-auto text-white flex-grow-1 g-0">
-        <app-front-navbar [albums]="albums"></app-front-navbar>
+        <app-front-navbar [menus]="add_menus" [sandboxMode]="sandbox" [albums]="albums"></app-front-navbar>
       </div>
 
     </div>
@@ -38,7 +38,8 @@
   <app-toaster></app-toaster>
 
 
-  <div class="offset-xl-1 col-xl-10 justify-content-center mt-1 main-content" style="overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none;">
+  <div class="offset-xl-1 col-xl-10 justify-content-center mt-1 main-content"
+    style="overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none;">
     <router-outlet></router-outlet>
   </div>
   <!-- <style>
@@ -62,7 +63,7 @@
         <p class="mb-0 text-muted">Tous droits réservés</p>
       </div>
       <div class="col-auto">
-         <a routerLink="legals" class="text-decoration-underline mb-0">Mentions légales</a>
+        <a routerLink="legals" class="text-decoration-underline mb-0">Mentions légales</a>
       </div>
     </div>
 
@@ -75,7 +76,7 @@
 </div>
 
 <style>
-    body {
-      overflow-y: hidden !important;
-    }
-  </style>
+  body {
+    overflow-y: hidden !important;
+  }
+</style>

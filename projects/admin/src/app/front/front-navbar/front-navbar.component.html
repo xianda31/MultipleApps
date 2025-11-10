@@ -8,7 +8,7 @@
 
     <div class="collapse navbar-collapse d-none d-md-flex align-items-center position-relative">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <!-- <li class="nav-item"><a class="nav-link" routerLink="home">Accueil</a></li> -->
+     
         <!-- test addmenu -->
         <ng-container *ngTemplateOutlet="testmenu"></ng-container>
 
@@ -56,12 +56,10 @@
           <a class="nav-link" routerLink="../back">Back office</a>
         </li>
 
-        <li *ngIf="!(logged_member$ | async)" class="nav-item">
-          <button class="btn btn-sm btn-sepia shadow-sm" type="button" data-bs-toggle="offcanvas"
-            data-bs-target="#loggingOffCanvas" aria-controls="loggingOffCanvas">
-            Espace membre
-          </button>
+        <li *ngIf="!(logged_member$ | async)" class="nav-item ">
+          <a class="nav-link" routerLink="connexion">Espace membre</a>
         </li>
+
         <li *ngIf="logged_member$ | async as member" ngbDropdown class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" ngbDropdownToggle id="userDropdown">
             <img *ngIf="member.has_avatar" [src]="avatar$ | async" alt="avatar" class="rounded-circle"
@@ -76,7 +74,7 @@
       </ul>
     </div>
 
-    <!-- Sidebar for mobile -->
+  <!-- Sidebar for mobile -->
     <div class="offcanvas offcanvas-start d-md-none bg-white text-dark align-items-start " tabindex="-1"
       id="sidebarMenu" aria-labelledby="sidebarMenuLabel">
       <div class="offcanvas-header">
@@ -84,15 +82,13 @@
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
       </div>
       <div class="offcanvas-body">
+  
         <ul class="navbar-nav">
-          <li *ngIf="!(logged_member$ | async)" class="nav-item mb-2">
-            <button class="btn btn-sm btn-secondary shadow-sm w-100" type="button" data-bs-toggle="offcanvas"
-              data-bs-target="#loggingOffCanvas" aria-controls="loggingOffCanvas">
-              Espace membre
-            </button>
+
+          <li *ngIf="!(logged_member$ | async)" class="nav-item" data-bs-dismiss="offcanvas">
+            <a class="nav-link" routerLink="connexion">Espace membre</a>
           </li>
-        </ul>
-        <ul class="navbar-nav">
+
           <li *ngIf="logged_member$ | async as member" ngbDropdown class="nav-item dropdown mb-2">
             <a class="nav-link dropdown-toggle" ngbDropdownToggle id="userDropdownMobile">{{member.firstname}}</a>
             <ul ngbDropdownMenu class="dropdown-menu" aria-labelledby="userDropdownMobile">
@@ -101,7 +97,7 @@
               </li>
             </ul>
           </li>
-          <!-- <li class="nav-item"><a class="nav-link" routerLink="home" data-bs-dismiss="offcanvas">Accueil</a></li> -->
+
           <li ngbDropdown class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" ngbDropdownToggle id="clubDropdownMobile">Le Club</a>
             <ul ngbDropdownMenu class="dropdown-menu" aria-labelledby="clubDropdownMobile">
@@ -152,28 +148,20 @@
     </div>
 
     <!-- Sandbox badge pushed to the far right inside navbar container -->
-    <div *ngIf="sandboxService.value" class="sandbox-badge ms-auto" aria-label="Mode sandbox">SANDBOX</div>
+    <span *ngIf="sandboxMode" class="badge rounded-pill text-bg-warning ms-auto sandbox-badge" aria-label="Mode sandbox">
+      SANDBOX
+    </span>
   </div>
 </nav>
 
 
 
 
-<div class="offcanvas offcanvas-end" data-bs-backdrop="static" tabindex="-1" id="loggingOffCanvas"
-  aria-labelledby="staticBackdropLabel">
-  <div class="offcanvas-header">
-    <h5 class="offcanvas-title" id="staticBackdropLabel">Se connecter</h5>
-    <button (click)="onCanvasClose()" type="button" class="btn-close" data-bs-dismiss="offcanvas"
-      aria-label="Close"></button>
-  </div>
-  <div class="offcanvas-body">
-    <app-connexion></app-connexion>
-  </div>
-</div>
+<!-- Offcanvas moved inside app-connexion-menu component -->
 
 
 <ng-template #testmenu>
-  <ng-container *ngFor="let entry of add_menus | keyvalue">
+  <ng-container *ngFor="let entry of menus | keyvalue">
     <ng-container *ngIf="entry.value.parent.position === NAVITEM_POSITION.NAVBAR">
       <!-- Dropdown parent only if it actually has children; otherwise fall back to a simple link -->
       <ng-container
