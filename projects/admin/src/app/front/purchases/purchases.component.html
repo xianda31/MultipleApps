@@ -1,45 +1,48 @@
 <div class="offset-md-1 col-md-10 offset-xl-3 col-xl-6 mt-3 ">
-    <div *ngIf="achats_ventes && achats_ventes.length > 0" class="card nice-shadow">
-        <div class="card-body">
-            <strong class="card-title">
-                <i class="bi bi-cart"></i>
-                Achats de cette saison :</strong>
-            <table class="table  table-sm table-striped table-responsive">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Achat</th>
-                        <th>Remarque</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr *ngFor="let achat_vente of achats_ventes">
-                        <td>
-                            {{ achat_vente.date | date:'EEEE d MMMM':'':'fr-FR' }}
-                        </td>
-                        <td>
-                            <span *ngFor="let item of achat_vente.items">
-                                <span *ngIf="item.type === 'revenue'">
-                                    {{ item.description }} : {{ item.amount | currency:'EUR':'symbol':'1.2-2' }}
-                                </span>
-                            </span>
-                        </td>
-                        <td>
-                            <span *ngFor="let item of achat_vente.items">
-                                <span *ngIf="item.type === 'bancaire'">
-                                    {{ item.description }} : {{ item.amount | currency:'EUR':'symbol':'1.2-2' }}
-                                </span>
-                            </span>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+    @if (achats_ventes && achats_ventes.length > 0) {
+    <div class="card-body">
+        <strong class="card-title">
+            <i class="bi bi-cart"></i>
+            Achats de cette saison :</strong>
+        <table class="table  table-sm table-striped table-responsive">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Achat</th>
+                    <th>Remarque</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (achat_vente of achats_ventes; track $index) {
+                <tr>
 
-            <div *ngIf="avoirs > 0" class="mt-2">
-                <strong>
-                    <i class="bi bi-wallet2"></i>
-                    Vous disposez d'un avoir de {{ avoirs | currency:'EUR':'symbol':'1.2-2' }}</strong>
-            </div>
-        </div>
+                    <td>
+                        {{ achat_vente.date | date:'EEEE d MMMM':'':'fr-FR' }}
+                    </td>
+                    <td>
+                        @for (item of achat_vente.items; track $index) {
+                        @if (item.type === 'revenue') {
+                        {{ item.description }} : {{ item.amount | currency:'EUR':'symbol':'1.2-2' }}
+                        }
+                        }
+                    </td>
+                    <td>
+                        @for (item of achat_vente.items; track $index) {
+                        @if (item.type === 'bancaire') {
+                        {{ item.description }} : {{ item.amount | currency:'EUR':'symbol':'1.2-2' }}
+                        }
+                        }
+                    </td>
+                </tr>
+                }
+            </tbody>
+        </table>
+
+        @if (avoirs > 0) {
+        <strong>
+            <i class="bi bi-wallet2"></i>
+            Vous disposez d'un avoir de {{ avoirs | currency:'EUR':'symbol':'1.2-2' }}</strong>
+        }
     </div>
+    }
 </div>

@@ -2,7 +2,8 @@
   <form [formGroup]="systemFormGroup">
     <!-- {{systemFormGroup.pristine}}
     {{systemFormGroup.touched}} -->
-    <div *ngIf="loaded" class="card mt-2">
+  @if (loaded) {
+  <div class="card mt-2">
       <div class="card-header">
         <div class="row justify-content-around">
           <div class="col-md-6">
@@ -69,16 +70,15 @@
 
                   </div>
                   <div class="card-body" formArrayName="fee_rates">
-
-                    <div *ngFor="let fee of fee_rates.controls; let i = index" >
-                      <div class="col input-group "formGroupName  ="{{i}}">
-                      <input class="input-group-text" style="min-width: 100px; text-align: center;" formControlName="key" readonly>
-                      <span class="input-group-text">adhérent</span>
-                      <input type="number" class="form-control" formControlName="member_price">
-                      <span class="input-group-text">non adhérent</span>
-                      <input type="number" class="form-control" formControlName="non_member_price">
+                    @for (fee of fee_rates.controls; let i = $index; track i) {
+                      <div class="col input-group" [formGroupName]="i">
+                        <input class="input-group-text" style="min-width: 100px; text-align: center;" formControlName="key" readonly>
+                        <span class="input-group-text">adhérent</span>
+                        <input type="number" class="form-control" formControlName="member_price">
+                        <span class="input-group-text">non adhérent</span>
+                        <input type="number" class="form-control" formControlName="non_member_price">
                       </div>
-                    </div>
+                    }
 
 
                   </div>
@@ -170,19 +170,20 @@
                 </div>
               </h6>
               <div class="card-body" formGroupName="revenue_and_expense_tree">
-                <div *ngFor="let section of sections.controls">
+                @for (section of sections.controls; track $index) {
                   <h6 class="col-2"> {{section.get('description')?.value }}</h6>
                   <div class="row my-2 offset-2">
                     <div class="col-6">
                       <div class="card h-100 bg-body-secondary" formArrayName="expenses">
                         <div class="card-body">
-                          <div *ngFor="let expense of expenses.controls; let i = index">
-                            <div class="input-group" [formGroupName]=" i"
-                              *ngIf="expense.get('section')?.value === section.get('key')?.value">
+                          @for (expense of expenses.controls; let i = $index; track i) {
+                            @if (expense.get('section')?.value === section.get('key')?.value) {
+                            <div class="input-group" [formGroupName]="i">
                               <input type="text" class="form-control w-25" formControlName="key">
                               <input type="text" class="form-control w-75" formControlName="description">
                             </div>
-                          </div>
+                            }
+                          }
                         </div>
                       </div>
                     </div>
@@ -190,18 +191,19 @@
                     <div class="col-6">
                       <div class="card h-100 bg-body-tertiary" formArrayName="revenues">
                         <div class="card-body">
-                          <div *ngFor="let revenue of revenues.controls; let i = index">
-                            <div class="input-group" [formGroupName]=" i"
-                              *ngIf="revenue.get('section')?.value === section.get('key')?.value">
+                          @for (revenue of revenues.controls; let i = $index; track i) {
+                            @if (revenue.get('section')?.value === section.get('key')?.value) {
+                            <div class="input-group" [formGroupName]="i">
                               <input type="text" class="form-control w-25" formControlName="key">
                               <input type="text" class="form-control w-75" formControlName="description">
                             </div>
-                          </div>
+                            }
+                          }
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                }
 
               </div>
             </div>
@@ -210,13 +212,15 @@
             <h6 class="card-header">codes banques</h6>
             <div class="card-body">
               <div class="row " formArrayName="banks">
-                <div class="col-md-4" *ngFor="let bank of banks.controls; let i = index">
-                  <div class="input-group" [formGroupName]=" i">
+                @for (bank of banks.controls; let i = $index; track i) {
+                <div class="col-md-4">
+                  <div class="input-group" [formGroupName]="i">
                     <span class="input-group-text">#</span>
                     <input type="text" class="form-control" formControlName="key">
                     <input type="text" class="form-control" formControlName="name">
                   </div>
                 </div>
+                }
               </div>
             </div>
           </div>
@@ -245,5 +249,6 @@
         </div>
       </div>
     </div>
+    }
   </form>
 </div>

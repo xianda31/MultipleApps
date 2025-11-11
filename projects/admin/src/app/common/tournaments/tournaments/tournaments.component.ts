@@ -8,6 +8,7 @@ import { TitleService } from '../../../front/title/title.service';
 
 @Component({
   selector: 'app-tournaments',
+  standalone: true,
   imports: [RouterModule, CommonModule],
   templateUrl: './tournaments.component.html',
   styleUrls: ['./tournaments.component.scss']

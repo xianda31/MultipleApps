@@ -27,11 +27,11 @@
 
 <ng-template #show_routes>
     <h5>Routes front-end</h5>
-    <div *ngFor="let route of front_routes[0]?.children">
+    @for (route of front_routes[0].children; track route.path) {
         <strong>Path:</strong> {{ route.path }}
-        <strong *ngIf="route.component">:</strong> {{ route.component?.name }}
-        <strong *ngIf="route.data">:</strong> {{ route.data | json }}
-    </div>
+    @if (route.component) {<strong>:</strong> {{ route.component.name }} }
+        @if (route.data) {<strong>:</strong> {{ route.data | json }} }
+    }
 </ng-template>
 
 <ng-template #navbar_simulation>
@@ -44,11 +44,10 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav" cdkDropList [cdkDropListData]="navbarEntries" (cdkDropListDropped)="dropParent($event)">
-                    <ng-container *ngFor="let entry of navbarEntries">
-                        <ng-container *ngIf="entry.parent.position === NAVITEM_POSITION.NAVBAR">
+                    @for (entry of navbarEntries; track entry.parent.id) {
+                        @if (entry.parent.position === NAVITEM_POSITION.NAVBAR) {
                             <!-- Dropdown parent only if it actually has children; otherwise fall back to a simple link -->
-                            <ng-container
-                                *ngIf="entry.parent.type === NAVITEM_TYPE.DROPDOWN && (entry.childs.length || 0) > 0; else simpleLink">
+                            @if (entry.parent.type === NAVITEM_TYPE.DROPDOWN && (entry.childs.length || 0) > 0) {
                                 <li class="nav-item dropdown ms-3 d-flex align-items-center" ngbDropdown cdkDrag>
                                     <span class="drag-handle me-1" cdkDragHandle><i class="bi bi-grip-vertical text-muted"></i></span>
                                     <button class="nav-link dropdown-toggle btn btn-link p-0" type="button"
@@ -59,17 +58,16 @@
                                         [attr.aria-labelledby]="'nav-' + entry.parent.id" cdkDropList
                                         [cdkDropListData]="entry.childs"
                                         (cdkDropListDropped)="dropChild($event, entry.parent)">
-                                        <button class="dropdown-item d-flex align-items-center gap-2"
-                                            *ngFor="let child of entry.childs" type="button"
+                                        @for (child of entry.childs; track child.id) {
+                                        <button class="dropdown-item d-flex align-items-center gap-2" type="button"
                                             (click)="show_page(child)" cdkDrag>
                                             <i class="bi bi-grip-vertical text-muted" cdkDragHandle></i>
                                             <span>{{ child.label }}</span>
                                         </button>
+                                        }
                                     </div>
                                 </li>
-                            </ng-container>
-                            <!-- Simple link parent (no dropdown) -->
-                            <ng-template #simpleLink>
+                            } @else {
                                 <li class="nav-item ms-3 d-flex align-items-center" cdkDrag>
                                     <span class="drag-handle me-1" cdkDragHandle><i class="bi bi-grip-vertical text-muted"></i></span>
                                     <button class="nav-link btn btn-link p-0" type="button"
@@ -77,9 +75,9 @@
                                         {{ entry.parent.label }}
                                     </button>
                                 </li>
-                            </ng-template>
-                        </ng-container>
-                    </ng-container>
+                            }
+                        }
+                    }
                 </ul>
             </div>
         </div>
@@ -91,12 +89,12 @@
     <div class="alert alert-secondary" role="alert">
         {{ front_route_verbose }}
 
-        <div *ngIf="selected_page">
+        @if (selected_page) {
             <h5>Page sélectionnée :</h5>
             <p><strong>Titre :</strong> {{ selected_page.title }}</p>
             <p><strong>Contenu :</strong></p>
             <!-- <div [innerHTML]="stringToSafeHtml(selected_page.content)"></div> -->
-        </div>
+        }
     </div>
 </ng-template>
 
@@ -114,7 +112,7 @@
             </tr>
         </thead>
         <tbody>
-            <ng-container *ngFor="let entry of menus | keyvalue : compareMenuEntries; let i = index">
+            @for (entry of menus | keyvalue : compareMenuEntries; let i = $index; track entry.key) {
                 <!-- Parent row -->
                 <tr>
                     <td>{{ i + 1 }}</td>
@@ -126,7 +124,8 @@
                     <td><i (click)="editNavitem(entry.value.parent)" class="bi bi-pencil-square" role="button" title="Éditer"></i></td>
                 </tr>
                 <!-- Child rows -->
-                <tr *ngFor="let child of entry.value.childs; let j = index">
+                @for (child of entry.value.childs; let j = $index; track child.id) {
+                <tr>
                     <td>{{ i + 1 }}.{{ j + 1 }}</td>
                     <td class="ps-4"> {{ child.label }}</td>
                     <td>{{ child.type }}</td>
@@ -135,7 +134,8 @@
                     <td class="d-none d-sm-table-cell">{{ child.type === NAVITEM_TYPE.CUSTOM_PAGE ? child.page_title : '' }}</td>
                     <td><i (click)="editNavitem(child)" class="bi bi-pencil-square" role="button" title="Éditer"></i></td>
                 </tr>
-            </ng-container>
+                }
+            }
         </tbody>
         <tbody>
             <tr>
@@ -165,7 +165,7 @@
                 <div class="col-6">
                     <label class="form-label">Position</label>
                     <select class="form-select" formControlName="position">
-                        <option *ngFor="let pos of NAVITEM_POSITIONS" [ngValue]="pos">{{ pos }}</option>
+                        @for (pos of NAVITEM_POSITIONS; track pos) {<option [ngValue]="pos">{{ pos }}</option>}
                     </select>
                 </div>
             </div>
@@ -174,15 +174,16 @@
                 <div class="col-6">
                     <label class="form-label">Type</label>
                     <select class="form-select" formControlName="type">
-                        <option *ngFor="let t of NAVITEM_TYPES" [ngValue]="t">{{ t }}</option>
+                        @for (t of NAVITEM_TYPES; track t) {<option [ngValue]="t">{{ t }}</option>}
                     </select>
                 </div>
                 <div class="col-6">
                     <label class="form-label">Parent (Dropdown)</label>
                     <select class="form-select" formControlName="parent_id">
                         <option [ngValue]="null">Aucun</option>
-                        <option *ngFor="let n of navitems" [ngValue]="n.id" [hidden]="n.type !== NAVITEM_TYPE.DROPDOWN">
-                            {{ n.path }}</option>
+                        @for (n of navitems; track n.id) {
+                        <option [ngValue]="n.id" [hidden]="n.type !== NAVITEM_TYPE.DROPDOWN">{{ n.path }}</option>
+                        }
                     </select>
                 </div>
             </div>
@@ -203,30 +204,30 @@
                 </div>
             </div>
 
-            <div class="row g-2" *ngIf="navItemForm.get('type')?.value === NAVITEM_TYPE.EXTERNAL_REDIRECT">
+            @if (navItemForm.get('type')?.value === NAVITEM_TYPE.EXTERNAL_REDIRECT) {
                 <div class="col-12">
                     <label class="form-label">URL externe</label>
                     <input type="url" class="form-control" formControlName="external_url" placeholder="https://..." />
                 </div>
-            </div>
+            }
 
-            <div class="row g-2" *ngIf="navItemForm.get('type')?.value === NAVITEM_TYPE.PLUGIN">
+            @if (navItemForm.get('type')?.value === NAVITEM_TYPE.PLUGIN) {
                 <div class="col-12">
                     <label class="form-label">Plug-in</label>
                     <select class="form-select" formControlName="plugin_name">
-                        <option *ngFor="let p of NAVITEM_PLUGINS" [ngValue]="p">{{ p }}</option>
+                        @for (p of NAVITEM_PLUGINS; track p) {<option [ngValue]="p">{{ p }}</option>}
                     </select>
                 </div>
-            </div>
+            }
 
-            <div class="row g-2" *ngIf="navItemForm.get('type')?.value === NAVITEM_TYPE.CUSTOM_PAGE">
+            @if (navItemForm.get('type')?.value === NAVITEM_TYPE.CUSTOM_PAGE) {
                 <div class="col-12">
                     <label class="form-label">Page</label>
                     <select class="form-select" formControlName="page_id">
-                        <option *ngFor="let pg of pages" [ngValue]="pg.id">{{ pg.title }}</option>
+                        @for (pg of pages; track pg.id) {<option [ngValue]="pg.id">{{ pg.title }}</option>}
                     </select>
                 </div>
-            </div>
+            }
 
             <div class="d-flex gap-2 justify-content-end mt-3">
                 <button type="button" class="btn btn-outline-secondary" (click)="offcanvas.dismiss()">Annuler</button>

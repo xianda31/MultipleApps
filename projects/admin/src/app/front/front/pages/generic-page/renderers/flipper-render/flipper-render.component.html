@@ -1,11 +1,11 @@
 <div class="flipper-wrapper">
   <div class="row offset-sm-3 col-sm-6 p-2">
     <div class="snippet-rotator">
-      <ng-container *ngFor="let snippet of snippets; let i = index; trackBy: trackById">
+      @for (snippet of snippets; let i = $index; track snippet.id) {
         <div class="rotating-snippet" [class.show]="i === currentIndex" [class.hide]="i !== currentIndex"
           [style.transition]="'transform ' + rotationDurationSec + ' cubic-bezier(.68,-0.55,.27,1.55), opacity ' + rotationDurationSec">
 
-          <ng-container *ngIf="CARD_STYLE === 'lateral'; else topStyle">
+          @if (CARD_STYLE === 'lateral') {
             <div class="card w-100 h-100 border-0">
               <div class="row g-0 h-100">
                 <div class="col-4 d-flex align-items-center justify-content-center p-2">
@@ -23,9 +23,7 @@
                 </div>
               </div>
             </div>
-          </ng-container>
-
-          <ng-template #topStyle>
+          } @else {
             <div class="card w-100 h-100 border-0">
               <img [src]="snippet.image_url" class="mg-fluid rounded-start" alt="{{snippet.title}}"
                 style="max-width:100%; max-height:10vh;  object-fit:cover">
@@ -36,9 +34,9 @@
                 </div>
               </div>
             </div>
-          </ng-template>
+          }
 
         </div>
-      </ng-container>
+      }
     </div>
   </div>

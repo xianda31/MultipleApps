@@ -1,4 +1,5 @@
-<div *ngIf="loaded" class="offset-xl-2 col-xl-8 px-2 mt-3">
+<div class="offset-xl-2 col-xl-8 px-2 mt-3">
+    @if (loaded) {
     <h5>Contrôle de cohérence des payments licences et adhésions</h5>
 
     <div class="row row-cols-1 row-cols-md-2 g-3 mt-2">
@@ -9,12 +10,17 @@
                     Licences perçues à enregistrer à la FFB
                 </div>
                 <div class="card-body">
-                    <ul *ngIf="collectedLicenses.length > 0">
-                        <li *ngFor="let full_name of collectedLicenses">{{full_name}}</li>
+                    @if (collectedLicenses.length > 0) {
+                    <ul>
+                        @for (full_name of collectedLicenses; track full_name) {
+                        <li>{{full_name}}</li>
+                        }
                     </ul>
-                    <div *ngIf="collectedLicenses.length === 0" class="text-muted">
+                    } @else {
+                    <div class="text-muted">
                         <i class="bi bi-check-circle"></i> Toutes les licences perçues ont été déclarées à la FFB
                     </div>
+                    }
                 </div>
             </div>
         </div>
@@ -25,19 +31,23 @@
                     Adhérents à éventuellement déclarer à la FFB
                 </div>
                 <div class="card-body ">
-                    <ul *ngIf="membersNotDeclaredAtFFB.length > 0">
-                        <li *ngFor="let member of membersNotDeclaredAtFFB">
-                         <span [class]="member.license_number !== 'none' ? 'fw-bold' : ''">{{member.full_name}}</span>
-                         <span *ngIf="member.license_number !== 'none'" >  ({{member.license_number}})</span>   
+                    @if (membersNotDeclaredAtFFB.length > 0) {
+                    <ul>
+                        @for (member of membersNotDeclaredAtFFB; track member.full_name) {
+                        <li>
+                            <span [class]="member.license_number !== 'none' ? 'fw-bold' : ''">{{member.full_name}}</span>
+                            @if (member.license_number !== 'none') { <span> ({{member.license_number}})</span> }
                         </li>
+                        }
                     </ul>
-                    <div *ngIf="membersToBeDeclaredAtFFB_nbr === 0" class="text-muted">
+                    } @else {
+                    <div class="text-muted">
                         <i class="bi bi-check-circle"></i> Toutes les adhérents déclarables à la FFB ont été déclarés
                     </div>
+                    }
                 </div>
             </div>
         </div>
-        
         <div class="col">
             <div [class]="' card nice_shadow h-100 ' + (missingMembership.length > 0 ? 'border-danger' : '')">
                 <div class="card-header">
@@ -45,13 +55,18 @@
                     licenciés FFB n'ayant pas réglé leur adhésion
                 </div>
                 <div class="card-body">
-                    <ul *ngIf="missingMembership.length > 0">
-                        <li *ngFor="let full_name of missingMembership">{{full_name}}</li>
+                    @if (missingMembership.length > 0) {
+                    <ul>
+                        @for (full_name of missingMembership; track full_name) {
+                        <li>{{full_name}}</li>
+                        }
                     </ul>
-                    <div *ngIf="missingMembership.length === 0" class="text-muted">
+                    } @else {
+                    <div class="text-muted">
                         <i class="bi bi-check-circle"></i> Tous les membres déclarés à la FFB sont à jour de leur
                         adhésion
                     </div>
+                    }
                 </div>
             </div>
         </div>
@@ -62,13 +77,18 @@
                     membres achetant sans avoir réglé leur adhésion
                 </div>
                 <div class="card-body">
-                    <ul *ngIf="buyWithoutMembership.length > 0">
-                        <li *ngFor="let full_name of buyWithoutMembership">{{full_name}}</li>
+                    @if (buyWithoutMembership.length > 0) {
+                    <ul>
+                        @for (full_name of buyWithoutMembership; track full_name) {
+                        <li>{{full_name}}</li>
+                        }
                     </ul>
-                    <div *ngIf="buyWithoutMembership.length === 0" class="text-muted">
+                    } @else {
+                    <div class="text-muted">
                         <i class="bi bi-check-circle"></i> Tous les membres sont à jour de leur
                         adhésion
                     </div>
+                    }
                 </div>
             </div>
         </div>
@@ -106,27 +126,29 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr *ngFor="let achat_vente of achats_ventes">
+                                    @for (achat_vente of achats_ventes; track $index) {
+                                    <tr>
                                         <td>
                                             {{ achat_vente.date | date:'EEEE d MMMM y':'':'fr-FR' }}
                                         </td>
                                         <td>
-                                            <span *ngFor="let item of achat_vente.items">
-                                                <span *ngIf="item.type === 'revenue'">
+                                            @for (item of achat_vente.items; track $index) {
+                                                @if (item.type === 'revenue') {
                                                     {{ item.description }} : {{ item.amount |
                                                     currency:'EUR':'symbol':'1.2-2' }}
-                                                </span>
-                                            </span>
+                                                }
+                                            }
                                         </td>
                                         <td>
-                                            <span *ngFor="let item of achat_vente.items">
-                                                <span *ngIf="item.type === 'bancaire'">
+                                            @for (item of achat_vente.items; track $index) {
+                                                @if (item.type === 'bancaire') {
                                                     {{ item.description }} : {{ item.amount |
                                                     currency:'EUR':'symbol':'1.2-2' }}
-                                                </span>
-                                            </span>
+                                                }
+                                            }
                                         </td>
                                     </tr>
+                                    }
                                 </tbody>
                             </table>
                         </div>
@@ -142,9 +164,11 @@
                 <strong>Historique par compte de résultats</strong>
                 <select class="form-select form-select-sm d-inline w-auto ms-2" [(ngModel)]="selected_account"
                     (change)="onAccountKeyChange($event)">
-                    <option *ngFor="let account of accounts " [ngValue]="account">
+                    @for (account of accounts; track account.key) {
+                    <option [ngValue]="account">
                         {{ account.key }}
                     </option>
+                    }
                 </select>
                 <span class="text-muted ms-2">{{selected_account?.description}}</span>
             </div>
@@ -153,22 +177,27 @@
                     <thead class="bg-light" style="position: sticky; top: 0; z-index: 2;">
                         <tr>
                             <th>[{{selected_account?.key}}] Adhérents</th>
-                            <th *ngFor="let month of [7, 8, 9, 10, 11, 12,1, 2, 3, 4, 5, 6 ]" class="text-center">{{
-                                month < 10 ? ('0' + month) : month }}</th>
+                            @for (month of [7, 8, 9, 10, 11, 12,1, 2, 3, 4, 5, 6 ]; track $index) {
+                            <th class="text-center">{{ month < 10 ? ('0' + month) : month }}</th>
+                            }
                         </tr>
                     </thead>
-                    <tbody *ngIf="selected_account">
-                        <tr *ngFor="let payment of payments | keyvalue">
+                    @if (selected_account) {
+                    <tbody>
+                        @for (payment of payments | keyvalue; track payment.key) {
+                        <tr>
                             <td>
                                 {{ payment.key }}
                             </td>
-                            <ng-container>
-                                <td *ngFor="let month of [7, 8, 9, 10, 11, 12,1, 2, 3, 4, 5, 6 ] "
-                                    class="w-10 text-center">
-                                    <span *ngIf="payment.value[month]">{{ payment.value[month] }}</span>
-                                </td>
-                            </ng-container>
+                            @for (month of [7, 8, 9, 10, 11, 12,1, 2, 3, 4, 5, 6 ]; track $index) {
+                            <td class="w-10 text-center">
+                                @if (payment.value[month]) {<span>{{ payment.value[month] }}</span>}
+                            </td>
+                            }
+                        </tr>
+                        }
                     </tbody>
+                    }
 
                 </table>
 
@@ -176,4 +205,4 @@
 
         </div>
     </div>
-</div>
+}

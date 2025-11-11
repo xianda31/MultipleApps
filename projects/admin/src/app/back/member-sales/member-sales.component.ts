@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { tap, switchMap, catchError, of } from 'rxjs';
 import { Expense, Formatted_purchase, Revenue } from '../../common/interfaces/accounting.interface';
 import { SystemDataService } from '../../common/services/system-data.service';
@@ -10,7 +10,6 @@ import { FormsModule } from '@angular/forms';
 import { MembersService } from '../../common/services/members.service';
 import { Revenue_and_expense_definition } from '../../common/interfaces/system-conf.interface';
 import { FFB_proxyService } from '../../common/ffb/services/ffb.service';
-import { a } from '@aws-amplify/backend';
 
 interface Payment { [key: string]: number };
 

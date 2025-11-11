@@ -6,10 +6,9 @@
         <div class="input-group input-group-sm w-25">
             <span class="input-group-text">selectionner une page</span>
             <select class="form-select form-select-sm " [(ngModel)]="selected_pageTitle">
-                <!-- (change)="onPageTitleChange($event)"> -->
-                <option *ngFor="let title of pageTitles_but_BIN" [value]="title">
-                    {{ title }}
-                </option>
+                @for (title of pageTitles_but_BIN; track title) {
+                <option [value]="title">{{ title }}</option>
+                }
             </select>
         </div>
 
@@ -21,28 +20,29 @@
                     <!-- colonne page & snippets -->
                     <div class="col-12 col-sm-3 ">
 
-                        <div *ngFor="let page of pageGroups; let p = index" [formGroup]="page">
-                            @if (((p === bin_page_index) || page.get('title')?.value === selected_pageTitle) )
-                            {
+                        @for (page of pageGroups; let p = $index; track p) {
+                            @if (((p === bin_page_index) || page.get('title')?.value === selected_pageTitle)) {
+                            <div [formGroup]="page">
 
                             <div class="card nice_shadow mt-3">
                                 <div class="card-header">
                                     <!-- affichage titre(si ce n'est pas la poubelle) -->
-                                    <div *ngIf="!(p === bin_page_index)" class="col-auto">
+                                    @if (!(p === bin_page_index)) {
+                                    <div class="col-auto">
                                         <div class="col d-flex align-items-center">
                                             <i [class]="bin_empty ? 'bi bi-inbox' : 'bi-journal-richtext' "></i>
                                             <span class="ms-2">{{page.get('title')?.value}}</span>
                                         </div>
-
                                     </div>
-
-
-                                    <div *ngIf="(p === bin_page_index)" class="row align-items-start mb-2">
+                                    }
+                                    @if (p === bin_page_index) {
+                                    <div class="row align-items-start mb-2">
                                         <div class="col d-flex align-items-center">
                                             <i [class]="bin_empty ? 'bi bi-inbox' : 'bi bi-inbox-fill' "></i>
                                             <span class="ms-2">A traiter</span>
                                         </div>
                                     </div>
+                                    }
 
                                 </div>
                                 <div class="card-body">
@@ -51,48 +51,46 @@
 
                                     <!-- liste des snippets de la page -->
 
-                                    <table cdkDropList [id]="'dropList_' + p" cdkDropListOrientation="mixed"
-                                        (cdkDropListDropped)="dropSnippet($event, p)" cdkDropListGroup
-                                        [cdkDropListConnectedTo]="dropListIds"
-                                        class=" mt-4 table able-responsive table-sm table-striped">
+                                    <table cdkDropList [id]="'dropList_' + p" cdkDropListOrientation="mixed" (cdkDropListDropped)="dropSnippet($event, p)" cdkDropListGroup [cdkDropListConnectedTo]="dropListIds" class=" mt-4 table able-responsive table-sm table-striped">
                                         <tbody>
-                                            <tr *ngFor="let snippet of page.get('snippets')?.value" cdkDrag>
+                                            @for (snippet of page.get('snippets')?.value; track snippet.id) {
+                                            <tr cdkDrag>
                                                 <td (mouseenter)="onHover(snippet)" (click)="onSnippetClick(snippet)">
                                                     {{snippet.title}}
                                                 </td>
                                                 <td (mouseenter)="onHover(snippet)" (click)="onSnippetClick(snippet)">
                                                     {{snippet.subtitle}}
                                                 </td>
-                                                <td *ngIf="!(p === bin_page_index)" class="text-center"><i
-                                                        (click)="cutSnippet(p,snippet)" class="bi bi-inbox"></i></td>
-                                                <td *ngIf="(p === bin_page_index)" class="text-center"><i
-                                                        (click)="deleteSnippet(p,snippet)" class="bi bi-trash"></i>
-                                                </td>
+                                                @if (!(p === bin_page_index)) {
+                                                <td class="text-center"><i (click)="cutSnippet(p,snippet)" class="bi bi-inbox"></i></td>
+                                                } @else {
+                                                <td class="text-center"><i (click)="deleteSnippet(p,snippet)" class="bi bi-trash"></i></td>
+                                                }
                                             </tr>
+                                            }
                                         </tbody>
-                                        <tfoot *ngIf="!(p === bin_page_index)">
+                                        @if (!(p === bin_page_index)) {
+                                        <tfoot>
                                             <tr>
-                                                <td colspan="2" class="text-end text-muted ">
-                                                    <small> ajouter un article </small>
-                                                </td>
-                                                <td class="text-center text-secondary">
-                                                    <i (click)="addWhiteSnippet(page)" class="bi bi-plus-square-fill">
-                                                    </i>
-                                                </td>
+                                                <td colspan="2" class="text-end text-muted "><small> ajouter un article </small></td>
+                                                <td class="text-center text-secondary"><i (click)="addWhiteSnippet(page)" class="bi bi-plus-square-fill"></i></td>
                                             </tr>
                                         </tfoot>
+                                        }
                                     </table>
                                 </div>
                             </div>
+                            </div>
                             }
-                        </div>
+                        }
 
 
 
                     </div>
 
                     <!-- colonne preview -->
-                    <div *ngIf="selected_pageTitle" class="col-12 col-sm-6 ">
+                    @if (selected_pageTitle) {
+                    <div class="col-12 col-sm-6 ">
                         <div class="card nice_shadow mt-3">
                             <div class="card-header">
                                 <div class="d-flex">
@@ -101,21 +99,23 @@
                                     </div>
                                     <div class="col">
 
-                                        <div *ngFor="let page of pageGroups;" [formGroup]="page">
-                                            <div *ngIf="(page.get('title')?.value === selected_pageTitle)"
-                                                class="col-auto">
+                                        @for (page of pageGroups; track $index) {
+                                        <div [formGroup]="page">
+                                            @if (page.get('title')?.value === selected_pageTitle) {
+                                            <div class="col-auto">
                                                 <div class="input-group input-group-sm ">
                                                     <span class="input-group-text">Présentation</span>
                                                     <select class="form-select form-select-sm"
                                                         formControlName="template" (change)="savePage(page)">
-                                                        <option *ngFor="let template of pageTemplates"
-                                                            [value]="template">
-                                                            {{template}}
-                                                        </option>
+                                                        @for (template of pageTemplates; track template) {
+                                                        <option [value]="template">{{template}}</option>
+                                                        }
                                                     </select>
                                                 </div>
                                             </div>
+                                            }
                                         </div>
+                                        }
                                     </div>
                                 </div>
                             </div>
@@ -126,6 +126,7 @@
                             </div>
                         </div>
                     </div>
+                    }
 
                     <!-- affichage snippet sélectionné -->
 
@@ -137,16 +138,16 @@
                                     <div class="flex-grow-1">
                                         Paramètrage paragraphe
                                     </div>
-                                    <span class="col ms-auto text-end me-2"><i (click)="snippetFreezed = !snippetFreezed"
-                                            *ngIf="snippetFreezed" class="bi bi-pin-angle-fill"></i>
+                                    <span class="col ms-auto text-end me-2">
+                                        @if (snippetFreezed) {<i (click)="snippetFreezed = !snippetFreezed" class="bi bi-pin-angle-fill"></i>}
                                     </span>
                                 </div>
                                 <div class="card-body">
                                     <app-snippet-editor [snippet]="selected_snippet"></app-snippet-editor>
                                 </div>
                             </div>
-                            </div>
-                            }
+                        </div>
+                        }
                         </div>
                     </div>
 

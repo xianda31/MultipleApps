@@ -9,8 +9,8 @@
     <div class="collapse navbar-collapse d-none d-md-flex align-items-center position-relative">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
      
-        <!-- test addmenu -->
-        <ng-container *ngIf="active_menu_editor"><ng-container *ngTemplateOutlet="testmenu"></ng-container></ng-container>
+  <!-- test addmenu -->
+  @if (active_menu_editor) {<ng-container *ngTemplateOutlet="testmenu"></ng-container>}
 
 
         <li ngbDropdown class="nav-item dropdown">
@@ -40,7 +40,8 @@
           </ul>
         </li>
 
-        <li *ngIf="logged_member$ | async as member" ngbDropdown class="nav-item dropdown">
+        @if (logged_member$ | async; as member) {
+        <li ngbDropdown class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" ngbDropdownToggle id="achatsDropdown">Mes achats</a>
           <ul ngbDropdownMenu class="dropdown-menu" aria-labelledby="achatsDropdown">
             <li><a class="dropdown-item" routerLink="achats/historique">Mon relevé</a></li>
@@ -48,22 +49,30 @@
             </li>
           </ul>
         </li>
+        }
 
-        <li *ngIf="logged_member$ | async as member" class="nav-item"><a class="nav-link" routerLink="albums">Les
-            albums</a></li>
+        @if (logged_member$ | async) {
+          <li class="nav-item"><a class="nav-link" routerLink="albums">Les
+              albums</a></li>
+        }
 
-        <li *ngIf="user_accreditation && user_accreditation.level > 0" class="nav-item">
+        @if (user_accreditation && user_accreditation.level > 0) {
+        <li class="nav-item">
           <a class="nav-link" routerLink="../back">Back office</a>
         </li>
+        }
 
-        <li *ngIf="!(logged_member$ | async)" class="nav-item ">
+        @if (!(logged_member$ | async)) {
+        <li class="nav-item ">
           <a class="nav-link" routerLink="connexion">Espace membre</a>
         </li>
+        }
 
-        <li *ngIf="logged_member$ | async as member" ngbDropdown class="nav-item dropdown">
+        @if (logged_member$ | async; as member) {
+        <li ngbDropdown class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" ngbDropdownToggle id="userDropdown">
-            <img *ngIf="member.has_avatar" [src]="avatar$ | async" alt="avatar" class="rounded-circle"
-              style="width:28px; height:28px; max-width:28px; max-height:28px; object-fit:cover">
+            @if (member.has_avatar) {<img [src]="avatar$ | async" alt="avatar" class="rounded-circle"
+              style="width:28px; height:28px; max-width:28px; max-height:28px; object-fit:cover">}
             {{member.firstname}}</a>
           <ul ngbDropdownMenu class="dropdown-menu" aria-labelledby="userDropdown">
             <li><a class="dropdown-item" routerLink="my_settings">mes préférences</a></li>
@@ -71,6 +80,7 @@
             <li><a class="dropdown-item" (click)="signOut()"><i class="bi bi-box-arrow-right"></i> Déconnexion</a></li>
           </ul>
         </li>
+        }
       </ul>
     </div>
 
@@ -85,11 +95,14 @@
   
         <ul class="navbar-nav">
 
-          <li *ngIf="!(logged_member$ | async)" class="nav-item" data-bs-dismiss="offcanvas">
+          @if (!(logged_member$ | async)) {
+          <li class="nav-item" data-bs-dismiss="offcanvas">
             <a class="nav-link" routerLink="connexion">Espace membre</a>
           </li>
+          }
 
-          <li *ngIf="logged_member$ | async as member" ngbDropdown class="nav-item dropdown mb-2">
+          @if (logged_member$ | async; as member) {
+          <li ngbDropdown class="nav-item dropdown mb-2">
             <a class="nav-link dropdown-toggle" ngbDropdownToggle id="userDropdownMobile">{{member.firstname}}</a>
             <ul ngbDropdownMenu class="dropdown-menu" aria-labelledby="userDropdownMobile">
               <li><a class="dropdown-item" routerLink="ffb_dashboard">FFB : tableau de bord</a></li>
@@ -97,6 +110,7 @@
               </li>
             </ul>
           </li>
+          }
 
           <li ngbDropdown class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" ngbDropdownToggle id="clubDropdownMobile">Le Club</a>
@@ -126,7 +140,8 @@
                   target="_blank" rel="noopener">Roy René : résultats récents</a></li>
             </ul>
           </li>
-          <li *ngIf="logged_member$ | async " ngbDropdown class="nav-item dropdown">
+          @if (logged_member$ | async) {
+          <li ngbDropdown class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" ngbDropdownToggle id="achatsDropdownMobile">Mes achats</a>
             <ul ngbDropdownMenu class="dropdown-menu" aria-labelledby="achatsDropdownMobile">
               <li><a class="dropdown-item" routerLink="achats/historique" data-bs-dismiss="offcanvas">Mon relevé</a>
@@ -135,22 +150,29 @@
               </li>
             </ul>
           </li>
+          }
 
-          <li *ngIf="logged_member$ | async " class="nav-item"><a class="nav-link" routerLink="albums"
+          @if (logged_member$ | async) {
+            <li class="nav-item"><a class="nav-link" routerLink="albums"
               data-bs-dismiss="offcanvas">Les albums</a></li>
+          }
 
-          <li *ngIf=" user_accreditation && user_accreditation.level > 0" class="nav-item">
+          @if ( user_accreditation && user_accreditation.level > 0) {
+          <li class="nav-item">
             <a class="nav-link" routerLink="../back" data-bs-dismiss="offcanvas">Back office</a>
           </li>
+          }
 
         </ul>
       </div>
     </div>
 
     <!-- Sandbox badge pushed to the far right inside navbar container -->
-    <span *ngIf="sandboxMode" class="badge rounded-pill text-bg-warning ms-auto sandbox-badge" aria-label="Mode sandbox">
-      SANDBOX
-    </span>
+    @if (sandboxMode) {
+      <span class="badge rounded-pill text-bg-warning ms-auto sandbox-badge" aria-label="Mode sandbox">
+        SANDBOX
+      </span>
+    }
   </div>
 </nav>
 
@@ -161,32 +183,32 @@
 
 
 <ng-template #testmenu>
-  <ng-container *ngFor="let entry of menus | keyvalue">
-    <ng-container *ngIf="entry.value.parent.position === NAVITEM_POSITION.NAVBAR">
+  @for (entry of menus | keyvalue; track entry.key) {
+    @if (entry.value.parent.position === NAVITEM_POSITION.NAVBAR) {
       <!-- Dropdown parent only if it actually has children; otherwise fall back to a simple link -->
-      <ng-container
-  *ngIf="entry.value.parent.type === NAVITEM_TYPE.DROPDOWN && (entry.value.childs.length || 0) > 0; else simpleLink">
+      @if (entry.value.parent.type === NAVITEM_TYPE.DROPDOWN && (entry.value.childs.length || 0) > 0) {
         <li class="nav-item dropdown ms-3" ngbDropdown>
           <button class="nav-link dropdown-toggle btn btn-link p-0" type="button" ngbDropdownToggle
             id="nav-{{ entry.key }}">
             {{ entry.value.parent.label }}
           </button>
-          <div class="dropdown-menu" ngbDropdownMenu [attr.aria-labelledby]="'nav-' + entry.key"             >
-            <button class="dropdown-item d-flex align-items-center gap-2" *ngFor="let child of entry.value.childs"
-              type="button" [routerLink]= "child.path " >
-              <span>{{ child.label }}</span>
-            </button>
+          <div class="dropdown-menu" ngbDropdownMenu [attr.aria-labelledby]="'nav-' + entry.key">
+            @for (child of entry.value.childs; track $index) {
+              <button class="dropdown-item d-flex align-items-center gap-2"
+                type="button" [routerLink]= "child.path " >
+                <span>{{ child.label }}</span>
+              </button>
+            }
           </div>
         </li>
-      </ng-container>
-      <!-- Simple link parent (no dropdown) -->
-      <ng-template #simpleLink>
+      } @else {
+        <!-- Simple link parent (no dropdown) -->
         <li class="nav-item ms-3">
           <button class="nav-link btn btn-link p-0" type="button" [routerLink]= "entry.value.parent.path ">
             {{ entry.value.parent.label }}
           </button>
         </li>
-      </ng-template>
-    </ng-container>
-  </ng-container>
+      }
+    }
+  }
 </ng-template>

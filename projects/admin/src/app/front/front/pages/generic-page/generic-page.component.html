@@ -1,41 +1,43 @@
-<div *ngIf="pageTemplate" class="  justify-content-center">
-  <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.SEQUENTIAL">
-    <app-sequential-render [snippets]="page_snippets"></app-sequential-render>
-  </ng-container>
-  <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.PUBLICATION">
-    <app-publication-render [snippets]="page_snippets" [scroll_to_snippet]="scroll_to_snippet"></app-publication-render>
-  </ng-container>
-  <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.A_LA_UNE">
-    <app-a-la-une-render [snippets]="page_snippets" [selected_title]="snippet_title"></app-a-la-une-render>
-  </ng-container>
-  <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.LOADABLE">
-    <app-loadable-render [snippets]="page_snippets"></app-loadable-render>
-  </ng-container>
-  <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.TROMBINOSCOPE">
-    <app-trombinoscope-render [snippets]="page_snippets"></app-trombinoscope-render>
-  </ng-container>
-  <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.CARDS_top">
-    <app-cards-img-top-render [snippets]="page_snippets"></app-cards-img-top-render>
-  </ng-container>
-  <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.CARDS_top_left">
-    <app-cards-img-top-left-render [snippets]="page_snippets"></app-cards-img-top-left-render>
-  </ng-container>
-  <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.CARDS_bottom">
-    <app-cards-img-bottom-render [snippets]="page_snippets"></app-cards-img-bottom-render>
-  </ng-container>
-  <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.ALBUMS">
-    <app-albums-render [snippets]="page_snippets"></app-albums-render>
-  </ng-container>
-  <ng-container *ngIf="pageTemplate === PAGE_TEMPLATES.FLIPPER">
-    <app-flipper-render [snippets]="page_snippets" ></app-flipper-render>
-  </ng-container>
-  <!-- gestion du template inconnu -->
-  <ng-container *ngIf="!isKnownTemplate(pageTemplate)">
-    <div class="text-center mt-5">
-      <h1 class="display-3">.... Oups ....</h1>
-      <div class="lead">
-        <p>Le modèle de page "{{pageTemplate}}" n'est pas reconnu.</p>
+@if (pageTemplate) {
+  <div class="  justify-content-center">
+    @if (pageTemplate === PAGE_TEMPLATES.SEQUENTIAL) {
+      <app-sequential-render [snippets]="page_snippets"></app-sequential-render>
+    }
+    @if (pageTemplate === PAGE_TEMPLATES.PUBLICATION) {
+      <app-publication-render [snippets]="page_snippets" [scroll_to_snippet]="scroll_to_snippet"></app-publication-render>
+    }
+    @if (pageTemplate === PAGE_TEMPLATES.A_LA_UNE) {
+      <app-a-la-une-render [snippets]="page_snippets" [selected_title]="snippet_title"></app-a-la-une-render>
+    }
+    @if (pageTemplate === PAGE_TEMPLATES.LOADABLE) {
+      <app-loadable-render [snippets]="page_snippets"></app-loadable-render>
+    }
+    @if (pageTemplate === PAGE_TEMPLATES.TROMBINOSCOPE) {
+      <app-trombinoscope-render [snippets]="page_snippets"></app-trombinoscope-render>
+    }
+    @if (pageTemplate === PAGE_TEMPLATES.CARDS_top) {
+      <app-cards-img-top-render [snippets]="page_snippets"></app-cards-img-top-render>
+    }
+    @if (pageTemplate === PAGE_TEMPLATES.CARDS_top_left) {
+      <app-cards-img-top-left-render [snippets]="page_snippets"></app-cards-img-top-left-render>
+    }
+    @if (pageTemplate === PAGE_TEMPLATES.CARDS_bottom) {
+      <app-cards-img-bottom-render [snippets]="page_snippets"></app-cards-img-bottom-render>
+    }
+    @if (pageTemplate === PAGE_TEMPLATES.ALBUMS) {
+      <app-albums-render [snippets]="page_snippets"></app-albums-render>
+    }
+    @if (pageTemplate === PAGE_TEMPLATES.FLIPPER) {
+      <app-flipper-render [snippets]="page_snippets"></app-flipper-render>
+    }
+    <!-- gestion du template inconnu -->
+    @if (!isKnownTemplate(pageTemplate)) {
+      <div class="text-center mt-5">
+        <h1 class="display-3">.... Oups ....</h1>
+        <div class="lead">
+          <p>Le modèle de page "{{pageTemplate}}" n'est pas reconnu.</p>
+        </div>
       </div>
-    </div>
-  </ng-container>
-</div>
+    }
+  </div>
+}
