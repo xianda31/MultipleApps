@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { Routes } from '@angular/router';
-import { routes } from '../../front/front.routes';
 
 @Injectable({ providedIn: 'root' })
 export class DynamicRoutesService {
@@ -13,11 +12,11 @@ export class DynamicRoutesService {
 
   setRoutes(routes: Routes): void {
       this._routes = routes;
-      console.log('DynamicRoutesService - Routes set:', this._routes);
+      console.log('DynamicRoutesService - Routes set:', this._routes[0].children);
     }
 
     getRoutes(): Routes {
-      console.log('DynamicRoutesService - Getting routes:', this._routes);  
+      console.log('DynamicRoutesService - Getting routes:', this._routes[0].children);  
       return this._routes;
     }
 }

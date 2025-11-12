@@ -6,6 +6,7 @@ import { GameCardsOwnedComponent } from "../../front/game-cards-owned/game-cards
 import { ConnexionComponent } from "../authentification/connexion/connexion.component";
 import { Routes } from "@angular/router";
 import { FrontComponent } from "../../front/front/front/front.component";
+import { ConnexionPageComponent } from "../authentification/connexion-page/connexion-page.component";
 
 export enum NAVITEM_PLUGIN {
    TOURNAMENTS = 'tournaments',
@@ -19,7 +20,7 @@ export const PLUGINS: { [key in NAVITEM_PLUGIN]: Type<any> } = {
     [NAVITEM_PLUGIN.SETTINGS]: SettingsComponent,
     [NAVITEM_PLUGIN.PURCHASES]: PurchasesComponent,
     [NAVITEM_PLUGIN.GAME_CARDS_OWNED]: GameCardsOwnedComponent,
-    [NAVITEM_PLUGIN.AUTHENTICATION]: ConnexionComponent
+    [NAVITEM_PLUGIN.AUTHENTICATION]: ConnexionPageComponent
 
 };
 

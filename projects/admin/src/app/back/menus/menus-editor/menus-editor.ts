@@ -3,7 +3,7 @@ import { Component, ViewChild, Inject, OnDestroy } from '@angular/core';
 import { NgbOffcanvas, NgbOffcanvasRef } from '@ng-bootstrap/ng-bootstrap';
 import { ToastService } from '../../../common/services/toast.service';
 import { NavItemsService } from '../../../common/services/navitem.service';
-import { MenuStructure, NavItem, NAVITEM_POSITION, NAVITEM_TYPE, NAVITEM_TYPE_ICONS } from '../../../common/interfaces/navitem.interface';
+import { MenuStructure, NavItem, NAVITEM_LOGGING_CRITERIA, NAVITEM_POSITION, NAVITEM_TYPE, NAVITEM_TYPE_ICONS } from '../../../common/interfaces/navitem.interface';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Routes } from '@angular/router';
@@ -12,13 +12,14 @@ import { NAVITEM_PLUGIN } from '../../../common/interfaces/plugin.interface';
 import { PageService } from '../../../common/services/page.service';
 import { Page } from '../../../common/interfaces/page_snippet.interface';
 import { DragDropModule } from '@angular/cdk/drag-drop';
-import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { APP_SANDBOX } from '../../../app.config';
 import { SandboxService } from '../../../common/services/sandbox.service';
 import { DynamicRoutesService } from '../../../common/services/dynamic-routes.service';
 import { Subject, combineLatest } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { charsanitize, buildFullPath, extractSegment } from '../../../common/utils/navitem.utils';
+// Preview in editor will always be generated from sandbox navitems; no need for static front routes here
 // import { path } from 'd3';
 
 @Component({
@@ -28,7 +29,7 @@ import { charsanitize, buildFullPath, extractSegment } from '../../../common/uti
   templateUrl: './menus-editor.html',
   styleUrl: './menus-editor.scss'
 })
-export class MenusEditorComponent implements OnDestroy {
+export class MenusEditorComponent  {
   @ViewChild('editNavitemOffcanvas', { static: true }) editNavitemOffcanvas: any;
 
   selectedNavitem: NavItem | null = null;
@@ -42,9 +43,13 @@ export class MenusEditorComponent implements OnDestroy {
   NAVITEM_TYPE_ICONS = NAVITEM_TYPE_ICONS;
   NAVITEM_PLUGIN = NAVITEM_PLUGIN;
   NAVITEM_PLUGINS = Object.values(NAVITEM_PLUGIN);
+  NAVITEM_LOGGING_CRITERIA = NAVITEM_LOGGING_CRITERIA;
+  NAVITEM_LOGGING_CRITERIA_VALUES = Object.values(NAVITEM_LOGGING_CRITERIA);
 
   navbar_verbose = '';
   front_route_verbose = '';
+  // Preview auth state toggle (simulation only)
+  previewLogged = false;
 
   front_routes!: Routes;
   navItems: NavItem[] = [];
@@ -66,6 +71,8 @@ export class MenusEditorComponent implements OnDestroy {
   private readonly destroyed$ = new Subject<void>();
   // Sorting helper for keyvalue pipe to sort parents by rank
   compareMenuEntries = (a: any, b: any) => (a?.value?.parent?.rank ?? 0) - (b?.value?.parent?.rank ?? 0);
+  // DnD: only allow entering same list (no inter-list transfers)
+  sameList = (drag: CdkDrag<unknown>, drop: CdkDropList<unknown>) => drag.dropContainer === drop;
 
 
 
@@ -86,7 +93,7 @@ export class MenusEditorComponent implements OnDestroy {
 
     // Load navitems and pages together, then enrich once
     combineLatest([
-      this.navitemService.loadNavItems(true),
+      this.navitemService.loadNavItemsSandbox(),
       this.pageService.listPages()
     ])
       // .pipe(takeUntil(this.destroyed$))
@@ -95,6 +102,8 @@ export class MenusEditorComponent implements OnDestroy {
           this.pages = pages;
           console.log('Navitems loaded for menu editor', navitems);
           this.navitems = this.enrichWithPageTitle(navitems);
+          // Editor preview always reflects sandbox dataset
+          this.front_routes = this.navitemService.generateFrontRoutes(this.navitems);
           this.menus = this.navitemService.getMenuStructure();
           console.log('Menu structure', this.menus);
           this.rebuildNavbarEntries();
@@ -102,21 +111,38 @@ export class MenusEditorComponent implements OnDestroy {
         error: (err) => this.toastService.showErrorToast('Chargement', err.message)
       });
 
+    // Initialize front routes for #show_routes preview
+    // this.navitemService
+    //   .getFrontRoutes(this.sandbox_mode)
+    //   .pipe(takeUntil(this.destroyed$))
+    //   .subscribe({
+    //     next: (routes) => {
+    //       this.front_routes = routes;
+    //       // Keep dynamic router in sync with computed routes
+    //       this.dynamicRoutesService.setRoutes(routes);
+    //     },
+    //     error: (err) => this.toastService.showErrorToast('Routes', err.message)
+    //   });
+
   }
 
   setSandbox(flag: boolean) {
     this.sandboxService.setSandbox(flag);
     this.sandbox_mode = flag;
-    this.navitemService.getFrontRoutes(flag).pipe(takeUntil(this.destroyed$)).subscribe(routes => {
-      this.front_routes = routes;
-      this.dynamicRoutesService.setRoutes(routes);
-      this.toastService.showSuccess('Sandbox', flag ? 'Mode sandbox activé' : 'Mode normal activé');
-    });
+    // Dynamic routes are now reloaded globally by app.config via SandboxService.sandbox$
+    this.toastService.showSuccess('Sandbox', flag ? 'Mode sandbox activé' : 'Mode normal activé');
     // Reload navitems for new sandbox mode and rebuild menu structure
     this.reloadNavitems();
   }
 
-
+  label_transformer(ni: NavItem): string {
+    switch (ni.label) {
+      case '$$USERNAME$$':
+          return 'John';
+      default:
+        return ni.label;
+    }
+  }
   
 
   private updateComputedPaths() {
@@ -148,9 +174,10 @@ export class MenusEditorComponent implements OnDestroy {
         slug: '',
         path: '',
         rank: 0,
-        public: true,
+        logging_criteria: NAVITEM_LOGGING_CRITERIA.ANY,
         group_level: 0,
         position: NAVITEM_POSITION.NAVBAR,
+        pre_label: null
       };
     }
     // Patcher le formulaire avec la sélection
@@ -161,6 +188,7 @@ export class MenusEditorComponent implements OnDestroy {
       slug: segment,
       path: this.selectedNavitem!.path || '',
       position: this.selectedNavitem!.position || NAVITEM_POSITION.NAVBAR,
+      logging_criteria: this.selectedNavitem!.logging_criteria || NAVITEM_LOGGING_CRITERIA.ANY,
       parent_id: this.selectedNavitem!.parent_id || null,
       page_id: this.selectedNavitem!.page_id || null,
       external_url: this.selectedNavitem!.external_url || null,
@@ -244,9 +272,26 @@ export class MenusEditorComponent implements OnDestroy {
     if (!event.container || event.previousIndex === event.currentIndex) {
       return; // nothing to do
     }
-    moveItemInArray(this.navbarEntries, event.previousIndex, event.currentIndex);
+    // We may be dragging in a filtered (preview) view where some parents are hidden.
+    // Work on the visible subset then merge back into the full list to keep hidden items stable.
+    const visible = this.navbarEntries.filter(e => this.allow(e.parent));
+    // Clone visible subset for manipulation
+    const working = [...visible];
+    moveItemInArray(working, event.previousIndex, event.currentIndex);
 
-    // Recompute ranks locally (0-based)
+    // Rebuild full navbarEntries replacing only allowed (visible) entries in their new order
+    const rebuilt: typeof this.navbarEntries = [];
+    let vIdx = 0;
+    for (const entry of this.navbarEntries) {
+      if (this.allow(entry.parent)) {
+        rebuilt.push(working[vIdx++]);
+      } else {
+        rebuilt.push(entry); // keep hidden entry in original relative position
+      }
+    }
+    this.navbarEntries = rebuilt;
+
+    // Recompute ranks globally (0-based) respecting new order
     const updatedParents = this.navbarEntries.map((e, idx) => ({ ...e.parent, rank: idx } as NavItem));
 
     // Optimistic update of local menus snapshot
@@ -276,10 +321,12 @@ export class MenusEditorComponent implements OnDestroy {
       slug: new FormControl(''),
       path: new FormControl({ value: '', disabled: true }),
       position: new FormControl('', { validators: [Validators.required] }),
+      logging_criteria: new FormControl(NAVITEM_LOGGING_CRITERIA.ANY, { validators: [Validators.required] }),
       parent_id: new FormControl<string | null>(null),
       page_id: new FormControl<string | null>(null),
       external_url: new FormControl<string | null>(null),
       plugin_name: new FormControl<string | null>(null),
+      pre_label: new FormControl<'icon' | 'avatar' | null>(null),
     });
 
 
@@ -338,14 +385,15 @@ export class MenusEditorComponent implements OnDestroy {
 
   private reloadNavitems() {
     combineLatest([
-      this.navitemService.loadNavItems(this.sandbox_mode),
+      this.navitemService.loadNavItemsSandbox(),
       this.pageService.listPages()
     ])
-      .pipe(takeUntil(this.destroyed$))
       .subscribe(([navitems, pages]) => {
         this.pages = pages;
         this.navitems = this.enrichWithPageTitle(navitems);
         this.menus = this.navitemService.getMenuStructure();
+        // Preview always built from sandbox items
+        this.front_routes = this.navitemService.generateFrontRoutes(this.navitems);
         this.rebuildNavbarEntries();
       });
   }
@@ -357,6 +405,35 @@ export class MenusEditorComponent implements OnDestroy {
       .sort((a, b) => (a.parent.rank ?? 0) - (b.parent.rank ?? 0));
   }
 
+  allow(ni: NavItem): boolean {
+    switch (ni.logging_criteria) {
+      case NAVITEM_LOGGING_CRITERIA.LOGGED_ONLY:
+        return this.previewLogged;
+      case NAVITEM_LOGGING_CRITERIA.UNLOGGED_ONLY:
+        return !this.previewLogged;
+      default:
+        return true;
+    }
+  }
+
+  hasVisibleChildren(entry: { parent: NavItem; childs: NavItem[] }): boolean {
+    if (entry.parent.type !== NAVITEM_TYPE.DROPDOWN) return true;
+    return (entry.childs || []).some(c => this.allow(c));
+  }
+
+  // private effectiveLoggingCriteria(ni: NavItem): NAVITEM_LOGGING_CRITERIA {
+  //   // If the item currently being edited matches, return the in-form (possibly unsaved) value for live preview
+  //   if (this.selectedNavitem && this.selectedNavitem.id === ni.id) {
+  //     const formCrit = this.navItemForm.get('logging_criteria')?.value as NAVITEM_LOGGING_CRITERIA | undefined;
+  //     return formCrit || NAVITEM_LOGGING_CRITERIA.ANY;
+  //   }
+  //   return ni.logging_criteria || NAVITEM_LOGGING_CRITERIA.ANY;
+  // }
+
+  onPreviewToggle(flag: boolean) {
+    this.previewLogged = flag;
+  }
+
   private buildPayloadFromForm(): NavItem {
     interface NavItemFormValue {
       sandbox: boolean;
@@ -364,11 +441,13 @@ export class MenusEditorComponent implements OnDestroy {
       label: string;
       slug: string;
       path: string;
+      logging_criteria: NAVITEM_LOGGING_CRITERIA;
       position: NAVITEM_POSITION;
       parent_id: string | null;
       page_id: string | null;
       external_url: string | null;
       plugin_name: NAVITEM_PLUGIN | null;
+      pre_label: 'icon' | 'avatar' | null;
     }
     const formValue = this.navItemForm.value as NavItemFormValue;
     // Guard against selecting self as parent
@@ -384,16 +463,17 @@ export class MenusEditorComponent implements OnDestroy {
       sandbox: true,
       type: formValue.type,
       label: formValue.label,
+      logging_criteria: formValue.logging_criteria,
       slug: segment,
       path: fullPath,
       position: formValue.position,
+      pre_label: formValue.pre_label,
       parent_id: formValue.parent_id || undefined,
       page_id: formValue.page_id || undefined,
       page_title,
       external_url: formValue.external_url || undefined,
       plugin_name: formValue.plugin_name || undefined,
       rank: this.selectedNavitem?.rank ?? 0,
-      public: this.selectedNavitem?.public ?? true,
       group_level: this.selectedNavitem?.group_level ?? 0,
     } as NavItem;
   }

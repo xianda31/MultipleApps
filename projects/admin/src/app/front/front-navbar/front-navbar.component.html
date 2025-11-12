@@ -8,11 +8,12 @@
 
     <div class="collapse navbar-collapse d-none d-md-flex align-items-center position-relative">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-     
-  <!-- test addmenu -->
-  @if (active_menu_editor) {<ng-container *ngTemplateOutlet="testmenu"></ng-container>}
 
-
+        <!-- test addmenu -->
+        @if (active_menu_editor && sandboxMode) {
+        <ng-container *ngTemplateOutlet="testmenu"></ng-container>
+        }
+        @else {
         <li ngbDropdown class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" ngbDropdownToggle id="clubDropdown">Le Club</a>
           <ul ngbDropdownMenu class="dropdown-menu" aria-labelledby="clubDropdown">
@@ -52,13 +53,13 @@
         }
 
         @if (logged_member$ | async) {
-          <li class="nav-item"><a class="nav-link" routerLink="albums">Les
-              albums</a></li>
+        <li class="nav-item"><a class="nav-link" routerLink="albums">Les
+            albums</a></li>
         }
 
         @if (user_accreditation && user_accreditation.level > 0) {
         <li class="nav-item">
-          <a class="nav-link" routerLink="../back">Back office</a>
+          <a class="nav-link" routerLink="back_office">Back office</a>
         </li>
         }
 
@@ -81,10 +82,11 @@
           </ul>
         </li>
         }
+        }
       </ul>
     </div>
 
-  <!-- Sidebar for mobile -->
+    <!-- Sidebar for mobile -->
     <div class="offcanvas offcanvas-start d-md-none bg-white text-dark align-items-start " tabindex="-1"
       id="sidebarMenu" aria-labelledby="sidebarMenuLabel">
       <div class="offcanvas-header">
@@ -92,7 +94,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
       </div>
       <div class="offcanvas-body">
-  
+
         <ul class="navbar-nav">
 
           @if (!(logged_member$ | async)) {
@@ -153,13 +155,12 @@
           }
 
           @if (logged_member$ | async) {
-            <li class="nav-item"><a class="nav-link" routerLink="albums"
-              data-bs-dismiss="offcanvas">Les albums</a></li>
+          <li class="nav-item"><a class="nav-link" routerLink="albums" data-bs-dismiss="offcanvas">Les albums</a></li>
           }
 
           @if ( user_accreditation && user_accreditation.level > 0) {
           <li class="nav-item">
-            <a class="nav-link" routerLink="../back" data-bs-dismiss="offcanvas">Back office</a>
+            <a class="nav-link" routerLink="back_office" data-bs-dismiss="offcanvas">Back office</a>
           </li>
           }
 
@@ -167,48 +168,53 @@
       </div>
     </div>
 
-    <!-- Sandbox badge pushed to the far right inside navbar container -->
-    @if (sandboxMode) {
-      <span class="badge rounded-pill text-bg-warning ms-auto sandbox-badge" aria-label="Mode sandbox">
-        SANDBOX
-      </span>
-    }
+
   </div>
 </nav>
 
 
 
 
-<!-- Offcanvas moved inside app-connexion-menu component -->
-
 
 <ng-template #testmenu>
-  @for (entry of menus | keyvalue; track entry.key) {
-    @if (entry.value.parent.position === NAVITEM_POSITION.NAVBAR) {
-      <!-- Dropdown parent only if it actually has children; otherwise fall back to a simple link -->
-      @if (entry.value.parent.type === NAVITEM_TYPE.DROPDOWN && (entry.value.childs.length || 0) > 0) {
-        <li class="nav-item dropdown ms-3" ngbDropdown>
-          <button class="nav-link dropdown-toggle btn btn-link p-0" type="button" ngbDropdownToggle
-            id="nav-{{ entry.key }}">
-            {{ entry.value.parent.label }}
-          </button>
-          <div class="dropdown-menu" ngbDropdownMenu [attr.aria-labelledby]="'nav-' + entry.key">
-            @for (child of entry.value.childs; track $index) {
-              <button class="dropdown-item d-flex align-items-center gap-2"
-                type="button" [routerLink]= "child.path " >
-                <span>{{ child.label }}</span>
-              </button>
-            }
-          </div>
-        </li>
-      } @else {
-        <!-- Simple link parent (no dropdown) -->
-        <li class="nav-item ms-3">
-          <button class="nav-link btn btn-link p-0" type="button" [routerLink]= "entry.value.parent.path ">
-            {{ entry.value.parent.label }}
-          </button>
-        </li>
+  @for (menu of menus | keyvalue; track menu.key) {
+  @if (menu.value.parent.position === NAVITEM_POSITION.NAVBAR
+  && (menu.value.parent.logging_criteria === NAVITEM_LOGGING_CRITERIA.ANY
+  || (menu.value.parent.logging_criteria === NAVITEM_LOGGING_CRITERIA.LOGGED_ONLY && (logged_member$ | async))
+  || (menu.value.parent.logging_criteria === NAVITEM_LOGGING_CRITERIA.UNLOGGED_ONLY && !(logged_member$ | async))
+  )
+  ) {
+
+  <!-- Dropdown parent  -->
+  @if (menu.value.parent.type === NAVITEM_TYPE.DROPDOWN && (menu.value.childs.length || 0) > 0) {
+  <li class="nav-item dropdown ms-3" ngbDropdown>
+    <a class="nav-link dropdown-toggle" ngbDropdownToggle id="nav-{{ menu.key }}">
+      @if(menu.value.parent.pre_label === 'avatar') {
+      <img [src]="avatar$ | async" alt="avatar" class="rounded-circle"
+        style="width:28px; height:28px; max-width:28px; max-height:28px; object-fit:cover">
       }
-    }
+      {{ label_transformer(menu.value.parent) }}
+    </a>
+    <ul class="dropdown-menu" ngbDropdownMenu [attr.aria-labelledby]="'nav-' + menu.key">
+      @for (child of menu.value.childs; track $index) {
+      <li>
+        <a class="dropdown-item " [routerLink]="child.path "> {{ child.label }} </a>
+      </li>
+      }
+    </ul>
+  </li>
+  } @else {
+  <!-- Simple link parent (no dropdown) -->
+  <li class="nav-item ms-3">
+    <a class="nav-link " [routerLink]="menu.value.parent.path ">
+            @if(menu.value.parent.pre_label === 'avatar') {
+      <img [src]="avatar$ | async" alt="avatar" class="rounded-circle"
+        style="width:28px; height:28px; max-width:28px; max-height:28px; object-fit:cover">
+      }
+      {{ label_transformer(menu.value.parent) }}
+    </a>
+  </li>
+  }
+  }
   }
 </ng-template>

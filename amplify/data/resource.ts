@@ -243,15 +243,16 @@ const schema = a.schema({
 
   NavItem: a.model({
     sandbox: a.boolean().required(),
-    type: a.enum(['Dropdown', 'ExternalRedirect', 'PlugIn', 'InternalLink', 'CustomPage']),
+    type: a.string().required(),
     label:a.string().required(),
     slug: a.string().required(),
     path: a.string().required(),
     rank: a.integer().required(),
-    public : a.boolean().required(),
+    logging_criteria: a.string().required(),
     group_level: a.integer().required(),
     position: a.enum(['Navbar', 'Footer', 'Brand']),
     // optional params
+    pre_label: a.string(),
     parent_id: a.string(),
     page_id: a.string(),
     page_title: a.string(),

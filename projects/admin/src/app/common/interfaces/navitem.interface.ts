@@ -6,8 +6,15 @@ export enum NAVITEM_TYPE {
     DROPDOWN = 'Dropdown',
     EXTERNAL_REDIRECT = 'ExternalRedirect',
     PLUGIN = 'PlugIn',
+    LOGGER = 'Logger',
     INTERNAL_LINK = 'InternalLink',
     CUSTOM_PAGE = 'CustomPage',
+}
+
+export enum NAVITEM_LOGGING_CRITERIA {
+    ANY = 'Any',
+    LOGGED_ONLY = 'LoggedOnly',
+    UNLOGGED_ONLY = 'UnloggedOnly',
 }
 
 export enum NAVITEM_POSITION {
@@ -21,10 +28,10 @@ export const NAVITEM_TYPE_ICONS: NAVITEM_TYPE_ICONS = {
     [NAVITEM_TYPE.DROPDOWN]: 'bi bi-chevron-down',
     [NAVITEM_TYPE.EXTERNAL_REDIRECT]: 'bi bi-globe2',
     [NAVITEM_TYPE.PLUGIN]: 'bi bi-gear-fill',
+    [NAVITEM_TYPE.LOGGER]: 'bi bi-box-arrow-in-right',
     [NAVITEM_TYPE.INTERNAL_LINK]: 'bi bi-link-45deg',
     [NAVITEM_TYPE.CUSTOM_PAGE]: 'bi bi-file-richtext',
 };
-
 
 
 export interface NavItem {
@@ -35,12 +42,13 @@ export interface NavItem {
     slug: string;
     path: string;
     rank: number;
-    public: boolean;
+    logging_criteria: NAVITEM_LOGGING_CRITERIA;
     group_level: number;
     position: NAVITEM_POSITION;
     // runtime-only convenience, not persisted
     page_title?: string;
     // optional params
+    pre_label: 'icon' | 'avatar' | null;
     parent_id?: string;
     page_id?: string;
     external_url?: string;

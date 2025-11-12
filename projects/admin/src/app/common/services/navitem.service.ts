@@ -3,9 +3,11 @@ import { BehaviorSubject, Observable, map, of, switchMap, tap } from 'rxjs';
 import { ToastService } from './toast.service';
 import { DBhandler } from './graphQL.service';
 import { MenuStructure, NavItem, NavItem_input, NAVITEM_TYPE } from '../interfaces/navitem.interface';
-import { routes } from '../../front/front.routes';
+import { minimal_routes, routes } from '../../front/front.routes';
 import { Routes } from '@angular/router';
 import { GenericPageComponent } from '../../front/front/pages/generic-page/generic-page.component';
+import { ConnexionPageComponent } from '../authentification/connexion-page/connexion-page.component';
+import { PLUGINS } from '../interfaces/plugin.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -20,23 +22,52 @@ export class NavItemsService {
   ) {}
 
 
-  getFrontRoutes(sandbox?: boolean): Observable<Routes> {
-    const _getFrontRoutes = (nav_items : NavItem[]): Routes => {
-      let new_routes: Routes = [...routes];
-      nav_items.forEach(item => {
-        if ( item.type === NAVITEM_TYPE.CUSTOM_PAGE ) {
-          new_routes[0].children?.unshift({path: item.path, component: GenericPageComponent, data: { page_title: item.page_title } });
-        }
-      });
-      return (new_routes);
-    }
-
-    return this.loadNavItems(!!sandbox).pipe(
-      map((nav_items) => _getFrontRoutes(nav_items))
+  getFrontRoutes(sandbox: boolean): Observable<Routes> {
+    const src$ = sandbox ? this.loadNavItemsSandbox() : this.loadNavItemsProduction(true);
+    return src$.pipe(
+      tap((items) => console.log('[routes] navitems (sandbox=%s): %d', sandbox, items.length)),
+      map((nav_items) => this.generateFrontRoutes(nav_items)),
+      tap((routes) => {
+        const children = routes?.[0]?.children ?? [];
+        const sample = (children as any[]).slice(0, 5).map(r => (r as any).path);
+        console.log('[routes] generated children=%d sample=%o', children.length, sample);
+      })
     );
   }
 
+  generateFrontRoutes(navItems: NavItem[]) : Routes {
+    // Deep-clone base routes to avoid mutating the shared minimal_routes tree
+    const cloneRoutes = (rs: Routes): Routes => rs.map(r => ({
+      ...r,
+      children: r.children ? cloneRoutes(r.children) : undefined
+    }));
+    const new_routes: Routes = cloneRoutes(minimal_routes);
 
+    // Ensure we only insert unique paths and always before catch-all
+    const root = new_routes[0];
+    if (!root.children) root.children = [];
+    const children = root.children;
+    const existing = new Set<string>(children.map(r => (r as any).path).filter((p: any) => typeof p === 'string'));
+
+    for (const item of navItems) {
+      const p = item.path;
+      if (!p || existing.has(p)) continue; // skip invalid or duplicate paths
+      switch (item.type) {
+        case NAVITEM_TYPE.CUSTOM_PAGE:
+          children.unshift({ path: p, component: GenericPageComponent, data: { page_title: item.page_title } });
+          existing.add(p);
+          break;
+        case NAVITEM_TYPE.PLUGIN:
+          children.unshift({ path: p, component: PLUGINS[item.plugin_name!] });
+          existing.add(p);
+          break;
+        default:
+          // skip other types
+          break;
+      }
+    }
+    return new_routes;
+  }
 
   getMenuStructure(): MenuStructure {
     const menuStructure: MenuStructure = {};
@@ -75,7 +106,7 @@ export class NavItemsService {
       position: navItem.position,
       type: navItem.type,
       rank: navItem.rank,
-      public: navItem.public,
+      logging_criteria: navItem.logging_criteria,
       group_level: navItem.group_level,
       // optional params
       parent_id: navItem.parent_id,
@@ -94,18 +125,37 @@ export class NavItemsService {
     }
   }
 
-  // List
-  loadNavItems(sandbox: boolean): Observable<NavItem[]> {
-    const _listNavItems = this.dbHandler.listNavItems().pipe(
+  // List (separated loads)
+  loadNavItemsSandbox(): Observable<NavItem[]> {
+    const _list = this.dbHandler.listNavItems().pipe(
       map((navItems: NavItem[]) => {
-        // Include items without sandbox flag (legacy) + those matching current sandbox mode
-        const filtered = navItems.filter(item => (item as any).sandbox === sandbox || (item as any).sandbox == null);
+        const filtered = navItems.filter(item => (item as any).sandbox === true);
         this._navItems = filtered;
         this._navItems$.next(this._navItems);
       }),
       switchMap(() => this._navItems$.asObservable())
     );
-    return (this._navItems && this._navItems.length > 0) ? this._navItems$.asObservable() : _listNavItems;
+    return (this._navItems && this._navItems.length > 0) ? this._navItems$.asObservable() : _list;
+  }
+
+  loadNavItemsProduction(includeLegacy: boolean = true): Observable<NavItem[]> {
+    const _list = this.dbHandler.listNavItems().pipe(
+      map((navItems: NavItem[]) => {
+        const filtered = navItems.filter(item => {
+          const sb = (item as any).sandbox;
+          return sb === false || (includeLegacy && (sb === undefined || sb === null));
+        });
+        this._navItems = filtered;
+        this._navItems$.next(this._navItems);
+      }),
+      switchMap(() => this._navItems$.asObservable())
+    );
+    return (this._navItems && this._navItems.length > 0) ? this._navItems$.asObservable() : _list;
+  }
+
+  // Backward-compatible alias
+  loadNavItems(sandbox: boolean): Observable<NavItem[]> {
+    return sandbox ? this.loadNavItemsSandbox() : this.loadNavItemsProduction(true);
   }
 
   // Get one
