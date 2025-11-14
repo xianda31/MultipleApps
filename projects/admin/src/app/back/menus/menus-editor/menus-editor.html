@@ -8,6 +8,10 @@
             Mode Sandbox <span class="state" [class.on]="sandboxService.value">({{ sandboxService.value ?
                 'ON' : 'OFF' }})</span>
         </label>
+        <!-- Bouton masqué temporairement jusqu'à décision sur la stratégie de promotion -->
+        <button class="btn btn-sm btn-warning ms-3 d-none" (click)="promoteSandboxMenus()" [disabled]="!sandboxService.value">
+            Promouvoir vers production
+        </button>
     </div>
 
     <div class="col-12 mt-3">
@@ -39,7 +43,7 @@
 <ng-template #show_routes>
     @if(front_routes && front_routes[0].children) {
 
-        @for (route of front_routes[0].children; track route) {
+        @for (route of front_routes[0].children; track route.path) {
             <div>
                 <strong>Path:</strong> {{ route.path }}
                 @if (route.component) {<strong>:</strong> {{ route.component.name }} }
@@ -79,7 +83,7 @@
                             </span>
                             }
 
-                            {{ label_transformer(entry.parent) }}
+                            {{ label_transformer_simulation(entry.parent) }}
                         </button>
                         <div class="dropdown-menu" ngbDropdownMenu [attr.aria-labelledby]="'nav-' + entry.parent.id"
                             cdkDropList [cdkDropListData]="entry.childs" [cdkDropListOrientation]="'vertical'"
@@ -101,7 +105,7 @@
                         <span class="drag-handle me-1" cdkDragHandle><i
                                 class="bi bi-grip-vertical text-muted"></i></span>
                         <button class="nav-link btn btn-link p-0" type="button" (click)="show_page(entry.parent)">
-                            {{ label_transformer(entry.parent) }}
+                            {{ label_transformer_simulation(entry.parent) }}
                         </button>
                     </li>
                     }
@@ -152,7 +156,8 @@
                     <td><strong>{{ entry.value.parent.label }}</strong></td>
                     <td>{{ entry.value.parent.type }}</td>
                     <td>{{ entry.value.parent.type === NAVITEM_TYPE.CUSTOM_PAGE ? entry.value.parent.page_title :
-                        (entry.value.parent.type === NAVITEM_TYPE.PLUGIN ? entry.value.parent.plugin_name : '') }}</td>
+                        (entry.value.parent.type === NAVITEM_TYPE.PLUGIN ? entry.value.parent.plugin_name : 
+                        (entry.value.parent.type === NAVITEM_TYPE.DIRECT_CALL ? entry.value.parent.slug : '')) }}</td>
                     <td>{{ entry.value.parent.path }}</td>
                     <td>{{ entry.value.parent.rank }}</td>
                     <td>{{ entry.value.parent.logging_criteria }}</td>
@@ -167,7 +172,8 @@
                     <td class="ps-4"> {{ child.label }}</td>
                     <td>{{ child.type }}</td>
                     <td>{{ child.type === NAVITEM_TYPE.CUSTOM_PAGE ? child.page_title :
-                        (child.type === NAVITEM_TYPE.PLUGIN ? child.plugin_name : '') }}</td>
+                        (child.type === NAVITEM_TYPE.PLUGIN ? child.plugin_name : 
+                        (child.type === NAVITEM_TYPE.DIRECT_CALL ? child.slug : '')) }}</td>
                     <td>{{ child.path }}</td>
                     <td>{{ child.rank }}</td>
                     <td>{{ child.logging_criteria }}</td>
@@ -191,7 +197,6 @@
     </div>
 </ng-template>
 
-<!-- Offcanvas for editing nav items     -->
 <ng-template #editNavitemOffcanvas let-offcanvas>
     <div class="offcanvas-header">
         <h5 class="offcanvas-title">Édition élément de menu</h5>
@@ -200,11 +205,7 @@
     <div class="offcanvas-body">
         <form [formGroup]="navItemForm" class="vstack gap-3">
             <div class="row g-2">
-                <div class="col-6">
-                    <label class="form-label">Libellé</label>
-                    <input type="text" class="form-control" formControlName="label" placeholder="Texte du menu" />
-                </div>
-                <div class="col-6">
+                <div class="col-12">
                     <label class="form-label">Position</label>
                     <select class="form-select" formControlName="position">
                         @for (pos of NAVITEM_POSITIONS; track pos) {<option [ngValue]="pos">{{ pos }}</option>}
@@ -214,6 +215,17 @@
                                 (change)="onPreviewToggle($event.target.checked)">
                         </div>
                     </select>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Libellé</label>
+                    <div class="input-group">
+                        <select class="form-select" [ngModel]="currentLabelToken" (ngModelChange)="useSpecialLabel($event)" [ngModelOptions]="{standalone:true}">
+                            <option [ngValue]="''">— libellé libre —</option>
+                            @for (tok of SPECIAL_LABELS; track tok) {<option [ngValue]="tok">{{ tok }}</option>}
+                        </select>
+                        <input type="text" class="form-control" formControlName="label" placeholder="Texte du menu" />
+                    </div>
+                    <div class="form-text">Le champ est éditable uniquement avec "libellé libre".</div>
                 </div>
 
                 <div class="row g-2">
@@ -254,6 +266,17 @@
                     </div>
                 </div>
 
+                @if (navItemForm.get('type')?.value === NAVITEM_TYPE.DIRECT_CALL) {
+                <div class="row g-2">
+                    <div class="col-12">
+                        <label class="form-label">Commande</label>
+                        <select class="form-select" formControlName="command_name">
+                            @for (c of NAVITEM_COMMANDS; track c) {<option [ngValue]="c">{{ c }}</option>}
+                        </select>
+                        <div class="form-text">Action exécutée au clic (sans navigation).</div>
+                    </div>
+                </div>
+                } @else {
                 <div class="row g-2">
                     <div class="col-6">
                         <label class="form-label">Segment (slug)</label>
@@ -269,6 +292,7 @@
                         <div class="form-text">Concatène le parent et le segment.</div>
                     </div>
                 </div>
+                }
 
                 @if (navItemForm.get('type')?.value === NAVITEM_TYPE.EXTERNAL_REDIRECT) {
                 <div class="col-12">

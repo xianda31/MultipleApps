@@ -13,6 +13,7 @@ import { Process_flow } from '../../common/authentification/authentification_int
 import { MemberSettingsService } from '../../common/services/member-settings.service';
 import { MenuStructure, NavItem, NAVITEM_LOGGING_CRITERIA, NAVITEM_POSITION, NAVITEM_TYPE } from '../../common/interfaces/navitem.interface';
 import { environment } from '../../../environments/environment';
+import { CommandRegistryService } from '../../common/services/command-registry.service';
 
 @Component({
   selector: 'app-front-navbar',
@@ -39,11 +40,13 @@ export class FrontNavbarComponent {
   active_menu_editor: boolean = false;
   logged: boolean = false;
   logged_member: Member | null = null;
+  private labelCache = new Map<string, Promise<string>>();
 
   constructor(
     private auth: AuthentificationService,
     private groupService: GroupService,
     private memberSettingsService: MemberSettingsService,
+  private commandRegistry: CommandRegistryService
 
 
   ) { }
@@ -66,47 +69,28 @@ export class FrontNavbarComponent {
         });
       }
     });
+
   }
 
 
-  label_transformer(ni: NavItem): string {
-    switch (ni.label) {
-      case '$$USERNAME$$':
-        if (this.logged_member) {
-          return this.logged_member.firstname;
-        } else {
-          throw new Error('No logged member found');
-        }
-      default:
-        return ni.label;
-    }
+  label_transformer(label: string): Promise<string> {
+    const key = label ?? '';
+    if (!key) return Promise.resolve('');
+    const cached = this.labelCache.get(key);
+    if (cached) return cached;
+    const p = this.commandRegistry.label_transform(key)
+      .catch(err => {
+        console.error('label_transform error for', key, err);
+        return key;
+      });
+    this.labelCache.set(key, p);
+    return p;
   }
 
   isNavItemActive(navItem: string): boolean {
     return this.lastActiveNavItem === navItem;
   }
-  // onCanvasClose() {
-  //   this.auth.changeMode(Process_flow.SIGN_IN);
-  // }
 
-
-  // force_canvas_to_close() {
-  //   const canvas = document.getElementById('loggingOffCanvas');
-  //   if (canvas) {
-  //     const bsOffcanvas = Offcanvas.getInstance(canvas);
-  //     if (bsOffcanvas) {
-  //       bsOffcanvas.hide();
-  //       setTimeout(() => {
-  //         canvas.classList.remove('show');
-  //         const backdrop = document.querySelector('.offcanvas-backdrop');
-  //         if (backdrop) {
-  //           backdrop.parentNode?.removeChild(backdrop);
-  //         }
-  //         document.body.classList.remove('offcanvas-backdrop', 'show', 'modal-open');
-  //       }, 300);
-  //     }
-  //   }
-  // }
 
   async signOut() {
     try {
@@ -115,5 +99,10 @@ export class FrontNavbarComponent {
     } catch (error) {
       console.error('Error signing out:', error);
     }
+  }
+
+  onCommand(item: NavItem) {
+    const raw = ((item as any).command_name || item.slug || '').toString();
+    this.commandRegistry.execute(raw).catch(err => console.error('Command execution failed:', raw, err));
   }
 }

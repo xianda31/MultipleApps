@@ -5,6 +5,7 @@ import { routes } from './app.routes';
 import { routes as front_static_routes } from './front/front.routes';
 import { APP_INITIALIZER } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
+import { distinctUntilChanged, skip } from 'rxjs/operators';
 import { NavItemsService } from './common/services/navitem.service';
 import { DynamicRoutesService } from './common/services/dynamic-routes.service';
 import { SandboxService } from './common/services/sandbox.service';
@@ -27,12 +28,11 @@ export function preloadFrontRoutes(
         .then((routes) => { dynamicRoutesService.setRoutes(routes); })
   .catch(() => { dynamicRoutesService.setRoutes(front_static_routes); });
       // And keep in sync with subsequent changes
-      sandboxService.sandbox$.subscribe((nextFlag) => {
+      sandboxService.sandbox$.pipe(skip(1), distinctUntilChanged()).subscribe((nextFlag) => {
         if (nextFlag) {
-          navitemService.getFrontRoutes(true).subscribe({
-            next: (routes) => dynamicRoutesService.setRoutes(routes),
-            error: () => { /* ignore */ }
-          });
+          firstValueFrom(navitemService.getFrontRoutes(true))
+            .then((routes) => dynamicRoutesService.setRoutes(routes))
+            .catch(() => { /* ignore */ });
         } else {
           dynamicRoutesService.setRoutes(front_static_routes);
         }
@@ -41,12 +41,11 @@ export function preloadFrontRoutes(
     } else {
       // Start on static routes and listen for sandbox toggles to switch
       dynamicRoutesService.setRoutes(front_static_routes);
-      sandboxService.sandbox$.subscribe((nextFlag) => {
+      sandboxService.sandbox$.pipe(skip(1), distinctUntilChanged()).subscribe((nextFlag) => {
         if (nextFlag) {
-          navitemService.getFrontRoutes(true).subscribe({
-            next: (routes) => dynamicRoutesService.setRoutes(routes),
-            error: () => { /* ignore */ }
-          });
+          firstValueFrom(navitemService.getFrontRoutes(true))
+            .then((routes) => dynamicRoutesService.setRoutes(routes))
+            .catch(() => { /* ignore */ });
         } else {
           dynamicRoutesService.setRoutes(front_static_routes);
         }

@@ -193,12 +193,16 @@
       <img [src]="avatar$ | async" alt="avatar" class="rounded-circle"
         style="width:28px; height:28px; max-width:28px; max-height:28px; object-fit:cover">
       }
-      {{ label_transformer(menu.value.parent) }}
+      {{ label_transformer(menu.value.parent.label) | async }}
     </a>
     <ul class="dropdown-menu" ngbDropdownMenu [attr.aria-labelledby]="'nav-' + menu.key">
       @for (child of menu.value.childs; track $index) {
       <li>
-        <a class="dropdown-item " [routerLink]="child.path "> {{ child.label }} </a>
+        @if (child.type === NAVITEM_TYPE.DIRECT_CALL) {
+        <a class="dropdown-item" (click)="onCommand(child)"> {{ child.label }} </a>
+        } @else {
+        <a class="dropdown-item" [routerLink]="child.path"> {{ child.label }} </a>
+        }
       </li>
       }
     </ul>
@@ -206,13 +210,23 @@
   } @else {
   <!-- Simple link parent (no dropdown) -->
   <li class="nav-item ms-3">
-    <a class="nav-link " [routerLink]="menu.value.parent.path ">
-            @if(menu.value.parent.pre_label === 'avatar') {
+    @if (menu.value.parent.type === NAVITEM_TYPE.DIRECT_CALL) {
+    <a class="nav-link" (click)="onCommand(menu.value.parent)">
+      @if(menu.value.parent.pre_label === 'avatar') {
       <img [src]="avatar$ | async" alt="avatar" class="rounded-circle"
         style="width:28px; height:28px; max-width:28px; max-height:28px; object-fit:cover">
       }
-      {{ label_transformer(menu.value.parent) }}
+      {{ label_transformer(menu.value.parent.label) | async }}
     </a>
+    } @else {
+    <a class="nav-link " [routerLink]="menu.value.parent.path ">
+      @if(menu.value.parent.pre_label === 'avatar') {
+      <img [src]="avatar$ | async" alt="avatar" class="rounded-circle"
+        style="width:28px; height:28px; max-width:28px; max-height:28px; object-fit:cover">
+      }
+      {{ label_transformer(menu.value.parent.label) | async }}
+    </a>
+    }
   </li>
   }
   }

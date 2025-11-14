@@ -1,15 +1,17 @@
 
 import { Schema } from "../../../../../../amplify/data/resource";
-import { NAVITEM_PLUGIN } from "./plugin.interface";
+import { NAVITEM_PLUGIN, NAVITEM_COMMAND } from "./plugin.interface";
 
 export enum NAVITEM_TYPE {
     DROPDOWN = 'Dropdown',
     EXTERNAL_REDIRECT = 'ExternalRedirect',
     PLUGIN = 'PlugIn',
-    LOGGER = 'Logger',
     INTERNAL_LINK = 'InternalLink',
+    DIRECT_CALL = 'DirectCall',
     CUSTOM_PAGE = 'CustomPage',
 }
+
+// UI-level command catalog for DirectCall items (not persisted in backend)
 
 export enum NAVITEM_LOGGING_CRITERIA {
     ANY = 'Any',
@@ -22,17 +24,6 @@ export enum NAVITEM_POSITION {
     FOOTER = 'Footer',
     BRAND = 'Brand',
 }
-
-export type NAVITEM_TYPE_ICONS = { [key in NAVITEM_TYPE]: string };
-export const NAVITEM_TYPE_ICONS: NAVITEM_TYPE_ICONS = {
-    [NAVITEM_TYPE.DROPDOWN]: 'bi bi-chevron-down',
-    [NAVITEM_TYPE.EXTERNAL_REDIRECT]: 'bi bi-globe2',
-    [NAVITEM_TYPE.PLUGIN]: 'bi bi-gear-fill',
-    [NAVITEM_TYPE.LOGGER]: 'bi bi-box-arrow-in-right',
-    [NAVITEM_TYPE.INTERNAL_LINK]: 'bi bi-link-45deg',
-    [NAVITEM_TYPE.CUSTOM_PAGE]: 'bi bi-file-richtext',
-};
-
 
 export interface NavItem {
     id: string;
@@ -47,6 +38,8 @@ export interface NavItem {
     position: NAVITEM_POSITION;
     // runtime-only convenience, not persisted
     page_title?: string;
+    // UI-only command for DirectCall; persisted as slug for compatibility
+    command_name?: NAVITEM_COMMAND;
     // optional params
     pre_label: 'icon' | 'avatar' | null;
     parent_id?: string;

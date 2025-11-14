@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, map, of, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, Observable, firstValueFrom, map, of, switchMap, tap } from 'rxjs';
 import { ToastService } from './toast.service';
 import { DBhandler } from './graphQL.service';
 import { MenuStructure, NavItem, NavItem_input, NAVITEM_TYPE } from '../interfaces/navitem.interface';
@@ -19,23 +19,17 @@ export class NavItemsService {
   constructor(
     private toastService: ToastService,
     private dbHandler: DBhandler,
-  ) {}
+  ) { }
 
 
   getFrontRoutes(sandbox: boolean): Observable<Routes> {
     const src$ = sandbox ? this.loadNavItemsSandbox() : this.loadNavItemsProduction(true);
     return src$.pipe(
-      tap((items) => console.log('[routes] navitems (sandbox=%s): %d', sandbox, items.length)),
       map((nav_items) => this.generateFrontRoutes(nav_items)),
-      tap((routes) => {
-        const children = routes?.[0]?.children ?? [];
-        const sample = (children as any[]).slice(0, 5).map(r => (r as any).path);
-        console.log('[routes] generated children=%d sample=%o', children.length, sample);
-      })
     );
   }
 
-  generateFrontRoutes(navItems: NavItem[]) : Routes {
+  generateFrontRoutes(navItems: NavItem[]): Routes {
     // Deep-clone base routes to avoid mutating the shared minimal_routes tree
     const cloneRoutes = (rs: Routes): Routes => rs.map(r => ({
       ...r,
@@ -43,29 +37,20 @@ export class NavItemsService {
     }));
     const new_routes: Routes = cloneRoutes(minimal_routes);
 
-    // Ensure we only insert unique paths and always before catch-all
-    const root = new_routes[0];
-    if (!root.children) root.children = [];
-    const children = root.children;
-    const existing = new Set<string>(children.map(r => (r as any).path).filter((p: any) => typeof p === 'string'));
+    // Assume paths are unique (enforced by editor later). Build dynamic children once
+    const dynamicItems = navItems
+      .filter(it => !!it?.path && (it.type === NAVITEM_TYPE.CUSTOM_PAGE || it.type === NAVITEM_TYPE.PLUGIN));
 
-    for (const item of navItems) {
-      const p = item.path;
-      if (!p || existing.has(p)) continue; // skip invalid or duplicate paths
-      switch (item.type) {
-        case NAVITEM_TYPE.CUSTOM_PAGE:
-          children.unshift({ path: p, component: GenericPageComponent, data: { page_title: item.page_title } });
-          existing.add(p);
-          break;
-        case NAVITEM_TYPE.PLUGIN:
-          children.unshift({ path: p, component: PLUGINS[item.plugin_name!] });
-          existing.add(p);
-          break;
-        default:
-          // skip other types
-          break;
-      }
-    }
+    const dynamicChildren = dynamicItems.map(ni =>
+      ni.type === NAVITEM_TYPE.CUSTOM_PAGE
+        ? { path: ni.path, component: GenericPageComponent, data: { page_title: ni.page_title } }
+        : { path: ni.path, component: PLUGINS[ni.plugin_name!] }
+    );
+
+    // Append minimal base routes after dynamic ones 
+    const root = new_routes[0];
+    const baseChildren = root.children ?? [];
+    root.children = [...dynamicChildren, ...baseChildren];
     return new_routes;
   }
 
@@ -91,7 +76,7 @@ export class NavItemsService {
     return menuStructure;
   }
 
-  
+
 
 
   // CRUDL NAVITEMS
@@ -120,7 +105,7 @@ export class NavItemsService {
       this._navItems$.next(this._navItems);
       return createdNavItem;
     } catch (error) {
-  this.toastService.showErrorToast('NavItems', 'Erreur lors de la création');
+      this.toastService.showErrorToast('NavItems', 'Erreur lors de la création');
       return Promise.reject(error);
     }
   }
@@ -171,7 +156,7 @@ export class NavItemsService {
       this._navItems$.next(this._navItems);
       return updatedNavItem;
     } catch (error) {
-  this.toastService.showErrorToast('NavItems', 'Erreur lors de la modification');
+      this.toastService.showErrorToast('NavItems', 'Erreur lors de la modification');
       return Promise.reject(error);
     }
   }
@@ -184,10 +169,30 @@ export class NavItemsService {
       this._navItems$.next(this._navItems);
       return true;
     } catch (error) {
-  this.toastService.showErrorToast('NavItems', 'Erreur lors de la suppression');
+      this.toastService.showErrorToast('NavItems', 'Erreur lors de la suppression');
       return false;
     }
   }
 
   // Note: page_title is a UI concern; components can enrich items with titles using PageService
+
+  // Promote all sandbox nav items to production by flipping the sandbox flag to false.
+  // Returns the number of items promoted.
+  async promoteSandboxMenus(): Promise<number> {
+    try {
+      const all = await firstValueFrom(this.dbHandler.listNavItems());
+      const sandboxItems = (all || []).filter((it: any) => it?.sandbox === true) as NavItem[];
+      for (const item of sandboxItems) {
+        const updated: NavItem = { ...item, sandbox: false } as NavItem;
+        await this.updateNavItem(updated);
+      }
+      this.toastService.showSuccess('NavItems', `${sandboxItems.length} élément(s) promu(s) en production`);
+      return sandboxItems.length;
+    } catch (error: any) {
+      this.toastService.showErrorToast('NavItems', 'Erreur lors de la promotion des menus sandbox');
+      return Promise.reject(error);
+    }
+  }
+
+  
 }

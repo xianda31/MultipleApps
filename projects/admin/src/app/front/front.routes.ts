@@ -55,7 +55,7 @@ export const minimal_routes : Routes = [
       { path: 'home', component: HomePage },
       { path: '', redirectTo: 'home', pathMatch: 'full' },
       { path: 'back_office', redirectTo: '/back', pathMatch: 'full' },
-      { path: '**', component: CustomRouter },  // catch-all route to handle custom routing
+      // { path: '**', component: CustomRouter },  // catch-all route to handle custom routing
     ]
   },
 ];
