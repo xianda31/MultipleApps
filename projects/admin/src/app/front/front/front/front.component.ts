@@ -31,10 +31,13 @@ export class FrontComponent {
   constructor(
     private siteLayoutService: SiteLayoutService,
       private sandboxService: SandboxService,
-      private navitemService: NavItemsService
+      private navitemService: NavItemsService,
+      private localStorageService: LocalStorageService,
   ) { }
 
   ngOnInit(): void {
+
+     this.localStorageService.setItem('entry_point', 'front');
 
     this.siteLayoutService.getAlbums().subscribe((albums) => {
       this.albums = albums;
