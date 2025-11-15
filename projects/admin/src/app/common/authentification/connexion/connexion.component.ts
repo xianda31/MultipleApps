@@ -31,6 +31,7 @@ export class ConnexionComponent {
   showPassword = false; // toggle for sign-in/sign-up password fields
   showNewPassword = false; // toggle for reset new password
   currentMode?: Process_flow;
+  isSubmitting = false;
 
   mode$!: Observable<Process_flow>;
   // mode: Process_flow = Process_flow.SIGN_IN;
@@ -87,6 +88,85 @@ export class ConnexionComponent {
           this.logging_msg = err?.message || 'Connexion impossible';
         }
       });
+  }
+
+  async onSubmit() {
+    if (this.isSubmitting) return;
+    this.isSubmitting = true;
+    try {
+      switch (this.currentMode) {
+      case Process_flow.SIGN_IN: {
+        if (this.loggerForm.invalid || this.email.invalid || this.password.invalid) {
+          this.email.markAsTouched();
+          this.password.markAsTouched();
+          this.logging_msg = 'Veuillez saisir une adresse mail et un mot de passe valides';
+          break;
+        }
+        await this.signIn();
+        break;
+      }
+      case Process_flow.SIGN_UP: {
+        // If a sign-up code has been sent, treat submit as confirmation
+        if (this.sign_up_sent) {
+          if (this.email.invalid || !this.code.value) {
+            this.email.markAsTouched();
+            this.code.markAsTouched();
+            this.signup_msg = 'Renseignez le code reçu par e-mail';
+            break;
+          }
+          await this.confirmSignUp();
+          break;
+        }
+        // Otherwise perform initial sign-up
+        if (this.email.invalid || this.password.invalid) {
+          this.email.markAsTouched();
+          this.password.markAsTouched();
+          this.signup_msg = 'Veuillez saisir un e-mail et un mot de passe valides';
+          break;
+        }
+        await this.signUp();
+        break;
+      }
+      case Process_flow.RESET_PASSWORD: {
+        const newPwdCtrl = this.loggerForm.get('new_password');
+        if (this.email.invalid || newPwdCtrl?.invalid) {
+          this.email.markAsTouched();
+          newPwdCtrl?.markAsTouched();
+          this.logging_msg = 'Saisissez un e-mail et un nouveau mot de passe valides';
+          break;
+        }
+        await Promise.resolve(this.resetPassword());
+        break;
+      }
+      case Process_flow.CONFIRM_RESET_PASSWORD: {
+        const newPwdCtrl = this.loggerForm.get('new_password');
+        if (this.email.invalid || !this.code.value || newPwdCtrl?.invalid) {
+          this.email.markAsTouched();
+          this.code.markAsTouched();
+          newPwdCtrl?.markAsTouched();
+          this.logging_msg = 'Renseignez le code reçu et vérifiez votre nouveau mot de passe';
+          break;
+        }
+        await Promise.resolve(this.confirmPassword());
+        break;
+      }
+      case Process_flow.CONFIRM_SIGN_UP: {
+        if (this.email.invalid || !this.code.value) {
+          this.email.markAsTouched();
+          this.code.markAsTouched();
+          this.signup_msg = 'Renseignez le code reçu par e-mail';
+          break;
+        }
+        await this.confirmSignUp();
+        break;
+      }
+      default:
+        // No action for other modes
+        break;
+      }
+    } finally {
+      this.isSubmitting = false;
+    }
   }
 
 
