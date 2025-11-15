@@ -193,7 +193,7 @@ export class FeesCollectorComponent {
   }
 
   gamer_class(gamer: Gamer): string {
-    let card_class = 'card h-100';
+    let card_class = 'card h-100 nice_shadow';
     if (!gamer.enabled) {
       card_class += ' bg-success shadow-lg text-bg-success';
       return card_class;

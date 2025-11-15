@@ -191,40 +191,35 @@
                         <span class="text-muted">{{gamer.firstname}} </span>
                     </div>
 
-                    <!-- mode de réglement (intègre "non payant") -->
-                    <div class="col-6 align-content-center d-grid gap-2">
-                        <!-- Non payant option -->
-                        <div class="form-check form-check-reverse mb-1">
-                            <input class="form-check-input" type="radio" [name]="'card_or_euro' + gamer.index"
+                    <!-- mode de réglement (vertical: carte / euro / non payant) -->
+                    <div class="col-6 d-flex flex-column-reverse gap-2" style="height: 120px;">
+                        <!-- Non payant option (dernier, en bas) -->
+                        <div class="form-check form-check-reverse mb-2">
+                            <input class="form-check-input fee-radio-lg" type="radio" [name]="'card_or_euro' + gamer.index"
                                 [id]="'none_radio'+ gamer.index" [value]="'none'"
                                 [checked]="gamer.validated && !gamer.enabled" [disabled]="gamer.disabled"
                                 (change)="gamer.enabled=false; gamer.in_euro=false; gamer.validated=true; log_game_state(); check_status()" />
-                            <label class="form-check-label" [for]="'none_radio'+ gamer.index">{{ (game.fee_rate ===
-                                'accession') ? 'forfait' : 'non payant' }}</label>
+                            <label class="form-check-label" [for]="'none_radio'+ gamer.index">{{ (game.fee_rate === 'accession') ? 'forfait' : 'non payant' }}</label>
                         </div>
-
-                        <!-- Carte (membres uniquement) -->
-                        <div *ngIf="gamer.is_member" class="form-check form-check-reverse mb-1">
-                            <input class="form-check-input" type="radio" [name]="'card_or_euro' + gamer.index"
-                                [id]="'pass-radio'+ gamer.index" [value]="'card'"
-                                [checked]="gamer.validated && gamer.enabled && !gamer.in_euro"
-                                [disabled]="gamer.disabled || gamer.game_credits < (doubled ? 2 : 1)"
-                                (change)="gamer.enabled=true; gamer.in_euro=false; gamer.validated=true; log_game_state(); check_status()" />
-                            <label class="form-check-label"
-                                [for]="'pass-radio'+ gamer.index">
-                                <i class="bi bi-pass"></i>
-                                ({{doubled ? 2 : 1}})
-                            </label>
-                        </div>
-
                         <!-- Euro -->
-                        <div class="form-check form-check-reverse mb-1">
-                            <input class="form-check-input" type="radio" [name]="'card_or_euro' + gamer.index"
+                        <div class="form-check form-check-reverse">
+                            <input class="form-check-input fee-radio-lg" type="radio" [name]="'card_or_euro' + gamer.index"
                                 [id]="'euro_radio'+ gamer.index" [value]="'euro'"
                                 [checked]="gamer.validated && gamer.enabled && gamer.in_euro"
                                 [disabled]="gamer.disabled"
                                 (change)="gamer.enabled=true; gamer.in_euro=true; gamer.validated=true; log_game_state(); check_status()" />
-                            <label class="form-check-label" [for]="'euro_radio'+ gamer.index"> {{gamer.price}}€ </label>
+                            <label class="form-check-label" [for]="'euro_radio'+ gamer.index">{{gamer.price}}€</label>
+                        </div>
+                        <!-- Carte (membres uniquement, en haut si affiché) -->
+                        <div *ngIf="gamer.is_member" class="form-check form-check-reverse">
+                            <input class="form-check-input fee-radio-lg" type="radio" [name]="'card_or_euro' + gamer.index"
+                                [id]="'pass-radio'+ gamer.index" [value]="'card'"
+                                [checked]="gamer.validated && gamer.enabled && !gamer.in_euro"
+                                [disabled]="gamer.disabled || gamer.game_credits < (doubled ? 2 : 1)"
+                                (change)="gamer.enabled=true; gamer.in_euro=false; gamer.validated=true; log_game_state(); check_status()" />
+                            <label class="form-check-label" [for]="'pass-radio'+ gamer.index">
+                                tampon ({{doubled ? 2 : 1}})
+                            </label>
                         </div>
                     </div>
                 </div>
