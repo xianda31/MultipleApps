@@ -1,10 +1,9 @@
+// Large radio buttons with visible selection
 .fee-radio-lg {
   width: 1.6rem;
   height: 1.6rem;
-  accent-color: #6c757d;
-  border: 2px solid #6c757d !important;
-  background: #fff;
-  box-shadow: 0 2px 6px 0 rgba(108,117,125,0.25);
+  accent-color: #0d6efd; // Bootstrap primary for clear selection
+  box-shadow: 0 2px 6px 0 rgba(13,110,253,0.18);
 }
 .form-check.form-check-reverse {
   display: flex;
@@ -53,8 +52,4 @@
 }
 
 /* Radios plus gros pour la colonne droite du fee editor */
-.fee-radio-lg {
-  width: 1.4rem;
-  height: 1.4rem;
-  accent-color: #0d6efd;
-}
+// Remove duplicate/old definition
