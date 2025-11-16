@@ -5,8 +5,6 @@ import { SystemDataService } from '../../common/services/system-data.service';
 import { SystemConfiguration } from '../../common/interfaces/system-conf.interface';
 import { ToastService } from '../../common/services/toast.service';
 import { FileService } from '../../common/services/files.service';
-import { BookService } from '../services/book.service';
-import { FEE_RATE } from '../fees/fees.interface';
 
 
 
@@ -157,6 +155,27 @@ export class SysConfComponent {
 
   get banks() {
     return this.systemFormGroup.get('banks') as FormArray;
+  }
+
+  // Ajoute un nouveau code banque '???'/'autre'
+  addBankCode(): void {
+    const banks = this.banks;
+    if (!banks) return;
+    // Vérifie si le dernier élément est bien '???'
+    const last = banks.at(banks.length - 1);
+    if (!last || last.get('key')?.value !== '???') {
+      banks.push(this.fb.group({ key: ['???'], name: ['autre'] }));
+    }
+  }
+
+  // Quand la key du dernier code banque est modifiée, recrée '???'/'autre' si besoin
+  onBankKeyChange(i: number): void {
+    const banks = this.banks;
+    if (!banks) return;
+    // Si on modifie le dernier et qu'il n'est plus '???', on ajoute un nouveau '???'
+    if (i === banks.length - 1 && banks.at(i).get('key')?.value !== '???') {
+      this.addBankCode();
+    }
   }
   get club_bank(): string {
     let key = this.systemFormGroup.get('club_bank_key')?.value;
