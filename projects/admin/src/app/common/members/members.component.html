@@ -64,6 +64,7 @@
             <th class="d-none d-sm-table-cell">licence</th>
             <th class="d-none d-sm-table-cell">date de licence</th>
             <th class="d-none d-sm-table-cell">mail</th>
+            <th class="d-none d-sm-table-cell">date naissance</th>
             <th class="d-none d-sm-table-cell"><i class="bi bi-telephone-fill"></i></th>
             <th class="d-none d-sm-table-cell">Ville</th>
             <th class="d-none d-sm-table-cell text-center">préf.</th>
@@ -107,6 +108,9 @@
               {{member.register_date ? (member.register_date | date:'dd/MM/yyyy') : ''}}
             </td>
             <td class="d-none d-sm-table-cell">{{member.email}}</td>
+            <td class="d-none d-sm-table-cell">
+              {{member.birthdate | date:'dd/MM/yyyy' : ''}}
+            </td>
             <td class="d-none d-sm-table-cell">{{member.phone_one | phone}}</td>
             <td class="d-none d-sm-table-cell">{{member.city }}</td>
             <td class="text-center"> <i (click)="access_settings(member)" class="bi bi-gear-fill"></i> </td>
