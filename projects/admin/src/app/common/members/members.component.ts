@@ -33,7 +33,7 @@ export class MembersComponent implements OnInit {
 
   // selected_filter: string = 'Tous';
   licenses_status: { [key: string]: string } = {
-    'registered': 'reg. FFB',
+    'registered': '@FFB',
     'unregistered': 'autres',
     // 'all': 'tous',
     // 'offered': 'Offerte',
