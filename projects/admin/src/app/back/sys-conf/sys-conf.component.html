@@ -4,7 +4,7 @@
     <div class="card mt-2 ">
       <h5 class="card-header">sauvegarde configuration</h5>
       <div class="card-body">
-  <div class="d-flex flex-row flex-nowrap justify-content-end gap-2">
+        <div class="d-flex flex-row flex-nowrap justify-content-end gap-2">
           <button class="btn btn-outline-success btn-sm w-auto">
             <i class="bi-file-earmark-arrow-up-fill"></i>
             <a [href]="export_file_url" style="text-decoration: none; color: var(--bs-success);"
@@ -26,10 +26,6 @@
       </div>
     </div>
     <div>
-      <!-- paramètres divers -->
-      <!-- <div class="card mt-2">
-          <h5 class="card-header">divers</h5>
-          <div class="card-body"> -->
       <div class="row g-3 mt-2">
         <div class="col-12 col-md-6">
           <div class="card h-100">
@@ -135,12 +131,12 @@
               <div class="row">
                 <div class="col-6 text-center fw-bold text-uppercase">charges</div>
                 <div class="col-6 text-center fw-bold text-uppercase">recettes</div>
-
               </div>
               <div *ngFor="let section of sections.controls" class="mb-3">
                 <h6>{{section.get('description')?.value }}</h6>
                 <div class="row g-2">
                   <div class="col-12 col-md-6 mb-2 mb-md-0">
+
                     <div class="card h-100 bg-body-secondary" formArrayName="expenses">
                       <div class="card-body">
                         <div *ngFor="let expense of expenses.controls; let i = index">
@@ -152,12 +148,12 @@
                             <div class="col-8 col-md-9">
                               <input type="text" class="form-control" formControlName="description">
                             </div>
-                            }
-                          }
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
+
                   <div class="col-12 col-md-6">
                     <div class="card h-100 bg-body-tertiary" formArrayName="revenues">
                       <div class="card-body">
@@ -170,56 +166,54 @@
                             <div class="col-8 col-md-9">
                               <input type="text" class="form-control" formControlName="description">
                             </div>
-                            }
-                          }
+                          </div>
                         </div>
                       </div>
                     </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card mt-2">
+            <h6 class="card-header">codes banques</h6>
+            <div class="card-body">
+              <div class="row g-2" formArrayName="banks">
+                <div class="col-12 col-md-4 mb-2 mb-md-0" *ngFor="let bank of banks.controls; let i = index"
+                  [formGroupName]="i">
+                  <div class="input-group">
+                    <span class="input-group-text">#</span>
+                    <input type="text" class="form-control" formControlName="key" (change)="onBankKeyChange(i)">
+                    <input type="text" class="form-control" formControlName="name">
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <div class="card mt-2">
-          <h6 class="card-header">codes banques</h6>
-          <div class="card-body">
-            <div class="row g-2" formArrayName="banks">
-              <div class="col-12 col-md-4 mb-2 mb-md-0" *ngFor="let bank of banks.controls; let i = index"
-                [formGroupName]="i">
-                <div class="input-group">
-                  <span class="input-group-text">#</span>
-                  <input type="text" class="form-control" formControlName="key" (change)="onBankKeyChange(i)">
-                  <input type="text" class="form-control" formControlName="name">
-                </div>
-                }
-              </div>
+      </div>
+      <!-- paramètres UE site -->
+      <div class="card mt-2">
+        <h5 class="card-header">site</h5>
+        <div class="card-body">
+          <h6>recadrage des vignettes stockées du site</h6>
+          <div class="d-flex flex-column flex-md-row gap-2" formGroupName="thumbnail">
+            <div class="input-group flex-fill">
+              <span class="input-group-text">largeur (px)</span>
+              <input type="text" class="form-control" formControlName="width">
+            </div>
+            <div class="input-group flex-fill">
+              <span class="input-group-text">hauteur (px)</span>
+              <input type="text" class="form-control" formControlName="height">
+            </div>
+            <div class="input-group flex-fill">
+              <span class="input-group-text">ratio</span>
+              <input type="text" class="form-control" formControlName="ratio">
             </div>
           </div>
         </div>
       </div>
     </div>
-    <!-- paramètres UE site -->
-    <div class="card mt-2">
-      <h5 class="card-header">site</h5>
-      <div class="card-body">
-        <h6>recadrage des vignettes stockées du site</h6>
-        <div class="d-flex flex-column flex-md-row gap-2" formGroupName="thumbnail">
-          <div class="input-group flex-fill">
-            <span class="input-group-text">largeur (px)</span>
-            <input type="text" class="form-control" formControlName="width">
-          </div>
-          <div class="input-group flex-fill">
-            <span class="input-group-text">hauteur (px)</span>
-            <input type="text" class="form-control" formControlName="height">
-          </div>
-          <div class="input-group flex-fill">
-            <span class="input-group-text">ratio</span>
-            <input type="text" class="form-control" formControlName="ratio">
-          </div>
-        </div>
-      </div>
-    </div>
-    <!-- </div> -->
-  </form>
+</form>
 </div>
