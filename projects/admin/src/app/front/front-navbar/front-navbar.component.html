@@ -177,31 +177,31 @@
 
 
 <ng-template #testmenu>
-  @for (menu of menus | keyvalue; track menu.key) {
-  @if (menu.value.parent.position === NAVITEM_POSITION.NAVBAR
-  && (menu.value.parent.logging_criteria === NAVITEM_LOGGING_CRITERIA.ANY
-  || (menu.value.parent.logging_criteria === NAVITEM_LOGGING_CRITERIA.LOGGED_ONLY && (logged_member$ | async))
-  || (menu.value.parent.logging_criteria === NAVITEM_LOGGING_CRITERIA.UNLOGGED_ONLY && !(logged_member$ | async))
+  @for (menu of menus; track menu.navitem.id) {
+  @if (menu.navitem.position === NAVITEM_POSITION.NAVBAR
+  && (menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.ANY
+  || (menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.LOGGED_ONLY && (logged_member$ | async))
+  || (menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.UNLOGGED_ONLY && !(logged_member$ | async))
   )
   ) {
 
   <!-- Dropdown parent  -->
-  @if (menu.value.parent.type === NAVITEM_TYPE.DROPDOWN && (menu.value.childs.length || 0) > 0) {
+  @if (menu.navitem.type === NAVITEM_TYPE.DROPDOWN && (menu.childs?.length || 0) > 0) {
   <li class="nav-item dropdown ms-3" ngbDropdown>
-    <a class="nav-link dropdown-toggle" ngbDropdownToggle id="nav-{{ menu.key }}">
-      @if(menu.value.parent.pre_label === 'avatar') {
+    <a class="nav-link dropdown-toggle" ngbDropdownToggle id="nav-{{ menu.navitem.id }}">
+      @if(menu.navitem.pre_label === 'avatar') {
       <img [src]="avatar$ | async" alt="avatar" class="rounded-circle"
         style="width:28px; height:28px; max-width:28px; max-height:28px; object-fit:cover">
       }
-      {{ label_transformer(menu.value.parent.label) | async }}
+      {{ label_transformer(menu.navitem.label) | async }}
     </a>
-    <ul class="dropdown-menu" ngbDropdownMenu [attr.aria-labelledby]="'nav-' + menu.key">
-      @for (child of menu.value.childs; track $index) {
+    <ul class="dropdown-menu" ngbDropdownMenu [attr.aria-labelledby]="'nav-' + menu.navitem.id">
+      @for (child of (menu.childs || []); track child.navitem.id) {
       <li>
-        @if (child.type === NAVITEM_TYPE.DIRECT_CALL) {
-        <a class="dropdown-item" (click)="onCommand(child)"> {{ child.label }} </a>
+        @if (child.navitem.type === NAVITEM_TYPE.DIRECT_CALL) {
+        <a class="dropdown-item" (click)="onCommand(child.navitem)"> {{ child.navitem.label }} </a>
         } @else {
-        <a class="dropdown-item" [routerLink]="child.path"> {{ child.label }} </a>
+        <a class="dropdown-item" [routerLink]="child.navitem.path"> {{ child.navitem.label }} </a>
         }
       </li>
       }
@@ -210,21 +210,21 @@
   } @else {
   <!-- Simple link parent (no dropdown) -->
   <li class="nav-item ms-3">
-    @if (menu.value.parent.type === NAVITEM_TYPE.DIRECT_CALL) {
-    <a class="nav-link" (click)="onCommand(menu.value.parent)">
-      @if(menu.value.parent.pre_label === 'avatar') {
+    @if (menu.navitem.type === NAVITEM_TYPE.DIRECT_CALL) {
+    <a class="nav-link" (click)="onCommand(menu.navitem)">
+      @if(menu.navitem.pre_label === 'avatar') {
       <img [src]="avatar$ | async" alt="avatar" class="rounded-circle"
         style="width:28px; height:28px; max-width:28px; max-height:28px; object-fit:cover">
       }
-      {{ label_transformer(menu.value.parent.label) | async }}
+      {{ label_transformer(menu.navitem.label) | async }}
     </a>
     } @else {
-    <a class="nav-link " [routerLink]="menu.value.parent.path ">
-      @if(menu.value.parent.pre_label === 'avatar') {
+    <a class="nav-link " [routerLink]="menu.navitem.path ">
+      @if(menu.navitem.pre_label === 'avatar') {
       <img [src]="avatar$ | async" alt="avatar" class="rounded-circle"
         style="width:28px; height:28px; max-width:28px; max-height:28px; object-fit:cover">
       }
-      {{ label_transformer(menu.value.parent.label) | async }}
+      {{ label_transformer(menu.navitem.label) | async }}
     </a>
     }
   </li>

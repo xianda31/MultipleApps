@@ -2,11 +2,10 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, firstValueFrom, map, of, switchMap, tap } from 'rxjs';
 import { ToastService } from './toast.service';
 import { DBhandler } from './graphQL.service';
-import { MenuStructure, NavItem, NavItem_input, NAVITEM_TYPE } from '../interfaces/navitem.interface';
+import {  MenuGroup, NavItem, NavItem_input, NAVITEM_TYPE } from '../interfaces/navitem.interface';
 import { minimal_routes, routes } from '../../front/front.routes';
 import { Routes } from '@angular/router';
 import { GenericPageComponent } from '../../front/front/pages/generic-page/generic-page.component';
-import { ConnexionPageComponent } from '../authentification/connexion-page/connexion-page.component';
 import { PLUGINS } from '../interfaces/plugin.interface';
 
 @Injectable({
@@ -54,26 +53,23 @@ export class NavItemsService {
     return new_routes;
   }
 
-  getMenuStructure(): MenuStructure {
-    const menuStructure: MenuStructure = {};
-    // Treat both null and undefined parent_id as top-level
-    this._navItems.forEach(item => {
-      if (item.parent_id == null) { // null or undefined
-        menuStructure[item.id] = { parent: item, childs: [] };
-      }
-    });
-    // Attach children
-    this._navItems.forEach(item => {
-      if (item.parent_id != null) {
-        const parentEntry = menuStructure[item.parent_id];
-        if (parentEntry) parentEntry.childs.push(item);
-      }
-    });
-    // Sort children by rank asc
-    Object.values(menuStructure).forEach(entry => {
-      entry.childs.sort((a, b) => a.rank - b.rank);
-    });
-    return menuStructure;
+  /**
+   * Nouvelle structure récursive : retourne un tableau de MenuGroup
+   */
+  getMenuStructure(): MenuGroup[] {
+    return this.buildMenuStructureNew(this._navItems);
+  }
+
+  /**
+   * Fonction utilitaire pour construire la structure récursive
+   */
+  buildMenuStructureNew(items: NavItem[], parentId: string | null = null): MenuGroup[] {
+    const levelItems = items.filter(it => it.parent_id === parentId);
+    levelItems.sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0));
+    return levelItems.map(it => ({
+      navitem: it,
+      childs: this.buildMenuStructureNew(items, it.id)
+    }));
   }
 
 
@@ -194,5 +190,5 @@ export class NavItemsService {
     }
   }
 
-  
+
 }

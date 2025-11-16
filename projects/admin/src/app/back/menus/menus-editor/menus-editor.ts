@@ -3,7 +3,7 @@ import { Component, ViewChild, Inject } from '@angular/core';
 import { NgbOffcanvas, NgbOffcanvasRef } from '@ng-bootstrap/ng-bootstrap';
 import { ToastService } from '../../../common/services/toast.service';
 import { NavItemsService } from '../../../common/services/navitem.service';
-import { MenuStructure, NavItem, NAVITEM_LOGGING_CRITERIA, NAVITEM_POSITION, NAVITEM_TYPE } from '../../../common/interfaces/navitem.interface';
+import { MenuStructure, MenuGroup, NavItem, NAVITEM_LOGGING_CRITERIA, NAVITEM_POSITION, NAVITEM_TYPE } from '../../../common/interfaces/navitem.interface';
 import { NAVITEM_COMMAND } from '../../../common/interfaces/plugin.interface';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -25,12 +25,13 @@ import { charsanitize, buildFullPath, extractSegment } from '../../../common/uti
 
 @Component({
   selector: 'app-menus-editor',
-  standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbDropdownModule, DragDropModule],
   templateUrl: './menus-editor.html',
-  styleUrl: './menus-editor.scss'
+  styleUrls: ['./menus-editor.scss'],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbDropdownModule, DragDropModule]
 })
 export class MenusEditorComponent  {
+  // ... autres propriétés ...
+  navbarEntries: MenuGroup[] = [];
   @ViewChild('editNavitemOffcanvas', { static: true }) editNavitemOffcanvas: any;
 
   selectedNavitem: NavItem | null = null;
@@ -55,11 +56,11 @@ export class MenusEditorComponent  {
 
   front_routes!: Routes;
   navItems: NavItem[] = [];
-  menus: MenuStructure = {};
+  menus: MenuStructure = [];
   pages: Page[] = [];
   selected_page: Page | null = null;
   // Ordered list for NAVBAR parents used for DnD at parent level
-  navbarEntries: Array<{ parent: NavItem; childs: NavItem[] }> = [];
+  // navbarEntries est maintenant de type MenuGroup[]
 
   navItemForm: FormGroup = new FormGroup({});
   routes!: Routes;
@@ -69,7 +70,6 @@ export class MenusEditorComponent  {
   // Special label tokens recognized by the navbar label_transformer
   SPECIAL_LABELS: string[] = Object.values(LABEL_TRANSFORMERS) as string[];
   currentLabelToken: string = '';
-  // Auto-slug helpers
   private slugManuallyEdited = false; // becomes true if user changes slug away from auto-generated value
   private lastAutoSlug = '';
   private skipNextPathUpdate = false; // skip first recompute when opening the editor to avoid duplicate slug in path
@@ -109,7 +109,7 @@ export class MenusEditorComponent  {
           this.navitems = this.enrichWithPageTitle(navitems);
           // Editor preview always reflects sandbox dataset
           this.front_routes = this.navitemService.generateFrontRoutes(this.navitems);
-          this.menus = this.buildMenuStructureFrom(this.navitems);
+          this.menus = this.buildMenuStructureNew(this.navitems);
           // console.log('Menu structure', this.menus);
           this.rebuildNavbarEntries();
         },
@@ -128,7 +128,6 @@ export class MenusEditorComponent  {
     //     },
     //     error: (err) => this.toastService.showErrorToast('Routes', err.message)
     //   });
-
   }
 
   setSandbox(flag: boolean) {
@@ -297,25 +296,16 @@ export class MenusEditorComponent  {
   }
 
   // Drag-and-drop: reorder children within the same parent and persist rank (0-based)
-  dropChild(event: CdkDragDrop<NavItem[]>, parent: NavItem) {
+  dropChild(event: CdkDragDrop<MenuGroup[]>, parent: MenuGroup) {
     if (!event.container || event.previousIndex === event.currentIndex) {
-      return; // nothing to do
+      return;
     }
-    const list = event.container.data; // the children array
+    const list = event.container.data as MenuGroup[];
     moveItemInArray(list, event.previousIndex, event.currentIndex);
-
     // Recompute ranks locally (0-based)
-    const updated = list.map((child, idx) => ({ ...child, rank: idx } as NavItem));
-
-    // Optimistic update of local menus snapshot
-    // Find the entry matching this parent in current menus and update its childs reference
-    const entry = Object.values(this.menus).find(e => e.parent.id === parent.id);
-    if (entry) {
-      entry.childs.splice(0, entry.childs.length, ...updated);
-    }
-
+    list.forEach((child, idx) => child.navitem.rank = idx);
     // Persist all updated children ranks
-    Promise.all(updated.map(child => this.navitemService.updateNavItem(child)))
+    Promise.all(list.map(child => this.navitemService.updateNavItem(child.navitem)))
       .then(() => {
         this.toastService.showSuccess('Menus', 'Ordre des sous-menus mis à jour');
       })
@@ -326,40 +316,16 @@ export class MenusEditorComponent  {
   }
 
   // Drag-and-drop: reorder top-level NAVBAR parents and persist their rank (0-based)
-  dropParent(event: CdkDragDrop<Array<{ parent: NavItem; childs: NavItem[] }>>) {
+  dropParent(event: CdkDragDrop<MenuGroup[]>) {
     if (!event.container || event.previousIndex === event.currentIndex) {
-      return; // nothing to do
+      return;
     }
-    // We may be dragging in a filtered (preview) view where some parents are hidden.
-    // Work on the visible subset then merge back into the full list to keep hidden items stable.
-    const visible = this.navbarEntries.filter(e => this.allow(e.parent));
-    // Clone visible subset for manipulation
-    const working = [...visible];
+    const working = [...this.navbarEntries];
     moveItemInArray(working, event.previousIndex, event.currentIndex);
-
-    // Rebuild full navbarEntries replacing only allowed (visible) entries in their new order
-    const rebuilt: typeof this.navbarEntries = [];
-    let vIdx = 0;
-    for (const entry of this.navbarEntries) {
-      if (this.allow(entry.parent)) {
-        rebuilt.push(working[vIdx++]);
-      } else {
-        rebuilt.push(entry); // keep hidden entry in original relative position
-      }
-    }
-    this.navbarEntries = rebuilt;
-
-    // Recompute ranks globally (0-based) respecting new order
-    const updatedParents = this.navbarEntries.map((e, idx) => ({ ...e.parent, rank: idx } as NavItem));
-
-    // Optimistic update of local menus snapshot
-    updatedParents.forEach(p => {
-      const entry = Object.values(this.menus).find(e => e.parent.id === p.id);
-      if (entry) entry.parent = p;
-    });
-
+    // Recompute ranks globally (0-based)
+    working.forEach((entry, idx) => entry.navitem.rank = idx);
     // Persist all updated parent ranks
-    Promise.all(updatedParents.map(p => this.navitemService.updateNavItem(p)))
+    Promise.all(working.map(e => this.navitemService.updateNavItem(e.navitem)))
       .then(() => {
         this.toastService.showSuccess('Menus', 'Ordre des menus mis à jour');
       })
@@ -367,6 +333,7 @@ export class MenusEditorComponent  {
         this.toastService.showErrorToast('Menus', 'Échec mise à jour de l\'ordre');
         console.error('DnD parent persist error:', err);
       });
+    this.navbarEntries = working;
   }
 
 
@@ -461,24 +428,17 @@ export class MenusEditorComponent  {
   }
 
   // Build a local menu structure from the enriched navitems list
-  private buildMenuStructureFrom(items: NavItem[]): MenuStructure {
-    const structure: MenuStructure = {};
-    // Add parents
-    for (const it of items) {
-      if (it.parent_id == null) {
-        structure[it.id] = { parent: it, childs: [] };
-      }
-    }
-    // Attach children
-    for (const it of items) {
-      if (it.parent_id != null) {
-        const entry = structure[it.parent_id];
-        if (entry) entry.childs.push(it);
-      }
-    }
-    // Sort children by rank for stable display
-    Object.values(structure).forEach(e => e.childs.sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0)));
-    return structure;
+  // Nouvelle version récursive pour MenuStructure
+  private buildMenuStructureNew(items: NavItem[], parentId: string | null = null): MenuGroup[] {
+    // Filtrer les navitems du niveau courant
+    const levelItems = items.filter(it => it.parent_id === parentId);
+    // Trier par rank
+    levelItems.sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0));
+    // Construire récursivement
+    return levelItems.map(it => ({
+      navitem: it,
+      childs: this.buildMenuStructureNew(items, it.id)
+    }));
   }
 
   private reloadNavitems() {
@@ -489,7 +449,7 @@ export class MenusEditorComponent  {
       .subscribe(([navitems, pages]) => {
         this.pages = pages;
         this.navitems = this.enrichWithPageTitle(navitems);
-        this.menus = this.buildMenuStructureFrom(this.navitems);
+  this.menus = this.buildMenuStructureNew(this.navitems);
         // Preview always built from sandbox items
         this.front_routes = this.navitemService.generateFrontRoutes(this.navitems);
         this.rebuildNavbarEntries();
@@ -499,8 +459,8 @@ export class MenusEditorComponent  {
   private rebuildNavbarEntries() {
     const entries = Object.values(this.menus || {});
     this.navbarEntries = entries
-      .filter(e => e.parent.position === NAVITEM_POSITION.NAVBAR)
-      .sort((a, b) => (a.parent.rank ?? 0) - (b.parent.rank ?? 0));
+      .filter(e => e.navitem.position === NAVITEM_POSITION.NAVBAR)
+      .sort((a, b) => (a.navitem.rank ?? 0) - (b.navitem.rank ?? 0));
   }
 
   allow(ni: NavItem): boolean {
@@ -514,9 +474,9 @@ export class MenusEditorComponent  {
     }
   }
 
-  hasVisibleChildren(entry: { parent: NavItem; childs: NavItem[] }): boolean {
-    if (entry.parent.type !== NAVITEM_TYPE.DROPDOWN) return true;
-    return (entry.childs || []).some(c => this.allow(c));
+  hasVisibleChildren(entry: MenuGroup): boolean {
+    if (entry.navitem.type !== NAVITEM_TYPE.DROPDOWN) return true;
+    return (entry.childs ?? []).some(childGroup => this.allow(childGroup.navitem));
   }
 
   // private effectiveLoggingCriteria(ni: NavItem): NAVITEM_LOGGING_CRITERIA {

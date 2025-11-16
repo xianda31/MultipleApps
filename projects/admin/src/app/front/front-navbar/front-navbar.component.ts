@@ -5,11 +5,9 @@ import { AuthentificationService } from '../../common/authentification/authentif
 import { GroupService } from '../../common/authentification/group.service';
 import { Accreditation } from '../../common/authentification/group.interface';
 import { Member } from '../../common/interfaces/member.interface';
-import { Offcanvas } from 'bootstrap';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbDropdownModule, NgbCollapseModule } from '@ng-bootstrap/ng-bootstrap';
 import { Observable } from 'rxjs';
-import { Process_flow } from '../../common/authentification/authentification_interface';
 import { MemberSettingsService } from '../../common/services/member-settings.service';
 import { MenuStructure, NavItem, NAVITEM_LOGGING_CRITERIA, NAVITEM_POSITION, NAVITEM_TYPE } from '../../common/interfaces/navitem.interface';
 import { environment } from '../../../environments/environment';
@@ -24,7 +22,7 @@ import { CommandRegistryService } from '../../common/services/command-registry.s
 })
 export class FrontNavbarComponent {
   @Input() albums: string[] = [];
-  @Input() menus: MenuStructure = {};
+  @Input() menus: MenuStructure = [];
   @Input() sandboxMode: boolean = false;
   NAVITEM_POSITION = NAVITEM_POSITION;
   NAVITEM_TYPE = NAVITEM_TYPE;

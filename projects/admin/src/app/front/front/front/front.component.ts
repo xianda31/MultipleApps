@@ -6,8 +6,7 @@ import { CommonModule } from '@angular/common';
 import { ToasterComponent } from '../../../common/toaster/components/toaster/toaster.component';
 import { TitleComponent } from '../../title/title.component';
 import { SiteLayoutService } from '../../../common/services/site-layout.service';
-import { Observable, of } from 'rxjs';
-import { MenuStructure, NAVITEM_POSITION, NAVITEM_TYPE } from '../../../common/interfaces/navitem.interface';
+import {  MenuStructure, NAVITEM_POSITION, NAVITEM_TYPE } from '../../../common/interfaces/navitem.interface';
 import { SandboxService } from '../../../common/services/sandbox.service';
 import { NavItemsService } from '../../../common/services/navitem.service';
 
@@ -19,7 +18,7 @@ import { NavItemsService } from '../../../common/services/navitem.service';
   styleUrl: './front.component.scss'
 })
 export class FrontComponent {
-  add_menus: MenuStructure = {};
+  add_menus: MenuStructure = [];
   NAVITEM_POSITION = NAVITEM_POSITION;
   NAVITEM_TYPE = NAVITEM_TYPE;
   NAVITEM_TYPES = Object.values(NAVITEM_TYPE);

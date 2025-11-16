@@ -54,4 +54,12 @@ export interface NavItem {
 export type NavItem_input = Omit<Schema['NavItem']['type'], 'id' | 'createdAt' | 'updatedAt'>;
 
 
-export interface MenuStructure { [key: string]: { parent: NavItem, childs: NavItem[] } }
+// Ancienne structure :
+// export interface MenuStructure { [key: string]: { parent: NavItem, childs: NavItem[] } }
+
+// Nouvelle structure récursive pour n niveaux
+export interface MenuGroup {
+    navitem: NavItem;
+    childs: MenuGroup[] | null;
+}
+export type MenuStructure = MenuGroup[];
