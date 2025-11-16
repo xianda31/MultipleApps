@@ -1,8 +1,8 @@
 <!-- <div class="loadable-wrapper offset-md-2 col-md-8 justify-content-start"> -->
-  <ng-container *ngIf="snippets.length === 0">
+  @if (snippets.length === 0) {
     <div class="alert alert-info">Aucun contenu à afficher.</div>
-  </ng-container>
-  <ng-container *ngFor="let snippet of snippets; trackBy: trackById">
+  }
+  @for (snippet of snippets; track snippet.id) {
     <div class="card nice_shadow mb-2">
       <div class="card-body">
         <div class="card-title">
@@ -19,5 +19,5 @@
         <div class="card-text tighter-html" [innerHTML]="snippet.content"></div>
       </div>
     </div>
-  </ng-container>
+  }
 <!-- </div> -->

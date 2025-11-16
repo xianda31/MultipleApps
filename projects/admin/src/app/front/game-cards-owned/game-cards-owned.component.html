@@ -2,26 +2,32 @@
 
     <div class="card" mt-3>
         <div class="card-header">
-            <h5 class="card-title">Droits de table :
-                <span *ngIf="total_free_places((cards$ | async) || []) > 0" class="text-muted small">
-                    il vous en reste {{total_free_places((cards$ | async) || [])}} 
-                </span>
-                <span *ngIf="total_free_places((cards$ | async) || []) === 0" class="text-muted small">
-                    Vous n'avez plus de droits de table d'avance.
-                </span>
-            </h5>
+                        <h5 class="card-title">Droits de table :
+                                @if (total_free_places((cards$ | async) || []) > 0) {
+                                    <span class="text-muted small">
+                                        il vous en reste {{total_free_places((cards$ | async) || [])}} 
+                                    </span>
+                                } @else if (total_free_places((cards$ | async) || []) === 0) {
+                                    <span class="text-muted small">
+                                        Vous n'avez plus de droits de table d'avance.
+                                    </span>
+                                }
+                        </h5>
         </div>
 
-        <div *ngIf="total_free_places((cards$ | async) || []) === 0" class="card-body">
-             Pensez à acheter une nouvelle carte !
-        </div>
+                @if (total_free_places((cards$ | async) || []) === 0) {
+                    <div class="card-body">Pensez à acheter une nouvelle carte !</div>
+                }
 
-        <div *ngIf="total_free_places((cards$ | async) || []) > 0"  class="card-body">
-
-            <div *ngFor="let card of cards$ | async" class="mt-2">
-                <ng-container *ngTemplateOutlet="game_card; context: { $implicit: card }"></ng-container>
-            </div>
-        </div>
+                @if (total_free_places((cards$ | async) || []) > 0) {
+                    <div class="card-body">
+                        @for (card of (cards$ | async); track card.id) {
+                            <div class="mt-2">
+                                <ng-container *ngTemplateOutlet="game_card; context: { $implicit: card }"></ng-container>
+                            </div>
+                        }
+                    </div>
+                }
     </div>
 
 </div>
@@ -36,10 +42,10 @@
                 </div>
                 <div class="text-muted">
                     <span class="fw-bolder">titulaire(s) :</span>
-                    <span *ngFor="let owner of card.owners; let j = index">
-                        <span *ngIf="j > 0"> &nbsp;et&nbsp; </span>
-                        {{owner.lastname}} {{owner.firstname}}
-                    </span>
+                                        @for (owner of card.owners; let j = $index; track j) {
+                                            @if (j > 0) { <span>&nbsp;et&nbsp;</span> }
+                                            {{owner.lastname}} {{owner.firstname}}
+                                        }
                 </div>
                 <div class="row justify-content-between  align-items-center mb-2">
                     <div class="col-5 text-muted">
@@ -56,13 +62,15 @@
 
         <div class="card-body">
             <div class="row row-cols-3 row-cols-md-6 g-0">
-                <div *ngFor="let place of card.stamp_places ; let i = index" class="col">
-                    <div [class]=" place.free ? 'card h-100' :'card h-100 bg-light'">
-                        <div class="card-body text-center">
-                            <small [class]=" place.free ? 'text-muted' :'  fw-bolder'"> {{place.free ? place.stamp :place.stamp | date}}</small>
-                        </div>
-                    </div>
-                </div>
+                                @for (place of card.stamp_places; let i = $index; track i) {
+                                    <div class="col">
+                                        <div [class]=" place.free ? 'card h-100' :'card h-100 bg-light'">
+                                            <div class="card-body text-center">
+                                                <small [class]=" place.free ? 'text-muted' :'  fw-bolder'"> {{place.free ? place.stamp : place.stamp | date}}</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
             </div>
         </div>
     </div>

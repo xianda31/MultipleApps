@@ -1,3 +1,3 @@
-  <ng-container *ngFor="let snippet of snippets; trackBy: trackById">
+  @for (snippet of snippets; track snippet.id) {
     <app-album [album]="snippet"></app-album>
-  </ng-container>
+  }

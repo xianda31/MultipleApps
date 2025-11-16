@@ -1,5 +1,5 @@
 <div class="cards-img-bottom-wrapper row">
-  <ng-container *ngFor="let snippet of snippets; trackBy: trackById">
+  @for (snippet of snippets; track snippet.id) {
     <div class="col-12 col-md-4 mb-3">
       <div class="card h-100">
         <div class="card-body">
@@ -9,5 +9,5 @@
         <img [src]="snippet.image_url" class="card-img-bottom" alt="{{snippet.title}}">
       </div>
     </div>
-  </ng-container>
+  }
 </div>

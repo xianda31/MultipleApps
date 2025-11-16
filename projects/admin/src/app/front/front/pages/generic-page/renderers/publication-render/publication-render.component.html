@@ -6,17 +6,19 @@
                     les titres
                 </div>
                 <div class="card-body">
-                    <div *ngFor="let snippet of snippets; trackBy: trackById" class=""
-                            (click)="scrollTo(getAnchorId(snippet))" [class.fw-bold]="isSelected(snippet)">
-                        {{snippet.title}}
-                        <span *ngIf="snippet.featured"><i class="bi bi-star-fill text-info"></i></span>
-                    </div>
+                    @for (snippet of snippets; track snippet.id) {
+                        <div class="" (click)="scrollTo(getAnchorId(snippet))" [class.fw-bold]="isSelected(snippet)">
+                            {{snippet.title}}
+                            @if (snippet.featured) {<span><i class="bi bi-star-fill text-info"></i></span>}
+                        </div>
+                    }
                 </div>
             </div>
         </div>
     </div>
     <div class="col-md-9">
-        <div class="col" *ngFor="let snippet of snippets; trackBy: trackById">
+        @for (snippet of snippets; track snippet.id) {
+        <div class="col">
             <div class="card border-0 mt-1" id="{{getAnchorId(snippet)}}">
                 <div class="card-body">
                     <div class="row flex-nowrap align-items-stretch snippet-block">
@@ -40,5 +42,6 @@
                 </div>
             </div>
         </div>
+        }
     </div>
 </div>

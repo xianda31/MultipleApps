@@ -35,10 +35,27 @@ export const routes: Routes = [
       { path: 'achats/carte', component: GameCardsOwnedComponent },
       { path: 'albums/:snippet_id', component: Carousel, canActivate: [BackAuthGuard] },
       { path: 'connexion', component: ConnexionPageComponent},
+      { path: 'back_office', redirectTo: '/back', pathMatch: 'full' },
       // { path: 'contacts', component: ContactsComponent },
       { path: '', redirectTo: 'home', pathMatch: 'full' },
       { path: '404', component: PageNotFoundComponent },
       { path: '**', component: CustomRouter },  // catch-all route to handle custom routing
+    ]
+  },
+];
+
+
+export const minimal_routes : Routes = [
+  {
+    path: '',
+    component: FrontComponent,
+    children: [
+      
+      
+      { path: 'home', component: HomePage },
+      { path: '', redirectTo: 'home', pathMatch: 'full' },
+      { path: 'back_office', redirectTo: '/back', pathMatch: 'full' },
+      // { path: '**', component: CustomRouter },  // catch-all route to handle custom routing
     ]
   },
 ];

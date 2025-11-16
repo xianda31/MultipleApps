@@ -1,37 +1,57 @@
 <div class="container">
-    <div class="row">
-        <div class="col-6 ">
-            <h6>Barre de navigation</h6>
-            <ng-container *ngTemplateOutlet="menu_table"></ng-container>
-            <!-- <ng-container *ngTemplateOutlet="show_routes"></ng-container> -->
-        </div>
 
-        <div class="col-6 ">
-            <h6>Aperçu</h6>
-            <div class="mb-3">
-                <div class="form-check form-switch sandbox-switch">
-                    <input class="form-check-input" type="checkbox" id="sandboxSwitch" [checked]="sandboxService.value"
-                        (change)="setSandbox($event.target.checked)">
-                    <label class="form-check-label" for="sandboxSwitch">
-                        Mode Sandbox <span class="state" [class.on]="sandboxService.value">({{ sandboxService.value ?
-                            'ON' : 'OFF' }})</span>
-                    </label>
-                </div>
-            </div>
-            <ng-container *ngTemplateOutlet="navbar_simulation"></ng-container>
 
-            <ng-container *ngTemplateOutlet="router_preview"></ng-container>
-        </div>
+    <div class="form-check form-switch sandbox-switch">
+        <input class="form-check-input" type="checkbox" id="sandboxSwitch" [checked]="sandboxService.value"
+            (change)="setSandbox($event.target.checked)">
+        <label class="form-check-label" for="sandboxSwitch">
+            Mode Sandbox <span class="state" [class.on]="sandboxService.value">({{ sandboxService.value ?
+                'ON' : 'OFF' }})</span>
+        </label>
+        <!-- Bouton masqué temporairement jusqu'à décision sur la stratégie de promotion -->
+        <button class="btn btn-sm btn-warning ms-3 d-none" (click)="promoteSandboxMenus()" [disabled]="!sandboxService.value">
+            Promouvoir vers production
+        </button>
     </div>
+
+    <div class="col-12 mt-3">
+        <h6>Simulateur barre de navigation</h6>
+        <div class="">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="previewLoggedSwitch" [(ngModel)]="previewLogged">
+                <label class="form-check-label" for="previewLoggedSwitch">
+                    Utilisateur connecté (prévisualisation)
+                </label>
+            </div>
+        </div>
+        <ng-container *ngTemplateOutlet="navbar_simulation"></ng-container>
+    </div>
+
+    <div class="col-12 mt-3">
+        <h6>Tableau des menus</h6>
+        <ng-container *ngTemplateOutlet="menu_table"></ng-container>
+        <!-- <ng-container *ngTemplateOutlet="show_routes"></ng-container> -->
+    </div>
+
+    <div class="col-12 mt-3">
+        <h6>Routes front-end</h6>
+        <ng-container *ngTemplateOutlet="show_routes"></ng-container>
+    </div>
+    <!-- </div> -->
 </div>
 
 <ng-template #show_routes>
-    <h5>Routes front-end</h5>
-    <div *ngFor="let route of front_routes[0]?.children">
-        <strong>Path:</strong> {{ route.path }}
-        <strong *ngIf="route.component">:</strong> {{ route.component?.name }}
-        <strong *ngIf="route.data">:</strong> {{ route.data | json }}
-    </div>
+    @if(front_routes && front_routes[0].children) {
+
+        @for (route of front_routes[0].children; track route.path) {
+            <div>
+                <strong>Path:</strong> {{ route.path }}
+                @if (route.component) {<strong>:</strong> {{ route.component.name }} }
+                @if (route.data) {<strong>:</strong> {{ route.data | json }} }
+    
+            </div>
+        }
+    }
 </ng-template>
 
 <ng-template #navbar_simulation>
@@ -40,48 +60,60 @@
             <a class="navbar-brand" href="#">MonSite</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
             </button>
+            <span class="navbar-toggler-icon"></span>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav" cdkDropList [cdkDropListData]="navbarEntries" (cdkDropListDropped)="dropParent($event)">
-                    <ng-container *ngFor="let entry of navbarEntries">
-                        <ng-container *ngIf="entry.parent.position === NAVITEM_POSITION.NAVBAR">
-                            <!-- Dropdown parent only if it actually has children; otherwise fall back to a simple link -->
-                            <ng-container
-                                *ngIf="entry.parent.type === NAVITEM_TYPE.DROPDOWN && (entry.childs.length || 0) > 0; else simpleLink">
-                                <li class="nav-item dropdown ms-3 d-flex align-items-center" ngbDropdown cdkDrag>
-                                    <span class="drag-handle me-1" cdkDragHandle><i class="bi bi-grip-vertical text-muted"></i></span>
-                                    <button class="nav-link dropdown-toggle btn btn-link p-0" type="button"
-                                        ngbDropdownToggle id="nav-{{ entry.parent.id }}">
-                                        {{ entry.parent.label }}
-                                    </button>
-                                    <div class="dropdown-menu" ngbDropdownMenu
-                                        [attr.aria-labelledby]="'nav-' + entry.parent.id" cdkDropList
-                                        [cdkDropListData]="entry.childs"
-                                        (cdkDropListDropped)="dropChild($event, entry.parent)">
-                                        <button class="dropdown-item d-flex align-items-center gap-2"
-                                            *ngFor="let child of entry.childs" type="button"
-                                            (click)="show_page(child)" cdkDrag>
-                                            <i class="bi bi-grip-vertical text-muted" cdkDragHandle></i>
-                                            <span>{{ child.label }}</span>
-                                        </button>
-                                    </div>
-                                </li>
-                            </ng-container>
-                            <!-- Simple link parent (no dropdown) -->
-                            <ng-template #simpleLink>
-                                <li class="nav-item ms-3 d-flex align-items-center" cdkDrag>
-                                    <span class="drag-handle me-1" cdkDragHandle><i class="bi bi-grip-vertical text-muted"></i></span>
-                                    <button class="nav-link btn btn-link p-0" type="button"
-                                        (click)="show_page(entry.parent)">
-                                        {{ entry.parent.label }}
-                                    </button>
-                                </li>
-                            </ng-template>
-                        </ng-container>
-                    </ng-container>
+                <ul class="navbar-nav" cdkDropList [cdkDropListData]="navbarEntries"
+                    [cdkDropListOrientation]="'horizontal'" [cdkDropListEnterPredicate]="sameList"
+                    (cdkDropListDropped)="dropParent($event)">
+                    @for (entry of navbarEntries; track entry.parent.id) {
+                    @if (entry.parent.position === NAVITEM_POSITION.NAVBAR && allow(entry.parent)) {
+                    <!-- Dropdown parent only if it actually has children; otherwise fall back to a simple link -->
+                    @if (entry.parent.type === NAVITEM_TYPE.DROPDOWN && hasVisibleChildren(entry)) {
+                    <li class="nav-item dropdown ms-3 d-flex align-items-center" ngbDropdown cdkDrag>
+                        <span class="drag-handle me-1" cdkDragHandle><i
+                                class="bi bi-grip-vertical text-muted"></i></span>
+                        <button class="nav-link dropdown-toggle btn btn-link p-0" type="button" ngbDropdownToggle
+                            id="nav-{{ entry.parent.id }}">
+                            @if(entry.parent.pre_label === 'avatar') {
+                            <span
+                                class="rounded-circle d-inline-flex justify-content-center align-items-center bg-secondary text-white me-1"
+                                style="width:28px; height:28px; max-width:28px; max-height:28px; font-size:0.75rem; line-height:28px;">
+                                JD
+                            </span>
+                            }
+
+                            {{ label_transformer_simulation(entry.parent) }}
+                        </button>
+                        <div class="dropdown-menu" ngbDropdownMenu [attr.aria-labelledby]="'nav-' + entry.parent.id"
+                            cdkDropList [cdkDropListData]="entry.childs" [cdkDropListOrientation]="'vertical'"
+                            [cdkDropListEnterPredicate]="sameList"
+                            (cdkDropListDropped)="dropChild($event, entry.parent)">
+                            @for (child of entry.childs; track child.id) {
+                            @if (allow(child)) {
+                            <button class="dropdown-item d-flex align-items-center gap-2" type="button"
+                                (click)="show_page(child)" cdkDrag>
+                                <i class="bi bi-grip-vertical text-muted" cdkDragHandle></i>
+                                <span>{{ child.label }}</span>
+                            </button>
+                            }
+                            }
+                        </div>
+                    </li>
+                    } @else {
+                    <li class="nav-item ms-3 d-flex align-items-center" cdkDrag>
+                        <span class="drag-handle me-1" cdkDragHandle><i
+                                class="bi bi-grip-vertical text-muted"></i></span>
+                        <button class="nav-link btn btn-link p-0" type="button" (click)="show_page(entry.parent)">
+                            {{ label_transformer_simulation(entry.parent) }}
+                        </button>
+                    </li>
+                    }
+                    }
+                    }
                 </ul>
             </div>
+
         </div>
     </nav>
 </ng-template>
@@ -91,65 +123,80 @@
     <div class="alert alert-secondary" role="alert">
         {{ front_route_verbose }}
 
-        <div *ngIf="selected_page">
-            <h5>Page sélectionnée :</h5>
-            <p><strong>Titre :</strong> {{ selected_page.title }}</p>
-            <p><strong>Contenu :</strong></p>
-            <!-- <div [innerHTML]="stringToSafeHtml(selected_page.content)"></div> -->
-        </div>
+        @if (selected_page) {
+        <h5>Page sélectionnée :</h5>
+        <p><strong>Titre :</strong> {{ selected_page.title }}</p>
+        <p><strong>Contenu :</strong></p>
+        <!-- <div [innerHTML]="stringToSafeHtml(selected_page.content)"></div> -->
+        }
     </div>
 </ng-template>
 
 <ng-template #menu_table>
-    <table class="table table-striped table-sm">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Libellé</th>
-                <th>Type</th>
-                <th>Path</th>
-                <th>Rank</th>
-                <th class="d-none d-sm-table-cell">Page</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <ng-container *ngFor="let entry of menus | keyvalue : compareMenuEntries; let i = index">
+    <div class="table-responsive">
+        <table class="table table-striped table-sm">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Libellé</th>
+                    <th>Type</th>
+                    <th>Param.</th>
+                    <th>Path</th>
+                    <th>Rank</th>
+                    <th>Visibilité</th>
+                    <th>Préfixe label</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (entry of menus | keyvalue : compareMenuEntries; let i = $index; track entry.key) {
                 <!-- Parent row -->
                 <tr>
                     <td>{{ i + 1 }}</td>
                     <td><strong>{{ entry.value.parent.label }}</strong></td>
                     <td>{{ entry.value.parent.type }}</td>
+                    <td>{{ entry.value.parent.type === NAVITEM_TYPE.CUSTOM_PAGE ? entry.value.parent.page_title :
+                        (entry.value.parent.type === NAVITEM_TYPE.PLUGIN ? entry.value.parent.plugin_name : 
+                        (entry.value.parent.type === NAVITEM_TYPE.DIRECT_CALL ? entry.value.parent.slug : '')) }}</td>
                     <td>{{ entry.value.parent.path }}</td>
                     <td>{{ entry.value.parent.rank }}</td>
-                    <td class="d-none d-sm-table-cell">{{ entry.value.parent.type === NAVITEM_TYPE.CUSTOM_PAGE ? entry.value.parent.page_title : '' }}</td>
-                    <td><i (click)="editNavitem(entry.value.parent)" class="bi bi-pencil-square" role="button" title="Éditer"></i></td>
+                    <td>{{ entry.value.parent.logging_criteria }}</td>
+                    <td>{{ entry.value.parent.pre_label }}</td>
+                    <td><i (click)="editNavitem(entry.value.parent)" class="bi bi-pencil-square" role="button"
+                            title="Éditer"></i></td>
                 </tr>
                 <!-- Child rows -->
-                <tr *ngFor="let child of entry.value.childs; let j = index">
+                @for (child of entry.value.childs; let j = $index; track child.id) {
+                <tr>
                     <td>{{ i + 1 }}.{{ j + 1 }}</td>
                     <td class="ps-4"> {{ child.label }}</td>
                     <td>{{ child.type }}</td>
+                    <td>{{ child.type === NAVITEM_TYPE.CUSTOM_PAGE ? child.page_title :
+                        (child.type === NAVITEM_TYPE.PLUGIN ? child.plugin_name : 
+                        (child.type === NAVITEM_TYPE.DIRECT_CALL ? child.slug : '')) }}</td>
                     <td>{{ child.path }}</td>
                     <td>{{ child.rank }}</td>
-                    <td class="d-none d-sm-table-cell">{{ child.type === NAVITEM_TYPE.CUSTOM_PAGE ? child.page_title : '' }}</td>
-                    <td><i (click)="editNavitem(child)" class="bi bi-pencil-square" role="button" title="Éditer"></i></td>
+                    <td>{{ child.logging_criteria }}</td>
+                    <td>{{ child.pre_label }}</td>
+                    <td><i (click)="editNavitem(child)" class="bi bi-pencil-square" role="button" title="Éditer"></i>
+                    </td>
                 </tr>
-            </ng-container>
-        </tbody>
-        <tbody>
-            <tr>
-                <td colspan="6" class="text-end">
-                    <button class="btn btn-sm btn-outline-primary" (click)="createNavItem()">
-                        <i class="bi bi-plus-square-fill"></i> Ajouter un élément
-                    </button>
-                </td>
-            </tr>
-        </tbody>
-    </table>
+                }
+                }
+            </tbody>
+            <tbody>
+                <tr>
+                    <td colspan="8" class="text-end">
+                        <button class="btn btn-sm btn-outline-primary" (click)="createNavItem()">
+                            <i class="bi bi-plus-square-fill"></i> Ajouter un élément
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 </ng-template>
 
-<!-- Offcanvas for editing nav items     -->
 <ng-template #editNavitemOffcanvas let-offcanvas>
     <div class="offcanvas-header">
         <h5 class="offcanvas-title">Édition élément de menu</h5>
@@ -158,82 +205,130 @@
     <div class="offcanvas-body">
         <form [formGroup]="navItemForm" class="vstack gap-3">
             <div class="row g-2">
-                <div class="col-6">
-                    <label class="form-label">Libellé</label>
-                    <input type="text" class="form-control" formControlName="label" placeholder="Texte du menu" />
-                </div>
-                <div class="col-6">
+                <div class="col-12">
                     <label class="form-label">Position</label>
                     <select class="form-select" formControlName="position">
-                        <option *ngFor="let pos of NAVITEM_POSITIONS" [ngValue]="pos">{{ pos }}</option>
+                        @for (pos of NAVITEM_POSITIONS; track pos) {<option [ngValue]="pos">{{ pos }}</option>}
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="previewLoggedSwitch"
+                                [(ngModel)]="previewLogged" [ngModelOptions]="{standalone:true}"
+                                (change)="onPreviewToggle($event.target.checked)">
+                        </div>
                     </select>
                 </div>
-            </div>
+                <div class="col-12">
+                    <label class="form-label">Libellé</label>
+                    <div class="input-group">
+                        <select class="form-select" [ngModel]="currentLabelToken" (ngModelChange)="useSpecialLabel($event)" [ngModelOptions]="{standalone:true}">
+                            <option [ngValue]="''">— libellé libre —</option>
+                            @for (tok of SPECIAL_LABELS; track tok) {<option [ngValue]="tok">{{ tok }}</option>}
+                        </select>
+                        <input type="text" class="form-control" formControlName="label" placeholder="Texte du menu" />
+                    </div>
+                    <div class="form-text">Le champ est éditable uniquement avec "libellé libre".</div>
+                </div>
 
-            <div class="row g-2">
-                <div class="col-6">
-                    <label class="form-label">Type</label>
-                    <select class="form-select" formControlName="type">
-                        <option *ngFor="let t of NAVITEM_TYPES" [ngValue]="t">{{ t }}</option>
-                    </select>
-                </div>
-                <div class="col-6">
-                    <label class="form-label">Parent (Dropdown)</label>
-                    <select class="form-select" formControlName="parent_id">
-                        <option [ngValue]="null">Aucun</option>
-                        <option *ngFor="let n of navitems" [ngValue]="n.id" [hidden]="n.type !== NAVITEM_TYPE.DROPDOWN">
-                            {{ n.path }}</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="row g-2">
-                <div class="col-6">
-                    <label class="form-label">Segment (slug)</label>
-                    <input type="text" class="form-control" formControlName="slug" placeholder="ex: club"
-                        [class.is-invalid]="navItemForm.get('type')?.value !== NAVITEM_TYPE.DROPDOWN && navItemForm.get('slug')?.invalid && (navItemForm.get('slug')?.dirty || navItemForm.get('slug')?.touched)" />
-                    <div class="invalid-feedback">
-                        Seuls les caractères minuscules, chiffres et '_' sont autorisés.
+                <div class="row g-2">
+                    <div class="col-6">
+                        <label class="form-label">Type</label>
+                        <select class="form-select" formControlName="type">
+                            @for (t of NAVITEM_TYPES; track t) {<option [ngValue]="t">{{ t }}</option>}
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Parent (Dropdown)</label>
+                        <select class="form-select" formControlName="parent_id">
+                            <option [ngValue]="null">Aucun</option>
+                            @for (n of navitems; track n.id) {
+                            <option [ngValue]="n.id" [hidden]="n.type !== NAVITEM_TYPE.DROPDOWN">{{ n.path }}
+                            </option>
+                            }
+                        </select>
                     </div>
                 </div>
-                <div class="col-6">
-                    <label class="form-label">Path (auto)</label>
-                    <input type="text" class="form-control" formControlName="path" readonly />
-                    <div class="form-text">Concatène le parent et le segment.</div>
-                </div>
-            </div>
 
-            <div class="row g-2" *ngIf="navItemForm.get('type')?.value === NAVITEM_TYPE.EXTERNAL_REDIRECT">
+                <div class="row g-2">
+                    <div class="col-6">
+                        <label class="form-label">Visibilité</label>
+                        <select class="form-select" formControlName="logging_criteria">
+                            @for (crit of NAVITEM_LOGGING_CRITERIA_VALUES; track crit) {
+                            <option [ngValue]="crit">{{ crit }}</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Préfixe label</label>
+                        <select class="form-select" formControlName="pre_label">
+                            @for (pre of ['icon', 'avatar', null]; track pre) {
+                            <option [ngValue]="pre">{{ pre }}</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                @if (navItemForm.get('type')?.value === NAVITEM_TYPE.DIRECT_CALL) {
+                <div class="row g-2">
+                    <div class="col-12">
+                        <label class="form-label">Commande</label>
+                        <select class="form-select" formControlName="command_name">
+                            @for (c of NAVITEM_COMMANDS; track c) {<option [ngValue]="c">{{ c }}</option>}
+                        </select>
+                        <div class="form-text">Action exécutée au clic (sans navigation).</div>
+                    </div>
+                </div>
+                } @else {
+                <div class="row g-2">
+                    <div class="col-6">
+                        <label class="form-label">Segment (slug)</label>
+                        <input type="text" class="form-control" formControlName="slug" placeholder="ex: club"
+                            [class.is-invalid]="navItemForm.get('type')?.value !== NAVITEM_TYPE.DROPDOWN && navItemForm.get('slug')?.invalid && (navItemForm.get('slug')?.dirty || navItemForm.get('slug')?.touched)" />
+                        <div class="invalid-feedback">
+                            Seuls les caractères minuscules, chiffres et '_' sont autorisés.
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Path (auto)</label>
+                        <input type="text" class="form-control" formControlName="path" readonly />
+                        <div class="form-text">Concatène le parent et le segment.</div>
+                    </div>
+                </div>
+                }
+
+                @if (navItemForm.get('type')?.value === NAVITEM_TYPE.EXTERNAL_REDIRECT) {
                 <div class="col-12">
                     <label class="form-label">URL externe</label>
                     <input type="url" class="form-control" formControlName="external_url" placeholder="https://..." />
                 </div>
-            </div>
+                }
 
-            <div class="row g-2" *ngIf="navItemForm.get('type')?.value === NAVITEM_TYPE.PLUGIN">
+                @if (navItemForm.get('type')?.value === NAVITEM_TYPE.PLUGIN) {
                 <div class="col-12">
                     <label class="form-label">Plug-in</label>
                     <select class="form-select" formControlName="plugin_name">
-                        <option *ngFor="let p of NAVITEM_PLUGINS" [ngValue]="p">{{ p }}</option>
+                        @for (p of NAVITEM_PLUGINS; track p) {<option [ngValue]="p">{{ p }}</option>}
                     </select>
                 </div>
-            </div>
+                }
 
-            <div class="row g-2" *ngIf="navItemForm.get('type')?.value === NAVITEM_TYPE.CUSTOM_PAGE">
+                @if (navItemForm.get('type')?.value === NAVITEM_TYPE.CUSTOM_PAGE) {
                 <div class="col-12">
                     <label class="form-label">Page</label>
                     <select class="form-select" formControlName="page_id">
-                        <option *ngFor="let pg of pages" [ngValue]="pg.id">{{ pg.title }}</option>
+                        @for (pg of pages; track pg.id) {<option [ngValue]="pg.id">{{ pg.title }}</option>}
                     </select>
                 </div>
-            </div>
+                }
 
-            <div class="d-flex gap-2 justify-content-end mt-3">
-                <button type="button" class="btn btn-outline-secondary" (click)="offcanvas.dismiss()">Annuler</button>
-                <button type="button" class="btn btn-danger" *ngIf="selectedNavitem?.id"
-                    (click)="deleteNavitem(selectedNavitem!)">Supprimer</button>
-                <button type="button" class="btn btn-primary" (click)="saveNavitem()"
-                    [disabled]="navItemForm.invalid">Enregistrer</button>
+                <div class="d-flex gap-2 justify-content-end mt-3">
+                    <button type="button" class="btn btn-outline-secondary"
+                        (click)="offcanvas.dismiss()">Annuler</button>
+                    @if(selectedNavitem?.id){
+                    <button type="button" class="btn btn-danger"
+                        (click)="deleteNavitem(selectedNavitem!)">Supprimer</button>
+                    }
+                    <button type="button" class="btn btn-primary" (click)="saveNavitem()"
+                        [disabled]="navItemForm.invalid">Enregistrer</button>
+                </div>
             </div>
         </form>
     </div>

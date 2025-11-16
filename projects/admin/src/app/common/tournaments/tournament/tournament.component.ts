@@ -13,6 +13,7 @@ import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-tournament',
+  standalone: true,
   imports: [UpperCasePipe, InputPlayerLicenseComponent, CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './tournament.component.html',
   styleUrl: './tournament.component.scss'

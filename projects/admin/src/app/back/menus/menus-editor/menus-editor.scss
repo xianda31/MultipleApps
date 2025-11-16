@@ -41,9 +41,8 @@
 	border: 1px solid #e1e1e1;
 }
 
-.cdk-drag-placeholder {
-	opacity: 0;
-}
+/* Generic placeholder hidden by default, then overridden per-container below */
+.cdk-drag-placeholder { opacity: 0; }
 
 .dropdown-item.cdk-drag-animating {
 	transition: transform 200ms ease;
@@ -76,6 +75,27 @@ i.bi-grip-vertical:active {
 	box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
 }
 
+/* Parent navbar placeholder: thin vertical indicator at drop position */
 .navbar-nav[cdkDropList] .cdk-drag-placeholder {
-	opacity: 0;
+	opacity: 1;
+	width: 6px;
+	min-width: 6px;
+	height: 1.5rem;
+	align-self: center;
+	background: rgba(13,110,253,.4); /* bootstrap primary */
+	border-radius: 3px;
 }
+
+/* Child dropdown placeholder: thin horizontal spacer */
+.dropdown-menu[cdkDropList] .cdk-drag-placeholder {
+	opacity: 1;
+	height: 6px;
+	margin: 2px 8px;
+	background: rgba(25,135,84,.35); /* bootstrap success */
+	border-radius: 3px;
+}
+
+// /* Prevent preview column content from overflowing onto the left at narrower widths */
+// .preview-wrap {
+// 	overflow-x: auto;
+// }
