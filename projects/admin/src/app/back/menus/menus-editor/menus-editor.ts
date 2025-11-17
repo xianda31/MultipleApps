@@ -101,7 +101,6 @@ export class MenusEditorComponent  {
       this.navitemService.loadNavItemsSandbox(),
       this.pageService.listPages()
     ])
-      // .pipe(takeUntil(this.destroyed$))
       .subscribe({
         next: ([navitems, pages]) => {
           this.pages = pages;
@@ -116,18 +115,6 @@ export class MenusEditorComponent  {
         error: (err) => this.toastService.showErrorToast('Chargement', err.message)
       });
 
-    // Initialize front routes for #show_routes preview
-    // this.navitemService
-    //   .getFrontRoutes(this.sandbox_mode)
-    //   .pipe(takeUntil(this.destroyed$))
-    //   .subscribe({
-    //     next: (routes) => {
-    //       this.front_routes = routes;
-    //       // Keep dynamic router in sync with computed routes
-    //       this.dynamicRoutesService.setRoutes(routes);
-    //     },
-    //     error: (err) => this.toastService.showErrorToast('Routes', err.message)
-    //   });
   }
 
   setSandbox(flag: boolean) {
@@ -242,7 +229,7 @@ export class MenusEditorComponent  {
     const payload = this.buildPayloadFromForm();
 
     // Enforce unique path only for items that produce routes
-    const routeTypes = new Set([NAVITEM_TYPE.INTERNAL_LINK, NAVITEM_TYPE.PLUGIN, NAVITEM_TYPE.CUSTOM_PAGE, NAVITEM_TYPE.EXTERNAL_REDIRECT]);
+    const routeTypes = new Set([NAVITEM_TYPE.INTERNAL_LINK, NAVITEM_TYPE.PLUGIN, NAVITEM_TYPE.CUSTOM_PAGE]);
     if (routeTypes.has(payload.type)) {
       const hasDuplicatePath = this.navitems.some(n => n.path === payload.path && n.id !== payload.id);
       if (hasDuplicatePath) {

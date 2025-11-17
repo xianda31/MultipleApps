@@ -210,7 +210,9 @@
             </li>
           } @else {
             <li>
-              @if (child.navitem.type === NAVITEM_TYPE.DIRECT_CALL) {
+              @if (child.navitem.type === NAVITEM_TYPE.EXTERNAL_REDIRECT) {
+                <a class="dropdown-item" [href]="child.navitem.external_url" target="_blank" rel="noopener"> {{ child.navitem.label }} </a>
+              } @else if (child.navitem.type === NAVITEM_TYPE.DIRECT_CALL) {
                 <a class="dropdown-item" (click)="onCommand(child.navitem)"> {{ child.navitem.label }} </a>
               } @else {
                 <a class="dropdown-item" [routerLink]="child.navitem.path"> {{ child.navitem.label }} </a>

@@ -4,11 +4,11 @@ import { NAVITEM_PLUGIN, NAVITEM_COMMAND } from "./plugin.interface";
 
 export enum NAVITEM_TYPE {
     DROPDOWN = 'Dropdown',
-    EXTERNAL_REDIRECT = 'ExternalRedirect',
     PLUGIN = 'PlugIn',
     INTERNAL_LINK = 'InternalLink',
     DIRECT_CALL = 'DirectCall',
     CUSTOM_PAGE = 'CustomPage',
+    EXTERNAL_REDIRECT = 'ExternalRedirect',
 }
 
 // UI-level command catalog for DirectCall items (not persisted in backend)

@@ -6,7 +6,7 @@ import {  MenuGroup, NavItem, NavItem_input, NAVITEM_TYPE } from '../interfaces/
 import { minimal_routes, routes } from '../../front/front.routes';
 import { Routes } from '@angular/router';
 import { GenericPageComponent } from '../../front/front/pages/generic-page/generic-page.component';
-import { PLUGINS } from '../interfaces/plugin.interface';
+import { PLUGINS, NAVITEM_PLUGIN } from '../interfaces/plugin.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -40,11 +40,23 @@ export class NavItemsService {
     const dynamicItems = navItems
       .filter(it => !!it?.path && (it.type === NAVITEM_TYPE.CUSTOM_PAGE || it.type === NAVITEM_TYPE.PLUGIN));
 
-    const dynamicChildren = dynamicItems.map(ni =>
-      ni.type === NAVITEM_TYPE.CUSTOM_PAGE
-        ? { path: ni.path, component: GenericPageComponent, data: { page_title: ni.page_title } }
-        : { path: ni.path, component: PLUGINS[ni.plugin_name!] }
-    );
+    const dynamicChildren = dynamicItems.map(ni => {
+      if (ni.type === NAVITEM_TYPE.CUSTOM_PAGE) {
+        return { path: ni.path, component: GenericPageComponent, data: { page_title: ni.page_title } };
+      }
+      if (ni.type === NAVITEM_TYPE.PLUGIN && ni.plugin_name === NAVITEM_PLUGIN.IFRAME) {
+        return {
+          path: ni.path,
+          component: PLUGINS[ni.plugin_name!],
+          data: { external_url: ni.external_url }
+        };
+      }
+      // Extension possible pour d'autres plugins avec paramètres
+      return {
+        path: ni.path,
+        component: PLUGINS[ni.plugin_name!]
+      };
+    });
 
     // Append minimal base routes after dynamic ones 
     const root = new_routes[0];
