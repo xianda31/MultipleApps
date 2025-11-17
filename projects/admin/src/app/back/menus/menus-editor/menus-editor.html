@@ -287,7 +287,7 @@
                     @if (navItemForm.get('type')?.value === NAVITEM_TYPE.EXTERNAL_REDIRECT && selectedNavitem) {
                     <div class="col-12">
                         <label class="form-label">URL externe à ouvrir</label>
-                        <input id="externalUrlInput" type="url" class="form-control" [(ngModel)]="selectedNavitem.external_url" placeholder="https://...">
+                        <input id="externalUrlInput" type="url" class="form-control" formControlName="external_url" placeholder="https://...">
                     </div>
                     }
 

@@ -1,3 +1,13 @@
+// Correction visibilité des sous-menus dropdown (dropdown-toggle/nav-link)
+.dropdown-menu .dropdown-toggle,
+.dropdown-menu .nav-link {
+  color: #212529 !important;
+}
+// Correction universelle visibilité dropdowns multi-niveaux
+.dropdown-menu .dropdown-item {
+  color: #212529 !important;
+  background: #fff !important;
+}
 // Correction couleur texte liens 3ème niveau et plus
 .dropdown-submenu .dropdown-menu .dropdown-submenu .dropdown-menu .dropdown-item {
   color: #212529 !important;

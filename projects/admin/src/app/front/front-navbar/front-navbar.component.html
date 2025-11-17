@@ -178,15 +178,20 @@
 
 <ng-template #testmenu>
   @for (menu of navbar_menus; track menu.navitem.id) {
-    @if ((menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.ANY)
-      || (menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.LOGGED_ONLY && (logged_member$ | async))
-      || (menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.UNLOGGED_ONLY && !(logged_member$ | async))) {
-      <ng-container *ngTemplateOutlet="menuGroupRecursive; context: { $implicit: menu }"></ng-container>
-    }
+  @if ((menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.ANY)
+  || (menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.LOGGED_ONLY && (logged_member$ | async))
+  || (menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.UNLOGGED_ONLY && !(logged_member$ | async))) {
+  <ng-container *ngTemplateOutlet="menuGroupRecursive; context: { $implicit: menu }"></ng-container>
   }
-<!-- Template récursive pour MenuGroup_new -->
-<ng-template #menuGroupRecursive let-menu>
-  @if (menu.navitem.type === NAVITEM_TYPE.DROPDOWN && (menu.childs?.length || 0) > 0) {
+  }
+  <!-- Template récursive pour MenuGroup_new -->
+  <ng-template #menuGroupRecursive let-menu>
+    <!-- DEBUG: Affiche le navitem courant, surligné si label Roy René -->
+    <!-- <div [style.display]="'block'" [style.background]="menu.navitem.label === 'Roy René' ? 'yellow' : 'none'"
+      style="font-size:10px;">
+      {{ menu.navitem | json }}
+    </div> -->
+    @if (menu.navitem.type === NAVITEM_TYPE.DROPDOWN && (menu.childs?.length || 0) > 0) {
     <li class="nav-item dropdown ms-3" ngbDropdown>
       <a class="nav-link dropdown-toggle" ngbDropdownToggle id="nav-{{ menu.navitem.id }}">
         @if(menu.navitem.pre_label === 'avatar') {
@@ -197,71 +202,51 @@
       </a>
       <ul class="dropdown-menu" ngbDropdownMenu [attr.aria-labelledby]="'nav-' + menu.navitem.id">
         @for (child of (menu.childs || []); track child.navitem.id) {
-          @if (child.navitem.type === NAVITEM_TYPE.DROPDOWN && (child.childs?.length || 0) > 0) {
-            <li ngbDropdown class="dropdown-submenu">
-              <a class="dropdown-item dropdown-toggle" ngbDropdownToggle id="nav-{{ child.navitem.id }}">
-                {{ child.navitem.label }}
-              </a>
-              <ul class="dropdown-menu" ngbDropdownMenu [attr.aria-labelledby]="'nav-' + child.navitem.id">
-                @for (subchild of (child.childs || []); track subchild.navitem.id) {
-                  <ng-container *ngTemplateOutlet="menuGroupRecursive; context: { $implicit: subchild }"></ng-container>
-                }
-              </ul>
-            </li>
-          } @else {
-            <li>
-              @if (child.navitem.type === NAVITEM_TYPE.EXTERNAL_REDIRECT) {
-                <a class="dropdown-item" [href]="child.navitem.external_url" target="_blank" rel="noopener"> {{ child.navitem.label }} </a>
-              } @else if (child.navitem.type === NAVITEM_TYPE.DIRECT_CALL) {
-                <a class="dropdown-item" (click)="onCommand(child.navitem)"> {{ child.navitem.label }} </a>
-              } @else {
-                <a class="dropdown-item" [routerLink]="child.navitem.path"> {{ child.navitem.label }} </a>
-              }
-            </li>
-          }
+        <ng-container *ngTemplateOutlet="menuGroupRecursive; context: { $implicit: child }"></ng-container>
         }
       </ul>
     </li>
-  } @else {
+    }
+    @else {
     <li class="nav-item ms-3">
-  @if (menu.navitem.parent_id) {
-        @if (menu.navitem.type === NAVITEM_TYPE.DIRECT_CALL) {
-          <a class="dropdown-item" (click)="onCommand(menu.navitem)">
-            @if(menu.navitem.pre_label === 'avatar') {
-            <img [src]="avatar$ | async" alt="avatar" class="rounded-circle"
-              style="width:28px; height:28px; max-width:28px; max-height:28px; object-fit:cover">
-            }
-            {{ label_transformer(menu.navitem.label) | async }}
-          </a>
-        } @else {
-          <a class="dropdown-item" [routerLink]="menu.navitem.path ">
-            @if(menu.navitem.pre_label === 'avatar') {
-            <img [src]="avatar$ | async" alt="avatar" class="rounded-circle"
-              style="width:28px; height:28px; max-width:28px; max-height:28px; object-fit:cover">
-            }
-            {{ label_transformer(menu.navitem.label) | async }}
-          </a>
-        }
-      } @else {
-        @if (menu.navitem.type === NAVITEM_TYPE.DIRECT_CALL) {
-          <a class="nav-link" (click)="onCommand(menu.navitem)">
-            @if(menu.navitem.pre_label === 'avatar') {
-            <img [src]="avatar$ | async" alt="avatar" class="rounded-circle"
-              style="width:28px; height:28px; max-width:28px; max-height:28px; object-fit:cover">
-            }
-            {{ label_transformer(menu.navitem.label) | async }}
-          </a>
-        } @else {
-          <a class="nav-link " [routerLink]="menu.navitem.path ">
-            @if(menu.navitem.pre_label === 'avatar') {
-            <img [src]="avatar$ | async" alt="avatar" class="rounded-circle"
-              style="width:28px; height:28px; max-width:28px; max-height:28px; object-fit:cover">
-            }
-            {{ label_transformer(menu.navitem.label) | async }}
-          </a>
-        }
+      @if (menu.navitem.type === NAVITEM_TYPE.EXTERNAL_REDIRECT) {
+        <a class="dropdown-item" [href]="menu.navitem.external_url" target="_blank" rel="noopener">
+          <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
+        </a>
+      }
+      @else if (menu.navitem.type === NAVITEM_TYPE.INTERNAL_LINK) {
+        <a class="dropdown-item" [routerLink]="menu.navitem.path">
+          <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
+        </a>
+      }
+      @else if (menu.navitem.type?.toLowerCase() === 'plugin') {
+        <a class="dropdown-item Plugin" [routerLink]="menu.navitem.path"
+          [queryParams]="{ external_url: menu.navitem.external_url }">
+          <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
+        </a>
+      }
+      @else if (menu.navitem.type === NAVITEM_TYPE.CUSTOM_PAGE) {
+        <a class="dropdown-item Page" [routerLink]="menu.navitem.path"
+          [queryParams]="{ page_title: menu.navitem.page_title }">
+          <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
+        </a>
+      }
+      @else if (menu.navitem.type === NAVITEM_TYPE.DIRECT_CALL) {
+        <a class="dropdown-item" (click)="onCommand(menu.navitem)">
+          <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
+        </a>
+      }
+      @else {
+        <span class="dropdown-item text-danger">Type de menu inconnu</span>
       }
     </li>
-  }
-</ng-template>
-</ng-template>
+    }
+  </ng-template>
+
+  <ng-template #menuLabelTemplate let-menu>
+    @if(menu.navitem.pre_label === 'avatar') {
+    <img [src]="avatar$ | async" alt="avatar" class="rounded-circle"
+      style="width:28px; height:28px; max-width:28px; max-height:28px; object-fit:cover">
+    }
+    {{ label_transformer(menu.navitem.label) | async }}
+  </ng-template>

@@ -1,4 +1,3 @@
-
 import { Component, ViewChild, Inject } from '@angular/core';
 import { NgbOffcanvas, NgbOffcanvasRef } from '@ng-bootstrap/ng-bootstrap';
 import { ToastService } from '../../../common/services/toast.service';
@@ -227,6 +226,10 @@ export class MenusEditorComponent  {
   saveNavitem() {
     if (!this.selectedNavitem) return;
     const payload = this.buildPayloadFromForm();
+    // Correction : prendre external_url depuis le formulaire si EXTERNAL_REDIRECT
+    if (payload.type === NAVITEM_TYPE.EXTERNAL_REDIRECT) {
+      payload.external_url = this.navItemForm.get('external_url')?.value || '';
+    }
 
     // Enforce unique path only for items that produce routes
     const routeTypes = new Set([NAVITEM_TYPE.INTERNAL_LINK, NAVITEM_TYPE.PLUGIN, NAVITEM_TYPE.CUSTOM_PAGE]);
@@ -342,12 +345,12 @@ export class MenusEditorComponent  {
       command_name: new FormControl<NAVITEM_COMMAND | null>(null),
     });
 
-
     // Dynamically require slug (segment) except for Dropdown + enforce allowed characters
     const typeCtrl = this.navItemForm.get('type')!;
     const segCtrlV = this.navItemForm.get('slug')!; // for validators only
     const pathCtrl = this.navItemForm.get('path')!; // read-only preview
     const cmdCtrl = this.navItemForm.get('command_name')!;
+    const externalUrlCtrl = this.navItemForm.get('external_url')!;
     const applySegmentValidators = (t: NAVITEM_TYPE) => {
       if (t === NAVITEM_TYPE.DROPDOWN || t === NAVITEM_TYPE.DIRECT_CALL) {
         segCtrlV.clearValidators();
@@ -363,6 +366,15 @@ export class MenusEditorComponent  {
         cmdCtrl.setValue(null, { emitEvent: false });
       }
       cmdCtrl.updateValueAndValidity({ emitEvent: false });
+
+      // external_url: required only for EXTERNAL_REDIRECT
+      if (t === NAVITEM_TYPE.EXTERNAL_REDIRECT) {
+        externalUrlCtrl.setValidators([Validators.required]);
+      } else {
+        externalUrlCtrl.clearValidators();
+        externalUrlCtrl.setValue(null, { emitEvent: false });
+      }
+      externalUrlCtrl.updateValueAndValidity({ emitEvent: false });
     };
 
     applySegmentValidators(typeCtrl.value as NAVITEM_TYPE);

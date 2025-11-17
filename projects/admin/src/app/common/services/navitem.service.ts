@@ -159,7 +159,12 @@ export class NavItemsService {
   // Update
   async updateNavItem(navItem: NavItem): Promise<NavItem> {
     try {
-      const updatedNavItem = await this.dbHandler.updateNavItem(navItem);
+      // Construction explicite de l'objet pour garantir la présence de tous les champs
+      // Correction : forcer le type et ne transmettre que les propriétés attendues
+      const updatedNavItem = await this.dbHandler.updateNavItem({
+        ...navItem,
+        type: navItem.type as NAVITEM_TYPE,
+      });
       this._navItems = this._navItems.map(m => m.id === updatedNavItem.id ? (updatedNavItem as NavItem) : m);
       this._navItems$.next(this._navItems);
       return updatedNavItem;
