@@ -67,60 +67,46 @@
                     [cdkDropListOrientation]="'horizontal'" [cdkDropListEnterPredicate]="sameList"
                     (cdkDropListDropped)="dropParent($event)">
                     @for (entry of navbarEntries; track entry.navitem.id) {
-                    @if (entry.navitem.position === NAVITEM_POSITION.NAVBAR && allow(entry.navitem)) {
-                    <!-- Dropdown parent only if it actually has children; otherwise fall back to a simple link -->
-                    @if (entry.navitem.type === NAVITEM_TYPE.DROPDOWN && hasVisibleChildren(entry)) {
-                    <li class="nav-item dropdown ms-3 d-flex align-items-center" ngbDropdown cdkDrag>
-                        <span class="drag-handle me-1" cdkDragHandle><i
-                                class="bi bi-grip-vertical text-muted"></i></span>
-                        <button class="nav-link dropdown-toggle btn btn-link p-0" type="button" ngbDropdownToggle
-                            id="nav-{{ entry.navitem.id }}">
-                            @if(entry.navitem.pre_label === 'avatar') {
-                            <span
-                                class="rounded-circle d-inline-flex justify-content-center align-items-center bg-secondary text-white me-1"
-                                style="width:28px; height:28px; max-width:28px; max-height:28px; font-size:0.75rem; line-height:28px;">
-                                JD
-                            </span>
-                            }
-
-                            {{ label_transformer_simulation(entry.navitem) }}
-                        </button>
-                        <div class="dropdown-menu" ngbDropdownMenu [attr.aria-labelledby]="'nav-' + entry.navitem.id"
-                            cdkDropList [cdkDropListData]="entry.childs || []" [cdkDropListOrientation]="'vertical'"
-                            [cdkDropListEnterPredicate]="sameList"
-                            (cdkDropListDropped)="dropChild($event, entry)">
-                            @for (childGroup of entry.childs; track childGroup.navitem.id) {
-                            @if (allow(childGroup.navitem)) {
-                            <button class="dropdown-item d-flex align-items-center gap-2" type="button"
-                                (click)="show_page(childGroup.navitem)" cdkDrag>
-                                <i class="bi bi-grip-vertical text-muted" cdkDragHandle></i>
-                                <span>{{ childGroup.navitem.label }}</span>
-                            </button>
-                            <!-- Si le sous-menu est aussi un dropdown, on affiche ses enfants récursivement -->
-                            @if (childGroup.navitem.type === NAVITEM_TYPE.DROPDOWN && childGroup.childs?.length) {
-                                <ul>
-                                    @for (subChild of childGroup.childs; track subChild.navitem.id) {
-                                    @if (allow(subChild.navitem)) {
-                                        <li><a class="dropdown-item" href="#">{{ subChild.navitem.label }}</a></li>
-                                    }
-                                    }
-                                </ul>
-                            }
-                            }
-                            }
-                        </div>
-                    </li>
-                    } @else {
-                    <li class="nav-item ms-3 d-flex align-items-center" cdkDrag>
-                        <span class="drag-handle me-1" cdkDragHandle><i
-                                class="bi bi-grip-vertical text-muted"></i></span>
-                        <button class="nav-link btn btn-link p-0" type="button" (click)="show_page(entry.navitem)">
-                            {{ label_transformer_simulation(entry.navitem) }}
-                        </button>
-                    </li>
+                        @if (entry.navitem.position === NAVITEM_POSITION.NAVBAR && allow(entry.navitem)) {
+                            <ng-container *ngTemplateOutlet="navbarGroupRecursive; context: { $implicit: entry }"></ng-container>
+                        }
                     }
+<!-- Template récursive pour la navbar -->
+<ng-template #navbarGroupRecursive let-entry>
+    @if (entry.navitem.type === NAVITEM_TYPE.DROPDOWN && hasVisibleChildren(entry)) {
+        <li class="nav-item dropdown ms-3 d-flex align-items-center" ngbDropdown cdkDrag>
+            <span class="drag-handle me-1" cdkDragHandle><i class="bi bi-grip-vertical text-muted"></i></span>
+            <button class="nav-link dropdown-toggle btn btn-link p-0" type="button" ngbDropdownToggle
+                id="nav-{{ entry.navitem.id }}">
+                @if(entry.navitem.pre_label === 'avatar') {
+                <span
+                    class="rounded-circle d-inline-flex justify-content-center align-items-center bg-secondary text-white me-1"
+                    style="width:28px; height:28px; max-width:28px; max-height:28px; font-size:0.75rem; line-height:28px;">
+                    JD
+                </span>
+                }
+                {{ label_transformer_simulation(entry.navitem) }}
+            </button>
+            <div class="dropdown-menu" ngbDropdownMenu [attr.aria-labelledby]="'nav-' + entry.navitem.id"
+                cdkDropList [cdkDropListData]="entry.childs || []" [cdkDropListOrientation]="'vertical'"
+                [cdkDropListEnterPredicate]="sameList"
+                (cdkDropListDropped)="dropChild($event, entry)">
+                @for (childGroup of entry.childs; track childGroup.navitem.id) {
+                    @if (allow(childGroup.navitem)) {
+                        <ng-container *ngTemplateOutlet="navbarGroupRecursive; context: { $implicit: childGroup }"></ng-container>
                     }
-                    }
+                }
+            </div>
+        </li>
+    } @else {
+        <li class="nav-item ms-3 d-flex align-items-center" cdkDrag>
+            <span class="drag-handle me-1" cdkDragHandle><i class="bi bi-grip-vertical text-muted"></i></span>
+            <button class="nav-link btn btn-link p-0" type="button" (click)="show_page(entry.navitem)">
+                {{ label_transformer_simulation(entry.navitem) }}
+            </button>
+        </li>
+    }
+</ng-template>
                 </ul>
             </div>
 
@@ -160,39 +146,27 @@
             </thead>
             <tbody>
                 @for (entry of menus; let i = $index; track entry.navitem.id) {
-                <!-- Parent row -->
-                <tr>
-                    <td>{{ i + 1 }}</td>
-                    <td><strong>{{ entry.navitem.label }}</strong></td>
-                    <td>{{ entry.navitem.type }}</td>
-                    <td>{{ entry.navitem.type === NAVITEM_TYPE.CUSTOM_PAGE ? entry.navitem.page_title :
-                        (entry.navitem.type === NAVITEM_TYPE.PLUGIN ? entry.navitem.plugin_name : 
-                        (entry.navitem.type === NAVITEM_TYPE.DIRECT_CALL ? entry.navitem.slug : '')) }}</td>
-                    <td>{{ entry.navitem.path }}</td>
-                    <td>{{ entry.navitem.rank }}</td>
-                    <td>{{ entry.navitem.logging_criteria }}</td>
-                    <td>{{ entry.navitem.pre_label }}</td>
-                    <td><i (click)="editNavitem(entry.navitem)" class="bi bi-pencil-square" role="button"
-                            title="Éditer"></i></td>
-                </tr>
-                <!-- Child rows -->
-                @for (childGroup of entry.childs; let j = $index; track childGroup.navitem.id) {
-                <tr>
-                    <td>{{ i + 1 }}.{{ j + 1 }}</td>
-                    <td class="ps-4"> {{ childGroup.navitem.label }}</td>
-                    <td>{{ childGroup.navitem.type }}</td>
-                    <td>{{ childGroup.navitem.type === NAVITEM_TYPE.CUSTOM_PAGE ? childGroup.navitem.page_title :
-                        (childGroup.navitem.type === NAVITEM_TYPE.PLUGIN ? childGroup.navitem.plugin_name : 
-                        (childGroup.navitem.type === NAVITEM_TYPE.DIRECT_CALL ? childGroup.navitem.slug : '')) }}</td>
-                    <td>{{ childGroup.navitem.path }}</td>
-                    <td>{{ childGroup.navitem.rank }}</td>
-                    <td>{{ childGroup.navitem.logging_criteria }}</td>
-                    <td>{{ childGroup.navitem.pre_label }}</td>
-                    <td><i (click)="editNavitem(childGroup.navitem)" class="bi bi-pencil-square" role="button" title="Éditer"></i>
-                    </td>
-                </tr>
+                    <ng-container *ngTemplateOutlet="menuTableRecursive; context: { $implicit: entry, parentIndex: (i + 1), indent: 0 }"></ng-container>
                 }
-                }
+<!-- Template récursive pour la table des menus -->
+<ng-template #menuTableRecursive let-entry let-parentIndex="parentIndex" let-indent="indent">
+    <tr>
+        <td>{{ parentIndex }}</td>
+        <td [style.padding-left.px]="indent * 24"><strong>{{ entry.navitem.label }}</strong></td>
+        <td>{{ entry.navitem.type }}</td>
+        <td>{{ entry.navitem.type === NAVITEM_TYPE.CUSTOM_PAGE ? entry.navitem.page_title :
+            (entry.navitem.type === NAVITEM_TYPE.PLUGIN ? entry.navitem.plugin_name :
+            (entry.navitem.type === NAVITEM_TYPE.DIRECT_CALL ? entry.navitem.slug : '')) }}</td>
+        <td>{{ entry.navitem.path }}</td>
+        <td>{{ entry.navitem.rank }}</td>
+        <td>{{ entry.navitem.logging_criteria }}</td>
+        <td>{{ entry.navitem.pre_label }}</td>
+        <td><i (click)="editNavitem(entry.navitem)" class="bi bi-pencil-square" role="button" title="Éditer"></i></td>
+    </tr>
+    @for (childGroup of entry.childs; let j = $index; track childGroup.navitem.id) {
+        <ng-container *ngTemplateOutlet="menuTableRecursive; context: { $implicit: childGroup, parentIndex: parentIndex + '.' + (j + 1), indent: indent + 1 }"></ng-container>
+    }
+</ng-template>
             </tbody>
             <tbody>
                 <tr>

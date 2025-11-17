@@ -22,7 +22,7 @@ import { CommandRegistryService } from '../../common/services/command-registry.s
 })
 export class FrontNavbarComponent {
   @Input() albums: string[] = [];
-  @Input() menus: MenuStructure = [];
+  @Input() navbar_menus: MenuStructure = [];
   @Input() sandboxMode: boolean = false;
   NAVITEM_POSITION = NAVITEM_POSITION;
   NAVITEM_TYPE = NAVITEM_TYPE;

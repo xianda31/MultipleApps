@@ -18,7 +18,7 @@ import { NavItemsService } from '../../../common/services/navitem.service';
   styleUrl: './front.component.scss'
 })
 export class FrontComponent {
-  add_menus: MenuStructure = [];
+  navbar_menus: MenuStructure = [];
   NAVITEM_POSITION = NAVITEM_POSITION;
   NAVITEM_TYPE = NAVITEM_TYPE;
   NAVITEM_TYPES = Object.values(NAVITEM_TYPE);
@@ -42,12 +42,12 @@ export class FrontComponent {
       this.albums = albums;
     });
 
-    this.add_menus = this.navitemService.getMenuStructure();
+    this.navbar_menus = this.navitemService.getMenuStructure();
     // Subscribe sandbox mode to force navbar visual indicator refresh if needed
     this.sandboxService.sandbox$.subscribe((sandbox) => {
       // trigger change detection by simple assignment if menus depend on mode later
       this.sandbox = sandbox;
-      this.add_menus = this.navitemService.getMenuStructure();
+      this.navbar_menus = this.navitemService.getMenuStructure().filter(menu => menu.navitem.position === NAVITEM_POSITION.NAVBAR );
     });
   }
 }
