@@ -48,7 +48,6 @@ export class FrontComponent {
       // trigger change detection by simple assignment if menus depend on mode later
       this.sandbox = sandbox;
       this.navbar_menus = this.navitemService.getMenuStructure().filter(menu => menu.navitem.position === NAVITEM_POSITION.NAVBAR );
-      console.log('FrontComponent - ', this.navbar_menus);
     });
   }
 }

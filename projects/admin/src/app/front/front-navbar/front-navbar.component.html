@@ -226,8 +226,7 @@
         </a>
       }
       @else if (menu.navitem.type === NAVITEM_TYPE.CUSTOM_PAGE) {
-        <a class="dropdown-item Page" [routerLink]="menu.navitem.path"
-          [queryParams]="{ page_title: menu.navitem.page_title }">
+        <a class="dropdown-item Page" [routerLink]="menu.navitem.path">
           <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
         </a>
       }

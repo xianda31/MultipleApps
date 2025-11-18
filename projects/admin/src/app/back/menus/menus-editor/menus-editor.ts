@@ -451,6 +451,15 @@ export class MenusEditorComponent  {
   this.menus = this.buildMenuStructureNew(this.navitems);
         // Preview always built from sandbox items
         this.front_routes = this.navitemService.generateFrontRoutes(this.navitems);
+        // If sandbox mode is active, update global dynamic routes so the front preview/router picks changes
+        try {
+          if (this.sandboxService && this.sandboxService.value) {
+            this.dynamicRoutesService.setRoutes(this.front_routes);
+          }
+        } catch (err) {
+          // Defensive: don't break editor if dynamic route update fails
+          console.warn('Failed to update dynamic routes from menus editor', err);
+        }
         this.rebuildNavbarEntries();
       });
   }
