@@ -12,8 +12,7 @@ import { NAVITEM_PLUGIN } from '../../../common/interfaces/plugin.interface';
 import { LABEL_TRANSFORMERS } from '../../../common/interfaces/plugin.interface';
 import { PageService } from '../../../common/services/page.service';
 import { Page } from '../../../common/interfaces/page_snippet.interface';
-import { DragDropModule } from '@angular/cdk/drag-drop';
-import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
+// CDK Drag&Drop imports removed — menu editor no longer uses DnD in this template
 import { APP_SANDBOX } from '../../../app.config';
 import { SandboxService } from '../../../common/services/sandbox.service';
 import { DynamicRoutesService } from '../../../common/services/dynamic-routes.service';
@@ -26,7 +25,7 @@ import { charsanitize, buildFullPath, extractSegment } from '../../../common/uti
   selector: 'app-menus-editor',
   templateUrl: './menus-editor.html',
   styleUrls: ['./menus-editor.scss'],
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbDropdownModule, DragDropModule]
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbDropdownModule]
 })
 export class MenusEditorComponent  {
   // ... autres propriétés ...
@@ -75,8 +74,7 @@ export class MenusEditorComponent  {
   private readonly destroyed$ = new Subject<void>();
   // Sorting helper for keyvalue pipe to sort parents by rank
   compareMenuEntries = (a: any, b: any) => (a?.value?.parent?.rank ?? 0) - (b?.value?.parent?.rank ?? 0);
-  // DnD: only allow entering same list (no inter-list transfers)
-  sameList = (drag: CdkDrag<unknown>, drop: CdkDropList<unknown>) => drag.dropContainer === drop;
+  // Drag&Drop support removed from this editor view
 
 
 
@@ -284,47 +282,7 @@ export class MenusEditorComponent  {
 
     this.selected_page = item.page_id ? this.pages.find(p => p.id === item.page_id) || null : null;
   }
-
-  // Drag-and-drop: reorder children within the same parent and persist rank (0-based)
-  dropChild(event: CdkDragDrop<MenuGroup[]>, parent: MenuGroup) {
-    if (!event.container || event.previousIndex === event.currentIndex) {
-      return;
-    }
-    const list = event.container.data as MenuGroup[];
-    moveItemInArray(list, event.previousIndex, event.currentIndex);
-    // Recompute ranks locally (0-based)
-    list.forEach((child, idx) => child.navitem.rank = idx);
-    // Persist all updated children ranks
-    Promise.all(list.map(child => this.navitemService.updateNavItem(child.navitem)))
-      .then(() => {
-        this.toastService.showSuccess('Menus', 'Ordre des sous-menus mis à jour');
-      })
-      .catch(err => {
-        this.toastService.showErrorToast('Menus', 'Échec mise à jour de l\'ordre');
-        console.error('DnD persist error:', err);
-      });
-  }
-
-  // Drag-and-drop: reorder top-level NAVBAR parents and persist their rank (0-based)
-  dropParent(event: CdkDragDrop<MenuGroup[]>) {
-    if (!event.container || event.previousIndex === event.currentIndex) {
-      return;
-    }
-    const working = [...this.navbarEntries];
-    moveItemInArray(working, event.previousIndex, event.currentIndex);
-    // Recompute ranks globally (0-based)
-    working.forEach((entry, idx) => entry.navitem.rank = idx);
-    // Persist all updated parent ranks
-    Promise.all(working.map(e => this.navitemService.updateNavItem(e.navitem)))
-      .then(() => {
-        this.toastService.showSuccess('Menus', 'Ordre des menus mis à jour');
-      })
-      .catch(err => {
-        this.toastService.showErrorToast('Menus', 'Échec mise à jour de l\'ordre');
-        console.error('DnD parent persist error:', err);
-      });
-    this.navbarEntries = working;
-  }
+  // Drag&Drop handlers removed: this preview no longer exposes DnD interactions
 
 
 

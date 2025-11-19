@@ -9,7 +9,8 @@
                 'ON' : 'OFF' }})</span>
         </label>
         <!-- Bouton masqué temporairement jusqu'à décision sur la stratégie de promotion -->
-        <button class="btn btn-sm btn-warning ms-3 d-none" (click)="promoteSandboxMenus()" [disabled]="!sandboxService.value">
+        <button class="btn btn-sm btn-warning ms-3 d-none" (click)="promoteSandboxMenus()"
+            [disabled]="!sandboxService.value">
             Promouvoir vers production
         </button>
     </div>
@@ -43,17 +44,16 @@
 <ng-template #show_routes>
     @if(front_routes && front_routes[0].children) {
 
-        @for (route of front_routes[0].children; track route.path) {
-            <div>
-                <strong>Path:</strong> {{ route.path }}
-                @if (route.component) {<strong>:</strong> {{ route.component.name }} }
-                @if (route.data) {<strong>:</strong> {{ route.data | json }} }
-    
-            </div>
-        }
+    @for (route of front_routes[0].children; track route.path) {
+    <div>
+        <strong>Path:</strong> {{ route.path }}
+        @if (route.component) {<strong>:</strong> {{ route.component.name }} }
+        @if (route.data) {<strong>:</strong> {{ route.data | json }} }
+
+    </div>
+    }
     }
 </ng-template>
-
 <ng-template #navbar_simulation>
     <nav class="navbar navbar-expand-lg navbar-light bg-light mb-3">
         <div class="container-fluid">
@@ -63,55 +63,63 @@
             </button>
             <span class="navbar-toggler-icon"></span>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav" cdkDropList [cdkDropListData]="navbarEntries"
-                    [cdkDropListOrientation]="'horizontal'" [cdkDropListEnterPredicate]="sameList"
-                    (cdkDropListDropped)="dropParent($event)">
-                    @for (entry of navbarEntries; track entry.navitem.id) {
-                        @if (entry.navitem.position === NAVITEM_POSITION.NAVBAR && allow(entry.navitem)) {
-                            <ng-container *ngTemplateOutlet="navbarGroupRecursive; context: { $implicit: entry }"></ng-container>
-                        }
-                    }
-<!-- Template récursive pour la navbar -->
-<ng-template #navbarGroupRecursive let-entry>
-    @if (entry.navitem.type === NAVITEM_TYPE.DROPDOWN && hasVisibleChildren(entry)) {
-        <li class="nav-item dropdown ms-3 d-flex align-items-center" ngbDropdown cdkDrag>
-            <span class="drag-handle me-1" cdkDragHandle><i class="bi bi-grip-vertical text-muted"></i></span>
-            <button class="nav-link dropdown-toggle btn btn-link p-0" type="button" ngbDropdownToggle
-                id="nav-{{ entry.navitem.id }}">
-                @if(entry.navitem.pre_label === 'avatar') {
-                <span
-                    class="rounded-circle d-inline-flex justify-content-center align-items-center bg-secondary text-white me-1"
-                    style="width:28px; height:28px; max-width:28px; max-height:28px; font-size:0.75rem; line-height:28px;">
-                    JD
-                </span>
-                }
-                {{ label_transformer_simulation(entry.navitem) }}
-            </button>
-            <div class="dropdown-menu" ngbDropdownMenu [attr.aria-labelledby]="'nav-' + entry.navitem.id"
-                cdkDropList [cdkDropListData]="entry.childs || []" [cdkDropListOrientation]="'vertical'"
-                [cdkDropListEnterPredicate]="sameList"
-                (cdkDropListDropped)="dropChild($event, entry)">
-                @for (childGroup of entry.childs; track childGroup.navitem.id) {
-                    @if (allow(childGroup.navitem)) {
-                        <ng-container *ngTemplateOutlet="navbarGroupRecursive; context: { $implicit: childGroup }"></ng-container>
-                    }
-                }
-            </div>
-        </li>
-    } @else {
-        <li class="nav-item ms-3 d-flex align-items-center" cdkDrag>
-            <span class="drag-handle me-1" cdkDragHandle><i class="bi bi-grip-vertical text-muted"></i></span>
-            <button class="nav-link btn btn-link p-0" type="button" (click)="show_page(entry.navitem)">
-                {{ label_transformer_simulation(entry.navitem) }}
-            </button>
-        </li>
-    }
-</ng-template>
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <ng-container *ngTemplateOutlet="menuContainer; context: { $implicit: navbarEntries }"></ng-container>
                 </ul>
             </div>
 
         </div>
     </nav>
+
+    <ng-template #menuContainer let-menus>
+        @for (menu of menus; track menu.navitem.id) {
+            @if ((menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.ANY)
+            || (menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.LOGGED_ONLY && previewLogged)
+            || (menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.UNLOGGED_ONLY && !previewLogged)) {
+                <ng-container *ngTemplateOutlet="menuGroupRecursive; context: { $implicit: menu }"></ng-container>
+            }
+        }
+    </ng-template>
+
+    <ng-template #menuGroupRecursive let-menu>
+        @if (menu.navitem.type === NAVITEM_TYPE.DROPDOWN && (menu.childs?.length || 0) > 0) {
+            <li class="nav-item dropdown ms-3 d-flex align-items-center" ngbDropdown>
+                <a class="nav-link dropdown-toggle" ngbDropdownToggle id="nav-{{ menu.navitem.id }}">
+                    @if(menu.navitem.pre_label === 'avatar') {
+                    <span
+                        class="rounded-circle d-inline-flex justify-content-center align-items-center bg-secondary text-white me-1"
+                        style="width:28px; height:28px; max-width:28px; max-height:28px; font-size:0.75rem; line-height:28px;">
+                        JD
+                    </span>
+                    }
+                    {{ label_transformer_simulation(menu.navitem) }}
+                </a>
+                <ul class="dropdown-menu" ngbDropdownMenu [attr.aria-labelledby]="'nav-' + menu.navitem.id">
+                    @for (child of (menu.childs || []); track child.navitem.id) {
+                        @if ((child.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.ANY)
+                        || (child.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.LOGGED_ONLY && previewLogged)
+                        || (child.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.UNLOGGED_ONLY && !previewLogged)) {
+                            <ng-container *ngTemplateOutlet="menuGroupRecursive; context: { $implicit: child }"></ng-container>
+                        }
+                    }
+                </ul>
+            </li>
+        } @else {
+            <li class="nav-item ms-3 d-flex align-items-center">
+                <button class="nav-link btn btn-link p-0" type="button" (click)="show_page(menu.navitem)">
+                    <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
+                </button>
+            </li>
+        }
+    </ng-template>
+
+    <ng-template #menuLabelTemplate let-menu>
+        @if(menu.navitem.pre_label === 'avatar') {
+        <span class="rounded-circle d-inline-flex justify-content-center align-items-center bg-secondary text-white me-1"
+            style="width:28px; height:28px; max-width:28px; max-height:28px; font-size:0.75rem; line-height:28px;">JD</span>
+        }
+        {{ label_transformer_simulation(menu.navitem) }}
+    </ng-template>
 </ng-template>
 
 
@@ -146,27 +154,30 @@
             </thead>
             <tbody>
                 @for (entry of menus; let i = $index; track entry.navitem.id) {
-                    <ng-container *ngTemplateOutlet="menuTableRecursive; context: { $implicit: entry, parentIndex: (i + 1), indent: 0 }"></ng-container>
+                <ng-container
+                    *ngTemplateOutlet="menuTableRecursive; context: { $implicit: entry, parentIndex: (i + 1), indent: 0 }"></ng-container>
                 }
-<!-- Template récursive pour la table des menus -->
-<ng-template #menuTableRecursive let-entry let-parentIndex="parentIndex" let-indent="indent">
-    <tr>
-        <td>{{ parentIndex }}</td>
-        <td [style.padding-left.px]="indent * 24"><strong>{{ entry.navitem.label }}</strong></td>
-        <td>{{ entry.navitem.type }}</td>
-        <td>{{ entry.navitem.type === NAVITEM_TYPE.CUSTOM_PAGE ? entry.navitem.page_title :
-            (entry.navitem.type === NAVITEM_TYPE.PLUGIN ? entry.navitem.plugin_name :
-            (entry.navitem.type === NAVITEM_TYPE.DIRECT_CALL ? entry.navitem.slug : '')) }}</td>
-        <td>{{ entry.navitem.path }}</td>
-        <td>{{ entry.navitem.rank }}</td>
-        <td>{{ entry.navitem.logging_criteria }}</td>
-        <td>{{ entry.navitem.pre_label }}</td>
-        <td><i (click)="editNavitem(entry.navitem)" class="bi bi-pencil-square" role="button" title="Éditer"></i></td>
-    </tr>
-    @for (childGroup of entry.childs; let j = $index; track childGroup.navitem.id) {
-        <ng-container *ngTemplateOutlet="menuTableRecursive; context: { $implicit: childGroup, parentIndex: parentIndex + '.' + (j + 1), indent: indent + 1 }"></ng-container>
-    }
-</ng-template>
+                <!-- Template récursive pour la table des menus -->
+                <ng-template #menuTableRecursive let-entry let-parentIndex="parentIndex" let-indent="indent">
+                    <tr>
+                        <td>{{ parentIndex }}</td>
+                        <td [style.padding-left.px]="indent * 24"><strong>{{ entry.navitem.label }}</strong></td>
+                        <td>{{ entry.navitem.type }}</td>
+                        <td>{{ entry.navitem.type === NAVITEM_TYPE.CUSTOM_PAGE ? entry.navitem.page_title :
+                            (entry.navitem.type === NAVITEM_TYPE.PLUGIN ? entry.navitem.plugin_name :
+                            (entry.navitem.type === NAVITEM_TYPE.DIRECT_CALL ? entry.navitem.slug : '')) }}</td>
+                        <td>{{ entry.navitem.path }}</td>
+                        <td>{{ entry.navitem.rank }}</td>
+                        <td>{{ entry.navitem.logging_criteria }}</td>
+                        <td>{{ entry.navitem.pre_label }}</td>
+                        <td><i (click)="editNavitem(entry.navitem)" class="bi bi-pencil-square" role="button"
+                                title="Éditer"></i></td>
+                    </tr>
+                    @for (childGroup of entry.childs; let j = $index; track childGroup.navitem.id) {
+                    <ng-container
+                        *ngTemplateOutlet="menuTableRecursive; context: { $implicit: childGroup, parentIndex: parentIndex + '.' + (j + 1), indent: indent + 1 }"></ng-container>
+                    }
+                </ng-template>
             </tbody>
             <tbody>
                 <tr>
@@ -203,7 +214,8 @@
                 <div class="col-12">
                     <label class="form-label">Libellé</label>
                     <div class="input-group">
-                        <select class="form-select" [ngModel]="currentLabelToken" (ngModelChange)="useSpecialLabel($event)" [ngModelOptions]="{standalone:true}">
+                        <select class="form-select" [ngModel]="currentLabelToken"
+                            (ngModelChange)="useSpecialLabel($event)" [ngModelOptions]="{standalone:true}">
                             <option [ngValue]="''">— libellé libre —</option>
                             @for (tok of SPECIAL_LABELS; track tok) {<option [ngValue]="tok">{{ tok }}</option>}
                         </select>
@@ -278,18 +290,20 @@
                 </div>
                 }
 
-                @if (navItemForm.get('type')?.value === NAVITEM_TYPE.PLUGIN && navItemForm.get('plugin_name')?.value === NAVITEM_PLUGIN.IFRAME) {
+                @if (navItemForm.get('type')?.value === NAVITEM_TYPE.PLUGIN && navItemForm.get('plugin_name')?.value ===
+                NAVITEM_PLUGIN.IFRAME) {
                 <div class="col-12">
                     <label class="form-label">URL externe</label>
                     <input type="url" class="form-control" formControlName="external_url" placeholder="https://..." />
                 </div>
                 }
-                    @if (navItemForm.get('type')?.value === NAVITEM_TYPE.EXTERNAL_REDIRECT && selectedNavitem) {
-                    <div class="col-12">
-                        <label class="form-label">URL externe à ouvrir</label>
-                        <input id="externalUrlInput" type="url" class="form-control" formControlName="external_url" placeholder="https://...">
-                    </div>
-                    }
+                @if (navItemForm.get('type')?.value === NAVITEM_TYPE.EXTERNAL_REDIRECT && selectedNavitem) {
+                <div class="col-12">
+                    <label class="form-label">URL externe à ouvrir</label>
+                    <input id="externalUrlInput" type="url" class="form-control" formControlName="external_url"
+                        placeholder="https://...">
+                </div>
+                }
 
                 @if (navItemForm.get('type')?.value === NAVITEM_TYPE.PLUGIN) {
                 <div class="col-12">
