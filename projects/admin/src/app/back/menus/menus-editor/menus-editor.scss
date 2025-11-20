@@ -99,3 +99,62 @@ i.bi-grip-vertical:active {
 // .preview-wrap {
 // 	overflow-x: auto;
 // }
+
+/* Ensure the navbar drop-list only covers the actual menu items */
+.nav-drop-list {
+	display: flex; /* use flex so items reflow horizontally based on width */
+	flex-wrap: nowrap;
+	align-items: center;
+	gap: 0.5rem;
+	padding-left: 0; /* reset bootstrap padding if any */
+	justify-content: flex-start;
+}
+
+.nav-drop-list > li {
+	display: flex; /* ensure children are laid out inline-flex-wise */
+	align-items: center;
+	white-space: nowrap;
+}
+
+/* Ensure the navbar collapse container is positioned so CDK boundary calculations work */
+#navbarNav {
+	position: relative;
+	overflow: visible; /* allow preview to overflow when needed */
+}
+
+/* Slightly constrain preview to avoid it jumping far to the right */
+.navbar-nav .cdk-drag-preview {
+	max-width: 320px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* Ensure preview origin is left so pointer remains aligned with grab handle */
+.navbar-nav .cdk-drag-preview {
+	transform-origin: left center !important;
+	cursor: grabbing !important;
+	pointer-events: none;
+}
+
+/* No forced fixed positioning: allow CDK to position the preview to avoid coordinate conflicts */
+.cdk-drag-preview {
+	will-change: transform;
+}
+
+/* Force navbar previews to use fixed positioning and reset offsets to avoid incremental Y offsets */
+#navbarNav .cdk-drag-preview,
+.navbar-nav .cdk-drag-preview {
+	position: fixed !important;
+	margin: 0 !important;
+	top: 0 !important;
+	left: 0 !important;
+	/* keep existing visual rules */
+	max-width: 320px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	transform-origin: left center !important;
+	pointer-events: none;
+	will-change: transform;
+}
