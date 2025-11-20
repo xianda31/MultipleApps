@@ -1,4 +1,4 @@
-<div class="container">
+<div class="container menus-editor-root">
 
 
     <div class="form-check form-switch sandbox-switch">
@@ -71,7 +71,7 @@
                             <li class="nav-item dropdown ms-3 d-flex align-items-center" ngbDropdown
                                 cdkDrag [cdkDragData]="menu" [cdkDragDisabled]="false" cdkDragBoundary="#navbarNav"
                                 [attr.data-nav-id]="menu.navitem.id"
-                                (cdkDragMoved)="onDragMoved($event)" (cdkDragEnded)="onDragEnded($event)">
+                                (cdkDragStarted)="onDragStarted($event)" (cdkDragMoved)="onDragMoved($event)" (cdkDragEnded)="onDragEnded($event)">
                             <ng-template cdkDragPreview>
                                 <div class="nav-drag-preview d-inline-flex align-items-center p-2 bg-white border">
                                     <span class="drag-handle me-1"><i class="bi bi-grip-vertical text-muted"></i></span>
@@ -89,14 +89,16 @@
                             <ul class="dropdown-menu" ngbDropdownMenu [attr.aria-labelledby]="'nav-' + menu.navitem.id"
                                 cdkDropList [cdkDropListData]="menu.childs"
                                 cdkDropListOrientation="vertical"
+                                [attr.data-parent-id]="menu.navitem.id"
+                                [cdkDropListEnterPredicate]="childEnterPredicate"
                                 (cdkDropListDropped)="onChildDrop($event, menu)">
                                 @for (child of (menu.childs || []); track child.navitem.id) {
                                     @if ((child.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.ANY)
                                     || (child.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.LOGGED_ONLY && previewLogged)
                                     || (child.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.UNLOGGED_ONLY && !previewLogged)) {
-                                        <li class="nav-item ms-3 d-flex align-items-center" cdkDrag [cdkDragData]="child" [cdkDragDisabled]="false" cdkDragBoundary="#navbarNav"
+                                        <li class="nav-item ms-3 d-flex align-items-center" cdkDrag [cdkDragData]="child" [cdkDragDisabled]="false"
                                             [attr.data-nav-id]="child.navitem.id"
-                                            (cdkDragMoved)="onDragMoved($event)" (cdkDragEnded)="onDragEnded($event)">
+                                            (cdkDragStarted)="onDragStarted($event)" (cdkDragMoved)="onDragMoved($event)" (cdkDragEnded)="onDragEnded($event)">
                                             <ng-template cdkDragPreview>
                                                 <div class="nav-drag-preview d-inline-flex align-items-center p-2 bg-white border">
                                                     <span class="drag-handle me-1"><i class="bi bi-grip-vertical text-muted"></i></span>
@@ -116,7 +118,7 @@
                         <ng-template #simpleItem>
                             <li class="nav-item ms-3 d-flex align-items-center" cdkDrag [cdkDragData]="menu" [cdkDragDisabled]="false" cdkDragBoundary="#navbarNav"
                                 [attr.data-nav-id]="menu.navitem.id"
-                                (cdkDragMoved)="onDragMoved($event)" (cdkDragEnded)="onDragEnded($event)">
+                                (cdkDragStarted)="onDragStarted($event)" (cdkDragMoved)="onDragMoved($event)" (cdkDragEnded)="onDragEnded($event)">
                                 <ng-template cdkDragPreview>
                                     <div class="nav-drag-preview d-inline-flex align-items-center p-2 bg-white border">
                                         <span class="drag-handle me-1"><i class="bi bi-grip-vertical text-muted"></i></span>

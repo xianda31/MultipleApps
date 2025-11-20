@@ -1,4 +1,4 @@
-import { Component, ViewChild, Inject, ChangeDetectorRef, ElementRef } from '@angular/core';
+import { Component, ViewChild, ViewChildren, QueryList, Inject, ChangeDetectorRef, ElementRef, AfterViewInit } from '@angular/core';
 import { NgbOffcanvas, NgbOffcanvasRef } from '@ng-bootstrap/ng-bootstrap';
 import { ToastService } from '../../../common/services/toast.service';
 import { NavItemsService } from '../../../common/services/navitem.service';
@@ -13,7 +13,8 @@ import { LABEL_TRANSFORMERS } from '../../../common/interfaces/plugin.interface'
 import { PageService } from '../../../common/services/page.service';
 import { Page } from '../../../common/interfaces/page_snippet.interface';
 import { DragDropModule } from '@angular/cdk/drag-drop';
-import { CdkDragDrop, moveItemInArray, CdkDragMove, CdkDragEnd } from '@angular/cdk/drag-drop';
+import { CdkDragDrop, moveItemInArray, CdkDragMove, CdkDragEnd, CdkDragStart } from '@angular/cdk/drag-drop';
+import { NgbDropdown } from '@ng-bootstrap/ng-bootstrap';
 import { APP_SANDBOX } from '../../../app.config';
 import { SandboxService } from '../../../common/services/sandbox.service';
 import { DynamicRoutesService } from '../../../common/services/dynamic-routes.service';
@@ -27,12 +28,15 @@ import { charsanitize, buildFullPath, extractSegment } from '../../../common/uti
   styleUrls: ['./menus-editor.scss'],
   imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbDropdownModule, DragDropModule]
 })
-export class MenusEditorComponent  {
+export class MenusEditorComponent implements AfterViewInit {
+  // Ensure we can close any open dropdowns on init
+  // Implement AfterViewInit below
   // component properties
   navbarEntries: MenuGroup[] = [];
   private _visibleNavbarEntries: MenuGroup[] = [];
   @ViewChild('editNavitemOffcanvas', { static: true }) editNavitemOffcanvas: any;
   @ViewChild('navDropList', { static: false, read: ElementRef }) navDropListRef?: ElementRef;
+  @ViewChildren(NgbDropdown) dropdowns?: QueryList<NgbDropdown>;
 
   selectedNavitem: NavItem | null = null;
   navitems!: NavItem[];
@@ -563,6 +567,48 @@ export class MenusEditorComponent  {
     // No-op: kept intentionally minimal to avoid interfering with CDK preview lifecycle
   }
 
+  // Close any open dropdowns when drag starts so menus don't remain open
+  onDragStarted(event: CdkDragStart) {
+    try {
+      const originEl = (event && (event.source as any) && (event.source as any).element && (event.source as any).element.nativeElement)
+        ? (event.source as any).element.nativeElement as HTMLElement
+        : null;
+
+      // Find parent dropdown element that contains the dragged element (if any)
+      const originDropdownEl = originEl ? originEl.closest('.dropdown') as HTMLElement | null : null;
+
+      // Scope root for queries
+      const rootEl = this.navbarNavRef && this.navbarNavRef.nativeElement ? this.navbarNavRef.nativeElement as HTMLElement : document;
+
+      // If we couldn't find the origin dropdown, avoid closing any dropdowns here
+      if (!originDropdownEl) return;
+
+      // Close all dropdowns except the one that contains the drag origin
+      const dropdownEls = Array.from(rootEl.querySelectorAll('.dropdown')) as HTMLElement[];
+      dropdownEls.forEach(el => {
+        if (originDropdownEl && originDropdownEl.isSameNode(el)) return; // keep origin open
+        // remove visual open state
+        el.classList.remove('show');
+        const menu = el.querySelector('.dropdown-menu');
+        if (menu) menu.classList.remove('show');
+        // set toggle aria-expanded to false
+        const toggle = el.querySelector('.dropdown-toggle') as HTMLElement | null;
+        if (toggle) toggle.setAttribute('aria-expanded', 'false');
+      });
+
+      // Also attempt to call NgbDropdown.close() on known instances except origin
+      try {
+        this.dropdowns?.forEach(d => {
+          try {
+            const dEl = (d as any)._elementRef?.nativeElement as HTMLElement | undefined;
+            if (dEl && originDropdownEl && dEl.isSameNode(originDropdownEl)) return;
+            try { d.close(); } catch (e) { /* ignore */ }
+          } catch (e) { /* ignore */ }
+        });
+      } catch (e) { /* ignore */ }
+    } catch (e) { /* silent */ }
+  }
+
 
   // Preview positioning is handled via CSS and `clearCdkTransforms`
   async onDragEnded(event: CdkDragEnd) {
@@ -586,22 +632,19 @@ export class MenusEditorComponent  {
   // Handler for drops inside a parent's child list (sub-menu ordering)
   async onChildDrop(event: CdkDragDrop<any>, parent: MenuGroup) {
     try {
-      if (!event.container || event.previousIndex === event.currentIndex) return;
-
-      // Ensure child array exists
+      if (!event.container) return;
+      // Only handle reorders within the same child list. Ignore cross-container transfers.
+      if (event.previousContainer !== event.container) return;
       if (!parent.childs) parent.childs = [];
+      if (event.previousIndex === event.currentIndex) return;
 
-      // Let CDK animate by rearranging the visible child array first
       moveItemInArray(parent.childs, event.previousIndex, event.currentIndex);
 
-      // Recompute ranks among siblings (0-based)
       parent.childs.forEach((c, idx) => c.navitem.rank = idx);
 
-      // Persist updated sibling ranks
       try {
         await Promise.all(parent.childs.map(c => this.navitemService.updateNavItem(c.navitem)));
         this.toastService.showSuccess('Menus', 'Ordre des sous-menus mis à jour');
-        // Reload structure to ensure global consistency
         this.reloadNavitems();
       } catch (err) {
         this.toastService.showErrorToast('Menus', "Échec mise à jour de l'ordre des sous-menus");
@@ -609,6 +652,20 @@ export class MenusEditorComponent  {
       }
     } catch (e) {
       // non-fatal
+    }
+  }
+
+  // Allow items into a child list only if they already belong to that parent (no cross-drop)
+  childEnterPredicate = (drag: any, drop: any): boolean => {
+    try {
+      const item = drag?.item?.data as MenuGroup | undefined;
+      if (!item || !item.navitem) return false;
+      const parentId = drop?.container?.element?.nativeElement?.getAttribute
+        ? drop.container.element.nativeElement.getAttribute('data-parent-id')
+        : null;
+      return !!(parentId && item.navitem.parent_id === parentId);
+    } catch (e) {
+      return false;
     }
   }
 
@@ -661,6 +718,39 @@ export class MenusEditorComponent  {
   ngOnDestroy(): void {
     this.destroyed$.next();
     this.destroyed$.complete();
+  }
+
+  ngAfterViewInit(): void {
+    // Close any NgbDropdown instances that might be open at startup
+    try {
+      // run in a timeout to let Angular finish rendering children
+      setTimeout(() => {
+        try {
+          this.dropdowns?.forEach(d => {
+            try { d.close(); } catch (e) { /* ignore */ }
+          });
+
+          // Also remove any leftover `.show` classes on dropdown menus inside the navbar
+          const rootEl = this.navbarNavRef && this.navbarNavRef.nativeElement ? this.navbarNavRef.nativeElement as HTMLElement : document;
+          const shown = Array.from(rootEl.querySelectorAll('.dropdown-menu.show')) as HTMLElement[];
+          shown.forEach(el => el.classList.remove('show'));
+          const shownParents = Array.from(rootEl.querySelectorAll('.dropdown.show')) as HTMLElement[];
+          shownParents.forEach(el => el.classList.remove('show'));
+
+          // Also ensure any dropdown toggles report aria-expanded=false
+          const toggles = Array.from(rootEl.querySelectorAll('.dropdown-toggle')) as HTMLElement[];
+          toggles.forEach(t => {
+            try {
+              t.setAttribute('aria-expanded', 'false');
+            } catch (e) { /* ignore */ }
+          });
+        } catch (e) {
+          // ignore
+        }
+      }, 0);
+    } catch (e) {
+      // ignore
+    }
   }
 
 
