@@ -13,14 +13,13 @@ import { LABEL_TRANSFORMERS } from '../../../common/interfaces/plugin.interface'
 import { PageService } from '../../../common/services/page.service';
 import { Page } from '../../../common/interfaces/page_snippet.interface';
 import { DragDropModule } from '@angular/cdk/drag-drop';
-import { CdkDragDrop, moveItemInArray, CdkDragStart, CdkDragMove, CdkDragEnd } from '@angular/cdk/drag-drop';
+import { CdkDragDrop, moveItemInArray, CdkDragMove, CdkDragEnd } from '@angular/cdk/drag-drop';
 import { APP_SANDBOX } from '../../../app.config';
 import { SandboxService } from '../../../common/services/sandbox.service';
 import { DynamicRoutesService } from '../../../common/services/dynamic-routes.service';
 import { Subject, combineLatest } from 'rxjs';
 import { charsanitize, buildFullPath, extractSegment } from '../../../common/utils/navitem.utils';
-// Preview in editor will always be generated from sandbox navitems; no need for static front routes here
-// import { path } from 'd3';
+// Preview in editor is generated from sandbox navitems
 
 @Component({
   selector: 'app-menus-editor',
@@ -29,7 +28,7 @@ import { charsanitize, buildFullPath, extractSegment } from '../../../common/uti
   imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbDropdownModule, DragDropModule]
 })
 export class MenusEditorComponent  {
-  // ... autres propriétés ...
+  // component properties
   navbarEntries: MenuGroup[] = [];
   private _visibleNavbarEntries: MenuGroup[] = [];
   @ViewChild('editNavitemOffcanvas', { static: true }) editNavitemOffcanvas: any;
@@ -53,15 +52,12 @@ export class MenusEditorComponent  {
   previewLogged = false;
 
   front_routes!: Routes;
-  // legacy: navItems unused
   menus: MenuStructure = [];
   pages: Page[] = [];
   selected_page: Page | null = null;
-  // Ordered list for NAVBAR parents used for DnD at parent level
-  // navbarEntries est maintenant de type MenuGroup[]
+  // navbarEntries: ordered list of top-level MenuGroup
 
   navItemForm: FormGroup = new FormGroup({});
-  routes!: Routes;
   sandbox_mode: boolean = false;
 
   private offRef: NgbOffcanvasRef | null = null;
@@ -72,12 +68,7 @@ export class MenusEditorComponent  {
   private lastAutoSlug = '';
   private skipNextPathUpdate = false; // skip first recompute when opening the editor to avoid duplicate slug in path
   private readonly destroyed$ = new Subject<void>();
-  // Sorting helper for keyvalue pipe to sort parents by rank
-  compareMenuEntries = (a: any, b: any) => (a?.value?.parent?.rank ?? 0) - (b?.value?.parent?.rank ?? 0);
-  // Drag&Drop: handler for reordering top-level navbar entries
-  private lastDragPrevIndex: number | null = null;
-  private lastPointerPosition: { x: number; y: number } | null = null;
-  private lastDropHandled: boolean = false;
+  // (helpers and DnD handlers simplified)
 
 
 
@@ -93,7 +84,7 @@ export class MenusEditorComponent  {
     private dynamicRoutesService: DynamicRoutesService,
   ) { this.sandbox_mode = sandboxFlag; }
 
-  // NOTE: we keep a reference to the navbar container to scope DOM queries when possible
+  // Keep a reference to the navbar container to scope DOM queries when possible
   @ViewChild('navbarNav', { static: false, read: ElementRef }) navbarNavRef?: ElementRef;
 
 
@@ -121,47 +112,7 @@ export class MenusEditorComponent  {
   }
 
 
-  // Reorder the full navbarEntries using the moved item's id and an anchor id + offset (0 before, 1 after)
-  private async reorderByMovedId(movedId: string, anchorId: string | null, insertionOffset: number) {
-    try {
-      const removedIndex = this.navbarEntries.findIndex(e => e.navitem.id === movedId);
-        if (removedIndex === -1) {
-        return;
-      }
-      const [moved] = this.navbarEntries.splice(removedIndex, 1);
-
-      let insertIndex: number;
-      if (anchorId) {
-        const anchorIndex = this.navbarEntries.findIndex(e => e.navitem.id === anchorId);
-        insertIndex = anchorIndex === -1 ? this.navbarEntries.length : (anchorIndex + insertionOffset);
-      } else {
-        insertIndex = this.navbarEntries.length;
-      }
-
-      // clamp
-      insertIndex = Math.max(0, Math.min(this.navbarEntries.length, insertIndex));
-
-      this.navbarEntries.splice(insertIndex, 0, moved);
-
-      try { this.cdr.detectChanges(); } catch (e) { /* ignore */ }
-
-      // Recompute ranks
-      this.navbarEntries.forEach((entry, idx) => entry.navitem.rank = idx);
-
-      // Persist
-      try {
-        await Promise.all(this.navbarEntries.map(e => this.navitemService.updateNavItem(e.navitem)));
-        this.toastService.showSuccess('Menus', 'Ordre des menus mis à jour');
-        this.rebuildVisibleNavbarEntries();
-        try { this.clearCdkTransforms(); } catch (e) { /* ignore */ }
-      } catch (err) {
-        this.toastService.showErrorToast('Menus', 'Échec mise à jour de l\'ordre');
-        this.reloadNavitems();
-      }
-    } catch (e) {
-      this.reloadNavitems();
-    }
-  }
+  
 
   setSandbox(flag: boolean) {
     this.sandboxService.setSandbox(flag);
@@ -329,7 +280,6 @@ export class MenusEditorComponent  {
 
     this.selected_page = item.page_id ? this.pages.find(p => p.id === item.page_id) || null : null;
   }
-  // Drag&Drop handlers removed: this preview no longer exposes DnD interactions
 
 
 
@@ -488,6 +438,11 @@ export class MenusEditorComponent  {
     return this._visibleNavbarEntries;
   }
 
+  // trackBy for menu items to keep DOM stable during reorders
+  trackByNavId(index: number, item: MenuGroup) {
+    return item?.navitem?.id;
+  }
+
   allow(ni: NavItem): boolean {
     switch (ni.logging_criteria) {
       case NAVITEM_LOGGING_CRITERIA.LOGGED_ONLY:
@@ -515,81 +470,82 @@ export class MenusEditorComponent  {
     // Let CDK animate by rearranging the visible array first
     moveItemInArray(this._visibleNavbarEntries, event.previousIndex, event.currentIndex);
     // Then map the visible array order into the full navbarEntries
-    this.lastDropHandled = true;
-    return this.reorderByVisibleIndices(event.previousIndex, event.currentIndex);
+    return this.reorderByVisibleFinalOrder();
   }
 
-  private async reorderByVisibleIndices(prevVisibleIndex: number, newVisibleIndex: number) {
-    // Work with the visible subset to map visible indices to the full navbarEntries
-    const visible = this.visibleNavbarEntries;
-    const prevVisible = visible[prevVisibleIndex];
-    // currentIndex can be equal to visible.length when dropping at the end
-    const currVisible = newVisibleIndex < visible.length ? visible[newVisibleIndex] : null;
-    if (!prevVisible) {
-      return;
-    }
+  // Robust reorder: build the new full navbarEntries ordering from the current visible order
+  // This avoids fragile index mapping when the visible array was mutated by CDK animations.
+  private async reorderByVisibleFinalOrder() {
+    try {
+      const visibleIds = (this.visibleNavbarEntries || []).map(v => v.navitem.id);
 
-    // Remove from full array
-    const removedIndex = this.navbarEntries.findIndex(e => e.navitem.id === prevVisible.navitem.id);
-    if (removedIndex === -1) {
-      return;
-    }
-    const [moved] = this.navbarEntries.splice(removedIndex, 1);
+      // Build new ordered array: first include visible entries in their current order
+      const idToEntry = new Map(this.navbarEntries.map(e => [e.navitem.id, e] as [string, MenuGroup]));
+      const newOrder: MenuGroup[] = [];
 
-    // Compute insertion index in full array
-    let insertIndex: number;
-    if (currVisible) {
-      insertIndex = this.navbarEntries.findIndex(e => e.navitem.id === currVisible.navitem.id);
-      if (insertIndex === -1) insertIndex = this.navbarEntries.length;
-    } else {
-      insertIndex = this.navbarEntries.length;
-    }
+      visibleIds.forEach(id => {
+        const entry = idToEntry.get(id);
+        if (entry) newOrder.push(entry);
+      });
 
-    this.navbarEntries.splice(insertIndex, 0, moved);
+      // Append any entries that are not visible (e.g. filtered out) preserving their existing order
+      this.navbarEntries.forEach(e => {
+        if (!visibleIds.includes(e.navitem.id)) newOrder.push(e);
+      });
 
-    // Force change detection so the rendered list updates immediately
-    try { this.cdr.detectChanges(); } catch (e) { /* ignore */ }
+      // Replace full list
+      this.navbarEntries = newOrder;
 
-    // Recompute ranks globally (0-based)
-    this.navbarEntries.forEach((entry, idx) => entry.navitem.rank = idx);
+      try { this.cdr.detectChanges(); } catch (e) { /* ignore */ }
 
-    // Persist updated parent ranks
+      // Recompute ranks globally (0-based)
+      this.navbarEntries.forEach((entry, idx) => entry.navitem.rank = idx);
+
+      // Persist updated parent ranks
       try {
-      await Promise.all(this.navbarEntries.map(e => this.navitemService.updateNavItem(e.navitem)));
-      this.toastService.showSuccess('Menus', 'Ordre des menus mis à jour');
-      // Ensure visible cache matches persisted order
-      this.rebuildVisibleNavbarEntries();
-      // Clear any inline transform left by CDK so flexbox can reflow items horizontally
-      try { this.clearCdkTransforms(); } catch (e) { /* ignore */ }
-    } catch (err) {
-      this.toastService.showErrorToast('Menus', 'Échec mise à jour de l\'ordre');
+        await Promise.all(this.navbarEntries.map(e => this.navitemService.updateNavItem(e.navitem)));
+        this.toastService.showSuccess('Menus', 'Ordre des menus mis à jour');
+        // Ensure visible cache matches persisted order
+        this.rebuildVisibleNavbarEntries();
+        // Clear any inline transform left by CDK so flexbox can reflow items horizontally
+        try { this.clearCdkTransforms(); } catch (e) { /* ignore */ }
+      } catch (err) {
+        this.toastService.showErrorToast('Menus', 'Échec mise à jour de l\'ordre');
+        this.reloadNavitems();
+      }
+    } catch (e) {
+      // defensive
       this.reloadNavitems();
     }
   }
+
 
   // Remove inline transform/transition styles CDK may have applied to elements during drag.
   // When a transform remains, flex layout can't reposition items correctly after DOM reorder.
   private clearCdkTransforms() {
     try {
-      const rootEl: HTMLElement | Document = (this.navDropListRef && this.navDropListRef.nativeElement) ? this.navDropListRef.nativeElement as HTMLElement : document;
-      // Reset transforms on draggable elements within scope
+      const rootEl = this.navDropListRef && this.navDropListRef.nativeElement ? this.navDropListRef.nativeElement as HTMLElement : null;
+      if (!rootEl) return;
+
+      // Reset inline transforms/transitions on draggable elements inside the nav drop list
       const draggables = Array.from(rootEl.querySelectorAll('.cdk-drag')) as HTMLElement[];
       draggables.forEach(d => {
         d.style.transform = '';
         d.style.transition = '';
       });
 
-      // Remove any preview/placeholder nodes created by CDK to avoid accumulated positional offsets
-      const previews = Array.from(document.querySelectorAll('.cdk-drag-preview, .cdk-drag-placeholder')) as HTMLElement[];
+      // Clean previews/placeholders only inside the nav drop list (do not touch the whole document)
+      const previews = Array.from(rootEl.querySelectorAll('.cdk-drag-preview, .cdk-drag-placeholder')) as HTMLElement[];
       previews.forEach(p => {
         try {
-          if (p.parentNode) p.parentNode.removeChild(p);
-        } catch (e) {
-          // If removal fails, fallback to clearing inline positioning
+          // Prefer clearing inline styles rather than removing DOM nodes
           p.style.transform = '';
           p.style.left = '';
           p.style.top = '';
           p.style.transition = '';
+          p.style.pointerEvents = 'none';
+        } catch (e) {
+          // ignore
         }
       });
 
@@ -599,160 +555,63 @@ export class MenusEditorComponent  {
     }
   }
 
-  // Debug hooks to inspect CDK drag events
-  // dropListEntered/dropListSorted handlers removed (no longer used)
-
-  onDragStarted(event: CdkDragStart) {
-    try {
-      // Allow CDK to create the preview, then remove any stale previews shortly after
-      // drag started
-      // NOTE: previously we removed stale previews here; disabled to avoid interfering with CDK preview lifecycle
-      const data = event.source?.data as MenuGroup | undefined;
-      if (data) {
-        this.lastDragPrevIndex = this.visibleNavbarEntries.findIndex(v => v.navitem.id === data.navitem.id);
-      } else {
-        this.lastDragPrevIndex = null;
-      }
-      this.lastDropHandled = false;
-    } catch (e) { /* silent */ }
-  }
-
+  // Drag handlers (move/end) — kept minimal
   onDragMoved(event: CdkDragMove) {
     try {
       /* minimal log to avoid spamming */
-      // store last pointer position for use on drag end fallback
-      this.lastPointerPosition = { x: event.pointerPosition.x, y: event.pointerPosition.y };
     } catch (e) { /* silent */ }
-    // Lightweight mitigation: clamp preview translateX if it becomes absurdly large
-    try {
-      const preview = document.querySelector('.cdk-drag-preview') as HTMLElement | null;
-      if (preview) {
-        this.clampPreviewTransform(preview, 0.9);
-      }
-    } catch (err) {
-      /* non-fatal */
-    }
+    // No-op: kept intentionally minimal to avoid interfering with CDK preview lifecycle
   }
 
-  // Clamp the translation components of a transform matrix/matrix3d on the preview element
-  // This preserves scale/rotation while preventing runaway translateX values causing the preview
-  // to appear far off-screen when dragging quickly to the right.
-  private clampPreviewTransform(preview: HTMLElement, maxWindowRatio = 0.9) {
-    try {
-      const cs = getComputedStyle(preview).transform;
-      if (!cs || cs === 'none') return;
-      const maxX = Math.max(200, Math.floor(window.innerWidth * (maxWindowRatio || 0.9)));
 
-      const s = cs.trim();
-      if (s.startsWith('matrix3d(')) {
-        const nums = s.slice(9, -1).split(',').map(n => parseFloat(n.trim()));
-        if (nums.length === 16) {
-          const tx = nums[12] || 0;
-          const ty = nums[13] || 0;
-          const clampedTx = Math.max(-maxX, Math.min(maxX, Math.round(tx)));
-          const clampedTy = Math.max(-9999, Math.min(9999, Math.round(ty)));
-          if (clampedTx !== tx || clampedTy !== ty) {
-            nums[12] = clampedTx;
-            nums[13] = clampedTy;
-            try { preview.style.transform = `matrix3d(${nums.join(',')})`; } catch (e) { /* ignore */ }
-          }
-        }
-      } else if (s.startsWith('matrix(')) {
-        const nums = s.slice(7, -1).split(',').map(n => parseFloat(n.trim()));
-        if (nums.length === 6) {
-          const tx = nums[4] || 0;
-          const ty = nums[5] || 0;
-          const clampedTx = Math.max(-maxX, Math.min(maxX, Math.round(tx)));
-          const clampedTy = Math.max(-9999, Math.min(9999, Math.round(ty)));
-          if (clampedTx !== tx || clampedTy !== ty) {
-            nums[4] = clampedTx;
-            nums[5] = clampedTy;
-            try { preview.style.transform = `matrix(${nums.join(',')})`; } catch (e) { /* ignore */ }
-          }
-        }
-      }
+  // Preview positioning is handled via CSS and `clearCdkTransforms`
+  async onDragEnded(event: CdkDragEnd) {
+    try {
+      // Simplified: rely on CDK drop event handling to persist order.
+      try { this.clearCdkTransforms(); } catch (e) { /* ignore */ }
+    } catch (e) { /* silent */ }
+  }
+
+  // Wrapper invoked from template to timestamp and forward the drop event.
+  // This helps confirm whether the `(cdkDropListDropped)` event reaches the component.
+  onParentDrop(event: CdkDragDrop<MenuGroup[]>) {
+    try {
+      // parent drop forwarded to reorder + persist
+      this.dropParent(event);
     } catch (e) {
       // silent
     }
   }
 
-  async onDragEnded(event: CdkDragEnd) {
+  // Handler for drops inside a parent's child list (sub-menu ordering)
+  async onChildDrop(event: CdkDragDrop<any>, parent: MenuGroup) {
     try {
-      // drag ended
-      // If CDK didn't dispatch a drop (no dropParent), attempt a fallback based on pointer position
-      if (!this.lastDropHandled && this.lastDragPrevIndex != null && this.lastPointerPosition) {
-        const pos = this.lastPointerPosition;
-        // find the target index by scanning children of navDropListRef
-        const listEl = this.navDropListRef?.nativeElement as HTMLElement | undefined;
-        if (listEl) {
-          const items = Array.from(listEl.querySelectorAll(':scope > li')) as HTMLElement[];
-          if (items && items.length > 0) {
-            const draggedId = (event.source && (event.source.data as MenuGroup)?.navitem?.id) ? (event.source.data as MenuGroup).navitem.id : null;
+      if (!event.container || event.previousIndex === event.currentIndex) return;
 
-            // Find candidate anchor element (skip the dragged element itself)
-            let anchorId: string | null = null;
-            let insertionOffset = 0; // 0 => before anchor, 1 => after anchor
+      // Ensure child array exists
+      if (!parent.childs) parent.childs = [];
 
-            for (let i = 0; i < items.length; i++) {
-              const itemEl = items[i];
-              const id = itemEl.getAttribute('data-nav-id');
-              if (!id || id === draggedId) continue; // ignore dragged element
-              const r = itemEl.getBoundingClientRect();
-              const cx = (r.left + r.right) / 2;
-              if (pos.x >= r.left && pos.x <= r.right && pos.y >= r.top && pos.y <= r.bottom) {
-                anchorId = id;
-                insertionOffset = pos.x > cx ? 1 : 0;
-                break;
-              }
-            }
+      // Let CDK animate by rearranging the visible child array first
+      moveItemInArray(parent.childs, event.previousIndex, event.currentIndex);
 
-            if (!anchorId) {
-              // pick nearest by center X (excluding dragged element)
-              let bestId: string | null = null;
-              let bestDist = Infinity;
-              for (let i = 0; i < items.length; i++) {
-                const itemEl = items[i];
-                const id = itemEl.getAttribute('data-nav-id');
-                if (!id || id === draggedId) continue;
-                const r = itemEl.getBoundingClientRect();
-                const cx = (r.left + r.right) / 2;
-                const d = Math.abs(cx - pos.x);
-                if (d < bestDist) { bestDist = d; bestId = id; }
-              }
-              if (bestId) {
-                const anchorEl = items.find(it => it.getAttribute('data-nav-id') === bestId)!;
-                const r = anchorEl.getBoundingClientRect();
-                const cx = (r.left + r.right) / 2;
-                anchorId = bestId;
-                insertionOffset = pos.x > cx ? 1 : 0;
-              }
-            }
+      // Recompute ranks among siblings (0-based)
+      parent.childs.forEach((c, idx) => c.navitem.rank = idx);
 
-            if (anchorId) {
-              // Use movedId and anchorId to reorder the full navbarEntries robustly
-              const movedId = draggedId;
-                if (!movedId) {
-                // no movedId available
-              } else {
-                // Update visible array first for immediate DOM feedback
-                const prev = this.lastDragPrevIndex as number;
-                // compute tentative visible target index for UI move
-                const anchorIndex = this.visibleNavbarEntries.findIndex(v => v.navitem.id === anchorId);
-                let tentativeIndex = anchorIndex + insertionOffset;
-                if (prev < tentativeIndex) tentativeIndex = Math.max(0, tentativeIndex - 1);
-                const newVisibleIndex = Math.max(0, Math.min(this.visibleNavbarEntries.length, tentativeIndex));
-                if (this.lastDragPrevIndex != null) {
-                  moveItemInArray(this._visibleNavbarEntries, this.lastDragPrevIndex, newVisibleIndex);
-                }
-                await this.reorderByMovedId(movedId, anchorId, insertionOffset);
-                this.lastDropHandled = true;
-              }
-            }
-          }
-        }
+      // Persist updated sibling ranks
+      try {
+        await Promise.all(parent.childs.map(c => this.navitemService.updateNavItem(c.navitem)));
+        this.toastService.showSuccess('Menus', 'Ordre des sous-menus mis à jour');
+        // Reload structure to ensure global consistency
+        this.reloadNavitems();
+      } catch (err) {
+        this.toastService.showErrorToast('Menus', "Échec mise à jour de l'ordre des sous-menus");
+        this.reloadNavitems();
       }
-    } catch (e) { /* silent */ }
+    } catch (e) {
+      // non-fatal
+    }
   }
+
 
   private buildPayloadFromForm(): NavItem {
     interface NavItemFormValue {

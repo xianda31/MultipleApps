@@ -64,75 +64,81 @@
             <span class="navbar-toggler-icon"></span>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul #navDropList="cdkDropList" class="navbar-nav nav-drop-list mb-2 mb-lg-0" cdkDropList [cdkDropListData]="visibleNavbarEntries"
-                    [cdkDropListConnectedTo]="[navDropList]" [cdkDropListOrientation]="'horizontal'" (cdkDropListDropped)="dropParent($event)">
-                    <ng-container *ngTemplateOutlet="menuContainer; context: { $implicit: visibleNavbarEntries }"></ng-container>
+                    cdkDropListOrientation="horizontal"
+                    (cdkDropListDropped)="onParentDrop($event)">
+                    @for (menu of visibleNavbarEntries; track menu.navitem.id) {
+                        <ng-container *ngIf="menu.navitem.type === NAVITEM_TYPE.DROPDOWN && (menu.childs?.length || 0) > 0; else simpleItem">
+                            <li class="nav-item dropdown ms-3 d-flex align-items-center" ngbDropdown
+                                cdkDrag [cdkDragData]="menu" [cdkDragDisabled]="false" cdkDragBoundary="#navbarNav"
+                                [attr.data-nav-id]="menu.navitem.id"
+                                (cdkDragMoved)="onDragMoved($event)" (cdkDragEnded)="onDragEnded($event)">
+                            <ng-template cdkDragPreview>
+                                <div class="nav-drag-preview d-inline-flex align-items-center p-2 bg-white border">
+                                    <span class="drag-handle me-1"><i class="bi bi-grip-vertical text-muted"></i></span>
+                                    <span class="drag-label">{{ label_transformer_simulation(menu.navitem) }}</span>
+                                </div>
+                            </ng-template>
+                            <span class="drag-handle me-1" cdkDragHandle><i class="bi bi-grip-vertical text-muted"></i></span>
+                            <a class="nav-link dropdown-toggle" ngbDropdownToggle id="nav-{{ menu.navitem.id }}">
+                                @if(menu.navitem.pre_label === 'avatar') {
+                                <span class="rounded-circle d-inline-flex justify-content-center align-items-center bg-secondary text-white me-1"
+                                    style="width:28px; height:28px; max-width:28px; max-height:28px; font-size:0.75rem; line-height:28px;">JD</span>
+                                }
+                                {{ label_transformer_simulation(menu.navitem) }}
+                            </a>
+                            <ul class="dropdown-menu" ngbDropdownMenu [attr.aria-labelledby]="'nav-' + menu.navitem.id"
+                                cdkDropList [cdkDropListData]="menu.childs"
+                                cdkDropListOrientation="vertical"
+                                (cdkDropListDropped)="onChildDrop($event, menu)">
+                                @for (child of (menu.childs || []); track child.navitem.id) {
+                                    @if ((child.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.ANY)
+                                    || (child.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.LOGGED_ONLY && previewLogged)
+                                    || (child.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.UNLOGGED_ONLY && !previewLogged)) {
+                                        <li class="nav-item ms-3 d-flex align-items-center" cdkDrag [cdkDragData]="child" [cdkDragDisabled]="false" cdkDragBoundary="#navbarNav"
+                                            [attr.data-nav-id]="child.navitem.id"
+                                            (cdkDragMoved)="onDragMoved($event)" (cdkDragEnded)="onDragEnded($event)">
+                                            <ng-template cdkDragPreview>
+                                                <div class="nav-drag-preview d-inline-flex align-items-center p-2 bg-white border">
+                                                    <span class="drag-handle me-1"><i class="bi bi-grip-vertical text-muted"></i></span>
+                                                    <span class="drag-label">{{ label_transformer_simulation(child.navitem) }}</span>
+                                                </div>
+                                            </ng-template>
+                                            <span class="drag-handle me-1" cdkDragHandle><i class="bi bi-grip-vertical text-muted"></i></span>
+                                            <button class="nav-link btn btn-link p-0" type="button" (click)="show_page(child.navitem)">
+                                                <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: child }"></ng-container>
+                                            </button>
+                                        </li>
+                                    }
+                                }
+                            </ul>
+                            </li>
+                        </ng-container>
+                        <ng-template #simpleItem>
+                            <li class="nav-item ms-3 d-flex align-items-center" cdkDrag [cdkDragData]="menu" [cdkDragDisabled]="false" cdkDragBoundary="#navbarNav"
+                                [attr.data-nav-id]="menu.navitem.id"
+                                (cdkDragMoved)="onDragMoved($event)" (cdkDragEnded)="onDragEnded($event)">
+                                <ng-template cdkDragPreview>
+                                    <div class="nav-drag-preview d-inline-flex align-items-center p-2 bg-white border">
+                                        <span class="drag-handle me-1"><i class="bi bi-grip-vertical text-muted"></i></span>
+                                        <span class="drag-label">{{ label_transformer_simulation(menu.navitem) }}</span>
+                                    </div>
+                                </ng-template>
+                                <span class="drag-handle me-1" cdkDragHandle><i class="bi bi-grip-vertical text-muted"></i></span>
+                                <button class="nav-link btn btn-link p-0" type="button" (click)="show_page(menu.navitem)">
+                                    <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
+                                </button>
+                            </li>
+                        </ng-template>
+                    }
                 </ul>
             </div>
+            
 
         </div>
     </nav>
 
-    <ng-template #menuContainer let-menus>
-        @for (menu of menus; track menu.navitem.id) {
-            @if ((menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.ANY)
-            || (menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.LOGGED_ONLY && previewLogged)
-            || (menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.UNLOGGED_ONLY && !previewLogged)) {
-                <ng-container *ngTemplateOutlet="menuGroupRecursive; context: { $implicit: menu, depth: 0 }"></ng-container>
-            }
-        }
-    </ng-template>
 
-    <ng-template #menuGroupRecursive let-menu let-depth="depth">
-        @if (menu.navitem.type === NAVITEM_TYPE.DROPDOWN && (menu.childs?.length || 0) > 0) {
-            <li class="nav-item dropdown ms-3 d-flex align-items-center" ngbDropdown cdkDrag [cdkDragData]="menu" [cdkDragDisabled]="depth !== 0" cdkDragBoundary="#navbarNav"
-                [attr.data-nav-id]="menu.navitem.id"
-                (cdkDragStarted)="onDragStarted($event)" (cdkDragMoved)="onDragMoved($event)" (cdkDragEnded)="onDragEnded($event)">
-                <!-- Custom preview to keep pointer alignment consistent -->
-                <ng-template cdkDragPreview>
-                    <div class="nav-drag-preview d-inline-flex align-items-center p-2 bg-white border">
-                        <span class="drag-handle me-1"><i class="bi bi-grip-vertical text-muted"></i></span>
-                        <span class="drag-label">{{ label_transformer_simulation(menu.navitem) }}</span>
-                    </div>
-                </ng-template>
-                <span class="drag-handle me-1" cdkDragHandle *ngIf="depth === 0"><i class="bi bi-grip-vertical text-muted"></i></span>
-                <a class="nav-link dropdown-toggle" ngbDropdownToggle id="nav-{{ menu.navitem.id }}">
-                    @if(menu.navitem.pre_label === 'avatar') {
-                    <span
-                        class="rounded-circle d-inline-flex justify-content-center align-items-center bg-secondary text-white me-1"
-                        style="width:28px; height:28px; max-width:28px; max-height:28px; font-size:0.75rem; line-height:28px;">
-                        JD
-                    </span>
-                    }
-                    {{ label_transformer_simulation(menu.navitem) }}
-                </a>
-                <ul class="dropdown-menu" ngbDropdownMenu [attr.aria-labelledby]="'nav-' + menu.navitem.id">
-                    @for (child of (menu.childs || []); track child.navitem.id) {
-                        @if ((child.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.ANY)
-                        || (child.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.LOGGED_ONLY && previewLogged)
-                        || (child.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.UNLOGGED_ONLY && !previewLogged)) {
-                            <ng-container *ngTemplateOutlet="menuGroupRecursive; context: { $implicit: child, depth: (depth + 1) }"></ng-container>
-                        }
-                    }
-                </ul>
-            </li>
-        } @else {
-            <li class="nav-item ms-3 d-flex align-items-center" cdkDrag [cdkDragData]="menu" [cdkDragDisabled]="depth !== 0" cdkDragBoundary="#navbarNav"
-                [attr.data-nav-id]="menu.navitem.id"
-                (cdkDragStarted)="onDragStarted($event)" (cdkDragMoved)="onDragMoved($event)" (cdkDragEnded)="onDragEnded($event)">
-                <!-- Custom preview to keep pointer alignment consistent -->
-                <ng-template cdkDragPreview>
-                    <div class="nav-drag-preview d-inline-flex align-items-center p-2 bg-white border">
-                        <span class="drag-handle me-1"><i class="bi bi-grip-vertical text-muted"></i></span>
-                        <span class="drag-label">{{ label_transformer_simulation(menu.navitem) }}</span>
-                    </div>
-                </ng-template>
-                <span class="drag-handle me-1" cdkDragHandle *ngIf="depth === 0"><i class="bi bi-grip-vertical text-muted"></i></span>
-                <button class="nav-link btn btn-link p-0" type="button" (click)="show_page(menu.navitem)">
-                    <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
-                </button>
-            </li>
-        }
-    </ng-template>
+    <!-- Recursive template removed: rendering limited to two levels (top + submenu) -->
 
     <ng-template #menuLabelTemplate let-menu>
         @if(menu.navitem.pre_label === 'avatar') {

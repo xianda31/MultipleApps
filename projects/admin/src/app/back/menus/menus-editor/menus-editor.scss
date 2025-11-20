@@ -1,160 +1,72 @@
 /* Sandbox mode switch styling */
 .sandbox-switch {
-	.form-check-input {
-		width: 2.5rem;
-		height: 1.3rem;
-		cursor: pointer;
-		background-color: #ddd;
-		border: 1px solid #bbb;
-		transition: background-color .25s ease, box-shadow .25s ease;
-	}
-		.form-check-input:checked {
-			background-color: #198754; /* bootstrap success */
-			border-color: #198754;
-			box-shadow: 0 0 0 0.15rem rgba(25,135,84,0.35);
-		}
-	.form-check-label {
-		margin-left: .5rem;
-		font-weight: 500;
-	}
-	.state {
-		margin-left: .4rem;
-		font-size: .75rem;
-		font-weight: 600;
-		opacity: .65;
-		transition: color .2s ease, opacity .2s ease;
-	}
-		.state.on {
-			color: #198754;
-			opacity: 1;
-		}
+  .form-check-input {
+	width: 2.5rem;
+	height: 1.3rem;
+	cursor: pointer;
+	background-color: #ddd;
+	border: 1px solid #bbb;
+	transition: background-color .25s ease, box-shadow .25s ease;
+  }
+  .form-check-input:checked {
+	background-color: #198754;
+	border-color: #198754;
+	box-shadow: 0 0 0 0.15rem rgba(25,135,84,0.35);
+  }
+  .form-check-label { margin-left: .5rem; font-weight: 500; }
+  .state { margin-left: .4rem; font-size: .75rem; font-weight: 600; opacity: .65; transition: color .2s ease, opacity .2s ease; }
+  .state.on { color: #198754; opacity: 1; }
 }
+
 /* Drag & Drop visual helpers */
-.dropdown-menu[cdkDropList] {
-	min-width: 14rem;
-	padding: .25rem 0;
-}
+.dropdown-menu[cdkDropList] { min-width: 14rem; padding: .25rem 0; }
 
-.dropdown-item.cdk-drag-preview {
-	box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
-	background: #fff;
-	border: 1px solid #e1e1e1;
-}
+.dropdown-item.cdk-drag-preview { box-shadow: 0 .5rem 1rem rgba(0,0,0,.15); background: #fff; border: 1px solid #e1e1e1; }
+.dropdown-item.cdk-drag-animating { transition: transform 200ms ease; }
+.dropdown-menu[cdkDropList] .dropdown-item + .dropdown-item { border-top: 1px dashed #f1f1f1; }
 
-/* Generic placeholder hidden by default, then overridden per-container below */
+i.bi-grip-vertical { cursor: grab; }
+i.bi-grip-vertical:active { cursor: grabbing; }
+
+.drag-handle { display: inline-flex; align-items: center; user-select: none; }
+
+/* Generic placeholder hidden by default; specific containers override opacity and sizing */
 .cdk-drag-placeholder { opacity: 0; }
-
-.dropdown-item.cdk-drag-animating {
-	transition: transform 200ms ease;
-}
-
-.dropdown-menu[cdkDropList] .dropdown-item + .dropdown-item {
-	border-top: 1px dashed #f1f1f1;
-}
-
-i.bi-grip-vertical {
-	cursor: grab;
-}
-
-i.bi-grip-vertical:active {
-	cursor: grabbing;
-}
-
-/* Parent drag handle & preview styling */
-.drag-handle {
-	display: inline-flex;
-	align-items: center;
-	user-select: none;
-}
-
-.navbar-nav[cdkDropList] .cdk-drag-preview {
-	padding: .25rem .5rem;
-	background: #fff;
-	border: 1px solid #e1e1e1;
-	border-radius: .25rem;
-	box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
-}
 
 /* Parent navbar placeholder: thin vertical indicator at drop position */
 .navbar-nav[cdkDropList] .cdk-drag-placeholder {
-	opacity: 1;
-	width: 6px;
-	min-width: 6px;
-	height: 1.5rem;
-	align-self: center;
-	background: rgba(13,110,253,.4); /* bootstrap primary */
-	border-radius: 3px;
+  opacity: 1; width: 6px; min-width: 6px; height: 1.5rem; align-self: center;
+  background: rgba(13,110,253,.4); border-radius: 3px;
 }
 
 /* Child dropdown placeholder: thin horizontal spacer */
 .dropdown-menu[cdkDropList] .cdk-drag-placeholder {
-	opacity: 1;
-	height: 6px;
-	margin: 2px 8px;
-	background: rgba(25,135,84,.35); /* bootstrap success */
-	border-radius: 3px;
+  opacity: 1; height: 6px; margin: 2px 8px; background: rgba(25,135,84,.35); border-radius: 3px;
 }
-
-// /* Prevent preview column content from overflowing onto the left at narrower widths */
-// .preview-wrap {
-// 	overflow-x: auto;
-// }
 
 /* Ensure the navbar drop-list only covers the actual menu items */
-.nav-drop-list {
-	display: flex; /* use flex so items reflow horizontally based on width */
-	flex-wrap: nowrap;
-	align-items: center;
-	gap: 0.5rem;
-	padding-left: 0; /* reset bootstrap padding if any */
-	justify-content: flex-start;
-}
-
-.nav-drop-list > li {
-	display: flex; /* ensure children are laid out inline-flex-wise */
-	align-items: center;
-	white-space: nowrap;
-}
+.nav-drop-list { display: flex; flex-wrap: nowrap; align-items: center; gap: 0.5rem; padding-left: 0; justify-content: flex-start; }
+.nav-drop-list > li { display: flex; align-items: center; white-space: nowrap; }
 
 /* Ensure the navbar collapse container is positioned so CDK boundary calculations work */
-#navbarNav {
-	position: relative;
-	overflow: visible; /* allow preview to overflow when needed */
-}
+#navbarNav { position: relative; overflow: visible; }
 
-/* Slightly constrain preview to avoid it jumping far to the right */
-.navbar-nav .cdk-drag-preview {
-	max-width: 320px;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-/* Ensure preview origin is left so pointer remains aligned with grab handle */
-.navbar-nav .cdk-drag-preview {
-	transform-origin: left center !important;
-	cursor: grabbing !important;
-	pointer-events: none;
-}
-
-/* No forced fixed positioning: allow CDK to position the preview to avoid coordinate conflicts */
+/* Consolidated preview rules: non-interactive, constrained size and placed above content */
 .cdk-drag-preview {
-	will-change: transform;
-}
-
-/* Force navbar previews to use fixed positioning and reset offsets to avoid incremental Y offsets */
-#navbarNav .cdk-drag-preview,
-.navbar-nav .cdk-drag-preview {
-	position: fixed !important;
-	margin: 0 !important;
-	top: 0 !important;
-	left: 0 !important;
-	/* keep existing visual rules */
-	max-width: 320px;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	transform-origin: left center !important;
-	pointer-events: none;
-	will-change: transform;
+  pointer-events: none;
+  position: fixed !important;
+  margin: 0 !important;
+  top: 0 !important;
+  left: 0 !important;
+  max-width: 320px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transform-origin: left center !important;
+  box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
+  background: #fff;
+  border: 1px solid #e1e1e1;
+  border-radius: .25rem;
+  z-index: 2000;
+  will-change: transform;
 }
