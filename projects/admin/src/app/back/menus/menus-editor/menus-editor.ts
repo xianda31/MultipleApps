@@ -233,6 +233,12 @@ export class MenusEditorComponent implements AfterViewInit {
       payload.external_url = this.navItemForm.get('external_url')?.value || '';
     }
 
+    // Guard: prevent second-level items from being DROPDOWN (no dropdowns inside dropdowns)
+    if (payload.parent_id && payload.type === NAVITEM_TYPE.DROPDOWN) {
+      this.toastService.showErrorToast('Menus', 'Un sous-menu ne peut pas être de type DROPDOWN.');
+      return;
+    }
+
     // Enforce unique path only for items that produce routes
     const routeTypes = new Set([NAVITEM_TYPE.INTERNAL_LINK, NAVITEM_TYPE.PLUGIN, NAVITEM_TYPE.CUSTOM_PAGE]);
     if (routeTypes.has(payload.type)) {

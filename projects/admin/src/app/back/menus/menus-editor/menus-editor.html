@@ -257,8 +257,14 @@
                     <div class="col-6">
                         <label class="form-label">Type</label>
                         <select class="form-select" formControlName="type">
-                            @for (t of NAVITEM_TYPES; track t) {<option [ngValue]="t">{{ t }}</option>}
+                            @for (t of NAVITEM_TYPES; track t) {
+                                <option [ngValue]="t"
+                                    [disabled]="(navItemForm.get('parent_id')?.value != null) && (t === NAVITEM_TYPE.DROPDOWN)">{{ t }}</option>
+                            }
                         </select>
+                        <div class="form-text" *ngIf="navItemForm.get('parent_id')?.value">
+                            Les sous-menus ne peuvent pas être de type <strong>DROPDOWN</strong>.
+                        </div>
                     </div>
                     <div class="col-6">
                         <label class="form-label">Parent (Dropdown)</label>
