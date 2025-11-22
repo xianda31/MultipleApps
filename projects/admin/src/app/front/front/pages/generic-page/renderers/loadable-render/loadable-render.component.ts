@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Snippet } from '../../../../../../common/interfaces/page_snippet.interface';
+import { BreakpointsSettings } from '../../../../../../common/interfaces/system-conf.interface';
 import { ToastService } from '../../../../../../common/services/toast.service';
 import { FileService } from '../../../../../../common/services/files.service';
 
@@ -13,6 +14,7 @@ import { FileService } from '../../../../../../common/services/files.service';
 })
 export class LoadableRenderComponent {
   @Input() snippets: Snippet[] = [];
+  @Input() row_cols: BreakpointsSettings = { SM: 1, MD: 2, LG: 3, XL: 4 };
 
   constructor(
     private fileService: FileService,

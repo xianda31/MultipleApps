@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgIf } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Group_names, Group_priorities } from '../../common/authentification/group.interface';
@@ -18,7 +18,7 @@ import { MemberSettingsService } from '../../common/services/member-settings.ser
 @Component({
   selector: 'app-back-navbar',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, ReactiveFormsModule, NgbDropdownModule,NgbCollapseModule],
+  imports: [CommonModule, NgIf, RouterLink, FormsModule, ReactiveFormsModule, NgbDropdownModule, NgbCollapseModule],
   templateUrl: './back-navbar.component.html',
   styleUrl: './back-navbar.component.scss'
 })

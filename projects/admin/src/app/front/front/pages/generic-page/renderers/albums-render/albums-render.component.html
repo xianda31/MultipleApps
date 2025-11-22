@@ -1,3 +1,7 @@
-  @for (snippet of snippets; track snippet.id) {
-    <app-album [album]="snippet"></app-album>
-  }
+  <div [ngClass]="rowCols()">
+    @for (snippet of snippets; track snippet.id) {
+      <div class="col">
+        <app-album [album]="snippet"></app-album>
+      </div>
+    }
+  </div>

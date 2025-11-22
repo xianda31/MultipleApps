@@ -2,6 +2,8 @@ import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Snippet } from '../../../../../../common/interfaces/page_snippet.interface';
 import { DomSanitizer } from '@angular/platform-browser';
+import { formatRowColsClasses } from '../../../../../../common/utils/ui-utils';
+import { BreakpointsSettings } from '../../../../../../common/interfaces/system-conf.interface';
 
 @Component({
   selector: 'app-cards-img-bottom-render',
@@ -12,6 +14,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 })
 export class CardsImgBottomRenderComponent {
   @Input() snippets: Snippet[] = [];
+  @Input() row_cols: BreakpointsSettings = { SM: 1, MD: 2, LG: 3, XL: 4 };
 
   constructor(private sanitizer: DomSanitizer) { }
 
@@ -22,5 +25,9 @@ export class CardsImgBottomRenderComponent {
     stringToSafeHtml(htmlString: string) {
     return this.sanitizer.bypassSecurityTrustHtml(htmlString) ;
   }
+
+    rowCols(): string[] {
+      return formatRowColsClasses(this.row_cols);
+    }
 
 }

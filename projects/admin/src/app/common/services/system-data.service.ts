@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
-import { SystemConfiguration } from '../interfaces/system-conf.interface';
-import { BehaviorSubject, from, Observable, switchMap, tap } from 'rxjs';
+import { SystemConfiguration, UIConfiguration } from '../interfaces/system-conf.interface';
+import { BehaviorSubject, from, Observable, switchMap, tap, catchError, of } from 'rxjs';
 import { FileService } from './files.service';
+import { ToastService } from './toast.service';
+import { normalizeBreakpoints } from '../utils/ui-utils';
 
 
 
@@ -11,9 +13,12 @@ import { FileService } from './files.service';
 export class SystemDataService {
   private _system_configuration !: SystemConfiguration;
   private _system_configuration$: BehaviorSubject<SystemConfiguration> = new BehaviorSubject(this._system_configuration);
+  // Separate UI settings cache and observable (stored in its own file)
+  private _ui_settings: UIConfiguration | undefined;
+  private _ui_settings$: BehaviorSubject<UIConfiguration | undefined> = new BehaviorSubject<UIConfiguration | undefined>(undefined);
   constructor(
     private fileService: FileService,
-
+    private toastService: ToastService
   ) { }
 
   // S3 download / upload
@@ -30,18 +35,147 @@ export class SystemDataService {
       switchMap(() => this._system_configuration$.asObservable())
     );
     
-    if(this._system_configuration !== undefined) {
-      // if (this.trace_on()) console.log(' configuration from cache', this._system_configuration);
-      return this._system_configuration$.asObservable();
-    }else {
+      // Remove legacy `tournaments` block if present to avoid writing old fields
+      try {
+        if ((this._ui_settings as any).tournaments) {
+          delete (this._ui_settings as any).tournaments;
+        }
+        // Also remove any lingering cardPerRow* top-level keys
+        const possibleLegacy = ['cardPerRowSm', 'cardPerRowMd', 'cardPerRowLg', 'cardPerRowXl'];
+        for (const k of possibleLegacy) {
+          if ((this._ui_settings as any)[k] !== undefined) delete (this._ui_settings as any)[k];
+        }
+      } catch (e) { /* ignore */ }
+
+      this.fileService.upload_to_S3(this._ui_settings, 'system/', 'ui_settings.txt').then(() => {
+      }).catch((err) => {
+        console.warn('save_ui_settings: upload error', err);
+      });
       return remote_load$;
     }
+
+  /**
+   * UI settings live methods: kept in a separate file `system/ui_settings.txt`.
+   */
+  get_ui_settings(): Observable<UIConfiguration> {
+    const defaults: UIConfiguration = {
+      template: { logo_path: '', background_color: '#ffffff' },
+      tournaments_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 },
+      news_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 },
+      homepage: { tournamentsEnabled: true, newsEnabled: true },
+      frontBannerEnabled: false,
+      homepage_intro: ''
+    };
+
+    const remote_load$ = from(this.fileService.download_json_file('system/ui_settings.txt')).pipe(
+      tap((conf) => {
+        // Simple load: expect `ui_settings.txt` to conform to `UIConfiguration`.
+        this._ui_settings = conf;
+        this._ui_settings$.next(this._ui_settings);
+      }),
+      catchError((err) => {
+        // If the file does not exist or can't be read, initialize with defaults and warn the user.
+        this._ui_settings = defaults;
+        try { this._ui_settings$.next(this._ui_settings); } catch (e) { /* ignore */ }
+        try { this.toastService.showWarning('UI settings', 'Fichier ui_settings manquant — paramètres initialisés par défaut'); } catch (e) { /* ignore */ }
+        return of(this._ui_settings);
+      }),
+      switchMap(() => this._ui_settings$.asObservable())
+    );
+
+    if (this._ui_settings !== undefined) {
+      // cast is safe: observable may emit undefined initially but callers expect UIConfiguration; ensure subscribers handle undefined if needed
+      return this._ui_settings$.asObservable() as Observable<UIConfiguration>;
+    } else {
+      return remote_load$ as Observable<UIConfiguration>;
+    }
+  }
+
+  /**
+   * Force a remote download of `system/ui_settings.txt` and update cache.
+   * Useful to surface missing-file warnings immediately.
+   */
+  fetch_ui_settings(): Observable<UIConfiguration> {
+    const remote$ = from(this.fileService.download_json_file('system/ui_settings.txt')).pipe(
+      tap((conf) => {
+        this._ui_settings = conf;
+        try { this._ui_settings$.next(this._ui_settings); } catch (e) { /* ignore */ }
+      }),
+      catchError((err) => {
+        const defaults: UIConfiguration = {
+          template: { logo_path: '', background_color: '#ffffff' },
+          tournaments_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 },
+          news_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 },
+          homepage: { tournamentsEnabled: true, newsEnabled: true },
+          frontBannerEnabled: false,
+          homepage_intro: ''
+        };
+        this._ui_settings = defaults;
+        try { this._ui_settings$.next(this._ui_settings); } catch (e) { /* ignore */ }
+        try { this.toastService.showWarning('UI settings', 'Fichier ui_settings manquant — paramètres initialisés par défaut'); } catch (e) { /* ignore */ }
+        return of(this._ui_settings as UIConfiguration);
+      }),
+      switchMap(() => this._ui_settings$.asObservable())
+    );
+    return remote$ as Observable<UIConfiguration>;
+  }
+  async save_ui_settings(ui: UIConfiguration) {
+    // Merge incoming settings with current cache (shallow) and normalize breakpoints
+    const existing = this._ui_settings || ({} as UIConfiguration);
+    const merged: UIConfiguration = { ...(existing as any), ...(ui as any) } as UIConfiguration;
+    merged.tournaments_row_cols = normalizeBreakpoints((merged as any).tournaments_row_cols) as any;
+    // Also normalize news row cols when present
+    (merged as any).news_row_cols = normalizeBreakpoints((merged as any).news_row_cols) as any;
+
+    this._ui_settings = merged;
+    try { this._ui_settings$.next(this._ui_settings); } catch (e) { /* ignore */ }
+
+    // Persist to S3 in background (log errors)
+    this.fileService.upload_to_S3(this._ui_settings, 'system/', 'ui_settings.txt').catch((err) => {
+      console.warn('save_ui_settings: upload error', err);
+    });
   }
 
 
   async save_configuration(conf: SystemConfiguration) {
-    this.fileService.upload_to_S3(conf, 'system/', 'system_configuration.txt').then((data) => {
-    });
+    // Update local cache and notify subscribers immediately so UI can react without waiting for S3 upload
+    try {
+      this._system_configuration = conf;
+      try { this._system_configuration$.next(this._system_configuration); } catch (e) { /* ignore */ }
+    } catch (e) { /* ignore */ }
+    // Persist to S3 in background. Ensure UI settings are NOT embedded into the system configuration file.
+    try {
+      const toUpload: any = { ...(conf as any) };
+      if (toUpload.ui_settings !== undefined) delete toUpload.ui_settings;
+      this.fileService.upload_to_S3(toUpload, 'system/', 'system_configuration.txt').then(() => {
+      }).catch((err) => {
+        console.warn('save_configuration: upload error', err);
+      });
+    } catch (e) {
+      console.warn('save_configuration: unable to prepare payload', e);
+    }
+  }
+
+  /**
+   * Merge and publish UI settings locally without persisting immediately.
+   * This allows live preview in the front-end while the admin edits settings.
+   */
+  patchUiSettings(ui: Partial<UIConfiguration>) {
+    try {
+      if (this._ui_settings === undefined || this._ui_settings === null) this._ui_settings = {} as UIConfiguration;
+      // Merge and normalize breakpoints when present
+      const mergedRaw = { ...(this._ui_settings || {}), ...(ui || {}) } as any;
+      if ((ui as any)?.tournaments_row_cols) {
+        mergedRaw.tournaments_row_cols = normalizeBreakpoints((ui as any).tournaments_row_cols);
+      }
+      if ((ui as any)?.news_row_cols) {
+        mergedRaw.news_row_cols = normalizeBreakpoints((ui as any).news_row_cols);
+      }
+      this._ui_settings = mergedRaw as UIConfiguration;
+      try { this._ui_settings$.next(this._ui_settings); } catch (e) { /* ignore */ }
+    } catch (e) {
+      // ignore
+    }
   }
 
   async change_to_new_season(season: string) {

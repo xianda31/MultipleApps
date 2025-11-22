@@ -2,6 +2,7 @@ import { ChangeDetectorRef, Component, ElementRef, Input, QueryList, ViewChildre
 import { CommonModule } from '@angular/common';
 import { Snippet } from '../../../../../../common/interfaces/page_snippet.interface';
 import { DomSanitizer } from '@angular/platform-browser';
+import { BreakpointsSettings } from '../../../../../../common/interfaces/system-conf.interface';
 
 @Component({
   selector: 'app-publication-render',
@@ -13,6 +14,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 export class PublicationRenderComponent implements AfterViewInit, AfterViewChecked, OnChanges {
   @Input() snippets: Snippet[] = [];
   @Input() scroll_to_snippet?: Snippet;
+  @Input() row_cols: BreakpointsSettings = { SM: 1, MD: 2, LG: 3, XL: 4 };
   @ViewChildren('textRef') textRefs!: QueryList<ElementRef>;
   textHeights: { [id: string]: number } = {};
   private pendingScrollId?: string;

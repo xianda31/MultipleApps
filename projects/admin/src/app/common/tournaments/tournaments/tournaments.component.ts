@@ -5,6 +5,8 @@ import { TournamentService } from '../../services/tournament.service';
 import { TournamentTeams } from '../../ffb/interface/tournament_teams.interface';
 import { AuthentificationService } from '../../authentification/authentification.service';
 import { TitleService } from '../../../front/title/title.service';
+import { BreakpointsSettings } from '../../interfaces/system-conf.interface';
+import { formatRowColsClasses } from '../../utils/ui-utils';
 
 @Component({
   selector: 'app-tournaments',
@@ -15,6 +17,9 @@ import { TitleService } from '../../../front/title/title.service';
 })
 export class TournamentsComponent {
   @Input() displayTitle: boolean = true;
+  @Input() row_cols: BreakpointsSettings = { SM: 1, MD: 2, LG: 3, XL: 4 }; 
+
+  
   next_tournament_teams: TournamentTeams[] = [];
 
   license_nbr = 0; // License number of the logged member
@@ -28,6 +33,8 @@ export class TournamentsComponent {
     private titleService: TitleService
 
   ) { }
+
+
 
   ngOnInit(): void {
 
@@ -81,6 +88,11 @@ export class TournamentsComponent {
   selectTournament(tournamentId: number) {
     this.router.navigate(['/front/tournaments', tournamentId],
       { relativeTo: this.route });
+  }
+
+  // Compute bootstrap row classes from the `row_cols` input (breakpoints settings).
+  rowCols(): string[] {
+    return formatRowColsClasses(this.row_cols);
   }
 
 }

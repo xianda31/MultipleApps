@@ -1,34 +1,34 @@
 @if (pageTemplate) {
   <div class="  justify-content-center">
     @if (pageTemplate === PAGE_TEMPLATES.SEQUENTIAL) {
-      <app-sequential-render [snippets]="page_snippets"></app-sequential-render>
+      <app-sequential-render [snippets]="page_snippets" [row_cols]="row_cols"></app-sequential-render>
     }
     @if (pageTemplate === PAGE_TEMPLATES.PUBLICATION) {
-      <app-publication-render [snippets]="page_snippets" [scroll_to_snippet]="scroll_to_snippet"></app-publication-render>
+      <app-publication-render [snippets]="page_snippets" [scroll_to_snippet]="scroll_to_snippet" [row_cols]="row_cols"></app-publication-render>
     }
     @if (pageTemplate === PAGE_TEMPLATES.A_LA_UNE) {
-      <app-a-la-une-render [snippets]="page_snippets" [selected_title]="snippet_title"></app-a-la-une-render>
+      <app-a-la-une-render [snippets]="page_snippets" [selected_title]="snippet_title" [row_cols]="row_cols"></app-a-la-une-render>
     }
     @if (pageTemplate === PAGE_TEMPLATES.LOADABLE) {
-      <app-loadable-render [snippets]="page_snippets"></app-loadable-render>
+      <app-loadable-render [snippets]="page_snippets" [row_cols]="row_cols"></app-loadable-render>
     }
     @if (pageTemplate === PAGE_TEMPLATES.TROMBINOSCOPE) {
-      <app-trombinoscope-render [snippets]="page_snippets"></app-trombinoscope-render>
+      <app-trombinoscope-render [snippets]="page_snippets" [row_cols]="row_cols"></app-trombinoscope-render>
     }
     @if (pageTemplate === PAGE_TEMPLATES.CARDS_top) {
-      <app-cards-img-top-render [snippets]="page_snippets"></app-cards-img-top-render>
+      <app-cards-img-top-render [snippets]="page_snippets" [row_cols]="row_cols"></app-cards-img-top-render>
     }
     @if (pageTemplate === PAGE_TEMPLATES.CARDS_top_left) {
-      <app-cards-img-top-left-render [snippets]="page_snippets"></app-cards-img-top-left-render>
+      <app-cards-img-top-left-render [snippets]="page_snippets" [row_cols]="row_cols"></app-cards-img-top-left-render>
     }
     @if (pageTemplate === PAGE_TEMPLATES.CARDS_bottom) {
-      <app-cards-img-bottom-render [snippets]="page_snippets"></app-cards-img-bottom-render>
+      <app-cards-img-bottom-render [snippets]="page_snippets" [row_cols]="row_cols"></app-cards-img-bottom-render>
     }
     @if (pageTemplate === PAGE_TEMPLATES.ALBUMS) {
-      <app-albums-render [snippets]="page_snippets"></app-albums-render>
+      <app-albums-render [snippets]="page_snippets" [row_cols]="row_cols"></app-albums-render>
     }
     @if (pageTemplate === PAGE_TEMPLATES.FLIPPER) {
-      <app-flipper-render [snippets]="page_snippets"></app-flipper-render>
+      <app-flipper-render [snippets]="page_snippets" [row_cols]="row_cols"></app-flipper-render>
     }
     <!-- gestion du template inconnu -->
     @if (!isKnownTemplate(pageTemplate)) {

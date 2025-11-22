@@ -1,0 +1,125 @@
+<div class="container ui-conf-root">
+  <h5>Paramètres UI (Accueil)</h5>
+
+  <form [formGroup]="uiForm" (ngSubmit)="saveSettings()" class="row g-3">
+    <div class="col-12">
+      <h6>Template</h6>
+    </div>
+    <div class="col-6 col-md-3" formGroupName="template">
+      <label class="form-label">Logo (haut-gauche)</label>
+      <div class="d-flex align-items-center gap-2">
+        <input type="file" accept="image/*" class="form-control form-control-sm w-auto" (change)="onLogoFileSelected($event)" />
+        <input type="text" class="form-control form-control-sm" formControlName="logo_path" placeholder="S3 path" />
+      </div>
+      <div *ngIf="logoPreviewUrl" class="mt-2"><img [src]="logoPreviewUrl" alt="logo preview" style="max-height:48px; max-width:160px;" /></div>
+    </div>
+    <div class="col-6 col-md-3" formGroupName="template">
+      <label class="form-label">Couleur fond</label>
+      <input type="color" class="form-control form-control-color" formControlName="background_color" />
+    </div>
+
+    <h6>Colonne tournois</h6>
+    <div formGroupName="tournaments_row_cols" class="w-100">
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="form-label">Nombre de tournois affichés par ligne</label>
+          <div class="input-group input-group-sm">
+            <span class="input-group-text">SM</span>
+            <input type="number" class="form-control text-center" formControlName="SM" min="1" max="6" style="max-width:3rem;" />
+            <span class="input-group-text">MD</span>
+            <input type="number" class="form-control text-center" formControlName="MD" min="1" max="6" style="max-width:3rem;" />
+            <span class="input-group-text">LG</span>
+            <input type="number" class="form-control text-center" formControlName="LG" min="1" max="6" style="max-width:3rem;" />
+            <span class="input-group-text">XL</span>
+            <input type="number" class="form-control text-center" formControlName="XL" min="1" max="6" style="max-width:3rem;" />
+          </div>
+          <div class="mt-1 d-flex gap-3 small text-danger">
+            <span *ngIf="uiForm.get('tournaments_row_cols.SM')?.invalid && (uiForm.get('tournaments_row_cols.SM')?.touched || uiForm.get('tournaments_row_cols.SM')?.dirty)">
+              SM: valeur entre 1 et 6
+            </span>
+            <span *ngIf="uiForm.get('tournaments_row_cols.MD')?.invalid && (uiForm.get('tournaments_row_cols.MD')?.touched || uiForm.get('tournaments_row_cols.MD')?.dirty)">
+              MD: valeur entre 1 et 6
+            </span>
+            <span *ngIf="uiForm.get('tournaments_row_cols.LG')?.invalid && (uiForm.get('tournaments_row_cols.LG')?.touched || uiForm.get('tournaments_row_cols.LG')?.dirty)">
+              LG: valeur entre 1 et 6
+            </span>
+            <span *ngIf="uiForm.get('tournaments_row_cols.XL')?.invalid && (uiForm.get('tournaments_row_cols.XL')?.touched || uiForm.get('tournaments_row_cols.XL')?.dirty)">
+              XL: valeur entre 1 et 6
+            </span>
+          </div>
+          <div class="mt-1 small text-danger" *ngIf="uiForm.get('tournaments_row_cols')?.hasError('breakpointsOrder')">
+            Les valeurs doivent être croissantes : SM ≤ MD ≤ LG ≤ XL
+          </div>
+        </div>
+      </div>
+    </div>
+    <h6>Colonne news</h6>
+    <div formGroupName="news_row_cols" class="w-100">
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="form-label">Nombre de news affichées par ligne</label>
+          <div class="input-group input-group-sm">
+            <span class="input-group-text">SM</span>
+            <input type="number" class="form-control text-center" formControlName="SM" min="1" max="6" style="max-width:3rem;" />
+            <span class="input-group-text">MD</span>
+            <input type="number" class="form-control text-center" formControlName="MD" min="1" max="6" style="max-width:3rem;" />
+            <span class="input-group-text">LG</span>
+            <input type="number" class="form-control text-center" formControlName="LG" min="1" max="6" style="max-width:3rem;" />
+            <span class="input-group-text">XL</span>
+            <input type="number" class="form-control text-center" formControlName="XL" min="1" max="6" style="max-width:3rem;" />
+          </div>
+          <div class="mt-1 d-flex gap-3 small text-danger">
+            <span *ngIf="uiForm.get('news_row_cols.SM')?.invalid && (uiForm.get('news_row_cols.SM')?.touched || uiForm.get('news_row_cols.SM')?.dirty)">
+              SM: valeur entre 1 et 6
+            </span>
+            <span *ngIf="uiForm.get('news_row_cols.MD')?.invalid && (uiForm.get('news_row_cols.MD')?.touched || uiForm.get('news_row_cols.MD')?.dirty)">
+              MD: valeur entre 1 et 6
+            </span>
+            <span *ngIf="uiForm.get('news_row_cols.LG')?.invalid && (uiForm.get('news_row_cols.LG')?.touched || uiForm.get('news_row_cols.LG')?.dirty)">
+              LG: valeur entre 1 et 6
+            </span>
+            <span *ngIf="uiForm.get('news_row_cols.XL')?.invalid && (uiForm.get('news_row_cols.XL')?.touched || uiForm.get('news_row_cols.XL')?.dirty)">
+              XL: valeur entre 1 et 6
+            </span>
+          </div>
+          <div class="mt-1 small text-danger" *ngIf="uiForm.get('news_row_cols')?.hasError('breakpointsOrder')">
+            Les valeurs doivent être croissantes : SM ≤ MD ≤ LG ≤ XL
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+
+    <div class="col-12 mt-3">
+      <h6>Page d'accueil</h6>
+    </div>
+    <div formGroupName="homepage" class="col-12 col-md-6">
+      <label class="form-label">Afficher section Tournois</label>
+      <select class="form-select" formControlName="tournamentsEnabled">
+        <option [ngValue]="true">Oui</option>
+        <option [ngValue]="false">Non</option>
+      </select>
+    </div>
+    <div formGroupName="homepage" class="col-12 col-md-6">
+      <label class="form-label">Afficher section News</label>
+      <select class="form-select" formControlName="newsEnabled">
+        <option [ngValue]="true">Oui</option>
+        <option [ngValue]="false">Non</option>
+      </select>
+    </div>
+
+    <div class="col-12 mt-2">
+      <label class="form-label">Texte introduction page d'accueil</label>
+      <textarea class="form-control" rows="3" formControlName="homepage_intro"></textarea>
+    </div>
+
+    <div class="col-12 d-flex gap-2 justify-content-end mt-2">
+      <input type="file" accept="application/json" (change)="onImportFile($event)" class="form-control form-control-sm w-auto" />
+      <a [href]="export_file_url" download="ui_settings.json" class="btn btn-outline-secondary btn-sm">Exporter</a>
+      <small class="text-muted align-self-center ms-2">(exporte l'état chargé / aperçu / enregistré)</small>
+      <button type="button" class="btn btn-secondary btn-sm" (click)="previewSettings()" [disabled]="uiForm.get('tournaments_row_cols')?.invalid">Aperçu</button>
+      <button type="submit" class="btn btn-primary btn-sm" [disabled]="uiForm.invalid || uiForm.get('tournaments_row_cols')?.invalid">Enregistrer</button>
+    </div>
+  </form>
+</div>

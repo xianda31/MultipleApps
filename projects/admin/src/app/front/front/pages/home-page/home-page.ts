@@ -6,13 +6,13 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { EXTRA_TITLES, MENU_TITLES } from '../../../../common/interfaces/page_snippet.interface';
 import { MembersService } from '../../../../common/services/members.service';
 import { SystemDataService } from '../../../../common/services/system-data.service';
+import { BreakpointsSettings, UIConfiguration } from '../../../../common/interfaces/system-conf.interface';
 import { combineLatest, map, Observable, switchMap, tap, interval, Subscription } from 'rxjs';
 import { Member } from '../../../../common/interfaces/member.interface';
 import { AuthentificationService } from '../../../../common/authentification/authentification.service';
 import { CommonModule } from '@angular/common';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { FileService, S3_ROOT_FOLDERS } from '../../../../common/services/files.service';
-import { S3Item } from '../../../../common/interfaces/file.interface';
+import { FileService } from '../../../../common/services/files.service';
 
 @Component({
   selector: 'app-home-page',
@@ -39,6 +39,13 @@ export class HomePage {
   private rotationSub?: Subscription;
   transitioning = false; // legacy flag (unused in sequential fade)
   opacity = 1;           // controls sequential fade opacity
+  // UI settings read from SystemDataService
+  homepage_tournaments_enabled: boolean = true;
+  homepage_news_enabled: boolean = true;
+  homepage_intro_text: string = '';
+  tournaments_row_cols: BreakpointsSettings = { SM: 1, MD: 2, LG: 3, XL: 4 };
+  news_row_cols: BreakpointsSettings = { SM: 1, MD: 2, LG: 3, XL: 2 };
+  logoPreview: string | null = null;
 
   constructor(
     private titleService: TitleService,
@@ -104,6 +111,22 @@ export class HomePage {
           this.opacity = 1;
         });
       }, this.FADE_OUT_MS);
+    });
+
+    // Read UI settings from dedicated UI settings file to control homepage and layout
+    this.systemDataService.get_ui_settings().subscribe((ui: UIConfiguration) => {
+      const conf: UIConfiguration = ui || {} as UIConfiguration;
+      const homepage = conf?.homepage || {};
+
+      this.tournaments_row_cols = conf.tournaments_row_cols ;
+      this.news_row_cols = conf.news_row_cols ;
+
+
+      this.homepage_tournaments_enabled = (homepage.tournamentsEnabled !== undefined) ? homepage.tournamentsEnabled : true;
+      this.homepage_news_enabled = (homepage.newsEnabled !== undefined) ? homepage.newsEnabled : true;
+      this.homepage_intro_text = (conf && conf.homepage_intro) ? conf.homepage_intro : '';
+      const logoPath = conf?.template?.logo_path;
+      if (logoPath) this.fileService.getPresignedUrl$(logoPath).subscribe({ next: (u) => this.logoPreview = u, error: () => this.logoPreview = null });
     });
   }
 

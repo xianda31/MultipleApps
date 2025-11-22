@@ -29,6 +29,7 @@ export const BACK_ROUTE_PATHS = {
   FilemgrWindows: 'site/disk/:root_folder',
   PagesEditor: 'site/pages',
   MenusEditor: 'site/menus',
+  UiConf: 'site/ui',
   Home: 'home',
 };
 

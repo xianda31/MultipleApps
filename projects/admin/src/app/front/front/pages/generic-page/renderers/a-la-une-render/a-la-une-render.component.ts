@@ -1,9 +1,11 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MENU_TITLES, Snippet } from '../../../../../../common/interfaces/page_snippet.interface';
+import { BreakpointsSettings } from '../../../../../../common/interfaces/system-conf.interface';
 import { Router } from '@angular/router';
 import { TruncatePipe } from '../../../../../../common/pipes/truncate.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
+import { formatRowColsClasses } from '../../../../../../common/utils/ui-utils';
 
 @Component({
   selector: 'app-a-la-une-render',
@@ -15,6 +17,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 export class ALaUneRenderComponent implements OnChanges {
   @Input() snippets: Snippet[] = [];
   @Input() selected_title?: string; // for news, the title of the selected snippet
+  @Input() row_cols: BreakpointsSettings = { SM: 1, MD: 2, LG: 3, XL: 4 };
 
   read_more: boolean = true;
   TRUNCATE_LIMIT = 300; //  truncating news content
@@ -23,11 +26,15 @@ export class ALaUneRenderComponent implements OnChanges {
     private router: Router,
     private sanitizer: DomSanitizer
 
-  ) { }
+  ) { 
+    console.log('row_cols in ALaUneRenderComponent:', this.row_cols);
+  }
 
 
    ngOnChanges(changes: SimpleChanges): void {
- 
+    if(changes['row_cols']) {
+      console.log('row_cols in ALaUneRenderComponent changed:', changes['row_cols'].currentValue);
+    }
     if (changes['selected_title'] ) {
       // Scroll to the snippet if selected_title changes
       const snippet = this.snippets.find(s => s.title === this.selected_title);
@@ -66,5 +73,10 @@ export class ALaUneRenderComponent implements OnChanges {
     stringToSafeHtml(htmlString: string) {
     return this.sanitizer.bypassSecurityTrustHtml(htmlString) ;
   }
+
+    // Compute bootstrap row classes from the `row_cols` input (breakpoints settings).
+    rowCols(): string[] {
+      return formatRowColsClasses(this.row_cols);
+    }
 
 }

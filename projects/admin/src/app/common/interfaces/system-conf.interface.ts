@@ -49,5 +49,33 @@ export interface SystemConfiguration {
     revenue_and_expense_tree: Revenue_and_expense_tree;
     banks: Bank[];
     thumbnail: ImageSize;
+    ui_settings?: UIConfiguration;
+}
+// UI configurtation interface
+
+export interface BreakpointsSettings {
+    SM: number;
+    MD: number;
+    LG: number;
+    XL: number;
+}
+
+export interface UIConfiguration {
+    template?: {
+        logo_path?: string; // S3 path
+        background_color?: string; // CSS color
+    };
+
+    tournaments_row_cols: BreakpointsSettings;
+    news_row_cols: BreakpointsSettings;
+
+    homepage?: {
+        tournamentsEnabled?: boolean;
+        newsEnabled?: boolean;
+    };
+    frontBannerEnabled?: boolean;
+    homepage_intro?: string;
+    // future UI settings can be added here
+    [key: string]: any;
 }
 

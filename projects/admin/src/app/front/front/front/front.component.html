@@ -1,11 +1,13 @@
-<div class="container-fluid root-bg">
+<div class="container-fluid root-bg" [ngStyle]="{ 'background-color': backgroundColor || null }">
 
   <div class="row d-flex align-items-stretch ">
 
     <div class="col-sm-auto mx-0 px-0 d-flex d-none d-xl-flex">
       <a routerLink="contacts">
-        <img class="img-fluid  h-100 object-fit-cover" style="max-height: 100px;" src="bcsto_ffb.jpg"
-          alt="marcaissonne" />
+        <img *ngIf="logoUrl; else staticLogo" class="img-fluid  h-100 object-fit-cover" style="max-height: 100px;" [src]="logoUrl" alt="logo" />
+        <ng-template #staticLogo>
+          <img class="img-fluid  h-100 object-fit-cover" style="max-height: 100px;" src="bcsto_ffb.jpg" alt="marcaissonne" />
+        </ng-template>
       </a>
     </div>
 
@@ -70,8 +72,12 @@
     </div>
 
     <span class="position-relative d-none d-xl-inline">
-      <img src="bcsto_ffb.jpg" alt="logo" class="img-fluid img-quarter-sm shadow position-absolute"
+      <img *ngIf="logoUrl; else staticLogo2" [src]="logoUrl" alt="logo" class="img-fluid img-quarter-sm shadow position-absolute"
         style="bottom: 20px; right: 20px; max-width: 130px;">
+      <ng-template #staticLogo2>
+        <img src="bcsto_ffb.jpg" alt="logo" class="img-fluid img-quarter-sm shadow position-absolute"
+          style="bottom: 20px; right: 20px; max-width: 130px;">
+      </ng-template>
     </span>
   </div>
 

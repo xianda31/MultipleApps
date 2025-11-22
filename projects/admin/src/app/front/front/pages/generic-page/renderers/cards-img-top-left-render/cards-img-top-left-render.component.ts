@@ -1,8 +1,10 @@
 import { AfterViewChecked, AfterViewInit, Component, ElementRef, Input, QueryList, ViewChildren } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MENU_TITLES, Snippet } from '../../../../../../common/interfaces/page_snippet.interface';
+import { BreakpointsSettings } from '../../../../../../common/interfaces/system-conf.interface';
 import { Router } from '@angular/router';
 import { DomSanitizer } from '@angular/platform-browser';
+import { formatRowColsClasses } from '../../../../../../common/utils/ui-utils';
 
 @Component({
   selector: 'app-cards-img-top-left-render',
@@ -12,6 +14,7 @@ import { DomSanitizer } from '@angular/platform-browser';
   styleUrls: ['./cards-img-top-left-render.component.scss']
 })
 export class CardsImgTopLeftRenderComponent implements AfterViewInit, AfterViewChecked {
+  @Input() row_cols: BreakpointsSettings = { SM: 1, MD: 2, LG: 3, XL: 4 };
   @Input() snippets: Snippet[] = [];
   @ViewChildren('clampRef') clampRefs!: QueryList<ElementRef<HTMLElement>>;
 
@@ -75,6 +78,11 @@ export class CardsImgTopLeftRenderComponent implements AfterViewInit, AfterViewC
       stringToSafeHtml(htmlString: string) {
     return this.sanitizer.bypassSecurityTrustHtml(htmlString) ;
   }
+
+      // Compute bootstrap row classes from the `row_cols` input (breakpoints settings).
+      rowCols(): string[] {
+        return formatRowColsClasses(this.row_cols);
+      }
 
   
 }

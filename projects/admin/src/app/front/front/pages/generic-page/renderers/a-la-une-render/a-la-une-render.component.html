@@ -1,28 +1,32 @@
-@for (snippet of snippets; track snippet.id) {
-  <div class="card border-0" id="{{snippet.title}}">
-    <div class="card-body">
-      <div class="row">
-        <div class="d-flex align-items-center mb-2">
-          <img [src]="snippet.image_url" alt="{{snippet.title}}" class="card-img-top me-2"
-            style="max-height:100px; width:auto; height:auto; object-fit:contain; display:block;">
-          <div>
-            <div class="card-title">{{snippet.title}}</div>
-            <div class="card-subtitle">{{snippet.subtitle}}
-              <div class="text-muted">Publié le {{snippet.updatedAt| date:'shortDate'}} </div>
+<div [ngClass]="rowCols()">
+  @for (snippet of snippets; track snippet.id) {
+    <div class="col">
+      <div class="card border-0" id="{{snippet.title}}">
+        <div class="card-body">
+          <div class="row">
+            <div class="d-flex align-items-center mb-2">
+              <img [src]="snippet.image_url" alt="{{snippet.title}}" class="card-img-top me-2"
+                style="max-height:100px; width:auto; height:auto; object-fit:contain; display:block;">
+              <div>
+                <div class="card-title">{{snippet.title}}</div>
+                <div class="card-subtitle">{{snippet.subtitle}}
+                  <div class="text-muted">Publié le {{snippet.updatedAt| date:'shortDate'}} </div>
+                </div>
+              </div>
+            </div>
+            <div class="card-text mt-3 col-12">
+              @if (read_more && (snippet.content.length > TRUNCATE_LIMIT + TRUNCATE_HYSTERISIS)) {
+                <span class="card-text tighter-html" [innerHTML]="stringToSafeHtml(snippet.content | truncate:TRUNCATE_LIMIT)"
+                  style="display:inline"></span>
+                <span (click)="readMore(snippet)" class="text-info ms-1" style="cursor:pointer;display:inline">... Lire la
+                  suite</span>
+              } @else {
+                <span class="card-text tighter-html" [innerHTML]="snippet.content"></span>
+              }
             </div>
           </div>
         </div>
-        <div class="card-text mt-3 col-12">
-          @if (read_more && (snippet.content.length > TRUNCATE_LIMIT + TRUNCATE_HYSTERISIS)) {
-            <span class="card-text tighter-html" [innerHTML]="stringToSafeHtml(snippet.content | truncate:TRUNCATE_LIMIT)"
-              style="display:inline"></span>
-            <span (click)="readMore(snippet)" class="text-info ms-1" style="cursor:pointer;display:inline">... Lire la
-              suite</span>
-          } @else {
-            <span class="card-text tighter-html" [innerHTML]="snippet.content"></span>
-          }
-        </div>
       </div>
     </div>
-  </div>
-}
+  }
+</div>
