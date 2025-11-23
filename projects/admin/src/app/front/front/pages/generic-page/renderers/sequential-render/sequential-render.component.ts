@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Snippet } from '../../../../../../common/interfaces/page_snippet.interface';
-import { BreakpointsSettings } from '../../../../../../common/interfaces/system-conf.interface';
+import { BreakpointsSettings } from '../../../../../../common/interfaces/ui-conf.interface';
 import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({

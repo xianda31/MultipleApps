@@ -7,7 +7,7 @@ import { ToasterComponent } from '../../../common/toaster/components/toaster/toa
 import { TitleComponent } from '../../title/title.component';
 import { SiteLayoutService } from '../../../common/services/site-layout.service';
 import { SystemDataService } from '../../../common/services/system-data.service';
-import { UIConfiguration } from '../../../common/interfaces/system-conf.interface';
+import { UIConfiguration } from '../../../common/interfaces/ui-conf.interface';
 import { FileService } from '../../../common/services/files.service';
 import {  MenuStructure, NAVITEM_POSITION, NAVITEM_TYPE } from '../../../common/interfaces/navitem.interface';
 import { SandboxService } from '../../../common/services/sandbox.service';

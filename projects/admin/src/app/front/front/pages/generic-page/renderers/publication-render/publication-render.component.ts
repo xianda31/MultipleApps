@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, ElementRef, Input, QueryList, ViewChildre
 import { CommonModule } from '@angular/common';
 import { Snippet } from '../../../../../../common/interfaces/page_snippet.interface';
 import { DomSanitizer } from '@angular/platform-browser';
-import { BreakpointsSettings } from '../../../../../../common/interfaces/system-conf.interface';
+import { BreakpointsSettings } from '../../../../../../common/interfaces/ui-conf.interface';
 
 @Component({
   selector: 'app-publication-render',
@@ -29,7 +29,8 @@ export class PublicationRenderComponent implements AfterViewInit, AfterViewCheck
     return item.id;
   }
 
-  ngOnInit() {}
+  ngOnInit() {
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['scroll_to_snippet'] && this.scroll_to_snippet) {
@@ -100,7 +101,7 @@ export class PublicationRenderComponent implements AfterViewInit, AfterViewCheck
       this.scrollElementToTop(el);
       // transient highlight on programmatic scroll
       el.classList.add('scroll-highlight');
-      setTimeout(() => el.classList.remove('scroll-highlight'), 4200);
+      setTimeout(() => el.classList.remove('scroll-highlight'), 7000);
       this.pendingScrollId = undefined;
     }
   }

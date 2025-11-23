@@ -6,7 +6,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { EXTRA_TITLES, MENU_TITLES } from '../../../../common/interfaces/page_snippet.interface';
 import { MembersService } from '../../../../common/services/members.service';
 import { SystemDataService } from '../../../../common/services/system-data.service';
-import { BreakpointsSettings, UIConfiguration } from '../../../../common/interfaces/system-conf.interface';
+import { BreakpointsSettings, UIConfiguration } from '../../../../common/interfaces/ui-conf.interface';
 import { combineLatest, map, Observable, switchMap, tap, interval, Subscription } from 'rxjs';
 import { Member } from '../../../../common/interfaces/member.interface';
 import { AuthentificationService } from '../../../../common/authentification/authentification.service';
@@ -118,12 +118,14 @@ export class HomePage {
       const conf: UIConfiguration = ui || {} as UIConfiguration;
       const homepage = conf?.homepage || {};
 
-      this.tournaments_row_cols = conf.tournaments_row_cols ;
-      this.news_row_cols = conf.news_row_cols ;
+      // breakpoints stored under `homepage` by contract; use defaults when missing
+      this.tournaments_row_cols = (conf && conf.homepage && conf.homepage.tournaments_row_cols) ? conf.homepage.tournaments_row_cols : this.tournaments_row_cols;
+      this.news_row_cols = (conf && conf.homepage && conf.homepage.news_row_cols) ? conf.homepage.news_row_cols : this.news_row_cols;
 
 
-      this.homepage_tournaments_enabled = (homepage.tournamentsEnabled !== undefined) ? homepage.tournamentsEnabled : true;
-      this.homepage_news_enabled = (homepage.newsEnabled !== undefined) ? homepage.newsEnabled : true;
+      // homepage enable flags were removed from configuration; keep defaults = true
+      this.homepage_tournaments_enabled = true;
+      this.homepage_news_enabled = true;
       this.homepage_intro_text = (conf && conf.homepage_intro) ? conf.homepage_intro : '';
       const logoPath = conf?.template?.logo_path;
       if (logoPath) this.fileService.getPresignedUrl$(logoPath).subscribe({ next: (u) => this.logoPreview = u, error: () => this.logoPreview = null });

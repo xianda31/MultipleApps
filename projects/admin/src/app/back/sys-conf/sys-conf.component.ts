@@ -78,12 +78,7 @@ export class SysConfComponent {
         debit_key: [''],
         credit_key: [''],
       }),
-
-      thumbnail: this.fb.group({
-        width: [300],
-        height: [200],
-        ratio: [1.78]
-      })
+      
     });
   }
 

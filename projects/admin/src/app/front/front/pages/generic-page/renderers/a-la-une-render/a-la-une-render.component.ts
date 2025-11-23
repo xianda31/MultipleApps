@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MENU_TITLES, Snippet } from '../../../../../../common/interfaces/page_snippet.interface';
-import { BreakpointsSettings } from '../../../../../../common/interfaces/system-conf.interface';
+import { BreakpointsSettings } from '../../../../../../common/interfaces/ui-conf.interface';
 import { Router } from '@angular/router';
 import { TruncatePipe } from '../../../../../../common/pipes/truncate.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -37,6 +37,7 @@ export class ALaUneRenderComponent implements OnChanges {
     }
     if (changes['selected_title'] ) {
       // Scroll to the snippet if selected_title changes
+      console.log('selected_title changed:', this.selected_title);  
       const snippet = this.snippets.find(s => s.title === this.selected_title);
       if (snippet) {
         // console.log('Scrolling to snippet:', snippet.title);
@@ -59,7 +60,10 @@ export class ALaUneRenderComponent implements OnChanges {
       this.router.navigate(['/front/news', snippet.title]);
     }else if(snippet.pageId === MENU_TITLES.AUTRES_RDV) {
       this.router.navigate(['/front/tournaments/autres_rdv', snippet.title]);
+    }else{
+      console.warn('Unknown pageId for readMore navigation:', snippet.pageId);
     }
+
   }
 
   scrollToElement(title: string): void {

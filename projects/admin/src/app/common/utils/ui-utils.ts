@@ -1,4 +1,4 @@
-import { BreakpointsSettings } from '../interfaces/system-conf.interface';
+import { BreakpointsSettings } from '../interfaces/ui-conf.interface';
 
 export function clampBreakpoint(val: any): number | null {
   if (val === null || val === undefined || val === '') return null;

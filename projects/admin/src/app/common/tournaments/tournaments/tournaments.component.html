@@ -1,17 +1,27 @@
-<div [ngClass]="rowCols()">
+<div  [ngClass]="rowCols()">
 
     <div class="col" *ngFor="let t of next_tournament_teams">
         <div class="card h-100  nice_shadow">
-
-            <h6 class="card-header">
-                <span class="stamp">
-                    <i [class]="icon_for(t)"></i> </span>
-                <div class="text-center">
-                    {{ date_of(t) | date:'EEEE d MMMM':'':'fr-FR' }}
-                    <div class="text-center"> {{name_of(t)}} </div>
+            <div class="row align-items-stretch g-0">
+                <div class="col col-sm-3 col-md-5 d-flex">
+                    <div class="overflow-hidden w-100" style="height: 8rem;">
+                        <ng-container *ngIf="getImageUrl(t) as imgUrl; else noImg">
+                            <img [attr.src]="imgUrl" class="img-fluid card-img-top" [alt]="name_of(t) || 'vignette'"
+                                style="object-fit:cover; display:block; width:100%; height:100%;">
+                        </ng-container>
+                        <ng-template #noImg>
+                            <div class="w-100 h-100" style="height:8rem; background: transparent;"></div>
+                        </ng-template>
+                    </div>
+                    <span class="stamp"> <i [class]="icon_for(t)"></i> </span>
                 </div>
-            </h6>
-
+                <div class="col col-sm-9 col-md-7 d-flex">
+                    <div class="card-title d-flex flex-column justify-content-center text-center ps-1">
+                        {{ date_of(t) | date:'EEEE d MMMM':'':'fr-FR' }}
+                        <div class="text-center"> {{name_of(t)}} </div>
+                    </div>
+                </div>
+            </div>
             <div class="card-body">
                 <div class="card-text">
                     <div *ngIf="t.teams && t.teams.length > 0">
@@ -36,7 +46,6 @@
                     </div>
                 </div>
 
-                <hr />
                 <div *ngIf="registrated_in(t)" class="text-info ms-1" style="cursor:pointer;display:inline"
                     (click)="selectTournament(t.subscription_tournament.id)">
                     Vous êtes inscrit(e) à ce tournoi.

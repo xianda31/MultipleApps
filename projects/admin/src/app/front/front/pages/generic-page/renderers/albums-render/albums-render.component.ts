@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Snippet } from '../../../../../../common/interfaces/page_snippet.interface';
 import { AlbumComponent } from '../../../../../album/album.component';
 import { formatRowColsClasses } from '../../../../../../common/utils/ui-utils';
-import { BreakpointsSettings } from '../../../../../../common/interfaces/system-conf.interface';
+import { BreakpointsSettings } from '../../../../../../common/interfaces/ui-conf.interface';
 
 @Component({
   selector: 'app-albums-render',

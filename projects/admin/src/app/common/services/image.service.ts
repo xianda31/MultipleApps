@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { SystemDataService } from './system-data.service';
-import { ImageSize } from '../interfaces/system-conf.interface';
+import { ImageSize } from '../interfaces/ui-conf.interface';
 import { Image } from 'exceljs';
 
 @Injectable({
@@ -13,10 +13,11 @@ export class ImageService {
   constructor(
     private systemDataService: SystemDataService
   ) {
-    this.systemDataService.get_configuration().subscribe((configuration) => {
-      this.thumbnailSize = configuration.thumbnail;
-      this.album_thumbnailSize = configuration.thumbnail;
-
+    // thumbnail sizing now stored in UI settings
+    this.systemDataService.get_ui_settings().subscribe((ui) => {
+      const thumb = (ui as any)?.thumbnail || { width: 300, height: 200, ratio: 1.78 };
+      this.thumbnailSize = thumb;
+      this.album_thumbnailSize = thumb;
     });
 
   }

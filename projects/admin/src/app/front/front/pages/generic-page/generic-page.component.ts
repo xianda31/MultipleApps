@@ -18,7 +18,7 @@ import { CardsImgBottomRenderComponent } from './renderers/cards-img-bottom-rend
 import { AlbumsRenderComponent } from './renderers/albums-render/albums-render.component';
 import { FlipperRenderComponent } from './renderers/flipper-render/flipper-render.component';
 import { CardsImgTopLeftRenderComponent } from './renderers/cards-img-top-left-render/cards-img-top-left-render.component';
-import { BreakpointsSettings } from '../../../../common/interfaces/system-conf.interface';
+import { BreakpointsSettings } from '../../../../common/interfaces/ui-conf.interface';
 
 @Component({
   selector: 'app-generic-page',
@@ -78,13 +78,17 @@ export class GenericPageComponent implements OnInit, OnChanges {
   }
 
   ngOnInit(): void {
+
     this.init_relative_links_handler();
 
     this.pageService.listPages()
       .subscribe(pages => {
         this.pages = pages;
         this.snippetService.listSnippets().subscribe(snippets => {
-          this.snippets = snippets;
+          this.snippets = snippets.map(s => {
+            s.pageId = undefined;;
+            return s;
+          });
           // update pageId for all snippets
           this.pages.forEach(page => {
             page.snippet_ids.forEach(id => {
@@ -96,7 +100,7 @@ export class GenericPageComponent implements OnInit, OnChanges {
           });
           this.filter_PageSnippets(this.page_title);
           // If a target snippet title is provided initially (via route), set scroll_to_snippet now
-          if (this.page_title === MENU_TITLES.NEWS && this.snippet_title) {
+          if ( this.snippet_title) {
             const target = this.page_snippets.find(s => s.title === this.snippet_title);
             if (target) {
               this.scroll_to_snippet = target;
@@ -109,8 +113,6 @@ export class GenericPageComponent implements OnInit, OnChanges {
   filter_PageSnippets(page_title: MENU_TITLES | EXTRA_TITLES) {
 
     if (page_title === EXTRA_TITLES.HIGHLIGHTS) {
-        console.log('row_cols in GenericPageComponent:', this.row_cols);
-
       this.page_snippets = this.snippets.filter(s => s.featured)
         .sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''));
       this.pageTemplate = PAGE_TEMPLATES.CARDS_top_left;
@@ -153,7 +155,6 @@ export class GenericPageComponent implements OnInit, OnChanges {
         this.page_snippets = this.page_snippets.filter(s => s.featured)
           .sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''));
         this.pageTemplate = PAGE_TEMPLATES.A_LA_UNE;
-        console.log('row_cols in GenericPageComponent:', this.row_cols);
         break;
 
       case MENU_TITLES.BIRTHDAYS:

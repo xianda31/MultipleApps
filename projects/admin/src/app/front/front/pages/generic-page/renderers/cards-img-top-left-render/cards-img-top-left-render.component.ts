@@ -1,7 +1,7 @@
 import { AfterViewChecked, AfterViewInit, Component, ElementRef, Input, QueryList, ViewChildren } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MENU_TITLES, Snippet } from '../../../../../../common/interfaces/page_snippet.interface';
-import { BreakpointsSettings } from '../../../../../../common/interfaces/system-conf.interface';
+import { BreakpointsSettings } from '../../../../../../common/interfaces/ui-conf.interface';
 import { Router } from '@angular/router';
 import { DomSanitizer } from '@angular/platform-browser';
 import { formatRowColsClasses } from '../../../../../../common/utils/ui-utils';
@@ -63,14 +63,18 @@ export class CardsImgTopLeftRenderComponent implements AfterViewInit, AfterViewC
     }
   }
     readMore(snippet: Snippet) {
-      // console.log('Navigating to page:', snippet.pageId);
+      console.log('Navigating to page:', snippet.pageId);
     // PATCH à CORRIGER ASAP
       if(snippet.pageId === MENU_TITLES.NEWS) {
         this.router.navigate(['/front/news', snippet.title]);
       }else if(snippet.pageId === MENU_TITLES.AUTRES_RDV) {
         this.router.navigate(['/front/tournaments/autres_rdv', snippet.title]);
+      }else
+      {
+        console.warn('Unknown pageId for readMore navigation:', snippet.pageId);
       }
     }
+    
     isOverflow(id: string): boolean {
       return !!this.overflowMap[id];
     }

@@ -1,11 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { ToastService } from '../../common/services/toast.service';
-import { FileService } from '../../common/services/files.service';
-// No continuous form subscriptions needed — preview/save are manual
-import { UIConfiguration } from '../../common/interfaces/system-conf.interface';
+import { FileService, S3_ROOT_FOLDERS } from '../../common/services/files.service';
+import { map, Observable, first, catchError, of, Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-ui-conf',
@@ -19,37 +18,145 @@ export class UiConfComponent implements OnInit {
   loaded = false;
   export_file_url: any;
   logoPreviewUrl: string | null = null;
-
+ thumbnails$ !: Observable<string[]>;
+  // cache of presigned preview URLs for tournaments_type entries keyed by the mapping key
+  previewMap: { [key: string]: string | null } = {};
+  private defaultImageSub?: Subscription;
   constructor(
     private fb: FormBuilder,
     private systemDataService: SystemDataService,
     private toastService: ToastService,
-    private fileService: FileService
+    public fileService: FileService
   ) {
+
+    this.thumbnails$ = this.fileService.list_files(S3_ROOT_FOLDERS.IMAGES + '/').pipe(
+      map((S3items) => S3items.map(item => item.path))
+    );
+
+
     this.uiForm = this.fb.group({
       template: this.fb.group({
         logo_path: [''],
         background_color: ['#ffffff']
       }),
+      thumbnail: this.fb.group({
+        width: [300],
+        height: [200],
+        ratio: [1.78]
+      }),
       tournaments_row_cols: this.fb.group({
-        SM: [null, [Validators.min(1), Validators.max(6)]],
-        MD: [4, [Validators.min(1), Validators.max(6)]],
-        LG: [null, [Validators.min(1), Validators.max(6)]],
-        XL: [null, [Validators.min(1), Validators.max(6)]]
+        SM: [1, [Validators.min(1), Validators.max(6)]],
+        MD: [2, [Validators.min(1), Validators.max(6)]],
+        LG: [4, [Validators.min(1), Validators.max(6)]],
+        XL: [6, [Validators.min(1), Validators.max(6)]]
       }, { validators: this.breakpointsOrderValidator }),
       news_row_cols: this.fb.group({
-        SM: [null, [Validators.min(1), Validators.max(6)]],
-        MD: [4, [Validators.min(1), Validators.max(6)]],
-        LG: [null, [Validators.min(1), Validators.max(6)]],
-        XL: [null, [Validators.min(1), Validators.max(6)]]
+        SM: [1, [Validators.min(1), Validators.max(6)]],
+        MD: [2, [Validators.min(1), Validators.max(6)]],
+        LG: [4, [Validators.min(1), Validators.max(6)]],
+        XL: [6, [Validators.min(1), Validators.max(6)]]
       }, { validators: this.breakpointsOrderValidator }),
-      homepage: this.fb.group({
-        tournamentsEnabled: [true],
-        newsEnabled: [true]
-      }),
+      tournaments_type: this.fb.array([]),
+      default_tournament_image: [''],
+      // `homepage` booleans removed from UI config; breakpoints stay editable at top-level form groups
       frontBannerEnabled: [false],
       homepage_intro: ['']
     });
+    // attach FormArray-level validator to enforce keys non-empty and unique
+    const tt = this.uiForm.get('tournaments_type') as FormArray;
+    tt.setValidators(this.tournamentsTypeArrayValidator);
+  }
+
+  get tournaments_type(): FormArray {
+    return this.uiForm.get('tournaments_type') as FormArray;
+  }
+
+  addTournamentType(key: string = '', image: string = '') {
+    const group = this.fb.group({ key: [key, Validators.required], image: [image] });
+    this.tournaments_type.push(group);
+    const idx = this.tournaments_type.length - 1;
+    // use key value as unique id for this mapping
+    const keyControl = group.get('key');
+    const imageControl = group.get('image');
+    const initialKey = keyControl?.value || '';
+    if (initialKey) {
+      this.loadPreviewForKey(initialKey, image);
+    }
+
+    // when image changes, refresh preview for the current key
+    if (imageControl) {
+      imageControl.valueChanges.subscribe((val) => {
+        const curKey = keyControl?.value;
+        if (curKey) this.loadPreviewForKey(curKey, val);
+      });
+    }
+
+    // when key changes, move preview entry to the new key and load preview for it
+    if (keyControl) {
+      let prevKey = initialKey;
+      keyControl.valueChanges.subscribe((newKey: string | null) => {
+        const curImage = imageControl?.value;
+        if (prevKey && prevKey !== newKey) {
+          delete this.previewMap[prevKey];
+        }
+        if (newKey) {
+          this.loadPreviewForKey(newKey, curImage);
+        }
+        prevKey = newKey || '';
+      });
+    }
+    // re-evaluate array-level validators after adding
+    this.tournaments_type.updateValueAndValidity();
+  }
+
+  removeTournamentType(i: number) {
+    const grp = this.tournaments_type.at(i);
+    const key = grp?.get('key')?.value;
+    if (key) delete this.previewMap[key];
+    this.tournaments_type.removeAt(i);
+    this.tournaments_type.updateValueAndValidity();
+  }
+
+  // Validator for tournaments_type FormArray: keys must be non-empty and unique
+  tournamentsTypeArrayValidator = (control: AbstractControl): ValidationErrors | null => {
+    try {
+      const arr = control as FormArray;
+      const keys = arr.controls.map(c => (c.get('key')?.value ?? '').toString().trim());
+      // empty keys
+      const hasEmpty = keys.some(k => !k);
+      if (hasEmpty) return { emptyKey: true };
+      // duplicates
+      const counts: { [k: string]: number } = {};
+      const dupes: string[] = [];
+      for (const k of keys) {
+        if (!k) continue;
+        counts[k] = (counts[k] || 0) + 1;
+        if (counts[k] === 2) dupes.push(k);
+      }
+      if (dupes.length) return { duplicateKeys: dupes };
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  private loadPreviewForKey(key: string, image: string | null | undefined) {
+    if (!key) return;
+    if (!image) {
+      this.previewMap[key] = null;
+      return;
+    }
+    // request presigned URL once, ignore errors and store null on failure
+    this.fileService.getPresignedUrl$(image)
+      .pipe(
+        first(),
+        catchError(() => of(null))
+      )
+      .subscribe((url: string | null) => {
+        this.previewMap[key] = url;
+      }, () => {
+        this.previewMap[key] = null;
+      });
   }
 
   // Validator to ensure breakpoints are non-decreasing: SM <= MD <= LG <= XL
@@ -89,11 +196,27 @@ export class UiConfComponent implements OnInit {
 
 
   loadDataInForm(ui: any) {
-    // Patch form with defaults (expect `tournaments_row_cols` in the UI file)
-    const tournaments = ui?.tournaments_row_cols || {};
-    const news = ui?.news_row_cols || {};
+    // Patch form with defaults (support both legacy top-level keys and new `homepage` nesting)
+    // homepage and breakpoints are required in the interface; use defaults if absent
+    const tournaments = (ui && ui.homepage && ui.homepage.tournaments_row_cols)
+      ? ui.homepage.tournaments_row_cols
+      : { SM: 1, MD: 2, LG: 4, XL: 6 };
+    const news = (ui && ui.homepage && ui.homepage.news_row_cols)
+      ? ui.homepage.news_row_cols
+      : { SM: 1, MD: 2, LG: 4, XL: 6 };
     const template = ui?.template || {};
+    const tournamentsType = ui?.tournaments_type || {};
     const homepage = ui?.homepage || {};
+    // Support legacy/default stored in tournaments_type under several possible keys
+    const defaultKeys = ['defaut', 'défaut', 'default', '__default__', 'fallback'];
+    let inferredDefault: string | undefined = ui?.default_tournament_image;
+    for (const dk of defaultKeys) {
+      if (!inferredDefault && tournamentsType && (tournamentsType as any)[dk]) {
+        inferredDefault = (tournamentsType as any)[dk];
+        // remove from mapping so it doesn't appear as a regular mapping row
+        delete (tournamentsType as any)[dk];
+      }
+    }
     this.uiForm.patchValue({
       template: {
         logo_path: template.logo_path ?? '',
@@ -111,13 +234,40 @@ export class UiConfComponent implements OnInit {
         LG: news.LG ?? 4,
         XL: news.XL ?? 6
       },
-      homepage: {
-        tournamentsEnabled: homepage.tournamentsEnabled ?? true,
-        newsEnabled: homepage.newsEnabled ?? true
+      tournaments_type: [] as any,
+      // homepage booleans removed; breakpoints are patched/handled separately
+      thumbnail: {
+        width: ui?.thumbnail?.width ?? 300,
+        height: ui?.thumbnail?.height ?? 200,
+        ratio: ui?.thumbnail?.ratio ?? 1.78
       },
+      default_tournament_image: inferredDefault ?? (ui?.default_tournament_image ?? ''),
+      // no homepage booleans
       frontBannerEnabled: ui?.frontBannerEnabled ?? false,
       homepage_intro: ui?.homepage_intro ?? ''
     });
+
+    // populate tournaments_type form array
+    this.tournaments_type.clear();
+    // reset preview cache
+    this.previewMap = {};
+    Object.keys(tournamentsType).forEach((k) => {
+      this.addTournamentType(k, tournamentsType[k]);
+    });
+
+    // Ensure default preview is loaded and kept in previewMap under key 'defaut'
+    // Unsubscribe previous subscription if any to avoid duplicates
+    try { this.defaultImageSub?.unsubscribe(); } catch (e) { /* ignore */ }
+    const defaultCtrl = this.uiForm.get('default_tournament_image');
+    if (defaultCtrl) {
+      // when the default image control changes, refresh the preview
+      this.defaultImageSub = defaultCtrl.valueChanges.subscribe((val) => {
+        this.loadPreviewForKey('defaut', val);
+      });
+    }
+    // load initial preview for default if present
+    const initialDefault = this.uiForm.get('default_tournament_image')?.value;
+    if (initialDefault) this.loadPreviewForKey('defaut', initialDefault);
   }
 
   async onLogoFileSelected(event: any) {
@@ -152,10 +302,33 @@ export class UiConfComponent implements OnInit {
 
   async saveSettings() {
     try {
+      // Build payload ensuring tournaments/news breakpoints are nested under `homepage`
+      const formVal: any = this.uiForm.value || {};
+      const payload: any = { ...formVal };
+      // Convert tournaments_type FormArray (array [{key,image},...]) into mapping { key: image }
+      if (Array.isArray(payload.tournaments_type)) {
+        const map: { [k: string]: string } = {};
+        payload.tournaments_type.forEach((entry: any) => {
+          if (entry && entry.key) map[entry.key] = entry.image || '';
+        });
+        // If default_tournament_image is set, store it under the forced key 'defaut'
+        if (payload.default_tournament_image) {
+          map['defaut'] = payload.default_tournament_image;
+        }
+        payload.tournaments_type = map;
+      } else {
+        // ensure we still include default if tournaments_type absent
+        payload.tournaments_type = {};
+        if (payload.default_tournament_image) payload.tournaments_type['defaut'] = payload.default_tournament_image;
+      }
+      payload.homepage = { ...(formVal.homepage || {}) };
+      payload.homepage.tournaments_row_cols = formVal.tournaments_row_cols;
+      payload.homepage.news_row_cols = formVal.news_row_cols;
+
       // Save UI settings into dedicated file and publish immediately
-      await this.systemDataService.save_ui_settings(this.uiForm.value || {});
+      await this.systemDataService.save_ui_settings(payload);
       // Refresh export blob so "Exporter" downloads the most recent saved state
-      this.export_file_url = this.fileService.json_to_blob(this.uiForm.value || {});
+      this.export_file_url = this.fileService.json_to_blob(payload);
       this.toastService.showSuccess('UI settings', 'Paramètres UI sauvegardés');
     } catch (e: any) {
       this.toastService.showErrorToast('UI settings', e?.message || 'Erreur sauvegarde');
@@ -164,9 +337,26 @@ export class UiConfComponent implements OnInit {
 
   previewSettings() {
     try {
-      this.systemDataService.patchUiSettings(this.uiForm.value || {});
+      const formVal: any = this.uiForm.value || {};
+      const preview: any = { ...formVal };
+      // Convert tournaments_type for preview as well
+      if (Array.isArray(preview.tournaments_type)) {
+        const map: { [k: string]: string } = {};
+        preview.tournaments_type.forEach((entry: any) => {
+          if (entry && entry.key) map[entry.key] = entry.image || '';
+        });
+        if (preview.default_tournament_image) map['defaut'] = preview.default_tournament_image;
+        preview.tournaments_type = map;
+      } else {
+        preview.tournaments_type = {};
+        if (preview.default_tournament_image) preview.tournaments_type['defaut'] = preview.default_tournament_image;
+      }
+      preview.homepage = { ...(formVal.homepage || {}) };
+      preview.homepage.tournaments_row_cols = formVal.tournaments_row_cols;
+      preview.homepage.news_row_cols = formVal.news_row_cols;
+      this.systemDataService.patchUiSettings(preview);
       // Update export blob to reflect the previewed state
-      this.export_file_url = this.fileService.json_to_blob(this.uiForm.value || {});
+      this.export_file_url = this.fileService.json_to_blob(preview);
       this.toastService.showInfo('UI settings', 'Aperçu appliqué');
     } catch (e: any) {
       this.toastService.showErrorToast('UI settings', 'Erreur affichage de l\'aperçu');

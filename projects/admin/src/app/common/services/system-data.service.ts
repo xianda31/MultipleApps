@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import { SystemConfiguration, UIConfiguration } from '../interfaces/system-conf.interface';
-import { BehaviorSubject, from, Observable, switchMap, tap, catchError, of } from 'rxjs';
+import { SystemConfiguration } from '../interfaces/system-conf.interface';
+import { UIConfiguration } from '../interfaces/ui-conf.interface';
+import { BehaviorSubject, from, Observable, switchMap, tap, catchError, of, combineLatest, map } from 'rxjs';
 import { FileService } from './files.service';
 import { ToastService } from './toast.service';
 import { normalizeBreakpoints } from '../utils/ui-utils';
@@ -60,9 +61,7 @@ export class SystemDataService {
   get_ui_settings(): Observable<UIConfiguration> {
     const defaults: UIConfiguration = {
       template: { logo_path: '', background_color: '#ffffff' },
-      tournaments_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 },
-      news_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 },
-      homepage: { tournamentsEnabled: true, newsEnabled: true },
+      homepage: { tournaments_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 }, news_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 } },
       frontBannerEnabled: false,
       homepage_intro: ''
     };
@@ -70,6 +69,14 @@ export class SystemDataService {
     const remote_load$ = from(this.fileService.download_json_file('system/ui_settings.txt')).pipe(
       tap((conf) => {
         // Simple load: expect `ui_settings.txt` to conform to `UIConfiguration`.
+        // Map legacy top-level tournaments/news into homepage if present
+        if (conf && ((conf as any).tournaments_row_cols || (conf as any).news_row_cols)) {
+          conf.homepage = conf.homepage || {};
+          conf.homepage.tournaments_row_cols = (conf as any).tournaments_row_cols || conf.homepage.tournaments_row_cols;
+          conf.homepage.news_row_cols = (conf as any).news_row_cols || conf.homepage.news_row_cols;
+          delete (conf as any).tournaments_row_cols;
+          delete (conf as any).news_row_cols;
+        }
         this._ui_settings = conf;
         this._ui_settings$.next(this._ui_settings);
       }),
@@ -92,6 +99,72 @@ export class SystemDataService {
   }
 
   /**
+   * Observable of the tournaments_type mapping: { [key]: imagePath }
+   */
+  tournamentsType$(): Observable<{ [key: string]: string }> {
+    return this.get_ui_settings().pipe(
+      switchMap((ui) => of((ui && ui.tournaments_type) ? ui.tournaments_type : {}))
+    );
+  }
+
+  /**
+   * Given a tournament keyword, return an observable that emits a presigned URL string or null.
+   * This looks up the configured image path from `tournaments_type` and asks FileService for a presigned URL.
+   */
+  imageForTournament$(keyword: string): Observable<string | null> {
+    if (!keyword) return of(null);
+    return this.tournamentsType$().pipe(
+      switchMap((map) => {
+        const p = map ? map[keyword] : undefined;
+        if (!p) return of(null);
+        return this.fileService.getPresignedUrl$(p).pipe(
+          catchError(() => of(null))
+        );
+      })
+    );
+  }
+
+  /**
+   * Return a mapping of tournament key -> presigned URL (or null on failure).
+   * Useful for components that want the ready-to-use URL for each keyword.
+   */
+  tournamentsTypeWithUrl$(): Observable<{ [key: string]: string | null }> {
+    // Use full UI settings so we can also resolve an explicit default image path if present.
+    return this.get_ui_settings().pipe(
+      switchMap((ui) => {
+        const mapping = (ui && ui.tournaments_type) ? ui.tournaments_type : {};
+        const entries = Object.entries(mapping || {});
+
+        const pathObs = entries.map(([k, path]) =>
+          this.fileService.getPresignedUrl$(path).pipe(
+            map((url: string) => [k, url] as [string, string | null]),
+            catchError(() => of([k, null] as [string, string | null]))
+          )
+        );
+
+        // If a default image path is specified, resolve it too and include under key '__default__'
+        const defaultPath = (ui && (ui as any).default_tournament_image) ? (ui as any).default_tournament_image : undefined;
+        const defaultObs = defaultPath
+          ? this.fileService.getPresignedUrl$(defaultPath).pipe(
+              map((url: string) => ['__default__', url] as [string, string | null]),
+              catchError(() => of(['__default__', null] as [string, string | null]))
+            )
+          : of(null);
+
+        const allObs = defaultObs ? [...pathObs, defaultObs] : pathObs;
+
+        if (allObs.length === 0) return of({} as { [key: string]: string | null });
+        return combineLatest(allObs as any[]).pipe(
+          map((pairs: Array<[string, string | null]>) => {
+            const filtered = pairs.filter(Boolean) as Array<[string, string | null]>;
+            return Object.fromEntries(filtered);
+          })
+        );
+      })
+    );
+  }
+
+  /**
    * Force a remote download of `system/ui_settings.txt` and update cache.
    * Useful to surface missing-file warnings immediately.
    */
@@ -104,9 +177,7 @@ export class SystemDataService {
       catchError((err) => {
         const defaults: UIConfiguration = {
           template: { logo_path: '', background_color: '#ffffff' },
-          tournaments_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 },
-          news_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 },
-          homepage: { tournamentsEnabled: true, newsEnabled: true },
+          homepage: { tournaments_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 }, news_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 } },
           frontBannerEnabled: false,
           homepage_intro: ''
         };
@@ -123,9 +194,15 @@ export class SystemDataService {
     // Merge incoming settings with current cache (shallow) and normalize breakpoints
     const existing = this._ui_settings || ({} as UIConfiguration);
     const merged: UIConfiguration = { ...(existing as any), ...(ui as any) } as UIConfiguration;
-    merged.tournaments_row_cols = normalizeBreakpoints((merged as any).tournaments_row_cols) as any;
-    // Also normalize news row cols when present
-    (merged as any).news_row_cols = normalizeBreakpoints((merged as any).news_row_cols) as any;
+    // Ensure breakpoints live under merged.homepage; accept legacy top-level keys
+    (merged as any).homepage = (merged as any).homepage || {};
+    const legacyT = (merged as any).tournaments_row_cols || (merged as any).homepage?.tournaments_row_cols;
+    const legacyN = (merged as any).news_row_cols || (merged as any).homepage?.news_row_cols;
+    (merged as any).homepage.tournaments_row_cols = normalizeBreakpoints(legacyT) as any;
+    (merged as any).homepage.news_row_cols = normalizeBreakpoints(legacyN) as any;
+    // remove legacy top-level keys
+    if ((merged as any).tournaments_row_cols !== undefined) delete (merged as any).tournaments_row_cols;
+    if ((merged as any).news_row_cols !== undefined) delete (merged as any).news_row_cols;
 
     this._ui_settings = merged;
     try { this._ui_settings$.next(this._ui_settings); } catch (e) { /* ignore */ }
@@ -165,12 +242,19 @@ export class SystemDataService {
       if (this._ui_settings === undefined || this._ui_settings === null) this._ui_settings = {} as UIConfiguration;
       // Merge and normalize breakpoints when present
       const mergedRaw = { ...(this._ui_settings || {}), ...(ui || {}) } as any;
-      if ((ui as any)?.tournaments_row_cols) {
-        mergedRaw.tournaments_row_cols = normalizeBreakpoints((ui as any).tournaments_row_cols);
+      mergedRaw.homepage = mergedRaw.homepage || {};
+      // support legacy top-level keys or nested homepage keys
+      if ((ui as any)?.homepage?.tournaments_row_cols || (ui as any)?.tournaments_row_cols) {
+        const t = (ui as any)?.homepage?.tournaments_row_cols || (ui as any)?.tournaments_row_cols;
+        mergedRaw.homepage.tournaments_row_cols = normalizeBreakpoints(t);
       }
-      if ((ui as any)?.news_row_cols) {
-        mergedRaw.news_row_cols = normalizeBreakpoints((ui as any).news_row_cols);
+      if ((ui as any)?.homepage?.news_row_cols || (ui as any)?.news_row_cols) {
+        const n = (ui as any)?.homepage?.news_row_cols || (ui as any)?.news_row_cols;
+        mergedRaw.homepage.news_row_cols = normalizeBreakpoints(n);
       }
+      // delete legacy top-level keys if any
+      if (mergedRaw.tournaments_row_cols !== undefined) delete mergedRaw.tournaments_row_cols;
+      if (mergedRaw.news_row_cols !== undefined) delete mergedRaw.news_row_cols;
       this._ui_settings = mergedRaw as UIConfiguration;
       try { this._ui_settings$.next(this._ui_settings); } catch (e) { /* ignore */ }
     } catch (e) {

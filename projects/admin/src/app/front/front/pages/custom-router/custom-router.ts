@@ -32,7 +32,11 @@ export class CustomRouter implements OnInit {
       const routeParts = r.path.split('/');
       const pathParts = path.split('/');
       if (routeParts.length !== pathParts.length) return false;
-      return routeParts.every((part, index) => part.startsWith(':') || part === pathParts[index]);
+      return routeParts.every((part, index) => {
+        // decode the incoming path segment for comparison so encoded titles match
+        const decoded = decodeURIComponent(pathParts[index] || '');
+        return part.startsWith(':') || part === decoded;
+      });
     });
 
     if (!matchedRoute) {
@@ -47,7 +51,8 @@ export class CustomRouter implements OnInit {
     const params: { [key: string]: string } = {};
     routeParts.forEach((part: string, index: number) => {
       if (part.startsWith(':')) {
-        params[part.substring(1)] = pathParts[index];
+        // decode param values so components receive the human-readable title
+        params[part.substring(1)] = decodeURIComponent(pathParts[index] || '');
       }
     });
     this.matchedRoute = { ...matchedRoute, params };
