@@ -1,7 +1,7 @@
 <div [ngClass]="rowCols()">
   @for (snippet of snippets; track snippet.id) {
     <div class="col">
-      <div class="card border-0" id="{{snippet.title}}">
+      <div class="card border-0" id="{{snippet.title}}" (mouseenter)="setHover(snippet.id)" (mouseleave)="clearHover()">
         <div class="card-body">
           <div class="row">
             <div class="d-flex align-items-center mb-2">
@@ -15,14 +15,14 @@
               </div>
             </div>
             <div class="card-text mt-3 col-12">
-              @if (read_more && (snippet.content.length > TRUNCATE_LIMIT + TRUNCATE_HYSTERISIS)) {
-                <span class="card-text tighter-html" [innerHTML]="stringToSafeHtml(snippet.content | truncate:TRUNCATE_LIMIT)"
-                  style="display:inline"></span>
+              <div #clampContainer class="clamp-container" (click)="onTapToggle(snippet.id, $event)">
+                <span #clampRef class="card-text tighter-html" [innerHTML]="stringToSafeHtml(snippet.content)"
+                  [ngStyle]="getClampStyle(snippet.id)"></span>
+              </div>
+              <ng-container *ngIf="!isHovered(snippet.id) && read_more && (snippet.content.length > TRUNCATE_LIMIT + TRUNCATE_HYSTERISIS)">
                 <span (click)="readMore(snippet)" class="text-info ms-1" style="cursor:pointer;display:inline">... Lire la
                   suite</span>
-              } @else {
-                <span class="card-text tighter-html" [innerHTML]="snippet.content"></span>
-              }
+              </ng-container>
             </div>
           </div>
         </div>

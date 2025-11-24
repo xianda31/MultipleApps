@@ -157,38 +157,6 @@ export class GenericPageComponent implements OnInit, OnChanges {
         this.pageTemplate = PAGE_TEMPLATES.A_LA_UNE;
         break;
 
-      case MENU_TITLES.BIRTHDAYS:
-
-        const snippet_model = this.page_snippets[0]; // use the first snippet as a model for birthdays snippets
-
-        this.memberService.get_birthdays_this_next_days(7).pipe(
-          map((result: { [day: string]: Member[]; }) => {
-            const days = Object.keys(result).sort();
-            if (days.length === 0) {
-              return [];
-            }
-            return days.map(day => {
-              const members_in_day = result[day];
-
-              return {
-                id: `birthday_snippet_${day}`,
-                title: new Date(day).toLocaleDateString('fr-FR', { weekday: 'long', day: '2-digit', month: 'long' }),
-                content: `<p>` + members_in_day.map(member => ` <span>${member.firstname} ${member.lastname}</span>`).join('<br>') + `</p>`,
-                subtitle: 'anniversaire de',
-                public: false,
-                image: snippet_model.image,
-                image_url: snippet_model.image_url,
-                file: '',
-                folder: '',
-                featured: snippet_model?.featured || false,
-              };
-            });
-          })).subscribe(snippets => {
-            this.page_snippets = snippets;
-            this.pageTemplate = this.page.template;
-          });
-        break;
-
 
       default:
         this.titleService.setTitle(this.page.title);

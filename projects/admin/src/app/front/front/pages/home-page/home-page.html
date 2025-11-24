@@ -18,7 +18,7 @@
 
 
 
-<div class="row mt-1 px-2 mb-4 g-md-5">
+<div class="row px-2 mb-4 g-md-5">
     <div class="col-12  col-md-8" >
         <div class="text-uppercase text-success mt-1">Prochains tournois</div>
         <app-tournaments [displayTitle]="false" [row_cols]="tournaments_row_cols"></app-tournaments>
@@ -49,8 +49,14 @@
 
 <ng-template #birthdays>
     <div *ngIf="logged_member$ | async as logged_member" class="d-none d-md-block">
-        <div class="card-body">
-            <app-generic-page [page_title]="MENU_TITLES.BIRTHDAYS"></app-generic-page>
+        <div *ngIf="next_birthdays.length > 0" class="card-body">
+            <div class="text-uppercase text-success mb-2">Prochains anniversaires</div>
+            <div *ngFor="let day_birthdays of next_birthdays" class="mb-3">
+                <div class="fw-bold">{{ day_birthdays.day | date:'EEEE d MMMM':'':'fr-FR' }}</div>
+                <div *ngFor="let member of day_birthdays.members">
+                    <i class="bi bi-gift-fill text-danger me-1"></i>{{ member.firstname }} {{ member.lastname }}  
+                </div>
+            </div>
         </div>
     </div>
 </ng-template>

@@ -56,6 +56,14 @@ export class UiConfComponent implements OnInit {
         LG: [4, [Validators.min(1), Validators.max(6)]],
         XL: [6, [Validators.min(1), Validators.max(6)]]
       }, { validators: this.breakpointsOrderValidator }),
+      // number of lines shown before showing a Read More link
+      read_more_lines: [3, [Validators.min(0), Validators.max(20)]],
+      // whether hovering unfolds the card entirely
+      unfold_on_hover: [false],
+      // hover delay in milliseconds before unfolding
+      hover_unfold_delay_ms: [500, [Validators.min(0), Validators.max(10000)]],
+      // hover unfold animation duration (ms)
+      hover_unfold_duration_ms: [300, [Validators.min(0), Validators.max(10000)]],
       tournaments_type: this.fb.array([]),
       default_tournament_image: [''],
       // `homepage` booleans removed from UI config; breakpoints stay editable at top-level form groups
@@ -234,6 +242,10 @@ export class UiConfComponent implements OnInit {
         LG: news.LG ?? 4,
         XL: news.XL ?? 6
       },
+      read_more_lines: homepage.read_more_lines ?? ui?.read_more_lines ?? 3,
+      unfold_on_hover: homepage.unfold_on_hover ?? ui?.unfold_on_hover ?? false,
+      hover_unfold_delay_ms: homepage.hover_unfold_delay_ms ?? ui?.hover_unfold_delay_ms ?? 500,
+      hover_unfold_duration_ms: homepage.hover_unfold_duration_ms ?? ui?.hover_unfold_duration_ms ?? 300,
       tournaments_type: [] as any,
       // homepage booleans removed; breakpoints are patched/handled separately
       thumbnail: {
@@ -324,8 +336,15 @@ export class UiConfComponent implements OnInit {
       payload.homepage = { ...(formVal.homepage || {}) };
       payload.homepage.tournaments_row_cols = formVal.tournaments_row_cols;
       payload.homepage.news_row_cols = formVal.news_row_cols;
+      // persist read_more_lines, unfold_on_hover and hover_unfold_delay_ms if present in the form
+      if (formVal.read_more_lines !== undefined) payload.homepage.read_more_lines = formVal.read_more_lines;
+      if (formVal.unfold_on_hover !== undefined) payload.homepage.unfold_on_hover = !!formVal.unfold_on_hover;
+      if (formVal.hover_unfold_delay_ms !== undefined) payload.homepage.hover_unfold_delay_ms = Number(formVal.hover_unfold_delay_ms);
+      if (formVal.hover_unfold_duration_ms !== undefined) payload.homepage.hover_unfold_duration_ms = Number(formVal.hover_unfold_duration_ms);
 
       // Save UI settings into dedicated file and publish immediately
+      // Debug: log tournaments_type payload to help diagnose persistence issues
+      // debug log removed
       await this.systemDataService.save_ui_settings(payload);
       // Refresh export blob so "Exporter" downloads the most recent saved state
       this.export_file_url = this.fileService.json_to_blob(payload);
@@ -354,6 +373,10 @@ export class UiConfComponent implements OnInit {
       preview.homepage = { ...(formVal.homepage || {}) };
       preview.homepage.tournaments_row_cols = formVal.tournaments_row_cols;
       preview.homepage.news_row_cols = formVal.news_row_cols;
+      if (formVal.read_more_lines !== undefined) preview.homepage.read_more_lines = formVal.read_more_lines;
+      if (formVal.unfold_on_hover !== undefined) preview.homepage.unfold_on_hover = !!formVal.unfold_on_hover;
+      if (formVal.hover_unfold_delay_ms !== undefined) preview.homepage.hover_unfold_delay_ms = Number(formVal.hover_unfold_delay_ms);
+      if (formVal.hover_unfold_duration_ms !== undefined) preview.homepage.hover_unfold_duration_ms = Number(formVal.hover_unfold_duration_ms);
       this.systemDataService.patchUiSettings(preview);
       // Update export blob to reflect the previewed state
       this.export_file_url = this.fileService.json_to_blob(preview);

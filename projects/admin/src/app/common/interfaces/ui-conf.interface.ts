@@ -22,17 +22,25 @@ export interface UIConfiguration {
   homepage: {
     tournaments_row_cols: BreakpointsSettings;
     news_row_cols: BreakpointsSettings;
+    // number of lines shown before a 'read more' link is displayed
+    read_more_lines?: number;
+    // when true, hovering a news card will unfold it entirely
+    unfold_on_hover?: boolean;
+    // delay in milliseconds before unfolding on hover
+    hover_unfold_delay_ms?: number;
+    // duration in milliseconds for the unfold animation
+    hover_unfold_duration_ms?: number;
   };
 
   // Mapping of tournament type keyword -> thumbnail path
   tournaments_type?: { [key: string]: string };
-  // Optional explicit default tournament image path (S3 path)
   default_tournament_image?: string;
 
-  
 
   frontBannerEnabled?: boolean;
   homepage_intro?: string;
+
+
   // thumbnail sizing used by site image processing
   thumbnail?: ImageSize;
   // future UI settings can be added here

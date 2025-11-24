@@ -84,6 +84,34 @@
                 Les valeurs doivent être croissantes : SM ≤ MD ≤ LG ≤ XL
               </div>
             </div>
+            <div class="mt-2">
+              <label class="form-label">Nombre de lignes avant 'Lire la suite'</label>
+              <div class="input-group input-group-sm" style="max-width:6rem;">
+                <input type="number" class="form-control text-center" formControlName="read_more_lines" min="0" max="20" />
+              </div>
+              <div class="small text-muted mt-1">0 = afficher tout, sinon nombre de lignes visibles avant lien</div>
+            </div>
+            <div class="mt-2">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch" id="unfoldOnHover" formControlName="unfold_on_hover">
+                <label class="form-check-label" for="unfoldOnHover">Déplier au survol (hover)</label>
+              </div>
+              <div class="small text-muted mt-1">Si activé, survoler une carte news affichera tout le contenu.</div>
+            </div>
+            <div class="mt-2">
+              <label class="form-label">Délai (ms) avant dépliage au survol</label>
+              <div class="input-group input-group-sm" style="max-width:8rem;">
+                <input type="number" class="form-control text-center" formControlName="hover_unfold_delay_ms" min="0" max="10000" />
+              </div>
+              <div class="small text-muted mt-1">Délai en millisecondes avant d'ouvrir la carte au survol (ex: 500)</div>
+            </div>
+            <div class="mt-2">
+              <label class="form-label">Durée animation (ms) du dépliage</label>
+              <div class="input-group input-group-sm" style="max-width:8rem;">
+                <input type="number" class="form-control text-center" formControlName="hover_unfold_duration_ms" min="0" max="10000" />
+              </div>
+              <div class="small text-muted mt-1">Durée en millisecondes de l'animation d'ouverture (ex: 300)</div>
+            </div>
           </div>
         </div>
       </div>

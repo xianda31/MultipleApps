@@ -55,7 +55,6 @@ export enum MENU_TITLES {
     LEGALS = 'mentions légales',
     CONTACTS = 'contacts',
     POUBELLE = 'poubelle',
-    BIRTHDAYS = 'anniversaires',
     AUTRES_RDV = 'autres rendez-vous',
 }
 export enum EXTRA_TITLES {

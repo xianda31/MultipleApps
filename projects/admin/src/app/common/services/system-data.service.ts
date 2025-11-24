@@ -194,6 +194,15 @@ export class SystemDataService {
     // Merge incoming settings with current cache (shallow) and normalize breakpoints
     const existing = this._ui_settings || ({} as UIConfiguration);
     const merged: UIConfiguration = { ...(existing as any), ...(ui as any) } as UIConfiguration;
+    // If the admin provided a full `tournaments_type` mapping, ensure it replaces the cached one
+    try {
+      if ((ui as any)?.tournaments_type !== undefined) {
+        (merged as any).tournaments_type = (ui as any).tournaments_type;
+      }
+      if ((ui as any)?.default_tournament_image !== undefined) {
+        (merged as any).default_tournament_image = (ui as any).default_tournament_image;
+      }
+    } catch (e) { /* ignore */ }
     // Ensure breakpoints live under merged.homepage; accept legacy top-level keys
     (merged as any).homepage = (merged as any).homepage || {};
     const legacyT = (merged as any).tournaments_row_cols || (merged as any).homepage?.tournaments_row_cols;
@@ -206,6 +215,9 @@ export class SystemDataService {
 
     this._ui_settings = merged;
     try { this._ui_settings$.next(this._ui_settings); } catch (e) { /* ignore */ }
+
+    // Debug: log current tournaments_type after merge
+    // debug log removed
 
     // Persist to S3 in background (log errors)
     this.fileService.upload_to_S3(this._ui_settings, 'system/', 'ui_settings.txt').catch((err) => {

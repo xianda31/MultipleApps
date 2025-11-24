@@ -1,7 +1,7 @@
 <div [ngClass]="rowCols()">
   @for (snippet of snippets; track snippet.id) {
     <div class="col">
-      <div class="card h-100 nice_shadow">
+      <div class="card h-100 nice_shadow" (mouseenter)="setHover(snippet.id)" (mouseleave)="clearHover()">
         <div class="row align-items-stretch g-0">
           <div class="col col-sm-3 col-md-5 d-flex">
             <div class="overflow-hidden w-100" style="height: 8rem;">
@@ -16,10 +16,12 @@
             </div>
           </div>
         </div>
-        <div class="card-body">
+          <div class="card-body">
           <div class="text-muted small">Publié le {{snippet.updatedAt| date:'shortDate'}} </div>
           <!-- Always apply visual line clamp for consistent card heights -->
-          <span #clampRef class="card-text tighter-html line-clamp-2" [innerHTML]="stringToSafeHtml(snippet.content)"></span>
+          <div #clampContainer class="clamp-container" style="overflow:hidden;" (click)="onTapToggle(snippet.id, $event)">
+            <span #clampRef class="card-text tighter-html" [ngStyle]="getClampStyle(snippet.id)" [innerHTML]="stringToSafeHtml(snippet.content)"></span>
+          </div>
           <!-- Show link only if text is actually overflowing (clamped) -->
           @if (read_more && isOverflow(snippet.id)) {
             <span (click)="readMore(snippet)" class="text-info ms-1" style="cursor:pointer;display:inline">... Lire la suite</span>

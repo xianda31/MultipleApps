@@ -63,6 +63,8 @@ export class HomePage {
       });
   }
   ngOnInit(): void {
+
+    this.getNextBirthdays();
     this.logged_member$ = this.auth.logged_member$;
 
     this.titleService.setTitle('Accueil');
@@ -73,21 +75,21 @@ export class HomePage {
       // this.sympathisants = members.filter(m => (m.is_sympathisant === true) && (m.season === season)).length;
     });
 
-      this.fileService.list_files(this.home_folder + '/').pipe(
-        map((S3items) => S3items.filter(item => item.size !== 0)),
-        tap((items) => {if(items.length === 0) console.warn('Album %s is empty');}),
-        switchMap((S3items) => {
-          return combineLatest(
-            S3items.map(item => this.fileService.getPresignedUrl$((item.path)))
-          )
-        })
-      ).subscribe((items) => { 
-         this.photos.push(...items);
-         this.photo_count = this.photos.length;
-         // prepare next index once photos are known
-         this.next_index = (this.photo_index + 1) % this.photo_count;
-        // console.log('Home photos loaded', this.photos.length);
-      });
+    this.fileService.list_files(this.home_folder + '/').pipe(
+      map((S3items) => S3items.filter(item => item.size !== 0)),
+      tap((items) => { if (items.length === 0) console.warn('Album %s is empty'); }),
+      switchMap((S3items) => {
+        return combineLatest(
+          S3items.map(item => this.fileService.getPresignedUrl$((item.path)))
+        )
+      })
+    ).subscribe((items) => {
+      this.photos.push(...items);
+      this.photo_count = this.photos.length;
+      // prepare next index once photos are known
+      this.next_index = (this.photo_index + 1) % this.photo_count;
+      // console.log('Home photos loaded', this.photos.length);
+    });
 
     // start slideshow rotation with sequential fade (out then in)
     this.rotationSub = interval(this.ROTATION_TIME).subscribe(() => {
@@ -100,7 +102,7 @@ export class HomePage {
         img.decoding = 'async';
         img.loading = 'eager' as any;
         img.src = this.photos[next];
-      } catch {}
+      } catch { }
       // fade out current image
       this.opacity = 0;
       setTimeout(() => {
@@ -138,12 +140,16 @@ export class HomePage {
       { relativeTo: this.route });
   }
 
-  // goToNews(event: Event) {
-  //   event.preventDefault();
-  //   this.router.navigate(['/front/news']);
-  // }
-
   ngOnDestroy(): void {
     this.rotationSub?.unsubscribe();
+  }
+
+  next_birthdays: { day: string; members: Member[]; }[] = [];
+  getNextBirthdays() {
+    this.membersService.get_birthdays_this_next_days(7)
+      .subscribe((result: { [day: string]: Member[]; }) => {
+        this.next_birthdays = result ? Object.keys(result).sort().map(day => ({ day, members: result[day] })) : [];  
+        console.log('Next birthdays:', this.next_birthdays);
+      });
   }
 }
