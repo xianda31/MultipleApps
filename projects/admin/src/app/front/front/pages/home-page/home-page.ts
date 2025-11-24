@@ -138,10 +138,10 @@ export class HomePage {
       { relativeTo: this.route });
   }
 
-  goToNews(event: Event) {
-    event.preventDefault();
-    this.router.navigate(['/front/news']);
-  }
+  // goToNews(event: Event) {
+  //   event.preventDefault();
+  //   this.router.navigate(['/front/news']);
+  // }
 
   ngOnDestroy(): void {
     this.rotationSub?.unsubscribe();

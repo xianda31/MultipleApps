@@ -11,24 +11,23 @@
     <div class="d-none d-md-block col-md-4">
         <ng-container *ngTemplateOutlet="birthdays"></ng-container>
     </div>
+    <div class="d-block d-md-none px-1">
+        <ng-container *ngTemplateOutlet="whoarewe"></ng-container>
+    </div>
 </div>
 
 
-<div class="d-block d-md-none px-1">
-    <ng-container *ngTemplateOutlet="whoarewe"></ng-container>
-</div>
 
-
-<div class="row mt-3 px-1 mb-4 g-md-5">
-    <div class="col-12  col-md-8 bg-light" *ngIf="homepage_tournaments_enabled">
-        <span class="text-uppercase text-success">Prochains tournois</span>
+<div class="row mt-1 px-2 mb-4 g-md-5">
+    <div class="col-12  col-md-8" >
+        <div class="text-uppercase text-success mt-1">Prochains tournois</div>
         <app-tournaments [displayTitle]="false" [row_cols]="tournaments_row_cols"></app-tournaments>
     </div>
     
-    <div class="col-12  col-md-4 bg-light px-md-5" *ngIf="homepage_news_enabled">
-        <span class="text-uppercase text-success">Les dernières nouvelles</span>
-        <span class="text-info" (click)="goToNews($event)" style="cursor: pointer;">... accéder à la totalité des
-            informations</span>
+    <div class="col-12  col-md-4">
+        <div class="text-uppercase text-success mt-1">Les dernières nouvelles</div>
+        <!-- <div class="text-info" (click)="goToNews($event)" style="cursor: pointer;">... accéder à la totalité des
+            informations</div> -->
         <app-generic-page [row_cols]="news_row_cols" [page_title]="EXTRA_TITLES.HIGHLIGHTS"></app-generic-page>
     </div>
 </div>
