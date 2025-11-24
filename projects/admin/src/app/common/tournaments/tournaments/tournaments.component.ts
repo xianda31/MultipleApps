@@ -104,21 +104,11 @@ export class TournamentsComponent {
   }
   
 
-  // Template-friendly getter to avoid template type-check/casting issues.
   getImageUrl(tTeams: TournamentTeams): string | null {
     return (tTeams as any).image_url ?? null;
   }
 
 
-  icon_for(tTeams: TournamentTeams): string {
-    const _name = tTeams.subscription_tournament.organization_club_tournament.tournament_name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "");
-    if (_name.includes('roy')) return 'bi bi-award';
-    if (_name.includes('eleve')) return 'bi bi-mortarboard-fill';
-    if (_name.includes('accession')) return 'bi bi-mortarboard-fill';
-    if (_name.includes('regularite')) return 'bi bi-gear-fill';
-    if (_name.includes('coupe')) return 'bi bi-trophy-fill';
-    return '';
-  }
 
   registrated_in(tTeams: TournamentTeams): boolean {
 
