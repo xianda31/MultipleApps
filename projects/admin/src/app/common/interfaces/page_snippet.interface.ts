@@ -13,7 +13,8 @@ export interface Snippet {
     image_url?: string;
     pageId?: string;
     createdAt?: string;
-    updatedAt?: string;
+    updatedAt?: string;     // in ISO format
+    publishedAt?: string;  // in YYYY-MM-DD format
 }
 
 export type Snippet_input = Omit<Schema['Snippet']['type'], 'id' | 'createdAt' | 'updatedAt'>;

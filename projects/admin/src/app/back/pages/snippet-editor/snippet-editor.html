@@ -11,17 +11,17 @@
     </div>
 </div>
 
-<div class="border-1">
-    <div class="border rounded p-2 bg-white" style="min-height:2em;">
-        <i class="bi bi-pencil-square" (click)="onSnippetContentClick(snippet)"></i>
-        <span class="card-text tighter-html" [innerHTML]="stringToSafeHtml(snippet.content)"></span>
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex align-items-center gap-2">
+            <span class="form-label text-muted mb-0">publié le :</span>
+            <input type="date" [(ngModel)]="snippet.publishedAt" class="form-control form-control-sm mb-1 d-inline-block w-auto"
+                (keydown.enter)="saveSnippetSelected()" placeholder="publication">
+        </div>
     </div>
 </div>
-<!-- </div> -->
 
-<!-- <div class="card-footer"> -->
 <div class="row">
-
     <!-- toggle public visibility -->
     <div class="d-flex align-items-center gap-3">
         <div class="form-check form-switch mb-0">
@@ -35,8 +35,16 @@
             <label class="form-check-label text-muted">à la une</label>
         </div>
     </div>
-
 </div>
+<br>
+<i class="bi bi-pencil-square mt-2" (click)="onSnippetContentClick(snippet)"> edition du texte</i>
+<div class="border-1">
+    <div class="border rounded p-2 bg-white" style="min-height:2em;">
+        <span class="card-text tighter-html" [innerHTML]="stringToSafeHtml(snippet.content)"></span>
+    </div>
+</div>
+<!-- </div> -->
+
 
 <!-- image url input -->
 <div class="input-group input-group-sm mt-1">
@@ -85,41 +93,3 @@
         <i class="bi bi-x-circle"></i>
     </button>
 </div>
-
-<!-- </div> -->
-<!-- </div> -->
-
-<!-- <table class="table table-responsive table-borderless table-sm mt-3 test-table-tight">
-    <tbody>
-        <tr>
-            <td></td>
-            <td>♠ R D 9 6</td>
-            <td></td>
-        </tr>
-        <tr>
-            <td></td>
-            <td>♥ V 5 2</td>
-            <td></td>
-        </tr>
-        <tr>
-            <td></td>
-            <td>♦</td>
-            <td></td>
-        </tr>
-        <tr>
-            <td></td>
-            <td>♣A V 9 5</td>
-            <td></td>
-        </tr>
-        <tr>
-            <td>♠ X</td>
-            <td></td>
-            <td>♠R</td>
-        </tr>
-        <tr>
-            <td>♣ V</td>
-            <td></td>
-            <td></td>
-        </tr>
-        </tbody>
-    </table> -->

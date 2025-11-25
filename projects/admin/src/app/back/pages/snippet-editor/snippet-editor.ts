@@ -18,8 +18,6 @@ import { DomSanitizer } from '@angular/platform-browser';
 })
 export class SnippetEditor {
   @Input() snippet !: Snippet;
-  // @Input() snippetFreezed : boolean = false;
-  // @Output() snippetFreezedChange = new EventEmitter<boolean>();
 
   file_paths$ !: Observable<string[]>;
   thumbnails$ !: Observable<string[]>;
@@ -35,6 +33,13 @@ export class SnippetEditor {
   ) { }
 
   ngOnInit(): void {
+
+// initialize publication_date if not set
+    // Initialize publishedAt from updatedAt (ISO) converted to YYYY-MM-DD
+    if (!this.snippet.publishedAt) {
+      this.snippet.publishedAt = this.toDateInputValue(this.snippet.updatedAt) || '';
+    }
+
     this.albums$ = this.fileService.list_folders(S3_ROOT_FOLDERS.ALBUMS + '/');
 
     this.thumbnails$ = this.fileService.list_files(S3_ROOT_FOLDERS.IMAGES + '/').pipe(
@@ -48,7 +53,9 @@ export class SnippetEditor {
 
   saveSnippetSelected() {
     if (!this.snippet) return;
-    this.snippetService.updateSnippet(this.snippet)
+    // Send the snippet as-is; `publishedAt` is expected to be in YYYY-MM-DD form.
+    const payload: any = { ...this.snippet };
+    this.snippetService.updateSnippet(payload)
       .then((updatedSnippet) => {
         this.snippet = updatedSnippet;
       })
@@ -70,5 +77,16 @@ export class SnippetEditor {
     stringToSafeHtml(htmlString: string) {
     return this.sanitizer.bypassSecurityTrustHtml(htmlString) ;
   }
+
+  private toDateInputValue(value: any): string | undefined {
+    if (!value) return undefined;
+    const d = (value instanceof Date) ? value : new Date(value);
+    if (isNaN(d.getTime())) return undefined;
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
 
 }

@@ -86,8 +86,11 @@ export class GenericPageComponent implements OnInit, OnChanges {
         this.pages = pages;
         this.snippetService.listSnippets().subscribe(snippets => {
           this.snippets = snippets.map(s => {
-            s.pageId = undefined;;
-            return s;
+            s.pageId = undefined;
+    // Initialize publishedAt from updatedAt (ISO) converted to YYYY-MM-DD
+    if (!s.publishedAt) {
+      s.publishedAt = this.toDateInputValue(s.updatedAt) || '';
+    }            return s;
           });
           // update pageId for all snippets
           this.pages.forEach(page => {
@@ -199,4 +202,14 @@ export class GenericPageComponent implements OnInit, OnChanges {
     return Object.values(PAGE_TEMPLATES).includes(template);
   }
 
+
+    private toDateInputValue(value: any): string | undefined {
+    if (!value) return undefined;
+    const d = (value instanceof Date) ? value : new Date(value);
+    if (isNaN(d.getTime())) return undefined;
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
 }
