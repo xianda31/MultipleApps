@@ -20,7 +20,18 @@ export class SystemDataService {
   constructor(
     private fileService: FileService,
     private toastService: ToastService
-  ) { }
+  ) {
+    // Eagerly fetch UI settings to populate the cache and reduce race conditions
+    // where other services might save or read settings before they are loaded.
+    this.get_ui_settings().subscribe({
+      next: () => { /* cache populated */ },
+      error: () => { /* handled inside get_ui_settings */ }
+    });
+  }
+
+  // Preload UI settings early to populate the in-memory cache and avoid races
+  // where other code attempts to save or read UI settings before they are loaded.
+  ngOnInit?() {}
 
   // S3 download / upload
 
@@ -35,59 +46,24 @@ export class SystemDataService {
       }),
       switchMap(() => this._system_configuration$.asObservable())
     );
-    
-      // Remove legacy `tournaments` block if present to avoid writing old fields
-      try {
-        if ((this._ui_settings as any).tournaments) {
-          delete (this._ui_settings as any).tournaments;
-        }
-        // Also remove any lingering cardPerRow* top-level keys
-        const possibleLegacy = ['cardPerRowSm', 'cardPerRowMd', 'cardPerRowLg', 'cardPerRowXl'];
-        for (const k of possibleLegacy) {
-          if ((this._ui_settings as any)[k] !== undefined) delete (this._ui_settings as any)[k];
-        }
-      } catch (e) { /* ignore */ }
-
-      // Only persist UI settings if they are defined. Avoid uploading `undefined` which
-      // would write the literal string "undefined" to the S3 file (observed in S3).
-      if (this._ui_settings !== undefined) {
-        this.fileService.upload_to_S3(this._ui_settings, 'system/', 'ui_settings.txt').then(() => {
-        }).catch((err) => {
-          console.warn('save_ui_settings: upload error', err);
-        });
-      } else {
-        console.warn('[SystemDataService] get_configuration(): _ui_settings is undefined, skipping upload to system/ui_settings.txt');
-      }
-      return remote_load$;
-    }
+ 
+    return remote_load$;
+  }
 
   /**
    * UI settings live methods: kept in a separate file `system/ui_settings.txt`.
    */
   get_ui_settings(): Observable<UIConfiguration> {
-    const defaults: UIConfiguration = {
-      template: { logo_path: '', background_color: '#ffffff' },
-      homepage: { tournaments_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 }, news_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 } },
-      frontBannerEnabled: false,
-      homepage_intro: ''
-    };
+    const defaults: UIConfiguration = this.getDefaultUi();
 
     console.debug('[SystemDataService] get_ui_settings(): attempting to download system/ui_settings.txt');
     const remote_load$ = from(this.fileService.download_json_file('system/ui_settings.txt')).pipe(
       tap((conf) => {
         // Simple load: expect `ui_settings.txt` to conform to `UIConfiguration`.
-        // Map legacy top-level tournaments/news into homepage if present
-        if (conf && ((conf as any).tournaments_row_cols || (conf as any).news_row_cols)) {
-          conf.homepage = conf.homepage || {};
-          conf.homepage.tournaments_row_cols = (conf as any).tournaments_row_cols || conf.homepage.tournaments_row_cols;
-          conf.homepage.news_row_cols = (conf as any).news_row_cols || conf.homepage.news_row_cols;
-          delete (conf as any).tournaments_row_cols;
-          delete (conf as any).news_row_cols;
-        }
         this._ui_settings = conf;
         this._ui_settings$.next(this._ui_settings);
         try {
-          console.info('[SystemDataService] get_ui_settings(): loaded ui_settings', { timestamp: new Date().toISOString(), keys: Object.keys(conf || {}) });
+          // console.info('[SystemDataService] get_ui_settings(): loaded ui_settings', { timestamp: new Date().toISOString(), keys: Object.keys(conf || {}) });
         } catch (e) { /* ignore logging issues */ }
       }),
       catchError((err) => {
@@ -234,11 +210,25 @@ export class SystemDataService {
     // Debug: log current tournaments_type after merge
     // debug log removed
 
-    // Persist to S3 in background (log errors)
-    this.fileService.upload_to_S3(this._ui_settings, 'system/', 'ui_settings.txt').catch((err) => {
+    // Persist to S3 in background (log errors). If somehow _ui_settings is undefined,
+    // use a safe default payload to avoid uploading the literal string "undefined".
+    const payload = this._ui_settings ?? this.getDefaultUi();
+    if (this._ui_settings === undefined) {
+      console.warn('[SystemDataService] save_ui_settings(): _ui_settings undefined at persist time, using defaults');
+    }
+    this.fileService.upload_to_S3(payload, 'system/', 'ui_settings.txt').catch((err) => {
       console.warn('save_ui_settings: upload error', err);
       try { console.error('[SystemDataService] save_ui_settings(): upload_to_S3 failed', { err, timestamp: new Date().toISOString() }); } catch (e) { /* ignore */ }
     });
+  }
+
+  private getDefaultUi(): UIConfiguration {
+    return {
+      template: { logo_path: '', background_color: '#ffffff' },
+      homepage: { tournaments_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 }, news_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 } },
+      frontBannerEnabled: false,
+      homepage_intro: ''
+    } as UIConfiguration;
   }
 
 
