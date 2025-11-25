@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { SystemConfiguration } from '../interfaces/system-conf.interface';
 import { UIConfiguration } from '../interfaces/ui-conf.interface';
-import { BehaviorSubject, from, Observable, switchMap, tap, catchError, of, combineLatest, map } from 'rxjs';
+import { BehaviorSubject, from, Observable, switchMap, tap, catchError, of, combineLatest, map, first } from 'rxjs';
 import { FileService } from './files.service';
 import { ToastService } from './toast.service';
 import { normalizeBreakpoints } from '../utils/ui-utils';
@@ -21,19 +21,7 @@ export class SystemDataService {
     private fileService: FileService,
     private toastService: ToastService
   ) {
-    // Eagerly fetch UI settings to populate the cache and reduce race conditions
-    // where other services might save or read settings before they are loaded.
-    this.get_ui_settings().subscribe({
-      next: () => { /* cache populated */ },
-      error: () => { /* handled inside get_ui_settings */ }
-    });
   }
-
-  // Preload UI settings early to populate the in-memory cache and avoid races
-  // where other code attempts to save or read UI settings before they are loaded.
-  ngOnInit?() {}
-
-  // S3 download / upload
 
 
    get_configuration(): Observable<SystemConfiguration> {
@@ -42,12 +30,11 @@ export class SystemDataService {
       tap((conf) => {
         this._system_configuration = conf;
         this._system_configuration$.next(this._system_configuration);
-        // if (this.trace_on()) console.log(' configuration from S3', this._system_configuration);
       }),
       switchMap(() => this._system_configuration$.asObservable())
     );
  
-    return remote_load$;
+    return this._system_configuration ? of(this._system_configuration) : remote_load$;
   }
 
   /**
@@ -56,7 +43,7 @@ export class SystemDataService {
   get_ui_settings(): Observable<UIConfiguration> {
     const defaults: UIConfiguration = this.getDefaultUi();
 
-    console.debug('[SystemDataService] get_ui_settings(): attempting to download system/ui_settings.txt');
+    // attempting to download system/ui_settings.txt
     const remote_load$ = from(this.fileService.download_json_file('system/ui_settings.txt')).pipe(
       tap((conf) => {
         // Simple load: expect `ui_settings.txt` to conform to `UIConfiguration`.
@@ -160,9 +147,7 @@ export class SystemDataService {
       tap((conf) => {
         this._ui_settings = conf;
         try { this._ui_settings$.next(this._ui_settings); } catch (e) { /* ignore */ }
-        try {
-          console.info('[SystemDataService] fetch_ui_settings(): fetched ui_settings', { timestamp: new Date().toISOString(), keys: Object.keys(conf || {}) });
-        } catch (e) { /* ignore logging issues */ }
+        // fetched ui_settings (silent)
       }),
       catchError((err) => {
         const defaults: UIConfiguration = {
@@ -284,7 +269,7 @@ export class SystemDataService {
     this._system_configuration.season = season;
     console.log('new season', this._system_configuration.season);
     this.save_configuration(this._system_configuration);
-    this._system_configuration$.next(this._system_configuration);
+    // Note: save_configuration already publishes the updated configuration.
   }
 
 
