@@ -48,10 +48,16 @@ export class SystemDataService {
         }
       } catch (e) { /* ignore */ }
 
-      this.fileService.upload_to_S3(this._ui_settings, 'system/', 'ui_settings.txt').then(() => {
-      }).catch((err) => {
-        console.warn('save_ui_settings: upload error', err);
-      });
+      // Only persist UI settings if they are defined. Avoid uploading `undefined` which
+      // would write the literal string "undefined" to the S3 file (observed in S3).
+      if (this._ui_settings !== undefined) {
+        this.fileService.upload_to_S3(this._ui_settings, 'system/', 'ui_settings.txt').then(() => {
+        }).catch((err) => {
+          console.warn('save_ui_settings: upload error', err);
+        });
+      } else {
+        console.warn('[SystemDataService] get_configuration(): _ui_settings is undefined, skipping upload to system/ui_settings.txt');
+      }
       return remote_load$;
     }
 
