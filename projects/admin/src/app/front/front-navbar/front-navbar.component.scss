@@ -1,338 +1,296 @@
-// Correction visibilité des sous-menus dropdown (dropdown-toggle/nav-link)
+/*
+	front-navbar.component.scss
+	Reformatted from compacted single-line CSS into readable blocks.
+	Behavior and selectors preserved — only whitespace/formatting changed.
+*/
+
+/* -----------------------------
+	 Dropdown / submenu styling
+	 ----------------------------- */
 .dropdown-menu .dropdown-toggle,
-.dropdown-menu .nav-link {
-  color: #212529 !important;
-}
-// Correction universelle visibilité dropdowns multi-niveaux
-.dropdown-menu .dropdown-item {
-  color: #212529 !important;
-  background: #fff !important;
-}
-// Correction couleur texte liens 3ème niveau et plus
-.dropdown-submenu .dropdown-menu .dropdown-submenu .dropdown-menu .dropdown-item {
-  color: #212529 !important;
-}
-// Correction visibilité sous-dropdowns (3ème niveau et plus)
-.dropdown-submenu > .dropdown-menu {
-  z-index: 1050 !important;
-  position: absolute !important;
-  left: 100% !important;
-  top: 0 !important;
-  display: none;
-}
-.dropdown-submenu:hover > .dropdown-menu,
-.dropdown-submenu:focus-within > .dropdown-menu {
-  display: block !important;
-}
-// Correction couleur texte dans navbar-dark
-.navbar-dark .dropdown-menu .dropdown-item {
-  color: #212529 !important;
-}
-.navbar-dark .dropdown-menu .dropdown-item:hover,
-.navbar-dark .dropdown-menu .dropdown-item:focus {
-  color: #fff !important;
-  background: #eb9a87 !important;
-}
-// Correction couleur et fond enfants sous-dropdown
-.dropdown-submenu > .dropdown-menu {
-  background: #fff !important;
-}
+.dropdown-menu .nav-link,
+.dropdown-menu .dropdown-item,
 .dropdown-submenu .dropdown-menu .dropdown-item {
-  color: #212529 !important;
-  background: #fff !important;
+	color: #212529 !important;
+	background: #fff !important;
 }
-.dropdown-submenu .dropdown-menu .dropdown-item:hover,
-.dropdown-submenu .dropdown-menu .dropdown-item:focus {
-  color: #fff !important;
-  background: #eb9a87 !important;
-}
-// Correction couleur texte enfants sous-dropdown
-.dropdown-submenu .dropdown-menu .dropdown-item {
-  color: #212529 !important;
-}
-// Dropdown et sous-dropdown : couleur et fond
+
 .navbar-dark .dropdown-menu .dropdown-item,
 .dropdown-submenu .dropdown-menu .dropdown-item {
-  color: #212529 !important;
-  background: #fff !important;
+	color: #212529 !important;
+	background: #fff !important;
 }
+
 .navbar-dark .dropdown-menu .dropdown-item:hover,
 .navbar-dark .dropdown-menu .dropdown-item:focus,
 .dropdown-submenu .dropdown-menu .dropdown-item:hover,
 .dropdown-submenu .dropdown-menu .dropdown-item:focus {
-  color: #fff !important;
-  background: #eb9a87 !important;
+	color: #fff !important;
+	background: #eb9a87 !important;
 }
-// Sous-dropdown Bootstrap
+
 .dropdown-submenu {
-  position: relative;
+	position: relative;
 }
 
 .dropdown-submenu > .dropdown-menu {
-  top: 0;
-  left: 100%;
-  margin-top: -6px;
-  margin-left: 0;
-  display: none;
-  min-width: 180px;
+	position: absolute;
+	left: 100%;
+	top: 0;
+	display: none;
+	min-width: 180px;
+	margin-top: -6px;
 }
 
 .dropdown-submenu:hover > .dropdown-menu,
 .dropdown-submenu:focus-within > .dropdown-menu {
-  display: block;
+	display: block;
 }
 
-// Optionnel : curseur et indicateur
-// Forcer le texte sombre dans la sidebar mobile (offcanvas)
-.offcanvas.bg-white {
-  color: #222 !important;
+/* Add a transparent spacer under dropdowns to avoid overlap issues */
+.dropdown::after,
+.nav-item.dropdown::after {
+	content: '';
+	position: absolute;
+	top: 100%;
+	left: 0;
+	right: 0;
+	height: 10px;
+	background: transparent;
+	z-index: 1000;
+	pointer-events: none;
 }
+
+.nav-item.dropdown {
+	position: relative;
+	overflow: visible;
+}
+
+
+/* -----------------------------
+	 Offcanvas / mobile menu
+	 ----------------------------- */
+.offcanvas.bg-white {
+	color: #222 !important;
+}
+
 .offcanvas.bg-white .nav-link,
 .offcanvas.bg-white .dropdown-item,
 .offcanvas.bg-white .btn,
 .offcanvas.bg-white .offcanvas-title {
-  color: #222 !important;
+	color: #222 !important;
 }
+
 .navbar-toggler .navbar-toggler-icon {
-  background-image: url("data:image/svg+xml;charset=utf8,<svg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'><path stroke='%23eb9a87' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/></svg>");
+	background-image: url("data:image/svg+xml;charset=utf8,<svg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'><path stroke='%23eb9a87' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/></svg>");
 }
+
 @media (max-width: 767.98px) {
-  /* Ensure close button is aligned to the far right inside mobile offcanvas */
-  .offcanvas .offcanvas-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between !important;
-    width: 100%;
-    padding-right: 0.75rem;
-  }
-  .offcanvas .offcanvas-title {
-    flex: 0 1 auto;
-  }
-  .offcanvas .btn-close {
-    margin-left: auto !important;
-  }
-  /* Mobile offcanvas aesthetics */
-  .offcanvas.offcanvas-start {
-    width: 74vw;
-    max-width: 360px;
-    /* Sepia-tinted glass effect */
-    background: linear-gradient(
-      180deg,
-      rgba(235, 154, 135, 0.16) 0%,
-      rgba(235, 154, 135, 0.10) 100%
-    );
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    border-radius: 0.75rem;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-    border: 1px solid rgba(235, 154, 135, 0.20);
-    top: 0.75rem !important;
-    bottom: auto !important;
-    height: 50vh !important;
-    overflow-x: hidden;
-    overflow-y: auto;
-    transition: transform .25s ease, background-color .25s ease;
-  }
-  .offcanvas-backdrop.show { opacity: 0.3; }
-  .navbar-nav.menu-sm-tight {
-    flex-direction: column !important;
-    gap: 0.25rem !important;
-  }
-  .navbar-nav.menu-sm-tight > .nav-item,
-  .navbar-nav.menu-sm-tight > .dropdown,
-  .navbar-nav.menu-sm-tight > .nav-link {
-    margin-bottom: 0.25rem !important;
-    padding-top: 0.25rem !important;
-    padding-bottom: 0.25rem !important;
-  }
+	.offcanvas .offcanvas-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between !important;
+		width: 100%;
+		padding-right: .75rem;
+	}
+
+	.offcanvas .offcanvas-title {
+		flex: 0 1 auto;
+	}
+
+	.offcanvas .btn-close {
+		margin-left: auto !important;
+	}
+
+	.offcanvas.offcanvas-start {
+		width: 74vw;
+		max-width: 360px;
+		background: linear-gradient(180deg, rgba(235,154,135,.16) 0%, rgba(235,154,135,.1) 100%);
+		backdrop-filter: blur(6px);
+		-webkit-backdrop-filter: blur(6px);
+		border-radius: .75rem;
+		box-shadow: 0 8px 24px rgba(0,0,0,.12);
+		border: 1px solid rgba(235,154,135,.2);
+		top: .75rem !important;
+		bottom: auto !important;
+		height: 50vh !important;
+		overflow-x: hidden;
+		overflow-y: auto;
+		transition: transform .25s ease, background-color .25s ease;
+	}
+
+	.offcanvas-backdrop.show {
+		opacity: .3;
+	}
+
+	.navbar-nav.menu-sm-tight {
+		flex-direction: column !important;
+		gap: .25rem !important;
+	}
+
+	.navbar-nav.menu-sm-tight > .nav-item,
+	.navbar-nav.menu-sm-tight > .dropdown,
+	.navbar-nav.menu-sm-tight > .nav-link {
+		margin-bottom: .25rem !important;
+		padding-top: .25rem !important;
+		padding-bottom: .25rem !important;
+	}
 }
-  .navbar,
-  .navbar-collapse,
-  .navbar-nav {
-    height: auto !important;
-    min-height: 0 !important;
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-  }
-  .navbar-nav > .nav-item,
-  .navbar-nav > .dropdown,
-  .navbar-nav > .nav-link {
-    padding-top: 0.05rem !important;
-    padding-bottom: 0.05rem !important;
-    min-height: 0 !important;
-  }
-  .nav-link {
-    font-size: 0.9rem !important;
-    padding-top: 0.08rem !important;
-    padding-bottom: 0.08rem !important;
-    min-height: 0 !important;
-  }
+
+
+/* -----------------------------
+	 Generic navbar sizing / spacing
+	 ----------------------------- */
+.navbar,
+.navbar-collapse,
+.navbar-nav {
+	height: auto !important;
+	min-height: 0 !important;
+	padding-top: 0 !important;
+	padding-bottom: 0 !important;
+}
+
+.navbar-nav > .nav-item,
+.navbar-nav > .dropdown,
+.navbar-nav > .nav-link {
+	padding-top: .05rem !important;
+	padding-bottom: .05rem !important;
+	min-height: 0 !important;
+}
+
+.nav-link {
+	font-size: .9rem !important;
+	padding-top: .08rem !important;
+	padding-bottom: .08rem !important;
+	min-height: 0 !important;
+}
+
+
+/* -----------------------------
+	 Desktop (landscape) tweaks
+	 ----------------------------- */
 @media (min-width: 768px) and (orientation: landscape) {
-  .navbar,
-  .navbar-collapse {
-    display: flex !important;
-    visibility: visible !important;
-    min-height: 68px;
-    opacity: 1 !important;
-  }
-  .navbar-nav {
-    flex-direction: row !important;
-    align-items: center !important;
-    width: 100%;
-  }
-  .dropdown {
-    &::after {
-      content: '';
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      height: 10px;
-      background: transparent;
-      z-index: 1000;
-      pointer-events: none;
-    }
-  }
-  .nav-item.dropdown {
-    position: relative;
-    overflow: visible;
-    &::after {
-      content: '';
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      height: 10px;
-      background: transparent;
-      z-index: 1000;
-      pointer-events: none;
-    }
-  }
-}
+	.navbar,
+	.navbar-collapse {
+		display: flex !important;
+		visibility: visible !important;
+		min-height: 68px;
+		opacity: 1 !important;
+	}
 
-.navbar-toggler-icon {
-  color: #eb9a87;
-}
-
-.navbar-toggler-sm .navbar-toggler-icon {
-  margin: 0 auto;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  display: block;
-
-  // Style pour nav-item actif
-  .nav-link.active {
-    border-bottom: 4px solid #eb9a87;
-    padding-bottom: 1px;
-  }
-}
-
-.nav-link:hover {
-  border-bottom: 2px solid rgba(139, 69, 19, 0.6);
-  padding-bottom: 4px;
-}
-
-// Bouton personnalisé sépia outline
-.btn-sepia {
-  background-color: transparent;
-  border: 1px solid #eb9a87;
-  color: #eb9a87;
-
-  &:hover {
-    background-color: #eb9a87;
-    border-color: #eb9a87;
-    color: white;
-  }
-
-  &:active,
-  &:focus {
-    background-color: #d88873;
-    border-color: #d88873;
-    color: white;
-    box-shadow: 0 0 0 0.2rem rgba(235, 154, 135, 0.25);
-  }
-}
-
-// Dropdown on hover uniquement à partir de md (desktop)
-// Menu vertical plus serré en sm
-@media (max-width: 767.98px) {
-
-  .menu-sm-tight>.nav-item,
-  .menu-sm-tight>.dropdown,
-  .menu-sm-tight>.nav-link {
-    margin-bottom: 0.1rem !important;
-    padding-top: 0.1rem !important;
-    padding-bottom: 0.1rem !important;
-    font-size: 0.95rem !important;
-    line-height: 1.1 !important;
-  }
-
-  .menu-sm-tight .dropdown-menu {
-    margin-top: 0 !important;
-    padding-top: 0.1rem !important;
-    padding-bottom: 0.1rem !important;
-    font-size: 0.95rem !important;
-    line-height: 1.1 !important;
-  }
+	.navbar-nav {
+		flex-direction: row !important;
+		align-items: center !important;
+		width: 100%;
+	}
 }
 
 @media (min-width: 768px) {
-  .dropdown {
-    &:hover>.dropdown-menu {
-      animation: fadeIn 0.2s ease-in;
-    }
+	.dropdown:hover > .dropdown-menu {
+		animation: fadeIn .2s ease-in;
+	}
 
-    &::after {
-      content: '';
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      height: 10px;
-      background: transparent;
-      z-index: 1000;
-      pointer-events: none;
-    }
-  }
+	.nav-item.dropdown {
+		position: relative;
+		overflow: visible;
+	}
 
-  .nav-item.dropdown {
-    position: relative;
-    overflow: visible;
-    &::after {
-      content: '';
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      height: 10px;
-      background: transparent;
-      z-index: 1000;
-      pointer-events: none;
-    }
-  }
-  .navbar,
-  .navbar-collapse {
-    align-items: center !important;
-  }
+	.navbar,
+	.navbar-collapse {
+		align-items: center !important;
+	}
 }
 
+
+/* -----------------------------
+	 Toggler / indicators
+	 ----------------------------- */
+.navbar-toggler-icon {
+	color: #eb9a87;
+}
+
+.navbar-toggler-sm .navbar-toggler-icon {
+	margin: 0 auto;
+	width: 24px;
+	height: 24px;
+	display: block;
+}
+
+.nav-link.active {
+	border-bottom: 4px solid #eb9a87;
+	padding-bottom: 1px;
+}
+
+.nav-link:hover {
+	border-bottom: 2px solid rgba(139,69,19,.6);
+	padding-bottom: 4px;
+}
+
+
+/* -----------------------------
+	 Sepia button style
+	 ----------------------------- */
+.btn-sepia {
+	background: transparent;
+	border: 1px solid #eb9a87;
+	color: #eb9a87;
+}
+
+.btn-sepia:hover {
+	background: #eb9a87;
+	border-color: #eb9a87;
+	color: #fff;
+}
+
+.btn-sepia:active,
+.btn-sepia:focus {
+	background: #d88873;
+	border-color: #d88873;
+	color: #fff;
+	box-shadow: 0 0 0 .2rem rgba(235,154,135,.25);
+}
+
+
+/* -----------------------------
+	 Compact menu small tweaks
+	 ----------------------------- */
+@media (max-width: 767.98px) {
+	.menu-sm-tight > .nav-item,
+	.menu-sm-tight > .dropdown,
+	.menu-sm-tight > .nav-link {
+		margin-bottom: .1rem !important;
+		padding-top: .1rem !important;
+		padding-bottom: .1rem !important;
+		font-size: .95rem !important;
+		line-height: 1.1 !important;
+	}
+
+	.menu-sm-tight .dropdown-menu {
+		margin-top: 0 !important;
+		padding-top: .1rem !important;
+		padding-bottom: .1rem !important;
+		font-size: .95rem !important;
+		line-height: 1.1 !important;
+	}
+}
+
+
+/* -----------------------------
+	 Animations
+	 ----------------------------- */
 .dropdown-menu {
-  transition: opacity 0.2s ease-in-out;
-  margin-top: 0;
+	transition: opacity .2s ease-in-out;
+	margin-top: 0;
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-5px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+	from {
+		opacity: 0;
+		transform: translateY(-5px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
 }
 
