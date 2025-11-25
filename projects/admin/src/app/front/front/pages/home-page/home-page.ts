@@ -45,6 +45,10 @@ export class HomePage {
   homepage_intro_text: string = '';
   tournaments_row_cols: BreakpointsSettings = { SM: 1, MD: 2, LG: 3, XL: 4 };
   news_row_cols: BreakpointsSettings = { SM: 1, MD: 2, LG: 3, XL: 2 };
+  // home layout ratio: 1 = equal cols (6/6), 2 = tournaments wider (8/4)
+  home_layout_ratio: number = 2;
+  tournamentsColClass: string = 'col-12 col-md-8';
+  newsColClass: string = 'col-12 col-md-4';
   logoPreview: string | null = null;
 
   constructor(
@@ -123,6 +127,8 @@ export class HomePage {
       // breakpoints stored under `homepage` by contract; use defaults when missing
       this.tournaments_row_cols = (conf && conf.homepage && conf.homepage.tournaments_row_cols) ? conf.homepage.tournaments_row_cols : this.tournaments_row_cols;
       this.news_row_cols = (conf && conf.homepage && conf.homepage.news_row_cols) ? conf.homepage.news_row_cols : this.news_row_cols;
+      this.home_layout_ratio = (conf && conf.homepage && conf.homepage.home_layout_ratio) ? conf.homepage.home_layout_ratio : this.home_layout_ratio;
+      this.updateColClasses();
 
 
       // homepage enable flags were removed from configuration; keep defaults = true
@@ -132,6 +138,16 @@ export class HomePage {
       const logoPath = conf?.template?.logo_path;
       if (logoPath) this.fileService.getPresignedUrl$(logoPath).subscribe({ next: (u) => this.logoPreview = u, error: () => this.logoPreview = null });
     });
+  }
+
+  private updateColClasses() {
+    if (this.home_layout_ratio === 1) {
+      this.tournamentsColClass = 'col-12 col-md-6';
+      this.newsColClass = 'col-12 col-md-6';
+    } else {
+      this.tournamentsColClass = 'col-12 col-md-8';
+      this.newsColClass = 'col-12 col-md-4';
+    }
   }
 
 
@@ -149,7 +165,6 @@ export class HomePage {
     this.membersService.get_birthdays_this_next_days(7)
       .subscribe((result: { [day: string]: Member[]; }) => {
         this.next_birthdays = result ? Object.keys(result).sort().map(day => ({ day, members: result[day] })) : [];  
-        console.log('Next birthdays:', this.next_birthdays);
       });
   }
 }

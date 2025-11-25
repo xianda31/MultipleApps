@@ -64,6 +64,8 @@ export class UiConfComponent implements OnInit {
       hover_unfold_delay_ms: [500, [Validators.min(0), Validators.max(10000)]],
       // hover unfold animation duration (ms)
       hover_unfold_duration_ms: [300, [Validators.min(0), Validators.max(10000)]],
+      // homepage layout ratio: 1 = 6/6, 2 = 8/4
+      home_layout_ratio: [2, [Validators.min(1), Validators.max(2)]],
       tournaments_type: this.fb.array([]),
       default_tournament_image: [''],
       // `homepage` booleans removed from UI config; breakpoints stay editable at top-level form groups
@@ -73,6 +75,11 @@ export class UiConfComponent implements OnInit {
     // attach FormArray-level validator to enforce keys non-empty and unique
     const tt = this.uiForm.get('tournaments_type') as FormArray;
     tt.setValidators(this.tournamentsTypeArrayValidator);
+  }
+
+  // convenience getter used by the template to know if unfold-on-hover is enabled
+  get unfoldOnHover(): boolean {
+    return !!this.uiForm?.get('unfold_on_hover')?.value;
   }
 
   get tournaments_type(): FormArray {
@@ -246,6 +253,7 @@ export class UiConfComponent implements OnInit {
       unfold_on_hover: homepage.unfold_on_hover ?? ui?.unfold_on_hover ?? false,
       hover_unfold_delay_ms: homepage.hover_unfold_delay_ms ?? ui?.hover_unfold_delay_ms ?? 500,
       hover_unfold_duration_ms: homepage.hover_unfold_duration_ms ?? ui?.hover_unfold_duration_ms ?? 300,
+      home_layout_ratio: homepage.home_layout_ratio ?? ui?.home_layout_ratio ?? 2,
       tournaments_type: [] as any,
       // homepage booleans removed; breakpoints are patched/handled separately
       thumbnail: {
@@ -341,6 +349,7 @@ export class UiConfComponent implements OnInit {
       if (formVal.unfold_on_hover !== undefined) payload.homepage.unfold_on_hover = !!formVal.unfold_on_hover;
       if (formVal.hover_unfold_delay_ms !== undefined) payload.homepage.hover_unfold_delay_ms = Number(formVal.hover_unfold_delay_ms);
       if (formVal.hover_unfold_duration_ms !== undefined) payload.homepage.hover_unfold_duration_ms = Number(formVal.hover_unfold_duration_ms);
+      if (formVal.home_layout_ratio !== undefined) payload.homepage.home_layout_ratio = Number(formVal.home_layout_ratio);
 
       // Save UI settings into dedicated file and publish immediately
       // Debug: log tournaments_type payload to help diagnose persistence issues
@@ -377,6 +386,7 @@ export class UiConfComponent implements OnInit {
       if (formVal.unfold_on_hover !== undefined) preview.homepage.unfold_on_hover = !!formVal.unfold_on_hover;
       if (formVal.hover_unfold_delay_ms !== undefined) preview.homepage.hover_unfold_delay_ms = Number(formVal.hover_unfold_delay_ms);
       if (formVal.hover_unfold_duration_ms !== undefined) preview.homepage.hover_unfold_duration_ms = Number(formVal.hover_unfold_duration_ms);
+      if (formVal.home_layout_ratio !== undefined) preview.homepage.home_layout_ratio = Number(formVal.home_layout_ratio);
       this.systemDataService.patchUiSettings(preview);
       // Update export blob to reflect the previewed state
       this.export_file_url = this.fileService.json_to_blob(preview);

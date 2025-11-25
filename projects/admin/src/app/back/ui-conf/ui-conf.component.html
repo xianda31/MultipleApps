@@ -1,168 +1,129 @@
 <div class="container ui-conf-root">
-  <form [formGroup]="uiForm" (ngSubmit)="saveSettings()" class="row">
-    <div class="card">
-      <div class="card-title">Paramètres page d'Accueil</div>
-      <div class="card-body">
-        <div class="row">
-          <div class="col-12 col-md-6">
-            <div formGroupName="tournaments_row_cols" class="w-100">
-              <label class="form-label">Nombre de tournois affichés par ligne</label>
-              <div class="input-group input-group-sm">
-                <span class="input-group-text">SM</span>
-                <input type="number" class="form-control text-center" formControlName="SM" min="1" max="6"
-                  style="max-width:3rem;" />
-                <span class="input-group-text">MD</span>
-                <input type="number" class="form-control text-center" formControlName="MD" min="1" max="6"
-                  style="max-width:3rem;" />
-                <span class="input-group-text">LG</span>
-                <input type="number" class="form-control text-center" formControlName="LG" min="1" max="6"
-                  style="max-width:3rem;" />
-                <span class="input-group-text">XL</span>
-                <input type="number" class="form-control text-center" formControlName="XL" min="1" max="6"
-                  style="max-width:3rem;" />
-              </div>
-              <div class="mt-1 d-flex gap-3 small text-danger">
-                <span
-                  *ngIf="uiForm.get('tournaments_row_cols.SM')?.invalid && (uiForm.get('tournaments_row_cols.SM')?.touched || uiForm.get('tournaments_row_cols.SM')?.dirty)">
-                  SM: valeur entre 1 et 6
-                </span>
-                <span
-                  *ngIf="uiForm.get('tournaments_row_cols.MD')?.invalid && (uiForm.get('tournaments_row_cols.MD')?.touched || uiForm.get('tournaments_row_cols.MD')?.dirty)">
-                  MD: valeur entre 1 et 6
-                </span>
-                <span
-                  *ngIf="uiForm.get('tournaments_row_cols.LG')?.invalid && (uiForm.get('tournaments_row_cols.LG')?.touched || uiForm.get('tournaments_row_cols.LG')?.dirty)">
-                  LG: valeur entre 1 et 6
-                </span>
-                <span
-                  *ngIf="uiForm.get('tournaments_row_cols.XL')?.invalid && (uiForm.get('tournaments_row_cols.XL')?.touched || uiForm.get('tournaments_row_cols.XL')?.dirty)">
-                  XL: valeur entre 1 et 6
-                </span>
-              </div>
-              <div class="mt-1 small text-danger"
-                *ngIf="uiForm.get('tournaments_row_cols')?.hasError('breakpointsOrder')">
-                Les valeurs doivent être croissantes : SM ≤ MD ≤ LG ≤ XL
+  <h5>Paramétrage interface utilisateur</h5>
+  <form [formGroup]="uiForm" (ngSubmit)="saveSettings()">
+    <div class="row row-cols-1 row-cols-md-2 g-3">
+      <div class="col">
+        <div class="card h-100">
+          <div class="card-title fw-bold fs-5 ms-2">page d'Accueil</div>
+          <div class="card-body">
+            <div class="fw-bold fs-6">Colonnes tournois et news</div>
+            <div class="mb-2 d-flex align-items-center gap-3">
+              <label class="form-label small mb-0">distribution colonnes :</label>
+              <div class="input-group input-group-sm" style="max-width:14rem;">
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" id="homeLayout1" formControlName="home_layout_ratio"
+                    [value]="1">
+                  <label class="form-check-label" for="homeLayout1">1:1</label>
+                </div>
+                <div class="form-check form-check-inline ms-2">
+                  <input class="form-check-input" type="radio" id="homeLayout2" formControlName="home_layout_ratio"
+                    [value]="2">
+                  <label class="form-check-label" for="homeLayout2">2:1</label>
+                </div>
               </div>
             </div>
-          </div>
-          <div class="col-12 col-md-6">
-            <div formGroupName="news_row_cols" class="w-100">
-              <label class="form-label">Nombre de news affichées par ligne</label>
-              <div class="input-group input-group-sm">
-                <span class="input-group-text">SM</span>
-                <input type="number" class="form-control text-center" formControlName="SM" min="1" max="6"
-                  style="max-width:3rem;" />
-                <span class="input-group-text">MD</span>
-                <input type="number" class="form-control text-center" formControlName="MD" min="1" max="6"
-                  style="max-width:3rem;" />
-                <span class="input-group-text">LG</span>
-                <input type="number" class="form-control text-center" formControlName="LG" min="1" max="6"
-                  style="max-width:3rem;" />
-                <span class="input-group-text">XL</span>
-                <input type="number" class="form-control text-center" formControlName="XL" min="1" max="6"
-                  style="max-width:3rem;" />
+            <ng-container
+              *ngTemplateOutlet="breakpointsInputs; context: { groupName: 'tournaments_row_cols', label: 'Tournois par ligne' }"></ng-container>
+            <ng-container
+              *ngTemplateOutlet="breakpointsInputs; context: { groupName: 'news_row_cols', label: 'News par ligne' }"></ng-container>
+
+            <div class="fw-bold fs-6">Paramètres de dépliage des news</div>
+
+            <div class="mt-2 d-flex align-items-center gap-2">
+              <span class="small text-nowrap flex-shrink-0">Lignes avant «Lire la suite»</span>
+              <div class="input-group input-group-sm" style="max-width:4rem;">
+                <input type="number" class="form-control form-control-sm text-center" formControlName="read_more_lines"
+                  min="0" max="20" />
               </div>
-              <div class="mt-1 d-flex gap-3 small text-danger">
-                <span
-                  *ngIf="uiForm.get('news_row_cols.SM')?.invalid && (uiForm.get('news_row_cols.SM')?.touched || uiForm.get('news_row_cols.SM')?.dirty)">
-                  SM: valeur entre 1 et 6
-                </span>
-                <span
-                  *ngIf="uiForm.get('news_row_cols.MD')?.invalid && (uiForm.get('news_row_cols.MD')?.touched || uiForm.get('news_row_cols.MD')?.dirty)">
-                  MD: valeur entre 1 et 6
-                </span>
-                <span
-                  *ngIf="uiForm.get('news_row_cols.LG')?.invalid && (uiForm.get('news_row_cols.LG')?.touched || uiForm.get('news_row_cols.LG')?.dirty)">
-                  LG: valeur entre 1 et 6
-                </span>
-                <span
-                  *ngIf="uiForm.get('news_row_cols.XL')?.invalid && (uiForm.get('news_row_cols.XL')?.touched || uiForm.get('news_row_cols.XL')?.dirty)">
-                  XL: valeur entre 1 et 6
-                </span>
-              </div>
-              <div class="mt-1 small text-danger" *ngIf="uiForm.get('news_row_cols')?.hasError('breakpointsOrder')">
-                Les valeurs doivent être croissantes : SM ≤ MD ≤ LG ≤ XL
-              </div>
+              <small class="text-muted ms-2">0 = tout le texte</small>
             </div>
-            <div class="mt-2">
-              <label class="form-label">Nombre de lignes avant 'Lire la suite'</label>
-              <div class="input-group input-group-sm" style="max-width:6rem;">
-                <input type="number" class="form-control text-center" formControlName="read_more_lines" min="0" max="20" />
-              </div>
-              <div class="small text-muted mt-1">0 = afficher tout, sinon nombre de lignes visibles avant lien</div>
-            </div>
-            <div class="mt-2">
+
+            <div class="mt-2 d-flex align-items-center gap-2">
+              <span class="small text-nowrap flex-shrink-0">Mode de dépliement :</span>
               <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" role="switch" id="unfoldOnHover" formControlName="unfold_on_hover">
-                <label class="form-check-label" for="unfoldOnHover">Déplier au survol (hover)</label>
+                <input class="form-check-input" type="checkbox" role="switch" id="unfoldOnHover"
+                  formControlName="unfold_on_hover">
+                <label class="form-check-label visually-hidden" for="unfoldOnHover">Déplier au survol</label>
               </div>
-              <div class="small text-muted mt-1">Si activé, survoler une carte news affichera tout le contenu.</div>
+              <small class="text-muted ms-2">{{ unfoldOnHover ? 'Ouverture en ligne' : 'Navigation vers la page'
+                }}</small>
             </div>
-            <div class="mt-2">
-              <label class="form-label">Délai (ms) avant dépliage au survol</label>
-              <div class="input-group input-group-sm" style="max-width:8rem;">
-                <input type="number" class="form-control text-center" formControlName="hover_unfold_delay_ms" min="0" max="10000" />
+
+            <div *ngIf="unfoldOnHover" class="mt-2 d-flex align-items-center gap-2">
+              <span class="small text-nowrap flex-shrink-0">délai | durée</span>
+              <div class="input-group input-group-sm" style="max-width:14rem;">
+                <input type="number" class="form-control form-control-sm text-center"
+                  formControlName="hover_unfold_delay_ms" min="0" max="10000"
+                  style="max-width:6rem;font-size:0.85rem;" />
+                <input type="number" class="form-control form-control-sm text-center ms-2"
+                  formControlName="hover_unfold_duration_ms" min="0" max="10000"
+                  style="max-width:6rem;font-size:0.85rem;" />
               </div>
-              <div class="small text-muted mt-1">Délai en millisecondes avant d'ouvrir la carte au survol (ex: 500)</div>
-            </div>
-            <div class="mt-2">
-              <label class="form-label">Durée animation (ms) du dépliage</label>
-              <div class="input-group input-group-sm" style="max-width:8rem;">
-                <input type="number" class="form-control text-center" formControlName="hover_unfold_duration_ms" min="0" max="10000" />
-              </div>
-              <div class="small text-muted mt-1">Durée en millisecondes de l'animation d'ouverture (ex: 300)</div>
+              <small class="text-muted ms-2">exprimés en millisecondes</small>
             </div>
           </div>
         </div>
       </div>
-    </div>
-    
-    <!-- Mapping editor for tournaments_type -->
-    <div class="card mt-3 w-100">
-      <div class="card-title">Mapping : tournaments_type</div>
-      <div class="card-body">
-        <div formArrayName="tournaments_type">
-          <div *ngFor="let ctrl of tournaments_type.controls; let i = index" [formGroupName]="i" class="d-flex align-items-center gap-2 mb-2">
-            <input type="text" class="form-control form-control-sm" placeholder="keyword" formControlName="key" style="max-width: 180px;" />
+      <div class="col">
+        <!-- Mapping editor for tournaments_type -->
+        <div class="card h-100">
+          <div class="card-title fw-bold fs-5 ms-2">Vignettes tournois</div>
+          <div class="card-body">
+            <div formArrayName="tournaments_type">
+              <div *ngFor="let ctrl of tournaments_type.controls; let i = index" [formGroupName]="i"
+                class="d-flex align-items-center gap-2 mb-2">
+                <input type="text" class="form-control form-control-sm" placeholder="keyword" formControlName="key"
+                  style="max-width: 180px;" />
 
-            <select class="form-select form-select-sm" formControlName="image" style="min-width: 240px;">
-              <option value="">-- aucune --</option>
-              <option *ngFor="let t of (thumbnails$ | async)" [value]="t">{{ t }}</option>
-            </select>
+                <select class="form-select form-select-sm" formControlName="image" style="min-width: 240px;">
+                  <option value="">-- aucune --</option>
+                  <option *ngFor="let t of (thumbnails$ | async)" [value]="t">{{ t }}</option>
+                </select>
 
-            <div class="preview ms-2">
-              <img *ngIf="ctrl.get('key')?.value && previewMap[ctrl.get('key')?.value]" [src]="previewMap[ctrl.get('key')?.value]" alt="thumb" style="height:36px;object-fit:cover;border-radius:4px;" />
+                <div class="preview ms-2">
+                  <img *ngIf="ctrl.get('key')?.value && previewMap[ctrl.get('key')?.value]"
+                    [src]="previewMap[ctrl.get('key')?.value]" alt="thumb"
+                    style="height:36px;object-fit:cover;border-radius:4px;" />
+                </div>
+
+                <button type="button" class="btn btn-outline-danger btn-sm ms-auto"
+                  (click)="removeTournamentType(i)">Supprimer</button>
+              </div>
             </div>
 
-            <button type="button" class="btn btn-outline-danger btn-sm ms-auto" (click)="removeTournamentType(i)">Supprimer</button>
+            <div class="mt-2">
+              <div *ngIf="tournaments_type.errors?.['emptyKey']" class="small text-danger">Chaque mapping doit avoir une
+                clé
+                non vide.</div>
+              <div *ngIf="tournaments_type.errors?.['duplicateKeys']" class="small text-danger">Clés en double: {{
+                (tournaments_type.errors?.['duplicateKeys'] || []).join(', ') }}</div>
+            </div>
+
+            <div class="mt-2 d-flex align-items-center gap-3">
+              <button type="button" class="btn btn-outline-success btn-sm" (click)="addTournamentType()">Ajouter un
+                mapping</button>
+              <div class="small text-muted">Associez un mot-clé de tournoi à une image vignette.</div>
+            </div>
+
+            <hr />
+            <!-- Integrated default row -->
+            <div class="small text-muted">Image utilisée quand aucun mot-clé ne correspond.</div>
+            <div class="d-flex align-items-center gap-2 mt-2 mb-2">
+              <input type="text" class="form-control form-control-sm" value="défaut" disabled
+                style="max-width: 180px;" />
+              <select class="form-select form-select-sm" formControlName="default_tournament_image"
+                style="min-width: 240px;">
+                <option value="">-- aucune --</option>
+                <option *ngFor="let t of (thumbnails$ | async)" [value]="t">{{ t }}</option>
+              </select>
+              <div class="preview ms-2">
+                <img *ngIf="previewMap['defaut']" [src]="previewMap['defaut']" alt="thumb"
+                  style="height:36px;object-fit:cover;border-radius:4px;" />
+              </div>
+            </div>
+
           </div>
         </div>
-
-        <div class="mt-2">
-          <div *ngIf="tournaments_type.errors?.['emptyKey']" class="small text-danger">Chaque mapping doit avoir une clé non vide.</div>
-          <div *ngIf="tournaments_type.errors?.['duplicateKeys']" class="small text-danger">Clés en double: {{ (tournaments_type.errors?.['duplicateKeys'] || []).join(', ') }}</div>
-        </div>
-
-        <div class="mt-2 d-flex align-items-center gap-3">
-          <button type="button" class="btn btn-outline-primary btn-sm" (click)="addTournamentType()">Ajouter un mapping</button>
-          <div class="small text-muted">Associez un mot-clé de tournoi à une image vignette.</div>
-        </div>
-
-        <hr />
-        <!-- Integrated default row -->
-        <div class="d-flex align-items-center gap-2 mt-2 mb-2">
-          <input type="text" class="form-control form-control-sm" value="défaut" disabled style="max-width: 180px;" />
-          <select class="form-select form-select-sm" formControlName="default_tournament_image" style="min-width: 240px;">
-            <option value="">-- aucune --</option>
-            <option *ngFor="let t of (thumbnails$ | async)" [value]="t">{{ t }}</option>
-          </select>
-          <div class="preview ms-2">
-            <img *ngIf="previewMap['defaut']" [src]="previewMap['defaut']" alt="thumb" style="height:36px;object-fit:cover;border-radius:4px;" />
-          </div>
-          <div class="ms-auto small text-muted">Clé forcée: <strong>défaut</strong></div>
-        </div>
-
-        <div class="small text-muted">Image utilisée quand aucun mot-clé ne correspond.</div>
       </div>
     </div>
 
@@ -173,8 +134,49 @@
       <small class="text-muted align-self-center ms-2">(exporte l'état chargé / aperçu / enregistré)</small>
       <button type="button" class="btn btn-secondary btn-sm" (click)="previewSettings()"
         [disabled]="uiForm.get('tournaments_row_cols')?.invalid">Aperçu</button>
-      <button type="submit" class="btn btn-primary btn-sm"
+      <button type="submit" class="btn btn-secondary btn-sm"
         [disabled]="uiForm.invalid || uiForm.get('tournaments_row_cols')?.invalid">Enregistrer</button>
     </div>
+
+    <!-- // compact template for breakpoints inputs -->
+    <ng-template #breakpointsInputs let-groupName="groupName" let-label="label">
+      <div [formGroupName]="groupName" class="w-100">
+        <div class="d-flex align-items-center gap-3">
+          <span class="form-label mb-0 text-nowrap flex-shrink-0">{{ label }} (sm|md|lg|xl) : </span>
+          <div class="input-group input-group-sm">
+            <input type="number" class="form-control form-control-sm text-center" formControlName="SM" min="1" max="6"
+              style="max-width:3rem;font-size:0.85rem;" />
+            <input type="number" class="form-control form-control-sm text-center" formControlName="MD" min="1" max="6"
+              style="max-width:3rem;font-size:0.85rem;" />
+            <input type="number" class="form-control form-control-sm text-center" formControlName="LG" min="1" max="6"
+              style="max-width:3rem;font-size:0.85rem;" />
+            <input type="number" class="form-control form-control-sm text-center" formControlName="XL" min="1" max="6"
+              style="max-width:3rem;font-size:0.85rem;" />
+          </div>
+        </div>
+        <div class="mt-1 d-flex gap-3 small text-danger">
+          <span
+            *ngIf="uiForm.get(groupName + '.SM')?.invalid && (uiForm.get(groupName + '.SM')?.touched || uiForm.get(groupName + '.SM')?.dirty)">
+            SM: 1–6
+          </span>
+          <span
+            *ngIf="uiForm.get(groupName + '.MD')?.invalid && (uiForm.get(groupName + '.MD')?.touched || uiForm.get(groupName + '.MD')?.dirty)">
+            MD: 1–6
+          </span>
+          <span
+            *ngIf="uiForm.get(groupName + '.LG')?.invalid && (uiForm.get(groupName + '.LG')?.touched || uiForm.get(groupName + '.LG')?.dirty)">
+            LG: 1–6
+          </span>
+          <span
+            *ngIf="uiForm.get(groupName + '.XL')?.invalid && (uiForm.get(groupName + '.XL')?.touched || uiForm.get(groupName + '.XL')?.dirty)">
+            XL: 1–6
+          </span>
+        </div>
+        <div class="mt-1 small text-danger" *ngIf="uiForm.get(groupName)?.hasError('breakpointsOrder')">
+          Les valeurs doivent être croissantes : SM ≤ MD ≤ LG ≤ XL
+        </div>
+      </div>
+    </ng-template>
+
   </form>
 </div>

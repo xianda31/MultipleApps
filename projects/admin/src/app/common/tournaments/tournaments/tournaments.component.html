@@ -25,16 +25,16 @@
                 <div class="card-text">
                     <div *ngIf="t.teams && t.teams.length > 0">
                         <small>
-                           {{(t.teams.length - t.isolated_player_count)}} paires inscrites  
+                            {{(t.teams.length - t.isolated_player_count)}} paires inscrites
                         </small>
                         <div *ngIf="t.isolated_player_count > 0">
                             <small>
-                                et {{t.isolated_player_count}} personne(s)
                                 <!-- <i class="bi bi-person-arms-up"> </i> -->
-                                <span *ngIf="t.isolated_player_count === 1" class="text-info-emphasis">cherche un
-                                    partenaire </span>
-                                <span *ngIf="t.isolated_player_count > 1" class="text-info-emphasis">cherchent un
-                                    partenaire </span>
+                                <span *ngIf="t.isolated_player_count === 1" class="text-info-emphasis">
+                                    et une personne cherche un partenaire </span>
+                                <span *ngIf="t.isolated_player_count > 1" class="text-info-emphasis">
+                                    et {{t.isolated_player_count}} personnes
+                                    cherchent un partenaire </span>
                             </small>
                         </div>
                     </div>

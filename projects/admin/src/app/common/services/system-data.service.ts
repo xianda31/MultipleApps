@@ -66,6 +66,7 @@ export class SystemDataService {
       homepage_intro: ''
     };
 
+    console.debug('[SystemDataService] get_ui_settings(): attempting to download system/ui_settings.txt');
     const remote_load$ = from(this.fileService.download_json_file('system/ui_settings.txt')).pipe(
       tap((conf) => {
         // Simple load: expect `ui_settings.txt` to conform to `UIConfiguration`.
@@ -79,9 +80,13 @@ export class SystemDataService {
         }
         this._ui_settings = conf;
         this._ui_settings$.next(this._ui_settings);
+        try {
+          console.info('[SystemDataService] get_ui_settings(): loaded ui_settings', { timestamp: new Date().toISOString(), keys: Object.keys(conf || {}) });
+        } catch (e) { /* ignore logging issues */ }
       }),
       catchError((err) => {
         // If the file does not exist or can't be read, initialize with defaults and warn the user.
+        console.error('[SystemDataService] get_ui_settings(): failed to download or parse system/ui_settings.txt', err);
         this._ui_settings = defaults;
         try { this._ui_settings$.next(this._ui_settings); } catch (e) { /* ignore */ }
         try { this.toastService.showWarning('UI settings', 'Fichier ui_settings manquant — paramètres initialisés par défaut'); } catch (e) { /* ignore */ }
@@ -173,6 +178,9 @@ export class SystemDataService {
       tap((conf) => {
         this._ui_settings = conf;
         try { this._ui_settings$.next(this._ui_settings); } catch (e) { /* ignore */ }
+        try {
+          console.info('[SystemDataService] fetch_ui_settings(): fetched ui_settings', { timestamp: new Date().toISOString(), keys: Object.keys(conf || {}) });
+        } catch (e) { /* ignore logging issues */ }
       }),
       catchError((err) => {
         const defaults: UIConfiguration = {
@@ -181,6 +189,7 @@ export class SystemDataService {
           frontBannerEnabled: false,
           homepage_intro: ''
         };
+        console.error('[SystemDataService] fetch_ui_settings(): error fetching ui_settings', err);
         this._ui_settings = defaults;
         try { this._ui_settings$.next(this._ui_settings); } catch (e) { /* ignore */ }
         try { this.toastService.showWarning('UI settings', 'Fichier ui_settings manquant — paramètres initialisés par défaut'); } catch (e) { /* ignore */ }
@@ -222,6 +231,7 @@ export class SystemDataService {
     // Persist to S3 in background (log errors)
     this.fileService.upload_to_S3(this._ui_settings, 'system/', 'ui_settings.txt').catch((err) => {
       console.warn('save_ui_settings: upload error', err);
+      try { console.error('[SystemDataService] save_ui_settings(): upload_to_S3 failed', { err, timestamp: new Date().toISOString() }); } catch (e) { /* ignore */ }
     });
   }
 

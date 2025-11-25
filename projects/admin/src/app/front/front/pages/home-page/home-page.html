@@ -19,12 +19,12 @@
 
 
 <div class="row px-2 mb-4 g-md-5">
-    <div class="col-12  col-md-8" >
+    <div [ngClass]="tournamentsColClass">
         <div class="text-uppercase text-success mt-1">Prochains tournois</div>
         <app-tournaments [displayTitle]="false" [row_cols]="tournaments_row_cols"></app-tournaments>
     </div>
     
-    <div class="col-12  col-md-4">
+    <div [ngClass]="newsColClass">
         <div class="text-uppercase text-success mt-1">Les dernières nouvelles</div>
         <!-- <div class="text-info" (click)="goToNews($event)" style="cursor: pointer;">... accéder à la totalité des
             informations</div> -->
@@ -41,7 +41,7 @@
 </ng-template>
 <ng-template #whoarewe>
     <span class="d-block mb-3">
-        <img src="/label-silver.svg" style="max-height:50px; float: left; margin-right: 0.5rem;" alt="silver_label" />
+        <img src="/label-silver.svg" style="max-height:6rem; float: left; margin-right: 0.5rem;" alt="silver_label" />
         Son école de Bridge vous permettra de consolider votre technique, selon votre niveau.
     </span>
     <span class="d-block mb-3 text-center">Aujourd'hui, nous sommes {{ licensees }} adhérents licenciés.</span>
@@ -62,7 +62,7 @@
 </ng-template>
 
 <ng-template #imagegallery>
-    <div class="rounded-2 overflow-hidden nice_shadow ar-16_9 d-inline-block mx-auto" style="height: 10rem;">
+    <div class="rounded-2 overflow-hidden nice_shadow ar-16_9 d-inline-block mx-auto" style="height: 12rem;">
         <img class="fade-img" [src]="photos[photo_index]" alt="photo" decoding="async" loading="eager"
             [style.opacity]="opacity" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
     </div>

@@ -20,16 +20,16 @@ export interface UIConfiguration {
   };
 
   homepage: {
+    // parameters for layout of tournaments and news cards on homepage
     tournaments_row_cols: BreakpointsSettings;
     news_row_cols: BreakpointsSettings;
-    // number of lines shown before a 'read more' link is displayed
+    // parameters for 'read more' behavior on news cards
     read_more_lines?: number;
-    // when true, hovering a news card will unfold it entirely
     unfold_on_hover?: boolean;
-    // delay in milliseconds before unfolding on hover
     hover_unfold_delay_ms?: number;
-    // duration in milliseconds for the unfold animation
     hover_unfold_duration_ms?: number;
+    // layout ratio for homepage: 1 = equal columns (col-md-6 / col-md-6), 2 = tournaments wider (col-md-8 / col-md-4)
+    home_layout_ratio?: 1 | 2;
   };
 
   // Mapping of tournament type keyword -> thumbnail path
