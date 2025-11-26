@@ -34,7 +34,8 @@ export class SnippetEditor {
 
   ngOnInit(): void {
 
-// initialize publication_date if not set
+    console.log('SnippetEditor initialized with snippet:', this.snippet.featured);
+
     // Initialize publishedAt from updatedAt (ISO) converted to YYYY-MM-DD
     if (!this.snippet.publishedAt) {
       this.snippet.publishedAt = this.toDateInputValue(this.snippet.updatedAt) || '';
@@ -53,8 +54,9 @@ export class SnippetEditor {
 
   saveSnippetSelected() {
     if (!this.snippet) return;
-    // Send the snippet as-is; `publishedAt` is expected to be in YYYY-MM-DD form.
+    console.log('Saving snippet:', this.snippet.featured);
     const payload: any = { ...this.snippet };
+    console.log('Saving payload:', payload.featured);
     this.snippetService.updateSnippet(payload)
       .then((updatedSnippet) => {
         this.snippet = updatedSnippet;
@@ -62,6 +64,15 @@ export class SnippetEditor {
       .catch(error => {
         console.error('Error updating snippet:', error);
       });
+  }
+
+  // Ensure toggles apply the new value before saving: ngModelChange provides the
+  // new value as $event but the two-way binding may not have updated the
+  // underlying object yet when a handler runs. Apply explicitly and then save.
+  onToggle(field: keyof Snippet, value: any) {
+    if (!this.snippet) return;
+    (this.snippet as any)[field] = value;
+    this.saveSnippetSelected();
   }
 
   onSnippetContentClick(snippet: Snippet) {

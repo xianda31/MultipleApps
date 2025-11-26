@@ -212,6 +212,7 @@ const schema = a.schema({
     image: a.string(),
     file: a.string(),
     folder: a.string(),
+    publishedAt: a.string(),
   })
     .authorization((allow) => [
       allow.guest().to(['read']),

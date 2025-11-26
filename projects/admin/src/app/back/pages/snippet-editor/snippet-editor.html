@@ -25,12 +25,12 @@
     <!-- toggle public visibility -->
     <div class="d-flex align-items-center gap-3">
         <div class="form-check form-switch mb-0">
-            <input (ngModelChange)="saveSnippetSelected()" [(ngModel)]="snippet.public" class="form-check-input"
+            <input (ngModelChange)="onToggle('public', $event)" [(ngModel)]="snippet.public" class="form-check-input"
                 type="checkbox" role="switch">
             <label class="form-check-label text-muted">Public</label>
         </div>
         <div class="form-check form-switch mb-0">
-            <input (ngModelChange)="saveSnippetSelected()" [(ngModel)]="snippet.featured" class="form-check-input"
+            <input (ngModelChange)="onToggle('featured', $event)" [(ngModel)]="snippet.featured" class="form-check-input"
                 type="checkbox" role="switch">
             <label class="form-check-label text-muted">à la une</label>
         </div>
