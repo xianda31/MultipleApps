@@ -197,6 +197,30 @@ export class PagesEditorComponent {
     this.snippetFreezed = true;
   }
 
+  onSnippetSaved(updated: Snippet) {
+    if (!updated) return;
+    // Merge into selected_snippet to keep reference stable
+    if (this.selected_snippet && this.selected_snippet.id === updated.id) {
+      Object.assign(this.selected_snippet, updated);
+    }
+    // Update in snippets array
+    const idx = this.snippets.findIndex(s => s.id === updated.id);
+    if (idx !== -1) {
+      this.snippets[idx] = { ...this.snippets[idx], ...updated } as Snippet;
+    }
+    // Update snippets on pages
+    this.pages.forEach(page => {
+      if (page.snippets) {
+        const si = page.snippets.findIndex(s => s.id === updated.id);
+        if (si !== -1) Object.assign(page.snippets[si], updated);
+      }
+    });
+    // Recompute form arrays if needed
+    this.pages.forEach(page => {
+      page.snippets = this.getPageSnippets(page);
+    });
+  }
+
   onHover(snippet?: Snippet) {
 
     if (this.selected_snippet?.id !== snippet?.id && !this.snippetFreezed) {

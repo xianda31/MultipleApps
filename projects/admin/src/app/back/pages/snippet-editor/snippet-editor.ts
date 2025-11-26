@@ -1,7 +1,7 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges } from '@angular/core';
 import { Snippet } from '../../../common/interfaces/page_snippet.interface';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { SnippetService } from '../../../common/services/snippet.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { SnippetModalEditorComponent } from '../../site/snippet-modal-editor/snippet-modal-editor.component';
@@ -16,8 +16,12 @@ import { DomSanitizer } from '@angular/platform-browser';
   templateUrl: './snippet-editor.html',
   styleUrl: './snippet-editor.scss'
 })
-export class SnippetEditor {
-  @Input() snippet !: Snippet;
+export class SnippetEditor implements OnChanges {
+  @Input() snippet: Snippet | null = null;
+  @Output() saved = new EventEmitter<Snippet>();
+
+  form: FormGroup;
+  saving = false;
 
   file_paths$ !: Observable<string[]>;
   thumbnails$ !: Observable<string[]>;
@@ -27,20 +31,24 @@ export class SnippetEditor {
     private snippetService: SnippetService,
     private modalService: NgbModal,
     private fileService: FileService,
-    private sanitizer: DomSanitizer
-
-
-  ) { }
+    private sanitizer: DomSanitizer,
+    private fb: FormBuilder
+  ) {
+    this.form = this.fb.group({
+      id: [''],
+      title: ['', Validators.required],
+      subtitle: [''],
+      content: [''],
+      publishedAt: [''],
+      public: [true],
+      featured: [false],
+      image: [''],
+      file: [''],
+      folder: ['']
+    });
+  }
 
   ngOnInit(): void {
-
-    console.log('SnippetEditor initialized with snippet:', this.snippet.featured);
-
-    // Initialize publishedAt from updatedAt (ISO) converted to YYYY-MM-DD
-    if (!this.snippet.publishedAt) {
-      this.snippet.publishedAt = this.toDateInputValue(this.snippet.updatedAt) || '';
-    }
-
     this.albums$ = this.fileService.list_folders(S3_ROOT_FOLDERS.ALBUMS + '/');
 
     this.thumbnails$ = this.fileService.list_files(S3_ROOT_FOLDERS.IMAGES + '/').pipe(
@@ -51,27 +59,61 @@ export class SnippetEditor {
     );
   }
 
-
-  saveSnippetSelected() {
-    if (!this.snippet) return;
-    console.log('Saving snippet:', this.snippet.featured);
-    const payload: any = { ...this.snippet };
-    console.log('Saving payload:', payload.featured);
-    this.snippetService.updateSnippet(payload)
-      .then((updatedSnippet) => {
-        this.snippet = updatedSnippet;
-      })
-      .catch(error => {
-        console.error('Error updating snippet:', error);
-      });
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['snippet'] && this.snippet) {
+      // Patch form values from input snippet without replacing controls
+      this.form.patchValue({
+        id: this.snippet.id || '',
+        title: this.snippet.title || '',
+        subtitle: this.snippet.subtitle || '',
+        content: this.snippet.content || '',
+        publishedAt: this.snippet.publishedAt || this.toDateInputValue(this.snippet.updatedAt) || '',
+        public: !!this.snippet.public,
+        featured: !!this.snippet.featured,
+        image: this.snippet.image || '',
+        file: this.snippet.file || '',
+        folder: this.snippet.folder || ''
+      }, { emitEvent: false });
+    }
   }
 
-  // Ensure toggles apply the new value before saving: ngModelChange provides the
-  // new value as $event but the two-way binding may not have updated the
-  // underlying object yet when a handler runs. Apply explicitly and then save.
-  onToggle(field: keyof Snippet, value: any) {
+  async saveSnippetSelected() {
     if (!this.snippet) return;
-    (this.snippet as any)[field] = value;
+    if (this.saving) return;
+    const payload: any = { ...this.snippet, ...this.form.value };
+    this.saving = true;
+    try {
+      const updatedSnippet = await this.snippetService.updateSnippet(payload);
+      // Emit updated snippet so parent can merge it into its state and keep references stable
+      this.saved.emit(updatedSnippet as Snippet);
+      // Refresh form with canonical values from backend
+      this.form.patchValue({
+        title: updatedSnippet.title || '',
+        subtitle: updatedSnippet.subtitle || '',
+        content: updatedSnippet.content || '',
+        publishedAt: updatedSnippet.publishedAt || '',
+        public: !!updatedSnippet.public,
+        featured: !!updatedSnippet.featured,
+        image: updatedSnippet.image || '',
+        file: updatedSnippet.file || '',
+        folder: updatedSnippet.folder || ''
+      }, { emitEvent: false });
+    } catch (error) {
+      console.error('Error updating snippet:', error);
+    } finally {
+      this.saving = false;
+    }
+  }
+
+  // For toggle/change events driven from template: update the form control and save
+  onToggleChange(field: string, value?: any) {
+    if (!this.snippet) return;
+    if (value === undefined) {
+      // read from control if event didn't pass the value
+      value = this.form.get(field)?.value;
+    } else {
+      this.form.get(field)?.setValue(value, { emitEvent: false });
+    }
     this.saveSnippetSelected();
   }
 
@@ -80,12 +122,13 @@ export class SnippetEditor {
     modalRef.componentInstance.snippet = snippet;
     modalRef.result.then((result) => {
       if (!result) return;
-      this.snippet = result;
+      // Patch modal result into the form and save
+      this.form.patchValue({ content: result.content || '' });
       this.saveSnippetSelected();
     });
   }
 
-    stringToSafeHtml(htmlString: string) {
+  stringToSafeHtml(htmlString: string) {
     return this.sanitizer.bypassSecurityTrustHtml(htmlString) ;
   }
 

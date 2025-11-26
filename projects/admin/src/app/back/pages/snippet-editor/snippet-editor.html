@@ -1,21 +1,22 @@
-<div class="row">
-    <div class="col-9">
-        <input type="text" [(ngModel)]="snippet.title" class="form-control form-control-sm mb-1"
-            (keydown.enter)="saveSnippetSelected()">
-        <input type="text" [(ngModel)]="snippet.subtitle" class="form-control form-control-sm text-muted"
-            (keydown.enter)="saveSnippetSelected()">
+<form [formGroup]="form">
+    <div class="row">
+        <div class="col-9">
+            <input type="text" formControlName="title" class="form-control form-control-sm mb-1"
+                (keydown.enter)="saveSnippetSelected()">
+            <input type="text" formControlName="subtitle" class="form-control form-control-sm text-muted"
+                (keydown.enter)="saveSnippetSelected()">
+        </div>
+        <div class="col-3 text-center">
+            <img *ngIf="snippet?.image_url" [src]="snippet?.image_url" alt="{{ form.get('title')?.value }}"
+                class="img-fluid snippet-img-limited">
+        </div>
     </div>
-    <div class="col-3 text-center">
-        <img *ngIf="snippet.image_url" [src]="snippet.image_url " alt="{{ snippet.title }}"
-            class="img-fluid snippet-img-limited">
-    </div>
-</div>
 
 <div class="row">
     <div class="col-12">
         <div class="d-flex align-items-center gap-2">
             <span class="form-label text-muted mb-0">publié le :</span>
-            <input type="date" [(ngModel)]="snippet.publishedAt" class="form-control form-control-sm mb-1 d-inline-block w-auto"
+            <input type="date" formControlName="publishedAt" class="form-control form-control-sm mb-1 d-inline-block w-auto"
                 (keydown.enter)="saveSnippetSelected()" placeholder="publication">
         </div>
     </div>
@@ -25,22 +26,22 @@
     <!-- toggle public visibility -->
     <div class="d-flex align-items-center gap-3">
         <div class="form-check form-switch mb-0">
-            <input (ngModelChange)="onToggle('public', $event)" [(ngModel)]="snippet.public" class="form-check-input"
+            <input [formControlName]="'public'" (change)="onToggleChange('public', $event.target.checked)" class="form-check-input"
                 type="checkbox" role="switch">
             <label class="form-check-label text-muted">Public</label>
         </div>
         <div class="form-check form-switch mb-0">
-            <input (ngModelChange)="onToggle('featured', $event)" [(ngModel)]="snippet.featured" class="form-check-input"
+            <input [formControlName]="'featured'" (change)="onToggleChange('featured', $event.target.checked)" class="form-check-input"
                 type="checkbox" role="switch">
             <label class="form-check-label text-muted">à la une</label>
         </div>
     </div>
 </div>
 <br>
-<i class="bi bi-pencil-square mt-2" (click)="onSnippetContentClick(snippet)"> edition du texte</i>
+<i class="bi bi-pencil-square mt-2" (click)="snippet && onSnippetContentClick(snippet)"> edition du texte</i>
 <div class="border-1">
     <div class="border rounded p-2 bg-white" style="min-height:2em;">
-        <span class="card-text tighter-html" [innerHTML]="stringToSafeHtml(snippet.content)"></span>
+        <span class="card-text tighter-html" [innerHTML]="stringToSafeHtml(form.get('content')?.value)"></span>
     </div>
 </div>
 <!-- </div> -->
@@ -49,14 +50,14 @@
 <!-- image url input -->
 <div class="input-group input-group-sm mt-1">
     <span class="input-group-text">Image</span>
-    <input type="text" list="image_datalist" class="form-control" [placeholder]="snippet.image"
-        [(ngModel)]="snippet.image" (keydown.enter)="saveSnippetSelected()" (change)="saveSnippetSelected()">
+    <input type="text" list="image_datalist" class="form-control" [placeholder]="form.get('image')?.value"
+        formControlName="image" (keydown.enter)="saveSnippetSelected()" (change)="saveSnippetSelected()">
     <datalist id="image_datalist">
         <option *ngFor="let path of thumbnails$ | async" [value]="path">
             {{ path }}
         </option>
     </datalist>
-    <button class="btn btn-sm " (click)="snippet.image = ''">
+    <button class="btn btn-sm " (click)="form.get('image')?.setValue(''); saveSnippetSelected();">
         <i class="bi bi-x-circle"></i>
     </button>
 </div>
@@ -64,7 +65,7 @@
 <!-- file url input -->
 <div class="input-group input-group-sm mt-1">
     <span class="input-group-text">Fichier</span>
-    <input type="text" list="file_datalist" class="form-control" [placeholder]="snippet.file" [(ngModel)]="snippet.file"
+    <input type="text" list="file_datalist" class="form-control" [placeholder]="form.get('file')?.value" formControlName="file"
         (keydown.enter)="saveSnippetSelected()" (change)="saveSnippetSelected()">
 
     <datalist id="file_datalist">
@@ -73,15 +74,15 @@
         </option>
     </datalist>
 
-    <button class="btn btn-sm " (click)="snippet.file = ''">
+    <button class="btn btn-sm " (click)="form.get('file')?.setValue(''); saveSnippetSelected();">
         <i class="bi bi-x-circle"></i>
     </button>
 </div>
 <!-- folder url input -->
 <div class="input-group input-group-sm mt-1">
     <span class="input-group-text">Dossier</span>
-    <input type="text" list="folder_datalist" class="form-control" [placeholder]="snippet.folder"
-        [(ngModel)]="snippet.folder" (keydown.enter)="saveSnippetSelected()" (change)="saveSnippetSelected()">
+    <input type="text" list="folder_datalist" class="form-control" [placeholder]="form.get('folder')?.value"
+        formControlName="folder" (keydown.enter)="saveSnippetSelected()" (change)="saveSnippetSelected()">
 
     <datalist id="folder_datalist">
         <option *ngFor="let path of albums$ | async" [value]="path">
@@ -89,7 +90,8 @@
         </option>
     </datalist>
 
-    <button class="btn btn-sm " (click)="snippet.folder = ''">
+    <button class="btn btn-sm " (click)="form.get('folder')?.setValue(''); saveSnippetSelected();">
         <i class="bi bi-x-circle"></i>
     </button>
 </div>
+</form>
