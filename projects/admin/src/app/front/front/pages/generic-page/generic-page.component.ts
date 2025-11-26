@@ -117,7 +117,7 @@ export class GenericPageComponent implements OnInit, OnChanges {
 
     if (page_title === EXTRA_TITLES.HIGHLIGHTS) {
       this.page_snippets = this.snippets.filter(s => s.featured)
-        .sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''));
+        .sort((a, b) => (b.publishedAt ?? '').localeCompare(a.publishedAt ?? ''));
       this.pageTemplate = PAGE_TEMPLATES.CARDS_top_left;
       // update pageId for all snippets
 

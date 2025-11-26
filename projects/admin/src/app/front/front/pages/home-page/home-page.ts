@@ -131,12 +131,6 @@ export class HomePage {
       this.updateColClasses();
 
 
-      // homepage enable flags were removed from configuration; keep defaults = true
-      // this.homepage_tournaments_enabled = true;
-      // this.homepage_news_enabled = true;
-      // this.homepage_intro_text = (conf && conf.homepage_intro) ? conf.homepage_intro : '';
-      const logoPath = conf?.template?.logo_path;
-      if (logoPath) this.fileService.getPresignedUrl$(logoPath).subscribe({ next: (u) => this.logoPreview = u, error: () => this.logoPreview = null });
     });
   }
 
