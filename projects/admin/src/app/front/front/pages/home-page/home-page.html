@@ -36,7 +36,6 @@
     <div class="card-body">
         <span class="text-uppercase text-success">Bienvenue au Bridge Club de Saint-Orens</span>
         <span class="d-block mb-3">un club dynamique, et convivial.</span>
-        <div *ngIf="homepage_intro_text" class="mt-2">{{ homepage_intro_text }}</div>
     </div>
 </ng-template>
 <ng-template #whoarewe>
@@ -48,7 +47,7 @@
 </ng-template>
 
 <ng-template #birthdays>
-    <div *ngIf="logged_member$ | async as logged_member" class="d-none d-md-block">
+    <div *ngIf="logged_member$ | async as logged_member" class="d-none d-md-block px-3">
         <div *ngIf="next_birthdays.length > 0" class="card-body">
             <div class="text-uppercase text-success mb-2">Prochains anniversaires</div>
             <div *ngFor="let day_birthdays of next_birthdays" class="mb-3">

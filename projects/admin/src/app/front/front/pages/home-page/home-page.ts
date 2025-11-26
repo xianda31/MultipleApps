@@ -40,9 +40,9 @@ export class HomePage {
   transitioning = false; // legacy flag (unused in sequential fade)
   opacity = 1;           // controls sequential fade opacity
   // UI settings read from SystemDataService
-  homepage_tournaments_enabled: boolean = true;
-  homepage_news_enabled: boolean = true;
-  homepage_intro_text: string = '';
+  // homepage_tournaments_enabled: boolean = true;
+  // homepage_news_enabled: boolean = true;
+  // homepage_intro_text: string = '';
   tournaments_row_cols: BreakpointsSettings = { SM: 1, MD: 2, LG: 3, XL: 4 };
   news_row_cols: BreakpointsSettings = { SM: 1, MD: 2, LG: 3, XL: 2 };
   // home layout ratio: 1 = equal cols (6/6), 2 = tournaments wider (8/4)
@@ -132,9 +132,9 @@ export class HomePage {
 
 
       // homepage enable flags were removed from configuration; keep defaults = true
-      this.homepage_tournaments_enabled = true;
-      this.homepage_news_enabled = true;
-      this.homepage_intro_text = (conf && conf.homepage_intro) ? conf.homepage_intro : '';
+      // this.homepage_tournaments_enabled = true;
+      // this.homepage_news_enabled = true;
+      // this.homepage_intro_text = (conf && conf.homepage_intro) ? conf.homepage_intro : '';
       const logoPath = conf?.template?.logo_path;
       if (logoPath) this.fileService.getPresignedUrl$(logoPath).subscribe({ next: (u) => this.logoPreview = u, error: () => this.logoPreview = null });
     });

@@ -156,7 +156,7 @@ export class GenericPageComponent implements OnInit, OnChanges {
 
       case EXTRA_TITLES.HIGHLIGHTS:
         this.page_snippets = this.page_snippets.filter(s => s.featured)
-          .sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''));
+          .sort((a, b) => (b.publishedAt ?? '').localeCompare(a.publishedAt ?? ''));
         this.pageTemplate = PAGE_TEMPLATES.A_LA_UNE;
         break;
 
