@@ -1,0 +1,25 @@
+<div class="container mt-4" style="max-width: 600px;">
+	<h3>Test envoi email SES</h3>
+	<form (ngSubmit)="sendMail()" #mailForm="ngForm">
+		<div class="mb-3">
+			<label>Expéditeur (from)</label>
+			<input class="form-control" [(ngModel)]="from" name="from" required>
+		</div>
+		<div class="mb-3">
+			<label>Destinataires (séparés par virgule)</label>
+			<input class="form-control" [(ngModel)]="toList" name="toList" required>
+		</div>
+		<div class="mb-3">
+			<label>Sujet</label>
+			<input class="form-control" [(ngModel)]="subject" name="subject" required>
+		</div>
+		<div class="mb-3">
+			<label>Message</label>
+			<textarea class="form-control" [(ngModel)]="body" name="body" rows="5" required></textarea>
+		</div>
+		<button class="btn btn-success" [disabled]="sending || !mailForm.form.valid">Envoyer</button>
+	</form>
+	<div *ngIf="sending" class="mt-2">Envoi en cours...</div>
+	<div *ngIf="result" class="alert alert-success mt-2">Envoi réussi ! {{ result | json }}</div>
+	<div *ngIf="error" class="alert alert-danger mt-2">Erreur : {{ error }}</div>
+</div>

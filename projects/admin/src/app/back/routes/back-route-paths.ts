@@ -1,4 +1,3 @@
-import { CloneDBComponent } from "../maintenance/clone-DB/clone-db.component";
 
 // Chemins relatifs pour le routing Angular (back.routes.ts)
 export const BACK_ROUTE_PATHS = {
@@ -32,6 +31,7 @@ export const BACK_ROUTE_PATHS = {
   UiConf: 'site/ui',
   Home: 'home',
   Assistance: 'assistance',
+  Mailing: 'mailing'
 };
 
 // Chemins absolus pour la navigation (service, liens, etc.)

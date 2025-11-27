@@ -31,6 +31,7 @@ import { UiConfComponent } from './ui-conf/ui-conf.component';
 import { CloneS3Component } from './maintenance/clone-S3/clone-s3.component';
 import { AssistanceComponent } from '../front/front/assistance/assistance.component';
 import { BackAssistanceComponent } from './back-assistance/back-assistance.component';
+import { MailingComponent } from './mailing/mailing.component';
 
 export const routes: Routes = [
   {
@@ -75,6 +76,7 @@ export const routes: Routes = [
   { path: BACK_ROUTE_PATHS.PagesEditor, component: PagesEditorComponent, canActivate: [BackAuthGuard] },
   { path: BACK_ROUTE_PATHS.Home, component: BackPageComponent },
   { path: BACK_ROUTE_PATHS.Assistance, component: BackAssistanceComponent, canActivate: [BackAuthGuard] },
+  { path: BACK_ROUTE_PATHS.Mailing, component: MailingComponent, canActivate: [BackAuthGuard] },
 
 
       { path: '', component: BackPageComponent },

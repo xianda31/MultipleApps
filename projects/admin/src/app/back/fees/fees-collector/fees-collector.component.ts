@@ -91,18 +91,18 @@ export class FeesCollectorComponent {
     if (tournament.status === this.GAME_STATUS.RECOVERED) {
       this.toastService.showInfo('Gestion tournoi', 'Une restauration d\'un pointage partiel a été effectuée.');
       const modalRef = this.modalService.open(GetConfirmationComponent, { centered: true });
-          modalRef.componentInstance.title = 'Voulez-vous plutôt repartir d\'une feuille blanche ?';
-          modalRef.componentInstance.subtitle = `Oui : nouvelle feuille blanche  Non : la restauration sera utilisée. `;
-          modalRef.result.then( async (answer: boolean) => {
-            if (answer) {
-              await this.feesCollectorService.reset_tournament_state(tournament);
-              this.next_tournaments.map(t => {
-                if (t.id === this.selected_tournament?.id) {
-                  t.status = Game_status.INITIAL;
-                }   
-              });
+      modalRef.componentInstance.title = 'Voulez-vous plutôt repartir d\'une feuille blanche ?';
+      modalRef.componentInstance.subtitle = `Oui : nouvelle feuille blanche  Non : la restauration sera utilisée. `;
+      modalRef.result.then(async (answer: boolean) => {
+        if (answer) {
+          await this.feesCollectorService.reset_tournament_state(tournament);
+          this.next_tournaments.map(t => {
+            if (t.id === this.selected_tournament?.id) {
+              t.status = Game_status.INITIAL;
             }
           });
+        }
+      });
     }
   }
 
@@ -144,12 +144,12 @@ export class FeesCollectorComponent {
           });
         }
       });
-    }else{
+    } else {
       this.next_tournaments.map(t => {
-       if (t.id === this.selected_tournament?.id) {
-         t.status = Game_status.RECOVERED;
-       }
-     });
+        if (t.id === this.selected_tournament?.id) {
+          t.status = Game_status.RECOVERED;
+        }
+      });
     }
 
   }
@@ -216,6 +216,55 @@ export class FeesCollectorComponent {
     await this.feesCollectorService.log_game_state();
   }
 
+
+  private to_csv(filename: string, rows: string[]) {
+    const csvContent = rows.join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  export_csv_ns() {
+    if (!this.game) return;
+    const csvRows: string[] = [];
+    for (let i = 0; i < this.game.gamers.length; i += 2) {
+      const gamer1 = this.game.gamers[i]?.license ?? '';
+      const gamer2 = this.game.gamers[i + 1]?.license ?? '';
+      csvRows.push(`${gamer1};${gamer2}`);
+    }
+    const ns = csvRows.filter((_, i) => i % 2 === 0);
+    this.to_csv('NS', ns);
+  }
+
+  export_csv_eo() {
+    if (!this.game) return;
+    const csvRows: string[] = [];
+    for (let i = 0; i < this.game.gamers.length; i += 2) {
+      const gamer1 = this.game.gamers[i]?.license ?? '';
+      const gamer2 = this.game.gamers[i + 1]?.license ?? '';
+      csvRows.push(`${gamer1};${gamer2}`);
+    }
+    const eo = csvRows.filter((_, i) => i % 2 === 1);
+    this.to_csv('EO', eo);
+  }
+
+  export_csv_all() {
+    if (!this.game) return;
+    const csvRows: string[] = [];
+    for (let i = 0; i < this.game.gamers.length; i += 2) {
+      const gamer1 = this.game.gamers[i]?.license ?? '';
+      const gamer2 = this.game.gamers[i + 1]?.license ?? '';
+      csvRows.push(`${gamer1};${gamer2}`);
+    }
+    this.to_csv('tournoi', csvRows);
+  }
+
   // PDF generation 
 
 
@@ -233,6 +282,8 @@ export class FeesCollectorComponent {
       this.pdfLoading = false;
     }, 100);
   }
+
+
 
   tables_to_pdf() {
 

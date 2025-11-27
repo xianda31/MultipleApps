@@ -27,6 +27,7 @@
     "@aws-sdk/client-cognito-identity-provider": "^3.887.0",
     "@aws-sdk/client-dynamodb": "^3.887.0",
     "@aws-sdk/client-s3": "^3.919.0",
+    "@aws-sdk/client-ses": "^3.940.0",
     "@aws-sdk/types": "^3.887.0",
     "@editorjs/editorjs": "^2.30.8",
     "@editorjs/header": "^2.8.8",
