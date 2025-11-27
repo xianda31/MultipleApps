@@ -1,3 +1,5 @@
+import { active } from "d3";
+
 export const environment = {
     production: true,
     region: 'eu-west-3',
@@ -8,6 +10,7 @@ export const environment = {
     s3_prod_bucket: '',
     s3_sandbox_bucket: '',
     back_guard: true,
-    active_menu_editor:false
+    active_menu_editor:false,
+    active_mailing: false
 };
 

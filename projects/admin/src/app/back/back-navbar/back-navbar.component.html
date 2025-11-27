@@ -132,7 +132,7 @@
         </li>
 
         <!-- Mailing -->
-        <li class="nav-item ms-md-1 ms-sm-1" *ngIf="accreditation_level >= accreditation_levels.Administrateur">
+        <li class="nav-item ms-md-1 ms-sm-1" *ngIf="(accreditation_level >= accreditation_levels.Administrateur)&& active_mailing">
           <a class="nav-link" routerLink="./mailing">
             <i class="fs-4 bi-envelope-fill">
             </i>

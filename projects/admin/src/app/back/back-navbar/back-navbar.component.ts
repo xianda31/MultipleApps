@@ -35,6 +35,7 @@ export class BackNavbarComponent implements OnInit {
  
   avatar$ !: Observable<string>;
 active_menu_editor : boolean = false;
+active_mailing : boolean = false;
   // assistance$ !: Observable<AssistanceRequest[]>;
   assistances_nbr : number = 0;
 
@@ -57,6 +58,7 @@ active_menu_editor : boolean = false;
      });
 
       this.active_menu_editor = environment.active_menu_editor;
+      this.active_mailing = environment.active_mailing;
 
 
     this.logged_member$ = this.auth.logged_member$;
