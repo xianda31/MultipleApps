@@ -10,8 +10,9 @@ import { NgbCollapseModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap
 import { Accreditation } from '../../common/authentification/group.interface';
 import { Observable } from 'rxjs';
 import { Member } from '../../common/interfaces/member.interface';
-import { ConnexionComponent } from '../../common/authentification/connexion/connexion.component';
 import { MemberSettingsService } from '../../common/services/member-settings.service';
+import { AssistanceRequestService } from '../../common/services/assistance-request.service';
+import { REQUEST_STATUS } from '../../common/interfaces/assistance-request.interface';
 
 
 
@@ -34,17 +35,27 @@ export class BackNavbarComponent implements OnInit {
  
   avatar$ !: Observable<string>;
 active_menu_editor : boolean = false;
+  // assistance$ !: Observable<AssistanceRequest[]>;
+  assistances_nbr : number = 0;
+
 
 
   constructor(
     private auth: AuthentificationService,
     private groupService: GroupService,
-    private memberSettingsService: MemberSettingsService
+    private memberSettingsService: MemberSettingsService,
+    private assistanceService: AssistanceRequestService
 
 
   ) { }
 
   ngOnInit(): void {
+
+     this.assistanceService.getAllRequests().subscribe(requests => {
+       this.assistances_nbr = requests.filter(r => r.status === REQUEST_STATUS.NEW).length;
+       console.log('Assistance requests count:', requests);
+     });
+
       this.active_menu_editor = environment.active_menu_editor;
 
 
@@ -72,31 +83,6 @@ active_menu_editor : boolean = false;
     });
     this.production_mode = environment.production;
   }
-
-  // onCanvasClose() {
-  //   console.log('Canvas closed');
-  //   this.auth.changeMode(Process_flow.SIGN_IN);
-  // }
-
-  // force_canvas_to_close() {
-  //   const canvas = document.getElementById('loggingOffCanvas');
-  //   if (canvas) {
-  //     const bsOffcanvas = Offcanvas.getInstance(canvas);
-  //     if (bsOffcanvas) {
-  //       bsOffcanvas.hide();
-  //       setTimeout(() => {
-  //         canvas.classList.remove('show');
-  //         const backdrop = document.querySelector('.offcanvas-backdrop');
-  //         if (backdrop) {
-  //           backdrop.parentNode?.removeChild(backdrop);
-  //         }
-  //         document.body.classList.remove('offcanvas-backdrop', 'show', 'modal-open');
-  //       }, 300);
-  //     }
-  //   }
-  // }
-
-
 
   async signOut() {
     try {

@@ -1,0 +1,35 @@
+// Align style with connexion form
+.container {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	min-height: 80vh;
+}
+
+.sepia-input {
+	background-color: #fff8cc !important;
+	border-color: #9ed39e;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+.sepia-input:focus {
+	background-color: #fff8cc !important;
+	border-color: #7ccf7c;
+	box-shadow: 0 0 0 0.25rem rgba(124, 207, 124, 0.25);
+}
+.btn-login {
+	padding: 0.75rem 0.5rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	color: #fff;
+}
+.card {
+	border-radius: 1rem;
+}
+.invalid-feedback {
+	display: block;
+}
+.link-forgot {
+    text-decoration: none; /* no underline for help text */
+    color: #198754; /* darker green for better contrast */
+    font-size: 0.875rem; /* smaller text */
+}

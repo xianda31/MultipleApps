@@ -11,7 +11,8 @@ import { PlayBook, PlayBook_input } from '../../back/game-cards/game-card.interf
 import {  Page, Page_input, Snippet, Snippet_input } from '../interfaces/page_snippet.interface';
 import { Game, Game_input } from '../../back/fees/fees.interface';
 import { NavItem, NavItem_input } from '../interfaces/navitem.interface';
-
+import { AssistanceRequest, AssistanceRequestInput } from '../interfaces/assistance-request.interface';
+// ...existing code...
 
 @Injectable({
   providedIn: 'root'
@@ -19,6 +20,12 @@ import { NavItem, NavItem_input } from '../interfaces/navitem.interface';
 export class DBhandler {
   constructor(
   ) { }
+
+  // ...existing code...
+
+
+
+
 
   private _authMode(): Observable<'userPool' | 'identityPool'> {
     return from(getCurrentUser()).pipe(
@@ -236,6 +243,63 @@ listPages(): Observable<Page[]> {
     return data[0] as Member;   // array of only one element, hopefully !!!
   }
 
+
+    // ASSISTANCE REQUESTS SERVICE
+
+  // CREATE
+  async createAssistanceRequest(input: AssistanceRequestInput): Promise<AssistanceRequest> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { data, errors } = await client.models.AssistanceRequest.create(input);
+    if (errors) throw errors;
+    return data as AssistanceRequest;
+  }
+
+  // READ (single)
+  async readAssistanceRequest(id: string): Promise<AssistanceRequest> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { data, errors } = await client.models.AssistanceRequest.get({ id });
+    if (errors) throw errors;
+    return data as AssistanceRequest;
+  }
+
+  // UPDATE
+  async updateAssistanceRequest(request: AssistanceRequest): Promise<AssistanceRequest> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { data, errors } = await client.models.AssistanceRequest.update(request);
+    if (errors) throw errors;
+    return data as AssistanceRequest;
+  }
+
+  // DELETE
+  async deleteAssistanceRequest(id: string): Promise<boolean> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { errors } = await client.models.AssistanceRequest.delete({ id });
+    if (errors) throw errors;
+    return true;
+  }
+
+  // LIST (all)
+  listAssistanceRequests(): Observable<AssistanceRequest[]> {
+    return this._authMode().pipe(
+      switchMap((authMode) => {
+        const client = generateClient<Schema>({ authMode });
+        return from(
+          client.models.AssistanceRequest.list({ limit: 300 })
+            .then(({ data, errors }) => {
+              if (errors) {
+                console.error('AssistanceRequest.list error', errors);
+                return [];
+              }
+              return data as AssistanceRequest[];
+            })
+        );
+      })
+    );
+  }
 
   // SNIPPETS SERVICE
 

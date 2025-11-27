@@ -1,0 +1,69 @@
+<div class="container mt-4">
+  <h3 class="mb-4">Demandes d'assistance</h3>
+  <table class="table table-bordered table-hover align-middle bg-white">
+    <thead class="table-light">
+      <tr>
+        <th>Nom</th>
+        <th>Prénom</th>
+        <th>Email</th>
+        <th>Type</th>
+        <th>Message</th>
+        <th>Date</th>
+        <th>
+          <div class="d-flex flex-row align-items-center gap-2">
+            <span>Status</span>
+            <select id="statusFilter" class="form-select form-select-sm" style="min-width: 110px;" [(ngModel)]="statusFilter">
+              <option value="">Tous</option>
+              <option *ngFor="let s of statusOptions" [value]="s.value">{{ s.label }}</option>
+            </select>
+          </div>
+        </th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let req of filteredRequests">
+        <td>{{ req.nom }}</td>
+        <td>{{ req.prenom }}</td>
+        <td>{{ req.email }}</td>
+        <td>{{ req.type }}</td>
+        <td class="message-cell" [attr.title]="req.texte">
+          {{ req.texte.split('\n')[0] }}
+          <ng-container *ngIf="req.texte.includes('\n')">…</ng-container>
+        </td>
+        <td>{{ req.createdAt | date:'short' }}</td>
+        <td>
+          <ng-container *ngIf="editingStatus[req.id]; else showStatus">
+            <select class="form-select form-select-sm" [(ngModel)]="req.status">
+              <option *ngFor="let s of statusOptions" [value]="s.value">{{ s.label }}</option>
+            </select>
+          </ng-container>
+          <ng-template #showStatus>
+            <span
+              class="badge"
+              [ngClass]="{
+                'bg-warning text-dark': req.status === statusOptions[0].value,
+                'bg-info text-dark': req.status === statusOptions[1].value,
+                'bg-success': req.status === statusOptions[2].value
+              }"
+            >
+              {{ getStatusLabel(req.status) }}
+            </span>
+          </ng-template>
+        </td>
+        <td>
+          <ng-container *ngIf="editingStatus[req.id]; else editBtn">
+            <button class="btn btn-success btn-sm me-1" (click)="updateStatus(req, req.status)">Enregistrer</button>
+            <button class="btn btn-outline-secondary btn-sm" (click)="editingStatus[req.id]=false">Annuler</button>
+          </ng-container>
+          <ng-template #editBtn>
+            <button class="btn btn-outline-primary btn-sm" (click)="enableEdit(req.id)">Modifier</button>
+          </ng-template>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+
+
+</div>

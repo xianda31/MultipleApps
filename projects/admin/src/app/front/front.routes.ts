@@ -13,7 +13,7 @@ import { TournamentsComponent } from '../common/tournaments/tournaments/tourname
 import { SettingsComponent } from '../common/members/settings/settings.component';
 import { BackAuthGuard } from '../back-auth.guard';
 import { ConnexionPageComponent } from '../common/authentification/connexion-page/connexion-page.component';
-
+import { AssistanceComponent } from './front/assistance/assistance.component';
 
 
 export const routes: Routes = [
@@ -36,6 +36,7 @@ export const routes: Routes = [
       { path: 'albums/:snippet_id', component: Carousel, canActivate: [BackAuthGuard] },
       { path: 'connexion', component: ConnexionPageComponent},
       { path: 'back_office', redirectTo: '/back', pathMatch: 'full' },
+      { path: 'assistance', component: AssistanceComponent },
       // { path: 'contacts', component: ContactsComponent },
       { path: '', redirectTo: 'home', pathMatch: 'full' },
       { path: '404', component: PageNotFoundComponent },

@@ -1,0 +1,59 @@
+<div class="container d-flex justify-content-center align-items-center min-vh-80">
+  <div class="card border-0 w-100" style="max-width: 480px;">
+    <div class="card-body p-4">
+      <div class="text-center mb-3">
+        <img src="bcsto.jpg" alt="Logo du club" class="mb-3 nice_shadow" style="max-width: 150px;">
+      </div>
+      <h5 class=" text-start">Assistance / Support</h5>
+      <div class="d-flex justify-content-start ">
+        <button type="button" class="btn btn-link p-0 link-forgot text-start" (click)="goBack()">
+          <i class="bi bi-house"></i>
+          <span class="ms-1">Retour/abandon</span>
+        </button>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <div class="mt-2 mb-3">
+          <label class="form-label">Nom</label>
+          <input type="text" class="form-control sepia-input" formControlName="nom"
+            [class.is-invalid]="submitted && form.get('nom')?.invalid">
+          <div *ngIf="submitted && form.get('nom')?.invalid" class="invalid-feedback">Nom requis</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Prénom</label>
+          <input type="text" class="form-control sepia-input" formControlName="prenom"
+            [class.is-invalid]="submitted && form.get('prenom')?.invalid">
+          <div *ngIf="submitted && form.get('prenom')?.invalid" class="invalid-feedback">Prénom requis</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Adresse mail</label>
+          <input type="email" class="form-control sepia-input" formControlName="email"
+            [class.is-invalid]="submitted && form.get('email')?.invalid">
+          <div *ngIf="submitted && form.get('email')?.invalid" class="invalid-feedback">Email valide requis</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Type de demande</label>
+          <select class="form-select sepia-input" formControlName="type"
+            [class.is-invalid]="submitted && form.get('type')?.invalid">
+            <option value="" disabled selected>Choisir...</option>
+            <option *ngFor="let t of requestTypes" [value]="t">{{ t }}</option>
+          </select>
+          <div *ngIf="submitted && form.get('type')?.invalid" class="invalid-feedback">Type requis</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Votre message</label>
+          <textarea class="form-control sepia-input" formControlName="texte" rows="4"
+            [class.is-invalid]="submitted && form.get('texte')?.invalid"></textarea>
+          <div *ngIf="submitted && form.get('texte')?.invalid" class="invalid-feedback">Message requis</div>
+        </div>
+        <button type="submit" class="btn btn-success btn-login w-100" [disabled]="loading">
+          <span *ngIf="loading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+          Envoyer
+        </button>
+
+        <div *ngIf="success" class="alert alert-success mt-3">Votre demande a bien été envoyée.</div>
+        <div *ngIf="error" class="alert alert-danger mt-3">{{ error }}</div>
+      </form>
+    </div>
+  </div>
+</div>

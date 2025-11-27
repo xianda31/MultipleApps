@@ -31,6 +31,7 @@ export const BACK_ROUTE_PATHS = {
   MenusEditor: 'site/menus',
   UiConf: 'site/ui',
   Home: 'home',
+  Assistance: 'assistance',
 };
 
 // Chemins absolus pour la navigation (service, liens, etc.)

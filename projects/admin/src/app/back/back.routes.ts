@@ -29,6 +29,8 @@ import { BackAuthGuard } from '../back-auth.guard';
 import { MenusEditorComponent } from './menus/menus-editor/menus-editor';
 import { UiConfComponent } from './ui-conf/ui-conf.component';
 import { CloneS3Component } from './maintenance/clone-S3/clone-s3.component';
+import { AssistanceComponent } from '../front/front/assistance/assistance.component';
+import { BackAssistanceComponent } from './back-assistance/back-assistance.component';
 
 export const routes: Routes = [
   {
@@ -72,6 +74,7 @@ export const routes: Routes = [
   { path: BACK_ROUTE_PATHS.MenusEditor, component: MenusEditorComponent },
   { path: BACK_ROUTE_PATHS.PagesEditor, component: PagesEditorComponent, canActivate: [BackAuthGuard] },
   { path: BACK_ROUTE_PATHS.Home, component: BackPageComponent },
+  { path: BACK_ROUTE_PATHS.Assistance, component: BackAssistanceComponent, canActivate: [BackAuthGuard] },
 
 
       { path: '', component: BackPageComponent },

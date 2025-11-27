@@ -1,8 +1,8 @@
 <div class="row bg-light  ">
   <div class="d-flex d-inline align-items-end  w-100 bg-dark  p-2  position-relative">
     <!-- Mobile sidebar toggle button -->
-    <button *ngIf="(logged_member$ | async)" class="btn btn-outline-secondary d-md-none text-center" type="button" data-bs-toggle="offcanvas"
-      data-bs-target="#mobileSidebar" aria-controls="mobileSidebar">
+    <button *ngIf="(logged_member$ | async)" class="btn btn-outline-secondary d-md-none text-center" type="button"
+      data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar" aria-controls="mobileSidebar">
       <i class="bi bi-list text-start"></i>
     </button>
 
@@ -120,13 +120,17 @@
           </ul>
         </li>
 
-        <!-- Connexion -->
-        <!-- <li *ngIf="!(logged_member$ | async)" ngbDropdown class="nav-item dropdown me-5">
-          <button class="btn btn-success btn-sm shadow-sm" type="button" data-bs-toggle="offcanvas"
-            data-bs-target="#loggingOffCanvas" aria-controls="loggingOffCanvas">
-            connexion
-          </button>
-        </li> -->
+        <!-- Assistance -->
+        <li class="nav-item ms-md-1 ms-sm-1" *ngIf="accreditation_level >= accreditation_levels.Editeur">
+          <a class="nav-link" routerLink="/front/assistance">
+            <i class="fs-4 bi-person-raised-hand">
+              <span *ngIf="assistances_nbr > 0" class="badge bg-warning top-0 start-100 translate-middle"
+                style="font-size: 0.6rem;">{{assistances_nbr}}</span>
+            </i>
+            <span class="ms-0">Assistance</span>
+          </a>
+        </li>
+
 
         <li *ngIf="(logged_member$ | async) as member" class="nav-item dropdown ms-auto me-5" ngbDropdown>
           <a class="nav-link dropdown-toggle d-flex align-items-center" ngbDropdownToggle href="#">
@@ -166,7 +170,8 @@
 
         <!-- Tournoi (single item) -->
         <li class="nav-item" *ngIf="accreditation_level >= accreditation_levels.Contributeur">
-          <a class="nav-link d-flex align-items-center" routerLink="./caisse/droits-de-table" data-bs-dismiss="offcanvas">
+          <a class="nav-link d-flex align-items-center" routerLink="./caisse/droits-de-table"
+            data-bs-dismiss="offcanvas">
             <i class="fs-4 bi-card-checklist"></i>
             <span class="ms-1">Tournois</span>
           </a>
@@ -257,12 +262,18 @@
             <li><a class="dropdown-item" routerLink="/front" data-bs-dismiss="offcanvas">aller au site</a></li>
           </ul>
         </li>
-        <!-- <li *ngIf="!(logged_member$ | async)" ngbDropdown class="nav-item dropdown">
-          <button class="btn btn-success shadow-sm w-100 my-2" type="button" data-bs-toggle="offcanvas"
-            data-bs-target="#loggingOffCanvas" aria-controls="loggingOffCanvas">
-            connexion
-          </button>
-        </li> -->
+
+       <!-- Assistance -->
+        <li class="nav-item ms-md-1 ms-sm-1" *ngIf="accreditation_level >= accreditation_levels.Editeur">
+          <a class="nav-link" routerLink="/front/assistance">
+            <i class="fs-4 bi-person-raised-hand">
+              <span *ngIf="assistances_nbr > 0" class="badge bg-warning top-0 start-100 translate-middle"
+                style="font-size: 0.6rem;">{{assistances_nbr}}</span>
+            </i>
+            <span class="ms-0">Assistance</span>
+          </a>
+        </li>
+
         <li *ngIf="(logged_member$ | async) " ngbDropdown class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
             <i class="fs-4 bi-person-circle"></i>

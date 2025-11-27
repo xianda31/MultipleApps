@@ -270,10 +270,27 @@ const schema = a.schema({
 
     ]),
 
+    
+    // Assistance requests
+
+AssistanceRequest: a.model({
+  nom: a.string().required(),
+  prenom: a.string().required(),
+  email: a.string().required(),
+  type: a.string().required(),
+  texte: a.string().required(),
+  status: a.string().required(),
+})
+.authorization((allow) => [
+  allow.guest().to(['create']),
+  allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+    allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
+    allow.group(Group_names.Editor).to(['read', 'create', 'update', 'delete']),
+    allow.group(Group_names.Support).to(['read', 'create', 'update', 'delete']),
+    allow.group(Group_names.Member).to(['read', 'create']),
+  ]),
+  
 });
-
-
-
 export type Schema = ClientSchema<typeof schema>;
 
 export const data = defineData({
