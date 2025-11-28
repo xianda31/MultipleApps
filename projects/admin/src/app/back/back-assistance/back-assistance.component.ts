@@ -45,9 +45,9 @@ export class BackAssistanceComponent implements OnInit {
         this.editingStatus[id] = true;
     }
 
-    async updateStatus(request: AssistanceRequest, newStatus: string) {
+    updateStatus(request: AssistanceRequest, newStatus: string) {
         const updated = { ...request, status: newStatus };
-        await this.assistanceService.updateRequest(updated);
+        this.assistanceService.updateRequest(updated);
         this.editingStatus[request.id] = false;
     }
 }

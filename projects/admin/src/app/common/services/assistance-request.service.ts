@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { DBhandler } from './graphQL.service';
 import { AssistanceRequest, AssistanceRequestInput } from '../interfaces/assistance-request.interface';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, switchMap, tap } from 'rxjs';
 import { ToastService } from './toast.service';
 
 
@@ -31,11 +31,11 @@ export class AssistanceRequestService {
   async updateRequest(request: AssistanceRequest) {
     try {
       const updatedRequest = await this.db.updateAssistanceRequest(request);
-      this.toastService.showSuccess('Demande mise à jour', `La demande a bien été mise à jour.`);
       const index = this._requests.findIndex(r => r.id === updatedRequest.id);
       if (index !== -1) {
         this._requests[index] = updatedRequest;
         this._request$.next(this._requests);
+        this.toastService.showSuccess('Demande mise à jour', `La demande a bien été mise à jour.`);
       }
     } catch (error) {
       this.toastService.showErrorToast('Erreur', `La mise à jour de la demande a échoué.`);
@@ -48,7 +48,8 @@ export class AssistanceRequestService {
       tap((requests) => {
         this._requests = requests;
         this._request$.next(this._requests);
-      })
+      }),
+      switchMap(() => this._request$.asObservable())
     );
 
     return this._requests ? this._request$.asObservable() : remote_loads$;
