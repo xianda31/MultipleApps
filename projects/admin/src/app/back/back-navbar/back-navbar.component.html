@@ -121,10 +121,10 @@
         </li>
 
         <!-- Assistance -->
-        <li class="nav-item ms-md-1 ms-sm-1" *ngIf="accreditation_level >= accreditation_levels.Editeur">
+        <li class="nav-item ms-md-1 ms-sm-1" *ngIf="(accreditation_level >= accreditation_levels.Editeur) && (assistances_nbr > 0)">
           <a class="nav-link" routerLink="./assistance">
             <i class="fs-4 bi-person-raised-hand">
-              <span *ngIf="assistances_nbr > 0" class="badge bg-warning top-0 start-100 translate-middle"
+              <span  class="badge bg-warning top-0 start-100 translate-middle"
                 style="font-size: 0.6rem;">{{assistances_nbr}}</span>
             </i>
             <span class="ms-0">Assistance</span>

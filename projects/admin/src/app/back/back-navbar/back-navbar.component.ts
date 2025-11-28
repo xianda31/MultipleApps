@@ -53,8 +53,8 @@ active_mailing : boolean = false;
   ngOnInit(): void {
 
      this.assistanceService.getAllRequests().subscribe(requests => {
-       this.assistances_nbr = requests.filter(r => r.status === REQUEST_STATUS.NEW).length;
-       console.log('Assistance requests count:', requests);
+       this.assistances_nbr = requests.filter(r => r.status !== REQUEST_STATUS.RESOLVED).length;
+       console.log('%s requests : %o', this.assistances_nbr,requests);
      });
 
       this.active_menu_editor = environment.active_menu_editor;

@@ -34,7 +34,6 @@ export class BackAssistanceComponent implements OnInit {
     ngOnInit() {
         this.assistanceService.getAllRequests().subscribe(requests => {
             this.requests = requests;
-            console.log('Assistance requests count:', requests);
         });
     }
     get filteredRequests(): AssistanceRequest[] {

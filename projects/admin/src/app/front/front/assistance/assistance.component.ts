@@ -3,7 +3,7 @@ import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AssistanceRequestService } from '../../../common/services/assistance-request.service';
 import { CommonModule } from '@angular/common';
-import { REQUEST_TYPES } from '../../../common/interfaces/assistance-request.interface';
+import { REQUEST_STATUS, REQUEST_TYPES } from '../../../common/interfaces/assistance-request.interface';
 import { TitleService } from '../../title/title.service';
 
 
@@ -39,7 +39,7 @@ export class AssistanceComponent {
             email: ['', [Validators.required, Validators.email]],
             type: ['', Validators.required],
             texte: ['', Validators.required],
-            status: ['open'],
+            status: [REQUEST_STATUS.NEW, Validators.required],
         });
     }
 
