@@ -127,7 +127,7 @@ export class MembersComponent implements OnInit {
       }
     });
     this.no_license_nbr = this.members.filter(m => m.membership_date && (m.license_status === LicenseStatus.UNREGISTERED)).length;
-    this.lost_members_nbr = this.members.filter(m => !m.membership_date ).length;
+    this.lost_members_nbr = this.members.filter(m => !m.membership_date && (m.license_status === LicenseStatus.UNREGISTERED)).length;
   }
 
   add_licensee(player: FFBplayer) {
