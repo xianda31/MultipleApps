@@ -49,11 +49,23 @@ export class MembersComponent implements OnInit {
   filter_icons : { [key in FILTER]: string } = {
     [FILTER.MEMBER]: 'bi bi-person-check-fill',
     [FILTER.MEMBER_AT_FFB]: 'bi bi-person-badge-fill',
-    [FILTER.STUDENT]: 'bi bi-mortarboard',
+    [FILTER.STUDENT]: 'bi bi-mortarboard-fill',
     [FILTER.UNKNOWN]: 'bi bi-person-slash',
   };
 
   avatar_urls$: { [key: string]: Observable<string> } = {};
+
+  // For dynamic info column in members table
+  infoColumns = ['license_number', 'membership_date', 'email', 'birthdate', 'phone_one', 'city'];
+  infoColumnLabels: { [key: string]: string } = {
+    license_number: 'Licence',
+    membership_date: "Date d'adhésion",
+    email: 'Mail',
+    birthdate: 'Date naissance',
+    phone_one: 'Téléphone',
+    city: 'Ville',
+  };
+  selectedInfoColumn: string = 'membership_date';
 
   // radioButtonGroup: FormGroup = new FormGroup({
   //   radioButton: new FormControl('Tous')
@@ -100,12 +112,6 @@ export class MembersComponent implements OnInit {
     });
   }
 
-  // hasAdh(member: Member): boolean {
-  //   const full_name = this.membersService.full_name(member);
-  //   const buy_op = this.operations
-  //     .filter((op) => op.member === full_name);
-  //   return buy_op.some(op => op.values['ADH']);
-  // }
 
   collect_avatars(members: Member[]): { [key: string]: Observable<string> } {
     const avatarUrls: { [key: string]: Observable<string> } = {};
@@ -219,8 +225,8 @@ export class MembersComponent implements OnInit {
           return ( (member.license_status === LicenseStatus.DULY_REGISTERED || member.license_status === LicenseStatus.PROMOTED_ONLY));
         case FILTER.STUDENT: //'membre sans licence':
           return (member.membership_date && (member.license_status === LicenseStatus.UNREGISTERED));
-        case FILTER.MEMBER: //'membre (i.e. adhérent)':
-          return (member.membership_date);
+        case FILTER.MEMBER: //'membre (i.e. adhérent ou déclaré à la FFB)':
+          return (member.membership_date || ( member.license_status === LicenseStatus.DULY_REGISTERED || member.license_status === LicenseStatus.PROMOTED_ONLY) );
         case FILTER.UNKNOWN: //'non adhérent':
           return (!member.membership_date && ( member.license_status === LicenseStatus.UNREGISTERED) );
 

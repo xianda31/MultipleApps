@@ -1,21 +1,11 @@
-<div class="mt-2">
+<div class="mt-2 container-fluid container-md">
   <div class="card">
     <div class="card-header">
-      <div class="row justify-content-between align-items-center">
-        <h5 class="col-12 col-sm">
-          Répertoire Club :
-          <span> {{members.length}} personnes</span>
-        </h5>
-        <h5 class="col-12 col-sm">
-          {{licensees.length}} de la base FFB :
-          <span> {{licensees.length - sympatisants_number}} licenciés + {{sympatisants_number}} sympathisants </span>
-        </h5>
-        <h5 class="col-12 col-sm">
-          {{no_license_nbr}} adhérents sans licence
-        </h5>
-        <h5 class="col-12 col-sm">
-          {{lost_members_nbr}} adhérents perdus
-        </h5>
+      <div class="row justify-content-start align-items-center fs-5">
+          <div class="col-auto card-title me-4"> Répertoire Club :</div>
+          <div class="col-auto card-title me-4">{{licensees.length}} de la base FFB  {{licensees.length - sympatisants_number}} licenciés + {{sympatisants_number}} sympathisants </div>
+          <div class="col-auto card-title me-4">{{no_license_nbr}} adhérents sans licence</div>
+          <div class="col-auto card-title me-4">{{lost_members_nbr}} adhérents perdus</div>
       </div>
     </div>
 
@@ -30,7 +20,7 @@
             <span class="input-group-text" id="inputGroup-sizing-sm"><strong>SANS licence </strong>(ex. débutant(e))
               :</span>
             <button class="btn  btn-primary btn-sm" (click)="add_newbee()">
-              <i class="bi bi-person-square"></i>
+              <i class="bi bi-mortarboard-fill"></i>
             </button>
           </div>
         </div>
@@ -50,13 +40,14 @@
       <table class="table table-striped table-sm table-bordered table-responsive">
         <thead>
           <tr>
-            <th>#</th>
-            <th>Nom</th>
-            <th>Prénom</th>
-            <th class="text-center"></th>
-            <th class="text-center">
+            <th style="width: 4%;">#</th>
+            <th style="width: 18%;">Nom</th>
+            <th style="width: 18%;">Prénom</th>
+            <th class="text-center" style="width: 8%;"></th>
+            <th class="text-center" style="width: 12%;">
+              {{filteredMembers.length}}
               <ng-container *ngIf="selected_filter === FILTERS.MEMBER_AT_FFB; else iconOnly">
-                <span class="background:#009478">FFB</span>
+                <span style ="color:#009478">FFB</span>
               </ng-container>
               <ng-template #iconOnly>
                 <i [class]="filter_icons[selected_filter]"></i>
@@ -72,13 +63,17 @@
             </th>
 
 
-            <th class="d-none d-sm-table-cell">licence</th>
-            <th class="d-none d-sm-table-cell">date de licence</th>
-            <th class="d-none d-sm-table-cell">date d'adhésion</th>
-            <th class="d-none d-sm-table-cell">mail</th>
-            <th class="d-none d-sm-table-cell">date naissance</th>
-            <th class="d-none d-sm-table-cell"><i class="bi bi-telephone-fill"></i></th>
-            <th class="d-none d-sm-table-cell">Ville</th>
+            <th class="d-none d-sm-table-cell" ngbDropdown style="cursor:pointer;">
+              <span ngbDropdownToggle style="font-weight: bold;">
+                {{ infoColumnLabels[selectedInfoColumn] }}
+                <!-- <i class="bi bi-caret-down-fill" style="font-size:0.8em;"></i> -->
+              </span>
+              <ul ngbDropdownMenu>
+                <li *ngFor="let col of infoColumns">
+                  <a class="dropdown-item" (click)="selectedInfoColumn = col">{{ infoColumnLabels[col] }}</a>
+                </li>
+              </ul>
+            </th>
             <th class="d-none d-sm-table-cell text-center">préf.</th>
             <th class="d-none d-sm-table-cell text-center">Actions</th>
           </tr>
@@ -97,7 +92,7 @@
               <span
                 ngbTooltip="{{member.license_taken_at === 'BCSTO' ? 'licencié au Club' : 'Sympathisant licencié au ' + member.license_taken_at}}"
                 tooltipClass="my-custom-class" placement="right">
-                <i [class]="member.license_taken_at !== 'BCSTO' ? 'bi bi-tencent-qq' : 'bi bi-person-square'"></i>
+                <i [style]="member.membership_date ? '' : 'color : red;'" [class]="member.license_taken_at !== 'BCSTO' ? 'bi bi-tencent-qq' : 'bi bi-person-square'"></i>
               </span>
               } @else if (member.license_status === 'unregistered') {
               @if (member.membership_date) {
@@ -112,19 +107,23 @@
               }
             </td>
 
-            <td class="d-none d-sm-table-cell">{{member.license_number}}</td>
-            <td>{{member.register_date ? (member.register_date | date:'dd/MM/yyyy') : ''}}</td>
             <td class="d-none d-sm-table-cell">
-              {{ member.membership_date ? (member.membership_date | date:'dd/MM/yyyy') : '' }}
+              @if (selectedInfoColumn === 'license_number') {
+                {{ member.license_number }}
+              } @else if (selectedInfoColumn === 'membership_date') {
+                {{ member.membership_date ? (member.membership_date | date:'dd/MM/yyyy') : '' }}
+              } @else if (selectedInfoColumn === 'email') {
+                {{ member.email }}
+              } @else if (selectedInfoColumn === 'birthdate') {
+                {{ member.birthdate | date:'dd/MM/yyyy' : '' }}
+              } @else if (selectedInfoColumn === 'phone_one') {
+                {{ member.phone_one | phone }}
+              } @else if (selectedInfoColumn === 'city') {
+                {{ member.city }}
+              }
             </td>
-            <td class="d-none d-sm-table-cell">{{member.email}}</td>
-            <td class="d-none d-sm-table-cell">
-              {{member.birthdate | date:'dd/MM/yyyy' : ''}}
-            </td>
-            <td class="d-none d-sm-table-cell">{{member.phone_one | phone}}</td>
-            <td class="d-none d-sm-table-cell">{{member.city }}</td>
-            <td class="text-center"> <i (click)="access_settings(member)" class="bi bi-gear-fill"></i> </td>
-            <td class="text-center">
+            <td class="d-none d-sm-table-cell text-center"> <i (click)="access_settings(member)" class="bi bi-gear-fill"></i> </td>
+            <td class="d-none d-sm-table-cell text-center">
               <i class="bi bi-trash" (click)="deleteMember(member)"></i>
             </td>
           </tr>
