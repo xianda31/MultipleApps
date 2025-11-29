@@ -8,7 +8,7 @@ import { MembersService } from '../../../../common/services/members.service';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 import { BreakpointsSettings, UIConfiguration } from '../../../../common/interfaces/ui-conf.interface';
 import { combineLatest, map, Observable, switchMap, tap, interval, Subscription } from 'rxjs';
-import { Member } from '../../../../common/interfaces/member.interface';
+import { LicenseStatus, Member } from '../../../../common/interfaces/member.interface';
 import { AuthentificationService } from '../../../../common/authentification/authentification.service';
 import { CommonModule } from '@angular/common';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
@@ -24,7 +24,8 @@ import { FileService } from '../../../../common/services/files.service';
 export class HomePage {
   EXTRA_TITLES = EXTRA_TITLES;
   MENU_TITLES = MENU_TITLES;
-  licensees = 0;
+  licensee_nbr = 0;
+  student_nbr = 0;
   logged_member$: Observable<Member | null> = new Observable<Member | null>();
   isMdOrAbove: boolean = false;
   home_folder: string = 'images/accueil';
@@ -39,13 +40,8 @@ export class HomePage {
   private rotationSub?: Subscription;
   transitioning = false; // legacy flag (unused in sequential fade)
   opacity = 1;           // controls sequential fade opacity
-  // UI settings read from SystemDataService
-  // homepage_tournaments_enabled: boolean = true;
-  // homepage_news_enabled: boolean = true;
-  // homepage_intro_text: string = '';
   tournaments_row_cols: BreakpointsSettings = { SM: 1, MD: 2, LG: 3, XL: 4 };
   news_row_cols: BreakpointsSettings = { SM: 1, MD: 2, LG: 3, XL: 2 };
-  // home layout ratio: 1 = equal cols (6/6), 2 = tournaments wider (8/4)
   home_layout_ratio: number = 2;
   tournamentsColClass: string = 'col-12 col-md-8';
   newsColClass: string = 'col-12 col-md-4';
@@ -75,9 +71,8 @@ export class HomePage {
     const season = this.systemDataService.get_today_season();
 
     this.membersService.listMembers().subscribe((members) => {
-      this.licensees = members.filter(m => m.season === season).length;
-      // this.sympathisants = members.filter(m => (m.is_sympathisant === true) && (m.season === season)).length;
-    });
+      this.licensee_nbr = members.filter(m => m.license_status !== LicenseStatus.UNREGISTERED).length;
+this.student_nbr = members.filter(m => m.membership_date && (m.license_status === LicenseStatus.UNREGISTERED)).length;});
 
     this.fileService.list_files(this.home_folder + '/').pipe(
       map((S3items) => S3items.filter(item => item.size !== 0)),

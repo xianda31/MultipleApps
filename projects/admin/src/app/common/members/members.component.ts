@@ -14,6 +14,16 @@ import { SystemDataService } from '../services/system-data.service';
 import { ToastService } from '../services/toast.service';
 import { PhonePipe } from '../pipes/phone.pipe';
 import { MemberSettingsService } from '../services/member-settings.service';
+import { BookService } from '../../back/services/book.service';
+import { Revenue } from '../interfaces/accounting.interface';
+
+
+enum FILTER {
+  'MEMBER' = 'membre',
+  'MEMBER_AT_FFB' = 'membre licencié à la FFB',
+  'STUDENT' = 'membre sans licence',
+  'UNKNOWN' = 'perdu',
+};
 
 @Component({
   selector: 'app-members',
@@ -28,19 +38,22 @@ export class MembersComponent implements OnInit {
   filteredMembers: Member[] = [];
   licensees: FFB_licensee[] = [];
   sympatisants_number: number = 0;
+  no_license_nbr: number = 0;
+  lost_members_nbr: number = 0;
   new_player!: FFBplayer;
   season: string = '';
-
-  // selected_filter: string = 'Tous';
-  licenses_status: { [key: string]: string } = {
-    'registered': '@FFB',
-    'unregistered': 'autres',
-    // 'all': 'tous',
-    // 'offered': 'Offerte',
+  operations: Revenue[] = [];
+  FILTERS = FILTER;
+  filters = Object.values(FILTER);
+  selected_filter: FILTER = FILTER.MEMBER;
+  filter_icons : { [key in FILTER]: string } = {
+    [FILTER.MEMBER]: 'bi bi-person-check-fill',
+    [FILTER.MEMBER_AT_FFB]: 'bi bi-person-badge-fill',
+    [FILTER.STUDENT]: 'bi bi-mortarboard',
+    [FILTER.UNKNOWN]: 'bi bi-person-slash',
   };
-  selected_status: string = 'registered';
 
-    avatar_urls$: { [key: string]: Observable<string> } = {};
+  avatar_urls$: { [key: string]: Observable<string> } = {};
 
   // radioButtonGroup: FormGroup = new FormGroup({
   //   radioButton: new FormControl('Tous')
@@ -49,10 +62,11 @@ export class MembersComponent implements OnInit {
   constructor(
     private licenseesService: LicenseesService,
     private membersService: MembersService,
-    private memberSettingsService: MemberSettingsService, 
+    private memberSettingsService: MemberSettingsService,
     private sysConfService: SystemDataService,
     private modalService: NgbModal,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private bookService: BookService,
 
   ) {
   }
@@ -62,6 +76,9 @@ export class MembersComponent implements OnInit {
     let today = new Date();
     this.season = this.sysConfService.get_season(today);
 
+    this.bookService.list_book_entries().subscribe((entries) => {
+      this.operations = this.bookService.get_operations();
+    });
 
     this.licenseesService.list_FFB_licensees$().pipe(
       tap((licensees) => {
@@ -75,14 +92,22 @@ export class MembersComponent implements OnInit {
     ).subscribe((members) => {
       this.members = members;
       this.avatar_urls$ = this.collect_avatars(members);
+      this.check_membership_paied();
       this.reset_license_statuses();
       this.updateDBfromFFB();
-      this.filterOnStatus(this.selected_status);
+      this.filterOnStatus(this.selected_filter);
       // console.log(this.members);
     });
   }
 
-  collect_avatars(members : Member[]): { [key: string]: Observable<string> } {
+  // hasAdh(member: Member): boolean {
+  //   const full_name = this.membersService.full_name(member);
+  //   const buy_op = this.operations
+  //     .filter((op) => op.member === full_name);
+  //   return buy_op.some(op => op.values['ADH']);
+  // }
+
+  collect_avatars(members: Member[]): { [key: string]: Observable<string> } {
     const avatarUrls: { [key: string]: Observable<string> } = {};
     members.forEach((member: Member) => {
       avatarUrls[member.license_number] = this.memberSettingsService.getAvatarUrl(member);
@@ -90,6 +115,20 @@ export class MembersComponent implements OnInit {
     return avatarUrls;
   }
 
+  check_membership_paied() {
+    this.members.forEach((member) => {
+      const full_name = this.membersService.full_name(member);
+      const buy_op = this.operations
+        .filter((op) => op.member === full_name);
+      const hasAdh = buy_op.find(op => op.values['ADH']);
+      if (hasAdh && member.membership_date !== hasAdh.date) {
+        member.membership_date = hasAdh.date;
+        this.membersService.updateMember(member);
+      }
+    });
+    this.no_license_nbr = this.members.filter(m => m.membership_date && (m.license_status === LicenseStatus.UNREGISTERED)).length;
+    this.lost_members_nbr = this.members.filter(m => !m.membership_date ).length;
+  }
 
   add_licensee(player: FFBplayer) {
     if (player) {
@@ -172,17 +211,21 @@ export class MembersComponent implements OnInit {
   }
 
 
-  filterOnStatus(status: string) {
-    this.selected_status = status;
+  filterOnStatus(filter: FILTER) {
+    this.selected_filter = filter;
     this.filteredMembers = this.members.filter((member: Member) => {
-      switch (status) {
-        case "registered": //'à jour':
-          return (member.license_status === LicenseStatus.DULY_REGISTERED || member.license_status === LicenseStatus.PROMOTED_ONLY);
-        case "unregistered": //'non à jour':
-          return (member.license_status === LicenseStatus.UNREGISTERED);
-        case "all": //'Tous':
+      switch (filter) {
+        case FILTER.MEMBER_AT_FFB: //'membre licencié':
+          return ( (member.license_status === LicenseStatus.DULY_REGISTERED || member.license_status === LicenseStatus.PROMOTED_ONLY));
+        case FILTER.STUDENT: //'membre sans licence':
+          return (member.membership_date && (member.license_status === LicenseStatus.UNREGISTERED));
+        case FILTER.MEMBER: //'membre (i.e. adhérent)':
+          return (member.membership_date);
+        case FILTER.UNKNOWN: //'non adhérent':
+          return (!member.membership_date && ( member.license_status === LicenseStatus.UNREGISTERED) );
+
         default: //'Tous':
-          return true;
+         throw new Error('Filtre inconnu' + filter);
       }
     });
   }

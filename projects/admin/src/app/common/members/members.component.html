@@ -7,8 +7,14 @@
           <span> {{members.length}} personnes</span>
         </h5>
         <h5 class="col-12 col-sm">
-          {{licensees.length}} dans la base FFB :
+          {{licensees.length}} de la base FFB :
           <span> {{licensees.length - sympatisants_number}} licenciés + {{sympatisants_number}} sympathisants </span>
+        </h5>
+        <h5 class="col-12 col-sm">
+          {{no_license_nbr}} adhérents sans licence
+        </h5>
+        <h5 class="col-12 col-sm">
+          {{lost_members_nbr}} adhérents perdus
         </h5>
       </div>
     </div>
@@ -49,12 +55,17 @@
             <th>Prénom</th>
             <th class="text-center"></th>
             <th class="text-center">
-              {{licenses_status[selected_status]}}
+              <ng-container *ngIf="selected_filter === FILTERS.MEMBER_AT_FFB; else iconOnly">
+                <span class="background:#009478">FFB</span>
+              </ng-container>
+              <ng-template #iconOnly>
+                <i [class]="filter_icons[selected_filter]"></i>
+              </ng-template>
               <div ngbDropdown class="btn-group">
                 <span class="dropdown-toggle dropdown-toggle-split" ngbDropdownToggle></span>
                 <ul ngbDropdownMenu class="dropdown-menu">
-                  <li *ngFor="let status of licenses_status | keyvalue">
-                    <a class="dropdown-item" (click)="filterOnStatus(status.key)">{{status.value}}</a>
+                  <li *ngFor="let filter of filters ">
+                    <a class="dropdown-item" (click)="filterOnStatus(filter)">{{filter}}</a>
                   </li>
                 </ul>
               </div>
@@ -63,6 +74,7 @@
 
             <th class="d-none d-sm-table-cell">licence</th>
             <th class="d-none d-sm-table-cell">date de licence</th>
+            <th class="d-none d-sm-table-cell">date d'adhésion</th>
             <th class="d-none d-sm-table-cell">mail</th>
             <th class="d-none d-sm-table-cell">date naissance</th>
             <th class="d-none d-sm-table-cell"><i class="bi bi-telephone-fill"></i></th>
@@ -77,35 +89,33 @@
             <td>{{member.lastname | uppercase}}</td>
             <td>{{member.firstname}}</td>
             <td class="text-center align-middle">
-              <img *ngIf="avatar_urls$[member.license_number] | async as avatarUrl" [src]="avatarUrl" alt="avatar" class="rounded-circle table-avatar">
+              <img *ngIf="avatar_urls$[member.license_number] | async as avatarUrl" [src]="avatarUrl" alt="avatar"
+                class="rounded-circle table-avatar">
             </td>
-            <ng-container [ngSwitch]="member.license_status">
-              <ng-container *ngSwitchCase="'duly_registered'">
-                <td class="text-center">
-                  <span
-                    ngbTooltip="{{member.license_taken_at === 'BCSTO' ? 'licencié au Club' : 'Sympathisant licencié au ' + member.license_taken_at}}"
-                    tooltipClass="my-custom-class" placement="right">
-                    <i [class]="member.license_taken_at !== 'BCSTO' ? 'bi bi-tencent-qq' : 'bi bi-person-square'"></i>
-                  </span>
-                </td>
-              </ng-container>
-
-              <ng-container *ngSwitchCase="'promoted_only'">
-                <td class="text-center text-danger">
-                  <span ngbTooltip="{{ 'Sympathisant non licencié ' }}" tooltipClass="my-custom-class"
-                    placement="right">
-                    <i class="bi bi-tencent-qq"></i>
-                  </span>
-                </td>
-              </ng-container>
-              <ng-container *ngSwitchDefault>
-                <td class="text-center"></td>
-              </ng-container>
-            </ng-container>
+            <td class="text-center">
+              @if (member.license_status === 'duly_registered') {
+              <span
+                ngbTooltip="{{member.license_taken_at === 'BCSTO' ? 'licencié au Club' : 'Sympathisant licencié au ' + member.license_taken_at}}"
+                tooltipClass="my-custom-class" placement="right">
+                <i [class]="member.license_taken_at !== 'BCSTO' ? 'bi bi-tencent-qq' : 'bi bi-person-square'"></i>
+              </span>
+              } @else if (member.license_status === 'unregistered') {
+              @if (member.membership_date) {
+              <span ngbTooltip="{{ 'adhérent non licencié ' }}" tooltipClass="my-custom-class" placement="right">
+                <i [class]="filter_icons[FILTERS.STUDENT]"></i>
+              </span>
+              } @else {
+              <i [class]="filter_icons[FILTERS.UNKNOWN]"></i>
+              }
+              } @else {
+              <!-- empty cell -->
+              }
+            </td>
 
             <td class="d-none d-sm-table-cell">{{member.license_number}}</td>
+            <td>{{member.register_date ? (member.register_date | date:'dd/MM/yyyy') : ''}}</td>
             <td class="d-none d-sm-table-cell">
-              {{member.register_date ? (member.register_date | date:'dd/MM/yyyy') : ''}}
+              {{ member.membership_date ? (member.membership_date | date:'dd/MM/yyyy') : '' }}
             </td>
             <td class="d-none d-sm-table-cell">{{member.email}}</td>
             <td class="d-none d-sm-table-cell">

@@ -165,6 +165,7 @@ const schema = a.schema({
     register_date: a.string(),
     has_avatar: a.boolean(),
     accept_mailing: a.boolean(),
+    membership_date: a.string(),
 
 
   })
