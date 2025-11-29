@@ -2,6 +2,7 @@ import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { MembersService } from '../../common/services/members.service';
 import { LicenseesService } from '../licensees/services/licensees.service';
 import { Observable, switchMap, tap } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule, UpperCasePipe } from '@angular/common';
 import { NgbModal, NgbTooltipModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
@@ -52,7 +53,7 @@ export class MembersComponent implements OnInit {
     [FILTER.STUDENT]: 'bi bi-mortarboard-fill',
     [FILTER.UNKNOWN]: 'bi bi-person-slash',
   };
-
+  loading: boolean = true; 
   avatar_urls$: { [key: string]: Observable<string> } = {};
 
   // For dynamic info column in members table
@@ -88,11 +89,12 @@ export class MembersComponent implements OnInit {
     let today = new Date();
     this.season = this.sysConfService.get_season(today);
 
-    this.bookService.list_book_entries().subscribe((entries) => {
-      this.operations = this.bookService.get_operations();
-    });
-
-    this.licenseesService.list_FFB_licensees$().pipe(
+    this.loading = true;
+    this.bookService.list_book_entries().pipe(
+      tap(() => {
+        this.operations = this.bookService.get_operations();
+      }),
+      switchMap(() => this.licenseesService.list_FFB_licensees$()),
       tap((licensees) => {
         this.licensees = licensees;
         this.sympatisants_number = this.licensees.reduce((count, licensee) => {
@@ -100,15 +102,18 @@ export class MembersComponent implements OnInit {
         }, 0);
       }),
       switchMap(() => this.membersService.listMembers()),
-
-    ).subscribe((members) => {
-      this.members = members;
-      this.avatar_urls$ = this.collect_avatars(members);
-      this.check_membership_paied();
-      this.reset_license_statuses();
-      this.updateDBfromFFB();
-      this.filterOnStatus(this.selected_filter);
-      // console.log(this.members);
+    ).subscribe({
+      next: (members: Member[]) => {
+        this.members = members;
+        this.avatar_urls$ = this.collect_avatars(members);
+        this.check_membership_paied();
+        this.reset_license_statuses();
+        this.updateDBfromFFB();
+        this.filterOnStatus(this.selected_filter);
+        this.loading = false;
+        // console.log(this.members);
+      },
+      error: () => {this.loading = false; this.toastService.showErrorToast('Membres', 'Erreur lors du chargement des membres'); },
     });
   }
 

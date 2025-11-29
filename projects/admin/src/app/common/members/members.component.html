@@ -2,10 +2,19 @@
   <div class="card">
     <div class="card-header">
       <div class="row justify-content-start align-items-center fs-5">
-          <div class="col-auto card-title me-4"> Répertoire Club :</div>
-          <div class="col-auto card-title me-4">{{licensees.length}} de la base FFB  {{licensees.length - sympatisants_number}} licenciés + {{sympatisants_number}} sympathisants </div>
+        <div class="col-auto card-title me-4 d-flex align-items-center"> Répertoire Club :
+          <ng-container *ngIf="loading">
+            <div class="spinner-border text-primary ms-2 align-middle" style="width: 1.5em; height: 1.5em; font-size: inherit; vertical-align: middle;" role="status">
+              <span class="visually-hidden">Chargement...</span>
+            </div>
+          </ng-container>
+        </div>
+        <ng-container *ngIf="!loading">
+          <div class="col-auto card-title me-4">{{licensees.length}} de la base FFB {{licensees.length -
+            sympatisants_number}} licenciés + {{sympatisants_number}} sympathisants </div>
           <div class="col-auto card-title me-4">{{no_license_nbr}} adhérents sans licence</div>
           <div class="col-auto card-title me-4">{{lost_members_nbr}} adhérents perdus</div>
+          </ng-container>
       </div>
     </div>
 
@@ -47,7 +56,7 @@
             <th class="text-center" style="width: 12%;">
               {{filteredMembers.length}}
               <ng-container *ngIf="selected_filter === FILTERS.MEMBER_AT_FFB; else iconOnly">
-                <span style ="color:#009478">FFB</span>
+                <span style="color:#009478">FFB</span>
               </ng-container>
               <ng-template #iconOnly>
                 <i [class]="filter_icons[selected_filter]"></i>
@@ -92,7 +101,8 @@
               <span
                 ngbTooltip="{{member.license_taken_at === 'BCSTO' ? 'licencié au Club' : 'Sympathisant licencié au ' + member.license_taken_at}}"
                 tooltipClass="my-custom-class" placement="right">
-                <i [style]="member.membership_date ? '' : 'color : red;'" [class]="member.license_taken_at !== 'BCSTO' ? 'bi bi-tencent-qq' : 'bi bi-person-square'"></i>
+                <i [style]="member.membership_date ? '' : 'color : red;'"
+                  [class]="member.license_taken_at !== 'BCSTO' ? 'bi bi-tencent-qq' : 'bi bi-person-square'"></i>
               </span>
               } @else if (member.license_status === 'unregistered') {
               @if (member.membership_date) {
@@ -109,20 +119,21 @@
 
             <td class="d-none d-sm-table-cell">
               @if (selectedInfoColumn === 'license_number') {
-                {{ member.license_number }}
+              {{ member.license_number }}
               } @else if (selectedInfoColumn === 'membership_date') {
-                {{ member.membership_date ? (member.membership_date | date:'dd/MM/yyyy') : '' }}
+              {{ member.membership_date ? (member.membership_date | date:'dd/MM/yyyy') : '' }}
               } @else if (selectedInfoColumn === 'email') {
-                {{ member.email }}
+              {{ member.email }}
               } @else if (selectedInfoColumn === 'birthdate') {
-                {{ member.birthdate | date:'dd/MM/yyyy' : '' }}
+              {{ member.birthdate | date:'dd/MM/yyyy' : '' }}
               } @else if (selectedInfoColumn === 'phone_one') {
-                {{ member.phone_one | phone }}
+              {{ member.phone_one | phone }}
               } @else if (selectedInfoColumn === 'city') {
-                {{ member.city }}
+              {{ member.city }}
               }
             </td>
-            <td class="d-none d-sm-table-cell text-center"> <i (click)="access_settings(member)" class="bi bi-gear-fill"></i> </td>
+            <td class="d-none d-sm-table-cell text-center"> <i (click)="access_settings(member)"
+                class="bi bi-gear-fill"></i> </td>
             <td class="d-none d-sm-table-cell text-center">
               <i class="bi bi-trash" (click)="deleteMember(member)"></i>
             </td>
