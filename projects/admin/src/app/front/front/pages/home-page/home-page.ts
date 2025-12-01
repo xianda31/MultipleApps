@@ -153,7 +153,16 @@ this.student_nbr = members.filter(m => m.membership_date && (m.license_status ==
   getNextBirthdays() {
     this.membersService.get_birthdays_this_next_days(7)
       .subscribe((result: { [day: string]: Member[]; }) => {
-        this.next_birthdays = result ? Object.keys(result).sort().map(day => ({ day, members: result[day] })) : [];  
+        const currentYear = new Date().getFullYear();
+        this.next_birthdays = result ? Object.keys(result).sort().map(mmdd => {
+          // Convert MM-DD to full date for display
+          const [month, day] = mmdd.split('-').map(Number);
+          const fullDate = new Date(currentYear, month - 1, day);
+          return { 
+            day: fullDate.toISOString(), 
+            members: result[mmdd] 
+          };
+        }) : [];  
       });
   }
 }

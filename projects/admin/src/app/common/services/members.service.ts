@@ -163,23 +163,33 @@ get_birthdays_this_month(): Observable<Member[]> {
   }
   get_birthdays_this_next_days(days_ahead: number): Observable<{ [key: string]: Member[]; }> {
     const now = new Date();
-    const endDate = new Date();
-    endDate.setDate(now.getDate() + days_ahead);
+    const currentDay = now.getDate();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    
     return this.listMembers().pipe(
       map(members => members.filter(m => {
         if (m.birthdate) {
-          const birthDate = new Date(m.birthdate);
-          const thisYearBirthday = new Date(now.getFullYear(), birthDate.getMonth(), birthDate.getDate());
-          return thisYearBirthday >= now && thisYearBirthday <= endDate;
+          // Extract only YYYY-MM-DD to avoid timezone conversion issues
+          const dateOnly = m.birthdate.split('T')[0]; // "1958-12-02"
+          const [year, month, day] = dateOnly.split('-').map(Number);
+          
+          // Calculate day difference from today
+          const birthdayDate = new Date(currentYear, month - 1, day);
+          const todayDate = new Date(currentYear, currentMonth, currentDay);
+          const daysDiff = Math.floor((birthdayDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
+          
+          return daysDiff >= 0 && daysDiff <= days_ahead;
         }
         return false;
       })),
       map(filteredMembers => {
         const grouped: { [key: string]: Member[] } = {};
         filteredMembers.forEach(member => {
-          const birthDate = new Date(member.birthdate);
-          const thisYearBirthday = new Date(now.getFullYear(), birthDate.getMonth(), birthDate.getDate());
-          const key = thisYearBirthday.toISOString().slice(0, 10); // YY-MM-DD
+          const dateOnly = member.birthdate.split('T')[0];
+          const [year, month, day] = dateOnly.split('-').map(Number);
+          // Use format MM-DD for grouping
+          const key = `${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
           if (!grouped[key]) {
             grouped[key] = [];
           }

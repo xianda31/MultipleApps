@@ -1,4 +1,5 @@
 import { ApplicationConfig, LOCALE_ID, provideZoneChangeDetection, InjectionToken } from '@angular/core';
+import { provideHttpClient } from '@angular/common/http';
 import { InMemoryScrollingOptions, provideRouter, withComponentInputBinding, withInMemoryScrolling } from '@angular/router';
 
 import { routes } from './app.routes';
@@ -63,6 +64,7 @@ export const appConfig: ApplicationConfig = {
     provideZoneChangeDetection({ eventCoalescing: true }),
     // provideAnimations(),
     provideRouter(routes, withInMemoryScrolling(scrollConfig), withComponentInputBinding()),
+    provideHttpClient(),
     { provide: LOCALE_ID, useValue: 'fr-FR' },
     {
       provide: APP_INITIALIZER,

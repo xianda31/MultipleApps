@@ -29,7 +29,6 @@ import { BackAuthGuard } from '../back-auth.guard';
 import { MenusEditorComponent } from './menus/menus-editor/menus-editor';
 import { UiConfComponent } from './ui-conf/ui-conf.component';
 import { CloneS3Component } from './maintenance/clone-S3/clone-s3.component';
-import { AssistanceComponent } from '../front/front/assistance/assistance.component';
 import { BackAssistanceComponent } from './back-assistance/back-assistance.component';
 import { MailingComponent } from './mailing/mailing.component';
 

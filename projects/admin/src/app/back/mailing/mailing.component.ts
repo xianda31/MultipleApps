@@ -3,7 +3,7 @@
 import { Component } from '@angular/core';
 import { CommonModule, JsonPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { SesMailingService } from '../services/ses-mailing.service';
+import { MailingApiService } from '../services/mailing-api.service';
 
 @Component({
   selector: 'app-mailing.component',
@@ -22,36 +22,39 @@ export class MailingComponent {
   result: any = null;
   error: string | null = null;
 
-  constructor(private sesMailing: SesMailingService) {}
+  constructor(private mailingApi: MailingApiService) {
+    console.log('MailingComponent initialized');
+  }
 
-  async sendMail() {
+  sendMail() {
     this.sending = true;
     this.result = null;
     this.error = null;
-    try {
-      // Prend la première ligne, sépare par virgule, filtre les emails valides uniquement
-      const toField = this.toList.split(/\r?\n/)[0];
-      const emailRegex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
-      const toArray = toField
-        .split(',')
-        .map(e => e.trim())
-        .filter(email => emailRegex.test(email));
-      console.log('Destinataires envoyés à SES:', toArray);
-      if (toArray.length === 0) {
-        this.error = 'Aucune adresse email valide trouvée.';
-        this.sending = false;
-        return;
-      }
-      this.result = await this.sesMailing.sendBulkEmail({
-        from: this.from,
-        toList: toArray,
-        subject: this.subject,
-        bodyText: this.body
-      });
-    } catch (e: any) {
-      this.error = e.message || 'Erreur lors de l\'envoi';
-    } finally {
+    // Prend la première ligne, sépare par virgule, filtre les emails valides uniquement
+    const toField = this.toList.split(/\r?\n/)[0];
+    const emailRegex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+    const toArray = toField
+      .split(',')
+      .map(e => e.trim())
+      .filter(email => emailRegex.test(email));
+    if (toArray.length === 0) {
+      this.error = 'Aucune adresse email valide trouvée.';
       this.sending = false;
+      return;
     }
+    this.mailingApi.sendEmail({
+      from: this.from,
+      to: toArray,
+      subject: this.subject,
+      bodyText: this.body
+    })
+      .then((res) => {
+        this.result = res;
+        this.sending = false;
+      })
+      .catch((err) => {
+        this.error = err?.error?.error || err.message || 'Erreur lors de l\'envoi';
+        this.sending = false;
+      });
   }
 }

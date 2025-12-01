@@ -1,3 +1,5 @@
+import * as path from "path";
+import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { defineBackend } from "@aws-amplify/backend";
 import { Stack } from "aws-cdk-lib";
 import {
@@ -5,38 +7,44 @@ import {
   HttpApi,
   HttpMethod,
 } from "aws-cdk-lib/aws-apigatewayv2";
-import {
-  // HttpIamAuthorizer,
-  HttpUserPoolAuthorizer,
-} from "aws-cdk-lib/aws-apigatewayv2-authorizers";
+import {  HttpUserPoolAuthorizer} from "aws-cdk-lib/aws-apigatewayv2-authorizers";
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import { Policy, PolicyStatement, Effect } from "aws-cdk-lib/aws-iam";
 import { ffbProxy } from "./functions/ffb-proxy/resource";
+import { sesMailing } from "./functions/ses-mailing/resource";
 import { auth } from "./auth/resource";
 import { data } from "./data/resource";
 import { storage } from "./storage/resource";
+
 
 const backend = defineBackend({
   auth,
   data,
   storage,
   ffbProxy,
+  sesMailing,
 });
 
 // create a new API stack
 const apiStack = backend.createStack("api-stack");
+
+// create Lambda integrations
+const httpLambdaIntegration = new HttpLambdaIntegration(
+  "LambdaIntegration",
+  backend.ffbProxy.resources.lambda
+);
+
+const sesMailingIntegration = new HttpLambdaIntegration(
+  "SesMailingIntegration",
+  backend.sesMailing.resources.lambda
+);
+
 
 // create a User Pool authorizer
 const userPoolAuthorizer = new HttpUserPoolAuthorizer(
   "userPoolAuth",
   backend.auth.resources.userPool,
   { userPoolClients: [backend.auth.resources.userPoolClient] }
-);
-
-// create a new HTTP Lambda integration
-const httpLambdaIntegration = new HttpLambdaIntegration(
-  "LambdaIntegration",
-  backend.ffbProxy.resources.lambda
 );
 
 // create a new HTTP API with IAM as default authorizer
@@ -55,7 +63,14 @@ const httpApi = new HttpApi(apiStack, "HttpApi", {
   createDefaultStage: true,
 });
 
-// add routes to the API with a IAM authorizer and different methods
+// add routes to the API
+
+httpApi.addRoutes({
+  path: "/api/send-email",
+  methods: [HttpMethod.POST],
+  integration: sesMailingIntegration,
+});
+
 httpApi.addRoutes({
   path: "/v1/{proxy+}",
   methods: [ HttpMethod.PUT, HttpMethod.POST, HttpMethod.DELETE],
