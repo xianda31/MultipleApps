@@ -5,6 +5,7 @@ const ses = new SESClient({ region: process.env.AWS_REGION });
 export const handler = async (event: any) => {
   // Vérifier l'authentification et les groupes
   const claims = event.requestContext?.authorizer?.jwt?.claims;
+  
   if (!claims) {
     return { 
       statusCode: 401, 
@@ -12,8 +13,21 @@ export const handler = async (event: any) => {
     };
   }
 
-  // Extraire les groupes Cognito
-  const groups = claims['cognito:groups'];
+  // Extraire les groupes Cognito (peut être un string JSON ou un array)
+  let groups = claims['cognito:groups'];
+  
+  // Si c'est une string, essayer de la parser
+  if (typeof groups === 'string') {
+    try {
+      // Remplacer les espaces par des virgules pour créer un JSON valide
+      // "[Membre Systeme Administrateur]" -> ["Membre","Systeme","Administrateur"]
+      groups = groups.replace(/\[|\]/g, '').split(' ');
+    } catch (e) {
+      console.error('Failed to parse groups:', groups);
+      groups = [];
+    }
+  }
+  
   const userGroups = Array.isArray(groups) ? groups : (groups ? [groups] : []);
   
   // Vérifier si l'utilisateur appartient à Administrateur ou Systeme
@@ -25,7 +39,8 @@ export const handler = async (event: any) => {
       statusCode: 403, 
       body: JSON.stringify({ 
         error: 'Forbidden: Access restricted to Administrateur and Systeme groups',
-        userGroups 
+        userGroups,
+        receivedGroups: claims['cognito:groups']
       }) 
     };
   }
