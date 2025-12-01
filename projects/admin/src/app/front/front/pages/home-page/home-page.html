@@ -44,8 +44,8 @@
         Son école de Bridge vous permettra de consolider votre technique, selon votre niveau.
     </span>
     <span class="d-block mb-3 text-center">Aujourd'hui,
-        nous sommes {{ licensee_nbr }} adhérents licenciés ,
-        et {{ student_nbr }} en apprentissage.
+        nous sommes <span class="fw-bold">{{ licensee_nbr }}</span> adhérents licenciés ,
+        et <span class="fw-bold">{{ student_nbr }}</span> en apprentissage.
     </span>
 </ng-template>
 
@@ -53,10 +53,12 @@
     <div *ngIf="logged_member$ | async as logged_member" class="d-none d-md-block px-3">
         <div *ngIf="next_birthdays.length > 0" class="card-body">
             <div class="text-uppercase text-success mb-2">Prochains anniversaires</div>
-            <div *ngFor="let day_birthdays of next_birthdays" class="mb-3">
-                <div class="fw-bold">{{ day_birthdays.day | date:'EEEE d MMMM':'':'fr-FR' }}</div>
-                <div *ngFor="let member of day_birthdays.members">
-                    <i class="bi bi-gift-fill text-danger me-1"></i>{{ member.firstname }} {{ member.lastname }}  
+            <div class="row">
+                <div *ngFor="let day of next_birthdays" class="col-6 mb-3">
+                    <div class="fw-bold small">{{ day.day | date:'EEE d MMM':'':'fr-FR' }}</div>
+                    <div *ngFor="let member of day.members" class="small">
+                        <i class="bi bi-gift-fill text-danger me-1"></i>{{ member.firstname }} {{ member.lastname }}  
+                    </div>
                 </div>
             </div>
         </div>
