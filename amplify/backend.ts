@@ -69,6 +69,7 @@ httpApi.addRoutes({
   path: "/api/send-email",
   methods: [HttpMethod.POST],
   integration: sesMailingIntegration,
+  authorizer: userPoolAuthorizer,
 });
 
 httpApi.addRoutes({
