@@ -1,60 +1,139 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule, JsonPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MailingApiService } from '../services/mailing-api.service';
 import { EmailTemplateService } from '../services/email-template.service';
+import { MembersService } from '../../common/services/members.service';
+import { Member } from '../../common/interfaces/member.interface';
 
 @Component({
   selector: 'app-mailing.component',
   standalone: true,
-  imports: [CommonModule, FormsModule, JsonPipe],
+  imports: [CommonModule, FormsModule],
   templateUrl: './mailing.component.html',
   styleUrl: './mailing.component.scss'
 })
 
-export class MailingComponent {
-  from = '';
+export class MailingComponent implements OnInit, AfterViewInit {
+  @ViewChild('editorDiv') editorDiv!: ElementRef<HTMLDivElement>;
+  
+  from = 'noreply@bridgeclubsaintorens.fr';
+  recipientMode: 'all' | 'selected' = 'all'; // Mode de sélection
+  members: Member[] = [];
+  memberSelection: Map<string, boolean> = new Map(); // Map pour stocker les sélections
+  selectedMembers: string[] = []; // IDs des membres sélectionnés
   toList = '';
   subject = '';
-  body = '';
-  bodyHtml = ''; // Nouveau: contenu HTML
-  useHtml = true; // Par défaut, utiliser HTML
+  bodyHtml = ''; // Contenu HTML
   sending = false;
   result: any = null;
   error: string | null = null;
+  skippedRecipients: string[] = [];
 
   constructor(
     private mailingApi: MailingApiService,
-    private emailTemplate: EmailTemplateService
+    private emailTemplate: EmailTemplateService,
+    private membersService: MembersService
   ) {
     console.log('MailingComponent initialized');
+  }
+
+  ngOnInit() {
+    // Charger la liste des membres avec email ET qui acceptent les mailings
+    this.membersService.listMembers().subscribe(members => {
+      this.members = members.filter(m => m.email && m.accept_mailing);
+    });
+  }
+
+  ngAfterViewInit() {
+    // Initialiser le contenu de l'éditeur si nécessaire
+    if (this.editorDiv && this.bodyHtml) {
+      this.editorDiv.nativeElement.innerHTML = this.bodyHtml;
+    }
+  }
+
+  // Gérer la sélection/désélection de membres
+  onMemberSelectionChange(member: Member) {
+    const isSelected = this.memberSelection.get(member.id) || false;
+    if (isSelected) {
+      if (!this.selectedMembers.includes(member.id)) {
+        this.selectedMembers.push(member.id);
+      }
+    } else {
+      this.selectedMembers = this.selectedMembers.filter(id => id !== member.id);
+    }
+  }
+
+  // Vérifier si un membre est sélectionné
+  isMemberSelected(memberId: string): boolean {
+    return this.memberSelection.get(memberId) || false;
+  }
+
+  // Basculer la sélection d'un membre
+  toggleMemberSelection(memberId: string) {
+    const currentValue = this.memberSelection.get(memberId) || false;
+    this.memberSelection.set(memberId, !currentValue);
+    if (!currentValue) {
+      this.selectedMembers.push(memberId);
+    } else {
+      this.selectedMembers = this.selectedMembers.filter(id => id !== memberId);
+    }
+  }
+
+  // Méthode pour prévisualiser le template complet
+  getFullPreview(): string {
+    return this.emailTemplate.buildEmailTemplate(this.bodyHtml);
+  }
+
+  // Méthode appelée lors de la modification de l'éditeur contenteditable
+  onContentChange(event: Event): void {
+    const element = event.target as HTMLElement;
+    this.bodyHtml = element.innerHTML;
+  }
+
+  // Appliquer un formatage au texte sélectionné
+  formatText(command: string, value?: string): void {
+    document.execCommand(command, false, value);
+    // Mettre le focus sur l'éditeur après le formatage
+    this.editorDiv?.nativeElement.focus();
   }
 
   sendMail() {
     this.sending = true;
     this.result = null;
     this.error = null;
-    // Prend la première ligne, sépare par virgule, filtre les emails valides uniquement
-    const toField = this.toList.split(/\r?\n/)[0];
-    const emailRegex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
-    const toArray = toField
-      .split(',')
-      .map(e => e.trim())
-      .filter(email => emailRegex.test(email));
+    this.skippedRecipients = [];
+    
+    let toArray: string[] = [];
+    
+    if (this.recipientMode === 'all') {
+      // Tous les membres avec email ET qui acceptent les mails
+      toArray = this.members
+        .filter(m => m.email && m.accept_mailing)
+        .map(m => m.email) as string[];
+    } else {
+      // Membres sélectionnés manuellement (vérifier aussi accept_mailing)
+      toArray = this.selectedMembers
+        .map(id => this.members.find(m => m.id === id))
+        .filter(m => m && m.email && m.accept_mailing)
+        .map(m => m!.email) as string[];
+    }
+    
     if (toArray.length === 0) {
-      this.error = 'Aucune adresse email valide trouvée.';
+      this.error = 'Aucun destinataire sélectionné.';
       this.sending = false;
       return;
     }
+    
     this.mailingApi.sendEmail({
       from: this.from,
       to: toArray,
       subject: this.subject,
-      bodyHtml: this.useHtml ? this.emailTemplate.buildEmailTemplate(this.bodyHtml) : undefined,
-      bodyText: this.useHtml ? undefined : this.body
+      bodyHtml: this.emailTemplate.buildEmailTemplate(this.bodyHtml)
     })
       .then((res) => {
         this.result = res;
+        this.skippedRecipients = res.skippedRecipients || [];
         this.sending = false;
       })
       .catch((err) => {

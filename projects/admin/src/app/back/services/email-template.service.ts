@@ -17,7 +17,6 @@ export class EmailTemplateService {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Email</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; background-color: #f4f4f4;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px 0;">
@@ -28,11 +27,11 @@ export class EmailTemplateService {
           
           <!-- En-tête -->
           <tr>
-            <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
+            <td style="background-color: #667eea; padding: 30px; text-align: center;">
               <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold;">
                 Bridge Club Saint-Orens
               </h1>
-              <p style="margin: 10px 0 0 0; color: #ffffff; font-size: 14px; opacity: 0.9;">
+              <p style="margin: 10px 0 0 0; color: #ffffff; font-size: 14px;">
                 Votre club de bridge convivial et dynamique
               </p>
             </td>
@@ -54,7 +53,7 @@ export class EmailTemplateService {
                     <p style="margin: 0; color: #666666; font-size: 14px; line-height: 1.6;">
                       <strong>Bridge Club Saint-Orens</strong><br>
                       📍 12 Avenue de Gameville, 31650 Saint-Orens-de-Gameville<br>
-                      📧 contact@bridgeclubsaintorens.fr<br>
+                      📧 <a href="mailto:bridge.saintorens@free.fr" style="color: #667eea; text-decoration: none;">bridge.saintorens@free.fr</a><br>
                       🌐 <a href="https://bridgeclubsaintorens.fr" style="color: #667eea; text-decoration: none;">bridgeclubsaintorens.fr</a>
                     </p>
                   </td>

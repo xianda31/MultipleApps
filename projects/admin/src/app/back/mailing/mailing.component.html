@@ -1,63 +1,120 @@
-<div class="container mt-4" style="max-width: 800px;">
+<div class="container mt-4">
 	<h3>Envoi d'email aux membres</h3>
-	<form (ngSubmit)="sendMail()" #mailForm="ngForm">
-		<div class="mb-3">
-			<label>Expéditeur (from)</label>
-			<input class="form-control" [(ngModel)]="from" name="from" required>
-		</div>
-		<div class="mb-3">
-			<label>Destinataires (séparés par virgule)</label>
-			<input class="form-control" [(ngModel)]="toList" name="toList" required>
-		</div>
-		<div class="mb-3">
-			<label>Sujet</label>
-			<input class="form-control" [(ngModel)]="subject" name="subject" required>
+	<div class="row">
+		<!-- Colonne gauche : Formulaire -->
+		<div class="col-md-6">
+			<form (ngSubmit)="sendMail()" #mailForm="ngForm">
+				<!-- Sélection des destinataires -->
+				<div class="mb-3">
+					<label class="form-label">Destinataires</label>
+					<div class="btn-group w-100 mb-2" role="group">
+						<input type="radio" class="btn-check" name="recipientMode" id="modeAll" 
+							[(ngModel)]="recipientMode" value="all" checked>
+						<label class="btn btn-outline-primary" for="modeAll">
+							Tous les membres ({{ members.length }})
+						</label>
+						
+						<input type="radio" class="btn-check" name="recipientMode" id="modeSelected" 
+							[(ngModel)]="recipientMode" value="selected">
+						<label class="btn btn-outline-primary" for="modeSelected">
+							Sélection personnalisée
+						</label>
+					</div>
+					
+					<!-- Liste de sélection (visible uniquement en mode 'selected') -->
+					<div *ngIf="recipientMode === 'selected'" class="border rounded p-2" style="max-height: 200px; overflow-y: auto;">
+						<div class="form-check" *ngFor="let member of members">
+							<input class="form-check-input" type="checkbox" 
+								[id]="'member-' + member.id" 
+								[checked]="isMemberSelected(member.id)"
+								(change)="toggleMemberSelection(member.id)">
+							<label class="form-check-label small" [for]="'member-' + member.id">
+								{{ member.lastname }} {{ member.firstname }} ({{ member.email }})
+							</label>
+						</div>
+					</div>
+					<div *ngIf="recipientMode === 'selected'" class="small text-muted mt-1">
+						{{ selectedMembers.length }} membre(s) sélectionné(s)
+					</div>
+				</div>
+				<div class="mb-3">
+					<label>Sujet</label>
+					<input class="form-control" [(ngModel)]="subject" name="subject" required>
+				</div>
+				
+				<!-- Éditeur HTML -->
+				<div class="mb-3">
+					<label>Corps du texte</label>
+					<!-- Barre d'outils de formatage -->
+					<div class="btn-toolbar mb-2 border-bottom pb-2" role="toolbar">
+						<div class="btn-group btn-group-sm me-2" role="group">
+							<button type="button" class="btn btn-outline-primary" (click)="formatText('bold')" title="Gras">
+								<strong>G</strong>
+							</button>
+							<button type="button" class="btn btn-outline-primary" (click)="formatText('italic')" title="Italique">
+								<em>I</em>
+							</button>
+							<button type="button" class="btn btn-outline-primary" (click)="formatText('underline')" title="Souligné">
+								<u>S</u>
+							</button>
+						</div>
+						<div class="btn-group btn-group-sm me-2" role="group">
+							<button type="button" class="btn btn-outline-primary" (click)="formatText('insertUnorderedList')" title="Liste à puces">
+								• Liste
+							</button>
+							<button type="button" class="btn btn-outline-primary" (click)="formatText('insertOrderedList')" title="Liste numérotée">
+								1. Liste
+							</button>
+						</div>
+						<div class="btn-group btn-group-sm" role="group">
+							<button type="button" class="btn btn-outline-primary" (click)="formatText('formatBlock', '<h3>')" title="Titre">
+								H3
+							</button>
+							<button type="button" class="btn btn-outline-primary" (click)="formatText('formatBlock', '<p>')" title="Paragraphe">
+								P
+							</button>
+						</div>
+					</div>
+					
+					<div 
+						#editorDiv
+						contenteditable="true" 
+						class="form-control editor-content" 
+						style="min-height: 400px; overflow-y: auto;"
+						(input)="onContentChange($event)"
+						(blur)="onContentChange($event)"
+						data-placeholder="Tapez ou collez votre contenu ici (HTML formaté accepté)...">
+					</div>
+					<input type="hidden" name="bodyHtml" [(ngModel)]="bodyHtml" required>
+				</div>
+			</form>
 		</div>
 		
-		<!-- Toggle HTML / Texte -->
-		<div class="mb-3">
-			<div class="form-check form-switch">
-				<input class="form-check-input" type="checkbox" id="useHtml" [(ngModel)]="useHtml" name="useHtml">
-				<label class="form-check-label" for="useHtml">
-					Utiliser le format HTML (avec en-tête et footer automatiques)
-				</label>
+		<!-- Colonne droite : Prévisualisation -->
+		<div class="col-md-6">
+			<div class="sticky-top" style="top: 20px;">
+				<h5>Prévisualisation</h5>
+				<div class="border rounded p-2 mb-3" style="background-color: #f9f9f9; max-height: 60vh; overflow-y: auto;">
+					<div [innerHTML]="getFullPreview()"></div>
+				</div>
+				
+				<!-- Bouton d'envoi et résultats -->
+				<button class="btn btn-success w-100 mb-2" [disabled]="sending || !mailForm.form.valid" (click)="sendMail()">
+					<span *ngIf="sending" class="spinner-border spinner-border-sm me-2"></span>
+					Envoyer
+				</button>
+				
+				<div *ngIf="result" class="alert alert-success">
+					✅ Envoi réussi ! {{ result.sentCount }} email(s) envoyé(s).
+					<div *ngIf="skippedRecipients.length > 0" class="mt-2">
+						<strong>⚠️ {{ skippedRecipients.length }} destinataire(s) exclu(s)</strong> (ont refusé les mailings) :
+						<ul class="mb-0 mt-1 small">
+							<li *ngFor="let email of skippedRecipients">{{ email }}</li>
+						</ul>
+					</div>
+				</div>
+				<div *ngIf="error" class="alert alert-danger">❌ Erreur : {{ error }}</div>
 			</div>
 		</div>
-		
-		<!-- Éditeur HTML -->
-		<div class="mb-3" *ngIf="useHtml">
-			<label>Contenu HTML (sera inséré dans le template avec en-tête et footer)</label>
-			<div class="alert alert-info small">
-				💡 Vous pouvez coller du HTML formaté ici. Il sera automatiquement encadré par l'en-tête du club et le footer avec le lien de désinscription.
-			</div>
-			<textarea class="form-control font-monospace" [(ngModel)]="bodyHtml" name="bodyHtml" rows="12" required
-				placeholder="<p>Bonjour,</p>
-<p>Voici le contenu de votre message...</p>
-<ul>
-  <li>Point 1</li>
-  <li>Point 2</li>
-</ul>"></textarea>
-			
-			<!-- Prévisualisation -->
-			<details class="mt-2">
-				<summary class="btn btn-sm btn-outline-secondary">Prévisualiser le rendu HTML</summary>
-				<div class="border p-3 mt-2" [innerHTML]="bodyHtml" style="background-color: #f9f9f9;"></div>
-			</details>
-		</div>
-		
-		<!-- Éditeur texte simple -->
-		<div class="mb-3" *ngIf="!useHtml">
-			<label>Message (texte brut)</label>
-			<textarea class="form-control" [(ngModel)]="body" name="body" rows="8" required></textarea>
-		</div>
-		
-		<button class="btn btn-success" [disabled]="sending || !mailForm.form.valid">
-			<span *ngIf="sending" class="spinner-border spinner-border-sm me-2"></span>
-			Envoyer
-		</button>
-	</form>
-	<div *ngIf="result" class="alert alert-success mt-3">
-		✅ Envoi réussi ! {{ result.sentCount }} email(s) envoyé(s).
 	</div>
-	<div *ngIf="error" class="alert alert-danger mt-3">❌ Erreur : {{ error }}</div>
 </div>

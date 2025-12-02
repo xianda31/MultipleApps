@@ -11,6 +11,6 @@ export const environment = {
     s3_sandbox_bucket: '',
     back_guard: true,
     active_menu_editor:false,
-    active_mailing: false
+    active_mailing: true
 };
 
