@@ -17,7 +17,7 @@ import { Member } from '../../common/interfaces/member.interface';
 export class MailingComponent implements OnInit, AfterViewInit {
   @ViewChild('editorDiv') editorDiv!: ElementRef<HTMLDivElement>;
   
-  from = 'noreply@bridgeclubsaintorens.fr';
+  from = '"Bridge Club Saint-Orens" <noreply@bridgeclubsaintorens.fr>';
   recipientMode: 'all' | 'selected' = 'all'; // Mode de sélection
   members: Member[] = [];
   memberSelection: Map<string, boolean> = new Map(); // Map pour stocker les sélections
