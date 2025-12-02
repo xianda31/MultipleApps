@@ -86,7 +86,7 @@ export const handler = async (event: any) => {
     
     // Créer un Map pour un accès rapide
     const memberMap = new Map(
-      (members || []).map(m => [m.email, m.accept_mailing !== false]) // Par défaut true si non défini
+      (members || []).map((m: any) => [m.email, m.accept_mailing !== false]) // Par défaut true si non défini
     );
     
     // Filtrer les destinataires qui acceptent les mailings

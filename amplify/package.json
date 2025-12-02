@@ -4,5 +4,11 @@
     "@aws-sdk/client-dynamodb": "^3.940.0",
     "@aws-sdk/lib-dynamodb": "^3.940.0",
     "@aws-sdk/client-ses": "^3.940.0"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-dynamodb": "^3.940.0",
+    "@aws-sdk/lib-dynamodb": "^3.940.0",
+    "@aws-sdk/client-ses": "^3.940.0",
+    "@types/node": "^20.0.0"
   }
 }
