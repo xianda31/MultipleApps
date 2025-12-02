@@ -1,9 +1,8 @@
-
-
 import { Component } from '@angular/core';
 import { CommonModule, JsonPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MailingApiService } from '../services/mailing-api.service';
+import { EmailTemplateService } from '../services/email-template.service';
 
 @Component({
   selector: 'app-mailing.component',
@@ -18,11 +17,16 @@ export class MailingComponent {
   toList = '';
   subject = '';
   body = '';
+  bodyHtml = ''; // Nouveau: contenu HTML
+  useHtml = true; // Par défaut, utiliser HTML
   sending = false;
   result: any = null;
   error: string | null = null;
 
-  constructor(private mailingApi: MailingApiService) {
+  constructor(
+    private mailingApi: MailingApiService,
+    private emailTemplate: EmailTemplateService
+  ) {
     console.log('MailingComponent initialized');
   }
 
@@ -46,7 +50,8 @@ export class MailingComponent {
       from: this.from,
       to: toArray,
       subject: this.subject,
-      bodyText: this.body
+      bodyHtml: this.useHtml ? this.emailTemplate.buildEmailTemplate(this.bodyHtml) : undefined,
+      bodyText: this.useHtml ? undefined : this.body
     })
       .then((res) => {
         this.result = res;

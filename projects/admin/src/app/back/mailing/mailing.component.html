@@ -1,5 +1,5 @@
-<div class="container mt-4" style="max-width: 600px;">
-	<h3>Test envoi email SES</h3>
+<div class="container mt-4" style="max-width: 800px;">
+	<h3>Envoi d'email aux membres</h3>
 	<form (ngSubmit)="sendMail()" #mailForm="ngForm">
 		<div class="mb-3">
 			<label>Expéditeur (from)</label>
@@ -13,13 +13,51 @@
 			<label>Sujet</label>
 			<input class="form-control" [(ngModel)]="subject" name="subject" required>
 		</div>
+		
+		<!-- Toggle HTML / Texte -->
 		<div class="mb-3">
-			<label>Message</label>
-			<textarea class="form-control" [(ngModel)]="body" name="body" rows="5" required></textarea>
+			<div class="form-check form-switch">
+				<input class="form-check-input" type="checkbox" id="useHtml" [(ngModel)]="useHtml" name="useHtml">
+				<label class="form-check-label" for="useHtml">
+					Utiliser le format HTML (avec en-tête et footer automatiques)
+				</label>
+			</div>
 		</div>
-		<button class="btn btn-success" [disabled]="sending || !mailForm.form.valid">Envoyer</button>
+		
+		<!-- Éditeur HTML -->
+		<div class="mb-3" *ngIf="useHtml">
+			<label>Contenu HTML (sera inséré dans le template avec en-tête et footer)</label>
+			<div class="alert alert-info small">
+				💡 Vous pouvez coller du HTML formaté ici. Il sera automatiquement encadré par l'en-tête du club et le footer avec le lien de désinscription.
+			</div>
+			<textarea class="form-control font-monospace" [(ngModel)]="bodyHtml" name="bodyHtml" rows="12" required
+				placeholder="<p>Bonjour,</p>
+<p>Voici le contenu de votre message...</p>
+<ul>
+  <li>Point 1</li>
+  <li>Point 2</li>
+</ul>"></textarea>
+			
+			<!-- Prévisualisation -->
+			<details class="mt-2">
+				<summary class="btn btn-sm btn-outline-secondary">Prévisualiser le rendu HTML</summary>
+				<div class="border p-3 mt-2" [innerHTML]="bodyHtml" style="background-color: #f9f9f9;"></div>
+			</details>
+		</div>
+		
+		<!-- Éditeur texte simple -->
+		<div class="mb-3" *ngIf="!useHtml">
+			<label>Message (texte brut)</label>
+			<textarea class="form-control" [(ngModel)]="body" name="body" rows="8" required></textarea>
+		</div>
+		
+		<button class="btn btn-success" [disabled]="sending || !mailForm.form.valid">
+			<span *ngIf="sending" class="spinner-border spinner-border-sm me-2"></span>
+			Envoyer
+		</button>
 	</form>
-	<div *ngIf="sending" class="mt-2">Envoi en cours...</div>
-	<div *ngIf="result" class="alert alert-success mt-2">Envoi réussi ! {{ result | json }}</div>
-	<div *ngIf="error" class="alert alert-danger mt-2">Erreur : {{ error }}</div>
+	<div *ngIf="result" class="alert alert-success mt-3">
+		✅ Envoi réussi ! {{ result.sentCount }} email(s) envoyé(s).
+	</div>
+	<div *ngIf="error" class="alert alert-danger mt-3">❌ Erreur : {{ error }}</div>
 </div>

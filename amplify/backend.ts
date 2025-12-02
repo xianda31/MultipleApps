@@ -12,6 +12,7 @@ import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations
 import { Policy, PolicyStatement, Effect } from "aws-cdk-lib/aws-iam";
 import { ffbProxy } from "./functions/ffb-proxy/resource";
 import { sesMailing } from "./functions/ses-mailing/resource";
+import { emailUnsubscribe } from "./functions/email-unsubscribe/resource";
 import { auth } from "./auth/resource";
 import { data } from "./data/resource";
 import { storage } from "./storage/resource";
@@ -23,6 +24,7 @@ const backend = defineBackend({
   storage,
   ffbProxy,
   sesMailing,
+  emailUnsubscribe,
 });
 
 // create a new API stack
@@ -37,6 +39,11 @@ const httpLambdaIntegration = new HttpLambdaIntegration(
 const sesMailingIntegration = new HttpLambdaIntegration(
   "SesMailingIntegration",
   backend.sesMailing.resources.lambda
+);
+
+const emailUnsubscribeIntegration = new HttpLambdaIntegration(
+  "EmailUnsubscribeIntegration",
+  backend.emailUnsubscribe.resources.lambda
 );
 
 
@@ -72,6 +79,13 @@ httpApi.addRoutes({
   authorizer: userPoolAuthorizer,
 });
 
+// Public route for email unsubscribe (no auth required)
+httpApi.addRoutes({
+  path: "/api/unsubscribe",
+  methods: [HttpMethod.GET],
+  integration: emailUnsubscribeIntegration,
+});
+
 httpApi.addRoutes({
   path: "/v1/{proxy+}",
   methods: [ HttpMethod.PUT, HttpMethod.POST, HttpMethod.DELETE],
@@ -100,6 +114,27 @@ const apiPolicy = new Policy(apiStack, "ApiPolicy", {
 // attach the policy to the authenticated and unauthenticated IAM roles
 backend.auth.resources.authenticatedUserIamRole.attachInlinePolicy(apiPolicy);
 backend.auth.resources.unauthenticatedUserIamRole.attachInlinePolicy(apiPolicy);
+
+// Grant both email Lambdas access to Member table
+const memberTable = backend.data.resources.tables['Member'];
+memberTable.grantReadWriteData(backend.emailUnsubscribe.resources.lambda);
+memberTable.grantReadData(backend.sesMailing.resources.lambda); // Read-only pour vérifier accept_mailing
+
+// Grant SES permissions to sesMailing Lambda
+const sesPolicy = new Policy(apiStack, "SesMailingPolicy", {
+  statements: [
+    new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: ["ses:SendEmail", "ses:SendRawEmail"],
+      resources: ["*"], // Ou spécifier votre domaine vérifié
+    }),
+  ],
+});
+backend.sesMailing.resources.lambda.role?.attachInlinePolicy(sesPolicy);
+
+// Set environment variable for table name
+backend.emailUnsubscribe.addEnvironment('MEMBER_TABLE_NAME', memberTable.tableName);
+backend.sesMailing.addEnvironment('MEMBER_TABLE_NAME', memberTable.tableName);
 
 // add outputs to the configuration file
 backend.addOutput({
