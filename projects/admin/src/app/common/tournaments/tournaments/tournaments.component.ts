@@ -26,6 +26,7 @@ export class TournamentsComponent {
 
   license_nbr = 0; // License number of the logged member
   logged: boolean = false;
+  loading: boolean = true;
 
   
 
@@ -56,6 +57,7 @@ export class TournamentsComponent {
 
 
   loadTournamentTeams() {
+    this.loading = true;
     combineLatest([
       this.systemDataService.tournamentsTypeWithUrl$(),
       this.tournamentService.list_next_tournament_teams()
@@ -71,6 +73,7 @@ export class TournamentsComponent {
       });
 
       this.next_tournament_teams = enrichedTeams;
+      this.loading = false;
     });
   }
 

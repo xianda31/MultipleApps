@@ -130,6 +130,8 @@
               {{ member.phone_one | phone }}
               } @else if (selectedInfoColumn === 'city') {
               {{ member.city }}
+              } @else if (selectedInfoColumn === 'accept_mailing') {
+              <i [class]="member.accept_mailing ? 'bi bi-check-circle-fill text-success' : 'bi bi-x-circle-fill text-danger'"></i>
               }
             </td>
             <td class="d-none d-sm-table-cell text-center"> <i (click)="access_settings(member)"

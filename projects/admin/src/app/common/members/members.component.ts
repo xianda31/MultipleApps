@@ -57,7 +57,7 @@ export class MembersComponent implements OnInit {
   avatar_urls$: { [key: string]: Observable<string> } = {};
 
   // For dynamic info column in members table
-  infoColumns = ['license_number', 'membership_date', 'email', 'birthdate', 'phone_one', 'city'];
+  infoColumns = ['license_number', 'membership_date', 'email', 'birthdate', 'phone_one', 'city', 'accept_mailing'];
   infoColumnLabels: { [key: string]: string } = {
     license_number: 'Licence',
     membership_date: "Date d'adhésion",
@@ -65,6 +65,7 @@ export class MembersComponent implements OnInit {
     birthdate: 'Date naissance',
     phone_one: 'Téléphone',
     city: 'Ville',
+    accept_mailing: 'Accepte mails',
   };
   selectedInfoColumn: string = 'membership_date';
 
