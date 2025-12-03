@@ -28,7 +28,7 @@ export class FileService {
     private sanitizer: DomSanitizer
   ) { }
 
-  getPresignedUrl$(path: string): Observable<string> {
+  getPresignedUrl$(path: string, silentError: boolean = false): Observable<string> {
     // console.log('getPresignedUrl$ for ', path);
     return new Observable<string>((subscriber) => {
       getUrl({ path: path, options: { validateObjectExistence: true } })
@@ -37,7 +37,10 @@ export class FileService {
           subscriber.complete();
         })
         .catch(error => {
-          console.log('%s reading %s', error, path);
+          // Ne logger que si ce n'est pas une erreur silencieuse (comme pour les avatars manquants)
+          if (!silentError && !path.includes('portraits/')) {
+            console.log('%s reading %s', error, path);
+          }
           subscriber.error(error);
         });
     });

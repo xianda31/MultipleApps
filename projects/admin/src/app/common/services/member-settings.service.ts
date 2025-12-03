@@ -4,7 +4,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { GetMemberSettingsComponent } from '../members/personal-info-modal/get-member-settings';
 import { MembersService } from './members.service';
 import { ToastService } from './toast.service';
-import { BehaviorSubject,  Observable, of } from 'rxjs';
+import { BehaviorSubject, Observable, of, catchError } from 'rxjs';
 import { FileService, S3_ROOT_FOLDERS } from './files.service';
 
 @Injectable({
@@ -30,10 +30,20 @@ private settings_change$: BehaviorSubject<number> = new BehaviorSubject<number>(
   // utilities functions (once members are loaded)
 
   getAvatarUrl(member: Member): Observable<string> {
+    if (!member || !member.has_avatar) {
+      return of('');
+    }
+    
     const avatar_path = S3_ROOT_FOLDERS.PORTRAITS + '/';
     const avatar_file = avatar_path + this.membersService.full_name(member) + '.png';
 
-    return member. has_avatar ? this.fileService.getPresignedUrl$(avatar_file) : of('')
+    return this.fileService.getPresignedUrl$(avatar_file).pipe(
+      catchError((error) => {
+        // Silencieusement ignorer l'erreur et retourner une chaîne vide
+        // console.warn(`Avatar non trouvé pour ${this.membersService.full_name(member)}`);
+        return of('');
+      })
+    );
   }
 
   set_settingsChange() {
