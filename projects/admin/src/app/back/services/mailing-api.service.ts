@@ -15,6 +15,7 @@ export class MailingApiService {
     subject: string;
     bodyText?: string;
     bodyHtml?: string;
+    attachments?: Array<{filename: string, content: string, contentType: string}>;
   }): Promise<any> {
     try {
       // Récupérer la session pour s'assurer que l'utilisateur est authentifié

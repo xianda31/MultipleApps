@@ -42,6 +42,28 @@
 					<input class="form-control" [(ngModel)]="subject" name="subject" required>
 				</div>
 				
+				<!-- Pièces jointes -->
+				<div class="mb-3">
+					<label class="form-label">Pièces jointes</label>
+					<input type="file" class="form-control" (change)="onFileSelected($event)" multiple 
+						accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png">
+					<div class="small text-muted mt-1">Formats acceptés : PDF, Word, Excel, Images</div>
+					
+					<!-- Liste des pièces jointes -->
+					<div *ngIf="attachments.length > 0" class="mt-2">
+						<div *ngFor="let attachment of attachments; let i = index" 
+							class="d-flex align-items-center justify-content-between border rounded p-2 mb-1">
+							<span class="small">
+								📎 {{ attachment.filename }} 
+								<span class="text-muted">({{ (attachment.content.length * 0.75 / 1024).toFixed(1) }} KB)</span>
+							</span>
+							<button type="button" class="btn btn-sm btn-danger" (click)="removeAttachment(i)">
+								×
+							</button>
+						</div>
+					</div>
+				</div>
+				
 				<!-- Éditeur HTML -->
 				<div class="mb-3">
 					<label>Corps du texte</label>

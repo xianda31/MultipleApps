@@ -1,10 +1,51 @@
-import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
+import { SESClient, SendEmailCommand, SendRawEmailCommand } from '@aws-sdk/client-ses';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, ScanCommand } from '@aws-sdk/lib-dynamodb';
 
 const ses = new SESClient({ region: process.env.AWS_REGION });
 const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
+
+// Fonction pour créer un email MIME avec pièces jointes
+function createRawEmail(
+  from: string, 
+  to: string[], 
+  subject: string, 
+  htmlBody: string, 
+  attachments: Array<{filename: string, content: string, contentType: string}>,
+  bcc?: string[]
+): string {
+  const boundary = `----=_Part_${Date.now()}`;
+  const attachmentBoundary = `----=_Attachment_${Date.now()}`;
+  
+  let rawEmail = `From: ${from}\r\n`;
+  rawEmail += `To: ${to.join(', ')}\r\n`;
+  if (bcc && bcc.length > 0) {
+    rawEmail += `Bcc: ${bcc.join(', ')}\r\n`;
+  }
+  rawEmail += `Subject: ${subject}\r\n`;
+  rawEmail += `MIME-Version: 1.0\r\n`;
+  rawEmail += `Content-Type: multipart/mixed; boundary="${boundary}"\r\n\r\n`;
+  
+  // Corps HTML
+  rawEmail += `--${boundary}\r\n`;
+  rawEmail += `Content-Type: text/html; charset=UTF-8\r\n`;
+  rawEmail += `Content-Transfer-Encoding: 7bit\r\n\r\n`;
+  rawEmail += `${htmlBody}\r\n\r\n`;
+  
+  // Pièces jointes
+  for (const attachment of attachments) {
+    rawEmail += `--${boundary}\r\n`;
+    rawEmail += `Content-Type: ${attachment.contentType}; name="${attachment.filename}"\r\n`;
+    rawEmail += `Content-Disposition: attachment; filename="${attachment.filename}"\r\n`;
+    rawEmail += `Content-Transfer-Encoding: base64\r\n\r\n`;
+    rawEmail += `${attachment.content}\r\n\r\n`;
+  }
+  
+  rawEmail += `--${boundary}--`;
+  
+  return rawEmail;
+}
 
 export const handler = async (event: any) => {
   // Vérifier l'authentification et les groupes
@@ -50,7 +91,7 @@ export const handler = async (event: any) => {
   }
 
   // event.body est stringifié si appelé via API Gateway HTTP
-  const { from, to, cc, subject, bodyText, bodyHtml } = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
+  const { from, to, cc, subject, bodyText, bodyHtml, attachments } = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
   
   console.log('📧 Email request:', { 
     from, 
@@ -133,6 +174,12 @@ export const handler = async (event: any) => {
     const sendPromises = batches.map(async (batch, index) => {
       console.log(`📤 Sending batch ${index + 1}/${batches.length} with ${batch.length} recipient(s)`);
       
+      // Si des pièces jointes, utiliser SendRawEmailCommand
+      if (attachments && attachments.length > 0) {
+        const rawEmail = createRawEmail(from, batch, subject, finalHtml, attachments);
+        return ses.send(new SendRawEmailCommand({ RawMessage: { Data: Buffer.from(rawEmail) } }));
+      }
+      
       const params = {
         Source: from,
         Destination: { 
@@ -158,6 +205,12 @@ export const handler = async (event: any) => {
       }
       
       const ccPromises = ccBatches.map(async (bccBatch, index) => {
+        // Si des pièces jointes, utiliser SendRawEmailCommand
+        if (attachments && attachments.length > 0) {
+          const rawEmail = createRawEmail(from, cc, subject, finalHtml, attachments, bccBatch);
+          return ses.send(new SendRawEmailCommand({ RawMessage: { Data: Buffer.from(rawEmail) } }));
+        }
+        
         const ccParams = {
           Source: from,
           Destination: { 

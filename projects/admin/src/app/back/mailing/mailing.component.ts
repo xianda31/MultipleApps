@@ -31,6 +31,7 @@ export class MailingComponent implements OnInit, AfterViewInit {
   result: any = null;
   error: string | null = null;
   skippedRecipients: string[] = [];
+  attachments: Array<{filename: string, content: string, contentType: string}> = [];
 
   constructor(
     private mailingApi: MailingApiService,
@@ -100,6 +101,28 @@ export class MailingComponent implements OnInit, AfterViewInit {
     this.editorDiv?.nativeElement.focus();
   }
 
+  onFileSelected(event: any) {
+    const files: FileList = event.target.files;
+    if (files && files.length > 0) {
+      Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const base64 = (reader.result as string).split(',')[1]; // Retirer le préfixe data:xxx;base64,
+          this.attachments.push({
+            filename: file.name,
+            content: base64,
+            contentType: file.type || 'application/octet-stream'
+          });
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  }
+
+  removeAttachment(index: number) {
+    this.attachments.splice(index, 1);
+  }
+
   sendMail() {
     this.sending = true;
     this.result = null;
@@ -132,7 +155,8 @@ export class MailingComponent implements OnInit, AfterViewInit {
       to: toArray,
       cc: this.ccEmail ? [this.ccEmail] : undefined,
       subject: this.subject,
-      bodyHtml: this.emailTemplate.buildEmailTemplate(this.bodyHtml)
+      bodyHtml: this.emailTemplate.buildEmailTemplate(this.bodyHtml),
+      attachments: this.attachments.length > 0 ? this.attachments : undefined
     })
       .then((res) => {
         this.result = res;
