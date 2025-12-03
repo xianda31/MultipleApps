@@ -178,6 +178,9 @@ export class SystemDataService {
       if ((ui as any)?.default_tournament_image !== undefined) {
         (merged as any).default_tournament_image = (ui as any).default_tournament_image;
       }
+      if ((ui as any)?.email !== undefined) {
+        (merged as any).email = (ui as any).email;
+      }
     } catch (e) { /* ignore */ }
     // Ensure breakpoints live under merged.homepage; accept legacy top-level keys
     (merged as any).homepage = (merged as any).homepage || {};

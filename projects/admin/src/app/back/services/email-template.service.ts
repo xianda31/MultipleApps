@@ -1,9 +1,18 @@
 import { Injectable } from '@angular/core';
+import { SystemDataService } from '../../common/services/system-data.service';
 
 @Injectable({
     providedIn: 'root'
 })
 export class EmailTemplateService {
+    private tagline = 'Votre club de bridge convivial et dynamique';
+
+    constructor(private systemDataService: SystemDataService) {
+        // Charger la configuration email au démarrage
+        this.systemDataService.get_ui_settings().subscribe(ui => {
+            this.tagline = ui?.email?.tagline || 'Votre club de bridge convivial et dynamique';
+        });
+    }
 
     /**
      * Construit un email HTML complet avec en-tête et footer
@@ -32,7 +41,7 @@ export class EmailTemplateService {
                 Bridge Club Saint-Orens
               </h1>
               <p style="margin: 10px 0 0 0; color: #ffffff; font-size: 14px;">
-                Votre club de bridge convivial et dynamique
+                ${this.tagline}
               </p>
             </td>
           </tr>

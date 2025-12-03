@@ -166,67 +166,61 @@ export const handler = async (event: any) => {
     
     console.log(`📦 Sending to ${validRecipients.length} recipients in ${batches.length} batch(es)`);
     
-    // Préparer le HTML avec lien de désinscription générique
-    const unsubscribeLink = `<hr style="margin-top: 30px; border: none; border-top: 1px solid #e0e0e0;"><p style="text-align: center; font-size: 12px; color: #999;">Vous ne souhaitez plus recevoir nos emails ? Connectez-vous sur <a href="${apiEndpoint.replace('/api', '')}" style="color: #667eea;">votre espace membre</a> pour gérer vos préférences.</p>`;
-    const finalHtml = (bodyHtml || `<p>${bodyText || ''}</p>`) + unsubscribeLink;
-    
-    // Envoyer chaque lot (sans CC pour éviter les doublons)
-    const sendPromises = batches.map(async (batch, index) => {
-      console.log(`📤 Sending batch ${index + 1}/${batches.length} with ${batch.length} recipient(s)`);
+    // Envoyer chaque email individuellement pour personnaliser le lien de désinscription
+    const sendPromises = validRecipients.map(async (recipientEmail) => {
+      const unsubscribeLink = `<hr style="margin-top: 30px; border: none; border-top: 1px solid #e0e0e0;"><p style="text-align: center; font-size: 12px; color: #999;">Vous ne souhaitez plus recevoir nos emails ? <a href="${apiEndpoint}/unsubscribe?email=${encodeURIComponent(recipientEmail)}" style="color: #667eea;">Cliquez ici pour vous désinscrire</a>.</p>`;
+      const personalizedHtml = (bodyHtml || `<p>${bodyText || ''}</p>`) + unsubscribeLink;
       
       // Si des pièces jointes, utiliser SendRawEmailCommand
       if (attachments && attachments.length > 0) {
-        const rawEmail = createRawEmail(from, batch, subject, finalHtml, attachments);
+        const rawEmail = createRawEmail(from, [recipientEmail], subject, personalizedHtml, attachments);
         return ses.send(new SendRawEmailCommand({ RawMessage: { Data: Buffer.from(rawEmail) } }));
       }
       
+      // Sans pièce jointe, utiliser SendEmailCommand
       const params = {
         Source: from,
         Destination: { 
-          ToAddresses: batch
+          ToAddresses: [recipientEmail]
         },
         Message: {
           Subject: { Data: subject },
-          Body: { Html: { Data: finalHtml } }
+          Body: { Html: { Data: personalizedHtml } }
         },
       };
       
       return ses.send(new SendEmailCommand(params));
     });
     
-    // Si un CC est défini, envoyer un email séparé en CC avec tous les destinataires en BCC
+    // Si un CC est défini, envoyer un email séparé au CC (sans lien de désinscription personnalisé)
     if (cc && cc.length > 0) {
-      console.log(`📧 Sending CC copy to ${cc.join(', ')} with all recipients in BCC`);
+      console.log(`📧 Sending CC copy to ${cc.join(', ')}`);
       
-      // SES limite aussi les BCC à 50, donc on envoie plusieurs emails CC si nécessaire
-      const ccBatches: string[][] = [];
-      for (let i = 0; i < validRecipients.length; i += MAX_RECIPIENTS_PER_BATCH) {
-        ccBatches.push(validRecipients.slice(i, i + MAX_RECIPIENTS_PER_BATCH));
-      }
+      const ccUnsubscribeLink = `<hr style="margin-top: 30px; border: none; border-top: 1px solid #e0e0e0;"><p style="text-align: center; font-size: 12px; color: #999;">Email envoyé en copie pour suivi.</p>`;
+      const ccHtml = (bodyHtml || `<p>${bodyText || ''}</p>`) + ccUnsubscribeLink;
       
-      const ccPromises = ccBatches.map(async (bccBatch, index) => {
+      const ccPromise = async () => {
         // Si des pièces jointes, utiliser SendRawEmailCommand
         if (attachments && attachments.length > 0) {
-          const rawEmail = createRawEmail(from, cc, subject, finalHtml, attachments, bccBatch);
+          const rawEmail = createRawEmail(from, cc, subject, ccHtml, attachments);
           return ses.send(new SendRawEmailCommand({ RawMessage: { Data: Buffer.from(rawEmail) } }));
         }
         
         const ccParams = {
           Source: from,
           Destination: { 
-            ToAddresses: cc,
-            BccAddresses: bccBatch
+            ToAddresses: cc
           },
           Message: {
             Subject: { Data: subject },
-            Body: { Html: { Data: finalHtml } }
+            Body: { Html: { Data: ccHtml } }
           },
         };
         
         return ses.send(new SendEmailCommand(ccParams));
-      });
+      };
       
-      sendPromises.push(...ccPromises);
+      sendPromises.push(ccPromise());
     }
     
     const results = await Promise.all(sendPromises);

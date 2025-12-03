@@ -40,6 +40,11 @@ export interface UIConfiguration {
   frontBannerEnabled?: boolean;
   homepage_intro?: string;
 
+  // Configuration des emails
+  email?: {
+    tagline?: string; // Accroche affichée dans l'en-tête des emails
+  };
+
 
   // thumbnail sizing used by site image processing
   thumbnail?: ImageSize;

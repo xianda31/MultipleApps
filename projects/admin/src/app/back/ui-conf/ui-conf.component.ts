@@ -70,7 +70,10 @@ export class UiConfComponent implements OnInit {
       default_tournament_image: [''],
       // `homepage` booleans removed from UI config; breakpoints stay editable at top-level form groups
       frontBannerEnabled: [false],
-      homepage_intro: ['']
+      homepage_intro: [''],
+      email: this.fb.group({
+        tagline: ['Votre club de bridge convivial et dynamique']
+      })
     });
     // attach FormArray-level validator to enforce keys non-empty and unique
     const tt = this.uiForm.get('tournaments_type') as FormArray;
@@ -264,7 +267,10 @@ export class UiConfComponent implements OnInit {
       default_tournament_image: inferredDefault ?? (ui?.default_tournament_image ?? ''),
       // no homepage booleans
       frontBannerEnabled: ui?.frontBannerEnabled ?? false,
-      homepage_intro: ui?.homepage_intro ?? ''
+      homepage_intro: ui?.homepage_intro ?? '',
+      email: {
+        tagline: ui?.email?.tagline ?? 'Votre club de bridge convivial et dynamique'
+      }
     });
 
     // populate tournaments_type form array
@@ -351,9 +357,14 @@ export class UiConfComponent implements OnInit {
       if (formVal.hover_unfold_duration_ms !== undefined) payload.homepage.hover_unfold_duration_ms = Number(formVal.hover_unfold_duration_ms);
       if (formVal.home_layout_ratio !== undefined) payload.homepage.home_layout_ratio = Number(formVal.home_layout_ratio);
 
+      // Préserver explicitement le champ email
+      if (formVal.email !== undefined) {
+        payload.email = formVal.email;
+      }
+
       // Save UI settings into dedicated file and publish immediately
       // Debug: log tournaments_type payload to help diagnose persistence issues
-      // debug log removed
+      console.log('Saving UI settings with email:', payload.email);
       await this.systemDataService.save_ui_settings(payload);
       // Refresh export blob so "Exporter" downloads the most recent saved state
       this.export_file_url = this.fileService.json_to_blob(payload);
