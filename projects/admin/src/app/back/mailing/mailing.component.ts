@@ -5,6 +5,7 @@ import { MailingApiService } from '../services/mailing-api.service';
 import { EmailTemplateService } from '../services/email-template.service';
 import { MembersService } from '../../common/services/members.service';
 import { Member } from '../../common/interfaces/member.interface';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-mailing.component',
@@ -23,6 +24,7 @@ export class MailingComponent implements OnInit, AfterViewInit {
   memberSelection: Map<string, boolean> = new Map(); // Map pour stocker les sélections
   selectedMembers: string[] = []; // IDs des membres sélectionnés
   toList = '';
+  ccEmail = environment.mailingCcEmail; // Email en copie depuis environment
   subject = '';
   bodyHtml = ''; // Contenu HTML
   sending = false;
@@ -128,6 +130,7 @@ export class MailingComponent implements OnInit, AfterViewInit {
     this.mailingApi.sendEmail({
       from: this.from,
       to: toArray,
+      cc: this.ccEmail ? [this.ccEmail] : undefined,
       subject: this.subject,
       bodyHtml: this.emailTemplate.buildEmailTemplate(this.bodyHtml)
     })

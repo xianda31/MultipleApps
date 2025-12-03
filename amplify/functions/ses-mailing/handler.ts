@@ -50,7 +50,7 @@ export const handler = async (event: any) => {
   }
 
   // event.body est stringifié si appelé via API Gateway HTTP
-  const { from, to, subject, bodyText, bodyHtml } = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
+  const { from, to, cc, subject, bodyText, bodyHtml } = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
   
   console.log('📧 Email request:', { 
     from, 
@@ -129,13 +129,15 @@ export const handler = async (event: any) => {
     const unsubscribeLink = `<hr style="margin-top: 30px; border: none; border-top: 1px solid #e0e0e0;"><p style="text-align: center; font-size: 12px; color: #999;">Vous ne souhaitez plus recevoir nos emails ? Connectez-vous sur <a href="${apiEndpoint.replace('/api', '')}" style="color: #667eea;">votre espace membre</a> pour gérer vos préférences.</p>`;
     const finalHtml = (bodyHtml || `<p>${bodyText || ''}</p>`) + unsubscribeLink;
     
-    // Envoyer chaque lot
+    // Envoyer chaque lot (sans CC pour éviter les doublons)
     const sendPromises = batches.map(async (batch, index) => {
       console.log(`📤 Sending batch ${index + 1}/${batches.length} with ${batch.length} recipient(s)`);
       
       const params = {
         Source: from,
-        Destination: { ToAddresses: batch },
+        Destination: { 
+          ToAddresses: batch
+        },
         Message: {
           Subject: { Data: subject },
           Body: { Html: { Data: finalHtml } }
@@ -144,6 +146,35 @@ export const handler = async (event: any) => {
       
       return ses.send(new SendEmailCommand(params));
     });
+    
+    // Si un CC est défini, envoyer un email séparé en CC avec tous les destinataires en BCC
+    if (cc && cc.length > 0) {
+      console.log(`📧 Sending CC copy to ${cc.join(', ')} with all recipients in BCC`);
+      
+      // SES limite aussi les BCC à 50, donc on envoie plusieurs emails CC si nécessaire
+      const ccBatches: string[][] = [];
+      for (let i = 0; i < validRecipients.length; i += MAX_RECIPIENTS_PER_BATCH) {
+        ccBatches.push(validRecipients.slice(i, i + MAX_RECIPIENTS_PER_BATCH));
+      }
+      
+      const ccPromises = ccBatches.map(async (bccBatch, index) => {
+        const ccParams = {
+          Source: from,
+          Destination: { 
+            ToAddresses: cc,
+            BccAddresses: bccBatch
+          },
+          Message: {
+            Subject: { Data: subject },
+            Body: { Html: { Data: finalHtml } }
+          },
+        };
+        
+        return ses.send(new SendEmailCommand(ccParams));
+      });
+      
+      sendPromises.push(...ccPromises);
+    }
     
     const results = await Promise.all(sendPromises);
     return { 

@@ -11,6 +11,7 @@ export class MailingApiService {
   async sendEmail(payload: {
     from: string;
     to: string[];
+    cc?: string[];
     subject: string;
     bodyText?: string;
     bodyHtml?: string;
