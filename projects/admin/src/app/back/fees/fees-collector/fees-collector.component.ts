@@ -35,6 +35,7 @@ export class FeesCollectorComponent {
   already_charged: boolean = false;
   pdfLoading = false;
   new_player!: FFBplayer | null;
+  hideValidated: boolean = false;
 
 
 
@@ -163,6 +164,17 @@ export class FeesCollectorComponent {
 
   toggle_sort() {
     this.feesCollectorService.toggle_sort();
+  }
+
+  toggle_hide_validated() {
+    this.hideValidated = !this.hideValidated;
+  }
+
+  shouldShowGamer(gamer: Gamer): boolean {
+    if (!this.game?.alphabetic_sort || !this.hideValidated) {
+      return true;
+    }
+    return !gamer.validated;
   }
 
   toggle_fee() {

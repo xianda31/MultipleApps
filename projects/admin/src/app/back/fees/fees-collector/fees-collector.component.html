@@ -105,19 +105,31 @@
 
     <div *ngIf="game " class="card-body">
 
-        <span class="col form-check form-switch">
-            <input class="form-check-input" type="checkbox" role="switch" [checked]="game.alphabetic_sort"
-                (change)="toggle_sort()">
-            <label class="form-check-label">tri alphabétique</label>
-        </span>
+        <div class="d-flex gap-3 mb-2 align-items-center">
+            <span class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch" [checked]="game.alphabetic_sort"
+                    (change)="toggle_sort()">
+                <label class="form-check-label">tri alphabétique</label>
+            </span>
+            
+            <span class="form-check form-switch" *ngIf="game.alphabetic_sort">
+                <input class="form-check-input" type="checkbox" role="switch" [checked]="hideValidated"
+                    (change)="toggle_hide_validated()">
+                <label class="form-check-label">
+                    {{ hideValidated ? 'validés masqués' : 'validés affichés' }}
+                </label>
+            </span>
+        </div>
 
         <!-- loop sur les gamers -->
         <div class="row">
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-2">
-                <div class="col" *ngFor="let gamer of game.gamers">
-                    <ng-container
-                        *ngTemplateOutlet="fee_editor; context:{gamer: gamer, doubled: (game.fees_doubled)}"></ng-container>
-                </div>
+                <ng-container *ngFor="let gamer of game.gamers">
+                    <div class="col" *ngIf="shouldShowGamer(gamer)">
+                        <ng-container
+                            *ngTemplateOutlet="fee_editor; context:{gamer: gamer, doubled: (game.fees_doubled)}"></ng-container>
+                    </div>
+                </ng-container>
             </div>
         </div>
 
