@@ -50,10 +50,14 @@ private settings_change$: BehaviorSubject<number> = new BehaviorSubject<number>(
       modalRef.componentInstance.member = member;
 
       modalRef.result.then((settings) => {
-        let settings_changed = false;
         if (settings) {
-          settings_changed = (settings.has_avatar !== member.has_avatar) ||
+          // Les settings retournés contiennent les nouvelles valeurs
+          const settings_changed = (settings.has_avatar !== member.has_avatar) ||
             (settings.accept_mailing !== member.accept_mailing);
+
+          console.log('Settings returned from modal:', settings);
+          console.log('Current member settings:', { has_avatar: member.has_avatar, accept_mailing: member.accept_mailing });
+          console.log('Settings changed?', settings_changed);
 
           if (settings_changed) {
             member.has_avatar = settings.has_avatar;
@@ -63,8 +67,14 @@ private settings_change$: BehaviorSubject<number> = new BehaviorSubject<number>(
               this.toastService.showSuccess(` préférences de ${this.membersService.full_name(member)}`, 'Mise à jour effectuée');
               observer.next(true);
               observer.complete();
+            }).catch((error) => {
+              console.error('Error updating member:', error);
+              this.toastService.showErrorToast('Erreur', 'Impossible de sauvegarder les préférences');
+              observer.next(false);
+              observer.complete();
             });
           } else {
+            console.log('No changes detected, not updating');
             observer.next(false);
             observer.complete();
           }

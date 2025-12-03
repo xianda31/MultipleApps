@@ -24,6 +24,8 @@ export class GetMemberSettingsComponent {
   preference!: Member_settings;
   base64_ico: string = '';
   full_name: string = '';
+  // Sauvegarder les valeurs initiales pour la comparaison
+  private initialSettings: Member_settings = {};
 
   readonly default_ico = 'anybody.png';
   readonly avatar_path = S3_ROOT_FOLDERS.PORTRAITS + '/';
@@ -44,17 +46,17 @@ export class GetMemberSettingsComponent {
       has_avatar: [false],
       accept_mailing: [true],
     });
-
-    this.preferenceForm.valueChanges.subscribe(values => {
-      if (values.has_avatar) {
-        this.member.has_avatar = this.has_avatar;
-      }
-    });
   }
 
   ngOnInit(): void {
 
     this.full_name = this.membersService.full_name(this.member);
+
+    // Sauvegarder les valeurs initiales
+    this.initialSettings = {
+      has_avatar: this.member.has_avatar ?? false,
+      accept_mailing: this.member.accept_mailing ?? true
+    };
 
     this.preferenceForm.patchValue({
       ico_url$: this.memberSettingsService.getAvatarUrl(this.member),

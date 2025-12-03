@@ -309,6 +309,7 @@ export class MembersComponent implements OnInit {
       city: this.capitalize_first(licensee.city?.toLowerCase()),
       season: licensee.season ?? (licensee.register ? this.season : ''),
       email: licensee.email ?? '',
+      accept_mailing: licensee.email ? true : false,
       phone_one: licensee.phone_one,
       is_sympathisant: licensee.is_sympathisant ?? false,
       license_status: licensee.register ? (licensee.license_id ? LicenseStatus.DULY_REGISTERED : LicenseStatus.PROMOTED_ONLY) : LicenseStatus.UNREGISTERED,
