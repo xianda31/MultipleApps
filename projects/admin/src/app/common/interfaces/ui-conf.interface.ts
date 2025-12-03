@@ -43,6 +43,7 @@ export interface UIConfiguration {
   // Configuration des emails
   email?: {
     tagline?: string; // Accroche affichée dans l'en-tête des emails
+    ccEmail?: string; // Adresse email en copie pour tous les mailings
   };
 
 

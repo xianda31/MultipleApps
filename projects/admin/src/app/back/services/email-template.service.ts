@@ -62,8 +62,8 @@ export class EmailTemplateService {
                     <p style="margin: 0; color: #666666; font-size: 14px; line-height: 1.6;">
                       <strong>Bridge Club Saint-Orens</strong><br>
                       📍 12 Avenue de Gameville, 31650 Saint-Orens-de-Gameville<br>
-                      📧 <a href="mailto:bridge.saintorens@free.fr" style="color: #667eea; text-decoration: none;">bridge.saintorens@free.fr</a><br>
-                      🌐 <a href="https://bridgeclubsaintorens.fr" style="color: #667eea; text-decoration: none;">bridgeclubsaintorens.fr</a>
+                      notre adresse mail : <a href="mailto:bridge.saintorens@free.fr" style="color: #667eea; text-decoration: none;">bridge.saintorens@free.fr</a><br>
+                     notre site:  <a href="https://bridgeclubsaintorens.fr" style="color: #667eea; text-decoration: none;">bridgeclubsaintorens.fr</a>
                     </p>
                   </td>
                 </tr>

@@ -5,7 +5,7 @@ import { MailingApiService } from '../services/mailing-api.service';
 import { EmailTemplateService } from '../services/email-template.service';
 import { MembersService } from '../../common/services/members.service';
 import { Member } from '../../common/interfaces/member.interface';
-import { environment } from '../../../environments/environment';
+import { SystemDataService } from '../../common/services/system-data.service';
 
 @Component({
   selector: 'app-mailing.component',
@@ -24,7 +24,7 @@ export class MailingComponent implements OnInit, AfterViewInit {
   memberSelection: Map<string, boolean> = new Map(); // Map pour stocker les sélections
   selectedMembers: string[] = []; // IDs des membres sélectionnés
   toList = '';
-  ccEmail = environment.mailingCcEmail; // Email en copie depuis environment
+  ccEmail = ''; // Email en copie depuis ui-conf
   subject = '';
   bodyHtml = ''; // Contenu HTML
   sending = false;
@@ -36,15 +36,21 @@ export class MailingComponent implements OnInit, AfterViewInit {
   constructor(
     private mailingApi: MailingApiService,
     private emailTemplate: EmailTemplateService,
-    private membersService: MembersService
+    private membersService: MembersService,
+    private systemDataService: SystemDataService
   ) {
     console.log('MailingComponent initialized');
   }
 
   ngOnInit() {
-    // Charger la liste des membres avec email ET qui acceptent les mailings
+    // Charger la liste des membres avec email valide (contient @ et pas de ?)
     this.membersService.listMembers().subscribe(members => {
-      this.members = members.filter(m => m.email && m.accept_mailing);
+      this.members = members.filter(m => m.email && m.email.includes('@') && !m.email.includes('?'));
+    });
+    
+    // Charger l'email en copie depuis ui-conf
+    this.systemDataService.get_ui_settings().subscribe(ui => {
+      this.ccEmail = ui?.email?.ccEmail || '';
     });
   }
 
@@ -53,6 +59,11 @@ export class MailingComponent implements OnInit, AfterViewInit {
     if (this.editorDiv && this.bodyHtml) {
       this.editorDiv.nativeElement.innerHTML = this.bodyHtml;
     }
+  }
+
+  // Compter les membres qui acceptent les mailings
+  getActiveMailingCount(): number {
+    return this.members.filter(m => m.accept_mailing).length;
   }
 
   // Gérer la sélection/désélection de membres

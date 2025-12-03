@@ -134,8 +134,18 @@
             <div class="mb-3">
               <label class="form-label">Accroche en-tête email</label>
               <input type="text" class="form-control" formControlName="tagline" 
-                placeholder="Votre club de bridge convivial et dynamique">
+                placeholder="Votre club de bridge convivial et dynamique"
+                autocomplete="organization-title"
+                name="email-tagline">
               <div class="small text-muted mt-1">Texte affiché sous le titre dans l'en-tête des emails</div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Email en copie (CC)</label>
+              <input type="email" class="form-control" formControlName="ccEmail" 
+                placeholder="exemple@domaine.fr"
+                autocomplete="email"
+                name="cc-email-address">
+              <div class="small text-muted mt-1">Adresse email qui recevra une copie de tous les mailings</div>
             </div>
           </div>
         </div>

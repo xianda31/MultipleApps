@@ -27,14 +27,19 @@
 							<input class="form-check-input" type="checkbox" 
 								[id]="'member-' + member.id" 
 								[checked]="isMemberSelected(member.id)"
+								[disabled]="!member.accept_mailing"
 								(change)="toggleMemberSelection(member.id)">
-							<label class="form-check-label small" [for]="'member-' + member.id">
+							<label class="form-check-label small" [for]="'member-' + member.id"
+								[class.text-muted]="!member.accept_mailing"
+								[class.text-decoration-line-through]="!member.accept_mailing">
 								{{ member.lastname }} {{ member.firstname }} ({{ member.email }})
+								<span *ngIf="!member.accept_mailing" class="badge bg-secondary ms-1">Refus mailing</span>
 							</label>
 						</div>
 					</div>
 					<div *ngIf="recipientMode === 'selected'" class="small text-muted mt-1">
-						{{ selectedMembers.length }} membre(s) sélectionné(s)
+						{{ selectedMembers.length }} membre(s) sélectionné(s) · 
+						{{ getActiveMailingCount() }} acceptent les mailings sur {{ members.length }} membres
 					</div>
 				</div>
 				<div class="mb-3">

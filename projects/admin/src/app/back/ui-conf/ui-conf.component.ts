@@ -72,7 +72,8 @@ export class UiConfComponent implements OnInit {
       frontBannerEnabled: [false],
       homepage_intro: [''],
       email: this.fb.group({
-        tagline: ['Votre club de bridge convivial et dynamique']
+        tagline: ['Votre club de bridge convivial et dynamique'],
+        ccEmail: ['']
       })
     });
     // attach FormArray-level validator to enforce keys non-empty and unique
@@ -269,7 +270,8 @@ export class UiConfComponent implements OnInit {
       frontBannerEnabled: ui?.frontBannerEnabled ?? false,
       homepage_intro: ui?.homepage_intro ?? '',
       email: {
-        tagline: ui?.email?.tagline ?? 'Votre club de bridge convivial et dynamique'
+        tagline: ui?.email?.tagline ?? 'Votre club de bridge convivial et dynamique',
+        ccEmail: ui?.email?.ccEmail ?? ''
       }
     });
 
