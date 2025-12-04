@@ -40,6 +40,11 @@ export class FrontNavbarComponent {
   logged_member: Member | null = null;
   private labelCache = new Map<string, Promise<string>>();
 
+  get brandNavitem(): NavItem | null {
+    const items = this.navbar_menus.map(mg => mg.navitem);
+    return items.find(item => item.position === NAVITEM_POSITION.BRAND) || null;
+  }
+
   constructor(
     private auth: AuthentificationService,
     private groupService: GroupService,

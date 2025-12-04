@@ -19,7 +19,8 @@
         <h6>Simulateur barre de navigation</h6>
         <div class="">
             <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="previewLoggedSwitch" [(ngModel)]="previewLogged">
+                <input class="form-check-input" type="checkbox" id="previewLoggedSwitch" [(ngModel)]="previewLogged"
+                    (change)="onPreviewToggle(previewLogged)">
                 <label class="form-check-label" for="previewLoggedSwitch">
                     Utilisateur connecté (prévisualisation)
                 </label>
@@ -57,18 +58,19 @@
 <ng-template #navbar_simulation>
     <nav class="navbar navbar-expand-lg navbar-light bg-light mb-3">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">MonSite</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            </button>
-            <span class="navbar-toggler-icon"></span>
+            @if (brandNavitem) {
+            <span class="navbar-brand d-flex align-items-center" style="font-size: 0.9rem;">
+                {{ label_transformer_simulation(brandNavitem) }}
+                <i (click)="editNavitem(brandNavitem); $event.stopPropagation()" class="bi bi-pencil-square ms-1 text-success" role="button" title="Éditer" style="font-size: 0.75rem;"></i>
+            </span>
+            }
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul #navDropList="cdkDropList" class="navbar-nav nav-drop-list mb-2 mb-lg-0" cdkDropList [cdkDropListData]="visibleNavbarEntries"
                     cdkDropListOrientation="horizontal"
                     (cdkDropListDropped)="onParentDrop($event)">
                     @for (menu of visibleNavbarEntries; track menu.navitem.id) {
                         <ng-container *ngIf="menu.navitem.type === NAVITEM_TYPE.DROPDOWN && (menu.childs?.length || 0) > 0; else simpleItem">
-                            <li class="nav-item dropdown ms-3 d-flex align-items-center" ngbDropdown
+                            <li class="nav-item dropdown ms-1 d-flex align-items-center" ngbDropdown
                                 cdkDrag [cdkDragData]="menu" [cdkDragDisabled]="false" cdkDragBoundary="#navbarNav"
                                 [attr.data-nav-id]="menu.navitem.id"
                                 (cdkDragStarted)="onDragStarted($event)" (cdkDragMoved)="onDragMoved($event)" (cdkDragEnded)="onDragEnded($event)">
@@ -85,6 +87,7 @@
                                     style="width:28px; height:28px; max-width:28px; max-height:28px; font-size:0.75rem; line-height:28px;">JD</span>
                                 }
                                 {{ label_transformer_simulation(menu.navitem) }}
+                                <i (click)="editNavitem(menu.navitem); $event.stopPropagation()" class="bi bi-pencil-square ms-1 text-success" role="button" title="Éditer" style="font-size: 0.75rem;"></i>
                             </a>
                             <ul class="dropdown-menu" ngbDropdownMenu [attr.aria-labelledby]="'nav-' + menu.navitem.id"
                                 cdkDropList [cdkDropListData]="menu.childs"
@@ -116,7 +119,7 @@
                             </li>
                         </ng-container>
                         <ng-template #simpleItem>
-                            <li class="nav-item ms-3 d-flex align-items-center" cdkDrag [cdkDragData]="menu" [cdkDragDisabled]="false" cdkDragBoundary="#navbarNav"
+                            <li class="nav-item ms-1 d-flex align-items-center" cdkDrag [cdkDragData]="menu" [cdkDragDisabled]="false" cdkDragBoundary="#navbarNav"
                                 [attr.data-nav-id]="menu.navitem.id"
                                 (cdkDragStarted)="onDragStarted($event)" (cdkDragMoved)="onDragMoved($event)" (cdkDragEnded)="onDragEnded($event)">
                                 <ng-template cdkDragPreview>
@@ -134,7 +137,9 @@
                     }
                 </ul>
             </div>
-            
+            <button class="btn btn-sm btn-outline-success ms-1" (click)="createNavItem()">
+                <i class="bi bi-plus-square-fill"></i>
+            </button>
 
         </div>
     </nav>
@@ -148,6 +153,7 @@
             style="width:28px; height:28px; max-width:28px; max-height:28px; font-size:0.75rem; line-height:28px;">JD</span>
         }
         {{ label_transformer_simulation(menu.navitem) }}
+        <i (click)="editNavitem(menu.navitem); $event.stopPropagation()" class="bi bi-pencil-square ms-1 text-success" role="button" title="Éditer" style="font-size: 0.75rem;"></i>
     </ng-template>
 </ng-template>
 
@@ -178,18 +184,17 @@
                     <th>Rank</th>
                     <th>Visibilité</th>
                     <th>Préfixe label</th>
-                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @for (entry of menus; let i = $index; track entry.navitem.id) {
                 <ng-container
-                    *ngTemplateOutlet="menuTableRecursive; context: { $implicit: entry, parentIndex: (i + 1), indent: 0 }"></ng-container>
+                    *ngTemplateOutlet="menuTableRecursive; context: { $implicit: entry, parentIndex: (i + 1), indent: 0, position: entry.navitem.position }"></ng-container>
                 }
                 <!-- Template récursive pour la table des menus -->
-                <ng-template #menuTableRecursive let-entry let-parentIndex="parentIndex" let-indent="indent">
+                <ng-template #menuTableRecursive let-entry let-parentIndex="parentIndex" let-indent="indent" let-position="position">
                     <tr>
-                        <td>{{ parentIndex }}</td>
+                        <td>{{ position }}-{{ parentIndex }}</td>
                         <td [style.padding-left.px]="indent * 24"><strong>{{ entry.navitem.label }}</strong></td>
                         <td>{{ entry.navitem.type }}</td>
                         <td>{{ entry.navitem.type === NAVITEM_TYPE.CUSTOM_PAGE ? entry.navitem.page_title :
@@ -199,23 +204,12 @@
                         <td>{{ entry.navitem.rank }}</td>
                         <td>{{ entry.navitem.logging_criteria }}</td>
                         <td>{{ entry.navitem.pre_label }}</td>
-                        <td><i (click)="editNavitem(entry.navitem)" class="bi bi-pencil-square" role="button"
-                                title="Éditer"></i></td>
                     </tr>
                     @for (childGroup of entry.childs; let j = $index; track childGroup.navitem.id) {
                     <ng-container
-                        *ngTemplateOutlet="menuTableRecursive; context: { $implicit: childGroup, parentIndex: parentIndex + '.' + (j + 1), indent: indent + 1 }"></ng-container>
+                        *ngTemplateOutlet="menuTableRecursive; context: { $implicit: childGroup, parentIndex: parentIndex + '.' + (j + 1), indent: indent + 1, position: position }"></ng-container>
                     }
                 </ng-template>
-            </tbody>
-            <tbody>
-                <tr>
-                    <td colspan="8" class="text-end">
-                        <button class="btn btn-sm btn-outline-primary" (click)="createNavItem()">
-                            <i class="bi bi-plus-square-fill"></i> Ajouter un élément
-                        </button>
-                    </td>
-                </tr>
             </tbody>
         </table>
     </div>

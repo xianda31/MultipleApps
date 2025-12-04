@@ -6,6 +6,7 @@ import { GameCardsOwnedComponent } from "../../front/game-cards-owned/game-cards
 import { Routes } from "@angular/router";
 import { ConnexionPageComponent } from "../authentification/connexion-page/connexion-page.component";
 import { IframeComponent } from "../../front/front/iframe/iframe";
+import { HomePage } from "../../front/front/pages/home-page/home-page";
 
 export enum NAVITEM_PLUGIN {
    TOURNAMENTS = 'tournaments',
@@ -13,7 +14,8 @@ export enum NAVITEM_PLUGIN {
    PURCHASES = 'purchases',
    GAME_CARDS_OWNED = 'game_cards_owned',
    AUTHENTICATION = 'authentication',
-   IFRAME = 'iframe'
+   IFRAME = 'iframe',
+   HOME = 'homePage'
 };
 
 // UI-level command catalog for DirectCall items
@@ -31,6 +33,7 @@ export const PLUGINS: { [key in NAVITEM_PLUGIN]: Type<any> } = {
     [NAVITEM_PLUGIN.GAME_CARDS_OWNED]: GameCardsOwnedComponent,
     [NAVITEM_PLUGIN.AUTHENTICATION]: ConnexionPageComponent,
     [NAVITEM_PLUGIN.IFRAME]: IframeComponent, 
+    [NAVITEM_PLUGIN.HOME]: HomePage,
 
 };
 

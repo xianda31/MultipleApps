@@ -24,6 +24,7 @@ import { charsanitize, buildFullPath, extractSegment } from '../../../common/uti
 
 @Component({
   selector: 'app-menus-editor',
+  standalone: true,
   templateUrl: './menus-editor.html',
   styleUrls: ['./menus-editor.scss'],
   imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbDropdownModule, DragDropModule]
@@ -448,6 +449,10 @@ export class MenusEditorComponent implements AfterViewInit {
     return this._visibleNavbarEntries;
   }
 
+  get brandNavitem(): NavItem | null {
+    return this.navitems?.find(item => item.position === NAVITEM_POSITION.BRAND) || null;
+  }
+
   // trackBy for menu items to keep DOM stable during reorders
   trackByNavId(index: number, item: MenuGroup) {
     return item?.navitem?.id;
@@ -472,6 +477,7 @@ export class MenusEditorComponent implements AfterViewInit {
 
   onPreviewToggle(flag: boolean) {
     this.previewLogged = flag;
+    this.rebuildVisibleNavbarEntries();
   }
 
   // Reorder top-level navbar parents and persist their rank (0-based)
