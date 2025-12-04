@@ -36,6 +36,7 @@ export class FeesCollectorComponent {
   pdfLoading = false;
   new_player!: FFBplayer | null;
   hideValidated: boolean = false;
+  disappearingGamers: Map<number, boolean> = new Map();
 
 
 
@@ -174,7 +175,26 @@ export class FeesCollectorComponent {
     if (!this.game?.alphabetic_sort || !this.hideValidated) {
       return true;
     }
-    return !gamer.validated;
+    // Ne pas afficher si validé et pas en cours de disparition
+    if (gamer.validated && !this.disappearingGamers.get(gamer.index)) {
+      return false;
+    }
+    return true;
+  }
+
+  onGamerValidated(gamer: Gamer): void {
+    if (this.game?.alphabetic_sort && this.hideValidated && gamer.validated) {
+      // Marquer comme en cours de disparition
+      this.disappearingGamers.set(gamer.index, true);
+      // Retirer après l'animation (2500ms)
+      setTimeout(() => {
+        this.disappearingGamers.delete(gamer.index);
+      }, 2500);
+    }
+  }
+
+  isDisappearing(gamer: Gamer): boolean {
+    return this.disappearingGamers.get(gamer.index) || false;
   }
 
   toggle_fee() {

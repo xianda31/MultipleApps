@@ -53,3 +53,46 @@
 
 /* Radios plus gros pour la colonne droite du fee editor */
 // Remove duplicate/old definition
+
+/* Transition pour le conteneur de joueur */
+.gamer-container {
+  transition: all 1.2s ease-out;
+  overflow: hidden;
+}
+
+/* Animation d'explosion-disparition */
+.explode-disappear {
+  animation: explode-disappear 2.5s ease-out forwards;
+  max-height: 0;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+@keyframes explode-disappear {
+  0% {
+    transform: scale(1);
+    filter: brightness(1);
+    opacity: 1;
+    max-height: 500px;
+  }
+  25% {
+    transform: scale(1.1);
+    filter: brightness(1.2);
+    opacity: 0.9;
+    max-height: 500px;
+  }
+  40% {
+    transform: scale(0.2);
+    filter: brightness(0.3);
+    opacity: 0;
+    max-height: 500px;
+  }
+  100% {
+    transform: scale(0.2);
+    filter: brightness(0.3);
+    opacity: 0;
+    max-height: 0;
+  }
+}
