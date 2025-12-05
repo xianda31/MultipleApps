@@ -37,14 +37,15 @@ export class DynamicRoutesService {
             if (frontSubtree.children) {
               replacement.children = frontSubtree.children;
               // If generated subtree has a component at root, set it
-              if (frontSubtree.component) replacement.component = frontSubtree.component;
+              if (frontSubtree.component) {
+                replacement.component = frontSubtree.component;
+              }
               // Remove loadChildren to avoid conflicts
               delete replacement.loadChildren;
             }
             const newConfig = [...current];
             newConfig[idx] = replacement;
             this.router.resetConfig(newConfig);
-            console.log('DynamicRoutesService - Merged front routes into router config (preserved other routes)');
           } else {
             // No explicit 'front' route: as a fallback, reset config to keep as before but append front subtree
             const newConfig = [...current, ...this._routes];

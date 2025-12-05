@@ -5,6 +5,7 @@ import { BreakpointsSettings } from '../../../../../../common/interfaces/ui-conf
 import { Router } from '@angular/router';
 import { DomSanitizer } from '@angular/platform-browser';
 import { SystemDataService } from '../../../../../../common/services/system-data.service';
+import { NavItemsService } from '../../../../../../common/services/navitem.service';
 import { Subscription } from 'rxjs';
 import { formatRowColsClasses } from '../../../../../../common/utils/ui-utils';
 
@@ -40,7 +41,8 @@ export class CardsImgTopLeftRenderComponent implements AfterViewInit, AfterViewC
    constructor(
     private router: Router,
   private sanitizer: DomSanitizer
-    , private systemDataService: SystemDataService
+    , private systemDataService: SystemDataService,
+    private navItemsService: NavItemsService
   ) {
     this.updateIsSmallScreenOrTouch();
     this.uiSub = this.systemDataService.get_ui_settings().subscribe((ui: any) => {
@@ -260,13 +262,16 @@ export class CardsImgTopLeftRenderComponent implements AfterViewInit, AfterViewC
       }
       return;
     }
-    // Fallback: navigate to snippet-specific page
-    if (snippet.pageId === MENU_TITLES.NEWS) {
-      this.router.navigate(['/front/news', snippet.title]);
-    } else if (snippet.pageId === MENU_TITLES.AUTRES_RDV) {
-      this.router.navigate(['/front/tournaments/autres_rdv', snippet.title]);
+    // Fallback: navigate to snippet-specific page using dynamic path lookup
+    if (snippet.pageId) {
+      const path = this.navItemsService.getPathByPageTitle(snippet.pageId);
+      if (path) {
+        this.router.navigate(['/front', path, snippet.title]);
+      } else {
+        console.warn('No path found for pageId:', snippet.pageId);
+      }
     } else {
-      console.warn('Unknown pageId for readMore navigation:', snippet.pageId);
+      console.warn('No pageId for readMore navigation');
     }
     }
 

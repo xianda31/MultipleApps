@@ -1,13 +1,8 @@
 <nav class="navbar navbar-expand-md navbar-dark text-white d-flex align-items-center">
   <div class="container-fluid h-100 d-flex align-items-center">
-    @if (active_menu_editor && sandboxMode && brandNavitem) {
-    <a class="navbar-brand d-flex align-items-center position-relative" [routerLink]="brandNavitem.path">
-      {{ brandNavitem.label }}
+    <a class="navbar-brand d-flex align-items-center position-relative" [routerLink]="brandPath">
+      {{ brandLabel }}
     </a>
-    }
-    @else if (!active_menu_editor || !sandboxMode) {
-    <a class="navbar-brand d-flex align-items-center position-relative" routerLink="/home">Accueil</a>
-    }
     <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"
       aria-controls="sidebarMenu">
       <span class="navbar-toggler-icon"></span>
@@ -16,86 +11,9 @@
     <div class="collapse navbar-collapse d-none d-md-flex align-items-center position-relative">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
 
-        <!-- test addmenu -->
-        @if (active_menu_editor && sandboxMode) {
-        <ng-container *ngTemplateOutlet="test_navbar_nav"></ng-container>
-        }
-        @else {
-        <li ngbDropdown class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" ngbDropdownToggle id="clubDropdown">Le Club</a>
-          <ul ngbDropdownMenu class="dropdown-menu" aria-labelledby="clubDropdown">
-            <li><a class="dropdown-item" routerLink="club/acteurs">Les acteurs</a></li>
-            <li><a class="dropdown-item" routerLink="club/documents">Documents</a></li>
-            <li><a class="dropdown-item" routerLink="club/bureau">Le bureau</a></li>
-            <li><a class="dropdown-item" routerLink="club/historique">L'historique</a></li>
-            <li><a class="dropdown-item" routerLink="contacts">Nous contacter</a></li>
-          </ul>
-        </li>
+        <!-- Dynamic navbar from configured menus -->
+        <ng-container *ngTemplateOutlet="dyn_navbar_nav"></ng-container>
 
-        <li class="nav-item"><a class="nav-link" routerLink="news">
-            Les news</a>
-        </li>
-
-
-        <li ngbDropdown class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" ngbDropdownToggle id="ecoleDropdown">L'école</a>
-          <ul ngbDropdownMenu class="dropdown-menu" aria-labelledby="ecoleDropdown">
-            <li><a class="dropdown-item" routerLink="école/cours">Cours</a></li>
-          </ul>
-        </li>
-        <li ngbDropdown class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" ngbDropdownToggle id="tournoisDropdown">Les tournois</a>
-          <ul ngbDropdownMenu class="dropdown-menu" aria-labelledby="tournoisDropdown">
-            <li><a class="dropdown-item" routerLink="tournaments/next">Tournois de régularité ouverts</a></li>
-            <li><a class="dropdown-item" routerLink="tournaments/autres_rdv">Autres rendez-vous</a></li>
-            <li><a class="dropdown-item" routerLink="tournaments/resultats_ffb">FFB : résultats récents</a></li>
-            <li><a class="dropdown-item" href="https://www.bridgeplus.com/nos-simultanes/resultats/?res=sim"
-                target="_blank" rel="noopener">Roy René : résultats récents</a></li>
-          </ul>
-        </li>
-
-        @if (logged_member$ | async; as member) {
-        <li ngbDropdown class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" ngbDropdownToggle id="achatsDropdown">Mes achats</a>
-          <ul ngbDropdownMenu class="dropdown-menu" aria-labelledby="achatsDropdown">
-            <li><a class="dropdown-item" routerLink="achats/historique">Mon relevé</a></li>
-            <li><a class="dropdown-item" routerLink="achats/carte">Mes droits de table</a>
-            </li>
-          </ul>
-        </li>
-        }
-
-        @if (logged_member$ | async) {
-        <li class="nav-item"><a class="nav-link" routerLink="albums">Les
-            albums</a></li>
-        }
-
-        @if (user_accreditation && user_accreditation.level > 0) {
-        <li class="nav-item">
-          <a class="nav-link" routerLink="back_office">Back office</a>
-        </li>
-        }
-
-        @if (!(logged_member$ | async)) {
-        <li class="nav-item ">
-          <a class="nav-link" routerLink="connexion">Espace membre</a>
-        </li>
-        }
-
-        @if (logged_member$ | async; as member) {
-        <li ngbDropdown class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" ngbDropdownToggle id="userDropdown">
-            @if (member.has_avatar) {<img [src]="avatar$ | async" alt="avatar" class="rounded-circle"
-              style="width:28px; height:28px; max-width:28px; max-height:28px; object-fit:cover">}
-            {{member.firstname}}</a>
-          <ul ngbDropdownMenu class="dropdown-menu" aria-labelledby="userDropdown">
-            <li><a class="dropdown-item" routerLink="my_settings">mes préférences</a></li>
-            <li><a class="dropdown-item" routerLink="ffb_dashboard">mon tableau de bord FFB</a></li>
-            <li><a class="dropdown-item" (click)="signOut()"><i class="bi bi-box-arrow-right"></i> Déconnexion</a></li>
-          </ul>
-        </li>
-        }
-        }
       </ul>
     </div>
 
@@ -110,72 +28,8 @@
 
         <ul class="navbar-nav">
 
-          @if (!(logged_member$ | async)) {
-          <li class="nav-item" data-bs-dismiss="offcanvas">
-            <a class="nav-link" routerLink="connexion">Espace membre</a>
-          </li>
-          }
-
-          @if (logged_member$ | async; as member) {
-          <li ngbDropdown class="nav-item dropdown mb-2">
-            <a class="nav-link dropdown-toggle" ngbDropdownToggle id="userDropdownMobile">{{member.firstname}}</a>
-            <ul ngbDropdownMenu class="dropdown-menu" aria-labelledby="userDropdownMobile">
-              <li><a class="dropdown-item" routerLink="ffb_dashboard">FFB : tableau de bord</a></li>
-              <li><a class="dropdown-item" (click)="signOut()"><i class="bi bi-box-arrow-right"></i> Déconnexion</a>
-              </li>
-            </ul>
-          </li>
-          }
-
-          <li ngbDropdown class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" ngbDropdownToggle id="clubDropdownMobile">Le Club</a>
-            <ul ngbDropdownMenu class="dropdown-menu" aria-labelledby="clubDropdownMobile">
-              <li><a class="dropdown-item" routerLink="club/acteurs" data-bs-dismiss="offcanvas">Les acteurs</a></li>
-              <li><a class="dropdown-item" routerLink="club/documents" data-bs-dismiss="offcanvas">Documents</a></li>
-              <li><a class="dropdown-item" routerLink="club/bureau" data-bs-dismiss="offcanvas">Le bureau</a></li>
-              <li><a class="dropdown-item" routerLink="club/historique" data-bs-dismiss="offcanvas">L'historique</a>
-              <li><a class="dropdown-item" routerLink="contacts" data-bs-dismiss="offcanvas">Nous contacter</a>
-              </li>
-            </ul>
-          </li>
-          <li ngbDropdown class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" ngbDropdownToggle id="ecoleDropdownMobile">L'école</a>
-            <ul ngbDropdownMenu class="dropdown-menu" aria-labelledby="ecoleDropdownMobile">
-              <li><a class="dropdown-item" routerLink="école/cours" data-bs-dismiss="offcanvas">Cours</a></li>
-            </ul>
-          </li>
-          <li ngbDropdown class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" ngbDropdownToggle id="tournoisDropdownMobile">Les tournois</a>
-            <ul ngbDropdownMenu class="dropdown-menu" aria-labelledby="tournoisDropdownMobile">
-              <li><a class="dropdown-item" routerLink="tournaments/next" data-bs-dismiss="offcanvas">Régularité à
-                  venir</a></li>
-              <li><a class="dropdown-item" routerLink="tournaments/resultats_ffb" data-bs-dismiss="offcanvas">FFB :
-                  résultats récents</a></li>
-              <li><a class="dropdown-item" href="https://www.bridgeplus.com/nos-simultanes/resultats/?res=sim"
-                  target="_blank" rel="noopener">Roy René : résultats récents</a></li>
-            </ul>
-          </li>
-          @if (logged_member$ | async) {
-          <li ngbDropdown class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" ngbDropdownToggle id="achatsDropdownMobile">Mes achats</a>
-            <ul ngbDropdownMenu class="dropdown-menu" aria-labelledby="achatsDropdownMobile">
-              <li><a class="dropdown-item" routerLink="achats/historique" data-bs-dismiss="offcanvas">Mon relevé</a>
-              </li>
-              <li><a class="dropdown-item" routerLink="achats/carte" data-bs-dismiss="offcanvas">Mes droits de table</a>
-              </li>
-            </ul>
-          </li>
-          }
-
-          @if (logged_member$ | async) {
-          <li class="nav-item"><a class="nav-link" routerLink="albums" data-bs-dismiss="offcanvas">Les albums</a></li>
-          }
-
-          @if ( user_accreditation && user_accreditation.level > 0) {
-          <li class="nav-item">
-            <a class="nav-link" routerLink="back_office" data-bs-dismiss="offcanvas">Back office</a>
-          </li>
-          }
+          <!-- Dynamic navbar for mobile from configured menus -->
+          <ng-container *ngTemplateOutlet="dyn_navbar_nav_mobile"></ng-container>
 
         </ul>
       </div>
@@ -184,12 +38,9 @@
 
   </div>
 </nav>
+ 
 
-
-
-
-
-<ng-template #test_navbar_nav>
+<ng-template #dyn_navbar_nav>
   @for (menu of navbar_menus; track menu.navitem.id) {
   @if (menu.navitem.position === NAVITEM_POSITION.NAVBAR && 
        ((menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.ANY)
@@ -200,11 +51,6 @@
   }
   <!-- Template récursive pour MenuGroup_new -->
   <ng-template #menuGroupRecursive let-menu>
-    <!-- DEBUG: Affiche le navitem courant, surligné si label Roy René -->
-    <!-- <div [style.display]="'block'" [style.background]="menu.navitem.label === 'Roy René' ? 'yellow' : 'none'"
-      style="font-size:10px;">
-      {{ menu.navitem | json }}
-    </div> -->
     @if (menu.navitem.type === NAVITEM_TYPE.DROPDOWN && (menu.childs?.length || 0) > 0) {
     <li class="nav-item dropdown ms-3" ngbDropdown>
       <a class="nav-link dropdown-toggle" ngbDropdownToggle id="nav-{{ menu.navitem.id }}">
@@ -255,11 +101,78 @@
     </li>
     }
   </ng-template>
+</ng-template>
 
-  <ng-template #menuLabelTemplate let-menu>
-    @if(menu.navitem.pre_label === 'avatar') {
-    <img [src]="avatar$ | async" alt="avatar" class="rounded-circle"
-      style="width:28px; height:28px; max-width:28px; max-height:28px; object-fit:cover">
+
+<!-- Mobile version with data-bs-dismiss for offcanvas -->
+<ng-template #dyn_navbar_nav_mobile>
+  @for (menu of navbar_menus; track menu.navitem.id) {
+  @if (menu.navitem.position === NAVITEM_POSITION.NAVBAR && 
+       ((menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.ANY)
+        || (menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.LOGGED_ONLY && (logged_member$ | async))
+        || (menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.UNLOGGED_ONLY && !(logged_member$ | async)))) {
+  <ng-container *ngTemplateOutlet="menuGroupRecursiveMobile; context: { $implicit: menu }"></ng-container>
+  }
+  }
+  <ng-template #menuGroupRecursiveMobile let-menu>
+    @if (menu.navitem.type === NAVITEM_TYPE.DROPDOWN && (menu.childs?.length || 0) > 0) {
+    <li class="nav-item dropdown" ngbDropdown>
+      <a class="nav-link dropdown-toggle" ngbDropdownToggle id="nav-mobile-{{ menu.navitem.id }}">
+        @if(menu.navitem.pre_label === 'avatar') {
+        <img [src]="avatar$ | async" alt="avatar" class="rounded-circle"
+          style="width:28px; height:28px; max-width:28px; max-height:28px; object-fit:cover">
+        }
+        {{ label_transformer(menu.navitem.label) | async }}
+      </a>
+      <ul class="dropdown-menu" ngbDropdownMenu [attr.aria-labelledby]="'nav-mobile-' + menu.navitem.id">
+        @for (child of (menu.childs || []); track child.navitem.id) {
+        <ng-container *ngTemplateOutlet="menuGroupRecursiveMobile; context: { $implicit: child }"></ng-container>
+        }
+      </ul>
+    </li>
     }
-    {{ label_transformer(menu.navitem.label) | async }}
+    @else {
+    <li class="nav-item">
+      @if (menu.navitem.type === NAVITEM_TYPE.EXTERNAL_REDIRECT) {
+      <a class="dropdown-item" [href]="menu.navitem.external_url" target="_blank" rel="noopener" data-bs-dismiss="offcanvas">
+        <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
+      </a>
+      }
+      @else if (menu.navitem.type === NAVITEM_TYPE.INTERNAL_LINK) {
+      <a class="dropdown-item" [routerLink]="menu.navitem.path" data-bs-dismiss="offcanvas">
+        <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
+      </a>
+      }
+      @else if (menu.navitem.type?.toLowerCase() === 'plugin') {
+      <a class="dropdown-item Plugin" [routerLink]="menu.navitem.path"
+        [queryParams]="{ external_url: menu.navitem.external_url }" data-bs-dismiss="offcanvas">
+        <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
+      </a>
+      }
+      @else if (menu.navitem.type === NAVITEM_TYPE.CUSTOM_PAGE) {
+      <a class="dropdown-item Page" [routerLink]="menu.navitem.path" data-bs-dismiss="offcanvas">
+        <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
+      </a>
+      }
+      @else if (menu.navitem.type === NAVITEM_TYPE.DIRECT_CALL) {
+      <a class="dropdown-item" (click)="onCommand(menu.navitem)" data-bs-dismiss="offcanvas">
+        <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
+      </a>
+      }
+      @else {
+      <span class="dropdown-item text-danger">Type de menu inconnu</span>
+      }
+    </li>
+    }
   </ng-template>
+</ng-template>
+
+
+<!-- Shared label template for both desktop and mobile -->
+<ng-template #menuLabelTemplate let-menu>
+  @if(menu.navitem.pre_label === 'avatar') {
+  <img [src]="avatar$ | async" alt="avatar" class="rounded-circle"
+    style="width:28px; height:28px; max-width:28px; max-height:28px; object-fit:cover">
+  }
+  {{ label_transformer(menu.navitem.label) | async }}
+</ng-template>

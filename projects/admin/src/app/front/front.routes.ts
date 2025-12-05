@@ -52,11 +52,15 @@ export const minimal_routes : Routes = [
     component: FrontComponent,
     children: [
       
+      // Routes with dynamic parameters (not configurable via editor)
+      { path: 'tournaments/:id', component: TournamentComponent },
+      { path: 'albums/:snippet_id', component: Carousel, canActivate: [BackAuthGuard] },
       
-      { path: 'home', component: HomePage },
-      { path: '', redirectTo: 'home', pathMatch: 'full' },
+      // System routes (redirects and fallbacks)
       { path: 'back_office', redirectTo: '/back', pathMatch: 'full' },
-      // { path: '**', component: CustomRouter },  // catch-all route to handle custom routing
+      // Default redirect will be added dynamically by navitem.service based on BRAND
+      { path: '404', component: PageNotFoundComponent },
+      { path: '**', component: CustomRouter },  // catch-all route to handle custom routing
     ]
   },
 ];

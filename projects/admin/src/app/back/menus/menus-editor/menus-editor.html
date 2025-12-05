@@ -2,11 +2,13 @@
 
 
     <div class="form-check form-switch sandbox-switch">
-        <input class="form-check-input" type="checkbox" id="sandboxSwitch" [checked]="sandboxService.value"
+        <input class="form-check-input" type="checkbox" id="sandboxSwitch" 
+            [checked]="sandboxService.value"
+            [disabled]="!hasSandboxNavitems"
             (change)="setSandbox($event.target.checked)">
         <label class="form-check-label" for="sandboxSwitch">
-            Mode Sandbox <span class="state" [class.on]="sandboxService.value">({{ sandboxService.value ?
-                'ON' : 'OFF' }})</span>
+            Prévisualiser les modifications <span class="state" [class.on]="sandboxService.value">({{ sandboxService.value ?
+                'Sandbox' : 'Production' }})</span>
         </label>
         
         <!-- Workflow de production/sandbox -->
@@ -19,16 +21,8 @@
             </button>
             <button class="btn btn-sm btn-warning ms-2" 
                     (click)="promoteSandboxToProduction()"
-                    [disabled]="!sandboxService.value"
                     title="Remplace tous les menus de production par les menus sandbox validés">
                 <i class="bi bi-cloud-upload"></i> Promouvoir sandbox → production
-            </button>
-            
-            <!-- Bouton d'initialisation ONE-TIME (supprimer après usage) -->
-            <button class="btn btn-sm btn-danger ms-2" 
-                    (click)="initializeProduction()"
-                    title="🚨 ONE-TIME: Convertit tous les menus sandbox actuels en production (à supprimer après usage)">
-                <i class="bi bi-exclamation-triangle-fill"></i> Init production (ONE-TIME)
             </button>
         </div>
     </div>

@@ -22,12 +22,12 @@ export function preloadFrontRoutes(
 ) {
   return () => {
     const flag = sandboxService.value;
-    // Initial runtime should use static routes unless sandbox is explicitly ON
-  if (flag) {
+    // Load dynamic routes based on sandbox mode (production or sandbox navitems)
+    if (flag) {
       // Load sandbox routes once on startup if sandbox=true
       const initial = firstValueFrom(navitemService.getFrontRoutes(true))
         .then((routes) => { dynamicRoutesService.setRoutes(routes); })
-  .catch(() => { dynamicRoutesService.setRoutes(front_static_routes); });
+        .catch(() => { dynamicRoutesService.setRoutes(front_static_routes); });
       // And keep in sync with subsequent changes
       sandboxService.sandbox$.pipe(skip(1), distinctUntilChanged()).subscribe((nextFlag) => {
         if (nextFlag) {
@@ -35,23 +35,30 @@ export function preloadFrontRoutes(
             .then((routes) => dynamicRoutesService.setRoutes(routes))
             .catch(() => { /* ignore */ });
         } else {
-          dynamicRoutesService.setRoutes(front_static_routes);
+          // Switch to production dynamic routes
+          firstValueFrom(navitemService.getFrontRoutes(false))
+            .then((routes) => dynamicRoutesService.setRoutes(routes))
+            .catch(() => { dynamicRoutesService.setRoutes(front_static_routes); });
         }
       });
       return initial;
     } else {
-      // Start on static routes and listen for sandbox toggles to switch
-      dynamicRoutesService.setRoutes(front_static_routes);
+      // Start with production dynamic routes and listen for sandbox toggles to switch
+      const initial = firstValueFrom(navitemService.getFrontRoutes(false))
+        .then((routes) => { dynamicRoutesService.setRoutes(routes); })
+        .catch(() => { dynamicRoutesService.setRoutes(front_static_routes); });
       sandboxService.sandbox$.pipe(skip(1), distinctUntilChanged()).subscribe((nextFlag) => {
         if (nextFlag) {
           firstValueFrom(navitemService.getFrontRoutes(true))
             .then((routes) => dynamicRoutesService.setRoutes(routes))
             .catch(() => { /* ignore */ });
         } else {
-          dynamicRoutesService.setRoutes(front_static_routes);
+          firstValueFrom(navitemService.getFrontRoutes(false))
+            .then((routes) => dynamicRoutesService.setRoutes(routes))
+            .catch(() => { /* ignore */ });
         }
       });
-      return Promise.resolve();
+      return initial;
     }
   };
 }

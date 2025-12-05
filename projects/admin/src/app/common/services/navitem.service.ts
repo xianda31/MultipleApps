@@ -1,12 +1,14 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, firstValueFrom, map, of, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, Observable, firstValueFrom, map, of, switchMap, tap, combineLatest } from 'rxjs';
 import { ToastService } from './toast.service';
 import { DBhandler } from './graphQL.service';
-import {  MenuGroup, NavItem, NavItem_input, NAVITEM_TYPE } from '../interfaces/navitem.interface';
+import {  MenuGroup, NavItem, NavItem_input, NAVITEM_TYPE, NAVITEM_POSITION } from '../interfaces/navitem.interface';
 import { minimal_routes, routes } from '../../front/front.routes';
 import { Routes } from '@angular/router';
 import { GenericPageComponent } from '../../front/front/pages/generic-page/generic-page.component';
 import { PLUGINS, NAVITEM_PLUGIN } from '../interfaces/plugin.interface';
+import { PageService } from './page.service';
+import { Page } from '../interfaces/page_snippet.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -18,14 +20,24 @@ export class NavItemsService {
   constructor(
     private toastService: ToastService,
     private dbHandler: DBhandler,
+    private pageService: PageService,
   ) { }
 
 
   getFrontRoutes(sandbox: boolean): Observable<Routes> {
     const src$ = sandbox ? this.loadNavItemsSandbox() : this.loadNavItemsProduction(true);
-    return src$.pipe(
-      map((nav_items) => this.generateFrontRoutes(nav_items)),
+    return combineLatest([src$, this.pageService.listPages()]).pipe(
+      map(([nav_items, pages]) => {
+        const enriched = this.enrichWithPageTitle(nav_items, pages);
+        return this.generateFrontRoutes(enriched);
+      }),
     );
+  }
+
+  private enrichWithPageTitle(items: NavItem[], pages: Page[]): NavItem[] {
+    if (!pages || pages.length === 0) return items;
+    const byId = new Map(pages.map(p => [p.id, p.title] as [string, string]));
+    return items.map(n => (n.page_id ? { ...n, page_title: byId.get(n.page_id) } : n));
   }
 
   generateFrontRoutes(navItems: NavItem[]): Routes {
@@ -42,7 +54,12 @@ export class NavItemsService {
 
     const dynamicChildren = dynamicItems.map(ni => {
       if (ni.type === NAVITEM_TYPE.CUSTOM_PAGE) {
-        return { path: ni.path, component: GenericPageComponent, data: { page_title: ni.page_title } };
+        // withComponentInputBinding() will map route data to @Input() properties
+        return { 
+          path: ni.path, 
+          component: GenericPageComponent, 
+          data: { page_title: ni.page_title } 
+        };
       }
       if (ni.type === NAVITEM_TYPE.PLUGIN && ni.plugin_name === NAVITEM_PLUGIN.IFRAME) {
         return {
@@ -52,16 +69,30 @@ export class NavItemsService {
         };
       }
       // Extension possible pour d'autres plugins avec paramètres
+      const comp = PLUGINS[ni.plugin_name!];
       return {
         path: ni.path,
-        component: PLUGINS[ni.plugin_name!]
+        component: comp
       };
     });
 
     // Append minimal base routes after dynamic ones 
     const root = new_routes[0];
     const baseChildren = root.children ?? [];
-    root.children = [...dynamicChildren, ...baseChildren];
+    
+    // Find BRAND navitem to set default redirect
+    const brandNavitem = navItems.find(ni => ni.position === NAVITEM_POSITION.BRAND);
+    
+    // Add default redirect only if BRAND exists
+    const redirectRoute = brandNavitem 
+      ? [{ path: '', redirectTo: brandNavitem.path, pathMatch: 'full' as const }]
+      : [];
+    
+    root.children = [...dynamicChildren, ...redirectRoute, ...baseChildren];
+    
+    // Return the full route structure with FrontComponent wrapper
+    // The path will be '' here, but dynamic-routes.service will merge these children
+    // into the existing 'front' route
     return new_routes;
   }
 
@@ -70,6 +101,16 @@ export class NavItemsService {
    */
   getMenuStructure(): MenuGroup[] {
     return this.buildMenuStructureNew(this._navItems);
+  }
+
+  /**
+   * Get the path for a given page_title (reverse lookup).
+   * Returns the path of the first navitem that has this page_title.
+   * Returns null if not found.
+   */
+  getPathByPageTitle(pageTitle: string): string | null {
+    const navitem = this._navItems.find(ni => ni.page_title === pageTitle);
+    return navitem?.path || null;
   }
 
   /**
@@ -120,19 +161,18 @@ export class NavItemsService {
 
   // List (separated loads)
   loadNavItemsSandbox(): Observable<NavItem[]> {
-    const _list = this.dbHandler.listNavItems().pipe(
+    return this.dbHandler.listNavItems().pipe(
       map((navItems: NavItem[]) => {
         const filtered = navItems.filter(item => (item as any).sandbox === true);
         this._navItems = filtered;
         this._navItems$.next(this._navItems);
-      }),
-      switchMap(() => this._navItems$.asObservable())
+        return filtered;
+      })
     );
-    return (this._navItems && this._navItems.length > 0) ? this._navItems$.asObservable() : _list;
   }
 
   loadNavItemsProduction(includeLegacy: boolean = true): Observable<NavItem[]> {
-    const _list = this.dbHandler.listNavItems().pipe(
+    return this.dbHandler.listNavItems().pipe(
       map((navItems: NavItem[]) => {
         const filtered = navItems.filter(item => {
           const sb = (item as any).sandbox;
@@ -140,10 +180,9 @@ export class NavItemsService {
         });
         this._navItems = filtered;
         this._navItems$.next(this._navItems);
-      }),
-      switchMap(() => this._navItems$.asObservable())
+        return filtered;
+      })
     );
-    return (this._navItems && this._navItems.length > 0) ? this._navItems$.asObservable() : _list;
   }
 
   // Backward-compatible alias
@@ -308,29 +347,6 @@ export class NavItemsService {
       return promotedCount;
     } catch (error: any) {
       this.toastService.showErrorToast('NavItems', 'Erreur lors de la promotion vers production');
-      return Promise.reject(error);
-    }
-  }
-
-  /**
-   * ONE-TIME INITIALIZATION: Flip all current sandbox items to production.
-   * Use this only once to initialize the production database from the current sandbox content.
-   * Returns the number of items initialized.
-   */
-  async initializeProductionFromSandbox(): Promise<number> {
-    try {
-      const all = await firstValueFrom(this.dbHandler.listNavItems());
-      const sandboxItems = (all || []).filter((it: any) => it?.sandbox === true) as NavItem[];
-      
-      for (const item of sandboxItems) {
-        const updated: NavItem = { ...item, sandbox: false } as NavItem;
-        await this.updateNavItem(updated);
-      }
-
-      this.toastService.showSuccess('NavItems', `${sandboxItems.length} élément(s) initialisé(s) en production`);
-      return sandboxItems.length;
-    } catch (error: any) {
-      this.toastService.showErrorToast('NavItems', 'Erreur lors de l\'initialisation production');
       return Promise.reject(error);
     }
   }

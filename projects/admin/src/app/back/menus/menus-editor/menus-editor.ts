@@ -64,6 +64,7 @@ export class MenusEditorComponent implements AfterViewInit {
 
   navItemForm: FormGroup = new FormGroup({});
   sandbox_mode: boolean = false;
+  hasSandboxNavitems: boolean = false;
 
   private offRef: NgbOffcanvasRef | null = null;
   // Special label tokens recognized by the navbar label_transformer
@@ -105,6 +106,7 @@ export class MenusEditorComponent implements AfterViewInit {
         next: ([navitems, pages]) => {
           this.pages = pages;
           this.navitems = this.enrichWithPageTitle(navitems);
+          this.hasSandboxNavitems = this.navitems.length > 0;
           // Editor preview always reflects sandbox dataset
           this.front_routes = this.navitemService.generateFrontRoutes(this.navitems);
           this.menus = this.buildMenuStructureNew(this.navitems);
@@ -286,34 +288,30 @@ export class MenusEditorComponent implements AfterViewInit {
   }
 
   async promoteSandboxToProduction() {
+    // Validate that a BRAND navitem exists before promotion
+    const brandExists = this.navitems?.some(item => item.position === NAVITEM_POSITION.BRAND);
+    if (!brandExists) {
+      const createBrand = confirm(
+        '⚠️ ATTENTION: Aucun élément BRAND (navbar-brand) n\'est défini dans les menus sandbox.\n\n' +
+        'Sans élément BRAND, la navigation de la barre de navigation ne fonctionnera pas correctement.\n\n' +
+        'Voulez-vous continuer quand même la promotion ?'
+      );
+      if (!createBrand) return;
+    }
+    
     if (!confirm('Promouvoir tous les menus sandbox vers production ? Cela remplacera tous les menus de production.')) return;
     try {
       const count = await this.navitemService.promoteSandboxToProduction();
       this.toastService.showSuccess('Menus', `${count} élément(s) promu(s) vers production`);
-      // After promotion, reload (sandbox still has the items, but production is now updated)
+      // After promotion, reload (sandbox is now empty, switch back to production mode)
+      this.sandboxService.setSandbox(false);
       this.reloadNavitems();
     } catch (err: any) {
       this.toastService.showErrorToast('Menus', err?.message || 'Échec de la promotion');
     }
   }
 
-  async initializeProduction() {
-    const msg = '🚨 ATTENTION: Opération ONE-TIME!\n\n' +
-                'Cette action va convertir TOUS les menus sandbox actuels en menus de production.\n' +
-                'À utiliser uniquement pour l\'initialisation initiale.\n\n' +
-                'Supprimer ce bouton après usage.\n\n' +
-                'Continuer ?';
-    if (!confirm(msg)) return;
-    try {
-      const count = await this.navitemService.initializeProductionFromSandbox();
-      this.toastService.showSuccess('Initialisation', `${count} menu(s) initialisé(s) en production`);
-      this.reloadNavitems();
-    } catch (err: any) {
-      this.toastService.showErrorToast('Initialisation', err?.message || 'Échec de l\'initialisation');
-    }
-  }
 
-  // @deprecated Use promoteSandboxToProduction() instead
   async promoteSandboxMenus() {
     // Optional confirm to avoid accidental promotions
     if (!confirm('Promouvoir tous les menus sandbox en production ? Cette action déplacera les éléments.')) return;
@@ -456,7 +454,8 @@ export class MenusEditorComponent implements AfterViewInit {
       .subscribe(([navitems, pages]) => {
         this.pages = pages;
         this.navitems = this.enrichWithPageTitle(navitems);
-  this.menus = this.buildMenuStructureNew(this.navitems);
+        this.hasSandboxNavitems = this.navitems.length > 0;
+        this.menus = this.buildMenuStructureNew(this.navitems);
         // Preview always built from sandbox items
         this.front_routes = this.navitemService.generateFrontRoutes(this.navitems);
         // If sandbox mode is active, update global dynamic routes so the front preview/router picks changes
@@ -751,7 +750,7 @@ export class MenusEditorComponent implements AfterViewInit {
     const page_title = formValue.page_id ? this.pages.find(p => p.id === formValue.page_id)?.title : undefined;
     return {
       id: this.selectedNavitem?.id || '',
-      sandbox: true,
+      sandbox: this.selectedNavitem?.sandbox ?? true, // Preserve existing sandbox flag, default to true for new items
       type: formValue.type,
       label: formValue.label,
       logging_criteria: formValue.logging_criteria,
