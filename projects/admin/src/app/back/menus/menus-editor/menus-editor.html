@@ -8,11 +8,29 @@
             Mode Sandbox <span class="state" [class.on]="sandboxService.value">({{ sandboxService.value ?
                 'ON' : 'OFF' }})</span>
         </label>
-        <!-- Bouton masqué temporairement jusqu'à décision sur la stratégie de promotion -->
-        <button class="btn btn-sm btn-warning ms-3 d-none" (click)="promoteSandboxMenus()"
-            [disabled]="!sandboxService.value">
-            Promouvoir vers production
-        </button>
+        
+        <!-- Workflow de production/sandbox -->
+        <div class="d-inline-block ms-3">
+            <button class="btn btn-sm btn-outline-primary" 
+                    (click)="cloneProductionToSandbox()"
+                    [disabled]="sandboxService.value"
+                    title="Copie tous les menus de production vers sandbox pour édition">
+                <i class="bi bi-arrow-left-right"></i> Copier production → sandbox
+            </button>
+            <button class="btn btn-sm btn-warning ms-2" 
+                    (click)="promoteSandboxToProduction()"
+                    [disabled]="!sandboxService.value"
+                    title="Remplace tous les menus de production par les menus sandbox validés">
+                <i class="bi bi-cloud-upload"></i> Promouvoir sandbox → production
+            </button>
+            
+            <!-- Bouton d'initialisation ONE-TIME (supprimer après usage) -->
+            <button class="btn btn-sm btn-danger ms-2" 
+                    (click)="initializeProduction()"
+                    title="🚨 ONE-TIME: Convertit tous les menus sandbox actuels en production (à supprimer après usage)">
+                <i class="bi bi-exclamation-triangle-fill"></i> Init production (ONE-TIME)
+            </button>
+        </div>
     </div>
 
     <div class="col-12 mt-3">

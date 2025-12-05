@@ -189,8 +189,155 @@ export class NavItemsService {
 
   // Note: page_title is a UI concern; components can enrich items with titles using PageService
 
+  /**
+   * Clone all production navitems (sandbox=false) to sandbox (sandbox=true) with new IDs.
+   * This allows editing without affecting production.
+   * Preserves parent-child relationships by mapping old IDs to new IDs.
+   * Returns the number of items cloned.
+   */
+  async cloneProductionToSandbox(): Promise<number> {
+    try {
+      const all = await firstValueFrom(this.dbHandler.listNavItems());
+      const prodItems = (all || []).filter((it: any) => it?.sandbox === false) as NavItem[];
+      
+      // First, delete all existing sandbox items
+      const sandboxItems = (all || []).filter((it: any) => it?.sandbox === true) as NavItem[];
+      for (const item of sandboxItems) {
+        await this.deleteNavItem(item);
+      }
+
+      // Map old production IDs to new sandbox IDs
+      const idMap = new Map<string, string>();
+
+      // Sort items to process parents before children (null parent_id first, then by rank)
+      const sortedItems = [...prodItems].sort((a, b) => {
+        if (!a.parent_id && b.parent_id) return -1;
+        if (a.parent_id && !b.parent_id) return 1;
+        return (a.rank ?? 0) - (b.rank ?? 0);
+      });
+
+      // Clone items in order, mapping parent_id references
+      let clonedCount = 0;
+      for (const prodItem of sortedItems) {
+        const clonedItem: NavItem_input = {
+          sandbox: true,
+          slug: prodItem.slug,
+          path: prodItem.path,
+          label: prodItem.label,
+          position: prodItem.position,
+          type: prodItem.type,
+          rank: prodItem.rank,
+          logging_criteria: prodItem.logging_criteria,
+          group_level: prodItem.group_level,
+          parent_id: prodItem.parent_id ? (idMap.get(prodItem.parent_id) || null) : null,
+          page_id: prodItem.page_id,
+          external_url: prodItem.external_url,
+          plugin_name: prodItem.plugin_name,
+          pre_label: prodItem.pre_label,
+        };
+        const newItem = await this.createNavItem(clonedItem as NavItem);
+        idMap.set(prodItem.id, newItem.id);
+        clonedCount++;
+      }
+
+      this.toastService.showSuccess('NavItems', `${clonedCount} élément(s) copié(s) vers sandbox`);
+      return clonedCount;
+    } catch (error: any) {
+      this.toastService.showErrorToast('NavItems', 'Erreur lors de la copie vers sandbox');
+      return Promise.reject(error);
+    }
+  }
+
+  /**
+   * Promote all sandbox nav items to production by:
+   * 1. Deleting all existing production items (sandbox=false)
+   * 2. Deleting all sandbox items (sandbox=true) and recreating them as production items with new IDs
+   * Preserves parent-child relationships by mapping old sandbox IDs to new production IDs.
+   * Returns the number of items promoted.
+   */
+  async promoteSandboxToProduction(): Promise<number> {
+    try {
+      const all = await firstValueFrom(this.dbHandler.listNavItems());
+      const prodItems = (all || []).filter((it: any) => it?.sandbox === false) as NavItem[];
+      const sandboxItems = (all || []).filter((it: any) => it?.sandbox === true) as NavItem[];
+
+      // Delete all production items
+      for (const item of prodItems) {
+        await this.deleteNavItem(item);
+      }
+
+      // Map old sandbox IDs to new production IDs
+      const idMap = new Map<string, string>();
+
+      // Sort items to process parents before children (null parent_id first, then by rank)
+      const sortedItems = [...sandboxItems].sort((a, b) => {
+        if (!a.parent_id && b.parent_id) return -1;
+        if (a.parent_id && !b.parent_id) return 1;
+        return (a.rank ?? 0) - (b.rank ?? 0);
+      });
+
+      // Delete sandbox items and recreate as production with mapped parent_id
+      let promotedCount = 0;
+      for (const sandboxItem of sortedItems) {
+        // Delete the sandbox item first
+        await this.deleteNavItem(sandboxItem);
+
+        // Recreate as production item with new ID
+        const prodItem: NavItem_input = {
+          sandbox: false,
+          slug: sandboxItem.slug,
+          path: sandboxItem.path,
+          label: sandboxItem.label,
+          position: sandboxItem.position,
+          type: sandboxItem.type,
+          rank: sandboxItem.rank,
+          logging_criteria: sandboxItem.logging_criteria,
+          group_level: sandboxItem.group_level,
+          parent_id: sandboxItem.parent_id ? (idMap.get(sandboxItem.parent_id) || null) : null,
+          page_id: sandboxItem.page_id,
+          external_url: sandboxItem.external_url,
+          plugin_name: sandboxItem.plugin_name,
+          pre_label: sandboxItem.pre_label,
+        };
+        const newItem = await this.createNavItem(prodItem as NavItem);
+        idMap.set(sandboxItem.id, newItem.id);
+        promotedCount++;
+      }
+
+      this.toastService.showSuccess('NavItems', `${promotedCount} élément(s) promu(s) en production`);
+      return promotedCount;
+    } catch (error: any) {
+      this.toastService.showErrorToast('NavItems', 'Erreur lors de la promotion vers production');
+      return Promise.reject(error);
+    }
+  }
+
+  /**
+   * ONE-TIME INITIALIZATION: Flip all current sandbox items to production.
+   * Use this only once to initialize the production database from the current sandbox content.
+   * Returns the number of items initialized.
+   */
+  async initializeProductionFromSandbox(): Promise<number> {
+    try {
+      const all = await firstValueFrom(this.dbHandler.listNavItems());
+      const sandboxItems = (all || []).filter((it: any) => it?.sandbox === true) as NavItem[];
+      
+      for (const item of sandboxItems) {
+        const updated: NavItem = { ...item, sandbox: false } as NavItem;
+        await this.updateNavItem(updated);
+      }
+
+      this.toastService.showSuccess('NavItems', `${sandboxItems.length} élément(s) initialisé(s) en production`);
+      return sandboxItems.length;
+    } catch (error: any) {
+      this.toastService.showErrorToast('NavItems', 'Erreur lors de l\'initialisation production');
+      return Promise.reject(error);
+    }
+  }
+
   // Promote all sandbox nav items to production by flipping the sandbox flag to false.
   // Returns the number of items promoted.
+  // @deprecated Use promoteSandboxToProduction() instead
   async promoteSandboxMenus(): Promise<number> {
     try {
       const all = await firstValueFrom(this.dbHandler.listNavItems());

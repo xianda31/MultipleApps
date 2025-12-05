@@ -272,6 +272,48 @@ export class MenusEditorComponent implements AfterViewInit {
     });
   }
 
+  async cloneProductionToSandbox() {
+    if (!confirm('Copier tous les menus de production vers sandbox ? Cela remplacera les menus sandbox existants.')) return;
+    try {
+      const count = await this.navitemService.cloneProductionToSandbox();
+      // Switch to sandbox mode to see the cloned items
+      this.setSandbox(true);
+      this.toastService.showSuccess('Menus', `${count} élément(s) copié(s) vers sandbox`);
+      this.reloadNavitems();
+    } catch (err: any) {
+      this.toastService.showErrorToast('Menus', err?.message || 'Échec de la copie');
+    }
+  }
+
+  async promoteSandboxToProduction() {
+    if (!confirm('Promouvoir tous les menus sandbox vers production ? Cela remplacera tous les menus de production.')) return;
+    try {
+      const count = await this.navitemService.promoteSandboxToProduction();
+      this.toastService.showSuccess('Menus', `${count} élément(s) promu(s) vers production`);
+      // After promotion, reload (sandbox still has the items, but production is now updated)
+      this.reloadNavitems();
+    } catch (err: any) {
+      this.toastService.showErrorToast('Menus', err?.message || 'Échec de la promotion');
+    }
+  }
+
+  async initializeProduction() {
+    const msg = '🚨 ATTENTION: Opération ONE-TIME!\n\n' +
+                'Cette action va convertir TOUS les menus sandbox actuels en menus de production.\n' +
+                'À utiliser uniquement pour l\'initialisation initiale.\n\n' +
+                'Supprimer ce bouton après usage.\n\n' +
+                'Continuer ?';
+    if (!confirm(msg)) return;
+    try {
+      const count = await this.navitemService.initializeProductionFromSandbox();
+      this.toastService.showSuccess('Initialisation', `${count} menu(s) initialisé(s) en production`);
+      this.reloadNavitems();
+    } catch (err: any) {
+      this.toastService.showErrorToast('Initialisation', err?.message || 'Échec de l\'initialisation');
+    }
+  }
+
+  // @deprecated Use promoteSandboxToProduction() instead
   async promoteSandboxMenus() {
     // Optional confirm to avoid accidental promotions
     if (!confirm('Promouvoir tous les menus sandbox en production ? Cette action déplacera les éléments.')) return;
