@@ -46,19 +46,6 @@ export class FrontNavbarComponent {
     return items.find(item => item.position === NAVITEM_POSITION.BRAND) || null;
   }
 
-  get brandPath(): string {
-    const brand = this.brandNavitem;
-    if (!brand) {
-      console.warn('[front-navbar] Aucun navitem BRAND défini. Utilisation du fallback /home. Vérifiez la configuration des menus.');
-      return '/home';
-    }
-    return brand.path;
-  }
-
-  get brandLabel(): string {
-    return this.brandNavitem?.label || 'Accueil';
-  }
-
   constructor(
     private auth: AuthentificationService,
     private groupService: GroupService,

@@ -147,6 +147,7 @@ export class NavItemsService {
       page_id: navItem.page_id,
       external_url: navItem.external_url,
       plugin_name: navItem.plugin_name,
+      pre_label: navItem.pre_label,
     };
     try {
       const createdNavItem = await this.dbHandler.createNavItem(navItem_input);

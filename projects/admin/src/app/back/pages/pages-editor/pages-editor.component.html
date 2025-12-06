@@ -1,5 +1,12 @@
 <div class="container-fluid pt-2">
 
+    @if (fromMenusEditor) {
+    <div class="mb-2">
+        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="backToMenusEditor()">
+            <i class="bi bi-arrow-left"></i> Retour aux menus
+        </button>
+    </div>
+    }
 
     <div class=" col ">
         <!-- select page -->

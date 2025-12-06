@@ -66,12 +66,13 @@
       <div class="col-auto">
         <p class="mb-0 text-muted">Tous droits réservés</p>
       </div>
-      <div class="col-auto">
-        <a routerLink="legals" class="text-decoration-underline mb-0">Mentions légales</a>
-      </div>
-      <div class="col-auto">
-        <a routerLink="assistance" class="text-decoration-underline mb-0">Assistance</a>
-      </div>
+      @if (footer_menus && footer_menus.length > 0) {
+        @for (menu of footer_menus; track menu.navitem.id) {
+          <div class="col-auto">
+            <a [routerLink]="menu.navitem.path" class="text-decoration-underline mb-0">{{ menu.navitem.label }}</a>
+          </div>
+        }
+      }
     </div>
 
     <span class="position-relative d-none d-xl-inline">

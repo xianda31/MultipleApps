@@ -6,7 +6,7 @@ import { MenuStructure, MenuGroup, NavItem, NAVITEM_LOGGING_CRITERIA, NAVITEM_PO
 import { NAVITEM_COMMAND } from '../../../common/interfaces/plugin.interface';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Routes } from '@angular/router';
+import { Routes, Router, ActivatedRoute } from '@angular/router';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { NAVITEM_PLUGIN } from '../../../common/interfaces/plugin.interface';
 import { LABEL_TRANSFORMERS } from '../../../common/interfaces/plugin.interface';
@@ -20,6 +20,7 @@ import { SandboxService } from '../../../common/services/sandbox.service';
 import { DynamicRoutesService } from '../../../common/services/dynamic-routes.service';
 import { Subject, combineLatest } from 'rxjs';
 import { charsanitize, buildFullPath, extractSegment } from '../../../common/utils/navitem.utils';
+import { BACK_ROUTE_ABS_PATHS } from '../../routes/back-route-paths';
 // Preview in editor is generated from sandbox navitems
 
 @Component({
@@ -35,6 +36,8 @@ export class MenusEditorComponent implements AfterViewInit {
   // component properties
   navbarEntries: MenuGroup[] = [];
   private _visibleNavbarEntries: MenuGroup[] = [];
+  footbarEntries: MenuGroup[] = [];
+  private _visibleFootbarEntries: MenuGroup[] = [];
   @ViewChild('editNavitemOffcanvas', { static: true }) editNavitemOffcanvas: any;
   @ViewChild('navDropList', { static: false, read: ElementRef }) navDropListRef?: ElementRef;
   @ViewChildren(NgbDropdown) dropdowns?: QueryList<NgbDropdown>;
@@ -45,6 +48,7 @@ export class MenusEditorComponent implements AfterViewInit {
   NAVITEM_TYPES = Object.values(NAVITEM_TYPE);
   NAVITEM_POSITION = NAVITEM_POSITION;
   NAVITEM_POSITIONS = Object.values(NAVITEM_POSITION);
+  ORDERED_NAVITEM_POSITIONS = [NAVITEM_POSITION.BRAND, NAVITEM_POSITION.NAVBAR, NAVITEM_POSITION.FOOTER];
   NAVITEM_PLUGIN = NAVITEM_PLUGIN;
   NAVITEM_PLUGINS = Object.values(NAVITEM_PLUGIN);
   NAVITEM_LOGGING_CRITERIA = NAVITEM_LOGGING_CRITERIA;
@@ -65,6 +69,10 @@ export class MenusEditorComponent implements AfterViewInit {
   navItemForm: FormGroup = new FormGroup({});
   sandbox_mode: boolean = false;
   hasSandboxNavitems: boolean = false;
+  sandboxCount: number = 0;
+  productionCount: number = 0;
+  showDebugInfo: boolean = false;
+  isProcessing: boolean = false;
 
   private offRef: NgbOffcanvasRef | null = null;
   // Special label tokens recognized by the navbar label_transformer
@@ -88,6 +96,8 @@ export class MenusEditorComponent implements AfterViewInit {
     @Inject(APP_SANDBOX) sandboxFlag: boolean,
     public sandboxService: SandboxService,
     private dynamicRoutesService: DynamicRoutesService,
+    private router: Router,
+    private route: ActivatedRoute,
   ) { this.sandbox_mode = sandboxFlag; }
 
   // Keep a reference to the navbar container to scope DOM queries when possible
@@ -100,13 +110,16 @@ export class MenusEditorComponent implements AfterViewInit {
     // Load navitems and pages together, then enrich once
     combineLatest([
       this.navitemService.loadNavItemsSandbox(),
+      this.navitemService.loadNavItemsProduction(),
       this.pageService.listPages()
     ])
       .subscribe({
-        next: ([navitems, pages]) => {
+        next: ([sandboxItems, productionItems, pages]) => {
           this.pages = pages;
-          this.navitems = this.enrichWithPageTitle(navitems);
-          this.hasSandboxNavitems = this.navitems.length > 0;
+          this.navitems = this.enrichWithPageTitle(sandboxItems);
+          this.hasSandboxNavitems = sandboxItems.length > 0;
+          this.sandboxCount = sandboxItems.length;
+          this.productionCount = productionItems.length;
           // Editor preview always reflects sandbox dataset
           this.front_routes = this.navitemService.generateFrontRoutes(this.navitems);
           this.menus = this.buildMenuStructureNew(this.navitems);
@@ -138,6 +151,14 @@ export class MenusEditorComponent implements AfterViewInit {
         return ni.label;
     }
   }
+
+  hasMenusForPosition(position: NAVITEM_POSITION): boolean {
+    return this.menus.some(m => m.navitem.position === position);
+  }
+
+  getLocalIndexForPosition(globalIndex: number, position: NAVITEM_POSITION): number {
+    return this.menus.slice(0, globalIndex).filter(m => m.navitem.position === position).length + 1;
+  }
   
 
   private updateComputedPaths() {
@@ -153,11 +174,11 @@ export class MenusEditorComponent implements AfterViewInit {
     this.navItemForm.get('path')?.setValue(full, { emitEvent: false });
   }
 
-  createNavItem() {
-    this.editNavitem();
+  createNavItem(position: NAVITEM_POSITION = NAVITEM_POSITION.NAVBAR) {
+    this.editNavitem(undefined, position);
   }
 
-  editNavitem(navItem?: any): void {
+  editNavitem(navItem?: any, defaultPosition?: NAVITEM_POSITION): void {
     if (navItem) {
       this.selectedNavitem = { ...navItem };
     } else {
@@ -171,14 +192,21 @@ export class MenusEditorComponent implements AfterViewInit {
         rank: 0,
         logging_criteria: NAVITEM_LOGGING_CRITERIA.ANY,
         group_level: 0,
-        position: NAVITEM_POSITION.NAVBAR,
+        position: defaultPosition || NAVITEM_POSITION.NAVBAR,
         pre_label: null
       };
     }
     // Patcher le formulaire avec la sélection
   const segment = extractSegment(this.selectedNavitem!, this.navitems);
+    
+    // Force type change if FOOTER position with DROPDOWN type (not allowed)
+    let itemType = this.selectedNavitem!.type;
+    if (this.selectedNavitem!.position === NAVITEM_POSITION.FOOTER && itemType === NAVITEM_TYPE.DROPDOWN) {
+      itemType = NAVITEM_TYPE.CUSTOM_PAGE;
+    }
+    
     this.navItemForm.reset({
-      type: this.selectedNavitem!.type,
+      type: itemType,
       label: this.selectedNavitem!.label || '',
       slug: segment,
       path: this.selectedNavitem!.path || '',
@@ -276,6 +304,7 @@ export class MenusEditorComponent implements AfterViewInit {
 
   async cloneProductionToSandbox() {
     if (!confirm('Copier tous les menus de production vers sandbox ? Cela remplacera les menus sandbox existants.')) return;
+    this.isProcessing = true;
     try {
       const count = await this.navitemService.cloneProductionToSandbox();
       // Switch to sandbox mode to see the cloned items
@@ -284,6 +313,8 @@ export class MenusEditorComponent implements AfterViewInit {
       this.reloadNavitems();
     } catch (err: any) {
       this.toastService.showErrorToast('Menus', err?.message || 'Échec de la copie');
+    } finally {
+      this.isProcessing = false;
     }
   }
 
@@ -300,6 +331,7 @@ export class MenusEditorComponent implements AfterViewInit {
     }
     
     if (!confirm('Promouvoir tous les menus sandbox vers production ? Cela remplacera tous les menus de production.')) return;
+    this.isProcessing = true;
     try {
       const count = await this.navitemService.promoteSandboxToProduction();
       this.toastService.showSuccess('Menus', `${count} élément(s) promu(s) vers production`);
@@ -308,6 +340,8 @@ export class MenusEditorComponent implements AfterViewInit {
       this.reloadNavitems();
     } catch (err: any) {
       this.toastService.showErrorToast('Menus', err?.message || 'Échec de la promotion');
+    } finally {
+      this.isProcessing = false;
     }
   }
 
@@ -332,7 +366,10 @@ export class MenusEditorComponent implements AfterViewInit {
     this.selected_page = item.page_id ? this.pages.find(p => p.id === item.page_id) || null : null;
   }
 
-
+  show_page_from_list(page: Page) {
+    const path = BACK_ROUTE_ABS_PATHS['PageEditor'].replace(':page_id', page.id);
+    this.router.navigateByUrl(path + '?from=menus');
+  }
 
   initialise_form() {
     this.navItemForm = this.fb.group({
@@ -449,12 +486,15 @@ export class MenusEditorComponent implements AfterViewInit {
   private reloadNavitems() {
     combineLatest([
       this.navitemService.loadNavItemsSandbox(),
+      this.navitemService.loadNavItemsProduction(),
       this.pageService.listPages()
     ])
-      .subscribe(([navitems, pages]) => {
+      .subscribe(([sandboxItems, productionItems, pages]) => {
         this.pages = pages;
-        this.navitems = this.enrichWithPageTitle(navitems);
-        this.hasSandboxNavitems = this.navitems.length > 0;
+        this.navitems = this.enrichWithPageTitle(sandboxItems);
+        this.hasSandboxNavitems = sandboxItems.length > 0;
+        this.sandboxCount = sandboxItems.length;
+        this.productionCount = productionItems.length;
         this.menus = this.buildMenuStructureNew(this.navitems);
         // Preview always built from sandbox items
         this.front_routes = this.navitemService.generateFrontRoutes(this.navitems);
@@ -476,6 +516,11 @@ export class MenusEditorComponent implements AfterViewInit {
       .filter(e => e.navitem.position === NAVITEM_POSITION.NAVBAR)
       .sort((a, b) => (a.navitem.rank ?? 0) - (b.navitem.rank ?? 0));
     this.rebuildVisibleNavbarEntries();
+
+    this.footbarEntries = entries
+      .filter(e => e.navitem.position === NAVITEM_POSITION.FOOTER)
+      .sort((a, b) => (a.navitem.rank ?? 0) - (b.navitem.rank ?? 0));
+    this.rebuildVisibleFootbarEntries();
   }
 
   // Maintain a stable visible array used by CDK so it can reflect DOM reorder
@@ -485,9 +530,19 @@ export class MenusEditorComponent implements AfterViewInit {
       .sort((a, b) => (a.navitem.rank ?? 0) - (b.navitem.rank ?? 0));
   }
 
+  private rebuildVisibleFootbarEntries() {
+    this._visibleFootbarEntries = (this.footbarEntries || [])
+      .filter(e => this.allow(e.navitem))
+      .sort((a, b) => (a.navitem.rank ?? 0) - (b.navitem.rank ?? 0));
+  }
+
   // Return the cached visible array (stable reference)
   get visibleNavbarEntries(): MenuGroup[] {
     return this._visibleNavbarEntries;
+  }
+
+  get visibleFootbarEntries(): MenuGroup[] {
+    return this._visibleFootbarEntries;
   }
 
   get brandNavitem(): NavItem | null {
@@ -738,7 +793,7 @@ export class MenusEditorComponent implements AfterViewInit {
       plugin_name: NAVITEM_PLUGIN | null;
       pre_label: 'icon' | 'avatar' | null;
     }
-    const formValue = this.navItemForm.value as NavItemFormValue;
+    const formValue = this.navItemForm.getRawValue() as NavItemFormValue;
     // Guard against selecting self as parent
     if (formValue.parent_id && this.selectedNavitem?.id && formValue.parent_id === this.selectedNavitem.id) {
       this.toastService.showErrorToast('Menus', 'Un élément ne peut pas être son propre parent');

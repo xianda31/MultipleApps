@@ -27,6 +27,7 @@ export const BACK_ROUTE_PATHS = {
   RootVolume: 'site/disk',
   FilemgrWindows: 'site/disk/:root_folder',
   PagesEditor: 'site/pages',
+  PageEditor: 'site/pages-editor/:page_id',
   MenusEditor: 'site/menus',
   UiConf: 'site/ui',
   Home: 'home',

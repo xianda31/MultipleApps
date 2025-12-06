@@ -1,6 +1,6 @@
  
 
-import { Component, signal } from '@angular/core';
+import { Component, signal, Input } from '@angular/core';
 import { ViewChild, ElementRef } from '@angular/core';
 import { PageService } from '../../../common/services/page.service';
 import { SnippetService } from '../../../common/services/snippet.service';
@@ -13,6 +13,8 @@ import { combineLatest, take } from 'rxjs';
 import { CdkDrag, CdkDropList, CdkDragDrop, moveItemInArray, transferArrayItem, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { SnippetEditor } from '../snippet-editor/snippet-editor';
 import { GenericPageComponent } from "../../../front/front/pages/generic-page/generic-page.component";
+import { ActivatedRoute, Router } from '@angular/router';
+import { BACK_ROUTE_ABS_PATHS } from '../../routes/back-route-paths';
 
 
 @Component({
@@ -24,6 +26,8 @@ import { GenericPageComponent } from "../../../front/front/pages/generic-page/ge
 })
 export class PagesEditorComponent {
   @ViewChild('scrollable') scrollable!: ElementRef;
+  @Input() pageId?: string;
+  fromMenusEditor = false;
 
   resolution_too_small = false;
 
@@ -50,6 +54,8 @@ export class PagesEditorComponent {
     private snippetService: SnippetService,
     private fb: FormBuilder,
     private toastService: ToastService,
+    private route: ActivatedRoute,
+    private router: Router,
   ) {
     this.pagesForm = this.fb.group({
       pagesArray: this.fb.array([])   // pour eviter les erreurs DOM à l'initialisation
@@ -58,7 +64,13 @@ export class PagesEditorComponent {
 
 
   ngOnInit(): void {
+    // Get pageId from route params if not provided via @Input
+    if (!this.pageId) {
+      this.pageId = this.route.snapshot.params['page_id'];
+    }
 
+    // Détecter si on vient de menus-editor via query param
+    this.fromMenusEditor = this.route.snapshot.queryParams['from'] === 'menus';
 
     this.pageService.listPages().pipe(take(1)).subscribe(pages => {
       // check if all mandatory pages exist
@@ -91,10 +103,21 @@ export class PagesEditorComponent {
 
           this.check_bin_empty();
           this.initFormArray(this.pages);
+          
+          // If pageId is provided, auto-select that page
+          if (this.pageId) {
+            const page = this.pages.find(p => p.id === this.pageId);
+            if (page) {
+              this.selected_pageTitle = page.title as MENU_TITLES;
+            }
+          }
         });
     });
   }
 
+  backToMenusEditor() {
+    this.router.navigateByUrl(BACK_ROUTE_ABS_PATHS['MenusEditor']);
+  }
 
 
   get dropListIds(): string[] {

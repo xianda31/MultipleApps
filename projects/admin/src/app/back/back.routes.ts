@@ -73,6 +73,7 @@ export const routes: Routes = [
   { path: BACK_ROUTE_PATHS.FilemgrWindows, component: FilemgrWindowsComponent, canActivate: [BackAuthGuard] },
   { path: BACK_ROUTE_PATHS.MenusEditor, component: MenusEditorComponent },
   { path: BACK_ROUTE_PATHS.PagesEditor, component: PagesEditorComponent, canActivate: [BackAuthGuard] },
+  { path: BACK_ROUTE_PATHS.PageEditor, component: PagesEditorComponent, canActivate: [BackAuthGuard] },
   { path: BACK_ROUTE_PATHS.Home, component: BackPageComponent },
   { path: BACK_ROUTE_PATHS.Assistance, component: BackAssistanceComponent, canActivate: [BackAuthGuard] },
   { path: BACK_ROUTE_PATHS.Mailing, component: MailingComponent, canActivate: [BackAuthGuard] },

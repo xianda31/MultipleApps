@@ -22,6 +22,7 @@ import { NavItemsService } from '../../../common/services/navitem.service';
 })
 export class FrontComponent {
   navbar_menus: MenuStructure = [];
+  footer_menus: MenuStructure = [];
   NAVITEM_POSITION = NAVITEM_POSITION;
   NAVITEM_TYPE = NAVITEM_TYPE;
   NAVITEM_TYPES = Object.values(NAVITEM_TYPE);
@@ -50,12 +51,21 @@ export class FrontComponent {
       this.albums = albums;
     });
 
-    this.navbar_menus = this.navitemService.getMenuStructure();
-    // Subscribe sandbox mode to force navbar visual indicator refresh if needed
+    // Load initial navitems based on current sandbox mode
+    const initialSandbox = this.sandboxService.value;
+    this.navitemService.loadNavItems(initialSandbox).subscribe(() => {
+      this.navbar_menus = this.navitemService.getMenuStructure();
+      this.footer_menus = this.navitemService.getMenuStructure().filter(menu => menu.navitem.position === NAVITEM_POSITION.FOOTER);
+    });
+
+    // Subscribe sandbox mode to reload navitems when mode changes
     this.sandboxService.sandbox$.subscribe((sandbox) => {
-      // trigger change detection by simple assignment if menus depend on mode later
       this.sandbox = sandbox;
-      this.navbar_menus = this.navitemService.getMenuStructure() ; //.filter(menu => menu.navitem.position === NAVITEM_POSITION.NAVBAR );
+      // Reload navitems for the new mode
+      this.navitemService.loadNavItems(sandbox).subscribe(() => {
+        this.navbar_menus = this.navitemService.getMenuStructure();
+        this.footer_menus = this.navitemService.getMenuStructure().filter(menu => menu.navitem.position === NAVITEM_POSITION.FOOTER);
+      });
     });
 
     // Load UI settings (logo/background) from dedicated UI settings file
