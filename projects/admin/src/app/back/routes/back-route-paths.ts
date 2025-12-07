@@ -39,3 +39,17 @@ export const BACK_ROUTE_PATHS = {
 export const BACK_ROUTE_ABS_PATHS = Object.fromEntries(
   Object.entries(BACK_ROUTE_PATHS).map(([k, v]) => [k, '/back/' + v])
 );
+
+// Navigation helpers - fonctions pour construire les chemins avec paramètres
+export const BACK_ROUTE_NAV = {
+  pageEditor: (pageId: string, queryParams?: { from?: string }) => {
+    const path = `/back/site/pages-editor/${pageId}`;
+    return queryParams?.from ? `${path}?from=${queryParams.from}` : path;
+  },
+  booksEditorFull: (id?: string) => 
+    id ? `/back/finance/books/editor/${id}` : '/back/finance/books/editor',
+  booksOverviewReport: (report: string) => 
+    `/back/finance/books/base-comptable/${report}`,
+  filemgrWindows: (rootFolder: string) => 
+    `/back/site/disk/${rootFolder}`,
+};

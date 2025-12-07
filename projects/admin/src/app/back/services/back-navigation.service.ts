@@ -83,6 +83,10 @@ export class BackNavigationService {
   goToPagesEditor() {
   this.router.navigate([BACK_ROUTE_ABS_PATHS['PagesEditor']]);
   }
+  goToPageEditor(pageId: string, queryParams?: { from?: string }) {
+    const basePath = BACK_ROUTE_ABS_PATHS['PagesEditor'];
+    this.router.navigate([basePath.replace('pages', 'pages-editor'), pageId], { queryParams });
+  }
   goToHome() {
   this.router.navigate([BACK_ROUTE_ABS_PATHS['Home']]);
   }

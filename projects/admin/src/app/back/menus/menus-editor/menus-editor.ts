@@ -20,7 +20,7 @@ import { SandboxService } from '../../../common/services/sandbox.service';
 import { DynamicRoutesService } from '../../../common/services/dynamic-routes.service';
 import { Subject, combineLatest } from 'rxjs';
 import { charsanitize, buildFullPath, extractSegment } from '../../../common/utils/navitem.utils';
-import { BACK_ROUTE_ABS_PATHS } from '../../routes/back-route-paths';
+import { BackNavigationService } from '../../services/back-navigation.service';
 // Preview in editor is generated from sandbox navitems
 
 @Component({
@@ -98,6 +98,7 @@ export class MenusEditorComponent implements AfterViewInit {
     private dynamicRoutesService: DynamicRoutesService,
     private router: Router,
     private route: ActivatedRoute,
+    private backNav: BackNavigationService,
   ) { this.sandbox_mode = sandboxFlag; }
 
   // Keep a reference to the navbar container to scope DOM queries when possible
@@ -367,8 +368,7 @@ export class MenusEditorComponent implements AfterViewInit {
   }
 
   show_page_from_list(page: Page) {
-    const path = BACK_ROUTE_ABS_PATHS['PageEditor'].replace(':page_id', page.id);
-    this.router.navigateByUrl(path + '?from=menus');
+    this.backNav.goToPageEditor(page.id, { from: 'menus' });
   }
 
   initialise_form() {
