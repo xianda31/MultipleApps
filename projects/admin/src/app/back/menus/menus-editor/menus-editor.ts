@@ -21,6 +21,7 @@ import { DynamicRoutesService } from '../../../common/services/dynamic-routes.se
 import { Subject, combineLatest } from 'rxjs';
 import { charsanitize, buildFullPath, extractSegment } from '../../../common/utils/navitem.utils';
 import { BackNavigationService } from '../../services/back-navigation.service';
+import { PageEditorComponent } from '../../pages/page-editor/page-editor.component';
 // Preview in editor is generated from sandbox navitems
 
 @Component({
@@ -28,7 +29,7 @@ import { BackNavigationService } from '../../services/back-navigation.service';
   standalone: true,
   templateUrl: './menus-editor.html',
   styleUrls: ['./menus-editor.scss'],
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbDropdownModule, DragDropModule]
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbDropdownModule, DragDropModule, PageEditorComponent]
 })
 export class MenusEditorComponent implements AfterViewInit {
   // Ensure we can close any open dropdowns on init
@@ -57,6 +58,7 @@ export class MenusEditorComponent implements AfterViewInit {
   NAVITEM_COMMANDS = Object.values(NAVITEM_COMMAND);
 
   front_route_verbose = '';
+  selectedPageId: string | undefined = undefined;
   // Preview auth state toggle (simulation only)
   previewLogged = false;
 
@@ -368,7 +370,7 @@ export class MenusEditorComponent implements AfterViewInit {
   }
 
   show_page_from_list(page: Page) {
-    this.backNav.goToPageEditor(page.id, { from: 'menus' });
+    this.selectedPageId = page.id;
   }
 
   initialise_form() {

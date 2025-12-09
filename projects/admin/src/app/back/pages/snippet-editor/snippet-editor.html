@@ -1,55 +1,53 @@
 <form [formGroup]="form">
     <div class="row">
-        <div class="col-9">
+        <div class="col-8">
+            <label class="form-label form-label-sm mb-0">Titre</label>
             <input type="text" formControlName="title" class="form-control form-control-sm mb-1"
                 (keydown.enter)="saveSnippetSelected()">
-            <input type="text" formControlName="subtitle" class="form-control form-control-sm text-muted"
+            <label class="form-label form-label-sm mb-0">Sous-titre</label>
+            <input type="text" formControlName="subtitle" class="form-control form-control-sm text-muted mb-1"
                 (keydown.enter)="saveSnippetSelected()">
         </div>
-        <div class="col-3 text-center">
+        <div class="col-4 text-center">
             <img *ngIf="snippet?.image_url" [src]="snippet?.image_url" alt="{{ form.get('title')?.value }}"
                 class="img-fluid snippet-img-limited">
         </div>
     </div>
 
-<div class="row">
+<div class="row mt-2 mb-1">
     <div class="col-12">
-        <div class="d-flex align-items-center gap-2">
-            <span class="form-label text-muted mb-0">publié le :</span>
-            <input type="date" formControlName="publishedAt" class="form-control form-control-sm mb-1 d-inline-block w-auto"
+        <div class="d-flex flex-row align-items-center gap-3">
+            <span class="form-label text-muted mb-0">Publié le :</span>
+            <input type="date" formControlName="publishedAt" class="form-control form-control-sm d-inline-block w-auto"
                 (keydown.enter)="saveSnippetSelected()" placeholder="publication">
+            <div class="form-check form-switch mb-0 d-flex flex-row align-items-center">
+                <input [formControlName]="'public'" (change)="onToggleChange('public', $event.target.checked)" 
+                    [ngClass]="form.get('public')?.value ? 'bg-success' : 'bg-light'" 
+                    class="form-check-input" style="width: 3em; height: 1.5em;"
+                    type="checkbox" role="switch">
+                <label class="form-check-label text-muted ms-2">Public</label>
+            </div>
+            <div class="form-check form-switch mb-0 d-flex flex-row align-items-center">
+                <input [formControlName]="'featured'" (change)="onToggleChange('featured', $event.target.checked)" 
+                    [ngClass]="form.get('featured')?.value ? 'bg-success' : 'bg-light'" 
+                    class="form-check-input" style="width: 3em; height: 1.5em;"
+                    type="checkbox" role="switch">
+                <label class="form-check-label text-muted ms-2">à la une</label>
+            </div>
         </div>
     </div>
 </div>
-
-<div class="row">
-    <!-- toggle public visibility -->
-    <div class="d-flex align-items-center gap-3">
-        <div class="form-check form-switch mb-0">
-            <input [formControlName]="'public'" (change)="onToggleChange('public', $event.target.checked)" class="form-check-input"
-                type="checkbox" role="switch">
-            <label class="form-check-label text-muted">Public</label>
-        </div>
-        <div class="form-check form-switch mb-0">
-            <input [formControlName]="'featured'" (change)="onToggleChange('featured', $event.target.checked)" class="form-check-input"
-                type="checkbox" role="switch">
-            <label class="form-check-label text-muted">à la une</label>
-        </div>
-    </div>
+<div class="form-label text-muted mb-0 mt-2">
+    Editer le texte :
+    <button class="btn btn-sm btn-outline-success ms-2" (click)="snippet && onSnippetContentClick(snippet)">
+        <i class="bi bi-arrows-fullscreen"></i> Éditeur plein écran </button>
 </div>
-<br>
-<i class="bi bi-pencil-square mt-2" (click)="snippet && onSnippetContentClick(snippet)"> edition du texte</i>
-<div class="border-1">
-    <div class="border rounded p-2 bg-white" style="min-height:2em;">
-        <span class="card-text tighter-html" [innerHTML]="stringToSafeHtml(form.get('content')?.value)"></span>
-    </div>
-</div>
-<!-- </div> -->
 
 
 <!-- image url input -->
-<div class="input-group input-group-sm mt-1">
-    <span class="input-group-text">Image</span>
+<div class="form-text mb-0 mt-1">Image accolée au texte</div>
+<div class="input-group input-group-sm ">
+    <span class="input-group-text" style="min-width: 110px;">Image</span>
     <input type="text" list="image_datalist" class="form-control" [placeholder]="form.get('image')?.value"
         formControlName="image" (keydown.enter)="saveSnippetSelected()" (change)="saveSnippetSelected()">
     <datalist id="image_datalist">
@@ -63,8 +61,9 @@
 </div>
 
 <!-- file url input -->
-<div class="input-group input-group-sm mt-1">
-    <span class="input-group-text">Fichier</span>
+<div class="form-text mb-0 mt-1">Fichier téléchargeable</div>
+<div class="input-group input-group-sm ">
+    <span class="input-group-text" style="min-width: 110px;">Fichier</span>
     <input type="text" list="file_datalist" class="form-control" [placeholder]="form.get('file')?.value" formControlName="file"
         (keydown.enter)="saveSnippetSelected()" (change)="saveSnippetSelected()">
 
@@ -79,8 +78,9 @@
     </button>
 </div>
 <!-- folder url input -->
-<div class="input-group input-group-sm mt-1">
-    <span class="input-group-text">Dossier</span>
+<div class="form-text mb-0 mt-1">Pour album photo</div>
+<div class="input-group input-group-sm ">
+    <span class="input-group-text" style="min-width: 110px;">Dossier</span>
     <input type="text" list="folder_datalist" class="form-control" [placeholder]="form.get('folder')?.value"
         formControlName="folder" (keydown.enter)="saveSnippetSelected()" (change)="saveSnippetSelected()">
 

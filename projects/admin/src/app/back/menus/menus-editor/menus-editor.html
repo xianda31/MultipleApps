@@ -3,10 +3,12 @@
      
     <div class="row">
         <!-- Column 0: Configuration BD -->
-        <div class="col-12 col-lg-3">
+        <div class="col-12 col-lg-2">
             <div class="card border-0 mb-1">
+                <div class="card-header" style="padding-top: 0.5rem; padding-bottom: 0.5rem;">
+                    <h6 class="mb-0">Base de données</h6>
+                </div>
                 <div class="card-body">
-                    <h5 class="card-title">base de données</h5>
                     <div class="d-flex align-items-center gap-2 mb-2">
                         <div class="card text-center" style="min-width: 120px;">
                             <div class="card-header bg-success text-white py-1">
@@ -69,17 +71,17 @@
         <!-- Column 1: Editeur menus + Simulations -->
         <div class="col-12 col-lg-6">
             <div class="card border-0 mb-1">
-                <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-between mb-3">
-                        <h5 class="card-title mb-0">Barres de menu</h5>
-                        <div class="form-check form-switch sandbox-switch">
-                            <input class="form-check-input" type="checkbox" id="previewLoggedSwitch"
-                                [(ngModel)]="previewLogged" (change)="onPreviewToggle(previewLogged)">
-                            <label class="form-check-label" for="previewLoggedSwitch">
-                                Mode utilisateur connecté
-                            </label>
-                        </div>
+                <div class="card-header d-flex align-items-center justify-content-between" style="padding-top: 0.5rem; padding-bottom: 0.5rem;">
+                    <h6 class="mb-0">Barres de menu</h6>
+                    <div class="form-check form-switch mb-0" style="min-height: 0; padding: 0;">
+                        <input class="form-check-input" type="checkbox" id="previewLoggedSwitch"
+                            [(ngModel)]="previewLogged" (change)="onPreviewToggle(previewLogged)" style="margin-top: 0;">
+                        <label class="form-check-label" for="previewLoggedSwitch" style="line-height: 1; padding-left: 0.25rem;">
+                            <small>Mode utilisateur connecté</small>
+                        </label>
                     </div>
+                </div>
+                <div class="card-body">
 
                     <!-- Simulations navbar et footer -->
                     <ng-container *ngTemplateOutlet="navbar_simulation"></ng-container>
@@ -88,25 +90,24 @@
             </div>
         </div>
         <!-- Column 2: vide -->
-        <div class="col-12 col-lg-3">
+        <div class="col-12 col-lg-4">
         </div>
 
     </div>
 
-    <div class="row">
-        <div class="col-12 col-lg-3">
+    <div class="row">   
+        <div class="col-12 col-lg-2">
             <div class="card border-0 mb-1">
+                <div class="card-header">
+                    <h6 class="mb-0">Editeur des pages</h6>
+                </div>
                 <div class="card-body">
-                    <h5 class="card-title">Editeur des pages</h5>
                     <ng-container *ngTemplateOutlet="pages_list"></ng-container>
                 </div>
             </div>
         </div>
-        <div class="col-12 col-lg-6">
-            <!-- Colonne gauche vide -->
-        </div>
-        <div class="col-12 col-lg-3">
-            <!-- Colonne droite vide -->
+        <div class="col-12 col-lg-10">
+            <app-page-editor [pageId]="selectedPageId"></app-page-editor>
         </div>
     </div>
 
@@ -119,12 +120,16 @@
                 </label>
             </div>
         </div>
-    </div> @if (showDebugInfo) {
+    </div>
+    
+    @if (showDebugInfo) {
     <div class="row">
         <div class="col-12">
             <div class="card border-0 mb-1">
+                <div class="card-header">
+                    <h6 class="mb-0">Informations de débogage</h6>
+                </div>
                 <div class="card-body">
-                    <h3 class="card-title">Informations de débogage</h3>
                     <div class="mt-3">
                         <h6>Tableau des menus</h6>
                         <ng-container *ngTemplateOutlet="menu_table"></ng-container>
