@@ -50,13 +50,48 @@ export class SnippetEditor implements OnChanges {
 
   ngOnInit(): void {
     this.albums$ = this.fileService.list_folders(S3_ROOT_FOLDERS.ALBUMS + '/');
-
     this.thumbnails$ = this.fileService.list_files(S3_ROOT_FOLDERS.IMAGES + '/').pipe(
       map((S3items) => S3items.map(item => item.path))
     );
     this.file_paths$ = this.fileService.list_files(S3_ROOT_FOLDERS.DOCUMENTS + '/').pipe(
       map((S3items) => S3items.map(item => item.path))
     );
+    // Met à jour l'image_url immédiatement quand l'input change
+    this.form.get('image')?.valueChanges.subscribe((val) => {
+      if (this.snippet) {
+        this.snippet.image = val;
+        // Met à jour l'URL S3 si le chemin est non vide
+        if (val) {
+          this.fileService.getPresignedUrl$(val, true).subscribe({
+            next: (url) => {
+              (this.snippet as any).image_url = url;
+            },
+            error: () => {
+              (this.snippet as any).image_url = val; // fallback to raw value
+            }
+          });
+        } else {
+          (this.snippet as any).image_url = '';
+        }
+      }
+    });
+    // Continue to save on blur/Enter
+    const imageInput = document.querySelector('input[formControlName="image"]');
+    if (imageInput) {
+      imageInput.addEventListener('blur', () => {
+        if (this.snippet) {
+          this.snippet.image = this.form.get('image')?.value;
+          this.saveSnippetSelected();
+        }
+      });
+      imageInput.addEventListener('keydown', (event: Event) => {
+        const keyboardEvent = event as KeyboardEvent;
+        if (keyboardEvent.key === 'Enter' && this.snippet) {
+          this.snippet.image = this.form.get('image')?.value;
+          this.saveSnippetSelected();
+        }
+      });
+    }
   }
 
   ngOnChanges(changes: SimpleChanges) {

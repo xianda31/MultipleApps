@@ -11,7 +11,7 @@ import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { NAVITEM_PLUGIN } from '../../../common/interfaces/plugin.interface';
 import { LABEL_TRANSFORMERS } from '../../../common/interfaces/plugin.interface';
 import { PageService } from '../../../common/services/page.service';
-import { Page } from '../../../common/interfaces/page_snippet.interface';
+import { Page, PAGE_TEMPLATES } from '../../../common/interfaces/page_snippet.interface';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { CdkDragDrop, moveItemInArray, CdkDragMove, CdkDragEnd, CdkDragStart } from '@angular/cdk/drag-drop';
 import { NgbDropdown } from '@ng-bootstrap/ng-bootstrap';
@@ -22,6 +22,7 @@ import { Subject, combineLatest } from 'rxjs';
 import { charsanitize, buildFullPath, extractSegment } from '../../../common/utils/navitem.utils';
 import { BackNavigationService } from '../../services/back-navigation.service';
 import { PageEditorComponent } from '../../pages/page-editor/page-editor.component';
+import { SnippetService } from '../../../common/services/snippet.service';
 // Preview in editor is generated from sandbox navitems
 
 @Component({
@@ -32,6 +33,7 @@ import { PageEditorComponent } from '../../pages/page-editor/page-editor.compone
   imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbDropdownModule, DragDropModule, PageEditorComponent]
 })
 export class MenusEditorComponent implements AfterViewInit {
+    snippets: any[] = [];
   // Ensure we can close any open dropdowns on init
   // Implement AfterViewInit below
   // component properties
@@ -98,9 +100,7 @@ export class MenusEditorComponent implements AfterViewInit {
     @Inject(APP_SANDBOX) sandboxFlag: boolean,
     public sandboxService: SandboxService,
     private dynamicRoutesService: DynamicRoutesService,
-    private router: Router,
-    private route: ActivatedRoute,
-    private backNav: BackNavigationService,
+    private snippetService: SnippetService
   ) { this.sandbox_mode = sandboxFlag; }
 
   // Keep a reference to the navbar container to scope DOM queries when possible
@@ -108,17 +108,21 @@ export class MenusEditorComponent implements AfterViewInit {
 
 
   ngOnInit(): void {
+      // Force global refresh of snippets cache for all consumers
+      this.snippetService.listSnippets().subscribe();
     this.initialise_form();
 
-    // Load navitems and pages together, then enrich once
+    // Load navitems, pages, and snippets together, then enrich once
     combineLatest([
       this.navitemService.loadNavItemsSandbox(),
       this.navitemService.loadNavItemsProduction(),
-      this.pageService.listPages()
+      this.pageService.listPages(),
+      this.snippetService.listSnippets()
     ])
       .subscribe({
-        next: ([sandboxItems, productionItems, pages]) => {
+        next: ([sandboxItems, productionItems, pages, snippets]) => {
           this.pages = pages;
+          this.snippets = snippets;
           this.navitems = this.enrichWithPageTitle(sandboxItems);
           this.hasSandboxNavitems = sandboxItems.length > 0;
           this.sandboxCount = sandboxItems.length;
@@ -284,7 +288,7 @@ export class MenusEditorComponent implements AfterViewInit {
     }
 
     const op = payload.id ? this.navitemService.updateNavItem(payload) : this.navitemService.createNavItem(payload);
-    op.then((res) => {
+    op.then(() => {
       this.toastService.showSuccess('Paramètres menu', 'nav_item sauvegardé');
       this.selectedNavitem = null;
       this.offRef?.dismiss('saved');
@@ -393,7 +397,6 @@ export class MenusEditorComponent implements AfterViewInit {
     // Dynamically require slug (segment) except for Dropdown + enforce allowed characters
     const typeCtrl = this.navItemForm.get('type')!;
     const segCtrlV = this.navItemForm.get('slug')!; // for validators only
-    const pathCtrl = this.navItemForm.get('path')!; // read-only preview
     const cmdCtrl = this.navItemForm.get('command_name')!;
     const externalUrlCtrl = this.navItemForm.get('external_url')!;
     const applySegmentValidators = (t: NAVITEM_TYPE) => {
@@ -552,7 +555,7 @@ export class MenusEditorComponent implements AfterViewInit {
   }
 
   // trackBy for menu items to keep DOM stable during reorders
-  trackByNavId(index: number, item: MenuGroup) {
+  trackByNavId(item: MenuGroup) {
     return item?.navitem?.id;
   }
 
@@ -670,7 +673,7 @@ export class MenusEditorComponent implements AfterViewInit {
   }
 
   // Drag handlers (move/end) — kept minimal
-  onDragMoved(event: CdkDragMove) {
+  onDragMoved() {
     try {
       /* minimal log to avoid spamming */
     } catch (e) { /* silent */ }
@@ -721,7 +724,7 @@ export class MenusEditorComponent implements AfterViewInit {
 
 
   // Preview positioning is handled via CSS and `clearCdkTransforms`
-  async onDragEnded(event: CdkDragEnd) {
+  async onDragEnded() {
     try {
       // Simplified: rely on CDK drop event handling to persist order.
       try { this.clearCdkTransforms(); } catch (e) { /* ignore */ }
@@ -863,5 +866,21 @@ export class MenusEditorComponent implements AfterViewInit {
     }
   }
 
-
+  async createPage(): Promise<void> {
+    const newPage: Page = {
+      id: 'page_' + Date.now(),
+      title: 'Nouvelle page',
+      template: PAGE_TEMPLATES.PUBLICATION,
+      snippet_ids: []
+    };
+    try {
+      const created = await this.pageService.createPage(newPage);
+      this.pages.push(created);
+      this.selectedPageId = created.id;
+      this.toastService.showSuccess('Pages', 'Nouvelle page créée');
+      this.cdr.detectChanges();
+    } catch (error) {
+      this.toastService.showErrorToast('Pages', 'Erreur lors de la création de la page');
+    }
+  }
 }

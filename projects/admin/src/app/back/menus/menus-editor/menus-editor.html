@@ -1,6 +1,6 @@
 <div class="container-fluid menus-editor-root mt-2">
     <!-- Row 1: Configuration BD menus + Editeur menus + Simulations -->
-     
+
     <div class="row">
         <!-- Column 0: Configuration BD -->
         <div class="col-12 col-lg-2">
@@ -71,12 +71,15 @@
         <!-- Column 1: Editeur menus + Simulations -->
         <div class="col-12 col-lg-6">
             <div class="card border-0 mb-1">
-                <div class="card-header d-flex align-items-center justify-content-between" style="padding-top: 0.5rem; padding-bottom: 0.5rem;">
+                <div class="card-header d-flex align-items-center justify-content-between"
+                    style="padding-top: 0.5rem; padding-bottom: 0.5rem;">
                     <h6 class="mb-0">Barres de menu</h6>
                     <div class="form-check form-switch mb-0" style="min-height: 0; padding: 0;">
                         <input class="form-check-input" type="checkbox" id="previewLoggedSwitch"
-                            [(ngModel)]="previewLogged" (change)="onPreviewToggle(previewLogged)" style="margin-top: 0;">
-                        <label class="form-check-label" for="previewLoggedSwitch" style="line-height: 1; padding-left: 0.25rem;">
+                            [(ngModel)]="previewLogged" (change)="onPreviewToggle(previewLogged)"
+                            style="margin-top: 0;">
+                        <label class="form-check-label" for="previewLoggedSwitch"
+                            style="line-height: 1; padding-left: 0.25rem;">
                             <small>Mode utilisateur connecté</small>
                         </label>
                     </div>
@@ -92,22 +95,26 @@
         <!-- Column 2: vide -->
         <div class="col-12 col-lg-4">
         </div>
-
     </div>
-
-    <div class="row">   
+    <hr class="border border-2 border-dark my-3">
+    <div class="row">
         <div class="col-12 col-lg-2">
             <div class="card border-0 mb-1">
-                <div class="card-header">
-                    <h6 class="mb-0">Editeur des pages</h6>
+                <div class="card-header mb-1">
+                    <h6 >Liste des pages</h6>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-0">
                     <ng-container *ngTemplateOutlet="pages_list"></ng-container>
                 </div>
             </div>
         </div>
+
+
+
         <div class="col-12 col-lg-10">
+            @if (selectedPageId) {
             <app-page-editor [pageId]="selectedPageId"></app-page-editor>
+            }
         </div>
     </div>
 
@@ -121,7 +128,7 @@
             </div>
         </div>
     </div>
-    
+
     @if (showDebugInfo) {
     <div class="row">
         <div class="col-12">
@@ -180,7 +187,7 @@
                             <li class="nav-item dropdown ms-1 d-flex align-items-center" ngbDropdown cdkDrag
                                 [cdkDragData]="menu" [cdkDragDisabled]="false" cdkDragBoundary="#navbarNav"
                                 [attr.data-nav-id]="menu.navitem.id" (cdkDragStarted)="onDragStarted($event)"
-                                (cdkDragMoved)="onDragMoved($event)" (cdkDragEnded)="onDragEnded($event)">
+                                (cdkDragMoved)="onDragMoved()" (cdkDragEnded)="onDragEnded()">
                                 <ng-template cdkDragPreview>
                                     <div class="nav-drag-preview d-inline-flex align-items-center p-2 bg-white border">
                                         <span class="drag-handle me-1"><i
@@ -215,8 +222,8 @@
                                     !previewLogged)) {
                                     <li class="nav-item ms-3 d-flex align-items-center" cdkDrag [cdkDragData]="child"
                                         [cdkDragDisabled]="false" [attr.data-nav-id]="child.navitem.id"
-                                        (cdkDragStarted)="onDragStarted($event)" (cdkDragMoved)="onDragMoved($event)"
-                                        (cdkDragEnded)="onDragEnded($event)">
+                                        (cdkDragStarted)="onDragStarted($event)" (cdkDragMoved)="onDragMoved()"
+                                        (cdkDragEnded)="onDragEnded()">
                                         <ng-template cdkDragPreview>
                                             <div
                                                 class="nav-drag-preview d-inline-flex align-items-center p-2 bg-white border">
@@ -243,7 +250,7 @@
                             <li class="nav-item ms-1 d-flex align-items-center" cdkDrag [cdkDragData]="menu"
                                 [cdkDragDisabled]="false" cdkDragBoundary="#navbarNav"
                                 [attr.data-nav-id]="menu.navitem.id" (cdkDragStarted)="onDragStarted($event)"
-                                (cdkDragMoved)="onDragMoved($event)" (cdkDragEnded)="onDragEnded($event)">
+                                (cdkDragMoved)="onDragMoved()" (cdkDragEnded)="onDragEnded()">
                                 <ng-template cdkDragPreview>
                                     <div class="nav-drag-preview d-inline-flex align-items-center p-2 bg-white border">
                                         <span class="drag-handle me-1"><i
@@ -296,8 +303,8 @@
                         @for (menu of visibleFootbarEntries; track menu.navitem.id) {
                         <li class="nav-item ms-3 d-flex align-items-center" cdkDrag [cdkDragData]="menu"
                             [cdkDragDisabled]="false" cdkDragBoundary="#footbarNav" [attr.data-nav-id]="menu.navitem.id"
-                            (cdkDragStarted)="onDragStarted($event)" (cdkDragMoved)="onDragMoved($event)"
-                            (cdkDragEnded)="onDragEnded($event)">
+                            (cdkDragStarted)="onDragStarted($event)" (cdkDragMoved)="onDragMoved()"
+                            (cdkDragEnded)="onDragEnded()">
                             <ng-template cdkDragPreview>
                                 <div class="nav-drag-preview d-inline-flex align-items-center p-2 bg-white border">
                                     <span class="drag-handle me-1"><i class="bi bi-grip-vertical text-muted"></i></span>
@@ -324,16 +331,25 @@
     </ng-template>
 
     <ng-template #pages_list>
-        <div class="row row-cols-1 row-cols-md-3 g-1 mb-3">
+        <div class="row row-cols-1 row-cols-md-2 g-1 mb-3">
             @for (page of pages; track page.id) {
             <div class="col">
-                <div class="card h-100" role="button" (click)="show_page_from_list(page)">
+                <div class="card h-100" role="button" (click)="show_page_from_list(page)"
+                    [ngClass]="{'bg-secondary text-white': page.title === '__CLIPBOARD__'}">
                     <div class="card-body">
                         <h6 class="card-title">{{ page.title }}</h6>
                     </div>
                 </div>
             </div>
             }
+        </div>
+        <div class="row">
+            <div class="col-auto">Nouvelle page</div>
+            <div class="col-auto">
+                <button class="btn btn-sm btn-outline-success " (click)="createPage()">
+                    <i class="bi bi-plus-square-fill "></i>
+                </button>
+            </div>
         </div>
     </ng-template>
 

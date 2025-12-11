@@ -29,7 +29,7 @@ import { Observable } from 'rxjs';
   styleUrl: './page-editor.component.scss'
 })
 export class PageEditorComponent implements OnChanges {
-  @Input() pageId?: string;
+  @Input() pageId: string = '';
   page: Page | null = null;
   snippets: Snippet[] = [];
   pageSnippets: Snippet[] = [];
@@ -194,6 +194,7 @@ export class PageEditorComponent implements OnChanges {
   }
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['pageId'] && this.pageId) {
+      this.selected_snippet = null;
       this.loadPage();
     }
   }

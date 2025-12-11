@@ -130,14 +130,10 @@ export class GenericPageComponent implements OnInit, OnChanges {
     if (!page) { throw new Error(page_title + ' page not found') }
     this.page = page;
 
+
     this.page_snippets = page.snippet_ids
       .map(id => this.snippets.find(snippet => snippet.id === id))
       .filter(snippet => snippet !== undefined) as Snippet[];
-
-    // post traitement de la page
-    if (this.page_snippets.length === 0) {
-      console.warn('%s snippets found for page %s: %o', this.snippets.length, this.page.title, this.page.snippet_ids);
-    }
 
     this.page_post_handling();
 

@@ -7,7 +7,7 @@
     <div class="col-12 col-sm-6">
       <div class="card border-0 mb-2">
         <div class="card-header d-flex align-items-center justify-content-between">
-          <h6 class="mb-0">Visualisation de la page</h6>
+          <h6 >Visualisation de la page</h6>
           <form [formGroup]="pageForm">
             <input type="text" class="form-control form-control-sm" formControlName="title"
               placeholder="Titre de la page" (blur)="savePage()" (keydown.enter)="savePage()">
@@ -31,7 +31,7 @@
     <div class="col-12 col-sm-2">
       <div class="card border-0 mb-2">
         <div class="card-header d-flex align-items-center justify-content-between">
-          <h6 class="mb-0">{{pageSnippets.length}} paragraphes dans la page</h6>
+          <h6 class="mb-0">{{pageSnippets.length}} paragraphe(s) dans la page</h6>
         </div>
         <div class="card-body">
           <div cdkDropList [cdkDropListData]="pageSnippets" (cdkDropListDropped)="onDrop($event)" class="snippet-list">
@@ -53,16 +53,13 @@
               }
             </div>
             }
-            <!-- @if (pageSnippets.length === 0) {
-            <div class="text-muted text-center p-3">
-              Aucun snippet. Glissez-déposez des snippets ici.
-            </div>
-            } -->
+         
+            
             @if (page.title !== '__CLIPBOARD__') {
             <div class="row align-items-center mb-2 justify-content-end">
               <div class="col-auto">Ajouter un snippet :</div>
               <div class="col-auto">
-                <button type="button" class="btn btn-sm btn-outline-success me-1" (click)="openAddSnippetModal()">
+                <button type="button" class="btn btn-sm btn-outline-success me-2" (click)="openAddSnippetModal()">
                   <i class="bi bi-plus-square-fill"></i>
                 </button>
               </div>
@@ -70,7 +67,7 @@
             <div class="row align-items-center justify-content-end">
               <div class="col-auto">Voir le clipboard :</div>
               <div class="col-auto">
-                <button type="button" class="btn btn-sm btn-outline-secondary me-1" (click)="openClipboardModal()"
+                <button type="button" class="btn btn-sm btn-outline-secondary me-2" (click)="openClipboardModal()"
                   title="Clipboard">
                   <i class="bi bi-inboxes-fill"></i>
                 </button>
