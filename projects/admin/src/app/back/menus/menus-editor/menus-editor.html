@@ -1,5 +1,5 @@
 <div class="container-fluid menus-editor-root mt-2">
-    <!-- Row 1: Configuration BD menus + Editeur menus + Simulations -->
+    <h5 class="mb-3 text-center">Éditeur des menus</h5>
 
     <div class="row">
         <!-- Column 0: Configuration BD -->
@@ -310,28 +310,6 @@
         </nav>
     </ng-template>
 
-    <ng-template #pages_list>
-        <div class="row row-cols-1 row-cols-md-2 g-1 mb-3">
-            @for (page of pages; track page.id) {
-            <div class="col">
-                <div class="card h-100" role="button" (click)="show_page_from_list(page)"
-                    [ngClass]="{'bg-secondary text-white': page.title === '__CLIPBOARD__'}">
-                    <div class="card-body">
-                        <h6 class="card-title">{{ page.title }}</h6>
-                    </div>
-                </div>
-            </div>
-            }
-        </div>
-        <div class="row">
-            <div class="col-auto">Nouvelle page</div>
-            <div class="col-auto">
-                <button class="btn btn-sm btn-outline-success " (click)="createPage()">
-                    <i class="bi bi-plus-square-fill "></i>
-                </button>
-            </div>
-        </div>
-    </ng-template>
 
 
     <ng-template #router_preview>

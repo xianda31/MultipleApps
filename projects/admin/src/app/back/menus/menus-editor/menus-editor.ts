@@ -11,7 +11,7 @@ import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { NAVITEM_PLUGIN } from '../../../common/interfaces/plugin.interface';
 import { LABEL_TRANSFORMERS } from '../../../common/interfaces/plugin.interface';
 import { PageService } from '../../../common/services/page.service';
-import { Page, PAGE_TEMPLATES } from '../../../common/interfaces/page_snippet.interface';
+import { CLIPBOARD_TITLE, Page, PAGE_TEMPLATES } from '../../../common/interfaces/page_snippet.interface';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { CdkDragDrop, moveItemInArray, CdkDragStart } from '@angular/cdk/drag-drop';
 import { NgbDropdown } from '@ng-bootstrap/ng-bootstrap';
@@ -20,9 +20,7 @@ import { SandboxService } from '../../../common/services/sandbox.service';
 import { DynamicRoutesService } from '../../../common/services/dynamic-routes.service';
 import { Subject, combineLatest } from 'rxjs';
 import { charsanitize, buildFullPath, extractSegment } from '../../../common/utils/navitem.utils';
-import { PageEditorComponent } from '../../pages/page-editor/page-editor.component';
 import { SnippetService } from '../../../common/services/snippet.service';
-// Preview in editor is generated from sandbox navitems
 
 @Component({
   selector: 'app-menus-editor',
@@ -32,10 +30,7 @@ import { SnippetService } from '../../../common/services/snippet.service';
   imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbDropdownModule, DragDropModule]
 })
 export class MenusEditorComponent implements AfterViewInit {
-    snippets: any[] = [];
-  // Ensure we can close any open dropdowns on init
-  // Implement AfterViewInit below
-  // component properties
+    // snippets: any[] = [];
   navbarEntries: MenuGroup[] = [];
   private _visibleNavbarEntries: MenuGroup[] = [];
   footbarEntries: MenuGroup[] = [];
@@ -59,7 +54,7 @@ export class MenusEditorComponent implements AfterViewInit {
   NAVITEM_COMMANDS = Object.values(NAVITEM_COMMAND);
 
   front_route_verbose = '';
-  selectedPageId: string | undefined = undefined;
+  // selectedPageId: string | undefined = undefined;
   // Preview auth state toggle (simulation only)
   previewLogged = false;
 
@@ -116,12 +111,11 @@ export class MenusEditorComponent implements AfterViewInit {
       this.navitemService.loadNavItemsSandbox(),
       this.navitemService.loadNavItemsProduction(),
       this.pageService.listPages(),
-      this.snippetService.listSnippets()
+      // this.snippetService.listSnippets()
     ])
       .subscribe({
-        next: ([sandboxItems, productionItems, pages, snippets]) => {
-          this.pages = pages;
-          this.snippets = snippets;
+        next: ([sandboxItems, productionItems, pages]) => {
+          this.pages = pages.filter(p => p.title !== CLIPBOARD_TITLE).sort((a, b) => a.title.localeCompare(b.title));
           this.navitems = this.enrichWithPageTitle(sandboxItems);
           this.hasSandboxNavitems = sandboxItems.length > 0;
           this.sandboxCount = sandboxItems.length;
@@ -372,9 +366,6 @@ export class MenusEditorComponent implements AfterViewInit {
     this.selected_page = item.page_id ? this.pages.find(p => p.id === item.page_id) || null : null;
   }
 
-  show_page_from_list(page: Page) {
-    this.selectedPageId = page.id;
-  }
 
   initialise_form() {
     this.navItemForm = this.fb.group({
@@ -865,21 +856,21 @@ export class MenusEditorComponent implements AfterViewInit {
     }
   }
 
-  async createPage(): Promise<void> {
-    const newPage: Page = {
-      id: 'page_' + Date.now(),
-      title: 'Nouvelle page',
-      template: PAGE_TEMPLATES.PUBLICATION,
-      snippet_ids: []
-    };
-    try {
-      const created = await this.pageService.createPage(newPage);
-      this.pages.push(created);
-      this.selectedPageId = created.id;
-      this.toastService.showSuccess('Pages', 'Nouvelle page créée');
-      this.cdr.detectChanges();
-    } catch (error) {
-      this.toastService.showErrorToast('Pages', 'Erreur lors de la création de la page');
-    }
-  }
+  // async createPage(): Promise<void> {
+  //   const newPage: Page = {
+  //     id: 'page_' + Date.now(),
+  //     title: 'Nouvelle page',
+  //     template: PAGE_TEMPLATES.PUBLICATION,
+  //     snippet_ids: []
+  //   };
+  //   try {
+  //     const created = await this.pageService.createPage(newPage);
+  //     this.pages.push(created);
+  //     this.selectedPageId = created.id;
+  //     this.toastService.showSuccess('Pages', 'Nouvelle page créée');
+  //     this.cdr.detectChanges();
+  //   } catch (error) {
+  //     this.toastService.showErrorToast('Pages', 'Erreur lors de la création de la page');
+  //   }
+  // }
 }
