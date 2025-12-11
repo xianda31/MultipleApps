@@ -1,61 +1,36 @@
- 
 
-import { Component, signal, Input } from '@angular/core';
-import { ViewChild, ElementRef } from '@angular/core';
+import { Component } from '@angular/core';
 import { PageService } from '../../../common/services/page.service';
 import { SnippetService } from '../../../common/services/snippet.service';
-import { MENU_TITLES, Page, PAGE_TEMPLATES, Snippet } from '../../../common/interfaces/page_snippet.interface';
+import { CLIPBOARD_TITLE, Page, PAGE_TEMPLATES } from '../../../common/interfaces/page_snippet.interface';
 import { CommonModule } from '@angular/common';
-import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ToastService } from '../../../common/services/toast.service';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { combineLatest, take } from 'rxjs';
-import { CdkDrag, CdkDropList, CdkDragDrop, moveItemInArray, transferArrayItem, CdkDropListGroup } from '@angular/cdk/drag-drop';
-import { SnippetEditor } from '../snippet-editor/snippet-editor';
-import { GenericPageComponent } from "../../../front/front/pages/generic-page/generic-page.component";
-import { ActivatedRoute, Router } from '@angular/router';
-import { BACK_ROUTE_ABS_PATHS } from '../../routes/back-route-paths';
+import { PageEditorComponent } from '../page-editor/page-editor.component';
+import { ClipboardService } from '../../../common/services/clipboard.service';
 
 
 @Component({
   selector: 'app-pages-editor',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, SnippetEditor, NgbModule, CdkDrag, CdkDropList, CdkDropListGroup, GenericPageComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbModule, PageEditorComponent],
   templateUrl: './pages-editor.component.html',
   styleUrl: './pages-editor.component.scss'
 })
 export class PagesEditorComponent {
-  @ViewChild('scrollable') scrollable!: ElementRef;
-  @Input() pageId?: string;
-  fromMenusEditor = false;
-
-  resolution_too_small = false;
 
   pages: Page[] = [];
-
-  snippets: Snippet[] = [];
-  selected_snippet: Snippet | null = null;
-
-  view_snippet = signal<boolean>(true);
-  snippetFreezed: boolean = false;
-  show_trash = false;
-
   pagesForm !: FormGroup;
   pageTemplates = Object.values(PAGE_TEMPLATES);
-  pageTitles = Object.values(MENU_TITLES);
-  pageTitles_but_BIN = this.pageTitles.filter(title => title !== MENU_TITLES.POUBELLE);
-  selected_pageTitle: MENU_TITLES | null = null;
-  bin_page_index: number | null = null;
-  bin_empty: boolean = false;
-
+  selected_page: Page | null = null;
 
   constructor(
     private pageService: PageService,
+    private clipboardService: ClipboardService,
     private snippetService: SnippetService,
     private fb: FormBuilder,
     private toastService: ToastService,
-    private route: ActivatedRoute,
-    private router: Router,
   ) {
     this.pagesForm = this.fb.group({
       pagesArray: this.fb.array([])   // pour eviter les erreurs DOM à l'initialisation
@@ -64,93 +39,66 @@ export class PagesEditorComponent {
 
 
   ngOnInit(): void {
-    // Get pageId from route params if not provided via @Input
-    if (!this.pageId) {
-      this.pageId = this.route.snapshot.params['page_id'];
-    }
 
-    // Détecter si on vient de menus-editor via query param
-    this.fromMenusEditor = this.route.snapshot.queryParams['from'] === 'menus';
-
-    this.pageService.listPages().pipe(take(1)).subscribe(pages => {
-      // check if all mandatory pages exist
-      this.pageTitles.forEach(title => {
-        const pageExists = pages.some(page => page.title === title);
-        if (!pageExists) {
-          this.pageService.createPage({
-            id: '',
-            title: title,
-            template: PAGE_TEMPLATES.PUBLICATION,
-            snippet_ids: [],
-          });
-          this.toastService.showInfo('Pages', `La page "${title}" manquait, et a été créée`);
-        }
-      });
-      // subscribe "normally"
-      combineLatest([this.pageService.listPages(), this.snippetService.listSnippets()])
-        .subscribe(([pages, snippets]) => {
-          this.pages = pages;
-          this.snippets = snippets;
-          this.pages.forEach(page => {
-            page.snippets = this.getPageSnippets(page);
-          });
-          // force bin_page to be the last page
-          const binPage = this.pages.find(page => page.title === MENU_TITLES.POUBELLE);
-          if (binPage) {
-            this.pages = this.pages.filter(page => page !== binPage).concat(binPage);
-          }
-          this.bin_page_index = this.pages.findIndex(page => page.title === MENU_TITLES.POUBELLE);
-
-          this.check_bin_empty();
-          this.initFormArray(this.pages);
-          
-          // If pageId is provided, auto-select that page
-          if (this.pageId) {
-            const page = this.pages.find(p => p.id === this.pageId);
-            if (page) {
-              this.selected_pageTitle = page.title as MENU_TITLES;
-            }
-          }
-        });
-    });
-  }
-
-  backToMenusEditor() {
-    this.router.navigateByUrl(BACK_ROUTE_ABS_PATHS['MenusEditor']);
-  }
-
-
-  get dropListIds(): string[] {
-    // On ne garde que les pages effectivement affichées (hors corbeille si masquée)
-    const ids: string[] = [];
-    this.pageGroups.forEach((page, i) => {
-      // Si la page est la corbeille et qu'elle n'est pas affichée, on saute
-      if (this.is_trash_page(page) && !this.show_trash) return;
-      // si la page est la page sélectionnée (ou si aucune n'est sélectionnée), on l'ajoute
-      if (this.is_trash_page(page) || page.get('title')?.value === this.selected_pageTitle) {
-        ids.push('dropList_' + i);
+    this.pageService.listPages().subscribe((pages) => {
+      this.pages = pages.sort((a, b) => a.title.localeCompare(b.title));
+      // force bin_page to be the last page
+      const binPage = this.pages.find(page => page.title === CLIPBOARD_TITLE);
+      if (binPage) {
+        this.pages = this.pages.filter(page => page !== binPage).concat(binPage);
+      }else{
+        this.clipboardService.initClipboardPage();
       }
+      this.initFormArray(this.pages);
     });
-    return ids;
   }
 
-  get pagesFormArray(): FormArray {
-    return this.pagesForm.get('pagesArray') as FormArray;
-  }
-  get pageGroups(): FormGroup[] {
-    return this.pagesFormArray.controls as FormGroup[];
+  selectPage(page: Page) {
+    this.selected_page = page
   }
 
-  is_trash_page(page: FormGroup): boolean {
-    return page.get('title')?.value === MENU_TITLES.POUBELLE;
+  is_clipboard_page(): boolean {
+    return this.selected_page?.title === CLIPBOARD_TITLE;
   }
 
-  check_bin_empty(): void {
-    const bin = this.pages.find(page => page.title === MENU_TITLES.POUBELLE);
-    const empty = bin ? bin.snippet_ids.length === 0 : false;
-    this.bin_empty = empty;
-    // return empty;
+  async newPage() {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const newPage: Page = {
+      id: '',
+      title: `Nouvelle page ${timeStr}`,
+      template: PAGE_TEMPLATES.PUBLICATION,
+      snippet_ids: [],
+      snippets: []
+    };
+    try {
+      const created = await this.pageService.createPage(newPage);
+      this.selected_page = created;
+      this.toastService.showSuccess('Pages', 'Nouvelle page créée');
+    } catch (error) {
+      this.toastService.showErrorToast('Pages', 'Erreur lors de la création de la page');
+    }
   }
+
+
+  async deletePage(page: Page) {
+    if (!page.id) return;
+    const snippets_to_delete = page.snippets || [];
+    try {
+      await this.pageService.deletePage(page);
+      this.toastService.showSuccess('Pages', 'Page supprimée');
+      // delete associated snippets
+      for (const snippet of snippets_to_delete) {
+        await this.snippetService.deleteSnippet(snippet);
+        console.log('Snippet deleted:', snippet.title);
+      }
+      this.selected_page = null;
+    } catch (error) {
+      this.toastService.showErrorToast('Pages', 'Erreur lors de la suppression de la page');
+    }
+  }
+
+
 
   initFormArray(pages: Page[]): void {
     this.pagesForm = this.fb.group({
@@ -165,203 +113,4 @@ export class PagesEditorComponent {
   }
 
 
-  getPageSnippets(page: Page): Snippet[] {
-    const snippets = page.snippet_ids
-      .map(id => this.snippets.find(snippet => snippet.id === id))
-      .filter((s): s is Snippet => s !== undefined);
-    return snippets ?? [];
-  }
-
-
-  savePage(pageGroup: FormGroup): void {
-    const isNew = pageGroup.get('id')?.value === '';
-    let page: Page = {
-      id: pageGroup.get('id')?.value,
-      title: pageGroup.get('title')?.value,
-      template: pageGroup.get('template')?.value,
-      snippet_ids: pageGroup.get('snippet_ids')?.value
-    };
-
-    (isNew ? this.pageService.createPage(page) : this.pageService.updatePage(page))
-      .then(() => { });
-  }
-
-
-  
-  onPageTitleChange(event: Event): void {
-    const select = event.target as HTMLSelectElement;
-    select.blur();
-    this.selected_snippet = null;
-    this.snippetFreezed = false;
-    
-  }
-
-  emptyBin() {
-    const bin = this.pages.find(page => page.title === MENU_TITLES.POUBELLE);
-    if (bin) {
-      const toDelete = bin.snippets || [];
-      bin.snippet_ids = [];
-      delete bin.snippets;
-      this.pageService.updatePage(bin).then(() => {
-        this.toastService.showSuccess('Pages', 'Corbeille vidée');
-        toDelete.forEach(async snippet => {
-          await this.snippetService.deleteSnippet(snippet);
-          console.log('Snippet deleted:', snippet.title);
-        });
-      });
-    }
-    this.bin_empty = true;
-  }
-
-
-
-  onSnippetClick(snippet: Snippet) {
-    this.selected_snippet = snippet || null;
-    this.snippetFreezed = true;
-  }
-
-  onSnippetSaved(updated: Snippet) {
-    if (!updated) return;
-    // Merge into selected_snippet to keep reference stable
-    if (this.selected_snippet && this.selected_snippet.id === updated.id) {
-      Object.assign(this.selected_snippet, updated);
-    }
-    // Update in snippets array
-    const idx = this.snippets.findIndex(s => s.id === updated.id);
-    if (idx !== -1) {
-      this.snippets[idx] = { ...this.snippets[idx], ...updated } as Snippet;
-    }
-    // Update snippets on pages
-    this.pages.forEach(page => {
-      if (page.snippets) {
-        const si = page.snippets.findIndex(s => s.id === updated.id);
-        if (si !== -1) Object.assign(page.snippets[si], updated);
-      }
-    });
-    // Recompute form arrays if needed
-    this.pages.forEach(page => {
-      page.snippets = this.getPageSnippets(page);
-    });
-  }
-
-  onHover(snippet?: Snippet) {
-
-    if (this.selected_snippet?.id !== snippet?.id && !this.snippetFreezed) {
-      this.selected_snippet = snippet || null;
-      // armer un timer qui etendra la visibilité du snippet
-      this.view_snippet.set(true);
-      setTimeout(() => {
-        this.view_snippet.set(false);
-      }, 5000);
-    }
-  }
-
-
-  // drag and drop handling
-
-  dropSnippet(event: CdkDragDrop<Snippet[]>, pageIndex: number) {
-    const originId = event.previousContainer.id; // origin dropList id
-    const originPageIndex = +originId.split('_')[1]; // extract pageIndex from id
-    if (event.previousContainer === event.container) {
-      // Moved within the same list
-      const snippets = this.pageGroups[pageIndex].get('snippets')?.value;
-      if (snippets) {
-        moveItemInArray(snippets, event.previousIndex, event.currentIndex);
-        this.pageGroups[pageIndex].get('snippets')?.setValue(snippets);
-        this.updateSnippetList(pageIndex);
-      }
-    } else {
-      // Moved between lists
-      const originSnippets = this.pageGroups[originPageIndex].get('snippets')?.value;
-      const targetSnippets = this.pageGroups[pageIndex].get('snippets')?.value;
-      if (originSnippets && targetSnippets) {
-        transferArrayItem(
-          originSnippets,
-          targetSnippets,
-          event.previousIndex,
-          event.currentIndex
-        );
-
-
-        this.pageGroups[originPageIndex].get('snippets')?.setValue(originSnippets);
-        this.updateSnippetList(originPageIndex);
-        this.pageGroups[pageIndex].get('snippets')?.setValue(targetSnippets);
-        this.updateSnippetList(pageIndex).then(() => {
-
-          console.log('snippet moved from %s to %s',
-            this.pageGroups[originPageIndex].get('title')?.value,
-            this.pageGroups[pageIndex].get('title')?.value
-          );
-
-          this.check_bin_empty();
-
-
-        });
-
-      }
-    }
-  }
-
-
-  cutSnippet(pageIndex: number, snippet: Snippet) {
-    this.addSnippet(this.bin_page_index!, snippet);
-    this.rmSnippet(pageIndex, snippet);
-    this.check_bin_empty();
-  }
-
-  async updateSnippetList(pageIndex: number) {
-    const snippets = this.pageGroups[pageIndex].get('snippets')?.value;
-    const snippet_ids = snippets.map((s: Snippet) => s.id);
-    this.pageGroups[pageIndex].get('snippet_ids')?.setValue(snippet_ids);
-    await this.savePage(this.pageGroups[pageIndex]);
-  }
-
-  rmSnippet(pageIndex: number, snippet: Snippet) {
-    const snippets = this.pageGroups[pageIndex].get('snippets')?.value;
-    const index = snippets.findIndex((s: Snippet) => s.id === snippet.id);
-    if (index === -1) { throw new Error('Snippet not found'); }
-    snippets.splice(index, 1);
-    this.pageGroups[pageIndex].get('snippets')?.setValue(snippets);
-        this.updateSnippetList(pageIndex);
-
-  }
-  addSnippet(pageIndex: number, snippet: Snippet) {
-    const snippets = this.pageGroups[pageIndex].get('snippets')?.value;
-    snippets.push(snippet);
-    this.pageGroups[pageIndex].get('snippets')?.setValue(snippets);
-    this.updateSnippetList(pageIndex);
-  }
-
-  deleteSnippet(pageIndex: number, snippet: Snippet) {
-    const snippets = this.pageGroups[pageIndex].get('snippets')?.value;
-    const index = snippets.findIndex((s: Snippet) => s.id === snippet.id);
-    if (index === -1) { throw new Error('Snippet not found'); }
-    snippets.splice(index, 1);
-    this.pageGroups[pageIndex].get('snippets')?.setValue(snippets);
-    this.updateSnippetList(pageIndex);
-    this.snippetService.deleteSnippet(snippet).then(() => {
-      this.toastService.showSuccess('Pages', ` "${snippet.title}" a été supprimé définitivement`);
-    });
-    this.check_bin_empty();
-  }
-
-  addWhiteSnippet(pageGroup: FormGroup) {
-    const snippet: Snippet = {
-      id: '',
-      title: 'title',
-      subtitle: 'subtitle',
-      content: '',
-      file: '',
-      image: '',
-      folder: '',
-      featured: false,
-      public: true,
-    };
-    this.snippetService.createSnippet(snippet).then((new_snippet) => {
-      pageGroup.get('snippets')?.value.push(new_snippet);
-      pageGroup.get('snippet_ids')?.value.push(new_snippet.id);
-      this.savePage(pageGroup);
-      this.onSnippetClick(new_snippet);
-    });
-  }
 }

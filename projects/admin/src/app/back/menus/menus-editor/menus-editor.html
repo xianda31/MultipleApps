@@ -96,27 +96,7 @@
         <div class="col-12 col-lg-4">
         </div>
     </div>
-    <hr class="border border-2 border-dark my-3">
-    <div class="row">
-        <div class="col-12 col-lg-2">
-            <div class="card border-0 mb-1">
-                <div class="card-header mb-1">
-                    <h6 >Liste des pages</h6>
-                </div>
-                <div class="card-body p-0">
-                    <ng-container *ngTemplateOutlet="pages_list"></ng-container>
-                </div>
-            </div>
-        </div>
 
-
-
-        <div class="col-12 col-lg-10">
-            @if (selectedPageId) {
-            <app-page-editor [pageId]="selectedPageId"></app-page-editor>
-            }
-        </div>
-    </div>
 
     <div class="row">
         <div class="col-12">

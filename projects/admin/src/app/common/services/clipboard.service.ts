@@ -1,48 +1,43 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, firstValueFrom } from 'rxjs';
-import { Page, Snippet } from '../interfaces/page_snippet.interface';
+import { CLIPBOARD_TITLE, Page, Snippet } from '../interfaces/page_snippet.interface';
 import { PageService } from './page.service';
 import { SnippetService } from './snippet.service';
-
-const CLIPBOARD_PAGE_TITLE = '__CLIPBOARD__';
 
 @Injectable({ providedIn: 'root' })
 export class ClipboardService {
   private clipboardPage: Page | null = null;
   private _clipboardSnippets$ = new BehaviorSubject<Snippet[]>([]);
+
   public get clipboardSnippets$(): BehaviorSubject<Snippet[]> {
     return this._clipboardSnippets$;
   }
 
   constructor(private pageService: PageService, private snippetService: SnippetService) {
-    this.initClipboardPage();
-}
+    // this.initClipboardPage();
+  }
 
-async initClipboardPage() {
+  async initClipboardPage() {
     // Cherche la page clipboard, sinon la crée
-    const clipboard = await firstValueFrom(this.pageService.getPageByTitle(CLIPBOARD_PAGE_TITLE));
+    const clipboard = await firstValueFrom(this.pageService.getPageByTitle(CLIPBOARD_TITLE));
     if (clipboard) {
-        this.clipboardPage = clipboard;
-        // Charger les vrais objets Snippet
-        const allSnippets = await firstValueFrom(this.snippetService.listSnippets());
-        const clipboardSnippets = clipboard.snippet_ids
-          .map(id => allSnippets.find(s => s.id === id))
-          .filter(s => s !== undefined) as Snippet[];
-        this._clipboardSnippets$.next(clipboardSnippets);
+      this.clipboardPage = clipboard;
+      const allSnippets = await firstValueFrom(this.snippetService.listSnippets());
+      const clipboardSnippets = clipboard.snippet_ids
+        .map(id => allSnippets.find(s => s.id === id))
+        .filter(s => s !== undefined) as Snippet[];
+      this._clipboardSnippets$.next(clipboardSnippets);
     } else {
       const newPage = await this.pageService.createPage({
         id: '',
-        title: CLIPBOARD_PAGE_TITLE,
+        title: CLIPBOARD_TITLE,
         template: 'publication',
         snippet_ids: []
       } as Page);
       this.clipboardPage = newPage;
       this._clipboardSnippets$.next([]);
+      console.warn('Clipboard page created');
     }
-  }
-
-  getSnippets() {
-    return this._clipboardSnippets$.value;
   }
 
   async addSnippet(snippet: Snippet) {
@@ -63,16 +58,13 @@ async initClipboardPage() {
     }
   }
 
-  async clear() {
-    if (!this.clipboardPage) await this.initClipboardPage();
-    this._clipboardSnippets$.next([]);
-    if (this.clipboardPage) {
-      this.clipboardPage.snippet_ids = [];
-      await this.pageService.updatePage(this.clipboardPage);
-    }
-  }
+  // async clear() {
+  //   if (!this.clipboardPage) await this.initClipboardPage();
+  //   this._clipboardSnippets$.next([]);
+  //   if (this.clipboardPage) {
+  //     this.clipboardPage.snippet_ids = [];
+  //     await this.pageService.updatePage(this.clipboardPage);
+  //   }
+  // }
 
-  private getSnippetsFromPage(page: Page): Snippet[] {
-    return page.snippets || [];
-  }
 }

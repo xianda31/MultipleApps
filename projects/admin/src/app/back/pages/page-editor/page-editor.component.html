@@ -1,4 +1,3 @@
-@if (page) {
 <div class="page-editor-container">
   <div class="row">
 
@@ -7,13 +6,15 @@
     <div class="col-12 col-sm-6">
       <div class="card border-0 mb-2">
         <div class="card-header d-flex align-items-center justify-content-between">
-          <h6 >Visualisation de la page</h6>
-          <form [formGroup]="pageForm">
+          <form [formGroup]="pageForm" class="d-flex align-items-center gap-2">
+            <label class="form-label mb-0" style="white-space: nowrap;">Titre :</label>
             <input type="text" class="form-control form-control-sm" formControlName="title"
-              placeholder="Titre de la page" (blur)="savePage()" (keydown.enter)="savePage()">
+              placeholder="Titre de la page" (blur)="savePage()" (keydown.enter)="savePage()"
+              [disabled]="is_clipboard_page">
+            <!-- <span *ngIf="is_clipboard_page" class="badge bg-info ms-2">Clipboard</span> -->
           </form>
           <form [formGroup]="pageForm" class="d-flex align-items-center gap-2">
-            <label class="form-label mb-0" style="white-space: nowrap;">Template:</label>
+            <label class="form-label mb-0" style="white-space: nowrap;">Template :</label>
             <select class="form-select form-select-sm" formControlName="template" style="width: auto;"
               (change)="savePage()">
               @for (tpl of pageTemplates; track tpl) {
@@ -28,10 +29,10 @@
       </div>
     </div>
     <!-- Colonne 2: Snippets de la page -->
-    <div class="col-12 col-sm-2">
+    <div class="col-12 col-sm-3">
       <div class="card border-0 mb-2">
-        <div class="card-header d-flex align-items-center justify-content-between">
-          <h6 class="mb-0">{{pageSnippets.length}} paragraphe(s) dans la page</h6>
+        <div class="card-header justify-content-center align-items-center same-header-height d-flex">
+          <h6 class="mb-0">paragraphe(s)</h6>
         </div>
         <div class="card-body">
           <div cdkDropList [cdkDropListData]="pageSnippets" (cdkDropListDropped)="onDrop($event)" class="snippet-list">
@@ -42,7 +43,7 @@
                 <div class="fw-bold">{{ snippet.title }}</div>
                 <small class="text-muted">{{ snippet.subtitle }}</small>
               </span>
-              @if (page.title === '__CLIPBOARD__') {
+              @if (selected_page.title === '__CLIPBOARD__') {
               <button type="button" class="btn btn-sm btn-outline-danger" (click)="deleteSnippet(snippet)">
                 <i class="bi bi-trash"></i>
               </button>
@@ -53,9 +54,9 @@
               }
             </div>
             }
-         
-            
-            @if (page.title !== '__CLIPBOARD__') {
+
+
+            @if (selected_page.title !== '__CLIPBOARD__') {
             <div class="row align-items-center mb-2 justify-content-end">
               <div class="col-auto">Ajouter un snippet :</div>
               <div class="col-auto">
@@ -76,66 +77,13 @@
             }
 
           </div>
-          <!-- Modal ajout snippet -->
-          <ng-template #addSnippetModal let-modal>
-            <div class="modal-header">
-              <h5 class="modal-title">Ajouter un snippet</h5>
-              <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
-            </div>
-            <div class="modal-body">
-              <form [formGroup]="addSnippetForm">
-                <div class="mb-2">
-                  <label class="form-label">Titre</label>
-                  <input type="text" class="form-control form-control-sm" formControlName="title">
-                </div>
-                <div class="mb-2">
-                  <label class="form-label">Sous-titre</label>
-                  <input type="text" class="form-control form-control-sm" formControlName="subtitle">
-                </div>
-              </form>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" (click)="modal.dismiss()">Annuler</button>
-              <button type="button" class="btn btn-success" (click)="addSnippet(modal)">Ajouter</button>
-            </div>
-          </ng-template>
 
-          <!-- Modal corbeille -->
-          <ng-template #clipboardModal let-modal>
-            <div class="modal-header">
-              <h5 class="modal-title">Clipboard</h5>
-              <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
-            </div>
-            <div class="modal-body">
-              <ng-container *ngIf="clipboardSnippets$ | async as clipboardSnippets">
-                <ng-container *ngIf="clipboardSnippets.length === 0; else clipboardList">
-                  <div class="text-muted text-center">Aucun snippet dans le clipboard</div>
-                </ng-container>
-                <ng-template #clipboardList>
-                  <ul class="list-group">
-                    <ng-container *ngFor="let snippet of clipboardSnippets; trackBy: trackSnippet">
-                      <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span>
-                          <div class="fw-bold">{{ snippet.title }}</div>
-                          <small class="text-muted">{{ snippet.subtitle }}</small>
-                        </span>
-                        <button type="button" class="btn btn-sm btn-outline-success"
-                          (click)="restoreSnippet(snippet, modal)">
-                          <i class="bi bi-arrow-counterclockwise"></i> Restituer
-                        </button>
-                      </li>
-                    </ng-container>
-                  </ul>
-                </ng-template>
-              </ng-container>
-            </div>
-          </ng-template>
         </div>
       </div>
     </div>
 
     <!-- Colonne 3: Éditeur snippet -->
-    <div class="col-12 col-sm-4">
+    <div class="col-12 col-sm-3">
       @if (selected_snippet) {
       <div class="card border-0 mb-2">
         <div class="card-header">
@@ -149,8 +97,59 @@
     </div>
   </div>
 </div>
-} @else {
-<div class="text-center text-muted p-4">
-  Sélectionnez une page pour l'éditer
-</div>
-}
+
+
+
+<!-- Modal ajout snippet -->
+<ng-template #addSnippetModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Ajouter un snippet</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+  </div>
+  <div class="modal-body">
+    <form [formGroup]="addSnippetForm">
+      <div class="mb-2">
+        <label class="form-label">Titre</label>
+        <input type="text" class="form-control form-control-sm" formControlName="title">
+      </div>
+      <div class="mb-2">
+        <label class="form-label">Sous-titre</label>
+        <input type="text" class="form-control form-control-sm" formControlName="subtitle">
+      </div>
+    </form>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="modal.dismiss()">Annuler</button>
+    <button type="button" class="btn btn-success" (click)="addSnippet(modal)">Ajouter</button>
+  </div>
+</ng-template>
+
+<!-- Modal clipboard -->
+<ng-template #clipboardModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Clipboard</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+  </div>
+  <div class="modal-body">
+    <ng-container *ngIf="clipboardSnippets$ | async as clipboardSnippets">
+      <ng-container *ngIf="clipboardSnippets.length === 0; else clipboardList">
+        <div class="text-muted text-center">Aucun snippet dans le clipboard</div>
+      </ng-container>
+      <ng-template #clipboardList>
+        <ul class="list-group">
+          <ng-container *ngFor="let snippet of clipboardSnippets; trackBy: trackSnippet">
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span>
+                <div class="fw-bold">{{ snippet.title }}</div>
+                <small class="text-muted">{{ snippet.subtitle }}</small>
+              </span>
+              <button type="button" class="btn btn-sm btn-outline-success" (click)="restoreSnippet(snippet, modal)">
+                <i class="bi bi-arrow-counterclockwise"></i> Restituer
+              </button>
+            </li>
+          </ng-container>
+        </ul>
+      </ng-template>
+    </ng-container>
+  </div>
+</ng-template>

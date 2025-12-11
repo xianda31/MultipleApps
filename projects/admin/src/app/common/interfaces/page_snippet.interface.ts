@@ -58,6 +58,8 @@ export enum MENU_TITLES {
     POUBELLE = 'poubelle',
     AUTRES_RDV = 'autres rendez-vous',
 }
+export const CLIPBOARD_TITLE = '__CLIPBOARD__'
+
 export enum EXTRA_TITLES {
     HIGHLIGHTS = 'à la une',
 }

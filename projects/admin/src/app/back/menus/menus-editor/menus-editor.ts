@@ -6,21 +6,20 @@ import { MenuStructure, MenuGroup, NavItem, NAVITEM_LOGGING_CRITERIA, NAVITEM_PO
 import { NAVITEM_COMMAND } from '../../../common/interfaces/plugin.interface';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Routes, Router, ActivatedRoute } from '@angular/router';
+import { Routes } from '@angular/router';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { NAVITEM_PLUGIN } from '../../../common/interfaces/plugin.interface';
 import { LABEL_TRANSFORMERS } from '../../../common/interfaces/plugin.interface';
 import { PageService } from '../../../common/services/page.service';
 import { Page, PAGE_TEMPLATES } from '../../../common/interfaces/page_snippet.interface';
 import { DragDropModule } from '@angular/cdk/drag-drop';
-import { CdkDragDrop, moveItemInArray, CdkDragMove, CdkDragEnd, CdkDragStart } from '@angular/cdk/drag-drop';
+import { CdkDragDrop, moveItemInArray, CdkDragStart } from '@angular/cdk/drag-drop';
 import { NgbDropdown } from '@ng-bootstrap/ng-bootstrap';
 import { APP_SANDBOX } from '../../../app.config';
 import { SandboxService } from '../../../common/services/sandbox.service';
 import { DynamicRoutesService } from '../../../common/services/dynamic-routes.service';
 import { Subject, combineLatest } from 'rxjs';
 import { charsanitize, buildFullPath, extractSegment } from '../../../common/utils/navitem.utils';
-import { BackNavigationService } from '../../services/back-navigation.service';
 import { PageEditorComponent } from '../../pages/page-editor/page-editor.component';
 import { SnippetService } from '../../../common/services/snippet.service';
 // Preview in editor is generated from sandbox navitems
@@ -30,7 +29,7 @@ import { SnippetService } from '../../../common/services/snippet.service';
   standalone: true,
   templateUrl: './menus-editor.html',
   styleUrls: ['./menus-editor.scss'],
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbDropdownModule, DragDropModule, PageEditorComponent]
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbDropdownModule, DragDropModule]
 })
 export class MenusEditorComponent implements AfterViewInit {
     snippets: any[] = [];
