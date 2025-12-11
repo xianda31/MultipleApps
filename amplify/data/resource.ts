@@ -106,8 +106,8 @@ const schema = a.schema({
       allow.guest().to(['read']),
       allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
       allow.group(Group_names.Admin).to(['read', 'update', 'delete']),
-      allow.group(Group_names.Editor).to(['read']),
-      allow.group(Group_names.Support).to(['read']),
+      allow.group(Group_names.Editor).to(['read', 'update']),
+      allow.group(Group_names.Support).to(['read', 'update']),
       allow.group(Group_names.Member).to(['read']),
 
     ]),
