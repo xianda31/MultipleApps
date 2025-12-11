@@ -2,7 +2,7 @@
 import { Injectable } from '@angular/core';
 import { generateClient } from 'aws-amplify/api';
 import { catchError, from, lastValueFrom, map, Observable, of, switchMap, tap, filter } from 'rxjs';
-import { getCurrentUser } from 'aws-amplify/auth';
+import { safeGetCurrentUser$ } from '../authentification/safe-auth';
 import { Member, Member_input } from '../interfaces/member.interface';
 import { BookEntry } from '../interfaces/accounting.interface';
 import { Schema } from '../../../../../../amplify/data/resource';
@@ -28,9 +28,9 @@ export class DBhandler {
 
 
   private _authMode(): Observable<'userPool' | 'identityPool'> {
-    return from(getCurrentUser()).pipe(
+    return safeGetCurrentUser$().pipe(
       map((user) => { return user !== null ? 'userPool' : 'identityPool' }),
-      catchError(() => { return from(['identityPool' as const]); })
+      catchError(() => of('identityPool' as const))
     );
   }
 

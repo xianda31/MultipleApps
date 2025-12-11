@@ -7,7 +7,7 @@ import { EXTRA_TITLES, MENU_TITLES } from '../../../../common/interfaces/page_sn
 import { MembersService } from '../../../../common/services/members.service';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 import { BreakpointsSettings, UIConfiguration } from '../../../../common/interfaces/ui-conf.interface';
-import { combineLatest, map, Observable, switchMap, tap, interval, Subscription } from 'rxjs';
+import { combineLatest, map, Observable, switchMap, tap, interval, Subscription, catchError, of } from 'rxjs';
 import { LicenseStatus, Member } from '../../../../common/interfaces/member.interface';
 import { AuthentificationService } from '../../../../common/authentification/authentification.service';
 import { CommonModule } from '@angular/common';
@@ -72,22 +72,36 @@ export class HomePage {
 
     this.membersService.listMembers().subscribe((members) => {
       this.licensee_nbr = members.filter(m => m.license_status !== LicenseStatus.UNREGISTERED).length;
-this.student_nbr = members.filter(m => m.membership_date && (m.license_status === LicenseStatus.UNREGISTERED)).length;});
+      this.student_nbr = members.filter(m => m.membership_date && (m.license_status === LicenseStatus.UNREGISTERED)).length;
+    });
 
     this.fileService.list_files(this.home_folder + '/').pipe(
       map((S3items) => S3items.filter(item => item.size !== 0)),
-      tap((items) => { if (items.length === 0) console.warn('Album %s is empty'); }),
+      tap((items) => { if (items.length === 0) console.debug('[HomePage] Album %s is empty', this.home_folder); }),
       switchMap((S3items) => {
-        return combineLatest(
-          S3items.map(item => this.fileService.getPresignedUrl$((item.path)))
-        )
+        if (!S3items || S3items.length === 0) return of([] as string[]);
+        const urlObservables = S3items.map(item =>
+          this.fileService.getPresignedUrl$((item.path)).pipe(
+            catchError(err => {
+              console.debug('[HomePage] getPresignedUrl$ failed for', item.path, err);
+              return of(null);
+            })
+          )
+        );
+        return combineLatest(urlObservables);
+      }),
+      catchError(err => {
+        console.debug('[HomePage] loading home images failed', err);
+        return of([] as (string | null)[]);
       })
     ).subscribe((items) => {
-      this.photos.push(...items);
-      this.photo_count = this.photos.length;
-      // prepare next index once photos are known
-      this.next_index = (this.photo_index + 1) % this.photo_count;
-      // console.log('Home photos loaded', this.photos.length);
+      const urls = (items || []).filter((u: string | null) => !!u) as string[];
+      if (urls.length > 0) {
+        this.photos.push(...urls);
+        this.photo_count = this.photos.length;
+        // prepare next index once photos are known
+        this.next_index = (this.photo_index + 1) % this.photo_count;
+      }
     });
 
     // start slideshow rotation with sequential fade (out then in)
@@ -124,9 +138,8 @@ this.student_nbr = members.filter(m => m.membership_date && (m.license_status ==
       this.news_row_cols = (conf && conf.homepage && conf.homepage.news_row_cols) ? conf.homepage.news_row_cols : this.news_row_cols;
       this.home_layout_ratio = (conf && conf.homepage && conf.homepage.home_layout_ratio) ? conf.homepage.home_layout_ratio : this.home_layout_ratio;
       this.updateColClasses();
-
-
     });
+
   }
 
   private updateColClasses() {
@@ -158,11 +171,11 @@ this.student_nbr = members.filter(m => m.membership_date && (m.license_status ==
           // Convert MM-DD to full date for display
           const [month, day] = mmdd.split('-').map(Number);
           const fullDate = new Date(currentYear, month - 1, day);
-          return { 
-            day: fullDate.toISOString(), 
-            members: result[mmdd] 
+          return {
+            day: fullDate.toISOString(),
+            members: result[mmdd]
           };
-        }) : [];  
+        }) : [];
       });
   }
 }

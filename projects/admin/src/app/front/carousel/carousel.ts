@@ -56,14 +56,15 @@ export class Carousel {
     });
   }
 
-  download(photo: S3Item) {
+  async download(photo: S3Item) {
     
     const get_name = (path: string): string => {
       const segments = path.split('/');
       return segments[segments.length - 1];
     };
 
-    firstValueFrom(this.fileService.getPresignedUrl$(photo.path)).then(async (url) => {
+    try {
+      const url = await firstValueFrom(this.fileService.getPresignedUrl$(photo.path));
       const response = await fetch(url);
       const blob = await response.blob();
       const link = document.createElement('a');
@@ -73,6 +74,8 @@ export class Carousel {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(link.href);
-    });
+    } catch (err) {
+      console.warn('[Carousel] download failed for', photo.path, err);
+    }
   }
 }
