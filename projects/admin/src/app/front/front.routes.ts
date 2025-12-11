@@ -1,66 +1,30 @@
-import { ExternalRedirectComponent } from './front/external-redirect/external-redirect.component';
 import { Routes } from '@angular/router';
 import { PageNotFoundComponent } from '../common/page-not-found/page-not-found.component';
-import { ConnexionComponent } from '../common/authentification/connexion/connexion.component';
 import { TournamentComponent } from '../common/tournaments/tournament/tournament.component';
-import { PurchasesComponent } from './purchases/purchases.component';
-import { GameCardsOwnedComponent } from './game-cards-owned/game-cards-owned.component';
 import { FrontComponent } from './front/front/front.component';
 import { Carousel } from './carousel/carousel';
-import { HomePage } from './front/pages/home-page/home-page';
 import { CustomRouter } from './front/pages/custom-router/custom-router';
-import { TournamentsComponent } from '../common/tournaments/tournaments/tournaments.component';
-import { SettingsComponent } from '../common/members/settings/settings.component';
 import { BackAuthGuard } from '../back-auth.guard';
-import { ConnexionPageComponent } from '../common/authentification/connexion-page/connexion-page.component';
-import { AssistanceComponent } from './front/assistance/assistance.component';
 
 
-export const routes: Routes = [
+// Minimal, safe front routes used at bootstrap. Dynamic/nav-driven routes
+// (home, tournaments listing, purchases, etc.) are injected at runtime
+// by the navitem/dynamic routes service to avoid early token-dependent calls.
+
+export const minimal_routes: Routes = [
   {
     path: '',
     component: FrontComponent,
     children: [
-
-
-      { path: 'home', component: HomePage },
-      { path: 'tournaments/next', component: TournamentsComponent, data: { displayTitle: true } },
-      { path: 'tournaments/resultats_ffb', component: ExternalRedirectComponent, data: { site: 'FFB' } },
-      { path: 'tournaments/autres_rdv', component: CustomRouter },
-      { path: 'tournaments/:id', component: TournamentComponent },
-      { path: 'my_settings', component: SettingsComponent, canActivate: [BackAuthGuard] },
-      { path: 'ffb_dashboard', component: ExternalRedirectComponent, data: { site: 'FFB_dashboard' } },
-      // { path: 'tournaments/resultats_royrene', component: ExternalRedirectComponent, data: { site : 'RoyRené' } },
-      { path: 'achats/historique', component: PurchasesComponent },
-      { path: 'achats/carte', component: GameCardsOwnedComponent },
-      { path: 'albums/:snippet_id', component: Carousel, canActivate: [BackAuthGuard] },
-      { path: 'connexion', component: ConnexionPageComponent},
-      { path: 'back_office', redirectTo: '/back', pathMatch: 'full' },
-      { path: 'assistance', component: AssistanceComponent },
-      // { path: 'contacts', component: ContactsComponent },
-      { path: '', redirectTo: 'home', pathMatch: 'full' },
-      { path: '404', component: PageNotFoundComponent },
-      { path: '**', component: CustomRouter },  // catch-all route to handle custom routing
-    ]
-  },
-];
-
-
-export const minimal_routes : Routes = [
-  {
-    path: '',
-    component: FrontComponent,
-    children: [
-      
       // Routes with dynamic parameters (not configurable via editor)
       { path: 'tournaments/:id', component: TournamentComponent },
       { path: 'albums/:snippet_id', component: Carousel, canActivate: [BackAuthGuard] },
-      
+
       // System routes (redirects and fallbacks)
       { path: 'back_office', redirectTo: '/back', pathMatch: 'full' },
       // Default redirect will be added dynamically by navitem.service based on BRAND
       { path: '404', component: PageNotFoundComponent },
-      { path: '**', component: CustomRouter },  // catch-all route to handle custom routing
+      { path: '**', component: CustomRouter }, // catch-all route to handle custom routing
     ]
   },
 ];

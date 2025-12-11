@@ -3,7 +3,7 @@ import { BehaviorSubject, Observable, firstValueFrom, map, of, switchMap, tap, c
 import { ToastService } from './toast.service';
 import { DBhandler } from './graphQL.service';
 import {  MenuGroup, NavItem, NavItem_input, NAVITEM_TYPE, NAVITEM_POSITION } from '../interfaces/navitem.interface';
-import { minimal_routes, routes } from '../../front/front.routes';
+import { minimal_routes } from '../../front/front.routes';
 import { Routes } from '@angular/router';
 import { GenericPageComponent } from '../../front/front/pages/generic-page/generic-page.component';
 import { PLUGINS, NAVITEM_PLUGIN } from '../interfaces/plugin.interface';

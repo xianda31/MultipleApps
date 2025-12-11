@@ -3,7 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { InMemoryScrollingOptions, provideRouter, withComponentInputBinding, withInMemoryScrolling } from '@angular/router';
 
 import { routes } from './app.routes';
-import { routes as front_static_routes } from './front/front.routes';
+import { minimal_routes } from './front/front.routes';
 import { APP_INITIALIZER } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { distinctUntilChanged, skip } from 'rxjs/operators';
@@ -21,45 +21,22 @@ export function preloadFrontRoutes(
   sandboxService: SandboxService
 ) {
   return () => {
-    const flag = sandboxService.value;
-    // Load dynamic routes based on sandbox mode (production or sandbox navitems)
-    if (flag) {
-      // Load sandbox routes once on startup if sandbox=true
-      const initial = firstValueFrom(navitemService.getFrontRoutes(true))
-        .then((routes) => { dynamicRoutesService.setRoutes(routes); })
-        .catch(() => { dynamicRoutesService.setRoutes(front_static_routes); });
-      // And keep in sync with subsequent changes
-      sandboxService.sandbox$.pipe(skip(1), distinctUntilChanged()).subscribe((nextFlag) => {
-        if (nextFlag) {
-          firstValueFrom(navitemService.getFrontRoutes(true))
-            .then((routes) => dynamicRoutesService.setRoutes(routes))
-            .catch(() => { /* ignore */ });
-        } else {
-          // Switch to production dynamic routes
-          firstValueFrom(navitemService.getFrontRoutes(false))
-            .then((routes) => dynamicRoutesService.setRoutes(routes))
-            .catch(() => { dynamicRoutesService.setRoutes(front_static_routes); });
-        }
-      });
-      return initial;
-    } else {
-      // Start with production dynamic routes and listen for sandbox toggles to switch
-      const initial = firstValueFrom(navitemService.getFrontRoutes(false))
-        .then((routes) => { dynamicRoutesService.setRoutes(routes); })
-        .catch(() => { dynamicRoutesService.setRoutes(front_static_routes); });
-      sandboxService.sandbox$.pipe(skip(1), distinctUntilChanged()).subscribe((nextFlag) => {
-        if (nextFlag) {
-          firstValueFrom(navitemService.getFrontRoutes(true))
-            .then((routes) => dynamicRoutesService.setRoutes(routes))
-            .catch(() => { /* ignore */ });
-        } else {
-          firstValueFrom(navitemService.getFrontRoutes(false))
-            .then((routes) => dynamicRoutesService.setRoutes(routes))
-            .catch(() => { /* ignore */ });
-        }
-      });
-      return initial;
-    }
+    const applyRoutes = async (useSandbox: boolean) => {
+      try {
+        const routes = await firstValueFrom(navitemService.getFrontRoutes(useSandbox));
+        dynamicRoutesService.setRoutes(routes);
+      } catch (err) {
+        console.warn('preloadFrontRoutes failed for useSandbox=' + useSandbox, err);
+        dynamicRoutesService.setRoutes(minimal_routes);
+      }
+    };
+
+    // Run initial load (sync) and subscribe to subsequent sandbox toggles
+    const initial = applyRoutes(sandboxService.value);
+    sandboxService.sandbox$.pipe(skip(1), distinctUntilChanged()).subscribe((nextFlag) => {
+      void applyRoutes(nextFlag);
+    });
+    return initial;
   };
 }
 
