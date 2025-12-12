@@ -3,7 +3,6 @@ import { PageNotFoundComponent } from '../common/page-not-found/page-not-found.c
 import { TournamentComponent } from '../common/tournaments/tournament/tournament.component';
 import { FrontComponent } from './front/front/front.component';
 import { Carousel } from './carousel/carousel';
-import { CustomRouter } from './front/pages/custom-router/custom-router';
 import { BackAuthGuard } from '../back-auth.guard';
 
 
@@ -22,9 +21,8 @@ export const minimal_routes: Routes = [
 
       // System routes (redirects and fallbacks)
       { path: 'back_office', redirectTo: '/back', pathMatch: 'full' },
-      // Default redirect will be added dynamically by navitem.service based on BRAND
       { path: '404', component: PageNotFoundComponent },
-      { path: '**', component: CustomRouter }, // catch-all route to handle custom routing
+      { path: '**', component: PageNotFoundComponent }, // catch-all route to handle custom routing
     ]
   },
 ];
