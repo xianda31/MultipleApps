@@ -35,23 +35,32 @@ export class Carousel {
   ngOnInit() {
     // Retrieve snippet_id and viewing parameters
     this.route.paramMap.subscribe(params => {
-      this.photoIndex = +params.get('startAt')!;
-      this.autoWrapped = params.get('autoWrapped') !== null ? params.get('autoWrapped') === 'true' : true;
+      // path params
       const snippet_id = params.get('snippet_id');
-      
+
+      // Prefer query params for optional view parameters
+      const qStart = this.route.snapshot.queryParamMap.get('startAt');
+      const qAuto = this.route.snapshot.queryParamMap.get('autoWrapped');
+
+      // Resolve start index from query params only (fallback default 0)
+      this.photoIndex = qStart !== null ? +qStart! : 0;
+
+      // Resolve autoWrapped from query params only (default true)
+      this.autoWrapped = qAuto !== null ? (qAuto === 'true') : true;
+
       if (snippet_id) {
         this.snippetService.listSnippets().subscribe((snippets) => {
           const snippet = snippets.find(s => s.id === snippet_id);
 
-        if (snippet) {
-          this.album = snippet;
-          this.titleService.setTitle(this.album.title + ' - ' + this.album.subtitle);
+          if (snippet) {
+            this.album = snippet;
+            this.titleService.setTitle(this.album.title + ' - ' + this.album.subtitle);
 
-          this.photos$ = this.fileService.list_files(this.album.folder + '/').pipe(
-            map((S3items) => S3items.filter(item => item.size !== 0)),
-          );
-        }
-      });
+            this.photos$ = this.fileService.list_files(this.album.folder + '/').pipe(
+              map((S3items) => S3items.filter(item => item.size !== 0)),
+            );
+          }
+        });
       }
     });
   }

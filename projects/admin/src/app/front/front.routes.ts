@@ -16,8 +16,8 @@ export const minimal_routes: Routes = [
     component: FrontComponent,
     children: [
       // Routes with dynamic parameters (not configurable via editor)
-      { path: 'tournaments/:id', component: TournamentComponent },
-      { path: 'albums/:snippet_id', component: Carousel, canActivate: [BackAuthGuard] },
+      // { path: 'tournaments/:id', component: TournamentComponent },
+      // { path: 'albums/:snippet_id', component: Carousel, canActivate: [BackAuthGuard] },
 
       // System routes (redirects and fallbacks)
       { path: 'back_office', redirectTo: '/back', pathMatch: 'full' },

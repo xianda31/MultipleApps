@@ -18,7 +18,7 @@ import { NgbDropdown } from '@ng-bootstrap/ng-bootstrap';
 import { APP_SANDBOX } from '../../../app.config';
 import { SandboxService } from '../../../common/services/sandbox.service';
 import { DynamicRoutesService } from '../../../common/services/dynamic-routes.service';
-import { Subject, combineLatest } from 'rxjs';
+import { Subject, combineLatest, firstValueFrom } from 'rxjs';
 import { charsanitize, buildFullPath, extractSegment } from '../../../common/utils/navitem.utils';
 import { SnippetService } from '../../../common/services/snippet.service';
 
@@ -116,12 +116,16 @@ export class MenusEditorComponent implements AfterViewInit {
       .subscribe({
         next: ([sandboxItems, productionItems, pages]) => {
           this.pages = pages.filter(p => p.title !== CLIPBOARD_TITLE).sort((a, b) => a.title.localeCompare(b.title));
-          this.navitems = this.enrichWithPageTitle(sandboxItems);
+          this.navitems = this.enrichWithPageTitleAndCarousel(sandboxItems);
           this.hasSandboxNavitems = sandboxItems.length > 0;
           this.sandboxCount = sandboxItems.length;
           this.productionCount = productionItems.length;
-          // Editor preview always reflects sandbox dataset
-          this.front_routes = this.navitemService.generateFrontRoutes(this.navitems);
+          // Editor preview always reflects sandbox dataset — use shared getFrontRoutes to match enrichment
+          firstValueFrom(this.navitemService.getFrontRoutes(true)).then(routes => {
+            this.front_routes = routes;
+          }).catch(err => {
+            console.warn('MenusEditor: failed to build preview routes', err);
+          });
           this.menus = this.buildMenuStructureNew(this.navitems);
           // menu structure loaded
           this.rebuildNavbarEntries();
@@ -281,6 +285,8 @@ export class MenusEditorComponent implements AfterViewInit {
     }
 
     const op = payload.id ? this.navitemService.updateNavItem(payload) : this.navitemService.createNavItem(payload);
+    console.log('MenusEditor.saveNavitem: about to save payload', { payloadId: payload.id, path: payload.path, page_id: payload.page_id, type: payload.type });
+    console.log('MenusEditor.saveNavitem stack', (new Error()).stack?.split('\n').slice(0,3));
     op.then(() => {
       this.toastService.showSuccess('Paramètres menu', 'nav_item sauvegardé');
       this.selectedNavitem = null;
@@ -295,6 +301,8 @@ export class MenusEditorComponent implements AfterViewInit {
 
   deleteNavitem(selectedNavitem: NavItem) {
     // Logique pour supprimer le nav item
+    console.log('MenusEditor.deleteNavitem: deleting', { id: selectedNavitem.id, path: selectedNavitem.path });
+    console.log('MenusEditor.deleteNavitem stack', (new Error()).stack?.split('\n').slice(0,3));
     this.navitemService.deleteNavItem(selectedNavitem).then(() => {
       this.toastService.showSuccess('Paramètres menu', 'nav_item supprimé');
       this.offRef?.dismiss('deleted');
@@ -458,10 +466,13 @@ export class MenusEditorComponent implements AfterViewInit {
     });
   }
 
-  private enrichWithPageTitle(items: NavItem[]): NavItem[] {
+  private enrichWithPageTitleAndCarousel(items: NavItem[]): NavItem[] {
     if (!this.pages || this.pages.length === 0) return items;
-    const byId = new Map(this.pages.map(p => [p.id, p.title] as [string, string]));
-    return items.map(n => (n.page_id ? { ...n, page_title: byId.get(n.page_id) } : n));
+    const byId = new Map(this.pages.map(p => [p.id, { title: p.title, carousel: p.template === PAGE_TEMPLATES.ALBUMS }] as [string, { title: string, carousel: boolean }]));
+    const enriched = items.map(n => (
+      n.page_id ? { ...n, page_title: byId.get(n.page_id)?.title, carousel: byId.get(n.page_id)?.carousel } : n
+    ));
+    return enriched;
   }
 
   // Build a local menu structure from the enriched navitems list
@@ -479,28 +490,33 @@ export class MenusEditorComponent implements AfterViewInit {
   }
 
   private reloadNavitems() {
+    console.log('MenusEditor.reloadNavitems: subscribing to navitems/pages');
     combineLatest([
       this.navitemService.loadNavItemsSandbox(),
       this.navitemService.loadNavItemsProduction(),
       this.pageService.listPages()
     ])
       .subscribe(([sandboxItems, productionItems, pages]) => {
+        console.log('MenusEditor.reloadNavitems: got emissions', { sandboxItems: sandboxItems.length, productionItems: productionItems.length, pages: pages?.length });
         this.pages = pages;
-        this.navitems = this.enrichWithPageTitle(sandboxItems);
+        this.navitems = this.enrichWithPageTitleAndCarousel(sandboxItems);
         this.hasSandboxNavitems = sandboxItems.length > 0;
         this.sandboxCount = sandboxItems.length;
         this.productionCount = productionItems.length;
         this.menus = this.buildMenuStructureNew(this.navitems);
-        // Preview always built from sandbox items
-        this.front_routes = this.navitemService.generateFrontRoutes(this.navitems);
-        // If sandbox mode is active, update global dynamic routes so the front preview/router picks changes
-        try {
-          if (this.sandboxService && this.sandboxService.value) {
-            this.dynamicRoutesService.setRoutes(this.front_routes);
+        // Preview always built from sandbox items using shared route generation
+        firstValueFrom(this.navitemService.getFrontRoutes(true)).then(routes => {
+          this.front_routes = routes;
+          try {
+            if (this.sandboxService && this.sandboxService.value) {
+              this.dynamicRoutesService.setRoutes(this.front_routes);
+            }
+          } catch (err) {
+            // Defensive: don't break editor if dynamic route update fails
           }
-        } catch (err) {
-          // Defensive: don't break editor if dynamic route update fails
-        }
+        }).catch(err => {
+          console.warn('MenusEditor.reloadNavitems: failed to compute front routes', err);
+        });
         this.rebuildNavbarEntries();
       });
   }

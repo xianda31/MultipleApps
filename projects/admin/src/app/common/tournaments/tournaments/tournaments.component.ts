@@ -128,7 +128,7 @@ export class TournamentsComponent {
   }
 
   selectTournament(tournamentId: number) {
-    this.router.navigate(['/front/tournaments', tournamentId],
+    this.router.navigate(['.', tournamentId],
       { relativeTo: this.route });
   }
 

@@ -1,14 +1,16 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, firstValueFrom, map, of, switchMap, tap, combineLatest } from 'rxjs';
+import { BehaviorSubject, Observable, firstValueFrom, map, of, switchMap, tap, first, combineLatest } from 'rxjs';
 import { ToastService } from './toast.service';
 import { DBhandler } from './graphQL.service';
-import {  MenuGroup, NavItem, NavItem_input, NAVITEM_TYPE, NAVITEM_POSITION } from '../interfaces/navitem.interface';
+import { MenuGroup, NavItem, NavItem_input, NAVITEM_TYPE, NAVITEM_POSITION } from '../interfaces/navitem.interface';
 import { minimal_routes } from '../../front/front.routes';
 import { Routes } from '@angular/router';
 import { GenericPageComponent } from '../../front/front/pages/generic-page/generic-page.component';
 import { PLUGINS, NAVITEM_PLUGIN } from '../interfaces/plugin.interface';
 import { PageService } from './page.service';
-import { Page } from '../interfaces/page_snippet.interface';
+import { Page, PAGE_TEMPLATES } from '../interfaces/page_snippet.interface';
+import { Carousel } from '../../front/carousel/carousel';
+import { TournamentComponent } from '../tournaments/tournament/tournament.component';
 
 @Injectable({
   providedIn: 'root'
@@ -17,35 +19,50 @@ export class NavItemsService {
   private _navItems: NavItem[] = [];
   private _navItems$ = new BehaviorSubject<NavItem[]>([]);
 
+
   constructor(
     private toastService: ToastService,
     private dbHandler: DBhandler,
     private pageService: PageService,
   ) { }
 
-
   getFrontRoutes(sandbox: boolean): Observable<Routes> {
     const src$ = sandbox ? this.loadNavItemsSandbox() : this.loadNavItemsProduction(true);
-    return combineLatest([src$, this.pageService.listPages()]).pipe(
+    return combineLatest([
+      src$,
+      this.pageService.listPages().pipe(
+        first((p: Page[] | undefined) => !!p && (p as Page[]).length > 0)
+      )
+    ]).pipe(
       map(([nav_items, pages]) => {
-        const enriched = this.enrichWithPageTitle(nav_items, pages);
+        const pagesArr = pages as Page[];
+        const enriched = this.enrichWithPageTitleAndCarousel(nav_items, pagesArr);
         return this.generateFrontRoutes(enriched);
-      }),
+      })
     );
   }
 
-  private enrichWithPageTitle(items: NavItem[], pages: Page[]): NavItem[] {
-    if (!pages || pages.length === 0) return items;
-    const byId = new Map(pages.map(p => [p.id, p.title] as [string, string]));
-    return items.map(n => (n.page_id ? { ...n, page_title: byId.get(n.page_id) } : n));
+  private enrichWithPageTitleAndCarousel(items: NavItem[], pages: Page[]): NavItem[] {
+    if (!pages || pages.length === 0) {
+      return items;
+    }
+    const byId = new Map(pages.map(p => [p.id, { title: p.title, carousel: p.template === PAGE_TEMPLATES.ALBUMS }] as [string, { title: string, carousel: boolean }]));
+    return items.map(n =>
+      n.page_id
+        ? { ...n, page_title: byId.get(n.page_id)?.title, carousel: byId.get(n.page_id)?.carousel }
+        : n
+    );
   }
 
+
   generateFrontRoutes(navItems: NavItem[]): Routes {
+    // Generate dynamic front child routes from navitems
     // Deep-clone base routes to avoid mutating the shared minimal_routes tree
     const cloneRoutes = (rs: Routes): Routes => rs.map(r => ({
       ...r,
       children: r.children ? cloneRoutes(r.children) : undefined
     }));
+
     const new_routes: Routes = cloneRoutes(minimal_routes);
 
     // Assume paths are unique (enforced by editor later). Build dynamic children once
@@ -54,11 +71,10 @@ export class NavItemsService {
 
     const dynamicChildren = dynamicItems.map(ni => {
       if (ni.type === NAVITEM_TYPE.CUSTOM_PAGE) {
-        // withComponentInputBinding() will map route data to @Input() properties
-        return { 
-          path: ni.path, 
-          component: GenericPageComponent, 
-          data: { page_title: ni.page_title } 
+        return {
+          path: ni.path,
+          component: GenericPageComponent,
+          data: { page_title: ni.page_title }
         };
       }
       if (ni.type === NAVITEM_TYPE.PLUGIN && ni.plugin_name === NAVITEM_PLUGIN.IFRAME) {
@@ -68,7 +84,7 @@ export class NavItemsService {
           data: { external_url: ni.external_url }
         };
       }
-      // Extension possible pour d'autres plugins avec paramètres
+      // Autres plugins sans paramètres
       const comp = PLUGINS[ni.plugin_name!];
       return {
         path: ni.path,
@@ -76,23 +92,31 @@ export class NavItemsService {
       };
     });
 
+    // Add plugin  routes with dynamic parameters (not configurable via editor)if needed
+    const tournamentNavItems = navItems.filter(ni => ni.plugin_name === NAVITEM_PLUGIN.TOURNAMENTS || ni.plugin_name === NAVITEM_PLUGIN.HOME);
+    const tournanamentRoute = tournamentNavItems.length > 0
+      ? tournamentNavItems.map(tournamentNavItem => ({ path: tournamentNavItem.path + '/:tournament_id', component: PLUGINS.tournament}))
+      : [];
+    // Add carousel route with dynamic parameter if page's template is album 
+    const albumNavItems = navItems.filter(ni => ni.page_title && ni.carousel);
+    const carouselRoutes = albumNavItems.length > 0
+      ? albumNavItems.map(ani => ({ path: ani.path + '/:snippet_id', component: PLUGINS.carousel }))
+      : [];
+
+    // Add default redirect only if BRAND exists
+    const brandNavitem = navItems.find(ni => ni.position === NAVITEM_POSITION.BRAND);
+    const brandRoute = brandNavitem
+      ? [{ path: '', redirectTo: brandNavitem.path, pathMatch: 'full' as const }]
+      : [];
+
+    const redirectRoute = [...tournanamentRoute, ...carouselRoutes, ...brandRoute];
+
     // Append minimal base routes after dynamic ones 
     const root = new_routes[0];
     const baseChildren = root.children ?? [];
-    
-    // Find BRAND navitem to set default redirect
-    const brandNavitem = navItems.find(ni => ni.position === NAVITEM_POSITION.BRAND);
-    
-    // Add default redirect only if BRAND exists
-    const redirectRoute = brandNavitem 
-      ? [{ path: '', redirectTo: brandNavitem.path, pathMatch: 'full' as const }]
-      : [];
-    
+
+
     root.children = [...dynamicChildren, ...redirectRoute, ...baseChildren];
-    
-    // Return the full route structure with FrontComponent wrapper
-    // The path will be '' here, but dynamic-routes.service will merge these children
-    // into the existing 'front' route
     return new_routes;
   }
 
@@ -239,7 +263,7 @@ export class NavItemsService {
     try {
       const all = await firstValueFrom(this.dbHandler.listNavItems());
       const prodItems = (all || []).filter((it: any) => it?.sandbox === false) as NavItem[];
-      
+
       // First, delete all existing sandbox items
       const sandboxItems = (all || []).filter((it: any) => it?.sandbox === true) as NavItem[];
       for (const item of sandboxItems) {

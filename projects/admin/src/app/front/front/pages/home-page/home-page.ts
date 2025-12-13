@@ -153,10 +153,10 @@ export class HomePage {
   }
 
 
-  onTournamentSelected(tournamentId: number) {
-    this.router.navigate(['/front/tournaments', tournamentId],
-      { relativeTo: this.route });
-  }
+  // onTournamentSelected(tournamentId: number) {
+  //   this.router.navigate(['/front/les_tournois/regularite', tournamentId],
+  //     { relativeTo: this.route });
+  // }
 
   ngOnDestroy(): void {
     this.rotationSub?.unsubscribe();

@@ -16,7 +16,8 @@ export class DynamicRoutesService {
    * Store routes locally and reset the Angular Router configuration so new routes are active immediately.
    * This ensures route `data` and other static bindings are available to routed components.
    */
-  setRoutes(routes: Routes): void {
+      setRoutes(routes: Routes): void {
+        console.debug('DynamicRoutesService.setRoutes called routesCount=' + (routes?.length ?? 0));
       this._routes = routes;
       try {
         // Merge the dynamic front routes into the existing router config instead of overwriting it.

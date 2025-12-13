@@ -6,7 +6,7 @@ import { CommonModule } from '@angular/common';
 import { NgbCarouselModule } from '@ng-bootstrap/ng-bootstrap';
 import { S3Item } from '../../common/interfaces/file.interface';
 import { Snippet } from '../../common/interfaces/page_snippet.interface';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 
 @Component({
@@ -27,7 +27,8 @@ export class AlbumComponent {
 
   constructor(
     private fileService: FileService,
-    private route: Router
+    private router: Router,
+    private route : ActivatedRoute
   ) { }
 
   ngOnInit() {
@@ -50,6 +51,7 @@ export class AlbumComponent {
   }
 
   openCarousel(index:number  ) {
-    this.route.navigate(['/front/albums', this.album.id, { startAt: index }]);
+    this.router.navigate(['.', this.album.id], { queryParams: { startAt: index, autoWrapped: true }, relativeTo: this.route });
   }
 }
+//{ startAt: index, autoWrapped: true } ,

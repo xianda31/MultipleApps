@@ -21,10 +21,32 @@ export function preloadFrontRoutes(
   sandboxService: SandboxService
 ) {
   return () => {
+    // Keep last applied signature per sandbox flag to avoid re-applying identical routes
+    const lastSignature: { [k: string]: string } = {};
+    const signatureOf = (routes: any): string => {
+      try {
+        // Build a small deterministic signature from the front subtree children paths
+        const subtree = (routes && routes[0] && routes[0].children) ? routes[0].children : routes;
+        const paths = (subtree || []).map((r: any) => r.path + '|' + (r.children ? JSON.stringify((r.children||[]).map((c:any)=>c.path)) : ''));
+        return paths.join('||');
+      } catch {
+        return String(routes?.length || 0);
+      }
+    };
+
     const applyRoutes = async (useSandbox: boolean) => {
       try {
+        console.debug(`preloadFrontRoutes: about to call getFrontRoutes useSandbox=${useSandbox}`);
         const routes = await firstValueFrom(navitemService.getFrontRoutes(useSandbox));
+        const sig = signatureOf(routes);
+        if (lastSignature[String(useSandbox)] === sig) {
+          console.debug('preloadFrontRoutes: identical routes signature, skipping setRoutes');
+          return;
+        }
+        lastSignature[String(useSandbox)] = sig;
+        console.debug('preloadFrontRoutes: got routes count=' + (routes?.length ?? 0));
         dynamicRoutesService.setRoutes(routes);
+        console.debug(`preloadFrontRoutes: setRoutes completed useSandbox=${useSandbox}`);
       } catch (err) {
         console.warn('preloadFrontRoutes failed for useSandbox=' + useSandbox, err);
         dynamicRoutesService.setRoutes(minimal_routes);

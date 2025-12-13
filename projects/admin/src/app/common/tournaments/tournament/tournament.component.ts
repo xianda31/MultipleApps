@@ -40,7 +40,7 @@ export class TournamentComponent implements OnInit {
   ngOnInit(): void {
 
     this.route.paramMap.subscribe(params => {
-      this.tteam_tournament_id = params.get('id') || '';
+      this.tteam_tournament_id = params.get('tournament_id') || '';
       this.TournamentService.getTournamentTeams(this.tteam_tournament_id)
         .subscribe((tteams) => {
           this.teams = tteams.teams;

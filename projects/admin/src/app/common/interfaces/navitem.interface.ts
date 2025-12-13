@@ -38,6 +38,7 @@ export interface NavItem {
     position: NAVITEM_POSITION;
     // runtime-only convenience, not persisted
     page_title?: string;
+    carousel? : boolean;
     // UI-only command for DirectCall; persisted as slug for compatibility
     command_name?: NAVITEM_COMMAND;
     // optional params
@@ -53,9 +54,6 @@ export interface NavItem {
 
 export type NavItem_input = Omit<Schema['NavItem']['type'], 'id' | 'createdAt' | 'updatedAt'>;
 
-
-// Ancienne structure :
-// export interface MenuStructure { [key: string]: { parent: NavItem, childs: NavItem[] } }
 
 // Nouvelle structure récursive pour n niveaux
 export interface MenuGroup {

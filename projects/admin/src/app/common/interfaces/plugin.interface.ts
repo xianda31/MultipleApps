@@ -7,16 +7,23 @@ import { Routes } from "@angular/router";
 import { ConnexionPageComponent } from "../authentification/connexion-page/connexion-page.component";
 import { IframeComponent } from "../../front/front/iframe/iframe";
 import { HomePage } from "../../front/front/pages/home-page/home-page";
+import { TournamentComponent } from "../tournaments/tournament/tournament.component";
+import { Carousel } from "../../front/carousel/carousel";
 
 export enum NAVITEM_PLUGIN {
-   TOURNAMENTS = 'tournaments',
-   SETTINGS = 'settings',
-   PURCHASES = 'purchases',
-   GAME_CARDS_OWNED = 'game_cards_owned',
-   AUTHENTICATION = 'authentication',
-   IFRAME = 'iframe',
-   HOME = 'homePage'
+  TOURNAMENTS = 'tournaments',
+  SETTINGS = 'settings',
+  PURCHASES = 'purchases',
+  GAME_CARDS_OWNED = 'game_cards_owned',
+  AUTHENTICATION = 'authentication',
+  IFRAME = 'iframe',
+  HOME = 'homePage',
 };
+
+export enum EMBEDDED_PLUGIN {
+  CAROUSEL='carousel',
+  TOURNAMENT = 'tournament',
+}
 
 // UI-level command catalog for DirectCall items
 export enum NAVITEM_COMMAND {
@@ -26,23 +33,17 @@ export enum NAVITEM_COMMAND {
 export enum LABEL_TRANSFORMERS {
   USERNAME = 'prénom_automatique',
 };
-export const PLUGINS: { [key in NAVITEM_PLUGIN]: Type<any> } = {
-    [NAVITEM_PLUGIN.TOURNAMENTS]: TournamentsComponent,
-    [NAVITEM_PLUGIN.SETTINGS]: SettingsComponent,
-    [NAVITEM_PLUGIN.PURCHASES]: PurchasesComponent,
-    [NAVITEM_PLUGIN.GAME_CARDS_OWNED]: GameCardsOwnedComponent,
-    [NAVITEM_PLUGIN.AUTHENTICATION]: ConnexionPageComponent,
-    [NAVITEM_PLUGIN.IFRAME]: IframeComponent, 
-    [NAVITEM_PLUGIN.HOME]: HomePage,
-
+export const PLUGINS: { [key in NAVITEM_PLUGIN | EMBEDDED_PLUGIN]: Type<any> } = {
+  [NAVITEM_PLUGIN.TOURNAMENTS]: TournamentsComponent,
+  [NAVITEM_PLUGIN.SETTINGS]: SettingsComponent,
+  [NAVITEM_PLUGIN.PURCHASES]: PurchasesComponent,
+  [NAVITEM_PLUGIN.GAME_CARDS_OWNED]: GameCardsOwnedComponent,
+  [NAVITEM_PLUGIN.AUTHENTICATION]: ConnexionPageComponent,
+  [NAVITEM_PLUGIN.IFRAME]: IframeComponent,
+  [NAVITEM_PLUGIN.HOME]: HomePage,
+  [EMBEDDED_PLUGIN.CAROUSEL]: Carousel,
+  [EMBEDDED_PLUGIN.TOURNAMENT]: TournamentComponent,
 };
 
-export function push_plugin_route(path: string, plugin: NAVITEM_PLUGIN) {
-  plugin_routes.push({ path: path, component: PLUGINS[plugin] });
-}
-
-export function reset_plugin_routes() {
-  plugin_routes.length = 0;
-}
 
 export const plugin_routes: Routes = [];

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, map, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, Observable, map, switchMap, tap, shareReplay } from 'rxjs';
 import { ToastService } from '../services/toast.service';
 import { DBhandler } from './graphQL.service';
 import { Page, Page_input } from '../interfaces/page_snippet.interface';
@@ -10,6 +10,7 @@ import { Page, Page_input } from '../interfaces/page_snippet.interface';
 export class PageService {
   private _pages: Page[] = [];
   private _pages$ = new BehaviorSubject<Page[]>([]);
+  private _pagesLoading$?: Observable<Page[]>;
 
   constructor(
     private toastService: ToastService,
@@ -37,14 +38,20 @@ export class PageService {
 
   // List
   listPages(): Observable<Page[]> {
-    const _listPages = this.dbHandler.listPages().pipe(
+    if (this._pages && this._pages.length > 0) return this._pages$.asObservable();
+    if (this._pagesLoading$) return this._pagesLoading$;
+
+    this._pagesLoading$ = this.dbHandler.listPages().pipe(
       map((pages: Page[]) => {
         this._pages = pages;
         this._pages$.next(pages);
+        return pages;
       }),
-      switchMap(() => this._pages$.asObservable())
+      tap(() => { this._pagesLoading$ = undefined; }),
+      shareReplay(1)
     );
-    return (this._pages && this._pages.length > 0) ? this._pages$.asObservable() : _listPages;
+
+    return this._pagesLoading$;
   }
 
   // Get one
