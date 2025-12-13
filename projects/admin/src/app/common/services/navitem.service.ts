@@ -6,7 +6,8 @@ import { MenuGroup, NavItem, NavItem_input, NAVITEM_TYPE, NAVITEM_POSITION } fro
 import { minimal_routes } from '../../front/front.routes';
 import { Routes } from '@angular/router';
 import { GenericPageComponent } from '../../front/front/pages/generic-page/generic-page.component';
-import { PLUGINS, NAVITEM_PLUGIN } from '../interfaces/plugin.interface';
+import { PLUGINS, NAVITEM_PLUGIN, PLUGINS_META } from '../interfaces/plugin.interface';
+import { BackAuthGuard } from '../../back-auth.guard';
 import { PageService } from './page.service';
 import { Page, PAGE_TEMPLATES } from '../interfaces/page_snippet.interface';
 import { Carousel } from '../../front/carousel/carousel';
@@ -77,39 +78,57 @@ export class NavItemsService {
           data: { page_title: ni.page_title }
         };
       }
-      if (ni.type === NAVITEM_TYPE.PLUGIN && ni.plugin_name === NAVITEM_PLUGIN.IFRAME) {
-        return {
+      if (ni.type === NAVITEM_TYPE.PLUGIN) {
+        const meta = ni.plugin_name ? PLUGINS_META[ni.plugin_name as string] : undefined;
+        const comp = PLUGINS[ni.plugin_name!];
+        const route: any = {
           path: ni.path,
-          component: PLUGINS[ni.plugin_name!],
-          data: { external_url: ni.external_url }
+          component: comp,
+          canActivate: meta?.requiresAuth ? [BackAuthGuard] : undefined
         };
+        if (meta?.requiresExternalUrl) {
+          route.data = { external_url: ni.external_url };
+        }
+        return route;
       }
-      // Autres plugins sans paramètres
-      const comp = PLUGINS[ni.plugin_name!];
-      return {
-        path: ni.path,
-        component: comp
-      };
-    });
+      return undefined as any;
+    }).filter((r): r is any => !!r);
 
-    // Add plugin  routes with dynamic parameters (not configurable via editor)if needed
-    const tournamentNavItems = navItems.filter(ni => ni.plugin_name === NAVITEM_PLUGIN.TOURNAMENTS || ni.plugin_name === NAVITEM_PLUGIN.HOME);
-    const tournanamentRoute = tournamentNavItems.length > 0
-      ? tournamentNavItems.map(tournamentNavItem => ({ path: tournamentNavItem.path + '/:tournament_id', component: PLUGINS.tournament}))
-      : [];
-    // Add carousel route with dynamic parameter if page's template is album 
-    const albumNavItems = navItems.filter(ni => ni.page_title && ni.carousel);
-    const carouselRoutes = albumNavItems.length > 0
-      ? albumNavItems.map(ani => ({ path: ani.path + '/:snippet_id', component: PLUGINS.carousel }))
-      : [];
+    
+    // Data-driven extra routes from plugin metadata
+    const extraRoutes: any[] = [];
+    for (const ni of navItems) {
+      if (!ni.plugin_name) continue;
+      const meta = PLUGINS_META[ni.plugin_name as string];
+      if (meta && meta.extraRoutes) {
+        for (const t of meta.extraRoutes) {
+          if (t.when === 'always' || (t.when === 'album' && !!ni.carousel)) {
+            const routeComponent = t.component ?? meta.component ?? PLUGINS[ni.plugin_name!];
+            extraRoutes.push({ path: ni.path + (t.suffix ?? ''), component: routeComponent, canActivate: meta?.requiresAuth ? [BackAuthGuard] : undefined });
+          }
+        }
+      }
+    }
+
+    // Drive album extra-routes via PLUGINS_META['PAGE_ALBUM'] when present
+    const pageAlbumMeta = PLUGINS_META['PAGE_ALBUM'];
+    if (pageAlbumMeta && pageAlbumMeta.extraRoutes) {
+      const albumNavs = navItems.filter(n => n.page_title && n.carousel);
+      for (const n of albumNavs) {
+        for (const t of pageAlbumMeta.extraRoutes) {
+          if (t.when === 'always') {
+            const routeComponent = t.component ?? pageAlbumMeta.component ?? PLUGINS['carousel'];
+            extraRoutes.push({ path: n.path + (t.suffix ?? ''), component: routeComponent });
+          }
+        }
+      }
+    }
 
     // Add default redirect only if BRAND exists
     const brandNavitem = navItems.find(ni => ni.position === NAVITEM_POSITION.BRAND);
-    const brandRoute = brandNavitem
-      ? [{ path: '', redirectTo: brandNavitem.path, pathMatch: 'full' as const }]
-      : [];
+    const brandRoute = brandNavitem ? [{ path: '', redirectTo: brandNavitem.path, pathMatch: 'full' as const }] : [];
 
-    const redirectRoute = [...tournanamentRoute, ...carouselRoutes, ...brandRoute];
+    const redirectRoute = [...extraRoutes, ...brandRoute];
 
     // Append minimal base routes after dynamic ones 
     const root = new_routes[0];

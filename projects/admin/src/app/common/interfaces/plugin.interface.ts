@@ -20,10 +20,19 @@ export enum NAVITEM_PLUGIN {
   HOME = 'homePage',
 };
 
-export enum EMBEDDED_PLUGIN {
-  CAROUSEL='carousel',
-  TOURNAMENT = 'tournament',
-}
+export type PluginRouteTemplate = {
+  suffix?: string; // appended to navitem.path
+  when?: 'always' | 'album' | 'none';
+  component?: Type<any>; // optional override for the extra route's component
+};
+
+export type PluginMeta = {
+  component?: Type<any>;
+  extraRoutes?: PluginRouteTemplate[];
+  providesBrand?: boolean;
+  requiresAuth?: boolean;
+  requiresExternalUrl?: boolean; // when true, route data will include external_url from navitem
+};
 
 // UI-level command catalog for DirectCall items
 export enum NAVITEM_COMMAND {
@@ -33,7 +42,7 @@ export enum NAVITEM_COMMAND {
 export enum LABEL_TRANSFORMERS {
   USERNAME = 'prénom_automatique',
 };
-export const PLUGINS: { [key in NAVITEM_PLUGIN | EMBEDDED_PLUGIN]: Type<any> } = {
+export const PLUGINS: Record<string, Type<any>> = {
   [NAVITEM_PLUGIN.TOURNAMENTS]: TournamentsComponent,
   [NAVITEM_PLUGIN.SETTINGS]: SettingsComponent,
   [NAVITEM_PLUGIN.PURCHASES]: PurchasesComponent,
@@ -41,9 +50,22 @@ export const PLUGINS: { [key in NAVITEM_PLUGIN | EMBEDDED_PLUGIN]: Type<any> } =
   [NAVITEM_PLUGIN.AUTHENTICATION]: ConnexionPageComponent,
   [NAVITEM_PLUGIN.IFRAME]: IframeComponent,
   [NAVITEM_PLUGIN.HOME]: HomePage,
-  [EMBEDDED_PLUGIN.CAROUSEL]: Carousel,
-  [EMBEDDED_PLUGIN.TOURNAMENT]: TournamentComponent,
+  ['carousel']: Carousel,
+  ['tournament']: TournamentComponent,
 };
 
+
+export const PLUGINS_META: Record<string, PluginMeta> = {
+  [NAVITEM_PLUGIN.TOURNAMENTS]: { component: TournamentComponent, extraRoutes: [{ suffix: '/:tournament_id', when: 'always' }], requiresAuth: false },
+  [NAVITEM_PLUGIN.SETTINGS]: { component: SettingsComponent, requiresAuth: true },
+  [NAVITEM_PLUGIN.PURCHASES]: { component: PurchasesComponent, requiresAuth: true },
+  [NAVITEM_PLUGIN.GAME_CARDS_OWNED]: { component: GameCardsOwnedComponent, requiresAuth: true },
+  [NAVITEM_PLUGIN.AUTHENTICATION]: { component: ConnexionPageComponent, requiresAuth: false },
+  [NAVITEM_PLUGIN.IFRAME]: { component: IframeComponent, requiresAuth: false, requiresExternalUrl: true },
+  [NAVITEM_PLUGIN.HOME]: { component: HomePage, providesBrand: true, extraRoutes: [{ suffix: '/:tournament_id', when: 'always', component: TournamentComponent }] },
+  // Special meta key to describe album pages (used when a navitem points to a PAGE with template ALBUMS)
+  ['PAGE_ALBUM']: { extraRoutes: [{ suffix: '/:snippet_id', when: 'always', component: Carousel }] },
+  ['carousel']: { component: Carousel, extraRoutes: [{ suffix: '/:snippet_id', when: 'album' }] },
+};
 
 export const plugin_routes: Routes = [];
