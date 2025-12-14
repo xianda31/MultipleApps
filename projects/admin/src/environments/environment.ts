@@ -6,8 +6,6 @@ export const environment = {
         sandbox_apid:'sandbox_apid_value',
     production_apid:'production_apid_value',
     back_guard: true,
-    active_menu_editor:false,
-    active_mailing: false,
     mailingCcEmail: 'xxxxx',
 
 

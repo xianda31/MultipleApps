@@ -112,8 +112,8 @@
           </a>
           <ul ngbDropdownMenu class="dropdown-menu">
             <!-- <li><a class="dropdown-item" routerLink="./site/thumbnails">vignettes</a></li> -->
-            <li *ngIf="active_menu_editor"><a class="dropdown-item" routerLink="./site/menus">les menus</a></li>
             <li><a class="dropdown-item" routerLink="./site/ui">paramètres UI</a></li>
+            <li ><a class="dropdown-item" routerLink="./site/menus">les menus</a></li>
             <li><a class="dropdown-item" routerLink="./site/pages">les pages</a></li>
             <li><a class="dropdown-item" routerLink="./site/disk">les données</a></li>
             <li><a class="dropdown-item" routerLink="/front">aller au site</a></li>
@@ -132,7 +132,7 @@
         </li>
 
         <!-- Mailing -->
-        <li class="nav-item ms-md-1 ms-sm-1" *ngIf="(accreditation_level >= accreditation_levels.Administrateur)&& active_mailing">
+        <li class="nav-item ms-md-1 ms-sm-1" *ngIf="(accreditation_level >= accreditation_levels.Administrateur)">
           <a class="nav-link" routerLink="./mailing">
             <i class="fs-4 bi-envelope-fill">
             </i>
@@ -266,6 +266,7 @@
           </div>
           <ul ngbDropdownMenu class="dropdown-menu">
             <li><a class="dropdown-item" routerLink="./site/ui" data-bs-dismiss="offcanvas">paramètres UI</a></li>
+            <li ><a class="dropdown-item" routerLink="./site/menus" data-bs-dismiss="offcanvas">les menus</a></li>
             <li><a class="dropdown-item" routerLink="./site/pages" data-bs-dismiss="offcanvas">les pages</a></li>
             <li><a class="dropdown-item" routerLink="./site/disk" data-bs-dismiss="offcanvas">les données</a></li>
             <li><a class="dropdown-item" routerLink="/front" data-bs-dismiss="offcanvas">aller au site</a></li>

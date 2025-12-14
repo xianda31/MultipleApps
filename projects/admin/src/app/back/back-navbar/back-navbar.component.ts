@@ -32,12 +32,9 @@ export class BackNavbarComponent implements OnInit {
   production_mode: boolean = false;
   user_accreditation: Accreditation | null = null;
   logged_member$: Observable<Member | null> = new Observable<Member | null>();
- 
+
   avatar$ !: Observable<string>;
-active_menu_editor : boolean = false;
-active_mailing : boolean = false;
-  // assistance$ !: Observable<AssistanceRequest[]>;
-  assistances_nbr : number = 0;
+  assistances_nbr: number = 0;
 
 
 
@@ -52,13 +49,9 @@ active_mailing : boolean = false;
 
   ngOnInit(): void {
 
-     this.assistanceService.getAllRequests().subscribe(requests => {
-       this.assistances_nbr = requests.filter(r => r.status !== REQUEST_STATUS.RESOLVED).length;
-     });
-
-      this.active_menu_editor = environment.active_menu_editor;
-      this.active_mailing = environment.active_mailing;
-
+    this.assistanceService.getAllRequests().subscribe(requests => {
+      this.assistances_nbr = requests.filter(r => r.status !== REQUEST_STATUS.RESOLVED).length;
+    });
 
     this.logged_member$ = this.auth.logged_member$;
 
@@ -70,7 +63,7 @@ active_mailing : boolean = false;
         // this.force_canvas_to_close();
 
         this.avatar$ = this.memberSettingsService.getAvatarUrl(member);
-        
+
         this.memberSettingsService.settingsChange$().subscribe(() => {
           this.avatar$ = this.memberSettingsService.getAvatarUrl(member);
         });
@@ -88,7 +81,7 @@ active_mailing : boolean = false;
   async signOut() {
     try {
       sessionStorage.clear();
-          this.accreditation_level = -1;
+      this.accreditation_level = -1;
 
       await this.auth.signOut();
     } catch (error) {

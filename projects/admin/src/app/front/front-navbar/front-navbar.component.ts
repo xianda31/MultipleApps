@@ -10,7 +10,6 @@ import { NgbDropdownModule, NgbCollapseModule } from '@ng-bootstrap/ng-bootstrap
 import { Observable } from 'rxjs';
 import { MemberSettingsService } from '../../common/services/member-settings.service';
 import { MenuStructure, NavItem, NAVITEM_LOGGING_CRITERIA, NAVITEM_POSITION, NAVITEM_TYPE } from '../../common/interfaces/navitem.interface';
-import { environment } from '../../../environments/environment';
 import { CommandRegistryService } from '../../common/services/command-registry.service';
 
 @Component({
@@ -35,7 +34,6 @@ export class FrontNavbarComponent {
   sidebarOpen = false;
   avatar$ !: Observable<string>;
 
-  active_menu_editor: boolean = false;
   logged: boolean = false;
   logged_member: Member | null = null;
   private labelCache = new Map<string, Promise<string>>();
@@ -55,8 +53,6 @@ export class FrontNavbarComponent {
 
   ) { }
   ngOnInit(): void {
-
-    this.active_menu_editor = environment.active_menu_editor;
 
     this.logged_member$ = this.auth.logged_member$;
 
