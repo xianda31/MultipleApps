@@ -7,10 +7,10 @@
                 </div>
                 <div class="card-body">
                     @for (snippet of snippets; track snippet.id) {
-                        <div class="" (click)="scrollTo(getAnchorId(snippet))" [class.fw-bold]="isSelected(snippet)">
-                            {{snippet.title}}
-                            @if (snippet.featured) {<span><i class="bi bi-star-fill text-info"></i></span>}
-                        </div>
+                    <div class="" (click)="scrollTo(getAnchorId(snippet))" [class.fw-bold]="isSelected(snippet)">
+                        {{snippet.title}}
+                        @if (snippet.featured) {<span><i class="bi bi-star-fill text-info"></i></span>}
+                    </div>
                     }
                 </div>
             </div>
@@ -20,21 +20,27 @@
         @for (snippet of snippets; track snippet.id) {
         <div class="col">
             <div class="card border-0 mt-1" id="{{getAnchorId(snippet)}}">
-                <div class="card-body">
-                    <div class="row flex-nowrap align-items-stretch snippet-block">
-                        <div class="col-5 d-flex align-items-center justify-content-start p-0">
-                            <img [src]="snippet.image_url" alt="{{snippet.title}}"
-                                class="img-fluid rounded-start snippet-img">
-                        </div>
-                        <div class="col-7 d-flex flex-column justify-content-center p-0">
-                            <div>
-                                <h3 class="card-title">{{snippet.title}}<div class="fs-5 text-muted">
-                                        {{snippet.subtitle}}</div>
-                                </h3>
-                                <small class="text-muted">Publié le {{snippet.createdAt | date:'shortDate'}}</small>
-                            </div>
-                        </div>
+
+                <div class="row flex-nowrap align-items-stretch snippet-header">
+                    <div class="col-4 col-md-5 d-flex align-items-center p-0">
+                        <img [src]="snippet.image_url" alt="{{snippet.title}}"
+                            class="img-fluid rounded-start snippet-img">
                     </div>
+                    <div class="col-8 col-md-7 d-flex flex-column justify-content-center p-0">
+                        <!-- <div class="card-body"> -->
+                            <h3 class="card-title">{{snippet.title}}
+                                <div class="fs-4 text-muted">
+                                    {{snippet.subtitle}}
+                                </div>
+                            </h3>
+                        <!-- </div> -->
+                    </div>
+                </div>
+
+                <div class="py-0 ms-1">
+                    <small class="card-text text-muted">publié le {{snippet.createdAt | date:'shortDate'}}</small>
+                </div>
+                <div class="card-body">
                     <div class="card-text mt-3 table-scroll">
                         <span class="card-text tighter-html" [innerHTML]="stringToSafeHtml(snippet.content)"
                             #textRef></span>

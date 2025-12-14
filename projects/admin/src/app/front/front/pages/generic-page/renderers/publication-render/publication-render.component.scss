@@ -15,7 +15,7 @@
 .main-content {
 	min-width: 0;
 }
-.snippet-block {
+.snippet-header {
 		border-bottom: 1px solid #dee2e6;
 		border-radius: 0 0 0.5rem 0.5rem;
 		background: #f8f9fa; // Bootstrap bg-light
@@ -41,7 +41,12 @@
 	width: auto;
 	max-width: 100%;
 	max-height: 100px; /* sensible default, can be overridden by [style.max-height.px] */
-	object-fit: contain;
+	object-fit: cover;
+	/* force the image to stick to the left inside the flex column */
+	margin-left: 0;
+	margin-right: auto;
+	object-position: left center;
+	align-self: flex-start;
 }
 
 /* Force tables inside rendered HTML ([innerHTML]) to be borderless and compact
