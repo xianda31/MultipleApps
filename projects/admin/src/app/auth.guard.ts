@@ -5,7 +5,7 @@ import { AuthentificationService } from './common/authentification/authentificat
 import { environment } from '../environments/environment';
 
 @Injectable({ providedIn: 'root' })
-export class BackAuthGuard implements CanActivate {
+export class AuthGuard implements CanActivate {
   constructor(private auth: AuthentificationService, private router: Router) {}
 
   canActivate(): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {

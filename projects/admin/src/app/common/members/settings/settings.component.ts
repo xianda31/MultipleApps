@@ -18,7 +18,6 @@ constructor(
   private location: Location
 )
    { 
-    console.log('SettingsComponent constructor');
    }
 
    ngOnInit(): void {

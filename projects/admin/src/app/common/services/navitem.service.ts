@@ -2,12 +2,12 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, firstValueFrom, map, of, switchMap, tap, first, combineLatest } from 'rxjs';
 import { ToastService } from './toast.service';
 import { DBhandler } from './graphQL.service';
-import { MenuGroup, NavItem, NavItem_input, NAVITEM_TYPE, NAVITEM_POSITION } from '../interfaces/navitem.interface';
+import { MenuGroup, NavItem, NavItem_input, NAVITEM_TYPE, NAVITEM_POSITION, NAVITEM_LOGGING_CRITERIA } from '../interfaces/navitem.interface';
 import { minimal_routes } from '../../front/front.routes';
 import { Routes } from '@angular/router';
 import { GenericPageComponent } from '../../front/front/pages/generic-page/generic-page.component';
 import { PLUGINS, NAVITEM_PLUGIN, PLUGINS_META } from '../interfaces/plugin.interface';
-import { BackAuthGuard } from '../../back-auth.guard';
+import { AuthGuard } from '../../auth.guard';
 import { PageService } from './page.service';
 import { Page, PAGE_TEMPLATES } from '../interfaces/page_snippet.interface';
 import { Carousel } from '../../front/carousel/carousel';
@@ -72,10 +72,12 @@ export class NavItemsService {
 
     const dynamicChildren = dynamicItems.map(ni => {
       if (ni.type === NAVITEM_TYPE.CUSTOM_PAGE) {
+        const needsAuth = ni.logging_criteria === NAVITEM_LOGGING_CRITERIA.LOGGED_ONLY ;
         return {
           path: ni.path,
           component: GenericPageComponent,
-          data: { page_title: ni.page_title }
+          data: { page_title: ni.page_title },
+          canActivate: needsAuth ? [AuthGuard] : undefined
         };
       }
       if (ni.type === NAVITEM_TYPE.PLUGIN) {
@@ -84,7 +86,7 @@ export class NavItemsService {
         const route: any = {
           path: ni.path,
           component: comp,
-          canActivate: meta?.requiresAuth ? [BackAuthGuard] : undefined
+          canActivate: meta?.requiresAuth ? [AuthGuard] : undefined
         };
         if (meta?.requiresExternalUrl) {
           route.data = { external_url: ni.external_url };
@@ -104,7 +106,7 @@ export class NavItemsService {
         for (const t of meta.extraRoutes) {
           if (t.when === 'always' || (t.when === 'album' && !!ni.carousel)) {
             const routeComponent = t.component ?? meta.component ?? PLUGINS[ni.plugin_name!];
-            extraRoutes.push({ path: ni.path + (t.suffix ?? ''), component: routeComponent, canActivate: meta?.requiresAuth ? [BackAuthGuard] : undefined });
+            extraRoutes.push({ path: ni.path + (t.suffix ?? ''), component: routeComponent, canActivate: meta?.requiresAuth ? [AuthGuard] : undefined });
           }
         }
       }
