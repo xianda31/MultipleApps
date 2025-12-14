@@ -16,7 +16,6 @@ import { LoadableRenderComponent } from './renderers/loadable-render/loadable-re
 import { CardsImgTopRenderComponent } from './renderers/cards-img-top-render/cards-img-top-render.component';
 import { CardsImgBottomRenderComponent } from './renderers/cards-img-bottom-render/cards-img-bottom-render.component';
 import { AlbumsRenderComponent } from './renderers/albums-render/albums-render.component';
-import { FlipperRenderComponent } from './renderers/flipper-render/flipper-render.component';
 import { CardsImgTopLeftRenderComponent } from './renderers/cards-img-top-left-render/cards-img-top-left-render.component';
 import { BreakpointsSettings } from '../../../../common/interfaces/ui-conf.interface';
 
@@ -34,7 +33,6 @@ import { BreakpointsSettings } from '../../../../common/interfaces/ui-conf.inter
     CardsImgTopLeftRenderComponent,
     CardsImgBottomRenderComponent,
     AlbumsRenderComponent,
-    FlipperRenderComponent
   ],
   templateUrl: './generic-page.component.html',
   styleUrl: './generic-page.component.scss'
@@ -56,7 +54,6 @@ export class GenericPageComponent implements OnInit, OnChanges {
     private snippetService: SnippetService,
     private pageService: PageService,
     private titleService: TitleService,
-    private memberService: MembersService,
     private router: Router,
     private renderer: Renderer2,
     private el: ElementRef,
