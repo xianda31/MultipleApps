@@ -17,9 +17,7 @@ export class GetAlbumComponent {
   selected_folder: string = '';
 
   constructor(
-    private activeModal: NgbActiveModal,
-    private fileService: FileService
-
+    private activeModal: NgbActiveModal
 
   ) { }
 

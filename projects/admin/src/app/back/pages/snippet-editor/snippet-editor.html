@@ -46,15 +46,12 @@
 
 
     <h6 class="mt-3"><i class="bi bi-gear-fill me-2"></i>Fichiers associés</h6>
-    <ng-container *ngIf="showImageSelector">
-        <ng-container *ngTemplateOutlet="imageSelector"></ng-container>
-    </ng-container>
 
     <!-- image url input -->
     <div class="form-label mb-0 mt-2">
-        Image associée :
+        Illustration :
         <span class="form-text">{{ form.get('image')?.value || 'aucune image' }}        </span>
-        <button type="button" class=" ms-1 btn btn-sm " (click)="openImageSelector()" >
+        <button type="button" class=" ms-1 btn btn-sm " (click)="openImageSelectorModal()" >
             <i class="h5 bi-folder2-open text-success"></i>
         </button>
     </div>
@@ -64,7 +61,7 @@
     <div class="form-label mb-0 mt-2">
         Fichier à télécharger :
         <span class="form-text">{{ form.get('file')?.value || 'aucun fichier' }}</span>
-        <button type="button" class="ms-1 btn btn-sm"  (click)="openFileSelector()">
+        <button type="button" class="ms-1 btn btn-sm"  (click)="openFileSelectorModal()">
             <i class="h5 bi-folder2-open text-success"></i>
         </button>
     </div>
@@ -74,146 +71,9 @@
     <div class="form-label mb-0 mt-2">
         Album photo :
         <span class="form-text">{{ form.get('folder')?.value || 'aucun dossier' }}</span>
-        <button type="button" class="ms-1 btn btn-sm" (click)="openFolderSelector()">
+        <button type="button" class="ms-1 btn btn-sm" (click)="openFolderSelectorModal()">
             <i class="h5 bi-folder2-open text-success"></i>
         </button>
     </div>
-
-
-
-    <!-- Simple offcanvas-like selector (no dependency on bootstrap JS) rendered from template for readability -->
-    <ng-template #imageSelector>
-        <div class="image-selector-backdrop" (click)="closeImageSelector()"></div>
-        <div class="image-selector-panel opened" role="dialog" aria-modal="true">
-            <div class="d-flex justify-content-between align-items-center p-2 border-bottom">
-                <strong>Choisir une image</strong>
-                <button type="button" class="btn btn-sm btn-outline-secondary" (click)="closeImageSelector()">Fermer</button>
-            </div>
-            <div class="p-2">
-                <ng-template #renderNode let-node let-prefix="prefix">
-                    <ul class="list-unstyled ms-1">
-                        <li *ngFor="let key of nodeKeys(node)">
-                            <ng-container *ngIf="isFolder(node, key); else fileEntry">
-                                <div class="d-flex align-items-center gap-2">
-                                    <button type="button" class="btn btn-sm btn-link p-0"
-                                        (click)="toggleExpanded((prefix? prefix + '/' : '') + key); $event.stopPropagation()">
-                                        <i
-                                            [class]="isExpanded((prefix? prefix + '/' : '') + key) ? 'bi bi-caret-down-fill' : 'bi bi-caret-right-fill'"></i>
-                                    </button>
-                                    <span class="fw-bold">{{ key }}</span>
-                                </div>
-                                <div *ngIf="isExpanded((prefix? prefix + '/' : '') + key)" class="ms-3">
-                                    <ng-container *ngIf="node[key]">
-                                        <ng-container
-                                            *ngTemplateOutlet="renderNode; context:{ $implicit: node[key], prefix: (prefix? prefix + '/' : '') + key }"></ng-container>
-                                    </ng-container>
-                                </div>
-                            </ng-container>
-                            <ng-template #fileEntry>
-                                <div class="image-thumb d-flex align-items-center gap-2"
-                                    (click)="selectImage(node[key].__data.path)">
-                                    <img [src]="(getItemByPath((prefix? prefix + '/' : '') + key)?.url$ | async)" alt=""
-                                        class="img-thumbnail" style="width:80px; height:60px; object-fit:cover;">
-                                    <div class="small text-truncate" style="max-width:120px">{{ key }}</div>
-                                </div>
-                            </ng-template>
-                        </li>
-                    </ul>
-                </ng-template>
-
-                <div *ngIf="fileSystemNodeImages">
-                    <ng-container
-                        *ngTemplateOutlet="renderNode; context:{ $implicit: fileSystemNodeImages, prefix: '' }"></ng-container>
-                </div>
-            </div>
-        </div>
-    </ng-template>
-    <!-- Folder selector template (albums) -->
-    <ng-template #folderSelector>
-        <div class="image-selector-backdrop" (click)="closeFolderSelector()"></div>
-        <div class="image-selector-panel opened" role="dialog" aria-modal="true">
-            <div class="d-flex justify-content-between align-items-center p-2 border-bottom">
-                <strong>Choisir un dossier</strong>
-                <button type="button" class="btn btn-sm btn-outline-secondary" (click)="closeFolderSelector()">Fermer</button>
-            </div>
-            <div class="p-2">
-                <ng-template #renderNodeFolder let-node let-prefix="prefix">
-                    <ul class="list-unstyled ms-1">
-                        <li *ngFor="let key of nodeKeys(node)">
-                            <ng-container *ngIf="isFolder(node, key)">
-                                <div class="d-flex align-items-center gap-2">
-                                    <button type="button" class="btn btn-sm btn-link p-0" (click)="toggleExpanded((prefix? prefix + '/' : '') + key); $event.stopPropagation()">
-                                        <i [class]="isExpanded((prefix? prefix + '/' : '') + key) ? 'bi bi-caret-down-fill' : 'bi bi-caret-right-fill'"></i>
-                                    </button>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <span class="fw-bold folder-entry">{{ key }}</span>
-                                        <button type="button" class="btn btn-sm btn-link p-0 text-success" (click)="selectFolder((prefix? prefix + '/' : '') + key); $event.stopPropagation()" title="Sélectionner le dossier">
-                                            <i class="bi bi-folder-check"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div *ngIf="isExpanded((prefix? prefix + '/' : '') + key)" class="ms-3">
-                                    <ng-container *ngIf="node[key]">
-                                        <ng-container *ngTemplateOutlet="renderNodeFolder; context:{ $implicit: node[key], prefix: (prefix? prefix + '/' : '') + key }"></ng-container>
-                                    </ng-container>
-                                </div>
-                            </ng-container>
-                        </li>
-                    </ul>
-                </ng-template>
-
-                <div *ngIf="fileSystemNodeFolders">
-                    <ng-container *ngTemplateOutlet="renderNodeFolder; context:{ $implicit: fileSystemNodeFolders, prefix: '' }"></ng-container>
-                </div>
-            </div>
-        </div>
-    </ng-template>
-    <!-- File selector template (documents) -->
-    <ng-template #fileSelector>
-        <div class="image-selector-backdrop" (click)="closeFileSelector()"></div>
-        <div class="image-selector-panel opened" role="dialog" aria-modal="true">
-            <div class="d-flex justify-content-between align-items-center p-2 border-bottom">
-                <strong>Choisir un fichier</strong>
-                <button type="button" class="btn btn-sm btn-outline-secondary" (click)="closeFileSelector()">Fermer</button>
-            </div>
-            <div class="p-2">
-                <ng-template #renderNodeFile let-node let-prefix="prefix">
-                    <ul class="list-unstyled ms-1">
-                        <li *ngFor="let key of nodeKeys(node)">
-                            <ng-container *ngIf="isFolder(node, key); else fileEntryFile">
-                                <div class="d-flex align-items-center gap-2">
-                                    <button type="button" class="btn btn-sm btn-link p-0"
-                                        (click)="toggleExpanded((prefix? prefix + '/' : '') + key); $event.stopPropagation()">
-                                        <i [class]="isExpanded((prefix? prefix + '/' : '') + key) ? 'bi bi-caret-down-fill' : 'bi bi-caret-right-fill'"></i>
-                                    </button>
-                                    <span class="fw-bold">{{ key }}</span>
-                                </div>
-                                <div *ngIf="isExpanded((prefix? prefix + '/' : '') + key)" class="ms-3">
-                                    <ng-container *ngIf="node[key]">
-                                        <ng-container *ngTemplateOutlet="renderNodeFile; context:{ $implicit: node[key], prefix: (prefix? prefix + '/' : '') + key }"></ng-container>
-                                    </ng-container>
-                                </div>
-                            </ng-container>
-                            <ng-template #fileEntryFile>
-                                <div class="image-thumb d-flex align-items-center gap-2" (click)="selectFile(node[key].__data.path)">
-                                    <div class="small text-truncate" style="max-width:320px">{{ (prefix? prefix + '/' : '') + key }}</div>
-                                </div>
-                            </ng-template>
-                        </li>
-                    </ul>
-                </ng-template>
-
-                <div *ngIf="fileSystemNodeFiles">
-                    <ng-container *ngTemplateOutlet="renderNodeFile; context:{ $implicit: fileSystemNodeFiles, prefix: '' }"></ng-container>
-                </div>
-            </div>
-        </div>
-    </ng-template>
-
-    <ng-container *ngIf="showFileSelector">
-        <ng-container *ngTemplateOutlet="fileSelector"></ng-container>
-    </ng-container>
-    <ng-container *ngIf="showFolderSelector">
-        <ng-container *ngTemplateOutlet="folderSelector"></ng-container>
-    </ng-container>
+    
 </form>

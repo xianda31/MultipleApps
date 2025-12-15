@@ -5,16 +5,16 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } 
 import { SnippetService } from '../../../common/services/snippet.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { SnippetModalEditorComponent } from '../../site/snippet-modal-editor/snippet-modal-editor.component';
-import { map, Observable } from 'rxjs';
 import { FileService, S3_ROOT_FOLDERS } from '../../../common/services/files.service';
 import { DomSanitizer } from '@angular/platform-browser';
+import { FileSystemSelectorComponent } from '../file-system-selector/file-system-selector.component';
 
 @Component({
   selector: 'app-snippet-editor',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, FormsModule],
   templateUrl: './snippet-editor.html',
-  styleUrl: './snippet-editor.scss'
+  styleUrls: ['./snippet-editor.scss']
 })
 export class SnippetEditor implements OnChanges {
   @Input() snippet: Snippet | null = null;
@@ -23,21 +23,8 @@ export class SnippetEditor implements OnChanges {
   form: FormGroup;
   saving = false;
 
-  file_paths$ !: Observable<string[]>;
-  albums$ !: Observable<string[]>;
-  // For graphical image selector
-  S3itemsImages: any[] = [];
-  fileSystemNodeImages: any = {};
-  // For graphical file selector (documents)
-  S3itemsFiles: any[] = [];
-  fileSystemNodeFiles: any = {};
-  showFileSelector = false;
-  // For graphical folder selector (albums)
-  S3itemsFolders: any[] = [];
-  fileSystemNodeFolders: any = {};
-  showFolderSelector = false;
-  showImageSelector = false;
-  expandedPaths = new Set<string>();
+  // selectors are opened as modals when needed
+  
 
   constructor(
     private snippetService: SnippetService,
@@ -61,26 +48,6 @@ export class SnippetEditor implements OnChanges {
   }
 
   ngOnInit(): void {
-    this.albums$ = this.fileService.list_folders(S3_ROOT_FOLDERS.ALBUMS + '/');
-    // also keep full items and generate filesystem for graphical selector
-    this.fileService.list_files(S3_ROOT_FOLDERS.IMAGES + '/').subscribe((items) => {
-      this.S3itemsImages = items;
-      this.fileSystemNodeImages = this.fileService.generate_filesystem(items);
-    });
-    // prepare documents filesystem for file selector
-    this.fileService.list_files(S3_ROOT_FOLDERS.DOCUMENTS + '/').subscribe((items) => {
-      this.S3itemsFiles = items;
-      this.fileSystemNodeFiles = this.fileService.generate_filesystem(items);
-    });
-    // prepare albums (folders) filesystem for folder selector
-    this.fileService.list_files(S3_ROOT_FOLDERS.ALBUMS + '/').subscribe((items) => {
-      this.S3itemsFolders = items;
-      this.fileSystemNodeFolders = this.fileService.generate_filesystem(items);
-    });
-    this.file_paths$ = this.fileService.list_files(S3_ROOT_FOLDERS.DOCUMENTS + '/').pipe(
-      map((S3items) => S3items.map(item => item.path))
-    );
-    // Met à jour l'image_url immédiatement quand l'input change
     this.form.get('image')?.valueChanges.subscribe((val) => {
       if (this.snippet) {
         this.snippet.image = val;
@@ -99,47 +66,47 @@ export class SnippetEditor implements OnChanges {
         }
       }
     });
-    // Input is now displayed as plain text and image selection is done via the graphical selector.
   }
 
-  // Image selector helpers
-  openImageSelector() { this.showImageSelector = true; }
-  closeImageSelector() { this.showImageSelector = false; }
-  // File selector helpers
-  openFileSelector() { this.showFileSelector = true; }
-  closeFileSelector() { this.showFileSelector = false; }
-  // Folder selector helpers
-  openFolderSelector() { this.showFolderSelector = true; }
-  closeFolderSelector() { this.showFolderSelector = false; }
-  
-  toggleExpanded(path: string) { if (this.expandedPaths.has(path)) this.expandedPaths.delete(path); else this.expandedPaths.add(path); }
-  isExpanded(path: string) { return this.expandedPaths.has(path); }
-  nodeKeys(node: any) { return node ? Object.keys(node).filter(k => k !== '__data') : []; }
-  getItemByPath(path: string) { return this.S3itemsImages.find((it: any) => it.path === path); }
-  isFolder(node: any, key: string): boolean {
-    const child = node && node[key];
-    if (!child) return false;
-    // folder if it has child keys other than __data or if its __data marks a folder (size === 0)
-    const childKeys = this.nodeKeys(child);
-    if (childKeys.length > 0) return true;
-    if (child.__data && child.__data.path && child.__data.size === 0) return true;
-    return false;
+  // Open selectors as NgbModal components and handle their events
+  openImageSelectorModal() {
+    const modalRef = this.modalService.open(FileSystemSelectorComponent as any, { size: 'lg', centered: true });
+    const cmp = modalRef.componentInstance as any;
+    cmp.rootFolder = S3_ROOT_FOLDERS.IMAGES + '/';
+    cmp.mode = 'files';
+    if (cmp.select && cmp.select.subscribe) cmp.select.subscribe((path: string) => { this.selectImage(path); modalRef.close(); });
+    if (cmp.close && cmp.close.subscribe) cmp.close.subscribe(() => modalRef.close());
   }
+
+  openFileSelectorModal() {
+    const modalRef = this.modalService.open(FileSystemSelectorComponent as any, { size: 'lg', centered: true });
+    const cmp = modalRef.componentInstance as any;
+    cmp.rootFolder = S3_ROOT_FOLDERS.DOCUMENTS + '/';
+    cmp.mode = 'files';
+    if (cmp.select && cmp.select.subscribe) cmp.select.subscribe((path: string) => { this.selectFile(path); modalRef.close(); });
+    if (cmp.close && cmp.close.subscribe) cmp.close.subscribe(() => modalRef.close());
+  }
+
+  openFolderSelectorModal() {
+    const modalRef = this.modalService.open(FileSystemSelectorComponent as any, { size: 'lg', centered: true });
+    const cmp = modalRef.componentInstance as any;
+    cmp.rootFolder = S3_ROOT_FOLDERS.ALBUMS + '/';
+    cmp.mode = 'folders';
+    if (cmp.select && cmp.select.subscribe) cmp.select.subscribe((path: string) => { this.selectFolder(path); modalRef.close(); });
+    if (cmp.close && cmp.close.subscribe) cmp.close.subscribe(() => modalRef.close());
+  }
+
   selectImage(path: string) {
     this.form.get('image')?.setValue(path);
-    // Update snippet preview and persist change immediately
     if (this.snippet) {
       this.snippet.image = path;
     }
-    this.closeImageSelector();
-    // trigger save so backend gets the new image path
     this.saveSnippetSelected();
   }
 
   selectFile(path: string) {
     this.form.get('file')?.setValue(path);
     if (this.snippet) { this.snippet.file = path; }
-    this.closeFileSelector();
     this.saveSnippetSelected();
   }
 
@@ -147,7 +114,6 @@ export class SnippetEditor implements OnChanges {
     // store folder path (no filename) into form and snippet
     this.form.get('folder')?.setValue(path);
     if (this.snippet) { this.snippet.folder = path; }
-    this.closeFolderSelector();
     this.saveSnippetSelected();
   }
 
