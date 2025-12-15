@@ -32,7 +32,7 @@
     <div class="col-12 col-sm-3">
       <div class="card border-0 mb-2">
         <div class="card-header justify-content-center align-items-center same-header-height d-flex">
-          <h6 class="mb-0">paragraphe(s)</h6>
+          <h6 class="mb-0">article(s)</h6>
         </div>
         <div class="card-body">
           <div cdkDropList [cdkDropListData]="pageSnippets" (cdkDropListDropped)="onDrop($event)" class="snippet-list">
@@ -58,7 +58,7 @@
 
             @if (selected_page.title !== '__CLIPBOARD__') {
             <div class="row align-items-center mb-2 justify-content-end">
-              <div class="col-auto">Ajouter un snippet :</div>
+              <div class="col-auto">Ajouter un article :</div>
               <div class="col-auto">
                 <button type="button" class="btn btn-sm btn-outline-success me-2" (click)="openAddSnippetModal()">
                   <i class="bi bi-plus-square-fill"></i>
@@ -86,8 +86,8 @@
     <div class="col-12 col-sm-3">
       @if (selected_snippet) {
       <div class="card border-0 mb-2">
-        <div class="card-header">
-          <h6 class="mb-0">Edition paragraphe</h6>
+        <div class="justify-content-center align-items-center same-header-height d-flex card-header">
+          <h6 class="mb-0">Edition article</h6>
         </div>
         <div class="card-body">
           <app-snippet-editor [snippet]="selected_snippet"></app-snippet-editor>

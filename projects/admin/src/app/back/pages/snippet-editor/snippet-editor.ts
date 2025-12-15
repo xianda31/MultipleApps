@@ -24,8 +24,12 @@ export class SnippetEditor implements OnChanges {
   saving = false;
 
   file_paths$ !: Observable<string[]>;
-  thumbnails$ !: Observable<string[]>;
   albums$ !: Observable<string[]>;
+  // For graphical image selector
+  S3itemsImages: any[] = [];
+  fileSystemNodeImages: any = {};
+  showImageSelector = false;
+  expandedPaths = new Set<string>();
 
   constructor(
     private snippetService: SnippetService,
@@ -50,9 +54,11 @@ export class SnippetEditor implements OnChanges {
 
   ngOnInit(): void {
     this.albums$ = this.fileService.list_folders(S3_ROOT_FOLDERS.ALBUMS + '/');
-    this.thumbnails$ = this.fileService.list_files(S3_ROOT_FOLDERS.IMAGES + '/').pipe(
-      map((S3items) => S3items.map(item => item.path))
-    );
+    // also keep full items and generate filesystem for graphical selector
+    this.fileService.list_files(S3_ROOT_FOLDERS.IMAGES + '/').subscribe((items) => {
+      this.S3itemsImages = items;
+      this.fileSystemNodeImages = this.fileService.generate_filesystem(items);
+    });
     this.file_paths$ = this.fileService.list_files(S3_ROOT_FOLDERS.DOCUMENTS + '/').pipe(
       map((S3items) => S3items.map(item => item.path))
     );
@@ -75,23 +81,34 @@ export class SnippetEditor implements OnChanges {
         }
       }
     });
-    // Continue to save on blur/Enter
-    const imageInput = document.querySelector('input[formControlName="image"]');
-    if (imageInput) {
-      imageInput.addEventListener('blur', () => {
-        if (this.snippet) {
-          this.snippet.image = this.form.get('image')?.value;
-          this.saveSnippetSelected();
-        }
-      });
-      imageInput.addEventListener('keydown', (event: Event) => {
-        const keyboardEvent = event as KeyboardEvent;
-        if (keyboardEvent.key === 'Enter' && this.snippet) {
-          this.snippet.image = this.form.get('image')?.value;
-          this.saveSnippetSelected();
-        }
-      });
+    // Input is now displayed as plain text and image selection is done via the graphical selector.
+  }
+
+  // Image selector helpers
+  openImageSelector() { this.showImageSelector = true; }
+  closeImageSelector() { this.showImageSelector = false; }
+  toggleExpanded(path: string) { if (this.expandedPaths.has(path)) this.expandedPaths.delete(path); else this.expandedPaths.add(path); }
+  isExpanded(path: string) { return this.expandedPaths.has(path); }
+  nodeKeys(node: any) { return node ? Object.keys(node).filter(k => k !== '__data') : []; }
+  getItemByPath(path: string) { return this.S3itemsImages.find((it: any) => it.path === path); }
+  isFolder(node: any, key: string): boolean {
+    const child = node && node[key];
+    if (!child) return false;
+    // folder if it has child keys other than __data or if its __data marks a folder (size === 0)
+    const childKeys = this.nodeKeys(child);
+    if (childKeys.length > 0) return true;
+    if (child.__data && child.__data.path && child.__data.size === 0) return true;
+    return false;
+  }
+  selectImage(path: string) {
+    this.form.get('image')?.setValue(path);
+    // Update snippet preview and persist change immediately
+    if (this.snippet) {
+      this.snippet.image = path;
     }
+    this.closeImageSelector();
+    // trigger save so backend gets the new image path
+    this.saveSnippetSelected();
   }
 
   ngOnChanges(changes: SimpleChanges) {

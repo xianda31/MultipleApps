@@ -5,3 +5,51 @@ table.test-table-tight > :not(caption) > * > * {
 	font-size: 0.95rem;        /* slightly smaller font */
 }
 
+/* Image selector offcanvas styles */
+.image-selector-backdrop {
+	position: fixed;
+	inset: 0;
+	background: rgba(0,0,0,0.45);
+	z-index: 1040;
+}
+
+/* Centered bottom sheet */
+.image-selector-panel {
+	position: fixed;
+	left: 50%;
+	bottom: 0;
+	transform: translate(-50%, 100%);
+	width: min(920px, 96%);
+	max-width: 96%;
+	height: 60vh;
+	background: #fff;
+	z-index: 1041;
+	box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.18);
+	overflow: auto;
+	border-radius: 0.5rem 0.5rem 0 0;
+	transition: transform 280ms cubic-bezier(.22,1,.36,1), opacity 200ms ease;
+	opacity: 0;
+	pointer-events: none;
+}
+.image-selector-panel.opened {
+	transform: translate(-50%, 0);
+	opacity: 1;
+	pointer-events: auto;
+}
+
+/* responsive: full height on small screens */
+@media (max-width: 576px) {
+	.image-selector-panel {
+		width: 100%;
+		left: 50%;
+		transform: translate(-50%, 100%);
+		max-width: 100%;
+		height: 80vh;
+		border-radius: 0.75rem 0.75rem 0 0;
+	}
+	.image-selector-panel.opened { transform: translate(-50%, 0); }
+}
+.image-thumb { cursor: pointer; text-align: center; }
+.image-thumb img { border-radius: 0.25rem; }
+
+
