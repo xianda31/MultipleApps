@@ -8,9 +8,8 @@
         <div class="card-header d-flex align-items-center justify-content-between">
           <form [formGroup]="pageForm" class="d-flex align-items-center gap-2">
             <label class="form-label mb-0" style="white-space: nowrap;">Titre :</label>
-            <input type="text" class="form-control form-control-sm" formControlName="title"
-              placeholder="Titre de la page" (blur)="savePage()" (keydown.enter)="savePage()"
-              [disabled]="is_clipboard_page">
+              <input type="text" class="form-control form-control-sm" formControlName="title"
+                placeholder="Titre de la page" (blur)="savePage()" (keydown.enter)="savePage()">
             <!-- <span *ngIf="is_clipboard_page" class="badge bg-info ms-2">Clipboard</span> -->
           </form>
           <form [formGroup]="pageForm" class="d-flex align-items-center gap-2">
@@ -90,7 +89,7 @@
           <h6 class="mb-0">Edition article</h6>
         </div>
         <div class="card-body">
-          <app-snippet-editor [snippet]="selected_snippet"></app-snippet-editor>
+          <app-snippet-editor [snippet]="selected_snippet" (saved)="onSnippetSaved($event)"></app-snippet-editor>
         </div>
       </div>
       }

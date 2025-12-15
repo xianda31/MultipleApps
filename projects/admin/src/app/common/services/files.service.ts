@@ -55,7 +55,9 @@ export class FileService {
           );
           subscriber.complete();
         })
-        .catch(error => subscriber.error(error));
+        .catch(error => {
+          console.log('%s listing %s', error, directory);
+          subscriber.error(error);});
     });
   }
 

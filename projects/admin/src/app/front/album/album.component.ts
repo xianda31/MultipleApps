@@ -17,9 +17,25 @@ import { ActivatedRoute, Router } from '@angular/router';
   styleUrl: './album.component.scss'
 })
 export class AlbumComponent {
-  @Input() album!: Snippet;
-  // photos$: Observable<S3Item[]> = new Observable<S3Item[]>();
+  private _album?: Snippet;
+  @Input()
+  set album(a: Snippet | undefined) {
+    const prevFolder = this._album?.folder;
+    this._album = a;
+    const currFolder = this._album?.folder;
+    if (!a || !currFolder || currFolder.trim() === '') {
+      this.photos = [];
+      this.loading = false;
+      return;
+    }
+    // If folder changed (or first set), reload photos
+    if (prevFolder !== currFolder) {
+      this.loadPhotos();
+    }
+  }
+  get album(): Snippet | undefined { return this._album; }
   photos!: S3Item[] ;
+  loading = true;
 
   getThumbnailUrl(originalUrl: string): string {
     return    S3_ROOT_FOLDERS.THUMBNAILS + '/' + originalUrl;
@@ -32,11 +48,24 @@ export class AlbumComponent {
   ) { }
 
   ngOnInit() {
-      this.fileService.list_files(this.album.folder + '/').pipe(
-        map((S3items) => S3items.filter(item => item.size !== 0)),
-        tap((items) => {if(items.length === 0) console.log('Album %s is empty', this.album.title);}),
-        switchMap((S3items) => {
-          return combineLatest(
+    // se protéger contre un folder vide
+    const folder = this._album?.folder;
+    if (!folder || folder.trim() === '') {
+      this.loading = false;
+    } else {
+      this.loadPhotos();
+    }
+  }
+
+  loadPhotos() {
+    this.loading = true;
+    const folder = this._album?.folder;
+    if (!folder) { this.photos = []; this.loading = false; return; }
+    this.fileService.list_files(folder + '/').pipe(
+      map((S3items) => S3items.filter(item => item.size !== 0)),
+      tap((items) => { if (items.length === 0) console.log('Album %s is empty', this._album?.title); }),
+      switchMap((S3items) => {
+        return combineLatest(
             S3items.map(item => this.fileService.getPresignedUrl$(this.getThumbnailUrl(item.path)))
           ).pipe(
             map(urls => {
@@ -47,11 +76,12 @@ export class AlbumComponent {
             }),
           );
         })
-      ).subscribe((items) => this.photos = items);
+      ).subscribe((items) => {  this.photos = items; this.loading = false; });
   }
 
   openCarousel(index:number  ) {
-    this.router.navigate(['.', this.album.id], { queryParams: { startAt: index, autoWrapped: true }, relativeTo: this.route });
+    const id = this._album?.id;
+    if (!id) return;
+    this.router.navigate(['.', id], { queryParams: { startAt: index, autoWrapped: true }, relativeTo: this.route });
   }
 }
-//{ startAt: index, autoWrapped: true } ,

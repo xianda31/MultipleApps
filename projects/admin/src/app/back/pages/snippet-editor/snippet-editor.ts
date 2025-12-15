@@ -28,6 +28,14 @@ export class SnippetEditor implements OnChanges {
   // For graphical image selector
   S3itemsImages: any[] = [];
   fileSystemNodeImages: any = {};
+  // For graphical file selector (documents)
+  S3itemsFiles: any[] = [];
+  fileSystemNodeFiles: any = {};
+  showFileSelector = false;
+  // For graphical folder selector (albums)
+  S3itemsFolders: any[] = [];
+  fileSystemNodeFolders: any = {};
+  showFolderSelector = false;
   showImageSelector = false;
   expandedPaths = new Set<string>();
 
@@ -59,6 +67,16 @@ export class SnippetEditor implements OnChanges {
       this.S3itemsImages = items;
       this.fileSystemNodeImages = this.fileService.generate_filesystem(items);
     });
+    // prepare documents filesystem for file selector
+    this.fileService.list_files(S3_ROOT_FOLDERS.DOCUMENTS + '/').subscribe((items) => {
+      this.S3itemsFiles = items;
+      this.fileSystemNodeFiles = this.fileService.generate_filesystem(items);
+    });
+    // prepare albums (folders) filesystem for folder selector
+    this.fileService.list_files(S3_ROOT_FOLDERS.ALBUMS + '/').subscribe((items) => {
+      this.S3itemsFolders = items;
+      this.fileSystemNodeFolders = this.fileService.generate_filesystem(items);
+    });
     this.file_paths$ = this.fileService.list_files(S3_ROOT_FOLDERS.DOCUMENTS + '/').pipe(
       map((S3items) => S3items.map(item => item.path))
     );
@@ -87,6 +105,13 @@ export class SnippetEditor implements OnChanges {
   // Image selector helpers
   openImageSelector() { this.showImageSelector = true; }
   closeImageSelector() { this.showImageSelector = false; }
+  // File selector helpers
+  openFileSelector() { this.showFileSelector = true; }
+  closeFileSelector() { this.showFileSelector = false; }
+  // Folder selector helpers
+  openFolderSelector() { this.showFolderSelector = true; }
+  closeFolderSelector() { this.showFolderSelector = false; }
+  
   toggleExpanded(path: string) { if (this.expandedPaths.has(path)) this.expandedPaths.delete(path); else this.expandedPaths.add(path); }
   isExpanded(path: string) { return this.expandedPaths.has(path); }
   nodeKeys(node: any) { return node ? Object.keys(node).filter(k => k !== '__data') : []; }
@@ -109,6 +134,28 @@ export class SnippetEditor implements OnChanges {
     this.closeImageSelector();
     // trigger save so backend gets the new image path
     this.saveSnippetSelected();
+  }
+
+  selectFile(path: string) {
+    this.form.get('file')?.setValue(path);
+    if (this.snippet) { this.snippet.file = path; }
+    this.closeFileSelector();
+    this.saveSnippetSelected();
+  }
+
+  selectFolder(path: string) {
+    // store folder path (no filename) into form and snippet
+    this.form.get('folder')?.setValue(path);
+    if (this.snippet) { this.snippet.folder = path; }
+    this.closeFolderSelector();
+    this.saveSnippetSelected();
+  }
+
+  onEnterSave(event: Event) {
+    event.preventDefault();
+    event.stopPropagation();
+    // ensure the form control value has been applied, run in next tick
+    setTimeout(() => this.saveSnippetSelected(), 0);
   }
 
   ngOnChanges(changes: SimpleChanges) {

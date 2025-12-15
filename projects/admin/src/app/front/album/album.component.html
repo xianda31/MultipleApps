@@ -1,7 +1,9 @@
 <div class="row justify-content-start align-items-center mt-3">
-    <div class="col-auto fw-bold">{{album.title}}</div>
-    <div class="col-auto text-muted"> {{album.subtitle}} </div>
-    <div class="col-auto">{{(photos)?.length}} photos</div>
+    <div class="col-auto fw-bold">{{album?.title}}</div>
+        <div class="col-auto text-muted"> {{album?.subtitle}} </div>
+    @if ( photos ) {
+    <div class="col-auto">{{(photos).length}} photos</div>
+    }
 </div>
 
 <div class="mt-1 row row-cols-3 row-cols-sm-3 row-cols-md-4 g-1 custom-row-cols-lg-10">
@@ -16,8 +18,12 @@
     </div>
     }
     } @else {
-        <div class="spinner-border text-secondary ms-5" role="status">
-        </div>
-        <span class="ms-2"> chargement de l'album...</span>
+    @if ( loading ) {
+    <div class="spinner-border text-secondary ms-5" role="status">
+    </div>
+    <span class="ms-2"> chargement de l'album...</span>
+    } @else {
+    <!-- <div class="text-muted">Aucune photo</div> -->
     }
-</div>  
+    }
+</div>
