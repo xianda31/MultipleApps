@@ -106,7 +106,17 @@ export class PageEditorComponent implements OnChanges {
     return this.selected_page.title;
   }
 
-
+  page_row_cols(page: Page): { SM: number; MD: number; LG: number; XL: number } {
+    // Define row_cols based on page template
+    switch (page.template) {
+      case PAGE_TEMPLATES.PUBLICATION:
+      case PAGE_TEMPLATES.CARDS_top:
+        case PAGE_TEMPLATES.SEQUENTIAL:
+        return { SM: 1, MD: 1, LG: 1, XL: 1 };
+      default:
+        return { SM: 1, MD: 1, LG: 2, XL: 3 };
+    }
+  }
 
   async savePage(): Promise<void> {
 
