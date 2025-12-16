@@ -154,7 +154,10 @@ export class SystemDataService {
           template: { logo_path: '', background_color: '#ffffff' },
           homepage: { tournaments_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 }, news_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 } },
           frontBannerEnabled: false,
-          homepage_intro: ''
+          homepage_intro: '',
+          email: { tagline: 'Votre club de bridge convivial et dynamique', ccEmail: '' },
+          card_thumbnails: [],
+          album_thumbnail: { width: 150, height: 150 }
         };
         console.error('[SystemDataService] fetch_ui_settings(): error fetching ui_settings', err);
         this._ui_settings = defaults;

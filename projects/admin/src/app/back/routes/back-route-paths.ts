@@ -1,3 +1,4 @@
+import { UploaderComponent } from "../files/uploader/uploader";
 
 // Chemins relatifs pour le routing Angular (back.routes.ts)
 export const BACK_ROUTE_PATHS = {
@@ -24,8 +25,9 @@ export const BACK_ROUTE_PATHS = {
   CloneDB: 'outils/cloneDB',
   CloneS3: 'outils/cloneS3',
   Snippets: 'site/thumbnails',
-  RootVolume: 'site/disk',
-  FilemgrWindows: 'site/disk/:root_folder',
+  RootVolume: 'outils/disk',
+  FilemgrWindows: 'outils/disk/:root_folder',
+  Uploader: 'site/uploader',
   PagesEditor: 'site/pages',
   PageEditor: 'site/pages-editor/:page_id',
   MenusEditor: 'site/menus',

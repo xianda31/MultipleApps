@@ -1,3 +1,4 @@
+
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
@@ -33,11 +34,16 @@ export class UiConfComponent implements OnInit {
       map((S3items) => S3items.map(item => item.path))
     );
 
-
     this.uiForm = this.fb.group({
       template: this.fb.group({
         logo_path: [''],
         background_color: ['#ffffff']
+      }),
+      card_thumbnails: this.fb.array([]),
+      album_thumbnail: this.fb.group({
+        width: [600],
+        height: [400],
+        ratio: [1.5]
       }),
       thumbnail: this.fb.group({
         width: [300],
@@ -56,19 +62,17 @@ export class UiConfComponent implements OnInit {
         LG: [4, [Validators.min(1), Validators.max(6)]],
         XL: [6, [Validators.min(1), Validators.max(6)]]
       }, { validators: this.breakpointsOrderValidator }),
-      // number of lines shown before showing a Read More link
+    
+      
       read_more_lines: [3, [Validators.min(0), Validators.max(20)]],
-      // whether hovering unfolds the card entirely
       unfold_on_hover: [false],
-      // hover delay in milliseconds before unfolding
       hover_unfold_delay_ms: [500, [Validators.min(0), Validators.max(10000)]],
-      // hover unfold animation duration (ms)
       hover_unfold_duration_ms: [300, [Validators.min(0), Validators.max(10000)]],
-      // homepage layout ratio: 1 = 6/6, 2 = 8/4
       home_layout_ratio: [2, [Validators.min(1), Validators.max(2)]],
+
+
       tournaments_type: this.fb.array([]),
       default_tournament_image: [''],
-      // `homepage` booleans removed from UI config; breakpoints stay editable at top-level form groups
       frontBannerEnabled: [false],
       homepage_intro: [''],
       email: this.fb.group({
@@ -88,6 +92,37 @@ export class UiConfComponent implements OnInit {
 
   get tournaments_type(): FormArray {
     return this.uiForm.get('tournaments_type') as FormArray;
+  }
+  get card_thumbnails(): FormArray {
+    return this.uiForm.get('card_thumbnails') as FormArray;
+  }
+
+    addCardThumbnail(width: number = 300, height: number = 200, ratio: number = 1.78) {
+    const group = this.fb.group({
+      width: [width, [Validators.min(50), Validators.max(2000)]],
+      height: [height, [Validators.min(50), Validators.max(2000)]],
+      ratio: [{ value: ratio, disabled: true }, [Validators.min(0.1), Validators.max(10)]]
+    });
+    // Met à jour le ratio automatiquement quand width ou height change
+    group.get('width')!.valueChanges.subscribe((w) => {
+      const h = group.get('height')!.value;
+      if (w != null && h != null && h > 0) {
+        group.get('ratio')!.setValue(Number((w / h).toFixed(2)), { emitEvent: false });
+      }
+    });
+    group.get('height')!.valueChanges.subscribe((h) => {
+      const w = group.get('width')!.value;
+      if (w != null && h != null && h > 0) {
+        group.get('ratio')!.setValue(Number((w / h).toFixed(2)), { emitEvent: false });
+      }
+    });
+    this.card_thumbnails.push(group);
+  }
+
+  removeCardThumbnail(i: number) {
+    if (this.card_thumbnails.length > 1) {
+      this.card_thumbnails.removeAt(i);
+    }
   }
 
   addTournamentType(key: string = '', image: string = '') {
@@ -236,6 +271,7 @@ export class UiConfComponent implements OnInit {
         delete (tournamentsType as any)[dk];
       }
     }
+
     this.uiForm.patchValue({
       template: {
         logo_path: template.logo_path ?? '',
@@ -273,6 +309,19 @@ export class UiConfComponent implements OnInit {
         tagline: ui?.email?.tagline ?? 'Votre club de bridge convivial et dynamique',
         ccEmail: ui?.email?.ccEmail ?? ''
       }
+    });
+
+    // Patch card_thumbnails array
+    const cardThumbs = Array.isArray(ui?.card_thumbnails) && ui.card_thumbnails.length
+      ? ui.card_thumbnails
+      : [{ width: 300, height: 200, ratio: 1.78 }];
+    const cardThumbsArray = this.uiForm.get('card_thumbnails') as FormArray;
+    cardThumbsArray.clear();
+    cardThumbs.forEach((thumb: any) => {
+      const width = Number(thumb.width) || 1;
+      const height = Number(thumb.height) || 1;
+      const ratio = Number((width / height).toFixed(2));
+      this.addCardThumbnail(width, height, ratio);
     });
 
     // populate tournaments_type form array
@@ -366,7 +415,6 @@ export class UiConfComponent implements OnInit {
 
       // Save UI settings into dedicated file and publish immediately
       // Debug: log tournaments_type payload to help diagnose persistence issues
-      console.log('Saving UI settings with email:', payload.email);
       await this.systemDataService.save_ui_settings(payload);
       // Refresh export blob so "Exporter" downloads the most recent saved state
       this.export_file_url = this.fileService.json_to_blob(payload);

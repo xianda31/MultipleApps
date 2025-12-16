@@ -10,7 +10,7 @@ export interface BreakpointsSettings {
 export interface ImageSize {
   width: number;
   height: number;
-  ratio: number;
+  // ratio?: number;
 }
 
 export interface UIConfiguration {
@@ -48,7 +48,8 @@ export interface UIConfiguration {
 
 
   // thumbnail sizing used by site image processing
-  thumbnail?: ImageSize;
+  card_thumbnails: ImageSize[];
+  album_thumbnail: ImageSize;
   // future UI settings can be added here
   [key: string]: any;
 }

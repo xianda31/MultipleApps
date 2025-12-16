@@ -2,6 +2,7 @@
   <h5>Paramétrage interface utilisateur</h5>
   <form [formGroup]="uiForm" (ngSubmit)="saveSettings()">
     <div class="row row-cols-1 row-cols-md-2 g-3">
+      <!-- section Accueil -->
       <div class="col">
         <div class="card h-100">
           <div class="card-title fw-bold fs-5 ms-2">page d'Accueil</div>
@@ -26,6 +27,11 @@
               *ngTemplateOutlet="breakpointsInputs; context: { groupName: 'tournaments_row_cols', label: 'Tournois par ligne' }"></ng-container>
             <ng-container
               *ngTemplateOutlet="breakpointsInputs; context: { groupName: 'news_row_cols', label: 'News par ligne' }"></ng-container>
+
+            <button type="button" class="btn btn-secondary btn-sm" (click)="previewSettings()"
+              [disabled]="uiForm.get('tournaments_row_cols')?.invalid">Aperçu</button>
+
+
 
             <div class="fw-bold fs-6">Paramètres de dépliage des news</div>
 
@@ -64,8 +70,8 @@
           </div>
         </div>
       </div>
+      <!-- vignettes tournois -->
       <div class="col">
-        <!-- Mapping editor for tournaments_type -->
         <div class="card h-100">
           <div class="card-title fw-bold fs-5 ms-2">Vignettes tournois</div>
           <div class="card-body">
@@ -125,41 +131,95 @@
           </div>
         </div>
       </div>
-      
-      <!-- Section Emails -->
+
       <div class="col">
+        <!-- Section Emails -->
         <div class="card h-100">
           <div class="card-title fw-bold fs-5 ms-2">Emails</div>
           <div class="card-body" formGroupName="email">
             <div class="mb-3">
               <label class="form-label">Accroche en-tête email</label>
-              <input type="text" class="form-control" formControlName="tagline" 
-                placeholder="Votre club de bridge convivial et dynamique"
-                autocomplete="organization-title"
+              <input type="text" class="form-control" formControlName="tagline"
+                placeholder="Votre club de bridge convivial et dynamique" autocomplete="organization-title"
                 name="email-tagline">
               <div class="small text-muted mt-1">Texte affiché sous le titre dans l'en-tête des emails</div>
             </div>
             <div class="mb-3">
               <label class="form-label">Email en copie (CC)</label>
-              <input type="email" class="form-control" formControlName="ccEmail" 
-                placeholder="exemple@domaine.fr"
-                autocomplete="email"
-                name="cc-email-address">
+              <input type="email" class="form-control" formControlName="ccEmail" placeholder="exemple@domaine.fr"
+                autocomplete="email" name="cc-email-address">
               <div class="small text-muted mt-1">Adresse email qui recevra une copie de tous les mailings</div>
             </div>
           </div>
         </div>
       </div>
+
+      <!-- Section images sizing -->
+      <div class="col">
+        <div class="card h-100">
+          <div class="card-title fw-bold fs-5 ms-2">Taille des vignettes images</div>
+          <div class="card-body">
+            <!-- <div class="row row-cols-1 row-cols-md-2 g-3"> -->
+              <div class="row">
+                <div class="d-flex align-items-center mb-2">
+                  <span class="fw-bold fs-6">Vignettes articles</span>
+                  <button type="button" class="btn btn-outline-success btn-sm ms-3" (click)="addCardThumbnail()">Ajouter une taille</button>
+                </div>
+                <div formArrayName="card_thumbnails">
+                  <div *ngFor="let thumb of card_thumbnails.controls; let i = index" [formGroupName]="i" class="mb-2 border rounded p-2">
+                    <div class="d-flex align-items-center gap-3">
+                      <span class="form-label mb-0 text-nowrap flex-shrink-0">Taille {{i+1}} :</span>
+                      <div class="input-group input-group-sm" style="max-width:10rem;">
+                        <span class="input-group-text">Largeur (px)</span>
+                        <input type="number" class="form-control form-control-sm text-center" formControlName="width" min="50" max="2000" />
+                      </div>
+                      <div class="input-group input-group-sm" style="max-width:10rem;">
+                        <span class="input-group-text">Hauteur (px)</span>
+                        <input type="number" class="form-control form-control-sm text-center" formControlName="height" min="50" max="2000" />
+                      </div>
+                      <div class="input-group input-group-sm" style="max-width:8rem;">
+                        <span class="input-group-text">Ratio</span>
+                        <input type="number" class="form-control form-control-sm text-center" formControlName="ratio" min="0.1" max="10" step="0.01" [disabled]="true" />
+                      </div>
+                      <button type="button" class="btn btn-outline-danger btn-sm ms-2" (click)="removeCardThumbnail(i)" [disabled]="card_thumbnails.length === 1">×</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="fw-bold fs-6 mb-2">Vignettes albums</div>
+                <div formGroupName="album_thumbnail">
+                  <div class="d-flex align-items-center gap-3 mb-2">
+                    <span class="form-label mb-0 text-nowrap flex-shrink-0">Taille :</span>
+                    <div class="input-group input-group-sm" style="max-width:10rem;">
+                      <span class="input-group-text">Largeur (px)</span>
+                      <input type="number" class="form-control form-control-sm text-center" formControlName="width"
+                        min="50" max="2000" />
+                    </div>
+                    <div class="input-group input-group-sm" style="max-width:10rem;">
+                      <span class="input-group-text">Hauteur (px)</span>
+                      <input type="number" class="form-control form-control-sm text-center" formControlName="height"
+                        min="50" max="2000" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <!-- </div> -->
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="col-12 d-flex gap-2 justify-content-end mt-2">
+    <!-- Import/Export/store Action buttons -->
+    <div class="col-12 d-flex gap-2 justify-content-end mt-2 bg-body-secondary p-2 rounded">
+
       <input type="file" accept="application/json" (change)="onImportFile($event)"
         class="form-control form-control-sm w-auto" />
-      <a [href]="export_file_url" download="ui_settings.json" class="btn btn-outline-secondary btn-sm">Exporter</a>
-      <small class="text-muted align-self-center ms-2">(exporte l'état chargé / aperçu / enregistré)</small>
-      <button type="button" class="btn btn-secondary btn-sm" (click)="previewSettings()"
-        [disabled]="uiForm.get('tournaments_row_cols')?.invalid">Aperçu</button>
-      <button type="submit" class="btn btn-secondary btn-sm"
+
+      <a [href]="export_file_url" download="ui_settings.json" class="btn btn-outline-success btn-sm">Export</a>
+
+      <small class="text-muted align-self-center ms-2">sauvegarde</small>
+      <button type="submit" class="btn btn-success btn-sm"
         [disabled]="uiForm.invalid || uiForm.get('tournaments_row_cols')?.invalid">Enregistrer</button>
     </div>
 

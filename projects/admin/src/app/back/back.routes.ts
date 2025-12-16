@@ -24,6 +24,7 @@ import { BackPageComponent } from './back-page/back-page.component';
 import { SnippetsComponent } from './site/snippets/snippets.component';
 import { PagesEditorComponent } from './pages/pages-editor/pages-editor.component';
 import { FilemgrWindowsComponent } from './files/filemgr/filemgr-windows.component';
+import { UploaderComponent } from './files/uploader/uploader';  
 import { RootVolumeComponent } from './files/root-volume/root-volume';
 import { AuthGuard } from '../auth.guard';
 import { MenusEditorComponent } from './menus/menus-editor/menus-editor';
@@ -64,13 +65,14 @@ export const routes: Routes = [
   { path: BACK_ROUTE_PATHS.SysConf, component: SysConfComponent, canActivate: [AuthGuard] },
   { path: BACK_ROUTE_PATHS.ImportExcel, component: ImportExcelComponent, canActivate: [AuthGuard] },
   { path: BACK_ROUTE_PATHS.GroupsList, component: GroupsListComponent, canActivate: [AuthGuard] },
+  { path: BACK_ROUTE_PATHS.RootVolume, component: RootVolumeComponent, canActivate: [AuthGuard] },
+  { path: BACK_ROUTE_PATHS.FilemgrWindows, component: FilemgrWindowsComponent, canActivate: [AuthGuard] },
   { path: BACK_ROUTE_PATHS.CloneDB, component: CloneDBComponent, canActivate: [AuthGuard] },
   { path: BACK_ROUTE_PATHS.CloneS3, component: CloneS3Component, canActivate: [AuthGuard] },
 
   { path: BACK_ROUTE_PATHS.Snippets, component: SnippetsComponent, canActivate: [AuthGuard] },
   { path: BACK_ROUTE_PATHS.UiConf, component: UiConfComponent, canActivate: [AuthGuard] },
-  { path: BACK_ROUTE_PATHS.RootVolume, component: RootVolumeComponent, canActivate: [AuthGuard] },
-  { path: BACK_ROUTE_PATHS.FilemgrWindows, component: FilemgrWindowsComponent, canActivate: [AuthGuard] },
+  {path: BACK_ROUTE_PATHS.Uploader, component: UploaderComponent, canActivate: [AuthGuard] },
   { path: BACK_ROUTE_PATHS.MenusEditor, component: MenusEditorComponent },
   { path: BACK_ROUTE_PATHS.PagesEditor, component: PagesEditorComponent, canActivate: [AuthGuard] },
   { path: BACK_ROUTE_PATHS.PageEditor, component: PagesEditorComponent, canActivate: [AuthGuard] },

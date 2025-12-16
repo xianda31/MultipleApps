@@ -1,25 +1,30 @@
 import { Component, Input, Output, EventEmitter, OnInit, ElementRef, Renderer2 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { FileService } from '../../../common/services/files.service';
+import { ToastService } from '../../../common/services/toast.service';
 
 @Component({
   selector: 'app-file-system-selector',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './file-system-selector.component.html',
   styleUrls: ['./file-system-selector.component.scss']
 })
 export class FileSystemSelectorComponent implements OnInit {
   @Input() rootFolder: string | null = null; // e.g. 'images/'
   @Input() mode: 'files' | 'folders' | 'both' = 'files';
+  @Input() allowCreateFolder: boolean = false;
   @Input() items: any[] | null = null;
   @Input() tree: any = null;
   @Output() select = new EventEmitter<string>();
   @Output() close = new EventEmitter<void>();
 
   expanded = new Set<string>();
+  showCreateFolder = false;
+  newFolderName: string = '';
 
-  constructor(private fileService: FileService, private el: ElementRef, private renderer: Renderer2) {}
+  constructor(private fileService: FileService, private el: ElementRef, private renderer: Renderer2, private toast: ToastService) {}
 
   ngOnInit(): void {
     try {
@@ -54,4 +59,33 @@ export class FileSystemSelectorComponent implements OnInit {
 
   onSelect(path: string) { this.select.emit(path); }
   onClose() { this.close.emit(); }
+
+  async createFolder() {
+    const name = (this.newFolderName || '').trim();
+    if (!name) {
+      this.toast.showErrorToast('Dossier', 'Nom de dossier requis');
+      return;
+    }
+    if (!this.rootFolder) {
+      this.toast.showErrorToast('Dossier', 'Racine non définie');
+      return;
+    }
+    // Ensure trailing slash on folder marker
+    const folderMarkerName = name.endsWith('/') ? name : name + '/';
+    try {
+      const file = new File([new Blob([])], folderMarkerName);
+      await this.fileService.upload_file(file, this.rootFolder);
+      this.toast.showSuccess('Dossier', 'Dossier créé');
+      // refresh listing
+      this.fileService.list_files(this.rootFolder).subscribe((items) => {
+        this.items = items;
+        this.tree = this.fileService.generate_filesystem(items);
+        this.newFolderName = '';
+        this.showCreateFolder = false;
+      });
+    } catch (err) {
+      console.error('createFolder error', err);
+      this.toast.showErrorToast('Dossier', 'Erreur création dossier');
+    }
+  }
 }

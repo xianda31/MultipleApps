@@ -4,9 +4,20 @@
     <strong *ngIf="mode==='files'">Choisir un fichier</strong>
     <strong *ngIf="mode==='folders'">Choisir un dossier</strong>
     <strong *ngIf="mode==='both'">Choisir un élément</strong>
-    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="onClose()">Fermer</button>
+    <div class="d-flex align-items-center gap-2">
+      <div *ngIf="mode !== 'files' && allowCreateFolder" class="d-flex align-items-center gap-2">
+        <button type="button" class="btn btn-sm btn-outline-success" (click)="showCreateFolder = !showCreateFolder">Nouveau dossier</button>
+      </div>
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="onClose()">Fermer</button>
+    </div>
   </div>
   <div class="p-2">
+    <div *ngIf="showCreateFolder && allowCreateFolder" class="mb-2">
+      <div class="input-group input-group-sm">
+        <input type="text" class="form-control form-control-sm" placeholder="Nom du dossier" [(ngModel)]="newFolderName">
+        <button type="button" class="btn btn-sm btn-primary" (click)="createFolder()">Créer</button>
+      </div>
+    </div>
     <ng-template #renderNode let-node let-prefix="prefix">
       <ul class="list-unstyled ms-1">
         <li *ngFor="let key of nodeKeys(node)">

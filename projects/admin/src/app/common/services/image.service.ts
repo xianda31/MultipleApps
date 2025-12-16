@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { SystemDataService } from './system-data.service';
 import { ImageSize } from '../interfaces/ui-conf.interface';
-import { Image } from 'exceljs';
 
 @Injectable({
   providedIn: 'root'
@@ -15,7 +14,8 @@ export class ImageService {
   ) {
     // thumbnail sizing now stored in UI settings
     this.systemDataService.get_ui_settings().subscribe((ui) => {
-      const thumb = (ui as any)?.thumbnail || { width: 300, height: 200, ratio: 1.78 };
+      let thumb = (ui as any)?.thumbnail || { width: 300, height: 200, ratio: 1.78 };
+      // thumb.ratio = thumb.width / thumb.height;
       this.thumbnailSize = thumb;
       this.album_thumbnailSize = thumb;
     });
@@ -39,7 +39,7 @@ export class ImageService {
 
     if (imgRatio >= 1) { // LANDSCAPE
       // 1. Crop centré au ratio sizing.ratio
-      const targetRatio = sizing.ratio;
+      const targetRatio = sizing.width/sizing.height;
       let cropWidth = width;
       let cropHeight = height;
       let sx = 0, sy = 0;
@@ -62,7 +62,7 @@ export class ImageService {
     } else { // PORTRAIT
       if (!both) {
         // 1. Rogner au centre pour obtenir le ratio 1/sizing.ratio
-        const targetRatio = 1 / sizing.ratio;
+        const targetRatio = 1 / (sizing.width / sizing.height);
         let cropWidth = width;
         let cropHeight = height;
         let sx = 0, sy = 0;
