@@ -32,112 +32,70 @@
                     </div>
                 </div>
 
-                <div class="row g-2 align-items-center mb-2">
-                    <div class="col-5">
-                        <div class="card p-2">
-                            <div class="card-body d-flex align-items-center justify-content-between">
-                                <div>
-                                    <h5 class="card-text mb-0">
-                                        Fichiers locaux:
-                                        <span>
-                                            <button type="button" class="btn btn-sm"
-                                                (click)="triggerFileDialog(targetRoot)" title="Choisir des fichiers">
-                                                <i class="h5 bi-files text-success"></i>
-                                            </button>
-                                        </span>
-                                    </h5>
-                                    <div *ngIf="(filesByRoot[targetRoot] || []).length === 0" class="small text-muted">
-                                        {{ (filesByRoot[targetRoot] || []).length }}
-                                        fichier(s)</div>
-                                    <ul *ngIf="(filesByRoot[targetRoot] || []).length > 0"
-                                        class="list-unstyled small mb-0">
+                <div class="row justify-content-between align-items-center mb-2 g-3">
+
+                    <div class="mt-2">
+                        <div class=" d-flex align-items-start justify-content-between">
+                            <div class="col">
+                                <h5 class=" mb-0">
+                                    Fichiers à uploader&nbsp;:
+                                    <span>
+                                        <button type="button" class="btn btn-sm" (click)="triggerFileDialog(targetRoot)"
+                                            title="Choisir des fichiers">
+                                            <i class="h5 bi-files text-success"></i>
+                                        </button>
+                                    </span>
+                                </h5>
+                                <div *ngIf="(filesByRoot[targetRoot] || []).length > 0" class="small text-muted">
+                                    <ul class="list-unstyled small mb-0">
                                         <li *ngFor="let f of filesByRoot[targetRoot]">{{ f.name }}</li>
                                     </ul>
-                                    <!-- Prévisualisation des images sélectionnées -->
-                                    <div *ngIf="(previewImagesByRoot[targetRoot]?.length ?? 0) > 0"
-                                        class="d-flex flex-wrap gap-2 mt-2">
-                                        <div *ngFor="let url; let i = index of previewImagesByRoot[targetRoot]">
-                                            <ng-container
-                                                *ngIf="previewImagesMetaByRoot[targetRoot] && previewImagesMetaByRoot[targetRoot][i] as meta">
-                                                <div class="border p-1 rounded bg-light position-relative"
-                                                    style="min-width:130px;">
-                                                    <img [src]="url" alt="preview"
-                                                        style="max-width: 120px; max-height: 80px; border-radius: 4px; border: 1px solid #ccc; display:block; margin:auto;" />
-                                                    <div class="small text-center mt-1">
-                                                        {{meta.width}}x{{meta.height}} | {{meta.sizeKB}} Ko
-                                                    </div>
-                                                    <button type="button"
-                                                        class="btn btn-outline-primary btn-sm position-absolute top-0 end-0 m-1"
-                                                        [class.active]="meta.selected"
-                                                        (click)="togglePreviewImageSelection(targetRoot, i, false)">
-                                                        <i class="bi"
-                                                            [ngClass]="meta.selected ? 'bi-check-square-fill' : 'bi-square' "></i>
-                                                    </button>
-                                                </div>
-                                            </ng-container>
-                                        </div>
-                                    </div>
-                                    <!-- Prévisualisation des images allégées générées localement -->
-                                    <div *ngIf="(previewLighterImagesByRoot[targetRoot]?.length ?? 0) > 0"
-                                        class="d-flex flex-wrap gap-2 mt-2">
-                                        <div *ngFor="let url; let i = index of previewLighterImagesByRoot[targetRoot]">
-                                            <ng-container
-                                                *ngIf="previewLighterImagesMetaByRoot[targetRoot] && previewLighterImagesMetaByRoot[targetRoot][i] as meta">
-                                                <div class="border p-1 rounded bg-light position-relative"
-                                                    style="min-width:130px;">
-                                                    <img [src]="url" alt="allégée"
-                                                        style="max-width: 120px; max-height: 80px; border-radius: 4px; border: 1px solid #aaa; opacity: 0.8; display:block; margin:auto;" />
-                                                    <div class="small text-center mt-1">
-                                                        {{meta.width}}x{{meta.height}} | {{meta.sizeKB}} Ko
-                                                    </div>
-                                                    <button type="button"
-                                                        class="btn btn-outline-primary btn-sm position-absolute top-0 end-0 m-1"
-                                                        [class.active]="meta.selected"
-                                                        (click)="togglePreviewImageSelection(targetRoot, i, true)">
-                                                        <i class="bi"
-                                                            [ngClass]="meta.selected ? 'bi-check-square-fill' : 'bi-square' "></i>
-                                                    </button>
-                                                </div>
-                                            </ng-container>
-                                        </div>
-                                    </div>
                                 </div>
+                                <input type="file" id="file-input-{{targetRoot}}" style="display:none"
+                                    [accept]="acceptFilter(targetRoot)" (change)="onFilesSelected($event, targetRoot)"
+                                    multiple>
                             </div>
-                            <input type="file" id="file-input-{{targetRoot}}" style="display:none"
-                                [accept]="acceptFilter(targetRoot)" (change)="onFilesSelected($event, targetRoot)"
-                                multiple>
+                            <div class="col">
+                                <ng-container *ngIf="(previewImagesByRoot[targetRoot]?.length ?? 0) > 0">
+                                    <ng-container *ngTemplateOutlet="previewImagesTpl"></ng-container>
+                                </ng-container>
+
+                            </div>
+                            <div class="col">
+                                <ng-container *ngIf="(previewLighterImagesByRoot[targetRoot]?.length ?? 0) > 0">
+                                    <ng-container *ngTemplateOutlet="previewLighterImagesTpl"></ng-container>
+                                </ng-container>
+                            </div>
+
                         </div>
                     </div>
 
-                    <div class="col-2 d-flex flex-column align-items-center justify-content-center">
-                        <button type="button" class="btn btn-success" (click)="uploadAllFor(targetRoot)"
-                            [disabled]="uploading">
-                            <i class="bi bi-cloud-upload"></i>
-                            Charger</button>
-                        <div *ngIf="uploading" class="spinner-border spinner-border-sm text-primary mt-2" role="status">
-                        </div>
-                    </div>
+                    <div class="mt-2">
+                        <div class=" d-flex align-items-center justify-content-between">
+                            <div class="align-items-center mb-0">
+                                <h5 class="d-flex align-items-center gap-2 mb-0">
+                                    <span>Dossier web&nbsp;:</span>
+                                    <span class="text-muted">{{ targetFolderByRoot[targetRoot] || 'définir le dossier'
+                                        }}</span>
+                                    <button type="button" class="btn btn-sm d-flex align-items-center gap-1"
+                                        (click)="chooseFolder(targetRoot)" title="Choisir dossier cible">
+                                        <i class="h5 bi-folder text-success mb-0"></i>
+                                    </button>
+                                </h5>
+                            </div>
 
-                    <div class="col-5">
-                        <div class="card p-2">
-                            <div class="card-body d-flex align-items-center justify-content-between">
-                                <div>
-                                    <h5 class="card-text mb-0">
-                                        Dossier web cible :
-                                        <span>
-                                            <button type="button" class="btn btn-sm" (click)="chooseFolder(targetRoot)"
-                                                title="Choisir dossier cible">
-                                                <i class="h5 bi-folder text-success"></i>
-                                            </button>
-                                        </span>
-
-                                    </h5>
-                                    <div class="form-text">{{ targetFolderByRoot[targetRoot] || 'aucun dossier' }}
-                                    </div>
+                            <div class="col-2 d-flex flex-column align-items-center justify-content-center">
+                                <button type="button" class="btn btn-success" (click)="uploadAllFor(targetRoot)"
+                                    [disabled]="uploading">
+                                    <i class="bi bi-cloud-upload"></i>
+                                    Charger</button>
+                                <div *ngIf="uploading" class="spinner-border spinner-border-sm text-primary mt-2"
+                                    role="status">
                                 </div>
                             </div>
                         </div>
                     </div>
+                    <!-- </div> -->
                 </div>
             </div>
         </div>
@@ -165,3 +123,54 @@
     </div>
 
 </div>
+<!-- Prévisualisation des images sélectionnées -->
+<ng-template #previewImagesTpl>
+    <h6>images originales</h6>
+    <div class="d-flex flex-wrap gap-2 mt-2">
+        <div *ngFor="let url; let i = index of previewImagesByRoot[targetRoot]">
+            <ng-container *ngIf="previewImagesMetaByRoot[targetRoot] && previewImagesMetaByRoot[targetRoot][i] as meta">
+                <div class="border p-1 rounded bg-light position-relative" style="min-width:130px;">
+                    <img [src]="url" alt="preview"
+                        style="max-width: 120px; max-height: 80px; border-radius: 4px; border: 1px solid #ccc; display:block; margin:auto;" />
+                    <div class="small text-center mt-1">
+                        {{meta.width}}x{{meta.height}} |
+                        <span>
+                            {{ (meta.width >= meta.height ? (meta.width/meta.height) : (meta.height/meta.width)) | number:'1.1-1':'en' }}
+                        </span>
+                        | {{meta.sizeKB}} Ko
+                    </div>
+                    <button type="button" class="btn btn-outline-primary btn-sm position-absolute top-0 end-0 m-1"
+                        [class.active]="meta.selected" (click)="togglePreviewImageSelection(targetRoot, i, false)">
+                        <i class="bi" [ngClass]="meta.selected ? 'bi-check-square-fill' : 'bi-square' "></i>
+                    </button>
+                </div>
+            </ng-container>
+        </div>
+    </div>
+</ng-template>
+
+<!-- Prévisualisation des images allégées générées localement -->
+<ng-template #previewLighterImagesTpl>
+    <h6>images allégées</h6>
+    <div class="d-flex flex-wrap gap-2 mt-2">
+        <div *ngFor="let url; let i = index of previewLighterImagesByRoot[targetRoot]">
+            <ng-container *ngIf="previewLighterImagesMetaByRoot[targetRoot] && previewLighterImagesMetaByRoot[targetRoot][i] as meta">
+                <div class="border p-1 rounded bg-light position-relative" style="min-width:130px;">
+                    <img [src]="url" alt="allégée"
+                        style="max-width: 120px; max-height: 80px; border-radius: 4px; border: 1px solid #aaa; display:block; margin:auto;" />
+                    <div class="small text-center mt-1">
+                        {{meta.width}}x{{meta.height}} |
+                        <span>
+                            {{ (meta.width >= meta.height ? (meta.width/meta.height) : (meta.height/meta.width)) | number:'1.1-1':'en' }}
+                        </span>
+                        | {{meta.sizeKB}} Ko
+                    </div>
+                    <button type="button" class="btn btn-outline-primary btn-sm position-absolute top-0 end-0 m-1"
+                        [class.active]="meta.selected" (click)="togglePreviewImageSelection(targetRoot, i, true)">
+                        <i class="bi" [ngClass]="meta.selected ? 'bi-check-square-fill' : 'bi-square' "></i>
+                    </button>
+                </div>
+            </ng-container>
+        </div>
+    </div>
+</ng-template>

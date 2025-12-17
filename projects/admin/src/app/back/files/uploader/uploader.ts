@@ -117,21 +117,16 @@ export class UploaderComponent {
       const lighterMetas: Array<{ width: number, height: number, sizeKB: number, selected: boolean }> = [];
       for (const file of files) {
         if (!file.type.startsWith('image/')) continue;
-        const dim = await this.imgService.imageDimensions(file);
-        if (!dim) continue;
-        const sizes = this.select_new_sizes(dim);
-        for (const size of sizes) {
-          const lighterFile = await this.createLightenFile(file, size);
-          if (lighterFile) {
-            const url = URL.createObjectURL(lighterFile);
-            lighterUrls.push(url);
-            lighterMetas.push({
-              width: size.width,
-              height: size.height,
-              sizeKB: Math.round(lighterFile.size / 1024),
-              selected: true
-            });
-          }
+        const lighterFiles = await this.imgService.createLighterFiles(file, this.card_img_sizes);
+        for (const { file: lighterFile, size } of lighterFiles) {
+          const url = URL.createObjectURL(lighterFile);
+          lighterUrls.push(url);
+          lighterMetas.push({
+            width: size.width,
+            height: size.height,
+            sizeKB: Math.round(lighterFile.size / 1024),
+            selected: true
+          });
         }
       }
       this.previewLighterImagesByRoot[key] = lighterUrls;
@@ -194,7 +189,7 @@ export class UploaderComponent {
         this.uploadedItems.push({ path, size: f.size, url });
         // Génère et upload les images allégées uniquement pour IMAGES
         if ((root ?? this.targetRoot) === S3_ROOT_FOLDERS.IMAGES) {
-          const lighterFiles = await this.createLighterFiles(f);
+          const lighterFiles = await this.imgService.createLighterFiles(f, this.card_img_sizes);
           let lighterMetaArr = this.previewLighterImagesMetaByRoot[key];
           if (lighterMetaArr && lighterMetaArr.length > 0) {
             const filteredLighterFiles = lighterFiles.filter((_, i) => lighterMetaArr[i]?.selected);
@@ -221,75 +216,11 @@ export class UploaderComponent {
     }
   }
 
-  async createLighterFiles(file: File): Promise<Array<{ file: File, size: ImageSize }>> {
-    const original_dimensions = await this.imgService.imageDimensions(file);
-    if (!original_dimensions) return [];
-    
-    const new_sizes : ImageSize[] = this.select_new_sizes(original_dimensions);
-    const lighterFiles: Array<{ file: File, size: ImageSize }> = [];
-    for (const size of new_sizes) {
-      const lighterFile = await this.createLightenFile(file, size);
-      if (lighterFile) {
-        lighterFiles.push({ file: lighterFile, size });
-      }
-    }
-    return lighterFiles;
-  }
-
-   select_new_sizes(original_dimensions: { width: number; height: number }): ImageSize[] {
-    // On compare toujours les ratios dans le même sens (portrait avec portrait, paysage avec paysage)
-    const isPortrait = original_dimensions.height > original_dimensions.width;
-    const original_ratio = original_dimensions.width / original_dimensions.height;
-
-    // Génère dynamiquement les tailles portrait à partir des tailles landscape si besoin
-    let candidateSizes: ImageSize[] = this.card_img_sizes;
-    if (isPortrait) {
-      const portraitSizes = this.card_img_sizes.map((s: ImageSize) => ({ width: s.height, height: s.width, ratio: +(s.height / s.width).toFixed(2) }));
-      candidateSizes = [...this.card_img_sizes, ...portraitSizes].filter((s, idx, arr) =>
-        arr.findIndex(t => t.width === s.width && t.height === s.height) === idx
-      );
-    }
-
-    let bestSize: ImageSize | null = null;
-    let bestDelta = Number.POSITIVE_INFINITY;
-    // 1. Essayer d'abord de trouver la meilleure taille de même orientation
-    for (const size of candidateSizes) {
-      const sizeIsPortrait = size.height > size.width;
-      if (isPortrait !== sizeIsPortrait) continue;
-      const sizeW = size.width;
-      const sizeH = size.height;
-      if (sizeW < original_dimensions.width && sizeH < original_dimensions.height) {
-        const sizeRatio = sizeW / sizeH;
-        const delta = Math.abs(sizeRatio - original_ratio) / original_ratio;
-        if (delta <= 0.1 && delta < bestDelta) {
-          bestDelta = delta;
-          bestSize = size;
-        }
-      }
-    }
-    if (bestSize) return [bestSize];
-    // 2. Si aucune taille de même orientation, proposer la taille la plus proche (toutes orientations)
-    bestSize = null;
-    bestDelta = Number.POSITIVE_INFINITY;
-    for (const size of candidateSizes) {
-      const sizeW = size.width;
-      const sizeH = size.height;
-      if (sizeW < original_dimensions.width && sizeH < original_dimensions.height) {
-        const sizeRatio = sizeW / sizeH;
-        const delta = Math.abs(sizeRatio - original_ratio) / original_ratio;
-        if (delta < bestDelta) {
-          bestDelta = delta;
-          bestSize = size;
-        }
-      }
-    }
-    return bestSize ? [bestSize] : [];
-  }
 
   // Génère une version allégée d'une image (suffixe w x h) via ImgService
   async createLightenFile(file: File, size: ImageSize): Promise<File | null> {
     if (!size) return null;
-    return this.imgService.createLightenFile(file, size.width, size.height);
+    return await this.imgService.createLightenFile(file, size.width, size.height);
   }
 
   triggerFileDialog(root: string) {
