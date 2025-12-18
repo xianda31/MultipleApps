@@ -45,12 +45,12 @@ export class UploaderComponent {
 
       this.data_usage = {
         [S3_ROOT_FOLDERS.IMAGES]: [
-          'Images ou photos (jpg, png, gif) utilisées en illustration dans les articles.',
-          `Des versions reformatées de ratio (${this.card_img_sizes.map(s => (s.width / s.height).toFixed(2)).join(', ')}) et résolution optimisés pour le web sont automatiquement créées en sus.`
+          'Images ou photos (jpg, png, gif) utilisées en illustration dans les articles, ou le carousel de la page d\'acceuil.',
+          `Des versions reformatées de ratio (${this.card_img_sizes.map(s => (s.width / s.height).toFixed(2)).join(', ')}) et résolution optimisés pour le web sont automatiquement créées en sus.`,
+          'nota : les images originales sont conservées telles quelles ; à utiliser pour le carousel d\'accueil par exemple.'
         ],
         [S3_ROOT_FOLDERS.ALBUMS]: [
           'Photos en haute résolution (jpg, png), format et résolution originaux, pour les albums photos',
-          'Elles sontregroupées sous un même dossier web et exploitées par carousel',
           'nota : des vignettes pour le preview des dossiers albums sont générées automatiquement.'
         ],
         [S3_ROOT_FOLDERS.DOCUMENTS]: [
@@ -187,20 +187,43 @@ export class UploaderComponent {
           url = await this.fileService.getPresignedUrl$(path).toPromise();
         } catch {}
         this.uploadedItems.push({ path, size: f.size, url });
-        // Génère et upload les images allégées uniquement pour IMAGES
-        if ((root ?? this.targetRoot) === S3_ROOT_FOLDERS.IMAGES) {
+        // Génère et upload les images allégées pour IMAGES et ALBUMS
+        const currentRoot = (root ?? this.targetRoot);
+        if (currentRoot === S3_ROOT_FOLDERS.IMAGES || currentRoot === S3_ROOT_FOLDERS.ALBUMS) {
           const lighterFiles = await this.imgService.createLighterFiles(f, this.card_img_sizes);
           let lighterMetaArr = this.previewLighterImagesMetaByRoot[key];
           if (lighterMetaArr && lighterMetaArr.length > 0) {
             const filteredLighterFiles = lighterFiles.filter((_, i) => lighterMetaArr[i]?.selected);
             for (let i = 0; i < filteredLighterFiles.length; i++) {
               const { file: lighterFile, size } = filteredLighterFiles[i];
-              await this.fileService.upload_file(lighterFile, tf);
+              // Pour ALBUMS, upload dans THUMBNAILS, en gardant le même chemin relatif et le nom original (pas de suffixe)
+              let lighterTargetFolder = tf;
+              let lighterFileToUpload = lighterFile;
+              let lighterFileName = lighterFile.name;
+              if (currentRoot === S3_ROOT_FOLDERS.ALBUMS) {
+                // tf commence par le chemin sélectionné sous ALBUMS, il faut le remplacer par THUMBNAILS/albums/
+                // Ex: tf = 'albums/2025/vacances/' => lighterTargetFolder = 'thumbnails/albums/2025/vacances/'
+                const albumsPrefix = S3_ROOT_FOLDERS.ALBUMS + '/';
+                const thumbnailsPrefix = S3_ROOT_FOLDERS.THUMBNAILS + '/albums/';
+                if (tf.startsWith(albumsPrefix)) {
+                  lighterTargetFolder = thumbnailsPrefix + tf.substring(albumsPrefix.length);
+                } else {
+                  // fallback: just replace root
+                  lighterTargetFolder = tf.replace(S3_ROOT_FOLDERS.ALBUMS, S3_ROOT_FOLDERS.THUMBNAILS+ '/albums/');
+                }
+                // Renommer le fichier allégé pour qu'il ait le même nom que l'original
+                lighterFileName = f.name;
+                // Créer un nouveau File avec le nom original si besoin
+                if (lighterFile.name !== lighterFileName) {
+                  lighterFileToUpload = new File([lighterFile], lighterFileName, { type: lighterFile.type });
+                }
+              }
+              await this.fileService.upload_file(lighterFileToUpload, lighterTargetFolder);
               let url: string | undefined = undefined;
               try {
-                url = await this.fileService.getPresignedUrl$(tf + lighterFile.name).toPromise();
+                url = await this.fileService.getPresignedUrl$(lighterTargetFolder + lighterFileName).toPromise();
               } catch {}
-              this.uploadedItems.push({ path: tf + lighterFile.name, size: lighterFile.size, url });
+              this.uploadedItems.push({ path: lighterTargetFolder + lighterFileName, size: lighterFileToUpload.size, url });
               this.toast.showSuccess('Uploader', `Image allégée (${size.width}x${size.height}) créée et téléchargée avec succès`);
             }
           }

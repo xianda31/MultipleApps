@@ -58,8 +58,6 @@ export class SnippetModalEditorComponent implements AfterViewInit {
   ngAfterViewInit(): void {
 
     const initialData = this.htmlToEditorJsBlocks(this.snippet.content);     // Convertit le HTML initial en blocks EditorJS
-    console.log('Snippet Content:', this.snippet.content);
-    console.log('Initial Data:', initialData);
 
     this.editor = new EditorJS(
       {
@@ -108,7 +106,6 @@ export class SnippetModalEditorComponent implements AfterViewInit {
 
       let snippet = { ...this.snippet };
       snippet.content = html; // On persiste la chaîne HTML brute, PAS l'objet SafeHtml
-      console.log('Final Snippet to Save:', snippet.content);
       this.activeModal.close(snippet);
     } catch (error) {
       console.error('Error saving snippet:', error);

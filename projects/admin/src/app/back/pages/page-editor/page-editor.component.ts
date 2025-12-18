@@ -1,3 +1,4 @@
+
 import { Component, Input, OnChanges, SimpleChanges, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -66,6 +67,7 @@ export class PageEditorComponent implements OnChanges {
       this.loadPage();
     }
   }
+
 
   loadPage(): void {
     const page = this.pageService.getPage(this.pageId);
@@ -238,23 +240,28 @@ export class PageEditorComponent implements OnChanges {
     }
   }
 
-  // Handler for snippet-editor saved output: update local lists and active selection
-  onSnippetSaved(updatedSnippet: Snippet) {
-    if (!updatedSnippet) return;
-    // update pageSnippets array entry if present — replace with new object and refresh array reference
-    const idx = this.pageSnippets.findIndex(s => s.id === updatedSnippet.id);
-    if (idx > -1) {
-      this.pageSnippets[idx] = { ...updatedSnippet } as Snippet;
-      this.pageSnippets = this.pageSnippets.slice(); // refresh reference for change detection
-    }
-    // also update global snippets list and selected_snippet
-    const globalIdx = this.snippets.findIndex(s => s.id === updatedSnippet.id);
-    if (globalIdx > -1) {
-      this.snippets[globalIdx] = { ...updatedSnippet } as Snippet;
-      this.snippets = this.snippets.slice();
-    }
-    if (this.selected_snippet && this.selected_snippet.id === updatedSnippet.id) {
-      this.selected_snippet = { ...updatedSnippet };
-    }
+      // Remplace le snippet modifié par une nouvelle référence pour forcer la détection de changement dans la stack
+  onSnippetSaved(updated: Snippet) {
+    this.pageSnippets = this.pageSnippets.map(s => s.id === updated.id ? { ...s, ...updated } : s);
   }
+
+  // Handler for snippet-editor saved output: update local lists and active selection
+  // onSnippetSaved(updatedSnippet: Snippet) {
+  //   if (!updatedSnippet) return;
+  //   // update pageSnippets array entry if present — replace with new object and refresh array reference
+  //   const idx = this.pageSnippets.findIndex(s => s.id === updatedSnippet.id);
+  //   if (idx > -1) {
+  //     this.pageSnippets[idx] = { ...updatedSnippet } as Snippet;
+  //     this.pageSnippets = this.pageSnippets.slice(); // refresh reference for change detection
+  //   }
+  //   // also update global snippets list and selected_snippet
+  //   const globalIdx = this.snippets.findIndex(s => s.id === updatedSnippet.id);
+  //   if (globalIdx > -1) {
+  //     this.snippets[globalIdx] = { ...updatedSnippet } as Snippet;
+  //     this.snippets = this.snippets.slice();
+  //   }
+  //   if (this.selected_snippet && this.selected_snippet.id === updatedSnippet.id) {
+  //     this.selected_snippet = { ...updatedSnippet };
+  //   }
+  // }
 }

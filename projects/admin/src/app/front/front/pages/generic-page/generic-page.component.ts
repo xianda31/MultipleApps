@@ -1,3 +1,4 @@
+
 import { Component, Input, Renderer2, ElementRef, OnChanges, SimpleChanges, OnInit } from '@angular/core';
 import { map, switchMap, tap } from 'rxjs';
 import { Router } from '@angular/router';
@@ -62,6 +63,7 @@ export class GenericPageComponent implements OnInit, OnChanges {
 
 
   ngOnChanges(changes: SimpleChanges): void {
+
     if (changes['page_title'] && !changes['page_title'].firstChange) {
       this.filter_PageSnippets(this.page_title);
     }
@@ -72,6 +74,13 @@ export class GenericPageComponent implements OnInit, OnChanges {
         this.scroll_to_snippet = snippet;
       }
     }
+  }
+    // Appelé lors de la sauvegarde d'un snippet (par exemple via (saved) du snippet-editor)
+  onSnippetSaved(updated: Snippet) {
+    // Remplace uniquement le snippet modifié dans page_snippets (nouvelle référence)
+    this.page_snippets = this.page_snippets.map(s =>
+      s.id === updated.id ? { ...s, ...updated } : s
+    );
   }
 
   ngOnInit(): void {

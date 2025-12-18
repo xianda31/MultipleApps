@@ -25,7 +25,6 @@ export class SnippetEditor implements OnChanges {
 
   // selectors are opened as modals when needed
   
-
   constructor(
     private snippetService: SnippetService,
     private modalService: NgbModal,
@@ -115,6 +114,12 @@ export class SnippetEditor implements OnChanges {
     this.form.get('folder')?.setValue(path);
     if (this.snippet) { this.snippet.folder = path; }
     this.saveSnippetSelected();
+    // Force refresh/emit for parent or view update
+    setTimeout(() => {
+      if (typeof this.saved !== 'undefined' && this.saved.emit) {
+        this.saved.emit({ ...this.snippet, ...this.form.value });
+      }
+    }, 0);
   }
 
   onEnterSave(event: Event) {
@@ -145,7 +150,15 @@ export class SnippetEditor implements OnChanges {
   async saveSnippetSelected() {
     if (!this.snippet) return;
     if (this.saving) return;
-    const payload: any = { ...this.snippet, ...this.form.value };
+    // Patch publishedAt to yyyy-MM-dd if present
+    let formValue = { ...this.form.value };
+    if (formValue.publishedAt) {
+      // Only keep yyyy-MM-dd part if value is ISO string
+      if (typeof formValue.publishedAt === 'string' && formValue.publishedAt.length > 10) {
+        formValue.publishedAt = formValue.publishedAt.substring(0, 10);
+      }
+    }
+    const payload: any = { ...this.snippet, ...formValue };
     this.saving = true;
     try {
       const updatedSnippet = await this.snippetService.updateSnippet(payload);

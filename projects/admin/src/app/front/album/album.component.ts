@@ -1,6 +1,6 @@
-import { combineLatest } from 'rxjs';
-import { map, switchMap, tap } from 'rxjs/operators';
-import { Component, Input } from '@angular/core';
+import { combineLatest, of } from 'rxjs';
+import { map, switchMap, tap, catchError } from 'rxjs/operators';
+import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { FileService, S3_ROOT_FOLDERS } from '../../common/services/files.service';
 import { CommonModule } from '@angular/common';
 import { NgbCarouselModule } from '@ng-bootstrap/ng-bootstrap';
@@ -16,24 +16,9 @@ import { ActivatedRoute, Router } from '@angular/router';
   templateUrl: './album.component.html',
   styleUrl: './album.component.scss'
 })
-export class AlbumComponent {
-  private _album?: Snippet;
-  @Input()
-  set album(a: Snippet | undefined) {
-    const prevFolder = this._album?.folder;
-    this._album = a;
-    const currFolder = this._album?.folder;
-    if (!a || !currFolder || currFolder.trim() === '') {
-      this.photos = [];
-      this.loading = false;
-      return;
-    }
-    // If folder changed (or first set), reload photos
-    if (prevFolder !== currFolder) {
-      this.loadPhotos();
-    }
-  }
-  get album(): Snippet | undefined { return this._album; }
+export class AlbumComponent implements OnChanges {
+  @Input() album?: Snippet;
+  private lastLoadedFolder?: string;
   photos!: S3Item[] ;
   loading = true;
 
@@ -48,39 +33,64 @@ export class AlbumComponent {
   ) { }
 
   ngOnInit() {
-    // se protéger contre un folder vide
-    const folder = this._album?.folder;
+    this.checkAndLoadPhotos();
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['album']) {
+      this.checkAndLoadPhotos();
+    }
+  }
+
+  private checkAndLoadPhotos() {
+    const folder = this.album?.folder;
     if (!folder || folder.trim() === '') {
+      this.photos = [];
       this.loading = false;
-    } else {
+      this.lastLoadedFolder = undefined;
+      return;
+    }
+    if (folder !== this.lastLoadedFolder) {
+      this.lastLoadedFolder = folder;
       this.loadPhotos();
     }
   }
 
   loadPhotos() {
     this.loading = true;
-    const folder = this._album?.folder;
+    const folder = this.album?.folder;
     if (!folder) { this.photos = []; this.loading = false; return; }
     this.fileService.list_files(folder + '/').pipe(
       map((S3items) => S3items.filter(item => item.size !== 0)),
-      tap((items) => { if (items.length === 0) console.log('Album %s is empty', this._album?.title); }),
+      tap((items) => { if (items.length === 0) console.log('Album %s is empty', this.album?.title); }),
       switchMap((S3items) => {
+        if (!S3items.length) return of(S3items);
         return combineLatest(
-            S3items.map(item => this.fileService.getPresignedUrl$(this.getThumbnailUrl(item.path)))
+            S3items.map(item => this.fileService.getPresignedUrl$(this.getThumbnailUrl(item.path)).pipe(
+              catchError(() => of(undefined))
+            ))
           ).pipe(
-            map(urls => {
+            map((urls: (string | undefined)[]) => {
               S3items.forEach((item, index) => {
-                item.url = (urls[index]); 
+                item.url = urls[index];
               });
               return S3items;
-            }),
+            })
           );
-        })
-      ).subscribe((items) => {  this.photos = items; this.loading = false; });
+      }),
+      catchError((err: any) => {
+        // 404 or other error: fallback to empty
+        console.warn('Erreur lors du chargement des photos de l\'album', err);
+        this.photos = [];
+        this.loading = false;
+        return of([] as S3Item[]);
+      })
+    )
+    .subscribe((items: S3Item[]) => {  this.photos = items; this.loading = false; });
   }
 
   openCarousel(index:number  ) {
-    const id = this._album?.id;
+    const id = this.album?.id;
     if (!id) return;
     this.router.navigate(['.', id], { queryParams: { startAt: index, autoWrapped: true }, relativeTo: this.route });
   }
