@@ -1,55 +1,58 @@
-<div class="image-selector-backdrop" (click)="onClose()"></div>
-<div class="image-selector-panel opened" role="dialog" aria-modal="true">
-  <div class="d-flex justify-content-between align-items-center p-2 border-bottom">
-    <strong *ngIf="mode==='files'">Choisir un fichier</strong>
-    <strong *ngIf="mode==='folders'">Choisir un dossier</strong>
-    <strong *ngIf="mode==='both'">Choisir un élément</strong>
-    <div class="d-flex align-items-center gap-2">
-      <div *ngIf="mode !== 'files' && allowCreateFolder" class="d-flex align-items-center gap-2">
-        <button type="button" class="btn btn-sm btn-outline-success" (click)="showCreateFolder = !showCreateFolder">Nouveau dossier</button>
+<div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true" style="background:rgba(0,0,0,0.35);">
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header d-flex align-items-center">
+        <h5 class="modal-title">
+          <span *ngIf="mode==='files'">Choisir un fichier</span>
+          <span *ngIf="mode==='folders'">Choisir un dossier</span>
+          <span *ngIf="mode==='both'">Choisir un élément</span>
+        </h5>
+        <div *ngIf="mode !== 'files' && allowCreateFolder" class="d-flex align-items-center gap-2 ms-3">
+          <button type="button" class="btn btn-sm btn-outline-success" (click)="showCreateFolder = !showCreateFolder">Nouveau dossier</button>
+        </div>
+        <button type="button" class="btn-close ms-auto" aria-label="Fermer" (click)="onClose()"></button>
       </div>
-      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="onClose()">Fermer</button>
-    </div>
-  </div>
-  <div class="p-2">
-    <div *ngIf="showCreateFolder && allowCreateFolder" class="mb-2">
-      <div class="input-group input-group-sm">
-        <input type="text" class="form-control form-control-sm" placeholder="Nom du dossier" [(ngModel)]="newFolderName">
-        <button type="button" class="btn btn-sm btn-primary" (click)="createFolder()">Créer</button>
-      </div>
-    </div>
-    <ng-template #renderNode let-node let-prefix="prefix">
-      <ul class="list-unstyled ms-1">
-        <li *ngFor="let key of nodeKeys(node)">
-          <ng-container *ngIf="isFolder(node, key); else fileEntry">
-            <div class="d-flex align-items-center gap-2">
-              <button type="button" class="btn btn-sm btn-link p-0"
-                (click)="toggleExpanded((prefix? prefix + '/' : '') + key); $event.stopPropagation()">
-                <i [class]="isExpanded((prefix? prefix + '/' : '') + key) ? 'bi bi-caret-down-fill' : 'bi bi-caret-right-fill'"></i>
-              </button>
-              <span class="fw-bold">{{ key }}</span>
-              <button *ngIf="mode!=='files'" type="button" class="btn btn-sm btn-link p-0 text-success ms-2" (click)="onSelect((prefix? prefix + '/' : '') + key); $event.stopPropagation()" title="Sélectionner le dossier">
-                <i class="bi bi-folder-check"></i>
-              </button>
-            </div>
-            <div *ngIf="isExpanded((prefix? prefix + '/' : '') + key)" class="ms-3">
-              <ng-container *ngIf="node[key]">
-                <ng-container *ngTemplateOutlet="renderNode; context:{ $implicit: node[key], prefix: (prefix? prefix + '/' : '') + key }"></ng-container>
+      <div class="modal-body">
+        <div *ngIf="showCreateFolder && allowCreateFolder" class="mb-2">
+          <div class="input-group input-group-sm">
+            <input type="text" class="form-control form-control-sm" placeholder="Nom du dossier" [(ngModel)]="newFolderName">
+            <button type="button" class="btn btn-sm btn-primary" (click)="createFolder()">Créer</button>
+          </div>
+        </div>
+        <ng-template #renderNode let-node let-prefix="prefix">
+          <ul class="list-unstyled ms-1">
+            <li *ngFor="let key of nodeKeys(node)">
+              <ng-container *ngIf="isFolder(node, key); else fileEntry">
+                <div class="d-flex align-items-center gap-2">
+                  <button type="button" class="btn btn-sm btn-link p-0"
+                    (click)="toggleExpanded((prefix? prefix + '/' : '') + key); $event.stopPropagation()">
+                    <i [class]="isExpanded((prefix? prefix + '/' : '') + key) ? 'bi bi-caret-down-fill' : 'bi bi-caret-right-fill'"></i>
+                  </button>
+                  <span class="fw-bold">{{ key }}</span>
+                  <button *ngIf="mode!=='files'" type="button" class="btn btn-sm btn-link p-0 text-success ms-2" (click)="onSelect((prefix? prefix + '/' : '') + key); $event.stopPropagation()" title="Sélectionner le dossier">
+                    <i class="bi bi-folder-check"></i>
+                  </button>
+                </div>
+                <div *ngIf="isExpanded((prefix? prefix + '/' : '') + key)" class="ms-3">
+                  <ng-container *ngIf="node[key]">
+                    <ng-container *ngTemplateOutlet="renderNode; context:{ $implicit: node[key], prefix: (prefix? prefix + '/' : '') + key }"></ng-container>
+                  </ng-container>
+                </div>
               </ng-container>
-            </div>
-          </ng-container>
-          <ng-template #fileEntry>
-            <div class="image-thumb d-flex align-items-center gap-2" (click)="mode!=='folders' && onSelect(node[key].__data.path)">
-              <img *ngIf="getItemByPath((prefix? prefix + '/' : '') + key)?.url$ | async as url" [src]="url" alt="" class="img-thumbnail" style="width:80px; height:60px; object-fit:cover;">
-              <div class="small text-truncate" style="max-width:320px">{{ (prefix? prefix + '/' : '') + key }}</div>
-            </div>
-          </ng-template>
-        </li>
-      </ul>
-    </ng-template>
+              <ng-template #fileEntry>
+                <div class="image-thumb d-flex align-items-center gap-2" (click)="mode!=='folders' && onSelect(node[key].__data.path)">
+                  <img *ngIf="getItemByPath((prefix? prefix + '/' : '') + key)?.url$ | async as url" [src]="url" alt="" class="img-thumbnail" style="width:80px; height:60px; object-fit:cover;">
+                  <div class="small text-truncate" style="max-width:320px">{{ (prefix? prefix + '/' : '') + key }}</div>
+                </div>
+              </ng-template>
+            </li>
+          </ul>
+        </ng-template>
 
-    <div *ngIf="tree">
-      <ng-container *ngTemplateOutlet="renderNode; context:{ $implicit: tree, prefix: '' }"></ng-container>
+        <div *ngIf="tree">
+          <ng-container *ngTemplateOutlet="renderNode; context:{ $implicit: tree, prefix: '' }"></ng-container>
+        </div>
+      </div>
     </div>
   </div>
 </div>
