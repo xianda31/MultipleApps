@@ -97,7 +97,7 @@
             <li><a class="dropdown-item" routerLink="./finance/books/editor">écriture</a></li>
             <li><a class="dropdown-item" routerLink="./outils/groups">droits d'accès</a></li>
             <li><a class="dropdown-item" routerLink="./outils/sysconf">configuration</a></li>
-            <li><a class="dropdown-item" routerLink="./outils/disk">données S3</a></li>
+            <li *ngIf="!production_mode"><a class="dropdown-item" routerLink="./outils/disk">données S3</a></li>
             <li *ngIf="!production_mode"><a class="dropdown-item" routerLink="./outils/excel_import">import excel</a>
             </li>
             <li *ngIf="!production_mode"><a class="dropdown-item" routerLink="./outils/cloneDB">clone DB</a></li>
@@ -116,7 +116,7 @@
             <li><a class="dropdown-item" routerLink="./site/ui">paramètres UI</a></li>
             <li ><a class="dropdown-item" routerLink="./site/menus">les menus</a></li>
             <li><a class="dropdown-item" routerLink="./site/pages">les pages</a></li>
-            <li><a class="dropdown-item" routerLink="./site/uploader">uploader</a></li>
+            <li><a class="dropdown-item" routerLink="./site/uploader">les images</a></li>
             <li><a class="dropdown-item" routerLink="/front">aller au site</a></li>
           </ul>
         </li>
@@ -269,7 +269,8 @@
             <li><a class="dropdown-item" routerLink="./site/ui" data-bs-dismiss="offcanvas">paramètres UI</a></li>
             <li ><a class="dropdown-item" routerLink="./site/menus" data-bs-dismiss="offcanvas">les menus</a></li>
             <li><a class="dropdown-item" routerLink="./site/pages" data-bs-dismiss="offcanvas">les pages</a></li>
-            <li><a class="dropdown-item" routerLink="./site/disk" data-bs-dismiss="offcanvas">les données</a></li>
+            <li><a class="dropdown-item" routerLink="./site/uploader" data-bs-dismiss="offcanvas">les images</a></li>
+
             <li><a class="dropdown-item" routerLink="/front" data-bs-dismiss="offcanvas">aller au site</a></li>
           </ul>
         </li>
