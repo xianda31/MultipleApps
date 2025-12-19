@@ -1,3 +1,5 @@
+import { GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Injectable } from '@angular/core';
 import { S3Client, ListObjectsV2Command, DeleteObjectCommand, CopyObjectCommand, _Object, ListObjectsV2CommandOutput } from '@aws-sdk/client-s3';
 import { environment } from '../../../environments/environment';
@@ -5,6 +7,11 @@ import { environment } from '../../../environments/environment';
 @Injectable({ providedIn: 'root' })
 export class S3CloneService {
   private client: S3Client;
+
+  async getSignedUrl(bucket: string, key: string): Promise<string> {
+    const command = new GetObjectCommand({ Bucket: bucket, Key: key });
+    return getSignedUrl(this.client, command, { expiresIn: 3600 });
+  }
 
   constructor() {
     this.client = new S3Client({

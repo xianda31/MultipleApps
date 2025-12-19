@@ -31,7 +31,12 @@
                     <tr *ngFor="let r of roots">
                         <td class="text-center"><input type="checkbox" [(ngModel)]="r.selected"></td>
                         <td><code>{{ r.key }}</code></td>
-                        <td>{{ r.sourceCount === null ? '…' : r.sourceCount }}</td>
+                        <td class="d-flex justify-content-between align-items-center">
+                            <span>{{ r.sourceCount === null ? '…' : r.sourceCount }}</span>
+                            <button class="btn btn-sm btn-outline-secondary ms-2" (click)="downloadRootZip(r.key)" [disabled]="r.sourceCount === 0 || r.sourceCount === null">
+                                <i class="bi bi-download"></i> .zip
+                            </button>
+                        </td>
                         <td>{{ r.destCount === null ? '…' : r.destCount }}</td>
                         <td class="text-center">
                             <div class="d-flex flex-column gap-1">

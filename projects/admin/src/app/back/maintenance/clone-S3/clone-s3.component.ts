@@ -37,6 +37,64 @@ export class CloneS3Component {
     private toastService: ToastService
   ) { }
 
+  // Download all files in a root as a .zip archive
+  async downloadRootZip(root: string) {
+    // Dynamically import JSZip for Angular compatibility
+    const JSZip = (await import('jszip')).default;
+    const entry = this.roots.find(r => r.key === root);
+    if (!entry || entry.sourceCount === 0 || entry.sourceCount === null) {
+      this.toastService.showErrorToast('Téléchargement', 'Aucun fichier à télécharger pour cette racine.');
+      return;
+    }
+    try {
+      const prefix = this.sourcePrefix(root);
+      let files: any[] = [];
+      if (this.sourceBucket) {
+        files = await this.s3.listAllObjects(this.sourceBucket, prefix);
+        files = files.filter(f => (f.Size || 0) > 0);
+      } else {
+        files = await firstValueFrom(this.fileService.list_files(prefix));
+        files = files.filter(f => f.size && f.size > 0);
+      }
+      if (!files.length) {
+        this.toastService.showErrorToast('Téléchargement', 'Aucun fichier trouvé.');
+        return;
+      }
+      const zip = new JSZip();
+      // Fetch and add each file to the zip
+      for (const file of files) {
+        let filePath = file.Key || file.path;
+        let fileName = filePath.split('/').pop();
+        try {
+          let blob: Blob;
+          if (this.sourceBucket) {
+            // Utilise FileService.getPresignedUrl$ pour obtenir l'URL signée compatible Angular
+            const url = await firstValueFrom(this.fileService.getPresignedUrl$(filePath));
+            const resp = await fetch(url);
+            blob = await resp.blob();
+          } else {
+            blob = await this.fileService.download_file(filePath);
+          }
+          zip.file(fileName, blob);
+        } catch (err) {
+          console.warn('Erreur téléchargement', filePath, err);
+        }
+      }
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(zipBlob);
+      a.download = `${root}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+      this.toastService.showSuccess('Téléchargement', `Archive ${root}.zip générée (${files.length} fichiers)`);
+    } catch (err) {
+      console.error('Erreur lors du téléchargement .zip', err);
+      this.toastService.showErrorToast('Téléchargement', 'Erreur lors de la génération de l’archive.');
+    }
+  }
+
 
   async ngOnInit() {
     // Default buckets from environment if provided

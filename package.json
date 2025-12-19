@@ -28,6 +28,7 @@
     "@aws-sdk/client-dynamodb": "^3.887.0",
     "@aws-sdk/client-s3": "^3.919.0",
     "@aws-sdk/client-ses": "^3.940.0",
+    "@aws-sdk/s3-request-presigner": "^3.955.0",
     "@aws-sdk/types": "^3.887.0",
     "@editorjs/editorjs": "^2.30.8",
     "@editorjs/header": "^2.8.8",
@@ -44,6 +45,7 @@
     "file-saver": "^2.0.5",
     "jspdf": "^3.0.1",
     "jspdf-autotable": "^5.0.2",
+    "jszip": "^3.10.1",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.1"
@@ -55,6 +57,7 @@
     "@angular/localize": "^20.2.4",
     "@aws-amplify/backend": "^1.0.4",
     "@aws-amplify/backend-cli": "^1.2.2",
+    "@types/aws-sdk": "^0.0.42",
     "@types/d3": "^7.4.3",
     "@types/file-saver": "^2.0.7",
     "@types/html2canvas": "^0.5.35",
