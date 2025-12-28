@@ -8,7 +8,6 @@ import { ProductService } from '../../../common/services/product.service';
 import { GameCardService } from '../../services/game-card.service';
 import { MembersService } from '../../../common/services/members.service';
 import { Product } from '../../products/product.interface';
-import { OpsItemCategory } from 'aws-cdk-lib/aws-cloudwatch-actions';
 
 @Injectable({
   providedIn: 'root'

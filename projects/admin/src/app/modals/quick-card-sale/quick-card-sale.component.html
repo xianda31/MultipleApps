@@ -1,0 +1,76 @@
+<div class="modal-header">
+    <h4 class="modal-title">Carte de 12 droits de table</h4>
+</div>
+<div class="modal-body">
+    <span class="mb-3">
+        titulaire : {{ titulaire.lastname }} {{ titulaire.firstname }}
+    </span>
+    <!-- Formulaire de vente rapide de carte -->
+    <form [formGroup]="form">
+        <!-- Co-titulaire (type Membre) -->
+        <div class="mtd-3">
+            <div class="d-flex align-items-center gap-2">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="togglePartagee" [formControl]="form.controls['cartePartagee']">
+                </div>
+                <span class="text-nowrap">{{ shared ?  'Carte partagée avec :' : 'Carte personnelle' }}</span>
+                <ng-container *ngIf="shared">
+                    <app-input-member id="coTitulaire" class="form-control form-select-sm ms-2"
+                        [ngClass]="{'border border-2 border-warning': shared && !form.get('coTitulaire')?.value}"
+                        [members]="members" formControlName="coTitulaire" placeholder="Choisir le co-titulaire"></app-input-member>
+                </ng-container>
+            </div>
+        </div>
+
+        <!-- Mode de paiement -->
+        <label class="form-label mt-3">Mode de paiement</label>
+        <div class="mb-3">
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" formControlName="mode"
+                    [value]="paymentMode.CASH" id="paiementEspeces">
+                <label class="form-check-label" for="paiementEspeces">Espèces</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" formControlName="mode"
+                    [value]="paymentMode.CHEQUE" id="paiementCheque">
+                <label class="form-check-label" for="paiementCheque">Chèque</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" formControlName="mode"
+                    [value]="paymentMode.TRANSFER" id="paiementVirement">
+                <label class="form-check-label" for="paiementVirement">Virement</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" formControlName="mode"
+                    [value]="paymentMode.CREDIT" id="paiementAvance">
+                <label class="form-check-label" for="paiementAvance">Avance</label>
+            </div>
+        </div>
+
+        <!-- Saisie banque et n° de chèque si paiement par chèque -->
+        <div *ngIf="form.get('mode')?.value === paymentMode.CHEQUE" class="mb-3">
+            <div class="row g-2 align-items-end">
+                <div class="col">
+                    <label for="bank" class="form-label">Banque</label>
+                    <select id="bank" class="form-select" formControlName="bank">
+                        <option value="">Sélectionner une banque</option>
+                        <option *ngFor="let b of banks" [value]="b.key">{{b.name}}</option>
+                    </select>
+                </div>
+                <div class="col">
+                    <label for="chequeNo" class="form-label">N° de chèque</label>
+                    <input id="chequeNo" type="text" class="form-control" formControlName="chequeNo" placeholder="Numéro de chèque">
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" (click)="confirm(true)" [disabled]="isConfirmDisabled">
+                Confirmer
+            </button>
+            <button type="button" class="btn btn-secondary" (click)="confirm(false)">Annuler</button>
+        </div>
+        <div *ngIf="isConfirmDisabled" class="text-danger small mt-1 text-end">
+            {{ getConfirmDisabledReason() }}
+        </div>
+    </form>
+</div>

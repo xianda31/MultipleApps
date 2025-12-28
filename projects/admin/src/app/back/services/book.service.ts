@@ -9,6 +9,7 @@ import { TRANSACTION_CLASS } from '../../common/interfaces/transaction.definitio
 import { Profit_and_loss } from '../../common/interfaces/system-conf.interface';
 import { DBhandler } from '../../common/services/graphQL.service';
 import { TransactionService } from './transaction.service';
+import { PaymentMode, SALE_ACCOUNTS } from '../shop/cart/cart.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -980,5 +981,64 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
     return this.higlighting[book_entry.id] ?? false;
   }
 
+  // utilitaire pour créer une vente de carte de tournoi
+
+private payment_mode2bank_op_type(payment_mode: PaymentMode): TRANSACTION_ID {
+    if (payment_mode === PaymentMode.CREDIT) {
+      return TRANSACTION_ID.achat_adhérent_en_espèces;
+    }
+
+    if (payment_mode === PaymentMode.CHEQUE) {
+      return TRANSACTION_ID.achat_adhérent_par_chèque;
+    } else {
+      if (payment_mode === PaymentMode.TRANSFER) {
+        return TRANSACTION_ID.achat_adhérent_par_virement;
+      }
+    }
+    return TRANSACTION_ID.achat_adhérent_en_espèces;
+  }
+
+ private   payments2fValue(payment_mode: PaymentMode, amount : number): AMOUNTS {
+      let f_amounts: AMOUNTS = {};
+      if (Object.values(FINANCIAL_ACCOUNT).includes(SALE_ACCOUNTS[payment_mode] as FINANCIAL_ACCOUNT)) {
+        const account = SALE_ACCOUNTS[payment_mode] as FINANCIAL_ACCOUNT;
+        f_amounts[account] = amount;
+      }
+      return f_amounts;
+    }
   
+
+  create_game_card_sale(buyer: string , card_price : number,mode:  PaymentMode ,co_buyer?:string,  cheque_ref?: string) : Promise<BookEntry> {
+    const today = new Date();
+   let values: { [key: string]: number } = {'CAR': card_price };
+   let amounts : AMOUNTS = this.payments2fValue( mode, card_price);
+    if (mode === PaymentMode.CREDIT) {
+      values[CUSTOMER_ACCOUNT.DEBT_debit] = card_price;
+      amounts = { [FINANCIAL_ACCOUNT.CASHBOX_debit]: 0 };
+    }
+    const bookEntry: BookEntry = {
+      id: '',
+      season: this.systemDataService.get_season(today),
+      date: today.toISOString().split('T')[0],
+      transaction_id: this.payment_mode2bank_op_type(mode),
+      amounts: amounts,
+      cheque_ref: cheque_ref,
+      bank_report: null,
+      operations: [{
+        label: 'vente carte de jeu',
+        member: buyer,
+        values: values
+      }],
+    };
+
+    if (co_buyer) {
+      bookEntry.operations.push({
+        label: 'vente carte de jeu (co-acheteur)',
+        member: co_buyer,
+        values: { 'CAR': 0 }
+      });
+    }
+
+    return this.create_book_entry(bookEntry);
+  }
 }

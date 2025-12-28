@@ -14,6 +14,8 @@ import { MembersService } from '../../../common/services/members.service';
 import { ToastService } from '../../../common/services/toast.service';
 import { DBhandler } from "../../../common/services/graphQL.service";
 import { MemberSettingsService } from '../../../common/services/member-settings.service';
+import { BookEntry } from '../../../common/interfaces/accounting.interface';
+import { PaymentMode } from '../../shop/cart/cart.interface';
 
 
 
@@ -446,5 +448,23 @@ export class FeesCollectorService {
 
   }
 
+  create_game_card_sale(members: Member[],card_entries: number,card_price: number, mode: PaymentMode, check_ref ?:string): Promise<boolean> {
+    const buyer = this.membersService.full_name(members[0]);
+    const co_buyer = (members.length > 1) ? this.membersService.full_name(members[1]) : undefined;
+    return new Promise<boolean>(async (resolve, reject) => {
+      try {
+        const card = await this.gameCardService.createCard(members,card_entries);
+        if (card) {
+          const buyer = this.membersService.full_name(members[0]);
+          this.BookService.create_game_card_sale(buyer,card_price, mode, co_buyer, check_ref);
+          resolve(true);
+        } else {
+          resolve(false);
+        }
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
 
 }

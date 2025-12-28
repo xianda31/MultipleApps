@@ -1,5 +1,4 @@
 import { FEE_RATE } from "../../back/fees/fees.interface";
-import { UIConfiguration } from './ui-conf.interface';
 
 export interface Account {
     key: string;

@@ -187,9 +187,17 @@
             <div class="position-absolute bottom-0 start-0 m-1 d-flex gap-1" style="z-index: 2;">
                 <span *ngIf="!gamer.enabled" class="badge bg-secondary">{{ (game.fee_rate === 'accession') ? 'ACC' :
                     'NP' }}</span>
-                <span *ngIf="gamer.is_member" class="badge" [ngClass]="{ 'text-bg-success': gamer.game_credits > 2,
-        'text-bg-danger': gamer.game_credits <= 2 }">
-                    {{ gamer.game_credits }} <i class="bi bi-pass"></i>
+                <span *ngIf="gamer.is_member" class="badge d-flex align-items-center gap-1" [ngClass]="{ 'text-bg-success': gamer.game_credits > 2, 'text-bg-danger': gamer.game_credits <= 2 }">
+                    <span>{{ gamer.game_credits }}</span> <i class="bi bi-pass"></i>
+                </span>
+                <span *ngIf="gamer.enabled && gamer.is_member && gamer.game_credits <= 4">
+                    <button type="button"
+                        class="btn btn-outline-warning btn-sm rounded-circle fee-radio-lg d-flex align-items-center justify-content-center"
+                        style="width: 2.2em; height: 2.2em; padding: 0;"
+                        title="Acheter des crédits"
+                        (click)="quickSale(gamer)">
+                        <i class="bi bi-cart-fill"></i>
+                    </button>
                 </span>
             </div>
             <div class="card-body py-0 position-relative" style="z-index: 1; overflow: hidden;">

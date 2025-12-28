@@ -10,7 +10,7 @@ import { RGBColor } from 'd3';
 @Injectable({
     providedIn: 'root'
 })
-export class ProductService {
+export class  ProductService {
     private _products!: Product[];
     private _products$ = new BehaviorSubject<Product[]>([]);
     products_keys: string[] = [];

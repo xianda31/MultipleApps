@@ -12,6 +12,12 @@ import { InputPlayerComponent } from '../../../common/ffb/input-licensee/input-p
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { GetConfirmationComponent } from '../../modals/get-confirmation/get-confirmation.component';
 import { ToastService } from '../../../common/services/toast.service';
+import { QuickCardSaleComponent } from '../../../modals/quick-card-sale';
+import { MembersService } from '../../../common/services/members.service';
+import { GameCardService } from '../../services/game-card.service';
+import { PaymentMode } from '../../shop/cart/cart.interface';
+import { SystemDataService } from '../../../common/services/system-data.service';
+import { ProductService } from '../../../common/services/product.service';
 
 
 
@@ -37,17 +43,35 @@ export class FeesCollectorComponent {
   new_player!: FFBplayer | null;
   hideValidated: boolean = false;
   disappearingGamers: Map<number, boolean> = new Map();
-
-
+  CARD_ENTRIES !: number;  
+  CARD_PRICE !: number;  
 
   constructor(
     private tournamentService: TournamentService,
     private feesCollectorService: FeesCollectorService,
     private pdfService: PdfService,
     private modalService: NgbModal,
+    private membersService: MembersService,
+    private productService: ProductService,
     private toastService: ToastService,
 
   ) {
+
+   this.membersService.listMembers().subscribe(members => {
+      // this.members = members;
+      // subscribe pour anticiper l'acquisition des membres ; utile plus tard
+    });
+
+    this.productService.listProducts().subscribe(products => {
+      const card_product = products.find(p => (p.account === 'CAR')&& (!p.paired));
+      if(!card_product || card_product.info1 === undefined) {
+        this.toastService.showErrorToast('Configuration produit', `Le produit carte de jeu n'a pas été trouvé. Veuillez le configurer correctement.`);
+        throw new Error('Le produit carte de jeu n\'a pas été trouvé. Veuillez le configurer correctement.');
+      }
+      this.CARD_PRICE = card_product.price ;
+      this.CARD_ENTRIES =  parseInt(card_product.info1)  ;
+    });
+
     const chrono = (date: string) => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -214,6 +238,35 @@ export class FeesCollectorComponent {
       this.feesCollectorService.add_player(player);
       this.log_game_state();
     }
+  }
+
+  quickSale(gamer: Gamer) {
+    const modalRef = this.modalService.open(QuickCardSaleComponent, { centered: true });
+    modalRef.componentInstance.titulaire = this.membersService.getMemberbyLicense(gamer.license);
+    modalRef.componentInstance.subtitle = `Confirmez-vous la vente d'un crédit de membre ?`;
+    modalRef.result.then(async (formValue: any) => {
+      if (formValue) {
+
+        try {
+          // create game card
+          const owners = [formValue.titulaire];
+          if (formValue.cartePartagee && formValue.coTitulaire) {
+            owners.push(formValue.coTitulaire);
+          }
+          const mode = formValue.mode;
+          const check_ref = (mode === PaymentMode.CHEQUE) ? formValue.bank + formValue.chequeNo : undefined;
+     
+          // save sale
+          const gamecard = await this.feesCollectorService.create_game_card_sale(owners, this.CARD_ENTRIES,this.CARD_PRICE, mode, check_ref);
+          if(gamecard) {
+          }
+
+        } catch (error) {
+          console.error('Erreur lors de la vente rapide', error);
+          this.toastService.showErrorToast('Vente rapide', `Erreur lors de la vente à ${gamer.firstname} ${gamer.lastname}`);
+        }
+      }
+    });
   }
 
   all_gamers_validated(): boolean {
