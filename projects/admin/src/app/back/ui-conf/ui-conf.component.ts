@@ -68,7 +68,7 @@ export class UiConfComponent implements OnInit {
       unfold_on_hover: [false],
       hover_unfold_delay_ms: [500, [Validators.min(0), Validators.max(10000)]],
       hover_unfold_duration_ms: [300, [Validators.min(0), Validators.max(10000)]],
-      home_layout_ratio: [2, [Validators.min(1), Validators.max(2)]],
+      home_layout_ratio: [2, [Validators.min(0), Validators.max(2)]],
 
 
       tournaments_type: this.fb.array([]),

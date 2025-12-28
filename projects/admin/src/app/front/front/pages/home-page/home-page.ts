@@ -42,15 +42,13 @@ export class HomePage {
   opacity = 1;           // controls sequential fade opacity
   tournaments_row_cols: BreakpointsSettings = { SM: 1, MD: 2, LG: 3, XL: 4 };
   news_row_cols: BreakpointsSettings = { SM: 1, MD: 2, LG: 3, XL: 2 };
-  home_layout_ratio: number = 2;
+  home_layout_ratio!: number;
   tournamentsColClass: string = 'col-12 col-md-8';
   newsColClass: string = 'col-12 col-md-4';
   logoPreview: string | null = null;
 
   constructor(
     private titleService: TitleService,
-    private router: Router,
-    private route: ActivatedRoute,
     private membersService: MembersService,
     private systemDataService: SystemDataService,
     private auth: AuthentificationService,
@@ -68,7 +66,6 @@ export class HomePage {
     this.logged_member$ = this.auth.logged_member$;
 
     this.titleService.setTitle('Accueil');
-    const season = this.systemDataService.get_today_season();
 
     this.membersService.listMembers().subscribe((members) => {
       this.licensee_nbr = members.filter(m => m.license_status !== LicenseStatus.UNREGISTERED).length;
@@ -131,24 +128,31 @@ export class HomePage {
     // Read UI settings from dedicated UI settings file to control homepage and layout
     this.systemDataService.get_ui_settings().subscribe((ui: UIConfiguration) => {
       const conf: UIConfiguration = ui || {} as UIConfiguration;
-      const homepage = conf?.homepage || {};
-
       // breakpoints stored under `homepage` by contract; use defaults when missing
       this.tournaments_row_cols = (conf && conf.homepage && conf.homepage.tournaments_row_cols) ? conf.homepage.tournaments_row_cols : this.tournaments_row_cols;
       this.news_row_cols = (conf && conf.homepage && conf.homepage.news_row_cols) ? conf.homepage.news_row_cols : this.news_row_cols;
-      this.home_layout_ratio = (conf && conf.homepage && conf.homepage.home_layout_ratio) ? conf.homepage.home_layout_ratio : this.home_layout_ratio;
+      this.home_layout_ratio = (conf && conf.homepage && conf.homepage.home_layout_ratio !== undefined)
+        ? conf.homepage.home_layout_ratio
+        : this.home_layout_ratio;
       this.updateColClasses();
     });
 
   }
 
   private updateColClasses() {
-    if (this.home_layout_ratio === 1) {
-      this.tournamentsColClass = 'col-12 col-md-6';
-      this.newsColClass = 'col-12 col-md-6';
-    } else {
-      this.tournamentsColClass = 'col-12 col-md-8';
-      this.newsColClass = 'col-12 col-md-4';
+    switch (this.home_layout_ratio) {
+      case 0:
+        this.tournamentsColClass = 'col-12 col-md-4';
+        this.newsColClass = 'col-12 col-md-8';
+        return;
+      case 1:
+        this.tournamentsColClass = 'col-12 col-md-6';
+        this.newsColClass = 'col-12 col-md-6';
+        return;
+      case 2:
+        this.tournamentsColClass = 'col-12 col-md-8';
+        this.newsColClass = 'col-12 col-md-4';
+        return;
     }
   }
 
