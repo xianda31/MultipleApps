@@ -16,6 +16,7 @@ import { S3CloneService } from '../s3-clone.service';
   styleUrl: './clone-s3.component.scss'
 })
 export class CloneS3Component {
+    downloadingZip: { [key: string]: boolean } = {};
   // UI state
   started = false;
   production_apid = environment.production_apid; // shown for parity with DB clone page header
@@ -39,6 +40,7 @@ export class CloneS3Component {
 
   // Download all files in a root as a .zip archive
   async downloadRootZip(root: string) {
+      this.downloadingZip[root] = true;
     // Dynamically import JSZip for Angular compatibility
     const JSZip = (await import('jszip')).default;
     const entry = this.roots.find(r => r.key === root);
@@ -58,13 +60,15 @@ export class CloneS3Component {
       }
       if (!files.length) {
         this.toastService.showErrorToast('Téléchargement', 'Aucun fichier trouvé.');
+        this.downloadingZip[root] = false;
         return;
       }
       const zip = new JSZip();
       // Fetch and add each file to the zip
       for (const file of files) {
         let filePath = file.Key || file.path;
-        let fileName = filePath.split('/').pop();
+        // Chemin relatif à la racine sélectionnée
+        let relativePath = filePath.startsWith(prefix) ? filePath.slice(prefix.length) : filePath;
         try {
           let blob: Blob;
           if (this.sourceBucket) {
@@ -75,7 +79,7 @@ export class CloneS3Component {
           } else {
             blob = await this.fileService.download_file(filePath);
           }
-          zip.file(fileName, blob);
+          zip.file(relativePath, blob);
         } catch (err) {
           console.warn('Erreur téléchargement', filePath, err);
         }
@@ -92,6 +96,8 @@ export class CloneS3Component {
     } catch (err) {
       console.error('Erreur lors du téléchargement .zip', err);
       this.toastService.showErrorToast('Téléchargement', 'Erreur lors de la génération de l’archive.');
+    } finally {
+      this.downloadingZip[root] = false;
     }
   }
 
