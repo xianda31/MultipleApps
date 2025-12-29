@@ -1,3 +1,17 @@
+/* Surlignage du dossier courant dans l'arborescence */
+.current-folder-highlight {
+	background: #e3f2fd !important;
+	color: #1565c0 !important;
+	border-radius: 0.4rem;
+	box-shadow: 0 1px 4px 0 rgba(21,101,192,0.08);
+	font-weight: 500;
+	transition: background 0.2s, color 0.2s;
+}
+.current-folder-line {
+	min-height: 2.2rem;
+	padding: 0.15rem 0.5rem;
+	border-radius: 0.4rem;
+}
 .image-selector-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:1040}
 .image-selector-panel{display:none;position:fixed;right:1rem;top:5rem;width:520px;background:#fff;border-radius:6px;z-index:1050;max-height:70vh;overflow:auto}
 .image-thumb{cursor:pointer;padding:4px}

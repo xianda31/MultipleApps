@@ -12,6 +12,7 @@ import { ToastService } from '../../../common/services/toast.service';
   styleUrls: ['./file-system-selector.component.scss']
 })
 export class FileSystemSelectorComponent implements OnInit {
+    currentPath: string = '';
   @Input() rootFolder: string | null = null; // e.g. 'images/'
   @Input() mode: 'files' | 'folders' | 'both' = 'files';
   @Input() allowCreateFolder: boolean = false;
@@ -52,7 +53,14 @@ export class FileSystemSelectorComponent implements OnInit {
     return false;
   }
 
-  toggleExpanded(path: string) { if (this.expanded.has(path)) this.expanded.delete(path); else this.expanded.add(path); }
+  toggleExpanded(path: string) {
+    if (this.expanded.has(path)) {
+      this.expanded.delete(path);
+    } else {
+      this.expanded.add(path);
+      this.currentPath = path;
+    }
+  }
   isExpanded(path: string) { return this.expanded.has(path); }
 
   getItemByPath(path: string) { return this.items ? this.items.find(it => it.path === path) : null; }
@@ -66,7 +74,9 @@ export class FileSystemSelectorComponent implements OnInit {
       this.toast.showErrorToast('Dossier', 'Nom de dossier requis');
       return;
     }
-    if (!this.rootFolder) {
+    let parent = this.currentPath || this.rootFolder;
+    if (parent && !parent.endsWith('/')) parent += '/';
+    if (!parent) {
       this.toast.showErrorToast('Dossier', 'Racine non définie');
       return;
     }
@@ -74,10 +84,10 @@ export class FileSystemSelectorComponent implements OnInit {
     const folderMarkerName = name.endsWith('/') ? name : name + '/';
     try {
       const file = new File([new Blob([])], folderMarkerName);
-      await this.fileService.upload_file(file, this.rootFolder);
+      await this.fileService.upload_file(file, parent);
       this.toast.showSuccess('Dossier', 'Dossier créé');
       // refresh listing
-      this.fileService.list_files(this.rootFolder).subscribe((items) => {
+      this.fileService.list_files(parent).subscribe((items) => {
         this.items = items;
         this.tree = this.fileService.generate_filesystem(items);
         this.newFolderName = '';
