@@ -73,6 +73,8 @@ export class SnippetEditor implements OnChanges {
     const cmp = modalRef.componentInstance as any;
     cmp.rootFolder = S3_ROOT_FOLDERS.IMAGES + '/';
     cmp.mode = 'files';
+    cmp.allowActions = false;
+    cmp.selectOnFolderClick = false;
     if (cmp.select && cmp.select.subscribe) cmp.select.subscribe((path: string) => { this.selectImage(path); modalRef.close(); });
     if (cmp.close && cmp.close.subscribe) cmp.close.subscribe(() => modalRef.close());
   }
@@ -82,6 +84,8 @@ export class SnippetEditor implements OnChanges {
     const cmp = modalRef.componentInstance as any;
     cmp.rootFolder = S3_ROOT_FOLDERS.DOCUMENTS + '/';
     cmp.mode = 'files';
+    cmp.allowActions = false;
+    cmp.selectOnFolderClick = false;
     if (cmp.select && cmp.select.subscribe) cmp.select.subscribe((path: string) => { this.selectFile(path); modalRef.close(); });
     if (cmp.close && cmp.close.subscribe) cmp.close.subscribe(() => modalRef.close());
   }
@@ -91,6 +95,8 @@ export class SnippetEditor implements OnChanges {
     const cmp = modalRef.componentInstance as any;
     cmp.rootFolder = S3_ROOT_FOLDERS.ALBUMS + '/';
     cmp.mode = 'folders';
+    cmp.allowActions = false;
+    cmp.selectOnFolderClick = false;
     if (cmp.select && cmp.select.subscribe) cmp.select.subscribe((path: string) => { this.selectFolder(path); modalRef.close(); });
     if (cmp.close && cmp.close.subscribe) cmp.close.subscribe(() => modalRef.close());
   }

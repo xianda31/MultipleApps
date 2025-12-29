@@ -15,6 +15,12 @@ import { ZipService } from '../../../common/services/zip.service';
   styleUrls: ['./file-system-selector.component.scss']
 })
 export class FileSystemSelectorComponent implements OnInit, OnChanges {
+    @Input() allowActions: boolean = true;
+    @Input() selectOnFolderClick: boolean = true;
+  // Sélectionne un fichier ou dossier et émet l'événement select
+  selectPath(path: string) {
+    this.onSelect(path);
+  }
 
           async deleteFile(path: string) {
             if (!path) return;
@@ -132,9 +138,8 @@ export class FileSystemSelectorComponent implements OnInit, OnChanges {
     } else {
       this.expanded.add(path);
       this.currentPath = path;
-      // Émet l'événement à chaque navigation dans un dossier
-      if (this.isFolderFromPath(path)) {
-        this.select.emit(path.endsWith('/') ? path : path + '/');
+      if (this.selectOnFolderClick) {
+        this.onSelect(path);
       }
     }
   }
@@ -155,7 +160,14 @@ export class FileSystemSelectorComponent implements OnInit, OnChanges {
 
   getItemByPath(path: string) { return this.items ? this.items.find(it => it.path === path) : null; }
 
-  onSelect(path: string) { this.select.emit(path); }
+  onSelect(path: string) {
+    // Always emit folder path with trailing slash if it's a folder
+    let normalized = path;
+    if (this.isFolderFromPath(path) && !path.endsWith('/')) {
+      normalized = path + '/';
+    }
+    this.select.emit(normalized);
+  }
   onClose() { this.close.emit(); }
 
   async createFolder() {

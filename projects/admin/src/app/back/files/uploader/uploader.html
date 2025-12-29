@@ -96,8 +96,9 @@
                 <div class="card-body py-3">
                     <h5 class="card-title mb-2">Volume {{targetRoot}}</h5>
                     <ng-container *ngIf="targetRoot as root">
-                        <app-file-system-selector #fsNav [rootFolder]="root + '/'" mode="files"
+                        <app-file-system-selector #fsNav [rootFolder]="root + '/'" mode="both"
                             [allowCreateFolder]="true"
+                            [selectOnFolderClick]="true"
                             (select)="onFileSelectedFromNav($event)"></app-file-system-selector>
                     </ng-container>
                 </div>

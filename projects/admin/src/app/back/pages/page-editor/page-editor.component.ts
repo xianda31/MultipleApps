@@ -175,7 +175,7 @@ export class PageEditorComponent implements OnChanges {
     try {
       const created = await this.snippetService.createSnippet(newSnippet);
       // this.snippets.push(created);
-      this.pageSnippets.push(created);
+      this.pageSnippets.unshift(created);
       await this.updatePageSnippets();
       modal.close();
       this.toastService.showSuccess('Snippet', 'Snippet ajouté');

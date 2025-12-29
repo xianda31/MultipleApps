@@ -30,19 +30,22 @@
                 <i [class]="isExpanded((prefix? prefix + '/' : '') + key) ? 'bi bi-caret-down-fill' : 'bi bi-caret-right-fill'"></i>
               </button>
               <span class="fw-bold"
+                    (click)="selectOnFolderClick && onSelect((prefix? prefix + '/' : '') + key); $event.stopPropagation()"
                     [class.text-primary]="currentPath === (prefix? prefix + '/' : '') + key"
                     [class.text-muted]="currentPath !== (prefix? prefix + '/' : '') + key">
                 {{ key }}
               </span>
-              <button type="button" class="btn btn-sm btn-link text-success ms-2" (click)="downloadFolderZip((prefix? prefix + '/' : '') + key); $event.stopPropagation()" title="Télécharger tout le dossier en zip">
-                <i class="bi bi-file-zip-fill"></i>
-              </button>
-              @if (prefix) {
-                <button type="button" class="btn btn-sm btn-link text-danger ms-2" (click)="deleteFolder((prefix? prefix + '/' : '') + key); $event.stopPropagation()" title="Supprimer le dossier et son contenu">
-                  <i class="bi bi-folder-x"></i>
-                </button>
-              }
-              <button *ngIf="mode!=='files'" type="button" class="btn btn-sm btn-link p-0 text-success ms-2" (click)="onSelect((prefix? prefix + '/' : '') + key); $event.stopPropagation()" title="Sélectionner le dossier">
+                @if (allowActions) {
+                  <button type="button" class="btn btn-sm btn-link text-success ms-2" (click)="downloadFolderZip((prefix? prefix + '/' : '') + key); $event.stopPropagation()" title="Télécharger tout le dossier en zip">
+                    <i class="bi bi-file-zip-fill"></i>
+                  </button>
+                  @if (prefix) {
+                    <button type="button" class="btn btn-sm btn-link text-danger ms-2" (click)="deleteFolder((prefix? prefix + '/' : '') + key); $event.stopPropagation()" title="Supprimer le dossier et son contenu">
+                      <i class="bi bi-folder-x"></i>
+                    </button>
+                  }
+                }
+              <button *ngIf="mode!=='files' && !selectOnFolderClick" type="button" class="btn btn-sm btn-link p-0 text-success ms-2" (click)="onSelect((prefix? prefix + '/' : '') + key); $event.stopPropagation()" title="Sélectionner le dossier">
                 <i class="bi bi-folder-check"></i>
               </button>
             </div>
@@ -55,7 +58,7 @@
             }
           } @else {
             @let url = getItemByPath((prefix? prefix + '/' : '') + key)?.url$ | async;
-            <div class="image-thumb d-flex align-items-center gap-2" (click)="mode!=='folders' && onSelect(node[key].__data.path)">
+              <div class="image-thumb d-flex align-items-center gap-2" (click)="mode!=='folders' && selectPath(node[key].__data.path)">
               @if (rootFolder === 'documents/' || rootFolder === 'documents') {
                 <i class="bi bi-file-earmark-fill" style="font-size:2rem;color:#888;"></i>
               } @else {
@@ -64,9 +67,11 @@
                 }
               }
               <div class="small text-truncate" style="max-width:320px">{{ key.split('/').pop() }}</div>
-              <button type="button" class="btn btn-sm btn-link text-danger ms-2" (click)="deleteFile(node[key].__data.path); $event.stopPropagation()" title="Supprimer">
-                <i class="bi bi-trash"></i>
-              </button>
+                @if (allowActions) {
+                  <button type="button" class="btn btn-sm btn-link text-danger ms-2" (click)="deleteFile(node[key].__data.path); $event.stopPropagation()" title="Supprimer">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                }
             </div>
           }
         </li>

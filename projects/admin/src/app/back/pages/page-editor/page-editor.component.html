@@ -8,8 +8,8 @@
         <div class="card-header d-flex align-items-center justify-content-between">
           <form [formGroup]="pageForm" class="d-flex align-items-center gap-2">
             <label class="form-label mb-0" style="white-space: nowrap;">Titre :</label>
-              <input type="text" class="form-control form-control-sm" formControlName="title"
-                placeholder="Titre de la page" (blur)="savePage()" (keydown.enter)="savePage()">
+            <input type="text" class="form-control form-control-sm" formControlName="title"
+              placeholder="Titre de la page" (blur)="savePage()" (keydown.enter)="savePage()">
             <!-- <span *ngIf="is_clipboard_page" class="badge bg-info ms-2">Clipboard</span> -->
           </form>
           <form [formGroup]="pageForm" class="d-flex align-items-center gap-2">
@@ -24,7 +24,7 @@
         </div>
         <div class="card-body">
           <app-generic-page [page_title]="pageTitleForPreview"
-          [row_cols]="page_row_cols(selected_page)"></app-generic-page>
+            [row_cols]="page_row_cols(selected_page)"></app-generic-page>
         </div>
       </div>
     </div>
@@ -35,6 +35,28 @@
           <h6 class="mb-0">article(s)</h6>
         </div>
         <div class="card-body">
+          @if (selected_page.title !== '__CLIPBOARD__') {
+          <div class="me-2">
+
+            <div class="row align-items-center mb-2 justify-content-end">
+              <div class="col-auto">Ajouter un article :</div>
+              <div class="col-auto">
+                <button type="button" class="btn btn-sm btn-outline-success me-2" (click)="openAddSnippetModal()">
+                  <i class="bi bi-plus-square-fill"></i>
+                </button>
+              </div>
+            </div>
+            <div class="row align-items-center justify-content-end mb-2">
+              <div class="col-auto">Voir le clipboard :</div>
+              <div class="col-auto">
+                <button type="button" class="btn btn-sm btn-outline-secondary me-2" (click)="openClipboardModal()"
+                  title="Clipboard">
+                  <i class="bi bi-inboxes-fill"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          }
           <div cdkDropList [cdkDropListData]="pageSnippets" (cdkDropListDropped)="onDrop($event)" class="snippet-list">
             @for (snippet of pageSnippets; track snippet.id) {
             <div cdkDrag class="snippet-item d-flex align-items-center gap-2 mb-2 p-2 border rounded">
@@ -56,25 +78,7 @@
             }
 
 
-            @if (selected_page.title !== '__CLIPBOARD__') {
-            <div class="row align-items-center mb-2 justify-content-end">
-              <div class="col-auto">Ajouter un article :</div>
-              <div class="col-auto">
-                <button type="button" class="btn btn-sm btn-outline-success me-2" (click)="openAddSnippetModal()">
-                  <i class="bi bi-plus-square-fill"></i>
-                </button>
-              </div>
-            </div>
-            <div class="row align-items-center justify-content-end">
-              <div class="col-auto">Voir le clipboard :</div>
-              <div class="col-auto">
-                <button type="button" class="btn btn-sm btn-outline-secondary me-2" (click)="openClipboardModal()"
-                  title="Clipboard">
-                  <i class="bi bi-inboxes-fill"></i>
-                </button>
-              </div>
-            </div>
-            }
+
 
           </div>
 
