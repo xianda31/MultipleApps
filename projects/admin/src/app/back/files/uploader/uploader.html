@@ -1,11 +1,10 @@
 <div class="container-fluid container-md">
-    <div class="row mt-3">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Uploader</h5>
-
-                <div class="mb-3 d-flex align-items-center gap-3">
-                    <label class="form-label small mb-0">Type de données</label>
+    <div class="row mt-3 row-cols-1 row-cols-md-6 g-3">
+        <!-- Card Données -->
+        <div class="col-md-6">
+            <div class="card mb-3 ">
+                <div class="card-body py-3">
+                    <h5 class="card-title mb-2">Type de données</h5>
                     <div class="d-flex gap-3 align-items-center">
                         <div class="form-check form-check-inline mb-0">
                             <input class="form-check-input" type="radio" name="uploadType" id="root-images"
@@ -23,105 +22,88 @@
                             <label class="form-check-label small ms-1" for="root-docs">Documents</label>
                         </div>
                     </div>
-                </div>
-                <div class="mb-3">
-                    <div class="alert alert-info  small mb-0" role="alert">
-                        <div *ngFor="let line of getDataUsageForRoot(targetRoot); let isLast=last">
-                            {{ line }}<br *ngIf="!isLast">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row justify-content-between align-items-center mb-2 g-3">
-
-                    <div class="mt-2">
-                        <div class=" d-flex align-items-start justify-content-between">
-                            <div class="col">
-                                <h5 class=" mb-0">
-                                    Fichiers à uploader&nbsp;:
-                                    <span>
-                                        <button type="button" class="btn btn-sm" (click)="triggerFileDialog(targetRoot)"
-                                            title="Choisir des fichiers">
-                                            <i class="h5 bi-files text-success"></i>
-                                        </button>
-                                    </span>
-                                </h5>
-                                <div *ngIf="(filesByRoot[targetRoot] || []).length > 0" class="small text-muted">
-                                    <ul class="list-unstyled small mb-0">
-                                        <li *ngFor="let f of filesByRoot[targetRoot]">{{ f.name }}</li>
-                                    </ul>
-                                </div>
-                                <input type="file" id="file-input-{{targetRoot}}" style="display:none"
-                                    [accept]="acceptFilter(targetRoot)" (change)="onFilesSelected($event, targetRoot)"
-                                    multiple>
-                            </div>
-                            <div class="col">
-                                <ng-container *ngIf="(previewImagesByRoot[targetRoot]?.length ?? 0) > 0">
-                                    <ng-container *ngTemplateOutlet="previewImagesTpl"></ng-container>
-                                </ng-container>
-
-                            </div>
-                            <div class="col">
-                                <ng-container *ngIf="(previewLighterImagesByRoot[targetRoot]?.length ?? 0) > 0">
-                                    <ng-container *ngTemplateOutlet="previewLighterImagesTpl"></ng-container>
-                                </ng-container>
-                            </div>
-
-                        </div>
-                    </div>
-
-                    <div class="mt-2">
-                        <div class=" d-flex align-items-center justify-content-between">
-                            <div class="align-items-center mb-0">
-                                <h5 class="d-flex align-items-center gap-2 mb-0">
-                                    <span>Dossier web&nbsp;:</span>
-                                    <span class="text-muted">{{ targetFolderByRoot[targetRoot] || 'définir le dossier'
-                                        }}</span>
-                                    <button type="button" class="btn btn-sm d-flex align-items-center gap-1"
-                                        (click)="chooseFolder(targetRoot)" title="Choisir dossier cible">
-                                        <i class="h5 bi-folder text-success mb-0"></i>
-                                    </button>
-                                </h5>
-                            </div>
-
-                            <div class="col-2 d-flex flex-column align-items-center justify-content-center">
-                                <button type="button" class="btn btn-success" (click)="uploadAllFor(targetRoot)"
-                                    [disabled]="uploading">
-                                    <i class="bi bi-cloud-upload"></i>
-                                    Charger</button>
-                                <div *ngIf="uploading" class="spinner-border spinner-border-sm text-primary mt-2"
-                                    role="status">
-                                </div>
+                    <div class="mb-3" style="height: 15em; min-height: 15em; max-height: 15em; overflow-y: auto;">
+                        <div class="alert alert-info small mb-0 h-100 d-flex flex-column justify-content-start"
+                            role="alert">
+                            <div *ngFor="let line of getDataUsageForRoot(targetRoot); let isLast=last">
+                                {{ line }}<br *ngIf="!isLast">
                             </div>
                         </div>
                     </div>
-                    <!-- </div> -->
                 </div>
             </div>
-        </div>
-    </div>
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h5 class="card-title d-flex align-items-center justify-content-between">
+                        <span>Upload des données</span>
+                        <span class="ms-auto text-end">
+                            <button type="button" class="btn btn-sm btn-success" (click)="uploadAllFor(targetRoot)"
+                                [disabled]="uploading || !filesByRoot || !filesByRoot[targetRoot] || filesByRoot[targetRoot].length === 0">
+                                <i class="bi bi-cloud-upload"></i>
+                                Charger</button>
+                            <span *ngIf="uploading" class="spinner-border spinner-border-sm text-primary ms-2"
+                                role="status"></span>
+                        </span>
+                    </h5>
+                    <p class="mt-1">Dossier cible :
+                        <span class="fw-bolder">{{ currentNavFolder || 'Aucun dossier sélectionné' }}</span>
+                    </p>
+                    <p>{{targetRoot === 'Documents' ? 'Selection des fichiers' : 'Selection des images' }} à uploader
+                        <span class="ms-1">
+                            <button type="button" class="btn btn-sm" (click)="triggerFileDialog(targetRoot)"
+                                title="Choisir des fichiers">
+                                <i
+                                    [class]="targetRoot === 'Documents' ? 'h5 bi-files text-success' : 'h5 bi-images text-success'"></i>
+                            </button>
+                        </span>
+                    </p>
 
-    <!-- Visualisation des images uploadées dans la card Dossier web cible -->
-    <div class="mt-2"
-        *ngIf="uploadedItems.length && (targetRoot === S3_ROOT_FOLDERS.IMAGES || targetRoot === S3_ROOT_FOLDERS.ALBUMS)">
-        <div class="card p-2">
-            <div class="card-body">
-                <h6 class="mb-2">Images récemment uploadées</h6>
-                <div class="d-flex flex-wrap gap-2">
-                    <div *ngFor="let it of uploadedItems" class="border p-1 rounded bg-light position-relative"
-                        style="min-width:130px;">
-                        <img *ngIf="it.url && it.path && it.path.match('.(jpg|jpeg|png|gif|webp)$')" [src]="it.url"
-                            alt="image"
-                            style="max-width: 120px; max-height: 80px; border-radius: 4px; border: 1px solid #ccc; display:block; margin:auto;" />
-                        <div class="small text-center mt-1">
-                            {{it.path.split('/').pop()}}<br>{{ (it.size/1024) | number:'1.0-0' }} Ko
+                    <div class="row justify-content-between align-items-center mb-2 g-3">
+
+                        <div class="mt-2">
+                            <div class=" d-flex align-items-start justify-content-between">
+                                <div class="col">
+                                    <div *ngIf="(filesByRoot[targetRoot] || []).length > 0" class="small text-muted">
+                                        <ul class="list-unstyled small mb-0">
+                                            <li *ngFor="let f of filesByRoot[targetRoot]">{{ f.name }}</li>
+                                        </ul>
+                                    </div>
+                                    <input type="file" id="file-input-{{targetRoot}}" style="display:none"
+                                        [accept]="acceptFilter(targetRoot)"
+                                        (change)="onFilesSelected($event, targetRoot)" multiple>
+                                </div>
+                                <div class="col">
+                                    <ng-container *ngIf="(previewImagesByRoot[targetRoot]?.length ?? 0) > 0">
+                                        <ng-container *ngTemplateOutlet="previewImagesTpl"></ng-container>
+                                    </ng-container>
+
+                                </div>
+                                <div class="col">
+                                    <ng-container *ngIf="(previewLighterImagesByRoot[targetRoot]?.length ?? 0) > 0">
+                                        <ng-container *ngTemplateOutlet="previewLighterImagesTpl"></ng-container>
+                                    </ng-container>
+                                </div>
+
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+        <!-- Card navigation -->
+        <div class="col-md-6">
+            <div class="card mb-3 h-100">
+                <div class="card-body py-3">
+                    <h5 class="card-title mb-2">Volume {{targetRoot}}</h5>
+                    <ng-container *ngIf="targetRoot as root">
+                        <app-file-system-selector #fsNav [rootFolder]="root + '/'" mode="files"
+                            [allowCreateFolder]="true"
+                            (select)="onFileSelectedFromNav($event)"></app-file-system-selector>
+                    </ng-container>
+                </div>
+            </div>
+        </div>
     </div>
-
 </div>
 <!-- Prévisualisation des images sélectionnées -->
 <ng-template #previewImagesTpl>
@@ -135,7 +117,8 @@
                     <div class="small text-center mt-1">
                         {{meta.width}}x{{meta.height}} |
                         <span>
-                            {{ (meta.width >= meta.height ? (meta.width/meta.height) : (meta.height/meta.width)) | number:'1.1-1':'en' }}
+                            {{ (meta.width >= meta.height ? (meta.width/meta.height) : (meta.height/meta.width)) |
+                            number:'1.1-1':'en' }}
                         </span>
                         | {{meta.sizeKB}} Ko
                     </div>
@@ -154,14 +137,16 @@
     <h6>images allégées</h6>
     <div class="d-flex flex-wrap gap-2 mt-2">
         <div *ngFor="let url; let i = index of previewLighterImagesByRoot[targetRoot]">
-            <ng-container *ngIf="previewLighterImagesMetaByRoot[targetRoot] && previewLighterImagesMetaByRoot[targetRoot][i] as meta">
+            <ng-container
+                *ngIf="previewLighterImagesMetaByRoot[targetRoot] && previewLighterImagesMetaByRoot[targetRoot][i] as meta">
                 <div class="border p-1 rounded bg-light position-relative" style="min-width:130px;">
                     <img [src]="url" alt="allégée"
                         style="max-width: 120px; max-height: 80px; border-radius: 4px; border: 1px solid #aaa; display:block; margin:auto;" />
                     <div class="small text-center mt-1">
                         {{meta.width}}x{{meta.height}} |
                         <span>
-                            {{ (meta.width >= meta.height ? (meta.width/meta.height) : (meta.height/meta.width)) | number:'1.1-1':'en' }}
+                            {{ (meta.width >= meta.height ? (meta.width/meta.height) : (meta.height/meta.width)) |
+                            number:'1.1-1':'en' }}
                         </span>
                         | {{meta.sizeKB}} Ko
                     </div>

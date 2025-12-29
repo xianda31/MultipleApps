@@ -1,3 +1,4 @@
+
 import { Injectable } from '@angular/core';
 import { getUrl, list, remove } from 'aws-amplify/storage';
 import { FileSystemNode, S3Item } from '../interfaces/file.interface';
@@ -155,7 +156,30 @@ export class FileService {
     });
   }
 
-
+  /**
+   * Supprime récursivement un dossier et tout son contenu (fichiers et sous-dossiers)
+   */
+  async deleteFolderRecursive(path: string): Promise<void> {
+    try {
+      if (!path.endsWith('/')) path += '/';
+      const items = await this.list_files(path).toPromise();
+      if (!items) return;
+      for (const item of items) {
+        if (item.path === path) continue;
+        const relative = item.path.replace(path, '');
+        if (relative.includes('/') && relative.lastIndexOf('/') !== relative.length - 1) continue;
+        if (item.size === 0) {
+          await this.deleteFolderRecursive(item.path);
+        } else {
+          await this.delete_file(item.path);
+        }
+      }
+      await this.delete_file(path);
+    } catch (err) {
+      throw err;
+    }
+  }
+    // Vérifie que deleteFolderRecursive est bien exportée et accessible
 
   upload_file(file: File, directory = ''): Promise<void> {
     return new Promise<void>((resolve, reject) => {

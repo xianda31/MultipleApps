@@ -1,17 +1,55 @@
-import { Component, Input, Output, EventEmitter, OnInit, ElementRef, Renderer2 } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ElementRef, Renderer2 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FileService } from '../../../common/services/files.service';
+import { NgbModal, NgbModalModule } from '@ng-bootstrap/ng-bootstrap';
+import { GetConfirmationComponent } from '../../../common/modals/get-confirmation.component';
 import { ToastService } from '../../../common/services/toast.service';
+import { ZipService } from '../../../common/services/zip.service';
 
 @Component({
   selector: 'app-file-system-selector',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, NgbModalModule],
   templateUrl: './file-system-selector.component.html',
   styleUrls: ['./file-system-selector.component.scss']
 })
-export class FileSystemSelectorComponent implements OnInit {
+export class FileSystemSelectorComponent implements OnInit, OnChanges {
+
+          async deleteFile(path: string) {
+            if (!path) return;
+            try {
+              await this.fileService.delete_file(path);
+              this.toast.showSuccess('Fichier', 'Fichier supprimé');
+              this.refresh();
+            } catch (err) {
+              console.error('deleteFile error', err);
+              this.toast.showErrorToast('Fichier', 'Erreur suppression fichier');
+            }
+          }
+        // Permet de forcer le rafraîchissement de l'arborescence
+        public refresh() {
+          if (this.rootFolder) {
+            this.fileService.list_files(this.rootFolder).subscribe((items) => {
+              this.items = items;
+              this.tree = this.fileService.generate_filesystem(items);
+            });
+          }
+        }
+      ngOnChanges(changes: SimpleChanges): void {
+        if (changes['rootFolder'] && changes['rootFolder'].currentValue) {
+          this.currentPath = '';
+          this.expanded.clear();
+          this.showCreateFolder = false;
+          this.newFolderName = '';
+          this.items = null;
+          this.tree = null;
+          this.fileService.list_files(this.rootFolder!).subscribe((items) => {
+            this.items = items;
+            this.tree = this.fileService.generate_filesystem(items);
+          });
+        }
+      }
     currentPath: string = '';
   @Input() rootFolder: string | null = null; // e.g. 'images/'
   @Input() mode: 'files' | 'folders' | 'both' = 'files';
@@ -25,8 +63,43 @@ export class FileSystemSelectorComponent implements OnInit {
   showCreateFolder = false;
   newFolderName: string = '';
 
-  constructor(private fileService: FileService, private el: ElementRef, private renderer: Renderer2, private toast: ToastService) {}
+  constructor(
+    private fileService: FileService,
+    private el: ElementRef,
+    private renderer: Renderer2,
+    private toast: ToastService,
+    private modalService: NgbModal,
+    private zipService: ZipService
+  ) {}
 
+  async downloadFolderZip(path: string) {
+    if (!path) return;
+    try {
+      const name = path.endsWith('/') ? path.slice(0, -1) : path;
+      await this.zipService.downloadFolderAsZip(path, name.split('/').pop() + '.zip');
+      this.toast.showSuccess('Téléchargement', 'Archive générée');
+    } catch (err) {
+      this.toast.showErrorToast('Téléchargement', 'Erreur lors de la génération de l’archive.');
+    }
+  }
+
+  async deleteFolder(path: string) {
+    if (!path) return;
+    try {
+      const modalRef = this.modalService.open(GetConfirmationComponent, { centered: true });
+      const confirmed = await modalRef.result;
+      if (!confirmed) return;
+      this.toast.showInfo('Dossier', `Suppression du dossier : ${path}`);
+      await this.fileService.deleteFolderRecursive(path);
+      this.toast.showSuccess('Dossier', 'Dossier et contenu supprimés');
+      this.refresh();
+    } catch (err) {
+      if (err !== false) {
+        console.error('deleteFolder error', err);
+        this.toast.showErrorToast('Dossier', 'Erreur suppression dossier');
+      }
+    }
+  }
   ngOnInit(): void {
     try {
       const isInModal = !!this.el.nativeElement.closest('.modal') || !!this.el.nativeElement.closest('.modal-content');
@@ -59,7 +132,24 @@ export class FileSystemSelectorComponent implements OnInit {
     } else {
       this.expanded.add(path);
       this.currentPath = path;
+      // Émet l'événement à chaque navigation dans un dossier
+      if (this.isFolderFromPath(path)) {
+        this.select.emit(path.endsWith('/') ? path : path + '/');
+      }
     }
+  }
+
+  // Helper pour savoir si un path est un dossier dans l'arborescence
+  isFolderFromPath(path: string): boolean {
+    if (!this.tree) return false;
+    const parts = path.split('/').filter(Boolean);
+    let node = this.tree;
+    for (const part of parts) {
+      if (!node[part]) return false;
+      node = node[part];
+    }
+    // Un dossier a potentiellement des enfants ou un __data.size === 0
+    return Object.keys(node).some(k => k !== '__data') || (node.__data && node.__data.size === 0);
   }
   isExpanded(path: string) { return this.expanded.has(path); }
 

@@ -1,7 +1,8 @@
+import { ViewChild } from '@angular/core';
+
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FileService, S3_ROOT_FOLDERS } from '../../../common/services/files.service';
 import { ImgService } from '../../../common/services/img.service';
 import { ToastService } from '../../../common/services/toast.service';
@@ -12,27 +13,39 @@ import { ImageSize } from '../../../common/interfaces/ui-conf.interface';
 @Component({
   selector: 'app-uploader',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, FileSystemSelectorComponent],
   templateUrl: './uploader.html',
   styleUrls: ['./uploader.scss']
 })
+
 export class UploaderComponent {
-  // --- UI & état ---
+
+  showCreateRootFolder = false;
+  newRootFolderName = '';
+  currentNavFolder: string = '';
   targetRoot: string = S3_ROOT_FOLDERS.IMAGES;
   S3_ROOT_FOLDERS = S3_ROOT_FOLDERS;
   data_usage!: Record<S3_ROOT_FOLDERS, string[]>;
   filesByRoot: { [key: string]: File[] } = {};
   previewImagesByRoot: { [key: string]: string[] } = {};
   previewLighterImagesByRoot: { [key: string]: string[] } = {};
+  lighterFilesByRoot: { [key: string]: File[] } = {}; // Stocke les fichiers allégés
   previewImagesMetaByRoot: { [key: string]: Array<{ width: number, height: number, sizeKB: number, selected: boolean }> } = {};
   previewLighterImagesMetaByRoot: { [key: string]: Array<{ width: number, height: number, sizeKB: number, selected: boolean }> } = {};
   targetFolderByRoot: { [key: string]: string } = {};
   uploading = false;
   uploadedItems: Array<{ path: string; size: number; url?: string }> = [];
   card_img_sizes: ImageSize[] = [];
+  refreshNav: (() => void) | null = null;
+    @ViewChild('fsNav') fsNavComponent?: any;
+  ngAfterViewInit(): void {
+    if (this.fsNavComponent && typeof this.fsNavComponent.refresh === 'function') {
+      this.refreshNav = () => this.fsNavComponent!.refresh();
+    }
+  }
+
 
   constructor(
-    private modal: NgbModal,
     private fileService: FileService,
     private toast: ToastService,
     private imgService: ImgService,
@@ -47,7 +60,9 @@ export class UploaderComponent {
         [S3_ROOT_FOLDERS.IMAGES]: [
           'Images ou photos (jpg, png, gif) utilisées en illustration dans les articles, ou le carousel de la page d\'acceuil.',
           `Des versions reformatées de ratio (${this.card_img_sizes.map(s => (s.width / s.height).toFixed(2)).join(', ')}) et résolution optimisés pour le web sont automatiquement créées en sus.`,
-          'nota : les images originales sont conservées telles quelles ; à utiliser pour le carousel d\'accueil par exemple.'
+          'nota :',
+          ' - pour les images des articles, ne conservez que les images reformatées (moins lourdes).',
+          ' - pour le carousel de la page d\'accueil ne chargez que les images originales de haute résolution.'
         ],
         [S3_ROOT_FOLDERS.ALBUMS]: [
           'Photos en haute résolution (jpg, png), format et résolution originaux, pour les albums photos',
@@ -63,32 +78,47 @@ export class UploaderComponent {
     });
   }
 
+  async createRootFolder() {
+    const name = (this.newRootFolderName || '').trim();
+    if (!name) {
+      this.toast.showErrorToast('Dossier', 'Nom de dossier requis');
+      return;
+    }
+    let parent = this.currentNavFolder || (this.targetRoot + '/');
+    if (parent && !parent.endsWith('/')) parent += '/';
+    if (!parent) {
+      this.toast.showErrorToast('Dossier', 'Racine non définie');
+      return;
+    }
+    const folderMarkerName = name.endsWith('/') ? name : name + '/';
+    try {
+      const file = new File([new Blob([])], folderMarkerName);
+      await this.fileService.upload_file(file, parent);
+      this.toast.showSuccess('Dossier', 'Dossier créé');
+      this.showCreateRootFolder = false;
+      this.newRootFolderName = '';
+      // Optionnel : rafraîchir la navigation si besoin
+    } catch (err) {
+      console.error('createRootFolder error', err);
+      this.toast.showErrorToast('Dossier', 'Erreur création dossier');
+    }
+  }
 
+  // Pour la navigation file-system-selector (card de droite)
+  onFileSelectedFromNav(path: string) {
+    // Si c'est un dossier, on l'utilise comme dossier courant
+    if (path.endsWith('/')) {
+      this.currentNavFolder = path;
+    } else {
+      // Si c'est un fichier, on prend son dossier parent
+      const idx = path.lastIndexOf('/');
+      this.currentNavFolder = idx >= 0 ? path.substring(0, idx + 1) : '';
+    }
+    // Optionnel : toast ou autre action
+  }
+  // La sélection de dossier se fait désormais via la navigation à droite
   chooseFolder(root?: string) {
-    const prevRoot = this.targetRoot;
-    if (root) this.targetRoot = root;
-    const modalRef = this.modal.open(FileSystemSelectorComponent as any, { size: 'lg', centered: true });
-    const cmp = modalRef.componentInstance as any;
-    cmp.rootFolder = this.targetRoot + '/';
-    // allow creating folders from the uploader
-    cmp.allowCreateFolder = true;
-    cmp.mode = 'folders';
-    const sub = cmp.select?.subscribe((path: string) => {
-      // ensure trailing slash
-      const p = path.endsWith('/') ? path : path + '/';
-      this.targetFolderByRoot[this.targetRoot] = p;
-      modalRef.close();
-    });
-    cmp.close?.subscribe(() => modalRef.close());
-    modalRef.result.finally(() => {
-      sub?.unsubscribe?.();
-      this.targetRoot = prevRoot;
-      // Focus sur le bouton 'Choisir des fichiers' après fermeture de la modale
-      setTimeout(() => {
-        const btn = document.querySelector('button[title="Choisir des fichiers"]') as HTMLButtonElement;
-        if (btn) btn.focus();
-      }, 0);
-    });
+    // Ne fait plus rien, conservé pour compatibilité éventuelle
   }
 
   onFilesSelected(ev: Event, root?: string) {
@@ -115,6 +145,7 @@ export class UploaderComponent {
     (async () => {
       const lighterUrls: string[] = [];
       const lighterMetas: Array<{ width: number, height: number, sizeKB: number, selected: boolean }> = [];
+      const lighterFilesArr: File[] = [];
       for (const file of files) {
         if (!file.type.startsWith('image/')) continue;
         const lighterFiles = await this.imgService.createLighterFiles(file, this.card_img_sizes);
@@ -127,10 +158,12 @@ export class UploaderComponent {
             sizeKB: Math.round(lighterFile.size / 1024),
             selected: true
           });
+          lighterFilesArr.push(lighterFile);
         }
       }
       this.previewLighterImagesByRoot[key] = lighterUrls;
       this.previewLighterImagesMetaByRoot[key] = lighterMetas;
+      this.lighterFilesByRoot[key] = lighterFilesArr;
     })();
   }
   
@@ -154,14 +187,17 @@ export class UploaderComponent {
 
   async uploadAllFor(root?: string) {
     const key = (root ?? this.targetRoot).toString();
-    const tf = this.targetFolderByRoot[key] ?? '';
+    const tf = this.currentNavFolder;
     let files = this.filesByRoot[key] ?? [];
     // Filtre les fichiers originaux selon la sélection
     const metaArr = this.previewImagesMetaByRoot[key];
-    let selectedCount = files.length;
+    const lighterMetaArr = this.previewLighterImagesMetaByRoot[key];
+    let selectedOriginalCount = files.length;
+    let selectedLighterCount = lighterMetaArr ? lighterMetaArr.filter(m => m.selected).length : 0;
+    let selectedOriginalFiles: File[] = files;
     if (metaArr && metaArr.length === files.length) {
-      files = files.filter((_, i) => metaArr[i]?.selected);
-      selectedCount = metaArr.filter(m => m.selected).length;
+      selectedOriginalFiles = files.filter((_, i) => metaArr[i]?.selected);
+      selectedOriginalCount = metaArr.filter(m => m.selected).length;
     }
     // Nettoie les previews après upload
     this.previewImagesByRoot[key]?.forEach(url => URL.revokeObjectURL(url));
@@ -172,14 +208,16 @@ export class UploaderComponent {
       this.toast.showWarning('Uploader', 'Veuillez choisir un dossier cible');
       return;
     }
-    if (selectedCount === 0) {
+    // Vérifie qu'au moins un fichier original ou allégé est sélectionné
+    if (selectedOriginalCount === 0 && selectedLighterCount === 0) {
       this.toast.showWarning('Uploader', 'Aucun fichier sélectionné');
       return;
     }
     this.uploading = true;
     try {
-      for (let fileIdx = 0; fileIdx < files.length; fileIdx++) {
-        const f = files[fileIdx];
+      // Upload des originaux sélectionnés
+      for (let fileIdx = 0; fileIdx < selectedOriginalFiles.length; fileIdx++) {
+        const f = selectedOriginalFiles[fileIdx];
         await this.fileService.upload_file(f, tf);
         const path = tf + f.name;
         let url: string | undefined = undefined;
@@ -187,50 +225,47 @@ export class UploaderComponent {
           url = await this.fileService.getPresignedUrl$(path).toPromise();
         } catch {}
         this.uploadedItems.push({ path, size: f.size, url });
-        // Génère et upload les images allégées pour IMAGES et ALBUMS
-        const currentRoot = (root ?? this.targetRoot);
-        if (currentRoot === S3_ROOT_FOLDERS.IMAGES || currentRoot === S3_ROOT_FOLDERS.ALBUMS) {
-          const lighterFiles = await this.imgService.createLighterFiles(f, this.card_img_sizes);
-          let lighterMetaArr = this.previewLighterImagesMetaByRoot[key];
-          if (lighterMetaArr && lighterMetaArr.length > 0) {
-            const filteredLighterFiles = lighterFiles.filter((_, i) => lighterMetaArr[i]?.selected);
-            for (let i = 0; i < filteredLighterFiles.length; i++) {
-              const { file: lighterFile, size } = filteredLighterFiles[i];
-              // Pour ALBUMS, upload dans THUMBNAILS, en gardant le même chemin relatif et le nom original (pas de suffixe)
-              let lighterTargetFolder = tf;
-              let lighterFileToUpload = lighterFile;
-              let lighterFileName = lighterFile.name;
-              if (currentRoot === S3_ROOT_FOLDERS.ALBUMS) {
-                // tf commence par le chemin sélectionné sous ALBUMS, il faut le remplacer par THUMBNAILS/albums/
-                // Ex: tf = 'albums/2025/vacances/' => lighterTargetFolder = 'thumbnails/albums/2025/vacances/'
-                const albumsPrefix = S3_ROOT_FOLDERS.ALBUMS + '/';
-                const thumbnailsPrefix = S3_ROOT_FOLDERS.THUMBNAILS + '/albums/';
-                if (tf.startsWith(albumsPrefix)) {
-                  lighterTargetFolder = thumbnailsPrefix + tf.substring(albumsPrefix.length);
-                } else {
-                  // fallback: just replace root
-                  lighterTargetFolder = tf.replace(S3_ROOT_FOLDERS.ALBUMS, S3_ROOT_FOLDERS.THUMBNAILS+ '/albums/');
-                }
-                // Renommer le fichier allégé pour qu'il ait le même nom que l'original
-                lighterFileName = f.name;
-                // Créer un nouveau File avec le nom original si besoin
-                if (lighterFile.name !== lighterFileName) {
-                  lighterFileToUpload = new File([lighterFile], lighterFileName, { type: lighterFile.type });
-                }
-              }
-              await this.fileService.upload_file(lighterFileToUpload, lighterTargetFolder);
-              let url: string | undefined = undefined;
-              try {
-                url = await this.fileService.getPresignedUrl$(lighterTargetFolder + lighterFileName).toPromise();
-              } catch {}
-              this.uploadedItems.push({ path: lighterTargetFolder + lighterFileName, size: lighterFileToUpload.size, url });
-              this.toast.showSuccess('Uploader', `Image allégée (${size.width}x${size.height}) créée et téléchargée avec succès`);
+      }
+      // Upload des images allégées sélectionnées
+      const currentRoot = (root ?? this.targetRoot);
+      if ((currentRoot === S3_ROOT_FOLDERS.IMAGES || currentRoot === S3_ROOT_FOLDERS.ALBUMS) && lighterMetaArr && lighterMetaArr.length > 0) {
+        const lighterFilesArr = this.lighterFilesByRoot[key] || [];
+        for (let i = 0; i < lighterFilesArr.length; i++) {
+          if (!lighterMetaArr[i]?.selected) continue;
+          const lighterFile = lighterFilesArr[i];
+          let lighterTargetFolder = tf;
+          let lighterFileToUpload = lighterFile;
+          let lighterFileName = lighterFile.name;
+          if (currentRoot === S3_ROOT_FOLDERS.ALBUMS) {
+            const albumsPrefix = S3_ROOT_FOLDERS.ALBUMS + '/';
+            const thumbnailsPrefix = S3_ROOT_FOLDERS.THUMBNAILS + '/albums/';
+            if (tf.startsWith(albumsPrefix)) {
+              lighterTargetFolder = thumbnailsPrefix + tf.substring(albumsPrefix.length);
+            } else {
+              lighterTargetFolder = tf.replace(S3_ROOT_FOLDERS.ALBUMS, S3_ROOT_FOLDERS.THUMBNAILS+ '/albums/');
+            }
+            lighterFileName = selectedOriginalFiles[i]?.name || lighterFile.name;
+            if (lighterFile.name !== lighterFileName) {
+              lighterFileToUpload = new File([lighterFile], lighterFileName, { type: lighterFile.type });
             }
           }
+          await this.fileService.upload_file(lighterFileToUpload, lighterTargetFolder);
+          let url: string | undefined = undefined;
+          try {
+            url = await this.fileService.getPresignedUrl$(lighterTargetFolder + lighterFileName).toPromise();
+          } catch {}
+          this.uploadedItems.push({ path: lighterTargetFolder + lighterFileName, size: lighterFileToUpload.size, url });
+          this.toast.showSuccess('Uploader', `Image allégée téléchargée avec succès`);
         }
       }
       this.toast.showSuccess('Uploader', 'Fichiers téléchargés avec succès');
       this.filesByRoot[key] = [];
+      // Reset du dossier courant après upload
+      this.currentNavFolder = '';
+      // Déclenche le rafraîchissement du file-system-selector si défini
+      if (this.refreshNav) {
+        this.refreshNav();
+      }
     } catch (err) {
       console.error(err);
       this.toast.showErrorToast('Uploader', 'Erreur pendant l\'upload');
