@@ -28,7 +28,7 @@ export class HomePage {
   student_nbr = 0;
   logged_member$: Observable<Member | null> = new Observable<Member | null>();
   isMdOrAbove: boolean = false;
-  home_folder: string = 'images/accueil';
+  home_folder: string = 'images/_ACCUEIL_';
   photos: string[] = ['/marcaissonne.jpg'];
   photo_index: number = 0;
   // Holds the upcoming index used for the top layers during transition to avoid flash
