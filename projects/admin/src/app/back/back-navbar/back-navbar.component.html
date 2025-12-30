@@ -1,16 +1,17 @@
-<div class="row bg-light  ">
-  <div class="d-flex d-inline align-items-end  w-100 bg-dark  p-2  position-relative">
+<div class="container-fluid bg-light p-0 m-0 w-100" style="max-width:100vw;">
+  <div class="d-flex d-inline align-items-start w-100 bg-dark px-2 pt-1 pb-1 position-relative">
     <!-- Mobile sidebar toggle button -->
     <button *ngIf="(logged_member$ | async)" class="btn btn-outline-secondary d-md-none text-center" type="button"
       data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar" aria-controls="mobileSidebar">
       <i class="bi bi-list text-start"></i>
     </button>
 
-    <span class="d-none d-md-inline logo-overlap position-absolute " style="left:1rem;top:1rem;">
-      <img src="admin.jpg" alt="BCSTO logo" class="me-1 logo-navbar" />
+
+    <span class="d-none d-md-inline logo-overlap" style="margin-right:0.5em;">
+      <img src="admin.jpg" alt="BCSTO logo" class="me-1 logo-navbar" style="height:2.7em;max-height:56px;width:auto;vertical-align:top;display:block;" />
     </span>
 
-    <span class="d-none d-md-inline fs-5 ms-1" style="padding-left:4em;">
+    <span class="d-none d-md-inline fs-5 ms-1" style="padding-left:1em;">
       Bridge Club <span style="white-space:nowrap">Saint-Orens</span>
       - saison {{season}}
       <span class="badge bg-success" style="font-size: 0.6rem;">{{entries_nbr}}</span>
@@ -19,10 +20,8 @@
 
     <span class="d-sm-inline d-md-none fs-5 ms-1">BCSTO {{season}}</span>
 
-    <!-- connexion -->
+    <!-- backdoor to front -->
     <div class="d-flex ms-auto align-items-end me-2">
-
-      <!-- backdoor to front -->
       <span class=" ms-4 d-none d-sm-inline ">
         <a [routerLink]="'/front'">
           <i class="bi bi-door-open-fill "></i>
@@ -32,23 +31,23 @@
   </div>
 
   <!-- Desktop navigation -->
-  <nav class="navbar navbar-expand-md navbar-light bg-light shadow-sm ps-5 d-none d-md-block ">
-    <div class="navbar-collapse d-flex">
+  <nav class="navbar navbar-expand-md navbar-light bg-light shadow-sm d-none d-md-block w-100" style="padding-left:0;">
+    <div class="navbar-collapse d-flex" style="padding-left:0;">
       <!-- <ul class="navbar-nav me-auto mb-md-0 mb-lg-0 align-items-start menu-sm-tight">
       </ul> -->
-      <ul class="navbar-nav  mb-md-0 mb-lg-0 justify-content-start align-items-end">
+      <ul class="navbar-nav mb-md-0 mb-lg-0 mt-2 align-items-end" style="padding-left:0;">
 
-        <li class="nav-item ms-md-1 ms-sm-1" *ngIf="accreditation_level >= accreditation_levels.Contributeur">
+        <li class="nav-item" *ngIf="accreditation_level >= accreditation_levels.Contributeur">
           <a class="nav-link" routerLink="./caisse/droits-de-table">
-            <i class="fs-4 bi-card-checklist"></i>
+            <i class="bi bi-card-checklist"></i>
             <span class="ms-1">Tournois</span>
           </a>
         </li>
 
         <li *ngIf="accreditation_level >= accreditation_levels.Contributeur" ngbDropdown
-          class="nav-item dropdown ms-md-1 ms-sm-1">
+          class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
-            <i class="fs-4 bi-cart"></i> <span class="ms-1">Boutique</span>
+            <i class="bi bi-cart"></i> <span class="ms-1">Boutique</span>
           </a>
           <ul ngbDropdownMenu class="dropdown-menu">
             <li><a class="dropdown-item" routerLink="./caisse/ventes">vente à adhérents</a></li>
@@ -57,9 +56,9 @@
         </li>
 
         <li *ngIf="accreditation_level >= accreditation_levels.Contributeur" ngbDropdown
-          class="nav-item dropdown ms-md-1 ms-sm-1">
+          class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
-            <i class="fs-4 bi-people"></i>
+            <i class="bi bi-people"></i>
             <span class="ms-1">Adhérents</span>
           </a>
           <ul ngbDropdownMenu class="dropdown-menu">
@@ -72,9 +71,9 @@
 
 
         <li *ngIf="accreditation_level >= accreditation_levels.Administrateur" ngbDropdown
-          class="nav-item dropdown ms-md-1 ms-sm-1">
+          class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
-            <i class="fs-4 bi-journal"></i> <span class="ms-1">Finance</span>
+            <i class="bi bi-journal"></i> <span class="ms-1">Finance</span>
           </a>
           <ul ngbDropdownMenu class="dropdown-menu">
             <li><a class="dropdown-item" routerLink="./finance/état-de-caisse">état de caisse</a></li>
@@ -88,9 +87,9 @@
 
         <!-- Outils -->
         <li *ngIf="accreditation_level >= accreditation_levels.Systeme" ngbDropdown
-          class="nav-item dropdown ms-md-1 ms-sm-1">
+          class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
-            <i class="fs-4 bi-database-fill-gear"></i> <span class="ms-1">Outils</span>
+            <i class="bi bi-database-fill-gear"></i> <span class="ms-1">Outils</span>
           </a>
           <ul ngbDropdownMenu class="dropdown-menu">
             <li><a class="dropdown-item" routerLink="./finance/books/list">base de données</a></li>
@@ -107,9 +106,9 @@
 
         <!-- site -->
         <li *ngIf="accreditation_level >= accreditation_levels.Editeur" ngbDropdown
-          class="nav-item dropdown ms-md-1 ms-sm-1">
+          class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
-            <i class="fs-4 bi-globe2"></i> <span class="ms-1">Site web</span>
+            <i class="bi bi-globe2"></i> <span class="ms-1">Site web</span>
           </a>
           <ul ngbDropdownMenu class="dropdown-menu">
             <!-- <li><a class="dropdown-item" routerLink="./site/thumbnails">vignettes</a></li> -->
@@ -117,14 +116,14 @@
             <li ><a class="dropdown-item" routerLink="./site/menus">les menus</a></li>
             <li><a class="dropdown-item" routerLink="./site/pages">les pages</a></li>
             <li><a class="dropdown-item" routerLink="./site/uploader">les datas</a></li>
-            <li><a class="dropdown-item" routerLink="/front">aller au site</a></li>
+            <li><a class="dropdown-item" routerLink="/front">aller sur le site</a></li>
           </ul>
         </li>
 
         <!-- Assistance -->
-        <li class="nav-item ms-md-1 ms-sm-1" *ngIf="(accreditation_level >= accreditation_levels.Editeur) && (assistances_nbr > 0)">
+        <li class="nav-item" *ngIf="(accreditation_level >= accreditation_levels.Editeur) && (assistances_nbr > 0)">
           <a class="nav-link" routerLink="./assistance">
-            <i class="fs-4 bi-person-raised-hand">
+            <i class="bi bi-person-raised-hand">
               <span  class="badge bg-warning top-0 start-100 translate-middle"
                 style="font-size: 0.6rem;">{{assistances_nbr}}</span>
             </i>
@@ -133,9 +132,9 @@
         </li>
 
         <!-- Mailing -->
-        <li class="nav-item ms-md-1 ms-sm-1" *ngIf="(accreditation_level >= accreditation_levels.Administrateur)">
+        <li class="nav-item" *ngIf="(accreditation_level >= accreditation_levels.Administrateur)">
           <a class="nav-link" routerLink="./mailing">
-            <i class="fs-4 bi-envelope-fill">
+            <i class="bi bi-envelope-fill">
             </i>
             <span class="ms-0">Mailing</span>
           </a>
@@ -146,10 +145,10 @@
           <a class="nav-link dropdown-toggle d-flex align-items-center" ngbDropdownToggle href="#">
             <ng-container *ngIf="member.has_avatar; else defaultIcon">
               <img [src]="avatar$ | async" alt="avatar" class="rounded-circle align-self-center"
-                style="width:28px; height:28px; max-width:28px; max-height:28px; object-fit:cover;">
+                style="width:20px; height:20px; max-width:20px; max-height:20px; object-fit:cover;">
             </ng-container>
             <ng-template #defaultIcon>
-              <i class="fs-4 bi-person-circle align-self-center"></i>
+              <i class="bi bi-person-circle align-self-center"></i>
             </ng-template>
             <span class="ms-1 align-self-center">{{ member.firstname }}</span>
           </a>
@@ -182,7 +181,7 @@
         <li class="nav-item" *ngIf="accreditation_level >= accreditation_levels.Contributeur">
           <a class="nav-link d-flex align-items-center" routerLink="./caisse/droits-de-table"
             data-bs-dismiss="offcanvas">
-            <i class="fs-4 bi-card-checklist"></i>
+            <i class="bi bi-card-checklist"></i>
             <span class="ms-1">Tournois</span>
           </a>
         </li>
@@ -190,7 +189,7 @@
         <li *ngIf="accreditation_level >= accreditation_levels.Contributeur" ngbDropdown class="nav-item dropdown">
           <div class="d-flex align-items-center">
             <span class="nav-link p-0 pe-2" style="cursor:default;">
-              <i class="fs-4 bi-cart"></i> <span class="ms-1">Boutique</span>
+              <i class="bi bi-cart"></i> <span class="ms-1">Boutique</span>
             </span>
             <a class="nav-link dropdown-toggle p-0" ngbDropdownToggle href="#" style="width:2em;"></a>
           </div>
@@ -204,7 +203,7 @@
         <li *ngIf="accreditation_level >= accreditation_levels.Contributeur" ngbDropdown class="nav-item dropdown">
           <div class="d-flex align-items-center">
             <span class="nav-link p-0 pe-2" style="cursor:default;">
-              <i class="fs-4 bi-people"></i> <span class="ms-1">Adhérents</span>
+              <i class="bi bi-people"></i> <span class="ms-1">Adhérents</span>
             </span>
             <a class="nav-link dropdown-toggle p-0" ngbDropdownToggle href="#" style="width:2em;"></a>
           </div>
@@ -218,7 +217,7 @@
         <li *ngIf="accreditation_level >= accreditation_levels.Administrateur" ngbDropdown class="nav-item dropdown">
           <div class="d-flex align-items-center">
             <span class="nav-link p-0 pe-2" style="cursor:default;">
-              <i class="fs-4 bi-journal"></i> <span class="ms-1">Finance</span>
+              <i class="bi bi-journal"></i> <span class="ms-1">Finance</span>
             </span>
             <a class="nav-link dropdown-toggle p-0" ngbDropdownToggle href="#" style="width:2em;"></a>
           </div>
@@ -239,7 +238,7 @@
         <li *ngIf="accreditation_level >= accreditation_levels.Systeme" ngbDropdown class="nav-item dropdown">
           <div class="d-flex align-items-center">
             <span class="nav-link p-0 pe-2" style="cursor:default;">
-              <i class="fs-4 bi-database-fill-gear"></i> <span class="ms-1">Outils</span>
+              <i class="bi bi-database-fill-gear"></i> <span class="ms-1">Outils</span>
             </span>
             <a class="nav-link dropdown-toggle p-0" ngbDropdownToggle href="#" style="width:2em;"></a>
           </div>
@@ -261,7 +260,7 @@
         <li *ngIf="accreditation_level >= accreditation_levels.Administrateur" ngbDropdown class="nav-item dropdown">
           <div class="d-flex align-items-center">
             <span class="nav-link p-0 pe-2" style="cursor:default;">
-              <i class="fs-4 bi-globe2"></i> <span class="ms-1">Site web</span>
+              <i class="bi bi-globe2"></i> <span class="ms-1">Site web</span>
             </span>
             <a class="nav-link dropdown-toggle p-0" ngbDropdownToggle href="#" style="width:2em;"></a>
           </div>
@@ -271,14 +270,14 @@
             <li><a class="dropdown-item" routerLink="./site/pages" data-bs-dismiss="offcanvas">les pages</a></li>
             <li><a class="dropdown-item" routerLink="./site/uploader" data-bs-dismiss="offcanvas">les datas</a></li>
 
-            <li><a class="dropdown-item" routerLink="/front" data-bs-dismiss="offcanvas">aller au site</a></li>
+            <li><a class="dropdown-item" routerLink="/front" data-bs-dismiss="offcanvas">aller sur le site</a></li>
           </ul>
         </li>
 
        <!-- Assistance -->
         <li class="nav-item ms-md-1 ms-sm-1" *ngIf="accreditation_level >= accreditation_levels.Editeur">
           <a class="nav-link" routerLink="./assistance">
-            <i class="fs-4 bi-person-raised-hand">
+            <i class="bi bi-person-raised-hand">
               <span *ngIf="assistances_nbr > 0" class="badge bg-warning top-0 start-100 translate-middle"
                 style="font-size: 0.6rem;">{{assistances_nbr}}</span>
             </i>
@@ -288,7 +287,7 @@
 
         <li *ngIf="(logged_member$ | async) " ngbDropdown class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
-            <i class="fs-4 bi-person-circle"></i>
+            <i class="bi bi-person-circle"></i>
             <span class="ms-1">{{ (logged_member$ | async)?.firstname }}</span>
           </a>
           <ul ngbDropdownMenu class="dropdown-menu">
