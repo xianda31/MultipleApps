@@ -49,19 +49,19 @@ export class BackNavbarComponent implements OnInit {
 
   ngOnInit(): void {
 
-    this.assistanceService.getAllRequests().subscribe(requests => {
-      this.assistances_nbr = requests.filter(r => r.status !== REQUEST_STATUS.RESOLVED).length;
-    });
-
+    
     this.logged_member$ = this.auth.logged_member$;
-
+    
     this.accreditation_level = -1;
-
+    
     this.auth.logged_member$.subscribe(async (member) => {
       if (member !== null) {
         this.user_accreditation = await this.groupService.getUserAccreditation();
         // this.force_canvas_to_close();
-
+        
+        this.assistanceService.getAllRequests().subscribe(requests => {
+          this.assistances_nbr = requests.filter(r => r.status !== REQUEST_STATUS.RESOLVED).length;
+        });
         this.avatar$ = this.memberSettingsService.getAvatarUrl(member);
 
         this.memberSettingsService.settingsChange$().subscribe(() => {

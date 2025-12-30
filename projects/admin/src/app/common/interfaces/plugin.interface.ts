@@ -9,6 +9,7 @@ import { IframeComponent } from "../../front/front/iframe/iframe";
 import { HomePage } from "../../front/front/pages/home-page/home-page";
 import { TournamentComponent } from "../tournaments/tournament/tournament.component";
 import { Carousel } from "../../front/carousel/carousel";
+import { AssistanceComponent } from "../../front/front/assistance/assistance.component";
 
 export enum NAVITEM_PLUGIN {
   TOURNAMENTS = 'tournaments',
@@ -18,6 +19,7 @@ export enum NAVITEM_PLUGIN {
   AUTHENTICATION = 'authentication',
   IFRAME = 'iframe',
   HOME = 'homePage',
+  ASSISTANCE = 'assistance',
 };
 
 export type PluginRouteTemplate = {
@@ -50,6 +52,7 @@ export const PLUGINS: Record<string, Type<any>> = {
   [NAVITEM_PLUGIN.AUTHENTICATION]: ConnexionPageComponent,
   [NAVITEM_PLUGIN.IFRAME]: IframeComponent,
   [NAVITEM_PLUGIN.HOME]: HomePage,
+  [NAVITEM_PLUGIN.ASSISTANCE]: AssistanceComponent,
   ['carousel']: Carousel,
   ['tournament']: TournamentComponent,
 };

@@ -12,7 +12,6 @@ import {  Page, Page_input, Snippet, Snippet_input } from '../interfaces/page_sn
 import { Game, Game_input } from '../../back/fees/fees.interface';
 import { NavItem, NavItem_input } from '../interfaces/navitem.interface';
 import { AssistanceRequest, AssistanceRequestInput } from '../interfaces/assistance-request.interface';
-// ...existing code...
 
 @Injectable({
   providedIn: 'root'
@@ -20,11 +19,6 @@ import { AssistanceRequest, AssistanceRequestInput } from '../interfaces/assista
 export class DBhandler {
   constructor(
   ) { }
-
-  // ...existing code...
-
-
-
 
 
   private _authMode(): Observable<'userPool' | 'identityPool'> {
