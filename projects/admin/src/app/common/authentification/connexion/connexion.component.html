@@ -35,7 +35,7 @@
             <span class=" text-danger">{{ logging_msg }}</span>
         </div>
         <div class="row mt-2 justify-content-center">
-            <div class="col-10 d-flex justify-content-end">
+            <div class="col-12 col-sm-12 col-lg-6 d-flex justify-content-end">
                     <button class="btn btn-success btn-login" type="submit"
                         [disabled]="isSubmitting || email.invalid || password.invalid">
                         <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
@@ -44,7 +44,7 @@
             </div>
         </div>
         <div class="row mt-2 justify-content-center">
-            <div class="col-10 d-flex justify-content-end">
+            <div class="col-12 col-sm-12 col-lg-6 d-flex justify-content-end">
                 <button class="btn btn-link p-0 link-forgot" type="button" (click)="newPassword()">Mot de passe oublié ?</button>
             </div>
         </div>
@@ -53,12 +53,12 @@
 
     <ng-template #reset_password>
         <div class="row mt-3 justify-content-center">
-            <div class="col-10">
+            <div class="col-12 col-sm-12 col-lg-6">
                 <label> Choisissez d'abord votre nouveau mot de passe, puis recevez un code par e-mail pour confirmer. </label>
             </div>
         </div>
         <div class="row mt-1 justify-content-center">
-            <div class="col-10 subtitle-email">Adresse e-mail: <strong>{{ email.value }}</strong></div>
+            <div class="col-12 col-sm-12 col-lg-6 subtitle-email">Adresse e-mail: <strong>{{ email.value }}</strong></div>
         </div>
         <div class="row mt-3 auth-field">
             <label for="new_password">nouveau mot de passe</label>
@@ -75,7 +75,7 @@
             </span>
         </div>
         <div class="row mt-4 justify-content-center">
-            <div class="col-10 d-flex justify-content-end">
+            <div class="col-12 col-sm-12 col-lg-6 d-flex justify-content-end">
                         <button class="btn btn-success btn-login" type="submit"
                             [disabled]="isSubmitting || email.invalid || loggerForm.get('new_password')?.invalid">
                             <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
@@ -84,7 +84,7 @@
             </div>
         </div>
         <div class="row mt-2 justify-content-center">
-            <div class="col-10 d-flex justify-content-end">
+            <div class="col-12 col-sm-12 col-lg-6 d-flex justify-content-end">
                 <button class="btn btn-link p-0 link-forgot" type="button" (click)="goToSignIn()">Retour à la connexion</button>
             </div>
         </div>
@@ -92,12 +92,12 @@
 
     <ng-template #confirm_reset_password>
         <div class="row mt-3 justify-content-center">
-            <div class="col-10">
+            <div class="col-12 col-sm-12 col-lg-6">
                 <label> Renseignez le code envoyé par email : </label>
             </div>
         </div>
         <div class="row mt-2 justify-content-center">
-            <div class="col-10">
+            <div class="col-12 col-sm-12 col-lg-6">
                 <input type="text" (keyup.enter)="confirmPassword()" class="form-control sepia-input"
                     formControlName="code" placeholder="code reçu par mail">
             </div>
@@ -106,7 +106,7 @@
             <div class="subtitle-email">Adresse e-mail: <strong>{{ email.value }}</strong></div>
         </div>
         <div class="row mt-4 justify-content-center">
-            <div class="col-10 d-flex justify-content-end">
+            <div class="col-12 col-sm-12 col-lg-6 d-flex justify-content-end">
                         <button class="btn btn-success btn-login" type="submit"
                             [disabled]="isSubmitting || !code.value || loggerForm.get('new_password')?.invalid || email.invalid">
                             <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
@@ -115,13 +115,13 @@
             </div>
         </div>
         <div class="row mt-2 justify-content-center">
-            <div class="col-10 d-flex justify-content-end">
+            <div class="col-12 col-sm-12 col-lg-6 d-flex justify-content-end">
                 <button class="btn btn-link p-0 link-forgot" type="button" (click)="resendResetPasswordCode()"
                     [disabled]="email.invalid">Renvoyer le code</button>
             </div>
         </div>
         <div class="row mt-2 justify-content-center">
-            <div class="col-10 d-flex justify-content-end">
+            <div class="col-12 col-sm-12 col-lg-6 d-flex justify-content-end">
                 <button class="btn btn-link p-0 link-forgot" type="button" (click)="goToSignIn()">Retour à la connexion</button>
             </div>
         </div>
@@ -132,10 +132,10 @@
             <span class=" text-danger">{{ signup_msg }}</span>
         </div>
         <div class="row mt-1 justify-content-center">
-            <div class="col-10 subtitle-email">Adresse e-mail: <strong>{{ email.value }}</strong></div>
+            <div class="col-12 col-sm-12 col-lg-6 subtitle-email">Adresse e-mail: <strong>{{ email.value }}</strong></div>
         </div>
         <div class="row mt-2 justify-content-center">
-            <div class="col-10 d-flex justify-content-end">
+            <div class="col-12 col-sm-12 col-lg-6 d-flex justify-content-end">
                                             <button class="btn btn-success btn-login" type="submit" [disabled]="isSubmitting || email.invalid || password.invalid">
                                                 <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                                                 Créer mon compte
@@ -144,26 +144,26 @@
         </div>
         <div *ngIf="sign_up_sent" class="mt-3">
             <div class="row justify-content-center">
-                <div class="col-10">
+                <div class="col-12 col-sm-12 col-lg-6">
                     <label> Renseignez le code qui vous a été envoyé à ce mail: </label>
                 </div>
             </div>
             <div class="row mt-1 justify-content-center">
-                <div class="col-10 subtitle-email">Adresse e-mail: <strong>{{ email.value }}</strong></div>
+                <div class="col-12 col-sm-12 col-lg-6 subtitle-email">Adresse e-mail: <strong>{{ email.value }}</strong></div>
             </div>
             <div class="row mt-2 justify-content-center">
-                <div class="col-10">
+                <div class="col-12 col-sm-12 col-lg-6">
                     <input type="text" (keyup.enter)="confirmSignUp()" class="form-control sepia-input" formControlName="code"
                         placeholder="code reçu par mail">
                 </div>
             </div>
             <div class="row mt-3 justify-content-center">
-                <div class="col-10 d-flex justify-content-end">
+                <div class="col-12 col-sm-12 col-lg-6 d-flex justify-content-end">
                     <button class="btn btn-link p-0 link-forgot" type="button" (click)="resendConfirmEmailCode()" [disabled]="email.invalid">Renvoyer le code</button>
                 </div>
             </div>
             <div class="row mt-2 justify-content-center">
-                <div class="col-10 d-flex justify-content-end">
+                <div class="col-12 col-sm-12 col-lg-6 d-flex justify-content-end">
                                                 <button class="btn btn-success btn-login" type="submit" [disabled]="isSubmitting || !code.value || email.invalid">
                                                     <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                                                     Confirmer
@@ -177,23 +177,23 @@
 
     <ng-template #confirm_sign_up>
         <div class="row mt-3 justify-content-center">
-            <div class="col-10">
+            <div class="col-12 col-sm-12 col-lg-6">
                 <label> Renseignez le code envoyé par email : </label>
             </div>
         </div>
         <div class="row mt-2 justify-content-center">
-            <div class="col-10">
+            <div class="col-12 col-sm-12 col-lg-6">
                 <input type="text" (keyup.enter)="confirmSignUp()" class="form-control sepia-input"
                     formControlName="code" placeholder="code reçu par mail">
             </div>
         </div>
     <div class="row mt-2 justify-content-center">
-        <div class="col-10 d-flex justify-content-end">
+        <div class="col-12 col-sm-12 col-lg-6 d-flex justify-content-end">
             <button class="btn btn-success btn-login" type="submit" [disabled]="!code.value || email.invalid">Confirmer</button>
         </div>
     </div>
     <div class="row mt-2 justify-content-center">
-        <div class="col-10 d-flex justify-content-end">
+        <div class="col-12 col-sm-12 col-lg-6 d-flex justify-content-end">
             <button class="btn btn-link p-0 link-forgot" type="button" (click)="resendConfirmEmailCode()" [disabled]="email.invalid">Renvoyer le code</button>
         </div>
     </div>
@@ -201,7 +201,7 @@
 
     <ng-template #mode_cases>
         <div class="row justify-content-center">
-            <div class="col-10">
+            <div class="col-12 col-sm-12 col-lg-6">
                 <h5 class="text-start" *ngIf="(mode$ | async) === process_flow.SIGN_IN">Se connecter</h5>
                 <div *ngIf="(mode$ | async) === process_flow.SIGN_IN" class="mt-1 w-100 text-start">
                     <button type="button" class="btn btn-link p-0 link-forgot text-start" (click)="goBack()">
@@ -244,10 +244,10 @@
     <ng-template #show_form>
         <br>
         <div class="row mt-3 justify-content-center auth-row" *ngIf="(mode$ | async) === process_flow.SIGN_IN || (mode$ | async) === process_flow.SIGN_UP">
-            <div class="col-10 mb-3">
+            <div class="col-12 col-sm-12 col-lg-6 mb-3">
                 <div class="form-floating">
               <input class="form-control sepia-input"  autocomplete="email" type="text" id="email" formControlName="email">
-                    <label for="email">adresse mail (le même que pour la FFB)</label>
+                    <label for="email">adresse mail (même que pour la FFB)</label>
                 </div>
                 <div>
                     <span *ngIf="email.dirty && email.hasError('not_member')" class="text-danger">
@@ -260,7 +260,7 @@
             </div>
         </div>
         <div class="row mt-1 justify-content-center auth-row" *ngIf="(mode$ | async) === process_flow.SIGN_IN || (mode$ | async) === process_flow.SIGN_UP">
-            <div class="col-10 mb-3">
+            <div class="col-12 col-sm-12 col-lg-6 mb-3">
                 <div class="form-floating position-relative">
                     <input class="form-control sepia-input with-eye"  autocomplete="password" [type]="showPassword ? 'text' : 'password'" id="password"
                         formControlName="password">
