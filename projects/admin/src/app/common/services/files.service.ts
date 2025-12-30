@@ -16,6 +16,8 @@ export enum S3_ROOT_FOLDERS {
   ALBUMS = 'albums',
   PORTRAITS = 'portraits',
   THUMBNAILS = 'thumbnails',
+  SYSTEM = 'system',
+  ACCOUNTING = 'accounting'
 }
 
 @Injectable({

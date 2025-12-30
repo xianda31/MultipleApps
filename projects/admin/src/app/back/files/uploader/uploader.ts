@@ -72,8 +72,11 @@ export class UploaderComponent {
           'Documents (pdf, doc, docx) en accès public ou privé',
           'utilisés pour les téléchargements par les visiteurs du site.'
         ],
+        // racines non visibles pour ce composant (uniquement pour compilation data usage)
         [S3_ROOT_FOLDERS.PORTRAITS]: [],
-        [S3_ROOT_FOLDERS.THUMBNAILS]: []
+        [S3_ROOT_FOLDERS.THUMBNAILS]: [],
+        [S3_ROOT_FOLDERS.SYSTEM]: [],
+        [S3_ROOT_FOLDERS.ACCOUNTING]: []
       };
     });
   }
