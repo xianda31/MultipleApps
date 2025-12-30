@@ -132,9 +132,9 @@
     </div>
     }
     <ng-template #show_routes>
-        @if(front_routes && front_routes[0].children) {
+        @if((sandboxService.value ? front_routes : front_routes_production) && (sandboxService.value ? front_routes : front_routes_production)[0].children) {
 
-        @for (route of front_routes[0].children; track route.path) {
+        @for (route of (sandboxService.value ? front_routes : front_routes_production)[0].children; track route.path) {
         <div>
             <strong>Path:</strong> {{ route.path }}
             @if (route.component) {<strong>:</strong> {{ route.component.name }} }

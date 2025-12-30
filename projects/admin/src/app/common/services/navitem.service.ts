@@ -47,7 +47,11 @@ export class NavItemsService {
    */
   getFrontRoutes(sandbox: boolean): Observable<Routes> {
     return this.loadNavItems(sandbox).pipe(
-      map(navItems => this.generateFrontRoutes(this.enrichWithPageTitleAndCarousel(navItems, [])))
+      switchMap(navItems =>
+        this.pageService.listPages().pipe(
+          map(pages => this.generateFrontRoutes(this.enrichWithPageTitleAndCarousel(navItems, pages)))
+        )
+      )
     );
   }
   generateFrontRoutes(navItems: NavItem[]): Routes {

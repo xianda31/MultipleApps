@@ -59,6 +59,7 @@ export class MenusEditorComponent implements AfterViewInit {
   previewLogged = false;
 
   front_routes!: Routes;
+  front_routes_production!: Routes;
   menus: MenuStructure = [];
   pages: Page[] = [];
   selected_page: Page | null = null;
@@ -116,16 +117,26 @@ export class MenusEditorComponent implements AfterViewInit {
       .subscribe({
         next: ([sandboxItems, productionItems, pages]) => {
           this.pages = pages.filter(p => p.title !== CLIPBOARD_TITLE).sort((a, b) => a.title.localeCompare(b.title));
-          this.navitems = this.enrichWithPageTitleAndCarousel(sandboxItems);
+          // Choisir la source selon le mode
+          const useSandbox = this.sandbox_mode;
+          const navitems = useSandbox ? sandboxItems : productionItems;
+          this.navitems = this.enrichWithPageTitleAndCarousel(navitems);
           this.hasSandboxNavitems = sandboxItems.length > 0;
           this.sandboxCount = sandboxItems.length;
           this.productionCount = productionItems.length;
-          // Editor preview always reflects sandbox dataset — use shared getFrontRoutes to match enrichment
+          // Générer les routes sandbox
           firstValueFrom(this.navitemService.getFrontRoutes(true)).then(routes => {
             this.front_routes = routes;
           }).catch(err => {
             console.warn('MenusEditor: failed to build preview routes', err);
           });
+          // Générer les routes production
+          firstValueFrom(this.navitemService.getFrontRoutes(false)).then(routes => {
+            this.front_routes_production = routes;
+          }).catch(err => {
+            console.warn('MenusEditor: failed to build production routes', err);
+          });
+          // Utiliser la bonne structure de menu
           this.menus = this.buildMenuStructureNew(this.navitems);
           // menu structure loaded
           this.rebuildNavbarEntries();
@@ -490,21 +501,22 @@ export class MenusEditorComponent implements AfterViewInit {
   }
 
   private reloadNavitems() {
-    console.log('MenusEditor.reloadNavitems: subscribing to navitems/pages');
     combineLatest([
       this.navitemService.loadNavItemsSandbox(),
       this.navitemService.loadNavItemsProduction(),
       this.pageService.listPages()
     ])
       .subscribe(([sandboxItems, productionItems, pages]) => {
-        console.log('MenusEditor.reloadNavitems: got emissions', { sandboxItems: sandboxItems.length, productionItems: productionItems.length, pages: pages?.length });
         this.pages = pages;
-        this.navitems = this.enrichWithPageTitleAndCarousel(sandboxItems);
+        // Choisir la source selon le mode
+        const useSandbox = this.sandbox_mode;
+        const navitems = useSandbox ? sandboxItems : productionItems;
+        this.navitems = this.enrichWithPageTitleAndCarousel(navitems);
         this.hasSandboxNavitems = sandboxItems.length > 0;
         this.sandboxCount = sandboxItems.length;
         this.productionCount = productionItems.length;
         this.menus = this.buildMenuStructureNew(this.navitems);
-        // Preview always built from sandbox items using shared route generation
+        // Générer les routes sandbox
         firstValueFrom(this.navitemService.getFrontRoutes(true)).then(routes => {
           this.front_routes = routes;
           try {
@@ -516,6 +528,12 @@ export class MenusEditorComponent implements AfterViewInit {
           }
         }).catch(err => {
           console.warn('MenusEditor.reloadNavitems: failed to compute front routes', err);
+        });
+        // Générer les routes production
+        firstValueFrom(this.navitemService.getFrontRoutes(false)).then(routes => {
+          this.front_routes_production = routes;
+        }).catch(err => {
+          console.warn('MenusEditor.reloadNavitems: failed to compute production routes', err);
         });
         this.rebuildNavbarEntries();
       });
