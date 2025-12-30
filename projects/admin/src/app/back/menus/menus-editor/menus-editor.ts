@@ -766,7 +766,14 @@ export class MenusEditorComponent implements AfterViewInit {
         this.toastService.showSuccess('Menus', 'Ordre des sous-menus mis à jour');
         this.reloadNavitems();
       } catch (err) {
-        this.toastService.showErrorToast('Menus', "Échec mise à jour de l'ordre des sous-menus");
+        // Ajout log détaillé pour diagnostic
+        let msg = "Échec mise à jour de l'ordre des sous-menus";
+        const e: any = err;
+        // Affiche tout l'objet erreur pour diagnostic maximal
+        msg += `\n${JSON.stringify(e)}`;
+        this.toastService.showErrorToast('Menus', msg);
+        // Log complet en console
+        console.error('Erreur updateNavItem (DnD footbar)', err);
         this.reloadNavitems();
       }
     } catch (e) {

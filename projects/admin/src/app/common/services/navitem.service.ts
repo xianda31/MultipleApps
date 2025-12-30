@@ -1,3 +1,4 @@
+
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, firstValueFrom, map, of, switchMap, tap, first, combineLatest } from 'rxjs';
 import { ToastService } from './toast.service';
@@ -25,23 +26,7 @@ export class NavItemsService {
     private toastService: ToastService,
     private dbHandler: DBhandler,
     private pageService: PageService,
-  ) { }
-
-  getFrontRoutes(sandbox: boolean): Observable<Routes> {
-    const src$ = sandbox ? this.loadNavItemsSandbox() : this.loadNavItemsProduction(true);
-    return combineLatest([
-      src$,
-      this.pageService.listPages().pipe(
-        first((p: Page[] | undefined) => !!p && (p as Page[]).length > 0)
-      )
-    ]).pipe(
-      map(([nav_items, pages]) => {
-        const pagesArr = pages as Page[];
-        const enriched = this.enrichWithPageTitleAndCarousel(nav_items, pagesArr);
-        return this.generateFrontRoutes(enriched);
-      })
-    );
-  }
+  ) {}
 
   private enrichWithPageTitleAndCarousel(items: NavItem[], pages: Page[]): NavItem[] {
     if (!pages || pages.length === 0) {
@@ -56,6 +41,15 @@ export class NavItemsService {
   }
 
 
+  /**
+   * Returns an observable of generated front routes for the sandbox or production navitems.
+   * @param sandbox If true, use sandbox navitems; otherwise, use production.
+   */
+  getFrontRoutes(sandbox: boolean): Observable<Routes> {
+    return this.loadNavItems(sandbox).pipe(
+      map(navItems => this.generateFrontRoutes(this.enrichWithPageTitleAndCarousel(navItems, [])))
+    );
+  }
   generateFrontRoutes(navItems: NavItem[]): Routes {
     // Generate dynamic front child routes from navitems
     // Deep-clone base routes to avoid mutating the shared minimal_routes tree
@@ -244,17 +238,31 @@ export class NavItemsService {
   // Update
   async updateNavItem(navItem: NavItem): Promise<NavItem> {
     try {
-      // Construction explicite de l'objet pour garantir la présence de tous les champs
-      // Correction : forcer le type et ne transmettre que les propriétés attendues
-      const updatedNavItem = await this.dbHandler.updateNavItem({
-        ...navItem,
-        type: navItem.type as NAVITEM_TYPE,
-      });
+      // Only send fields allowed by backend schema
+      const navItem_input = {
+        sandbox: navItem.sandbox,
+        type: navItem.type,
+        label: navItem.label,
+        slug: navItem.slug,
+        path: navItem.path,
+        rank: navItem.rank,
+        logging_criteria: navItem.logging_criteria,
+        group_level: navItem.group_level,
+        position: navItem.position,
+        pre_label: navItem.pre_label,
+        parent_id: navItem.parent_id,
+        page_id: navItem.page_id,
+        external_url: navItem.external_url,
+        plugin_name: navItem.plugin_name,
+      };
+      const updatedNavItem = await this.dbHandler.updateNavItem({ ...navItem_input, id: navItem.id });
       this._navItems = this._navItems.map(m => m.id === updatedNavItem.id ? (updatedNavItem as NavItem) : m);
       this._navItems$.next(this._navItems);
       return updatedNavItem;
     } catch (error) {
       this.toastService.showErrorToast('NavItems', 'Erreur lors de la modification');
+      console.log('Erreur updateNavItem', error);
+      console.log('NavItem envoyé', navItem);
       return Promise.reject(error);
     }
   }
