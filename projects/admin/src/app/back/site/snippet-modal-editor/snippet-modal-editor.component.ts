@@ -133,10 +133,34 @@ export class SnippetModalEditorComponent implements AfterViewInit {
             }
           });
         } else if (tag === 'P') {
+          // Si le paragraphe ne contient qu'un lien, on le convertit en block linkTool
+          const p = node as HTMLElement;
+          const a = p.childNodes.length === 1 && p.firstChild && (p.firstChild as HTMLElement).tagName === 'A' ? p.firstChild as HTMLAnchorElement : null;
+          if (a) {
+            blocks.push({
+              type: 'linkTool',
+              data: {
+                link: a.getAttribute('href') || '',
+                meta: {},
+                text: a.textContent || ''
+              }
+            });
+          } else {
+            blocks.push({
+              type: 'paragraph',
+              data: {
+                text: p.innerHTML
+              }
+            });
+          }
+        } else if (tag === 'A') {
+          // Lien isolé hors paragraphe
           blocks.push({
-            type: 'paragraph',
+            type: 'linkTool',
             data: {
-              text: (node as HTMLElement).innerHTML
+              link: (node as HTMLAnchorElement).getAttribute('href') || '',
+              meta: {},
+              text: (node as HTMLAnchorElement).textContent || ''
             }
           });
         } else if (tag === 'UL' || tag === 'OL') {

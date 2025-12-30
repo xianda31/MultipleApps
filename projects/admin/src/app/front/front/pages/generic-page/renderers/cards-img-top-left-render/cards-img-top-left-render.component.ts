@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { DomSanitizer } from '@angular/platform-browser';
 import { SystemDataService } from '../../../../../../common/services/system-data.service';
 import { NavItemsService } from '../../../../../../common/services/navitem.service';
+import { InternalLinkRoutingService } from '../../../../../../common/services/internal-link-routing.service';
 import { Subscription } from 'rxjs';
 import { formatRowColsClasses } from '../../../../../../common/utils/ui-utils';
 
@@ -17,6 +18,8 @@ import { formatRowColsClasses } from '../../../../../../common/utils/ui-utils';
   styleUrls: ['./cards-img-top-left-render.component.scss']
 })
 export class CardsImgTopLeftRenderComponent implements AfterViewInit, AfterViewChecked {
+      // plus besoin de globalPointerHandlerAttached ici
+    private clampLinkHandlers: Array<() => void> = [];
   @Input() row_cols: BreakpointsSettings = { SM: 1, MD: 2, LG: 3, XL: 4 };
   @Input() snippets: Snippet[] = [];
   @ViewChildren('clampContainer') clampContainers!: QueryList<ElementRef<HTMLElement>>;
@@ -40,9 +43,10 @@ export class CardsImgTopLeftRenderComponent implements AfterViewInit, AfterViewC
   private overflowCheckScheduled = false;
    constructor(
     private router: Router,
-  private sanitizer: DomSanitizer
-    , private systemDataService: SystemDataService,
-    private navItemsService: NavItemsService
+    private sanitizer: DomSanitizer,
+    private systemDataService: SystemDataService,
+    private navItemsService: NavItemsService,
+    private internalLinkRoutingService: InternalLinkRoutingService
   ) {
     this.updateIsSmallScreenOrTouch();
     this.uiSub = this.systemDataService.get_ui_settings().subscribe((ui: any) => {
@@ -147,10 +151,48 @@ export class CardsImgTopLeftRenderComponent implements AfterViewInit, AfterViewC
   }
   ngAfterViewInit() {
     this.scheduleOverflowCheck();
+    // Handler global factorisé via le service
+    this.internalLinkRoutingService.attachGlobalPointerHandler();
+  }
+
+  /**
+   * Attache un handler de clic sur chaque clampContainer pour router les liens internes
+   */
+  private attachInternalLinkHandlersToClampContainers() {
+    // Nettoyage des anciens handlers si rechargement
+    this.clampLinkHandlers.forEach(off => off());
+    this.clampLinkHandlers = [];
+    if (!this.clampContainers) return;
+    this.clampContainers.forEach(ref => {
+      const handler = (event: MouseEvent) => {
+        const target = event.target as HTMLElement;
+        if (target.tagName === 'A') {
+          let href = target.getAttribute('href');
+          console.log('[CardsImgTopLeftRender] Click on link:', href);
+          if (href && (/^(\/|\.\/|\.\.)/.test(href))) {
+            event.preventDefault();
+            event.stopPropagation();
+            // Normalize relative links
+            if (href.startsWith('./')) {
+              href = '/' + href.slice(2);
+            } else if (href.startsWith('../')) {
+              while (href.startsWith('../')) {
+                href = href.slice(3);
+              }
+              href = '/' + href;
+            }
+            this.router.navigateByUrl(href);
+          }
+        }
+      };
+      ref.nativeElement.addEventListener('click', handler, true); // mode capture
+      this.clampLinkHandlers.push(() => ref.nativeElement.removeEventListener('click', handler, true));
+    });
   }
 
   ngAfterViewChecked() {
     this.scheduleOverflowCheck();
+    this.attachInternalLinkHandlersToClampContainers();
   }
 
   private scheduleOverflowCheck() {

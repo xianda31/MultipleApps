@@ -202,13 +202,20 @@ export class SnippetEditor implements OnChanges {
   }
 
   onSnippetContentClick(snippet: Snippet) {
+    // Mémorise l'élément ayant le focus avant ouverture du modal
+    const lastFocused: HTMLElement | null = document.activeElement as HTMLElement;
     const modalRef = this.modalService.open(SnippetModalEditorComponent, { centered: true });
-    modalRef.componentInstance.snippet = snippet;
+    // Pass a copy to avoid mutating the original before save
+    modalRef.componentInstance.snippet = { ...snippet };
     modalRef.result.then((result) => {
       if (!result) return;
-      // Patch modal result into the form and save
+      // Replace the snippet reference and patch form
+      this.snippet = { ...this.snippet, ...result };
       this.form.patchValue({ content: result.content || '' });
       this.saveSnippetSelected();
+    }).finally(() => {
+      // Restaure le focus sur l'élément précédent
+      if (lastFocused) setTimeout(() => lastFocused.focus(), 0);
     });
   }
 

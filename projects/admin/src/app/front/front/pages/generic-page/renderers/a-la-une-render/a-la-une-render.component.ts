@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { DomSanitizer } from '@angular/platform-browser';
 import { SystemDataService } from '../../../../../../common/services/system-data.service';
 import { NavItemsService } from '../../../../../../common/services/navitem.service';
+import { InternalLinkRoutingService } from '../../../../../../common/services/internal-link-routing.service';
 import { Subscription } from 'rxjs';
 import { formatRowColsClasses } from '../../../../../../common/utils/ui-utils';
 
@@ -48,10 +49,10 @@ export class ALaUneRenderComponent implements OnChanges, OnDestroy, AfterViewIni
   private overflowCheckScheduled = false;
   constructor(
     private router: Router,
-    private sanitizer: DomSanitizer
-
-    , private systemDataService: SystemDataService,
-    private navItemsService: NavItemsService
+    private sanitizer: DomSanitizer,
+    private systemDataService: SystemDataService,
+    private navItemsService: NavItemsService,
+    private internalLinkRoutingService: InternalLinkRoutingService
   ) {
     this.updateIsSmallScreenOrTouch();
     // subscribe to UI settings to pick up `read_more_lines` changes
@@ -157,6 +158,8 @@ export class ALaUneRenderComponent implements OnChanges, OnDestroy, AfterViewIni
 
   ngAfterViewInit() {
     this.scheduleOverflowCheck();
+    // Handler global factorisé via le service
+    this.internalLinkRoutingService.attachGlobalPointerHandler();
   }
 
   ngAfterViewChecked() {

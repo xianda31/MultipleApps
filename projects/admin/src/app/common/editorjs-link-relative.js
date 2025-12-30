@@ -17,24 +17,34 @@ class LinkToolRelative {
   render() {
     const input = document.createElement('input');
     input.type = 'text';
-    input.placeholder = 'Enter a link';
+    input.placeholder = 'Lien interne (front/...) ou externe (https://...)';
     input.value = this.data && this.data.link ? this.data.link : '';
     input.addEventListener('input', (e) => {
-      this.data.link = e.target.value;
+      let val = e.target.value;
+      // Ne jamais préfixer http:// automatiquement
+      this.data.link = val;
     });
     return input;
   }
 
   save(blockContent) {
+    let link = blockContent.value;
+    // Auto-correct: if link looks like 'front/...' (no protocol, no leading slash), prefix with '/'
+    if (typeof link === 'string' &&
+        /^[a-zA-Z0-9_\-]+\/.+/.test(link) &&
+        !/^([a-zA-Z]+:\/\/|\/|\.\/|\.\.\/)/.test(link)) {
+      link = '/' + link;
+    }
     return {
-      link: blockContent.value
+      link
     };
   }
 
   validate(savedData) {
-    // Accept relative links (start with / or ./ or ../)
+    // Accept relative links (start with /, ./, ../, or a word for internal route)
     if (!savedData.link) return false;
-    return /^([a-zA-Z]+:\/\/|\/|\.\/|\.\.\/)/.test(savedData.link);
+    // Accept: protocol://, /, ./, ../, or a string without spaces or protocol (ex: front/les_albums)
+    return /^([a-zA-Z]+:\/\/|\/|\.\/|\.\.\/|[a-zA-Z0-9_\-]+\/.+)/.test(savedData.link);
   }
 }
 

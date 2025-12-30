@@ -89,12 +89,17 @@ export class SnippetsComponent {
   }
 
   onModalEditSnippetContent() {
+    // Mémorise l'élément ayant le focus avant ouverture du modal
+    const lastFocused: HTMLElement | null = document.activeElement as HTMLElement;
     const modalRef = this.modalService.open(SnippetModalEditorComponent, { centered: true });
     modalRef.componentInstance.snippet = this.snippetForm.getRawValue();
     modalRef.result.then((result) => {
       if (result) {
         this.snippetForm.patchValue(result);
       }
+    }).finally(() => {
+      // Restaure le focus sur l'élément précédent
+      if (lastFocused) setTimeout(() => lastFocused.focus(), 0);
     });
   }
 

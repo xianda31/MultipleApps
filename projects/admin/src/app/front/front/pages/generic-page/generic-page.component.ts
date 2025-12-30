@@ -181,9 +181,21 @@ export class GenericPageComponent implements OnInit, OnChanges {
     this.renderer.listen(this.el.nativeElement, 'click', (event: MouseEvent) => {
       const target = event.target as HTMLElement;
       if (target.tagName === 'A') {
-        const href = target.getAttribute('href');
-        if (href && (/^\/|^\.\/|^\.\./.test(href))) {
+        let href = target.getAttribute('href');
+        // Gère tous les liens internes commençant par /, ./, ../
+        if (href && (/^(\/|\.\/|\.\.)/.test(href))) {
           event.preventDefault();
+          // Normalise ./front/les_albums ou ../ en chemin absolu
+          if (href.startsWith('./')) {
+            href = '/' + href.slice(2);
+          } else if (href.startsWith('../')) {
+            // Pour ../, on enlève les ../ et on repart de la racine
+            while (href.startsWith('../')) {
+              href = href.slice(3);
+            }
+            href = '/' + href;
+          }
+          // Si le lien commence déjà par /, on route tel quel
           this.router.navigateByUrl(href);
         } else if (href && (/^#/.test(href))) { // Handle internal anchor links
           event.preventDefault();
