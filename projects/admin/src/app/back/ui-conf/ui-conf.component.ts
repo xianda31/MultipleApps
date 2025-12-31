@@ -416,9 +416,17 @@ export class UiConfComponent implements OnInit {
       // Save UI settings into dedicated file and publish immediately
       // Debug: log tournaments_type payload to help diagnose persistence issues
       await this.systemDataService.save_ui_settings(payload);
-      // Refresh export blob so "Exporter" downloads the most recent saved state
-      this.export_file_url = this.fileService.json_to_blob(payload);
-      this.toastService.showSuccess('UI settings', 'Paramètres UI sauvegardés');
+      // Forcer le reload distant des settings pour éviter le cache
+      this.systemDataService.fetch_ui_settings().pipe(first()).subscribe({
+        next: (freshUi) => {
+          this.loadDataInForm(freshUi);
+          this.export_file_url = this.fileService.json_to_blob(freshUi);
+          this.toastService.showSuccess('UI settings', 'Paramètres UI sauvegardés et rechargés');
+        },
+        error: (err) => {
+          this.toastService.showErrorToast('UI settings', 'Erreur lors du rechargement distant après sauvegarde');
+        }
+      });
     } catch (e: any) {
       this.toastService.showErrorToast('UI settings', e?.message || 'Erreur sauvegarde');
     }
