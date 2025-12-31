@@ -1,33 +1,37 @@
 <div [ngClass]="rowCols()">
   @for (snippet of snippets; track snippet.id) {
-    <div class="col">
-      <div class="card h-100 nice_shadow" (mouseenter)="setHover(snippet.id)" (mouseleave)="clearHover()">
-        <div class="row align-items-stretch g-0">
-          <div class="col col-sm-3 col-md-5 d-flex">
-            <div class="overflow-hidden w-100" style="height: 8rem;">
-              <img [src]="snippet.image_url" class="img-fluid card-img-top" alt="{{snippet.title}}"
-                style="object-fit:cover; display:block; width:100%; height:100%;">
-            </div>
-          </div>
-          <div class="col col-sm-9 col-md-7 d-flex">
-            <div class="card-title d-flex flex-column justify-content-center text-center ps-1">
-              {{snippet.title}}
-              <div class="text-muted">{{snippet.subtitle}}</div>
-            </div>
+  <div class="col">
+    <div class="card h-100 nice_shadow" (mouseenter)="setHover(snippet.id)" (mouseleave)="clearHover()">
+      <div class="row align-items-stretch g-0">
+        <div class="col col-sm-3 col-md-5 d-flex">
+          <div class="overflow-hidden w-100" style="height: 8rem;">
+            <img [src]="snippet.image_url" class="img-fluid card-img-top" alt="{{snippet.title}}"
+              style="object-fit:cover; display:block; width:100%; height:100%;">
           </div>
         </div>
-          <div class="card-body">
-          <div class="text-muted small">Publié le {{snippet.publishedAt| date:'shortDate'}} </div>
-          <!-- Always apply visual line clamp for consistent card heights -->
-          <div #clampContainer class="clamp-container" style="overflow:hidden;" (click)="onTapToggle(snippet.id, $event)">
-            <span #clampRef class="card-text tighter-html" [ngStyle]="getClampStyle(snippet.id)" [innerHTML]="stringToSafeHtml(snippet.content)"></span>
+        <div class="col col-sm-9 col-md-7 px-1 px-md-3">
+          <div class="d-flex flex-column justify-content-center align-items-center h-100 w-100 text-center">
+            <h5 class="card-title  text-success ">
+              {{snippet.title}}
+            </h5>
+            <h6 class="card-subtitle text-muted ">{{snippet.subtitle}}</h6>
           </div>
-          <!-- Show link only if text is actually overflowing (clamped) -->
-          @if (read_more && isOverflow(snippet.id)) {
-            <span (click)="readMore(snippet)" class="text-info ms-1" style="cursor:pointer;display:inline">... Lire la suite</span>
-          }
         </div>
       </div>
+      <div class="card-body">
+        <div class="text-muted small">Publié le {{snippet.publishedAt| date:'shortDate'}} </div>
+        <!-- Always apply visual line clamp for consistent card heights -->
+        <div #clampContainer class="clamp-container" style="overflow:hidden;" (click)="onTapToggle(snippet.id, $event)">
+          <span #clampRef class="card-text tighter-html" [ngStyle]="getClampStyle(snippet.id)"
+            [innerHTML]="stringToSafeHtml(snippet.content)"></span>
+        </div>
+        <!-- Show link only if text is actually overflowing (clamped) -->
+        @if (read_more && isOverflow(snippet.id)) {
+        <span (click)="readMore(snippet)" class="text-info ms-1" style="cursor:pointer;display:inline">... Lire la
+          suite</span>
+        }
+      </div>
     </div>
+  </div>
   }
 </div>
