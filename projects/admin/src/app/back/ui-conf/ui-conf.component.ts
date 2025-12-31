@@ -416,7 +416,8 @@ export class UiConfComponent implements OnInit {
       // Save UI settings into dedicated file and publish immediately
       // Debug: log tournaments_type payload to help diagnose persistence issues
       await this.systemDataService.save_ui_settings(payload);
-      // Forcer le reload distant des settings pour éviter le cache
+      // Vider le cache local pour forcer un vrai reload distant
+      (this.systemDataService as any)._ui_settings = undefined;
       this.systemDataService.fetch_ui_settings().pipe(first()).subscribe({
         next: (freshUi) => {
           this.loadDataInForm(freshUi);
