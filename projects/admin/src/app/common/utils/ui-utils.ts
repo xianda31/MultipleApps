@@ -31,7 +31,7 @@ export function normalizeBreakpoints(b: any): BreakpointsSettings {
  * Returns an array of classes to apply on the container element.
  */
 export function formatRowColsClasses(bp: BreakpointsSettings | undefined): string[] {
-  const classes: string[] = [ 'row', 'row-cols-1', 'g-4', 'justify-content-center'];
+  const classes: string[] = [ 'row', 'row-cols-1', 'g-3', 'justify-content-center'];
   const cols = bp || ({ SM: 1, MD: 2, LG: 3, XL: 4 } as BreakpointsSettings);
   if (cols.SM !== undefined && cols.SM !== null) classes.push('row-cols-sm-' + cols.SM);
   classes.push('row-cols-md-' + cols.MD);
