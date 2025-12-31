@@ -19,7 +19,7 @@ export class UiConfComponent implements OnInit {
   loaded = false;
   export_file_url: any;
   logoPreviewUrl: string | null = null;
- thumbnails$ !: Observable<string[]>;
+  thumbnails$ !: Observable<string[]>;
   // cache of presigned preview URLs for tournaments_type entries keyed by the mapping key
   previewMap: { [key: string]: string | null } = {};
   private defaultImageSub?: Subscription;
@@ -62,8 +62,8 @@ export class UiConfComponent implements OnInit {
         LG: [4, [Validators.min(1), Validators.max(6)]],
         XL: [6, [Validators.min(1), Validators.max(6)]]
       }, { validators: this.breakpointsOrderValidator }),
-    
-      
+
+
       read_more_lines: [3, [Validators.min(0), Validators.max(20)]],
       unfold_on_hover: [false],
       hover_unfold_delay_ms: [500, [Validators.min(0), Validators.max(10000)]],
@@ -97,7 +97,7 @@ export class UiConfComponent implements OnInit {
     return this.uiForm.get('card_thumbnails') as FormArray;
   }
 
-    addCardThumbnail(width: number = 300, height: number = 200, ratio: number = 1.78) {
+  addCardThumbnail(width: number = 300, height: number = 200, ratio: number = 1.78) {
     const group = this.fb.group({
       width: [width, [Validators.min(50), Validators.max(2000)]],
       height: [height, [Validators.min(50), Validators.max(2000)]],
@@ -228,8 +228,7 @@ export class UiConfComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Load UI settings: prefer cached in-memory preview if present,
-    // fall back to remote fetch when not available.
+    // Un seul subscribe à l'init
     this.systemDataService.get_ui_settings().subscribe({
       next: (ui) => {
         this.loadDataInForm(ui || {});
@@ -249,7 +248,7 @@ export class UiConfComponent implements OnInit {
   }
 
 
-  loadDataInForm(ui: any) {
+  private loadDataInForm(ui: any) {
     // Patch form with defaults (support both legacy top-level keys and new `homepage` nesting)
     // homepage and breakpoints are required in the interface; use defaults if absent
     const tournaments = (ui && ui.homepage && ui.homepage.tournaments_row_cols)
@@ -260,6 +259,7 @@ export class UiConfComponent implements OnInit {
       : { SM: 1, MD: 2, LG: 4, XL: 6 };
     const template = ui?.template || {};
     const tournamentsType = ui?.tournaments_type || {};
+    // ...
     const homepage = ui?.homepage || {};
     // Support legacy/default stored in tournaments_type under several possible keys
     const defaultKeys = ['defaut', 'défaut', 'default', '__default__', 'fallback'];
@@ -393,6 +393,7 @@ export class UiConfComponent implements OnInit {
           map['defaut'] = payload.default_tournament_image;
         }
         payload.tournaments_type = map;
+        // ...
       } else {
         // ensure we still include default if tournaments_type absent
         payload.tournaments_type = {};
@@ -413,21 +414,9 @@ export class UiConfComponent implements OnInit {
         payload.email = formVal.email;
       }
 
-      // Save UI settings into dedicated file and publish immediately
-      // Debug: log tournaments_type payload to help diagnose persistence issues
+      // Save UI settings into dedicated file and publish immédiatement
       await this.systemDataService.save_ui_settings(payload);
-      // Vider le cache local pour forcer un vrai reload distant
-      (this.systemDataService as any)._ui_settings = undefined;
-      this.systemDataService.fetch_ui_settings().pipe(first()).subscribe({
-        next: (freshUi) => {
-          this.loadDataInForm(freshUi);
-          this.export_file_url = this.fileService.json_to_blob(freshUi);
-          this.toastService.showSuccess('UI settings', 'Paramètres UI sauvegardés et rechargés');
-        },
-        error: (err) => {
-          this.toastService.showErrorToast('UI settings', 'Erreur lors du rechargement distant après sauvegarde');
-        }
-      });
+      // Le subscribe initial à get_ui_settings() sera notifié et mettra à jour l'UI
     } catch (e: any) {
       this.toastService.showErrorToast('UI settings', e?.message || 'Erreur sauvegarde');
     }

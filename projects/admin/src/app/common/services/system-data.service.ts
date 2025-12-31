@@ -146,8 +146,8 @@ export class SystemDataService {
     const remote$ = from(this.fileService.download_json_file('system/ui_settings.txt')).pipe(
       tap((conf) => {
         this._ui_settings = conf;
-        try { this._ui_settings$.next(this._ui_settings); } catch (e) { /* ignore */ }
-        // fetched ui_settings (silent)
+        // MAJ du BehaviorSubject pour tous les abonnés
+        this._ui_settings$.next(this._ui_settings);
       }),
       catchError((err) => {
         const defaults: UIConfiguration = {
@@ -161,11 +161,12 @@ export class SystemDataService {
         };
         console.error('[SystemDataService] fetch_ui_settings(): error fetching ui_settings', err);
         this._ui_settings = defaults;
-        try { this._ui_settings$.next(this._ui_settings); } catch (e) { /* ignore */ }
+        this._ui_settings$.next(this._ui_settings);
         try { this.toastService.showWarning('UI settings', 'Fichier ui_settings manquant — paramètres initialisés par défaut'); } catch (e) { /* ignore */ }
         return of(this._ui_settings as UIConfiguration);
       }),
-      switchMap(() => this._ui_settings$.asObservable())
+      // On émet UNIQUEMENT la valeur fraîchement chargée
+      map(() => this._ui_settings as UIConfiguration)
     );
     return remote$ as Observable<UIConfiguration>;
   }
@@ -196,21 +197,20 @@ export class SystemDataService {
     if ((merged as any).news_row_cols !== undefined) delete (merged as any).news_row_cols;
 
     this._ui_settings = merged;
-    try { this._ui_settings$.next(this._ui_settings); } catch (e) { /* ignore */ }
-
-    // Debug: log current tournaments_type after merge
-    // debug log removed
-
     // Persist to S3 in background (log errors). If somehow _ui_settings is undefined,
     // use a safe default payload to avoid uploading the literal string "undefined".
     const payload = this._ui_settings ?? this.getDefaultUi();
     if (this._ui_settings === undefined) {
       console.warn('[SystemDataService] save_ui_settings(): _ui_settings undefined at persist time, using defaults');
     }
-    this.fileService.upload_to_S3(payload, 'system/', 'ui_settings.txt').catch((err) => {
+    try {
+      await this.fileService.upload_to_S3(payload, 'system/', 'ui_settings.txt');
+      // Only notify subscribers after successful upload
+      this._ui_settings$.next(this._ui_settings);
+    } catch (err) {
       console.warn('save_ui_settings: upload error', err);
       try { console.error('[SystemDataService] save_ui_settings(): upload_to_S3 failed', { err, timestamp: new Date().toISOString() }); } catch (e) { /* ignore */ }
-    });
+    }
   }
 
   private getDefaultUi(): UIConfiguration {
