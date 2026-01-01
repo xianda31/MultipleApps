@@ -8,7 +8,7 @@ import edjsHTML from 'editorjs-html'
 import Header from '@editorjs/header';
 import List from '@editorjs/list';
 import Table from '@editorjs/table';
-import ColorPicker, { ColorPickerWithoutSanitize } from 'editorjs-color-picker';
+import ColorPicker from 'editorjs-color-picker';
 
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';

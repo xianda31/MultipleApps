@@ -1,3 +1,4 @@
+
 import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges } from '@angular/core';
 import { Snippet } from '../../../common/interfaces/page_snippet.interface';
 import { CommonModule } from '@angular/common';
@@ -12,16 +13,20 @@ import { FileSystemSelectorComponent } from '../file-system-selector/file-system
 @Component({
   selector: 'app-snippet-editor',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, FileSystemSelectorComponent],
   templateUrl: './snippet-editor.html',
   styleUrls: ['./snippet-editor.scss']
 })
 export class SnippetEditor implements OnChanges {
   @Input() snippet: Snippet | null = null;
   @Output() saved = new EventEmitter<Snippet>();
-
+  
+  public readonly S3_ROOT_FOLDERS = S3_ROOT_FOLDERS;
   form: FormGroup;
   saving = false;
+  showImageSelector = false;
+  showFileSelector = false;
+  showFolderSelector = false;
 
   // selectors are opened as modals when needed
   
@@ -67,39 +72,6 @@ export class SnippetEditor implements OnChanges {
     });
   }
 
-  // Open selectors as NgbModal components and handle their events
-  openImageSelectorModal() {
-    const modalRef = this.modalService.open(FileSystemSelectorComponent as any, { size: 'lg', centered: true });
-    const cmp = modalRef.componentInstance as any;
-    cmp.rootFolder = S3_ROOT_FOLDERS.IMAGES + '/';
-    cmp.mode = 'files';
-    cmp.allowActions = false;
-    cmp.selectOnFolderClick = false;
-    if (cmp.select && cmp.select.subscribe) cmp.select.subscribe((path: string) => { this.selectImage(path); modalRef.close(); });
-    if (cmp.close && cmp.close.subscribe) cmp.close.subscribe(() => modalRef.close());
-  }
-
-  openFileSelectorModal() {
-    const modalRef = this.modalService.open(FileSystemSelectorComponent as any, { size: 'lg', centered: true });
-    const cmp = modalRef.componentInstance as any;
-    cmp.rootFolder = S3_ROOT_FOLDERS.DOCUMENTS + '/';
-    cmp.mode = 'files';
-    cmp.allowActions = false;
-    cmp.selectOnFolderClick = false;
-    if (cmp.select && cmp.select.subscribe) cmp.select.subscribe((path: string) => { this.selectFile(path); modalRef.close(); });
-    if (cmp.close && cmp.close.subscribe) cmp.close.subscribe(() => modalRef.close());
-  }
-
-  openFolderSelectorModal() {
-    const modalRef = this.modalService.open(FileSystemSelectorComponent as any, { size: 'lg', centered: true });
-    const cmp = modalRef.componentInstance as any;
-    cmp.rootFolder = S3_ROOT_FOLDERS.ALBUMS + '/';
-    cmp.mode = 'folders';
-    cmp.allowActions = false;
-    cmp.selectOnFolderClick = false;
-    if (cmp.select && cmp.select.subscribe) cmp.select.subscribe((path: string) => { this.selectFolder(path); modalRef.close(); });
-    if (cmp.close && cmp.close.subscribe) cmp.close.subscribe(() => modalRef.close());
-  }
 
   selectImage(path: string) {
     this.form.get('image')?.setValue(path);
@@ -233,5 +205,14 @@ export class SnippetEditor implements OnChanges {
     return `${yyyy}-${mm}-${dd}`;
   }
 
+
+    public getNameFromPath(path?: string | null): string {
+      if (!path) return '';
+      const idx = path.lastIndexOf('/');
+      if (idx === -1) return path;
+      // If path ends with '/', remove it and try again
+      if (idx === path.length - 1) return this.getNameFromPath(path.slice(0, -1));
+      return path.slice(idx + 1);
+    }
 
 }
