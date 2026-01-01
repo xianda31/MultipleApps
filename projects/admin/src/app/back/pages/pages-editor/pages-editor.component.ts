@@ -1,5 +1,7 @@
 
 import { Component } from '@angular/core';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { GetConfirmationComponent } from '../../../common/modals/get-confirmation.component';
 import { PageService } from '../../../common/services/page.service';
 import { SnippetService } from '../../../common/services/snippet.service';
 import { CLIPBOARD_TITLE, Page, PAGE_TEMPLATES } from '../../../common/interfaces/page_snippet.interface';
@@ -31,6 +33,7 @@ export class PagesEditorComponent {
     private snippetService: SnippetService,
     private fb: FormBuilder,
     private toastService: ToastService,
+    private modalService: NgbModal
   ) {
     this.pagesForm = this.fb.group({
       pagesArray: this.fb.array([])   // pour eviter les erreurs DOM à l'initialisation
@@ -83,6 +86,15 @@ export class PagesEditorComponent {
 
   async deletePage(page: Page) {
     if (!page.id) return;
+    const modalRef = this.modalService.open(GetConfirmationComponent, { centered: true });
+    modalRef.componentInstance.title = 'Supprimer la page ?';
+    modalRef.componentInstance.subtitle = `La page « ${page.title} » et tous ses contenus seront supprimés.`;
+    try {
+      const confirmed = await modalRef.result;
+      if (!confirmed) return;
+    } catch {
+      return;
+    }
     const snippets_to_delete = page.snippets || [];
     try {
       await this.pageService.deletePage(page);

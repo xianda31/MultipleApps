@@ -6,10 +6,10 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
   standalone: true,
   template: `
     <div class="modal-header">
-      <h5 class="modal-title">Confirmation</h5>
+      <h5 class="modal-title">{{ title || 'Confirmation' }}</h5>
     </div>
     <div class="modal-body">
-      <p>Voulez-vous vraiment supprimer ce dossier et tout son contenu ?</p>
+      <p>{{ subtitle || 'Voulez-vous vraiment supprimer ce dossier et tout son contenu ?' }}</p>
     </div>
     <div class="modal-footer">
       <button type="button" class="btn btn-danger" (click)="confirm()">Supprimer</button>
@@ -18,6 +18,8 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
   `
 })
 export class GetConfirmationComponent {
+  title?: string;
+  subtitle?: string;
   constructor(public activeModal: NgbActiveModal) {}
   confirm() { this.activeModal.close(true); }
   cancel() { this.activeModal.dismiss(false); }
