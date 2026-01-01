@@ -1,4 +1,4 @@
-<div class="albums-wrapper" *ngIf="!selectedAlbum">
+<div class="albums-wrapper">
   <div [ngClass]="rowCols()">
     @for (snippet of snippets; track snippet.id) {
       <div class="col">
@@ -19,8 +19,4 @@
       </div>
     }
   </div>
-</div>
-<div *ngIf="selectedAlbum">
-  <button type="button" class="btn btn-sm btn-secondary mb-2" (click)="closeAlbum()">Retour aux albums</button>
-  <app-album [album]="selectedAlbum"></app-album>
 </div>

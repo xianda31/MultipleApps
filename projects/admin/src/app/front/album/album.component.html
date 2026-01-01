@@ -1,6 +1,6 @@
-<div class="row justify-content-start align-items-center mt-3">
-    <div class="col-auto fw-bold">{{album?.title}}</div>
-    <div class="col-auto text-muted">{{album?.subtitle}}</div>
+<div *ngIf="album" class="row justify-content-start align-items-center mt-3">
+    <div class="col-auto fw-bold">{{album.title}}</div>
+    <div class="col-auto text-muted">{{album.subtitle}}</div>
     <div class="col-auto" *ngIf="photos">{{photos.length}} photos</div>
 </div>
 

@@ -10,6 +10,7 @@ import { HomePage } from "../../front/front/pages/home-page/home-page";
 import { TournamentComponent } from "../tournaments/tournament/tournament.component";
 import { Carousel } from "../../front/carousel/carousel";
 import { AssistanceComponent } from "../../front/front/assistance/assistance.component";
+import { AlbumComponent } from "../../front/album/album.component";
 
 export enum NAVITEM_PLUGIN {
   TOURNAMENTS = 'tournaments',
@@ -20,6 +21,7 @@ export enum NAVITEM_PLUGIN {
   IFRAME = 'iframe',
   HOME = 'homePage',
   ASSISTANCE = 'assistance',
+  // ALBUM = 'album',
 };
 
 export type PluginRouteTemplate = {
@@ -53,7 +55,7 @@ export const PLUGINS: Record<string, Type<any>> = {
   [NAVITEM_PLUGIN.IFRAME]: IframeComponent,
   [NAVITEM_PLUGIN.HOME]: HomePage,
   [NAVITEM_PLUGIN.ASSISTANCE]: AssistanceComponent,
-  ['carousel']: Carousel,
+  ['album']: AlbumComponent,
   ['tournament']: TournamentComponent,
 };
 
@@ -66,9 +68,8 @@ export const PLUGINS_META: Record<string, PluginMeta> = {
   [NAVITEM_PLUGIN.AUTHENTICATION]: { component: ConnexionPageComponent, requiresAuth: false },
   [NAVITEM_PLUGIN.IFRAME]: { component: IframeComponent, requiresAuth: false, requiresExternalUrl: true },
   [NAVITEM_PLUGIN.HOME]: { component: HomePage, providesBrand: true, extraRoutes: [{ suffix: '/:tournament_id', when: 'always', component: TournamentComponent }] },
-  // Special meta key to describe album pages (used when a navitem points to a PAGE with template ALBUMS)
-  ['PAGE_ALBUM']: { extraRoutes: [{ suffix: '/:snippet_id', when: 'always', component: Carousel }] },
-  ['carousel']: { component: Carousel, extraRoutes: [{ suffix: '/:snippet_id', when: 'album' }] },
+  ['album']: { component: AlbumComponent, extraRoutes: [{ suffix: '/:snippet_id', when: 'always', component: AlbumComponent }] },
+  // ['carousel']: { component: Carousel, extraRoutes: [{ suffix: '/:snippet_id', when: 'album' }] },
 };
 
 export const plugin_routes: Routes = [];

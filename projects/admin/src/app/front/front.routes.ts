@@ -4,6 +4,7 @@ import { TournamentComponent } from '../common/tournaments/tournament/tournament
 import { FrontComponent } from './front/front/front.component';
 import { Carousel } from './carousel/carousel';
 import { AuthGuard } from '../auth.guard';
+import { AlbumComponent } from './album/album.component';
 
 
 // Minimal, safe front routes used at bootstrap. Dynamic/nav-driven routes
@@ -17,7 +18,7 @@ export const minimal_routes: Routes = [
     children: [
       // Routes with dynamic parameters (not configurable via editor)
       // { path: 'tournaments/:id', component: TournamentComponent },
-      // { path: 'albums/:snippet_id', component: Carousel, canActivate: [AuthGuard] },
+      { path: 'les_albums/:snippet_id', component: AlbumComponent },
 
       // System routes (redirects and fallbacks)
       { path: 'back_office', redirectTo: '/back', pathMatch: 'full' },

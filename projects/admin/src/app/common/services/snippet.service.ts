@@ -79,6 +79,17 @@ export class SnippetService {
         return of(snippets);
     }
 
+    async readSnippet(snippet_id: string): Promise<Snippet> {
+        try {
+            let snippet = await this.dbHandler.readSnippet(snippet_id);
+            snippet = await this.add_image_url(snippet);
+            return Promise.resolve(snippet);
+        } catch (errors) {
+            this.toastService.showErrorToast('Gestion des snippets', 'Une erreur est survenue lors de la lecture du snippet');
+            return Promise.reject('Error reading snippet');
+        }
+    }
+
     async updateSnippet(snippet: Snippet): Promise<Snippet> {
         if(snippet.image_url) delete snippet.image_url; // Remove image_url if it exists to avoid sending it to the backend
         if(snippet.pageId) delete snippet.pageId; // Remove pageId if it exists to avoid sending it to the backend
