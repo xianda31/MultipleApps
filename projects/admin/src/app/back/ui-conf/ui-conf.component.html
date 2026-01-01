@@ -162,40 +162,20 @@
       <!-- Section images sizing -->
       <div class="col">
         <div class="card h-100">
-          <div class="card-title fw-bold fs-5 ms-2">Taille des vignettes images</div>
+          <div class="card-title fw-bold fs-5 ms-2">Taille des vignettes articles</div>
           <div class="card-body">
             <!-- <div class="row row-cols-1 row-cols-md-2 g-3"> -->
-              <div class="row">
-                <div class="d-flex align-items-center mb-2">
-                  <span class="fw-bold fs-6">Vignettes articles</span>
-                  <button type="button" class="btn btn-outline-success btn-sm ms-3" (click)="addCardThumbnail()">Ajouter une taille</button>
-                </div>
-                <div formArrayName="card_thumbnails">
-                  <div *ngFor="let thumb of card_thumbnails.controls; let i = index" [formGroupName]="i" class="mb-2 border rounded p-2">
-                    <div class="d-flex align-items-center gap-3">
-                      <span class="form-label mb-0 text-nowrap flex-shrink-0">Taille {{i+1}} :</span>
-                      <div class="input-group input-group-sm" style="max-width:10rem;">
-                        <span class="input-group-text">Largeur (px)</span>
-                        <input type="number" class="form-control form-control-sm text-center" formControlName="width" min="50" max="2000" />
-                      </div>
-                      <div class="input-group input-group-sm" style="max-width:10rem;">
-                        <span class="input-group-text">Hauteur (px)</span>
-                        <input type="number" class="form-control form-control-sm text-center" formControlName="height" min="50" max="2000" />
-                      </div>
-                      <div class="input-group input-group-sm" style="max-width:8rem;">
-                        <span class="input-group-text">Ratio</span>
-                        <input type="number" class="form-control form-control-sm text-center" formControlName="ratio" min="0.1" max="10" step="0.01" />
-                      </div>
-                      <button type="button" class="btn btn-outline-danger btn-sm ms-2" (click)="removeCardThumbnail(i)" [disabled]="card_thumbnails.length === 1">×</button>
-                    </div>
-                  </div>
-                </div>
+            <div class="row">
+              <div class="d-flex align-items-center mb-2">
+                <span class="fw-bold fs-6">Vignettes articles</span>
+                <button type="button" class="btn btn-outline-success btn-sm ms-3" (click)="addCardThumbnail()">Ajouter
+                  une taille</button>
               </div>
-              <div class="row">
-                <div class="fw-bold fs-6 mb-2">Vignettes albums</div>
-                <div formGroupName="album_thumbnail">
-                  <div class="d-flex align-items-center gap-3 mb-2">
-                    <span class="form-label mb-0 text-nowrap flex-shrink-0">Taille :</span>
+              <div formArrayName="card_thumbnails">
+                <div *ngFor="let thumb of card_thumbnails.controls; let i = index" [formGroupName]="i"
+                  class="mb-2 border rounded p-2">
+                  <div class="d-flex align-items-center gap-3">
+                    <span class="form-label mb-0 text-nowrap flex-shrink-0">Taille {{i+1}} :</span>
                     <div class="input-group input-group-sm" style="max-width:10rem;">
                       <span class="input-group-text">Largeur (px)</span>
                       <input type="number" class="form-control form-control-sm text-center" formControlName="width"
@@ -206,10 +186,53 @@
                       <input type="number" class="form-control form-control-sm text-center" formControlName="height"
                         min="50" max="2000" />
                     </div>
+                    <div class="input-group input-group-sm" style="max-width:8rem;">
+                      <span class="input-group-text">Ratio</span>
+                      <input type="number" class="form-control form-control-sm text-center" formControlName="ratio"
+                        min="0.1" max="10" step="0.01" />
+                    </div>
+                    <button type="button" class="btn btn-outline-danger btn-sm ms-2" (click)="removeCardThumbnail(i)"
+                      [disabled]="card_thumbnails.length === 1">×</button>
                   </div>
                 </div>
               </div>
+            </div>
+            <div class="row">
+              <div class="fw-bold fs-6 mb-2">Vignettes albums</div>
+              <div formGroupName="album_thumbnail">
+                <div class="d-flex align-items-center gap-3 mb-2">
+                  <span class="form-label mb-0 text-nowrap flex-shrink-0">Taille :</span>
+                  <div class="input-group input-group-sm" style="max-width:10rem;">
+                    <span class="input-group-text">Largeur (px)</span>
+                    <input type="number" class="form-control form-control-sm text-center" formControlName="width"
+                      min="50" max="2000" />
+                  </div>
+                  <div class="input-group input-group-sm" style="max-width:10rem;">
+                    <span class="input-group-text">Hauteur (px)</span>
+                    <input type="number" class="form-control form-control-sm text-center" formControlName="height"
+                      min="50" max="2000" />
+                  </div>
+                </div>
+              </div>
+            </div>
             <!-- </div> -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Section album carousel interval -->
+      <div class="col">
+        <div class="card h-100">
+          <div class="card-title fw-bold fs-5 ms-2">Carousel d'albums</div>
+          <div class="card-body">
+            <div class="d-flex align-items-center gap-2">
+              <span class="form-label mb-0 text-nowrap flex-shrink-0">Intervalle de défilement automatique (ms) :</span>
+              <div class="input-group input-group-sm" style="max-width:8rem;">
+                <input type="number" class="form-control form-control-sm text-center"
+                  formControlName="album_carousel_interval_ms" min="0" max="60000" />
+              </div>
+              <small class="text-muted ms-2">0 = désactivé</small>
+            </div>
           </div>
         </div>
       </div>

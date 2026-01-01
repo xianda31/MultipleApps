@@ -1,29 +1,30 @@
 <div class="row justify-content-start align-items-center mt-3">
     <div class="col-auto fw-bold">{{album?.title}}</div>
-        <div class="col-auto text-muted"> {{album?.subtitle}} </div>
-    @if ( photos ) {
-    <div class="col-auto">{{(photos).length}} photos</div>
-    }
+    <div class="col-auto text-muted">{{album?.subtitle}}</div>
+    <div class="col-auto" *ngIf="photos">{{photos.length}} photos</div>
 </div>
 
-<div class="mt-1 row row-cols-3 row-cols-sm-3 row-cols-md-4 g-1 custom-row-cols-lg-10">
+<div *ngIf="loading" class="d-flex align-items-center mt-3">
+    <div class="spinner-border text-secondary ms-3" role="status"></div>
+    <span class="ms-2">chargement de l'album...</span>
+</div>
 
-    @if ( photos ) {
-    @for (photo of photos; track $index) {
-    <div class="col">
-        <div (click)="openCarousel($index)" class="card bg-dark nice_shadow">
-            <img [src]="photo.url" class="card-img-top" />
-
+<ng-container *ngIf="!loading && photos && photos.length">
+    <ngb-carousel #carousel [activeId]="activeId" (slide)="onActiveIdChange($event.current)" [showNavigationArrows]="true" [showNavigationIndicators]="false" [interval]="carouselInterval" *ngIf="photos.length > 0">
+        <ng-template ngbSlide *ngFor="let photo of photos; let i = index" [id]="i.toString()">
+            <img [src]="photo.highResUrl || photo.url" class="d-block w-100 album-carousel-img" [alt]="album?.title + ' photo ' + (i+1)" />
+        </ng-template>
+    </ngb-carousel>
+    <div class="d-flex justify-content-center my-2" *ngIf="photos.length > 0">
+        <button type="button" class="btn btn-primary" (click)="download(photos[activeId ? +activeId : 0])">
+            <i class="bi bi-download"></i> Télécharger cette image
+        </button>
+    </div>
+    <div class="album-thumbnails d-flex justify-content-center mt-2">
+        <div *ngFor="let photo of photos; let i = index" class="album-thumb-wrapper mx-1" [class.selected-thumb]="activeId === i.toString()" (click)="selectSlide(i)">
+            <img [src]="photo.url" class="album-thumb-img" [alt]="'thumbnail ' + (i+1)" />
         </div>
     </div>
-    }
-    } @else {
-    @if ( loading ) {
-    <div class="spinner-border text-secondary ms-5" role="status">
-    </div>
-    <span class="ms-2"> chargement de l'album...</span>
-    } @else {
-    <!-- <div class="text-muted">Aucune photo</div> -->
-    }
-    }
-</div>
+</ng-container>
+
+<div *ngIf="!loading && (!photos || !photos.length)" class="text-muted mt-3">Aucune photo</div>

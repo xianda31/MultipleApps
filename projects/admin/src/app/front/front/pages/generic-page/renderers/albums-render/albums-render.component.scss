@@ -1,22 +1,138 @@
 .albums-wrapper {
-  .card {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    border-radius: 0.5rem;
+  .album-stack {
+    position: relative;
+    margin-bottom: 1.5rem;
+    transition: transform 0.3s ease;
+    // Assure l'espace pour les cartes empilées
+    padding: 15px;
+    
+    &:hover {
+      .album-card {
+        transform-origin: left center;
+        transform: scaleX(0.95) rotateY(-10deg);
+        box-shadow: 
+          inset 0 2px 4px rgba(255,255,255,0.15),
+          inset 0 -2px 6px rgba(0,0,0,0.1),
+          0 6px 20px rgba(0,0,0,0.2);
+      }
+    }
+  }
+  
+  .album-card-back {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    right: 15px;
+    // Mêmes dimensions que la carte principale
+    aspect-ratio: 3/4;
+    max-width: 280px;
+    margin: 0 auto;
+    // Bords arrondis seulement à droite (comme un livre)
+    border-radius: 0;
+    border-top-right-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+    transition: transform 0.3s ease;
+    pointer-events: none;
+  }
+  
+  .album-card-1 {
+    background: #e0e0e0;
+    border: 1px solid #c8c8c8;
+    transform: translateX(12px) translateY(12px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+    z-index: 1;
+  }
+  
+  .album-card-2 {
+    background: #e0e0e0;
+    border: 1px solid #c8c8c8;
+    transform: translateX(8px) translateY(8px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    z-index: 2;
+  }
+  
+  .album-card-3 {
+    background: #f0f0f0;
+    border: 1px solid #d8d8d8;
+    transform: translateX(4px) translateY(4px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    z-index: 3;
+  }
+  
+  .album-card {
+    position: relative;
+    // Bords arrondis seulement à droite (comme un livre)
+    border-radius: 0;
+    border-top-right-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
     overflow: hidden;
-    text-align: center;
+    // Vert équivalent à bg-success
+    background: #198754;
+    border: 2px solid #157347;
+    // Ombres simples
+    box-shadow: 
+      inset 0 2px 4px rgba(255,255,255,0.1),
+      inset 0 -2px 6px rgba(0,0,0,0.1),
+      0 4px 12px rgba(0,0,0,0.15);
+    transition: box-shadow 0.3s ease;
+    // Format portrait
+    aspect-ratio: 3/4;
+    max-width: 280px;
+    margin: 0 auto;
+    z-index: 4;
   }
-  .card-img-top {
+
+  .album-cover {
     object-fit: cover;
-    height: 160px;
-    width: 100%;
+    height: 65%;
+    width: calc(100% - 2rem);
+    margin: 1rem;
     background: #f8f9fa;
+    // Bordure blanche comme une photo
+    border: 6px solid white;
+    box-shadow: 
+      0 0 0 1px #ddd,
+      inset 0 0 0 2px rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
   }
+  
+  .card-body {
+    text-align: center;
+    padding: 0.5rem 1rem 1rem;
+    height: 35%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    
+    // Étiquette pour le titre et sous-titre
+    .album-label {
+      background: white;
+      border: 3px solid white;
+      box-shadow: 
+        0 0 0 1px #ddd,
+        inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+      border-radius: 2px;
+      padding: 0.4rem 0.6rem;
+      // Même largeur que l'image
+      width: calc(100% - 2rem);
+      margin: 0 1rem;
+    }
+  }
+  
   .card-title {
-    font-size: 1rem;
-    font-weight: 600;
-  }
-  .card-text {
     font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.2rem;
     line-height: 1.2;
+    color: #333;
+    text-shadow: none;
+  }
+  
+  .card-text {
+    font-size: 0.85rem;
+    line-height: 1.1;
+    color: #666;
+    text-shadow: none;
+    margin-bottom: 0;
   }
 }

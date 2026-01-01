@@ -78,7 +78,8 @@ export class UiConfComponent implements OnInit {
       email: this.fb.group({
         tagline: ['Votre club de bridge convivial et dynamique'],
         ccEmail: ['']
-      })
+      }),
+      album_carousel_interval_ms: [5000, [Validators.min(0), Validators.max(60000)]]
     });
     // attach FormArray-level validator to enforce keys non-empty and unique
     const tt = this.uiForm.get('tournaments_type') as FormArray;

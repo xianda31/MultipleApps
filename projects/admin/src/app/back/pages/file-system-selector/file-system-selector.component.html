@@ -36,8 +36,11 @@
                 {{ key }}
               </span>
                 @if (allowActions) {
-                  <button type="button" class="btn btn-sm btn-link text-success ms-2" (click)="downloadFolderZip((prefix? prefix + '/' : '') + key); $event.stopPropagation()" title="Télécharger tout le dossier en zip">
+                  <button type="button" class="btn btn-sm btn-link text-success ms-2 position-relative" (click)="downloadFolderZip((prefix? prefix + '/' : '') + key); $event.stopPropagation()" title="Télécharger tout le dossier en zip" [disabled]="downloadingZipFolder === (prefix? prefix + '/' : '') + key">
                     <i class="bi bi-file-zip-fill"></i>
+                    <span *ngIf="downloadingZipFolder === (prefix? prefix + '/' : '') + key" class="position-absolute top-50 start-50 translate-middle">
+                      <span class="spinner-border spinner-border-sm text-secondary" style="z-index:2;"></span>
+                    </span>
                   </button>
                   @if (prefix) {
                     <button type="button" class="btn btn-sm btn-link text-danger ms-2" (click)="deleteFolder((prefix? prefix + '/' : '') + key); $event.stopPropagation()" title="Supprimer le dossier et son contenu">

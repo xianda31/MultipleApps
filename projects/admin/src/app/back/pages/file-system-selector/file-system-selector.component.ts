@@ -15,8 +15,9 @@ import { ZipService } from '../../../common/services/zip.service';
   styleUrls: ['./file-system-selector.component.scss']
 })
 export class FileSystemSelectorComponent implements OnInit, OnChanges {
-    @Input() allowActions: boolean = true;
-    @Input() selectOnFolderClick: boolean = true;
+  @Input() allowActions: boolean = true;
+  @Input() selectOnFolderClick: boolean = true;
+  downloadingZipFolder: string | null = null;
   // Sélectionne un fichier ou dossier et émet l'événement select
   selectPath(path: string) {
     this.onSelect(path);
@@ -80,12 +81,15 @@ export class FileSystemSelectorComponent implements OnInit, OnChanges {
 
   async downloadFolderZip(path: string) {
     if (!path) return;
+    this.downloadingZipFolder = path;
     try {
       const name = path.endsWith('/') ? path.slice(0, -1) : path;
       await this.zipService.downloadFolderAsZip(path, name.split('/').pop() + '.zip');
       this.toast.showSuccess('Téléchargement', 'Archive générée');
     } catch (err) {
       this.toast.showErrorToast('Téléchargement', 'Erreur lors de la génération de l’archive.');
+    } finally {
+      this.downloadingZipFolder = null;
     }
   }
 

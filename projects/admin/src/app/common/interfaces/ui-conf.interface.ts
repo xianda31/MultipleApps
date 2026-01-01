@@ -50,7 +50,9 @@ export interface UIConfiguration {
   // thumbnail sizing used by site image processing
   card_thumbnails: ImageSize[];
   album_thumbnail: ImageSize;
-  // future UI settings can be added here
+  // Intervalle de défilement automatique du carousel d'albums (en ms)
+  album_carousel_interval_ms?: number;
+  // future UI settings can be added ici
   [key: string]: any;
 }
 

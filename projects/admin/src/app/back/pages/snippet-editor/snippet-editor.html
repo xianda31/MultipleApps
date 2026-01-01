@@ -62,7 +62,7 @@
                 [allowCreateFolder]="false"
                 [selectOnFolderClick]="false"
                 [allowActions]="false"
-                (select)="form.get('image')?.setValue($event); showImageSelector = false">
+                (select)="form.get('image')?.setValue($event); form.get('image')?.markAsDirty(); showImageSelector = false; saveSnippetSelected()">
             </app-file-system-selector>
         </ng-container>
     </div>
@@ -84,7 +84,7 @@
                 [allowCreateFolder]="false"
                 [selectOnFolderClick]="false"
                 [allowActions]="false"
-                (select)="form.get('file')?.setValue($event); showFileSelector = false">
+                (select)="form.get('file')?.setValue($event); form.get('file')?.markAsDirty(); showFileSelector = false; saveSnippetSelected()">
             </app-file-system-selector>
         </ng-container>
     </div>
@@ -106,7 +106,7 @@
                 [allowCreateFolder]="true"
                 [selectOnFolderClick]="true"
                 [allowActions]="false"
-                (select)="form.get('folder')?.setValue($event); showFolderSelector = false">
+                (select)="form.get('folder')?.setValue($event); form.get('folder')?.markAsDirty(); showFolderSelector = false; saveSnippetSelected()">
             </app-file-system-selector>
         </ng-container>
     </div>
