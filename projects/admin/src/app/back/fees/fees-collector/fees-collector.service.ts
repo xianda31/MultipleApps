@@ -313,7 +313,7 @@ export class FeesCollectorService {
   private check_acc(fullname: string): boolean {
     const month_to_quarter = (month: number): number => {
       if (month >= 7 && month <= 11) return 0;  //  juillet à novembre => T1
-      if (month === 12 || (month >= 1 && month <= 2)) return 1;  //  décembre à février => T2
+      if (month === 12 || (month >= 0 && month <= 2)) return 1;  //  décembre à février => T2
       if (month >= 3 && month <= 6) return 2;  //  mars à juin => T3
       throw new Error('Invalid month');
     }
