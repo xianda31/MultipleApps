@@ -12,7 +12,7 @@
 <ng-container *ngIf="!loading && photos && photos.length">
     <ngb-carousel #carousel [activeId]="activeId" (slide)="onActiveIdChange($event.current)" [showNavigationArrows]="true" [showNavigationIndicators]="false" [interval]="carouselInterval" *ngIf="photos.length > 0">
         <ng-template ngbSlide *ngFor="let photo of photos; let i = index" [id]="i.toString()">
-            <img [src]="photo.highResUrl || photo.url" class="d-block w-100 album-carousel-img" [alt]="album?.title + ' photo ' + (i+1)" />
+            <img [src]="photo.highResUrl || photo.url" class="d-block w-100 album-carousel-img" [alt]="album.title + ' photo ' + (i+1)" />
         </ng-template>
     </ngb-carousel>
     <div class="d-flex justify-content-center my-2" *ngIf="photos.length > 0">
