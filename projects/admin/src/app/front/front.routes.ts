@@ -18,7 +18,7 @@ export const minimal_routes: Routes = [
     children: [
       // Routes with dynamic parameters (not configurable via editor)
       // { path: 'tournaments/:id', component: TournamentComponent },
-      { path: 'les_albums/:snippet_id', component: AlbumComponent },
+      // { path: 'les_albums/:snippet_id', component: AlbumComponent },
 
       // System routes (redirects and fallbacks)
       { path: 'back_office', redirectTo: '/back', pathMatch: 'full' },

@@ -117,7 +117,7 @@ export class NavItemsService {
       for (const n of albumNavs) {
         for (const t of pageAlbumMeta.extraRoutes) {
           if (t.when === 'always') {
-            const routeComponent = t.component ?? pageAlbumMeta.component ?? PLUGINS['carousel'];
+            const routeComponent = t.component ;
             extraRoutes.push({ path: n.path + (t.suffix ?? ''), component: routeComponent });
           }
         }

@@ -55,7 +55,7 @@ export const PLUGINS: Record<string, Type<any>> = {
   [NAVITEM_PLUGIN.IFRAME]: IframeComponent,
   [NAVITEM_PLUGIN.HOME]: HomePage,
   [NAVITEM_PLUGIN.ASSISTANCE]: AssistanceComponent,
-  ['album']: AlbumComponent,
+  ['les_albums']: AlbumComponent,
   ['tournament']: TournamentComponent,
 };
 
@@ -67,9 +67,10 @@ export const PLUGINS_META: Record<string, PluginMeta> = {
   [NAVITEM_PLUGIN.GAME_CARDS_OWNED]: { component: GameCardsOwnedComponent, requiresAuth: true },
   [NAVITEM_PLUGIN.AUTHENTICATION]: { component: ConnexionPageComponent, requiresAuth: false },
   [NAVITEM_PLUGIN.IFRAME]: { component: IframeComponent, requiresAuth: false, requiresExternalUrl: true },
-  [NAVITEM_PLUGIN.HOME]: { component: HomePage, providesBrand: true, extraRoutes: [{ suffix: '/:tournament_id', when: 'always', component: TournamentComponent }] },
-  ['album']: { component: AlbumComponent, extraRoutes: [{ suffix: '/:snippet_id', when: 'always', component: AlbumComponent }] },
-  // ['carousel']: { component: Carousel, extraRoutes: [{ suffix: '/:snippet_id', when: 'album' }] },
+  [NAVITEM_PLUGIN.HOME]: { component: HomePage, providesBrand: true,
+     extraRoutes: [{ suffix: '/:tournament_id', when: 'always', component: TournamentComponent }] },
+     
+  ['PAGE_ALBUM']: { component: AlbumComponent, extraRoutes: [{ suffix: '/:snippet_id', when: 'always', component: AlbumComponent }] },
 };
 
-export const plugin_routes: Routes = [];
+export const plugin_routes: Routes = []; 
