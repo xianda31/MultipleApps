@@ -23,8 +23,10 @@
           </form>
         </div>
         <div class="card-body">
-          <app-generic-page [page_title]="pageTitleForPreview"
-            [row_cols]="page_row_cols(selected_page)"></app-generic-page>
+          <div class="viewport-sim mx-auto">
+            <app-generic-page [page_title]="pageTitleForPreview"
+              [row_cols]="page_row_cols(selected_page)"></app-generic-page>
+          </div>
         </div>
       </div>
     </div>
