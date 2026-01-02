@@ -3,11 +3,15 @@ import { AuthentificationService } from '../authentification/authentification.se
 import { NAVITEM_COMMAND, LABEL_TRANSFORMERS } from '../interfaces/plugin.interface';
 import { firstValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { Router } from '@angular/router';
 
 
 @Injectable({ providedIn: 'root' })
 export class CommandRegistryService {
-    constructor(private auth: AuthentificationService) { }
+    constructor(
+        private auth: AuthentificationService,
+        private router: Router
+    ) { }
 
     private readonly navitem_commands: Record<NAVITEM_COMMAND, () => void | Promise<void>> =
         {
@@ -24,6 +28,8 @@ export class CommandRegistryService {
         try {
             sessionStorage.clear();
             await this.auth.signOut();
+            this.router.navigate(['/']);
+
         } catch (e) {
             console.error('Error during signOut command:', e);
         }

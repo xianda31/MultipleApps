@@ -5,8 +5,21 @@
     background: #222;
 }
 
+
 .album-thumbnails {
-    gap: 0.5rem;
+    display: grid;
+    gap: 0.2rem;
+    justify-content: center;
+    grid-template-columns: repeat(3, 70px);
+    @media (min-width: 768px) {
+        grid-template-columns: repeat(4, 70px);
+    }
+    @media (min-width: 992px) {
+        grid-template-columns: repeat(6, 70px);
+    }
+    @media (min-width: 1200px) {
+        grid-template-columns: repeat(10, 70px);
+    }
 }
 
 .album-thumb-wrapper {

@@ -8,7 +8,6 @@ import { ConnexionPageComponent } from "../authentification/connexion-page/conne
 import { IframeComponent } from "../../front/front/iframe/iframe";
 import { HomePage } from "../../front/front/pages/home-page/home-page";
 import { TournamentComponent } from "../tournaments/tournament/tournament.component";
-import { Carousel } from "../../front/carousel/carousel";
 import { AssistanceComponent } from "../../front/front/assistance/assistance.component";
 import { AlbumComponent } from "../../front/album/album.component";
 

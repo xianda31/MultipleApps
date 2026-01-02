@@ -20,8 +20,8 @@
             <i class="bi bi-download"></i> Télécharger cette image
         </button>
     </div>
-    <div class="album-thumbnails d-flex justify-content-center mt-2">
-        <div *ngFor="let photo of photos; let i = index" class="album-thumb-wrapper mx-1" [class.selected-thumb]="activeId === i.toString()" (click)="selectSlide(i)">
+    <div class="album-thumbnails mt-2">
+        <div *ngFor="let photo of photos; let i = index" class="album-thumb-wrapper" [class.selected-thumb]="activeId === i.toString()" (click)="selectSlide(i)">
             <img [src]="photo.url" class="album-thumb-img" [alt]="'thumbnail ' + (i+1)" />
         </div>
     </div>
