@@ -30,6 +30,7 @@ import { Observable } from 'rxjs';
   styleUrl: './page-editor.component.scss'
 })
 export class PageEditorComponent implements OnChanges {
+    openSnippetId: string | null = null;
   @Input() pageId: string = '';
   selected_page!: Page;
   snippets: Snippet[] = [];
@@ -241,8 +242,24 @@ export class PageEditorComponent implements OnChanges {
   }
 
       // Remplace le snippet modifié par une nouvelle référence pour forcer la détection de changement dans la stack
-  onSnippetSaved(updated: Snippet) {
-    this.pageSnippets = this.pageSnippets.map(s => s.id === updated.id ? { ...s, ...updated } : s);
+
+  onSnippetSaved(updatedSnippet: Snippet) {
+    if (!updatedSnippet) return;
+    // update pageSnippets array entry if present — replace with new object and refresh array reference
+    const idx = this.pageSnippets.findIndex(s => s.id === updatedSnippet.id);
+    if (idx > -1) {
+      this.pageSnippets[idx] = { ...updatedSnippet } as Snippet;
+      this.pageSnippets = this.pageSnippets.slice(); // refresh reference for change detection
+    }
+    // also update global snippets list and selected_snippet
+    const globalIdx = this.snippets.findIndex(s => s.id === updatedSnippet.id);
+    if (globalIdx > -1) {
+      this.snippets[globalIdx] = { ...updatedSnippet } as Snippet;
+      this.snippets = this.snippets.slice();
+    }
+    if (this.selected_snippet && this.selected_snippet.id === updatedSnippet.id) {
+      this.selected_snippet = { ...updatedSnippet } as Snippet;
+    }
   }
 
   // Handler for snippet-editor saved output: update local lists and active selection

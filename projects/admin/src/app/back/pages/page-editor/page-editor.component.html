@@ -3,7 +3,7 @@
 
 
     <!-- Colonne 1: Visualisation -->
-    <div class="col-12 col-sm-6">
+    <div class="col-12 col-md-5">
       <div class="card border-0 mb-2">
         <div class="card-header d-flex align-items-center justify-content-between">
           <form [formGroup]="pageForm" class="d-flex align-items-center gap-2">
@@ -22,16 +22,14 @@
             </select>
           </form>
         </div>
-        <div class="card-body">
-          <div class="viewport-sim mx-auto">
-            <app-generic-page [page_title]="pageTitleForPreview"
-              [row_cols]="page_row_cols(selected_page)"></app-generic-page>
-          </div>
+        <div class="viewport-sim mx-auto">
+          <app-generic-page [page_title]="pageTitleForPreview"
+            [row_cols]="page_row_cols(selected_page)"></app-generic-page>
         </div>
       </div>
     </div>
     <!-- Colonne 2: Snippets de la page -->
-    <div class="col-12 col-sm-3">
+    <div class="col-12 col-md-4">
       <div class="card border-0 mb-2">
         <div class="card-header justify-content-center align-items-center same-header-height d-flex">
           <h6 class="mb-0">article(s)</h6>
@@ -40,48 +38,50 @@
           @if (selected_page.title !== '__CLIPBOARD__') {
           <div class="me-2">
 
-            <div class="row align-items-center mb-2 justify-content-end">
-              <div class="col-auto">Ajouter un article :</div>
-              <div class="col-auto">
-                <button type="button" class="btn btn-sm btn-outline-success me-2" (click)="openAddSnippetModal()">
-                  <i class="bi bi-plus-square-fill"></i>
-                </button>
-              </div>
-            </div>
-            <div class="row align-items-center justify-content-end mb-2">
-              <div class="col-auto">Voir le clipboard :</div>
-              <div class="col-auto">
-                <button type="button" class="btn btn-sm btn-outline-secondary me-2" (click)="openClipboardModal()"
-                  title="Clipboard">
-                  <i class="bi bi-inboxes-fill"></i>
-                </button>
-              </div>
+            <div class="d-flex flex-row align-items-center gap-3 mb-2">
+              <button type="button" class="btn btn-sm btn-outline-success " (click)="openAddSnippetModal()">
+                <i class="bi bi-plus-square-fill"></i>
+              </button>
+              <span>ajout d'article</span>
+              <button type="button" class="btn btn-sm btn-outline-secondary ms-auto " (click)="openClipboardModal()"
+                title="Clipboard">
+                <i class="bi bi-inboxes-fill"></i>
+              </button>
+              <span>clipboard</span>
             </div>
           </div>
           }
           <div cdkDropList [cdkDropListData]="pageSnippets" (cdkDropListDropped)="onDrop($event)" class="snippet-list">
-            @for (snippet of pageSnippets; track snippet.id) {
-            <div cdkDrag class="snippet-item d-flex align-items-center gap-2 mb-2 p-2 border rounded">
-              <i class="bi bi-grip-vertical" cdkDragHandle></i>
-              <span class="flex-grow-1" (click)="selectSnippet(snippet)" role="button">
-                <div class="fw-bold">{{ snippet.title }}</div>
-                <small class="text-muted">{{ snippet.subtitle }}</small>
-              </span>
-              @if (selected_page.title === '__CLIPBOARD__') {
-              <button type="button" class="btn btn-sm btn-outline-danger" (click)="deleteSnippet(snippet)">
-                <i class="bi bi-trash"></i>
-              </button>
-              } @else {
-              <button type="button" class="btn btn-sm btn-outline-secondary" (click)="removeSnippet(snippet)">
-                <i class="bi bi-inbox-fill"></i>
-              </button>
-              }
+            <div class="accordion" id="snippetAccordion">
+              <ng-container *ngFor="let snippet of pageSnippets; trackBy: trackSnippet">
+                <div cdkDrag class="accordion-item">
+                  <h2 class="accordion-header d-flex align-items-center" id="heading-{{snippet.id}}">
+                    <span cdkDragHandle class="me-2" style="cursor:grab"><i class="bi bi-grip-vertical"></i></span>
+                    <button class="accordion-button collapsed flex-grow-1" type="button"
+                      [attr.aria-expanded]="openSnippetId === snippet.id"
+                      [attr.aria-controls]="'collapse-' + snippet.id"
+                      (click)="openSnippetId = (openSnippetId === snippet.id ? null : snippet.id)">
+                      {{ snippet.title }}
+                    </button>
+                    <button *ngIf="selected_page.title === '__CLIPBOARD__'" type="button"
+                      class="btn btn-sm btn-outline-danger ms-1 me-1" (click)="deleteSnippet(snippet)">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                    <button *ngIf="selected_page.title !== '__CLIPBOARD__'" type="button"
+                      class="btn btn-sm btn-outline-secondary ms-1 me-1" (click)="removeSnippet(snippet)">
+                      <i class="bi bi-inbox-fill"></i>
+                    </button>
+                  </h2>
+                  <div [id]="'collapse-' + snippet.id" class="accordion-collapse collapse"
+                    [class.show]="openSnippetId === snippet.id" [attr.aria-labelledby]="'heading-' + snippet.id"
+                    data-bs-parent="#snippetAccordion">
+                    <div class="accordion-body">
+                      <app-snippet-editor [snippet]="snippet" (saved)="onSnippetSaved($event)"></app-snippet-editor>
+                    </div>
+                  </div>
+                </div>
+              </ng-container>
             </div>
-            }
-
-
-
-
           </div>
 
         </div>
@@ -89,7 +89,7 @@
     </div>
 
     <!-- Colonne 3: Éditeur snippet -->
-    <div class="col-12 col-sm-3">
+    <div class="col-12 col-md-3">
       @if (selected_snippet) {
       <div class="card border-0 mb-2">
         <div class="justify-content-center align-items-center same-header-height d-flex card-header">
