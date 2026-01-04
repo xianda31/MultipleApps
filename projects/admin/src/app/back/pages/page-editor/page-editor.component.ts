@@ -29,7 +29,7 @@ import { Observable } from 'rxjs';
     GenericPageComponent,
     SnippetEditor
   ],
-  templateUrl: './page-editor-progressive.component.html',
+  templateUrl: './page-editor.component.html',
   styleUrl: './page-editor.component.scss'
 })
 export class PageEditorComponent implements OnChanges, OnInit {
@@ -37,7 +37,6 @@ export class PageEditorComponent implements OnChanges, OnInit {
   private loadingPage: boolean = false;
   
   // Gestion S3 Colonne 3
-  s3Mode: 'snippet-editor' | 'file-manager' = 'file-manager';
   s3TargetRoot: string = S3_ROOT_FOLDERS.IMAGES;
   s3CurrentPath: string = '';
   S3_ROOT_FOLDERS = S3_ROOT_FOLDERS;
@@ -48,6 +47,8 @@ export class PageEditorComponent implements OnChanges, OnInit {
   fileSelectionType: 'image' | 'document' | 'folder' = 'image';
   fileSelectionTargetSnippet: Snippet | null = null;
   selectedFilePathForSnippet: string | null = null;
+  selectionTimestamp: number = 0; // Force change detection
+  targetSnippetId: string | null = null; // Only target specific snippet
   
   // Propriétés uploader
   filesByRoot: { [key: string]: File[] } = {};
@@ -57,7 +58,6 @@ export class PageEditorComponent implements OnChanges, OnInit {
   selected_page!: Page;
   snippets: Snippet[] = [];
   pageSnippets: Snippet[] = [];
-  selected_snippet: Snippet | null = null;
   pageForm!: FormGroup;
   pageTemplates = Object.values(PAGE_TEMPLATES);
   addSnippetForm!: FormGroup;
@@ -96,7 +96,6 @@ export class PageEditorComponent implements OnChanges, OnInit {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['pageId'] && this.pageId && changes['pageId'].currentValue !== changes['pageId'].previousValue) {
-      this.selected_snippet = null;
       this.openSnippetId = null;
       this.loadRealPage();
     }
@@ -266,20 +265,12 @@ export class PageEditorComponent implements OnChanges, OnInit {
   // snippet methods
 
   selectSnippet(snippet: Snippet): void {
-    this.selected_snippet = snippet;
+    // Snippet selection is now handled by accordion
   }
 
   onSnippetAccordionClick(snippet: Snippet): void {
     // Gestion de l'accordéon
     this.openSnippetId = (this.openSnippetId === snippet.id ? null : snippet.id);
-    
-    // Sélection du snippet et passage en mode snippet-editor si accordéon ouvert
-    if (this.openSnippetId === snippet.id) {
-      this.selected_snippet = snippet;
-      this.switchToSnippetEditorMode();
-    } else {
-      this.selected_snippet = null;
-    }
   }
 
 
@@ -416,19 +407,12 @@ export class PageEditorComponent implements OnChanges, OnInit {
       this.snippets[globalIdx] = { ...updatedSnippet } as Snippet;
       this.snippets = this.snippets.slice();
     }
-    if (this.selected_snippet && this.selected_snippet.id === updatedSnippet.id) {
-      this.selected_snippet = { ...updatedSnippet } as Snippet;
-    }
   }
 
   // === MÉTHODES S3 GESTION COLONNE 3 ===
   
-  switchToSnippetEditorMode(): void {
-    this.s3Mode = 'snippet-editor';
-  }
-  
   switchToFileManagerMode(): void {
-    this.s3Mode = 'file-manager';
+    // File manager is now the default mode - no mode switching needed
   }
   
   onS3FileSelected(path: string): void {
@@ -529,6 +513,7 @@ export class PageEditorComponent implements OnChanges, OnInit {
     this.fileSelectionType = type;
     this.fileSelectionTargetSnippet = snippet;
     this.fileSelectionContext = context;
+    this.targetSnippetId = snippet.id; // Set target ID
     
     // Basculer sur le bon volume
     if (type === 'image') {
@@ -544,25 +529,32 @@ export class PageEditorComponent implements OnChanges, OnInit {
     this.fileSelectionMode = false;
     this.fileSelectionContext = '';
     this.fileSelectionTargetSnippet = null;
+    this.fileSelectionType = 'image'; // Reset to default
+    this.targetSnippetId = null;
     this.s3CurrentPath = '';
   }
   
   applyFileSelection(): void {
-    if (!this.fileSelectionTargetSnippet || !this.s3CurrentPath) return;
+    if (!this.fileSelectionTargetSnippet || !this.s3CurrentPath || !this.fileSelectionType) return;
     
-    // Set properties for snippet-editor to receive
+    // Set properties for snippet-editor to receive - use timestamp to force change detection
     this.selectedFilePathForSnippet = this.s3CurrentPath;
+    this.selectionTimestamp = Date.now();
+    console.log('🔗 Applying selection:', this.fileSelectionType, this.s3CurrentPath, 'to snippet:', this.fileSelectionTargetSnippet.title, 'timestamp:', this.selectionTimestamp);
     
     this.toastService.showSuccess('Sélection', `${this.s3CurrentPath} sélectionné`);
     
-    // Reset after a small delay to allow snippet-editor to process
+    // Reset after a longer delay to ensure snippet-editor processes the change
     setTimeout(() => {
+      console.log('🧹 Resetting selection inputs');
       this.selectedFilePathForSnippet = null;
+      this.selectionTimestamp = 0;
+      this.targetSnippetId = null;
       this.cancelFileSelection();
-    }, 100);
+    }, 500);
   }
 
-  // Méthode appelée par le snippet-editor pour déclencher une sélection
+  // Méthode appelée par le snippet-editor pour déclencher une sélection de fichier
   onSnippetRequestFileSelection(request: {type: 'image' | 'document' | 'folder', snippet: Snippet, context: string}): void {
     this.activateFileSelection(request.type, request.snippet, request.context);
   }

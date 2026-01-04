@@ -21,6 +21,8 @@ export class SnippetEditor implements OnChanges {
   @Input() snippet: Snippet | null = null;
   @Input() selectedFilePath: string | null = null;
   @Input() selectionType: 'image' | 'document' | 'folder' | null = null;
+  @Input() selectionTimestamp: number = 0;
+  @Input() targetSnippetId: string | null = null; // Only process selection if this matches snippet.id
   @Output() saved = new EventEmitter<Snippet>();
   @Output() fileSelectionRequested = new EventEmitter<{type: 'image' | 'document' | 'folder', snippet: Snippet, context: string}>();
   
@@ -124,10 +126,14 @@ export class SnippetEditor implements OnChanges {
       }, { emitEvent: false });
     }
     
-    // Handle file selection from parent
-    if (changes['selectedFilePath'] && changes['selectionType'] && 
-        this.selectedFilePath && this.selectionType) {
+    // Handle file selection from parent - only if targeted to this snippet
+    if (changes['selectionTimestamp'] && this.selectionTimestamp > 0 && 
+        this.selectedFilePath && this.selectionType &&
+        this.targetSnippetId && this.snippet && this.snippet.id === this.targetSnippetId) {
+      console.log('📥 Snippet-editor', this.snippet.title, 'received targeted selection:', this.selectionType, this.selectedFilePath);
       this.applyFileSelection(this.selectionType, this.selectedFilePath);
+    } else if (changes['selectionTimestamp'] && this.selectionTimestamp > 0 && this.snippet) {
+      console.log('🚫 Snippet-editor', this.snippet.title, 'ignored selection - not targeted (target:', this.targetSnippetId, 'my id:', this.snippet.id, ')');
     }
   }
 
@@ -251,6 +257,7 @@ export class SnippetEditor implements OnChanges {
     
     // Apply file selection from parent
     applyFileSelection(type: 'image' | 'document' | 'folder', path: string): void {
+      console.log('🎯 Applying file selection to snippet:', type, path);
       if (type === 'image') {
         this.selectImage(path);
       } else if (type === 'document') {
@@ -258,6 +265,7 @@ export class SnippetEditor implements OnChanges {
       } else if (type === 'folder') {
         this.selectFolder(path);
       }
+      console.log('✅ File selection applied successfully');
     }
 
 }
