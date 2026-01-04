@@ -13,20 +13,20 @@ import { FileSystemSelectorComponent } from '../file-system-selector/file-system
 @Component({
   selector: 'app-snippet-editor',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, FileSystemSelectorComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule],
   templateUrl: './snippet-editor.html',
   styleUrls: ['./snippet-editor.scss']
 })
 export class SnippetEditor implements OnChanges {
   @Input() snippet: Snippet | null = null;
+  @Input() selectedFilePath: string | null = null;
+  @Input() selectionType: 'image' | 'document' | 'folder' | null = null;
   @Output() saved = new EventEmitter<Snippet>();
+  @Output() fileSelectionRequested = new EventEmitter<{type: 'image' | 'document' | 'folder', snippet: Snippet, context: string}>();
   
   public readonly S3_ROOT_FOLDERS = S3_ROOT_FOLDERS;
   form: FormGroup;
   saving = false;
-  showImageSelector = false;
-  showFileSelector = false;
-  showFolderSelector = false;
 
   // selectors are opened as modals when needed
   
@@ -123,6 +123,12 @@ export class SnippetEditor implements OnChanges {
         folder: this.snippet.folder || ''
       }, { emitEvent: false });
     }
+    
+    // Handle file selection from parent
+    if (changes['selectedFilePath'] && changes['selectionType'] && 
+        this.selectedFilePath && this.selectionType) {
+      this.applyFileSelection(this.selectionType, this.selectedFilePath);
+    }
   }
 
   async saveSnippetSelected() {
@@ -213,6 +219,45 @@ export class SnippetEditor implements OnChanges {
       // If path ends with '/', remove it and try again
       if (idx === path.length - 1) return this.getNameFromPath(path.slice(0, -1));
       return path.slice(idx + 1);
+    }
+
+    // Méthodes pour déclencher la sélection via le parent
+    requestImageSelection(): void {
+      if (!this.snippet) return;
+      this.fileSelectionRequested.emit({
+        type: 'image',
+        snippet: this.snippet,
+        context: `Image pour "${this.snippet.title}"`
+      });
+    }
+    
+    requestFileSelection(): void {
+      if (!this.snippet) return;
+      this.fileSelectionRequested.emit({
+        type: 'document', 
+        snippet: this.snippet,
+        context: `Document pour "${this.snippet.title}"`
+      });
+    }
+    
+    requestFolderSelection(): void {
+      if (!this.snippet) return;
+      this.fileSelectionRequested.emit({
+        type: 'folder',
+        snippet: this.snippet, 
+        context: `Album pour "${this.snippet.title}"`
+      });
+    }
+    
+    // Apply file selection from parent
+    applyFileSelection(type: 'image' | 'document' | 'folder', path: string): void {
+      if (type === 'image') {
+        this.selectImage(path);
+      } else if (type === 'document') {
+        this.selectFile(path);
+      } else if (type === 'folder') {
+        this.selectFolder(path);
+      }
     }
 
 }

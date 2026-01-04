@@ -1,9 +1,4 @@
-/* Tighten table row height ONLY for the test table */
-table.test-table-tight > :not(caption) > * > * {
-	padding: 0.125rem 0.25rem; /* reduce vertical/horizontal padding */
-	line-height: 1.1;          /* tighter line height */
-	font-size: 0.95rem;        /* slightly smaller font */
-}
+/* Snippet editor styles */
 
 /* Image selector offcanvas styles */
 .image-selector-backdrop {

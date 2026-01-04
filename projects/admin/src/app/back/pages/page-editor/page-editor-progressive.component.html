@@ -1,15 +1,14 @@
 <div class="page-editor-container">
   <div class="row">
-
-    <!-- Colonne 1: Visualisation -->
+    
+    <!-- Colonne 1: Viewport avec formulaires -->
     <div class="col-12 col-lg-4">
-      <div class="card border-0 mb-2">
+      <div class="card border-success">
         <div class="card-header d-flex align-items-center justify-content-between">
           <form [formGroup]="pageForm" class="d-flex align-items-center gap-2">
             <label class="form-label mb-0" style="white-space: nowrap;">Titre :</label>
             <input type="text" class="form-control form-control-sm" formControlName="title"
               placeholder="Titre de la page" (blur)="savePage()" (keydown.enter)="savePage()">
-            <!-- <span *ngIf="is_clipboard_page" class="badge bg-info ms-2">Clipboard</span> -->
           </form>
           <form [formGroup]="pageForm" class="d-flex align-items-center gap-2">
             <label class="form-label mb-0" style="white-space: nowrap;">Template :</label>
@@ -22,8 +21,19 @@
           </form>
         </div>
         <div class="viewport-sim mx-auto">
-          <app-generic-page [page_title]="pageTitleForPreview"
-            [row_cols]="page_row_cols(selected_page)"></app-generic-page>
+          <div *ngIf="selected_page; else noPage">
+            <!-- Aperçu de la page avec app-generic-page -->
+            <app-generic-page 
+              [page_title]="pageTitleForPreview"
+              [row_cols]="page_row_cols(selected_page)">
+            </app-generic-page>
+          </div>
+          <ng-template #noPage>
+            <div class="text-muted text-center p-4">
+              <i class="fas fa-eye-slash mb-2"></i><br>
+              Aucune page sélectionnée
+            </div>
+          </ng-template>
         </div>
       </div>
     </div>
@@ -59,7 +69,7 @@
                     <button class="accordion-button collapsed flex-grow-1" type="button"
                       [attr.aria-expanded]="openSnippetId === snippet.id"
                       [attr.aria-controls]="'collapse-' + snippet.id"
-                            (click)="onSnippetAccordionClick(snippet)">
+                      (click)="onSnippetAccordionClick(snippet)">
                       {{ snippet.title }}
                     </button>
                     <button *ngIf="selected_page && selected_page.title === '__CLIPBOARD__'" type="button"
@@ -75,100 +85,138 @@
                     [class.show]="openSnippetId === snippet.id" [attr.aria-labelledby]="'heading-' + snippet.id"
                     data-bs-parent="#snippetAccordion">
                     <div class="accordion-body">
-                      <app-snippet-editor [snippet]="snippet" (saved)="onSnippetSaved($event)"></app-snippet-editor>
+                      <app-snippet-editor [snippet]="snippet" 
+                                          [selectedFilePath]="selectedFilePathForSnippet"
+                                          [selectionType]="fileSelectionType"
+                                          (saved)="onSnippetSaved($event)"
+                                          (fileSelectionRequested)="onSnippetRequestFileSelection($event)">
+                      </app-snippet-editor>
                     </div>
                   </div>
                 </div>
               </ng-container>
             </div>
           </div>
-
         </div>
       </div>
     </div>
 
-    <!-- Colonne 3: Gestion S3 / Fichiers -->
+    <!-- Colonne 3: Upload complet intégré -->
     <div class="col-12 col-lg-5">
-      <div class="card border-0 mb-2">
-        <!-- Bandeau sélection volume S3 -->
-        <div class="card-header same-header-height">
-          <div class="d-flex flex-column gap-2">
-            <div class="d-flex align-items-center justify-content-between">
-              <h6 class="mb-0">Type de données</h6>
-              <div class="btn-group btn-group-sm" role="group">
-                <input type="radio" class="btn-check" name="s3Mode" id="mode-files" 
-                       [checked]="s3Mode === 'file-manager'" (change)="switchToFileManagerMode()">
-                <label class="btn btn-outline-primary btn-sm" for="mode-files">
-                  <i class="bi bi-folder2"></i>
-                </label>
-                <input type="radio" class="btn-check" name="s3Mode" id="mode-editor" 
-                       [checked]="s3Mode === 'snippet-editor'" (change)="switchToSnippetEditorMode()">
-                <label class="btn btn-outline-secondary btn-sm" for="mode-editor">
-                  <i class="bi bi-pencil-square"></i>
-                </label>
-              </div>
+      <!-- Header mode sélection snippet -->
+      <div *ngIf="fileSelectionMode" class="alert alert-warning mb-2">
+        <div class="d-flex align-items-center justify-content-between">
+          <span><i class="bi bi-arrow-left"></i> Sélection pour: <strong>{{fileSelectionContext}}</strong></span>
+          <button class="btn btn-sm btn-outline-secondary" (click)="cancelFileSelection()">
+            <i class="bi bi-x"></i> Annuler
+          </button>
+        </div>
+      </div>
+
+      <!-- Card Type de données -->
+      <div class="card mb-2">
+        <div class="card-body py-3">
+          <h5 class="card-title mb-2">Type de données</h5>
+          <div class="d-flex gap-3 align-items-center">
+            <div class="form-check form-check-inline mb-0">
+              <input class="form-check-input" type="radio" name="s3Root" id="root-images"
+                [(ngModel)]="s3TargetRoot" value="images">
+              <label class="form-check-label small ms-1" for="root-images">Images</label>
             </div>
-            <div class="d-flex gap-3 align-items-center">
-              <div class="form-check form-check-inline mb-0">
-                <input class="form-check-input" type="radio" name="s3Root" id="root-images"
-                  [(ngModel)]="s3TargetRoot" value="images">
-                <label class="form-check-label small ms-1" for="root-images">Images</label>
-              </div>
-              <div class="form-check form-check-inline mb-0">
-                <input class="form-check-input" type="radio" name="s3Root" id="root-albums"
-                  [(ngModel)]="s3TargetRoot" value="albums">
-                <label class="form-check-label small ms-1" for="root-albums">Albums</label>
-              </div>
-              <div class="form-check form-check-inline mb-0">
-                <input class="form-check-input" type="radio" name="s3Root" id="root-docs"
-                  [(ngModel)]="s3TargetRoot" value="documents">
-                <label class="form-check-label small ms-1" for="root-docs">Documents</label>
+            <div class="form-check form-check-inline mb-0">
+              <input class="form-check-input" type="radio" name="s3Root" id="root-albums"
+                [(ngModel)]="s3TargetRoot" value="albums">
+              <label class="form-check-label small ms-1" for="root-albums">Albums</label>
+            </div>
+            <div class="form-check form-check-inline mb-0">
+              <input class="form-check-input" type="radio" name="s3Root" id="root-docs"
+                [(ngModel)]="s3TargetRoot" value="documents">
+              <label class="form-check-label small ms-1" for="root-docs">Documents</label>
+            </div>
+          </div>
+          <!-- Info du volume sélectionné -->
+          <div class="mb-3 mt-2" style="height: 8em; min-height: 8em; max-height: 8em; overflow-y: auto;">
+            <div class="alert alert-info small mb-0 h-100 d-flex flex-column justify-content-start" role="alert">
+              <div *ngFor="let line of getDataUsageForRoot(s3TargetRoot); let isLast=last">
+                {{ line }}<br *ngIf="!isLast">
               </div>
             </div>
           </div>
         </div>
-        
-        <!-- Contenu S3 -->
-        <div class="card-body p-2">
-          <div *ngIf="s3Mode === 'file-manager'" class="mb-2">
-            <div class="small text-muted mb-1">Mode: Gestionnaire de fichiers</div>
-            <div class="small text-success" *ngIf="s3CurrentPath">Sélectionné: {{s3CurrentPath}}</div>
+      </div>
+
+      <!-- Card Upload (masqué en mode sélection) -->
+      <div *ngIf="!fileSelectionMode" class="card mb-2">
+        <div class="card-body">
+          <h5 class="card-title d-flex align-items-center justify-content-between">
+            <span>Upload des données</span>
+            <span class="ms-auto text-end">
+              <button type="button" class="btn btn-sm btn-success" (click)="uploadAllFor(s3TargetRoot)"
+                [disabled]="uploading || !filesByRoot || !filesByRoot[s3TargetRoot] || filesByRoot[s3TargetRoot].length === 0">
+                <i class="bi bi-cloud-upload"></i>
+                Charger</button>
+              <span *ngIf="uploading" class="spinner-border spinner-border-sm text-primary ms-2" role="status"></span>
+            </span>
+          </h5>
+          <p class="mt-1">Dossier cible :
+            <span class="fw-bolder">{{ s3CurrentPath || 'Aucun dossier sélectionné' }}</span>
+          </p>
+          <p>{{s3TargetRoot === 'documents' ? 'Selection des fichiers' : 'Selection des images' }} à uploader
+            <span class="ms-1">
+              <button type="button" class="btn btn-sm" (click)="triggerFileDialog(s3TargetRoot)" title="Choisir des fichiers">
+                <i [class]="s3TargetRoot === 'documents' ? 'h5 bi-files text-success' : 'h5 bi-images text-success'"></i>
+              </button>
+            </span>
+          </p>
+          <!-- Liste et preview des fichiers -->
+          <div class="row justify-content-between align-items-center mb-2 g-2">
+            <div class="col" *ngIf="(filesByRoot[s3TargetRoot] || []).length > 0">
+              <div class="small text-muted">
+                <ul class="list-unstyled small mb-0">
+                  <li *ngFor="let f of filesByRoot[s3TargetRoot]">{{ f.name }}</li>
+                </ul>
+              </div>
+            </div>
           </div>
-          
-          <div *ngIf="s3Mode === 'snippet-editor'" class="mb-2">
-            <div class="small text-muted mb-1">Mode: Édition snippet</div>
-            <div class="small text-info" *ngIf="selected_snippet">Édition: {{selected_snippet.title}}</div>
-            <div class="small text-warning" *ngIf="!selected_snippet">Aucun snippet sélectionné</div>
-          </div>
-          
-          <!-- File System Selector intégré -->
-          <div style="height: 400px; overflow-y: auto;">
+          <input type="file" [id]="'file-input-' + s3TargetRoot" style="display:none"
+            [accept]="acceptFilter(s3TargetRoot)" (change)="onFilesSelected($event, s3TargetRoot)" multiple>
+        </div>
+      </div>
+
+      <!-- Card Navigation -->
+      <div class="card mb-2">
+        <div class="card-body py-3">
+          <h5 class="card-title mb-2">
+            <span *ngIf="!fileSelectionMode">Volume {{s3TargetRoot}}</span>
+            <span *ngIf="fileSelectionMode" class="text-primary">
+              <i class="bi bi-cursor-fill"></i> Cliquez pour sélectionner
+            </span>
+          </h5>
+          <div style="height: 300px; overflow-y: auto;" 
+               [class.border-primary]="fileSelectionMode" 
+               [class.border-2]="fileSelectionMode">
             <app-file-system-selector 
               [rootFolder]="s3TargetRoot + '/'" 
               mode="both"
-              [allowCreateFolder]="s3Mode === 'file-manager'"
+              [allowCreateFolder]="!fileSelectionMode"
               [selectOnFolderClick]="true"
-              [allowActions]="s3Mode === 'file-manager'"
+              [allowActions]="!fileSelectionMode"
               (select)="onS3FileSelected($event)">
             </app-file-system-selector>
           </div>
-        </div>
-      </div>
-      
-      <!-- Éditeur snippet en mode snippet-editor -->
-      <div *ngIf="s3Mode === 'snippet-editor' && selected_snippet" class="card border-0 mb-2">
-        <div class="card-header">
-          <h6 class="mb-0">Édition article</h6>
-        </div>
-        <div class="card-body">
-          <app-snippet-editor [snippet]="selected_snippet" (saved)="onSnippetSaved($event)"></app-snippet-editor>
+          
+          <!-- Bouton appliquer sélection -->
+          <div *ngIf="fileSelectionMode && s3CurrentPath" class="mt-2">
+            <button class="btn btn-primary btn-sm w-100" (click)="applyFileSelection()">
+              <i class="bi bi-check-circle"></i> Appliquer la sélection
+            </button>
+          </div>
         </div>
       </div>
     </div>
+    
   </div>
 </div>
-
-
 
 <!-- Modal ajout snippet -->
 <ng-template #addSnippetModal let-modal>

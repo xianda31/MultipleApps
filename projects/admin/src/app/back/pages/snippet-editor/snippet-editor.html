@@ -46,69 +46,48 @@
 
     <h6 class="mt-3"><i class="bi bi-gear-fill me-2"></i>Fichiers associés</h6>
 
-    <!-- image url input with embedded file system selector -->
+    <!-- image url input with selection button -->
     <div class="form-label mb-0 mt-2">
-        Illustration :
-        <span class="form-text">
-            {{ form.get('image')?.value ? getNameFromPath(form.get('image')?.value) : 'aucune image' }}
-        </span>
-        <button type="button" class="btn btn-sm ms-1" (click)="showImageSelector = !showImageSelector">
-            <i class="h5 bi-folder2-open text-success"></i>
-        </button>
-        <ng-container *ngIf="showImageSelector">
-            <app-file-system-selector
-                [rootFolder]="S3_ROOT_FOLDERS.IMAGES + '/'"
-                mode="files"
-                [allowCreateFolder]="false"
-                [selectOnFolderClick]="false"
-                [allowActions]="false"
-                (select)="form.get('image')?.setValue($event); showImageSelector = false">
-            </app-file-system-selector>
-        </ng-container>
+        <label class="mb-1">Illustration :</label>
+        <div class="d-flex align-items-center gap-2">
+            <input class="form-control form-control-sm" 
+                   [value]="form.get('image')?.value ? getNameFromPath(form.get('image')?.value) : 'Aucune image'" 
+                   readonly>
+            <button type="button" class="btn btn-outline-primary btn-sm" 
+                    (click)="requestImageSelection()">
+                <i class="bi bi-arrow-right"></i> Sélectionner →
+            </button>
+        </div>
     </div>
 
 
-    <!-- file url input with embedded file system selector -->
+    <!-- file url input with selection button -->
     <div class="form-label mb-0 mt-2">
-        Fichier à télécharger :
-        <span class="form-text">
-            {{ form.get('file')?.value ? getNameFromPath(form.get('file')?.value) : 'aucun fichier' }}
-        </span>
-        <button type="button" class="btn btn-sm ms-1" (click)="showFileSelector = !showFileSelector">
-            <i class="h5 bi-folder2-open text-success"></i>
-        </button>
-        <ng-container *ngIf="showFileSelector">
-            <app-file-system-selector
-                [rootFolder]="S3_ROOT_FOLDERS.DOCUMENTS + '/'"
-                mode="files"
-                [allowCreateFolder]="false"
-                [selectOnFolderClick]="false"
-                [allowActions]="false"
-                (select)="form.get('file')?.setValue($event); showFileSelector = false">
-            </app-file-system-selector>
-        </ng-container>
+        <label class="mb-1">Fichier à télécharger :</label>
+        <div class="d-flex align-items-center gap-2">
+            <input class="form-control form-control-sm"
+                   [value]="form.get('file')?.value ? getNameFromPath(form.get('file')?.value) : 'Aucun fichier'"
+                   readonly>
+            <button type="button" class="btn btn-outline-primary btn-sm"
+                    (click)="requestFileSelection()">
+                <i class="bi bi-arrow-right"></i> Sélectionner →
+            </button>
+        </div>
     </div>
 
 
-    <!-- folder selector (albums) with embedded file system selector -->
+    <!-- folder selector (albums) with selection button -->
     <div class="form-label mb-0 mt-2">
-        Album photo :
-        <span class="form-text">
-            {{ form.get('folder')?.value ? getNameFromPath(form.get('folder')?.value) : 'aucun dossier' }}
-        </span>
-        <button type="button" class="btn btn-sm ms-1" (click)="showFolderSelector = !showFolderSelector">
-            <i class="h5 bi-folder2-open text-success"></i>
-        </button>
-        <ng-container *ngIf="showFolderSelector">
-            <app-file-system-selector
-                [rootFolder]="S3_ROOT_FOLDERS.ALBUMS + '/'"
-                mode="folders"
-                [allowCreateFolder]="true"
-                [selectOnFolderClick]="true"
-                [allowActions]="false"
-                (select)="form.get('folder')?.setValue($event); showFolderSelector = false">
-            </app-file-system-selector>
-        </ng-container>
+        <label class="mb-1">Album photo :</label>
+        <div class="d-flex align-items-center gap-2">
+            <input class="form-control form-control-sm"
+                   [value]="form.get('folder')?.value ? getNameFromPath(form.get('folder')?.value) : 'Aucun dossier'"
+                   readonly>
+            <button type="button" class="btn btn-outline-primary btn-sm"
+                    (click)="requestFolderSelection()">
+                <i class="bi bi-arrow-right"></i> Sélectionner →
+            </button>
+        </div>
     </div>
     
 </form>
