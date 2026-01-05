@@ -227,10 +227,12 @@ const schema = a.schema({
 
 
   Page: a.model({
+    id: a.id().required(),
     title: a.string().required(),
     template: a.string().required(),
     snippet_ids: a.string().array().required(),
   })
+    .identifier(['id'])
     .authorization((allow) => [
       allow.guest().to(['read']),
       allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),

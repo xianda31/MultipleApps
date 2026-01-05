@@ -1,0 +1,92 @@
+.cms-wrapper-container {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.viewport-sim {
+  border: 1px solid #dee2e6;
+  border-radius: 0.375rem;
+  background: white;
+  min-height: 200px;
+  max-height: 400px;
+  overflow: hidden;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.x-small {
+  font-size: 0.75rem;
+}
+
+// Drag & Drop Styling
+.snippet-list {
+  padding: 0;
+}
+
+.accordion-item.cdk-drag-preview {
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  background: white;
+  border: 1px solid #e1e1e1;
+  border-radius: 0.375rem;
+}
+
+.accordion-item.cdk-drag-animating {
+  transition: transform 200ms ease;
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.5;
+  background: #f8f9fa;
+  border: 2px dashed #6c757d;
+  border-radius: 0.375rem;
+  min-height: 60px;
+}
+
+.cdk-drop-list-receiving .cdk-drag-placeholder {
+  background: #e7f3ff;
+  border-color: #0d6efd;
+}
+
+// Drag handle styling
+[cdkDragHandle] {
+  cursor: grab !important;
+}
+
+[cdkDragHandle]:active {
+  cursor: grabbing !important;
+}
+
+// Clipboard modal styling
+.modal-body .list-group-item {
+  border-left: 3px solid #ffc107;
+}
+
+.modal-body .list-group-item:hover {
+  background-color: #f8f9fa;
+}
+
+// File manager mode buttons
+.btn-group .btn-check:checked + .btn {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+  color: white;
+}
+
+.card-body {
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+  }
+}

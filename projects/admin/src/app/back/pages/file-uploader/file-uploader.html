@@ -1,0 +1,179 @@
+<div class="file-uploader">
+  <!-- Upload Controls -->
+  <div class="upload-controls mb-3">
+    <div class="d-flex align-items-center gap-3">
+      <input
+        #fileInput
+        type="file"
+        multiple
+        class="form-control"
+        [accept]="fileManager.getAcceptFilter(currentRoot)"
+        (change)="onFilesSelected($event)"
+      />
+      <button
+        class="btn btn-primary"
+        [disabled]="!hasSelectedFiles || isUploading"
+        (click)="uploadFiles()"
+      >
+        <i class="fas fa-upload me-1"></i>
+        {{ isUploading ? 'Uploading...' : 'Upload Files' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Selected Files Preview -->
+  <div *ngIf="selectedFiles.length > 0" class="selected-files mb-3">
+    <h6 class="small">Selected Files ({{ selectedFiles.length }})</h6>
+    <div class="file-list">
+      <div
+        *ngFor="let file of selectedFiles; trackBy: trackByFile"
+        class="file-item border rounded mb-3 p-3"
+      >
+        <div class="file-header mb-2">
+          <div class="file-name fw-semibold">{{ file.name }}</div>
+          <div class="file-details text-muted small">
+            {{ formatFileSize(file.size) }} • {{ file.type || 'Unknown type' }}
+          </div>
+        </div>
+        
+        <div class="row" *ngIf="isImageFile(file)">
+          <!-- Original Image -->
+          <div class="col-md-6">
+            <div class="image-option">
+              <h6 class="small fw-semibold mb-2">Original</h6>
+              <div class="image-container position-relative">
+                <img *ngIf="getFileThumbnail(file); let thumbnail"
+                     [src]="thumbnail"
+                     [alt]="file.name"
+                     class="img-thumbnail"
+                     style="width: 100%; max-width: 200px; height: auto;">
+                <button 
+                  class="btn position-absolute top-0 end-0 m-1"
+                  [class]="isOriginalSelected(file) ? 'btn-success' : 'btn-outline-secondary'"
+                  (click)="toggleOriginalSelection(file)"
+                  [disabled]="isUploading">
+                  <i class="fas fa-check" *ngIf="isOriginalSelected(file)"></i>
+                  <i class="fas fa-plus" *ngIf="!isOriginalSelected(file)"></i>
+                </button>
+              </div>
+              <small class="text-muted">{{ formatFileSize(file.size) }}</small>
+            </div>
+          </div>
+          
+          <!-- Thumbnail Image -->
+          <div class="col-md-6" *ngIf="getThumbnailFile(file) as thumbnailFile">
+            <div class="image-option">
+              <h6 class="small fw-semibold mb-2">Thumbnail</h6>
+              <div class="image-container position-relative">
+                <img *ngIf="getFileThumbnail(thumbnailFile); let thumbnail"
+                     [src]="thumbnail"
+                     [alt]="thumbnailFile.name"
+                     class="img-thumbnail"
+                     style="width: 100%; max-width: 200px; height: auto;">
+                <button 
+                  class="btn position-absolute top-0 end-0 m-1"
+                  [class]="isThumbnailSelected(thumbnailFile) ? 'btn-success' : 'btn-outline-secondary'"
+                  (click)="toggleThumbnailSelection(thumbnailFile)"
+                  [disabled]="isUploading">
+                  <i class="fas fa-check" *ngIf="isThumbnailSelected(thumbnailFile)"></i>
+                  <i class="fas fa-plus" *ngIf="!isThumbnailSelected(thumbnailFile)"></i>
+                </button>
+              </div>
+              <small class="text-muted">{{ formatFileSize(thumbnailFile.size) }}</small>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Non-image files -->
+        <div *ngIf="!isImageFile(file)" class="non-image-file">
+          <div class="d-flex align-items-center">
+            <div class="file-icon me-3">
+              <i class="{{ getFileIcon(file.name) }}" style="font-size: 2rem;"></i>
+            </div>
+            <div class="flex-grow-1">
+              <div>{{ file.name }}</div>
+              <small class="text-muted">{{ formatFileSize(file.size) }}</small>
+            </div>
+            <button 
+              class="btn"
+              [class]="isOriginalSelected(file) ? 'btn-success' : 'btn-outline-secondary'"
+              (click)="toggleOriginalSelection(file)"
+              [disabled]="isUploading">
+              <i class="fas fa-check" *ngIf="isOriginalSelected(file)"></i>
+              <i class="fas fa-plus" *ngIf="!isOriginalSelected(file)"></i>
+            </button>
+          </div>
+        </div>
+        
+        <!-- Remove File Button -->
+        <div class="text-end mt-2">
+          <button
+            class="btn btn-outline-danger btn-sm"
+            (click)="removeFile(file)"
+            [disabled]="isUploading">
+            <i class="fas fa-trash"></i> Remove
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Upload destination info -->
+    <div class="alert alert-info" *ngIf="currentRoot === 'albums'">
+      <small>
+        <i class="fas fa-info-circle"></i>
+        <strong>Albums mode:</strong> Original images will be uploaded to the selected folder, thumbnails will be uploaded to THUMBNAILS/albums/.
+      </small>
+    </div>
+  </div>
+
+  <!-- Upload Progress -->
+  <div *ngIf="uploadProgress$ | async as progressList" class="mb-3">
+    <div *ngIf="progressList.length > 0">
+      <h6 class="small">Upload Progress</h6>
+      <div *ngFor="let progress of progressList" class="progress-item mb-2">
+      <div class="d-flex justify-content-between align-items-center mb-1">
+        <small class="text-muted">{{ progress.fileName }}</small>
+        <small class="text-muted">
+          <span class="badge" 
+                [class]="progress.status === 'completed' ? 'bg-success' : 
+                        progress.status === 'error' ? 'bg-danger' : 
+                        progress.status === 'uploading' ? 'bg-primary' : 'bg-secondary'">
+            {{ progress.status | titlecase }}
+          </span>
+        </small>
+      </div>
+      <div class="progress">
+        <div
+          class="progress-bar"
+          [class]="progress.status === 'error' ? 'bg-danger' : progress.status === 'completed' ? 'bg-success' : ''"
+          role="progressbar"
+          [style.width.%]="progress.progress"
+          [attr.aria-valuenow]="progress.progress"
+          aria-valuemax="100"
+        ></div>
+      </div>
+      <div *ngIf="progress.error" class="text-danger small">{{ progress.error }}</div>
+    </div>
+    </div>
+  </div>
+
+  <!-- Upload Status -->
+  <div *ngIf="uploadStatus" class="alert mb-3" [ngClass]="uploadStatusClass">
+    <i class="fas" [ngClass]="uploadStatusIcon"></i>
+    {{ uploadStatus }}
+  </div>
+
+  <!-- File Browser for Target Selection -->
+  <div class="file-browser-section">
+    <div class="card">
+      <div class="card-header py-2">
+        <h6 class="card-title mb-0">
+          <i class="bi bi-folder"></i> Select Target Folder
+        </h6>
+      </div>
+      <div class="card-body p-2">
+        <app-file-browser></app-file-browser>
+      </div>
+    </div>
+  </div>
+</div>

@@ -18,16 +18,11 @@ export class PageService {
   ) {}
 
   // Create
-  async createPage(page: Page): Promise<Page> {
-    let page_input: Page_input = {
-      title: page.title,
-      template: page.template,
-      snippet_ids: page.snippet_ids
-    };
+  async createPage(page: Page_input): Promise<Page> {
     try {
-      const createdPage = await this.dbHandler.createPage(page_input);
-      this._pages.push(createdPage as Page);
-      this._pages$.next(this._pages);
+      // Protection : retire le champ id si présent
+      const { id, ...pageWithoutId } = page as any;
+      const createdPage = await this.dbHandler.createPage(pageWithoutId);
       return createdPage;
     } catch (error) {
       this.toastService.showErrorToast('Pages', 'Erreur lors de la création');

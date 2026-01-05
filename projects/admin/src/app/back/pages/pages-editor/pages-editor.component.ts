@@ -1,9 +1,10 @@
 import { Component, ChangeDetectorRef, NgZone } from '@angular/core';
 import { PageService } from '../../../common/services/page.service';
-import { Page } from '../../../common/interfaces/page_snippet.interface';
+import { Page, PAGE_TEMPLATES } from '../../../common/interfaces/page_snippet.interface';
 import { CommonModule } from '@angular/common';
 import { PageEditorComponent } from '../page-editor/page-editor.component';
 import { Observable, BehaviorSubject } from 'rxjs';
+import { ToastService } from '../../../common/services/toast.service';
 
 
 @Component({
@@ -22,7 +23,8 @@ export class PagesEditorComponent {
   constructor(
     private pageService: PageService,
     private cdr: ChangeDetectorRef,
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private toastService: ToastService
   ) {}
 
   async ngOnInit() {
@@ -40,8 +42,24 @@ export class PagesEditorComponent {
     this.selectedPageSubject.next(page);
   }
 
-  newPage() {
-    // Implementation needed
+  async newPage() {
+    const newPage: Page = {
+      id: 'page_' + Date.now(),
+      title: 'Nouvelle page',
+      template: PAGE_TEMPLATES.PUBLICATION,
+      snippet_ids: [] // Nouvelle page commence vide
+    };
+    
+    try {
+      const created = await this.pageService.createPage(newPage);
+      this.pages.push(created);
+      this.selectPage(created);
+      this.toastService.showSuccess('Pages', 'Nouvelle page créée');
+      this.cdr.detectChanges();
+    } catch (error) {
+      this.toastService.showErrorToast('Pages', 'Erreur lors de la création de la page');
+      console.error('Error creating page:', error);
+    }
   }
 
   deletePage(page: Page) {

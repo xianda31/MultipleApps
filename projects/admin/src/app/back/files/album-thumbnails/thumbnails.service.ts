@@ -75,8 +75,9 @@ export class ThumbnailsService {
         next: async (url) => {
             await this.imageService.resizeImageAtUrl(url,true).then(async (resizedBase64) => {
               await this.imageService.getBase64Dimensions(resizedBase64).then((dimensions) => {
+                const originalFilename = imagePath.split('/').pop() || 'thumbnail.jpg';
                 let new_blob = this.imageService.base64ToBlob(resizedBase64);
-                let resized_file = new File([new_blob], (imagePath), { type: new_blob.type });
+                let resized_file = new File([new_blob], originalFilename, { type: new_blob.type });
                 subscriber.next(resized_file);
               });
             });

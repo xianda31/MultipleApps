@@ -111,7 +111,10 @@ export class SnippetEditor implements OnChanges {
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['snippet'] && this.snippet) {
-      // Patch form values from input snippet without replacing controls
+      // Patch form values from input snippet - emit events for image/file/folder to trigger URL generation
+      const previousImage = this.form.get('image')?.value;
+      const newImage = this.snippet.image || '';
+      
       this.form.patchValue({
         id: this.snippet.id || '',
         title: this.snippet.title || '',
@@ -120,10 +123,26 @@ export class SnippetEditor implements OnChanges {
         publishedAt: this.snippet.publishedAt || this.toDateInputValue(this.snippet.updatedAt) || '',
         public: !!this.snippet.public,
         featured: !!this.snippet.featured,
-        image: this.snippet.image || '',
+        image: newImage,
         file: this.snippet.file || '',
         folder: this.snippet.folder || ''
       }, { emitEvent: false });
+      
+      // If image changed, manually trigger the valueChanges logic
+      if (previousImage !== newImage) {
+        if (newImage) {
+          this.fileService.getPresignedUrl$(newImage, true).subscribe({
+            next: (url) => {
+              (this.snippet as any).image_url = url;
+            },
+            error: (err) => {
+              (this.snippet as any).image_url = newImage; // fallback to raw value
+            }
+          });
+        } else {
+          (this.snippet as any).image_url = '';
+        }
+      }
     }
     
     // Handle file selection from parent - only if targeted to this snippet

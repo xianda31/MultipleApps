@@ -23,7 +23,7 @@ export class AlbumsRenderComponent {
   }
 
   trackById(index: number, item: any) {
-    return item.id;
+    return item?.id || index;
   }
 
   selectAlbum(album: Snippet) {

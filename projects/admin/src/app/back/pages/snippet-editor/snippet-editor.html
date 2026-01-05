@@ -11,8 +11,11 @@
                 (keyup.enter)="onEnterSave($event)">
         </div>
         <div class="col-4 text-center">
-            <img *ngIf="form.get('image')?.value" [src]="snippet?.image_url || form.get('image')?.value"
+            <img *ngIf="snippet && snippet.image_url" [src]="snippet.image_url"
                 alt="{{ form.get('title')?.value }}" class="img-fluid snippet-img-limited">
+            <div *ngIf="form.get('image')?.value && (!snippet || !snippet.image_url)" class="text-muted small">
+                <i class="bi bi-hourglass-split"></i> Chargement...
+            </div>
         </div>
     </div>
 

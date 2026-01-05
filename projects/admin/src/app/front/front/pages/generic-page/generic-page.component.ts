@@ -43,12 +43,12 @@ export class GenericPageComponent implements OnInit, OnChanges {
   @Input() page_title!: MENU_TITLES | EXTRA_TITLES;
   @Input() snippet_title?: string; // for news, the title of the selected snippet
   @Input() row_cols: BreakpointsSettings = { SM: 1, MD: 2, LG: 3, XL: 4 };
+  @Input() page_snippets: Snippet[] = []; // Allow external snippets to be passed in
   page!: Page;
   pages: Page[] = [];
   pageTemplate!: PAGE_TEMPLATES;
   PAGE_TEMPLATES = PAGE_TEMPLATES;
   snippets: Snippet[] = [];
-  page_snippets: Snippet[] = [];
   scroll_to_snippet?: Snippet;
 
   constructor(
@@ -73,6 +73,12 @@ export class GenericPageComponent implements OnInit, OnChanges {
       if (snippet) {
         this.scroll_to_snippet = snippet;
       }
+    }
+
+    // Handle external page_snippets changes (e.g., from CMS wrapper)
+    if (changes['page_snippets'] && !changes['page_snippets'].firstChange) {
+      console.log('📄 External page_snippets updated, triggering page post-handling');
+      this.page_post_handling();
     }
   }
     // Appelé lors de la sauvegarde d'un snippet (par exemple via (saved) du snippet-editor)
@@ -136,10 +142,15 @@ export class GenericPageComponent implements OnInit, OnChanges {
     if (!page) { throw new Error(page_title + ' page not found') }
     this.page = page;
 
-
-    this.page_snippets = page.snippet_ids
-      .map(id => this.snippets.find(snippet => snippet.id === id))
-      .filter(snippet => snippet !== undefined) as Snippet[];
+    // Use external page_snippets if provided (e.g., from CMS), otherwise load from service
+    if (this.page_snippets !== undefined) {
+      console.log('📄 Using external page_snippets:', this.page_snippets.length);
+    } else {
+      console.log('📄 Loading page_snippets from service for page:', page.title);
+      this.page_snippets = page.snippet_ids
+        .map(id => this.snippets.find(snippet => snippet.id === id))
+        .filter(snippet => snippet !== undefined) as Snippet[];
+    }
 
     this.page_post_handling();
 

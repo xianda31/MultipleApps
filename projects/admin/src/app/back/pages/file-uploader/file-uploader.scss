@@ -1,0 +1,42 @@
+.file-uploader {
+  .upload-controls {
+    input[type="file"] {
+      cursor: pointer;
+    }
+  }
+
+  .selected-files {
+    .file-list {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .file-item {
+      transition: background-color 0.15s ease-in-out;
+      
+      &:hover {
+        background-color: #f8f9fa;
+      }
+    }
+
+    .file-info {
+      min-width: 0; // Allow text to truncate
+      
+      .file-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+  }
+
+  .progress {
+    height: 0.5rem;
+  }
+
+  .alert {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+}

@@ -34,7 +34,8 @@ export const BACK_ROUTE_PATHS = {
   UiConf: 'site/ui',
   Home: 'home',
   Assistance: 'assistance',
-  Mailing: 'mailing'
+  Mailing: 'mailing',
+  CMSWrapper:'site/cms-wrapper'
 };
 
 // Chemins absolus pour la navigation (service, liens, etc.)

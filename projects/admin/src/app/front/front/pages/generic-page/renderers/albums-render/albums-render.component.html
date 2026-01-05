@@ -1,22 +1,24 @@
 <div class="albums-wrapper">
   <div [ngClass]="rowCols()">
-    @for (snippet of snippets; track snippet.id) {
-      <div class="col">
-        <div class="album-stack" style="cursor:pointer;" (click)="selectAlbum(snippet)">
-          <div class="card album-card-back album-card-3">&nbsp;</div>
-          <div class="card album-card-back album-card-2">&nbsp;</div>
-          <div class="card album-card-back album-card-1">&nbsp;</div>
-          <div class="card album-card h-100">
-            <img *ngIf="snippet.image_url" [src]="snippet.image_url" class="card-img-top album-cover" />
-            <div class="card-body">
-              <div class="album-label">
-                <h5 class="card-title">{{ snippet.title }}</h5>
-                <p class="card-text text-muted">{{ snippet.subtitle }}</p>
+    @for (snippet of snippets; track snippet?.id || $index) {
+      @if (snippet) {
+        <div class="col">
+          <div class="album-stack" style="cursor:pointer;" (click)="selectAlbum(snippet)">
+            <div class="card album-card-back album-card-3">&nbsp;</div>
+            <div class="card album-card-back album-card-2">&nbsp;</div>
+            <div class="card album-card-back album-card-1">&nbsp;</div>
+            <div class="card album-card h-100">
+              <img *ngIf="snippet.image_url" [src]="snippet.image_url" class="card-img-top album-cover" />
+              <div class="card-body">
+                <div class="album-label">
+                  <h5 class="card-title">{{ snippet.title }}</h5>
+                  <p class="card-text text-muted">{{ snippet.subtitle }}</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      }
     }
   </div>
 </div>
