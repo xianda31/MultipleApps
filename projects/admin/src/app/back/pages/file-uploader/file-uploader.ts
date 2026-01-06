@@ -124,9 +124,9 @@ export class FileUploader implements OnInit, OnDestroy {
         this.fileManager.addFilesToUpload(targetPath, originalFiles);
         uploads.push(this.fileManager.uploadFiles(targetPath));
       }
-      
+      console.log('FileUploader: Current root is', this.currentRoot);
       // Special handling for ALBUMS: upload thumbnails to THUMBNAILS/albums
-      if (this.currentRoot === S3_ROOT_FOLDERS.ALBUMS && this.selectedThumbnails.size > 0) {
+      if (this.currentRoot === S3_ROOT_FOLDERS.ALBUMS+'/' && this.selectedThumbnails.size > 0) {
         const thumbnailPath = `${S3_ROOT_FOLDERS.THUMBNAILS}/albums/${this.targetPath ? this.targetPath + '/' : ''}`;
         console.log('FileUploader: Uploading thumbnails to path:', thumbnailPath);
         const thumbnailFiles = Array.from(this.selectedThumbnails);
@@ -134,6 +134,7 @@ export class FileUploader implements OnInit, OnDestroy {
         // Add thumbnail files to manager and upload
         this.fileManager.addFilesToUpload(thumbnailPath, thumbnailFiles);
         uploads.push(this.fileManager.uploadFiles(thumbnailPath));
+
       } else if (this.selectedThumbnails.size > 0) {
         // For other roots (like IMAGES), upload selected thumbnails to same target
         const targetPath = this.getFullTargetPath();
@@ -245,8 +246,6 @@ export class FileUploader implements OnInit, OnDestroy {
         fullPath += '/';
       }
     }
-    
-    console.log('FileUploader: Full target path:', fullPath);
     return fullPath;
   }
 

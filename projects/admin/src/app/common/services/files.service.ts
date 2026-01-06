@@ -42,7 +42,7 @@ export class FileService {
         .catch(error => {
           // Ne logger que si ce n'est pas une erreur silencieuse (comme pour les avatars manquants)
           if (!silentError && !path.includes('portraits/')) {
-            console.log('%s reading %s', error, path);
+            console.log('reading %s %s', path,error);
           }
           subscriber.error(error);
         });

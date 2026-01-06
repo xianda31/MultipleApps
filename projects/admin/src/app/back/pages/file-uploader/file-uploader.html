@@ -46,14 +46,14 @@
                      [src]="thumbnail"
                      [alt]="file.name"
                      class="img-thumbnail"
-                     style="width: 100%; max-width: 200px; height: auto;">
+                     style="width: 100%; max-width: 60px; height: auto;">
                 <button 
-                  class="btn position-absolute top-0 end-0 m-1"
+                  class="btn btn-sm position-absolute top-0 end-0 m-1"
                   [class]="isOriginalSelected(file) ? 'btn-success' : 'btn-outline-secondary'"
                   (click)="toggleOriginalSelection(file)"
                   [disabled]="isUploading">
-                  <i class="fas fa-check" *ngIf="isOriginalSelected(file)"></i>
-                  <i class="fas fa-plus" *ngIf="!isOriginalSelected(file)"></i>
+                  <i class="bi bi-check-square" *ngIf="isOriginalSelected(file)"></i>
+                  <i class="bi bi-plus" *ngIf="!isOriginalSelected(file)"></i>
                 </button>
               </div>
               <small class="text-muted">{{ formatFileSize(file.size) }}</small>
@@ -69,14 +69,14 @@
                      [src]="thumbnail"
                      [alt]="thumbnailFile.name"
                      class="img-thumbnail"
-                     style="width: 100%; max-width: 200px; height: auto;">
+                     style="width: 100%; max-width: 60px; height: auto;">
                 <button 
-                  class="btn position-absolute top-0 end-0 m-1"
+                  class="btn btn-sm position-absolute top-0 end-0 m-1"
                   [class]="isThumbnailSelected(thumbnailFile) ? 'btn-success' : 'btn-outline-secondary'"
                   (click)="toggleThumbnailSelection(thumbnailFile)"
                   [disabled]="isUploading">
-                  <i class="fas fa-check" *ngIf="isThumbnailSelected(thumbnailFile)"></i>
-                  <i class="fas fa-plus" *ngIf="!isThumbnailSelected(thumbnailFile)"></i>
+                  <i class="bi bi-check-square" *ngIf="isThumbnailSelected(thumbnailFile)"></i>
+                  <i class="bi bi-plus" *ngIf="!isThumbnailSelected(thumbnailFile)"></i>
                 </button>
               </div>
               <small class="text-muted">{{ formatFileSize(thumbnailFile.size) }}</small>
@@ -95,32 +95,32 @@
               <small class="text-muted">{{ formatFileSize(file.size) }}</small>
             </div>
             <button 
-              class="btn"
+              class="btn btn-sm"
               [class]="isOriginalSelected(file) ? 'btn-success' : 'btn-outline-secondary'"
               (click)="toggleOriginalSelection(file)"
               [disabled]="isUploading">
-              <i class="fas fa-check" *ngIf="isOriginalSelected(file)"></i>
-              <i class="fas fa-plus" *ngIf="!isOriginalSelected(file)"></i>
+              <i class="bi bi-check-square" *ngIf="isOriginalSelected(file)"></i>
+              <i class="bi bi-plus" *ngIf="!isOriginalSelected(file)"></i>
             </button>
           </div>
         </div>
         
         <!-- Remove File Button -->
-        <div class="text-end mt-2">
+        <!-- <div class="text-end mt-2">
           <button
             class="btn btn-outline-danger btn-sm"
             (click)="removeFile(file)"
             [disabled]="isUploading">
-            <i class="fas fa-trash"></i> Remove
+            <i class="bi bi-trash"></i> Remove
           </button>
-        </div>
+        </div> -->
       </div>
     </div>
     
     <!-- Upload destination info -->
     <div class="alert alert-info" *ngIf="currentRoot === 'albums'">
       <small>
-        <i class="fas fa-info-circle"></i>
+        <i class="bi bi-info-circle"></i>
         <strong>Albums mode:</strong> Original images will be uploaded to the selected folder, thumbnails will be uploaded to THUMBNAILS/albums/.
       </small>
     </div>
@@ -168,7 +168,7 @@
     <div class="card">
       <div class="card-header py-2">
         <h6 class="card-title mb-0">
-          <i class="bi bi-folder"></i> Select Target Folder
+          <i class="bi bi-folder"></i> Choix du répertoire de destination
         </h6>
       </div>
       <div class="card-body p-2">

@@ -9,12 +9,14 @@ export class ClipboardService {
   private clipboardPage: Page | null = null;
   private _clipboardSnippets$ = new BehaviorSubject<Snippet[]>([]);
 
+
+
   public get clipboardSnippets$(): BehaviorSubject<Snippet[]> {
     return this._clipboardSnippets$;
   }
 
   constructor(private pageService: PageService, private snippetService: SnippetService) {
-    // this.initClipboardPage();
+    this.initClipboardPage();
   }
 
   async initClipboardPage() {

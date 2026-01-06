@@ -40,7 +40,7 @@ import { BreakpointsSettings } from '../../../../common/interfaces/ui-conf.inter
 })
 export class GenericPageComponent implements OnInit, OnChanges {
 
-  @Input() page_title!: MENU_TITLES | EXTRA_TITLES;
+  @Input() page_title!: string;
   @Input() snippet_title?: string; // for news, the title of the selected snippet
   @Input() row_cols: BreakpointsSettings = { SM: 1, MD: 2, LG: 3, XL: 4 };
   @Input() page_snippets: Snippet[] = []; // Allow external snippets to be passed in
@@ -125,22 +125,24 @@ export class GenericPageComponent implements OnInit, OnChanges {
       });
   }
 
-  filter_PageSnippets(page_title: MENU_TITLES | EXTRA_TITLES) {
+  filter_PageSnippets(page_title: string) {
+
 
     if (page_title === EXTRA_TITLES.HIGHLIGHTS) {
       this.page_snippets = this.snippets.filter(s => s.featured)
         .sort((a, b) => (b.publishedAt ?? '').localeCompare(a.publishedAt ?? ''));
       this.pageTemplate = PAGE_TEMPLATES.CARDS_top_left;
       // update pageId for all snippets
-
+      
       return;
     }
-
+    
     const title = page_title;
     // load the page by its title, then load all snippets  for this page
     const page = this.pages.find(p => p.title === title);
     if (!page) { throw new Error(page_title + ' page not found') }
     this.page = page;
+    console.log('📄 Filtering page snippets for page_title: %o', this.page);
 
     // Use external page_snippets if provided (e.g., from CMS), otherwise load from service
     if (this.page_snippets !== undefined) {

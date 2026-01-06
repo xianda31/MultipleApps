@@ -16,15 +16,15 @@ export class SnippetService {
     logged: boolean = false;
 
     constructor(
-        private auth : AuthentificationService,
+        private auth: AuthentificationService,
         private fileService: FileService,
         private toastService: ToastService,
         private dbHandler: DBhandler
     ) {
         this.auth.logged_member$.subscribe(user => {
             if (user) {
-                this.logged=true;
-                if(this._snippets) this._snippets$.next(this._snippets.filter((s) => s.public || this.logged));
+                this.logged = true;
+                if (this._snippets) this._snippets$.next(this._snippets.filter((s) => s.public || this.logged));
 
             } else {
                 // console.log('not logged');
@@ -53,9 +53,9 @@ export class SnippetService {
             return Promise.reject('Error creating snippet');
         }
     }
-    
 
-    listSnippets(): Observable<Snippet[]> {    // correctif copilot pour eviter une emission initiale array vide
+
+    listSnippets(showError:boolean = false): Observable<Snippet[]> {    // correctif copilot pour eviter une emission initiale array vide
         const _listSnippets = this.dbHandler.listSnippets().pipe(
             map((snippets) => snippets),
             switchMap((snippets) => this.sorted_snippets(snippets)),
@@ -91,8 +91,8 @@ export class SnippetService {
     }
 
     async updateSnippet(snippet: Snippet): Promise<Snippet> {
-        if(snippet.image_url) delete snippet.image_url; // Remove image_url if it exists to avoid sending it to the backend
-        if(snippet.pageId) delete snippet.pageId; // Remove pageId if it exists to avoid sending it to the backend
+        if (snippet.image_url) delete snippet.image_url; // Remove image_url if it exists to avoid sending it to the backend
+        if (snippet.pageId) delete snippet.pageId; // Remove pageId if it exists to avoid sending it to the backend
         try {
             let updatedSnippet = await this.dbHandler.updateSnippet(snippet);
             updatedSnippet = await this.add_image_url(updatedSnippet);
@@ -138,10 +138,10 @@ export class SnippetService {
     async add_image_url(snippet: Snippet): Promise<Snippet> {
         if (snippet.image) {
             try {
-                const url = await firstValueFrom(this.fileService.getPresignedUrl$(snippet.image));
+                const url = await firstValueFrom(this.fileService.getPresignedUrl$(snippet.image,true));
                 return { ...snippet, image_url: url };
             } catch (error) {
-                return snippet;
+                return { ...snippet, image_url: undefined };
             }
         }
         return snippet;

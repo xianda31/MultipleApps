@@ -69,60 +69,70 @@ export class CmsWrapper implements OnInit, OnDestroy {
     this.initializeForm();
   }
 
-  ngOnInit(): void {
-    this.loadPages();
-    this.setupFileSelectionListener();
-    this.clipboardSnippets$ = this.clipboardService.clipboardSnippets$;
-  }
+  async ngOnInit(): Promise<void> {
+    // load snippets & check snippet.image_url for each snippet with  image
+    this.snippetService.listSnippets().subscribe((snippets: Snippet[]) => {
+      snippets.forEach(async (snippet) => {
+        if (snippet.image) {
+          if (!snippet.image_url) {
+            this.toastService.showWarning('Vérification des images', ` la vignette de ${snippet.title} est introuvable`);
+          }
+        }
+      });
+    });
+
+      this.pageService.listPages().subscribe((pages: Page[]) => {
+        this.pages = pages.sort((a, b) => a.title.localeCompare(b.title));
+      });
+
+      this.setupFileSelectionListener();
+      this.clipboardSnippets$ = this.clipboardService.clipboardSnippets$;
+    }
 
   ngOnDestroy(): void {
-    this.subscriptions.forEach(sub => sub.unsubscribe());
-  }
-
+      this.subscriptions.forEach(sub => sub.unsubscribe());
+    }
 
   private initializeForm(): void {
-    this.pageForm = this.fb.group({
-      title: [''],
-      template: [PAGE_TEMPLATES.PUBLICATION]
-    });
-  }
+      this.pageForm = this.fb.group({
+        title: [''],
+        template: [PAGE_TEMPLATES.PUBLICATION]
+      });
+    }
+
 
   // === PAGE MANAGEMENT ===
 
-  async loadPages(): Promise<void> {
-    this.pageService.listPages().subscribe((pages: Page[]) => {
-      this.pages = pages;
-    });
-  }
+  async openClipboard() {
+      this.modalService.open(this.clipboardModal, { size: 'lg' });
+    }
+
+  is_Clipboard(page: Page): boolean {
+      return page.title === CLIPBOARD_TITLE;
+    }
+
+
 
   selectPage(page: Page): void {
-    this.selectedPage = page;
-    this.selectedPageId = page.id;
+      this.selectedPage = page;
+      this.selectedPageId = page.id;
 
-    // Clear pageSnippets immediately to prevent showing previous page's snippets
-    this.pageSnippets = [];
+      // Clear pageSnippets immediately to prevent showing previous page's snippets
+      this.pageSnippets = [];
 
-    // Update form
-    this.pageForm.patchValue({
-      title: page.title,
-      template: page.template || PAGE_TEMPLATES.PUBLICATION
-    });
+      // Update form
+      this.pageForm.patchValue({
+        title: page.title,
+        template: page.template || PAGE_TEMPLATES.PUBLICATION
+      });
 
-    // Load snippets for this page, ensuring snippet_ids array is clean
-    const snippetIds = (page.snippet_ids || []).filter(id => id && typeof id === 'string' && id.trim() !== '');
+      // Load snippets for this page, ensuring snippet_ids array is clean
+      const snippetIds = (page.snippet_ids || []).filter(id => id && typeof id === 'string' && id.trim() !== '');
+      this.loadPageSnippets(snippetIds);
+    }
 
-    // Special handling for CLIPBOARD - potential source of duplication bugs
-    // if (page.title === CLIPBOARD_TITLE) {
-    //   console.warn('⚠️ CLIPBOARD detected - watch for duplication issues');
-    //   // Don't use loadPageSnippets for clipboard, use the clipboard service directly
-    //   return;
-    // }
-
-    this.loadPageSnippets(snippetIds);
-  }
-
-  async savePage(): Promise<void> {
-    if (!this.selectedPage) return;
+  async savePage(): Promise < void> {
+      if(!this.selectedPage) return;
 
     const formValue = this.pageForm.value;
     const updatedPage = {
@@ -259,65 +269,28 @@ export class CmsWrapper implements OnInit, OnDestroy {
       this.pageSnippets = this.pageSnippets.slice(); // trigger change detection
     }
 
-    // Wait a bit for UI to update then trigger a save to persist the change
-    setTimeout(() => {
-      this.onSnippetSaved(updatedSnippet);
-    }, 100);
 
     // Reset active selection
     this.activeSelectionSnippetId = null;
   }
 
+  // todo : est-ce vraiment utile de faire ça de cette façon ?
   async loadPageSnippets(snippetIds: string[]): Promise<void> {
     if (!snippetIds || snippetIds.length === 0) {
       this.pageSnippets = [];
       return;
     }
 
-    // Filter out null/undefined/empty snippet IDs upfront and remove duplicates
-    const validSnippetIds = [...new Set(snippetIds.filter(id => id && typeof id === 'string' && id.trim() !== ''))];
-
-    // Log if we found duplicate IDs in the page configuration
-    if (validSnippetIds.length !== snippetIds.length) {
-      console.warn('🔍 DUPLICATE SNIPPET IDs FOUND IN PAGE CONFIG:', {
-        originalIds: snippetIds,
-        dedupedIds: validSnippetIds,
-        duplicatesCount: snippetIds.length - validSnippetIds.length
-      });
-    }
-
-    if (validSnippetIds.length === 0) {
-      this.pageSnippets = [];
-      return;
-    }
-
     try {
-      // First ensure all snippets are loaded
-      await firstValueFrom(this.snippetService.listSnippets());
-
-      // Map to snippets and filter out null/undefined results
-      const snippetsMap = new Map<string, Snippet>();
-      validSnippetIds.forEach(id => {
-        const snippet = this.snippetService.getSnippet(id);
-        if (snippet !== null && snippet !== undefined && snippet.id !== undefined && snippet.id !== null) {
-          snippetsMap.set(snippet.id, snippet);
-        }
-      });
-
-      // Convert map back to array to preserve order and ensure uniqueness
-      const cleanSnippets = Array.from(snippetsMap.values());
-      this.pageSnippets = cleanSnippets; // This will use our setter with deduplication
-
-      // Simple check - should never have duplicates now
-      if (this.pageSnippets.length !== cleanSnippets.length) {
-        console.error('🚨 CLIPBOARD BUG: Duplicate snippet IDs were found and removed');
-      }
-
+      this.pageSnippets = snippetIds
+        .map(id => this.snippetService.getSnippet(id))
+        .filter((s): s is Snippet => !!s && !!s.id);
     } catch (error) {
-      console.error('Error loading page snippets:', error);
-      this.pageSnippets = []; // This will use our setter
+      this.pageSnippets = [];
     }
   }
+
+  // === SNIPPET MANAGEMENT ===
 
   async addNewSnippet(): Promise<void> {
     if (!this.selectedPage) return;
@@ -379,11 +352,23 @@ export class CmsWrapper implements OnInit, OnDestroy {
     }
   }
 
-  // Removed trackSnippet function - now using snippet.id directly in template
+  deleteSnippetFromCurrentPage(snippet: Snippet ): void {
+    const confirmed = confirm(`Supprimer le snippet « ${snippet.title} » ?`);
+    if (!confirmed) return;
 
-  async openClipboard() {
-    this.modalService.open(this.clipboardModal, { size: 'lg' });
+    this.snippetService.deleteSnippet(snippet).then(async () => {
+      // Remove from local pageSnippets array
+      this.pageSnippets = this.pageSnippets.filter(s => s.id !== snippet.id);
+      // Also remove from selectedPage's snippet_ids
+      this.selectedPage!.snippet_ids = this.selectedPage!.snippet_ids.filter(id => id !== snippet.id);
+
+      await this.pageService.updatePage(this.selectedPage!);
+      this.toastService.showSuccess('Article', 'Article supprimé');
+    }).catch(() => {
+      this.toastService.showErrorToast('Erreur', 'Impossible de supprimer l\'article');
+    });
   }
+
 
   // === DRAG & DROP METHODS ===
 
@@ -439,25 +424,6 @@ export class CmsWrapper implements OnInit, OnDestroy {
   }
 
   // === PREVIEW METHODS ===
-
-  get pageTitleForPreview(): MENU_TITLES | EXTRA_TITLES {
-    // Convert the page title to a MENU_TITLES or EXTRA_TITLES enum value
-    const title = this.selectedPage?.title;
-    if (!title) return MENU_TITLES.NEWS; // Default fallback
-
-    // Try to find matching enum value
-    const menuTitles = Object.values(MENU_TITLES) as string[];
-    const extraTitles = Object.values(EXTRA_TITLES) as string[];
-
-    if (menuTitles.includes(title)) {
-      return title as MENU_TITLES;
-    } else if (extraTitles.includes(title)) {
-      return title as EXTRA_TITLES;
-    }
-
-    // Default fallback
-    return MENU_TITLES.NEWS;
-  }
 
   getPageRowCols(page: Page | null | undefined): BreakpointsSettings {
     // Define row_cols based on page template
