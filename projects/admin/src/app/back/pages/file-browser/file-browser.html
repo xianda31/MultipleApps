@@ -1,6 +1,6 @@
 <div class="file-browser">
   <!-- Selection Mode Header -->
-  <div *ngIf="isSelectionMode" class="alert alert-info mb-2">
+  <!-- <div *ngIf="isSelectionMode" class="alert alert-info mb-2">
     <div class="d-flex align-items-center justify-content-between">
       <div>
         <small><i class="bi bi-cursor-fill"></i> <strong>Mode sélection:</strong> {{ selectionContext }}</small><br>
@@ -10,7 +10,7 @@
         <i class="bi bi-x"></i>
       </button>
     </div>
-  </div>
+  </div> -->
 
   <!-- Root Folder Selection (disabled in selection mode) -->
   <div class="root-selector mb-3" *ngIf="!isSelectionMode">
@@ -30,14 +30,14 @@
   </div>
   
   <!-- Selection Mode Root Display -->
-  <div class="mb-3" *ngIf="isSelectionMode">
+  <!-- <div class="mb-3" *ngIf="isSelectionMode">
     <div class="alert alert-secondary mb-0 py-2">
       <small class="text-muted">
         <i class="bi bi-lock"></i> Mode automatique : 
         <strong>{{ getRootDisplayName(getCleanRoot()) }}</strong>
       </small>
     </div>
-  </div>
+  </div> -->
 
   <!-- Current Path Display -->
   <div class="current-path mb-2">
@@ -53,6 +53,14 @@
                 (click)="showCreateFolder = !showCreateFolder" 
                 title="Créer un dossier">
           <i class="bi bi-folder-plus"></i>
+        </button>
+        <!-- Download: available for files and folders -->
+        <button class="btn btn-outline-primary btn-sm" 
+                *ngIf="!isSelectionMode" 
+                (click)="downloadCurrent()" 
+                [disabled]="isDownloading"
+                [title]="!currentPath ? 'Télécharger tout le contenu du dossier racine' : isCurrentPathAFolder() ? 'Télécharger le dossier complet' : 'Télécharger le fichier'">
+          <i class="bi" [class.bi-download]="!isDownloading" [class.bi-hourglass-split]="isDownloading"></i>
         </button>
         <!-- Delete folder: only if we have a path and it's a folder -->
         <button  class="btn btn-outline-danger btn-sm" 

@@ -77,7 +77,7 @@ export class GenericPageComponent implements OnInit, OnChanges {
 
     // Handle external page_snippets changes (e.g., from CMS wrapper)
     if (changes['page_snippets'] && !changes['page_snippets'].firstChange) {
-      console.log('📄 External page_snippets updated, triggering page post-handling');
+      // console.log('📄 External page_snippets updated, triggering page post-handling');
       this.page_post_handling();
     }
   }
@@ -142,13 +142,12 @@ export class GenericPageComponent implements OnInit, OnChanges {
     const page = this.pages.find(p => p.title === title);
     if (!page) { throw new Error(page_title + ' page not found') }
     this.page = page;
-    console.log('📄 Filtering page snippets for page_title: %o', this.page);
 
     // Use external page_snippets if provided (e.g., from CMS), otherwise load from service
     if (this.page_snippets !== undefined) {
-      console.log('📄 Using external page_snippets:', this.page_snippets.length);
+      // console.log('📄 Using external page_snippets:', this.page_snippets.length);
     } else {
-      console.log('📄 Loading page_snippets from service for page:', page.title);
+      // console.log('📄 Loading page_snippets from service for page:', page.title);
       this.page_snippets = page.snippet_ids
         .map(id => this.snippets.find(snippet => snippet.id === id))
         .filter(snippet => snippet !== undefined) as Snippet[];

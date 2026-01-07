@@ -1,8 +1,8 @@
 <form [formGroup]="form">
 
     <h6 class="mt-1"><i class="bi bi-gear-fill me-2"></i>Contenu</h6>
-    <div class="row">
-        <div class="col-8">
+    <div class="row align-items-stretch">
+        <div class="col-8 d-flex flex-column justify-content-between">
             <label class="form-label form-label-sm mb-0">Titre</label>
             <input type="text" formControlName="title" class="form-control form-control-sm mb-1"
                 (keyup.enter)="onEnterSave($event)">
@@ -10,7 +10,7 @@
             <input type="text" formControlName="subtitle" class="form-control form-control-sm text-muted mb-1"
                 (keyup.enter)="onEnterSave($event)">
         </div>
-        <div class="col-4 text-center">
+        <div class="col-4 d-flex align-items-center justify-content-center">
             <img *ngIf="snippet && snippet.image_url" [src]="snippet.image_url"
                 alt="{{ form.get('title')?.value }}" class="img-fluid snippet-img-limited">
             <div *ngIf="form.get('image')?.value && (!snippet || !snippet.image_url)" class="text-muted small">
@@ -56,9 +56,9 @@
             <input class="form-control form-control-sm" 
                    [value]="form.get('image')?.value ? getNameFromPath(form.get('image')?.value) : 'Aucune image'" 
                    readonly>
-            <button type="button" class="btn btn-outline-primary btn-sm" 
+            <button type="button" class="btn btn-outline-success btn-sm" 
                     (click)="requestImageSelection()">
-                <i class="bi bi-arrow-right"></i> Sélectionner →
+                <i class="h5 bi-folder-symlink-fill"></i>
             </button>
         </div>
     </div>
@@ -71,9 +71,9 @@
             <input class="form-control form-control-sm"
                    [value]="form.get('file')?.value ? getNameFromPath(form.get('file')?.value) : 'Aucun fichier'"
                    readonly>
-            <button type="button" class="btn btn-outline-primary btn-sm"
+            <button type="button" class="btn btn-outline-success btn-sm"
                     (click)="requestFileSelection()">
-                <i class="bi bi-arrow-right"></i> Sélectionner →
+                <i class="h5 bi-folder-symlink-fill"></i>
             </button>
         </div>
     </div>
@@ -86,9 +86,9 @@
             <input class="form-control form-control-sm"
                    [value]="form.get('folder')?.value ? getNameFromPath(form.get('folder')?.value) : 'Aucun dossier'"
                    readonly>
-            <button type="button" class="btn btn-outline-primary btn-sm"
+            <button type="button" class="btn btn-outline-success btn-sm"
                     (click)="requestFolderSelection()">
-                <i class="bi bi-arrow-right"></i> Sélectionner →
+                <i class="h5 bi-folder-symlink-fill"></i>
             </button>
         </div>
     </div>

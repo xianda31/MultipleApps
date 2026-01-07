@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { FileManager } from '../../../services/file-manager';
 import { FileService, S3_ROOT_FOLDERS } from '../../../common/services/files.service';
+import JSZip from 'jszip';
 
 @Component({
   selector: 'app-file-browser',
@@ -23,6 +24,7 @@ export class FileBrowser implements OnInit, OnDestroy {
   showCreateFolder: boolean = false;
   newFolderName: string = '';
   expandedFolders: Set<string> = new Set(); // Track expanded folders
+  isDownloading: boolean = false;
 
   private subscriptions: Subscription[] = [];
 
@@ -59,6 +61,8 @@ export class FileBrowser implements OnInit, OnDestroy {
   }
 
   onRootChange(newRoot: string): void {
+    // Reset current path when changing root
+    this.fileManager.setCurrentPath('');
     this.fileManager.setCurrentRoot(newRoot);
   }
 
@@ -397,5 +401,180 @@ export class FileBrowser implements OnInit, OnDestroy {
         this.imagePreviewUrl = null;
       }
     });
+  }
+
+  // Download methods
+  async downloadCurrent(): Promise<void> {
+    // Get root name without trailing slash
+    const rootName = this.currentRoot.replace('/', '');
+    
+    // If no path selected OR path equals root name, we're at root level - download entire root as folder
+    if (!this.currentPath || this.currentPath.trim() === '' || this.currentPath === rootName) {
+      await this.downloadFolder();
+      return;
+    }
+    
+    const isFolder = this.isCurrentPathAFolder();
+    
+    if (isFolder) {
+      await this.downloadFolder();
+    } else {
+      await this.downloadFile();
+    }
+  }
+
+  async downloadFile(): Promise<void> {
+    if (!this.currentPath) return;
+    
+    try {
+      this.isDownloading = true;
+      const fullPath = `${this.currentRoot}${this.currentPath}`;
+      
+      const blob = await this.fileService.download_file(fullPath);
+      
+      // Extract filename from path
+      const fileName = this.currentPath.split('/').pop() || 'download';
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      link.click();
+      
+      // Cleanup
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('FileBrowser: Error downloading file:', error);
+      alert('Erreur lors du téléchargement du fichier');
+    } finally {
+      this.isDownloading = false;
+    }
+  }
+
+  async downloadFolder(): Promise<void> {
+    try {
+      this.isDownloading = true;
+      
+      // Get root name without trailing slash
+      const rootName = this.currentRoot.replace('/', '');
+      
+      // If currentPath equals root name or is empty, we're downloading the root folder
+      const isRootDownload = !this.currentPath || this.currentPath.trim() === '' || this.currentPath === rootName;
+      
+      // Handle root download or subfolder download
+      const folderPath = isRootDownload
+        ? this.currentRoot // Just use root (e.g., "images/")
+        : `${this.currentRoot}${this.currentPath}/`; // Use root + subpath
+      
+      // Get all files in folder recursively
+      const files = await this.getAllFilesInFolder(folderPath, isRootDownload);
+      
+      if (files.length === 0) {
+        alert('Le dossier est vide');
+        this.isDownloading = false;
+        return;
+      }
+      
+      // Create a new ZIP file
+      const zip = new JSZip();
+      
+      // Download all files and add them to the ZIP
+      let successCount = 0;
+      for (const filePath of files) {
+        try {
+          const blob = await this.fileService.download_file(filePath);
+          
+          // Get relative path within the folder for the ZIP structure
+          const relativePath = filePath.replace(folderPath, '');
+          
+          // Skip empty files or system files
+          if (blob.size === 0 || relativePath.startsWith('.')) {
+            continue;
+          }
+          
+          zip.file(relativePath, blob);
+          successCount++;
+        } catch (error) {
+          console.error('FileBrowser: Error downloading file:', filePath, error);
+        }
+      }
+      
+      if (successCount === 0) {
+        alert('Aucun fichier n\'a pu être téléchargé');
+        this.isDownloading = false;
+        return;
+      }
+      
+      // Generate the ZIP file
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      
+      // Download the ZIP file
+      const folderName = this.currentPath 
+        ? (this.currentPath.split('/').pop() || 'folder')
+        : this.currentRoot.replace(/\/$/, '');
+      const url = window.URL.createObjectURL(zipBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${folderName}.zip`;
+      link.click();
+      
+      // Cleanup
+      window.URL.revokeObjectURL(url);
+      
+      console.log(`FileBrowser: ZIP downloaded successfully with ${successCount} files`);
+      // alert(`Dossier téléchargé : ${successCount} fichier(s) dans ${folderName}.zip`);
+    } catch (error) {
+      console.error('FileBrowser: Error downloading folder:', error);
+      alert('Erreur lors du téléchargement du dossier');
+    } finally {
+      this.isDownloading = false;
+    }
+  }
+
+  private async getAllFilesInFolder(folderPath: string, isRootDownload: boolean = false): Promise<string[]> {
+    const files: string[] = [];
+    
+    // Navigate to the folder in the tree
+    const cleanRoot = this.currentRoot.replace(/\/$/, '');
+    
+    if (!this.fileTree || !this.fileTree[cleanRoot]) {
+      return files;
+    }
+    
+    let node = this.fileTree[cleanRoot];
+    
+    // If we have a current path AND we're not downloading the root, navigate to it
+    if (!isRootDownload && this.currentPath && this.currentPath.trim() !== '') {
+      const relativePath = this.currentPath;
+      const pathParts = relativePath.split('/').filter(part => part.length > 0);
+      
+      for (const part of pathParts) {
+        if (!node || !node[part]) {
+          return files;
+        }
+        node = node[part];
+      }
+    }
+    
+    // Recursively collect all files
+    const collectFiles = (currentNode: any, prefix: string) => {
+      if (!currentNode) return;
+      for (const key in currentNode) {
+        // Skip technical properties and hidden files
+        if (key.startsWith('_') || key.startsWith('.')) continue;
+        const value = currentNode[key];
+        const fullPath = prefix ? `${prefix}/${key}` : key;
+        if (this.isLeafNode(value)) {
+          // Build S3 path correctly: always root + '/' + fullPath (no double slash)
+          const s3Path = this.currentRoot.replace(/\/$/, '') + '/' + fullPath;
+          files.push(s3Path);
+        } else {
+          collectFiles(value, fullPath);
+        }
+      }
+    };
+    collectFiles(node, '');
+    return files;
   }
 }

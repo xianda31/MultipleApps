@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
@@ -32,7 +32,10 @@ export class FileUploader implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
 
-  constructor(public fileManager: FileManager) {}
+  constructor(
+    public fileManager: FileManager,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   get hasSelectedFiles(): boolean {
     return this.selectedOriginals.size > 0 || this.selectedThumbnails.size > 0;
@@ -100,6 +103,8 @@ export class FileUploader implements OnInit, OnDestroy {
       this.selectedOriginals.clear();
       this.selectedThumbnails.clear();
       this.fileToThumbnail.clear();
+      // Mark all files as candidates for upload by default
+      this.selectedFiles.forEach(file => this.selectedOriginals.add(file));
       // Generate thumbnails for image files
       this.generateThumbnailsAndFiles();
     }
@@ -359,7 +364,15 @@ export class FileUploader implements OnInit, OnDestroy {
             const fileNameParts = originalFile.name.split('.');
             const extension = fileNameParts.pop();
             const baseName = fileNameParts.join('.');
-            const thumbnailName = `${baseName}_thumb.${extension}`;
+            
+            // Si ALBUMS: nom identique (sans suffixe), sinon: suffixe avec dimensions
+            let thumbnailName: string;
+            if (this.currentRoot === S3_ROOT_FOLDERS.ALBUMS + '/') {
+              thumbnailName = originalFile.name;
+            } else {
+              const ratio = (width / height).toFixed(2);
+              thumbnailName = `${baseName}_${Math.round(width)}x${Math.round(height)}_${ratio}.${extension}`;
+            }
             
             const thumbnailFile = new File([blob], thumbnailName, {
               type: originalFile.type
@@ -367,6 +380,8 @@ export class FileUploader implements OnInit, OnDestroy {
             
             // Store the relationship and thumbnail preview
             this.fileToThumbnail.set(originalFile, thumbnailFile);
+            // Mark thumbnail as candidate for upload by default
+            this.selectedThumbnails.add(thumbnailFile);
             
             // Create thumbnail preview
             const thumbnailReader = new FileReader();
@@ -374,6 +389,8 @@ export class FileUploader implements OnInit, OnDestroy {
               const thumbnailResult = e.target?.result as string;
               if (thumbnailResult) {
                 this.fileThumbnails.set(thumbnailFile, thumbnailResult);
+                // Force change detection to update the view
+                this.cdr.detectChanges();
               }
             };
             thumbnailReader.readAsDataURL(thumbnailFile);
