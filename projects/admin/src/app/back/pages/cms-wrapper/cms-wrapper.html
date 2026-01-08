@@ -10,7 +10,7 @@
                         <i class="bi bi-plus-lg"></i>
                     </button>
                 </div>
-                <div class="card-body p-2" style="max-height: 80vh; overflow-y: auto;">
+                <div class="card-body p-2">
                     <!-- Pages list will go here -->
                     <div class="list-group list-group-flush">
                         @for (page of pages; track page.id) {
@@ -38,7 +38,7 @@
                         </button>
                     </div>
                 </div>
-                <div class="card-body p-2" style="max-height: 80vh; overflow-y: auto;">
+                <div class="card-body p-2">
                     @if (selectedPage) {
                     <!-- Page form controls -->
                     <form [formGroup]="pageForm" class="mb-3">
@@ -88,7 +88,7 @@
                         </button>
                     </div>
                 </div>
-                <div class="card-body p-2" style="max-height: 80vh; overflow-y: auto;">
+                <div class="card-body p-2">
                     @if (selectedPage && pageSnippets.length > 0) {
                     <!-- Snippets accordion with drag & drop -->
                     <div cdkDropList [cdkDropListData]="pageSnippets" (cdkDropListDropped)="onDrop($event)"
@@ -167,7 +167,7 @@
                         </label>
                     </div>
                 </div>
-                <div class="card-body p-2" style="max-height: 85vh; overflow-y: auto;">
+                <div class="card-body p-2">
 
                     <!-- File Browser Mode -->
                     @if (fileMode === 'browse') {
