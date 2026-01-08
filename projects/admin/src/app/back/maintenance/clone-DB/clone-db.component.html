@@ -1,14 +1,28 @@
 <div class="card mt-3">
-    <h4 class="card-header text-center">DB clone ({{production_apid}} → {{sandbox_apid}})</h4>
+    <h4 class="card-header text-center" [ngClass]="reverseDirection ? 'bg-danger text-white' : ''">
+        DB clone 
+        <span *ngIf="!reverseDirection">({{production_apid}} → {{sandbox_apid}})</span>
+        <span *ngIf="reverseDirection" class="fw-bold">⚠️ MODE INVERSÉ ({{sandbox_apid}} → {{production_apid}}) ⚠️</span>
+    </h4>
     <div class="card-body">
         <div class="row g-2 align-items-end mb-3">
-            <div class="col-12 col-md-8">
+            <div class="col-12 col-md-6">
                 <div class="text-muted small">Sélectionnez les tables à cloner et lancez l'action. Les tables de destination seront vidées puis recopiées.</div>
+                <div class="form-check form-switch mt-2">
+                    <input class="form-check-input" type="checkbox" id="reverseSwitch" [(ngModel)]="reverseDirection" [disabled]="started">
+                    <label class="form-check-label" for="reverseSwitch">
+                        <span *ngIf="!reverseDirection">Mode normal (Prod → Sandbox)</span>
+                        <span *ngIf="reverseDirection" class="text-danger fw-bold">⚠️ Mode inversé DANGEREUX (Sandbox → Prod)</span>
+                    </label>
+                </div>
             </div>
-            <div class="col-12 col-md-4 d-flex gap-2 justify-content-end">
+            <div class="col-12 col-md-6 d-flex gap-2 justify-content-end">
                 <button class="btn btn-outline-secondary" (click)="refreshTables()" [disabled]="started">Rafraîchir</button>
                 <button class="btn btn-outline-info" (click)="refreshCountsLive()" [disabled]="started">Rafraîchir (live)</button>
-                <button class="btn btn-primary" (click)="cloneSelected()" [disabled]="started">Cloner la sélection</button>
+                <button class="btn" [ngClass]="reverseDirection ? 'btn-danger' : 'btn-primary'" (click)="cloneSelected()" [disabled]="started">
+                    <span *ngIf="!reverseDirection">Cloner la sélection</span>
+                    <span *ngIf="reverseDirection">⚠️ ÉCRASER PRODUCTION</span>
+                </button>
             </div>
         </div>
 
@@ -37,7 +51,10 @@
                         </td>
                         <td class="text-center">
                             <div class="d-flex flex-column gap-1">
-                                <button class="btn btn-sm btn-primary" (click)="cloneTableAt(i)" [disabled]="started || rowCloning[i]">Cloner</button>
+                                <button class="btn btn-sm" [ngClass]="reverseDirection ? 'btn-danger' : 'btn-primary'" (click)="cloneTableAt(i)" [disabled]="started || rowCloning[i]">
+                                    <span *ngIf="!reverseDirection">Cloner</span>
+                                    <span *ngIf="reverseDirection">⚠️ ÉCRASER</span>
+                                </button>
                                 <div *ngIf="rowCloning[i]" class="small text-muted">en cours…</div>
                             </div>
                         </td>

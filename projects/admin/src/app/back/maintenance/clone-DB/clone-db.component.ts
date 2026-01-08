@@ -31,6 +31,7 @@ export class CloneDBComponent {
   // UI selections and per-row cloning state
   selected: boolean[] = [];
   rowCloning: boolean[] = [];
+  reverseDirection: boolean = false; // Si true, clone de sandbox vers production
 
   constructor(
     private batchService: BatchService,
@@ -79,12 +80,29 @@ export class CloneDBComponent {
 
 
   cloneTableAt(index: number) {
-    const source_table = this.production_tables[index].Table?.TableName ?? '';
+    let source_table: string;
+    let destination_table: string;
+    
+    if (this.reverseDirection) {
+      // Mode DANGEREUX : sandbox → production
+      source_table = this.sandbox_tables[index].Table?.TableName ?? '';
+      destination_table = this.production_tables[index].Table?.TableName ?? '';
+      
+      if (!confirm(`⚠️ ATTENTION : Vous allez écraser la table PRODUCTION "${this.name(destination_table)}" avec les données de SANDBOX.\n\nCette opération est IRRÉVERSIBLE et DANGEREUSE !\n\nConfirmez-vous cette action ?`)) {
+        console.warn(`[CLONE INVERSÉ ANNULÉ] L'utilisateur a refusé de cloner ${source_table} vers ${destination_table}`);
+        return;
+      }
+      console.warn(`[CLONE INVERSÉ] Clonage DANGEREUX de ${source_table} vers ${destination_table}`);
+    } else {
+      // Mode normal : production → sandbox
+      source_table = this.production_tables[index].Table?.TableName ?? '';
+      destination_table = source_table.replace(this.production_apid, environment.sandbox_apid);
+      console.log(`Cloning table ${source_table} to ${destination_table}`);
+    }
+    
     if (!source_table) return;
-    const destination_table = source_table.replace(this.production_apid, environment.sandbox_apid);
     this.started = true;
     this.rowCloning[index] = true;
-    console.log(`Cloning table ${source_table} to ${destination_table}`);
 
 
     // delete sandbox items
