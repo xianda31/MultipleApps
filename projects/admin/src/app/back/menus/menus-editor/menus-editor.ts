@@ -298,6 +298,7 @@ export class MenusEditorComponent implements AfterViewInit {
     const op = payload.id ? this.navitemService.updateNavItem(payload) : this.navitemService.createNavItem(payload);
     console.log('MenusEditor.saveNavitem: about to save payload', { payloadId: payload.id, path: payload.path, page_id: payload.page_id, type: payload.type });
     console.log('MenusEditor.saveNavitem stack', (new Error()).stack?.split('\n').slice(0,3));
+    
     op.then(() => {
       this.toastService.showSuccess('Paramètres menu', 'nav_item sauvegardé');
       this.selectedNavitem = null;
