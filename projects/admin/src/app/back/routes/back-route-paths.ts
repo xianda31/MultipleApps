@@ -8,6 +8,7 @@ export const BACK_ROUTE_PATHS = {
   MembersDatabase: 'members/database',
   GameCardsEditor: 'members/cartes-admission',
   MemberSales: 'members/controls',
+  Competitions: 'members/competitions',
   CashBoxStatus: 'finance/état-de-caisse',
   BankReconciliation: 'finance/bank-reconciliation',
   ExpenseAndRevenue: 'finance/expense-and-revenue',
@@ -33,8 +34,8 @@ export const BACK_ROUTE_PATHS = {
   MenusEditor: 'site/menus',
   UiConf: 'site/ui',
   Home: 'home',
-  Assistance: 'assistance',
-  Mailing: 'mailing',
+  Assistance: 'communication/assistance',
+  Mailing: 'communication/mailing',
   CMSWrapper:'site/cms-wrapper'
 };
 

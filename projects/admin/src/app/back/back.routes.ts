@@ -31,6 +31,7 @@ import { CloneS3Component } from './maintenance/clone-S3/clone-s3.component';
 import { BackAssistanceComponent } from './back-assistance/back-assistance.component';
 import { MailingComponent } from './mailing/mailing.component';
 import { CmsWrapper } from './pages/cms-wrapper/cms-wrapper';
+import { CompetitionsComponent } from './competitions/competitions';
 
 export const routes: Routes = [
   {
@@ -79,6 +80,7 @@ export const routes: Routes = [
   { path: BACK_ROUTE_PATHS.Home, component: BackPageComponent },
   { path: BACK_ROUTE_PATHS.Assistance, component: BackAssistanceComponent, canActivate: [AuthGuard] },
   { path: BACK_ROUTE_PATHS.Mailing, component: MailingComponent, canActivate: [AuthGuard] },
+  { path: BACK_ROUTE_PATHS.Competitions, component: CompetitionsComponent, canActivate: [AuthGuard] },
 
 
 

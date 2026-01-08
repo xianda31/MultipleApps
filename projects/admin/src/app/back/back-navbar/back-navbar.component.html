@@ -66,6 +66,7 @@
             <li *ngIf="accreditation_level >= accreditation_levels.Administrateur"><a class="dropdown-item"
                 routerLink="./members/cartes-admission">cartes admission</a></li>
             <li><a class="dropdown-item" routerLink="./members/controls">contrôles</a></li>
+            <li><a class="dropdown-item" routerLink="./members/competitions">compétitions</a></li>
           </ul>
         </li>
 
@@ -120,26 +121,24 @@
             <li><a class="dropdown-item" routerLink="/front">aller sur le site</a></li>
           </ul>
         </li>
-
-        <!-- Assistance -->
-        <li class="nav-item" *ngIf="(accreditation_level >= accreditation_levels.Editeur) && (assistances_nbr > 0)">
-          <a class="nav-link" routerLink="./assistance">
-            <i class="bi bi-person-raised-hand">
+        <!-- communication -->
+        <li *ngIf="accreditation_level >= accreditation_levels.Editeur" ngbDropdown
+          class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
+            <i class="bi bi-globe2"></i> <span class="ms-1">Communication</span>
+          </a>
+          <ul ngbDropdownMenu class="dropdown-menu">
+            <!-- <li><a class="dropdown-item" routerLink="./site/thumbnails">vignettes</a></li> -->
+            <li><a class="dropdown-item" routerLink="./communication/assistance">
+              Assistance
               <span  class="badge bg-warning top-0 start-100 translate-middle"
                 style="font-size: 0.6rem;">{{assistances_nbr}}</span>
-            </i>
-            <span class="ms-0">Assistance</span>
-          </a>
+            </a></li>
+            <li ><a class="dropdown-item" routerLink="./communication/mailing">Mailing</a></li>
+          </ul>
         </li>
 
-        <!-- Mailing -->
-        <li class="nav-item" *ngIf="(accreditation_level >= accreditation_levels.Administrateur)">
-          <a class="nav-link" routerLink="./mailing">
-            <i class="bi bi-envelope-fill">
-            </i>
-            <span class="ms-0">Mailing</span>
-          </a>
-        </li>
+
 
 
         <li *ngIf="(logged_member$ | async) as member" class="nav-item dropdown ms-auto me-5" ngbDropdown>
@@ -213,6 +212,7 @@
             <li><a class="dropdown-item" routerLink="./members/cartes-admission" data-bs-dismiss="offcanvas">cartes
                 admission</a></li>
             <li><a class="dropdown-item" routerLink="./members/controls" data-bs-dismiss="offcanvas">contrôles</a></li>
+            <li><a class="dropdown-item" routerLink="./members/competitions" data-bs-dismiss="offcanvas">compétitions</a></li>
           </ul>
         </li>
         <li *ngIf="accreditation_level >= accreditation_levels.Administrateur" ngbDropdown class="nav-item dropdown">
@@ -277,16 +277,26 @@
           </ul>
         </li>
 
-       <!-- Assistance -->
-        <li class="nav-item ms-md-1 ms-sm-1" *ngIf="accreditation_level >= accreditation_levels.Editeur">
-          <a class="nav-link" routerLink="./assistance">
-            <i class="bi bi-person-raised-hand">
-              <span *ngIf="assistances_nbr > 0" class="badge bg-warning top-0 start-100 translate-middle"
+      <!-- communication -->
+        
+        <li *ngIf="accreditation_level >= accreditation_levels.Administrateur" ngbDropdown class="nav-item dropdown">
+          <div class="d-flex align-items-center">
+            <span class="nav-link p-0 pe-2" style="cursor:default;">
+              <i class="bi bi-globe2"></i> <span class="ms-1">Communication</span>
+            </span>
+            <a class="nav-link dropdown-toggle p-0" ngbDropdownToggle href="#" style="width:2em;"></a>
+          </div>
+          <ul ngbDropdownMenu class="dropdown-menu">
+            <!-- <li><a class="dropdown-item" routerLink="./site/thumbnails">vignettes</a></li> -->
+            <li><a class="dropdown-item" routerLink="./communication/assistance" data-bs-dismiss="offcanvas">
+              Assistance
+              <span  class="badge bg-warning top-0 start-100 translate-middle"
                 style="font-size: 0.6rem;">{{assistances_nbr}}</span>
-            </i>
-            <span class="ms-0">Assistance</span>
-          </a>
+            </a></li>
+            <li ><a class="dropdown-item" routerLink="./communication/mailing" data-bs-dismiss="offcanvas">Mailing</a></li>
+          </ul>
         </li>
+
 
         <li *ngIf="(logged_member$ | async) " ngbDropdown class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
