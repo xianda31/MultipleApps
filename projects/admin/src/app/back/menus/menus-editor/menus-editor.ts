@@ -56,7 +56,7 @@ export class MenusEditorComponent implements AfterViewInit {
   front_route_verbose = '';
   // selectedPageId: string | undefined = undefined;
   // Preview auth state toggle (simulation only)
-  previewLogged = false;
+  previewLogged = true;
 
   front_routes!: Routes;
   front_routes_production!: Routes;

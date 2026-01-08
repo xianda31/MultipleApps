@@ -140,7 +140,12 @@ export class GenericPageComponent implements OnInit, OnChanges {
     const title = page_title;
     // load the page by its title, then load all snippets  for this page
     const page = this.pages.find(p => p.title === title);
-    if (!page) { throw new Error(page_title + ' page not found') }
+    if (!page) { 
+      // Page not found - this can happen temporarily during title editing in CMS
+      console.warn(`GenericPage: page "${page_title}" not found in pages list - waiting for sync`);
+      // Don't throw error, just return early - the component will re-render when pages update
+      return;
+    }
     this.page = page;
 
     // Use external page_snippets if provided (e.g., from CMS), otherwise load from service
