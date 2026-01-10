@@ -1,1 +1,41 @@
-<p>competitions works!</p>
+<div class="container-fluid my-3">
+
+    <div *ngIf="!results_extracted" class="row mb-3 justify-content-center">
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Chargement...</span>
+            </div>
+            <div>
+                {{ spinnerMessage }}
+            </div>
+        </div>
+    </div>
+
+    <div  class="row justify-content-center mb-3">
+        <div class="col-md-2" *ngFor="let labelIdx of labels.concat(['Autres']); let i = index">
+            <div class="fw-bold text-center mb-2">{{ labelIdx }}</div>
+            <div class="d-flex flex-column gap-1">
+                <div *ngFor="let competition of competitionsByDivision[labelIdx]" class="card shadow-sm">
+                    <div class="card-header fw-bold text-center">{{ competition.label }}</div>
+                    <div class="card-body p-2">
+                        <div *ngIf="team_results && team_results[competition.id] && team_results[competition.id].length > 0">
+                            <div *ngFor="let team of team_results[competition.id]" class="mb-2">
+                                <div class="d-flex align-items-center">
+                                    <span class="me-2">
+                                        {{ team.rank }}<ng-container *ngIf="team.rank == 1">er</ng-container><ng-container *ngIf="team.rank > 1">ème</ng-container>
+                                    </span>
+                                    <span class="d-flex flex-column">
+                                        <span *ngFor="let player of team.players">
+                                            <span [ngClass]="{'fw-semibold': isMember(player), 'fst-italic': !isMember(player), 'player-small': true}">
+                                                {{ player.firstname }} {{ player.lastname }}
+                                            </span>
+                                        </span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
