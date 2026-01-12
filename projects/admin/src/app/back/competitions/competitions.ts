@@ -23,7 +23,7 @@ export class CompetitionsComponent {
   // Map des résultats par compétition
   team_results: { [competitionId: number]: {competition: Competition, teams: CompetitionTeam[]} } = {};
   labels: string[] = ['DN4', 'Expert', 'Performance', 'Challenge'];
-  spinnerMessage: string = 'Analyse en cours...';
+  spinnerMessage: string = 'Recherche en cours...';
   members: Member[] = [];
 
   constructor(
