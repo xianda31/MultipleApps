@@ -12,6 +12,8 @@ export interface Player {
   pp_extra: number;
   pe_extra: number;
   is_ic_used: boolean;
+  // addeditional field for service use
+  is_member?: boolean;
 }
 
 export interface CompetitionTeam {
