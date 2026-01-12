@@ -49,12 +49,36 @@ export class PublicationRenderComponent implements AfterViewInit, AfterViewCheck
     this.updateTextHeights();
     this.prepareTables();
     this.scheduleTryScroll();
+    this.attachLinkHandlers();
   }
 
   ngAfterViewChecked() {
     this.updateTextHeights();
     this.prepareTables();
     this.scheduleTryScroll();
+    this.attachLinkHandlers();
+  }
+
+  private attachLinkHandlers() {
+    if (!this.textRefs) return;
+    this.textRefs.forEach(ref => {
+      const root: HTMLElement = ref.nativeElement as HTMLElement;
+      // Pour chaque lien <a> dans le HTML injecté
+      root.querySelectorAll('a').forEach((a: HTMLAnchorElement) => {
+        // Pour éviter d'ajouter plusieurs fois le même handler
+        if ((a as any)._customHandlerAttached) return;
+        (a as any)._customHandlerAttached = true;
+        a.addEventListener('click', (event: MouseEvent) => {
+          const href = a.getAttribute('href');
+          if (!href) return;
+          if (/^https?:\/\//i.test(href)) {
+            event.preventDefault();
+            window.open(href, '_blank', 'noopener');
+          }
+          // Pour les liens internes, laisser le comportement natif ou Angular gérer
+        });
+      });
+    });
   }
 
   updateTextHeights() {

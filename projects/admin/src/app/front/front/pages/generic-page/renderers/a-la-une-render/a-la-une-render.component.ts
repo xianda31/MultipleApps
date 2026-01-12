@@ -8,6 +8,7 @@ import { SystemDataService } from '../../../../../../common/services/system-data
 import { NavItemsService } from '../../../../../../common/services/navitem.service';
 import { InternalLinkRoutingService } from '../../../../../../common/services/internal-link-routing.service';
 import { Subscription } from 'rxjs';
+import { attachExternalLinkHandler } from '../../utils/util_click_handler';
 import { formatRowColsClasses } from '../../../../../../common/utils/ui-utils';
 
 @Component({
@@ -160,10 +161,20 @@ export class ALaUneRenderComponent implements OnChanges, OnDestroy, AfterViewIni
     this.scheduleOverflowCheck();
     // Handler global factorisé via le service
     this.internalLinkRoutingService.attachGlobalPointerHandler();
+    this.attachLinkHandlers();
   }
 
   ngAfterViewChecked() {
     this.scheduleOverflowCheck();
+    this.attachLinkHandlers();
+  }
+
+  private attachLinkHandlers() {
+    if (!this.clampRefs) return;
+    this.clampRefs.forEach(ref => {
+      const root: HTMLElement = ref.nativeElement as HTMLElement;
+      attachExternalLinkHandler(root);
+    });
   }
 
   private scheduleOverflowCheck() {
