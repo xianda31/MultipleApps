@@ -199,8 +199,9 @@ export class GenericPageComponent implements OnInit, OnChanges {
       const target = event.target as HTMLElement;
       if (target.tagName === 'A') {
         let href = target.getAttribute('href');
-        // Gère tous les liens internes commençant par /, ./, ../
-        if (href && (/^(\/|\.\/|\.\.)/.test(href))) {
+        if (!href) return;
+        // Liens internes (/, ./, ../)
+        if (/^(\/|\.\/|\.\.)/.test(href)) {
           event.preventDefault();
           // Normalise ./front/les_albums ou ../ en chemin absolu
           if (href.startsWith('./')) {
@@ -214,16 +215,19 @@ export class GenericPageComponent implements OnInit, OnChanges {
           }
           // Si le lien commence déjà par /, on route tel quel
           this.router.navigateByUrl(href);
-        } else if (href && (/^#/.test(href))) { // Handle internal anchor links
+        } else if (/^#/.test(href)) { // Liens d'ancre internes
           event.preventDefault();
           const id = href.substring(1);
           const element = document.getElementById(id);
           if (element) {
-            element.scrollIntoView({ behavior: 'smooth' }); // Smooth scroll to element
+            element.scrollIntoView({ behavior: 'smooth' });
           }
-        } else if (href) {   // Handle external links
+        } else if (/^https?:\/\//i.test(href)) {
+          // Lien externe : ouvrir dans un nouvel onglet
           event.preventDefault();
-          window.open(href, '_blank');
+          window.open(href, '_blank', 'noopener');
+        } else {
+          // Autres cas (ex: mailto, tel, etc.) : laisser le comportement natif
         }
       }
     });
