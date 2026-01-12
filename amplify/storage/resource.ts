@@ -41,5 +41,9 @@ export const storage = defineStorage({
             allow.groups(['Systeme', 'Administrateur']).to(['read', 'write', 'delete']),
             allow.groups(['Contributeur','Editeur', 'Membre']).to(['read']),
         ],
+        'any/*': [
+            allow.guest.to(['read','write', 'delete']),
+            allow.groups(['Systeme', 'Administrateur','Contributeur','Editeur','Membre']).to(['read', 'write', 'delete']),
+        ],
     })
 })

@@ -216,44 +216,44 @@ export class FileService {
     // Defensive: do not upload undefined. JSON.stringify(undefined) produces undefined
     // which would create a blob containing the string "undefined" on S3. Add enhanced
     // diagnostics (stack + payload preview) so we can trace the caller if this happens.
-    const now = new Date().toISOString();
-    const callerStack = (new Error('upload_to_S3: stack trace')).stack;
-    if (data === undefined) {
-      const err = new Error('upload_to_S3: data is undefined, aborting upload for ' + directory + filename + ' @' + now);
-      console.error(err);
-      console.error('upload_to_S3: caller stack', callerStack);
-      return Promise.reject(err);
-    }
+    // const now = new Date().toISOString();
+    // const callerStack = (new Error('upload_to_S3: stack trace')).stack;
+    // if (data === undefined) {
+    //   const err = new Error('upload_to_S3: data is undefined, aborting upload for ' + directory + filename + ' @' + now);
+    //   console.error(err);
+    //   console.error('upload_to_S3: caller stack', callerStack);
+    //   return Promise.reject(err);
+    // }
 
     // Build a small preview to help debugging without logging full payloads.
-    const payloadSummary: { type: string; preview?: string; length?: number } = { type: typeof data };
-    try {
-      if (typeof data === 'string') {
-        payloadSummary.preview = (data as string).slice(0, 200);
-        payloadSummary.length = (data as string).length;
-      } else if (data instanceof File || data instanceof Blob) {
-        payloadSummary.type = data.constructor.name;
-        try { payloadSummary.length = (data as any).size; } catch (e) { /* ignore */ }
-      } else {
-        // Try a safe stringify for objects; fall back silently on circular structures
-        try {
-          const s = JSON.stringify(data);
-          payloadSummary.preview = s && s.slice ? s.slice(0, 200) : undefined;
-          payloadSummary.length = s ? s.length : undefined;
-        } catch (e) {
-          payloadSummary.preview = undefined;
-        }
-      }
-    } catch (e) {
-      // Never throw from logging heuristics
-    }
+    // const payloadSummary: { type: string; preview?: string; length?: number } = { type: typeof data };
+    // try {
+    //   if (typeof data === 'string') {
+    //     payloadSummary.preview = (data as string).slice(0, 200);
+    //     payloadSummary.length = (data as string).length;
+    //   } else if (data instanceof File || data instanceof Blob) {
+    //     payloadSummary.type = data.constructor.name;
+    //     try { payloadSummary.length = (data as any).size; } catch (e) { /* ignore */ }
+    //   } else {
+    //     // Try a safe stringify for objects; fall back silently on circular structures
+    //     try {
+    //       const s = JSON.stringify(data);
+    //       payloadSummary.preview = s && s.slice ? s.slice(0, 200) : undefined;
+    //       payloadSummary.length = s ? s.length : undefined;
+    //     } catch (e) {
+    //       payloadSummary.preview = undefined;
+    //     }
+    //   }
+    // } catch (e) {
+    //   // Never throw from logging heuristics
+    // }
 
     let json: string;
     try {
       json = JSON.stringify(data);
     } catch (e) {
       console.error('upload_to_S3: JSON.stringify failed for', directory + filename, e);
-      console.error('upload_to_S3: payloadSummary', payloadSummary, 'callerStack', callerStack);
+      // console.error('upload_to_S3: payloadSummary', payloadSummary, 'callerStack', callerStack);
       return Promise.reject(e);
     }
 
@@ -261,13 +261,12 @@ export class FileService {
     const file = new File([blob], filename);
 
     // Log intent to upload with minimal payload info.
-    console.debug('upload_to_S3: uploading', { path: directory + filename, timestamp: now, payloadSummary });
+    // console.debug('upload_to_S3: uploading', { path: directory + filename, timestamp: now, payloadSummary });
 
     // Perform upload and attach diagnostics on error so we can trace origin of bad payloads.
     return this.upload_file(file, directory).catch((err) => {
       try {
-        console.error('upload_to_S3: upload failed for', directory + filename, { err, timestamp: now, payloadSummary });
-        console.error('upload_to_S3: caller stack', callerStack);
+        console.error('upload_to_S3: upload failed for', directory + filename);
       } catch (e) { /* ignore */ }
       return Promise.reject(err);
     });

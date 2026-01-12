@@ -1,3 +1,11 @@
+export interface CompetitionResults {
+  competition: Competition;
+  teams: CompetitionTeam[];
+}
+
+export interface CompetitionResultsMap {
+  [competitionId: number]: CompetitionResults;
+}
 export interface Player {
   id: number;
   gender: string;
@@ -90,3 +98,4 @@ export interface Competition {
   nb_phases: number;
   nb_simultaneous_phases: number;
 }
+

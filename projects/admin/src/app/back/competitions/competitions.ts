@@ -33,11 +33,11 @@ export class CompetitionsComponent {
   ngOnInit(): void {
 
     this.competitionService.getCompetionsResults('2025/2026').subscribe(results => {
-      console.log('Résultats des compétitions pour la saison 2025-2026', results);
+      // console.log('Résultats des compétitions pour la saison 2025-2026', results);
       this.team_results = results;
       // Ne garder que les compétitions ayant au moins une équipe avec au moins un joueur
       this.competitions = Object.values(results)
-        .filter(r => Array.isArray(r.teams) && r.teams.some(team => Array.isArray(team.players) && team.players.length > 0))
+        .filter(r => Array.isArray(r.teams) && r.teams.some((team: any) => Array.isArray(team.players) && team.players.length > 0))
         .map(r => r.competition);
       this.results_extracted = true;
     });
