@@ -10,9 +10,11 @@ import { HomePage } from "../../front/front/pages/home-page/home-page";
 import { TournamentComponent } from "../tournaments/tournament/tournament.component";
 import { AssistanceComponent } from "../../front/front/assistance/assistance.component";
 import { AlbumComponent } from "../../front/album/album.component";
+import { CompetitionsComponent } from "../../back/competitions/competitions";
 
 export enum NAVITEM_PLUGIN {
   TOURNAMENTS = 'tournaments',
+  COMPETITIONS = 'competitions',
   SETTINGS = 'settings',
   PURCHASES = 'purchases',
   GAME_CARDS_OWNED = 'game_cards_owned',
@@ -47,6 +49,7 @@ export enum LABEL_TRANSFORMERS {
 };
 export const PLUGINS: Record<string, Type<any>> = {
   [NAVITEM_PLUGIN.TOURNAMENTS]: TournamentsComponent,
+  [NAVITEM_PLUGIN.COMPETITIONS]: CompetitionsComponent,
   [NAVITEM_PLUGIN.SETTINGS]: SettingsComponent,
   [NAVITEM_PLUGIN.PURCHASES]: PurchasesComponent,
   [NAVITEM_PLUGIN.GAME_CARDS_OWNED]: GameCardsOwnedComponent,

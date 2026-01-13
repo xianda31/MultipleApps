@@ -81,7 +81,8 @@ export class UiConfComponent implements OnInit {
       competitions: this.fb.group({
         preferred_organizations: [ ['FFB', 'Ligue 06 LR-PY', 'Comité des Pyrenees'] ],
         show_members_only: [false],
-        one_year_back: [false]
+        one_year_back: [false],
+        show_theorical_rank: [false]
       })
     });
     // attach FormArray-level validator to enforce keys non-empty and unique
@@ -314,7 +315,8 @@ export class UiConfComponent implements OnInit {
       competitions: {
         preferred_organizations: ui?.competitions?.preferred_organizations ?? ['FFB', 'Ligue 06 LR-PY', 'Comité des Pyrenees'],
         show_members_only: ui?.competitions?.show_members_only ?? false,
-        one_year_back: ui?.competitions?.one_year_back ?? false
+        one_year_back: ui?.competitions?.one_year_back ?? false,
+        show_theorical_rank: ui?.competitions?.show_theorical_rank ?? false
       }
     });
 
@@ -422,7 +424,8 @@ export class UiConfComponent implements OnInit {
       payload.competitions = {
         preferred_organizations: formVal.competitions?.preferred_organizations ?? ['FFB', 'Ligue 06 LR-PY', 'Comité des Pyrenees'],
         show_members_only: formVal.competitions?.show_members_only ?? false,
-        one_year_back: formVal.competitions?.one_year_back ?? false
+        one_year_back: formVal.competitions?.one_year_back ?? false,
+        show_theorical_rank: formVal.competitions?.show_theorical_rank ?? false
       };
 
       // Save UI settings into dedicated file and publish immédiatement

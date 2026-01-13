@@ -22,9 +22,10 @@ export class CompetitionsComponent {
 
   divisions: string[] = ['DN4', 'Expert', 'Performance', 'Challenge'];
 
-  preferred_organizations!: string[] ; //= ['FFB', 'Ligue 06 LR-PY', 'Comité des Pyrenees'];
-  show_members_only!: boolean //= false;
-  one_year_back!: boolean //= false;
+  preferred_organizations!: string[] ; 
+  show_members_only!: boolean ;
+  one_year_back!: boolean ;
+  show_theorical_rank!: boolean ;
 
   
   spinnerMessage: string = 'Recherche en cours...';
@@ -66,6 +67,9 @@ export class CompetitionsComponent {
       }
       if (typeof ui.competitions.one_year_back === 'boolean') {
         this.one_year_back = ui.competitions.one_year_back;
+      }
+      if (typeof ui.competitions.show_theorical_rank === 'boolean') {
+        this.show_theorical_rank = ui.competitions.show_theorical_rank;
       }
     }
   }

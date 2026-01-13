@@ -236,25 +236,29 @@
           </div>
         </div>
        </div>
-       <!-- Section Compétitions positionnée à droite -->
+       <!-- Section Résultats compétitions -->
        <div class="col">
          <div class="card h-100">
-           <div class="card-title fw-bold fs-5 ms-2">Paramètres Compétitions</div>
+           <div class="card-title fw-bold fs-5 ms-2">Résultats compétitions</div>
            <div class="card-body" formGroupName="competitions">
              <div class="mb-2">
-               <label class="form-label">Organisations préférées</label>
+               <label class="form-label">Sélection</label>
                <input type="text" class="form-control" formControlName="preferred_organizations"
                  placeholder="Séparez par des virgules" />
                <div class="small text-muted mt-1">Exemple : FFB, Ligue 06 LR-PY, Comité des Pyrenees</div>
              </div>
              <div class="mb-2 form-check">
                <input type="checkbox" class="form-check-input" id="showMembersOnly" formControlName="show_members_only" />
-               <label class="form-check-label" for="showMembersOnly">Afficher uniquement les membres</label>
+               <label class="form-check-label" for="showMembersOnly">Afficher uniquement les membres dans les équipes</label>
              </div>
              <div class="mb-2 form-check">
                <input type="checkbox" class="form-check-input" id="oneYearBack" formControlName="one_year_back" />
                <label class="form-check-label" for="oneYearBack">Afficher la saison précédente</label>
              </div>
+              <div class="mb-2 form-check">
+                <input type="checkbox" class="form-check-input" id="showTheoricalRank" formControlName="show_theorical_rank" />
+                <label class="form-check-label" for="showTheoricalRank">Afficher le rang théorique</label>
+              </div>
            </div>
          </div>
        </div>

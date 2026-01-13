@@ -26,13 +26,18 @@
                                 <div *ngFor="let team of team_results[competition.id].teams" class="mb-2">
                                     <div class="d-flex align-items-center">
                                         <span class="me-2 d-flex flex-column align-items-center">
-                                            <span>
+                                            <ng-container *ngIf="show_theorical_rank; else simpleRank">
                                                 <span
                                                     [ngClass]="{'badge bg-success': team.rank <= team.theorical_rank, '': team.rank < team.theorical_rank}">
                                                     {{ team.rank + (team.rank===1?'er':'eme')}}
-                                                </span> </span>
-                                            <span class="fst-italic" style="font-size: 0.65em;">theor.{{
-                                                team.theorical_rank}}</span>
+                                                </span>
+                                                <span class="fst-italic" style="font-size: 0.65em;">theor.{{
+                                                    team.theorical_rank}}
+                                                </span>
+                                            </ng-container>
+                                            <ng-template #simpleRank>
+                                                <span style="font-size: 0.8em;">{{ team.rank + (team.rank===1?'er':'eme') }}</span>
+                                            </ng-template>
                                         </span>
                                         <span
                                             class="d-flex flex-row flex-grow-1 w-100 justify-content-between align-items-start">
@@ -56,5 +61,6 @@
             </div>
         </div>
     </div>
-    <div class="mt-2 text-center" style="font-size: 0.6em;">résultats à date pour la saison {{current_season}} - données FFB</div>
+    <div class="mt-2 text-center" style="font-size: 0.6em;">résultats à date pour la saison {{current_season}} - données
+        FFB</div>
 </div>
