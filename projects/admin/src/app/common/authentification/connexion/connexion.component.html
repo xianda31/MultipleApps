@@ -36,10 +36,10 @@
         </div>
         <div class="row mt-2 justify-content-center">
             <div class="col-12 col-sm-12 col-lg-6 d-flex justify-content-end">
-                    <button class="btn btn-success btn-login" type="submit"
+                    <button class="btn btn-success btn-login" type="submit" translate="no"
                         [disabled]="isSubmitting || email.invalid || password.invalid">
                         <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                        Connexion
+                        {{ labels.connexion }}
                     </button>
             </div>
         </div>
@@ -79,7 +79,7 @@
                         <button class="btn btn-success btn-login" type="submit"
                             [disabled]="isSubmitting || email.invalid || loggerForm.get('new_password')?.invalid">
                             <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                            Envoyer le code
+                            {{ labels.envoyerCode }}
                         </button>
             </div>
         </div>
@@ -110,19 +110,19 @@
                         <button class="btn btn-success btn-login" type="submit"
                             [disabled]="isSubmitting || !code.value || loggerForm.get('new_password')?.invalid || email.invalid">
                             <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                            Changer le mot de passe
+                            {{ labels.changerMotDePasse }}
                         </button>
             </div>
         </div>
         <div class="row mt-2 justify-content-center">
             <div class="col-12 col-sm-12 col-lg-6 d-flex justify-content-end">
                 <button class="btn btn-link p-0 link-forgot" type="button" (click)="resendResetPasswordCode()"
-                    [disabled]="email.invalid">Renvoyer le code</button>
+                    [disabled]="email.invalid">{{ labels.renvoyerCode }}</button>
             </div>
         </div>
         <div class="row mt-2 justify-content-center">
             <div class="col-12 col-sm-12 col-lg-6 d-flex justify-content-end">
-                <button class="btn btn-link p-0 link-forgot" type="button" (click)="goToSignIn()">Retour à la connexion</button>
+                <button class="btn btn-link p-0 link-forgot" type="button" (click)="goToSignIn()">{{ labels.retourConnexion }}</button>
             </div>
         </div>
     </ng-template>
@@ -138,7 +138,7 @@
             <div class="col-12 col-sm-12 col-lg-6 d-flex justify-content-end">
                                             <button class="btn btn-success btn-login" type="submit" [disabled]="isSubmitting || email.invalid || password.invalid">
                                                 <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                                Créer mon compte
+                                                {{ labels.creerCompte }}
                                             </button>
             </div>
         </div>
@@ -159,14 +159,14 @@
             </div>
             <div class="row mt-3 justify-content-center">
                 <div class="col-12 col-sm-12 col-lg-6 d-flex justify-content-end">
-                    <button class="btn btn-link p-0 link-forgot" type="button" (click)="resendConfirmEmailCode()" [disabled]="email.invalid">Renvoyer le code</button>
+                    <button class="btn btn-link p-0 link-forgot" type="button" (click)="resendConfirmEmailCode()" [disabled]="email.invalid">{{ labels.renvoyerCode }}</button>
                 </div>
             </div>
             <div class="row mt-2 justify-content-center">
                 <div class="col-12 col-sm-12 col-lg-6 d-flex justify-content-end">
                                                 <button class="btn btn-success btn-login" type="submit" [disabled]="isSubmitting || !code.value || email.invalid">
                                                     <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                                    Confirmer
+                                                    {{ labels.confirmer }}
                                                 </button>
                 </div>
             </div>
@@ -189,12 +189,12 @@
         </div>
     <div class="row mt-2 justify-content-center">
         <div class="col-12 col-sm-12 col-lg-6 d-flex justify-content-end">
-            <button class="btn btn-success btn-login" type="submit" [disabled]="!code.value || email.invalid">Confirmer</button>
+            <button class="btn btn-success btn-login" type="submit" [disabled]="!code.value || email.invalid">{{ labels.confirmer }}</button>
         </div>
     </div>
     <div class="row mt-2 justify-content-center">
         <div class="col-12 col-sm-12 col-lg-6 d-flex justify-content-end">
-            <button class="btn btn-link p-0 link-forgot" type="button" (click)="resendConfirmEmailCode()" [disabled]="email.invalid">Renvoyer le code</button>
+            <button class="btn btn-link p-0 link-forgot" type="button" (click)="resendConfirmEmailCode()" [disabled]="email.invalid">{{ labels.renvoyerCode }}</button>
         </div>
     </div>
     </ng-template>

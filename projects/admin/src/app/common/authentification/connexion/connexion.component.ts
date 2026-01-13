@@ -33,6 +33,17 @@ export class ConnexionComponent {
   currentMode?: Process_flow;
   isSubmitting = false;
 
+  // Labels sécurisés pour éviter les problèmes de cache/build
+  readonly labels = {
+    connexion: 'Connexion',
+    creerCompte: 'Créer mon compte',
+    confirmer: 'Confirmer',
+    envoyerCode: 'Envoyer le code',
+    changerMotDePasse: 'Changer le mot de passe',
+    renvoyerCode: 'Renvoyer le code',
+    retourConnexion: 'Retour à la connexion'
+  };
+
   mode$!: Observable<Process_flow>;
   // mode: Process_flow = Process_flow.SIGN_IN;
 
