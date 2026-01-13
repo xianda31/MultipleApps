@@ -63,13 +63,11 @@ export class UiConfComponent implements OnInit {
         XL: [6, [Validators.min(1), Validators.max(6)]]
       }, { validators: this.breakpointsOrderValidator }),
 
-
       read_more_lines: [3, [Validators.min(0), Validators.max(20)]],
       unfold_on_hover: [false],
       hover_unfold_delay_ms: [500, [Validators.min(0), Validators.max(10000)]],
       hover_unfold_duration_ms: [300, [Validators.min(0), Validators.max(10000)]],
       home_layout_ratio: [2, [Validators.min(0), Validators.max(2)]],
-
 
       tournaments_type: this.fb.array([]),
       default_tournament_image: [''],
@@ -79,7 +77,12 @@ export class UiConfComponent implements OnInit {
         tagline: ['Votre club de bridge convivial et dynamique'],
         ccEmail: ['']
       }),
-      album_carousel_interval_ms: [5000, [Validators.min(0), Validators.max(60000)]]
+      album_carousel_interval_ms: [5000, [Validators.min(0), Validators.max(60000)]],
+      competitions: this.fb.group({
+        preferred_organizations: [ ['FFB', 'Ligue 06 LR-PY', 'Comité des Pyrenees'] ],
+        show_members_only: [false],
+        one_year_back: [false]
+      })
     });
     // attach FormArray-level validator to enforce keys non-empty and unique
     const tt = this.uiForm.get('tournaments_type') as FormArray;
@@ -296,19 +299,22 @@ export class UiConfComponent implements OnInit {
       hover_unfold_duration_ms: homepage.hover_unfold_duration_ms ?? ui?.hover_unfold_duration_ms ?? 300,
       home_layout_ratio: homepage.home_layout_ratio ?? ui?.home_layout_ratio ?? 2,
       tournaments_type: [] as any,
-      // homepage booleans removed; breakpoints are patched/handled separately
       thumbnail: {
         width: ui?.thumbnail?.width ?? 300,
         height: ui?.thumbnail?.height ?? 200,
         ratio: ui?.thumbnail?.ratio ?? 1.78
       },
       default_tournament_image: inferredDefault ?? (ui?.default_tournament_image ?? ''),
-      // no homepage booleans
       frontBannerEnabled: ui?.frontBannerEnabled ?? false,
       homepage_intro: ui?.homepage_intro ?? '',
       email: {
         tagline: ui?.email?.tagline ?? 'Votre club de bridge convivial et dynamique',
         ccEmail: ui?.email?.ccEmail ?? ''
+      },
+      competitions: {
+        preferred_organizations: ui?.competitions?.preferred_organizations ?? ['FFB', 'Ligue 06 LR-PY', 'Comité des Pyrenees'],
+        show_members_only: ui?.competitions?.show_members_only ?? false,
+        one_year_back: ui?.competitions?.one_year_back ?? false
       }
     });
 
@@ -394,16 +400,13 @@ export class UiConfComponent implements OnInit {
           map['defaut'] = payload.default_tournament_image;
         }
         payload.tournaments_type = map;
-        // ...
       } else {
-        // ensure we still include default if tournaments_type absent
         payload.tournaments_type = {};
         if (payload.default_tournament_image) payload.tournaments_type['defaut'] = payload.default_tournament_image;
       }
       payload.homepage = { ...(formVal.homepage || {}) };
       payload.homepage.tournaments_row_cols = formVal.tournaments_row_cols;
       payload.homepage.news_row_cols = formVal.news_row_cols;
-      // persist read_more_lines, unfold_on_hover and hover_unfold_delay_ms if present in the form
       if (formVal.read_more_lines !== undefined) payload.homepage.read_more_lines = formVal.read_more_lines;
       if (formVal.unfold_on_hover !== undefined) payload.homepage.unfold_on_hover = !!formVal.unfold_on_hover;
       if (formVal.hover_unfold_delay_ms !== undefined) payload.homepage.hover_unfold_delay_ms = Number(formVal.hover_unfold_delay_ms);
@@ -414,6 +417,13 @@ export class UiConfComponent implements OnInit {
       if (formVal.email !== undefined) {
         payload.email = formVal.email;
       }
+
+      // Ajout des paramètres competitions dans le payload
+      payload.competitions = {
+        preferred_organizations: formVal.competitions?.preferred_organizations ?? ['FFB', 'Ligue 06 LR-PY', 'Comité des Pyrenees'],
+        show_members_only: formVal.competitions?.show_members_only ?? false,
+        one_year_back: formVal.competitions?.one_year_back ?? false
+      };
 
       // Save UI settings into dedicated file and publish immédiatement
       await this.systemDataService.save_ui_settings(payload);

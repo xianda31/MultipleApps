@@ -11,28 +11,44 @@
         </div>
     </div>
 
-    <div  class="row justify-content-center mb-3">
-        <div class="col-md-2" *ngFor="let labelIdx of labels.concat(['Autres']); let i = index">
-            <div class="fw-bold text-center mb-2">{{ labelIdx }}</div>
+    <div class="row justify-content-center mb-3">
+        <div class="col-md-2" *ngFor="let division of divisions.concat(['Autres']); let i = index">
+            <div class="fw-bold text-center mb-2">{{ division }}</div>
             <div class="d-flex flex-column gap-1">
-                <div *ngFor="let competition of competitionsByDivision[labelIdx]" class="card shadow-sm">
+                <div *ngFor="let competition of competitionsByDivision[division]" class="card shadow-sm">
                     <div class="card-header fw-bold text-center">{{ competition.label }}</div>
+                    <!-- <div class="card-header fw-bold text-center">{{ competition.division.label}}</div> -->
                     <div class="card-body p-2">
-                        <div *ngIf="team_results && team_results[competition.id] && team_results[competition.id].teams && team_results[competition.id].teams.length > 0">
-                            <div *ngIf="team_results[competition.id].teams && team_results[competition.id].teams.length > 0">
+                        <div
+                            *ngIf="team_results && team_results[competition.id] && team_results[competition.id].teams && team_results[competition.id].teams.length > 0">
+                            <div
+                                *ngIf="team_results[competition.id].teams && team_results[competition.id].teams.length > 0">
                                 <div *ngFor="let team of team_results[competition.id].teams" class="mb-2">
                                     <div class="d-flex align-items-center">
-                                        <span class="me-2">
-                                            {{ team.rank }}<ng-container *ngIf="team.rank == 1">er</ng-container><ng-container *ngIf="team.rank > 1">ème</ng-container>
+                                        <span class="me-2 d-flex flex-column align-items-center">
+                                            <span>
+                                                <span
+                                                    [ngClass]="{'badge bg-success': team.rank <= team.theorical_rank, '': team.rank < team.theorical_rank}">
+                                                    {{ team.rank + (team.rank===1?'er':'eme')}}
+                                                </span> </span>
+                                            <span class="fst-italic" style="font-size: 0.65em;">theor.{{
+                                                team.theorical_rank}}</span>
                                         </span>
-                                        <span class="d-flex flex-column">
-                                            <span *ngFor="let player of team.players">
-                                                <span [ngClass]="{'fw-semibold': isMember(player), 'fst-italic': !isMember(player), 'player-small': true}">
-                                                    {{ player.firstname }} {{ player.lastname }}
+                                        <span
+                                            class="d-flex flex-row flex-grow-1 w-100 justify-content-between align-items-start">
+                                            <span class="d-flex flex-column">
+                                                <span *ngFor="let player of team.players">
+                                                    <span *ngIf="isMember(player) || !show_members_only"
+                                                        [ngClass]="{'fw-semibold': isMember(player), 'fst-italic': !isMember(player), 'player-small': true}">
+                                                        {{ player.firstname }} {{ player.lastname }}
+                                                    </span>
                                                 </span>
                                             </span>
+                                            <span class="text-end ms-2" style="font-size: 0.8em;">{{ pe(team.players[0])
+                                                }}</span>
                                         </span>
                                     </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -40,3 +56,5 @@
             </div>
         </div>
     </div>
+    <div class="mt-2 text-center" style="font-size: 0.6em;">résultats à date pour la saison {{current_season}} - données FFB</div>
+</div>

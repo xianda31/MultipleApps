@@ -93,6 +93,20 @@ export class CompetitionService {
         });
       });
       const safeCompTeam = filteredTeams ?? [];
+      // ordonne les équipes membre en premier
+      safeCompTeam.sort((a, b) => {
+        const aHasMember = this.has_a_member(a.players) ? 0 : 1;
+        const bHasMember = this.has_a_member(b.players) ? 0 : 1;
+        return aHasMember - bHasMember;
+      });
+      // trie les joueurs membres en premier dans chaque équipe
+      safeCompTeam.forEach(team => {
+        team.players.sort((p1, p2) => {
+          const m1 = p1.is_member ? 0 : 1;
+          const m2 = p2.is_member ? 0 : 1;
+          return m1 - m2;
+        });
+      });
       results[comp.id] = { competition: comp, teams: safeCompTeam };
     }
     return results;
