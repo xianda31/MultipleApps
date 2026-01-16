@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { DBhandler } from './graphQL.service';
-import { AssistanceRequest, AssistanceRequestInput } from '../interfaces/assistance-request.interface';
+import { AssistanceRequest, AssistanceRequestInput, REQUEST_STATUS } from '../interfaces/assistance-request.interface';
 import { BehaviorSubject, Observable, switchMap, tap } from 'rxjs';
 import { ToastService } from './toast.service';
 
@@ -13,6 +13,28 @@ export class AssistanceRequestService {
   constructor(
     private db: DBhandler,
      private toastService: ToastService) { }
+
+  /**
+   * Crée une demande d'assistance automatique pour tracer les pannes de connexion.
+   * Utilisé pour les cas où la session est corrompue ou incohérente.
+   */
+  async reportAuthError(email: string, errorType: string, errorDetails: string) {
+    try {
+      const input: AssistanceRequestInput = {
+        nom: '[SYSTÈME]',
+        prenom: 'Auto-rapport',
+        email: email || 'inconnu',
+        type: 'Problème à la connexion',
+        texte: `[Auto-diagnostic] ${errorType}\n\nDétails: ${errorDetails}\n\nDate: ${new Date().toISOString()}\nUser-Agent: ${navigator.userAgent}`,
+        status: REQUEST_STATUS.NEW
+      };
+      await this.db.createAssistanceRequest(input);
+      console.log('[AssistanceRequestService] Panne de connexion signalée automatiquement');
+    } catch (err) {
+      // Ne pas bloquer le flux principal si le rapport échoue
+      console.warn('[AssistanceRequestService] Impossible de signaler la panne:', err);
+    }
+  }
 
   async createRequest(input: AssistanceRequestInput) {
     try {

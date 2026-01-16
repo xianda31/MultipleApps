@@ -6,6 +6,7 @@ import { AuthEvent, Process_flow } from './authentification_interface';
 import { Member } from '../interfaces/member.interface';
 import { MembersService } from '../services/members.service';
 import { ToastService } from '../services/toast.service';
+import { AssistanceRequestService } from '../services/assistance-request.service';
 
 
 
@@ -23,7 +24,8 @@ export class AuthentificationService {
   private _logged_member$: BehaviorSubject<Member | null> = new BehaviorSubject<Member | null>(null);
   constructor(
     private toastService: ToastService,
-    private memberService: MembersService
+    private memberService: MembersService,
+    private assistanceRequestService: AssistanceRequestService
   ) {
 
 
@@ -81,13 +83,42 @@ export class AuthentificationService {
         } catch (err: any) {
 
           if (err.name === 'UserAlreadyAuthenticatedException') {
-            const user = await getCurrentUser();
-            let member = await this.memberService.searchMemberByEmail(user.signInDetails?.loginId!);
-            if (member) {
-              this._logged_member$.next(member);
-              resolve(member.id);
-            }
-            else {
+            // L'utilisateur a déjà une session active, tenter de la récupérer
+            try {
+              const user = await getCurrentUser();
+              const attributes = await fetchUserAttributes();
+              const member_id = attributes['custom:member_id'];
+              if (member_id) {
+                const member = await this.memberService.readMember(member_id);
+                if (member) {
+                  this._logged_member$.next(member);
+                  resolve(member.id);
+                  return;
+                }
+              }
+              // Fallback: recherche par email si member_id absent ou membre non trouvé
+              const member = await this.memberService.searchMemberByEmail(user.signInDetails?.loginId || email);
+              if (member) {
+                this._logged_member$.next(member);
+                resolve(member.id);
+              } else {
+                // Session corrompue: signaler via assistance, déconnecter et laisser l'utilisateur réessayer
+                this.assistanceRequestService.reportAuthError(
+                  email,
+                  'Session corrompue (UserAlreadyAuthenticatedException)',
+                  `member_id=${member_id || 'absent'}, loginId=${user.signInDetails?.loginId || 'absent'}, membre introuvable après fallback`
+                );
+                await signOut({ global: false }).catch(() => {});
+                reject(new Error('Session invalide, veuillez réessayer'));
+              }
+            } catch (innerErr: any) {
+              // Erreur lors de la récupération de session: signaler, nettoyer et rejeter
+              this.assistanceRequestService.reportAuthError(
+                email,
+                'Erreur récupération session (UserAlreadyAuthenticatedException)',
+                `Erreur interne: ${innerErr?.message || innerErr}`
+              );
+              await signOut({ global: false }).catch(() => {});
               reject(err);
             }
           } else if (err.name === 'UserNotConfirmedException') {

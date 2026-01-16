@@ -90,11 +90,14 @@ export class ConnexionComponent {
           this.logging_msg = 'Compte non confirmé. Un code vous a été envoyé par e-mail.';
         } else if (name === 'PasswordResetRequiredException') {
           this.logging_msg = 'Réinitialisation requise. Un code vous a été envoyé par e-mail.';
-        } else if (name === 'NotAuthorizedException' || name === 'UserNotFoundException') {
-          this.logging_msg = "Compte introuvable ou mot de passe invalide. Création de compte proposée.";
-          // Basculer sur la création de compte si le compte est introuvable ou mdp invalide
+        } else if (name === 'UserNotFoundException') {
+          // Le compte n'existe pas : proposer la création
+          this.logging_msg = "Compte introuvable. Création de compte proposée.";
           this.toastService.showInfo('Connexion', 'Création de compte proposée.');
           this.goSignUp();
+        } else if (name === 'NotAuthorizedException') {
+          // Mot de passe incorrect ou autre erreur d'autorisation : ne pas rediriger vers la création
+          this.logging_msg = "Mot de passe incorrect. Vérifiez votre saisie ou réinitialisez votre mot de passe.";
         } else {
           this.logging_msg = err?.message || 'Connexion impossible';
         }
