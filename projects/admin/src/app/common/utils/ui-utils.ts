@@ -18,14 +18,23 @@ export function applyUiThemeInitializer(systemDataService: SystemDataService) {
       const t = ui?.template || {};
       const root = document.documentElement;
       const headerBg = t['header_bg'] || ui['header_bg'];
+      const headerTextColor = t['header_text_color'] || ui['header_text_color'];
       const navbarBg = t['navbar_bg'] || ui['navbar_bg'];
+      const navbarTextColor = t['navbar_text_color'] || ui['navbar_text_color'];
       const footerBg = t['footer_bg'] || ui['footer_bg'];
+      const footerTextColor = t['footer_text_color'] || ui['footer_text_color'];
       if (headerBg) {
         root.style.setProperty('--brand-bg', headerBg);
         root.style.setProperty('--title-bg', headerBg);
       }
+      if (headerTextColor) {
+        root.style.setProperty('--brand-text', headerTextColor);
+        root.style.setProperty('--title-text', headerTextColor);
+      }
       if (navbarBg) root.style.setProperty('--navbar-bg', navbarBg);
+      if (navbarTextColor) root.style.setProperty('--navbar-text', navbarTextColor);
       if (footerBg) root.style.setProperty('--footer-bg', footerBg);
+      if (footerTextColor) root.style.setProperty('--footer-text', footerTextColor);
     } catch (e) {
       // ignore errors, keep default theme variables from assets
     }
@@ -73,6 +82,12 @@ export function applyUiThemeFromConfig(ui: UIConfiguration | null | undefined) {
     root.style.setProperty('--brand-bg', t.header_bg);
     root.style.setProperty('--title-bg', t.header_bg);
   }
+  if (t.header_text_color) {
+    root.style.setProperty('--brand-text', t.header_text_color);
+    root.style.setProperty('--title-text', t.header_text_color);
+  }
   if (t.navbar_bg) root.style.setProperty('--navbar-bg', t.navbar_bg);
+  if (t.navbar_text_color) root.style.setProperty('--navbar-text', t.navbar_text_color);
   if (t.footer_bg) root.style.setProperty('--footer-bg', t.footer_bg);
+  if (t.footer_text_color) root.style.setProperty('--footer-text', t.footer_text_color);
 }

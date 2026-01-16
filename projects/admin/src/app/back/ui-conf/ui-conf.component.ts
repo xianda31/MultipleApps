@@ -44,6 +44,9 @@ export class UiConfComponent implements OnInit {
       dark_color: [localStorage.getItem('ui-dark_color') || '#212529'],
       brand_bg: [localStorage.getItem('ui-brand_bg') || '#2e332d'],
       header_bg: ['#2e332d'],
+      header_text_color: ['#ffffff'],
+      navbar_text_color: ['#ffffff'],
+      footer_text_color: ['#ffffff'],
       navbar_bg: ['#3f493d'],
       footer_bg: ['#f8f9fa'],
       template: this.fb.group({
@@ -291,7 +294,8 @@ export class UiConfComponent implements OnInit {
     this.uiForm.patchValue({
       template: {
         logo_path: template.logo_path ?? '',
-        background_color: template.background_color ?? '#ffffff'
+        background_color: template.background_color ?? '#ffffff',
+        header_text_color: template.header_text_color ?? ui?.header_text_color ?? '#ffffff'
       },
       tournaments_row_cols: {
         SM: tournaments.SM ?? 1,
@@ -331,6 +335,9 @@ export class UiConfComponent implements OnInit {
       },
       brand_bg: ui?.brand_bg ?? '#2e332d',
       header_bg: ui?.header_bg ?? '#2e332d',
+      header_text_color: template.header_text_color ?? ui?.header_text_color ?? '#ffffff',
+      navbar_text_color: template.navbar_text_color ?? ui?.navbar_text_color ?? '#ffffff',
+      footer_text_color: template.footer_text_color ?? ui?.footer_text_color ?? '#ffffff',
       navbar_bg: ui?.navbar_bg ?? '#3f493d',
       footer_bg: ui?.footer_bg ?? '#f8f9fa',
     });
@@ -448,6 +455,11 @@ export class UiConfComponent implements OnInit {
       payload.header_bg = formVal.header_bg;
       payload.navbar_bg = formVal.navbar_bg;
       payload.footer_bg = formVal.footer_bg;
+      // Stocker les couleurs de police dans template
+      payload.template = payload.template || {};
+      payload.template.header_text_color = formVal.header_text_color;
+      payload.template.navbar_text_color = formVal.navbar_text_color;
+      payload.template.footer_text_color = formVal.footer_text_color;
 
       // Save UI settings into dedicated file and publish immédiatement
       await this.systemDataService.save_ui_settings(payload);
@@ -481,6 +493,11 @@ export class UiConfComponent implements OnInit {
       if (formVal.hover_unfold_delay_ms !== undefined) preview.homepage.hover_unfold_delay_ms = Number(formVal.hover_unfold_delay_ms);
       if (formVal.hover_unfold_duration_ms !== undefined) preview.homepage.hover_unfold_duration_ms = Number(formVal.hover_unfold_duration_ms);
       if (formVal.home_layout_ratio !== undefined) preview.homepage.home_layout_ratio = Number(formVal.home_layout_ratio);
+      // Stocker les couleurs de police dans template
+      preview.template = preview.template || {};
+      preview.template.header_text_color = formVal.header_text_color;
+      preview.template.navbar_text_color = formVal.navbar_text_color;
+      preview.template.footer_text_color = formVal.footer_text_color;
       this.systemDataService.patchUiSettings(preview);
       // Update export blob to reflect the previewed state
       this.export_file_url = this.fileService.json_to_blob(preview);

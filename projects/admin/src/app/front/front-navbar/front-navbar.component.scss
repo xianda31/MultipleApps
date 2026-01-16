@@ -7,19 +7,19 @@
 /* -----------------------------
 	 Dropdown / submenu styling
 	 ----------------------------- */
-.dropdown-menu .dropdown-toggle,
-.dropdown-menu .nav-link,
-.dropdown-menu .dropdown-item,
-.dropdown-submenu .dropdown-menu .dropdown-item {
+ .dropdown-menu .dropdown-toggle,
+ .dropdown-menu .nav-link,
+ .dropdown-menu .dropdown-item,
+ .dropdown-submenu .dropdown-menu .dropdown-item {
 	color: #212529 !important;
 	background: #fff !important;
-}
+ }
 
-.navbar-dark .dropdown-menu .dropdown-item,
-.dropdown-submenu .dropdown-menu .dropdown-item {
+ .navbar-dark .dropdown-menu .dropdown-item,
+ .dropdown-submenu .dropdown-menu .dropdown-item {
 	color: #212529 !important;
 	background: #fff !important;
-}
+ }
 
 .navbar-dark .dropdown-menu .dropdown-item:hover,
 .navbar-dark .dropdown-menu .dropdown-item:focus,
@@ -170,14 +170,16 @@
 	 Desktop (landscape) tweaks
 	 ----------------------------- */
 @media (min-width: 768px) and (orientation: landscape) {
-	.navbar,
-	.navbar-collapse {
-		display: flex !important;
-		visibility: visible !important;
-		min-height: 68px;
-		opacity: 1 !important;
-	}
 
+	.navbar,
+	.navbar-collapse,
+	.navbar-nav {
+		height: auto !important;
+		min-height: 0 !important;
+		padding-top: 0 !important;
+		padding-bottom: 0 !important;
+		color: var(--navbar-text, #fff) !important;
+	}
 	.navbar-nav {
 		flex-direction: row !important;
 		align-items: center !important;

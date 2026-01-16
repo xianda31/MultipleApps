@@ -17,8 +17,11 @@ export interface UIConfiguration {
   template?: {
     logo_path?: string; // S3 path
     header_bg?: string; // Couleur bandeau supérieur & barre de titre
+    header_text_color?: string; // Couleur du texte du bandeau supérieur & barre de titre
     navbar_bg?: string; // Couleur navbar
+    navbar_text_color?: string; // Couleur du texte de la navbar
     footer_bg?: string; // Couleur pied de page
+    footer_text_color?: string; // Couleur du texte du pied de page
   };
 
   homepage: {

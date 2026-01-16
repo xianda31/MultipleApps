@@ -60,16 +60,16 @@
         style="bottom: -30px; left: 30px; max-width: 130px;">
     </span>
 
-    <p class="mb-0">© 2025 Bridge Club de Saint-Orens</p>
+    <p class="mb-0" style="color:var(--footer-text, #fff)">© 2025 Bridge Club de Saint-Orens</p>
 
-    <div class="row justify-content-center">
+    <div class="row justify-content-center" style="color:var(--footer-text, #fff)">
       <div class="col-auto">
-        <p class="mb-0 text-muted">Tous droits réservés</p>
+        <p class="mb-0" style="color:var(--footer-text, #fff)">Tous droits réservés</p>
       </div>
       @if (footer_menus && footer_menus.length > 0) {
         @for (menu of footer_menus; track menu.navitem.id) {
           <div class="col-auto">
-            <a [routerLink]="menu.navitem.path" class="text-decoration-underline mb-0">{{ menu.navitem.label }}</a>
+            <a [routerLink]="menu.navitem.path" class="text-decoration-underline mb-0" style="color:var(--footer-text, #fff)">{{ menu.navitem.label }}</a>
           </div>
         }
       }

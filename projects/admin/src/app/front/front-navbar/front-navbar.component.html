@@ -2,7 +2,7 @@
   <div class="container-fluid h-100 d-flex align-items-center">
     @if (brandNavitem) {
       <a class="navbar-brand d-flex align-items-center position-relative" [routerLink]="brandNavitem.path">
-        {{ brandNavitem.label }}
+        <span style="color:var(--navbar-text, #fff)">{{ brandNavitem.label }}</span>
       </a>
     }
     <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"
@@ -60,7 +60,7 @@
         <img [src]="avatar$ | async" alt="avatar" class="rounded-circle"
           style="width:28px; height:28px; max-width:28px; max-height:28px; object-fit:cover">
         }
-        {{ label_transformer(menu.navitem.label) | async }}
+        <span>{{ label_transformer(menu.navitem.label) | async }}</span>
       </a>
       <ul class="dropdown-menu" ngbDropdownMenu [attr.aria-labelledby]="'nav-' + menu.navitem.id">
         @for (child of (menu.childs || []); track child.navitem.id) {
