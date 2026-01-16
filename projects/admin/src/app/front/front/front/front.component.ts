@@ -12,6 +12,7 @@ import { FileService } from '../../../common/services/files.service';
 import {  MenuStructure, NAVITEM_POSITION, NAVITEM_TYPE } from '../../../common/interfaces/navitem.interface';
 import { SandboxService } from '../../../common/services/sandbox.service';
 import { NavItemsService } from '../../../common/services/navitem.service';
+import { applyUiThemeFromConfig } from '../../../common/utils/ui-utils';
 
 @Component({
   selector: 'app-front',
@@ -30,8 +31,6 @@ export class FrontComponent {
   albums: string[] = [];
   uiSettings: UIConfiguration | null = null;
   logoUrl: string | null = null;
-  backgroundColor: string | null = null;
-  // albums$ : Observable<string[]> = of([]);
   today = new Date();
 
   constructor(
@@ -72,9 +71,10 @@ export class FrontComponent {
     this.systemDataService.get_ui_settings().subscribe((ui: UIConfiguration) => {
       const u: UIConfiguration = ui || {};
       this.uiSettings = u;
-      this.backgroundColor = u?.template?.background_color || null;
       const logoPath = u?.template?.logo_path;
       if (logoPath) this.fileService.getPresignedUrl$(logoPath).subscribe({ next: (u2) => this.logoUrl = u2, error: () => this.logoUrl = null });
+      // Appliquer les couleurs du front via CSS variables
+      applyUiThemeFromConfig(u);
     });
   }
 }

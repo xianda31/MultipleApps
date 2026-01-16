@@ -37,9 +37,14 @@ app-front-navbar {
   }
 }
 
+
+
 html, body {
   overflow-y: hidden !important;
   height: 100vh !important;
+  background: var(--main-bg) !important;
+  color: var(--main-text) !important;
+  font-family: var(--font-main) !important;
 }
 
 .container-fluid.root-bg {
@@ -78,7 +83,7 @@ html, body {
 
 
 .root-bg {
-  font-family: 'Amarante', serif;
+  font-family: var(--font-main);
   min-height: 100vh;
   padding-left: 0;
   display: flex;
@@ -89,23 +94,23 @@ html, body {
 
 
 .brand-bg {
-  background-color: rgb(46, 51, 45);
-  color: white;
+  background-color: var(--brand-bg);
+  color: var(--main-text);
   font-size: 1.2rem;
   @media (min-width: 1200px) { font-size: 1.5rem; }
 }
 
 
 .navbar-bg {
-  background-color: rgb(63, 73, 61);
-  color: white;
+  background-color: var(--navbar-bg);
+  color: var(--main-text);
 }
 
 
 .title-bg {
-  font-family: 'Emblema One', cursive;
-  background-color: rgb(46, 51, 45);
-  color: white;
+  font-family: var(--font-title, var(--font-main));
+  background-color: var(--title-bg);
+  color: var(--main-text);
 }
 
 /* Masque la scrollbar verticale interne tout en gardant le scroll fonctionnel */
@@ -127,6 +132,11 @@ html, body {
   box-shadow: 0 0 0 1px rgba(0,0,0,.05), 0 .25rem .5rem rgba(0,0,0,.08);
   border: 1px solid rgba(255,193,7,.35);
   text-transform: uppercase;
+}
+
+.footer-bg {
+  background-color: var(--footer-bg, #f8f9fa);
+  color: var(--main-text);
 }
 
 

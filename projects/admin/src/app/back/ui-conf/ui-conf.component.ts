@@ -1,4 +1,3 @@
-
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
@@ -35,6 +34,18 @@ export class UiConfComponent implements OnInit {
     );
 
     this.uiForm = this.fb.group({
+      main_color: [localStorage.getItem('ui-main_color') || '#3f493d'],
+      secondary_color: [localStorage.getItem('ui-secondary_color') || '#ffc107'],
+      success_color: [localStorage.getItem('ui-success_color') || '#198754'],
+      danger_color: [localStorage.getItem('ui-danger_color') || '#dc3545'],
+      warning_color: [localStorage.getItem('ui-warning_color') || '#ffc107'],
+      info_color: [localStorage.getItem('ui-info_color') || '#0dcaf0'],
+      light_color: [localStorage.getItem('ui-light_color') || '#f8f9fa'],
+      dark_color: [localStorage.getItem('ui-dark_color') || '#212529'],
+      brand_bg: [localStorage.getItem('ui-brand_bg') || '#2e332d'],
+      header_bg: ['#2e332d'],
+      navbar_bg: ['#3f493d'],
+      footer_bg: ['#f8f9fa'],
       template: this.fb.group({
         logo_path: [''],
         background_color: ['#ffffff']
@@ -317,7 +328,11 @@ export class UiConfComponent implements OnInit {
         show_members_only: ui?.competitions?.show_members_only ?? false,
         one_year_back: ui?.competitions?.one_year_back ?? false,
         show_theorical_rank: ui?.competitions?.show_theorical_rank ?? false
-      }
+      },
+      brand_bg: ui?.brand_bg ?? '#2e332d',
+      header_bg: ui?.header_bg ?? '#2e332d',
+      navbar_bg: ui?.navbar_bg ?? '#3f493d',
+      footer_bg: ui?.footer_bg ?? '#f8f9fa',
     });
 
     // Patch card_thumbnails array
@@ -428,6 +443,12 @@ export class UiConfComponent implements OnInit {
         show_theorical_rank: formVal.competitions?.show_theorical_rank ?? false
       };
 
+      // Ajout des couleurs de thème dans le payload
+      payload.brand_bg = formVal.brand_bg;
+      payload.header_bg = formVal.header_bg;
+      payload.navbar_bg = formVal.navbar_bg;
+      payload.footer_bg = formVal.footer_bg;
+
       // Save UI settings into dedicated file and publish immédiatement
       await this.systemDataService.save_ui_settings(payload);
       // Le subscribe initial à get_ui_settings() sera notifié et mettra à jour l'UI
@@ -467,6 +488,22 @@ export class UiConfComponent implements OnInit {
     } catch (e: any) {
       this.toastService.showErrorToast('UI settings', 'Erreur affichage de l\'aperçu');
     }
+  }
+
+
+
+  applyTheme() {
+    const main = this.uiForm.get('main_color')?.value || '#3f493d';
+    const secondary = this.uiForm.get('secondary_color')?.value || '#ffc107';
+    const font = this.uiForm.get('main_font')?.value || 'Amarante, serif';
+    document.documentElement.style.setProperty('--primary', main);
+    document.documentElement.style.setProperty('--secondary', secondary);
+    document.documentElement.style.setProperty('--font-main', font);
+    localStorage.setItem('ui-main_color', main);
+    localStorage.setItem('ui-secondary_color', secondary);
+    localStorage.setItem('ui-main_font', font);
+
+    // Nettoyage : plus de couleurs Bootstrap
   }
 
 }

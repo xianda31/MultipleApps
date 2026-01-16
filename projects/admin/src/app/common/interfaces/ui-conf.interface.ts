@@ -16,7 +16,9 @@ export interface ImageSize {
 export interface UIConfiguration {
   template?: {
     logo_path?: string; // S3 path
-    background_color?: string; // CSS color
+    header_bg?: string; // Couleur bandeau supérieur & barre de titre
+    navbar_bg?: string; // Couleur navbar
+    footer_bg?: string; // Couleur pied de page
   };
 
   homepage: {

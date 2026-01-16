@@ -10,6 +10,8 @@ import { distinctUntilChanged, skip } from 'rxjs/operators';
 import { NavItemsService } from './common/services/navitem.service';
 import { DynamicRoutesService } from './common/services/dynamic-routes.service';
 import { SandboxService } from './common/services/sandbox.service';
+import { SystemDataService } from './common/services/system-data.service';
+import { applyUiThemeInitializer } from './common/utils/ui-utils';
 
 // Fonction d'initialisation pour précharger les routes dynamiques du front
 export const APP_SANDBOX = new InjectionToken<boolean>('APP_SANDBOX');
@@ -62,6 +64,8 @@ export function preloadFrontRoutes(
   };
 }
 
+
+
 const scrollConfig: InMemoryScrollingOptions = {
   scrollPositionRestoration: 'enabled'
 }
@@ -76,6 +80,12 @@ export const appConfig: ApplicationConfig = {
       provide: APP_INITIALIZER,
       useFactory: preloadFrontRoutes,
       deps: [NavItemsService, DynamicRoutesService, SandboxService],
+      multi: true
+    },
+    {
+      provide: APP_INITIALIZER,
+      useFactory: applyUiThemeInitializer,
+      deps: [SystemDataService],
       multi: true
     },
     { provide: APP_SANDBOX, useFactory: (sandboxService: SandboxService) => sandboxService.value, deps: [SandboxService] }

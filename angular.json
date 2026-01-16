@@ -309,6 +309,11 @@
               {
                 "glob": "**/*",
                 "input": "projects/admin/public"
+              },
+              {
+                "glob": "**/*",
+                "input": "projects/admin/src/assets",
+                "output": "assets"
               }
             ],
             "styles": [
@@ -388,6 +393,11 @@
               {
                 "glob": "**/*",
                 "input": "projects/admin/public"
+              },
+              {
+                "glob": "**/*",
+                "input": "projects/admin/src/assets",
+                "output": "assets"
               }
             ],
             "styles": [

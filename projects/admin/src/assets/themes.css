@@ -1,0 +1,18 @@
+:root {
+  --main-bg: #f8f9fa;
+  --main-text: #222;
+  --primary: #3f493d;
+  --secondary: #ffc107;
+  --font-main: 'Amarante', serif;
+  --font-title: 'Emblema One', cursive;
+  --brand-bg: #2e332d;
+  --navbar-bg: #3f493d;
+  --title-bg: #2e332d;
+  --footer-bg: #f8f9fa;
+  --bs-success: #198754;
+  --bs-danger: #dc3545;
+  --bs-warning: #ffc107;
+  --bs-info: #0dcaf0;
+  --bs-light: #f8f9fa;
+  --bs-dark: #212529;
+}

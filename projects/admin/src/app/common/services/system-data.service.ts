@@ -151,7 +151,7 @@ export class SystemDataService {
       }),
       catchError((err) => {
         const defaults: UIConfiguration = {
-          template: { logo_path: '', background_color: '#ffffff' },
+          template: { logo_path: '' },
           homepage: { tournaments_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 }, news_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 } },
           frontBannerEnabled: false,
           homepage_intro: '',
@@ -215,7 +215,7 @@ export class SystemDataService {
 
   private getDefaultUi(): UIConfiguration {
     return {
-      template: { logo_path: '', background_color: '#ffffff' },
+      template: { logo_path: ''},
       homepage: { tournaments_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 }, news_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 } },
       frontBannerEnabled: false,
       homepage_intro: ''

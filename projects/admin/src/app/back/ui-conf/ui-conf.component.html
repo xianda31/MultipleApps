@@ -1,7 +1,53 @@
 <div class="container ui-conf-root">
-  <h5>Paramétrage interface utilisateur</h5>
   <form [formGroup]="uiForm" (ngSubmit)="saveSettings()">
     <div class="row row-cols-1 row-cols-md-2 g-3">
+      <!-- section Thème -->
+      <div class="col">
+        <div class="card h-100">
+          <div class="card-title fw-bold fs-5 ms-2">Paramétrage interface utilisateur</div>
+          <div class="card-body">
+            <div class="mb-3 row">
+              <div class="col-12 col-md-6">
+                <!-- Couleurs du front -->
+                <div class="fw-bold small mb-1 mt-2 text-primary">Couleurs du front&nbsp;:</div>
+                <div class="d-flex align-items-center mb-0" style="gap:0.25rem; min-height:1.8rem;">
+                  <input type="color" style="width:1.6rem;height:1.6rem;padding:0;border:none;"
+                    formControlName="header_bg" (change)="applyTheme()">
+                  <label class="form-label mb-0 flex-grow-1" style="font-size:0.95em;">Bandeau supérieur & Barre de titre</label>
+                </div>
+                <div class="d-flex align-items-center mb-0" style="gap:0.25rem; min-height:1.8rem;">
+                  <input type="color" style="width:1.6rem;height:1.6rem;padding:0;border:none;"
+                    formControlName="navbar_bg" (change)="applyTheme()">
+                  <label class="form-label mb-0 flex-grow-1" style="font-size:0.95em;">Navbar</label>
+                </div>
+                <div class="d-flex align-items-center mb-0" style="gap:0.25rem; min-height:1.8rem;">
+                  <input type="color" style="width:1.6rem;height:1.6rem;padding:0;border:none;"
+                    formControlName="footer_bg" (change)="applyTheme()">
+                  <label class="form-label mb-0 flex-grow-1" style="font-size:0.95em;">Pied de page</label>
+                </div>
+              </div>
+              <div class="col-12 col-md-6">
+                <!-- Polices -->
+                <div class="mb-2">
+                  <label class="form-label fw-bold mb-0">Police principale</label>
+                  <input type="text" class="form-control form-control-sm" formControlName="main_font"
+                    placeholder="ex: Amarante, serif" (change)="applyTheme()">
+                </div>
+                <div class="mb-2">
+                  <label class="form-label fw-bold mb-0">Police des titres</label>
+                  <input type="text" class="form-control form-control-sm" formControlName="title_font"
+                    placeholder="ex: Emblema One, cursive" (change)="applyTheme()">
+                </div>
+              </div>
+            </div>
+            <!-- Bouton Enregistrer accessible en bas de la section -->
+            <div class="d-flex justify-content-end mt-2">
+              <button type="submit" class="btn btn-success btn-sm"
+                [disabled]="uiForm.invalid || uiForm.get('tournaments_row_cols')?.invalid">Enregistrer</button>
+            </div>
+          </div>
+        </div>
+      </div>
       <!-- section Accueil -->
       <div class="col">
         <div class="card h-100">
@@ -235,35 +281,38 @@
             </div>
           </div>
         </div>
-       </div>
-       <!-- Section Résultats compétitions -->
-       <div class="col">
-         <div class="card h-100">
-           <div class="card-title fw-bold fs-5 ms-2">Résultats compétitions</div>
-           <div class="card-body" formGroupName="competitions">
-             <div class="mb-2">
-               <label class="form-label">Sélection</label>
-               <input type="text" class="form-control" formControlName="preferred_organizations"
-                 placeholder="Séparez par des virgules" />
-               <div class="small text-muted mt-1">Exemple : FFB, Ligue 06 LR-PY, Comité des Pyrenees</div>
-             </div>
-             <div class="mb-2 form-check">
-               <input type="checkbox" class="form-check-input" id="showMembersOnly" formControlName="show_members_only" />
-               <label class="form-check-label" for="showMembersOnly">Afficher uniquement les membres dans les équipes</label>
-             </div>
-             <div class="mb-2 form-check">
-               <input type="checkbox" class="form-check-input" id="oneYearBack" formControlName="one_year_back" />
-               <label class="form-check-label" for="oneYearBack">Afficher la saison précédente</label>
-             </div>
-              <div class="mb-2 form-check">
-                <input type="checkbox" class="form-check-input" id="showTheoricalRank" formControlName="show_theorical_rank" />
-                <label class="form-check-label" for="showTheoricalRank">Afficher le rang théorique</label>
-              </div>
-           </div>
-         </div>
-       </div>
       </div>
-    
+      <!-- Section Résultats compétitions -->
+      <div class="col">
+        <div class="card h-100">
+          <div class="card-title fw-bold fs-5 ms-2">Résultats compétitions</div>
+          <div class="card-body" formGroupName="competitions">
+            <div class="mb-2">
+              <label class="form-label">Sélection</label>
+              <input type="text" class="form-control" formControlName="preferred_organizations"
+                placeholder="Séparez par des virgules" />
+              <div class="small text-muted mt-1">Exemple : FFB, Ligue 06 LR-PY, Comité des Pyrenees</div>
+            </div>
+            <div class="mb-2 form-check">
+              <input type="checkbox" class="form-check-input" id="showMembersOnly"
+                formControlName="show_members_only" />
+              <label class="form-check-label" for="showMembersOnly">Afficher uniquement les membres dans les
+                équipes</label>
+            </div>
+            <div class="mb-2 form-check">
+              <input type="checkbox" class="form-check-input" id="oneYearBack" formControlName="one_year_back" />
+              <label class="form-check-label" for="oneYearBack">Afficher la saison précédente</label>
+            </div>
+            <div class="mb-2 form-check">
+              <input type="checkbox" class="form-check-input" id="showTheoricalRank"
+                formControlName="show_theorical_rank" />
+              <label class="form-check-label" for="showTheoricalRank">Afficher le rang théorique</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
 
     <!-- Import/Export/store Action buttons -->
     <div class="col-12 d-flex gap-2 justify-content-end mt-2 bg-body-secondary p-2 rounded">
@@ -316,4 +365,5 @@
     </ng-template>
 
   </form>
+
 </div>

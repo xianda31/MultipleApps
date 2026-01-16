@@ -1,10 +1,35 @@
-import { BreakpointsSettings } from '../interfaces/ui-conf.interface';
+import { BreakpointsSettings, UIConfiguration } from '../interfaces/ui-conf.interface';
 
 export function clampBreakpoint(val: any): number | null {
   if (val === null || val === undefined || val === '') return null;
   const n = Number(val);
   if (isNaN(n)) return null;
   return Math.max(1, Math.min(6, Math.trunc(n)));
+}
+
+// Initializer to apply UI theme variables before the app starts
+import { SystemDataService } from '../services/system-data.service';
+import { firstValueFrom } from 'rxjs';
+
+export function applyUiThemeInitializer(systemDataService: SystemDataService) {
+  return async () => {
+    try {
+      const ui = await firstValueFrom(systemDataService.get_ui_settings());
+      const t = ui?.template || {};
+      const root = document.documentElement;
+      const headerBg = t['header_bg'] || ui['header_bg'];
+      const navbarBg = t['navbar_bg'] || ui['navbar_bg'];
+      const footerBg = t['footer_bg'] || ui['footer_bg'];
+      if (headerBg) {
+        root.style.setProperty('--brand-bg', headerBg);
+        root.style.setProperty('--title-bg', headerBg);
+      }
+      if (navbarBg) root.style.setProperty('--navbar-bg', navbarBg);
+      if (footerBg) root.style.setProperty('--footer-bg', footerBg);
+    } catch (e) {
+      // ignore errors, keep default theme variables from assets
+    }
+  };
 }
 
 export function normalizeBreakpoints(b: any): BreakpointsSettings {
@@ -38,4 +63,16 @@ export function formatRowColsClasses(bp: BreakpointsSettings | undefined): strin
   if (cols.LG !== undefined && cols.LG !== null) classes.push('row-cols-lg-' + cols.LG);
   if (cols.XL !== undefined && cols.XL !== null) classes.push('row-cols-xl-' + cols.XL);
   return classes;
+}
+
+export function applyUiThemeFromConfig(ui: UIConfiguration | null | undefined) {
+  if (!ui) return;
+  const t = ui.template || {};
+  const root = document.documentElement;
+  if (t.header_bg) {
+    root.style.setProperty('--brand-bg', t.header_bg);
+    root.style.setProperty('--title-bg', t.header_bg);
+  }
+  if (t.navbar_bg) root.style.setProperty('--navbar-bg', t.navbar_bg);
+  if (t.footer_bg) root.style.setProperty('--footer-bg', t.footer_bg);
 }

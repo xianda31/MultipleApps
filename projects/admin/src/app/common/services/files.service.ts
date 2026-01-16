@@ -1,4 +1,3 @@
-
 import { Injectable } from '@angular/core';
 import { getUrl, list, remove } from 'aws-amplify/storage';
 import { FileSystemNode, S3Item } from '../interfaces/file.interface';
