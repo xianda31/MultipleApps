@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { TournamentService } from '../../../common/services/tournament.service';
 import { Person, Player, Team, TournamentTeams } from '../../../common/ffb/interface/tournament_teams.interface';
-import { BehaviorSubject, map, Observable, of, Subject, Subscription } from 'rxjs';
+import { BehaviorSubject, map, Observable } from 'rxjs';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { Member } from '../../../common/interfaces/member.interface';
 import { club_tournament_extended, FEE_RATE, Game, Game_status, Gamer } from '../fees.interface';
@@ -14,7 +14,6 @@ import { MembersService } from '../../../common/services/members.service';
 import { ToastService } from '../../../common/services/toast.service';
 import { DBhandler } from "../../../common/services/graphQL.service";
 import { MemberSettingsService } from '../../../common/services/member-settings.service';
-import { BookEntry } from '../../../common/interfaces/accounting.interface';
 import { PaymentMode } from '../../shop/cart/cart.interface';
 
 
@@ -123,6 +122,19 @@ export class FeesCollectorService {
     }
   }
 
+private update_members_debts() {
+    let members = this.get_members();
+    let debts= this.BookService.get_debts();
+
+    this.game.gamers.forEach((gamer) => {
+      if (gamer.is_member) {
+        const fullname = this.membersService.full_name(this.membersService.getMemberbyLicense(gamer.license)!);
+        let member_debt = debts.get(fullname);
+        gamer.debt = member_debt ? member_debt.total : 0;
+      }
+    });
+  }
+
   private update_members_assets() {
     let members = this.get_members();
 
@@ -187,6 +199,7 @@ export class FeesCollectorService {
         this.tournament.status = Game_status.RECOVERED;
         this.game = game; // restore previous game state
         this.generate_member_images();
+        this.update_members_debts() ;
         this.update_members_assets();
         // this.set_game(tournament);
       }
@@ -230,6 +243,7 @@ export class FeesCollectorService {
     if (game) {
       this.game = game;
       this.update_members_assets();
+      this.update_members_debts() ;
       return true;
     } else {
       this.toastService.showErrorToast('restauration', 'Aucun état de saisie trouvé pour ce tournoi');
@@ -269,6 +283,7 @@ export class FeesCollectorService {
         gamer.price = gamer.is_member ? this.game.member_trn_price * factor : this.game.non_member_trn_price * factor;
       });
 
+      this.update_members_debts() ;
       this.update_members_assets();   // will update gamers game_credits & trigger _game$.next(this.game)
     }
     );
@@ -285,6 +300,7 @@ export class FeesCollectorService {
         is_member: this.is_member(player.license_number),
         game_credits: 0,
         acc_credits: (this.is_member(player.license_number)) ? this.check_acc(this.membersService.full_name(this.membersService.getMemberbyLicense(player.license_number)!)) : false,
+        debt: 0,
         index: this.game.gamers.length,
         in_euro: true, // default to euro
         price: this.is_member(player.license_number) ? this.game.member_trn_price * factor : this.game.non_member_trn_price * factor,
@@ -293,6 +309,7 @@ export class FeesCollectorService {
         photo_url$: this.is_member(player.license_number) ? this.membersSettingsService.getAvatarUrl(this.membersService.getMemberbyLicense(player.license_number)!) : null
       };
       this.game.gamers.push(new_gamer);
+      this.update_members_debts() ;
       this.update_members_assets();   // will update gamers game_credits & trigger _game$.next(this.game)
     }
   }
@@ -366,6 +383,7 @@ export class FeesCollectorService {
       is_member: is_member,
       game_credits: game_credits,
       acc_credits: acc_credits,
+      debt: 0,
       in_euro: in_euro,
       index: index,
       price: price,
