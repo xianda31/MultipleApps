@@ -47,10 +47,15 @@ export class CompetitionsComponent {
 
       this.competitionService.getCompetionsResults(this.current_season).subscribe(results => {
         this.team_results = results;
-        // Ne garder que les compétitions ayant au moins une équipe avec au moins un joueur
+        console.log('CompetitionsComponent: received competition results', results);
+        // Ne garder que les compétitions non E-* et ayant au moins une équipe avec au moins un joueur
         this.competitions = Object.values(results)
+        .filter(r => !r.competition.label.startsWith('E '))
           .filter(r => Array.isArray(r.teams) && r.teams.some((team: any) => Array.isArray(team.players) && team.players.length > 0))
           .map(r => r.competition);
+
+          console.log(`CompetitionsComponent: loaded ${this.competitions.length} competitions with results for season ${this.current_season}`);
+          console.log(this.competitions);
         this.results_extracted = true;
       });
     });
