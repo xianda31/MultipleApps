@@ -151,7 +151,20 @@ export class SystemDataService {
       }),
       catchError((err) => {
         const defaults: UIConfiguration = {
-          template: { logo_path: '' },
+          template: {
+            logo_path: '',
+            header_bg: '#2e332d',
+            header_text_color: '#ffffff',
+            navbar_bg: '#3f493d',
+            navbar_text_color: '#ffffff',
+            footer_bg: '#f8f9fa',
+            footer_text_color: '#ffffff',
+            main_font: 'Amarante, serif',
+            title_font: 'Emblema One, cursive',
+            content_font: 'Amarante, serif',
+            content_bg: '#ffffff',
+            content_text_color: '#222222'
+          },
           homepage: { tournaments_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 }, news_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 } },
           frontBannerEnabled: false,
           homepage_intro: '',
@@ -215,7 +228,20 @@ export class SystemDataService {
 
   private getDefaultUi(): UIConfiguration {
     return {
-      template: { logo_path: ''},
+      template: {
+        logo_path: '',
+        header_bg: '#2e332d',
+        header_text_color: '#ffffff',
+        navbar_bg: '#3f493d',
+        navbar_text_color: '#ffffff',
+        footer_bg: '#f8f9fa',
+        footer_text_color: '#ffffff',
+        main_font: 'Amarante, serif',
+        title_font: 'Emblema One, cursive',
+        content_font: 'Amarante, serif',
+        content_bg: '#ffffff',
+        content_text_color: '#222222'
+      },
       homepage: { tournaments_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 }, news_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 } },
       frontBannerEnabled: false,
       homepage_intro: ''

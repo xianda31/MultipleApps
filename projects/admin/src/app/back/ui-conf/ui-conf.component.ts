@@ -14,6 +14,29 @@ import { map, Observable, first, catchError, of, Subscription } from 'rxjs';
   styleUrls: ['./ui-conf.component.scss']
 })
 export class UiConfComponent implements OnInit {
+  // Subset Google Fonts populaires (label = affiché, css = valeur à injecter)
+  googleFontsSubset = [
+    { label: 'Amarante', css: 'Amarante, serif' },
+    { label: 'Roboto', css: 'Roboto, sans-serif' },
+    { label: 'Open Sans', css: 'Open Sans, sans-serif' },
+    { label: 'Lato', css: 'Lato, sans-serif' },
+    { label: 'Montserrat', css: 'Montserrat, sans-serif' },
+    { label: 'Oswald', css: 'Oswald, sans-serif' },
+    { label: 'Raleway', css: 'Raleway, sans-serif' },
+    { label: 'Emblema One', css: 'Emblema One, cursive' },
+    { label: 'Caveat', css: 'Caveat, cursive' },
+    { label: 'Pacifico', css: 'Pacifico, cursive' },
+    { label: 'Merriweather', css: 'Merriweather, serif' },
+    { label: 'Playfair Display', css: 'Playfair Display, serif' },
+    { label: 'Quicksand', css: 'Quicksand, sans-serif' },
+    { label: 'Source Sans Pro', css: 'Source Sans Pro, sans-serif' },
+    { label: 'Nunito', css: 'Nunito, sans-serif' },
+    { label: 'Bebas Neue', css: 'Bebas Neue, cursive' },
+    { label: 'Fira Sans', css: 'Fira Sans, sans-serif' },
+    { label: 'Poppins', css: 'Poppins, sans-serif' },
+    { label: 'Ubuntu', css: 'Ubuntu, sans-serif' },
+    { label: 'Muli', css: 'Muli, sans-serif' }
+  ];
   uiForm!: FormGroup;
   loaded = false;
   export_file_url: any;
@@ -34,15 +57,20 @@ export class UiConfComponent implements OnInit {
     );
 
     this.uiForm = this.fb.group({
-      main_color: [localStorage.getItem('ui-main_color') || '#3f493d'],
-      secondary_color: [localStorage.getItem('ui-secondary_color') || '#ffc107'],
-      success_color: [localStorage.getItem('ui-success_color') || '#198754'],
-      danger_color: [localStorage.getItem('ui-danger_color') || '#dc3545'],
-      warning_color: [localStorage.getItem('ui-warning_color') || '#ffc107'],
-      info_color: [localStorage.getItem('ui-info_color') || '#0dcaf0'],
-      light_color: [localStorage.getItem('ui-light_color') || '#f8f9fa'],
-      dark_color: [localStorage.getItem('ui-dark_color') || '#212529'],
-      brand_bg: [localStorage.getItem('ui-brand_bg') || '#2e332d'],
+      content_font: ['Amarante, serif'],
+      content_bg: ['#ffffff'],
+      content_text_color: ['#222222'],
+      main_font: ['Amarante, serif'],
+      title_font: ['Emblema One, cursive'],
+      main_color: ['#3f493d'],
+      secondary_color: ['#ffc107'],
+      success_color: ['#198754'],
+      danger_color: ['#dc3545'],
+      warning_color: ['#ffc107'],
+      info_color: ['#0dcaf0'],
+      light_color: ['#f8f9fa'],
+      dark_color: ['#212529'],
+      brand_bg: ['#2e332d'],
       header_bg: ['#2e332d'],
       header_text_color: ['#ffffff'],
       navbar_text_color: ['#ffffff'],
@@ -93,7 +121,7 @@ export class UiConfComponent implements OnInit {
       }),
       album_carousel_interval_ms: [5000, [Validators.min(0), Validators.max(60000)]],
       competitions: this.fb.group({
-        preferred_organizations: [ ['FFB', 'Ligue 06 LR-PY', 'Comité des Pyrenees'] ],
+        preferred_organizations: [['FFB', 'Ligue 06 LR-PY', 'Comité des Pyrenees']],
         show_members_only: [false],
         one_year_back: [false],
         show_theorical_rank: [false]
@@ -257,6 +285,8 @@ export class UiConfComponent implements OnInit {
           this.fileService.getPresignedUrl$(logoPath).subscribe({ next: (url) => this.logoPreviewUrl = url, error: () => this.logoPreviewUrl = null });
         }
         this.loaded = true;
+        // Appliquer le thème seulement après chargement effectif
+        this.applyTheme();
       },
       error: (err) => {
         this.toastService.showErrorToast('UI settings', 'Erreur chargement des paramètres UI');
@@ -292,10 +322,14 @@ export class UiConfComponent implements OnInit {
     }
 
     this.uiForm.patchValue({
+      content_font: template.content_font ?? ui.content_font ?? 'Amarante, serif',
+      content_bg: template.content_bg ?? ui.content_bg ?? '#ffffff',
+      content_text_color: template.content_text_color ?? ui.content_text_color ?? '#222222',
       template: {
         logo_path: template.logo_path ?? '',
         background_color: template.background_color ?? '#ffffff',
-        header_text_color: template.header_text_color ?? ui?.header_text_color ?? '#ffffff'
+        header_text_color: template.header_text_color ?? ui?.header_text_color ?? '#ffffff',
+        footer_text_color: template.footer_text_color ?? ui?.footer_text_color ?? ''
       },
       tournaments_row_cols: {
         SM: tournaments.SM ?? 1,
@@ -337,9 +371,11 @@ export class UiConfComponent implements OnInit {
       header_bg: ui?.header_bg ?? '#2e332d',
       header_text_color: template.header_text_color ?? ui?.header_text_color ?? '#ffffff',
       navbar_text_color: template.navbar_text_color ?? ui?.navbar_text_color ?? '#ffffff',
-      footer_text_color: template.footer_text_color ?? ui?.footer_text_color ?? '#ffffff',
+      footer_text_color: template.footer_text_color ?? ui?.footer_text_color ?? ui?.footer_text_color ?? '#ffffff',
       navbar_bg: ui?.navbar_bg ?? '#3f493d',
       footer_bg: ui?.footer_bg ?? '#f8f9fa',
+      main_font: template.main_font ?? ui.main_font ?? 'Amarante, serif',
+      title_font: template.title_font ?? ui.title_font ?? 'Emblema One, cursive',
     });
 
     // Patch card_thumbnails array
@@ -413,6 +449,15 @@ export class UiConfComponent implements OnInit {
       // Build payload ensuring tournaments/news breakpoints are nested under `homepage`
       const formVal: any = this.uiForm.value || {};
       const payload: any = { ...formVal };
+      // Ajout des champs content_*
+      payload.template = payload.template || {};
+      payload.template.content_font = formVal.content_font;
+      payload.template.content_bg = formVal.content_bg;
+      payload.template.content_text_color = formVal.content_text_color;
+      payload.content_font = formVal.content_font;
+      payload.content_bg = formVal.content_bg;
+      payload.content_text_color = formVal.content_text_color;
+      // Build payload ensuring tournaments/news breakpoints are nested under `homepage`
       // Convert tournaments_type FormArray (array [{key,image},...]) into mapping { key: image }
       if (Array.isArray(payload.tournaments_type)) {
         const map: { [k: string]: string } = {};
@@ -455,11 +500,17 @@ export class UiConfComponent implements OnInit {
       payload.header_bg = formVal.header_bg;
       payload.navbar_bg = formVal.navbar_bg;
       payload.footer_bg = formVal.footer_bg;
-      // Stocker les couleurs de police dans template
+      // Stocker les couleurs de police et polices dans template
       payload.template = payload.template || {};
       payload.template.header_text_color = formVal.header_text_color;
       payload.template.navbar_text_color = formVal.navbar_text_color;
       payload.template.footer_text_color = formVal.footer_text_color;
+      payload.template.main_font = formVal.main_font;
+      payload.template.title_font = formVal.title_font;
+      // Pour compatibilité descendante et accès direct
+      payload.footer_text_color = formVal.footer_text_color;
+      payload.main_font = formVal.main_font;
+      payload.title_font = formVal.title_font;
 
       // Save UI settings into dedicated file and publish immédiatement
       await this.systemDataService.save_ui_settings(payload);
@@ -510,12 +561,18 @@ export class UiConfComponent implements OnInit {
 
 
   applyTheme() {
+    const contentFont = this.uiForm.get('content_font')?.value || 'Amarante, serif';
+    const contentBg = this.uiForm.get('content_bg')?.value || '#ffffff';
+    const contentText = this.uiForm.get('content_text_color')?.value || '#222222';
     const main = this.uiForm.get('main_color')?.value || '#3f493d';
     const secondary = this.uiForm.get('secondary_color')?.value || '#ffc107';
     const font = this.uiForm.get('main_font')?.value || 'Amarante, serif';
     document.documentElement.style.setProperty('--primary', main);
     document.documentElement.style.setProperty('--secondary', secondary);
     document.documentElement.style.setProperty('--font-main', font);
+    document.documentElement.style.setProperty('--content-font', contentFont);
+    document.documentElement.style.setProperty('--content-bg', contentBg);
+    document.documentElement.style.setProperty('--content-text', contentText);
     localStorage.setItem('ui-main_color', main);
     localStorage.setItem('ui-secondary_color', secondary);
     localStorage.setItem('ui-main_font', font);
@@ -524,3 +581,5 @@ export class UiConfComponent implements OnInit {
   }
 
 }
+
+

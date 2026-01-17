@@ -78,6 +78,10 @@ export function applyUiThemeFromConfig(ui: UIConfiguration | null | undefined) {
   if (!ui) return;
   const t = ui.template || {};
   const root = document.documentElement;
+  // Contenu page (autour du router)
+  const contentFont = t['content_font'] || ui['content_font'];
+  const contentBg = t['content_bg'] || ui['content_bg'];
+  const contentText = t['content_text_color'] || ui['content_text_color'];
   if (t.header_bg) {
     root.style.setProperty('--brand-bg', t.header_bg);
     root.style.setProperty('--title-bg', t.header_bg);
@@ -90,4 +94,45 @@ export function applyUiThemeFromConfig(ui: UIConfiguration | null | undefined) {
   if (t.navbar_text_color) root.style.setProperty('--navbar-text', t.navbar_text_color);
   if (t.footer_bg) root.style.setProperty('--footer-bg', t.footer_bg);
   if (t.footer_text_color) root.style.setProperty('--footer-text', t.footer_text_color);
+
+  // --- Google Fonts dynamic injection ---
+  // Remove previous dynamic font links
+  const prevLinks = document.querySelectorAll('link[data-ui-dynamic-font]');
+  prevLinks.forEach(l => l.parentNode?.removeChild(l));
+
+  // Helper to build Google Fonts URL for a font family
+  function buildGoogleFontUrl(font: string): string | null {
+    if (!font) return null;
+    // Extract family name (before comma)
+    const family = font.split(',')[0].replace(/['"]/g, '').trim().replace(/ /g, '+');
+    if (!family) return null;
+    return `https://fonts.googleapis.com/css?family=${family}:400,700&display=swap`;
+  }
+
+  // Inject font-main and font-title if present
+  // Use 'as any' to access dynamic keys (font-main/font-title)
+  const fontMain = t['main_font'] || ui['main_font'];
+  const fontTitle = t['title_font'] || ui['title_font'];
+  const loadedFonts = new Set<string>();
+  [fontMain, fontTitle].forEach(font => {
+    if (font && typeof font === 'string' && !loadedFonts.has(font)) {
+      const url = buildGoogleFontUrl(font);
+      if (url) {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = url;
+        link.setAttribute('data-ui-dynamic-font', '1');
+        document.head.appendChild(link);
+        loadedFonts.add(font);
+      }
+    }
+  });
+
+  // Set CSS variables for font families
+  if (fontMain) root.style.setProperty('--font-main', fontMain);
+  if (fontTitle) root.style.setProperty('--font-title', fontTitle);
+
+  if (contentFont) root.style.setProperty('--content-font', contentFont);
+  if (contentBg) root.style.setProperty('--content-bg', contentBg);
+  if (contentText) root.style.setProperty('--content-text', contentText);
 }

@@ -108,6 +108,10 @@
 .dropdown-menu {
     z-index: 1050 !important;
     position: absolute;
+    // Zone de survol élargie pour faciliter le clic
+    margin-top: -2px !important;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
 }
 .menu-sm-tight.navbar-nav > .nav-item,
 .menu-sm-tight.navbar-nav > .dropdown,
@@ -118,9 +122,26 @@
     padding-top: 0.1rem !important;
     padding-bottom: 0.1rem !important;
 }
+
+// Garde le dropdown ouvert au survol (desktop)
+.nav-item.dropdown:hover > .dropdown-menu,
 .dropdown:hover > .dropdown-menu {
     display: block;
+    visibility: visible;
+    opacity: 1;
 }
+
+// Zone de transition invisible pour éviter la fermeture prématurée
+.nav-item.dropdown > .dropdown-menu::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: 0;
+    right: 0;
+    height: 12px;
+    background: transparent;
+}
+
 .dropdown > .dropdown-toggle:active {
     pointer-events: none;
 }

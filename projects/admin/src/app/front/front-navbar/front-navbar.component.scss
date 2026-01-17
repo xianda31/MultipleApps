@@ -1,3 +1,42 @@
+/* Correction renforcée : sous-menus toujours texte noir sur fond blanc, tous niveaux */
+
+
+.navbar .dropdown-menu .dropdown-item:active,
+.navbar .dropdown-menu .dropdown-item:focus,
+.navbar .dropdown-menu .dropdown-item:hover {
+	background: #eb9a87 !important;
+	color: #fff !important;
+}
+
+.navbar .dropdown-menu .dropdown-divider {
+	border-color: #eee !important;
+}
+/* -----------------------------
+	 Harmonisation police/couleur navbar
+	 ----------------------------- */
+
+
+.dropdown-menu .dropdown-item:hover,
+.dropdown-menu .dropdown-item:focus {
+	background: #eb9a87 !important;
+	color: #fff !important;
+}
+
+
+// Bootstrap default: sous-menus noir sur fond blanc
+.dropdown-menu {
+	background: #fff;
+	color: #222;
+}
+.dropdown-menu .dropdown-item,
+.dropdown-menu .nav-link {
+	color: #222;
+}
+.dropdown-menu .dropdown-item:hover,
+.dropdown-menu .dropdown-item:focus {
+	background: #eb9a87;
+	color: #fff;
+}
 /*
 	front-navbar.component.scss
 	Reformatted from compacted single-line CSS into readable blocks.
@@ -42,10 +81,6 @@
 	margin-top: -6px;
 }
 
-.dropdown-submenu:hover > .dropdown-menu,
-.dropdown-submenu:focus-within > .dropdown-menu {
-	display: block;
-}
 
 /* Add a transparent spacer under dropdowns to avoid overlap issues */
 .dropdown::after,

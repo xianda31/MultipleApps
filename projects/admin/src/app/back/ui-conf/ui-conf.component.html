@@ -4,42 +4,75 @@
       <!-- section Thème -->
       <div class="col">
         <div class="card h-100">
-          <div class="card-title fw-bold fs-5 ms-2">Paramétrage interface utilisateur</div>
+          <div class="card-title fw-bold fs-5 ms-2">Paramétrage template</div>
           <div class="card-body">
-            <div class="mb-3">
-              <div class="fw-bold small mb-1 mt-2 text-primary">Thème&nbsp;: couleurs et polices</div>
-              <div class="table-responsive">
-                <table class="table table-bordered align-middle mb-0" style="min-width: 420px;">
-                  <thead class="table-light">
-                    <tr>
-                      <th style="width: 30%">Zone</th>
-                      <th style="width: 20%">Couleur fond</th>
-                      <th style="width: 20%">Couleur police</th>
-                      <th style="width: 30%">Police</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>Bandeau sup. &amp; titre</td>
-                      <td><input type="color" style="width:1.6rem;height:1.6rem;padding:0;border:none;" formControlName="header_bg" (change)="applyTheme()"></td>
-                      <td><input type="color" style="width:1.6rem;height:1.6rem;padding:0;border:none;" formControlName="header_text_color" (change)="applyTheme()"></td>
-                      <td><input type="text" class="form-control form-control-sm" formControlName="title_font" placeholder="ex: Emblema One, cursive" (change)="applyTheme()"></td>
-                    </tr>
-                    <tr>
-                      <td>Navbar</td>
-                      <td><input type="color" style="width:1.6rem;height:1.6rem;padding:0;border:none;" formControlName="navbar_bg" (change)="applyTheme()"></td>
-                      <td><input type="color" style="width:1.6rem;height:1.6rem;padding:0;border:none;" formControlName="navbar_text_color" (change)="applyTheme()"></td>
-                      <td><input type="text" class="form-control form-control-sm" formControlName="main_font" placeholder="ex: Amarante, serif" (change)="applyTheme()"></td>
-                    </tr>
-                    <tr>
-                      <td>Pied de page</td>
-                      <td><input type="color" style="width:1.6rem;height:1.6rem;padding:0;border:none;" formControlName="footer_bg" (change)="applyTheme()"></td>
-                      <td><input type="color" style="width:1.6rem;height:1.6rem;padding:0;border:none;" formControlName="footer_text_color" (change)="applyTheme()"></td>
-                      <td><input type="text" class="form-control form-control-sm" formControlName="main_font" placeholder="ex: Amarante, serif" (change)="applyTheme()" readonly></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+            <div class="table-responsive">
+              <table class="table align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th class="col-4 col-md-3">Zone</th>
+                    <th class="col-2 col-md-2">Fond</th>
+                    <th class="col-2 col-md-2">Texte</th>
+                    <th class="col-4 col-md-3">Police</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td [ngStyle]="{
+                          'background': uiForm.get('header_bg')?.value,
+                          'color': uiForm.get('header_text_color')?.value,
+                          'font-family': uiForm.get('title_font')?.value
+                        }">Bandeaux</td>
+                    <td>
+                      <input type="color" style="width:1.6rem;height:1.6rem;padding:0;border:none;" formControlName="header_bg" (change)="applyTheme()">
+                    </td>
+                    <td>
+                      <input type="color" style="width:1.6rem;height:1.6rem;padding:0;border:none;" formControlName="header_text_color" (change)="applyTheme()">
+                    </td>
+                    <td>
+                      <select class="form-select form-select-sm" formControlName="title_font" (change)="applyTheme()">
+                        <option *ngFor="let font of googleFontsSubset" [value]="font.css">{{ font.label }}</option>
+                      </select>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td [ngStyle]="{
+                          'background': uiForm.get('navbar_bg')?.value,
+                          'color': uiForm.get('navbar_text_color')?.value,
+                          'font-family': uiForm.get('main_font')?.value
+                        }">Menus</td>
+                    <td>
+                      <input type="color" style="width:1.6rem;height:1.6rem;padding:0;border:none;" formControlName="navbar_bg" (change)="applyTheme()">
+                    </td>
+                    <td>
+                      <input type="color" style="width:1.6rem;height:1.6rem;padding:0;border:none;" formControlName="navbar_text_color" (change)="applyTheme()">
+                    </td>
+                    <td>
+                      <select class="form-select form-select-sm" formControlName="main_font" (change)="applyTheme()">
+                        <option *ngFor="let font of googleFontsSubset" [value]="font.css">{{ font.label }}</option>
+                      </select>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td [ngStyle]="{
+                          'background': uiForm.get('content_bg')?.value,
+                          'color': uiForm.get('content_text_color')?.value,
+                          'font-family': uiForm.get('content_font')?.value
+                        }">Contenu page</td>
+                    <td>
+                      <input type="color" style="width:1.6rem;height:1.6rem;padding:0;border:none;" formControlName="content_bg" (change)="applyTheme()">
+                    </td>
+                    <td>
+                      <input type="color" style="width:1.6rem;height:1.6rem;padding:0;border:none;" formControlName="content_text_color" (change)="applyTheme()">
+                    </td>
+                    <td>
+                      <select class="form-select form-select-sm" formControlName="content_font" (change)="applyTheme()">
+                        <option *ngFor="let font of googleFontsSubset" [value]="font.css">{{ font.label }}</option>
+                      </select>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
             <!-- Bouton Enregistrer accessible en bas de la section -->
             <div class="d-flex justify-content-end mt-2">

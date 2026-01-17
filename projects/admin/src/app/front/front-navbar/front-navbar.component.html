@@ -1,8 +1,8 @@
 <nav class="navbar navbar-expand-md navbar-dark text-white d-flex align-items-center">
   <div class="container-fluid h-100 d-flex align-items-center">
     @if (brandNavitem) {
-      <a class="navbar-brand d-flex align-items-center position-relative" [routerLink]="brandNavitem.path">
-        <span style="color:var(--navbar-text, #fff)">{{ brandNavitem.label }}</span>
+      <a class="navbar-brand d-flex align-items-center position-relative main-nav-link align-middle" [routerLink]="brandNavitem.path">
+        <span class="align-middle">{{ brandNavitem.label }}</span>
       </a>
     }
     <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"
@@ -55,7 +55,7 @@
   <ng-template #menuGroupRecursive let-menu>
     @if (menu.navitem.type === NAVITEM_TYPE.DROPDOWN && (menu.childs?.length || 0) > 0) {
     <li class="nav-item dropdown ms-3" ngbDropdown>
-      <a class="nav-link dropdown-toggle" ngbDropdownToggle id="nav-{{ menu.navitem.id }}">
+      <a class="nav-link main-nav-link dropdown-toggle" ngbDropdownToggle id="nav-{{ menu.navitem.id }}">
         @if(menu.navitem.pre_label === 'avatar') {
         <img [src]="avatar$ | async" alt="avatar" class="rounded-circle"
           style="width:28px; height:28px; max-width:28px; max-height:28px; object-fit:cover">
@@ -72,28 +72,28 @@
     @else {
     <li class="nav-item ms-3">
       @if (menu.navitem.type === NAVITEM_TYPE.EXTERNAL_REDIRECT) {
-      <a class="dropdown-item" [href]="menu.navitem.external_url" target="_blank" rel="noopener">
+      <a class="nav-link main-nav-link" [href]="menu.navitem.external_url" target="_blank" rel="noopener">
         <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
       </a>
       }
       @else if (menu.navitem.type === NAVITEM_TYPE.INTERNAL_LINK) {
-      <a class="dropdown-item" [routerLink]="menu.navitem.path">
+      <a class="nav-link main-nav-link" [routerLink]="menu.navitem.path">
         <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
       </a>
       }
       @else if (menu.navitem.type?.toLowerCase() === 'plugin') {
-      <a class="dropdown-item Plugin" [routerLink]="menu.navitem.path"
+      <a class="nav-link main-nav-link Plugin" [routerLink]="menu.navitem.path"
         [queryParams]="{ external_url: menu.navitem.external_url }">
         <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
       </a>
       }
       @else if (menu.navitem.type === NAVITEM_TYPE.CUSTOM_PAGE) {
-      <a class="dropdown-item Page" [routerLink]="menu.navitem.path">
+      <a class="nav-link main-nav-link Page" [routerLink]="menu.navitem.path">
         <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
       </a>
       }
       @else if (menu.navitem.type === NAVITEM_TYPE.DIRECT_CALL) {
-      <a class="dropdown-item" (click)="onCommand(menu.navitem)">
+      <a class="nav-link main-nav-link" (click)="onCommand(menu.navitem)">
         <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
       </a>
       }
