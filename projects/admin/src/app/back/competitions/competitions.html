@@ -26,29 +26,30 @@
                                 <div *ngFor="let team of team_results[competition.id].teams" class="mb-2">
                                     <div class="d-flex align-items-center">
                                         <span class="me-2 d-flex flex-column align-items-center">
-                                            <ng-container *ngIf="show_theorical_rank; else simpleRank">
-                                                <span
-                                                    [ngClass]="{'badge bg-success': team.rank <= team.theorical_rank, '': team.rank < team.theorical_rank}">
-                                                    {{ team.rank + (team.rank===1?'er':'eme')}}
-                                                </span>
-                                                <span class="fst-italic" style="font-size: 0.65em;">theor.{{
-                                                    team.theorical_rank}}
-                                                </span>
-                                            </ng-container>
-                                            <ng-template #simpleRank>
-                                                <span style="font-size: 0.8em;">{{ team.rank + (team.rank===1?'er':'eme') }}</span>
-                                            </ng-template>
+                                            <span >{{ team.rank + (team.rank===1?'er':'eme') }}</span>
                                         </span>
                                         <span
                                             class="ms-3 d-flex flex-row flex-grow-1 w-100 justify-content-between align-items-start">
-                                            <span class="d-flex flex-column">
-                                                <span *ngFor="let player of team.players">
-                                                    <span *ngIf="isMember(player) || !show_members_only"
-                                                        [ngClass]="{'fw-semibold': isMember(player), 'fst-italic': !isMember(player), 'player-small': true}">
-                                                        {{ player.firstname }} {{ player.lastname }}
-                                                    </span>
-                                                </span>
-                                            </span>
+                                                                                        <ng-container *ngIf="show_members_only; else playersColumn">
+                                                                                            <span>
+                                                                                                <ng-container *ngFor="let player of getDisplayedPlayers(team.players); let i = index; let last = last">
+                                                                                                    <span [ngClass]="{'fw-semibold': isMember(player), 'fst-italic': !isMember(player), 'player-small': true}">
+                                                                                                        {{ player.firstname }} {{ player.lastname }}
+                                                                                                    </span>
+                                                                                                    <ng-container *ngIf="!last"> - </ng-container>
+                                                                                                </ng-container>
+                                                                                            </span>
+                                                                                        </ng-container>
+                                                                                        <ng-template #playersColumn>
+                                                                                            <span class="d-flex flex-column">
+                                                                                                <span *ngFor="let player of team.players">
+                                                                                                    <span *ngIf="isMember(player) || !show_members_only"
+                                                                                                        [ngClass]="{'fw-semibold': isMember(player), 'fst-italic': !isMember(player), 'player-small': true}">
+                                                                                                        {{ player.firstname }} {{ player.lastname }}
+                                                                                                    </span>
+                                                                                                </span>
+                                                                                            </span>
+                                                                                        </ng-template>
                                             <!-- on affiche pas les pe -->
                                             <!-- <span class="text-end ms-2" style="font-size: 0.8em;">{{ pe(team.players[0])
                                                 }}</span> -->

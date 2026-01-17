@@ -104,9 +104,17 @@ export class CompetitionsComponent {
       return player.is_member === true;
     }
   
-    pe(player: Player): number {
-      const pe = player.pe + player.pe_bonus + player.pe_extra;
-      // const pp = player.pp + player.pp_bonus + player.pp_extra;
-      return pe;
+    // pe(player: Player): number {
+    //   const pe = player.pe + player.pe_bonus + player.pe_extra;
+    //   // const pp = player.pp + player.pp_bonus + player.pp_extra;
+    //   return pe;
+    // }
+
+      getDisplayedPlayers(players: Player[]): Player[] {
+    if (this.show_members_only) {
+      return players.filter(p => this.isMember(p));
     }
+    return players;
+  }
+
 }
