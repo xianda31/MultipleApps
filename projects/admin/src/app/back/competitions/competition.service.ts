@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Competition, CompetitionSeason, CompetitionTeam, Player } from './competitions.interface';
+import { Competition, CompetitionData, CompetitionSeason, CompetitionTeam, Player } from './competitions.interface';
 
 import { CompetitionResultsMap } from './competitions.interface';
 import { FFB_proxyService } from '../../common/ffb/services/ffb.service';
@@ -68,6 +68,10 @@ export class CompetitionService {
       }),
       // récupérer les résultats pour chaque compétition
       switchMap((competitions: Competition[]) => {
+        console.log('Compétitions récupérées pour la saison', season);
+        competitions.forEach(c => {
+          console.log(` - [${c.id}] ${c.label} (Groupes probatés: ${c.allGroupsProbated})`);
+        });
         return from(this.runSerial(competitions)).pipe(
           map((results: { [competitionId: number]: { competition: Competition, teams: CompetitionTeam[] } }) => {
             const merged = { ...this._team_results, ...results };
@@ -142,6 +146,14 @@ export class CompetitionService {
       catchError((err) => {
         console.error(`Erreur lors du chargement des résultats pour la compétition ${competitionId}:`, err);
         return of([]);
+      })
+    );
+  }
+  getCompetitionStatus(competitionId: string): Observable<CompetitionData | null> {
+    return from(this.ffbService.getCompetitionStatus(competitionId)).pipe(
+      catchError((err) => {
+        console.error(`Erreur lors du chargement des résultats pour la compétition ${competitionId}:`, err);
+        return of(null);
       })
     );
   }

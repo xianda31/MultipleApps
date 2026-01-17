@@ -56,7 +56,18 @@ export class CompetitionsComponent {
 
           console.log(`CompetitionsComponent: loaded ${this.competitions.length} competitions with results for season ${this.current_season}`);
           console.log(this.competitions);
-        this.results_extracted = true;
+
+          // this.competitions.forEach(async comp => {
+          //   this.competitionService.getCompetitionStatus(comp.id.toString()).subscribe(statusData => {
+          //     if (statusData) {
+          //       console.log(`Competition ${comp.id} with phases data:`, statusData.phases);
+          //     } else {
+          //       console.log(`No status data available for competition ${comp.id}`);
+          //     }
+          //   });
+          // });
+
+          this.results_extracted = true;
       });
     });
   }

@@ -99,3 +99,121 @@ export interface Competition {
   nb_simultaneous_phases: number;
 }
 
+// Interface exhaustive pour la structure d'une compétition détaillée (API FFB)
+export interface CompetitionData {
+  id: number;
+  season_id: number;
+  season_label: string;
+  subscription_type: string;
+  name: string;
+  archive_date: string | null;
+  competition_id: number;
+  competition_label: string;
+  is_over_two_season: boolean;
+  organization_id: number;
+  parent_subordinate_id: number | null;
+  organization_code: string;
+  organization_name: string;
+  has_group_paid: boolean;
+  pe_bonus_process_duration: number | null;
+  pe_bonus_process_enabled: boolean;
+  simultaneous_code: string | null;
+  division: {
+    id: number;
+    label: string;
+  };
+  festival: any; // null ou objet selon les cas
+  family: {
+    id: number;
+    label: string;
+    is_ko: boolean;
+  };
+  type: {
+    id: number;
+    label: string;
+    code: string;
+  };
+  format: {
+    id: number;
+    label: string;
+    code: string;
+  };
+  phases: {
+    id: number;
+    name: string;
+    application_deadline: string;
+    min_date_publication: string;
+    is_simultaneous: boolean;
+    is_ko: boolean;
+    is_second_chance: boolean;
+    is_for_loser: boolean;
+    simultaneous_calcul_mode_id: number | null;
+    groups: {
+      id: number;
+      name: string;
+      team_max_number: number;
+      application_deadline: string;
+      sessions: {
+        id: number;
+        group_id: number;
+        label: string;
+        date: string;
+        place: string;
+        mail_sent: boolean;
+        is_date_deadline: boolean;
+        import_result_date: string | null;
+        has_realbridge: boolean;
+        moment_id: number | null;
+      }[];
+      nb_sections: number;
+      nb_rounds: number;
+      nb_deals_per_round: number;
+      nb_qualified: number;
+      comments: string | null;
+      serpentin: number;
+      nb_halftime: number;
+      nb_deals_per_halftime: number;
+      type_id: number;
+      type_code: string;
+      type_label: string;
+      is_probated: boolean;
+      iv_min: number;
+      has_teams: number;
+      has_teams_who_played: number;
+      serpentin_generated: boolean;
+      pool_game_generated: boolean;
+      parent_group_id: number | null;
+      is_for_loser: boolean;
+      is_second_chance: boolean;
+      pe_weight: number;
+      calculation_date: string;
+      probation_date: string;
+      has_convocation: boolean;
+      convocation_sent: boolean;
+      has_not_played: boolean;
+      has_no_mailing: boolean;
+      simultaneous_organization_id: number;
+      results: {
+        played: number;
+        total: number;
+      };
+      tournament_place: {
+        id: number;
+        code: string;
+        label: string;
+      };
+      has_price: boolean;
+      is_qualification_group: boolean;
+    }[];
+  }[];
+  allGroupsProbated: boolean;
+  is_paid: boolean;
+  billing_date: string | null;
+  billing_docdate: string | null;
+  calculation_date: string;
+  discount: number;
+  is_ic_used: number;
+  has_realbridge: boolean;
+  has_points: boolean;
+}
+
