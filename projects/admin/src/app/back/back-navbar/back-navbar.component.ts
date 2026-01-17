@@ -1,14 +1,15 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ViewChildren, QueryList } from '@angular/core';
 import { CommonModule, NgIf } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink, NavigationEnd } from '@angular/router';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Group_names, Group_priorities } from '../../common/authentification/group.interface';
 import { AuthentificationService } from '../../common/authentification/authentification.service';
 import { GroupService } from '../../common/authentification/group.service';
 import { environment } from '../../../environments/environment';
-import { NgbCollapseModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbCollapseModule, NgbDropdown, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { Accreditation } from '../../common/authentification/group.interface';
 import { Observable } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { Member } from '../../common/interfaces/member.interface';
 import { MemberSettingsService } from '../../common/services/member-settings.service';
 import { AssistanceRequestService } from '../../common/services/assistance-request.service';
@@ -36,19 +37,30 @@ export class BackNavbarComponent implements OnInit {
   avatar$ !: Observable<string>;
   assistances_nbr: number = 0;
 
+  @ViewChildren(NgbDropdown) dropdowns!: QueryList<NgbDropdown>;
 
+  closeAllDropdowns() {
+    this.dropdowns?.forEach(dropdown => dropdown.close());
+  }
 
   constructor(
     private auth: AuthentificationService,
     private groupService: GroupService,
     private memberSettingsService: MemberSettingsService,
-    private assistanceService: AssistanceRequestService
+    private assistanceService: AssistanceRequestService,
+    private router: Router
 
 
   ) { }
 
   ngOnInit(): void {
 
+    // Fermer tous les dropdowns lors de la navigation
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe(() => {
+      this.closeAllDropdowns();
+    });
     
     this.logged_member$ = this.auth.logged_member$;
     

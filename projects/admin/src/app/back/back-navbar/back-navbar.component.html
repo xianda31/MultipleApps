@@ -44,9 +44,9 @@
           </a>
         </li>
 
-        <li *ngIf="accreditation_level >= accreditation_levels.Contributeur" ngbDropdown
+        <li *ngIf="accreditation_level >= accreditation_levels.Contributeur" ngbDropdown [autoClose]="'inside'"
           class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
+          <a class="nav-link dropdown-toggle" ngbDropdownToggle role="button">
             <i class="bi bi-cart"></i> <span class="ms-1">Boutique</span>
           </a>
           <ul ngbDropdownMenu class="dropdown-menu">
@@ -55,9 +55,9 @@
           </ul>
         </li>
 
-        <li *ngIf="accreditation_level >= accreditation_levels.Contributeur" ngbDropdown
+        <li *ngIf="accreditation_level >= accreditation_levels.Contributeur" ngbDropdown [autoClose]="'inside'"
           class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
+          <a class="nav-link dropdown-toggle" ngbDropdownToggle role="button">
             <i class="bi bi-people"></i>
             <span class="ms-1">Adhérents</span>
           </a>
@@ -73,7 +73,7 @@
 
         <li *ngIf="accreditation_level >= accreditation_levels.Administrateur" ngbDropdown
           class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
+          <a class="nav-link dropdown-toggle" ngbDropdownToggle role="button">
             <i class="bi bi-journal"></i> <span class="ms-1">Finance</span>
           </a>
           <ul ngbDropdownMenu class="dropdown-menu">
@@ -89,7 +89,7 @@
         <!-- Outils -->
         <li *ngIf="accreditation_level >= accreditation_levels.Systeme" ngbDropdown
           class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
+          <a class="nav-link dropdown-toggle" ngbDropdownToggle role="button">
             <i class="bi bi-database-fill-gear"></i> <span class="ms-1">Outils</span>
           </a>
           <ul ngbDropdownMenu class="dropdown-menu">
@@ -108,7 +108,7 @@
         <!-- site -->
         <li *ngIf="accreditation_level >= accreditation_levels.Editeur" ngbDropdown
           class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
+          <a class="nav-link dropdown-toggle" ngbDropdownToggle role="button">
             <i class="bi bi-globe2"></i> <span class="ms-1">Site web</span>
           </a>
           <ul ngbDropdownMenu class="dropdown-menu">
@@ -124,7 +124,7 @@
         <!-- communication -->
         <li *ngIf="accreditation_level >= accreditation_levels.Editeur" ngbDropdown
           class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
+          <a class="nav-link dropdown-toggle" ngbDropdownToggle role="button">
             <i class="bi bi-globe2"></i> <span class="ms-1">Communication</span>
           </a>
           <ul ngbDropdownMenu class="dropdown-menu">
