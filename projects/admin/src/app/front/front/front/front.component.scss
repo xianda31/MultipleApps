@@ -98,7 +98,6 @@ html, body {
   color: var(--brand-text, #fff) !important;
   font-size: 1.2rem;
   @media (min-width: 1200px) { font-size: 1.5rem; }
-  color: var(--brand-text, #fff) !important;
 }
 
 
@@ -106,7 +105,6 @@ html, body {
   background-color: var(--navbar-bg);
   color: var(--navbar-text, #fff);
 }
-
 
 .title-bg {
   font-family: var(--font-title, var(--font-main));
