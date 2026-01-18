@@ -72,10 +72,7 @@ export const routes: Routes = [
 
   { path: BACK_ROUTE_PATHS.Snippets, component: SnippetsComponent, canActivate: [AuthGuard] },
   { path: BACK_ROUTE_PATHS.UiConf, component: UiConfComponent, canActivate: [AuthGuard] },
-  // {path: BACK_ROUTE_PATHS.Uploader, component: UploaderComponent, canActivate: [AuthGuard] },
   { path: BACK_ROUTE_PATHS.MenusEditor, component: MenusEditorComponent, canActivate: [AuthGuard] },
-  // { path: BACK_ROUTE_PATHS.PagesEditor, component: PagesEditorComponent, canActivate: [AuthGuard] },
-  // { path: BACK_ROUTE_PATHS.PageEditor, component: PagesEditorComponent, canActivate: [AuthGuard] },
   { path: BACK_ROUTE_PATHS.CMSWrapper, component: CmsWrapper, canActivate: [AuthGuard] },
   { path: BACK_ROUTE_PATHS.Home, component: BackPageComponent },
   { path: BACK_ROUTE_PATHS.Assistance, component: BackAssistanceComponent, canActivate: [AuthGuard] },
