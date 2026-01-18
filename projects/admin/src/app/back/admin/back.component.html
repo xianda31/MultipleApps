@@ -1,5 +1,5 @@
 
-<div class="container-fluid  p-0 m-0 w-100" style="max-width:100vw;">
+<div class="container-fluid p-0 m-0 w-100 admin-container" style="max-width:100vw;">
   <!-- <div class="ms-0"> -->
     <app-back-navbar [season]="(season$ | async) ?? ''" [entries_nbr]="(book_entries_number$ | async) ?? 0"
     ></app-back-navbar>
@@ -8,4 +8,6 @@
     <app-toaster></app-toaster>
     <router-outlet></router-outlet>
   </div>
+  <!-- Footer bandeau - ajoutez votre contenu de pied de page ici -->
+  <!-- <div class="admin-footer">Contenu du pied de page</div> -->
 </div>

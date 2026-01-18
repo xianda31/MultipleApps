@@ -1,11 +1,16 @@
 .main-content {
   height: 78vh;
+  flex: 1;
+  overflow-y: auto;
 }
 
 @media (max-width: 576px) {
   .main-content {
     height: auto !important;
-    min-height: 90vh;
+    min-height: 60vh;
+    max-height: none;
+    flex: 1;
+    overflow-y: auto;
   }
 }
 @media (max-width: 767.98px) {
@@ -85,11 +90,20 @@ html, body {
 .root-bg {
   font-family: var(--font-main);
   min-height: 100vh;
+  height: 100vh;
   padding-left: 0;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   justify-content: flex-start;
+  overflow-y: auto;
+}
+
+@media (max-width: 576px) {
+  .root-bg {
+    height: auto;
+    min-height: 100vh;
+  }
 }
 
 
