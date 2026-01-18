@@ -37,10 +37,31 @@ export class BackNavbarComponent implements OnInit {
   avatar$ !: Observable<string>;
   assistances_nbr: number = 0;
 
+  // Mobile menu collapse states
+  mobileMenus = {
+    boutique: false,
+    adherents: false,
+    finance: false,
+    outils: false,
+    site: false,
+    communication: false,
+    user: false
+  };
+
   @ViewChildren(NgbDropdown) dropdowns!: QueryList<NgbDropdown>;
 
   closeAllDropdowns() {
     this.dropdowns?.forEach(dropdown => dropdown.close());
+  }
+
+  toggleMobileMenu(menu: keyof typeof this.mobileMenus) {
+    this.mobileMenus[menu] = !this.mobileMenus[menu];
+  }
+
+  closeAllMobileMenus() {
+    Object.keys(this.mobileMenus).forEach(key => {
+      this.mobileMenus[key as keyof typeof this.mobileMenus] = false;
+    });
   }
 
   constructor(

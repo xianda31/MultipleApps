@@ -111,7 +111,7 @@
                     (change)="toggle_sort()">
                 <label class="form-check-label">tri alphabétique</label>
             </span>
-            
+
             <span class="form-check form-switch" *ngIf="game.alphabetic_sort">
                 <input class="form-check-input" type="checkbox" role="switch" [checked]="hideValidated"
                     (change)="toggle_hide_validated()">
@@ -125,7 +125,8 @@
         <div class="row">
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-2">
                 <ng-container *ngFor="let gamer of game.gamers">
-                    <div class="col gamer-container" *ngIf="shouldShowGamer(gamer)" [ngClass]="{'explode-disappear': isDisappearing(gamer)}">
+                    <div class="col gamer-container" *ngIf="shouldShowGamer(gamer)"
+                        [ngClass]="{'explode-disappear': isDisappearing(gamer)}">
                         <ng-container
                             *ngTemplateOutlet="fee_editor; context:{gamer: gamer, doubled: (game.fees_doubled)}"></ng-container>
                     </div>
@@ -187,17 +188,21 @@
             <div class="position-absolute bottom-0 start-0 m-1 d-flex gap-1" style="z-index: 2;">
                 <span *ngIf="!gamer.enabled" class="badge bg-secondary">{{ (game.fee_rate === 'accession') ? 'ACC' :
                     'NP' }}</span>
-                <span *ngIf="gamer.is_member" class="badge d-flex align-items-center gap-1" [ngClass]="{ 'text-bg-success': gamer.game_credits > 2, 'text-bg-danger': gamer.game_credits <= 2 }">
+                <span *ngIf="gamer.is_member" class="badge d-flex align-items-center gap-1"
+                    [ngClass]="{ 'text-bg-success': gamer.game_credits > 2, 'text-bg-danger': gamer.game_credits <= 2 }">
                     <span>{{ gamer.game_credits }}</span> <i class="bi bi-pass"></i>
                 </span>
                 <span *ngIf="gamer.enabled && gamer.is_member && gamer.game_credits <= 4">
                     <button type="button"
                         class="btn btn-outline-warning btn-sm rounded-circle fee-radio-lg d-flex align-items-center justify-content-center"
-                        style="width: 2.2em; height: 2.2em; padding: 0;"
-                        title="Acheter des crédits"
+                        style="width: 2.2em; height: 2.2em; padding: 0;" title="Acheter des crédits"
                         (click)="quickSale(gamer)">
                         <i class="bi bi-cart-fill"></i>
                     </button>
+                </span>
+                <span *ngIf="gamer.is_member && gamer.debt > 0" class="ms-3 text-warning">
+                    <i class="h6 bi-wallet2"></i>
+                    <span class="ms-1 text-muted" style="font-size: 0.85em;">{{ gamer.debt |currency : 'EUR': 'symbol'}}</span>
                 </span>
             </div>
             <div class="card-body py-0 position-relative" style="z-index: 1; overflow: hidden;">
@@ -224,16 +229,17 @@
                     <div class="col-6 d-flex flex-column-reverse gap-2" style="height: 120px;">
                         <!-- Non payant option (dernier, en bas) -->
                         <div class="form-check form-check-reverse mb-2">
-                            <input class="form-check-input fee-radio-lg" type="radio" [name]="'card_or_euro' + gamer.index"
-                                [id]="'none_radio'+ gamer.index" [value]="'none'"
+                            <input class="form-check-input fee-radio-lg" type="radio"
+                                [name]="'card_or_euro' + gamer.index" [id]="'none_radio'+ gamer.index" [value]="'none'"
                                 [checked]="gamer.validated && !gamer.enabled" [disabled]="gamer.disabled"
                                 (change)="gamer.enabled=false; gamer.in_euro=false; gamer.validated=true; onGamerValidated(gamer); log_game_state(); check_status()" />
-                            <label class="form-check-label" [for]="'none_radio'+ gamer.index">{{ (game.fee_rate === 'accession') ? 'forfait' : 'non payant' }}</label>
+                            <label class="form-check-label" [for]="'none_radio'+ gamer.index">{{ (game.fee_rate ===
+                                'accession') ? 'forfait' : 'non payant' }}</label>
                         </div>
                         <!-- Euro -->
                         <div class="form-check form-check-reverse">
-                            <input class="form-check-input fee-radio-lg" type="radio" [name]="'card_or_euro' + gamer.index"
-                                [id]="'euro_radio'+ gamer.index" [value]="'euro'"
+                            <input class="form-check-input fee-radio-lg" type="radio"
+                                [name]="'card_or_euro' + gamer.index" [id]="'euro_radio'+ gamer.index" [value]="'euro'"
                                 [checked]="gamer.validated && gamer.enabled && gamer.in_euro"
                                 [disabled]="gamer.disabled"
                                 (change)="gamer.enabled=true; gamer.in_euro=true; gamer.validated=true; onGamerValidated(gamer); log_game_state(); check_status()" />
@@ -241,8 +247,8 @@
                         </div>
                         <!-- Carte (membres uniquement, en haut si affiché) -->
                         <div *ngIf="gamer.is_member" class="form-check form-check-reverse">
-                            <input class="form-check-input fee-radio-lg" type="radio" [name]="'card_or_euro' + gamer.index"
-                                [id]="'pass-radio'+ gamer.index" [value]="'card'"
+                            <input class="form-check-input fee-radio-lg" type="radio"
+                                [name]="'card_or_euro' + gamer.index" [id]="'pass-radio'+ gamer.index" [value]="'card'"
                                 [checked]="gamer.validated && gamer.enabled && !gamer.in_euro"
                                 [disabled]="gamer.disabled || gamer.game_credits < (doubled ? 2 : 1)"
                                 (change)="gamer.enabled=true; gamer.in_euro=false; gamer.validated=true; onGamerValidated(gamer); log_game_state(); check_status()" />

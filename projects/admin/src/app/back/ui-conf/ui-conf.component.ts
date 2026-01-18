@@ -573,11 +573,6 @@ export class UiConfComponent implements OnInit {
     document.documentElement.style.setProperty('--content-font', contentFont);
     document.documentElement.style.setProperty('--content-bg', contentBg);
     document.documentElement.style.setProperty('--content-text', contentText);
-    localStorage.setItem('ui-main_color', main);
-    localStorage.setItem('ui-secondary_color', secondary);
-    localStorage.setItem('ui-main_font', font);
-
-    // Nettoyage : plus de couleurs Bootstrap
   }
 
 }

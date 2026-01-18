@@ -8,7 +8,7 @@
 
 
     <span class="d-none d-md-inline logo-overlap" style="margin-right:0.5em;">
-      <img src="admin.jpg" alt="BCSTO logo" class="me-1 logo-navbar" style="height:2.7em;max-height:56px;width:auto;vertical-align:top;display:block;" />
+      <img src="admin.jpg" alt="BCSTO logo" class="me-1 logo-navbar" style="height:2.7em;max-height:56px;width:auto;display:block;" />
     </span>
 
     <span class="d-none d-md-inline fs-5 ms-1" style="padding-left:1em;">
@@ -186,125 +186,128 @@
           </a>
         </li>
 
-        <li *ngIf="accreditation_level >= accreditation_levels.Contributeur" ngbDropdown class="nav-item dropdown">
+        <li *ngIf="accreditation_level >= accreditation_levels.Contributeur" class="nav-item">
           <div class="d-flex align-items-center">
-            <span class="nav-link p-0 pe-2" style="cursor:default;">
+            <span class="nav-link p-0 pe-2" style="cursor:pointer;" (click)="toggleMobileMenu('boutique')">
               <i class="bi bi-cart"></i> <span class="ms-1">Boutique</span>
             </span>
-            <a class="nav-link dropdown-toggle p-0" ngbDropdownToggle href="#" style="width:2em;"></a>
+            <a class="nav-link dropdown-toggle p-0" (click)="toggleMobileMenu('boutique')" href="javascript:void(0)" style="width:2em;"></a>
           </div>
-          <ul ngbDropdownMenu class="dropdown-menu">
-            <li><a class="dropdown-item" routerLink="./caisse/ventes" data-bs-dismiss="offcanvas">vente à adhérents</a>
+          <ul class="list-unstyled ps-4" [ngbCollapse]="!mobileMenus.boutique">
+            <li><a class="nav-link" routerLink="./caisse/ventes" data-bs-dismiss="offcanvas">vente à adhérents</a>
             </li>
-            <li><a class="dropdown-item" routerLink="./caisse/produits" data-bs-dismiss="offcanvas">produits à la
+            <li><a class="nav-link" routerLink="./caisse/produits" data-bs-dismiss="offcanvas">produits à la
                 vente</a></li>
           </ul>
         </li>
-        <li *ngIf="accreditation_level >= accreditation_levels.Contributeur" ngbDropdown class="nav-item dropdown">
+        <li *ngIf="accreditation_level >= accreditation_levels.Contributeur" class="nav-item">
           <div class="d-flex align-items-center">
-            <span class="nav-link p-0 pe-2" style="cursor:default;">
+            <span class="nav-link p-0 pe-2" style="cursor:pointer;" (click)="toggleMobileMenu('adherents')">
               <i class="bi bi-people"></i> <span class="ms-1">Adhérents</span>
             </span>
-            <a class="nav-link dropdown-toggle p-0" ngbDropdownToggle href="#" style="width:2em;"></a>
+            <a class="nav-link dropdown-toggle p-0" (click)="toggleMobileMenu('adherents')" href="javascript:void(0)" style="width:2em;"></a>
           </div>
-          <ul ngbDropdownMenu class="dropdown-menu">
-            <li><a class="dropdown-item" routerLink="./members/database" data-bs-dismiss="offcanvas">répertoire</a></li>
-            <li><a class="dropdown-item" routerLink="./members/cartes-admission" data-bs-dismiss="offcanvas">cartes
+          <ul class="list-unstyled ps-4" [ngbCollapse]="!mobileMenus.adherents">
+            <li><a class="nav-link" routerLink="./members/database" data-bs-dismiss="offcanvas">répertoire</a></li>
+            <li><a class="nav-link" routerLink="./members/cartes-admission" data-bs-dismiss="offcanvas">cartes
                 admission</a></li>
-            <li><a class="dropdown-item" routerLink="./members/controls" data-bs-dismiss="offcanvas">contrôles</a></li>
-            <li><a class="dropdown-item" routerLink="./members/competitions" data-bs-dismiss="offcanvas">compétitions</a></li>
+            <li><a class="nav-link" routerLink="./members/controls" data-bs-dismiss="offcanvas">contrôles</a></li>
+            <li><a class="nav-link" routerLink="./members/competitions" data-bs-dismiss="offcanvas">compétitions</a></li>
           </ul>
         </li>
-        <li *ngIf="accreditation_level >= accreditation_levels.Administrateur" ngbDropdown class="nav-item dropdown">
+        <li *ngIf="accreditation_level >= accreditation_levels.Administrateur" class="nav-item">
           <div class="d-flex align-items-center">
-            <span class="nav-link p-0 pe-2" style="cursor:default;">
+            <span class="nav-link p-0 pe-2" style="cursor:pointer;" (click)="toggleMobileMenu('finance')">
               <i class="bi bi-journal"></i> <span class="ms-1">Finance</span>
             </span>
-            <a class="nav-link dropdown-toggle p-0" ngbDropdownToggle href="#" style="width:2em;"></a>
+            <a class="nav-link dropdown-toggle p-0" (click)="toggleMobileMenu('finance')" href="javascript:void(0)" style="width:2em;"></a>
           </div>
-          <ul ngbDropdownMenu class="dropdown-menu">
-            <li><a class="dropdown-item" routerLink="./finance/état-de-caisse" data-bs-dismiss="offcanvas">état de
+          <ul class="list-unstyled ps-4" [ngbCollapse]="!mobileMenus.finance">
+            <li><a class="nav-link" routerLink="./finance/état-de-caisse" data-bs-dismiss="offcanvas">état de
                 caisse</a></li>
-            <li><a class="dropdown-item" routerLink="./finance/toutes-ecritures" data-bs-dismiss="offcanvas">écritures
+            <li><a class="nav-link" routerLink="./finance/toutes-ecritures" data-bs-dismiss="offcanvas">écritures
               </a></li>
-            <li><a class="dropdown-item" routerLink="./finance/books/base-comptable"
+            <li><a class="nav-link" routerLink="./finance/books/base-comptable"
                 data-bs-dismiss="offcanvas">synthèse</a></li>
-            <li><a class="dropdown-item" routerLink="./finance/bank-reconciliation"
+            <li><a class="nav-link" routerLink="./finance/bank-reconciliation"
                 data-bs-dismiss="offcanvas">rapprochement bancaire</a></li>
-            <li><a class="dropdown-item" routerLink="./finance/expense-and-revenue"
+            <li><a class="nav-link" routerLink="./finance/expense-and-revenue"
                 data-bs-dismiss="offcanvas">résultats</a></li>
-            <li><a class="dropdown-item" routerLink="./finance/balance" data-bs-dismiss="offcanvas">bilan</a></li>
+            <li><a class="nav-link" routerLink="./finance/balance" data-bs-dismiss="offcanvas">bilan</a></li>
           </ul>
         </li>
-        <li *ngIf="accreditation_level >= accreditation_levels.Systeme" ngbDropdown class="nav-item dropdown">
+        <li *ngIf="accreditation_level >= accreditation_levels.Systeme" class="nav-item">
           <div class="d-flex align-items-center">
-            <span class="nav-link p-0 pe-2" style="cursor:default;">
+            <span class="nav-link p-0 pe-2" style="cursor:pointer;" (click)="toggleMobileMenu('outils')">
               <i class="bi bi-database-fill-gear"></i> <span class="ms-1">Outils</span>
             </span>
-            <a class="nav-link dropdown-toggle p-0" ngbDropdownToggle href="#" style="width:2em;"></a>
+            <a class="nav-link dropdown-toggle p-0" (click)="toggleMobileMenu('outils')" href="javascript:void(0)" style="width:2em;"></a>
           </div>
-          <ul ngbDropdownMenu class="dropdown-menu">
-            <li><a class="dropdown-item" routerLink="./finance/books/list" data-bs-dismiss="offcanvas">base de
+          <ul class="list-unstyled ps-4" [ngbCollapse]="!mobileMenus.outils">
+            <li><a class="nav-link" routerLink="./finance/books/list" data-bs-dismiss="offcanvas">base de
                 données</a></li>
-            <li><a class="dropdown-item" routerLink="./finance/books/editor" data-bs-dismiss="offcanvas">écriture</a>
+            <li><a class="nav-link" routerLink="./finance/books/editor" data-bs-dismiss="offcanvas">écriture</a>
             </li>
-            <li><a class="dropdown-item" routerLink="./outils/groups" data-bs-dismiss="offcanvas">droits d'accès</a>
+            <li><a class="nav-link" routerLink="./outils/groups" data-bs-dismiss="offcanvas">droits d'accès</a>
             </li>
-            <li><a class="dropdown-item" routerLink="./outils/sysconf" data-bs-dismiss="offcanvas">configuration</a>
+            <li><a class="nav-link" routerLink="./outils/sysconf" data-bs-dismiss="offcanvas">configuration</a>
             </li>
-            <li *ngIf="!production_mode"><a class="dropdown-item" routerLink="./outils/excel_import"
+            <li *ngIf="!production_mode"><a class="nav-link" routerLink="./outils/excel_import"
                 data-bs-dismiss="offcanvas">import excel</a></li>
-            <li *ngIf="!production_mode"><a class="dropdown-item" routerLink="./outils/cloneDB"
+            <li *ngIf="!production_mode"><a class="nav-link" routerLink="./outils/cloneDB"
                 data-bs-dismiss="offcanvas">clone DB</a></li>
           </ul>
         </li>
-        <li *ngIf="accreditation_level >= accreditation_levels.Administrateur" ngbDropdown class="nav-item dropdown">
+        <li *ngIf="accreditation_level >= accreditation_levels.Administrateur" class="nav-item">
           <div class="d-flex align-items-center">
-            <span class="nav-link p-0 pe-2" style="cursor:default;">
+            <span class="nav-link p-0 pe-2" style="cursor:pointer;" (click)="toggleMobileMenu('site')">
               <i class="bi bi-globe2"></i> <span class="ms-1">Site web</span>
             </span>
-            <a class="nav-link dropdown-toggle p-0" ngbDropdownToggle href="#" style="width:2em;"></a>
+            <a class="nav-link dropdown-toggle p-0" (click)="toggleMobileMenu('site')" href="javascript:void(0)" style="width:2em;"></a>
           </div>
-          <ul ngbDropdownMenu class="dropdown-menu">
-            <li><a class="dropdown-item" routerLink="./site/ui" data-bs-dismiss="offcanvas">paramètres UI</a></li>
-            <li ><a class="dropdown-item" routerLink="./site/menus" data-bs-dismiss="offcanvas">les menus</a></li>
-            <li ><a class="dropdown-item" routerLink="./site/cms-wrapper" data-bs-dismiss="offcanvas">pages et datas</a></li>
+          <ul class="list-unstyled ps-4" [ngbCollapse]="!mobileMenus.site">
+            <li><a class="nav-link" routerLink="./site/ui" data-bs-dismiss="offcanvas">paramètres UI</a></li>
+            <li ><a class="nav-link" routerLink="./site/menus" data-bs-dismiss="offcanvas">les menus</a></li>
+            <li ><a class="nav-link" routerLink="./site/cms-wrapper" data-bs-dismiss="offcanvas">pages et datas</a></li>
             
-            <!-- <li><a class="dropdown-item" routerLink="./site/pages" data-bs-dismiss="offcanvas">les pages</a></li>
-            <li><a class="dropdown-item" routerLink="./site/uploader" data-bs-dismiss="offcanvas">les datas</a></li> -->
+            <!-- <li><a class="nav-link" routerLink="./site/pages" data-bs-dismiss="offcanvas">les pages</a></li>
+            <li><a class="nav-link" routerLink="./site/uploader" data-bs-dismiss="offcanvas">les datas</a></li> -->
 
-            <li><a class="dropdown-item" routerLink="/front" data-bs-dismiss="offcanvas">aller sur le site</a></li>
+            <li><a class="nav-link" routerLink="/front" data-bs-dismiss="offcanvas">aller sur le site</a></li>
           </ul>
         </li>
 
       <!-- communication -->
         
-        <li *ngIf="accreditation_level >= accreditation_levels.Administrateur" ngbDropdown class="nav-item dropdown">
+        <li *ngIf="accreditation_level >= accreditation_levels.Administrateur" class="nav-item">
           <div class="d-flex align-items-center">
-            <span class="nav-link p-0 pe-2" style="cursor:default;">
+            <span class="nav-link p-0 pe-2" style="cursor:pointer;" (click)="toggleMobileMenu('communication')">
               <i class="bi bi-globe2"></i> <span class="ms-1">Communication</span>
             </span>
-            <a class="nav-link dropdown-toggle p-0" ngbDropdownToggle href="#" style="width:2em;"></a>
+            <a class="nav-link dropdown-toggle p-0" (click)="toggleMobileMenu('communication')" href="javascript:void(0)" style="width:2em;"></a>
           </div>
-          <ul ngbDropdownMenu class="dropdown-menu">
-            <!-- <li><a class="dropdown-item" routerLink="./site/thumbnails">vignettes</a></li> -->
-            <li><a class="dropdown-item" routerLink="./communication/assistance" data-bs-dismiss="offcanvas">
+          <ul class="list-unstyled ps-4" [ngbCollapse]="!mobileMenus.communication">
+            <!-- <li><a class="nav-link" routerLink="./site/thumbnails">vignettes</a></li> -->
+            <li><a class="nav-link" routerLink="./communication/assistance" data-bs-dismiss="offcanvas">
               Assistance
               <span  class="badge bg-warning top-0 start-100 translate-middle"
                 style="font-size: 0.6rem;">{{assistances_nbr}}</span>
             </a></li>
-            <li ><a class="dropdown-item" routerLink="./communication/mailing" data-bs-dismiss="offcanvas">Mailing</a></li>
+            <li ><a class="nav-link" routerLink="./communication/mailing" data-bs-dismiss="offcanvas">Mailing</a></li>
           </ul>
         </li>
 
 
-        <li *ngIf="(logged_member$ | async) " ngbDropdown class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" ngbDropdownToggle href="#">
-            <i class="bi bi-person-circle"></i>
-            <span class="ms-1">{{ (logged_member$ | async)?.firstname }}</span>
-          </a>
-          <ul ngbDropdownMenu class="dropdown-menu">
-            <li> <a class="dropdown-item" (click)="signOut()" data-bs-dismiss="offcanvas">
+        <li *ngIf="(logged_member$ | async) " class="nav-item">
+          <div class="d-flex align-items-center">
+            <span class="nav-link p-0 pe-2" style="cursor:pointer;" (click)="toggleMobileMenu('user')">
+              <i class="bi bi-person-circle"></i>
+              <span class="ms-1">{{ (logged_member$ | async)?.firstname }}</span>
+            </span>
+            <a class="nav-link dropdown-toggle p-0" (click)="toggleMobileMenu('user')" href="javascript:void(0)" style="width:2em;"></a>
+          </div>
+          <ul class="list-unstyled ps-4" [ngbCollapse]="!mobileMenus.user">
+            <li> <a class="nav-link" (click)="signOut()" data-bs-dismiss="offcanvas" style="cursor:pointer;">
                 <i class="bi bi-box-arrow-right"></i>
                 Déconnexion
               </a></li>

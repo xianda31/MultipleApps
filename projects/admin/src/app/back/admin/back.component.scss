@@ -1,6 +1,14 @@
 
+.admin-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
 .admin-scrollable-content {
-	overflow-y: auto;
-	min-height: 60vh;
-	max-height: 80vh;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }

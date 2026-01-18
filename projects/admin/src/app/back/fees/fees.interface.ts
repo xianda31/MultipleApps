@@ -42,6 +42,7 @@ export interface Gamer {
     is_member: boolean;
     game_credits: number;
     acc_credits: boolean;
+    debt: number;
     index: number;
     in_euro: boolean;
     price: number;
