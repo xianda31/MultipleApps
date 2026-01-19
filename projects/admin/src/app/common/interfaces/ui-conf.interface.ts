@@ -1,3 +1,10 @@
+// Configuration des préférences compétitions
+export interface CompetitionsUIConfig {
+  preferred_organizations: string[];
+  show_members_only: boolean;
+  one_year_back: boolean;
+  show_theorical_rank: boolean;
+}
 // UI-specific interfaces extracted from system configuration
 
 export interface BreakpointsSettings {
@@ -62,7 +69,9 @@ export interface UIConfiguration {
   album_thumbnail: ImageSize;
   // Intervalle de défilement automatique du carousel d'albums (en ms)
   album_carousel_interval_ms?: number;
-  // future UI settings can be added ici
-  [key: string]: any;
+
+  
+  // Configuration des compétitions (préférences affichage, filtres, etc)
+  competitions?: CompetitionsUIConfig;
 }
 

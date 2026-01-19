@@ -6,6 +6,34 @@ const token = "Bearer eyJhbGciOiJSUzI1NiJ9.eyJyb2xlcyI6WyJST0xFX1dPUktBUkVBX1VTR
 export const handler: Handler = async (event) => {
     try {
         let path = event.pathParameters?.proxy || "";
+        // Handle dynamic competitions/organizations/{organization_id}
+        const competitionsOrgMatch = path.match(/^competitions\/organizations\/(\d+)$/);
+        if (competitionsOrgMatch) {
+            const organization_id = competitionsOrgMatch[1];
+            // Support ?search=... and/or ?season_id=...
+            const params = [];
+            if (event.queryStringParameters?.search) {
+                params.push("search=" + encodeURIComponent(event.queryStringParameters.search));
+            }
+            if (event.queryStringParameters?.season_id) {
+                params.push("season_id=" + encodeURIComponent(event.queryStringParameters.season_id));
+            }
+            const url = params.length > 0
+                ? ffbUrl + `competitions/organizations/${organization_id}` + "?" + params.join("&")
+                : ffbUrl + `competitions/organizations/${organization_id}`;
+            try {
+                const res = await fetch(
+                    url,
+                    { headers: { Authorization: token }, },
+                );
+                return res.json();
+            } catch (e) {
+                return {
+                    'statusCode': 500,
+                    'body': 'remote server error :' + e
+                };
+            }
+        }
         switch (path) {
             case "members":
                 path = "members/207656";
@@ -84,75 +112,54 @@ export const handler: Handler = async (event) => {
                     };
                 }
 
-            case "competitions/organizations/1":
-                // Supporte ?search=... et/ou ?season_id=...
-                const params = [];
-                if (event.queryStringParameters?.search) {
-                    params.push("search=" + encodeURIComponent(event.queryStringParameters.search));
-                }
-                if (event.queryStringParameters?.season_id) {
-                    params.push("season_id=" + encodeURIComponent(event.queryStringParameters.season_id));
-                }
-                const url = params.length > 0 ? ffbUrl + path + "?" + params.join("&") : ffbUrl + path;
-                try {
-                    const res = await fetch(
-                        url,
-                        { headers: { Authorization: token }, },
-                    );
-                    return res.json();
-                } catch (e) {
-                    return {
-                        'statusCode': 500,
-                        'body': 'remote server error :' + e
-                    };
-                }
 
-                case "competitions/final-ranking":
-                    // attend queryStringParameters.competition_id et .season_id
-                    if (event.queryStringParameters?.competition_id ) {
-                        const competition_id = event.queryStringParameters.competition_id;
-                        const finalRankingPath = `competitions/${competition_id}/organizations/1/final-ranking`;
-                        try {
-                            const res = await fetch(
-                                ffbUrl + finalRankingPath,
-                                { headers: { Authorization: token }, },
-                            );
-                            return res.json();
-                        } catch (e) {
-                            return {
-                                'statusCode': 500,
-                                'body': 'remote server error :' + e
-                            };
-                        }
+            case "competitions/final-ranking":
+                // attend queryStringParameters.competition_id et .season_id
+                if (event.queryStringParameters?.competition_id && event.queryStringParameters?.organization_id) {
+                    const competition_id = event.queryStringParameters.competition_id;
+                    const organization_id = event.queryStringParameters.organization_id ;
+                    const finalRankingPath = `competitions/${competition_id}/organizations/${organization_id}/final-ranking`;
+                    try {
+                        const res = await fetch(
+                            ffbUrl + finalRankingPath,
+                            { headers: { Authorization: token }, },
+                        );
+                        return res.json();
+                    } catch (e) {
+                        return {
+                            'statusCode': 500,
+                            'body': 'remote server error :' + e
+                        };
                     }
-                    return {
-                        'statusCode': 400,
-                        'body': 'proxy error : missing competition_id '
-                    };
+                }
+                return {
+                    'statusCode': 400,
+                    'body': 'proxy error : missing competition_id '
+                };
 
-                case "competitions/stades":
-                    // attend queryStringParameters.competition_id et .season_id
-                    if (event.queryStringParameters?.competition_id ) {
-                        const competition_id = event.queryStringParameters.competition_id;
-                        const finalRankingPath = `competitions/${competition_id}/organizations/1/stades`;
-                        try {
-                            const res = await fetch(
-                                ffbUrl + finalRankingPath,
-                                { headers: { Authorization: token }, },
-                            );
-                            return res.json();
-                        } catch (e) {
-                            return {
-                                'statusCode': 500,
-                                'body': 'remote server error :' + e
-                            };
-                        }
+            case "competitions/stades":
+                // attend queryStringParameters.competition_id et .season_id
+                if (event.queryStringParameters?.competition_id) {
+                    const competition_id = event.queryStringParameters.competition_id;
+                    const finalRankingPath = `competitions/${competition_id}/organizations/1/stades`;
+                    try {
+                        const res = await fetch(
+                            ffbUrl + finalRankingPath,
+                            { headers: { Authorization: token }, },
+                        );
+                        return res.json();
+                    } catch (e) {
+                        return {
+                            'statusCode': 500,
+                            'body': 'remote server error :' + e
+                        };
                     }
-                    return {
-                        'statusCode': 400,
-                        'body': 'proxy error : missing competition_id '
-                    };
-                
+                }
+                return {
+                    'statusCode': 400,
+                    'body': 'proxy error : missing competition_id '
+                };
+
 
             // ----------------------------------------API Tournament management for club 1438
             case "organizations/1438/club_tournament":

@@ -5,6 +5,7 @@ import { SystemDataService } from '../../common/services/system-data.service';
 import { ToastService } from '../../common/services/toast.service';
 import { FileService, S3_ROOT_FOLDERS } from '../../common/services/files.service';
 import { map, Observable, first, catchError, of, Subscription } from 'rxjs';
+import { CompetitionsUIConfig } from '../../common/interfaces/ui-conf.interface';
 
 @Component({
   selector: 'app-ui-conf',
@@ -366,7 +367,7 @@ export class UiConfComponent implements OnInit {
         show_members_only: ui?.competitions?.show_members_only ?? false,
         one_year_back: ui?.competitions?.one_year_back ?? false,
         show_theorical_rank: ui?.competitions?.show_theorical_rank ?? false
-      },
+      } as CompetitionsUIConfig,
       brand_bg: ui?.brand_bg ?? '#2e332d',
       header_bg: ui?.header_bg ?? '#2e332d',
       header_text_color: template.header_text_color ?? ui?.header_text_color ?? '#ffffff',
@@ -493,7 +494,7 @@ export class UiConfComponent implements OnInit {
         show_members_only: formVal.competitions?.show_members_only ?? false,
         one_year_back: formVal.competitions?.one_year_back ?? false,
         show_theorical_rank: formVal.competitions?.show_theorical_rank ?? false
-      };
+      } as CompetitionsUIConfig;
 
       // Ajout des couleurs de thème dans le payload
       payload.brand_bg = formVal.brand_bg;

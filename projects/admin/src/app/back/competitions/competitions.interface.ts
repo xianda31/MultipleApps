@@ -4,7 +4,7 @@ export interface CompetitionResults {
 }
 
 export interface CompetitionResultsMap {
-  [competitionId: number]: CompetitionResults;
+  [competitionId: number]: CompetitionResults[];
 }
 export interface Player {
   id: number;

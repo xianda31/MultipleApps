@@ -17,12 +17,12 @@ export function applyUiThemeInitializer(systemDataService: SystemDataService) {
       const ui = await firstValueFrom(systemDataService.get_ui_settings());
       const t = ui?.template || {};
       const root = document.documentElement;
-      const headerBg = t['header_bg'] || ui['header_bg'];
-      const headerTextColor = t['header_text_color'] || ui['header_text_color'];
-      const navbarBg = t['navbar_bg'] || ui['navbar_bg'];
-      const navbarTextColor = t['navbar_text_color'] || ui['navbar_text_color'];
-      const footerBg = t['footer_bg'] || ui['footer_bg'];
-      const footerTextColor = t['footer_text_color'] || ui['footer_text_color'];
+      const headerBg = t['header_bg'] || ui.template?.header_bg;
+      const headerTextColor = t['header_text_color'] || ui.template?.header_text_color;
+      const navbarBg = t['navbar_bg'] || ui.template?.navbar_bg;
+      const navbarTextColor = t['navbar_text_color'] || ui.template?.navbar_text_color;
+      const footerBg = t['footer_bg'] || ui.template?.footer_bg;
+      const footerTextColor = t['footer_text_color'] || ui.template?.footer_text_color;
       if (headerBg) {
         root.style.setProperty('--brand-bg', headerBg);
         root.style.setProperty('--title-bg', headerBg);
@@ -79,9 +79,9 @@ export function applyUiThemeFromConfig(ui: UIConfiguration | null | undefined) {
   const t = ui.template || {};
   const root = document.documentElement;
   // Contenu page (autour du router)
-  const contentFont = t['content_font'] || ui['content_font'];
-  const contentBg = t['content_bg'] || ui['content_bg'];
-  const contentText = t['content_text_color'] || ui['content_text_color'];
+  const contentFont = t['content_font'] || ui.template?.content_font;
+  const contentBg = t['content_bg'] || ui.template?.content_bg;
+  const contentText = t['content_text_color'] || ui.template?.content_text_color;
   if (t.header_bg) {
     root.style.setProperty('--brand-bg', t.header_bg);
     root.style.setProperty('--title-bg', t.header_bg);
@@ -111,8 +111,8 @@ export function applyUiThemeFromConfig(ui: UIConfiguration | null | undefined) {
 
   // Inject font-main and font-title if present
   // Use 'as any' to access dynamic keys (font-main/font-title)
-  const fontMain = t['main_font'] || ui['main_font'];
-  const fontTitle = t['title_font'] || ui['title_font'];
+  const fontMain = t['main_font'] || ui.template?.main_font;
+  const fontTitle = t['title_font'] || ui.template?.title_font;
   const loadedFonts = new Set<string>();
   [fontMain, fontTitle].forEach(font => {
     if (font && typeof font === 'string' && !loadedFonts.has(font)) {

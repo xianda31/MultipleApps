@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
-import { Competition, CompetitionData, CompetitionSeason, CompetitionTeam, Player } from './competitions.interface';
+import { Competition, CompetitionData, CompetitionOrganization, CompetitionSeason, CompetitionTeam, Player } from './competitions.interface';
 
 import { CompetitionResultsMap } from './competitions.interface';
 import { FFB_proxyService } from '../../common/ffb/services/ffb.service';
 import { MembersService } from '../../common/services/members.service';
 import { SystemDataService } from '../../common/services/system-data.service';
-import { from, map, Observable, catchError, of, switchMap, tap, mergeMap } from 'rxjs';
+import { from, map, Observable, catchError, of, switchMap, tap, mergeMap, toArray, concatMap, lastValueFrom } from 'rxjs';
 import { Member } from '../../common/interfaces/member.interface';
 import { FileService } from '../../common/services/files.service';
 
@@ -15,25 +15,39 @@ import { FileService } from '../../common/services/files.service';
 export class CompetitionService {
   private _members: Member[] = [];
   private _team_results: CompetitionResultsMap = {};
+  private _organizations: CompetitionOrganization[] = [];
+  private _preferred_organizations: CompetitionOrganization[] = [];
 
-
-
+persistence: boolean = true
   constructor(
     private ffbService: FFB_proxyService,
     private memberService: MembersService,
     private systemService: SystemDataService,
-    private fileService: FileService
+    private fileService: FileService,
   ) {
     this.memberService.listMembers().subscribe(members => {
       this._members = members;
     });
-
-
+   }
+  
+  getCompetitionOrganizations(organization_labels: string[]): Observable<CompetitionOrganization[]> {
+    if (this._organizations.length > 0) {
+      return of(this._organizations);
+    } else {
+      return from(this.ffbService.getCompetitionOrganizations()).pipe(
+        tap((orgs: CompetitionOrganization[]) => {
+          this._organizations = orgs.filter(org => organization_labels.includes(org.label));
+        })
+      );
+    }
   }
-
-  getCompetionsResults(season: string): Observable<CompetitionResultsMap> { 
-
-    return from(this.ffbService.getSeasons()).pipe(
+  
+  getCompetionsResults(season: string, organization_labels: string[]): Observable<CompetitionResultsMap> { 
+    return from(this.ffbService.getCompetitionOrganizations()) .pipe(
+      tap((orgs: CompetitionOrganization[]) => {
+        this._preferred_organizations = orgs.filter(org => organization_labels.includes(org.label));
+      }),
+      switchMap(() => from(this.ffbService.getSeasons())),
       // recupérer la saison correspondant au nom donné
       map((seasons: CompetitionSeason[]) => {
         const selected_season = seasons.find(s => s.name === season);
@@ -41,6 +55,10 @@ export class CompetitionService {
       }),
       // récupère les données des compétitions à partir du fichier S3 si disponible (en série dans la séquence RxJS)
       switchMap((seasonObj: CompetitionSeason | undefined) => {
+        if(this.persistence === false) {
+          this._team_results = {};
+          return of(seasonObj);
+        }
         if (!seasonObj) return of(seasonObj);
         const safeSeason = season.replace(/\//g, '_');
         return from(this.fileService.download_json_file('any/resultats' + safeSeason + '.txt')).pipe(
@@ -57,26 +75,33 @@ export class CompetitionService {
       // récupérer les compétitions de cette saison
       switchMap((seasonObj: CompetitionSeason | undefined) => {
         if (!seasonObj) return of([] as Competition[]);
-        const competitions = this.getCompetitions(String(seasonObj.id));
-        return competitions;
+        return this.getCompetitions(String(seasonObj.id), this._preferred_organizations);
+      }),
+      // filtre les compétitions de label en 'E '
+      map((competitions: Competition[]) => {
+        const filtered = competitions.filter(c => !c.label.startsWith('E '));
+        console.log('CompetitionService: %s competitions retrieved', filtered.length);
+        return filtered;
       }),
       // filtrer les compétitions n'etant pas listées dans le fichier S3 et ayant des résultats d'équipe
       map((competitions: Competition[]) => {
         const filtered_comps = competitions.filter(c => !this.is_logged_in_S3(String(c.id)) && c.allGroupsProbated === true);
-        // console.log('Nouvelles compétitions avec résultats d\'équipe', filtered_comps);
+        console.log('Nouvelles compétitions avec résultats d\'équipe', filtered_comps);
         return filtered_comps;
       }),
       // récupérer les résultats pour chaque compétition
       switchMap((competitions: Competition[]) => {
-        console.log('Compétitions récupérées pour la saison', season);
-        competitions.forEach(c => {
-          console.log(` - [${c.id}] ${c.label} (Groupes probatés: ${c.allGroupsProbated})`);
-        });
+        // console.log('Compétitions récupérées pour la saison', season);
+        // competitions.forEach(c => {
+        //   console.log(` - [${c.id}] ${c.label} (Groupes probatés: ${c.allGroupsProbated})`);
+        // });
         return from(this.runSerial(competitions)).pipe(
-          map((results: { [competitionId: number]: { competition: Competition, teams: CompetitionTeam[] } }) => {
+          map((results: CompetitionResultsMap) => {
+            console.log('CompetitionService: compétition résultats récupérés', results);
             const merged = { ...this._team_results, ...results };
             return merged;
           }),
+          tap((merged) => console.log('CompetitionService: compétition résultats fusionnés', merged)),
           tap((merged) => this.saveResults(season, merged)),
         );
       })
@@ -84,10 +109,10 @@ export class CompetitionService {
   }
 
   // Exécution séquentielle des requêtes pour chaque compétition
-  private async runSerial(competitions: Competition[]): Promise<{ [competitionId: number]: { competition: Competition, teams: CompetitionTeam[] } }> {
-    const results: { [competitionId: number]: { competition: Competition, teams: CompetitionTeam[] } } = {};
+  private async runSerial(competitions: Competition[]): Promise<CompetitionResultsMap> {
+    const results: CompetitionResultsMap = {};
     for (const comp of competitions) {
-      const compTeam = await this.getCompetitionResults(String(comp.id)).toPromise();
+      const compTeam = await lastValueFrom(this.getCompetitionResults(String(comp.id),String(comp.organization_id)));
       // Filtrer les équipes pour ne garder que celles ayant au moins un membre
       const filteredTeams = (compTeam || []).filter(team => this.has_a_member(team.players));
       // add is_member field to each player
@@ -111,7 +136,10 @@ export class CompetitionService {
           return m1 - m2;
         });
       });
-      results[comp.id] = { competition: comp, teams: safeCompTeam };
+      if (safeCompTeam.length > 0) {
+        if (!results[comp.id]) results[comp.id] = [];
+        results[comp.id].push({ competition: comp, teams: safeCompTeam });
+      }
     }
     return results;
   }
@@ -137,23 +165,21 @@ export class CompetitionService {
     );
   }
 
-  getCompetitions(seasonId: string): Observable<Competition[]> {
-    return from(this.ffbService.getCompetitions(seasonId));
+  getCompetitions(seasonId: string, organizations: CompetitionOrganization[]): Observable<Competition[]> {
+    const organization_ids = organizations.map(org => org.id.toString());
+    console.log('Fetching competitions for season', seasonId, 'and organizations', organization_ids);
+    return from(organization_ids).pipe(
+      concatMap(orgId => from(this.ffbService.getCompetitions(seasonId, orgId))),
+      toArray(),
+      map(arrays => arrays.flat())
+    );
   }
 
-  getCompetitionResults(competitionId: string): Observable<CompetitionTeam[]> {
-    return from(this.ffbService.getCompetitionResults(competitionId)).pipe(
+  getCompetitionResults(competitionId: string, organization_id: string): Observable<CompetitionTeam[]> {
+    return from(this.ffbService.getCompetitionResults(competitionId, organization_id)).pipe(
       catchError((err) => {
         console.error(`Erreur lors du chargement des résultats pour la compétition ${competitionId}:`, err);
         return of([]);
-      })
-    );
-  }
-  getCompetitionStatus(competitionId: string): Observable<CompetitionData | null> {
-    return from(this.ffbService.getCompetitionStatus(competitionId)).pipe(
-      catchError((err) => {
-        console.error(`Erreur lors du chargement des résultats pour la compétition ${competitionId}:`, err);
-        return of(null);
       })
     );
   }
