@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { del, get, post } from 'aws-amplify/api';
-import { club_tournament, Tournament } from '../interface/club_tournament.interface';
+import { Tournament } from '../interface/club_tournament.interface';
 import { FFB_licensee } from '../interface/licensee.interface';
 import { FFBplayer } from '../interface/FFBplayer.interface';
 import { TournamentTeams } from '../interface/tournament_teams.interface';
 import { from, Observable } from 'rxjs';
-import { Competition, CompetitionData, CompetitionOrganization, CompetitionSeason, CompetitionTeam} from '../../../back/competitions/competitions.interface';
+import { Competition, CompetitionOrganization, CompetitionSeason, CompetitionTeam} from '../../../back/competitions/competitions.interface';
 @Injectable({
   providedIn: 'root'
 })
@@ -231,7 +231,6 @@ async getSeasons() : Promise<CompetitionSeason[]> {
       const { body } = await restOperation.response;
       const data = await body.json();
       const data2 = data as unknown as Competition[];
-      console.log('FFB_proxyService: getCompetitions for organization_id=', organization_id, data2.filter(c => c.id === 11527));
       return data2;
     } catch (error) {
       console.log('getCompetitions : GET call failed: ', error);

@@ -12,7 +12,7 @@
     </div>
 
     <div class="row justify-content-center mb-3">
-        <div class="col-md-2" *ngFor="let division of divisions.concat(['Autres']); let i = index">
+        <div class="col-md-2" *ngFor="let division of divisions; let i = index">
             <div class="fw-bold text-center mb-2">{{ division }}</div>
             <div class="d-flex flex-column gap-1">
                 <div *ngFor="let entry of team_results | keyvalue">
@@ -20,20 +20,20 @@
                     <ng-container *ngIf="
                         entry.value.length > 0 &&
                         (
-                            (entry.value[0].competition.division && entry.value[0].competition.division.label === division) ||
-                            (division === 'Autres' && (!entry.value[0].competition.division || !divisions.includes(entry.value[0].competition.division.label)))
+                            (getDivisionCategory(entry.value[0].competition.division?.label) === division) ||
+                            (division === 'Autres' && getDivisionCategory(entry.value[0].competition.division?.label) === 'Autres')
                         ) &&
                         hasTeamsToDisplay(entry.value)
                     ">
                         <div class="card shadow-sm">
                             <div class="card-header text-center">
-                                <span class="fw-bold">{{ entry.value[0].competition.label }}</span>
+                                <span class="fw-bold"> {{entry.key}} {{ entry.value[0].competition.label }}</span>
                             </div>
                             <div class="card-body p-2">
                                 <ng-container *ngFor="let result of entry.value; let i = index">
                                     <div class="mb-2">
                                         <ng-container *ngIf="i > 0"><hr class="my-2"></ng-container>
-                                        <div class=" small text-primary">{{ get_organization_label(result.competition.organization_id) }}</div>
+                                        <div class=" small text-primary mb-1">{{ get_organization_label(result.competition.organization_id) }}</div>
                                         <div *ngFor="let team of result.teams" class="mb-2">
                                             <div class="d-flex align-items-center">
                                                 <span class="me-2 d-flex flex-column align-items-center">

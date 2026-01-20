@@ -80,7 +80,6 @@ export class CompetitionService {
       // filtre les compétitions de label en 'E '
       map((competitions: Competition[]) => {
         const filtered = competitions.filter(c => !c.label.startsWith('E '));
-        console.log('CompetitionService: %s competitions retrieved', filtered.length);
         return filtered;
       }),
       // filtrer les compétitions ayant des résultats d'équipe (allGroupsProbated === true)
@@ -92,18 +91,18 @@ export class CompetitionService {
       // filtrer les compétitions n'ayant pas été enregistrées dans le fichier S3 
       map((competitions: Competition[]) => {
         const filtered = competitions.filter(c => !this.is_logged_in_S3(c));
-        console.log('Nouvelles compétitions ', filtered);
+        console.log('Nouvelles compétitions non encore persistées ', filtered);
         return filtered;
       }),
       // récupérer les résultats pour chaque compétition
       switchMap((competitions: Competition[]) => {
         return from(this.runSerial(competitions)).pipe(
           map((results: CompetitionResultsMap) => {
-            console.log('CompetitionService: compétition résultats récupérés', results);
+            // console.log('CompetitionService: compétition résultats récupérés', results);
             const merged = { ...this._team_results, ...results };
             return merged;
           }),
-          tap((merged) => console.log('CompetitionService: compétition résultats fusionnés', merged)),
+          // tap((merged) => console.log('CompetitionService: compétition résultats fusionnés', merged)),
           tap((merged) => this.saveResults(season, merged)),
         );
       })
@@ -192,7 +191,7 @@ export class CompetitionService {
     const resultsArr = this._team_results[c_id];
     if (!resultsArr || !Array.isArray(resultsArr)) return false;
     const isLoggedIn = resultsArr.some(r => r.competition && r.competition.organization_id === c_org);
-    console.log(`CompetitionService: is_logged_in_S3 check for competition ${c_id} org ${c_org}:`, isLoggedIn);
+    // console.log(`CompetitionService: is_logged_in_S3 check for competition ${c_id} org ${c_org}:`, isLoggedIn);
     return isLoggedIn;
   }
 
