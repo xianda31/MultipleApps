@@ -1,7 +1,7 @@
 
 
 import { Component } from '@angular/core';
-import { Competition, CompetitionOrganization, CompetitionResultsMap, CompetitionSeason, CompetitionTeam, Player } from './competitions.interface';
+import { Competition, CompetitionOrganization, CompetitionResultsMap, CompetitionSeason, CompetitionTeam, Player, CompetitionResults } from './competitions.interface';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CompetitionService } from './competition.service';
@@ -62,26 +62,20 @@ export class CompetitionsComponent {
       this.titleService.setTitle('Les résultats des compétitions - Saison ' + this.current_season);
 
       this.competitionService.getCompetionsResults(this.current_season, this.preferred_organization_labels).subscribe(results => {
-        this.team_results = results;
+        // Filtrer les CompetitionResults dont toutes les teams sont vides
+        const filteredResults: CompetitionResultsMap = {};
+        Object.entries(results).forEach(([compId, compResults]) => {
+          const validResults = (compResults as CompetitionResults[]).filter((r: CompetitionResults) =>
+            Array.isArray(r.teams) && r.teams.some((team: CompetitionTeam) => Array.isArray(team.players) && team.players.length > 0)
+          );
+          if (validResults.length > 0) {
+            filteredResults[Number(compId)] = validResults;
+          }
+        });
+        this.team_results = filteredResults;
+       
         console.log('CompetitionsComponent: received competition results', results);
-        // Ne garder que les compétitions  ayant au moins une équipe avec au moins un joueur
-        // this.competitions = Object.values(results)
-        //   .flat()
-        //   .filter(r => Array.isArray(r.teams) && r.teams.some((team: any) => Array.isArray(team.players) && team.players.length > 0))
-        //   .map(r => r.competition);
-
-        //   console.log(`CompetitionsComponent: loaded ${this.competitions.length} competitions with results for season ${this.current_season}`);
-        //   console.log(this.competitions);
-
-          // this.competitions.forEach(async comp => {
-          //   this.competitionService.getCompetitionStatus(comp.id.toString()).subscribe(statusData => {
-          //     if (statusData) {
-          //       console.log(`Competition ${comp.id} with phases data:`, statusData.phases);
-          //     } else {
-          //       console.log(`No status data available for competition ${comp.id}`);
-          //     }
-          //   });
-          // });
+        
 
           this.results_extracted = true;
       });
@@ -92,6 +86,12 @@ export class CompetitionsComponent {
     const org = this.organizations.find(o => o.id === id);
     return org ? org.label : 'Inconnu';
   }
+
+    hasTeamsToDisplay(results: any[]): boolean {
+    return Array.isArray(results) && results.some(r => r.teams && r.teams.length > 0);
+  }
+
+
   
   // Section de configuration acquise depuis UI settings
   private loadCompetitionConfigFromUi(ui: any) {

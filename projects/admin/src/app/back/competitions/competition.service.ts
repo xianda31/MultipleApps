@@ -138,10 +138,10 @@ export class CompetitionService {
           return m1 - m2;
         });
       });
-      if (safeCompTeam.length > 0) {
+      // if (safeCompTeam.length > 0) {
         if (!results[comp.id]) results[comp.id] = [];
         results[comp.id].push({ competition: comp, teams: safeCompTeam });
-      }
+      // }
     }
     return results;
   }
@@ -191,7 +191,9 @@ export class CompetitionService {
     const c_org = comp.organization_id;
     const resultsArr = this._team_results[c_id];
     if (!resultsArr || !Array.isArray(resultsArr)) return false;
-    return resultsArr.some(r => r.competition && r.competition.organization_id === c_org);
+    const isLoggedIn = resultsArr.some(r => r.competition && r.competition.organization_id === c_org);
+    console.log(`CompetitionService: is_logged_in_S3 check for competition ${c_id} org ${c_org}:`, isLoggedIn);
+    return isLoggedIn;
   }
 
   has_a_member(players: Player[]): boolean {
