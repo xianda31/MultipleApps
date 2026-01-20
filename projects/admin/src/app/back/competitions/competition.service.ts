@@ -18,7 +18,7 @@ export class CompetitionService {
   private _organizations: CompetitionOrganization[] = [];
   private _preferred_organizations: CompetitionOrganization[] = [];
 
-persistence: boolean = true
+  persistence: boolean = true
   constructor(
     private ffbService: FFB_proxyService,
     private memberService: MembersService,
@@ -28,8 +28,8 @@ persistence: boolean = true
     this.memberService.listMembers().subscribe(members => {
       this._members = members;
     });
-   }
-  
+  }
+
   getCompetitionOrganizations(organization_labels: string[]): Observable<CompetitionOrganization[]> {
     if (this._organizations.length > 0) {
       return of(this._organizations);
@@ -41,9 +41,9 @@ persistence: boolean = true
       );
     }
   }
-  
-  getCompetionsResults(season: string, organization_labels: string[]): Observable<CompetitionResultsMap> { 
-    return from(this.ffbService.getCompetitionOrganizations()) .pipe(
+
+  getCompetionsResults(season: string, organization_labels: string[]): Observable<CompetitionResultsMap> {
+    return from(this.ffbService.getCompetitionOrganizations()).pipe(
       tap((orgs: CompetitionOrganization[]) => {
         this._preferred_organizations = orgs.filter(org => organization_labels.includes(org.label));
       }),
@@ -55,7 +55,7 @@ persistence: boolean = true
       }),
       // récupère les données des compétitions à partir du fichier S3 si disponible (en série dans la séquence RxJS)
       switchMap((seasonObj: CompetitionSeason | undefined) => {
-        if(this.persistence === false) {
+        if (this.persistence === false) {
           this._team_results = {};
           return of(seasonObj);
         }
@@ -83,18 +83,20 @@ persistence: boolean = true
         console.log('CompetitionService: %s competitions retrieved', filtered.length);
         return filtered;
       }),
-      // filtrer les compétitions n'etant pas listées dans le fichier S3 et ayant des résultats d'équipe
+      // filtrer les compétitions ayant des résultats d'équipe (allGroupsProbated === true)
       map((competitions: Competition[]) => {
-        const filtered_comps = competitions.filter(c => !this.is_logged_in_S3(String(c.id)) && c.allGroupsProbated === true);
-        console.log('Nouvelles compétitions avec résultats d\'équipe', filtered_comps);
-        return filtered_comps;
+        const filtered = competitions.filter(c => c.allGroupsProbated === true);
+        console.log('Compétitions avec résultats d\'équipe', filtered);
+        return filtered;
+      }),
+      // filtrer les compétitions n'ayant pas été enregistrées dans le fichier S3 
+      map((competitions: Competition[]) => {
+        const filtered = competitions.filter(c => !this.is_logged_in_S3(c));
+        console.log('Nouvelles compétitions ', filtered);
+        return filtered;
       }),
       // récupérer les résultats pour chaque compétition
       switchMap((competitions: Competition[]) => {
-        // console.log('Compétitions récupérées pour la saison', season);
-        // competitions.forEach(c => {
-        //   console.log(` - [${c.id}] ${c.label} (Groupes probatés: ${c.allGroupsProbated})`);
-        // });
         return from(this.runSerial(competitions)).pipe(
           map((results: CompetitionResultsMap) => {
             console.log('CompetitionService: compétition résultats récupérés', results);
@@ -112,7 +114,7 @@ persistence: boolean = true
   private async runSerial(competitions: Competition[]): Promise<CompetitionResultsMap> {
     const results: CompetitionResultsMap = {};
     for (const comp of competitions) {
-      const compTeam = await lastValueFrom(this.getCompetitionResults(String(comp.id),String(comp.organization_id)));
+      const compTeam = await lastValueFrom(this.getCompetitionResults(String(comp.id), String(comp.organization_id)));
       // Filtrer les équipes pour ne garder que celles ayant au moins un membre
       const filteredTeams = (compTeam || []).filter(team => this.has_a_member(team.players));
       // add is_member field to each player
@@ -184,9 +186,14 @@ persistence: boolean = true
     );
   }
 
-  is_logged_in_S3(c_id: string): boolean {
-    return this._team_results[Number(c_id)] !== undefined;
+  is_logged_in_S3(comp: Competition): boolean {
+    const c_id = Number(comp.id);
+    const c_org = comp.organization_id;
+    const resultsArr = this._team_results[c_id];
+    if (!resultsArr || !Array.isArray(resultsArr)) return false;
+    return resultsArr.some(r => r.competition && r.competition.organization_id === c_org);
   }
+
   has_a_member(players: Player[]): boolean {
     const member1 = this._members.find(m => players.some(p => p.license_number === m.license_number));
     const member2 = this._members.find(m => players.some(p => p.license_number === m.license_number));
