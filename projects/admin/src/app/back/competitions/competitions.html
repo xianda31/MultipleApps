@@ -15,7 +15,7 @@
         <div class="col-md-2" *ngFor="let division of divisions; let i = index">
             <div class="fw-bold text-center mb-2">{{ division }}</div>
             <div class="d-flex flex-column gap-1">
-                <div *ngFor="let entry of team_results | keyvalue">
+                <ng-container *ngFor="let entry of team_results | keyvalue">
                     <!-- entry.key = competitionId, entry.value = CompetitionResults[] -->
                     <ng-container *ngIf="
                         entry.value.length > 0 &&
@@ -68,7 +68,7 @@
                             </div>
                         </div>
                     </ng-container>
-                </div>
+                </ng-container>
             </div>
         </div>
     </div>
