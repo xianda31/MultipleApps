@@ -4,6 +4,7 @@ import { AuthentificationService } from '../../common/authentification/authentif
 import { Member } from '../../common/interfaces/member.interface';
 import { Observable } from 'rxjs';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { Accreditation } from '../../common/authentification/group.interface';
 import { GroupService } from '../../common/authentification/group.service';
 import { ConnexionComponent } from '../../common/authentification/connexion/connexion.component';
@@ -11,7 +12,7 @@ import { ConnexionComponent } from '../../common/authentification/connexion/conn
 @Component({
   selector: 'app-back-page',
   standalone: true,
-  imports: [CommonModule, ConnexionComponent],
+  imports: [CommonModule, RouterModule, ConnexionComponent],
   templateUrl: './back-page.component.html',
   styleUrl: './back-page.component.scss'
 })

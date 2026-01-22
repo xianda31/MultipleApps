@@ -13,6 +13,9 @@
         <br>
         Merci pour votre engagement envers le Club.
     </p>
+    <p>
+        <a [routerLink]="['/front']" class="btn btn-primary">Basculer sur le front</a>
+    </p>
 </div>
 <div *ngIf="!(logged_member$ | async)" class="text-center justify-content-center">
     <h1>Bienvenue sur la page d'administration</h1>
