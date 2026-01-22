@@ -322,10 +322,21 @@
           <div class="card-title fw-bold fs-5 ms-2">Résultats compétitions</div>
           <div class="card-body" formGroupName="competitions">
             <div class="mb-2">
-              <label class="form-label">Sélection</label>
-              <input type="text" class="form-control" formControlName="preferred_organizations"
-                placeholder="Séparez par des virgules" />
-              <div class="small text-muted mt-1">Exemple : FFB, Ligue 06 LR-PY, Comité des Pyrenees</div>
+              <label class="form-label">Codes FFB des niveaux de compétition</label>
+              <div formGroupName="preferred_organizations">
+                <div class="mb-1 d-flex align-items-center gap-2">
+                  <label class="form-label small mb-0" style="min-width:70px;">Comité</label>
+                  <input type="text" class="form-control form-control-sm" formControlName="comite" placeholder="Comité des Pyrenees" />
+                </div>
+                <div class="mb-1 d-flex align-items-center gap-2">
+                  <label class="form-label small mb-0" style="min-width:70px;">Ligue</label>
+                  <input type="text" class="form-control form-control-sm" formControlName="ligue" placeholder="Ligue 06 LR-PY" />
+                </div>
+                <div class="mb-1 d-flex align-items-center gap-2">
+                  <label class="form-label small mb-0" style="min-width:70px;">National</label>
+                  <input type="text" class="form-control form-control-sm" formControlName="national" placeholder="FFB" />
+                </div>
+              </div>
             </div>
             <div class="mb-2 form-check">
               <input type="checkbox" class="form-check-input" id="showMembersOnly"

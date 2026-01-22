@@ -1,5 +1,4 @@
 
-
 import { Component } from '@angular/core';
 import { Competition, CompetitionOrganization, CompetitionResultsMap, CompetitionSeason, CompetitionTeam, Player, CompetitionResults } from './competitions.interface';
 import { CommonModule } from '@angular/common';
@@ -15,31 +14,30 @@ import { TitleService } from '../../front/title/title.service';
   styleUrl: './competitions.scss'
 })
 export class CompetitionsComponent {
-  current_season: string = '' ;
+  current_season: string = '';
   competitions: Competition[] = [];
   organizations: CompetitionOrganization[] = [];
   results_extracted: boolean = false;
   team_results: CompetitionResultsMap = {};
 
-  divisions: string[] = ['National', 'Expert', 'Performance', 'Challenge', 'Accession'];
+  divisions: string[] = ['Division de Ligue', 'Expert', 'Performance', 'Challenge', 'Espérance'];
   division_labels: { [key: string]: string } = {
-    'DN3': 'National',
-    'DN4': 'National',
+    'DN': 'Division de Ligue',
     'Expert': 'Expert',
     'Performance': 'Performance',
     'Challenge': 'Challenge',
-    'Aucune Division': 'Accession'
-    
+    'Espérance': 'Espérance',
+
   };
 
-  preferred_organization_labels!: string[] ; 
-  show_members_only!: boolean ;
-  one_year_back!: boolean ;
-  show_theorical_rank!: boolean ;
+  preferred_organization_labels!: { comite: string; ligue: string; national: string };
+  show_members_only!: boolean;
+  one_year_back!: boolean;
+  show_theorical_rank!: boolean;
 
-  
+
   spinnerMessage: string = 'Recherche en cours...';
-  
+
   constructor(
     private competitionService: CompetitionService,
     private systemService: SystemDataService,
@@ -51,7 +49,12 @@ export class CompetitionsComponent {
     // Charger la configuration Competitions depuis ui-conf
     this.systemService.get_ui_settings().subscribe(ui => {
       // this.loadCompetitionConfigFromUi(ui);
-      this.preferred_organization_labels = ui?.competitions?.preferred_organizations || ['FFB', 'Ligue 06 LR-PY', 'Comité des Pyrenees'];
+      // Utilise l'objet { comite, ligue, national } directement
+      if (ui?.competitions?.preferred_organizations && typeof ui.competitions.preferred_organizations === 'object') {
+        this.preferred_organization_labels = ui.competitions.preferred_organizations;
+      } else {
+        this.preferred_organization_labels = { comite: 'Comité des Pyrenees', ligue: 'Ligue 06 LR-PY', national: 'FFB' };
+      }
       this.show_members_only = ui?.competitions?.show_members_only || false;
       this.one_year_back = ui?.competitions?.one_year_back || false;
       this.show_theorical_rank = ui?.competitions?.show_theorical_rank || false;
@@ -59,7 +62,7 @@ export class CompetitionsComponent {
       this.competitionService.getCompetitionOrganizations(this.preferred_organization_labels).subscribe(orgs => {
         this.organizations = orgs;
       });
-      
+
       this.current_season = this.one_year_back ? this.systemService.previous_season(this.systemService.get_today_season()) : this.systemService.get_today_season();
       this.titleService.setTitle('Les résultats des compétitions - Saison ' + this.current_season);
 
@@ -75,55 +78,69 @@ export class CompetitionsComponent {
           }
         });
         this.team_results = filteredResults;
-       
-        console.log('CompetitionsComponent: received competition results', results);
-        
 
-          this.results_extracted = true;
+        console.log('CompetitionsComponent: received competition results', results);
+
+
+        this.results_extracted = true;
       });
     });
   }
 
   get_organization_label(id: number): string {
     const org = this.organizations.find(o => o.id === id);
-    return 'classement ' + (org ? org.label : 'Inconnu') ;
+    if (!org) return 'Inconnu';
+    // Cherche le niveau correspondant à l'organisation
+    const orgLabel = org.label;
+    let niveau: string | undefined = undefined;
+    for (const [level, label] of Object.entries(this.preferred_organization_labels)) {
+      if (label === orgLabel) {
+        niveau = level;
+        break;
+      }
+    }
+    switch (niveau) {
+      case 'comite':
+        return 'résultat Comité';
+      case 'ligue':
+        return 'résultat Finale de Ligue';
+      case 'national':
+        return 'résultat Finale Nationale';
+      default:
+        return 'résultats ' + org.label;
+    }
   }
 
-    hasTeamsToDisplay(results: any[]): boolean {
+  hasTeamsToDisplay(results: any[]): boolean {
     return Array.isArray(results) && results.some(r => r.teams && r.teams.length > 0);
   }
 
-  getDivisionCategory(label: string | undefined): string {
-    if (!label) return 'Accession';
-    return this.division_labels[label] || 'Accession';
+  // Classement en colonne selon le label de division, ou le label de la compétition si division = 'Aucune Division'
+  getDivisionCategory(divisionLabel: string | undefined, competitionLabel?: string): string {
+    let labelToUse = divisionLabel;
+    if (divisionLabel === 'Aucune Division' && competitionLabel) {
+      labelToUse = competitionLabel;
+    }
+    if (!labelToUse) return 'Autres';
+    const key = Object.keys(this.division_labels).find(k => labelToUse.startsWith(k));
+    if (!key) return 'Autres';
+    return this.division_labels[key] || 'Autres';
   }
 
-  
-  // Section de configuration acquise depuis UI settings
-  private loadCompetitionConfigFromUi(ui: any) {
-    if (ui?.competitions) {
-      if (Array.isArray(ui.competitions.preferred_organizations)) {
-        this.preferred_organization_labels = ui.competitions.preferred_organizations;
-      }
-      if (typeof ui.competitions.show_members_only === 'boolean') {
-        this.show_members_only = ui.competitions.show_members_only;
-      }
-      if (typeof ui.competitions.one_year_back === 'boolean') {
-        this.one_year_back = ui.competitions.one_year_back;
-      }
-      if (typeof ui.competitions.show_theorical_rank === 'boolean') {
-        this.show_theorical_rank = ui.competitions.show_theorical_rank;
-      }
-    }
+  // Retourne la première division_label dont la clé commence par 'label'
+  getDivisionLabelStartingWithLabel(): string | undefined {
+    const key = Object.keys(this.division_labels).find(k => k.startsWith('label'));
+    return key ? this.division_labels[key] : undefined;
   }
 
-  
-    isMember(player: Player): boolean {
-      return player.is_member === true;
-    }
-  
 
-      getDisplayedPlayers(players: Player[]): Player[] {
+
+  isMember(player: Player): boolean {
+    return player.is_member === true;
+  }
+
+
+  getDisplayedPlayers(players: Player[]): Player[] {
     if (this.show_members_only) {
       return players.filter(p => this.isMember(p));
     }

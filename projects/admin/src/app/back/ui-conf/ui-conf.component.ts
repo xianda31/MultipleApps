@@ -122,7 +122,11 @@ export class UiConfComponent implements OnInit {
       }),
       album_carousel_interval_ms: [5000, [Validators.min(0), Validators.max(60000)]],
       competitions: this.fb.group({
-        preferred_organizations: [['FFB', 'Ligue 06 LR-PY', 'Comité des Pyrenees']],
+        preferred_organizations: this.fb.group({
+          ["comite"]: ['Comité des Pyrenees'],
+          ["ligue"]: ['Ligue 06 LR-PY'],
+          ["national"]: ['FFB']
+        }),
         show_members_only: [false],
         one_year_back: [false],
         show_theorical_rank: [false]
@@ -363,7 +367,11 @@ export class UiConfComponent implements OnInit {
         ccEmail: ui?.email?.ccEmail ?? ''
       },
       competitions: {
-        preferred_organizations: ui?.competitions?.preferred_organizations ?? ['FFB', 'Ligue 06 LR-PY', 'Comité des Pyrenees'],
+        preferred_organizations: {
+          ["comite"]: ui?.competitions?.preferred_organizations?.comite || 'Comité des Pyrénées',
+          ["ligue"]: ui?.competitions?.preferred_organizations?.ligue || 'Ligue 06 LR-PY',
+          ["national"]: ui?.competitions?.preferred_organizations?.national || 'FFB'
+        },
         show_members_only: ui?.competitions?.show_members_only ?? false,
         one_year_back: ui?.competitions?.one_year_back ?? false,
         show_theorical_rank: ui?.competitions?.show_theorical_rank ?? false
@@ -490,7 +498,11 @@ export class UiConfComponent implements OnInit {
 
       // Ajout des paramètres competitions dans le payload
       payload.competitions = {
-        preferred_organizations: formVal.competitions?.preferred_organizations ?? ['FFB', 'Ligue 06 LR-PY', 'Comité des Pyrenees'],
+        preferred_organizations: {
+          ["comite"]: formVal.competitions?.preferred_organizations?.comite || 'Comité des Pyrenees',
+          ["ligue"]: formVal.competitions?.preferred_organizations?.ligue || 'Ligue 06 LR-PY',
+          ["national"]: formVal.competitions?.preferred_organizations?.national || 'FFB'
+        },
         show_members_only: formVal.competitions?.show_members_only ?? false,
         one_year_back: formVal.competitions?.one_year_back ?? false,
         show_theorical_rank: formVal.competitions?.show_theorical_rank ?? false

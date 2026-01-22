@@ -7,6 +7,7 @@ import { MembersService } from '../../common/services/members.service';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { from, map, Observable, catchError, of, switchMap, tap, mergeMap, toArray, concatMap, lastValueFrom } from 'rxjs';
 import { Member } from '../../common/interfaces/member.interface';
+import { CompetitionsLevels } from '../../common/interfaces/ui-conf.interface';
 import { FileService } from '../../common/services/files.service';
 
 @Injectable({
@@ -30,22 +31,64 @@ export class CompetitionService {
     });
   }
 
-  getCompetitionOrganizations(organization_labels: string[]): Observable<CompetitionOrganization[]> {
+  /**
+   * Accepts only the object structure { comite, ligue, national }.
+   * Converts to array for internal use.
+   */
+  getCompetitionOrganizations(organization_labels: { comite: string; ligue: string; national: string }): Observable<CompetitionOrganization[]> {
+        let labels: string[];
+        if (organization_labels && typeof organization_labels === 'object') {
+          labels = [organization_labels[CompetitionsLevels.National], organization_labels[CompetitionsLevels.Ligue], organization_labels[CompetitionsLevels.Comite]];
+        } else {
+          labels = ['FFB', 'Ligue 06 LR-PY', 'Comité des Pyrenees'];
+        }
+        if (labels.some(l => l === undefined)) {
+          console.warn('Attention: une des valeurs preferred_organizations est undefined', labels);
+        } else {
+          console.log('Labels utilisés pour organisations:', labels);
+        }
     if (this._organizations.length > 0) {
+      const foundLabels = this._organizations.map(org => org.label);
+      labels.forEach(label => {
+        if (!foundLabels.includes(label)) {
+          console.warn(`Organisation non trouvée pour le label: ${label}`);
+        }
+      });
       return of(this._organizations);
     } else {
       return from(this.ffbService.getCompetitionOrganizations()).pipe(
         tap((orgs: CompetitionOrganization[]) => {
-          this._organizations = orgs.filter(org => organization_labels.includes(org.label));
+          this._organizations = orgs.filter(org => labels.includes(org.label));
+          const foundLabels = this._organizations.map(org => org.label);
+          labels.forEach(label => {
+            if (!foundLabels.includes(label)) {
+              console.warn(`Organisation non trouvée pour le label: ${label}`);
+              console.warn('Organisations disponibles:', orgs.map(o => o.label));
+            }
+          });
         })
       );
     }
   }
 
-  getCompetionsResults(season: string, organization_labels: string[]): Observable<CompetitionResultsMap> {
+  getCompetionsResults(
+    season: string,
+    organization_labels: { comite: string; ligue: string; national: string }
+  ): Observable<CompetitionResultsMap> {
+    let labels: string[];
+    if (organization_labels && typeof organization_labels === 'object') {
+      labels = [organization_labels[CompetitionsLevels.National], organization_labels[CompetitionsLevels.Ligue], organization_labels[CompetitionsLevels.Comite]];
+    } else {
+      labels = ['FFB', 'Ligue 06 LR-PY', 'Comité des Pyrenees'];
+    }
+    if (labels.some(l => l === undefined)) {
+      console.warn('Attention: une des valeurs preferred_organizations est undefined', labels);
+    } else {
+      console.log('Labels utilisés pour organisations:', labels);
+    }
     return from(this.ffbService.getCompetitionOrganizations()).pipe(
       tap((orgs: CompetitionOrganization[]) => {
-        this._preferred_organizations = orgs.filter(org => organization_labels.includes(org.label));
+        this._preferred_organizations = orgs.filter(org => labels.includes(org.label));
       }),
       switchMap(() => from(this.ffbService.getSeasons())),
       // recupérer la saison correspondant au nom donné
@@ -139,7 +182,7 @@ export class CompetitionService {
       });
       // if (safeCompTeam.length > 0) {
         if (!results[comp.id]) results[comp.id] = [];
-        results[comp.id].push({ competition: comp, teams: safeCompTeam });
+        results[comp.id].unshift({ competition: comp, teams: safeCompTeam });
       // }
     }
     return results;

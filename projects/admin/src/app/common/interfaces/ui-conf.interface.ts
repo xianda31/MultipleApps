@@ -1,6 +1,18 @@
 // Configuration des préférences compétitions
+export enum CompetitionsLevels {
+  Comite = 'comite',
+  Ligue = 'ligue',
+  National = 'national'
+}
+
+export const CompetitionsLevelsLabels: { [key in CompetitionsLevels]: string } = {
+  [CompetitionsLevels.Comite]: 'Comité',
+  [CompetitionsLevels.Ligue]: 'Ligue',
+  [CompetitionsLevels.National]: 'National'
+};
+ 
 export interface CompetitionsUIConfig {
-  preferred_organizations: string[];
+  preferred_organizations: { [key in CompetitionsLevels]: string };
   show_members_only: boolean;
   one_year_back: boolean;
   show_theorical_rank: boolean;

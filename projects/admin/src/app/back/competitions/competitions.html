@@ -12,7 +12,7 @@
     </div>
 
     <div class="row justify-content-center mb-3">
-        <div class="col-md-2" *ngFor="let division of divisions; let i = index">
+        <div class="col-md-2" *ngFor="let division of divisions.concat('Autres'); let i = index">
             <div class="fw-bold text-center mb-2">{{ division }}</div>
             <div class="d-flex flex-column gap-1">
                 <ng-container *ngFor="let entry of team_results | keyvalue">
@@ -20,16 +20,20 @@
                     <ng-container *ngIf="
                         entry.value.length > 0 &&
                         (
-                            (getDivisionCategory(entry.value[0].competition.division?.label) === division) ||
-                            (division === 'Autres' && getDivisionCategory(entry.value[0].competition.division?.label) === 'Autres')
+                            (getDivisionCategory(entry.value[0].competition.division.label, entry.value[0].competition.label) === division) ||
+                            (division === 'Autres' && getDivisionCategory(entry.value[0].competition.division.label, entry.value[0].competition.label) === 'Autres')
                         ) &&
                         hasTeamsToDisplay(entry.value)
                     ">
                         <div class="card shadow-sm">
                             <div class="card-header text-center">
-                                <span class="fw-bold"> {{ entry.value[0].competition.label }}</span>
+                                <span class="fw-bold"> {{ entry.value[0].competition.family.label }}</span>
+                                <!-- <div>{{ entry.value[0].competition.label }}</div>
+                                <div>{{ entry.value[0].competition.division.label }}</div>
+                                <div>{{entry.key}}</div> -->
+
                             </div>
-                            <div class="card-body p-2">
+                            <div class="card-body p-2"> 
                                 <ng-container *ngFor="let result of entry.value; let i = index">
                                     <div class="mb-2">
                                         <ng-container *ngIf="i > 0"><hr class="my-2"></ng-container>
