@@ -37,7 +37,7 @@
                                 <ng-container *ngFor="let result of entry.value; let i = index">
                                     <div class="mb-2">
                                         <ng-container *ngIf="i > 0"><hr class="my-2"></ng-container>
-                                        <div class=" small text-primary mb-1">{{ get_organization_label(result.competition.organization_id) }}</div>
+                                        <div class="  text-primary mb-1">{{ get_organization_label(result.competition.organization_id) }}</div>
                                         <div *ngFor="let team of result.teams" class="mb-2">
                                             <div class="d-flex align-items-center">
                                                 <span class="me-2 d-flex flex-column align-items-center">

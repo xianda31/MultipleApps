@@ -48,12 +48,10 @@ export class CompetitionsComponent {
 
     // Charger la configuration Competitions depuis ui-conf
     this.systemService.get_ui_settings().subscribe(ui => {
-      // this.loadCompetitionConfigFromUi(ui);
-      // Utilise l'objet { comite, ligue, national } directement
       if (ui?.competitions?.preferred_organizations && typeof ui.competitions.preferred_organizations === 'object') {
         this.preferred_organization_labels = ui.competitions.preferred_organizations;
       } else {
-        this.preferred_organization_labels = { comite: 'Comité des Pyrenees', ligue: 'Ligue 06 LR-PY', national: 'FFB' };
+        this.preferred_organization_labels = { comite: 'Comité des Pyrénées', ligue: 'Ligue 06 LR-PY', national: 'FFB' };
       }
       this.show_members_only = ui?.competitions?.show_members_only || false;
       this.one_year_back = ui?.competitions?.one_year_back || false;
@@ -79,7 +77,7 @@ export class CompetitionsComponent {
         });
         this.team_results = filteredResults;
 
-        console.log('CompetitionsComponent: received competition results', results);
+        // console.log('CompetitionsComponent: received competition results', results);
 
 
         this.results_extracted = true;
@@ -101,13 +99,13 @@ export class CompetitionsComponent {
     }
     switch (niveau) {
       case 'comite':
-        return 'résultat Comité';
+        return 'Résultats Comité';
       case 'ligue':
-        return 'résultat Finale de Ligue';
+        return 'Résultats Finale de Ligue';
       case 'national':
-        return 'résultat Finale Nationale';
+        return 'Résultats Finale Nationale';
       default:
-        return 'résultats ' + org.label;
+        return 'Résultats ' + org.label;
     }
   }
 
