@@ -102,7 +102,8 @@ table.fit-cols td {
   text-overflow: ellipsis;
 }
 
-/* You can add global styles to this file, and also import other style files */
+/* You can add global styles to this file, et aussi importer d'autres fichiers de styles */
+@import "../public/scss/custom.scss";
 // nice_shadow_30 :
 .nice_shadow { 
   box-shadow: rgba(0, 0, 0, 0.25) 0px 14px 28px, rgba(0, 0, 0, 0.22) 0px 10px 10px;

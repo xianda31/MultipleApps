@@ -1,0 +1,14 @@
+{
+  "name": "admin-style-build",
+  "version": "1.0.0",
+  "scripts": {
+     "build:css": "sass public/scss/custom.scss public/css/custom.css --no-source-map",
+     "watch:css": "sass --watch public/scss/custom.scss:public/css/custom.css --no-source-map"
+  },
+  "devDependencies": {
+    "sass": "^1.90.0"
+  },
+  "dependencies": {
+    "multiple-apps": "file:../.."
+  }
+}

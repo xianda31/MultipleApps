@@ -94,7 +94,7 @@
           </a>
           <ul ngbDropdownMenu class="dropdown-menu">
             <li><a class="dropdown-item" routerLink="./finance/books/list">base de données</a></li>
-            <li><a class="dropdown-item" routerLink="./finance/books/editor">écriture</a></li>
+            <li *ngIf="!production_mode"><a class="dropdown-item" routerLink="./finance/books/editor">écriture</a></li>
             <li><a class="dropdown-item" routerLink="./outils/groups">droits d'accès</a></li>
             <li><a class="dropdown-item" routerLink="./outils/sysconf">configuration</a></li>
             <li *ngIf="!production_mode"><a class="dropdown-item" routerLink="./outils/disk">données S3</a></li>
