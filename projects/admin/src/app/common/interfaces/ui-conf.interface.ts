@@ -1,3 +1,12 @@
+// Libellés de divisions pour les compétitions
+export const COMPETITION_DIVISIONS: string[] = ['Division de Ligue', 'Expert', 'Performance', 'Challenge', 'Espérance'];
+export const COMPETITION_DIVISION_LABELS: { [key: string]: string } = {
+  'DN': 'Division de Ligue',
+  'Expert': 'Expert',
+  'Performance': 'Performance',
+  'Challenge': 'Challenge',
+  'Espérance': 'Espérance',
+};
 // Configuration des préférences compétitions
 export enum CompetitionsLevels {
   Comite = 'comite',
@@ -13,9 +22,11 @@ export const CompetitionsLevelsLabels: { [key in CompetitionsLevels]: string } =
  
 export interface CompetitionsUIConfig {
   preferred_organizations: { [key in CompetitionsLevels]: string };
+  result_filter_thresholds: { [key: string]: number };
   show_members_only: boolean;
   one_year_back: boolean;
-  show_theorical_rank: boolean;
+  show_infos: boolean;
+  full_regeneration: boolean;
 }
 // UI-specific interfaces extracted from system configuration
 

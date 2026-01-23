@@ -322,7 +322,7 @@
           <div class="card-title fw-bold fs-5 ms-2">Résultats compétitions</div>
           <div class="card-body" formGroupName="competitions">
             <div class="mb-2">
-              <label class="form-label">Codes FFB des niveaux de compétition</label>
+              <label class="form-label fw-bolder">Codes FFB des niveaux de compétition</label>
               <div formGroupName="preferred_organizations">
                 <div class="mb-1 d-flex align-items-center gap-2">
                   <label class="form-label small mb-0" style="min-width:70px;">Comité</label>
@@ -338,6 +338,16 @@
                 </div>
               </div>
             </div>
+            <div class="mb-2">
+              <label class="form-label fw-bolder">Seuils de filtrage des résultats par division</label>
+              <div formGroupName="result_filter_thresholds">
+                <div *ngFor="let division of divisions" class="d-flex align-items-center mb-2" style="max-width: 550px;">
+                  <span class="form-label small mb-0" style="min-width:170px;">{{ division }}</span>
+                  <input type="range" class="form-range flex-grow-1 mx-2" [formControlName]="division" min="1" max="100" step="1" />
+                  <span class="badge bg-secondary ms-2 flex-shrink-0">{{ uiForm.get(['competitions', 'result_filter_thresholds', division])?.value }}</span>
+                </div>
+              </div>
+            </div>
             <div class="mb-2 form-check">
               <input type="checkbox" class="form-check-input" id="showMembersOnly"
                 formControlName="show_members_only" />
@@ -350,8 +360,13 @@
             </div>
             <div class="mb-2 form-check">
               <input type="checkbox" class="form-check-input" id="showTheoricalRank"
-                formControlName="show_theorical_rank" />
-              <label class="form-check-label" for="showTheoricalRank">Afficher le rang théorique</label>
+                formControlName="show_infos" />
+              <label class="form-check-label" for="showTheoricalRank">Afficher les données détaillées</label>
+            </div>
+            <div class="mb-2 form-check">
+              <input type="checkbox" class="form-check-input" id="fullRegeneration"
+                formControlName="full_regeneration" />
+              <label class="form-check-label" for="fullRegeneration">Forcer la régénération complète des résultats</label>
             </div>
           </div>
         </div>

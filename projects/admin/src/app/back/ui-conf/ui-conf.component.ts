@@ -5,7 +5,7 @@ import { SystemDataService } from '../../common/services/system-data.service';
 import { ToastService } from '../../common/services/toast.service';
 import { FileService, S3_ROOT_FOLDERS } from '../../common/services/files.service';
 import { map, Observable, first, catchError, of, Subscription } from 'rxjs';
-import { CompetitionsUIConfig } from '../../common/interfaces/ui-conf.interface';
+import { CompetitionsUIConfig, COMPETITION_DIVISIONS } from '../../common/interfaces/ui-conf.interface';
 
 @Component({
   selector: 'app-ui-conf',
@@ -15,6 +15,7 @@ import { CompetitionsUIConfig } from '../../common/interfaces/ui-conf.interface'
   styleUrls: ['./ui-conf.component.scss']
 })
 export class UiConfComponent implements OnInit {
+  divisions = COMPETITION_DIVISIONS;
   // Subset Google Fonts populaires (label = affiché, css = valeur à injecter)
   googleFontsSubset = [
     { label: 'Amarante', css: 'Amarante, serif' },
@@ -127,9 +128,13 @@ export class UiConfComponent implements OnInit {
           ["ligue"]: ['Ligue 06 LR-PY'],
           ["national"]: ['FFB']
         }),
+        result_filter_thresholds: this.fb.group(
+          Object.fromEntries((COMPETITION_DIVISIONS as string[]).map((d: string) => [d, [0]]))
+        ),
         show_members_only: [false],
         one_year_back: [false],
-        show_theorical_rank: [false]
+        show_infos: [false],
+        full_regeneration: [false]
       })
     });
     // attach FormArray-level validator to enforce keys non-empty and unique
@@ -372,9 +377,11 @@ export class UiConfComponent implements OnInit {
           ["ligue"]: ui?.competitions?.preferred_organizations?.ligue || 'Ligue 06 LR-PY',
           ["national"]: ui?.competitions?.preferred_organizations?.national || 'FFB'
         },
+        // Les autres champs sont patchés ci-dessous
         show_members_only: ui?.competitions?.show_members_only ?? false,
         one_year_back: ui?.competitions?.one_year_back ?? false,
-        show_theorical_rank: ui?.competitions?.show_theorical_rank ?? false
+        show_infos: ui?.competitions?.show_infos ?? false,
+        full_regeneration: ui?.competitions?.full_regeneration ?? false
       } as CompetitionsUIConfig,
       brand_bg: ui?.brand_bg ?? '#2e332d',
       header_bg: ui?.header_bg ?? '#2e332d',
@@ -386,6 +393,16 @@ export class UiConfComponent implements OnInit {
       main_font: template.main_font ?? ui.main_font ?? 'Amarante, serif',
       title_font: template.title_font ?? ui.title_font ?? 'Emblema One, cursive',
     });
+
+    // Patch result_filter_thresholds séparément pour garantir la synchro avec le FormGroup enfant
+    const thresholds = (COMPETITION_DIVISIONS as string[]).reduce((acc: { [key: string]: number }, d: string) => {
+      acc[d] = ui?.competitions?.result_filter_thresholds?.[d] ?? 0;
+      return acc;
+    }, {});
+    const thresholdsGroup = this.uiForm.get(['competitions', 'result_filter_thresholds']) as FormGroup;
+    if (thresholdsGroup) {
+      thresholdsGroup.patchValue(thresholds);
+    }
 
     // Patch card_thumbnails array
     const cardThumbs = Array.isArray(ui?.card_thumbnails) && ui.card_thumbnails.length
@@ -503,9 +520,13 @@ export class UiConfComponent implements OnInit {
           ["ligue"]: formVal.competitions?.preferred_organizations?.ligue || 'Ligue 06 LR-PY',
           ["national"]: formVal.competitions?.preferred_organizations?.national || 'FFB'
         },
+        result_filter_thresholds: formVal.competitions?.result_filter_thresholds && typeof formVal.competitions.result_filter_thresholds.get === 'function'
+          ? Object.fromEntries(Object.entries(formVal.competitions.result_filter_thresholds.controls).map(([k, v]: [string, any]) => [k, v.value]))
+          : formVal.competitions?.result_filter_thresholds || {},
         show_members_only: formVal.competitions?.show_members_only ?? false,
         one_year_back: formVal.competitions?.one_year_back ?? false,
-        show_theorical_rank: formVal.competitions?.show_theorical_rank ?? false
+        show_infos: formVal.competitions?.show_infos ?? false,
+        full_regeneration: formVal.competitions?.full_regeneration ?? false
       } as CompetitionsUIConfig;
 
       // Ajout des couleurs de thème dans le payload

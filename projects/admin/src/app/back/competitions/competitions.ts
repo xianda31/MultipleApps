@@ -1,6 +1,6 @@
-
 import { Component } from '@angular/core';
-import { Competition, CompetitionOrganization, CompetitionResultsMap, CompetitionSeason, CompetitionTeam, Player, CompetitionResults } from './competitions.interface';
+import { Competition, CompetitionOrganization, CompetitionResultsMap, CompetitionTeam, Player, CompetitionResults } from './competitions.interface';
+import { COMPETITION_DIVISIONS, COMPETITION_DIVISION_LABELS } from '../../common/interfaces/ui-conf.interface';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CompetitionService } from './competition.service';
@@ -9,6 +9,7 @@ import { TitleService } from '../../front/title/title.service';
 
 @Component({
   selector: 'app-competitions',
+  standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './competitions.html',
   styleUrl: './competitions.scss'
@@ -19,22 +20,17 @@ export class CompetitionsComponent {
   organizations: CompetitionOrganization[] = [];
   results_extracted: boolean = false;
   team_results: CompetitionResultsMap = {};
+  filtered_team_results: CompetitionResultsMap = {};
 
-  divisions: string[] = ['Division de Ligue', 'Expert', 'Performance', 'Challenge', 'Espérance'];
-  division_labels: { [key: string]: string } = {
-    'DN': 'Division de Ligue',
-    'Expert': 'Expert',
-    'Performance': 'Performance',
-    'Challenge': 'Challenge',
-    'Espérance': 'Espérance',
-
-  };
+  divisions: string[] = COMPETITION_DIVISIONS;
+  division_labels: { [key: string]: string } = COMPETITION_DIVISION_LABELS;
 
   preferred_organization_labels!: { comite: string; ligue: string; national: string };
   show_members_only!: boolean;
   one_year_back!: boolean;
-  show_theorical_rank!: boolean;
-
+  show_infos!: boolean;
+  full_regeneration!: boolean;
+  result_filter_thresholds: { [key: string]: number } = {};
 
   spinnerMessage: string = 'Recherche en cours...';
 
@@ -54,8 +50,9 @@ export class CompetitionsComponent {
         this.preferred_organization_labels = { comite: 'Comité des Pyrénées', ligue: 'Ligue 06 LR-PY', national: 'FFB' };
       }
       this.show_members_only = ui?.competitions?.show_members_only || false;
-      this.one_year_back = ui?.competitions?.one_year_back || false;
-      this.show_theorical_rank = ui?.competitions?.show_theorical_rank || false;
+      this.show_infos = ui?.competitions?.show_infos || false;
+      this.full_regeneration = ui?.competitions?.full_regeneration ?? false;
+      this.result_filter_thresholds = ui?.competitions?.result_filter_thresholds || {};
 
       this.competitionService.getCompetitionOrganizations(this.preferred_organization_labels).subscribe(orgs => {
         this.organizations = orgs;
@@ -64,7 +61,8 @@ export class CompetitionsComponent {
       this.current_season = this.one_year_back ? this.systemService.previous_season(this.systemService.get_today_season()) : this.systemService.get_today_season();
       this.titleService.setTitle('Les résultats des compétitions - Saison ' + this.current_season);
 
-      this.competitionService.getCompetionsResults(this.current_season, this.preferred_organization_labels).subscribe(results => {
+      this.competitionService.getCompetionsResults(this.current_season, this.preferred_organization_labels, this.full_regeneration).subscribe(results => {
+        if(this.show_infos) console.log('CompetitionsComponent: received raw competition results', results);
         // Filtrer les CompetitionResults dont toutes les teams sont vides
         const filteredResults: CompetitionResultsMap = {};
         Object.entries(results).forEach(([compId, compResults]) => {
@@ -75,10 +73,18 @@ export class CompetitionsComponent {
             filteredResults[Number(compId)] = validResults;
           }
         });
+        // Ne garder que les compétitions où au moins un résultat a des équipes à afficher après filtrage
+        const filteredToDisplay: CompetitionResultsMap = {};
+        Object.entries(filteredResults).forEach(([compId, compResults]) => {
+          const hasDisplayable = (compResults as CompetitionResults[]).some(res => this.getFilteredTeams(res).length > 0);
+          if (hasDisplayable) {
+            filteredToDisplay[Number(compId)] = compResults;
+          }
+        });
         this.team_results = filteredResults;
+        this.filtered_team_results = filteredToDisplay;
 
         // console.log('CompetitionsComponent: received competition results', results);
-
 
         this.results_extracted = true;
       });
@@ -109,9 +115,6 @@ export class CompetitionsComponent {
     }
   }
 
-  hasTeamsToDisplay(results: any[]): boolean {
-    return Array.isArray(results) && results.some(r => r.teams && r.teams.length > 0);
-  }
 
   // Classement en colonne selon le label de division, ou le label de la compétition si division = 'Aucune Division'
   getDivisionCategory(divisionLabel: string | undefined, competitionLabel?: string): string {
@@ -119,9 +122,15 @@ export class CompetitionsComponent {
     if (divisionLabel === 'Aucune Division' && competitionLabel) {
       labelToUse = competitionLabel;
     }
-    if (!labelToUse) return 'Autres';
+    if (!labelToUse) {
+      console.warn('getDivisionCategory: divisionLabel et competitionLabel non définis, retour "Autres"');
+      return 'Autres';
+    }
     const key = Object.keys(this.division_labels).find(k => labelToUse.startsWith(k));
-    if (!key) return 'Autres';
+    if (!key) {
+      console.warn('getDivisionCategory: labelToUse ne correspond à aucune division connue, retour "Autres"', labelToUse);
+      return 'Autres';
+    }
     return this.division_labels[key] || 'Autres';
   }
 
@@ -131,12 +140,9 @@ export class CompetitionsComponent {
     return key ? this.division_labels[key] : undefined;
   }
 
-
-
   isMember(player: Player): boolean {
     return player.is_member === true;
   }
-
 
   getDisplayedPlayers(players: Player[]): Player[] {
     if (this.show_members_only) {
@@ -145,4 +151,25 @@ export class CompetitionsComponent {
     return players;
   }
 
+  hasTeamsToDisplay(results: any[]): boolean {
+    return Array.isArray(results) && results.some(r => r.teams && r.teams.length > 0);
+  }
+
+  hasFilteredTeamsToDisplay(results: any[]): boolean {
+    return Array.isArray(results) && results.some(res => this.getFilteredTeams(res).length > 0);
+  }
+
+  getThreshold(competition: Competition): number {
+    const divisionLabel = this.getDivisionCategory(competition?.division?.label, competition?.label);
+    return this.result_filter_thresholds[divisionLabel];
+  }
+
+  getFilteredTeams(result: CompetitionResults): CompetitionTeam[] {
+    if (!result || !Array.isArray(result.teams)) return [];
+    const threshold = this.getThreshold(result.competition);
+    if (threshold === undefined) return result.teams;
+    return result.teams.filter((team: CompetitionTeam) =>
+      team.cumulated_pe_percentage === undefined || team.cumulated_pe_percentage <= threshold
+    );
+  }
 }

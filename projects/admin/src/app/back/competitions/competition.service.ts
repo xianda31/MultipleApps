@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Competition, CompetitionData, CompetitionOrganization, CompetitionSeason, CompetitionTeam, Player } from './competitions.interface';
+import { Competition, CompetitionOrganization, CompetitionSeason, CompetitionTeam, Player } from './competitions.interface';
 
 import { CompetitionResultsMap } from './competitions.interface';
 import { FFB_proxyService } from '../../common/ffb/services/ffb.service';
@@ -19,7 +19,6 @@ export class CompetitionService {
   private _organizations: CompetitionOrganization[] = [];
   private _preferred_organizations: CompetitionOrganization[] = [];
 
-  persistence: boolean = true
   constructor(
     private ffbService: FFB_proxyService,
     private memberService: MembersService,
@@ -45,7 +44,7 @@ export class CompetitionService {
         if (labels.some(l => l === undefined)) {
           console.warn('Attention: une des valeurs preferred_organizations est undefined', labels);
         } else {
-          console.log('Labels utilisés pour organisations:', labels);
+          // console.log('Labels utilisés pour organisations:', labels);
         }
     if (this._organizations.length > 0) {
       const foundLabels = this._organizations.map(org => org.label);
@@ -73,20 +72,20 @@ export class CompetitionService {
 
   getCompetionsResults(
     season: string,
-    organization_labels: { comite: string; ligue: string; national: string }
+    organization_labels: { comite: string; ligue: string; national: string },
+    full_regeneration: boolean 
   ): Observable<CompetitionResultsMap> {
     let labels: string[];
     if (organization_labels && typeof organization_labels === 'object') {
       labels = [organization_labels[CompetitionsLevels.National], organization_labels[CompetitionsLevels.Ligue], organization_labels[CompetitionsLevels.Comite]];
     } else {
-      labels = ['FFB', 'Ligue 06 LR-PY', 'Comité des Pyrenees'];
+      labels = ['FFB', 'Ligue 06 LR-PY', 'Comité des Pyrénées'];
     }
     if (labels.some(l => l === undefined)) {
       console.warn('Attention: une des valeurs preferred_organizations est undefined', labels);
     } else {
-      console.log('Labels utilisés pour organisations:', labels);
     }
-    return from(this.ffbService.getCompetitionOrganizations()).pipe(
+    return (from(this.ffbService.getCompetitionOrganizations()).pipe(
       tap((orgs: CompetitionOrganization[]) => {
         this._preferred_organizations = orgs.filter(org => labels.includes(org.label));
       }),
@@ -98,7 +97,7 @@ export class CompetitionService {
       }),
       // récupère les données des compétitions à partir du fichier S3 si disponible (en série dans la séquence RxJS)
       switchMap((seasonObj: CompetitionSeason | undefined) => {
-        if (this.persistence === false) {
+        if (full_regeneration === true) {
           this._team_results = {};
           return of(seasonObj);
         }
@@ -120,26 +119,19 @@ export class CompetitionService {
         if (!seasonObj) return of([] as Competition[]);
         return this.getCompetitions(String(seasonObj.id), this._preferred_organizations);
       }),
-      // filtre les compétitions de label en 'E '
+      // filtres regroupés en un seul map
       map((competitions: Competition[]) => {
-        const filtered = competitions.filter(c => !c.label.startsWith('E '));
-        return filtered;
-      }),
-      // filtrer les compétitions ayant des résultats d'équipe (allGroupsProbated === true)
-      map((competitions: Competition[]) => {
-        const filtered = competitions.filter(c => c.allGroupsProbated === true);
-        console.log('Compétitions avec résultats d\'équipe', filtered);
-        return filtered;
-      }),
-      // filtrer les compétitions n'ayant pas été enregistrées dans le fichier S3 
-      map((competitions: Competition[]) => {
-        const filtered = competitions.filter(c => !this.is_logged_in_S3(c));
-        console.log('Nouvelles compétitions non encore persistées ', filtered);
+        const filtered = competitions
+          .filter(c => !c.label.startsWith('E '))
+          .filter(c => c.type.label === 'Fédérale')
+          .filter(c => c.allGroupsProbated === true)
+          .filter(c => !this.is_logged_in_S3(c));
+        // console.log('Nouvelles compétitions non encore persistées ', filtered);
         return filtered;
       }),
       // récupérer les résultats pour chaque compétition
       switchMap((competitions: Competition[]) => {
-        return from(this.runSerial(competitions)).pipe(
+        return from(this.runSerial(competitions) as Promise<CompetitionResultsMap>).pipe(
           map((results: CompetitionResultsMap) => {
             // console.log('CompetitionService: compétition résultats récupérés', results);
             const merged = { ...this._team_results, ...results };
@@ -149,16 +141,21 @@ export class CompetitionService {
           tap((merged) => this.saveResults(season, merged)),
         );
       })
-    );
+    )) as Observable<CompetitionResultsMap>;
   }
 
   // Exécution séquentielle des requêtes pour chaque compétition
   private async runSerial(competitions: Competition[]): Promise<CompetitionResultsMap> {
     const results: CompetitionResultsMap = {};
     for (const comp of competitions) {
-      const compTeam = await lastValueFrom(this.getCompetitionResults(String(comp.id), String(comp.organization_id)));
+      let compTeam = await lastValueFrom(this.getCompetitionResults(String(comp.id), String(comp.organization_id)));
+      // compute pe_pourcerntage for each player
+      compTeam = this.computePePercentage(comp, compTeam);
+
       // Filtrer les équipes pour ne garder que celles ayant au moins un membre
       const filteredTeams = (compTeam || []).filter(team => this.has_a_member(team.players));
+
+
       // add is_member field to each player
       filteredTeams.forEach(team => {
         team.players.forEach(player => {
@@ -188,10 +185,29 @@ export class CompetitionService {
     return results;
   }
 
+  private computePePercentage(comp: Competition, teams: CompetitionTeam[]): CompetitionTeam[] {
+    // Somme totale des PE distribués à toutes les équipes (tous joueurs)
+    const totalPe = teams.reduce((sum, team) => {
+      return sum + team.players.reduce((s, player) => s + (player.pe || 0) + (player.pe_bonus || 0) + (player.pe_extra || 0), 0);
+    }, 0);
+    comp.cumulated_pe_percentage = totalPe;
+    // Calculer le pe de chaque équipe
+    const teamPeArray = teams.map(team => team.players.reduce((s, player) => s + (player.pe || 0) + (player.pe_bonus || 0) + (player.pe_extra || 0), 0));
+      // Pour chaque équipe, calculer le % de PE attribués et cumulated_pe_percentage (somme des PE de l'équipe et de toutes les équipes mieux classées)
+      return teams.map((team, idx) => {
+        const teamPe = teamPeArray[idx];
+        team.pe_pourcentage = totalPe > 0 ? (teamPe / totalPe) * 100 : 0;
+        // cumulated_pe_percentage = somme des PE gagnés par l'équipe et toutes les équipes de rang supérieur (i.e. d'indice <= idx)
+        team.cumulated_pe_percentage = totalPe > 0 ? (teamPeArray.slice(0, idx + 1).reduce((sum, pe) => sum + pe, 0) / totalPe) * 100 : 0;
+        return team;
+      });
+  }
+
   saveResults(season: string, results: CompetitionResultsMap): void {
     const safeSeason = season.replace(/\//g, '_');
     // Ne pas créer le fichier si les résultats sont vides
     if (results && Object.keys(results).length > 0) {
+      // console.log('résultats : ', results);
       this.fileService.upload_to_S3(results, 'any/', 'resultats' + safeSeason + '.txt');
     } else {
       console.log('Aucun résultat à sauvegarder, fichier S3 non créé.');
@@ -211,7 +227,7 @@ export class CompetitionService {
 
   getCompetitions(seasonId: string, organizations: CompetitionOrganization[]): Observable<Competition[]> {
     const organization_ids = organizations.map(org => org.id.toString());
-    console.log('Fetching competitions for season', seasonId, 'and organizations', organization_ids);
+    // console.log('Fetching competitions for season', seasonId, 'and organizations', organization_ids);
     return from(organization_ids).pipe(
       concatMap(orgId => from(this.ffbService.getCompetitions(seasonId, orgId))),
       toArray(),
