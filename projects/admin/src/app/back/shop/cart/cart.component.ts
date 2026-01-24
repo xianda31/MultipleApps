@@ -123,6 +123,15 @@ export class CartComponent {
 
 
   cart_is_not_valid(): boolean {
+    // Cas spécial : dette compensée par avoir et paiement espèces
+    if (
+      this.debt_amount > 0 &&
+      this.asset_available >= this.debt_amount &&
+      this.total_amount() === 0 &&
+      this.selected_payment.mode === PaymentMode.CASH
+    ) {
+      return false;
+    }
     return !this.selected_payment.mode 
       || (this.cart.items.length === 0 && !(this.total_amount()>0))
       || (this.total_amount()<0)
