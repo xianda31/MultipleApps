@@ -77,7 +77,7 @@ export const routes: Routes = [
   { path: BACK_ROUTE_PATHS.Home, component: BackPageComponent },
   { path: BACK_ROUTE_PATHS.Assistance, component: BackAssistanceComponent, canActivate: [AuthGuard] },
   { path: BACK_ROUTE_PATHS.Mailing, component: MailingComponent, canActivate: [AuthGuard] },
-  { path: BACK_ROUTE_PATHS.Competitions, component: CompetitionsComponent, canActivate: [AuthGuard] },
+  { path: BACK_ROUTE_PATHS.Competitions, component: CompetitionsComponent,data: { access: 'full' }, canActivate: [AuthGuard] },
 
 
 

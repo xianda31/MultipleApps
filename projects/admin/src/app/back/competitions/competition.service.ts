@@ -1,3 +1,5 @@
+import { COMPETITION_DIVISION_LABELS } from '../../common/interfaces/ui-conf.interface';
+
 import { Injectable } from '@angular/core';
 import { Competition, CompetitionOrganization, CompetitionSeason, CompetitionTeam, Player } from './competitions.interface';
 
@@ -68,6 +70,25 @@ export class CompetitionService {
         })
       );
     }
+  }
+
+    /**
+   * Calcule le label de division rendu pour une compétition selon la logique initiale (voir getDivisionCategory)
+   */
+   getDivisionCategoryToLabel(competition: Competition): string {
+     let labelToUse = competition.division.label;
+    //  if (!labelToUse) {
+    //    return 'Autres';
+    //  }
+     if (labelToUse === 'Aucune Division' && competition.label) {
+       labelToUse = competition.label;
+      }
+      const division_labels = COMPETITION_DIVISION_LABELS;
+    const key = Object.keys(division_labels).find(k => labelToUse.startsWith(k));
+    if (!key) {
+      return 'Autres';
+    }
+    return division_labels[key] || 'Autres';
   }
 
   getCompetionsResults(
@@ -148,13 +169,14 @@ export class CompetitionService {
   private async runSerial(competitions: Competition[]): Promise<CompetitionResultsMap> {
     const results: CompetitionResultsMap = {};
     for (const comp of competitions) {
+      // Injecte le rendered_label selon la logique initiale
+      comp.rendered_label = this.getDivisionCategoryToLabel(comp);
       let compTeam = await lastValueFrom(this.getCompetitionResults(String(comp.id), String(comp.organization_id)));
       // compute pe_pourcerntage for each player
       compTeam = this.computePePercentage(comp, compTeam);
 
       // Filtrer les équipes pour ne garder que celles ayant au moins un membre
       const filteredTeams = (compTeam || []).filter(team => this.has_a_member(team.players));
-
 
       // add is_member field to each player
       filteredTeams.forEach(team => {
@@ -177,11 +199,10 @@ export class CompetitionService {
           return m1 - m2;
         });
       });
-      // if (safeCompTeam.length > 0) {
-        if (!results[comp.id]) results[comp.id] = [];
-        results[comp.id].unshift({ competition: comp, teams: safeCompTeam });
-      // }
+      if (!results[comp.id]) results[comp.id] = [];
+      results[comp.id].unshift({ competition: comp, teams: safeCompTeam });
     }
+    console.log('CompetitionService: résultats des compétitions calculés séquentiellement', results);
     return results;
   }
 

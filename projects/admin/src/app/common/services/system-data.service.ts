@@ -41,7 +41,21 @@ export class SystemDataService {
    * UI settings live methods: kept in a separate file `system/ui_settings.txt`.
    */
   get_ui_settings(): Observable<UIConfiguration> {
-    const defaults: UIConfiguration = this.getDefaultUi();
+    const defaults: UIConfiguration = {
+      ...this.getDefaultUi(),
+      competitions: {
+        preferred_organizations: {
+          comite: '',
+          ligue: '',
+          national: ''
+        },
+        result_filter_thresholds: {},
+        show_members_only: false,
+        one_year_back: false,
+        show_infos: false,
+        no_filter: false
+      }
+    };
 
     // attempting to download system/ui_settings.txt
     const remote_load$ = from(this.fileService.download_json_file('system/ui_settings.txt')).pipe(
@@ -170,7 +184,19 @@ export class SystemDataService {
           homepage_intro: '',
           email: { tagline: 'Votre club de bridge convivial et dynamique', ccEmail: '' },
           card_thumbnails: [],
-          album_thumbnail: { width: 150, height: 150 }
+          album_thumbnail: { width: 150, height: 150 },
+          competitions: {
+            preferred_organizations: {
+              comite: '',
+              ligue: '',
+              national: ''
+            },
+            result_filter_thresholds: {},
+            show_members_only: false,
+            one_year_back: false,
+            show_infos: false,
+            no_filter: false
+          }
         };
         console.error('[SystemDataService] fetch_ui_settings(): error fetching ui_settings', err);
         this._ui_settings = defaults;
@@ -244,7 +270,21 @@ export class SystemDataService {
       },
       homepage: { tournaments_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 }, news_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 } },
       frontBannerEnabled: false,
-      homepage_intro: ''
+      homepage_intro: '',
+      competitions: {
+        preferred_organizations: {
+          comite: '',
+          ligue: '',
+          national: ''
+        },
+        result_filter_thresholds: {},
+        show_members_only: false,
+        one_year_back: false,
+        show_infos: false,
+        no_filter: false
+      },
+      card_thumbnails: [],
+      album_thumbnail: { width: 600, height: 400, ratio: 1.5 }
     } as UIConfiguration;
   }
 

@@ -339,6 +339,9 @@
               </div>
             </div>
             <div class="mb-2">
+               <label class="form-label fw-bolder">Autres paramètres d'affichage : voir directement dans la page admin compétitions</label>
+            </div>
+            <!-- <div class="mb-2">
               <label class="form-label fw-bolder">Seuils de filtrage des résultats par division</label>
               <div formGroupName="result_filter_thresholds">
                 <div *ngFor="let division of divisions" class="d-flex align-items-center mb-2" style="max-width: 550px;">
@@ -364,10 +367,10 @@
               <label class="form-check-label" for="showTheoricalRank">Afficher les données détaillées</label>
             </div>
             <div class="mb-2 form-check">
-              <input type="checkbox" class="form-check-input" id="fullRegeneration"
-                formControlName="full_regeneration" />
-              <label class="form-check-label" for="fullRegeneration">Forcer la régénération complète des résultats</label>
-            </div>
+              <input type="checkbox" class="form-check-input" id="noFilter"
+                formControlName="no_filter" />
+              <label class="form-check-label" for="noFilter">Aucun filtrage des résultats</label>
+            </div> -->
           </div>
         </div>
       </div>

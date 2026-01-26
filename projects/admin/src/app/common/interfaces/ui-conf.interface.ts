@@ -1,11 +1,13 @@
 // Libellés de divisions pour les compétitions
-export const COMPETITION_DIVISIONS: string[] = ['Division de Ligue', 'Expert', 'Performance', 'Challenge', 'Espérance'];
+export const COMPETITION_DIVISIONS: string[] = ['Division de Ligue', 'Expert', 'Performance', 'Challenge', 'Espérance','Coupe de France','Autres'];
 export const COMPETITION_DIVISION_LABELS: { [key: string]: string } = {
   'DN': 'Division de Ligue',
   'Expert': 'Expert',
   'Performance': 'Performance',
   'Challenge': 'Challenge',
   'Espérance': 'Espérance',
+  'Coupe de France': 'Coupe de France',
+  'Autres': 'Autres'
 };
 // Configuration des préférences compétitions
 export enum CompetitionsLevels {
@@ -26,7 +28,7 @@ export interface CompetitionsUIConfig {
   show_members_only: boolean;
   one_year_back: boolean;
   show_infos: boolean;
-  full_regeneration: boolean;
+  no_filter: boolean;
 }
 // UI-specific interfaces extracted from system configuration
 
@@ -95,6 +97,6 @@ export interface UIConfiguration {
 
   
   // Configuration des compétitions (préférences affichage, filtres, etc)
-  competitions?: CompetitionsUIConfig;
+  competitions: CompetitionsUIConfig;
 }
 

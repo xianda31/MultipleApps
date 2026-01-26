@@ -134,7 +134,7 @@ export class UiConfComponent implements OnInit {
         show_members_only: [false],
         one_year_back: [false],
         show_infos: [false],
-        full_regeneration: [false]
+        no_filter: [false]
       })
     });
     // attach FormArray-level validator to enforce keys non-empty and unique
@@ -381,7 +381,7 @@ export class UiConfComponent implements OnInit {
         show_members_only: ui?.competitions?.show_members_only ?? false,
         one_year_back: ui?.competitions?.one_year_back ?? false,
         show_infos: ui?.competitions?.show_infos ?? false,
-        full_regeneration: ui?.competitions?.full_regeneration ?? false
+        no_filter: ui?.competitions?.no_filter ?? false
       } as CompetitionsUIConfig,
       brand_bg: ui?.brand_bg ?? '#2e332d',
       header_bg: ui?.header_bg ?? '#2e332d',
@@ -526,7 +526,7 @@ export class UiConfComponent implements OnInit {
         show_members_only: formVal.competitions?.show_members_only ?? false,
         one_year_back: formVal.competitions?.one_year_back ?? false,
         show_infos: formVal.competitions?.show_infos ?? false,
-        full_regeneration: formVal.competitions?.full_regeneration ?? false
+        no_filter: formVal.competitions?.no_filter ?? false
       } as CompetitionsUIConfig;
 
       // Ajout des couleurs de thème dans le payload

@@ -72,8 +72,9 @@ export interface Competition {
   pe_bonus_process_enabled: boolean;
   simultaneous_code: string | null;
   organization_id: number;
-      // additional fields for service use
+  // additional fields for service use
   cumulated_pe_percentage?: number;
+  rendered_label?: string;
 
   division: {
     id: number;
