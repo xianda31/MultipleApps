@@ -1,4 +1,5 @@
 import { Component, Input, OnInit, ViewChildren, QueryList } from '@angular/core';
+import { BACK_ROUTE_PATHS } from '../routes/back-route-paths';
 import { CommonModule, NgIf } from '@angular/common';
 import { Router, RouterLink, NavigationEnd } from '@angular/router';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -25,7 +26,7 @@ import { REQUEST_STATUS } from '../../common/interfaces/assistance-request.inter
   styleUrl: './back-navbar.component.scss'
 })
 export class BackNavbarComponent implements OnInit {
-
+  
   @Input() season: string = '';
   @Input() entries_nbr: number = 0;
   accreditation_level!: number;
@@ -33,10 +34,11 @@ export class BackNavbarComponent implements OnInit {
   production_mode: boolean = false;
   user_accreditation: Accreditation | null = null;
   logged_member$: Observable<Member | null> = new Observable<Member | null>();
-
+  
   avatar$ !: Observable<string>;
   assistances_nbr: number = 0;
-
+ BACK_ROUTE_PATHS = BACK_ROUTE_PATHS;
+  
   // Mobile menu collapse states
   mobileMenus = {
     boutique: false,

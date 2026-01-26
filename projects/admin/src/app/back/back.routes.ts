@@ -21,7 +21,7 @@ import { MembersComponent } from '../common/members/members.component';
 import { CloneDBComponent } from './maintenance/clone-DB/clone-db.component';
 import { AdminComponent } from './admin/back.component';
 import { BackPageComponent } from './back-page/back-page.component';
-import { SnippetsComponent } from './site/snippets/snippets.component';
+// import { SnippetsComponent } from './site/snippets/snippets.component';
 import { FilemgrWindowsComponent } from './files/filemgr/filemgr-windows.component';
 import { RootVolumeComponent } from './files/root-volume/root-volume';
 import { AuthGuard } from '../auth.guard';
@@ -70,7 +70,7 @@ export const routes: Routes = [
   { path: BACK_ROUTE_PATHS.CloneDB, component: CloneDBComponent, canActivate: [AuthGuard] },
   { path: BACK_ROUTE_PATHS.CloneS3, component: CloneS3Component, canActivate: [AuthGuard] },
 
-  { path: BACK_ROUTE_PATHS.Snippets, component: SnippetsComponent, canActivate: [AuthGuard] },
+  // { path: BACK_ROUTE_PATHS.Snippets, component: SnippetsComponent, canActivate: [AuthGuard] },
   { path: BACK_ROUTE_PATHS.UiConf, component: UiConfComponent, canActivate: [AuthGuard] },
   { path: BACK_ROUTE_PATHS.MenusEditor, component: MenusEditorComponent, canActivate: [AuthGuard] },
   { path: BACK_ROUTE_PATHS.CMSWrapper, component: CmsWrapper, canActivate: [AuthGuard] },

@@ -39,7 +39,7 @@
       <ul class="navbar-nav mb-md-0 mb-lg-0 mt-2 align-items-end" style="padding-left:0;">
 
         <li class="nav-item" *ngIf="accreditation_level >= accreditation_levels.Contributeur">
-          <a class="nav-link" routerLink="./caisse/droits-de-table">
+          <a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.FeesCollector">
             <i class="bi bi-card-checklist"></i>
             <span class="ms-1">Tournois</span>
           </a>
@@ -51,8 +51,8 @@
             <i class="bi bi-cart"></i> <span class="ms-1">Boutique</span>
           </a>
           <ul ngbDropdownMenu class="dropdown-menu">
-            <li><a class="dropdown-item" routerLink="./caisse/ventes">vente à adhérents</a></li>
-            <li><a class="dropdown-item" routerLink="./caisse/produits">produits à la vente</a></li>
+            <li><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.Shop">vente à adhérents</a></li>
+            <li><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.Products">produits à la vente</a></li>
           </ul>
         </li>
 
@@ -63,10 +63,11 @@
             <span class="ms-1">Adhérents</span>
           </a>
           <ul ngbDropdownMenu class="dropdown-menu">
-            <li><a class="dropdown-item" routerLink="./members/database">répertoire</a></li>
+            <li><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.MembersDatabase">répertoire</a></li>
             <li *ngIf="accreditation_level >= accreditation_levels.Administrateur"><a class="dropdown-item"
-                routerLink="./members/cartes-admission">cartes admission</a></li>
-            <li><a class="dropdown-item" routerLink="./members/controls">contrôles</a></li>
+                [routerLink]="BACK_ROUTE_PATHS.GameCardsEditor">cartes admission</a></li>
+            <li><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.MemberSales">contrôles</a></li>
+            <li><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.Competitions">compétitions</a></li>
           </ul>
         </li>
 
@@ -76,12 +77,13 @@
             <i class="bi bi-journal"></i> <span class="ms-1">Finance</span>
           </a>
           <ul ngbDropdownMenu class="dropdown-menu">
-            <li><a class="dropdown-item" routerLink="./finance/état-de-caisse">état de caisse</a></li>
-            <li><a class="dropdown-item" routerLink="./finance/toutes-ecritures">écritures</a></li>
-            <li><a class="dropdown-item" routerLink="./finance/books/base-comptable">synthèse</a></li>
-            <li><a class="dropdown-item" routerLink="./finance/bank-reconciliation">rapprochement bancaire</a></li>
-            <li><a class="dropdown-item" routerLink="./finance/expense-and-revenue">résultats</a></li>
-            <li><a class="dropdown-item" routerLink="./finance/balance">bilan</a></li>
+            <li><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.CashBoxStatus">état de caisse</a></li>
+            <li><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.BooksEditor">écritures</a></li>
+            <li><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.BooksOverview">synthèse</a></li>
+            <li><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.BankReconciliation">rapprochement bancaire</a>
+            </li>
+            <li><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.ExpenseAndRevenue">résultats</a></li>
+            <li><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.Balance">bilan</a></li>
           </ul>
         </li>
 
@@ -91,15 +93,20 @@
             <i class="bi bi-database-fill-gear"></i> <span class="ms-1">Outils</span>
           </a>
           <ul ngbDropdownMenu class="dropdown-menu">
-            <li><a class="dropdown-item" routerLink="./finance/books/list">base de données</a></li>
-            <li *ngIf="!production_mode"><a class="dropdown-item" routerLink="./finance/books/editor">écriture</a></li>
-            <li><a class="dropdown-item" routerLink="./outils/groups">droits d'accès</a></li>
-            <li><a class="dropdown-item" routerLink="./outils/sysconf">configuration</a></li>
-            <li *ngIf="!production_mode"><a class="dropdown-item" routerLink="./outils/disk">données S3</a></li>
-            <li *ngIf="!production_mode"><a class="dropdown-item" routerLink="./outils/excel_import">import excel</a>
+            <li><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.BooksList">base de données</a></li>
+            <li *ngIf="!production_mode"><a class="dropdown-item"
+                [routerLink]="BACK_ROUTE_PATHS.BooksEditorFull">écriture</a></li>
+            <li><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.GroupsList">droits d'accès</a></li>
+            <li><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.SysConf">configuration</a></li>
+            <li *ngIf="!production_mode"><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.RootVolume">données
+                S3</a></li>
+            <li *ngIf="!production_mode"><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.ImportExcel">import
+                excel</a>
             </li>
-            <li *ngIf="!production_mode"><a class="dropdown-item" routerLink="./outils/cloneDB">clone DB</a></li>
-            <li *ngIf="!production_mode"><a class="dropdown-item" routerLink="./outils/cloneS3">clone S3</a></li>
+            <li *ngIf="!production_mode"><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.CloneDB">clone DB</a>
+            </li>
+            <li *ngIf="!production_mode"><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.CloneS3">clone S3</a>
+            </li>
           </ul>
         </li>
 
@@ -110,10 +117,9 @@
           </a>
           <ul ngbDropdownMenu class="dropdown-menu">
             <!-- <li><a class="dropdown-item" routerLink="./site/thumbnails">vignettes</a></li> -->
-            <li><a class="dropdown-item" routerLink="./site/ui">paramètres UI</a></li>
-            <li><a class="dropdown-item" routerLink="./site/menus">les menus</a></li>
-            <li><a class="dropdown-item" routerLink="./site/competitions">compétitions</a></li>
-            <li><a class="dropdown-item" routerLink="./site/cms-wrapper">pages et datas</a></li>
+            <li><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.UiConf">paramètres UI</a></li>
+            <li><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.MenusEditor">les menus</a></li>
+            <li><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.CMSWrapper">pages et datas</a></li>
             <li><a class="dropdown-item" routerLink="/front">aller sur le site</a></li>
           </ul>
         </li>
@@ -174,7 +180,7 @@
 
         <!-- Tournoi (single item) -->
         <li class="nav-item" *ngIf="accreditation_level >= accreditation_levels.Contributeur">
-          <a class="nav-link d-flex align-items-center" routerLink="./caisse/droits-de-table"
+          <a class="nav-link d-flex align-items-center" [routerLink]="BACK_ROUTE_PATHS.FeesCollector"
             data-bs-dismiss="offcanvas">
             <i class="bi bi-card-checklist"></i>
             <span class="ms-1">Tournois</span>
@@ -190,10 +196,10 @@
               style="width:2em;"></a>
           </div>
           <ul class="list-unstyled ps-4" [ngbCollapse]="!mobileMenus.boutique">
-            <li><a class="nav-link" routerLink="./caisse/ventes" data-bs-dismiss="offcanvas">vente à adhérents</a>
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.Shop" data-bs-dismiss="offcanvas">vente à adhérents</a>
             </li>
-            <li><a class="nav-link" routerLink="./caisse/produits" data-bs-dismiss="offcanvas">produits à la
-                vente</a></li>
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.Products" data-bs-dismiss="offcanvas">produits à la
+              vente</a></li>
           </ul>
         </li>
         <li *ngIf="accreditation_level >= accreditation_levels.Contributeur" class="nav-item">
@@ -205,11 +211,11 @@
               style="width:2em;"></a>
           </div>
           <ul class="list-unstyled ps-4" [ngbCollapse]="!mobileMenus.adherents">
-            <li><a class="nav-link" routerLink="./members/database" data-bs-dismiss="offcanvas">répertoire</a></li>
-            <li><a class="nav-link" routerLink="./members/cartes-admission" data-bs-dismiss="offcanvas">cartes
-                admission</a></li>
-            <li><a class="nav-link" routerLink="./members/controls" data-bs-dismiss="offcanvas">contrôles</a></li>
-            <li><a class="nav-link" routerLink="./members/competitions" data-bs-dismiss="offcanvas">compétitions</a>
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.MembersDatabase" data-bs-dismiss="offcanvas">répertoire</a></li>
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.GameCardsEditor" data-bs-dismiss="offcanvas">cartes
+              admission</a></li>
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.MemberSales" data-bs-dismiss="offcanvas">contrôles</a></li>
+            <li><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.Competitions" data-bs-dismiss="offcanvas">compétitions</a>
             </li>
           </ul>
         </li>
@@ -222,17 +228,17 @@
               style="width:2em;"></a>
           </div>
           <ul class="list-unstyled ps-4" [ngbCollapse]="!mobileMenus.finance">
-            <li><a class="nav-link" routerLink="./finance/état-de-caisse" data-bs-dismiss="offcanvas">état de
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.CashBoxStatus" data-bs-dismiss="offcanvas">état de
                 caisse</a></li>
-            <li><a class="nav-link" routerLink="./finance/toutes-ecritures" data-bs-dismiss="offcanvas">écritures
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.BooksEditor" data-bs-dismiss="offcanvas">écritures
               </a></li>
-            <li><a class="nav-link" routerLink="./finance/books/base-comptable" data-bs-dismiss="offcanvas">synthèse</a>
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.BooksOverview" data-bs-dismiss="offcanvas">synthèse</a>
             </li>
-            <li><a class="nav-link" routerLink="./finance/bank-reconciliation" data-bs-dismiss="offcanvas">rapprochement
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.BankReconciliation" data-bs-dismiss="offcanvas">rapprochement
                 bancaire</a></li>
-            <li><a class="nav-link" routerLink="./finance/expense-and-revenue" data-bs-dismiss="offcanvas">résultats</a>
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.ExpenseAndRevenue" data-bs-dismiss="offcanvas">résultats</a>
             </li>
-            <li><a class="nav-link" routerLink="./finance/balance" data-bs-dismiss="offcanvas">bilan</a></li>
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.Balance" data-bs-dismiss="offcanvas">bilan</a></li>
           </ul>
         </li>
         <li *ngIf="accreditation_level >= accreditation_levels.Systeme" class="nav-item">
@@ -244,18 +250,18 @@
               style="width:2em;"></a>
           </div>
           <ul class="list-unstyled ps-4" [ngbCollapse]="!mobileMenus.outils">
-            <li><a class="nav-link" routerLink="./finance/books/list" data-bs-dismiss="offcanvas">base de
-                données</a></li>
-            <li><a class="nav-link" routerLink="./finance/books/editor" data-bs-dismiss="offcanvas">écriture</a>
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.BooksList" data-bs-dismiss="offcanvas">base de
+              données</a></li>
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.BooksEditorFull" data-bs-dismiss="offcanvas">écriture</a>
             </li>
-            <li><a class="nav-link" routerLink="./outils/groups" data-bs-dismiss="offcanvas">droits d'accès</a>
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.GroupsList" data-bs-dismiss="offcanvas">droits d'accès</a>
             </li>
-            <li><a class="nav-link" routerLink="./outils/sysconf" data-bs-dismiss="offcanvas">configuration</a>
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.SysConf" data-bs-dismiss="offcanvas">configuration</a>
             </li>
-            <li *ngIf="!production_mode"><a class="nav-link" routerLink="./outils/excel_import"
-                data-bs-dismiss="offcanvas">import excel</a></li>
-            <li *ngIf="!production_mode"><a class="nav-link" routerLink="./outils/cloneDB"
-                data-bs-dismiss="offcanvas">clone DB</a></li>
+            <li *ngIf="!production_mode"><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.ImportExcel"
+              data-bs-dismiss="offcanvas">import excel</a></li>
+            <li *ngIf="!production_mode"><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.CloneDB"
+              data-bs-dismiss="offcanvas">clone DB</a></li>
           </ul>
         </li>
         <li *ngIf="accreditation_level >= accreditation_levels.Administrateur" class="nav-item">
@@ -267,10 +273,9 @@
               style="width:2em;"></a>
           </div>
           <ul class="list-unstyled ps-4" [ngbCollapse]="!mobileMenus.site">
-            <li><a class="nav-link" routerLink="./site/ui" data-bs-dismiss="offcanvas">paramètres UI</a></li>
-            <li><a class="nav-link" routerLink="./site/menus" data-bs-dismiss="offcanvas">les menus</a></li>
-            <li><a class="nav-link" routerLink="./site/cms-wrapper" data-bs-dismiss="offcanvas">pages et datas</a></li>
-            <li><a class="dropdown-item" routerLink="./site/competitions" data-bs-dismiss="offcanvas">compétitions</a></li>
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.UiConf" data-bs-dismiss="offcanvas">paramètres UI</a></li>
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.MenusEditor" data-bs-dismiss="offcanvas">les menus</a></li>
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.CMSWrapper" data-bs-dismiss="offcanvas">pages et datas</a></li>
 
             <li><a class="nav-link" routerLink="/front" data-bs-dismiss="offcanvas">aller sur le site</a></li>
           </ul>
@@ -287,13 +292,13 @@
               href="javascript:void(0)" style="width:2em;"></a>
           </div>
           <ul class="list-unstyled ps-4" [ngbCollapse]="!mobileMenus.communication">
-            <!-- <li><a class="nav-link" routerLink="./site/thumbnails">vignettes</a></li> -->
-            <li><a class="nav-link" routerLink="./communication/assistance" data-bs-dismiss="offcanvas">
+            <!-- <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.Snippets">vignettes</a></li> -->
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.Assistance" data-bs-dismiss="offcanvas">
                 Assistance
                 <span class="badge bg-warning top-0 start-100 translate-middle"
                   style="font-size: 0.6rem;">{{assistances_nbr}}</span>
               </a></li>
-            <li><a class="nav-link" routerLink="./communication/mailing" data-bs-dismiss="offcanvas">Mailing</a></li>
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.Mailing" data-bs-dismiss="offcanvas">Mailing</a></li>
           </ul>
         </li>
 
