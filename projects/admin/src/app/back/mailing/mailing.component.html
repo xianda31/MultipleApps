@@ -11,7 +11,7 @@
 						<input type="radio" class="btn-check" name="recipientMode" id="modeAll" 
 							[(ngModel)]="recipientMode" value="all" checked>
 						<label class="btn btn-outline-primary" for="modeAll">
-							Tous les membres ({{ members.length }})
+							Tous les membres ({{ getActiveMailingCount() }}/{{ members.length }})
 						</label>
 						
 						<input type="radio" class="btn-check" name="recipientMode" id="modeSelected" 
