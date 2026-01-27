@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
-import { CommonModule, JsonPipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MailingApiService } from '../services/mailing-api.service';
 import { EmailTemplateService } from '../services/email-template.service';
@@ -19,6 +19,7 @@ export class MailingComponent implements OnInit, AfterViewInit {
   @ViewChild('editorDiv') editorDiv!: ElementRef<HTMLDivElement>;
   
   from = '"Bridge Club Saint-Orens" <noreply@bridgeclubsaintorens.fr>';
+  replyTo = '"Bridge Club Saint-Orens" <bridge.saintorens@free.fr>'; // Adresse pour les réponses
   recipientMode: 'all' | 'selected' = 'all'; // Mode de sélection
   members: Member[] = [];
   memberSelection: Map<string, boolean> = new Map(); // Map pour stocker les sélections
@@ -167,7 +168,8 @@ export class MailingComponent implements OnInit, AfterViewInit {
       cc: this.ccEmail ? [this.ccEmail] : undefined,
       subject: this.subject,
       bodyHtml: this.emailTemplate.buildEmailTemplate(this.bodyHtml),
-      attachments: this.attachments.length > 0 ? this.attachments : undefined
+      attachments: this.attachments.length > 0 ? this.attachments : undefined,
+      replyTo: this.replyTo
     })
       .then((res) => {
         this.result = res;

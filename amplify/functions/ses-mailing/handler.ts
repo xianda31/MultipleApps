@@ -13,7 +13,8 @@ function createRawEmail(
   subject: string, 
   htmlBody: string, 
   attachments: Array<{filename: string, content: string, contentType: string}>,
-  bcc?: string[]
+  bcc?: string[],
+  replyTo?: string
 ): string {
   const boundary = `----=_Part_${Date.now()}`;
   const attachmentBoundary = `----=_Attachment_${Date.now()}`;
@@ -22,6 +23,9 @@ function createRawEmail(
   rawEmail += `To: ${to.join(', ')}\r\n`;
   if (bcc && bcc.length > 0) {
     rawEmail += `Bcc: ${bcc.join(', ')}\r\n`;
+  }
+  if (replyTo) {
+    rawEmail += `Reply-To: ${replyTo}\r\n`;
   }
   rawEmail += `Subject: ${subject}\r\n`;
   rawEmail += `MIME-Version: 1.0\r\n`;
@@ -91,11 +95,12 @@ export const handler = async (event: any) => {
   }
 
   // event.body est stringifié si appelé via API Gateway HTTP
-  const { from, to, cc, subject, bodyText, bodyHtml, attachments } = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
+  const { from, to, cc, subject, bodyText, bodyHtml, attachments, replyTo } = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
   
   console.log('📧 Email request:', { 
     from, 
     to, 
+    replyTo,
     subject, 
     bodyHtmlLength: bodyHtml?.length || 0,
     bodyHtmlPreview: bodyHtml?.substring(0, 200) || 'N/A'
@@ -173,12 +178,12 @@ export const handler = async (event: any) => {
       
       // Si des pièces jointes, utiliser SendRawEmailCommand
       if (attachments && attachments.length > 0) {
-        const rawEmail = createRawEmail(from, [recipientEmail], subject, personalizedHtml, attachments);
+        const rawEmail = createRawEmail(from, [recipientEmail], subject, personalizedHtml, attachments, undefined, replyTo);
         return ses.send(new SendRawEmailCommand({ RawMessage: { Data: Buffer.from(rawEmail) } }));
       }
       
       // Sans pièce jointe, utiliser SendEmailCommand
-      const params = {
+      const params: any = {
         Source: from,
         Destination: { 
           ToAddresses: [recipientEmail]
@@ -188,6 +193,10 @@ export const handler = async (event: any) => {
           Body: { Html: { Data: personalizedHtml } }
         },
       };
+      
+      if (replyTo) {
+        params.ReplyToAddresses = [replyTo];
+      }
       
       return ses.send(new SendEmailCommand(params));
     });
@@ -202,11 +211,11 @@ export const handler = async (event: any) => {
       const ccPromise = async () => {
         // Si des pièces jointes, utiliser SendRawEmailCommand
         if (attachments && attachments.length > 0) {
-          const rawEmail = createRawEmail(from, cc, subject, ccHtml, attachments);
+          const rawEmail = createRawEmail(from, cc, subject, ccHtml, attachments, undefined, replyTo);
           return ses.send(new SendRawEmailCommand({ RawMessage: { Data: Buffer.from(rawEmail) } }));
         }
         
-        const ccParams = {
+        const ccParams: any = {
           Source: from,
           Destination: { 
             ToAddresses: cc
@@ -216,6 +225,10 @@ export const handler = async (event: any) => {
             Body: { Html: { Data: ccHtml } }
           },
         };
+        
+        if (replyTo) {
+          ccParams.ReplyToAddresses = [replyTo];
+        }
         
         return ses.send(new SendEmailCommand(ccParams));
       };
