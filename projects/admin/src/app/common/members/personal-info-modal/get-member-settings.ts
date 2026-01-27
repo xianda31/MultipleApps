@@ -25,7 +25,7 @@ export class GetMemberSettingsComponent {
   base64_ico: string = '';
   full_name: string = '';
   // Sauvegarder les valeurs initiales pour la comparaison
-  private initialSettings: Member_settings = {};
+  initialSettings!: Member_settings;
 
   readonly default_ico = 'anybody.png';
   readonly avatar_path = S3_ROOT_FOLDERS.PORTRAITS + '/';
@@ -55,7 +55,7 @@ export class GetMemberSettingsComponent {
     // Sauvegarder les valeurs initiales
     this.initialSettings = {
       has_avatar: this.member.has_avatar ?? false,
-      accept_mailing: this.member.accept_mailing ?? true
+      accept_mailing: this.member.accept_mailing ?? true,
     };
 
     this.preferenceForm.patchValue({

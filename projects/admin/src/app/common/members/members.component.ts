@@ -2,7 +2,6 @@ import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { MembersService } from '../../common/services/members.service';
 import { LicenseesService } from '../licensees/services/licensees.service';
 import { Observable, switchMap, tap } from 'rxjs';
-import { finalize } from 'rxjs/operators';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule, UpperCasePipe } from '@angular/common';
 import { NgbModal, NgbTooltipModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
@@ -168,6 +167,9 @@ export class MembersComponent implements OnInit {
           license_taken_at: 'BCSTO',
           license_status: LicenseStatus.UNREGISTERED,
           is_sympathisant: false,
+          accept_mailing: newbee.email ? true : false,
+          has_avatar: false,
+          membership_date: ''
         }
         this.membersService.createMember(new_member).then((_member) => {
           this.toastService.showSuccess('Nouveau membre non licencié', new_member.lastname + ' ' + new_member.firstname);
@@ -200,6 +202,9 @@ export class MembersComponent implements OnInit {
       // register_date: ''
       license_status: player.is_current_season ? LicenseStatus.DULY_REGISTERED : LicenseStatus.UNREGISTERED,
       is_sympathisant: false,
+      accept_mailing: true,
+      has_avatar: false,
+      membership_date: ''
     }
   }
 
@@ -277,6 +282,9 @@ export class MembersComponent implements OnInit {
       register_date: licensee.register_date ?? '',
       license_status: licensee.register ? (licensee.license_id ? LicenseStatus.DULY_REGISTERED : LicenseStatus.PROMOTED_ONLY) : LicenseStatus.UNREGISTERED,
       is_sympathisant: licensee.is_sympathisant ?? false,
+      accept_mailing: member.accept_mailing,
+      has_avatar: member.has_avatar,
+      membership_date: member.membership_date,
 
 
     }
@@ -314,6 +322,8 @@ export class MembersComponent implements OnInit {
       is_sympathisant: licensee.is_sympathisant ?? false,
       license_status: licensee.register ? (licensee.license_id ? LicenseStatus.DULY_REGISTERED : LicenseStatus.PROMOTED_ONLY) : LicenseStatus.UNREGISTERED,
       license_taken_at: licensee.orga_license_name ?? 'BCSTO',
+      membership_date: '',
+      has_avatar: false,
     }
 
   }
