@@ -1,14 +1,11 @@
 
 import { Component, Input, Renderer2, ElementRef, OnChanges, SimpleChanges, OnInit } from '@angular/core';
-import { map, switchMap, tap } from 'rxjs';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { EXTRA_TITLES, MENU_TITLES, Page, PAGE_TEMPLATES, Snippet } from '../../../../common/interfaces/page_snippet.interface';
 import { PageService } from '../../../../common/services/page.service';
 import { SnippetService } from '../../../../common/services/snippet.service';
 import { TitleService } from '../../../title/title.service';
-import { MembersService } from '../../../../common/services/members.service';
-import { Member } from '../../../../common/interfaces/member.interface';
 import { TrombinoscopeRenderComponent } from './renderers/trombinoscope-render/trombinoscope-render.component';
 import { SequentialRenderComponent } from './renderers/sequential-render/sequential-render.component';
 import { PublicationRenderComponent } from './renderers/publication-render/publication-render.component';
@@ -81,7 +78,7 @@ export class GenericPageComponent implements OnInit, OnChanges {
       this.page_post_handling();
     }
   }
-    // Appelé lors de la sauvegarde d'un snippet (par exemple via (saved) du snippet-editor)
+  // Appelé lors de la sauvegarde d'un snippet (par exemple via (saved) du snippet-editor)
   onSnippetSaved(updated: Snippet) {
     // Remplace uniquement le snippet modifié dans page_snippets (nouvelle référence)
     this.page_snippets = this.page_snippets.map(s =>
@@ -99,10 +96,10 @@ export class GenericPageComponent implements OnInit, OnChanges {
         this.snippetService.listSnippets().subscribe(snippets => {
           this.snippets = snippets.map(s => {
             s.pageId = undefined;
-    // Initialize publishedAt from updatedAt (ISO) converted to YYYY-MM-DD
-    if (!s.publishedAt) {
-      s.publishedAt = this.toDateInputValue(s.updatedAt) || '';
-    }            return s;
+            // Initialize publishedAt from updatedAt (ISO) converted to YYYY-MM-DD
+            if (!s.publishedAt) {
+              s.publishedAt = this.toDateInputValue(s.updatedAt) || '';
+            } return s;
           });
           // update pageId for all snippets
           this.pages.forEach(page => {
@@ -115,7 +112,7 @@ export class GenericPageComponent implements OnInit, OnChanges {
           });
           this.filter_PageSnippets(this.page_title);
           // If a target snippet title is provided initially (via route), set scroll_to_snippet now
-          if ( this.snippet_title) {
+          if (this.snippet_title) {
             const target = this.page_snippets.find(s => s.title === this.snippet_title);
             if (target) {
               this.scroll_to_snippet = target;
@@ -132,15 +129,13 @@ export class GenericPageComponent implements OnInit, OnChanges {
       this.page_snippets = this.snippets.filter(s => s.featured)
         .sort((a, b) => (b.publishedAt ?? '').localeCompare(a.publishedAt ?? ''));
       this.pageTemplate = PAGE_TEMPLATES.CARDS_top_left;
-      // update pageId for all snippets
-      
       return;
     }
-    
+
     const title = page_title;
     // load the page by its title, then load all snippets  for this page
     const page = this.pages.find(p => p.title === title);
-    if (!page) { 
+    if (!page) {
       // Page not found - this can happen temporarily during title editing in CMS
       console.warn(`GenericPage: page "${page_title}" not found in pages list - waiting for sync`);
       // Don't throw error, just return early - the component will re-render when pages update
@@ -238,7 +233,7 @@ export class GenericPageComponent implements OnInit, OnChanges {
   }
 
 
-    private toDateInputValue(value: any): string | undefined {
+  private toDateInputValue(value: any): string | undefined {
     if (!value) return undefined;
     const d = (value instanceof Date) ? value : new Date(value);
     if (isNaN(d.getTime())) return undefined;
