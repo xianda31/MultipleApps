@@ -1,29 +1,16 @@
 <!-- <form [formGroup]="payment_form"> -->
 <div class="card w-100">
     <div class="card-body g-0">
-                @if (message) {
-                    <div class="warning mb-3">
-                        <strong class="text-danger blinking"> Message : {{message.toUpperCase()}}</strong>
-                    </div>
-                }
+        @if (message) {
+        <div class="warning mb-3">
+            <strong class="text-danger blinking"> Message : {{message.toUpperCase()}}</strong>
+        </div>
+        }
 
         <strong>Panier : </strong>
         <div class="table-responsive">
             <table class="table  table-sm  align-middle caption-top">
-                <!-- debt if any -->
-                                @if (debt_amount > 0) {
-                                    <caption>
-                                        <span class="text-muted"> Dette :{{debt_amount | currency:'€':'symbol':'2.2-2':'fr'}} </span>
-                                    </caption>
-                                }
 
-                <!-- asset if any -->
-                                @if (asset_available > 0) {
-                                    <caption>
-                                        <span class="text-muted"> Avoir disponible:{{asset_available | currency:'€':'symbol':'2.2-2':'fr'}}
-                                        </span>
-                                    </caption>
-                                }
 
                 <thead>
                     <tr class="table-primary">
@@ -35,6 +22,61 @@
                 </thead>
 
                 <tbody>
+                    <!-- debt if any -->
+                    @if (debt_amount > 0) {
+                    <tr>
+                                                <td class="text-muted">
+                                                    <span [ngStyle]="{ 'text-decoration': !cart.take_debt ? 'line-through' : 'none' }">
+                                                        Dette de {{debt_amount | currency:'€':'symbol':'2.2-2':'fr'}}
+                                                    </span>
+                                                </td>
+                        <td></td>
+                        <td class="text-end">
+                            @if (cart.take_debt) {
+                            +{{debt_amount | currency:'€':'symbol':'2.2-2':'fr'}}
+                            }
+                        </td>
+                        <!-- Switch for cart.take_debt -->
+                        <td class="text-center text-primary align-middle p-0">
+                            <div class="d-flex justify-content-center align-items-center"
+                                style="height:100%;min-height:38px;">
+                                <label class="form-check form-switch m-0">
+                                    <input class="form-check-input" type="checkbox" role="switch"
+                                        (change)="toggle_take_debt()" [checked]="cart.take_debt">
+                                </label>
+                            </div>
+                        </td>
+                    </tr>
+                    }
+
+                    <!-- asset if any -->
+                    @if (asset_available > 0) {
+                    <tr>
+                                                <td>
+                                                    <span [ngStyle]="{ 'text-decoration': !cart.take_asset ? 'line-through' : 'none' }">
+                                                        Avoir disponible de {{asset_available | currency:'€':'symbol':'2.2-2':'fr'}}
+                                                    </span>
+                                                </td>
+                        <td></td>
+                        <td class="text-end">
+                            @if (cart.take_asset) {
+                            -{{asset_available | currency:'€':'symbol':'2.2-2':'fr'}}
+                            }
+                        </td>
+                        <!-- Switch for cart.take_asset -->
+                        <td class="text-center text-primary align-middle p-0">
+                            <div class="d-flex justify-content-center align-items-center"
+                                style="height:100%;min-height:38px;">
+                                <label class="form-check form-switch m-0">
+                                    <input class="form-check-input" type="checkbox" role="switch"
+                                        (change)="toggle_take_asset()" [checked]="cart.take_asset">
+                                </label>
+                            </div>
+                        </td>
+                    </tr>
+                    }
+
+
                     @for (item of cart.items; let i = $index; track i) {
                     <tr>
                         <!-- descriptif produit -->
@@ -73,8 +115,8 @@
             </table>
         </div>
         <!--  paiement -->
-    @if ((cart.items.length > 0 || debt_amount > 0)) {
-    <div class="row mt-2 ">
+        @if ((cart.items.length > 0 || debt_amount > 0)) {
+        <div class="row mt-2 ">
             <div class="col-3 ">
                 <strong>Total : {{total_amount() | currency:'€':'symbol':'2.2-2':'fr'}}
                 </strong>
@@ -93,7 +135,7 @@
                 </div>
                 <div class="form-check form-check-inline">
                     <input class="form-check_input" type="radio" [(ngModel)]="selected_payment.mode"
-                    (ngModelChange)="payment_mode_change()" [value]="paymentMode.TRANSFER">
+                        (ngModelChange)="payment_mode_change()" [value]="paymentMode.TRANSFER">
                     <label class="form-check-label">virement</label>
                 </div>
                 <div class="form-check form-check-inline">
@@ -111,9 +153,9 @@
                         <select [ngClass]="!selected_payment.bank?'to-fill-in':''" class="form-control form-control-sm"
                             [(ngModel)]="selected_payment.bank" required>
                             <option value="undefined" hidden disabled>banque</option>
-                                                        @for (bank of (banks$ | async); track bank.key) {
-                                                            <option [value]="bank.key">{{bank.name}}</option>
-                                                        }
+                            @for (bank of (banks$ | async); track bank.key) {
+                            <option [value]="bank.key">{{bank.name}}</option>
+                            }
                         </select>
                     </div>
                     <div>
@@ -126,7 +168,7 @@
             }
             <!-- </ng-container> -->
         </div>
-    }
+        }
 
 
 
@@ -134,11 +176,10 @@
 
         <!-- nbre éléments : {{cart.items.length}} -->
         <div class="justify-content-center mt-4">
-            <button type="button" class="btn btn-success nice_shadow"
-                [disabled]=" cart_is_not_valid() "
+            <button type="button" class="btn btn-success nice_shadow" [disabled]=" cart_is_not_valid() "
                 (click)="validate_sale()">confirmation du panier</button>
 
-              <!-- {{check_cart()}}   -->
+            <!-- {{check_cart()}}   -->
         </div>
     </div>
 </div>
@@ -148,18 +189,18 @@
 
 
     @if (payment.mode === paymentMode.CHEQUE) {
-        <td colspan="3">
-            <select [ngClass]="!payment.bank?'to-fill-in':''" class="form-control form-control-sm"
-                [(ngModel)]="payment.bank" required>
-                <option value="undefined" hidden disabled>banque</option>
-                                @for (bank of (banks$ | async); track bank.key) {
-                                    <option [value]="bank.key">{{bank.name}}</option>
-                                }
-            </select>
-        </td>
-        <td colspan="3">
-            <input [ngClass]="!payment.cheque_no?'to-fill-in':''" placeholder="N° de chèque" type="text" id="cheque_no"
-                class="form-control form-control-sm" [(ngModel)]="payment.cheque_no">
-        </td>
+    <td colspan="3">
+        <select [ngClass]="!payment.bank?'to-fill-in':''" class="form-control form-control-sm"
+            [(ngModel)]="payment.bank" required>
+            <option value="undefined" hidden disabled>banque</option>
+            @for (bank of (banks$ | async); track bank.key) {
+            <option [value]="bank.key">{{bank.name}}</option>
+            }
+        </select>
+    </td>
+    <td colspan="3">
+        <input [ngClass]="!payment.cheque_no?'to-fill-in':''" placeholder="N° de chèque" type="text" id="cheque_no"
+            class="form-control form-control-sm" [(ngModel)]="payment.cheque_no">
+    </td>
     }
 </ng-template>

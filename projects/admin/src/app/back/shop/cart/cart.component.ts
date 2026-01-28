@@ -27,7 +27,7 @@ export class CartComponent {
   asset_available = 0;
   total_amount = signal(0);
 
-  cart: Cart = { items: [], debt: null, asset_available: null, asset_used: null, buyer_name: '' };
+  cart: Cart = { items: [], debt: null, asset_available: null, asset_used: null, buyer_name: '', take_asset:true, take_debt:true };
   members!: Member[];
   products!: Product[];
 
@@ -63,6 +63,8 @@ export class CartComponent {
       this.cart = cart;
       this.debt_amount = cart.debt?.amount || 0;
       this.asset_available = cart.asset_available?.amount || 0;
+      this.cart.take_asset = cart.take_asset;
+      this.cart.take_debt = cart.take_debt;
 
       if (this.cart.items.length === 0) {
         this.clear_payment();
@@ -107,6 +109,13 @@ export class CartComponent {
 
   getCartAmount() {
     return this.cartService.getCartAmount();
+  }
+
+  toggle_take_debt() {
+    this.cartService.takeDebt(!this.cart.take_debt);
+  }
+  toggle_take_asset() {
+    this.cartService.takeAsset(!this.cart.take_asset);
   }
 
   payment_mode_change() {

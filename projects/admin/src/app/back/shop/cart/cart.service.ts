@@ -14,7 +14,7 @@ import { Product } from '../../products/product.interface';
 })
 
 export class CartService {
-  private _cart: Cart = { items: [], debt: null, asset_available: null, asset_used: null, buyer_name: '' };
+  private _cart: Cart = { items: [], debt: null, asset_available: null, asset_used: null, buyer_name: '',take_asset:true,take_debt:true };
   private _payment!: Payment;
   private _cart$: BehaviorSubject<Cart> = new BehaviorSubject<Cart>(this._cart);
   private seller: string = '';
@@ -65,6 +65,9 @@ export class CartService {
     this._cart.debt = null;
     this._cart.asset_available = null;
     this._cart.asset_used = null;
+    this._cart.take_asset = true;
+    this._cart.take_debt = true;
+    this._cart.buyer_name = '';
     this._cart$.next(this._cart);
   }
 
@@ -75,6 +78,14 @@ export class CartService {
   }
   setAsset(name: string, amount: number): void {
     this._cart.asset_available = { name: name, amount: amount };
+    this._cart$.next(this._cart);
+  }
+  takeAsset(take: boolean): void {
+    this._cart.take_asset = take;
+    this._cart$.next(this._cart);
+  }
+  takeDebt(take: boolean): void {
+    this._cart.take_debt = take;
     this._cart$.next(this._cart);
   }
 
@@ -89,9 +100,9 @@ export class CartService {
 
   getCartAmount(): number {
     // console.log('getCartAmount', this._cart.debt, this._cart.asset);
-    let due = this._cart.items.reduce((total, item) => total + item.paied, 0) + (this._cart.debt?.amount || 0);
+    let due = this._cart.items.reduce((total, item) => total + item.paied, 0) + (this._cart.take_debt ? (this._cart.debt?.amount  || 0) : 0);
 
-    if (this._cart.asset_available && this._cart.asset_available.amount > 0) {
+    if (this._cart.take_asset && this._cart.asset_available && this._cart.asset_available.amount > 0) {
       let asset_available = this._cart.asset_available.amount;
       let asset_used = (asset_available > due) ? due : asset_available;
       this._cart.asset_used = { name: this._cart.asset_available.name, amount: asset_used };
@@ -162,12 +173,12 @@ export class CartService {
       }
     });
     // push debt_credit and asset_debit as "CartItems"
-    if (this._cart.debt) {
+    if (this._cart.debt && this._cart.take_debt) {
       let items = payees.get(this._cart.debt.name) ?? [];
       items.push({ paied: this._cart.debt.amount, mutable: false, product_account: CUSTOMER_ACCOUNT.DEBT_credit, payee_name: this._cart.debt.name, product_id: '' });
       payees.set(this._cart.debt.name, items);
     }
-    if (this._cart.asset_used) {
+    if (this._cart.asset_used && this._cart.take_asset) {
       let items = payees.get(this._cart.asset_used.name) ?? [];
       items.push({ paied: this._cart.asset_used.amount, mutable: false, product_account: CUSTOMER_ACCOUNT.ASSET_debit, payee_name: this._cart.asset_used.name, product_id: '' });
       payees.set(this._cart.asset_used.name, items);

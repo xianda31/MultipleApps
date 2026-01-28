@@ -46,6 +46,8 @@ export interface Cart {
   debt: { name: string, amount: number } | null;
   asset_available: { name: string, amount: number } | null;
   asset_used: { name: string, amount: number } | null;
+  take_asset : boolean;
+  take_debt : boolean;
   buyer_name: string;
 }
 
