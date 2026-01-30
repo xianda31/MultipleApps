@@ -31,11 +31,6 @@ export class CompetitionService {
       this._members = members;
     });
   }
-
-  /**
-   * Accepts only the object structure { comite, ligue, national }.
-   * Converts to array for internal use.
-   */
   getCompetitionOrganizations(organization_labels: { comite: string; ligue: string; national: string }): Observable<CompetitionOrganization[]> {
         let labels: string[];
         if (organization_labels && typeof organization_labels === 'object') {
