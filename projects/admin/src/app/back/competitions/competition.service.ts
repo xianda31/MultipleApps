@@ -1,7 +1,6 @@
-import { COMPETITION_DIVISION_LABELS } from '../../common/interfaces/ui-conf.interface';
 
 import { Injectable } from '@angular/core';
-import { Competition, CompetitionOrganization, CompetitionSeason, CompetitionTeam, Player } from './competitions.interface';
+import { Competition, COMPETITION_DIVISION_LABELS, COMPETITION_LEVELS, CompetitionOrganization, CompetitionSeason, CompetitionTeam, Player } from './competitions.interface';
 
 import { CompetitionResultsMap } from './competitions.interface';
 import { FFB_proxyService } from '../../common/ffb/services/ffb.service';
@@ -9,7 +8,6 @@ import { MembersService } from '../../common/services/members.service';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { from, map, Observable, catchError, of, switchMap, tap, mergeMap, toArray, concatMap, lastValueFrom } from 'rxjs';
 import { Member } from '../../common/interfaces/member.interface';
-import { CompetitionsLevels } from '../../common/interfaces/ui-conf.interface';
 import { FileService } from '../../common/services/files.service';
 
 @Injectable({
@@ -20,6 +18,8 @@ export class CompetitionService {
   private _team_results: CompetitionResultsMap = {};
   private _organizations: CompetitionOrganization[] = [];
   private _preferred_organizations: CompetitionOrganization[] = [];
+
+  COMPETITION_LEVELS = COMPETITION_LEVELS;
 
   constructor(
     private ffbService: FFB_proxyService,
@@ -39,7 +39,7 @@ export class CompetitionService {
   getCompetitionOrganizations(organization_labels: { comite: string; ligue: string; national: string }): Observable<CompetitionOrganization[]> {
         let labels: string[];
         if (organization_labels && typeof organization_labels === 'object') {
-          labels = [organization_labels[CompetitionsLevels.National], organization_labels[CompetitionsLevels.Ligue], organization_labels[CompetitionsLevels.Comite]];
+          labels = [organization_labels[this.COMPETITION_LEVELS.National], organization_labels[this.COMPETITION_LEVELS.Ligue], organization_labels[this.COMPETITION_LEVELS.Comite]];
         } else {
           labels = ['FFB', 'Ligue 06 LR-PY', 'Comité des Pyrenees'];
         }
@@ -76,14 +76,15 @@ export class CompetitionService {
    * Calcule le label de division rendu pour une compétition selon la logique initiale (voir getDivisionCategory)
    */
    getDivisionCategoryToLabel(competition: Competition): string {
-     let labelToUse = competition.division.label;
-    //  if (!labelToUse) {
-    //    return 'Autres';
-    //  }
-     if (labelToUse === 'Aucune Division' && competition.label) {
-       labelToUse = competition.label;
-      }
-      const division_labels = COMPETITION_DIVISION_LABELS;
+    // Si la compétition est de la famille Interclubs, on retourne explicitement 'Interclubs'
+    if (competition.family && competition.family.label === 'Interclubs') {
+      return 'Interclubs';
+    }
+    let labelToUse = competition.division.label;
+    if (labelToUse === 'Aucune Division' && competition.label) {
+      labelToUse = competition.label;
+    }
+    const division_labels = COMPETITION_DIVISION_LABELS;
     const key = Object.keys(division_labels).find(k => labelToUse.startsWith(k));
     if (!key) {
       return 'Autres';
@@ -98,7 +99,7 @@ export class CompetitionService {
   ): Observable<CompetitionResultsMap> {
     let labels: string[];
     if (organization_labels && typeof organization_labels === 'object') {
-      labels = [organization_labels[CompetitionsLevels.National], organization_labels[CompetitionsLevels.Ligue], organization_labels[CompetitionsLevels.Comite]];
+      labels = [organization_labels[COMPETITION_LEVELS.National], organization_labels[COMPETITION_LEVELS.Ligue], organization_labels[COMPETITION_LEVELS.Comite]];
     } else {
       labels = ['FFB', 'Ligue 06 LR-PY', 'Comité des Pyrénées'];
     }
@@ -169,8 +170,9 @@ export class CompetitionService {
   private async runSerial(competitions: Competition[]): Promise<CompetitionResultsMap> {
     const results: CompetitionResultsMap = {};
     for (const comp of competitions) {
-      // Injecte le rendered_label selon la logique initiale
-      comp.rendered_label = this.getDivisionCategoryToLabel(comp);
+      // Injecte le assigned_division selon la logique initiale
+      comp.assigned_division = this.getDivisionCategoryToLabel(comp);
+      comp.assigned_label = comp.assigned_division === 'Interclubs' ? comp.label :comp.family.label;
       let compTeam = await lastValueFrom(this.getCompetitionResults(String(comp.id), String(comp.organization_id)));
       // compute pe_pourcerntage for each player
       compTeam = this.computePePercentage(comp, compTeam);
@@ -202,7 +204,7 @@ export class CompetitionService {
       if (!results[comp.id]) results[comp.id] = [];
       results[comp.id].unshift({ competition: comp, teams: safeCompTeam });
     }
-    console.log('CompetitionService: résultats des compétitions calculés séquentiellement', results);
+    console.log('CompetitionService: résultats des compétitions nouvellement calculés ', results);
     return results;
   }
 

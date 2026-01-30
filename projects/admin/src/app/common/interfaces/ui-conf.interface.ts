@@ -1,36 +1,8 @@
-// Libellés de divisions pour les compétitions
-export const COMPETITION_DIVISIONS: string[] = ['Division de Ligue', 'Expert', 'Performance', 'Challenge', 'Espérance','Coupe de France','Autres'];
-export const COMPETITION_DIVISION_LABELS: { [key: string]: string } = {
-  'DN': 'Division de Ligue',
-  'Expert': 'Expert',
-  'Performance': 'Performance',
-  'Challenge': 'Challenge',
-  'Espérance': 'Espérance',
-  'Coupe de France': 'Coupe de France',
-  'Autres': 'Autres'
-};
-// Configuration des préférences compétitions
-export enum CompetitionsLevels {
-  Comite = 'comite',
-  Ligue = 'ligue',
-  National = 'national'
-}
 
-export const CompetitionsLevelsLabels: { [key in CompetitionsLevels]: string } = {
-  [CompetitionsLevels.Comite]: 'Comité',
-  [CompetitionsLevels.Ligue]: 'Ligue',
-  [CompetitionsLevels.National]: 'National'
-};
- 
-export interface CompetitionsUIConfig {
-  preferred_organizations: { [key in CompetitionsLevels]: string };
-  result_filter_thresholds: { [key: string]: number };
-  show_members_only: boolean;
-  one_year_back: boolean;
-  show_infos: boolean;
-  no_filter: boolean;
-}
 // UI-specific interfaces extracted from system configuration
+
+import { COMPETITION_LEVELS } from "../../back/competitions/competitions.interface";
+
 
 export interface BreakpointsSettings {
   SM: number;
@@ -44,6 +16,16 @@ export interface ImageSize {
   height: number;
   // ratio?: number;
 }
+
+export interface CompetitionsUIConfig {
+  preferred_organizations: { [key in COMPETITION_LEVELS]: string };
+  result_filter_thresholds: { [key: string]: number };
+  show_members_only: boolean;
+  one_year_back: boolean;
+  show_infos: boolean;
+  no_filter: boolean;
+}
+
 
 export interface UIConfiguration {
   template: {

@@ -2,14 +2,14 @@
 
 
 import { Component } from '@angular/core';
-import { Competition, CompetitionOrganization, CompetitionResultsMap, CompetitionTeam, Player, CompetitionResults } from './competitions.interface';
-import { COMPETITION_DIVISIONS, COMPETITION_DIVISION_LABELS, UIConfiguration } from '../../common/interfaces/ui-conf.interface';
+import { Competition, CompetitionOrganization, CompetitionResultsMap, CompetitionTeam, Player, CompetitionResults, COMPETITION_DIVISION_LABELS } from './competitions.interface';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CompetitionService } from './competition.service';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { TitleService } from '../../front/title/title.service';
 import { ActivatedRoute } from '@angular/router';
+import { UIConfiguration } from '../../common/interfaces/ui-conf.interface';
 
 @Component({
   selector: 'app-competitions',
@@ -26,7 +26,7 @@ export class CompetitionsComponent {
   team_results: CompetitionResultsMap = {};
   filtered_team_results: CompetitionResultsMap = {};
 
-  divisions: string[] = COMPETITION_DIVISIONS;
+  divisions: string[] = Object.values(COMPETITION_DIVISION_LABELS);
   division_labels: { [key: string]: string } = COMPETITION_DIVISION_LABELS;
 
   preferred_organization_labels!: { comite: string; ligue: string; national: string };
@@ -61,19 +61,25 @@ export class CompetitionsComponent {
       } else {
         this.back_office_mode = (access === 'full');
       }
-      console.log('CompetitionsComponent: back_office_mode=', this.back_office_mode);
     });
 
     // Charger la configuration Competitions depuis ui-conf
     this.systemService.get_ui_settings().subscribe(ui => {
       this.ui_config_loaded = ui;
 
+      const defaultLabels = { comite: 'Comité des Pyrénées', ligue: 'Ligue 06 LR-PY', national: 'FFB' };
       if (ui?.competitions?.preferred_organizations && typeof ui.competitions.preferred_organizations === 'object') {
-        this.preferred_organization_labels = ui.competitions.preferred_organizations;
+        const orgs = ui.competitions.preferred_organizations;
+        this.preferred_organization_labels = {
+          comite: orgs.comite ?? defaultLabels.comite,
+          ligue: orgs.ligue ?? defaultLabels.ligue,
+          national: orgs.national ?? defaultLabels.national
+        };
       } else {
-        this.preferred_organization_labels = { comite: 'Comité des Pyrénées', ligue: 'Ligue 06 LR-PY', national: 'FFB' };
+        this.preferred_organization_labels = defaultLabels;
       }
       this.no_filter = ui?.competitions?.no_filter || false;
+      this.one_year_back = ui?.competitions?.one_year_back || false;
       this.competitionService.getCompetitionOrganizations(this.preferred_organization_labels).subscribe(orgs => {
         this.organizations = orgs;
       });
@@ -127,13 +133,13 @@ export class CompetitionsComponent {
 
       // Vérifier s'il y a des résultats pour la division 'Autres'
       const autresHasResults = Object.values(filteredToDisplay).some((arr: CompetitionResults[]) =>
-        arr.some((res: CompetitionResults) => res.competition.rendered_label === 'Autres')
+        arr.some((res: CompetitionResults) => res.competition.assigned_division === 'Autres')
       );
       if (autresHasResults && !this.divisions.includes('Autres')) {
         this.divisions = [...this.divisions, 'Autres'];
         if (this.show_infos) {
           const autresResults = Object.values(filteredToDisplay)
-            .flatMap((arr: CompetitionResults[]) => arr.filter((res: CompetitionResults) => res.competition.rendered_label === 'Autres'));
+            .flatMap((arr: CompetitionResults[]) => arr.filter((res: CompetitionResults) => res.competition.assigned_division === 'Autres'));
           console.warn('[PROD TRACK] Résultats présents pour la division "Autres". Cas à surveiller.', autresResults);
         }
       }
@@ -212,7 +218,7 @@ export class CompetitionsComponent {
   }
 
   getThreshold(competition: Competition): number {
-    const divisionLabel = competition.rendered_label || 'Autres';
+    const divisionLabel = competition.assigned_division || 'Autres';
     return this.ui_config_loaded.competitions.result_filter_thresholds[divisionLabel];
   }
 

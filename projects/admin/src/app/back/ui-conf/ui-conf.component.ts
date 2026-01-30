@@ -5,7 +5,8 @@ import { SystemDataService } from '../../common/services/system-data.service';
 import { ToastService } from '../../common/services/toast.service';
 import { FileService, S3_ROOT_FOLDERS } from '../../common/services/files.service';
 import { map, Observable, first, catchError, of, Subscription } from 'rxjs';
-import { CompetitionsUIConfig, COMPETITION_DIVISIONS } from '../../common/interfaces/ui-conf.interface';
+import { CompetitionsUIConfig} from '../../common/interfaces/ui-conf.interface';
+import { COMPETITION_DIVISION_LABELS, COMPETITION_DIVISIONS } from '../competitions/competitions.interface';
 
 @Component({
   selector: 'app-ui-conf',
@@ -15,7 +16,7 @@ import { CompetitionsUIConfig, COMPETITION_DIVISIONS } from '../../common/interf
   styleUrls: ['./ui-conf.component.scss']
 })
 export class UiConfComponent implements OnInit {
-  divisions = COMPETITION_DIVISIONS;
+  divisions = Object.values(COMPETITION_DIVISION_LABELS);
   // Subset Google Fonts populaires (label = affiché, css = valeur à injecter)
   googleFontsSubset = [
     { label: 'Amarante', css: 'Amarante, serif' },

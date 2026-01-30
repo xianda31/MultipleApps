@@ -1,3 +1,32 @@
+// Libellés de divisions pour les compétitions
+export const COMPETITION_DIVISIONS: string[] = ['Division de Ligue', 'Expert', 'Performance', 'Challenge', 'Espérance','Interclubs','Autres'];
+export const COMPETITION_DIVISION_LABELS: { [key: string]: string } = {
+  'DN': 'Division de Ligue',
+  'Expert': 'Expert',
+  'Performance': 'Performance',
+  'Challenge': 'Challenge',
+  'Espérance': 'Espérance',
+  'Interclubs': 'Interclubs',
+  'Autres': 'Autres'
+};
+// Configuration des préférences compétitions
+export enum COMPETITION_LEVELS {
+  Comite = 'comite',
+  Ligue = 'ligue',
+  National = 'national'
+}
+
+
+// export const COMPETITION_LEVELS_LABELS: { [key in CompetitionsLevels]: string } = {
+//   [CompetitionsLevels.Comite]: 'Comité',
+//   [CompetitionsLevels.Ligue]: 'Ligue',
+//   [CompetitionsLevels.National]: 'National'
+// };
+
+
+// API FFB Competition interfaces
+
+
 export interface CompetitionResults {
   competition: Competition;
   teams: CompetitionTeam[];
@@ -74,7 +103,8 @@ export interface Competition {
   organization_id: number;
   // additional fields for service use
   cumulated_pe_percentage?: number;
-  rendered_label?: string;
+  assigned_division?: string;
+  assigned_label?: string;
 
   division: {
     id: number;

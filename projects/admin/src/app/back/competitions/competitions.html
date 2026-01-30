@@ -99,24 +99,22 @@
                                 <!-- result.key = competitionId, result.value = CompetitionResults[] -->
                                 <ng-container *ngIf="result.value.length > 0 && hasTeamsToDisplay(result.value)"
                                     [ngTemplateOutlet]="competitionCard" [ngTemplateOutletContext]="{
-                                                        divisionCategory: result.value[0].competition.rendered_label,
+                                                        divisionCategory: result.value[0].competition.assigned_division,
                                                         result: result,
                                                         division: division
                                                     }">
                                 </ng-container>
                                 <ng-template #competitionCard let-divisionCategory="divisionCategory"
                                     let-result="result" let-division="division">
-                                    <ng-container *ngIf="
-                                                        (divisionCategory === division) ||
-                                                        (division === 'Autres' && divisionCategory === 'Autres')
-                                                    ">
+                                    <ng-container *ngIf="divisionCategory === division">
                                         <div class="card shadow-sm" style="font-size:0.85em;">
                                             <div class="card-header text-center" style="font-size:0.9em;">
-                                                <span class="fw-bold"> {{ result.value[0].competition.family.label
-                                                    }}</span>
+                                                <span class="fw-bold">
+                                                    {{ result.value[0].competition.assigned_label }}
+                                                </span>
                                                 <div *ngIf="show_infos" style="font-size: 0.7em;">{{result.key}}
-                                                    {{result.value[0].competition.label}} - {{
-                                                    (result.value[0].competition.organization_id) }}</div>
+                                                    {{result.value[0].competition.family.label}} - {{
+                                                    (result.value[0].competition.label) }}</div>
                                             </div>
                                             <div class="card-body p-2">
                                                 <ng-container *ngFor="let res of result.value; let i = index">
