@@ -47,7 +47,8 @@
                                             [(ngModel)]="ui_config_loaded.competitions.result_filter_thresholds[division]"
                                             min="1" max="100" step="1" (change)="onParamsChange(false)"
                                             [disabled]="ui_config_loaded.competitions.no_filter" />
-                                        <span class="badge bg-secondary ms-2" style="min-width: 40px; text-align: center;">{{
+                                        <span class="badge bg-secondary ms-2"
+                                            style="min-width: 40px; text-align: center;">{{
                                             ui_config_loaded.competitions.result_filter_thresholds[division]
                                             }}</span>
                                     </div>
@@ -81,18 +82,16 @@
             <div *ngIf="results_extracted">
 
                 <!-- Bloc résultats -->
-                <div *ngIf="(filtered_team_results | keyvalue).length > 0"
-                    class="row mb-3" style="gap:0;">
+                <div *ngIf="(filtered_team_results | keyvalue).length > 0" class="row mb-3" style="gap:0;">
                     <div *ngIf="results_extracted && (filtered_team_results | keyvalue).length === 0"
                         class="alert alert-info text-center my-4">
                         Aucun résultat à afficher pour la saison {{current_season}}.
                     </div>
-                    <div class="division-col px-1 col-12 col-md" *ngFor="let division of divisions; let i = index"
-                        style="min-width:120px;">
-                        <div class="fw-bold text-center mb-2" style="font-size:0.95em;">
+                    <div class=" px-1 col-12 col-md" *ngFor="let division of divisions; let i = index">
+                        <div class=" text-center  text-uppercase text-primary fw-bolder mt-2 mb-2" >
                             {{ division }}
                         </div>
-                        <div class="d-flex flex-column gap-1" style="font-size:0.85em;">
+                        <div class="d-flex flex-column gap-3" >
                             <ng-container *ngFor="let result of filtered_team_results | keyvalue">
                                 <!-- result.key = competitionId, result.value = CompetitionResults[] -->
                                 <ng-container *ngIf="result.value.length > 0 && hasTeamsToDisplay(result.value)"
@@ -102,86 +101,6 @@
                                                         division: division
                                                     }">
                                 </ng-container>
-                                <ng-template #competitionCard let-divisionCategory="divisionCategory"
-                                    let-result="result" let-division="division">
-                                    <ng-container *ngIf="divisionCategory === division">
-                                        <div class="card shadow-sm" style="font-size:0.85em;">
-                                            <div class="card-header text-center" style="font-size:0.9em;">
-                                                <span class="fw-bold">
-                                                    {{ result.value[0].competition.assigned_label }}
-                                                </span>
-                                                <div *ngIf="show_infos" style="font-size: 0.7em;">{{result.key}}
-                                                    {{result.value[0].competition.family.label}} - {{
-                                                    (result.value[0].competition.label) }}</div>
-                                            </div>
-                                            <div class="card-body p-2">
-                                                <ng-container *ngFor="let res of result.value; let i = index">
-                                                    <div class="mb-2">
-                                                        <ng-container *ngIf="i > 0">
-                                                            <hr class="my-2">
-                                                        </ng-container>
-                                                        <div *ngIf="getFilteredTeams(res).length !== 0"
-                                                            class="text-primary mb-1">
-                                                            {{ get_organization_label(res.competition.organization_id)
-                                                            }}
-                                                        </div>
-                                                        <ng-container *ngFor="let team of getFilteredTeams(res)">
-                                                            <div class="mb-2">
-                                                                <div class="d-flex align-items-center">
-                                                                    <span
-                                                                        class="me-2 d-flex flex-column align-items-center rank-style">
-                                                                        <span>
-                                                                            {{ team.rank + (team.rank===1?'er':'eme') }}
-                                                                        </span>
-                                                                        <span *ngIf="show_infos"
-                                                                            style="font-size: 0.7em;">
-                                                                            {{(team.cumulated_pe_percentage ?
-                                                                            (team.cumulated_pe_percentage |
-                                                                            number:'1.0-1') +
-                                                                            '%' :
-                                                                            '') }}
-                                                                        </span>
-                                                                    </span>
-                                                                    <span
-                                                                        class="ms-3 d-flex flex-row flex-grow-1 w-100 justify-content-between align-items-start">
-                                                                        <ng-container
-                                                                            *ngIf="show_members_only; else playersColumn">
-                                                                            <span>
-                                                                                <ng-container
-                                                                                    *ngFor="let player of getDisplayedPlayers(team.players); let i = index; let last = last">
-                                                                                    <span
-                                                                                        [ngClass]="{'fw-semibold': isMember(player), 'fst-italic': !isMember(player), 'player-small': true}">
-                                                                                        {{ player.firstname }} {{
-                                                                                        player.lastname }}
-                                                                                    </span>
-                                                                                    <ng-container *ngIf="!last"> -
-                                                                                    </ng-container>
-                                                                                </ng-container>
-                                                                            </span>
-                                                                        </ng-container>
-                                                                        <ng-template #playersColumn>
-                                                                            <span class="d-flex flex-column">
-                                                                                <span
-                                                                                    *ngFor="let player of team.players">
-                                                                                    <span
-                                                                                        *ngIf="isMember(player) || !show_members_only"
-                                                                                        [ngClass]="{'fw-semibold': isMember(player), 'fst-italic': !isMember(player), 'player-small': true}">
-                                                                                        {{ player.firstname }} {{
-                                                                                        player.lastname }}
-                                                                                    </span>
-                                                                                </span>
-                                                                            </span>
-                                                                        </ng-template>
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-                                                        </ng-container>
-                                                    </div>
-                                                </ng-container>
-                                            </div>
-                                        </div>
-                                    </ng-container>
-                                </ng-template>
                             </ng-container>
                         </div>
                     </div>
@@ -195,4 +114,75 @@
         </div>
     </div>
 
+    <ng-template #competitionCard let-divisionCategory="divisionCategory" let-result="result" let-division="division">
+        <ng-container *ngIf="divisionCategory === division">
+            <div class="card nice_shadow" style="font-size:0.9em;">
+                <div class="card-header text-center text-primary">
+                    <span class="fw-bold">
+                        {{ result.value[0].competition.assigned_label }}
+                    </span>
+                    <div *ngIf="show_infos" style="font-size: 0.7em;">{{result.key}}
+                        {{result.value[0].competition.family.label}} - {{
+                        (result.value[0].competition.label) }}</div>
+                </div>
+                <div class="card-body p-2">
+                    <ng-container *ngFor="let res of result.value; let i = index">
+                        <div class="mb-2">
+                            <hr *ngIf="i > 0" class="my-2">
+                            <div *ngIf="getFilteredTeams(res).length !== 0" class="text-primary mb-1">
+                                {{ get_organization_label(res.competition.organization_id)
+                                }}
+                            </div>
+                            <ng-container *ngFor="let team of getFilteredTeams(res)">
+                                <div class="mb-2">
+                                    <div class="d-flex align-items-center">
+                                        <span class="me-2 d-flex flex-column align-items-center rank-style">
+                                            <span>
+                                                {{ team.rank + (team.rank===1?'er':'eme') }}
+                                            </span>
+                                            <span *ngIf="show_infos" style="font-size: 0.7em;">
+                                                {{(team.cumulated_pe_percentage ?
+                                                (team.cumulated_pe_percentage |
+                                                number:'1.0-1') +
+                                                '%' :
+                                                '') }}
+                                            </span>
+                                        </span>
+                                        <span
+                                            class="ms-3 d-flex flex-row flex-grow-1 w-100 justify-content-between align-items-start">
+                                            <ng-container *ngIf="show_members_only; else playersColumn">
+                                                <span>
+                                                    <ng-container
+                                                        *ngFor="let player of getDisplayedPlayers(team.players); let i = index; let last = last">
+                                                        <span
+                                                            [ngClass]="{'fw-semibold': isMember(player), 'fst-italic': !isMember(player), 'player-small': true}">
+                                                            {{ player.firstname }} {{
+                                                            player.lastname }}
+                                                        </span>
+                                                        <ng-container *ngIf="!last"> -
+                                                        </ng-container>
+                                                    </ng-container>
+                                                </span>
+                                            </ng-container>
+                                            <ng-template #playersColumn>
+                                                <span class="d-flex flex-column">
+                                                    <span *ngFor="let player of team.players">
+                                                        <span *ngIf="isMember(player) || !show_members_only"
+                                                            [ngClass]="{'fw-semibold': isMember(player), 'fst-italic': !isMember(player), 'player-small': true}">
+                                                            {{ player.firstname }} {{
+                                                            player.lastname }}
+                                                        </span>
+                                                    </span>
+                                                </span>
+                                            </ng-template>
+                                        </span>
+                                    </div>
+                                </div>
+                            </ng-container>
+                        </div>
+                    </ng-container>
+                </div>
+            </div>
+        </ng-container>
+    </ng-template>
 </div>

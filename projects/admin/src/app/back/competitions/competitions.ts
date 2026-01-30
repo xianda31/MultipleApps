@@ -106,7 +106,7 @@ export class CompetitionsComponent {
 
   update_results(): void {
     this.current_season = this.one_year_back ? this.systemService.previous_season(this.systemService.get_today_season()) : this.systemService.get_today_season();
-    this.titleService.setTitle('Les résultats des compétitions ' + this.current_season);
+    this.titleService.setTitle('Compétitions ' + this.current_season);
 
     this.competitionService.getCompetionsResults(this.current_season, this.preferred_organization_labels, this.full_regeneration).subscribe(results => {
       if (this.show_infos) console.log('CompetitionsComponent: received raw competition results', results);
