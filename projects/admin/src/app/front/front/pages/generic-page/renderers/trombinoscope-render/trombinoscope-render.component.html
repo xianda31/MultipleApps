@@ -1,14 +1,16 @@
-<div [ngClass]="rowCols()">
-    @for (snippet of snippets; track snippet.id) {
-        <div class="col">
-            <div class="card h-100 nice_shadow">
-                <img [src]="snippet.image_url" class="img-fluid rounded-start"
-                         style="max-width: 100%; max-height: 20vh; object-fit: cover;" alt="{{snippet.title}}">
-                <div class="card-body text-center">
-                    <h5 class="card-title mb-1">{{snippet.title}}</h5>
-                    <h6 class="card-title mb-1">{{snippet.subtitle}}</h6>
+<div class="mt-3">
+    <div [ngClass]="rowCols()">
+        @for (snippet of snippets; track snippet.id) {
+            <div class="col">
+                <div class="card h-100 nice_shadow">
+                    <img [src]="snippet.image_url" class="img-fluid rounded-start"
+                             style="max-width: 100%; max-height: 40vh; object-fit: cover;" alt="{{snippet.title}}">
+                    <div class="card-body text-center">
+                        <h5 class="card-title mb-1">{{snippet.title}}</h5>
+                        <h6 class="card-title mb-1">{{snippet.subtitle}}</h6>
+                    </div>
                 </div>
             </div>
-        </div>
-    }
+        }
+    </div>
 </div>
