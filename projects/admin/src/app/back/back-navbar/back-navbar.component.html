@@ -94,18 +94,28 @@
           </a>
           <ul ngbDropdownMenu class="dropdown-menu">
             <li><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.BooksList">base de données</a></li>
-            <li *ngIf="!production_mode"><a class="dropdown-item"
-                [routerLink]="BACK_ROUTE_PATHS.BooksEditorFull">écriture</a></li>
             <li><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.GroupsList">droits d'accès</a></li>
             <li><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.SysConf">configuration</a></li>
-            <li *ngIf="!production_mode"><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.RootVolume">données
+            <li><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.BooksEditor">écriture</a></li>
+          </ul>
+        </li>
+
+        <!-- Outils développeur -->
+
+        <li *ngIf="!production_mode && accreditation_level >= accreditation_levels.Systeme" ngbDropdown class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" ngbDropdownToggle role="button">
+            <i class="bi bi-wrench"></i> <span class="ms-1">DevTools</span>
+          </a>
+          <ul ngbDropdownMenu class="dropdown-menu">
+            <li><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.BooksDebugger">écritures</a></li>
+            <li><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.RootVolume">données
                 S3</a></li>
-            <li *ngIf="!production_mode"><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.ImportExcel">import
+            <li><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.ImportExcel">import
                 excel</a>
             </li>
-            <li *ngIf="!production_mode"><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.CloneDB">clone DB</a>
+            <li><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.CloneDB">clone DB</a>
             </li>
-            <li *ngIf="!production_mode"><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.CloneS3">clone S3</a>
+            <li><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.CloneS3">clone S3</a>
             </li>
           </ul>
         </li>
@@ -196,10 +206,11 @@
               style="width:2em;"></a>
           </div>
           <ul class="list-unstyled ps-4" [ngbCollapse]="!mobileMenus.boutique">
-            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.Shop" data-bs-dismiss="offcanvas">vente à adhérents</a>
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.Shop" data-bs-dismiss="offcanvas">vente à
+                adhérents</a>
             </li>
             <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.Products" data-bs-dismiss="offcanvas">produits à la
-              vente</a></li>
+                vente</a></li>
           </ul>
         </li>
         <li *ngIf="accreditation_level >= accreditation_levels.Contributeur" class="nav-item">
@@ -211,11 +222,14 @@
               style="width:2em;"></a>
           </div>
           <ul class="list-unstyled ps-4" [ngbCollapse]="!mobileMenus.adherents">
-            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.MembersDatabase" data-bs-dismiss="offcanvas">répertoire</a></li>
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.MembersDatabase"
+                data-bs-dismiss="offcanvas">répertoire</a></li>
             <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.GameCardsEditor" data-bs-dismiss="offcanvas">cartes
-              admission</a></li>
-            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.MemberSales" data-bs-dismiss="offcanvas">contrôles</a></li>
-            <li><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.Competitions" data-bs-dismiss="offcanvas">compétitions</a>
+                admission</a></li>
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.MemberSales"
+                data-bs-dismiss="offcanvas">contrôles</a></li>
+            <li><a class="dropdown-item" [routerLink]="BACK_ROUTE_PATHS.Competitions"
+                data-bs-dismiss="offcanvas">compétitions</a>
             </li>
           </ul>
         </li>
@@ -232,15 +246,19 @@
                 caisse</a></li>
             <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.BooksEditor" data-bs-dismiss="offcanvas">écritures
               </a></li>
-            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.BooksOverview" data-bs-dismiss="offcanvas">synthèse</a>
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.BooksOverview"
+                data-bs-dismiss="offcanvas">synthèse</a>
             </li>
-            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.BankReconciliation" data-bs-dismiss="offcanvas">rapprochement
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.BankReconciliation"
+                data-bs-dismiss="offcanvas">rapprochement
                 bancaire</a></li>
-            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.ExpenseAndRevenue" data-bs-dismiss="offcanvas">résultats</a>
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.ExpenseAndRevenue"
+                data-bs-dismiss="offcanvas">résultats</a>
             </li>
             <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.Balance" data-bs-dismiss="offcanvas">bilan</a></li>
           </ul>
         </li>
+        <!-- Outils -->
         <li *ngIf="accreditation_level >= accreditation_levels.Systeme" class="nav-item">
           <div class="d-flex align-items-center">
             <span class="nav-link p-0 pe-2" style="cursor:pointer;" (click)="toggleMobileMenu('outils')">
@@ -251,19 +269,42 @@
           </div>
           <ul class="list-unstyled ps-4" [ngbCollapse]="!mobileMenus.outils">
             <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.BooksList" data-bs-dismiss="offcanvas">base de
-              données</a></li>
-            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.BooksEditorFull" data-bs-dismiss="offcanvas">écriture</a>
+                données</a></li>
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.BooksEditor"
+                data-bs-dismiss="offcanvas">écriture</a>
             </li>
-            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.GroupsList" data-bs-dismiss="offcanvas">droits d'accès</a>
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.GroupsList" data-bs-dismiss="offcanvas">droits
+                d'accès</a>
             </li>
-            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.SysConf" data-bs-dismiss="offcanvas">configuration</a>
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.SysConf"
+                data-bs-dismiss="offcanvas">configuration</a>
             </li>
-            <li *ngIf="!production_mode"><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.ImportExcel"
-              data-bs-dismiss="offcanvas">import excel</a></li>
-            <li *ngIf="!production_mode"><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.CloneDB"
-              data-bs-dismiss="offcanvas">clone DB</a></li>
           </ul>
         </li>
+        <!-- Outils développeur -->
+        <li *ngIf="!production_mode && accreditation_level >= accreditation_levels.Systeme" class="nav-item">
+          <div class="d-flex align-items-center">
+            <span class="nav-link p-0 pe-2" style="cursor:pointer;" (click)="toggleMobileMenu('devtools')">
+              <i class="bi bi-wrench"></i> <span class="ms-1">DevTools</span>
+            </span>
+            <a class="nav-link dropdown-toggle p-0" (click)="toggleMobileMenu('devtools')" href="javascript:void(0)"
+              style="width:2em;"></a>
+          </div>
+          <ul class="list-unstyled ps-4" [ngbCollapse]="!mobileMenus.devtools">
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.BooksDebugger"
+                data-bs-dismiss="offcanvas">écritures</a></li>
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.RootVolume"
+                data-bs-dismiss="offcanvas">données S3</a></li>
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.ImportExcel"
+                data-bs-dismiss="offcanvas">import excel</a>
+            </li>
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.CloneDB"
+                data-bs-dismiss="offcanvas">clone DB</a>
+            </li>
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.CloneS3"
+                data-bs-dismiss="offcanvas">clone S3</a>
+            </li>
+          </ul>
         <li *ngIf="accreditation_level >= accreditation_levels.Administrateur" class="nav-item">
           <div class="d-flex align-items-center">
             <span class="nav-link p-0 pe-2" style="cursor:pointer;" (click)="toggleMobileMenu('site')">
@@ -273,9 +314,12 @@
               style="width:2em;"></a>
           </div>
           <ul class="list-unstyled ps-4" [ngbCollapse]="!mobileMenus.site">
-            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.UiConf" data-bs-dismiss="offcanvas">paramètres UI</a></li>
-            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.MenusEditor" data-bs-dismiss="offcanvas">les menus</a></li>
-            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.CMSWrapper" data-bs-dismiss="offcanvas">pages et datas</a></li>
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.UiConf" data-bs-dismiss="offcanvas">paramètres UI</a>
+            </li>
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.MenusEditor" data-bs-dismiss="offcanvas">les
+                menus</a></li>
+            <li><a class="nav-link" [routerLink]="BACK_ROUTE_PATHS.CMSWrapper" data-bs-dismiss="offcanvas">pages et
+                datas</a></li>
 
             <li><a class="nav-link" routerLink="/front" data-bs-dismiss="offcanvas">aller sur le site</a></li>
           </ul>

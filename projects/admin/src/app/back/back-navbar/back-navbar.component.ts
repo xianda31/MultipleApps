@@ -45,6 +45,7 @@ export class BackNavbarComponent implements OnInit {
     adherents: false,
     finance: false,
     outils: false,
+    devtools: false,
     site: false,
     communication: false,
     user: false
