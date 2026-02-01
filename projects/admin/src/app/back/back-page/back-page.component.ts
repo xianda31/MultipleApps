@@ -4,7 +4,7 @@ import { AuthentificationService } from '../../common/authentification/authentif
 import { Member } from '../../common/interfaces/member.interface';
 import { Observable } from 'rxjs';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { Accreditation } from '../../common/authentification/group.interface';
 import { GroupService } from '../../common/authentification/group.service';
 import { ConnexionComponent } from '../../common/authentification/connexion/connexion.component';
@@ -24,12 +24,21 @@ export class BackPageComponent {
   constructor(
     private auth: AuthentificationService,
     private groupService: GroupService,
-
+    private router: Router,
+    private route: ActivatedRoute
   ) { }
 
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     this.logged_member$ = this.auth.logged_member$;
+
+    // Déconnexion automatique si route /signout
+    if (this.router.url.endsWith('/signout')) {
+      await this.auth.signOut();
+      // Redirige vers la page d'accueil back après déconnexion
+      this.router.navigate(['/', 'back', 'home']);
+      return;
+    }
 
     this.auth.logged_member$.subscribe(async (member) => {
       if (member !== null) {

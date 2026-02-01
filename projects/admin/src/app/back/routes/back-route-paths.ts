@@ -34,7 +34,8 @@ export const BACK_ROUTE_PATHS = {
   Home: 'home',
   Assistance: 'communication/assistance',
   Mailing: 'communication/mailing',
-  CMSWrapper:'site/cms-wrapper'
+  CMSWrapper:'site/cms-wrapper',
+  SignOut: 'signout'
 };
 
 // Chemins absolus pour la navigation (service, liens, etc.)
