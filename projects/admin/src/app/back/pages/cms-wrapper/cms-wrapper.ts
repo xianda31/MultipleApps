@@ -277,6 +277,10 @@ export class CmsWrapper implements OnInit, OnDestroy {
       this.pageSnippets = this.pageSnippets.slice(); // trigger change detection
     }
 
+    // Persist the change to backend
+    this.snippetService.updateSnippet(updatedSnippet).catch(() => {
+      this.toastService.showErrorToast('Erreur', 'Impossible de sauvegarder la modification');
+    });
 
     // Reset active selection
     this.activeSelectionSnippetId = null;
