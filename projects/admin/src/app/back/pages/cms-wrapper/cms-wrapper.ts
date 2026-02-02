@@ -70,66 +70,79 @@ export class CmsWrapper implements OnInit, OnDestroy {
   }
 
   async ngOnInit(): Promise<void> {
-    // load snippets & check snippet.image_url for each snippet with  image
-    this.snippetService.listSnippets().subscribe((snippets: Snippet[]) => {
-      snippets.forEach(async (snippet) => {
+    // load snippets & check snippet.image_url for each snippet with image
+    this.snippetService.listSnippets().subscribe(async (snippets: Snippet[]) => {
+      for (const snippet of snippets) {
         if (snippet.image) {
           if (!snippet.image_url) {
             this.toastService.showWarning('Vérification des images', ` la vignette de ${snippet.title} est introuvable`);
           }
         }
-      });
+      }
     });
 
-      this.pageService.listPages().subscribe((pages: Page[]) => {
-        this.pages = pages.sort((a, b) => a.title.localeCompare(b.title));
-      });
+    this.pageService.listPages().subscribe((pages: Page[]) => {
+      this.pages = pages.sort((a, b) => a.title.localeCompare(b.title));
+    });
 
-      this.setupFileSelectionListener();
-      this.clipboardSnippets$ = this.clipboardService.clipboardSnippets$;
-    }
+    this.setupFileSelectionListener();
+    this.clipboardSnippets$ = this.clipboardService.clipboardSnippets$;
+  }
 
   ngOnDestroy(): void {
-      this.subscriptions.forEach(sub => sub.unsubscribe());
-    }
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
 
   private initializeForm(): void {
-      this.pageForm = this.fb.group({
-        title: [''],
-        template: [PAGE_TEMPLATES.PUBLICATION]
-      });
-    }
+    this.pageForm = this.fb.group({
+      title: [''],
+      template: [PAGE_TEMPLATES.PUBLICATION]
+    });
+  }
 
 
   // === PAGE MANAGEMENT ===
 
   async openClipboard() {
-      this.modalService.open(this.clipboardModal, { size: 'lg' });
-    }
+    this.modalService.open(this.clipboardModal, { size: 'lg' });
+  }
 
   is_Clipboard(page: Page): boolean {
-      return page.title === CLIPBOARD_TITLE;
-    }
+    return page.title === CLIPBOARD_TITLE;
+  }
 
 
 
-  selectPage(page: Page): void {
-      this.selectedPage = page;
-      this.selectedPageId = page.id;
+  async selectPage(page: Page): Promise<void> {
+    this.selectedPage = page;
+    this.selectedPageId = page.id;
 
-      // Clear pageSnippets immediately to prevent showing previous page's snippets
+    // Clear pageSnippets immediately to prevent showing previous page's snippets
+    this.pageSnippets = [];
+
+    // Update form
+    this.pageForm.patchValue({
+      title: page.title,
+      template: page.template || PAGE_TEMPLATES.PUBLICATION
+    });
+
+    // Load snippets for this page, ensuring snippet_ids array is clean
+    const snippetIds = (page.snippet_ids || []).filter(id => id && typeof id === 'string' && id.trim() !== '');
+    
+    if (!snippetIds || snippetIds.length === 0) {
       this.pageSnippets = [];
-
-      // Update form
-      this.pageForm.patchValue({
-        title: page.title,
-        template: page.template || PAGE_TEMPLATES.PUBLICATION
-      });
-
-      // Load snippets for this page, ensuring snippet_ids array is clean
-      const snippetIds = (page.snippet_ids || []).filter(id => id && typeof id === 'string' && id.trim() !== '');
-      this.loadPageSnippets(snippetIds);
+      return;
     }
+
+    try {
+      // Charge chaque snippet depuis le backend pour garantir la fraîcheur
+      const snippetPromises = snippetIds.map(id => this.snippetService.readSnippet(id).catch(() => undefined));
+      const snippets = await Promise.all(snippetPromises);
+      this.pageSnippets = snippets.filter((s): s is Snippet => !!s && !!s.id);
+    } catch (error) {
+      this.pageSnippets = [];
+    }
+  }
 
   async savePage(): Promise<void> {
     if (!this.selectedPage) return;
@@ -286,21 +299,7 @@ export class CmsWrapper implements OnInit, OnDestroy {
     this.activeSelectionSnippetId = null;
   }
 
-  // todo : est-ce vraiment utile de faire ça de cette façon ?
-  async loadPageSnippets(snippetIds: string[]): Promise<void> {
-    if (!snippetIds || snippetIds.length === 0) {
-      this.pageSnippets = [];
-      return;
-    }
 
-    try {
-      this.pageSnippets = snippetIds
-        .map(id => this.snippetService.getSnippet(id))
-        .filter((s): s is Snippet => !!s && !!s.id);
-    } catch (error) {
-      this.pageSnippets = [];
-    }
-  }
 
   // === SNIPPET MANAGEMENT ===
 
@@ -331,7 +330,7 @@ export class CmsWrapper implements OnInit, OnDestroy {
       const created = await this.snippetService.createSnippet(newSnippet);
       if (created) {
         // Update UI IMMEDIATELY (synchronously) before DB calls
-        
+
         // Add the new snippet to the array (check for duplicates)
         const existingIndex = this.pageSnippets.findIndex(s => s.id === created.id);
         if (existingIndex === -1) {
@@ -349,7 +348,7 @@ export class CmsWrapper implements OnInit, OnDestroy {
           this.pages[pageIndex] = { ...this.selectedPage };
           this.pages = [...this.pages]; // Force change detection
         }
-        
+
         this.openSnippetId = created.id;
 
         // Then persist page to DB asynchronously
@@ -386,7 +385,7 @@ export class CmsWrapper implements OnInit, OnDestroy {
     }
   }
 
-  deleteSnippetFromCurrentPage(snippet: Snippet ): void {
+  deleteSnippetFromCurrentPage(snippet: Snippet): void {
     const confirmed = confirm(`Supprimer le snippet « ${snippet.title} » ?`);
     if (!confirmed) return;
 
