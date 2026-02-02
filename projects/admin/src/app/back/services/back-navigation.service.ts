@@ -50,9 +50,9 @@ export class BackNavigationService {
   }
   goToBooksEditorFull(id?: string) {
     if (id) {
-      this.router.navigate([BACK_ROUTE_ABS_PATHS['BooksEditorFull'], id]);
+      this.router.navigate([BACK_ROUTE_ABS_PATHS['BooksEditor'], id]);
     } else {
-      this.router.navigate([BACK_ROUTE_ABS_PATHS['BooksEditorFull']]);
+      this.router.navigate([BACK_ROUTE_ABS_PATHS['BooksEditor']]);
     }
   }
   goToSysConf() {
