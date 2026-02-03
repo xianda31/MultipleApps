@@ -105,6 +105,67 @@
 /* -----------------------------
 	 Offcanvas / mobile menu
 	 ----------------------------- */
+
+/* Mobile offcanvas - submenus always expanded */
+.offcanvas .navbar-nav {
+	flex-direction: column !important;
+	width: 100%;
+	gap: 0.25rem;
+}
+
+.offcanvas .mobile-submenu-parent {
+	margin-bottom: 0.25rem;
+	width: 100%;
+	display: flex !important;
+	flex-direction: column !important;
+}
+
+.offcanvas .mobile-submenu-parent > .nav-link {
+	// color: #222 !important;
+	font-weight: 600;
+	padding: 0.4rem 0.5rem;
+	margin-bottom: 0.15rem;
+	display: block;
+	width: 100%;
+}
+
+.offcanvas .mobile-submenu-parent > .navbar-nav {
+	list-style: none;
+	padding-left: 1.25rem;
+	margin-top: 0;
+	margin-bottom: 0;
+	flex-direction: column !important;
+	width: 100%;
+	gap: 0;
+}
+
+.offcanvas .mobile-submenu-parent > .navbar-nav .nav-item {
+	margin-bottom: 0;
+	margin-top: 0;
+	width: 100%;
+	line-height: 1;
+}
+
+.offcanvas .mobile-submenu-parent > .navbar-nav .dropdown-item {
+	padding: 0.2rem 0.5rem;
+	font-size: 0.9rem;
+	display: block;
+	width: 100%;
+	font-weight: normal;
+	margin: 0;
+	line-height: 1.3;
+}
+
+/* Style for single menu items without submenu in mobile */
+.offcanvas .nav-item:not(.mobile-submenu-parent) > .dropdown-item,
+.offcanvas .nav-item:not(.mobile-submenu-parent) > .nav-link {
+	color: #222 !important;
+	font-weight: 600;
+	padding: 0.4rem 0.5rem;
+	display: block;
+	width: 100%;
+}
+
 .offcanvas.bg-white {
 	color: #222 !important;
 }
@@ -144,11 +205,12 @@
 		backdrop-filter: blur(6px);
 		-webkit-backdrop-filter: blur(6px);
 		border-radius: .75rem;
-		box-shadow: 0 8px 24px rgba(0,0,0,.12);
-		border: 1px solid rgba(235,154,135,.2);
+		box-shadow: none;
+		// border: 1px solid rgba(235,154,135,.2);
 		top: .75rem !important;
-		bottom: auto !important;
-		height: 50vh !important;
+		bottom: .75rem !important;
+		height: auto !important;
+		max-height: 90vh !important;
 		overflow-x: hidden;
 		overflow-y: auto;
 		transition: transform .25s ease, background-color .25s ease;
@@ -191,13 +253,17 @@
 	padding-top: .05rem !important;
 	padding-bottom: .05rem !important;
 	min-height: 0 !important;
+	display: flex !important;
+	align-items: center !important;
 }
 
 .nav-link {
-	font-size: .9rem !important;
+	font-size: 1.1rem !important;
 	padding-top: .08rem !important;
 	padding-bottom: .08rem !important;
 	min-height: 0 !important;
+	display: flex !important;
+	align-items: center !important;
 }
 
 

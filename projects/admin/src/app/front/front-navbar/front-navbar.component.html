@@ -1,61 +1,67 @@
 <nav class="navbar navbar-expand-md navbar-dark text-white d-flex align-items-center">
   <div class="container-fluid h-100 d-flex align-items-center">
     @if (brandNavitem) {
-      <a class="navbar-brand d-flex align-items-center position-relative main-nav-link align-middle" [routerLink]="brandNavitem.path">
-        <span class="align-middle">{{ brandNavitem.label }}</span>
-      </a>
+    <a class="navbar-brand d-flex align-items-center position-relative main-nav-link align-middle"
+      [routerLink]="brandNavitem.path">
+      <span class="align-middle">{{ brandNavitem.label }}</span>
+    </a>
     }
     <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"
       aria-controls="sidebarMenu">
       <span class="navbar-toggler-icon"></span>
     </button>
 
+    <!-- Desktop menu -->
     <div class="collapse navbar-collapse d-none d-md-flex align-items-center position-relative">
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-
-        <!-- Dynamic navbar from configured menus -->
-        <ng-container *ngTemplateOutlet="dyn_navbar_nav"></ng-container>
-
+      <ul class="navbar-nav me-auto  mb-lg-0">
+        <ng-container *ngTemplateOutlet="dyn_navbar_unified; context: { isMobile: false }"></ng-container>
       </ul>
     </div>
 
     <!-- Sidebar for mobile -->
-    <div class="offcanvas offcanvas-start d-md-none bg-white text-dark align-items-start " tabindex="-1"
+    <div class="offcanvas offcanvas-start d-md-none bg-white text-dark" tabindex="-1"
       id="sidebarMenu" aria-labelledby="sidebarMenuLabel">
-      <div class="offcanvas-header">
-        <h5 class="offcanvas-title" id="sidebarMenuLabel">BCSTO</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+      <div class="offcanvas-header flex-column align-items-start py-1">
+        <div class="d-flex w-100 justify-content-between align-items-center">
+          <h5 class="offcanvas-title" id="sidebarMenuLabel">BCSTO</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <!-- @if (brandNavitem) {
+        <a class="navbar-brand d-flex align-items-center mt-2" [routerLink]="brandNavitem.path" data-bs-dismiss="offcanvas">
+          <span>{{ brandNavitem.label }}</span>
+        </a>
+        } -->
       </div>
-      <div class="offcanvas-body">
-
+      <div class="offcanvas-body p-1">
         <ul class="navbar-nav">
-
-          <!-- Dynamic navbar for mobile from configured menus -->
-          <ng-container *ngTemplateOutlet="dyn_navbar_nav_mobile"></ng-container>
-
+          <ng-container *ngTemplateOutlet="dyn_navbar_unified; context: { isMobile: true }"></ng-container>
         </ul>
       </div>
     </div>
 
-
   </div>
 </nav>
- 
 
-<ng-template #dyn_navbar_nav>
+
+<ng-template #dyn_navbar_unified let-isMobile="isMobile">
   @for (menu of navbar_menus; track menu.navitem.id) {
-  @if (menu.navitem.position === NAVITEM_POSITION.NAVBAR && 
-       ((menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.ANY)
-        || (menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.LOGGED_ONLY && (logged_member$ | async))
-        || (menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.UNLOGGED_ONLY && !(logged_member$ | async)))) {
-  <ng-container *ngTemplateOutlet="menuGroupRecursive; context: { $implicit: menu }"></ng-container>
+  @if (menu.navitem.position === NAVITEM_POSITION.NAVBAR &&
+  ((menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.ANY)
+  || (menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.LOGGED_ONLY && (logged_member$ | async))
+  || (menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.UNLOGGED_ONLY && !(logged_member$ | async)))) {
+  <ng-container *ngTemplateOutlet="menuGroupRecursive; context: { $implicit: menu, isMobile: isMobile }"></ng-container>
   }
   }
-  <!-- Template récursive pour MenuGroup_new -->
-  <ng-template #menuGroupRecursive let-menu>
-    @if (menu.navitem.type === NAVITEM_TYPE.DROPDOWN && (menu.childs?.length || 0) > 0) {
+</ng-template>
+
+<!-- Template récursive unifiée pour MenuGroup -->
+<ng-template #menuGroupRecursive let-menu let-isMobile="isMobile">
+  @if (menu.navitem.type === NAVITEM_TYPE.DROPDOWN && (menu.childs?.length || 0) > 0) {
+    <!-- Desktop: dropdown avec ngbDropdown -->
+    @if (!isMobile) {
     <li class="nav-item dropdown ms-3" ngbDropdown>
-      <a class="nav-link main-nav-link dropdown-toggle" ngbDropdownToggle id="nav-{{ menu.navitem.id }}">
+      <a class="nav-link main-nav-link dropdown-toggle" ngbDropdownToggle
+        [id]="'nav-' + menu.navitem.id">
         @if(menu.navitem.pre_label === 'avatar') {
         <img [src]="avatar$ | async" alt="avatar" class="rounded-circle"
           style="width:28px; height:28px; max-width:28px; max-height:28px; object-fit:cover">
@@ -64,109 +70,69 @@
       </a>
       <ul class="dropdown-menu" ngbDropdownMenu [attr.aria-labelledby]="'nav-' + menu.navitem.id">
         @for (child of (menu.childs || []); track child.navitem.id) {
-        <ng-container *ngTemplateOutlet="menuGroupRecursive; context: { $implicit: child }"></ng-container>
+        <ng-container
+          *ngTemplateOutlet="menuGroupRecursive; context: { $implicit: child, isMobile: isMobile }"></ng-container>
         }
       </ul>
     </li>
     }
+    <!-- Mobile: liste dépliée sans dropdown -->
     @else {
-    <li class="nav-item ms-3">
-      @if (menu.navitem.type === NAVITEM_TYPE.EXTERNAL_REDIRECT) {
-      <a class="nav-link main-nav-link" [href]="menu.navitem.external_url" target="_blank" rel="noopener">
-        <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
-      </a>
-      }
-      @else if (menu.navitem.type === NAVITEM_TYPE.INTERNAL_LINK) {
-      <a class="nav-link main-nav-link" [routerLink]="menu.navitem.path">
-        <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
-      </a>
-      }
-      @else if (menu.navitem.type?.toLowerCase() === 'plugin') {
-      <a class="nav-link main-nav-link Plugin" [routerLink]="menu.navitem.path"
-        [queryParams]="{ external_url: menu.navitem.external_url }">
-        <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
-      </a>
-      }
-      @else if (menu.navitem.type === NAVITEM_TYPE.CUSTOM_PAGE) {
-      <a class="nav-link main-nav-link Page" [routerLink]="menu.navitem.path">
-        <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
-      </a>
-      }
-      @else if (menu.navitem.type === NAVITEM_TYPE.DIRECT_CALL) {
-      <a class="nav-link main-nav-link" (click)="onCommand(menu.navitem)">
-        <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
-      </a>
-      }
-      @else {
-      <span class="dropdown-item text-danger">Type de menu inconnu</span>
-      }
-    </li>
-    }
-  </ng-template>
-</ng-template>
-
-
-<!-- Mobile version with data-bs-dismiss for offcanvas -->
-<ng-template #dyn_navbar_nav_mobile>
-  @for (menu of navbar_menus; track menu.navitem.id) {
-  @if (menu.navitem.position === NAVITEM_POSITION.NAVBAR && 
-       ((menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.ANY)
-        || (menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.LOGGED_ONLY && (logged_member$ | async))
-        || (menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.UNLOGGED_ONLY && !(logged_member$ | async)))) {
-  <ng-container *ngTemplateOutlet="menuGroupRecursiveMobile; context: { $implicit: menu }"></ng-container>
-  }
-  }
-  <ng-template #menuGroupRecursiveMobile let-menu>
-    @if (menu.navitem.type === NAVITEM_TYPE.DROPDOWN && (menu.childs?.length || 0) > 0) {
-    <li class="nav-item dropdown" ngbDropdown>
-      <a class="nav-link dropdown-toggle" ngbDropdownToggle id="nav-mobile-{{ menu.navitem.id }}">
+    <li class="nav-item mobile-submenu-parent">
+      <span class="nav-link fw-bold">
         @if(menu.navitem.pre_label === 'avatar') {
         <img [src]="avatar$ | async" alt="avatar" class="rounded-circle"
           style="width:28px; height:28px; max-width:28px; max-height:28px; object-fit:cover">
         }
         {{ label_transformer(menu.navitem.label) | async }}
-      </a>
-      <ul class="dropdown-menu" ngbDropdownMenu [attr.aria-labelledby]="'nav-mobile-' + menu.navitem.id">
+      </span>
+      <ul class="navbar-nav ms-3">
         @for (child of (menu.childs || []); track child.navitem.id) {
-        <ng-container *ngTemplateOutlet="menuGroupRecursiveMobile; context: { $implicit: child }"></ng-container>
+        <ng-container
+          *ngTemplateOutlet="menuGroupRecursive; context: { $implicit: child, isMobile: isMobile }"></ng-container>
         }
       </ul>
     </li>
     }
-    @else {
-    <li class="nav-item">
-      @if (menu.navitem.type === NAVITEM_TYPE.EXTERNAL_REDIRECT) {
-      <a class="dropdown-item" [href]="menu.navitem.external_url" target="_blank" rel="noopener" data-bs-dismiss="offcanvas">
-        <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
-      </a>
-      }
-      @else if (menu.navitem.type === NAVITEM_TYPE.INTERNAL_LINK) {
-      <a class="dropdown-item" [routerLink]="menu.navitem.path" data-bs-dismiss="offcanvas">
-        <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
-      </a>
-      }
-      @else if (menu.navitem.type?.toLowerCase() === 'plugin') {
-      <a class="dropdown-item Plugin" [routerLink]="menu.navitem.path"
-        [queryParams]="{ external_url: menu.navitem.external_url }" data-bs-dismiss="offcanvas">
-        <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
-      </a>
-      }
-      @else if (menu.navitem.type === NAVITEM_TYPE.CUSTOM_PAGE) {
-      <a class="dropdown-item Page" [routerLink]="menu.navitem.path" data-bs-dismiss="offcanvas">
-        <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
-      </a>
-      }
-      @else if (menu.navitem.type === NAVITEM_TYPE.DIRECT_CALL) {
-      <a class="dropdown-item" (click)="onCommand(menu.navitem)" data-bs-dismiss="offcanvas">
-        <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
-      </a>
-      }
-      @else {
-      <span class="dropdown-item text-danger">Type de menu inconnu</span>
-      }
-    </li>
+  }
+  @else {
+  <li [class]="isMobile ? 'nav-item' : 'nav-item ms-3'">
+    @if (menu.navitem.type === NAVITEM_TYPE.EXTERNAL_REDIRECT) {
+    <a [class]="isMobile ? 'dropdown-item' : 'nav-link main-nav-link'" [href]="menu.navitem.external_url"
+      target="_blank" rel="noopener" [attr.data-bs-dismiss]="isMobile ? 'offcanvas' : null">
+      <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
+    </a>
     }
-  </ng-template>
+    @else if (menu.navitem.type === NAVITEM_TYPE.INTERNAL_LINK) {
+    <a [class]="isMobile ? 'dropdown-item' : 'nav-link main-nav-link'" [routerLink]="menu.navitem.path"
+      [attr.data-bs-dismiss]="isMobile ? 'offcanvas' : null">
+      <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
+    </a>
+    }
+    @else if (menu.navitem.type?.toLowerCase() === 'plugin') {
+    <a [class]="isMobile ? 'dropdown-item Plugin' : 'nav-link main-nav-link Plugin'" [routerLink]="menu.navitem.path"
+      [queryParams]="{ external_url: menu.navitem.external_url }"
+      [attr.data-bs-dismiss]="isMobile ? 'offcanvas' : null">
+      <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
+    </a>
+    }
+    @else if (menu.navitem.type === NAVITEM_TYPE.CUSTOM_PAGE) {
+    <a [class]="isMobile ? 'dropdown-item Page' : 'nav-link main-nav-link Page'" [routerLink]="menu.navitem.path"
+      [attr.data-bs-dismiss]="isMobile ? 'offcanvas' : null">
+      <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
+    </a>
+    }
+    @else if (menu.navitem.type === NAVITEM_TYPE.DIRECT_CALL) {
+    <a [class]="isMobile ? 'dropdown-item' : 'nav-link main-nav-link'" (click)="onCommand(menu.navitem)"
+      [attr.data-bs-dismiss]="isMobile ? 'offcanvas' : null">
+      <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
+    </a>
+    }
+    @else {
+    <span class="dropdown-item text-danger">Type de menu inconnu</span>
+    }
+  </li>
+  }
 </ng-template>
 
 
