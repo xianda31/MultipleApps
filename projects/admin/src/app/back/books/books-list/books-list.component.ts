@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { BackNavigationService } from '../../services/back-navigation.service';
 import { BookEntry } from '../../../common/interfaces/accounting.interface';
@@ -27,6 +27,7 @@ export class BooksListComponent {
   season: string = '';
   book_entries!: BookEntry[];
   truncature = '1.2-2';  // '1.0-0';// '1.2-2';  //
+  isMobilePortrait: boolean = false;
   constructor(
     private bookService: BookService,
     private transactionService: TransactionService,
@@ -35,10 +36,21 @@ export class BooksListComponent {
     private backNavigationService: BackNavigationService,
     private modalService: NgbModal,
 
-  ) { }
+  ) { 
+  }
+
+  @HostListener('window:resize')
+  onResize() {
+    this.checkMobilePortrait();
+  }
+
+  checkMobilePortrait() {
+    this.isMobilePortrait = window.innerWidth < 600 || window.innerHeight > window.innerWidth;
+  }
 
   ngOnInit() {
     this.loaded = false;
+    this.checkMobilePortrait();
     this.systemDataService.get_configuration().subscribe(
       (conf) => { this.season = conf.season; }
     );
