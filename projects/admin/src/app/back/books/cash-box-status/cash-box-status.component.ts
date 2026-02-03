@@ -3,11 +3,11 @@ import { BookEntry, TRANSACTION_ID, FINANCIAL_ACCOUNT } from '../../../common/in
 import { BookService } from '../../services/book.service';
 import { CommonModule } from '@angular/common';
 import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { _CHEQUE_IN_ACCOUNT, _CHEQUES_FIRST_IN_CASHBOX } from '../../../common/interfaces/transaction.definition';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { Bank } from '../../../common/interfaces/system-conf.interface';
-import { combineLatest, map, switchMap, tap } from 'rxjs';
+import { map, switchMap, tap } from 'rxjs';
 import { FinancialReportService } from '../../services/financial_report.service';
 import { TransactionService } from '../../services/transaction.service';
 import { ToastService } from '../../../common/services/toast.service';
