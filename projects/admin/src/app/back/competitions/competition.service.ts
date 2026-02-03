@@ -199,7 +199,6 @@ export class CompetitionService {
       if (!results[comp.id]) results[comp.id] = [];
       results[comp.id].unshift({ competition: comp, teams: safeCompTeam });
     }
-    console.log('CompetitionService: résultats des compétitions nouvellement calculés ', results);
     return results;
   }
 

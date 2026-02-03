@@ -49,7 +49,7 @@
     </div>
 
 
-    <!-- 2eme ligne comptes financiers , tag, bordereau (si applicabe) -->
+    <!-- 2eme ligne comptes financiers , tag, bordereau (si applicable) -->
 
     <div *ngIf="selected_transaction" class="mt-2 row justify-content-start align-items-end mx-0">
 
@@ -91,35 +91,36 @@
         <div class="row align-items-end mx-0" *ngFor="let operation of operations.controls; let i = index ; let last = last">
           <div class="col-12 mt-2">
             <!-- transaction d'une transaction non nominative -->
-            <div class="row align-items-end mx-0" *ngIf="!selected_transaction.nominative ">
-              <div class="col-sm-2">
+            <div *ngIf="!selected_transaction.nominative" class="row align-items-end mx-0 p-1 mb-1">
+              <div class="col-12 col-sm-2">
                 <div [ngTemplateOutlet]="label" [ngTemplateOutletContext]="{inputFormGroup: operation}">
                 </div>
               </div>
-              <div *ngIf="!selected_transaction.pure_financial" class="col-sm-8">
+              <div *ngIf="!selected_transaction.pure_financial" class="col-12 col-sm-10">
                 <ng-container [ngTemplateOutlet]="costs_and_revenues"
                   [ngTemplateOutletContext]="{inputFormGroup: operation, transaction: selected_transaction}"></ng-container>
               </div>
             </div>
             <!-- transaction d'une transaction nominative -->
-            <div *ngIf="selected_transaction.nominative" class="row align-items-end mx-0 bg-light rounded p-1 mb-1">
-              <div class="col-12 col-sm-3 col-md-2 align-self-start">
-                <ng-container [ngTemplateOutlet]="member"
-                  [ngTemplateOutletContext]="{inputFormGroup: operation, transaction: selected_transaction}">
-                </ng-container>
-              </div>
-              <div *ngIf="!selected_transaction.pure_financial " class="col-12 col-sm-5 col-md-6">
-                <div [ngTemplateOutlet]="costs_and_revenues"
-                  [ngTemplateOutletContext]="{inputFormGroup: operation, transaction: selected_transaction}">
+            <div *ngIf="selected_transaction.nominative" class="bg-light rounded p-1 mb-1">
+              <div class="row align-items-start mx-0">
+                <div class="col-12 col-sm-2 d-flex flex-column">
+                  <ng-container [ngTemplateOutlet]="member"
+                    [ngTemplateOutletContext]="{inputFormGroup: operation, transaction: selected_transaction, index: i}">
+                  </ng-container>
+                </div>
+                <div *ngIf="!selected_transaction.pure_financial" class="col-12 col-sm-10">
+                  <div [ngTemplateOutlet]="costs_and_revenues"
+                    [ngTemplateOutletContext]="{inputFormGroup: operation, transaction: selected_transaction}">
+                  </div>
                 </div>
               </div>
-              <div class="col-12 col-sm-3 col-md-3">
-                <div [ngTemplateOutlet]="optional_accounts_form"
-                  [ngTemplateOutletContext]="{inputFormGroup: operation}">
+              <div class="row mx-0 mt-2" *ngIf="optional_accounts && optional_accounts.length > 0">
+                <div class="col-12">
+                  <div [ngTemplateOutlet]="optional_accounts_form"
+                    [ngTemplateOutletContext]="{inputFormGroup: operation}">
+                  </div>
                 </div>
-              </div>
-              <div class="col-auto col-sm-1 col-md-1 text-center">
-                <i (click)="delete_operation(i)" class="h4 text-danger bi-person-fill-dash" style="cursor: pointer;"></i>
               </div>
             </div>
 
@@ -169,22 +170,21 @@
       <ng-container [formGroup]="inputFormGroup">
 
         <label for="label">Intitulé</label>
-        <input type="text" placeholder="intitulé" class="form-control" formControlName="label">
+        <input type="text" placeholder="intitulé" class="form-control form-control-sm" formControlName="label">
       </ng-container>
     </ng-template>
 
     <!-- formulaire adhérent -->
-    <ng-template #member let-inputFormGroup="inputFormGroup" let-transaction="transaction">
+    <ng-template #member let-inputFormGroup="inputFormGroup" let-transaction="transaction" let-index="index">
       <ng-container [formGroup]="inputFormGroup">
         <label for="member">Adhérent</label>
-        <div class="input-group">
-
-          <input class="form-control " list="members" formControlName="member">
+        <div class="input-group input-group-sm">
+          <input class="form-control" list="members" formControlName="member">
           <datalist id="members">
             <option *ngFor="let member of members">{{member.lastname}} {{member.firstname}}</option>
           </datalist>
-          <button *ngIf="creation" type="button" class="btn btn-primary" (click)="add_operation(transaction)">
-            <i class="bi bi-person-fill-add"></i>
+          <button type="button" class="btn btn-danger btn-sm" (click)="delete_operation(index)" title="Supprimer">
+            <i class="bi bi-person-fill-dash"></i>
           </button>
         </div>
       </ng-container>
@@ -223,12 +223,12 @@
     <!-- formulaire recette_dépense -->
     <ng-template #costs_and_revenues let-inputFormGroup="inputFormGroup" let-transaction="transaction">
       <ng-container [formGroup]="inputFormGroup">
-        <div formArrayName="values" class="row g-1">
-          <div class="col-3 col-sm-2 col-md-2 col-lg-1" *ngFor="let account of inputFormGroup.get('values').controls ; let i = index">
-            <label class="form-label mb-0" style="font-size: 0.75rem;" [ngbTooltip]="expense_or_revenue_accounts(transaction)[i].description" tooltipClass="my-custom-class"
+        <div formArrayName="values" class="d-flex flex-wrap" style="gap: 0.25rem;">
+          <div style="min-width: 60px; flex: 1 1 calc(6.66% - 0.25rem); max-width: 120px;" *ngFor="let account of inputFormGroup.get('values').controls ; let i = index">
+            <label class="form-label mb-0" style="font-size: 0.7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" [ngbTooltip]="expense_or_revenue_accounts(transaction)[i].description" tooltipClass="my-custom-class"
               placement="top">{{expense_or_revenue_accounts(transaction)[i].key}}</label>
             <input type="text" [class]="account.invalid ? 'form-control form-control-sm border-danger' : 'form-control form-control-sm'"
-              [formControlName]="i" [id]="'value' + i" style="padding: 0.25rem 0.5rem; font-size: 0.875rem;">
+              [formControlName]="i" [id]="'value' + i" style="padding: 0.25rem 0.35rem; font-size: 0.875rem;">
           </div>
         </div>
       </ng-container>
@@ -239,13 +239,13 @@
     <ng-template #optional_accounts_form let-inputFormGroup="inputFormGroup">
       <ng-container [formGroup]="inputFormGroup">
         <ng-container *ngIf="optional_accounts && optional_accounts.length > 0">
-          <div formArrayName="optional_accounts" class="row g-1">
-            <div class="col-6 col-sm-12 col-md-6 col-lg-4"
+          <div formArrayName="optional_accounts" class="d-flex flex-wrap" style="gap: 0.25rem;">
+            <div style="min-width: 60px; flex: 1 1 calc(6.66% - 0.25rem); max-width: 120px;"
               *ngFor="let account of inputFormGroup.get('optional_accounts').controls ; let i = index">
-              <label class="form-label mb-0" style="font-size: 0.75rem;" [ngbTooltip]="optional_accounts[i].description" tooltipClass="my-custom-class"
+              <label class="form-label mb-0" style="font-size: 0.7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" [ngbTooltip]="optional_accounts[i].description" tooltipClass="my-custom-class"
                 placement="top">{{optional_accounts[i].label}}</label>
               <input type="text" [class]="account.invalid ? 'form-control form-control-sm border-danger' : 'form-control form-control-sm'"
-                [formControlName]="i" [id]="'customer_account' + i" style="padding: 0.25rem 0.5rem; font-size: 0.875rem;">
+                [formControlName]="i" [id]="'customer_account' + i" style="padding: 0.25rem 0.35rem; font-size: 0.875rem;">
             </div>
           </div>
         </ng-container>
