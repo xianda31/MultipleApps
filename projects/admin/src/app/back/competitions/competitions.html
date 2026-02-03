@@ -1,6 +1,6 @@
 <div class="container-fluid py-3">
     <div class="row">
-        <div *ngIf="back_office_mode" class="col-12 mb-3 mb-md-0">
+        <div *ngIf="back_office_mode" class="col-12 col-lg-4 col-xl-3 mb-3 mb-lg-0">
             <!-- Bloc back-office uniquement -->
             <div *ngIf="back_office_mode" class="card mb-3 mt-5 shadow-sm">
                 <div class="card-header ">
@@ -65,7 +65,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-12 col-md">
+        <div [ngClass]="back_office_mode ? 'col-12 col-lg-8 col-xl-9' : 'col-12'">
 
 
             <div *ngIf="!results_extracted" class="row mb-3 justify-content-center">
