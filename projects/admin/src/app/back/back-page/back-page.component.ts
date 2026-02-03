@@ -1,10 +1,9 @@
 import { Component } from '@angular/core';
-import { MembersService } from '../../common/services/members.service';
 import { AuthentificationService } from '../../common/authentification/authentification.service';
 import { Member } from '../../common/interfaces/member.interface';
 import { Observable } from 'rxjs';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router, ActivatedRoute } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { Accreditation } from '../../common/authentification/group.interface';
 import { GroupService } from '../../common/authentification/group.service';
 import { ConnexionComponent } from '../../common/authentification/connexion/connexion.component';
@@ -24,9 +23,7 @@ export class BackPageComponent {
   constructor(
     private auth: AuthentificationService,
     private groupService: GroupService,
-    private router: Router,
-    private route: ActivatedRoute
-  ) { }
+    private router: Router  ) { }
 
 
   async ngOnInit(): Promise<void> {
