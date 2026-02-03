@@ -167,17 +167,15 @@ export class SystemDataService {
         const defaults: UIConfiguration = {
           template: {
             logo_path: '',
-            header_bg: '#2e332d',
-            header_text_color: '#ffffff',
+            banner_bg: '#2e332d',
+            banner_text_color: '#ffffff',
+            banner_font: 'Emblema One, cursive',
             navbar_bg: '#3f493d',
             navbar_text_color: '#ffffff',
-            footer_bg: '#f8f9fa',
-            footer_text_color: '#ffffff',
-            main_font: 'Amarante, serif',
-            title_font: 'Emblema One, cursive',
-            content_font: 'Amarante, serif',
+            navbar_font: 'Amarante, serif',
             content_bg: '#ffffff',
-            content_text_color: '#222222'
+            content_text_color: '#222222',
+            content_font: 'Amarante, serif'
           },
           homepage: { tournaments_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 }, news_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 } },
           frontBannerEnabled: false,
@@ -256,17 +254,15 @@ export class SystemDataService {
     return {
       template: {
         logo_path: '',
-        header_bg: '#2e332d',
-        header_text_color: '#ffffff',
+        banner_bg: '#2e332d',
+        banner_text_color: '#ffffff',
+        banner_font: 'Emblema One, cursive',
         navbar_bg: '#3f493d',
         navbar_text_color: '#ffffff',
-        footer_bg: '#f8f9fa',
-        footer_text_color: '#ffffff',
-        main_font: 'Amarante, serif',
-        title_font: 'Emblema One, cursive',
-        content_font: 'Amarante, serif',
+        navbar_font: 'Amarante, serif',
         content_bg: '#ffffff',
-        content_text_color: '#222222'
+        content_text_color: '#222222',
+        content_font: 'Amarante, serif'
       },
       homepage: { tournaments_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 }, news_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 } },
       frontBannerEnabled: false,

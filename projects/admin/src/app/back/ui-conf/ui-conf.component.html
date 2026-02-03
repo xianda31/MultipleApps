@@ -5,7 +5,7 @@
       <div class="col">
         <div class="card h-100">
           <div class="card-title fw-bold fs-5 ms-2">Paramétrage template</div>
-          <div class="card-body">
+          <div class="card-body" formGroupName="template">
             <div class="table-responsive">
               <table class="table align-middle mb-0">
                 <thead>
@@ -19,27 +19,27 @@
                 <tbody>
                   <tr>
                     <td [ngStyle]="{
-                          'background': uiForm.get('header_bg')?.value,
-                          'color': uiForm.get('header_text_color')?.value,
-                          'font-family': uiForm.get('title_font')?.value
+                          'background': uiForm.get('template.banner_bg')?.value,
+                          'color': uiForm.get('template.banner_text_color')?.value,
+                          'font-family': uiForm.get('template.banner_font')?.value
                         }">Bandeaux</td>
                     <td>
-                      <input type="color" style="width:1.6rem;height:1.6rem;padding:0;border:none;" formControlName="header_bg" (change)="applyTheme()">
+                      <input type="color" style="width:1.6rem;height:1.6rem;padding:0;border:none;" formControlName="banner_bg" (change)="applyTheme()">
                     </td>
                     <td>
-                      <input type="color" style="width:1.6rem;height:1.6rem;padding:0;border:none;" formControlName="header_text_color" (change)="applyTheme()">
+                      <input type="color" style="width:1.6rem;height:1.6rem;padding:0;border:none;" formControlName="banner_text_color" (change)="applyTheme()">
                     </td>
                     <td>
-                      <select class="form-select form-select-sm" formControlName="title_font" (change)="applyTheme()">
+                      <select class="form-select form-select-sm" formControlName="banner_font" (change)="applyTheme()">
                         <option *ngFor="let font of googleFontsSubset" [value]="font.css">{{ font.label }}</option>
                       </select>
                     </td>
                   </tr>
                   <tr>
                     <td [ngStyle]="{
-                          'background': uiForm.get('navbar_bg')?.value,
-                          'color': uiForm.get('navbar_text_color')?.value,
-                          'font-family': uiForm.get('main_font')?.value
+                          'background': uiForm.get('template.navbar_bg')?.value,
+                          'color': uiForm.get('template.navbar_text_color')?.value,
+                          'font-family': uiForm.get('template.navbar_font')?.value
                         }">Menus</td>
                     <td>
                       <input type="color" style="width:1.6rem;height:1.6rem;padding:0;border:none;" formControlName="navbar_bg" (change)="applyTheme()">
@@ -48,16 +48,16 @@
                       <input type="color" style="width:1.6rem;height:1.6rem;padding:0;border:none;" formControlName="navbar_text_color" (change)="applyTheme()">
                     </td>
                     <td>
-                      <select class="form-select form-select-sm" formControlName="main_font" (change)="applyTheme()">
+                      <select class="form-select form-select-sm" formControlName="navbar_font" (change)="applyTheme()">
                         <option *ngFor="let font of googleFontsSubset" [value]="font.css">{{ font.label }}</option>
                       </select>
                     </td>
                   </tr>
                   <tr>
                     <td [ngStyle]="{
-                          'background': uiForm.get('content_bg')?.value,
-                          'color': uiForm.get('content_text_color')?.value,
-                          'font-family': uiForm.get('content_font')?.value
+                          'background': uiForm.get('template.content_bg')?.value,
+                          'color': uiForm.get('template.content_text_color')?.value,
+                          'font-family': uiForm.get('template.content_font')?.value
                         }">Contenu page</td>
                     <td>
                       <input type="color" style="width:1.6rem;height:1.6rem;padding:0;border:none;" formControlName="content_bg" (change)="applyTheme()">

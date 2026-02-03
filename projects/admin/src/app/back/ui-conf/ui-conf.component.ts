@@ -60,11 +60,6 @@ export class UiConfComponent implements OnInit {
     );
 
     this.uiForm = this.fb.group({
-      content_font: ['Amarante, serif'],
-      content_bg: ['#ffffff'],
-      content_text_color: ['#222222'],
-      main_font: ['Amarante, serif'],
-      title_font: ['Emblema One, cursive'],
       main_color: ['#3f493d'],
       secondary_color: ['#ffc107'],
       success_color: ['#198754'],
@@ -74,15 +69,18 @@ export class UiConfComponent implements OnInit {
       light_color: ['#f8f9fa'],
       dark_color: ['#212529'],
       brand_bg: ['#2e332d'],
-      header_bg: ['#2e332d'],
-      header_text_color: ['#ffffff'],
-      navbar_text_color: ['#ffffff'],
-      footer_text_color: ['#ffffff'],
-      navbar_bg: ['#3f493d'],
-      footer_bg: ['#f8f9fa'],
       template: this.fb.group({
         logo_path: [''],
-        background_color: ['#ffffff']
+        background_color: ['#ffffff'],
+        banner_bg: ['#2e332d'],
+        banner_text_color: ['#ffffff'],
+        banner_font: ['Emblema One, cursive'],
+        navbar_bg: ['#3f493d'],
+        navbar_text_color: ['#ffffff'],
+        navbar_font: ['Amarante, serif'],
+        content_bg: ['#ffffff'],
+        content_text_color: ['#222222'],
+        content_font: ['Amarante, serif']
       }),
       card_thumbnails: this.fb.array([]),
       album_thumbnail: this.fb.group({
@@ -333,14 +331,18 @@ export class UiConfComponent implements OnInit {
     }
 
     this.uiForm.patchValue({
-      content_font: template.content_font ?? ui.content_font ?? 'Amarante, serif',
-      content_bg: template.content_bg ?? ui.content_bg ?? '#ffffff',
-      content_text_color: template.content_text_color ?? ui.content_text_color ?? '#222222',
       template: {
         logo_path: template.logo_path ?? '',
         background_color: template.background_color ?? '#ffffff',
-        header_text_color: template.header_text_color ?? ui?.header_text_color ?? '#ffffff',
-        footer_text_color: template.footer_text_color ?? ui?.footer_text_color ?? ''
+        banner_bg: template.banner_bg ?? ui?.banner_bg ?? ui?.header_bg ?? '#2e332d',
+        banner_text_color: template.banner_text_color ?? ui?.banner_text_color ?? ui?.header_text_color ?? '#ffffff',
+        banner_font: template.banner_font ?? ui?.banner_font ?? ui?.title_font ?? 'Emblema One, cursive',
+        navbar_bg: template.navbar_bg ?? ui?.navbar_bg ?? '#3f493d',
+        navbar_text_color: template.navbar_text_color ?? ui?.navbar_text_color ?? '#ffffff',
+        navbar_font: template.navbar_font ?? ui?.navbar_font ?? ui?.main_font ?? 'Amarante, serif',
+        content_bg: template.content_bg ?? ui?.content_bg ?? '#ffffff',
+        content_text_color: template.content_text_color ?? ui?.content_text_color ?? '#222222',
+        content_font: template.content_font ?? ui?.content_font ?? 'Amarante, serif'
       },
       tournaments_row_cols: {
         SM: tournaments.SM ?? 1,
@@ -385,14 +387,6 @@ export class UiConfComponent implements OnInit {
         no_filter: ui?.competitions?.no_filter ?? false
       } as CompetitionsUIConfig,
       brand_bg: ui?.brand_bg ?? '#2e332d',
-      header_bg: ui?.header_bg ?? '#2e332d',
-      header_text_color: template.header_text_color ?? ui?.header_text_color ?? '#ffffff',
-      navbar_text_color: template.navbar_text_color ?? ui?.navbar_text_color ?? '#ffffff',
-      footer_text_color: template.footer_text_color ?? ui?.footer_text_color ?? ui?.footer_text_color ?? '#ffffff',
-      navbar_bg: ui?.navbar_bg ?? '#3f493d',
-      footer_bg: ui?.footer_bg ?? '#f8f9fa',
-      main_font: template.main_font ?? ui.main_font ?? 'Amarante, serif',
-      title_font: template.title_font ?? ui.title_font ?? 'Emblema One, cursive',
     });
 
     // Patch result_filter_thresholds séparément pour garantir la synchro avec le FormGroup enfant
@@ -476,14 +470,16 @@ export class UiConfComponent implements OnInit {
       // Build payload ensuring tournaments/news breakpoints are nested under `homepage`
       const formVal: any = this.uiForm.value || {};
       const payload: any = { ...formVal };
-      // Ajout des champs content_*
-      payload.template = payload.template || {};
-      payload.template.content_font = formVal.content_font;
-      payload.template.content_bg = formVal.content_bg;
-      payload.template.content_text_color = formVal.content_text_color;
-      payload.content_font = formVal.content_font;
-      payload.content_bg = formVal.content_bg;
-      payload.content_text_color = formVal.content_text_color;
+      
+      // template est déjà bien structuré dans formVal
+      // Juste vérifier qu'on ne garde pas de champs legacy au niveau racine
+      delete payload.header_bg;
+      delete payload.header_text_color;
+      delete payload.footer_bg;
+      delete payload.footer_text_color;
+      delete payload.main_font;
+      delete payload.title_font;
+      
       // Build payload ensuring tournaments/news breakpoints are nested under `homepage`
       // Convert tournaments_type FormArray (array [{key,image},...]) into mapping { key: image }
       if (Array.isArray(payload.tournaments_type)) {
@@ -530,22 +526,8 @@ export class UiConfComponent implements OnInit {
         no_filter: formVal.competitions?.no_filter ?? false
       } as CompetitionsUIConfig;
 
-      // Ajout des couleurs de thème dans le payload
+      // Ajout brand_bg
       payload.brand_bg = formVal.brand_bg;
-      payload.header_bg = formVal.header_bg;
-      payload.navbar_bg = formVal.navbar_bg;
-      payload.footer_bg = formVal.footer_bg;
-      // Stocker les couleurs de police et polices dans template
-      payload.template = payload.template || {};
-      payload.template.header_text_color = formVal.header_text_color;
-      payload.template.navbar_text_color = formVal.navbar_text_color;
-      payload.template.footer_text_color = formVal.footer_text_color;
-      payload.template.main_font = formVal.main_font;
-      payload.template.title_font = formVal.title_font;
-      // Pour compatibilité descendante et accès direct
-      payload.footer_text_color = formVal.footer_text_color;
-      payload.main_font = formVal.main_font;
-      payload.title_font = formVal.title_font;
 
       // Save UI settings into dedicated file and publish immédiatement
       await this.systemDataService.save_ui_settings(payload);
@@ -579,11 +561,8 @@ export class UiConfComponent implements OnInit {
       if (formVal.hover_unfold_delay_ms !== undefined) preview.homepage.hover_unfold_delay_ms = Number(formVal.hover_unfold_delay_ms);
       if (formVal.hover_unfold_duration_ms !== undefined) preview.homepage.hover_unfold_duration_ms = Number(formVal.hover_unfold_duration_ms);
       if (formVal.home_layout_ratio !== undefined) preview.homepage.home_layout_ratio = Number(formVal.home_layout_ratio);
-      // Stocker les couleurs de police dans template
-      preview.template = preview.template || {};
-      preview.template.header_text_color = formVal.header_text_color;
-      preview.template.navbar_text_color = formVal.navbar_text_color;
-      preview.template.footer_text_color = formVal.footer_text_color;
+      // Template est déjà bien structuré dans formVal
+      preview.template = formVal.template || {};
       this.systemDataService.patchUiSettings(preview);
       // Update export blob to reflect the previewed state
       this.export_file_url = this.fileService.json_to_blob(preview);
@@ -596,15 +575,17 @@ export class UiConfComponent implements OnInit {
 
 
   applyTheme() {
-    const contentFont = this.uiForm.get('content_font')?.value || 'Amarante, serif';
-    const contentBg = this.uiForm.get('content_bg')?.value || '#ffffff';
-    const contentText = this.uiForm.get('content_text_color')?.value || '#222222';
+    const bannerFont = this.uiForm.get('template.banner_font')?.value || 'Emblema One, cursive';
+    const navbarFont = this.uiForm.get('template.navbar_font')?.value || 'Amarante, serif';
+    const contentFont = this.uiForm.get('template.content_font')?.value || 'Amarante, serif';
+    const contentBg = this.uiForm.get('template.content_bg')?.value || '#ffffff';
+    const contentText = this.uiForm.get('template.content_text_color')?.value || '#222222';
     const main = this.uiForm.get('main_color')?.value || '#3f493d';
     const secondary = this.uiForm.get('secondary_color')?.value || '#ffc107';
-    const font = this.uiForm.get('main_font')?.value || 'Amarante, serif';
     document.documentElement.style.setProperty('--primary', main);
     document.documentElement.style.setProperty('--secondary', secondary);
-    document.documentElement.style.setProperty('--font-main', font);
+    document.documentElement.style.setProperty('--banner-font', bannerFont);
+    document.documentElement.style.setProperty('--navbar-font', navbarFont);
     document.documentElement.style.setProperty('--content-font', contentFont);
     document.documentElement.style.setProperty('--content-bg', contentBg);
     document.documentElement.style.setProperty('--content-text', contentText);

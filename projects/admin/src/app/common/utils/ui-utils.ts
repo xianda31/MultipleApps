@@ -17,24 +17,22 @@ export function applyUiThemeInitializer(systemDataService: SystemDataService) {
       const ui = await firstValueFrom(systemDataService.get_ui_settings());
       const t = ui?.template || {};
       const root = document.documentElement;
-      const headerBg = t['header_bg'] || ui.template?.header_bg;
-      const headerTextColor = t['header_text_color'] || ui.template?.header_text_color;
-      const navbarBg = t['navbar_bg'] || ui.template?.navbar_bg;
-      const navbarTextColor = t['navbar_text_color'] || ui.template?.navbar_text_color;
-      const footerBg = t['footer_bg'] || ui.template?.footer_bg;
-      const footerTextColor = t['footer_text_color'] || ui.template?.footer_text_color;
-      if (headerBg) {
-        root.style.setProperty('--brand-bg', headerBg);
-        root.style.setProperty('--title-bg', headerBg);
+      const bannerBg = t['banner_bg'];
+      const bannerTextColor = t['banner_text_color'];
+      const navbarBg = t['navbar_bg'];
+      const navbarTextColor = t['navbar_text_color'];
+      if (bannerBg) {
+        root.style.setProperty('--brand-bg', bannerBg);
+        root.style.setProperty('--title-bg', bannerBg);
+        root.style.setProperty('--footer-bg', bannerBg);
       }
-      if (headerTextColor) {
-        root.style.setProperty('--brand-text', headerTextColor);
-        root.style.setProperty('--title-text', headerTextColor);
+      if (bannerTextColor) {
+        root.style.setProperty('--brand-text', bannerTextColor);
+        root.style.setProperty('--title-text', bannerTextColor);
+        root.style.setProperty('--footer-text', bannerTextColor);
       }
       if (navbarBg) root.style.setProperty('--navbar-bg', navbarBg);
       if (navbarTextColor) root.style.setProperty('--navbar-text', navbarTextColor);
-      if (footerBg) root.style.setProperty('--footer-bg', footerBg);
-      if (footerTextColor) root.style.setProperty('--footer-text', footerTextColor);
     } catch (e) {
       // ignore errors, keep default theme variables from assets
     }
@@ -79,21 +77,21 @@ export function applyUiThemeFromConfig(ui: UIConfiguration | null | undefined) {
   const t = ui.template || {};
   const root = document.documentElement;
   // Contenu page (autour du router)
-  const contentFont = t['content_font'] || ui.template?.content_font;
-  const contentBg = t['content_bg'] || ui.template?.content_bg;
-  const contentText = t['content_text_color'] || ui.template?.content_text_color;
-  if (t.header_bg) {
-    root.style.setProperty('--brand-bg', t.header_bg);
-    root.style.setProperty('--title-bg', t.header_bg);
+  const contentFont = t['content_font'];
+  const contentBg = t['content_bg'];
+  const contentText = t['content_text_color'];
+  if (t.banner_bg) {
+    root.style.setProperty('--brand-bg', t.banner_bg);
+    root.style.setProperty('--title-bg', t.banner_bg);
+    root.style.setProperty('--footer-bg', t.banner_bg);
   }
-  if (t.header_text_color) {
-    root.style.setProperty('--brand-text', t.header_text_color);
-    root.style.setProperty('--title-text', t.header_text_color);
+  if (t.banner_text_color) {
+    root.style.setProperty('--brand-text', t.banner_text_color);
+    root.style.setProperty('--title-text', t.banner_text_color);
+    root.style.setProperty('--footer-text', t.banner_text_color);
   }
   if (t.navbar_bg) root.style.setProperty('--navbar-bg', t.navbar_bg);
   if (t.navbar_text_color) root.style.setProperty('--navbar-text', t.navbar_text_color);
-  if (t.footer_bg) root.style.setProperty('--footer-bg', t.footer_bg);
-  if (t.footer_text_color) root.style.setProperty('--footer-text', t.footer_text_color);
 
   // --- Google Fonts dynamic injection ---
   // Remove previous dynamic font links
@@ -111,10 +109,10 @@ export function applyUiThemeFromConfig(ui: UIConfiguration | null | undefined) {
 
   // Inject font-main and font-title if present
   // Use 'as any' to access dynamic keys (font-main/font-title)
-  const fontMain = t['main_font'] || ui.template?.main_font;
-  const fontTitle = t['title_font'] || ui.template?.title_font;
+  const bannerFont = t['banner_font'];
+  const navbarFont = t['navbar_font'];
   const loadedFonts = new Set<string>();
-  [fontMain, fontTitle].forEach(font => {
+  [bannerFont, navbarFont, contentFont].forEach(font => {
     if (font && typeof font === 'string' && !loadedFonts.has(font)) {
       const url = buildGoogleFontUrl(font);
       if (url) {
@@ -129,8 +127,11 @@ export function applyUiThemeFromConfig(ui: UIConfiguration | null | undefined) {
   });
 
   // Set CSS variables for font families
-  if (fontMain) root.style.setProperty('--font-main', fontMain);
-  if (fontTitle) root.style.setProperty('--font-title', fontTitle);
+  if (bannerFont) {
+    root.style.setProperty('--banner-font', bannerFont);
+    root.style.setProperty('--footer-font', bannerFont);
+  }
+  if (navbarFont) root.style.setProperty('--navbar-font', navbarFont);
 
   if (contentFont) root.style.setProperty('--content-font', contentFont);
   if (contentBg) root.style.setProperty('--content-bg', contentBg);

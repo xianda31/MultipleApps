@@ -30,17 +30,18 @@ export interface CompetitionsUIConfig {
 export interface UIConfiguration {
   template: {
     logo_path?: string; // S3 path
-    header_bg: string; // Couleur bandeau supérieur & barre de titre
-    header_text_color: string; // Couleur du texte du bandeau supérieur & barre de titre
+
+    banner_bg: string; // Couleur bandeau supérieur
+    banner_text_color: string; // Couleur du texte du bandeau
+    banner_font: string; // Police du bandeau Google Fonts
+
     navbar_bg: string; // Couleur navbar
     navbar_text_color: string; // Couleur du texte de la navbar
-    footer_bg: string; // Couleur pied de page
-    footer_text_color: string; // Couleur du texte du pied de page
-    main_font: string; // Police principale Google Fonts
-    title_font: string; // Police des titres Google Fonts
-    content_font: string; // Police du contenu page
+    navbar_font: string; // Police de la navbar Google Fonts
+
     content_bg: string; // Fond du contenu page
     content_text_color: string; // Couleur texte du contenu page
+    content_font: string; // Police du contenu page Google Fonts
   };
 
   homepage: {
@@ -77,7 +78,7 @@ export interface UIConfiguration {
   // Intervalle de défilement automatique du carousel d'albums (en ms)
   album_carousel_interval_ms?: number;
 
-  
+
   // Configuration des compétitions (préférences affichage, filtres, etc)
   competitions: CompetitionsUIConfig;
 }
