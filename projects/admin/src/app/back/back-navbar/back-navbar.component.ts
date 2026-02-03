@@ -127,7 +127,6 @@ export class BackNavbarComponent implements OnInit {
           { label: 'répertoire', route: this.BACK_ROUTE_PATHS.MembersDatabase },
           { label: 'cartes admission', route: this.BACK_ROUTE_PATHS.GameCardsEditor, adminOnly: true },
           { label: 'contrôles', route: this.BACK_ROUTE_PATHS.MemberSales },
-          { label: 'compétitions', route: this.BACK_ROUTE_PATHS.Competitions }
         ]
       },
       {
@@ -156,7 +155,7 @@ export class BackNavbarComponent implements OnInit {
           { label: 'écriture', route: this.BACK_ROUTE_PATHS.BooksEditor }
         ]
       },
-
+      
       {
         label: 'Site web',
         key: 'site',
@@ -166,6 +165,7 @@ export class BackNavbarComponent implements OnInit {
           { label: 'paramètres UI', route: this.BACK_ROUTE_PATHS.UiConf },
           { label: 'les menus', route: this.BACK_ROUTE_PATHS.MenusEditor },
           { label: 'pages et datas', route: this.BACK_ROUTE_PATHS.CMSWrapper },
+          { label: 'compétitions', route: this.BACK_ROUTE_PATHS.Competitions },
           { label: 'aller sur le site', route: '/front' }
         ]
       },
@@ -186,7 +186,7 @@ export class BackNavbarComponent implements OnInit {
         minLevel: this.accreditation_levels.Systeme,
         isDev: true,
         subMenus: [
-          { label: 'écritures', route: this.BACK_ROUTE_PATHS.BooksDebugger },
+          // { label: 'écritures', route: this.BACK_ROUTE_PATHS.BooksDebugger },
           { label: 'données S3', route: this.BACK_ROUTE_PATHS.RootVolume },
           { label: 'import excel', route: this.BACK_ROUTE_PATHS.ImportExcel },
           { label: 'clone DB', route: this.BACK_ROUTE_PATHS.CloneDB },

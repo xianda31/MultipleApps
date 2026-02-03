@@ -69,8 +69,8 @@ export const routes: Routes = [
       { path: BACK_ROUTE_PATHS.FilemgrWindows, component: FilemgrWindowsComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.CloneDB, component: CloneDBComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.CloneS3, component: CloneS3Component, canActivate: [AuthGuard] },
-      { path: BACK_ROUTE_PATHS.BooksDebugger, component: BooksEditorComponent, data: { access: 'full' }, canActivate: [AuthGuard] },
-      { path: BACK_ROUTE_PATHS.BooksDebuggerId, component: BooksEditorComponent, data: { access: 'full' }, canActivate: [AuthGuard] },
+      // { path: BACK_ROUTE_PATHS.BooksDebugger, component: BooksEditorComponent, data: { access: 'full' }, canActivate: [AuthGuard] },
+      // { path: BACK_ROUTE_PATHS.BooksDebuggerId, component: BooksEditorComponent, data: { access: 'full' }, canActivate: [AuthGuard] },
 
 
       // { path: BACK_ROUTE_PATHS.Snippets, component: SnippetsComponent, canActivate: [AuthGuard] },
