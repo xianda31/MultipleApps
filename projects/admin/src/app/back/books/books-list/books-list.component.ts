@@ -167,4 +167,8 @@ export class BooksListComponent {
     this.slice_start = (this.slice_start === 0) ? -this.SLICE_SIZE : 0;
   }
 
+  backward_slice() {
+    this.slice_start -= this.SLICE_SIZE;
+  }
+
 }

@@ -72,9 +72,15 @@
 </div>
 
 <ng-template #slice_toggler>
-  <div class="form-check form-switch">
-    <input class="form-check-input" type="checkbox" role="switch" id="switchCheckDefault" (change)="toggle_slice()"
-      [checked]="slice_start === -SLICE_SIZE">
-    <label class="form-check-label" for="switchCheckDefault">{{SLICE_SIZE}} dernières opérations</label>
+  <div class="d-flex align-items-center">
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" role="switch" id="switchCheckDefault" (change)="toggle_slice()"
+        [checked]="slice_start < 0">
+      <label class="form-check-label" for="switchCheckDefault">{{(slice_start<0)? -slice_start + ' dernières opérations'
+          : 'toutes les opérations' }}</label>
+    </div>
+    <div class="ms-4 text-primary" style="cursor: pointer;" (click)="backward_slice()">
+      <i class="bi bi-skip-backward-fill"></i>
+    </div>
   </div>
 </ng-template>
