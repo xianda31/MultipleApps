@@ -1,20 +1,8 @@
-.main-content {
-  height: 78vh;
-  flex: 1;
-  overflow-y: auto;
-}
 
-@media (max-width: 576px) {
-  .main-content {
-    height: auto !important;
-    min-height: 60vh;
-    max-height: none;
-    flex: 1;
-    overflow-y: auto;
-  }
-}
+
 @media (max-width: 767.98px) {
-  .title-bg, app-title {
+  .title-bg,
+  app-title {
     display: none !important;
   }
 }
@@ -31,20 +19,9 @@ app-front-navbar {
   display: flex !important;
   align-items: center !important;
 }
-@media (min-width: 768px) and (orientation: landscape) {
-  .navbar-bg {
-    min-height: 0 !important;
-    height: auto !important;
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-    display: flex !important;
-    align-items: center !important;
-  }
-}
 
-
-
-html, body {
+html,
+body {
   overflow-y: hidden !important;
   height: 100vh !important;
   background: var(--main-bg) !important;
@@ -80,12 +57,11 @@ html, body {
 .img-quarter-sm {
   width: 20% !important;
   max-width: 100px !important;
+
   @media (max-width: 420px) {
     display: none !important;
   }
 }
-
-
 
 .root-bg {
   font-family: var(--font-main);
@@ -106,15 +82,6 @@ html, body {
   }
 }
 
-
-.brand-bg {
-  background-color: var(--brand-bg) !important;
-  color: var(--brand-text, #fff) !important;
-  font-size: 1.2rem;
-  @media (min-width: 1200px) { font-size: 1.5rem; }
-}
-
-
 .navbar-bg {
   background-color: var(--navbar-bg);
   color: var(--navbar-text, #fff);
@@ -128,11 +95,15 @@ html, body {
 
 /* Masque la scrollbar verticale interne tout en gardant le scroll fonctionnel */
 .container-fluid.root-bg {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE 10+ */
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE 10+ */
 }
+
 .container-fluid.root-bg::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+  display: none;
+  /* Chrome, Safari, Opera */
 }
 
 .sandbox-badge {
@@ -142,16 +113,87 @@ html, body {
   justify-content: center;
   background: linear-gradient(90deg, #ffc107 0%, #ffca2c 100%);
   color: #5a4200;
-  box-shadow: 0 0 0 1px rgba(0,0,0,.05), 0 .25rem .5rem rgba(0,0,0,.08);
-  border: 1px solid rgba(255,193,7,.35);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .05), 0 .25rem .5rem rgba(0, 0, 0, .08);
+  border: 1px solid rgba(255, 193, 7, .35);
   text-transform: uppercase;
 }
 
-.footer-bg {
-  background-color: var(--footer-bg, #f8f9fa);
-  color: var(--footer-text, #fff);
+/* Bandeaux personnalisés avec variables CSS pour couleurs et polices */
+
+.main-content {
+  font-family: var(--content-font, Amarante, serif) !important;
+  background: var(--content-bg, #ffffff) !important;
+  color: var(--content-text, #222222) !important;
+  height: 78vh;
+  flex: 1;
+  overflow-y: auto;
+  font-size: 1rem !important;
+
+  @media (max-width: 767.98px) {
+    font-size: 0.9rem !important;
+  }
+
+  @media (max-width: 600px), (max-height: 500px) {
+    font-size: 0.75rem !important;
+  }
+
+  @media (max-width: 576px) {
+    height: auto !important;
+    min-height: 60vh;
+  }
+
+  h1 { font-size: 2em !important; }
+  h2 { font-size: 1.75em !important; }
+  h3 { font-size: 1.5em !important; }
+  h4 { font-size: 1.25em !important; }
+  h5 { font-size: 1.1em !important; }
+  h6 { font-size: 1em !important; }
 }
 
+.site-banner {
+  font-family: var(--banner-font, Caveat, cursive) !important;
+  color: var(--banner-text-color, #fff) !important;
+  background: var(--banner-bg, #2e332d) !important;
+  font-size: 1.25rem !important;
 
+  @media (max-width: 767.98px) {
+    font-size: 1.05rem !important;
+  }
 
+  @media (max-width: 600px),
+  (max-height: 500px) {
+    font-size: 0.85rem !important;
+  }
+}
 
+.title-banner {
+  font-family: var(--banner-font, Caveat, cursive) !important;
+  color: var(--banner-text-color, #fff) !important;
+  background: var(--banner-bg, #2e332d) !important;
+  font-size: 1.25rem !important;
+
+  @media (max-width: 767.98px) {
+    font-size: 1.05rem !important;
+  }
+
+  @media (max-width: 600px),
+  (max-height: 500px) {
+    font-size: 0.80rem !important;
+  }
+}
+
+.footer-banner {
+  font-family: var(--banner-font, Caveat, cursive) !important;
+  color: var(--banner-text-color, #fff) !important;
+  background: var(--banner-bg, #2e332d) !important;
+  font-size: 1rem !important;
+
+  @media (max-width: 767.98px) {
+    font-size: 0.9rem !important;
+  }
+
+  @media (max-width: 600px),
+  (max-height: 500px) {
+    font-size: 0.75rem !important;
+  }
+}

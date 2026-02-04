@@ -81,17 +81,22 @@ export function applyUiThemeFromConfig(ui: UIConfiguration | null | undefined) {
   const contentBg = t['content_bg'];
   const contentText = t['content_text_color'];
   if (t.banner_bg) {
+    root.style.setProperty('--banner-bg', t.banner_bg);
     root.style.setProperty('--brand-bg', t.banner_bg);
     root.style.setProperty('--title-bg', t.banner_bg);
     root.style.setProperty('--footer-bg', t.banner_bg);
   }
   if (t.banner_text_color) {
+    root.style.setProperty('--banner-text-color', t.banner_text_color);
     root.style.setProperty('--brand-text', t.banner_text_color);
     root.style.setProperty('--title-text', t.banner_text_color);
     root.style.setProperty('--footer-text', t.banner_text_color);
   }
   if (t.navbar_bg) root.style.setProperty('--navbar-bg', t.navbar_bg);
-  if (t.navbar_text_color) root.style.setProperty('--navbar-text', t.navbar_text_color);
+  if (t.navbar_text_color) {
+    root.style.setProperty('--navbar-text', t.navbar_text_color);
+    root.style.setProperty('--navbar-text-color', t.navbar_text_color);
+  }
 
   // --- Google Fonts dynamic injection ---
   // Remove previous dynamic font links
