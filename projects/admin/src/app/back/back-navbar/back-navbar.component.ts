@@ -152,7 +152,7 @@ export class BackNavbarComponent implements OnInit {
           { label: 'base de données', route: this.BACK_ROUTE_PATHS.BooksList },
           { label: 'droits d\'accès', route: this.BACK_ROUTE_PATHS.GroupsList },
           { label: 'configuration', route: this.BACK_ROUTE_PATHS.SysConf },
-          { label: 'écriture', route: this.BACK_ROUTE_PATHS.BooksEditor }
+          // { label: 'écriture', route: this.BACK_ROUTE_PATHS.BooksEditor }
         ]
       },
       
