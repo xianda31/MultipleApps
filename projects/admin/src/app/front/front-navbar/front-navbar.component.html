@@ -79,7 +79,7 @@
     <!-- Mobile: liste dépliée sans dropdown -->
     @else {
     <li class="nav-item mobile-submenu-parent">
-      <span class="nav-link fw-bold">
+      <span class="dropdown-item">
         @if(menu.navitem.pre_label === 'avatar') {
         <img [src]="avatar$ | async" alt="avatar" class="rounded-circle"
           style="width:28px; height:28px; max-width:28px; max-height:28px; object-fit:cover">
