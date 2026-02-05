@@ -186,7 +186,7 @@
         <div [class]="gamer_class(gamer)" style="position: relative;">
             <!-- Bottom-left badges: NP (non payant) and member credits -->
             <div class="position-absolute bottom-0 start-0 m-1 d-flex gap-1" style="z-index: 2;">
-                <span *ngIf="!gamer.enabled" class="badge bg-secondary">{{ (game.fee_rate === 'accession') ? 'ACC' :
+                <span *ngIf="!gamer.enabled" class="badge bg-secondary">{{ (game.fee_rate === 'accession' && gamer.acc_credits) ? 'ACC' :
                     'NP' }}</span>
                 <span *ngIf="gamer.is_member" class="badge d-flex align-items-center gap-1"
                     [ngClass]="{ 'text-bg-success': gamer.game_credits > 2, 'text-bg-danger': gamer.game_credits <= 2 }">
@@ -234,7 +234,7 @@
                                 [checked]="gamer.validated && !gamer.enabled" [disabled]="gamer.disabled"
                                 (change)="gamer.enabled=false; gamer.in_euro=false; gamer.validated=true; onGamerValidated(gamer); log_game_state(); check_status()" />
                             <label class="form-check-label" [for]="'none_radio'+ gamer.index">{{ (game.fee_rate ===
-                                'accession') ? 'forfait' : 'non payant' }}</label>
+                                'accession'&& gamer.acc_credits) ? 'forfait' : 'non payant' }}</label>
                         </div>
                         <!-- Euro -->
                         <div class="form-check form-check-reverse">

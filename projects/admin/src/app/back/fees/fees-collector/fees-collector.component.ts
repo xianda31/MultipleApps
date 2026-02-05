@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { TournamentService } from '../../../common/services/tournament.service';
 import { FeesCollectorService } from './fees-collector.service';
-import { BehaviorSubject, from, Observable, of, switchMap } from 'rxjs';
+import { BehaviorSubject, switchMap } from 'rxjs';
 import { club_tournament_extended, FEE_RATE, Game, Game_status, Gamer } from '../fees.interface';
 import { PdfService } from '../../../common/services/pdf.service';
 import { HorizontalAlignment, PDF_table } from '../../../common/interfaces/pdf-table.interface';
@@ -14,9 +14,7 @@ import { GetConfirmationComponent } from '../../modals/get-confirmation/get-conf
 import { ToastService } from '../../../common/services/toast.service';
 import { QuickCardSaleComponent } from '../../../modals/quick-card-sale';
 import { MembersService } from '../../../common/services/members.service';
-import { GameCardService } from '../../services/game-card.service';
 import { PaymentMode } from '../../shop/cart/cart.interface';
-import { SystemDataService } from '../../../common/services/system-data.service';
 import { ProductService } from '../../../common/services/product.service';
 
 
