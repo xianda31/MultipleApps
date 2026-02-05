@@ -60,18 +60,8 @@ export class UiConfComponent implements OnInit {
     );
 
     this.uiForm = this.fb.group({
-      main_color: ['#3f493d'],
-      secondary_color: ['#ffc107'],
-      success_color: ['#198754'],
-      danger_color: ['#dc3545'],
-      warning_color: ['#ffc107'],
-      info_color: ['#0dcaf0'],
-      light_color: ['#f8f9fa'],
-      dark_color: ['#212529'],
-      brand_bg: ['#2e332d'],
       template: this.fb.group({
         logo_path: [''],
-        background_color: ['#ffffff'],
         banner_bg: ['#2e332d'],
         banner_text_color: ['#ffffff'],
         banner_font: ['Emblema One, cursive'],
@@ -87,11 +77,6 @@ export class UiConfComponent implements OnInit {
         width: [600],
         height: [400],
         ratio: [1.5]
-      }),
-      thumbnail: this.fb.group({
-        width: [300],
-        height: [200],
-        ratio: [1.78]
       }),
       tournaments_row_cols: this.fb.group({
         SM: [1, [Validators.min(1), Validators.max(6)]],
@@ -333,7 +318,6 @@ export class UiConfComponent implements OnInit {
     this.uiForm.patchValue({
       template: {
         logo_path: template.logo_path ?? '',
-        background_color: template.background_color ?? '#ffffff',
         banner_bg: template.banner_bg ?? ui?.banner_bg ?? ui?.header_bg ?? '#2e332d',
         banner_text_color: template.banner_text_color ?? ui?.banner_text_color ?? ui?.header_text_color ?? '#ffffff',
         banner_font: template.banner_font ?? ui?.banner_font ?? ui?.title_font ?? 'Emblema One, cursive',
@@ -362,11 +346,6 @@ export class UiConfComponent implements OnInit {
       hover_unfold_duration_ms: homepage.hover_unfold_duration_ms ?? ui?.hover_unfold_duration_ms ?? 300,
       home_layout_ratio: homepage.home_layout_ratio ?? ui?.home_layout_ratio ?? 2,
       tournaments_type: [] as any,
-      thumbnail: {
-        width: ui?.thumbnail?.width ?? 300,
-        height: ui?.thumbnail?.height ?? 200,
-        ratio: ui?.thumbnail?.ratio ?? 1.78
-      },
       default_tournament_image: inferredDefault ?? (ui?.default_tournament_image ?? ''),
       frontBannerEnabled: ui?.frontBannerEnabled ?? false,
       homepage_intro: ui?.homepage_intro ?? '',
@@ -385,8 +364,7 @@ export class UiConfComponent implements OnInit {
         one_year_back: ui?.competitions?.one_year_back ?? false,
         show_infos: ui?.competitions?.show_infos ?? false,
         no_filter: ui?.competitions?.no_filter ?? false
-      } as CompetitionsUIConfig,
-      brand_bg: ui?.brand_bg ?? '#2e332d',
+      } as CompetitionsUIConfig
     });
 
     // Patch result_filter_thresholds séparément pour garantir la synchro avec le FormGroup enfant
@@ -467,67 +445,75 @@ export class UiConfComponent implements OnInit {
 
   async saveSettings() {
     try {
-      // Build payload ensuring tournaments/news breakpoints are nested under `homepage`
       const formVal: any = this.uiForm.value || {};
-      const payload: any = { ...formVal };
       
-      // template est déjà bien structuré dans formVal
-      // Juste vérifier qu'on ne garde pas de champs legacy au niveau racine
-      delete payload.header_bg;
-      delete payload.header_text_color;
-      delete payload.footer_bg;
-      delete payload.footer_text_color;
-      delete payload.main_font;
-      delete payload.title_font;
-      
-      // Build payload ensuring tournaments/news breakpoints are nested under `homepage`
+      // Build clean payload conforming STRICTLY to UIConfiguration interface
       // Convert tournaments_type FormArray (array [{key,image},...]) into mapping { key: image }
-      if (Array.isArray(payload.tournaments_type)) {
-        const map: { [k: string]: string } = {};
-        payload.tournaments_type.forEach((entry: any) => {
-          if (entry && entry.key) map[entry.key] = entry.image || '';
+      const tournamentsTypeMap: { [k: string]: string } = {};
+      if (Array.isArray(formVal.tournaments_type)) {
+        formVal.tournaments_type.forEach((entry: any) => {
+          if (entry && entry.key) tournamentsTypeMap[entry.key] = entry.image || '';
         });
-        // If default_tournament_image is set, store it under the forced key 'defaut'
-        if (payload.default_tournament_image) {
-          map['defaut'] = payload.default_tournament_image;
-        }
-        payload.tournaments_type = map;
-      } else {
-        payload.tournaments_type = {};
-        if (payload.default_tournament_image) payload.tournaments_type['defaut'] = payload.default_tournament_image;
       }
-      payload.homepage = { ...(formVal.homepage || {}) };
-      payload.homepage.tournaments_row_cols = formVal.tournaments_row_cols;
-      payload.homepage.news_row_cols = formVal.news_row_cols;
-      if (formVal.read_more_lines !== undefined) payload.homepage.read_more_lines = formVal.read_more_lines;
-      if (formVal.unfold_on_hover !== undefined) payload.homepage.unfold_on_hover = !!formVal.unfold_on_hover;
-      if (formVal.hover_unfold_delay_ms !== undefined) payload.homepage.hover_unfold_delay_ms = Number(formVal.hover_unfold_delay_ms);
-      if (formVal.hover_unfold_duration_ms !== undefined) payload.homepage.hover_unfold_duration_ms = Number(formVal.hover_unfold_duration_ms);
-      if (formVal.home_layout_ratio !== undefined) payload.homepage.home_layout_ratio = Number(formVal.home_layout_ratio);
-
-      // Préserver explicitement le champ email
-      if (formVal.email !== undefined) {
-        payload.email = formVal.email;
+      // If default_tournament_image is set, store it under the forced key 'defaut'
+      if (formVal.default_tournament_image) {
+        tournamentsTypeMap['defaut'] = formVal.default_tournament_image;
       }
 
-      // Ajout des paramètres competitions dans le payload
-      payload.competitions = {
-        preferred_organizations: {
-          ["comite"]: formVal.competitions?.preferred_organizations?.comite || 'Comité des Pyrenees',
-          ["ligue"]: formVal.competitions?.preferred_organizations?.ligue || 'Ligue 06 LR-PY',
-          ["national"]: formVal.competitions?.preferred_organizations?.national || 'FFB'
+      // Build payload with ONLY fields from UIConfiguration interface
+      const payload: any = {
+        template: {
+          logo_path: formVal.template?.logo_path || '',
+          banner_bg: formVal.template?.banner_bg || '#2e332d',
+          banner_text_color: formVal.template?.banner_text_color || '#ffffff',
+          banner_font: formVal.template?.banner_font || 'Emblema One, cursive',
+          navbar_bg: formVal.template?.navbar_bg || '#3f493d',
+          navbar_text_color: formVal.template?.navbar_text_color || '#ffffff',
+          navbar_font: formVal.template?.navbar_font || 'Amarante, serif',
+          content_bg: formVal.template?.content_bg || '#ffffff',
+          content_text_color: formVal.template?.content_text_color || '#222222',
+          content_font: formVal.template?.content_font || 'Amarante, serif'
         },
-        result_filter_thresholds: formVal.competitions?.result_filter_thresholds && typeof formVal.competitions.result_filter_thresholds.get === 'function'
-          ? Object.fromEntries(Object.entries(formVal.competitions.result_filter_thresholds.controls).map(([k, v]: [string, any]) => [k, v.value]))
-          : formVal.competitions?.result_filter_thresholds || {},
-        show_members_only: formVal.competitions?.show_members_only ?? false,
-        one_year_back: formVal.competitions?.one_year_back ?? false,
-        show_infos: formVal.competitions?.show_infos ?? false,
-        no_filter: formVal.competitions?.no_filter ?? false
-      } as CompetitionsUIConfig;
-
-      // Ajout brand_bg
-      payload.brand_bg = formVal.brand_bg;
+        homepage: {
+          tournaments_row_cols: formVal.tournaments_row_cols || { SM: 1, MD: 2, LG: 4, XL: 6 },
+          news_row_cols: formVal.news_row_cols || { SM: 1, MD: 2, LG: 4, XL: 6 },
+          read_more_lines: formVal.read_more_lines ?? 3,
+          unfold_on_hover: !!formVal.unfold_on_hover,
+          hover_unfold_delay_ms: Number(formVal.hover_unfold_delay_ms) || 500,
+          hover_unfold_duration_ms: Number(formVal.hover_unfold_duration_ms) || 300,
+          home_layout_ratio: Number(formVal.home_layout_ratio) || 2
+        },
+        tournaments_type: tournamentsTypeMap,
+        default_tournament_image: formVal.default_tournament_image || '',
+        frontBannerEnabled: !!formVal.frontBannerEnabled,
+        homepage_intro: formVal.homepage_intro || '',
+        email: {
+          tagline: formVal.email?.tagline || 'Votre club de bridge convivial et dynamique',
+          ccEmail: formVal.email?.ccEmail || ''
+        },
+        card_thumbnails: Array.isArray(formVal.card_thumbnails) && formVal.card_thumbnails.length
+          ? formVal.card_thumbnails.map((t: any) => ({ width: Number(t.width), height: Number(t.height) }))
+          : [{ width: 300, height: 200 }],
+        album_thumbnail: {
+          width: Number(formVal.album_thumbnail?.width) || 600,
+          height: Number(formVal.album_thumbnail?.height) || 400
+        },
+        album_carousel_interval_ms: Number(formVal.album_carousel_interval_ms) || 5000,
+        competitions: {
+          preferred_organizations: {
+            ["comite"]: formVal.competitions?.preferred_organizations?.comite || 'Comité des Pyrenees',
+            ["ligue"]: formVal.competitions?.preferred_organizations?.ligue || 'Ligue 06 LR-PY',
+            ["national"]: formVal.competitions?.preferred_organizations?.national || 'FFB'
+          },
+          result_filter_thresholds: formVal.competitions?.result_filter_thresholds && typeof formVal.competitions.result_filter_thresholds.get === 'function'
+            ? Object.fromEntries(Object.entries(formVal.competitions.result_filter_thresholds.controls).map(([k, v]: [string, any]) => [k, v.value]))
+            : formVal.competitions?.result_filter_thresholds || {},
+          show_members_only: formVal.competitions?.show_members_only ?? false,
+          one_year_back: formVal.competitions?.one_year_back ?? false,
+          show_infos: formVal.competitions?.show_infos ?? false,
+          no_filter: formVal.competitions?.no_filter ?? false
+        } as CompetitionsUIConfig
+      };
 
       // Save UI settings into dedicated file and publish immédiatement
       await this.systemDataService.save_ui_settings(payload);
@@ -540,29 +526,72 @@ export class UiConfComponent implements OnInit {
   previewSettings() {
     try {
       const formVal: any = this.uiForm.value || {};
-      const preview: any = { ...formVal };
-      // Convert tournaments_type for preview as well
-      if (Array.isArray(preview.tournaments_type)) {
-        const map: { [k: string]: string } = {};
-        preview.tournaments_type.forEach((entry: any) => {
-          if (entry && entry.key) map[entry.key] = entry.image || '';
+      
+      // Build clean preview conforming to UIConfiguration interface (same as saveSettings)
+      const tournamentsTypeMap: { [k: string]: string } = {};
+      if (Array.isArray(formVal.tournaments_type)) {
+        formVal.tournaments_type.forEach((entry: any) => {
+          if (entry && entry.key) tournamentsTypeMap[entry.key] = entry.image || '';
         });
-        if (preview.default_tournament_image) map['defaut'] = preview.default_tournament_image;
-        preview.tournaments_type = map;
-      } else {
-        preview.tournaments_type = {};
-        if (preview.default_tournament_image) preview.tournaments_type['defaut'] = preview.default_tournament_image;
       }
-      preview.homepage = { ...(formVal.homepage || {}) };
-      preview.homepage.tournaments_row_cols = formVal.tournaments_row_cols;
-      preview.homepage.news_row_cols = formVal.news_row_cols;
-      if (formVal.read_more_lines !== undefined) preview.homepage.read_more_lines = formVal.read_more_lines;
-      if (formVal.unfold_on_hover !== undefined) preview.homepage.unfold_on_hover = !!formVal.unfold_on_hover;
-      if (formVal.hover_unfold_delay_ms !== undefined) preview.homepage.hover_unfold_delay_ms = Number(formVal.hover_unfold_delay_ms);
-      if (formVal.hover_unfold_duration_ms !== undefined) preview.homepage.hover_unfold_duration_ms = Number(formVal.hover_unfold_duration_ms);
-      if (formVal.home_layout_ratio !== undefined) preview.homepage.home_layout_ratio = Number(formVal.home_layout_ratio);
-      // Template est déjà bien structuré dans formVal
-      preview.template = formVal.template || {};
+      if (formVal.default_tournament_image) {
+        tournamentsTypeMap['defaut'] = formVal.default_tournament_image;
+      }
+
+      const preview: any = {
+        template: {
+          logo_path: formVal.template?.logo_path || '',
+          banner_bg: formVal.template?.banner_bg || '#2e332d',
+          banner_text_color: formVal.template?.banner_text_color || '#ffffff',
+          banner_font: formVal.template?.banner_font || 'Emblema One, cursive',
+          navbar_bg: formVal.template?.navbar_bg || '#3f493d',
+          navbar_text_color: formVal.template?.navbar_text_color || '#ffffff',
+          navbar_font: formVal.template?.navbar_font || 'Amarante, serif',
+          content_bg: formVal.template?.content_bg || '#ffffff',
+          content_text_color: formVal.template?.content_text_color || '#222222',
+          content_font: formVal.template?.content_font || 'Amarante, serif'
+        },
+        homepage: {
+          tournaments_row_cols: formVal.tournaments_row_cols || { SM: 1, MD: 2, LG: 4, XL: 6 },
+          news_row_cols: formVal.news_row_cols || { SM: 1, MD: 2, LG: 4, XL: 6 },
+          read_more_lines: formVal.read_more_lines ?? 3,
+          unfold_on_hover: !!formVal.unfold_on_hover,
+          hover_unfold_delay_ms: Number(formVal.hover_unfold_delay_ms) || 500,
+          hover_unfold_duration_ms: Number(formVal.hover_unfold_duration_ms) || 300,
+          home_layout_ratio: Number(formVal.home_layout_ratio) || 2
+        },
+        tournaments_type: tournamentsTypeMap,
+        default_tournament_image: formVal.default_tournament_image || '',
+        frontBannerEnabled: !!formVal.frontBannerEnabled,
+        homepage_intro: formVal.homepage_intro || '',
+        email: {
+          tagline: formVal.email?.tagline || 'Votre club de bridge convivial et dynamique',
+          ccEmail: formVal.email?.ccEmail || ''
+        },
+        card_thumbnails: Array.isArray(formVal.card_thumbnails) && formVal.card_thumbnails.length
+          ? formVal.card_thumbnails.map((t: any) => ({ width: Number(t.width), height: Number(t.height) }))
+          : [{ width: 300, height: 200 }],
+        album_thumbnail: {
+          width: Number(formVal.album_thumbnail?.width) || 600,
+          height: Number(formVal.album_thumbnail?.height) || 400
+        },
+        album_carousel_interval_ms: Number(formVal.album_carousel_interval_ms) || 5000,
+        competitions: {
+          preferred_organizations: {
+            ["comite"]: formVal.competitions?.preferred_organizations?.comite || 'Comité des Pyrenees',
+            ["ligue"]: formVal.competitions?.preferred_organizations?.ligue || 'Ligue 06 LR-PY',
+            ["national"]: formVal.competitions?.preferred_organizations?.national || 'FFB'
+          },
+          result_filter_thresholds: formVal.competitions?.result_filter_thresholds && typeof formVal.competitions.result_filter_thresholds.get === 'function'
+            ? Object.fromEntries(Object.entries(formVal.competitions.result_filter_thresholds.controls).map(([k, v]: [string, any]) => [k, v.value]))
+            : formVal.competitions?.result_filter_thresholds || {},
+          show_members_only: formVal.competitions?.show_members_only ?? false,
+          one_year_back: formVal.competitions?.one_year_back ?? false,
+          show_infos: formVal.competitions?.show_infos ?? false,
+          no_filter: formVal.competitions?.no_filter ?? false
+        } as CompetitionsUIConfig
+      };
+
       this.systemDataService.patchUiSettings(preview);
       // Update export blob to reflect the previewed state
       this.export_file_url = this.fileService.json_to_blob(preview);
@@ -580,10 +609,7 @@ export class UiConfComponent implements OnInit {
     const contentFont = this.uiForm.get('template.content_font')?.value || 'Amarante, serif';
     const contentBg = this.uiForm.get('template.content_bg')?.value || '#ffffff';
     const contentText = this.uiForm.get('template.content_text_color')?.value || '#222222';
-    const main = this.uiForm.get('main_color')?.value || '#3f493d';
-    const secondary = this.uiForm.get('secondary_color')?.value || '#ffc107';
-    document.documentElement.style.setProperty('--primary', main);
-    document.documentElement.style.setProperty('--secondary', secondary);
+    
     document.documentElement.style.setProperty('--banner-font', bannerFont);
     document.documentElement.style.setProperty('--navbar-font', navbarFont);
     document.documentElement.style.setProperty('--content-font', contentFont);

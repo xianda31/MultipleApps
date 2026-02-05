@@ -16,7 +16,8 @@ export enum S3_ROOT_FOLDERS {
   PORTRAITS = 'portraits',
   THUMBNAILS = 'thumbnails',
   SYSTEM = 'system',
-  ACCOUNTING = 'accounting'
+  ACCOUNTING = 'accounting',
+  ANY = 'any'
 }
 
 @Injectable({
@@ -211,7 +212,7 @@ export class FileService {
 
   // json upload/download utilities
 
-  async upload_to_S3(data: any, directory: string, filename: string) {
+  async upload_to_S3(data: any, directory: string, filename: string, pretty: boolean = false) {
     // Defensive: do not upload undefined. JSON.stringify(undefined) produces undefined
     // which would create a blob containing the string "undefined" on S3. Add enhanced
     // diagnostics (stack + payload preview) so we can trace the caller if this happens.
@@ -249,7 +250,7 @@ export class FileService {
 
     let json: string;
     try {
-      json = JSON.stringify(data);
+      json = pretty ? JSON.stringify(data, null, 2) : JSON.stringify(data);
     } catch (e) {
       console.error('upload_to_S3: JSON.stringify failed for', directory + filename, e);
       // console.error('upload_to_S3: payloadSummary', payloadSummary, 'callerStack', callerStack);

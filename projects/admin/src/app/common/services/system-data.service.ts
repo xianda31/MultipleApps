@@ -208,40 +208,17 @@ export class SystemDataService {
     return remote$ as Observable<UIConfiguration>;
   }
   async save_ui_settings(ui: UIConfiguration) {
-    // Merge incoming settings with current cache (shallow) and normalize breakpoints
-    const existing = this._ui_settings || ({} as UIConfiguration);
-    const merged: UIConfiguration = { ...(existing as any), ...(ui as any) } as UIConfiguration;
-    // If the admin provided a full `tournaments_type` mapping, ensure it replaces the cached one
-    try {
-      if ((ui as any)?.tournaments_type !== undefined) {
-        (merged as any).tournaments_type = (ui as any).tournaments_type;
-      }
-      if ((ui as any)?.default_tournament_image !== undefined) {
-        (merged as any).default_tournament_image = (ui as any).default_tournament_image;
-      }
-      if ((ui as any)?.email !== undefined) {
-        (merged as any).email = (ui as any).email;
-      }
-    } catch (e) { /* ignore */ }
-    // Ensure breakpoints live under merged.homepage; accept legacy top-level keys
-    (merged as any).homepage = (merged as any).homepage || {};
-    const legacyT = (merged as any).tournaments_row_cols || (merged as any).homepage?.tournaments_row_cols;
-    const legacyN = (merged as any).news_row_cols || (merged as any).homepage?.news_row_cols;
-    (merged as any).homepage.tournaments_row_cols = normalizeBreakpoints(legacyT) as any;
-    (merged as any).homepage.news_row_cols = normalizeBreakpoints(legacyN) as any;
-    // remove legacy top-level keys
-    if ((merged as any).tournaments_row_cols !== undefined) delete (merged as any).tournaments_row_cols;
-    if ((merged as any).news_row_cols !== undefined) delete (merged as any).news_row_cols;
-
-    this._ui_settings = merged;
-    // Persist to S3 in background (log errors). If somehow _ui_settings is undefined,
-    // use a safe default payload to avoid uploading the literal string "undefined".
+    // Use the provided payload directly (no merge) as it's now complete and clean
+    // The ui-conf component sends a complete, properly structured UIConfiguration object
+    this._ui_settings = ui;
+    
+    // Persist to S3 with pretty formatting
     const payload = this._ui_settings ?? this.getDefaultUi();
     if (this._ui_settings === undefined) {
       console.warn('[SystemDataService] save_ui_settings(): _ui_settings undefined at persist time, using defaults');
     }
     try {
-      await this.fileService.upload_to_S3(payload, 'system/', 'ui_settings.txt');
+      await this.fileService.upload_to_S3(payload, 'system/', 'ui_settings.txt', true);
       // Only notify subscribers after successful upload
       this._ui_settings$.next(this._ui_settings);
     } catch (err) {
@@ -295,7 +272,7 @@ export class SystemDataService {
     try {
       const toUpload: any = { ...(conf as any) };
       if (toUpload.ui_settings !== undefined) delete toUpload.ui_settings;
-      this.fileService.upload_to_S3(toUpload, 'system/', 'system_configuration.txt').then(() => {
+      this.fileService.upload_to_S3(toUpload, 'system/', 'system_configuration.txt', true).then(() => {
       }).catch((err) => {
         console.warn('save_configuration: upload error', err);
       });
