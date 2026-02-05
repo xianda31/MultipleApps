@@ -304,6 +304,11 @@ export class UiConfComponent implements OnInit {
     const tournamentsType = ui?.tournaments_type || {};
     // ...
     const homepage = ui?.homepage || {};
+    
+    // Debug: vérifier les valeurs chargées
+    console.log('Template chargé:', template);
+    console.log('banner_bg:', template.banner_bg);
+    
     // Support legacy/default stored in tournaments_type under several possible keys
     const defaultKeys = ['defaut', 'défaut', 'default', '__default__', 'fallback'];
     let inferredDefault: string | undefined = ui?.default_tournament_image;
@@ -366,6 +371,16 @@ export class UiConfComponent implements OnInit {
         no_filter: ui?.competitions?.no_filter ?? false
       } as CompetitionsUIConfig
     });
+
+    // Force la mise à jour des contrôles du template pour synchroniser les inputs color
+    const templateGroup = this.uiForm.get('template');
+    if (templateGroup) {
+      templateGroup.updateValueAndValidity();
+      Object.keys(templateGroup.value).forEach(key => {
+        const control = templateGroup.get(key);
+        control?.updateValueAndValidity({ emitEvent: true });
+      });
+    }
 
     // Patch result_filter_thresholds séparément pour garantir la synchro avec le FormGroup enfant
     const thresholds = (COMPETITION_DIVISIONS as string[]).reduce((acc: { [key: string]: number }, d: string) => {
@@ -610,11 +625,34 @@ export class UiConfComponent implements OnInit {
     const contentBg = this.uiForm.get('template.content_bg')?.value || '#ffffff';
     const contentText = this.uiForm.get('template.content_text_color')?.value || '#222222';
     
+    // Load Google Fonts dynamically for active fonts
+    this.loadGoogleFont(bannerFont);
+    this.loadGoogleFont(navbarFont);
+    this.loadGoogleFont(contentFont);
+    
     document.documentElement.style.setProperty('--banner-font', bannerFont);
     document.documentElement.style.setProperty('--navbar-font', navbarFont);
     document.documentElement.style.setProperty('--content-font', contentFont);
     document.documentElement.style.setProperty('--content-bg', contentBg);
     document.documentElement.style.setProperty('--content-text', contentText);
+  }
+
+  private loadGoogleFont(fontCss: string) {
+    // Extract font family name from CSS string (e.g., "Quicksand, sans-serif" -> "Quicksand")
+    const fontName = fontCss.split(',')[0].trim();
+    
+    // Check if font link already exists
+    const linkId = `google-font-${fontName.replace(/\s+/g, '-').toLowerCase()}`;
+    if (document.getElementById(linkId)) {
+      return; // Font already loaded
+    }
+    
+    // Create and inject Google Fonts link
+    const link = document.createElement('link');
+    link.id = linkId;
+    link.rel = 'stylesheet';
+    link.href = `https://fonts.googleapis.com/css2?family=${fontName.replace(/\s+/g, '+')}&display=swap`;
+    document.head.appendChild(link);
   }
 
 }

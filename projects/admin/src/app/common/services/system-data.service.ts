@@ -57,7 +57,7 @@ export class SystemDataService {
       }
     };
 
-    // attempting to download system/ui_settings.txt
+    // Toujours recharger depuis S3 pour éviter les problèmes de cache
     const remote_load$ = from(this.fileService.download_json_file('system/ui_settings.txt')).pipe(
       tap((conf) => {
         // Simple load: expect `ui_settings.txt` to conform to `UIConfiguration`.
@@ -78,12 +78,8 @@ export class SystemDataService {
       switchMap(() => this._ui_settings$.asObservable())
     );
 
-    if (this._ui_settings !== undefined) {
-      // cast is safe: observable may emit undefined initially but callers expect UIConfiguration; ensure subscribers handle undefined if needed
-      return this._ui_settings$.asObservable() as Observable<UIConfiguration>;
-    } else {
-      return remote_load$ as Observable<UIConfiguration>;
-    }
+    // Toujours recharger depuis S3
+    return remote_load$ as Observable<UIConfiguration>;
   }
 
   /**
@@ -219,8 +215,13 @@ export class SystemDataService {
     }
     try {
       await this.fileService.upload_to_S3(payload, 'system/', 'ui_settings.txt', true);
-      // Only notify subscribers after successful upload
-      this._ui_settings$.next(this._ui_settings);
+      
+      // Invalider le cache local - get_ui_settings rechargera depuis S3 à la prochaine demande
+      this._ui_settings = undefined as any;
+      
+      // Notifier les subscribers avec la valeur qui vient d'être sauvegardée
+      this._ui_settings$.next(ui);
+      
     } catch (err) {
       console.warn('save_ui_settings: upload error', err);
       try { console.error('[SystemDataService] save_ui_settings(): upload_to_S3 failed', { err, timestamp: new Date().toISOString() }); } catch (e) { /* ignore */ }
