@@ -115,15 +115,81 @@ export class MenusEditorComponent implements AfterViewInit {
       // this.snippetService.listSnippets()
     ])
       .subscribe({
-        next: ([sandboxItems, productionItems, pages]) => {
+        next: async ([sandboxItems, productionItems, pages]) => {
           this.pages = pages.filter(p => p.title !== CLIPBOARD_TITLE).sort((a, b) => a.title.localeCompare(b.title));
+          this.hasSandboxNavitems = sandboxItems.length > 0;
+          this.sandboxCount = sandboxItems.length;
+          this.productionCount = productionItems.length;
+
+          // Forcer Angular à détecter les changements
+          this.cdr.detectChanges();
+
+          // Attendre le prochain cycle pour permettre au DOM de se mettre à jour
+          // avant d'afficher les prompts bloquants
+          await new Promise(resolve => setTimeout(resolve, 0));
+
+          // Gestion de l'initialisation automatique de la sandbox
+          if (sandboxItems.length === 0 && productionItems.length > 0) {
+            // Sandbox vide : proposer de copier depuis production
+            const shouldInit = confirm(
+              '📋 La sandbox est vide.\n\n' +
+              'Voulez-vous initialiser la sandbox avec la configuration de production actuelle ?\n\n' +
+              '(Recommandé pour commencer à éditer les menus)'
+            );
+            if (shouldInit) {
+              try {
+                this.isProcessing = true;
+                const count = await this.navitemService.cloneProductionToSandbox();
+                this.toastService.showSuccess('Menus', `${count} élément(s) copié(s) vers sandbox`);
+                // Recharger les données après la copie
+                const reloadedSandbox = await firstValueFrom(this.navitemService.loadNavItemsSandbox());
+                sandboxItems = reloadedSandbox;
+                this.hasSandboxNavitems = sandboxItems.length > 0;
+                this.sandboxCount = sandboxItems.length;
+                this.sandbox_mode = true;
+                this.sandboxService.setSandbox(true);
+              } catch (err: any) {
+                this.toastService.showErrorToast('Menus', err?.message || 'Échec de l\'initialisation');
+              } finally {
+                this.isProcessing = false;
+              }
+            }
+          } else if (sandboxItems.length > 0) {
+            // Sandbox non vide : proposer de la garder ou de l'écraser
+            const choice = confirm(
+              '⚠️ Travail en cours détecté dans la sandbox.\n\n' +
+              `La sandbox contient ${sandboxItems.length} élément(s).\n` +
+              'Voulez-vous CONSERVER ce travail ?\n' +
+              'OK = Garder la sandbox actuelle\n' +
+              'Annuler = Écraser avec la configuration de production'
+            );
+            if (!choice && productionItems.length > 0) {
+              // L'utilisateur veut écraser avec la production
+              try {
+                this.isProcessing = true;
+                const count = await this.navitemService.cloneProductionToSandbox();
+                this.toastService.showSuccess('Menus', `${count} élément(s) copié(s) vers sandbox`);
+                // Recharger les données après la copie
+                const reloadedSandbox = await firstValueFrom(this.navitemService.loadNavItemsSandbox());
+                sandboxItems = reloadedSandbox;
+                this.hasSandboxNavitems = sandboxItems.length > 0;
+                this.sandboxCount = sandboxItems.length;
+              } catch (err: any) {
+                this.toastService.showErrorToast('Menus', err?.message || 'Échec de l\'écrasement');
+              } finally {
+                this.isProcessing = false;
+              }
+            }
+            // Activer automatiquement le mode sandbox si elle n'est pas vide
+            this.sandbox_mode = true;
+            this.sandboxService.setSandbox(true);
+          }
+
           // Choisir la source selon le mode
           const useSandbox = this.sandbox_mode;
           const navitems = useSandbox ? sandboxItems : productionItems;
           this.navitems = this.enrichWithPageTitleAndCarousel(navitems);
-          this.hasSandboxNavitems = sandboxItems.length > 0;
-          this.sandboxCount = sandboxItems.length;
-          this.productionCount = productionItems.length;
+          
           // Générer les routes sandbox
           firstValueFrom(this.navitemService.getFrontRoutes(true)).then(routes => {
             this.front_routes = routes;
@@ -323,7 +389,8 @@ export class MenusEditorComponent implements AfterViewInit {
   }
 
   async cloneProductionToSandbox() {
-    if (!confirm('Copier tous les menus de production vers sandbox ? Cela remplacera les menus sandbox existants.')) return;
+    // Ne demander confirmation que si la sandbox contient déjà des éléments
+    if (this.hasSandboxNavitems && !confirm('Copier tous les menus de production vers sandbox ? Cela remplacera les menus sandbox existants.')) return;
     this.isProcessing = true;
     try {
       const count = await this.navitemService.cloneProductionToSandbox();
@@ -360,6 +427,34 @@ export class MenusEditorComponent implements AfterViewInit {
       this.reloadNavitems();
     } catch (err: any) {
       this.toastService.showErrorToast('Menus', err?.message || 'Échec de la promotion');
+    } finally {
+      this.isProcessing = false;
+    }
+  }
+
+  async deleteSandbox() {
+    if (!confirm(
+      '⚠️ ATTENTION : Vous allez supprimer tous les menus de la sandbox.\n\n' +
+      'Cette action abandonnera tout le travail en cours non promu.\n\n' +
+      'Voulez-vous vraiment continuer ?'
+    )) return;
+    
+    this.isProcessing = true;
+    try {
+      // Utiliser le service pour supprimer tous les navitems sandbox
+      const sandboxItems = await firstValueFrom(this.navitemService.loadNavItemsSandbox());
+      let deletedCount = 0;
+      for (const item of sandboxItems) {
+        await this.navitemService.deleteNavItem(item);
+        deletedCount++;
+      }
+      this.toastService.showSuccess('Menus', `${deletedCount} élément(s) supprimé(s) de la sandbox`);
+      // Basculer en mode production et recharger
+      this.sandboxService.setSandbox(false);
+      this.sandbox_mode = false;
+      this.reloadNavitems();
+    } catch (err: any) {
+      this.toastService.showErrorToast('Menus', err?.message || 'Échec de la suppression');
     } finally {
       this.isProcessing = false;
     }

@@ -32,7 +32,7 @@
                                 }
                             </button>
                             <button class="btn btn-sm btn-warning" (click)="promoteSandboxToProduction()"
-                                [disabled]="isProcessing"
+                                [disabled]="!hasSandboxNavitems || isProcessing"
                                 title="Remplace tous les menus de production par les menus sandbox validés">
                                 @if (isProcessing) {
                                 <span class="spinner-border spinner-border-sm me-1" role="status"
@@ -41,6 +41,18 @@
                                 <i class="bi bi-arrow-right"></i>
                                 }
                             </button>
+                            @if (hasSandboxNavitems) {
+                            <button class="btn btn-sm btn-outline-danger" (click)="deleteSandbox()"
+                                [disabled]="isProcessing"
+                                title="Supprimer tous les menus sandbox (abandon du travail en cours)">
+                                @if (isProcessing) {
+                                <span class="spinner-border spinner-border-sm me-1" role="status"
+                                    aria-hidden="true"></span>
+                                } @else {
+                                <i class="bi bi-trash"></i>
+                                }
+                            </button>
+                            }
                         </div>
 
                         <div class="card text-center" style="min-width: 120px;">
@@ -70,6 +82,13 @@
 
         <!-- Column 1: Editeur menus + Simulations -->
         <div class="col-12 col-lg-6">
+            @if (!hasSandboxNavitems) {
+            <div class="alert alert-warning" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <strong>Sandbox vide :</strong> L'édition des menus n'est pas possible tant que la sandbox est vide. 
+                Utilisez le bouton de copie pour initialiser la sandbox avec les menus de production.
+            </div>
+            } @else {
             <div class="card border-0 mb-1">
                 <div class="card-header d-flex align-items-center justify-content-between"
                     style="padding-top: 0.5rem; padding-bottom: 0.5rem;">
@@ -91,6 +110,7 @@
                     <ng-container *ngTemplateOutlet="footbar_simulation"></ng-container>
                 </div>
             </div>
+            }
         </div>
         <!-- Column 2: vide -->
         <div class="col-12 col-lg-4">
@@ -159,8 +179,11 @@
                 @if (brandNavitem) {
                 <span class="navbar-brand d-flex align-items-center" style="font-size: 1.25rem; font-weight: 600;">
                     {{ label_transformer_simulation(brandNavitem) }}
-                    <i (click)="editNavitem(brandNavitem); $event.stopPropagation()"
-                        class="bi bi-pencil-square ms-1 text-success" role="button" title="Éditer"
+                    <i (click)="hasSandboxNavitems && editNavitem(brandNavitem); $event.stopPropagation()"
+                        [class]="'bi bi-pencil-square ms-1 ' + (hasSandboxNavitems ? 'text-success' : 'text-muted')"
+                        [style.cursor]="hasSandboxNavitems ? 'pointer' : 'not-allowed'"
+                        [style.opacity]="hasSandboxNavitems ? '1' : '0.5'"
+                        role="button" [title]="hasSandboxNavitems ? 'Éditer' : 'Sandbox vide - édition désactivée'"
                         style="font-size: 0.75rem;"></i>
                 </span>
                 <div class="border-end border-2 border-secondary mx-3" style="height: 30px;"></div>
@@ -192,8 +215,11 @@
                                         style="width:28px; height:28px; max-width:28px; max-height:28px; font-size:0.75rem; line-height:28px;">JD</span>
                                     }
                                     {{ label_transformer_simulation(menu.navitem) }}
-                                    <i (click)="editNavitem(menu.navitem); $event.stopPropagation()"
-                                        class="bi bi-pencil-square ms-1 text-success" role="button" title="Éditer"
+                                    <i (click)="hasSandboxNavitems && editNavitem(menu.navitem); $event.stopPropagation()"
+                                        [class]="'bi bi-pencil-square ms-1 ' + (hasSandboxNavitems ? 'text-success' : 'text-muted')"
+                                        [style.cursor]="hasSandboxNavitems ? 'pointer' : 'not-allowed'"
+                                        [style.opacity]="hasSandboxNavitems ? '1' : '0.5'"
+                                        role="button" [title]="hasSandboxNavitems ? 'Éditer' : 'Sandbox vide - édition désactivée'"
                                         style="font-size: 0.75rem;"></i>
                                 </a>
                                 <ul class="dropdown-menu" ngbDropdownMenu
@@ -258,7 +284,9 @@
                         }
                     </ul>
                 </div>
-                <button class="btn btn-sm btn-outline-success ms-1" (click)="createNavItem()">
+                <button class="btn btn-sm btn-outline-success ms-1" (click)="createNavItem()"
+                    [disabled]="!hasSandboxNavitems"
+                    [title]="hasSandboxNavitems ? 'Créer un nouvel élément de menu' : 'Sandbox vide - création désactivée'">
                     <i class="bi bi-plus-square-fill"></i>
                 </button>
 
@@ -275,8 +303,11 @@
                 style="width:28px; height:28px; max-width:28px; max-height:28px; font-size:0.75rem; line-height:28px;">JD</span>
             }
             {{ label_transformer_simulation(menu.navitem) }}
-            <i (click)="editNavitem(menu.navitem); $event.stopPropagation()"
-                class="bi bi-pencil-square ms-1 text-success" role="button" title="Éditer"
+            <i (click)="hasSandboxNavitems && editNavitem(menu.navitem); $event.stopPropagation()"
+                [class]="'bi bi-pencil-square ms-1 ' + (hasSandboxNavitems ? 'text-success' : 'text-muted')"
+                [style.cursor]="hasSandboxNavitems ? 'pointer' : 'not-allowed'"
+                [style.opacity]="hasSandboxNavitems ? '1' : '0.5'"
+                role="button" [title]="hasSandboxNavitems ? 'Éditer' : 'Sandbox vide - édition désactivée'"
                 style="font-size: 0.75rem;"></i>
         </ng-template>
     </ng-template>
@@ -303,15 +334,20 @@
                                     class="bi bi-grip-vertical text-muted"></i></span>
                             <button class="nav-link btn btn-link p-0" type="button" (click)="show_page(menu.navitem)">
                                 {{ label_transformer_simulation(menu.navitem) }}
-                                <i (click)="editNavitem(menu.navitem); $event.stopPropagation()"
-                                    class="bi bi-pencil-square ms-1 text-success" role="button" title="Éditer"
+                                <i (click)="hasSandboxNavitems && editNavitem(menu.navitem); $event.stopPropagation()"
+                                    [class]="'bi bi-pencil-square ms-1 ' + (hasSandboxNavitems ? 'text-success' : 'text-muted')"
+                                    [style.cursor]="hasSandboxNavitems ? 'pointer' : 'not-allowed'"
+                                    [style.opacity]="hasSandboxNavitems ? '1' : '0.5'"
+                                    role="button" [title]="hasSandboxNavitems ? 'Éditer' : 'Sandbox vide - édition désactivée'"
                                     style="font-size: 0.75rem;"></i>
                             </button>
                         </li>
                         }
                     </ul>
                 </div>
-                <button class="btn btn-sm btn-outline-success ms-1" (click)="createNavItem(NAVITEM_POSITION.FOOTER)">
+                <button class="btn btn-sm btn-outline-success ms-1" (click)="createNavItem(NAVITEM_POSITION.FOOTER)"
+                    [disabled]="!hasSandboxNavitems"
+                    [title]="hasSandboxNavitems ? 'Créer un nouvel élément de menu' : 'Sandbox vide - création désactivée'">
                     <i class="bi bi-plus-square-fill"></i>
                 </button>
             </div>

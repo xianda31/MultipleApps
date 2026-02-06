@@ -1,18 +1,16 @@
 
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, firstValueFrom, map, of, switchMap, tap, first, combineLatest } from 'rxjs';
+import { BehaviorSubject, Observable, firstValueFrom, map, switchMap } from 'rxjs';
 import { ToastService } from './toast.service';
 import { DBhandler } from './graphQL.service';
 import { MenuGroup, NavItem, NavItem_input, NAVITEM_TYPE, NAVITEM_POSITION, NAVITEM_LOGGING_CRITERIA } from '../interfaces/navitem.interface';
 import { minimal_routes } from '../../front/front.routes';
 import { Routes } from '@angular/router';
 import { GenericPageComponent } from '../../front/front/pages/generic-page/generic-page.component';
-import { PLUGINS, NAVITEM_PLUGIN, PLUGINS_META } from '../interfaces/plugin.interface';
+import { PLUGINS, PLUGINS_META } from '../interfaces/plugin.interface';
 import { AuthGuard } from '../../auth.guard';
 import { PageService } from './page.service';
 import { Page, PAGE_TEMPLATES } from '../interfaces/page_snippet.interface';
-import { Carousel } from '../../front/carousel/carousel';
-import { TournamentComponent } from '../tournaments/tournament/tournament.component';
 
 @Injectable({
   providedIn: 'root'
