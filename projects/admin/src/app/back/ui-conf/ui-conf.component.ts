@@ -365,10 +365,7 @@ export class UiConfComponent implements OnInit {
           ["national"]: ui?.competitions?.preferred_organizations?.national || 'FFB'
         },
         // Les autres champs sont patchés ci-dessous
-        show_members_only: ui?.competitions?.show_members_only ?? false,
-        one_year_back: ui?.competitions?.one_year_back ?? false,
         show_infos: ui?.competitions?.show_infos ?? false,
-        no_filter: ui?.competitions?.no_filter ?? false
       } as CompetitionsUIConfig
     });
 

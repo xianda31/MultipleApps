@@ -30,9 +30,9 @@ export class CompetitionsComponent {
   division_labels: { [key: string]: string } = COMPETITION_DIVISION_LABELS;
 
   preferred_organization_labels!: { comite: string; ligue: string; national: string };
-  show_members_only!: boolean;
+  show_full_team!: boolean;
   one_year_back!: boolean;
-  show_infos!: boolean;
+  // show_infos!: boolean;
   // full_regeneration!: boolean;
   // result_filter_thresholds: { [key: string]: number } = {};
 
@@ -78,38 +78,33 @@ export class CompetitionsComponent {
       } else {
         this.preferred_organization_labels = defaultLabels;
       }
-      this.no_filter = ui?.competitions?.no_filter || false;
-      this.one_year_back = ui?.competitions?.one_year_back || false;
+      this.one_year_back =  false;
       this.competitionService.getCompetitionOrganizations(this.preferred_organization_labels).subscribe(orgs => {
         this.organizations = orgs;
       });
 
-      this.show_members_only = ui?.competitions?.show_members_only || false;
-      this.show_infos = ui?.competitions?.show_infos || false;
-      this.no_filter = ui?.competitions?.no_filter || false;
+      this.show_full_team =  false;
+      // this.show_infos = ui?.competitions?.show_infos || false;
+      this.no_filter =  false;
       this.update_results();
     });
   }
   onParamsChange(reload:boolean): void {
-    // Recalcule l'affichage localement sans recharger depuis S3
-    this.show_members_only = this.ui_config_loaded.competitions.show_members_only;
-    this.show_infos = this.ui_config_loaded.competitions.show_infos;
-    this.one_year_back = this.ui_config_loaded.competitions.one_year_back;
-    this.no_filter = this.ui_config_loaded.competitions.no_filter;
 
     if (reload) {
       this.results_extracted = false;
       this.update_results();
     }
     this.thresholdsModified = true;
+    this.titleService.setTitle('Résultats des compétitions ' + this.current_season);
   }
 
   update_results(): void {
     this.current_season = this.one_year_back ? this.systemService.previous_season(this.systemService.get_today_season()) : this.systemService.get_today_season();
-    this.titleService.setTitle('Compétitions ' + this.current_season);
+    this.titleService.setTitle('Résultats des compétitions ' + this.current_season);
 
     this.competitionService.getCompetionsResults(this.current_season, this.preferred_organization_labels, this.full_regeneration).subscribe(results => {
-      if (this.show_infos) console.log('CompetitionsComponent: received raw competition results', results);
+      if (this.ui_config_loaded.competitions.show_infos) console.log('CompetitionsComponent: received raw competition results', results);
       // Filtrer les CompetitionResults dont toutes les teams sont vides
       const filteredResults: CompetitionResultsMap = {};
       Object.entries(results).forEach(([compId, compResults]) => {
@@ -137,7 +132,7 @@ export class CompetitionsComponent {
       );
       if (autresHasResults && !this.divisions.includes('Autres')) {
         this.divisions = [...this.divisions, 'Autres'];
-        if (this.show_infos) {
+        if (this.ui_config_loaded.competitions.show_infos) {
           const autresResults = Object.values(filteredToDisplay)
             .flatMap((arr: CompetitionResults[]) => arr.filter((res: CompetitionResults) => res.competition.assigned_division === 'Autres'));
           console.warn('[PROD TRACK] Résultats présents pour la division "Autres". Cas à surveiller.', autresResults);
@@ -203,7 +198,7 @@ export class CompetitionsComponent {
   }
 
   getDisplayedPlayers(players: Player[]): Player[] {
-    if (this.show_members_only) {
+    if (!this.show_full_team) {
       return players.filter(p => this.isMember(p));
     }
     return players;

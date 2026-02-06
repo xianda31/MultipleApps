@@ -10,28 +10,10 @@
                     <!-- <div class="row"> -->
                     <div class="col-auto d-flex flex-column gap-2">
                         <div class="form-check form-check-inline mb-0">
-                            <input class="form-check-input" type="checkbox" id="showMembersOnlyBack"
-                                [(ngModel)]="ui_config_loaded.competitions.show_members_only"
-                                (change)="onParamsChange(false)" />
-                            <label class="form-check-label" for="showMembersOnlyBack">Membres uniquement</label>
-                        </div>
-                        <div class="form-check form-check-inline mb-0">
                             <input class="form-check-input" type="checkbox" id="showTheoricalRankBack"
                                 [(ngModel)]="ui_config_loaded.competitions.show_infos"
                                 (change)="onParamsChange(false)" />
                             <label class="form-check-label" for="showTheoricalRankBack">Données détaillées</label>
-                        </div>
-                        <div class="form-check form-check-inline mb-0">
-                            <input class="form-check-input" type="checkbox" id="oneYearBackBack"
-                                [(ngModel)]="ui_config_loaded.competitions.one_year_back"
-                                (change)="onParamsChange(true)" />
-                            <label class="form-check-label" for="oneYearBackBack">Saison précédente</label>
-                        </div>
-                        <div class="form-check form-check-inline mb-0">
-                            <input class="form-check-input" type="checkbox" id="noFilterBack"
-                                [(ngModel)]="ui_config_loaded.competitions.no_filter"
-                                (change)="onParamsChange(false)" />
-                            <label class="form-check-label" for="noFilterBack">Aucun filtrage</label>
                         </div>
 
                         <!-- <div class="col-auto flex-grow-1"> -->
@@ -46,7 +28,7 @@
                                         <input type="range" class="form-range" style="width: 200px;"
                                             [(ngModel)]="ui_config_loaded.competitions.result_filter_thresholds[division]"
                                             min="1" max="100" step="1" (change)="onParamsChange(false)"
-                                            [disabled]="ui_config_loaded.competitions.no_filter" />
+                                            [disabled]="no_filter" />
                                         <span class="badge bg-secondary ms-2"
                                             style="min-width: 40px; text-align: center;">{{
                                             ui_config_loaded.competitions.result_filter_thresholds[division]
@@ -67,7 +49,6 @@
         </div>
         <div [ngClass]="back_office_mode ? 'col-12 col-lg-8 col-xl-9' : 'col-12'">
 
-
             <div *ngIf="!results_extracted" class="row mb-3 justify-content-center">
                 <div class="text-center">
                     <div class="spinner-border text-primary" role="status">
@@ -80,6 +61,26 @@
             </div>
 
             <div *ngIf="results_extracted">
+                <!-- paramètres visualisation -->
+                <div class="d-inline-block w-auto mb-3" >
+                    <div class=" d-flex align-items-center" style="gap: 2rem">
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" id="noFilterSwitch" [(ngModel)]="no_filter">
+                            <label class="form-check-label" for="noFilterSwitch">résultats complets</label>
+                        </div>
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" id="showFullTeamSwitch"
+                                [(ngModel)]="show_full_team">
+                            <label class="form-check-label" for="showFullTeamSwitch">équipes complètes</label>
+                        </div>
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" id="showFullTeamSwitch"
+                                [(ngModel)]="one_year_back" (change)="onParamsChange(true)">
+                            <label class="form-check-label" for="showFullTeamSwitch">année précédente</label>
+                        </div>
+                    </div>
+                </div>
+
 
                 <!-- Bloc résultats -->
                 <div *ngIf="(filtered_team_results | keyvalue).length > 0" class="row mb-3" style="gap:0;">
@@ -88,10 +89,10 @@
                         Aucun résultat à afficher pour la saison {{current_season}}.
                     </div>
                     <div class=" px-1 col-12 col-md" *ngFor="let division of divisions; let i = index">
-                        <div class=" text-center  text-uppercase text-primary fw-bolder mt-2 mb-2" >
+                        <div class=" text-center  text-uppercase text-primary fw-bolder mt-2 mb-2">
                             {{ division }}
                         </div>
-                        <div class="d-flex flex-column gap-3" >
+                        <div class="d-flex flex-column gap-3">
                             <ng-container *ngFor="let result of filtered_team_results | keyvalue">
                                 <!-- result.key = competitionId, result.value = CompetitionResults[] -->
                                 <ng-container *ngIf="result.value.length > 0 && hasTeamsToDisplay(result.value)"
@@ -121,7 +122,7 @@
                     <span class="fw-bold">
                         {{ result.value[0].competition.assigned_label }}
                     </span>
-                    <div *ngIf="show_infos" style="font-size: 0.7em;">{{result.key}}
+                    <div *ngIf="ui_config_loaded.competitions.show_infos" style="font-size: 0.7em;">{{result.key}}
                         {{result.value[0].competition.family.label}} - {{
                         (result.value[0].competition.label) }}</div>
                 </div>
@@ -140,7 +141,8 @@
                                             <span>
                                                 {{ team.rank + (team.rank===1?'er':'eme') }}
                                             </span>
-                                            <span *ngIf="show_infos" style="font-size: 0.7em;">
+                                            <span *ngIf="ui_config_loaded.competitions.show_infos"
+                                                style="font-size: 0.7em;">
                                                 {{(team.cumulated_pe_percentage ?
                                                 (team.cumulated_pe_percentage |
                                                 number:'1.0-1') +
@@ -150,7 +152,7 @@
                                         </span>
                                         <span
                                             class="ms-3 d-flex flex-row flex-grow-1 w-100 justify-content-between align-items-start">
-                                            <ng-container *ngIf="show_members_only; else playersColumn">
+                                            <ng-container *ngIf="!show_full_team; else playersColumn">
                                                 <span>
                                                     <ng-container
                                                         *ngFor="let player of getDisplayedPlayers(team.players); let i = index; let last = last">
@@ -167,7 +169,7 @@
                                             <ng-template #playersColumn>
                                                 <span class="d-flex flex-column">
                                                     <span *ngFor="let player of team.players">
-                                                        <span *ngIf="isMember(player) || !show_members_only"
+                                                        <span *ngIf="isMember(player) || show_full_team"
                                                             [ngClass]="{'fw-semibold': isMember(player), 'fst-italic': !isMember(player), 'player-small': true}">
                                                             {{ player.firstname }} {{
                                                             player.lastname }}

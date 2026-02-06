@@ -50,10 +50,7 @@ export class SystemDataService {
           national: ''
         },
         result_filter_thresholds: {},
-        show_members_only: false,
-        one_year_back: false,
         show_infos: false,
-        no_filter: false
       }
     };
 
@@ -186,10 +183,7 @@ export class SystemDataService {
               national: ''
             },
             result_filter_thresholds: {},
-            show_members_only: false,
-            one_year_back: false,
             show_infos: false,
-            no_filter: false
           }
         };
         console.error('[SystemDataService] fetch_ui_settings(): error fetching ui_settings', err);
