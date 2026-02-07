@@ -21,7 +21,6 @@ import { MembersComponent } from '../common/members/members.component';
 import { CloneDBComponent } from './maintenance/clone-DB/clone-db.component';
 import { AdminComponent } from './admin/back.component';
 import { BackPageComponent } from './back-page/back-page.component';
-// import { SnippetsComponent } from './site/snippets/snippets.component';
 import { FilemgrWindowsComponent } from './files/filemgr/filemgr-windows.component';
 import { RootVolumeComponent } from './files/root-volume/root-volume';
 import { AuthGuard } from '../auth.guard';
@@ -32,6 +31,7 @@ import { BackAssistanceComponent } from './back-assistance/back-assistance.compo
 import { MailingComponent } from './mailing/mailing.component';
 import { CmsWrapper } from './pages/cms-wrapper/cms-wrapper';
 import { CompetitionsComponent } from './competitions/competitions';
+import { ComiteeBookletViewerComponent } from './comitee-booklet-viewer/comitee-booklet-viewer.component';
 
 export const routes: Routes = [
   {
@@ -69,6 +69,7 @@ export const routes: Routes = [
       { path: BACK_ROUTE_PATHS.FilemgrWindows, component: FilemgrWindowsComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.CloneDB, component: CloneDBComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.CloneS3, component: CloneS3Component, canActivate: [AuthGuard] },
+      { path: BACK_ROUTE_PATHS.ComiteeBookletViewer, component: ComiteeBookletViewerComponent, data:{pdfSrc:'Agenda_2025_26.pdf'}, canActivate: [AuthGuard] },
       // { path: BACK_ROUTE_PATHS.BooksDebugger, component: BooksEditorComponent, data: { access: 'full' }, canActivate: [AuthGuard] },
       // { path: BACK_ROUTE_PATHS.BooksDebuggerId, component: BooksEditorComponent, data: { access: 'full' }, canActivate: [AuthGuard] },
 

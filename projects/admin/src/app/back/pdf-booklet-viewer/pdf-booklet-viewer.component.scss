@@ -1,0 +1,261 @@
+﻿:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.pdf-error-details {
+  color: #fff;
+  background: #b71c1c;
+  padding: 0.5rem;
+  margin-top: 0.5rem;
+  border-radius: 4px;
+  font-size: 0.95em;
+  white-space: pre-line;
+}
+
+.pdf-error {
+  color: #fff;
+  background: #d32f2f;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 4px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.booklet-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 1rem;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.navigation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  // gap: 2rem;
+  margin-bottom: 1rem;
+  // padding: 0.75rem;
+  // background: white;
+  // border-radius: 8px;
+  // box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  // flex-shrink: 0;
+
+  button {
+    padding: 0.75rem 1.5rem;
+    background: #1976d2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+
+    &:hover:not(:disabled) {
+      background: #1565c0;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    &:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+  }
+
+  .page-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    min-width: 120px;
+    text-align: center;
+  }
+}
+
+.booklet-wrapper {
+  perspective: 2000px;
+  perspective-origin: center center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 1400px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.booklet-book {
+  display: flex;
+  position: relative;
+  transform-style: preserve-3d;
+  gap: 0;
+  border: 2px solid #999;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+}
+
+@keyframes flipPageRight {
+  0% {
+    transform: rotateY(0deg) translateZ(0px);
+  }
+  50% {
+    transform: rotateY(-90deg) translateZ(80px);
+  }
+  100% {
+    transform: rotateY(-180deg) translateZ(0px);
+  }
+}
+
+@keyframes flipPageLeft {
+  0% {
+    transform: rotateY(-180deg) translateZ(0px);
+  }
+  50% {
+    transform: rotateY(-90deg) translateZ(80px);
+  }
+  100% {
+    transform: rotateY(0deg) translateZ(0px);
+  }
+}
+
+.page-container {
+  position: relative;
+  transform-style: preserve-3d;
+  backface-visibility: visible;
+  
+  &.left-page {
+    transform-origin: right center;
+    margin-right: 0;
+    
+    .page-inner::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 20px;
+      background: linear-gradient(
+        to left,
+        rgba(0,0,0,0.15) 0%,
+        rgba(0,0,0,0.08) 50%,
+        transparent 100%
+      );
+      pointer-events: none;
+      z-index: 2;
+    }
+  }
+  
+  &.right-page {
+    transform-origin: left center;
+    margin-left: 0;
+    
+    &.hidden {
+      display: none;
+    }
+    
+    // La page-next est en dessous (statique, pour flip avant)
+    .page-next {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+      visibility: hidden;
+      
+      // Retirer les effets visuels pour éviter les artefacts
+      box-shadow: none !important;
+      
+      &::before {
+        display: none !important;
+      }
+    }
+    
+    // La page-current est au milieu (qui se tourne lors du flip avant)
+    .page-current {
+      position: relative;
+      z-index: 2;
+      transform-style: preserve-3d;
+      backface-visibility: hidden;
+      transform-origin: left center; // Axe de rotation sur la reliure (bord gauche)
+    }
+    
+    // La page-prev apparaît au-dessus lors du flip arrière
+    .page-prev {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 3;
+      transform-style: preserve-3d;
+      backface-visibility: hidden;
+      transform-origin: left center;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      
+      // Retirer les effets visuels pour éviter les artefacts
+      box-shadow: none !important;
+      
+      &::before {
+        display: none !important;
+      }
+    }
+    
+    &.flipping-right {
+      .page-next {
+        visibility: visible;
+      }
+      
+      .page-current {
+        animation: flipPageRight 1.4s cubic-bezier(0.645, 0.045, 0.355, 1);
+      }
+    }
+    
+    &.flipping-left {
+      .page-prev {
+        opacity: 1;
+        visibility: visible;
+        animation: flipPageLeft 1.4s cubic-bezier(0.645, 0.045, 0.355, 1);
+      }
+    }
+  }
+}
+
+.page-inner {
+  background: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.pdf-canvas {
+  display: block;
+  max-width: 100%;
+  max-height: calc(100vh - 12rem);
+  height: auto;
+  width: auto;
+}
+
+.book-spine {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(
+    to right,
+    rgba(0,0,0,0.2),
+    rgba(0,0,0,0.1),
+    rgba(0,0,0,0.05),
+    rgba(0,0,0,0.1),
+    rgba(0,0,0,0.2)
+  );
+  z-index: 10;
+  pointer-events: none;
+}

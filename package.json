@@ -46,6 +46,7 @@
     "jspdf": "^3.0.1",
     "jspdf-autotable": "^5.0.2",
     "jszip": "^3.10.1",
+    "pdfjs-dist": "^4.8.69",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.1"

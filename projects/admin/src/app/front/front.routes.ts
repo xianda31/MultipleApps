@@ -1,10 +1,6 @@
 import { Routes } from '@angular/router';
 import { PageNotFoundComponent } from '../common/page-not-found/page-not-found.component';
-import { TournamentComponent } from '../common/tournaments/tournament/tournament.component';
 import { FrontComponent } from './front/front/front.component';
-import { Carousel } from './carousel/carousel';
-import { AuthGuard } from '../auth.guard';
-import { AlbumComponent } from './album/album.component';
 
 
 // Minimal, safe front routes used at bootstrap. Dynamic/nav-driven routes

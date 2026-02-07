@@ -1,0 +1,71 @@
+<div class="booklet-container">
+    <div *ngIf="pdfError" class="pdf-error">
+        <div>
+            {{ pdfError.split('\n')[0] }}
+        </div>
+        <div *ngIf="pdfError.split('\n').length > 1" class="pdf-error-details">
+            <span *ngFor="let line of pdfError.split('\n').slice(1)">
+                {{ line }}<br />
+            </span>
+        </div>
+    </div>
+
+    <div *ngIf="presignedUrl && pdfDocument">
+        <!-- Navigation -->
+        <div class="navigation">
+            <div class="d-flex align-items-center gap-3 w-100">
+                <label class="page-label mb-0">{{ getCurrentPageLabel() }}</label>
+                <input 
+                    type="range" 
+                    class="form-range flex-grow-1" 
+                    [min]="0" 
+                    [max]="pagePairs.length" 
+                    [value]="displayIndex"
+                    (input)="goToPage(+$any($event.target).value)"
+                    [disabled]="isFlipping"
+                    step="1">
+            </div>
+        </div>
+
+        <!-- Booklet 3D avec effet flip -->
+        <div class="booklet-wrapper">
+            <div class="booklet-book">
+
+                <!-- Page de gauche -->
+                <div class="page-container left-page" (click)="prevPage()">
+                    <div class="page-inner">
+                        <canvas #leftCanvas class="pdf-canvas"></canvas>
+                    </div>
+                    <!-- Canvas caché pour pré-charger la page de gauche suivante -->
+                    <div class="page-inner" style="position: absolute; opacity: 0; pointer-events: none;">
+                        <canvas #nextLeftCanvas class="pdf-canvas"></canvas>
+                    </div>
+                </div>
+
+                <!-- Reliure centrale -->
+                <div class="book-spine"></div>
+
+                <!-- Page de droite -->
+                <div class="page-container right-page" (click)="nextPage()" [class.hidden]="!showRightPage"
+                    [class.flipping-right]="isFlipping && flipDirection === 'right'"
+                    [class.flipping-left]="isFlipping && flipDirection === 'left'">
+
+                    <!-- Page suivante (visible pendant la rotation avant) -->
+                    <div class="page-inner page-next">
+                        <canvas #nextCanvas class="pdf-canvas"></canvas>
+                    </div>
+
+                    <!-- Page actuelle (au milieu) -->
+                    <div class="page-inner page-current">
+                        <canvas #rightCanvas class="pdf-canvas"></canvas>
+                    </div>
+
+                    <!-- Page précédente (qui revient par-dessus lors du flip arrière) -->
+                    <div class="page-inner page-prev">
+                        <canvas #prevCanvas class="pdf-canvas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -25,6 +25,7 @@ export const BACK_ROUTE_PATHS = {
   GroupsList: 'outils/groups',
   CloneDB: 'outils/cloneDB',
   CloneS3: 'outils/cloneS3',
+  ComiteeBookletViewer: 'outils/comitee-booklet-viewer',
   // Snippets: 'site/thumbnails',
   RootVolume: 'outils/disk',
   FilemgrWindows: 'outils/disk/:root_folder',

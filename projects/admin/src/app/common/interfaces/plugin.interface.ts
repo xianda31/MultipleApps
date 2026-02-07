@@ -11,6 +11,7 @@ import { TournamentComponent } from "../tournaments/tournament/tournament.compon
 import { AssistanceComponent } from "../../front/front/assistance/assistance.component";
 import { AlbumComponent } from "../../front/album/album.component";
 import { CompetitionsComponent } from "../../back/competitions/competitions";
+import { ComiteeBookletViewerComponent } from "../../back/comitee-booklet-viewer/comitee-booklet-viewer.component";
 
 export enum NAVITEM_PLUGIN {
   TOURNAMENTS = 'tournaments',
@@ -22,6 +23,7 @@ export enum NAVITEM_PLUGIN {
   IFRAME = 'iframe',
   HOME = 'homePage',
   ASSISTANCE = 'assistance',
+  COMITEE_BOOKLET_VIEWER = 'comitee_booklet_viewer',
   // ALBUM = 'album',
 };
 
@@ -59,6 +61,7 @@ export const PLUGINS: Record<string, Type<any>> = {
   [NAVITEM_PLUGIN.ASSISTANCE]: AssistanceComponent,
   ['les_albums']: AlbumComponent,
   ['tournament']: TournamentComponent,
+  [NAVITEM_PLUGIN.COMITEE_BOOKLET_VIEWER]: ComiteeBookletViewerComponent,
 };
 
 
