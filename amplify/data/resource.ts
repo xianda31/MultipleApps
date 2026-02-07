@@ -105,7 +105,7 @@ const schema = a.schema({
     .authorization((allow) => [
       allow.guest().to(['read']),
       allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
-      allow.group(Group_names.Admin).to(['read', 'update', 'delete']),
+      allow.group(Group_names.Admin).to(['read','create', 'update', 'delete']),
       allow.group(Group_names.Editor).to(['read','create', 'update']),
       allow.group(Group_names.Support).to(['read','create', 'update']),
       allow.group(Group_names.Member).to(['read']),
