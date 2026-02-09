@@ -301,7 +301,8 @@ export class UiConfComponent implements OnInit {
       ? ui.homepage.news_row_cols
       : { SM: 1, MD: 2, LG: 4, XL: 6 };
     const template = ui?.template || {};
-    const tournamentsType = ui?.tournaments_type || {};
+    // IMPORTANT: deep copy to avoid mutating the original object in BehaviorSubject cache
+    const tournamentsType: { [key: string]: string } = { ...(ui?.tournaments_type || {}) };
     // ...
     const homepage = ui?.homepage || {};
     
@@ -309,10 +310,10 @@ export class UiConfComponent implements OnInit {
     const defaultKeys = ['defaut', 'défaut', 'default', '__default__', 'fallback'];
     let inferredDefault: string | undefined = ui?.default_tournament_image;
     for (const dk of defaultKeys) {
-      if (!inferredDefault && tournamentsType && (tournamentsType as any)[dk]) {
-        inferredDefault = (tournamentsType as any)[dk];
-        // remove from mapping so it doesn't appear as a regular mapping row
-        delete (tournamentsType as any)[dk];
+      if (!inferredDefault && tournamentsType[dk]) {
+        inferredDefault = tournamentsType[dk];
+        // remove from mapping so it doesn't appear as a regular mapping row (safe: we're mutating a copy)
+        delete tournamentsType[dk];
       }
     }
 
@@ -524,6 +525,7 @@ export class UiConfComponent implements OnInit {
       };
 
       // Save UI settings into dedicated file and publish immédiatement
+      console.log('Saving UI settings with payload:', payload);
       await this.systemDataService.save_ui_settings(payload);
       // Le subscribe initial à get_ui_settings() sera notifié et mettra à jour l'UI
     } catch (e: any) {

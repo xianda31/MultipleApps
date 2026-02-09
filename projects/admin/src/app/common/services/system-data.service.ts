@@ -198,22 +198,14 @@ export class SystemDataService {
     return remote$ as Observable<UIConfiguration>;
   }
   async save_ui_settings(ui: UIConfiguration) {
-    // Use the provided payload directly (no merge) as it's now complete and clean
-    // The ui-conf component sends a complete, properly structured UIConfiguration object
+
     this._ui_settings = ui;
     
     // Persist to S3 with pretty formatting
-    const payload = this._ui_settings ?? this.getDefaultUi();
-    if (this._ui_settings === undefined) {
-      console.warn('[SystemDataService] save_ui_settings(): _ui_settings undefined at persist time, using defaults');
-    }
+
     try {
-      await this.fileService.upload_to_S3(payload, 'system/', 'ui_settings.txt', true);
+      await this.fileService.upload_to_S3(ui, 'system/', 'ui_settings.txt', true);
       
-      // Invalider le cache local - get_ui_settings rechargera depuis S3 à la prochaine demande
-      this._ui_settings = undefined as any;
-      
-      // Notifier les subscribers avec la valeur qui vient d'être sauvegardée
       this._ui_settings$.next(ui);
       
     } catch (err) {

@@ -74,13 +74,13 @@ export class HomePage {
 
     this.fileService.list_files(this.home_folder + '/').pipe(
       map((S3items) => S3items.filter(item => item.size !== 0)),
-      tap((items) => { if (items.length === 0) console.debug('[HomePage] Album %s is empty', this.home_folder); }),
+      tap((items) => { if (items.length === 0) {/* ... */} }),
       switchMap((S3items) => {
         if (!S3items || S3items.length === 0) return of([] as string[]);
         const urlObservables = S3items.map(item =>
           this.fileService.getPresignedUrl$((item.path)).pipe(
             catchError(err => {
-              console.debug('[HomePage] getPresignedUrl$ failed for', item.path, err);
+              // ...
               return of(null);
             })
           )
@@ -88,7 +88,7 @@ export class HomePage {
         return combineLatest(urlObservables);
       }),
       catchError(err => {
-        console.debug('[HomePage] loading home images failed', err);
+        // ...
         return of([] as (string | null)[]);
       })
     ).subscribe((items) => {

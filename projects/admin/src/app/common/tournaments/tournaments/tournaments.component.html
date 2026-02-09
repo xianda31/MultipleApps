@@ -9,24 +9,25 @@
         <div class="card h-100  nice_shadow">
             <div class="row  g-0">
                 <div class="col col-sm-3 col-md-4 d-flex">
-                    <div class="overflow-hidden w-100" style="height: 4rem;">
+                    <div class="overflow-hidden w-100" >
                         <ng-container *ngIf="getImageUrl(t) as imgUrl; else noImg">
                             <img [attr.src]="imgUrl" class="img-fluid card-img-top" [alt]="name_of(t) || 'vignette'"
-                                style="object-fit:cover; display:block; width:100%; height:4.5rem;">
+                                style="object-fit:cover; display:block; width:100%;">
                         </ng-container>
                         <ng-template #noImg>
-                            <div class="w-100 h-100" style="height:4rem; background: transparent;"></div>
+                            <div class="w-100 h-100" style=" background: transparent;"></div>
                         </ng-template>
                     </div>
                 </div>
-                <div class="col col-sm-9 col-md-8 d-flex">
-                    <div class="ms-1  d-flex flex-column justify-content-center text-center">
-                        <h5 class=" card-title text-success">{{ date_of(t) | date:'EEEE d MMMM':'':'fr-FR' }}</h5>
+                <div class="col col-sm-9 col-md-8 d-flex align-items-center">
+                    <div class="w-100">
+                        <h4 class="text-success text-center">{{ date_of(t) | date:'EEEE d MMMM':'':'fr-FR' }}
+                            <h5 > {{name_of(t)}} </h5>
+                        </h4>
                     </div>
                 </div>
             </div>
-            <div class="card-body g-0 d-flex flex-column">
-                <div class="card-subtitle text-center"> {{name_of(t)}} </div>
+            <div class="card-body pt-0 g-0 d-flex flex-column">
                 <hr>
                 <div class="card-text">
                     <div *ngIf="t.teams && t.teams.length > 0">

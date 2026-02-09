@@ -266,7 +266,7 @@ export class FileService {
     const file = new File([blob], filename);
 
     // Log intent to upload with minimal payload info.
-    // console.debug('upload_to_S3: uploading', { path: directory + filename, timestamp: now, payloadSummary });
+    // ...
 
     // Perform upload and attach diagnostics on error so we can trace origin of bad payloads.
     // Use noCache=true for config files to avoid CDN caching issues
@@ -297,7 +297,7 @@ export class FileService {
             // Provide detailed diagnostics to help investigate corrupt or invalid files
             console.error('download_json_file: JSON parse error for', path, parseErr);
             try {
-              console.debug('download_json_file: raw content snippet:', path, raw && raw.slice ? raw.slice(0, 200) : raw);
+              // ...
             } catch (e) { /* ignore */ }
             this.toastService.showErrorToast('Configuration système', `Fichier ${path} invalide (erreur de parsing)`);
             reject(parseErr);
