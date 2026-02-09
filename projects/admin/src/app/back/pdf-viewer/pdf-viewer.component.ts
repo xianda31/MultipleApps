@@ -13,13 +13,13 @@ if (typeof window !== 'undefined') {
 }
 
 @Component({
-    selector: 'app-comitee-booklet-viewer',
+    selector: 'app-pdf-viewer',
     standalone: true,
     imports: [CommonModule, FormsModule],
-    templateUrl: './comitee-booklet-viewer.component.html',
-    styleUrls: ['./comitee-booklet-viewer.component.scss']
+    templateUrl: './pdf-viewer.component.html',
+    styleUrls: ['./pdf-viewer.component.scss']
 })
-export class ComiteeBookletViewerComponent implements OnInit, AfterViewInit {
+export class PdfViewerComponent implements OnInit, AfterViewInit {
     @Input() pdfSrc!: string;
     @ViewChild('leftCanvas', { static: false }) leftCanvas?: ElementRef<HTMLCanvasElement>;
     @ViewChild('rightCanvas', { static: false }) rightCanvas?: ElementRef<HTMLCanvasElement>;
@@ -49,14 +49,14 @@ export class ComiteeBookletViewerComponent implements OnInit, AfterViewInit {
     async ngOnInit(): Promise<void> {
 
         this.titleService.setTitle('Agenda compétitions Midi-Pyrénées ');
-        this.pdfSrc = 'Tableau de Bord 2025-2026.pdf'; // Valeur par défaut
+        // this.pdfSrc = 'Agenda_2025_26.pdf'; // Valeur par défaut
         if (!this.pdfSrc) {
-            const dataSrc = this.route.snapshot.data['pdfSrc'];
+            const dataSrc = this.route.snapshot.data['pdf_src'];
             if (dataSrc) {
                 this.pdfSrc = dataSrc;
-                console.log('[PdfBookletViewer] pdfSrc from route:', this.pdfSrc);
+                console.log('[PdfBookletViewer] pdf_src from route:', this.pdfSrc);
             } else {
-                console.warn('[PdfBookletViewer] pdfSrc not found in route data');
+                console.warn('[PdfBookletViewer] pdf_src not found in route data');
             }
         }
 

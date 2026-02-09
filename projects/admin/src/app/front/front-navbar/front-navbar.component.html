@@ -98,7 +98,7 @@
   @else {
   <li [class]="isMobile ? 'nav-item' : 'nav-item ms-3'">
     @if (menu.navitem.type === NAVITEM_TYPE.EXTERNAL_REDIRECT) {
-    <a [class]="isMobile ? 'dropdown-item' : 'nav-link main-nav-link'" [href]="menu.navitem.external_url"
+    <a [class]="isMobile ? 'dropdown-item' : 'nav-link main-nav-link'" [href]="menu.navitem.extra_parameter"
       target="_blank" rel="noopener" [attr.data-bs-dismiss]="isMobile ? 'offcanvas' : null">
       <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
     </a>
@@ -111,7 +111,6 @@
     }
     @else if (menu.navitem.type?.toLowerCase() === 'plugin') {
     <a [class]="isMobile ? 'dropdown-item Plugin' : 'nav-link main-nav-link Plugin'" [routerLink]="menu.navitem.path"
-      [queryParams]="{ external_url: menu.navitem.external_url }"
       [attr.data-bs-dismiss]="isMobile ? 'offcanvas' : null">
       <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
     </a>

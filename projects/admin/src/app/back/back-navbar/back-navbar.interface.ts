@@ -106,7 +106,7 @@ export const STATIC_MENUS: NavbarMenu[] = [
             { label: 'import excel', route: BACK_ROUTE_PATHS.ImportExcel },
             { label: 'clone DB', route: BACK_ROUTE_PATHS.CloneDB },
             { label: 'clone S3', route: BACK_ROUTE_PATHS.CloneS3 },
-            {label: 'ComiteeBookletViewer', route: BACK_ROUTE_PATHS.ComiteeBookletViewer }
+            { label: 'ComiteeBookletViewer', route: BACK_ROUTE_PATHS.ComiteeBooklet }
         ]
-    }
-];
+    },
+]

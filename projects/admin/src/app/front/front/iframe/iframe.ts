@@ -1,4 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 @Component({
@@ -9,11 +10,21 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 })
 export class IframeComponent implements OnInit {
   @Input() external_url: string = '';
-  safeUrl: SafeResourceUrl = '';
+  safeUrl: SafeResourceUrl | null = null;
 
-  constructor(private sanitizer: DomSanitizer) { }
+  constructor(
+    private sanitizer: DomSanitizer,
+    private route: ActivatedRoute
+  ) { }
 
   ngOnInit(): void {
-    this.safeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.external_url);
+    // Try from @Input first (via withComponentInputBinding), fallback to route.data
+    if (!this.external_url) {
+      this.external_url = this.route.snapshot.data['external_url'] || '';
+    }
+    
+    if (this.external_url) {
+      this.safeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.external_url);
+    }
   }
 }

@@ -8,7 +8,7 @@ import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, 
 import { CommonModule } from '@angular/common';
 import { Routes } from '@angular/router';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
-import { NAVITEM_PLUGIN } from '../../../common/interfaces/plugin.interface';
+import { NAVITEM_PLUGIN, PLUGINS_META, PluginParamDef } from '../../../common/interfaces/plugin.interface';
 import { LABEL_TRANSFORMERS } from '../../../common/interfaces/plugin.interface';
 import { PageService } from '../../../common/services/page.service';
 import { CLIPBOARD_TITLE, Page, PAGE_TEMPLATES } from '../../../common/interfaces/page_snippet.interface';
@@ -83,6 +83,13 @@ export class MenusEditorComponent implements AfterViewInit {
   private readonly destroyed$ = new Subject<void>();
   // (helpers and DnD handlers simplified)
 
+  // Getter to retrieve plugin param for the currently selected plugin
+  get currentPluginParam(): PluginParamDef | null {
+    const pluginName = this.navItemForm?.get('plugin_name')?.value;
+    if (!pluginName) return null;
+    const meta = PLUGINS_META[pluginName];
+    return meta?.param || null;
+  }
 
 
   constructor(
@@ -295,7 +302,8 @@ export class MenusEditorComponent implements AfterViewInit {
       logging_criteria: this.selectedNavitem!.logging_criteria || NAVITEM_LOGGING_CRITERIA.ANY,
       parent_id: this.selectedNavitem!.parent_id || null,
       page_id: this.selectedNavitem!.page_id || null,
-      external_url: this.selectedNavitem!.external_url || null,
+      extra_parameter: this.selectedNavitem!.extra_parameter || null,
+      extra_parameter_label: this.selectedNavitem!.extra_parameter_label || null,
       plugin_name: this.selectedNavitem!.plugin_name || null,
       command_name: this.selectedNavitem!.type === NAVITEM_TYPE.DIRECT_CALL
         ? (Object.values(NAVITEM_COMMAND).includes(this.selectedNavitem!.slug as NAVITEM_COMMAND)
@@ -340,9 +348,10 @@ export class MenusEditorComponent implements AfterViewInit {
   saveNavitem() {
     if (!this.selectedNavitem) return;
     const payload = this.buildPayloadFromForm();
-    // Correction : prendre external_url depuis le formulaire si EXTERNAL_REDIRECT
+    // Correction : prendre extra_parameter depuis le formulaire si EXTERNAL_REDIRECT
     if (payload.type === NAVITEM_TYPE.EXTERNAL_REDIRECT) {
-      payload.external_url = this.navItemForm.get('external_url')?.value || '';
+      payload.extra_parameter = this.navItemForm.get('extra_parameter')?.value || '';
+      payload.extra_parameter_label = 'external_url'; // Fixed label for external redirects
     }
 
     // Guard: prevent second-level items from being DROPDOWN (no dropdowns inside dropdowns)
@@ -493,7 +502,8 @@ export class MenusEditorComponent implements AfterViewInit {
       logging_criteria: new FormControl(NAVITEM_LOGGING_CRITERIA.ANY, { validators: [Validators.required] }),
       parent_id: new FormControl<string | null>(null),
       page_id: new FormControl<string | null>(null),
-      external_url: new FormControl<string | null>(null),
+      extra_parameter: new FormControl<string | null>(null),
+      extra_parameter_label: new FormControl<string | null>(null),
       plugin_name: new FormControl<string | null>(null),
       pre_label: new FormControl<'icon' | 'avatar' | null>(null),
       command_name: new FormControl<NAVITEM_COMMAND | null>(null),
@@ -503,7 +513,7 @@ export class MenusEditorComponent implements AfterViewInit {
     const typeCtrl = this.navItemForm.get('type')!;
     const segCtrlV = this.navItemForm.get('slug')!; // for validators only
     const cmdCtrl = this.navItemForm.get('command_name')!;
-    const externalUrlCtrl = this.navItemForm.get('external_url')!;
+    const extraParamCtrl = this.navItemForm.get('extra_parameter')!;
     const applySegmentValidators = (t: NAVITEM_TYPE) => {
       if (t === NAVITEM_TYPE.DROPDOWN || t === NAVITEM_TYPE.DIRECT_CALL) {
         segCtrlV.clearValidators();
@@ -520,18 +530,33 @@ export class MenusEditorComponent implements AfterViewInit {
       }
       cmdCtrl.updateValueAndValidity({ emitEvent: false });
 
-      // external_url: required only for EXTERNAL_REDIRECT
+      // extra_parameter: required only for EXTERNAL_REDIRECT
       if (t === NAVITEM_TYPE.EXTERNAL_REDIRECT) {
-        externalUrlCtrl.setValidators([Validators.required]);
+        extraParamCtrl.setValidators([Validators.required]);
       } else {
-        externalUrlCtrl.clearValidators();
-        externalUrlCtrl.setValue(null, { emitEvent: false });
+        extraParamCtrl.clearValidators();
       }
-      externalUrlCtrl.updateValueAndValidity({ emitEvent: false });
+      extraParamCtrl.updateValueAndValidity({ emitEvent: false });
     };
 
     applySegmentValidators(typeCtrl.value as NAVITEM_TYPE);
     typeCtrl.valueChanges.subscribe((t: NAVITEM_TYPE) => applySegmentValidators(t));
+
+    // Auto-set extra_parameter_label when plugin is selected (from PluginMeta.param.dataKey)
+    const pluginNameCtrl = this.navItemForm.get('plugin_name')!;
+    const extraParamLabelCtrl = this.navItemForm.get('extra_parameter_label')!;
+    pluginNameCtrl.valueChanges.subscribe((pn: NAVITEM_PLUGIN | null) => {
+      if (pn) {
+        const meta = PLUGINS_META[pn];
+        if (meta?.param?.dataKey) {
+          extraParamLabelCtrl.setValue(meta.param.dataKey, { emitEvent: false });
+        } else {
+          extraParamLabelCtrl.setValue(null, { emitEvent: false });
+        }
+      } else {
+        extraParamLabelCtrl.setValue(null, { emitEvent: false });
+      }
+    });
 
     // Auto-generate slug & path preview.
     // Strategy: while user has not manually edited slug (slugManuallyEdited=false),
@@ -921,7 +946,8 @@ export class MenusEditorComponent implements AfterViewInit {
       position: NAVITEM_POSITION;
       parent_id: string | null;
       page_id: string | null;
-      external_url: string | null;
+      extra_parameter: string | null;
+      extra_parameter_label: string | null;
       plugin_name: NAVITEM_PLUGIN | null;
       pre_label: 'icon' | 'avatar' | null;
     }
@@ -948,7 +974,8 @@ export class MenusEditorComponent implements AfterViewInit {
       parent_id: formValue.parent_id || undefined,
       page_id: isDirectCall ? undefined : (formValue.page_id || undefined),
       page_title,
-      external_url: isDirectCall ? undefined : (formValue.external_url || undefined),
+      extra_parameter: isDirectCall ? undefined : (formValue.extra_parameter || undefined),
+      extra_parameter_label: isDirectCall ? undefined : (formValue.extra_parameter_label || undefined),
       plugin_name: isDirectCall ? undefined : (formValue.plugin_name || undefined),
       rank: this.selectedNavitem?.rank ?? 0,
       group_level: this.selectedNavitem?.group_level ?? 0,

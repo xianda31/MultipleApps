@@ -45,7 +45,8 @@ export interface NavItem {
     pre_label: 'icon' | 'avatar' | null;
     parent_id?: string;
     page_id?: string;
-    external_url?: string;
+    extra_parameter?: string; // generic parameter value for plugins (url, filename, etc.)
+    extra_parameter_label?: string; // key name for route.data (e.g. 'external_url', 'pdf_src')
     plugin_name?: NAVITEM_PLUGIN;
     // meta data
     createdAt?: string;

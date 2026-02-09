@@ -45,7 +45,7 @@ export class TournamentsComponent {
   ngOnInit(): void {
 
 
-    if (this.displayTitle) this.titleService.setTitle('Les prochains tournois de régularité');
+  if (this.displayTitle !== false) this.titleService.setTitle('Les prochains tournois de régularité');
     this.loadTournamentTeams();
 
     this.auth.logged_member$.subscribe((member) => {

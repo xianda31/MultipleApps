@@ -7,7 +7,7 @@ import { MenuGroup, NavItem, NavItem_input, NAVITEM_TYPE, NAVITEM_POSITION, NAVI
 import { minimal_routes } from '../../front/front.routes';
 import { Routes } from '@angular/router';
 import { GenericPageComponent } from '../../front/front/pages/generic-page/generic-page.component';
-import { PLUGINS, PLUGINS_META } from '../interfaces/plugin.interface';
+import { NAVITEM_PLUGIN, PLUGINS, PLUGINS_META } from '../interfaces/plugin.interface';
 import { AuthGuard } from '../../auth.guard';
 import { PageService } from './page.service';
 import { Page, PAGE_TEMPLATES } from '../interfaces/page_snippet.interface';
@@ -84,8 +84,9 @@ export class NavItemsService {
           component: comp,
           canActivate: meta?.requiresAuth ? [AuthGuard] : undefined
         };
-        if (meta?.requiresExternalUrl) {
-          route.data = { external_url: ni.external_url };
+        // Build route.data using extra_parameter_label from DB as the key name
+        if (ni.extra_parameter && ni.extra_parameter_label) {
+          route.data = { [ni.extra_parameter_label]: ni.extra_parameter };
         }
         return route;
       }
@@ -108,14 +109,14 @@ export class NavItemsService {
       }
     }
 
-    // Drive album extra-routes via PLUGINS_META['PAGE_ALBUM'] when present
-    const pageAlbumMeta = PLUGINS_META['PAGE_ALBUM'];
-    if (pageAlbumMeta && pageAlbumMeta.extraRoutes) {
+    // Drive album extra-routes via PLUGINS_META[NAVITEM_PLUGIN.ALBUM]
+    const albumMeta = PLUGINS_META[NAVITEM_PLUGIN.ALBUM];
+    if (albumMeta?.extraRoutes) {
       const albumNavs = navItems.filter(n => n.page_title && n.carousel);
       for (const n of albumNavs) {
-        for (const t of pageAlbumMeta.extraRoutes) {
+        for (const t of albumMeta.extraRoutes) {
           if (t.when === 'always') {
-            const routeComponent = t.component ;
+            const routeComponent = t.component ?? PLUGINS[NAVITEM_PLUGIN.ALBUM];
             extraRoutes.push({ path: n.path + (t.suffix ?? ''), component: routeComponent });
           }
         }
@@ -186,7 +187,8 @@ export class NavItemsService {
       // optional params
       parent_id: navItem.parent_id,
       page_id: navItem.page_id,
-      external_url: navItem.external_url,
+      extra_parameter: navItem.extra_parameter,
+      extra_parameter_label: navItem.extra_parameter_label,
       plugin_name: navItem.plugin_name,
       pre_label: navItem.pre_label,
     };
@@ -254,7 +256,8 @@ export class NavItemsService {
         pre_label: navItem.pre_label,
         parent_id: navItem.parent_id,
         page_id: navItem.page_id,
-        external_url: navItem.external_url,
+        extra_parameter: navItem.extra_parameter,
+        extra_parameter_label: navItem.extra_parameter_label,
         plugin_name: navItem.plugin_name,
       };
       const updatedNavItem = await this.dbHandler.updateNavItem({ ...navItem_input, id: navItem.id });
@@ -326,7 +329,8 @@ export class NavItemsService {
           group_level: prodItem.group_level,
           parent_id: prodItem.parent_id ? (idMap.get(prodItem.parent_id) || null) : null,
           page_id: prodItem.page_id,
-          external_url: prodItem.external_url,
+          extra_parameter: prodItem.extra_parameter,
+          extra_parameter_label: prodItem.extra_parameter_label,
           plugin_name: prodItem.plugin_name,
           pre_label: prodItem.pre_label,
         };
@@ -390,7 +394,8 @@ export class NavItemsService {
           group_level: sandboxItem.group_level,
           parent_id: sandboxItem.parent_id ? (idMap.get(sandboxItem.parent_id) || null) : null,
           page_id: sandboxItem.page_id,
-          external_url: sandboxItem.external_url,
+          extra_parameter: sandboxItem.extra_parameter,
+          extra_parameter_label: sandboxItem.extra_parameter_label,
           plugin_name: sandboxItem.plugin_name,
           pre_label: sandboxItem.pre_label,
         };

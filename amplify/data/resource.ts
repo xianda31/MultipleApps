@@ -260,7 +260,8 @@ const schema = a.schema({
     parent_id: a.string(),
     page_id: a.string(),
     page_title: a.string(),
-    external_url: a.string(),
+    extra_parameter: a.string(), // generic parameter value for plugins (url, filename, etc.)
+    extra_parameter_label: a.string(), // key name for route.data (e.g. 'external_url', 'pdf_src')
     plugin_name: a.string(),
   })
     .authorization((allow) => [
