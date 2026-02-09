@@ -305,10 +305,6 @@ export class UiConfComponent implements OnInit {
     // ...
     const homepage = ui?.homepage || {};
     
-    // Debug: vérifier les valeurs chargées
-    console.log('Template chargé:', template);
-    console.log('banner_bg:', template.banner_bg);
-    
     // Support legacy/default stored in tournaments_type under several possible keys
     const defaultKeys = ['defaut', 'défaut', 'default', '__default__', 'fallback'];
     let inferredDefault: string | undefined = ui?.default_tournament_image;
@@ -493,7 +489,7 @@ export class UiConfComponent implements OnInit {
           unfold_on_hover: !!formVal.unfold_on_hover,
           hover_unfold_delay_ms: Number(formVal.hover_unfold_delay_ms) || 500,
           hover_unfold_duration_ms: Number(formVal.hover_unfold_duration_ms) || 300,
-          home_layout_ratio: Number(formVal.home_layout_ratio) || 2
+          home_layout_ratio: formVal.home_layout_ratio ?? 2
         },
         tournaments_type: tournamentsTypeMap,
         default_tournament_image: formVal.default_tournament_image || '',
@@ -570,7 +566,7 @@ export class UiConfComponent implements OnInit {
           unfold_on_hover: !!formVal.unfold_on_hover,
           hover_unfold_delay_ms: Number(formVal.hover_unfold_delay_ms) || 500,
           hover_unfold_duration_ms: Number(formVal.hover_unfold_duration_ms) || 300,
-          home_layout_ratio: Number(formVal.home_layout_ratio) || 2
+          home_layout_ratio: formVal.home_layout_ratio ?? 2
         },
         tournaments_type: tournamentsTypeMap,
         default_tournament_image: formVal.default_tournament_image || '',
