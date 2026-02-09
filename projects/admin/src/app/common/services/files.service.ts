@@ -183,14 +183,19 @@ export class FileService {
   }
     // Vérifie que deleteFolderRecursive est bien exportée et accessible
 
-  upload_file(file: File, directory = ''): Promise<void> {
+  upload_file(file: File, directory = '', noCache: boolean = false): Promise<void> {
     return new Promise<void>((resolve, reject) => {
+      const options: any = {
+        contentType: file.type,
+      };
+      // Add cache-control header to prevent CDN caching for config files
+      if (noCache) {
+        options.metadata = { 'cache-control': 'no-cache, no-store, must-revalidate' };
+      }
       uploadData({
         data: file,
         path: directory + file.name,
-        options: {
-          contentType: file.type,
-        }
+        options: options
       }).result
         .then(() => {
           resolve();
@@ -264,7 +269,9 @@ export class FileService {
     // console.debug('upload_to_S3: uploading', { path: directory + filename, timestamp: now, payloadSummary });
 
     // Perform upload and attach diagnostics on error so we can trace origin of bad payloads.
-    return this.upload_file(file, directory).catch((err) => {
+    // Use noCache=true for config files to avoid CDN caching issues
+    const isConfigFile = directory.startsWith('system/') || filename.endsWith('_settings.txt');
+    return this.upload_file(file, directory, isConfigFile).catch((err) => {
       try {
         console.error('upload_to_S3: upload failed for', directory + filename);
       } catch (e) { /* ignore */ }
@@ -274,6 +281,7 @@ export class FileService {
 
 
   async download_json_file(path: string): Promise<any> {
+    // Use downloadData which handles S3 authentication properly
     let promise = new Promise<any>((resolve, reject) => {
       downloadData({
         path: path,
