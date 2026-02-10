@@ -18,9 +18,8 @@ import { NgbDropdown } from '@ng-bootstrap/ng-bootstrap';
 import { APP_SANDBOX } from '../../../app.config';
 import { SandboxService } from '../../../common/services/sandbox.service';
 import { DynamicRoutesService } from '../../../common/services/dynamic-routes.service';
-import { Subject, combineLatest, firstValueFrom } from 'rxjs';
+import { Subject, combineLatest, firstValueFrom, first } from 'rxjs';
 import { charsanitize, buildFullPath, extractSegment } from '../../../common/utils/navitem.utils';
-import { SnippetService } from '../../../common/services/snippet.service';
 
 @Component({
   selector: 'app-menus-editor',
@@ -101,8 +100,7 @@ export class MenusEditorComponent implements AfterViewInit {
     private cdr: ChangeDetectorRef,
     @Inject(APP_SANDBOX) sandboxFlag: boolean,
     public sandboxService: SandboxService,
-    private dynamicRoutesService: DynamicRoutesService,
-    private snippetService: SnippetService
+    private dynamicRoutesService: DynamicRoutesService
   ) { this.sandbox_mode = sandboxFlag; }
 
   // Keep a reference to the navbar container to scope DOM queries when possible
@@ -110,17 +108,16 @@ export class MenusEditorComponent implements AfterViewInit {
 
 
   ngOnInit(): void {
-      // Force global refresh of snippets cache for all consumers
-      this.snippetService.listSnippets().subscribe();
     this.initialise_form();
 
     // Load navitems, pages, and snippets together, then enrich once
+    // IMPORTANT: first() ensures this runs only once at init, avoiding re-triggering
+    // confirm dialogs when pages/snippets are updated elsewhere (e.g., cms-wrapper)
     combineLatest([
       this.navitemService.loadNavItemsSandbox(),
       this.navitemService.loadNavItemsProduction(),
       this.pageService.listPages(),
-      // this.snippetService.listSnippets()
-    ])
+    ]).pipe(first())
       .subscribe({
         next: async ([sandboxItems, productionItems, pages]) => {
           this.pages = pages.filter(p => p.title !== CLIPBOARD_TITLE).sort((a, b) => a.title.localeCompare(b.title));
@@ -371,8 +368,6 @@ export class MenusEditorComponent implements AfterViewInit {
     }
 
     const op = payload.id ? this.navitemService.updateNavItem(payload) : this.navitemService.createNavItem(payload);
-    console.log('MenusEditor.saveNavitem: about to save payload', { payloadId: payload.id, path: payload.path, page_id: payload.page_id, type: payload.type });
-    console.log('MenusEditor.saveNavitem stack', (new Error()).stack?.split('\n').slice(0,3));
     
     op.then(() => {
       this.toastService.showSuccess('Paramètres menu', 'nav_item sauvegardé');
@@ -387,9 +382,6 @@ export class MenusEditorComponent implements AfterViewInit {
   }
 
   deleteNavitem(selectedNavitem: NavItem) {
-    // Logique pour supprimer le nav item
-    console.log('MenusEditor.deleteNavitem: deleting', { id: selectedNavitem.id, path: selectedNavitem.path });
-    console.log('MenusEditor.deleteNavitem stack', (new Error()).stack?.split('\n').slice(0,3));
     this.navitemService.deleteNavItem(selectedNavitem).then(() => {
       this.toastService.showSuccess('Paramètres menu', 'nav_item supprimé');
       this.offRef?.dismiss('deleted');
@@ -626,7 +618,7 @@ export class MenusEditorComponent implements AfterViewInit {
       this.navitemService.loadNavItemsSandbox(),
       this.navitemService.loadNavItemsProduction(),
       this.pageService.listPages()
-    ])
+    ]).pipe(first())
       .subscribe(([sandboxItems, productionItems, pages]) => {
         this.pages = pages;
         // Choisir la source selon le mode
