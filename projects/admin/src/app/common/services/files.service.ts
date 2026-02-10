@@ -285,19 +285,16 @@ export class FileService {
     try {
       const urlResult = await getUrl({ path: path });
       const urlString = urlResult.url.toString();
-      // Add cache-busting parameter if requested
-      const fetchUrl = bypassCache ? `${urlString}&_cb=${Date.now()}` : urlString;
-      
+      // Ne pas ajouter de paramètre cache-buster à une URL signée !
+      const fetchUrl = urlString;
       const response = await fetch(fetchUrl, {
         method: 'GET',
         cache: bypassCache ? 'no-store' : 'default',
         headers: bypassCache ? { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' } : {}
       });
-      
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
-      
       const raw = await response.text();
       try {
         const data = JSON.parse(raw);
