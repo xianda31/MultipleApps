@@ -280,37 +280,38 @@ export class FileService {
   }
 
 
-  async download_json_file(path: string): Promise<any> {
-    // Use downloadData which handles S3 authentication properly
-    let promise = new Promise<any>((resolve, reject) => {
-      downloadData({
-        path: path,
-      }).result
-        .then(async (result) => {
-          // Read raw body text first so we can log it on parse failure
-          const raw = await result.body.text();
-          try {
-            const data = JSON.parse(raw);
-            // console.log('%s : downloaded data', path, data);
-            resolve(data);
-          } catch (parseErr) {
-            // Provide detailed diagnostics to help investigate corrupt or invalid files
-            console.error('download_json_file: JSON parse error for', path, parseErr);
-            try {
-              // ...
-            } catch (e) { /* ignore */ }
-            this.toastService.showErrorToast('Configuration système', `Fichier ${path} invalide (erreur de parsing)`);
-            reject(parseErr);
-          }
-        })
-        .catch((error) => {
-          // Log full error object to capture HTTP/S3 status, code and message
-          console.error('download_json_file: failed to download', path, error);
-          try { this.toastService.showErrorToast('Configuration système', 'Impossible de charger le fichier ' + path + ' — ' + (error?.message || error)); } catch (e) { /* ignore */ }
-          reject(error);
-        });
-    });
-    return promise;
+  async download_json_file(path: string, bypassCache: boolean = true): Promise<any> {
+    // Use getUrl to get a presigned URL, then fetch with cache control to bypass browser cache
+    try {
+      const urlResult = await getUrl({ path: path });
+      const urlString = urlResult.url.toString();
+      // Add cache-busting parameter if requested
+      const fetchUrl = bypassCache ? `${urlString}&_cb=${Date.now()}` : urlString;
+      
+      const response = await fetch(fetchUrl, {
+        method: 'GET',
+        cache: bypassCache ? 'no-store' : 'default',
+        headers: bypassCache ? { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' } : {}
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const raw = await response.text();
+      try {
+        const data = JSON.parse(raw);
+        return data;
+      } catch (parseErr) {
+        console.error('download_json_file: JSON parse error for', path, parseErr);
+        this.toastService.showErrorToast('Configuration système', `Fichier ${path} invalide (erreur de parsing)`);
+        throw parseErr;
+      }
+    } catch (error: any) {
+      console.error('download_json_file: failed to download', path, error);
+      this.toastService.showErrorToast('Configuration système', 'Impossible de charger le fichier ' + path + ' — ' + (error?.message || error));
+      throw error;
+    }
   }
 
 
