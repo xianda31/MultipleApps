@@ -1,4 +1,5 @@
-import { Component, Input } from '@angular/core';
+
+import { Component, Input, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AuthentificationService } from '../../common/authentification/authentification.service';
@@ -37,11 +38,20 @@ export class FrontNavbarComponent {
   logged: boolean = false;
   logged_member: Member | null = null;
   private labelCache = new Map<string, Promise<string>>();
+  isPortrait = true;
+  isMobileLandscape = false;
 
-  get brandNavitem(): NavItem | null {
-    if (!this.navbar_menus || this.navbar_menus.length === 0) return null;
-    const items = this.navbar_menus.map(mg => mg.navitem);
-    return items.find(item => item.position === NAVITEM_POSITION.BRAND) || null;
+  @HostListener('window:resize')
+  onResize() {
+    this.isPortrait = window.innerHeight > window.innerWidth;
+    // Détection mobile/landscape : largeur <= 1024px et hauteur <= 500px
+    this.isMobileLandscape = window.innerWidth <= 1024 && window.innerHeight <= 500 && window.innerWidth > window.innerHeight;
+    // Ajoute ou retire la classe CSS sur le body
+    if (this.isMobileLandscape) {
+      document.body.classList.add('force-mobile-navbar');
+    } else {
+      document.body.classList.remove('force-mobile-navbar');
+    }
   }
 
   constructor(
@@ -53,6 +63,7 @@ export class FrontNavbarComponent {
 
   ) { }
   ngOnInit(): void {
+    this.onResize(); // Détection initiale de l'orientation
 
     this.logged_member$ = this.auth.logged_member$;
 
@@ -70,9 +81,16 @@ export class FrontNavbarComponent {
       }
     });
 
+    this.onResize(); // Initial orientation
+
   }
 
-
+  get brandNavitem(): NavItem | null {
+    if (!this.navbar_menus || this.navbar_menus.length === 0) return null;
+    const items = this.navbar_menus.map(mg => mg.navitem);
+    return items.find(item => item.position === this.NAVITEM_POSITION.BRAND) || null;
+  }
+  
   label_transformer(label: string): Promise<string> {
     const key = label ?? '';
     if (!key) return Promise.resolve('');

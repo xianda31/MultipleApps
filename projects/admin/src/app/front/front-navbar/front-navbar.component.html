@@ -1,43 +1,61 @@
-<nav class="navbar navbar-expand-md navbar-dark text-white d-flex align-items-center">
+<nav class="navbar navbar-dark text-white d-flex align-items-center" [class.navbar-expand-md]="!isMobileLandscape">
   <div class="container-fluid h-100 d-flex align-items-center">
-    @if (brandNavitem) {
+    @if (brandNavitem && !isMobileLandscape) {
     <a class="navbar-brand d-flex align-items-center position-relative main-nav-link align-middle"
       [routerLink]="brandNavitem.path">
       <span class="align-middle">{{ brandNavitem.label }}</span>
     </a>
     }
-    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"
-      aria-controls="sidebarMenu">
-      <span class="navbar-toggler-icon"></span>
-    </button>
+    <!-- Bouton toggler supprimé ici, il est présent dans la ligne compacte mobile -->
 
-    <!-- Desktop menu -->
-    <div class="collapse navbar-collapse d-none d-md-flex align-items-center position-relative">
+    <!-- Desktop menu (caché en mobile landscape) -->
+    @if (!isMobileLandscape) {
+    <div class="collapse navbar-collapse navbar-desktop d-none d-md-flex align-items-center position-relative">
       <ul class="navbar-nav me-auto  mb-lg-0">
         <ng-container *ngTemplateOutlet="dyn_navbar_unified; context: { isMobile: false }"></ng-container>
       </ul>
     </div>
+    }
 
-    <!-- Sidebar for mobile -->
-    <div class="offcanvas offcanvas-start d-md-none bg-white text-dark" tabindex="-1"
-      id="sidebarMenu" aria-labelledby="sidebarMenuLabel">
+    <!-- Sidebar for mobile (toujours dispo en mobile landscape) -->
+    <div class="offcanvas offcanvas-start navbar-offcanvas bg-white text-dark"
+         [class.d-md-none]="!isMobileLandscape"
+         tabindex="-1" id="sidebarMenu" aria-labelledby="sidebarMenuLabel">
       <div class="offcanvas-header flex-column align-items-start py-1">
         <div class="d-flex w-100 justify-content-between align-items-center ">
-          <img src="bcsto_ffb.jpg" alt="BCSTO Logo" style="height:35px;">
+          @if (brandNavitem) {
+          <a class="dropdown-item fw-bold" [routerLink]="brandNavitem.path" data-bs-dismiss="offcanvas" style="font-size:1.1rem;">
+            {{ brandNavitem.label }}
+          </a>
+          }
           <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
-        <!-- @if (brandNavitem) {
-        <a class="navbar-brand d-flex align-items-center mt-2" [routerLink]="brandNavitem.path" data-bs-dismiss="offcanvas">
-          <span>{{ brandNavitem.label }}</span>
-        </a>
-        } -->
       </div>
       <div class="offcanvas-body p-1">
         <ul class="navbar-nav">
-          <ng-container *ngTemplateOutlet="dyn_navbar_unified; context: { isMobile: true }"></ng-container>
+          <ng-container *ngTemplateOutlet="dyn_navbar_unified; context: { isMobile: true, isPortrait: isPortrait }"></ng-container>
         </ul>
       </div>
     </div>
+
+    <!-- Ligne compacte mobile : toggler + titre (visible en mobile ou en mobile landscape) -->
+    @if (isMobileLandscape) {
+    <div class="navbar-mobile-compact d-flex align-items-center justify-content-between w-100 py-1 px-2"
+         style="background: var(--navbar-bg);">
+      <button class="navbar-toggler me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <span class="title-banner text-center flex-grow-1" style="font-size:1.1rem;">Bridge Club Saint-Orens</span>
+    </div>
+    } @else {
+    <div class="navbar-mobile-compact d-md-none d-flex align-items-center justify-content-between w-100 py-1 px-2"
+         style="background: var(--navbar-bg);">
+      <button class="navbar-toggler me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <span class="title-banner text-center flex-grow-1" style="font-size:1.1rem;">Bridge Club Saint-Orens</span>
+    </div>
+    }
 
   </div>
 </nav>
@@ -49,7 +67,7 @@
   ((menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.ANY)
   || (menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.LOGGED_ONLY && (logged_member$ | async))
   || (menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.UNLOGGED_ONLY && !(logged_member$ | async)))) {
-  <ng-container *ngTemplateOutlet="menuGroupRecursive; context: { $implicit: menu, isMobile: isMobile }"></ng-container>
+  <ng-container *ngTemplateOutlet="menuGroupRecursive; context: { $implicit: menu, isMobile: isMobile, isPortrait: isPortrait }"></ng-container>
   }
   }
 </ng-template>
@@ -57,8 +75,8 @@
 <!-- Template récursive unifiée pour MenuGroup -->
 <ng-template #menuGroupRecursive let-menu let-isMobile="isMobile">
   @if (menu.navitem.type === NAVITEM_TYPE.DROPDOWN && (menu.childs?.length || 0) > 0) {
-    <!-- Desktop: dropdown avec ngbDropdown -->
-    @if (!isMobile) {
+    <!-- Desktop ou mobile/landscape: dropdown avec ngbDropdown (non déplié) -->
+    @if (!isMobile || (isMobile && !isPortrait)) {
     <li class="nav-item dropdown ms-3" ngbDropdown>
       <a class="nav-link main-nav-link dropdown-toggle" ngbDropdownToggle
         [id]="'nav-' + menu.navitem.id">
@@ -76,7 +94,7 @@
       </ul>
     </li>
     }
-    <!-- Mobile: liste dépliée sans dropdown -->
+    <!-- Mobile/portrait: liste dépliée sans dropdown -->
     @else {
     <li class="nav-item mobile-submenu-parent">
       <span class="dropdown-item">
@@ -143,3 +161,10 @@
   }
   {{ label_transformer(menu.navitem.label) | async }}
 </ng-template>
+
+<!-- Cache le titre classique sur mobile -->
+<style>
+  @media (max-width: 767.98px) {
+    .navbar .navbar-brand, .navbar .site-banner { display: none !important; }
+  }
+</style>

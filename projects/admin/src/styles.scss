@@ -116,5 +116,13 @@ table.fit-cols td {
   pointer-events: none !important;
 }
 
-
-  
+/* Forcer le menu burger/offcanvas en mobile landscape (hauteur faible) */
+body.force-mobile-navbar .navbar-desktop {
+  display: none !important;
+}
+body.force-mobile-navbar .navbar-offcanvas {
+  display: block !important;
+}
+body.force-mobile-navbar .navbar-mobile-compact {
+  display: flex !important;
+}
