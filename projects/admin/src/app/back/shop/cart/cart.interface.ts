@@ -49,6 +49,7 @@ export interface Cart {
   take_asset : boolean;
   take_debt : boolean;
   buyer_name: string;
+  tag ?: string;
 }
 
 

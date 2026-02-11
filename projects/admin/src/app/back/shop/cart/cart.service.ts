@@ -125,6 +125,7 @@ export class CartService {
         ...session,
         id: '',
         transaction_id: this.payment_mode2bank_op_type(this._payment.mode),
+        tag: this._cart.tag,
         amounts: this.payments2fValue(this._payment.mode),
         operations: this.cart2Operations(),
         cheque_ref: this.payments2cheque_ref(this._payment),

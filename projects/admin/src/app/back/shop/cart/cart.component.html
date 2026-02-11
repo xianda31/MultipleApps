@@ -25,11 +25,11 @@
                     <!-- debt if any -->
                     @if (debt_amount > 0) {
                     <tr>
-                                                <td class="text-muted">
-                                                    <span [ngStyle]="{ 'text-decoration': !cart.take_debt ? 'line-through' : 'none' }">
-                                                        Dette de {{debt_amount | currency:'€':'symbol':'2.2-2':'fr'}}
-                                                    </span>
-                                                </td>
+                        <td class="text-muted">
+                            <span [ngStyle]="{ 'text-decoration': !cart.take_debt ? 'line-through' : 'none' }">
+                                Dette de {{debt_amount | currency:'€':'symbol':'2.2-2':'fr'}}
+                            </span>
+                        </td>
                         <td></td>
                         <td class="text-end">
                             @if (cart.take_debt) {
@@ -52,11 +52,11 @@
                     <!-- asset if any -->
                     @if (asset_available > 0) {
                     <tr>
-                                                <td>
-                                                    <span [ngStyle]="{ 'text-decoration': !cart.take_asset ? 'line-through' : 'none' }">
-                                                        Avoir disponible de {{asset_available | currency:'€':'symbol':'2.2-2':'fr'}}
-                                                    </span>
-                                                </td>
+                        <td>
+                            <span [ngStyle]="{ 'text-decoration': !cart.take_asset ? 'line-through' : 'none' }">
+                                Avoir disponible de {{asset_available | currency:'€':'symbol':'2.2-2':'fr'}}
+                            </span>
+                        </td>
                         <td></td>
                         <td class="text-end">
                             @if (cart.take_asset) {
@@ -174,33 +174,34 @@
 
         <!-- validation  //-->
 
-        <!-- nbre éléments : {{cart.items.length}} -->
+        
         <div class="justify-content-center mt-4">
             <button type="button" class="btn btn-success nice_shadow" [disabled]=" cart_is_not_valid() "
-                (click)="validate_sale()">confirmation du panier</button>
-
-            <!-- {{check_cart()}}   -->
+            (click)="validate_sale()">confirmation du panier</button>
+        </div>
+        <div *ngIf="!cart_is_not_valid()">
+            <input type="text" class="form-control form-control-sm mt-2" placeholder="commentaire (optionnel)"
+                [(ngModel)]="cart.tag">
         </div>
     </div>
-</div>
-<!-- </form> -->
+    <!-- </form> -->
 
-<ng-template #payment_info let-payment="payment">
+    <ng-template #payment_info let-payment="payment">
 
 
-    @if (payment.mode === paymentMode.CHEQUE) {
-    <td colspan="3">
-        <select [ngClass]="!payment.bank?'to-fill-in':''" class="form-control form-control-sm"
-            [(ngModel)]="payment.bank" required>
-            <option value="undefined" hidden disabled>banque</option>
-            @for (bank of (banks$ | async); track bank.key) {
-            <option [value]="bank.key">{{bank.name}}</option>
-            }
-        </select>
-    </td>
-    <td colspan="3">
-        <input [ngClass]="!payment.cheque_no?'to-fill-in':''" placeholder="N° de chèque" type="text" id="cheque_no"
-            class="form-control form-control-sm" [(ngModel)]="payment.cheque_no">
-    </td>
-    }
-</ng-template>
+        @if (payment.mode === paymentMode.CHEQUE) {
+        <td colspan="3">
+            <select [ngClass]="!payment.bank?'to-fill-in':''" class="form-control form-control-sm"
+                [(ngModel)]="payment.bank" required>
+                <option value="undefined" hidden disabled>banque</option>
+                @for (bank of (banks$ | async); track bank.key) {
+                <option [value]="bank.key">{{bank.name}}</option>
+                }
+            </select>
+        </td>
+        <td colspan="3">
+            <input [ngClass]="!payment.cheque_no?'to-fill-in':''" placeholder="N° de chèque" type="text" id="cheque_no"
+                class="form-control form-control-sm" [(ngModel)]="payment.cheque_no">
+        </td>
+        }
+    </ng-template>

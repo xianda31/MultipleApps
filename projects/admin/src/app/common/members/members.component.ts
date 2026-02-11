@@ -131,7 +131,7 @@ export class MembersComponent implements OnInit {
       const full_name = this.membersService.full_name(member);
       const buy_op = this.operations
         .filter((op) => op.member === full_name);
-      const hasAdh = buy_op.find(op => op.values['ADH']);
+      const hasAdh = buy_op.find(op => 'ADH' in op.values);
       if (hasAdh && member.membership_date !== hasAdh.date) {
         member.membership_date = hasAdh.date;
         this.membersService.updateMember(member);
