@@ -46,13 +46,13 @@ export class MembersComponent implements OnInit {
   FILTERS = FILTER;
   filters = Object.values(FILTER);
   selected_filter: FILTER = FILTER.MEMBER;
-  filter_icons : { [key in FILTER]: string } = {
+  filter_icons: { [key in FILTER]: string } = {
     [FILTER.MEMBER]: 'bi bi-person-check-fill',
     [FILTER.MEMBER_AT_FFB]: 'bi bi-person-badge-fill',
     [FILTER.STUDENT]: 'bi bi-mortarboard-fill',
     [FILTER.UNKNOWN]: 'bi bi-person-slash',
   };
-  loading: boolean = true; 
+  loading: boolean = true;
   avatar_urls$: { [key: string]: Observable<string> } = {};
 
   // For dynamic info column in members table
@@ -113,7 +113,7 @@ export class MembersComponent implements OnInit {
         this.loading = false;
         // console.log(this.members);
       },
-      error: () => {this.loading = false; this.toastService.showErrorToast('Membres', 'Erreur lors du chargement des membres'); },
+      error: () => { this.loading = false; this.toastService.showErrorToast('Membres', 'Erreur lors du chargement des membres'); },
     });
   }
 
@@ -136,6 +136,7 @@ export class MembersComponent implements OnInit {
         member.membership_date = hasAdh.date;
         this.membersService.updateMember(member);
       }
+      else if (!hasAdh) { member.membership_date = ''; }
     });
     this.no_license_nbr = this.members.filter(m => m.membership_date && (m.license_status === LicenseStatus.UNREGISTERED)).length;
     this.lost_members_nbr = this.members.filter(m => !m.membership_date && (m.license_status === LicenseStatus.UNREGISTERED)).length;
@@ -233,16 +234,16 @@ export class MembersComponent implements OnInit {
     this.filteredMembers = this.members.filter((member: Member) => {
       switch (filter) {
         case FILTER.MEMBER_AT_FFB: //'membre licencié':
-          return ( (member.license_status === LicenseStatus.DULY_REGISTERED || member.license_status === LicenseStatus.PROMOTED_ONLY));
+          return ((member.license_status === LicenseStatus.DULY_REGISTERED || member.license_status === LicenseStatus.PROMOTED_ONLY));
         case FILTER.STUDENT: //'membre sans licence':
           return (member.membership_date && (member.license_status === LicenseStatus.UNREGISTERED));
         case FILTER.MEMBER: //'membre (i.e. adhérent ou déclaré à la FFB)':
-          return (member.membership_date || ( member.license_status === LicenseStatus.DULY_REGISTERED || member.license_status === LicenseStatus.PROMOTED_ONLY) );
+          return (member.membership_date || (member.license_status === LicenseStatus.DULY_REGISTERED || member.license_status === LicenseStatus.PROMOTED_ONLY));
         case FILTER.UNKNOWN: //'non adhérent':
-          return (!member.membership_date && ( member.license_status === LicenseStatus.UNREGISTERED) );
+          return (!member.membership_date && (member.license_status === LicenseStatus.UNREGISTERED));
 
         default: //'Tous':
-         throw new Error('Filtre inconnu' + filter);
+          throw new Error('Filtre inconnu' + filter);
       }
     });
   }
