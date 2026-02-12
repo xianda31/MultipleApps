@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, AfterViewInit, ElementRef, ViewChild } from '@angular/core';
 import { FrontNavbarComponent } from '../../front-navbar/front-navbar.component';
 import { LocalStorageService } from '../../../back/services/local-storage.service';
 import { RouterModule } from '@angular/router';
@@ -21,7 +21,7 @@ import { applyUiThemeFromConfig } from '../../../common/utils/ui-utils';
   templateUrl: './front.component.html',
   styleUrl: './front.component.scss'
 })
-export class FrontComponent {
+export class FrontComponent implements AfterViewInit {
   navbar_menus: MenuStructure = [];
   footer_menus: MenuStructure = [];
   NAVITEM_POSITION = NAVITEM_POSITION;
@@ -32,6 +32,10 @@ export class FrontComponent {
   uiSettings: UIConfiguration | null = null;
   logoUrl: string | null = null;
   today = new Date();
+  @ViewChild('footerBanner', { static: false }) footerBanner!: ElementRef<HTMLElement>;
+  @ViewChild('headerBanner', { static: false }) headerBanner!: ElementRef<HTMLElement>;
+  private headerObserver?: MutationObserver;
+  footerObserver: any;
 
   constructor(
     private siteLayoutService: SiteLayoutService,
@@ -76,5 +80,61 @@ export class FrontComponent {
       // Appliquer les couleurs du front via CSS variables
       applyUiThemeFromConfig(u);
     });
+  }
+
+  ngAfterViewInit(): void {
+    this.updateHeaderHeight();
+    this.updateFooterHeight();
+    // Observe les changements dans le header pour ajuster dynamiquement la hauteur
+    if (this.headerBanner && this.headerBanner.nativeElement) {
+      this.headerObserver = new MutationObserver(() => {
+        this.updateHeaderHeight();
+      });
+      this.headerObserver.observe(this.headerBanner.nativeElement, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['style', 'class'],
+      });
+    }
+    // Observe les changements dans le footer pour ajuster dynamiquement la hauteur
+    if (this.footerBanner && this.footerBanner.nativeElement) {
+      this.footerObserver = new MutationObserver(() => {
+        this.updateFooterHeight();
+      });
+      this.footerObserver.observe(this.footerBanner.nativeElement, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['style', 'class'],
+      });
+    }
+  }
+
+  private updateHeaderHeight() {
+    setTimeout(() => {
+      if (this.headerBanner && this.headerBanner.nativeElement) {
+        const height = this.headerBanner.nativeElement.offsetHeight;
+        document.documentElement.style.setProperty('--header-height', height + 'px');
+      }
+    });
+  }
+
+  private updateFooterHeight() {
+    setTimeout(() => {
+      if (this.footerBanner && this.footerBanner.nativeElement) {
+        const height = this.footerBanner.nativeElement.offsetHeight;
+        document.documentElement.style.setProperty('--footer-height', height + 'px');
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.headerObserver) {
+      this.headerObserver.disconnect();
+    }
+    if (this.footerObserver) {
+      this.footerObserver.disconnect();
+    }
   }
 }
