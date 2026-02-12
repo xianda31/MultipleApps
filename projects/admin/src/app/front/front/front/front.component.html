@@ -1,4 +1,4 @@
-<div class="container-fluid root-bg" style="--footer-height: 4rem;">
+<div class="container-fluid root-bg" >
 
   <div #headerBanner>
     <div class="row d-flex align-items-stretch ">
@@ -49,10 +49,10 @@
   <!-- bandeau pied de page -->
 
   <div #footerBanner class="row footer-banner text-center mt-auto justify-content-between flex-wrap">
-    <span class="position-relative d-none d-xl-inline">
+    <!-- <span class="position-relative d-none d-xl-inline">
       <img src="VilleDeStOrens.png" alt="Ville de Saint Orens" class="img-fluid img-quarter-sm shadow position-absolute"
         style="bottom: -30px; left: 30px; max-width: 130px;">
-    </span>
+    </span> -->
 
     <div class="d-flex align-items-center gap-3 flex-wrap justify-content-center w-auto mx-auto">
       <span class="mb-0 me-5 d-none">© 2025 Bridge Club de Saint-Orens</span>
@@ -65,14 +65,14 @@
       }
     </div>
 
-    <span class="position-relative d-none d-xl-inline">
+    <!-- <span class="position-relative d-none d-xl-inline">
       <img *ngIf="logoUrl; else staticLogo2" [src]="logoUrl" alt="logo" class="img-fluid img-quarter-sm shadow position-absolute"
         style="bottom: 20px; right: 20px; max-width: 130px;">
       <ng-template #staticLogo2>
         <img src="bcsto_ffb.jpg" alt="logo" class="img-fluid img-quarter-sm shadow position-absolute"
           style="bottom: 20px; right: 20px; max-width: 130px;">
       </ng-template>
-    </span>
+    </span> -->
   </div>
 
 </div>
