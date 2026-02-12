@@ -1,6 +1,3 @@
-
-
-
 import { Component } from '@angular/core';
 import { Competition, CompetitionOrganization, CompetitionResultsMap, CompetitionTeam, Player, CompetitionResults, COMPETITION_DIVISION_LABELS } from './competitions.interface';
 import { CommonModule } from '@angular/common';
@@ -42,6 +39,7 @@ export class CompetitionsComponent {
   ui_config_loaded!: UIConfiguration;
   no_filter: boolean = false;
   full_regeneration: boolean = false;
+  data_ready: boolean = false;
 
 
   constructor(
@@ -66,7 +64,7 @@ export class CompetitionsComponent {
     // Charger la configuration Competitions depuis ui-conf
     this.systemService.get_ui_settings().subscribe(ui => {
       this.ui_config_loaded = ui;
-
+      
       const defaultLabels = { comite: 'Comité des Pyrénées', ligue: 'Ligue 06 LR-PY', national: 'FFB' };
       if (ui?.competitions?.preferred_organizations && typeof ui.competitions.preferred_organizations === 'object') {
         const orgs = ui.competitions.preferred_organizations;
@@ -82,11 +80,12 @@ export class CompetitionsComponent {
       this.competitionService.getCompetitionOrganizations(this.preferred_organization_labels).subscribe(orgs => {
         this.organizations = orgs;
       });
-
+      
       this.show_full_team =  false;
       // this.show_infos = ui?.competitions?.show_infos || false;
       this.no_filter =  false;
       this.update_results();
+      this.data_ready = true;
     });
   }
   onParamsChange(reload:boolean): void {

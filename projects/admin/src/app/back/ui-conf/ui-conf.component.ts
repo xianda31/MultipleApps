@@ -108,18 +108,13 @@ export class UiConfComponent implements OnInit {
       album_carousel_interval_ms: [5000, [Validators.min(0), Validators.max(60000)]],
       competitions: this.fb.group({
         preferred_organizations: this.fb.group({
-          ["comite"]: ['Comité des Pyrenees'],
-          ["ligue"]: ['Ligue 06 LR-PY'],
-          ["national"]: ['FFB']
+          comite: ['Comité des Pyrenees'],
+          ligue: ['Ligue 06 LR-PY'],
+          national: ['FFB']
         }),
-        result_filter_thresholds: this.fb.group(
-          Object.fromEntries((COMPETITION_DIVISIONS as string[]).map((d: string) => [d, [0]]))
-        ),
-        show_members_only: [false],
-        one_year_back: [false],
-        show_infos: [false],
-        no_filter: [false]
-      })
+        result_filter_thresholds: this.fb.group({}),
+        show_infos: [false]
+      }),
     });
     // attach FormArray-level validator to enforce keys non-empty and unique
     const tt = this.uiForm.get('tournaments_type') as FormArray;
@@ -292,6 +287,8 @@ export class UiConfComponent implements OnInit {
 
 
   private loadDataInForm(ui: any) {
+    // Correction globale des accents mal encodés sur tout l'objet ui
+    ui = this.fixAllBrokenAccents(ui);
     // Patch form with defaults (support both legacy top-level keys and new `homepage` nesting)
     // homepage and breakpoints are required in the interface; use defaults if absent
     const tournaments = (ui && ui.homepage && ui.homepage.tournaments_row_cols)
@@ -305,7 +302,6 @@ export class UiConfComponent implements OnInit {
     const tournamentsType: { [key: string]: string } = { ...(ui?.tournaments_type || {}) };
     // ...
     const homepage = ui?.homepage || {};
-    
     // Support legacy/default stored in tournaments_type under several possible keys
     const defaultKeys = ['defaut', 'défaut', 'default', '__default__', 'fallback'];
     let inferredDefault: string | undefined = ui?.default_tournament_image;
@@ -650,6 +646,51 @@ export class UiConfComponent implements OnInit {
     document.head.appendChild(link);
   }
 
+  private fixBrokenAccents(str: string): string {
+    if (!str) return str;
+    return str
+      .replace(/Ã©/g, 'é')
+      .replace(/Ã¨/g, 'è')
+      .replace(/Ãª/g, 'ê')
+      .replace(/Ã«/g, 'ë')
+      .replace(/Ã /g, 'à')
+      .replace(/Ã¢/g, 'â')
+      .replace(/Ã§/g, 'ç')
+      .replace(/Ã¹/g, 'ù')
+      .replace(/Ã»/g, 'û')
+      .replace(/Ã¼/g, 'ü')
+      .replace(/Ã´/g, 'ô')
+      .replace(/Ã¶/g, 'ö')
+      .replace(/Ã®/g, 'î')
+      .replace(/Ã¯/g, 'ï')
+      .replace(/Ãª/g, 'ê')
+      .replace(/Ã‰/g, 'É')
+      .replace(/Ã€/g, 'À')
+      .replace(/Ã‹/g, 'Ë')
+      .replace(/Ã”/g, 'Ô')
+      .replace(/Ãœ/g, 'Ü')
+      .replace(/Ã›/g, 'Û')
+      .replace(/ÃŸ/g, 'ß')
+      .replace(/Ã±/g, 'ñ')
+      .replace(/Ã³/g, 'ó')
+      .replace(/Ã¡/g, 'á')
+      .replace(/Ã­/g, 'í')
+      .replace(/Ãº/g, 'ú')
+      .replace(/Ã‘/g, 'Ñ');
+  }
+
+  private fixAllBrokenAccents(obj: any): any {
+    if (typeof obj === 'string') return this.fixBrokenAccents(obj);
+    if (Array.isArray(obj)) return obj.map(v => this.fixAllBrokenAccents(v));
+    if (typeof obj === 'object' && obj !== null) {
+      const out: any = {};
+      for (const k of Object.keys(obj)) {
+        out[this.fixBrokenAccents(k)] = this.fixAllBrokenAccents(obj[k]);
+      }
+      return out;
+    }
+    return obj;
+  }
 }
 
 
