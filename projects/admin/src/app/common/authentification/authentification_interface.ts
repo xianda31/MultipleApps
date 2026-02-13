@@ -5,7 +5,8 @@ export enum Process_flow {
    FORGOT_PASSWORD = 'FORGOT_PASSWORD',
    RESET_PASSWORD = 'RESET_PASSWORD',
    CONFIRM_RESET_PASSWORD = 'CONFIRM_RESET_PASSWORD',
-  SIGNED_IN = 'SIGNED_IN',};
+  // SIGNED_IN = 'SIGNED_IN',
+};
 
 
 export interface AuthData {

@@ -17,7 +17,7 @@ import { applyUiThemeFromConfig } from '../../../common/utils/ui-utils';
 @Component({
   selector: 'app-front',
   standalone: true,
-  imports: [CommonModule, RouterModule, FrontNavbarComponent, TitleComponent, ToasterComponent],
+  imports: [CommonModule, RouterModule, FrontNavbarComponent, TitleComponent],
   templateUrl: './front.component.html',
   styleUrl: './front.component.scss'
 })
