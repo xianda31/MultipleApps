@@ -58,7 +58,6 @@ export class ConnexionComponent {
     private toastService: ToastService,
     private auth: AuthentificationService,
     private fb: FormBuilder,
-    private location: Location,
     private router: Router,
 
   ) {
@@ -74,7 +73,10 @@ export class ConnexionComponent {
   async ngOnInit() {
     this.mode$ = this.auth.mode$;
     // Track current mode for navigation decisions
-    this.mode$.subscribe(m => this.currentMode = m);
+    this.mode$.subscribe(m => {
+       this.currentMode = m;
+      // console.log('Current auth mode:', m);
+      });
   }
 
   async signIn() {

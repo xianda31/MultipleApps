@@ -78,6 +78,7 @@ export class AuthentificationService {
           } else {
             let member = await this.memberService.readMember(member_id);
             this._logged_member$.next(member);
+            this.changeMode(Process_flow.SIGNED_IN);
             resolve(member_id);
           }
         } catch (err: any) {
