@@ -185,7 +185,6 @@ export class ConnexionComponent {
     }
   }
 
-
   goSignUp() {
     // Clear any previous sign-in error when switching to sign-up
     this.logging_msg = '';
