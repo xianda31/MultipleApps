@@ -3,7 +3,7 @@ import { BACK_ROUTE_PATHS } from '../routes/back-route-paths';
 import { Group_priorities } from '../../common/authentification/group.interface';
 import { NavbarMenu } from './back-navbar.interface';
 
-export const staticMenus: NavbarMenu[] = [
+export const BACK_STATIC_MENUS: NavbarMenu[] = [
   {
     label: 'Tournois',
     key: 'boutique',
@@ -46,6 +46,14 @@ export const staticMenus: NavbarMenu[] = [
       { label: 'bilan', route: BACK_ROUTE_PATHS.Balance }
     ]
   },
+  {
+    label: 'Factures',
+    key: 'invoices',
+    icon: 'bi-stickies-fill',
+    minLevel: Group_priorities.Contributeur,
+     route: BACK_ROUTE_PATHS.Invoices,
+  },
+
   {
     label: 'Outils',
     key: 'outils',

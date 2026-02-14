@@ -82,6 +82,7 @@ const schema = a.schema({
     cheque_ref: a.string(),
     deposit_ref: a.string(),
     bank_report: a.string(),
+    invoice: a.string(),
 
   })
     .authorization((allow) => [
@@ -112,11 +113,27 @@ const schema = a.schema({
 
     ]),
 
+// invoices
 
+Invoice: a.model({
+  id: a.id().required(),
+  season: a.string().required(),
+  filename: a.string().required(),
+  title: a.string().required(),
+  amount: a.float().required(),
+  book_entry_id: a.string(),
+  author: a.string(),
+})
+  .authorization((allow) => [
+    allow.guest().to(['read']),
+    allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+    allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
+    allow.group(Group_names.Editor).to(['read', 'create', 'update']),
+    allow.group(Group_names.Support).to(['read', 'create', 'update']),
+    allow.group(Group_names.Member).to(['read']),
+  ]),
 
   // tournois joués
-
-
   Game: a.model({
     gameId: a.id().required(),
     season: a.string().required(),

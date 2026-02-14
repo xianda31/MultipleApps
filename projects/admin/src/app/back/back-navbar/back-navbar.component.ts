@@ -15,7 +15,8 @@ import { Member } from '../../common/interfaces/member.interface';
 import { MemberSettingsService } from '../../common/services/member-settings.service';
 import { AssistanceRequestService } from '../../common/services/assistance-request.service';
 import { REQUEST_STATUS } from '../../common/interfaces/assistance-request.interface';
-import { NavbarMenu, STATIC_MENUS } from './back-navbar.interface';
+import { NavbarMenu} from './back-navbar.interface';
+import { BACK_STATIC_MENUS } from './back-navbar.definition';
 
 
 
@@ -27,7 +28,7 @@ import { NavbarMenu, STATIC_MENUS } from './back-navbar.interface';
   styleUrl: './back-navbar.component.scss'
 })
 export class BackNavbarComponent implements OnInit {
-    navbarMenus: NavbarMenu[] = STATIC_MENUS;
+    navbarMenus: NavbarMenu[] = BACK_STATIC_MENUS;
   
   @Input() season: string = '';
   @Input() entries_nbr: number = 0;

@@ -6,7 +6,7 @@ import { FileSystemNode, S3Item } from '../interfaces/file.interface';
 import { downloadData, uploadData } from 'aws-amplify/storage';
 import { ToastService } from '../services/toast.service';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 
 export const S3_BUCKET = 'Bcsto-drive';
 export enum S3_ROOT_FOLDERS {
@@ -17,6 +17,7 @@ export enum S3_ROOT_FOLDERS {
   THUMBNAILS = 'thumbnails',
   SYSTEM = 'system',
   ACCOUNTING = 'accounting',
+  INVOICES = 'invoices',
   ANY = 'any'
 }
 
@@ -183,22 +184,26 @@ export class FileService {
   }
     // Vérifie que deleteFolderRecursive est bien exportée et accessible
 
-  upload_file(file: File, directory = '', noCache: boolean = false): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
+  upload_file(file: File, directory = '',  preventOverwrite: boolean = false): Promise<string> {
+    return new Promise<string>((resolve, reject) => {
       const options: any = {
         contentType: file.type,
       };
-      // Add cache-control header to prevent CDN caching for config files
-      if (noCache) {
-        options.metadata = { 'cache-control': 'no-cache, no-store, must-revalidate' };
+      if (preventOverwrite) {
+        options.preventOverwrite = true;
       }
+
+      const s3Path = directory + file.name;
       uploadData({
         data: file,
-        path: directory + file.name,
+        path: s3Path,
         options: options
       }).result
         .then(() => {
-          resolve();
+          // Get the public URL of the uploaded file
+          getUrl({ path: s3Path }).then(urlResult => {
+            resolve(urlResult.url.toString());
+          }).catch(err => reject(err));
         })
         .catch((error) => {
           reject(error);
@@ -218,40 +223,6 @@ export class FileService {
   // json upload/download utilities
 
   async upload_to_S3(data: any, directory: string, filename: string, pretty: boolean = false) {
-    // Defensive: do not upload undefined. JSON.stringify(undefined) produces undefined
-    // which would create a blob containing the string "undefined" on S3. Add enhanced
-    // diagnostics (stack + payload preview) so we can trace the caller if this happens.
-    // const now = new Date().toISOString();
-    // const callerStack = (new Error('upload_to_S3: stack trace')).stack;
-    // if (data === undefined) {
-    //   const err = new Error('upload_to_S3: data is undefined, aborting upload for ' + directory + filename + ' @' + now);
-    //   console.error(err);
-    //   console.error('upload_to_S3: caller stack', callerStack);
-    //   return Promise.reject(err);
-    // }
-
-    // Build a small preview to help debugging without logging full payloads.
-    // const payloadSummary: { type: string; preview?: string; length?: number } = { type: typeof data };
-    // try {
-    //   if (typeof data === 'string') {
-    //     payloadSummary.preview = (data as string).slice(0, 200);
-    //     payloadSummary.length = (data as string).length;
-    //   } else if (data instanceof File || data instanceof Blob) {
-    //     payloadSummary.type = data.constructor.name;
-    //     try { payloadSummary.length = (data as any).size; } catch (e) { /* ignore */ }
-    //   } else {
-    //     // Try a safe stringify for objects; fall back silently on circular structures
-    //     try {
-    //       const s = JSON.stringify(data);
-    //       payloadSummary.preview = s && s.slice ? s.slice(0, 200) : undefined;
-    //       payloadSummary.length = s ? s.length : undefined;
-    //     } catch (e) {
-    //       payloadSummary.preview = undefined;
-    //     }
-    //   }
-    // } catch (e) {
-    //   // Never throw from logging heuristics
-    // }
 
     let json: string;
     try {
@@ -270,8 +241,8 @@ export class FileService {
 
     // Perform upload and attach diagnostics on error so we can trace origin of bad payloads.
     // Use noCache=true for config files to avoid CDN caching issues
-    const isConfigFile = directory.startsWith('system/') || filename.endsWith('_settings.txt');
-    return this.upload_file(file, directory, isConfigFile).catch((err) => {
+    // const isConfigFile = directory.startsWith('system/') || filename.endsWith('_settings.txt');
+    return this.upload_file(file, directory).catch((err) => {
       try {
         console.error('upload_to_S3: upload failed for', directory + filename);
       } catch (e) { /* ignore */ }

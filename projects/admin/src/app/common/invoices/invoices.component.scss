@@ -1,0 +1,35 @@
+.invoices-wrapper {
+  margin: 1rem 0;
+  background: #f9f9f9;
+  border-radius: 8px;
+  padding: 1rem;
+}
+.invoices-wrapper h3 {
+  margin-bottom: 1rem;
+}
+.invoices-wrapper form {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.invoices-wrapper ul {
+  list-style: none;
+  padding: 0;
+}
+.invoices-wrapper li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.invoices-wrapper button {
+  background: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.25rem 0.75rem;
+  cursor: pointer;
+}
+.invoices-wrapper button:hover {
+  background: #0056b3;
+}

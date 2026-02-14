@@ -45,5 +45,10 @@ export const storage = defineStorage({
             allow.guest.to(['read','write', 'delete']),
             allow.groups(['Systeme', 'Administrateur','Contributeur','Editeur','Membre']).to(['read', 'write', 'delete']),
         ],
+        'invoices/*': [
+            allow.guest.to(['read']),
+            allow.groups(['Systeme', 'Administrateur', 'Contributeur', 'Editeur']).to(['read', 'write', 'delete']),
+            allow.groups([ 'Membre']).to(['read']),
+        ],
     })
 })

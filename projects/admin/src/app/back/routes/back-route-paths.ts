@@ -16,6 +16,7 @@ export const BACK_ROUTE_PATHS = {
   BooksOverview: 'finance/books/base-comptable',
   BooksOverviewReport: 'finance/books/base-comptable/:report',
   BooksList: 'finance/books/list',
+  Invoices: 'finance/invoices',
   // BooksDebugger: 'devtools/books/editor',
   // BooksDebuggerId: 'devtools/books/editor/:id',
   BooksEditor: 'finance/books/editor',

@@ -12,6 +12,7 @@ import {  Page, Page_input, Snippet, Snippet_input } from '../interfaces/page_sn
 import { Game, Game_input } from '../../back/fees/fees.interface';
 import { NavItem, NavItem_input } from '../interfaces/navitem.interface';
 import { AssistanceRequest, AssistanceRequestInput } from '../interfaces/assistance-request.interface';
+import { Invoice, Invoice_input } from '../interfaces/invoice.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -145,6 +146,64 @@ listPages(): Observable<Page[]> {
     return true;
   }
 
+// Invoices Services
+
+  // INVOICE SERVICE
+
+  // CREATE
+  async createInvoice(invoice: Invoice_input): Promise<Invoice> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { data, errors } = await client.models.Invoice.create(invoice);
+    if (errors) throw errors;
+    return data as Invoice;
+  }
+
+  // READ (single)
+  async readInvoice(id: string): Promise<Invoice> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { data, errors } = await client.models.Invoice.get({ id });
+    if (errors) throw errors;
+    return data as Invoice;
+  }
+
+  // UPDATE
+  async updateInvoice(invoice: Invoice): Promise<Invoice> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { data, errors } = await client.models.Invoice.update(invoice);
+    if (errors) throw errors;
+    return data as Invoice;
+  }
+
+  // DELETE
+  async deleteInvoice(id: string): Promise<boolean> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { errors } = await client.models.Invoice.delete({ id });
+    if (errors) throw errors;
+    return true;
+  }
+
+  // LIST (all)
+  listInvoices(): Observable<Invoice[]> {
+    return this._authMode().pipe(
+      switchMap((authMode) => {
+        const client = generateClient<Schema>({ authMode });
+        return from(
+          client.models.Invoice.list({ limit: 300 })
+            .then(({ data, errors }) => {
+              if (errors) {
+                console.error('Invoice.list error', errors);
+                return [];
+              }
+              return data as Invoice[];
+            })
+        );
+      })
+    );
+  }
 
   // Members Service
 
