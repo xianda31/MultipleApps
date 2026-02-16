@@ -370,6 +370,9 @@ export class SystemDataService {
   }
 
   date_in_season(date: string, season: string): boolean {
+    if (!season || season.length < 9) {
+      return false;
+    }
     let start_date = new Date(season.slice(0, 4) + '-07-01');
     let end_date = new Date(season.slice(5, 9) + '-06-30');
     let date_obj = new Date(date);

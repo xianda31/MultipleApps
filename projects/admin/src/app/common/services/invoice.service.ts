@@ -10,7 +10,6 @@ import { Invoice, Invoice_input } from '../interfaces/invoice.interface';
 export class InvoiceService {
   private _invoices: Invoice[] = [];
   private _invoices$ = new BehaviorSubject<Invoice[]>([]);
-  private _invoicesLoading$?: Observable<Invoice[]>;
 
   constructor(
     private toastService: ToastService,
@@ -72,6 +71,34 @@ export class InvoiceService {
     } catch (error) {
       this.toastService.showErrorToast('Factures', 'Erreur lors de la suppression');
       return Promise.reject(error);
+    }
+  }
+
+  // utilitaires
+
+  resetInvoiceBookEntryLink(invoiceId: string): void {
+    const invoice = this.getInvoice(invoiceId);
+    if (invoice) {
+      invoice.book_entry_id = '';
+      this.updateInvoice(invoice)
+      .then(() => {console.log('Book entry link reset for invoice', invoice);})
+      .catch(() => {
+        this.toastService.showErrorToast('Factures', 'Erreur lors de la dissociation de la facture');
+      });
+      this._invoices$.next(this._invoices);
+    }else {
+      console.warn('Invoice not found for resetting book entry link:', invoiceId);
+    }
+  }
+
+  setInvoiceBookEntryLink(invoiceId: string, bookEntryId: string): void {
+    const invoice = this.getInvoice(invoiceId);
+    if (invoice) {
+      invoice.book_entry_id = bookEntryId;
+      this.updateInvoice(invoice).catch(() => {
+        this.toastService.showErrorToast('Factures', 'Erreur lors de l\'association de la facture');
+      });
+      this._invoices$.next(this._invoices);
     }
   }
 }

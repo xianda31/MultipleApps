@@ -694,7 +694,7 @@ create_custom_key(season : string, trn_id:number) : string{
     const client = generateClient<Schema>({ authMode: authMode });
     const { data, errors } = await client.models.BookEntry.get(
       { id: id },
-      { selectionSet: ['id', 'season', 'tag', 'date', 'amounts', 'operations.*', 'transaction_id', 'cheque_ref', 'deposit_ref', 'bank_report'] }
+      { selectionSet: ['id', 'season', 'tag','invoice_id', 'date', 'amounts', 'operations.*', 'transaction_id', 'cheque_ref', 'deposit_ref', 'bank_report'] }
 
     );
     if (errors) throw errors;

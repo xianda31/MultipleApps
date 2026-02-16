@@ -1,9 +1,12 @@
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 
-import { Component, Input, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, ChangeDetectorRef, ViewChild, ElementRef } from '@angular/core';
+import * as pdfjsLib from 'pdfjs-dist';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { FileService, S3_ROOT_FOLDERS } from '../services/files.service';
 import { CommonModule } from '@angular/common';
+import { SafeUrlPipe } from '../pipes/safe-url.pipe';
 import { SystemDataService } from '../services/system-data.service';
 import { Invoice } from '../interfaces/invoice.interface';
 import { InvoiceService } from '../services/invoice.service';
@@ -16,23 +19,26 @@ import { Observable } from 'rxjs';
   imports: [CommonModule, ReactiveFormsModule, FormsModule]
 })
 export class InvoicesComponent {
+  hoveredInvoice?: Invoice;
+  pdfPopupUrl?: SafeResourceUrl;
   season: string = '';
   invoices: (Invoice & { url?: string })[] = [];
   uploading = false;
   invoiceForm: FormGroup;
-
   pdfPreviewUrl?: string;
+  
+  @ViewChild('pdfMiniatureCanvas', { static: false }) pdfMiniatureCanvas?: ElementRef<HTMLCanvasElement>;
+  pdfMiniatureError = false;
 
   constructor(
     private systemService: SystemDataService,
     private invoiceService: InvoiceService,
     private fb: FormBuilder,
     private fileService: FileService,
-    private cdr: ChangeDetectorRef
-  ) {
+    private cdr: ChangeDetectorRef  ) {
     this.invoiceForm = this.fb.group({
       title: ['', Validators.required],
-      amount: ['', [Validators.required, Validators.pattern(/^\d+(\.\d{1,2})?$/)]],
+      amount: ['', [Validators.required, Validators.pattern(/^[\d]+(\.[\d]{1,2})?$/)]],
       author: [''],
       filename: ['', Validators.required]
     });
@@ -163,4 +169,49 @@ export class InvoicesComponent {
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.slice(0, 3).map(b => b.toString(16).padStart(2, '0')).join('');
   }
+
+
+  async showPdfPreview(invoice: Invoice) {
+    this.hoveredInvoice = invoice;
+    this.pdfMiniatureError = false;
+    setTimeout(async () => {
+      if (!this.pdfMiniatureCanvas) return;
+      const canvas = this.pdfMiniatureCanvas.nativeElement;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (invoice.filename) {
+        const seasonFolder = this.season.replace('/', '_');
+        const s3Path = `${S3_ROOT_FOLDERS.INVOICES}/${seasonFolder}/` + invoice.filename;
+        this.getInvoiceUrl(s3Path).subscribe(async url => {
+          try {
+            // Chargement PDF.js
+            (pdfjsLib as any).GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+            const loadingTask = pdfjsLib.getDocument(url);
+            const pdf = await loadingTask.promise;
+            const page = await pdf.getPage(1);
+            const scale = 0.6;
+            const viewport = page.getViewport({ scale });
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            await page.render({ canvasContext: ctx, viewport }).promise;
+          } catch (e) {
+            this.pdfMiniatureError = true;
+          }
+        });
+      }
+    }, 10);
+  }
+
+
+  hidePdfPreview() {
+    this.hoveredInvoice = undefined;
+    this.pdfMiniatureError = false;
+    if (this.pdfMiniatureCanvas) {
+      const ctx = this.pdfMiniatureCanvas.nativeElement.getContext('2d');
+      if (ctx) ctx.clearRect(0, 0, this.pdfMiniatureCanvas.nativeElement.width, this.pdfMiniatureCanvas.nativeElement.height);
+    }
+    this.cdr.detectChanges();
+  }
+
 }

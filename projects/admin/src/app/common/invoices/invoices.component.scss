@@ -1,3 +1,16 @@
+.pdf-preview-popup {
+  position: absolute;
+  top: 2.2rem;
+  left: 0;
+  z-index: 1000;
+  background: #fff;
+  border: 1px solid #ccc;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  padding: 0.25rem;
+  border-radius: 6px;
+  min-width: 350px;
+  min-height: 400px;
+}
 .invoices-wrapper {
   margin: 1rem 0;
   background: #f9f9f9;

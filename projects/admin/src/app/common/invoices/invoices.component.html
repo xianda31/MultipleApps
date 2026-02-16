@@ -51,22 +51,38 @@
               <th>Montant</th>
               <th>Auteur</th>
               <th>Date</th>
-              <th>Fichier</th>
+              <th>Ecriture</th>
+              <th>Document</th>
               <th>Action</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let invoice of invoices">
-              <td>{{ invoice.title }}</td>
+              <td class="position-relative">
+                <span
+                  (mouseenter)="showPdfPreview(invoice)"
+                  (mouseleave)="hidePdfPreview()"
+                  style="cursor:pointer;text-decoration:underline;color:#0d6efd;"
+                >
+                  {{ invoice.title }}
+                </span>
+                <div *ngIf="hoveredInvoice === invoice" class="pdf-preview-popup" style="position:fixed; left: 180px; top: 180px; min-width:220px; z-index: 3000;">
+                  <canvas #pdfMiniatureCanvas width="220" height="300" style="display:block;"></canvas>
+                  <div *ngIf="pdfMiniatureError" class="text-danger small">Erreur d'aperçu PDF</div>
+                </div>
+              </td>
               <td>{{ invoice.amount | number:'1.2-2' }} €</td>
               <td>{{ invoice.author }}</td>
               <td>{{ invoice.createdAt | date:'short' }}</td>
               <td>
-                <!-- <ng-container *ngIf="invoice.url && invoice.filename"> -->
-                  <span class="text-primary text-decoration-underline" style="cursor:pointer" (click)="openInvoicePdf(invoice)">
-                    {{ invoice.filename }}
-                  </span>
-                <!-- </ng-container> -->
+                <span *ngIf="invoice.book_entry_id ">
+                  <i class="bi bi-journal-text text-primary" title="Facture liée à une écriture comptable"></i>
+                </span>
+              </td>
+              <td>
+                <span class="text-primary text-decoration-underline" style="cursor:pointer" (click)="openInvoicePdf(invoice)">
+                  {{ invoice.filename }}
+                </span>
               </td>
               <td>
                 <button class="btn btn-link text-danger p-0" (click)="onDeleteInvoice(invoice)" title="Supprimer">
@@ -75,7 +91,7 @@
               </td>
             </tr>
             <tr *ngIf="invoices.length === 0">
-              <td colspan="6" class="text-center">Aucune facture trouvée.</td>
+              <td colspan="7" class="text-center">Aucune facture trouvée.</td>
             </tr>
           </tbody>
         </table>

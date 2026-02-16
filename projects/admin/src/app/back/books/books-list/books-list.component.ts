@@ -183,4 +183,12 @@ export class BooksListComponent {
     this.slice_start -= this.SLICE_SIZE;
   }
 
+  invoice_required(entry: BookEntry): boolean {
+    let transaction = this.transactionService.get_transaction(entry.transaction_id);
+    if (transaction === undefined) {
+      console.log('oops , there is a problem', entry);
+      return false;
+    }
+    return transaction.invoice_required;
+  }
 }

@@ -123,6 +123,7 @@ export interface BookEntry {
   season: string;
   date: string;
   tag?: string;
+  invoice_id?: string | null;      // id de la facture associée (si applicable)
   transaction_id: TRANSACTION_ID;   // type d'opération bancaire
   amounts: AMOUNTS
   cheque_ref?: string;        // code banque + numéro de chèque

@@ -54,30 +54,31 @@
     <div *ngIf="selected_transaction" class="mt-2 row justify-content-start align-items-end mx-0">
 
       <!--  affichage comptes financiers -->
-      <div class="col-md-5 col-sm-4">
+      <div class=" col-sm-4 col-md-5">
         <div class="row align-items-center mx-0">
           <div class="col-sm-8">
             <ng-container [ngTemplateOutlet]="financial_amounts"
               [ngTemplateOutletContext]="{inputFormGroup: form}"></ng-container>
           </div>
-          <div class="col-4 text-start" *ngIf="financial_accounts.length>0  && !protected_mode" >
+          <div class="col-4 text-start" *ngIf="financial_accounts.length>0  && !protected_mode">
             <i [class]="financial_accounts_locked ? 'fs-4 bi-lock-fill' : 'fs-4 bi-unlock-fill'"
               (click)="lock_unlock_financial_accounts()"></i>
           </div>
         </div>
       </div>
-      
-      <!-- info tag  -->
-      <div class="col-sm-3">
-        <ng-container [ngTemplateOutlet]="tag" [ngTemplateOutletContext]="{inputFormGroup: form}">
-        </ng-container>
+
+      <!-- info tag  & invoice -->
+      <div class="col-sm-3 col-md-4 d-flex align-items-end gap-2">
+        <ng-container [ngTemplateOutlet]="tag" [ngTemplateOutletContext]="{inputFormGroup: form}"></ng-container>
+        <ng-container [ngTemplateOutlet]="invoice" [ngTemplateOutletContext]="{inputFormGroup: form}"></ng-container>
       </div>
+      <!-- <div>
+      </div> -->
 
       <!-- bordereau -->
-      <div *ngIf="!protected_mode && transaction_with_deposit(transaction_id)"
-        class=" col-md-3  col-sm-3 ">
-          <label for="deposit_ref">Bordereau</label>
-          <input type="text" class="form-control" id="deposit_ref" formControlName="deposit_ref">
+      <div class="col-sm-3 col-md-3" *ngIf="!protected_mode && transaction_with_deposit(transaction_id)" >
+        <label for="deposit_ref">Bordereau</label>
+        <input type="text" class="form-control" id="deposit_ref" formControlName="deposit_ref">
       </div>
 
     </div>
@@ -88,7 +89,8 @@
     <div class="mt-3" *ngIf="selected_transaction">
       <div formArrayName="operations">
         <!-- pour chaque operation de la transaction -->
-        <div class="row align-items-end mx-0" *ngFor="let operation of operations.controls; let i = index ; let last = last">
+        <div class="row align-items-end mx-0"
+          *ngFor="let operation of operations.controls; let i = index ; let last = last">
           <div class="col-12 mt-2">
             <!-- transaction d'une transaction non nominative -->
             <div *ngIf="!selected_transaction.nominative" class="row align-items-end mx-0 p-1 mb-1">
@@ -161,8 +163,25 @@
     <!-- formulaire tag -->
     <ng-template #tag let-inputFormGroup="inputFormGroup">
       <ng-container [formGroup]="inputFormGroup">
-        <label for="label">tag</label>
-        <input type="text" class="form-control" formControlName="tag">
+        <div class="d-flex flex-column">
+          <label for="label">tag</label>
+          <input type="text" class="form-control" formControlName="tag">
+        </div>
+      </ng-container>
+    </ng-template>
+
+    <!-- formulaire invoice -->
+    <ng-template #invoice let-inputFormGroup="inputFormGroup">
+      <ng-container [formGroup]="inputFormGroup">
+        <div class="d-flex flex-column">
+          <label for="invoice_id">Document</label>
+            <select class="form-control" id="invoice_id" formControlName="invoice_id" (change)="onInvoiceChange($event)">
+              <option [value]="''">aucun</option>
+              <option *ngFor="let invoice of invoices" [value]="invoice.id">
+                {{invoice.title}} - {{invoice.amount | number:'1.2-2'}} € - {{invoice.author}} 
+              </option>
+            </select>
+        </div>
       </ng-container>
     </ng-template>
     <!-- formulaire intitulé -->
@@ -224,10 +243,14 @@
     <ng-template #costs_and_revenues let-inputFormGroup="inputFormGroup" let-transaction="transaction">
       <ng-container [formGroup]="inputFormGroup">
         <div formArrayName="values" class="d-flex flex-wrap" style="gap: 0.25rem;">
-          <div style="min-width: 60px; flex: 1 1 calc(6.66% - 0.25rem); max-width: 120px;" *ngFor="let account of inputFormGroup.get('values').controls ; let i = index">
-            <label class="form-label mb-0" style="font-size: 0.7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" [ngbTooltip]="expense_or_revenue_accounts(transaction)[i].description" tooltipClass="my-custom-class"
+          <div style="min-width: 60px; flex: 1 1 calc(6.66% - 0.25rem); max-width: 120px;"
+            *ngFor="let account of inputFormGroup.get('values').controls ; let i = index">
+            <label class="form-label mb-0"
+              style="font-size: 0.7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+              [ngbTooltip]="expense_or_revenue_accounts(transaction)[i].description" tooltipClass="my-custom-class"
               placement="top">{{expense_or_revenue_accounts(transaction)[i].key}}</label>
-            <input type="text" [class]="account.invalid ? 'form-control form-control-sm border-danger' : 'form-control form-control-sm'"
+            <input type="text"
+              [class]="account.invalid ? 'form-control form-control-sm border-danger' : 'form-control form-control-sm'"
               [formControlName]="i" [id]="'value' + i" style="padding: 0.25rem 0.35rem; font-size: 0.875rem;">
           </div>
         </div>
@@ -242,10 +265,14 @@
           <div formArrayName="optional_accounts" class="d-flex flex-wrap" style="gap: 0.25rem;">
             <div style="min-width: 60px; flex: 1 1 calc(6.66% - 0.25rem); max-width: 120px;"
               *ngFor="let account of inputFormGroup.get('optional_accounts').controls ; let i = index">
-              <label class="form-label mb-0" style="font-size: 0.7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" [ngbTooltip]="optional_accounts[i].description" tooltipClass="my-custom-class"
+              <label class="form-label mb-0"
+                style="font-size: 0.7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+                [ngbTooltip]="optional_accounts[i].description" tooltipClass="my-custom-class"
                 placement="top">{{optional_accounts[i].label}}</label>
-              <input type="text" [class]="account.invalid ? 'form-control form-control-sm border-danger' : 'form-control form-control-sm'"
-                [formControlName]="i" [id]="'customer_account' + i" style="padding: 0.25rem 0.35rem; font-size: 0.875rem;">
+              <input type="text"
+                [class]="account.invalid ? 'form-control form-control-sm border-danger' : 'form-control form-control-sm'"
+                [formControlName]="i" [id]="'customer_account' + i"
+                style="padding: 0.25rem 0.35rem; font-size: 0.875rem;">
             </div>
           </div>
         </ng-container>
@@ -272,42 +299,26 @@
 
     <!-- formulaire chèque -->
     <ng-template #cheque_definition>
-        <label>Banque et n° de chèque</label>
-        <div class="input-group">
-          <select class="form-control" formControlName="bank_name" required>
-            <option *ngFor="let bank of banks " [value]="bank.key">
-              {{bank.name}}
-            </option>
-          </select>
-          <input type="text" class="form-control" id="cheque_number" formControlName="cheque_number">
-        </div>
+      <label>Banque et n° de chèque</label>
+      <div class="input-group">
+        <select class="form-control" formControlName="bank_name" required>
+          <option *ngFor="let bank of banks " [value]="bank.key">
+            {{bank.name}}
+          </option>
+        </select>
+        <input type="text" class="form-control" id="cheque_number" formControlName="cheque_number">
+      </div>
     </ng-template>
 
     <!-- formulaire chèque Club -->
     <ng-template #cheque_club>
 
-        <label>Banque et n° de chèque</label>
-        <div class="input-group">
-          <input readonly class="form-control" formControlName="bank_name">
-          <!-- <select class="form-control" formControlName="bank_name" required>
-            <option *ngFor="let bank of banks " [value]="bank.key">
-              {{bank.name}}
-            </option>
-          </select> -->
-          <input type="text" class="form-control" id="cheque_number" formControlName="cheque_number">
-        </div>
+      <label>Banque et n° de chèque</label>
+      <div class="input-group">
+        <input readonly class="form-control" formControlName="bank_name">
+        <input type="text" class="form-control" id="cheque_number" formControlName="cheque_number">
+      </div>
 
-
-      <!-- <div class="row align-items-end">
-        <div class="col-6">
-          <label for="bank_name">Banque</label>
-          <input readonly class="form-control" formControlName="bank_name">
-        </div>
-        <div class="col-6">
-          <label for="cheque_number">n° de chèque</label>
-          <input type="text" class="form-control" id="cheque_number" formControlName="cheque_number">
-        </div>
-      </div> -->
 
     </ng-template>
 

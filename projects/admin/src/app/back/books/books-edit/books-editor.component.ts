@@ -1,20 +1,23 @@
+
 import { CommonModule, formatDate } from '@angular/common';
-import { Component, Input, ViewEncapsulation } from '@angular/core';
+import { Component, ViewEncapsulation } from '@angular/core';
 import { Location } from '@angular/common';
 import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { BookService } from '../../services/book.service';
-import { BookEntry, operation_values, Operation, FINANCIAL_ACCOUNT, TRANSACTION_ID, CUSTOMER_ACCOUNT, BALANCE_ACCOUNT } from '../../../common/interfaces/accounting.interface';
+import { BookEntry, operation_values, Operation, FINANCIAL_ACCOUNT, TRANSACTION_ID, BALANCE_ACCOUNT } from '../../../common/interfaces/accounting.interface';
 import { Bank } from '../../../common/interfaces/system-conf.interface';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { Transaction, Account_def, TRANSACTION_CLASS } from '../../../common/interfaces/transaction.definition';
 import { Member } from '../../../common/interfaces/member.interface';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, combineLatest, take } from 'rxjs';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { BackComponent } from '../../../common/loc-back/loc-back.component';
 import { MembersService } from '../../../common/services/members.service';
 import { TransactionService } from '../../services/transaction.service';
 import { ToastService } from '../../../common/services/toast.service';
+import { InvoiceService } from '../../../common/services/invoice.service';
+import { Invoice } from '../../../common/interfaces/invoice.interface';
 
 interface Operation_initial_values {
   optional_accounts?: string[];
@@ -55,7 +58,8 @@ export class BooksEditorComponent {
   transaction_ids !: TRANSACTION_ID[];
 
   transaction_classes !: TRANSACTION_CLASS[];
-  // class_descriptions = Object(Class_descriptions);
+
+  invoices!: Invoice[];
 
   form!: FormGroup;
 
@@ -81,6 +85,7 @@ export class BooksEditorComponent {
     private transactionService: TransactionService,
     private systemDataService: SystemDataService,
     private membersService: MembersService,
+    private invoiceService: InvoiceService,
     private toastService: ToastService,
     private route: ActivatedRoute,
     private location: Location
@@ -88,33 +93,35 @@ export class BooksEditorComponent {
   ) { }
 
   ngOnInit() {
-
     this.transaction_ids = [];
     this.transaction_classes = this.transactionService.list_transaction_classes();
+
+    // Load members immediately (not config-dependent)
     this.membersService.listMembers().subscribe((members) => {
       this.members = members;
     });
 
-    this.systemDataService.get_configuration().subscribe((conf) => {
+    // Combine config, params, and data, and only proceed when all are ready
+    combineLatest([
+      this.systemDataService.get_configuration().pipe(take(1)),
+      this.route.params.pipe(take(1)),
+      this.route.data.pipe(take(1))
+    ]).subscribe(([conf, params, data]) => {
       this.season = conf.season;
       this.banks = conf.banks;
       this.club_bank = this.banks.find(bank => bank.key === conf.club_bank_key)!;
       this.expenses_accounts = conf.revenue_and_expense_tree.expenses;
       this.products_accounts = conf.revenue_and_expense_tree.revenues;
-    });
 
-    this.init_form();
-
-    // Access both params and data from ActivatedRoute
-    this.route.params.subscribe(params => {
-      this.book_entry_id = params['id']; // Access the 'id' parameter from the URL
-      this.creation = (this.book_entry_id === undefined);
-
-      // Access custom route data (e.g., 'access')
-      this.route.data.subscribe(data => {
-        let access = data['access'];
-        this.protected_mode = !(access && (access === 'full'));
+      this.invoiceService.listInvoices().subscribe(invoices => {
+        this.invoices = invoices;
       });
+
+      this.book_entry_id = params['id'];
+      this.creation = (this.book_entry_id === undefined);
+      this.protected_mode = !(data['access'] && (data['access'] === 'full'));
+
+      this.init_form();
 
       if (!this.creation) {
         this.bookService.read_book_entry(this.book_entry_id)
@@ -122,16 +129,18 @@ export class BooksEditorComponent {
             this.selected_book_entry = book_entry;
             this.set_form(book_entry);
             this.valueChanges_subscribe();
+            this.form_ready = true;
           })
-          .catch((error) => { throw new Error('error reading book_entry', error) });
-
+          .catch((error) => {
+            this.toastService.showErrorToast('Erreur', "Erreur lors du chargement de l'écriture comptable");
+            console.error('error reading book_entry', error);
+            this.form_ready = false;
+          });
       } else {
         this.valueChanges_subscribe();
+        this.form_ready = true;
       }
-
-      this.form_ready = true;
     });
-
   }
 
   operations_valueChanges_subscribe() { // operation change handler pour le calcul du total
@@ -159,6 +168,7 @@ export class BooksEditorComponent {
       'transaction_id': ['', Validators.required],
       'amounts': new FormArray([]),
       'tag': [''],
+      'invoice_id': [''],
       'bank_name': [''],
       'cheque_number': [''],
       'deposit_ref': [''],
@@ -170,9 +180,13 @@ export class BooksEditorComponent {
   set_form(book_entry: BookEntry) {
 
     this.selected_transaction = this.transactionService.get_transaction(book_entry.transaction_id);
+    if (!this.selected_transaction) {
+      this.toastService.showErrorToast('Erreur', "Transaction inconnue pour l'écriture comptable");
+      console.error('Transaction inconnue pour book_entry', book_entry);
+      return;
+    }
     let transac_class = this.selected_transaction.class;
     this.financial_accounts = this.selected_transaction.financial_accounts;
-
 
     this.form.patchValue({
       id: book_entry.id,
@@ -183,6 +197,7 @@ export class BooksEditorComponent {
       bank_name: book_entry.cheque_ref?.slice(0, 3),
       cheque_number: book_entry.cheque_ref?.slice(3),
       deposit_ref: book_entry.deposit_ref,
+      invoice_id: book_entry.invoice_id,
     });
 
     this.transaction_ids = this.transactionService.class_to_ids(transac_class);
@@ -197,16 +212,13 @@ export class BooksEditorComponent {
       (this.form.controls['amounts'] as FormArray).controls[this.financial_accounts.indexOf(account)].setValue(value);
     });
 
-
     // création des champs operations
     this.operations.clear();
     book_entry.operations.forEach((operation) => {
       this.add_operation(this.selected_transaction!, operation);
     });
     this.operations_valueChanges_subscribe();
-
-
-  };
+  }
 
 
 
@@ -437,7 +449,7 @@ export class BooksEditorComponent {
       };
     });
 
-   this.save_book_entry(amounts, operations);
+    this.save_book_entry(amounts, operations);
   }
 
   negative_number_acceptable(bookEntry: BookEntry): boolean {
@@ -498,6 +510,7 @@ export class BooksEditorComponent {
       cheque_ref: this.form.controls['bank_name'].value?.toString() + this.form.controls['cheque_number'].value?.toString(),
       deposit_ref: this.form.controls['deposit_ref'].value ?? undefined,
       tag: this.form.controls['tag'].value ?? undefined,
+      invoice_id: this.form.controls['invoice_id'].value ?? undefined,
       amounts: amounts,
       operations: operations
     };
@@ -633,6 +646,32 @@ export class BooksEditorComponent {
   date_in_season(date: string): boolean {
     return this.systemDataService.date_in_season(date, this.season);
   }
+
+  // Handler for invoice select change
+  async onInvoiceChange(event: Event) {
+    const select = event.target as HTMLSelectElement;
+    const invoiceId = this.form.get('invoice_id')?.value;
+    if (!select.value || select.value === '') {
+      try {
+        this.invoiceService.resetInvoiceBookEntryLink(this.selected_book_entry.invoice_id!);
+        this.form.get('invoice_id')?.setValue('');
+        console.log('Invoice deselected, book entry link reset');
+      } catch (error) {
+        console.error('Error resetting invoice book entry link:', error);
+      }
+    } else {
+      try {
+        this.invoiceService.setInvoiceBookEntryLink(invoiceId, this.book_entry_id);
+        this.form.get('invoice_id')?.setValue(invoiceId);
+        console.log('Invoice selected:', invoiceId);
+      } catch (error) {
+        console.error('Error setting invoice book entry link:', error);
+      }
+    }
+  }
+
 }
+
+
 
 

@@ -9,8 +9,8 @@
         <div class="form-check form-switch">
           <input class="form-check-input" type="checkbox" role="switch" id="switchCheckDefault"
             (change)="toggle_slice()" [checked]="slice_start < 0">
-          <label class="form-check-label" for="switchCheckDefault">{{(slice_start<0)? -slice_start
-              + ' dernières' : 'toutes' }}</label>
+          <label class="form-check-label" for="switchCheckDefault">{{(slice_start<0)? -slice_start + ' dernières'
+              : 'toutes' }}</label>
         </div>
         <div class="ms-3 text-primary" style="cursor: pointer;" (click)="backward_slice()">
           <i class="bi bi-skip-backward-fill"></i>
@@ -41,7 +41,8 @@
           <th class="col">libellé</th>
           <th class="col">produits/charges</th>
           <th class="col th_hover" (click)="sort_by('montant')"> montant</th>
-          <th class="col th_hover" (click)="sort_by('tag')"> tag </th>
+          <th class="col th_hover">doc</th>
+          <th class="col th_hover text-center" (click)="sort_by('tag')"> tag </th>
           <th class="col th_hover" (click)="sort_by('classe')">classe </th>
           <th class="col th_hover" (click)="sort_by('transaction')"> type</th>
           <th class="col text-center">actions</th>
@@ -55,8 +56,18 @@
               date: 'dd/MM'}} </td>
             <td>{{operation.member ? operation.member : operation.label}}</td>
             <td>{{operation.values | json}}</td>
-            <td *ngIf="first" [rowSpan]="entry.operations.length" class="text-end pe-3"> {{total_amount(entry) |
+            <td *ngIf="first" [rowSpan]="entry.operations.length" class="text-center pe-3"> {{total_amount(entry) |
               number:truncature:'fr'}}
+            </td>
+            <td *ngIf="first" [rowSpan]="entry.operations.length">
+              <div *ngIf="invoice_required(entry)" class="d-flex flex-column align-items-center">
+                <span *ngIf="entry.invoice_id" class="text-success" title="Facture attachée">
+                  <i class="bi bi-paperclip"></i>
+                </span>
+                <span *ngIf="!entry.invoice_id" class="text-danger" title="Facture requise">
+                  <i class="bi bi-exclamation-triangle-fill"></i>
+                </span>
+              </div>
             </td>
             <td *ngIf="first" [rowSpan]="entry.operations.length"> {{entry.tag}} </td>
             <td *ngIf="first" [rowSpan]="entry.operations.length"> {{class_label(entry) }} </td>

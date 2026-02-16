@@ -113,6 +113,10 @@ export class BookService {
 
   async update_book_entry(book_entry: BookEntry) {
     try {
+      // Patch: ensure invoice_id is set to null if undefined, so backend clears the value
+      if ('invoice_id' in book_entry && book_entry.invoice_id === undefined) {
+        book_entry.invoice_id = null;
+      }
       let updated_entry = await this.dbHandler.updateBookEntry(book_entry);
       this._book_entries = this._book_entries.map((entry) => entry.id === updated_entry.id ? updated_entry : entry);
       this._book_entries$.next(this._book_entries.sort((a, b) => {
