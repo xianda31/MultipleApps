@@ -1,0 +1,68 @@
+<div class="container-fluid">
+  <div class="card mt-4 border-0">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">Factures - Saison {{ season }}</h5>
+      <button class="btn btn-primary" type="button" (click)="editInvoice(null)" [disabled]="showInvoiceEditor" >
+        <i class="bi bi-plus-lg"></i> Nouvelle facture
+      </button>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-12 col-md-6">
+          {{ invoices.length }} facture{{ invoices.length > 1 ? 's' : '' }} trouvée{{ invoices.length > 1 ? 's' : '' }}.
+          <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle bg-white">
+              <thead class="table-light">
+                <tr>
+                  <th>Titre</th>
+                  <th>Montant</th>
+                  <th>Type</th>
+                  <th>Auteur</th>
+                  <th>Date</th>
+                  <th>Ecriture</th>
+                  <th>Document</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let invoice of invoices">
+                  <td> {{ invoice.title }} </td>
+                  <td>{{ invoice.amount | number:'1.2-2' }} €</td>
+                  <td>{{ invoice.account }}</td>
+                  <td>{{ invoice.author }}</td>
+                  <td>{{ invoice.createdAt | date:'dd/MM/yyyy' }}</td>
+                  <td>
+                    <span *ngIf="invoice.book_entry_id ">
+                      <i class="bi bi-journal-text text-primary" title="Facture liée à une écriture comptable"></i>
+                    </span>
+                  </td>
+                  <td> {{ invoice.filename }} </td>
+                  <td>
+
+                    <button class="btn btn-link text-primary p-0 me-2" (click)="editInvoice(invoice)" title="Éditer">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-link text-danger p-0 ms-2" (click)="onDeleteInvoice(invoice)" title="Supprimer">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+                <tr *ngIf="invoices.length === 0">
+                  <td colspan="8" class="text-center">Aucune facture trouvée.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="col-12 col-md-6">
+
+          <app-invoice-editor *ngIf="showInvoiceEditor" [expenses]="expenses" [season]="season"
+            [invoice]="selectedInvoice" (invoiceCreated)="onCreateInvoice($event)"
+            (invoiceUpdated)="onUpdateInvoice($event)" (cancel)="closeInvoiceEditor()">
+          </app-invoice-editor>
+        </div>
+      </div>
+
+    </div>
+
+  </div>

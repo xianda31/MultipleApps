@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 
-import { BookEntry, Revenue, FINANCIAL_ACCOUNT, BALANCE_ACCOUNT, Expense, CUSTOMER_ACCOUNT, TRANSACTION_ID, Operation, AMOUNTS,  Formatted_purchase, Item } from '../../common/interfaces/accounting.interface';
+import { BookEntry, Revenue, FINANCIAL_ACCOUNT, BALANCE_ACCOUNT, Expense, CUSTOMER_ACCOUNT, TRANSACTION_ID, Operation, AMOUNTS, Formatted_purchase, Item } from '../../common/interfaces/accounting.interface';
 // import { Schema } from '../../../../amplify/data/resource';
 import { BehaviorSubject, catchError, from, map, Observable, of, switchMap, tap } from 'rxjs';
 import { SystemDataService } from '../../common/services/system-data.service';
@@ -10,6 +10,8 @@ import { Profit_and_loss } from '../../common/interfaces/system-conf.interface';
 import { DBhandler } from '../../common/services/graphQL.service';
 import { TransactionService } from './transaction.service';
 import { PaymentMode, SALE_ACCOUNTS } from '../shop/cart/cart.interface';
+import { Invoice } from '../../common/interfaces/invoice.interface';
+import { invoicePaymentMethods } from '../invoice-editor/invoice.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -215,48 +217,48 @@ export class BookService {
     return this._book_entries ?? []; // if no book entries are loaded yet
   }
 
-  private format_data(revenues: Revenue[], expenses: Expense[]) : Formatted_purchase[] {
+  private format_data(revenues: Revenue[], expenses: Expense[]): Formatted_purchase[] {
 
-      let transform_key = (key: string): string => {    // solution provisoire
-        if (key === 'creance_in') {
-          return 'achat à crédit';
-        } else if (key === 'creance_out') {
-          return 'remboursement crédit';
-        } else if (key === 'avoir_in') {
-          return 'utilisation avoir';
-        } else if (key === 'avoir_out') {
-          return 'attribution avoir';
-        }
-        return key;
+    let transform_key = (key: string): string => {    // solution provisoire
+      if (key === 'creance_in') {
+        return 'achat à crédit';
+      } else if (key === 'creance_out') {
+        return 'remboursement crédit';
+      } else if (key === 'avoir_in') {
+        return 'utilisation avoir';
+      } else if (key === 'avoir_out') {
+        return 'attribution avoir';
       }
-  
-  
-      const achats = revenues.map((operation) => {
-        let items: Item[] = Object.entries(operation.values).map(([key, value]: [string, number]) => {
-          let type: Item["type"] = (key.startsWith('creance') || key.startsWith('avoir')) ? 'bancaire' : 'revenue';
-          return { type: type, description: (transform_key(key)), amount: value };
-        });
-        return { date: operation.date, items: items };
-      });
-  
-  
-      const ventes = expenses.map((operation) => {
-        let items: Item[] = Object.entries(operation.values).map(([key, value]: [string, number]) => {
-          let type: Item["type"] = (key.startsWith('creance') || key.startsWith('avoir')) ? 'bancaire' : 'expense';
-          return { type: type, description: (transform_key(key)), amount: value };
-        });
-        return { date: operation.date, items: items };
-      });
-  
-      return [...achats, ...ventes].sort((b, a) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      return key;
     }
-    
+
+
+    const achats = revenues.map((operation) => {
+      let items: Item[] = Object.entries(operation.values).map(([key, value]: [string, number]) => {
+        let type: Item["type"] = (key.startsWith('creance') || key.startsWith('avoir')) ? 'bancaire' : 'revenue';
+        return { type: type, description: (transform_key(key)), amount: value };
+      });
+      return { date: operation.date, items: items };
+    });
+
+
+    const ventes = expenses.map((operation) => {
+      let items: Item[] = Object.entries(operation.values).map(([key, value]: [string, number]) => {
+        let type: Item["type"] = (key.startsWith('creance') || key.startsWith('avoir')) ? 'bancaire' : 'expense';
+        return { type: type, description: (transform_key(key)), amount: value };
+      });
+      return { date: operation.date, items: items };
+    });
+
+    return [...achats, ...ventes].sort((b, a) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }
+
 
   get_formated_buy_operations(member_full_name: string): Formatted_purchase[] {
     let revenues = this.get_revenues_from_members().filter((revenue) => revenue.member === member_full_name);
     let expenses = this.get_expenses_for_members().filter((expense) => expense.member === member_full_name);
 
-    return this.format_data(revenues,expenses)
+    return this.format_data(revenues, expenses)
 
   }
 
@@ -347,7 +349,7 @@ export class BookService {
       }, [] as Revenue[]);
   }
 
-book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
+  book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
     return book_entries.map(book_entry => {
       return book_entry.operations.map(op => ({
         ...op,
@@ -379,7 +381,7 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
         return [...acc, ...revenues];
       }, [] as Revenue[]);
   }
-  
+
   get_expenses_for_members(): Expense[] {
 
     if (!this._book_entries) { // if no book entries are loaded yet
@@ -401,7 +403,7 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
       }, [] as Expense[]);
   }
 
-  get_sales_of_the_day(the_day : string) : Observable<BookEntry[]> {
+  get_sales_of_the_day(the_day: string): Observable<BookEntry[]> {
     return this.list_book_entries().pipe(
       map((book_entries) => {
         return book_entries.filter((entry) => entry.date === the_day && this.transactionService.transaction_class(entry.transaction_id) === TRANSACTION_CLASS.REVENUE_FROM_MEMBER);
@@ -421,9 +423,9 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
       return true;
     }
     return this._book_entries
-    .filter((book_entry) => in_cashbox(book_entry))
+      .filter((book_entry) => in_cashbox(book_entry))
   }
-  
+
   get_cash_movements_amount(): number {
     return this.Round(this.get_cash_movements()
       .reduce((acc, book_entry) => acc + (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] || 0), 0));
@@ -618,7 +620,7 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
           acc_op_dates.push(date);
         }
       });
-      }); 
+    });
     return acc_op_dates;
   }
 
@@ -696,7 +698,7 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
     }
   }
 
-  create_tournament_fees_entry(date: string,tag:string, fees_amount: number) {
+  create_tournament_fees_entry(date: string, tag: string, fees_amount: number) {
     let amounts: AMOUNTS = {};
     amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] = fees_amount;
 
@@ -761,27 +763,27 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
     return this.Round(this.get_total_revenues() - this.get_total_expenses());
   }
 
-// écriture d'alignement de la caisse
-  cashbox_alignment( value: number): Promise<BookEntry> {
+  // écriture d'alignement de la caisse
+  cashbox_alignment(value: number): Promise<BookEntry> {
 
     let today = new Date();
-    if(value === 0) {
+    if (value === 0) {
       this.toastService.showWarning('base comptabilité', 'la valeur de l\'alignement de caisse ne peut pas être nulle');
       return Promise.resolve({} as BookEntry);
     }
-    
-   let pl_keys: Profit_and_loss = this.systemDataService.get_profit_and_loss_keys();
+
+    let pl_keys: Profit_and_loss = this.systemDataService.get_profit_and_loss_keys();
 
     const entry: BookEntry = {
       id: '',
       tag: 'reconciliation caisse',
       season: this.systemDataService.get_season(today),
       date: today.toISOString().split('T')[0],
-      amounts: (value<0) ? { [FINANCIAL_ACCOUNT.CASHBOX_credit]: -value } : { [FINANCIAL_ACCOUNT.CASHBOX_debit]: value },
+      amounts: (value < 0) ? { [FINANCIAL_ACCOUNT.CASHBOX_credit]: -value } : { [FINANCIAL_ACCOUNT.CASHBOX_debit]: value },
       operations: [
         {
-          label: (value<0) ? 'alignement caisse (manque)' : 'alignement caisse (excédent)',
-          values: (value<0) ?{ [pl_keys.debit_key]: -value } : { [pl_keys.credit_key]: value},
+          label: (value < 0) ? 'alignement caisse (manque)' : 'alignement caisse (excédent)',
+          values: (value < 0) ? { [pl_keys.debit_key]: -value } : { [pl_keys.credit_key]: value },
         }
       ],
       transaction_id: (value < 0) ? TRANSACTION_ID.dépense_en_espèces : TRANSACTION_ID.vente_en_espèces,
@@ -987,7 +989,7 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
 
   // utilitaire pour créer une vente de carte de tournoi
 
-private payment_mode2bank_op_type(payment_mode: PaymentMode): TRANSACTION_ID {
+  private payment_mode2bank_op_type(payment_mode: PaymentMode): TRANSACTION_ID {
     if (payment_mode === PaymentMode.CREDIT) {
       return TRANSACTION_ID.achat_adhérent_en_espèces;
     }
@@ -1002,20 +1004,20 @@ private payment_mode2bank_op_type(payment_mode: PaymentMode): TRANSACTION_ID {
     return TRANSACTION_ID.achat_adhérent_en_espèces;
   }
 
- private   payments2fValue(payment_mode: PaymentMode, amount : number): AMOUNTS {
-      let f_amounts: AMOUNTS = {};
-      if (Object.values(FINANCIAL_ACCOUNT).includes(SALE_ACCOUNTS[payment_mode] as FINANCIAL_ACCOUNT)) {
-        const account = SALE_ACCOUNTS[payment_mode] as FINANCIAL_ACCOUNT;
-        f_amounts[account] = amount;
-      }
-      return f_amounts;
+  private payments2fValue(payment_mode: PaymentMode, amount: number): AMOUNTS {
+    let f_amounts: AMOUNTS = {};
+    if (Object.values(FINANCIAL_ACCOUNT).includes(SALE_ACCOUNTS[payment_mode] as FINANCIAL_ACCOUNT)) {
+      const account = SALE_ACCOUNTS[payment_mode] as FINANCIAL_ACCOUNT;
+      f_amounts[account] = amount;
     }
-  
+    return f_amounts;
+  }
 
-  create_game_card_sale(buyer: string , card_price : number,mode:  PaymentMode ,co_buyer?:string,  cheque_ref?: string) : Promise<BookEntry> {
+
+  create_game_card_sale(buyer: string, card_price: number, mode: PaymentMode, co_buyer?: string, cheque_ref?: string): Promise<BookEntry> {
     const today = new Date();
-   let values: { [key: string]: number } = {'CAR': card_price };
-   let amounts : AMOUNTS = this.payments2fValue( mode, card_price);
+    let values: { [key: string]: number } = { 'CAR': card_price };
+    let amounts: AMOUNTS = this.payments2fValue(mode, card_price);
     if (mode === PaymentMode.CREDIT) {
       values[CUSTOMER_ACCOUNT.DEBT_debit] = card_price;
       amounts = { [FINANCIAL_ACCOUNT.CASHBOX_debit]: 0 };
@@ -1043,6 +1045,48 @@ private payment_mode2bank_op_type(payment_mode: PaymentMode): TRANSACTION_ID {
       });
     }
 
+    return this.create_book_entry(bookEntry);
+  }
+
+
+  create_entry_from_invoice(invoice: Invoice): Promise<BookEntry> {
+    const today = new Date();
+    let amounts: AMOUNTS = {};
+    let operations: Operation = { label: '', values: {} };
+    let tag ='';
+    let cheque_ref: string | undefined = undefined;
+    switch (invoice.transaction_id) {
+      case TRANSACTION_ID.dépense_en_espèces:
+        amounts = { [FINANCIAL_ACCOUNT.CASHBOX_credit]: invoice.amount };
+        operations = { label: invoicePaymentMethods[invoice.transaction_id]!, values: { [invoice.account]: invoice.amount } };
+        tag = 'réglement en espèces sur justificatif';
+        break;
+      case TRANSACTION_ID.dépense_par_chèque:
+        amounts = { [FINANCIAL_ACCOUNT.BANK_credit]: invoice.amount };
+        operations = { label: invoicePaymentMethods[invoice.transaction_id]!, values: { [invoice.account]: invoice.amount }};
+        cheque_ref = 'CLUB-XXXX';
+        break;
+      case TRANSACTION_ID.dépense_par_virement:
+        amounts = { [FINANCIAL_ACCOUNT.BANK_credit]: invoice.amount };
+        operations = { label: invoicePaymentMethods[invoice.transaction_id]!, values: { [invoice.account]: invoice.amount }};
+        break;
+      case TRANSACTION_ID.dépense_par_carte:
+      default:
+        console.warn('transaction non prise en charge pour la génération d\'écriture comptable à partir de la facture : ');
+        return Promise.reject({} as BookEntry);
+    }
+
+    const bookEntry: BookEntry = {
+      id: '',
+      season: this.systemDataService.get_season(today),
+      date: today.toISOString().split('T')[0],
+      transaction_id: invoice.transaction_id,
+      amounts: amounts,
+      operations: [operations],
+      invoice_id: invoice.id,
+      tag: tag,
+      cheque_ref: cheque_ref,
+    };
     return this.create_book_entry(bookEntry);
   }
 }

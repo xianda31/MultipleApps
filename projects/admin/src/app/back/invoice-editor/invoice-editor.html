@@ -1,0 +1,89 @@
+<div class="card m-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Justificatif de dépenses</h5>
+        <button class="btn-close" (click)="cancelEditor()"></button>
+    </div>
+    <div class="card-body">
+        <form [formGroup]="invoiceForm" (ngSubmit)="returnInvoice()">
+            <div class="mb-3">
+                <div class="row mb-3">
+                    <div class="col-6 col-md-2">
+                        <label for="deposit_date" class="form-label mb-0">Date</label>
+                        <input type="date" class="form-control" id="deposit_date" formControlName="deposit_date">
+                    </div>
+                    <div class="col-6 col-md-5">
+                        <label for="title" class="form-label mb-0">Titre</label>
+                        <input type="text" class="form-control" id="title" formControlName="title">
+                    </div>
+
+                    <div class="col-3 col-md-3">
+                        <label for="account" class="form-label mb-0">Compte</label>
+                        <select class="form-select" id="account" formControlName="account">
+                            <option value="">-- Sélectionner un compte --</option>
+                            <option *ngFor="let exp of expenses" [value]="exp.key">{{ exp.key }} - {{ exp.description }}
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="col-3 col-md-2">
+                        <label for="amount" class="form-label mb-0">Montant </label>
+                        <input type="number" class="form-control" id="amount" formControlName="amount">
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="mb-3">
+                <label for="pdfFile" class="form-label mb-0">Fichier PDF</label>
+                <div class="d-flex align-items-center">
+                    <div *ngIf="invoiceForm.get('filename')?.value" class="text-success w-50">
+                        document actuel :
+                        <span *ngIf="pdfPreviewUrl || invoice" class="text-primary text-decoration-underline"
+                            style="cursor:pointer" (click)="openPreviewPdf()">
+                            {{ invoiceForm.get('filename')?.value.split('/').pop() }}
+                        </span>
+                    </div>
+                    <input type="file" class="form-control  me-3 w-50" id="pdfFile" accept="application/pdf"
+                        (change)="onFileSelected($event)">
+                </div>
+                <div *ngIf="uploading" class="text-info small">Upload en cours...</div>
+
+                <div *ngIf="invoiceForm.get('filename')?.value" class="text-success small">
+                    <div class="mt-2">
+                        <canvas #pdfMiniatureCanvas
+                            style="max-width: 100%; border: 1px solid #ccc; background: #fafafa;"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+
+                <div class="col-6 col-md-6">
+                    <label class="form-label mb-0">Mode de règlement</label>
+                    <div [formGroup]="invoiceForm">
+                        <div *ngFor="let p of invoicePaymentMethods | keyvalue" class="form-check">
+                            <input class="form-check-input" type="radio" [id]="'transaction-' + p.key"
+                                formControlName="transaction_id" [value]="p.key">
+                            <label class="form-check-label" [for]="'transaction-' + p.key">{{ p.value }}</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div *ngIf="!editor_in_creation_mode " class="offset-md-3 col-6 col-md-3">
+                    <label for="book_entry_id" class="form-label">
+                        <button type="button" class="btn btn-sm btn-primary ms-2" (click)="returnInvoice(true)" [disabled]="invoiceForm.invalid">
+                            Validation comptable
+                        </button>
+                    </label>
+                    <input type="text" class="form-control" id="book_entry_id" formControlName="book_entry_id" readonly>
+                </div>
+            </div>
+
+
+            <button type="submit" class="btn btn-success" [disabled]="invoiceForm.invalid" (click)="returnInvoice()">
+                {{ invoice ? 'Modifier' : 'Créer' }}
+            </button>
+            <button type="button" class="btn btn-secondary ms-2" (click)="cancelEditor()">Annuler</button>
+        </form>
+    </div>
+</div>

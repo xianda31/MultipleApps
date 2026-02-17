@@ -118,11 +118,14 @@ const schema = a.schema({
 Invoice: a.model({
   id: a.id().required(),
   season: a.string().required(),
-  filename: a.string().required(),
+  date: a.date().required(),
   title: a.string().required(),
   amount: a.float().required(),
+  account: a.string().required(),
+  filename: a.string().required(),
+  author: a.string().required(),
+  transaction_id: a.string().required(),
   book_entry_id: a.string(),
-  author: a.string(),
 })
   .authorization((allow) => [
     allow.guest().to(['read']),

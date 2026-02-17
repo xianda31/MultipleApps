@@ -32,7 +32,7 @@ import { MailingComponent } from './mailing/mailing.component';
 import { CmsWrapper } from './pages/cms-wrapper/cms-wrapper';
 import { CompetitionsComponent } from './competitions/competitions';
 import { PdfViewerComponent } from './pdf-viewer/pdf-viewer.component';
-import { InvoicesComponent } from '../common/invoices/invoices.component';
+import { InvoicesComponent } from './invoices/invoices.component';
 
 export const routes: Routes = [
   {
