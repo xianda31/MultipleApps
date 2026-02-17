@@ -70,7 +70,7 @@
       <!-- info tag  & invoice -->
       <div class="col-sm-3 col-md-4 d-flex align-items-end gap-2">
         <ng-container [ngTemplateOutlet]="tag" [ngTemplateOutletContext]="{inputFormGroup: form}"></ng-container>
-        <ng-container [ngTemplateOutlet]="invoice" [ngTemplateOutletContext]="{inputFormGroup: form}"></ng-container>
+        <ng-container *ngIf="!creation" [ngTemplateOutlet]="invoice" [ngTemplateOutletContext]="{inputFormGroup: form}"></ng-container>
       </div>
       <!-- <div>
       </div> -->
@@ -175,12 +175,14 @@
       <ng-container [formGroup]="inputFormGroup">
         <div class="d-flex flex-column">
           <label for="invoice_id">Document</label>
-            <select class="form-control" id="invoice_id" formControlName="invoice_id" (change)="onInvoiceChange($event)">
-              <option [value]="''">aucun</option>
-              <option *ngFor="let invoice of invoices" [value]="invoice.id">
-                {{invoice.title}} - {{invoice.amount | number:'1.2-2'}} € - {{invoice.author}} 
-              </option>
-            </select>
+            <ng-container *ngIf="inputFormGroup.get('invoice_id').value !== '' && inputFormGroup.get('invoice_id').value">
+              <div class="form-control bg-light">
+                {{ getInvoiceDescription(inputFormGroup.get('invoice_id').value) }}
+              </div>
+            </ng-container>
+            <ng-container *ngIf="!inputFormGroup.get('invoice_id').value">
+              <button type="button" class="btn btn-outline-primary" (click)="onInvoiceDefine()">Attacher</button>
+            </ng-container>
         </div>
       </ng-container>
     </ng-template>

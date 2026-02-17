@@ -39,6 +39,14 @@ interface Account {
   styleUrl: './books-editor.component.scss'
 })
 export class BooksEditorComponent {
+  /**
+   * Retourne la description de la facture pour un id donné, ou une chaîne vide si non trouvée.
+   */
+  getInvoiceDescription(invoice_id: string): string {
+    if (!invoice_id) return '';
+    const invoice = this.invoices?.find(inv => inv.id === invoice_id);
+    return invoice ? invoice.description : '';
+  }
   NumberRegexPattern: string = '([-,+]?[0-9]+([.,][0-9]*)?|[.][0-9]+)';
   // NumberRegexPattern: string = '([0-9]+([.,][0-9]*)?|[.][0-9]+)';
 
@@ -648,26 +656,61 @@ export class BooksEditorComponent {
   }
 
   // Handler for invoice select change
-  async onInvoiceChange(event: Event) {
-    const select = event.target as HTMLSelectElement;
-    const invoiceId = this.form.get('invoice_id')?.value;
-    if (!select.value || select.value === '') {
-      try {
-        this.invoiceService.resetInvoiceBookEntryLink(this.selected_book_entry.invoice_id!);
-        this.form.get('invoice_id')?.setValue('');
-        console.log('Invoice deselected, book entry link reset');
-      } catch (error) {
-        console.error('Error resetting invoice book entry link:', error);
-      }
-    } else {
-      try {
-        this.invoiceService.setInvoiceBookEntryLink(invoiceId, this.book_entry_id);
-        this.form.get('invoice_id')?.setValue(invoiceId);
-        console.log('Invoice selected:', invoiceId);
-      } catch (error) {
-        console.error('Error setting invoice book entry link:', error);
-      }
-    }
+  // async onInvoiceChange(event: Event) {
+  //   const select = event.target as HTMLSelectElement;
+  //   const invoiceId = this.form.get('invoice_id')?.value;
+  //   if (!select.value || select.value === '') {
+  //     try {
+  //       this.invoiceService.resetInvoiceBookEntryLink(this.selected_book_entry.invoice_id!);
+  //       this.form.get('invoice_id')?.setValue('');
+  //       console.log('Invoice deselected, book entry link reset');
+  //     } catch (error) {
+  //       console.error('Error resetting invoice book entry link:', error);
+  //     }
+  //   } else {
+  //     try {
+  //       this.invoiceService.setInvoiceBookEntryLink(invoiceId, this.book_entry_id);
+  //       this.form.get('invoice_id')?.setValue(invoiceId);
+  //       console.log('Invoice selected:', invoiceId);
+  //     } catch (error) {
+  //       console.error('Error setting invoice book entry link:', error);
+  //     }
+  //   }
+  // }
+
+  onInvoiceDefine() {
+    let transaction = this.transactionService.get_transaction(this.transaction_id);
+    let expense_or_revenue_accounts = this.expense_or_revenue_accounts(transaction);
+
+    const invoice: Invoice = {
+      id: '',
+      season: this.season,
+      date: this.form.controls['date'].value,
+      payee: this.form.controls['operations'].value.map((operation: any) => operation.label).join(' - '),
+      amount: this.form.controls['amounts'].value.reduce((acc: number, val: string) => acc + this.parse_to_float(val), 0),
+      account: (() => {
+        const operations = this.form.controls['operations'].value;
+        if (operations && operations.length > 0 && operations[0].values) {
+          const  index = operations[0].values.findIndex((value: string) => value !== '' && value !== '0');
+          return index !== -1 ? expense_or_revenue_accounts[index].key : '';
+        }
+        return '';
+      })(),
+      transaction_id: this.transaction_id,
+      filename: '',
+      description:  '',
+      book_entry_id: this.book_entry_id
+
+    };
+
+    console.log('Creating invoice with data:', invoice);
+    this.invoiceService.createInvoice(invoice).then((createdInvoice) => {
+      this.form.get('invoice_id')?.setValue(createdInvoice.id);
+      // this.invoiceService.setInvoiceBookEntryLink(createdInvoice.id, this.book_entry_id);
+      // console.log('Invoice created and linked:', createdInvoice);
+    }).catch((error) => {      this.toastService.showErrorToast('Erreur', 'Erreur lors de la création de la facture');
+      console.error('Error creating invoice:', error);
+    });
   }
 
 }

@@ -119,11 +119,11 @@ Invoice: a.model({
   id: a.id().required(),
   season: a.string().required(),
   date: a.date().required(),
-  title: a.string().required(),
+  payee: a.string().required(),
+  description: a.string().required(),
   amount: a.float().required(),
   account: a.string().required(),
   filename: a.string().required(),
-  author: a.string().required(),
   transaction_id: a.string().required(),
   book_entry_id: a.string(),
 })

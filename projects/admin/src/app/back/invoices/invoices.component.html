@@ -14,10 +14,11 @@
             <table class="table table-bordered table-hover align-middle bg-white">
               <thead class="table-light">
                 <tr>
-                  <th>Titre</th>
+                  <th>Mode</th>
+                  <th>Bénéficiaire</th>
                   <th>Montant</th>
-                  <th>Type</th>
-                  <th>Auteur</th>
+                  <th>Description</th>
+                  <th>Compte</th>
                   <th>Date</th>
                   <th>Ecriture</th>
                   <th>Document</th>
@@ -26,10 +27,11 @@
               </thead>
               <tbody>
                 <tr *ngFor="let invoice of invoices">
-                  <td> {{ invoice.title }} </td>
+                  <td>{{ get_payment_mode(invoice) }}</td>
+                  <td>{{ invoice.payee }}</td>
                   <td>{{ invoice.amount | number:'1.2-2' }} €</td>
+                  <td> {{ invoice.description }} </td>
                   <td>{{ invoice.account }}</td>
-                  <td>{{ invoice.author }}</td>
                   <td>{{ invoice.createdAt | date:'dd/MM/yyyy' }}</td>
                   <td>
                     <span *ngIf="invoice.book_entry_id ">

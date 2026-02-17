@@ -2,16 +2,14 @@ import { Component, Output, EventEmitter, Input, ChangeDetectorRef, ViewChild, E
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { S3_ROOT_FOLDERS, FileService } from '../../common/services/files.service';
 import { CommonModule } from '@angular/common';
-import { identity, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import * as pdfjsLib from 'pdfjs-dist';
-import { TRANSACTION_ID } from '../../common/interfaces/accounting.interface';
 import { AuthentificationService } from '../../common/authentification/authentification.service';
 import { Member } from '../../common/interfaces/member.interface';
 import { Accreditation, Group_priorities } from '../../common/authentification/group.interface';
 import { GroupService } from '../../common/authentification/group.service';
-import { Invoice } from '../../common/interfaces/invoice.interface';
+import { Invoice, invoicePaymentMethods } from '../../common/interfaces/invoice.interface';
 import { Revenue_and_expense_definition } from '../../common/interfaces/system-conf.interface';
-import { invoicePaymentMethods } from './invoice.interface';
 import { BookService } from '../services/book.service';
 
 @Component({
@@ -31,7 +29,6 @@ export class InvoiceEditor {
   @Output() cancel = new EventEmitter<void>();
 
   editor_in_creation_mode: boolean = true;
-  logged_member: Member | null = null;
   accreditation_levels = Group_priorities;
   user_accreditation: Accreditation | null = null;
   invoiceForm: FormGroup;
@@ -42,31 +39,29 @@ export class InvoiceEditor {
   constructor(
     private fb: FormBuilder,
     private authService: AuthentificationService,
-    private fileService: FileService,
     private groupService: GroupService,
+    private fileService: FileService,
     private bookService: BookService,
     private cdr: ChangeDetectorRef) {
     this.invoiceForm = this.fb.group({
       id: [''],
       season: [{ value: '', disabled: true }],
       date: [this.getTodayDate(), Validators.required],
-      title: ['', Validators.required],
+      description: ['', Validators.required],
       amount: ['', [Validators.required, Validators.pattern(/^[\d]+(\.[\d]{1,2})?$/)]],
-      account: [''],
+      account: ['', Validators.required],
       filename: ['', Validators.required],
-      author: [''],
-      transaction_id: [''],
+      payee: ['', Validators.required],
+      transaction_id: ['', Validators.required],
       book_entry_id: [{ value: '', disabled: true }],
-      deposit_date: [this.getTodayDate()]
+      // deposit_date: [this.getTodayDate()]
     });
   }
 
   ngOnInit() {
     this.authService.logged_member$.subscribe(async member => {
-      this.logged_member = member;
-      if (this.logged_member) {
+      if (member) {
         this.user_accreditation = await this.groupService.getUserAccreditation();
-        this.invoiceForm.patchValue({ author: this.logged_member.firstname });
       }
     });
     if (this.invoice) {
@@ -201,11 +196,11 @@ export class InvoiceEditor {
         id: raw.id,
         season: this.season,
         date: raw.date,
-        title: raw.title,
+        description: raw.description,
         amount: raw.amount,
         account: raw.account,
         filename: raw.filename,
-        author: raw.author,
+        payee: raw.payee,
         transaction_id: raw.transaction_id,
         book_entry_id: raw.book_entry_id,
       };

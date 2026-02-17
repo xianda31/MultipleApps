@@ -10,8 +10,7 @@ import { Profit_and_loss } from '../../common/interfaces/system-conf.interface';
 import { DBhandler } from '../../common/services/graphQL.service';
 import { TransactionService } from './transaction.service';
 import { PaymentMode, SALE_ACCOUNTS } from '../shop/cart/cart.interface';
-import { Invoice } from '../../common/interfaces/invoice.interface';
-import { invoicePaymentMethods } from '../invoice-editor/invoice.interface';
+import { Invoice, invoicePaymentMethods } from '../../common/interfaces/invoice.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -1058,19 +1057,22 @@ export class BookService {
     switch (invoice.transaction_id) {
       case TRANSACTION_ID.dépense_en_espèces:
         amounts = { [FINANCIAL_ACCOUNT.CASHBOX_credit]: invoice.amount };
-        operations = { label: invoicePaymentMethods[invoice.transaction_id]!, values: { [invoice.account]: invoice.amount } };
+        operations = { label:invoice.payee + ' (' + invoicePaymentMethods[invoice.transaction_id]!+')', values: { [invoice.account]: invoice.amount } };
         tag = 'réglement en espèces sur justificatif';
         break;
       case TRANSACTION_ID.dépense_par_chèque:
         amounts = { [FINANCIAL_ACCOUNT.BANK_credit]: invoice.amount };
-        operations = { label: invoicePaymentMethods[invoice.transaction_id]!, values: { [invoice.account]: invoice.amount }};
+        operations = { label:invoice.payee + ' (' + invoicePaymentMethods[invoice.transaction_id]!+')', values: { [invoice.account]: invoice.amount }};
         cheque_ref = 'CLUB-XXXX';
         break;
       case TRANSACTION_ID.dépense_par_virement:
         amounts = { [FINANCIAL_ACCOUNT.BANK_credit]: invoice.amount };
-        operations = { label: invoicePaymentMethods[invoice.transaction_id]!, values: { [invoice.account]: invoice.amount }};
+        operations = { label:invoice.payee + ' (' + invoicePaymentMethods[invoice.transaction_id]!+')', values: { [invoice.account]: invoice.amount }};
         break;
       case TRANSACTION_ID.dépense_par_carte:
+        amounts = { [FINANCIAL_ACCOUNT.BANK_credit]: invoice.amount };
+        operations = { label:invoice.payee + ' (' + invoicePaymentMethods[invoice.transaction_id]!+')', values: { [invoice.account]: invoice.amount }};
+        break;
       default:
         console.warn('transaction non prise en charge pour la génération d\'écriture comptable à partir de la facture : ');
         return Promise.reject({} as BookEntry);

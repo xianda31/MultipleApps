@@ -5,7 +5,7 @@ import { Component, ViewChild, ElementRef } from '@angular/core';
 import { FileService, S3_ROOT_FOLDERS } from '../../common/services/files.service';
 import { CommonModule } from '@angular/common';
 import { SystemDataService } from '../../common/services/system-data.service';
-import { Invoice } from '../../common/interfaces/invoice.interface';
+import { Invoice, invoicePaymentMethods } from '../../common/interfaces/invoice.interface';
 import { InvoiceService } from '../../common/services/invoice.service';
 import { Observable } from 'rxjs';
 import { Revenue_and_expense_definition } from '../../common/interfaces/system-conf.interface';
@@ -24,6 +24,8 @@ export class InvoicesComponent {
   season: string = '';
   invoices: (Invoice & { url?: string })[] = [];
   expenses: Revenue_and_expense_definition[] = [];
+  invoicePaymentMethods = invoicePaymentMethods;
+
   uploading = false;
   pdfPreviewUrl?: string;
 
@@ -57,6 +59,10 @@ export class InvoicesComponent {
   editInvoice(invoice: Invoice | null) {
     this.selectedInvoice = invoice;
     this.showInvoiceEditor = true;
+  }
+
+  get_payment_mode(invoice: Invoice): string {
+    return this.invoicePaymentMethods[invoice.transaction_id] || invoice.transaction_id;
   }
 
   // CRUD actions 
