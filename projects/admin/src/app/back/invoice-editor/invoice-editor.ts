@@ -5,7 +5,6 @@ import { CommonModule } from '@angular/common';
 import { Observable } from 'rxjs';
 import * as pdfjsLib from 'pdfjs-dist';
 import { AuthentificationService } from '../../common/authentification/authentification.service';
-import { Member } from '../../common/interfaces/member.interface';
 import { Accreditation, Group_priorities } from '../../common/authentification/group.interface';
 import { GroupService } from '../../common/authentification/group.service';
 import { Invoice, invoicePaymentMethods } from '../../common/interfaces/invoice.interface';
@@ -17,7 +16,6 @@ import { BookService } from '../services/book.service';
   templateUrl: './invoice-editor.html',
   styleUrls: ['./invoice-editor.scss'],
   imports: [CommonModule, ReactiveFormsModule, FormsModule]
-
 })
 export class InvoiceEditor {
   @ViewChild('pdfMiniatureCanvas') pdfMiniatureCanvas!: ElementRef<HTMLCanvasElement>;

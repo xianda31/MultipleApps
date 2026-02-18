@@ -17,7 +17,9 @@ import { MembersService } from '../../../common/services/members.service';
 import { TransactionService } from '../../services/transaction.service';
 import { ToastService } from '../../../common/services/toast.service';
 import { InvoiceService } from '../../../common/services/invoice.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Invoice } from '../../../common/interfaces/invoice.interface';
+import { InvoiceEditor } from '../../invoice-editor/invoice-editor';
 
 interface Operation_initial_values {
   optional_accounts?: string[];
@@ -96,8 +98,8 @@ export class BooksEditorComponent {
     private invoiceService: InvoiceService,
     private toastService: ToastService,
     private route: ActivatedRoute,
-    private location: Location
-
+    private location: Location,
+    private modalService: NgbModal
   ) { }
 
   ngOnInit() {
@@ -691,14 +693,14 @@ export class BooksEditorComponent {
       account: (() => {
         const operations = this.form.controls['operations'].value;
         if (operations && operations.length > 0 && operations[0].values) {
-          const  index = operations[0].values.findIndex((value: string) => value !== '' && value !== '0');
+          const index = operations[0].values.findIndex((value: string) => value !== '' && value !== '0');
           return index !== -1 ? expense_or_revenue_accounts[index].key : '';
         }
         return '';
       })(),
       transaction_id: this.transaction_id,
       filename: '',
-      description:  '',
+      description: this.form.controls['tag'].value ?? '',
       book_entry_id: this.book_entry_id
 
     };
@@ -706,14 +708,39 @@ export class BooksEditorComponent {
     console.log('Creating invoice with data:', invoice);
     this.invoiceService.createInvoice(invoice).then((createdInvoice) => {
       this.form.get('invoice_id')?.setValue(createdInvoice.id);
-      // this.invoiceService.setInvoiceBookEntryLink(createdInvoice.id, this.book_entry_id);
-      // console.log('Invoice created and linked:', createdInvoice);
-    }).catch((error) => {      this.toastService.showErrorToast('Erreur', 'Erreur lors de la création de la facture');
-      console.error('Error creating invoice:', error);
+      this.openInvoiceEditor(createdInvoice);
+    }).catch((error) => {
+      this.toastService.showErrorToast('Erreur', 'Erreur lors de la création de la facture');
     });
   }
 
+  openInvoiceEditor(invoice: Invoice) {
+    // Utilisation du service NgbModal pour ouvrir le composant invoice-editor
+    const modalRef = this.modalService.open(InvoiceEditor, { size: 'lg', backdrop: 'static', centered: true });
+    modalRef.componentInstance.expenses = this.expenses_accounts;
+    modalRef.componentInstance.invoice = invoice;
+    modalRef.componentInstance.season = this.season;
+
+    // Gestion des événements de sortie du composant
+    const closeModal = () => modalRef.close();
+    if (modalRef.componentInstance.invoiceCreated) {
+      modalRef.componentInstance.invoiceCreated.subscribe(() => closeModal());
+    }
+    if (modalRef.componentInstance.invoiceUpdated) {
+      modalRef.componentInstance.invoiceUpdated.subscribe(() => closeModal());
+    }
+    if (modalRef.componentInstance.cancel) {
+      modalRef.componentInstance.cancel.subscribe(() => closeModal());
+    }
+
+    modalRef.result.then((result) => {
+      // Traitement après fermeture
+    }, (reason) => {
+      // Fermeture ou annulation
+    });
+  }
 }
+
 
 
 
