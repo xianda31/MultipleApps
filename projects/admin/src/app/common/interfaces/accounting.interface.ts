@@ -1,3 +1,5 @@
+import { InvocationType } from "aws-cdk-lib/triggers"
+
 export enum TRANSACTION_ID {
   achat_adhérent_en_espèces = 'achat_adhérent_en_espèces',
   achat_adhérent_par_chèque = 'achat_adhérent_par_chèque',
@@ -128,6 +130,7 @@ export interface BookEntry {
   cheque_ref?: string;        // code banque + numéro de chèque
   bank_report?: string | null;       // (mois) relevé bancaire
   deposit_ref?: string;       //  référence bordereau de dépôt
+  invoice_ref?: string;       // référence facture fournisseur
   operations: Operation[];
 }
 

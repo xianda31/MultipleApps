@@ -17,6 +17,7 @@ export enum S3_ROOT_FOLDERS {
   THUMBNAILS = 'thumbnails',
   SYSTEM = 'system',
   ACCOUNTING = 'accounting',
+  INVOICES = 'invoices',
   ANY = 'any'
 }
 
@@ -183,14 +184,14 @@ export class FileService {
   }
     // Vérifie que deleteFolderRecursive est bien exportée et accessible
 
-  upload_file(file: File, directory = '', noCache: boolean = false): Promise<void> {
+  upload_file(file: File, directory = '', noOverwrite: boolean = false): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       const options: any = {
         contentType: file.type,
       };
       // Add cache-control header to prevent CDN caching for config files
-      if (noCache) {
-        options.metadata = { 'cache-control': 'no-cache, no-store, must-revalidate' };
+      if (noOverwrite) {
+        options.validateObjectExistence = true;
       }
       uploadData({
         data: file,
@@ -270,8 +271,8 @@ export class FileService {
 
     // Perform upload and attach diagnostics on error so we can trace origin of bad payloads.
     // Use noCache=true for config files to avoid CDN caching issues
-    const isConfigFile = directory.startsWith('system/') || filename.endsWith('_settings.txt');
-    return this.upload_file(file, directory, isConfigFile).catch((err) => {
+    // const isConfigFile = directory.startsWith('system/') || filename.endsWith('_settings.txt');
+    return this.upload_file(file, directory).catch((err) => {
       try {
         console.error('upload_to_S3: upload failed for', directory + filename);
       } catch (e) { /* ignore */ }

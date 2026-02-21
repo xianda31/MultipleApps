@@ -1041,4 +1041,34 @@ private payment_mode2bank_op_type(payment_mode: PaymentMode): TRANSACTION_ID {
 
     return this.create_book_entry(bookEntry);
   }
+
+  // utilitaires pour l'UI de booklist : persister le slice, le tri et les filtres appliqués par l'utilisateur
+  private _sort_key: string = '';
+  private _filter_key: string = '';
+  SLICE_SIZE = 15;
+  private slice_start = -this.SLICE_SIZE; // pour le slice des opérations
+  set_sort_key(key: string) {
+    this._sort_key = key;
+  }
+  get_sort_key(): string {
+    return this._sort_key;
+  }
+  set_filter_key(key: string) {
+    this._filter_key = key;
+  }
+  get_filter_key(): string {
+    return this._filter_key;
+  }
+  toggle_slice(): number {
+    this.slice_start = (this.slice_start === 0) ? -this.SLICE_SIZE : 0;
+    return this.slice_start;
+  }
+  backward_slice():number{
+     this.slice_start -= this.SLICE_SIZE;
+      return this.slice_start;
+  }
+  get_slice_back(): number {
+    return this.slice_start;
+  }
+
 }

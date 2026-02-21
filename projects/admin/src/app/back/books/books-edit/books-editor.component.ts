@@ -1,9 +1,9 @@
 import { CommonModule, formatDate } from '@angular/common';
-import { Component, Input, ViewEncapsulation } from '@angular/core';
+import { Component, ViewEncapsulation } from '@angular/core';
 import { Location } from '@angular/common';
 import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { BookService } from '../../services/book.service';
-import { BookEntry, operation_values, Operation, FINANCIAL_ACCOUNT, TRANSACTION_ID, CUSTOMER_ACCOUNT, BALANCE_ACCOUNT } from '../../../common/interfaces/accounting.interface';
+import { BookEntry, operation_values, Operation, FINANCIAL_ACCOUNT, TRANSACTION_ID, BALANCE_ACCOUNT } from '../../../common/interfaces/accounting.interface';
 import { Bank } from '../../../common/interfaces/system-conf.interface';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { Transaction, Account_def, TRANSACTION_CLASS } from '../../../common/interfaces/transaction.definition';
@@ -36,6 +36,7 @@ interface Account {
   styleUrl: './books-editor.component.scss'
 })
 export class BooksEditorComponent {
+
   NumberRegexPattern: string = '([-,+]?[0-9]+([.,][0-9]*)?|[.][0-9]+)';
   // NumberRegexPattern: string = '([0-9]+([.,][0-9]*)?|[.][0-9]+)';
 
@@ -91,6 +92,7 @@ export class BooksEditorComponent {
 
     this.transaction_ids = [];
     this.transaction_classes = this.transactionService.list_transaction_classes();
+
     this.membersService.listMembers().subscribe((members) => {
       this.members = members;
     });
@@ -101,37 +103,38 @@ export class BooksEditorComponent {
       this.club_bank = this.banks.find(bank => bank.key === conf.club_bank_key)!;
       this.expenses_accounts = conf.revenue_and_expense_tree.expenses;
       this.products_accounts = conf.revenue_and_expense_tree.revenues;
-    });
 
-    this.init_form();
 
-    // Access both params and data from ActivatedRoute
-    this.route.params.subscribe(params => {
-      this.book_entry_id = params['id']; // Access the 'id' parameter from the URL
-      this.creation = (this.book_entry_id === undefined);
+      this.init_form();
 
-      // Access custom route data (e.g., 'access')
-      this.route.data.subscribe(data => {
-        let access = data['access'];
-        this.protected_mode = !(access && (access === 'full'));
+      // Access both params and data from ActivatedRoute
+      this.route.params.subscribe(params => {
+        this.book_entry_id = params['id']; // Access the 'id' parameter from the URL
+        this.creation = (this.book_entry_id === undefined);
+
+        // Access custom route data (e.g., 'access')
+        this.route.data.subscribe(data => {
+          let access = data['access'];
+          this.protected_mode = !(access && (access === 'full'));
+        });
+
+        if (!this.creation) {
+          this.bookService.read_book_entry(this.book_entry_id)
+            .then((book_entry) => {
+              this.selected_book_entry = book_entry;
+              console.log('book entry loaded:', book_entry);
+              this.set_form(book_entry);
+              this.valueChanges_subscribe();
+              this.form_ready = true;
+            })
+            .catch((error) => { throw new Error('error reading book_entry', error) });
+
+        } else {
+          this.valueChanges_subscribe();
+          this.form_ready = true;
+        }
       });
-
-      if (!this.creation) {
-        this.bookService.read_book_entry(this.book_entry_id)
-          .then((book_entry) => {
-            this.selected_book_entry = book_entry;
-            this.set_form(book_entry);
-            this.valueChanges_subscribe();
-          })
-          .catch((error) => { throw new Error('error reading book_entry', error) });
-
-      } else {
-        this.valueChanges_subscribe();
-      }
-
-      this.form_ready = true;
     });
-
   }
 
   operations_valueChanges_subscribe() { // operation change handler pour le calcul du total
@@ -154,7 +157,7 @@ export class BooksEditorComponent {
     this.selected_transaction = undefined;
     this.form = this.fb.group({
       'id': [''],
-      'date': [today, Validators.required],
+      'date': [today, [Validators.required, this.dateSeasonValidator]],
       'transac_class': ['', Validators.required],
       'transaction_id': ['', Validators.required],
       'amounts': new FormArray([]),
@@ -162,6 +165,7 @@ export class BooksEditorComponent {
       'bank_name': [''],
       'cheque_number': [''],
       'deposit_ref': [''],
+      'invoice_ref': [''],
       'operations': new FormArray([]),
     });
   }
@@ -183,6 +187,7 @@ export class BooksEditorComponent {
       bank_name: book_entry.cheque_ref?.slice(0, 3),
       cheque_number: book_entry.cheque_ref?.slice(3),
       deposit_ref: book_entry.deposit_ref,
+      invoice_ref: book_entry.invoice_ref ?? '',
     });
 
     this.transaction_ids = this.transactionService.class_to_ids(transac_class);
@@ -229,6 +234,11 @@ export class BooksEditorComponent {
   }
 
   valueChanges_subscribe() {
+    // Prevent multiple subscriptions
+    this.transacClassSubscription?.unsubscribe();
+    this.transactionIdSubscription?.unsubscribe();
+    this.operations_valueChanges_subscription?.unsubscribe();
+
     // form.transaction_class change handler
     this.transacClassSubscription = this.form.controls['transac_class'].valueChanges.subscribe((op_class) => {
       this.selected_transaction = undefined;
@@ -437,7 +447,7 @@ export class BooksEditorComponent {
       };
     });
 
-   this.save_book_entry(amounts, operations);
+    this.save_book_entry(amounts, operations);
   }
 
   negative_number_acceptable(bookEntry: BookEntry): boolean {
@@ -497,6 +507,7 @@ export class BooksEditorComponent {
       transaction_id: this.form.controls['transaction_id'].value,
       cheque_ref: this.form.controls['bank_name'].value?.toString() + this.form.controls['cheque_number'].value?.toString(),
       deposit_ref: this.form.controls['deposit_ref'].value ?? undefined,
+      invoice_ref: this.form.controls['invoice_ref'].value ?? undefined,
       tag: this.form.controls['tag'].value ?? undefined,
       amounts: amounts,
       operations: operations
@@ -576,12 +587,28 @@ export class BooksEditorComponent {
     return this.form.get('amounts') as FormArray;
   }
 
-  get date(): FormControl {
-    return this.form.get('date') as FormControl;
+  get date(): string {
+    const dateControl = this.form.get('date');
+    if (dateControl) {
+      console.log(dateControl.value);
+    }
+    else {
+      console.log('date control is null');
+    }
+    return dateControl ? dateControl.value : '';
+  }
+  get dateErrors() {
+    const control = this.form.get('date');
+    return control ? control.errors : null;
   }
 
-
   // utilities
+
+  dateSeasonValidator = (control: AbstractControl): ValidationErrors | null => {
+    const value = control.value;
+    if (!value || !this.season) return null;
+    return this.date_in_season(value) ? null : { notInSeason: true };
+  };
 
   operations_grand_total(): number {
     let grand_total = 0;
@@ -618,6 +645,10 @@ export class BooksEditorComponent {
     return this.transactionService.get_transaction(transaction_id).require_deposit_ref;
   }
 
+  transaction_with_invoice(transaction_id: TRANSACTION_ID): boolean {
+    return this.transactionService.get_transaction(transaction_id).invoice_required;
+  }
+
   parse_to_string(value: number): string {
     return value !== undefined ? value.toString() : '';
   }
@@ -633,6 +664,9 @@ export class BooksEditorComponent {
   date_in_season(date: string): boolean {
     return this.systemDataService.date_in_season(date, this.season);
   }
+
+  add_invoice_ref() {
+    let invoice_ref = prompt('référence de la facture fournisseur');
+  }
+
 }
-
-

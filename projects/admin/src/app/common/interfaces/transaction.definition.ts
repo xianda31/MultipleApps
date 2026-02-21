@@ -70,6 +70,7 @@ export type Transaction = {
   pure_financial: boolean,
   revenue_account_to_show: boolean,
   require_deposit_ref: boolean,
+  invoice_required: boolean,
   cash: 'in' | 'out' | 'none',
   cheque: 'in' | 'out' | 'none'
 };
@@ -82,7 +83,8 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
 
   // paiement en espèces par un adhérent
   [TRANSACTION_ID.achat_adhérent_en_espèces]: {
-    label: 'paiement en espèces',
+     label: 'paiement en espèces',
+     invoice_required: false,
     tooltip: 'espèces d\'un adhérent reçues en caisse',
     class: TRANSACTION_CLASS.REVENUE_FROM_MEMBER,
     financial_accounts: financial_debits,
@@ -97,7 +99,8 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
   },
   // paiement par chèque par un adhérent
   [TRANSACTION_ID.achat_adhérent_par_chèque]: {
-    label: 'paiement par chèque',
+     label: 'paiement par chèque',
+     invoice_required: false,
     tooltip: 'chèque d\'un adhérent reçu en caisse',
     class: TRANSACTION_CLASS.REVENUE_FROM_MEMBER,
     financial_accounts: financial_debits,
@@ -112,7 +115,8 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
   },
   // paiement par virement d'un adhérent
   [TRANSACTION_ID.achat_adhérent_par_virement]: {
-    label: 'VIREMENT EN NOTRE FAVEUR',
+     label: 'VIREMENT EN NOTRE FAVEUR',
+     invoice_required: false,
     tooltip: 'virement d\'un adhérent sur compte association',
     class: TRANSACTION_CLASS.REVENUE_FROM_MEMBER,
     financial_accounts: financial_debits,
@@ -131,7 +135,8 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
 
   // reception d'espèces de la par d'autres qu'un adhérent
   [TRANSACTION_ID.vente_en_espèces]: {
-    label: 'paiement en espèces',
+     label: 'paiement en espèces',
+     invoice_required: false,
     tooltip: 'espèces d\'un tiers reçues en caisse (rare !)',
     class: TRANSACTION_CLASS.OTHER_REVENUE,
     financial_accounts: financial_debits,
@@ -146,7 +151,8 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
 
   // réception de chèque(s) de la par d'autres qu'un adhérent
   [TRANSACTION_ID.vente_par_chèque]: {
-    label: 'paiement par chèque',
+     label: 'paiement par chèque',
+     invoice_required: false,
     tooltip: 'chèque d\'un tiers reçu en caisse (rare !)',
     class: TRANSACTION_CLASS.OTHER_REVENUE,
     financial_accounts: financial_debits,
@@ -159,7 +165,8 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     cheque: 'in',
   },
   [TRANSACTION_ID.vente_par_virement]: {
-    label: 'VIREMENT EN NOTRE FAVEUR',
+     label: 'VIREMENT EN NOTRE FAVEUR',
+     invoice_required: false,
     tooltip: 'virement d\'un tiers sur compte association',
     class: TRANSACTION_CLASS.OTHER_REVENUE,
     financial_accounts: financial_debits,
@@ -190,7 +197,8 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
 
   // dépot de fonds en espèces
   [TRANSACTION_ID.dépôt_collecte_espèces]: {
-    label: 'VERSEMENT D\'ESPÈCES',
+     label: 'VERSEMENT D\'ESPÈCES',
+     invoice_required: false,
     tooltip: 'collecte d\'espèces directement déposé en banque',
     class: TRANSACTION_CLASS.OTHER_REVENUE,
     financial_accounts: [{ key: FINANCIAL_ACCOUNT.BANK_debit, label: 'Banque_in', description: '' }],
@@ -205,7 +213,8 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
 
   // dépot de fonds en chèques (non tracés)
   [TRANSACTION_ID.dépôt_collecte_chèques]: {
-    label: 'REMISE DE CHÈQUES',
+     label: 'REMISE DE CHÈQUES',
+     invoice_required: false,
     tooltip: 'collecte de chèques directement déposé en banque',
     class: TRANSACTION_CLASS.OTHER_REVENUE,
     financial_accounts: financial_debits,
@@ -220,6 +229,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     // interet de l'épargne
     [TRANSACTION_ID.intérêt_épargne]: {
       label: 'INTERÊT D\'ÉPARGNE',
+      invoice_required: false,
       tooltip: 'versement d\'intérêt de l\'épargne',
       class: TRANSACTION_CLASS.OTHER_REVENUE,
       financial_accounts: financial_debits,
@@ -237,7 +247,8 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
 
   // dépot d'espèces (de la caisse) en banque
   [TRANSACTION_ID.dépôt_caisse_espèces]: {
-    label: 'VERSEMENT D\'ESPÈCES',
+     label: 'VERSEMENT D\'ESPÈCES',
+     invoice_required: false,
     tooltip: 'retrait d\'espèces de la caisse vers le compte bancaire',
     class: TRANSACTION_CLASS.MOVEMENT,
     financial_accounts: [...financial_credits, ...financial_debits],
@@ -251,7 +262,8 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
   },
   // dépot de chèques (receptionnés en caisse) en banque
   [TRANSACTION_ID.dépôt_caisse_chèques]: {
-    label: 'REMISE DE CHÈQUES',
+     label: 'REMISE DE CHÈQUES',
+     invoice_required: false,
     tooltip: 'retrait de chèques de la caisse vers le compte bancaire',
     class: TRANSACTION_CLASS.MOVEMENT,
     financial_accounts: [...financial_credits, ...financial_debits],
@@ -266,7 +278,8 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
   },
   // versement sur compte épargne
   [TRANSACTION_ID.virement_banque_vers_épargne]: {
-    label: 'VERSEMENT SUR COMPTE ÉPARGNE',
+     label: 'VERSEMENT SUR COMPTE ÉPARGNE',
+     invoice_required: false,
     tooltip: 'virement du compte courant vers le compte épargne',
     class: TRANSACTION_CLASS.MOVEMENT,
     financial_accounts: [...financial_credits, ...financial_debits],
@@ -281,7 +294,8 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
   },
   // retrait du compte épargne
   [TRANSACTION_ID.retrait_épargne_vers_banque]: {
-    label: 'RETRAIT DU COMPTE ÉPARGNE',
+     label: 'RETRAIT DU COMPTE ÉPARGNE',
+     invoice_required: false,
     tooltip: 'retrait du compte épargne vers le compte courant',
     class: TRANSACTION_CLASS.MOVEMENT,
     // profit_and_loss_accounts: FINANCIAL_ACCOUNT.BANK_debit,
@@ -302,7 +316,8 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
 
   // émission d'avoir à un adhérent
   [TRANSACTION_ID.attribution_avoir]: {
-    label: 'attribution d\'avoir(s) nominatif(s)',
+     label: 'attribution d\'avoir(s) nominatif(s)',
+     invoice_required: false,
     tooltip: 'attribution d\'avoir(s) nominatif(s)',
     class: TRANSACTION_CLASS.EXPENSE_FOR_MEMBER,
     financial_accounts: [],
@@ -318,7 +333,8 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
 
   // annulation d'une dette adhérent
   [TRANSACTION_ID.annulation_dette_adhérent]: {
-    label: 'annulation d\'une dette',
+     label: 'annulation d\'une dette',
+     invoice_required: false,
     tooltip: 'annulation d\'une dette adhérent',
     class: TRANSACTION_CLASS.EXPENSE_FOR_MEMBER,
     financial_accounts: [],
@@ -336,7 +352,8 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
 
   // remboursement d'achat par chèque
   [TRANSACTION_ID.remboursement_achat_adhérent_par_chèque]: {
-    label: 'remboursement par chèque',
+     label: 'remboursement par chèque',
+     invoice_required: false,
     tooltip: 'remboursement d\'un achat adhérent par chèque',
     class: TRANSACTION_CLASS.REIMBURSEMENT,
     financial_accounts: financial_credits,
@@ -350,7 +367,8 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
   },
   // remboursement d'achat en espèces
   [TRANSACTION_ID.remboursement_achat_adhérent_en_espèces]: {
-    label: 'remboursement en espèces',
+     label: 'remboursement en espèces',
+     invoice_required: false,
     tooltip: 'remboursement d\'un achat adhérent en espèces',
     class: TRANSACTION_CLASS.REIMBURSEMENT,
     financial_accounts: financial_credits,
@@ -364,7 +382,8 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
   },
   // remboursement d'achat par avoir
   [TRANSACTION_ID.remboursement_achat_adhérent_par_avoir]: {
-    label: 'remboursement par avoir',
+     label: 'remboursement par avoir',
+     invoice_required: false,
     tooltip: 'remboursement d\'un achat adhérent par avoir',
     class: TRANSACTION_CLASS.REIMBURSEMENT,
     financial_accounts: [],
@@ -384,7 +403,8 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
 
   // achat en espèces d'une prestation ou service
   [TRANSACTION_ID.dépense_en_espèces]: {
-    label: 'achat en espèces',
+     label: 'achat en espèces',
+     invoice_required: true,
     tooltip: 'paiement en espèces d\'une prestation ou service',
     class: TRANSACTION_CLASS.OTHER_EXPENSE,
     financial_accounts: financial_credits,
@@ -399,7 +419,8 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
 
   // paiement par chèque d'une prestation ou service
   [TRANSACTION_ID.dépense_par_chèque]: {
-    label: 'CHEQUE EMIS',
+     label: 'CHEQUE EMIS',
+     invoice_required: true,
     tooltip: 'paiement par chèque d\'une prestation ou service',
     class: TRANSACTION_CLASS.OTHER_EXPENSE,
     financial_accounts: financial_credits,
@@ -414,7 +435,8 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
   },
   // paiement à un tiers d'une prestation ou service par virement
   [TRANSACTION_ID.dépense_par_virement]: {
-    label: 'VIREMENT EMIS',
+     label: 'VIREMENT EMIS',
+     invoice_required: true,
     tooltip: 'paiement par virement d\'une prestation ou service',
     class: TRANSACTION_CLASS.OTHER_EXPENSE,
     financial_accounts: financial_credits,
@@ -428,7 +450,8 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
   },
   // paiement par carte bancaire d'une prestation ou de marchandises
   [TRANSACTION_ID.dépense_par_carte]: {
-    label: 'PAIEMENT PAR CARTE',
+     label: 'PAIEMENT PAR CARTE',
+     invoice_required: true,
     tooltip: 'achat par carte bancaire',
     class: TRANSACTION_CLASS.OTHER_EXPENSE,
     financial_accounts: financial_credits,
@@ -442,7 +465,8 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
   },
   // prélèvement sur le compte bancaire par une autre entité
   [TRANSACTION_ID.dépense_par_prélèvement]: {
-    label: 'PRÉLÈVEMENT',
+     label: 'PRÉLÈVEMENT',
+     invoice_required: false,
     tooltip: 'prélèvement sur le compte bancaire',
     class: TRANSACTION_CLASS.OTHER_EXPENSE,
     financial_accounts: financial_credits,
@@ -459,7 +483,8 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
   // ****  CLASS = BALANCE_SHEET ****
 
   [TRANSACTION_ID.report_avoir]: {
-    label: 'report d\'avoir',
+     label: 'report d\'avoir',
+     invoice_required: false,
     tooltip: 'report d\'avoir adhérent',
     class: TRANSACTION_CLASS.BALANCE,
     financial_accounts: [{ key: BALANCE_ACCOUNT.BAL_debit, label: 'report_in', description: 'passif' }],
@@ -474,7 +499,8 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
   },
   // report d'encours paiement par chèque d'une prestation ou service
   [TRANSACTION_ID.report_chèque]: {
-    label: 'REPORT CHEQUE',
+     label: 'REPORT CHEQUE',
+     invoice_required: false,
     tooltip: 'report d\'un chèque non encaissé sur l\'année suivante',
     class: TRANSACTION_CLASS.BALANCE,
     financial_accounts: [...balance_sheet_accounts, ...financial_credits],
@@ -489,7 +515,8 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
   },
   // report d'encours paiement par carte d'une prestation ou service
   [TRANSACTION_ID.report_carte]: {
-    label: 'REPORT CARTE',
+     label: 'REPORT CARTE',
+     invoice_required: false,
     tooltip: 'report d\'une carte non encaissée l\'année précédente',
     class: TRANSACTION_CLASS.BALANCE,
     financial_accounts: [...balance_sheet_accounts, ...financial_credits],
@@ -503,7 +530,8 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     cheque: 'none',
   },
   [TRANSACTION_ID.report_dette]: {
-    label: 'report de dette',
+     label: 'report de dette',
+     invoice_required: false,
     tooltip: 'report d\'une dette adhérent sur l\'année suivante',
     class: TRANSACTION_CLASS.BALANCE,
     financial_accounts: [...balance_sheet_accounts],
@@ -517,7 +545,8 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     cheque: 'none',
   },
   [TRANSACTION_ID.report_prélèvement]: {
-    label: 'REPORT PRELEVEMENT',
+     label: 'REPORT PRELEVEMENT',
+     invoice_required: false,
     tooltip: 'report d\'un prélèvement non encaissé sur l\'année suivante',
     class: TRANSACTION_CLASS.BALANCE,
     financial_accounts: [...balance_sheet_accounts, ...financial_credits],

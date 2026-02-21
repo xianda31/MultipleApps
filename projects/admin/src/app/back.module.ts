@@ -3,6 +3,7 @@ import { CommonModule as AngularCommonModule } from '@angular/common';
 import { SharedModule } from './common/shared.module';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { routes } from './back/back.routes';
 // All route components are now standalone; no need to import them here.
 
@@ -15,6 +16,7 @@ import { routes } from './back/back.routes';
     FormsModule,
     RouterModule.forChild(routes),
     SharedModule // keep for non-standalone pipes/services still declared there
+    NgbModule
   ],
 })
 export class BackModule { }

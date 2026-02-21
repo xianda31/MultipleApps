@@ -82,6 +82,7 @@ const schema = a.schema({
     cheque_ref: a.string(),
     deposit_ref: a.string(),
     bank_report: a.string(),
+    invoice_ref: a.string(),
 
   })
     .authorization((allow) => [

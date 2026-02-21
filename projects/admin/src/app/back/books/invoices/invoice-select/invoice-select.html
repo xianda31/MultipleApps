@@ -1,0 +1,16 @@
+<div class="modal-header">
+  <h5 class="modal-title">Facture d'une écriture comptable</h5>
+  <button type="button" class="btn-close btn-sm ms-auto" aria-label="Close" (click)="close()">
+  </button>
+</div>
+
+<div class="modal-body invoice-upload">
+  <label for="fileInput" class="form-label">Sélectionnez un fichier PDF à associer à cette écriture comptable :</label>
+  <input type="file" accept="application/pdf" (change)="onFileSelected($event)" class="form-control mb-2" />
+  <div *ngIf="uploadError" class="alert alert-danger mt-2">{{ uploadError }}</div>
+  <div *ngIf="uploadSuccess" class="alert alert-success mt-2">Upload réussi !</div>
+</div>
+<div class="modal-footer">
+  <button type="button" class="btn btn-secondary btn-sm" (click)="close()">Annuler</button>
+  <button type="button" class="btn btn-primary btn-sm" (click)="uploadInvoice()" [disabled]="!selectedFile ">Valider</button>
+</div>

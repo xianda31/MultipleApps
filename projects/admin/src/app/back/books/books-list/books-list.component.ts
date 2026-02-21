@@ -10,6 +10,7 @@ import { BooksExportExcelService } from '../books-export-excel.service';
 import { TransactionService } from '../../services/transaction.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { GetConfirmationComponent } from '../../modals/get-confirmation/get-confirmation.component';
+import { InvoiceSelectComponent } from '../invoices/invoice-select/invoice-select';
 
 type Fields = 'date' | 'classe' | 'transaction' | 'montant' | 'tag'
 @Component({
@@ -20,8 +21,8 @@ type Fields = 'date' | 'classe' | 'transaction' | 'montant' | 'tag'
   styleUrl: './books-list.component.scss'
 })
 export class BooksListComponent {
-  SLICE_SIZE = 15;
-  slice_start = -this.SLICE_SIZE; // pour le slice des opérations
+
+  slice_start!: number; // pour le slice des opérations
 
   loaded: boolean = false;
   season: string = '';
@@ -36,7 +37,7 @@ export class BooksListComponent {
     private backNavigationService: BackNavigationService,
     private modalService: NgbModal,
 
-  ) { 
+  ) {
   }
 
   @HostListener('window:resize')
@@ -49,6 +50,7 @@ export class BooksListComponent {
   }
 
   ngOnInit() {
+    this.slice_start = this.bookService.get_slice_back();
     this.loaded = false;
     this.checkMobilePortrait();
     this.systemDataService.get_configuration().subscribe(
@@ -168,7 +170,7 @@ export class BooksListComponent {
     const modalRef = this.modalService.open(GetConfirmationComponent, { centered: true });
     modalRef.componentInstance.title = 'Confirmer la suppression';
     modalRef.componentInstance.subtitle = `Êtes-vous sûr de vouloir supprimer cette écriture comptable du ${book_entry.date} d'un montant de ${this.total_amount(book_entry).toFixed(2)} € ? Cette action est irréversible.`;
-    modalRef.result.then( async (answer: boolean) => {
+    modalRef.result.then(async (answer: boolean) => {
       if (answer) {
         await this.bookService.delete_book_entry(book_entry);
       }
@@ -176,11 +178,34 @@ export class BooksListComponent {
   }
 
   toggle_slice() {
-    this.slice_start = (this.slice_start === 0) ? -this.SLICE_SIZE : 0;
+    this.slice_start = this.bookService.toggle_slice();
   }
 
   backward_slice() {
-    this.slice_start -= this.SLICE_SIZE;
+    this.slice_start = this.bookService.backward_slice();
   }
+
+  add_invoice_ref(entry: BookEntry) { 
+      // const directory = entry.season.replace(/\//g, '_');
+    const modalRef = this.modalService.open(InvoiceSelectComponent, { size: 'lg' });
+    modalRef.componentInstance.bookEntry = entry;
+    modalRef.componentInstance.invoiceSelected.subscribe(async (filename: string) => {
+      try {
+         modalRef.close();
+        entry.invoice_ref = filename;
+        const updated_entry = await this.bookService.update_book_entry(entry);
+        console.log('Book entry updated with invoice ref:', updated_entry);
+      } catch (err) {
+        console.error('Error updating book entry with invoice ref:', err);
+      }
+    });
+  }
+
+  download_invoice_pdf(filename: string) { }
+  invoice_required(entry: BookEntry): boolean {
+    return this.transactionService.get_transaction(entry.transaction_id)?.invoice_required ?? false;
+  }
+
+
 
 }

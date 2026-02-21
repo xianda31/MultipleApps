@@ -45,12 +45,21 @@ export const STATIC_MENUS: NavbarMenu[] = [
         ]
     },
     {
+        label: 'Comptabilité',
+        key: 'comptabilite',
+        icon: 'bi-calculator',
+        minLevel: Group_priorities.Contributeur,
+        subMenus: [
+            { label: 'état de caisse', route: BACK_ROUTE_PATHS.CashBoxStatus },
+            { label: 'factures', route: BACK_ROUTE_PATHS.Invoices },
+        ]
+    },
+    {
         label: 'Finance',
         key: 'finance',
         icon: 'bi-journal',
         minLevel: Group_priorities.Administrateur,
         subMenus: [
-            { label: 'état de caisse', route: BACK_ROUTE_PATHS.CashBoxStatus },
             { label: 'écritures', route: BACK_ROUTE_PATHS.BooksEditor },
             { label: 'synthèse', route: BACK_ROUTE_PATHS.BooksOverview },
             { label: 'rapprochement bancaire', route: BACK_ROUTE_PATHS.BankReconciliation },

@@ -6,25 +6,23 @@
       <div class="col-md-2 col-sm-3">
         <label for="date">
           Date opération
-          <span *ngIf="!date_in_season(date.value)" class="col-3 text-danger">
-            <i class="bi bi-exclamation-circle"></i>
-            <span> hors saison actuelle</span>
-          </span>
         </label>
-        <input type="date" [class]="!date_in_season(date.value)?'form-control border-danger':'form-control'" id="date"
+        <input type="date" [class]="dateErrors && dateErrors['notInSeason'] && form.get('date')?.touched ? 'form-control border-danger' : 'form-control'" id="date"
           formControlName="date">
+        <div *ngIf="dateErrors && dateErrors['notInSeason'] && form.get('date')?.touched" class="text-danger mt-1">
+          <i class="bi bi-exclamation-circle"></i>
+          <span>Date hors saison comptable.</span>
+        </div>
       </div>
       <!-- choix classe transaction -->
       <div class="col-md-3 col-sm-5">
         <label>Classe de transaction</label>
-        <select class="form-control" id="transac_class" formControlName="transac_class">
-          <option value="undefined" hidden disabled>néant</option>
+        <select class="form-control" id="transac_class" formControlName="transac_class" [attr.disabled]="protected_mode ? true : null">
           <option *ngFor="let class of transaction_classes | keyvalue" [value]="class.value">
             {{class.value}}
           </option>
         </select>
       </div>
-
       <!-- choix de la transaction -->
       <div *ngIf="transaction_ids && transaction_ids.length > 0" class="col-md-3 col-sm-4">
         <label>Transaction</label>
@@ -35,7 +33,6 @@
           </option>
         </select>
       </div>
-
       <!-- cheque reference -->
       <div *ngIf="transaction_id" class="col-md-3 col-sm-3">
         <ng-container *ngIf="transaction_with_cheque_in(transaction_id)"
@@ -43,9 +40,9 @@
         <ng-container *ngIf="transaction_with_cheque_out(transaction_id)"
           [ngTemplateOutlet]="cheque_club"></ng-container>
       </div>
-
-      <loc-back class="col-1"></loc-back>
-
+      <div class="col-1">
+        <loc-back></loc-back>
+      </div>
     </div>
 
 
@@ -78,6 +75,25 @@
         class=" col-md-3  col-sm-3 ">
           <label for="deposit_ref">Bordereau</label>
           <input type="text" class="form-control" id="deposit_ref" formControlName="deposit_ref">
+      </div>
+
+      <!-- facture -->
+      <div *ngIf=" transaction_with_invoice(transaction_id)"
+        class=" col-md-2  col-sm-4 ">
+        <label for="invoice_ref" >Facture</label>
+          <ng-container *ngIf="creation || !selected_book_entry.invoice_ref; else invoice_exists">
+            <div class="input-group">
+              <input type="text" class="form-control" id="invoice_ref" placeholder="aucune facture" formControlName="invoice_ref">
+              <button class="btn btn-outline-primary" type="button" (click)="add_invoice_ref()">définir</button>
+            </div>
+          </ng-container>
+          <ng-template #invoice_exists>
+          <div class="input-group">
+            <button class="btn btn-outline-primary" type="button" >view</button>
+            <input type="text" class="form-control" id="invoice_ref" formControlName="invoice_ref">
+            <button class="btn btn-outline-warning" type="button">clear</button>
+          </div>
+          </ng-template>
       </div>
 
     </div>
@@ -147,7 +163,7 @@
         <button type="button" class="btn btn-warning " (click)="delete_book_entry()">Supprimer</button>
       </div>
     </div>
-
+<!-- affichage json -->
     <div *ngIf="selected_book_entry " class="card mt-3 bg-body-secondary">
       <div class="card-body">
         <span class="fst-italic">
