@@ -41,7 +41,7 @@
           <th class="col">libellé</th>
           <th class="col">produits/charges</th>
           <th class="col" (click)="sort_by('montant')" style="cursor: pointer;"> montant</th>
-          <th class="col"> doc.</th>
+          <th class="col"> doc</th>
           <th class="col" (click)="sort_by('tag')" style="cursor: pointer;"> commentaire </th>
           <th class="col" (click)="sort_by('classe')" style="cursor: pointer;">classe </th>
           <th class="col" (click)="sort_by('transaction')" style="cursor: pointer;"> type</th>
@@ -61,20 +61,17 @@
             </td>
             <td *ngIf="first" [rowSpan]="entry.operations.length">
               <ng-container *ngIf="invoice_required(entry)" >
-                <ng-container *ngIf="entry.invoice_ref; else uploadIcon">
+                <ng-container *ngIf="entry.invoice_ref; else missingIcon">
                   <span class="me-3 align-middle d-inline-flex align-items-center" style="cursor:pointer" (click)="download_invoice_pdf(entry.invoice_ref)">
-                    <i class="bi-file-earmark-arrow-down-fill text-info fs-5"></i>
-                    <span class="ms-1">consulter</span>
+                    <i class="bi bi-file-check-fill text-info fs-5"></i>
                   </span>
                 </ng-container>
-                <ng-template #uploadIcon>
-                  <span class="me-3 align-middle d-inline-flex align-items-center" style="cursor:pointer" (click)="add_invoice_ref(entry)">
-                    <i class="bi bi-file-earmark-plus-fill text-success fs-5"></i>
-                    <span class="ms-1">ajouter</span>
+                <ng-template #missingIcon>
+                  <span class="me-3 align-middle d-inline-flex align-items-center" >
+                    <i class="bi bi-file-earmark-x text-warning fs-5" style="cursor:pointer" (click)="add_invoice_ref(entry)"></i>
                   </span>
                 </ng-template>
               </ng-container>
-              <span class="align-middle">{{entry.invoice_ref}}</span>
             </td>
             <td *ngIf="first" [rowSpan]="entry.operations.length"> {{entry.tag}} </td>
             <td *ngIf="first" [rowSpan]="entry.operations.length"> {{class_label(entry) }} </td>

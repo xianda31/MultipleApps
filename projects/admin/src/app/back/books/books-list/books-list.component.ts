@@ -11,6 +11,9 @@ import { TransactionService } from '../../services/transaction.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { GetConfirmationComponent } from '../../modals/get-confirmation/get-confirmation.component';
 import { InvoiceSelectComponent } from '../invoices/invoice-select/invoice-select';
+import { S3_ROOT_FOLDERS } from '../../../common/services/files.service';
+import { InvoiceService } from '../../../common/services/invoice.service';
+import { ToastService } from '../../../common/services/toast.service';
 
 type Fields = 'date' | 'classe' | 'transaction' | 'montant' | 'tag'
 @Component({
@@ -36,6 +39,8 @@ export class BooksListComponent {
     private exportExcelService: BooksExportExcelService,
     private backNavigationService: BackNavigationService,
     private modalService: NgbModal,
+    private invoiceService: InvoiceService,
+    private toastService: ToastService,
 
   ) {
   }
@@ -185,27 +190,29 @@ export class BooksListComponent {
     this.slice_start = this.bookService.backward_slice();
   }
 
-  add_invoice_ref(entry: BookEntry) { 
-      // const directory = entry.season.replace(/\//g, '_');
-    const modalRef = this.modalService.open(InvoiceSelectComponent, { size: 'lg' });
-    modalRef.componentInstance.bookEntry = entry;
-    modalRef.componentInstance.invoiceSelected.subscribe(async (filename: string) => {
-      try {
-         modalRef.close();
-        entry.invoice_ref = filename;
-        const updated_entry = await this.bookService.update_book_entry(entry);
-        console.log('Book entry updated with invoice ref:', updated_entry);
-      } catch (err) {
-        console.error('Error updating book entry with invoice ref:', err);
-      }
-    });
-  }
 
-  download_invoice_pdf(filename: string) { }
+  download_invoice_pdf(filename: string) {
+    this.invoiceService.download_invoice(filename, this.season);
+   }
+
   invoice_required(entry: BookEntry): boolean {
     return this.transactionService.get_transaction(entry.transaction_id)?.invoice_required ?? false;
   }
 
-
+  add_invoice_ref(entry: BookEntry) {
+    const modalRef = this.modalService.open(InvoiceSelectComponent, { size: 'lg' });
+    modalRef.componentInstance.directory = this.season;
+    modalRef.componentInstance.invoiceSelected.subscribe(async (filename: string) => {
+      try {
+        modalRef.close();
+        entry.invoice_ref = filename;
+        await this.bookService.update_book_entry(entry);
+        this.toastService.showSuccess('Référence facture', 'la référence de la facture a été ajoutée à l\'écriture');
+      } catch (err) {
+        console.error('Error updating book entry with invoice ref:', err);
+        this.toastService.showErrorToast('Référence facture', 'Une erreur est survenue lors de l\'ajout de la référence de la facture à l\'écriture');
+      }
+    });
+  }
 
 }

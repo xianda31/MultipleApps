@@ -1,11 +1,10 @@
-import { Component, Inject, Input, Output } from '@angular/core';
-import { DomSanitizer } from '@angular/platform-browser';
+import { Component, Input, Output } from '@angular/core';
 import { FileService, S3_ROOT_FOLDERS } from '../../../../common/services/files.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { EventEmitter } from '@angular/core';
-import { BookEntry } from '../../../../common/interfaces/accounting.interface';
+import { ToastService } from '../../../../common/services/toast.service';
 
 @Component({
   selector: 'app-invoice-select',
@@ -15,7 +14,8 @@ import { BookEntry } from '../../../../common/interfaces/accounting.interface';
 })
 export class InvoiceSelectComponent {
   // @Input() directory: string = '';
-  @Input() bookEntry: BookEntry | null = null;
+  // @Input() bookEntry: BookEntry | null = null;
+  @Input() directory: string = '';
   @Output() invoiceSelected = new EventEmitter< string>();
   selectedFile: File | null = null;
   uploadError: string | null = null;
@@ -23,7 +23,8 @@ export class InvoiceSelectComponent {
 
   constructor(
     private fileService: FileService,
-    private activeModal: NgbActiveModal
+    private activeModal: NgbActiveModal,
+    private toastService: ToastService,
   ) {}
 
   onFileSelected(event: any) {
@@ -54,7 +55,7 @@ export class InvoiceSelectComponent {
       } else {
         filename = originalName + '_' + hash;
       }
-      const directory = S3_ROOT_FOLDERS.INVOICES + '/' + this.bookEntry?.season.replace(/\//g, '_') +'/';
+      const directory = S3_ROOT_FOLDERS.INVOICES + '/' + this.directory.replace(/\//g, '_') +'/';
       // Check existence
       const files$ = this.fileService.list_files(directory);
       const files = await files$.toPromise();
@@ -66,6 +67,7 @@ export class InvoiceSelectComponent {
       const fileToUpload = new File([this.selectedFile], filename, { type: 'application/pdf' });
       await this.fileService.upload_file(fileToUpload, directory);
       this.uploadSuccess = true;
+      this.toastService.showSuccess('Chargement facture', filename + ' a été chargé avec succès.');
       this.invoiceSelected.emit(fileToUpload.name);
       this.activeModal.close(null);
     } catch (err) {

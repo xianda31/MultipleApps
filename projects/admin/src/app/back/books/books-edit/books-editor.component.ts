@@ -10,11 +10,13 @@ import { Transaction, Account_def, TRANSACTION_CLASS } from '../../../common/int
 import { Member } from '../../../common/interfaces/member.interface';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { BackComponent } from '../../../common/loc-back/loc-back.component';
 import { MembersService } from '../../../common/services/members.service';
 import { TransactionService } from '../../services/transaction.service';
 import { ToastService } from '../../../common/services/toast.service';
+import { InvoiceSelectComponent } from '../invoices/invoice-select/invoice-select';
+import { InvoiceService } from '../../../common/services/invoice.service';
 
 interface Operation_initial_values {
   optional_accounts?: string[];
@@ -82,6 +84,8 @@ export class BooksEditorComponent {
     private transactionService: TransactionService,
     private systemDataService: SystemDataService,
     private membersService: MembersService,
+    private invoiceService: InvoiceService,
+    private modalService: NgbModal,
     private toastService: ToastService,
     private route: ActivatedRoute,
     private location: Location
@@ -568,9 +572,19 @@ export class BooksEditorComponent {
     this.location.back();
   }
 
-  double_click(amount: any) {
+  sum_amounts(amount: any) {
     let cntrl = amount as FormControl;
     cntrl.setValue(this.operations_grand_total());
+  }
+
+  private lastClickTime: number = 0;
+
+  handleClick(amount: any) {
+    const now = Date.now();
+    if (now - this.lastClickTime < 400) {
+      this.sum_amounts(amount);
+    }
+    this.lastClickTime = now;
   }
 
   // getters
@@ -617,6 +631,7 @@ export class BooksEditorComponent {
     });
     return grand_total < 0 ? -grand_total : grand_total;
   }
+
   expense_or_revenue_accounts(transaction: Transaction): Account[] {
     if (transaction === undefined) { throw new Error('transaction is undefined'); };
     if (transaction.pure_financial) return [];
@@ -666,7 +681,41 @@ export class BooksEditorComponent {
   }
 
   add_invoice_ref() {
-    let invoice_ref = prompt('référence de la facture fournisseur');
+    const modalRef = this.modalService.open(InvoiceSelectComponent, { size: 'lg' });
+    modalRef.componentInstance.directory = this.season;
+    modalRef.componentInstance.invoiceSelected.subscribe(async (filename: string) => {
+      try {
+        modalRef.close();
+        this.form.controls['invoice_ref'].setValue(filename);
+        this.selected_book_entry.invoice_ref = filename;
+        await this.bookService.update_book_entry(this.selected_book_entry);
+        this.toastService.showSuccess('Référence facture', 'la référence de la facture a été ajoutée à l\'écriture');
+      } catch (err) {
+        console.error('Error updating book entry with invoice ref:', err);
+        this.toastService.showErrorToast('Référence facture', 'Une erreur est survenue lors de l\'ajout de la référence de la facture à l\'écriture');
+      }
+    });
   }
+  
+  clear_invoice_ref() {
+    const invoice_ref = this.form.controls['invoice_ref'].value;
+    this.selected_book_entry.invoice_ref = '';
+    this.bookService.update_book_entry(this.selected_book_entry).then(() => {
+      this.toastService.showSuccess('Suppression référence facture', 'la référence de la facture a été supprimée de l\'écriture');
+    }).catch((err) => {
+      console.error('Error updating book entry:', err);
+      this.toastService.showErrorToast('Suppression référence facture', 'Une erreur est survenue lors de la suppression de la référence de la facture de l\'écriture');
+    });
+    this.invoiceService.delete_invoice(invoice_ref, this.season).then(() => {
+      this.toastService.showSuccess('Suppression facture', invoice_ref + ' a été supprimé avec succès.');
+    }).catch((err) => {
+      console.error('Error deleting invoice:', err);
+      this.toastService.showErrorToast('Suppression facture', 'Une erreur est survenue lors de la suppression de la facture.');
+    });
+    this.form.controls['invoice_ref'].setValue('');
+  }
+
+
+
 
 }
