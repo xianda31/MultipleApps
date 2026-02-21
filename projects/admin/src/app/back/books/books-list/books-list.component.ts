@@ -10,12 +10,12 @@ import { BooksExportExcelService } from '../books-export-excel.service';
 import { TransactionService } from '../../services/transaction.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { GetConfirmationComponent } from '../../modals/get-confirmation/get-confirmation.component';
-import { InvoiceSelectComponent } from '../invoices/invoice-select/invoice-select';
+import { InvoiceSelectComponent } from '../invoice-select/invoice-select';
 import { S3_ROOT_FOLDERS } from '../../../common/services/files.service';
 import { InvoiceService } from '../../../common/services/invoice.service';
 import { ToastService } from '../../../common/services/toast.service';
 
-type Fields = 'date' | 'classe' | 'transaction' | 'montant' | 'tag'
+type Fields = 'date' | 'classe' | 'transaction' | 'montant' | 'tag' | 'invoice';
 @Component({
   selector: 'app-books-list',
   standalone: true,
@@ -93,6 +93,7 @@ export class BooksListComponent {
     'transaction': 1,
     'montant': 1,
     'tag': 1,
+    'invoice': 1,
   };
   sort_clear() {
     this.criterias.clear();
@@ -141,6 +142,9 @@ export class BooksListComponent {
             return 0;
           });
           break
+        case 'invoice':
+            // Filter to only entries with invoice_required=true, keep their original order
+            this.book_entries = this.book_entries.filter(entry => this.invoice_required(entry));
       };
     });
   }

@@ -32,7 +32,6 @@ import { MailingComponent } from './mailing/mailing.component';
 import { CmsWrapper } from './pages/cms-wrapper/cms-wrapper';
 import { CompetitionsComponent } from './competitions/competitions';
 import { PdfViewerComponent } from './pdf-viewer/pdf-viewer.component';
-import { InvoicesComponent } from './books/invoices/invoices';
 
 export const routes: Routes = [
   {
@@ -62,7 +61,6 @@ export const routes: Routes = [
       { path: BACK_ROUTE_PATHS.BooksList, component: BooksListComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.BooksEditor, component: BooksEditorComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.BooksEditorId, component: BooksEditorComponent, canActivate: [AuthGuard] },
-      { path: BACK_ROUTE_PATHS.Invoices, component: InvoicesComponent, canActivate: [AuthGuard] },
 
       { path: BACK_ROUTE_PATHS.SysConf, component: SysConfComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.ImportExcel, component: ImportExcelComponent, canActivate: [AuthGuard] },

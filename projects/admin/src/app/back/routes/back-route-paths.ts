@@ -18,7 +18,6 @@ export const BACK_ROUTE_PATHS = {
   BooksList: 'finance/books/list',
   // BooksDebugger: 'devtools/books/editor',
   // BooksDebuggerId: 'devtools/books/editor/:id',
-  Invoices: 'finance/factures',
   BooksEditor: 'finance/books/editor',
   BooksEditorId: 'finance/books/editor/:id',
   SysConf: 'outils/sysconf',

@@ -1,10 +1,10 @@
 import { Component, Input, Output } from '@angular/core';
-import { FileService, S3_ROOT_FOLDERS } from '../../../../common/services/files.service';
+import { FileService, S3_ROOT_FOLDERS } from '../../../common/services/files.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { EventEmitter } from '@angular/core';
-import { ToastService } from '../../../../common/services/toast.service';
+import { ToastService } from '../../../common/services/toast.service';
 
 @Component({
   selector: 'app-invoice-select',

@@ -41,7 +41,7 @@
           <th class="col">libellé</th>
           <th class="col">produits/charges</th>
           <th class="col" (click)="sort_by('montant')" style="cursor: pointer;"> montant</th>
-          <th class="col"> doc</th>
+          <th class="col" (click)="sort_by('invoice')" style="cursor: pointer;">justif.</th>
           <th class="col" (click)="sort_by('tag')" style="cursor: pointer;"> commentaire </th>
           <th class="col" (click)="sort_by('classe')" style="cursor: pointer;">classe </th>
           <th class="col" (click)="sort_by('transaction')" style="cursor: pointer;"> type</th>
@@ -63,7 +63,7 @@
               <ng-container *ngIf="invoice_required(entry)" >
                 <ng-container *ngIf="entry.invoice_ref; else missingIcon">
                   <span class="me-3 align-middle d-inline-flex align-items-center" style="cursor:pointer" (click)="download_invoice_pdf(entry.invoice_ref)">
-                    <i class="bi bi-file-check-fill text-info fs-5"></i>
+                    <i class="bi bi-file-earmark-check-fill text-primary fs-5"></i>
                   </span>
                 </ng-container>
                 <ng-template #missingIcon>

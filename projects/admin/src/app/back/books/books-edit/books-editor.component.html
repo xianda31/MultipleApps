@@ -40,9 +40,7 @@
         <ng-container *ngIf="transaction_with_cheque_out(transaction_id)"
           [ngTemplateOutlet]="cheque_club"></ng-container>
       </div>
-      <div class="col-1">
-        <loc-back></loc-back>
-      </div>
+
     </div>
 
 
@@ -162,6 +160,15 @@
       <div *ngIf="!creation" class="col-auto">
         <button type="button" class="btn btn-warning " (click)="delete_book_entry()">Supprimer</button>
       </div>
+      
+      <!-- sortie -->
+      <div class="col-auto">
+          <button type="button" [class]="form.dirty || form.touched ? 'btn btn-secondary' : 'btn btn-primary'" (click)="onBack()">
+            Sortir 
+          </button>
+          <div *ngIf="form.dirty || form.touched" class="ms-2 text-danger small">(les saisies non enregistrées seront perdues)</div>
+      </div>
+
     </div>
 <!-- affichage json -->
     <div *ngIf="selected_book_entry " class="card mt-3 bg-body-secondary">

@@ -1,3 +1,4 @@
+
 import { CommonModule, formatDate } from '@angular/common';
 import { Component, ViewEncapsulation } from '@angular/core';
 import { Location } from '@angular/common';
@@ -9,15 +10,17 @@ import { SystemDataService } from '../../../common/services/system-data.service'
 import { Transaction, Account_def, TRANSACTION_CLASS } from '../../../common/interfaces/transaction.definition';
 import { Member } from '../../../common/interfaces/member.interface';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { from, Subscription } from 'rxjs';
 import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { BackComponent } from '../../../common/loc-back/loc-back.component';
 import { MembersService } from '../../../common/services/members.service';
 import { TransactionService } from '../../services/transaction.service';
 import { ToastService } from '../../../common/services/toast.service';
-import { InvoiceSelectComponent } from '../invoices/invoice-select/invoice-select';
+import { InvoiceSelectComponent } from '../invoice-select/invoice-select';
 import { InvoiceService } from '../../../common/services/invoice.service';
-
+    import { combineLatest, of } from 'rxjs';
+    import { switchMap, take, map } from 'rxjs/operators';
+    
 interface Operation_initial_values {
   optional_accounts?: string[];
   label?: string;
@@ -33,7 +36,7 @@ interface Account {
   selector: 'app-booking',
   standalone: true,
   encapsulation: ViewEncapsulation.None, // nécessaire pour que les CSS des tooltips fonctionnent
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbTooltipModule, BackComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbTooltipModule],
   templateUrl: './books-editor.component.html',
   styleUrl: './books-editor.component.scss'
 })
@@ -93,51 +96,58 @@ export class BooksEditorComponent {
   ) { }
 
   ngOnInit() {
-
     this.transaction_ids = [];
     this.transaction_classes = this.transactionService.list_transaction_classes();
 
+    // Charger les membres une seule fois
     this.membersService.listMembers().subscribe((members) => {
       this.members = members;
     });
 
-    this.systemDataService.get_configuration().subscribe((conf) => {
-      this.season = conf.season;
-      this.banks = conf.banks;
-      this.club_bank = this.banks.find(bank => bank.key === conf.club_bank_key)!;
-      this.expenses_accounts = conf.revenue_and_expense_tree.expenses;
-      this.products_accounts = conf.revenue_and_expense_tree.revenues;
+    // Combine route data, params et configuration
 
 
-      this.init_form();
-
-      // Access both params and data from ActivatedRoute
-      this.route.params.subscribe(params => {
-        this.book_entry_id = params['id']; // Access the 'id' parameter from the URL
+    combineLatest([
+      this.route.data,
+      this.route.params,
+      this.systemDataService.get_configuration()
+    ]).pipe(
+      take(1),
+      switchMap(([data, params, conf]) => {
+        let access = data['access'];
+        this.protected_mode = !(access && (access === 'full'));
+        this.season = conf.season;
+        this.banks = conf.banks;
+        this.club_bank = this.banks.find(bank => bank.key === conf.club_bank_key)!;
+        this.expenses_accounts = conf.revenue_and_expense_tree.expenses;
+        this.products_accounts = conf.revenue_and_expense_tree.revenues;
+        this.init_form();
+        this.book_entry_id = params['id'];
         this.creation = (this.book_entry_id === undefined);
-
-        // Access custom route data (e.g., 'access')
-        this.route.data.subscribe(data => {
-          let access = data['access'];
-          this.protected_mode = !(access && (access === 'full'));
-        });
-
         if (!this.creation) {
-          this.bookService.read_book_entry(this.book_entry_id)
-            .then((book_entry) => {
-              this.selected_book_entry = book_entry;
-              console.log('book entry loaded:', book_entry);
-              this.set_form(book_entry);
-              this.valueChanges_subscribe();
-              this.form_ready = true;
-            })
-            .catch((error) => { throw new Error('error reading book_entry', error) });
-
+          return from(this.bookService.read_book_entry(this.book_entry_id)).pipe(
+            map((book_entry) => ({ book_entry }))
+          );
+        } else {
+          return of({ book_entry: null });
+        }
+      })
+    ).subscribe({
+      next: (result: any) => {
+        if (result.book_entry) {
+          this.selected_book_entry = result.book_entry;
+          console.log('book entry loaded:', result.book_entry);
+          this.set_form(result.book_entry);
+          this.valueChanges_subscribe();
+          this.form_ready = true;
         } else {
           this.valueChanges_subscribe();
           this.form_ready = true;
         }
-      });
+      },
+      error: (error: any) => {
+        throw new Error('error reading book_entry', error);
+      }
     });
   }
 
@@ -687,16 +697,35 @@ export class BooksEditorComponent {
       try {
         modalRef.close();
         this.form.controls['invoice_ref'].setValue(filename);
-        this.selected_book_entry.invoice_ref = filename;
-        await this.bookService.update_book_entry(this.selected_book_entry);
-        this.toastService.showSuccess('Référence facture', 'la référence de la facture a été ajoutée à l\'écriture');
+        if (!this.creation && this.selected_book_entry) {
+          this.selected_book_entry.invoice_ref = filename;
+          await this.bookService.update_book_entry(this.selected_book_entry);
+          this.toastService.showSuccess('Référence facture', 'la référence de la facture a été ajoutée à l\'écriture');
+        } else {
+          // En mode création, on ne fait rien de plus : la référence sera prise en compte à la création
+          this.toastService.showSuccess('Référence facture', 'la référence de la facture a été ajoutée au formulaire. Elle sera enregistrée lors de la création.');
+        }
       } catch (err) {
         console.error('Error updating book entry with invoice ref:', err);
         this.toastService.showErrorToast('Référence facture', 'Une erreur est survenue lors de l\'ajout de la référence de la facture à l\'écriture');
       }
     });
   }
-  
+
+  // Gestion du fichier orphelin en cas d'annulation ou suppression en mode création
+  cleanup_orphan_invoice_file() {
+    const invoice_ref = this.form.controls['invoice_ref'].value;
+    if (invoice_ref) {
+      this.invoiceService.delete_invoice(invoice_ref, this.season).then(() => {
+        this.toastService.showSuccess('Suppression facture orpheline', invoice_ref + ' a été supprimé avec succès.');
+        this.form.controls['invoice_ref'].setValue('');
+      }).catch((err) => {
+        console.error('Error deleting orphan invoice:', err);
+        this.toastService.showErrorToast('Suppression facture orpheline', 'Une erreur est survenue lors de la suppression de la facture orpheline.');
+      });
+    }
+  }
+
   clear_invoice_ref() {
     const invoice_ref = this.form.controls['invoice_ref'].value;
     this.selected_book_entry.invoice_ref = '';
@@ -715,7 +744,13 @@ export class BooksEditorComponent {
     this.form.controls['invoice_ref'].setValue('');
   }
 
-
+  onBack() {
+    // Si en mode création et une facture a été sélectionnée, supprimer le fichier orphelin
+    if (this.creation && this.form.controls['invoice_ref'].value) {
+      this.cleanup_orphan_invoice_file();
+    }
+    this.location.back();
+  }
 
 
 }
