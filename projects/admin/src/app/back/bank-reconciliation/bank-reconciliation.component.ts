@@ -27,12 +27,12 @@ export class BankReconciliationComponent {
   current_season!: string;
   former_balance_sheet !: Balance_sheet;
   bank_book_entries: BookEntry[] = [];
-  // bank_accounts = Object.values(Bank_accounts).slice().reverse() as FINANCIAL_ACCOUNT[];
+
   bank_accounts: FINANCIAL_ACCOUNT[] = [
     FINANCIAL_ACCOUNT.BANK_credit,
     FINANCIAL_ACCOUNT.BANK_debit,
-    // [FINANCIAL_ACCOUNT.SAVING_debit]: 'saving_in',
-    // [FINANCIAL_ACCOUNT.SAVING_credit]: 'saving_out',
+    FINANCIAL_ACCOUNT.SAVING_debit,
+    FINANCIAL_ACCOUNT.SAVING_credit,
   ];
 
 

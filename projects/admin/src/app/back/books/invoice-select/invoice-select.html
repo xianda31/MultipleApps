@@ -6,11 +6,17 @@
 
 <div class="modal-body invoice-upload">
   <label for="fileInput" class="form-label">Sélectionnez un fichier PDF à associer à cette écriture comptable :</label>
-  <input type="file" accept="application/pdf" (change)="onFileSelected($event)" class="form-control mb-2" />
+  <input type="file" accept="application/pdf" (change)="onFileSelected($event)" class="form-control mb-2" [disabled]="uploading" />
   <div *ngIf="uploadError" class="alert alert-danger mt-2">{{ uploadError }}</div>
   <div *ngIf="uploadSuccess" class="alert alert-success mt-2">Upload réussi !</div>
+  <div *ngIf="uploading" class="d-flex align-items-center mt-2">
+    <div class="spinner-border text-primary me-2" role="status">
+      <span class="visually-hidden">Uploading...</span>
+    </div>
+    <span>Chargement en cours...</span>
+  </div>
 </div>
 <div class="modal-footer">
-  <button type="button" class="btn btn-secondary btn-sm" (click)="close()">Annuler</button>
-  <button type="button" class="btn btn-primary btn-sm" (click)="uploadInvoice()" [disabled]="!selectedFile ">Valider</button>
+  <button type="button" class="btn btn-secondary btn-sm" (click)="close()" [disabled]="uploading">Annuler</button>
+  <button type="button" class="btn btn-primary btn-sm" (click)="uploadInvoice()" [disabled]="!selectedFile || uploading">Valider</button>
 </div>

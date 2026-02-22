@@ -163,12 +163,14 @@
       
       <!-- sortie -->
       <div class="col-auto">
-          <button type="button" [class]="form.dirty || form.touched ? 'btn btn-secondary' : 'btn btn-primary'" (click)="onBack()">
-            Sortir 
-          </button>
-          <div *ngIf="form.dirty || form.touched" class="ms-2 text-danger small">(les saisies non enregistrées seront perdues)</div>
+        <button type="button"
+          [class]="creation && (form.dirty || form.touched) && form.valid ? 'btn btn-secondary' : 'btn btn-primary'"
+          (click)="onBack()">
+          Sortir
+        </button>
+        <div *ngIf="creation && (form.dirty || form.touched) && form.valid" class="text-muted small">(aucun enregistrement)</div>
       </div>
-
+ 
     </div>
 <!-- affichage json -->
     <div *ngIf="selected_book_entry " class="card mt-3 bg-body-secondary">

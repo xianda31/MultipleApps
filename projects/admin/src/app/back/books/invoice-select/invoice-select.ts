@@ -13,6 +13,7 @@ import { ToastService } from '../../../common/services/toast.service';
   styleUrl: './invoice-select.scss'
 })
 export class InvoiceSelectComponent {
+    uploading: boolean = false;
   // @Input() directory: string = '';
   // @Input() bookEntry: BookEntry | null = null;
   @Input() directory: string = '';
@@ -44,7 +45,8 @@ export class InvoiceSelectComponent {
   async uploadInvoice() {
     this.uploadError = null;
     this.uploadSuccess = false;
-    if (!this.selectedFile ) return;
+    if (!this.selectedFile || this.uploading) return;
+    this.uploading = true;
     try {
       const hash = await this.computeHash(this.selectedFile);
       const originalName = this.selectedFile.name;
@@ -61,6 +63,7 @@ export class InvoiceSelectComponent {
       const files = await files$.toPromise();
       if (files && files.some((f: any) => f.path.endsWith(filename))) {
         this.uploadError = 'Un fichier avec ce titre et contenu existe déjà.';
+        this.uploading = false;
         return;
       }
       // Upload
@@ -72,6 +75,8 @@ export class InvoiceSelectComponent {
       this.activeModal.close(null);
     } catch (err) {
       this.uploadError = 'Erreur lors de l\'upload: ' + err;
+    } finally {
+      this.uploading = false;
     }
   }
   
