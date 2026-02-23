@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { Location } from '@angular/common';
 import { Router } from '@angular/router';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
-import { catchError, from, map, Observable, of, switchMap } from 'rxjs';
+import { catchError, from, map, Observable, of, switchMap, tap } from 'rxjs';
 import { ToastService } from '../../services/toast.service';
 import { Process_flow } from '../authentification_interface';
 import { AuthentificationService } from '../authentification.service';
@@ -25,6 +25,7 @@ export class ConnexionComponent {
 
   sign_up_sent: boolean = false;
   process_flow = Process_flow;
+  canShowSignUp = false;
 
   logging_msg: string = '';
   signup_msg: string = '';
@@ -82,24 +83,26 @@ export class ConnexionComponent {
   async signIn() {
     await this.auth.signIn(this.email!.value, this.password!.value)
       .then((member_id) => {
-         if (!member_id) { console.warn('sign in', 'erreur imprévue'); } 
+         if (!member_id) { console.warn('sign in', 'erreur imprévue'); }
          this.logging_msg ='';
         })
-      .catch((err) => {
+      .catch(async (err) => {
         console.log('sign in erreur', err);
         const name = err?.name || '';
         if (name === 'UserNotConfirmedException') {
           this.logging_msg = 'Compte non confirmé. Un code vous a été envoyé par e-mail.';
         } else if (name === 'PasswordResetRequiredException') {
           this.logging_msg = 'Réinitialisation requise. Un code vous a été envoyé par e-mail.';
-        } else if (name === 'UserNotFoundException') {
-          // Le compte n'existe pas : proposer la création
-          this.logging_msg = "Compte introuvable. Création de compte proposée.";
-          this.toastService.showInfo('Connexion', 'Création de compte proposée.');
-          this.goSignUp();
         } else if (name === 'NotAuthorizedException') {
-          // Mot de passe incorrect ou autre erreur d'autorisation : ne pas rediriger vers la création
-          this.logging_msg = "Mot de passe incorrect. Vérifiez votre saisie ou réinitialisez votre mot de passe.";
+          // Vérifier si l'email existe dans la base membres
+          const member = await this.membersService.searchMemberByEmail(this.email.value);
+          if (member) {
+            this.logging_msg = "Compte inexistant ou mot de passe incorrect.";
+            this.canShowSignUp = true;
+          } else {
+            this.logging_msg = "Email inconnu.";
+            this.canShowSignUp = false;
+          }
         } else {
           this.logging_msg = err?.message || 'Connexion impossible';
         }
@@ -189,6 +192,7 @@ export class ConnexionComponent {
     // Clear any previous sign-in error when switching to sign-up
     this.logging_msg = '';
     this.signup_msg = '';
+    this.canShowSignUp = false;
     this.auth.changeMode(Process_flow.SIGN_UP);
   }
 
@@ -288,7 +292,7 @@ export class ConnexionComponent {
     if (!control.value.match(EMAIL_PATTERN)) return of(null);
     return of(control.value).pipe(
       switchMap((email) => from(this.membersService.searchMemberByEmail(email))),
-      // tap((member) => this.applying_member = member),
+      tap((member) => console.log('emailValidator found member:', member)),
       map((member) => { return member ? null : { not_member: false }; }),
       catchError((error) => { console.error('Error in emailValidator:', error); return of(null); })
     )
