@@ -20,12 +20,12 @@
 
 <div class="row px-2 mt-1 mb-4 g-md-5">
     <div [ngClass]="tournamentsColClass">
-        <div class="text-uppercase text-success mt-1">Prochains tournois</div>
+        <div class="text-uppercase text-success fw-bolder mt-1 mb-2">Prochains tournois</div>
         <app-tournaments [displayTitle]="false" [row_cols]="tournaments_row_cols"></app-tournaments>
     </div>
     
     <div [ngClass]="newsColClass">
-        <div class="text-uppercase text-success mt-1">Les dernières nouvelles</div>
+        <div class="text-uppercase text-success fw-bolder mt-1 mb-2">Les dernières nouvelles</div>
         <!-- <div class="text-info" (click)="goToNews($event)" style="cursor: pointer;">... accéder à la totalité des
             informations</div> -->
         <app-generic-page [row_cols]="news_row_cols" [page_title]="EXTRA_TITLES.HIGHLIGHTS"></app-generic-page>
@@ -34,7 +34,7 @@
 
 <ng-template #welcome>
     <div class="card-body">
-        <span class="text-uppercase text-success">Bienvenue au Bridge Club de Saint-Orens</span>
+        <span class="text-uppercase fw-bolder text-success">Bienvenue au Bridge Club de Saint-Orens</span>
         <span class="d-block mb-3">un club dynamique, et convivial.</span>
     </div>
 </ng-template>
@@ -52,7 +52,7 @@
 <ng-template #birthdays>
     <div *ngIf="logged_member$ | async as logged_member" class="d-none d-md-block px-3">
         <div *ngIf="next_birthdays.length > 0" class="card-body">
-            <div class="text-uppercase text-success mb-2">Prochains anniversaires</div>
+            <div class="text-uppercase fw-bolder text-success mb-2">Prochains anniversaires</div>
             <div class="row">
                 <div *ngFor="let day of next_birthdays" class="col-6 mb-3">
                     <div class="fw-bold small">{{ day.day | date:'EEE d MMM':'':'fr-FR' }}</div>
