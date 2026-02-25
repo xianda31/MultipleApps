@@ -5,6 +5,8 @@ import { FFB_proxyService } from '../ffb/services/ffb.service';
 import { TournamentTeams } from '../ffb/interface/tournament_teams.interface';
 import { ToastService } from './toast.service';
 
+const MAX_TOURNAMENTS_LISTED = 8; // Number of tournaments to list
+
 @Injectable({
     providedIn: 'root',
 })
@@ -40,7 +42,12 @@ export class TournamentService {
     list_next_tournament_teams(days_back: number = 0): Observable<TournamentTeams[]> {
         return this.list_next_tournaments(days_back).pipe(
             switchMap((tournaments) => {
-                const tournamentTeamsObservables = tournaments.map((tournament) =>
+
+                let filtered_tournaments = tournaments
+                    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                    .slice(0, MAX_TOURNAMENTS_LISTED); // Ne prendre que les 8 premiers
+
+                const tournamentTeamsObservables = filtered_tournaments.map((tournament) =>
                     from(this.ffbService.getTournamentTeams(tournament.team_tournament_id.toString()))
                 );
                 return merge(...tournamentTeamsObservables).pipe(
