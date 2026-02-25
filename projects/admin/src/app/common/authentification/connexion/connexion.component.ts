@@ -1,8 +1,7 @@
 import { Component } from '@angular/core';
-import { Location } from '@angular/common';
 import { Router } from '@angular/router';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
-import { catchError, from, map, Observable, of, switchMap, tap } from 'rxjs';
+import { catchError, from, map, Observable, of, switchMap } from 'rxjs';
 import { ToastService } from '../../services/toast.service';
 import { Process_flow } from '../authentification_interface';
 import { AuthentificationService } from '../authentification.service';
@@ -292,7 +291,6 @@ export class ConnexionComponent {
     if (!control.value.match(EMAIL_PATTERN)) return of(null);
     return of(control.value).pipe(
       switchMap((email) => from(this.membersService.searchMemberByEmail(email))),
-      tap((member) => console.log('emailValidator found member:', member)),
       map((member) => { return member ? null : { not_member: false }; }),
       catchError((error) => { console.error('Error in emailValidator:', error); return of(null); })
     )

@@ -1,4 +1,4 @@
-<div *ngIf="logged_member$ | async as logged_member" class="text-center">
+<div *ngIf="logged_member" class="text-center">
     <h2>Bonjour {{ logged_member.firstname }}</h2>
 
     <p *ngIf="user_accreditation && user_accreditation.level === 0">
@@ -19,7 +19,7 @@
             Basculer sur le front</a>
     </p>
 </div>
-<div *ngIf="!(logged_member$ | async)" class="text-center justify-content-center">
+<div *ngIf="!(logged_member)" class="text-center justify-content-center">
     <h1>Bienvenue sur la page d'administration</h1>
     <!-- <p>Veuillez vous connecter pour accéder aux fonctionnalités .</p> -->
     <div class="d-flex justify-content-center">

@@ -17,8 +17,9 @@ import { ConnexionComponent } from '../../common/authentification/connexion/conn
 })
 export class BackPageComponent {
 
-  logged_member$ !: Observable<Member | null>;
+  // logged_member$ !: Observable<Member | null>;
   user_accreditation: Accreditation | null = null;
+  logged_member !: Member | null;
 
   constructor(
     private auth: AuthentificationService,
@@ -27,7 +28,7 @@ export class BackPageComponent {
 
 
   async ngOnInit(): Promise<void> {
-    this.logged_member$ = this.auth.logged_member$;
+    // this.logged_member$ = this.auth.logged_member$;
 
     // Déconnexion automatique si route /signout
     if (this.router.url.endsWith('/signout')) {
@@ -40,6 +41,7 @@ export class BackPageComponent {
     this.auth.logged_member$.subscribe(async (member) => {
       if (member !== null) {
         this.user_accreditation = await this.groupService.getUserAccreditation();
+        this.logged_member = member;
       }
     });
   }
