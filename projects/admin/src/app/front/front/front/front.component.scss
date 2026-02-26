@@ -1,6 +1,7 @@
 
 
 @media (max-width: 767.98px) {
+
   .title-bg,
   app-title {
     display: none !important;
@@ -23,32 +24,53 @@ app-front-navbar {
 
 html,
 body {
-  overflow-y: hidden !important;
-  height: 100vh !important;
-  background: var(--main-bg) !important;
+  overflow-y: auto !important;
   color: var(--main-text) !important;
   font-family: var(--font-main) !important;
 }
+// Source - https://stackoverflow.com/a/70392459
+// Posted by Lady_Angular, modified by community. See post 'Timeline' for change history
+// Retrieved 2026-02-26, License - CC BY-SA 4.0
 
-.container-fluid.root-bg {
+body::-webkit-scrollbar {
+    display: none;
+}
+
+.container-fluid {
+  background: var(--content-bg, #ffffff) !important;
   position: relative;
   min-height: 100vh;
-  height: 100vh;
   overflow-y: auto;
-  padding-right: 0 !important;
-  padding-left: 0 !important;
-  margin-right: 0 !important;
-  margin-left: 0 !important;
-  width: 100vw;
+  overflow-x: auto;
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 100%;
   box-sizing: border-box;
+  font-family: var(--font-main);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
 }
 
-/* Suppression des ombres visuelles sur la zone scrollable */
-.container-fluid.root-bg::before,
-.container-fluid.root-bg::after {
-  content: none !important;
-  display: none !important;
-}
+
+/* Personnalisation de la scrollbar verticale Chrome */
+// .container-fluid::-webkit-scrollbar {
+//   width: 6px;
+//   background: transparent;
+// }
+// .container-fluid::-webkit-scrollbar-thumb {
+//   background: rgba(0,0,0,0.12);
+//   border-radius: 4px;
+//   box-shadow: 0 0 6px 2px rgba(0,0,0,0.10);
+// }
+// .container-fluid::-webkit-scrollbar-thumb:hover {
+//   background: rgba(0,0,0,0.18);
+// }
+
+
 
 .row {
   margin-right: 0 !important;
@@ -64,17 +86,6 @@ body {
   }
 }
 
-.root-bg {
-  font-family: var(--font-main);
-  min-height: 100vh;
-  height: 100vh;
-  padding-left: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: flex-start;
-  overflow-y: auto;
-}
 
 @media (max-width: 576px) {
   .root-bg {
@@ -94,18 +105,6 @@ body {
   color: var(--title-text, #fff);
 }
 
-/* Masque la scrollbar verticale interne tout en gardant le scroll fonctionnel */
-.container-fluid.root-bg {
-  scrollbar-width: none;
-  /* Firefox */
-  -ms-overflow-style: none;
-  /* IE 10+ */
-}
-
-.container-fluid.root-bg::-webkit-scrollbar {
-  display: none;
-  /* Chrome, Safari, Opera */
-}
 
 .sandbox-badge {
   font-size: 1.5rem;
@@ -134,7 +133,8 @@ body {
     font-size: 0.9rem !important;
   }
 
-  @media (max-width: 600px), (max-height: 500px) {
+  @media (max-width: 600px),
+  (max-height: 500px) {
     font-size: 0.75rem !important;
   }
 
@@ -143,12 +143,29 @@ body {
     min-height: 60vh;
   }
 
-  h1 { font-size: 2em !important; }
-  h2 { font-size: 1.75em !important; }
-  h3 { font-size: 1.5em !important; }
-  h4 { font-size: 1.25em !important; }
-  h5 { font-size: 1.1em !important; }
-  h6 { font-size: 1em !important; }
+  h1 {
+    font-size: 2em !important;
+  }
+
+  h2 {
+    font-size: 1.75em !important;
+  }
+
+  h3 {
+    font-size: 1.5em !important;
+  }
+
+  h4 {
+    font-size: 1.25em !important;
+  }
+
+  h5 {
+    font-size: 1.1em !important;
+  }
+
+  h6 {
+    font-size: 1em !important;
+  }
 }
 
 .site-banner {

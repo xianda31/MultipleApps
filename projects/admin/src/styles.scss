@@ -1,3 +1,12 @@
+/* Masquer complètement la scrollbar globale (Chrome/Edge) */
+html::-webkit-scrollbar, body::-webkit-scrollbar {
+  display: none;
+}
+html, body {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+}
+/* Personnalisation globale de la scrollbar pour Chrome/Firefox */
 // Interligne réduit pour innerHTML
 .tighter-html {
   line-height: 1.1;
