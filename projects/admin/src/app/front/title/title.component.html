@@ -1,1 +1,15 @@
-<span class="responsive-title">{{ title$ | async }}</span>
+
+<div class="ms-3 mt-1 mb-1">
+
+    <nav aria-label="breadcrumb">
+        <div style="display: flex; align-items: center;">
+            <ol class="breadcrumb" style="margin-bottom: 0;">
+                <li *ngFor="let crumb of breadcrumb" class="breadcrumb-item">
+                    <a *ngIf="crumb.path" >{{ crumb.label }}</a>
+                    <span *ngIf="!crumb.path">{{ crumb.label }}</span>
+                </li>
+            </ol>
+            <span style="padding-left:0.5em">: {{ title$ | async }}</span>
+        </div>
+    </nav>
+</div>

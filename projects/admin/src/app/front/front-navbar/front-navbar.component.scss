@@ -537,3 +537,48 @@
   color: #155724 !important;
 }
 
+/* Harmonisation globale des têtes de menus (force homogénéité) */
+.navbar-nav .nav-link.main-nav-link,
+.navbar-nav .nav-link.main-nav-link.Page,
+.navbar-nav .nav-link.main-nav-link.Plugin,
+.navbar-nav .nav-link.main-nav-link.Page span,
+.navbar-nav .nav-link.main-nav-link.Plugin span {
+	color: #fff !important;
+	font-weight: 700 !important;
+	font-size: 1.3rem !important;
+	font-family: inherit !important;
+	line-height: 1.2 !important;
+	padding-top: 0.35rem !important;
+	padding-bottom: 0.35rem !important;
+}
+.navbar-nav .nav-item .nav-link {
+	display: inline-flex !important;
+	align-items: center !important;
+}
+.navbar-nav .nav-item.ms-3 { margin-left: 1.5rem !important; }
+.navbar-nav .nav-link.dropdown-toggle::after { color: #fff !important; }
+
+/* Ensure brand (brandNavitem) uses the exact same appearance as other top-level nav links */
+.navbar-brand.main-nav-link,
+.navbar .navbar-brand,
+.navbar-brand.main-nav-link .align-middle {
+	color: #fff !important;
+	font-weight: 700 !important;
+	font-size: 1.3rem !important;
+	font-family: inherit !important;
+	line-height: 1.2 !important;
+}
+
+/* Force exact same font-family and weight for all top-level nav links to ensure homogeneity */
+.navbar > .navbar-nav, .navbar .navbar-nav {
+	/* nothing here, keep specificity grouping */
+}
+.navbar .navbar-nav .nav-link.main-nav-link,
+.navbar .navbar-nav .nav-link.main-nav-link.Page,
+.navbar .navbar-nav .nav-link.main-nav-link.Plugin {
+	font-family: inherit !important;
+	font-weight: 700 !important;
+	color: #fff !important;
+}
+
+

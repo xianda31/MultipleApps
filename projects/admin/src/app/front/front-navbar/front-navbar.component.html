@@ -1,16 +1,15 @@
-<nav class="navbar navbar-dark text-white d-flex align-items-center" [class.navbar-expand-md]="!isMobileLandscape">
-  <div class="container-fluid h-100 d-flex align-items-center">
+<nav class="navbar navbar-dark d-flex " [class.navbar-expand-md]="!isMobileLandscape">
+  <div class="container-fluid h-100 d-flex ">
     @if (brandNavitem && !isMobileLandscape) {
-    <a class="navbar-brand d-flex align-items-center position-relative main-nav-link align-middle"
+    <a class="navbar-brand d-flex  position-relative main-nav-link align-middle"
       [routerLink]="brandNavitem.path">
       <span class="align-middle">{{ brandNavitem.label }}</span>
     </a>
     }
-    <!-- Bouton toggler supprimé ici, il est présent dans la ligne compacte mobile -->
 
     <!-- Desktop menu (caché en mobile landscape) -->
     @if (!isMobileLandscape) {
-    <div class="collapse navbar-collapse navbar-desktop d-none d-md-flex align-items-center position-relative">
+    <div class="collapse navbar-collapse navbar-desktop d-none d-md-flex  position-relative">
       <ul class="navbar-nav me-auto  mb-lg-0">
         <ng-container *ngTemplateOutlet="dyn_navbar_unified; context: { isMobile: false }"></ng-container>
       </ul>
@@ -22,7 +21,7 @@
          [class.d-md-none]="!isMobileLandscape"
          tabindex="-1" id="sidebarMenu" aria-labelledby="sidebarMenuLabel">
       <div class="offcanvas-header flex-column align-items-start py-1">
-        <div class="d-flex w-100 justify-content-between align-items-center ">
+        <div class="d-flex w-100 justify-content-between  ">
           @if (brandNavitem) {
           <a class="dropdown-item fw-bold" [routerLink]="brandNavitem.path" data-bs-dismiss="offcanvas" style="font-size:1.1rem;">
             {{ brandNavitem.label }}
@@ -40,20 +39,20 @@
 
     <!-- Ligne compacte mobile : toggler + titre (visible en mobile ou en mobile landscape) -->
     @if (isMobileLandscape) {
-    <div class="navbar-mobile-compact d-flex align-items-center justify-content-between w-100 py-1 px-2"
-         style="background: var(--navbar-bg);">
+            <div class="navbar-mobile-compact d-flex align-items-center justify-content-center w-100 px-2"
+              style="background: var(--navbar-bg); height: 48px;">
       <button class="navbar-toggler me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu">
         <span class="navbar-toggler-icon"></span>
       </button>
-      <span class="title-banner text-center flex-grow-1" style="font-size:0.8rem;">Bridge Club Saint-Orens</span>
+      <span class="title-banner text-center flex-grow-1 d-flex align-items-center justify-content-center" style="font-size:0.8rem; height: 48px;">Bridge Club Saint-Orens</span>
     </div>
     } @else {
-    <div class="navbar-mobile-compact d-md-none d-flex align-items-center justify-content-between w-100 py-1 px-2"
+    <div class="navbar-mobile-compact d-md-none d-flex  justify-content-between w-100 py-1 px-2"
          style="background: var(--navbar-bg);">
       <button class="navbar-toggler me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu">
         <span class="navbar-toggler-icon"></span>
       </button>
-      <span class="title-banner text-center flex-grow-1" style="font-size:0.8rem;">Bridge Club Saint-Orens</span>
+      <span class="title-banner text-center flex-grow-1 d-flex align-items-center justify-content-center" style="font-size:0.8rem;">Bridge Club Saint-Orens</span>
     </div>
     }
 
@@ -74,6 +73,9 @@
 
 <!-- Template récursive unifiée pour MenuGroup -->
 <ng-template #menuGroupRecursive let-menu let-isMobile="isMobile">
+
+  <!-- cas Dropdown -->
+
   @if (menu.navitem.type === NAVITEM_TYPE.DROPDOWN && (menu.childs?.length || 0) > 0) {
     <!-- Desktop ou mobile/landscape: dropdown avec ngbDropdown (non déplié) -->
     @if (!isMobile || (isMobile && !isPortrait)) {
@@ -113,6 +115,9 @@
     </li>
     }
   }
+
+  <!-- cas simple -->
+
   @else {
   <li [class]="isMobile ? 'nav-item' : 'nav-item ms-3'">
     @if (menu.navitem.type === NAVITEM_TYPE.EXTERNAL_REDIRECT) {

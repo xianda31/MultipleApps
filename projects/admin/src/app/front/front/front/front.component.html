@@ -1,82 +1,322 @@
-<div class="container-fluid" >
+<!-- Images club spécifiques par mode -->
+<div class="container-fluid">
 
-  <div #headerBanner>
-    <div class="row d-flex align-items-stretch ">
+  <div id="headerBanner">
+    <!--
+      ===============================
+      | STRUCTURE DES MODES HEADER |
+      ===============================
+      Mode laptop :
+        - row 1 : logo   + banner (nom club + date) centré (col)
+        - row 2 : brand + menus horizontaux centrés (col)
+        - row 3 : image_club (tplImageClub, classe w-100 d-none d-md-block)
+        - row 4 : contenu principal factorisé (tplContent)
+        - row 5 : footer factorisé (tplFooter)
+      Mode mobile/landscape :
+        - row 1 : logo ( qui fait aussi déclencheur de menu offcanvas) + banner (nom club + date) centré (col)
+        - offcanvas : menu offcanvas
+        - row 2 : contenu principal factorisé (tplContent)
+        - row 3 : footer factorisé (tplFooter)
+      Mode mobile/portrait :
+        - row 1 : burger à gauche, banner centré (col)
+        - row 2 : image_club (tplImageClub, classe w-100 d-block d-md-none)
+        - offcanvas : menu offcanvas
+        - row 3 : contenu principal factorisé (tplContent)
+        - row 4 : footer factorisé (tplFooter)
+    -->
+    <ng-container *ngIf="isLaptopMode">
+      <ng-template [ngTemplateOutlet]="tplLaptop"></ng-template>
+    </ng-container>
+    <ng-container *ngIf="isMobileLandscape">
+      <ng-template [ngTemplateOutlet]="tplMobileLandscape"></ng-template>
+    </ng-container>
+    <ng-container *ngIf="isMobilePortrait">
+      <ng-template [ngTemplateOutlet]="tplMobilePortrait"></ng-template>
+    </ng-container>
 
-      <div class="col-sm-auto mx-0 px-0 d-flex d-none d-xl-flex">
-        <a routerLink="contacts">
-          <img *ngIf="logoUrl; else staticLogo" class="img-fluid  h-100 object-fit-cover" style="max-height: 100px;" [src]="logoUrl" alt="logo" />
-          <ng-template #staticLogo>
-            <img class="img-fluid  h-100 object-fit-cover" style="max-height: 100px;" src="bcsto_ffb.jpg" alt="marcaissonne" />
-          </ng-template>
-        </a>
+    <!-- Mode Laptop   -->
+    <ng-template #tplLaptop>
+      <div class="row d-md-flex align-items-stretch site-banner header-shadow laptop-banner-row g-0 my-0">
+        <div class="col d-flex align-items-center px-0">
+          <ng-template [ngTemplateOutlet]="tplBanner" [ngTemplateOutletContext]="{ mode: 'laptop' }"></ng-template>
+        </div>
       </div>
-
-      <div class="col-sm d-flex flex-column mx-0 px-0 ">
-
-        <div class="d-none row justify-content-between mx-0 brand-bg py-1 h-100 d-flex align-items-center site-banner">
-          <div class="col text-center">
-            Bridge Club Saint-Orens
-            @if(sandbox) {<span class="badge sandbox-badge text-dark ms-2" aria-label="Mode sandbox">Mode Sandbox</span>}
-
+      <div class="row d-md-flex site-banner h-auto g-0 w-100 py-0 my-0 laptop-navbar-row">
+        <nav class="navbar navbar-dark navbar-expand d-flex w-100 justify-content-center position-relative">
+          <!-- Nom du club positionné indépendamment -->
+          <div class="club-name-sticky-independent d-none">
+            <span class="nav-link" style="color: #fff !important; font-weight: bold; font-family: inherit;">
+              {{ club_name }}
+            </span>
           </div>
+          
+          <div class="d-flex flex-row align-items-center justify-content-center gap-5 w-auto mx-auto"
+            style="font-size: 1.3rem; font-weight: bold;">
+            <div
+              class="navbar-collapse navbar-desktop position-relative d-flex align-items-center navbar-menu-align justify-content-center p-0 m-0">
+              <ul class="navbar-nav mb-0 flex-nowrap justify-content-center" style="gap: 1.5rem;">
+                <li *ngIf="brandNavitem" class="nav-item ms-3">
+                  <a class="nav-link main-nav-link" [routerLink]="brandNavitem.path"
+                    style="color: #fff !important; font-weight: bold; font-family: inherit;">
+                    {{ brandNavitem.label }}
+                  </a>
+                </li>
+                <ng-container *ngTemplateOutlet="dyn_navbar_unified; context: { isMobile: false }"></ng-container>
+              </ul>
+            </div>
+          </div>
+        </nav>
+      </div>
+      <div class="laptop-image-club">
+        <ng-template [ngTemplateOutlet]="tplImageClub"
+          [ngTemplateOutletContext]="{ imgClass: 'w-100 d-none d-md-block' }"></ng-template>
+      </div>
+      <ng-template [ngTemplateOutlet]="tplContent"></ng-template>
+      <ng-template [ngTemplateOutlet]="tplFooter"></ng-template>
+    </ng-template>
 
-          <div class="mx-auto col-auto text-end me-5 d-none d-md-block">
-            <span class="mb-0">{{today | date:'EEEE d MMMM y':'':'fr-FR' }}</span>
+    <!-- template mode Mobile Landscape -->
+
+    <ng-template #tplMobileLandscape>
+      <div class="row d-flex align-items-stretch site-banner header-shadow">
+        <div class="col-auto d-flex align-items-center px-2" style="min-width: 60px;">
+          <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas"
+            data-bs-target="#mobileLandscapeMenuOffcanvas" aria-controls="mobileLandscapeMenuOffcanvas"
+            aria-label="Ouvrir le menu">
+            <ng-template [ngTemplateOutlet]="tplLogo"></ng-template>
+          </button>
+        </div>
+        <div class="col d-flex align-items-center justify-content-center">
+          <ng-template [ngTemplateOutlet]="tplBanner"
+            [ngTemplateOutletContext]="{ mode: 'mobile-landscape' }"></ng-template>
+        </div>
+      </div>
+      <ng-template [ngTemplateOutlet]="tplOffcanvasMenu"
+        [ngTemplateOutletContext]="{ offcanvasId: 'mobileLandscapeMenuOffcanvas', offcanvasLabel: 'mobileLandscapeMenuOffcanvasLabel' }"></ng-template>
+      <ng-template [ngTemplateOutlet]="tplContent"></ng-template>
+      <ng-template [ngTemplateOutlet]="tplFooter"></ng-template>
+    </ng-template>
+
+
+
+    <!-- template mode Mobile Portrait -->
+    <ng-template #tplMobilePortrait>
+      <div class="row d-flex d-md-none align-items-stretch site-banner header-shadow">
+        <div class="col-12 px-0">
+          <div class="navbar-bg h-auto g-0 w-100 py-0 my-0">
+            <nav class="navbar navbar-dark">
+              <div class="d-flex align-items-center px-0 w-100">
+                <button class="navbar-toggler ms-2 me-2 flex-shrink-0" type="button" data-bs-toggle="offcanvas"
+                  data-bs-target="#mobileMenuOffcanvas" aria-controls="mobileMenuOffcanvas" aria-label="Ouvrir le menu">
+                  <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="flex-grow-1 d-flex justify-content-center align-items-center min-width-0">
+                  <ng-template [ngTemplateOutlet]="tplBanner" [ngTemplateOutletContext]="{ mode: 'mobile-portrait' }"></ng-template>
+                </div>
+              </div>
+            </nav>
+            <ng-template [ngTemplateOutlet]="tplOffcanvasMenu"
+              [ngTemplateOutletContext]="{ offcanvasId: 'mobileMenuOffcanvas', offcanvasLabel: 'mobileMenuOffcanvasLabel' }"></ng-template>
+            <ng-template [ngTemplateOutlet]="tplImageClub"
+              [ngTemplateOutletContext]="{ imgClass: 'w-100 d-block d-md-none' }"></ng-template>
           </div>
         </div>
+      </div>
+      <ng-template [ngTemplateOutlet]="tplContent"></ng-template>
+      <ng-template [ngTemplateOutlet]="tplFooter"></ng-template>
+    </ng-template>
 
+    <!-- Templates dynamiques pour menus -->
+    <ng-template #dyn_navbar_unified let-isMobile="isMobile">
+      <ng-container *ngFor="let menu of navbar_menus; let last = last; trackBy: trackNavitemId">
+        <ng-container
+          *ngIf="menu.navitem.position === NAVITEM_POSITION.NAVBAR &&
+                (menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.ANY
+                || (menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.LOGGED_ONLY && (logged_member$ | async))
+                || (menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.UNLOGGED_ONLY && !(logged_member$ | async)))">
+          <ng-container
+            *ngTemplateOutlet="menuGroupRecursive; context: { $implicit: menu, isMobile: isMobile, isPortrait: isPortrait, isLastTop: last }"></ng-container>
+        </ng-container>
+      </ng-container>
+    </ng-template>
 
-        <div class="row navbar-bg shadow px-2 align-items-center h-auto text-white flex-grow-1 g-0">
-          <app-front-navbar [navbar_menus]="navbar_menus" [sandboxMode]="sandbox" [albums]="albums"></app-front-navbar>
+    <ng-template #menuGroupRecursive let-menu let-isMobile="isMobile" let-isLastTop="isLastTop">
+      <ng-container *ngIf="menu.navitem.type === NAVITEM_TYPE.DROPDOWN && (menu.childs?.length || 0)">
+        <!-- Mode desktop (laptop) : dropdown classique -->
+        <ng-container *ngIf="!isMobile; else landscapeDropdownList">
+          <li class="nav-item dropdown ms-3" ngbDropdown>
+            <a class="nav-link main-nav-link dropdown-toggle" ngbDropdownToggle [id]="'nav-' + menu.navitem.id">
+              <img *ngIf="menu.navitem.pre_label === 'avatar'" [src]="avatar$ | async" alt="avatar"
+                class="rounded-circle"
+                style="width:28px; height:28px; max-width:28px; max-height:28px; object-fit:cover">
+              <span>{{ label_transformer(menu.navitem.label) | async }}</span>
+            </a>
+            <ul class="dropdown-menu" ngbDropdownMenu [attr.aria-labelledby]="'nav-' + menu.navitem.id">
+              <ng-container *ngFor="let child of (menu.childs || []); trackBy: trackNavitemId">
+                <ng-container
+                  *ngTemplateOutlet="menuGroupRecursive; context: { $implicit: child, isMobile: isMobile }"></ng-container>
+              </ng-container>
+            </ul>
+          </li>
+        </ng-container>
+        <!-- Mode mobile/landscape : liste imbriquée -->
+        <ng-template #landscapeDropdownList>
+          <li class="nav-item mobile-submenu-parent ps-2">
+            <span class="dropdown-item ps-0">
+              <img *ngIf="menu.navitem.pre_label === 'avatar'" [src]="avatar$ | async" alt="avatar"
+                class="rounded-circle"
+                style="width:28px; height:28px; max-width:28px; max-height:28px; object-fit:cover">
+              {{ label_transformer(menu.navitem.label) | async }}
+            </span>
+            <ul class="navbar-nav ms-3">
+              <ng-container *ngFor="let child of (menu.childs || []); trackBy: trackNavitemId">
+                <ng-container
+                  *ngTemplateOutlet="menuGroupRecursive; context: { $implicit: child, isMobile: isMobile }"></ng-container>
+              </ng-container>
+            </ul>
+          </li>
+        </ng-template>
+      </ng-container>
+      <ng-container *ngIf="menu.navitem.type !== NAVITEM_TYPE.DROPDOWN || !(menu.childs?.length || 0)">
+        <li [ngClass]="isMobile ? 'nav-item ps-2' + (isLastTop ? ' mt-4' : '') : 'nav-item ms-3'">
+          <a *ngIf="menu.navitem.type === NAVITEM_TYPE.EXTERNAL_REDIRECT"
+            [ngClass]="isMobile ? 'dropdown-item ps-0' + (isLastTop ? ' fw-bold' : '') : 'nav-link main-nav-link'"
+            [href]="menu.navitem.extra_parameter" target="_blank" rel="noopener"
+            [attr.data-bs-dismiss]="isMobile ? 'offcanvas' : null">
+            <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
+          </a>
+          <a *ngIf="menu.navitem.type === NAVITEM_TYPE.INTERNAL_LINK"
+            [ngClass]="isMobile ? 'dropdown-item ps-0' + (isLastTop ? ' fw-bold' : '') : 'nav-link main-nav-link'"
+            [routerLink]="menu.navitem.path" [attr.data-bs-dismiss]="isMobile ? 'offcanvas' : null"
+            style="color: #fff !important; font-size: 1.3rem; font-weight: bold;">
+            <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
+          </a>
+          <a *ngIf="menu.navitem.type?.toLowerCase() === 'plugin'"
+            [ngClass]="isMobile ? 'dropdown-item Plugin ps-0' : 'nav-link main-nav-link Plugin'"
+            [routerLink]="menu.navitem.path" [attr.data-bs-dismiss]="isMobile ? 'offcanvas' : null">
+            <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
+          </a>
+          <a *ngIf="menu.navitem.type === NAVITEM_TYPE.CUSTOM_PAGE"
+            [ngClass]="isMobile ? 'dropdown-item  ps-0' : 'nav-link main-nav-link '" [routerLink]="menu.navitem.path"
+            [attr.data-bs-dismiss]="isMobile ? 'offcanvas' : null">
+            <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
+          </a>
+          <a *ngIf="menu.navitem.type === NAVITEM_TYPE.DIRECT_CALL"
+            [ngClass]="isMobile ? 'dropdown-item ps-0' : 'nav-link main-nav-link'" (click)="onCommand(menu.navitem)"
+            [attr.data-bs-dismiss]="isMobile ? 'offcanvas' : null">
+            <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
+          </a>
+          <span
+            *ngIf="menu.navitem.type !== NAVITEM_TYPE.EXTERNAL_REDIRECT && menu.navitem.type !== NAVITEM_TYPE.INTERNAL_LINK && menu.navitem.type?.toLowerCase() !== 'plugin' && menu.navitem.type !== NAVITEM_TYPE.CUSTOM_PAGE && menu.navitem.type !== NAVITEM_TYPE.DIRECT_CALL"
+            class="dropdown-item text-danger">Type de menu inconnu</span>
+        </li>
+      </ng-container>
+    </ng-template>
+    <ng-template #menuLabelTemplate let-menu>
+      <img *ngIf="menu.navitem.pre_label === 'avatar'" [src]="avatar$ | async" alt="avatar" class="rounded-circle"
+        style="width:28px; height:28px; max-width:28px; max-height:28px; object-fit:cover">
+      {{ label_transformer(menu.navitem.label) | async }}
+    </ng-template>
+
+  </div>
+
+  <!-- menu offcanvas -->
+  <ng-template #tplOffcanvasMenu let-offcanvasId="offcanvasId" let-offcanvasLabel="offcanvasLabel">
+    <div class="offcanvas offcanvas-start offcanvas-adapt-width" tabindex="-1" [id]="offcanvasId"
+      [attr.aria-labelledby]="offcanvasLabel">
+      <div class="offcanvas-header">
+        <h5 class="offcanvas-title" [id]="offcanvasLabel">Menu</h5>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Fermer"></button>
+      </div>
+      <div class="offcanvas-body p-0">
+        <ul class="navbar-nav mb-2 w-100">
+          <li *ngIf="brandNavitem" class="nav-item w-100">
+            <a class="nav-link main-nav-link ps-2 py-2 fw-bold" [routerLink]="brandNavitem.path"
+              data-bs-dismiss="offcanvas">
+              {{ brandNavitem.label }}
+            </a>
+          </li>
+        </ul>
+        <div class="w-100">
+          <ul class="navbar-nav mb-0 flex-nowrap">
+            <ng-container *ngTemplateOutlet="dyn_navbar_unified; context: { isMobile: true }"></ng-container>
+          </ul>
         </div>
-
-      </div>
-
-    </div>
-    <div class="row justify-content-center title-banner align-items-center p-1 site-banner">
-      <div class="text-center g-0 ">
-        <app-title></app-title>
       </div>
     </div>
-  </div>
+  </ng-template>
 
-  <div class="offset-xl-1 col-xl-10 justify-content-center  main-content"
-    style="overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none; ">
-    <router-outlet></router-outlet>
-  </div>
 
-  <!-- bandeau pied de page -->
-
-  <div #footerBanner class="row footer-banner text-center mt-auto justify-content-between flex-wrap">
-    <!-- <span class="position-relative d-none d-xl-inline">
-      <img src="VilleDeStOrens.png" alt="Ville de Saint Orens" class="img-fluid img-quarter-sm shadow position-absolute"
-        style="bottom: -30px; left: 30px; max-width: 130px;">
-    </span> -->
-
-    <div class="d-flex align-items-center gap-3 flex-wrap justify-content-center w-auto mx-auto">
-      <span class="mb-0 me-5 d-none">© 2025 Bridge Club de Saint-Orens</span>
-      @if (footer_menus && footer_menus.length > 0) {
-        @for (menu of footer_menus; track menu.navitem.id) {
-          <span class="footer-menu-item ">
-            <a [routerLink]="menu.navitem.path" class="mb-0 footer-banner" style=" text-decoration: none;">{{ menu.navitem.label }}</a>
-          </span>
-        }
-      }
-    </div>
-
-    <!-- <span class="position-relative d-none d-xl-inline">
-      <img *ngIf="logoUrl; else staticLogo2" [src]="logoUrl" alt="logo" class="img-fluid img-quarter-sm shadow position-absolute"
-        style="bottom: 20px; right: 20px; max-width: 130px;">
-      <ng-template #staticLogo2>
-        <img src="bcsto_ffb.jpg" alt="logo" class="img-fluid img-quarter-sm shadow position-absolute"
-          style="bottom: 20px; right: 20px; max-width: 130px;">
+  <!-- Éléments factorisés communs aux modes -->
+  <ng-template #tplLogo>
+    <a routerLink="contacts" style="display: flex; align-items: center;">
+      <img *ngIf="logoUrl; else staticLogo" class="img-fluid" style="max-height: 60px; width: auto;" [src]="logoUrl"
+        alt="logo" />
+      <ng-template #staticLogo>
+        <img class="img-fluid" style="max-height: 60px; width: auto;" src="bcsto_ffb.jpg" alt="marcaissonne" />
       </ng-template>
-    </span> -->
-  </div>
+    </a>
+    <span *ngIf="sandbox" class="badge sandbox-badge over-logo text-dark" aria-label="Mode sandbox">Mode
+      Sandbox</span>
+  </ng-template>
 
-</div>
 
-<style>
+  <ng-template #tplBanner let-mode="mode">
+    <ng-container [ngSwitch]="mode">
+      <!-- Mode laptop : logo + nom club centré + date calée à droite -->
+      <span *ngSwitchCase="'laptop'" class="d-flex align-items-center w-100">
+        <ng-template [ngTemplateOutlet]="tplLogo"></ng-template>
+        <span class="flex-grow-1 text-center fw-bold text-nowrap">{{ club_name }}</span>
+        <span class="small text-nowrap ms-auto me-2">{{today | date:'EEEE d MMMM yyyy':'':'fr-FR' }}</span>
+      </span>
+      <!-- Mode mobile/landscape : nom club centré + date en dessous -->
+      <span *ngSwitchCase="'mobile-landscape'" class="w-100 d-block text-center">
+        <span class="fw-bold text-nowrap d-block">{{ club_name }}</span>
+        <span class="small text-nowrap d-block">{{today | date:'EEEE d MMMM yyyy':'':'fr-FR' }}</span>
+      </span>
+      <!-- Mode mobile/portrait : nom club centré + date en dessous (centré par flex, pas text-center) -->
+      <span *ngSwitchCase="'mobile-portrait'"
+        class="w-100 d-flex flex-column align-items-center justify-content-center">
+        <span class="fw-bold text-nowrap">{{ club_name }}</span>
+        <span class="small text-nowrap">{{today | date:'EEEE d MMMM yyyy':'':'fr-FR' }}</span>
+      </span>
+      <!-- Fallback -->
+      <span *ngSwitchDefault class="w-100 d-block text-center">
+        <span class="fw-bold text-nowrap d-block">{{ club_name }}</span>
+        <span class="small text-nowrap d-block">{{today | date:'EEEE d MMMM yyyy':'':'fr-FR' }}</span>
+      </span>
+    </ng-container>
+  </ng-template>
 
-</style>
+
+  <ng-template #tplImageClub let-imgClass="imgClass">
+    <img [class]="imgClass" src="catala.jpg" alt="image_club"
+      style="height: 100px; width: 100vw; object-fit: cover; display: block;" />
+  </ng-template>
+
+  <ng-template #tplContent>
+    <div class="row">
+      <div class="offset-xl-1 col-xl-10 justify-content-center main-content"
+        style="overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none; ">
+        <app-title></app-title>
+        <router-outlet></router-outlet>
+      </div>
+    </div>
+  </ng-template>
+
+  <ng-template #tplFooter>
+    <div class="footer-banner d-flex align-items-center justify-content-between flex-wrap ">
+      <div class="footer-banner-content flex-grow-1">
+        <div class="text-center">© 2026 {{ club_name }}</div>
+        <div class="row justify-content-center">
+          <div *ngFor="let menu of footer_menus; trackBy: trackNavitemId" class="col-auto">
+            <a [routerLink]="menu.navitem.path" class="mb-0 footer-banner" style="text-decoration: none;">{{
+              menu.navitem.label }}</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-banner-img d-flex align-items-center" *ngIf="isLaptopMode">
+        <img src="VilleDeStOrens.png" alt="Saint-Orens" class="img-fluid nice_shadow" />
+      </div>
+    </div>
+  </ng-template>

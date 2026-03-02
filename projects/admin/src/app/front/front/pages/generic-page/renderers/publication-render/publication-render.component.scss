@@ -1,3 +1,7 @@
+// Empêche tout débordement horizontal des cards
+.card {
+	overflow-x: hidden;
+}
 /* Grid layout for sticky sidebar */
 .publication-grid {
 	display: grid;
@@ -15,12 +19,21 @@
 .main-content {
 	min-width: 0;
 }
+// Empêche les images de dépasser du cadre de la card
+// Empêche les images de dépasser du cadre de la card
 .snippet-header {
-		border-bottom: 1px solid #dee2e6;
-		border-radius: 0 0 0.5rem 0.5rem;
-		background: #f8f9fa; // Bootstrap bg-light
-		position: relative;
+	border-bottom: 1px solid #dee2e6;
+	border-radius: 0 0 0.5rem 0.5rem;
+	background: #f8f9fa; // Bootstrap bg-light
+	position: relative;
 }
+
+// Ajoute un overflow caché sur la colonne image
+.snippet-header > .col-4,
+.snippet-header > .col-md-5 {
+	overflow: hidden;
+}
+
 
 .snippet-block::after {
 		content: '';
