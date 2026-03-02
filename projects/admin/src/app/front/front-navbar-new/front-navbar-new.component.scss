@@ -1,0 +1,47 @@
+/* Styles pour la barre de navigation */
+.laptop-navbar-row {
+  transition: top 0.1s ease-out;
+  z-index: 1050;
+  background: var(--banner-bg, #2e332d) !important;
+  
+  &.scrolled-sticky {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100vw !important;
+    margin: 0 !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+    
+    /* Afficher le nom du club seulement en mode sticky */
+    .club-name-sticky-independent {
+      display: block !important;
+    }
+  }
+  
+  /* Position indépendante du nom du club */
+  .club-name-sticky-independent {
+    display: none !important;
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+  }
+}
+
+/* Harmonisation des liens de navigation */
+.nav-link.main-nav-link {
+  font-family: inherit !important;
+  font-weight: 700 !important;
+  font-size: 1.3rem !important;
+  color: #fff !important;
+  padding-left: 0.75rem !important;
+  padding-right: 0.75rem !important;
+}
+
+.navbar-brand {
+  font-family: inherit !important;
+  font-weight: 700 !important;
+  font-size: 1.3rem !important;
+  color: #fff !important;
+}
