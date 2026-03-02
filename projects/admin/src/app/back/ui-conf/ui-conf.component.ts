@@ -28,24 +28,18 @@ export class UiConfComponent implements OnInit {
     { label: 'Raleway', css: 'Raleway, sans-serif' },
     { label: 'Emblema One', css: 'Emblema One, cursive' },
     { label: 'Caveat', css: 'Caveat, cursive' },
-    { label: 'Pacifico', css: 'Pacifico, cursive' },
-    { label: 'Merriweather', css: 'Merriweather, serif' },
-    { label: 'Playfair Display', css: 'Playfair Display, serif' },
-    { label: 'Quicksand', css: 'Quicksand, sans-serif' },
-    { label: 'Source Sans Pro', css: 'Source Sans Pro, sans-serif' },
-    { label: 'Nunito', css: 'Nunito, sans-serif' },
-    { label: 'Bebas Neue', css: 'Bebas Neue, cursive' },
-    { label: 'Fira Sans', css: 'Fira Sans, sans-serif' },
-    { label: 'Poppins', css: 'Poppins, sans-serif' },
-    { label: 'Ubuntu', css: 'Ubuntu, sans-serif' },
-    { label: 'Muli', css: 'Muli, sans-serif' }
+    { label: 'Pacifico', css: 'Pacifico, cursive' }
   ];
+  // Track injected Google fonts to limit total injected fonts
+  private injectedGoogleFonts = new Set<string>();
   uiForm!: FormGroup;
   loaded = false;
   export_file_url: any;
   logoPreviewUrl: string | null = null;
+  imageClubPreviewUrl: string | null = null;
+  placeholderImageUrl = 'https://via.placeholder.com/64?text=No+image';
   thumbnails$ !: Observable<string[]>;
-  // cache of presigned preview URLs for tournaments_type entries keyed by the mapping key
+  // cache of presigned preview URLs for tournaments_type entries keyed by the mapping key 
   previewMap: { [key: string]: string | null } = {};
   private defaultImageSub?: Subscription;
   constructor(
@@ -61,16 +55,25 @@ export class UiConfComponent implements OnInit {
 
     this.uiForm = this.fb.group({
       template: this.fb.group({
-        logo_path: [''],
-        banner_bg: ['#2e332d'],
-        banner_text_color: ['#ffffff'],
-        banner_font: ['Emblema One, cursive'],
-        navbar_bg: ['#3f493d'],
-        navbar_text_color: ['#ffffff'],
-        navbar_font: ['Amarante, serif'],
-        content_bg: ['#ffffff'],
-        content_text_color: ['#222222'],
-        content_font: ['Amarante, serif']
+        banner: this.fb.group({
+          bg: ['#2e332d'],
+          text_color: ['#ffffff']
+        }),
+        navbar: this.fb.group({
+          bg: ['#3f493d'],
+          text_color: ['#ffffff']
+        }),
+        content: this.fb.group({
+          bg: ['#ffffff'],
+          text_color: ['#222222']
+        }),
+        footer: this.fb.group({
+          bg: ['#ffffff'],
+          text_color: ['#000000']
+        }),
+        site_font: ['Amarante, serif'],
+        logo_club_path: [''],
+        image_club_path: ['']
       }),
       card_thumbnails: this.fb.array([]),
       album_thumbnail: this.fb.group({
@@ -269,9 +272,17 @@ export class UiConfComponent implements OnInit {
       next: (ui) => {
         this.loadDataInForm(ui || {});
         this.export_file_url = this.fileService.json_to_blob(ui || {});
-        const logoPath = ui?.template?.logo_path;
+        const logoPath = ui?.template?.logo_club_path ?? (ui as any)?.template?.logo_path;
         if (logoPath) {
           this.fileService.getPresignedUrl$(logoPath).subscribe({ next: (url) => this.logoPreviewUrl = url, error: () => this.logoPreviewUrl = null });
+        } else {
+          this.logoPreviewUrl = null;
+        }
+        const imagePath = ui?.template?.image_club_path ?? '';
+        if (imagePath) {
+          this.fileService.getPresignedUrl$(imagePath).subscribe({ next: (url) => this.imageClubPreviewUrl = url, error: () => this.imageClubPreviewUrl = null });
+        } else {
+          this.imageClubPreviewUrl = null;
         }
         this.loaded = true;
         // Appliquer le thème seulement après chargement effectif
@@ -315,16 +326,25 @@ export class UiConfComponent implements OnInit {
 
     this.uiForm.patchValue({
       template: {
-        logo_path: template.logo_path ?? '',
-        banner_bg: template.banner_bg ?? ui?.banner_bg ?? ui?.header_bg ?? '#2e332d',
-        banner_text_color: template.banner_text_color ?? ui?.banner_text_color ?? ui?.header_text_color ?? '#ffffff',
-        banner_font: template.banner_font ?? ui?.banner_font ?? ui?.title_font ?? 'Emblema One, cursive',
-        navbar_bg: template.navbar_bg ?? ui?.navbar_bg ?? '#3f493d',
-        navbar_text_color: template.navbar_text_color ?? ui?.navbar_text_color ?? '#ffffff',
-        navbar_font: template.navbar_font ?? ui?.navbar_font ?? ui?.main_font ?? 'Amarante, serif',
-        content_bg: template.content_bg ?? ui?.content_bg ?? '#ffffff',
-        content_text_color: template.content_text_color ?? ui?.content_text_color ?? '#222222',
-        content_font: template.content_font ?? ui?.content_font ?? 'Amarante, serif'
+        banner: {
+          bg: template?.banner?.bg ?? template?.banner_bg ?? ui?.banner_bg ?? ui?.header_bg ?? '#2e332d',
+          text_color: template?.banner?.text_color ?? template?.banner_text_color ?? ui?.banner_text_color ?? ui?.header_text_color ?? '#ffffff'
+        },
+        navbar: {
+          bg: template?.navbar?.bg ?? template?.navbar_bg ?? ui?.navbar_bg ?? '#3f493d',
+          text_color: template?.navbar?.text_color ?? template?.navbar_text_color ?? ui?.navbar_text_color ?? '#ffffff'
+        },
+        content: {
+          bg: template?.content?.bg ?? template?.content_bg ?? ui?.content_bg ?? '#ffffff',
+          text_color: template?.content?.text_color ?? template?.content_text_color ?? ui?.content_text_color ?? '#222222'
+        },
+        footer: {
+          bg: template.footer?.bg ?? '#ffffff',
+          text_color: template.footer?.text_color ?? '#000000'
+        },
+        site_font: template.site_font ?? template.navbar_font ?? template.content_font ?? template.banner_font ?? ui?.main_font ?? 'Amarante, serif',
+        logo_club_path: template.logo_club_path ?? template.logo_path ?? '' ,
+        image_club_path: template.image_club_path ?? ''
       },
       tournaments_row_cols: {
         SM: tournaments.SM ?? 1,
@@ -421,17 +441,35 @@ export class UiConfComponent implements OnInit {
   async onLogoFileSelected(event: any) {
     const file: File = event.target.files?.[0];
     if (!file) return;
-    const filename = `ui/logo_${Date.now()}_${file.name}`;
+    // Use a stable filename so uploads replace the existing S3 object (no timestamp)
+    const filenameOnly = `logo.jpg`;
+    const path = `${S3_ROOT_FOLDERS.SYSTEM}/${filenameOnly}`;
     try {
-      await this.fileService.upload_file(file, 'ui/');
-      // store path relative to bucket
-      const path = filename; // consistent with upload_file usage
-      this.uiForm.get('template.logo_path')?.setValue(path);
-      // fetch presigned url
+      // Create a new File instance with the chosen stable name so upload_file uses it
+      const fileToUpload = new File([file], filenameOnly, { type: 'image/jpeg' });
+      await this.fileService.upload_file(fileToUpload, S3_ROOT_FOLDERS.SYSTEM + '/');
+      this.uiForm.get('template.logo_club_path')?.setValue(path);
       this.fileService.getPresignedUrl$(path).subscribe({ next: (url) => this.logoPreviewUrl = url, error: () => this.logoPreviewUrl = null });
       this.toastService.showSuccess('UI settings', 'Logo uploaded');
     } catch (e: any) {
       this.toastService.showErrorToast('UI settings', 'Erreur upload du logo');
+    }
+  }
+
+  async onImageFileSelected(event: any) {
+    const file: File = event.target.files?.[0];
+    if (!file) return;
+    // Use a stable filename so uploads replace the existing S3 object (no timestamp)
+    const filenameOnly = `image_club.jpg`;
+    const path = `${S3_ROOT_FOLDERS.SYSTEM}/${filenameOnly}`;
+    try {
+      const fileToUpload = new File([file], filenameOnly, { type: 'image/jpeg' });
+      await this.fileService.upload_file(fileToUpload, S3_ROOT_FOLDERS.SYSTEM + '/');
+      this.uiForm.get('template.image_club_path')?.setValue(path);
+      this.fileService.getPresignedUrl$(path).subscribe({ next: (url) => this.imageClubPreviewUrl = url, error: () => this.imageClubPreviewUrl = null });
+      this.toastService.showSuccess('UI settings', 'Image club uploaded');
+    } catch (e: any) {
+      this.toastService.showErrorToast('UI settings', 'Erreur upload de l\'image club');
     }
   }
 
@@ -468,16 +506,25 @@ export class UiConfComponent implements OnInit {
       // Build payload with ONLY fields from UIConfiguration interface
       const payload: any = {
         template: {
-          logo_path: formVal.template?.logo_path || '',
-          banner_bg: formVal.template?.banner_bg || '#2e332d',
-          banner_text_color: formVal.template?.banner_text_color || '#ffffff',
-          banner_font: formVal.template?.banner_font || 'Emblema One, cursive',
-          navbar_bg: formVal.template?.navbar_bg || '#3f493d',
-          navbar_text_color: formVal.template?.navbar_text_color || '#ffffff',
-          navbar_font: formVal.template?.navbar_font || 'Amarante, serif',
-          content_bg: formVal.template?.content_bg || '#ffffff',
-          content_text_color: formVal.template?.content_text_color || '#222222',
-          content_font: formVal.template?.content_font || 'Amarante, serif'
+          banner: {
+            bg: formVal.template?.banner?.bg || '#2e332d',
+            text_color: formVal.template?.banner?.text_color || '#ffffff'
+          },
+          navbar: {
+            bg: formVal.template?.navbar?.bg || '#3f493d',
+            text_color: formVal.template?.navbar?.text_color || '#ffffff'
+          },
+          content: {
+            bg: formVal.template?.content?.bg || '#ffffff',
+            text_color: formVal.template?.content?.text_color || '#222222'
+          },
+          footer: {
+            bg: formVal.template?.footer?.bg || '#ffffff',
+            text_color: formVal.template?.footer?.text_color || '#000000'
+          },
+          site_font: formVal.template?.site_font || 'Amarante, serif',
+          logo_club_path: formVal.template?.logo_club_path || '',
+          image_club_path: formVal.template?.image_club_path || ''
         },
         homepage: {
           tournaments_row_cols: formVal.tournaments_row_cols || { SM: 1, MD: 2, LG: 4, XL: 6 },
@@ -546,16 +593,25 @@ export class UiConfComponent implements OnInit {
 
       const preview: any = {
         template: {
-          logo_path: formVal.template?.logo_path || '',
-          banner_bg: formVal.template?.banner_bg || '#2e332d',
-          banner_text_color: formVal.template?.banner_text_color || '#ffffff',
-          banner_font: formVal.template?.banner_font || 'Emblema One, cursive',
-          navbar_bg: formVal.template?.navbar_bg || '#3f493d',
-          navbar_text_color: formVal.template?.navbar_text_color || '#ffffff',
-          navbar_font: formVal.template?.navbar_font || 'Amarante, serif',
-          content_bg: formVal.template?.content_bg || '#ffffff',
-          content_text_color: formVal.template?.content_text_color || '#222222',
-          content_font: formVal.template?.content_font || 'Amarante, serif'
+          banner: {
+            bg: formVal.template?.banner?.bg || '#2e332d',
+            text_color: formVal.template?.banner?.text_color || '#ffffff'
+          },
+          navbar: {
+            bg: formVal.template?.navbar?.bg || '#3f493d',
+            text_color: formVal.template?.navbar?.text_color || '#ffffff'
+          },
+          content: {
+            bg: formVal.template?.content?.bg || '#ffffff',
+            text_color: formVal.template?.content?.text_color || '#222222'
+          },
+          footer: {
+            bg: formVal.template?.footer?.bg || '#ffffff',
+            text_color: formVal.template?.footer?.text_color || '#000000'
+          },
+          site_font: formVal.template?.site_font || 'Amarante, serif',
+          logo_club_path: formVal.template?.logo_club_path || '',
+          image_club_path: formVal.template?.image_club_path || ''
         },
         homepage: {
           tournaments_row_cols: formVal.tournaments_row_cols || { SM: 1, MD: 2, LG: 4, XL: 6 },
@@ -610,20 +666,18 @@ export class UiConfComponent implements OnInit {
 
 
   applyTheme() {
-    const bannerFont = this.uiForm.get('template.banner_font')?.value || 'Emblema One, cursive';
-    const navbarFont = this.uiForm.get('template.navbar_font')?.value || 'Amarante, serif';
-    const contentFont = this.uiForm.get('template.content_font')?.value || 'Amarante, serif';
-    const contentBg = this.uiForm.get('template.content_bg')?.value || '#ffffff';
-    const contentText = this.uiForm.get('template.content_text_color')?.value || '#222222';
-    
-    // Load Google Fonts dynamically for active fonts
-    this.loadGoogleFont(bannerFont);
-    this.loadGoogleFont(navbarFont);
-    this.loadGoogleFont(contentFont);
-    
-    document.documentElement.style.setProperty('--banner-font', bannerFont);
-    document.documentElement.style.setProperty('--navbar-font', navbarFont);
-    document.documentElement.style.setProperty('--content-font', contentFont);
+    const siteFont = this.uiForm.get('template.site_font')?.value || this.uiForm.get('template')?.get('site_font')?.value || 'Amarante, serif';
+    const contentBg = this.uiForm.get('template.content')?.get('bg')?.value || this.uiForm.get('template')?.get(['content','bg'])?.value || '#ffffff';
+    const contentText = this.uiForm.get('template.content')?.get('text_color')?.value || this.uiForm.get('template')?.get(['content','text_color'])?.value || '#222222';
+
+    // Load single site Google Font dynamically
+    if (siteFont) this.loadGoogleFont(siteFont);
+
+    // Set CSS variables: keep backward-compatible per-section vars mapped to site font
+    document.documentElement.style.setProperty('--site-font', siteFont);
+    document.documentElement.style.setProperty('--banner-font', siteFont);
+    document.documentElement.style.setProperty('--navbar-font', siteFont);
+    document.documentElement.style.setProperty('--content-font', siteFont);
     document.documentElement.style.setProperty('--content-bg', contentBg);
     document.documentElement.style.setProperty('--content-text', contentText);
   }
@@ -631,19 +685,26 @@ export class UiConfComponent implements OnInit {
   private loadGoogleFont(fontCss: string) {
     // Extract font family name from CSS string (e.g., "Quicksand, sans-serif" -> "Quicksand")
     const fontName = fontCss.split(',')[0].trim();
-    
-    // Check if font link already exists
-    const linkId = `google-font-${fontName.replace(/\s+/g, '-').toLowerCase()}`;
+    // Normalize key used in DOM and tracking
+    const normalized = fontName.replace(/\s+/g, '-').toLowerCase();
+
+    // If already injected, skip
+    if (this.injectedGoogleFonts.has(normalized)) return;
+
+    // Check if font link already exists in DOM (robustness)
+    const linkId = `google-font-${normalized}`;
     if (document.getElementById(linkId)) {
-      return; // Font already loaded
+      this.injectedGoogleFonts.add(normalized);
+      return; // Font already present in DOM
     }
-    
+
     // Create and inject Google Fonts link
     const link = document.createElement('link');
     link.id = linkId;
     link.rel = 'stylesheet';
     link.href = `https://fonts.googleapis.com/css2?family=${fontName.replace(/\s+/g, '+')}&display=swap`;
     document.head.appendChild(link);
+    this.injectedGoogleFonts.add(normalized);
   }
 
   private fixBrokenAccents(str: string): string {

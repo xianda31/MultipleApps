@@ -158,7 +158,7 @@ export class FrontComponent implements AfterViewInit {
     this.systemDataService.get_ui_settings().subscribe((ui: UIConfiguration) => {
       const u: UIConfiguration = ui || {};
       this.uiSettings = u;
-      const logoPath = u?.template?.logo_path;
+      const logoPath = u?.template?.logo_club_path ?? (u as any)?.template?.logo_path;
       if (logoPath) this.fileService.getPresignedUrl$(logoPath).subscribe({ next: (u2) => this.logoUrl = u2, error: () => this.logoUrl = null });
       // Appliquer les couleurs du front via CSS variables
       applyUiThemeFromConfig(u);

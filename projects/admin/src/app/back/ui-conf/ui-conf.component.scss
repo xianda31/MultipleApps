@@ -1,3 +1,29 @@
 .ui-conf-root { padding: 1rem; }
 .ui-conf-root h5 { margin-bottom: 1rem; }
 .ui-conf-root .form-label { font-size: .85rem; }
+
+/* Reduce table row padding to make rows as short as possible */
+.ui-conf-root table.table-sm th,
+.ui-conf-root table.table-sm td {
+	padding: .25rem .5rem;
+	line-height: 1;
+	vertical-align: middle;
+}
+
+/* Slightly smaller color inputs and previews to avoid forcing tall rows */
+.ui-conf-root input[type="color"] {
+	width: 1.4rem !important;
+	height: 1.4rem !important;
+	padding: 0 !important;
+	border: none !important;
+}
+
+.ui-conf-root .preview img {
+	height: 24px !important;
+	object-fit: contain;
+}
+
+/* Make template table headers normal weight (remove bold only for this table) */
+.ui-conf-root [formGroupName="template"] table.table-sm th {
+	font-weight: 400 !important;
+}

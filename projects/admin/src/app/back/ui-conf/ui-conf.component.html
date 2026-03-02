@@ -6,74 +6,118 @@
         <div class="card h-100">
           <div class="card-title fw-bold fs-5 ms-2">Paramétrage template</div>
           <div class="card-body" formGroupName="template">
-            <div class="table-responsive">
-              <table class="table align-middle mb-0">
+
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <label class="fs-6 mb-1 text-nowrap">Police du site</label>
+              <select class="form-select form-select-sm flex-shrink-0 ms-auto" style="max-width:15rem;" formControlName="site_font" (change)="applyTheme()">
+                <option *ngFor="let font of googleFontsSubset" [value]="font.css">{{ font.label }}</option>
+              </select>
+            </div>
+
+            <div class="fw-bold fs-6">Couleurs des fond et police par zone</div>
+            <div class="table-sm table-responsive">
+              <table class="table table-sm align-middle mb-0">
                 <thead>
                   <tr>
-                    <th class="col-4 col-md-3">Zone</th>
-                    <th class="col-2 col-md-2">Fond</th>
-                    <th class="col-2 col-md-2">Texte</th>
-                    <th class="col-4 col-md-3">Police</th>
+                    <th class="col-6 col-md-6">Zone</th>
+                    <th class="col-3 col-md-3">Fond</th>
+                    <th class="col-3 col-md-3">Texte</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
+                  <tr [formGroupName]="'banner'">
                     <td [ngStyle]="{
-                          'background': uiForm.get('template.banner_bg')?.value,
-                          'color': uiForm.get('template.banner_text_color')?.value,
-                          'font-family': uiForm.get('template.banner_font')?.value
-                        }">Bandeaux</td>
+                          'background': uiForm.get('template.banner.bg')?.value,
+                          'color': uiForm.get('template.banner.text_color')?.value
+                        }">Bandeau haut</td>
                     <td>
-                      <input type="color" style="width:1.6rem;height:1.6rem;padding:0;border:none;" formControlName="banner_bg" (change)="applyTheme()">
+                      <input type="color" style="width:1.6rem;height:1.6rem;padding:0;border:none;" formControlName="bg"
+                        (change)="applyTheme()">
                     </td>
                     <td>
-                      <input type="color" style="width:1.6rem;height:1.6rem;padding:0;border:none;" formControlName="banner_text_color" (change)="applyTheme()">
-                    </td>
-                    <td>
-                      <select class="form-select form-select-sm" formControlName="banner_font" (change)="applyTheme()">
-                        <option *ngFor="let font of googleFontsSubset" [value]="font.css">{{ font.label }}</option>
-                      </select>
+                      <input type="color" style="width:1.6rem;height:1.6rem;padding:0;border:none;"
+                        formControlName="text_color" (change)="applyTheme()">
                     </td>
                   </tr>
-                  <tr>
+                  <tr [formGroupName]="'navbar'">
                     <td [ngStyle]="{
-                          'background': uiForm.get('template.navbar_bg')?.value,
-                          'color': uiForm.get('template.navbar_text_color')?.value,
-                          'font-family': uiForm.get('template.navbar_font')?.value
-                        }">Menus</td>
+                          'background': uiForm.get('template.navbar.bg')?.value,
+                          'color': uiForm.get('template.navbar.text_color')?.value
+                        }">Barre de menus</td>
                     <td>
-                      <input type="color" style="width:1.6rem;height:1.6rem;padding:0;border:none;" formControlName="navbar_bg" (change)="applyTheme()">
+                      <input type="color" style="width:1.6rem;height:1.6rem;padding:0;border:none;" formControlName="bg"
+                        (change)="applyTheme()">
                     </td>
                     <td>
-                      <input type="color" style="width:1.6rem;height:1.6rem;padding:0;border:none;" formControlName="navbar_text_color" (change)="applyTheme()">
-                    </td>
-                    <td>
-                      <select class="form-select form-select-sm" formControlName="navbar_font" (change)="applyTheme()">
-                        <option *ngFor="let font of googleFontsSubset" [value]="font.css">{{ font.label }}</option>
-                      </select>
+                      <input type="color" style="width:1.6rem;height:1.6rem;padding:0;border:none;"
+                        formControlName="text_color" (change)="applyTheme()">
                     </td>
                   </tr>
-                  <tr>
+                  <tr [formGroupName]="'content'">
                     <td [ngStyle]="{
-                          'background': uiForm.get('template.content_bg')?.value,
-                          'color': uiForm.get('template.content_text_color')?.value,
-                          'font-family': uiForm.get('template.content_font')?.value
+                          'background': uiForm.get('template.content.bg')?.value,
+                          'color': uiForm.get('template.content.text_color')?.value
                         }">Contenu page</td>
                     <td>
-                      <input type="color" style="width:1.6rem;height:1.6rem;padding:0;border:none;" formControlName="content_bg" (change)="applyTheme()">
+                      <input type="color" style="width:1.6rem;height:1.6rem;padding:0;border:none;" formControlName="bg"
+                        (change)="applyTheme()">
                     </td>
                     <td>
-                      <input type="color" style="width:1.6rem;height:1.6rem;padding:0;border:none;" formControlName="content_text_color" (change)="applyTheme()">
+                      <input type="color" style="width:1.6rem;height:1.6rem;padding:0;border:none;"
+                        formControlName="text_color" (change)="applyTheme()">
+                    </td>
+                  </tr>
+                  <tr [formGroupName]="'footer'">
+                    <td [ngStyle]="{
+                          'background': uiForm.get('template.footer.bg')?.value,
+                          'color': uiForm.get('template.footer.text_color')?.value
+                        }">Pied de page</td>
+                    <td>
+                      <input type="color" style="width:1.6rem;height:1.6rem;padding:0;border:none;" formControlName="bg"
+                        (change)="applyTheme()">
                     </td>
                     <td>
-                      <select class="form-select form-select-sm" formControlName="content_font" (change)="applyTheme()">
-                        <option *ngFor="let font of googleFontsSubset" [value]="font.css">{{ font.label }}</option>
-                      </select>
+                      <input type="color" style="width:1.6rem;height:1.6rem;padding:0;border:none;"
+                        formControlName="text_color" (change)="applyTheme()">
                     </td>
                   </tr>
                 </tbody>
               </table>
             </div>
+
+            <div class="fw-bold fs-6 mt-2">Images du club (logo et banière)</div>
+
+            <div class="d-flex align-items-center gap-2 mt-2">
+              <label class="form-label small mb-1">Logo club</label>
+              <div class="d-flex gap-2 align-items-center">
+                <input type="file" accept="image/*" #logoFileInput style="display:none"
+                  (change)="onLogoFileSelected($event)" />
+                <button type="button" class="btn btn-outline-secondary btn-sm"
+                  (click)="logoFileInput.click()">Modifier</button>
+                <!-- <input type="text" class="form-control form-control-sm" formControlName="logo_club_path"
+                  placeholder="Chemin S3 (logo)" /> -->
+                <div class="preview ms-2">
+                  <img [src]="logoPreviewUrl || placeholderImageUrl" alt="logo"
+                    style="height:32px;object-fit:contain;" />
+                </div>
+              </div>
+            </div>
+            <div class="d-flex align-items-center gap-2 mt-2">
+              <label class="form-label small mb-1">Image club</label>
+              <div class="d-flex gap-2 align-items-center">
+                <input type="file" accept="image/*" #imageFileInput style="display:none"
+                  (change)="onImageFileSelected($event)" />
+                <button type="button" class="btn btn-outline-secondary btn-sm"
+                  (click)="imageFileInput.click()">Modifier</button>
+                <!-- <input type="text" class="form-control form-control-sm" formControlName="image_club_path"
+                  placeholder="Chemin S3 (image club)" /> -->
+                <div class="preview ms-2">
+                  <img [src]="imageClubPreviewUrl || placeholderImageUrl" alt="club"
+                    style="height:32px;object-fit:contain;" />
+                </div>
+              </div>
+            </div>
+
             <!-- Bouton Enregistrer accessible en bas de la section -->
             <div class="d-flex justify-content-end mt-2">
               <button type="submit" class="btn btn-success btn-sm"
@@ -326,20 +370,24 @@
               <div formGroupName="preferred_organizations">
                 <div class="mb-1 d-flex align-items-center gap-2">
                   <label class="form-label small mb-0" style="min-width:70px;">Comité</label>
-                  <input type="text" class="form-control form-control-sm" formControlName="comite" placeholder="Comité des Pyrenees" />
+                  <input type="text" class="form-control form-control-sm" formControlName="comite"
+                    placeholder="Comité des Pyrenees" />
                 </div>
                 <div class="mb-1 d-flex align-items-center gap-2">
                   <label class="form-label small mb-0" style="min-width:70px;">Ligue</label>
-                  <input type="text" class="form-control form-control-sm" formControlName="ligue" placeholder="Ligue 06 LR-PY" />
+                  <input type="text" class="form-control form-control-sm" formControlName="ligue"
+                    placeholder="Ligue 06 LR-PY" />
                 </div>
                 <div class="mb-1 d-flex align-items-center gap-2">
                   <label class="form-label small mb-0" style="min-width:70px;">National</label>
-                  <input type="text" class="form-control form-control-sm" formControlName="national" placeholder="FFB" />
+                  <input type="text" class="form-control form-control-sm" formControlName="national"
+                    placeholder="FFB" />
                 </div>
               </div>
             </div>
             <div class="mb-2">
-               <label class="form-label fw-bolder">Autres paramètres d'affichage : voir directement dans la page admin compétitions</label>
+              <label class="form-label fw-bolder">Autres paramètres d'affichage : voir directement dans la page admin
+                compétitions</label>
             </div>
             <!-- <div class="mb-2">
               <label class="form-label fw-bolder">Seuils de filtrage des résultats par division</label>

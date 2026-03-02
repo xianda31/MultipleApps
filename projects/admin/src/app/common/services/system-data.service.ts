@@ -159,16 +159,13 @@ export class SystemDataService {
       catchError((err) => {
         const defaults: UIConfiguration = {
           template: {
-            logo_path: '',
-            banner_bg: '#2e332d',
-            banner_text_color: '#ffffff',
-            banner_font: 'Emblema One, cursive',
-            navbar_bg: '#3f493d',
-            navbar_text_color: '#ffffff',
-            navbar_font: 'Amarante, serif',
-            content_bg: '#ffffff',
-            content_text_color: '#222222',
-            content_font: 'Amarante, serif'
+            banner: { bg: '#2e332d', text_color: '#ffffff' },
+            navbar: { bg: '#3f493d', text_color: '#ffffff' },
+            content: { bg: '#ffffff', text_color: '#222222' },
+            footer: { bg: '#ffffff', text_color: '#222222' },
+            site_font: 'Amarante, serif',
+            logo_club_path: '',
+            image_club_path: ''
           },
           homepage: { tournaments_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 }, news_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 } },
           frontBannerEnabled: false,
@@ -217,16 +214,13 @@ export class SystemDataService {
   private getDefaultUi(): UIConfiguration {
     return {
       template: {
-        logo_path: '',
-        banner_bg: '#2e332d',
-        banner_text_color: '#ffffff',
-        banner_font: 'Emblema One, cursive',
-        navbar_bg: '#3f493d',
-        navbar_text_color: '#ffffff',
-        navbar_font: 'Amarante, serif',
-        content_bg: '#ffffff',
-        content_text_color: '#222222',
-        content_font: 'Amarante, serif'
+        banner: { bg: '#2e332d', text_color: '#ffffff' },
+        navbar: { bg: '#3f493d', text_color: '#ffffff' },
+        content: { bg: '#ffffff', text_color: '#222222' },
+        footer: { bg: '#ffffff', text_color: '#222222' },
+        site_font: 'Amarante, serif',
+        logo_club_path: '',
+        image_club_path: ''
       },
       homepage: { tournaments_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 }, news_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 } },
       frontBannerEnabled: false,

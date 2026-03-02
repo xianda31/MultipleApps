@@ -26,22 +26,20 @@ export interface CompetitionsUIConfig {
   // show_members_only: boolean;
 }
 
+export interface tplDef {
+  bg:string;
+  text_color: string;
+}
 
 export interface UIConfiguration {
   template: {
-    logo_path?: string; // S3 path
-
-    banner_bg: string; // Couleur bandeau supérieur
-    banner_text_color: string; // Couleur du texte du bandeau
-    banner_font: string; // Police du bandeau Google Fonts
-
-    navbar_bg: string; // Couleur navbar
-    navbar_text_color: string; // Couleur du texte de la navbar
-    navbar_font: string; // Police de la navbar Google Fonts
-
-    content_bg: string; // Fond du contenu page
-    content_text_color: string; // Couleur texte du contenu page
-    content_font: string; // Police du contenu page Google Fonts
+    banner: tplDef;
+    navbar: tplDef;
+    content: tplDef;
+    footer: tplDef;
+    site_font: string; // police globale du front
+    logo_club_path?: string; // S3 path
+    image_club_path?: string; // S3 path
   };
 
   homepage: {
