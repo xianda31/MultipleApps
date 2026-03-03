@@ -163,9 +163,7 @@ export class SystemDataService {
             navbar: { bg: '#3f493d', text_color: '#ffffff' },
             content: { bg: '#ffffff', text_color: '#222222' },
             footer: { bg: '#ffffff', text_color: '#222222' },
-            site_font: 'Amarante, serif',
-            logo_club_path: '',
-            image_club_path: ''
+            club: { name: '', logo: '', image: '', font: 'Roboto, serif' }
           },
           homepage: { tournaments_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 }, news_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 } },
           frontBannerEnabled: false,
@@ -218,9 +216,7 @@ export class SystemDataService {
         navbar: { bg: '#3f493d', text_color: '#ffffff' },
         content: { bg: '#ffffff', text_color: '#222222' },
         footer: { bg: '#ffffff', text_color: '#222222' },
-        site_font: 'Amarante, serif',
-        logo_club_path: '',
-        image_club_path: ''
+        club: { name: '', logo: '', image: '', font: 'Roboto, serif' }
       },
       homepage: { tournaments_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 }, news_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 } },
       frontBannerEnabled: false,

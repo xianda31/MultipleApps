@@ -1,14 +1,11 @@
+  /* Banner complètement masqué en mode sticky */
+  .laptop-banner-row.scrolled-sticky {
+    height: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    z-index: 0 !important;
+  }
 // Aligner verticalement le label de la marque et les menus
-.navbar-brand-menu-row {
-  min-height: 48px;
-}
-.navbar-brand-align {
-  height: 48px;
-  display: flex;
-  align-items: center;
-  padding-top: 0;
-  padding-bottom: 0;
-}
 .navbar-menu-align {
   height: 48px;
   display: flex;
@@ -55,7 +52,7 @@
 /* Mode laptop: scroll behavior - both rows sticky, banner visibility controlled by height */
 @media (min-width: 768px) {
   .laptop-banner-row {
-    transition: height 0.1s ease-out; /* Transition plus rapide pour éviter les flashs */
+    transition: height 0.3s ease-out;
     background: var(--banner-bg, #2e332d) !important;
     
     &.scrolled-sticky {
@@ -65,25 +62,22 @@
       right: 0 !important;
       width: 100vw !important;
       margin: 0 !important;
-      z-index: 1051 !important; /* Au-dessus de navbar */
-    }
-    
-    /* Logo plus gros qui empiète sur la navbar quand banner n'est pas sticky */
-    &:not(.scrolled-sticky) {
-      img {
-        max-height: 80px !important; /* Plus gros que les 60px par défaut */
-        position: relative;
-        z-index: 1052 !important; /* Au-dessus de tout pour empiéter */
-        top: 10px !important; /* Décalage vers le bas */
-        margin-left: 25px !important; /* Décalage vers la droite */
-      }
+      z-index: 1051 !important;
+      /* Banner caché en sticky - géré par TypeScript avec height: 0 */
     }
   }
   
+  /* Image club avec transition fluide */
+  .laptop-image-club {
+    transition: transform 0.4s ease-out, opacity 0.3s ease-out;
+    transform: translateY(0);
+    opacity: 1;
+  }
+  
   .laptop-navbar-row {
-    transition: top 0.1s ease-out; /* Transition rapide pour remontée immédiate */
+    transition: top 0.2s ease-out;
     z-index: 1050;
-    background: var(--banner-bg, #2e332d) !important;
+    background: var(--navbar-bg, var(--banner-bg, #2e332d)) !important;
     
     &.scrolled-sticky {
       position: fixed !important;
@@ -110,19 +104,30 @@
       z-index: 10;
     }
   }
+  
+  /* Conteneur laptop - pas de transformation particulière */
+  .laptop-content-container {
+    position: relative;
+  }
+  
+  /* Image club scroll naturellement */
+  .laptop-image-club {
+    position: relative;
+    z-index: 1;
+    /* Enhanced banner shadow for stronger depth */
+    box-shadow: 0 8px 24px rgba(0,0,0,0.22),
+                0 4px 12px rgba(0,0,0,0.12) !important;
+  }
+  
+  /* Banner complètement masqué en mode sticky */
+  .laptop-banner-row.scrolled-sticky {
+    height: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    z-index: 0 !important;
+  }
 }
-/* Badge sandbox sur le logo, toujours visible */
-.sandbox-badge.over-logo {
-  position: absolute !important;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) rotate(-30deg);
-  z-index: 99999 !important;
-  pointer-events: auto;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-  font-size: 1rem !important;
-  padding: 0.25em 0.7em;
-}
+
 
 
 @media (max-width: 767.98px) {
@@ -265,7 +270,7 @@ body::-webkit-scrollbar {
 
 
 .sandbox-badge {
-  font-size: 1.5rem;
+  font-size: 0.7rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -342,12 +347,67 @@ body::-webkit-scrollbar {
   }
 }
 
+/* Ensure the centered club name in the banner uses the site font, not the banner font */
+.site-banner .flex-grow-1,
+.site-banner .flex-grow-1 span {
+  font-family: var(--site-font, inherit) !important;
+}
+
+/* Fix banner height in laptop mode independent of logo image size */
+@media (min-width: 768px) {
+  .laptop-banner-row .site-banner span.d-flex.align-items-center.w-100 {
+    height: 44px !important;
+    position: relative;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* Logo position absolute, cropped if too large */
+  .laptop-banner-row .site-banner span.d-flex.align-items-center.w-100 > a[routerLink="contacts"] {
+    position: absolute !important;
+    left: 1rem !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    z-index: 10 !important;
+    display: flex !important;
+    align-items: center !important;
+    height: auto !important;
+    pointer-events: auto;
+  }
+
+  .laptop-banner-row .site-banner span.d-flex.align-items-center.w-100 > a[routerLink="contacts"] img {
+    width: auto !important;
+    display: block !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  /* Center club name and date in flex row */
+  .laptop-banner-row .site-banner span.d-flex.align-items-center.w-100 > .flex-grow-1 {
+    flex: 1 1 auto !important;
+    height: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: static !important;
+  }
+
+  .laptop-banner-row .site-banner span.d-flex.align-items-center.w-100 > .small.text-nowrap {
+    position: absolute !important;
+    right: 1rem !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    white-space: nowrap !important;
+  }
+}
 
 
-.footer-banner {
-  font-family: var(--banner-font, Caveat, cursive) !important;
-  color: var(--banner-text-color, #fff) !important;
-  background: var(--banner-bg, #2e332d) !important;
+
+  .footer-banner {
+  font-family: var(--footer-font, Caveat, cursive) !important;
+  color: var(--footer-text, #fff) !important;
+  background: var(--footer-bg, var(--banner-bg, #2e332d)) !important;
   font-size: 1rem !important;
   display: flex;
   align-items: center;
@@ -367,6 +427,11 @@ body::-webkit-scrollbar {
   (max-height: 500px) {
     font-size: 0.75rem !important;
   }
+}
+
+/* Ensure the content-row spans full width with content background so the offset gutters match */
+.content-row {
+  background: var(--content-bg, #ffffff) !important;
 }
 
 .footer-banner-content {
@@ -398,4 +463,3 @@ body::-webkit-scrollbar {
     padding-right: 0 !important;
   }
 }
-

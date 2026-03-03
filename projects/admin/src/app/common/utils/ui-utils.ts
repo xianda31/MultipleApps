@@ -85,6 +85,8 @@ export function applyUiThemeFromConfig(ui: UIConfiguration | null | undefined) {
   const bannerTextColor = t?.banner?.text_color ?? t?.banner_text_color;
   const navbarBg = t?.navbar?.bg ?? t?.navbar_bg;
   const navbarTextColor = t?.navbar?.text_color ?? t?.navbar_text_color;
+  const footerBg = t?.footer?.bg ?? t?.footer_bg;
+  const footerTextColor = t?.footer?.text_color ?? t?.footer_text_color;
   if (bannerBg) {
     root.style.setProperty('--banner-bg', bannerBg);
     root.style.setProperty('--brand-bg', bannerBg);
@@ -102,6 +104,12 @@ export function applyUiThemeFromConfig(ui: UIConfiguration | null | undefined) {
     root.style.setProperty('--navbar-text', navbarTextColor);
     root.style.setProperty('--navbar-text-color', navbarTextColor);
   }
+
+  // Footer specific variables: prefer footer settings, fall back to banner
+  if (footerBg) root.style.setProperty('--footer-bg', footerBg);
+  else if (bannerBg) root.style.setProperty('--footer-bg', bannerBg);
+  if (footerTextColor) root.style.setProperty('--footer-text', footerTextColor);
+  else if (bannerTextColor) root.style.setProperty('--footer-text', bannerTextColor);
 
   // --- Google Fonts dynamic injection ---
   // Remove previous dynamic font links

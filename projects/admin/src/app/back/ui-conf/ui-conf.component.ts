@@ -5,7 +5,7 @@ import { SystemDataService } from '../../common/services/system-data.service';
 import { ToastService } from '../../common/services/toast.service';
 import { FileService, S3_ROOT_FOLDERS } from '../../common/services/files.service';
 import { map, Observable, first, catchError, of, Subscription } from 'rxjs';
-import { CompetitionsUIConfig} from '../../common/interfaces/ui-conf.interface';
+import { CompetitionsUIConfig } from '../../common/interfaces/ui-conf.interface';
 import { COMPETITION_DIVISION_LABELS, COMPETITION_DIVISIONS } from '../competitions/competitions.interface';
 
 @Component({
@@ -37,7 +37,8 @@ export class UiConfComponent implements OnInit {
   export_file_url: any;
   logoPreviewUrl: string | null = null;
   imageClubPreviewUrl: string | null = null;
-  placeholderImageUrl = 'https://via.placeholder.com/64?text=No+image';
+  // inline SVG data URI used as a local placeholder to avoid external network requests
+  placeholderImageUrl = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'><rect fill='%23e0e0e0' width='100%25' height='100%25'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='10' fill='%23666'>No%20image</text></svg>";
   thumbnails$ !: Observable<string[]>;
   // cache of presigned preview URLs for tournaments_type entries keyed by the mapping key 
   previewMap: { [key: string]: string | null } = {};
@@ -71,15 +72,18 @@ export class UiConfComponent implements OnInit {
           bg: ['#ffffff'],
           text_color: ['#000000']
         }),
-        site_font: ['Amarante, serif'],
-        logo_club_path: [''],
-        image_club_path: ['']
-      }),
-      card_thumbnails: this.fb.array([]),
-      album_thumbnail: this.fb.group({
-        width: [600],
-        height: [400],
-        ratio: [1.5]
+        club: this.fb.group({
+          font: ['Roboto, serif'],
+          name: [''],
+          logo: [''],
+          image: ['']
+        }),
+        card_thumbnails: this.fb.array([]),
+        album_thumbnail: this.fb.group({
+          width: [600],
+          height: [400],
+          ratio: [1.5]
+        }),
       }),
       tournaments_row_cols: this.fb.group({
         SM: [1, [Validators.min(1), Validators.max(6)]],
@@ -133,7 +137,7 @@ export class UiConfComponent implements OnInit {
     return this.uiForm.get('tournaments_type') as FormArray;
   }
   get card_thumbnails(): FormArray {
-    return this.uiForm.get('card_thumbnails') as FormArray;
+    return this.uiForm.get(['template', 'card_thumbnails']) as FormArray;
   }
 
   addCardThumbnail(width: number = 300, height: number = 200, ratio: number = 1.78) {
@@ -272,13 +276,13 @@ export class UiConfComponent implements OnInit {
       next: (ui) => {
         this.loadDataInForm(ui || {});
         this.export_file_url = this.fileService.json_to_blob(ui || {});
-        const logoPath = ui?.template?.logo_club_path ?? (ui as any)?.template?.logo_path;
+        const logoPath = ui?.template?.club?.logo ?? (ui as any)?.template?.logo ?? (ui as any)?.template?.logo_club_path ?? (ui as any)?.template?.logo_path;
         if (logoPath) {
           this.fileService.getPresignedUrl$(logoPath).subscribe({ next: (url) => this.logoPreviewUrl = url, error: () => this.logoPreviewUrl = null });
         } else {
           this.logoPreviewUrl = null;
         }
-        const imagePath = ui?.template?.image_club_path ?? '';
+        const imagePath = ui?.template?.club?.image ?? (ui as any)?.template?.image ?? (ui as any)?.template?.image_club_path ?? '';
         if (imagePath) {
           this.fileService.getPresignedUrl$(imagePath).subscribe({ next: (url) => this.imageClubPreviewUrl = url, error: () => this.imageClubPreviewUrl = null });
         } else {
@@ -293,7 +297,6 @@ export class UiConfComponent implements OnInit {
       }
     });
 
-    // No continuous form subscription — export/preview/save are manual actions.
   }
 
 
@@ -342,9 +345,12 @@ export class UiConfComponent implements OnInit {
           bg: template.footer?.bg ?? '#ffffff',
           text_color: template.footer?.text_color ?? '#000000'
         },
-        site_font: template.site_font ?? template.navbar_font ?? template.content_font ?? template.banner_font ?? ui?.main_font ?? 'Amarante, serif',
-        logo_club_path: template.logo_club_path ?? template.logo_path ?? '' ,
-        image_club_path: template.image_club_path ?? ''
+        club: {
+          font: template.club?.font ?? template.site_font ?? template.navbar_font ?? template.content_font ?? template.banner_font ?? ui?.main_font ?? 'Amarante, serif',
+          name: template.club?.name ?? template.site?.name ?? ui?.site_name ?? '',
+          logo: template.club?.logo ?? (template as any).logo_club_path ?? (template as any).logo_path ?? (template as any).logo ?? '',
+          image: template.club?.image ?? (template as any).image_club_path ?? (template as any).image ?? ''
+        }
       },
       tournaments_row_cols: {
         SM: tournaments.SM ?? 1,
@@ -392,6 +398,23 @@ export class UiConfComponent implements OnInit {
       });
     }
 
+    // Ensure `template.club` controls are explicitly set (robust against unexpected patchValue mismatches)
+    try {
+      const clubGroup = this.uiForm.get(['template', 'club']) as FormGroup | null;
+      if (clubGroup) {
+        const clubFont = template?.club?.font ?? template?.site_font ?? template?.navbar_font ?? ui?.main_font ?? 'Amarante, serif';
+        const clubName = template?.club?.name ?? template?.site?.name ?? ui?.site_name ?? '';
+        const clubLogo = template?.club?.logo ?? (template as any).logo_club_path ?? (template as any).logo_path ?? (template as any).logo ?? '';
+        const clubImage = template?.club?.image ?? (template as any).image_club_path ?? (template as any).image ?? '';
+        clubGroup.get('font')?.setValue(clubFont, { emitEvent: false });
+        clubGroup.get('name')?.setValue(clubName, { emitEvent: false });
+        clubGroup.get('logo')?.setValue(clubLogo, { emitEvent: false });
+        clubGroup.get('image')?.setValue(clubImage, { emitEvent: false });
+      }
+    } catch (e) {
+      // non-fatal — keep going
+    }
+
     // Patch result_filter_thresholds séparément pour garantir la synchro avec le FormGroup enfant
     const thresholds = (COMPETITION_DIVISIONS as string[]).reduce((acc: { [key: string]: number }, d: string) => {
       acc[d] = ui?.competitions?.result_filter_thresholds?.[d] ?? 0;
@@ -402,11 +425,11 @@ export class UiConfComponent implements OnInit {
       thresholdsGroup.patchValue(thresholds);
     }
 
-    // Patch card_thumbnails array
+    // Patch card_thumbnails array (stored under `template`)
     const cardThumbs = Array.isArray(ui?.card_thumbnails) && ui.card_thumbnails.length
       ? ui.card_thumbnails
       : [{ width: 300, height: 200, ratio: 1.78 }];
-    const cardThumbsArray = this.uiForm.get('card_thumbnails') as FormArray;
+    const cardThumbsArray = this.uiForm.get(['template', 'card_thumbnails']) as FormArray;
     cardThumbsArray.clear();
     cardThumbs.forEach((thumb: any) => {
       const width = Number(thumb.width) || 1;
@@ -448,7 +471,7 @@ export class UiConfComponent implements OnInit {
       // Create a new File instance with the chosen stable name so upload_file uses it
       const fileToUpload = new File([file], filenameOnly, { type: 'image/jpeg' });
       await this.fileService.upload_file(fileToUpload, S3_ROOT_FOLDERS.SYSTEM + '/');
-      this.uiForm.get('template.logo_club_path')?.setValue(path);
+      this.uiForm.get('template.club.logo')?.setValue(path);
       this.fileService.getPresignedUrl$(path).subscribe({ next: (url) => this.logoPreviewUrl = url, error: () => this.logoPreviewUrl = null });
       this.toastService.showSuccess('UI settings', 'Logo uploaded');
     } catch (e: any) {
@@ -465,7 +488,7 @@ export class UiConfComponent implements OnInit {
     try {
       const fileToUpload = new File([file], filenameOnly, { type: 'image/jpeg' });
       await this.fileService.upload_file(fileToUpload, S3_ROOT_FOLDERS.SYSTEM + '/');
-      this.uiForm.get('template.image_club_path')?.setValue(path);
+      this.uiForm.get('template.club.image')?.setValue(path);
       this.fileService.getPresignedUrl$(path).subscribe({ next: (url) => this.imageClubPreviewUrl = url, error: () => this.imageClubPreviewUrl = null });
       this.toastService.showSuccess('UI settings', 'Image club uploaded');
     } catch (e: any) {
@@ -489,7 +512,7 @@ export class UiConfComponent implements OnInit {
   async saveSettings() {
     try {
       const formVal: any = this.uiForm.value || {};
-      
+
       // Build clean payload conforming STRICTLY to UIConfiguration interface
       // Convert tournaments_type FormArray (array [{key,image},...]) into mapping { key: image }
       const tournamentsTypeMap: { [k: string]: string } = {};
@@ -522,9 +545,16 @@ export class UiConfComponent implements OnInit {
             bg: formVal.template?.footer?.bg || '#ffffff',
             text_color: formVal.template?.footer?.text_color || '#000000'
           },
-          site_font: formVal.template?.site_font || 'Amarante, serif',
-          logo_club_path: formVal.template?.logo_club_path || '',
-          image_club_path: formVal.template?.image_club_path || ''
+          club: {
+            font: formVal.template?.club?.font || formVal.template?.site_font || 'Amarante, serif',
+            name: formVal.template?.club?.name || '',
+            logo: formVal.template?.club?.logo || formVal.template?.logo_club_path || '',
+            image: formVal.template?.club?.image || formVal.template?.image_club_path || ''
+          },
+          // backward-compatible aliases used by other parts of the app
+          site_font: formVal.template?.club?.font || formVal.template?.site_font || 'Amarante, serif',
+          logo_club_path: formVal.template?.club?.logo || formVal.template?.logo_club_path || '',
+          image_club_path: formVal.template?.club?.image || formVal.template?.image_club_path || ''
         },
         homepage: {
           tournaments_row_cols: formVal.tournaments_row_cols || { SM: 1, MD: 2, LG: 4, XL: 6 },
@@ -543,12 +573,12 @@ export class UiConfComponent implements OnInit {
           tagline: formVal.email?.tagline || 'Votre club de bridge convivial et dynamique',
           ccEmail: formVal.email?.ccEmail || ''
         },
-        card_thumbnails: Array.isArray(formVal.card_thumbnails) && formVal.card_thumbnails.length
-          ? formVal.card_thumbnails.map((t: any) => ({ width: Number(t.width), height: Number(t.height) }))
+        card_thumbnails: Array.isArray(formVal.template?.card_thumbnails) && formVal.template.card_thumbnails.length
+          ? formVal.template.card_thumbnails.map((t: any) => ({ width: Number(t.width), height: Number(t.height) }))
           : [{ width: 300, height: 200 }],
         album_thumbnail: {
-          width: Number(formVal.album_thumbnail?.width) || 600,
-          height: Number(formVal.album_thumbnail?.height) || 400
+          width: Number(formVal.template?.album_thumbnail?.width) || 600,
+          height: Number(formVal.template?.album_thumbnail?.height) || 400
         },
         album_carousel_interval_ms: Number(formVal.album_carousel_interval_ms) || 5000,
         competitions: {
@@ -579,7 +609,7 @@ export class UiConfComponent implements OnInit {
   previewSettings() {
     try {
       const formVal: any = this.uiForm.value || {};
-      
+
       // Build clean preview conforming to UIConfiguration interface (same as saveSettings)
       const tournamentsTypeMap: { [k: string]: string } = {};
       if (Array.isArray(formVal.tournaments_type)) {
@@ -609,9 +639,16 @@ export class UiConfComponent implements OnInit {
             bg: formVal.template?.footer?.bg || '#ffffff',
             text_color: formVal.template?.footer?.text_color || '#000000'
           },
-          site_font: formVal.template?.site_font || 'Amarante, serif',
-          logo_club_path: formVal.template?.logo_club_path || '',
-          image_club_path: formVal.template?.image_club_path || ''
+          club: {
+            font: formVal.template?.club?.font || formVal.template?.site_font || 'Amarante, serif',
+            name: formVal.template?.club?.name || '',
+            logo: formVal.template?.club?.logo || formVal.template?.logo_club_path || '',
+            image: formVal.template?.club?.image || formVal.template?.image_club_path || ''
+          },
+          // backward-compatible aliases
+          site_font: formVal.template?.club?.font || formVal.template?.site_font || 'Amarante, serif',
+          logo_club_path: formVal.template?.club?.logo || formVal.template?.logo_club_path || '',
+          image_club_path: formVal.template?.club?.image || formVal.template?.image_club_path || ''
         },
         homepage: {
           tournaments_row_cols: formVal.tournaments_row_cols || { SM: 1, MD: 2, LG: 4, XL: 6 },
@@ -630,12 +667,12 @@ export class UiConfComponent implements OnInit {
           tagline: formVal.email?.tagline || 'Votre club de bridge convivial et dynamique',
           ccEmail: formVal.email?.ccEmail || ''
         },
-        card_thumbnails: Array.isArray(formVal.card_thumbnails) && formVal.card_thumbnails.length
-          ? formVal.card_thumbnails.map((t: any) => ({ width: Number(t.width), height: Number(t.height) }))
+        card_thumbnails: Array.isArray(formVal.template?.card_thumbnails) && formVal.template.card_thumbnails.length
+          ? formVal.template.card_thumbnails.map((t: any) => ({ width: Number(t.width), height: Number(t.height) }))
           : [{ width: 300, height: 200 }],
         album_thumbnail: {
-          width: Number(formVal.album_thumbnail?.width) || 600,
-          height: Number(formVal.album_thumbnail?.height) || 400
+          width: Number(formVal.template?.album_thumbnail?.width) || 600,
+          height: Number(formVal.template?.album_thumbnail?.height) || 400
         },
         album_carousel_interval_ms: Number(formVal.album_carousel_interval_ms) || 5000,
         competitions: {
@@ -666,9 +703,9 @@ export class UiConfComponent implements OnInit {
 
 
   applyTheme() {
-    const siteFont = this.uiForm.get('template.site_font')?.value || this.uiForm.get('template')?.get('site_font')?.value || 'Amarante, serif';
-    const contentBg = this.uiForm.get('template.content')?.get('bg')?.value || this.uiForm.get('template')?.get(['content','bg'])?.value || '#ffffff';
-    const contentText = this.uiForm.get('template.content')?.get('text_color')?.value || this.uiForm.get('template')?.get(['content','text_color'])?.value || '#222222';
+    const siteFont = this.uiForm.get(['template','club','font'])?.value || this.uiForm.get('template.site_font')?.value || this.uiForm.get('template')?.get('site_font')?.value || 'Amarante, serif';
+    const contentBg = this.uiForm.get('template.content')?.get('bg')?.value || this.uiForm.get('template')?.get(['content', 'bg'])?.value || '#ffffff';
+    const contentText = this.uiForm.get('template.content')?.get('text_color')?.value || this.uiForm.get('template')?.get(['content', 'text_color'])?.value || '#222222';
 
     // Load single site Google Font dynamically
     if (siteFont) this.loadGoogleFont(siteFont);

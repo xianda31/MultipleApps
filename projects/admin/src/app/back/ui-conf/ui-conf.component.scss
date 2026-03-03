@@ -19,11 +19,45 @@
 }
 
 .ui-conf-root .preview img {
-	height: 24px !important;
+	height: 30px !important;
 	object-fit: contain;
 }
 
 /* Make template table headers normal weight (remove bold only for this table) */
 .ui-conf-root [formGroupName="template"] table.table-sm th {
 	font-weight: 400 !important;
+}
+
+/* Admin UI: force readable colors independent from front theme variables */
+/* Use fixed, high-contrast defaults so fields remain legible in the admin console */
+.ui-conf-root,
+.ui-conf-root .form-label,
+.ui-conf-root label,
+.ui-conf-root .form-control,
+.ui-conf-root .form-select,
+.ui-conf-root .form-check-label,
+.ui-conf-root .card-title {
+	color: #222222 !important;
+}
+
+.ui-conf-root .form-control,
+.ui-conf-root .form-select {
+	background-color: #ffffff !important;
+	color: #222222 !important;
+}
+
+/* Keep previews and small color inputs unchanged */
+.ui-conf-root .preview img { filter: none !important; }
+.ui-conf-root input[type="color"] { outline: none; }
+
+/* Ensure native select dropdown options are readable (some browsers inherit header color) */
+.ui-conf-root select,
+.ui-conf-root .form-select {
+	color: #222222 !important;
+	background-color: #ffffff !important;
+}
+.ui-conf-root select option,
+.ui-conf-root .form-select option {
+	color: #222222 !important;
+	background-color: #ffffff !important;
 }

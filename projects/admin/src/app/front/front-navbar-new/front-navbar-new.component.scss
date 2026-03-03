@@ -2,7 +2,7 @@
 .laptop-navbar-row {
   transition: top 0.1s ease-out;
   z-index: 1050;
-  background: var(--banner-bg, #2e332d) !important;
+  background: var(--navbar-bg, var(--banner-bg, #2e332d)) !important;
   
   &.scrolled-sticky {
     position: fixed !important;
@@ -31,17 +31,34 @@
 
 /* Harmonisation des liens de navigation */
 .nav-link.main-nav-link {
-  font-family: inherit !important;
-  font-weight: 700 !important;
-  font-size: 1.3rem !important;
-  color: #fff !important;
-  padding-left: 0.75rem !important;
-  padding-right: 0.75rem !important;
+  font-family: var(--site-font, inherit) !important;
+  font-weight: 500 !important;
+  font-size: 1.2rem !important;
+  color: var(--navbar-text, #fff) !important;
+  padding-left: 0.6rem !important;
+  padding-right: 0.6rem !important;
 }
 
 .navbar-brand {
-  font-family: inherit !important;
-  font-weight: 700 !important;
-  font-size: 1.3rem !important;
-  color: #fff !important;
+  font-family: var(--site-font, inherit) !important;
+  font-weight: 500 !important;
+  font-size: 1.2rem !important;
+  color: var(--navbar-text, #fff) !important;
+}
+
+/* Ensure the club name (sticky/independent) uses the site font */
+.club-name-sticky-independent .nav-link,
+.club-name-sticky-independent span {
+  font-family: var(--site-font, inherit) !important;
+  font-weight: 500 !important;
+  color: var(--navbar-text, #fff) !important;
+}
+
+/* Ensure dropdown menus remain readable: dark text on light background */
+.dropdown-menu {
+  background: var(--dropdown-bg, #fff) !important;
+}
+.dropdown-menu .dropdown-item,
+.dropdown-menu .nav-link {
+  color: var(--dropdown-text, #222) !important;
 }

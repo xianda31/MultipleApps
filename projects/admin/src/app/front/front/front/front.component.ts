@@ -59,48 +59,6 @@ export class FrontComponent implements AfterViewInit {
     }
   }
 
-  @HostListener('window:scroll')
-  onScroll() {
-    if (this.isLaptopMode) {
-      const scrollY = window.scrollY;
-      const bannerRow = document.querySelector('.laptop-banner-row') as HTMLElement;
-      const navbarRow = document.querySelector('app-front-navbar-new .laptop-navbar-row') as HTMLElement;
-      
-      // Seuil plus élevé pour éviter les effets indésirables
-      const stickyThreshold = 80; // Déclenchement du sticky plus tard
-      
-      if (scrollY < stickyThreshold) {
-        // Comportement normal : pas de sticky, tout reste dans le flux
-        bannerRow?.classList.remove('scrolled-sticky', 'banner-hidden');
-        navbarRow?.classList.remove('scrolled-sticky');
-        
-        // Reset des styles inline
-        if (navbarRow) {
-          navbarRow.style.top = '';
-        }
-        if (bannerRow) {
-          bannerRow.style.height = '';
-          bannerRow.style.overflow = '';
-        }
-      } else {
-        // Au-delà du seuil : sticky avec banner immédiatement caché
-        bannerRow?.classList.add('scrolled-sticky', 'banner-hidden');
-        navbarRow?.classList.add('scrolled-sticky');
-        
-        // Banner caché dès le passage en sticky
-        if (bannerRow) {
-          bannerRow.style.height = '0px';
-          bannerRow.style.overflow = 'hidden';
-        }
-        
-        // Navbar en haut
-        if (navbarRow) {
-          navbarRow.style.top = '0px';
-        }
-      }
-    }
-  }
-
   get isDesktopWidth(): boolean {
     return window.innerWidth >= 768;
   }
@@ -114,6 +72,7 @@ export class FrontComponent implements AfterViewInit {
   albums: string[] = [];
   uiSettings: UIConfiguration | null = null;
   logoUrl: string | null = null;
+  imageClubUrl: string | null = null;
   today = new Date();
   @ViewChild('footerBanner', { static: false }) footerBanner!: ElementRef<HTMLElement>;
   @ViewChild('headerBanner', { static: false }) headerBanner!: ElementRef<HTMLElement>;
@@ -158,8 +117,15 @@ export class FrontComponent implements AfterViewInit {
     this.systemDataService.get_ui_settings().subscribe((ui: UIConfiguration) => {
       const u: UIConfiguration = ui || {};
       this.uiSettings = u;
-      const logoPath = u?.template?.logo_club_path ?? (u as any)?.template?.logo_path;
+      const logoPath = u?.template?.club.logo ?? (u as any)?.template?.logo;
       if (logoPath) this.fileService.getPresignedUrl$(logoPath).subscribe({ next: (u2) => this.logoUrl = u2, error: () => this.logoUrl = null });
+      const imagePath = u?.template?.club.image ?? (u as any)?.template?.image;
+      if (imagePath) this.fileService.getPresignedUrl$(imagePath).subscribe({ next: (u2) => this.imageClubUrl = u2, error: () => this.imageClubUrl = null });
+      
+      // Récupérer le nom du club depuis la configuration UI (plusieurs emplacements possibles)
+      const clubName = u?.template?.club?.name ?? (u as any)?.template?.club_name ?? (u as any)?.template?.club?.club_name;
+      if (clubName) this.club_name = clubName;
+
       // Appliquer les couleurs du front via CSS variables
       applyUiThemeFromConfig(u);
     });
@@ -294,6 +260,63 @@ export class FrontComponent implements AfterViewInit {
    */
   get isLaptopMode(): boolean {
     return !this.isMobileLandscape && !this.isPortrait && this.isDesktopWidth;
+  }
+
+
+  @HostListener('window:scroll')
+  onScroll() {
+    if (this.isLaptopMode) {
+      const scrollY = window.scrollY;
+      const bannerRow = document.querySelector('.laptop-banner-row') as HTMLElement;
+      const navbarRow = document.querySelector('app-front-navbar-new .laptop-navbar-row') as HTMLElement;
+      const contentContainer = document.querySelector('.laptop-content-container') as HTMLElement;
+      
+      // Seuil basé sur la hauteur du banner (quand il a disparu)
+      const stickyThreshold = 44;
+      
+      if (scrollY < stickyThreshold) {
+        // Comportement normal : pas de sticky, tout scroll naturellement
+        bannerRow?.classList.remove('scrolled-sticky', 'banner-hidden');
+        navbarRow?.classList.remove('scrolled-sticky');
+        
+        // Reset des styles inline
+        if (navbarRow) {
+          navbarRow.style.top = '';
+        }
+        if (bannerRow) {
+          bannerRow.style.height = '';
+          bannerRow.style.overflow = '';
+          bannerRow.style.opacity = '';
+        }
+        // Supprimer le margin-top compensatoire
+        if (contentContainer) {
+          contentContainer.style.marginTop = '';
+        }
+      } else {
+        // Sticky uniquement quand banner a disparu
+        bannerRow?.classList.add('scrolled-sticky', 'banner-hidden');
+        navbarRow?.classList.add('scrolled-sticky');
+        
+        // Banner caché
+        if (bannerRow) {
+          bannerRow.style.height = '0px';
+          bannerRow.style.overflow = 'hidden';
+        }
+        
+        // Navbar en haut
+        if (navbarRow) {
+          navbarRow.style.top = '0px';
+        }
+        
+        // Compenser la hauteur de la navbar ET du banner qui sortent du flux
+        // Cela évite que le contenu "remonte" brutalement
+        if (contentContainer && navbarRow) {
+          const navbarHeight = navbarRow.offsetHeight;
+          const bannerHeight = 44; // Hauteur du banner qui disparaît
+          contentContainer.style.marginTop = `${navbarHeight + bannerHeight}px`;
+        }
+      }
+    }
   }
 
 }

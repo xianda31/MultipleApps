@@ -29,45 +29,48 @@
 
     <!-- Mode Laptop   -->
     <ng-template #tplLaptop>
+
       <div class="row d-md-flex align-items-stretch site-banner header-shadow laptop-banner-row g-0 my-0">
-        <div class="col d-flex align-items-center px-0">
+        <div class="col d-flex align-items-center px-0 ">
           <ng-template [ngTemplateOutlet]="tplBanner" [ngTemplateOutletContext]="{ mode: 'laptop' }"></ng-template>
         </div>
       </div>
-      <app-front-navbar-new [club_name]="club_name" [brandNavitem]="brandNavitem" [navbar_menus]="navbar_menus"
+
+      <app-front-navbar-new [brandNavitem]="brandNavitem" [navbar_menus]="navbar_menus"
         [logged_member$]="logged_member$" [avatar$]="avatar$" [isPortrait]="isPortrait" [isMobile]="false"
         [label_transformer]="label_transformer.bind(this)" [trackNavitemId]="trackNavitemId.bind(this)"
-        [onCommand]="onCommand.bind(this)">
+        [onCommand]="onCommand.bind(this)" [imageClubUrl]="imageClubUrl" [logoUrl]="logoUrl">
       </app-front-navbar-new>
-      <div class="laptop-image-club">
-        <ng-template [ngTemplateOutlet]="tplImageClub"></ng-template>
+      <div class="laptop-content-container">
+        <div class="laptop-image-club ">
+          <ng-template [ngTemplateOutlet]="tplImageClub"></ng-template>
+        </div>
+        <ng-template [ngTemplateOutlet]="tplContent"></ng-template>
       </div>
-      <ng-template [ngTemplateOutlet]="tplContent"></ng-template>
       <ng-template [ngTemplateOutlet]="tplFooter"></ng-template>
     </ng-template>
 
     <!-- Mode Mobile (landscape et portrait) -->
     <ng-template #tplMobile>
       <div class="row d-flex align-items-stretch site-banner header-shadow">
-        <div class="col-12 px-0">
-          <div class="navbar-bg h-auto g-0 w-100 py-0 my-0">
-            <nav class="navbar navbar-dark">
-              <div class="d-flex align-items-center px-0 w-100">
-                <button class="navbar-toggler ms-2 me-2 flex-shrink-0" type="button" data-bs-toggle="offcanvas"
-                  data-bs-target="#mobileMenuOffcanvas" aria-controls="mobileMenuOffcanvas" aria-label="Ouvrir le menu">
-                  <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="flex-grow-1 d-flex justify-content-center align-items-center min-width-0">
-                  <ng-template [ngTemplateOutlet]="tplBanner"
-                    [ngTemplateOutletContext]="{ mode: 'mobile' }"></ng-template>
-                </div>
-              </div>
-            </nav>
-            <ng-template [ngTemplateOutlet]="tplOffcanvasMenu"
-              [ngTemplateOutletContext]="{ offcanvasId: 'mobileMenuOffcanvas', offcanvasLabel: 'mobileMenuOffcanvasLabel' }"></ng-template>
 
-            <ng-template *ngIf="isMobilePortrait" [ngTemplateOutlet]="tplImageClub"></ng-template>
-          </div>
+        <div class="navbar-bg h-auto g-0 w-100 py-0 my-0">
+          <nav class="navbar navbar-dark">
+            <div class="d-flex align-items-center px-0 w-100">
+              <button class="navbar-toggler ms-2 me-2 flex-shrink-0" type="button" data-bs-toggle="offcanvas"
+                data-bs-target="#mobileMenuOffcanvas" aria-controls="mobileMenuOffcanvas" aria-label="Ouvrir le menu">
+                <span class="navbar-toggler-icon"></span>
+              </button>
+              <div class="flex-grow-1 d-flex justify-content-center align-items-center min-width-0">
+                <ng-template [ngTemplateOutlet]="tplBanner"
+                  [ngTemplateOutletContext]="{ mode: 'mobile' }"></ng-template>
+              </div>
+            </div>
+          </nav>
+          <ng-template [ngTemplateOutlet]="tplOffcanvasMenu"
+            [ngTemplateOutletContext]="{ offcanvasId: 'mobileMenuOffcanvas', offcanvasLabel: 'mobileMenuOffcanvasLabel' }"></ng-template>
+
+          <ng-template *ngIf="isMobilePortrait" [ngTemplateOutlet]="tplImageClub"></ng-template>
         </div>
       </div>
       <ng-template [ngTemplateOutlet]="tplContent"></ng-template>
@@ -97,7 +100,7 @@
           <app-front-navbar-new [club_name]="club_name" [brandNavitem]="null" [navbar_menus]="navbar_menus"
             [logged_member$]="logged_member$" [avatar$]="avatar$" [isPortrait]="isPortrait" [isMobile]="true"
             [label_transformer]="label_transformer.bind(this)" [trackNavitemId]="trackNavitemId.bind(this)"
-            [onCommand]="onCommand.bind(this)">
+            [onCommand]="onCommand.bind(this)" [imageClubUrl]="imageClubUrl" [logoUrl]="logoUrl">
           </app-front-navbar-new>
         </div>
       </div>
@@ -108,14 +111,8 @@
   <!-- Éléments factorisés communs aux modes -->
   <ng-template #tplLogo>
     <a routerLink="contacts" style="display: flex; align-items: center;">
-      <img *ngIf="logoUrl; else staticLogo" class="img-fluid" style="max-height: 60px; width: auto;" [src]="logoUrl"
-        alt="logo" />
-      <ng-template #staticLogo>
-        <img class="img-fluid" style="max-height: 60px; width: auto;" src="bcsto_ffb.jpg" alt="marcaissonne" />
-      </ng-template>
+      <img class="img-fluid nice_shadow m-1 ms-4" style="max-height: 40px; width: auto;" [src]="logoUrl" alt="logo" />
     </a>
-    <span *ngIf="sandbox" class="badge sandbox-badge over-logo text-dark" aria-label="Mode sandbox">Mode
-      Sandbox</span>
   </ng-template>
 
 
@@ -124,7 +121,7 @@
       <!-- Mode laptop : logo + nom club centré + date calée à droite -->
       <span *ngSwitchCase="'laptop'" class="d-flex align-items-center w-100">
         <ng-template [ngTemplateOutlet]="tplLogo"></ng-template>
-        <span class="flex-grow-1 text-center fw-bold text-nowrap">{{ club_name }}</span>
+        <span class="flex-grow-1 text-center text-nowrap">{{ club_name }}        </span>
         <span class="small text-nowrap ms-auto me-2">{{today | date:'EEEE d MMMM yyyy':'':'fr-FR' }}</span>
       </span>
       <!-- Mode mobile (landscape et portrait) : nom club centré + date en dessous -->
@@ -133,16 +130,18 @@
         <span class="small text-nowrap">{{today | date:'EEEE d MMMM yyyy':'':'fr-FR' }}</span>
       </span>
     </ng-container>
+    <span *ngIf="sandbox" class="badge sandbox-badge text-dark" aria-label="Mode sandbox">Mode
+      Sandbox</span>
   </ng-template>
 
 
   <ng-template #tplImageClub>
-    <img class="w-100 d-none d-md-block" src="catala.jpg" alt="image_club"
+    <img class="w-100 d-none d-md-block nice_shadow" [src]="imageClubUrl " alt="image_club"
       style="height: 100px; width: 100vw; object-fit: cover; display: block;" />
   </ng-template>
 
   <ng-template #tplContent>
-    <div class="row">
+    <div class="row content-row">
       <div class="offset-xl-1 col-xl-10 justify-content-center main-content"
         style="overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none; ">
         <app-title></app-title>

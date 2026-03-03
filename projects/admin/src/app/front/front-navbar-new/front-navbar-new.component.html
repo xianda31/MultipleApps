@@ -1,11 +1,11 @@
 <!-- Mode laptop : barre de navigation complète -->
-<div *ngIf="!isMobile" class="row d-md-flex site-banner h-auto g-0 w-100 py-0 my-0 laptop-navbar-row">
+<div *ngIf="!isMobile" class="row d-md-flex h-auto g-0 w-100 py-0 my-0 laptop-navbar-row">
   <nav class="navbar navbar-dark navbar-expand d-flex w-100 justify-content-center position-relative">
-    <!-- Nom du club positionné indépendamment -->
+    <!-- Logo du club positionné indépendamment (remplace le nom) -->
     <div class="club-name-sticky-independent d-none">
-      <span class="nav-link" style="color: #fff !important; font-weight: bold; font-family: inherit;">
-        {{ club_name }}
-      </span>
+      <a routerLink="contacts" class="nav-link" style="display:flex; align-items:center;">
+        <img [src]="logoUrl || imageClubUrl || ''" alt="logo" class="img-fluid" style="max-height:40px; width:auto;" />
+      </a>
     </div>
     
     <div class="d-flex flex-row align-items-center justify-content-center gap-5 w-auto mx-auto"
@@ -14,8 +14,7 @@
         class="navbar-collapse navbar-desktop position-relative d-flex align-items-center navbar-menu-align justify-content-center p-0 m-0">
         <ul class="navbar-nav mb-0 flex-nowrap justify-content-center" style="gap: 1.5rem;">
           <li *ngIf="brandNavitem" class="nav-item ms-3">
-            <a class="nav-link main-nav-link" [routerLink]="brandNavitem.path"
-              style="color: #fff !important; font-weight: bold; font-family: inherit;">
+            <a class="nav-link main-nav-link" [routerLink]="brandNavitem.path">
               {{ brandNavitem.label }}
             </a>
           </li>
@@ -92,8 +91,7 @@
       </a>
       <a *ngIf="menu.navitem.type === NAVITEM_TYPE.INTERNAL_LINK"
         [ngClass]="isMobile ? 'dropdown-item ps-0' + (isLastTop ? ' fw-bold' : '') : 'nav-link main-nav-link'"
-        [routerLink]="menu.navitem.path" [attr.data-bs-dismiss]="isMobile ? 'offcanvas' : null"
-        style="color: #fff !important; font-size: 1.3rem; font-weight: bold;">
+        [routerLink]="menu.navitem.path" [attr.data-bs-dismiss]="isMobile ? 'offcanvas' : null">
         <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
       </a>
       <a *ngIf="menu.navitem.type?.toLowerCase() === 'plugin'"

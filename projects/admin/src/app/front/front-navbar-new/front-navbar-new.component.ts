@@ -14,6 +14,9 @@ import { Member } from '../../common/interfaces/member.interface';
   styleUrl: './front-navbar-new.component.scss'
 })
 export class FrontNavbarNewComponent {
+  // @Input() club_name: string = '';
+  @Input() imageClubUrl: string | null = null;
+  @Input() logoUrl: string | null = null;
   @Input() club_name: string = '';
   @Input() brandNavitem: NavItem | null = null;
   @Input() navbar_menus: MenuStructure = [];
@@ -24,6 +27,7 @@ export class FrontNavbarNewComponent {
   @Input() label_transformer!: (label: string) => Promise<string>;
   @Input() trackNavitemId!: (index: number, menu: any) => any;
   @Input() onCommand!: (item: NavItem) => void;
+
 
   NAVITEM_POSITION = NAVITEM_POSITION;
   NAVITEM_TYPE = NAVITEM_TYPE;

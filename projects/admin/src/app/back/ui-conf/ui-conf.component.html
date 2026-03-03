@@ -4,14 +4,44 @@
       <!-- section Thème -->
       <div class="col">
         <div class="card h-100">
-          <div class="card-title fw-bold fs-5 ms-2">Paramétrage template</div>
+          <div class="card-title fw-bold fs-5 ms-2">Paramétrage du template site</div>
           <div class="card-body" formGroupName="template">
 
-            <div class="d-flex align-items-center gap-2 mb-2">
-              <label class="fs-6 mb-1 text-nowrap">Police du site</label>
-              <select class="form-select form-select-sm flex-shrink-0 ms-auto" style="max-width:15rem;" formControlName="site_font" (change)="applyTheme()">
+
+            <div class="fw-bold fs-6 mt-2">Nom, logo et banière</div>
+            <div class="d-flex align-items-center gap-2 mb-2"  formGroupName="club">
+              <label class="fs-6 mb-1 text-nowrap">Police</label>
+              <select class="form-select form-select-sm flex-shrink-0 ms-2" style="max-width:10rem;"
+                formControlName="font" (change)="applyTheme()">
                 <option *ngFor="let font of googleFontsSubset" [value]="font.css">{{ font.label }}</option>
               </select>
+              <input type="text" class="form-control form-control-sm ms-2 w-100" formControlName="name" placeholder="Nom du site" style="max-width:12rem;" [style.font-family]="uiForm.get(['template','club','font'])?.value" />
+            </div>
+            <div class="row">
+              <div class="col align-items-center gap-2 ">
+                <label class="form-label small mb-1">Logo</label>
+                <div class="d-flex gap-2 align-items-center">
+                  <input type="file" accept="image/*" #logoFileInput style="display:none"
+                    (change)="onLogoFileSelected($event)" />
+                  <div class="preview ms-2">
+                    <img [src]="logoPreviewUrl || placeholderImageUrl" alt="logo" />
+                  </div>
+                  <button type="button" class="btn btn-outline-secondary btn-sm"
+                    (click)="logoFileInput.click()">Modifier</button>
+                </div>
+              </div>
+              <div class="col align-items-center gap-2 ">
+                <label class="form-label small mb-1">Image</label>
+                <div class="d-flex gap-2 align-items-center">
+                  <input type="file" accept="image/*" #imageFileInput style="display:none"
+                    (change)="onImageFileSelected($event)" />
+                  <div class="preview ms-2">
+                    <img [src]="imageClubPreviewUrl || placeholderImageUrl" alt="club" />
+                  </div>
+                  <button type="button" class="btn btn-outline-secondary btn-sm"
+                    (click)="imageFileInput.click()">Modifier</button>
+                </div>
+              </div>
             </div>
 
             <div class="fw-bold fs-6">Couleurs des fond et police par zone</div>
@@ -85,38 +115,7 @@
               </table>
             </div>
 
-            <div class="fw-bold fs-6 mt-2">Images du club (logo et banière)</div>
 
-            <div class="d-flex align-items-center gap-2 mt-2">
-              <label class="form-label small mb-1">Logo club</label>
-              <div class="d-flex gap-2 align-items-center">
-                <input type="file" accept="image/*" #logoFileInput style="display:none"
-                  (change)="onLogoFileSelected($event)" />
-                <button type="button" class="btn btn-outline-secondary btn-sm"
-                  (click)="logoFileInput.click()">Modifier</button>
-                <!-- <input type="text" class="form-control form-control-sm" formControlName="logo_club_path"
-                  placeholder="Chemin S3 (logo)" /> -->
-                <div class="preview ms-2">
-                  <img [src]="logoPreviewUrl || placeholderImageUrl" alt="logo"
-                    style="height:32px;object-fit:contain;" />
-                </div>
-              </div>
-            </div>
-            <div class="d-flex align-items-center gap-2 mt-2">
-              <label class="form-label small mb-1">Image club</label>
-              <div class="d-flex gap-2 align-items-center">
-                <input type="file" accept="image/*" #imageFileInput style="display:none"
-                  (change)="onImageFileSelected($event)" />
-                <button type="button" class="btn btn-outline-secondary btn-sm"
-                  (click)="imageFileInput.click()">Modifier</button>
-                <!-- <input type="text" class="form-control form-control-sm" formControlName="image_club_path"
-                  placeholder="Chemin S3 (image club)" /> -->
-                <div class="preview ms-2">
-                  <img [src]="imageClubPreviewUrl || placeholderImageUrl" alt="club"
-                    style="height:32px;object-fit:contain;" />
-                </div>
-              </div>
-            </div>
 
             <!-- Bouton Enregistrer accessible en bas de la section -->
             <div class="d-flex justify-content-end mt-2">
@@ -287,7 +286,7 @@
       <div class="col">
         <div class="card h-100">
           <div class="card-title fw-bold fs-5 ms-2">Taille des vignettes articles</div>
-          <div class="card-body">
+          <div class="card-body" formGroupName="template">
             <!-- <div class="row row-cols-1 row-cols-md-2 g-3"> -->
             <div class="row">
               <div class="d-flex align-items-center mb-2">
@@ -453,19 +452,19 @@
         </div>
         <div class="mt-1 d-flex gap-3 small text-danger">
           <span
-            *ngIf="uiForm.get(groupName + '.SM')?.invalid && (uiForm.get(groupName + '.SM')?.touched || uiForm.get(groupName + '.SM')?.dirty)">
+            *ngIf="uiForm.get([groupName,'SM'])?.invalid && (uiForm.get([groupName,'SM'])?.touched || uiForm.get([groupName,'SM'])?.dirty)">
             SM: 1–6
           </span>
           <span
-            *ngIf="uiForm.get(groupName + '.MD')?.invalid && (uiForm.get(groupName + '.MD')?.touched || uiForm.get(groupName + '.MD')?.dirty)">
+            *ngIf="uiForm.get([groupName,'MD'])?.invalid && (uiForm.get([groupName,'MD'])?.touched || uiForm.get([groupName,'MD'])?.dirty)">
             MD: 1–6
           </span>
           <span
-            *ngIf="uiForm.get(groupName + '.LG')?.invalid && (uiForm.get(groupName + '.LG')?.touched || uiForm.get(groupName + '.LG')?.dirty)">
+            *ngIf="uiForm.get([groupName,'LG'])?.invalid && (uiForm.get([groupName,'LG'])?.touched || uiForm.get([groupName,'LG'])?.dirty)">
             LG: 1–6
           </span>
           <span
-            *ngIf="uiForm.get(groupName + '.XL')?.invalid && (uiForm.get(groupName + '.XL')?.touched || uiForm.get(groupName + '.XL')?.dirty)">
+            *ngIf="uiForm.get([groupName,'XL'])?.invalid && (uiForm.get([groupName,'XL'])?.touched || uiForm.get([groupName,'XL'])?.dirty)">
             XL: 1–6
           </span>
         </div>

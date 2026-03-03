@@ -31,15 +31,20 @@ export interface tplDef {
   text_color: string;
 }
 
+export interface SiteDef {
+  name: string;
+  logo: string;
+  image: string;
+  font: string; // police globale du front
+}
+
 export interface UIConfiguration {
   template: {
     banner: tplDef;
     navbar: tplDef;
     content: tplDef;
     footer: tplDef;
-    site_font: string; // police globale du front
-    logo_club_path?: string; // S3 path
-    image_club_path?: string; // S3 path
+    club: SiteDef;
   };
 
   homepage: {
