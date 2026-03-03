@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { club_tournament } from '../ffb/interface/club_tournament.interface';
-import { BehaviorSubject, from, map, merge, Observable, scan, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, from, map, merge, Observable, scan, switchMap, tap, of } from 'rxjs';
+import { shareReplay } from 'rxjs/operators';
 import { FFB_proxyService } from '../ffb/services/ffb.service';
 import { TournamentTeams } from '../ffb/interface/tournament_teams.interface';
 import { ToastService } from './toast.service';
@@ -11,9 +12,11 @@ const MAX_TOURNAMENTS_LISTED = 8; // Number of tournaments to list
     providedIn: 'root',
 })
 export class TournamentService {
-
+    private _tournaments!: club_tournament[];
     private _tournamentTeams: TournamentTeams[] = [];
     private _tournamentTeams$ = new BehaviorSubject<TournamentTeams[]>([]);
+    // Cache for in-flight or resolved TournamentTeams observables to avoid repeated remote calls
+    private _teamFetchCache: Map<string, Observable<TournamentTeams>> = new Map();
 
     constructor(
         private ffbService: FFB_proxyService,
@@ -22,24 +25,33 @@ export class TournamentService {
     }
 
     list_next_tournaments(days_back: number): Observable<club_tournament[]> {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const start_date = new Date(today);
-        start_date.setDate(today.getDate() - days_back);
-        return this.ffbService._getTournaments().pipe(
+        let remote_load$ = this.ffbService._getTournaments().pipe(
             map((tournaments) => {
                 if (!Array.isArray(tournaments)) {
                     this.toastService.showErrorToast('connexion au serveur FFB', 'Erreur serveur FFB ou format inattendu lors de la récupération des tournois');
                     console.error('Erreur serveur FFB ou format inattendu lors de la récupération des tournois');
                     return [];
                 }
-                return tournaments.filter((tournament) => new Date(tournament.date) >= start_date);
-            }),
-            // tap((tournaments) => { this._tournaments = tournaments; })
+                this._tournaments = tournaments;
+                console.log('Tournois récupérés :', this._tournaments);
+                return this._tournaments;
+            })
         );
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const start_date = new Date(today);
+        start_date.setDate(today.getDate() - days_back);
+
+        return this._tournaments ?
+            from([this._tournaments.filter((tournament) => new Date(tournament.date) >= start_date)]) : remote_load$.pipe(
+                map((tournaments) => tournaments.filter((tournament) => new Date(tournament.date) >= start_date))
+            );
     }
 
     list_next_tournament_teams(days_back: number = 0): Observable<TournamentTeams[]> {
+
+
         return this.list_next_tournaments(days_back).pipe(
             switchMap((tournaments) => {
 
@@ -47,22 +59,36 @@ export class TournamentService {
                     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
                     .slice(0, MAX_TOURNAMENTS_LISTED); // Ne prendre que les 8 premiers
 
-                const tournamentTeamsObservables = filtered_tournaments.map((tournament) =>
-                    from(this.ffbService.getTournamentTeams(tournament.team_tournament_id.toString()))
-                );
-                return merge(...tournamentTeamsObservables).pipe(
-                    tap((t: TournamentTeams) => {
-                        const idx = this._tournamentTeams.findIndex(tt => tt.subscription_tournament.id ===
-                            t.subscription_tournament.id);
-                        if (idx > -1) this._tournamentTeams[idx] = t;
-                        else this._tournamentTeams.push(t);
+                const tournamentTeamsObservables = filtered_tournaments.map((tournament) => {
+                    const id = tournament.team_tournament_id.toString();
+                    // If we already have the teams in memory, emit them synchronously
+                    const existing = this.find_tournamentTeamsById(id);
+                    if (existing) return of(existing as TournamentTeams);
 
-                        this._tournamentTeams.sort((a, b) => {
-                            return new Date(this.date_of(a)).getTime() - new Date(this.date_of(b)).getTime();
-                        });
-                        this._tournamentTeams$.next(this._tournamentTeams);
-                    }),
-                );
+                    // If a fetch is already in-flight or cached, reuse it
+                    if (this._teamFetchCache.has(id)) return this._teamFetchCache.get(id)!;
+
+                    // Otherwise initiate remote fetch and cache the observable (shareReplay to replay result)
+                    console.log(`Fetching teams for tournament ${tournament.tournament_name} (ID: ${id}) from FFB service...`);
+                    const obs = from(this.ffbService.getTournamentTeams(id)).pipe(
+                        tap((t: TournamentTeams) => {
+                            const idx = this._tournamentTeams.findIndex(tt => tt.subscription_tournament.id ===
+                                t.subscription_tournament.id);
+                            if (idx > -1) this._tournamentTeams[idx] = t;
+                            else this._tournamentTeams.push(t);
+
+                            this._tournamentTeams.sort((a, b) => {
+                                return new Date(this.date_of(a)).getTime() - new Date(this.date_of(b)).getTime();
+                            });
+                            this._tournamentTeams$.next(this._tournamentTeams);
+                        }),
+                        shareReplay(1)
+                    );
+                    this._teamFetchCache.set(id, obs);
+                    return obs;
+                });
+
+                return merge(...tournamentTeamsObservables);
             }),
             switchMap(() => this._tournamentTeams$.asObservable())
         );
@@ -105,6 +131,8 @@ export class TournamentService {
                     return acc + (team.players.length === 1 ? 1 : 0);
                 }, 0);
                 this._tournamentTeams$.next(this._tournamentTeams);
+                    // Update cached observable for this tteams_id so future callers get fresh data
+                    this._teamFetchCache.set(tteams_id, of(tteams));
             }
         } catch (error) {
             console.error('Error creating team:', error);
@@ -128,6 +156,8 @@ export class TournamentService {
                     return acc + (team.players.length === 1 ? 1 : 0);
                 }, 0);
                 this._tournamentTeams$.next(this._tournamentTeams);
+                    // Update cached observable for this tteams_id so future callers get fresh data
+                    this._teamFetchCache.set(tteams_id, of(tteams));
             } catch (error) {
                 console.error('Error deleting team:', error);
             }
