@@ -36,11 +36,11 @@
         </div>
       </div>
 
-      <app-front-navbar-new [brandNavitem]="brandNavitem" [navbar_menus]="navbar_menus"
+      <app-front-navbar [brandNavitem]="brandNavitem" [navbar_menus]="navbar_menus"
         [logged_member$]="logged_member$" [avatar$]="avatar$" [isPortrait]="isPortrait" [isMobile]="false"
         [label_transformer]="label_transformer.bind(this)" [trackNavitemId]="trackNavitemId.bind(this)"
         [onCommand]="onCommand.bind(this)" [imageClubUrl]="imageClubUrl" [logoUrl]="logoUrl">
-      </app-front-navbar-new>
+      </app-front-navbar>
       <div class="laptop-content-container">
         <div class="laptop-image-club ">
           <ng-template [ngTemplateOutlet]="tplImageClub"></ng-template>
@@ -97,11 +97,11 @@
           </li>
         </ul>
         <div class="w-100">
-          <app-front-navbar-new [club_name]="club_name" [brandNavitem]="null" [navbar_menus]="navbar_menus"
+          <app-front-navbar [club_name]="club_name" [brandNavitem]="null" [navbar_menus]="navbar_menus"
             [logged_member$]="logged_member$" [avatar$]="avatar$" [isPortrait]="isPortrait" [isMobile]="true"
             [label_transformer]="label_transformer.bind(this)" [trackNavitemId]="trackNavitemId.bind(this)"
             [onCommand]="onCommand.bind(this)" [imageClubUrl]="imageClubUrl" [logoUrl]="logoUrl">
-          </app-front-navbar-new>
+          </app-front-navbar>
         </div>
       </div>
     </div>

@@ -22,12 +22,12 @@ import { Accreditation } from '../../../common/authentification/group.interface'
 import { Member } from '../../../common/interfaces/member.interface';
 import { MemberSettingsService } from '../../../common/services/member-settings.service';
 import { CommandRegistryService } from '../../../common/services/command-registry.service';
-import { FrontNavbarNewComponent } from '../../front-navbar-new/front-navbar-new.component';
+import { FrontNavbarComponent } from '../../front-navbar/front-navbar.component';
 
 @Component({
   selector: 'app-front',
   standalone: true,
-  imports: [CommonModule, RouterModule, TitleComponent, FormsModule, ReactiveFormsModule, NgbDropdownModule, NgbCollapseModule, RouterLink, FrontNavbarNewComponent],
+  imports: [CommonModule, RouterModule, TitleComponent, FormsModule, ReactiveFormsModule, NgbDropdownModule, NgbCollapseModule, RouterLink, FrontNavbarComponent],
   templateUrl: './front.component.html',
   styleUrls: ['./front.component.scss']
 })
@@ -268,7 +268,7 @@ export class FrontComponent implements AfterViewInit {
     if (this.isLaptopMode) {
       const scrollY = window.scrollY;
       const bannerRow = document.querySelector('.laptop-banner-row') as HTMLElement;
-      const navbarRow = document.querySelector('app-front-navbar-new .laptop-navbar-row') as HTMLElement;
+      const navbarRow = document.querySelector('app-front-navbar .laptop-navbar-row') as HTMLElement;
       const contentContainer = document.querySelector('.laptop-content-container') as HTMLElement;
       
       // Seuil basé sur la hauteur du banner (quand il a disparu)

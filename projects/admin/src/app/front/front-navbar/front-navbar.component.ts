@@ -1,126 +1,35 @@
-
-import { Component, Input, HostListener } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { AuthentificationService } from '../../common/authentification/authentification.service';
-import { GroupService } from '../../common/authentification/group.service';
-import { Accreditation } from '../../common/authentification/group.interface';
-import { Member } from '../../common/interfaces/member.interface';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { NgbDropdownModule, NgbCollapseModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { Observable } from 'rxjs';
-import { MemberSettingsService } from '../../common/services/member-settings.service';
 import { MenuStructure, NavItem, NAVITEM_LOGGING_CRITERIA, NAVITEM_POSITION, NAVITEM_TYPE } from '../../common/interfaces/navitem.interface';
-import { CommandRegistryService } from '../../common/services/command-registry.service';
+import { Member } from '../../common/interfaces/member.interface';
 
 @Component({
   selector: 'app-front-navbar',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbDropdownModule, NgbCollapseModule, RouterLink],
+  imports: [CommonModule, RouterLink, NgbDropdownModule],
   templateUrl: './front-navbar.component.html',
   styleUrl: './front-navbar.component.scss'
 })
 export class FrontNavbarComponent {
-  @Input() albums: string[] = [];
+  // @Input() club_name: string = '';
+  @Input() imageClubUrl: string | null = null;
+  @Input() logoUrl: string | null = null;
+  @Input() club_name: string = '';
+  @Input() brandNavitem: NavItem | null = null;
   @Input() navbar_menus: MenuStructure = [];
-  @Input() sandboxMode: boolean = false;
+  @Input() logged_member$: Observable<Member | null> = new Observable<Member | null>();
+  @Input() avatar$!: Observable<string>;
+  @Input() isPortrait: boolean = false;
+  @Input() isMobile: boolean = false;
+  @Input() label_transformer!: (label: string) => Promise<string>;
+  @Input() trackNavitemId!: (index: number, menu: any) => any;
+  @Input() onCommand!: (item: NavItem) => void;
+
+
   NAVITEM_POSITION = NAVITEM_POSITION;
   NAVITEM_TYPE = NAVITEM_TYPE;
-  NAVITEM_TYPES = Object.values(NAVITEM_TYPE);
   NAVITEM_LOGGING_CRITERIA = NAVITEM_LOGGING_CRITERIA;
-
-  logged_member$: Observable<Member | null> = new Observable<Member | null>();
-  user_accreditation: Accreditation | null = null;
-  lastActiveNavItem: string = '';
-  sidebarOpen = false;
-  avatar$ !: Observable<string>;
-
-  logged: boolean = false;
-  logged_member: Member | null = null;
-  private labelCache = new Map<string, Promise<string>>();
-  isPortrait = true;
-  isMobileLandscape = false;
-
-  @HostListener('window:resize')
-  onResize() {
-    this.isPortrait = window.innerHeight > window.innerWidth;
-    // Détection mobile/landscape : largeur <= 1024px et hauteur <= 500px
-    this.isMobileLandscape = window.innerWidth <= 1024 && window.innerHeight <= 500 && window.innerWidth > window.innerHeight;
-    // Ajoute ou retire la classe CSS sur le body
-    if (this.isMobileLandscape) {
-      document.body.classList.add('force-mobile-navbar');
-    } else {
-      document.body.classList.remove('force-mobile-navbar');
-    }
-  }
-
-  constructor(
-    private auth: AuthentificationService,
-    private groupService: GroupService,
-    private memberSettingsService: MemberSettingsService,
-  private commandRegistry: CommandRegistryService
-
-
-  ) { }
-  ngOnInit(): void {
-    this.onResize(); // Détection initiale de l'orientation
-
-    this.logged_member$ = this.auth.logged_member$;
-
-    this.auth.logged_member$.subscribe(async (member) => {
-      if (member !== null) {
-        this.logged_member = member;
-        this.logged = true;
-        this.user_accreditation = await this.groupService.getUserAccreditation();
-        // this.force_canvas_to_close();
-        this.avatar$ = this.memberSettingsService.getAvatarUrl(member);
-
-        this.memberSettingsService.settingsChange$().subscribe(() => {
-          this.avatar$ = this.memberSettingsService.getAvatarUrl(member);
-        });
-      }
-    });
-
-    this.onResize(); // Initial orientation
-
-  }
-
-  get brandNavitem(): NavItem | null {
-    if (!this.navbar_menus || this.navbar_menus.length === 0) return null;
-    const items = this.navbar_menus.map(mg => mg.navitem);
-    return items.find(item => item.position === this.NAVITEM_POSITION.BRAND) || null;
-  }
-  
-  label_transformer(label: string): Promise<string> {
-    const key = label ?? '';
-    if (!key) return Promise.resolve('');
-    const cached = this.labelCache.get(key);
-    if (cached) return cached;
-    const p = this.commandRegistry.label_transform(key)
-      .catch(err => {
-        console.error('label_transform error for', key, err);
-        return key;
-      });
-    this.labelCache.set(key, p);
-    return p;
-  }
-
-  isNavItemActive(navItem: string): boolean {
-    return this.lastActiveNavItem === navItem;
-  }
-
-
-  async signOut() {
-    try {
-      sessionStorage.clear();
-      await this.auth.signOut();
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
-  }
-
-  onCommand(item: NavItem) {
-    const raw = ((item as any).command_name || item.slug || '').toString();
-    this.commandRegistry.execute(raw).catch(err => console.error('Command execution failed:', raw, err));
-  }
 }
