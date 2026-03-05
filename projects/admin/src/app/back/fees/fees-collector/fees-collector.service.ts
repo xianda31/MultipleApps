@@ -122,15 +122,28 @@ export class FeesCollectorService {
     }
   }
 
-private update_members_debts() {
+  private update_members_debts() {
     let members = this.get_members();
-    let debts= this.BookService.get_debts();
-
+    let debts = this.BookService.get_debts();
+    console.log('update_members_debts', debts);
     this.game.gamers.forEach((gamer) => {
       if (gamer.is_member) {
         const fullname = this.membersService.full_name(this.membersService.getMemberbyLicense(gamer.license)!);
         let member_debt = debts.get(fullname);
         gamer.debt = member_debt ? member_debt.total : 0;
+      }
+    });
+  }
+  private update_members_credits() {
+    let members = this.get_members();
+    let credits = this.BookService.get_customers_assets();
+    // console.log('update_members_credits', credits);
+    this.game.gamers.forEach((gamer) => {
+      if (gamer.is_member) {
+        const fullname = this.membersService.full_name(this.membersService.getMemberbyLicense(gamer.license)!);
+        let member_credit = credits.get(fullname);
+        gamer.credit = member_credit ? member_credit.total : 0;
+        if (gamer.credit > 0) console.log(`Gamer ${gamer.firstname} ${gamer.lastname} has credit: ${gamer.credit}`);
       }
     });
   }
@@ -199,7 +212,8 @@ private update_members_debts() {
         this.tournament.status = Game_status.RECOVERED;
         this.game = game; // restore previous game state
         this.generate_member_images();
-        this.update_members_debts() ;
+        this.update_members_debts();
+        this.update_members_credits();
         this.update_members_assets();
         // this.set_game(tournament);
       }
@@ -209,7 +223,7 @@ private update_members_debts() {
 
   async check_tournament_status(tournament: club_tournament): Promise<Game_status> {
     const season = this.systemDataService.get_season(new Date());
-    let game : Game | null = null;
+    let game: Game | null = null;
     try {
       game = await this.DBhandler.readGame(season, tournament.id);
       if (!game) {
@@ -243,7 +257,8 @@ private update_members_debts() {
     if (game) {
       this.game = game;
       this.update_members_assets();
-      this.update_members_debts() ;
+      this.update_members_debts();
+      this.update_members_credits();
       return true;
     } else {
       this.toastService.showErrorToast('restauration', 'Aucun état de saisie trouvé pour ce tournoi');
@@ -283,7 +298,8 @@ private update_members_debts() {
         gamer.price = gamer.is_member ? this.game.member_trn_price * factor : this.game.non_member_trn_price * factor;
       });
 
-      this.update_members_debts() ;
+      this.update_members_debts();
+      this.update_members_credits();
       this.update_members_assets();   // will update gamers game_credits & trigger _game$.next(this.game)
     }
     );
@@ -301,6 +317,7 @@ private update_members_debts() {
         game_credits: 0,
         acc_credits: (this.is_member(player.license_number)) ? this.check_acc(this.membersService.full_name(this.membersService.getMemberbyLicense(player.license_number)!)) : false,
         debt: 0,
+        credit: 0,
         index: this.game.gamers.length,
         in_euro: true, // default to euro
         price: this.is_member(player.license_number) ? this.game.member_trn_price * factor : this.game.non_member_trn_price * factor,
@@ -309,7 +326,8 @@ private update_members_debts() {
         photo_url$: this.is_member(player.license_number) ? this.membersSettingsService.getAvatarUrl(this.membersService.getMemberbyLicense(player.license_number)!) : null
       };
       this.game.gamers.push(new_gamer);
-      this.update_members_debts() ;
+      this.update_members_debts();
+      this.update_members_credits();
       this.update_members_assets();   // will update gamers game_credits & trigger _game$.next(this.game)
     }
   }
@@ -384,6 +402,7 @@ private update_members_debts() {
       game_credits: game_credits,
       acc_credits: acc_credits,
       debt: 0,
+      credit: 0,
       in_euro: in_euro,
       index: index,
       price: price,
@@ -466,15 +485,15 @@ private update_members_debts() {
 
   }
 
-  create_game_card_sale(members: Member[],card_entries: number,card_price: number, mode: PaymentMode, check_ref ?:string): Promise<boolean> {
+  create_game_card_sale(members: Member[], card_entries: number, card_price: number, mode: PaymentMode, check_ref?: string): Promise<boolean> {
     const buyer = this.membersService.full_name(members[0]);
     const co_buyer = (members.length > 1) ? this.membersService.full_name(members[1]) : undefined;
     return new Promise<boolean>(async (resolve, reject) => {
       try {
-        const card = await this.gameCardService.createCard(members,card_entries);
+        const card = await this.gameCardService.createCard(members, card_entries);
         if (card) {
           const buyer = this.membersService.full_name(members[0]);
-          this.BookService.create_game_card_sale(buyer,card_price, mode, co_buyer, check_ref);
+          this.BookService.create_game_card_sale(buyer, card_price, mode, co_buyer, check_ref);
           resolve(true);
         } else {
           resolve(false);

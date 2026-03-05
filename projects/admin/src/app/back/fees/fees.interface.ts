@@ -43,6 +43,7 @@ export interface Gamer {
     game_credits: number;
     acc_credits: boolean;
     debt: number;
+    credit: number;
     index: number;
     in_euro: boolean;
     price: number;

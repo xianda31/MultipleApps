@@ -14,6 +14,8 @@ import { GetConfirmationComponent } from '../../modals/get-confirmation/get-conf
 import { ToastService } from '../../../common/services/toast.service';
 import { QuickCardSaleComponent } from '../../../modals/quick-card-sale';
 import { MembersService } from '../../../common/services/members.service';
+import { Router } from '@angular/router';
+import { BACK_ROUTE_ABS_PATHS } from '../../routes/back-route-paths';
 import { PaymentMode } from '../../shop/cart/cart.interface';
 import { ProductService } from '../../../common/services/product.service';
 
@@ -52,6 +54,7 @@ export class FeesCollectorComponent {
     private membersService: MembersService,
     private productService: ProductService,
     private toastService: ToastService,
+    private router: Router,
 
   ) {
 
@@ -239,6 +242,14 @@ export class FeesCollectorComponent {
   }
 
   quickSale(gamer: Gamer) {
+
+    // If the gamer has a pre-existing credit or a debt, redirect to the Shop page
+    const hasCredit = ((gamer as any).credits || (gamer as any).credit) > 0;
+    if (hasCredit || (gamer as any).debt > 0) {
+      this.router.navigateByUrl(BACK_ROUTE_ABS_PATHS['Shop']);
+      return;
+    }
+
     const modalRef = this.modalService.open(QuickCardSaleComponent, { centered: true });
     modalRef.componentInstance.titulaire = this.membersService.getMemberbyLicense(gamer.license);
     modalRef.componentInstance.subtitle = `Confirmez-vous la vente d'un crédit de membre ?`;

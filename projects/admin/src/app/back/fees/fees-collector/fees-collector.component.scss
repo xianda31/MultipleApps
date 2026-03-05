@@ -96,3 +96,25 @@
     max-height: 0;
   }
 }
+
+/* Keep badges a fixed height so quickSale button presence doesn't change layout */
+.fixed-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 2.2rem !important;
+  min-width: 2.2rem !important;
+  padding: 0 0.45rem !important;
+  font-size: 0.85rem !important;
+  border-radius: 0.375rem !important;
+}
+
+/* Ensure quickSale button matches the same height */
+.quick-sale-btn {
+  width: 2.2rem !important;
+  height: 2.2rem !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}

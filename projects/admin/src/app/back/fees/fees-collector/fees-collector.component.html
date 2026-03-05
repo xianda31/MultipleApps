@@ -186,24 +186,30 @@
         <div [class]="gamer_class(gamer)" style="position: relative;">
             <!-- Bottom-left badges: NP (non payant) and member credits -->
             <div class="position-absolute bottom-0 start-0 m-1 d-flex gap-1" style="z-index: 2;">
-                <span *ngIf="!gamer.enabled" class="badge bg-secondary">{{ (game.fee_rate === 'accession' && gamer.acc_credits) ? 'ACC' :
+                <span *ngIf="!gamer.enabled" class="badge bg-secondary fixed-badge">{{ (game.fee_rate === 'accession' && gamer.acc_credits) ? 'ACC' :
                     'NP' }}</span>
-                <span *ngIf="gamer.is_member" class="badge d-flex align-items-center gap-1"
-                    [ngClass]="{ 'text-bg-success': gamer.game_credits > 2, 'text-bg-danger': gamer.game_credits <= 2 }">
+                <span *ngIf="gamer.is_member" class="badge fixed-badge"
+                    [ngClass]="{ 'text-bg-danger': gamer.game_credits <= 1, 'text-bg-warning': gamer.game_credits > 1 && gamer.game_credits < 3, 'text-bg-success': gamer.game_credits >= 3 }">
                     <span>{{ gamer.game_credits }}</span> <i class="bi bi-pass"></i>
                 </span>
                 <span *ngIf="gamer.enabled && gamer.is_member && gamer.game_credits <= 4">
                     <button type="button"
-                        class="btn btn-outline-warning btn-sm rounded-circle fee-radio-lg d-flex align-items-center justify-content-center"
-                        style="width: 2.2em; height: 2.2em; padding: 0;" title="Acheter des crédits"
+                        class="btn btn-outline-warning btn-sm rounded-circle quick-sale-btn"
+                         title="Acheter des crédits"
                         (click)="quickSale(gamer)">
                         <i class="bi bi-cart-fill"></i>
                     </button>
                 </span>
-                <span *ngIf="gamer.is_member && gamer.debt > 0" class="ms-3 text-warning">
-                    <i class="h6 bi-wallet2"></i>
-                    <span class="ms-1 text-muted" style="font-size: 0.85em;">{{ gamer.debt |currency : 'EUR': 'symbol'}}</span>
-                </span>
+                <div class="ms-3 d-flex flex-column gap-1">
+                    <span *ngIf="gamer.is_member && gamer.debt > 0" class="text-danger">
+                        <i class="h6 bi-exclamation-triangle"></i>
+                        <span class="ms-1 text-muted" style="font-size: 0.85em;">{{ gamer.debt | currency : 'EUR': 'symbol'}}</span>
+                    </span>
+                    <span *ngIf="gamer.is_member && gamer.credit > 0" class="text-success">
+                        <i class="h6 bi-piggy-bank"></i>
+                        <span class="ms-1 text-muted" style="font-size: 0.85em;">{{ gamer.credit | currency : 'EUR': 'symbol'}}</span>
+                    </span>
+                </div>
             </div>
             <div class="card-body py-0 position-relative" style="z-index: 1; overflow: hidden;">
                 <!-- Avatar wrapper for centering -->
