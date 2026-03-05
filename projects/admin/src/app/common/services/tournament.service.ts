@@ -33,7 +33,7 @@ export class TournamentService {
                     return [];
                 }
                 this._tournaments = tournaments;
-                console.log('Tournois récupérés :', this._tournaments);
+                // console.log('Tournois récupérés :', this._tournaments);
                 return this._tournaments;
             })
         );
@@ -69,7 +69,7 @@ export class TournamentService {
                     if (this._teamFetchCache.has(id)) return this._teamFetchCache.get(id)!;
 
                     // Otherwise initiate remote fetch and cache the observable (shareReplay to replay result)
-                    console.log(`Fetching teams for tournament ${tournament.tournament_name} (ID: ${id}) from FFB service...`);
+                    // console.log(`Fetching teams for tournament ${tournament.tournament_name} (ID: ${id}) from FFB service...`);
                     const obs = from(this.ffbService.getTournamentTeams(id)).pipe(
                         tap((t: TournamentTeams) => {
                             const idx = this._tournamentTeams.findIndex(tt => tt.subscription_tournament.id ===

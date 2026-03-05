@@ -65,7 +65,7 @@ export class HomePage {
     this.getNextBirthdays();
     this.logged_member$ = this.auth.logged_member$;
 
-    this.titleService.setTitle('Accueil');
+    this.titleService.setTitle('Les actualités et les prochains tournois de régularité');
 
     this.membersService.listMembers().subscribe((members) => {
       this.licensee_nbr = members.filter(m => m.license_status !== LicenseStatus.UNREGISTERED).length;

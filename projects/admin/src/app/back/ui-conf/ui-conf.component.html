@@ -10,12 +10,12 @@
 
             <div class="fw-bold fs-6 mt-2">Nom, logo et banière</div>
             <div class="d-flex align-items-center gap-2 mb-2"  formGroupName="club">
-              <label class="fs-6 mb-1 text-nowrap">Police</label>
+              <input type="text" class="form-control form-control-sm ms-2 mt-1" formControlName="name" placeholder="Nom du site" style="max-width:18rem;" [style.font-family]="uiForm.get(['template','club','font'])?.value" />
+              <label class="fs-6 mb-1 text-nowrap ms-auto">Police</label>
               <select class="form-select form-select-sm flex-shrink-0 ms-2" style="max-width:10rem;"
                 formControlName="font" (change)="applyTheme()">
                 <option *ngFor="let font of googleFontsSubset" [value]="font.css">{{ font.label }}</option>
               </select>
-              <input type="text" class="form-control form-control-sm ms-2 w-100" formControlName="name" placeholder="Nom du site" style="max-width:12rem;" [style.font-family]="uiForm.get(['template','club','font'])?.value" />
             </div>
             <div class="row">
               <div class="col align-items-center gap-2 ">

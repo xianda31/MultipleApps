@@ -164,7 +164,7 @@ export class GenericPageComponent implements OnInit, OnChanges {
     switch (this.page_title) {
       case MENU_TITLES.NEWS:
         this.page_snippets = this.page_snippets.sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
-        this.titleService.setTitle(this.page.title);
+        this.titleService.setTitle('Les actualités');
         this.pageTemplate = this.page.template;
         break;
 

@@ -142,10 +142,12 @@
 
   <ng-template #tplContent>
     <div class="row content-row">
-      <div class="offset-xl-1 col-xl-10 justify-content-center main-content"
-        style="overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none; ">
-        <app-title></app-title>
-        <router-outlet></router-outlet>
+      <div class="offset-xl-1 col-xl-10 justify-content-center main-content">
+        <div class="mt-2 mb-2">
+          <app-title></app-title>
+        </div>
+
+        <router-outlet ></router-outlet>
       </div>
     </div>
   </ng-template>

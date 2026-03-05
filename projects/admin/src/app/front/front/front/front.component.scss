@@ -222,8 +222,7 @@ body::-webkit-scrollbar {
   background: var(--content-bg, #ffffff) !important;
   position: relative;
   min-height: 100vh;
-  overflow-y: auto;
-  overflow-x: auto;
+  overflow: visible; /* allow position:sticky descendants to work */
   padding: 0 !important;
   margin: 0 !important;
   width: 100%;
@@ -289,7 +288,6 @@ body::-webkit-scrollbar {
   color: var(--content-text, #222222) !important;
   min-height: 75vh;
   flex: 1;
-  overflow-y: auto;
   font-size: 1rem !important;
 
   @media (max-width: 767.98px) {

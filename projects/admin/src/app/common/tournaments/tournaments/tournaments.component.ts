@@ -9,6 +9,7 @@ import { BreakpointsSettings } from '../../interfaces/ui-conf.interface';
 import { formatRowColsClasses } from '../../utils/ui-utils';
 import { SystemDataService } from '../../services/system-data.service';
 import { combineLatest } from 'rxjs';
+import { Member } from '../../interfaces/member.interface';
 
 @Component({
   selector: 'app-tournaments',
@@ -25,8 +26,9 @@ export class TournamentsComponent {
   next_tournament_teams: TournamentTeams[] = [];
 
   license_nbr = 0; // License number of the logged member
-  logged: boolean = false;
+  // logged: boolean = false;
   loading: boolean = true;
+  logged: Member | null = null; 
 
   
 
@@ -51,7 +53,7 @@ export class TournamentsComponent {
     this.auth.logged_member$.subscribe((member) => {
       const whoAmI = member;
       this.license_nbr = whoAmI ? Number(whoAmI.license_number) : 0;
-      this.logged = !!whoAmI;
+      this.logged = whoAmI || null;
     });
   }
 

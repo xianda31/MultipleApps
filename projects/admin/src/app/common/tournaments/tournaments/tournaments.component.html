@@ -7,11 +7,22 @@
 <div *ngIf="!loading" [ngClass]="rowCols()">
     <div class="col" *ngFor="let t of next_tournament_teams">
         <div class="card h-100  nice_shadow">
+            <div 
+                class=" card-header d-flex text-white bg-primary py-2 align-items-center justify-content-between">
+                <div class="ms-2 text-uppercase">TOURNOI DE RÉGULARITÉ</div>
+                <div *ngIf="registrated_in(t) " class="me-2 d-flex align-items-center">
+                    <div class="bg-primary text-white text-uppercase fw-bold  px-3 py-1 d-inline-flex align-items-center border border-white border-2"
+                         style="font-size:0.95rem; letter-spacing:0.04em; box-shadow: 0 10px 30px rgba(0,0,0,0.28);">
+                        INSCRIT<span *ngIf="logged?.gender === 'Mme'">E</span>
+                    </div>
+                </div>
+            </div>
+
             <div class="row  g-0">
                 <div class="col col-sm-3 col-md-4 d-flex">
-                    <div class="overflow-hidden w-100" >
+                    <div class="overflow-hidden w-100">
                         <ng-container *ngIf="getImageUrl(t) as imgUrl; else noImg">
-                            <img [attr.src]="imgUrl" class="img-fluid card-img-top" [alt]="name_of(t) || 'vignette'"
+                            <img [attr.src]="imgUrl" class="img-fluid " [alt]="name_of(t) || 'vignette'"
                                 style="object-fit:cover; display:block; width:100%;">
                         </ng-container>
                         <ng-template #noImg>
@@ -19,48 +30,37 @@
                         </ng-template>
                     </div>
                 </div>
-                <div class="col col-sm-9 col-md-8 d-flex align-items-center">
+                <div class="col col-sm-9 col-md-8 d-flex align-items-center pe-1">
                     <div class="w-100">
                         <h4 class="text-success text-center">{{ date_of(t) | date:'EEEE d MMMM':'':'fr-FR' }}
-                            <h5 > {{name_of(t)}} </h5>
+                            <h5> {{name_of(t)}} </h5>
                         </h4>
                     </div>
+
                 </div>
             </div>
             <div class="card-body pt-0 g-0 d-flex flex-column">
-                <hr>
-                <div class="card-text">
-                    <div *ngIf="t.teams && t.teams.length > 0">
-                        <small>
-                            {{(t.teams.length - t.isolated_player_count)}} paires inscrites
-                        </small>
-                        <div *ngIf="t.isolated_player_count > 0">
-                            <small>
-                                <!-- <i class="bi bi-person-arms-up"> </i> -->
-                                <span *ngIf="t.isolated_player_count === 1" class="text-info-emphasis">
-                                    et une personne cherche un partenaire </span>
-                                <span *ngIf="t.isolated_player_count > 1" class="text-info-emphasis">
-                                    et {{t.isolated_player_count}} personnes
-                                    cherchent un partenaire </span>
-                            </small>
+                <h5 class="text-center mt-2 ">
+                        <ng-container *ngIf="t.teams.length; else none">
+                        {{ (t.teams.length - (t.isolated_player_count || 0)) }} {{ ((t.teams.length - (t.isolated_player_count || 0)) === 1) ? 'paire inscrite' : 'paires inscrites' }}
+                        <div *ngIf="t.isolated_player_count">
+                            {{ t.isolated_player_count === 1 ? 'et une personne cherche un partenaire' : ('et ' +
+                            t.isolated_player_count + ' personnes cherchent un partenaire') }}
+                        </div>
+
+                    </ng-container>
+                    <ng-template #none>aucune inscription</ng-template>
+                </h5>
+                <!-- <hr> -->
+
+                <div *ngIf="logged" class=" d-flex justify-content-center align-items-center mt-3">
+                    <div class="ms-1" style="cursor:pointer;" (click)="selectTournament(t.subscription_tournament.id)">
+                        <div class="btn btn-primary  py-1 px-2 nice_shadow">
+                                <i class="bi bi-people-fill me-1"></i>
+                                    Voir les inscriptions
                         </div>
                     </div>
-                    <div *ngIf="!t.teams || t.teams.length === 0">
-                        <small>
-                            aucune inscription
-                        </small>
-                    </div>
-                </div>
 
-                <div class="mt-auto d-flex justify-content-center align-items-center">
-                    <div *ngIf="registrated_in(t)" class="text-info ms-1" style="cursor:pointer;"
-                        (click)="selectTournament(t.subscription_tournament.id)">
-                        Vous êtes inscrit(e) à ce tournoi.
-                    </div>
-                    <div *ngIf="!registrated_in(t) && logged" class="text-info ms-1" style="cursor:pointer;"
-                        (click)="selectTournament(t.subscription_tournament.id)">
-                        ... s'inscrire
-                    </div>
                 </div>
             </div>
 

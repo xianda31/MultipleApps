@@ -1,9 +1,9 @@
 <div class="row">
-    <div class="col-md-3">
-        <div class="position-sticky" style="top: 0; z-index: 2; background: #fff;">
+    <div class="col-md-3 col-lg-3 gap-lg-1">
+        <div class="position-sticky" style="top: 64px; z-index: 2; background: #fff; max-height: calc(100vh - 64px); overflow-y: auto;">
             <div class="card">
-                <div class="card-header text-uppercase">
-                    les titres
+                <div class="card-header  text-uppercase">
+                    sommaire
                 </div>
                 <div class="card-body">
                     @for (snippet of snippets; track snippet.id) {
@@ -16,17 +16,17 @@
             </div>
         </div>
     </div>
-    <div class="col-md-9">
+    <div class="col-md-9 col-lg-7">
         @for (snippet of snippets; track snippet.id) {
-        <div class="col">
-            <div class="card border-0 mt-1" id="{{getAnchorId(snippet)}}">
+        <div class="col ">
+            <div class="card border-0 mt-3" id="{{getAnchorId(snippet)}}">
 
                 <div class="row flex-nowrap align-items-stretch gx-0 snippet-header" style="width:100%">
                     <div class="col-4 col-md-5 d-flex align-items-center p-0">
                         <img [src]="snippet.image_url" alt="{{snippet.title}}"
                             class="img-fluid rounded-start snippet-img">
                     </div>
-                    <div class="col-8 col-md-7 d-flex flex-column justify-content-center p-0">
+                    <div class="col-8 col-md-7 d-flex flex-column justify-content-center p-0 ">
                         <!-- <div class="card-body"> -->
                             <h3 class="card-title">{{snippet.title}}
                                 <div class="fs-4 text-muted">
