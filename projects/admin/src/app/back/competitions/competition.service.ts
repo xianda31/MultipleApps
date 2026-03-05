@@ -1,6 +1,6 @@
 
 import { Injectable } from '@angular/core';
-import { Competition, COMPETITION_DIVISION_LABELS, COMPETITION_LEVELS, CompetitionOrganization, CompetitionSeason, CompetitionTeam, Player } from './competitions.interface';
+import { Competition, COMPETITION_DIVISION_LABELS, COMPETITION_LEVELS, CompetitionOrganization, CompetitionSeason, CompetitionTeam, Player, CompetitionPhases } from './competitions.interface';
 
 import { CompetitionResultsMap } from './competitions.interface';
 import { FFB_proxyService } from '../../common/ffb/services/ffb.service';
@@ -68,7 +68,10 @@ export class CompetitionService {
   }
 
     /**
-   * Calcule le label de division rendu pour une compétition selon la logique initiale (voir getDivisionCategory)
+   * Calcule  pour une compétition sla catégorie en se basant sur :
+   * - la famille de la compétition (ex: Interclubs)
+   * - la division de la compétition (ex: Division de Ligue, Expert, Performance, Challenge, Espérance)
+   * - le label de la compétition (en dernier recours si division = "Aucune Division")
    */
    getDivisionCategoryToLabel(competition: Competition): string {
     // Si la compétition est de la famille Interclubs, on retourne explicitement 'Interclubs'
@@ -80,7 +83,15 @@ export class CompetitionService {
       labelToUse = competition.label;
     }
     const division_labels = COMPETITION_DIVISION_LABELS;
-    const key = Object.keys(division_labels).find(k => labelToUse.startsWith(k));
+    const norm = (s: string | undefined) => (s || '').normalize('NFD').replace(/[[\u0300-\u036f]/g, '').toLowerCase();
+    // normalize labelToUse once
+    const nLabel = norm(labelToUse);
+    const key = Object.keys(division_labels).find(k => {
+      const val = division_labels[k];
+      // match if labelToUse starts with the key (abbrev), or equals the mapped value,
+      // or starts with the mapped value (e.g. "Division de Ligue")
+      return nLabel.startsWith(norm(k)) || norm(val) === nLabel || nLabel.startsWith(norm(val));
+    });
     if (!key) {
       return 'Autres';
     }
@@ -143,7 +154,7 @@ export class CompetitionService {
           .filter(c => c.type.label === 'Fédérale')
           .filter(c => c.allGroupsProbated === true)
           .filter(c => !this.is_logged_in_S3(c));
-        // console.log('Nouvelles compétitions non encore persistées ', filtered);
+         console.log('Nouvelles compétitions non encore persistées ', filtered);
         return filtered;
       }),
       // récupérer les résultats pour chaque compétition
@@ -168,8 +179,30 @@ export class CompetitionService {
       // Injecte le assigned_division selon la logique initiale
       comp.assigned_division = this.getDivisionCategoryToLabel(comp);
       comp.assigned_label = comp.assigned_division === 'Interclubs' ? comp.label :comp.family.label;
-      let compTeam = await lastValueFrom(this.getCompetitionResults(String(comp.id), String(comp.organization_id)));
-      // compute pe_pourcerntage for each player
+      // Appelle la méthode combinée qui renvoie teams + phases
+      const payload = await lastValueFrom(this.getCompetitionResults(String(comp.id), String(comp.organization_id)));
+      let compTeam = payload.teams || [];
+      // Récupère la calculation_date depuis les phases si présentes
+      try {
+        const phases = payload.phases;
+        if (phases && Array.isArray((phases as any).phases) && (phases as any).phases.length > 0) {
+          const firstPhase = (phases as any).phases[0];
+          if (firstPhase.calculation_date) {
+            comp.calculation_date = firstPhase.calculation_date;
+          } else if (Array.isArray(firstPhase.groups) && firstPhase.groups.length > 0) {
+            const firstGroup = firstPhase.groups[0];
+            comp.calculation_date = firstGroup.calculation_date ?? firstGroup.probation_date ?? null;
+          } else {
+            comp.calculation_date = null;
+          }
+        } else {
+          comp.calculation_date = null;
+        }
+      } catch (err) {
+        comp.calculation_date = null;
+      }
+
+      // compute pe_pourcentage for each player
       compTeam = this.computePePercentage(comp, compTeam);
 
       // Filtrer les équipes pour ne garder que celles ayant au moins un membre
@@ -252,11 +285,20 @@ export class CompetitionService {
     );
   }
 
-  getCompetitionResults(competitionId: string, organization_id: string): Observable<CompetitionTeam[]> {
-    return from(this.ffbService.getCompetitionResults(competitionId, organization_id)).pipe(
+  /**
+   * Récupère à la fois les résultats (teams) et les phases pour une compétition.
+   * Retourne un objet { teams, phases } où phases peut être null.
+   */
+  getCompetitionResults(competitionId: string, organization_id: string): Observable<{ teams: CompetitionTeam[]; phases: CompetitionPhases | null }> {
+    // Utilise Promise.all pour appeler les deux endpoints en parallèle
+    return from(Promise.all([
+      this.ffbService.getCompetitionResults(competitionId, organization_id),
+      this.ffbService.getCompetitionPhases(competitionId, organization_id)
+    ])).pipe(
+      map(([teams, phases]) => ({ teams: (teams || []) as CompetitionTeam[], phases: (phases as CompetitionPhases | null) })),
       catchError((err) => {
-        console.error(`Erreur lors du chargement des résultats pour la compétition ${competitionId}:`, err);
-        return of([]);
+        console.error(`Erreur lors du chargement des résultats/phases pour la compétition ${competitionId}:`, err);
+        return of({ teams: [], phases: null });
       })
     );
   }

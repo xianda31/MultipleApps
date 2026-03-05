@@ -5,7 +5,7 @@ import { FFB_licensee } from '../interface/licensee.interface';
 import { FFBplayer } from '../interface/FFBplayer.interface';
 import { TournamentTeams } from '../interface/tournament_teams.interface';
 import { from, Observable } from 'rxjs';
-import { Competition, CompetitionOrganization, CompetitionSeason, CompetitionTeam} from '../../../back/competitions/competitions.interface';
+import { Competition, CompetitionOrganization, CompetitionPhases, CompetitionSeason, CompetitionTeam} from '../../../back/competitions/competitions.interface';
 @Injectable({
   providedIn: 'root'
 })
@@ -257,6 +257,27 @@ async getSeasons() : Promise<CompetitionSeason[]> {
     } catch (error) {
       console.log('GET call failed: ', error);
       return [];
+    }
+  }
+  async getCompetitionPhases(competition_id: string, organization_id: string) : Promise<CompetitionPhases | null> {
+    try {
+      const restOperation = get({
+        apiName: 'ffbProxyApi',
+        path: 'v1/competitions/stades',
+        options: {
+          queryParams: {
+            competition_id: competition_id,
+            organization_id: organization_id
+          }
+        }
+      });
+      const { body } = await restOperation.response;
+      const data = await body.json();
+      const data2 = data as unknown as CompetitionPhases;
+      return data2;
+    } catch (error) {
+      console.log('GET call failed: ', error);
+      return null;
     }
   }
   

@@ -29,9 +29,6 @@ export class CompetitionsComponent {
   preferred_organization_labels!: { comite: string; ligue: string; national: string };
   show_full_team!: boolean;
   one_year_back!: boolean;
-  // show_infos!: boolean;
-  // full_regeneration!: boolean;
-  // result_filter_thresholds: { [key: string]: number } = {};
 
   spinnerMessage: string = 'Recherche en cours...';
   back_office_mode: boolean = false;
@@ -40,6 +37,7 @@ export class CompetitionsComponent {
   no_filter: boolean = false;
   full_regeneration: boolean = false;
   data_ready: boolean = false;
+  trace_mode: boolean = false;
 
 
   constructor(
@@ -59,6 +57,11 @@ export class CompetitionsComponent {
       } else {
         this.back_office_mode = (access === 'full');
       }
+    });
+
+    // récuperer trace_mode depuis la configuration système pour ajuster le message du spinner
+    this.systemService.get_configuration().subscribe(config => {
+    this.trace_mode = config.trace_mode;
     });
 
     // Charger la configuration Competitions depuis ui-conf
@@ -103,7 +106,7 @@ export class CompetitionsComponent {
     this.titleService.setTitle('Résultats des compétitions ' + this.current_season);
 
     this.competitionService.getCompetionsResults(this.current_season, this.preferred_organization_labels, this.full_regeneration).subscribe(results => {
-      if (this.ui_config_loaded.competitions.show_infos) console.log('CompetitionsComponent: received raw competition results', results);
+
       // Filtrer les CompetitionResults dont toutes les teams sont vides
       const filteredResults: CompetitionResultsMap = {};
       Object.entries(results).forEach(([compId, compResults]) => {
@@ -138,7 +141,9 @@ export class CompetitionsComponent {
         }
       }
 
-      // console.log('CompetitionsComponent: received competition results', results);
+      if (this.trace_mode) {
+        console.log('CompetitionsComponent: received competition results', results);
+      }
 
       this.results_extracted = true;
     });

@@ -136,6 +136,29 @@ export const handler: Handler = async (event) => {
                     'statusCode': 400,
                     'body': 'proxy error : missing competition_id '
                 };
+            case "competitions/stades":
+                // attend queryStringParameters.competition_id et .season_id
+                if (event.queryStringParameters?.competition_id && event.queryStringParameters?.organization_id) {
+                    const competition_id = event.queryStringParameters.competition_id;
+                    const organization_id = event.queryStringParameters.organization_id ;
+                    const finalRankingPath = `competitions/${competition_id}/organizations/${organization_id}/stades`;
+                    try {
+                        const res = await fetch(
+                            ffbUrl + finalRankingPath,
+                            { headers: { Authorization: token }, },
+                        );
+                        return res.json();
+                    } catch (e) {
+                        return {
+                            'statusCode': 500,
+                            'body': 'remote server error :' + e
+                        };
+                    }
+                }
+                return {
+                    'statusCode': 400,
+                    'body': 'proxy error : missing competition_id '
+                };
 
             case "competitions/stades":
                 // attend queryStringParameters.competition_id et .season_id

@@ -30,6 +30,8 @@ export enum COMPETITION_LEVELS {
 export interface CompetitionResults {
   competition: Competition;
   teams: CompetitionTeam[];
+  // additional fields for service use
+  calculation_date?: string | null;
 }
 
 export interface CompetitionResultsMap {
@@ -110,6 +112,7 @@ export interface Competition {
     id: number;
     label: string;
   };
+  calculation_date?: string | null;
   family: {
     id: number;
     label: string;
@@ -135,4 +138,132 @@ export interface Competition {
   nb_phases: number;
   nb_simultaneous_phases: number;
 }
+
+// Détail d'une compétition avec phases / groupes / séances (structure retournée par l'API)
+export interface CompetitionPhases {
+  id: number;
+  season_id: number;
+  season_label: string;
+  subscription_type: string | null;
+  name: string;
+  archive_date: string | null;
+  competition_id: number;
+  competition_label: string;
+  is_over_two_season: boolean;
+  organization_id: number;
+  parent_subordinate_id: number | null;
+  organization_code: string;
+  organization_name: string;
+  has_group_paid: boolean;
+  pe_bonus_process_duration: number | null;
+  pe_bonus_process_enabled: boolean;
+  simultaneous_code: string | null;
+  division: {
+    id: number;
+    label: string;
+  };
+  festival: any | null;
+  family: {
+    id: number;
+    label: string;
+    is_ko: boolean;
+  };
+  type: {
+    id: number;
+    label: string;
+    code: string;
+  };
+  format: {
+    id: number;
+    label: string;
+    code: string;
+  };
+  phases: CompetitionPhase[];
+  allGroupsProbated: boolean;
+  is_paid: boolean;
+  billing_date: string | null;
+  billing_docdate: string | null;
+  calculation_date: string | null;
+  discount: number;
+  // parfois renvoyé comme 0/1
+  is_ic_used: number | boolean;
+  has_realbridge: boolean;
+  has_points: boolean;
+}
+
+export interface CompetitionPhase {
+  id: number;
+  name: string;
+  application_deadline: string | null;
+  min_date_publication: string | null;
+  is_simultaneous: boolean;
+  is_ko: boolean;
+  is_second_chance: boolean;
+  is_for_loser: boolean;
+  simultaneous_calcul_mode_id: number | null;
+  groups: CompetitionPhaseGroup[];
+}
+
+export interface CompetitionPhaseGroup {
+  id: number;
+  name: string;
+  team_max_number: number;
+  application_deadline: string | null;
+  sessions: CompetitionPhaseSession[];
+  nb_sections: number;
+  nb_rounds: number;
+  nb_deals_per_round: number;
+  nb_qualified: number;
+  comments: string | null;
+  serpentin: number;
+  nb_halftime: number;
+  nb_deals_per_halftime: number;
+  type_id: number;
+  type_code: string;
+  type_label: string;
+  is_probated: boolean;
+  iv_min: number | null;
+  has_teams: number;
+  has_teams_who_played: number;
+  serpentin_generated: boolean;
+  pool_game_generated: boolean;
+  parent_group_id: number | null;
+  is_for_loser: boolean;
+  is_second_chance: boolean;
+  pe_weight: number;
+  calculation_date: string | null;
+  probation_date: string | null;
+  has_convocation: boolean;
+  convocation_sent: boolean;
+  has_not_played: boolean;
+  has_no_mailing: boolean;
+  simultaneous_organization_id: number | null;
+  results: {
+    played: number;
+    total: number;
+  };
+  tournament_place: {
+    id: number;
+    code: string;
+    label: string;
+  } | null;
+  has_price: boolean;
+  is_qualification_group: boolean;
+}
+
+export interface CompetitionPhaseSession {
+  id: number;
+  group_id: number;
+  label: string;
+  date: string | null;
+  place: string | null;
+  mail_sent: boolean;
+  is_date_deadline: boolean;
+  import_result_date: string | null;
+  has_realbridge: boolean;
+  moment_id: number | null;
+}
+
+
+
 
