@@ -38,6 +38,8 @@ export class CompetitionsComponent {
   full_regeneration: boolean = false;
   data_ready: boolean = false;
   trace_mode: boolean = false;
+  // nombre de jours pour considérer une calculation_date comme récente
+  private readonly RECENT_CALCULATION_DAYS: number = 30;
 
 
   constructor(
@@ -90,6 +92,17 @@ export class CompetitionsComponent {
       this.update_results();
       this.data_ready = true;
     });
+  }
+
+  /**
+   * Retourne vrai si la calculation_date est dans les derniers RECENT_CALCULATION_DAYS jours.
+   */
+  isRecentCalculation(calcDate?: string | null): boolean {
+    if (!calcDate) return false;
+    const d = new Date(calcDate);
+    if (isNaN(d.getTime())) return false;
+    const diffMs = Date.now() - d.getTime();
+    return diffMs >= 0 && diffMs <= this.RECENT_CALCULATION_DAYS * 24 * 60 * 60 * 1000;
   }
   onParamsChange(reload:boolean): void {
 

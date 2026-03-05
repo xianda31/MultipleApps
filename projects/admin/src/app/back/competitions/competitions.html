@@ -133,9 +133,12 @@
                         <ng-container *ngFor="let res of result.value; let i = index">
                             <div class="mb-2">
                                 <hr *ngIf="i > 0" class="my-2">
-                                <div *ngIf="getFilteredTeams(res).length !== 0" class="text-primary mb-1 d-flex align-items-center">
+                                <div *ngIf="getFilteredTeams(res).length !== 0" class="text-primary mb-1 d-flex align-items-center position-relative">
                                     <span class="d-flex align-items-center">{{ get_organization_label(res.competition.organization_id) }}</span>
-                                    <span class="ms-auto small d-flex align-items-center">{{ res.competition.calculation_date | date:'shortDate' }}</span>
+                                    <span class="ms-auto small d-flex align-items-center"
+                                          [ngClass]="{'recent-date': isRecentCalculation(res.competition.calculation_date)}">
+                                        {{ res.competition.calculation_date | date:'shortDate' }}
+                                    </span>
                                 </div>
                                 <ng-container *ngFor="let team of getFilteredTeams(res)">
                                     <div class="mb-2">
