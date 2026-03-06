@@ -135,11 +135,13 @@ export class CartService {
         sale.transaction_id = bank_op_type;
       }
 
+      // capture items snapshot to avoid concurrent modifications
+      const itemsSnapshot = this._cart.items.slice();
       this.bookService.create_book_entry(sale)
         .then(async (sale) => {
           resolve(sale);
-          // console.log('sale saved', sale);
-          await this.handle_game_card(session);
+          // process game card creation using the snapshot (avoids race with clearCart)
+          await this.handle_game_card(session, itemsSnapshot);
           this.clearCart();
         })
         .catch((error) => {
@@ -258,11 +260,11 @@ export class CartService {
   }
 
 
-  async handle_game_card(session: Session) {
+  async handle_game_card(session: Session, items?: CartItem[]) {
     let members: Member[] = [];
-    for (const cartitem of this._cart.items) {
+    const cartItems = items ?? this._cart.items;
+    for (const cartitem of cartItems) {
       if (cartitem.product_account === 'CAR') {
-
         if (!cartitem.payee || cartitem.payee === null) {
           console.warn('no payee for CAR product', cartitem);
           continue;

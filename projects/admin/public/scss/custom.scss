@@ -25,3 +25,15 @@
 @import "../../../../node_modules/bootstrap/scss/utilities/api";
 
 // 8. Add additional custom code here
+
+/* Tooltips: white text on info background */
+.tooltip .tooltip-inner {
+	background-color: $info !important;
+	color: #fff !important;
+	border-radius: .25rem;
+}
+
+.bs-tooltip-top .tooltip-arrow::before { border-top-color: $info !important; }
+.bs-tooltip-bottom .tooltip-arrow::before { border-bottom-color: $info !important; }
+.bs-tooltip-start .tooltip-arrow::before { border-left-color: $info !important; }
+.bs-tooltip-end .tooltip-arrow::before { border-right-color: $info !important; }

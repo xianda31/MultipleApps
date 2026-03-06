@@ -39,6 +39,7 @@ export const routes: Routes = [
     component: AdminComponent,
     children: [
 
+      { path: BACK_ROUTE_PATHS.Shop + '/:member_id', component: ShopComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.Shop, component: ShopComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.FeesCollector, component: FeesCollectorComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.Products, component: ProductsComponent, canActivate: [AuthGuard] },

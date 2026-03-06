@@ -9,7 +9,7 @@ import { PdfService } from '../../../common/services/pdf.service';
 import { HorizontalAlignment, PDF_table } from '../../../common/interfaces/pdf-table.interface';
 import { FFBplayer } from '../../../common/ffb/interface/FFBplayer.interface';
 import { InputPlayerComponent } from '../../../common/ffb/input-licensee/input-player.component';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { GetConfirmationComponent } from '../../modals/get-confirmation/get-confirmation.component';
 import { ToastService } from '../../../common/services/toast.service';
 import { QuickCardSaleComponent } from '../../../modals/quick-card-sale';
@@ -24,7 +24,7 @@ import { ProductService } from '../../../common/services/product.service';
 @Component({
   selector: 'app-fees-collector',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, InputPlayerComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, InputPlayerComponent, NgbTooltipModule],
   templateUrl: './fees-collector.component.html',
   styleUrl: './fees-collector.component.scss'
 })
@@ -98,6 +98,8 @@ export class FeesCollectorComponent {
     });
 
   }
+
+  // tooltips are provided by NgbTooltip via the template directive
 
   ngOnInit() {
 
@@ -245,11 +247,20 @@ export class FeesCollectorComponent {
 
     // If the gamer has a pre-existing credit or a debt, redirect to the Shop page
     const hasCredit = ((gamer as any).credits || (gamer as any).credit) > 0;
-    if (hasCredit || (gamer as any).debt > 0) {
-      this.router.navigateByUrl(BACK_ROUTE_ABS_PATHS['Shop']);
+      if (hasCredit || (gamer as any).debt > 0) {
+      const member = this.membersService.getMemberbyLicense(gamer.license);
+      if (member && member.id) {
+        this.router.navigateByUrl(`${BACK_ROUTE_ABS_PATHS['Shop']}/${member.id}`);
+      } else {
+        // fallback to shop root if member not found
+        this.router.navigateByUrl(BACK_ROUTE_ABS_PATHS['Shop']);
+      }
       return;
     }
 
+    // ensure active element (e.g., the clicked button) is blurred so it won't remain focused
+    // when overlays or aria-hidden attributes are applied to ancestors
+    try { (document.activeElement as HTMLElement | null)?.blur(); } catch (e) { /* ignore in non-browser env */ }
     const modalRef = this.modalService.open(QuickCardSaleComponent, { centered: true });
     modalRef.componentInstance.titulaire = this.membersService.getMemberbyLicense(gamer.license);
     modalRef.componentInstance.subtitle = `Confirmez-vous la vente d'un crédit de membre ?`;
@@ -266,9 +277,7 @@ export class FeesCollectorComponent {
           const check_ref = (mode === PaymentMode.CHEQUE) ? formValue.bank + formValue.chequeNo : undefined;
      
           // save sale
-          const gamecard = await this.feesCollectorService.create_game_card_sale(owners, this.CARD_ENTRIES,this.CARD_PRICE, mode, check_ref);
-          if(gamecard) {
-          }
+          await this.feesCollectorService.create_game_card_sale(owners, this.CARD_ENTRIES,this.CARD_PRICE, mode, check_ref);
 
         } catch (error) {
           console.error('Erreur lors de la vente rapide', error);

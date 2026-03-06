@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormGroup, FormControl, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { LicenseStatus, Member } from '../../common/interfaces/member.interface';
 import { CartService } from './cart/cart.service';
@@ -27,6 +28,7 @@ import { MoveToEndPipe } from '../../common/pipes/move-to-end.pipe';
   styleUrl: './shop.component.scss'
 })
 export class ShopComponent {
+  @Input() member_id: string | null = null;
   members!: Member[];
 
   cart_is_valid = true;
@@ -43,6 +45,7 @@ export class ShopComponent {
   products_array: Map<string, Product[]> = new Map();
 
   logged_member: Member | null = null;
+  isSaving: boolean = false;
   buyerForm: FormGroup = new FormGroup({
     buyer: new FormControl(null, Validators.required),
   });
@@ -66,7 +69,7 @@ export class ShopComponent {
     private auth: AuthentificationService,
     private systemDataService: SystemDataService,
     private pdfService: PdfService,
-
+    private route: ActivatedRoute,
   ) {
 
   }
@@ -78,14 +81,29 @@ export class ShopComponent {
     this.session.season = this.systemDataService.get_season(today);
     this.bookService.list_book_entries().subscribe((book_entries) => {
       this.operations = this.bookService.get_operations();
+
+      this.membersService.listMembers().subscribe((members) => {
+        this.members = members;
+        // If component was given a buyer_input (member id) via @Input, prefer it
+        const memberIdFromRoute = this.route.snapshot.paramMap.get('member_id');
+        if (memberIdFromRoute) {
+          const m = this.members.find(mem => mem.id === memberIdFromRoute) || this.membersService.getMember(memberIdFromRoute);
+          const looksValid = !!m && (!!m.firstname || !!m.lastname || !!m.license_number);
+          if (looksValid) {
+            this.buyerForm.patchValue({ buyer: m }, { emitEvent: false });
+            this.check_buyer(m);
+          } else {
+            console.warn(`ShopComponent: member with id ${memberIdFromRoute} seems invalid`);
+            this.buyerForm.patchValue({ buyer: null }, { emitEvent: false });
+          }
+          return;
+        }
+      });
+
     });
 
-    this.productService.listProducts().subscribe((products) => {
-      this.products_array = this.productService.products_by_accounts(products);
-    });
-
-    this.membersService.listMembers().subscribe((members) => {
-      this.members = members;
+    this.buyerForm.valueChanges.subscribe((value) => {
+      this.check_buyer(value['buyer']);
     });
 
     this.auth.logged_member$.subscribe((member) => {
@@ -94,54 +112,9 @@ export class ShopComponent {
     });
 
 
-
-    this.buyerForm.valueChanges.subscribe(async (value) => {
-      const buyer: Member | null = value['buyer'];
-      if (buyer === null) return;
-      this.cartService.clearCart();
-      this.cartService.setBuyer(buyer.lastname + ' ' + buyer.firstname);
-
-      this.debt_amount = await this.find_debt(buyer);
-      if (this.debt_amount !== 0) {
-        this.toastService.showWarning('dette', 'cette personne a une dette de ' + this.debt_amount.toFixed(2) + ' €');
-        this.cartService.setDebt(buyer.lastname + ' ' + buyer.firstname, this.debt_amount);
-      }
-
-      this.asset_amount = await this.find_assets(buyer);
-      if (this.asset_amount !== 0) {
-        this.toastService.showInfo('avoir', 'cette personne a un avoir de ' + this.asset_amount.toFixed(2) + ' €');
-        this.cartService.setAsset(buyer.lastname + ' ' + buyer.firstname, this.asset_amount);
-      }
-
-      this.license_paied = (buyer.license_status === LicenseStatus.DULY_REGISTERED);
-      if (!this.license_paied) {
-        this.toastService.showWarning('licence', `${buyer.firstname} ${buyer.lastname} n\'a pas de licence pour cette saison`);
-      }
-
-      // Check if the buyer has paid the membership fee
-      let full_name = this.membersService.full_name(buyer);
-      this.membership_paied = this.operations
-        .filter((op) => op.member === full_name)
-        .some((op) => op.values['ADH']);
-
-      if (!this.membership_paied) {
-        this.toastService.showWarning('adhésion', `${buyer.firstname} ${buyer.lastname} n\'a pas payé l\'adhésion au Club`);
-      }
-
-      // generate aggregatred message
-      this.message ="";
-      if(!this.license_paied && !this.membership_paied) {
-        this.message = `Adhésion et licence à prendre`;
-      }
-      else if(!this.license_paied) {
-        this.message = `Licence à prendre`;
-      }
-      else if(!this.membership_paied) {
-        this.message = `Adhésion à prendre`;
-      }
-
+    this.productService.listProducts().subscribe((products) => {
+      this.products_array = this.productService.products_by_accounts(products);
     });
-
   }
 
   on_product_click(product: Product) {
@@ -163,7 +136,9 @@ export class ShopComponent {
   }
 
   cart_confirmed(): void {
+    
     let full_name = this.membersService.first_then_last_name(this.buyer!);
+    this.isSaving = true;
     this.cartService.save_sale(this.session, this.buyer!)
       .then(() => {
         this.toastService.showSuccess('vente à ' + full_name, (this.debt_amount > 0) ? 'achats et dette enregistrés' : 'achats enregistrés');
@@ -171,8 +146,11 @@ export class ShopComponent {
       .catch((error) => {
         console.error('error saving sale', error);
         this.toastService.showErrorToast('vente', 'erreur lors de l\'enregistrement de la vente');
+      })
+      .finally(() => {
+        this.buyerForm.reset();
+        this.isSaving = false;
       });
-    this.buyerForm.reset();
   }
 
   clear_sale(): void {
@@ -204,6 +182,51 @@ export class ShopComponent {
     let name = payer.lastname + ' ' + payer.firstname;
     let due = this.bookService.find_assets(name);
     return Promise.resolve(due);
+  }
+
+  private async check_buyer(buyer: Member | null): Promise<void> {
+    if (buyer === null) return;
+    this.cartService.clearCart();
+    this.cartService.setBuyer(buyer.lastname + ' ' + buyer.firstname);
+
+    this.debt_amount = await this.find_debt(buyer);
+    if (this.debt_amount !== 0) {
+      this.toastService.showWarning('dette', 'cette personne a une dette de ' + this.debt_amount.toFixed(2) + ' €');
+      this.cartService.setDebt(buyer.lastname + ' ' + buyer.firstname, this.debt_amount);
+    }
+
+    this.asset_amount = await this.find_assets(buyer);
+    if (this.asset_amount !== 0) {
+      this.toastService.showInfo('avoir', 'cette personne a un avoir de ' + this.asset_amount.toFixed(2) + ' €');
+      this.cartService.setAsset(buyer.lastname + ' ' + buyer.firstname, this.asset_amount);
+    }
+
+    this.license_paied = (buyer.license_status === LicenseStatus.DULY_REGISTERED);
+    if (!this.license_paied) {
+      this.toastService.showWarning('licence', `${buyer.firstname} ${buyer.lastname} n'a pas de licence pour cette saison`);
+    }
+
+    // Check if the buyer has paid the membership fee
+    let full_name = this.membersService.full_name(buyer);
+    this.membership_paied = this.operations
+      .filter((op) => op.member === full_name)
+      .some((op) => op.values['ADH']);
+
+    if (!this.membership_paied) {
+      this.toastService.showWarning('adhésion', `${buyer.firstname} ${buyer.lastname} n'a pas payé l'adhésion au Club`);
+    }
+
+    // generate aggregated message
+    this.message = "";
+    if (!this.license_paied && !this.membership_paied) {
+      this.message = `Adhésion et licence à prendre`;
+    }
+    else if (!this.license_paied) {
+      this.message = `Licence à prendre`;
+    }
+    else if (!this.membership_paied) {
+      this.message = `Adhésion à prendre`;
+    }
   }
 
   get_sales_table(table: PDF_table) {

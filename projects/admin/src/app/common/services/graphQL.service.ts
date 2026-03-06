@@ -8,7 +8,7 @@ import { BookEntry } from '../interfaces/accounting.interface';
 import { Schema } from '../../../../../../amplify/data/resource';
 import { Product, Product_input } from '../../back/products/product.interface';
 import { PlayBook, PlayBook_input } from '../../back/game-cards/game-card.interface';
-import {  Page, Page_input, Snippet, Snippet_input } from '../interfaces/page_snippet.interface';
+import { Page, Page_input, Snippet, Snippet_input } from '../interfaces/page_snippet.interface';
 import { Game, Game_input } from '../../back/fees/fees.interface';
 import { NavItem, NavItem_input } from '../interfaces/navitem.interface';
 import { AssistanceRequest, AssistanceRequestInput } from '../interfaces/assistance-request.interface';
@@ -32,63 +32,63 @@ export class DBhandler {
 
   // PAGE SERVICE
 
-// PAGE CREATE PROMISE
-async createPage(page: Page_input): Promise<Page> {
-  const authMode = await lastValueFrom(this._authMode());
-  const client = generateClient<Schema>({ authMode: authMode });
-  const { data : pageData, errors } = await client.models.Page.create(page);
-  if (errors) throw errors;
-  return pageData as unknown as Page;
-}
+  // PAGE CREATE PROMISE
+  async createPage(page: Page_input): Promise<Page> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode: authMode });
+    const { data: pageData, errors } = await client.models.Page.create(page);
+    if (errors) throw errors;
+    return pageData as unknown as Page;
+  }
 
-// PAGE READ (single) PROMISE
-async readPage(id: string): Promise<Page> {
-  const authMode = await lastValueFrom(this._authMode());
-  const client = generateClient<Schema>({ authMode: authMode });
-  const { data: pageData, errors } = await client.models.Page.get({ id });
-  if (errors) throw errors;
-  return pageData as unknown as Page;
-}
+  // PAGE READ (single) PROMISE
+  async readPage(id: string): Promise<Page> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode: authMode });
+    const { data: pageData, errors } = await client.models.Page.get({ id });
+    if (errors) throw errors;
+    return pageData as unknown as Page;
+  }
 
-// PAGE UPDATE PROMISE
-async updatePage(page: Page): Promise<Page> {
-  const authMode = await lastValueFrom(this._authMode());
-  const client = generateClient<Schema>({ authMode: authMode });
-  const { data: updatedPage, errors } = await client.models.Page.update(page);
-  if (errors) throw errors;
-  return updatedPage as unknown as Page;
-}
+  // PAGE UPDATE PROMISE
+  async updatePage(page: Page): Promise<Page> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode: authMode });
+    const { data: updatedPage, errors } = await client.models.Page.update(page);
+    if (errors) throw errors;
+    return updatedPage as unknown as Page;
+  }
 
-// PAGE DELETE PROMISE
-async deletePage(id: string): Promise<boolean> {
-  const authMode = await lastValueFrom(this._authMode());
-  const client = generateClient<Schema>({ authMode: authMode });
-  const { errors } = await client.models.Page.delete({ id });
-  if (errors) throw errors;
-  return true;
-}
+  // PAGE DELETE PROMISE
+  async deletePage(id: string): Promise<boolean> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode: authMode });
+    const { errors } = await client.models.Page.delete({ id });
+    if (errors) throw errors;
+    return true;
+  }
 
-// PAGE LIST (all) OBSERVABLE
-listPages(): Observable<Page[]> {
-  return this._authMode().pipe(
-    switchMap((authMode) => {
-      const client = generateClient<Schema>({ authMode: authMode });
-      return from(
-        client.models.Page.list({ limit: 300 })
-          .then(({ data, errors }) => {
-            if (errors) {
-              console.error('Page.list error', errors);
-              return [];
-            }
-            return data as unknown as Page[];
-          })
-      );
-    })
-  );
-}
+  // PAGE LIST (all) OBSERVABLE
+  listPages(): Observable<Page[]> {
+    return this._authMode().pipe(
+      switchMap((authMode) => {
+        const client = generateClient<Schema>({ authMode: authMode });
+        return from(
+          client.models.Page.list({ limit: 300 })
+            .then(({ data, errors }) => {
+              if (errors) {
+                console.error('Page.list error', errors);
+                return [];
+              }
+              return data as unknown as Page[];
+            })
+        );
+      })
+    );
+  }
 
 
-// MENU SERVICE
+  // MENU SERVICE
 
   // NAVITEM LIST (all) OBSERVABLE
   listNavItems(): Observable<NavItem[]> {
@@ -209,7 +209,7 @@ listPages(): Observable<Page[]> {
     const client = generateClient<Schema>({ authMode: authMode });
     const { data, errors } = await client.models.Member.list({
       filter: { license_number: { eq: license_number } },
-      limit : 300
+      limit: 300
     });
     if (errors) {
       console.error(errors);
@@ -225,7 +225,7 @@ listPages(): Observable<Page[]> {
     const client = generateClient<Schema>({ authMode: authMode });
     const { data, errors } = await client.models.Member.list({
       filter: { email: { eq: normalizedEmail } },
-      limit :300
+      limit: 300
     });
     if (errors) {
       console.error(errors);
@@ -238,7 +238,7 @@ listPages(): Observable<Page[]> {
   }
 
 
-    // ASSISTANCE REQUESTS SERVICE
+  // ASSISTANCE REQUESTS SERVICE
 
   // CREATE
   async createAssistanceRequest(input: AssistanceRequestInput): Promise<AssistanceRequest> {
@@ -421,15 +421,15 @@ listPages(): Observable<Page[]> {
 
   // GAME SERVICE
 
-create_custom_key(season : string, trn_id:number) : string{
-  return season + '_' + trn_id;
-}
+  create_custom_key(season: string, trn_id: number): string {
+    return season + '_' + trn_id;
+  }
 
-   // CREATE PROMISE   ! validated
+  // CREATE PROMISE   ! validated
   async createGame(game: Game): Promise<Game> {
     const game_id = this.create_custom_key(game.season, game.tournament!.id);
 
-    let game_input : Game_input = {
+    let game_input: Game_input = {
       gameId: game_id,
       season: game.season,
       member_trn_price: game.member_trn_price,
@@ -442,43 +442,43 @@ create_custom_key(season : string, trn_id:number) : string{
     };
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode: authMode });
-    const { data : game_output, errors } = await client.models.Game.create(game_input);
+    const { data: game_output, errors } = await client.models.Game.create(game_input);
     if (errors) throw errors;
     let created_game = game_output
       ? {
-          ...game_output,
-          gamers: typeof game_output.gamers === 'string'
-            ? JSON.parse(game_output.gamers)
-            : game_output.gamers,
-          fee_rate: (game_output.fee_rate === null ? 'standard' : game_output.fee_rate) as Game['fee_rate']
-        }
+        ...game_output,
+        gamers: typeof game_output.gamers === 'string'
+          ? JSON.parse(game_output.gamers)
+          : game_output.gamers,
+        fee_rate: (game_output.fee_rate === null ? 'standard' : game_output.fee_rate) as Game['fee_rate']
+      }
       : null;
     if (!created_game) throw new Error('Game creation failed: game_output is null');
     return created_game;
   }
 
-  async  readGame(season : string, trn_id:number): Promise<Game | null> {
+  async readGame(season: string, trn_id: number): Promise<Game | null> {
     let game_id = this.create_custom_key(season, trn_id);
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode: authMode });
-    const { data : game_output, errors } = await client.models.Game.get({ gameId: game_id });
+    const { data: game_output, errors } = await client.models.Game.get({ gameId: game_id });
     // console.log('Game.read output:', game_output);
     if (errors) throw errors;
     let read_game = game_output
       ? {
-          ...game_output,
-          gamers: typeof game_output.gamers === 'string'
-            ? JSON.parse(game_output.gamers)
-            : game_output.gamers,
-          fee_rate: (game_output.fee_rate === null ? 'standard' : game_output.fee_rate) as Game['fee_rate']
-        }
+        ...game_output,
+        gamers: typeof game_output.gamers === 'string'
+          ? JSON.parse(game_output.gamers)
+          : game_output.gamers,
+        fee_rate: (game_output.fee_rate === null ? 'standard' : game_output.fee_rate) as Game['fee_rate']
+      }
       : null;
     return read_game;
   }
 
   async updateGame(game: Game): Promise<Game> {
     const game_id = this.create_custom_key(game.season, game.tournament!.id);
-    let game_input : Game_input = {
+    let game_input: Game_input = {
       gameId: game_id,
       season: game.season,
       fee_rate: game.fee_rate,
@@ -491,23 +491,23 @@ create_custom_key(season : string, trn_id:number) : string{
     };
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode: authMode });
-    const { data : game_output, errors } = await client.models.Game.update( game_input);
+    const { data: game_output, errors } = await client.models.Game.update(game_input);
     if (errors) throw errors;
     let updated_game = game_output
       ? {
-          ...game_output,
-          gamers: typeof game_output.gamers === 'string'
-            ? JSON.parse(game_output.gamers)
-            : game_output.gamers,
-          fee_rate: (game_output.fee_rate === null ? 'standard' : game_output.fee_rate) as Game['fee_rate']
-        }
+        ...game_output,
+        gamers: typeof game_output.gamers === 'string'
+          ? JSON.parse(game_output.gamers)
+          : game_output.gamers,
+        fee_rate: (game_output.fee_rate === null ? 'standard' : game_output.fee_rate) as Game['fee_rate']
+      }
       : null;
     if (!updated_game) throw new Error('Game update failed: game_output is null');
     return updated_game;
   }
 
-  async deleteGame(season : string, trn_id:number): Promise<boolean> {
-    let  game_id = this.create_custom_key(season, trn_id);
+  async deleteGame(season: string, trn_id: number): Promise<boolean> {
+    let game_id = this.create_custom_key(season, trn_id);
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode: authMode });
     const { errors } = await client.models.Game.delete({ gameId: game_id });
@@ -635,7 +635,7 @@ create_custom_key(season : string, trn_id:number) : string{
     const client = generateClient<Schema>({ authMode: authMode });
     const { data, errors } = await client.models.BookEntry.get(
       { id: id },
-      { selectionSet: ['id', 'season', 'tag', 'date', 'amounts', 'operations.*', 'transaction_id', 'cheque_ref', 'deposit_ref', 'bank_report','invoice_ref'] }
+      { selectionSet: ['id', 'season', 'tag', 'date', 'amounts', 'operations.*', 'transaction_id', 'cheque_ref', 'deposit_ref', 'bank_report', 'invoice_ref'] }
 
     );
     if (errors) throw errors;
@@ -731,5 +731,5 @@ create_custom_key(season : string, trn_id:number) : string{
   }
 
 
-  
+
 }

@@ -38,8 +38,29 @@ export class MembersService {
     return this._members.find((m) => m.lastname + ' ' + m.firstname === name) || null;
   }
 
-  getMember(id: string): Member | null {
-    return this._members.find((m) => m.id === id) || null;
+  getMember(id: string): Member {
+    const found = this._members.find((m) => m.id === id);
+    if (found) return found;
+    console.warn(`MembersService.getMember: member with id ${id} not found in cache`);
+    // return a placeholder Member to satisfy callers by construction
+    return {
+      id,
+      gender: '',
+      firstname: '',
+      lastname: '',
+      license_number: '',
+      birthdate: '',
+      city: '',
+      season: '',
+      email: '',
+      phone_one: '',
+      is_sympathisant: false,
+      license_status: '',
+      license_taken_at: '',
+      membership_date: '',
+      has_avatar: false,
+      accept_mailing: false
+    } as Member;
   }
 
   full_name(member: Member): string {

@@ -15,6 +15,7 @@ import { ToastService } from '../../../common/services/toast.service';
 import { DBhandler } from "../../../common/services/graphQL.service";
 import { MemberSettingsService } from '../../../common/services/member-settings.service';
 import { PaymentMode } from '../../shop/cart/cart.interface';
+import { Console } from 'console';
 
 
 
@@ -179,6 +180,11 @@ export class FeesCollectorService {
   }
 
   get_tournament(): club_tournament | null {
+    // check if debt or credit have changed since tournament load
+    if (this.tournament) {
+    this.update_members_debts();
+    this.update_members_credits();
+    }
     return this.tournament;
   }
 
@@ -488,7 +494,9 @@ export class FeesCollectorService {
         const card = await this.gameCardService.createCard(members, card_entries);
         if (card) {
           const buyer = this.membersService.full_name(members[0]);
-          this.BookService.create_game_card_sale(buyer, card_price, mode, co_buyer, check_ref);
+          await this.BookService.create_game_card_sale(buyer, card_price, mode, co_buyer, check_ref);
+          this.update_members_debts();  // update debts after sale
+          this.update_members_credits(); // update credits after sale
           resolve(true);
         } else {
           resolve(false);
