@@ -123,9 +123,7 @@ export class FeesCollectorService {
   }
 
   private update_members_debts() {
-    let members = this.get_members();
     let debts = this.BookService.get_debts();
-    console.log('update_members_debts', debts);
     this.game.gamers.forEach((gamer) => {
       if (gamer.is_member) {
         const fullname = this.membersService.full_name(this.membersService.getMemberbyLicense(gamer.license)!);
@@ -135,15 +133,12 @@ export class FeesCollectorService {
     });
   }
   private update_members_credits() {
-    let members = this.get_members();
     let credits = this.BookService.get_customers_assets();
-    // console.log('update_members_credits', credits);
     this.game.gamers.forEach((gamer) => {
       if (gamer.is_member) {
         const fullname = this.membersService.full_name(this.membersService.getMemberbyLicense(gamer.license)!);
         let member_credit = credits.get(fullname);
         gamer.credit = member_credit ? member_credit.total : 0;
-        if (gamer.credit > 0) console.log(`Gamer ${gamer.firstname} ${gamer.lastname} has credit: ${gamer.credit}`);
       }
     });
   }

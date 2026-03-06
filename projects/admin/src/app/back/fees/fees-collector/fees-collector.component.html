@@ -200,15 +200,11 @@
                         <i class="bi bi-cart-fill"></i>
                     </button>
                 </span>
-                <div class="ms-3 d-flex flex-column gap-1">
-                    <span *ngIf="gamer.is_member && gamer.debt > 0" class="text-danger">
-                        <i class="h6 bi-exclamation-triangle"></i>
-                        <span class="ms-1 text-muted" style="font-size: 0.85em;">{{ gamer.debt | currency : 'EUR': 'symbol'}}</span>
-                    </span>
-                    <span *ngIf="gamer.is_member && gamer.credit > 0" class="text-success">
-                        <i class="h6 bi-piggy-bank"></i>
-                        <span class="ms-1 text-muted" style="font-size: 0.85em;">{{ gamer.credit | currency : 'EUR': 'symbol'}}</span>
-                    </span>
+                <div class="ms-3 d-flex align-items-end">
+                    <ul *ngIf="gamer.is_member" class="small list-unstyled mb-0 d-flex flex-column justify-content-end">
+                        <li *ngIf="gamer.debt > 0" class="mb-0">dette :  {{ gamer.debt | currency : 'EUR': 'symbol'}}</li>
+                        <li *ngIf="gamer.credit>0" class="mb-0">avoir : {{ gamer.credit | currency : 'EUR': 'symbol'}}</li>
+                    </ul>
                 </div>
             </div>
             <div class="card-body py-0 position-relative" style="z-index: 1; overflow: hidden;">
