@@ -84,7 +84,7 @@ export class SnippetModalEditorComponent implements AfterViewInit {
                 ColorPicker: {
             class: ColorPicker as any,
             config: {
-              colors: ['#0d6efd', '#6c757d', '#198754', '#dc3545', '#ffc107', '#0dcaf0', '#f8f9fa', '#212529', '#eb9a87'],
+              colors: ['#0d6efd', '#6c757d', '#198754', '#dc3545', '#ffc107', '#0dcaf0', '#f8f9fa', '#212529', '#6c757d'],
             }
           },
         },

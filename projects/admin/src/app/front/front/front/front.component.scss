@@ -157,62 +157,9 @@ body {
   font-family: var(--font-main) !important;
 }
 
-// --- Début fusion front-navbar styles ---
-@media (max-width: 900px) {
-  .navbar-nav {
-    flex-wrap: wrap !important;
-    justify-content: flex-start !important;
-  }
-}
-.navbar .dropdown-menu .dropdown-item:active,
-.navbar .dropdown-menu .dropdown-item:focus,
-.navbar .dropdown-menu .dropdown-item:hover {
-  background: #eb9a87 !important;
-  color: #fff !important;
-}
-.navbar .dropdown-menu .dropdown-divider {
-  border-color: #eee !important;
-}
-.dropdown-menu .dropdown-item:hover,
-.dropdown-menu .dropdown-item:focus {
-  background: #eb9a87 !important;
-  color: #fff !important;
-}
-.dropdown-menu {
-  background: #fff;
-  color: #222;
-}
-.dropdown-menu .dropdown-item,
-.dropdown-menu .nav-link {
-  color: #222;
-}
-.dropdown-menu .dropdown-item:hover,
-.dropdown-menu .dropdown-item:focus {
-  background: #eb9a87;
-  color: #fff;
-}
-.dropdown-menu .dropdown-toggle,
-.dropdown-menu .nav-link,
-.dropdown-menu .dropdown-item,
-.dropdown-submenu .dropdown-menu .dropdown-item {
-  color: #212529 !important;
-  background: #fff !important;
-}
-.navbar-dark .dropdown-menu .dropdown-item,
-.dropdown-submenu .dropdown-menu .dropdown-item {
-  color: #212529 !important;
-  background: #fff !important;
-}
-.navbar-dark .dropdown-menu .dropdown-item:hover,
-.navbar-dark .dropdown-menu .dropdown-item:focus,
-.dropdown-submenu .dropdown-menu .dropdown-item:hover,
-.dropdown-submenu .dropdown-menu .dropdown-item:focus {
-  color: #fff !important;
-  background: #eb9a87 !important;
-}
-// ... (styles offcanvas, mobile, toggler, etc. du front-navbar)
-// Pour la lisibilité, voir front-navbar.component.scss pour l'intégralité
-// --- Fin fusion front-navbar styles ---
+/* Front-navbar styles are centralized in front-navbar.component.scss.
+   Removed duplicated/obsolete rules (previously contained hardcoded
+   `#eb9a87` backgrounds) to avoid duplication and confusion. */
 
 body::-webkit-scrollbar {
     display: none;
