@@ -15,7 +15,7 @@ import { ToastService } from '../../../common/services/toast.service';
 import { DBhandler } from "../../../common/services/graphQL.service";
 import { MemberSettingsService } from '../../../common/services/member-settings.service';
 import { PaymentMode } from '../../shop/cart/cart.interface';
-import { Console } from 'console';
+import { warn } from 'pdfjs-dist/types/src/shared/util';
 
 
 
@@ -65,36 +65,88 @@ export class FeesCollectorService {
   get_fee_rate(type: FEE_RATE): Fee_rate {
     const fee_rate = this.sys_conf.fee_rates.find((rate) => rate.key === type);
     if (!fee_rate) {
-      throw new Error(`Fee rate type ${type} not found`);
+      // If config doesn't contain the requested rate, return a fallback but warn
+      console.warn(`Fee rate type ${type} not found in system configuration, using fallback prices`);
+      return { key: type, member_price: Number(this.game.member_trn_price ?? 0), non_member_price: Number(this.game.non_member_trn_price ?? 0) } as Fee_rate;
     }
     return fee_rate;
   }
 
+
   change_fee_rate(new_rate: FEE_RATE) {
+    const prev_rate = this.game.fee_rate;
     this.game.fee_rate = new_rate;
     let fee_rate = this.get_fee_rate(new_rate);
+
+    this.showFeeRateChangeAlert(
+      this.game.member_trn_price,
+      fee_rate.member_price,
+      this.game.non_member_trn_price,
+      fee_rate.non_member_price
+    );
+
     this.game.member_trn_price = +fee_rate.member_price;
     this.game.non_member_trn_price = +fee_rate.non_member_price;
     let factor = this.game.fees_doubled ? 2 : 1;
+
     this.game.gamers.forEach((gamer) => {
       gamer.price = gamer.is_member ? this.game.member_trn_price * factor : this.game.non_member_trn_price * factor;
     });
+
+    // If we are leaving ACCESSION, re-enable all gamers and reset validation
+    if (prev_rate === FEE_RATE.ACCESSION && new_rate !== FEE_RATE.ACCESSION) {
+      this.game.gamers.forEach((gamer) => {
+        gamer.enabled = true;
+        gamer.validated = false;
+      });
+    }
+
+    // If the new rate is ACCESSION, disable gamers that can use accession credits
     if (fee_rate.key === FEE_RATE.ACCESSION) {
-      // use acc_credits where possible
       this.game.gamers.forEach((gamer) => {
         if (gamer.is_member && gamer.acc_credits) {
           gamer.enabled = false;
+          gamer.validated = true;
         }
       });
     }
+
     this._game$.next(this.game);
   }
 
+  private showFeeRateChangeAlert(
+    oldMemberPrice: number,
+    newMemberPrice: number,
+    oldNonMemberPrice: number,
+    newNonMemberPrice: number
+  ) {
+    let alertMsg = '';
+    if (this.game.gamers.some(gamer => gamer.is_member && gamer.in_euro) && oldMemberPrice !== newMemberPrice) {
+      alertMsg += `Tarif membre modifié : ${oldMemberPrice} € → ${newMemberPrice} €\n`;
+    }
+    if (this.game.gamers.some(gamer => !gamer.is_member && gamer.in_euro) && oldNonMemberPrice !== newNonMemberPrice) {
+      alertMsg += `Tarif non-membre modifié : ${oldNonMemberPrice} € → ${newNonMemberPrice} €\n`;
+    }
+    if (alertMsg) {
+      window.alert(`Attention, vous venez de modifier la tarification du droit de table en espèces :\n\n${alertMsg}\nAssurez-vous de la cohérence des sommes déjà reçues.`);
+    }
+  }
+
   toggle_fee() {
+    const oldMemberPrice = this.game.member_trn_price;
+    const oldNonMemberPrice = this.game.non_member_trn_price;
     this.game.fees_doubled = !this.game.fees_doubled;
     let factor = this.game.fees_doubled ? 2 : 1;
+    const newMemberPrice = this.game.member_trn_price * factor;
+    const newNonMemberPrice = this.game.non_member_trn_price * factor;
+    this.showFeeRateChangeAlert(
+      oldMemberPrice,
+      newMemberPrice,
+      oldNonMemberPrice,
+      newNonMemberPrice
+    );
     this.game.gamers.forEach((gamer) => {
-      gamer.price = gamer.is_member ? this.game.member_trn_price * factor : this.game.non_member_trn_price * factor;
+      gamer.price = gamer.is_member ? newMemberPrice : newNonMemberPrice;
     });
     this._game$.next(this.game);
   }
@@ -182,8 +234,8 @@ export class FeesCollectorService {
   get_tournament(): club_tournament | null {
     // check if debt or credit have changed since tournament load
     if (this.tournament) {
-    this.update_members_debts();
-    this.update_members_credits();
+      this.update_members_debts();
+      this.update_members_credits();
     }
     return this.tournament;
   }
@@ -223,21 +275,40 @@ export class FeesCollectorService {
 
 
   async check_tournament_status(tournament: club_tournament): Promise<Game_status> {
-    const season = this.systemDataService.get_season(new Date());
-    let game: Game | null = null;
     try {
+      // Guard: if sys_conf is not initialized yet, return INITIAL status
+      if (!this.sys_conf) {
+        console.warn('SystemConfiguration not yet initialized; returning INITIAL status for tournament', tournament.id);
+        return Game_status.INITIAL;
+      }
+
+      const season = this.systemDataService.get_season(new Date());
+      let game: Game | null = null;
       game = await this.DBhandler.readGame(season, tournament.id);
       if (!game) {
         return Game_status.INITIAL;
       }
-      const already_charged = this.BookService.search_tournament_fees_entry(tournament.date, tournament.tournament_name) !== undefined;
+
+      // Guard: Only check BookService if members are loaded (sign that initialization is progressing)
+      // In degraded mode, members may not be loaded yet, so skip this check
+      let already_charged = false;
+      if (this.members && this.members.length > 0) {
+        try {
+          already_charged = this.BookService.search_tournament_fees_entry(tournament.date, tournament.tournament_name) !== undefined;
+        } catch (bookError) {
+          // BookService.search_tournament_fees_entry() may throw if _book_entries not yet initialized
+          // Silent catch: this is expected in degraded mode
+          already_charged = false;
+        }
+      }
+
       if (already_charged) {
         return Game_status.COMPLETED;
       }
       return Game_status.RECOVERED;
     } catch (error) {
-      console.error('Error checking game %o status:%d', game, error);
-      return Game_status.RECOVERED;
+      console.warn('Dependencies not fully initialized in check_tournament_status (expected in degraded mode); returning INITIAL', error);
+      return Game_status.INITIAL;
     }
   }
 

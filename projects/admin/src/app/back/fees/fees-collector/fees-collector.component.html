@@ -69,7 +69,7 @@
             <div class="col-12 col-md-3 border border-secondary rounded p-1 text-center">
                 <div *ngFor="let fee_rate of fee_rates" class="form-check form-check-inline me-2">
                     <input class="form-check-input" type="radio" name="inlineRadioOptions"
-                        [id]="'inlineRadio' + fee_rate" [value]="fee_rate" [(ngModel)]="game.fee_rate"
+                        [id]="'inlineRadio' + fee_rate" [value]="fee_rate" [ngModel]="game.fee_rate"
                         (change)="fee_rate_changed(fee_rate)">
                     <label class="form-check-label" [for]="'inlineRadio' + fee_rate">{{ fee_rate }}</label>
                 </div>

@@ -33,7 +33,7 @@ export class FeesCollectorComponent {
   FEE_RATE = FEE_RATE;
   next_tournaments: club_tournament_extended[] = [];
   selected_tournament: club_tournament_extended | null = null;
-  fee_rates = Object.values(FEE_RATE);
+  fee_rates: FEE_RATE[] = Object.values(FEE_RATE);
   selected_fee_rate: FEE_RATE = FEE_RATE.STANDARD;
   days_back: number = 0;
   private daysBack$ = new BehaviorSubject<number>(0);

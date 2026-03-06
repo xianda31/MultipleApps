@@ -32,7 +32,7 @@ export interface Game extends Fees_context {
 export enum FEE_RATE {
     STANDARD = 'standard',
     ACCESSION = 'accession',
-    HOLYDAYS = 'vacances'
+    HOLYDAYS = 'été'
 }
 
 export interface Gamer {

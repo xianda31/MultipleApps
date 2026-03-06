@@ -118,3 +118,46 @@
   align-items: center !important;
   justify-content: center !important;
 }
+
+/* Hover: subtle scale-up and lift for quick-sale button */
+.quick-sale-btn {
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+.quick-sale-btn:hover,
+.quick-sale-btn:focus,
+.quick-sale-btn:focus-visible,
+.quick-sale-btn:hover {
+  transform-origin: center center;
+  transform: scale(1.12) !important;
+  box-shadow: 0 8px 18px rgba(13,110,253,0.22) !important;
+}
+
+.quick-sale-btn {
+  will-change: transform;
+}
+
+/* Ensure button receives pointer events even if ancestor rules try to block them */
+.quick-sale-btn {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  position: relative !important;
+  z-index: 9999 !important;
+}
+
+/* Ensure the bottom-left badge container is interactive (allows its children to receive pointer events) */
+.gamer-container > .position-absolute.bottom-0.start-0 {
+  pointer-events: auto !important;
+  z-index: 10001 !important;
+}
+
+/* Avatar hover: allow pointer events on avatar and apply slight zoom + shadow */
+.gamer-container .position-absolute.top-50.start-50.translate-middle img.img-fluid.rounded-circle {
+  pointer-events: auto !important;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+  transform-origin: center center;
+}
+.gamer-container .position-absolute.top-50.start-50.translate-middle:hover img.img-fluid.rounded-circle,
+.gamer-container .position-absolute.top-50.start-50.translate-middle img.img-fluid.rounded-circle:hover {
+  transform: scale(1.20) !important;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25) !important;
+}
