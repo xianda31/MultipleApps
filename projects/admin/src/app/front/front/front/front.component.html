@@ -136,8 +136,12 @@
 
 
   <ng-template #tplImageClub>
-    <img class="w-100 d-none d-md-block nice_shadow" [src]="imageClubUrl " alt="image_club"
-      style="height: 100px; width: 100vw; object-fit: cover; display: block;" />
+        <img class="w-100 nice_shadow"
+          [class.d-none]="isMobileLandscape"
+          [class.d-md-block]="!isMobilePortrait && !isMobileLandscape"
+          [src]="imageClubUrl"
+          alt="image_club"
+          style="height: 100px; width: 100vw; object-fit: cover; display: block;" />
   </ng-template>
 
   <ng-template #tplContent>
