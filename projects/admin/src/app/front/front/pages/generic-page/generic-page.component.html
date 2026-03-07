@@ -13,7 +13,7 @@
       <app-loadable-render [snippets]="page_snippets" [row_cols]="row_cols"></app-loadable-render>
     }
     @if (pageTemplate === PAGE_TEMPLATES.TROMBINOSCOPE) {
-      <app-trombinoscope-render [snippets]="page_snippets" [row_cols]="row_cols"></app-trombinoscope-render>
+      <app-trombinoscope-render [snippets]="page_snippets" [row_cols]="{SM: 2, MD: 3, LG: 3, XL: 4}"></app-trombinoscope-render>
     }
     @if (pageTemplate === PAGE_TEMPLATES.CARDS_top) {
       <app-cards-img-top-render [snippets]="page_snippets" [row_cols]="row_cols"></app-cards-img-top-render>

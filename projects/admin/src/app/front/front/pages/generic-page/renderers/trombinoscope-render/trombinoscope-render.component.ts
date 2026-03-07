@@ -20,6 +20,7 @@ export class TrombinoscopeRenderComponent {
   }
 
   rowCols(): string[] {
+    return 'row row-cols-2 row-cols-sm-3 row-cols-md-3 row-cols-lg-3 row-cols-xl-4 g-3justify-content-center'.split(' ');
     return formatRowColsClasses(this.row_cols);
   }
 }

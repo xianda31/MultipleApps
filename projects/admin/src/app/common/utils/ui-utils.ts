@@ -66,7 +66,7 @@ export function formatRowColsClasses(bp: BreakpointsSettings | undefined): strin
   const classes: string[] = [ 'row', 'row-cols-1', 'g-3', 'justify-content-center'];
   const cols = bp || ({ SM: 1, MD: 2, LG: 3, XL: 4 } as BreakpointsSettings);
   if (cols.SM !== undefined && cols.SM !== null) classes.push('row-cols-sm-' + cols.SM);
-  classes.push('row-cols-md-' + cols.MD);
+  if (cols.MD !== undefined && cols.MD !== null) classes.push('row-cols-md-' + cols.MD);
   if (cols.LG !== undefined && cols.LG !== null) classes.push('row-cols-lg-' + cols.LG);
   if (cols.XL !== undefined && cols.XL !== null) classes.push('row-cols-xl-' + cols.XL);
   return classes;
