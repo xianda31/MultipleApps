@@ -1,9 +1,6 @@
 <div class="row mt-3 px-1">
     <div class="col-xs-6 col-md-4">
         <ng-container *ngTemplateOutlet="welcome"></ng-container>
-        <ng-container *ngIf="isMdOrAbove">
-            <ng-container *ngTemplateOutlet="whoarewe"></ng-container>
-        </ng-container>
     </div>
     <div class="col-xs-6 col-md-4 d-flex justify-content-center">
         <ng-container *ngTemplateOutlet="imagegallery"></ng-container>
@@ -11,9 +8,9 @@
     <div class="d-none d-md-block col-md-4">
         <ng-container *ngTemplateOutlet="birthdays"></ng-container>
     </div>
-    <div class="d-block d-md-none px-2">
+    <!-- <div class="d-block d-md-none px-2">
         <ng-container *ngTemplateOutlet="whoarewe"></ng-container>
-    </div>
+    </div> -->
 </div>
 
 
@@ -23,7 +20,7 @@
         <h6 class="text-uppercase text-success fw-bolder mt-2 mb-2">Prochains tournois</h6>
         <app-tournaments [displayTitle]="false" [row_cols]="tournaments_row_cols"></app-tournaments>
     </div>
-    
+
     <div [ngClass]="newsColClass">
         <h6 class="text-uppercase text-success fw-bolder mt-2 mb-2">Les dernières nouvelles</h6>
         <!-- <div class="text-info" (click)="goToNews($event)" style="cursor: pointer;">... accéder à la totalité des
@@ -33,20 +30,22 @@
 </div>
 
 <ng-template #welcome>
-    <div class="card-body">
-        <h6 class="text-uppercase fw-bolder text-success">Bienvenue au Bridge Club de Saint-Orens</h6>
-        <span class="d-block mb-3">un club dynamique, et convivial.</span>
+    <div class="card-body position-relative" style="min-height: 11rem;">
+
+        <span class="d-block position-absolute w-100" style="top:1.0rem; right:0; min-height:8rem; pointer-events:none; z-index:1; text-align:right;">
+            <img src="/label-silver.svg" style="max-height:7rem; opacity:0.9; display:inline-block; margin-right:0.5rem;" alt="silver_label" />
+        </span>
+        <div  style="position:relative; z-index:2;">
+             <h6 class="text-uppercase fw-bolder text-success">Bienvenue au Bridge Club de Saint-Orens</h6>
+            <h6 class="d-block text-success">un club dynamique, et convivial.</h6>
+            <span class="d-block w-75">Son école de Bridge vous permettra de consolider votre technique, selon votre niveau.
+            <span class="d-block w-75">Aujourd'hui,
+                nous sommes <span class="fw-bold">{{ licensee_nbr }}</span> adhérents licenciés ,
+                et <span class="fw-bold">{{ student_nbr }}</span> en apprentissage.
+            </span>
+            </span>
+        </div>
     </div>
-</ng-template>
-<ng-template #whoarewe>
-    <span class="d-block mb-3">
-        <img src="/label-silver.svg" style="max-height:6rem; float: left; margin-right: 0.5rem;" alt="silver_label" />
-        Son école de Bridge vous permettra de consolider votre technique, selon votre niveau.
-    </span>
-    <span class="d-block mb-3 text-center">Aujourd'hui,
-        nous sommes <span class="fw-bold">{{ licensee_nbr }}</span> adhérents licenciés ,
-        et <span class="fw-bold">{{ student_nbr }}</span> en apprentissage.
-    </span>
 </ng-template>
 
 <ng-template #birthdays>
@@ -57,7 +56,7 @@
                 <div *ngFor="let day of next_birthdays" class="col-6 mb-3">
                     <div class="fw-bold small">{{ day.day | date:'EEE d MMM':'':'fr-FR' }}</div>
                     <div *ngFor="let member of day.members" class="small">
-                        <i class="bi bi-gift-fill text-danger me-1"></i>{{ member.firstname }} {{ member.lastname }}  
+                        <i class="bi bi-gift-fill text-danger me-1"></i>{{ member.firstname }} {{ member.lastname }}
                     </div>
                 </div>
             </div>
