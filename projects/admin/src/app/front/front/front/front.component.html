@@ -51,30 +51,36 @@
     </ng-template>
 
     <!-- Mode Mobile (landscape et portrait) -->
+
     <ng-template #tplMobile>
-      <div class="row d-flex align-items-stretch site-banner header-shadow">
-
-        <div class="navbar-bg h-auto g-0 w-100 py-0 my-0">
-          <nav class="navbar navbar-dark">
-            <div class="d-flex align-items-center px-0 w-100">
-              <button class="navbar-toggler ms-2 me-2 flex-shrink-0" type="button" data-bs-toggle="offcanvas"
-                data-bs-target="#mobileMenuOffcanvas" aria-controls="mobileMenuOffcanvas" aria-label="Ouvrir le menu">
-                <span class="navbar-toggler-icon"></span>
-              </button>
-              <div class="flex-grow-1 d-flex justify-content-center align-items-center min-width-0">
-                <ng-template [ngTemplateOutlet]="tplBanner"
-                  [ngTemplateOutletContext]="{ mode: 'mobile' }"></ng-template>
+      <div class="mobile-flex-container d-flex flex-column min-vh-100">
+        <div class="row d-flex align-items-stretch site-banner header-shadow">
+          <div class="navbar-bg h-auto g-0 w-100 py-0 my-0">
+            <nav class="navbar navbar-dark">
+              <div class="d-flex align-items-center px-0 w-100">
+                <button class="navbar-toggler ms-2 me-2 flex-shrink-0" type="button" data-bs-toggle="offcanvas"
+                  data-bs-target="#mobileMenuOffcanvas" aria-controls="mobileMenuOffcanvas" aria-label="Ouvrir le menu">
+                  <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="flex-grow-1 d-flex justify-content-center align-items-center min-width-0">
+                  <ng-template [ngTemplateOutlet]="tplBanner"
+                    [ngTemplateOutletContext]="{ mode: 'mobile' }"></ng-template>
+                </div>
               </div>
-            </div>
-          </nav>
-          <ng-template [ngTemplateOutlet]="tplOffcanvasMenu"
-            [ngTemplateOutletContext]="{ offcanvasId: 'mobileMenuOffcanvas', offcanvasLabel: 'mobileMenuOffcanvasLabel' }"></ng-template>
+            </nav>
+            <ng-template [ngTemplateOutlet]="tplOffcanvasMenu"
+              [ngTemplateOutletContext]="{ offcanvasId: 'mobileMenuOffcanvas', offcanvasLabel: 'mobileMenuOffcanvasLabel' }"></ng-template>
 
-          <ng-template *ngIf="isMobilePortrait" [ngTemplateOutlet]="tplImageClub"></ng-template>
+            <ng-template *ngIf="isMobilePortrait" [ngTemplateOutlet]="tplImageClub"></ng-template>
+          </div>
+        </div>
+        <div class="flex-grow-1">
+          <ng-template [ngTemplateOutlet]="tplContent"></ng-template>
+        </div>
+        <div class="mt-auto">
+          <ng-template [ngTemplateOutlet]="tplFooter"></ng-template>
         </div>
       </div>
-      <ng-template [ngTemplateOutlet]="tplContent"></ng-template>
-      <ng-template [ngTemplateOutlet]="tplFooter"></ng-template>
     </ng-template>
 
   </div>
@@ -157,8 +163,8 @@
   </ng-template>
 
   <ng-template #tplFooter>
-    <div class="footer-banner d-flex align-items-center justify-content-between flex-wrap ">
-      <div class="footer-banner-content flex-grow-1">
+    <div class="footer-banner d-flex align-items-center justify-content-between flex-wrap mt-auto">
+      <div class="footer-banner-content flex-grow-1 py-1" style="line-height: 1.2;">
         <div class="text-center">© 2026 {{ club_name }}</div>
         <div class="row justify-content-center">
           <div *ngFor="let menu of footer_menus; trackBy: trackNavitemId" class="col-auto">
@@ -167,8 +173,8 @@
           </div>
         </div>
       </div>
-      <div class="footer-banner-img d-flex align-items-center" *ngIf="isLaptopMode">
+      <!-- <div class="footer-banner-img d-flex align-items-center" *ngIf="isLaptopMode">
         <img src="VilleDeStOrens.png" alt="Saint-Orens" class="img-fluid nice_shadow" />
-      </div>
+      </div> -->
     </div>
   </ng-template>
