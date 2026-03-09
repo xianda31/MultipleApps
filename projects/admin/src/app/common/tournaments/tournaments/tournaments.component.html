@@ -9,11 +9,8 @@
         <div class="card h-100  nice_shadow">
             <div class=" card-header d-flex text-white bg-primary py-2 align-items-center justify-content-between">
                 <div class="ms-2 text-uppercase">TOURNOI DE RÉGULARITÉ</div>
-                <div *ngIf="registrated_in(t) " class="me-2 d-flex align-items-center">
-                    <div class="bg-primary text-white text-uppercase fw-bold  px-3 py-0 d-inline-flex align-items-center border border-white border-2"
-                        style="font-size:0.75rem; letter-spacing:0.04em;">
-                        INSCRIT<span *ngIf="logged?.gender === 'Mme'">E</span>
-                    </div>
+                <div *ngIf="registrated_in(t) " class="badge  bg-info px-4 py-2">
+                     INSCRIT<span *ngIf="logged?.gender === 'Mme'">E</span> 
                 </div>
             </div>
 
@@ -31,8 +28,9 @@
                 </div>
                 <div class="col col-sm-9 col-md-8  justify-content-center  px-1">
                     <!-- <div class="w-100"> -->
-                        <h5 class="text-success text-center fw-bolder">{{ date_of(t) | date:'EEEE d MMMM':'':'fr-FR' }} </h5>
-                        <h6 class="text-center"> {{name_of(t)}} </h6>
+                    <h5 class="text-success text-center fw-bolder">{{ date_of(t) | date:'EEEE d MMMM':'':'fr-FR' }}
+                    </h5>
+                    <h6 class="text-center"> {{name_of(t)}} </h6>
                     <!-- </div> -->
 
                 </div>
