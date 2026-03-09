@@ -5,3 +5,23 @@
 .tr_hoverable:hover {
   font-weight: bolder;
 }
+
+.mobile-line {
+  display: flex;
+  justify-content: space-between;
+  gap: .5rem;
+  padding: .3rem 0;
+  border-bottom: 1px solid rgba(0, 0, 0, .06);
+  cursor: pointer;
+}
+
+.mobile-label {
+  flex: 1;
+  word-break: break-word;
+  font-size: .92rem;
+}
+
+.mobile-value {
+  white-space: nowrap;
+  // font-weight: 600;
+}

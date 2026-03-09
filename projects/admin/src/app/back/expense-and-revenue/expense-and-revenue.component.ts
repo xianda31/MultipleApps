@@ -73,5 +73,32 @@ export class ExpenseAndRevenueComponent {
   //   console.log('key pressed', event)
   // }
 
+  get_section_total_expenses(sectionKey: string): number {
+    return this.expense_definitions
+      .filter(def => def.section === sectionKey)
+      .reduce((total, def) => total + this.get_total_expenses(def.key), 0);
+  }
+
+  get_section_total_revenues(sectionKey: string): number {
+    return this.revenue_definitions
+      .filter(def => def.section === sectionKey)
+      .reduce((total, def) => total + this.get_total_revenues(def.key), 0);
+  }
+
+  get_section_expense_definitions(sectionKey: string): Revenue_and_expense_definition[] {
+    return this.expense_definitions.filter(def => def.section === sectionKey);
+  }
+
+  get_section_revenue_definitions(sectionKey: string): Revenue_and_expense_definition[] {
+    return this.revenue_definitions.filter(def => def.section === sectionKey);
+  }
+
+  get_max_definitions_in_section(sectionKey: string): number {
+    return Math.max(
+      this.get_section_expense_definitions(sectionKey).length,
+      this.get_section_revenue_definitions(sectionKey).length
+    );
+  }
 
 }
+
