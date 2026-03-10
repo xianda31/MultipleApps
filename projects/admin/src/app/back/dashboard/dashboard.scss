@@ -1,0 +1,43 @@
+/* Classes utiles uniquement */
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+}
+
+.legend-symbol {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.legend-point {
+  display: inline-block;
+}
+
+.chart-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 1000px;
+  height: auto;
+  background-color: white;
+  border-radius: 8px;
+  padding: 15px;
+  canvas {
+    max-width: 100%;
+  }
+}
+
+
+@media (max-width: 768px) {
+  .chart-wrapper {
+    height: 300px;
+    padding: 10px;
+  }
+}
+

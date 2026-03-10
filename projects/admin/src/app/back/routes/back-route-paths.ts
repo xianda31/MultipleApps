@@ -25,8 +25,11 @@ export const BACK_ROUTE_PATHS = {
   GroupsList: 'outils/groups',
   CloneDB: 'outils/cloneDB',
   CloneS3: 'outils/cloneS3',
-  ComiteeBooklet: 'outils/comitee_booklet',
+  // ComiteeBooklet: 'outils/comitee_booklet',
   // Snippets: 'site/thumbnails',
+
+  Dashboard: 'dashboard',
+  
   RootVolume: 'outils/disk',
   FilemgrWindows: 'outils/disk/:root_folder',
   MenusEditor: 'site/menus',
