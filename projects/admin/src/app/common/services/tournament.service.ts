@@ -33,7 +33,6 @@ export class TournamentService {
                     return [];
                 }
                 this._tournaments = tournaments;
-                // console.log('Tournois récupérés :', this._tournaments);
                 return this._tournaments;
             })
         );
