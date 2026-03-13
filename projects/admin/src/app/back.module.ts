@@ -15,7 +15,7 @@ import { routes } from './back/back.routes';
     AngularCommonModule,
     FormsModule,
     RouterModule.forChild(routes),
-    SharedModule // keep for non-standalone pipes/services still declared there
+    SharedModule, // keep for non-standalone pipes/services still declared there
     NgbModule
   ],
 })

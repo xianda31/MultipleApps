@@ -84,6 +84,13 @@ export const STATIC_MENUS: NavbarMenu[] = [
         ]
     },
     {
+        label: 'Dashboard',
+        key: 'dashboard',
+        icon: 'bi-speedometer2',
+        route: BACK_ROUTE_PATHS.Dashboard,
+        minLevel: Group_priorities.Administrateur
+    },
+    {
         label: 'DevTools',
         key: 'devtools',
         icon: 'bi-wrench',
@@ -95,7 +102,7 @@ export const STATIC_MENUS: NavbarMenu[] = [
             { label: 'import excel', route: BACK_ROUTE_PATHS.ImportExcel },
             { label: 'clone DB', route: BACK_ROUTE_PATHS.CloneDB },
             { label: 'clone S3', route: BACK_ROUTE_PATHS.CloneS3 },
-            { label: 'ComiteeBookletViewer', route: BACK_ROUTE_PATHS.ComiteeBooklet }
+            // { label: 'ComiteeBookletViewer', route: BACK_ROUTE_PATHS.ComiteeBooklet }
         ]
     },
 ]

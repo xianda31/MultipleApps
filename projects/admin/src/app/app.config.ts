@@ -1,6 +1,7 @@
 import { ApplicationConfig, LOCALE_ID, provideZoneChangeDetection, InjectionToken } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { InMemoryScrollingOptions, provideRouter, withComponentInputBinding, withInMemoryScrolling } from '@angular/router';
+import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 
 import { routes } from './app.routes';
 import { minimal_routes } from './front/front.routes';
@@ -75,6 +76,7 @@ export const appConfig: ApplicationConfig = {
     // provideAnimations(),
     provideRouter(routes, withInMemoryScrolling(scrollConfig), withComponentInputBinding()),
     provideHttpClient(),
+    provideCharts(withDefaultRegisterables()),
     { provide: LOCALE_ID, useValue: 'fr-FR' },
     {
       provide: APP_INITIALIZER,
