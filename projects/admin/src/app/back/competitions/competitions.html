@@ -1,25 +1,22 @@
 <div *ngIf="data_ready">
     <div class="container-fluid py-3">
         <div class="row">
+            <!-- Bloc back-office uniquement -->
             <div *ngIf="back_office_mode" class="col-12 col-lg-4 col-xl-3 mb-3 mb-lg-0">
-                <!-- Bloc back-office uniquement -->
-                <div *ngIf="back_office_mode" class="card mb-3 mt-5 shadow-sm">
+                <div class="card mb-3 mt-5 shadow-sm">
                     <div class="card-header ">
-                        <span class="fw-bolder text-center d-block mb-3">Mode back-office - réglage des paramètres
-                            d'affichage</span>
+                        <span class="fw-bolder text-center d-block mb-3">Panneau de réglage</span>
 
                         <!-- <div class="row"> -->
-                        <div class="col-auto d-flex flex-column gap-2">
-                            <div class="form-check form-check-inline mb-0">
-                                <input class="form-check-input" type="checkbox" id="showTheoricalRankBack"
-                                    [(ngModel)]="ui_config_loaded.competitions.show_infos"
-                                    (change)="onParamsChange(false)" />
-                                <label class="form-check-label" for="showTheoricalRankBack">Données détaillées</label>
-                            </div>
+                        <div class="card-body col-auto d-flex flex-column gap-2">
 
-                            <!-- <div class="col-auto flex-grow-1"> -->
+                            <!-- potentiometres filtrage(rank) -->
                             <div class="d-flex flex-column align-items-stretch ms-3">
-                                <!-- <label class="form-check-label">Seuils de filtrage par division</label> -->
+                                <div class="d-flex align-content-around">
+                                    <span class="fw-bolder"> réglage des seuils d'affichage </span>
+                                    <button [disabled]="!thresholdsModified" class="btn btn-primary btn-sm ms-auto mt-1"
+                                        (click)="saveThresholds()">Sauvegarder</button>
+                                </div>
                                 <div *ngFor="let division of divisions; let i = index">
                                     <div *ngIf="back_office_mode " class=" w-100 mb-1">
                                         <div class="d-flex align-items-center w-100 mx-auto">
@@ -38,12 +35,27 @@
                                     </div>
                                 </div>
                             </div>
+                            <!-- visualisation des données détaillées (rank ..)-->
+                            <div class="d-flex align-items-center mt-3">
+                                <label class="form-check-label fw-bolder" for="showTheoricalRankBack">Montrer les
+                                    données détaillées</label>
+                                <div class="form-check form-switch ms-auto">
+                                    <input class="form-check-input" type="checkbox" id="showTheoricalRankBack"
+                                        [(ngModel)]="ui_config_loaded.competitions.show_infos"
+                                        (change)="onParamsChange(false)" />
+                                </div>
+                            </div>
+
+                            <!-- RAZ persistence -->
+                            <div class="d-flex align-items-center mt-3">
+                                <span class="fw-bolder">Réinitialiser la sauvegarde des résultats</span>
+                                <button class="btn btn-primary btn-sm ms-auto"
+                                    (click)="onParamsChange(true)">RAZ</button>
+                            </div>
                         </div>
 
-                        <div>
-                            <button [disabled]="!thresholdsModified" class="btn btn-primary btn-sm ms-auto mt-1"
-                                (click)="saveThresholds()">Sauvegarder</button>
-                        </div>
+
+
                         <!-- </div> -->
                     </div>
                 </div>
@@ -133,13 +145,14 @@
                         <ng-container *ngFor="let res of result.value; let i = index">
                             <div class="mb-2">
                                 <hr *ngIf="i > 0" class="my-2">
-                                <div *ngIf="getFilteredTeams(res).length !== 0" class="text-primary mb-1 d-flex align-items-center position-relative">
-                                                                        <span class="d-flex align-items-center"
-                                                                                    [ngClass]="{'recent-date': isRecentCalculation(res.competition.calculation_date)}">
-                                                                                {{ get_organization_label(res.competition.organization_id) }}</span>
-                                                                        <span class="ms-auto small d-flex align-items-center">
-                                                                                {{ res.competition.calculation_date | date:'shortDate' }}
-                                                                        </span>
+                                <div *ngIf="getFilteredTeams(res).length !== 0"
+                                    class="text-primary mb-1 d-flex align-items-center position-relative">
+                                    <span class="d-flex align-items-center"
+                                        [ngClass]="{'recent-date': isRecentCalculation(res.competition.calculation_date)}">
+                                        {{ get_organization_label(res.competition.organization_id) }}</span>
+                                    <span class="ms-auto small d-flex align-items-center">
+                                        {{ res.competition.calculation_date | date:'shortDate' }}
+                                    </span>
                                 </div>
                                 <ng-container *ngFor="let team of getFilteredTeams(res)">
                                     <div class="mb-2">

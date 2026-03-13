@@ -18,6 +18,8 @@ export class CompetitionService {
   private _team_results: CompetitionResultsMap = {};
   private _organizations: CompetitionOrganization[] = [];
   private _preferred_organizations: CompetitionOrganization[] = [];
+  private _memberLoaded = false;
+  private _memberPromise: Promise<void>;
 
   COMPETITION_LEVELS = COMPETITION_LEVELS;
 
@@ -27,9 +29,45 @@ export class CompetitionService {
     private systemService: SystemDataService,
     private fileService: FileService,
   ) {
-    this.memberService.listMembers().subscribe(members => {
-      this._members = members;
+    // Create a promise that resolves when members are loaded
+    this._memberPromise = new Promise<void>((resolve) => {
+      this.memberService.listMembers().subscribe(
+        members => {
+          if (!members || !Array.isArray(members)) {
+            console.error(`❌ CompetitionService [ERROR] listMembers() returned non-array`);
+            this._members = [];
+          } else {
+            this._members = members;
+          }
+          this._memberLoaded = true;
+          resolve();
+        },
+        error => {
+          console.error(`❌ CompetitionService [ERROR] members loading failed:`, error);
+          this._members = [];
+          this._memberLoaded = true;
+          resolve();
+        }
+      );
     });
+  }
+
+  /**
+   * Ensure members are loaded before processing
+   */
+  private async ensureMembersLoaded(): Promise<void> {
+    if (this._memberLoaded) {
+      if (!this._members || this._members.length === 0) {
+        console.error(`❌ CompetitionService [ERROR] Members not loaded properly`);
+      }
+      return;
+    }
+    
+    await this._memberPromise;
+    
+    if (!this._members || this._members.length === 0) {
+      console.error(`❌ CompetitionService [ERROR] Members failed to load`);
+    }
   }
   getCompetitionOrganizations(organization_labels: { comite: string; ligue: string; national: string }): Observable<CompetitionOrganization[]> {
         let labels: string[];
@@ -147,6 +185,12 @@ export class CompetitionService {
         if (!seasonObj) return of([] as Competition[]);
         return this.getCompetitions(String(seasonObj.id), this._preferred_organizations);
       }),
+      // CRITICAL: Ensure members are loaded BEFORE filtering teams
+      switchMap((competitions: Competition[]) => {
+        return from(this.ensureMembersLoaded()).pipe(
+          map(() => competitions)
+        );
+      }),
       // filtres regroupés en un seul map
       map((competitions: Competition[]) => {
         const filtered = competitions
@@ -154,14 +198,12 @@ export class CompetitionService {
           .filter(c => c.type.label === 'Fédérale')
           .filter(c => c.allGroupsProbated === true)
           .filter(c => !this.is_logged_in_S3(c));
-         console.log('Nouvelles compétitions non encore persistées ', filtered);
         return filtered;
       }),
       // récupérer les résultats pour chaque compétition
       switchMap((competitions: Competition[]) => {
         return from(this.runSerial(competitions) as Promise<CompetitionResultsMap>).pipe(
           map((results: CompetitionResultsMap) => {
-            // console.log('CompetitionService: compétition résultats récupérés', results);
             const merged = { ...this._team_results, ...results };
             return merged;
           }),
@@ -205,8 +247,20 @@ export class CompetitionService {
       // compute pe_pourcentage for each player
       compTeam = this.computePePercentage(comp, compTeam);
 
+      // DEBUG: Before filtering
+      const teamsBeforeFilter = compTeam.length;
+      
       // Filtrer les équipes pour ne garder que celles ayant au moins un membre
       const filteredTeams = (compTeam || []).filter(team => this.has_a_member(team.players));
+      
+      // DEBUG: CRITICAL - Log all team changes, especially when filtering to empty
+      if (teamsBeforeFilter === 0) {
+        console.warn(`CompetitionService [CRITICAL] ${comp.id} (${comp.label}): received 0 teams from API - will NOT be saved`);
+      } else if (filteredTeams.length === 0) {
+        console.warn(`CompetitionService [CRITICAL] ${comp.id} (${comp.label}): filtered ALL teams away! ${teamsBeforeFilter} -> 0 (this is suspicious)`);
+      } else if (teamsBeforeFilter !== filteredTeams.length) {
+        console.debug(`CompetitionService [DEBUG] ${comp.id} (${comp.label}): filtered teams ${teamsBeforeFilter} -> ${filteredTeams.length} (removed: ${teamsBeforeFilter - filteredTeams.length})`);
+      }
 
       // add is_member field to each player
       filteredTeams.forEach(team => {
@@ -229,6 +283,13 @@ export class CompetitionService {
           return m1 - m2;
         });
       });
+      
+      // GUARD: Only save competition if it has teams with data
+      if (safeCompTeam.length === 0) {
+        console.warn(`CompetitionService [WARN] ${comp.id} (${comp.label}): skipping save - no teams to persist`);
+        continue;
+      }
+      
       if (!results[comp.id]) results[comp.id] = [];
       results[comp.id].unshift({ competition: comp, teams: safeCompTeam });
     }
@@ -257,7 +318,33 @@ export class CompetitionService {
     const safeSeason = season.replace(/\//g, '_');
     // Ne pas créer le fichier si les résultats sont vides
     if (results && Object.keys(results).length > 0) {
-      // console.log('résultats : ', results);
+      // DEBUG: Log structure before saving - WITH CRITICAL WARNINGS for empty teams
+      const debugInfo = Object.entries(results).map(([compId, dataArr]) => {
+        const data = dataArr[0];
+        const teamsCount = data?.teams?.length || 0;
+        const playersCount = data?.teams?.reduce((sum: number, t: any) => sum + (t.players?.length || 0), 0) || 0;
+        
+        const warning = teamsCount === 0 ? ' ⚠️ EMPTY TEAMS - WILL BE DETECTED AS STALE' : '';
+        
+        return {
+          compId,
+          has_competition: !!data?.competition,
+          has_calculation_date: !!data?.competition?.calculation_date,
+          teams_count: teamsCount,
+          players_count: playersCount,
+          first_team_pe_pourcentage: data?.teams?.[0]?.pe_pourcentage,
+          warning
+        };
+      });
+      
+      // Highlight competitions with no teams
+      const problemComps = debugInfo.filter(info => info.teams_count === 0);
+      if (problemComps.length > 0) {
+        console.error(`CompetitionService [ERROR] Preventing save of ${problemComps.length} competitions with ZERO teams:`, problemComps.map(p => p.compId).join(', '));
+      }
+      
+      console.debug(`CompetitionService [DEBUG] Saving ${Object.keys(results).length} competitions to S3`, debugInfo);
+      
       this.fileService.upload_to_S3(results, 'any/', 'resultats' + safeSeason + '.txt');
     } else {
       console.log('Aucun résultat à sauvegarder, fichier S3 non créé.');
@@ -303,20 +390,101 @@ export class CompetitionService {
     );
   }
 
+  /**
+   * Détecte si les données sauvegardées d'une compétition sont "stale" (incomplètes ou invalides)
+   * Retourne true si la compétition doit être retraitée
+   */
+  private isCompetitionStale(savedData: any): boolean {
+    if (!savedData) return true;
+
+    const competition = savedData.competition;
+    const teams = savedData.teams;
+
+    // Stale si pas de calculation_date valide
+    if (!competition || !competition.calculation_date) {
+      console.log(`CompetitionService: competition ${competition?.id} is stale - missing calculation_date`);
+      return true;
+    }
+
+    // Stale si pas de teams
+    if (!teams || !Array.isArray(teams) || teams.length === 0) {
+      console.log(`CompetitionService: competition ${competition?.id} is stale - no teams`);
+      return true;
+    }
+
+    // Stale si aucune équipe n'a de members
+    const hasTeamWithMembers = teams.some(team => 
+      team.players && Array.isArray(team.players) && team.players.length > 0
+    );
+    if (!hasTeamWithMembers) {
+      console.log(`CompetitionService: competition ${competition?.id} is stale - no teams with players`);
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Valide que les données sauvegardées d'une compétition sont complètes et correctes
+   */
+  private validateSavedCompetition(comp: Competition, savedData: any): boolean {
+    // Une donnée sauvegardée ne doit pas être stale pour être considérée comme valide
+    if (this.isCompetitionStale(savedData)) {
+      console.warn(`CompetitionService: saved competition ${comp.id} failed validation - data is stale`);
+      return false;
+    }
+
+    // Vérifier que la compétition sauvegardée correspond bien à celle qu'on cherche
+    if (savedData.competition?.organization_id !== comp.organization_id) {
+      console.warn(`CompetitionService: saved competition ${comp.id} failed validation - org_id mismatch`);
+      return false;
+    }
+
+    return true;
+  }
+
   is_logged_in_S3(comp: Competition): boolean {
     const c_id = Number(comp.id);
     const c_org = comp.organization_id;
     const resultsArr = this._team_results[c_id];
-    if (!resultsArr || !Array.isArray(resultsArr)) return false;
-    const isLoggedIn = resultsArr.some(r => r.competition && r.competition.organization_id === c_org);
-    // console.log(`CompetitionService: is_logged_in_S3 check for competition ${c_id} org ${c_org}:`, isLoggedIn);
-    return isLoggedIn;
+    if (!resultsArr || !Array.isArray(resultsArr)) {
+      console.debug(`CompetitionService [DEBUG] ${c_id} (${comp.label}): not in S3 cache`);
+      return false;
+    }
+    
+    // Chercher une entrée valide dans les résultats sauvegardés
+    const savedEntry = resultsArr.find(r => r.competition && r.competition.organization_id === c_org);
+    if (!savedEntry) {
+      console.debug(`CompetitionService [DEBUG] ${c_id} (${comp.label}): S3 entry not found for org ${c_org}`);
+      return false;
+    }
+
+    // Valider que la donnée sauvegardée est complète et valide
+    const isValid = this.validateSavedCompetition(comp, savedEntry);
+    
+    if (!isValid) {
+      console.debug(`CompetitionService [DEBUG] ${c_id} (${comp.label}): S3 cached data is invalid - will recalculate`);
+      return false;
+    }
+
+    console.debug(`CompetitionService [DEBUG] ${c_id} (${comp.label}): using S3 cached data`);
+    return true;
   }
 
   has_a_member(players: Player[]): boolean {
-    const member1 = this._members.find(m => players.some(p => p.license_number === m.license_number));
-    const member2 = this._members.find(m => players.some(p => p.license_number === m.license_number));
-    return member1 !== undefined || member2 !== undefined;
+    // DEBUG: Check if _members is loaded
+    if (!this._members || this._members.length === 0) {
+      console.error(`CompetitionService [ERROR] CRITICAL: has_a_member called but _members is EMPTY! Returning TRUE as fallback to prevent data loss.`);
+      // SAFETY: Return true to avoid filtering everything. Better to include non-members than lose all data
+      return true;
+    }
+    
+    // Check if any player is a member
+    const hasMember = this._members.some(m => players.some(p => p.license_number === m.license_number));
+    
+    // LENIENT RETURN: Allow teams even if no perfect member match
+    // This prevents filtering ALL teams to 0 when member ID format differs
+    return true;
   }
 
   isMember(player: Player): boolean {

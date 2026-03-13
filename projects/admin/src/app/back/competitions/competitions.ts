@@ -7,6 +7,8 @@ import { SystemDataService } from '../../common/services/system-data.service';
 import { TitleService } from '../../front/title/title.service';
 import { ActivatedRoute } from '@angular/router';
 import { UIConfiguration } from '../../common/interfaces/ui-conf.interface';
+import { Member } from '../../common/interfaces/member.interface';
+import { MembersService } from '../../common/services/members.service';
 
 @Component({
   selector: 'app-competitions',
@@ -38,6 +40,7 @@ export class CompetitionsComponent {
   full_regeneration: boolean = false;
   data_ready: boolean = false;
   trace_mode: boolean = false;
+  private _members: Member[] = [];
   // nombre de jours pour considérer une calculation_date comme récente
   private readonly RECENT_CALCULATION_DAYS: number = 30;
 
@@ -47,9 +50,14 @@ export class CompetitionsComponent {
     private systemService: SystemDataService,
     private titleService: TitleService,
     private route: ActivatedRoute,
+    private memberService: MembersService,
   ) { }
 
   ngOnInit(): void {
+    // Load members for filtering
+    this.memberService.listMembers().subscribe(members => {
+      this._members = members || [];
+    });
 
     // Access custom route data (e.g., 'access')
     this.route.data.subscribe(data => {
@@ -108,7 +116,9 @@ export class CompetitionsComponent {
 
     if (reload) {
       this.results_extracted = false;
+      this.full_regeneration = true;
       this.update_results();
+      this.full_regeneration = false;
     }
     this.thresholdsModified = true;
     this.titleService.setTitle('Résultats des compétitions ' + this.current_season);
@@ -211,7 +221,8 @@ export class CompetitionsComponent {
   }
 
   isMember(player: Player): boolean {
-    return player.is_member === true;
+    // Check if player's license_number exists in members list
+    return this._members.some(m => m.license_number === player.license_number);
   }
 
   getDisplayedPlayers(players: Player[]): Player[] {
@@ -236,12 +247,24 @@ export class CompetitionsComponent {
 
   getFilteredTeams(result: CompetitionResults): CompetitionTeam[] {
     if (!result || !Array.isArray(result.teams)) return [];
+    
+    // Filter by threshold
     const threshold = this.getThreshold(result.competition);
-    if (this.no_filter) return result.teams;
-    if (threshold === undefined) return result.teams;
-    return result.teams.filter((team: CompetitionTeam) =>
-      team.cumulated_pe_percentage === undefined || team.cumulated_pe_percentage <= threshold
-    );
+    let filtered = result.teams;
+    if (!this.no_filter && threshold !== undefined) {
+      filtered = result.teams.filter((team: CompetitionTeam) =>
+        team.cumulated_pe_percentage === undefined || team.cumulated_pe_percentage <= threshold
+      );
+    }
+    
+    // Remove teams that have NO valid members (all players are non-members)
+    filtered = filtered.filter((team: CompetitionTeam) => {
+      if (!Array.isArray(team.players) || team.players.length === 0) return false;
+      // Keep team if at least one player is a member
+      return team.players.some(p => this.isMember(p));
+    });
+    
+    return filtered;
   }
 
   
