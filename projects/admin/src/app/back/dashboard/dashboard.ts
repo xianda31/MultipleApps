@@ -7,7 +7,7 @@ import { SystemDataService } from '../../common/services/system-data.service';
 import { Revenue, Expense, BookEntry, CUSTOMER_ACCOUNT } from '../../common/interfaces/accounting.interface';
 import { TournamentService } from '../../common/services/tournament.service';
 import { Observable, map } from 'rxjs';
-  import { DashboardGraphService } from './dashboard.graph.service';
+import { DashboardGraphService } from './dashboard.graph.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -21,11 +21,14 @@ export class DashboardComponent {
   allMonths: string[] = [];
   startYear!: number;
 
-  
+
   financialChartData: any;
   playerChartData: any;
   playerChartOptions!: ChartOptions<any>;
   financialChartOptions!: ChartOptions<any>;
+
+  playerCountAverage  !: number;
+  tournamentCountAverage!: number;
 
   constructor(
     private bookService: BookService,
@@ -38,42 +41,40 @@ export class DashboardComponent {
 
   ngOnInit() {
 
+    this.systemDataService.get_configuration().subscribe((conf) => {
+      // Générer tous les mois de la saison courante (juillet à juin)
+      const season = conf.season;
+      this.startYear = parseInt(season.slice(0, 4));
+      this.allMonths = this.generateSeasonMonths(this.startYear);
 
-    // Générer tous les mois de la saison courante (juillet à juin)
-    const season = this.systemDataService.get_season(new Date());
-    this.startYear = parseInt(season.slice(0, 4));
-    this.allMonths = this.generateSeasonMonths(this.startYear);
 
-    // Initialiser les données financières et de tournois, puis configurer les datasets des graphiques avec les couleurs récupérées
+      this.initialize_financial_data(this.allMonths).subscribe(({ chartRevenue, chartExpense, chartResult }) => {
 
-    this.initialize_financial_data(this.allMonths).subscribe(({ chartRevenue, chartExpense, chartResult }) => {
+        ({ data: this.financialChartData, options: this.financialChartOptions } = this.graphService.buildFinancialChart(
+          this.allMonths,
+          chartRevenue,
+          chartExpense,
+          chartResult
+        ));
+      });
 
-      ({data: this.financialChartData, options: this.financialChartOptions} = this.graphService.buildFinancialChart(
-        this.allMonths,
-        chartRevenue,
-        chartExpense,
-        chartResult
-      ));
+      this.initialize_tournaments_data(this.allMonths).subscribe(({ playerCounts, tournamentCounts }) => {
+        // Calculer les moyennes
+        const nonNullPlayerCounts = playerCounts.filter(c => c !== null) as number[];
+        const nonNullTournamentCounts = tournamentCounts.filter(c => c !== null) as number[];
+        this.playerCountAverage = nonNullPlayerCounts.length > 0 ? nonNullPlayerCounts.reduce((a, b) => a + b, 0) / nonNullPlayerCounts.length : 0;
+        this.tournamentCountAverage = nonNullTournamentCounts.length > 0 ? nonNullTournamentCounts.reduce((a, b) => a + b, 0) / nonNullTournamentCounts.length : 0;
+
+        ({ data: this.playerChartData, options: this.playerChartOptions } = this.graphService.buildPlayerChart(
+          this.allMonths,
+          playerCounts,
+          tournamentCounts,
+          this.playerCountAverage,
+          this.tournamentCountAverage
+        ));
+      });
+
     });
-
-    // initialiser les données de tournois et joueurs, puis configurer les datasets du graphique avec les couleurs récupérées
-    this.initialize_tournaments_data(this.allMonths).subscribe(({ playerCounts, tournamentCounts }) => {
-
-      // Calculer les moyennes
-      const nonNullPlayerCounts = playerCounts.filter(c => c !== null) as number[];
-      const nonNullTournamentCounts = tournamentCounts.filter(c => c !== null) as number[];
-      const playerCountAverage = nonNullPlayerCounts.length > 0 ? nonNullPlayerCounts.reduce((a, b) => a + b, 0) / nonNullPlayerCounts.length : 0;
-      const tournamentCountAverage = nonNullTournamentCounts.length > 0 ? nonNullTournamentCounts.reduce((a, b) => a + b, 0) / nonNullTournamentCounts.length : 0;
-
-      ({data: this.playerChartData, options: this.playerChartOptions} = this.graphService.buildPlayerChart(
-        this.allMonths,
-        playerCounts,
-        tournamentCounts,
-        playerCountAverage,
-        tournamentCountAverage
-      ));
-    });
-
   }
 
   initialize_tournaments_data(chartLabels: string[]): Observable<{ playerCounts: (number | null)[], tournamentCounts: (number | null)[] }> {
