@@ -28,9 +28,10 @@ export class TournamentsComponent {
   license_nbr = 0; // License number of the logged member
   // logged: boolean = false;
   loading: boolean = true;
-  logged: Member | null = null; 
+  in_error: boolean = false;
+  logged: Member | null = null;
 
-  
+
 
   constructor(
     private tournamentService: TournamentService,
@@ -38,7 +39,7 @@ export class TournamentsComponent {
     private router: Router,
     private route: ActivatedRoute,
     private titleService: TitleService,
-    private systemDataService: SystemDataService
+    private systemDataService: SystemDataService,
 
   ) { }
 
@@ -47,7 +48,7 @@ export class TournamentsComponent {
   ngOnInit(): void {
 
 
-  if (this.displayTitle !== false) this.titleService.setTitle('Les prochains tournois de régularité');
+    if (this.displayTitle !== false) this.titleService.setTitle('Les prochains tournois de régularité');
     this.loadTournamentTeams();
 
     this.auth.logged_member$.subscribe((member) => {
@@ -63,19 +64,24 @@ export class TournamentsComponent {
     combineLatest([
       this.systemDataService.tournamentsTypeWithUrl$(),
       this.tournamentService.list_next_tournament_teams()
-    ]).subscribe(([types_map, next_tournament_teams]: [any, TournamentTeams[]]) => {
-      const mapObj = types_map || {};
-
-      // Enrich each team with a precomputed `image_url` using a helper for clarity.
-      const enrichedTeams = next_tournament_teams.map((team) => {
-        const rawName = team.subscription_tournament.organization_club_tournament.tournament_name || '';
-        const nameKey = rawName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-        const imageUrl = this.findImageUrlForName(nameKey, mapObj);
-        return Object.assign(team as any, { image_url: imageUrl });
-      });
-
-      this.next_tournament_teams = enrichedTeams;
-      this.loading = false;
+    ]).subscribe({
+      next: ([types_map, next_tournament_teams]: [any, TournamentTeams[]]) => {
+        const mapObj = types_map || {};
+        // Enrich each team with une image_url
+        const enrichedTeams = next_tournament_teams.map((team) => {
+          const rawName = team.subscription_tournament.organization_club_tournament.tournament_name || '';
+          const nameKey = rawName.toLowerCase().normalize('NFD').replace(/[]/g, '');
+          const imageUrl = this.findImageUrlForName(nameKey, mapObj);
+          return Object.assign(team as any, { image_url: imageUrl });
+        });
+        this.next_tournament_teams = enrichedTeams;
+        this.loading = false;
+      },
+      error: (err) => {
+        this.loading = false;
+        this.in_error = true;
+        console.error('Erreur lors du chargement des tournois :', err);
+      }
     });
   }
 
@@ -107,7 +113,7 @@ export class TournamentsComponent {
   name_of(tTeams: TournamentTeams): string {
     return tTeams.subscription_tournament.organization_club_tournament.tournament_name;
   }
-  
+
 
   getImageUrl(tTeams: TournamentTeams): string | null {
     return (tTeams as any).image_url ?? null;

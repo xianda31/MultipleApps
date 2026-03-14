@@ -4,7 +4,11 @@
     </div>
 </div>
 
-<div *ngIf="!loading" [ngClass]="rowCols()">
+<div *ngIf="!loading && in_error" class="alert alert-danger mt-3 w-50 align-self-center" role="alert">
+    Les tournois sont momentanément inaccessibles.
+</div>
+
+<div *ngIf="!loading && !in_error" [ngClass]="rowCols()">
     <div class="col" *ngFor="let t of next_tournament_teams">
         <div class="card h-100  nice_shadow">
             <div class=" card-header d-flex text-white bg-primary py-2 align-items-center justify-content-between">

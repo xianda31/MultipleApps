@@ -43,7 +43,6 @@ export class FFB_proxyService {
       apiName: 'ffbProxyApi',
       path: 'v1/organizations/1438/club_tournament',
     });
-
     return from((async () => {
       try {
         const response = await restOperation.response;
@@ -53,12 +52,7 @@ export class FFB_proxyService {
           throw new Error('Réponse serveur invalide');
         }
       } catch (error: any) {
-        if (error?.response?.statusCode === 500) {
-          console.error('Erreur serveur 500 lors de la récupération des tournois');
-        } else {
-          console.error('Erreur lors de la récupération des tournois:', error);
-        }
-        return [];
+        return Promise.reject(error);
       }
     })());
   }

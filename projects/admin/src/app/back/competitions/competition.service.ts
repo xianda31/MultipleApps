@@ -471,24 +471,47 @@ export class CompetitionService {
     return true;
   }
 
+  /**
+   * Normalise un numéro de licence pour comparaison robuste
+   * Gère: whitespace, leading zeros, casse
+   */
+  private normalizeLicense(license: string | undefined): string {
+    if (!license) return '';
+    return String(license)
+      .trim()
+      .toLowerCase()
+      .replace(/^0+/, ''); // Remove leading zeros (so 02449751 -> 2449751)
+  }
+
+  /**
+   * Compare deux numéros de licence avec normalisation
+   * Retourne true si les licenses correspondent (même après normalisation)
+   */
+  private licensesMatch(playerLicense: string | undefined, memberLicense: string | undefined): boolean {
+    // Exact match first (fast path)
+    if (playerLicense === memberLicense) return true;
+    
+    // Normalized match (handles formats like 02449751 vs 2449751)
+    const normPlayer = this.normalizeLicense(playerLicense);
+    const normMember = this.normalizeLicense(memberLicense);
+    
+    return normPlayer === normMember && normPlayer !== '';
+  }
+
   has_a_member(players: Player[]): boolean {
-    // DEBUG: Check if _members is loaded
     if (!this._members || this._members.length === 0) {
-      console.error(`CompetitionService [ERROR] CRITICAL: has_a_member called but _members is EMPTY! Returning TRUE as fallback to prevent data loss.`);
-      // SAFETY: Return true to avoid filtering everything. Better to include non-members than lose all data
-      return true;
+      console.error(`CompetitionService [ERROR] _members is EMPTY!`);
+      return false; // Strict: if no members loaded, team has no members
     }
     
-    // Check if any player is a member
-    const hasMember = this._members.some(m => players.some(p => p.license_number === m.license_number));
-    
-    // LENIENT RETURN: Allow teams even if no perfect member match
-    // This prevents filtering ALL teams to 0 when member ID format differs
-    return true;
+    // Check if ANY player matches ANY member using robust license comparison
+    return players.some(p => 
+      this._members.some(m => this.licensesMatch(p.license_number, m.license_number))
+    );
   }
 
   isMember(player: Player): boolean {
-    return this._members.some(m => m.license_number === player.license_number);
+    return this._members.some(m => this.licensesMatch(player.license_number, m.license_number));
   }
 
 }

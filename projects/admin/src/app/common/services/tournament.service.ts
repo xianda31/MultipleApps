@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { club_tournament } from '../ffb/interface/club_tournament.interface';
-import { BehaviorSubject, from, map, merge, Observable, scan, switchMap, tap, of } from 'rxjs';
+import { BehaviorSubject, from, map, merge, Observable, scan, switchMap, tap, of, catchError, throwError } from 'rxjs';
 import { shareReplay } from 'rxjs/operators';
 import { FFB_proxyService } from '../ffb/services/ffb.service';
 import { TournamentTeams } from '../ffb/interface/tournament_teams.interface';
@@ -26,14 +26,18 @@ export class TournamentService {
 
     list_next_tournaments(days_back: number): Observable<club_tournament[]> {
         let remote_load$ = this.ffbService._getTournaments().pipe(
-            map((tournaments) => {
+            map((tournaments: unknown) => {
                 if (!Array.isArray(tournaments)) {
                     this.toastService.showErrorToast('connexion au serveur FFB', 'Erreur serveur FFB ou format inattendu lors de la récupération des tournois');
                     console.error('Erreur serveur FFB ou format inattendu lors de la récupération des tournois');
                     return [];
                 }
-                this._tournaments = tournaments;
+                this._tournaments = tournaments as club_tournament[];
                 return this._tournaments;
+            }),
+            catchError((err: any) => {
+                console.warn('[TournamentService] Erreur lors de la récupération des tournois', err);
+                return throwError(() => err);
             })
         );
 
@@ -43,8 +47,8 @@ export class TournamentService {
         start_date.setDate(today.getDate() - days_back);
 
         return this._tournaments ?
-            from([this._tournaments.filter((tournament) => new Date(tournament.date) >= start_date)]) : remote_load$.pipe(
-                map((tournaments) => tournaments.filter((tournament) => new Date(tournament.date) >= start_date))
+            from([this._tournaments.filter((tournament: club_tournament) => new Date(tournament.date) >= start_date)]) : remote_load$.pipe(
+                map((tournaments: club_tournament[]) => tournaments.filter((tournament: club_tournament) => new Date(tournament.date) >= start_date))
             );
     }
 
@@ -53,7 +57,6 @@ export class TournamentService {
 
         return this.list_next_tournaments(days_back).pipe(
             switchMap((tournaments) => {
-
                 let filtered_tournaments = tournaments
                     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
                     .slice(0, MAX_TOURNAMENTS_LISTED); // Ne prendre que les 8 premiers
@@ -68,7 +71,6 @@ export class TournamentService {
                     if (this._teamFetchCache.has(id)) return this._teamFetchCache.get(id)!;
 
                     // Otherwise initiate remote fetch and cache the observable (shareReplay to replay result)
-                    // console.log(`Fetching teams for tournament ${tournament.tournament_name} (ID: ${id}) from FFB service...`);
                     const obs = from(this.ffbService.getTournamentTeams(id)).pipe(
                         tap((t: TournamentTeams) => {
                             const idx = this._tournamentTeams.findIndex(tt => tt.subscription_tournament.id ===
@@ -89,7 +91,8 @@ export class TournamentService {
 
                 return merge(...tournamentTeamsObservables);
             }),
-            switchMap(() => this._tournamentTeams$.asObservable())
+            switchMap(() => this._tournamentTeams$.asObservable()),
+            catchError((err) => throwError(() => err))
         );
     }
 

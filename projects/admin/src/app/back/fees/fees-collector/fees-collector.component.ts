@@ -90,13 +90,21 @@ export class FeesCollectorComponent {
     today.setHours(0, 0, 0, 0);
     this.daysBack$.pipe(
       switchMap(v => this.tournamentService.list_next_tournaments(v))
-    ).subscribe(async (tournaments) => {
-      const withStatus: club_tournament_extended[] = tournaments.map(t => ({ ...t, chrono: chrono(t.date) }));
-      const statuses = await Promise.all(withStatus.map(t => this.feesCollectorService.check_tournament_status(t)));
-      withStatus.forEach((t, i) => (t.status = statuses[i]));
-      this.next_tournaments = withStatus;
+    ).subscribe({
+      next: async (tournaments) => {
+        const withStatus: club_tournament_extended[] = tournaments.map(t => ({ ...t, chrono: chrono(t.date) }));
+        const statuses = await Promise.all(withStatus.map(t => this.feesCollectorService.check_tournament_status(t)));
+        withStatus.forEach((t, i) => (t.status = statuses[i]));
+        this.next_tournaments = withStatus;
+      },
+      error: (err) => {
+        this.toastService.showErrorToast('connexion au serveur FFB', `Erreur \`${err}\` lors de la récupération des tournois`);
+        if (typeof window !== 'undefined' && window.console) {
+          console.error('Erreur lors du chargement des tournois :', err);
+        }
+        this.next_tournaments = [];
+      }
     });
-
   }
 
   // tooltips are provided by NgbTooltip via the template directive
