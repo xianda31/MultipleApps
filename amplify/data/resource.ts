@@ -167,7 +167,9 @@ const schema = a.schema({
     has_avatar: a.boolean(),
     accept_mailing: a.boolean(),
     membership_date: a.string(),
-
+    person_id: a.integer(),
+    iv: a.integer(),
+    iv_code: a.string(),
 
   })
     .authorization((allow) => [

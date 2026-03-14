@@ -32,10 +32,10 @@ export class FileService {
     private sanitizer: DomSanitizer
   ) { }
 
-  getPresignedUrl$(path: string, silentError: boolean = false): Observable<string> {
+  getPresignedUrl$(path: string, silentError: boolean = false, validateExistence: boolean = true): Observable<string> {
     // console.log('getPresignedUrl$ for ', path);
     return new Observable<string>((subscriber) => {
-      getUrl({ path: path, options: { validateObjectExistence: true } })
+      getUrl({ path: path, options: { validateObjectExistence: validateExistence } })
         .then(getUrlOutput => {
           subscriber.next(getUrlOutput.url.href);
           subscriber.complete();
@@ -43,7 +43,7 @@ export class FileService {
         .catch(error => {
           // Ne logger que si ce n'est pas une erreur silencieuse (comme pour les avatars manquants)
           if (!silentError && !path.includes('portraits/')) {
-            console.log('reading %s %s', path,error);
+            console.log('reading %s %s', path, error);
           }
           subscriber.error(error);
         });

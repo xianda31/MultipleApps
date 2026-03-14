@@ -36,8 +36,29 @@ export const handler: Handler = async (event) => {
         }
         switch (path) {
             case "members":
-                path = "members/207656";
-                break;
+                // recuperer le parametre person_id
+                if (event.queryStringParameters?.person_id) {
+                const person_id = event.queryStringParameters.person_id ;
+                try {
+                    const res = await fetch (
+                        ffbUrl + path + '/' + person_id,
+                        { headers: { Authorization: token }, },
+                    );
+                    return res.json();
+                } catch (e) {
+                    return {
+                        'statusCode': 500,
+                        'body': 'remote server error :' + e
+                    };
+                }
+                }
+                return {
+                    'statusCode': 400,
+                    'body': 'proxy error : missing person_id'
+                };
+
+
+
             case "search-members":
                 // traitement search-members&search=...
                 if (event.queryStringParameters?.search) {

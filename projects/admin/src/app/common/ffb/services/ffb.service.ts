@@ -3,15 +3,39 @@ import { del, get, post } from 'aws-amplify/api';
 import { Tournament } from '../interface/club_tournament.interface';
 import { FFB_licensee } from '../interface/licensee.interface';
 import { FFBplayer } from '../interface/FFBplayer.interface';
-import { TournamentTeams } from '../interface/tournament_teams.interface';
+import { Person, TournamentTeams } from '../interface/tournament_teams.interface';
 import { from, Observable } from 'rxjs';
 import { Competition, CompetitionOrganization, CompetitionPhases, CompetitionSeason, CompetitionTeam} from '../../../back/competitions/competitions.interface';
+import { FFBPerson } from '../../interfaces/FFBperson.interface';
 @Injectable({
   providedIn: 'root'
 })
 export class FFB_proxyService {
 
   constructor() { }
+
+
+  async get_player(person_id:number): Promise<Person | null> {
+    try {
+      const restOperation = get({
+        apiName: 'ffbProxyApi',
+        path: 'v1/users',
+        options: {
+          queryParams: {
+            person_id: person_id.toString()
+          }
+        }
+          });
+      const { body } = await restOperation.response;
+      const data = await body.json();
+      const data2 = data as unknown as Person;
+      return data2;
+    } catch (error) {
+      console.log('GET call failed: ', error);
+      return null;
+
+    }
+  }
 
 
   async searchPlayersSuchAs(hint: string): Promise<FFBplayer[]> {
@@ -57,22 +81,6 @@ export class FFB_proxyService {
     })());
   }
 
-  // async getTournaments(): Promise<club_tournament[]> {
-  //   try {
-  //     const restOperation = get({
-  //       apiName: 'ffbProxyApi',
-  //       path: 'v1/organizations/1438/club_tournament',
-  //     });
-  //     const { body } = await restOperation.response;
-  //     // console.log('GET call succeeded: ', await body.text());
-  //     const data = await body.json();
-  //     const data2 = data as unknown as club_tournament[];
-  //     return data2;
-  //   } catch (error) {
-  //     console.log('GET call failed: ', error);
-  //     return [];
-  //   }
-  // }
 
   async getAdherents(): Promise<FFB_licensee[]> {
     try {
@@ -90,6 +98,28 @@ export class FFB_proxyService {
       return [];
     }
   }
+
+    async getFFBPerson(id: number): Promise<FFBPerson | null> {
+    try {
+      const restOperation = get({
+        apiName: 'ffbProxyApi',
+        path: 'v1/members',
+        options: {
+          queryParams: {
+            person_id: id.toString()
+          }
+        }
+      });
+      const { body } = await restOperation.response;
+      // console.log('GET call succeeded: ', await body.text());
+      const data = await body.json();
+      return data as unknown as FFBPerson;
+    } catch (error) {
+      console.log('GET call failed: ', error);
+      return null;
+    }
+  }
+
 
   async postTeam(tournamentId: string, licences: string[]): Promise<TournamentTeams | null> {
 
@@ -274,26 +304,5 @@ async getSeasons() : Promise<CompetitionSeason[]> {
       return null;
     }
   }
-  
-  // async getCompetitionStatus(competition_id: string) : Promise<CompetitionData | null> {
-  //   try {
-  //     const restOperation = get({
-  //       apiName: 'ffbProxyApi',
-  //       path: 'v1/competitions/stades',
-  //       options: {
-  //         queryParams: {
-  //           competition_id: competition_id
-  //         }
-  //       }
-  //     });
-  //     const { body } = await restOperation.response;
-  //     const data = await body.json();
-  //     const data2 = data as unknown as CompetitionData;
-  //     return data2;
-  //   } catch (error) {
-  //     console.log('GET call failed: ', error);
-  //     return null;
-  //   }
-  // }
 
 }

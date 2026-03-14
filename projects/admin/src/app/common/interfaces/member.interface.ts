@@ -22,6 +22,9 @@ export interface Member extends Member_settings{
   membership_date: string;
   orga_license_name?: string;
   register_date?: string;
+  person_id?:number;    // index FFB_licencee 
+  iv?: number;
+  iv_code?:string;
   createdAt?: string;
   updatedAt?: string;
 

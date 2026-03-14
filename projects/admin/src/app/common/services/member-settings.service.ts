@@ -37,7 +37,7 @@ private settings_change$: BehaviorSubject<number> = new BehaviorSubject<number>(
     const avatar_path = S3_ROOT_FOLDERS.PORTRAITS + '/';
     const avatar_file = avatar_path + this.membersService.full_name(member) + '.png';
 
-    return this.fileService.getPresignedUrl$(avatar_file).pipe(
+    return this.fileService.getPresignedUrl$(avatar_file, false, false).pipe(
       catchError((error) => {
         // Silencieusement ignorer l'erreur et retourner une chaîne vide
         // console.warn(`Avatar non trouvé pour ${this.membersService.full_name(member)}`);

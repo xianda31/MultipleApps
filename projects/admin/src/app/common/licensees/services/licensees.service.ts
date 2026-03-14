@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, from } from 'rxjs';
-import { filter, switchMap, tap } from 'rxjs/operators';
+import { BehaviorSubject, Observable, from, of } from 'rxjs';
+import { filter, switchMap, tap, map } from 'rxjs/operators';
 import { FFB_licensee } from '../../ffb/interface/licensee.interface';
 import { FFB_proxyService } from '../../ffb/services/ffb.service';
+import { FFBPersonIV } from '../../interfaces/FFBperson.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -42,9 +43,8 @@ export class LicenseesService {
     return this._licensees ? this._licensees$.asObservable() : remote_load$;
   }
 
-  // getLicenseeByLicense(license: string): Observable<FFB_licensee> {
-  //   return from(this.FFBService.getLicenceeDetails(license)).pipe(
-  //     filter((licensee): licensee is FFB_licensee => licensee !== null)
-  //   );
-  // }
+  async get_iv(person_id: number): Promise<FFBPersonIV | undefined> {
+    const person = await this.FFBService.getFFBPerson(person_id);
+    return person?.iv;
+  }
 }

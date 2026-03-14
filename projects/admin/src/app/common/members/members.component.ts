@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { MembersService } from '../../common/services/members.service';
 import { LicenseesService } from '../licensees/services/licensees.service';
-import { Observable, switchMap, tap } from 'rxjs';
+import { Observable, switchMap, tap, take } from 'rxjs';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule, UpperCasePipe } from '@angular/common';
 import { NgbModal, NgbTooltipModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
@@ -16,6 +16,7 @@ import { PhonePipe } from '../pipes/phone.pipe';
 import { MemberSettingsService } from '../services/member-settings.service';
 import { BookService } from '../../back/services/book.service';
 import { Revenue } from '../interfaces/accounting.interface';
+import { FFBPersonIV } from '../interfaces/FFBperson.interface';
 
 
 enum FILTER {
@@ -56,10 +57,11 @@ export class MembersComponent implements OnInit {
   avatar_urls$: { [key: string]: Observable<string> } = {};
 
   // For dynamic info column in members table
-  infoColumns = ['license_number', 'membership_date', 'email', 'birthdate', 'phone_one', 'city', 'accept_mailing'];
+  infoColumns = ['license_number', 'membership_date', 'register_date', 'email', 'birthdate', 'phone_one', 'city', 'accept_mailing'];
   infoColumnLabels: { [key: string]: string } = {
     license_number: 'Licence',
     membership_date: "Date d'adhésion",
+    register_date: "Date de licence",
     email: 'Mail',
     birthdate: 'Date naissance',
     phone_one: 'Téléphone',
@@ -102,16 +104,22 @@ export class MembersComponent implements OnInit {
         }, 0);
       }),
       switchMap(() => this.membersService.listMembers()),
+      take(1)
     ).subscribe({
       next: (members: Member[]) => {
         this.members = members;
         this.avatar_urls$ = this.collect_avatars(members);
-        this.check_membership_paied();
-        this.reset_license_statuses();
-        this.updateDBfromFFB();
         this.filterOnStatus(this.selected_filter);
         this.loading = false;
         // console.log(this.members);
+
+        // Lancer les checks en parallèle en arrière-plan (sans bloquer l'affichage)
+        Promise.all([
+          this.check_membership_paied(),
+          this.reset_license_statuses(),
+          this.updateDBfromFFB(),
+          this.update_iv()
+        ]).catch(err => console.error('Erreur lors du traitement des membres:', err));
       },
       error: () => { this.loading = false; this.toastService.showErrorToast('Membres', 'Erreur lors du chargement des membres'); },
     });
@@ -126,18 +134,22 @@ export class MembersComponent implements OnInit {
     return avatarUrls;
   }
 
-  check_membership_paied() {
+  async check_membership_paied() {
+    const updates: Promise<any>[] = [];
     this.members.forEach((member) => {
       const full_name = this.membersService.full_name(member);
-      const buy_op = this.operations
-        .filter((op) => op.member === full_name);
+      const buy_op = this.operations.filter((op) => op.member === full_name);
       const hasAdh = buy_op.find(op => 'ADH' in op.values);
-      if (hasAdh && member.membership_date !== hasAdh.date) {
-        member.membership_date = hasAdh.date;
-        this.membersService.updateMember(member);
+
+      const newMembershipDate = hasAdh ? hasAdh.date : '';
+
+      // Vérifier si le changement est réel avant d'updater
+      if (member.membership_date !== newMembershipDate) {
+        member.membership_date = newMembershipDate;
+        updates.push(this.membersService.updateMember(member));
       }
-      else if (!hasAdh) { member.membership_date = ''; }
     });
+    await Promise.all(updates);
     this.no_license_nbr = this.members.filter(m => m.membership_date && (m.license_status === LicenseStatus.UNREGISTERED)).length;
     this.lost_members_nbr = this.members.filter(m => !m.membership_date && (m.license_status === LicenseStatus.UNREGISTERED)).length;
   }
@@ -156,7 +168,7 @@ export class MembersComponent implements OnInit {
       if (newbee) {
         let new_member: Member = {
           id: '',
-          gender: newbee.gender,
+          gender: newbee.gender=== 1 ? 'M.' : 'Mme',
           firstname: newbee.firstname,
           lastname: newbee.lastname.toUpperCase(),
           license_number: '??' + newbee.lastname.toUpperCase().slice(0, 3) + newbee.firstname.slice(0, 3),
@@ -170,7 +182,9 @@ export class MembersComponent implements OnInit {
           is_sympathisant: false,
           accept_mailing: newbee.email ? true : false,
           has_avatar: false,
-          membership_date: ''
+          membership_date: '',
+          person_id: undefined,
+          iv: undefined
         }
         this.membersService.createMember(new_member).then((_member) => {
           this.toastService.showSuccess('Nouveau membre non licencié', new_member.lastname + ' ' + new_member.firstname);
@@ -205,27 +219,41 @@ export class MembersComponent implements OnInit {
       is_sympathisant: false,
       accept_mailing: true,
       has_avatar: false,
-      membership_date: ''
+      membership_date: '',
+      person_id: player.person_id
     }
   }
 
-  updateDBfromFFB() {
-    this.licensees.forEach((licensee) => {
-      this.createOrUpdateMember(licensee);
-    });
+  async update_iv() {
+    const updates: Promise<any>[] = [];
+
+    for (const member of this.members) {
+      if (member.iv == null && member.person_id !== undefined && member.person_id !== null) {
+        const iv : FFBPersonIV | undefined = await this.licenseesService.get_iv(member.person_id);
+        if (iv !== undefined) {
+          console.log(`Mise à jour de l'iv pour ${member.lastname} ${member.firstname} (person_id: ${member.person_id}) (iv: ${iv.iv}, code: ${iv.code})`);
+          member.iv = iv.iv;
+          member.iv_code = iv.code;
+          updates.push(this.membersService.updateMember(member));
+        }
+      }
+    }
+    await Promise.all(updates);
   }
 
   async reset_license_statuses() {
+    const updates: Promise<any>[] = [];
     for (const member of this.members) {
-      if (!this.licensees.some((l) => l.license_number === member.license_number)) {
-        if (member.license_status !== LicenseStatus.UNREGISTERED) {
-          member.license_status = LicenseStatus.UNREGISTERED;
-          this.membersService.updateMember(member);
-          this.toastService.showWarning('Licences', `Licence de ${member.lastname} ${member.firstname} obsolète `);
-        }
-      } else {
+      const existsInFFB = this.licensees.some((l) => l.license_number === member.license_number);
+
+      // Reset la licence seulement si elle n'existe pas dans FFB et n'est pas déjà UNREGISTERED
+      if (!existsInFFB && member.license_status !== LicenseStatus.UNREGISTERED) {
+        member.license_status = LicenseStatus.UNREGISTERED;
+        updates.push(this.membersService.updateMember(member));
+        this.toastService.showWarning('Licences', `Licence de ${member.lastname} ${member.firstname} obsolète `);
       }
     }
+    await Promise.all(updates);
   }
 
 
@@ -248,19 +276,27 @@ export class MembersComponent implements OnInit {
     });
   }
 
+
+  async updateDBfromFFB() {
+    const updates: Promise<any>[] = [];
+    this.licensees.forEach((licensee) => {
+      updates.push(this.createOrUpdateMember(licensee));
+    });
+    await Promise.all(updates);
+  }
+
   async createOrUpdateMember(licensee: FFB_licensee) {
-    let existingMember = this.members.find((m) => m.license_number === licensee.license_number);
+    const existingMember = this.members.find((m) => m.license_number === licensee.license_number);
 
     if (existingMember) {
-      let member = this.compare(existingMember, licensee);
-      if (member !== null) {
-        // this.verbose += 'modification : ' + member.lastname + ' ' + member.firstname + '\n';
-        await this.membersService.updateMember(member);
-      } else {
+      const updatedMember = this.compare(existingMember, licensee);
+      // Seulement updater si compare() détecte des changements (retourne non-null)
+      if (updatedMember !== null) {
+        await this.membersService.updateMember(updatedMember);
       }
-
     } else {
-      let newMember = this.createNewMember(licensee);
+      // Créer nouveau membre seulement s'il n'existe pas
+      const newMember = this.createNewMember(licensee);
       await this.membersService.createMember(newMember);
     }
   }
@@ -286,7 +322,7 @@ export class MembersComponent implements OnInit {
       accept_mailing: member.accept_mailing,
       has_avatar: member.has_avatar,
       membership_date: member.membership_date,
-
+      person_id: licensee.person_id ?? member.person_id,
 
     }
     let is: { [key: string]: any } = member;
@@ -323,10 +359,11 @@ export class MembersComponent implements OnInit {
       is_sympathisant: licensee.is_sympathisant ?? false,
       license_status: licensee.register ? (licensee.license_id ? LicenseStatus.DULY_REGISTERED : LicenseStatus.PROMOTED_ONLY) : LicenseStatus.UNREGISTERED,
       license_taken_at: licensee.orga_license_name ?? 'BCSTO',
+      register_date: licensee.register_date ?? '',
       membership_date: '',
       has_avatar: false,
+      person_id: licensee.person_id ?? undefined,
     }
-
   }
   deleteMember(member: Member) {
     this.membersService.deleteMember(member);
