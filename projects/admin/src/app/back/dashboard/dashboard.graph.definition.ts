@@ -1,4 +1,5 @@
 
+
 import { ChartOptions } from 'chart.js';
 
 export const defaultFinancialChartData = {
@@ -128,5 +129,32 @@ export const defaultFinancialChartOptions: ChartOptions<'bar'> = {
       grid: { display: true },
       ticks: { font: { size: 11 } }
     }
+  }
+};
+
+// Distribution d'âge des membres (bar chart)
+export const defaultMemberAgeDistributionChartData = {
+  labels: [],
+  datasets: [
+    {
+      data: [],
+      label: 'Membres',
+      backgroundColor: '',
+      borderColor: '',
+      borderWidth: 2,
+      borderRadius: 4
+    }
+  ]
+};
+
+export const defaultMemberAgeDistributionChartOptions: ChartOptions<'bar'> = {
+  responsive: true,
+  plugins: {
+    legend: { display: false },
+    title: { display: false, text: "Distribution par tranche d'âge" }
+  },
+  scales: {
+    x: { title: { display: false, text: "Tranche d'âge" } },
+    y: { title: { display: true, text: 'Nombre de membres' }, beginAtZero: true }
   }
 };

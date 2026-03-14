@@ -1,11 +1,15 @@
+
 import { Injectable } from '@angular/core';
 import { ChartOptions } from 'chart.js';
 import {
   defaultFinancialChartData,
   defaultPlayerChartData,
   defaultPlayerChartOptions,
-  defaultFinancialChartOptions
+  defaultFinancialChartOptions,
+  defaultMemberAgeDistributionChartData,
+  defaultMemberAgeDistributionChartOptions
 } from './dashboard.graph.definition';
+
 
 @Injectable({
   providedIn: 'root'
@@ -18,6 +22,50 @@ export class DashboardGraphService {
       primary: root.getPropertyValue('--color-primary').trim(),
       secondary: root.getPropertyValue('--color-secondary').trim(),
       info: root.getPropertyValue('--color-info').trim()
+    };
+  }
+
+  buildMemberAgeDistributionChart(
+    ageGroups: string[],
+    countsMale: number[],
+    countsFemale: number[]
+  ): { data: any, options: ChartOptions<any> } {
+    const { primary, secondary } = this.getChartColors();
+    return {
+      data: {
+        labels: ageGroups,
+        datasets: [
+          {
+            label: 'Hommes',
+            data: countsMale,
+            backgroundColor: primary + '99',
+            borderColor: primary,
+            borderWidth: 2,
+            borderRadius: 4,
+            stack: 'Stack 0',
+          },
+          {
+            label: 'Femmes',
+            data: countsFemale,
+            backgroundColor: secondary + '99',
+            borderColor: secondary,
+            borderWidth: 2,
+            borderRadius: 4,
+            stack: 'Stack 0',
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          title: { display: false, text: "Distribution par tranche d'âge" }
+        },
+        scales: {
+          x: { title: { display: false, text: "Tranche d'âge" }, stacked: true },
+          y: { title: { display: true, text: 'Nombre de membres' }, beginAtZero: true, stacked: true }
+        }
+      } as ChartOptions<any>
     };
   }
 
@@ -137,5 +185,11 @@ export class DashboardGraphService {
   }
   getDefaultFinancialChartOptions(): ChartOptions<'bar'> {
     return defaultFinancialChartOptions;
+  }
+    getDefaultMemberAgeDistributionChartData() {
+    return defaultMemberAgeDistributionChartData;
+  }
+  getDefaultMemberAgeDistributionChartOptions(): ChartOptions<'bar'> {
+    return defaultMemberAgeDistributionChartOptions;
   }
 }
