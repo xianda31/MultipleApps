@@ -33,6 +33,7 @@ export class DashboardComponent {
   ivSuffixColorMap!: { [suffix: string]: string };
 
   playerCountAverage  !: number;
+  teamPerTournamentAverage !: number;
   tournamentCountAverage!: number;
   membersCount!: number;
 
@@ -66,16 +67,17 @@ export class DashboardComponent {
         ));
       });
 
-      this.initialize_tournaments_data(this.allMonths).subscribe(({ playerCounts, tournamentCounts }) => {
+      this.initialize_tournaments_data(this.allMonths).subscribe(({ pairCounts, tournamentCounts }) => {
         // Calculer les moyennes
-        const nonNullPlayerCounts = playerCounts.filter(c => c !== null) as number[];
+        const nonNullPairCounts = pairCounts.filter(c => c !== null) as number[];
         const nonNullTournamentCounts = tournamentCounts.filter(c => c !== null) as number[];
-        this.playerCountAverage = nonNullPlayerCounts.length > 0 ? nonNullPlayerCounts.reduce((a, b) => a + b, 0) / nonNullPlayerCounts.length : 0;
+        this.playerCountAverage = nonNullPairCounts.length > 0 ? nonNullPairCounts.reduce((a, b) => a + b, 0) / nonNullPairCounts.length : 0;
         this.tournamentCountAverage = nonNullTournamentCounts.length > 0 ? nonNullTournamentCounts.reduce((a, b) => a + b, 0) / nonNullTournamentCounts.length : 0;
+        this.teamPerTournamentAverage = this.tournamentCountAverage > 0 ? this.playerCountAverage / this.tournamentCountAverage : 0;
 
         ({ data: this.playerChartData, options: this.playerChartOptions } = this.graphService.buildPlayerChart(
           this.allMonths,
-          playerCounts,
+          pairCounts,
           tournamentCounts,
           this.playerCountAverage,
           this.tournamentCountAverage
@@ -247,28 +249,31 @@ export class DashboardComponent {
       }));
   }
 
-  initialize_tournaments_data(chartLabels: string[]): Observable<{ playerCounts: (number | null)[], tournamentCounts: (number | null)[] }> {
-    // Initialise les données joueurs et tournois par mois
+  initialize_tournaments_data(chartLabels: string[]): Observable<{ pairCounts: (number | null)[], tournamentCounts: (number | null)[] }> {
+    // Initialise les données paires (équipes) et tournois par mois
     const daysBack = Math.ceil((new Date().getTime() - new Date(`${this.startYear}-07-01`).getTime()) / (1000 * 60 * 60 * 24));
 
     return this.tournamentService.list_next_tournaments(daysBack).pipe(
       map((trns) => {
-        let playerCountsByMonth: { [month: string]: number } = {};
+        let pairCountsByMonth: { [month: string]: number } = {};
         let tournamentCountByMonth: { [month: string]: number } = {};
         trns.forEach(trn => {
           const d = new Date(trn.date);
           const yyyy = d.getFullYear();
           const mm = String(d.getMonth() + 1).padStart(2, '0');
           const key = `${yyyy}-${mm}`;
-          const pc = typeof trn.nbr_inscrit === 'number' ? trn.nbr_inscrit : parseInt(trn.nbr_inscrit, 10);
-          playerCountsByMonth[key] = (playerCountsByMonth[key] || 0) + (isNaN(pc) ? 0 : pc);
+          const totalInscrit = typeof trn.nbr_inscrit === 'number' ? trn.nbr_inscrit : parseInt(trn.nbr_inscrit, 10);
+          // Calculer le nombre de paires: (total - joueurs isolés) / 2
+          const isolatedCount = trn.has_isolated_player ? 1 : 0;
+          const pairCount = Math.floor((totalInscrit - isolatedCount) / 2);
+          pairCountsByMonth[key] = (pairCountsByMonth[key] || 0) + (isNaN(pairCount) ? 0 : pairCount);
           tournamentCountByMonth[key] = (tournamentCountByMonth[key] || 0) + 1;
         });
-        const playerCounts: (number | null)[] = chartLabels.map(m => playerCountsByMonth[m] ?? null);
+        const pairCounts: (number | null)[] = chartLabels.map(m => pairCountsByMonth[m] ?? null);
         const tournamentCounts: (number | null)[] = chartLabels.map(m => tournamentCountByMonth[m] ?? null);
 
 
-        return { playerCounts, tournamentCounts };
+        return { pairCounts, tournamentCounts };
       })
     );
   }

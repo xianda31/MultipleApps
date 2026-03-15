@@ -42,7 +42,7 @@ export const defaultPlayerChartData = {
   datasets: [
     {
       data: [],
-      label: 'Joueurs',
+      label: 'Paires',
       backgroundColor: '',
       borderColor: '',
       borderWidth: 2,
@@ -76,7 +76,7 @@ export const defaultPlayerChartOptions: ChartOptions<'bar'> = {
     },
     title: {
       display: false,
-      text: 'Joueurs et tournois par mois'
+      text: 'Paires et tournois par mois'
     }
   },
   scales: {
@@ -92,7 +92,7 @@ export const defaultPlayerChartOptions: ChartOptions<'bar'> = {
       beginAtZero: true,
       grid: { display: true },
       ticks: { font: { size: 11 } },
-      title: { display: true, text: 'Joueurs' }
+      title: { display: true, text: 'Paires' }
     },
     y1: {
       type: 'linear' as const,

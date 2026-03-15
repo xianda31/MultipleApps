@@ -116,6 +116,20 @@ export class DashboardGraphService {
     tournamentCountAverage: number
   ): {data:any, options:ChartOptions<any>} {
     const { primary, info } = this.getChartColors();
+    const options = JSON.parse(JSON.stringify(defaultPlayerChartOptions)) as ChartOptions<'bar'>;
+    
+    // Appliquer les couleurs aux axes
+    if (options.scales) {
+      if (options.scales['y']) {
+        (options.scales['y'] as any).ticks = { ...(options.scales['y'] as any).ticks, color: primary };
+        (options.scales['y'] as any).title = { ...(options.scales['y'] as any).title, color: primary };
+      }
+      if (options.scales['y1']) {
+        (options.scales['y1'] as any).ticks = { ...(options.scales['y1'] as any).ticks, color: info };
+        (options.scales['y1'] as any).title = { ...(options.scales['y1'] as any).title, color: info };
+      }
+    }
+
     return {
       data: {
         labels: allMonths,
@@ -147,7 +161,7 @@ export class DashboardGraphService {
           {
             type: 'line',
             data: allMonths.map(() => playerCountAverage),
-            label: 'Moy. Joueurs',
+            label: 'Moy. Paires',
             borderColor: primary,
             backgroundColor: 'transparent',
             borderWidth: 2,
@@ -170,7 +184,7 @@ export class DashboardGraphService {
           }
         ]
       },
-      options: defaultPlayerChartOptions
+      options
     };
   }
 

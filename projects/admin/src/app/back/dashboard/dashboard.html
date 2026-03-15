@@ -1,7 +1,7 @@
 <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-2 mt-3 px-3 mb-3">
     <div class="col">
         <div class="card h-100">
-            <h5 class="card-header">Recettes, dépenses et résultat</h5>
+            <h6 class="card-header">Recettes, dépenses et résultat</h6>
             <div class="card-body">
                 <div class="card-text text-center justify-content-center">
                     <div class="chart-container">
@@ -34,12 +34,12 @@
     </div>
     <div class="col">
         <div class="card h-100">
-            <h5 class="card-header">Tournois de régularité</h5>
+            <h6 class="card-header">Tournois de régularité</h6>
             <div class="card-body">
                 <div class="card-text text-center justify-content-center">
                     <div class="text-muted small">
-                        (moyenne: {{playerCountAverage | number:'1.0-0'}} joueurs sur
-                        {{tournamentCountAverage | number:'1.0-0'}} tournois )
+                        (moyenne mensuelle: {{tournamentCountAverage | number:'1.0-0'}} tournois de {{teamPerTournamentAverage
+                        | number:'1.0-0'}} paires)
                     </div>
                     <div class="chart-container">
                         <canvas baseChart [data]="playerChartData" [options]="playerChartOptions" [type]="'bar'">
@@ -52,7 +52,7 @@
                     <span class="legend-item">
                         <span class="legend-symbol"
                             [style.backgroundColor]="playerChartData?.datasets?.[0]?.backgroundColor"></span>
-                        Joueurs
+                        Paires
                     </span>
                     <span class="legend-item ms-4">
                         <svg class="legend-point" width="12" height="12"
@@ -68,7 +68,7 @@
 
     <div class="col">
         <div class="card h-100">
-            <h5 class="card-header">Tranches d'âge </h5>
+            <h6 class="card-header">Tranches d'âge </h6>
             <div class="card-body">
                 <div class="card-text text-center justify-content-center">
                     <div class="chart-container">
@@ -76,11 +76,10 @@
                         </canvas>
                     </div>
                 </div>
-                
+
             </div>
             <div class="card-footer">
-                <div
-                    class="d-inline-flex ">
+                <div class="d-inline-flex ">
                     <span class="legend-item">
                         <span class="legend-symbol"
                             [style.backgroundColor]="memberChartData?.datasets?.[0]?.backgroundColor"></span>
@@ -98,7 +97,7 @@
 
     <div class="col">
         <div class="card h-100">
-            <h5 class="card-header">Classement par série </h5>
+            <h6 class="card-header">Classement par série </h6>
             <div class="card-body">
                 <div class="card-text text-center justify-content-center">
                     <div class="chart-container">
@@ -108,44 +107,44 @@
                 </div>
             </div>
             <div class="card-footer">
-                    <div                       class="d-inline-flex ">
-                        <span class="legend-item">
-                            <span class="legend-symbol"
-                                [ngStyle]="{'background-color': ivSuffixColorMap['NvL'] + '99'}"></span>
-                            NvL
-                        </span>
-                        <span class="legend-item ms-4">
-                            <span class="legend-symbol"
-                                [ngStyle]="{'background-color': ivSuffixColorMap['T'] + '99'}"></span>
-                            T
-                        </span>
-                        <span class="legend-item ms-4">
-                            <span class="legend-symbol"
-                                [ngStyle]="{'background-color': ivSuffixColorMap['K'] + '99'}"></span>
-                            K
-                        </span>
-                        <span class="legend-item ms-4">
-                            <span class="legend-symbol"
-                                [ngStyle]="{'background-color': ivSuffixColorMap['C'] + '99'}"></span>
-                            C
-                        </span>
-                        <span class="legend-item ms-4">
-                            <span class="legend-symbol"
-                                [ngStyle]="{'background-color': ivSuffixColorMap['P'] + '99'}"></span>
-                            P
-                        </span>
-                        <span class="legend-item ms-4">
-                            <span class="legend-symbol"
-                                [ngStyle]="{'background-color': ivSuffixColorMap['Pr'] + '99'}"></span>
-                            Pr
-                        </span>
-                        <span class="legend-item ms-4">
-                            <span class="legend-symbol"
-                                [ngStyle]="{'background-color': ivSuffixColorMap['H'] + '99'}"></span>
-                            H
-                        </span>
-                    </div>
+                <div class="d-inline-flex ">
+                    <span class="legend-item">
+                        <span class="legend-symbol"
+                            [ngStyle]="{'background-color': ivSuffixColorMap['NvL'] + '99'}"></span>
+                        NvL
+                    </span>
+                    <span class="legend-item ms-4">
+                        <span class="legend-symbol"
+                            [ngStyle]="{'background-color': ivSuffixColorMap['T'] + '99'}"></span>
+                        T
+                    </span>
+                    <span class="legend-item ms-4">
+                        <span class="legend-symbol"
+                            [ngStyle]="{'background-color': ivSuffixColorMap['K'] + '99'}"></span>
+                        K
+                    </span>
+                    <span class="legend-item ms-4">
+                        <span class="legend-symbol"
+                            [ngStyle]="{'background-color': ivSuffixColorMap['C'] + '99'}"></span>
+                        C
+                    </span>
+                    <span class="legend-item ms-4">
+                        <span class="legend-symbol"
+                            [ngStyle]="{'background-color': ivSuffixColorMap['P'] + '99'}"></span>
+                        P
+                    </span>
+                    <span class="legend-item ms-4">
+                        <span class="legend-symbol"
+                            [ngStyle]="{'background-color': ivSuffixColorMap['Pr'] + '99'}"></span>
+                        Pr
+                    </span>
+                    <span class="legend-item ms-4">
+                        <span class="legend-symbol"
+                            [ngStyle]="{'background-color': ivSuffixColorMap['H'] + '99'}"></span>
+                        H
+                    </span>
                 </div>
+            </div>
         </div>
     </div>
 </div>

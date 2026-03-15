@@ -64,7 +64,7 @@ export const STATIC_MENUS: NavbarMenu[] = [
         label: 'Site web',
         key: 'site',
         icon: 'bi-globe2',
-        minLevel: Group_priorities.Administrateur,
+        minLevel: Group_priorities.Editeur,
         subMenus: [
             { label: 'paramètres UI', route: BACK_ROUTE_PATHS.UiConf },
             { label: 'les menus', route: BACK_ROUTE_PATHS.MenusEditor },
@@ -77,7 +77,7 @@ export const STATIC_MENUS: NavbarMenu[] = [
         label: 'Communication',
         key: 'communication',
         icon: 'bi-envelope-paper',
-        minLevel: Group_priorities.Administrateur,
+        minLevel: Group_priorities.Editeur,
         subMenus: [
             { label: 'Assistance', route: BACK_ROUTE_PATHS.Assistance },
             { label: 'Mailing', route: BACK_ROUTE_PATHS.Mailing }
@@ -88,7 +88,7 @@ export const STATIC_MENUS: NavbarMenu[] = [
         key: 'dashboard',
         icon: 'bi-speedometer2',
         route: BACK_ROUTE_PATHS.Dashboard,
-        minLevel: Group_priorities.Administrateur
+        minLevel: Group_priorities.Contributeur
     },
     {
         label: 'DevTools',
