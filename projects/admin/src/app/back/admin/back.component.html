@@ -4,7 +4,7 @@
     <app-back-navbar [season]="(season$ | async) ?? ''" [entries_nbr]="(book_entries_number$ | async) ?? 0"
     ></app-back-navbar>
   <!-- </div> -->
-  <div class="container-fluid justify-content-center admin-scrollable-content" style="padding-left: 0; padding-right: 0;">
+  <div class="container-fluid justify-content-center admin-scrollable-content" >
     <app-toaster></app-toaster>
     <router-outlet></router-outlet>
   </div>
