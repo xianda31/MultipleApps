@@ -324,6 +324,15 @@ export class CashBoxStatusComponent {
     return new Date(date).toLocaleDateString();
   }
 
+  toggle_draw_all(): void {
+    this.chequesToProcess.controls.forEach(ctrl => {
+      if (!ctrl.get('drawn')?.value) {
+        this.draw(ctrl, true);
+        ctrl.get('drawn')?.setValue(true);
+      }
+    });
+  }
+
 
   draw(ctrl: AbstractControl, drawn: boolean): void {
     const book_entry = this.cheques_in_cashbox.find(be => be.id === ctrl.get('id')?.value);

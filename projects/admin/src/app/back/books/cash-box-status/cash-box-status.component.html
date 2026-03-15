@@ -37,6 +37,13 @@
                         <div class="col-auto mt-3" formArrayName="cheques_to_process">
                             <table class="table table-sm  table-responsive table-bordered ">
                                 <tbody class="fs-6">
+                                    <!-- bouton select all -->
+                                    <tr class="cheque-select-all-row">
+                                    <td class="text-center">
+                                        <input type="checkbox" (change)="toggle_draw_all()">
+                                    </td>
+                                    <td colspan="4" class="text-start small"></td>
+                                    </tr>
                                     <tr *ngFor="let chequeCtrl of chequesToProcess.controls; let i = index"
                                         [formGroupName]="i">
                                         <ng-container *ngIf="!chequeCtrl.get('drawn')?.value">
@@ -152,7 +159,8 @@
                                         [formGroupName]="i">
                                         <td class="col-3 small">{{ref.value.cheque_qty}} chèque(s)</td>
                                         <td class="col-2 small">{{ref.value.amount}}€</td>
-                                        <td class="col-2 small"> {{get_date_from_temporary_deposit_ref(ref.value.temp_ref)}}</td>
+                                        <td class="col-2 small">
+                                            {{get_date_from_temporary_deposit_ref(ref.value.temp_ref)}}</td>
                                         <td class="col-5 input-group">
                                             <input type="text" class="form-control" formControlName="new_ref"
                                                 placeholder="référence de bordereau">
@@ -174,8 +182,9 @@
             <div class="card  h-100">
                 <div class="card-header fw-bolder d-flex align-items-center justify-content-between">
                     <span>Consolidation bancaire à faire</span>
-                    <a [routerLink]="reconciliation_path()"  class="ms-auto me-1 text-decoration-none" title="Aller à la consolidation bancaire">
-                        <i class="bi-box-arrow-right text-primary small" ></i>
+                    <a [routerLink]="reconciliation_path()" class="ms-auto me-1 text-decoration-none"
+                        title="Aller à la consolidation bancaire">
+                        <i class="bi-box-arrow-right text-primary small"></i>
                     </a>
                 </div>
                 <div class="card-body text-start">

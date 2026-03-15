@@ -55,6 +55,7 @@
                         <td> <input type="text" class="form-control" formControlName="description"> </td>
                         <td> <input type="text" class="form-control" formControlName="info1"> </td>
                         <td> <app-custom-dropdown
+                            class="form-control"
                             [items]="(accounts$ | async) || []"
                             [searchValue]="accountInput"
                             [displayFn]="displayAccountFn"

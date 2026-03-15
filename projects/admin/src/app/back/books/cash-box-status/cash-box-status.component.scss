@@ -3,3 +3,17 @@
 .container-fluid {
 	text-align: center;
 }
+
+/* Select all row - no borders */
+.cheque-select-all-row {
+	border-top: none !important;
+}
+
+.cheque-select-all-row td:first-child {
+	border: 1px solid #dee2e6 !important;
+}
+
+.cheque-select-all-row td:not(:first-child) {
+	border: none !important;
+}
+
