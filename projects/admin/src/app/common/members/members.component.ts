@@ -157,7 +157,10 @@ export class MembersComponent implements OnInit {
   add_licensee(player: FFBplayer) {
     if (player) {
       const new_member: Member = this.player2member(player);
-      this.membersService.createMember(new_member);
+      this.membersService.createMember(new_member).then(() => {
+        this.refreshMembers();
+        this.new_player = null as any;
+      });
     }
   }
 
@@ -166,28 +169,37 @@ export class MembersComponent implements OnInit {
 
     modalRef.result.then((newbee: any) => {
       if (newbee) {
-        let new_member: Member = {
-          id: '',
-          gender: newbee.gender=== 1 ? 'M.' : 'Mme',
-          firstname: newbee.firstname,
-          lastname: newbee.lastname.toUpperCase(),
-          license_number: '??' + newbee.lastname.toUpperCase().slice(0, 3) + newbee.firstname.slice(0, 3),
-          birthdate: newbee.birthdate,
-          city: this.capitalize_first(newbee.city.toLowerCase()),
-          season: '',
-          email: newbee.email ?? '',
-          phone_one: newbee.phone ?? '',
-          license_taken_at: 'BCSTO',
-          license_status: LicenseStatus.UNREGISTERED,
-          is_sympathisant: false,
-          accept_mailing: newbee.email ? true : false,
-          has_avatar: false,
-          membership_date: '',
-          person_id: undefined,
-          iv: undefined
-        }
-        this.membersService.createMember(new_member).then((_member) => {
-          this.toastService.showSuccess('Nouveau membre non licencié', new_member.lastname + ' ' + new_member.firstname);
+        // Vérifier si l'email existe déjà
+        this.membersService.searchMemberByEmail(newbee.email).then((existingMember) => {
+          if (existingMember) {
+            this.toastService.showWarning('Nouveau membre', `Un membre avec l'email ${newbee.email} existe déjà`);
+            return;
+          }
+          
+          let new_member: Member = {
+            id: '',
+            gender: newbee.gender=== 1 ? 'M.' : 'Mme',
+            firstname: newbee.firstname,
+            lastname: newbee.lastname.toUpperCase(),
+            license_number: '??' + newbee.lastname.toUpperCase().slice(0, 3) + newbee.firstname.slice(0, 3),
+            birthdate: newbee.birthdate,
+            city: this.capitalize_first(newbee.city.toLowerCase()),
+            season: '',
+            email: newbee.email ?? '',
+            phone_one: newbee.phone ?? '',
+            license_taken_at: 'BCSTO',
+            license_status: LicenseStatus.UNREGISTERED,
+            is_sympathisant: false,
+            accept_mailing: newbee.email ? true : false,
+            has_avatar: false,
+            membership_date: '',
+            person_id: undefined,
+            iv: undefined
+          }
+          this.membersService.createMember(new_member).then((_member) => {
+            this.toastService.showSuccess('Nouveau membre non licencié', new_member.lastname + ' ' + new_member.firstname);
+            this.refreshMembers();
+          });
         });
       }
 
@@ -366,7 +378,17 @@ export class MembersComponent implements OnInit {
     }
   }
   deleteMember(member: Member) {
-    this.membersService.deleteMember(member);
+    this.membersService.deleteMember(member).then(() => {
+      this.refreshMembers();
+    });
+  }
+
+  private refreshMembers(): void {
+    this.membersService.listMembers().pipe(take(1)).subscribe((members: Member[]) => {
+      this.members = members;
+      this.avatar_urls$ = this.collect_avatars(members);
+      this.filterOnStatus(this.selected_filter);
+    });
   }
 
   access_settings(member: Member): void {
