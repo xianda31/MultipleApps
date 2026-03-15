@@ -66,14 +66,15 @@ export class TournamentsComponent {
       this.tournamentService.list_next_tournament_teams()
     ]).subscribe({
       next: ([types_map, next_tournament_teams]: [any, TournamentTeams[]]) => {
-        const mapObj = types_map || {};
-        // Enrich each team with une image_url
-        const enrichedTeams = next_tournament_teams.map((team) => {
-          const rawName = team.subscription_tournament.organization_club_tournament.tournament_name || '';
-          const nameKey = rawName.toLowerCase().normalize('NFD').replace(/[]/g, '');
-          const imageUrl = this.findImageUrlForName(nameKey, mapObj);
-          return Object.assign(team as any, { image_url: imageUrl });
-        });
+            const mapObj = types_map || {};
+            // Enrich each team with une image_url
+            const enrichedTeams = next_tournament_teams.map((team) => {
+              const rawName = team.subscription_tournament.organization_club_tournament.tournament_name || '';
+              // Nettoyage : suppression des accents uniquement
+              const nameKey = rawName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+              const imageUrl = this.findImageUrlForName(nameKey, mapObj);
+              return Object.assign(team as any, { image_url: imageUrl });
+            });
         this.next_tournament_teams = enrichedTeams;
         this.loading = false;
       },

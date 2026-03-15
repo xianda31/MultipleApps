@@ -12,10 +12,10 @@
     <div class="col" *ngFor="let t of next_tournament_teams">
         <div class="card h-100  nice_shadow">
             <div class=" card-header d-flex text-white bg-primary py-2 align-items-center justify-content-between">
-                <div class="ms-2 text-uppercase">TOURNOI DE RÉGULARITÉ</div>
-                <div *ngIf="registrated_in(t) " class="badge  bg-info px-4 py-2">
+                <div class="ms-1">TOURNOI DE RÉGULARITÉ</div>
+                 <div *ngIf="registrated_in(t) " class="badge bg-info px-2 py-2" style="font-size: 0.60em;">
                      INSCRIT<span *ngIf="logged?.gender === 'Mme'">E</span> 
-                </div>
+                 </div>
             </div>
 
             <div class="row  g-0">
