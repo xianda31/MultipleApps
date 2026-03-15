@@ -23,6 +23,8 @@ export class InputPlayerLicenseComponent implements ControlValueAccessor {
 
   str_player: string = '';
   partners!: FFBplayer[];
+  showSuggestions: boolean = false;
+  private hideSuggestionsTimeout: any;
 
   onChange: (value: string) => void = () => { };
   onTouch: () => void = () => { };
@@ -36,9 +38,7 @@ export class InputPlayerLicenseComponent implements ControlValueAccessor {
     if (input === undefined || input === null) {
       return;
     }
-    // this.input.setValue('#' + input);
     this.str_player = input;
-    // console.log('writeValue', input);
   }
   registerOnChange(fn: any): void {
     this.onChange = fn;
@@ -56,16 +56,29 @@ export class InputPlayerLicenseComponent implements ControlValueAccessor {
       this.ffbService.searchPlayersSuchAs(str_player)
         .then((partners: FFBplayer[]) => {
           this.partners = partners;
-          // console.log('%s options found', partners.length);
+          this.showSuggestions = true;
         });
       this.onChange(this.getLicenceNbr(str_player));
+    } else {
+      this.showSuggestions = false;
     }
+  }
+
+  selectPartner(partner: FFBplayer) {
+    this.str_player = `${partner.firstname} ${partner.lastname} (${partner.license_number})`;
+    this.onChange(partner.license_number?.toString() || '');
+    this.showSuggestions = false;
+  }
+
+  hideSuggestionsDelay() {
+    // Délai pour permettre au click sur une option de se déclencher
+    this.hideSuggestionsTimeout = setTimeout(() => {
+      this.showSuggestions = false;
+    }, 200);
   }
 
   getLicenceNbr(str: string): string {
     return str.substring(0, str.length - 1).split('(')[1] ?? '';
   }
-
-
 }
 

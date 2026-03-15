@@ -1,8 +1,21 @@
-<input type="text" style="outline:none;border:none;width: 100%; " [attr.list]="listeId" [(ngModel)]="str_player"
-    (ngModelChange)="setValue(str_player)" [placeholder]="placeholder">
-<datalist [id]="listeId">
-    <option *ngFor="let partner of partners ">
-        {{partner.firstname}} {{partner.lastname}} ({{partner.license_number}})
-    </option>
-</datalist>
-<!-- {{str_player | json}} -->
+<div class="input-player-container position-relative">
+    <input type="text" 
+        style="outline:none;border:none;width: 100%;" 
+        [(ngModel)]="str_player"
+        (ngModelChange)="setValue(str_player)"
+        (focus)="showSuggestions = true"
+        (blur)="hideSuggestionsDelay()"
+        [placeholder]="placeholder"
+        autocomplete="off">
+    
+    <!-- Dropdown personnalisé pour autocomplétion mobile -->
+    <ul *ngIf="showSuggestions && partners && partners.length > 0" 
+        class="partners-list position-absolute start-0 end-0 mt-1 list-unstyled border rounded shadow-sm"
+        style="z-index: 1000; max-height: 300px; overflow-y: auto; background: white;">
+        <li *ngFor="let partner of partners" 
+            (click)="selectPartner(partner)"
+            class="p-2 border-bottom cursor-pointer hover-highlight">
+            {{partner.firstname}} {{partner.lastname}} ({{partner.license_number}})
+        </li>
+    </ul>
+</div>
