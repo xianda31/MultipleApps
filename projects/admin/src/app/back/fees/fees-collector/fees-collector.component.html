@@ -183,7 +183,7 @@
     </div>
 
     <ng-template #fee_editor ; let-gamer="gamer" ; let-doubled="doubled">
-        <div [class]="gamer_class(gamer)" style="position: relative;">
+        <div [class]="gamer_class(gamer)" style="position: relative; background-color: #f0f4f8;">
             <!-- Bottom-left badges: NP (non payant) and member credits -->
             <div class="position-absolute bottom-0 start-0 m-1 d-flex gap-1" style="z-index: 2;">
                 <span *ngIf="!gamer.enabled" class="badge bg-secondary fixed-badge">{{ (game.fee_rate === 'accession' && gamer.acc_credits) ? 'ACC' :
@@ -236,7 +236,7 @@
                                 [checked]="gamer.validated && !gamer.enabled" [disabled]="gamer.disabled"
                                 (change)="gamer.enabled=false; gamer.in_euro=false; gamer.validated=true; onGamerValidated(gamer); log_game_state(); check_status()" />
                             <label class="form-check-label" [for]="'none_radio'+ gamer.index">{{ (game.fee_rate ===
-                                'accession'&& gamer.acc_credits) ? 'forfait' : 'non payant' }}</label>
+                                'accession'&& gamer.acc_credits) ? 'forfait' : 'offert' }}</label>
                         </div>
                         <!-- Euro -->
                         <div class="form-check form-check-reverse">
@@ -255,7 +255,8 @@
                                 [disabled]="gamer.disabled || gamer.game_credits < (doubled ? 2 : 1)"
                                 (change)="gamer.enabled=true; gamer.in_euro=false; gamer.validated=true; onGamerValidated(gamer); log_game_state(); check_status()" />
                             <label class="form-check-label" [for]="'pass-radio'+ gamer.index">
-                                tampon ({{doubled ? 2 : 1}})
+                                <!-- {{doubled ? '2 tampons' : '1 tampon'}} -->
+                                 carte
                             </label>
                         </div>
                     </div>
