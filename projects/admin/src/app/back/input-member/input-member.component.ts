@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, forwardRef, Input } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR, ReactiveFormsModule } from '@angular/forms';
 import { Member } from '../../common/interfaces/member.interface';
+import { CustomDropdownComponent } from '../../common/components/custom-dropdown/custom-dropdown.component';
 
 @Component({
   selector: 'app-input-member',
@@ -13,28 +14,30 @@ import { Member } from '../../common/interfaces/member.interface';
             multi: true
         }
     ],
-    imports: [ReactiveFormsModule, FormsModule, CommonModule],
+    imports: [ReactiveFormsModule, FormsModule, CommonModule, CustomDropdownComponent],
     templateUrl: './input-member.component.html',
     styleUrl: './input-member.component.scss'
 })
 export class InputMemberComponent implements ControlValueAccessor {
   @Input() members: Member[] = [];
   input!: string;
+  searchInput: string = '';
 
   onChange: (value: Member | null) => void = () => {
   };
   onTouch: () => void = () => { };
   disabled = false;
 
-  // constructor(  ) { }
+  displayMemberFn = (member: Member) => `${member.lastname.toUpperCase()} ${member.firstname}`;
 
   writeValue(input: Member | null): void {
     if (input === undefined || input === null) {
       this.input = '';
+      this.searchInput = '';
       return;
     }
-
     this.input = input.lastname + '\u00A0' + input.firstname;
+    this.searchInput = this.displayMemberFn(input);
   }
   registerOnChange(fn: any): void {
     this.onChange = fn;
@@ -46,15 +49,16 @@ export class InputMemberComponent implements ControlValueAccessor {
     this.disabled = isDisabled;
   }
 
-  setValue(input: string) {
+  onSearchChange(value: string) {
     this.onTouch();
-    const substring = input.split('\u00A0');
-    // console.log(substring);
-    const member = this.members.find((m) => (m.lastname.toUpperCase() === substring[0] && m.firstname === substring[1])) ?? null;
-    // if(!member) {console.warn('InputMemberComponent.setValue: member not found for input', input) }
-    this.onChange(member);
+    this.searchInput = value;
   }
 
+  onMemberSelected(member: Member) {
+    this.input = member.lastname + '\u00A0' + member.firstname;
+    this.searchInput = this.displayMemberFn(member);
+    this.onChange(member);
+  }
 }
 
 

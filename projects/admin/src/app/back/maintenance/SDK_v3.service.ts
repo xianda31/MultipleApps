@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BatchGetItemCommand, DescribeTableCommand, DescribeTableOutput, DynamoDBClient, ListTablesCommand, TransactGetItemsCommand, ScanCommand, PutItemCommand, BatchWriteItemCommand, BatchWriteItemCommandOutput } from '@aws-sdk/client-dynamodb';
+import { BatchGetItemCommand, DescribeTableCommand, DescribeTableOutput, DynamoDBClient, ListTablesCommand, ScanCommand, BatchWriteItemCommand, BatchWriteItemCommandOutput } from '@aws-sdk/client-dynamodb';
 import { catchError, from, map, Observable, of, concat as rxConcat, toArray, switchMap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 

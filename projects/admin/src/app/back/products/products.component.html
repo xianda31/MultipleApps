@@ -54,12 +54,14 @@
                         <td> <input type="text" class="form-control" formControlName="glyph"> </td>
                         <td> <input type="text" class="form-control" formControlName="description"> </td>
                         <td> <input type="text" class="form-control" formControlName="info1"> </td>
-                        <td> <input list="datalist" type="text" class="form-control" formControlName="account">
-                            <datalist id="datalist">
-                                                                @for (account of (accounts$ | async); track account) {
-                                                                    <option [value]="account"></option>
-                                                                }
-                            </datalist>
+                        <td> <app-custom-dropdown
+                            [items]="(accounts$ | async) || []"
+                            [searchValue]="accountInput"
+                            [displayFn]="displayAccountFn"
+                            (searchValueChange)="onAccountInputChange($event)"
+                            (itemSelected)="selectAccount($event)"
+                            (blur)="hideAccountSuggestionsDelay()">
+                        </app-custom-dropdown>
                         </td>
                         <td> <input type="text" class="form-control" formControlName="price"> </td>
 

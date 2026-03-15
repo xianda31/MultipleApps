@@ -14,7 +14,7 @@
         style="z-index: 1000; max-height: 300px; overflow-y: auto; background: white;">
         <li *ngFor="let partner of partners" 
             (click)="selectPartner(partner)"
-            class="p-2 border-bottom cursor-pointer hover-highlight">
+            class="p-2 cursor-pointer hover-highlight">
             {{partner.firstname}} {{partner.lastname}} ({{partner.license_number}})
         </li>
     </ul>

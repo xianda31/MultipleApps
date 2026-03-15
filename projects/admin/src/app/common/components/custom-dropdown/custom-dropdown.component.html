@@ -1,0 +1,20 @@
+<div class="custom-dropdown-container position-relative w-100">
+  <input type="text"
+    style="outline:none;border:none;width: 100%;"
+    [(ngModel)]="searchValue"
+    (ngModelChange)="onInputChange($any($event))"
+    (focus)="onFocus()"
+    (blur)="hideSuggestionsDelay()"
+    [placeholder]="placeholder"
+    autocomplete="off">
+
+  <ul *ngIf="showSuggestions && getFilteredItems() && getFilteredItems().length > 0"
+    class="dropdown-list position-absolute start-0 end-0 mt-1 list-unstyled border rounded shadow-sm"
+    style="z-index: 1000; max-height: 300px; overflow-y: auto; background: white;">
+    <li *ngFor="let item of getFilteredItems()"
+      (click)="selectItem(item)"
+      class="p-2 cursor-pointer hover-highlight">
+      {{ displayFn(item) }}
+    </li>
+  </ul>
+</div>

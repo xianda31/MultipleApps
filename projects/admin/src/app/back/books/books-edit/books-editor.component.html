@@ -204,10 +204,15 @@
       <ng-container [formGroup]="inputFormGroup">
         <label for="member">Adhérent</label>
         <div class="input-group input-group-sm">
-          <input class="form-control" list="members" formControlName="member">
-          <datalist id="members">
-            <option *ngFor="let member of members">{{member.lastname}} {{member.firstname}}</option>
-          </datalist>
+          <app-custom-dropdown
+            class="form-control"
+            [items]="members"
+            placeholder="Rechercher..."
+            [searchValue]="memberSearchInput[index] || ''"
+            [displayFn]="displayMemberFn"
+            (searchValueChange)="onMemberSearchChange($event, index)"
+            (itemSelected)="onMemberSelected($event, index)">
+          </app-custom-dropdown>
           <button type="button" class="btn btn-danger btn-sm" (click)="delete_operation(index)" title="Supprimer">
             <i class="bi bi-person-fill-dash"></i>
           </button>

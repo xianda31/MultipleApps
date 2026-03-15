@@ -5,6 +5,7 @@ import { FFB_proxyService } from '../services/ffb.service';
 import { CommonModule } from '@angular/common';
 import { FFB_licensee } from '../interface/licensee.interface';
 import { Player } from '../interface/tournament_teams.interface';
+import { CustomDropdownComponent } from '../../components/custom-dropdown/custom-dropdown.component';
 
 @Component({
     selector: 'app-input-player',
@@ -15,12 +16,11 @@ import { Player } from '../interface/tournament_teams.interface';
             multi: true
         }
     ],
-    imports: [ReactiveFormsModule, FormsModule, CommonModule],
+    imports: [ReactiveFormsModule, FormsModule, CommonModule, CustomDropdownComponent],
     templateUrl: './input-player.component.html',
     styleUrl: './input-player.component.scss'
 })
 export class InputPlayerComponent implements ControlValueAccessor {
-  @Input() listeId!: string;
   @Input() placeholder!: string;
 
   str_player: string = '';
@@ -30,17 +30,22 @@ export class InputPlayerComponent implements ControlValueAccessor {
   onTouch: () => void = () => { };
   disabled = false;
 
+  displayPlayerFn = (player: FFBplayer) => `${player.firstname} ${player.lastname} (${player.license_number})`;
+
   constructor(
     private ffbService: FFB_proxyService
   ) { }
 
   writeValue(input: any): void {
-    // if (input === undefined || input === null) {
-    //   return;
-    // }
-    // this.input.setValue('#' + input);
-    this.str_player = input;
-    // console.log('writeValue', input);
+    if (input) {
+      if (typeof input === 'string') {
+        this.str_player = input;
+      } else if (input && typeof input === 'object') {
+        this.str_player = this.displayPlayerFn(input);
+      }
+    } else {
+      this.str_player = '';
+    }
   }
   registerOnChange(fn: any): void {
     this.onChange = fn;
@@ -52,27 +57,33 @@ export class InputPlayerComponent implements ControlValueAccessor {
     this.disabled = isDisabled;
   }
 
-  setValue(str_player: string) {
+  onSearchChange(value: string) {
     this.onTouch();
-    if (str_player.length > 3) {
-      this.ffbService.searchPlayersSuchAs(str_player)
+    this.str_player = value;
+    if (value.length > 3) {
+      this.ffbService.searchPlayersSuchAs(value)
         .then((players) => {
           this.players = players;
-          // console.log('%s options found', licensees.length);
         });
-      this.onChange((this.search(str_player)));
+      const selectedPlayer = this.search(value);
+      if (selectedPlayer) {
+        this.onChange(selectedPlayer);
+      }
     }
   }
 
-  search(str: string): FFBplayer {
-    const license = this.getLicenceNbr(str);
-    const player = this.players.find((player) => player.license_number === license);
-    // console.log('%s => %s', str, player);
-    return player!;
-  }
-  getLicenceNbr(str: string): string {
-    return str.substring(0, str.length - 1).split('(')[1] ?? '';
+  onPlayerSelected(player: FFBplayer) {
+    this.str_player = `${player.firstname} ${player.lastname} (${player.license_number})`;
+    this.onChange(player);
   }
 
+  private search(str: string): FFBplayer | undefined {
+    const license = this.getLicenceNbr(str);
+    return this.players.find((player) => player.license_number === license);
+  }
+
+  private getLicenceNbr(str: string): string {
+    return str.substring(0, str.length - 1).split('(')[1] ?? '';
+  }
 }
 

@@ -18,6 +18,7 @@ import { TransactionService } from '../../services/transaction.service';
 import { ToastService } from '../../../common/services/toast.service';
 import { InvoiceSelectComponent } from '../invoice-select/invoice-select';
 import { InvoiceService } from '../../../common/services/invoice.service';
+import { CustomDropdownComponent } from '../../../common/components/custom-dropdown/custom-dropdown.component';
     import { combineLatest, of } from 'rxjs';
     import { switchMap, take, map } from 'rxjs/operators';
     
@@ -36,7 +37,7 @@ interface Account {
   selector: 'app-booking',
   standalone: true,
   encapsulation: ViewEncapsulation.None, // nécessaire pour que les CSS des tooltips fonctionnent
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbTooltipModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbTooltipModule, CustomDropdownComponent],
   templateUrl: './books-editor.component.html',
   styleUrl: './books-editor.component.scss'
 })
@@ -80,6 +81,10 @@ export class BooksEditorComponent {
   // Store subscriptions for valueChanges
   transacClassSubscription!: Subscription;
   transactionIdSubscription!: Subscription;
+
+  // Pour dropdown custom membre
+  memberSearchInput: { [key: number]: string } = {};
+  displayMemberFn = (member: Member) => `${member.lastname} ${member.firstname}`;
 
   constructor(
     private fb: FormBuilder,
@@ -752,5 +757,15 @@ export class BooksEditorComponent {
     this.location.back();
   }
 
+  // Gestion du dropdown custom membre
+  onMemberSearchChange(value: string, index: number) {
+    this.memberSearchInput[index] = value;
+  }
+
+  onMemberSelected(member: Member, index: number) {
+    this.memberSearchInput[index] = this.displayMemberFn(member);
+    const operationForm = this.operations.at(index) as FormGroup;
+    operationForm.get('member')?.setValue(member.id);
+  }
 
 }

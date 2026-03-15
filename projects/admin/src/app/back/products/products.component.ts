@@ -5,10 +5,11 @@ import { Product } from './product.interface';
 import { map, Observable } from 'rxjs';
 import { ProductService } from '../../common/services/product.service';
 import { SystemDataService } from '../../common/services/system-data.service';
+import { CustomDropdownComponent } from '../../common/components/custom-dropdown/custom-dropdown.component';
 @Component({
   selector: 'app-products',
   standalone: true,
-    imports: [CommonModule, FormsModule, ReactiveFormsModule,],
+    imports: [CommonModule, FormsModule, ReactiveFormsModule, CustomDropdownComponent],
     templateUrl: './products.component.html',
     styleUrl: './products.component.scss'
 })
@@ -19,6 +20,10 @@ export class ProductsComponent implements OnInit, OnDestroy {
   productForm!: FormGroup;
   product_selected: boolean = false;
   accounts$ !: Observable<string[]>;
+
+  accountInput: string = '';
+  showAccountSuggestions: boolean = false;
+  displayAccountFn = (account: string) => account;
 
   constructor(
     private productService: ProductService,
@@ -87,6 +92,22 @@ export class ProductsComponent implements OnInit, OnDestroy {
     this.product_selected = false;
     // let { ...deleted_product } = product;
     this.productForm.patchValue(product);   // permet de réafficher le produit supprimé
-
   }
+
+  // Gestion du dropdown custom compte
+  onAccountInputChange(value: string) {
+    this.accountInput = value;
+    this.showAccountSuggestions = true;
+  }
+
+  selectAccount(account: string) {
+    this.accountInput = account;
+    this.productForm.get('account')?.setValue(account);
+    this.showAccountSuggestions = false;
+  }
+
+  hideAccountSuggestionsDelay() {
+    setTimeout(() => { this.showAccountSuggestions = false; }, 200);
+  }
+
 }

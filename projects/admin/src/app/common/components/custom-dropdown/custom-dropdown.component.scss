@@ -1,0 +1,24 @@
+.custom-dropdown-container {
+  position: relative;
+  width: 100%;
+}
+
+.dropdown-list {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  max-height: 300px;
+  overflow-y: auto;
+
+  li {
+    padding: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+
+    &.hover-highlight:hover {
+      background-color: #f0f0f0;
+    }
+  }
+}
