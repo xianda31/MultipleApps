@@ -16797,4 +16797,30 @@ textarea.form-control-lg {
   }
 }
 
+/* Align select elements with custom-dropdown styling */
+.form-control,
+.form-select {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--bs-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.form-control:hover,
+.form-select:hover {
+  border-color: #bbb;
+}
+
+/* Hover effect on select options */
+.form-select option:checked {
+  background-color: var(--bs-primary);
+  color: white;
+}
+
 /*# sourceMappingURL=custom.css.map */
