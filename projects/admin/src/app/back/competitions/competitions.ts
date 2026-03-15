@@ -247,24 +247,47 @@ export class CompetitionsComponent {
 
   getFilteredTeams(result: CompetitionResults): CompetitionTeam[] {
     if (!result || !Array.isArray(result.teams)) return [];
-    
-    // Filter by threshold
     const threshold = this.getThreshold(result.competition);
-    let filtered = result.teams;
-    if (!this.no_filter && threshold !== undefined) {
-      filtered = result.teams.filter((team: CompetitionTeam) =>
-        team.cumulated_pe_percentage === undefined || team.cumulated_pe_percentage <= threshold
-      );
-    }
-    
-    // Remove teams that have NO valid members (all players are non-members)
-    filtered = filtered.filter((team: CompetitionTeam) => {
-      if (!Array.isArray(team.players) || team.players.length === 0) return false;
-      // Keep team if at least one player is a member
-      return team.players.some(p => this.isMember(p));
+    return result.teams.filter((team: CompetitionTeam) =>
+      this.no_filter ||
+      !threshold ||
+      threshold === 0 ||
+      (team.cumulated_pe_percentage as any) >= +threshold
+    );
+  }
+
+  /**
+   * Récupère les compétitions récentes groupées par division
+   */
+  getRecentCompetitions(): { [division: string]: Array<{ label: string; date: string; organization: string }> } {
+    const recentByDivision: { [division: string]: Array<{ label: string; date: string; organization: string }> } = {};
+
+    Object.values(this.filtered_team_results).forEach((results: CompetitionResults[]) => {
+      results.forEach((res: CompetitionResults) => {
+        if (this.isRecentCalculation(res.competition.calculation_date)) {
+          const division = res.competition.assigned_division || 'Autres';
+          if (!recentByDivision[division]) {
+            recentByDivision[division] = [];
+          }
+          
+          // Vérifier si cette compétition n'est pas déjà ajoutée
+          const competitionLabel = res.competition.assigned_label ?? 'Unknown';
+          const exists = recentByDivision[division].some(
+            c => c.label === competitionLabel && c.date === res.competition.calculation_date
+          );
+          
+          if (!exists) {
+            recentByDivision[division].push({
+              label: competitionLabel,
+              date: res.competition.calculation_date || '',
+              organization: this.get_organization_label(res.competition.organization_id)
+            });
+          }
+        }
+      });
     });
-    
-    return filtered;
+
+    return recentByDivision;
   }
 
   

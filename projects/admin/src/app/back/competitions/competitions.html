@@ -59,7 +59,35 @@
                         <!-- </div> -->
                     </div>
                 </div>
+                <div *ngIf="back_office_mode" class="card mb-3 mt-5 shadow-sm">
+                    <div class="card-header">
+                        <span class="fw-bolder text-center d-block mb-3">les derniers résultats</span>
+                        <div class="card-body">
+                            <ng-container *ngIf="(getRecentCompetitions() | keyvalue).length > 0; else noRecent">
+                                <div *ngFor="let division of getRecentCompetitions() | keyvalue" class="mb-2">
+                                    <div class="fw-bold text-primary mb-2">{{ division.key }}</div>
+                                    <div class="ps-3">
+                                        <div *ngFor="let comp of division.value" class="small mb-2">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="text-start">{{ comp.label }}</span>
+                                                <div class="d-flex ms-auto">
+                                                    <span class="text-muted" style="font-size: 0.9em;">{{ comp.organization }}</span>
+                                                    <span class="text-muted ms-4">{{ comp.date | date:'shortDate' }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </ng-container>
+                            <ng-template #noRecent>
+                                <div class="text-muted text-center small">Aucune compétition récente</div>
+                            </ng-template>
+                        </div>
+
+                    </div>
+                </div>
             </div>
+
             <div [ngClass]="back_office_mode ? 'col-12 col-lg-8 col-xl-9' : 'col-12'">
 
                 <div *ngIf="!results_extracted" class="row mb-3 justify-content-center">
