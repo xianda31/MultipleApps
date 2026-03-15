@@ -7,7 +7,7 @@ import {
   defaultPlayerChartOptions,
   defaultFinancialChartOptions,
   defaultMemberAgeDistributionChartData,
-  defaultMemberAgeDistributionChartOptions
+  defaultMemberAgeDistributionChartOptions,
 } from './dashboard.graph.definition';
 
 
@@ -191,5 +191,64 @@ export class DashboardGraphService {
   }
   getDefaultMemberAgeDistributionChartOptions(): ChartOptions<'bar'> {
     return defaultMemberAgeDistributionChartOptions;
+  }
+
+  buildIVDistributionChart(
+    series: string[],
+    dataByCodeAndSerie: { [codeWithSerie: string]: { count: number, iv: number } },
+    suffixOrder: string[]
+  ): { data: any, options: ChartOptions<any> } {
+    // Couleur par suffixe avec noms de symboles de cartes
+    const colorMap = this.getIVSuffixColorMap();
+
+    // Créer un dataset par suffixe
+    const datasets = suffixOrder.map(suffix => {
+      const data = series.map(serie => {
+        const key = `${serie}|${suffix}`;
+        return dataByCodeAndSerie[key]?.count || 0;
+      });
+
+      const color = colorMap[suffix] || '#999999';
+
+      return {
+        label: suffix,
+        data,
+        backgroundColor: color + '99',
+        borderColor: color,
+        borderWidth: 2,
+        borderRadius: 4,
+        stack: 'Stack 0',
+      };
+    });
+
+    return {
+      data: {
+        labels: series,
+        datasets
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          title: { display: false, text: 'Distribution des valeurs IV par série' }
+        },
+        scales: {
+          x: { title: { display: false, text: 'Série' }, stacked: true },
+          y: { title: { display: true, text: 'Nombre de membres' }, beginAtZero: true, stacked: true }
+        }
+      } as ChartOptions<any>
+    };
+  }
+
+  getIVSuffixColorMap(): { [suffix: string]: string } {
+    return {
+      'NvL': '#AAAAAA',  // Non classé (gris clair)
+      'T': '#228B22',    // Trèfle (vert)
+      'K': '#db5e25',    // Carreau (orange)
+      'C': '#E31B23',    // Coeur (rouge vif)
+      'P': '#1C1C1C',    // Pique (noir)
+      'Pr': '#ad9f4e',    // Promotion (dorée)
+      'H': '#bb9823'   // Autres (dorée ++)
+    };
   }
 }

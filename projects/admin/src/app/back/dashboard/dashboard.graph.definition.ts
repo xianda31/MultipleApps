@@ -158,3 +158,30 @@ export const defaultMemberAgeDistributionChartOptions: ChartOptions<'bar'> = {
     y: { title: { display: true, text: 'Nombre de membres' }, beginAtZero: true }
   }
 };
+
+// Distribution IV des membres (bar chart)
+export const defaultIVDistributionChartData = {
+  labels: [],
+  datasets: [
+    {
+      data: [],
+      label: 'Membres',
+      backgroundColor: '',
+      borderColor: '',
+      borderWidth: 2,
+      borderRadius: 4
+    }
+  ]
+};
+
+export const defaultIVDistributionChartOptions: ChartOptions<'bar'> = {
+  responsive: true,
+  plugins: {
+    legend: { display: false },
+    title: { display: false, text: 'Distribution des valeurs IV' }
+  },
+  scales: {
+    x: { title: { display: false, text: 'Plage IV' } },
+    y: { title: { display: true, text: 'Nombre de membres' }, beginAtZero: true }
+  }
+};

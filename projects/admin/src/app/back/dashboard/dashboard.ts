@@ -22,14 +22,15 @@ export class DashboardComponent {
   allMonths: string[] = [];
   startYear!: number;
 
-
-  financialChartData: any;
-  playerChartData: any;
+  financialChartData: any = {};
+  playerChartData: any = {};
   playerChartOptions!: ChartOptions<any>;
   financialChartOptions!: ChartOptions<any>;
-  memberChartData:any;
+  memberChartData: any = {};
   memberChartOptions !: ChartOptions<any>
-
+  ivChartData: any = {};
+  ivChartOptions!: ChartOptions<any>;
+  ivSuffixColorMap!: { [suffix: string]: string };
 
   playerCountAverage  !: number;
   tournamentCountAverage!: number;
@@ -42,6 +43,7 @@ export class DashboardComponent {
     private graphService: DashboardGraphService,
     private memberService: MembersService
   ) {
+    this.ivSuffixColorMap = this.graphService.getIVSuffixColorMap();
   }
 
 
@@ -80,7 +82,7 @@ export class DashboardComponent {
         ));
       });
 
-      this.initialize_members_data().subscribe(({ age_groups,  group_counts_male, group_counts_female }) => {
+      this.initialize_members_data().subscribe(({ age_groups, group_counts_male, group_counts_female }) => {
         const countsMale = age_groups.map(g => group_counts_male[g] || 0);
         const countsFemale = age_groups.map(g => group_counts_female[g] || 0);
         ({ data: this.memberChartData, options: this.memberChartOptions } = this.graphService.buildMemberAgeDistributionChart(
@@ -90,8 +92,19 @@ export class DashboardComponent {
         ));
       });
 
+      this.initialize_iv_data().subscribe(({ series, dataByCodeAndSerie, suffixOrder }) => {
+        ({ data: this.ivChartData, options: this.ivChartOptions } = this.graphService.buildIVDistributionChart(
+          series,
+          dataByCodeAndSerie,
+          suffixOrder
+        ));
+      });
+
     });
   }
+
+
+
 
   initialize_members_data(ageStep: number = 5): Observable<{
     age_groups: string[],
@@ -99,71 +112,139 @@ export class DashboardComponent {
     group_counts_male: { [age_group: string]: number },
     group_counts_female: { [age_group: string]: number }
   }> {
-    return this.memberService.listMembers().pipe(map(members => {
-      this.membersCount = members.length;
-      const now = new Date();
-      // Calculer l'âge et le genre de chaque membre
-      const agesWithGender = members
-        .map(m => {
-          if (!m.birthdate) return null;
-          const birth = new Date(m.birthdate);
-          if (isNaN(birth.getTime())) return null;
-          let age = now.getFullYear() - birth.getFullYear();
-          const mDiff = now.getMonth() - birth.getMonth();
-          if (mDiff < 0 || (mDiff === 0 && now.getDate() < birth.getDate())) {
-            age--;
-          }
-          return { age, gender: m.gender };
-        })
-        .filter(a => a !== null && a.age >= 0) as { age: number, gender: any }[];
+    return this.memberService.listMembers().pipe(
+      map(members => members.filter(m => m.membership_date)), // Filtrer les membres ayant payé leur cotisation
+      map(members => {
+        this.membersCount = members.length;
+        console.log(`Total members: ${this.membersCount}`);
+        const now = new Date();
+        // Calculer l'âge et le genre de chaque membre
+        const agesWithGender = members
+          .map(m => {
+            if (!m.birthdate) return null;
+            const birth = new Date(m.birthdate);
+            if (isNaN(birth.getTime())) return null;
+            let age = now.getFullYear() - birth.getFullYear();
+            const mDiff = now.getMonth() - birth.getMonth();
+            if (mDiff < 0 || (mDiff === 0 && now.getDate() < birth.getDate())) {
+              age--;
+            }
+            return { age, gender: m.gender };
+          })
+          .filter(a => a !== null && a.age >= 0) as { age: number, gender: any }[];
 
-      const ages = agesWithGender.map(a => a.age);
-      // Déterminer la borne min et max
-      const maxAge = Math.max(...ages, 0);
-      const minAge = Math.min(...ages, 0);
-      // Arrondir la borne min à l'inférieur multiple de ageStep
-      const minGroup = Math.floor(minAge / ageStep) * ageStep;
-      // Créer les tranches minGroup-minGroup+ageStep-1, ...
-      let age_groups: string[] = [];
-      const group_counts: { [age_group: string]: number } = {};
-      const group_counts_male: { [age_group: string]: number } = {};
-      const group_counts_female: { [age_group: string]: number } = {};
-      for (let min = minGroup; min <= maxAge; min += ageStep) {
-        const max = min + ageStep - 1;
-        const label = `${min}-${max}`;
-        age_groups.push(label);
-        group_counts[label] = 0;
-        group_counts_male[label] = 0;
-        group_counts_female[label] = 0;
-      }
-      // Compter les membres dans chaque tranche et par genre
-      for (const { age, gender } of agesWithGender) {
-        const groupIdx = Math.floor((age - minGroup) / ageStep);
-        const label = age_groups[groupIdx] || `${minGroup + ageStep * groupIdx}-${minGroup + ageStep * groupIdx + ageStep - 1}`;
-        if (!(label in group_counts)) {
+        const ages = agesWithGender.map(a => a.age);
+        // Déterminer la borne min et max
+        const maxAge = Math.max(...ages, 0);
+        const minAge = Math.min(...ages, 0);
+        // Arrondir la borne min à l'inférieur multiple de ageStep
+        const minGroup = Math.floor(minAge / ageStep) * ageStep;
+        // Créer les tranches minGroup-minGroup+ageStep-1, ...
+        let age_groups: string[] = [];
+        const group_counts: { [age_group: string]: number } = {};
+        const group_counts_male: { [age_group: string]: number } = {};
+        const group_counts_female: { [age_group: string]: number } = {};
+        for (let min = minGroup; min <= maxAge; min += ageStep) {
+          const max = min + ageStep - 1;
+          const label = `${min}-${max}`;
+          age_groups.push(label);
           group_counts[label] = 0;
           group_counts_male[label] = 0;
           group_counts_female[label] = 0;
-          if (!age_groups.includes(label)) age_groups.push(label);
         }
-        group_counts[label]++;
-        if (gender === 1 || gender === 'M.') {
-          group_counts_male[label]++;
-        } else if (gender === 0 || gender === 'Mme') {
-          group_counts_female[label]++;
-        } else {
-          group_counts_female[label]++;
+        // Compter les membres dans chaque tranche et par genre
+        for (const { age, gender } of agesWithGender) {
+          const groupIdx = Math.floor((age - minGroup) / ageStep);
+          const label = age_groups[groupIdx] || `${minGroup + ageStep * groupIdx}-${minGroup + ageStep * groupIdx + ageStep - 1}`;
+          if (!(label in group_counts)) {
+            group_counts[label] = 0;
+            group_counts_male[label] = 0;
+            group_counts_female[label] = 0;
+            if (!age_groups.includes(label)) age_groups.push(label);
+          }
+          group_counts[label]++;
+          if (gender === 1 || gender === 'M.') {
+            group_counts_male[label]++;
+          } else if (gender === 0 || gender === 'Mme') {
+            group_counts_female[label]++;
+          } else {
+            group_counts_female[label]++;
+          }
         }
-      }
-      // Supprimer les premières tranches vides
-      while (age_groups.length > 0 && group_counts[age_groups[0]] === 0) {
-        delete group_counts[age_groups[0]];
-        delete group_counts_male[age_groups[0]];
-        delete group_counts_female[age_groups[0]];
-        age_groups.shift();
-      }
-      return { age_groups, group_counts, group_counts_male, group_counts_female };
-    }));
+        // Supprimer les premières tranches vides
+        while (age_groups.length > 0 && group_counts[age_groups[0]] === 0) {
+          delete group_counts[age_groups[0]];
+          delete group_counts_male[age_groups[0]];
+          delete group_counts_female[age_groups[0]];
+          age_groups.shift();
+        }
+        return { age_groups, group_counts, group_counts_male, group_counts_female };
+      }));
+  }
+
+  initialize_iv_data(step: number = 10): Observable<{
+    series: string[],
+    dataByCodeAndSerie: { [codeWithSerie: string]: { count: number, iv: number } },
+    suffixOrder: string[]
+  }> {
+    return this.memberService.listMembers().pipe(
+      map(members => members.filter(m => m.membership_date)), // Filtrer les membres ayant payé leur cotisation
+
+      map(members => {
+        // Récupérer les membres avec iv_code et iv valides
+        const membersWithIVCode = members
+          .filter(m => m.iv_code && m.iv !== null && m.iv !== undefined && typeof m.iv === 'number');
+
+        if (membersWithIVCode.length === 0) {
+          return { series: [], dataByCodeAndSerie: {}, suffixOrder: [] };
+        }
+
+        const series = ['NvL', '4', '3', '2', '1'];
+        const dataByCodeAndSerie: { [codeWithSerie: string]: { count: number, iv: number } } = {};
+        const suffixMap: { [suffix: string]: number } = {}; // suffix -> min IV
+
+        // Extraire la série et le suffixe de chaque iv_code
+        for (const member of membersWithIVCode) {
+          const code = member.iv_code!;
+          const iv = member.iv!;
+
+          let serie = '';
+          let suffix = '';
+
+          // Déterminer la série et le suffixe
+          if (code.startsWith('NvL')) {
+            serie = 'NvL';
+            const remaining = code.substring(3); // Tout ce qui suit "NvL"
+            // Extraire le suffixe (dernier caractère ou "Pr" si en fin)
+            suffix = remaining.endsWith('Pr') ? 'Pr' : remaining.charAt(remaining.length - 1) || '';
+          } else if (code.length > 0 && /^[1-4]/.test(code)) {
+            serie = code.charAt(0);
+            const remaining = code.substring(1);
+            // Extraire le suffixe (dernier caractère ou "Pr" si en fin)
+            suffix = remaining.endsWith('Pr') ? 'Pr' : remaining.charAt(remaining.length - 1) || '';
+          } else {
+            continue;
+          }
+
+          // Compter
+          const key = `${serie}|${suffix}`;
+          if (!dataByCodeAndSerie[key]) {
+            dataByCodeAndSerie[key] = { count: 0, iv };
+          }
+          dataByCodeAndSerie[key].count++;
+
+          // Tracker l'IV min pour chaque suffixe
+          if (!suffixMap[suffix] || iv < suffixMap[suffix]) {
+            suffixMap[suffix] = iv;
+          }
+        }
+
+        // Trier les suffixes par min IV
+        const suffixOrder = Object.keys(suffixMap)
+          .sort((a, b) => suffixMap[a] - suffixMap[b]);
+
+        return { series, dataByCodeAndSerie, suffixOrder };
+      }));
   }
 
   initialize_tournaments_data(chartLabels: string[]): Observable<{ playerCounts: (number | null)[], tournamentCounts: (number | null)[] }> {
@@ -261,7 +342,5 @@ export class DashboardComponent {
     }
     return months;
   }
-
-
 }
 
