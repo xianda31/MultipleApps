@@ -36,6 +36,8 @@ export class DashboardComponent {
   teamPerTournamentAverage !: number;
   tournamentCountAverage!: number;
   membersCount!: number;
+  averageMaleAge!: number;
+  averageFemaleAge!: number;
 
   constructor(
     private bookService: BookService,
@@ -173,6 +175,13 @@ export class DashboardComponent {
             group_counts_female[label]++;
           }
         }
+
+        // calculer la moyenne d'âge par genre
+          const totalMale = agesWithGender.filter(a => a.gender === 1 || a.gender === 'M.').length;
+          const totalFemale = agesWithGender.filter(a => a.gender === 0 || a.gender === 'Mme').length;
+          this.averageMaleAge = totalMale > 0 ? agesWithGender.filter(a => a.gender === 1 || a.gender === 'M.').reduce((sum, a) => sum + a.age, 0) / totalMale : 0;
+          this.averageFemaleAge = totalFemale > 0 ? agesWithGender.filter(a => a.gender ===  0 || a.gender === 'Mme').reduce((sum, a) => sum + a.age, 0) / totalFemale : 0;
+
         // Supprimer les premières tranches vides
         while (age_groups.length > 0 && group_counts[age_groups[0]] === 0) {
           delete group_counts[age_groups[0]];

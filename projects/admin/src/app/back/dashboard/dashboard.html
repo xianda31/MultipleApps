@@ -38,7 +38,8 @@
             <div class="card-body">
                 <div class="card-text text-center justify-content-center">
                     <div class="text-muted small">
-                        (moyenne mensuelle: {{tournamentCountAverage | number:'1.0-0'}} tournois de {{teamPerTournamentAverage
+                        (moyenne mensuelle: {{tournamentCountAverage | number:'1.0-0'}} tournois de
+                        {{teamPerTournamentAverage
                         | number:'1.0-0'}} paires)
                     </div>
                     <div class="chart-container">
@@ -70,12 +71,17 @@
         <div class="card h-100">
             <h6 class="card-header">Tranches d'âge </h6>
             <div class="card-body">
+                <div class="text-muted small">
+                    (âge moyen: {{averageMaleAge | number:'1.0-1'}} ans pour les hommes, {{averageFemaleAge |
+                    number:'1.0-1'}} ans pour les femmes)
+                </div>
                 <div class="card-text text-center justify-content-center">
                     <div class="chart-container">
                         <canvas baseChart [data]="memberChartData" [options]="memberChartOptions" [type]="'bar'">
                         </canvas>
                     </div>
                 </div>
+  
 
             </div>
             <div class="card-footer">
