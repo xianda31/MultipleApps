@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { DBhandler } from './graphQL.service';
 import { AssistanceRequest, AssistanceRequestInput, REQUEST_STATUS } from '../interfaces/assistance-request.interface';
-import { BehaviorSubject, Observable, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, Observable, switchMap, tap, map } from 'rxjs';
 import { ToastService } from './toast.service';
 
 
@@ -75,5 +75,11 @@ export class AssistanceRequestService {
     );
 
     return this._requests ? this._request$.asObservable() : remote_loads$;
+  }
+
+  getOpenRequestsCount(): Observable<number> {
+    return this.getAllRequests().pipe(
+      map((requests) => requests.filter((r) => r.status !== REQUEST_STATUS.RESOLVED).length)
+    );
   }
 }

@@ -15,21 +15,34 @@ import { AssistanceRequestService } from '../../common/services/assistance-reque
 })
 export class BackAssistanceComponent implements OnInit {
     requests: AssistanceRequest[] = [];
-    editingStatus: { [id: string]: boolean } = {};
     statusOptions = [
-        { value: REQUEST_STATUS.NEW, label: 'Nouveau' },
-        { value: REQUEST_STATUS.IN_PROGRESS, label: 'En cours' },
-        { value: REQUEST_STATUS.RESOLVED, label: 'Résolu' }
+        { value: REQUEST_STATUS.NEW, label: '🔴 Nouveau' },
+        { value: REQUEST_STATUS.IN_PROGRESS, label: '🟡 En cours' },
+        { value: REQUEST_STATUS.RESOLVED, label: '🟢 Résolu' }
     ];
 
     statusFilter: string = '';
-
-    getStatusLabel(status: string): string {
-        const found = this.statusOptions.find((s: { value: string; label: string }) => s.value === status);
-        return found ? found.label : status;
-    }
+    sortOrder: 'asc' | 'desc' = 'desc';
 
     constructor(private assistanceService: AssistanceRequestService) { }
+
+    getStatusBadgeClass(status: string): string {
+        if (status === REQUEST_STATUS.NEW) return 'bg-danger';
+        if (status === REQUEST_STATUS.RESOLVED) return 'bg-success';
+        return '';
+    }
+
+    getStatusBadgeStyle(status: string): { [key: string]: string } {
+        if (status === REQUEST_STATUS.IN_PROGRESS) {
+            return { backgroundColor: '#90EE90', color: '#000' };
+        }
+        return {};
+    }
+
+    getStatusLabel(status: string): string {
+        const found = this.statusOptions.find(s => s.value === status);
+        return found ? found.label : status;
+    }
 
     ngOnInit() {
         this.assistanceService.getAllRequests().subscribe(requests => {
@@ -37,17 +50,24 @@ export class BackAssistanceComponent implements OnInit {
         });
     }
     get filteredRequests(): AssistanceRequest[] {
-        if (!this.statusFilter) return this.requests;
-        return this.requests.filter(r => r.status === this.statusFilter);
+        let filtered = this.requests;
+        if (this.statusFilter) {
+            filtered = filtered.filter(r => r.status === this.statusFilter);
+        }
+        // Tri par date de création
+        return filtered.sort((a, b) => {
+            const dateA = new Date(a.createdAt).getTime();
+            const dateB = new Date(b.createdAt).getTime();
+            return this.sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+        });
     }
 
-    enableEdit(id: string) {
-        this.editingStatus[id] = true;
+    toggleSortOrder() {
+        this.sortOrder = this.sortOrder === 'desc' ? 'asc' : 'desc';
     }
 
     updateStatus(request: AssistanceRequest, newStatus: string) {
         const updated = { ...request, status: newStatus };
         this.assistanceService.updateRequest(updated);
-        this.editingStatus[request.id] = false;
     }
 }

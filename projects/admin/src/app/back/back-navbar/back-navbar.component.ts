@@ -39,7 +39,7 @@ export class BackNavbarComponent implements OnInit {
   logged_member$: Observable<Member | null> = new Observable<Member | null>();
   
   avatar$ !: Observable<string>;
-  assistances_nbr: number = 0;
+  assistances_nbr : number = 0;
  BACK_ROUTE_PATHS = BACK_ROUTE_PATHS;
   
   // Mobile menu collapse states
@@ -79,6 +79,9 @@ export class BackNavbarComponent implements OnInit {
 
   ngOnInit(): void {
 
+    this.assistanceService.getOpenRequestsCount().subscribe(count => {
+      this.assistances_nbr = count;
+    });
     // Fermer tous les dropdowns lors de la navigation
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
@@ -100,9 +103,7 @@ export class BackNavbarComponent implements OnInit {
       this.navbarMenus = [...staticMenus];
       if (member !== null) {
         this.user_accreditation = await this.groupService.getUserAccreditation();
-        this.assistanceService.getAllRequests().subscribe(requests => {
-          this.assistances_nbr = requests.filter(r => r.status !== REQUEST_STATUS.RESOLVED).length;
-        });
+   
         this.avatar$ = this.memberSettingsService.getAvatarUrl(member);
         this.memberSettingsService.settingsChange$().subscribe(() => {
           this.avatar$ = this.memberSettingsService.getAvatarUrl(member);

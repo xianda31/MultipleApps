@@ -17,6 +17,7 @@
       - saison {{season}}
       <span class="badge bg-success" style="font-size: 0.6rem;">{{entries_nbr}}</span>
       <span *ngIf="!production_mode" class="badge bg-dark" style="font-size: 0.6rem;">dev</span>
+      <span *ngIf="assistances_nbr" class="badge bg-warning" style="font-size: 0.6rem; color: rgb(252, 249, 249);">{{assistances_nbr}} ticket(s)</span>
     </span>
 
     <span class="d-sm-inline d-md-none fs-5 ms-1">BCSTO {{season}}</span>

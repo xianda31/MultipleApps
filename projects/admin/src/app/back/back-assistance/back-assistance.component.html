@@ -1,69 +1,61 @@
-<div class="container mt-4">
+<div class="container-fluid mt-4 px-0">
   <h3 class="mb-4">Demandes d'assistance</h3>
-  <table class="table table-bordered table-hover align-middle bg-white">
-    <thead class="table-light">
-      <tr>
-        <th>Nom</th>
-        <th>Prénom</th>
-        <th>Email</th>
-        <th>Type</th>
-        <th>Message</th>
-        <th>Date</th>
-        <th>
-          <div class="d-flex flex-row align-items-center gap-2">
-            <span>Status</span>
-            <select id="statusFilter" class="form-select form-select-sm" style="min-width: 110px;" [(ngModel)]="statusFilter">
-              <option value="">Tous</option>
-              <option *ngFor="let s of statusOptions" [value]="s.value">{{ s.label }}</option>
-            </select>
+
+  <!-- Filtres et tri -->
+  <div class="row mb-3">
+    <div class="col-12 col-md-4 d-flex align-items-center gap-2">
+      <div class="text-nowrap ">Filtrer par état:</div>
+      <select class="form-select form-select-sm" [(ngModel)]="statusFilter" style="max-width: 200px;">
+        <option value="">Tous</option>
+        <option *ngFor="let s of statusOptions" [value]="s.value">{{ s.label }}</option>
+      </select>
+    </div>
+
+    <div class="col-12 col-md-4 d-flex align-items-center gap-2 mt-2">
+      <label class="form-label mb-2">Trier par date:</label>
+      <button class="btn btn-outline-secondary btn-sm" (click)="toggleSortOrder()">
+        Tri: {{ sortOrder === 'desc' ? 'Plus récent' : 'Plus ancien' }}
+        <i class="bi" [ngClass]="sortOrder === 'desc' ? 'bi-arrow-down' : 'bi-arrow-up'"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Cartes -->
+  <div class="row g-3 mb-3">
+    <div class="col-12 col-md-6 col-lg-3" *ngFor="let req of filteredRequests">
+      <div class="card nice_shadow h-100 ">
+        <div class="card-body">
+
+          <div class="mb-2 row">
+            <div class="col col-md-7">
+              <div><strong>Origine:</strong> {{ req.prenom }} {{ req.nom }}</div>
+              <div class=" small mb-2">
+                <strong>Email:</strong>
+                <a [href]="'mailto:' + req.email" class="ms-1 text-decoration-none">{{ req.email }}</a>
+              </div>
+              <div><strong>Type:</strong> {{ req.type }}</div>
+            </div>
+            <div class="col col-md-5">
+              <div><strong>Date:</strong> {{ req.createdAt | date:'short' }}</div>
+
+              <div class="mb-3 d-flex align-items-center gap-2">
+                <!-- <label class="form-label mb-0 text-nowrap">Status:</label> -->
+                <select class="form-select form-select-sm" style="max-width: 150px;" [(ngModel)]="req.status"
+                  (change)="updateStatus(req, req.status)">
+                  <option *ngFor="let s of statusOptions" [value]="s.value">{{ s.label }}</option>
+                </select>
+              </div>
+            </div>
           </div>
-        </th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let req of filteredRequests">
-        <td>{{ req.nom }}</td>
-        <td>{{ req.prenom }}</td>
-        <td>{{ req.email }}</td>
-        <td>{{ req.type }}</td>
-        <td class="message-cell" [attr.title]="req.texte">
-          {{ req.texte.split('\n')[0] }}
-          <ng-container *ngIf="req.texte.includes('\n')">…</ng-container>
-        </td>
-        <td>{{ req.createdAt | date:'short' }}</td>
-        <td>
-          <ng-container *ngIf="editingStatus[req.id]; else showStatus">
-            <select class="form-select form-select-sm" [(ngModel)]="req.status">
-              <option *ngFor="let s of statusOptions" [value]="s.value">{{ s.label }}</option>
-            </select>
-          </ng-container>
-          <ng-template #showStatus>
-            <span
-              class="badge"
-              [ngClass]="{
-                'bg-warning text-dark': req.status === statusOptions[0].value,
-                'bg-info text-dark': req.status === statusOptions[1].value,
-                'bg-success': req.status === statusOptions[2].value
-              }"
-            >
-              {{ getStatusLabel(req.status) }}
-            </span>
-          </ng-template>
-        </td>
-        <td>
-          <ng-container *ngIf="editingStatus[req.id]; else editBtn">
-            <button class="btn btn-success btn-sm me-1" (click)="updateStatus(req, req.status)">Enregistrer</button>
-            <button class="btn btn-outline-secondary btn-sm" (click)="editingStatus[req.id]=false">Annuler</button>
-          </ng-container>
-          <ng-template #editBtn>
-            <button class="btn btn-outline-primary btn-sm" (click)="enableEdit(req.id)">Modifier</button>
-          </ng-template>
-        </td>
-      </tr>
-    </tbody>
-  </table>
 
 
+          <div class="mb-3 flex-grow-1">
+            <div><strong>Message:</strong>
+              <div> {{ req.texte }} </div>
+            </div>
+          </div>
 
-</div>
+        </div>
+      </div>
+    </div>
+  </div>
