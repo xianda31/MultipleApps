@@ -11,60 +11,65 @@
 <div *ngIf="!loading && !in_error" [ngClass]="rowCols()">
     <div class="col" *ngFor="let t of next_tournament_teams">
         <div class="card h-100  nice_shadow">
-            <div class=" card-header d-flex text-white bg-primary py-2 align-items-center justify-content-between">
-                <div class="ms-1">TOURNOI DE RÉGULARITÉ</div>
-                 <div *ngIf="registrated_in(t) " class="badge bg-info px-2 py-2" style="font-size: 0.60em;">
-                     INSCRIT<span *ngIf="logged?.gender === 'Mme'">E</span> 
-                 </div>
-            </div>
+            <div class="card-body d-flex flex-column">
 
-            <div class="row  g-0">
-                <div class="col col-sm-3 col-md-4 d-flex">
-                    <div class="overflow-hidden w-100">
-                        <ng-container *ngIf="getImageUrl(t) as imgUrl; else noImg">
-                            <img [attr.src]="imgUrl" class="img-fluid " [alt]="name_of(t) || 'vignette'"
-                                style="object-fit:cover; display:block; width:100%;">
-                        </ng-container>
-                        <ng-template #noImg>
-                            <div class="w-100 h-100" style=" background: transparent;"></div>
-                        </ng-template>
-                    </div>
-                </div>
-                <div class="col col-sm-9 col-md-8  justify-content-center  px-1">
-                    <!-- <div class="w-100"> -->
-                    <h5 class="text-success text-center fw-bolder">{{ date_of(t) | date:'EEEE d MMMM':'':'fr-FR' }}
+                <div class="d-flex align-items-center justify-content-start">
+                    <h5 class="text-success fw-bolder mb-0">
+                        Tournoi de régularité
                     </h5>
-                    <h6 class="text-center"> {{name_of(t)}} </h6>
-                    <!-- </div> -->
-
+                    <div *ngIf="registrated_in(t) " class="ms-2 badge bg-info px-2 py-2 align-self-center" style="font-size: 0.60em;">
+                        INSCRIT<span *ngIf="logged?.gender === 'Mme'">E</span>
+                    </div>
                 </div>
-            </div>
-            <div class="card-body pt-0 g-0 d-flex flex-column justify-content-end">
-                <div class="text-center  ">
-                    <ng-container *ngIf="t.teams.length; else none">
-                        {{ (t.teams.length - (t.isolated_player_count || 0)) }} {{ ((t.teams.length -
-                        (t.isolated_player_count || 0)) === 1) ? 'paire inscrite' : 'paires inscrites' }}
-                        <div *ngIf="t.isolated_player_count">
-                            {{ t.isolated_player_count === 1 ? 'et une personne cherche un partenaire' : ('et ' +
-                            t.isolated_player_count + ' personnes cherchent un partenaire') }}
+
+                <div class="row  g-0">
+                    <div class="col col-sm-9 col-md-8  d-flex justify-content-start align-items-center px-1">
+                        <h6 class="text-start">
+                            <div class="fs-5 text-primary fw-bolder">{{ date_of(t) | date:'EEEE d MMMM':'':'fr-FR' }}
+                            </div>
+                            {{name_of(t)}}
+                        </h6>
+                    </div>
+                    <div class="col col-sm-3 col-md-4 d-flex">
+                        <div class="overflow-hidden w-100">
+                            <ng-container *ngIf="getImageUrl(t) as imgUrl; else noImg">
+                                <img [attr.src]="imgUrl" class="img-fluid " [alt]="name_of(t) || 'vignette'"
+                                    style="object-fit:cover; display:block; width:100%;">
+                            </ng-container>
+                            <ng-template #noImg>
+                                <div class="w-100 h-100" style=" background: transparent;"></div>
+                            </ng-template>
                         </div>
-
-                    </ng-container>
-                    <ng-template #none>aucune inscription</ng-template>
+                    </div>
                 </div>
-                <!-- <hr> -->
 
-                <div *ngIf="logged" class=" d-flex justify-content-center align-items-center ">
-                    <div class="ms-1" style="cursor:pointer;" (click)="selectTournament(t.subscription_tournament.id)">
-                        <div class="btn btn-outline-primary  py-1 px-2 nice_shadow">
-                            <i class="bi bi-people-fill me-1"></i>
-                            Voir les inscriptions
+                <div class="pt-0 g-0 d-flex flex-column mt-auto">
+                    <div class="text-center  ">
+                        <ng-container *ngIf="t.teams.length; else none">
+                            {{ (t.teams.length - (t.isolated_player_count || 0)) }} {{ ((t.teams.length -
+                            (t.isolated_player_count || 0)) === 1) ? 'paire inscrite' : 'paires inscrites' }}
+                            <div *ngIf="t.isolated_player_count">
+                                {{ t.isolated_player_count === 1 ? 'et une personne cherche un partenaire' : ('et ' +
+                                t.isolated_player_count + ' personnes cherchent un partenaire') }}
+                            </div>
+
+                        </ng-container>
+                        <ng-template #none>aucune inscription</ng-template>
+                    </div>
+                    <!-- <hr> -->
+
+                    <div *ngIf="logged" class=" d-flex justify-content-center align-items-center ">
+                        <div class="ms-1" style="cursor:pointer;"
+                            (click)="selectTournament(t.subscription_tournament.id)">
+                            <div class="btn btn-outline-primary  py-1 px-2 nice_shadow">
+                                <i class="bi bi-people-fill me-1"></i>
+                                Voir les inscriptions
+                            </div>
                         </div>
                     </div>
 
                 </div>
             </div>
-
         </div>
     </div>
 </div>

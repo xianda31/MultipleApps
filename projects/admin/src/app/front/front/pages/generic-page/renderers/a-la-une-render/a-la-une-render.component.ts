@@ -24,30 +24,34 @@ export class ALaUneRenderComponent implements OnChanges, OnDestroy, AfterViewIni
   @Input() row_cols: BreakpointsSettings = { SM: 1, MD: 2, LG: 3, XL: 4 };
 
   read_more: boolean = true;
-  // number of lines to show before truncating (controlled from UI settings)
   read_more_lines: number = 3;
-  // char-based truncate limit derived from `read_more_lines` (approximate)
-  TRUNCATE_LIMIT = 300; // will be recalculated when settings arrive
-  TRUNCATE_HYSTERISIS = 50; // threshold to show "Read more" link
+  TRUNCATE_LIMIT = 300;
+  TRUNCATE_HYSTERISIS = 50;
   private uiSub?: Subscription;
-  // if true, hovering unfolds the card entirely
+  
+  // Expand/collapse settings from UI
   unfold_on_hover: boolean = false;
-  // currently hovered snippet id (used when unfold_on_hover is enabled)
-  hoveredSnippetId: string | null = null;
-  // hover timer id used to delay expansion
-  private hoverTimer: any;
-  // hover delay in ms (read from UI settings)
   hoverDelayMs: number = 500;
-  // hover animation duration (ms)
-  hoverDurationMs: number = 300;
+  hoverDurationMs: number = 600;
+  
+  // Per-snippet state: track which snippets are expanded
+  private expandedSnippets = new Set<string>();
+  
+  // Per-snippet timers: hover and collapse delays
+  private snippetHoverTimers = new Map<string, any>();
+  private snippetCollapseTimers = new Map<string, any>();
+  
   // small screen or touch detection
   isSmallScreenOrTouch: boolean = false;
+  // touch device detection (independent of orientation)
+  isTouchDevice: boolean = false;
   @ViewChildren('clampContainer') clampContainers!: QueryList<ElementRef<HTMLElement>>;
   @ViewChildren('clampRef') clampRefs!: QueryList<ElementRef<HTMLElement>>;
 
   // Track if a snippet's text is visually overflowing (clamped)
   private overflowMap: Record<string, boolean> = {};
   private overflowCheckScheduled = false;
+  
   constructor(
     private router: Router,
     private sanitizer: DomSanitizer,
@@ -56,39 +60,102 @@ export class ALaUneRenderComponent implements OnChanges, OnDestroy, AfterViewIni
     private internalLinkRoutingService: InternalLinkRoutingService
   ) {
     this.updateIsSmallScreenOrTouch();
-    // subscribe to UI settings to pick up `read_more_lines` changes
+    // subscribe to UI settings
     this.uiSub = this.systemDataService.get_ui_settings().subscribe((ui: any) => {
       try {
         const rl = (ui && ui.homepage && ui.homepage.read_more_lines) ? ui.homepage.read_more_lines : ui?.read_more_lines ?? 3;
         this.read_more_lines = (rl !== undefined && rl !== null) ? Number(rl) : 3;
-        // approximate: 120 chars per line
         this.TRUNCATE_LIMIT = Math.max(0, Math.round(this.read_more_lines * 120));
+        
+        // Get expand/collapse settings from UI
         this.unfold_on_hover = !!(ui && ui.homepage && ui.homepage.unfold_on_hover) || !!ui?.unfold_on_hover;
         this.hoverDelayMs = (ui && ui.homepage && ui.homepage.hover_unfold_delay_ms) ? Number(ui.homepage.hover_unfold_delay_ms) : (ui?.hover_unfold_delay_ms ?? 500);
-        this.hoverDurationMs = (ui && ui.homepage && ui.homepage.hover_unfold_duration_ms) ? Number(ui.homepage.hover_unfold_duration_ms) : (ui?.hover_unfold_duration_ms ?? 300);
+        this.hoverDurationMs = (ui && ui.homepage && ui.homepage.hover_unfold_duration_ms) ? Number(ui.homepage.hover_unfold_duration_ms) : (ui?.hover_unfold_duration_ms ?? 600);
       } catch (e) { /* ignore */ }
     });
   }
 
   setHover(id: any) {
-    if (!this.unfold_on_hover || this.isSmallScreenOrTouch) return;
-    // delay expansion by 500ms; cancel any previous timer
-    this.cancelHoverTimer();
-    this.hoverTimer = setTimeout(() => {
-      this.hoveredSnippetId = id !== undefined && id !== null ? String(id) : null;
-      this.hoverTimer = undefined;
-      // animate expansion for this snippet
-      this.animateExpandForId(this.hoveredSnippetId ?? undefined, true);
+    if (!this.unfold_on_hover) return;
+    const snippetId = id !== undefined && id !== null ? String(id) : null;
+    if (!snippetId) return;
+    
+    // Cancel any pending collapse timer
+    this.cancelCollapseTimer(snippetId);
+    
+    // If already expanded, do nothing
+    if (this.expandedSnippets.has(snippetId)) return;
+    
+    // Cancel any previous hover timer
+    this.cancelHoverTimer(snippetId);
+    
+    // Schedule expansion after delay
+    const timer = setTimeout(() => {
+      this.expandedSnippets.add(snippetId);
+      this.snippetHoverTimers.delete(snippetId);
+      this.animateExpand(snippetId);
     }, this.hoverDelayMs);
+    
+    this.snippetHoverTimers.set(snippetId, timer);
   }
 
-  clearHover() {
-    // cancel any pending expansion and collapse immediately
-    this.cancelHoverTimer();
-    if (!this.unfold_on_hover || this.isSmallScreenOrTouch) return;
-    this.hoveredSnippetId = null;
-    // animate collapse for previous snippet
-    this.animateExpandForId(undefined, false);
+  clearHover(id: any) {
+    if (!this.unfold_on_hover) return;
+    const snippetId = id !== undefined && id !== null ? String(id) : null;
+    if (!snippetId) return;
+    
+    // Cancel pending hover expansion
+    this.cancelHoverTimer(snippetId);
+    
+    // If not expanded, do nothing
+    if (!this.expandedSnippets.has(snippetId)) return;
+    
+    // Cancel any previous collapse timer
+    this.cancelCollapseTimer(snippetId);
+    
+    // Schedule collapse with animation
+    const timer = setTimeout(() => {
+      this.expandedSnippets.delete(snippetId);
+      this.snippetCollapseTimers.delete(snippetId);
+      this.animateCollapse(snippetId);
+    }, this.hoverDelayMs);
+    
+    this.snippetCollapseTimers.set(snippetId, timer);
+  }
+
+  private cancelHoverTimer(snippetId: string) {
+    const timer = this.snippetHoverTimers.get(snippetId);
+    if (timer) {
+      clearTimeout(timer);
+      this.snippetHoverTimers.delete(snippetId);
+    }
+  }
+
+  private cancelCollapseTimer(snippetId: string) {
+    const timer = this.snippetCollapseTimers.get(snippetId);
+    if (timer) {
+      clearTimeout(timer);
+      this.snippetCollapseTimers.delete(snippetId);
+    }
+  }
+
+  isExpanded(id: any): boolean {
+    if (!this.unfold_on_hover) return false;
+    const snippetId = id !== undefined && id !== null ? String(id) : null;
+    return snippetId !== null && this.expandedSnippets.has(snippetId);
+  }
+
+  getClampStyle(id: any): { [k: string]: any } {
+    const expanded = this.isExpanded(id);
+    if (expanded) {
+      return { 'display': 'block', 'overflow': 'visible' };
+    }
+    return {
+      'display': '-webkit-box',
+      '-webkit-box-orient': 'vertical',
+      '-webkit-line-clamp': String(this.read_more_lines),
+      'overflow': 'hidden'
+    };
   }
 
   @HostListener('window:resize')
@@ -98,7 +165,6 @@ export class ALaUneRenderComponent implements OnChanges, OnDestroy, AfterViewIni
 
   @HostListener('window:touchstart')
   onFirstTouch() {
-    // Re-evaluate small-screen state on first touch; do not force tap-mode on large touch-capable laptops
     this.updateIsSmallScreenOrTouch();
   }
 
@@ -107,54 +173,17 @@ export class ALaUneRenderComponent implements OnChanges, OnDestroy, AfterViewIni
       const mq = window.matchMedia('(max-width: 768px)');
       const hasTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) || (navigator as any).msMaxTouchPoints > 0;
       const isMobileUA = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
-      // Enable tap-mode only for touch phones in portrait (height > width) and small/mobile UA.
       const isPortrait = (typeof window.innerHeight === 'number' && typeof window.innerWidth === 'number') ? window.innerHeight > window.innerWidth : false;
+      
+      // Set touch device (independent of orientation)
+      this.isTouchDevice = !!hasTouch || isMobileUA;
+      
+      // Set small screen or touch (requires portrait for touch)
       this.isSmallScreenOrTouch = !!hasTouch && isPortrait && (mq.matches || isMobileUA);
-    } catch (e) { this.isSmallScreenOrTouch = false; }
-  }
-
-  onTapToggle(id: any, ev: Event) {
-    // Only handle taps on small/touch devices when unfold_on_hover is enabled
-    if (!this.unfold_on_hover || !this.isSmallScreenOrTouch) return;
-    ev.stopPropagation();
-    this.cancelHoverTimer();
-    const sid = id !== undefined && id !== null ? String(id) : null;
-    if (this.hoveredSnippetId === sid) {
-      // collapse
-      this.hoveredSnippetId = null;
-      this.animateExpandForId(sid ?? undefined, false);
-    } else {
-      // expand
-      this.hoveredSnippetId = sid;
-      this.animateExpandForId(sid ?? undefined, true);
+    } catch (e) { 
+      this.isSmallScreenOrTouch = false;
+      this.isTouchDevice = false;
     }
-  }
-
-  isHovered(id: any): boolean {
-    if (!this.unfold_on_hover) return false;
-    return id !== undefined && id !== null && this.hoveredSnippetId === String(id);
-  }
-
-  private cancelHoverTimer() {
-    try {
-      if (this.hoverTimer) {
-        clearTimeout(this.hoverTimer);
-        this.hoverTimer = undefined;
-      }
-    } catch (e) { /* ignore */ }
-  }
-
-  getClampStyle(id: any): { [k: string]: any } {
-    const hovered = this.isHovered(id);
-    if (hovered) {
-      return { 'display': 'block', 'overflow': 'visible' };
-    }
-    return {
-      'display': '-webkit-box',
-      '-webkit-box-orient': 'vertical',
-      '-webkit-line-clamp': String(this.read_more_lines),
-      'overflow': 'hidden'
-    };
   }
 
   ngAfterViewInit() {
@@ -200,62 +229,11 @@ export class ALaUneRenderComponent implements OnChanges, OnDestroy, AfterViewIni
     }
   }
 
-  private findContainerById(id: string | undefined): HTMLElement | null {
-    if (!id) return null;
+  private findContainerById(id: string): HTMLElement | null {
     const idx = this.snippets.findIndex(s => String(s.id) === String(id));
     const arr = this.clampContainers ? this.clampContainers.toArray() : [];
     if (idx >= 0 && idx < arr.length) return arr[idx].nativeElement as HTMLElement;
     return null;
-  }
-
-  private animateExpandForId(id: string | undefined, expand: boolean) {
-    const container = this.findContainerById(id);
-    if (!container) return;
-    this.animateContainer(container, expand);
-  }
-
-  private animateContainer(container: HTMLElement, expand: boolean) {
-    const animMs = (this as any).hoverDurationMs ?? this.hoverDurationMs ?? 300;
-    const startHeight = container.clientHeight;
-    const fullHeight = (container.firstElementChild as HTMLElement)?.scrollHeight ?? container.scrollHeight;
-    const collapsedHeight = this.read_more_lines > 0 ? Math.round(this.read_more_lines * this.estimateLineHeight(container)) : 0;
-
-    container.style.transition = `height ${animMs}ms ease`;
-    if (expand) {
-      if (!container.style.height) container.style.height = `${startHeight}px`;
-      container.offsetHeight; // force reflow
-      container.style.height = `${fullHeight}px`;
-      const onEnd = () => {
-        container.style.height = 'auto';
-        container.style.transition = '';
-        container.removeEventListener('transitionend', onEnd);
-      };
-      container.addEventListener('transitionend', onEnd);
-    } else {
-      if (!container.style.height || container.style.height === 'auto') {
-        container.style.height = `${fullHeight}px`;
-      }
-      container.offsetHeight;
-      container.style.height = collapsedHeight > 0 ? `${collapsedHeight}px` : '';
-      const onEnd = () => {
-        container.style.transition = '';
-        container.removeEventListener('transitionend', onEnd);
-      };
-      container.addEventListener('transitionend', onEnd);
-    }
-  }
-
-  private estimateLineHeight(el: HTMLElement): number {
-    try {
-      const inner = (el.firstElementChild as HTMLElement) || el;
-      const cs = window.getComputedStyle(inner);
-      let lh = parseFloat(cs.lineHeight as string);
-      if (!lh || isNaN(lh)) {
-        const fs = parseFloat(cs.fontSize as string) || 16;
-        lh = Math.round(fs * 1.2);
-      }
-      return lh;
-    } catch (e) { return 18; }
   }
 
 
@@ -275,7 +253,17 @@ export class ALaUneRenderComponent implements OnChanges, OnDestroy, AfterViewIni
 
   ngOnDestroy(): void {
     try { this.uiSub?.unsubscribe(); } catch (e) { /* ignore */ }
-    this.cancelHoverTimer();
+    
+    // Clean up all timers for all snippets
+    this.snippetHoverTimers.forEach((timer) => {
+      try { clearTimeout(timer); } catch (e) { /* ignore */ }
+    });
+    this.snippetHoverTimers.clear();
+    
+    this.snippetCollapseTimers.forEach((timer) => {
+      try { clearTimeout(timer); } catch (e) { /* ignore */ }
+    });
+    this.snippetCollapseTimers.clear();
   }
 
   trackById(index: number, item: any) {
@@ -283,30 +271,143 @@ export class ALaUneRenderComponent implements OnChanges, OnDestroy, AfterViewIni
   }
 
   readMore(snippet: Snippet) {
-    // On small/touch devices, if unfold_on_hover is enabled, toggle inline expansion
-    if (this.isSmallScreenOrTouch && this.unfold_on_hover) {
-      const sid = snippet.id !== undefined && snippet.id !== null ? String(snippet.id) : null;
-      if (this.hoveredSnippetId === sid) {
-        this.hoveredSnippetId = null;
-        this.animateExpandForId(sid ?? undefined, false);
+    const snippetId = snippet.id !== undefined && snippet.id !== null ? String(snippet.id) : null;
+    if (!snippetId) return;
+    
+    // If unfold_on_hover is disabled, navigate to the snippet page
+    if (!this.unfold_on_hover) {
+      if (snippet.pageId) {
+        const path = this.navItemsService.getPathByPageTitle(snippet.pageId);
+        if (path) {
+          this.router.navigate(['/front', path, snippet.title]);
+        } else {
+          console.warn('No path found for pageId:', snippet.pageId);
+        }
       } else {
-        this.hoveredSnippetId = sid;
-        this.animateExpandForId(sid ?? undefined, true);
+        console.warn('No pageId for readMore navigation');
       }
       return;
     }
-    // Otherwise keep original behavior: navigate to the snippet page using dynamic path lookup
-    if (snippet.pageId) {
-      const path = this.navItemsService.getPathByPageTitle(snippet.pageId);
-      if (path) {
-        this.router.navigate(['/front', path, snippet.title]);
-      } else {
-        console.warn('No path found for pageId:', snippet.pageId);
-      }
+    
+    // If unfold_on_hover is enabled, toggle expansion
+    this.cancelCollapseTimer(snippetId);
+    this.cancelHoverTimer(snippetId);
+    
+    if (this.expandedSnippets.has(snippetId)) {
+      // Already expanded, collapse it
+      this.expandedSnippets.delete(snippetId);
+      this.animateCollapse(snippetId);
     } else {
-      console.warn('No pageId for readMore navigation');
+      // Not expanded, expand it immediately
+      this.expandedSnippets.add(snippetId);
+      this.animateExpand(snippetId);
     }
+  }
 
+  private animateExpand(snippetId: string) {
+    const container = this.findContainerById(snippetId);
+    if (!container) return;
+    
+    const span = container.querySelector('span.card-text') as HTMLElement;
+    if (!span) return;
+    
+    // Get the clamped (current) height
+    const clampedHeight = this.measureClampedHeight(container);
+    
+    // Temporarily remove clamping styles to measure full height
+    const originalDisplay = span.style.display;
+    const originalBoxOrient = (span.style as any).webkitBoxOrient;
+    const originalLineClamp = (span.style as any).webkitLineClamp;
+    const originalOverflow = span.style.overflow;
+    
+    span.style.display = 'block';
+    (span.style as any).webkitBoxOrient = '';
+    (span.style as any).webkitLineClamp = '';
+    span.style.overflow = 'visible';
+    
+    // Force reflow to get accurate height
+    span.offsetHeight;
+    const fullHeight = span.scrollHeight;
+    
+    // Restore original styles
+    span.style.display = originalDisplay;
+    (span.style as any).webkitBoxOrient = originalBoxOrient;
+    (span.style as any).webkitLineClamp = originalLineClamp;
+    span.style.overflow = originalOverflow;
+    
+    // Set explicit starting height (clamped)
+    container.style.height = `${clampedHeight}px`;
+    container.style.transition = '';
+    
+    // Trigger reflow to ensure height is set
+    container.offsetHeight;
+    
+    // Now animate to full height with smooth progression
+    const animDuration = this.hoverDurationMs ?? 600;
+    container.style.transition = `height ${animDuration}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`;
+    container.style.height = `${fullHeight}px`;
+    
+    const onEnd = () => {
+      container.style.height = 'auto';
+      container.style.transition = '';
+      container.removeEventListener('transitionend', onEnd);
+    };
+    container.addEventListener('transitionend', onEnd, { once: true });
+  }
+
+  private animateCollapse(snippetId: string) {
+    const container = this.findContainerById(snippetId);
+    if (!container) return;
+    
+    const animDuration = this.hoverDurationMs ?? 600;
+    const clampedHeight = this.measureClampedHeight(container);
+    
+    // Set explicit current height before transition
+    container.style.height = `${container.clientHeight}px`;
+    container.style.transition = '';
+    
+    // Trigger reflow to ensure height is set
+    container.offsetHeight;
+    
+    // Now animate to clamped height
+    container.style.transition = `height ${animDuration}ms ease-in`;
+    container.style.height = `${clampedHeight}px`;
+    
+    const onEnd = () => {
+      container.style.transition = '';
+      container.style.height = '';
+      container.removeEventListener('transitionend', onEnd);
+    };
+    container.addEventListener('transitionend', onEnd, { once: true });
+  }
+
+  private measureClampedHeight(container: HTMLElement): number {
+    const span = container.querySelector('span.card-text') as HTMLElement;
+    if (!span) return 0;
+    
+    // Save current styles
+    const originalDisplay = span.style.display;
+    const originalBoxOrient = (span.style as any).webkitBoxOrient;
+    const originalLineClamp = (span.style as any).webkitLineClamp;
+    const originalOverflow = span.style.overflow;
+    
+    // Apply clamping styles
+    (span.style as any).display = '-webkit-box';
+    (span.style as any).webkitBoxOrient = 'vertical';
+    (span.style as any).webkitLineClamp = String(this.read_more_lines);
+    span.style.overflow = 'hidden';
+    
+    // Force reflow
+    span.offsetHeight;
+    const height = span.clientHeight;
+    
+    // Restore original styles
+    span.style.display = originalDisplay || '';
+    (span.style as any).webkitBoxOrient = originalBoxOrient || '';
+    (span.style as any).webkitLineClamp = originalLineClamp || '';
+    span.style.overflow = originalOverflow || '';
+    
+    return height;
   }
 
   scrollToElement(title: string): void {

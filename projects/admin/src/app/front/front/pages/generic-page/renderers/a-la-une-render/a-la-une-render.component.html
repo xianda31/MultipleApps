@@ -1,32 +1,35 @@
 <div [ngClass]="rowCols()">
   @for (snippet of snippets; track snippet.id) {
-    <div class="col">
-      <div class="card border-0" id="{{snippet.title}}" (mouseenter)="setHover(snippet.id)" (mouseleave)="clearHover()">
-        <div class="card-body">
-          <div class="row">
-            <div class="d-flex align-items-center mb-2">
+  <div class="col">
+    <div class="card nice_shadow" id="{{snippet.title}}" (pointerenter)="setHover(snippet.id)"
+      (pointerleave)="clearHover(snippet.id)">
+      <div class="card-body">
+        <div class="text-primary text-center fw-bolder fs-5 mb-2">{{snippet.subtitle}} </div>
+
+        <div class="row ">
+          <div class="d-flex align-items-center mb-2">
+            <div>
               <img [src]="snippet.image_url" alt="{{snippet.title}}" class="card-img-top me-2"
                 style="max-height:100px; width:auto; height:auto; object-fit:contain; display:block;">
-              <div>
-                <div class="card-title">{{snippet.title}}</div>
-                <div class="card-subtitle">{{snippet.subtitle}}
-                  <div class="text-muted">Publié le {{snippet.publishedAt| date:'shortDate'}} </div>
-                </div>
-              </div>
+              <sub class="text-muted">{{snippet.publishedAt| date:'shortDate'}} </sub>
             </div>
-            <div class="card-text mt-3 col-12">
-              <div #clampContainer class="clamp-container" (click)="onTapToggle(snippet.id, $event)">
-                <span #clampRef class="card-text tighter-html" [innerHTML]="stringToSafeHtml(snippet.content)"
-                  [ngStyle]="getClampStyle(snippet.id)"></span>
-              </div>
-              <ng-container *ngIf="!isHovered(snippet.id) && read_more && (snippet.content.length > TRUNCATE_LIMIT + TRUNCATE_HYSTERISIS)">
-                <span (click)="readMore(snippet)" class="text-info ms-1" style="cursor:pointer;display:inline">... Lire la
-                  suite</span>
-              </ng-container>
+            <h5 class="text-success fw-bolder mb-0 flex-grow-1 text-center">{{snippet.title}}</h5>
+          </div>
+          <div class="card-text mt-3 col-12">
+            <div #clampContainer class="clamp-container">
+              <span #clampRef class="card-text tighter-html" [innerHTML]="stringToSafeHtml(snippet.content)"
+                [ngStyle]="getClampStyle(snippet.id)"></span>
             </div>
+            <ng-container *ngIf="read_more && (snippet.content.length > TRUNCATE_LIMIT + TRUNCATE_HYSTERISIS)">
+              <span (click)="readMore(snippet)" class="text-info ms-1" style="cursor:pointer;display:inline">
+                <span *ngIf="!isExpanded(snippet.id)">... Lire la suite</span>
+                <span *ngIf="isExpanded(snippet.id) && isTouchDevice">↑ Replier</span>
+              </span>
+            </ng-container>
           </div>
         </div>
       </div>
     </div>
+  </div>
   }
 </div>

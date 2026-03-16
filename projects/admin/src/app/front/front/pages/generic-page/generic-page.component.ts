@@ -2,6 +2,7 @@
 import { Component, Input, Renderer2, ElementRef, OnChanges, SimpleChanges, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { combineLatest, switchMap } from 'rxjs';
 import { EXTRA_TITLES, MENU_TITLES, Page, PAGE_TEMPLATES, Snippet } from '../../../../common/interfaces/page_snippet.interface';
 import { PageService } from '../../../../common/services/page.service';
 import { SnippetService } from '../../../../common/services/snippet.service';
@@ -13,8 +14,8 @@ import { ALaUneRenderComponent } from './renderers/a-la-une-render/a-la-une-rend
 import { LoadableRenderComponent } from './renderers/loadable-render/loadable-render.component';
 import { CardsImgTopRenderComponent } from './renderers/cards-img-top-render/cards-img-top-render.component';
 import { CardsImgBottomRenderComponent } from './renderers/cards-img-bottom-render/cards-img-bottom-render.component';
-import { AlbumsRenderComponent } from './renderers/albums-render/albums-render.component';
 import { CardsImgTopLeftRenderComponent } from './renderers/cards-img-top-left-render/cards-img-top-left-render.component';
+import { AlbumsRenderComponent } from './renderers/albums-render/albums-render.component';
 import { BreakpointsSettings } from '../../../../common/interfaces/ui-conf.interface';
 
 @Component({
@@ -74,61 +75,50 @@ export class GenericPageComponent implements OnInit, OnChanges {
 
     // Handle external page_snippets changes (e.g., from CMS wrapper)
     if (changes['page_snippets'] && !changes['page_snippets'].firstChange) {
-      // console.log('📄 External page_snippets updated, triggering page post-handling');
-      this.page_post_handling();
+      this.applyPageConfiguration(this.page_title);
     }
-  }
-  // Appelé lors de la sauvegarde d'un snippet (par exemple via (saved) du snippet-editor)
-  onSnippetSaved(updated: Snippet) {
-    // Remplace uniquement le snippet modifié dans page_snippets (nouvelle référence)
-    this.page_snippets = this.page_snippets.map(s =>
-      s.id === updated.id ? { ...s, ...updated } : s
-    );
   }
 
   ngOnInit(): void {
-
     this.init_relative_links_handler();
 
-    this.pageService.listPages()
-      .subscribe(pages => {
+    combineLatest([this.pageService.listPages(), this.snippetService.listSnippets()])
+      .subscribe(([pages, snippets]) => {
         this.pages = pages;
-        this.snippetService.listSnippets().subscribe(snippets => {
-          this.snippets = snippets.map(s => {
-            s.pageId = undefined;
-            // Initialize publishedAt from updatedAt (ISO) converted to YYYY-MM-DD
-            if (!s.publishedAt) {
-              s.publishedAt = this.toDateInputValue(s.updatedAt) || '';
-            } return s;
-          });
-          // update pageId for all snippets
-          this.pages.forEach(page => {
-            page.snippet_ids.forEach(id => {
-              const snippet = this.snippets.find(s => s.id === id);
-              if (snippet) {
-                snippet.pageId = page.title;
-              }
-            });
-          });
-          this.filter_PageSnippets(this.page_title);
-          // If a target snippet title is provided initially (via route), set scroll_to_snippet now
-          if (this.snippet_title) {
-            const target = this.page_snippets.find(s => s.title === this.snippet_title);
-            if (target) {
-              this.scroll_to_snippet = target;
-            }
+        this.snippets = snippets.map(s => {
+          s.pageId = undefined;
+          // Initialize publishedAt from updatedAt (ISO) converted to YYYY-MM-DD
+          if (!s.publishedAt) {
+            s.publishedAt = this.toDateInputValue(s.updatedAt) || '';
           }
+          return s;
         });
+        // Update pageId for all snippets
+        this.pages.forEach(page => {
+          page.snippet_ids.forEach(id => {
+            const snippet = this.snippets.find(s => s.id === id);
+            if (snippet) {
+              snippet.pageId = page.title;
+            }
+          });
+        });
+        this.filter_PageSnippets(this.page_title);
+        // If target snippet title is provided initially, set scroll target
+        if (this.snippet_title) {
+          const target = this.page_snippets.find(s => s.title === this.snippet_title);
+          if (target) {
+            this.scroll_to_snippet = target;
+          }
+        }
       });
   }
 
   filter_PageSnippets(page_title: string) {
 
-
     if (page_title === EXTRA_TITLES.HIGHLIGHTS) {
       this.page_snippets = this.snippets.filter(s => s.featured)
         .sort((a, b) => (b.publishedAt ?? '').localeCompare(a.publishedAt ?? ''));
-      this.pageTemplate = PAGE_TEMPLATES.CARDS_top_left;
+      this.pageTemplate = PAGE_TEMPLATES.A_LA_UNE;
       return;
     }
 
@@ -138,49 +128,29 @@ export class GenericPageComponent implements OnInit, OnChanges {
     if (!page) {
       // Page not found - this can happen temporarily during title editing in CMS
       console.warn(`GenericPage: page "${page_title}" not found in pages list - waiting for sync`);
-      // Don't throw error, just return early - the component will re-render when pages update
       return;
     }
     this.page = page;
 
-    // Use external page_snippets if provided (e.g., from CMS), otherwise load from service
-    if (this.page_snippets !== undefined) {
-      // console.log('📄 Using external page_snippets:', this.page_snippets.length);
-    } else {
-      // console.log('📄 Loading page_snippets from service for page:', page.title);
+    // Load page_snippets from page snippet IDs if not provided externally
+    if (!Array.isArray(this.page_snippets) || this.page_snippets.length === 0) {
       this.page_snippets = page.snippet_ids
         .map(id => this.snippets.find(snippet => snippet.id === id))
         .filter(snippet => snippet !== undefined) as Snippet[];
     }
 
-    this.page_post_handling();
-
+    // Apply page-specific configuration
+    this.applyPageConfiguration(page_title);
   }
 
-
-
-  page_post_handling() {
-
-    switch (this.page_title) {
-      case MENU_TITLES.NEWS:
-        this.page_snippets = this.page_snippets.sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
-        this.titleService.setTitle('Les actualités');
-        this.pageTemplate = this.page.template;
-        break;
-
-      case EXTRA_TITLES.HIGHLIGHTS:
-        this.page_snippets = this.page_snippets.filter(s => s.featured)
-          .sort((a, b) => (b.publishedAt ?? '').localeCompare(a.publishedAt ?? ''));
-        this.pageTemplate = PAGE_TEMPLATES.A_LA_UNE;
-        break;
-
-
-      default:
-        this.titleService.setTitle(this.page.title);
-        this.pageTemplate = this.page.template;
-        break;
+  private applyPageConfiguration(page_title: string) {
+    if (page_title === MENU_TITLES.NEWS) {
+      this.page_snippets = this.page_snippets.sort((a, b) => (b.publishedAt ?? '').localeCompare(a.publishedAt ?? ''));
+      this.titleService.setTitle('Les actualités');
+    } else {
+      this.titleService.setTitle(this.page.title);
     }
-
+    this.pageTemplate = this.page.template;
   }
 
 
