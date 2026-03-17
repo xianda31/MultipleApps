@@ -135,19 +135,4 @@ export class BalanceComponent {
     return rounded * Math.sign(value);
   }
 
-
-  // private download_file() {
-
-  //   if (this.export_url) {
-  //     const link = document.createElement('a');
-
-  //     link.href = this.export_url;
-  //     link.download = 'balance_sheet.json';
-  //     document.body.appendChild(link);
-  //     link.click();
-  //     document.body.removeChild(link);
-  //   } else {
-  //     console.error('No file URL available for download.');
-  //   }
-  // }
 }

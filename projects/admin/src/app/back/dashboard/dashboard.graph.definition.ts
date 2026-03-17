@@ -69,7 +69,7 @@ export const defaultPlayerChartData = {
 
 export const defaultPlayerChartOptions: ChartOptions<'bar'> = {
   responsive: true,
-  maintainAspectRatio: true,
+  maintainAspectRatio: false,
   plugins: {
     legend: {
       display: false
@@ -77,12 +77,15 @@ export const defaultPlayerChartOptions: ChartOptions<'bar'> = {
     title: {
       display: false,
       text: 'Paires et tournois par mois'
+    },
+    datalabels: {
+      display: false
     }
   },
   scales: {
     x: {
       stacked: false,
-      ticks: { font: { size: 11 } }
+      ticks: { font: { size: 13 } }
     },
     y: {
       type: 'linear' as const,
@@ -91,8 +94,8 @@ export const defaultPlayerChartOptions: ChartOptions<'bar'> = {
       stacked: false,
       beginAtZero: true,
       grid: { display: true },
-      ticks: { font: { size: 11 } },
-      title: { display: true, text: 'Paires' }
+      ticks: { font: { size: 13 } },
+      title: { display: true, text: 'Paires', font: { size: 13 } }
     },
     y1: {
       type: 'linear' as const,
@@ -100,15 +103,15 @@ export const defaultPlayerChartOptions: ChartOptions<'bar'> = {
       position: 'right' as const,
       beginAtZero: true,
       grid: { drawOnChartArea: false },
-      ticks: { font: { size: 11 } },
-      title: { display: true, text: 'Tournois' }
+      ticks: { font: { size: 13 } },
+      title: { display: true, text: 'Tournois', font: { size: 13 } }
     }
   }
 };
 
 export const defaultFinancialChartOptions: ChartOptions<'bar'> = {
   responsive: true,
-  maintainAspectRatio: true,
+  maintainAspectRatio: false,
   plugins: {
     legend: {
       display: false
@@ -116,18 +119,22 @@ export const defaultFinancialChartOptions: ChartOptions<'bar'> = {
     title: {
       display: false,
       text: 'Recettes, dépenses et résultat par mois'
+    },
+    datalabels: {
+      display: false
     }
   },
   scales: {
     x: {
       stacked: false,
-      ticks: { font: { size: 11 } }
+      ticks: { font: { size: 13 } }
     },
     y: {
       stacked: false,
       beginAtZero: true,
       grid: { display: true },
-      ticks: { font: { size: 11 } }
+      ticks: { font: { size: 13 } },
+      title: { display: true, text: 'Montant (€)', font: { size: 13 } }
     }
   }
 };
@@ -149,13 +156,15 @@ export const defaultMemberAgeDistributionChartData = {
 
 export const defaultMemberAgeDistributionChartOptions: ChartOptions<'bar'> = {
   responsive: true,
+  maintainAspectRatio: false,
   plugins: {
     legend: { display: false },
-    title: { display: false, text: "Distribution par tranche d'âge" }
+    title: { display: false, text: "Distribution par tranche d'âge" },
+    datalabels: { display: false }
   },
   scales: {
-    x: { title: { display: false, text: "Tranche d'âge" } },
-    y: { title: { display: true, text: 'Nombre de membres' }, beginAtZero: true }
+    x: { title: { display: false, text: "Tranche d'âge" }, ticks: { font: { size: 13 } } },
+    y: { title: { display: true, text: 'Nombre de membres', font: { size: 13 } }, beginAtZero: true, ticks: { font: { size: 13 } } }
   }
 };
 
@@ -176,12 +185,74 @@ export const defaultIVDistributionChartData = {
 
 export const defaultIVDistributionChartOptions: ChartOptions<'bar'> = {
   responsive: true,
+  maintainAspectRatio: false,
   plugins: {
     legend: { display: false },
-    title: { display: false, text: 'Distribution des valeurs IV' }
+    title: { display: false, text: 'Distribution des valeurs IV' },
+    datalabels: { display: false }
   },
   scales: {
-    x: { title: { display: false, text: 'Plage IV' } },
-    y: { title: { display: true, text: 'Nombre de membres' }, beginAtZero: true }
+    x: { title: { display: false, text: 'Plage IV' }, ticks: { font: { size: 13 } } },
+    y: { title: { display: true, text: 'Nombre de membres', font: { size: 13 } }, beginAtZero: true, ticks: { font: { size: 13 } } }
+  }
+};
+
+// Graphique des bilans (bar chart stacked)
+export const defaultBalanceChartData = {
+  labels: [],
+  datasets: [
+    {
+      data: [],
+      label: 'Épargne',
+      backgroundColor: '',
+      borderColor: '',
+      borderWidth: 2,
+      borderRadius: 4,
+      stack: 'Stack 0'
+    },
+    {
+      data: [],
+      label: 'Banque',
+      backgroundColor: '',
+      borderColor: '',
+      borderWidth: 2,
+      borderRadius: 4,
+      stack: 'Stack 0'
+    },
+    {
+      data: [],
+      label: 'Caisse',
+      backgroundColor: '',
+      borderColor: '',
+      borderWidth: 2,
+      borderRadius: 4,
+      stack: 'Stack 0'
+    },
+    {
+      data: [],
+      label: 'En cours',
+      backgroundColor: '',
+      borderColor: '',
+      borderWidth: 2,
+      borderRadius: 4,
+      stack: 'Stack 1'
+    }
+  ]
+};
+
+export const defaultBalanceChartOptions: ChartOptions<'bar'> = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+    title: { display: false, text: 'Bilan par saison' },
+    datalabels: {
+      display: false,
+      font: { size: 0 }
+    }
+  },
+  scales: {
+    x: { title: { display: false, text: 'Saison' }, ticks: { font: { size: 13 } } },
+    y: { title: { display: true, text: 'Montant (€)', font: { size: 13 } }, beginAtZero: true, stacked: true, ticks: { font: { size: 13 } } }
   }
 };

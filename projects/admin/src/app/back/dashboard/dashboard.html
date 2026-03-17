@@ -1,156 +1,215 @@
-<div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-2 mt-3 px-3 mb-3">
-    <div class="col">
-        <div class="card h-100">
-            <h6 class="card-header">Recettes, dépenses et résultat</h6>
-            <div class="card-body">
-                <div class="card-text text-center justify-content-center">
-                    <div class="chart-container">
-                        <canvas baseChart [data]="financialChartData" [options]="financialChartOptions" [type]="'bar'">
-                        </canvas>
+<div class="container-fluid p-md-4">
+    <!-- Finance Section -->
+    <div class="row row-cols-1 row-cols-md-3 g-4 mb-5">
+        <div class="col">
+            <div class="card h-100">
+                <h5 class="card-header bg-light fw-bold">{{season}} : Recettes, dépenses et résultat</h5>
+                <div class="card-body p-4">
+                    <div class="card-text text-center justify-content-center">
+                        <div class="chart-container" style="position: relative;">
+                            <canvas baseChart [data]="financialChartData" [options]="financialChartOptions"
+                                [type]="'bar'">
+                            </canvas>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="card-footer">
-                <!-- Légende personnalisée -->
-                <div class="d-inline-flex  mx-auto">
-                    <span class="legend-item">
-                        <span class="legend-symbol" style="background-color: rgba(34, 129, 16, 0.6);"></span>
-                        Recettes
-                    </span>
-                    <span class="legend-item ms-4">
-                        <span class="legend-symbol" style="background-color: rgba(108, 117, 125, 0.6);"></span>
-                        Dépenses
-                    </span>
-                    <span class="legend-item ms-4">
-                        <svg class="legend-point" width="12" height="12"
-                            style="margin-right: 8px; vertical-align: middle;">
-                            <circle cx="6" cy="6" r="5" fill="rgb(13, 95, 189)" stroke="#fff" stroke-width="2" />
-                        </svg>
-                        Résultat
-                    </span>
+                <div class="card-footer bg-light">
+                    <!-- Légende personnalisée -->
+                    <div class="d-flex flex-wrap gap-3 justify-content-center">
+                        <span class="legend-item">
+                            <span class="legend-symbol"
+                                style="background-color: rgba(34, 129, 16, 0.6);"></span>
+                            <span>Recettes</span>
+                        </span>
+                        <span class="legend-item">
+                            <span class="legend-symbol"
+                                style="background-color: rgba(108, 117, 125, 0.6);"></span>
+                            <span>Dépenses</span>
+                        </span>
+                        <span class="legend-item">
+                            <svg class="legend-point" width="16" height="16"
+                                style="margin-right: 6px; vertical-align: middle;">
+                                <circle cx="8" cy="8" r="5" fill="rgb(13, 95, 189)" stroke="#333"
+                                    stroke-width="2" />
+                            </svg>
+                            <span>Résultat</span>
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-    <div class="col">
-        <div class="card h-100">
-            <h6 class="card-header">Tournois de régularité</h6>
-            <div class="card-body">
-                <div class="card-text text-center justify-content-center">
-                    <div class="text-muted small">
-                        (moyenne mensuelle: {{tournamentCountAverage | number:'1.0-0'}} tournois de
-                        {{teamPerTournamentAverage
-                        | number:'1.0-0'}} paires)
-                    </div>
-                    <div class="chart-container">
-                        <canvas baseChart [data]="playerChartData" [options]="playerChartOptions" [type]="'bar'">
-                        </canvas>
+        <div class="col">
+            <div class="card h-100">
+                <h5 class="card-header bg-light fw-bold">Bilan par saison</h5>
+                <div class="card-body p-4">
+                    <div class="card-text text-center justify-content-center">
+                        <div class="chart-container" style="position: relative;">
+                            <canvas baseChart [data]="balanceChartData" [options]="balanceChartOptions"
+                                [type]="'bar'">
+                            </canvas>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="card-footer">
-                <div class="d-inline-flex  mx-auto ">
-                    <span class="legend-item">
-                        <span class="legend-symbol"
-                            [style.backgroundColor]="playerChartData?.datasets?.[0]?.backgroundColor"></span>
-                        Paires
-                    </span>
-                    <span class="legend-item ms-4">
-                        <svg class="legend-point" width="12" height="12"
-                            style="margin-right: 8px; vertical-align: middle;">
-                            <circle cx="6" cy="6" r="5" fill="rgb(13, 95, 189)" stroke="#fff" stroke-width="2" />
-                        </svg>
-                        Tournois
-                    </span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col">
-        <div class="card h-100">
-            <h6 class="card-header">Tranches d'âge </h6>
-            <div class="card-body">
-                <div class="text-muted small">
-                    (âge moyen: {{averageMaleAge | number:'1.0-1'}} ans pour les hommes, {{averageFemaleAge |
-                    number:'1.0-1'}} ans pour les femmes)
-                </div>
-                <div class="card-text text-center justify-content-center">
-                    <div class="chart-container">
-                        <canvas baseChart [data]="memberChartData" [options]="memberChartOptions" [type]="'bar'">
-                        </canvas>
+                <div class="card-footer bg-light">
+                    <!-- Légende personnalisée -->
+                    <div class="d-flex flex-wrap gap-3 justify-content-center">
+                        <span class="legend-item">
+                            <span class="legend-symbol"
+                                [style.backgroundColor]="balanceChartData?.datasets?.[0]?.backgroundColor"></span>
+                            <span>Épargne</span>
+                        </span>
+                        <span class="legend-item">
+                            <span class="legend-symbol"
+                                [style.backgroundColor]="balanceChartData?.datasets?.[1]?.backgroundColor"></span>
+                            <span>Banque</span>
+                        </span>
+                        <span class="legend-item">
+                            <span class="legend-symbol"
+                                [style.backgroundColor]="balanceChartData?.datasets?.[2]?.backgroundColor"></span>
+                            <span>Caisse</span>
+                        </span>
+                        <span class="legend-item">
+                            <span class="legend-symbol"
+                                [style.backgroundColor]="balanceChartData?.datasets?.[4]?.backgroundColor"></span>
+                            <span>En cours</span>
+                        </span>
+                        <span class="legend-item">
+                            <svg class="legend-point" width="16" height="16"
+                                style="margin-right: 6px; vertical-align: middle;">
+                                <line x1="0" y1="8" x2="16" y2="8" stroke-width="2"
+                                    [ngStyle]="{'stroke': balanceChartData?.datasets?.[5]?.borderColor}" />
+                                <circle cx="8" cy="8" r="3"
+                                    [ngStyle]="{'fill': balanceChartData?.datasets?.[5]?.pointBackgroundColor}" />
+                            </svg>
+                            <span>Total actif</span>
+                        </span>
                     </div>
-                </div>
-  
-
-            </div>
-            <div class="card-footer">
-                <div class="d-inline-flex ">
-                    <span class="legend-item">
-                        <span class="legend-symbol"
-                            [style.backgroundColor]="memberChartData?.datasets?.[0]?.backgroundColor"></span>
-                        Hommes
-                    </span>
-                    <span class="legend-item ms-4">
-                        <span class="legend-symbol"
-                            [style.backgroundColor]="memberChartData?.datasets?.[1]?.backgroundColor"></span>
-                        Femmes
-                    </span>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="col">
-        <div class="card h-100">
-            <h6 class="card-header">Classement par série </h6>
-            <div class="card-body">
-                <div class="card-text text-center justify-content-center">
-                    <div class="chart-container">
-                        <canvas baseChart [data]="ivChartData" [options]="ivChartOptions" [type]="'bar'">
-                        </canvas>
+    <!-- People Section -->
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        <div class="col">
+            <div class="card h-100">
+                <h5 class="card-header bg-light fw-bold">Tournois de régularité</h5>
+                <div class="card-body p-4">
+                    <div class="card-text text-center justify-content-center">
+                        <div class="text-dark small mb-3">
+                            <strong>Moyenne mensuelle:</strong> {{tournamentCountAverage | number:'1.0-1'}}
+                            tournois de {{ teamPerTournamentAverage | number:'1.0-1'}} paires
+                        </div>
+                        <div class="chart-container" style="position: relative;">
+                            <canvas baseChart [data]="playerChartData" [options]="playerChartOptions"
+                                [type]="'bar'">
+                            </canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-light">
+                    <div class="d-flex flex-wrap gap-3 justify-content-center">
+                        <span class="legend-item">
+                            <span class="legend-symbol"
+                                [style.backgroundColor]="playerChartData?.datasets?.[0]?.backgroundColor"></span>
+                            <span>Paires</span>
+                        </span>
+                        <span class="legend-item">
+                            <svg class="legend-point" width="16" height="16"
+                                style="margin-right: 6px; vertical-align: middle;">
+                                <circle cx="8" cy="8" r="5" fill="rgb(13, 95, 189)" stroke="#333"
+                                    stroke-width="2" />
+                            </svg>
+                            <span>Tournois</span>
+                        </span>
                     </div>
                 </div>
             </div>
-            <div class="card-footer">
-                <div class="d-inline-flex ">
-                    <span class="legend-item">
-                        <span class="legend-symbol"
-                            [ngStyle]="{'background-color': ivSuffixColorMap['NvL'] + '99'}"></span>
-                        NvL
-                    </span>
-                    <span class="legend-item ms-4">
-                        <span class="legend-symbol"
-                            [ngStyle]="{'background-color': ivSuffixColorMap['T'] + '99'}"></span>
-                        T
-                    </span>
-                    <span class="legend-item ms-4">
-                        <span class="legend-symbol"
-                            [ngStyle]="{'background-color': ivSuffixColorMap['K'] + '99'}"></span>
-                        K
-                    </span>
-                    <span class="legend-item ms-4">
-                        <span class="legend-symbol"
-                            [ngStyle]="{'background-color': ivSuffixColorMap['C'] + '99'}"></span>
-                        C
-                    </span>
-                    <span class="legend-item ms-4">
-                        <span class="legend-symbol"
-                            [ngStyle]="{'background-color': ivSuffixColorMap['P'] + '99'}"></span>
-                        P
-                    </span>
-                    <span class="legend-item ms-4">
-                        <span class="legend-symbol"
-                            [ngStyle]="{'background-color': ivSuffixColorMap['Pr'] + '99'}"></span>
-                        Pr
-                    </span>
-                    <span class="legend-item ms-4">
-                        <span class="legend-symbol"
-                            [ngStyle]="{'background-color': ivSuffixColorMap['H'] + '99'}"></span>
-                        H
-                    </span>
+        </div>
+                <div class="col">
+            <div class="card h-100">
+                <h5 class="card-header bg-light fw-bold">Classement par série</h5>
+                <div class="card-body p-4">
+                    <div class="card-text text-center justify-content-center">
+                        <div class="chart-container" style="position: relative;">
+                            <canvas baseChart [data]="ivChartData" [options]="ivChartOptions" [type]="'bar'">
+                            </canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-light">
+                    <div class="d-flex flex-wrap gap-2 justify-content-center">
+                        <span class="legend-item">
+                            <span class="legend-symbol"
+                                [ngStyle]="{'background-color': ivSuffixColorMap['NvL'] + '99'}"></span>
+                            <span>NvL</span>
+                        </span>
+                        <span class="legend-item">
+                            <span class="legend-symbol"
+                                [ngStyle]="{'background-color': ivSuffixColorMap['T'] + '99'}"></span>
+                            <span>T</span>
+                        </span>
+                        <span class="legend-item">
+                            <span class="legend-symbol"
+                                [ngStyle]="{'background-color': ivSuffixColorMap['K'] + '99'}"></span>
+                            <span>K</span>
+                        </span>
+                        <span class="legend-item">
+                            <span class="legend-symbol"
+                                [ngStyle]="{'background-color': ivSuffixColorMap['C'] + '99'}"></span>
+                            <span>C</span>
+                        </span>
+                        <span class="legend-item">
+                            <span class="legend-symbol"
+                                [ngStyle]="{'background-color': ivSuffixColorMap['P'] + '99'}"></span>
+                            <span>P</span>
+                        </span>
+                        <span class="legend-item">
+                            <span class="legend-symbol"
+                                [ngStyle]="{'background-color': ivSuffixColorMap['Pr'] + '99'}"></span>
+                            <span>Pr</span>
+                        </span>
+                        <span class="legend-item">
+                            <span class="legend-symbol"
+                                [ngStyle]="{'background-color': ivSuffixColorMap['H'] + '99'}"></span>
+                            <span>H</span>
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
+        <div class="col">
+            <div class="card h-100">
+                <h5 class="card-header bg-light fw-bold">Tranches d'âge</h5>
+                <div class="card-body p-4">
+                    <div class="text-dark small mb-3">
+                        <strong>Moyennes : Hommes:</strong> {{averageMaleAge | number:'1.0-1'}} ans |
+                        <strong>Femmes:</strong> {{averageFemaleAge | number:'1.0-1'}} ans
+                    </div>
+                    <div class="card-text text-center justify-content-center">
+                        <div class="chart-container" style="position: relative;">
+                            <canvas baseChart [data]="memberChartData" [options]="memberChartOptions"
+                                [type]="'bar'">
+                            </canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-light">
+                    <div class="d-flex flex-wrap gap-3 justify-content-center">
+                        <span class="legend-item">
+                            <span class="legend-symbol"
+                                [style.backgroundColor]="memberChartData?.datasets?.[0]?.backgroundColor"></span>
+                            <span>Hommes</span>
+                        </span>
+                        <span class="legend-item">
+                            <span class="legend-symbol"
+                                [style.backgroundColor]="memberChartData?.datasets?.[1]?.backgroundColor"></span>
+                            <span>Femmes</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>

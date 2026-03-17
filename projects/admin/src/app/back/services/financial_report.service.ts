@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { from, map, catchError, of, Observable, BehaviorSubject, switchMap } from 'rxjs';
+import { from, map, catchError, of, Observable, BehaviorSubject, switchMap, shareReplay } from 'rxjs';
 import { Balance_board, Balance_record, Balance_sheet } from '../../common/interfaces/balance.interface';
 import { FileService } from '../../common/services/files.service';
 import { ToastService } from '../../common/services/toast.service';
@@ -125,45 +125,42 @@ export class FinancialReportService {
   }
 
 
-  // update_balance_sheet(balance_sheet: Balance_sheet): Observable<Balance_sheet> {
-  //   const index = this._balance_sheets.findIndex((sheet) => sheet.season === balance_sheet.season);
-  //   if (index !== -1) {
-  //     this._balance_sheets[index] = balance_sheet;
-  //     return this.balance_sheets_upload_to_S3().pipe(
-  //       map(() => {
-  //         this._balance_sheets$.next(this._balance_sheets);
-  //         return balance_sheet;
-  //       }
-  //       ));
-  //   } else {
-  //     throw new Error(`Balance sheet for season ${balance_sheet.season} not found`);
-  //   }
-  // }
-
   // list balance_sheets
 
-  list_balance_sheets(): Observable<Balance_sheet[]> {
-    const download_sheets: Observable<Balance_sheet[]> = from(this.fileService.download_json_file('accounting/balance_history.txt')).pipe(
+ read_balance_sheets_from_S3(): Observable<Balance_sheet[]> {
+    return from(this.fileService.download_json_file('accounting/balance_history.txt')).pipe(
       map((data) => {
-        // console.log('balance history downloaded', data);
         let balance_records = data as Balance_record[];
-        this._balance_sheets = balance_records.map((record) => {
+        let balance_sheets = balance_records.map((record) => {
           let in_bank_total = record.bank + record.savings;
           let cashbox = record.cash + record.client_debts;
           let wip_total = record.uncashed_cheques + record.outstanding_expenses + record.gift_vouchers;
           let actif_total = in_bank_total + cashbox + wip_total;
-
           return {
             ...record,
-            in_bank_total: record.bank + record.savings,
-            wip_total: wip_total,
+            in_bank_total: in_bank_total,
             cashbox: cashbox,
-            actif_total: actif_total,
+            wip_total: wip_total,
+            actif_total: actif_total
           } as Balance_sheet;
-
         });
-        // if (this.trace_on()) console.log(' balance history from S3', this._balance_sheets);
-        return this._balance_sheets;
+        return balance_sheets;
+      }),
+      map((balance_sheets) => {
+        // Assigner _balance_sheets pour que compute_balance_board() puisse l'utiliser
+        this._balance_sheets = balance_sheets;
+        return balance_sheets;
+      }),
+      shareReplay(1)
+    );
+  }
+
+
+  list_balance_sheets(): Observable<Balance_sheet[]> {
+    const download_sheets: Observable<Balance_sheet[]> = this.read_balance_sheets_from_S3().pipe(
+      map((sheets) => {
+        this._balance_sheets = sheets;
+        return sheets;
       }),
       switchMap((sheets) => {
         this._balance_sheets$.next(sheets);

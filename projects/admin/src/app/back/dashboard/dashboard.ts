@@ -6,9 +6,11 @@ import { BookService } from '../services/book.service';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { Revenue, Expense, BookEntry, CUSTOMER_ACCOUNT } from '../../common/interfaces/accounting.interface';
 import { TournamentService } from '../../common/services/tournament.service';
-import { Observable, map } from 'rxjs';
+import { Observable, map, switchMap } from 'rxjs';
 import { DashboardGraphService } from './dashboard.graph.service';
 import { MembersService } from '../../common/services/members.service';
+import { FinancialReportService } from '../services/financial_report.service';
+import { Balance_board, Balance_sheet } from '../../common/interfaces/balance.interface';
 
 @Component({
   selector: 'app-dashboard',
@@ -21,11 +23,13 @@ export class DashboardComponent {
 
   allMonths: string[] = [];
   startYear!: number;
-
+  season!: string;
   financialChartData: any = {};
+  financialChartOptions!: ChartOptions<any>;
+  balanceChartData: any = {};
+  balanceChartOptions!: ChartOptions<any>;
   playerChartData: any = {};
   playerChartOptions!: ChartOptions<any>;
-  financialChartOptions!: ChartOptions<any>;
   memberChartData: any = {};
   memberChartOptions !: ChartOptions<any>
   ivChartData: any = {};
@@ -44,7 +48,8 @@ export class DashboardComponent {
     private systemDataService: SystemDataService,
     private tournamentService: TournamentService,
     private graphService: DashboardGraphService,
-    private memberService: MembersService
+    private memberService: MembersService,
+    private financialService: FinancialReportService,
   ) {
     this.ivSuffixColorMap = this.graphService.getIVSuffixColorMap();
   }
@@ -67,7 +72,17 @@ export class DashboardComponent {
           chartExpense,
           chartResult
         ));
+
+        this.season = season;
+        this.initialize_balance_data(season).subscribe((balance_sheets) => {
+          console.log('Balance sheets :', balance_sheets);
+          ({ data: this.balanceChartData, options: this.balanceChartOptions } = this.graphService.buildBalanceChart(
+            balance_sheets
+          ));
+        });
+
       });
+
 
       this.initialize_tournaments_data(this.allMonths).subscribe(({ pairCounts, tournamentCounts }) => {
         // Calculer les moyennes
@@ -107,7 +122,16 @@ export class DashboardComponent {
     });
   }
 
+  initialize_balance_data(season: string): Observable<Balance_sheet[]> {
 
+    return this.financialService.read_balance_sheets_from_S3().pipe(
+      map((balance_sheets) => {
+        const balance_board: Balance_board = this.financialService.compute_balance_board(season);
+        balance_sheets.push(balance_board.current);
+        return balance_sheets;
+      })
+    );
+}
 
 
   initialize_members_data(ageStep: number = 5): Observable<{
@@ -177,10 +201,10 @@ export class DashboardComponent {
         }
 
         // calculer la moyenne d'âge par genre
-          const totalMale = agesWithGender.filter(a => a.gender === 1 || a.gender === 'M.').length;
-          const totalFemale = agesWithGender.filter(a => a.gender === 0 || a.gender === 'Mme').length;
-          this.averageMaleAge = totalMale > 0 ? agesWithGender.filter(a => a.gender === 1 || a.gender === 'M.').reduce((sum, a) => sum + a.age, 0) / totalMale : 0;
-          this.averageFemaleAge = totalFemale > 0 ? agesWithGender.filter(a => a.gender ===  0 || a.gender === 'Mme').reduce((sum, a) => sum + a.age, 0) / totalFemale : 0;
+        const totalMale = agesWithGender.filter(a => a.gender === 1 || a.gender === 'M.').length;
+        const totalFemale = agesWithGender.filter(a => a.gender === 0 || a.gender === 'Mme').length;
+        this.averageMaleAge = totalMale > 0 ? agesWithGender.filter(a => a.gender === 1 || a.gender === 'M.').reduce((sum, a) => sum + a.age, 0) / totalMale : 0;
+        this.averageFemaleAge = totalFemale > 0 ? agesWithGender.filter(a => a.gender === 0 || a.gender === 'Mme').reduce((sum, a) => sum + a.age, 0) / totalFemale : 0;
 
         // Supprimer les premières tranches vides
         while (age_groups.length > 0 && group_counts[age_groups[0]] === 0) {
