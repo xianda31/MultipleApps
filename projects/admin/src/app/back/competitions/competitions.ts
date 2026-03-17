@@ -9,6 +9,8 @@ import { ActivatedRoute } from '@angular/router';
 import { UIConfiguration } from '../../common/interfaces/ui-conf.interface';
 import { Member } from '../../common/interfaces/member.interface';
 import { MembersService } from '../../common/services/members.service';
+import { FileService } from '../../common/services/files.service';
+import { from, of, catchError, concat, tap } from 'rxjs';
 
 @Component({
   selector: 'app-competitions',
@@ -40,6 +42,7 @@ export class CompetitionsComponent {
   full_regeneration: boolean = false;
   data_ready: boolean = false;
   trace_mode: boolean = false;
+  is_refreshing: boolean = false;
   private _members: Member[] = [];
   // nombre de jours pour considérer une calculation_date comme récente
   private readonly RECENT_CALCULATION_DAYS: number = 30;
@@ -51,6 +54,7 @@ export class CompetitionsComponent {
     private titleService: TitleService,
     private route: ActivatedRoute,
     private memberService: MembersService,
+    private fileService: FileService,
   ) { }
 
   ngOnInit(): void {
@@ -127,53 +131,85 @@ export class CompetitionsComponent {
   update_results(): void {
     this.current_season = this.one_year_back ? this.systemService.previous_season(this.systemService.get_today_season()) : this.systemService.get_today_season();
     this.titleService.setTitle('Résultats des compétitions ' + this.current_season);
+    this.results_extracted = false;
+    this.is_refreshing = false;
+    this.spinnerMessage = 'Chargement des résultats...';
 
-    this.competitionService.getCompetionsResults(this.current_season, this.preferred_organization_labels, this.full_regeneration).subscribe(results => {
+    const safeSeason = this.current_season.replace(/\//g, '_');
+    
+    // Step 1: Create observable to load cached S3 results
+    const cachedResults$ = from(this.fileService.download_json_file('any/resultats' + safeSeason + '.txt')).pipe(
+      catchError(() => of({} as CompetitionResultsMap)),
+      tap(() => {
+        // Cache loaded, now FFB scan starts
+        this.is_refreshing = true;
+        this.spinnerMessage = 'Actualisation des données FFB en cours...';
+      })
+    );
 
-      // Filtrer les CompetitionResults dont toutes les teams sont vides
-      const filteredResults: CompetitionResultsMap = {};
-      Object.entries(results).forEach(([compId, compResults]) => {
-        const validResults = (compResults as CompetitionResults[]).filter((r: CompetitionResults) =>
-          Array.isArray(r.teams) && r.teams.some((team: CompetitionTeam) => Array.isArray(team.players) && team.players.length > 0)
-        );
-        if (validResults.length > 0) {
-          filteredResults[Number(compId)] = validResults;
-        }
-      });
-      // Ne garder que les compétitions où au moins un résultat a des équipes à afficher après filtrage
-      const filteredToDisplay: CompetitionResultsMap = {};
-      Object.entries(filteredResults).forEach(([compId, compResults]) => {
-        const hasDisplayable = (compResults as CompetitionResults[]).some(res => this.getFilteredTeams(res).length > 0);
-        if (hasDisplayable) {
-          filteredToDisplay[Number(compId)] = compResults;
-        }
-      });
-      this.team_results = filteredResults;
-      this.filtered_team_results = filteredToDisplay;
+    // Step 2: Create observable for fresh results (includes FFB rescan)
+    const freshResults$ = this.competitionService.getCompetionsResults(this.current_season, this.preferred_organization_labels, this.full_regeneration).pipe(
+      tap(() => {
+        // FFB scan completed
+        this.is_refreshing = false;
+      })
+    );
 
-      // Vérifier s'il y a des résultats pour la division 'Autres'
-      const autresHasResults = Object.values(filteredToDisplay).some((arr: CompetitionResults[]) =>
-        arr.some((res: CompetitionResults) => res.competition.assigned_division === 'Autres')
-      );
-      if (autresHasResults && !this.divisions.includes('Autres')) {
-        this.divisions = [...this.divisions, 'Autres'];
-        if (this.ui_config_loaded.competitions.show_infos) {
-          const autresResults = Object.values(filteredToDisplay)
-            .flatMap((arr: CompetitionResults[]) => arr.filter((res: CompetitionResults) => res.competition.assigned_division === 'Autres'));
-          console.warn('[PROD TRACK] Résultats présents pour la division "Autres". Cas à surveiller.', autresResults);
-        }
+    // Step 3: Emit cached results first, then fresh results
+    concat(cachedResults$, freshResults$).subscribe(
+      results => {
+        this.processResults(results);
+        this.results_extracted = true;
+      },
+      error => {
+        console.error('Erreur lors du chargement des résultats:', error);
+        this.results_extracted = true;
+        this.is_refreshing = false;
       }
-
-      if (this.trace_mode) {
-        console.log('CompetitionsComponent: received competition results', results);
-      }
-
-      this.results_extracted = true;
-    });
+    );
   }
 
+  private processResults(results: CompetitionResultsMap): void {
+    // Filtrer les CompetitionResults dont toutes les teams sont vides
+    const filteredResults: CompetitionResultsMap = {};
+    Object.entries(results).forEach(([compId, compResults]) => {
+      const validResults = (compResults as CompetitionResults[]).filter((r: CompetitionResults) =>
+        Array.isArray(r.teams) && r.teams.some((team: CompetitionTeam) => Array.isArray(team.players) && team.players.length > 0)
+      );
+      if (validResults.length > 0) {
+        filteredResults[Number(compId)] = validResults;
+      }
+    });
+    // Ne garder que les compétitions où au moins un résultat a des équipes à afficher après filtrage
+    const filteredToDisplay: CompetitionResultsMap = {};
+    Object.entries(filteredResults).forEach(([compId, compResults]) => {
+      const hasDisplayable = (compResults as CompetitionResults[]).some(res => this.getFilteredTeams(res).length > 0);
+      if (hasDisplayable) {
+        filteredToDisplay[Number(compId)] = compResults;
+      }
+    });
+    this.team_results = filteredResults;
+    this.filtered_team_results = filteredToDisplay;
 
+    // Vérifier s'il y a des résultats pour la division 'Autres'
+    const autresHasResults = Object.values(filteredToDisplay).some((arr: CompetitionResults[]) =>
+      arr.some((res: CompetitionResults) => res.competition.assigned_division === 'Autres')
+    );
+    if (autresHasResults && !this.divisions.includes('Autres')) {
+      this.divisions = [...this.divisions, 'Autres'];
+      if (this.ui_config_loaded.competitions.show_infos) {
+        const autresResults = Object.values(filteredToDisplay)
+          .flatMap((arr: CompetitionResults[]) => arr.filter((res: CompetitionResults) => res.competition.assigned_division === 'Autres'));
+        console.warn('[PROD TRACK] Résultats présents pour la division "Autres". Cas à surveiller.', autresResults);
+      }
+    }
 
+    if (this.trace_mode) {
+      console.log('CompetitionsComponent: received competition results', results);
+    }
+
+    this.results_extracted = true;
+  }
 
   saveThresholds(): void {
     // Get the current UI config and merge thresholds before saving
@@ -252,7 +288,7 @@ export class CompetitionsComponent {
       this.no_filter ||
       !threshold ||
       threshold === 0 ||
-      (team.cumulated_pe_percentage as any) >= +threshold
+      (team.weighted_rank as any) <= +threshold
     );
   }
 

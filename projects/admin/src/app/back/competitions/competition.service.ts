@@ -248,11 +248,12 @@ export class CompetitionService {
         comp.calculation_date = null;
       }
 
-      // compute pe_pourcentage for each player
-      compTeam = this.computePePercentage(comp, compTeam);
-
       // Filter teams to keep only those with at least one member
       const teamsBeforeFilter = compTeam.length;
+      
+      // Calculate pe_pourcentage BEFORE filtering (based on all competitors)
+      this.calculatePePercentageBeforeFilter(comp, compTeam);
+      
       const filteredTeams = (compTeam || []).filter(team => this.has_a_member(team.players));
 
       // add is_member field to each player
@@ -288,22 +289,33 @@ export class CompetitionService {
     return results;
   }
 
-  private computePePercentage(comp: Competition, teams: CompetitionTeam[]): CompetitionTeam[] {
-    // Somme totale des PE distribués à toutes les équipes (tous joueurs)
+  /**
+   * Calculate weighted_rank (cumulative PE percentage) for each team
+   * weighted_rank = (PE of all better-ranked teams) / totalPe
+   * - Best ranked team (rank=1): 0% (no better teams)
+   * - Worst ranked team: 100% (all other teams are better)
+   * Used by getFilteredTeams() in component for threshold filtering
+   */
+  private calculatePePercentageBeforeFilter(comp: Competition, teams: CompetitionTeam[]): void {
     const totalPe = teams.reduce((sum, team) => {
       return sum + team.players.reduce((s, player) => s + (player.pe || 0) + (player.pe_bonus || 0) + (player.pe_extra || 0), 0);
     }, 0);
     comp.cumulated_pe_percentage = totalPe;
-    // Calculer le pe de chaque équipe
-    const teamPeArray = teams.map(team => team.players.reduce((s, player) => s + (player.pe || 0) + (player.pe_bonus || 0) + (player.pe_extra || 0), 0));
-      // Pour chaque équipe, calculer le % de PE attribués et cumulated_pe_percentage (somme des PE de l'équipe et de toutes les équipes mieux classées)
-      return teams.map((team, idx) => {
-        const teamPe = teamPeArray[idx];
-        team.pe_pourcentage = totalPe > 0 ? (teamPe / totalPe) * 100 : 0;
-        // cumulated_pe_percentage = somme des PE gagnés par l'équipe et toutes les équipes de rang supérieur (i.e. d'indice <= idx)
-        team.cumulated_pe_percentage = totalPe > 0 ? (teamPeArray.slice(0, idx + 1).reduce((sum, pe) => sum + pe, 0) / totalPe) * 100 : 0;
-        return team;
-      });
+    
+    // Calculate pe_pourcentage and weighted_rank for each team based on ALL teams
+    teams.forEach((team) => {
+      const teamPe = team.players.reduce((s, player) => s + (player.pe || 0) + (player.pe_bonus || 0) + (player.pe_extra || 0), 0);
+      team.pe_pourcentage = totalPe > 0 ? (teamPe / totalPe) * 100 : 0;
+      
+      // Weighted rank: PE of all better-ranked teams (rank < this team)
+      const betterTeamsPe = teams
+        .filter(t => t.rank < team.rank)
+        .reduce((sum, t) => {
+          return sum + t.players.reduce((s, p) => s + (p.pe || 0) + (p.pe_bonus || 0) + (p.pe_extra || 0), 0);
+        }, 0);
+      
+      team.weighted_rank = totalPe > 0 ? (betterTeamsPe / totalPe) * 100 : 0;
+    });
   }
 
   saveResults(season: string, results: CompetitionResultsMap): void {

@@ -65,7 +65,7 @@ export interface CompetitionTeam {
   players: Player[];
     // additional fields for service use
   pe_pourcentage?: number;
-  cumulated_pe_percentage?: number;
+  weighted_rank?: number;
 }
 
 export interface CompetitionOrganization {

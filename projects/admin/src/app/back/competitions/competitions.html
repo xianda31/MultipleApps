@@ -71,8 +71,10 @@
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <span class="text-start">{{ comp.label }}</span>
                                                 <div class="d-flex ms-auto">
-                                                    <span class="text-muted" style="font-size: 0.9em;">{{ comp.organization }}</span>
-                                                    <span class="text-muted ms-4">{{ comp.date | date:'shortDate' }}</span>
+                                                    <span class="text-muted" style="font-size: 0.9em;">{{
+                                                        comp.organization }}</span>
+                                                    <span class="text-muted ms-4">{{ comp.date | date:'shortDate'
+                                                        }}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -102,12 +104,22 @@
                 </div>
 
                 <div *ngIf="results_extracted">
+                    <!-- Actualisation FFB en arrière-plan - overlay au centre -->
+                    <div *ngIf="is_refreshing" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                        <div class="d-flex flex-column align-items-center gap-3">
+                            <div class="spinner-border text-info" role="status" style="width: 3rem; height: 3rem;">
+                                <span class="visually-hidden">{{ spinnerMessage }}</span>
+                            </div>
+                            <span style="font-size: 1rem; color: #0d6efd;">{{ spinnerMessage }}</span>
+                        </div>
+                    </div>
+
                     <!-- paramètres visualisation -->
                     <div class="d-inline-block w-auto mb-3">
                         <div class=" d-flex align-items-center" style="gap: 2rem">
                             <div class="form-check form-switch mb-0">
                                 <input class="form-check-input" type="checkbox" id="noFilterSwitch"
-                                    [(ngModel)]="no_filter">
+                                    [(ngModel)]="no_filter" (change)="onParamsChange(false)">
                                 <label class="form-check-label" for="noFilterSwitch">résultats complets</label>
                             </div>
                             <div class="form-check form-switch mb-0">
@@ -190,12 +202,8 @@
                                                     {{ team.rank + (team.rank===1?'er':'eme') }}
                                                 </span>
                                                 <span *ngIf="ui_config_loaded.competitions.show_infos"
-                                                    style="font-size: 0.7em;">
-                                                    {{(team.cumulated_pe_percentage ?
-                                                    (team.cumulated_pe_percentage |
-                                                    number:'1.0-1') +
-                                                    '%' :
-                                                    '') }}
+                                                    style="font-size: 0.7em;" class="d-flex align-items-center gap-1">
+                                                    <i class="bi bi-align-center" style="font-size: 0.9em;"></i>{{ (team.weighted_rank | number:'1.0-0') }}
                                                 </span>
                                             </span>
                                             <span
