@@ -3,10 +3,10 @@ import { Injectable } from '@angular/core';
 import { ChartOptions, Chart } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import {
-  defaultFinancialChartData,
+  defaultExpensesAndRevenuesChartData,
   defaultPlayerChartData,
   defaultPlayerChartOptions,
-  defaultFinancialChartOptions,
+  defaultExpensesAndRevenuesChartOptions,
   defaultMemberAgeDistributionChartData,
   defaultMemberAgeDistributionChartOptions,
 } from './dashboard.graph.definition';
@@ -76,7 +76,7 @@ export class DashboardGraphService {
     };
   }
 
-  buildFinancialChart(
+  buildExpensesAndRevenuesChart(
     allMonths: string[],
     chartRevenue: (number | null)[],
     chartExpense: (number | null)[],
@@ -88,21 +88,21 @@ export class DashboardGraphService {
       labels: allMonths,
       datasets: [
         {
-          ...defaultFinancialChartData.datasets[0],
+          ...defaultExpensesAndRevenuesChartData.datasets[0],
           data: chartRevenue,
           backgroundColor: primary + '99',
           borderColor: primary,
           datalabels: { display: false }
         },
         {
-          ...defaultFinancialChartData.datasets[1],
+          ...defaultExpensesAndRevenuesChartData.datasets[1],
           data: chartExpense,
           backgroundColor: secondary + '99',
           borderColor: secondary,
           datalabels: { display: false }
         },
         {
-          ...defaultFinancialChartData.datasets[2],
+          ...defaultExpensesAndRevenuesChartData.datasets[2],
           type: 'line',
           data: chartResult,
           borderColor: info,
@@ -137,7 +137,7 @@ export class DashboardGraphService {
           }
         }
       ]},
-      options: defaultFinancialChartOptions
+      options: defaultExpensesAndRevenuesChartOptions
     };
   }
 
@@ -374,7 +374,7 @@ export class DashboardGraphService {
   }
 
   getDefaultFinancialChartData() {
-    return defaultFinancialChartData;
+    return defaultExpensesAndRevenuesChartData;
   }
   getDefaultPlayerChartData() {
     return defaultPlayerChartData;
@@ -383,7 +383,7 @@ export class DashboardGraphService {
     return defaultPlayerChartOptions;
   }
   getDefaultFinancialChartOptions(): ChartOptions<'bar'> {
-    return defaultFinancialChartOptions;
+    return defaultExpensesAndRevenuesChartOptions;
   }
     getDefaultMemberAgeDistributionChartData() {
     return defaultMemberAgeDistributionChartData;
@@ -449,6 +449,69 @@ export class DashboardGraphService {
       'P': '#1C1C1C',    // Pique (noir)
       'Pr': '#ad9f4e',    // Promotion (dorée)
       'H': '#bb9823'   // Autres (dorée ++)
+    };
+  }
+
+  buildRevenuesAndExpensesBySectionChart(
+    per_section_revenues: { [section: string]: number },
+    per_section_expenses: { [section: string]: number }
+  ): { data: any, options: ChartOptions<any> } {
+    const { primary, secondary, info } = this.getChartColors();
+    
+    const sections = Object.keys(per_section_revenues);
+    const revenues = sections.map(section => per_section_revenues[section] || 0);
+    const expenses = sections.map(section => per_section_expenses[section] || 0);
+
+    return {
+      data: {
+        labels: sections,
+        datasets: [
+          {
+            label: 'Revenus',
+            data: revenues,
+            backgroundColor: primary + '99',
+            borderColor: primary,
+            borderWidth: 2,
+            borderRadius: 4
+          },
+          {
+            label: 'Dépenses',
+            data: expenses,
+            backgroundColor: secondary + '99',
+            borderColor: secondary,
+            borderWidth: 2,
+            borderRadius: 4
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          },
+          title: {
+            display: false,
+            text: 'Revenus et dépenses par section'
+          },
+          datalabels: {
+            display: false
+          }
+        },
+        scales: {
+          x: {
+            stacked: false,
+            ticks: { font: { size: 12 } }
+          },
+          y: {
+            stacked: false,
+            beginAtZero: true,
+            ticks: { font: { size: 12 } },
+            title: { display: true, text: 'Montant (€)', font: { size: 13 } }
+          }
+        }
+      } as ChartOptions<any>
     };
   }
 }

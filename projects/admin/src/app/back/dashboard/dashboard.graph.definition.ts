@@ -2,7 +2,7 @@
 
 import { ChartOptions } from 'chart.js';
 
-export const defaultFinancialChartData = {
+export const defaultExpensesAndRevenuesChartData = {
   labels: [],
   datasets: [
     {
@@ -109,7 +109,7 @@ export const defaultPlayerChartOptions: ChartOptions<'bar'> = {
   }
 };
 
-export const defaultFinancialChartOptions: ChartOptions<'bar'> = {
+export const defaultExpensesAndRevenuesChartOptions: ChartOptions<'bar'> = {
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
@@ -254,5 +254,78 @@ export const defaultBalanceChartOptions: ChartOptions<'bar'> = {
   scales: {
     x: { title: { display: false, text: 'Saison' }, ticks: { font: { size: 13 } } },
     y: { title: { display: true, text: 'Montant (€)', font: { size: 13 } }, beginAtZero: true, stacked: true, ticks: { font: { size: 13 } } }
+  }
+};
+
+// Graphiques camembert pour revenus et dépenses
+export const defaultRevenuesPieChartData = {
+  labels: [],
+  datasets: [
+    {
+      data: [],
+      label: 'Revenus',
+      backgroundColor: [],
+      borderColor: '#fff',
+      borderWidth: 2
+    }
+  ]
+};
+
+export const defaultRevenuesPieChartOptions: ChartOptions<'pie'> = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      display: true,
+      position: 'bottom' as const,
+      labels: { font: { size: 12 }, padding: 15 }
+    },
+    title: {
+      display: false,
+      text: 'Revenus par catégorie'
+    },
+    datalabels: {
+      display: true,
+      font: { size: 12, weight: 'bold' },
+      formatter: (value: number) => {
+        return value.toFixed(0) + ' €';
+      }
+    }
+  }
+};
+
+export const defaultExpensesPieChartData = {
+  labels: [],
+  datasets: [
+    {
+      data: [],
+      label: 'Dépenses',
+      backgroundColor: [],
+      borderColor: '#fff',
+      borderWidth: 2
+    }
+  ]
+};
+
+export const defaultExpensesPieChartOptions: ChartOptions<'pie'> = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      display: true,
+      position: 'bottom' as const,
+      labels: { font: { size: 12 }, padding: 15 }
+    },
+    title: {
+      display: false,
+      text: 'Dépenses par catégorie'
+    },
+    datalabels: {
+      display: true,
+      font: { size: 12, weight: 'bold' },
+      formatter: (value: number) => {
+        return value.toFixed(0) + ' €';
+      }
+    }
   }
 };

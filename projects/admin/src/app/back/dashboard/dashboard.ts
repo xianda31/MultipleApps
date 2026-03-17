@@ -11,6 +11,7 @@ import { DashboardGraphService } from './dashboard.graph.service';
 import { MembersService } from '../../common/services/members.service';
 import { FinancialReportService } from '../services/financial_report.service';
 import { Balance_board, Balance_sheet } from '../../common/interfaces/balance.interface';
+import { Revenue_and_expense_definition } from '../../common/interfaces/system-conf.interface';
 
 @Component({
   selector: 'app-dashboard',
@@ -24,8 +25,8 @@ export class DashboardComponent {
   allMonths: string[] = [];
   startYear!: number;
   season!: string;
-  financialChartData: any = {};
-  financialChartOptions!: ChartOptions<any>;
+  expensesAndRevenuesChartData: any = {};
+  expensesAndRevenuesChartOptions!: ChartOptions<any>;
   balanceChartData: any = {};
   balanceChartOptions!: ChartOptions<any>;
   playerChartData: any = {};
@@ -35,6 +36,9 @@ export class DashboardComponent {
   ivChartData: any = {};
   ivChartOptions!: ChartOptions<any>;
   ivSuffixColorMap!: { [suffix: string]: string };
+  
+  revenuseAndExpensesBySectionChartData: any = {};
+  revenuseAndExpensesBySectionChartOptions!: ChartOptions<any>;
 
   playerCountAverage  !: number;
   teamPerTournamentAverage !: number;
@@ -42,6 +46,10 @@ export class DashboardComponent {
   membersCount!: number;
   averageMaleAge!: number;
   averageFemaleAge!: number;
+
+  p_and_l_sections: { key: string, description: string }[] = [];
+  revenue_definitions: Revenue_and_expense_definition[] = [];
+  expense_definitions: Revenue_and_expense_definition[] = [];
 
   constructor(
     private bookService: BookService,
@@ -59,28 +67,36 @@ export class DashboardComponent {
 
     this.systemDataService.get_configuration().subscribe((conf) => {
       // Générer tous les mois de la saison courante (juillet à juin)
-      const season = conf.season;
-      this.startYear = parseInt(season.slice(0, 4));
+      this.season = conf.season;
+      this.p_and_l_sections = conf.revenue_and_expense_tree.sections;
+      this.revenue_definitions = conf.revenue_and_expense_tree.revenues;
+      this.expense_definitions = conf.revenue_and_expense_tree.expenses;
+      this.startYear = parseInt(this.season.slice(0, 4));
       this.allMonths = this.generateSeasonMonths(this.startYear);
 
 
       this.initialize_financial_data(this.allMonths).subscribe(({ chartRevenue, chartExpense, chartResult }) => {
 
-        ({ data: this.financialChartData, options: this.financialChartOptions } = this.graphService.buildFinancialChart(
+        ({ data: this.expensesAndRevenuesChartData, options: this.expensesAndRevenuesChartOptions } = this.graphService.buildExpensesAndRevenuesChart(
           this.allMonths,
           chartRevenue,
           chartExpense,
           chartResult
         ));
 
-        this.season = season;
-        this.initialize_balance_data(season).subscribe((balance_sheets) => {
-          console.log('Balance sheets :', balance_sheets);
+        this.initialize_balance_data(this.season).subscribe((balance_sheets) => {
           ({ data: this.balanceChartData, options: this.balanceChartOptions } = this.graphService.buildBalanceChart(
             balance_sheets
           ));
         });
 
+
+       let {  per_section_revenues, per_section_expenses } =  this.initialize_results_data(); // pour calculer le résultat de la saison en cours, utilisé dans check_balance_vs_profit_and_loss()
+
+        ({ data: this.revenuseAndExpensesBySectionChartData, options: this.revenuseAndExpensesBySectionChartOptions } = this.graphService.buildRevenuesAndExpensesBySectionChart(
+          per_section_revenues,
+          per_section_expenses
+        ));
       });
 
 
@@ -131,8 +147,28 @@ export class DashboardComponent {
         return balance_sheets;
       })
     );
-}
+  }
 
+  initialize_results_data(): {  per_section_revenues: { [section: string]: number }, per_section_expenses: { [section: string]: number } } {
+    // book_entries supposed to be loaded before,
+    let per_section_revenues: { [section: string]: number } = {};
+    let per_section_expenses: { [section: string]: number } = {};
+
+    this.revenue_definitions.forEach(def => {
+      if (!per_section_revenues[def.section]) {
+        per_section_revenues[def.section] = 0;
+      }
+      per_section_revenues[def.section] += this.bookService.get_total_revenues(def.key);
+    });
+    this.expense_definitions.forEach(def => {
+      if (!per_section_expenses[def.section]) {
+        per_section_expenses[def.section] = 0;
+      }
+      per_section_expenses[def.section] += this.bookService.get_total_expenses(def.key);
+    });
+    return { per_section_revenues, per_section_expenses };
+    
+  }
 
   initialize_members_data(ageStep: number = 5): Observable<{
     age_groups: string[],
@@ -144,7 +180,6 @@ export class DashboardComponent {
       map(members => members.filter(m => m.membership_date)), // Filtrer les membres ayant payé leur cotisation
       map(members => {
         this.membersCount = members.length;
-        console.log(`Total members: ${this.membersCount}`);
         const now = new Date();
         // Calculer l'âge et le genre de chaque membre
         const agesWithGender = members

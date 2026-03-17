@@ -3,12 +3,39 @@
     <div class="row row-cols-1 row-cols-md-3 g-4 mb-5">
         <div class="col">
             <div class="card h-100">
-                <h5 class="card-header bg-light fw-bold">{{season}} : Recettes, dépenses et résultat</h5>
+                <h5 class="card-header bg-light fw-bold">Recettes et dépenses {{season}} par section</h5>
+                <div class="card-body p-4">
+                    <div class="chart-container" style="position: relative;">
+                        <canvas baseChart [data]="revenuseAndExpensesBySectionChartData"
+                            [options]="revenuseAndExpensesBySectionChartOptions" [type]="'bar'">
+                        </canvas>
+                    </div>
+                </div>
+                <div class="card-footer bg-light">
+                    <!-- Légende personnalisée -->
+                    <div class="d-flex flex-wrap gap-3 justify-content-center">
+                        <span class="legend-item">
+                            <span class="legend-symbol"
+                                [style.backgroundColor]="revenuseAndExpensesBySectionChartData?.datasets?.[0]?.backgroundColor"></span>
+                            <span>Recettes</span>
+                        </span>
+                        <span class="legend-item">
+                            <span class="legend-symbol"
+                                [style.backgroundColor]="revenuseAndExpensesBySectionChartData?.datasets?.[1]?.backgroundColor"></span>
+                            <span>Dépenses</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card h-100">
+                <h5 class="card-header bg-light fw-bold"> Recettes, dépenses et flux net {{season}}</h5>
                 <div class="card-body p-4">
                     <div class="card-text text-center justify-content-center">
                         <div class="chart-container" style="position: relative;">
-                            <canvas baseChart [data]="financialChartData" [options]="financialChartOptions"
-                                [type]="'bar'">
+                            <canvas baseChart [data]="expensesAndRevenuesChartData"
+                                [options]="expensesAndRevenuesChartOptions" [type]="'bar'">
                             </canvas>
                         </div>
                     </div>
@@ -17,22 +44,19 @@
                     <!-- Légende personnalisée -->
                     <div class="d-flex flex-wrap gap-3 justify-content-center">
                         <span class="legend-item">
-                            <span class="legend-symbol"
-                                style="background-color: rgba(34, 129, 16, 0.6);"></span>
+                            <span class="legend-symbol" style="background-color: rgba(34, 129, 16, 0.6);"></span>
                             <span>Recettes</span>
                         </span>
                         <span class="legend-item">
-                            <span class="legend-symbol"
-                                style="background-color: rgba(108, 117, 125, 0.6);"></span>
+                            <span class="legend-symbol" style="background-color: rgba(108, 117, 125, 0.6);"></span>
                             <span>Dépenses</span>
                         </span>
                         <span class="legend-item">
                             <svg class="legend-point" width="16" height="16"
                                 style="margin-right: 6px; vertical-align: middle;">
-                                <circle cx="8" cy="8" r="5" fill="rgb(13, 95, 189)" stroke="#333"
-                                    stroke-width="2" />
+                                <circle cx="8" cy="8" r="5" fill="rgb(13, 95, 189)" stroke="#333" stroke-width="2" />
                             </svg>
-                            <span>Résultat</span>
+                            <span>Flux net</span>
                         </span>
                     </div>
                 </div>
@@ -40,12 +64,11 @@
         </div>
         <div class="col">
             <div class="card h-100">
-                <h5 class="card-header bg-light fw-bold">Bilan par saison</h5>
+                <h5 class="card-header bg-light fw-bold">Bilans annuels par saison</h5>
                 <div class="card-body p-4">
                     <div class="card-text text-center justify-content-center">
                         <div class="chart-container" style="position: relative;">
-                            <canvas baseChart [data]="balanceChartData" [options]="balanceChartOptions"
-                                [type]="'bar'">
+                            <canvas baseChart [data]="balanceChartData" [options]="balanceChartOptions" [type]="'bar'">
                             </canvas>
                         </div>
                     </div>
@@ -87,6 +110,7 @@
                 </div>
             </div>
         </div>
+
     </div>
 
     <!-- People Section -->
@@ -101,8 +125,7 @@
                             tournois de {{ teamPerTournamentAverage | number:'1.0-1'}} paires
                         </div>
                         <div class="chart-container" style="position: relative;">
-                            <canvas baseChart [data]="playerChartData" [options]="playerChartOptions"
-                                [type]="'bar'">
+                            <canvas baseChart [data]="playerChartData" [options]="playerChartOptions" [type]="'bar'">
                             </canvas>
                         </div>
                     </div>
@@ -117,8 +140,7 @@
                         <span class="legend-item">
                             <svg class="legend-point" width="16" height="16"
                                 style="margin-right: 6px; vertical-align: middle;">
-                                <circle cx="8" cy="8" r="5" fill="rgb(13, 95, 189)" stroke="#333"
-                                    stroke-width="2" />
+                                <circle cx="8" cy="8" r="5" fill="rgb(13, 95, 189)" stroke="#333" stroke-width="2" />
                             </svg>
                             <span>Tournois</span>
                         </span>
@@ -126,7 +148,7 @@
                 </div>
             </div>
         </div>
-                <div class="col">
+        <div class="col">
             <div class="card h-100">
                 <h5 class="card-header bg-light fw-bold">Classement par série</h5>
                 <div class="card-body p-4">
@@ -188,8 +210,7 @@
                     </div>
                     <div class="card-text text-center justify-content-center">
                         <div class="chart-container" style="position: relative;">
-                            <canvas baseChart [data]="memberChartData" [options]="memberChartOptions"
-                                [type]="'bar'">
+                            <canvas baseChart [data]="memberChartData" [options]="memberChartOptions" [type]="'bar'">
                             </canvas>
                         </div>
                     </div>
