@@ -23,7 +23,7 @@ enum FILTER {
   'MEMBER' = 'membre',
   'MEMBER_AT_FFB' = 'membre licencié à la FFB',
   'STUDENT' = 'membre sans licence',
-  'UNKNOWN' = 'perdu',
+  'UNKNOWN' = 'non adhérent',
 };
 
 @Component({

@@ -13,7 +13,7 @@
           <div class="col-auto card-title me-4">{{licensees.length}} de la base FFB {{licensees.length -
             sympatisants_number}} licenciés + {{sympatisants_number}} sympathisants </div>
           <div class="col-auto card-title me-4">{{no_license_nbr}} adhérents sans licence</div>
-          <div class="col-auto card-title me-4">{{lost_members_nbr}} adhérents perdus</div>
+          <div class="col-auto card-title me-4">{{lost_members_nbr}} non adhérents</div>
           </ng-container>
       </div>
     </div>
@@ -25,9 +25,8 @@
         <!-- <div class="col-md-4">
         </div> -->
         <div class="col-md-6 ">
-          <div class="input-group input-group-sm">
-            <span class="input-group-text" id="inputGroup-sizing-sm"><strong>SANS licence </strong>(ex. débutant(e))
-              :</span>
+          <div class="input-group input-group-sm  w-auto " style="max-width: 400px;">
+            <span class="input-group-text" id="inputGroup-sizing-sm"><strong class="me-1">NON LICENCIÉ(E) </strong>(ex. débutant(e))</span>
             <button class="btn  btn-primary btn-sm" (click)="add_newbee()">
               <i class="bi bi-mortarboard-fill"></i>
             </button>
@@ -35,10 +34,9 @@
         </div>
         <div class="col-md-6">
           <div class="input-group input-group-sm ">
-            <span class="input-group-text" id="inputGroup-sizing-sm"><strong>licencié(e) </strong>(futur adhérent(e))
-              :</span>
+            <span class="input-group-text" id="inputGroup-sizing-sm"><strong >LICENCIÉ(E) </strong>     :</span>
             <app-input-player listeId="new_guest" placeholder="nom ou prénom" type="text"
-              class="form-control form-control-sm" [(ngModel)]="new_player"
+              class="form-control form-control-sm" style="max-width: 300px;" [(ngModel)]="new_player"
               (ngModelChange)="add_licensee(new_player)"></app-input-player>
           </div>
         </div>
