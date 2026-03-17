@@ -34,7 +34,6 @@ export class CompetitionService {
       this.memberService.listMembers().subscribe(
         members => {
           if (!members || !Array.isArray(members)) {
-            console.error(`❌ CompetitionService [ERROR] listMembers() returned non-array`);
             this._members = [];
           } else {
             this._members = members;
@@ -43,7 +42,7 @@ export class CompetitionService {
           resolve();
         },
         error => {
-          console.error(`❌ CompetitionService [ERROR] members loading failed:`, error);
+          console.error(`❌ CompetitionService [CRITICAL] members loading failed:`, error);
           this._members = [];
           this._memberLoaded = true;
           resolve();
@@ -58,15 +57,20 @@ export class CompetitionService {
   private async ensureMembersLoaded(): Promise<void> {
     if (this._memberLoaded) {
       if (!this._members || this._members.length === 0) {
-        console.error(`❌ CompetitionService [ERROR] Members not loaded properly`);
+        console.warn(`⚠️ CompetitionService [WARN] Members marked as loaded but empty - may cause filtering issues`);
+      } else {
+        // console.log(`✓ CompetitionService: Members loaded (${this._members.length} members)`);
       }
       return;
     }
     
+    console.log('⏳ CompetitionService: Waiting for members to load...');
     await this._memberPromise;
     
     if (!this._members || this._members.length === 0) {
-      console.error(`❌ CompetitionService [ERROR] Members failed to load`);
+      console.error(`❌ CompetitionService [CRITICAL] Members failed to load or is empty - filtering may be disabled`);
+    } else {
+      console.log(`✓ CompetitionService: Members loaded successfully (${this._members.length} members)`);
     }
   }
   getCompetitionOrganizations(organization_labels: { comite: string; ligue: string; national: string }): Observable<CompetitionOrganization[]> {
@@ -247,20 +251,9 @@ export class CompetitionService {
       // compute pe_pourcentage for each player
       compTeam = this.computePePercentage(comp, compTeam);
 
-      // DEBUG: Before filtering
+      // Filter teams to keep only those with at least one member
       const teamsBeforeFilter = compTeam.length;
-      
-      // Filtrer les équipes pour ne garder que celles ayant au moins un membre
       const filteredTeams = (compTeam || []).filter(team => this.has_a_member(team.players));
-      
-      // DEBUG: CRITICAL - Log all team changes, especially when filtering to empty
-      if (teamsBeforeFilter === 0) {
-        console.warn(`CompetitionService [CRITICAL] ${comp.id} (${comp.label}): received 0 teams from API - will NOT be saved`);
-      } else if (filteredTeams.length === 0) {
-        console.warn(`CompetitionService [CRITICAL] ${comp.id} (${comp.label}): filtered ALL teams away! ${teamsBeforeFilter} -> 0 (this is suspicious)`);
-      } else if (teamsBeforeFilter !== filteredTeams.length) {
-        console.debug(`CompetitionService [DEBUG] ${comp.id} (${comp.label}): filtered teams ${teamsBeforeFilter} -> ${filteredTeams.length} (removed: ${teamsBeforeFilter - filteredTeams.length})`);
-      }
 
       // add is_member field to each player
       filteredTeams.forEach(team => {
@@ -284,9 +277,8 @@ export class CompetitionService {
         });
       });
       
-      // GUARD: Only save competition if it has teams with data
+      // Skip if no teams after filtering (club doesn't participate in this competition)
       if (safeCompTeam.length === 0) {
-        console.warn(`CompetitionService [WARN] ${comp.id} (${comp.label}): skipping save - no teams to persist`);
         continue;
       }
       
@@ -475,36 +467,25 @@ export class CompetitionService {
    * Normalise un numéro de licence pour comparaison robuste
    * Gère: whitespace, leading zeros, casse
    */
-  private normalizeLicense(license: string | undefined): string {
-    if (!license) return '';
-    return String(license)
-      .trim()
-      .toLowerCase()
-      .replace(/^0+/, ''); // Remove leading zeros (so 02449751 -> 2449751)
-  }
-
-  /**
-   * Compare deux numéros de licence avec normalisation
-   * Retourne true si les licenses correspondent (même après normalisation)
-   */
   private licensesMatch(playerLicense: string | undefined, memberLicense: string | undefined): boolean {
-    // Exact match first (fast path)
-    if (playerLicense === memberLicense) return true;
+    if (!playerLicense || !memberLicense) return false;
     
-    // Normalized match (handles formats like 02449751 vs 2449751)
-    const normPlayer = this.normalizeLicense(playerLicense);
-    const normMember = this.normalizeLicense(memberLicense);
+    // Convert both to numbers and compare
+    // This automatically handles leading zeros: Number("00035271") === Number("35271")
+    const playerNum = Number(playerLicense);
+    const memberNum = Number(memberLicense);
     
-    return normPlayer === normMember && normPlayer !== '';
+    // Both must be valid numbers and equal
+    return !isNaN(playerNum) && !isNaN(memberNum) && playerNum === memberNum;
   }
 
   has_a_member(players: Player[]): boolean {
+    // SAFETY: Return true if members not loaded - don't filter teams away!
     if (!this._members || this._members.length === 0) {
-      console.error(`CompetitionService [ERROR] _members is EMPTY!`);
-      return false; // Strict: if no members loaded, team has no members
+      return true;
     }
     
-    // Check if ANY player matches ANY member using robust license comparison
+    // Check if ANY player matches ANY member
     return players.some(p => 
       this._members.some(m => this.licensesMatch(p.license_number, m.license_number))
     );
