@@ -360,6 +360,10 @@ export class BooksEditorComponent {
 
     if (transaction.nominative) {
       operationForm.addControl('member', new FormControl(operation_initial?.member ?? '', Validators.required));
+      // Initialiser l'affichage avec le texte stocké (même comportement que l'ancienne datalist)
+      if (operation_initial?.member) {
+        this.memberSearchInput[this.operations.length] = operation_initial.member;
+      }
       if (transaction.optional_accounts !== undefined) {
         this.optional_accounts = transaction.optional_accounts;
         operationForm.addControl('optional_accounts', this.fb.array(
@@ -763,9 +767,10 @@ export class BooksEditorComponent {
   }
 
   onMemberSelected(member: Member, index: number) {
-    this.memberSearchInput[index] = this.displayMemberFn(member);
+    const displayText = this.displayMemberFn(member);
+    this.memberSearchInput[index] = displayText;
     const operationForm = this.operations.at(index) as FormGroup;
-    operationForm.get('member')?.setValue(member.id);
+    operationForm.get('member')?.setValue(displayText);
   }
 
 }

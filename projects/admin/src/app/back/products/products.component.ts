@@ -72,6 +72,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
   onReadProduct(product: Product) {
     this.productForm.patchValue(product);
+    this.accountInput = product.account ?? '';
     this.product_selected = true;
   }
 
@@ -92,6 +93,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
     this.product_selected = false;
     // let { ...deleted_product } = product;
     this.productForm.patchValue(product);   // permet de réafficher le produit supprimé
+    this.accountInput = product.account ?? '';
   }
 
   // Gestion du dropdown custom compte
