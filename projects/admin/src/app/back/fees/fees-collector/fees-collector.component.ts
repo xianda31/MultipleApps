@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ViewChild, TemplateRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { TournamentService } from '../../../common/services/tournament.service';
@@ -41,10 +41,14 @@ export class FeesCollectorComponent {
   already_charged: boolean = false;
   pdfLoading = false;
   new_player!: FFBplayer | null;
+  new_pair_player1!: FFBplayer | null;
+  new_pair_player2!: FFBplayer | null;
+  modalErrorMessage: string = '';
   hideValidated: boolean = false;
   disappearingGamers: Map<number, boolean> = new Map();
   CARD_ENTRIES !: number;  
   CARD_PRICE !: number;  
+  @ViewChild('addPlayersModal') addPlayersModalRef!: TemplateRef<any>;  
 
   constructor(
     private tournamentService: TournamentService,
@@ -249,6 +253,63 @@ export class FeesCollectorComponent {
       this.feesCollectorService.add_player(player);
       this.log_game_state();
     }
+  }
+
+  openAddPlayersModal() {
+    this.modalErrorMessage = '';
+    const modal = this.modalService.open(this.addPlayersModalRef, {
+      centered: true,
+      size: 'lg'
+    });
+  }
+
+  add_pair(player1: FFBplayer | null, player2: FFBplayer | null, modal: any) {
+    this.modalErrorMessage = '';
+
+    // Vérifier que au moins un joueur est saisi
+    if (!player1 && !player2) {
+      this.modalErrorMessage = 'Veuillez saisir au moins un joueur.';
+      return;
+    }
+
+    // Vérifier que les joueurs ne sont pas déjà inscrits
+    if (player1) {
+      const player1Exists = this.game.gamers.some(
+        g => g.license === player1.license_number && g.license !== ''
+      );
+      if (player1Exists) {
+        this.modalErrorMessage = `${player1.firstname} ${player1.lastname} est déjà inscrit dans ce tournoi.`;
+        return;
+      }
+    }
+
+    if (player2) {
+      const player2Exists = this.game.gamers.some(
+        g => g.license === player2.license_number && g.license !== ''
+      );
+      if (player2Exists) {
+        this.modalErrorMessage = `${player2.firstname} ${player2.lastname} est déjà inscrit dans ce tournoi.`;
+        return;
+      }
+    }
+
+    // Vérifier que ce ne sont pas les mêmes joueurs
+    if (player1 && player2 && player1.license_number === player2.license_number && player1.license_number !== '') {
+      this.modalErrorMessage = 'Les deux joueurs doivent être différents.';
+      return;
+    }
+
+    // Tout est ok, ajouter les joueurs
+    if (player1) {
+      this.feesCollectorService.add_player(player1);
+    }
+    if (player2) {
+      this.feesCollectorService.add_player(player2);
+    }
+    this.log_game_state();
+    this.new_pair_player1 = null;
+    this.new_pair_player2 = null;
+    modal.close();
   }
 
   quickSale(gamer: Gamer) {

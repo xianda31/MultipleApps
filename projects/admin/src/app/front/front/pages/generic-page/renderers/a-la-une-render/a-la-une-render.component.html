@@ -15,7 +15,7 @@
             </div>
             <h5 class="text-success fw-bolder mb-0 flex-grow-1 text-center">{{snippet.title}}</h5>
           </div>
-          <div class="card-text mt-3 col-12">
+          <div class="card-text  col-12">
             <div #clampContainer class="clamp-container">
               <span #clampRef class="card-text tighter-html" [innerHTML]="stringToSafeHtml(snippet.content)"
                 [ngStyle]="getClampStyle(snippet.id)"></span>

@@ -66,7 +66,7 @@
                 <span>&nbsp; {{ game.tournament.name }}</span>
             </div>
 
-            <div class="col-12 col-md-3 border border-secondary rounded p-1 text-center">
+            <div class="col-12 col-md-3 border border-secondary rounded py-1 text-center">
                 <div *ngFor="let fee_rate of fee_rates" class="form-check form-check-inline me-2">
                     <input class="form-check-input" type="radio" name="inlineRadioOptions"
                         [id]="'inlineRadio' + fee_rate" [value]="fee_rate" [ngModel]="game.fee_rate"
@@ -84,16 +84,10 @@
                 </div>
             </div>
 
-            <div class="ms-auto col-12 col-md-2">
-                <div class="input-group input-group-sm flex-grow-1 me-2">
-                    <span class="input-group-text">ajout joueur :</span>
-                    <app-input-player listeId="new_guest" placeholder="nom ou prénom" type="text"
-                        class="form-control form-control-sm" [(ngModel)]="new_player"
-                        (ngModelChange)="add_player(new_player)"></app-input-player>
-                    <span class="input-group-text">
-                        <i class="bi bi-x-circle" (click)="clear_added_player()"></i>
-                    </span>
-                </div>
+            <div class="ms-auto col-12 col-md-auto">
+                <button type="button" class="btn btn-sm btn-primary shadow-sm" (click)="openAddPlayersModal()">
+                    <i class="bi bi-person-plus-fill me-1"></i>Ajouter une paire
+                </button>
             </div>
             <!-- </ng-container> -->
 
@@ -274,6 +268,50 @@
                     les droits pour ce tournoi ont été enregistrés !
                 </i>
             </div>
+        </div>
+    </ng-template>
+
+    <!-- Modal ajout paire de joueurs -->
+    <ng-template #addPlayersModal let-modal>
+        <div class="modal-header">
+            <h5 class="modal-title">Ajouter une nouvelle paire</h5>
+            <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+        </div>
+        <div class="modal-body">
+            <div *ngIf="modalErrorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
+                {{ modalErrorMessage }}
+                <button type="button" class="btn-close" (click)="modalErrorMessage = ''"></button>
+            </div>
+            <div class="row g-3">
+                <div class="col-12">
+                    <label for="player1" class="form-label">Joueur 1</label>
+                    <app-input-player 
+                        id="player1"
+                        listeId="new_guest_1" 
+                        placeholder="Nom ou prénom du 1er joueur" 
+                        type="text"
+                        class="form-control" 
+                        [(ngModel)]="new_pair_player1">
+                    </app-input-player>
+                </div>
+                <div class="col-12">
+                    <label for="player2" class="form-label">Joueur 2</label>
+                    <app-input-player 
+                        id="player2"
+                        listeId="new_guest_2" 
+                        placeholder="Nom ou prénom du 2e joueur" 
+                        type="text"
+                        class="form-control" 
+                        [(ngModel)]="new_pair_player2">
+                    </app-input-player>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="modal.dismiss()">Annuler</button>
+            <button type="button" class="btn btn-primary" (click)="add_pair(new_pair_player1, new_pair_player2, modal)">
+                <i class="bi bi-plus-circle me-1"></i>Ajouter
+            </button>
         </div>
     </ng-template>
 </div>
