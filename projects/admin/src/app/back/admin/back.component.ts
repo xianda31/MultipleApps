@@ -3,6 +3,7 @@ import { RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { BackNavbarComponent } from '../back-navbar/back-navbar.component';
+import { BreakingNewsDisplayComponent } from '../breaking-news/breaking-news-display.component';
 import { ToasterComponent } from '../../common/toaster/components/toaster/toaster.component';
 import { map, Observable } from 'rxjs';
 import { SystemDataService } from '../../common/services/system-data.service';
@@ -12,7 +13,7 @@ import { LocalStorageService } from '../services/local-storage.service';
 @Component({
   selector: 'app-back',
   standalone: true,
-  imports: [RouterModule, ReactiveFormsModule, BackNavbarComponent, ToasterComponent, CommonModule, FormsModule],
+  imports: [RouterModule, ReactiveFormsModule, BackNavbarComponent, BreakingNewsDisplayComponent, ToasterComponent, CommonModule, FormsModule],
   templateUrl: './back.component.html',
   styleUrls: ['./back.component.scss']
 })

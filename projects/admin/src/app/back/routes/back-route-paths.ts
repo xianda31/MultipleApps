@@ -38,6 +38,7 @@ export const BACK_ROUTE_PATHS = {
   Home: 'home',
   Assistance: 'communication/assistance',
   Mailing: 'communication/mailing',
+  BreakingNews: 'communication/breaking-news',
   CMSWrapper:'site/cms-wrapper',
   SignOut: 'signout'
 };

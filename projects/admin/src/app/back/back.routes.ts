@@ -29,6 +29,7 @@ import { UiConfComponent } from './ui-conf/ui-conf.component';
 import { CloneS3Component } from './maintenance/clone-S3/clone-s3.component';
 import { BackAssistanceComponent } from './back-assistance/back-assistance.component';
 import { MailingComponent } from './mailing/mailing.component';
+import { BreakingNewsDefineComponent } from './breaking-news/breaking-news-define.component';
 import { CmsWrapper } from './pages/cms-wrapper/cms-wrapper';
 import { CompetitionsComponent } from './competitions/competitions';
 import { DashboardComponent } from './dashboard/dashboard';
@@ -83,6 +84,7 @@ export const routes: Routes = [
       { path: BACK_ROUTE_PATHS.SignOut, component: BackPageComponent },
       { path: BACK_ROUTE_PATHS.Assistance, component: BackAssistanceComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.Mailing, component: MailingComponent, canActivate: [AuthGuard] },
+      { path: BACK_ROUTE_PATHS.BreakingNews, component: BreakingNewsDefineComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.Competitions, component: CompetitionsComponent, data: { access: 'full' }, canActivate: [AuthGuard] },
 
 

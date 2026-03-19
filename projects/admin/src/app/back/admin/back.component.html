@@ -1,13 +1,14 @@
 
-<div class="p-0 m-0" style="width: 100%; overflow-x: hidden;">
-  <!-- <div class="ms-0"> -->
+<div class="p-0 m-0" style="width: 100%;">
+  <div style="position: sticky; top: 0; z-index: 1030;">
     <app-back-navbar [season]="(season$ | async) ?? ''" [entries_nbr]="(book_entries_number$ | async) ?? 0"
     ></app-back-navbar>
-  <!-- </div> -->
-  <div class="container-fluid justify-content-center admin-scrollable-content" >
+  </div>
+  <div class="container-fluid justify-content-center admin-scrollable-content" style="overflow-x: hidden;">
     <app-toaster></app-toaster>
     <router-outlet></router-outlet>
   </div>
-  <!-- Footer bandeau - ajoutez votre contenu de pied de page ici -->
-  <!-- <div class="admin-footer">Contenu du pied de page</div> -->
-</div>
+  <div class="d-none d-md-block" style="position: sticky; bottom: 0; z-index: 1030;">
+    <app-breaking-news-display></app-breaking-news-display>
+  </div>
+</div> 

@@ -17,6 +17,7 @@ import { AssistanceRequestService } from '../../common/services/assistance-reque
 import { REQUEST_STATUS } from '../../common/interfaces/assistance-request.interface';
 import { NavbarMenu } from './back-navbar.interface';
 import { STATIC_MENUS } from './back-navbar.definition';
+import { BreakingNewsService } from '../breaking-news/breaking-news.service';
 
 
 
@@ -75,7 +76,9 @@ export class BackNavbarComponent implements OnInit {
     private groupService: GroupService,
     private memberSettingsService: MemberSettingsService,
     private assistanceService: AssistanceRequestService,
-    private router: Router  ) { }
+    private router: Router,
+    public breakingNewsService: BreakingNewsService,
+  ) { }
 
   ngOnInit(): void {
 

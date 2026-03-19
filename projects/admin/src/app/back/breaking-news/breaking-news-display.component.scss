@@ -1,0 +1,27 @@
+.breaking-news-bar {
+  background-color: #198754; // Bootstrap bg-success color
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  min-height: 32px;
+  padding: 0.25rem 0.75rem;
+}
+
+.ticker-wrapper {
+  position: relative;
+}
+
+.ticker-content {
+  display: flex;
+  white-space: nowrap;
+  animation: ticker 40s linear infinite;
+
+  span {
+    padding-right: 4rem; /* espace entre les deux copies */
+  }
+}
+
+@keyframes ticker {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}

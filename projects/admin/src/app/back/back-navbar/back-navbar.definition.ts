@@ -80,7 +80,8 @@ export const STATIC_MENUS: NavbarMenu[] = [
         minLevel: Group_priorities.Editeur,
         subMenus: [
             { label: 'Assistance', route: BACK_ROUTE_PATHS.Assistance },
-            { label: 'Mailing', route: BACK_ROUTE_PATHS.Mailing }
+            { label: 'Mailing', route: BACK_ROUTE_PATHS.Mailing },
+            { label: 'Breaking News', route: BACK_ROUTE_PATHS.BreakingNews }
         ]
     },
     {

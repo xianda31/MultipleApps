@@ -1,0 +1,108 @@
+.message-item {
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #f8f9fa !important;
+  }
+
+  .message-content {
+    word-wrap: break-word;
+  }
+
+  .text-strike {
+    text-decoration: line-through;
+    opacity: 0.6;
+  }
+
+  .edit-mode {
+    input {
+      font-size: 0.95rem;
+    }
+  }
+}
+
+.btn-group {
+  &.message-actions {
+    gap: 0.25rem;
+  }
+}
+
+.emoji-picker {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1000;
+  margin-top: 0.5rem;
+  min-width: 320px;
+  max-width: 400px;
+
+  .emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+    gap: 0.25rem;
+  }
+
+  .emoji-btn {
+    background: none;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    padding: 0.5rem;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+
+    &:hover {
+      background-color: #e9ecef;
+      border-color: #adb5bd;
+      transform: scale(1.1);
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+  }
+}
+
+.emoji-picker-small {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1000;
+  margin-top: 0.25rem;
+  min-width: 280px;
+
+  .emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(35px, 1fr));
+    gap: 0.2rem;
+  }
+
+  .emoji-btn {
+    background: none;
+    border: 1px solid #dee2e6;
+    border-radius: 0.2rem;
+    padding: 0.3rem;
+    font-size: 1.3rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 35px;
+
+    &:hover {
+      background-color: #e9ecef;
+      border-color: #adb5bd;
+      transform: scale(1.1);
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+  }
+}
+

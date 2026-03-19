@@ -22,11 +22,20 @@
 
     <span class="d-sm-inline d-md-none fs-5 ms-1">BCSTO {{season}}</span>
 
-    <!-- backdoor to front -->
-    <div class="d-flex ms-auto align-items-end me-2">
-      <span class=" ms-4 d-none d-sm-inline ">
+    <!-- backdoor to front + toggle breaking-news -->
+    <div class="d-flex ms-auto align-items-center me-2 gap-3">
+      <!-- toggle breaking-news (laptop uniquement) -->
+      <div class="d-none d-md-flex align-items-center gap-1" style="font-size:0.75rem;">
+        <span class="text-muted d-flex align-items-center">Infos</span>
+        <div class="form-check form-switch mb-0 d-flex align-items-center">
+          <input class="form-check-input" type="checkbox" role="switch"
+            [checked]="breakingNewsService.isVisible"
+            (change)="breakingNewsService.toggle()">
+        </div>
+      </div>
+      <span class="ms-2 d-none d-sm-inline">
         <a [routerLink]="'/front'">
-          <i class="bi bi-door-open-fill "></i>
+          <i class="bi bi-door-open-fill"></i>
         </a>
       </span>
     </div>

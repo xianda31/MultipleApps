@@ -1,0 +1,190 @@
+<div class="container-fluid p-4">
+  <div class="row mb-4">
+    <div class="col-12">
+      <h1>Gestion des Breaking News</h1>
+      <p class="text-muted">Gérez les messages d'information qui s'affichent en haut de l'administration</p>
+    </div>
+  </div>
+
+  <!-- Form to add new message -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">Ajouter un nouveau message</h5>
+        </div>
+        <div class="card-body">
+          <div class="input-group mb-2">
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Entrez le message (ex: 📅 Prochain tournoi : inscriptions ouvertes)"
+              [(ngModel)]="newMessageText"
+              (keyup.enter)="addMessage()"
+              [disabled]="saving"
+            />
+            <button
+              class="btn btn-primary"
+              type="button"
+              (click)="addMessage()"
+              [disabled]="saving || !newMessageText.trim()"
+            >
+              <span *ngIf="!saving">➕ Ajouter</span>
+              <span *ngIf="saving" class="spinner-border spinner-border-sm me-2"></span>
+              <span *ngIf="saving">En cours...</span>
+            </button>
+          </div>
+
+          <!-- Emoji Picker Toggle -->
+          <div class="position-relative">
+            <button
+              type="button"
+              class="btn btn-outline-secondary btn-sm"
+              (click)="toggleEmojiPicker()"
+              title="Insérer un emoji"
+            >
+              😀 Emojis
+            </button>
+
+            <!-- Emoji Gallery -->
+            <div *ngIf="showEmojiPicker" class="emoji-picker card shadow-sm">
+              <div class="card-body p-2">
+                <div class="emoji-grid">
+                  <button
+                    *ngFor="let emojiItem of emojis"
+                    type="button"
+                    class="emoji-btn"
+                    (click)="insertEmoji(emojiItem.emoji)"
+                    [title]="emojiItem.label"
+                  >
+                    {{ emojiItem.emoji }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Messages list -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">
+            Messages définis
+            <span class="badge bg-info ms-2">{{ messages.length }}</span>
+          </h5>
+        </div>
+        <div class="card-body">
+          <div *ngIf="messages.length === 0" class="alert alert-info">
+            Aucun message défini. Créez votre premier breaking news ci-dessus.
+          </div>
+
+          <div *ngFor="let message of messages" class="message-item mb-3 p-3 border rounded">
+            <div class="d-flex justify-content-between align-items-start">
+              <div class="flex-grow-1">
+                <!-- Display mode -->
+                <div *ngIf="editingId !== message.id" class="message-content">
+                  <div class="d-flex align-items-center gap-2 mb-2">
+                    <input
+                      type="checkbox"
+                      class="form-check-input"
+                      [checked]="message.active"
+                      (change)="toggleActive(message.id)"
+                      [disabled]="saving"
+                    />
+                    <span [class.text-muted]="!message.active" [class.text-strike]="!message.active">
+                      {{ message.text }}
+                    </span>
+                  </div>
+                  <small class="text-muted d-block">
+                    Créé: {{ message.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+                  </small>
+                </div>
+
+                <!-- Edit mode -->
+                <div *ngIf="editingId === message.id" class="edit-mode">
+                  <input
+                    type="text"
+                    class="form-control mb-2"
+                    [(ngModel)]="editingText"
+                    [disabled]="saving"
+                  />
+                  <div class="d-flex gap-2 mb-2">
+                    <button
+                      type="button"
+                      class="btn btn-success btn-sm"
+                      (click)="saveEdit()"
+                      [disabled]="saving || !editingText.trim()"
+                    >
+                      ✓ Valider
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-secondary btn-sm"
+                      (click)="cancelEdit()"
+                      [disabled]="saving"
+                    >
+                      ✗ Annuler
+                    </button>
+                    <div class="position-relative">
+                      <button
+                        type="button"
+                        class="btn btn-outline-secondary btn-sm"
+                        (click)="showEditEmojiPicker = !showEditEmojiPicker"
+                        title="Insérer un emoji"
+                      >
+                        😀
+                      </button>
+                      <div *ngIf="showEditEmojiPicker" class="emoji-picker-small card shadow-sm">
+                        <div class="card-body p-2">
+                          <div class="emoji-grid">
+                            <button
+                              *ngFor="let emojiItem of emojis"
+                              type="button"
+                              class="emoji-btn"
+                              (click)="insertEmojiInEdit(emojiItem.emoji); showEditEmojiPicker = false"
+                              [title]="emojiItem.label"
+                            >
+                              {{ emojiItem.emoji }}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Action buttons -->
+              <div class="btn-group ms-2" role="group" *ngIf="editingId !== message.id">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-primary"
+                  (click)="startEdit(message)"
+                  [disabled]="saving"
+                  title="Éditer"
+                >
+                  ✏️
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-danger"
+                  (click)="deleteMessage(message.id)"
+                  [disabled]="saving"
+                  title="Supprimer"
+                >
+                  🗑️
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
