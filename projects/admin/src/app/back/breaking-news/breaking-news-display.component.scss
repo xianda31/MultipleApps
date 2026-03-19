@@ -9,19 +9,27 @@
 
 .ticker-wrapper {
   position: relative;
+  overflow: hidden;
 }
 
 .ticker-content {
-  display: flex;
+  display: inline-block;
   white-space: nowrap;
-  animation: ticker 40s linear infinite;
+  animation: ticker 60s linear infinite;
+  will-change: transform;
 
   span {
-    padding-right: 4rem; /* espace entre les deux copies */
+    display: inline-block;
+    padding-right: 5rem; /* espace entre les deux copies */
   }
 }
 
 @keyframes ticker {
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
 }
+
