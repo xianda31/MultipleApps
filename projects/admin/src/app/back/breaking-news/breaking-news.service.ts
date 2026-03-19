@@ -37,7 +37,7 @@ export class BreakingNewsService {
   private _messages$ = new BehaviorSubject<BreakingNewsMessage[]>([]);
   messages$ = this._messages$.asObservable();
 
-  private S3_PATH = 'system/breaking-news.json';
+  private S3_PATH = `${S3_ROOT_FOLDERS.SYSTEM}/breaking-news.txt`;
 
   constructor(
     private fileService: FileService,
@@ -86,12 +86,12 @@ export class BreakingNewsService {
 
   async saveMessages(messages: BreakingNewsMessage[]): Promise<void> {
     try {
-      await this.fileService.upload_to_S3(messages, 'system/', 'breaking-news.json', true);
+      await this.fileService.upload_to_S3(messages, `${S3_ROOT_FOLDERS.SYSTEM}/`, 'breaking-news.txt', true);
       this._messages$.next(messages);
-      this.toastService.showSuccess('Breaking news sauvegardés', 'success');
+      this.toastService.show('Breaking news sauvegardés', 'success');
     } catch (error) {
       console.error('Error saving breaking news:', error);
-      this.toastService.showErrorToast('Erreur lors de la sauvegarde', 'error');
+      this.toastService.show('Erreur lors de la sauvegarde', 'error');
       throw error;
     }
   }
