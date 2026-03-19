@@ -88,10 +88,10 @@ export class BreakingNewsService {
     try {
       await this.fileService.upload_to_S3(messages, `${S3_ROOT_FOLDERS.SYSTEM}/`, 'breaking-news.txt', true);
       this._messages$.next(messages);
-      this.toastService.show('Breaking news sauvegardés', 'success');
+      this.toastService.showInfo('Breaking news sauvegardés', 'success');
     } catch (error) {
       console.error('Error saving breaking news:', error);
-      this.toastService.show('Erreur lors de la sauvegarde', 'error');
+      this.toastService.showErrorToast('Erreur lors de la sauvegarde', 'error');
       throw error;
     }
   }
