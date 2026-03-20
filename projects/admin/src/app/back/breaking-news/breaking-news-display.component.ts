@@ -17,7 +17,10 @@ export class BreakingNewsDisplayComponent implements OnInit {
   visible$: Observable<boolean>;
   messages$: Observable<BreakingNewsMessage[]>;
 
-  constructor(public breakingNewsService: BreakingNewsService) {
+  constructor(
+    private breakingNewsService: BreakingNewsService
+  )
+     {
     this.visible$ = breakingNewsService.visible$;
     this.messages$ = breakingNewsService.messages$;
     
@@ -42,6 +45,10 @@ export class BreakingNewsDisplayComponent implements OnInit {
     return activeMessages.length > 0 
       ? activeMessages.join(this.separator)
       : '📢 Aucun message d\'information pour le moment.';
+  }
+
+  hasActiveMessages(messages: BreakingNewsMessage[]): boolean {
+    return messages && messages.some(m => m.active);
   }
 }
 

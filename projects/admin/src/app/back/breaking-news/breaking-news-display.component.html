@@ -1,4 +1,4 @@
-<div *ngIf="(visible$ | async)" class="breaking-news-bar d-flex align-items-center">
+<div *ngIf="(visible$ | async) && hasActiveMessages((messages$ | async) || [])" class="breaking-news-bar d-flex align-items-center">
   <div class="ticker-wrapper flex-grow-1 overflow-hidden">
     <h6 class="ticker-content">
       <span>{{ getTickerText((messages$ | async) || []) }}</span>
