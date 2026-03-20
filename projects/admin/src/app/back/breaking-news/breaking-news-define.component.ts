@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BreakingNewsService, BreakingNewsMessage, EMOJI_SUGGESTIONS } from './breaking-news.service';
@@ -10,7 +10,7 @@ import { BreakingNewsService, BreakingNewsMessage, EMOJI_SUGGESTIONS } from './b
   templateUrl: './breaking-news-define.component.html',
   styleUrl: './breaking-news-define.component.scss'
 })
-export class BreakingNewsDefineComponent implements OnInit {
+export class BreakingNewsDefineComponent implements OnInit, OnDestroy {
   messages: BreakingNewsMessage[] = [];
   newMessageText = '';
   editingId: string | null = null;
@@ -23,9 +23,14 @@ export class BreakingNewsDefineComponent implements OnInit {
   constructor(private breakingNewsService: BreakingNewsService) {}
 
   ngOnInit(): void {
+    this.breakingNewsService.activate();
     this.breakingNewsService.messages$.subscribe(messages => {
       this.messages = messages;
     });
+  }
+
+  ngOnDestroy(): void {
+    this.breakingNewsService.deactivate();
   }
 
   addMessage(): void {

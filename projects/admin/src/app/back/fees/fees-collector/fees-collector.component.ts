@@ -1,4 +1,4 @@
-import { Component, ViewChild, TemplateRef } from '@angular/core';
+import { Component, ViewChild, TemplateRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { TournamentService } from '../../../common/services/tournament.service';
@@ -18,6 +18,7 @@ import { Router } from '@angular/router';
 import { BACK_ROUTE_ABS_PATHS } from '../../routes/back-route-paths';
 import { PaymentMode } from '../../shop/cart/cart.interface';
 import { ProductService } from '../../../common/services/product.service';
+import { BreakingNewsService } from '../../breaking-news/breaking-news.service';
 
 
 
@@ -28,7 +29,7 @@ import { ProductService } from '../../../common/services/product.service';
   templateUrl: './fees-collector.component.html',
   styleUrl: './fees-collector.component.scss'
 })
-export class FeesCollectorComponent {
+export class FeesCollectorComponent implements OnDestroy {
   GAME_STATUS = Game_status;
   FEE_RATE = FEE_RATE;
   next_tournaments: club_tournament_extended[] = [];
@@ -59,7 +60,7 @@ export class FeesCollectorComponent {
     private productService: ProductService,
     private toastService: ToastService,
     private router: Router,
-
+    private breakingNewsService: BreakingNewsService,
   ) {
 
    this.membersService.listMembers().subscribe(members => {
@@ -114,6 +115,7 @@ export class FeesCollectorComponent {
   // tooltips are provided by NgbTooltip via the template directive
 
   ngOnInit() {
+    this.breakingNewsService.activate(); // Show banner when this page is active
 
     this.selected_tournament = this.feesCollectorService.get_tournament();  // persisté par le cache service
 
@@ -123,6 +125,10 @@ export class FeesCollectorComponent {
         // console.log('Game updated from service for tournament ', this.game);
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    this.breakingNewsService.deactivate(); // Hide banner when leaving page
   }
 
 

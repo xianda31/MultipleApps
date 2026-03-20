@@ -20,6 +20,14 @@ export class BreakingNewsDisplayComponent implements OnInit {
   constructor(public breakingNewsService: BreakingNewsService) {
     this.visible$ = breakingNewsService.visible$;
     this.messages$ = breakingNewsService.messages$;
+    
+    // Debug logging
+    this.visible$.subscribe(val => {
+      console.log('[BreakingNewsDisplayComponent] visible$ changed to:', val);
+    });
+    this.messages$.subscribe(msgs => {
+      console.log('[BreakingNewsDisplayComponent] messages$ changed to:', msgs);
+    });
   }
 
   ngOnInit(): void {

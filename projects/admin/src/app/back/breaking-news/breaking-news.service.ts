@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, combineLatest, map, shareReplay } from 'rxjs';
 import { FileService, S3_ROOT_FOLDERS } from '../../common/services/files.service';
 import { ToastService } from '../../common/services/toast.service';
 
@@ -31,8 +31,14 @@ export const EMOJI_SUGGESTIONS = [
 
 @Injectable({ providedIn: 'root' })
 export class BreakingNewsService {
-  private _visible$ = new BehaviorSubject<boolean>(true);
-  visible$ = this._visible$.asObservable();
+  private _globalVisible$ = new BehaviorSubject<boolean>(true); // Contrôle global (navbar) - ON par défaut
+  private _componentActive$ = new BehaviorSubject<boolean>(false); // Contrôle local (composant)
+  
+  // Visible si GLOBAL et COMPOSANT actif
+  visible$ = combineLatest([this._globalVisible$, this._componentActive$]).pipe(
+    map(([global, component]) => global && component),
+    shareReplay(1)
+  );
 
   private _messages$ = new BehaviorSubject<BreakingNewsMessage[]>([]);
   messages$ = this._messages$.asObservable();
@@ -46,12 +52,43 @@ export class BreakingNewsService {
     this.loadMessages();
   }
 
+  // Contrôle global (navbar switch)
+  toggleView(): void {
+    console.log('[BreakingNewsService] toggleView() called');
+    this._globalVisible$.next(!this._globalVisible$.value);
+  }
+
+  setGlobalVisible(visible: boolean): void {
+    console.log('[BreakingNewsService] setGlobalVisible(' + visible + ') called');
+    this._globalVisible$.next(visible);
+  }
+
+  get isGlobalVisible(): boolean {
+    return this._globalVisible$.value;
+  }
+
+  // Contrôle local (composant)
+  activate(): void {
+    console.log('[BreakingNewsService] activate() called');
+    this._componentActive$.next(true);
+  }
+
+  deactivate(): void {
+    console.log('[BreakingNewsService] deactivate() called');
+    this._componentActive$.next(false);
+  }
+
+  get isComponentActive(): boolean {
+    return this._componentActive$.value;
+  }
+
+  // Hérité du service
   toggle() {
-    this._visible$.next(!this._visible$.value);
+    this.toggleView();
   }
 
   get isVisible(): boolean {
-    return this._visible$.value;
+    return this._globalVisible$.value && this._componentActive$.value;
   }
 
   get messages(): BreakingNewsMessage[] {
@@ -59,6 +96,7 @@ export class BreakingNewsService {
   }
 
   loadMessages(): void {
+    console.log('[BreakingNewsService] loadMessages() starting...');
     this.fileService.getPresignedUrl$(this.S3_PATH, true)
       .subscribe({
         next: (url) => {
@@ -68,17 +106,20 @@ export class BreakingNewsService {
               return response.json();
             })
             .then((data: any[]) => {
+              console.log('[BreakingNewsService] Messages loaded from S3:', data);
               const messages = data.map(msg => ({
                 ...msg,
                 createdAt: new Date(msg.createdAt)
               }));
               this._messages$.next(messages);
             })
-            .catch(() => {
+            .catch((err) => {
+              console.error('[BreakingNewsService] Error loading messages:', err);
               this._messages$.next([]);
             });
         },
-        error: () => {
+        error: (err) => {
+          console.error('[BreakingNewsService] Error getting S3 URL:', err);
           this._messages$.next([]);
         }
       });
