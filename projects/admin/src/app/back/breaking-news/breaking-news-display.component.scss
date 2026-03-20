@@ -15,17 +15,15 @@
 }
 
 .ticker-content {
-  display: flex;
+  display: block;
   white-space: nowrap;
   animation: ticker 20s linear infinite;
   will-change: transform;
   --ticker-translate: -50%; /* valeur par défaut, écrasée par JS */
 
   span {
-    min-width: 100vw;  /* au moins 1 écran de large */
     display: inline-block;
-    flex-shrink: 0;
-    padding-right: 2rem;
+    padding-right: 4rem;
   }
 }
 

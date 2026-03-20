@@ -50,7 +50,7 @@ export class BreakingNewsDisplayComponent implements OnInit, AfterViewInit, OnDe
     const spans = this.tickerContent.nativeElement.querySelectorAll('span');
     if (spans.length < 1) return;
     // La largeur exacte du premier span = distance à translater pour la boucle
-    const spanWidth = (spans[0] as HTMLElement).offsetWidth;
+    const spanWidth = (spans[0] as HTMLElement).getBoundingClientRect().width;
     const duration = spanWidth / this.TICKER_SPEED_PX_PER_SEC;
     this.tickerContent.nativeElement.style.setProperty('--ticker-translate', `-${spanWidth}px`);
     this.tickerContent.nativeElement.style.animationDuration = `${duration}s`;
