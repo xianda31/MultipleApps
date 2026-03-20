@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BreakingNewsService, BreakingNewsMessage, EMOJI_SUGGESTIONS } from './breaking-news.service';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-breaking-news-define',
@@ -19,8 +20,11 @@ export class BreakingNewsDefineComponent implements OnInit, OnDestroy {
   emojis = EMOJI_SUGGESTIONS;
   showEmojiPicker = false;
   showEditEmojiPicker = false;
+  authorizationFlag$: Observable<boolean>;
 
-  constructor(private breakingNewsService: BreakingNewsService) {}
+  constructor(private breakingNewsService: BreakingNewsService) {
+    this.authorizationFlag$ = this.breakingNewsService.authorizationFlag$;
+  }
 
   ngOnInit(): void {
     this.breakingNewsService.activate();
@@ -116,5 +120,9 @@ export class BreakingNewsDefineComponent implements OnInit, OnDestroy {
 
   toggleEmojiPicker(): void {
     this.showEmojiPicker = !this.showEmojiPicker;
+  }
+
+  toggleAuthorizationFlag(): void {
+    this.breakingNewsService.setAuthorizationFlag(!this.breakingNewsService.isAuthorizationFlagSet);
   }
 }

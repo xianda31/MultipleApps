@@ -10,6 +10,11 @@ export interface BreakingNewsMessage {
   createdAt: Date;
 }
 
+export interface BreakingNewsConfig {
+  authorizationFlag: boolean; // Flag de définition du droit d'afficher le bandeau
+  messages: BreakingNewsMessage[];
+}
+
 export const EMOJI_SUGGESTIONS = [
   { emoji: '📅', label: 'Calendrier' },
   { emoji: '🏆', label: 'Trophée/Résultat' },
@@ -31,12 +36,13 @@ export const EMOJI_SUGGESTIONS = [
 
 @Injectable({ providedIn: 'root' })
 export class BreakingNewsService {
-  private _globalVisible$ = new BehaviorSubject<boolean>(true); // Contrôle global (navbar) - ON par défaut
+  private _authorizationFlag$ = new BehaviorSubject<boolean>(true); // Flag d'autorisation - persisté en S3
+  private _globalVisible$ = new BehaviorSubject<boolean>(true); // Switch d'affichage (navbar)
   private _componentActive$ = new BehaviorSubject<boolean>(false); // Contrôle local (composant)
   
-  // Visible si GLOBAL et COMPOSANT actif
-  visible$ = combineLatest([this._globalVisible$, this._componentActive$]).pipe(
-    map(([global, component]) => global && component),
+  // Visible si: authorizationFlag=true ET globalVisible=true ET componentActive=true
+  visible$ = combineLatest([this._authorizationFlag$, this._globalVisible$, this._componentActive$]).pipe(
+    map(([auth, global, component]) => auth && global && component),
     shareReplay(1)
   );
 
@@ -52,14 +58,26 @@ export class BreakingNewsService {
     this.loadMessages();
   }
 
+  // Contrôle du flag d'autorisation (persisté en S3)
+  setAuthorizationFlag(authorized: boolean): void {
+    this._authorizationFlag$.next(authorized);
+    this.saveAuthorizationFlag();
+  }
+
+  get isAuthorizationFlagSet(): boolean {
+    return this._authorizationFlag$.value;
+  }
+
+  get authorizationFlag$(): Observable<boolean> {
+    return this._authorizationFlag$.asObservable();
+  }
+
   // Contrôle global (navbar switch)
   toggleView(): void {
-    console.log('[BreakingNewsService] toggleView() called');
     this._globalVisible$.next(!this._globalVisible$.value);
   }
 
   setGlobalVisible(visible: boolean): void {
-    console.log('[BreakingNewsService] setGlobalVisible(' + visible + ') called');
     this._globalVisible$.next(visible);
   }
 
@@ -69,12 +87,10 @@ export class BreakingNewsService {
 
   // Contrôle local (composant)
   activate(): void {
-    console.log('[BreakingNewsService] activate() called');
     this._componentActive$.next(true);
   }
 
   deactivate(): void {
-    console.log('[BreakingNewsService] deactivate() called');
     this._componentActive$.next(false);
   }
 
@@ -96,7 +112,6 @@ export class BreakingNewsService {
   }
 
   loadMessages(): void {
-    console.log('[BreakingNewsService] loadMessages() starting...');
     this.fileService.getPresignedUrl$(this.S3_PATH, true)
       .subscribe({
         next: (url) => {
@@ -105,21 +120,29 @@ export class BreakingNewsService {
               if (!response.ok) throw new Error('Failed to load');
               return response.json();
             })
-            .then((data: any[]) => {
-              console.log('[BreakingNewsService] Messages loaded from S3:', data);
-              const messages = data.map(msg => ({
+            .then((data: any) => {
+              
+              // Charger le flag d'autorisation
+              if (typeof data.authorizationFlag === 'boolean') {
+                this._authorizationFlag$.next(data.authorizationFlag);
+              }
+              
+              // Charger les messages
+              const messages = (data.messages || []).map((msg: any) => ({
                 ...msg,
                 createdAt: new Date(msg.createdAt)
               }));
               this._messages$.next(messages);
             })
             .catch((err) => {
-              console.error('[BreakingNewsService] Error loading messages:', err);
+              console.error('[BreakingNewsService] Error loading data:', err);
+              this._authorizationFlag$.next(true); // Valeur par défaut
               this._messages$.next([]);
             });
         },
         error: (err) => {
           console.error('[BreakingNewsService] Error getting S3 URL:', err);
+          this._authorizationFlag$.next(true); // Valeur par défaut
           this._messages$.next([]);
         }
       });
@@ -127,13 +150,29 @@ export class BreakingNewsService {
 
   async saveMessages(messages: BreakingNewsMessage[]): Promise<void> {
     try {
-      await this.fileService.upload_to_S3(messages, `${S3_ROOT_FOLDERS.SYSTEM}/`, 'breaking-news.txt', true);
+      const config: BreakingNewsConfig = {
+        authorizationFlag: this._authorizationFlag$.value,
+        messages: messages
+      };
+      await this.fileService.upload_to_S3(config, `${S3_ROOT_FOLDERS.SYSTEM}/`, 'breaking-news.txt', true);
       this._messages$.next(messages);
       this.toastService.showInfo('Breaking news sauvegardés', 'success');
     } catch (error) {
       console.error('Error saving breaking news:', error);
       this.toastService.showErrorToast('Erreur lors de la sauvegarde', 'error');
       throw error;
+    }
+  }
+
+  private async saveAuthorizationFlag(): Promise<void> {
+    try {
+      const config: BreakingNewsConfig = {
+        authorizationFlag: this._authorizationFlag$.value,
+        messages: this._messages$.value
+      };
+      await this.fileService.upload_to_S3(config, `${S3_ROOT_FOLDERS.SYSTEM}/`, 'breaking-news.txt', true);
+    } catch (error) {
+      console.error('Error saving authorization flag:', error);
     }
   }
 

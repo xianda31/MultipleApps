@@ -41,6 +41,7 @@ export class BackNavbarComponent implements OnInit {
   
   avatar$ !: Observable<string>;
   assistances_nbr : number = 0;
+  authorizationFlag$: Observable<boolean>;
  BACK_ROUTE_PATHS = BACK_ROUTE_PATHS;
   
   // Mobile menu collapse states
@@ -78,7 +79,9 @@ export class BackNavbarComponent implements OnInit {
     private assistanceService: AssistanceRequestService,
     private router: Router,
     public breakingNewsService: BreakingNewsService,
-  ) { }
+  ) { 
+    this.authorizationFlag$ = this.breakingNewsService.authorizationFlag$;
+  }
 
   ngOnInit(): void {
 

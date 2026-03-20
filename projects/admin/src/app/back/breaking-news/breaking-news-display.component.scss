@@ -11,26 +11,26 @@
 .ticker-wrapper {
   position: relative;
   overflow: hidden;
+  width: 100%;
 }
 
 .ticker-content {
-  display: inline-block;
+  display: flex;
   white-space: nowrap;
-  animation: ticker 60s linear infinite;
+  animation: ticker 20s linear infinite;
   will-change: transform;
+  --ticker-translate: -50%; /* valeur par défaut, écrasée par JS */
 
   span {
+    min-width: 100vw;  /* au moins 1 écran de large */
     display: inline-block;
-    padding-right: 5rem; /* espace entre les deux copies */
+    flex-shrink: 0;
+    padding-right: 2rem;
   }
 }
 
 @keyframes ticker {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(var(--ticker-translate)); }
 }
 
