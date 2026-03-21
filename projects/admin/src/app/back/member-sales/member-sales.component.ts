@@ -103,7 +103,7 @@ export class MemberSalesComponent {
         let full_name = this.memberService.full_name(member);
         const adh_paied = this.operations
           .filter((op) => op.member === full_name)
-          .some((op) => op.values['ADH']);
+          .some((op) => op.values['ADH'] !== undefined && op.values['ADH'] !== null);
 
         if (!adh_paied) {
           this.missingMembership.push(full_name);
