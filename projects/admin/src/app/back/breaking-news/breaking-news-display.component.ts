@@ -48,9 +48,27 @@ export class BreakingNewsDisplayComponent implements OnInit, AfterViewInit, OnDe
   private updateTickerTranslation(): void {
     if (!this.tickerContent) return;
     const spans = this.tickerContent.nativeElement.querySelectorAll('span');
-    if (spans.length < 1) return;
-    // La largeur exacte du premier span = distance à translater pour la boucle
-    const spanWidth = (spans[0] as HTMLElement).getBoundingClientRect().width;
+    if (spans.length < 2) return;
+
+    const span0 = spans[0] as HTMLElement;
+    const span1 = spans[1] as HTMLElement;
+
+    // Reset du padding dynamique pour mesurer le texte seul
+    span0.style.paddingRight = '';
+    span1.style.paddingRight = '';
+
+    const wrapperWidth = this.tickerContent.nativeElement.parentElement!.getBoundingClientRect().width;
+    const rawTextWidth = span0.getBoundingClientRect().width;
+
+    // Si le texte est plus court que le bandeau, span2 serait visible dès le départ.
+    // On pad span1 pour que span2 commence exactement au bord droit du bandeau.
+    if (rawTextWidth < wrapperWidth) {
+      span0.style.paddingRight = `${wrapperWidth - rawTextWidth}px`;
+    } else {
+      span0.style.paddingRight = '4rem'; // séparateur visuel entre les répétitions
+    }
+
+    const spanWidth = span0.getBoundingClientRect().width;
     const duration = spanWidth / this.TICKER_SPEED_PX_PER_SEC;
     this.tickerContent.nativeElement.style.setProperty('--ticker-translate', `-${spanWidth}px`);
     this.tickerContent.nativeElement.style.animationDuration = `${duration}s`;
