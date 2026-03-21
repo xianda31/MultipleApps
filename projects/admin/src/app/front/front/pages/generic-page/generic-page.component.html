@@ -27,6 +27,9 @@
     @if (pageTemplate === PAGE_TEMPLATES.ALBUMS) {
       <app-albums-render [snippets]="page_snippets" [row_cols]="row_cols"></app-albums-render>
     }
+    @if (pageTemplate === PAGE_TEMPLATES.BOOKLET) {
+      <app-booklet-render [snippets]="page_snippets"></app-booklet-render>
+    }
     <!-- gestion du template inconnu -->
     @if (!isKnownTemplate(pageTemplate)) {
       <div class="text-center mt-5">

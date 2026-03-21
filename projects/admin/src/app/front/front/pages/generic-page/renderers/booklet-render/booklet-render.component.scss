@@ -1,0 +1,533 @@
+// Animation duration for page flips
+// Must match PAGE_FLIP_DURATION_MS in booklet-render.component.ts
+// If changing this, update the TypeScript constant as well (convert to milliseconds)
+$page-flip-duration: 3.4s;
+
+// .booklet-container {
+//   padding: 1rem 0;
+// }
+
+.booklet-header {
+  border-bottom: 1px solid #dee2e6;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+
+  h5 {
+    font-weight: 600;
+    color: #495057;
+  }
+}
+
+.page-navigation {
+  .btn {
+    font-size: 0.875rem;
+    min-width: 100px;
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}
+
+// Booklet two-page spread with 3D flip animation
+.booklet-wrapper {
+  perspective: 2000px;
+  perspective-origin: center center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  min-height: 600px;
+  margin-bottom: 2rem;
+}
+
+.booklet-book {
+  display: flex;
+  position: relative;
+  transform-style: preserve-3d;
+  width: 100%;
+  height: 100%;
+  border: 2px solid #dee2e6;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+@keyframes flipPageRight {
+  0% {
+    transform: rotateY(0deg);
+  }
+  50% {
+    transform: rotateY(-90deg);
+  }
+  100% {
+    transform: rotateY(-180deg);
+  }
+}
+
+@keyframes flipPageLeft {
+  0% {
+    transform: rotateY(-180deg);
+  }
+  50% {
+    transform: rotateY(-90deg);
+  }
+  100% {
+    transform: rotateY(0deg);
+  }
+}
+
+.page-container {
+  flex: 1;
+  position: relative;
+  transform-style: preserve-3d;
+  min-height: 600px;
+  display: flex;
+  align-items: stretch;
+  z-index: 1;
+
+  &.flipping-right,
+  &.flipping-left {
+    z-index: 10; // Must be above the static page
+  }
+
+  &.left-page {
+    transform-origin: right center;
+    cursor: pointer;
+
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.02);
+    }
+
+    &.flipping-left {
+      animation: flipLeftPageOut $page-flip-duration ease-in-out forwards;
+    }
+
+    // Shadow effet au bord droit
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 15px;
+      background: linear-gradient(to left,
+          rgba(0, 0, 0, 0.12) 0%,
+          rgba(0, 0, 0, 0.06) 50%,
+          transparent 100%);
+      pointer-events: none;
+      z-index: 2;
+    }
+  }
+
+  &.right-page {
+    transform-origin: left center;
+    cursor: pointer;
+
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.02);
+    }
+
+    &.flipping-right {
+      animation: flipRightPageOut $page-flip-duration ease-in-out forwards;
+    }
+
+    // Shadow effet au bord gauche
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 15px;
+      background: linear-gradient(to right,
+          rgba(0, 0, 0, 0.12) 0%,
+          rgba(0, 0, 0, 0.06) 50%,
+          transparent 100%);
+      pointer-events: none;
+      z-index: 2;
+    }
+  }
+}
+
+// Forward flip: right page turns left (around spine)
+@keyframes flipRightPageOut {
+  0%   { transform: rotateY(0deg); }
+  100% { transform: rotateY(-180deg); }
+}
+
+// Backward flip: left page turns right (around spine)
+@keyframes flipLeftPageOut {
+  0%   { transform: rotateY(0deg); }
+  100% { transform: rotateY(180deg); }
+}
+
+.page-face {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  backface-visibility: hidden;
+
+  // Back face: pre-rotated 180° so it appears correctly during second half of flip
+  &.page-back {
+    transform: rotateY(180deg);
+  }
+
+  .card {
+    height: 100%;
+    border: none;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+
+    .card-img-top {
+      object-fit: cover;
+      max-height: 250px;
+      width: 100%;
+      flex-shrink: 0;
+      margin: 0;
+    }
+
+    .card-body {
+      padding: 1.5rem;
+      overflow-y: auto;
+      flex: 1;
+
+      .card-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: 0.5rem;
+      }
+
+      .text-muted {
+        font-size: 0.95rem;
+      }
+
+      .card-text {
+        font-size: 0.95rem;
+        line-height: 1.5;
+        color: #495057;
+
+        p {
+          margin-bottom: 0.75rem;
+
+          &:last-child {
+            margin-bottom: 0;
+          }
+        }
+
+        ul, ol {
+          padding-left: 1.5rem;
+          margin-bottom: 0.75rem;
+
+          li {
+            margin-bottom: 0.5rem;
+          }
+        }
+
+        img {
+          max-width: 100%;
+          height: auto;
+          margin: 1rem 0;
+        }
+      }
+
+      hr {
+        margin: 1rem 0;
+        border-color: #e9ecef;
+      }
+    }
+  }
+
+  &.blank-page {
+    .card-body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 600px;
+      color: #adb5bd;
+      font-size: 1.1rem;
+    }
+  }
+}
+
+// Backdrop: static full-spread layer behind the rotating page
+.spread-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  display: flex;
+  align-items: stretch;
+
+  .backdrop-page {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+
+    .card {
+      height: 100%;
+      border: none;
+      box-shadow: none;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+
+      .card-img-top {
+        object-fit: cover;
+        max-height: 250px;
+        width: 100%;
+        flex-shrink: 0;
+        margin: 0;
+      }
+
+      .card-body {
+        padding: 1.5rem;
+        overflow-y: auto;
+        flex: 1;
+
+        .card-title {
+          font-size: 1.5rem;
+          font-weight: 600;
+          color: #1a1a1a;
+          margin-bottom: 0.5rem;
+        }
+
+        .text-muted {
+          font-size: 0.95rem;
+        }
+
+        .card-text {
+          font-size: 0.95rem;
+          line-height: 1.5;
+          color: #495057;
+
+          p {
+            margin-bottom: 0.75rem;
+
+            &:last-child {
+              margin-bottom: 0;
+            }
+          }
+
+          ul, ol {
+            padding-left: 1.5rem;
+            margin-bottom: 0.75rem;
+
+            li {
+              margin-bottom: 0.5rem;
+            }
+          }
+
+          img {
+            max-width: 100%;
+            height: auto;
+            margin: 1rem 0;
+          }
+        }
+
+        hr {
+          margin: 1rem 0;
+          border-color: #e9ecef;
+        }
+      }
+    }
+  }
+
+  .backdrop-spine {
+    width: 2px;
+    background: linear-gradient(to right,
+        rgba(0, 0, 0, 0.1),
+        rgba(0, 0, 0, 0.2),
+        rgba(0, 0, 0, 0.1));
+    flex-shrink: 0;
+  }
+}
+
+.book-spine {
+  width: 2px;
+  background: linear-gradient(to right,
+      rgba(0, 0, 0, 0.1),
+      rgba(0, 0, 0, 0.2),
+      rgba(0, 0, 0, 0.1));
+  flex-shrink: 0;
+}
+
+.booklet-indicators {
+  .indicator-btn {
+    width: 40px;
+    height: 40px;
+    border: 2px solid #dee2e6;
+    background: white;
+    color: #495057;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: #198754;
+      color: #198754;
+    }
+
+    &.active {
+      background: #198754;
+      color: white;
+      border-color: #198754;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 1024px) {
+  .booklet-wrapper {
+    min-height: 500px;
+  }
+
+  .page-container {
+    min-height: 500px;
+  }
+
+  .page-face .card {
+    .card-img-top {
+      max-height: 200px;
+    }
+
+    .card-body {
+      padding: 1.25rem;
+
+      .card-title {
+        font-size: 1.3rem;
+      }
+
+      .card-text {
+        font-size: 0.9rem;
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .booklet-wrapper {
+    min-height: 400px;
+  }
+
+  .page-container {
+    min-height: 400px;
+  }
+
+  .page-face .card {
+    .card-img-top {
+      max-height: 150px;
+    }
+
+    .card-body {
+      padding: 1rem;
+
+      .card-title {
+        font-size: 1.1rem;
+      }
+
+      .card-text {
+        font-size: 0.85rem;
+        line-height: 1.4;
+      }
+    }
+  }
+
+  .booklet-header {
+    flex-direction: column;
+    gap: 1rem;
+
+    h5 {
+      text-align: center;
+    }
+
+    .page-navigation {
+      width: 100%;
+
+      .btn {
+        flex: 1;
+        min-width: auto;
+      }
+    }
+  }
+
+  .booklet-indicators {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+
+    .indicator-btn {
+      width: 36px;
+      height: 36px;
+      font-size: 0.85rem;
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .booklet-book {
+    flex-direction: column;
+    min-height: auto;
+    border-radius: 0;
+  }
+
+  .page-container {
+    min-height: 350px;
+    width: 100%;
+    flex: none;
+
+    &.left-page,
+    &.right-page {
+      border-bottom: 1px solid #dee2e6;
+
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+  }
+
+  .book-spine {
+    display: none;
+  }
+
+  .page-face {
+    .card {
+      .card-img-top {
+        max-height: 120px;
+      }
+
+      .card-body {
+        padding: 0.75rem;
+
+        .card-title {
+          font-size: 1rem;
+        }
+
+        .card-text {
+          font-size: 0.8rem;
+        }
+      }
+    }
+  }
+
+  .booklet-wrapper {
+    min-height: auto;
+  }
+}

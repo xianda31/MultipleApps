@@ -41,6 +41,7 @@ export enum PAGE_TEMPLATES {
     CARDS_top_left = 'fiches img haut-gauche',
     CARDS_bottom = 'fiches img bas',
     ALBUMS = 'albums',
+    BOOKLET = 'livret',
     // FLIPPER = 'flipper',
     // X_DEFAULT = 'journal',
 }
