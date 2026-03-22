@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -17,7 +17,7 @@ import { LocalStorageService } from '../services/local-storage.service';
   templateUrl: './back.component.html',
   styleUrls: ['./back.component.scss']
 })
-export class AdminComponent {
+export class AdminComponent implements OnInit, OnDestroy {
   season$ = new Observable<string>();
   book_entries_number$ = new Observable<number>();
 
@@ -37,6 +37,16 @@ export class AdminComponent {
 
     this.season$ = this.systemDataService.get_configuration().pipe(map((conf) => conf.season));
 
+    // Ensure html/body can scroll when entering back component
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
+  }
 
+  ngOnDestroy(): void {
+    // Reset scroll context when leaving back component
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
   }
 }

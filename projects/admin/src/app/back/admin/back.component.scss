@@ -1,15 +1,14 @@
 
+// Layout container: flex column filling parent height
 .admin-container {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100%;
+  width: 100%;
 }
 
 .admin-scrollable-content {
   flex: 1;
-  min-height: 100vh;
-  min-height: 100dvh;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
