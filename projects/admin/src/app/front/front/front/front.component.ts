@@ -240,6 +240,11 @@ export class FrontComponent implements AfterViewInit {
     if (this.footerObserver) {
       this.footerObserver.disconnect();
     }
+    // Nettoyage Bootstrap : l'offcanvas mobile laisse overflow:hidden sur le body lors d'une navigation Angular
+    document.body.style.overflow = '';
+    document.body.style.removeProperty('padding-right');
+    document.body.classList.remove('modal-open');
+    document.querySelectorAll('.offcanvas-backdrop').forEach(el => el.remove());
   }
 
   /**

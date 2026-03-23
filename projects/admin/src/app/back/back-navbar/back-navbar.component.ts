@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChildren, QueryList } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, ViewChildren, QueryList } from '@angular/core';
 import { BACK_ROUTE_PATHS } from '../routes/back-route-paths';
 import { CommonModule, NgIf } from '@angular/common';
 import { Router, RouterLink, NavigationEnd } from '@angular/router';
@@ -28,7 +28,7 @@ import { BreakingNewsService } from '../breaking-news/breaking-news.service';
   templateUrl: './back-navbar.component.html',
   styleUrl: './back-navbar.component.scss'
 })
-export class BackNavbarComponent implements OnInit {
+export class BackNavbarComponent implements OnInit, OnDestroy {
     navbarMenus: NavbarMenu[] = STATIC_MENUS;
   
   @Input() season: string = '';
@@ -81,6 +81,14 @@ export class BackNavbarComponent implements OnInit {
     public breakingNewsService: BreakingNewsService,
   ) { 
     this.authorizationFlag$ = this.breakingNewsService.authorizationFlag$;
+  }
+
+  ngOnDestroy(): void {
+    // Nettoyage Bootstrap : l'offcanvas mobile laisse overflow:hidden sur le body lors d'une navigation Angular
+    document.body.style.overflow = '';
+    document.body.style.removeProperty('padding-right');
+    document.body.classList.remove('modal-open');
+    document.querySelectorAll('.offcanvas-backdrop').forEach(el => el.remove());
   }
 
   ngOnInit(): void {
