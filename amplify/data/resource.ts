@@ -206,10 +206,10 @@ const schema = a.schema({
 
   // Stripe Transactions (paiements par carte)
   StripeTransaction: a.model({
-    stripeSessionId: a.string().required(),
-    status: a.enum(['pending', 'completed', 'failed']).required(),
-    amountCents: a.integer().required(), // montant en centimes
-    currency: a.string().required(), // 'eur', 'usd', etc.
+    stripeSessionId: a.string().isRequired(),
+    status: a.enum(['pending', 'completed', 'failed']).isRequired(),
+    amountCents: a.integer().isRequired(), // montant en centimes
+    currency: a.string().isRequired(), // 'eur', 'usd', etc.
     customerEmail: a.string(),
     stripeMeta: a.json(), // metadata JSON du paiement
   })
