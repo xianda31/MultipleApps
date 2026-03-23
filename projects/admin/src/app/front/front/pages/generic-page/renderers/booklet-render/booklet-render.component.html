@@ -1,22 +1,36 @@
-<div class="container-md mb-3" *ngIf="leftSnippet">
-  <!-- Header with navigation -->
-  <div class="booklet-header d-flex justify-content-between align-items-center mb-1">
-    <!-- Navigation indicators at bottom -->
-    <div class="booklet-indicators d-flex justify-content-center gap-2 flex-wrap">
-      <button *ngFor="let snippet of snippets; let i = index" class="indicator-btn"
-        [class.active]="i >= currentIndex && i < currentIndex + 2" (click)="goToPage(i)" [title]="snippet.title">
+<!-- Template for reusable snippet card -->
+<ng-template #snippetCard let-snippet>
+  <div class="card h-100 nice_shadow" *ngIf="snippet">
+    <img [src]="snippet.image_url" class="card-img-top img-fluid" alt="{{ snippet.title }}"
+      *ngIf="snippet.image_url">
+    <div class="card-body d-flex flex-column">
+      <h4 class="card-title">{{ snippet.title }} :
+        <span class="text-muted " *ngIf="snippet.subtitle">{{ snippet.subtitle }}</span>
+      </h4>
+      <!-- <hr> -->
+      <div class="card-text tighter-html flex-grow-1" [innerHTML]="stringToSafeHtml(snippet.content)"></div>
+    </div>
+  </div>
+</ng-template>
+
+<div class="container-md mb-3" *ngIf="leftSnippet && !isMobilePortrait">
+  <!-- Navigation bar: ← | page indicators | → -->
+  <div class="booklet-nav d-flex align-items-center gap-2 mb-2">
+    <button class="btn btn-sm btn-outline-secondary booklet-nav-btn"
+            (click)="previous()" [disabled]="!hasPrevious || isFlipping" title="Pages précédentes">
+      ←
+    </button>
+    <div class="booklet-indicators d-flex gap-1 flex-grow-1 justify-content-center">
+      <button *ngFor="let snippet of snippets; let i = index" class="indicator-btn flex-shrink-0"
+              [class.active]="i >= currentIndex && i < currentIndex + 2"
+              (click)="goToPage(i)" [title]="snippet.title" [disabled]="isFlipping">
         {{ i + 1 }}
       </button>
     </div>
-    <div class="page-navigation d-flex gap-2">
-      <button class="btn btn-sm btn-outline-secondary" (click)="previous()" [disabled]="!hasPrevious"
-        title="Pages précédentes">
-        ← Retour
-      </button>
-      <button class="btn btn-sm btn-outline-secondary" (click)="next()" [disabled]="!hasNext" title="Pages suivantes">
-        Suivant →
-      </button>
-    </div>
+    <button class="btn btn-sm btn-outline-secondary booklet-nav-btn"
+            (click)="next()" [disabled]="!hasNext || isFlipping" title="Pages suivantes">
+      →
+    </button>
   </div>
 
   <!-- Booklet with two-page spread -->
@@ -24,70 +38,15 @@
     <div class="booklet-book">
 
       <!-- BACKDROP: static background, spans full book, revealed when the flipping page rotates away -->
+      <!-- Content is frozen at flip-start so it stays correct even after currentIndex updates (step 1 of 2-phase commit) -->
       <div class="spread-backdrop" *ngIf="isFlipping">
-
-        <!-- Forward flip: shows next spread (N+2 left, N+3 right) -->
-        <ng-container *ngIf="flipDirection === 'right'">
-          <div class="backdrop-page">
-            <div class="card h-100 nice_shadow" *ngIf="nextLeftSnippet">
-              <img [src]="nextLeftSnippet.image_url" class="card-img-top img-fluid" alt="{{ nextLeftSnippet.title }}"
-                *ngIf="nextLeftSnippet.image_url">
-              <div class="card-body d-flex flex-column">
-                <h4 class="card-title">{{ nextLeftSnippet.title }}</h4>
-                <p class="text-muted mb-3" *ngIf="nextLeftSnippet.subtitle">{{ nextLeftSnippet.subtitle }}</p>
-                <hr>
-                <div class="card-text tighter-html flex-grow-1" [innerHTML]="stringToSafeHtml(nextLeftSnippet.content)">
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="backdrop-spine"></div>
-          <div class="backdrop-page">
-            <div class="card h-100 nice_shadow" *ngIf="nextRightSnippet">
-              <img [src]="nextRightSnippet.image_url" class="card-img-top img-fluid" alt="{{ nextRightSnippet.title }}"
-                *ngIf="nextRightSnippet.image_url">
-              <div class="card-body d-flex flex-column">
-                <h4 class="card-title">{{ nextRightSnippet.title }}</h4>
-                <p class="text-muted mb-3" *ngIf="nextRightSnippet.subtitle">{{ nextRightSnippet.subtitle }}</p>
-                <hr>
-                <div class="card-text tighter-html flex-grow-1"
-                  [innerHTML]="stringToSafeHtml(nextRightSnippet.content)"></div>
-              </div>
-            </div>
-          </div>
-        </ng-container>
-
-        <!-- Backward flip: shows previous spread (N-2 left, N-1 right) -->
-        <ng-container *ngIf="flipDirection === 'left'">
-          <div class="backdrop-page">
-            <div class="card h-100 nice_shadow" *ngIf="prevLeftSnippet">
-              <img [src]="prevLeftSnippet.image_url" class="card-img-top img-fluid" alt="{{ prevLeftSnippet.title }}"
-                *ngIf="prevLeftSnippet.image_url">
-              <div class="card-body d-flex flex-column">
-                <h4 class="card-title">{{ prevLeftSnippet.title }}</h4>
-                <p class="text-muted mb-3" *ngIf="prevLeftSnippet.subtitle">{{ prevLeftSnippet.subtitle }}</p>
-                <hr>
-                <div class="card-text tighter-html flex-grow-1" [innerHTML]="stringToSafeHtml(prevLeftSnippet.content)">
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="backdrop-spine"></div>
-          <div class="backdrop-page">
-            <div class="card h-100 nice_shadow" *ngIf="prevRightSnippet">
-              <img [src]="prevRightSnippet.image_url" class="card-img-top img-fluid" alt="{{ prevRightSnippet.title }}"
-                *ngIf="prevRightSnippet.image_url">
-              <div class="card-body d-flex flex-column">
-                <h4 class="card-title">{{ prevRightSnippet.title }}</h4>
-                <p class="text-muted mb-3" *ngIf="prevRightSnippet.subtitle">{{ prevRightSnippet.subtitle }}</p>
-                <hr>
-                <div class="card-text tighter-html flex-grow-1"
-                  [innerHTML]="stringToSafeHtml(prevRightSnippet.content)"></div>
-              </div>
-            </div>
-          </div>
-        </ng-container>
-
+        <div class="backdrop-page">
+          <ng-container *ngTemplateOutlet="snippetCard; context: {$implicit: backdropLeft}" />
+        </div>
+        <div class="backdrop-spine"></div>
+        <div class="backdrop-page">
+          <ng-container *ngTemplateOutlet="snippetCard; context: {$implicit: backdropRight}" />
+        </div>
       </div>
 
       <!-- Left Page: static during forward flip, rotates during backward flip -->
@@ -95,30 +54,11 @@
         [class.flipping-left]="isFlipping && flipDirection === 'left'">
         <!-- Front face: current left page -->
         <div class="page-face page-front" *ngIf="leftSnippet">
-          <div class="card h-100 nice_shadow">
-            <img [src]="leftSnippet.image_url" class="card-img-top img-fluid" alt="{{ leftSnippet.title }}"
-              *ngIf="leftSnippet.image_url">
-            <div class="card-body d-flex flex-column">
-              <h4 class="card-title">{{ leftSnippet.title }}</h4>
-              <p class="text-muted mb-3" *ngIf="leftSnippet.subtitle">{{ leftSnippet.subtitle }}</p>
-              <hr>
-              <div class="card-text tighter-html flex-grow-1" [innerHTML]="stringToSafeHtml(leftSnippet.content)"></div>
-            </div>
-          </div>
+          <ng-container *ngTemplateOutlet="snippetCard; context: {$implicit: leftSnippet}" />
         </div>
-        <!-- Back face: prev right page (visible during 2nd half of backward flip) -->
-        <div class="page-face page-back" *ngIf="isFlipping && flipDirection === 'left' && prevRightSnippet">
-          <div class="card h-100 nice_shadow">
-            <img [src]="prevRightSnippet.image_url" class="card-img-top img-fluid" alt="{{ prevRightSnippet.title }}"
-              *ngIf="prevRightSnippet.image_url">
-            <div class="card-body d-flex flex-column">
-              <h4 class="card-title">{{ prevRightSnippet.title }}</h4>
-              <p class="text-muted mb-3" *ngIf="prevRightSnippet.subtitle">{{ prevRightSnippet.subtitle }}</p>
-              <hr>
-              <div class="card-text tighter-html flex-grow-1" [innerHTML]="stringToSafeHtml(prevRightSnippet.content)">
-              </div>
-            </div>
-          </div>
+        <!-- Back face: destination right page (visible during 2nd half of backward flip) -->
+        <div class="page-face page-back" *ngIf="isFlipping && flipDirection === 'left' && backdropRight">
+          <ng-container *ngTemplateOutlet="snippetCard; context: {$implicit: backdropRight}" />
         </div>
       </div>
 
@@ -130,37 +70,17 @@
         [class.flipping-right]="isFlipping && flipDirection === 'right'">
         <!-- Front face: current right page -->
         <div class="page-face page-front" *ngIf="rightSnippet">
-          <div class="card h-100 nice_shadow">
-            <img [src]="rightSnippet.image_url" class="card-img-top img-fluid" alt="{{ rightSnippet.title }}"
-              *ngIf="rightSnippet.image_url">
-            <div class="card-body d-flex flex-column">
-              <h4 class="card-title">{{ rightSnippet.title }}</h4>
-              <p class="text-muted mb-3" *ngIf="rightSnippet.subtitle">{{ rightSnippet.subtitle }}</p>
-              <hr>
-              <div class="card-text tighter-html flex-grow-1" [innerHTML]="stringToSafeHtml(rightSnippet.content)">
-              </div>
-            </div>
-          </div>
+          <ng-container *ngTemplateOutlet="snippetCard; context: {$implicit: rightSnippet}" />
         </div>
-        <!-- Back face: next left page (visible during 2nd half of forward flip) -->
-        <div class="page-face page-back" *ngIf="isFlipping && flipDirection === 'right' && nextLeftSnippet">
-          <div class="card h-100 nice_shadow">
-            <img [src]="nextLeftSnippet.image_url" class="card-img-top img-fluid" alt="{{ nextLeftSnippet.title }}"
-              *ngIf="nextLeftSnippet.image_url">
-            <div class="card-body d-flex flex-column">
-              <h4 class="card-title">{{ nextLeftSnippet.title }}</h4>
-              <p class="text-muted mb-3" *ngIf="nextLeftSnippet.subtitle">{{ nextLeftSnippet.subtitle }}</p>
-              <hr>
-              <div class="card-text tighter-html flex-grow-1" [innerHTML]="stringToSafeHtml(nextLeftSnippet.content)">
-              </div>
-            </div>
-          </div>
+        <!-- Back face: destination left page (visible during 2nd half of forward flip) -->
+        <div class="page-face page-back" *ngIf="isFlipping && flipDirection === 'right' && backdropLeft">
+          <ng-container *ngTemplateOutlet="snippetCard; context: {$implicit: backdropLeft}" />
         </div>
         <!-- Blank page if last page is odd -->
         <div class="page-face page-front" *ngIf="!rightSnippet">
           <div class="card h-100">
             <div class="card-body d-flex align-items-center justify-content-center">
-              <span class="text-muted">Fin du livret</span>
+              <span class="text-muted"></span>
             </div>
           </div>
         </div>
@@ -170,6 +90,64 @@
   </div>
 
 
+</div>
+
+<!-- Portrait mobile: single-page mode with navigation -->
+<div class="portrait-container" *ngIf="isMobilePortrait && portraitSnippet">
+
+  <!-- Navigation bar -->
+  <div class="portrait-nav d-flex align-items-center gap-2 mb-2">
+    <button class="btn btn-sm btn-outline-secondary portrait-nav-btn"
+            (click)="portraitPrevious()"
+            [disabled]="!portraitHasPrevious || isFlipping">
+      ←
+    </button>
+
+    <div class="portrait-indicators d-flex gap-1 flex-grow-1 justify-content-center">
+      <button *ngFor="let snippet of snippets; let i = index"
+              class="indicator-btn flex-shrink-0"
+              [class.active]="i === portraitIndex"
+              (click)="portraitGoToPage(i)"
+              [title]="snippet.title"
+              [disabled]="isFlipping">
+        {{ i + 1 }}
+      </button>
+    </div>
+
+    <button class="btn btn-sm btn-outline-secondary portrait-nav-btn"
+            (click)="portraitNext()"
+            [disabled]="!portraitHasNext || isFlipping">
+      →
+    </button>
+  </div>
+
+  <!-- Single page with 3D flip -->
+  <div class="portrait-wrapper">
+    <div class="portrait-book">
+
+      <!-- Backdrop: destination page visible behind the rotating page (content frozen at flip-start) -->
+      <div class="portrait-backdrop" *ngIf="isFlipping">
+        <ng-container *ngTemplateOutlet="snippetCard; context: {$implicit: backdropPortrait}" />
+      </div>
+
+      <!-- Current page (animates during flip) -->
+      <div class="portrait-page"
+           [class.portrait-flipping-right]="isFlipping && flipDirection === 'right'"
+           [class.portrait-flipping-left]="isFlipping && flipDirection === 'left'">
+
+        <!-- Front face: current page -->
+        <div class="page-face page-front">
+          <ng-container *ngTemplateOutlet="snippetCard; context: {$implicit: portraitSnippet}" />
+        </div>
+
+        <!-- Back face: destination page (visible during 2nd half of flip, frozen at flip-start) -->
+        <div class="page-face page-back" *ngIf="isFlipping && backdropPortrait">
+          <ng-container *ngTemplateOutlet="snippetCard; context: {$implicit: backdropPortrait}" />
+        </div>
+      </div>
+
+    </div>
+  </div>
 </div>
 
 <!-- Empty state -->

@@ -3,25 +3,60 @@
 // If changing this, update the TypeScript constant as well (convert to milliseconds)
 $page-flip-duration: 3.4s;
 
+// Landscape: reduce container padding to fit content
+.container-md {
+  @media (orientation: landscape) {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+}
+
 // .booklet-container {
 //   padding: 1rem 0;
 // }
 
-.booklet-header {
-  border-bottom: 1px solid #dee2e6;
-  padding-bottom: 1rem;
-  margin-bottom: 1.5rem;
+.booklet-nav {
+  .booklet-nav-btn {
+    min-width: 56px;
+    font-size: 1rem;
+    flex-shrink: 0;
 
-  h5 {
-    font-weight: 600;
-    color: #495057;
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
   }
 }
 
-.page-navigation {
-  .btn {
-    font-size: 0.875rem;
-    min-width: 100px;
+.booklet-indicators {
+  overflow-x: auto;
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+
+  .indicator-btn {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    padding: 0;
+    border: 2px solid #dee2e6;
+    background: white;
+    color: #495057;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: #198754;
+      color: #198754;
+    }
+
+    &.active {
+      background: #198754;
+      color: white;
+      border-color: #198754;
+    }
 
     &:disabled {
       opacity: 0.5;
@@ -51,7 +86,9 @@ $page-flip-duration: 3.4s;
   border: 2px solid #dee2e6;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   border-radius: 0.5rem;
-  overflow: hidden;
+  // Use clip-path instead of overflow:hidden — overflow:hidden on a preserve-3d element
+  // creates a flat stacking context which breaks backface-visibility on children.
+  clip-path: inset(0 round 0.5rem);
 }
 
 @keyframes flipPageRight {
@@ -153,14 +190,16 @@ $page-flip-duration: 3.4s;
 
 // Forward flip: right page turns left (around spine)
 @keyframes flipRightPageOut {
-  0%   { transform: rotateY(0deg); }
-  100% { transform: rotateY(-180deg); }
+  0%   { transform: rotateY(0deg); visibility: visible; }
+  99%  { transform: rotateY(-180deg); visibility: visible; }
+  100% { transform: rotateY(-180deg); visibility: hidden; }
 }
 
 // Backward flip: left page turns right (around spine)
 @keyframes flipLeftPageOut {
-  0%   { transform: rotateY(0deg); }
-  100% { transform: rotateY(180deg); }
+  0%   { transform: rotateY(0deg); visibility: visible; }
+  99%  { transform: rotateY(180deg); visibility: visible; }
+  100% { transform: rotateY(180deg); visibility: hidden; }
 }
 
 .page-face {
@@ -189,7 +228,7 @@ $page-flip-duration: 3.4s;
 
     .card-img-top {
       object-fit: cover;
-      max-height: 250px;
+      height: 180px;
       width: 100%;
       flex-shrink: 0;
       margin: 0;
@@ -286,7 +325,7 @@ $page-flip-duration: 3.4s;
 
       .card-img-top {
         object-fit: cover;
-        max-height: 250px;
+        height: 180px;
         width: 100%;
         flex-shrink: 0;
         margin: 0;
@@ -364,36 +403,6 @@ $page-flip-duration: 3.4s;
   flex-shrink: 0;
 }
 
-.booklet-indicators {
-  .indicator-btn {
-    width: 30px;
-    height: 30px;
-    border: 2px solid #dee2e6;
-    background: white;
-    color: #495057;
-    border-radius: 0.25rem;
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.2s ease;
-
-    &:hover {
-      border-color: #198754;
-      color: #198754;
-    }
-
-    &.active {
-      background: #198754;
-      color: white;
-      border-color: #198754;
-    }
-
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-  }
-}
-
 // Responsive
 @media (max-width: 1024px) {
   .booklet-wrapper {
@@ -404,9 +413,12 @@ $page-flip-duration: 3.4s;
     min-height: 500px;
   }
 
+  // .booklet-book covers both page-face AND backdrop contexts
+  .booklet-book .card-img-top { height: 150px !important; }
+
   .page-face .card {
     .card-img-top {
-      max-height: 200px;
+      height: 150px;
     }
 
     .card-body {
@@ -432,9 +444,11 @@ $page-flip-duration: 3.4s;
     min-height: 400px;
   }
 
+  .booklet-book .card-img-top { height: 130px !important; }
+
   .page-face .card {
     .card-img-top {
-      max-height: 150px;
+      height: 130px;
     }
 
     .card-body {
@@ -469,16 +483,6 @@ $page-flip-duration: 3.4s;
     }
   }
 
-  .booklet-indicators {
-    flex-wrap: wrap;
-    gap: 0.5rem;
-
-    .indicator-btn {
-      width: 36px;
-      height: 36px;
-      font-size: 0.85rem;
-    }
-  }
 }
 
 @media (max-width: 600px) {
@@ -507,10 +511,12 @@ $page-flip-duration: 3.4s;
     display: none;
   }
 
+  .booklet-book .card-img-top { height: 100px !important; }
+
   .page-face {
     .card {
       .card-img-top {
-        max-height: 120px;
+        height: 100px;
       }
 
       .card-body {
@@ -529,5 +535,196 @@ $page-flip-duration: 3.4s;
 
   .booklet-wrapper {
     min-height: auto;
+  }
+}
+
+// Mobile landscape: fit content to viewport height
+@media (max-height: 500px) {
+  .booklet-header {
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+
+    h5 {
+      font-size: 0.95rem;
+    }
+  }
+
+  .page-navigation {
+    .btn {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      min-width: 60px;
+    }
+  }
+
+  .booklet-wrapper {
+    min-height: 320px;
+    margin-bottom: 0.5rem;
+  }
+
+  .page-container {
+    min-height: 320px;
+  }
+
+  // Landscape mobile: same constraint for both page-face AND backdrop
+  .booklet-book .card-img-top,
+  .portrait-book .card-img-top { height: 70px !important; }
+
+  .page-face .card {
+    .card-img-top {
+      height: 70px;
+    }
+
+    .card-body {
+      padding: 0.75rem;
+
+      .card-title {
+        font-size: 0.95rem;
+        margin-bottom: 0.25rem;
+      }
+
+      .card-text {
+        font-size: 0.75rem;
+        line-height: 1.3;
+      }
+
+      hr {
+        margin: 0.5rem 0;
+      }
+    }
+  }
+}
+
+// Landscape orientation: fit within viewport height (accounting for footer)
+// Only applies to mobile/tablet landscape, not laptop landscape
+@media (orientation: landscape) and (max-width: 1024px) {
+  .container-md {
+    margin-bottom: 0 !important; // override Bootstrap mb-3
+  }
+
+  .booklet-wrapper {
+    min-height: 260px;
+    max-height: calc(100vh - 180px);
+    margin-bottom: 0;
+  }
+
+  .page-container {
+    min-height: 260px;
+    max-height: calc(100vh - 180px);
+  }
+}
+
+// ─── Portrait single-page mode ──────────────────────────────────────────────
+// Completely isolated from two-page booklet classes
+
+$portrait-flip-duration: 1.0s;
+
+@keyframes portraitFlipRight {
+  0%   { transform: rotateY(0deg); visibility: visible; }
+  99%  { transform: rotateY(-180deg); visibility: visible; }
+  100% { transform: rotateY(-180deg); visibility: hidden; }
+}
+
+@keyframes portraitFlipLeft {
+  0%   { transform: rotateY(0deg); visibility: visible; }
+  99%  { transform: rotateY(180deg); visibility: visible; }
+  100% { transform: rotateY(180deg); visibility: hidden; }
+}
+
+@media (orientation: portrait) and (max-width: 600px) {
+
+  .portrait-nav {
+    .portrait-nav-btn {
+      min-width: 56px;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+  }
+
+  .portrait-indicators {
+    overflow-x: auto;
+    scrollbar-width: none;
+    &::-webkit-scrollbar { display: none; }
+
+    .indicator-btn {
+      width: 30px;
+      height: 30px;
+      min-width: 30px;
+      padding: 0;
+      border: 2px solid #dee2e6;
+      background: white;
+      color: #495057;
+      border-radius: 0.25rem;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 0.8rem;
+      transition: all 0.15s ease;
+
+      &.active {
+        background: #198754;
+        color: white;
+        border-color: #198754;
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+  }
+
+  // portrait-container fills all available vertical space in the flex layout
+  .portrait-container {
+    padding: 0.5rem;
+  }
+
+  .portrait-wrapper {
+    perspective: 1200px;
+    width: 100%;
+    // Concrete height: total vp minus navbar(~65) + club-img(~100) + breadcrumb(~35)
+    //   + portrait-nav(~52) + padding/margins(~30) + footer(~80) ≈ 362px
+    height: calc(100svh - 370px);
+    min-height: 280px;
+    display: flex;
+    align-items: stretch;
+    margin-bottom: 0.5rem;
+  }
+
+  .portrait-book {
+    position: relative;
+    transform-style: preserve-3d;
+    flex: 1;
+    border: 2px solid #dee2e6;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-radius: 0.5rem;
+    clip-path: inset(0 round 0.5rem);
+  }
+
+  .portrait-backdrop {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    border-radius: 0.5rem;
+  }
+
+  .portrait-page {
+    // position:relative + height:100% so .page-face (position:absolute, height:100%)
+    // gets a real pixel height from the parent  
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    z-index: 1;
+
+    &.portrait-flipping-right {
+      transform-origin: left center;
+      animation: portraitFlipRight $portrait-flip-duration ease-in-out forwards;
+    }
+
+    &.portrait-flipping-left {
+      transform-origin: right center;
+      animation: portraitFlipLeft $portrait-flip-duration ease-in-out forwards;
+    }
   }
 }

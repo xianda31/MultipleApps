@@ -164,9 +164,9 @@
 
   <ng-template #tplFooter>
     <div class="footer-banner d-flex align-items-center justify-content-between flex-wrap mt-auto">
-      <div class="footer-banner-content flex-grow-1 py-1" style="line-height: 1.2;">
+      <div class="footer-banner-content flex-grow-1" style="line-height: 1.2;">
         <div class="text-center">© 2026 {{ club_name }}</div>
-        <div class="row justify-content-center">
+        <div class="row justify-content-center pb-0">
           <div *ngFor="let menu of footer_menus; trackBy: trackNavitemId" class="col-auto">
             <a [routerLink]="menu.navitem.path" class="mb-0 footer-banner" style="text-decoration: none;">{{
               menu.navitem.label }}</a>

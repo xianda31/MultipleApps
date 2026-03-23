@@ -49,6 +49,19 @@
   }
 }
 
+// Mobile landscape: remove min-vh-100 so container wraps content, footer follows naturally
+@media (orientation: landscape) {
+  .mobile-flex-container {
+    min-height: 0 !important; // override Bootstrap min-vh-100
+  }
+
+  .mobile-flex-container > .flex-grow-1 {
+    max-height: calc(100vh - 130px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
 /* Mode laptop: scroll behavior - both rows sticky, banner visibility controlled by height */
 @media (min-width: 768px) {
   .laptop-banner-row {
