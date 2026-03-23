@@ -1,6 +1,9 @@
 {
   "name": "multiple-apps",
   "version": "1.0.0",
+  "workspaces": [
+    "amplify/functions/*"
+  ],
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
