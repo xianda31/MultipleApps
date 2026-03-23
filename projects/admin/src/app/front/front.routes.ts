@@ -1,6 +1,9 @@
 import { Routes } from '@angular/router';
 import { PageNotFoundComponent } from '../common/page-not-found/page-not-found.component';
 import { FrontComponent } from './front/front/front.component';
+import { FrontShopComponent } from './shop/front-shop.component';
+import { CheckoutSuccessComponent } from './shop/checkout-success.component';
+import { CheckoutCancelComponent } from './shop/checkout-cancel.component';
 
 
 // Minimal, safe front routes used at bootstrap. Dynamic/nav-driven routes
@@ -15,6 +18,11 @@ export const minimal_routes: Routes = [
       // Routes with dynamic parameters (not configurable via editor)
       // { path: 'tournaments/:id', component: TournamentComponent },
       // { path: 'les_albums/:snippet_id', component: AlbumComponent },
+
+      // Stripe E-commerce routes
+      { path: 'shop', component: FrontShopComponent },
+      { path: 'checkout-success', component: CheckoutSuccessComponent },
+      { path: 'checkout-cancel', component: CheckoutCancelComponent },
 
       // System routes (redirects and fallbacks)
       { path: 'back_office', redirectTo: '/back', pathMatch: 'full' },

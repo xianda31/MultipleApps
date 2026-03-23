@@ -1,0 +1,120 @@
+<div class="checkout-success-container">
+  <!-- ÉTAT CHARGEMENT -->
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner-animation">
+      <div class="spinner-border"></div>
+    </div>
+    <p>Vérification de votre paiement...</p>
+  </div>
+
+  <!-- ÉTAT SUCCÈS -->
+  <div class="success-state" *ngIf="checkoutStatus && !isLoading">
+    <div class="success-icon-wrapper">
+      <div class="success-checkmark">
+        <div class="checkmark-circle">
+          <div class="checkmark-stem"></div>
+          <div class="checkmark-kick"></div>
+        </div>
+      </div>
+    </div>
+
+    <h1 class="success-title">Paiement réussi ! ✓</h1>
+
+    <div class="success-message">
+      <p class="main-message">
+        Merci pour votre achat. Votre paiement a été traité avec succès.
+      </p>
+
+      <div class="transaction-details">
+        <div class="detail-item" *ngIf="checkoutStatus.sessionId">
+          <span class="detail-label">ID de session :</span>
+          <span class="detail-value">{{ checkoutStatus.sessionId }}</span>
+        </div>
+
+        <div class="detail-item" *ngIf="checkoutStatus.amountTotal">
+          <span class="detail-label">Montant payé :</span>
+          <span class="detail-value amount">
+            {{ formatPrice(checkoutStatus.amountTotal) }}
+          </span>
+        </div>
+
+        <div class="detail-item" *ngIf="checkoutStatus.customerEmail">
+          <span class="detail-label">Email de confirmation :</span>
+          <span class="detail-value">{{ checkoutStatus.customerEmail }}</span>
+        </div>
+
+        <div class="detail-item" *ngIf="checkoutStatus.paymentStatus">
+          <span class="detail-label">Statut du paiement :</span>
+          <span class="detail-value status" [class]="checkoutStatus.paymentStatus">
+            <i class="bi bi-check-circle-fill"></i>
+            {{ checkoutStatus.paymentStatus === 'paid' ? 'Payé' : checkoutStatus.paymentStatus }}
+          </span>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <i class="bi bi-info-circle"></i>
+        <div>
+          <strong>Prochaines étapes :</strong>
+          <ul>
+            <li>Un email de confirmation a été envoyé à votre adresse email</li>
+            <li>Vos articles seront livrés selon les délais indiqués</li>
+            <li>Gardez votre ID de session pour tout suivi futur</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="security-badge">
+        <i class="bi bi-shield-check"></i>
+        <span>Paiement sécurisé par Stripe</span>
+      </div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="success-actions">
+      <a routerLink="/front/shop" class="btn btn-primary">
+        <i class="bi bi-shop"></i> Retourner à la boutique
+      </a>
+      <a routerLink="/front" class="btn btn-outline-secondary">
+        <i class="bi bi-house"></i> Retour à l'accueil
+      </a>
+    </div>
+  </div>
+
+  <!-- ÉTAT ERREUR -->
+  <div class="error-state" *ngIf="error && !isLoading">
+    <div class="error-icon">
+      <i class="bi bi-exclamation-circle"></i>
+    </div>
+
+    <h1 class="error-title">Impossible de confirmer votre paiement</h1>
+
+    <div class="error-message">
+      <p class="main-message">{{ error }}</p>
+
+      <div class="info-box error">
+        <i class="bi bi-info-circle"></i>
+        <div>
+          <strong>Que faire :</strong>
+          <ul>
+            <li>Vérifiez votre email pour la confirmation de paiement</li>
+            <li>
+              Contactez notre support avec votre ID de session si disponible
+            </li>
+            <li>Essayez de faire un nouveau paiement si ce dernier a échoué</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="error-actions">
+      <a routerLink="/front/shop" class="btn btn-primary">
+        <i class="bi bi-shop"></i> Retourner à la boutique
+      </a>
+      <a routerLink="/front/contact" class="btn btn-outline-secondary">
+        <i class="bi bi-chat-left-text"></i> Contacter le support
+      </a>
+    </div>
+  </div>
+</div>

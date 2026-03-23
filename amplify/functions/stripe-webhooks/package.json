@@ -1,0 +1,13 @@
+{
+  "name": "stripe-webhooks",
+  "version": "1.0.0",
+  "description": "Stripe Webhooks Handler",
+  "main": "handler.ts",
+  "dependencies": {
+    "stripe": "^14.14.0",
+    "aws-amplify": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  }
+}

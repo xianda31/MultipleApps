@@ -1,0 +1,260 @@
+.checkout-cancel-container {
+  padding: 4rem 1rem;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  @media (max-width: 768px) {
+    padding: 2rem 1rem;
+  }
+}
+
+.cancel-content {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  padding: 3rem 2rem;
+  max-width: 700px;
+  width: 100%;
+  animation: slideUp 0.5s ease-out;
+
+  @media (max-width: 768px) {
+    padding: 2rem 1.5rem;
+  }
+}
+
+/* ========================
+   ICÔNE ANNULATION
+======================== */
+
+.cancel-icon-wrapper {
+  text-align: center;
+  margin-bottom: 2rem;
+  animation: zoomIn 0.6s ease-out;
+}
+
+.cancel-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, #f39c12 0%, #e74c3c 100%);
+  border-radius: 50%;
+  font-size: 3rem;
+  color: white;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* ========================
+   TITRE & MESSAGE
+======================== */
+
+.cancel-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2c3e50;
+  text-align: center;
+  margin: 0 0 1rem 0;
+
+  @media (max-width: 768px) {
+    font-size: 1.5rem;
+  }
+}
+
+.cancel-message {
+  margin-bottom: 2rem;
+
+  .main-message {
+    font-size: 1.1rem;
+    color: #555;
+    text-align: center;
+    margin: 0 0 2rem 0;
+    line-height: 1.6;
+  }
+}
+
+/* ========================
+   BOÎTES INFO
+======================== */
+
+.info-box {
+  display: flex;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: #fff3e0;
+  border-left: 4px solid #f39c12;
+  border-radius: 8px;
+  margin: 2rem 0;
+
+  i {
+    font-size: 1.5rem;
+    color: #f39c12;
+    flex-shrink: 0;
+    margin-top: 0.25rem;
+  }
+
+  strong {
+    color: #2c3e50;
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  p {
+    margin: 0;
+    color: #555;
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+}
+
+.support-section {
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin: 2rem 0;
+
+  strong {
+    color: #2c3e50;
+    display: block;
+    margin-bottom: 0.75rem;
+  }
+
+  p {
+    margin: 0;
+    color: #555;
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+}
+
+/* ========================
+   ACTIONS
+======================== */
+
+.cancel-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 2rem 0;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+
+  .btn {
+    padding: 1rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+
+    &.btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.3);
+      }
+    }
+
+    &.btn-outline-secondary {
+      background: white;
+      color: #7f8c8d;
+      border: 2px solid #bdc3c7;
+
+      &:hover {
+        background: #ecf0f1;
+        border-color: #95a5a6;
+      }
+    }
+
+    i {
+      font-size: 1.2rem;
+    }
+  }
+}
+
+/* ========================
+   SUGGESTIONS
+======================== */
+
+.suggestions {
+  padding: 2rem;
+  background: #f0f7ff;
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+
+  h3 {
+    color: #2c3e50;
+    font-size: 1.1rem;
+    margin: 0 0 1rem 0;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 0;
+      color: #555;
+      font-size: 0.95rem;
+
+      i {
+        color: #667eea;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+      }
+    }
+  }
+}
+
+/* ========================
+   ANIMATIONS
+======================== */
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(243, 156, 18, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 15px rgba(243, 156, 18, 0);
+  }
+}

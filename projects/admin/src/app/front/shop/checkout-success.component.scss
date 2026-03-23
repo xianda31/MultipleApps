@@ -1,0 +1,473 @@
+.checkout-success-container {
+  padding: 4rem 1rem;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  @media (max-width: 768px) {
+    padding: 2rem 1rem;
+  }
+}
+
+/* ========================
+   ÉTAT CHARGEMENT
+======================== */
+
+.loading-state {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  width: 100%;
+
+  .spinner-animation {
+    margin-bottom: 2rem;
+
+    .spinner-border {
+      width: 60px;
+      height: 60px;
+      border: 4px solid #ecf0f1;
+      border-top-color: #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+  }
+
+  p {
+    font-size: 1.1rem;
+    color: #7f8c8d;
+    margin: 0;
+  }
+}
+
+/* ========================
+   ÉTAT SUCCÈS
+======================== */
+
+.success-state {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  padding: 3rem 2rem;
+  max-width: 700px;
+  width: 100%;
+  animation: slideUp 0.5s ease-out;
+
+  @media (max-width: 768px) {
+    padding: 2rem 1.5rem;
+  }
+}
+
+.success-icon-wrapper {
+  text-align: center;
+  margin-bottom: 2rem;
+  animation: zoomIn 0.6s ease-out;
+}
+
+.success-checkmark {
+  .checkmark-circle {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    position: relative;
+    margin: 0 auto;
+    animation: scaleIn 0.6s ease-out;
+
+    .checkmark-stem,
+    .checkmark-kick {
+      position: absolute;
+      background-color: white;
+    }
+
+    .checkmark-stem {
+      width: 4px;
+      height: 50px;
+      left: 50%;
+      top: 20%;
+      transform: translateX(-2px);
+      animation: growCheckmark 0.6s ease-out 0.3s backwards;
+    }
+
+    .checkmark-kick {
+      width: 4px;
+      height: 25px;
+      left: 50%;
+      top: 55%;
+      transform: translateX(-2px) rotate(-45deg);
+      transform-origin: left center;
+      animation: growCheckmark 0.6s ease-out 0.5s backwards;
+    }
+  }
+}
+
+.success-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #27ae60;
+  text-align: center;
+  margin: 0 0 1rem 0;
+
+  @media (max-width: 768px) {
+    font-size: 1.5rem;
+  }
+}
+
+.success-message {
+  margin-bottom: 2rem;
+
+  .main-message {
+    font-size: 1.1rem;
+    color: #555;
+    text-align: center;
+    margin: 0 0 2rem 0;
+    line-height: 1.6;
+  }
+}
+
+/* ========================
+   DÉTAILS TRANSACTION
+======================== */
+
+.transaction-details {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+  border: 1px solid #ecf0f1;
+
+  .detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e0e0e0;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+
+    .detail-label {
+      font-weight: 600;
+      color: #2c3e50;
+      min-width: 150px;
+    }
+
+    .detail-value {
+      color: #7f8c8d;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+      word-break: break-all;
+
+      &.amount {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #27ae60;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+      &.status {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.4rem 0.8rem;
+        background: #e8f5e9;
+        color: #27ae60;
+        border-radius: 20px;
+        font-weight: 600;
+
+        &.completed,
+        &.paid {
+          background: #e8f5e9;
+          color: #27ae60;
+        }
+
+        &.pending {
+          background: #fff3e0;
+          color: #f57c00;
+        }
+
+        &.failed {
+          background: #ffebee;
+          color: #c62828;
+        }
+
+        i {
+          font-size: 1rem;
+        }
+      }
+    }
+  }
+}
+
+/* ========================
+   BOÎTES INFO
+======================== */
+
+.info-box {
+  display: flex;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: #e3f2fd;
+  border-left: 4px solid #667eea;
+  border-radius: 8px;
+  margin: 2rem 0;
+
+  &.error {
+    background: #ffebee;
+    border-left-color: #c62828;
+  }
+
+  i {
+    font-size: 1.5rem;
+    color: #667eea;
+    flex-shrink: 0;
+    margin-top: 0.25rem;
+  }
+
+  strong {
+    color: #2c3e50;
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 1.5rem;
+    color: #555;
+    font-size: 0.95rem;
+    line-height: 1.6;
+
+    li {
+      margin: 0.5rem 0;
+    }
+  }
+
+  &.error {
+    i {
+      color: #c62828;
+    }
+
+    strong {
+      color: #c62828;
+    }
+  }
+}
+
+.security-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #f0f7ff;
+  border-radius: 8px;
+  color: #667eea;
+  font-weight: 600;
+  margin: 2rem 0 0 0;
+
+  i {
+    font-size: 1.3rem;
+  }
+}
+
+/* ========================
+   ACTIONS (SUCCÈS)
+======================== */
+
+.success-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 2rem;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+
+  .btn {
+    padding: 1rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+
+    &.btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.3);
+      }
+    }
+
+    &.btn-outline-secondary {
+      background: white;
+      color: #7f8c8d;
+      border: 2px solid #bdc3c7;
+
+      &:hover {
+        background: #ecf0f1;
+        border-color: #95a5a6;
+      }
+    }
+
+    i {
+      font-size: 1.2rem;
+    }
+  }
+}
+
+/* ========================
+   ÉTAT ERREUR
+======================== */
+
+.error-state {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  padding: 3rem 2rem;
+  max-width: 700px;
+  width: 100%;
+  animation: slideUp 0.5s ease-out;
+
+  @media (max-width: 768px) {
+    padding: 2rem 1.5rem;
+  }
+}
+
+.error-icon {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  font-size: 4rem;
+  color: #c62828;
+  animation: shake 0.5s ease-out;
+}
+
+.error-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #c62828;
+  text-align: center;
+  margin: 0 0 1rem 0;
+
+  @media (max-width: 768px) {
+    font-size: 1.3rem;
+  }
+}
+
+.error-message {
+  margin-bottom: 2rem;
+
+  .main-message {
+    font-size: 1.1rem;
+    color: #555;
+    text-align: center;
+    margin: 0 0 2rem 0;
+    line-height: 1.6;
+  }
+}
+
+/* ========================
+   ACTIONS (ERREUR)
+======================== */
+
+.error-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 2rem;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ========================
+   ANIMATIONS
+======================== */
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.3);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes growCheckmark {
+  from {
+    height: 0;
+  }
+  to {
+    height: 100%;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-5px);
+  }
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(5px);
+  }
+}

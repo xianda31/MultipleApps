@@ -1,0 +1,174 @@
+<div class="shop-container">
+  <!-- En-tête -->
+  <div class="shop-header">
+    <h1>Boutique</h1>
+    <p class="subtitle">Achetez vos produits en ligne en toute sécurité</p>
+  </div>
+
+  <div class="shop-layout">
+    <!-- SECTION PRODUITS (Gauche) -->
+    <div class="products-section">
+      <div class="section-title">
+        <h2>Produits disponibles</h2>
+      </div>
+
+      <div class="products-grid" *ngIf="products$ | async as products">
+        <!-- Si produits vides -->
+        <div class="empty-state" *ngIf="!products || products.length === 0">
+          <p>Aucun produit disponible pour le moment.</p>
+        </div>
+
+        <!-- Grille des produits -->
+        <div class="product-card" *ngFor="let product of products">
+          <div class="product-image">
+            <img
+              *ngIf="product.image"
+              [src]="product.image"
+              [alt]="product.description"
+              class="img-fluid"
+            />
+            <div *ngIf="!product.image" class="no-image">
+              <i class="bi bi-image"></i>
+            </div>
+          </div>
+
+          <div class="product-info">
+            <h3 class="product-name">{{ product.description }}</h3>
+            <p class="product-label" *ngIf="product.label">{{ product.label }}</p>
+
+            <div class="price-container">
+              <span class="price">{{ formatPrice(product.values / 100) }}</span>
+              <span class="currency">EUR</span>
+            </div>
+
+            <p class="product-description" *ngIf="product.comment">
+              {{ product.comment }}
+            </p>
+
+            <button
+              class="btn btn-primary btn-add-cart"
+              (click)="addToCart(product)"
+              [disabled]="isCheckingOut"
+            >
+              <i class="bi bi-cart-plus"></i> Ajouter au panier
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION PANIER (Droite) -->
+    <div class="cart-section">
+      <!-- Bouton toggle panier (Mobile) -->
+      <button
+        class="toggle-cart-btn d-md-none"
+        (click)="showCart = !showCart"
+        [class.active]="showCart"
+      >
+        <i class="bi bi-bag"></i>
+        <span class="badge" *ngIf="(cart$ | async)?.items?.length">
+          {{ (cart$ | async)?.items?.length }}
+        </span>
+      </button>
+
+      <!-- Panier -->
+      <div class="cart-panel" [class.show]="showCart">
+        <h3 class="cart-title">
+          <i class="bi bi-bag-check"></i> Panier
+        </h3>
+
+        <div class="cart-content" *ngIf="cart$ | async as cart">
+          <!-- Si panier vide -->
+          <div class="empty-cart" *ngIf="!cart.items || cart.items.length === 0">
+            <i class="bi bi-bag"></i>
+            <p>Votre panier est vide</p>
+          </div>
+
+          <!-- Items du panier -->
+          <div class="cart-items" *ngIf="cart.items && cart.items.length > 0">
+            <div class="cart-item" *ngFor="let item of cart.items">
+              <div class="item-header">
+                <span class="item-name">{{ item.product.description }}</span>
+                <button
+                  class="btn-remove"
+                  (click)="removeFromCart(item.product.id)"
+                  title="Retirer du panier"
+                >
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+
+              <div class="item-actions">
+                <div class="quantity-control">
+                  <button
+                    class="btn-qty"
+                    (click)="updateQuantity(item.product.id, item.quantity - 1)"
+                    [disabled]="item.quantity <= 1"
+                  >
+                    −
+                  </button>
+                  <span class="qty-value">{{ item.quantity }}</span>
+                  <button
+                    class="btn-qty"
+                    (click)="updateQuantity(item.product.id, item.quantity + 1)"
+                    [disabled]="item.quantity >= 100"
+                  >
+                    +
+                  </button>
+                </div>
+                <span class="item-price">
+                  {{ formatPrice((item.product.values / 100) * item.quantity) }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Total -->
+            <div class="cart-total">
+              <div class="total-line">
+                <span>Sous-total:</span>
+                <span>{{ formatPrice(cart.subtotal / 100) }}</span>
+              </div>
+              <div class="total-line">
+                <span>Frais (à calculer):</span>
+                <span>À l'étape Stripe</span>
+              </div>
+              <div class="total-amount">
+                <strong>Montant estimé:</strong>
+                <strong>{{ formatPrice(cart.subtotal / 100) }}</strong>
+              </div>
+
+              <!-- Note de sécurité -->
+              <p class="security-note">
+                <i class="bi bi-shield-check"></i> Paiement sécurisé par Stripe
+              </p>
+            </div>
+
+            <!-- Actions -->
+            <div class="cart-actions">
+              <button
+                class="btn btn-primary btn-checkout w-100"
+                (click)="checkout()"
+                [disabled]="isCheckingOut"
+              >
+                <span *ngIf="!isCheckingOut">
+                  <i class="bi bi-cash-coin"></i> Passer la commande
+                </span>
+                <span *ngIf="isCheckingOut">
+                  <span class="spinner-border spinner-border-sm me-2"></span>
+                  Traitement...
+                </span>
+              </button>
+              <button
+                class="btn btn-outline-secondary w-100"
+                (click)="clearCart()"
+                [disabled]="isCheckingOut"
+              >
+                <i class="bi bi-trash"></i> Vider le panier
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

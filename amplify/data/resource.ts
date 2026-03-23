@@ -204,6 +204,21 @@ const schema = a.schema({
 
     ]),
 
+  // Stripe Transactions (paiements par carte)
+  StripeTransaction: a.model({
+    stripeSessionId: a.string().required(),
+    status: a.enum(['pending', 'completed', 'failed']).required(),
+    amountCents: a.integer().required(), // montant en centimes
+    currency: a.string().required(), // 'eur', 'usd', etc.
+    customerEmail: a.string(),
+    stripeMeta: a.json(), // metadata JSON du paiement
+  })
+    .authorization((allow) => [
+      allow.guest().to(['read']),
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
+    ]),
+
   // Site web
 
 

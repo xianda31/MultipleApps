@@ -13,6 +13,8 @@ import { Policy, PolicyStatement, Effect } from "aws-cdk-lib/aws-iam";
 import { ffbProxy } from "./functions/ffb-proxy/resource";
 import { sesMailing } from "./functions/ses-mailing/resource";
 import { emailUnsubscribe } from "./functions/email-unsubscribe/resource";
+import { stripeCheckout } from "./functions/stripe-checkout/resource";
+import { stripeWebhooks } from "./functions/stripe-webhooks/resource";
 import { auth } from "./auth/resource";
 import { data } from "./data/resource";
 import { storage } from "./storage/resource";
@@ -25,6 +27,8 @@ const backend = defineBackend({
   ffbProxy,
   sesMailing,
   emailUnsubscribe,
+  stripeCheckout,
+  stripeWebhooks,
 });
 
 // create a new API stack
@@ -44,6 +48,16 @@ const sesMailingIntegration = new HttpLambdaIntegration(
 const emailUnsubscribeIntegration = new HttpLambdaIntegration(
   "EmailUnsubscribeIntegration",
   backend.emailUnsubscribe.resources.lambda
+);
+
+const stripeCheckoutIntegration = new HttpLambdaIntegration(
+  "StripeCheckoutIntegration",
+  backend.stripeCheckout.resources.lambda
+);
+
+const stripeWebhooksIntegration = new HttpLambdaIntegration(
+  "StripeWebhooksIntegration",
+  backend.stripeWebhooks.resources.lambda
 );
 
 
@@ -84,6 +98,22 @@ httpApi.addRoutes({
   path: "/api/unsubscribe",
   methods: [HttpMethod.GET],
   integration: emailUnsubscribeIntegration,
+});
+
+// 🔒 Stripe Checkout - Autorisation optionnelle (visiteur peut acheter sans compte)
+httpApi.addRoutes({
+  path: "/api/stripe/checkout",
+  methods: [HttpMethod.POST],
+  integration: stripeCheckoutIntegration,
+  // PAS de authorization -> permet achat anonyme ET connecté
+});
+
+// 🔒 Stripe Webhooks - Pas d'autorisation (Stripe appel en webhook)
+httpApi.addRoutes({
+  path: "/api/stripe/webhooks",
+  methods: [HttpMethod.POST],
+  integration: stripeWebhooksIntegration,
+  // PAS de authorization -> Stripe doit pouvoir appeler
 });
 
 httpApi.addRoutes({
