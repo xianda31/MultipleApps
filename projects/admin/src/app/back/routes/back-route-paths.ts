@@ -29,6 +29,8 @@ export const BACK_ROUTE_PATHS = {
   // Snippets: 'site/thumbnails',
 
   Dashboard: 'dashboard',
+
+  Stripe: 'stripe',
   
   RootVolume: 'outils/disk',
   FilemgrWindows: 'outils/disk/:root_folder',

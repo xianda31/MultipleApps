@@ -106,4 +106,16 @@ export const STATIC_MENUS: NavbarMenu[] = [
             // { label: 'ComiteeBookletViewer', route: BACK_ROUTE_PATHS.ComiteeBooklet }
         ]
     },
+    {
+        label: 'Stripe',
+        key: 'stripe',
+        icon: 'bi-cart3',
+        minLevel: Group_priorities.Systeme,
+        isDev: true,
+        subMenus: [
+            // { label: 'écritures', route: BACK_ROUTE_PATHS.BooksDebugger },
+            { label: 'données S3', route: BACK_ROUTE_PATHS.Stripe },
+            // { label: 'ComiteeBookletViewer', route: BACK_ROUTE_PATHS.ComiteeBooklet }
+        ]
+    },
 ]

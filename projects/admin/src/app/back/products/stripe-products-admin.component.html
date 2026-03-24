@@ -1,0 +1,74 @@
+<div class="container mt-4">
+  <h2 class="mb-3">Gestion des StripeProducts</h2>
+  <button class="btn btn-secondary mb-3" (click)="refresh()">Rafraîchir</button>
+  <table class="table table-striped table-bordered">
+    <thead class="table-light">
+      <tr>
+        <th>Nom</th>
+        <th>Montant</th>
+        <th>Devise</th>
+        <th>Description</th>
+        <th>Statut</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let product of products">
+        <td><b>{{ product.name }}</b></td>
+        <td>{{ product.amount / 100 }}</td>
+        <td>{{ product.currency }}</td>
+        <td>{{ product.description }}</td>
+        <td>
+          <span class="badge" [ngClass]="product.active ? 'bg-success' : 'bg-danger'">
+            {{ product.active ? 'Actif' : 'Inactif' }}
+          </span>
+        </td>
+        <td>
+          <button class="btn btn-sm btn-primary me-1" (click)="edit(product)">Éditer</button>
+          <button class="btn btn-sm btn-warning me-1" (click)="toggleActive(product)">
+            {{ product.active ? 'Désactiver' : 'Activer' }}
+          </button>
+          <button class="btn btn-sm btn-danger" (click)="delete(product)">Supprimer</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <button class="btn btn-success mb-4" (click)="add()">Ajouter un StripeProduct</button>
+
+  <!-- Formulaire d'ajout/édition Bootstrap -->
+  <div *ngIf="editing" class="card mt-4">
+    <div class="card-header">
+      <h4 class="mb-0">{{ editing.id ? 'Édition' : 'Ajout' }} StripeProduct</h4>
+    </div>
+    <div class="card-body">
+      <form #f="ngForm" (ngSubmit)="save()">
+        <div class="mb-3">
+          <label class="form-label">Nom</label>
+          <input [(ngModel)]="editing!.name" name="name" class="form-control" placeholder="Nom" required />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Montant (centimes)</label>
+          <input [(ngModel)]="editing!.amount" name="amount" class="form-control" placeholder="Montant (centimes)" type="number" required />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Devise</label>
+          <input [(ngModel)]="editing!.currency" name="currency" class="form-control" placeholder="Devise" required />
+        </div>
+        <div class="mb-3" *ngIf="editing!.id">
+          <label class="form-label">ID</label>
+          <input [value]="editing!.id" class="form-control" readonly />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Description</label>
+          <textarea [(ngModel)]="editing!.description" name="description" class="form-control" placeholder="Description"></textarea>
+        </div>
+        <div class="form-check mb-3">
+          <input type="checkbox" [(ngModel)]="editing!.active" name="active" class="form-check-input" id="activeCheck" />
+          <label class="form-check-label" for="activeCheck">Actif</label>
+        </div>
+        <button type="submit" class="btn btn-primary me-2">Enregistrer</button>
+        <button type="button" class="btn btn-secondary" (click)="cancel()">Annuler</button>
+      </form>
+    </div>
+  </div>
+</div>

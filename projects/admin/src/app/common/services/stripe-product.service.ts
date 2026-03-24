@@ -17,7 +17,7 @@ export class StripeProductService {
     return this.dbHandler.readStripeProduct(id);
   }
 
-  updateStripeProduct(product: StripeProduct & { id: string }): Promise<StripeProduct> {
+  updateStripeProduct(product: StripeProductInput & { id: string }): Promise<StripeProduct> {
     return this.dbHandler.updateStripeProduct(product);
   }
 

@@ -204,30 +204,34 @@ const schema = a.schema({
 
     ]),
 
+
   // Produits Stripe (paiements par carte)
   StripeProduct: a.model({
-    stripeId: a.string().required(),
+    id: a.id().required(),
     name: a.string().required(),
     description: a.string(),
     amount: a.integer().required(),
     currency: a.string().required(),
     active: a.boolean().required(),
   })
+    .identifier(['id'])
     .authorization((allow) => [
       allow.guest().to(['read']),
       allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
       allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
     ]),
 
+
   // Stripe Transactions (paiements par carte)
   StripeTransaction: a.model({
-    stripeSessionId: a.string().required(),
+    id: a.id().required(),
     status: a.enum(['pending', 'completed', 'failed']),
     amountCents: a.integer().required(),
     currency: a.string().required(),
     customerEmail: a.string(),
     stripeMeta: a.json(),
   })
+    .identifier(['id'])
     .authorization((allow) => [
       allow.guest().to(['read']),
       allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),

@@ -2,6 +2,7 @@ import { Type } from "@angular/core";
 import { TournamentsComponent } from "../tournaments/tournaments/tournaments.component";
 import { SettingsComponent } from "../members/settings/settings.component";
 import { PurchasesComponent } from "../../front/purchases/purchases.component";
+import { FrontShopComponent } from "../../front/shop/front-shop.component";
 import { GameCardsOwnedComponent } from "../../front/game-cards-owned/game-cards-owned.component";
 import { Routes } from "@angular/router";
 import { ConnexionPageComponent } from "../authentification/connexion-page/connexion-page.component";
@@ -25,6 +26,7 @@ export enum NAVITEM_PLUGIN {
   ASSISTANCE = 'assistance',
   PDF_VIEWER = 'pdf_viewer',
   ALBUM = 'les_albums',
+  ONLINE_SHOP = 'online_shop',
 };
 
 export type PluginRouteTemplate = {
@@ -69,10 +71,12 @@ export const PLUGINS: Record<string, Type<any>> = {
   [NAVITEM_PLUGIN.ASSISTANCE]: AssistanceComponent,
   [NAVITEM_PLUGIN.ALBUM]: AlbumComponent,
   [NAVITEM_PLUGIN.PDF_VIEWER]: PdfViewerComponent,
+  [NAVITEM_PLUGIN.ONLINE_SHOP]: FrontShopComponent,
 };
 
 
 export const PLUGINS_META: Record<string, PluginMeta> = {
+    [NAVITEM_PLUGIN.ONLINE_SHOP]: { requiresAuth: false },
   // Plugins avec extraRoutes ou configuration spéciale
   [NAVITEM_PLUGIN.TOURNAMENTS]: { 
     component: TournamentComponent,  // Composant différent pour le détail (vs liste)

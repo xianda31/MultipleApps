@@ -82,7 +82,7 @@
                 <span class="item-name">{{ item.product.name }}</span>
                 <button
                   class="btn-remove"
-                  (click)="removeFromCart(item.product.stripeId)"
+                  (click)="removeFromCart(item.product.id)"
                   title="Retirer du panier"
                 >
                   <i class="bi bi-trash"></i>
@@ -93,7 +93,7 @@
                 <div class="quantity-control">
                   <button
                     class="btn-qty"
-                    (click)="updateQuantity(item.product.stripeId, item.quantity - 1)"
+                    (click)="updateQuantity(item.product.id, item.quantity - 1)"
                     [disabled]="item.quantity <= 1"
                   >
                     −
@@ -101,7 +101,7 @@
                   <span class="qty-value">{{ item.quantity }}</span>
                   <button
                     class="btn-qty"
-                    (click)="updateQuantity(item.product.stripeId, item.quantity + 1)"
+                    (click)="updateQuantity(item.product.id, item.quantity + 1)"
                     [disabled]="item.quantity >= 100"
                   >
                     +

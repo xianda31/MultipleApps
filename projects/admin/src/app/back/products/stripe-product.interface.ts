@@ -1,9 +1,9 @@
 import { Schema } from "../../../../../../amplify/data/resource";
 
 export interface StripeProduct {
-  stripeId: string;
+  id: string;
   name: string;
-  description?: string;
+  description?: string | null;
   amount: number;
   currency: string;
   active: boolean;

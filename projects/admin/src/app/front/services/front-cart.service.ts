@@ -30,7 +30,7 @@ export class FrontCartService {
    * IMPORTANT: Aucune validation du prix ici - sera fait serveur-side
    */
   addToCart(product: StripeProduct, quantity: number = 1): void {
-    const existingItem = this._cart.items.find(item => item.product.stripeId === product.stripeId);
+    const existingItem = this._cart.items.find(item => item.product.id === product.id);
     if (existingItem) {
       existingItem.quantity += quantity;
     } else {
@@ -43,7 +43,7 @@ export class FrontCartService {
    * Retire un item du panier
    */
   removeFromCart(productId: string): void {
-    this._cart.items = this._cart.items.filter(item => item.product.stripeId !== productId);
+    this._cart.items = this._cart.items.filter(item => item.product.id !== productId);
     this._updateSubtotal();
   }
 
@@ -51,7 +51,7 @@ export class FrontCartService {
    * Met à jour la quantité d'un item
    */
   updateQuantity(productId: string, quantity: number): void {
-    const item = this._cart.items.find(i => i.product.stripeId === productId);
+    const item = this._cart.items.find(i => i.product.id === productId);
     if (item) {
       if (quantity <= 0) {
         this.removeFromCart(productId);
@@ -89,7 +89,7 @@ export class FrontCartService {
    */
   getCheckoutPayload(): { productIds: string[]; quantities: number[] } {
     return {
-      productIds: this._cart.items.map(item => item.product.stripeId),
+      productIds: this._cart.items.map(item => item.product.id),
       quantities: this._cart.items.map(item => item.quantity)
     };
   }
