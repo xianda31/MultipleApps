@@ -42,13 +42,13 @@ export class StripeService {
         apiName: this.API_NAME,
         path: this.CHECKOUT_PATH,
         options: {
-          body: {
+          body: JSON.stringify({
             productIds: request.productIds,
             quantities: request.quantities,
             successUrl: request.successUrl,
             cancelUrl: request.cancelUrl,
             customerEmail: request.customerEmail
-          },
+          }),
           headers: {
             'Content-Type': 'application/json',
             ...headers
@@ -57,7 +57,8 @@ export class StripeService {
       });
 
       const { body } = await restOperation.response;
-      const response: StripeCheckoutResponse = await body.json();
+      const responseText = await body.text();
+      const response: StripeCheckoutResponse = JSON.parse(responseText);
 
       if (response.error) {
         throw new Error(response.error);

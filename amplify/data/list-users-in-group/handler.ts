@@ -1,5 +1,5 @@
 import type { Schema } from "../resource"
-import { env } from "$amplify/env/add-user-to-group"
+import { env } from "$amplify/env/list-users-in-group"
 import {
   ListUsersInGroupCommand,
   CognitoIdentityProviderClient,
