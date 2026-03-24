@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { Product } from '../../back/products/product.interface';
-import { FrontCart, FrontCartItem } from './front-cart.interface';
+import { StripeProduct } from '../../back/products/stripe-product.interface';
+import { StripeCart, StripeCartItem } from './stripe-cart.interface';
 
 /**
  * Service de panier frontend - SIMPLE, pas de logique métier complexe
@@ -12,16 +12,16 @@ import { FrontCart, FrontCartItem } from './front-cart.interface';
   providedIn: 'root'
 })
 export class FrontCartService {
-  private _cart: FrontCart = { items: [], subtotal: 0 };
-  private _cart$ = new BehaviorSubject<FrontCart>(this._cart);
+  private _cart: StripeCart = { items: [], subtotal: 0 };
+  private _cart$ = new BehaviorSubject<StripeCart>(this._cart);
 
   constructor() {}
 
-  get cart$(): Observable<FrontCart> {
+  get cart$(): Observable<StripeCart> {
     return this._cart$.asObservable();
   }
 
-  get cart(): FrontCart {
+  get cart(): StripeCart {
     return this._cart;
   }
 
@@ -29,15 +29,13 @@ export class FrontCartService {
    * Ajoute un produit au panier (ou augmente la quantité)
    * IMPORTANT: Aucune validation du prix ici - sera fait serveur-side
    */
-  addToCart(product: Product, quantity: number = 1): void {
-    const existingItem = this._cart.items.find(item => item.product.id === product.id);
-    
+  addToCart(product: StripeProduct, quantity: number = 1): void {
+    const existingItem = this._cart.items.find(item => item.product.stripeId === product.stripeId);
     if (existingItem) {
       existingItem.quantity += quantity;
     } else {
       this._cart.items.push({ product, quantity });
     }
-    
     this._updateSubtotal();
   }
 
@@ -45,7 +43,7 @@ export class FrontCartService {
    * Retire un item du panier
    */
   removeFromCart(productId: string): void {
-    this._cart.items = this._cart.items.filter(item => item.product.id !== productId);
+    this._cart.items = this._cart.items.filter(item => item.product.stripeId !== productId);
     this._updateSubtotal();
   }
 
@@ -53,7 +51,7 @@ export class FrontCartService {
    * Met à jour la quantité d'un item
    */
   updateQuantity(productId: string, quantity: number): void {
-    const item = this._cart.items.find(i => i.product.id === productId);
+    const item = this._cart.items.find(i => i.product.stripeId === productId);
     if (item) {
       if (quantity <= 0) {
         this.removeFromCart(productId);
@@ -79,7 +77,7 @@ export class FrontCartService {
    */
   private _updateSubtotal(): void {
     this._cart.subtotal = this._cart.items.reduce(
-      (total, item) => total + (item.product.price * item.quantity),
+      (total, item) => total + (item.product.amount * item.quantity),
       0
     );
     this._cart$.next(this._cart);
@@ -91,7 +89,7 @@ export class FrontCartService {
    */
   getCheckoutPayload(): { productIds: string[]; quantities: number[] } {
     return {
-      productIds: this._cart.items.map(item => item.product.id),
+      productIds: this._cart.items.map(item => item.product.stripeId),
       quantities: this._cart.items.map(item => item.quantity)
     };
   }

@@ -20,29 +20,20 @@
 
         <!-- Grille des produits -->
         <div class="product-card" *ngFor="let product of products">
-          <div class="product-image">
-            <img
-              *ngIf="product.image"
-              [src]="product.image"
-              [alt]="product.description"
-              class="img-fluid"
-            />
-            <div *ngIf="!product.image" class="no-image">
-              <i class="bi bi-image"></i>
-            </div>
+          <!-- No product image: StripeProduct has no image property -->
+          <div class="product-image no-image">
+            <i class="bi bi-image"></i>
           </div>
 
           <div class="product-info">
-            <h3 class="product-name">{{ product.description }}</h3>
-            <p class="product-label" *ngIf="product.label">{{ product.label }}</p>
 
+            <h3 class="product-name">{{ product.name }}</h3>
             <div class="price-container">
-              <span class="price">{{ formatPrice(product.values / 100) }}</span>
-              <span class="currency">EUR</span>
+              <span class="price">{{ formatPrice(product.amount / 100) }}</span>
+              <span class="currency">{{ product.currency }}</span>
             </div>
-
-            <p class="product-description" *ngIf="product.comment">
-              {{ product.comment }}
+            <p class="product-description" *ngIf="product.description">
+              {{ product.description }}
             </p>
 
             <button
@@ -88,7 +79,7 @@
           <div class="cart-items" *ngIf="cart.items && cart.items.length > 0">
             <div class="cart-item" *ngFor="let item of cart.items">
               <div class="item-header">
-                <span class="item-name">{{ item.product.description }}</span>
+                <span class="item-name">{{ item.product.name }}</span>
                 <button
                   class="btn-remove"
                   (click)="removeFromCart(item.product.id)"
@@ -102,7 +93,7 @@
                 <div class="quantity-control">
                   <button
                     class="btn-qty"
-                    (click)="updateQuantity(item.product.id, item.quantity - 1)"
+                    (click)="updateQuantity(item.product.stripeId, item.quantity - 1)"
                     [disabled]="item.quantity <= 1"
                   >
                     −
@@ -110,14 +101,14 @@
                   <span class="qty-value">{{ item.quantity }}</span>
                   <button
                     class="btn-qty"
-                    (click)="updateQuantity(item.product.id, item.quantity + 1)"
+                    (click)="updateQuantity(item.product.stripeId, item.quantity + 1)"
                     [disabled]="item.quantity >= 100"
                   >
                     +
                   </button>
                 </div>
                 <span class="item-price">
-                  {{ formatPrice((item.product.values / 100) * item.quantity) }}
+                  {{ formatPrice((item.product.amount / 100) * item.quantity) }}
                 </span>
               </div>
             </div>

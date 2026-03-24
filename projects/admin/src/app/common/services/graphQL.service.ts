@@ -1,4 +1,4 @@
-
+ 
 import { Injectable } from '@angular/core';
 import { generateClient } from 'aws-amplify/api';
 import { catchError, from, lastValueFrom, map, Observable, of, switchMap, tap, filter } from 'rxjs';
@@ -7,6 +7,7 @@ import { Member, Member_input } from '../interfaces/member.interface';
 import { BookEntry } from '../interfaces/accounting.interface';
 import { Schema } from '../../../../../../amplify/data/resource';
 import { Product, Product_input } from '../../back/products/product.interface';
+import { StripeProduct, StripeProductInput } from '../../back/products/stripe-product.interface';
 import { PlayBook, PlayBook_input } from '../../back/game-cards/game-card.interface';
 import { Page, Page_input, Snippet, Snippet_input } from '../interfaces/page_snippet.interface';
 import { Game, Game_input } from '../../back/fees/fees.interface';
@@ -353,6 +354,65 @@ export class DBhandler {
   }
 
 
+ // STRIPE PRODUCT SERVICE
+
+  // CREATE
+
+  async createStripeProduct(product: StripeProductInput): Promise<StripeProduct> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { data, errors } = await client.models.StripeProduct.create(product);
+    if (errors) throw errors;
+    return data as StripeProduct;
+  }
+
+  // READ (single)
+
+  async readStripeProduct(id: string): Promise<StripeProduct> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { data, errors } = await client.models.StripeProduct.get({ id });
+    if (errors) throw errors;
+    return data as StripeProduct;
+  }
+
+  // UPDATE
+
+  async updateStripeProduct(product: StripeProduct & { id: string }): Promise<StripeProduct> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { data, errors } = await client.models.StripeProduct.update(product);
+    if (errors) throw errors;
+    return data as StripeProduct;
+  }
+
+  // DELETE
+
+  async deleteStripeProduct(id: string): Promise<boolean> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { errors } = await client.models.StripeProduct.delete({ id });
+    if (errors) throw errors;
+    return true;
+  }
+
+  // LIST (all)
+  listStripeProducts(): Observable<StripeProduct[]> {
+    return this._authMode().pipe(
+      switchMap((authMode) => {
+        const client = generateClient<Schema>({ authMode });
+        return from(client.models.StripeProduct.list({ limit: 300 })).pipe(
+          map(({ data, errors }) => {
+            if (errors) {
+              console.error('StripeProduct.list error', errors);
+              return [];
+            }
+            return data as StripeProduct[];
+          })
+        );
+      })
+    );
+  }
 
 
 

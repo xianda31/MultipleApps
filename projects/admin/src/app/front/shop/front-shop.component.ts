@@ -4,22 +4,22 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Observable, Subject, takeUntil } from 'rxjs';
 import { ToastService } from '../../common/services/toast.service';
-import { ProductService } from '../../common/services/product.service';
+import { StripeProductService } from '../../common/services/stripe-product.service';
 import { FrontCartService } from '../services/front-cart.service';
 import { StripeService } from '../services/stripe.service';
-import { Product } from '../../back/products/product.interface';
-import { FrontCart } from '../services/front-cart.interface';
+import { StripeProduct } from '../../back/products/stripe-product.interface';
+import { StripeCart } from '../services/stripe-cart.interface';
 
 @Component({
   selector: 'app-front-shop',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule],
   templateUrl: './front-shop.component.html',
   styleUrls: ['./front-shop.component.scss']
 })
 export class FrontShopComponent implements OnInit, OnDestroy {
-  products$!: Observable<Product[]>;
-  cart$!: Observable<FrontCart>;
+  products$!: Observable<StripeProduct[]>;
+  cart$!: Observable<StripeCart>;
   
   isCheckingOut = false;
   showCart = false;
@@ -27,15 +27,15 @@ export class FrontShopComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   constructor(
-    private productService: ProductService,
+    private stripeProductService: StripeProductService,
     private cartService: FrontCartService,
     private stripeService: StripeService,
     private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
-    // Charger les produits disponibles à l'achat
-    this.products$ = this.productService.listProducts();
+    // Charger les produits Stripe disponibles à l'achat
+    this.products$ = this.stripeProductService.listStripeProducts();
     
     // Observer le panier
     this.cart$ = this.cartService.cart$;
@@ -49,10 +49,10 @@ export class FrontShopComponent implements OnInit, OnDestroy {
   /**
    * Ajoute un produit au panier
    */
-  addToCart(product: Product): void {
+  addToCart(product: StripeProduct): void {
     this.cartService.addToCart(product, 1);
     this.toastService.showSuccess(
-      `${product.description} ajouté au panier`,
+      `${product.name} ajouté au panier`,
       'Produit ajouté'
     );
   }
