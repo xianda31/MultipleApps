@@ -82,7 +82,7 @@
                 <span class="item-name">{{ item.product.name }}</span>
                 <button
                   class="btn-remove"
-                  (click)="removeFromCart(item.product.id)"
+                  (click)="removeFromCart(item.product.stripeId)"
                   title="Retirer du panier"
                 >
                   <i class="bi bi-trash"></i>
