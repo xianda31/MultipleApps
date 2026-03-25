@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges, OnDestroy, AfterViewInit, AfterViewChecked, ElementRef, QueryList, ViewChildren, HostListener } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, OnDestroy, AfterViewInit, AfterViewChecked, ElementRef, QueryList, ViewChildren } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MENU_TITLES, Snippet } from '../../../../../../common/interfaces/page_snippet.interface';
 import { BreakpointsSettings } from '../../../../../../common/interfaces/ui-conf.interface';
@@ -29,22 +29,11 @@ export class ALaUneRenderComponent implements OnChanges, OnDestroy, AfterViewIni
   TRUNCATE_HYSTERISIS = 50;
   private uiSub?: Subscription;
   
-  // Expand/collapse settings from UI
-  unfold_on_hover: boolean = false;
-  hoverDelayMs: number = 500;
-  hoverDurationMs: number = 600;
+  // Animation duration for expand/collapse
+  private readonly animationDurationMs = 600;
   
   // Per-snippet state: track which snippets are expanded
   private expandedSnippets = new Set<string>();
-  
-  // Per-snippet timers: hover and collapse delays
-  private snippetHoverTimers = new Map<string, any>();
-  private snippetCollapseTimers = new Map<string, any>();
-  
-  // small screen or touch detection
-  isSmallScreenOrTouch: boolean = false;
-  // touch device detection (independent of orientation)
-  isTouchDevice: boolean = false;
   @ViewChildren('clampContainer') clampContainers!: QueryList<ElementRef<HTMLElement>>;
   @ViewChildren('clampRef') clampRefs!: QueryList<ElementRef<HTMLElement>>;
 
@@ -59,88 +48,19 @@ export class ALaUneRenderComponent implements OnChanges, OnDestroy, AfterViewIni
     private navItemsService: NavItemsService,
     private internalLinkRoutingService: InternalLinkRoutingService
   ) {
-    this.updateIsSmallScreenOrTouch();
     // subscribe to UI settings
     this.uiSub = this.systemDataService.get_ui_settings().subscribe((ui: any) => {
       try {
         const rl = (ui && ui.homepage && ui.homepage.read_more_lines) ? ui.homepage.read_more_lines : ui?.read_more_lines ?? 3;
         this.read_more_lines = (rl !== undefined && rl !== null) ? Number(rl) : 3;
         this.TRUNCATE_LIMIT = Math.max(0, Math.round(this.read_more_lines * 120));
-        
-        // Get expand/collapse settings from UI
-        this.unfold_on_hover = !!(ui && ui.homepage && ui.homepage.unfold_on_hover) || !!ui?.unfold_on_hover;
-        this.hoverDelayMs = (ui && ui.homepage && ui.homepage.hover_unfold_delay_ms) ? Number(ui.homepage.hover_unfold_delay_ms) : (ui?.hover_unfold_delay_ms ?? 500);
-        this.hoverDurationMs = (ui && ui.homepage && ui.homepage.hover_unfold_duration_ms) ? Number(ui.homepage.hover_unfold_duration_ms) : (ui?.hover_unfold_duration_ms ?? 600);
       } catch (e) { /* ignore */ }
     });
   }
 
-  setHover(id: any) {
-    if (!this.unfold_on_hover) return;
-    const snippetId = id !== undefined && id !== null ? String(id) : null;
-    if (!snippetId) return;
-    
-    // Cancel any pending collapse timer
-    this.cancelCollapseTimer(snippetId);
-    
-    // If already expanded, do nothing
-    if (this.expandedSnippets.has(snippetId)) return;
-    
-    // Cancel any previous hover timer
-    this.cancelHoverTimer(snippetId);
-    
-    // Schedule expansion after delay
-    const timer = setTimeout(() => {
-      this.expandedSnippets.add(snippetId);
-      this.snippetHoverTimers.delete(snippetId);
-      this.animateExpand(snippetId);
-    }, this.hoverDelayMs);
-    
-    this.snippetHoverTimers.set(snippetId, timer);
-  }
 
-  clearHover(id: any) {
-    if (!this.unfold_on_hover) return;
-    const snippetId = id !== undefined && id !== null ? String(id) : null;
-    if (!snippetId) return;
-    
-    // Cancel pending hover expansion
-    this.cancelHoverTimer(snippetId);
-    
-    // If not expanded, do nothing
-    if (!this.expandedSnippets.has(snippetId)) return;
-    
-    // Cancel any previous collapse timer
-    this.cancelCollapseTimer(snippetId);
-    
-    // Schedule collapse with animation
-    const timer = setTimeout(() => {
-      this.expandedSnippets.delete(snippetId);
-      this.snippetCollapseTimers.delete(snippetId);
-      this.animateCollapse(snippetId);
-    }, this.hoverDelayMs);
-    
-    this.snippetCollapseTimers.set(snippetId, timer);
-  }
-
-  private cancelHoverTimer(snippetId: string) {
-    const timer = this.snippetHoverTimers.get(snippetId);
-    if (timer) {
-      clearTimeout(timer);
-      this.snippetHoverTimers.delete(snippetId);
-    }
-  }
-
-  private cancelCollapseTimer(snippetId: string) {
-    const timer = this.snippetCollapseTimers.get(snippetId);
-    if (timer) {
-      clearTimeout(timer);
-      this.snippetCollapseTimers.delete(snippetId);
-    }
-  }
 
   isExpanded(id: any): boolean {
-    if (!this.unfold_on_hover) return false;
     const snippetId = id !== undefined && id !== null ? String(id) : null;
     return snippetId !== null && this.expandedSnippets.has(snippetId);
   }
@@ -158,33 +78,7 @@ export class ALaUneRenderComponent implements OnChanges, OnDestroy, AfterViewIni
     };
   }
 
-  @HostListener('window:resize')
-  onWindowResize() {
-    this.updateIsSmallScreenOrTouch();
-  }
 
-  @HostListener('window:touchstart')
-  onFirstTouch() {
-    this.updateIsSmallScreenOrTouch();
-  }
-
-  private updateIsSmallScreenOrTouch() {
-    try {
-      const mq = window.matchMedia('(max-width: 768px)');
-      const hasTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) || (navigator as any).msMaxTouchPoints > 0;
-      const isMobileUA = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
-      const isPortrait = (typeof window.innerHeight === 'number' && typeof window.innerWidth === 'number') ? window.innerHeight > window.innerWidth : false;
-      
-      // Set touch device (independent of orientation)
-      this.isTouchDevice = !!hasTouch || isMobileUA;
-      
-      // Set small screen or touch (requires portrait for touch)
-      this.isSmallScreenOrTouch = !!hasTouch && isPortrait && (mq.matches || isMobileUA);
-    } catch (e) { 
-      this.isSmallScreenOrTouch = false;
-      this.isTouchDevice = false;
-    }
-  }
 
   ngAfterViewInit() {
     this.scheduleOverflowCheck();
@@ -253,17 +147,6 @@ export class ALaUneRenderComponent implements OnChanges, OnDestroy, AfterViewIni
 
   ngOnDestroy(): void {
     try { this.uiSub?.unsubscribe(); } catch (e) { /* ignore */ }
-    
-    // Clean up all timers for all snippets
-    this.snippetHoverTimers.forEach((timer) => {
-      try { clearTimeout(timer); } catch (e) { /* ignore */ }
-    });
-    this.snippetHoverTimers.clear();
-    
-    this.snippetCollapseTimers.forEach((timer) => {
-      try { clearTimeout(timer); } catch (e) { /* ignore */ }
-    });
-    this.snippetCollapseTimers.clear();
   }
 
   trackById(index: number, item: any) {
@@ -274,35 +157,19 @@ export class ALaUneRenderComponent implements OnChanges, OnDestroy, AfterViewIni
     const snippetId = snippet.id !== undefined && snippet.id !== null ? String(snippet.id) : null;
     if (!snippetId) return;
     
-    // If unfold_on_hover is disabled, navigate to the snippet page
-    if (!this.unfold_on_hover) {
-      if (snippet.pageId) {
-        const path = this.navItemsService.getPathByPageTitle(snippet.pageId);
-        if (path) {
-          this.router.navigate(['/front', path, snippet.title]);
-        } else {
-          console.warn('No path found for pageId:', snippet.pageId);
-        }
-      } else {
-        console.warn('No pageId for readMore navigation');
-      }
-      return;
-    }
-    
-    // If unfold_on_hover is enabled, toggle expansion
-    this.cancelCollapseTimer(snippetId);
-    this.cancelHoverTimer(snippetId);
-    
+    // Toggle expansion on button click
     if (this.expandedSnippets.has(snippetId)) {
       // Already expanded, collapse it
       this.expandedSnippets.delete(snippetId);
       this.animateCollapse(snippetId);
     } else {
-      // Not expanded, expand it immediately
+      // Not expanded, expand it
       this.expandedSnippets.add(snippetId);
       this.animateExpand(snippetId);
     }
   }
+
+
 
   private animateExpand(snippetId: string) {
     const container = this.findContainerById(snippetId);
@@ -343,8 +210,7 @@ export class ALaUneRenderComponent implements OnChanges, OnDestroy, AfterViewIni
     container.offsetHeight;
     
     // Now animate to full height with smooth progression
-    const animDuration = this.hoverDurationMs ?? 600;
-    container.style.transition = `height ${animDuration}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`;
+    container.style.transition = `height ${this.animationDurationMs}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`;
     container.style.height = `${fullHeight}px`;
     
     const onEnd = () => {
@@ -358,8 +224,6 @@ export class ALaUneRenderComponent implements OnChanges, OnDestroy, AfterViewIni
   private animateCollapse(snippetId: string) {
     const container = this.findContainerById(snippetId);
     if (!container) return;
-    
-    const animDuration = this.hoverDurationMs ?? 600;
     const clampedHeight = this.measureClampedHeight(container);
     
     // Set explicit current height before transition
@@ -370,7 +234,7 @@ export class ALaUneRenderComponent implements OnChanges, OnDestroy, AfterViewIni
     container.offsetHeight;
     
     // Now animate to clamped height
-    container.style.transition = `height ${animDuration}ms ease-in`;
+    container.style.transition = `height ${this.animationDurationMs}ms ease-in`;
     container.style.height = `${clampedHeight}px`;
     
     const onEnd = () => {
