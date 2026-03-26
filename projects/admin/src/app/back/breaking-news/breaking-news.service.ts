@@ -132,6 +132,16 @@ export class BreakingNewsService {
                 ...msg,
                 createdAt: new Date(msg.createdAt)
               }));
+              // s'il ny a qu'un seul message, on rajoute un message fantôme pour éviter les problèmes d'animation du ticker
+              if (messages.length === 1) {
+                messages.push({
+                  id: 'dummy',
+                  text: '',
+                  active: false,
+                  createdAt: new Date()
+                });
+              }
+
               this._messages$.next(messages);
             })
             .catch((err) => {

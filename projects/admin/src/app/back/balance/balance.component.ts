@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { ToastService } from '../../common/services/toast.service';
 import { switchMap } from 'rxjs';
@@ -15,15 +16,17 @@ import { FinancialReportService } from '../services/financial_report.service';
 @Component({
   selector: 'app-balance',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, ParenthesisPipe, DebtsAndAssetsDetailsComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbModule, ParenthesisPipe, DebtsAndAssetsDetailsComponent],
   templateUrl: './balance.component.html',
   styleUrl: './balance.component.scss'
 })
 export class BalanceComponent {
+  isMobile = false;
 
   export_url: any;
   selected_season!: string;
   current_season!: string;
+  next_season!: string;
   trading_result = 0;
   loaded = false;
   balance_board!: Balance_board;
@@ -40,9 +43,13 @@ export class BalanceComponent {
     private bookService: BookService,
     private toastService: ToastService,
     private financialService: FinancialReportService,
-    private router: Router,
     private backNavigationService: BackNavigationService
-  ) { }
+  ) {
+    this.isMobile = window.innerWidth < 768;
+    window.addEventListener('resize', () => {
+      this.isMobile = window.innerWidth < 768;
+    });
+  }
 
 
   ngOnInit() {
@@ -51,6 +58,8 @@ export class BalanceComponent {
       (configuration) => {
         this.selected_season = configuration.season;
         this.current_season = configuration.season;
+        this.next_season = this.systemDataService.next_season(this.current_season);
+
         return configuration.season;
       });
 

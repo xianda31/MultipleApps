@@ -3,7 +3,6 @@ import { Injectable } from '@angular/core';
 import { ChartOptions, Chart } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import {
-  defaultExpensesAndRevenuesChartData,
   defaultPlayerChartData,
   defaultPlayerChartOptions,
   defaultExpensesAndRevenuesChartOptions,
@@ -12,7 +11,7 @@ import {
 } from './dashboard.graph.definition';
 import { Balance_sheet } from '../../common/interfaces/balance.interface';
 
-// Enregistrer le plugin datalabels
+// borderRadius nettoyé
 Chart.register(ChartDataLabels);
 
 
@@ -47,8 +46,8 @@ export class DashboardGraphService {
             backgroundColor: primary + '99',
             borderColor: primary,
             borderWidth: 2,
-            borderRadius: 4,
-            stack: 'Stack 0',
+            borderRadius: 1,
+            stack: 'Stack 0'
           },
           {
             label: 'Femmes',
@@ -56,8 +55,8 @@ export class DashboardGraphService {
             backgroundColor: secondary + '99',
             borderColor: secondary,
             borderWidth: 2,
-            borderRadius: 4,
-            stack: 'Stack 0',
+            borderRadius: 1,
+            stack: 'Stack 0'
           }
         ]
       },
@@ -81,62 +80,67 @@ export class DashboardGraphService {
     chartRevenue: (number | null)[],
     chartExpense: (number | null)[],
     chartResult: (number | null)[]
-  ): {data:any, options:ChartOptions<any>} {
+  ): { data: any, options: ChartOptions<any> } {
     const { primary, secondary, info } = this.getChartColors();
     return {
-        data: {
-      labels: allMonths,
-      datasets: [
-        {
-          ...defaultExpensesAndRevenuesChartData.datasets[0],
-          data: chartRevenue,
-          backgroundColor: primary + '99',
-          borderColor: primary,
-          datalabels: { display: false }
-        },
-        {
-          ...defaultExpensesAndRevenuesChartData.datasets[1],
-          data: chartExpense,
-          backgroundColor: secondary + '99',
-          borderColor: secondary,
-          datalabels: { display: false }
-        },
-        {
-          ...defaultExpensesAndRevenuesChartData.datasets[2],
-          type: 'line',
-          data: chartResult,
-          borderColor: info,
-          backgroundColor: info + '1A',
-          pointBackgroundColor: info,
-          pointRadius: 5,
-          pointBorderColor: '#fff',
-          pointBorderWidth: 2,
-          datalabels: {
-            display: (context: any) => {
-              // Afficher le label uniquement sur le dernier point avec une valeur non-null
-              const data = context.dataset.data;
-              for (let i = data.length - 1; i >= 0; i--) {
-                if (data[i] !== null && data[i] !== undefined) {
-                  return context.dataIndex === i;
+      data: {
+        labels: allMonths,
+        datasets: [
+          {
+            label: 'Revenus',
+            data: chartRevenue,
+            backgroundColor: primary + '99',
+            borderColor: primary,
+            borderWidth: 2,
+            borderRadius: 1,
+            datalabels: { display: false }
+          },
+          {
+            label: 'Dépenses',
+            data: chartExpense,
+            backgroundColor: secondary + '99',
+            borderColor: secondary,
+            borderWidth: 2,
+            borderRadius: 1,
+            datalabels: { display: false }
+          },
+          {
+            type: 'line',
+            label: 'Résultat',
+            data: chartResult,
+            borderColor: info,
+            backgroundColor: info + '1A',
+            pointBackgroundColor: info,
+            pointRadius: 5,
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            datalabels: {
+              display: (context: any) => {
+                // Afficher le label uniquement sur le dernier point avec une valeur non-null
+                const data = context.dataset.data;
+                for (let i = data.length - 1; i >= 0; i--) {
+                  if (data[i] !== null && data[i] !== undefined) {
+                    return context.dataIndex === i;
+                  }
                 }
+                return false;
+              },
+              align: 'right',
+              anchor: 'end',
+              offset: 8,
+              font: {
+                size: 14,
+                weight: 'bold'
+              },
+              color: info,
+              formatter: (value: number | null) => {
+                if (value === null || value === undefined) return '';
+                return value.toFixed(0) + ' €';
               }
-              return false;
-            },
-            align: 'right',
-            anchor: 'end',
-            offset: 8,
-            font: {
-              size: 14,
-              weight: 'bold'
-            },
-            color: info,
-            formatter: (value: number | null) => {
-              if (value === null || value === undefined) return '';
-              return value.toFixed(0) + ' €';
             }
           }
-        }
-      ]},
+        ]
+      },
       options: defaultExpensesAndRevenuesChartOptions
     };
   }
@@ -147,10 +151,10 @@ export class DashboardGraphService {
     tournamentCounts: (number | null)[],
     playerCountAverage: number,
     tournamentCountAverage: number
-  ): {data:any, options:ChartOptions<any>} {
+  ): { data: any, options: ChartOptions<any> } {
     const { primary, info } = this.getChartColors();
     const options = JSON.parse(JSON.stringify(defaultPlayerChartOptions)) as ChartOptions<'bar'>;
-    
+
     // Appliquer les couleurs aux axes
     if (options.scales) {
       if (options.scales['y']) {
@@ -173,7 +177,7 @@ export class DashboardGraphService {
             backgroundColor: primary + '99',
             borderColor: primary,
             borderWidth: 2,
-            borderRadius: 4,
+            borderRadius: 1,
             yAxisID: 'y'
           },
           {
@@ -225,27 +229,27 @@ export class DashboardGraphService {
     balanceSheets: Balance_sheet[]
   ): { data: any, options: ChartOptions<any> } {
     const { primary, secondary, info } = this.getChartColors();
-    
+
     // Trier les balance_sheets par saison chronologiquement
     const sortedSheets = [...balanceSheets].sort((a, b) => {
       return a.season.localeCompare(b.season);
     });
-    
+
     // Extraire les saisons et les données
     const seasons = sortedSheets.map(sheet => sheet.season);
     const savingsData = sortedSheets.map(sheet => sheet.savings);
     const bankData = sortedSheets.map(sheet => sheet.bank);
     const cashboxData = sortedSheets.map(sheet => sheet.cashbox);
     const wipTotalData = sortedSheets.map(sheet => sheet.wip_total);
-    
+
     // Calculer l'offset invisible (hauteur = sum de Stack 0 + wip_total)
-    const invisibleOffsetData = sortedSheets.map(sheet => 
+    const invisibleOffsetData = sortedSheets.map(sheet =>
       sheet.savings + sheet.bank + sheet.cashbox + sheet.wip_total
     );
-    
+
     // Calculer la hauteur "En cours" (-wip_total pour l'effet waterfall)
     const wipDisplayData = sortedSheets.map(sheet => -sheet.wip_total);
-    
+
     return {
       data: {
         labels: seasons,
@@ -256,7 +260,7 @@ export class DashboardGraphService {
             backgroundColor: primary + '99',
             borderColor: primary,
             borderWidth: 2,
-            borderRadius: 4,
+            borderRadius: 1,
             stack: 'Stack 0',
             datalabels: { display: false }
           },
@@ -286,7 +290,7 @@ export class DashboardGraphService {
             backgroundColor: 'transparent',
             borderColor: 'transparent',
             borderWidth: 0,
-            borderRadius: { topLeft: 4, topRight: 4, bottomLeft: 0, bottomRight: 0 },
+            borderRadius: { topLeft: 1, topRight: 1, bottomLeft: 1, bottomRight: 1 },
             stack: 'Stack 1',
             pointRadius: 0,
             datalabels: {
@@ -312,7 +316,7 @@ export class DashboardGraphService {
             borderColor: '#FF6B6B',
             borderWidth: 3,
             borderSkipped: false,
-            borderRadius: { topLeft: 0, topRight: 0, bottomLeft: 4, bottomRight: 4 },
+            borderRadius: { topLeft: 1, topRight: 1, bottomLeft: 1, bottomRight: 1 },
             stack: 'Stack 1',
             datalabels: { display: false }
           },
@@ -350,10 +354,10 @@ export class DashboardGraphService {
               const datasetIndex = 5; // Index du dataset "Total actif"
               const dataset = chart.data.datasets[datasetIndex];
               const meta = chart.getDatasetMeta(datasetIndex);
-              
+
               // Récupérer les données de wip_total (dataset 4)
               const wipDataset = chart.data.datasets[4];
-              
+
               for (let i = 0; i < meta.data.length; i++) {
                 const point = meta.data[i];
                 // Décaler le point visuellement de la moitié de la hauteur de la barre "En cours"
@@ -374,20 +378,25 @@ export class DashboardGraphService {
   }
 
   getDefaultFinancialChartData() {
-    return defaultExpensesAndRevenuesChartData;
+    return {};
   }
+
   getDefaultPlayerChartData() {
     return defaultPlayerChartData;
   }
+
   getDefaultPlayerChartOptions(): ChartOptions<'bar'> {
     return defaultPlayerChartOptions;
   }
+
   getDefaultFinancialChartOptions(): ChartOptions<'bar'> {
     return defaultExpensesAndRevenuesChartOptions;
   }
-    getDefaultMemberAgeDistributionChartData() {
+
+  getDefaultMemberAgeDistributionChartData() {
     return defaultMemberAgeDistributionChartData;
   }
+
   getDefaultMemberAgeDistributionChartOptions(): ChartOptions<'bar'> {
     return defaultMemberAgeDistributionChartOptions;
   }
@@ -440,8 +449,8 @@ export class DashboardGraphService {
     };
   }
 
-  getIVSuffixColorMap(): { [suffix: string]: string } {
-    return {
+  getIVSuffixColorMap() {
+    const map = {
       'NvL': '#AAAAAA',  // Non classé (gris clair)
       'T': '#228B22',    // Trèfle (vert)
       'K': '#db5e25',    // Carreau (orange)
@@ -450,14 +459,15 @@ export class DashboardGraphService {
       'Pr': '#ad9f4e',    // Promotion (dorée)
       'H': '#bb9823'   // Autres (dorée ++)
     };
+    return map as { [key: string]: string };
   }
 
-  buildRevenuesAndExpensesBySectionChart(
+  public buildRevenuesAndExpensesBySectionChart(
     per_section_revenues: { [section: string]: number },
     per_section_expenses: { [section: string]: number }
   ): { data: any, options: ChartOptions<any> } {
     const { primary, secondary, info } = this.getChartColors();
-    
+
     const sections = Object.keys(per_section_revenues);
     const revenues = sections.map(section => per_section_revenues[section] || 0);
     const expenses = sections.map(section => per_section_expenses[section] || 0);

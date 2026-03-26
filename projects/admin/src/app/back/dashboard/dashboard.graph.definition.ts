@@ -10,12 +10,14 @@ export const defaultExpensesAndRevenuesChartData = {
       label: 'Revenus',
       backgroundColor: '',
       borderColor: '',
-      borderWidth: 2,
+        borderRadius: 0
+      },
+      {
+        data: [],
       borderRadius: 4
     },
     {
       data: [],
-      label: 'Dépenses',
       backgroundColor: '',
       borderColor: '',
       borderWidth: 2,
@@ -85,7 +87,7 @@ export const defaultPlayerChartOptions: ChartOptions<'bar'> = {
   scales: {
     x: {
       stacked: false,
-      ticks: { font: { size: 13 } }
+      ticks: { font: { size: 12 } }
     },
     y: {
       type: 'linear' as const,
@@ -94,8 +96,8 @@ export const defaultPlayerChartOptions: ChartOptions<'bar'> = {
       stacked: false,
       beginAtZero: true,
       grid: { display: true },
-      ticks: { font: { size: 13 } },
-      title: { display: true, text: 'Paires', font: { size: 13 } }
+      ticks: { font: { size: 12 } },
+      title: { display: true, text: 'Paires', font: { size: 12 } }
     },
     y1: {
       type: 'linear' as const,
@@ -103,8 +105,8 @@ export const defaultPlayerChartOptions: ChartOptions<'bar'> = {
       position: 'right' as const,
       beginAtZero: true,
       grid: { drawOnChartArea: false },
-      ticks: { font: { size: 13 } },
-      title: { display: true, text: 'Tournois', font: { size: 13 } }
+      ticks: { font: { size: 12 } },
+      title: { display: true, text: 'Tournois', font: { size: 12 } }
     }
   }
 };
@@ -127,14 +129,14 @@ export const defaultExpensesAndRevenuesChartOptions: ChartOptions<'bar'> = {
   scales: {
     x: {
       stacked: false,
-      ticks: { font: { size: 13 } }
+      ticks: { font: { size: 12 } }
     },
     y: {
       stacked: false,
       beginAtZero: true,
       grid: { display: true },
-      ticks: { font: { size: 13 } },
-      title: { display: true, text: 'Montant (€)', font: { size: 13 } }
+      ticks: { font: { size: 12 } },
+      title: { display: true, text: 'Montant (€)', font: { size: 12 } }
     }
   }
 };
@@ -163,8 +165,8 @@ export const defaultMemberAgeDistributionChartOptions: ChartOptions<'bar'> = {
     datalabels: { display: false }
   },
   scales: {
-    x: { title: { display: false, text: "Tranche d'âge" }, ticks: { font: { size: 13 } } },
-    y: { title: { display: true, text: 'Nombre de membres', font: { size: 13 } }, beginAtZero: true, ticks: { font: { size: 13 } } }
+    x: { title: { display: false, text: "Tranche d'âge" }, ticks: { font: { size: 12 } } },
+    y: { title: { display: true, text: 'Nombre de membres', font: { size: 12 } }, beginAtZero: true, ticks: { font: { size: 12 } } }
   }
 };
 
@@ -192,8 +194,8 @@ export const defaultIVDistributionChartOptions: ChartOptions<'bar'> = {
     datalabels: { display: false }
   },
   scales: {
-    x: { title: { display: false, text: 'Plage IV' }, ticks: { font: { size: 13 } } },
-    y: { title: { display: true, text: 'Nombre de membres', font: { size: 13 } }, beginAtZero: true, ticks: { font: { size: 13 } } }
+    x: { title: { display: false, text: 'Plage IV' }, ticks: { font: { size: 12 } } },
+    y: { title: { display: true, text: 'Nombre de membres', font: { size: 12 } }, beginAtZero: true, ticks: { font: { size: 12 } } }
   }
 };
 
@@ -252,8 +254,8 @@ export const defaultBalanceChartOptions: ChartOptions<'bar'> = {
     }
   },
   scales: {
-    x: { title: { display: false, text: 'Saison' }, ticks: { font: { size: 13 } } },
-    y: { title: { display: true, text: 'Montant (€)', font: { size: 13 } }, beginAtZero: true, stacked: true, ticks: { font: { size: 13 } } }
+    x: { title: { display: false, text: 'Saison' }, ticks: { font: { size: 12 } } },
+    y: { title: { display: true, text: 'Montant (€)', font: { size: 12 } }, beginAtZero: true, stacked: true, ticks: { font: { size: 12 } } }
   }
 };
 
