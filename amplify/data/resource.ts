@@ -183,35 +183,19 @@ const schema = a.schema({
     ]),
 
 
-  // Produits à la vente
+  // Produits à la vente (unifié back-office + Stripe)
 
-  Product: a.model({
-    glyph: a.string().required(),
-    description: a.string().required(),
-    account: a.string().required(),
-    price: a.float().required(),
-    paired: a.boolean().required(),
-    active: a.boolean().required(),
-    info1: a.string(),
-  })
-    .authorization((allow) => [
-      allow.guest().to(['read']),
-      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
-      allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
-      allow.group(Group_names.Editor).to(['read', 'create']),
-      allow.group(Group_names.Support).to(['read', 'create']),
-      allow.group(Group_names.Member).to(['read']),
-
-    ]),
-
-
-  // Produits Stripe (paiements par carte)
-  StripeProduct: a.model({
+  SaleItem: a.model({
     id: a.id().required(),
-    name: a.string().required(),
-    description: a.string(),
-    amount: a.integer().required(),
-    currency: a.string().required(),
+    name: a.string().required(),          // label court (Stripe + back)
+    description: a.string().required(),   // label long
+    glyph: a.string().required(),         // icône UI back-office
+    price: a.float().required(),          // en euros (source of truth)
+    account: a.string().required(),       // compte compta (ex: "CAR")
+    entries: a.integer(),                 // nb entrées carte (ex: 10)
+    paired: a.boolean().required(),       // carte partagée (paire)
+    currency: a.string().required(),      // "EUR" par défaut
+    stripeEnabled: a.boolean().required(), // vendable en ligne
     active: a.boolean().required(),
   })
     .identifier(['id'])
@@ -219,6 +203,9 @@ const schema = a.schema({
       allow.guest().to(['read']),
       allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
       allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Editor).to(['read', 'create']),
+      allow.group(Group_names.Support).to(['read', 'create']),
+      allow.group(Group_names.Member).to(['read']),
     ]),
 
 

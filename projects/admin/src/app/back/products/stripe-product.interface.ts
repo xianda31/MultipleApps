@@ -1,12 +1,2 @@
-import { Schema } from "../../../../../../amplify/data/resource";
-
-export interface StripeProduct {
-  id: string;
-  name: string;
-  description?: string | null;
-  amount: number;
-  currency: string;
-  active: boolean;
-}
-
-export type StripeProductInput = Omit<Schema['StripeProduct']['type'], 'createdAt' | 'updatedAt'>;
+// StripeProduct is now SaleItem — re-exported for backward compatibility
+export { SaleItem as StripeProduct, SaleItemInput as StripeProductInput } from './sale-item.interface';

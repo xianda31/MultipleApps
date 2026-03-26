@@ -279,7 +279,7 @@ export class CartService {
 
         if ((product.paired && members.length === 2) || !product.paired) {
           // create game card
-          await this.gameCardService.createCard(members, (+product.info1! * members.length))
+          await this.gameCardService.createCard(members, (product.entries! * members.length))
             .catch(error => {
               console.error('Error à la création de la carte', member.firstname, member.lastname, error);
             })

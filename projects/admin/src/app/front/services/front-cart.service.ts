@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { StripeProduct } from '../../back/products/stripe-product.interface';
+import { SaleItem } from '../../back/products/sale-item.interface';
 import { StripeCart, StripeCartItem } from './stripe-cart.interface';
 
 /**
@@ -29,7 +29,7 @@ export class FrontCartService {
    * Ajoute un produit au panier (ou augmente la quantité)
    * IMPORTANT: Aucune validation du prix ici - sera fait serveur-side
    */
-  addToCart(product: StripeProduct, quantity: number = 1): void {
+  addToCart(product: SaleItem, quantity: number = 1): void {
     const existingItem = this._cart.items.find(item => item.product.id === product.id);
     if (existingItem) {
       existingItem.quantity += quantity;
@@ -77,7 +77,7 @@ export class FrontCartService {
    */
   private _updateSubtotal(): void {
     this._cart.subtotal = this._cart.items.reduce(
-      (total, item) => total + (item.product.amount * item.quantity),
+      (total, item) => total + (item.product.price * item.quantity),
       0
     );
     this._cart$.next(this._cart);

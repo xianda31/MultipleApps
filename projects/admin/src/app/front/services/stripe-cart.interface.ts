@@ -1,7 +1,7 @@
-import { StripeProduct } from '../../back/products/stripe-product.interface';
+import { SaleItem } from '../../back/products/sale-item.interface';
 
 export interface StripeCartItem {
-  product: StripeProduct;
+  product: SaleItem;
   quantity: number;
 }
 

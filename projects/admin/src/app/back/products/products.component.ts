@@ -43,19 +43,21 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
 
     this.products_subscription = this.productService.listProducts().subscribe((products) => {
-      this.products = products;
+      this.products = [...products].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'fr'));
     });
 
     this.productForm = new FormGroup({
       id: new FormControl(),
       glyph: new FormControl('', Validators.required),
+      name: new FormControl('', Validators.required),
       description: new FormControl('', Validators.required),
-      info1: new FormControl(''),
+      entries: new FormControl<number | null>(null),
       price: new FormControl('', [Validators.required, Validators.min(0)]),
       account: new FormControl('', Validators.required),
       paired: new FormControl<boolean>(false, { nonNullable: true }),
+      currency: new FormControl('EUR', Validators.required),
+      stripeEnabled: new FormControl<boolean>(false, { nonNullable: true }),
       active: new FormControl<boolean>(true, { nonNullable: true }),
-      // color: new FormControl('', Validators.required),
     });
 
   }

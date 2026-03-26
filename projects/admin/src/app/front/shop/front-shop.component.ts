@@ -7,7 +7,7 @@ import { ToastService } from '../../common/services/toast.service';
 import { StripeProductService } from '../../common/services/stripe-product.service';
 import { FrontCartService } from '../services/front-cart.service';
 import { StripeService } from '../services/stripe.service';
-import { StripeProduct } from '../../back/products/stripe-product.interface';
+import { SaleItem } from '../../back/products/sale-item.interface';
 import { StripeCart } from '../services/stripe-cart.interface';
 
 @Component({
@@ -18,7 +18,7 @@ import { StripeCart } from '../services/stripe-cart.interface';
   styleUrls: ['./front-shop.component.scss']
 })
 export class FrontShopComponent implements OnInit, OnDestroy {
-  products$!: Observable<StripeProduct[]>;
+  products$!: Observable<SaleItem[]>;
   cart$!: Observable<StripeCart>;
   
   isCheckingOut = false;
@@ -49,7 +49,7 @@ export class FrontShopComponent implements OnInit, OnDestroy {
   /**
    * Ajoute un produit au panier
    */
-  addToCart(product: StripeProduct): void {
+  addToCart(product: SaleItem): void {
     this.cartService.addToCart(product, 1);
     this.toastService.showSuccess(
       `${product.name} ajouté au panier`,

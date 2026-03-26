@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StripeProductService } from '../../common/services/stripe-product.service';
+import { ProductService } from '../../common/services/product.service';
 import { StripeProduct } from './stripe-product.interface';
 
 @Component({
@@ -15,14 +16,17 @@ export class StripeProductsAdminComponent implements OnInit {
   products: StripeProduct[] = [];
   editing: Partial<StripeProduct> | null = null;
 
-  constructor(private stripeProductService: StripeProductService) {}
+  constructor(
+    private stripeProductService: StripeProductService,
+    private productService: ProductService
+  ) {}
 
   ngOnInit() {
     this.refresh();
   }
 
   refresh() {
-    this.stripeProductService.listStripeProducts().subscribe(p => this.products = p);
+    this.productService.listProducts().subscribe(p => this.products = p as unknown as StripeProduct[]);
   }
 
   add() {
@@ -41,7 +45,7 @@ export class StripeProductsAdminComponent implements OnInit {
     if (!this.editing) return;
     const prod = this.editing as StripeProduct;
     // Vérification des champs requis
-    if (!prod.name || !prod.currency || prod.amount == null) {
+    if (!prod.name || !prod.currency || prod.price == null) {
       alert('Veuillez remplir tous les champs obligatoires (nom, montant, devise).');
       return;
     }

@@ -361,9 +361,9 @@ export class DBhandler {
   async createStripeProduct(product: StripeProductInput): Promise<StripeProduct> {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode });
-    const { data, errors } = await client.models.StripeProduct.create(product);
+    const { data, errors } = await client.models.SaleItem.create(product as any);
     if (errors) throw errors;
-    return data as StripeProduct;
+    return data as unknown as StripeProduct;
   }
 
   // READ (single)
@@ -371,9 +371,9 @@ export class DBhandler {
   async readStripeProduct(id: string): Promise<StripeProduct> {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode });
-    const { data, errors } = await client.models.StripeProduct.get({ id });
+    const { data, errors } = await client.models.SaleItem.get({ id });
     if (errors) throw errors;
-    return data as StripeProduct;
+    return data as unknown as StripeProduct;
   }
 
   // UPDATE
@@ -381,9 +381,9 @@ export class DBhandler {
   async updateStripeProduct(product: StripeProduct & { id: string }): Promise<StripeProduct> {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode });
-    const { data, errors } = await client.models.StripeProduct.update(product);
+    const { data, errors } = await client.models.SaleItem.update(product as any);
     if (errors) throw errors;
-    return data as StripeProduct;
+    return data as unknown as StripeProduct;
   }
 
   // DELETE
@@ -391,23 +391,23 @@ export class DBhandler {
   async deleteStripeProduct(id: string): Promise<boolean> {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode });
-    const { errors } = await client.models.StripeProduct.delete({ id });
+    const { errors } = await client.models.SaleItem.delete({ id });
     if (errors) throw errors;
     return true;
   }
 
-  // LIST (all)
+  // LIST (active + stripeEnabled)
   listStripeProducts(): Observable<StripeProduct[]> {
     return this._authMode().pipe(
       switchMap((authMode) => {
         const client = generateClient<Schema>({ authMode });
-        return from(client.models.StripeProduct.list({ limit: 300 })).pipe(
+        return from(client.models.SaleItem.list({ limit: 300 })).pipe(
           map(({ data, errors }) => {
             if (errors) {
-              console.error('StripeProduct.list error', errors);
+              console.error('SaleItem.list (stripe) error', errors);
               return [];
             }
-            return data as StripeProduct[];
+            return (data as unknown as StripeProduct[]).filter((p: any) => p.stripeEnabled && p.active);
           })
         );
       })
@@ -424,37 +424,34 @@ export class DBhandler {
   async createProduct(product: Product_input): Promise<Product> {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode: authMode });
-    const { data, errors } = await client.models.Product.create(product);
+    const { data, errors } = await client.models.SaleItem.create(product as any);
     if (errors) throw errors;
-    if (data && 'info1' in data && data.info1 === null) {
-      data.info1 = null;
-    }
-    return data as Product;
+    return data as unknown as Product;
   }
 
   // PRODUCT  READ (single) PROMISE
   async readProduct(id: string): Promise<Product> {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode: authMode });
-    const { data, errors } = await client.models.Product.get({ id });
+    const { data, errors } = await client.models.SaleItem.get({ id });
     if (errors) throw errors;
-    return data as Product;
+    return data as unknown as Product;
   }
 
   // PRODUCT UPDATE PROMISE
   async updateProduct(product: Product): Promise<Product> {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode: authMode });
-    const { data, errors } = await client.models.Product.update(product);
+    const { data, errors } = await client.models.SaleItem.update(product as any);
     if (errors) throw errors;
-    return data as Product;
+    return data as unknown as Product;
   }
 
-  // PRODUCT DELETE PROMISE (userPool authMode only) 
+  // PRODUCT DELETE PROMISE (userPool authMode only)
   async deleteProduct(id: string): Promise<boolean> {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode: authMode });
-    const { errors } = await client.models.Product.delete({ id });
+    const { errors } = await client.models.SaleItem.delete({ id });
     if (errors) throw errors;
     return true;
   }
@@ -465,13 +462,13 @@ export class DBhandler {
       switchMap((authMode) => {
         const client = generateClient<Schema>({ authMode: authMode });
         return from(
-          client.models.Product.list({ limit: 300 })
+          client.models.SaleItem.list({ limit: 300 })
             .then(({ data, errors }) => {
               if (errors) {
                 console.error('Product.list error', errors);
                 return [];
               }
-              return data as Product[];
+              return data as unknown as Product[];
             })
         );
       })

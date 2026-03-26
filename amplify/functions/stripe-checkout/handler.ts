@@ -12,7 +12,7 @@ import { DynamoDBDocumentClient, GetCommand } from '@aws-sdk/lib-dynamodb';
 
 const ddbClient = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(ddbClient);
-const STRIPE_PRODUCT_TABLE = process.env['STRIPE_PRODUCT_TABLE_NAME'] || '';
+const SALE_ITEM_TABLE = process.env['SALE_ITEM_TABLE_NAME'] || '';
 
 const stripe = new Stripe(process.env['STRIPE_SECRET_KEY'] || '', {
   apiVersion: '2024-04-10' as any,
@@ -50,7 +50,7 @@ async function getValidatedProducts(
 
   for (let i = 0; i < productIds.length; i++) {
     const result = await docClient.send(new GetCommand({
-      TableName: STRIPE_PRODUCT_TABLE,
+      TableName: SALE_ITEM_TABLE,
       Key: { id: productIds[i] },
     }));
 
@@ -61,12 +61,15 @@ async function getValidatedProducts(
     if (!product.active) {
       throw new Error(`Produit inactif: ${productIds[i]}`);
     }
+    if (!product.stripeEnabled) {
+      throw new Error(`Produit non disponible en ligne: ${productIds[i]}`);
+    }
 
-    // amount est stocké en centimes dans DynamoDB (ex: 5 = 0,05€)
+    // price est en euros dans DynamoDB (ex: 5.00 = 5,00€)
     validatedItems.push({
       product,
       quantity: quantities[i],
-      price: product.amount as number,
+      price: Math.round((product.price as number) * 100), // convertir en centimes pour Stripe
     });
   }
 
@@ -134,7 +137,7 @@ export async function handler(event: any): Promise<any> {
             account: item.product.account,
           },
         },
-        unit_amount: item.price, // déjà en centimes depuis DynamoDB
+        unit_amount: item.price, // en centimes (converti depuis euros)
       },
       quantity: item.quantity,
     }));

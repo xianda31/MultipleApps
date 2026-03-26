@@ -70,12 +70,12 @@ export class FeesCollectorComponent implements OnDestroy {
 
     this.productService.listProducts().subscribe(products => {
       const card_product = products.find(p => (p.account === 'CAR')&& (!p.paired));
-      if(!card_product || card_product.info1 === undefined) {
+      if(!card_product || card_product.entries === undefined || card_product.entries === null) {
         this.toastService.showErrorToast('Configuration produit', `Le produit carte de jeu n'a pas été trouvé. Veuillez le configurer correctement.`);
         throw new Error('Le produit carte de jeu n\'a pas été trouvé. Veuillez le configurer correctement.');
       }
       this.CARD_PRICE = card_product.price ;
-      this.CARD_ENTRIES =  parseInt(card_product.info1)  ;
+      this.CARD_ENTRIES =  card_product.entries  ;
     });
 
     const chrono = (date: string) => {

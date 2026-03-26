@@ -145,10 +145,10 @@ const apiPolicy = new Policy(apiStack, "ApiPolicy", {
 backend.auth.resources.authenticatedUserIamRole.attachInlinePolicy(apiPolicy);
 backend.auth.resources.unauthenticatedUserIamRole.attachInlinePolicy(apiPolicy);
 
-// Grant stripeCheckout access to StripeProduct table
-const stripeProductTable = backend.data.resources.tables['StripeProduct'];
-stripeProductTable.grantReadData(backend.stripeCheckout.resources.lambda);
-backend.stripeCheckout.addEnvironment('STRIPE_PRODUCT_TABLE_NAME', stripeProductTable.tableName);
+// Grant stripeCheckout access to SaleItem table
+const saleItemTable = backend.data.resources.tables['SaleItem'];
+saleItemTable.grantReadData(backend.stripeCheckout.resources.lambda);
+backend.stripeCheckout.addEnvironment('SALE_ITEM_TABLE_NAME', saleItemTable.tableName);
 
 // Grant both email Lambdas access to Member table
 const memberTable = backend.data.resources.tables['Member'];

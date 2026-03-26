@@ -29,7 +29,7 @@
 
             <h3 class="product-name">{{ product.name }}</h3>
             <div class="price-container">
-              <span class="price">{{ formatPrice(product.amount / 100) }}</span>
+              <span class="price">{{ formatPrice(product.price) }}</span>
               <span class="currency">{{ product.currency }}</span>
             </div>
             <p class="product-description" *ngIf="product.description">
@@ -108,7 +108,7 @@
                   </button>
                 </div>
                 <span class="item-price">
-                  {{ formatPrice((item.product.amount / 100) * item.quantity) }}
+                  {{ formatPrice(item.product.price * item.quantity) }}
                 </span>
               </div>
             </div>
@@ -117,7 +117,7 @@
             <div class="cart-total">
               <div class="total-line">
                 <span>Sous-total:</span>
-                <span>{{ formatPrice(cart.subtotal / 100) }}</span>
+                <span>{{ formatPrice(cart.subtotal) }}</span>
               </div>
               <div class="total-line">
                 <span>Frais (à calculer):</span>
@@ -125,7 +125,7 @@
               </div>
               <div class="total-amount">
                 <strong>Montant estimé:</strong>
-                <strong>{{ formatPrice(cart.subtotal / 100) }}</strong>
+                <strong>{{ formatPrice(cart.subtotal) }}</strong>
               </div>
 
               <!-- Note de sécurité -->
