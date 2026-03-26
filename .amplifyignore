@@ -1,0 +1,10 @@
+# Ignore patterns for Amplify Sandbox watch
+amplify/node_modules/**
+node_modules/**
+.amplify/**
+.next/**
+out/**
+dist/**
+build/**
+.angular/**
+*.log

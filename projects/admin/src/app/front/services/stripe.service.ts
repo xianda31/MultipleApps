@@ -59,7 +59,7 @@ export class StripeService {
       const { body } = await restOperation.response;
       const responseText = await body.text();
       const response: StripeCheckoutResponse = JSON.parse(responseText);
-
+ 
       if (response.error) {
         throw new Error(response.error);
       }

@@ -113,9 +113,8 @@ export const STATIC_MENUS: NavbarMenu[] = [
         minLevel: Group_priorities.Systeme,
         isDev: true,
         subMenus: [
-            // { label: 'écritures', route: BACK_ROUTE_PATHS.BooksDebugger },
-            { label: 'données S3', route: BACK_ROUTE_PATHS.Stripe },
-            // { label: 'ComiteeBookletViewer', route: BACK_ROUTE_PATHS.ComiteeBooklet }
+            { label: 'produits', route: BACK_ROUTE_PATHS.StripeProducts },
+            { label: 'boutique', route: BACK_ROUTE_PATHS.StripeShop },
         ]
     },
 ]

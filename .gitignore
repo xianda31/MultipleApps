@@ -43,8 +43,12 @@ testem.log
 # Ignore sensitive Angular environment files
 projects/admin/src/environments/environment.development.ts
 
+# Amplify generated outputs (should only exist at root)
+amplify/**/amplify_outputs.json
+
 # Environment files with secrets
 .env.local
+amplify/.env.local
 .env
 .env.*.local
 
