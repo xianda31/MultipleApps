@@ -43,6 +43,11 @@ testem.log
 # Ignore sensitive Angular environment files
 projects/admin/src/environments/environment.development.ts
 
+# Environment files with secrets
+.env.local
+.env
+.env.*.local
+
 # System files
 .DS_Store
 Thumbs.db
