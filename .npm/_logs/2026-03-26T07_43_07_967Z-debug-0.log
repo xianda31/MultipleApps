@@ -1,0 +1,128 @@
+0 verbose cli C:\Program Files\nodejs\node.exe C:\Program Files\nodejs\node_modules\npm\bin\npm-cli.js
+1 info using npm@10.9.2
+2 info using node@v22.14.0
+3 silly config load:file:C:\Program Files\nodejs\node_modules\npm\npmrc
+4 silly config load:file:C:\Users\chrre\Develop\MultipleApps\.npmrc
+5 silly config load:file:C:\Users\chrre\.npmrc
+6 silly config load:file:C:\Users\chrre\AppData\Roaming\npm\etc\npmrc
+7 verbose title npm ci
+8 verbose argv "ci" "--cache" ".npm" "--prefer-offline"
+9 verbose logfile logs-max:10 dir:C:\Users\chrre\Develop\MultipleApps\.npm\_logs\2026-03-26T07_43_07_967Z-
+10 verbose logfile C:\Users\chrre\Develop\MultipleApps\.npm\_logs\2026-03-26T07_43_07_967Z-debug-0.log
+11 silly logfile done cleaning log files
+12 silly packumentCache heap:4345298944 maxSize:1086324736 maxEntrySize:543162368
+13 silly idealTree buildDeps
+14 silly fetch manifest @aws-sdk/types@^3.734.0
+15 silly packumentCache full:https://registry.npmjs.org/@aws-sdk%2ftypes cache-miss
+16 http fetch GET 200 https://registry.npmjs.org/npm 6208ms
+17 http fetch GET 200 https://registry.npmjs.org/@aws-sdk%2ftypes 354ms (cache miss)
+18 silly packumentCache full:https://registry.npmjs.org/@aws-sdk%2ftypes set size:undefined disposed:false
+19 silly placeDep ROOT @aws-sdk/types@3.973.6 KEEP for: @aws-amplify/plugin-types@1.10.1 want: ^3.734.0
+20 warn ERESOLVE overriding peer dependency {
+20 warn ERESOLVE   code: 'ERESOLVE',
+20 warn ERESOLVE   edge: {
+20 warn ERESOLVE     type: 'peer',
+20 warn ERESOLVE     name: '@aws-sdk/types',
+20 warn ERESOLVE     spec: '^3.734.0',
+20 warn ERESOLVE     error: 'PEER LOCAL',
+20 warn ERESOLVE     from: {
+20 warn ERESOLVE       name: '@aws-amplify/plugin-types',
+20 warn ERESOLVE       version: '1.10.1',
+20 warn ERESOLVE       location: 'node_modules/@aws-amplify/data-construct/node_modules/@aws-amplify/ai-constructs/node_modules/@aws-amplify/plugin-types',
+20 warn ERESOLVE       isWorkspace: false,
+20 warn ERESOLVE       dependents: [Array]
+20 warn ERESOLVE     }
+20 warn ERESOLVE   },
+20 warn ERESOLVE   dep: {
+20 warn ERESOLVE     name: '@aws-sdk/types',
+20 warn ERESOLVE     version: '3.973.6',
+20 warn ERESOLVE     whileInstalling: {
+20 warn ERESOLVE       name: '@aws-amplify/plugin-types',
+20 warn ERESOLVE       version: '1.10.1',
+20 warn ERESOLVE       path: 'C:\\Users\\chrre\\Develop\\MultipleApps\\node_modules\\@aws-amplify\\data-construct\\node_modules\\@aws-amplify\\ai-constructs\\node_modules\\@aws-amplify\\plugin-types'
+20 warn ERESOLVE     },
+20 warn ERESOLVE     location: 'node_modules/@aws-sdk/types',
+20 warn ERESOLVE     isWorkspace: false,
+20 warn ERESOLVE     dependents: [ [Object] ]
+20 warn ERESOLVE   },
+20 warn ERESOLVE   force: false,
+20 warn ERESOLVE   isMine: false,
+20 warn ERESOLVE   strictPeerDeps: false,
+20 warn ERESOLVE   current: {
+20 warn ERESOLVE     name: '@aws-sdk/types',
+20 warn ERESOLVE     version: '3.821.0',
+20 warn ERESOLVE     location: 'node_modules/@aws-amplify/data-construct/node_modules/@aws-amplify/ai-constructs/node_modules/@aws-amplify/plugin-types/node_modules/@aws-sdk/types',
+20 warn ERESOLVE     isWorkspace: false,
+20 warn ERESOLVE     dependents: []
+20 warn ERESOLVE   }
+20 warn ERESOLVE }
+21 silly placeDep ROOT @aws-sdk/types@3.973.6 KEEP for: @aws-amplify/plugin-types@1.10.1 want: ^3.734.0
+22 warn ERESOLVE overriding peer dependency {
+22 warn ERESOLVE   code: 'ERESOLVE',
+22 warn ERESOLVE   edge: {
+22 warn ERESOLVE     type: 'peer',
+22 warn ERESOLVE     name: '@aws-sdk/types',
+22 warn ERESOLVE     spec: '^3.734.0',
+22 warn ERESOLVE     error: 'PEER LOCAL',
+22 warn ERESOLVE     from: {
+22 warn ERESOLVE       name: '@aws-amplify/plugin-types',
+22 warn ERESOLVE       version: '1.10.1',
+22 warn ERESOLVE       location: 'node_modules/@aws-amplify/graphql-api-construct/node_modules/@aws-amplify/ai-constructs/node_modules/@aws-amplify/plugin-types',
+22 warn ERESOLVE       isWorkspace: false,
+22 warn ERESOLVE       dependents: [Array]
+22 warn ERESOLVE     }
+22 warn ERESOLVE   },
+22 warn ERESOLVE   dep: {
+22 warn ERESOLVE     name: '@aws-sdk/types',
+22 warn ERESOLVE     version: '3.973.6',
+22 warn ERESOLVE     whileInstalling: {
+22 warn ERESOLVE       name: '@aws-amplify/plugin-types',
+22 warn ERESOLVE       version: '1.10.1',
+22 warn ERESOLVE       path: 'C:\\Users\\chrre\\Develop\\MultipleApps\\node_modules\\@aws-amplify\\graphql-api-construct\\node_modules\\@aws-amplify\\ai-constructs\\node_modules\\@aws-amplify\\plugin-types'
+22 warn ERESOLVE     },
+22 warn ERESOLVE     location: 'node_modules/@aws-sdk/types',
+22 warn ERESOLVE     isWorkspace: false,
+22 warn ERESOLVE     dependents: [ [Object] ]
+22 warn ERESOLVE   },
+22 warn ERESOLVE   force: false,
+22 warn ERESOLVE   isMine: false,
+22 warn ERESOLVE   strictPeerDeps: false,
+22 warn ERESOLVE   current: {
+22 warn ERESOLVE     name: '@aws-sdk/types',
+22 warn ERESOLVE     version: '3.821.0',
+22 warn ERESOLVE     location: 'node_modules/@aws-amplify/graphql-api-construct/node_modules/@aws-amplify/ai-constructs/node_modules/@aws-amplify/plugin-types/node_modules/@aws-sdk/types',
+22 warn ERESOLVE     isWorkspace: false,
+22 warn ERESOLVE     dependents: []
+22 warn ERESOLVE   }
+22 warn ERESOLVE }
+23 verbose stack Error: EPERM: operation not permitted, unlink 'C:\Users\chrre\Develop\MultipleApps\node_modules\@lmdb\lmdb-win32-x64\node.napi.node'
+24 error code EPERM
+25 error syscall unlink
+26 error path C:\Users\chrre\Develop\MultipleApps\node_modules\@lmdb\lmdb-win32-x64\node.napi.node
+27 error errno -4048
+28 error [Error: EPERM: operation not permitted, unlink 'C:\Users\chrre\Develop\MultipleApps\node_modules\@lmdb\lmdb-win32-x64\node.napi.node'] {
+28 error   errno: -4048,
+28 error   code: 'EPERM',
+28 error   syscall: 'unlink',
+28 error   path: 'C:\\Users\\chrre\\Develop\\MultipleApps\\node_modules\\@lmdb\\lmdb-win32-x64\\node.napi.node'
+28 error }
+29 error
+29 error The operation was rejected by your operating system.
+29 error It's possible that the file was already in use (by a text editor or antivirus),
+29 error or that you lack permissions to access it.
+29 error
+29 error If you believe this might be a permissions issue, please double-check the
+29 error permissions of the file and its containing directories, or try running
+29 error the command again as root/Administrator.
+30 verbose cwd C:\Users\chrre\Develop\MultipleApps
+31 verbose os Windows_NT 10.0.22621
+32 verbose node v22.14.0
+33 verbose npm  v10.9.2
+34 notice
+34 notice New major version of npm available! 10.9.2 -> 11.12.0
+34 notice Changelog: https://github.com/npm/cli/releases/tag/v11.12.0
+34 notice To update run: npm install -g npm@11.12.0
+34 notice  { force: true, [Symbol(proc-log.meta)]: true }
+35 verbose exit -4048
+36 verbose code -4048
+37 error A complete log of this run can be found in: C:\Users\chrre\Develop\MultipleApps\.npm\_logs\2026-03-26T07_43_07_967Z-debug-0.log
