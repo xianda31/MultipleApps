@@ -7,6 +7,12 @@
  */
 
 import Stripe from 'stripe';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { DynamoDBDocumentClient, GetCommand } from '@aws-sdk/lib-dynamodb';
+
+const ddbClient = new DynamoDBClient({});
+const docClient = DynamoDBDocumentClient.from(ddbClient);
+const STRIPE_PRODUCT_TABLE = process.env['STRIPE_PRODUCT_TABLE_NAME'] || '';
 
 const stripe = new Stripe(process.env['STRIPE_SECRET_KEY'] || '', {
   apiVersion: '2024-04-10' as any,
@@ -40,22 +46,27 @@ async function getValidatedProducts(
     }
   }
 
-  // Produits de test pour le développement
-  // TODO: En production, récupérer depuis StripeProduct model
   const validatedItems: Array<{ product: any; quantity: number; price: number }> = [];
 
   for (let i = 0; i < productIds.length; i++) {
-    const product = {
-      id: productIds[i],
-      name: `Product ${productIds[i]}`,
-      amount: getTestProductPrice(productIds[i]),
-      active: true,
-    };
+    const result = await docClient.send(new GetCommand({
+      TableName: STRIPE_PRODUCT_TABLE,
+      Key: { id: productIds[i] },
+    }));
 
+    const product = result.Item;
+    if (!product) {
+      throw new Error(`Produit non trouvé: ${productIds[i]}`);
+    }
+    if (!product.active) {
+      throw new Error(`Produit inactif: ${productIds[i]}`);
+    }
+
+    // amount est stocké en centimes dans DynamoDB (ex: 5 = 0,05€)
     validatedItems.push({
       product,
       quantity: quantities[i],
-      price: product.amount,
+      price: product.amount as number,
     });
   }
 
@@ -63,28 +74,18 @@ async function getValidatedProducts(
 }
 
 /**
- * Retourne les prix de test pour le développement
- */
-function getTestProductPrice(productId: string): number {
-  const testPrices: Record<string, number> = {
-    'prod-test-1': 999,
-    'prod-test-2': 2999,
-    'prod-test-3': 4999,
-  };
-  return testPrices[productId] || 1999;
-}
-
-/**
  * Handler principal: Crée une session Stripe Checkout sécurisée
  */
 export async function handler(event: any): Promise<any> {
-  console.log('🔒 Stripe Checkout Handler - Début');
+  console.log('[stripe-checkout] handler start');
 
   try {
     // Parser le body
     let request: CheckoutRequest;
     try {
-      request = JSON.parse(event.body || '{}');
+      const rawBody = typeof event.body === 'string' ? event.body : JSON.stringify(event.body);
+      request = JSON.parse(rawBody || '{}');
+      console.log('Request parsed:', JSON.stringify({ successUrl: request.successUrl, cancelUrl: request.cancelUrl, productIds: request.productIds }));
     } catch {
       return {
         statusCode: 400,
@@ -94,6 +95,7 @@ export async function handler(event: any): Promise<any> {
 
     // Valider les URLs de redirection
     if (!isValidUrl(request.successUrl) || !isValidUrl(request.cancelUrl)) {
+      console.log('URL validation failed:', { successUrl: request.successUrl, cancelUrl: request.cancelUrl });
       return {
         statusCode: 400,
         body: JSON.stringify({ error: 'Invalid redirect URLs' }),
@@ -126,36 +128,36 @@ export async function handler(event: any): Promise<any> {
       price_data: {
         currency: 'eur',
         product_data: {
-          name: item.product.description || item.product.id,
+          name: item.product.name || item.product.description || item.product.id,
           metadata: {
             productId: item.product.id,
             account: item.product.account,
           },
         },
-        unit_amount: Math.round(item.price * 100), // Stripe en centimes
+        unit_amount: item.price, // déjà en centimes depuis DynamoDB
       },
       quantity: item.quantity,
     }));
 
     // Calculer le montant total validé
-    const totalAmount = validatedItems.reduce(
+    const totalAmountCents = validatedItems.reduce(
       (sum, item) => sum + item.price * item.quantity,
       0
     );
 
-    console.log(`✅ Montant validé: ${totalAmount}€ pour ${validatedItems.length} item(s)`);
+    console.log('[stripe-checkout] montant valide:', (totalAmountCents / 100).toFixed(2), 'EUR pour', validatedItems.length, 'item(s)');
 
     // 🔒 Créer la session Stripe
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: lineItems,
       mode: 'payment',
-      success_url: request.successUrl,
+      success_url: `${request.successUrl}?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: request.cancelUrl,
       customer_email: request.customerEmail,
       metadata: {
         userId: event.requestContext?.authorizer?.claims?.sub || 'guest',
-        totalAmount: totalAmount.toString(),
+        totalAmount: totalAmountCents.toString(),
         productCount: validatedItems.length.toString(),
       },
       // Webhook pour confirmation
@@ -164,7 +166,7 @@ export async function handler(event: any): Promise<any> {
       },
     });
 
-    console.log(`✅ Session Stripe créée: ${session.id}`);
+    console.log('[stripe-checkout] session creee:', session.id);
 
     // Retourner en réponse
     return {
@@ -182,7 +184,7 @@ export async function handler(event: any): Promise<any> {
       }),
     };
   } catch (error: any) {
-    console.error('❌ Erreur Stripe Checkout:', error);
+    console.error('CHECKOUT_ERROR name=' + error?.name + ' msg=' + error?.message + ' code=' + error?.code);
 
     // Ne pas révéler les détails techniques
     const errorMessage = error?.message?.includes('Produit')
@@ -202,9 +204,10 @@ export async function handler(event: any): Promise<any> {
  * Utilitaires de validation
  */
 function isValidUrl(url: string): boolean {
+  if (!url || typeof url !== 'string') return false;
   try {
-    new URL(url);
-    return url.startsWith('https://') || url.startsWith('http://localhost');
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:' || parsed.hostname === 'localhost';
   } catch {
     return false;
   }

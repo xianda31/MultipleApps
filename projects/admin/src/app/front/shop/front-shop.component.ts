@@ -85,6 +85,15 @@ export class FrontShopComponent implements OnInit, OnDestroy {
         return;
       }
 
+      // Vérifier le minimum Stripe (0,50€ = 50 centimes)
+      if (cart.subtotal < 0.50) {
+        this.toastService.showWarning(
+          'Le montant minimum est de 0,50€ par commande (limite Stripe)',
+          'Montant insuffisant'
+        );
+        return;
+      }
+
       this.isCheckingOut = true;
 
       // Préparer la requête (seulement IDs + quantités)

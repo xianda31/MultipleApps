@@ -15,12 +15,21 @@ registerLocaleData(fr.default);
 
 Amplify.configure(outputs);
 const amplifyConfig = Amplify.getConfig();
+
+// Normalize REST API endpoints: remove trailing slash to avoid double-slash in paths
+const restApi = Object.fromEntries(
+  Object.entries(outputs.custom.API as Record<string, any>).map(([name, cfg]) => [
+    name,
+    { ...cfg, endpoint: cfg.endpoint.replace(/\/$/, '') }
+  ])
+);
+
 Amplify.configure(
   {
     ...amplifyConfig,
     API: {
       ...amplifyConfig.API,
-      REST: outputs.custom.API,
+      REST: restApi,
     },
   },
   {

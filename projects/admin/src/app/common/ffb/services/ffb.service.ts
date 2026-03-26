@@ -19,7 +19,7 @@ export class FFB_proxyService {
     try {
       const restOperation = get({
         apiName: 'ffbProxyApi',
-        path: 'v1/users',
+        path: '/v1/users',
         options: {
           queryParams: {
             person_id: person_id.toString()
@@ -42,7 +42,7 @@ export class FFB_proxyService {
     try {
       const restOperation = get({
         apiName: 'ffbProxyApi',
-        path: 'v1/subscription-search-members',
+        path: '/v1/subscription-search-members',
         options: {
           queryParams: {
             // alive: "1",
@@ -65,7 +65,7 @@ export class FFB_proxyService {
   _getTournaments(): Observable<Tournament[]> {
     const restOperation = get({
       apiName: 'ffbProxyApi',
-      path: 'v1/organizations/1438/club_tournament',
+      path: '/v1/organizations/1438/club_tournament',
     });
     return from((async () => {
       try {
@@ -86,7 +86,7 @@ export class FFB_proxyService {
     try {
       const restOperation = get({
         apiName: 'ffbProxyApi',
-        path: 'v1/organizations/1438/members',
+        path: '/v1/organizations/1438/members',
       });
       const { body } = await restOperation.response;
       // console.log('GET call succeeded: ', await body.text());
@@ -103,7 +103,7 @@ export class FFB_proxyService {
     try {
       const restOperation = get({
         apiName: 'ffbProxyApi',
-        path: 'v1/members',
+        path: '/v1/members',
         options: {
           queryParams: {
             person_id: id.toString()
@@ -130,7 +130,7 @@ export class FFB_proxyService {
     try {
       const restOperation = post({
         apiName: 'ffbProxyApi',
-        path: 'v1/organizations/1438/tournament',
+        path: '/v1/organizations/1438/tournament',
         options: {
           body: { players: players },
           queryParams: {
@@ -152,7 +152,7 @@ export class FFB_proxyService {
     try {
       const restOperation = del({
         apiName: 'ffbProxyApi',
-        path: 'v1/organizations/1438/tournament',
+        path: '/v1/organizations/1438/tournament',
         options: {
           queryParams: {
             id: tournamentId.toString(),
@@ -177,7 +177,7 @@ export class FFB_proxyService {
       try {
         const restOperation = get({
           apiName: 'ffbProxyApi',
-          path: 'v1/organizations/1438/tournament',
+          path: '/v1/organizations/1438/tournament',
           options: { queryParams: { id: id } }
         });
         const { body } = await restOperation.response;
@@ -197,7 +197,7 @@ async getOrganizations() : Promise<CompetitionOrganization[]> {
     try {
       const restOperation = get({
         apiName: 'ffbProxyApi',
-        path: 'v1/organizations/all',
+        path: '/v1/organizations/all',
       });
       const { body } = await restOperation.response;
       const data = await body.json();
@@ -213,7 +213,7 @@ async getSeasons() : Promise<CompetitionSeason[]> {
     try {
       const restOperation = get({
         apiName: 'ffbProxyApi',
-        path: 'v1/seasons',
+        path: '/v1/seasons',
       });
       const { body } = await restOperation.response;
       const data = await body.json();
@@ -229,7 +229,7 @@ async getSeasons() : Promise<CompetitionSeason[]> {
     try {
       const restOperation = get({
         apiName: 'ffbProxyApi',
-        path: 'v1/organizations/all',
+        path: '/v1/organizations/all',
       });
       const { body } = await restOperation.response;
       const data = await body.json();
@@ -245,7 +245,7 @@ async getSeasons() : Promise<CompetitionSeason[]> {
     try {
       const restOperation = get({
         apiName: 'ffbProxyApi',
-        path: 'v1/competitions/organizations/' + organization_id,
+        path: '/v1/competitions/organizations/' + organization_id,
         options: {
           queryParams: {
             season_id: season_id,
@@ -266,7 +266,7 @@ async getSeasons() : Promise<CompetitionSeason[]> {
     try {
       const restOperation = get({
         apiName: 'ffbProxyApi',
-        path: 'v1/competitions/final-ranking',
+        path: '/v1/competitions/final-ranking',
         options: {
           queryParams: {
             competition_id: competition_id,
@@ -287,7 +287,7 @@ async getSeasons() : Promise<CompetitionSeason[]> {
     try {
       const restOperation = get({
         apiName: 'ffbProxyApi',
-        path: 'v1/competitions/stades',
+        path: '/v1/competitions/stades',
         options: {
           queryParams: {
             competition_id: competition_id,

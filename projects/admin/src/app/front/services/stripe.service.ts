@@ -42,13 +42,13 @@ export class StripeService {
         apiName: this.API_NAME,
         path: this.CHECKOUT_PATH,
         options: {
-          body: JSON.stringify({
+          body: {
             productIds: request.productIds,
             quantities: request.quantities,
             successUrl: request.successUrl,
             cancelUrl: request.cancelUrl,
             customerEmail: request.customerEmail
-          }),
+          } as any,
           headers: {
             'Content-Type': 'application/json',
             ...headers
