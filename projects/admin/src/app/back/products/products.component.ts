@@ -16,6 +16,7 @@ import { CustomDropdownComponent } from '../../common/components/custom-dropdown
 export class ProductsComponent implements OnInit, OnDestroy {
   products_subscription: any;
   products: Product[] = [];
+  showModal = false;
   
   productForm!: FormGroup;
   product_selected: boolean = false;
@@ -65,9 +66,23 @@ export class ProductsComponent implements OnInit, OnDestroy {
     return this.productForm.valid;
   }
 
+  onNewProduct() {
+    this.productForm.reset({ paired: false, stripeEnabled: false, active: true, currency: 'EUR' });
+    this.accountInput = '';
+    this.product_selected = false;
+    this.showModal = true;
+  }
+
+  onCloseModal() {
+    this.showModal = false;
+    this.productForm.reset();
+    this.product_selected = false;
+  }
+
   onCreateProduct() {
     let new_product = this.productForm.getRawValue();
     this.productService.createProduct(new_product);
+    this.showModal = false;
     this.productForm.reset();
     this.product_selected = false;
   }
@@ -76,6 +91,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
     this.productForm.patchValue(product);
     this.accountInput = product.account ?? '';
     this.product_selected = true;
+    this.showModal = true;
   }
 
   onModProduct(product: Product) {
@@ -86,16 +102,16 @@ export class ProductsComponent implements OnInit, OnDestroy {
   onUpdateProduct() {
     let product = this.productForm.getRawValue();
     this.productService.updateProduct(product);
+    this.showModal = false;
     this.product_selected = false;
     this.productForm.reset();
   }
 
   onDeleteProduct(product: Product) {
+    if (!confirm(`Supprimer "${product.name}" ?`)) return;
     this.productService.deleteProduct(product);
     this.product_selected = false;
-    // let { ...deleted_product } = product;
-    this.productForm.patchValue(product);   // permet de réafficher le produit supprimé
-    this.accountInput = product.account ?? '';
+    this.productForm.reset();
   }
 
   // Gestion du dropdown custom compte

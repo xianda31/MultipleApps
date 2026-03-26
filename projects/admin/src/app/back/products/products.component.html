@@ -1,23 +1,26 @@
-<div class="card shadow-sm mt-3 mb-3">
-    <div class="card-header">
-        <h5>Les produits</h5>
-    </div>
-    <div class="card-body">
-        <form [formGroup]="productForm">
+<div class="container-lg">
+    <div class="card shadow-sm mt-3 mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Les produits</h5>
+            <button class="btn btn-outline-success btn-sm" (click)="onNewProduct()">
+                <i class="bi bi-plus-lg"></i> Nouveau
+            </button>
+        </div>
+        <div class="card-body">
             @if (products) {
-            <table class="table table-sm table-striped table-hover table-responsive">
+            <table class="table table-sm table-striped table-hover">
                 <thead>
                     <tr>
-                        <th class="col-2">Produit</th>
-                        <th class="col-2">Nom (Stripe)</th>
-                        <th class="col-3">Description</th>
-                        <th class="col-1">Entrées</th>
-                        <th class="col-1 text-center">Compte</th>
-                        <th class="col-1 text-center">Prix</th>
-                        <th class="col-1 text-center">couple</th>
-                        <th class="col-1">En ligne</th>
-                        <th class="col-1">actif</th>
-                        <th class="col-1">Actions</th>
+                        <th>Produit</th>
+                        <th>Nom (Stripe)</th>
+                        <th>Description</th>
+                        <th>Entrées</th>
+                        <th class="text-center">Compte</th>
+                        <th class="text-center">Prix</th>
+                        <th class="text-center">Couple</th>
+                        <th class="text-center">En ligne</th>
+                        <th class="text-center">Actif</th>
+                        <th class="text-center">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -30,79 +33,116 @@
                         <td class="text-center">{{ product.account }}</td>
                         <td class="text-end">{{ product.price | currency:'€':'symbol':'2.2-2':'fr' }}</td>
                         <td class="text-center">
-                            <div class="mx-auto form-check form-switch">
+                            <div class="form-check form-switch d-flex justify-content-center mb-0">
                                 <input class="form-check-input" type="checkbox" role="switch"
-                                    [id]="'paired-' + product.id"
-                                    [checked]="product.paired"
+                                    [id]="'paired-' + product.id" [checked]="product.paired"
                                     (change)="product.paired = !product.paired; onModProduct(product)">
                             </div>
                         </td>
-                        <td>
-                            <div class="form-check form-switch">
+                        <td class="text-center">
+                            <div class="form-check form-switch d-flex justify-content-center mb-0">
                                 <input class="form-check-input" type="checkbox" role="switch"
-                                    [id]="'stripeEnabled-' + product.id"
-                                    [checked]="product.stripeEnabled"
+                                    [id]="'stripeEnabled-' + product.id" [checked]="product.stripeEnabled"
                                     (change)="product.stripeEnabled = !product.stripeEnabled; onModProduct(product)">
                             </div>
                         </td>
-                        <td>
-                            <div class="form-check form-switch">
+                        <td class="text-center">
+                            <div class="form-check form-switch d-flex justify-content-center mb-0">
                                 <input class="form-check-input" type="checkbox" role="switch"
-                                    [id]="'active-' + product.id"
-                                    [checked]="product.active"
+                                    [id]="'active-' + product.id" [checked]="product.active"
                                     (change)="product.active = !product.active; onModProduct(product)">
                             </div>
                         </td>
-                        <td class="text-center ">
-                            <button class="btn btn-outline-primary" (click)="onReadProduct(product)">
+                        <td class="text-center text-nowrap">
+                            <button class="btn btn-sm btn-outline-primary me-1" (click)="onReadProduct(product)" title="Modifier">
                                 <i class="bi bi-pen"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" (click)="onDeleteProduct(product)" title="Supprimer">
+                                <i class="bi bi-trash"></i>
                             </button>
                         </td>
                     </tr>
                     }
-                    <tr></tr>
-                    <tr>
-                        <td> <input type="text" class="form-control" formControlName="glyph"> </td>
-                        <td> <input type="text" class="form-control" formControlName="name"> </td>
-                        <td> <input type="text" class="form-control" formControlName="description"> </td>
-                        <td> <input type="number" class="form-control" formControlName="entries"> </td>
-                        <td> <app-custom-dropdown
-                            class="form-control"
-                            [items]="(accounts$ | async) || []"
-                            [searchValue]="accountInput"
-                            [displayFn]="displayAccountFn"
-                            (searchValueChange)="onAccountInputChange($event)"
-                            (itemSelected)="selectAccount($event)"
-                            (blur)="hideAccountSuggestionsDelay()">
-                        </app-custom-dropdown>
-                        </td>
-                        <td> <input type="text" class="form-control" formControlName="price"> </td>
-
-                        <td class="text-center">
-                            <div class="mx-auto  form-switch">
-                                <input class="form-check-input" type="checkbox" role="switch" formControlName="paired">
-                            </div>
-                        </td>
-                        <td class="text-center">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" role="switch" formControlName="stripeEnabled">
-                            </div>
-                        </td>
-                        <td class="text-center">
-                            <div class=" form-check form-switch">
-                                <input class="form-check-input" type="checkbox" role="switch" formControlName="active">
-                            </div>
-                        </td>
-                        <td class="text-center ">
-                            <button class="btn btn-outline-primary btn-sm" [disabled]="!product_form_filled()"
-                                (click)="product_selected ? onUpdateProduct() :onCreateProduct()">
-                                <i class="bi bi-check2-square"></i></button>
-                        </td>
-                    </tr>
                 </tbody>
             </table>
             }
-        </form>
-
+        </div>
     </div>
 </div>
+
+<!-- Modal création / édition -->
+@if (showModal) {
+<div class="modal fade show" style="display:block" tabindex="-1" (click)="onCloseModal()">
+    <div class="modal-dialog modal-lg modal-dialog-centered" (click)="$event.stopPropagation()">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ product_selected ? 'Modifier le produit' : 'Nouveau produit' }}</h5>
+                <button type="button" class="btn-close" (click)="onCloseModal()"></button>
+            </div>
+            <div class="modal-body">
+                <form [formGroup]="productForm">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Glyph</label>
+                            <input type="text" class="form-control" formControlName="glyph" placeholder="ex: CAR-i">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Nom (Stripe)</label>
+                            <input type="text" class="form-control" formControlName="name">
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label">Description</label>
+                            <input type="text" class="form-control" formControlName="description">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Entrées</label>
+                            <input type="number" class="form-control" formControlName="entries">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Compte</label>
+                            <app-custom-dropdown
+                                [items]="(accounts$ | async) || []"
+                                [searchValue]="accountInput"
+                                [displayFn]="displayAccountFn"
+                                (searchValueChange)="onAccountInputChange($event)"
+                                (itemSelected)="selectAccount($event)"
+                                (blur)="hideAccountSuggestionsDelay()">
+                            </app-custom-dropdown>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Prix (€)</label>
+                            <input type="number" step="0.01" class="form-control" formControlName="price">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Devise</label>
+                            <input type="text" class="form-control" formControlName="currency">
+                        </div>
+                        <div class="col-md-3 d-flex flex-column justify-content-end gap-2">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="modal-paired" formControlName="paired">
+                                <label class="form-check-label" for="modal-paired">Couple</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="modal-stripe" formControlName="stripeEnabled">
+                                <label class="form-check-label" for="modal-stripe">En ligne</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="modal-active" formControlName="active">
+                                <label class="form-check-label" for="modal-active">Actif</label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" (click)="onCloseModal()">Annuler</button>
+                <button class="btn btn-primary" [disabled]="!product_form_filled()"
+                    (click)="product_selected ? onUpdateProduct() : onCreateProduct()">
+                    <i class="bi bi-check2-square me-1"></i>{{ product_selected ? 'Enregistrer' : 'Créer' }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-backdrop fade show"></div>
+}
