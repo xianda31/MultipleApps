@@ -1,3 +1,4 @@
+// @ts-nocheck - amplify backend file, compiled inadvertently by Angular due to Schema import chain
 import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
 import { addUserToGroup } from './add-user-to-group/resource';
 import { listUsersInGroup } from './list-users-in-group/resource';

@@ -155,7 +155,7 @@ export class DBhandler {
     const client = generateClient<Schema>({ authMode: authMode });
     const { data, errors } = await client.models.Member.create(member);
     if (errors) throw errors;
-    return data as Member;
+    return data as unknown as Member;
   }
 
   // MEMBER READ (single) PROMISE
@@ -164,7 +164,7 @@ export class DBhandler {
     const client = generateClient<Schema>({ authMode: authMode });
     const { data, errors } = await client.models.Member.get({ id });
     if (errors) throw errors;
-    return data as Member;
+    return data as unknown as Member;
   }
 
   // MEMBER UPDATE PROMISE
@@ -173,7 +173,7 @@ export class DBhandler {
     const client = generateClient<Schema>({ authMode: authMode });
     const { data, errors } = await client.models.Member.update(member);
     if (errors) throw errors;
-    return data as Member;
+    return data as unknown as Member;
   }
 
   // MEMBER DELETE
@@ -197,7 +197,7 @@ export class DBhandler {
                 console.error('Member.list error', errors);
                 return [];
               }
-              return data as Member[];
+              return data as unknown as Member[];
             })
         );
       })
@@ -216,7 +216,7 @@ export class DBhandler {
       console.error(errors);
       return null;
     }
-    return data[0] as Member;   // array of only one element, hopefully !!!
+    return data[0] as unknown as Member;   // array of only one element, hopefully !!!
   }
 
   // MEMBER SEARCH BY EMAIL
@@ -235,7 +235,7 @@ export class DBhandler {
     if (data.length === 0) {
       return null; // No member found with the given email
     }
-    return data[0] as Member;   // array of only one element, hopefully !!!
+    return data[0] as unknown as Member;   // array of only one element, hopefully !!!
   }
 
 
@@ -247,7 +247,7 @@ export class DBhandler {
     const client = generateClient<Schema>({ authMode });
     const { data, errors } = await client.models.AssistanceRequest.create(input);
     if (errors) throw errors;
-    return data as AssistanceRequest;
+    return data as unknown as AssistanceRequest;
   }
 
   // READ (single)
@@ -256,7 +256,7 @@ export class DBhandler {
     const client = generateClient<Schema>({ authMode });
     const { data, errors } = await client.models.AssistanceRequest.get({ id });
     if (errors) throw errors;
-    return data as AssistanceRequest;
+    return data as unknown as AssistanceRequest;
   }
 
   // UPDATE
@@ -265,7 +265,7 @@ export class DBhandler {
     const client = generateClient<Schema>({ authMode });
     const { data, errors } = await client.models.AssistanceRequest.update(request);
     if (errors) throw errors;
-    return data as AssistanceRequest;
+    return data as unknown as AssistanceRequest;
   }
 
   // DELETE
@@ -289,7 +289,7 @@ export class DBhandler {
                 console.error('AssistanceRequest.list error', errors);
                 return [];
               }
-              return data as AssistanceRequest[];
+              return data as unknown as AssistanceRequest[];
             })
         );
       })
@@ -304,7 +304,7 @@ export class DBhandler {
     const client = generateClient<Schema>({ authMode: authMode });
     const { data, errors } = await client.models.Snippet.create(snippet);
     if (errors) throw errors;
-    return data as Snippet;
+    return data as unknown as Snippet;
   }
 
   // SNIPPET READ (single) PROMISE
@@ -313,7 +313,7 @@ export class DBhandler {
     const client = generateClient<Schema>({ authMode: authMode });
     const { data, errors } = await client.models.Snippet.get({ id });
     if (errors) throw errors;
-    return data as Snippet;
+    return data as unknown as Snippet;
   }
 
   // SNIPPET UPDATE PROMISE
@@ -322,7 +322,7 @@ export class DBhandler {
     const client = generateClient<Schema>({ authMode: authMode });
     const { data, errors } = await client.models.Snippet.update(snippet);
     if (errors) throw errors;
-    return data as Snippet;
+    return data as unknown as Snippet;
   }
 
   // SNIPPET DELETE PROMISE
@@ -346,7 +346,7 @@ export class DBhandler {
                 console.error('Snippet.list error', errors);
                 return [];
               }
-              return data as Snippet[];
+              return data as unknown as Snippet[];
             })
         );
       })
@@ -517,8 +517,9 @@ export class DBhandler {
     };
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode: authMode });
-    const { data: game_output, errors } = await client.models.Game.create(game_input);
+    const { data: game_output_raw, errors } = await client.models.Game.create(game_input);
     if (errors) throw errors;
+    const game_output = game_output_raw as any;
     let created_game = game_output
       ? {
         ...game_output,
@@ -529,16 +530,17 @@ export class DBhandler {
       }
       : null;
     if (!created_game) throw new Error('Game creation failed: game_output is null');
-    return created_game;
+    return created_game as unknown as Game;
   }
 
   async readGame(season: string, trn_id: number): Promise<Game | null> {
     let game_id = this.create_custom_key(season, trn_id);
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode: authMode });
-    const { data: game_output, errors } = await client.models.Game.get({ gameId: game_id });
+    const { data: game_output_raw, errors } = await client.models.Game.get({ gameId: game_id });
     // console.log('Game.read output:', game_output);
     if (errors) throw errors;
+    const game_output = game_output_raw as any;
     let read_game = game_output
       ? {
         ...game_output,
@@ -548,7 +550,7 @@ export class DBhandler {
         fee_rate: (game_output.fee_rate === null ? 'standard' : game_output.fee_rate) as Game['fee_rate']
       }
       : null;
-    return read_game;
+    return read_game as unknown as Game | null;
   }
 
   async updateGame(game: Game): Promise<Game> {
@@ -566,8 +568,9 @@ export class DBhandler {
     };
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode: authMode });
-    const { data: game_output, errors } = await client.models.Game.update(game_input);
+    const { data: game_output_raw, errors } = await client.models.Game.update(game_input);
     if (errors) throw errors;
+    const game_output = game_output_raw as any;
     let updated_game = game_output
       ? {
         ...game_output,
@@ -578,7 +581,7 @@ export class DBhandler {
       }
       : null;
     if (!updated_game) throw new Error('Game update failed: game_output is null');
-    return updated_game;
+    return updated_game as unknown as Game;
   }
 
   async deleteGame(season: string, trn_id: number): Promise<boolean> {
@@ -598,7 +601,7 @@ export class DBhandler {
     const client = generateClient<Schema>({ authMode: authMode });
     const { data, errors } = await client.models.PlayBook.create(playBook);
     if (errors) throw errors;
-    return data as PlayBook;
+    return data as unknown as PlayBook;
   }
 
   // READ (single) PROMISE
@@ -607,7 +610,7 @@ export class DBhandler {
     const client = generateClient<Schema>({ authMode: authMode });
     const { data, errors } = await client.models.PlayBook.get({ id });
     if (errors) throw errors;
-    return data as PlayBook;
+    return data as unknown as PlayBook;
   }
 
   // UPDATE PROMISE
@@ -616,7 +619,7 @@ export class DBhandler {
     const client = generateClient<Schema>({ authMode: authMode });
     const { data, errors } = await client.models.PlayBook.update(playBook);
     if (errors) throw errors;
-    return data as PlayBook;
+    return data as unknown as PlayBook;
   }
 
   // DELETE PROMISE
@@ -640,7 +643,7 @@ export class DBhandler {
                 // Mask error, return empty array
                 return [];
               }
-              return data as PlayBook[];
+              return data as unknown as PlayBook[];
             })
         );
       }),
@@ -657,11 +660,11 @@ export class DBhandler {
     return this._authMode().pipe(
       switchMap((authMode) => {
         const client = generateClient<Schema>({ authMode: authMode });
-        const stream = client.models.PlayBook.observeQuery();
+        const stream = (client.models.PlayBook as any).observeQuery();
         return (onlySynced
           ? stream.pipe(filter((payload: any) => payload?.isSynced === true))
           : stream
-        ).pipe(map(({ items }: any) => items as PlayBook[]));
+        ).pipe(map(({ items }: any) => items as PlayBook[])) as Observable<PlayBook[]>;
       })
     );
   }
@@ -701,7 +704,7 @@ export class DBhandler {
     delete jsonified_entry.id; // Ensure id is not included in the input type
     const { data, errors } = await client.models.BookEntry.create(jsonified_entry);
     if (errors) return Promise.reject(errors);
-    return this.parsed_entry(data as BookEntry);
+    return this.parsed_entry(data as unknown as BookEntry);
   }
 
   // READ (single)
@@ -714,7 +717,7 @@ export class DBhandler {
 
     );
     if (errors) throw errors;
-    return this.parsed_entry(data as BookEntry);
+    return this.parsed_entry(data as unknown as BookEntry);
   }
 
   // UPDATE PROMISE (userPool authMode only)   !validated
@@ -724,7 +727,7 @@ export class DBhandler {
     let jsonified_entry = this.jsonified_entry(entry);
     const { data, errors } = await client.models.BookEntry.update(jsonified_entry);
     if (errors) return Promise.reject(errors);
-    return this.parsed_entry(data as BookEntry);
+    return this.parsed_entry(data as unknown as BookEntry);
   }
 
   // DELETE PROMISE  

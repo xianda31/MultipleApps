@@ -1,0 +1,33 @@
+version: 1
+
+backend:
+  phases:
+    preBuild:
+      commands:
+        - echo "Clearing npm cache..."
+        - npm cache clean --force
+        - rm -f package-lock.json
+        - echo "Installing dependencies..."
+    build:
+      commands:
+        - npm ci --prefer-offline --no-audit
+    postBuild:
+      commands:
+        - echo "Build complete"
+
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - echo "Installing frontend dependencies..."
+    build:
+      commands:
+        - npm run build
+  artifacts:
+    baseDirectory: dist/admin/browser
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - 'node_modules/**/*'
+      - '.angular/**/*'
