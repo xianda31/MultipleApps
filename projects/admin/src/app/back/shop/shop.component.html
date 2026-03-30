@@ -1,86 +1,162 @@
-<!-- cart editor -->
-<div class="card w-100 mt-3">
-  <div class="card-header">
-    <h5 class="row justify-content-around align-items-center">
+<div class="container-lg">
+  <!-- shop -->
+  <div class="shop-layout">
 
-      <div class="col-auto">
-        Achats adhérents
+    <!-- Header bar -->
+    <div class="shop-header-bar">
+      <span class="fw-semibold">Boutique</span>
+      @if (!onlineMode) {
+      <div class="d-flex align-items-center gap-2 ms-auto">
+        <input type="date" class="form-control form-control-sm" style="max-width:160px;"
+          (ngModelChange)="date_change($event)" [(ngModel)]="session.date">
+      </div>
+      }
+    </div>
+
+    @if (shouldShowSpinner$ | async) {
+    <div class="alert alert-info d-flex align-items-center my-3" role="alert">
+      <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+      <div class="flex-grow-1">
+        <strong>Paiement reçu.</strong> Enregistrement en cours…
+      </div>
+    </div>
+    }
+    @if (shouldShowSuccess$ | async) {
+    <div class="alert alert-success d-flex align-items-center my-3" role="alert">
+      <i class="bi bi-check-circle-fill me-2 fs-5"></i>
+      <div class="flex-grow-1">
+        <strong>Paiement confirmé !</strong> Vos achats ont été enregistrés.
+        @let url = (receiptUrl$ | async);
+        @if (url) {
+        <a [href]="url" target="_blank" rel="noopener" class="ms-2">
+          <i class="bi bi-receipt me-1"></i>Voir le reçu
+        </a>
+        }
+      </div>
+      <button type="button" class="btn-close ms-3" (click)="stripeCheckout.reset()"></button>
+    </div>
+    }
+
+    <!-- Main content: 2-panel layout -->
+    <div class="shop-panels">
+
+      <!-- Panel: Buyer + Cart (fixed panel — never scrolls away) -->
+      <div class="shop-panel-cart">
+
+        @if (onlineMode && logged_member) {
+        <div class="shop-buyer-header">
+          <i class="bi bi-person-check-fill me-2"></i>
+          <strong>{{logged_member.firstname}} {{logged_member.lastname}}</strong>
+        </div>
+        }
+        @if (!onlineMode) {
+        <div class="shop-buyer-header" [formGroup]="buyerForm">
+          <i class="bi bi-person-check-fill me-2"></i>
+          <app-input-member class="buyer-input" [members]="members" formControlName="buyer"
+            placeholder="Sélectionner un adhérent"></app-input-member>
+          <i class="bi bi-x-circle ms-2" style="cursor:pointer;" (click)="clear_sale()"></i>
+        </div>
+        }
+
+        <div *ngIf="buyer || onlineMode">
+          <app-cart [message]="message" [onlineMode]="onlineMode" [canEditPrice]="canEditPrice"
+            (complete)="cart_confirmed()" (stripeCheckout)="on_stripe_checkout()"
+            (assetUsableChange)="asset_amount = $event">
+          </app-cart>
+        </div>
+
       </div>
 
-      <div class="col-md-3 col-sm-5 text-end">
-        <input type="date" class="col form-control form-control-sm" (ngModelChange)="date_change($event)"
-          [(ngModel)]="session.date">
-      </div>
+      <!-- Panel: Products (scrollable) -->
+      <div class="shop-panel-products">
+        <div *ngFor="let products of products_array | keyvalue | moveToEnd:'LIC'">
+          <div class="shop-product-grid">
+            <div *ngFor="let product of products.value">
+              <ng-container *ngIf="!onlineMode || product.stripeEnabled">
+              <div [style]="product_gradient_style(product)" class="shop-product-card"
+                (click)="on_product_click(product)"
+                [title]="product.description && product.description !== product.name ? product.description : ''">
 
-      <div class="col-auto ms-auto">
-        <button class="btn btn-sm btn-primary align-self-end" (click)="tables_to_pdf()">
-          <i class="bi-printer"></i>
-        </button>
-      </div>
-
-    </h5>
-  </div>
-
-  <div class="card-body">
-
-    <div class="row justify-content-evenly">
-      <!-- colonne keypad -->
-      <div class="col-md-3 col-sm-3 mt-2 ">
-        <div class="row" *ngFor="let products of products_array | keyvalue | moveToEnd:'LIC'">
-          <div class="row g-1">
-            <div *ngFor="let product of products.value" class="col-6">
-              <div [style]="product_color_style(product)" class="card text-white nice_shadow bigger-on-hover h-100" (click)="on_product_click(product)" style="position: relative;">
-                <div class="card-body text-center px-0 py-1">
-                  <strong>{{product.glyph}}</strong>
-                  <ng-container class="ms-auto" *ngIf="product.paired">
-                    <i class="bi bi-people-fill ms-1" style="font-size: 1em; vertical-align: middle;"></i>
-                  </ng-container>
-                  <p>
-                    <small>
-                      {{product.price.toFixed(2)}} €
-                      {{product.paired ? ' x2':''}}
-                    </small>
-                  </p>
+                <div class="shop-product-header">
+                  <div class="shop-product-glyph">
+                    @if ((getProductGlyph(product))?.startsWith('bi-')) {
+                    <i [class]="'bi ' + getProductGlyph(product)"></i>
+                    } @else {
+                    {{getProductGlyph(product)}}
+                    }
+                  </div>
+                  <div class="shop-product-name">{{product.name}}</div>
                 </div>
+
+                <div class="shop-product-price-row">
+                  @if (product.paired) {
+                  <div class="shop-paired-badge">
+                    <i class="bi bi-people-fill"></i>
+                  </div>
+                  }
+                  <div class="shop-product-price">
+                    <span class="price">{{product.price.toFixed(2)}}€</span>
+                  </div>
+                </div>
+
               </div>
+              </ng-container>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- colonne acheteur et cart  -->
-      <div class="col-md-9 col-sm-9 fs-6 font-monospace  ">
-        <!-- <div class="container h-100 d-flex flex-column"> -->
-
-        <div class="col-md-8 col-sm-12  mt-2">
-
-          <!-- buyer -->
-          <div [formGroup]="buyerForm" class="d-flex align-items-center justify-content-between">
-            <div class="input-group input-group-sm flex-grow-1 me-2">
-              <span class="input-group-text"> Adhérent </span>
-              <app-input-member class="form-control form-control-sm" [members]="members"
-                formControlName="buyer"></app-input-member>
-              <span class="input-group-text">
-                <i class="bi bi-x-circle" (click)="clear_sale()"></i>
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <!-- cart  -->
-        <div *ngIf="buyer" class="mt-2">
-          <app-cart [message]="message" (complete)="cart_confirmed()"></app-cart>
-        </div>
-
-        <!-- </div> -->
-
-      </div>
     </div>
   </div>
 </div>
 
+<!-- ===== Modal : sélection du 2e membre pour produit couplé ===== -->
+@if (showPairedModal && pendingPairedProduct) {
+<div class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,0.45);">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h6 class="modal-title">
+          <i class="bi bi-people-fill me-2"></i>
+          {{ pendingPairedProduct.name }}
+          <span class="text-muted fw-normal small ms-1">— produit couplé</span>
+        </h6>
+        <button type="button" class="btn-close" (click)="on_paired_cancelled()"></button>
+      </div>
+      <div class="modal-body">
+        <p class="small text-muted mb-3">
+          @if (pendingPairedProduct.account === 'CAR') {
+          Carte partagée. Prix total : <strong>{{ pendingPairedProduct.price.toFixed(2) }}€</strong>.
+          } @else {
+          Inscription pour deux : <strong>{{ pendingPairedProduct.price.toFixed(2) }}€</strong>
+          (<strong>{{ (pendingPairedProduct.price / 2).toFixed(2) }}€</strong> par membre).
+          }
+        </p>
 
-<!--  sales_of_the_day -->
-<div class="mt-5 shadow_sm">
-  <app-todays-books (pdf_table)="get_sales_table($event)"></app-todays-books>
+        <!-- 1er membre (acheteur courant) -->
+        <div class="mb-3">
+          <label class="form-label fw-semibold small">1er membre</label>
+          <div class="form-control form-control-sm bg-light">
+            <i class="bi bi-person-check-fill text-success me-1"></i>
+            {{ buyer?.firstname }} {{ buyer?.lastname }}
+          </div>
+        </div>
+
+        <!-- 2e membre -->
+        <div class="mb-2">
+          <label class="form-label fw-semibold small">2e membre <span class="text-danger">*</span></label>
+          <app-input-member class="form-control form-control-sm" [members]="members"
+            [(ngModel)]="pairedSecondMember"></app-input-member>
+        </div>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="on_paired_cancelled()">Annuler</button>
+        <button type="button" class="btn btn-sm btn-primary" [disabled]="!pairedSecondMember"
+          (click)="on_paired_confirmed()">
+          <i class="bi bi-cart-plus me-1"></i>Ajouter au panier
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
+}

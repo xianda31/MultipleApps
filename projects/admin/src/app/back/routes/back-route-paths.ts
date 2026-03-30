@@ -31,7 +31,8 @@ export const BACK_ROUTE_PATHS = {
   Dashboard: 'dashboard',
 
   StripeProducts: 'stripe/products',
-  StripeShop: 'stripe/shop',
+  // StripeShop: 'stripe/shop',
+  StripeReconciliation: 'stripe/reconciliation',
   Stripe: 'stripe',
   
   RootVolume: 'outils/disk',

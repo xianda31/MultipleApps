@@ -2,6 +2,7 @@ import { defineFunction, secret } from '@aws-amplify/backend';
 
 export const stripeWebhooks = defineFunction({
   name: 'stripe-webhooks',
+  resourceGroupName: 'data',
   entry: './handler.ts',
   timeoutSeconds: 30,
   memoryMB: 512,

@@ -75,6 +75,7 @@ const schema = a.schema({
     season: a.string().required(),
     date: a.date().required(),
     tag: a.string(),
+    stripeTag: a.string(),  // Tag court Stripe (stripe:XXXXX) pour traçabilité
     amounts: a.json().required(),
     operations: a.ref('Operation').array().required(),
 
@@ -190,10 +191,9 @@ const schema = a.schema({
     name: a.string().required(),          // label court (Stripe + back)
     description: a.string().required(),   // label long
     glyph: a.string().required(),         // icône UI back-office
-    price: a.float().required(),          // en euros (source of truth)
+    price: a.float().required(),          // en euros (source of truth — prix total de l'achat)
     account: a.string().required(),       // compte compta (ex: "CAR")
-    entries: a.integer(),                 // nb entrées carte (ex: 10)
-    paired: a.boolean().required(),       // carte partagée (paire)
+    paired: a.boolean().required(),       // produit couplé (paire de membres)
     currency: a.string().required(),      // "EUR" par défaut
     stripeEnabled: a.boolean().required(), // vendable en ligne
     active: a.boolean().required(),
@@ -212,17 +212,21 @@ const schema = a.schema({
   // Stripe Transactions (paiements par carte)
   StripeTransaction: a.model({
     id: a.id().required(),
+    stripeSessionId: a.string().required(),  // Stripe Checkout session ID (cs_xxx)
+    buyerMemberId: a.string(),               // DynamoDB Member ID de l'acheteur
     status: a.enum(['pending', 'completed', 'failed']),
     amountCents: a.integer().required(),
     currency: a.string().required(),
     customerEmail: a.string(),
-    stripeMeta: a.json(),
+    stripeMeta: a.json(),                    // cartSnapshot, season, date, memberName...
+    processed: a.boolean(),                  // true après création du BookEntry côté frontend
   })
     .identifier(['id'])
     .authorization((allow) => [
       allow.guest().to(['read']),
       allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
       allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Member).to(['read']),
     ]),
 
   // Site web

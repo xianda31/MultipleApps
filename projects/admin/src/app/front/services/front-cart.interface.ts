@@ -22,6 +22,13 @@ export interface StripeCheckoutRequest {
   successUrl: string;
   cancelUrl: string;
   customerEmail?: string; // optionnel, si visiteur connecté
+  debtAmountCents?: number; // optionnel, montant de dette en centimes
+  assetAmountCents?: number; // optionnel, montant d'avoir à retenir en centimes
+  memberName?: string; // optionnel, nom du membre (pour traçabilité)
+  buyerMemberId?: string; // DynamoDB Member ID (pour reconstruction webhook)
+  cartSnapshot?: Array<{ productId: string; pairedMemberId?: string }>; // détail panier
+  season?: string; // saison comptable
+  date?: string; // date ISO YYYY-MM-DD
 }
 
 export interface StripeCheckoutResponse {

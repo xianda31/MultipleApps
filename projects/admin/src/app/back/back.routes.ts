@@ -33,7 +33,7 @@ import { BreakingNewsDefineComponent } from './breaking-news/breaking-news-defin
 import { CmsWrapper } from './pages/cms-wrapper/cms-wrapper';
 import { CompetitionsComponent } from './competitions/competitions';
 import { DashboardComponent } from './dashboard/dashboard';
-import { FrontShopComponent } from '../front/shop/front-shop.component';
+import { StripeReconciliationComponent } from './shop/stripe-reconciliation/stripe-reconciliation.component';
 
 
 export const routes: Routes = [
@@ -89,7 +89,8 @@ export const routes: Routes = [
       { path: BACK_ROUTE_PATHS.BreakingNews, component: BreakingNewsDefineComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.Competitions, component: CompetitionsComponent, data: { access: 'full' }, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.StripeProducts, redirectTo: BACK_ROUTE_PATHS.Products, pathMatch: 'full' },
-      { path: BACK_ROUTE_PATHS.StripeShop, component: FrontShopComponent, canActivate: [AuthGuard] },
+      { path: BACK_ROUTE_PATHS.Shop, component: ShopComponent, canActivate: [AuthGuard], data: { onlineMode: false } },
+      { path: BACK_ROUTE_PATHS.StripeReconciliation, component: StripeReconciliationComponent, canActivate: [AuthGuard] },
 
 
       { path: '', component: BackPageComponent },

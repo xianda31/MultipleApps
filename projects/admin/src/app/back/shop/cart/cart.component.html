@@ -1,207 +1,174 @@
 <!-- <form [formGroup]="payment_form"> -->
-<div class="card w-100">
-    <div class="card-body g-0">
-        @if (message) {
-        <div class="warning mb-3">
-            <strong class="text-danger blinking"> Message : {{message.toUpperCase()}}</strong>
-        </div>
-        }
+<div class="cart-panel">
 
-        <strong>Panier : </strong>
-        <div class="table-responsive">
-            <table class="table  table-sm  align-middle caption-top">
-
-
-                <thead>
-                    <tr class="table-primary">
-                        <th class="text-start">produit</th>
-                        <th class="text-start">adhérent</th>
-                        <th class="text-end">montant</th>
-                        <th class="text-center">actions</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    <!-- debt if any -->
-                    @if (debt_amount > 0) {
-                    <tr>
-                        <td class="text-muted">
-                            <span [ngStyle]="{ 'text-decoration': !cart.take_debt ? 'line-through' : 'none' }">
-                                Dette de {{debt_amount | currency:'€':'symbol':'2.2-2':'fr'}}
-                            </span>
-                        </td>
-                        <td></td>
-                        <td class="text-end">
-                            @if (cart.take_debt) {
-                            +{{debt_amount | currency:'€':'symbol':'2.2-2':'fr'}}
-                            }
-                        </td>
-                        <!-- Switch for cart.take_debt -->
-                        <td class="text-center text-primary align-middle p-0">
-                            <div class="d-flex justify-content-center align-items-center"
-                                style="height:100%;min-height:38px;">
-                                <label class="form-check form-switch m-0">
-                                    <input class="form-check-input" type="checkbox" role="switch"
-                                        (change)="toggle_take_debt()" [checked]="cart.take_debt">
-                                </label>
-                            </div>
-                        </td>
-                    </tr>
-                    }
-
-                    <!-- asset if any -->
-                    @if (asset_available > 0) {
-                    <tr>
-                        <td>
-                            <span [ngStyle]="{ 'text-decoration': !cart.take_asset ? 'line-through' : 'none' }">
-                                Avoir disponible de {{asset_available | currency:'€':'symbol':'2.2-2':'fr'}}
-                            </span>
-                        </td>
-                        <td></td>
-                        <td class="text-end">
-                            @if (cart.take_asset) {
-                            -{{asset_available | currency:'€':'symbol':'2.2-2':'fr'}}
-                            }
-                        </td>
-                        <!-- Switch for cart.take_asset -->
-                        <td class="text-center text-primary align-middle p-0">
-                            <div class="d-flex justify-content-center align-items-center"
-                                style="height:100%;min-height:38px;">
-                                <label class="form-check form-switch m-0">
-                                    <input class="form-check-input" type="checkbox" role="switch"
-                                        (change)="toggle_take_asset()" [checked]="cart.take_asset">
-                                </label>
-                            </div>
-                        </td>
-                    </tr>
-                    }
-
-
-                    @for (item of cart.items; let i = $index; track i) {
-                    <tr>
-                        <!-- descriptif produit -->
-                        <td>
-                            {{get_product_description(item.product_id)}}
-                        </td>
-
-                        <td>
-                            <div class="input-group input-group-sm">
-
-                                <button (click)="item.payee=null" class="btn btn-sm btn-outline-secondary"
-                                    type="button">
-                                    <i class="bi bi-x-lg"></i>
-                                </button>
-                                <app-input-member [ngClass]="!item.payee?'to-fill-in':''"
-                                    class="form-control form-control-sm" [members]="members" [(ngModel)]="item.payee"
-                                    (ngModelChange)="payeeChanged(i)"></app-input-member>
-                            </div>
-                        </td>
-
-                        <td class="text-end">
-                            @if (!item.mutable) {<span>{{item.paied | currency:'€':'symbol':'2.2-2':'fr'}}</span>}
-                            @if (item.mutable) {<input type="number" class="form-control form-control-sm"
-                                [(ngModel)]="item.paied" (keydown.enter)="updateCartItem(item)">}
-                        </td>
-
-                        <td class=" text-center text-primary">
-                            @if (!item.mutable) {<i class="bi bi-pencil-fill" (click)="item.mutable= true"></i>}
-                            @if (item.mutable) {<i class="bi bi-check-lg" (click)="updateCartItem(item)"></i>}
-                            &nbsp;
-                            <i class="bi bi-trash3" (click)="deleteCartItem(item)"></i>
-                        </td>
-                    </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-        <!--  paiement -->
-        @if ((cart.items.length > 0 || debt_amount > 0)) {
-        <div class="row mt-2 ">
-            <div class="col-3 ">
-                <strong>Total : {{total_amount() | currency:'€':'symbol':'2.2-2':'fr'}}
-                </strong>
-            </div>
-
-            <div class="col-5 p-0 d-flex flex-column">
-                <div class="form-check form-check-inline">
-                    <input class="form-check_input" type="radio" [(ngModel)]="selected_payment.mode"
-                        (ngModelChange)="payment_mode_change()" [value]="paymentMode.CASH">
-                    <label class="form-check-label">espèces</label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <input class="form-check_input" type="radio" [(ngModel)]="selected_payment.mode"
-                        (ngModelChange)="payment_mode_change()" [value]="paymentMode.CHEQUE">
-                    <label class="form-check-label">chèque</label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <input class="form-check_input" type="radio" [(ngModel)]="selected_payment.mode"
-                        (ngModelChange)="payment_mode_change()" [value]="paymentMode.TRANSFER">
-                    <label class="form-check-label">virement</label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <input class="form-check_input" type="radio" [(ngModel)]="selected_payment.mode"
-                        (ngModelChange)="payment_mode_change()" [value]="paymentMode.CREDIT">
-                    <label class="form-check-label fst-italic">avance</label>
-                </div>
-            </div>
-
-            <!-- <ng-container *ngIf="selected_payment.mode === paymentMode.CHEQUE"> -->
-            @if (selected_payment.mode === paymentMode.CHEQUE) {
-            <div class="col-4 p-0">
-                <div class="d-flex flex-column justify-content-between">
-                    <div>
-                        <select [ngClass]="!selected_payment.bank?'to-fill-in':''" class="form-control form-control-sm"
-                            [(ngModel)]="selected_payment.bank" required>
-                            <option value="undefined" hidden disabled>banque</option>
-                            @for (bank of (banks$ | async); track bank.key) {
-                            <option [value]="bank.key">{{bank.name}}</option>
-                            }
-                        </select>
-                    </div>
-                    <div>
-                        <input [ngClass]="!selected_payment.cheque_no?'to-fill-in':''" placeholder="N° de chèque"
-                            type="text" id="cheque_no" class="form-control form-control-sm mt-2"
-                            [(ngModel)]="selected_payment.cheque_no">
-                    </div>
-                </div>
-            </div>
-            }
-            <!-- </ng-container> -->
-        </div>
-        }
-
-
-
-        <!-- validation  //-->
-
-        
-        <div class="justify-content-center mt-4">
-            <button type="button" class="btn btn-success nice_shadow" [disabled]=" cart_is_not_valid() "
-            (click)="validate_sale()">confirmation du panier</button>
-        </div>
-        <div *ngIf="!cart_is_not_valid()">
-            <input type="text" class="form-control form-control-sm mt-2" placeholder="commentaire (optionnel)"
-                [(ngModel)]="cart.tag">
-        </div>
+    @if (message) {
+    <div class="alert alert-danger mb-3 py-2 blinking">
+        <strong>{{ message.toUpperCase() }}</strong>
     </div>
-    <!-- </form> -->
+    }
 
-    <ng-template #payment_info let-payment="payment">
+    <h3 class="cart-title"><i class="bi bi-bag-check"></i> Panier</h3>
+
+    @if (cart.items.length === 0 && debt_amount === 0) {
+    <div class="empty-cart">
+        <i class="bi bi-bag"></i>
+        <p>Votre panier est vide</p>
+    </div>
+    } @else {
+    <div class="table-responsive">
+        <table class="table table-sm align-middle">
+            <!-- <thead>
+                <tr class="table-primary">
+                    <th class="text-start">produit</th>
+                    <th class="text-end">montant</th>
+                    <th class="text-center">actions</th>
+                </tr>
+            </thead> -->
+            <tbody>
+
+                @if (debt_amount > 0) {
+                <tr>
+                    <td class="fw-semibold" [class.text-decoration-line-through]="!cart.take_debt">
+                        Dette
+                    </td>
+                    <td class="text-end fw-semibold" [class.text-decoration-line-through]="!cart.take_debt">
+                        +{{ debt_amount | currency:'€':'symbol':'2.2-2':'fr' }}
+                    </td>
+                    <td class="text-center text-primary align-middle p-0">
+                        @if (!onlineMode) {
+                        <div class="d-flex justify-content-center align-items-center" style="min-height:38px;">
+                            <label class="form-check form-switch m-0">
+                                <input class="form-check-input" type="checkbox" role="switch"
+                                    (change)="toggle_take_debt()" [checked]="cart.take_debt">
+                            </label>
+                        </div>
+                        }
+                    </td>
+                </tr>
+                }
 
 
-        @if (payment.mode === paymentMode.CHEQUE) {
-        <td colspan="3">
-            <select [ngClass]="!payment.bank?'to-fill-in':''" class="form-control form-control-sm"
-                [(ngModel)]="payment.bank" required>
+
+                @for (item of cart.items; let i = $index; track i) {
+                <tr>
+                    <td>
+                        <div class="fw-semibold">
+                            {{ get_product_description(item.product_id) }}
+                            @if (item.paired_with) {<i class="bi bi-people-fill ms-1 text-primary"
+                                title="produit couplé"></i>}
+                        </div>
+                        @if (item.paired_with) {
+                        <small class="text-muted d-block">
+                            <i class="bi bi-person-fill me-1"></i>{{ item.payee_name }}
+                            <i class="bi bi-people-fill mx-1 text-primary"></i>{{ item.paired_name }}
+                        </small>
+                        }
+                    </td>
+                    <td class="text-end">
+                        @if (!onlineMode && i === editingIndex && canEditPrice) {
+                        <input type="number" class="form-control form-control-sm text-end" [(ngModel)]="item.paied"
+                            (blur)="updateCartItem(item)" (keydown.enter)="updateCartItem(item)"
+                            (keydown.escape)="editingIndex = null" autofocus>
+                        } @else {
+                        <span [class.clickable-price]="!onlineMode && canEditPrice"
+                            (click)="!onlineMode && canEditPrice && (editingIndex = i)">
+                            {{ item.paied | currency:'€':'symbol':'2.2-2':'fr' }}
+                        </span>
+                        }
+                    </td>
+                    <td class="text-center text-primary">
+                        <i class="bi bi-trash3" (click)="deleteCartItem(item)"></i>
+                    </td>
+                </tr>
+                }
+
+                @if (asset_available > 0) {
+                <tr>
+                    <td class="fw-semibold" [class.text-decoration-line-through]="!cart.take_asset">
+                        Avoir
+                       <span class="text-muted"> ( {{ asset_available | currency:'€':'symbol':'2.2-2':'fr' }} disponibles)</span>
+                    </td>
+                    <td class="text-end fw-semibold" [class.text-decoration-line-through]="!cart.take_asset">
+                        -{{ asset_usable | currency:'€':'symbol':'2.2-2':'fr' }}
+                    </td>
+                    <td class="text-center text-primary align-middle p-0">
+                        @if (!onlineMode) {
+                        <div class="d-flex justify-content-center align-items-center" style="min-height:38px;">
+                            <label class="form-check form-switch m-0">
+                                <input class="form-check-input" type="checkbox" role="switch"
+                                    (change)="toggle_take_asset()" [checked]="cart.take_asset">
+                            </label>
+                        </div>
+                        }
+                    </td>
+                </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr class="table-light">
+                    <td class="fw-bold">Total</td>
+                    <td class="text-end fw-bold text-success">{{ total_amount() | currency:'€':'symbol':'2.2-2':'fr' }}
+                    </td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <div class="cart-total">
+        @if (onlineMode) {
+        <p class="security-note"><i class="bi bi-shield-check me-1"></i>Paiement sécurisé par Stripe</p>
+        } @else {
+        <div class="payment-buttons">
+            <button type="button" class="btn-pay" [class.active]="selected_payment.mode === paymentMode.CASH"
+                (click)="selected_payment.mode = paymentMode.CASH; payment_mode_change()">
+                <i class="bi bi-cash me-1"></i>Espèces
+            </button>
+            <button type="button" class="btn-pay" [class.active]="selected_payment.mode === paymentMode.CHEQUE"
+                (click)="selected_payment.mode = paymentMode.CHEQUE; payment_mode_change()">
+                <i class="bi bi-file-earmark-text me-1"></i>Chèque
+            </button>
+            <button type="button" class="btn-pay" [class.active]="selected_payment.mode === paymentMode.TRANSFER"
+                (click)="selected_payment.mode = paymentMode.TRANSFER; payment_mode_change()">
+                <i class="bi bi-bank me-1"></i>Virement
+            </button>
+            <button type="button" class="btn-pay" [class.active]="selected_payment.mode === paymentMode.CREDIT"
+                (click)="selected_payment.mode = paymentMode.CREDIT; payment_mode_change()">
+                <i class="bi bi-arrow-up-circle me-1"></i>Avance
+            </button>
+        </div>
+        @if (selected_payment.mode === paymentMode.CHEQUE) {
+        <div class="cheque-fields mt-2">
+            <select [ngClass]="!selected_payment.bank?'to-fill-in':''" class="form-select form-select-sm mb-2"
+                [(ngModel)]="selected_payment.bank" required>
                 <option value="undefined" hidden disabled>banque</option>
                 @for (bank of (banks$ | async); track bank.key) {
                 <option [value]="bank.key">{{bank.name}}</option>
                 }
             </select>
-        </td>
-        <td colspan="3">
-            <input [ngClass]="!payment.cheque_no?'to-fill-in':''" placeholder="N° de chèque" type="text" id="cheque_no"
-                class="form-control form-control-sm" [(ngModel)]="payment.cheque_no">
-        </td>
+            <input [ngClass]="!selected_payment.cheque_no?'to-fill-in':''" placeholder="N° de chèque" type="text"
+                id="cheque_no" class="form-control form-control-sm" [(ngModel)]="selected_payment.cheque_no">
+        </div>
         }
-    </ng-template>
+        }
+    </div>
+    <div class="cart-actions">
+        @if (onlineMode) {
+        <button type="button" class="btn-checkout" [disabled]="stripe_checkout_not_ready()"
+            (click)="stripeCheckout.emit()">
+            <i class="bi bi-credit-card me-2"></i>Payer par carte
+        </button>
+        } @else {
+        <button type="button" class="btn-checkout" [disabled]="cart_is_not_valid()" (click)="validate_sale()">
+            <i class="bi bi-check-circle me-2"></i>Confirmer le panier
+        </button>
+        @if (!cart_is_not_valid()) {
+        <input type="text" class="form-control form-control-sm" placeholder="commentaire (optionnel)"
+            [(ngModel)]="cart.tag">
+        }
+        }
+    </div>
+    }
+
+</div>
+<!-- </form> -->

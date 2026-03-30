@@ -108,6 +108,13 @@ httpApi.addRoutes({
   // PAS de authorization -> permet achat anonyme ET connecté
 });
 
+// Stripe Receipt - Récupération du reçu de paiement
+httpApi.addRoutes({
+  path: "/api/stripe/receipt",
+  methods: [HttpMethod.POST],
+  integration: stripeCheckoutIntegration,
+});
+
 // 🔒 Stripe Webhooks - Pas d'autorisation (Stripe appel en webhook)
 httpApi.addRoutes({
   path: "/api/stripe/webhooks",
@@ -149,6 +156,11 @@ backend.auth.resources.unauthenticatedUserIamRole.attachInlinePolicy(apiPolicy);
 const saleItemTable = backend.data.resources.tables['SaleItem'];
 saleItemTable.grantReadData(backend.stripeCheckout.resources.lambda);
 backend.stripeCheckout.addEnvironment('SALE_ITEM_TABLE_NAME', saleItemTable.tableName);
+
+// Grant stripeWebhooks write access to StripeTransaction table (data recording only)
+const stripeTransactionTable = backend.data.resources.tables['StripeTransaction'];
+stripeTransactionTable.grantReadWriteData(backend.stripeWebhooks.resources.lambda);
+backend.stripeWebhooks.addEnvironment('STRIPE_TRANSACTION_TABLE_NAME', stripeTransactionTable.tableName);
 
 // Grant both email Lambdas access to Member table
 const memberTable = backend.data.resources.tables['Member'];

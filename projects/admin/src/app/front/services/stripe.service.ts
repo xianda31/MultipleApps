@@ -47,7 +47,14 @@ export class StripeService {
             quantities: request.quantities,
             successUrl: request.successUrl,
             cancelUrl: request.cancelUrl,
-            customerEmail: request.customerEmail
+            customerEmail: request.customerEmail || undefined,
+            debtAmountCents: request.debtAmountCents || undefined,
+            assetAmountCents: request.assetAmountCents || undefined,
+            memberName: request.memberName || undefined,
+            buyerMemberId: request.buyerMemberId || undefined,
+            cartSnapshot: request.cartSnapshot || undefined,
+            season: request.season || undefined,
+            date: request.date || undefined,
           } as any,
           headers: {
             'Content-Type': 'application/json',
@@ -68,6 +75,30 @@ export class StripeService {
     } catch (error: any) {
       console.error('Erreur création session Stripe:', error);
       throw new Error(`Impossible de créer la session de paiement: ${error?.message || 'Erreur inconnue'}`);
+    }
+  }
+
+  /**
+   * Récupère l'URL du reçu Stripe pour une session donnée
+   */
+  async getReceiptUrl(sessionId: string): Promise<string | null> {
+    try {
+      const restOperation = post({
+        apiName: this.API_NAME,
+        path: '/api/stripe/receipt',
+        options: {
+          body: { sessionId } as any,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      });
+
+      const { body } = await restOperation.response;
+      const responseText = await body.text();
+      const response = JSON.parse(responseText);
+      return response.data?.receiptUrl || null;
+    } catch (error: any) {
+      console.error('Erreur récupération reçu Stripe:', error);
+      return null;
     }
   }
 

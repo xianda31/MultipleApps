@@ -257,22 +257,19 @@ export class AuthentificationService {
   }
 
   async getCurrentUser(): Promise<string | null> {
-    let promise = new Promise<string | null>((resolve, reject) => {
-      getCurrentUser()
-        .then(async ({ username, userId, signInDetails }) => {
-          const attributes = await fetchUserAttributes();
-          let member_id = attributes['custom:member_id'];
+    try {
+      const { username, userId, signInDetails } = await getCurrentUser();
+      const attributes = await fetchUserAttributes();
+      const member_id = attributes['custom:member_id'];
 
-          // this._logged_member = this.memberService.getMember(member_id!);
-          this._logged_member$.next(this.memberService.getMember(member_id!));
+      // readMember = async (fetch DB), getMember = sync (cache mémoire, vide après reload)
+      const member = await this.memberService.readMember(member_id!);
+      this._logged_member$.next(member);
 
-          resolve(member_id!);
-        })
-        .catch((err) => {
-          resolve(null);          // erreur "normale" si pas de user connecté
-        });
-    });
-    return promise;
+      return member_id!;
+    } catch (err) {
+      return null;              // erreur "normale" si pas de user connecté
+    }
   }
 
 

@@ -32,13 +32,13 @@ export interface Payment {
 
 
 export interface CartItem {
-  payee?: Member | null;    // null => 2nd payee to fill-in
-  paied: number;
-  mutable : boolean; // true => item can be modified
-  // payee_id: string;
+  payee: Member;              // primary payee (always set)
+  payee_name: string;         // cached display name
+  paied: number;              // amount paid (per-member for paired-perMember; total for shared)
   product_id: string;
   product_account: string;
-  payee_name: string;
+  paired_with?: Member;       // 2nd member (paired products only) — atomic with payee
+  paired_name?: string;       // cached display name for 2nd member
 }
 
 export interface Cart {
@@ -50,6 +50,7 @@ export interface Cart {
   take_debt : boolean;
   buyer_name: string;
   tag ?: string;
+  stripeTag?: string;  // Tag Stripe court (stripe:XXXXX) pour traçabilité
 }
 
 

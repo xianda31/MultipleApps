@@ -5,10 +5,236 @@
 @keyframes blinker {
   50% { opacity: 0; }
 }
-// select {
-//     border-color: blueviolet;
-// }
 
 .to-fill-in {
     border-color: red;
+}
+
+.clickable-price {
+    cursor: pointer;
+    border-bottom: 1px dashed #aaa;
+    padding-bottom: 1px;
+    &:hover { color: #667eea; border-color: #667eea; }
+}
+
+/* ========================
+   CART PANEL CONTAINER
+======================== */
+
+.cart-panel {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+
+  .cart-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0 0 1.25rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+
+    i { color: #27ae60; }
+  }
+
+  .empty-cart {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: #95a5a6;
+
+    i {
+      font-size: 2.5rem;
+      display: block;
+      margin-bottom: 0.75rem;
+      opacity: 0.5;
+    }
+
+    p { margin: 0; font-size: 1rem; }
+  }
+}
+
+/* ========================
+   CART ITEMS (online mode)
+======================== */
+
+.cart-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+
+  .cart-item {
+    padding: 0.75rem 1rem;
+    border: 1px solid #ecf0f1;
+    border-radius: 8px;
+    background: #f8f9fa;
+
+    .item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.4rem;
+
+      .item-name {
+        font-weight: 600;
+        color: #2c3e50;
+        flex: 1;
+      }
+
+      .btn-remove {
+        background: none;
+        border: none;
+        color: #e74c3c;
+        cursor: pointer;
+        font-size: 1.1rem;
+        padding: 0;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+
+        &:hover { background: #ffe5e1; border-radius: 4px; }
+      }
+    }
+
+    .item-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      .item-price {
+        font-weight: 700;
+        color: #27ae60;
+        font-size: 1rem;
+      }
+    }
+  }
+}
+
+/* ========================
+   CART TOTAL
+======================== */
+
+.cart-total {
+  padding: 1rem 1.25rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+
+  .total-amount {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 700;
+    color: #2c3e50;
+    font-size: 1.1rem;
+
+    span:last-child { color: #27ae60; }
+  }
+
+  .security-note {
+    font-size: 0.8rem;
+    color: #27ae60;
+    margin: 0.5rem 0 0 0;
+  }
+
+  .payment-modes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.1rem;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+  }
+
+  .cheque-fields { }
+}
+
+/* ========================
+   BUYER HEADER
+======================== */
+
+.buyer-header {
+  background: #e3f2fd;
+  color: #1565c0;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+}
+
+/* ========================
+   PAYMENT BUTTONS
+======================== */
+
+.payment-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+}
+
+.btn-pay {
+  flex: 1;
+  min-width: calc(50% - 0.2rem);
+  padding: 0.45rem 0.5rem;
+  border: 1.5px solid #bdc3c7;
+  border-radius: 8px;
+  background: white;
+  color: #5f5f5f;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+
+  &:hover {
+    border-color: #667eea;
+    color: #667eea;
+  }
+
+  &.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-color: transparent;
+    font-weight: 600;
+  }
+}
+
+/* ========================
+   CART ACTIONS
+======================== */
+
+.cart-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.btn-checkout {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.3s ease;
+
+  &:hover:not(:disabled) {
+    transform: scale(1.02);
+    opacity: 0.95;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 }

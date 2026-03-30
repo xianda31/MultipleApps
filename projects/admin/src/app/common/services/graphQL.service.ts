@@ -415,6 +415,24 @@ export class DBhandler {
   }
 
 
+  // STRIPE TRANSACTION SERVICE
+
+  async listUnprocessedStripeTransactions(): Promise<any[]> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { data, errors } = await client.models.StripeTransaction.list({ limit: 300 });
+    if (errors) throw errors;
+    return (data as any[]).filter((t: any) => t.status === 'completed' && !t.processed);
+  }
+
+  async markStripeTransactionProcessed(id: string): Promise<void> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { errors } = await client.models.StripeTransaction.update({ id, processed: true } as any);
+    if (errors) throw errors;
+  }
+
+
 
 
 
@@ -692,7 +710,7 @@ export class DBhandler {
     const client = generateClient<Schema>({ authMode: authMode });
     const { data, errors } = await client.models.BookEntry.get(
       { id: id },
-      { selectionSet: ['id', 'season', 'tag', 'date', 'amounts', 'operations.*', 'transaction_id', 'cheque_ref', 'deposit_ref', 'bank_report', 'invoice_ref'] }
+      { selectionSet: ['id', 'season', 'tag', 'stripeTag', 'date', 'amounts', 'operations.*', 'transaction_id', 'cheque_ref', 'deposit_ref', 'bank_report', 'invoice_ref'] }
 
     );
     if (errors) throw errors;

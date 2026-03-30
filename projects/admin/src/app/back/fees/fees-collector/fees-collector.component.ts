@@ -47,7 +47,6 @@ export class FeesCollectorComponent implements OnDestroy {
   modalErrorMessage: string = '';
   hideValidated: boolean = false;
   disappearingGamers: Map<number, boolean> = new Map();
-  CARD_ENTRIES !: number;  
   CARD_PRICE !: number;  
   @ViewChild('addPlayersModal') addPlayersModalRef!: TemplateRef<any>;  
 
@@ -69,13 +68,12 @@ export class FeesCollectorComponent implements OnDestroy {
     });
 
     this.productService.listProducts().subscribe(products => {
-      const card_product = products.find(p => (p.account === 'CAR')&& (!p.paired));
-      if(!card_product || card_product.entries === undefined || card_product.entries === null) {
+      const card_product = products.find(p => (p.account === 'CAR') && (!p.paired));
+      if (!card_product) {
         this.toastService.showErrorToast('Configuration produit', `Le produit carte de jeu n'a pas été trouvé. Veuillez le configurer correctement.`);
         throw new Error('Le produit carte de jeu n\'a pas été trouvé. Veuillez le configurer correctement.');
       }
-      this.CARD_PRICE = card_product.price ;
-      this.CARD_ENTRIES =  card_product.entries  ;
+      this.CARD_PRICE = card_product.price;
     });
 
     const chrono = (date: string) => {
@@ -352,7 +350,7 @@ export class FeesCollectorComponent implements OnDestroy {
           const check_ref = (mode === PaymentMode.CHEQUE) ? formValue.bank + formValue.chequeNo : undefined;
      
           // save sale
-          await this.feesCollectorService.create_game_card_sale(owners, this.CARD_ENTRIES,this.CARD_PRICE, mode, check_ref);
+          await this.feesCollectorService.create_game_card_sale(owners, this.CARD_PRICE, mode, check_ref);
 
         } catch (error) {
           console.error('Erreur lors de la vente rapide', error);

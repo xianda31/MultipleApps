@@ -4,32 +4,33 @@ import { CommonModule, CurrencyPipe } from '@angular/common';
 import { map, Observable } from 'rxjs';
 import { Cart, CartItem, Payment, PaymentMode } from './cart.interface';
 import { ProductService } from '../../../common/services/product.service';
-import { InputMemberComponent } from '../../input-member/input-member.component';
-import { Member } from '../../../common/interfaces/member.interface';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Bank } from '../../../common/interfaces/system-conf.interface';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { Product } from '../../products/product.interface';
-import { MembersService } from '../../../common/services/members.service';
-
 @Component({
   selector: 'app-cart',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, InputMemberComponent, CurrencyPipe],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, CurrencyPipe],
   templateUrl: './cart.component.html',
   styleUrl: './cart.component.scss'
 })
 export class CartComponent {
   @Output() complete = new EventEmitter<void>();
+  @Output() stripeCheckout = new EventEmitter<void>();
+  @Output() assetUsableChange = new EventEmitter<number>();  // Émettre quand l'avoir utilisable change
   @Input() message: string = '';
+  @Input() onlineMode = false;
+  @Input() canEditPrice = false;  // Si false, modifier les prix est désactivé
 
   debt_amount = 0;
   asset_available = 0;
+  asset_usable = 0;  // Avoir réellement utilisable (ne rend pas le total négatif)
   total_amount = signal(0);
 
   cart: Cart = { items: [], debt: null, asset_available: null, asset_used: null, buyer_name: '', take_asset:true, take_debt:true };
-  members!: Member[];
   products!: Product[];
+  editingIndex: number | null = null;
 
   paymentMode = PaymentMode;
   selected_payment !: Payment;
@@ -37,7 +38,6 @@ export class CartComponent {
   banks$ !: Observable<Bank[]>;
 
   constructor(
-    private membersService: MembersService,
     private cartService: CartService,
     private productService: ProductService,
     private systemDataService: SystemDataService,
@@ -49,9 +49,6 @@ export class CartComponent {
 
     this.clear_payment();
 
-    this.membersService.listMembers().subscribe((members) => {
-      this.members = members;
-    });
     this.productService.listProducts().subscribe((products) => {
       this.products = products;
     });
@@ -70,8 +67,26 @@ export class CartComponent {
         this.clear_payment();
       }
       this.total_amount.update(() => this.cartService.getCartAmount());
+      // Calculer l'avoir réellement utilisable
+      this.asset_usable = this.calculate_usable_asset();
+      // Émettre le changement d'asset_usable pour que le parent (shop) puisse l'utiliser
+      this.assetUsableChange.emit(this.asset_usable);
 
     });
+  }
+
+  calculate_usable_asset(): number {
+    // Avoir utilisable = min(avoir_disponible, montant_brut_à_payer)
+    // Montant brut = articles + dette (AVANT déduction d'avoir)
+    if (!this.cart.take_asset || this.asset_available <= 0) return 0;
+    
+    // Calculer le montant brut (articles + dette)
+    const items_total = this.cart.items.reduce((sum, item) => sum + item.paied, 0);
+    const debt = (this.cart.take_debt && this.debt_amount > 0) ? this.debt_amount : 0;
+    const gross_total = items_total + debt;
+    
+    // Avoir utilisable ne peut pas dépasser le montant brut à payer
+    return Math.min(this.asset_available, Math.max(0, gross_total));
   }
 
   get_product_description(product_id: string): string {
@@ -84,17 +99,21 @@ export class CartComponent {
   }
 
   updateCartItem(cart_item: CartItem) {
+    // Vérifier les permissions : modification des prix autorisée seulement si canEditPrice
+    if (!this.canEditPrice) {
+      console.warn('Permission denied: user cannot edit prices');
+      this.editingIndex = null;
+      return;
+    }
     this.cartService.updateCartItem(cart_item);
-    cart_item.mutable = false;
+    this.editingIndex = null;
   }
 
-  some_payee_cleared(): boolean {
-    return this.cartService.getCartItems().some((item) => !item.payee_name);
-  }
-
-  payeeChanged(index: number) {
-    if (!this.cart.items[index].payee) return;
-    this.cart.items[index].payee_name = this.cart.items[index].payee!.lastname + ' ' + this.cart.items[index].payee!.firstname;
+  stripe_checkout_not_ready(): boolean {
+    if (this.cart.items.length === 0 && this.debt_amount === 0) return true;
+    // All items must have a valid payee
+    // Paired items (paired_with) are already atomic — the 2nd member is always present
+    return this.cart.items.some(item => !item.payee);
   }
 
   clear_payment() {

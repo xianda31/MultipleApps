@@ -13,6 +13,7 @@ import { AssistanceComponent } from "../../front/front/assistance/assistance.com
 import { AlbumComponent } from "../../front/album/album.component";
 import { CompetitionsComponent } from "../../back/competitions/competitions";
 import { PdfViewerComponent } from "../../back/pdf-viewer/pdf-viewer.component";
+import { ShopComponent } from "../../back/shop/shop.component";
 
 export enum NAVITEM_PLUGIN {
   TOURNAMENTS = 'tournaments',
@@ -71,12 +72,13 @@ export const PLUGINS: Record<string, Type<any>> = {
   [NAVITEM_PLUGIN.ASSISTANCE]: AssistanceComponent,
   [NAVITEM_PLUGIN.ALBUM]: AlbumComponent,
   [NAVITEM_PLUGIN.PDF_VIEWER]: PdfViewerComponent,
-  // [NAVITEM_PLUGIN.ONLINE_SHOP]: FrontShopComponent,
+  [NAVITEM_PLUGIN.ONLINE_SHOP]: ShopComponent,
 };
 
 
 export const PLUGINS_META: Record<string, PluginMeta> = {
-    [NAVITEM_PLUGIN.ONLINE_SHOP]: { requiresAuth: false },
+    
+  
   // Plugins avec extraRoutes ou configuration spéciale
   [NAVITEM_PLUGIN.TOURNAMENTS]: { 
     component: TournamentComponent,  // Composant différent pour le détail (vs liste)
@@ -95,7 +97,9 @@ export const PLUGINS_META: Record<string, PluginMeta> = {
   [NAVITEM_PLUGIN.PDF_VIEWER]: { 
     param: { label: 'Fichier PDF', placeholder: 'nom_du_fichier.pdf', inputType: 'text', dataKey: 'pdf_src' },
   },
-  
+  [NAVITEM_PLUGIN.ONLINE_SHOP]: { 
+    param: { label: 'Mode boutique en ligne', placeholder: '', inputType: 'text', dataKey: 'onlineMode' },
+  },
   // Plugins nécessitant authentification (component récupéré de PLUGINS)
   [NAVITEM_PLUGIN.SETTINGS]: { requiresAuth: true },
   [NAVITEM_PLUGIN.PURCHASES]: { requiresAuth: true },

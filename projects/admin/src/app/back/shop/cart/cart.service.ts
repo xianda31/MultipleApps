@@ -98,6 +98,14 @@ export class CartService {
     this.seller = seller_name;
   }
 
+  setTag(tag: string): void {
+    this._cart.tag = tag;
+  }
+
+  setStripeTag(stripeTag: string): void {
+    this._cart.stripeTag = stripeTag;
+  }
+
   getCartAmount(): number {
     // console.log('getCartAmount', this._cart.debt, this._cart.asset);
     let due = this._cart.items.reduce((total, item) => total + item.paied, 0) + (this._cart.take_debt ? (this._cart.debt?.amount  || 0) : 0);
@@ -126,6 +134,7 @@ export class CartService {
         id: '',
         transaction_id: this.payment_mode2bank_op_type(this._payment.mode),
         tag: this._cart.tag,
+        stripeTag: this._cart.stripeTag,
         amounts: this.payments2fValue(this._payment.mode),
         operations: this.cart2Operations(),
         cheque_ref: this.payments2cheque_ref(this._payment),
@@ -151,39 +160,71 @@ export class CartService {
     return promise;
   }
 
-  build_cart_item(product: Product, payee: Member | null): CartItem {
-    const cartItem: CartItem = {
+  build_cart_item(product: Product, payee: Member, paired_with?: Member): CartItem {
+    const item: CartItem = {
       product_id: product.id,
-      paied: product.price,
-      mutable: false,
       product_account: product.account,
-      payee_name: payee === null ? '' : payee.lastname + ' ' + payee.firstname
+      payee: payee,
+      payee_name: payee.lastname + ' ' + payee.firstname,
+      paied: product.price,   // prix total de l'achat (déjà total pour paired)
     };
-    return { payee: payee, ...cartItem }
+
+    if (product.paired && paired_with) {
+      item.paired_with = paired_with;
+      item.paired_name = paired_with.lastname + ' ' + paired_with.firstname;
+    }
+
+    return item;
   }
 
 
   cart2Operations(): Operation[] {
     let operations: Operation[] = [];
     let payees: Map<string, CartItem[]> = new Map();
-    this._cart.items.forEach((cartitem) => {
-      let payee = cartitem.payee_name;
 
-      if (payees.has(payee)) {
-        payees.get(payee)!.push(cartitem);
+    this._cart.items.forEach((cartitem) => {
+      const isShared = cartitem.paired_with && cartitem.product_account === 'CAR';
+
+      if (isShared) {
+        // Shared (CAR): une seule opération au nom des deux membres
+        const sharedKey = cartitem.payee_name + ' / ' + cartitem.paired_name;
+        const existing = payees.get(sharedKey) ?? [];
+        existing.push(cartitem);
+        payees.set(sharedKey, existing);
+      } else if (cartitem.paired_with) {
+        // Per-member (ADH-c, PERF-c): deux opérations distinctes à prix unitaire (= total / 2)
+        const unitPrice = cartitem.paied / 2;
+        const item1: CartItem = { ...cartitem, paied: unitPrice, paired_with: undefined, paired_name: undefined };
+        const item2: CartItem = {
+          ...cartitem,
+          payee: cartitem.paired_with,
+          payee_name: cartitem.paired_name!,
+          paied: unitPrice,
+          paired_with: undefined,
+          paired_name: undefined,
+        };
+        [item1, item2].forEach(it => {
+          const existing = payees.get(it.payee_name) ?? [];
+          existing.push(it);
+          payees.set(it.payee_name, existing);
+        });
       } else {
-        payees.set(payee, [cartitem]);
+        // Produit simple
+        const existing = payees.get(cartitem.payee_name) ?? [];
+        existing.push(cartitem);
+        payees.set(cartitem.payee_name, existing);
       }
     });
+
     // push debt_credit and asset_debit as "CartItems"
     if (this._cart.debt && this._cart.take_debt) {
       let items = payees.get(this._cart.debt.name) ?? [];
-      items.push({ paied: this._cart.debt.amount, mutable: false, product_account: CUSTOMER_ACCOUNT.DEBT_credit, payee_name: this._cart.debt.name, product_id: '' });
+      items.push({ payee: { lastname: this._cart.debt.name, firstname: '' } as any, paied: this._cart.debt.amount, product_account: CUSTOMER_ACCOUNT.DEBT_credit, payee_name: this._cart.debt.name, product_id: '' });
       payees.set(this._cart.debt.name, items);
     }
     if (this._cart.asset_used && this._cart.take_asset) {
       let items = payees.get(this._cart.asset_used.name) ?? [];
-      items.push({ paied: this._cart.asset_used.amount, mutable: false, product_account: CUSTOMER_ACCOUNT.ASSET_debit, payee_name: this._cart.asset_used.name, product_id: '' });
+      items.push({ payee: { lastname: this._cart.asset_used.name, firstname: '' } as any, paied: this._cart.asset_used.amount, product_account: CUSTOMER_ACCOUNT.ASSET_debit, payee_name: this._cart.asset_used.name, product_id: '' });
       payees.set(this._cart.asset_used.name, items);
     }
 
@@ -261,31 +302,18 @@ export class CartService {
 
 
   async handle_game_card(session: Session, items?: CartItem[]) {
-    let members: Member[] = [];
     const cartItems = items ?? this._cart.items;
     for (const cartitem of cartItems) {
-      if (cartitem.product_account === 'CAR') {
-        if (!cartitem.payee || cartitem.payee === null) {
-          console.warn('no payee for CAR product', cartitem);
-          continue;
-        }
-        let product = this.productService.getProduct(cartitem.product_id);
-        let member = this.membersService.getMemberbyName(cartitem.payee_name);
-        if (!product || !member) {
-          console.warn('product or member not found for CAR product', cartitem);
-          continue;
-        }
-        members.push(member);
+      if (cartitem.product_account !== 'CAR') continue;
 
-        if ((product.paired && members.length === 2) || !product.paired) {
-          // create game card
-          await this.gameCardService.createCard(members, (product.entries! * members.length))
-            .catch(error => {
-              console.error('Error à la création de la carte', member.firstname, member.lastname, error);
-            })
-            .finally(() => { members = [] }); // reset members array after processing
-        }
-      }
+      const members: Member[] = [cartitem.payee];
+      if (cartitem.paired_with) members.push(cartitem.paired_with);
+
+      // Toujours MAX_STAMPS jetons au total (défaut de createCard)
+      await this.gameCardService.createCard(members)
+        .catch(error => {
+          console.error('Error à la création de la carte', cartitem.payee_name, error);
+        });
     }
   }
 }

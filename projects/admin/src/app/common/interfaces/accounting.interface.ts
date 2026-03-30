@@ -125,6 +125,7 @@ export interface BookEntry {
   season: string;
   date: string;
   tag?: string;
+  stripeTag?: string;  // Tag Stripe court (stripe:XXXXX) pour traçabilité
   transaction_id: TRANSACTION_ID;   // type d'opération bancaire
   amounts: AMOUNTS
   cheque_ref?: string;        // code banque + numéro de chèque

@@ -1,3 +1,247 @@
 .bigger-on-hover:hover {
     transform: scale(1.05);
 }
+
+/* ===== Buyer header (back + online) ===== */
+.shop-buyer-header {
+    display: flex;
+    align-items: center;
+    background: #e3f2fd;
+    color: #1565c0;
+    border-radius: 8px;
+    padding: 0.5rem 0.9rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+
+    .buyer-input {
+        flex: 1;
+        min-width: 0;
+    }
+
+    // Pierce into app-input-member > app-custom-dropdown > input
+    ::ng-deep .custom-dropdown-container input {
+        background: transparent !important;
+        color: #1565c0 !important;
+        font-weight: 600 !important;
+        font-size: 0.95rem !important;
+        padding: 0 !important;
+    }
+}
+
+/* ===================================================================
+   SHOP LAYOUT — CSS Grid, 3 breakpoints: desktop / portrait / landscape
+   Principle: each panel has its own overflow-y so buyer+cart never
+   scrolls away. No position:sticky needed.
+   =================================================================== */
+
+.shop-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;              /* fill viewport */
+    padding: 0.75rem 0.5rem 0;
+    overflow: hidden;            /* no double scroll */
+}
+
+.shop-header-bar {
+    display: flex;
+    align-items: center;
+    padding-bottom: 0.6rem;
+    margin-bottom: 0.25rem;
+    border-bottom: 1px solid #dee2e6;
+    font-size: 1.05rem;
+    flex-shrink: 0;
+}
+
+/* ===== 2-panel area (products + buyer/cart) ===== */
+.shop-panels {
+    flex: 1;
+    min-height: 0;               /* crucial for child overflow */
+    display: grid;
+    gap: 1rem;
+    /* Desktop default: products left 40%, cart right 60% */
+    grid-template-columns: 2fr 3fr;
+    grid-template-rows: 1fr;
+}
+
+.shop-panel-products {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0.5rem 0.25rem 2rem;
+}
+
+.shop-panel-cart {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0.5rem 0.25rem 2rem;
+}
+
+/* ===== Product grid (replaces Bootstrap row/col-6) ===== */
+.shop-product-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+/* ===== Product cards ===== */
+.shop-product-card {
+    border-radius: 10px;
+    padding: 1rem 0.75rem;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+    transition: all 0.25s ease;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.18);
+    color: white;
+    position: relative;
+
+    &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 22px rgba(0,0,0,0.25);
+    }
+
+    .shop-product-header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .shop-product-glyph {
+        font-size: 1.3rem;
+        line-height: 1;
+        flex-shrink: 0;
+        filter: drop-shadow(0 1px 2px rgba(0,0,0,0.25));
+        i { font-size: 1.3rem; }
+    }
+
+    .shop-product-name {
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: white;
+        line-height: 1.3;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        flex: 1;
+        text-align: center;
+    }
+
+    .shop-product-price-row {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 0.5rem;
+    }
+
+    .shop-product-price {
+        margin-bottom: 0;
+        flex: 1;
+        text-align: center;
+        .price {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: white;
+        }
+    }
+
+    .shop-paired-badge {
+        background: rgba(255, 255, 255, 0.25);
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        border-radius: 50%;
+        width: 1.5rem;
+        height: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(8px);
+        flex-shrink: 0;
+
+        i {
+            font-size: 0.8rem;
+            color: white;
+        }
+    }
+}
+
+/* =========================
+   MOBILE PORTRAIT (large phones/tablettes)
+   Cart on top (fixed), products scroll below
+   ========================= */
+@media (max-width: 1024px) and (orientation: portrait) {
+    .shop-panels {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;    /* cart=auto height, products=fill rest */
+    }
+
+    .shop-panel-cart {
+        order: -1;                        /* cart first */
+        overflow-y: visible;              /* don't scroll cart itself */
+        padding: 0.5rem 0 0.75rem;
+        border-bottom: 1px solid #dee2e6;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    }
+
+    .shop-panel-products {
+        padding: 0.75rem 0.25rem 2rem;
+    }
+
+    .shop-product-card {
+        padding: 0.5rem 0.3rem;
+
+        .shop-product-glyph,
+        .shop-paired-badge {
+            display: none !important;
+        }
+        .shop-product-name {
+            font-size: 0.95rem;
+        }
+        .shop-product-price .price {
+            font-size: 0.85rem;
+        }
+    }
+}
+
+/* =========================
+   MOBILE LANDSCAPE (large phones/tablettes)
+   Products left (scroll), cart right (scroll if needed)
+   ========================= */
+@media (max-width: 1024px) and (orientation: landscape) {
+    .shop-layout {
+        padding: 0.25rem 0.5rem 0;
+    }
+
+    .shop-header-bar {
+        padding-bottom: 0.3rem;
+        margin-bottom: 0.15rem;
+        font-size: 0.9rem;
+    }
+
+    .shop-panels {
+        grid-template-columns: 55% 1fr;
+        gap: 0.5rem;
+    }
+
+    .shop-panel-cart {
+        border-left: 1px solid #dee2e6;
+        padding-left: 0.5rem;
+    }
+
+    /* Compact cards */
+    .shop-product-card {
+        padding: 0.4rem 0.2rem;
+
+        .shop-product-glyph,
+        .shop-paired-badge {
+            display: none !important;
+        }
+        .shop-product-name {
+            font-size: 0.8rem;
+        }
+        .shop-product-price .price {
+            font-size: 0.75rem;
+        }
+    }
+}

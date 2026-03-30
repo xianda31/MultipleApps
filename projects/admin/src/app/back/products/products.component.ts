@@ -6,6 +6,7 @@ import { map, Observable } from 'rxjs';
 import { ProductService } from '../../common/services/product.service';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { CustomDropdownComponent } from '../../common/components/custom-dropdown/custom-dropdown.component';
+import { getGlyphForAccount } from '../../common/utilities/account-glyph.mapper';
 @Component({
   selector: 'app-products',
   standalone: true,
@@ -49,16 +50,15 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
     this.productForm = new FormGroup({
       id: new FormControl(),
-      glyph: new FormControl('', Validators.required),
       name: new FormControl('', Validators.required),
       description: new FormControl('', Validators.required),
-      entries: new FormControl<number | null>(null),
       price: new FormControl('', [Validators.required, Validators.min(0)]),
       account: new FormControl('', Validators.required),
       paired: new FormControl<boolean>(false, { nonNullable: true }),
       currency: new FormControl('EUR', Validators.required),
       stripeEnabled: new FormControl<boolean>(false, { nonNullable: true }),
       active: new FormControl<boolean>(true, { nonNullable: true }),
+      // glyph est auto-déterminé basé sur `account` — ne pas inclure dans le formulaire
     });
 
   }
@@ -81,6 +81,8 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
   onCreateProduct() {
     let new_product = this.productForm.getRawValue();
+    // Déterminer auto le glyph basé sur le compte
+    new_product.glyph = getGlyphForAccount(new_product.account);
     this.productService.createProduct(new_product);
     this.showModal = false;
     this.productForm.reset();
@@ -101,6 +103,8 @@ export class ProductsComponent implements OnInit, OnDestroy {
   }
   onUpdateProduct() {
     let product = this.productForm.getRawValue();
+    // Déterminer auto le glyph basé sur le compte
+    product.glyph = getGlyphForAccount(product.account);
     this.productService.updateProduct(product);
     this.showModal = false;
     this.product_selected = false;

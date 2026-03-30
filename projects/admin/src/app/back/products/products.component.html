@@ -11,10 +11,9 @@
             <table class="table table-sm table-striped table-hover">
                 <thead>
                     <tr>
-                        <th>Produit</th>
-                        <th>Nom (Stripe)</th>
+                        <!-- <th>Produit</th> -->
+                        <th>Nom</th>
                         <th>Description</th>
-                        <th>Entrées</th>
                         <th class="text-center">Compte</th>
                         <th class="text-center">Prix</th>
                         <th class="text-center">Couple</th>
@@ -26,10 +25,15 @@
                 <tbody>
                     @for (product of products; track product.id) {
                     <tr>
-                        <td>{{ product.glyph }}</td>
+                        <!-- <td>
+                            @if (product.glyph.startsWith('bi-')) {
+                              <i [class]="'bi ' + product.glyph + ' fs-5'"></i>
+                            } @else {
+                              {{ product.glyph }}
+                            }
+                        </td> -->
                         <td>{{ product.name }}</td>
                         <td>{{ product.description }}</td>
-                        <td>{{ product.entries }}</td>
                         <td class="text-center">{{ product.account }}</td>
                         <td class="text-end">{{ product.price | currency:'€':'symbol':'2.2-2':'fr' }}</td>
                         <td class="text-center">
@@ -82,10 +86,6 @@
             <div class="modal-body">
                 <form [formGroup]="productForm">
                     <div class="row g-3">
-                        <div class="col-md-3">
-                            <label class="form-label">Glyph</label>
-                            <input type="text" class="form-control" formControlName="glyph" placeholder="ex: CAR-i">
-                        </div>
                         <div class="col-md-4">
                             <label class="form-label">Nom (Stripe)</label>
                             <input type="text" class="form-control" formControlName="name">
@@ -93,10 +93,6 @@
                         <div class="col-md-5">
                             <label class="form-label">Description</label>
                             <input type="text" class="form-control" formControlName="description">
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label">Entrées</label>
-                            <input type="number" class="form-control" formControlName="entries">
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">Compte</label>

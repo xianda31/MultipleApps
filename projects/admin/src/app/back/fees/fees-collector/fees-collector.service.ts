@@ -557,12 +557,12 @@ export class FeesCollectorService {
 
   }
 
-  create_game_card_sale(members: Member[], card_entries: number, card_price: number, mode: PaymentMode, check_ref?: string): Promise<boolean> {
+  create_game_card_sale(members: Member[], card_price: number, mode: PaymentMode, check_ref?: string): Promise<boolean> {
     const buyer = this.membersService.full_name(members[0]);
     const co_buyer = (members.length > 1) ? this.membersService.full_name(members[1]) : undefined;
     return new Promise<boolean>(async (resolve, reject) => {
       try {
-        const card = await this.gameCardService.createCard(members, card_entries);
+        const card = await this.gameCardService.createCard(members); // MAX_STAMPS par défaut
         if (card) {
           const buyer = this.membersService.full_name(members[0]);
           await this.BookService.create_game_card_sale(buyer, card_price, mode, co_buyer, check_ref);

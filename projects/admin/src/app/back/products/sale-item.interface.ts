@@ -5,10 +5,9 @@ export interface SaleItem {
   name: string;
   description: string;
   glyph: string;
-  price: number;              // en euros
+  price: number;              // en euros (prix total de l'achat)
   account: string;
-  entries?: number | null;    // nb entrées carte
-  paired: boolean;
+  paired: boolean;            // produit couplé (paire de membres)
   currency: string;
   stripeEnabled: boolean;
   active: boolean;
