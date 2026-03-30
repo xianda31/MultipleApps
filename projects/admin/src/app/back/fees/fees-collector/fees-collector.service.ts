@@ -426,12 +426,19 @@ export class FeesCollectorService {
     }
 
     const check_quarter = (index: number) => {
-      if (index > 3) { throw new Error('I quarter overflow'); };
+      if (index > 2) {
+        // Ne bloque plus l'app, mais signale l'anomalie
+        console.warn('Quarter overflow for member', fullname, acc_op_dates);
+        if (this.toastService) {
+          this.toastService.showWarning('Anomalie trimestre', `Plus de 3 opérations trimestrielles pour ${fullname}`);
+        }
+        return;
+      }
       if (!quarters[index]) {
-        quarters[index] = true
+        quarters[index] = true;
       } else {
-        check_quarter(index + 1)
-      };
+        check_quarter(index + 1);
+      }
     }
 
     const this_quarter = () => {

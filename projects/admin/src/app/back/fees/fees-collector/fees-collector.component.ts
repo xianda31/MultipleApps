@@ -9,26 +9,30 @@ import { PdfService } from '../../../common/services/pdf.service';
 import { HorizontalAlignment, PDF_table } from '../../../common/interfaces/pdf-table.interface';
 import { FFBplayer } from '../../../common/ffb/interface/FFBplayer.interface';
 import { InputPlayerComponent } from '../../../common/ffb/input-licensee/input-player.component';
+import { InputMemberComponent } from '../../input-member/input-member.component';
 import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { GetConfirmationComponent } from '../../modals/get-confirmation/get-confirmation.component';
 import { ToastService } from '../../../common/services/toast.service';
-import { QuickCardSaleComponent } from '../../../modals/quick-card-sale';
 import { MembersService } from '../../../common/services/members.service';
 import { Router } from '@angular/router';
 import { BACK_ROUTE_ABS_PATHS } from '../../routes/back-route-paths';
 import { PaymentMode } from '../../shop/cart/cart.interface';
 import { ProductService } from '../../../common/services/product.service';
 import { BreakingNewsService } from '../../breaking-news/breaking-news.service';
+import { Member } from '../../../common/interfaces/member.interface';
+import { SystemDataService } from '../../../common/services/system-data.service';
+import { Bank } from '../../../common/interfaces/system-conf.interface';
 
 
 
 @Component({
   selector: 'app-fees-collector',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, InputPlayerComponent, NgbTooltipModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, InputPlayerComponent, InputMemberComponent, NgbTooltipModule],
   templateUrl: './fees-collector.component.html',
   styleUrl: './fees-collector.component.scss'
 })
+
 export class FeesCollectorComponent implements OnDestroy {
   GAME_STATUS = Game_status;
   FEE_RATE = FEE_RATE;
@@ -47,8 +51,11 @@ export class FeesCollectorComponent implements OnDestroy {
   modalErrorMessage: string = '';
   hideValidated: boolean = false;
   disappearingGamers: Map<number, boolean> = new Map();
-  CARD_PRICE !: number;  
-  @ViewChild('addPlayersModal') addPlayersModalRef!: TemplateRef<any>;  
+  CARD_PRICE !: number;
+  members: Member[] = [];
+  banks: Bank[] = [];
+
+  @ViewChild('addPlayersModal') addPlayersModalRef!: TemplateRef<any>;
 
   constructor(
     private tournamentService: TournamentService,
@@ -60,11 +67,16 @@ export class FeesCollectorComponent implements OnDestroy {
     private toastService: ToastService,
     private router: Router,
     private breakingNewsService: BreakingNewsService,
+    private systemDataService: SystemDataService,
   ) {
+    this.systemDataService.get_configuration().subscribe(conf => {
+      this.banks = conf.banks || [];
+    });
 
-   this.membersService.listMembers().subscribe(members => {
-      // this.members = members;
-      // subscribe pour anticiper l'acquisition des membres ; utile plus tard
+    console.log('FeesCollectorComponent initialized');
+
+    this.membersService.listMembers().subscribe(members => {
+      this.members = members;
     });
 
     this.productService.listProducts().subscribe(products => {
@@ -320,7 +332,7 @@ export class FeesCollectorComponent implements OnDestroy {
 
     // If the gamer has a pre-existing credit or a debt, redirect to the Shop page
     const hasCredit = ((gamer as any).credits || (gamer as any).credit) > 0;
-      if (hasCredit || (gamer as any).debt > 0) {
+    if (hasCredit || (gamer as any).debt > 0) {
       const member = this.membersService.getMemberbyLicense(gamer.license);
       if (member && member.id) {
         this.router.navigateByUrl(`${BACK_ROUTE_ABS_PATHS['Shop']}/${member.id}`);
@@ -331,34 +343,58 @@ export class FeesCollectorComponent implements OnDestroy {
       return;
     }
 
-    // ensure active element (e.g., the clicked button) is blurred so it won't remain focused
-    // when overlays or aria-hidden attributes are applied to ancestors
-    try { (document.activeElement as HTMLElement | null)?.blur(); } catch (e) { /* ignore in non-browser env */ }
-    const modalRef = this.modalService.open(QuickCardSaleComponent, { centered: true });
-    modalRef.componentInstance.titulaire = this.membersService.getMemberbyLicense(gamer.license);
-    modalRef.componentInstance.subtitle = `Confirmez-vous la vente d'un crédit de membre ?`;
-    modalRef.result.then(async (formValue: any) => {
-      if (formValue) {
-
-        try {
-          // create game card
-          const owners = [formValue.titulaire];
-          if (formValue.cartePartagee && formValue.coTitulaire) {
-            owners.push(formValue.coTitulaire);
-          }
-          const mode = formValue.mode;
-          const check_ref = (mode === PaymentMode.CHEQUE) ? formValue.bank + formValue.chequeNo : undefined;
-     
-          // save sale
-          await this.feesCollectorService.create_game_card_sale(owners, this.CARD_PRICE, mode, check_ref);
-
-        } catch (error) {
-          console.error('Erreur lors de la vente rapide', error);
-          this.toastService.showErrorToast('Vente rapide', `Erreur lors de la vente à ${gamer.firstname} ${gamer.lastname}`);
-        }
-      }
-    });
+    // Préparer l'ouverture du modal inline (état local)
+    this.quickSaleModalOpen = true;
+    this.quickSaleGamer = gamer;
+    this.quickSaleForm = {
+      titulaire: this.membersService.getMemberbyLicense(gamer.license),
+      cartePartagee: true,
+      coTitulaire: null,
+      mode: null,
+      bank: '',
+      chequeNo: ''
+    };
+    this.quickSaleError = '';
   }
+
+  // État et callbacks pour le modal inline
+  quickSaleModalOpen = false;
+  quickSaleGamer: Gamer | null = null;
+  quickSaleForm: any = null;
+  quickSaleError: string = '';
+
+  async confirmQuickSale() {
+    if (!this.quickSaleForm || !this.quickSaleGamer) return;
+    try {
+      const owners = [this.quickSaleForm.titulaire];
+      if (this.quickSaleForm.cartePartagee && this.quickSaleForm.coTitulaire) {
+        owners.push(this.quickSaleForm.coTitulaire);
+      }
+      const mode = this.quickSaleForm.mode;
+      const check_ref = (mode === PaymentMode.CHEQUE) ? this.quickSaleForm.bank + this.quickSaleForm.chequeNo : undefined;
+      await this.feesCollectorService.create_game_card_sale(owners, this.CARD_PRICE, mode, check_ref);
+      this.quickSaleModalOpen = false;
+      this.quickSaleGamer = null;
+      this.quickSaleForm = null;
+      this.quickSaleError = '';
+    } catch (error) {
+      console.error('Erreur lors de la vente rapide', error);
+      if (this.quickSaleGamer) {
+        this.toastService.showErrorToast('Vente rapide', `Erreur lors de la vente à ${this.quickSaleGamer.firstname} ${this.quickSaleGamer.lastname}`);
+      } else {
+        this.toastService.showErrorToast('Vente rapide', 'Erreur lors de la vente rapide.');
+      }
+      this.quickSaleError = 'Erreur lors de la vente rapide.';
+    }
+  }
+
+  cancelQuickSale() {
+    this.quickSaleModalOpen = false;
+    this.quickSaleGamer = null;
+    this.quickSaleForm = null;
+    this.quickSaleError = '';
+  }
+
 
   all_gamers_validated(): boolean {
     return !!this.game?.tournament && !!this.game && this.game.gamers.every(gamer => gamer.validated);
@@ -502,6 +538,4 @@ export class FeesCollectorComponent implements OnDestroy {
     }
     return { title, headers, alignments, rows };
   }
-
-
 }

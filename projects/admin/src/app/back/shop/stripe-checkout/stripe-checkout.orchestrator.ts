@@ -110,12 +110,14 @@ export class StripeCheckoutOrchestrator {
             throw new Error('Pas d\'URL de paiement reçue');
           }
 
-          // 5. Sauvegarder le snapshot en sessionStorage pour le retour
+          // 5. Sauvegarder le snapshot ET le sessionId en sessionStorage pour le retour
           const STRIPE_CART_KEY = 'stripe_pending_cart';
           sessionStorage.setItem(STRIPE_CART_KEY, JSON.stringify({
             snapshot,
             sessionId: response.data.sessionId,
           }));
+          // Sauvegarder aussi le sessionId seul pour un accès facile au retour
+          sessionStorage.setItem('stripe_session_id', response.data.sessionId);
 
           resolve({ sessionUrl: response.data.sessionUrl });
         }).catch((error) => {
@@ -156,7 +158,6 @@ export class StripeCheckoutOrchestrator {
 
       try {
         // Laisser le composant configurer le panier si une callback est fournie
-        // (par ex: récupérer du sessionStorage et reconstruire)
         if (cartSetupCallback) {
           cartSetupCallback();
         }
@@ -166,11 +167,15 @@ export class StripeCheckoutOrchestrator {
           .pipe(
             switchMap((entry) => 
               this.markProcessed(sessionId).pipe(
-                tap(() => this.fetchReceipt(sessionId)),
+                tap(() => {
+                  console.log('[Stripe] Transaction marked as processed');
+                  this.fetchReceipt(sessionId);
+                }),
                 map(() => entry)
               )
             ),
             tap((entry) => {
+              console.log('[Stripe] Checkout complete, setting state to success');
               this.setState({
                 ...this.state$.value,
                 checkoutPhase: { 
@@ -184,6 +189,7 @@ export class StripeCheckoutOrchestrator {
             }),
             catchError((error) => {
               const errorMsg = error instanceof Error ? error.message : String(error);
+              console.error('[Stripe] Error in complete checkout:', errorMsg);
               this.setState({
                 ...this.state$.value,
                 checkoutPhase: { phase: 'error', message: errorMsg },
@@ -195,9 +201,14 @@ export class StripeCheckoutOrchestrator {
               return of(null);
             })
           )
-          .subscribe();
+          .subscribe({
+            next: () => {},
+            error: (err) => console.error('[Stripe] Subscribe error:', err),
+            complete: () => console.log('[Stripe] Complete checkout observable completed')
+          });
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
+        console.error('[Stripe] Exception in completeCheckout:', errorMsg);
         this.setState({
           ...this.state$.value,
           checkoutPhase: { phase: 'error', message: errorMsg },
@@ -349,6 +360,23 @@ export class StripeCheckoutOrchestrator {
       this.toastService.showErrorToast('Paiement', 'Erreur lors de la préparation du panier');
       return { debtAmount: 0, assetAmount: 0 };
     }
+  }
+
+  /**
+   * Get current checkout phase - allows components to check state immediately without subscription timing issues
+   */
+  getCurrentPhase(): string {
+    return this.state$.value.checkoutPhase.phase;
+  }
+
+  /**
+   * Get pending session ID if checkout is in redirect_pending state
+   */
+  getPendingSessionId(): string | null {
+    if (this.state$.value.checkoutPhase.phase === 'redirect_pending') {
+      return this.state$.value.checkoutPhase.sessionId;
+    }
+    return null;
   }
 
   /**

@@ -627,9 +627,9 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
   }
 
   find_assets(member_full_name: string): number {
+    if (!this._book_entries) return 0;
     let assets = new Map<string, number>();
     this._book_entries.forEach((book_entry) => {
-
       book_entry.operations.forEach((op) => {
         if (op.values[CUSTOMER_ACCOUNT.ASSET_debit]) {
           let name = op.member;

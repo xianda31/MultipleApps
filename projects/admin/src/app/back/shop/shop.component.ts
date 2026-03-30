@@ -1,7 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormGroup, FormControl, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
-import { filter } from 'rxjs';
 import { LicenseStatus, Member } from '../../common/interfaces/member.interface';
 import { CartService } from './cart/cart.service';
 import { CommonModule } from '@angular/common';
@@ -79,6 +78,7 @@ export class ShopComponent {
     private toastService: ToastService,
     private auth: AuthentificationService,
     private route: ActivatedRoute,
+    private router: Router,
     readonly stripeCheckout: StripeCheckoutOrchestrator,
     private shopInit: ShopInitializationService,
     private buyerContext: BuyerContextService,
@@ -97,40 +97,43 @@ export class ShopComponent {
       this.session = state.session;
       this.operations = state.operations;
       this.canEditPrice = state.canEditPrice;
-    });
 
-    // Handle Stripe redirect from Stripe checkout
-    if (this.route.snapshot.queryParamMap.get('checkout') === 'success') {
-      const sessionId = sessionStorage.getItem('stripe_session_id');
-      if (sessionId) {
-        this.stripeCheckout.notifyRedirectFromStripe(sessionId);
-        sessionStorage.removeItem('stripe_session_id');
+      // initializeShop() a déjà chargé les book_entries via loadOperations()
+      // -> pas besoin d'un deuxième appel list_book_entries()
+
+      // Handle Stripe redirect from Stripe checkout
+      if (this.route.snapshot.queryParamMap.get('checkout') === 'success') {
+        const sessionId = sessionStorage.getItem('stripe_session_id');
+        if (sessionId) {
+          this.stripeCheckout.notifyRedirectFromStripe(sessionId);
+          sessionStorage.removeItem('stripe_session_id');
+        }
       }
-    }
 
-    // Load members and setup buyer selection
-    this.membersService.listMembers().subscribe((members) => {
-      this.members = members;
-      this.setupBuyerFromRoute();
-    });
+      // Load members and setup buyer selection
+      this.membersService.listMembers().subscribe((members) => {
+        this.members = members;
+        this.setupBuyerFromRoute();
+      });
 
-    // Watch logged member changes (auth)
-    this.auth.logged_member$.subscribe((member) => {
-      this.logged_member = member;
-      this.handleLoggedMemberChange(member);
-    });
+      // Watch logged member changes (auth)
+      this.auth.logged_member$.subscribe((member) => {
+        this.logged_member = member;
+        this.handleLoggedMemberChange(member);
+      });
 
-    // Watch buyer form changes
-    this.buyerForm.valueChanges.subscribe((value) => {
-      this.onBuyerChange(value['buyer']);
-    });
+      // Watch buyer form changes
+      this.buyerForm.valueChanges.subscribe((value) => {
+        this.onBuyerChange(value['buyer']);
+      });
 
-    // Load and organize products
-    this.shopProducts.loadAndOrganizeProducts().subscribe((data) => {
-      this.allProducts = data.allProducts;
-      this.products_array = data.productsArray;
-      // Try to complete Stripe checkout if pending
-      this.tryCompleteStripeCheckout();
+      // Load and organize products
+      this.shopProducts.loadAndOrganizeProducts().subscribe((data) => {
+        this.allProducts = data.allProducts;
+        this.products_array = data.productsArray;
+        // Try to complete Stripe checkout if pending
+        this.tryCompleteStripeCheckout();
+      });
     });
   }
 
@@ -138,7 +141,15 @@ export class ShopComponent {
    * Configure l'acheteur à partir de la route (member_id @Input ou paramètre)
    */
   private setupBuyerFromRoute(): void {
-    if (this.onlineMode) return; // Mode en ligne gère mal l'acheteur par route
+    if (this.onlineMode) {
+      // En mode en ligne : si l'auth a été résolue avant le chargement des membres,
+      // handleLoggedMemberChange a sauté le patchValue (this.members était vide).
+      // On relance ici maintenant que les membres sont disponibles.
+      if (this.logged_member) {
+        this.handleLoggedMemberChange(this.logged_member);
+      }
+      return;
+    }
 
     const memberIdFromRoute = this.member_id || this.route.snapshot.paramMap.get('member_id');
     if (!memberIdFromRoute) return;
@@ -159,13 +170,18 @@ export class ShopComponent {
   private handleLoggedMemberChange(member: Member | null): void {
     if (this.onlineMode) {
       this.cartService.setSeller('en ligne');
-      if (member && this.members?.length) {
+      // En mode retour Stripe, on ne touche pas au panier : prepareCheckoutCart s'en charge.
+      // En mode normal, on configure l'acheteur seulement si pas encore fait (!this.buyer).
+      const isStripeReturnMode = this.stripeCheckout.getCurrentPhase() !== 'idle';
+      if (!isStripeReturnMode && member && this.members?.length && !this.buyer) {
         const m = this.buyerContext.findBuyerById(member.id, this.members);
         if (m) {
           this.buyerForm.patchValue({ buyer: m });
           this.setupBuyerAssets(m);
         }
       }
+      // Toujours tenter de compléter le checkout Stripe si en attente
+      this.tryCompleteStripeCheckout();
     } else {
       this.cartService.setSeller(member?.firstname ?? 'unknown');
     }
@@ -191,32 +207,33 @@ export class ShopComponent {
     if (this.stripeCheckoutPrepared) return;
     if (!this.logged_member || !this.members?.length || !this.allProducts?.length) return;
 
-    // Abonner une seule fois
-    this.stripeCheckout.checkoutState$.pipe(
-      filter((s: any) => s.checkoutPhase.phase === 'redirect_pending'),
-      filter(() => {
-        this.stripeCheckoutPrepared = true;
-        return true;
-      })
-    ).subscribe(async (state: any) => {
-      const sessionId = state.checkoutPhase.sessionId;
-      if (sessionId) {
-        // Préparer le panier via le façade
-        const result = await this.stripeCheckout.prepareCheckoutCart(
-          sessionId,
-          this.logged_member!,
-          this.members,
-          this.allProducts
-        );
-        this.debt_amount = result.debtAmount;
-        this.asset_amount = result.assetAmount;
-        
-        // Appeler la façade pour complêter
-        this.stripeCheckout.completeCheckout(sessionId, this.session).subscribe(
-          () => {}, // La façade gère les états
-          (error) => console.error('Erreur completeCheckout Stripe:', error)
-        );
-      }
+    // Check if we're in redirect_pending state (redirect from Stripe)
+    const sessionId = this.stripeCheckout.getPendingSessionId();
+    if (!sessionId) return; // Not in redirect_pending, nothing to do
+
+    console.log('[Shop] Detected Stripe redirect_pending with sessionId:', sessionId);
+    this.stripeCheckoutPrepared = true;
+
+    // Préparer le panier via le façade
+    this.stripeCheckout.prepareCheckoutCart(
+      sessionId,
+      this.logged_member!,
+      this.members,
+      this.allProducts
+    ).then((result) => {
+      this.debt_amount = result.debtAmount;
+      this.asset_amount = result.assetAmount;
+      
+      console.log('[Shop] Cart prepared, calling completeCheckout...');
+      
+      // Appeler la façade pour complêter
+      this.stripeCheckout.completeCheckout(sessionId, this.session).subscribe(
+        () => console.log('[Shop] completeCheckout next'),
+        (error) => console.error('[Shop] completeCheckout error:', error),
+        () => console.log('[Shop] completeCheckout complete')
+      );
+    }).catch((error) => {
+      console.error('[Shop] Error preparing checkout cart:', error);
     });
   }
 
@@ -345,6 +362,13 @@ export class ShopComponent {
 
   product_gradient_style(product: Product): string {
     return this.shopProducts.getProductGradientStyle(product);
+  }
+
+  dismissSuccessBanner(): void {
+    this.stripeCheckout.reset();
+    this.stripeCheckoutPrepared = false;
+    this.cartService.clearCart();
+    this.router.navigate([], { relativeTo: this.route, queryParams: {} });
   }
 
   async on_stripe_checkout(): Promise<void> {

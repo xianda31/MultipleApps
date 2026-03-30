@@ -106,7 +106,7 @@
                 <label class="form-check-label">tri alphabétique</label>
             </span>
 
-            <span class="form-check form-switch" >
+            <span class="form-check form-switch">
                 <input class="form-check-input" type="checkbox" role="switch" [checked]="hideValidated"
                     (change)="toggle_hide_validated()">
                 <label class="form-check-label">
@@ -180,24 +180,25 @@
         <div [class]="gamer_class(gamer)" style="position: relative; background-color: #f0f4f8;">
             <!-- Bottom-left badges: NP (non payant) and member credits -->
             <div class="position-absolute bottom-0 start-0 m-1 d-flex gap-1" style="z-index: 2;">
-                <span *ngIf="!gamer.enabled" class="badge bg-secondary fixed-badge">{{ (game.fee_rate === 'accession' && gamer.acc_credits) ? 'ACC' :
+                <span *ngIf="!gamer.enabled" class="badge bg-secondary fixed-badge">{{ (game.fee_rate ===
+                    'accession' && gamer.acc_credits) ? 'ACC' :
                     'NP' }}</span>
                 <span *ngIf="gamer.is_member" class="badge fixed-badge"
                     [ngClass]="{ 'text-bg-danger': gamer.game_credits <= 1, 'text-bg-warning': gamer.game_credits > 1 && gamer.game_credits < 3, 'text-bg-success': gamer.game_credits >= 3 }">
                     <span>{{ gamer.game_credits }}</span> <i class="bi bi-pass"></i>
                 </span>
-                    <span *ngIf="gamer.enabled && gamer.is_member && gamer.game_credits <= 4">
-                    <button type="button"
-                        class="btn btn-outline-primary btn-sm rounded-circle quick-sale-btn"
-                        [ngbTooltip]="'Acheter une carte'" placement="top"
-                        (click)="quickSale(gamer)">
+                <span *ngIf="gamer.enabled && gamer.is_member && gamer.game_credits <= 4">
+                    <button type="button" class="btn btn-outline-primary btn-sm rounded-circle quick-sale-btn"
+                        [ngbTooltip]="'Acheter une carte'" placement="top" (click)="quickSale(gamer)">
                         <i class="bi bi-cart-fill"></i>
                     </button>
                 </span>
                 <div class="ms-3 d-flex align-items-end">
                     <ul *ngIf="gamer.is_member" class="small list-unstyled mb-0 d-flex flex-column justify-content-end">
-                        <li *ngIf="gamer.debt > 0" class="mb-0 text-muted small">dette : <span class="text-muted">{{ gamer.debt | currency : 'EUR': 'symbol'}}</span></li>
-                        <li *ngIf="gamer.credit>0" class="mb-0 text-muted small">avoir : <span class="text-muted">{{ gamer.credit | currency : 'EUR': 'symbol'}}</span></li>
+                        <li *ngIf="gamer.debt > 0" class="mb-0 text-muted small">dette : <span class="text-muted">{{
+                                gamer.debt | currency : 'EUR': 'symbol'}}</span></li>
+                        <li *ngIf="gamer.credit>0" class="mb-0 text-muted small">avoir : <span class="text-muted">{{
+                                gamer.credit | currency : 'EUR': 'symbol'}}</span></li>
                     </ul>
                 </div>
             </div>
@@ -250,7 +251,7 @@
                                 (change)="gamer.enabled=true; gamer.in_euro=false; gamer.validated=true; onGamerValidated(gamer); log_game_state(); check_status()" />
                             <label class="form-check-label" [for]="'pass-radio'+ gamer.index">
                                 <!-- {{doubled ? '2 tampons' : '1 tampon'}} -->
-                                 carte
+                                carte
                             </label>
                         </div>
                     </div>
@@ -270,48 +271,146 @@
             </div>
         </div>
     </ng-template>
+    <!-- Modal inline : Vente rapide de carte (QuickSale) -->
+    <div *ngIf="quickSaleModalOpen" class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,0.45);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title d-flex align-items-center gap-3">
+                        <i class="bi bi-cart-plus me-2"></i>
+                        Vente rapide de carte
 
-    <!-- Modal ajout paire de joueurs -->
-    <ng-template #addPlayersModal let-modal>
-        <div class="modal-header">
-            <h5 class="modal-title">Ajouter une nouvelle paire</h5>
-            <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
-        </div>
-        <div class="modal-body">
-            <div *ngIf="modalErrorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
-                {{ modalErrorMessage }}
-                <button type="button" class="btn-close" (click)="modalErrorMessage = ''"></button>
-            </div>
-            <div class="row g-3">
-                <div class="col-12">
-                    <label for="player1" class="form-label">Joueur 1</label>
-                    <app-input-player 
-                        id="player1"
-                        listeId="new_guest_1" 
-                        placeholder="Nom ou prénom du 1er joueur" 
-                        type="text"
-                        class="form-control" 
-                        [(ngModel)]="new_pair_player1">
-                    </app-input-player>
+                    </h6>
+                    <button type="button" class="btn-close" (click)="cancelQuickSale()"></button>
                 </div>
-                <div class="col-12">
-                    <label for="player2" class="form-label">Joueur 2</label>
-                    <app-input-player 
-                        id="player2"
-                        listeId="new_guest_2" 
-                        placeholder="Nom ou prénom du 2e joueur" 
-                        type="text"
-                        class="form-control" 
-                        [(ngModel)]="new_pair_player2">
-                    </app-input-player>
+                <div class="modal-body">
+                    <div *ngIf="quickSaleError" class="alert alert-danger py-2">{{ quickSaleError }}</div>
+                    <div class="mb-3">
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <label class="form-label fw-semibold small">Titulaire</label>
+                                <div class="form-control form-control-sm bg-light">
+                                    <i class="bi bi-person-check-fill text-success me-1"></i>
+                                    {{ quickSaleForm?.titulaire?.firstname }} {{ quickSaleForm?.titulaire?.lastname }}
+                                </div>
+                            </div>
+
+                            <div class="col-6" style="min-height:56px;">
+                                <span class="form-switch mb-0 ">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="cartePartagee"
+                                        [(ngModel)]="quickSaleForm.cartePartagee">
+                                    <label class="form-label fw-semibold small ms-1" for="cartePartagee">
+                                        {{ quickSaleForm.cartePartagee ? 'partagée avec' : 'individuelle' }}
+                                    </label>
+                                </span>
+                                <app-input-member *ngIf="quickSaleForm.cartePartagee"
+                                    [(ngModel)]="quickSaleForm.coTitulaire" [members]="members"
+                                    placeholder="Nom ou prénom du co-titulaire" class="form-control form-control-sm"
+                                    listeId="quick_sale_cotitulaire">
+                                </app-input-member>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Mode de paiement</label>
+                            <div class="payment-buttons row g-2">
+                                <div class="col-6">
+                                    <button type="button" class="btn-pay w-100"
+                                        [class.active]="quickSaleForm.mode === 'espèces'"
+                                        (click)="quickSaleForm.mode = 'espèces'">
+                                        <i class="bi bi-cash me-1"></i>Espèces
+                                    </button>
+                                </div>
+                                <div class="col-6">
+                                    <button type="button" class="btn-pay w-100"
+                                        [class.active]="quickSaleForm.mode === 'chèque'"
+                                        (click)="quickSaleForm.mode = 'chèque'">
+                                        <i class="bi bi-file-earmark-text me-1"></i>Chèque
+                                    </button>
+                                </div>
+                                <div class="col-6">
+                                    <button type="button" class="btn-pay w-100"
+                                        [class.active]="quickSaleForm.mode === 'virement'"
+                                        (click)="quickSaleForm.mode = 'virement'">
+                                        <i class="bi bi-bank me-1"></i>Virement
+                                    </button>
+                                </div>
+                                <div class="col-6">
+                                    <button type="button" class="btn-pay w-100"
+                                        [class.active]="quickSaleForm.mode === 'crédit'"
+                                        (click)="quickSaleForm.mode = 'crédit'">
+                                        <i class="bi bi-arrow-up-circle me-1"></i>Avance
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3" *ngIf="quickSaleForm.mode === 'chèque'">
+                            <div class="row g-2">
+                                <div class="col">
+                                    <select class="form-select form-select-sm" [(ngModel)]="quickSaleForm.bank">
+                                        <option value="">Sélectionner une banque</option>
+                                        <option *ngFor="let b of banks" [value]="b.key">{{b.name}}</option>
+                                    </select>
+                                </div>
+                                <div class="col">
+                                    <input type="text" class="form-control form-control-sm" placeholder="N° de chèque"
+                                        [(ngModel)]="quickSaleForm.chequeNo">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Prix</label>
+                            <div class="form-control form-control-sm bg-light">{{ CARD_PRICE |
+                                currency:'EUR':'symbol':'1.2-2':'fr' }}</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer py-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                            (click)="cancelQuickSale()">Annuler</button>
+                        <button type="button" class="btn btn-sm btn-primary" (click)="confirmQuickSale()" [disabled]="
+                                                    (quickSaleForm.cartePartagee && !quickSaleForm.coTitulaire)
+                                                    || quickSaleForm.mode === null
+                                                    || quickSaleForm.mode === undefined
+                                                    || (quickSaleForm.mode === 'chèque' && (!quickSaleForm.bank || !quickSaleForm.chequeNo))
+                                                ">
+                            <i class="bi bi-check-circle me-1"></i>Valider la vente
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" (click)="modal.dismiss()">Annuler</button>
-            <button type="button" class="btn btn-primary" (click)="add_pair(new_pair_player1, new_pair_player2, modal)">
-                <i class="bi bi-plus-circle me-1"></i>Ajouter
-            </button>
-        </div>
-    </ng-template>
-</div>
+
+        <!-- Modal ajout paire de joueurs -->
+        <ng-template #addPlayersModal let-modal>
+            <div class="modal-header">
+                <h5 class="modal-title">Ajouter une nouvelle paire</h5>
+                <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+            </div>
+            <div class="modal-body">
+                <div *ngIf="modalErrorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {{ modalErrorMessage }}
+                    <button type="button" class="btn-close" (click)="modalErrorMessage = ''"></button>
+                </div>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label for="player1" class="form-label">Joueur 1</label>
+                        <app-input-player id="player1" listeId="new_guest_1" placeholder="Nom ou prénom du 1er joueur"
+                            type="text" class="form-control" [(ngModel)]="new_pair_player1">
+                        </app-input-player>
+                    </div>
+                    <div class="col-12">
+                        <label for="player2" class="form-label">Joueur 2</label>
+                        <app-input-player id="player2" listeId="new_guest_2" placeholder="Nom ou prénom du 2e joueur"
+                            type="text" class="form-control" [(ngModel)]="new_pair_player2">
+                        </app-input-player>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" (click)="modal.dismiss()">Annuler</button>
+                <button type="button" class="btn btn-primary"
+                    (click)="add_pair(new_pair_player1, new_pair_player2, modal)">
+                    <i class="bi bi-plus-circle me-1"></i>Ajouter
+                </button>
+            </div>
+        </ng-template>
+    </div>
