@@ -14,6 +14,12 @@ type Table = {
   size: number;
 };
 
+type TableRow = {
+  name: string; // nom sans apid (ex: "BookEntry")
+  production?: DescribeTableOutput;
+  sandbox?: DescribeTableOutput;
+};
+
 @Component({
   selector: 'app-clone-db',
   standalone: true,
@@ -24,13 +30,14 @@ type Table = {
 export class CloneDBComponent {
   production_tables: DescribeTableOutput[] = [];
   sandbox_tables: DescribeTableOutput[] = [];
+  tableRows: TableRow[] = [];
   started: boolean = false;
   production_apid = environment.production_apid;
   sandbox_apid = environment.sandbox_apid;
   source_table_description!: DescribeTableOutput | null;
   // UI selections and per-row cloning state
-  selected: boolean[] = [];
-  rowCloning: boolean[] = [];
+  selected: Map<string, boolean> = new Map(); // clé: tableName (sans apid)
+  rowCloning: Map<string, boolean> = new Map();
   reverseDirection: boolean = false; // Si true, clone de sandbox vers production
 
   constructor(
@@ -56,9 +63,41 @@ export class CloneDBComponent {
         next: (tables) => {
           this.production_tables = tables.filter(table => this.apid(table.Table?.TableName ?? '') === this.production_apid);
           this.sandbox_tables = tables.filter(table => this.apid(table.Table?.TableName ?? '') === this.sandbox_apid);
-          // initialize selections and row states
-          this.selected = this.production_tables.map(() => true);
-          this.rowCloning = this.production_tables.map(() => false);
+          
+          // Build table mapping by name (without apid)
+          const tableMap = new Map<string, TableRow>();
+          
+          // Add production tables
+          this.production_tables.forEach((table) => {
+            const tableName = table.Table?.TableName ?? '';
+            const name = this.name(tableName);
+            if (!tableMap.has(name)) {
+              tableMap.set(name, { name });
+            }
+            tableMap.get(name)!.production = table;
+          });
+          
+          // Add sandbox tables
+          this.sandbox_tables.forEach((table) => {
+            const tableName = table.Table?.TableName ?? '';
+            const name = this.name(tableName);
+            if (!tableMap.has(name)) {
+              tableMap.set(name, { name });
+            }
+            tableMap.get(name)!.sandbox = table;
+          });
+          
+          // Sort and convert to array
+          this.tableRows = Array.from(tableMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+          
+          // Initialize selections and row cloning state
+          this.selected.clear();
+          this.rowCloning.clear();
+          this.tableRows.forEach((row) => {
+            this.selected.set(row.name, true);
+            this.rowCloning.set(row.name, false);
+          });
+          
           this.started = false;
         },
         error: (_e) => {
@@ -79,33 +118,46 @@ export class CloneDBComponent {
   }
 
 
-  cloneTableAt(index: number) {
+  cloneTableAt(tableName: string) {
+    // Find the row for this table name
+    const row = this.tableRows.find(r => r.name === tableName);
+    if (!row || (!row.production && !row.sandbox)) {
+      console.error(`Invalid table name ${tableName}: missing table definition`);
+      this.toastService.showErrorToast('Clone BDD', `Table ${tableName} non trouvée.`);
+      return;
+    }
+
     let source_table: string;
     let destination_table: string;
     
     if (this.reverseDirection) {
       // Mode DANGEREUX : sandbox → production
-      source_table = this.sandbox_tables[index].Table?.TableName ?? '';
-      destination_table = this.production_tables[index].Table?.TableName ?? '';
+      if (!row.sandbox || !row.production) {
+        this.toastService.showErrorToast('Clone BDD', `Mode inversé impossible: table manquante en Sandbox ou Production.`);
+        return;
+      }
+      source_table = row.sandbox.Table?.TableName ?? '';
+      destination_table = row.production.Table?.TableName ?? '';
       
-      if (!confirm(`⚠️ ATTENTION : Vous allez écraser la table PRODUCTION "${this.name(destination_table)}" avec les données de SANDBOX.\n\nCette opération est IRRÉVERSIBLE et DANGEREUSE !\n\nConfirmez-vous cette action ?`)) {
+      if (!confirm(`⚠️ ATTENTION : Vous allez écraser la table PRODUCTION "${tableName}" avec les données de SANDBOX.\n\nCette opération est IRRÉVERSIBLE et DANGEREUSE !\n\nConfirmez-vous cette action ?`)) {
         console.warn(`[CLONE INVERSÉ ANNULÉ] L'utilisateur a refusé de cloner ${source_table} vers ${destination_table}`);
         return;
       }
       console.warn(`[CLONE INVERSÉ] Clonage DANGEREUX de ${source_table} vers ${destination_table}`);
     } else {
       // Mode normal : production → sandbox
-      source_table = this.production_tables[index].Table?.TableName ?? '';
+      if (!row.production) {
+        this.toastService.showErrorToast('Clone BDD', `Table Production manquante pour ${tableName}.`);
+        return;
+      }
+      source_table = row.production.Table?.TableName ?? '';
       destination_table = source_table.replace(this.production_apid, environment.sandbox_apid);
       console.log(`Cloning table ${source_table} to ${destination_table}`);
     }
     
     if (!source_table) return;
     this.started = true;
-    this.rowCloning[index] = true;
-
-
-    // delete sandbox items
+    this.rowCloning.set(tableName, true);
 
     console.log(`Deleting items from ${destination_table}`);
     this.batchService.scanTable(destination_table, 0).pipe(
@@ -113,92 +165,92 @@ export class CloneDBComponent {
         if (items.length > 0) {
           return this.batchService.batchDeleteItem(destination_table, items);
         }
-        return of([]); // No items to delete
+        return of([]);
       })
     ).subscribe({
       next: () => {
         console.log(`Items deleted from ${destination_table}`);
-        this.copy_table(index, source_table, destination_table);
+        this.copy_table(tableName, source_table, destination_table);
       },
       error: (error) => {
         console.error('Error deleting items:', error);
-        this.finishRow(index);
+        this.finishRow(tableName);
       }
     });
-
-    // copy production items to sandbox
-
   }
-  copy_table(index: number, source_table: string, destination_table: string) {
+
+  copy_table(tableName: string, source_table: string, destination_table: string) {
     console.log(`Copying items from ${source_table} to ${destination_table}`);
     this.batchService.scanTable(source_table, 0).pipe(
       switchMap((items) => {
         if (items.length > 0) {
           return this.batchService.batchWriteItem(destination_table, items);
         }
-        return of([]); // No items to copy
+        return of([]);
       })
     ).subscribe({
       next: () => {
         console.log(`Items copied from ${source_table} to ${destination_table}`);
-        // Post-clone validation: compare item counts via paginated scans
-        this.validateCounts(index, source_table, destination_table);
+        this.validateCounts(tableName, source_table, destination_table);
       },
       error: (error) => {
         console.error('Error copying items:', error);
-        this.toastService.showErrorToast('Clone BDD', `Erreur lors du clonage de la table ${this.name(source_table)}`);
-        this.finishRow(index);
+        this.toastService.showErrorToast('Clone BDD', `Erreur lors du clonage de la table ${tableName}`);
+        this.finishRow(tableName);
       }
     });
   }
 
-  private validateCounts(index: number, source_table: string, destination_table: string) {
-    // Run scans in sequence to reduce pressure
+  private validateCounts(tableName: string, source_table: string, destination_table: string) {
     this.batchService.scanTable(source_table, 0).pipe(
       switchMap((srcItems) => this.batchService.scanTable(destination_table, 0).pipe(map(destItems => ({ src: srcItems, dest: destItems }))))
     ).subscribe({
       next: ({ src, dest }) => {
         const srcCount = src.length;
         const destCount = dest.length;
-        // Update UI counts to reflect live scan results (DescribeTable ItemCount is eventually consistent)
-        if (this.production_tables[index]?.Table) {
-          this.production_tables[index].Table!.ItemCount = srcCount;
+        
+        // Update UI counts
+        const row = this.tableRows.find(r => r.name === tableName);
+        if (row) {
+          if (row.production?.Table) {
+            row.production.Table.ItemCount = srcCount;
+          }
+          if (row.sandbox?.Table) {
+            row.sandbox.Table.ItemCount = destCount;
+          }
         }
-        if (this.sandbox_tables[index]?.Table) {
-          this.sandbox_tables[index].Table!.ItemCount = destCount;
-        }
+        
         if (srcCount === destCount) {
-          this.toastService.showSuccess('Clone BDD', `Table ${this.name(source_table)} clonée et vérifiée (${srcCount} items).`);
+          this.toastService.showSuccess('Clone BDD', `Table ${tableName} clonée et vérifiée (${srcCount} items).`);
         } else {
           this.toastService.showWarning('Clone BDD', `Clonage terminé mais écart détecté: source=${srcCount}, dest=${destCount}.`);
         }
-        this.finishRow(index);
+        this.finishRow(tableName);
       },
       error: (_e) => {
-        this.toastService.showWarning('Clone BDD', `Clonage terminé, mais la validation a échoué pour ${this.name(source_table)}.`);
-        this.finishRow(index);
+        this.toastService.showWarning('Clone BDD', `Clonage terminé, mais la validation a échoué pour ${tableName}.`);
+        this.finishRow(tableName);
       }
     });
   }
 
   async cloneSelected() {
-    const indices = this.selected
-      .map((v, i) => ({ v, i }))
-      .filter(e => e.v)
-      .map(e => e.i);
-    if (indices.length === 0) {
+    const selectedNames = Array.from(this.selected.entries())
+      .filter(([_, selected]) => selected)
+      .map(([name, _]) => name);
+    
+    if (selectedNames.length === 0) {
       this.toastService.showInfo('Clone BDD', 'Aucune table sélectionnée');
       return;
     }
     this.started = true;
-    // Démarre les clones en parallèle (chaque ligne gère son propre état)
-    for (const i of indices) {
-      this.cloneTableAt(i);
+    // Démarre les clones en parallèle
+    for (const name of selectedNames) {
+      this.cloneTableAt(name);
     }
-    // Surveille la fin de tous les clones sélectionnés, puis lance un rafraîchissement live global
-    const selectedSet = new Set(indices);
+    // Surveille la fin de tous les clones sélectionnés
     const timer = setInterval(() => {
-      const allDone = indices.every(i => this.rowCloning[i] === false);
+      const allDone = selectedNames.every(name => this.rowCloning.get(name) === false);
       if (allDone) {
         clearInterval(timer);
         this.refreshCountsLive();
@@ -206,10 +258,11 @@ export class CloneDBComponent {
     }, 1000);
   }
 
-  private finishRow(index: number) {
-    this.rowCloning[index] = false;
-    // Si plus aucune ligne n'est en cours et pas de batch en attente, libère l'UI
-    if (this.rowCloning.every(v => v === false)) {
+  private finishRow(tableName: string) {
+    this.rowCloning.set(tableName, false);
+    // Si plus aucune ligne n'est en cours, libère l'UI
+    const allDone = Array.from(this.rowCloning.values()).every(v => v === false);
+    if (allDone) {
       this.started = false;
     }
   }
@@ -217,30 +270,47 @@ export class CloneDBComponent {
   // Live refresh of item counts using strong-consistency scans
   refreshCountsLive() {
     this.started = true;
-    const prodScans = this.production_tables.map(t => {
-      const name = t.Table?.TableName ?? '';
-      return this.batchService.scanTable(name, 0).pipe(map(items => items.length));
-    });
-    const sandScans = this.sandbox_tables.map(t => {
-      const name = t.Table?.TableName ?? '';
-      return this.batchService.scanTable(name, 0).pipe(map(items => items.length));
+    
+    // Build observable array for all tables
+    const scans: Observable<{ name: string; type: 'production' | 'sandbox'; count: number }>[] = [];
+    
+    this.tableRows.forEach(row => {
+      if (row.production?.Table?.TableName) {
+        const name = row.production.Table.TableName;
+        scans.push(
+          this.batchService.scanTable(name, 0).pipe(
+            map(items => ({ name: row.name, type: 'production' as const, count: items.length }))
+          )
+        );
+      }
+      if (row.sandbox?.Table?.TableName) {
+        const name = row.sandbox.Table.TableName;
+        scans.push(
+          this.batchService.scanTable(name, 0).pipe(
+            map(items => ({ name: row.name, type: 'sandbox' as const, count: items.length }))
+          )
+        );
+      }
     });
 
-    const prod$ = prodScans.length ? combineLatest(prodScans) : of([] as number[]);
-    const sand$ = sandScans.length ? combineLatest(sandScans) : of([] as number[]);
+    if (scans.length === 0) {
+      this.started = false;
+      return;
+    }
 
-    combineLatest([prod$, sand$]).subscribe({
-      next: ([prodCounts, sandCounts]) => {
-        for (let i = 0; i < prodCounts.length; i++) {
-          if (this.production_tables[i]?.Table) {
-            this.production_tables[i].Table!.ItemCount = prodCounts[i];
+    combineLatest(scans).subscribe({
+      next: (results) => {
+        // Update counts in tableRows
+        results.forEach(result => {
+          const row = this.tableRows.find(r => r.name === result.name);
+          if (row) {
+            if (result.type === 'production' && row.production?.Table) {
+              row.production.Table.ItemCount = result.count;
+            } else if (result.type === 'sandbox' && row.sandbox?.Table) {
+              row.sandbox.Table.ItemCount = result.count;
+            }
           }
-        }
-        for (let i = 0; i < sandCounts.length; i++) {
-          if (this.sandbox_tables[i]?.Table) {
-            this.sandbox_tables[i].Table!.ItemCount = sandCounts[i];
-          }
-        }
+        });
         this.toastService.showInfo('Clone BDD', 'Comptes mis à jour (live)');
         this.started = false;
       },

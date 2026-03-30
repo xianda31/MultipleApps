@@ -37,25 +37,31 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr *ngFor="let table of production_tables; let i = index">
-                        <td class="text-center"><input type="checkbox" [(ngModel)]="selected[i]"></td>
-                        <td>
-                            <code>{{ name(table.Table?.TableName ?? '') }}</code> ·
-                            {{ table.Table?.ItemCount }} items ·
-                            {{ table.Table?.TableSizeBytes | number: '1.0-0' }} bytes
+                    <tr *ngFor="let row of tableRows">
+                        <td class="text-center"><input type="checkbox" [checked]="selected.get(row.name)" (change)="selected.set(row.name, $event.target.checked)"></td>
+                        <td *ngIf="row.production?.Table as prodTable; else noProdTable">
+                            <code>{{ row.name }}</code> ·
+                            {{ prodTable.ItemCount }} items ·
+                            {{ prodTable.TableSizeBytes | number: '1.0-0' }} bytes
                         </td>
-                        <td>
-                            <code>{{ name(sandbox_tables[i].Table?.TableName ?? '') }}</code> ·
-                            {{ sandbox_tables[i].Table?.ItemCount }} items ·
-                            {{ sandbox_tables[i].Table?.TableSizeBytes | number: '1.0-0' }} bytes
+                        <ng-template #noProdTable>
+                            <td class="text-muted text-center"><small>Pas de table Production</small></td>
+                        </ng-template>
+                        <td *ngIf="row.sandbox?.Table as sandTable; else noSandboxTable">
+                            <code>{{ row.name }}</code> ·
+                            {{ sandTable.ItemCount }} items ·
+                            {{ sandTable.TableSizeBytes | number: '1.0-0' }} bytes
                         </td>
+                        <ng-template #noSandboxTable>
+                            <td class="text-muted text-center"><small>Pas de correspondance en Sandbox</small></td>
+                        </ng-template>
                         <td class="text-center">
                             <div class="d-flex flex-column gap-1">
-                                <button class="btn btn-sm" [ngClass]="reverseDirection ? 'btn-danger' : 'btn-primary'" (click)="cloneTableAt(i)" [disabled]="started || rowCloning[i]">
+                                <button class="btn btn-sm" [ngClass]="reverseDirection ? 'btn-danger' : 'btn-primary'" (click)="cloneTableAt(row.name)" [disabled]="started || rowCloning.get(row.name) || !row.production?.Table || !row.sandbox?.Table" [title]="(!row.production?.Table || !row.sandbox?.Table) ? 'Tables manquantes' : ''">
                                     <span *ngIf="!reverseDirection">Cloner</span>
                                     <span *ngIf="reverseDirection">⚠️ ÉCRASER</span>
                                 </button>
-                                <div *ngIf="rowCloning[i]" class="small text-muted">en cours…</div>
+                                <div *ngIf="rowCloning.get(row.name)" class="small text-muted">en cours…</div>
                             </div>
                         </td>
                     </tr>
