@@ -10,7 +10,7 @@ backend:
           SCHEMA2="node_modules/@aws-amplify/backend-cli/node_modules/@aws-amplify/backend-output-schemas/lib/platform/stack_metadata_schemas.js"
           for f in "$SCHEMA1" "$SCHEMA2"; do
             if [ -f "$f" ]; then
-              sed -i 's/z\.record(exports\.backendOutputEntryStackMetadataSchema)/z.record(z.string(), exports.backendOutputEntryStackMetadataSchema)/g' "$f"
+              sed -i 's/z\.record(exports\.backendOutputEntryStackMetadataSchema)/z.record(zod_1.z.string(), exports.backendOutputEntryStackMetadataSchema)/g' "$f"
               echo "Patched $f"
             fi
           done
