@@ -1,9 +1,6 @@
 version: 1
 backend:
   phases:
-    preBuild:
-      commands:
-        - rm -rf .npm
     build:
       commands:
         - npm ci --cache .npm --prefer-offline
@@ -19,7 +16,6 @@ frontend:
   phases:
     preBuild:
       commands:
-        - rm -rf .npm
         - npm ci --cache .npm --prefer-offline
     build:
       commands:
