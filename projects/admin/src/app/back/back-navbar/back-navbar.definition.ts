@@ -111,7 +111,7 @@ export const STATIC_MENUS: NavbarMenu[] = [
         key: 'stripe',
         icon: 'bi-cart3',
         minLevel: Group_priorities.Systeme,
-        isDev: true,
+        isDev: false,
         subMenus: [
             { label: 'produits', route: BACK_ROUTE_PATHS.StripeProducts },
             { label: 'rapprochement', route: BACK_ROUTE_PATHS.StripeReconciliation },
