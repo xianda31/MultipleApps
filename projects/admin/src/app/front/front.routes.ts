@@ -14,12 +14,9 @@ export const minimal_routes: Routes = [
     path: '',
     component: FrontComponent,
     children: [
-      // Routes with dynamic parameters (not configurable via editor)
-      // { path: 'tournaments/:id', component: TournamentComponent },
-      // { path: 'les_albums/:snippet_id', component: AlbumComponent },
+      // Routes with dynamic parameters (not configurable via editor => refer to plugin meta for these)
 
       // Stripe E-commerce routes
-      // { path: 'shop', component: FrontShopComponent },
       { path: 'checkout-success', component: CheckoutSuccessComponent },
       { path: 'checkout-cancel', component: CheckoutCancelComponent },
 

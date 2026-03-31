@@ -31,9 +31,9 @@ export const BACK_ROUTE_PATHS = {
   Dashboard: 'dashboard',
 
   StripeProducts: 'stripe/products',
-  // StripeShop: 'stripe/shop',
+  StripeOnlineShop: 'stripe/onlineshop',  // simulation d'une page front pour test 
   StripeReconciliation: 'stripe/reconciliation',
-  Stripe: 'stripe',
+  // Stripe: 'stripe',
   
   RootVolume: 'outils/disk',
   FilemgrWindows: 'outils/disk/:root_folder',

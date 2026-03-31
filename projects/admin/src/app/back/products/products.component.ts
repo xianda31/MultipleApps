@@ -55,7 +55,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
       price: new FormControl('', [Validators.required, Validators.min(0)]),
       account: new FormControl('', Validators.required),
       paired: new FormControl<boolean>(false, { nonNullable: true }),
-      currency: new FormControl('EUR', Validators.required),
+      currency: new FormControl({ value: 'EUR', disabled: true }),
       stripeEnabled: new FormControl<boolean>(false, { nonNullable: true }),
       active: new FormControl<boolean>(true, { nonNullable: true }),
       // glyph est auto-déterminé basé sur `account` — ne pas inclure dans le formulaire

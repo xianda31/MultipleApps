@@ -19,6 +19,7 @@ export class CartComponent {
   @Output() complete = new EventEmitter<void>();
   @Output() stripeCheckout = new EventEmitter<void>();
   @Output() assetUsableChange = new EventEmitter<number>();  // Émettre quand l'avoir utilisable change
+  @Output() debtAmountChange = new EventEmitter<number>();  // Émettre quand la dette à inclure change
   @Input() message: string = '';
   @Input() onlineMode = false;
   @Input() canEditPrice = false;  // Si false, modifier les prix est désactivé
@@ -71,7 +72,10 @@ export class CartComponent {
       this.asset_usable = this.calculate_usable_asset();
       // Émettre le changement d'asset_usable pour que le parent (shop) puisse l'utiliser
       this.assetUsableChange.emit(this.asset_usable);
-
+      
+      // Émettre la vraie dette à passer au checkout (0 si take_debt = false)
+      const debtToCharge = (this.cart.take_debt && this.debt_amount > 0) ? this.debt_amount : 0;
+      this.debtAmountChange.emit(debtToCharge);
     });
   }
 

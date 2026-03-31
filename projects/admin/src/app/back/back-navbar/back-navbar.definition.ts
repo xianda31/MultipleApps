@@ -115,6 +115,7 @@ export const STATIC_MENUS: NavbarMenu[] = [
         subMenus: [
             { label: 'produits', route: BACK_ROUTE_PATHS.StripeProducts },
             { label: 'rapprochement', route: BACK_ROUTE_PATHS.StripeReconciliation },
+            { label: 'simu online shop', route: BACK_ROUTE_PATHS.StripeOnlineShop }
         ]
     },
 ]

@@ -28,7 +28,7 @@ import { ShopProductService } from './services/shop-product.service';
 })
 export class ShopComponent {
   @Input() member_id: string | null = null;
-  @Input() onlineMode = false;
+  @Input() onlineMode !: boolean;
   members!: Member[];
 
   cart_is_valid = true;
@@ -86,7 +86,9 @@ export class ShopComponent {
   ) {}
 
   ngOnInit(): void {
-    // Override @Input with route data if provided
+    // Apply default for @Input (not auto-applied by Angular)
+    this.onlineMode ??= true;
+
     const routeOnlineMode = this.route.snapshot.data['onlineMode'];
     if (routeOnlineMode !== undefined) {
       this.onlineMode = routeOnlineMode;

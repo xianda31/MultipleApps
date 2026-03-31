@@ -72,7 +72,7 @@ export const PLUGINS: Record<string, Type<any>> = {
   [NAVITEM_PLUGIN.ASSISTANCE]: AssistanceComponent,
   [NAVITEM_PLUGIN.ALBUM]: AlbumComponent,
   [NAVITEM_PLUGIN.PDF_VIEWER]: PdfViewerComponent,
-  [NAVITEM_PLUGIN.ONLINE_SHOP]: ShopComponent,
+  [NAVITEM_PLUGIN.ONLINE_SHOP]: ShopComponent,   // par defaut onlineMode = true
 };
 
 
@@ -97,10 +97,10 @@ export const PLUGINS_META: Record<string, PluginMeta> = {
   [NAVITEM_PLUGIN.PDF_VIEWER]: { 
     param: { label: 'Fichier PDF', placeholder: 'nom_du_fichier.pdf', inputType: 'text', dataKey: 'pdf_src' },
   },
-  [NAVITEM_PLUGIN.ONLINE_SHOP]: { 
-    param: { label: 'Mode boutique en ligne', placeholder: '', inputType: 'text', dataKey: 'onlineMode' },
-  },
+
+  
   // Plugins nécessitant authentification (component récupéré de PLUGINS)
+  [NAVITEM_PLUGIN.ONLINE_SHOP]: { requiresAuth: true },
   [NAVITEM_PLUGIN.SETTINGS]: { requiresAuth: true },
   [NAVITEM_PLUGIN.PURCHASES]: { requiresAuth: true },
   [NAVITEM_PLUGIN.GAME_CARDS_OWNED]: { requiresAuth: true },

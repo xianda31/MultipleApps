@@ -4,13 +4,11 @@
 
     <!-- Header bar -->
     <div class="shop-header-bar">
-      <span class="fw-semibold">Boutique</span>
-      @if (!onlineMode) {
-      <div class="d-flex align-items-center gap-2 ms-auto">
+      <span class="fw-semibold">   {{onlineMode ? 'Boutique en ligne' : 'Vente aux adhérents'}}</span>
+      <div *ngIf="!onlineMode" class="d-flex align-items-center gap-2 ms-auto">
         <input type="date" class="form-control form-control-sm" style="max-width:160px;"
-          (ngModelChange)="date_change($event)" [(ngModel)]="session.date">
+          (ngModelChange)="date_change($event)" [(ngModel)]="session.date"          >
       </div>
-      }
     </div>
 
     @if (shouldShowSpinner$ | async) {
@@ -61,7 +59,8 @@
         <div *ngIf="buyer || onlineMode">
           <app-cart [message]="message" [onlineMode]="onlineMode" [canEditPrice]="canEditPrice"
             (complete)="cart_confirmed()" (stripeCheckout)="on_stripe_checkout()"
-            (assetUsableChange)="asset_amount = $event">
+            (assetUsableChange)="asset_amount = $event"
+            (debtAmountChange)="debt_amount = $event">
           </app-cart>
         </div>
 
