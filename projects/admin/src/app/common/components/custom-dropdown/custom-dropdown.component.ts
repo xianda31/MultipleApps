@@ -23,7 +23,7 @@ export class CustomDropdownComponent {
   onInputChange(value: string) {
     this.searchValue = value;
     this.searchValueChange.emit(value);
-    this.showSuggestions = value.length > 0;
+    this.showSuggestions = true;
   }
 
   selectItem(item: any) {
@@ -38,7 +38,7 @@ export class CustomDropdownComponent {
   }
 
   onFocus() {
-    // Dropdown s'affiche seulement lors de la saisie (au moins 1 caractère)
+    this.showSuggestions = true;
   }
 
   getFilteredItems(): any[] {

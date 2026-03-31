@@ -8,7 +8,7 @@
     [placeholder]="placeholder"
     autocomplete="off">
 
-  <ul *ngIf="showSuggestions && getFilteredItems() && getFilteredItems().length > 0"
+  <ul *ngIf="showSuggestions && getFilteredItems().length > 0"
     class="dropdown-list position-absolute start-0 end-0 mt-1 list-unstyled border rounded shadow-sm"
     style="z-index: 1000; max-height: 300px; overflow-y: auto; background: white;">
     <li *ngFor="let item of getFilteredItems()"

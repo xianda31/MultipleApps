@@ -121,6 +121,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
   // Gestion du dropdown custom compte
   onAccountInputChange(value: string) {
     this.accountInput = value;
+    this.productForm.get('account')?.setValue(value || null);
     this.showAccountSuggestions = true;
   }
 
