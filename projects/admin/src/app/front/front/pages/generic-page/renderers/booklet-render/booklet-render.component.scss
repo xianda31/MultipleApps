@@ -531,3 +531,178 @@ $page-flip-duration: 3.4s;
     min-height: auto;
   }
 }
+
+// ==========================================
+// MOBILE LANDSCAPE MODE
+// ==========================================
+.booklet-container.landscape-mode {
+  // Masquer header et indicateurs
+  .booklet-header {
+    display: none;
+  }
+
+  .booklet-indicators {
+    display: none;
+  }
+
+  // Hauteur tenant compte navbar/image/footer (~250px au total)
+  .booklet-wrapper {
+    min-height: calc(100vh - 280px);
+    height: calc(100vh - 280px);
+    max-height: calc(100vh - 280px);
+    margin-bottom: 0;
+    padding: 0;
+  }
+
+  .booklet-book {
+    height: 100%;
+    min-height: 100%;
+  }
+
+  .page-container {
+    min-height: 100% !important;
+    height: 100% !important;
+  }
+}
+
+// ==========================================
+// MOBILE PORTRAIT MODE - Single Page
+// ==========================================
+.booklet-container.portrait-mode {
+  // Maintenant dans col-12 => utiliser 100% du container, pas 100vw
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0.5rem !important;
+  
+  .booklet-wrapper {
+    min-height: auto;
+    height: auto;
+    margin-bottom: 0.5rem;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    display: flex !important;
+    justify-content: center !important;
+  }
+
+  .booklet-book {
+    // Layout vertical : afficher une page à la fois
+    flex-direction: column;
+    min-height: auto;
+    height: auto;
+    max-width: 100% !important;     // ← Full width du container
+    width: 100% !important;         // ← Ensure 100% width
+    margin: 0 auto !important;      // ← Centrer
+    padding: 0 !important;          // ← No padding
+  }
+
+  // Override ALL page-containers to remove height constraints
+  // (media queries may still apply, so we use !important)
+  .page-container {
+    min-height: auto !important;
+    height: auto !important;
+  }
+
+  // Cacher la page de droite en portrait
+  .page-container.right-page {
+    display: none;
+  }
+
+  // Désactiver TOUTES les animations 3D en portrait (pas le flip ici)
+  .page-container {
+    &.flipping-right,
+    &.flipping-left {
+      animation: none !important;
+    }
+  }
+
+  // La page de gauche prend toute la largeur et hauteur constante
+  .page-container.left-page {
+    width: 100% !important;
+    border-right: none;
+    min-height: auto !important;  // ← Auto, pas constante
+    max-height: 50vh !important;  // ← Max hauteur pour viewport
+    height: auto !important;      // ← S'adapter au contenu
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    flex: none;
+  }
+
+  // Bone invisible en portrait
+  .book-spine {
+    display: none;
+  }
+
+  // Backdrop invisible en portrait
+  .spread-backdrop {
+    display: none;
+  }
+
+  // Page face : contenu peut s'étendre
+  .page-face {
+    position: static !important;   // ← Retirer absolute pour le layout naturel
+    height: 100% !important;       // ← Prendre la hauteur du parent (50vh max)
+    width: 100% !important;        // ← Full width
+    overflow: visible !important;  // ← Permettre au contenu de dépasser
+    
+    .card {
+      height: 100% !important;      // ← Prendre la hauteur du parent (50vh max)
+      overflow: hidden !important;  // ← Clip si dépasse
+      
+      .card-body {
+        flex: 1;                      // ← Flex pour remplir l'espace
+        max-height: none !important;  // ← Pas de limite de hauteur
+        overflow-y: auto !important;  // ← Scrollable si contenu dépasse
+      }
+    }
+  }
+
+  // Header compact en portrait
+  .booklet-header {
+    display: flex !important;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.5rem 0 !important;
+    margin-bottom: 0.5rem !important;
+    
+    h5 {
+      font-size: 0.9rem;
+      margin-bottom: 0 !important;
+      flex: 1 1 100%;
+    }
+    
+    .page-navigation {
+      width: 100%;
+      gap: 0.5rem;
+      
+      .btn {
+        flex: 1;
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+        min-width: auto !important;
+      }
+    }
+  }
+
+  // Ajuster les indicateurs pour afficher UN seul pour chaque page
+  .booklet-indicators {
+    margin-top: 0.25rem !important;
+    gap: 0.25rem !important;
+    
+    .indicator-btn {
+      width: 32px;
+      height: 32px;
+      font-size: 0.75rem;
+      
+      &.active {
+        // En portrait, un seul indicateur actif à la fois
+        background: #198754;
+        border-color: #198754;
+        color: white;
+      }
+    }
+  }
+}
+

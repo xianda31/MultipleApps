@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Snippet } from '../../../../../../common/interfaces/page_snippet.interface';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -19,8 +19,17 @@ export class BookletRenderComponent implements OnInit {
   currentIndex: number = 0;
   isFlipping: boolean = false;
   flipDirection: 'left' | 'right' | null = null;
+  isLandscape: boolean = window.matchMedia('(orientation: landscape)').matches;
+  isMobile: boolean = window.innerWidth < 1400;  // Couvre Galaxy A51 (914px) et Surface Pro 7 (1368px)
 
   constructor(private sanitizer: DomSanitizer) { }
+
+  @HostListener('window:orientationchange')
+  @HostListener('window:resize')
+  onOrientationChange(): void {
+    this.isLandscape = window.matchMedia('(orientation: landscape)').matches;
+    this.isMobile = window.innerWidth < 1400;
+  }
 
   ngOnInit(): void {
     if (this.snippets.length === 0) {
@@ -60,11 +69,13 @@ export class BookletRenderComponent implements OnInit {
   }
 
   get hasNext(): boolean {
-    return this.currentIndex + 2 < this.snippets.length;
+    const pageIncrement = (this.isMobile && !this.isLandscape) ? 1 : 2;
+    return this.currentIndex + pageIncrement < this.snippets.length;
   }
 
   get hasPrevious(): boolean {
-    return this.currentIndex > 0;
+    const pageDecrement = (this.isMobile && !this.isLandscape) ? 1 : 2;
+    return this.currentIndex - pageDecrement >= 0;
   }
 
   get pageNumber(): number {
@@ -75,27 +86,41 @@ export class BookletRenderComponent implements OnInit {
     return this.snippets.length;
   }
 
+  // En portrait mobile, pas d'animation 3D => délai minimal
+  // En paysage/desktop, animation 3D => délai plein
+  private get flipDelay(): number {
+    return (this.isMobile && !this.isLandscape) ? 0 : PAGE_FLIP_DURATION_MS;
+  }
+
   next(): void {
-    if (this.hasNext && !this.isFlipping) {
+    // En mode portrait mobile: avancer d'une page, sinon deux pages (spread)
+    const pageIncrement = (this.isMobile && !this.isLandscape) ? 1 : 2;
+    const hasNextPage = this.currentIndex + pageIncrement < this.snippets.length;
+    
+    if (hasNextPage && !this.isFlipping) {
       this.isFlipping = true;
       this.flipDirection = 'right';
       setTimeout(() => {
-        this.currentIndex += 2;
+        this.currentIndex += pageIncrement;
         this.isFlipping = false;
         this.flipDirection = null;
-      }, PAGE_FLIP_DURATION_MS);
+      }, this.flipDelay);
     }
   }
 
   previous(): void {
-    if (this.hasPrevious && !this.isFlipping) {
+    // En mode portrait mobile: reculer d'une page, sinon deux pages (spread)
+    const pageDecrement = (this.isMobile && !this.isLandscape) ? 1 : 2;
+    const hasPreviousPage = this.currentIndex - pageDecrement >= 0;
+    
+    if (hasPreviousPage && !this.isFlipping) {
       this.isFlipping = true;
       this.flipDirection = 'left';
       setTimeout(() => {
-        this.currentIndex -= 2;
+        this.currentIndex -= pageDecrement;
         this.isFlipping = false;
         this.flipDirection = null;
-      }, PAGE_FLIP_DURATION_MS);
+      }, this.flipDelay);
     }
   }
 
@@ -107,7 +132,7 @@ export class BookletRenderComponent implements OnInit {
         this.currentIndex = index;
         this.isFlipping = false;
         this.flipDirection = null;
-      }, PAGE_FLIP_DURATION_MS);
+      }, this.flipDelay);
     }
   }
 

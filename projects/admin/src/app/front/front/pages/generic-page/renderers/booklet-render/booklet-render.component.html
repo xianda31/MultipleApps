@@ -1,6 +1,11 @@
-<div class="container-md" *ngIf="leftSnippet">
-  <!-- Header with navigation -->
-  <div class="booklet-header d-flex justify-content-between align-items-center mb-3">
+<div class="container-md booklet-container" 
+  [class.landscape-mode]="isMobile && isLandscape"
+  [class.portrait-mode]="isMobile && !isLandscape"
+  *ngIf="leftSnippet">
+  
+  <!-- Header with navigation - HIDDEN in landscape mode -->
+  <div class="booklet-header d-flex justify-content-between align-items-center mb-3"
+    *ngIf="!(isMobile && isLandscape)">
     <h5 class="mb-0">Page {{ pageNumber }} - {{ pageNumber + 1 }} / {{ totalPages }}</h5>
     <div class="page-navigation d-flex gap-2">
       <button class="btn btn-sm btn-outline-secondary"
@@ -18,8 +23,8 @@
     </div>
   </div>
 
-  <!-- Booklet with two-page spread -->
-  <div class="booklet-wrapper">
+  <!-- Booklet with two-page spread (desktop & mobile landscape) OR single page (mobile portrait) -->
+  <div class="booklet-wrapper" [class.single-page-mode]="isMobile && isLandscape">
     <div class="booklet-book">
 
       <!-- BACKDROP: static background, spans full book, revealed when the flipping page rotates away -->
@@ -171,11 +176,12 @@
     </div>
   </div>
 
-  <!-- Navigation indicators at bottom -->
-  <div class="booklet-indicators mt-4 d-flex justify-content-center gap-2 flex-wrap">
+  <!-- Navigation indicators at bottom - HIDDEN in landscape mode -->
+  <div class="booklet-indicators mt-4 d-flex justify-content-center gap-2 flex-wrap"
+    *ngIf="!(isMobile && isLandscape)">
     <button *ngFor="let snippet of snippets; let i = index"
       class="indicator-btn"
-      [class.active]="i >= currentIndex && i < currentIndex + 2"
+      [class.active]="(isMobile && !isLandscape) ? (i === currentIndex) : (i >= currentIndex && i < currentIndex + 2)"
       (click)="goToPage(i)"
       [title]="snippet.title">
       {{ i + 1 }}

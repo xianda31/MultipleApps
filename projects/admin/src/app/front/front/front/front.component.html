@@ -152,7 +152,7 @@
 
   <ng-template #tplContent>
     <div class="row content-row">
-      <div class="offset-xl-1 col-xl-10 justify-content-center main-content">
+      <div [ngClass]="{ 'offset-xxl-1 col-xxl-10': !isMobilePortrait && !isMobileLandscape, 'col-12 px-0': isMobilePortrait || isMobileLandscape }" class="justify-content-center main-content">
         <div class="mt-2 mb-2">
           <app-title></app-title>
         </div>
