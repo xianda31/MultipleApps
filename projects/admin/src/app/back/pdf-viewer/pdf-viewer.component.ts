@@ -21,6 +21,7 @@ if (typeof window !== 'undefined') {
 })
 export class PdfViewerComponent implements OnInit, AfterViewInit {
     @Input() pdfSrc!: string;
+    @Input() hideRange: boolean = false;
     @ViewChild('leftCanvas', { static: false }) leftCanvas?: ElementRef<HTMLCanvasElement>;
     @ViewChild('rightCanvas', { static: false }) rightCanvas?: ElementRef<HTMLCanvasElement>;
     @ViewChild('nextCanvas', { static: false }) nextCanvas?: ElementRef<HTMLCanvasElement>;

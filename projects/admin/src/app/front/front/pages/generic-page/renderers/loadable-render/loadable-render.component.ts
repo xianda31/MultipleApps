@@ -1,5 +1,7 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { NgbModal, NgbModalModule } from '@ng-bootstrap/ng-bootstrap';
+import { PdfViewerComponent } from '../../../../../../back/pdf-viewer/pdf-viewer.component';
 import { Snippet } from '../../../../../../common/interfaces/page_snippet.interface';
 import { BreakpointsSettings } from '../../../../../../common/interfaces/ui-conf.interface';
 import { ToastService } from '../../../../../../common/services/toast.service';
@@ -8,18 +10,26 @@ import { FileService } from '../../../../../../common/services/files.service';
 @Component({
   selector: 'app-loadable-render',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, NgbModalModule, PdfViewerComponent],
   templateUrl: './loadable-render.component.html',
   styleUrls: ['./loadable-render.component.scss']
 })
 export class LoadableRenderComponent {
   @Input() snippets: Snippet[] = [];
   @Input() row_cols: BreakpointsSettings = { SM: 1, MD: 2, LG: 3, XL: 4 };
+  
+  isDesktopMode: boolean = window.innerWidth >= 768;
 
   constructor(
     private fileService: FileService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private modalService: NgbModal
   ) {}
+
+  @HostListener('window:resize')
+  onResize(): void {
+    this.isDesktopMode = window.innerWidth >= 768;
+  }
 
   icons: { [key: string]: string } = {
     pdf: 'bi-file-earmark-pdf-fill',
@@ -55,5 +65,24 @@ export class LoadableRenderComponent {
     } catch (error) {
       this.toastService.showErrorToast('Erreur lors du téléchargement', docItem.name + ' n\'est pas disponible');
     }
+  }
+
+  isPdf(file: string): boolean {
+    return file.toLowerCase().endsWith('.pdf');
+  }
+
+  openPdfViewer(snippet: Snippet): void {
+    const modalRef = this.modalService.open(PdfViewerComponent, {
+      size: 'md',
+      backdrop: 'static',
+      keyboard: true,
+      fullscreen: false,
+      centered: true,
+      windowClass: 'pdf-modal'
+    });
+    
+    // Passer le filename au composant PdfViewerComponent
+    modalRef.componentInstance.pdfSrc = snippet.file;
+    modalRef.componentInstance.hideRange = true;
   }
 }

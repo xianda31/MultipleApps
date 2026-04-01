@@ -10,14 +10,14 @@
 </div>
 
 <div class="row" *ngIf="presignedUrl && pdfDocument">
-    <div class="col-12 col-md-2">
+    <div class="col-12 col-md-2" *ngIf="!hideRange">
         <div class="d-flex align-items-start w-100">
             <label class=" d-flex align-items-center text-nowrap text-muted small">{{ getCurrentPageLabel() }}</label>
             <input type="range" class="form-range flex-grow-1 ms-1" [min]="0" [max]="pagePairs.length"
                 [value]="displayIndex" (input)="goToPage(+$any($event.target).value)" [disabled]="isFlipping" step="1">
         </div>
     </div>
-    <div class="col-12 col-md-10">
+    <div [class]="hideRange ? 'col-12' : 'col-12 col-md-10'">
         <div class="booklet-wrapper">
             <div class="booklet-book">
                 <!-- Page de gauche -->

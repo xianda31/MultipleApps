@@ -1,3 +1,33 @@
+// PDF Viewer modal — largeur proportionnelle à 2 pages A4 (ratio 1.414)
+.pdf-modal {
+  .modal-dialog {
+    // 2 pages A4 côte à côte : rapport largeur/hauteur = 2 × (210/297) ≈ 1.414
+    // On base la largeur sur la hauteur disponible (88vh pour laisser les marges)
+    width: min(95vw, calc(84vh * 1.42));
+    max-width: min(95vw, calc(84vh * 1.42));
+    margin: auto;
+  }
+
+  .modal-content {
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.5rem;
+  }
+
+  // Contraindre le booklet-wrapper à la hauteur disponible dans le modal
+  app-pdf-viewer .booklet-wrapper {
+    height: calc(84vh - 1rem);
+    width: auto;
+  }
+}
+
 /* Masquer complètement la scrollbar globale (Chrome/Edge) */
 html::-webkit-scrollbar, body::-webkit-scrollbar {
   display: none;
