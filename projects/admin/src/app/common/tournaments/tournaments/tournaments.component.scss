@@ -1,0 +1,14 @@
+// Égaliser la hauteur des cards sur toutes les lignes via CSS Grid
+.equal-height-cards {
+  display: grid !important;
+  grid-auto-rows: 1fr;
+  align-items: stretch;
+  // grid-template-columns est injecté dynamiquement via [style]="gridStyle()"
+
+  // Annuler les largeurs flex que Bootstrap injecte sur les .col enfants
+  > .col {
+    width: 100% !important;
+    flex: unset !important;
+    max-width: 100% !important;
+  }
+}

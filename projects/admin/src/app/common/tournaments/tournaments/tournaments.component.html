@@ -8,7 +8,7 @@
     Les tournois sont momentanément inaccessibles.
 </div>
 
-<div *ngIf="!loading && !in_error" [ngClass]="rowCols()">
+<div *ngIf="!loading && !in_error" class="equal-height-cards" [ngClass]="rowCols()" [style]="gridStyle()">
     <div class="col" *ngFor="let t of next_tournament_teams">
         <div class="card h-100 nice_shadow position-relative" style="overflow: hidden;">
 

@@ -10,7 +10,7 @@ import { FileService } from '../../../../../../common/services/files.service';
 @Component({
   selector: 'app-loadable-render',
   standalone: true,
-  imports: [CommonModule, NgbModalModule, PdfViewerComponent],
+  imports: [CommonModule, NgbModalModule],
   templateUrl: './loadable-render.component.html',
   styleUrls: ['./loadable-render.component.scss']
 })

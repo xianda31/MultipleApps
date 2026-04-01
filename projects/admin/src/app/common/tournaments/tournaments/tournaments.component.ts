@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, HostListener, Input } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TournamentService } from '../../services/tournament.service';
 import { TournamentTeams } from '../../ffb/interface/tournament_teams.interface';
@@ -144,6 +144,21 @@ export class TournamentsComponent {
   // Compute bootstrap row classes from the `row_cols` input (breakpoints settings).
   rowCols(): string[] {
     return formatRowColsClasses(this.row_cols);
+  }
+
+  @HostListener('window:resize')
+  onResize(): void { /* déclenche la réévaluation de gridStyle() */ }
+
+  gridStyle(): { [key: string]: string } {
+    const w = window.innerWidth;
+    const bp = this.row_cols;
+    let cols: number;
+    if (w >= 1200 && bp.XL != null) cols = bp.XL;
+    else if (w >= 992 && bp.LG != null) cols = bp.LG;
+    else if (w >= 768 && bp.MD != null) cols = bp.MD;
+    else if (w >= 576 && bp.SM != null) cols = bp.SM;
+    else cols = 1;
+    return { 'grid-template-columns': `repeat(${cols}, 1fr)` };
   }
 
 }
