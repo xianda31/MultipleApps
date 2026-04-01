@@ -19,19 +19,17 @@
                     <thead>
                         <tr>
                             <th scope="col"></th>
-                            <th scope="col" ></th>
-                            <th scope="col" ></th>
-                            <th scope="col" ></th>
+                            <th scope="col"></th>
+                            <th scope="col"></th>
+                            <!-- <th scope="col" ></th> -->
                         </tr>
                     </thead>
                     <tbody>
                         <tr *ngFor="let team of teams,let i=index">
                             <td>
                                 <div class="text-center">
-                                    <button *ngIf="is_in_team(whoAmI?.license_number,team)" (click)="deleteTeam(team)"
-                                        class="btn btn-sm bg-warning">
-                                        <i class="bi bi-trash3-fill"></i>
-                                    </button>
+                                    <i class="bi bi-trash3-fill text-warning"
+                                        *ngIf="is_in_team(whoAmI?.license_number,team)" (click)="deleteTeam(team)"></i>
                                     <span *ngIf="!is_in_team(whoAmI?.license_number,team)">{{i+1}}</span>
                                 </div>
                             </td>
@@ -40,12 +38,12 @@
                                 {{player.person.lastname | uppercase}}
                             </td>
                             <ng-container *ngIf="team.is_isolated_player">
-                                <td></td>
+                                <!-- <td></td> -->
                                 <td *ngIf="!already_subscribed && (is_member$ | async)"
                                     class="text-start align-content-center">
                                     <button [disabled]="!whoAmI" class="btn btn-sm btn-primary"
                                         (click)="completeTeam(team.players[0])">Compléter
-                                        </button>
+                                    </button>
                                 </td>
                             </ng-container>
                         </tr>
@@ -54,31 +52,27 @@
                         <tr style="border-top: 2px solid #2b66a1;"> </tr>
                         <!-- bandeau inscription -->
                         <tr>
-                            <td class="align-middle">{{teams.length + 1}}</td>
-                            <td class="align-middle">
+                            <!-- validation  inscription -->
+                            <td>
+                                <div class="text-center">
+                                    <i class="bi bi-check-circle text-success text-center" 
+                                        style="cursor: pointer;"
+                                        [ngbTooltip]="player2.valid ? 'Inscription équipe' : 'Inscription solo'"
+                                        placement="top"
+                                        (click)="player2.valid ? subscribeWithPlayer2() : subscribeSolo()"></i>
+                                </div>
+                            </td>
+                            <td>
                                 {{whoAmI?.firstname}} {{whoAmI?.lastname}}
                             </td>
                             <!-- partenaire potentiel -->
-                            <td class="align-middle">
+                            <td>
                                 <app-input-player-license listeId="player2" type="text"
                                     class="form-control form-control-sm" [formControl]="player2" required>
                                 </app-input-player-license>
                                 <span *ngIf="player2.errors?.['already_engaged'] && player2.touched"
                                     class="text-danger">Ce
                                     joueur est déjà inscrit</span>
-                            </td>
-                            <!-- validation  inscription -->
-                            <td class="col-3 align-middle">
-                                <div *ngIf="player2.valid">
-                                    <button class="btn btn-primary btn-sm" (click)="subscribeWithPlayer2()">
-                                        enregistrer l'équipe
-                                    </button>
-                                </div>
-                                <div *ngIf="!player2.valid">
-                                    <button class="btn btn-primary btn-sm" (click)="subscribeSolo()">
-                                        s'inscrire seul
-                                    </button>
-                                </div>
                             </td>
                         </tr>
                     </tfoot>

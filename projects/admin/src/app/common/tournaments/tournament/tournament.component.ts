@@ -8,13 +8,14 @@ import { FormControl, Validators, FormsModule, ReactiveFormsModule, ValidationEr
 import { CommonModule, Location, UpperCasePipe } from '@angular/common';
 import { TournamentService } from '../../services/tournament.service';
 import { InputPlayerLicenseComponent } from '../../ffb/input-player/input-player-license.component';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-tournament',
   standalone: true,
-  imports: [UpperCasePipe, InputPlayerLicenseComponent, CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [UpperCasePipe, InputPlayerLicenseComponent, CommonModule, FormsModule, ReactiveFormsModule, NgbTooltipModule],
   templateUrl: './tournament.component.html',
   styleUrl: './tournament.component.scss'
 })
