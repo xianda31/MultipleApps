@@ -1,4 +1,4 @@
-import { Component, ViewChild, TemplateRef, OnDestroy } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { TournamentService } from '../../../common/services/tournament.service';
@@ -49,13 +49,12 @@ export class FeesCollectorComponent implements OnDestroy {
   new_pair_player1!: FFBplayer | null;
   new_pair_player2!: FFBplayer | null;
   modalErrorMessage: string = '';
+  addPlayersModalOpen: boolean = false;
   hideValidated: boolean = false;
   disappearingGamers: Map<number, boolean> = new Map();
   CARD_PRICE !: number;
   members: Member[] = [];
   banks: Bank[] = [];
-
-  @ViewChild('addPlayersModal') addPlayersModalRef!: TemplateRef<any>;
 
   constructor(
     private tournamentService: TournamentService,
@@ -273,13 +272,19 @@ export class FeesCollectorComponent implements OnDestroy {
 
   openAddPlayersModal() {
     this.modalErrorMessage = '';
-    const modal = this.modalService.open(this.addPlayersModalRef, {
-      centered: true,
-      size: 'lg'
-    });
+    this.new_pair_player1 = null;
+    this.new_pair_player2 = null;
+    this.addPlayersModalOpen = true;
   }
 
-  add_pair(player1: FFBplayer | null, player2: FFBplayer | null, modal: any) {
+  closeAddPlayersModal() {
+    this.addPlayersModalOpen = false;
+    this.new_pair_player1 = null;
+    this.new_pair_player2 = null;
+    this.modalErrorMessage = '';
+  }
+
+  add_pair(player1: FFBplayer | null, player2: FFBplayer | null) {
     this.modalErrorMessage = '';
 
     // Vérifier que au moins un joueur est saisi
@@ -323,9 +328,7 @@ export class FeesCollectorComponent implements OnDestroy {
       this.feesCollectorService.add_player(player2);
     }
     this.log_game_state();
-    this.new_pair_player1 = null;
-    this.new_pair_player2 = null;
-    modal.close();
+    this.closeAddPlayersModal();
   }
 
   quickSale(gamer: Gamer) {

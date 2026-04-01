@@ -378,39 +378,53 @@
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Modal ajout paire de joueurs -->
-        <ng-template #addPlayersModal let-modal>
-            <div class="modal-header">
-                <h5 class="modal-title">Ajouter une nouvelle paire</h5>
-                <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
-            </div>
-            <div class="modal-body">
-                <div *ngIf="modalErrorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
-                    {{ modalErrorMessage }}
-                    <button type="button" class="btn-close" (click)="modalErrorMessage = ''"></button>
+    <!-- Modal ajout paire de joueurs (inline - comme quickSaleModal) -->
+    <div *ngIf="addPlayersModalOpen" class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,0.45);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title d-flex align-items-center gap-3">
+                        <i class="bi bi-person-plus-fill me-2"></i>
+                        Ajouter une nouvelle paire
+                    </h6>
+                    <button type="button" class="btn-close" aria-label="Close" (click)="closeAddPlayersModal()"></button>
                 </div>
-                <div class="row g-3">
-                    <div class="col-12">
-                        <label for="player1" class="form-label">Joueur 1</label>
-                        <app-input-player id="player1" listeId="new_guest_1" placeholder="Nom ou prénom du 1er joueur"
-                            type="text" class="form-control" [(ngModel)]="new_pair_player1">
-                        </app-input-player>
+                <div class="modal-body">
+                    <div *ngIf="modalErrorMessage" class="alert alert-danger alert-dismissible fade show py-2" role="alert">
+                        {{ modalErrorMessage }}
+                        <button type="button" class="btn-close" (click)="modalErrorMessage = ''"></button>
                     </div>
-                    <div class="col-12">
-                        <label for="player2" class="form-label">Joueur 2</label>
-                        <app-input-player id="player2" listeId="new_guest_2" placeholder="Nom ou prénom du 2e joueur"
-                            type="text" class="form-control" [(ngModel)]="new_pair_player2">
-                        </app-input-player>
+                    <div class="mb-3">
+                        <div class="row mb-3 g-2">
+                            <div class="col-6">
+                                <label class="form-label fw-semibold small">
+                                    <i class="bi bi-person-fill text-primary me-1"></i>Joueur 1
+                                </label>
+                                <app-input-player id="player1" listeId="new_guest_1" placeholder="Nom ou prénom"
+                                    type="text" class="form-control form-control-sm" [(ngModel)]="new_pair_player1">
+                                </app-input-player>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-semibold small">
+                                    <i class="bi bi-person-fill text-primary me-1"></i>Joueur 2
+                                </label>
+                                <app-input-player id="player2" listeId="new_guest_2" placeholder="Nom ou prénom"
+                                    type="text" class="form-control form-control-sm" [(ngModel)]="new_pair_player2">
+                                </app-input-player>
+                            </div>
+                        </div>
                     </div>
                 </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="closeAddPlayersModal()">Annuler</button>
+                    <button type="button" class="btn btn-sm btn-primary"
+                        (click)="add_pair(new_pair_player1, new_pair_player2)"
+                        [disabled]="!new_pair_player1 && !new_pair_player2">
+                        <i class="bi bi-plus-circle me-1"></i>Ajouter
+                    </button>
+                </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" (click)="modal.dismiss()">Annuler</button>
-                <button type="button" class="btn btn-primary"
-                    (click)="add_pair(new_pair_player1, new_pair_player2, modal)">
-                    <i class="bi bi-plus-circle me-1"></i>Ajouter
-                </button>
-            </div>
-        </ng-template>
+        </div>
     </div>
