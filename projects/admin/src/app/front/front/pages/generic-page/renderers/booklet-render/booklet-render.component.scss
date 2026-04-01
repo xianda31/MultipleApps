@@ -1,7 +1,7 @@
 // Animation duration for page flips
 // Must match PAGE_FLIP_DURATION_MS in booklet-render.component.ts
 // If changing this, update the TypeScript constant as well (convert to milliseconds)
-$page-flip-duration: 3.4s;
+$page-flip-duration: 1.5s;
 
 // .booklet-container {
 //   padding: 1rem 0;
@@ -269,6 +269,7 @@ $page-flip-duration: 3.4s;
   z-index: 0;
   display: flex;
   align-items: stretch;
+  opacity: 1;  // Toujours visible depuis le départ
 
   .backdrop-page {
     flex: 1;
@@ -618,13 +619,13 @@ $page-flip-duration: 3.4s;
     }
   }
 
-  // La page de gauche prend toute la largeur et hauteur constante
+  // La page de gauche : hauteur FIXE pour uniformité (comme h-100)
   .page-container.left-page {
     width: 100% !important;
     border-right: none;
-    min-height: auto !important;  // ← Auto, pas constante
-    max-height: 50vh !important;  // ← Max hauteur pour viewport
-    height: auto !important;      // ← S'adapter au contenu
+    height: 60vh !important;      // ← Hauteur fixe uniforme pour toutes les pages
+    min-height: 60vh !important;
+    max-height: 60vh !important;
     max-width: 100% !important;
     margin: 0 auto !important;
     flex: none;
@@ -640,21 +641,21 @@ $page-flip-duration: 3.4s;
     display: none;
   }
 
-  // Page face : contenu peut s'étendre
+  // Page face : prend toute la hauteur du parent fixe
   .page-face {
-    position: static !important;   // ← Retirer absolute pour le layout naturel
-    height: 100% !important;       // ← Prendre la hauteur du parent (50vh max)
-    width: 100% !important;        // ← Full width
-    overflow: visible !important;  // ← Permettre au contenu de dépasser
+    position: static !important;
+    height: 100% !important;      // ← Prend les 60vh du parent
+    width: 100% !important;
+    overflow: hidden !important;
     
     .card {
-      height: 100% !important;      // ← Prendre la hauteur du parent (50vh max)
-      overflow: hidden !important;  // ← Clip si dépasse
+      height: 100% !important;    // ← Prend les 60vh du parent
+      overflow: hidden !important;
       
       .card-body {
-        flex: 1;                      // ← Flex pour remplir l'espace
-        max-height: none !important;  // ← Pas de limite de hauteur
-        overflow-y: auto !important;  // ← Scrollable si contenu dépasse
+        flex: 1;                      // ← Remplit l'espace restant (après image + titre)
+        min-height: 0;                // ← Nécessaire pour que flex + overflow fonctionne
+        overflow-y: auto !important;  // ← Scroll si le contenu dépasse
       }
     }
   }

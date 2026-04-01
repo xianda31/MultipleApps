@@ -4,7 +4,7 @@ import { Snippet } from '../../../../../../common/interfaces/page_snippet.interf
 import { DomSanitizer } from '@angular/platform-browser';
 
 // Animation duration in milliseconds - must match SCSS $page-flip-duration
-const PAGE_FLIP_DURATION_MS = 3400; // 3.4s
+const PAGE_FLIP_DURATION_MS = 1500; // 1.5s
 
 @Component({
   selector: 'app-booklet-render',
