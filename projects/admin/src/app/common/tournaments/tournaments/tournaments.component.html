@@ -12,25 +12,26 @@
     <div class="col" *ngFor="let t of next_tournament_teams">
         <div class="card h-100 nice_shadow position-relative" style="overflow: hidden;">
 
-                <!-- Bandeau diagonal coin supérieur droit -->
-                <div *ngIf="registrated_in(t)" class="position-absolute bg-info text-white fw-bold d-flex align-items-center justify-content-center"
-                    style="width: 130px; padding: 6px 0; transform: rotate(45deg); font-size: 0.8em; top: 18px; right: -32px; z-index: 1;">
-                    INSCRIT<span *ngIf="logged?.gender === 'Mme'">E</span>
-                </div>
+            <!-- Bandeau diagonal coin supérieur droit -->
+            <div *ngIf="registrated_in(t)"
+                class="position-absolute bg-info text-white fw-bold d-flex align-items-center justify-content-center"
+                style="width: 130px; padding: 6px 0; transform: rotate(45deg); font-size: 0.8em; top: 18px; right: -32px; z-index: 1;">
+                INSCRIT<span *ngIf="logged?.gender === 'Mme'">E</span>
+            </div>
 
             <div class="card-body d-flex flex-column">
 
                 <div class="d-flex align-items-center justify-content-start">
                     <h5 class="text-success fw-bolder mb-0">
-                        Tournoi de régularité
+                        {{ date_of(t) | date:'EEEE d MMMM':'':'fr-FR' }}
                     </h5>
                 </div>
 
                 <div class="row  g-0">
                     <div class="col col-sm-9 col-md-8  d-flex justify-content-start align-items-center px-1">
                         <h6 class="text-start">
-                            <div class="fs-5 text-primary fw-bolder">{{ date_of(t) | date:'EEEE d MMMM':'':'fr-FR' }}
-                            </div>
+                            <!-- <div class="fs-5 text-primary fw-bolder">{{ date_of(t) | date:'EEEE d MMMM':'':'fr-FR' }}
+                            </div> -->
                             {{name_of(t)}}
                         </h6>
                     </div>
