@@ -3,7 +3,13 @@ backend:
   phases:
     build:
       commands:
-        - npm ci --cache .npm
+        - |
+          if [ -d node_modules ]; then
+            echo "node_modules restored from cache, skipping full install"
+            npm install --prefer-offline --no-audit --no-fund 2>/dev/null || npm ci
+          else
+            npm ci
+          fi
         - npm install @parcel/watcher-linux-x64-glibc@2.5.1 --no-save
         - |
           SCHEMA1="node_modules/@aws-amplify/deployed-backend-client/node_modules/@aws-amplify/backend-output-schemas/lib/platform/stack_metadata_schemas.js"
@@ -23,5 +29,5 @@ frontend:
       - '**/*'
   cache:
     paths:
-      - '.npm/**/*'
+      - 'node_modules/**/*'
       - '.angular/cache/**/*'
