@@ -7,8 +7,9 @@
         <label for="date">
           Date opération
         </label>
-        <input type="date" [class]="dateErrors && dateErrors['notInSeason'] && form.get('date')?.touched ? 'form-control border-danger' : 'form-control'" id="date"
-          formControlName="date">
+        <input type="date"
+          [class]="dateErrors && dateErrors['notInSeason'] && form.get('date')?.touched ? 'form-control border-danger' : 'form-control'"
+          id="date" formControlName="date">
         <div *ngIf="dateErrors && dateErrors['notInSeason'] && form.get('date')?.touched" class="text-danger mt-1">
           <i class="bi bi-exclamation-circle"></i>
           <span>Date hors saison comptable.</span>
@@ -17,7 +18,8 @@
       <!-- choix classe transaction -->
       <div class="col-md-3 col-sm-5">
         <label>Classe de transaction</label>
-        <select class="form-control" id="transac_class" formControlName="transac_class" [attr.disabled]="protected_mode ? true : null">
+        <select class="form-control" id="transac_class" formControlName="transac_class"
+          [attr.disabled]="protected_mode ? true : null">
           <option *ngFor="let class of transaction_classes | keyvalue" [value]="class.value">
             {{class.value}}
           </option>
@@ -55,13 +57,13 @@
             <ng-container [ngTemplateOutlet]="financial_amounts"
               [ngTemplateOutletContext]="{inputFormGroup: form}"></ng-container>
           </div>
-          <div class="col-4 text-start" *ngIf="financial_accounts.length>0  && !protected_mode" >
+          <div class="col-4 text-start" *ngIf="financial_accounts.length>0  && !protected_mode">
             <i [class]="financial_accounts_locked ? 'fs-4 bi-lock-fill' : 'fs-4 bi-unlock-fill'"
               (click)="lock_unlock_financial_accounts()"></i>
           </div>
         </div>
       </div>
-      
+
       <!-- info tag  -->
       <div class="col-sm-3">
         <ng-container [ngTemplateOutlet]="tag" [ngTemplateOutletContext]="{inputFormGroup: form}">
@@ -69,29 +71,28 @@
       </div>
 
       <!-- bordereau -->
-      <div *ngIf="!protected_mode && transaction_with_deposit(transaction_id)"
-        class=" col-md-3  col-sm-3 ">
-          <label for="deposit_ref">Bordereau</label>
-          <input type="text" class="form-control" id="deposit_ref" formControlName="deposit_ref">
+      <div *ngIf="!protected_mode && transaction_with_deposit(transaction_id)" class=" col-md-3  col-sm-3 ">
+        <label for="deposit_ref">Bordereau</label>
+        <input type="text" class="form-control" id="deposit_ref" formControlName="deposit_ref">
       </div>
 
       <!-- facture -->
-      <div *ngIf=" transaction_with_invoice(transaction_id)"
-        class=" col-md-2  col-sm-4 ">
-        <label for="invoice_ref" >Facture</label>
-          <ng-container *ngIf="creation || !selected_book_entry.invoice_ref; else invoice_exists">
-            <div class="input-group">
-              <input type="text" class="form-control" id="invoice_ref" placeholder="aucune facture" formControlName="invoice_ref">
-              <button class="btn btn-outline-primary" type="button" (click)="add_invoice_ref()">définir</button>
-            </div>
-          </ng-container>
-          <ng-template #invoice_exists>
+      <div *ngIf=" transaction_with_invoice(transaction_id)" class=" col-md-2  col-sm-4 ">
+        <label for="invoice_ref">Facture</label>
+        <ng-container *ngIf="creation || !selected_book_entry.invoice_ref; else invoice_exists">
           <div class="input-group">
-            <button class="btn btn-outline-primary" type="button" >view</button>
+            <input type="text" class="form-control" id="invoice_ref" placeholder="aucune facture"
+              formControlName="invoice_ref">
+            <button class="btn btn-outline-primary" type="button" (click)="add_invoice_ref()">définir</button>
+          </div>
+        </ng-container>
+        <ng-template #invoice_exists>
+          <div class="input-group">
+            <button class="btn btn-outline-primary" type="button">view</button>
             <input type="text" class="form-control" id="invoice_ref" formControlName="invoice_ref">
             <button class="btn btn-warning" type="button" (click)="clear_invoice_ref()">clear</button>
           </div>
-          </ng-template>
+        </ng-template>
       </div>
 
     </div>
@@ -102,7 +103,8 @@
     <div class="mt-3" *ngIf="selected_transaction">
       <div formArrayName="operations">
         <!-- pour chaque operation de la transaction -->
-        <div class="row align-items-end mx-0" *ngFor="let operation of operations.controls; let i = index ; let last = last">
+        <div class="row align-items-end mx-0"
+          *ngFor="let operation of operations.controls; let i = index ; let last = last">
           <div class="col-12 mt-2">
             <!-- transaction d'une transaction non nominative -->
             <div *ngIf="!selected_transaction.nominative" class="row align-items-end mx-0 p-1 mb-1">
@@ -160,7 +162,7 @@
       <div *ngIf="!creation" class="col-auto">
         <button type="button" class="btn btn-warning " (click)="delete_book_entry()">Supprimer</button>
       </div>
-      
+
       <!-- sortie -->
       <div class="col-auto">
         <button type="button"
@@ -168,11 +170,16 @@
           (click)="onBack()">
           Sortir
         </button>
-        <div *ngIf="creation && (form.dirty || form.touched) && form.valid" class="text-muted small">(aucun enregistrement)</div>
+        <div *ngIf="creation && (form.dirty || form.touched) && form.valid" class="text-muted small">(aucun
+          enregistrement)</div>
       </div>
- 
+      <!-- dupliquer -->
+      <div *ngIf="!creation" class="col-auto">
+        <button type="button" class="btn btn-secondary" (click)="duplicate_book_entry()"> Dupliquer </button>
+      </div>
+
     </div>
-<!-- affichage json -->
+    <!-- affichage json -->
     <div *ngIf="selected_book_entry " class="card mt-3 bg-body-secondary">
       <div class="card-body">
         <span class="fst-italic">
@@ -204,14 +211,9 @@
       <ng-container [formGroup]="inputFormGroup">
         <label for="member">Adhérent</label>
         <div class="input-group input-group-sm">
-          <app-custom-dropdown
-            class="form-control"
-            [items]="members"
-            placeholder="Rechercher..."
-            [searchValue]="memberSearchInput[index] || ''"
-            [displayFn]="displayMemberFn"
-            (searchValueChange)="onMemberSearchChange($event, index)"
-            (itemSelected)="onMemberSelected($event, index)">
+          <app-custom-dropdown class="form-control" [items]="members" placeholder="Rechercher..."
+            [searchValue]="memberSearchInput[index] || ''" [displayFn]="displayMemberFn"
+            (searchValueChange)="onMemberSearchChange($event, index)" (itemSelected)="onMemberSelected($event, index)">
           </app-custom-dropdown>
           <button type="button" class="btn btn-danger btn-sm" (click)="delete_operation(index)" title="Supprimer">
             <i class="bi bi-person-fill-dash"></i>
@@ -254,10 +256,14 @@
     <ng-template #costs_and_revenues let-inputFormGroup="inputFormGroup" let-transaction="transaction">
       <ng-container [formGroup]="inputFormGroup">
         <div formArrayName="values" class="d-flex flex-wrap" style="gap: 0.25rem;">
-          <div style="min-width: 60px; flex: 1 1 calc(6.66% - 0.25rem); max-width: 120px;" *ngFor="let account of inputFormGroup.get('values').controls ; let i = index">
-            <label class="form-label mb-0" style="font-size: 0.7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" [ngbTooltip]="expense_or_revenue_accounts(transaction)[i].description" tooltipClass="my-custom-class"
+          <div style="min-width: 60px; flex: 1 1 calc(6.66% - 0.25rem); max-width: 120px;"
+            *ngFor="let account of inputFormGroup.get('values').controls ; let i = index">
+            <label class="form-label mb-0"
+              style="font-size: 0.7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+              [ngbTooltip]="expense_or_revenue_accounts(transaction)[i].description" tooltipClass="my-custom-class"
               placement="top">{{expense_or_revenue_accounts(transaction)[i].key}}</label>
-            <input type="text" [class]="account.invalid ? 'form-control form-control-sm border-danger' : 'form-control form-control-sm'"
+            <input type="text"
+              [class]="account.invalid ? 'form-control form-control-sm border-danger' : 'form-control form-control-sm'"
               [formControlName]="i" [id]="'value' + i" style="padding: 0.25rem 0.35rem; font-size: 0.875rem;">
           </div>
         </div>
@@ -272,10 +278,14 @@
           <div formArrayName="optional_accounts" class="d-flex flex-wrap" style="gap: 0.25rem;">
             <div style="min-width: 60px; flex: 1 1 calc(6.66% - 0.25rem); max-width: 120px;"
               *ngFor="let account of inputFormGroup.get('optional_accounts').controls ; let i = index">
-              <label class="form-label mb-0" style="font-size: 0.7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" [ngbTooltip]="optional_accounts[i].description" tooltipClass="my-custom-class"
+              <label class="form-label mb-0"
+                style="font-size: 0.7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+                [ngbTooltip]="optional_accounts[i].description" tooltipClass="my-custom-class"
                 placement="top">{{optional_accounts[i].label}}</label>
-              <input type="text" [class]="account.invalid ? 'form-control form-control-sm border-danger' : 'form-control form-control-sm'"
-                [formControlName]="i" [id]="'customer_account' + i" style="padding: 0.25rem 0.35rem; font-size: 0.875rem;">
+              <input type="text"
+                [class]="account.invalid ? 'form-control form-control-sm border-danger' : 'form-control form-control-sm'"
+                [formControlName]="i" [id]="'customer_account' + i"
+                style="padding: 0.25rem 0.35rem; font-size: 0.875rem;">
             </div>
           </div>
         </ng-container>
@@ -302,30 +312,30 @@
 
     <!-- formulaire chèque -->
     <ng-template #cheque_definition>
-        <label>Banque et n° de chèque</label>
-        <div class="input-group">
-          <select class="form-control" formControlName="bank_name" required>
-            <option *ngFor="let bank of banks " [value]="bank.key">
-              {{bank.name}}
-            </option>
-          </select>
-          <input type="text" class="form-control" id="cheque_number" formControlName="cheque_number">
-        </div>
+      <label>Banque et n° de chèque</label>
+      <div class="input-group">
+        <select class="form-control" formControlName="bank_name" required>
+          <option *ngFor="let bank of banks " [value]="bank.key">
+            {{bank.name}}
+          </option>
+        </select>
+        <input type="text" class="form-control" id="cheque_number" formControlName="cheque_number">
+      </div>
     </ng-template>
 
     <!-- formulaire chèque Club -->
     <ng-template #cheque_club>
 
-        <label>Banque et n° de chèque</label>
-        <div class="input-group">
-          <input readonly class="form-control" formControlName="bank_name">
-          <!-- <select class="form-control" formControlName="bank_name" required>
+      <label>Banque et n° de chèque</label>
+      <div class="input-group">
+        <input readonly class="form-control" formControlName="bank_name">
+        <!-- <select class="form-control" formControlName="bank_name" required>
             <option *ngFor="let bank of banks " [value]="bank.key">
               {{bank.name}}
             </option>
           </select> -->
-          <input type="text" class="form-control" id="cheque_number" formControlName="cheque_number">
-        </div>
+        <input type="text" class="form-control" id="cheque_number" formControlName="cheque_number">
+      </div>
 
 
       <!-- <div class="row align-items-end">

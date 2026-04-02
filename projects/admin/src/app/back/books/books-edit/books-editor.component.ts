@@ -9,19 +9,18 @@ import { Bank } from '../../../common/interfaces/system-conf.interface';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { Transaction, Account_def, TRANSACTION_CLASS } from '../../../common/interfaces/transaction.definition';
 import { Member } from '../../../common/interfaces/member.interface';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { from, Subscription } from 'rxjs';
 import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { BackComponent } from '../../../common/loc-back/loc-back.component';
 import { MembersService } from '../../../common/services/members.service';
 import { TransactionService } from '../../services/transaction.service';
 import { ToastService } from '../../../common/services/toast.service';
 import { InvoiceSelectComponent } from '../invoice-select/invoice-select';
 import { InvoiceService } from '../../../common/services/invoice.service';
 import { CustomDropdownComponent } from '../../../common/components/custom-dropdown/custom-dropdown.component';
-    import { combineLatest, of } from 'rxjs';
-    import { switchMap, take, map } from 'rxjs/operators';
-    
+import { combineLatest, of } from 'rxjs';
+import { switchMap, take, map, distinctUntilChanged } from 'rxjs/operators';
+
 interface Operation_initial_values {
   optional_accounts?: string[];
   label?: string;
@@ -96,6 +95,7 @@ export class BooksEditorComponent {
     private modalService: NgbModal,
     private toastService: ToastService,
     private route: ActivatedRoute,
+    private router: Router,
     private location: Location
 
   ) { }
@@ -110,14 +110,11 @@ export class BooksEditorComponent {
     });
 
     // Combine route data, params et configuration
-
-
     combineLatest([
-      this.route.data,
-      this.route.params,
-      this.systemDataService.get_configuration()
+      this.route.data.pipe(take(1)),
+      this.route.params.pipe(distinctUntilChanged((prev, curr) => prev['id'] === curr['id'])),
+      this.systemDataService.get_configuration().pipe(take(1))
     ]).pipe(
-      take(1),
       switchMap(([data, params, conf]) => {
         let access = data['access'];
         this.protected_mode = !(access && (access === 'full'));
@@ -583,6 +580,17 @@ export class BooksEditorComponent {
     }
   }
 
+  async duplicate_book_entry() {
+    try {
+      let new_book_entry = { ...this.selected_book_entry, date: formatDate(new Date(), 'yyyy-MM-dd', 'en') };
+      const duplicateEntry = await this.bookService.create_book_entry(new_book_entry);
+      this.toastService.showSuccess('duplication', 'écriture dupliquée');
+      const newUrl = this.router.url.replace(this.book_entry_id, duplicateEntry?.id);
+      this.router.navigateByUrl(newUrl);
+    } catch (error) {
+      this.toastService.showErrorToast('duplication', 'écriture non dupliquée');
+    }
+  }
 
 
   // events
