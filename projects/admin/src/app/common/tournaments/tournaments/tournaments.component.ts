@@ -152,11 +152,15 @@ export class TournamentsComponent {
   gridStyle(): { [key: string]: string } {
     const w = window.innerWidth;
     const bp = this.row_cols;
+    if (!bp) {
+      console.warn('[TournamentsComponent] row_cols is undefined — composant instancié sans parent (accès direct par routeur ?). Utilisation des valeurs par défaut.');
+    }
+    const safeBp = bp ?? { SM: 1, MD: 2, LG: 3, XL: 4 };
     let cols: number;
-    if (w >= 1200 && bp.XL != null) cols = bp.XL;
-    else if (w >= 992 && bp.LG != null) cols = bp.LG;
-    else if (w >= 768 && bp.MD != null) cols = bp.MD;
-    else if (w >= 576 && bp.SM != null) cols = bp.SM;
+    if (w >= 1200 && safeBp.XL != null) cols = safeBp.XL;
+    else if (w >= 992 && safeBp.LG != null) cols = safeBp.LG;
+    else if (w >= 768 && safeBp.MD != null) cols = safeBp.MD;
+    else if (w >= 576 && safeBp.SM != null) cols = safeBp.SM;
     else cols = 1;
     return { 'grid-template-columns': `repeat(${cols}, 1fr)` };
   }

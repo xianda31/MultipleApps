@@ -14,70 +14,77 @@
                     </div>
                 </div>
             </div>
-            <div class="card-body px-0">
-                <table class="table table-borderless table-sm table-striped table-responsive p-0">
-                    <thead>
-                        <tr>
-                            <th scope="col"></th>
-                            <th scope="col"></th>
-                            <th scope="col"></th>
-                            <!-- <th scope="col" ></th> -->
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr *ngFor="let team of teams,let i=index">
-                            <td>
-                                <div class="text-center">
-                                    <i class="bi bi-trash3-fill text-warning"
-                                        *ngIf="is_in_team(whoAmI?.license_number,team)" (click)="deleteTeam(team)"></i>
-                                    <span *ngIf="!is_in_team(whoAmI?.license_number,team)">{{i+1}}</span>
-                                </div>
-                            </td>
-                            <td *ngFor="let player of team.players">
-                                {{player.person.firstname}}
-                                {{player.person.lastname | uppercase}}
-                            </td>
-                            <ng-container *ngIf="team.is_isolated_player">
-                                <!-- <td></td> -->
-                                <td *ngIf="!already_subscribed && (is_member$ | async)"
-                                    class="text-start align-content-center">
-                                    <button [disabled]="!whoAmI" class="btn btn-sm btn-primary"
-                                        (click)="completeTeam(team.players[0])">Compléter
-                                    </button>
+            <div class="card-body px-2">
+                <div class="border rounded">
+                    <table class="table table-borderless table-sm table-responsive mb-0">
+                        <thead>
+                            <tr>
+                                <th scope="col"></th>
+                                <th scope="col"></th>
+                                <th scope="col"></th>
+                                <!-- <th scope="col" ></th> -->
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let team of teams,let i=index">
+                                <td>
+                                    <div class="text-center">
+                                        <i class="bi bi-trash3-fill text-warning"
+                                            *ngIf="is_in_team(whoAmI?.license_number,team)"
+                                            (click)="deleteTeam(team)"></i>
+                                        <span *ngIf="!is_in_team(whoAmI?.license_number,team)">{{i+1}}</span>
+                                    </div>
                                 </td>
-                            </ng-container>
-                        </tr>
-                    </tbody>
-                    <tfoot *ngIf="(!already_subscribed && (is_member$ | async))" class=" table-primary table-sm">
-                        <tr style="border-top: 2px solid #2b66a1;"> </tr>
-                        <!-- bandeau inscription -->
-                        <tr>
-                            <!-- validation  inscription -->
-                            <td>
-                                <div class="text-center">
-                                    <i class="bi bi-check-circle text-success text-center" 
-                                        style="cursor: pointer;"
-                                        [ngbTooltip]="player2.valid ? 'Inscription équipe' : 'Inscription solo'"
-                                        placement="top"
-                                        (click)="player2.valid ? subscribeWithPlayer2() : subscribeSolo()"></i>
-                                </div>
-                            </td>
-                            <td>
-                                {{whoAmI?.firstname}} {{whoAmI?.lastname}}
-                            </td>
-                            <!-- partenaire potentiel -->
-                            <td>
-                                <app-input-player-license listeId="player2" type="text"
-                                    class="form-control form-control-sm" [formControl]="player2" required>
-                                </app-input-player-license>
-                                <span *ngIf="player2.errors?.['already_engaged'] && player2.touched"
-                                    class="text-danger">Ce
-                                    joueur est déjà inscrit</span>
-                            </td>
-                        </tr>
-                    </tfoot>
-                </table>
+                                <td *ngFor="let player of team.players">
+                                    {{player.person.firstname}}
+                                    {{player.person.lastname | uppercase}}
+                                </td>
+                                <ng-container *ngIf="team.is_isolated_player">
+                                    <!-- <td></td> -->
+                                    <td *ngIf="!already_subscribed && (is_member$ | async)"
+                                        class="text-start align-content-center">
+                                        <button [disabled]="!whoAmI" class="btn btn-sm btn-primary"
+                                            (click)="completeTeam(team.players[0])">Compléter
+                                        </button>
+                                    </td>
+                                </ng-container>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
+            <!-- Zone d'inscription -->
+            <div *ngIf="(!already_subscribed && (is_member$ | async))" class="px-3 pb-3 pt-1">
+                <div class="d-flex gap-2 align-items-end mb-3">
+                    <!-- 1er joueur (moi) -->
+                    <div class="flex-fill">
+                        <label class="form-label fw-semibold small">1er joueur</label>
+                        <div class="form-control form-control-sm bg-light">
+                            <i class="bi bi-person-check-fill text-success me-1"></i>
+                            {{whoAmI?.firstname}} {{whoAmI?.lastname}}
+                        </div>
+                    </div>
+                    <!-- 2e joueur (partenaire optionnel) -->
+                    <div class="flex-fill">
+                        <label class="form-label fw-semibold small">2eme joueur <span
+                                class="text-muted">(optionnel)</span></label>
+                        <app-input-player-license listeId="player2" type="text" placeholder="mon partenaire"
+                            class="form-control form-control-sm" [formControl]="player2" required>
+                        </app-input-player-license>
+                        <span *ngIf="player2.errors?.['already_engaged'] && player2.touched"
+                            class="text-danger small">Ce joueur est déjà inscrit</span>
+                    </div>
+                </div>
+                <!-- Boutons -->
+                <div class="d-flex gap-2 justify-content-around">
+                    <button class="btn btn-sm btn-outline-primary" (click)="subscribeSolo()">
+                        <i class="bi bi-person me-1"></i>S'inscrire seul
+                    </button>
+                    <button class="btn btn-sm btn-primary" (click)="subscribeWithPlayer2()" [disabled]="!player2.valid">
+                        <i class="bi bi-people me-1"></i>Inscrire l'équipe
+                    </button>
+                </div>
             </div>
         </div>
     </div>

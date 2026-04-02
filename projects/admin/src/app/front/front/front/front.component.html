@@ -47,6 +47,7 @@
         </div>
         <ng-template [ngTemplateOutlet]="tplContent"></ng-template>
       </div>
+      <div class="flex-spacer"></div>
       <ng-template [ngTemplateOutlet]="tplFooter"></ng-template>
     </ng-template>
 
@@ -74,9 +75,8 @@
             <ng-template *ngIf="isMobilePortrait" [ngTemplateOutlet]="tplImageClub"></ng-template>
           </div>
         </div>
-        <div class="flex-grow-1">
-          <ng-template [ngTemplateOutlet]="tplContent"></ng-template>
-        </div>
+        <ng-template [ngTemplateOutlet]="tplContent"></ng-template>
+        <div class="flex-spacer"></div>
         <div class="mt-auto">
           <ng-template [ngTemplateOutlet]="tplFooter"></ng-template>
         </div>

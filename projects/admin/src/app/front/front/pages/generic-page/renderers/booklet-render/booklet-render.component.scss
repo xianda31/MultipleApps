@@ -546,11 +546,12 @@ $page-flip-duration: 1.5s;
     display: none;
   }
 
-  // Hauteur tenant compte navbar/image/footer (~250px au total)
+  // Hauteur : utilise dvh (exclut les barres du navigateur mobile)
+  // Déduction réduite au strict minimum : navbar ~56px + petite marge
   .booklet-wrapper {
-    min-height: calc(100vh - 280px);
-    height: calc(100vh - 280px);
-    max-height: calc(100vh - 280px);
+    min-height: calc(100dvh - 80px);
+    height: calc(100dvh - 80px);
+    max-height: calc(100dvh - 80px);
     margin-bottom: 0;
     padding: 0;
   }
