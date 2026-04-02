@@ -6,7 +6,6 @@
   "main": "handler.ts",
   "dependencies": {
     "stripe": "^14.14.0",
-    "aws-amplify": "latest",
     "@aws-sdk/client-dynamodb": "^3.609.0",
     "@aws-sdk/lib-dynamodb": "^3.609.0"
   },
