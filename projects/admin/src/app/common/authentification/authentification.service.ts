@@ -84,43 +84,63 @@ export class AuthentificationService {
         } catch (err: any) {
 
           if (err.name === 'UserAlreadyAuthenticatedException') {
-            // L'utilisateur a déjà une session active, tenter de la récupérer
+            // Tenter de récupérer la session existante
+            let recoveredMember: any = null;
+            let recoveredMemberId: string | undefined;
+            let recoveryLoginId: string | undefined;
+
             try {
               const user = await getCurrentUser();
+              recoveryLoginId = user.signInDetails?.loginId;
               const attributes = await fetchUserAttributes();
-              const member_id = attributes['custom:member_id'];
-              if (member_id) {
-                const member = await this.memberService.readMember(member_id);
+              recoveredMemberId = attributes['custom:member_id'];
+              if (recoveredMemberId) {
+                const member = await this.memberService.readMember(recoveredMemberId);
+                if (member) { recoveredMember = member; }
+              }
+              if (!recoveredMember) {
+                // Fallback par email
+                const member = await this.memberService.searchMemberByEmail(recoveryLoginId || email);
                 if (member) {
-                  this._logged_member$.next(member);
-                  resolve(member.id);
-                  return;
+                  recoveredMember = member;
+                } else {
+                  this.assistanceRequestService.reportAuthError(
+                    email,
+                    'Session corrompue (UserAlreadyAuthenticatedException)',
+                    `member_id=${recoveredMemberId || 'absent'}, loginId=${recoveryLoginId || 'absent'}, membre introuvable après fallback`
+                  );
                 }
               }
-              // Fallback: recherche par email si member_id absent ou membre non trouvé
-              const member = await this.memberService.searchMemberByEmail(user.signInDetails?.loginId || email);
-              if (member) {
-                this._logged_member$.next(member);
-                resolve(member.id);
-              } else {
-                // Session corrompue: signaler via assistance, déconnecter et laisser l'utilisateur réessayer
-                this.assistanceRequestService.reportAuthError(
-                  email,
-                  'Session corrompue (UserAlreadyAuthenticatedException)',
-                  `member_id=${member_id || 'absent'}, loginId=${user.signInDetails?.loginId || 'absent'}, membre introuvable après fallback`
-                );
-                await signOut({ global: false }).catch(() => {});
-                reject(new Error('Session invalide, veuillez réessayer'));
-              }
             } catch (innerErr: any) {
-              // Erreur lors de la récupération de session: signaler, nettoyer et rejeter
+              // Tokens expirés ou session invalide
               this.assistanceRequestService.reportAuthError(
                 email,
                 'Erreur récupération session (UserAlreadyAuthenticatedException)',
                 `Erreur interne: ${innerErr?.message || innerErr}`
               );
-              await signOut({ global: false }).catch(() => {});
-              reject(err);
+            }
+
+            if (recoveredMember) {
+              this._logged_member$.next(recoveredMember);
+              resolve(recoveredMember.id);
+              return;
+            }
+
+            // Session périmée : nettoyer les tokens et relancer la connexion automatiquement
+            await signOut({ global: false }).catch(() => {});
+            try {
+              await signIn(signInInput);
+              const retryAttrs = await fetchUserAttributes();
+              const retryMemberId = retryAttrs['custom:member_id'];
+              if (retryMemberId) {
+                const retryMember = await this.memberService.readMember(retryMemberId);
+                this._logged_member$.next(retryMember);
+                resolve(retryMemberId);
+              } else {
+                reject(new Error('Session invalide, veuillez réessayer'));
+              }
+            } catch (retryErr: any) {
+              reject(retryErr);
             }
           } else if (err.name === 'UserNotConfirmedException') {
             // Compte non confirmé: rester en vérification par e-mail
