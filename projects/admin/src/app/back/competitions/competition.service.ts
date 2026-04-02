@@ -20,6 +20,7 @@ export class CompetitionService {
   private _preferred_organizations: CompetitionOrganization[] = [];
   private _memberLoaded = false;
   private _memberPromise: Promise<void>;
+  ffbScanDone: boolean = false;
 
   COMPETITION_LEVELS = COMPETITION_LEVELS;
 

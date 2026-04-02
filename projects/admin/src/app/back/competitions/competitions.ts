@@ -151,12 +151,17 @@ export class CompetitionsComponent {
     const freshResults$ = this.competitionService.getCompetionsResults(this.current_season, this.preferred_organization_labels, this.full_regeneration).pipe(
       tap(() => {
         // FFB scan completed
+        this.competitionService.ffbScanDone = true;
         this.is_refreshing = false;
       })
     );
 
-    // Step 3: Emit cached results first, then fresh results
-    concat(cachedResults$, freshResults$).subscribe(
+    // Step 3: Emit cached results first, then fresh results (skip FFB scan on return visit)
+    const pipeline$ = this.competitionService.ffbScanDone && !this.full_regeneration
+      ? cachedResults$.pipe(tap(() => { this.is_refreshing = false; }))
+      : concat(cachedResults$, freshResults$);
+
+    pipeline$.subscribe(
       results => {
         this.processResults(results);
         this.results_extracted = true;
