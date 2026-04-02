@@ -4,7 +4,7 @@ backend:
     build:
       commands:
         - npm ci --cache .npm
-        # - npm install @parcel/watcher-linux-x64-glibc@2.5.1 --no-save  # Commenté : non utilisé en production build
+        - npm install @parcel/watcher-linux-x64-glibc@2.5.1 --no-save
         - |
           SCHEMA1="node_modules/@aws-amplify/deployed-backend-client/node_modules/@aws-amplify/backend-output-schemas/lib/platform/stack_metadata_schemas.js"
           SCHEMA2="node_modules/@aws-amplify/backend-cli/node_modules/@aws-amplify/backend-output-schemas/lib/platform/stack_metadata_schemas.js"
