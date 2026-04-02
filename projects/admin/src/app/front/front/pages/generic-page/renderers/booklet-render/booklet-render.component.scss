@@ -38,7 +38,8 @@ $page-flip-duration: 1.5s;
   justify-content: center;
   align-items: center;
   width: 100%;
-  min-height: 600px;
+  height: calc(100dvh - 460px);
+  min-height: 400px;
   margin-bottom: 2rem;
 }
 
@@ -82,7 +83,7 @@ $page-flip-duration: 1.5s;
   flex: 1;
   position: relative;
   transform-style: preserve-3d;
-  min-height: 600px;
+  min-height: 0;
   display: flex;
   align-items: stretch;
   z-index: 1;
@@ -189,7 +190,7 @@ $page-flip-duration: 1.5s;
 
     .card-img-top {
       object-fit: cover;
-      max-height: 250px;
+      max-height: 25%;
       width: 100%;
       flex-shrink: 0;
       margin: 0;
@@ -287,7 +288,7 @@ $page-flip-duration: 1.5s;
 
       .card-img-top {
         object-fit: cover;
-        max-height: 250px;
+        max-height: 25%;
         width: 100%;
         flex-shrink: 0;
         margin: 0;
@@ -407,7 +408,7 @@ $page-flip-duration: 1.5s;
 
   .page-face .card {
     .card-img-top {
-      max-height: 200px;
+      max-height: 25%;
     }
 
     .card-body {
@@ -435,7 +436,7 @@ $page-flip-duration: 1.5s;
 
   .page-face .card {
     .card-img-top {
-      max-height: 150px;
+      max-height: 25%;
     }
 
     .card-body {
@@ -511,7 +512,7 @@ $page-flip-duration: 1.5s;
   .page-face {
     .card {
       .card-img-top {
-        max-height: 120px;
+        max-height: 25%;
       }
 
       .card-body {
