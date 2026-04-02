@@ -4,15 +4,12 @@ backend:
     build:
       commands:
         - npm ci --cache .npm
-        - npm install @parcel/watcher-linux-x64-glibc@2.5.1 --no-save
+        # - npm install @parcel/watcher-linux-x64-glibc@2.5.1 --no-save  # Commenté : non utilisé en production build
         - |
           SCHEMA1="node_modules/@aws-amplify/deployed-backend-client/node_modules/@aws-amplify/backend-output-schemas/lib/platform/stack_metadata_schemas.js"
           SCHEMA2="node_modules/@aws-amplify/backend-cli/node_modules/@aws-amplify/backend-output-schemas/lib/platform/stack_metadata_schemas.js"
           for f in "$SCHEMA1" "$SCHEMA2"; do
-            if [ -f "$f" ]; then
-              sed -i 's/z\.record(exports\.backendOutputEntryStackMetadataSchema)/z.record(zod_1.z.string(), exports.backendOutputEntryStackMetadataSchema)/g' "$f"
-              echo "Patched $f"
-            fi
+            [ -f "$f" ] && sed -i 's/z\.record(exports\.backendOutputEntryStackMetadataSchema)/z.record(zod_1.z.string(), exports.backendOutputEntryStackMetadataSchema)/g' "$f"
           done
         - npx ampx pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
 frontend:
@@ -29,4 +26,5 @@ frontend:
       - '**/*'
   cache:
     paths:
-      - '.npm/**/*'
+      - 'node_modules/**/*'
+      - '.angular/cache/**/*'
