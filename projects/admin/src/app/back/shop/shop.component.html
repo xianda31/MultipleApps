@@ -71,7 +71,7 @@
         <div *ngFor="let products of products_array | keyvalue | moveToEnd:'LIC'">
           <div class="shop-product-grid">
             <div *ngFor="let product of products.value">
-              <ng-container *ngIf="!onlineMode || product.stripeEnabled">
+              <ng-container *ngIf="product.active && (!onlineMode || product.stripeEnabled)">
               <div [style]="product_gradient_style(product)" class="shop-product-card"
                 (click)="on_product_click(product)"
                 [title]="product.description && product.description !== product.name ? product.description : ''">
