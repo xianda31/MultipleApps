@@ -70,7 +70,7 @@
                     <td class="text-end">
                         @if (!onlineMode && i === editingIndex && canEditPrice) {
                         <input type="number" class="form-control form-control-sm text-end" [(ngModel)]="item.paied"
-                            (blur)="updateCartItem(item)" (keydown.enter)="updateCartItem(item)"
+                            (blur)="updateCartItem(item, i)" (keydown.enter)="updateCartItem(item, i)"
                             (keydown.escape)="editingIndex = null" autofocus>
                         } @else {
                         <span [class.clickable-price]="!onlineMode && canEditPrice"

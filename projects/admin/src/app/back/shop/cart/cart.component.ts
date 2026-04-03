@@ -112,22 +112,25 @@ export class CartComponent {
     this.cartService.deleteCartItem(cart_item);
   }
 
-  updateCartItem(cart_item: CartItem) {
+  updateCartItem(cart_item: CartItem, itemIndex?: number) {
     // Vérifier les permissions : modification des prix autorisée seulement si canEditPrice
     if (!this.canEditPrice) {
       console.warn('Permission denied: user cannot edit prices');
       this.editingIndex = null;
       return;
     }
-    this.cartService.updateCartItem(cart_item);
+    if (itemIndex === undefined) {
+      itemIndex = this.cart.items.indexOf(cart_item);
+    }
+    this.cartService.updateCartItem(cart_item, itemIndex);
     this.editingIndex = null;
   }
 
-  updatePayeeName(cart_item: CartItem) {
+  updatePayeeName(cart_item: CartItem, index: number) {
     if (cart_item.payee) {
       cart_item.payee_name = `${cart_item.payee.lastname} ${cart_item.payee.firstname}`;
     }
-    this.cartService.updateCartItem(cart_item);
+    this.cartService.updateCartItem(cart_item, index);
     this.editingPayeeIndex = null;
   }
 
@@ -152,7 +155,8 @@ export class CartComponent {
     // Mettre à jour le payee et le nom d'affichage
     this.editingPayeeItem.payee = this.selectedPayeeTemp;
     this.editingPayeeItem.payee_name = `${this.selectedPayeeTemp.lastname} ${this.selectedPayeeTemp.firstname}`;
-    this.cartService.updateCartItem(this.editingPayeeItem);
+    const itemIndex = this.cart.items.indexOf(this.editingPayeeItem);
+    this.cartService.updateCartItem(this.editingPayeeItem, itemIndex);
     this.editingPayeeModal = false;
     this.editingPayeeItem = null;
     this.selectedPayeeTemp = null;

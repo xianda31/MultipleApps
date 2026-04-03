@@ -50,8 +50,12 @@ export class CartService {
       this._cart$.next(this._cart);
     }
   }
-  updateCartItem(CartItem: CartItem): void {
-    const index = this._cart.items.findIndex(item => item.product_id === CartItem.product_id);
+  updateCartItem(CartItem: CartItem, itemIndex?: number): void {
+    let index = itemIndex;
+    // Si l'index n'est pas fourni, chercher par référence d'objet
+    if (index === undefined) {
+      index = this._cart.items.indexOf(CartItem);
+    }
     if (index > -1) {
       this._cart.items[index] = CartItem;
       this._cart$.next(this._cart);
