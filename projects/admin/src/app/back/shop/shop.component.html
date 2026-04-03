@@ -57,7 +57,7 @@
         }
 
         <div *ngIf="buyer || onlineMode">
-          <app-cart [message]="message" [onlineMode]="onlineMode" [canEditPrice]="canEditPrice"
+          <app-cart [message]="message" [onlineMode]="onlineMode" [canEditPrice]="canEditPrice" [members]="members"
             (complete)="cart_confirmed()" (stripeCheckout)="on_stripe_checkout()"
             (assetUsableChange)="asset_amount = $event"
             (debtAmountChange)="debt_amount = $event">

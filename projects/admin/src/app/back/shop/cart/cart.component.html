@@ -57,12 +57,15 @@
                             @if (item.paired_with) {<i class="bi bi-people-fill ms-1 text-primary"
                                 title="produit couplé"></i>}
                         </div>
-                        @if (item.paired_with) {
                         <small class="text-muted d-block">
-                            <i class="bi bi-person-fill me-1"></i>{{ item.payee_name }}
+                            <span [class.clickable-price]="!item.paired_with && !onlineMode"
+                                (click)="!item.paired_with && !onlineMode && openPayeeModal(item)">
+                                <i class="bi bi-person-fill me-1"></i>{{ item.payee_name }}
+                            </span>
+                            @if (item.paired_with) {
                             <i class="bi bi-people-fill mx-1 text-primary"></i>{{ item.paired_name }}
+                            }
                         </small>
-                        }
                     </td>
                     <td class="text-end">
                         @if (!onlineMode && i === editingIndex && canEditPrice) {
@@ -86,7 +89,8 @@
                 <tr>
                     <td class="fw-semibold" [class.text-decoration-line-through]="!cart.take_asset">
                         Avoir
-                       <span class="text-muted"> ( {{ asset_available | currency:'€':'symbol':'2.2-2':'fr' }} disponibles)</span>
+                        <span class="text-muted"> ( {{ asset_available | currency:'€':'symbol':'2.2-2':'fr' }}
+                            disponibles)</span>
                     </td>
                     <td class="text-end fw-semibold" [class.text-decoration-line-through]="!cart.take_asset">
                         -{{ asset_usable | currency:'€':'symbol':'2.2-2':'fr' }}
@@ -171,4 +175,40 @@
     }
 
 </div>
+
+<!-- ===== Modal : édition payee ===== -->
+@if (editingPayeeModal && editingPayeeItem) {
+<div class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,0.45);">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h6 class="modal-title">
+          <i class="bi bi-person-fill me-2"></i>
+          {{ get_product_description(editingPayeeItem.product_id) }}
+        </h6>
+        <button type="button" class="btn-close" (click)="cancelPayeeEdit()"></button>
+      </div>
+      <div class="modal-body">
+        <p class="small text-muted mb-3">
+          Modifier le bénéficiaire pour ce produit.
+        </p>
+
+        <div class="mb-2">
+          <label class="form-label fw-semibold small">Bénéficiaire <span class="text-danger">*</span></label>
+          <div class="form-text small text-muted mb-2">Actuel : <strong>{{ currentPayeeDisplay }}</strong></div>
+          <app-input-member class="form-control form-control-sm" [members]="members"
+            [(ngModel)]="selectedPayeeTemp"></app-input-member>
+        </div>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cancelPayeeEdit()">Annuler</button>
+        <button type="button" class="btn btn-sm btn-primary" [disabled]="!selectedPayeeTemp"
+          (click)="confirmPayeeEdit()">
+          <i class="bi bi-check-circle me-1"></i>Confirmer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+}
 <!-- </form> -->

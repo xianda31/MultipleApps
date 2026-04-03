@@ -8,10 +8,12 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Bank } from '../../../common/interfaces/system-conf.interface';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { Product } from '../../products/product.interface';
+import { InputMemberComponent } from '../../input-member/input-member.component';
+import { Member } from '../../../common/interfaces/member.interface';
 @Component({
   selector: 'app-cart',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, CurrencyPipe],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, CurrencyPipe, InputMemberComponent],
   templateUrl: './cart.component.html',
   styleUrl: './cart.component.scss'
 })
@@ -23,6 +25,7 @@ export class CartComponent {
   @Input() message: string = '';
   @Input() onlineMode = false;
   @Input() canEditPrice = false;  // Si false, modifier les prix est désactivé
+  @Input() members: Member[] = [];  // Liste des membres pour la sélection du payee
 
   debt_amount = 0;
   asset_available = 0;
@@ -32,11 +35,18 @@ export class CartComponent {
   cart: Cart = { items: [], debt: null, asset_available: null, asset_used: null, buyer_name: '', take_asset:true, take_debt:true };
   products!: Product[];
   editingIndex: number | null = null;
+  editingPayeeIndex: number | null = null;
 
   paymentMode = PaymentMode;
   selected_payment !: Payment;
 
   banks$ !: Observable<Bank[]>;
+
+  // Modal édition payee
+  editingPayeeModal = false;
+  editingPayeeItem: CartItem | null = null;
+  selectedPayeeTemp: Member | null = null;
+  currentPayeeDisplay: string = '';
 
   constructor(
     private cartService: CartService,
@@ -111,6 +121,41 @@ export class CartComponent {
     }
     this.cartService.updateCartItem(cart_item);
     this.editingIndex = null;
+  }
+
+  updatePayeeName(cart_item: CartItem) {
+    if (cart_item.payee) {
+      cart_item.payee_name = `${cart_item.payee.lastname} ${cart_item.payee.firstname}`;
+    }
+    this.cartService.updateCartItem(cart_item);
+    this.editingPayeeIndex = null;
+  }
+
+  openPayeeModal(cart_item: CartItem) {
+    this.editingPayeeItem = cart_item;
+    this.selectedPayeeTemp = null;  // Laisser vide
+    this.currentPayeeDisplay = cart_item.payee ? `${cart_item.payee.lastname} ${cart_item.payee.firstname}` : 'Aucun';
+    this.editingPayeeModal = true;
+    this.editingPayeeIndex = null;
+  }
+
+  cancelPayeeEdit() {
+    this.editingPayeeModal = false;
+    this.editingPayeeItem = null;
+    this.selectedPayeeTemp = null;
+  }
+
+  confirmPayeeEdit() {
+    if (!this.selectedPayeeTemp || !this.editingPayeeItem) {
+      return;
+    }
+    // Mettre à jour le payee et le nom d'affichage
+    this.editingPayeeItem.payee = this.selectedPayeeTemp;
+    this.editingPayeeItem.payee_name = `${this.selectedPayeeTemp.lastname} ${this.selectedPayeeTemp.firstname}`;
+    this.cartService.updateCartItem(this.editingPayeeItem);
+    this.editingPayeeModal = false;
+    this.editingPayeeItem = null;
+    this.selectedPayeeTemp = null;
   }
 
   stripe_checkout_not_ready(): boolean {
