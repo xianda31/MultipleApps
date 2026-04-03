@@ -44,11 +44,11 @@
   </ng-container>
 </ng-template>
 
-<ng-template #menuGroupRecursive let-menu let-isMobile="isMobile" let-isLastTop="isLastTop">
+<ng-template #menuGroupRecursive let-menu let-isMobile="isMobile" let-isLastTop="isLastTop" let-dropdown="dropdown">
   <ng-container *ngIf="menu.navitem.type === NAVITEM_TYPE.DROPDOWN && (menu.childs?.length || 0)">
     <!-- Mode desktop (laptop) : dropdown classique -->
     <ng-container *ngIf="!isMobile; else landscapeDropdownList">
-      <li class="nav-item dropdown ms-3" ngbDropdown>
+      <li class="nav-item dropdown ms-3" ngbDropdown #drop="ngbDropdown">
         <a class="nav-link main-nav-link dropdown-toggle" ngbDropdownToggle [id]="'nav-' + menu.navitem.id">
           <img *ngIf="menu.navitem.pre_label === 'avatar'" [src]="avatar$ | async" alt="avatar"
             class="rounded-circle"
@@ -58,7 +58,7 @@
         <ul class="dropdown-menu" ngbDropdownMenu [attr.aria-labelledby]="'nav-' + menu.navitem.id">
           <ng-container *ngFor="let child of (menu.childs || []); trackBy: trackNavitemId">
             <ng-container
-              *ngTemplateOutlet="menuGroupRecursive; context: { $implicit: child, isMobile: isMobile }"></ng-container>
+              *ngTemplateOutlet="menuGroupRecursive; context: { $implicit: child, isMobile: isMobile, dropdown: drop }"></ng-container>
           </ng-container>
         </ul>
       </li>
@@ -86,26 +86,31 @@
       <a *ngIf="menu.navitem.type === NAVITEM_TYPE.EXTERNAL_REDIRECT"
         [ngClass]="isMobile ? 'dropdown-item ps-0' + (isLastTop ? ' fw-bold' : '') : 'nav-link main-nav-link'"
         [href]="menu.navitem.extra_parameter" target="_blank" rel="noopener"
-        [attr.data-bs-dismiss]="isMobile ? 'offcanvas' : null">
+        [attr.data-bs-dismiss]="isMobile ? 'offcanvas' : null"
+        (click)="dropdown?.close()">
         <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
       </a>
       <a *ngIf="menu.navitem.type === NAVITEM_TYPE.INTERNAL_LINK"
         [ngClass]="isMobile ? 'dropdown-item ps-0' + (isLastTop ? ' fw-bold' : '') : 'nav-link main-nav-link'"
-        [routerLink]="menu.navitem.path" [attr.data-bs-dismiss]="isMobile ? 'offcanvas' : null">
+        [routerLink]="menu.navitem.path" [attr.data-bs-dismiss]="isMobile ? 'offcanvas' : null"
+        (click)="dropdown?.close()">
         <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
       </a>
       <a *ngIf="menu.navitem.type?.toLowerCase() === 'plugin'"
         [ngClass]="isMobile ? 'dropdown-item Plugin ps-0' : 'nav-link main-nav-link Plugin'"
-        [routerLink]="menu.navitem.path" [attr.data-bs-dismiss]="isMobile ? 'offcanvas' : null">
+        [routerLink]="menu.navitem.path" [attr.data-bs-dismiss]="isMobile ? 'offcanvas' : null"
+        (click)="dropdown?.close()">
         <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
       </a>
       <a *ngIf="menu.navitem.type === NAVITEM_TYPE.CUSTOM_PAGE"
         [ngClass]="isMobile ? 'dropdown-item  ps-0' : 'nav-link main-nav-link '" [routerLink]="menu.navitem.path"
-        [attr.data-bs-dismiss]="isMobile ? 'offcanvas' : null">
+        [attr.data-bs-dismiss]="isMobile ? 'offcanvas' : null"
+        (click)="dropdown?.close()">
         <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
       </a>
       <a *ngIf="menu.navitem.type === NAVITEM_TYPE.DIRECT_CALL"
-        [ngClass]="isMobile ? 'dropdown-item ps-0' : 'nav-link main-nav-link'" (click)="onCommand(menu.navitem)"
+        [ngClass]="isMobile ? 'dropdown-item ps-0' : 'nav-link main-nav-link'"
+        (click)="onCommand(menu.navitem); dropdown?.close()"
         [attr.data-bs-dismiss]="isMobile ? 'offcanvas' : null">
         <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
       </a>
