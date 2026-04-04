@@ -1,10 +1,18 @@
 /**
- * Crée des junctions Windows (symlinks Linux) pour rendre @aws-amplify/backend
+ * Crée des junctions Windows pour rendre @aws-amplify/backend
  * visible depuis amplify/node_modules, après chaque npm install.
  *
  * Contexte: npm workspaces hoise @aws-amplify/backend vers node_modules racine,
- * mais ampx (Amplify CLI) cherche les packages dans amplify/node_modules.
+ * mais ampx (Amplify CLI) cherche les packages dans amplify/node_modules
+ * sur Windows (TypeScript moduleResolution ne remonte pas).
+ *
+ * Sur Linux/macOS: npm workspaces fonctionne correctement, ce script ne fait rien.
  */
+
+// Junctions are a Windows-only workaround — skip on Linux/macOS (CI, etc.)
+if (process.platform !== 'win32') {
+  process.exit(0);
+}
 
 const fs = require('fs');
 const path = require('path');
