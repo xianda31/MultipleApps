@@ -11,7 +11,8 @@
     "start": "ng serve",
     "build": "ng build admin",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "postinstall": "node scripts/link-amplify-deps.cjs"
   },
   "private": true,
   "dependencies": {

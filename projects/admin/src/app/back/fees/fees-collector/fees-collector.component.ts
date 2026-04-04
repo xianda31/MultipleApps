@@ -333,12 +333,12 @@ export class FeesCollectorComponent implements OnDestroy {
 
   quickSale(gamer: Gamer) {
 
-    // If the gamer has a pre-existing credit or a debt, redirect to the Shop page
+    // If the gamer has a pre-existing credit or a debt, redirect to the Shop page (offline mode)
     const hasCredit = ((gamer as any).credits || (gamer as any).credit) > 0;
     if (hasCredit || (gamer as any).debt > 0) {
       const member = this.membersService.getMemberbyLicense(gamer.license);
       if (member && member.id) {
-        this.router.navigateByUrl(`${BACK_ROUTE_ABS_PATHS['Shop']}/${member.id}`);
+        this.router.navigateByUrl(`${BACK_ROUTE_ABS_PATHS['Shop']}?buyerId=${member.id}`);
       } else {
         // fallback to shop root if member not found
         this.router.navigateByUrl(BACK_ROUTE_ABS_PATHS['Shop']);

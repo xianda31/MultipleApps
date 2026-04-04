@@ -30,11 +30,28 @@ interface CheckoutRequest {
   customerEmail?: string;
   debtAmountCents?: number;  // Montant de dette optionnel (en centimes)
   assetAmountCents?: number;  // Montant d'avoir optionnel (en centimes)
+  discountAmountCents?: number; // Ristourne staff uniquement (mode offline QR)
   memberName?: string;  // Nom du membre (pour traçabilité)
   buyerMemberId?: string; // DynamoDB Member ID (pour reconstruction webhook)
-  cartSnapshot?: Array<{ productId: string; pairedMemberId?: string }>; // détail panier
+  cartSnapshot?: Array<{ productId: string; payeeId?: string; pairedMemberId?: string }>; // détail panier
   season?: string; // saison comptable
   date?: string; // date ISO YYYY-MM-DD
+}
+
+/**
+ * Vérifie si l'appelant est un staff (Admin/Editor/System) via les claims Cognito
+ */
+function isStaffCaller(event: any): boolean {
+  const claims =
+    event.requestContext?.authorizer?.claims ||
+    event.requestContext?.authorizer?.jwt?.claims ||
+    {};
+  // cognito:groups peut être une string CSV ou un tableau selon la config
+  const rawGroups = claims['cognito:groups'] || '';
+  const groups: string[] = Array.isArray(rawGroups)
+    ? rawGroups
+    : rawGroups.split(',').map((g: string) => g.trim()).filter(Boolean);
+  return groups.some((g: string) => ['Admin', 'Editor', 'System'].includes(g));
 }
 
 /**
@@ -277,22 +294,37 @@ async function handleCheckout(event: any): Promise<any> {
       };
     });
 
-    // Valider et normaliser debt/asset amounts
+    // Valider et normaliser debt/asset/discount amounts
     const debtValue = request.debtAmountCents;
     const assetValue = request.assetAmountCents;
-    
-    const debtAmountCents = (debtValue && typeof debtValue === 'number' && debtValue > 0) 
-      ? Math.floor(debtValue) 
+    const discountValue = request.discountAmountCents;
+
+    const debtAmountCents = (debtValue && typeof debtValue === 'number' && debtValue > 0)
+      ? Math.floor(debtValue)
       : 0;
-    const assetAmountCents = (assetValue && typeof assetValue === 'number' && assetValue > 0) 
-      ? Math.floor(assetValue) 
+    const assetAmountCents = (assetValue && typeof assetValue === 'number' && assetValue > 0)
+      ? Math.floor(assetValue)
       : 0;
-    
+    // 🔒 Ristourne acceptée uniquement pour les staff authentifiés
+    let discountAmountCents = 0;
+    if (discountValue && typeof discountValue === 'number' && discountValue > 0) {
+      if (!isStaffCaller(event)) {
+        return {
+          statusCode: 403,
+          body: JSON.stringify({ error: 'Discount not allowed for non-staff purchases' }),
+        };
+      }
+      discountAmountCents = Math.floor(discountValue);
+    }
+
     if (debtAmountCents < 0 || !Number.isInteger(debtAmountCents)) {
       throw new Error(`Invalid debtAmountCents: ${debtAmountCents}`);
     }
     if (assetAmountCents < 0 || !Number.isInteger(assetAmountCents)) {
       throw new Error(`Invalid assetAmountCents: ${assetAmountCents}`);
+    }
+    if (discountAmountCents < 0 || !Number.isInteger(discountAmountCents)) {
+      throw new Error(`Invalid discountAmountCents: ${discountAmountCents}`);
     }
 
     // Ajouter la dette en tant que line item séparé si présent
@@ -314,23 +346,29 @@ async function handleCheckout(event: any): Promise<any> {
     }
 
     // ⚠️ Stripe n'accepte PAS les montants négatifs dans unit_amount!
-    // Pour déduire l'avoir, on crée un COUPON Stripe dynamique
-    let assetCouponId: string | undefined;
-    if (assetAmountCents > 0) {
+    // Pour déduire avoir + ristourne, on crée UN SEUL coupon Stripe combiné
+    let combinedCouponId: string | undefined;
+    const totalBonusCents = assetAmountCents + discountAmountCents;
+    if (totalBonusCents > 0) {
+      const couponName = discountAmountCents > 0 && assetAmountCents > 0
+        ? `Avoir + Ristourne - ${request.memberName || 'Membre'}`
+        : discountAmountCents > 0
+          ? `Ristourne - ${request.memberName || 'Membre'}`
+          : `Avoir retenu - ${request.memberName || 'Membre'}`;
       const coupon = await stripe.coupons.create({
-        amount_off: assetAmountCents,
+        amount_off: totalBonusCents,
         currency: 'eur',
         duration: 'once',
-        name: `Avoir retenu - ${request.memberName || 'Membre'}`,
+        name: couponName,
       });
-      assetCouponId = coupon.id;
+      combinedCouponId = coupon.id;
     }
 
     // Calculer le montant total validé
     const totalAmountCents = validatedItems.reduce(
       (sum, item) => sum + item.price * item.quantity,
       0
-    ) + debtAmountCents - assetAmountCents;
+    ) + debtAmountCents - assetAmountCents - discountAmountCents;
 
     // Valider le montant total
     if (totalAmountCents < 0) {
@@ -355,6 +393,7 @@ async function handleCheckout(event: any): Promise<any> {
         memberName: request.memberName || '',
         debtAmountCents: debtAmountCents.toString(),
         assetAmountCents: assetAmountCents.toString(),
+        discountAmountCents: discountAmountCents.toString(),
         buyerMemberId: request.buyerMemberId || '',
         cartSnapshot: JSON.stringify(request.cartSnapshot || []),
         season: request.season || '',
@@ -365,9 +404,9 @@ async function handleCheckout(event: any): Promise<any> {
       },
     };
     
-    // Appliquer le coupon d'avoir si présent
-    if (assetCouponId) {
-      sessionParams.discounts = [{ coupon: assetCouponId }];
+    // Appliquer le coupon combiné (avoir + ristourne) si présent
+    if (combinedCouponId) {
+      sessionParams.discounts = [{ coupon: combinedCouponId }];
     }
 
     const session = await stripe.checkout.sessions.create(sessionParams);

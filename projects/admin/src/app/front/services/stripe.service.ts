@@ -50,6 +50,7 @@ export class StripeService {
             customerEmail: request.customerEmail || undefined,
             debtAmountCents: request.debtAmountCents || undefined,
             assetAmountCents: request.assetAmountCents || undefined,
+            discountAmountCents: request.discountAmountCents || undefined,
             memberName: request.memberName || undefined,
             buyerMemberId: request.buyerMemberId || undefined,
             cartSnapshot: request.cartSnapshot || undefined,

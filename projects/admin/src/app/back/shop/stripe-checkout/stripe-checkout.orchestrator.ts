@@ -66,7 +66,7 @@ export class StripeCheckoutOrchestrator {
    * Initiate: utilisateur clique "payer", crée session Stripe
    * Gère la préparation de la session et la sauvegarde du snapshot
    */
-  initiateCheckout(cartItems: CartItem[], member: Member | null, debtAmount: number, assetAmount: number, session: any, onlineMode: boolean, onlineSuccessUrl: string, onlineCancelUrl: string): Promise<{ sessionUrl: string }> {
+  initiateCheckout(cartItems: CartItem[], member: Member | null, debtAmount: number, assetAmount: number, session: any, onlineMode: boolean, onlineSuccessUrl: string, onlineCancelUrl: string, discountAmountCents?: number): Promise<{ sessionUrl: string }> {
     return new Promise((resolve, reject) => {
       try {
         if (!member) {
@@ -89,6 +89,7 @@ export class StripeCheckoutOrchestrator {
         // 3. Créer le snapshot du panier
         const snapshot = cartItems.map(item => ({
           productId: item.product_id,
+          payeeId: item.payee?.id,
           pairedMemberId: item.paired_with?.id,
         }));
 
@@ -100,6 +101,7 @@ export class StripeCheckoutOrchestrator {
           cancelUrl: onlineCancelUrl,
           debtAmountCents,
           assetAmountCents,
+          discountAmountCents: (discountAmountCents && discountAmountCents > 0) ? discountAmountCents : undefined,
           memberName,
           buyerMemberId: member.id,
           cartSnapshot: snapshot,
@@ -298,7 +300,7 @@ export class StripeCheckoutOrchestrator {
     }
 
     try {
-      const stored: { snapshot: Array<{ productId: string; pairedMemberId?: string }>; sessionId?: string } = JSON.parse(raw);
+      const stored: { snapshot: Array<{ productId: string; payeeId?: string; pairedMemberId?: string }>; sessionId?: string } = JSON.parse(raw);
       const snapshot = stored.snapshot;
 
       // Vérifier que toutes les données sont chargées
@@ -320,11 +322,12 @@ export class StripeCheckoutOrchestrator {
       for (const item of snapshot) {
         const product = allProducts.find(p => p.id === item.productId);
         if (!product) continue;
+        const payee = item.payeeId ? (members.find(m => m.id === item.payeeId) ?? buyer) : buyer;
         let paired: Member | undefined;
         if (item.pairedMemberId) {
           paired = members.find(m => m.id === item.pairedMemberId);
         }
-        const cartItem = this.cartService.build_cart_item(product, buyer, paired);
+        const cartItem = this.cartService.build_cart_item(product, payee, paired);
         this.cartService.addToCart(cartItem);
       }
 

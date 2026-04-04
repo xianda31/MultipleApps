@@ -164,6 +164,7 @@ export class CartComponent {
 
   stripe_checkout_not_ready(): boolean {
     if (this.cart.items.length === 0 && this.debt_amount === 0) return true;
+    if (this.total_amount() <= 0) return true;  // Stripe rejette les sessions à 0€
     // All items must have a valid payee
     // Paired items (paired_with) are already atomic — the 2nd member is always present
     return this.cart.items.some(item => !item.payee);

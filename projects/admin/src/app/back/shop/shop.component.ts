@@ -18,6 +18,37 @@ import { ShopInitializationService } from './services/shop-initialization.servic
 import { BuyerContextService } from './services/buyer-context.service';
 import { ShopProductService } from './services/shop-product.service';
 
+/**
+ * ShopComponent — Interface de gestion des ventes (cartes, adhésions, produits)
+ *
+ * MODES D'OPÉRATION:
+ * • onlineMode=true (route: StripeOnlineShop)
+ *   - Mode encaisse magasin via Stripe Checkout
+ *   - Buyer auto-défini = logged_member (client final)
+ *   - Panier temps réel, paiement en ligne
+ *   - Webhooks Stripe auto-complètent la transaction
+ *
+ * • onlineMode=false (route: Shop + query param ?buyerId=xxx)
+ *   - Mode vente offline (vendeur présent)
+ *   - Buyer sélectionnable via InputMemberComponent
+ *   - Buyer peut être pré-sélectionné via buyerId query param
+ *   - Paiement: chèque, espèces, tampons, crédit
+ *   - Panier manuel, sauvegarde immédiate
+ *
+ * FONCTIONNALITÉS PRINCIPALES:
+ * • Sélection de produits par catégorie (cartes, adhésions, perfectionnement, etc.)
+ * • Gestion des payees (paiement effectué par autre membre que buyer)
+ * • Support produits paired (2 membres, ex: adhésion couple)
+ * • Affichage dette/avoirs du buyer
+ * • Panier éditable: quantité, payee, prix si admin/editor
+ * • Validation Stripe côté serveur (montants, produits, payees)
+ * • Bootstrapping session (date, saison, droits, opérations compta)
+ *
+ * INTEGRATION:
+ * • FeesCollectorComponent redirect vers Shop avec ?buyerId=xxx en offline
+ * • QuickSale depuis tournoi → Shop avec buyer pré-sélectionné
+ * • Réconciliation Stripe via observables isSuccess$/receiptUrl$
+ */
 
 @Component({
   selector: 'app-shop',
@@ -140,7 +171,7 @@ export class ShopComponent {
   }
 
   /**
-   * Configure l'acheteur à partir de la route (member_id @Input ou paramètre)
+   * Configure l'acheteur à partir de la route (member_id @Input ou paramètre, ou buyerId query param)
    */
   private setupBuyerFromRoute(): void {
     if (this.onlineMode) {
@@ -153,7 +184,10 @@ export class ShopComponent {
       return;
     }
 
-    const memberIdFromRoute = this.member_id || this.route.snapshot.paramMap.get('member_id');
+    // Essayer en priorité le query param buyerId (plus fiable que path param)
+    // Puis fallback sur path param member_id ou @Input member_id
+    const buyerIdFromQuery = this.route.snapshot.queryParamMap.get('buyerId');
+    const memberIdFromRoute = buyerIdFromQuery || this.member_id || this.route.snapshot.paramMap.get('member_id');
     if (!memberIdFromRoute) return;
 
     const buyer = this.buyerContext.findBuyerById(memberIdFromRoute, this.members);
@@ -375,17 +409,34 @@ export class ShopComponent {
 
   async on_stripe_checkout(): Promise<void> {
     const member = this.onlineMode ? this.logged_member : this.buyer;
-    
+    const cartItems = this.cartService.getCartItems();
+
+    // Calculer la ristourne globale (mode offline uniquement)
+    // = différence entre prix DB et prix saisis dans le cart
+    let discountAmountCents: number | undefined;
+    if (!this.onlineMode) {
+      let totalDiscountCents = 0;
+      for (const item of cartItems) {
+        const product = this.allProducts.find(p => p.id === item.product_id);
+        if (product) {
+          const discountCents = Math.round((product.price - item.paied) * 100);
+          if (discountCents > 0) totalDiscountCents += discountCents;
+        }
+      }
+      if (totalDiscountCents > 0) discountAmountCents = totalDiscountCents;
+    }
+
     try {
       const result = await this.stripeCheckout.initiateCheckout(
-        this.cartService.getCartItems(),
+        cartItems,
         member || null,
         this.debt_amount,
         this.asset_amount,
         this.session,
         this.onlineMode,
         this.onlineSuccesUrl,
-        this.onlineCancelUrl
+        this.onlineCancelUrl,
+        discountAmountCents
       );
       window.location.href = result.sessionUrl;
     } catch (error: any) {

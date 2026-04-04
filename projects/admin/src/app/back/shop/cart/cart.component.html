@@ -58,8 +58,8 @@
                                 title="produit couplé"></i>}
                         </div>
                         <small class="text-muted d-block">
-                            <span [class.clickable-price]="!item.paired_with && !onlineMode"
-                                (click)="!item.paired_with && !onlineMode && openPayeeModal(item)">
+                            <span [class.clickable-price]="!item.paired_with"
+                                (click)="!item.paired_with && openPayeeModal(item)">
                                 <i class="bi bi-person-fill me-1"></i>{{ item.payee_name }}
                             </span>
                             @if (item.paired_with) {
