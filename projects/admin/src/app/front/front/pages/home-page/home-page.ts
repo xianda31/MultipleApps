@@ -3,6 +3,8 @@ import { TitleService } from '../../../title/title.service';
 import { GenericPageComponent } from '../generic-page/generic-page.component';
 import { TournamentsComponent } from '../../../../common/tournaments/tournaments/tournaments.component';
 import { Router, ActivatedRoute } from '@angular/router';
+import { NavItemsService } from '../../../../common/services/navitem.service';
+import { NAVITEM_PLUGIN } from '../../../../common/interfaces/plugin.interface';
 import { EXTRA_TITLES, MENU_TITLES } from '../../../../common/interfaces/page_snippet.interface';
 import { MembersService } from '../../../../common/services/members.service';
 import { SystemDataService } from '../../../../common/services/system-data.service';
@@ -13,6 +15,7 @@ import { AuthentificationService } from '../../../../common/authentification/aut
 import { CommonModule } from '@angular/common';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { FileService } from '../../../../common/services/files.service';
+import { ConnexionComponent } from '../../../../common/authentification/connexion/connexion.component';
 
 @Component({
   selector: 'app-home-page',
@@ -54,6 +57,8 @@ export class HomePage {
     private auth: AuthentificationService,
     private breakpointObserver: BreakpointObserver,
     private fileService: FileService,
+    private router: Router,
+    private navItemsService: NavItemsService,
   ) {
     this.breakpointObserver.observe([Breakpoints.Medium, Breakpoints.Large, Breakpoints.XLarge])
       .subscribe(result => {
@@ -181,5 +186,11 @@ export class HomePage {
           };
         }) : [];
       });
+  }
+
+
+  EspaceMembre() {
+    const path = this.navItemsService.getPathByPlugin(NAVITEM_PLUGIN.AUTHENTICATION);
+    if (path) this.router.navigate(['/front', path]);
   }
 }

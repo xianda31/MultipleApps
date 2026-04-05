@@ -8,9 +8,11 @@
     <div class="d-none d-md-block col-md-4">
         <ng-container *ngTemplateOutlet="birthdays"></ng-container>
     </div>
-    <!-- <div class="d-block d-md-none px-2">
-        <ng-container *ngTemplateOutlet="whoarewe"></ng-container>
-    </div> -->
+    @if (!(logged_member$ | async)) {
+    <div class="text-uppercase text-success fw-bolder mt-2 mb-2">
+        <ng-container *ngTemplateOutlet="connexion"></ng-container>
+    </div>
+    }
 </div>
 
 
@@ -69,4 +71,10 @@
         <img class="fade-img" [src]="photos[photo_index]" alt="photo" decoding="async" loading="eager"
             [style.opacity]="opacity" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
     </div>
+</ng-template>
+
+<ng-template #connexion>
+<button class="btn btn-outline-success" (click)="EspaceMembre()">
+    <i class="bi bi-box-arrow-in-right me-1"></i> Espace Membre
+</button>
 </ng-template>

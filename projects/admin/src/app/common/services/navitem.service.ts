@@ -156,6 +156,16 @@ export class NavItemsService {
   }
 
   /**
+   * Get the path for a given plugin name (reverse lookup).
+   * Returns the path of the first navitem that uses this plugin.
+   * Returns null if not found.
+   */
+  getPathByPlugin(pluginName: string): string | null {
+    const navitem = this._navItems.find(ni => ni.plugin_name === pluginName);
+    return navitem?.path || null;
+  }
+
+  /**
    * Fonction utilitaire pour construire la structure récursive
    */
   buildMenuStructureNew(items: NavItem[], parentId: string | null = null): MenuGroup[] {
