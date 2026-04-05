@@ -1,0 +1,98 @@
+{
+  "payouts": [
+    {
+      "id": "po_real_20260404_001",
+      "amount": 6281,
+      "currency": "eur",
+      "arrival_date": 1712275200,
+      "fees": 219,
+      "gross": 6500,
+      "status": "paid",
+      "description": "Payout Stripe du 4 avril 2026 — 1 paiement adhérent (achat online réel)",
+      "associated_stripe_payment_ids": [
+        "ch_test_G49XYpmnzyJu"
+      ],
+      "associated_stripe_session_ids": [
+        "cs_test_a1M7MTPL7YdKQ2GF2FdW3Jnnag0ONQXZ5wl6SKdlSaYRe2G49XYpmnzyJu"
+      ],
+      "created_at": "2026-04-04T14:55:25Z",
+      "metadata": {
+        "note": "Payout réel — paiement Stripe testé avec succès. Amount: 65€, Frais: 2.19€ (2.9% + 0.30€), Net: 62.81€"
+      }
+    },
+    {
+      "id": "po_1AQkx2AB4VCFR8F8oKTv1234",
+      "amount": 4700,
+      "currency": "eur",
+      "arrival_date": 1712275200,
+      "fees": 300,
+      "gross": 5000,
+      "status": "paid",
+      "description": "Payout Stripe fictif du 4 avril 2026 — 5 paiements adhérents groupés",
+      "associated_stripe_payment_ids": [
+        "ch_1AQkx2AB4VCFR8F8oKTv0001",
+        "ch_1AQkx2AB4VCFR8F8oKTv0002",
+        "ch_1AQkx2AB4VCFR8F8oKTv0003",
+        "ch_1AQkx2AB4VCFR8F8oKTv0004",
+        "ch_1AQkx2AB4VCFR8F8oKTv0005"
+      ],
+      "created_at": "2026-04-04T10:30:00Z",
+      "metadata": {
+        "note": "Fixture dev — validé manuellement"
+      }
+    },
+    {
+      "id": "po_1AQkx2AB4VCFR8F8oKTv5678",
+      "amount": 2340,
+      "currency": "eur",
+      "arrival_date": 1712361600,
+      "fees": 160,
+      "gross": 2500,
+      "status": "paid",
+      "description": "Payout Stripe fictif du 5 avril 2026 — 2 paiements adhérents",
+      "associated_stripe_payment_ids": [
+        "ch_1AQkx2AB4VCFR8F8oKTv0006",
+        "ch_1AQkx2AB4VCFR8F8oKTv0007"
+      ],
+      "created_at": "2026-04-05T11:00:00Z",
+      "metadata": {
+        "note": "Fixture dev — validé manuellement"
+      }
+    },
+    {
+      "id": "po_1AQkx2AB4VCFR8F8oKTv9999",
+      "amount": 9700,
+      "currency": "eur",
+      "arrival_date": 1712448000,
+      "fees": 500,
+      "gross": 10200,
+      "status": "in_transit",
+      "description": "Payout Stripe fictif du 6 avril 2026 — 9 paiements adhérents (en attente)",
+      "associated_stripe_payment_ids": [
+        "ch_1AQkx2AB4VCFR8F8oKTv0008",
+        "ch_1AQkx2AB4VCFR8F8oKTv0009",
+        "ch_1AQkx2AB4VCFR8F8oKTv0010",
+        "ch_1AQkx2AB4VCFR8F8oKTv0011",
+        "ch_1AQkx2AB4VCFR8F8oKTv0012",
+        "ch_1AQkx2AB4VCFR8F8oKTv0013",
+        "ch_1AQkx2AB4VCFR8F8oKTv0014",
+        "ch_1AQkx2AB4VCFR8F8oKTv0015",
+        "ch_1AQkx2AB4VCFR8F8oKTv0016"
+      ],
+      "created_at": "2026-04-06T09:15:00Z",
+      "metadata": {
+        "note": "Fixture dev — en transit (non finalisé)"
+      }
+    }
+  ],
+  "fee_structure": {
+    "percentage": 0.029,
+    "fixed_amount_eur": 0.30,
+    "description": "2.9% + 0.30€ par payout Stripe"
+  },
+  "meta": {
+    "generated_at": "2026-04-04T14:55:25Z",
+    "environment": "dev-fixtures",
+    "note": "Données de test pour réconciliation Stripe. Payout #1 = réel (paiement Stripe testé). Autres = fixtures fictives pour scénarios de test."
+  }
+}

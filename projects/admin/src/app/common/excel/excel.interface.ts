@@ -55,6 +55,7 @@ export enum COL {
   AV = 48,
   AW = 49,
   AX = 50,
+  AY = 51,
 }
 
 export const MAP_start = {
@@ -68,11 +69,11 @@ export const MAP_start = {
 
 export const MAP_end = {
 
-  'pointage': 'AT',
-  'n° chèque': 'AU',
-  'bordereau': 'AV',
-  'verif balance': 'AW',
-  'nature': 'AX',
+  'pointage': 'AU',
+  'n° chèque': 'AV',
+  'bordereau': 'AW',
+  'verif balance': 'AX',
+  'nature': 'AY',
 }
 
 export const MAP = {
@@ -135,27 +136,31 @@ export const EXTRA_CUSTOMER_OUT: { [key in CUSTOMER_ACCOUNT]?: string } = {
 export const FINANCIAL_COL_in : { [key in FINANCIAL_ACCOUNT | BALANCE_ACCOUNT]?: string } = {
   'cashbox_in': 'AJ',
   'bank_in': 'AK',
-  'saving_in': 'AL',
-  'report_in': 'AM',
+  'stripe_in': 'AL',
+  'saving_in': 'AM',
+  'report_in': 'AN',
 } 
 
 export const FINANCIAL_COL_out: { [key in FINANCIAL_ACCOUNT | BALANCE_ACCOUNT]?: string } = {
-  'cashbox_out': 'AP',
-  'bank_out': 'AQ',
-  'saving_out': 'AR',
-  'report_out': 'AS',
+  'cashbox_out': 'AQ',
+  'bank_out': 'AR',
+  'stripe_out': 'AS',
+  'saving_out': 'AT',
+  'report_out': 'AU',
 }
 
 export const FINANCIAL_COL: { [key in FINANCIAL_ACCOUNT | BALANCE_ACCOUNT]: string } = {
   'cashbox_in': 'AJ',
   'bank_in': 'AK',
-  'saving_in': 'AL',
-  'report_in': 'AM',
+  'stripe_in': 'AL',
+  'saving_in': 'AM',
+  'report_in': 'AN',
 
-  'cashbox_out': 'AP',
-  'bank_out': 'AQ',
-  'saving_out': 'AR',
-  'report_out': 'AS',
+  'cashbox_out': 'AQ',
+  'bank_out': 'AR',
+  'stripe_out': 'AS',
+  'saving_out': 'AT',
+  'report_out': 'AU',
 }
 
 
@@ -241,6 +246,8 @@ export const TRANSACTION_ID_TO_NATURE: { [key in TRANSACTION_ID]?: string } = {
   [TRANSACTION_ID.achat_adhérent_par_chèque]: 'paiement par chèque',
   [TRANSACTION_ID.achat_adhérent_en_espèces]: 'paiement en espèces',
   [TRANSACTION_ID.remboursement_achat_adhérent_par_chèque]: 'remboursement par chèque',
+  [TRANSACTION_ID.achat_adhérent_par_carte]: 'paiement par carte',
+  [TRANSACTION_ID.virement_stripe_vers_banque]: 'règlement Stripe',
   // [TRANSACTION_ID.vente_en_espèces]: 'espèces',
   // [TRANSACTION_ID.vente_par_chèque]: 'chèque',
 };
@@ -270,6 +277,8 @@ export const TRANSACTION_ID_TO_CHRONO: { [key in TRANSACTION_ID]?: string } = {
   [TRANSACTION_ID.achat_adhérent_en_espèces]: 'C',
   [TRANSACTION_ID.remboursement_achat_adhérent_par_chèque]: 'C',
   [TRANSACTION_ID.annulation_dette_adhérent]: 'C',
+  [TRANSACTION_ID.achat_adhérent_par_carte]: 'C',
+  [TRANSACTION_ID.virement_stripe_vers_banque]: 'B',
   // [TRANSACTION_ID.vente_en_espèces]: 'espèces',
   // [TRANSACTION_ID.vente_par_chèque]: 'chèque',
 };

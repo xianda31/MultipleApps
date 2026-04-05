@@ -76,7 +76,8 @@ const schema = a.schema({
     season: a.string().required(),
     date: a.date().required(),
     tag: a.string(),
-    stripeTag: a.string(),  // Tag court Stripe (stripe:XXXXX) pour traçabilité
+    stripeTag: a.string(),      // Tag court Stripe (stripe:XXXXX) — lien de réconciliation avec StripeTransaction
+    stripeSessionId: a.string(), // Stripe session ID complet (cs_xxx) — pour annulation BookEntry-first
     amounts: a.json().required(),
     operations: a.ref('Operation').array().required(),
 
@@ -214,13 +215,19 @@ const schema = a.schema({
   StripeTransaction: a.model({
     id: a.id().required(),
     stripeSessionId: a.string().required(),  // Stripe Checkout session ID (cs_xxx)
+    stripeTag: a.string(),                   // Tag court (stripe:XXXXX) — même valeur que BookEntry.stripeTag
+    bookEntryId: a.string(),                 // ID du BookEntry associé (BookEntry-first)
     buyerMemberId: a.string(),               // DynamoDB Member ID de l'acheteur
     status: a.enum(['pending', 'completed', 'failed']),
     amountCents: a.integer().required(),
     currency: a.string().required(),
     customerEmail: a.string(),
-    stripeMeta: a.json(),                    // cartSnapshot, season, date, memberName...
-    processed: a.boolean(),                  // true après création du BookEntry côté frontend
+    stripeMeta: a.json(),                    // season, date, memberName, amounts...
+    processed: a.boolean(),                  // true après confirmation frontend
+    amountFeesCents: a.integer(),            // frais Stripe prélevés (pour Phase 2 reconciliation)
+    amountNetCents: a.integer(),             // montant net reçu = amountCents - amountFeesCents
+    reconciledAt: a.string(),                // date/heure de la réconciliation avec payout Stripe
+    payoutId: a.string(),                    // Stripe payout ID (pour tracer le virement bancaire)
   })
     .identifier(['id'])
     .authorization((allow) => [

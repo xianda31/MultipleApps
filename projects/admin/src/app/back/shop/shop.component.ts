@@ -17,6 +17,7 @@ import { StripeCheckoutOrchestrator } from './stripe-checkout/stripe-checkout.or
 import { ShopInitializationService } from './services/shop-initialization.service';
 import { BuyerContextService } from './services/buyer-context.service';
 import { ShopProductService } from './services/shop-product.service';
+import { BACK_ROUTE_ABS_PATHS } from '../routes/back-route-paths';
 
 /**
  * ShopComponent — Interface de gestion des ventes (cartes, adhésions, produits)
@@ -87,8 +88,8 @@ export class ShopComponent {
   get receiptUrl$() { return this.stripeCheckout.receiptUrl$; }
   get shouldShowSpinner$() { return this.stripeCheckout.shouldShowSpinner$; }
   get shouldShowSuccess$() { return this.stripeCheckout.shouldShowSuccess$; }
-  onlineSuccesUrl = `${window.location.origin}/front/mes_achats/achat_en_ligne?checkout=success`;
-  onlineCancelUrl = `${window.location.origin}/front/mes_achats/achat_en_ligne`;
+  onlineSuccesUrl = `${window.location.origin}${BACK_ROUTE_ABS_PATHS['StripeOnlineShop']}?checkout=success`;
+  onlineCancelUrl = `${window.location.origin}${BACK_ROUTE_ABS_PATHS['StripeOnlineShop']}?checkout=cancel`;
 
   // Paired product modal state
   showPairedModal = false;
@@ -135,12 +136,18 @@ export class ShopComponent {
       // -> pas besoin d'un deuxième appel list_book_entries()
 
       // Handle Stripe redirect from Stripe checkout
-      if (this.route.snapshot.queryParamMap.get('checkout') === 'success') {
+      const checkoutResult = this.route.snapshot.queryParamMap.get('checkout');
+      if (checkoutResult === 'success') {
         const sessionId = sessionStorage.getItem('stripe_session_id');
         if (sessionId) {
           this.stripeCheckout.notifyRedirectFromStripe(sessionId);
           sessionStorage.removeItem('stripe_session_id');
         }
+      } else if (checkoutResult === 'cancel') {
+        // BookEntry-first : annulation explicite → supprimer le BookEntry créé
+        this.stripeCheckout.cancelPendingCheckout().then(() => {
+          this.toastService.showWarning('Paiement', 'Paiement annulé');
+        });
       }
 
       // Load members and setup buyer selection
@@ -206,7 +213,7 @@ export class ShopComponent {
   private handleLoggedMemberChange(member: Member | null): void {
     if (this.onlineMode) {
       this.cartService.setSeller('en ligne');
-      // En mode retour Stripe, on ne touche pas au panier : prepareCheckoutCart s'en charge.
+      // En mode retour Stripe (BookEntry-first), le panier est déjà sauvegardé — on ne le recharge pas.
       // En mode normal, on configure l'acheteur seulement si pas encore fait (!this.buyer).
       const isStripeReturnMode = this.stripeCheckout.getCurrentPhase() !== 'idle';
       if (!isStripeReturnMode && member && this.members?.length && !this.buyer) {
@@ -241,35 +248,20 @@ export class ShopComponent {
   private tryCompleteStripeCheckout(): void {
     // Éviter les appels multiples
     if (this.stripeCheckoutPrepared) return;
-    if (!this.logged_member || !this.members?.length || !this.allProducts?.length) return;
+    if (!this.logged_member) return;
 
     // Check if we're in redirect_pending state (redirect from Stripe)
     const sessionId = this.stripeCheckout.getPendingSessionId();
-    if (!sessionId) return; // Not in redirect_pending, nothing to do
+    if (!sessionId) return;
 
-    console.log('[Shop] Detected Stripe redirect_pending with sessionId:', sessionId);
     this.stripeCheckoutPrepared = true;
+    console.log('[Shop] Stripe retour détecté, sessionId:', sessionId);
 
-    // Préparer le panier via le façade
-    this.stripeCheckout.prepareCheckoutCart(
-      sessionId,
-      this.logged_member!,
-      this.members,
-      this.allProducts
-    ).then((result) => {
-      this.debt_amount = result.debtAmount;
-      this.asset_amount = result.assetAmount;
-      
-      console.log('[Shop] Cart prepared, calling completeCheckout...');
-      
-      // Appeler la façade pour complêter
-      this.stripeCheckout.completeCheckout(sessionId, this.session).subscribe(
-        () => console.log('[Shop] completeCheckout next'),
-        (error) => console.error('[Shop] completeCheckout error:', error),
-        () => console.log('[Shop] completeCheckout complete')
-      );
-    }).catch((error) => {
-      console.error('[Shop] Error preparing checkout cart:', error);
+    // BookEntry-first : le BookEntry est déjà créé, on marque juste processed
+    this.stripeCheckout.completeCheckout(sessionId, this.session).subscribe({
+      next: () => console.log('[Shop] completeCheckout next'),
+      error: (error) => console.error('[Shop] completeCheckout error:', error),
+      complete: () => console.log('[Shop] completeCheckout complete'),
     });
   }
 

@@ -14,16 +14,18 @@ export enum TRANSACTION_ID {
   dépôt_caisse_chèques = 'dépôt_caisse_chèques',
   virement_banque_vers_épargne = 'virement_banque_vers_épargne',
   retrait_épargne_vers_banque = 'retrait_épargne_vers_banque',
+  virement_stripe_vers_banque = 'virement_stripe_vers_banque',
   attribution_avoir = 'attribution_avoir',
   remboursement_achat_adhérent_par_chèque = 'remboursement_achat_adhérent_par_chèque',
-  remboursement_achat_adhérent_en_espèces = 'remboursement_achat_adhérent_en_espèces',  
+  remboursement_achat_adhérent_en_espèces = 'remboursement_achat_adhérent_en_espèces',
   remboursement_achat_adhérent_par_avoir = 'remboursement_achat_adhérent_par_avoir',
   annulation_dette_adhérent = 'annulation_dette',
   dépense_en_espèces = 'dépense_en_espèces',
   dépense_par_chèque = 'dépense_par_chèque',
   dépense_par_virement = 'dépense_par_virement',
   dépense_par_carte = 'dépense_par_carte',
- dépense_par_prélèvement = 'dépense_par_prélèvement',
+  dépense_par_prélèvement = 'dépense_par_prélèvement',
+  achat_adhérent_par_carte = 'achat_adhérent_par_carte',
   report_avoir = 'report_avoir',
   report_chèque = 'report_chèque',
   report_carte = 'report_carte',
@@ -39,9 +41,12 @@ export enum FINANCIAL_ACCOUNT {
   CASHBOX_credit = 'cashbox_out',
 
   BANK_debit = 'bank_in',
-  SAVING_debit = 'saving_in',
-
   BANK_credit = 'bank_out',
+
+  STRIPE_debit = 'stripe_in',
+  STRIPE_credit = 'stripe_out',
+
+  SAVING_debit = 'saving_in',
   SAVING_credit = 'saving_out',
 
 }
@@ -61,11 +66,13 @@ export enum BALANCE_ACCOUNT {
 export const Financial_debit_accounts: { [key in Partial<FINANCIAL_ACCOUNT>]?: string } = {
   [FINANCIAL_ACCOUNT.CASHBOX_debit]: 'Caisse',
   [FINANCIAL_ACCOUNT.BANK_debit]: 'Banque',
+  [FINANCIAL_ACCOUNT.STRIPE_debit]: 'Stripe',
   [FINANCIAL_ACCOUNT.SAVING_debit]: 'Epargne',
 }
 export const Financial_credit_accounts: { [key in Partial<FINANCIAL_ACCOUNT>]?: string } = {
   [FINANCIAL_ACCOUNT.CASHBOX_credit]: 'Caisse',
   [FINANCIAL_ACCOUNT.BANK_credit]: 'Banque',
+  [FINANCIAL_ACCOUNT.STRIPE_credit]: 'Stripe',
   [FINANCIAL_ACCOUNT.SAVING_credit]: 'Epargne',
 }
 
@@ -76,7 +83,7 @@ export const Bank_accounts: { [key in Partial<FINANCIAL_ACCOUNT>]?: string } = {
   // [FINANCIAL_ACCOUNT.SAVING_credit]: 'saving_out',
 }
 
-export const Savings_accounts : { [key in Partial<FINANCIAL_ACCOUNT>]?: string } = {
+export const Savings_accounts: { [key in Partial<FINANCIAL_ACCOUNT>]?: string } = {
   [FINANCIAL_ACCOUNT.SAVING_debit]: 'saving_in',
   [FINANCIAL_ACCOUNT.SAVING_credit]: 'saving_out',
 }
@@ -86,7 +93,10 @@ export const Cashbox_accounts: { [key in Partial<FINANCIAL_ACCOUNT>]?: string } 
   [FINANCIAL_ACCOUNT.CASHBOX_credit]: 'cashbox_out',
 }
 
-
+export const Stripe_accounts: { [key in Partial<FINANCIAL_ACCOUNT>]?: string } = {
+  [FINANCIAL_ACCOUNT.STRIPE_debit]: 'stripe_in',
+  [FINANCIAL_ACCOUNT.STRIPE_credit]: 'stripe_out',
+}
 
 
 export type operation_values = { [key: string]: number };
@@ -115,7 +125,7 @@ export interface Expense extends Operation {
 }; // comptes de charges
 
 
-export type AMOUNTS = { [key in BALANCE_ACCOUNT | FINANCIAL_ACCOUNT  ]?: number; };
+export type AMOUNTS = { [key in BALANCE_ACCOUNT | FINANCIAL_ACCOUNT]?: number; };
 
 
 export interface BookEntry {

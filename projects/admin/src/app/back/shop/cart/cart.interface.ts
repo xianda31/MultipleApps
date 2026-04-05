@@ -9,7 +9,7 @@ export enum PaymentMode {
   TRANSFER = 'virement',
   CREDIT = 'crédit',
   ASSETS = 'avoir',
-  // CARD = 'carte',
+  CARD = 'carte',
 }
 
 export const SALE_ACCOUNTS: { [key in PaymentMode]: FINANCIAL_ACCOUNT | CUSTOMER_ACCOUNT } = {
@@ -18,7 +18,7 @@ export const SALE_ACCOUNTS: { [key in PaymentMode]: FINANCIAL_ACCOUNT | CUSTOMER
   [PaymentMode.TRANSFER]: FINANCIAL_ACCOUNT.BANK_debit,
   [PaymentMode.CREDIT]: CUSTOMER_ACCOUNT.DEBT_debit,
   [PaymentMode.ASSETS]: CUSTOMER_ACCOUNT.ASSET_debit,
-  // [PaymentMode.CARD]: FINANCIAL_ACCOUNT.CARD_OUT,
+  [PaymentMode.CARD]: FINANCIAL_ACCOUNT.STRIPE_debit,  // Stripe : compte intermédiaire (crédité via payout bancaire en Phase 2)
 }
 
 

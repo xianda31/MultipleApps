@@ -26,11 +26,13 @@ export type Account_def = {
 export const financial_debits: Account_def[] = [
   { key: FINANCIAL_ACCOUNT.CASHBOX_debit, label: 'Caisse_in', description: ' ' },
   { key: FINANCIAL_ACCOUNT.BANK_debit, label: 'Banque_in', description: ' ' },
+  { key: FINANCIAL_ACCOUNT.STRIPE_debit, label: 'Stripe_in', description: ' ' },
   { key: FINANCIAL_ACCOUNT.SAVING_debit, label: 'Epargne_in', description: ' ' },
 ]
 export const financial_credits: Account_def[] = [
   { key: FINANCIAL_ACCOUNT.CASHBOX_credit, label: 'Caisse_out', description: ' ' },
   { key: FINANCIAL_ACCOUNT.BANK_credit, label: 'Banque_out', description: ' ' },
+  { key: FINANCIAL_ACCOUNT.STRIPE_credit, label: 'Stripe_out', description: ' ' },
   { key: FINANCIAL_ACCOUNT.SAVING_credit, label: 'Epargne_out', description: ' ' },
 
 ]
@@ -72,7 +74,8 @@ export type Transaction = {
   require_deposit_ref: boolean,
   invoice_required: boolean,
   cash: 'in' | 'out' | 'none',
-  cheque: 'in' | 'out' | 'none'
+  cheque: 'in' | 'out' | 'none',
+  profit_and_loss_keys?: string[];  // clés P&L additionnelles pour débits (ex. frais Stripe)
 };
 
 export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
@@ -113,6 +116,25 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     cash: 'none',
     cheque: 'in',
   },
+  // paiement par carte (Stripe) d'un adhérent
+  // deposit_ref = ID du virement Stripe (payout) qui regroupe les paiements individuels
+  //               analogie : bordereau de remise de chèques
+  [TRANSACTION_ID.achat_adhérent_par_carte]: {
+     label: 'paiement par carte (Stripe)',
+     invoice_required: false,
+    tooltip: 'paiement Stripe d\'un adhérent — crédité en banque via virement Stripe (payout)',
+    class: TRANSACTION_CLASS.REVENUE_FROM_MEMBER,
+    financial_accounts: financial_debits,
+    optional_accounts: customer_options,
+    financial_accounts_to_charge: [FINANCIAL_ACCOUNT.STRIPE_debit],
+    nominative: true,
+    pure_financial: false,
+    revenue_account_to_show: true,
+    require_deposit_ref: true,   // deposit_ref = Stripe payout ID (regroupement de paiements)
+    cash: 'none',
+    cheque: 'none',
+  },
+
   // paiement par virement d'un adhérent
   [TRANSACTION_ID.achat_adhérent_par_virement]: {
      label: 'VIREMENT EN NOTRE FAVEUR',
@@ -276,6 +298,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     cash: 'none',
     cheque: 'out',
   },
+
   // versement sur compte épargne
   [TRANSACTION_ID.virement_banque_vers_épargne]: {
      label: 'VERSEMENT SUR COMPTE ÉPARGNE',
@@ -309,7 +332,22 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     cheque: 'none',
   },
 
-
+  // règlement Stripe vers compte bancaire (encaissement des paiements)
+  [TRANSACTION_ID.virement_stripe_vers_banque]: {
+     label: 'RÈGLEMENT STRIPE VERS BANQUE',
+     invoice_required: false,
+    tooltip: 'encaissement Stripe (payout) vers le compte bancaire, débits : BANK_debit + frais Stripe',
+    class: TRANSACTION_CLASS.MOVEMENT,
+    financial_accounts: [...financial_credits, ...financial_debits],
+    financial_accounts_to_charge: [FINANCIAL_ACCOUNT.STRIPE_credit, FINANCIAL_ACCOUNT.BANK_debit],
+    nominative: false,
+    pure_financial: false,
+    revenue_account_to_show: false,
+    require_deposit_ref: true,  // deposit_ref = Stripe payout ID
+    cash: 'none',
+    cheque: 'none',
+    profit_and_loss_keys: [],  // rempli dynamiquement lors du règlement avec frais Stripe (Phase 2)
+  },
 
   // E depense pour adhérent ****
   // ****  CLASS = EXPENS_FOR_MEMBER ****

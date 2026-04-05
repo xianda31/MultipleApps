@@ -2,28 +2,29 @@
  * StripeCheckoutOrchestrator
  * Orchestration centralisée du flux Stripe
  * Encapsule la complexité, expose une API propre au composant
+ *
+ * Approche BookEntry-first (analogue au chèque) :
+ * - La vente est enregistrée AVANT la navigation vers Stripe
+ * - En cas de succès : StripeTransaction.processed = true (réconciliation Phase 2)
+ * - En cas d'annulation explicite : BookEntry supprimé par le frontend
+ * - En cas d'abandon : BookEntry détecté non-réconcilié lors de la Phase 2
  */
 
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, tap, switchMap, catchError, of, map } from 'rxjs';
+import { BehaviorSubject, Observable, tap, catchError, of, map } from 'rxjs';
 import { CartService } from '../cart/cart.service';
 import { StripeService } from '../../../front/services/stripe.service';
 import { DBhandler } from '../../../common/services/graphQL.service';
-import { 
-  StripeCheckoutState, 
-  initialCheckoutState, 
-  checkoutSelectors 
+import {
+  StripeCheckoutState,
+  initialCheckoutState,
+  checkoutSelectors
 } from './stripe-checkout.state';
 import { BookEntry } from '../../../common/interfaces/accounting.interface';
 import { Member } from '../../../common/interfaces/member.interface';
 import { getShortStripeTag } from '../../../common/utilities/stripe-utils';
 import { ToastService } from '../../../common/services/toast.service';
 import { CartItem, PaymentMode } from '../cart/cart.interface';
-import { Product } from '../../products/product.interface';
-import { BuyerContextService } from '../services/buyer-context.service';
-import { MembersService } from '../../../common/services/members.service';
-
-const STRIPE_CART_KEY = 'stripe_pending_cart';
 
 @Injectable({
   providedIn: 'root'
@@ -55,82 +56,89 @@ export class StripeCheckoutOrchestrator {
     private stripeService: StripeService,
     private dbHandler: DBhandler,
     private toastService: ToastService,
-    private buyerContext: BuyerContextService,
-    private membersService: MembersService,
-  ) {
-    // Note: Auto-complete est géré par le composant qui appelle completeCheckout()
-    // après avoir préparé les données du panier
-  }
+  ) {}
 
   /**
-   * Initiate: utilisateur clique "payer", crée session Stripe
-   * Gère la préparation de la session et la sauvegarde du snapshot
+   * Initiate: utilisateur clique "payer"
+   *
+   * Approche BookEntry-first (analogue au chèque) :
+   * 1. Créer session Stripe → obtenir sessionId
+   * 2. setStripeTag sur le panier (dérivé du sessionId)
+   * 3. save_sale() → BookEntry créé immédiatement
+   * 4. Stocker bookEntryId + sessionId en sessionStorage (pour annulation éventuelle)
+   * 5. Naviguer vers Stripe
+   *
+   * En cas d'échec Stripe (cancel_url) : le BookEntry est supprimé par le frontend.
+   * En cas d'abandon : BookEntry non réconcilié → détecté en Phase 2 (réconciliation).
    */
-  initiateCheckout(cartItems: CartItem[], member: Member | null, debtAmount: number, assetAmount: number, session: any, onlineMode: boolean, onlineSuccessUrl: string, onlineCancelUrl: string, discountAmountCents?: number): Promise<{ sessionUrl: string }> {
-    return new Promise((resolve, reject) => {
-      try {
-        if (!member) {
-          throw new Error('Aucun acheteur sélectionné');
-        }
+  async initiateCheckout(cartItems: CartItem[], member: Member | null, debtAmount: number, assetAmount: number, session: any, onlineMode: boolean, onlineSuccessUrl: string, onlineCancelUrl: string, discountAmountCents?: number): Promise<{ sessionUrl: string }> {
+    if (!member) {
+      throw new Error('Aucun acheteur sélectionné');
+    }
 
-        // 1. Grouper les produits par ID
-        const productGroup = new Map<string, number>();
-        for (const item of cartItems) {
-          productGroup.set(item.product_id, (productGroup.get(item.product_id) || 0) + 1);
-        }
-        const productIds = [...productGroup.keys()];
-        const quantities = productIds.map(id => productGroup.get(id)!);
+    // 1. Grouper les produits par ID
+    const productGroup = new Map<string, number>();
+    for (const item of cartItems) {
+      productGroup.set(item.product_id, (productGroup.get(item.product_id) || 0) + 1);
+    }
+    const productIds = [...productGroup.keys()];
+    const quantities = productIds.map(id => productGroup.get(id)!);
 
-        // 2. Préparer les montants
-        const debtAmountCents = (debtAmount > 0) ? Math.round(debtAmount * 100) : undefined;
-        const assetAmountCents = (assetAmount > 0) ? Math.round(assetAmount * 100) : undefined;
-        const memberName = member.lastname + ' ' + member.firstname;
+    const debtAmountCents = (debtAmount > 0) ? Math.round(debtAmount * 100) : undefined;
+    const assetAmountCents = (assetAmount > 0) ? Math.round(assetAmount * 100) : undefined;
+    const memberName = member.lastname + ' ' + member.firstname;
 
-        // 3. Créer le snapshot du panier
-        const snapshot = cartItems.map(item => ({
-          productId: item.product_id,
-          payeeId: item.payee?.id,
-          pairedMemberId: item.paired_with?.id,
-        }));
+    // 2. Créer la session Stripe (validation des prix côté serveur)
+    let response;
+    try {
+      response = await this.stripeService.createCheckoutSession({
+        productIds,
+        quantities,
+        successUrl: onlineSuccessUrl,
+        cancelUrl: onlineCancelUrl,
+        debtAmountCents,
+        assetAmountCents,
+        discountAmountCents: (discountAmountCents && discountAmountCents > 0) ? discountAmountCents : undefined,
+        memberName,
+        buyerMemberId: member.id,
+        season: session.season,
+        date: session.date,
+      });
+    } catch (error) {
+      this.toastService.showErrorToast('Paiement', 'Impossible de créer la session de paiement');
+      throw error;
+    }
 
-        // 4. Créer la session Stripe
-        this.stripeService.createCheckoutSession({
-          productIds,
-          quantities,
-          successUrl: onlineSuccessUrl,
-          cancelUrl: onlineCancelUrl,
-          debtAmountCents,
-          assetAmountCents,
-          discountAmountCents: (discountAmountCents && discountAmountCents > 0) ? discountAmountCents : undefined,
-          memberName,
-          buyerMemberId: member.id,
-          cartSnapshot: snapshot,
-          season: session.season,
-          date: session.date,
-        }).then((response) => {
-          if (!response.data?.sessionUrl) {
-            throw new Error('Pas d\'URL de paiement reçue');
-          }
+    if (!response.data?.sessionUrl) {
+      throw new Error('Pas d\'URL de paiement reçue');
+    }
 
-          // 5. Sauvegarder le snapshot ET le sessionId en sessionStorage pour le retour
-          const STRIPE_CART_KEY = 'stripe_pending_cart';
-          sessionStorage.setItem(STRIPE_CART_KEY, JSON.stringify({
-            snapshot,
-            sessionId: response.data.sessionId,
-          }));
-          // Sauvegarder aussi le sessionId seul pour un accès facile au retour
-          sessionStorage.setItem('stripe_session_id', response.data.sessionId);
+    const sessionId = response.data.sessionId;
 
-          resolve({ sessionUrl: response.data.sessionUrl });
-        }).catch((error) => {
-          this.toastService.showErrorToast('Paiement', 'Impossible de créer la session de paiement');
-          reject(error);
-        });
-      } catch (error) {
-        this.toastService.showErrorToast('Paiement', error instanceof Error ? error.message : 'Erreur lors de l\'initiation du paiement');
-        reject(error);
-      }
-    });
+    // 3. BookEntry-first : configurer le stripeTag puis sauvegarder la vente
+    const stripeTag = getShortStripeTag(sessionId);
+    this.cartService.setStripeTag(stripeTag);
+    this.cartService.payment = {
+      mode: PaymentMode.CARD,
+      amount: this.cartService.getCartAmount(),
+      payer_id: member.id,
+      bank: '',
+      cheque_no: '',
+    };
+
+    let bookEntry;
+    try {
+      bookEntry = await this.cartService.save_sale(session);
+    } catch (error) {
+      this.toastService.showErrorToast('Paiement', 'Erreur lors de l\'enregistrement de la vente');
+      throw error;
+    }
+
+    // 4. Stocker sessionId + bookEntryId pour le retour / annulation
+    sessionStorage.setItem('stripe_session_id', sessionId);
+    sessionStorage.setItem('stripe_book_entry_id', bookEntry.id);
+
+    return { sessionUrl: response.data.sessionUrl };
   }
 
   /**
@@ -144,10 +152,11 @@ export class StripeCheckoutOrchestrator {
   }
 
   /**
-   * Complete: Utilisateur revient de Stripe, sauvegarde tout
-   * @param sessionId ID de la session Stripe
-   * @param session Objet session (date, season) pour l'enregistrement
-   * @param cartSetupCallback Fonction optionnelle pour configurer le panier (récupérer depuis sessionStorage, etc)
+   * Complete: utilisateur revient de Stripe après paiement accepté.
+   *
+   * BookEntry-first : le BookEntry est DÉJÀ créé en base.
+   * On marque simplement la StripeTransaction comme traitée et on affiche le succès.
+   * La réconciliation (Phase 2) fera le lien StripeTransaction ↔ BookEntry via stripeTag.
    */
   completeCheckout(sessionId: string, session: any, cartSetupCallback?: () => void): Observable<BookEntry> {
     return new Observable((observer) => {
@@ -158,86 +167,38 @@ export class StripeCheckoutOrchestrator {
         error: null,
       });
 
-      try {
-        // Laisser le composant configurer le panier si une callback est fournie
-        if (cartSetupCallback) {
-          cartSetupCallback();
-        }
-
-        // Orchestrez tout: save_sale -> mark processed -> get receipt
-        this.saveCheckoutEntry(sessionId, session)
-          .pipe(
-            switchMap((entry) => 
-              this.markProcessed(sessionId).pipe(
-                tap(() => {
-                  console.log('[Stripe] Transaction marked as processed');
-                  this.fetchReceipt(sessionId);
-                }),
-                map(() => entry)
-              )
-            ),
-            tap((entry) => {
-              console.log('[Stripe] Checkout complete, setting state to success');
-              this.setState({
-                ...this.state$.value,
-                checkoutPhase: { 
-                  phase: 'success', 
-                  sessionId,
-                },
-                isSaving: false,
-              });
-              observer.next(entry);
-              observer.complete();
-            }),
-            catchError((error) => {
-              const errorMsg = error instanceof Error ? error.message : String(error);
-              console.error('[Stripe] Error in complete checkout:', errorMsg);
-              this.setState({
-                ...this.state$.value,
-                checkoutPhase: { phase: 'error', message: errorMsg },
-                isSaving: false,
-                error: errorMsg,
-              });
-              this.toastService.showErrorToast('Paiement', `Erreur: ${errorMsg}`);
-              observer.error(error);
-              return of(null);
-            })
-          )
-          .subscribe({
-            next: () => {},
-            error: (err) => console.error('[Stripe] Subscribe error:', err),
-            complete: () => console.log('[Stripe] Complete checkout observable completed')
-          });
-      } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        console.error('[Stripe] Exception in completeCheckout:', errorMsg);
-        this.setState({
-          ...this.state$.value,
-          checkoutPhase: { phase: 'error', message: errorMsg },
-          isSaving: false,
-          error: errorMsg,
-        });
-        observer.error(error);
-      }
-    });
-  }
-
-  /**
-   * Sauvegarde l'entrée comptable (BookEntry)
-   */
-  private saveCheckoutEntry(sessionId: string, session: any): Observable<BookEntry> {
-    return new Observable((observer) => {
-      // Utilise cartService pour sauvegarder (cartService doit avoir le panier configuré)
-      const stripeTag = getShortStripeTag(sessionId);
-      this.cartService.setStripeTag(stripeTag);
-
-      this.cartService.save_sale(session)
-        .then((entry) => {
-          observer.next(entry);
-          observer.complete();
-        })
-        .catch((error) => {
-          observer.error(error);
+      // Marquer la transaction comme traitée puis récupérer le reçu
+      this.markProcessed(sessionId)
+        .pipe(
+          tap(() => {
+            this.fetchReceipt(sessionId);
+            this.setState({
+              ...this.state$.value,
+              checkoutPhase: { phase: 'success', sessionId },
+              isSaving: false,
+            });
+            // Nettoyer sessionStorage
+            sessionStorage.removeItem('stripe_session_id');
+            sessionStorage.removeItem('stripe_book_entry_id');
+          }),
+          map(() => ({} as BookEntry)), // BookEntry déjà créé — retourne un objet vide pour compatibilité
+          catchError((error) => {
+            const errorMsg = error instanceof Error ? error.message : String(error);
+            console.error('[Stripe] Error in completeCheckout:', errorMsg);
+            this.setState({
+              ...this.state$.value,
+              checkoutPhase: { phase: 'error', message: errorMsg },
+              isSaving: false,
+              error: errorMsg,
+            });
+            this.toastService.showErrorToast('Paiement', `Erreur: ${errorMsg}`);
+            observer.error(error);
+            return of(null as any);
+          })
+        )
+        .subscribe({
+          next: (entry) => { observer.next(entry); observer.complete(); },
+          error: (err) => console.error('[Stripe] Subscribe error:', err),
         });
     });
   }
@@ -269,8 +230,8 @@ export class StripeCheckoutOrchestrator {
         if (url) {
           this.setState({
             ...this.state$.value,
-            checkoutPhase: { 
-              phase: 'success', 
+            checkoutPhase: {
+              phase: 'success',
               sessionId,
               receiptUrl: url,
             },
@@ -284,89 +245,27 @@ export class StripeCheckoutOrchestrator {
   }
 
   /**
-   * Prépare/restaure le panier Stripe après un retour de Stripe
-   * Reconstruit le panier depuis le sessionStorage avec les données sauvegardées
+   * Annule un checkout en cours : supprime le BookEntry créé en amont (BookEntry-first).
+   * Appelé en retour sur cancel_url.
    */
-  async prepareCheckoutCart(
-    sessionId: string,
-    loggedMember: Member,
-    members: Member[],
-    allProducts: Product[]
-  ): Promise<{ debtAmount: number; assetAmount: number }> {
-    const raw = sessionStorage.getItem(STRIPE_CART_KEY);
-    if (!raw) {
-      console.warn('No Stripe cart found in sessionStorage');
-      return { debtAmount: 0, assetAmount: 0 };
+  async cancelPendingCheckout(): Promise<void> {
+    const bookEntryId = sessionStorage.getItem('stripe_book_entry_id');
+    if (bookEntryId) {
+      try {
+        await this.dbHandler.deleteBookEntry(bookEntryId);
+        console.log(`[Stripe] BookEntry ${bookEntryId} supprimé suite à annulation`);
+      } catch (error) {
+        console.error('[Stripe] Erreur suppression BookEntry annulé:', error);
+        // Non-bloquant — sera détecté à la réconciliation
+      }
     }
-
-    try {
-      const stored: { snapshot: Array<{ productId: string; payeeId?: string; pairedMemberId?: string }>; sessionId?: string } = JSON.parse(raw);
-      const snapshot = stored.snapshot;
-
-      // Vérifier que toutes les données sont chargées
-      if (!loggedMember || !members?.length || !allProducts?.length) {
-        console.warn('Missing data for Stripe cart restoration:', { loggedMember: !!loggedMember, members: members?.length, products: allProducts?.length });
-        return { debtAmount: 0, assetAmount: 0 };
-      }
-
-      const buyer = members.find(m => m.id === loggedMember.id);
-      if (!buyer) {
-        console.warn('Buyer not found for Stripe cart restoration');
-        return { debtAmount: 0, assetAmount: 0 };
-      }
-
-      // Reconstruire le panier
-      this.cartService.clearCart();
-      this.cartService.setBuyer(buyer.lastname + ' ' + buyer.firstname);
-
-      for (const item of snapshot) {
-        const product = allProducts.find(p => p.id === item.productId);
-        if (!product) continue;
-        const payee = item.payeeId ? (members.find(m => m.id === item.payeeId) ?? buyer) : buyer;
-        let paired: Member | undefined;
-        if (item.pairedMemberId) {
-          paired = members.find(m => m.id === item.pairedMemberId);
-        }
-        const cartItem = this.cartService.build_cart_item(product, payee, paired);
-        this.cartService.addToCart(cartItem);
-      }
-
-      // Recalculer dette et avoir avec le service
-      const debtAmount = await this.buyerContext.loadDebt(buyer);
-      if (debtAmount > 0) {
-        this.cartService.setDebt(buyer.lastname + ' ' + buyer.firstname, debtAmount);
-      }
-
-      const assetAmount = await this.buyerContext.loadAssets(buyer);
-      if (assetAmount > 0) {
-        this.cartService.setAsset(buyer.lastname + ' ' + buyer.firstname, assetAmount);
-      }
-
-      // Payment mode = virement bancaire (Stripe)
-      this.cartService.payment = {
-        mode: PaymentMode.TRANSFER,
-        amount: this.cartService.getCartAmount(),
-        payer_id: buyer.id,
-        bank: '',
-        cheque_no: '',
-      };
-
-      // Tag pour traçabilité
-      this.cartService.setStripeTag(getShortStripeTag(sessionId));
-
-      // Nettoyer sessionStorage
-      sessionStorage.removeItem(STRIPE_CART_KEY);
-
-      return { debtAmount, assetAmount };
-    } catch (error) {
-      console.error('Error preparing Stripe cart:', error);
-      this.toastService.showErrorToast('Paiement', 'Erreur lors de la préparation du panier');
-      return { debtAmount: 0, assetAmount: 0 };
-    }
+    sessionStorage.removeItem('stripe_session_id');
+    sessionStorage.removeItem('stripe_book_entry_id');
+    this.reset();
   }
 
   /**
-   * Get current checkout phase - allows components to check state immediately without subscription timing issues
+   * Get current checkout phase
    */
   getCurrentPhase(): string {
     return this.state$.value.checkoutPhase.phase;

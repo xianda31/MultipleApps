@@ -1,65 +1,156 @@
 <div class="container-fluid mt-3">
-  <h4>Réconciliation Stripe</h4>
-  <p class="text-muted">Paiements Stripe reçus sans écriture comptable (utilisateur non revenu après paiement)</p>
+  <h4>Réconciliation Stripe — Virements bancaires</h4>
+  <p class="text-muted small">Paiements carte validés, en attente de virement Stripe (payout) vers le compte bancaire.</p>
 
-  @if (loading) {
-    <div class="d-flex align-items-center gap-2 my-4">
+  <!-- Tableau des paiements en attente -->
+  @if (loadingLines) {
+    <div class="d-flex align-items-center gap-2 my-3">
       <div class="spinner-border spinner-border-sm" role="status"></div>
       <span>Chargement…</span>
     </div>
   }
 
-  @if (!loading && pending.length === 0) {
-    <div class="alert alert-success mt-3">
-      <i class="bi bi-check-circle"></i> Aucun paiement Stripe en attente de traitement.
+  @if (!loadingLines && lines.length === 0) {
+    <div class="alert alert-success">
+      <i class="bi bi-check-circle"></i> Tous les paiements carte sont réconciliés avec un payout.
     </div>
   }
 
-  @if (!loading && pending.length > 0) {
-    <div class="d-flex justify-content-between align-items-center mb-2">
-      <span class="badge bg-warning text-dark">{{ pending.length }} paiement(s) non traité(s)</span>
-      <button class="btn btn-sm btn-primary" (click)="processAll()" [disabled]="processing.size > 0">
-        Tout traiter
-      </button>
-    </div>
-
-    <table class="table table-sm table-striped align-middle">
-      <thead>
+  @if (!loadingLines && lines.length > 0) {
+    <table class="table table-sm table-hover align-middle mb-0">
+      <thead class="table-light">
         <tr>
+          <th style="width:36px">
+            <input type="checkbox" class="form-check-input"
+                   [checked]="allSelected"
+                   (change)="toggleAll($any($event.target).checked)">
+          </th>
           <th>Date</th>
           <th>Acheteur</th>
-          <th>Montant</th>
-          <th>Articles</th>
-          <th>Session Stripe</th>
-          <th></th>
+          <th>Panier</th>
+          <th class="text-end">Brut</th>
+          <th class="text-end">Frais</th>
+          <th class="text-end">Net</th>
+          <th>Tag Stripe</th>
         </tr>
       </thead>
       <tbody>
-        @for (tx of pending; track tx.id) {
-          <tr>
-            <td>{{ formatDate(tx.createdAt) }}</td>
-            <td>{{ tx.buyerName }}</td>
-            <td class="text-end">{{ formatAmount(tx.amountCents) }}</td>
-            <td><small>{{ tx.cartSummary }}</small></td>
-            <td><small class="text-muted font-monospace">{{ tx.stripeSessionId | slice:0:20 }}…</small></td>
+        @for (line of lines; track line.bookEntry.id) {
+          <tr [class.table-primary]="line.selected">
             <td>
-              <button class="btn btn-sm btn-outline-success"
-                      (click)="processTransaction(tx)"
-                      [disabled]="processing.has(tx.id)">
-                @if (processing.has(tx.id)) {
-                  <span class="spinner-border spinner-border-sm"></span>
-                } @else {
-                  Traiter
-                }
-              </button>
+              <input type="checkbox" class="form-check-input" [(ngModel)]="line.selected">
             </td>
+            <td>{{ formatDate(line.bookEntry.date) }}</td>
+            <td>{{ line.buyerName }}</td>
+            <td><small class="text-muted">{{ line.cartSummary }}</small></td>
+            <td class="text-end">{{ formatAmount(line.grossCents) }}</td>
+            <td class="text-end">
+              @if (line.feesCents > 0) {
+                <span class="text-danger">{{ formatAmount(line.feesCents) }}</span>
+              } @else {
+                <span class="text-muted">—</span>
+              }
+            </td>
+            <td class="text-end fw-semibold">{{ formatAmount(line.netCents) }}</td>
+            <td><small class="font-monospace text-muted">{{ line.bookEntry.stripeTag }}</small></td>
           </tr>
         }
       </tbody>
+      @if (selectedLines.length > 0) {
+        <tfoot class="table-secondary fw-bold">
+          <tr>
+            <td colspan="4" class="text-end">{{ selectedLines.length }} sélectionné(s)</td>
+            <td class="text-end">{{ formatAmount(selectedGrossCents) }}</td>
+            <td class="text-end text-danger">{{ formatAmount(selectedFeesCents) }}</td>
+            <td class="text-end">{{ formatAmount(selectedNetCents) }}</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      }
     </table>
   }
 
-  <button class="btn btn-sm btn-outline-secondary mt-2" (click)="loadPendingTransactions()" [disabled]="loading">
-    <i class="bi bi-arrow-clockwise"></i> Rafraîchir
-  </button>
+  <!-- Formulaire de création du payout -->
+  @if (!loadingLines) {
+    <div class="card border-primary mt-3" style="max-width: 560px;">
+      <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <span>Créer l'écriture de virement Stripe</span>
+        <button class="btn btn-sm btn-outline-light ms-auto" (click)="loadLines()" [disabled]="loadingLines">
+          <i class="bi bi-arrow-clockwise"></i>
+        </button>
+      </div>
+      <div class="card-body">
+
+        <!-- Auto-remplir depuis Stripe (Approche B) -->
+        <div class="mb-3">
+          <label class="form-label form-label-sm fw-semibold">Identifiant payout Stripe</label>
+          <div class="input-group input-group-sm">
+            <input type="text" class="form-control font-monospace"
+                   placeholder="po_..." [(ngModel)]="payoutId">
+            <button class="btn btn-outline-primary" (click)="lookupPayout()"
+                    [disabled]="lookingUp || !payoutId.trim()">
+              @if (lookingUp) {
+                <span class="spinner-border spinner-border-sm me-1"></span>
+              } @else {
+                <i class="bi bi-search me-1"></i>
+              }
+              Auto-remplir
+            </button>
+          </div>
+          <div class="form-text">Entrez le payout ID (tableau de bord Stripe) pour auto-sélectionner les paiements et récupérer les frais.</div>
+        </div>
+
+        <!-- Date -->
+        <div class="mb-3">
+          <label class="form-label form-label-sm">Date du virement (relevé bancaire)</label>
+          <input type="date" class="form-control form-control-sm" [(ngModel)]="payoutDate">
+        </div>
+
+        <!-- Validation net bancaire -->
+        <div class="mb-3">
+          <label class="form-label form-label-sm">Montant net (relevé bancaire) — validation</label>
+          <div class="input-group input-group-sm">
+            <input type="number" class="form-control" step="0.01" min="0"
+                   placeholder="ex: 33.61" [(ngModel)]="netBancaire">
+            <span class="input-group-text">€</span>
+            @if (netBancaire !== null) {
+              <span class="input-group-text"
+                    [class.text-success]="netMatch"
+                    [class.text-danger]="!netMatch">
+                @if (netMatch) { <i class="bi bi-check-circle-fill"></i> }
+                @else { <i class="bi bi-x-circle-fill"></i> }
+              </span>
+            }
+          </div>
+          @if (netBancaire !== null && !netMatch) {
+            <div class="text-danger form-text">
+              Calculé : {{ formatAmount(selectedNetCents) }}
+            </div>
+          }
+        </div>
+
+        <!-- Récapitulatif -->
+        @if (selectedLines.length > 0) {
+          <div class="d-flex justify-content-between text-muted small border-top pt-2 mb-3">
+            <span>Brut : <strong>{{ formatAmount(selectedGrossCents) }}</strong></span>
+            <span>Frais : <strong class="text-danger">{{ formatAmount(selectedFeesCents) }}</strong></span>
+            <span>Net : <strong class="text-dark">{{ formatAmount(selectedNetCents) }}</strong></span>
+          </div>
+        }
+
+        <!-- Bouton valider -->
+        <button class="btn btn-primary w-100"
+                (click)="createPayout()"
+                [disabled]="processingPayout || !payoutId.trim() || selectedLines.length === 0 || selectedNetCents <= 0">
+          @if (processingPayout) {
+            <span class="spinner-border spinner-border-sm me-1"></span>
+          }
+          Valider — {{ selectedLines.length }} paiement(s)
+          @if (selectedNetCents > 0) {
+            ({{ formatAmount(selectedNetCents) }} net)
+          }
+        </button>
+      </div>
+    </div>
+  }
 </div>

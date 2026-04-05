@@ -276,13 +276,14 @@ export class CartService {
     if (payment_mode === PaymentMode.CREDIT) {
       return TRANSACTION_ID.achat_adhérent_en_espèces;
     }
-
     if (payment_mode === PaymentMode.CHEQUE) {
       return TRANSACTION_ID.achat_adhérent_par_chèque;
-    } else {
-      if (payment_mode === PaymentMode.TRANSFER) {
-        return TRANSACTION_ID.achat_adhérent_par_virement;
-      }
+    }
+    if (payment_mode === PaymentMode.TRANSFER) {
+      return TRANSACTION_ID.achat_adhérent_par_virement;
+    }
+    if (payment_mode === PaymentMode.CARD) {
+      return TRANSACTION_ID.achat_adhérent_par_carte;
     }
     return TRANSACTION_ID.achat_adhérent_en_espèces;
   }

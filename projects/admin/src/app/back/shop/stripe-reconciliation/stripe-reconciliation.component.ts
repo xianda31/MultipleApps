@@ -1,143 +1,241 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { DBhandler } from '../../../common/services/graphQL.service';
 import { BookService } from '../../services/book.service';
-import { CartService } from '../cart/cart.service';
 import { MembersService } from '../../../common/services/members.service';
-import { ProductService } from '../../../common/services/product.service';
-import { SystemDataService } from '../../../common/services/system-data.service';
 import { ToastService } from '../../../common/services/toast.service';
+import { SystemDataService } from '../../../common/services/system-data.service';
+import { StripeService } from '../../../front/services/stripe.service';
 import { Member } from '../../../common/interfaces/member.interface';
-import { Product } from '../../products/product.interface';
-import { PaymentMode } from '../cart/cart.interface';
-import { TRANSACTION_ID } from '../../../common/interfaces/accounting.interface';
-import { getShortStripeTag } from '../../../common/utilities/stripe-utils';
+import { BookEntry, TRANSACTION_ID, FINANCIAL_ACCOUNT } from '../../../common/interfaces/accounting.interface';
 
-interface PendingTransaction {
-  id: string;
-  stripeSessionId: string;
-  buyerMemberId: string;
-  amountCents: number;
-  currency: string;
-  customerEmail: string;
-  createdAt: string;
-  stripeMeta: {
-    cartSnapshot: string;
-    season: string;
-    date: string;
-    memberName: string;
-    debtAmountCents: string;
-    assetAmountCents: string;
-  };
-  // enrichi côté frontend
-  buyerName?: string;
-  cartSummary?: string;
-  alreadyBooked?: boolean;
+interface PayoutLine {
+  bookEntry: BookEntry;
+  stripeTransaction: any | null;   // StripeTransaction enrichie
+  buyerName: string;
+  cartSummary: string;
+  grossCents: number;              // = bookEntry.amounts[stripe_in] * 100
+  feesCents: number;               // depuis StripeTransaction.amountFeesCents ou payout lookup
+  get netCents(): number;
+  selected: boolean;
 }
 
 @Component({
   selector: 'app-stripe-reconciliation',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './stripe-reconciliation.component.html',
 })
 export class StripeReconciliationComponent {
-  pending: PendingTransaction[] = [];
-  loading = true;
-  processing = new Set<string>();
+
+  lines: PayoutLine[] = [];
+  loadingLines = false;
+
+  // Formulaire payout
+  payoutId = '';
+  payoutDate = new Date().toISOString().slice(0, 10);
+  netBancaire: number | null = null;   // montant net saisi depuis le relevé bancaire
+  lookingUp = false;
+  processingPayout = false;
+
+  // Computed
+  get selectedLines(): PayoutLine[] { return this.lines.filter(l => l.selected); }
+  get selectedGrossCents(): number { return this.selectedLines.reduce((s, l) => s + l.grossCents, 0); }
+  get selectedFeesCents(): number { return this.selectedLines.reduce((s, l) => s + l.feesCents, 0); }
+  get selectedNetCents(): number { return this.selectedGrossCents - this.selectedFeesCents; }
+  get netMatch(): boolean {
+    return this.netBancaire !== null &&
+      Math.round(this.netBancaire * 100) === this.selectedNetCents;
+  }
+  get allSelected(): boolean { return this.lines.length > 0 && this.lines.every(l => l.selected); }
 
   private members: Member[] = [];
-  private products: Product[] = [];
-  private bookEntriesLoaded = false;
 
   constructor(
     private dbHandler: DBhandler,
     private bookService: BookService,
-    private cartService: CartService,
     private membersService: MembersService,
-    private productService: ProductService,
-    private systemDataService: SystemDataService,
     private toastService: ToastService,
+    private systemDataService: SystemDataService,
+    private stripeService: StripeService,
   ) {}
 
   ngOnInit(): void {
-    // Charger membres, produits et écritures comptables, puis vérifier
     this.bookService.list_book_entries().subscribe(() => {
-      this.bookEntriesLoaded = true;
-
       this.membersService.listMembers().subscribe((members) => {
         this.members = members;
-
-        this.productService.listProducts().subscribe((products) => {
-          this.products = products;
-          this.loadPendingTransactions();
-        });
+        this.loadLines();
       });
     });
   }
 
-  async loadPendingTransactions(): Promise<void> {
-    this.loading = true;
+  async loadLines(): Promise<void> {
+    this.loadingLines = true;
     try {
-      const raw = await this.dbHandler.listUnprocessedStripeTransactions();
-      this.pending = raw.map((t: any) => this.enrichTransaction(t)).filter(t => !t.alreadyBooked);
+      // BookEntries achat_adhérent_par_carte sans deposit_ref (= non encore réconciliés avec un payout)
+      const bookEntries = this.bookService.get_book_entries()
+        .filter(e =>
+          e.transaction_id === TRANSACTION_ID.achat_adhérent_par_carte &&
+          !e.deposit_ref &&
+          e.stripeTag   // a un tag Stripe = paiement Stripe confirmé
+        );
+
+      // StripeTransactions complétées sans payoutId
+      const stripeTransactions = await this.dbHandler.listUnpayoutedStripeTransactions();
+
+      this.lines = bookEntries.map(be => {
+        const st = stripeTransactions.find(
+          (t: any) => t.bookEntryId === be.id || (be.stripeTag && t.stripeTag === be.stripeTag)
+        ) || null;
+
+        const grossCents = Math.round(((be.amounts as any)[FINANCIAL_ACCOUNT.STRIPE_debit] || 0) * 100);
+
+        const member = this.members.find(m =>
+          be.operations.some(op => op.member && op.member.includes(m.lastname))
+        );
+        const buyerName = member
+          ? member.lastname + ' ' + member.firstname
+          : be.operations.find(op => op.member)?.member || be.tag || '(inconnu)';
+
+        const cartSummary = be.operations
+          .filter(op => op.member)
+          .map(op => op.label)
+          .join(', ') || this.formatAmount(grossCents);
+
+        const line: PayoutLine = {
+          bookEntry: be,
+          stripeTransaction: st,
+          buyerName,
+          cartSummary,
+          grossCents,
+          feesCents: st?.amountFeesCents || 0,
+          get netCents() { return this.grossCents - this.feesCents; },
+          selected: false,
+        };
+        return line;
+      });
     } catch (error) {
-      console.error('Erreur chargement transactions Stripe:', error);
-      this.toastService.showErrorToast('Réconciliation', 'Impossible de charger les transactions Stripe');
+      console.error('Erreur chargement lignes payout:', error);
+      this.toastService.showErrorToast('Réconciliation', 'Impossible de charger les paiements');
     } finally {
-      this.loading = false;
+      this.loadingLines = false;
+    }
+  }
+
+  toggleAll(checked: boolean): void {
+    this.lines.forEach(l => l.selected = checked);
+  }
+
+  /**
+   * Approche B : auto-sélection depuis Stripe API
+   */
+  async lookupPayout(): Promise<void> {
+    if (!this.payoutId.trim()) {
+      this.toastService.showWarning('Lookup payout', 'Identifiant payout requis (po_...)');
+      return;
+    }
+    this.lookingUp = true;
+    try {
+      const result = await this.stripeService.lookupPayout(this.payoutId.trim());
+
+      // Désélectionner tout d'abord
+      this.lines.forEach(l => l.selected = false);
+
+      let matched = 0;
+      result.charges.forEach((charge: any) => {
+        const line = this.lines.find(l =>
+          l.bookEntry.id === charge.bookEntryId ||
+          (l.bookEntry.stripeTag && l.bookEntry.stripeTag === charge.stripeTag)
+        );
+        if (line) {
+          line.selected = true;
+          line.feesCents = charge.feesCents;
+          matched++;
+        }
+      });
+
+      // Pré-remplir le net bancaire
+      this.netBancaire = result.totalNetCents / 100;
+
+      this.toastService.showSuccess('Lookup payout',
+        `${matched} paiement(s) identifié(s) sur ${result.charges.length} charge(s) Stripe`);
+    } catch (error: any) {
+      this.toastService.showErrorToast('Lookup payout', error?.message || 'Erreur Stripe API');
+    } finally {
+      this.lookingUp = false;
     }
   }
 
   /**
-   * Enrichit une StripeTransaction brute avec des infos lisibles
-   * et vérifie si un BookEntry avec tag stripe:<sessionId> existe déjà
+   * Approche A+B : créer l'écriture virement + marquer les BookEntries
    */
-  private enrichTransaction(t: any): PendingTransaction {
-    const meta = (typeof t.stripeMeta === 'string' ? JSON.parse(t.stripeMeta) : t.stripeMeta) || {};
-    const pt: PendingTransaction = {
-      id: t.id,
-      stripeSessionId: t.stripeSessionId || t.id,
-      buyerMemberId: t.buyerMemberId || '',
-      amountCents: t.amountCents,
-      currency: t.currency,
-      customerEmail: t.customerEmail || '',
-      createdAt: t.createdAt || '',
-      stripeMeta: {
-        cartSnapshot: meta.cartSnapshot || '[]',
-        season: meta.season || '',
-        date: meta.date || '',
-        memberName: meta.memberName || '',
-        debtAmountCents: meta.debtAmountCents || '0',
-        assetAmountCents: meta.assetAmountCents || '0',
-      },
-    };
-
-    // Résoudre le nom de l'acheteur
-    const member = this.members.find(m => m.id === pt.buyerMemberId);
-    pt.buyerName = member
-      ? member.lastname + ' ' + member.firstname
-      : pt.stripeMeta.memberName || pt.customerEmail || '(inconnu)';
-
-    // Résumé du panier
-    try {
-      const snapshot: Array<{ productId: string }> = JSON.parse(pt.stripeMeta.cartSnapshot);
-      const names = snapshot.map(item => {
-        const prod = this.products.find(p => p.id === item.productId);
-        return prod?.name || item.productId;
-      });
-      pt.cartSummary = names.join(', ') || '(vide)';
-    } catch {
-      pt.cartSummary = '(erreur parsing)';
+  async createPayout(): Promise<void> {
+    if (!this.payoutId.trim()) {
+      this.toastService.showWarning('Payout', 'Identifiant payout Stripe requis');
+      return;
+    }
+    if (this.selectedLines.length === 0) {
+      this.toastService.showWarning('Payout', 'Aucun paiement sélectionné');
+      return;
+    }
+    if (this.selectedNetCents <= 0) {
+      this.toastService.showWarning('Payout', 'Montant net invalide');
+      return;
     }
 
-    // Vérifier si un BookEntry existe déjà pour cette session
-    const stripeTag = getShortStripeTag(pt.stripeSessionId);
-    const existingEntry = this.bookService.get_book_entries()
-      .find(e => e.stripeTag === stripeTag);
-    pt.alreadyBooked = !!existingEntry;
+    this.processingPayout = true;
+    const reconciledAt = new Date().toISOString();
+    const pId = this.payoutId.trim();
 
-    return pt;
+    try {
+      // 1. Écriture virement_stripe_vers_banque
+      await this.bookService.create_book_entry({
+        id: '',
+        season: this.systemDataService.get_season(new Date(this.payoutDate)),
+        date: this.payoutDate,
+        transaction_id: TRANSACTION_ID.virement_stripe_vers_banque,
+        deposit_ref: pId,
+        amounts: {
+          [FINANCIAL_ACCOUNT.STRIPE_credit]: this.selectedGrossCents / 100,
+          [FINANCIAL_ACCOUNT.BANK_debit]: this.selectedNetCents / 100,
+        } as any,
+        operations: this.selectedFeesCents > 0 ? [{
+          label: 'frais stripe',
+          values: { 'BNQ': this.selectedFeesCents / 100 },
+        }] : [],
+      });
+
+      // 2. Mettre à jour deposit_ref sur chaque BookEntry sélectionné
+      await Promise.all(
+        this.selectedLines.map(l =>
+          this.bookService.update_book_entry({ ...l.bookEntry, deposit_ref: pId })
+        )
+      );
+
+      // 3. Taguer les StripeTransactions avec le payoutId
+      await Promise.all(
+        this.selectedLines
+          .filter(l => l.stripeTransaction)
+          .map(l => this.dbHandler.updateStripeTransactionPayout(l.stripeTransaction.id, pId, reconciledAt))
+      );
+
+      this.toastService.showSuccess('Payout',
+        `Écriture créée — ${this.selectedLines.length} paiement(s) réconcilié(s) ` +
+        `(brut: ${this.formatAmount(this.selectedGrossCents)}, ` +
+        `frais: ${this.formatAmount(this.selectedFeesCents)}, ` +
+        `net: ${this.formatAmount(this.selectedNetCents)})`);
+
+      // Reset
+      this.payoutId = '';
+      this.netBancaire = null;
+      await this.loadLines();
+    } catch (error: any) {
+      console.error('Erreur création payout:', error);
+      this.toastService.showErrorToast('Payout', 'Erreur lors de la création de l\'écriture');
+    } finally {
+      this.processingPayout = false;
+    }
   }
 
   formatAmount(cents: number): string {
@@ -148,113 +246,9 @@ export class StripeReconciliationComponent {
     if (!iso) return '—';
     try {
       return new Date(iso).toLocaleDateString('fr-FR', {
-        day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        day: '2-digit', month: '2-digit', year: 'numeric'
       });
-    } catch {
-      return iso;
-    }
-  }
-
-  /**
-   * Traite une transaction : reconstruit le panier et crée BookEntry + GameCard
-   * via les services Angular existants (aucun code métier dupliqué)
-   */
-  async processTransaction(tx: PendingTransaction): Promise<void> {
-    if (this.processing.has(tx.id)) return;
-    this.processing.add(tx.id);
-
-    try {
-      const buyer = this.members.find(m => m.id === tx.buyerMemberId);
-      if (!buyer) {
-        this.toastService.showErrorToast('Réconciliation', `Membre introuvable: ${tx.buyerMemberId}`);
-        return;
-      }
-
-      const snapshot: Array<{ productId: string; pairedMemberId?: string }> =
-        JSON.parse(tx.stripeMeta.cartSnapshot);
-
-      if (!snapshot.length) {
-        this.toastService.showWarning('Réconciliation', 'Panier vide — transaction ignorée');
-        await this.markProcessed(tx);
-        return;
-      }
-
-      // Reconstruire le panier via CartService (même logique que shop)
-      this.cartService.clearCart();
-      this.cartService.setSeller('en ligne');
-      this.cartService.setBuyer(buyer.lastname + ' ' + buyer.firstname);
-
-      for (const item of snapshot) {
-        const product = this.products.find(p => p.id === item.productId);
-        if (!product) {
-          console.warn(`Produit ${item.productId} introuvable — ignoré`);
-          continue;
-        }
-        let paired: Member | undefined;
-        if (item.pairedMemberId) {
-          paired = this.members.find(m => m.id === item.pairedMemberId);
-        }
-        const cartItem = this.cartService.build_cart_item(product, buyer, paired);
-        this.cartService.addToCart(cartItem);
-      }
-
-      // Recalculer dette/avoir depuis les écritures comptables
-      const buyerName = buyer.lastname + ' ' + buyer.firstname;
-      const debt = this.bookService.find_member_debt(buyerName);
-      if (debt > 0) this.cartService.setDebt(buyerName, debt);
-      const asset = this.bookService.find_assets(buyerName);
-      if (asset > 0) this.cartService.setAsset(buyerName, asset);
-
-      // Tag Stripe pour traçabilité et détection de doublon
-      this.cartService.setStripeTag(getShortStripeTag(tx.stripeSessionId));
-
-      // Session comptable : utiliser les données du paiement original
-      const session = {
-        season: tx.stripeMeta.season || this.systemDataService.get_season(new Date()),
-        date: tx.stripeMeta.date || new Date().toISOString().split('T')[0],
-      };
-
-      // Mode de paiement = virement (Stripe)
-      this.cartService.payment = {
-        mode: PaymentMode.TRANSFER,
-        amount: this.cartService.getCartAmount(),
-        payer_id: buyer.id,
-        bank: '',
-        cheque_no: '',
-      };
-
-      // Créer le BookEntry + GameCard via save_sale
-      await this.cartService.save_sale(session, buyer);
-
-      // Marquer comme traitée dans StripeTransaction
-      await this.markProcessed(tx);
-
-      this.toastService.showSuccess('Réconciliation',
-        `Vente ${buyerName} enregistrée (${this.formatAmount(tx.amountCents)})`);
-
-      // Retirer de la liste
-      this.pending = this.pending.filter(p => p.id !== tx.id);
-
-    } catch (error) {
-      console.error('Erreur traitement transaction:', tx.id, error);
-      this.toastService.showErrorToast('Réconciliation',
-        `Erreur lors du traitement de la vente pour ${tx.buyerName}`);
-    } finally {
-      this.processing.delete(tx.id);
-    }
-  }
-
-  async processAll(): Promise<void> {
-    for (const tx of [...this.pending]) {
-      await this.processTransaction(tx);
-    }
-  }
-
-  private async markProcessed(tx: PendingTransaction): Promise<void> {
-    try {
-      await this.dbHandler.markStripeTransactionProcessed(tx.id);
-    } catch (error) {
-      console.error('Erreur marquage transaction:', tx.id, error);
-    }
+    } catch { return iso; }
   }
 }
+

@@ -115,6 +115,14 @@ httpApi.addRoutes({
   integration: stripeCheckoutIntegration,
 });
 
+// 🔒 Stripe Payout Lookup - Admin uniquement (réconciliation payout)
+httpApi.addRoutes({
+  path: "/api/stripe/payout-lookup",
+  methods: [HttpMethod.POST],
+  integration: stripeCheckoutIntegration,
+  authorizer: userPoolAuthorizer,
+});
+
 // 🔒 Stripe Webhooks - Pas d'autorisation (Stripe appel en webhook)
 httpApi.addRoutes({
   path: "/api/stripe/webhooks",

@@ -425,10 +425,33 @@ export class DBhandler {
     return (data as any[]).filter((t: any) => t.status === 'completed' && !t.processed);
   }
 
+  async listUnpayoutedStripeTransactions(): Promise<any[]> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { data, errors } = await client.models.StripeTransaction.list({ limit: 300 });
+    if (errors) throw errors;
+    return (data as any[]).filter((t: any) => t.status === 'completed' && !t.payoutId);
+  }
+
   async markStripeTransactionProcessed(id: string): Promise<void> {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode });
     const { errors } = await client.models.StripeTransaction.update({ id, processed: true } as any);
+    if (errors) throw errors;
+  }
+
+  async listProcessedUnpayoutedStripeTransactions(): Promise<any[]> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { data, errors } = await client.models.StripeTransaction.list({ limit: 300 });
+    if (errors) throw errors;
+    return (data as any[]).filter((t: any) => t.processed === true && !t.payoutId);
+  }
+
+  async updateStripeTransactionPayout(id: string, payoutId: string, reconciledAt: string): Promise<void> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { errors } = await client.models.StripeTransaction.update({ id, payoutId, reconciledAt } as any);
     if (errors) throw errors;
   }
 

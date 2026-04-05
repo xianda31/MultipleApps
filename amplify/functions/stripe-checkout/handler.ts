@@ -32,8 +32,8 @@ interface CheckoutRequest {
   assetAmountCents?: number;  // Montant d'avoir optionnel (en centimes)
   discountAmountCents?: number; // Ristourne staff uniquement (mode offline QR)
   memberName?: string;  // Nom du membre (pour traçabilité)
-  buyerMemberId?: string; // DynamoDB Member ID (pour reconstruction webhook)
-  cartSnapshot?: Array<{ productId: string; payeeId?: string; pairedMemberId?: string }>; // détail panier
+  buyerMemberId?: string; // DynamoDB Member ID (pour traçabilité)
+  bookEntryId?: string;  // ID du BookEntry créé avant navigation (BookEntry-first)
   season?: string; // saison comptable
   date?: string; // date ISO YYYY-MM-DD
 }
@@ -121,12 +121,16 @@ async function getValidatedProducts(
 }
 
 /**
- * Handler principal: Route vers checkout ou receipt selon le path
+/**
+ * Handler principal: Route vers checkout, receipt ou payout-lookup selon le path
  */
 export async function handler(event: any): Promise<any> {
   const path = event.rawPath || event.path || '';
   if (path.endsWith('/receipt')) {
     return handleReceipt(event);
+  }
+  if (path.endsWith('/payout-lookup')) {
+    return handlePayoutLookup(event);
   }
   return handleCheckout(event);
 }
@@ -222,7 +226,7 @@ async function handleCheckout(event: any): Promise<any> {
           assetAmountCents: event.assetAmountCents,
           memberName: event.memberName,
           buyerMemberId: event.buyerMemberId,
-          cartSnapshot: event.cartSnapshot,
+          bookEntryId: event.bookEntryId,
           season: event.season,
           date: event.date,
         };
@@ -395,9 +399,10 @@ async function handleCheckout(event: any): Promise<any> {
         assetAmountCents: assetAmountCents.toString(),
         discountAmountCents: discountAmountCents.toString(),
         buyerMemberId: request.buyerMemberId || '',
-        cartSnapshot: JSON.stringify(request.cartSnapshot || []),
+        bookEntryId: request.bookEntryId || '',
         season: request.season || '',
         date: request.date || '',
+        // stripeTag sera ajouté après création de la session (lié au sessionId)
       },
       automatic_tax: {
         enabled: false,
@@ -410,6 +415,9 @@ async function handleCheckout(event: any): Promise<any> {
     }
 
     const session = await stripe.checkout.sessions.create(sessionParams);
+
+    // stripeTag dérivé du sessionId — calculé côté webhook via session.id.slice(-12)
+    // (les sessions Stripe sont immutables après création, pas de sessions.update)
 
     // Retourner en réponse
     return {
@@ -448,6 +456,74 @@ function isValidUrl(url: string): boolean {
     return parsed.protocol === 'https:' || parsed.hostname === 'localhost';
   } catch {
     return false;
+  }
+}
+
+/**
+ * Lookup payout Stripe : retourne les charges associées à un payout
+ * ⚠️ Admin-only — vérifié par la route API Gateway (userPoolAuthorizer)
+ */
+async function handlePayoutLookup(event: any): Promise<any> {
+  const CORS = { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' };
+
+  if (!isStaffCaller(event)) {
+    return { statusCode: 403, headers: CORS, body: JSON.stringify({ error: 'Admin required' }) };
+  }
+  if (!STRIPE_SECRET_KEY) {
+    return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: 'STRIPE_SECRET_KEY not configured' }) };
+  }
+
+  try {
+    let bodyObj: any = {};
+    if (typeof event.body === 'string') bodyObj = JSON.parse(event.body);
+    else if (event.body) bodyObj = event.body;
+
+    const payoutId = bodyObj.payoutId;
+    if (!payoutId || typeof payoutId !== 'string' || !payoutId.startsWith('po_')) {
+      return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Invalid payoutId (expected po_...)' }) };
+    }
+
+    // Récupérer toutes les balance transactions du payout, en expandant la charge et son payment_intent
+    const btList = await stripe.balanceTransactions.list({
+      payout: payoutId,
+      limit: 100,
+      expand: ['data.source', 'data.source.payment_intent'],
+    });
+
+    const charges = btList.data
+      .filter((bt: any) => bt.type === 'charge')
+      .map((bt: any) => {
+        const charge = bt.source as Stripe.Charge;
+        const pi = charge?.payment_intent as Stripe.PaymentIntent | null;
+        const meta = pi?.metadata || {};
+        return {
+          chargeId: charge?.id || null,
+          stripeTag: meta['stripeTag'] || null,
+          bookEntryId: meta['bookEntryId'] || null,
+          grossCents: bt.amount,           // montant brut (= amountCents du paiement)
+          feesCents: bt.fee,               // frais Stripe (positif)
+          netCents: bt.net,                // net = gross - fees
+        };
+      });
+
+    return {
+      statusCode: 200,
+      headers: CORS,
+      body: JSON.stringify({
+        payoutId,
+        totalGrossCents: charges.reduce((s: number, c: any) => s + c.grossCents, 0),
+        totalFeesCents: charges.reduce((s: number, c: any) => s + c.feesCents, 0),
+        totalNetCents: charges.reduce((s: number, c: any) => s + c.netCents, 0),
+        charges,
+      }),
+    };
+  } catch (error: any) {
+    console.error('[payout-lookup] ERROR:', error?.message || error);
+    return {
+      statusCode: 500,
+      headers: CORS,
+      body: JSON.stringify({ error: 'Failed to lookup payout: ' + (error?.message || 'unknown') }),
+    };
   }
 }
 

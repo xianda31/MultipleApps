@@ -5,7 +5,7 @@ import { BookEntry, Revenue, FINANCIAL_ACCOUNT, BALANCE_ACCOUNT, Expense, CUSTOM
 import { BehaviorSubject, catchError, from, map, Observable, of, switchMap, tap } from 'rxjs';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { ToastService } from '../../common/services/toast.service';
-import { TRANSACTION_CLASS } from '../../common/interfaces/transaction.definition';
+import { TRANSACTION_CLASS, TRANSACTION_DIRECTORY } from '../../common/interfaces/transaction.definition';
 import { Profit_and_loss } from '../../common/interfaces/system-conf.interface';
 import { DBhandler } from '../../common/services/graphQL.service';
 import { TransactionService } from './transaction.service';
@@ -653,7 +653,16 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
       return [] as Expense[]
     }
     return this._book_entries
-      .filter(book_entry => [TRANSACTION_CLASS.OTHER_EXPENSE, TRANSACTION_CLASS.EXPENSE_FOR_MEMBER].includes(this.transactionService.transaction_class(book_entry.transaction_id)))
+      .filter(book_entry => {
+        const cls = this.transactionService.transaction_class(book_entry.transaction_id);
+        if ([TRANSACTION_CLASS.OTHER_EXPENSE, TRANSACTION_CLASS.EXPENSE_FOR_MEMBER].includes(cls)) return true;
+        // MOVEMENT avec pure_financial=false : contient des frais imputés à des comptes P&L (ex: frais Stripe → BNQ)
+        if (cls === TRANSACTION_CLASS.MOVEMENT) {
+          const def = TRANSACTION_DIRECTORY[book_entry.transaction_id];
+          return def && def.pure_financial === false;
+        }
+        return false;
+      })
       .reduce((acc, book_entry) => {
         const expenses = book_entry.operations
           .map(op => ({

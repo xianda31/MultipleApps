@@ -59,6 +59,8 @@ async function recordStripeTransaction(session: Stripe.Checkout.Session): Promis
     Item: {
       id: session.id,
       stripeSessionId: session.id,
+      stripeTag: meta['stripeTag'] || `stripe:${session.id.slice(-12)}`,  // lien de réconciliation → BookEntry.stripeTag
+      bookEntryId: meta['bookEntryId'] || null,                            // lien direct BookEntry (BookEntry-first)
       buyerMemberId: meta['buyerMemberId'] || null,
       status: 'completed',
       amountCents: session.amount_total || 0,
@@ -66,7 +68,6 @@ async function recordStripeTransaction(session: Stripe.Checkout.Session): Promis
       customerEmail: session.customer_email || null,
       processed: false,
       stripeMeta: {
-        cartSnapshot: meta['cartSnapshot'] || '[]',
         season: meta['season'] || '',
         date: meta['date'] || '',
         memberName: meta['memberName'] || '',

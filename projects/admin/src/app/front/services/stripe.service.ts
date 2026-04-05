@@ -2,6 +2,25 @@ import { Injectable } from '@angular/core';
 import { post } from 'aws-amplify/api';
 import { fetchAuthSession } from 'aws-amplify/auth';
 import { StripeCheckoutRequest, StripeCheckoutResponse } from './front-cart.interface';
+import { environment } from '../../../environments/environment';
+
+// Mocks dev uniquement — jamais utilisés en production
+const MOCK_PAYOUTS: Record<string, any> = {
+  'po_mock_renoux_65': {
+    payoutId: 'po_mock_renoux_65',
+    totalGrossCents: 6500,
+    totalFeesCents: 236,
+    totalNetCents: 6264,
+    charges: [{
+      chargeId: 'ch_test_G49XYpmnzyJu',
+      stripeTag: 'stripe:G49XYpmnzyJu',
+      bookEntryId: 'e3322d9d-82f8-4455-9d0a-13903f3990d8',
+      grossCents: 6500,
+      feesCents: 236,
+      netCents: 6264,
+    }],
+  },
+};
 
 /**
  * Service Stripe - appelle la Lambda de paiement sécurisée
@@ -53,7 +72,7 @@ export class StripeService {
             discountAmountCents: request.discountAmountCents || undefined,
             memberName: request.memberName || undefined,
             buyerMemberId: request.buyerMemberId || undefined,
-            cartSnapshot: request.cartSnapshot || undefined,
+            bookEntryId: request.bookEntryId || undefined,
             season: request.season || undefined,
             date: request.date || undefined,
           } as any,
@@ -104,24 +123,41 @@ export class StripeService {
   }
 
   /**
-   * Récupère le statut d'une session Stripe (optionnel, pour affichage)
+   * Lookup payout Stripe : retourne les charges associées à un payout (Admin seulement)
    */
-  async getSessionStatus(sessionId: string): Promise<any> {
+  async lookupPayout(payoutId: string): Promise<{
+    payoutId: string;
+    totalGrossCents: number;
+    totalFeesCents: number;
+    totalNetCents: number;
+    charges: { chargeId: string; stripeTag: string | null; bookEntryId: string | null; grossCents: number; feesCents: number; netCents: number }[];
+  }> {
+    // Mock dev uniquement
+    if (!environment.production && MOCK_PAYOUTS[payoutId]) {
+      return MOCK_PAYOUTS[payoutId];
+    }
     try {
+      const session = await fetchAuthSession();
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (session.tokens?.idToken) {
+        headers['Authorization'] = `Bearer ${session.tokens.idToken.toString()}`;
+      }
       const restOperation = post({
         apiName: this.API_NAME,
-        path: '/api/stripe/session-status',
+        path: '/api/stripe/payout-lookup',
         options: {
-          body: { sessionId },
-          headers: { 'Content-Type': 'application/json' }
+          body: { payoutId } as any,
+          headers,
         }
       });
-
       const { body } = await restOperation.response;
-      return await body.json();
+      const responseText = await body.text();
+      const response = JSON.parse(responseText);
+      if (response.error) throw new Error(response.error);
+      return response;
     } catch (error: any) {
-      console.error('Erreur récupération statut session:', error);
-      throw error;
+      console.error('Erreur lookup payout Stripe:', error);
+      throw new Error(`Impossible de récupérer le payout: ${error?.message || 'Erreur inconnue'}`);
     }
   }
 }

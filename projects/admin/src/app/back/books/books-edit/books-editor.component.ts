@@ -512,7 +512,7 @@ export class BooksEditorComponent {
       total_expense_or_revenue = -total_expense_or_revenue;
     }
 
-    return total_financial === total_expense_or_revenue;
+    return Math.round(total_financial * 100) === Math.round(total_expense_or_revenue * 100);
   }
 
 
