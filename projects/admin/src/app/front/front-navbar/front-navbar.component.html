@@ -1,6 +1,6 @@
 <!-- Mode laptop : barre de navigation complète -->
 <div *ngIf="!isMobile" class="row d-md-flex h-auto g-0 w-100 py-0 my-0 laptop-navbar-row">
-  <nav class="navbar navbar-dark navbar-expand d-flex w-100 justify-content-center position-relative">
+  <nav class="navbar navbar-dark navbar-expand d-flex w-100 justify-content-center position-relative align-items-center">
     <!-- Logo du club positionné indépendamment (remplace le nom) -->
     <div class="club-name-sticky-independent d-none">
       <a routerLink="contacts" class="nav-link" style="display:flex; align-items:center;">
@@ -22,6 +22,12 @@
         </ul>
       </div>
     </div>
+    <!-- Bouton Accès Membre en haut à droite (mode desktop) -->
+    @if (!(logged_member$ | async)) {
+    <button class="btn btn-light position-absolute end-0 me-3" (click)="espaceMembre.emit()" style="top: 50%; transform: translateY(-50%); font-family: var(--site-font, inherit); ">
+      <i class="bi bi-box-arrow-in-right me-2 text-dark"></i> Accès Membre
+    </button>
+    }
   </nav>
 </div>
 

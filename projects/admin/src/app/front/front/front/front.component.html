@@ -27,7 +27,7 @@
       <ng-template [ngTemplateOutlet]="tplMobile"></ng-template>
     </ng-container>
 
-    <!-- Mode Laptop   -->
+    <!-- Mode Laptop   -->Q
     <ng-template #tplLaptop>
 
       <div class="row d-md-flex align-items-stretch site-banner header-shadow laptop-banner-row g-0 my-0">
@@ -39,8 +39,11 @@
       <app-front-navbar [brandNavitem]="brandNavitem" [navbar_menus]="navbar_menus"
         [logged_member$]="logged_member$" [avatar$]="avatar$" [isPortrait]="isPortrait" [isMobile]="false"
         [label_transformer]="label_transformer.bind(this)" [trackNavitemId]="trackNavitemId.bind(this)"
-        [onCommand]="onCommand.bind(this)" [imageClubUrl]="imageClubUrl" [logoUrl]="logoUrl">
+        [onCommand]="onCommand.bind(this)" [imageClubUrl]="imageClubUrl" [logoUrl]="logoUrl"
+        (espaceMembre)="EspaceMembre()">
       </app-front-navbar>
+
+
       <div class="laptop-content-container">
         <div class="laptop-image-club ">
           <ng-template [ngTemplateOutlet]="tplImageClub"></ng-template>
@@ -67,6 +70,11 @@
                   <ng-template [ngTemplateOutlet]="tplBanner"
                     [ngTemplateOutletContext]="{ mode: 'mobile' }"></ng-template>
                 </div>
+                @if (!(logged_member$ | async)) {
+                <button class="btn btn-sm btn-light flex-shrink-0 me-2" (click)="EspaceMembre()">
+                  <i class="bi bi-box-arrow-in-right text-dark"></i>
+                </button>
+                }
               </div>
             </nav>
             <ng-template [ngTemplateOutlet]="tplOffcanvasMenu"

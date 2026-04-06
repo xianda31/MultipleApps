@@ -57,8 +57,6 @@ export class HomePage {
     private auth: AuthentificationService,
     private breakpointObserver: BreakpointObserver,
     private fileService: FileService,
-    private router: Router,
-    private navItemsService: NavItemsService,
   ) {
     this.breakpointObserver.observe([Breakpoints.Medium, Breakpoints.Large, Breakpoints.XLarge])
       .subscribe(result => {
@@ -188,9 +186,4 @@ export class HomePage {
       });
   }
 
-
-  EspaceMembre() {
-    const path = this.navItemsService.getPathByPlugin(NAVITEM_PLUGIN.AUTHENTICATION);
-    if (path) this.router.navigate(['/front', path]);
-  }
 }

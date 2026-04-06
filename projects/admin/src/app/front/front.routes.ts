@@ -3,6 +3,7 @@ import { PageNotFoundComponent } from '../common/page-not-found/page-not-found.c
 import { FrontComponent } from './front/front/front.component';
 import { CheckoutSuccessComponent } from './shop/checkout-success.component';
 import { CheckoutCancelComponent } from './shop/checkout-cancel.component';
+import { ConnexionPageComponent } from '../common/authentification/connexion-page/connexion-page.component';
 
 
 // Minimal, safe front routes used at bootstrap. Dynamic/nav-driven routes
@@ -19,6 +20,9 @@ export const minimal_routes: Routes = [
       // Stripe E-commerce routes
       { path: 'checkout-success', component: CheckoutSuccessComponent },
       { path: 'checkout-cancel', component: CheckoutCancelComponent },
+
+      // Authentication route
+      { path: 'authentication', component: ConnexionPageComponent },
 
       // System routes (redirects and fallbacks)
       { path: 'back_office', redirectTo: '/back', pathMatch: 'full' },

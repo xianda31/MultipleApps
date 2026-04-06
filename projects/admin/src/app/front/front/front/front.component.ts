@@ -2,7 +2,7 @@
 
 import { Component, AfterViewInit, ElementRef, ViewChild, HostListener } from '@angular/core';
 import { LocalStorageService } from '../../../back/services/local-storage.service';
-import { RouterModule, RouterLink } from '@angular/router';
+import { Router, RouterModule, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { TitleComponent } from '../../title/title.component';
 import { SiteLayoutService } from '../../../common/services/site-layout.service';
@@ -89,7 +89,8 @@ export class FrontComponent implements AfterViewInit {
     private auth: AuthentificationService,
     private groupService: GroupService,
     private memberSettingsService: MemberSettingsService,
-    private commandRegistry: CommandRegistryService
+    private commandRegistry: CommandRegistryService,
+    private router: Router
   ) { }
 
   ngOnInit(): void {
@@ -184,6 +185,11 @@ export class FrontComponent implements AfterViewInit {
     const raw = ((item as any).command_name || item.slug || '').toString();
     this.commandRegistry.execute(raw).catch(err => console.error('Command execution failed:', raw, err));
   }
+
+  EspaceMembre() {
+    this.router.navigate(['/front/authentication']);
+  }
+
 
   ngAfterViewInit(): void {
     this.updateHeaderHeight();

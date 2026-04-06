@@ -382,11 +382,33 @@ export class MenusEditorComponent implements AfterViewInit {
   }
 
   deleteNavitem(selectedNavitem: NavItem) {
+    // Mise à jour locale immédiate pour une réactivité UI instantanée
+    this.removeNavitemLocally(selectedNavitem);
+    
+    // Suppression serveur + resync
     this.navitemService.deleteNavItem(selectedNavitem).then(() => {
       this.toastService.showSuccess('Paramètres menu', 'nav_item supprimé');
       this.offRef?.dismiss('deleted');
       this.offRef = null;
+      // Resync complet depuis le serveur pour assurer la cohérence
+      this.reloadNavitems();
+    }).catch(err => {
+      this.toastService.showErrorToast('Suppression', err.message);
+      // Rechargement pour restaurer en cas d'erreur
+      this.reloadNavitems();
     });
+  }
+
+  private removeNavitemLocally(navitem: NavItem) {
+    // Supprimer du tableau navitems
+    this.navitems = (this.navitems || []).filter(item => item.id !== navitem.id);
+    
+    // Reconstruire la structure des menus
+    this.menus = this.buildMenuStructureNew(this.navitems);
+    
+    // Mettre à jour les listes visibles
+    this.rebuildNavbarEntries();
+    this.rebuildVisibleFootbarEntries();
   }
 
   async cloneProductionToSandbox() {

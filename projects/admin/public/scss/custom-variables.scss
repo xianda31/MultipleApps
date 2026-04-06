@@ -4,20 +4,14 @@ $success: rgb(32, 146, 51);
 $danger: rgb(220, 53, 69);
 $warning: rgba(204, 75, 58, 0.979);
 $info: rgb(13, 95, 189);
-$light: rgb(217, 225, 233);
+$light: rgb(245, 245, 245);
 $dark: rgb(43, 45, 48);
 
 :root {
 	--color-primary: #228110; /* rgb(34, 129, 16) */
 	--color-secondary: #6c757d;
 	--color-info: #0d5fbd;   /* rgb(13, 95, 189) */
+	--color-light: #f5f5f5;  /* rgb(245, 245, 245) */
+	--color-dark: #2b2d30;   /* rgb(43, 45, 48) */
 }
-$primary: rgb(34, 129, 16);
-$secondary: #6c757d;
-$success: rgb(32, 146, 51);
-$danger: rgb(220, 53, 69);
-$warning: rgba(204, 75, 58, 0.979);
-$info: rgb(13, 95, 189);
-$light: rgb(217, 225, 233);
-$dark: rgb(43, 45, 48);
 

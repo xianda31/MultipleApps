@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
@@ -27,6 +27,7 @@ export class FrontNavbarComponent {
   @Input() label_transformer!: (label: string) => Promise<string>;
   @Input() trackNavitemId!: (index: number, menu: any) => any;
   @Input() onCommand!: (item: NavItem) => void;
+  @Output() espaceMembre = new EventEmitter<void>();
 
 
   NAVITEM_POSITION = NAVITEM_POSITION;
