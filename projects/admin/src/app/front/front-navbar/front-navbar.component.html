@@ -25,7 +25,7 @@
     <!-- Bouton Accès Membre en haut à droite (mode desktop) -->
     @if (!(logged_member$ | async)) {
     <button class="btn btn-light position-absolute end-0 me-3" (click)="espaceMembre.emit()" style="top: 50%; transform: translateY(-50%); font-family: var(--site-font, inherit); ">
-      <i class="bi bi-box-arrow-in-right me-2 text-dark"></i> Accès Membre
+      <i class="bi bi-person-bounding-box me-2 text-dark"></i> Accès Membre
     </button>
     }
   </nav>

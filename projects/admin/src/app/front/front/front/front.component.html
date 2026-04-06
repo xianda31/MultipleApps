@@ -27,7 +27,7 @@
       <ng-template [ngTemplateOutlet]="tplMobile"></ng-template>
     </ng-container>
 
-    <!-- Mode Laptop   -->Q
+    <!-- Mode Laptop   -->
     <ng-template #tplLaptop>
 
       <div class="row d-md-flex align-items-stretch site-banner header-shadow laptop-banner-row g-0 my-0">
@@ -72,7 +72,7 @@
                 </div>
                 @if (!(logged_member$ | async)) {
                 <button class="btn btn-sm btn-light flex-shrink-0 me-2" (click)="EspaceMembre()">
-                  <i class="bi bi-box-arrow-in-right text-dark"></i>
+                  <i class="bi bi-person-bounding-box text-dark"></i>
                 </button>
                 }
               </div>
