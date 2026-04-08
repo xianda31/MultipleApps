@@ -3,7 +3,7 @@ import { PageNotFoundComponent } from '../common/page-not-found/page-not-found.c
 import { FrontComponent } from './front/front/front.component';
 import { CheckoutSuccessComponent } from './shop/checkout-success.component';
 import { CheckoutCancelComponent } from './shop/checkout-cancel.component';
-import { ConnexionPageComponent } from '../common/authentification/connexion-page/connexion-page.component';
+import { ConnexionComponent } from '../common/authentification/connexion/connexion.component';
 
 
 // Minimal, safe front routes used at bootstrap. Dynamic/nav-driven routes
@@ -22,7 +22,7 @@ export const minimal_routes: Routes = [
       { path: 'checkout-cancel', component: CheckoutCancelComponent },
 
       // Authentication route
-      { path: 'authentication', component: ConnexionPageComponent },
+      { path: 'authentication', component: ConnexionComponent },
 
       // System routes (redirects and fallbacks)
       { path: 'back_office', redirectTo: '/back', pathMatch: 'full' },

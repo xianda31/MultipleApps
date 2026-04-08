@@ -1,13 +1,15 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
+import { CommonModule, Location } from '@angular/common';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
-import { catchError, from, map, Observable, of, switchMap } from 'rxjs';
+import { catchError, filter, from, map, Observable, of, switchMap, take } from 'rxjs';
 import { ToastService } from '../../services/toast.service';
 import { Process_flow } from '../authentification_interface';
 import { AuthentificationService } from '../authentification.service';
+import { AuthentificationRedirectService } from '../authentification-redirect.service';
 import { MembersService } from '../../services/members.service';
 import { Group_icons } from '../group.interface';
-import { CommonModule } from '@angular/common';
+import { TitleService } from '../../../front/title/title.service';
 
 const EMAIL_PATTERN = "^[_A-Za-z0-9-\+]+(\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\.[A-Za-z0-9]+)*(\.[A-Za-z]{2,})$";
 const PSW_PATTERN = '^(?!\\s+)(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[\\^$*.[\\]{}()?"!@#%&/\\\\,><\': ;| _~`=+-]).{8,256}(?<!\\s)$';
@@ -25,6 +27,7 @@ export class ConnexionComponent {
   sign_up_sent: boolean = false;
   process_flow = Process_flow;
   canShowSignUp = false;
+  isBackContext: boolean = false;
 
   logging_msg: string = '';
   signup_msg: string = '';
@@ -57,9 +60,11 @@ export class ConnexionComponent {
     private membersService: MembersService,
     private toastService: ToastService,
     private auth: AuthentificationService,
+    private authRedirectService: AuthentificationRedirectService,
     private fb: FormBuilder,
     private router: Router,
-
+    private location: Location,
+    private titleService: TitleService
   ) {
     this.loggerForm = this.fb.group({
       email: ['', { validators: [Validators.required, Validators.pattern(EMAIL_PATTERN)], asyncValidators: this.emailValidator }],
@@ -77,6 +82,36 @@ export class ConnexionComponent {
        this.currentMode = m;
       // console.log('Current auth mode:', m);
       });
+    
+    // Detect context: if current URL contains /back, it's back context
+    const currentUrl = this.router.url;
+    this.isBackContext = currentUrl.includes('/back');
+    if (this.isBackContext) {
+      this.authRedirectService.setReturnUrl('/back', 'back');
+    }
+    
+    // Reset title on init
+    this.titleService.setTitle('Authentification');
+    
+    // After successful login, redirect to original page or context default
+    // filter+take(1) ensures the subscription auto-completes after first login
+    // preventing zombie subscriptions from consuming returnUrl on subsequent logins
+    this.auth.logged_member$.pipe(
+      filter(member => !!member),
+      take(1)
+    ).subscribe(member => {
+      this.titleService.setTitle('');
+      // Get the saved return URL and context
+      const context = this.authRedirectService.getContext();
+      let targetUrl = this.authRedirectService.getReturnUrl();
+      
+      // If we detected back context but service returned front default, redirect to back
+      if (this.isBackContext && targetUrl === '/front') {
+        targetUrl = '/back';
+      }
+      
+      this.router.navigateByUrl(targetUrl);
+    });
   }
 
   async signIn() {

@@ -5,7 +5,6 @@ import { PurchasesComponent } from "../../front/purchases/purchases.component";
 // import { FrontShopComponent } from "../../front/shop/front-shop.component";
 import { GameCardsOwnedComponent } from "../../front/game-cards-owned/game-cards-owned.component";
 import { Routes } from "@angular/router";
-import { ConnexionPageComponent } from "../authentification/connexion-page/connexion-page.component";
 import { IframeComponent } from "../../front/front/iframe/iframe";
 import { HomePage } from "../../front/front/pages/home-page/home-page";
 import { TournamentComponent } from "../tournaments/tournament/tournament.component";

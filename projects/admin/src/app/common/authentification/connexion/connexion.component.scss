@@ -118,6 +118,60 @@
     box-shadow: 0 0 0 0.25rem rgba(124, 207, 124, 0.25) !important;
 }
 
+/* Reduce input height on mobile/landscape for better space utilization */
+@media (max-width: 1200px) and (max-height: 600px) {
+    .form-floating > .form-control.sepia-input {
+        height: 2.2rem;
+        padding-top: 0.6rem;
+        padding-bottom: 0.3rem;
+        font-size: 0.85rem;
+    }
+    
+    /* Reduce margins on mobile */
+    .row {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+    
+    .row.mt-1 { margin-top: 0.1rem !important; }
+    .row.mt-2 { margin-top: 0.2rem !important; }
+    .row.mt-3 { margin-top: 0.3rem !important; }
+    .row.mt-4 { margin-top: 0.4rem !important; }
+    
+    /* Reduce card padding */
+    .card-body {
+        padding: 0.5rem;
+    }
+    
+    /* Reduce auth-row margins */
+    .auth-row {
+        margin-bottom: 0.2rem !important;
+    }
+    
+    .col-12.col-sm-12.col-lg-8 {
+        margin-bottom: 0.2rem !important;
+    }
+    
+    /* Hide separator br tag */
+    br { display: none; }
+    
+    /* Tighter button padding */
+    .btn-login {
+        padding: 0.4rem 0.3rem !important;
+        font-size: 0.85rem;
+    }
+    
+    /* Reduce label size */
+    label {
+        font-size: 0.8rem;
+    }
+    
+    h5 {
+        margin-bottom: 0.2rem !important;
+        font-size: 0.95rem !important;
+    }
+}
+
 /* Eye toggle buttons and input padding */
 .btn-eye {
     display: inline-flex;

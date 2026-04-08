@@ -17,6 +17,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbDropdownModule, NgbCollapseModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { Observable } from 'rxjs';
 import { AuthentificationService } from '../../../common/authentification/authentification.service';
+import { AuthentificationRedirectService } from '../../../common/authentification/authentification-redirect.service';
 import { GroupService } from '../../../common/authentification/group.service';
 import { Accreditation } from '../../../common/authentification/group.interface';
 import { Member } from '../../../common/interfaces/member.interface';
@@ -88,6 +89,7 @@ export class FrontComponent implements AfterViewInit {
     private systemDataService: SystemDataService,
     private fileService: FileService,
     private auth: AuthentificationService,
+    private authRedirectService: AuthentificationRedirectService,
     private groupService: GroupService,
     private memberSettingsService: MemberSettingsService,
     private commandRegistry: CommandRegistryService,
@@ -188,6 +190,8 @@ export class FrontComponent implements AfterViewInit {
   }
 
   EspaceMembre() {
+    // Save current URL before navigating to authentication (context: front)
+    this.authRedirectService.setReturnUrl(this.router.url, 'front');
     this.router.navigate(['/front/authentication']);
   }
 
