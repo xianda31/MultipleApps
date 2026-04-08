@@ -1,6 +1,6 @@
 
 
-import { Component, AfterViewInit, ElementRef, ViewChild, HostListener } from '@angular/core';
+import { Component, AfterViewInit, ElementRef, ViewChild, HostListener, ViewEncapsulation } from '@angular/core';
 import { LocalStorageService } from '../../../back/services/local-storage.service';
 import { Router, RouterModule, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -14,7 +14,7 @@ import { SandboxService } from '../../../common/services/sandbox.service';
 import { NavItemsService } from '../../../common/services/navitem.service';
 import { applyUiThemeFromConfig } from '../../../common/utils/ui-utils';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { NgbDropdownModule, NgbCollapseModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdownModule, NgbCollapseModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { Observable } from 'rxjs';
 import { AuthentificationService } from '../../../common/authentification/authentification.service';
 import { GroupService } from '../../../common/authentification/group.service';
@@ -27,7 +27,8 @@ import { FrontNavbarComponent } from '../../front-navbar/front-navbar.component'
 @Component({
   selector: 'app-front',
   standalone: true,
-  imports: [CommonModule, RouterModule, TitleComponent, FormsModule, ReactiveFormsModule, NgbDropdownModule, NgbCollapseModule, RouterLink, FrontNavbarComponent],
+  encapsulation: ViewEncapsulation.None, // nécessaire pour que les tooltips fonctionnent
+  imports: [CommonModule, RouterModule, TitleComponent, FormsModule, ReactiveFormsModule, NgbDropdownModule, NgbCollapseModule, NgbTooltipModule, RouterLink, FrontNavbarComponent],
   templateUrl: './front.component.html',
   styleUrls: ['./front.component.scss']
 })

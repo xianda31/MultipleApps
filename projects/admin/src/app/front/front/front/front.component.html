@@ -71,8 +71,9 @@
                     [ngTemplateOutletContext]="{ mode: 'mobile' }"></ng-template>
                 </div>
                 @if (!(logged_member$ | async)) {
-                <button class="btn btn-sm btn-light flex-shrink-0 me-2" (click)="EspaceMembre()">
+                <button class="btn btn-sm btn-light flex-shrink-0 me-2 d-flex align-items-center gap-1" (click)="EspaceMembre()">
                   <i class="bi bi-person-bounding-box text-dark"></i>
+                  <span class="d-none d-sm-inline text-dark small">Accès membre</span>
                 </button>
                 }
               </div>
