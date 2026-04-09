@@ -67,7 +67,7 @@ export class ConnexionComponent {
     private titleService: TitleService
   ) {
     this.loggerForm = this.fb.group({
-      email: ['', { validators: [Validators.required, Validators.pattern(EMAIL_PATTERN)], asyncValidators: this.emailValidator }],
+      email: ['', { validators: [Validators.required, Validators.pattern(EMAIL_PATTERN)] }],
       password: ['', [Validators.required, Validators.pattern(PSW_PATTERN)]],
       // new password is only used in RESET PASSWORD flows; validators applied dynamically when needed
       new_password: [''],
@@ -101,15 +101,11 @@ export class ConnexionComponent {
       take(1)
     ).subscribe(member => {
       this.titleService.setTitle('');
-      // Get the saved return URL and context
       const context = this.authRedirectService.getContext();
       let targetUrl = this.authRedirectService.getReturnUrl();
-      
-      // If we detected back context but service returned front default, redirect to back
       if (this.isBackContext && targetUrl === '/front') {
         targetUrl = '/back';
       }
-      
       this.router.navigateByUrl(targetUrl);
     });
   }
@@ -121,7 +117,6 @@ export class ConnexionComponent {
          this.logging_msg ='';
         })
       .catch(async (err) => {
-        console.log('sign in erreur', err);
         const name = err?.name || '';
         if (name === 'UserNotConfirmedException') {
           this.logging_msg = 'Compte non confirmé. Un code vous a été envoyé par e-mail.';
@@ -149,7 +144,7 @@ export class ConnexionComponent {
     try {
       switch (this.currentMode) {
       case Process_flow.SIGN_IN: {
-        if (this.loggerForm.invalid || this.email.invalid || this.password.invalid) {
+        if (!this.email.value || !this.password.value) {
           this.email.markAsTouched();
           this.password.markAsTouched();
           this.logging_msg = 'Veuillez saisir une adresse mail et un mot de passe valides';
@@ -227,6 +222,9 @@ export class ConnexionComponent {
     this.logging_msg = '';
     this.signup_msg = '';
     this.canShowSignUp = false;
+    // Add async member-existence check only for sign-up flow
+    this.loggerForm.get('email')?.addAsyncValidators(this.emailValidator);
+    this.loggerForm.get('email')?.updateValueAndValidity({ emitEvent: false });
     this.auth.changeMode(Process_flow.SIGN_UP);
   }
 
@@ -301,6 +299,9 @@ export class ConnexionComponent {
   }
 
   goToSignIn() {
+    // Remove async validator when returning to sign-in (not needed, avoids PENDING state)
+    this.loggerForm.get('email')?.removeAsyncValidators(this.emailValidator);
+    this.loggerForm.get('email')?.updateValueAndValidity({ emitEvent: false });
     // Reset fields and modes to go back to login without resetting
     this.loggerForm.get('code')?.reset('');
     this.loggerForm.get('code')?.setValidators([]);
