@@ -21,6 +21,15 @@ interface PayoutLine {
   selected: boolean;
 }
 
+interface StripePayout {
+  id: string;
+  amountCents: number;
+  status: string;
+  arrivalDate: string;
+  description: string | null;
+  automatic: boolean;
+}
+
 @Component({
   selector: 'app-stripe-reconciliation',
   standalone: true,
@@ -32,23 +41,63 @@ export class StripeReconciliationComponent {
   lines: PayoutLine[] = [];
   loadingLines = false;
 
+  // Liste des payouts Stripe
+  availablePayouts: StripePayout[] = [];
+  loadingPayouts = false;
+  payoutsError: string | null = null;
+  private reconciledPayoutIds = new Set<string>();
+
+  get filteredPayouts(): StripePayout[] {
+    return this.availablePayouts.filter(p => !this.reconciledPayoutIds.has(p.id));
+  }
+
   // Formulaire payout
   payoutId = '';
   payoutDate = new Date().toISOString().slice(0, 10);
-  netBancaire: number | null = null;   // montant net saisi depuis le relevé bancaire
+  netBancaire: number | null = null;   // montant net viré en banque
   lookingUp = false;
   processingPayout = false;
+  isManualPayout = false;
+
+  // Données de cohérence issues du lookup automatique
+  expectedGrossCents = 0;    // brut total attendu (depuis Stripe, payout auto uniquement)
+  expectedChargeCount = 0;   // nombre de charges attendues
 
   // Computed
   get selectedLines(): PayoutLine[] { return this.lines.filter(l => l.selected); }
   get selectedGrossCents(): number { return this.selectedLines.reduce((s, l) => s + l.grossCents, 0); }
   get selectedFeesCents(): number { return this.selectedLines.reduce((s, l) => s + l.feesCents, 0); }
   get selectedNetCents(): number { return this.selectedGrossCents - this.selectedFeesCents; }
-  get netMatch(): boolean {
-    return this.netBancaire !== null &&
-      Math.round(this.netBancaire * 100) === this.selectedNetCents;
-  }
   get allSelected(): boolean { return this.lines.length > 0 && this.lines.every(l => l.selected); }
+
+  // Cohérence de la sélection
+  get impliedFeesCents(): number {
+    return this.netBancaire !== null ? this.selectedGrossCents - Math.round(this.netBancaire * 100) : 0;
+  }
+  get selectionCoherent(): boolean {
+    if (this.selectedLines.length === 0 || !this.netBancaire) return false;
+    if (!this.isManualPayout && this.expectedGrossCents > 0) {
+      // Auto: le brut sélectionné doit correspondre exactement
+      return this.selectedGrossCents === this.expectedGrossCents;
+    }
+    // Manuel: frais implicites < 10% du brut
+    return this.impliedFeesCents >= 0 && this.impliedFeesCents / this.selectedGrossCents < 0.10;
+  }
+  get coherenceWarning(): string | null {
+    if (this.selectedLines.length === 0 || !this.netBancaire) return null;
+    if (!this.isManualPayout && this.expectedGrossCents > 0) {
+      if (this.selectedGrossCents !== this.expectedGrossCents) {
+        const diff = this.selectedGrossCents - this.expectedGrossCents;
+        return `Brut sélectionné (${this.formatAmount(this.selectedGrossCents)}) ≠ brut Stripe attendu (${this.formatAmount(this.expectedGrossCents)}) — écart : ${diff > 0 ? '+' : ''}${this.formatAmount(diff)}`;
+      }
+    } else if (this.isManualPayout && this.impliedFeesCents > 0) {
+      const rate = this.impliedFeesCents / this.selectedGrossCents;
+      if (rate >= 0.10) {
+        return `Frais implicites inhabituellement élevés (${(rate * 100).toFixed(1)}% du brut) — vérifiez la sélection.`;
+      }
+    }
+    return null;
+  }
 
   private members: Member[] = [];
 
@@ -62,6 +111,7 @@ export class StripeReconciliationComponent {
   ) {}
 
   ngOnInit(): void {
+    this.loadStripePayouts();
     this.bookService.list_book_entries().subscribe(() => {
       this.membersService.listMembers().subscribe((members) => {
         this.members = members;
@@ -70,11 +120,58 @@ export class StripeReconciliationComponent {
     });
   }
 
+  async loadStripePayouts(): Promise<void> {
+    this.loadingPayouts = true;
+    this.payoutsError = null;
+    try {
+      this.availablePayouts = await this.stripeService.listPayouts();
+    } catch (error: any) {
+      this.payoutsError = error?.message || 'Impossible de charger les virements Stripe';
+    } finally {
+      this.loadingPayouts = false;
+    }
+  }
+
+  async selectPayout(payout: StripePayout): Promise<void> {
+    this.payoutId = payout.id;
+    this.payoutDate = payout.arrivalDate;
+    this.netBancaire = payout.amountCents / 100;
+    this.expectedGrossCents = 0;
+    this.expectedChargeCount = 0;
+    await this.lookupPayout();
+  }
+
+  payoutStatusClass(status: string): string {
+    if (status === 'paid') return 'text-success';
+    if (status === 'pending' || status === 'in_transit') return 'text-warning';
+    return 'text-danger';
+  }
+
+  payoutStatusLabel(status: string): string {
+    if (status === 'paid') return 'Viré';
+    if (status === 'in_transit') return 'En transit';
+    if (status === 'pending') return 'En attente';
+    if (status === 'canceled') return 'Annulé';
+    return status;
+  }
+
   async loadLines(): Promise<void> {
     this.loadingLines = true;
     try {
+      const allBookEntries = this.bookService.get_book_entries();
+
+      // BookEntries virement_stripe_vers_banque avec deposit_ref po_xxx = payouts déjà réconciliés
+      this.reconciledPayoutIds = new Set(
+        allBookEntries
+          .filter(e =>
+            e.transaction_id === TRANSACTION_ID.virement_stripe_vers_banque &&
+            e.deposit_ref?.startsWith('po_')
+          )
+          .map(e => e.deposit_ref!)
+      );
+
       // BookEntries achat_adhérent_par_carte sans deposit_ref (= non encore réconciliés avec un payout)
-      const bookEntries = this.bookService.get_book_entries()
+      const bookEntries = allBookEntries
         .filter(e =>
           e.transaction_id === TRANSACTION_ID.achat_adhérent_par_carte &&
           !e.deposit_ref &&
@@ -136,8 +233,22 @@ export class StripeReconciliationComponent {
       return;
     }
     this.lookingUp = true;
+    this.isManualPayout = false;
     try {
       const result = await this.stripeService.lookupPayout(this.payoutId.trim());
+
+      if (result.isManual) {
+        this.isManualPayout = true;
+        this.expectedGrossCents = 0;
+        this.expectedChargeCount = 0;
+        this.toastService.showWarning('Virement manuel',
+          'Ce virement a été créé manuellement — sélectionnez les paiements manuellement dans la liste.');
+        return;
+      }
+
+      // Mémoriser les totaux Stripe pour contrôle de cohérence
+      this.expectedGrossCents = result.totalGrossCents;
+      this.expectedChargeCount = result.charges.length;
 
       // Désélectionner tout d'abord
       this.lines.forEach(l => l.selected = false);
@@ -179,7 +290,7 @@ export class StripeReconciliationComponent {
       this.toastService.showWarning('Payout', 'Aucun paiement sélectionné');
       return;
     }
-    if (this.selectedNetCents <= 0) {
+    if (!this.netBancaire || this.netBancaire <= 0) {
       this.toastService.showWarning('Payout', 'Montant net invalide');
       return;
     }
@@ -187,6 +298,13 @@ export class StripeReconciliationComponent {
     this.processingPayout = true;
     const reconciledAt = new Date().toISOString();
     const pId = this.payoutId.trim();
+
+    // Capturer les valeurs avant les opérations async (les getters seraient recalculés à 0 après loadLines)
+    const snapshotCount = this.selectedLines.length;
+    const snapshotGross = this.selectedGrossCents;
+    const netCents = Math.round(this.netBancaire * 100);
+    const snapshotFees = snapshotGross - netCents;
+    const snapshotNet = netCents;
 
     try {
       // 1. Écriture virement_stripe_vers_banque
@@ -197,12 +315,12 @@ export class StripeReconciliationComponent {
         transaction_id: TRANSACTION_ID.virement_stripe_vers_banque,
         deposit_ref: pId,
         amounts: {
-          [FINANCIAL_ACCOUNT.STRIPE_credit]: this.selectedGrossCents / 100,
-          [FINANCIAL_ACCOUNT.BANK_debit]: this.selectedNetCents / 100,
+          [FINANCIAL_ACCOUNT.STRIPE_credit]: snapshotGross / 100,
+          [FINANCIAL_ACCOUNT.BANK_debit]: snapshotNet / 100,
         } as any,
-        operations: this.selectedFeesCents > 0 ? [{
+        operations: snapshotFees > 0 ? [{
           label: 'frais stripe',
-          values: { 'BNQ': this.selectedFeesCents / 100 },
+          values: { 'BNQ': snapshotFees / 100 },
         }] : [],
       });
 
@@ -221,10 +339,10 @@ export class StripeReconciliationComponent {
       );
 
       this.toastService.showSuccess('Payout',
-        `Écriture créée — ${this.selectedLines.length} paiement(s) réconcilié(s) ` +
-        `(brut: ${this.formatAmount(this.selectedGrossCents)}, ` +
-        `frais: ${this.formatAmount(this.selectedFeesCents)}, ` +
-        `net: ${this.formatAmount(this.selectedNetCents)})`);
+        `Écriture créée — ${snapshotCount} paiement(s) réconcilié(s) ` +
+        `(brut: ${this.formatAmount(snapshotGross)}, ` +
+        `frais: ${this.formatAmount(snapshotFees)}, ` +
+        `net: ${this.formatAmount(snapshotNet)})`);
 
       // Reset
       this.payoutId = '';

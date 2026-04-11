@@ -396,6 +396,14 @@ export class ShopComponent {
     this.stripeCheckout.reset();
     this.stripeCheckoutPrepared = false;
     this.cartService.clearCart();
+    // En mode online, re-établir l'acheteur (logged_member) immédiatement
+    // pour permettre un nouvel achat sans attendre le cycle async auth/members
+    if (this.onlineMode && this.logged_member) {
+      const m = this.buyerContext.findBuyerById(this.logged_member.id, this.members);
+      if (m) {
+        this.buyerForm.patchValue({ buyer: m }, { emitEvent: false });
+      }
+    }
     this.router.navigate([], { relativeTo: this.route, queryParams: {} });
   }
 

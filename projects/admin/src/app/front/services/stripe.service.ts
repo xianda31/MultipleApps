@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { post } from 'aws-amplify/api';
+import { get, post } from 'aws-amplify/api';
 import { fetchAuthSession } from 'aws-amplify/auth';
 import { StripeCheckoutRequest, StripeCheckoutResponse } from './front-cart.interface';
 import { environment } from '../../../environments/environment';
@@ -123,10 +123,38 @@ export class StripeService {
   }
 
   /**
+   * Liste les payouts Stripe récents (30 derniers jours)
+   */
+  async listPayouts(): Promise<{
+    id: string;
+    amountCents: number;
+    status: string;
+    arrivalDate: string;
+    description: string | null;
+    automatic: boolean;
+  }[]> {
+    try {
+      const restOperation = get({
+        apiName: this.API_NAME,
+        path: '/api/stripe/payout-list',
+      });
+      const { body } = await restOperation.response;
+      const responseText = await body.text();
+      const response = JSON.parse(responseText);
+      if (response.error) throw new Error(response.error);
+      return response.payouts || [];
+    } catch (error: any) {
+      console.error('Erreur listing payouts Stripe:', error);
+      throw new Error(`Impossible de lister les payouts: ${error?.message || 'Erreur inconnue'}`);
+    }
+  }
+
+  /**
    * Lookup payout Stripe : retourne les charges associées à un payout (Admin seulement)
    */
   async lookupPayout(payoutId: string): Promise<{
     payoutId: string;
+    isManual?: boolean;
     totalGrossCents: number;
     totalFeesCents: number;
     totalNetCents: number;

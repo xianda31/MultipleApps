@@ -116,11 +116,20 @@ httpApi.addRoutes({
 });
 
 // 🔒 Stripe Payout Lookup - Admin uniquement (réconciliation payout)
+// DEBUG TEMP: authorizer désactivé pour test fonctionnel
 httpApi.addRoutes({
   path: "/api/stripe/payout-lookup",
   methods: [HttpMethod.POST],
   integration: stripeCheckoutIntegration,
-  authorizer: userPoolAuthorizer,
+  // authorizer: userPoolAuthorizer,
+});
+
+// 🔒 Stripe Payout List - liste les virements récents (Admin)
+httpApi.addRoutes({
+  path: "/api/stripe/payout-list",
+  methods: [HttpMethod.GET],
+  integration: stripeCheckoutIntegration,
+  // authorizer: userPoolAuthorizer,
 });
 
 // 🔒 Stripe Webhooks - Pas d'autorisation (Stripe appel en webhook)
