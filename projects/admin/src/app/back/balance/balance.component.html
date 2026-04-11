@@ -41,6 +41,10 @@
                   <td> {{balance_board.current.cash | number:truncature:'fr'}}</td>
                 </tr>
                 <tr class="fw-light fs-6">
+                  <td>encours CB</td>
+                  <td> {{balance_board.current.stripe_pending | number:truncature:'fr'}}</td>
+                </tr>
+                <tr class="fw-light fs-6">
                   <td>chèques à déposer</td>
                   <td>{{balance_board.current.uncashed_cheques | number:truncature:'fr'| parenthesis}}</td>
                 </tr>
@@ -121,6 +125,14 @@
                 <td class="variation">{{balance_board.delta.cash| number:truncature:'fr'}}</td>
                 <td>&#8205;</td>
                 <td class="table-secondary"> {{balance_board.previous.cash | number:truncature:'fr'}}</td>
+              </tr>
+              <tr class="fw-light fs-6">
+                <td>encours CB</td>
+                <td> {{balance_board.current.stripe_pending | number:truncature:'fr'}}</td>
+                <td>&#8205;</td>
+                <td class="variation">{{balance_board.delta.stripe_pending | number:truncature:'fr'}}</td>
+                <td>&#8205;</td>
+                <td class="table-secondary"> {{balance_board.previous.stripe_pending | number:truncature:'fr'}}</td>
               </tr>
               <tr class="fw-light fs-6">
                 <td>chèques à déposer</td>

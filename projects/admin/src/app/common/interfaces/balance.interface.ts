@@ -11,6 +11,7 @@ export interface Balance_record {
     // client_assets: number; // créances clients
   }
 export interface Balance_sheet  extends Balance_record {
+    stripe_pending: number; // encours cartes : paiements Stripe reçus non encore virés en banque (stripe_in - stripe_out)
     in_bank_total: number; // total banque (livret + compte courant)
     cashbox: number; // liquidités (caisse + dettes ou petits avoirs clients + chèques non encaissés)
     wip_total: number; // total en cours (fond de caisse + dettes_créances  + chèques cadeaux + paiements en cours)

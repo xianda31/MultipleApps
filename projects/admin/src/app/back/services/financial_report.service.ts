@@ -38,6 +38,7 @@ export class FinancialReportService {
 
       return {
         ...record,
+        stripe_pending: 0,
         in_bank_total: record.bank + record.savings,
         wip_total: wip_total,
         cashbox: cashbox,
@@ -114,6 +115,7 @@ export class FinancialReportService {
         gift_vouchers: 0,
         client_debts: 0,
         client_assets: 0,
+        stripe_pending: 0,
         in_bank_total: 0,
         cashbox: 0,
         wip_total: 0,
@@ -193,13 +195,14 @@ export class FinancialReportService {
     let bank = previous_balance_sheet.bank + this.bookService.get_bank_movements_amount();
     let uncashed_cheques = this.bookService.get_uncashed_cheques_amount();
     let client_debts = this.bookService.get_clients_debts_value();
+    let stripe_pending = this.bookService.get_stripe_pending_amount();
 
     let outstanding_expenses = -this.bookService.get_bank_outstanding_expenses_amount();
     let gift_vouchers = -this.bookService.get_customers_assets_amount();
     let client_assets = 0;
 
     let in_bank_total = bank + savings;
-    let cashbox = cash + client_debts + client_assets + uncashed_cheques;
+    let cashbox = cash + client_debts + client_assets + uncashed_cheques + stripe_pending;
     let wip_total = outstanding_expenses + gift_vouchers;
     let actif_total = in_bank_total + cashbox + wip_total;
 
@@ -213,6 +216,7 @@ export class FinancialReportService {
       gift_vouchers: gift_vouchers,
       client_debts: client_debts,
       client_assets: client_assets,
+      stripe_pending: stripe_pending,
       in_bank_total: bank + savings,
       cashbox: cashbox,
       wip_total: wip_total,
@@ -237,7 +241,7 @@ export class FinancialReportService {
   }
 
   _actif_net(balance_sheet: Balance_sheet) {
-    return balance_sheet.uncashed_cheques + balance_sheet.client_debts + balance_sheet.cash + balance_sheet.bank + balance_sheet.savings - (+balance_sheet.outstanding_expenses + balance_sheet.gift_vouchers);
+    return balance_sheet.uncashed_cheques + balance_sheet.client_debts + balance_sheet.cash + balance_sheet.bank + balance_sheet.savings + balance_sheet.stripe_pending - (+balance_sheet.outstanding_expenses + balance_sheet.gift_vouchers);
   }
 
 
@@ -252,6 +256,7 @@ export class FinancialReportService {
       outstanding_expenses: a.outstanding_expenses - b.outstanding_expenses,
       gift_vouchers: a.gift_vouchers - b.gift_vouchers,
       client_debts: a.client_debts - b.client_debts,
+      stripe_pending: a.stripe_pending - b.stripe_pending,
       in_bank_total: a.in_bank_total - b.in_bank_total,
       cashbox: a.cashbox - b.cashbox,
       wip_total: a.wip_total - b.wip_total,

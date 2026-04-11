@@ -462,6 +462,12 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
     }, 0));
   }
 
+  get_stripe_pending_amount(): number {
+    if (this._book_entries === undefined) return 0;
+    return this.Round(this._book_entries.reduce((acc, book_entry) =>
+      acc + (book_entry.amounts[FINANCIAL_ACCOUNT.STRIPE_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.STRIPE_credit] || 0), 0));
+  }
+
   private _is_bankable(book_entry: BookEntry): boolean {
     return (book_entry.transaction_id === TRANSACTION_ID.dépense_par_chèque
       || book_entry.transaction_id === TRANSACTION_ID.dépense_par_prélèvement
