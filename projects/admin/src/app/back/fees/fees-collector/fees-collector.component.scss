@@ -74,6 +74,23 @@
   }
 }
 
+.birthday-emoji {
+  display: inline-block;
+  font-size: 1.5rem;
+  animation: birthday-blink 4.0s ease-in-out infinite;
+}
+
+@keyframes birthday-blink {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.3;
+    transform: scale(0.9);
+  }
+}
+
 /* More visible gray for passed & upcoming tournaments */
 .card-passedOrupcoming {
   background-color: #e9ecef !important; /* Bootstrap gray-200 */

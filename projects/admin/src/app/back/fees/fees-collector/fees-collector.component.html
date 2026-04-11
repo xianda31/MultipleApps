@@ -58,7 +58,8 @@
         </div>
 
         <div *ngIf="game " class="row  justify-content-between align-items-center">
-            <div *ngIf="game && game.tournament" class="col-12 col-md-4 justify-content-around align-items-center text-info fw-bolder d-flex">
+            <div *ngIf="game && game.tournament" class="col-12 col-md-4 justify-content-around align-items-center text-primary-emphasis  d-flex">
+                <span> {{ game.tournament.date | date:'EEEE d MMMM':'':'fr-FR' }}</span>
                 <span> {{ game.tournament.name }}</span>
             </div>
             
@@ -80,7 +81,7 @@
                 </div>
             </div>
             
-            <div *ngIf="game && game.tournament" class="col-12 col-md-2 d-flex justify-content-end">
+            <div *ngIf="game && game.tournament" class="col-12 col-md-2 d-none d-md-flex justify-content-end">
                 <span class="ms-2 text-primary fw-bolder">
                     {{game.gamers.length / 2 | number:'1.0-0'}} paires
                 </span>
@@ -204,7 +205,7 @@
                     </ul>
                 </div>
             </div>
-            <div class="card-body py-0 position-relative" style="z-index: 1; overflow: hidden;">
+            <div class="card-body py-0 position-relative" style="z-index: 1; overflow: visible;">
                 <!-- Avatar wrapper for centering -->
                 <div *ngIf="(gamer.photo_url$ | async) as photoUrl">
                     <ng-container *ngIf="photoUrl">
@@ -213,6 +214,9 @@
                             <img [src]="photoUrl" alt="{{ gamer.lastname }}" class="img-fluid rounded-circle"
                                 style="max-height: 120px; max-width: 120px; object-fit: cover; border: 2px solid #fff; box-shadow: 0 4px 14px rgba(0,0,0,0.25);"
                                 (error)="gamer.photo_url = null">
+                            <span *ngIf="gamer.is_member && isBirthday(gamer)" class="birthday-emoji" title="Joyeux anniversaire!" style="z-index: 5; margin-left: 10px; pointer-events: auto;">
+                                🎂
+                            </span>
                         </div>
                     </ng-container>
                 </div>
@@ -221,7 +225,7 @@
                     <!-- nom et prénom du joueur -->
                     <div class="col-6">
                         <h6 class="p-0 mb-0">{{gamer.lastname}} </h6>
-                        <span class="text-muted">{{gamer.firstname}} </span>
+                        <span class="text-muted">{{gamer.firstname}}  </span>
                     </div>
 
                     <!-- mode de réglement (vertical: carte / euro / non payant) -->

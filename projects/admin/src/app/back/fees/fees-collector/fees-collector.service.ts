@@ -380,22 +380,26 @@ export class FeesCollectorService {
 
   add_player(player: FFBplayer) {
     let factor = this.game.fees_doubled ? 2 : 1;
+    let member = this.is_member(player.license_number);
     if (player) {
       let new_gamer: Gamer = {
         license: player.license_number,
         firstname: player.firstname,
         lastname: player.lastname.toUpperCase(),
-        is_member: this.is_member(player.license_number),
+        is_member: !!member,
+        member_id: member?.id || null,
+        my_birthday: member?.birthdate === new Date().toISOString().slice(0, 10) ? new Date().toISOString().slice(0, 10) : null,
+
         game_credits: 0,
-        acc_credits: (this.is_member(player.license_number)) ? this.check_acc(this.membersService.full_name(this.membersService.getMemberbyLicense(player.license_number)!)) : false,
+        acc_credits: (!!member) ? this.check_acc(this.membersService.full_name(member)) : false,
         debt: 0,
         credit: 0,
         index: this.game.gamers.length,
         in_euro: true, // default to euro
-        price: this.is_member(player.license_number) ? this.game.member_trn_price * factor : this.game.non_member_trn_price * factor,
+        price: !!member ? this.game.member_trn_price * factor : this.game.non_member_trn_price * factor,
         validated: false,
         enabled: true,
-        photo_url$: this.is_member(player.license_number) ? this.membersSettingsService.getAvatarUrl(this.membersService.getMemberbyLicense(player.license_number)!) : null
+        photo_url$: !!member ? this.membersSettingsService.getAvatarUrl(member) : null
       };
       this.game.gamers.push(new_gamer);
       this.update_members_debts();
@@ -404,8 +408,8 @@ export class FeesCollectorService {
     }
   }
 
-  private is_member(license: string): boolean {
-    return this.members.some((member) => member.license_number === license);
+  private is_member(license: string): Member | null {
+    return this.members.find((member) => member.license_number === license) || null;
   }
 
 
@@ -466,18 +470,20 @@ export class FeesCollectorService {
     }
 
     let license = to_string(person.license_number);
-    let is_member = this.is_member(license);
-    let in_euro = !is_member;
-    let price = is_member ? this.game.member_trn_price : this.game.non_member_trn_price;
+    let member = this.is_member(license);
+    let in_euro = !member;
+    let price = member ? this.game.member_trn_price : this.game.non_member_trn_price;
 
-    let game_credits = (is_member) ? this.gameCardService.get_member_credit(license) : 0;
-    let acc_credits = (is_member) ? this.check_acc(this.membersService.full_name(this.membersService.getMemberbyLicense(license)!)) : false;
+    let game_credits = (member) ? this.gameCardService.get_member_credit(license) : 0;
+    let acc_credits = (member) ? this.check_acc(this.membersService.full_name(member)) : false;
 
     return {
       license: license,
       firstname: person.firstname,
       lastname: person.lastname.toUpperCase(),
-      is_member: is_member,
+      is_member: !!member,
+      member_id: member ? member.id : null,
+      my_birthday: member ? member.birthdate : null,
       game_credits: game_credits,
       acc_credits: acc_credits,
       debt: 0,
@@ -487,14 +493,17 @@ export class FeesCollectorService {
       price: price,
       validated: false,
       enabled: true,
-      photo_url$: is_member ? this.membersSettingsService.getAvatarUrl(this.membersService.getMemberbyLicense(license)!) : null
+      photo_url$: member ? this.membersSettingsService.getAvatarUrl(member) : null
     };
   }
 
   generate_member_images() {
     this.game.gamers.forEach((gamer) => {
       if (gamer.is_member) {
-        gamer.photo_url$ = this.membersSettingsService.getAvatarUrl(this.membersService.getMemberbyLicense(gamer.license)!);
+        const member = this.membersService.getMemberbyLicense(gamer.license);
+        if (member) {
+          gamer.photo_url$ = this.membersSettingsService.getAvatarUrl(member);
+        }
       }
     });
   }

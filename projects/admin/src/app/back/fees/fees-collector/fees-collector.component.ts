@@ -431,6 +431,15 @@ export class FeesCollectorComponent implements OnDestroy {
     await this.feesCollectorService.log_game_state();
   }
 
+  isBirthday(gamer: Gamer): boolean {
+    if (!gamer.my_birthday || !this.game?.tournament?.date) {
+      return false;
+    }
+    const birthdayDate = new Date(gamer.my_birthday);
+    const tournamentDate = new Date(this.game.tournament.date);
+    return birthdayDate.getMonth() === tournamentDate.getMonth() &&
+           birthdayDate.getDate() === tournamentDate.getDate();
+  }
 
   private to_csv(filename: string, rows: string[]) {
     const csvContent = rows.join('\r\n');
@@ -540,5 +549,12 @@ export class FeesCollectorComponent implements OnDestroy {
       ]);
     }
     return { title, headers, alignments, rows };
+  }
+
+  is_my_birthday(gamer: Gamer): boolean {
+    if (!gamer.my_birthday) return false;
+    const tournament_date = this.game.tournament?.date;
+    if (!tournament_date) return false;
+    return gamer.my_birthday === tournament_date;
   }
 }

@@ -50,6 +50,8 @@ export interface Gamer {
     validated: boolean;
     enabled: boolean;
     photo_url$: Observable<string> | null;
+    member_id: string | null;
+    my_birthday:string | null;
 }
 
 export type Game_input = Omit<Schema['Game']['type'], 'id' | 'createdAt' | 'updatedAt'> ;
