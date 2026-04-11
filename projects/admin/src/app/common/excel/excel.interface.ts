@@ -56,6 +56,7 @@ export enum COL {
   AW = 49,
   AX = 50,
   AY = 51,
+  AZ = 52,
 }
 
 export const MAP_start = {
@@ -69,11 +70,11 @@ export const MAP_start = {
 
 export const MAP_end = {
 
-  'pointage': 'AU',
-  'n° chèque': 'AV',
-  'bordereau': 'AW',
-  'verif balance': 'AX',
-  'nature': 'AY',
+  'pointage': 'AV',
+  'n° chèque': 'AW',
+  'bordereau': 'AX',
+  'verif balance': 'AY',
+  'nature': 'AZ',
 }
 
 export const MAP = {
@@ -117,21 +118,19 @@ export const EXPENSES_COL: ACCOUNTS_COL = {
   'BNQ': 'AG',
 }
 
-export const CUSTOMER_COL : { [key in CUSTOMER_ACCOUNT]: string } = {
-  'creance_in': 'AH',
-  'avoir_in': 'AI',
-  'creance_out': 'AN',
-  'avoir_out': 'AO',
-}
-
 export const EXTRA_CUSTOMER_IN: { [key in CUSTOMER_ACCOUNT]?: string } = {
   'creance_in': 'AH',
   'avoir_in': 'AI',
 }
 export const EXTRA_CUSTOMER_OUT: { [key in CUSTOMER_ACCOUNT]?: string } = {
-  'creance_out': 'AN',
-  'avoir_out': 'AO',
+  'creance_out': 'AO',
+  'avoir_out': 'AP',
 }
+
+export const CUSTOMER_COL: { [key in CUSTOMER_ACCOUNT]: string } = {
+  ...EXTRA_CUSTOMER_IN,
+  ...EXTRA_CUSTOMER_OUT,
+} as { [key in CUSTOMER_ACCOUNT]: string };
 
 export const FINANCIAL_COL_in : { [key in FINANCIAL_ACCOUNT | BALANCE_ACCOUNT]?: string } = {
   'cashbox_in': 'AJ',
@@ -150,18 +149,9 @@ export const FINANCIAL_COL_out: { [key in FINANCIAL_ACCOUNT | BALANCE_ACCOUNT]?:
 }
 
 export const FINANCIAL_COL: { [key in FINANCIAL_ACCOUNT | BALANCE_ACCOUNT]: string } = {
-  'cashbox_in': 'AJ',
-  'bank_in': 'AK',
-  'stripe_in': 'AL',
-  'saving_in': 'AM',
-  'report_in': 'AN',
-
-  'cashbox_out': 'AQ',
-  'bank_out': 'AR',
-  'stripe_out': 'AS',
-  'saving_out': 'AT',
-  'report_out': 'AU',
-}
+  ...FINANCIAL_COL_in,
+  ...FINANCIAL_COL_out,
+} as { [key in FINANCIAL_ACCOUNT | BALANCE_ACCOUNT]: string };
 
 
 

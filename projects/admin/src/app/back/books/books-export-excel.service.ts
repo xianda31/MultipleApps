@@ -210,6 +210,8 @@ export class BooksExportExcelService {
 
             row[(COL[CUSTOMER_COL.creance_in as keyof typeof COL]) - 1] = op.values['creance_in'] ? op.values['creance_in'] : '';
             row[(COL[CUSTOMER_COL.avoir_in as keyof typeof COL]) - 1] = op.values['avoir_in'] ? op.values['avoir_in'] : '';
+            row[(COL[CUSTOMER_COL.creance_out as keyof typeof COL]) - 1] = op.values['creance_out'] ? op.values['creance_out'] : '';
+            row[(COL[CUSTOMER_COL.avoir_out as keyof typeof COL]) - 1] = op.values['avoir_out'] ? op.values['avoir_out'] : '';
           }
 
           rows.push(row);
@@ -284,7 +286,8 @@ export class BooksExportExcelService {
       let start_row = newRows[0].number;
       let end_row = start_row + rows.length - 1;
 
-      Object.values({ ...{ 'info': 'E' }, ...FINANCIAL_COL, ...MAP_end }).forEach(element => {
+      const colsToMerge = [...new Set(Object.values({ ...MAP_start, ...FINANCIAL_COL, ...MAP_end }))];
+      colsToMerge.forEach(element => {
         this.worksheet.mergeCells(
           start_row,
           COL[element as keyof typeof COL],
