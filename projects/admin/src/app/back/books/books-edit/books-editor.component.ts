@@ -91,7 +91,7 @@ export class BooksEditorComponent {
     private transactionService: TransactionService,
     private systemDataService: SystemDataService,
     private membersService: MembersService,
-    private invoiceService: InvoiceService,
+    protected invoiceService: InvoiceService,
     private modalService: NgbModal,
     private toastService: ToastService,
     private route: ActivatedRoute,
@@ -582,7 +582,16 @@ export class BooksEditorComponent {
 
   async duplicate_book_entry() {
     try {
-      let new_book_entry = { ...this.selected_book_entry, date: formatDate(new Date(), 'yyyy-MM-dd', 'en') };
+      const today = formatDate(new Date(), 'yyyy-MM-dd', 'en');
+      let new_book_entry: BookEntry = {
+        id: '',
+        season: this.systemDataService.get_season(new Date(today)),
+        date: today,
+        transaction_id: this.selected_book_entry.transaction_id,
+        amounts: { ...this.selected_book_entry.amounts },
+        operations: this.selected_book_entry.operations.map(op => ({ ...op })),
+        ...(this.selected_book_entry.tag ? { tag: this.selected_book_entry.tag } : {}),
+      };
       const duplicateEntry = await this.bookService.create_book_entry(new_book_entry);
       this.toastService.showSuccess('duplication', 'écriture dupliquée');
       const newUrl = this.router.url.replace(this.book_entry_id, duplicateEntry?.id);

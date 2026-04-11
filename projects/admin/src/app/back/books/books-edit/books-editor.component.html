@@ -88,7 +88,7 @@
         </ng-container>
         <ng-template #invoice_exists>
           <div class="input-group">
-            <button class="btn btn-outline-primary" type="button">view</button>
+            <button class="btn btn-outline-primary" type="button" (click)="invoiceService.download_invoice(selected_book_entry.invoice_ref!, season)">view</button>
             <input type="text" class="form-control" id="invoice_ref" formControlName="invoice_ref">
             <button class="btn btn-warning" type="button" (click)="clear_invoice_ref()">clear</button>
           </div>
