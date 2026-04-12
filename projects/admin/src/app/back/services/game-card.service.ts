@@ -5,6 +5,7 @@ import { Member } from '../../common/interfaces/member.interface';
 import { ToastService } from '../../common/services/toast.service';
 import { MembersService } from '../../common/services/members.service';
 import { DBhandler } from '../../common/services/graphQL.service';
+import { MailingService } from '../mailing/mailing.service';
 
 
 @Injectable({
@@ -12,6 +13,7 @@ import { DBhandler } from '../../common/services/graphQL.service';
 })
 export class GameCardService {
 
+  readonly LOW_CREDIT_THRESHOLD = 2; // seuil critique de droits de table restants pour alerter le joueur (en nombre de tampons)
   private members: Member[] = [];
   private _gameCards!: GameCard[];
   private gameCards$: BehaviorSubject<GameCard[]> = new BehaviorSubject<GameCard[]>(this._gameCards);
@@ -19,6 +21,7 @@ export class GameCardService {
   constructor(
     private membersService: MembersService,
     private toastService: ToastService,
+    private mailingService: MailingService,
     private dbHandler: DBhandler
   ) { }
 
@@ -70,14 +73,30 @@ export class GameCardService {
       .reduce((total, card) => total + (card.initial_qty - card.stamps.length), 0);
   }
 
-  async stamp_member_card(member: Member, stamp_date: string, double: boolean): Promise<void> {
+  // get_current_card(member_license: string): GameCard | null {
+  //   const memberCards = this._gameCards.filter(c => c.owners.some(owner => owner.license_number === member_license));
+  //   if (memberCards.length === 0) {
+  //     return null;
+  //   }
+  //   let current_card= memberCards.sort((a, b) => (a.initial_qty - a.stamps.length) - (b.initial_qty - b.stamps.length))[0];
+  //   return current_card;
+  // }
+
+
+
+  async stamp_member_card(member: Member, stamp_date: string, double: boolean): Promise<boolean> {
 
     let cards = this._gameCards.filter(c => c.owners.some(owner => (owner.license_number === member.license_number) && (c.stamps.length < c.initial_qty)));
     if (cards.length === 0) {
       this.toastService.showErrorToast('Gestion des cartes', `Aucune carte de tournoi trouvée pour ${member.firstname} ${member.lastname}`);
-      return;
+      return false;
     }
     cards = cards.sort((a, b) => ((a.initial_qty - a.stamps.length) - (b.initial_qty - b.stamps.length)));
+
+    // Calculate credit before stamping
+    const creditBefore = this._gameCards
+      .filter(c => c.owners.some(owner => owner.license_number === member.license_number))
+      .reduce((total, card) => total + (card.initial_qty - card.stamps.length), 0);
 
     cards[0].stamps.push(stamp_date);
     await this.updateCard(cards[0])
@@ -95,6 +114,118 @@ export class GameCardService {
           console.error('Error stamping member card:', error);
         });
     }
+
+    // Calculate credit after stamping
+    const creditAfter = this._gameCards
+      .filter(c => c.owners.some(owner => owner.license_number === member.license_number))
+      .reduce((total, card) => total + (card.initial_qty - card.stamps.length), 0);
+
+    // Return true if credit crossed below threshold
+    // For shared cards, use a higher threshold since each owner will likely stamp
+    const threshold = cards[0].owners.length > 1 
+      ? this.LOW_CREDIT_THRESHOLD * cards[0].owners.length 
+      : this.LOW_CREDIT_THRESHOLD;
+    
+    const low_credit = creditBefore > threshold && creditAfter <= threshold;
+    if (low_credit) {
+      this.low_credit_message(cards[0]);
+    }
+    return low_credit;
+  }
+
+
+  low_credit_message(card: GameCard): void {
+    const emails = card.owners.map(owner => owner.email).filter(email => email);
+    const cardHtml = this.buildCardHtml(card);
+    
+    this.mailingService.sendEmail({
+      to: emails,
+      subject: 'Votre carte de droits de table est presque vide - Pensez à recharger !',
+      bodyHtml: `
+        <p>Cher ${card.owners.map(owner => owner.firstname).join(', ')},</p>
+        
+        <p>Le nombre de droits de tables restant sur ta carte de droits de table est bas :</p>
+        <p>Merci de penser à la recharger pour continuer à participer aux tournois.</p>
+        
+        <p>A très bientôt,<br>Le comité du club de bridge</p>
+        
+        ${cardHtml}
+
+      `
+    }).catch(error => {
+      console.error('Error sending low credit email:', error);
+    });
+  }
+
+  private buildCardHtml(card: GameCard): string {
+    const ownersHtml = card.owners
+      .map(owner => `${owner.lastname} ${owner.firstname}`)
+      .join(' &nbsp;et&nbsp; ');
+    
+    const remainingCredits = card.initial_qty - card.stamps.length;
+    const createdDate = card.createdAt ? new Date(card.createdAt).toLocaleDateString('fr-FR') : 'N/A';
+
+    // Grille 4 colonnes par ligne via <table> (seul compatible email)
+    const COLS = 4;
+    let rows = '';
+    for (let row = 0; row < Math.ceil(card.initial_qty / COLS); row++) {
+      let cells = '';
+      for (let col = 0; col < COLS; col++) {
+        const i = row * COLS + col;
+        if (i >= card.initial_qty) {
+          cells += '<td></td>';
+          continue;
+        }
+        const isStamped = i < card.stamps.length;
+        const label = isStamped
+          ? new Date(card.stamps[i]).toLocaleDateString('fr-FR')
+          : `n°${i + 1}`;
+        const bgColor = isStamped ? '#f8f9fa' : '#ffffff';
+        const fontWeight = isStamped ? 'bold' : 'normal';
+        const color = isStamped ? '#333' : '#999';
+        cells += `
+          <td style="padding: 2px;">
+            <div style="background-color: ${bgColor}; border: 1px solid #dee2e6; border-radius: 3px; padding: 10px 4px; text-align: center; width: 70px;">
+              <small style="font-weight: ${fontWeight}; color: ${color}; font-size: 11px;">${label}</small>
+            </div>
+          </td>`;
+      }
+      rows += `<tr>${cells}</tr>`;
+    }
+
+    return `
+      <div style="border: 1px solid #dee2e6; border-radius: 4px; font-family: Arial, sans-serif; margin: 15px 0; overflow: hidden;">
+        
+        <!-- En-tête carte -->
+        <div style="padding: 12px 16px 8px; border-bottom: 1px solid #dee2e6;">
+          <div style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">
+            Carte de ${card.initial_qty} droits de table
+          </div>
+          <div style="color: #6c757d; font-size: 13px; margin-bottom: 8px;">
+            <strong>titulaire(s) :</strong> ${ownersHtml}
+          </div>
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="color: #6c757d; font-size: 13px;">
+                <strong>créée le :</strong> ${createdDate}
+              </td>
+              <td style="text-align: center; color: #6c757d; font-size: 13px;">
+                <strong>crédit restant :</strong>
+                <span style="background-color: #198754; color: #fff; font-size: 12px; font-weight: bold; padding: 2px 8px; border-radius: 10px; margin-left: 4px;">${remainingCredits}</span>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- Corps : grille des cases -->
+        <div style="padding: 12px 16px;">
+          <table cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+
+      </div>
+    `;
   }
 
   //  interfaces editeur
@@ -136,8 +267,8 @@ export class GameCardService {
         }
       }
 
-      this.toastService.showErrorToast('Gestion des cartes', 'Une erreur est survenue lors de la modifier de la carte de tournoi');
-      return Promise.reject('Error updating game card');
+      this.toastService.showErrorToast('Gestion des cartes', 'Une erreur est survenue lors de la création de la carte de tournoi');
+      return Promise.reject('Error creating game card');
     }
   }
 

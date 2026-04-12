@@ -1,11 +1,9 @@
 import { Component, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MailingApiService } from '../services/mailing-api.service';
-import { EmailTemplateService } from '../services/email-template.service';
+import { MailingService, SendEmailParams } from './mailing.service';
 import { MembersService } from '../../common/services/members.service';
 import { Member } from '../../common/interfaces/member.interface';
-import { SystemDataService } from '../../common/services/system-data.service';
 
 @Component({
   selector: 'app-mailing.component',
@@ -18,14 +16,11 @@ import { SystemDataService } from '../../common/services/system-data.service';
 export class MailingComponent implements OnInit, AfterViewInit {
   @ViewChild('editorDiv') editorDiv!: ElementRef<HTMLDivElement>;
   
-  from = '"Bridge Club Saint-Orens" <noreply@bridgeclubsaintorens.fr>';
-  replyTo = '"Bridge Club Saint-Orens" <bridge.saintorens@free.fr>'; // Adresse pour les réponses
   recipientMode: 'all' | 'selected' = 'all'; // Mode de sélection
   members: Member[] = [];
   memberSelection: Map<string, boolean> = new Map(); // Map pour stocker les sélections
   selectedMembers: string[] = []; // IDs des membres sélectionnés
   toList = '';
-  ccEmail = ''; // Email en copie depuis ui-conf
   subject = '';
   bodyHtml = ''; // Contenu HTML
   sending = false;
@@ -35,10 +30,8 @@ export class MailingComponent implements OnInit, AfterViewInit {
   attachments: Array<{filename: string, content: string, contentType: string}> = [];
 
   constructor(
-    private mailingApi: MailingApiService,
-    private emailTemplate: EmailTemplateService,
-    private membersService: MembersService,
-    private systemDataService: SystemDataService
+    private mailingService: MailingService,
+    private membersService: MembersService
   ) {
     console.log('MailingComponent initialized');
   }
@@ -47,11 +40,6 @@ export class MailingComponent implements OnInit, AfterViewInit {
     // Charger la liste des membres avec email valide (contient @ et pas de ?)
     this.membersService.listMembers().subscribe(members => {
       this.members = members.filter(m => m.email && m.email.includes('@') && !m.email.includes('?'));
-    });
-    
-    // Charger l'email en copie depuis ui-conf
-    this.systemDataService.get_ui_settings().subscribe(ui => {
-      this.ccEmail = ui?.email?.ccEmail || '';
     });
   }
 
@@ -97,7 +85,7 @@ export class MailingComponent implements OnInit, AfterViewInit {
 
   // Méthode pour prévisualiser le template complet
   getFullPreview(): string {
-    return this.emailTemplate.buildEmailTemplate(this.bodyHtml);
+    return this.mailingService.buildEmailTemplate(this.bodyHtml);
   }
 
   // Méthode appelée lors de la modification de l'éditeur contenteditable
@@ -135,6 +123,44 @@ export class MailingComponent implements OnInit, AfterViewInit {
     this.attachments.splice(index, 1);
   }
 
+  openMailPreview() {
+    let fullBodyHtml = this.mailingService.buildEmailTemplate(this.bodyHtml);
+    
+    // Ajouter les pièces jointes si présentes
+    if (this.attachments.length > 0) {
+      const attachmentsList = this.attachments
+        .map(att => `<li>${att.filename}</li>`)
+        .join('');
+      const attachmentsSection = `
+        <div style="margin-top: 20px; padding: 15px; background-color: #f0f0f0; border-left: 4px solid #667eea;">
+          <strong>Pièces jointes (${this.attachments.length}) :</strong>
+          <ul style="margin: 10px 0; padding-left: 20px;">
+            ${attachmentsList}
+          </ul>
+        </div>
+      `;
+      fullBodyHtml = fullBodyHtml.replace('</body>', attachmentsSection + '</body>');
+    }
+    
+    const newWindow = window.open('', '_blank');
+    if (newWindow) {
+      newWindow.document.write(fullBodyHtml);
+      newWindow.document.close();
+    }
+  }
+
+  resetForm() {
+    this.subject = '';
+    this.bodyHtml = '';
+    this.attachments = [];
+    this.selectedMembers = [];
+    this.memberSelection.clear();
+    this.recipientMode = 'all';
+    if (this.editorDiv) {
+      this.editorDiv.nativeElement.innerHTML = '';
+    }
+  }
+
   sendMail() {
     this.sending = true;
     this.result = null;
@@ -162,22 +188,23 @@ export class MailingComponent implements OnInit, AfterViewInit {
       return;
     }
     
-    this.mailingApi.sendEmail({
-      from: this.from,
+    const emailParams: SendEmailParams = {
       to: toArray,
-      cc: this.ccEmail ? [this.ccEmail] : undefined,
       subject: this.subject,
-      bodyHtml: this.emailTemplate.buildEmailTemplate(this.bodyHtml),
-      attachments: this.attachments.length > 0 ? this.attachments : undefined,
-      replyTo: this.replyTo
-    })
+      bodyHtml: this.bodyHtml,
+      attachments: this.attachments.length > 0 ? this.attachments : undefined
+    };
+
+    this.mailingService.sendEmail(emailParams)
       .then((res) => {
         this.result = res;
         this.skippedRecipients = res.skippedRecipients || [];
         this.sending = false;
+        this.openMailPreview();
+        this.resetForm();
       })
       .catch((err) => {
-        this.error = err?.error?.error || err.message || 'Erreur lors de l\'envoi';
+        this.error = err?.message || 'Erreur lors de l\'envoi';
         this.sending = false;
       });
   }

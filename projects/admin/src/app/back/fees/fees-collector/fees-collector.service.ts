@@ -508,6 +508,11 @@ export class FeesCollectorService {
     });
   }
 
+  private low_credit_message(member: Member) {
+    const fullname = this.membersService.full_name(member);
+    this.toastService.showInfo('Crédit faible', `un mail a été envoyé à ${fullname} `);
+  }
+
   euros_collected(): number {
     return this.game.gamers
       .filter((gamer) => gamer.in_euro && gamer.enabled && gamer.validated)
@@ -551,14 +556,17 @@ export class FeesCollectorService {
 
 
       // charge members game_credits
-      members.forEach((gamer) => {
+      for (const gamer of members) {
         if (!gamer.in_euro) {
           let member = this.members.find((member) => member.license_number === gamer.license);
           if (member) {
-            this.gameCardService.stamp_member_card(member, this.game.tournament!.date, this.game.fees_doubled);
+            const low_credit = await this.gameCardService.stamp_member_card(member, this.game.tournament!.date, this.game.fees_doubled);
+            if (low_credit) {
+              this.low_credit_message(member);
+            }
           } else { throw new Error('Member not found !!!!'); }
         }
-      });
+      }
 
       // create bookEntry for tournament fees
       try {

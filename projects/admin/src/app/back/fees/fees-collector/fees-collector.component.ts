@@ -551,10 +551,4 @@ export class FeesCollectorComponent implements OnDestroy {
     return { title, headers, alignments, rows };
   }
 
-  is_my_birthday(gamer: Gamer): boolean {
-    if (!gamer.my_birthday) return false;
-    const tournament_date = this.game.tournament?.date;
-    if (!tournament_date) return false;
-    return gamer.my_birthday === tournament_date;
-  }
 }

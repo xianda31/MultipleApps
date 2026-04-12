@@ -1,26 +1,10 @@
-import { Injectable } from '@angular/core';
-import { SystemDataService } from '../../common/services/system-data.service';
-
-@Injectable({
-    providedIn: 'root'
-})
-export class EmailTemplateService {
-    private tagline = 'Votre club de bridge convivial et dynamique';
-
-    constructor(private systemDataService: SystemDataService) {
-        // Charger la configuration email au démarrage
-        this.systemDataService.get_ui_settings().subscribe(ui => {
-            this.tagline = ui?.email?.tagline || 'Votre club de bridge convivial et dynamique';
-        });
-    }
-
-    /**
-     * Construit un email HTML complet avec en-tête et footer
-     * @param bodyHtml Le contenu HTML personnalisé (sans <html>, <body>, etc.)
-     * @returns Le HTML complet prêt à être envoyé
-     */
-    buildEmailTemplate(bodyHtml: string): string {
-        return `
+/**
+ * Template HTML pour les emails
+ * Placeholders:
+ * - {{TAGLINE}}: Tagline du club depuis la configuration
+ * - {{BODY_HTML}}: Contenu personnalisé du mail
+ */
+export const MAILING_TEMPLATE = `
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -41,7 +25,7 @@ export class EmailTemplateService {
                 Bridge Club Saint-Orens
               </h1>
               <p style="margin: 10px 0 0 0; color: #ffffff; font-size: 14px;">
-                ${this.tagline}
+                {{TAGLINE}}
               </p>
             </td>
           </tr>
@@ -49,7 +33,7 @@ export class EmailTemplateService {
           <!-- Corps du message (contenu personnalisé) -->
           <tr>
             <td style="padding: 40px 30px;">
-              ${bodyHtml}
+              {{BODY_HTML}}
             </td>
           </tr>
           
@@ -77,6 +61,4 @@ export class EmailTemplateService {
   </table>
 </body>
 </html>
-    `.trim();
-    }
-}
+`.trim();
