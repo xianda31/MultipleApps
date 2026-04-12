@@ -574,7 +574,12 @@ export class FileBrowser implements OnInit, OnDestroy {
         }
       }
     };
-    collectFiles(node, '');
+    // Utilise currentPath comme préfixe initial pour que les chemins S3 soient corrects
+    // ex: albums/AlbumName/photo.jpg au lieu de albums/photo.jpg
+    const initialPrefix = (!isRootDownload && this.currentPath && this.currentPath.trim() !== '')
+      ? this.currentPath
+      : '';
+    collectFiles(node, initialPrefix);
     return files;
   }
 }

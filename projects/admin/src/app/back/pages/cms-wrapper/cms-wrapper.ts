@@ -315,7 +315,7 @@ export class CmsWrapper implements OnInit, OnDestroy {
 
     const newSnippet: Snippet = {
       id: 'snpt_' + Date.now(),
-      title: 'Nouvel article',
+      title: '',
       subtitle: '',
       content: '',
       image: '',
