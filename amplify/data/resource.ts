@@ -228,6 +228,7 @@ const schema = a.schema({
     amountNetCents: a.integer(),             // montant net reçu = amountCents - amountFeesCents
     reconciledAt: a.string(),                // date/heure de la réconciliation avec payout Stripe
     payoutId: a.string(),                    // Stripe payout ID (pour tracer le virement bancaire)
+    ttl: a.integer(),                        // TTL DynamoDB (epoch seconds) — purge auto après 3 ans
   })
     .identifier(['id'])
     .authorization((allow) => [

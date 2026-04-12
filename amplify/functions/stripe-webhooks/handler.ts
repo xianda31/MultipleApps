@@ -67,6 +67,7 @@ async function recordStripeTransaction(session: Stripe.Checkout.Session): Promis
       currency: session.currency || 'eur',
       customerEmail: session.customer_email || null,
       processed: false,
+      ttl: Math.floor(Date.now() / 1000) + 3 * 365 * 24 * 3600, // expire dans 3 ans (TTL DynamoDB)
       stripeMeta: {
         season: meta['season'] || '',
         date: meta['date'] || '',

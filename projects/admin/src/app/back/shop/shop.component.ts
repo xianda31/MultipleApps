@@ -17,7 +17,6 @@ import { StripeCheckoutOrchestrator } from './stripe-checkout/stripe-checkout.or
 import { ShopInitializationService } from './services/shop-initialization.service';
 import { BuyerContextService } from './services/buyer-context.service';
 import { ShopProductService } from './services/shop-product.service';
-import { BACK_ROUTE_ABS_PATHS } from '../routes/back-route-paths';
 
 /**
  * ShopComponent — Interface de gestion des ventes (cartes, adhésions, produits)
@@ -88,8 +87,9 @@ export class ShopComponent {
   get receiptUrl$() { return this.stripeCheckout.receiptUrl$; }
   get shouldShowSpinner$() { return this.stripeCheckout.shouldShowSpinner$; }
   get shouldShowSuccess$() { return this.stripeCheckout.shouldShowSuccess$; }
-  onlineSuccesUrl = `${window.location.origin}${BACK_ROUTE_ABS_PATHS['StripeOnlineShop']}?checkout=success`;
-  onlineCancelUrl = `${window.location.origin}${BACK_ROUTE_ABS_PATHS['StripeOnlineShop']}?checkout=cancel`;
+  // Utilise l'URL courante → fonctionne quelle que soit la route (back test, front menu dynamique, etc.)
+  onlineSuccesUrl = `${window.location.origin}${window.location.pathname}?checkout=success`;
+  onlineCancelUrl = `${window.location.origin}${window.location.pathname}?checkout=cancel`;
 
   // Paired product modal state
   showPairedModal = false;
@@ -138,10 +138,10 @@ export class ShopComponent {
       // Handle Stripe redirect from Stripe checkout
       const checkoutResult = this.route.snapshot.queryParamMap.get('checkout');
       if (checkoutResult === 'success') {
-        const sessionId = sessionStorage.getItem('stripe_session_id');
+        // session_id est injecté par Stripe directement dans l'URL de retour
+        const sessionId = this.route.snapshot.queryParamMap.get('session_id');
         if (sessionId) {
           this.stripeCheckout.notifyRedirectFromStripe(sessionId);
-          sessionStorage.removeItem('stripe_session_id');
         }
       } else if (checkoutResult === 'cancel') {
         // BookEntry-first : annulation explicite → supprimer le BookEntry créé

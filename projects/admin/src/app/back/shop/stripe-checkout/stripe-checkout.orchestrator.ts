@@ -134,8 +134,7 @@ export class StripeCheckoutOrchestrator {
       throw error;
     }
 
-    // 4. Stocker sessionId + bookEntryId pour le retour / annulation
-    sessionStorage.setItem('stripe_session_id', sessionId);
+    // 4. Stocker bookEntryId pour annulation (session_id est disponible dans l'URL Stripe au retour)
     sessionStorage.setItem('stripe_book_entry_id', bookEntry.id);
 
     return { sessionUrl: response.data.sessionUrl };
@@ -178,7 +177,6 @@ export class StripeCheckoutOrchestrator {
               isSaving: false,
             });
             // Nettoyer sessionStorage
-            sessionStorage.removeItem('stripe_session_id');
             sessionStorage.removeItem('stripe_book_entry_id');
           }),
           map(() => ({} as BookEntry)), // BookEntry déjà créé — retourne un objet vide pour compatibilité
@@ -259,7 +257,6 @@ export class StripeCheckoutOrchestrator {
         // Non-bloquant — sera détecté à la réconciliation
       }
     }
-    sessionStorage.removeItem('stripe_session_id');
     sessionStorage.removeItem('stripe_book_entry_id');
     this.reset();
   }

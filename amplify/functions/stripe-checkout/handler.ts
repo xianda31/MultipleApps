@@ -46,8 +46,6 @@ function isStaffCaller(event: any): boolean {
     event.requestContext?.authorizer?.claims ||
     event.requestContext?.authorizer?.jwt?.claims ||
     {};
-  // DEBUG TEMP — à retirer après diagnostic
-  console.log('[isStaffCaller] email:', claims['email'], 'sub:', claims['sub'], 'groups:', claims['cognito:groups']);
   // cognito:groups peut être une string CSV ou un tableau selon la config
   const rawGroups = claims['cognito:groups'] || '';
   const groups: string[] = Array.isArray(rawGroups)
@@ -510,10 +508,9 @@ async function handlePayoutList(_event: any): Promise<any> {
 async function handlePayoutLookup(event: any): Promise<any> {
   const CORS = { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' };
 
-  // DEBUG TEMP: auth désactivée pour test fonctionnel
-  // if (!isStaffCaller(event)) {
-  //   return { statusCode: 403, headers: CORS, body: JSON.stringify({ error: 'Admin required' }) };
-  // }
+  if (!isStaffCaller(event)) {
+    return { statusCode: 403, headers: CORS, body: JSON.stringify({ error: 'Admin required' }) };
+  }
   if (!STRIPE_SECRET_KEY) {
     return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: 'STRIPE_SECRET_KEY not configured' }) };
   }

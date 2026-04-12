@@ -2,6 +2,7 @@ import * as path from "path";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { defineBackend } from "@aws-amplify/backend";
 import { Stack } from "aws-cdk-lib";
+import { Construct } from "constructs";
 import {
   CorsHttpMethod,
   HttpApi,
@@ -10,6 +11,7 @@ import {
 import {  HttpUserPoolAuthorizer} from "aws-cdk-lib/aws-apigatewayv2-authorizers";
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import { Policy, PolicyStatement, Effect } from "aws-cdk-lib/aws-iam";
+import { CfnTable } from "aws-cdk-lib/aws-dynamodb";
 import { ffbProxy } from "./functions/ffb-proxy/resource";
 import { sesMailing } from "./functions/ses-mailing/resource";
 import { emailUnsubscribe } from "./functions/email-unsubscribe/resource";
@@ -116,12 +118,11 @@ httpApi.addRoutes({
 });
 
 // 🔒 Stripe Payout Lookup - Admin uniquement (réconciliation payout)
-// DEBUG TEMP: authorizer désactivé pour test fonctionnel
 httpApi.addRoutes({
   path: "/api/stripe/payout-lookup",
   methods: [HttpMethod.POST],
   integration: stripeCheckoutIntegration,
-  // authorizer: userPoolAuthorizer,
+  authorizer: userPoolAuthorizer,
 });
 
 // 🔒 Stripe Payout List - liste les virements récents (Admin)
@@ -129,7 +130,7 @@ httpApi.addRoutes({
   path: "/api/stripe/payout-list",
   methods: [HttpMethod.GET],
   integration: stripeCheckoutIntegration,
-  // authorizer: userPoolAuthorizer,
+  authorizer: userPoolAuthorizer,
 });
 
 // 🔒 Stripe Webhooks - Pas d'autorisation (Stripe appel en webhook)
@@ -178,6 +179,14 @@ backend.stripeCheckout.addEnvironment('SALE_ITEM_TABLE_NAME', saleItemTable.tabl
 const stripeTransactionTable = backend.data.resources.tables['StripeTransaction'];
 stripeTransactionTable.grantReadWriteData(backend.stripeWebhooks.resources.lambda);
 backend.stripeWebhooks.addEnvironment('STRIPE_TRANSACTION_TABLE_NAME', stripeTransactionTable.tableName);
+
+// Activer TTL DynamoDB sur le champ 'ttl' (purge auto 3 ans)
+// Amplify Gen 2 imbrique la table dans un construct enfant — on cherche le CfnTable en profondeur
+const cfnStripeTransactionTable = stripeTransactionTable.node.tryFindChild('Resource') as CfnTable
+  ?? stripeTransactionTable.node.children.find((c: Construct): c is CfnTable => c instanceof CfnTable);
+if (cfnStripeTransactionTable) {
+  cfnStripeTransactionTable.timeToLiveSpecification = { enabled: true, attributeName: 'ttl' };
+}
 
 // Grant both email Lambdas access to Member table
 const memberTable = backend.data.resources.tables['Member'];
