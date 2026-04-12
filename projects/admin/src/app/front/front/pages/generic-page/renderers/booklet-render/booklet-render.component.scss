@@ -288,7 +288,7 @@ $page-flip-duration: 1.5s;
 
       .card-img-top {
         object-fit: cover;
-        max-height: 25%;
+        max-height:33%;
         width: 100%;
         flex-shrink: 0;
         margin: 0;
@@ -408,7 +408,7 @@ $page-flip-duration: 1.5s;
 
   .page-face .card {
     .card-img-top {
-      max-height: 25%;
+      max-height: 33%;
     }
 
     .card-body {
@@ -436,7 +436,7 @@ $page-flip-duration: 1.5s;
 
   .page-face .card {
     .card-img-top {
-      max-height: 25%;
+      max-height: 33%;
     }
 
     .card-body {
@@ -512,7 +512,7 @@ $page-flip-duration: 1.5s;
   .page-face {
     .card {
       .card-img-top {
-        max-height: 25%;
+        max-height: 33%;
       }
 
       .card-body {
