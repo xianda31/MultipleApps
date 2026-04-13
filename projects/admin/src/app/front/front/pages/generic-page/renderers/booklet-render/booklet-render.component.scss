@@ -38,9 +38,9 @@ $page-flip-duration: 1.5s;
   justify-content: center;
   align-items: center;
   width: 100%;
-  height: calc(100dvh - 460px);
+  height: calc(100dvh - 390px); // -460 avant indicateurs supprimés (~70px récupérés)
   min-height: 400px;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
 
 .booklet-book {
@@ -174,6 +174,7 @@ $page-flip-duration: 1.5s;
   display: flex;
   flex-direction: column;
   backface-visibility: hidden;
+  pointer-events: none; // Les clics traversent jusqu'au page-container
 
   // Back face: pre-rotated 180° so it appears correctly during second half of flip
   &.page-back {
@@ -366,36 +367,6 @@ $page-flip-duration: 1.5s;
   flex-shrink: 0;
 }
 
-.booklet-indicators {
-  .indicator-btn {
-    width: 40px;
-    height: 40px;
-    border: 2px solid #dee2e6;
-    background: white;
-    color: #495057;
-    border-radius: 0.25rem;
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.2s ease;
-
-    &:hover {
-      border-color: #198754;
-      color: #198754;
-    }
-
-    &.active {
-      background: #198754;
-      color: white;
-      border-color: #198754;
-    }
-
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-  }
-}
-
 // Responsive
 @media (max-width: 1024px) {
   .booklet-wrapper {
@@ -471,16 +442,6 @@ $page-flip-duration: 1.5s;
     }
   }
 
-  .booklet-indicators {
-    flex-wrap: wrap;
-    gap: 0.5rem;
-
-    .indicator-btn {
-      width: 36px;
-      height: 36px;
-      font-size: 0.85rem;
-    }
-  }
 }
 
 @media (max-width: 600px) {
@@ -538,12 +499,12 @@ $page-flip-duration: 1.5s;
 // MOBILE LANDSCAPE MODE
 // ==========================================
 .booklet-container.landscape-mode {
+  // Neutralise l'inflation automatique de texte sur mobile haute densité (DPR > 1)
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+
   // Masquer header et indicateurs
   .booklet-header {
-    display: none;
-  }
-
-  .booklet-indicators {
     display: none;
   }
 
@@ -565,6 +526,16 @@ $page-flip-duration: 1.5s;
   .page-container {
     min-height: 100% !important;
     height: 100% !important;
+  }
+
+  // Re-activer le scroll vertical dans les pages (navigation via swipe)
+  .page-face {
+    pointer-events: auto;
+
+    .card-body {
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
   }
 }
 
@@ -689,23 +660,5 @@ $page-flip-duration: 1.5s;
     }
   }
 
-  // Ajuster les indicateurs pour afficher UN seul pour chaque page
-  .booklet-indicators {
-    margin-top: 0.25rem !important;
-    gap: 0.25rem !important;
-    
-    .indicator-btn {
-      width: 32px;
-      height: 32px;
-      font-size: 0.75rem;
-      
-      &.active {
-        // En portrait, un seul indicateur actif à la fois
-        background: #198754;
-        border-color: #198754;
-        color: white;
-      }
-    }
-  }
 }
 

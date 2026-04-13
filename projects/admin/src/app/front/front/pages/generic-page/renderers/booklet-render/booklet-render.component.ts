@@ -136,6 +136,34 @@ export class BookletRenderComponent implements OnInit {
     }
   }
 
+  // ─── Swipe (mobile) ──────────────────────────────────────────
+  private touchStartX = 0;
+  private touchStartY = 0;
+  private readonly SWIPE_THRESHOLD = 50;
+
+  onTouchStart(event: TouchEvent): void {
+    this.touchStartX = event.touches[0].clientX;
+    this.touchStartY = event.touches[0].clientY;
+  }
+
+  onTouchEnd(event: TouchEvent): void {
+    const deltaX = event.changedTouches[0].clientX - this.touchStartX;
+    const deltaY = Math.abs(event.changedTouches[0].clientY - this.touchStartY);
+    // Ignorer si geste principalement vertical (scroll) ou sous le seuil
+    if (Math.abs(deltaX) < this.SWIPE_THRESHOLD || deltaY > Math.abs(deltaX)) return;
+    if (deltaX < 0) this.next();
+    else this.previous();
+  }
+
+  // ─── Click (desktop uniquement) ──────────────────────────────
+  clickPrevious(): void {
+    if (!this.isMobile) this.previous();
+  }
+
+  clickNext(): void {
+    if (!this.isMobile) this.next();
+  }
+
   stringToSafeHtml(htmlString: string) {
     return this.sanitizer.bypassSecurityTrustHtml(htmlString);
   }
