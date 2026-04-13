@@ -167,7 +167,7 @@ export class CmsWrapper implements OnInit, OnDestroy {
     try {
       await this.pageService.updatePage(updatedPage);
     } catch (error) {
-      this.toastService.showErrorToast('Erreur', 'Impossible de sauvegarder la page');
+      this.toastService.showError('Erreur', 'Impossible de sauvegarder la page');
     }
   }
 
@@ -190,7 +190,7 @@ export class CmsWrapper implements OnInit, OnDestroy {
         this.toastService.showSuccess('Page', 'Nouvelle page créée');
       }
     } catch (error) {
-      this.toastService.showErrorToast('Erreur', 'Impossible de créer la page');
+      this.toastService.showError('Erreur', 'Impossible de créer la page');
     }
   }
 
@@ -221,7 +221,7 @@ export class CmsWrapper implements OnInit, OnDestroy {
       }
       this.toastService.showSuccess('Page', 'Page et articles supprimés');
     } catch (error) {
-      this.toastService.showErrorToast('Erreur', 'Impossible de supprimer la page ou ses articles');
+      this.toastService.showError('Erreur', 'Impossible de supprimer la page ou ses articles');
     }
   }
 
@@ -292,7 +292,7 @@ export class CmsWrapper implements OnInit, OnDestroy {
 
     // Persist the change to backend
     this.snippetService.updateSnippet(updatedSnippet).catch(() => {
-      this.toastService.showErrorToast('Erreur', 'Impossible de sauvegarder la modification');
+      this.toastService.showError('Erreur', 'Impossible de sauvegarder la modification');
     });
 
     // Reset active selection
@@ -360,7 +360,7 @@ export class CmsWrapper implements OnInit, OnDestroy {
         }
       }
     } catch (error) {
-      this.toastService.showErrorToast('Erreur', 'Impossible de créer l\'article');
+      this.toastService.showError('Erreur', 'Impossible de créer l\'article');
     }
   }
 
@@ -380,7 +380,7 @@ export class CmsWrapper implements OnInit, OnDestroy {
     try {
       await this.snippetService.updateSnippet(snippet);
     } catch (error) {
-      this.toastService.showErrorToast('Erreur', 'Impossible de sauvegarder l\'article');
+      this.toastService.showError('Erreur', 'Impossible de sauvegarder l\'article');
       // On error, could reload snippets to revert local changes
     }
   }
@@ -398,7 +398,7 @@ export class CmsWrapper implements OnInit, OnDestroy {
       await this.pageService.updatePage(this.selectedPage!);
       this.toastService.showSuccess('Article', 'Article supprimé');
     }).catch(() => {
-      this.toastService.showErrorToast('Erreur', 'Impossible de supprimer l\'article');
+      this.toastService.showError('Erreur', 'Impossible de supprimer l\'article');
     });
   }
 
@@ -419,7 +419,7 @@ export class CmsWrapper implements OnInit, OnDestroy {
       try {
         await this.pageService.updatePage(this.selectedPage);
       } catch (error) {
-        this.toastService.showErrorToast('Erreur', 'Impossible de sauvegarder l\'ordre des articles');
+        this.toastService.showError('Erreur', 'Impossible de sauvegarder l\'ordre des articles');
       }
     }
   }

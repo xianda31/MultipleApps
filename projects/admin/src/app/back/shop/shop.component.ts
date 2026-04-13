@@ -312,7 +312,7 @@ export class ShopComponent {
       })
       .catch((error) => {
         console.error('error saving sale', error);
-        this.toastService.showErrorToast('vente', 'erreur lors de l\'enregistrement de la vente');
+        this.toastService.showError('vente', 'erreur lors de l\'enregistrement de la vente');
       })
       .finally(() => {
         this.buyerForm.reset();

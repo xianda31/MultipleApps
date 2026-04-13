@@ -293,7 +293,7 @@ export class UiConfComponent implements OnInit {
         this.applyTheme();
       },
       error: (err) => {
-        this.toastService.showErrorToast('UI settings', 'Erreur chargement des paramètres UI');
+        this.toastService.showError('UI settings', 'Erreur chargement des paramètres UI');
       }
     });
 
@@ -475,7 +475,7 @@ export class UiConfComponent implements OnInit {
       this.fileService.getPresignedUrl$(path).subscribe({ next: (url) => this.logoPreviewUrl = url, error: () => this.logoPreviewUrl = null });
       this.toastService.showSuccess('UI settings', 'Logo uploaded');
     } catch (e: any) {
-      this.toastService.showErrorToast('UI settings', 'Erreur upload du logo');
+      this.toastService.showError('UI settings', 'Erreur upload du logo');
     }
   }
 
@@ -492,7 +492,7 @@ export class UiConfComponent implements OnInit {
       this.fileService.getPresignedUrl$(path).subscribe({ next: (url) => this.imageClubPreviewUrl = url, error: () => this.imageClubPreviewUrl = null });
       this.toastService.showSuccess('UI settings', 'Image club uploaded');
     } catch (e: any) {
-      this.toastService.showErrorToast('UI settings', 'Erreur upload de l\'image club');
+      this.toastService.showError('UI settings', 'Erreur upload de l\'image club');
     }
   }
 
@@ -505,7 +505,7 @@ export class UiConfComponent implements OnInit {
       this.loadDataInForm(json);
       this.toastService.showSuccess('UI settings', 'Fichier chargé avec succès');
     } catch (e: any) {
-      this.toastService.showErrorToast('UI settings', 'Erreur lecture du fichier');
+      this.toastService.showError('UI settings', 'Erreur lecture du fichier');
     }
   }
 
@@ -602,7 +602,7 @@ export class UiConfComponent implements OnInit {
       await this.systemDataService.save_ui_settings(payload);
       // Le subscribe initial à get_ui_settings() sera notifié et mettra à jour l'UI
     } catch (e: any) {
-      this.toastService.showErrorToast('UI settings', e?.message || 'Erreur sauvegarde');
+      this.toastService.showError('UI settings', e?.message || 'Erreur sauvegarde');
     }
   }
 
@@ -696,7 +696,7 @@ export class UiConfComponent implements OnInit {
       this.export_file_url = this.fileService.json_to_blob(preview);
       this.toastService.showInfo('UI settings', 'Aperçu appliqué');
     } catch (e: any) {
-      this.toastService.showErrorToast('UI settings', 'Erreur affichage de l\'aperçu');
+      this.toastService.showError('UI settings', 'Erreur affichage de l\'aperçu');
     }
   }
 

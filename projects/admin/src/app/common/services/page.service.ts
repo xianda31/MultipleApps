@@ -25,7 +25,7 @@ export class PageService {
       const createdPage = await this.dbHandler.createPage(pageWithoutId);
       return createdPage;
     } catch (error) {
-      this.toastService.showErrorToast('Pages', 'Erreur lors de la création');
+      this.toastService.showError('Pages', 'Erreur lors de la création');
       return Promise.reject(error);
     }
   }
@@ -68,7 +68,7 @@ export class PageService {
       this._pages$.next(this._pages);
       return updatedPage;
     } catch (error) {
-      this.toastService.showErrorToast('Pages', 'Erreur lors de la modification');
+      this.toastService.showError('Pages', 'Erreur lors de la modification');
       return Promise.reject(error);
     }
   }
@@ -81,7 +81,7 @@ export class PageService {
       this._pages$.next(this._pages);
       return true;
     } catch (error) {
-      this.toastService.showErrorToast('Pages', 'Erreur lors de la suppression');
+      this.toastService.showError('Pages', 'Erreur lors de la suppression');
       return Promise.reject(error);
     }
   }

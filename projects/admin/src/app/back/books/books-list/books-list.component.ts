@@ -214,7 +214,7 @@ export class BooksListComponent {
         this.toastService.showSuccess('Référence facture', 'la référence de la facture a été ajoutée à l\'écriture');
       } catch (err) {
         console.error('Error updating book entry with invoice ref:', err);
-        this.toastService.showErrorToast('Référence facture', 'Une erreur est survenue lors de l\'ajout de la référence de la facture à l\'écriture');
+        this.toastService.showError('Référence facture', 'Une erreur est survenue lors de l\'ajout de la référence de la facture à l\'écriture');
       }
     });
   }

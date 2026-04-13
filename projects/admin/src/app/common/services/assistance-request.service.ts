@@ -45,7 +45,7 @@ export class AssistanceRequestService {
        this._request$.next(this._requests);
        }
     } catch (error) {
-      this.toastService.showErrorToast('Erreur', `La création de la demande a échoué.`);
+      this.toastService.showError('Erreur', `La création de la demande a échoué.`);
       console.error('Error creating assistance request:', error);
     }
   }
@@ -60,7 +60,7 @@ export class AssistanceRequestService {
         this.toastService.showSuccess('Demande mise à jour', `La demande a bien été mise à jour.`);
       }
     } catch (error) {
-      this.toastService.showErrorToast('Erreur', `La mise à jour de la demande a échoué.`);
+      this.toastService.showError('Erreur', `La mise à jour de la demande a échoué.`);
     }
   }
 

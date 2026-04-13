@@ -214,7 +214,7 @@ export class StripeReconciliationComponent {
       });
     } catch (error) {
       console.error('Erreur chargement lignes payout:', error);
-      this.toastService.showErrorToast('Réconciliation', 'Impossible de charger les paiements');
+      this.toastService.showError('Réconciliation', 'Impossible de charger les paiements');
     } finally {
       this.loadingLines = false;
     }
@@ -272,7 +272,7 @@ export class StripeReconciliationComponent {
       this.toastService.showSuccess('Lookup payout',
         `${matched} paiement(s) identifié(s) sur ${result.charges.length} charge(s) Stripe`);
     } catch (error: any) {
-      this.toastService.showErrorToast('Lookup payout', error?.message || 'Erreur Stripe API');
+      this.toastService.showError('Lookup payout', error?.message || 'Erreur Stripe API');
     } finally {
       this.lookingUp = false;
     }
@@ -350,7 +350,7 @@ export class StripeReconciliationComponent {
       await this.loadLines();
     } catch (error: any) {
       console.error('Erreur création payout:', error);
-      this.toastService.showErrorToast('Payout', 'Erreur lors de la création de l\'écriture');
+      this.toastService.showError('Payout', 'Erreur lors de la création de l\'écriture');
     } finally {
       this.processingPayout = false;
     }

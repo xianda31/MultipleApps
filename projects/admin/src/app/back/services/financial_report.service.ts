@@ -58,7 +58,7 @@ export class FinancialReportService {
       this.fileService.upload_to_S3(balance_records, 'accounting/', 'balance_history.txt');
     }
     catch (error) {
-      this.toastService.showErrorToast('sauvegarde des bilans', error instanceof Error ? error.message : String(error));
+      this.toastService.showError('sauvegarde des bilans', error instanceof Error ? error.message : String(error));
     }
     finally {
       return of(this._balance_sheets);
@@ -94,7 +94,7 @@ export class FinancialReportService {
         }
       }),
       catchError((error) => {
-        this.toastService.showErrorToast('read_balance_sheet', error.message);
+        this.toastService.showError('read_balance_sheet', error.message);
         return of({} as Balance_sheet);
       })
     );
@@ -169,7 +169,7 @@ export class FinancialReportService {
         return this._balance_sheets$.asObservable();
       }),
       catchError((error) => {
-        this.toastService.showErrorToast('list_balance_sheets', error.message);
+        this.toastService.showError('list_balance_sheets', error.message);
         return of([] as Balance_sheet[]);
       })
     );

@@ -97,7 +97,7 @@ const modalRef = this.modalService.open(GetLoggingComponent, { centered: true })
       });
       
     } else {
-      this.toastService.showErrorToast('Création compte', 'Mel non répertorié dans la base de données adhérents');
+      this.toastService.showError('Création compte', 'Mel non répertorié dans la base de données adhérents');
     }
   }
   

@@ -153,7 +153,7 @@ export class MenusEditorComponent implements AfterViewInit {
                 this.sandbox_mode = true;
                 this.sandboxService.setSandbox(true);
               } catch (err: any) {
-                this.toastService.showErrorToast('Menus', err?.message || 'Échec de l\'initialisation');
+                this.toastService.showError('Menus', err?.message || 'Échec de l\'initialisation');
               } finally {
                 this.isProcessing = false;
               }
@@ -179,7 +179,7 @@ export class MenusEditorComponent implements AfterViewInit {
                 this.hasSandboxNavitems = sandboxItems.length > 0;
                 this.sandboxCount = sandboxItems.length;
               } catch (err: any) {
-                this.toastService.showErrorToast('Menus', err?.message || 'Échec de l\'écrasement');
+                this.toastService.showError('Menus', err?.message || 'Échec de l\'écrasement');
               } finally {
                 this.isProcessing = false;
               }
@@ -211,7 +211,7 @@ export class MenusEditorComponent implements AfterViewInit {
           // menu structure loaded
           this.rebuildNavbarEntries();
         },
-        error: (err) => this.toastService.showErrorToast('Chargement', err.message)
+        error: (err) => this.toastService.showError('Chargement', err.message)
       });
 
   }
@@ -353,7 +353,7 @@ export class MenusEditorComponent implements AfterViewInit {
 
     // Guard: prevent second-level items from being DROPDOWN (no dropdowns inside dropdowns)
     if (payload.parent_id && payload.type === NAVITEM_TYPE.DROPDOWN) {
-      this.toastService.showErrorToast('Menus', 'Un sous-menu ne peut pas être de type DROPDOWN.');
+      this.toastService.showError('Menus', 'Un sous-menu ne peut pas être de type DROPDOWN.');
       return;
     }
 
@@ -362,7 +362,7 @@ export class MenusEditorComponent implements AfterViewInit {
     if (routeTypes.has(payload.type)) {
       const hasDuplicatePath = this.navitems.some(n => n.path === payload.path && n.id !== payload.id);
       if (hasDuplicatePath) {
-        this.toastService.showErrorToast('Menus', 'Ce path est déjà utilisé par un autre élément.');
+        this.toastService.showError('Menus', 'Ce path est déjà utilisé par un autre élément.');
         return;
       }
     }
@@ -377,7 +377,7 @@ export class MenusEditorComponent implements AfterViewInit {
       // Refresh list to show updated page_title
       this.reloadNavitems();
     }).catch(err => {
-      this.toastService.showErrorToast('Gestion des menus', err.message);
+      this.toastService.showError('Gestion des menus', err.message);
     });
   }
 
@@ -393,7 +393,7 @@ export class MenusEditorComponent implements AfterViewInit {
       // Resync complet depuis le serveur pour assurer la cohérence
       this.reloadNavitems();
     }).catch(err => {
-      this.toastService.showErrorToast('Suppression', err.message);
+      this.toastService.showError('Suppression', err.message);
       // Rechargement pour restaurer en cas d'erreur
       this.reloadNavitems();
     });
@@ -422,7 +422,7 @@ export class MenusEditorComponent implements AfterViewInit {
       this.toastService.showSuccess('Menus', `${count} élément(s) copié(s) vers sandbox`);
       this.reloadNavitems();
     } catch (err: any) {
-      this.toastService.showErrorToast('Menus', err?.message || 'Échec de la copie');
+      this.toastService.showError('Menus', err?.message || 'Échec de la copie');
     } finally {
       this.isProcessing = false;
     }
@@ -449,7 +449,7 @@ export class MenusEditorComponent implements AfterViewInit {
       this.sandboxService.setSandbox(false);
       this.reloadNavitems();
     } catch (err: any) {
-      this.toastService.showErrorToast('Menus', err?.message || 'Échec de la promotion');
+      this.toastService.showError('Menus', err?.message || 'Échec de la promotion');
     } finally {
       this.isProcessing = false;
     }
@@ -477,7 +477,7 @@ export class MenusEditorComponent implements AfterViewInit {
       this.sandbox_mode = false;
       this.reloadNavitems();
     } catch (err: any) {
-      this.toastService.showErrorToast('Menus', err?.message || 'Échec de la suppression');
+      this.toastService.showError('Menus', err?.message || 'Échec de la suppression');
     } finally {
       this.isProcessing = false;
     }
@@ -493,7 +493,7 @@ export class MenusEditorComponent implements AfterViewInit {
       // After promotion, reload (now sandbox likely empty)
       this.reloadNavitems();
     } catch (err: any) {
-      this.toastService.showErrorToast('Menus', err?.message || 'Échec de la promotion');
+      this.toastService.showError('Menus', err?.message || 'Échec de la promotion');
     }
   }
 
@@ -786,7 +786,7 @@ export class MenusEditorComponent implements AfterViewInit {
         // Clear any inline transform left by CDK so flexbox can reflow items horizontally
         try { this.clearCdkTransforms(); } catch (e) { /* ignore */ }
       } catch (err) {
-        this.toastService.showErrorToast('Menus', 'Échec mise à jour de l\'ordre');
+        this.toastService.showError('Menus', 'Échec mise à jour de l\'ordre');
         this.reloadNavitems();
       }
     } catch (e) {
@@ -924,7 +924,7 @@ export class MenusEditorComponent implements AfterViewInit {
         const e: any = err;
         // Affiche tout l'objet erreur pour diagnostic maximal
         msg += `\n${JSON.stringify(e)}`;
-        this.toastService.showErrorToast('Menus', msg);
+        this.toastService.showError('Menus', msg);
         // Log complet en console
         console.error('Erreur updateNavItem (DnD footbar)', err);
         this.reloadNavitems();
@@ -968,7 +968,7 @@ export class MenusEditorComponent implements AfterViewInit {
     const formValue = this.navItemForm.getRawValue() as NavItemFormValue;
     // Guard against selecting self as parent
     if (formValue.parent_id && this.selectedNavitem?.id && formValue.parent_id === this.selectedNavitem.id) {
-      this.toastService.showErrorToast('Menus', 'Un élément ne peut pas être son propre parent');
+      this.toastService.showError('Menus', 'Un élément ne peut pas être son propre parent');
       throw new Error('Invalid parent selection: self-parent');
     }
     const isDirectCall = formValue.type === NAVITEM_TYPE.DIRECT_CALL;
@@ -1048,7 +1048,7 @@ export class MenusEditorComponent implements AfterViewInit {
   //     this.toastService.showSuccess('Pages', 'Nouvelle page créée');
   //     this.cdr.detectChanges();
   //   } catch (error) {
-  //     this.toastService.showErrorToast('Pages', 'Erreur lors de la création de la page');
+  //     this.toastService.showError('Pages', 'Erreur lors de la création de la page');
   //   }
   // }
 }

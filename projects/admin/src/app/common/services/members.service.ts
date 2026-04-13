@@ -86,11 +86,11 @@ export class MembersService {
     catch (errors) {
       if (Array.isArray(errors) && errors.length > 0 && typeof errors[0] === 'object' && errors[0] !== null && 'errorType' in errors[0]) {
         if ((errors[0] as any).errorType === 'Unauthorized') {
-          this.toastService.showErrorToast('Gestion des membres', 'Vous n\'êtes pas autorisé à modifier une fiche adhérent');
+          this.toastService.showError('Gestion des membres', 'Vous n\'êtes pas autorisé à modifier une fiche adhérent');
           return Promise.reject('Unauthorized');
         }
       }
-      this.toastService.showErrorToast('Gestion des membres', 'Une erreur est survenue lors de la modification de la fiche adhérent');
+      this.toastService.showError('Gestion des membres', 'Une erreur est survenue lors de la modification de la fiche adhérent');
       return Promise.reject('Error updating member');
 
     }
@@ -108,7 +108,7 @@ export class MembersService {
     }
     catch (error) {
       console.error('Error reading member:', error);
-      this.toastService.showErrorToast('Service adhérent', 'impossible de lire la fiche adhérent');
+      this.toastService.showError('Service adhérent', 'impossible de lire la fiche adhérent');
       return null;
     }
 
@@ -135,11 +135,11 @@ export class MembersService {
     catch (errors) {
       if (Array.isArray(errors) && errors.length > 0 && typeof errors[0] === 'object' && errors[0] !== null && 'errorType' in errors[0]) {
         if ((errors[0] as any).errorType === 'Unauthorized') {
-          this.toastService.showErrorToast('Gestion des membres', 'Vous n\'êtes pas autorisé à modifier une fiche adhérent');
+          this.toastService.showError('Gestion des membres', 'Vous n\'êtes pas autorisé à modifier une fiche adhérent');
           return Promise.reject('Unauthorized');
         }
       }
-      this.toastService.showErrorToast('Gestion des membres', 'Une erreur est survenue lors de la modification de la fiche adhérent');
+      this.toastService.showError('Gestion des membres', 'Une erreur est survenue lors de la modification de la fiche adhérent');
       return Promise.reject('Error updating member');
     }
   }
@@ -157,11 +157,11 @@ export class MembersService {
     catch (errors) {
       if (Array.isArray(errors) && errors.length > 0 && typeof errors[0] === 'object' && errors[0] !== null && 'errorType' in errors[0]) {
         if ((errors[0] as any).errorType === 'Unauthorized') {
-          this.toastService.showErrorToast('Gestion des membres', 'Vous n\'êtes pas autorisé à supprimer une fiche adhérent');
+          this.toastService.showError('Gestion des membres', 'Vous n\'êtes pas autorisé à supprimer une fiche adhérent');
           return Promise.reject('Unauthorized');
         }
       }
-      this.toastService.showErrorToast('Gestion des membres', 'Une erreur est survenue lors de la suppression de la fiche adhérent');
+      this.toastService.showError('Gestion des membres', 'Une erreur est survenue lors de la suppression de la fiche adhérent');
       return Promise.reject('Error deleting member');
     }
   }

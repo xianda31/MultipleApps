@@ -50,7 +50,7 @@ export class GroupsListComponent implements OnInit {
             } else {
               // If user already in a group , remove it from this group
               this._removeUserFromGroup(user.Username, group)
-                .catch((error) => { this.toastService.showErrorToast('Gestion des accès', `Opération refusée: ${error}`); });
+                .catch((error) => { this.toastService.showError('Gestion des accès', `Opération refusée: ${error}`); });
             }
           }
         }
@@ -71,11 +71,11 @@ export class GroupsListComponent implements OnInit {
         // this.toastService.showSuccess('Gestion des accès', `${user.member.firstname} ${user.member.lastname} retiré du groupe ${user.prev_group}`);
         user.prev_group = new_group; // Update the previous group to the current one
       })
-      .catch((error) => { this.toastService.showErrorToast('Gestion des accès', `Opération refusée: ${error}`); });
+      .catch((error) => { this.toastService.showError('Gestion des accès', `Opération refusée: ${error}`); });
 
     this._addUserToGroup(user.Username, new_group) // Add to new group
       .then(() => { this.toastService.showSuccess('Gestion des accès', `${user.member.firstname} ${user.member.lastname} mis dans le groupe ${new_group}`); })
-      .catch((error) => { this.toastService.showErrorToast('Gestion des accès', `Opération refusée: ${error}`); });
+      .catch((error) => { this.toastService.showError('Gestion des accès', `Opération refusée: ${error}`); });
 
   }
 

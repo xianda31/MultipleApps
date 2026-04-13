@@ -27,11 +27,11 @@ export class FileSystemSelectorComponent implements OnInit, OnChanges {
             if (!path) return;
             try {
               await this.fileService.delete_file(path);
-              this.toast.showSuccess('Fichier', 'Fichier supprimé');
+              this.toastService.showSuccess('Fichier', 'Fichier supprimé');
               this.refresh();
             } catch (err) {
               console.error('deleteFile error', err);
-              this.toast.showErrorToast('Fichier', 'Erreur suppression fichier');
+              this.toastService.showError('Fichier', 'Erreur suppression fichier');
             }
           }
         // Permet de forcer le rafraîchissement de l'arborescence
@@ -74,7 +74,7 @@ export class FileSystemSelectorComponent implements OnInit, OnChanges {
     private fileService: FileService,
     private el: ElementRef,
     private renderer: Renderer2,
-    private toast: ToastService,
+    private toastService: ToastService,
     private modalService: NgbModal,
     private zipService: ZipService
   ) {}
@@ -85,9 +85,9 @@ export class FileSystemSelectorComponent implements OnInit, OnChanges {
     try {
       const name = path.endsWith('/') ? path.slice(0, -1) : path;
       await this.zipService.downloadFolderAsZip(path, name.split('/').pop() + '.zip');
-      this.toast.showSuccess('Téléchargement', 'Archive générée');
+      this.toastService.showSuccess('Téléchargement', 'Archive générée');
     } catch (err) {
-      this.toast.showErrorToast('Téléchargement', 'Erreur lors de la génération de l’archive.');
+      this.toastService.showError('Téléchargement', 'Erreur lors de la génération de l’archive.');
     } finally {
       this.downloadingZipFolder = null;
     }
@@ -99,14 +99,14 @@ export class FileSystemSelectorComponent implements OnInit, OnChanges {
       const modalRef = this.modalService.open(GetConfirmationComponent, { centered: true });
       const confirmed = await modalRef.result;
       if (!confirmed) return;
-      this.toast.showInfo('Dossier', `Suppression du dossier : ${path}`);
+      this.toastService.showInfo('Dossier', `Suppression du dossier : ${path}`);
       await this.fileService.deleteFolderRecursive(path);
-      this.toast.showSuccess('Dossier', 'Dossier et contenu supprimés');
+      this.toastService.showSuccess('Dossier', 'Dossier et contenu supprimés');
       this.refresh();
     } catch (err) {
       if (err !== false) {
         console.error('deleteFolder error', err);
-        this.toast.showErrorToast('Dossier', 'Erreur suppression dossier');
+        this.toastService.showError('Dossier', 'Erreur suppression dossier');
       }
     }
   }
@@ -177,13 +177,13 @@ export class FileSystemSelectorComponent implements OnInit, OnChanges {
   async createFolder() {
     const name = (this.newFolderName || '').trim();
     if (!name) {
-      this.toast.showErrorToast('Dossier', 'Nom de dossier requis');
+      this.toastService.showError('Dossier', 'Nom de dossier requis');
       return;
     }
     let parent = this.currentPath || this.rootFolder;
     if (parent && !parent.endsWith('/')) parent += '/';
     if (!parent) {
-      this.toast.showErrorToast('Dossier', 'Racine non définie');
+      this.toastService.showError('Dossier', 'Racine non définie');
       return;
     }
     // Ensure trailing slash on folder marker
@@ -191,7 +191,7 @@ export class FileSystemSelectorComponent implements OnInit, OnChanges {
     try {
       const file = new File([new Blob([])], folderMarkerName);
       await this.fileService.upload_file(file, parent);
-      this.toast.showSuccess('Dossier', 'Dossier créé');
+      this.toastService.showSuccess('Dossier', 'Dossier créé');
       // refresh listing
       this.fileService.list_files(parent).subscribe((items) => {
         this.items = items;
@@ -201,7 +201,7 @@ export class FileSystemSelectorComponent implements OnInit, OnChanges {
       });
     } catch (err) {
       console.error('createFolder error', err);
-      this.toast.showErrorToast('Dossier', 'Erreur création dossier');
+      this.toastService.showError('Dossier', 'Erreur création dossier');
     }
   }
 }

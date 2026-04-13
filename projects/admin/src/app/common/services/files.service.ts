@@ -302,12 +302,12 @@ export class FileService {
         return data;
       } catch (parseErr) {
         console.error('download_json_file: JSON parse error for', path, parseErr);
-        this.toastService.showErrorToast('Configuration système', `Fichier ${path} invalide (erreur de parsing)`);
+        this.toastService.showError('Configuration système', `Fichier ${path} invalide (erreur de parsing)`);
         throw parseErr;
       }
     } catch (error: any) {
       console.error('download_json_file: failed to download', path, error);
-      this.toastService.showErrorToast('Configuration système', 'Impossible de charger le fichier ' + path + ' — ' + (error?.message || error));
+      this.toastService.showError('Configuration système', 'Impossible de charger le fichier ' + path + ' — ' + (error?.message || error));
       throw error;
     }
   }

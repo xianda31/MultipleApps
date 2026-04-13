@@ -28,7 +28,7 @@ export class TournamentService {
         let remote_load$ = this.ffbService._getTournaments().pipe(
             map((tournaments: unknown) => {
                 if (!Array.isArray(tournaments)) {
-                    this.toastService.showErrorToast('connexion au serveur FFB', 'Erreur serveur FFB ou format inattendu lors de la récupération des tournois');
+                    this.toastService.showError('connexion au serveur FFB', 'Erreur serveur FFB ou format inattendu lors de la récupération des tournois');
                     console.error('Erreur serveur FFB ou format inattendu lors de la récupération des tournois');
                     return [];
                 }

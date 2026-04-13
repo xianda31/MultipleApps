@@ -45,11 +45,11 @@ export class SnippetService {
         } catch (errors) {
             if (Array.isArray(errors) && errors.length > 0 && typeof errors[0] === 'object' && errors[0] !== null && 'errorType' in errors[0]) {
                 if ((errors[0] as any).errorType === 'Unauthorized') {
-                    this.toastService.showErrorToast('Gestion des snippets', 'Vous n\'êtes pas autorisé à créer un snippet');
+                    this.toastService.showError('Gestion des snippets', 'Vous n\'êtes pas autorisé à créer un snippet');
                     return Promise.reject('Unauthorized');
                 }
             }
-            this.toastService.showErrorToast('Gestion des snippets', 'Une erreur est survenue lors de la création d\'un snippet');
+            this.toastService.showError('Gestion des snippets', 'Une erreur est survenue lors de la création d\'un snippet');
             return Promise.reject('Error creating snippet');
         }
     }
@@ -85,7 +85,7 @@ export class SnippetService {
             snippet = await this.add_image_url(snippet);
             return Promise.resolve(snippet);
         } catch (errors) {
-            this.toastService.showErrorToast('Gestion des snippets', 'Une erreur est survenue lors de la lecture du snippet');
+            this.toastService.showError('Gestion des snippets', 'Une erreur est survenue lors de la lecture du snippet');
             return Promise.reject('Error reading snippet');
         }
     }
@@ -103,11 +103,11 @@ export class SnippetService {
         } catch (errors) {
             if (Array.isArray(errors) && errors.length > 0 && typeof errors[0] === 'object' && errors[0] !== null && 'errorType' in errors[0]) {
                 if ((errors[0] as any).errorType === 'Unauthorized') {
-                    this.toastService.showErrorToast('Gestion des snippets', 'Vous n\'êtes pas autorisé à modifier un snippet');
+                    this.toastService.showError('Gestion des snippets', 'Vous n\'êtes pas autorisé à modifier un snippet');
                     return Promise.reject('Update not authorized');
                 }
             }
-            this.toastService.showErrorToast('Gestion des snippets', 'Une erreur est survenue lors de la modification d\'un snippet');
+            this.toastService.showError('Gestion des snippets', 'Une erreur est survenue lors de la modification d\'un snippet');
             return Promise.reject('Error updating snippet');
         }
     }
@@ -121,11 +121,11 @@ export class SnippetService {
         } catch (errors) {
             if (Array.isArray(errors) && errors.length > 0 && typeof errors[0] === 'object' && errors[0] !== null && 'errorType' in errors[0]) {
                 if ((errors[0] as any).errorType === 'Unauthorized') {
-                    this.toastService.showErrorToast('Gestion des snippets', 'Vous n\'êtes pas autorisé à supprimer un snippet');
+                    this.toastService.showError('Gestion des snippets', 'Vous n\'êtes pas autorisé à supprimer un snippet');
                     return Promise.reject('Delete not authorized');
                 }
             }
-            this.toastService.showErrorToast('Gestion des snippets', 'Une erreur est survenue lors de la suppression d\'un snippet');
+            this.toastService.showError('Gestion des snippets', 'Une erreur est survenue lors de la suppression d\'un snippet');
             return Promise.reject('Error deleting snippet');
         }
     }

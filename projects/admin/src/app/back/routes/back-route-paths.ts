@@ -25,6 +25,7 @@ export const BACK_ROUTE_PATHS = {
   GroupsList: 'outils/groups',
   CloneDB: 'outils/cloneDB',
   CloneS3: 'outils/cloneS3',
+  BookBackup: 'outils/book-backup',
   // ComiteeBooklet: 'outils/comitee_booklet',
   // Snippets: 'site/thumbnails',
 

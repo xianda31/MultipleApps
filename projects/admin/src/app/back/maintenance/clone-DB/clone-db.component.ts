@@ -102,7 +102,7 @@ export class CloneDBComponent {
         },
         error: (_e) => {
           this.started = false;
-          this.toastService.showErrorToast('Clone BDD', 'Erreur lors du chargement des tables');
+          this.toastService.showError('Clone BDD', 'Erreur lors du chargement des tables');
         }
       });
   }
@@ -123,7 +123,7 @@ export class CloneDBComponent {
     const row = this.tableRows.find(r => r.name === tableName);
     if (!row || (!row.production && !row.sandbox)) {
       console.error(`Invalid table name ${tableName}: missing table definition`);
-      this.toastService.showErrorToast('Clone BDD', `Table ${tableName} non trouvée.`);
+      this.toastService.showError('Clone BDD', `Table ${tableName} non trouvée.`);
       return;
     }
 
@@ -133,7 +133,7 @@ export class CloneDBComponent {
     if (this.reverseDirection) {
       // Mode DANGEREUX : sandbox → production
       if (!row.sandbox || !row.production) {
-        this.toastService.showErrorToast('Clone BDD', `Mode inversé impossible: table manquante en Sandbox ou Production.`);
+        this.toastService.showError('Clone BDD', `Mode inversé impossible: table manquante en Sandbox ou Production.`);
         return;
       }
       source_table = row.sandbox.Table?.TableName ?? '';
@@ -147,7 +147,7 @@ export class CloneDBComponent {
     } else {
       // Mode normal : production → sandbox
       if (!row.production) {
-        this.toastService.showErrorToast('Clone BDD', `Table Production manquante pour ${tableName}.`);
+        this.toastService.showError('Clone BDD', `Table Production manquante pour ${tableName}.`);
         return;
       }
       source_table = row.production.Table?.TableName ?? '';
@@ -195,7 +195,7 @@ export class CloneDBComponent {
       },
       error: (error) => {
         console.error('Error copying items:', error);
-        this.toastService.showErrorToast('Clone BDD', `Erreur lors du clonage de la table ${tableName}`);
+        this.toastService.showError('Clone BDD', `Erreur lors du clonage de la table ${tableName}`);
         this.finishRow(tableName);
       }
     });
@@ -315,7 +315,7 @@ export class CloneDBComponent {
         this.started = false;
       },
       error: (_e) => {
-        this.toastService.showErrorToast('Clone BDD', 'Échec du rafraîchissement (live)');
+        this.toastService.showError('Clone BDD', 'Échec du rafraîchissement (live)');
         this.started = false;
       }
     });

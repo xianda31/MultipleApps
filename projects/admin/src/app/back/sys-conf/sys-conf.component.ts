@@ -25,7 +25,7 @@ export class SysConfComponent {
 
   constructor(
     private systemDataService: SystemDataService,
-    private toatService: ToastService,
+    private toastService: ToastService,
     private fileService: FileService,
     private fb: FormBuilder
   ) {
@@ -99,7 +99,7 @@ export class SysConfComponent {
         },
         error: (error) => {
           console.error('error', error);
-          this.toatService.showErrorToast('erreur de chargement de la configuration', 'vérifiez la connexion internet');
+          this.toastService.showError('erreur de chargement de la configuration', 'vérifiez la connexion internet');
         }
       });
 
@@ -122,7 +122,7 @@ export class SysConfComponent {
     }
     console.log('nouvelle configuration', new_configuration);
     this.systemDataService.save_configuration(new_configuration);
-    this.toatService.showSuccess('configuration sauvegardée', 'les nouvelles données ont été enregistrées');
+    this.toastService.showSuccess('configuration sauvegardée', 'les nouvelles données ont été enregistrées');
   }
 
   get_trace_mode() {
@@ -230,10 +230,10 @@ export class SysConfComponent {
       try {
         let json = JSON.parse(text);
         this.loadDataInFormGroup(json);
-        this.toatService.showSuccess('fichier de configuration chargé', 'les données sont prêtes à être enregistrées');
+        this.toastService.showSuccess('fichier de configuration chargé', 'les données sont prêtes à être enregistrées');
       } catch (error) {
         console.error('error', error);
-        this.toatService.showErrorToast('erreur chargement fichier de configuration', 'vérifiez la syntaxe');
+        this.toastService.showError('erreur chargement fichier de configuration', 'vérifiez la syntaxe');
       }
       // let json = JSON.parse(text);
       // this.loadDataInFormGroup(JSON.parse(text));

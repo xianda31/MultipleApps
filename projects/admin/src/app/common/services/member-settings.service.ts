@@ -79,7 +79,7 @@ private settings_change$: BehaviorSubject<number> = new BehaviorSubject<number>(
               observer.complete();
             }).catch((error) => {
               console.error('Error updating member:', error);
-              this.toastService.showErrorToast('Erreur', 'Impossible de sauvegarder les préférences');
+              this.toastService.showError('Erreur', 'Impossible de sauvegarder les préférences');
               observer.next(false);
               observer.complete();
             });

@@ -30,7 +30,7 @@ transaction_class(id: TRANSACTION_ID): TRANSACTION_CLASS {
   if (check) {
     return TRANSACTION_DIRECTORY[id].class;
   } else {
-    this.toastService.showErrorToast('écriture comptable corrompue', `transaction " ${id} " inconnue`);
+    this.toastService.showError('écriture comptable corrompue', `transaction " ${id} " inconnue`);
     throw new Error(`transaction ${id} not found`);
   }
 }
@@ -51,7 +51,7 @@ get_transaction(id: TRANSACTION_ID): Transaction {
   if (check) {
     return TRANSACTION_DIRECTORY[id];
   } else {
-    this.toastService.showErrorToast('écriture comptable corrompue', `transaction " ${id} " inconnue`);
+    this.toastService.showError('écriture comptable corrompue', `transaction " ${id} " inconnue`);
     throw new Error(`transaction ${id} not found`);
   }
 }

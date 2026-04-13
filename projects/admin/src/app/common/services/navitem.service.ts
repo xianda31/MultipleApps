@@ -208,7 +208,7 @@ export class NavItemsService {
       this._navItems$.next(this._navItems);
       return createdNavItem;
     } catch (error) {
-      this.toastService.showErrorToast('NavItems', 'Erreur lors de la création');
+      this.toastService.showError('NavItems', 'Erreur lors de la création');
       return Promise.reject(error);
     }
   }
@@ -275,7 +275,7 @@ export class NavItemsService {
       this._navItems$.next(this._navItems);
       return updatedNavItem;
     } catch (error) {
-      this.toastService.showErrorToast('NavItems', 'Erreur lors de la modification');
+      this.toastService.showError('NavItems', 'Erreur lors de la modification');
       console.log('Erreur updateNavItem', error);
       console.log('NavItem envoyé', navItem);
       return Promise.reject(error);
@@ -290,7 +290,7 @@ export class NavItemsService {
       this._navItems$.next(this._navItems);
       return true;
     } catch (error) {
-      this.toastService.showErrorToast('NavItems', 'Erreur lors de la suppression');
+      this.toastService.showError('NavItems', 'Erreur lors de la suppression');
       return false;
     }
   }
@@ -352,7 +352,7 @@ export class NavItemsService {
       this.toastService.showSuccess('NavItems', `${clonedCount} élément(s) copié(s) vers sandbox`);
       return clonedCount;
     } catch (error: any) {
-      this.toastService.showErrorToast('NavItems', 'Erreur lors de la copie vers sandbox');
+      this.toastService.showError('NavItems', 'Erreur lors de la copie vers sandbox');
       return Promise.reject(error);
     }
   }
@@ -417,7 +417,7 @@ export class NavItemsService {
       this.toastService.showSuccess('NavItems', `${promotedCount} élément(s) promu(s) en production`);
       return promotedCount;
     } catch (error: any) {
-      this.toastService.showErrorToast('NavItems', 'Erreur lors de la promotion vers production');
+      this.toastService.showError('NavItems', 'Erreur lors de la promotion vers production');
       return Promise.reject(error);
     }
   }
@@ -436,7 +436,7 @@ export class NavItemsService {
       this.toastService.showSuccess('NavItems', `${sandboxItems.length} élément(s) promu(s) en production`);
       return sandboxItems.length;
     } catch (error: any) {
-      this.toastService.showErrorToast('NavItems', 'Erreur lors de la promotion des menus sandbox');
+      this.toastService.showError('NavItems', 'Erreur lors de la promotion des menus sandbox');
       return Promise.reject(error);
     }
   }

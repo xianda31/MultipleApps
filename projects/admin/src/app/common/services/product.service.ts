@@ -81,12 +81,12 @@ export class  ProductService {
         } catch (errors) {
             if (Array.isArray(errors) && errors.length > 0 && typeof errors[0] === 'object' && errors[0] !== null && 'errorType' in errors[0]) {
                 if ((errors[0] as any).errorType === 'Unauthorized') {
-                    this.toastService.showErrorToast('Gestion des produits', 'Vous n\'êtes pas autorisé à créer un produit à la vente');
+                    this.toastService.showError('Gestion des produits', 'Vous n\'êtes pas autorisé à créer un produit à la vente');
                     return Promise.reject('Unauthorized');
                 }
             }
 
-            this.toastService.showErrorToast('Gestion des cartes', 'Une erreur est survenue lors de la création d\'un produit à la vente');
+            this.toastService.showError('Gestion des cartes', 'Une erreur est survenue lors de la création d\'un produit à la vente');
             return Promise.reject('Error updating product');
         }
     }
@@ -134,12 +134,12 @@ export class  ProductService {
         } catch (errors) {
             if (Array.isArray(errors) && errors.length > 0 && typeof errors[0] === 'object' && errors[0] !== null && 'errorType' in errors[0]) {
                 if ((errors[0] as any).errorType === 'Unauthorized') {
-                    this.toastService.showErrorToast('Gestion des produits', 'Vous n\'êtes pas autorisé à modifier un produit à la vente');
+                    this.toastService.showError('Gestion des produits', 'Vous n\'êtes pas autorisé à modifier un produit à la vente');
                     return Promise.reject('Update not authorized');
                 }
             }
 
-            this.toastService.showErrorToast('Gestion des cartes', 'Une erreur est survenue lors de la modifier d\'un produit à la vente');
+            this.toastService.showError('Gestion des cartes', 'Une erreur est survenue lors de la modifier d\'un produit à la vente');
             return Promise.reject('Error updating product');
         }
     }
@@ -155,12 +155,12 @@ export class  ProductService {
         } catch (errors) {
             if (Array.isArray(errors) && errors.length > 0 && typeof errors[0] === 'object' && errors[0] !== null && 'errorType' in errors[0]) {
                 if ((errors[0] as any).errorType === 'Unauthorized') {
-                    this.toastService.showErrorToast('Gestion des produits', 'Vous n\'êtes pas autorisé à supprimer un produit à la vente');
+                    this.toastService.showError('Gestion des produits', 'Vous n\'êtes pas autorisé à supprimer un produit à la vente');
                     return Promise.reject('Delete not authorized');
                 }
             }
 
-            this.toastService.showErrorToast('Gestion des cartes', 'Une erreur est survenue lors de la suppression d\'un produit à la vente');
+            this.toastService.showError('Gestion des cartes', 'Une erreur est survenue lors de la suppression d\'un produit à la vente');
             return Promise.reject('Error updating product');
         }
     }

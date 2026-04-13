@@ -81,7 +81,7 @@ export class FeesCollectorComponent implements OnDestroy {
     this.productService.listProducts().subscribe(products => {
       const card_product = products.find(p => (p.account === 'CAR') && (!p.paired));
       if (!card_product) {
-        this.toastService.showErrorToast('Configuration produit', `Le produit carte de jeu n'a pas été trouvé. Veuillez le configurer correctement.`);
+        this.toastService.showError('Configuration produit', `Le produit carte de jeu n'a pas été trouvé. Veuillez le configurer correctement.`);
         throw new Error('Le produit carte de jeu n\'a pas été trouvé. Veuillez le configurer correctement.');
       }
       this.CARD_PRICE = card_product.price;
@@ -112,7 +112,7 @@ export class FeesCollectorComponent implements OnDestroy {
         this.next_tournaments = withStatus;
       },
       error: (err) => {
-        this.toastService.showErrorToast('connexion au serveur FFB', `Erreur \`${err}\` lors de la récupération des tournois`);
+        this.toastService.showError('connexion au serveur FFB', `Erreur \`${err}\` lors de la récupération des tournois`);
         if (typeof window !== 'undefined' && window.console) {
           console.error('Erreur lors du chargement des tournois :', err);
         }
@@ -383,9 +383,9 @@ export class FeesCollectorComponent implements OnDestroy {
     } catch (error) {
       console.error('Erreur lors de la vente rapide', error);
       if (this.quickSaleGamer) {
-        this.toastService.showErrorToast('Vente rapide', `Erreur lors de la vente à ${this.quickSaleGamer.firstname} ${this.quickSaleGamer.lastname}`);
+        this.toastService.showError('Vente rapide', `Erreur lors de la vente à ${this.quickSaleGamer.firstname} ${this.quickSaleGamer.lastname}`);
       } else {
-        this.toastService.showErrorToast('Vente rapide', 'Erreur lors de la vente rapide.');
+        this.toastService.showError('Vente rapide', 'Erreur lors de la vente rapide.');
       }
       this.quickSaleError = 'Erreur lors de la vente rapide.';
     }

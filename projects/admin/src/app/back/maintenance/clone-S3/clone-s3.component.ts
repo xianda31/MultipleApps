@@ -45,7 +45,7 @@ export class CloneS3Component {
     const JSZip = (await import('jszip')).default;
     const entry = this.roots.find(r => r.key === root);
     if (!entry || entry.sourceCount === 0 || entry.sourceCount === null) {
-      this.toastService.showErrorToast('Téléchargement', 'Aucun fichier à télécharger pour cette racine.');
+      this.toastService.showError('Téléchargement', 'Aucun fichier à télécharger pour cette racine.');
       return;
     }
     try {
@@ -59,7 +59,7 @@ export class CloneS3Component {
         files = files.filter(f => f.size && f.size > 0);
       }
       if (!files.length) {
-        this.toastService.showErrorToast('Téléchargement', 'Aucun fichier trouvé.');
+        this.toastService.showError('Téléchargement', 'Aucun fichier trouvé.');
         this.downloadingZip[root] = false;
         return;
       }
@@ -95,7 +95,7 @@ export class CloneS3Component {
       this.toastService.showSuccess('Téléchargement', `Archive ${root}.zip générée (${files.length} fichiers)`);
     } catch (err) {
       console.error('Erreur lors du téléchargement .zip', err);
-      this.toastService.showErrorToast('Téléchargement', 'Erreur lors de la génération de l’archive.');
+      this.toastService.showError('Téléchargement', 'Erreur lors de la génération de l’archive.');
     } finally {
       this.downloadingZip[root] = false;
     }
@@ -185,12 +185,12 @@ export class CloneS3Component {
       const src = this.sourcePrefix(root);
       const dst = this.destPrefix(root);
       if (src === dst && this.sourceBucket === this.destBucket) {
-        this.toastService.showErrorToast('Clone S3', `Source et destination identiques pour ${root}. Modifiez les préfixes.`);
+        this.toastService.showError('Clone S3', `Source et destination identiques pour ${root}. Modifiez les préfixes.`);
         return;
       }
 
       if (!this.sourceBucket || !this.destBucket) {
-        this.toastService.showErrorToast('Clone S3', 'Veuillez renseigner les noms de buckets source et destination.');
+        this.toastService.showError('Clone S3', 'Veuillez renseigner les noms de buckets source et destination.');
         return;
       }
 
@@ -204,7 +204,7 @@ export class CloneS3Component {
       this.toastService.showSuccess('Clone S3', `Dossier ${root} cloné (${res.total - res.errors}/${res.total})`);
     } catch (e) {
       console.error('Clone error', root, e);
-      this.toastService.showErrorToast('Clone S3', `Erreur lors du clonage du dossier ${root}`);
+      this.toastService.showError('Clone S3', `Erreur lors du clonage du dossier ${root}`);
     } finally {
       entry.cloning = false;
       this.started = false;

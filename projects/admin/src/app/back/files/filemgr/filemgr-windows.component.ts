@@ -101,7 +101,7 @@ export class FilemgrWindowsComponent {
 
     windows_add_folder(parent: S3Item, folder_name: string) {
         if (!folder_name || folder_name.trim() === '') {
-            this.toastService.showErrorToast('Nouveau dossier', 'Le nom du dossier ne peut pas être vide');
+            this.toastService.showError('Nouveau dossier', 'Le nom du dossier ne peut pas être vide');
             return;
         }
         this.create_virtual_folder(parent, folder_name);
@@ -117,7 +117,7 @@ export class FilemgrWindowsComponent {
             this.toastService.showSuccess('Suppression', 'Fichier supprimé avec succès');
 
         }).catch(() => {
-            this.toastService.showErrorToast('Suppression', 'Échec de la suppression du fichier');
+            this.toastService.showError('Suppression', 'Échec de la suppression du fichier');
         });
     }
 
@@ -160,7 +160,7 @@ export class FilemgrWindowsComponent {
             this.regenerate_navigation_point(path);
             return newItem;
         }).catch((error) => {
-            this.toastService.showErrorToast('Upload', 'Échec du téléchargement du fichier');
+            this.toastService.showError('Upload', 'Échec du téléchargement du fichier');
             return Promise.reject(error);
         });
     }

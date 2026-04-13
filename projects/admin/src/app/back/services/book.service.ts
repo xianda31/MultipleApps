@@ -81,7 +81,7 @@ export class BookService {
           this.toastService.showWarning('base comptabilité', 'Vous n\'êtes pas autorisé à créer une entrée comptable');
           break;
         default:
-          this.toastService.showErrorToast('base comptabilité', errorType);
+          this.toastService.showError('base comptabilité', errorType);
       }
       throw errorType;
     }
@@ -103,7 +103,7 @@ export class BookService {
           this.toastService.showWarning('base comptabilité', 'Vous n\'êtes pas autorisé à créer une entrée comptable');
           break;
         default:
-          this.toastService.showErrorToast('base comptabilité', errorType);
+          this.toastService.showError('base comptabilité', errorType);
       }
       throw errorType;
     }
@@ -129,7 +129,7 @@ export class BookService {
           this.toastService.showWarning('base comptabilité', 'Vous n\'êtes pas autorisé à modifier une entrée comptable');
           break;
         default:
-          this.toastService.showErrorToast('base comptabilité', errorType);
+          this.toastService.showError('base comptabilité', errorType);
       }
       throw errorType;
     };
@@ -149,7 +149,7 @@ export class BookService {
       }
     } catch (error) {
       console.error('error', error);
-      this.toastService.showErrorToast('base comptabilité', 'Vous n\'êtes pas autorisé à supprimer une entrée comptable');
+      this.toastService.showError('base comptabilité', 'Vous n\'êtes pas autorisé à supprimer une entrée comptable');
       throw error instanceof Error ? error.message : String(error);
     }
   }
@@ -168,7 +168,7 @@ export class BookService {
       switchMap(() => this._book_entries$.asObservable()),
       catchError((error) => {
         console.error('Error fetching book entries:', error);
-        this.toastService.showErrorToast('base comptabilité', 'Erreur de chargement de la base de données');
+        this.toastService.showError('base comptabilité', 'Erreur de chargement de la base de données');
         return of([] as BookEntry[]);
       })
     );
@@ -289,7 +289,7 @@ export class BookService {
     this._book_entries.forEach((entry) => {
       if (!this._book_entry_balanced(entry)) {
         error = true;
-        this.toastService.showErrorToast('base comptabilité', `L'écriture comptable du ${entry.date} n'est pas équilibrée`);
+        this.toastService.showError('base comptabilité', `L'écriture comptable du ${entry.date} n'est pas équilibrée`);
       }
 
     });

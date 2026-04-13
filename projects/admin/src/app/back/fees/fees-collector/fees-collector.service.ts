@@ -321,7 +321,7 @@ export class FeesCollectorService {
 
   async restore_game_state(): Promise<boolean> {
     if (!this.tournament) {
-      this.toastService.showErrorToast('restauration', 'Aucun tournoi sélectionné pour la restauration');
+      this.toastService.showError('restauration', 'Aucun tournoi sélectionné pour la restauration');
       return false;
     }
     const season = this.systemDataService.get_season(new Date());
@@ -333,7 +333,7 @@ export class FeesCollectorService {
       this.update_members_credits();
       return true;
     } else {
-      this.toastService.showErrorToast('restauration', 'Aucun état de saisie trouvé pour ce tournoi');
+      this.toastService.showError('restauration', 'Aucun état de saisie trouvé pour ce tournoi');
       return false;
     }
   }
@@ -575,7 +575,7 @@ export class FeesCollectorService {
         this.toastService.showSuccess('droits de table', total + ' € de droits de table enregistrés');
       }
       catch (error: unknown) {
-        this.toastService.showErrorToast('droits de table', 'Erreur lors de l\'enregistrement des droits de table');
+        this.toastService.showError('droits de table', 'Erreur lors de l\'enregistrement des droits de table');
       }
     }
 

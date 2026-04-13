@@ -53,7 +53,7 @@ export class GetLoggingComponent implements OnInit {
       this.password.setValue('');
       this.password.enable();
     }).catch((error) => {
-      this.toastService.showErrorToast('Erreur de réinitialisation', error.message || 'Une erreur est survenue lors de la réinitialisation du mot de passe.');
+      this.toastService.showError('Erreur de réinitialisation', error.message || 'Une erreur est survenue lors de la réinitialisation du mot de passe.');
     });
   }
 
@@ -62,7 +62,7 @@ export class GetLoggingComponent implements OnInit {
       this.toastService.showSuccess('Inscription', 'Demande de compte effectuée. Un email de confirmation a été envoyé.');
       this.secret_code.enable();
     }).catch((error) => {
-      this.toastService.showErrorToast('Erreur d\'inscription', error.message || 'Une erreur est survenue lors de la création du compte.');
+      this.toastService.showError('Erreur d\'inscription', error.message || 'Une erreur est survenue lors de la création du compte.');
     });
   }
 
@@ -75,7 +75,7 @@ export class GetLoggingComponent implements OnInit {
         this.auth.confirmSignUp(this.email, this.secret_code.value);
         break;
       default:
-        this.toastService.showErrorToast('Erreur', 'Mode non reconnu');
+        this.toastService.showError('Erreur', 'Mode non reconnu');
         return;
     }
     this.activeModal.close(this.loggingForm.value);

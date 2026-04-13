@@ -154,7 +154,7 @@ export class AuthentificationService {
             this.toastService.showInfo('connexion', 'Réinitialisation requise : un code vous a été envoyé par e-mail');
             reject(err);
           } else {
-            // this.toastService.showErrorToast('erreur identification', err.message);
+            // this.toastService.showError('erreur identification', err.message);
             reject(err);
           }
         }
@@ -228,7 +228,7 @@ export class AuthentificationService {
     let promise = new Promise((resolve, reject) => {
       resetPassword({ username: email })
         .catch((err) => {
-          // this.toastService.showErrorToast('reset password', err.message);
+          // this.toastService.showError('reset password', err.message);
           reject(err);
         })
         .then((res) => {
@@ -245,7 +245,7 @@ export class AuthentificationService {
     let promise = new Promise((resolve, reject) => {
       confirmResetPassword({ username: email, confirmationCode: code, newPassword: password })
         .catch((err) => {
-          this.toastService.showErrorToast('new password', err.message);
+          this.toastService.showError('new password', err.message);
           reject(err);
         })
         .then((res) => {
@@ -269,7 +269,7 @@ export class AuthentificationService {
         }
         )
         .catch((err) => {
-          this.toastService.showErrorToast('sign up confirmation', err.message);
+          this.toastService.showError('sign up confirmation', err.message);
           reject(err);
         });
     });

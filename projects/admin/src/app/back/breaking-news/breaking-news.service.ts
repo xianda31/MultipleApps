@@ -169,7 +169,7 @@ export class BreakingNewsService {
       this.toastService.showInfo('Breaking news sauvegardés', 'success');
     } catch (error) {
       console.error('Error saving breaking news:', error);
-      this.toastService.showErrorToast('Erreur lors de la sauvegarde', 'error');
+      this.toastService.showError('Erreur lors de la sauvegarde', 'error');
       throw error;
     }
   }

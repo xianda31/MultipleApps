@@ -550,7 +550,7 @@ export class BooksEditorComponent {
         this.reset_form();
       })
         .catch((error) => {
-          this.toastService.showErrorToast('erreur', 'écriture non enregistrée');
+          this.toastService.showError('erreur', 'écriture non enregistrée');
         });
     } else {
       booking.id = this.book_entry_id;
@@ -576,7 +576,7 @@ export class BooksEditorComponent {
       this.location.back();
     }
     catch (error) {
-      this.toastService.showErrorToast('écriture BD', 'vous ne pouvez pas supprimer cette écriture');
+      this.toastService.showError('écriture BD', 'vous ne pouvez pas supprimer cette écriture');
     }
   }
 
@@ -597,7 +597,7 @@ export class BooksEditorComponent {
       const newUrl = this.router.url.replace(this.book_entry_id, duplicateEntry?.id);
       this.router.navigateByUrl(newUrl);
     } catch (error) {
-      this.toastService.showErrorToast('duplication', 'écriture non dupliquée');
+      this.toastService.showError('duplication', 'écriture non dupliquée');
     }
   }
 
@@ -733,7 +733,7 @@ export class BooksEditorComponent {
         }
       } catch (err) {
         console.error('Error updating book entry with invoice ref:', err);
-        this.toastService.showErrorToast('Référence facture', 'Une erreur est survenue lors de l\'ajout de la référence de la facture à l\'écriture');
+        this.toastService.showError('Référence facture', 'Une erreur est survenue lors de l\'ajout de la référence de la facture à l\'écriture');
       }
     });
   }
@@ -747,7 +747,7 @@ export class BooksEditorComponent {
         this.form.controls['invoice_ref'].setValue('');
       }).catch((err) => {
         console.error('Error deleting orphan invoice:', err);
-        this.toastService.showErrorToast('Suppression facture orpheline', 'Une erreur est survenue lors de la suppression de la facture orpheline.');
+        this.toastService.showError('Suppression facture orpheline', 'Une erreur est survenue lors de la suppression de la facture orpheline.');
       });
     }
   }
@@ -759,13 +759,13 @@ export class BooksEditorComponent {
       this.toastService.showSuccess('Suppression référence facture', 'la référence de la facture a été supprimée de l\'écriture');
     }).catch((err) => {
       console.error('Error updating book entry:', err);
-      this.toastService.showErrorToast('Suppression référence facture', 'Une erreur est survenue lors de la suppression de la référence de la facture de l\'écriture');
+      this.toastService.showError('Suppression référence facture', 'Une erreur est survenue lors de la suppression de la référence de la facture de l\'écriture');
     });
     this.invoiceService.delete_invoice(invoice_ref, this.season).then(() => {
       this.toastService.showSuccess('Suppression facture', invoice_ref + ' a été supprimé avec succès.');
     }).catch((err) => {
       console.error('Error deleting invoice:', err);
-      this.toastService.showErrorToast('Suppression facture', 'Une erreur est survenue lors de la suppression de la facture.');
+      this.toastService.showError('Suppression facture', 'Une erreur est survenue lors de la suppression de la facture.');
     });
     this.form.controls['invoice_ref'].setValue('');
   }

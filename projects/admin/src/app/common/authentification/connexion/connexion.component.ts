@@ -258,7 +258,7 @@ export class ConnexionComponent {
       })
       .catch((err) => {
         // Erreur explicite en cas d'échec réel de confirmation
-        this.toastService.showErrorToast('sign up', err?.message || 'Confirmation impossible');
+        this.toastService.showError('sign up', err?.message || 'Confirmation impossible');
         this.signup_msg = 'erreur à la confirmation';
       });
   }

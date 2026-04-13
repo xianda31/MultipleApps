@@ -105,7 +105,7 @@ export class StripeCheckoutOrchestrator {
         date: session.date,
       });
     } catch (error) {
-      this.toastService.showErrorToast('Paiement', 'Impossible de créer la session de paiement');
+      this.toastService.showError('Paiement', 'Impossible de créer la session de paiement');
       throw error;
     }
 
@@ -130,7 +130,7 @@ export class StripeCheckoutOrchestrator {
     try {
       bookEntry = await this.cartService.save_sale(session);
     } catch (error) {
-      this.toastService.showErrorToast('Paiement', 'Erreur lors de l\'enregistrement de la vente');
+      this.toastService.showError('Paiement', 'Erreur lors de l\'enregistrement de la vente');
       throw error;
     }
 
@@ -189,7 +189,7 @@ export class StripeCheckoutOrchestrator {
               isSaving: false,
               error: errorMsg,
             });
-            this.toastService.showErrorToast('Paiement', `Erreur: ${errorMsg}`);
+            this.toastService.showError('Paiement', `Erreur: ${errorMsg}`);
             observer.error(error);
             return of(null as any);
           })

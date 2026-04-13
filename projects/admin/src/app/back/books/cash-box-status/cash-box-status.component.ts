@@ -290,7 +290,7 @@ export class CashBoxStatusComponent {
           this.toastService.showSuccess('Alignement caisse consigné', `Montant : ${correction.toFixed(2)} €`);
         })
           .catch((err) => {
-            this.toastService.showErrorToast('Erreur lors de l\'alignement de la caisse', `Erreur : ${err.message}`);
+            this.toastService.showError('Erreur lors de l\'alignement de la caisse', `Erreur : ${err.message}`);
           })
           .finally(() => {
             this.cashForm.get('cash_real_amount')?.reset();

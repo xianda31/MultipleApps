@@ -116,7 +116,7 @@ export class FrontShopComponent implements OnInit, OnDestroy {
       }
     } catch (error: any) {
       console.error('Erreur checkout:', error);
-      this.toastService.showErrorToast(
+      this.toastService.showError(
         'Impossible de créer la session de paiement',
         error?.message || 'Erreur inconnue'
       );

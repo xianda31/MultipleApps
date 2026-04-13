@@ -88,7 +88,7 @@ export class GameCardService {
 
     let cards = this._gameCards.filter(c => c.owners.some(owner => (owner.license_number === member.license_number) && (c.stamps.length < c.initial_qty)));
     if (cards.length === 0) {
-      this.toastService.showErrorToast('Gestion des cartes', `Aucune carte de tournoi trouvée pour ${member.firstname} ${member.lastname}`);
+      this.toastService.showError('Gestion des cartes', `Aucune carte de tournoi trouvée pour ${member.firstname} ${member.lastname}`);
       return false;
     }
     cards = cards.sort((a, b) => ((a.initial_qty - a.stamps.length) - (b.initial_qty - b.stamps.length)));
@@ -262,12 +262,12 @@ export class GameCardService {
     } catch (errors) {
       if (Array.isArray(errors) && errors.length > 0 && typeof errors[0] === 'object' && errors[0] !== null && 'errorType' in errors[0]) {
         if ((errors[0] as any).errorType === 'Unauthorized') {
-          this.toastService.showErrorToast('Gestion des cartes', 'Vous n\'êtes pas autorisé à créer une carte de tournoi');
+          this.toastService.showError('Gestion des cartes', 'Vous n\'êtes pas autorisé à créer une carte de tournoi');
           return Promise.reject('Unauthorized');
         }
       }
 
-      this.toastService.showErrorToast('Gestion des cartes', 'Une erreur est survenue lors de la création de la carte de tournoi');
+      this.toastService.showError('Gestion des cartes', 'Une erreur est survenue lors de la création de la carte de tournoi');
       return Promise.reject('Error creating game card');
     }
   }
@@ -296,11 +296,11 @@ export class GameCardService {
     } catch (errors) {
       if (Array.isArray(errors) && errors.length > 0 && typeof errors[0] === 'object' && errors[0] !== null && 'errorType' in errors[0]) {
         if ((errors[0] as any).errorType === 'Unauthorized') {
-          this.toastService.showErrorToast('Gestion des cartes', 'Vous n\'êtes pas autorisé à modifier une carte de tournoi');
+          this.toastService.showError('Gestion des cartes', 'Vous n\'êtes pas autorisé à modifier une carte de tournoi');
           return Promise.reject('Unauthorized');
         }
       }
-      this.toastService.showErrorToast('Gestion des cartes', 'Une erreur est survenue lors de la modification de la carte de tournoi');
+      this.toastService.showError('Gestion des cartes', 'Une erreur est survenue lors de la modification de la carte de tournoi');
       return Promise.reject('Error updating game card');
     }
   }
@@ -319,7 +319,7 @@ export class GameCardService {
       }
       return false;
     } catch (error) {
-      this.toastService.showErrorToast('Gestion des cartes', 'La suppression de la carte de tournoi a échoué');
+      this.toastService.showError('Gestion des cartes', 'La suppression de la carte de tournoi a échoué');
       console.error('Error deleting game card:', error);
       throw error;
     }

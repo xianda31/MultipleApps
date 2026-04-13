@@ -121,7 +121,7 @@ export class MembersComponent implements OnInit {
           this.update_iv()
         ]).catch(err => console.error('Erreur lors du traitement des membres:', err));
       },
-      error: () => { this.loading = false; this.toastService.showErrorToast('Membres', 'Erreur lors du chargement des membres'); },
+      error: () => { this.loading = false; this.toastService.showError('Membres', 'Erreur lors du chargement des membres'); },
     });
   }
 

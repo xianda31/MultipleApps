@@ -58,7 +58,7 @@ export class ToastService {
    * @param title Toast title
    * @param message Toast message
    */
-  showErrorToast(title: string, message: string) {
+  showError(title: string, message: string) {
     this._toastEvents.next({
       message,
       title,
