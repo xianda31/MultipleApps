@@ -19,6 +19,7 @@ import { GroupsListComponent } from './groups/groups-list/groups-list.component'
 import { ProductsComponent } from './products/products.component';
 import { MembersComponent } from '../common/members/members.component';
 import { CloneDBComponent } from './maintenance/clone-DB/clone-db.component';
+import { BookBackupComponent } from './maintenance/book-backup/book-backup.component';
 import { AdminComponent } from './admin/back.component';
 import { BackPageComponent } from './back-page/back-page.component';
 import { FilemgrWindowsComponent } from './files/filemgr/filemgr-windows.component';
@@ -73,6 +74,7 @@ export const routes: Routes = [
       { path: BACK_ROUTE_PATHS.FilemgrWindows, component: FilemgrWindowsComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.CloneDB, component: CloneDBComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.CloneS3, component: CloneS3Component, canActivate: [AuthGuard] },
+      { path: BACK_ROUTE_PATHS.BookBackup, component: BookBackupComponent, canActivate: [AuthGuard] },
       // { path: BACK_ROUTE_PATHS.ComiteeBooklet, component: PdfViewerComponent, data:{pdf_src:'Agenda_2025_26.pdf'}, canActivate: [AuthGuard] },
       // { path: BACK_ROUTE_PATHS.BooksDebugger, component: BooksEditorComponent, data: { access: 'full' }, canActivate: [AuthGuard] },
       // { path: BACK_ROUTE_PATHS.BooksDebuggerId, component: BooksEditorComponent, data: { access: 'full' }, canActivate: [AuthGuard] },

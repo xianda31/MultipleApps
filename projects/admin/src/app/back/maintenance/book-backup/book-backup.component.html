@@ -1,0 +1,257 @@
+<div class="container-fluid py-3">
+
+  <!-- En-tête -->
+  <div class="d-flex align-items-center gap-2 mb-3">
+    <i class="bi bi-database-fill-down fs-4 text-primary"></i>
+    <h4 class="mb-0">Utilitaires de backup-restore de la base comptable</h4>
+  </div>
+
+  <!-- Mise en garde -->
+  <div class="alert alert-warning d-flex gap-2 mb-3">
+      <div>
+        <i class="bi bi-exclamation-triangle-fill fs-5 text-danger flex-shrink-0 mt-1 me-2"></i>
+      <strong>Outil à usage critique.</strong>
+      N'utilisez cet outil que si vous connaissez parfaitement ce qu'il fait et les conséquences de son utilisation.<br>
+    </div>
+  </div>
+
+  <!-- Alerte table introuvable -->
+  <div class="alert alert-danger" *ngIf="!tableFound && bookEntryTableName === ''">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    Connexion DynamoDB en cours ou table BookEntry introuvable...
+  </div>
+
+  <!-- Info table courante -->
+  <div class="alert alert-info py-2 mb-3" *ngIf="tableFound">
+    <i class="bi bi-database me-2"></i>
+    Table active&nbsp;: <code>{{ bookEntryTableName }}</code>
+    <span class="badge bg-info text-white ms-2" *ngIf="isSandbox">SANDBOX</span>
+    <span class="badge bg-info text-white ms-2" *ngIf="!isSandbox">PRODUCTION</span>
+  </div>
+
+  <div class="row g-3">
+
+    <!-- ── EXPORT ── -->
+    <div class="col-12 col-lg-6">
+      <div class="card h-100">
+        <div class="card-header bg-primary text-white d-flex align-items-center gap-2">
+          <i class="bi bi-download"></i>
+          <strong>Export JSON (backup)</strong>
+        </div>
+        <div class="card-body">
+          <p class="text-muted small">
+            Exporte toutes les écritures d'une saison en fichier JSON (format DynamoDB natif).
+          </p>
+
+          <!-- Sélection de saison -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Saisons en base</label>
+
+            <!-- Chargement en cours -->
+            <div class="text-muted small" *ngIf="seasonsLoading">
+              <span class="spinner-border spinner-border-sm me-1"></span>
+              Chargement des saisons...
+            </div>
+
+            <!-- Boutons de sélection -->
+            <div class="d-flex flex-wrap gap-2" *ngIf="!seasonsLoading && availableSeasons.length > 0">
+              <button *ngFor="let s of availableSeasons"
+                class="btn btn-sm"
+                [class.btn-primary]="exportSeason === s"
+                [class.btn-outline-secondary]="exportSeason !== s"
+                [disabled]="exportStatus === 'loading'"
+                (click)="exportSeason = s; exportStatus = 'idle'">
+                {{ s }}
+              </button>
+            </div>
+
+            <!-- Aucune saison trouvée -->
+            <div class="text-muted small" *ngIf="!seasonsLoading && availableSeasons.length === 0 && tableFound">
+              Aucune saison trouvée dans la table.
+            </div>
+          </div>
+
+          <button class="btn btn-primary w-100"
+            [disabled]="!exportSeason.trim() || !tableFound || exportStatus === 'loading'"
+            (click)="onExport()">
+            <span class="spinner-border spinner-border-sm me-2" *ngIf="exportStatus === 'loading'"></span>
+            <i class="bi bi-download me-2" *ngIf="exportStatus !== 'loading'"></i>
+            Exporter {{ exportSeason }}
+          </button>
+
+          <div class="alert alert-success mt-3 py-2" *ngIf="exportStatus === 'done'">
+            <i class="bi bi-check-circle me-2"></i>
+            {{ exportCount }} entrées exportées avec succès.
+          </div>
+          <div class="alert alert-danger mt-3 py-2" *ngIf="exportStatus === 'error'">
+            <i class="bi bi-x-circle me-2"></i>
+            Erreur pendant l'export. Consultez la console.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── IMPORT / RESTORE ── -->
+    <div class="col-12 col-lg-6">
+      <div class="card h-100">
+        <div class="card-header d-flex align-items-center gap-2"
+          [class.bg-danger]="!isSandbox"
+          [class.text-white]="!isSandbox"
+          [class.bg-warning]="isSandbox">
+          <i class="bi bi-upload"></i>
+          <strong>Import JSON (restore)</strong>
+          <span class="ms-auto badge bg-white text-danger" *ngIf="!isSandbox">PRODUCTION</span>
+          <span class="ms-auto badge bg-dark text-white" *ngIf="isSandbox">SANDBOX</span>
+        </div>
+        <div class="card-body">
+
+          <!-- Avertissement prod -->
+          <div class="alert alert-danger py-2 mb-3" *ngIf="!isSandbox">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+            <strong>Vous êtes en PRODUCTION.</strong> Cette opération écrase des données réelles.
+          </div>
+
+          <p class="text-muted small">
+            Importe un fichier de backup JSON dans la table courante.<br>
+          </p>
+
+          <!-- Sélection fichier -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Fichier de backup (.json)</label>
+            <input class="form-control"
+              type="file"
+              accept=".json"
+              (change)="onFileSelect($event)"
+              [disabled]="importStatus === 'loading'">
+          </div>
+
+          <!-- Erreur parsing -->
+          <div class="alert alert-danger py-2" *ngIf="importParseError">
+            <i class="bi bi-x-circle me-2"></i>{{ importParseError }}
+          </div>
+
+          <!-- Résumé fichier chargé -->
+          <div *ngIf="importData" class="mb-3">
+            <div class="alert alert-secondary py-2">
+              <div><strong>Saison :</strong> {{ importData.season }}</div>
+              <div><strong>Nombre d'entrées :</strong> {{ importData.count }}</div>
+              <div><strong>Table source :</strong> <code>{{ importData.table }}</code></div>
+              <div><strong>Exporté le :</strong> {{ importData.exportedAt | date:'dd/MM/yyyy HH:mm' }}</div>
+            </div>
+
+            <!-- Option purge (sandbox uniquement) -->
+            <div class="form-check mb-3" *ngIf="isSandbox">
+              <input class="form-check-input" type="checkbox" id="purgeCheck"
+                [(ngModel)]="purgeBeforeImport">
+              <label class="form-check-label text-warning fw-semibold" for="purgeCheck">
+                Purger la saison {{ importData.season }} avant import
+              </label>
+              <div class="form-text">Supprime d'abord les entrées existantes pour cette saison (repartir de zéro).</div>
+            </div>
+
+            <!-- Confirmation : saisir la saison -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold">
+                Confirmer en saisissant la saison&nbsp;:
+                <code class="text-danger">{{ importData.season }}</code>
+              </label>
+              <input class="form-control"
+                type="text"
+                [(ngModel)]="confirmSeasonInput"
+                placeholder="Saisir exactement la saison"
+                [disabled]="importStatus === 'loading'">
+            </div>
+
+            <!-- Bouton import -->
+            <button class="btn w-100 fw-bold"
+              [class.btn-danger]="!isSandbox"
+              [class.btn-warning]="isSandbox"
+              [disabled]="!canImport"
+              (click)="onImport()">
+              <span class="spinner-border spinner-border-sm me-2" *ngIf="importStatus === 'loading'"></span>
+              <i class="bi bi-upload me-2" *ngIf="importStatus !== 'loading'"></i>
+              <span *ngIf="!isSandbox">⚠️ Restaurer {{ importData.count }} entrées en PRODUCTION</span>
+              <span *ngIf="isSandbox">Importer {{ importData.count }} entrées dans sandbox</span>
+            </button>
+
+            <!-- Progression -->
+            <div class="alert alert-info mt-2 py-2" *ngIf="importProgress">
+              <span class="spinner-border spinner-border-sm me-2"></span>{{ importProgress }}
+            </div>
+
+            <!-- Erreur inline -->
+            <div class="alert alert-danger mt-2 py-2" *ngIf="importStatus === 'error'">
+              <i class="bi bi-x-circle me-2"></i>
+              Erreur pendant l'import. Consultez la console.
+              <button class="btn btn-sm btn-outline-danger ms-3" (click)="resetImport()">Réessayer</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PURGE SAISON (sandbox uniquement) ── -->
+    <div class="col-12" *ngIf="isSandbox">
+      <div class="card border-info">
+        <div class="card-header bg-info text-white d-flex align-items-center gap-2">
+          <i class="bi bi-trash3"></i>
+          <strong>Purge saison</strong>
+          <span class="ms-auto badge bg-dark">SANDBOX ONLY</span>
+        </div>
+        <div class="card-body">
+          <p class="text-muted small mb-3">
+            Supprime toutes les écritures d'une saison (sandbox uniquement). L'export permet de restaurer ensuite.
+          </p>
+
+          <div class="d-flex flex-wrap align-items-center gap-3">
+
+            <!-- Sélection saison -->
+            <div>
+              <label class="form-label fw-semibold mb-1">Saison à purger</label>
+              <div class="d-flex flex-wrap gap-2" *ngIf="availableSeasons.length > 0">
+                <button *ngFor="let s of availableSeasons"
+                  class="btn btn-sm"
+                  [class.btn-warning]="purgeSeasonTarget === s"
+                  [class.btn-outline-secondary]="purgeSeasonTarget !== s"
+                  [disabled]="purgeStatus === 'loading'"
+                  (click)="purgeSeasonTarget = s; purgeStatus = 'idle'">
+                  {{ s }}
+                </button>
+              </div>
+              <div class="text-muted small" *ngIf="availableSeasons.length === 0">
+                Aucune saison disponible.
+              </div>
+            </div>
+
+            <!-- Bouton -->
+            <div *ngIf="purgeSeasonTarget" class="mt-auto">
+              <button class="btn btn-warning fw-semibold"
+                [disabled]="purgeStatus === 'loading'"
+                (click)="onPurgeSeason()">
+                <span class="spinner-border spinner-border-sm me-2" *ngIf="purgeStatus === 'loading'"></span>
+                <i class="bi bi-trash3 me-2" *ngIf="purgeStatus !== 'loading'"></i>
+                Purger {{ purgeSeasonTarget }}
+              </button>
+            </div>
+
+          </div>
+
+          <!-- Résultat -->
+          <div class="alert alert-success mt-3 py-2" *ngIf="purgeStatus === 'done'">
+            <i class="bi bi-check-circle me-2"></i>
+            {{ purgeCount }} entrées supprimées pour la saison {{ purgeSeasonTarget }}.
+            <button class="btn btn-sm btn-outline-success ms-3" (click)="resetPurge()">Nouvelle purge</button>
+          </div>
+          <div class="alert alert-warning mt-3 py-2" *ngIf="purgeStatus === 'error'">
+            <i class="bi bi-x-circle me-2"></i>
+            Erreur pendant la purge. Consultez la console.
+            <button class="btn btn-sm btn-outline-secondary ms-3" (click)="resetPurge()">Réessayer</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

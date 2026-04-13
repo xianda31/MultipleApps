@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BatchGetItemCommand, DescribeTableCommand, DescribeTableOutput, DynamoDBClient, ListTablesCommand, ScanCommand, BatchWriteItemCommand, BatchWriteItemCommandOutput } from '@aws-sdk/client-dynamodb';
-import { catchError, from, map, Observable, of, concat as rxConcat, toArray, switchMap } from 'rxjs';
+import { catchError, from, map, Observable, of, throwError, concat as rxConcat, toArray, switchMap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 @Injectable({
@@ -89,6 +89,33 @@ export class BatchService {
         })
       );
     }
+  }
+
+  scanTableBySeason(tableName: string, season: string): Observable<any[]> {
+    const fetchAll = async (): Promise<any[]> => {
+      let items: any[] = [];
+      let lastEvaluatedKey: any = undefined;
+      do {
+        const command = new ScanCommand({
+          TableName: tableName,
+          ConsistentRead: true,
+          ExclusiveStartKey: lastEvaluatedKey,
+          FilterExpression: '#s = :season',
+          ExpressionAttributeNames: { '#s': 'season' },
+          ExpressionAttributeValues: { ':season': { S: season } },
+        });
+        const data = await this.client.send(command);
+        items = items.concat(data.Items || []);
+        lastEvaluatedKey = data.LastEvaluatedKey;
+      } while (lastEvaluatedKey);
+      return items;
+    };
+    return from(fetchAll()).pipe(
+      catchError((error) => {
+        console.error('Error scanning table by season:', error);
+        return throwError(() => error);
+      })
+    );
   }
 
   batchWriteItem(tableName: string, items: any[]): Observable<any> {

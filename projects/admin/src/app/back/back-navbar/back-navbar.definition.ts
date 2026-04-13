@@ -56,7 +56,7 @@ export const STATIC_MENUS: NavbarMenu[] = [
             { label: 'base de données', route: BACK_ROUTE_PATHS.BooksList },
             { label: 'droits d\'accès', route: BACK_ROUTE_PATHS.GroupsList },
             { label: 'configuration', route: BACK_ROUTE_PATHS.SysConf },
-            // { label: 'écriture', route: BACK_ROUTE_PATHS.BooksEditor }
+            { label: 'backup comptable', route: BACK_ROUTE_PATHS.BookBackup },
         ]
     },
 
