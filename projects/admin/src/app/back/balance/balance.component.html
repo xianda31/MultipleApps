@@ -210,33 +210,12 @@
                   <td class="text-start">REPORT A NOUVEAU</td>
                   <td>{{balance_board.previous.actif_total | number:truncature:'fr'}}</td>
                 </tr>
-                <!-- alignment with "FOND DE CAISSE" -->
-                <tr *ngFor="let n of [1, 2]" class="fw-light fs-6">
-                  <td>&#8205;</td>
-                  <td>&#8205;</td>
-                </tr>
 
                 <tr class="table-primary fw-bold">
                   <td class="text-start ">EXERCICE
                     {{trading_result < 0?'DEFICITAIRE':'BENEFICIAIRE'}}</td>
                   <td>{{trading_result | number:truncature:'fr'}}</td>
                 </tr>
-
-                <tr *ngFor="let n of [1, 2]" class="fw-light fs-6">
-                  <td>&#8205;</td>
-                  <td>&#8205;</td>
-                </tr>
-
-                <tr class="fw-bold"> <!--alignement ligne ENCOURS-->
-                  <td>&#8205;</td>
-                  <td>&#8205;</td>
-                </tr>
-
-                <tr *ngFor="let n of [1, 2,3]" class="fw-light fs-6">
-                  <td>&#8205;</td>
-                  <td>&#8205;</td>
-                </tr>
-
 
                 <tr class="table-primary fw-bold">
                   <td class="text-start ">TOTAL PASSIF</td>
@@ -279,7 +258,7 @@
                 <td>&#8205;</td>
               </tr>
 
-              <tr *ngFor="let n of [1, 2,3]" class="fw-light fs-6">
+              <tr *ngFor="let n of [1, 2,3,4]" class="fw-light fs-6">
                 <td>&#8205;</td>
                 <td>&#8205;</td>
               </tr>
