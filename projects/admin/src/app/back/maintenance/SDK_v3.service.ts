@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import { BatchGetItemCommand, DescribeTableCommand, DescribeTableOutput, DynamoDBClient, ListTablesCommand, ScanCommand, BatchWriteItemCommand, BatchWriteItemCommandOutput } from '@aws-sdk/client-dynamodb';
+import { BatchGetItemCommand, DescribeTableCommand, DescribeTableOutput, DynamoDBClient, ListTablesCommand, ListTablesCommandOutput, ScanCommand, BatchWriteItemCommand, BatchWriteItemCommandOutput } from '@aws-sdk/client-dynamodb';
 import { catchError, from, map, Observable, of, throwError, concat as rxConcat, toArray, switchMap } from 'rxjs';
+import { fetchAuthSession } from 'aws-amplify/auth';
 import { environment } from '../../../environments/environment';
 
 @Injectable({
@@ -14,18 +15,35 @@ export class BatchService {
 
     this.client = new DynamoDBClient({
       region: environment.region,
-      credentials: {
-        accessKeyId: environment.aws_access_key_id,
-        secretAccessKey: environment.aws_secret_access_key,
-      }
+      credentials: async () => {
+        const session = await fetchAuthSession();
+        const creds = session.credentials;
+        if (!creds) throw new Error('No AWS credentials in session');
+        return {
+          accessKeyId: creds.accessKeyId,
+          secretAccessKey: creds.secretAccessKey,
+          sessionToken: creds.sessionToken,
+          expiration: creds.expiration,
+        };
+      },
     });
   }
 
   listTables(): Observable<string[]> {
-    const command = new ListTablesCommand({});
-    return from(this.client.send(command)).pipe(
-      map((data) => {
-        this._tables = data.TableNames || [];
+    const fetchAll = async (): Promise<string[]> => {
+      let tables: string[] = [];
+      let lastEvaluatedTableName: string | undefined = undefined;
+      do {
+        const command = new ListTablesCommand({ ExclusiveStartTableName: lastEvaluatedTableName });
+        const data: ListTablesCommandOutput = await this.client.send(command);
+        tables = tables.concat(data.TableNames || []);
+        lastEvaluatedTableName = data.LastEvaluatedTableName;
+      } while (lastEvaluatedTableName);
+      return tables;
+    };
+    return from(fetchAll()).pipe(
+      map((tables) => {
+        this._tables = tables;
         return this._tables;
       }),
       catchError((error) => {

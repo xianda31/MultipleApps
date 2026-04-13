@@ -29,7 +29,7 @@
     <span class="badge bg-info text-white ms-2" *ngIf="!isSandbox">PRODUCTION</span>
   </div>
 
-  <div class="row g-3">
+  <div class="row g-3" *ngIf="tableFound">
 
     <!-- ── EXPORT ── -->
     <div class="col-12 col-lg-6">

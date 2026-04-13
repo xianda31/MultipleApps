@@ -209,6 +209,26 @@ backend.sesMailing.resources.lambda.role?.attachInlinePolicy(sesPolicy);
 backend.emailUnsubscribe.addEnvironment('MEMBER_TABLE_NAME', memberTable.tableName);
 backend.sesMailing.addEnvironment('MEMBER_TABLE_NAME', memberTable.tableName);
 
+// Grant Systeme group DynamoDB access for book-backup tool
+// ARN en wildcard pour éviter toute référence cross-stack (pas de grantReadWriteData)
+const bookBackupStack = backend.createStack('book-backup-stack');
+const systemeGroupRole = backend.auth.resources.groups['Systeme'].role;
+const bookBackupPolicy = new Policy(bookBackupStack, 'BookBackupPolicy', {
+  statements: [
+    new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: ['dynamodb:ListTables'],
+      resources: ['*'],
+    }),
+    new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: ['dynamodb:DescribeTable', 'dynamodb:Scan', 'dynamodb:BatchWriteItem', 'dynamodb:DeleteItem', 'dynamodb:GetItem', 'dynamodb:PutItem'],
+      resources: ['arn:aws:dynamodb:*:*:table/BookEntry-*'],
+    }),
+  ],
+});
+systemeGroupRole.attachInlinePolicy(bookBackupPolicy);
+
 // add outputs to the configuration file
 backend.addOutput({
   custom: {
