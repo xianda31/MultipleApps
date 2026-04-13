@@ -7,6 +7,22 @@
 <div class="modal-body invoice-upload">
   <label for="fileInput" class="form-label">Sélectionnez un fichier PDF à associer à cette écriture comptable :</label>
   <input type="file" accept="application/pdf" (change)="onFileSelected($event)" class="form-control mb-2" [disabled]="uploading" />
+
+  <!-- Fichier identique déjà présent → proposition de réutilisation -->
+  <div *ngIf="existingFilename" class="alert alert-info mt-2">
+    <i class="bi bi-file-earmark-check me-2"></i>
+    Ce fichier existe déjà en base.<br>
+    <small class="text-muted">{{ existingFilename }}</small><br>
+    <div class="d-flex gap-2 mt-2">
+      <button class="btn btn-sm btn-primary" (click)="useExisting()">
+        <i class="bi bi-share me-1"></i>Partager cette facture
+      </button>
+      <button class="btn btn-sm btn-outline-secondary" (click)="existingFilename = null">
+        Choisir un autre fichier
+      </button>
+    </div>
+  </div>
+
   <div *ngIf="uploadError" class="alert alert-danger mt-2">{{ uploadError }}</div>
   <div *ngIf="uploadSuccess" class="alert alert-success mt-2">Upload réussi !</div>
   <div *ngIf="uploading" class="d-flex align-items-center mt-2">
@@ -18,5 +34,5 @@
 </div>
 <div class="modal-footer">
   <button type="button" class="btn btn-secondary btn-sm" (click)="close()" [disabled]="uploading">Annuler</button>
-  <button type="button" class="btn btn-primary btn-sm" (click)="uploadInvoice()" [disabled]="!selectedFile || uploading">Valider</button>
+  <button type="button" class="btn btn-primary btn-sm" (click)="uploadInvoice()" [disabled]="!selectedFile || uploading || !!existingFilename">Valider</button>
 </div>

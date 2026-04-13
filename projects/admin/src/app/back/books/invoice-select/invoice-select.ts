@@ -14,13 +14,12 @@ import { ToastService } from '../../../common/services/toast.service';
 })
 export class InvoiceSelectComponent {
     uploading: boolean = false;
-  // @Input() directory: string = '';
-  // @Input() bookEntry: BookEntry | null = null;
   @Input() directory: string = '';
-  @Output() invoiceSelected = new EventEmitter< string>();
+  @Output() invoiceSelected = new EventEmitter<string>();
   selectedFile: File | null = null;
   uploadError: string | null = null;
   uploadSuccess: boolean = false;
+  existingFilename: string | null = null;
 
   constructor(
     private fileService: FileService,
@@ -30,14 +29,15 @@ export class InvoiceSelectComponent {
 
   onFileSelected(event: any) {
     const file = event.target.files[0];
+    this.existingFilename = null;
+    this.uploadError = null;
+    this.uploadSuccess = false;
     if (file && file.type === 'application/pdf') {
       this.selectedFile = file;
-      this.uploadError = null;
     } else {
       this.selectedFile = null;
       this.uploadError = 'Veuillez sélectionner un fichier PDF.';
     }
-    this.uploadSuccess = false;
   }
 
   
@@ -62,7 +62,8 @@ export class InvoiceSelectComponent {
       const files$ = this.fileService.list_files(directory);
       const files = await files$.toPromise();
       if (files && files.some((f: any) => f.path.endsWith(filename))) {
-        this.uploadError = 'Un fichier avec ce titre et contenu existe déjà.';
+        // Fichier déjà existant : proposer de le réutiliser
+        this.existingFilename = filename;
         this.uploading = false;
         return;
       }
@@ -80,6 +81,12 @@ export class InvoiceSelectComponent {
     }
   }
   
+  useExisting() {
+    if (!this.existingFilename) return;
+    this.invoiceSelected.emit(this.existingFilename);
+    this.activeModal.close(null);
+  }
+
   close() {
     this.activeModal.close(null);
   }
