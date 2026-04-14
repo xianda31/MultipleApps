@@ -87,6 +87,11 @@ export class InvoiceSelectComponent {
     this.activeModal.close(null);
   }
 
+  mark_na() {
+    this.invoiceSelected.emit('N/A');
+    this.activeModal.close(null);
+  }
+
   close() {
     this.activeModal.close(null);
   }

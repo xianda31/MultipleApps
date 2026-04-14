@@ -728,7 +728,6 @@ export class BooksEditorComponent {
           await this.bookService.update_book_entry(this.selected_book_entry);
           this.toastService.showSuccess('Référence facture', 'la référence de la facture a été ajoutée à l\'écriture');
         } else {
-          // En mode création, on ne fait rien de plus : la référence sera prise en compte à la création
           this.toastService.showSuccess('Référence facture', 'la référence de la facture a été ajoutée au formulaire. Elle sera enregistrée lors de la création.');
         }
       } catch (err) {
@@ -736,6 +735,30 @@ export class BooksEditorComponent {
         this.toastService.showError('Référence facture', 'Une erreur est survenue lors de l\'ajout de la référence de la facture à l\'écriture');
       }
     });
+  }
+
+  async set_invoice_na() {
+    try {
+      this.form.controls['invoice_ref'].setValue('N/A');
+      this.selected_book_entry.invoice_ref = 'N/A';
+      await this.bookService.update_book_entry(this.selected_book_entry);
+      this.toastService.showSuccess('Facture', 'L\'écriture a été marquée comme non documentée.');
+    } catch (err) {
+      console.error('Error setting invoice N/A:', err);
+      this.toastService.showError('Facture', 'Erreur lors de la mise à jour.');
+    }
+  }
+
+  async clear_invoice_na() {
+    try {
+      this.form.controls['invoice_ref'].setValue('');
+      this.selected_book_entry.invoice_ref = undefined;
+      await this.bookService.update_book_entry(this.selected_book_entry);
+      this.toastService.showSuccess('Facture', 'Le statut « non documenté » a été effacé.');
+    } catch (err) {
+      console.error('Error clearing invoice N/A:', err);
+      this.toastService.showError('Facture', 'Erreur lors de la mise à jour.');
+    }
   }
 
   // Gestion du fichier orphelin en cas d'annulation ou suppression en mode création
@@ -754,19 +777,21 @@ export class BooksEditorComponent {
 
   clear_invoice_ref() {
     const invoice_ref = this.form.controls['invoice_ref'].value;
-    this.selected_book_entry.invoice_ref = '';
+    this.selected_book_entry.invoice_ref = undefined;
     this.bookService.update_book_entry(this.selected_book_entry).then(() => {
       this.toastService.showSuccess('Suppression référence facture', 'la référence de la facture a été supprimée de l\'écriture');
     }).catch((err) => {
       console.error('Error updating book entry:', err);
       this.toastService.showError('Suppression référence facture', 'Une erreur est survenue lors de la suppression de la référence de la facture de l\'écriture');
     });
-    this.invoiceService.delete_invoice(invoice_ref, this.season).then(() => {
-      this.toastService.showSuccess('Suppression facture', invoice_ref + ' a été supprimé avec succès.');
-    }).catch((err) => {
-      console.error('Error deleting invoice:', err);
-      this.toastService.showError('Suppression facture', 'Une erreur est survenue lors de la suppression de la facture.');
-    });
+    if (invoice_ref && invoice_ref !== 'N/A') {
+      this.invoiceService.delete_invoice(invoice_ref, this.season).then(() => {
+        this.toastService.showSuccess('Suppression facture', invoice_ref + ' a été supprimé avec succès.');
+      }).catch((err) => {
+        console.error('Error deleting invoice:', err);
+        this.toastService.showError('Suppression facture', 'Une erreur est survenue lors de la suppression de la facture.');
+      });
+    }
     this.form.controls['invoice_ref'].setValue('');
   }
 

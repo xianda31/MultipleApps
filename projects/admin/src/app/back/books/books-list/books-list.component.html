@@ -5,16 +5,27 @@
       <h5>Ecritures comptables
       </h5>
 
-      <div class="d-flex align-items-center">
+      <div class="d-flex align-items-center justify-content-between gap-4">
         <div class="form-check form-switch">
           <input class="form-check-input" type="checkbox" role="switch" id="switchCheckDefault"
             (change)="toggle_slice()" [checked]="slice_start < 0">
           <label class="form-check-label" for="switchCheckDefault">{{(slice_start<0)? -slice_start + ' dernières'
               : 'toutes' }}</label>
         </div>
-        <div class="ms-3 text-primary" style="cursor: pointer;" (click)="backward_slice()">
+
+        <div class="ms-2 text-primary" style="cursor: pointer;" (click)="backward_slice()">
           <i class="bi bi-skip-backward-fill"></i>
         </div>
+
+        <div class=" ms-5">
+          <span class="text-muted">tri :&nbsp; 
+            <span *ngFor="let criteria of criterias" class="text-muted me-2">{{criteria}} </span>
+          </span>
+          <span class="text-primary" style="cursor: pointer;" *ngIf="criterias.size > 0" (click)="sort_clear()">
+            <i class="bi bi-arrow-counterclockwise" ></i>
+          </span>
+        </div>
+
       </div>
 
       <div *ngIf="!isMobilePortrait">
@@ -27,13 +38,6 @@
   </div>
 
   <div class="card-body">
-    <div class="d-flex text-mute mb-2">
-      <span class="text-muted">reset tri :&nbsp; </span>
-      <span *ngFor="let criteria of criterias" class="text-muted me-2">{{criteria}} </span>
-      <span class="text-muted">
-        <i class="bi bi-arrow-counterclockwise" (click)="sort_clear()"></i>
-      </span>
-    </div>
     <div class="table-responsive" style="max-height: 75vh; overflow-y: auto;">
     <table class="table table-sm table-striped table-hover">
       <thead class="sticky-top table-light">
@@ -61,17 +65,25 @@
               number:truncature:'fr'}}
             </td>
             <td *ngIf="first" [rowSpan]="entry.operations.length">
-              <ng-container *ngIf="invoice_required(entry)" >
-                <ng-container *ngIf="entry.invoice_ref; else missingIcon">
-                  <span class="me-3 align-middle d-inline-flex align-items-center" style="cursor:pointer" (click)="download_invoice_pdf(entry.invoice_ref)">
+              <ng-container *ngIf="invoice_required(entry)">
+                <!-- état 1 : facture référencée -->
+                <ng-container *ngIf="entry.invoice_ref && entry.invoice_ref !== 'N/A'">
+                  <span class="me-3 align-middle d-inline-flex align-items-center" style="cursor:pointer" (click)="download_invoice_pdf(entry.invoice_ref!)">
                     <i class="bi bi-file-earmark-check-fill text-primary fs-5"></i>
                   </span>
                 </ng-container>
-                <ng-template #missingIcon>
-                  <span class="me-3 align-middle d-inline-flex align-items-center" >
-                    <i class="bi bi-file-earmark-x text-warning fs-5" style="cursor:pointer" (click)="add_invoice_ref(entry)"></i>
+                <!-- état 2 : N/A -->
+                <ng-container *ngIf="entry.invoice_ref === 'N/A'">
+                  <span class="me-3 align-middle d-inline-flex align-items-center" ngbTooltip="non documenté">
+                    <i class="bi bi-file-earmark text-secondary fs-5"></i>
                   </span>
-                </ng-template>
+                </ng-container>
+                <!-- état 3 : manquante -->
+                <ng-container *ngIf="!entry.invoice_ref">
+                  <span class="me-3 align-middle d-inline-flex align-items-center">
+                    <i class="bi bi-file-earmark-x text-warning fs-5" style="cursor:pointer" (click)="add_invoice_ref(entry)" ngbTooltip="Associer une facture"></i>
+                  </span>
+                </ng-container>
               </ng-container>
             </td>
             <td *ngIf="first" [rowSpan]="entry.operations.length"> {{entry.tag}} </td>

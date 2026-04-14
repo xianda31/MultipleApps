@@ -33,6 +33,7 @@
   </div>
 </div>
 <div class="modal-footer">
+  <button type="button" class="btn btn-outline-secondary btn-sm" (click)="mark_na()" [disabled]="uploading" ngbTooltip="Pas de facture applicable pour cette écriture">non documenté</button>
   <button type="button" class="btn btn-secondary btn-sm" (click)="close()" [disabled]="uploading">Annuler</button>
   <button type="button" class="btn btn-primary btn-sm" (click)="uploadInvoice()" [disabled]="!selectedFile || uploading || !!existingFilename">Valider</button>
 </div>

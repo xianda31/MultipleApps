@@ -4,22 +4,20 @@ import { FormsModule } from '@angular/forms';
 import { BackNavigationService } from '../../services/back-navigation.service';
 import { BookEntry } from '../../../common/interfaces/accounting.interface';
 import { SystemDataService } from '../../../common/services/system-data.service';
-import { BookService } from '../../services/book.service';
+import { BookService, Fields } from '../../services/book.service';
 import { of } from 'rxjs';
 import { BooksExportExcelService } from '../books-export-excel.service';
 import { TransactionService } from '../../services/transaction.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { GetConfirmationComponent } from '../../modals/get-confirmation/get-confirmation.component';
 import { InvoiceSelectComponent } from '../invoice-select/invoice-select';
-import { S3_ROOT_FOLDERS } from '../../../common/services/files.service';
 import { InvoiceService } from '../../../common/services/invoice.service';
 import { ToastService } from '../../../common/services/toast.service';
 
-type Fields = 'date' | 'classe' | 'transaction' | 'montant' | 'tag' | 'invoice';
 @Component({
   selector: 'app-books-list',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, NgbTooltipModule],
   templateUrl: './books-list.component.html',
   styleUrl: './books-list.component.scss'
 })
@@ -67,6 +65,7 @@ export class BooksListComponent {
       .subscribe(
         (book_entries) => {
           this.book_entries = [...book_entries];
+          this.apply_sorts();
           this.loaded = true;
         }),
       (err: any) => {
@@ -86,24 +85,21 @@ export class BooksListComponent {
   }
 
 
-  criterias: Set<Fields> = new Set();
-  sort_directions: { [key in Fields]: number } = {
-    'date': 1,
-    'classe': 1,
-    'transaction': 1,
-    'montant': 1,
-    'tag': 1,
-    'invoice': 1,
-  };
+  get criterias(): Set<Fields> { return this.bookService.get_criterias(); }
+  get sort_directions(): { [key in Fields]: number } { return this.bookService.get_sort_directions(); }
+  
   sort_clear() {
-    this.criterias.clear();
+    this.bookService.clear_criterias();
     this.book_entries = this.bookService.get_book_entries();
   }
 
   sort_by(selected: Fields) {
+    this.bookService.add_criteria(selected);
+    this.bookService.set_sort_direction(selected, -this.sort_directions[selected]);
+    this.apply_sorts();
+  }
 
-    this.criterias.add(selected);
-    this.sort_directions[selected] = -this.sort_directions[selected];
+  private apply_sorts() {
     Array.from(this.criterias).reverse().forEach((criteria) => {
 
       switch (criteria) {
@@ -134,18 +130,18 @@ export class BooksListComponent {
             if (this.bookService.get_total_amount(a) > this.bookService.get_total_amount(b)) return this.sort_directions[criteria];
             return 0;
           });
-          break
+          break;
         case 'tag':
           this.book_entries.sort((a, b) => {
             if ((a.tag ?? '') < (b.tag ?? '')) return -this.sort_directions[criteria];
             if ((a.tag ?? '') > (b.tag ?? '')) return this.sort_directions[criteria];
             return 0;
           });
-          break
+          break;
         case 'invoice':
-            // Filter to only entries with invoice_required=true, keep their original order
-            this.book_entries = this.book_entries.filter(entry => this.invoice_required(entry));
-      };
+          this.book_entries = this.book_entries.filter(entry => this.invoice_required(entry));
+          break;
+      }
     });
   }
 

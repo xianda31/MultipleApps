@@ -11,6 +11,8 @@ import { DBhandler } from '../../common/services/graphQL.service';
 import { TransactionService } from './transaction.service';
 import { PaymentMode, SALE_ACCOUNTS } from '../shop/cart/cart.interface';
 
+export type Fields = 'date' | 'classe' | 'transaction' | 'montant' | 'tag' | 'invoice';
+
 @Injectable({
   providedIn: 'root'
 })
@@ -1085,5 +1087,13 @@ private payment_mode2bank_op_type(payment_mode: PaymentMode): TRANSACTION_ID {
   get_slice_back(): number {
     return this.slice_start;
   }
+
+  private _criterias: Set<Fields> = new Set();
+  private _sort_directions: { [key in Fields]: number } = { date: 1, classe: 1, transaction: 1, montant: 1, tag: 1, invoice: 1 };
+  get_criterias(): Set<Fields> { return this._criterias; }
+  get_sort_directions(): { [key in Fields]: number } { return this._sort_directions; }
+  add_criteria(field: Fields): void { this._criterias.add(field); }
+  set_sort_direction(field: Fields, direction: number): void { this._sort_directions[field] = direction; }
+  clear_criterias(): void { this._criterias.clear(); }
 
 }

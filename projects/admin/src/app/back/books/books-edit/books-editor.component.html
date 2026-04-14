@@ -79,20 +79,33 @@
       <!-- facture -->
       <div *ngIf=" transaction_with_invoice(transaction_id)" class=" col-md-2  col-sm-4 ">
         <label for="invoice_ref">Facture</label>
-        <ng-container *ngIf="creation || !selected_book_entry.invoice_ref; else invoice_exists">
+        <small *ngIf="!creation" class="text-muted d-block mb-1" style="font-size:0.7rem;">
+          <i class="bi bi-cloud-check"></i> la modification est enregistrée immédiatement
+        </small>
+        <!-- pas de facture -->
+        <ng-container *ngIf="creation || (!selected_book_entry?.invoice_ref)">
           <div class="input-group">
             <input type="text" class="form-control" id="invoice_ref" placeholder="aucune facture"
               formControlName="invoice_ref">
             <button class="btn btn-outline-primary" type="button" (click)="add_invoice_ref()">définir</button>
+            <button *ngIf="!creation" class="btn btn-outline-secondary" type="button" (click)="set_invoice_na()" ngbTooltip="Pas de facture applicable">non documenté</button>
           </div>
         </ng-container>
-        <ng-template #invoice_exists>
+        <!-- non documenté -->
+        <ng-container *ngIf="!creation && selected_book_entry?.invoice_ref === 'N/A'">
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-file-earmark text-secondary"></i>&nbsp;non documenté</span>
+            <button class="btn btn-outline-secondary" type="button" (click)="clear_invoice_na()">effacer</button>
+          </div>
+        </ng-container>
+        <!-- facture référencée -->
+        <ng-container *ngIf="!creation && selected_book_entry?.invoice_ref && selected_book_entry?.invoice_ref !== 'N/A'">
           <div class="input-group">
             <button class="btn btn-outline-primary" type="button" (click)="invoiceService.download_invoice(selected_book_entry.invoice_ref!, season)">view</button>
             <input type="text" class="form-control" id="invoice_ref" formControlName="invoice_ref">
             <button class="btn btn-warning" type="button" (click)="clear_invoice_ref()">clear</button>
           </div>
-        </ng-template>
+        </ng-container>
       </div>
 
     </div>
