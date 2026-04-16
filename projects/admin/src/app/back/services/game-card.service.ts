@@ -6,6 +6,7 @@ import { ToastService } from '../../common/services/toast.service';
 import { MembersService } from '../../common/services/members.service';
 import { DBhandler } from '../../common/services/graphQL.service';
 import { MailingService } from '../mailing/mailing.service';
+import { environment } from '../../../environments/environment';
 
 
 @Injectable({
@@ -100,19 +101,21 @@ export class GameCardService {
 
     cards[0].stamps.push(stamp_date);
     await this.updateCard(cards[0])
-      .catch(error => { console.error('Error stamping member card:', error); })
-      .finally(() => {
-        if (cards[0].stamps.length >= cards[0].initial_qty) {
-          cards.shift(); // remove the card if it is full
-        }
-      });
+      .catch(error => { console.error('Error stamping member card:', error); });
 
     if (double) { // add a second stamp if double
-      cards[0].stamps.push(stamp_date);
-      await this.updateCard(cards[0])
-        .catch(error => {
-          console.error('Error stamping member card:', error);
-        });
+      // Re-query _gameCards after the first stamp: the first stamp may have filled cards[0],
+      // causing cards.shift() on the stale array to leave cards[0] undefined and crash the loop.
+      const doubleCards = this._gameCards
+        .filter(c => c.owners.some(owner => owner.license_number === member.license_number) && c.stamps.length < c.initial_qty)
+        .sort((a, b) => (a.initial_qty - a.stamps.length) - (b.initial_qty - b.stamps.length));
+      if (doubleCards.length === 0) {
+        this.toastService.showError('Gestion des cartes', `Aucune carte disponible pour le 2ème tampon de ${member.firstname} ${member.lastname}`);
+      } else {
+        doubleCards[0].stamps.push(stamp_date);
+        await this.updateCard(doubleCards[0])
+          .catch(error => { console.error('Error stamping member card (double):', error); });
+      }
     }
 
     // Calculate credit after stamping
@@ -122,10 +125,10 @@ export class GameCardService {
 
     // Return true if credit crossed below threshold
     // For shared cards, use a higher threshold since each owner will likely stamp
-    const threshold = cards[0].owners.length > 1 
-      ? this.LOW_CREDIT_THRESHOLD * cards[0].owners.length 
+    const threshold = cards[0].owners.length > 1
+      ? this.LOW_CREDIT_THRESHOLD * cards[0].owners.length
       : this.LOW_CREDIT_THRESHOLD;
-    
+
     const low_credit = creditBefore > threshold && creditAfter <= threshold;
     if (low_credit) {
       this.low_credit_message(cards[0]);
@@ -135,6 +138,9 @@ export class GameCardService {
 
 
   low_credit_message(card: GameCard): void {
+
+    if (!environment.low_game_card_message ) return; // feature toggle
+    
     const emails = card.owners.map(owner => owner.email).filter(email => email);
     const cardHtml = this.buildCardHtml(card);
     

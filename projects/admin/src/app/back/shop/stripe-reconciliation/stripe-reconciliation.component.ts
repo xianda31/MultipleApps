@@ -319,7 +319,7 @@ export class StripeReconciliationComponent {
           [FINANCIAL_ACCOUNT.BANK_debit]: snapshotNet / 100,
         } as any,
         operations: snapshotFees > 0 ? [{
-          label: 'frais stripe',
+          label: 'virement organisme CB',
           values: { 'BNQ': snapshotFees / 100 },
         }] : [],
       });

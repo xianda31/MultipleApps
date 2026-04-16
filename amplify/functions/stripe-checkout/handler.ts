@@ -42,17 +42,46 @@ interface CheckoutRequest {
  * Vérifie si l'appelant est un staff (Admin/Editor/System) via les claims Cognito
  */
 function isStaffCaller(event: any): boolean {
+  const ALLOWED = ['Administrateur', 'Editeur', 'Systeme'];
+
+  // Strategy 1: read groups directly from the raw JWT payload in Authorization header.
+  // API GW has already verified the signature — safe to just decode.
+  const authHeader: string = event.headers?.authorization || event.headers?.Authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+  if (token) {
+    try {
+      const payloadB64 = token.split('.')[1];
+      const payloadJson = Buffer.from(payloadB64, 'base64url').toString('utf8');
+      const payload = JSON.parse(payloadJson);
+      const jwtGroups: string[] = Array.isArray(payload['cognito:groups']) ? payload['cognito:groups'] : [];
+      if (jwtGroups.some((g: string) => ALLOWED.includes(g))) return true;
+      // JWT decoded but group not found — log and fall through to claims strategy
+      console.warn('[isStaffCaller] JWT groups not allowed:', jwtGroups, '| payload keys:', Object.keys(payload));
+    } catch (e) {
+      console.warn('[isStaffCaller] JWT decode failed:', e);
+    }
+  }
+
+  // Strategy 2: API GW parsed claims (fallback)
   const claims =
-    event.requestContext?.authorizer?.claims ||
     event.requestContext?.authorizer?.jwt?.claims ||
+    event.requestContext?.authorizer?.claims ||
     {};
-  // cognito:groups peut être une string CSV ou un tableau selon la config
-  const rawGroups = claims['cognito:groups'] || '';
-  const groups: string[] = Array.isArray(rawGroups)
-    ? rawGroups
-    : rawGroups.split(',').map((g: string) => g.trim()).filter(Boolean);
-  const result = groups.some((g: string) => ['Administrateur', 'Editeur', 'Systeme'].includes(g));
-  if (!result) console.warn('[isStaffCaller] REFUSED — groups found:', groups);
+  const rawGroups = claims['cognito:groups'] ?? '';
+  let groups: string[];
+  if (Array.isArray(rawGroups)) {
+    groups = rawGroups;
+  } else if (typeof rawGroups === 'string' && rawGroups.startsWith('[')) {
+    try { groups = JSON.parse(rawGroups); } catch { groups = []; }
+  } else {
+    groups = String(rawGroups).split(/[\s,]+/).map((g: string) => g.trim()).filter(Boolean);
+  }
+
+  const result = groups.some((g: string) => ALLOWED.includes(g));
+  if (!result) {
+    console.warn('[isStaffCaller] REFUSED — claims groups:', groups, '| raw:', JSON.stringify(rawGroups),
+      '| all claims:', JSON.stringify(claims), '| auth header present:', !!token);
+  }
   return result;
 }
 

@@ -7,6 +7,6 @@ export const environment = {
     production_apid:'production_apid_value',
     back_guard: true,
     mailingCcEmail: 'xxxxx',
-
+    low_game_card_message: false,
 
 };

@@ -560,9 +560,14 @@ export class FeesCollectorService {
         if (!gamer.in_euro) {
           let member = this.members.find((member) => member.license_number === gamer.license);
           if (member) {
-            const low_credit = await this.gameCardService.stamp_member_card(member, this.game.tournament!.date, this.game.fees_doubled);
-            if (low_credit) {
-              this.low_credit_message(member);
+            try {
+              const low_credit = await this.gameCardService.stamp_member_card(member, this.game.tournament!.date, this.game.fees_doubled);
+              if (low_credit) {
+                this.low_credit_message(member);
+              }
+            } catch (stampError) {
+              console.error(`Error stamping card for ${member.firstname} ${member.lastname}:`, stampError);
+              this.toastService.showError('Gestion des cartes', `Erreur lors du tampon pour ${member.firstname} ${member.lastname}`);
             }
           } else { throw new Error('Member not found !!!!'); }
         }
