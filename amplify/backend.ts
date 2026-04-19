@@ -229,6 +229,18 @@ const bookBackupPolicy = new Policy(bookBackupStack, 'BookBackupPolicy', {
 });
 systemeGroupRole.attachInlinePolicy(bookBackupPolicy);
 
+// Grant Systeme group DynamoDB access for cloneDB tool (all app tables)
+const cloneDbPolicy = new Policy(bookBackupStack, 'CloneDbPolicy', {
+  statements: [
+    new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: ['dynamodb:DescribeTable', 'dynamodb:Scan', 'dynamodb:BatchWriteItem', 'dynamodb:DeleteItem', 'dynamodb:GetItem', 'dynamodb:PutItem'],
+      resources: ['arn:aws:dynamodb:*:*:table/*'],
+    }),
+  ],
+});
+systemeGroupRole.attachInlinePolicy(cloneDbPolicy);
+
 // add outputs to the configuration file
 backend.addOutput({
   custom: {

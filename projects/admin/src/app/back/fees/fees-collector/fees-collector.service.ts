@@ -15,7 +15,6 @@ import { ToastService } from '../../../common/services/toast.service';
 import { DBhandler } from "../../../common/services/graphQL.service";
 import { MemberSettingsService } from '../../../common/services/member-settings.service';
 import { PaymentMode } from '../../shop/cart/cart.interface';
-import { warn } from 'pdfjs-dist/types/src/shared/util';
 
 
 
@@ -295,6 +294,7 @@ export class FeesCollectorService {
       if (this.members && this.members.length > 0) {
         try {
           already_charged = this.BookService.search_tournament_fees_entry(tournament.date, tournament.tournament_name) !== undefined;
+          console.log(`Tournament ${tournament.tournament_name} on ${tournament.date} already charged:`, already_charged);
         } catch (bookError) {
           // BookService.search_tournament_fees_entry() may throw if _book_entries not yet initialized
           // Silent catch: this is expected in degraded mode
@@ -525,9 +525,7 @@ export class FeesCollectorService {
   }
 
   async save_fees() {
-
     let check_ok = true;
-    // console.log('save_fees', this.game);
 
     // check if all non-members have been validated
     let non_members = this.game.gamers.filter((gamer) => !gamer.is_member && gamer.enabled);
@@ -546,14 +544,10 @@ export class FeesCollectorService {
       this.toastService.showWarning('droits de table', 'tous les adhérents doivent être validés');
     }
 
-    // check if all members have enough game credits
-
-
     if (check_ok) {
       // sum-up non-members and members fees in euros
       let non_members_euros = non_members.reduce((acc, gamer) => acc + gamer.price, 0);
       let members_euros = members.reduce((acc, gamer) => acc + (gamer.in_euro ? gamer.price : 0), 0);
-
 
       // charge members game_credits
       for (const gamer of members) {
@@ -566,24 +560,27 @@ export class FeesCollectorService {
                 this.low_credit_message(member);
               }
             } catch (stampError) {
-              console.error(`Error stamping card for ${member.firstname} ${member.lastname}:`, stampError);
+              console.error(`  [stamp] ERREUR pour ${member.firstname} ${member.lastname}:`, stampError);
               this.toastService.showError('Gestion des cartes', `Erreur lors du tampon pour ${member.firstname} ${member.lastname}`);
             }
-          } else { throw new Error('Member not found !!!!'); }
+          } else {
+            console.error(`  [stamp] licence ${gamer.license} introuvable dans this.members`);
+            this.toastService.showError('Gestion des cartes', `Adhérent introuvable (licence ${gamer.license}) — tampon ignoré`);
+          }
         }
       }
 
       // create bookEntry for tournament fees
       try {
         let total = non_members_euros + members_euros;
-        await this.BookService.create_tournament_fees_entry(this.game.tournament!.date, this.game.tournament!.name, total)
+        await this.BookService.create_tournament_fees_entry(this.game.tournament!.date, this.game.tournament!.name, total);
         this.toastService.showSuccess('droits de table', total + ' € de droits de table enregistrés');
       }
       catch (error: unknown) {
+        console.error('[BookEntry] ERREUR complète:', error);
         this.toastService.showError('droits de table', 'Erreur lors de l\'enregistrement des droits de table');
       }
     }
-
   }
 
   create_game_card_sale(members: Member[], card_price: number, mode: PaymentMode, check_ref?: string): Promise<boolean> {

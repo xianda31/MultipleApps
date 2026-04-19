@@ -259,7 +259,7 @@ export class FeesCollectorComponent implements OnDestroy {
 
   async validate_fees() {
     this.tables_to_pdf();
-    await this.feesCollectorService.save_fees()
+    await this.feesCollectorService.save_fees();
     this.clear_session();
   }
 
