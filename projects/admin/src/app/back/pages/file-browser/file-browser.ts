@@ -106,7 +106,7 @@ export class FileBrowser implements OnInit, OnDestroy {
     
     const rawKeys = Object.keys(obj).filter(key => 
       !excludedKeys.includes(key) && 
-      !key.startsWith('_') && // Exclude any property starting with underscore
+      !key.startsWith('__') && // Exclude internal double-underscore properties
       key !== '.folder_placeholder' && // Exclude folder placeholder files
       typeof key === 'string'
     );
