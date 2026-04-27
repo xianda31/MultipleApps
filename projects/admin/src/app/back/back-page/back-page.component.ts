@@ -40,8 +40,8 @@ export class BackPageComponent {
 
     this.auth.logged_member$.subscribe(async (member) => {
       if (member !== null) {
-        this.user_accreditation = await this.groupService.getUserAccreditation();
         this.logged_member = member;
+        this.user_accreditation = await this.groupService.getUserAccreditation();
       }
     });
   }
