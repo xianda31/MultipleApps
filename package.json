@@ -5,14 +5,34 @@
     "amplify",
     "amplify/functions/*"
   ],
+  "main": "electron/main.js",
   "scripts": {
     "ng": "ng",
     "sandbox": "ampx sandbox --profile amplify-dev --identifier toto --exclude amplify/node_modules --exclude \"**/amplify_outputs.json\"",
     "start": "ng serve",
     "build": "ng build admin",
+    "build:electron": "ng build admin --configuration production && electron-builder",
+    "electron:dev": "ng build admin --configuration development && electron .",
+    "electron": "electron .",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "postinstall": "node scripts/link-amplify-deps.cjs"
+  },
+  "build": {
+    "appId": "com.association.caisse",
+    "productName": "Caisse",
+    "files": [
+      "electron/**/*",
+      "dist/admin/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "projects/admin/public/favicon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   },
   "private": true,
   "dependencies": {
@@ -76,6 +96,8 @@
     "aws-cdk": "^2.189.1",
     "aws-cdk-lib": "^2.189.1",
     "constructs": "^10.3.0",
+    "electron": "^41.5.0",
+    "electron-builder": "^26.8.1",
     "esbuild": "^0.23.0",
     "jasmine-core": "~5.1.0",
     "karma": "~6.4.0",

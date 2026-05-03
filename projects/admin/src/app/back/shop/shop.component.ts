@@ -506,7 +506,7 @@ export class ShopComponent {
         if (status === 'disconnected') {
           this.tpeReaderConnected = false;
           this.tpeReaderLabel = '';
-          this.toastService.showWarning('TPE', 'Reader déconnecté.');
+          this.toastService.showWarning('TPE', 'WisePad 3 déconnecté — cliquez "Connecter TPE" pour reconnecter.');
         }
       });
     } catch (err: any) {

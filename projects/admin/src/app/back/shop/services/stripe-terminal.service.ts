@@ -74,10 +74,11 @@ export class StripeTerminalService {
     this.terminal = StripeTerminal.create({
       onFetchConnectionToken: () => this.fetchConnectionToken(),
       onUnexpectedReaderDisconnect: () => {
-        console.warn('[StripeTerminal] Reader disconnected unexpectedly');
+        console.warn('[StripeTerminal] Reader disconnected unexpectedly — Bluetooth perdu');
         this.reader = null;
         this._status$.next('disconnected');
         this._readerLabel$.next('');
+        // Signal UI : l'utilisateur peut relancer onConnectReader() pour re-scanner
       },
     });
   }
@@ -88,26 +89,41 @@ export class StripeTerminalService {
 
   /**
    * Découvre les readers disponibles.
-   * Simulated: readers virtuels Stripe (dev/staging, aucun matériel requis).
-   * Production: readers internet Stripe (BBPOS WisePOS E, S700 — pas WisePad 3 Bluetooth).
+   * Simulated : readers virtuels Stripe (dev/staging, aucun matériel requis) — method internet.
+   * Production Electron : WisePad 3 via Bluetooth LE — method bluetooth.
    */
   async discoverReaders(simulated = false): Promise<any[]> {
     await this.init();
-    const result = await this.terminal.discoverReaders({ simulated });
+    const config = simulated
+      ? { simulated: true }
+      : { simulated: false, discoveryMethod: 'bluetooth' };
+    const result = await this.terminal.discoverReaders(config);
     if ((result as any).error) throw new Error((result as any).error.message);
     return (result as any).discoveredReaders as any[];
   }
 
   /**
-   * Connecte un reader (internet ou simulé).
+   * Connecte un reader.
+   * Simulated/internet : connectReader standard.
+   * Bluetooth (WisePad 3) : connectBluetoothReader avec auto-reconnect activé.
    */
   async connectReader(reader: any): Promise<void> {
     this._status$.next('connecting');
     this._errorMessage$.next('');
 
-    const result = await this.terminal.connectReader(reader, {
-      fail_if_in_use: false,
-    });
+    const isBluetooth = reader.device_type === 'bbpos_wisepad3'
+      || (reader as any).discoveryMethod === 'bluetooth'
+      || (!reader.ip_address && !reader.base_url);
+
+    const connectFn = isBluetooth
+      ? () => (this.terminal as any).connectBluetoothReader(reader, {
+          fail_if_in_use: false,
+          // Reconnexion automatique si déconnexion inattendue
+          autoReconnectOnUnexpectedDisconnect: true,
+        })
+      : () => this.terminal.connectReader(reader, { fail_if_in_use: false });
+
+    const result = await connectFn();
 
     if ((result as any).error) {
       this._status$.next('error');
@@ -117,7 +133,7 @@ export class StripeTerminalService {
 
     this.reader = (result as any).reader;
     this._status$.next('connected');
-    this._readerLabel$.next(reader.label || reader.id || 'TPE');
+    this._readerLabel$.next(reader.label || reader.id || 'WisePad 3');
   }
 
   /**
