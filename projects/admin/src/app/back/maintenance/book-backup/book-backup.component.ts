@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { BatchService } from '../SDK_v3.service';
 import { ToastService } from '../../../common/services/toast.service';
 import { environment } from '../../../../environments/environment';
+import { Amplify } from 'aws-amplify';
 import { switchMap, of, map } from 'rxjs';
 
 interface BackupFile {
@@ -29,7 +30,7 @@ export class BookBackupComponent implements OnInit {
   // ── État table ──────────────────────────────────────────────────────
   bookEntryTableName: string = '';
   tableFound: boolean = false;
-  currentApid: string = environment.production_apid;
+  currentApid: string = '';
   isSandbox: boolean = false;
 
   // ── Export ──────────────────────────────────────────────────────────
@@ -63,10 +64,17 @@ export class BookBackupComponent implements OnInit {
       || window.location.hostname.includes('sandbox')
       || window.location.hostname.includes('localhost');
 
-    // Trouver la table BookEntry dans la liste des tables
+    // Extraire l'apid depuis l'endpoint AppSync configuré (source de vérité per-deployment)
+    const graphqlEndpoint = (Amplify.getConfig().API as any)?.GraphQL?.endpoint as string | undefined;
+    const apidMatch = graphqlEndpoint?.match(/\/\/([^\.]+)\./); 
+    this.currentApid = apidMatch?.[1] ?? '';
+
+    // Trouver la table BookEntry correspondant à l'environnement courant
     this.batchService.listTables().subscribe({
       next: (tables) => {
-        const found = tables.find(t => t.startsWith('BookEntry-'));
+        const found = this.currentApid
+          ? tables.find(t => t.startsWith('BookEntry-') && t.includes(this.currentApid))
+          : tables.find(t => t.startsWith('BookEntry-'));
         if (found) {
           this.bookEntryTableName = found;
           this.tableFound = true;
