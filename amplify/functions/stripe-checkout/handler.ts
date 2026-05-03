@@ -166,6 +166,9 @@ export async function handler(event: any): Promise<any> {
   if (path.endsWith('/payout-list')) {
     return handlePayoutList(event);
   }
+  if (path.endsWith('/terminal-payment-intent')) {
+    return handleTerminalPaymentIntent(event);
+  }
   return handleCheckout(event);
 }
 
@@ -645,6 +648,72 @@ async function handlePayoutLookup(event: any): Promise<any> {
 
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+/**
+ * Crée un PaymentIntent Stripe pour le mode Terminal (TPE physique / card_present)
+ * ⚠️ Réservé au staff — autentification Cognito obligatoire
+ */
+async function handleTerminalPaymentIntent(event: any): Promise<any> {
+  const CORS = { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' };
+
+  if (!isStaffCaller(event)) {
+    return { statusCode: 403, headers: CORS, body: JSON.stringify({ error: 'Staff authorization required' }) };
+  }
+
+  if (!STRIPE_SECRET_KEY) {
+    return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: 'STRIPE_SECRET_KEY not configured' }) };
+  }
+
+  let body: any = {};
+  try {
+    body = typeof event.body === 'string' ? JSON.parse(event.body) : (event.body || {});
+  } catch {
+    return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Invalid JSON body' }) };
+  }
+
+  const { amountCents, memberName, buyerMemberId, season, date, bookEntryId } = body;
+
+  if (!amountCents || !Number.isInteger(amountCents) || amountCents <= 0) {
+    return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'amountCents must be a positive integer' }) };
+  }
+  if (!memberName || typeof memberName !== 'string' || memberName.trim().length === 0) {
+    return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'memberName is required' }) };
+  }
+
+  try {
+    // Tag court pour réconciliation avec BookEntry (même pattern que online checkout)
+    const stripeTag = `stripe:${Date.now().toString(36).toUpperCase().slice(-8)}`;
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amountCents,
+      currency: 'eur',
+      payment_method_types: ['card_present'],
+      capture_method: 'automatic',
+      metadata: {
+        memberName: memberName.trim(),
+        buyerMemberId: buyerMemberId || '',
+        season: season || '',
+        date: date || '',
+        stripeTag,
+        bookEntryId: bookEntryId || '',
+        source: 'terminal',
+      },
+    });
+
+    return {
+      statusCode: 200,
+      headers: CORS,
+      body: JSON.stringify({
+        clientSecret: paymentIntent.client_secret,
+        paymentIntentId: paymentIntent.id,
+        stripeTag,
+      }),
+    };
+  } catch (err: any) {
+    console.error('[terminal-payment-intent] Stripe error:', err);
+    return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: err.message }) };
+  }
 }
 
 export { handler as checkoutHandler };

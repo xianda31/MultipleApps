@@ -22,8 +22,16 @@ export class CartComponent {
   @Output() stripeCheckout = new EventEmitter<void>();
   @Output() assetUsableChange = new EventEmitter<number>();  // Émettre quand l'avoir utilisable change
   @Output() debtAmountChange = new EventEmitter<number>();  // Émettre quand la dette à inclure change
+  @Output() tpePayment = new EventEmitter<void>();          // Paiement par TPE demandé
+  @Output() connectReader = new EventEmitter<void>();        // Connecter le reader TPE
+  @Output() disconnectReader = new EventEmitter<void>();     // Déconnecter le reader TPE
   @Input() message: string = '';
   @Input() onlineMode = false;
+  @Input() onlinePaymentActive = true;
+  @Input() tpePaymentActive = false;    // Flag système : TPE activé
+  @Input() readerConnected = false;     // Reader Bluetooth connecté
+  @Input() tpePaymentInProgress = false; // Paiement TPE en cours
+  @Input() tpeReaderLabel = '';         // Libellé du reader connecté
   @Input() canEditPrice = false;  // Si false, modifier les prix est désactivé
   @Input() members: Member[] = [];  // Liste des membres pour la sélection du payee
 
@@ -218,6 +226,13 @@ export class CartComponent {
       || (this.cart.items.length === 0 && !(this.total_amount()>0))
       || (this.total_amount()<0)
       || (this.selected_payment.mode === PaymentMode.CHEQUE && (  !this.selected_payment.bank || !this.selected_payment.cheque_no) )
+      || this.cart.items.some((item) => !item.payee);
+  }
+
+  /** Validation pour paiement TPE : pas besoin de mode de paiement sélectionné. */
+  cart_is_not_valid_for_tpe(): boolean {
+    return (this.cart.items.length === 0 && !(this.total_amount() > 0))
+      || this.total_amount() <= 0
       || this.cart.items.some((item) => !item.payee);
   }
 

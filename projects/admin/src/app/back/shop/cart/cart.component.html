@@ -9,7 +9,12 @@
 
     <h3 class="cart-title"><i class="bi bi-bag-check"></i> Panier</h3>
 
-    @if (cart.items.length === 0 && debt_amount === 0) {
+    @if (onlineMode && !onlinePaymentActive) {
+    <div class="alert alert-warning d-flex align-items-center gap-2 my-3" role="alert">
+        <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+        <strong>Achat en ligne momentanément indisponible</strong>
+    </div>
+    } @else if (cart.items.length === 0 && debt_amount === 0) {
     <div class="empty-cart">
         <i class="bi bi-bag"></i>
         <p>Votre panier est vide</p>
@@ -140,6 +145,18 @@
                 (click)="selected_payment.mode = paymentMode.CREDIT; payment_mode_change()">
                 <i class="bi bi-arrow-up-circle me-1"></i>Avance
             </button>
+            @if (tpePaymentActive) {
+            @if (!readerConnected) {
+            <button type="button" class="btn-pay" (click)="connectReader.emit()">
+                <i class="bi bi-bluetooth me-1"></i>Connecter TPE
+            </button>
+            } @else {
+            <button type="button" class="btn-pay active tpe-connected" (click)="disconnectReader.emit()"
+                title="Cliquer pour déconnecter">
+                <i class="bi bi-bluetooth-fill me-1"></i>{{ tpeReaderLabel || 'TPE' }}
+            </button>
+            }
+            }
         </div>
         @if (selected_payment.mode === paymentMode.CHEQUE) {
         <div class="cheque-fields mt-2">
@@ -166,6 +183,17 @@
         <button type="button" class="btn-checkout" [disabled]="cart_is_not_valid()" (click)="validate_sale()">
             <i class="bi bi-check-circle me-2"></i>Confirmer le panier
         </button>
+        @if (tpePaymentActive && readerConnected) {
+        <button type="button" class="btn-checkout btn-checkout-tpe"
+            [disabled]="cart_is_not_valid_for_tpe() || tpePaymentInProgress"
+            (click)="tpePayment.emit()">
+            @if (tpePaymentInProgress) {
+            <span class="spinner-border spinner-border-sm me-2" role="status"></span>En cours…
+            } @else {
+            <i class="bi bi-credit-card-2-front me-2"></i>Payer par carte
+            }
+        </button>
+        }
         @if (!cart_is_not_valid()) {
         <input type="text" class="form-control form-control-sm" placeholder="commentaire (optionnel)"
             [(ngModel)]="cart.tag">

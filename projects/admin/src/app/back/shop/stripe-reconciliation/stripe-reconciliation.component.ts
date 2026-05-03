@@ -100,6 +100,7 @@ export class StripeReconciliationComponent {
   }
 
   private members: Member[] = [];
+  private CB_fees_account: string = '';
 
   constructor(
     private dbHandler: DBhandler,
@@ -112,6 +113,12 @@ export class StripeReconciliationComponent {
 
   ngOnInit(): void {
     this.loadStripePayouts();
+    this.systemDataService.get_configuration().subscribe(conf => {
+      this.CB_fees_account = conf.CB_fees_account || '';
+      if (!this.CB_fees_account) {
+        this.toastService.showError('Configuration', 'Compte frais CB non configuré — configurez-le dans les paramètres système');
+      }
+    });
     this.bookService.list_book_entries().subscribe(() => {
       this.membersService.listMembers().subscribe((members) => {
         this.members = members;
@@ -253,7 +260,11 @@ export class StripeReconciliationComponent {
       // Désélectionner tout d'abord
       this.lines.forEach(l => l.selected = false);
 
+      const allBookEntries = this.bookService.get_book_entries();
+      const pId = this.payoutId.trim();
       let matched = 0;
+      const wrongPayoutTags: string[] = [];
+
       result.charges.forEach((charge: any) => {
         const line = this.lines.find(l =>
           l.bookEntry.id === charge.bookEntryId ||
@@ -263,6 +274,16 @@ export class StripeReconciliationComponent {
           line.selected = true;
           line.feesCents = charge.feesCents;
           matched++;
+        } else if (charge.stripeTag) {
+          // Détecter si cette charge est déjà réconciliée avec un AUTRE payout (deposit_ref incorrect)
+          const alreadyReconciled = allBookEntries.find(e =>
+            e.stripeTag === charge.stripeTag &&
+            e.deposit_ref &&
+            e.deposit_ref !== pId
+          );
+          if (alreadyReconciled) {
+            wrongPayoutTags.push(`${charge.stripeTag} → ${alreadyReconciled.deposit_ref}`);
+          }
         }
       });
 
@@ -271,6 +292,11 @@ export class StripeReconciliationComponent {
 
       this.toastService.showSuccess('Lookup payout',
         `${matched} paiement(s) identifié(s) sur ${result.charges.length} charge(s) Stripe`);
+
+      if (wrongPayoutTags.length > 0) {
+        this.toastService.showWarning('Lookup payout',
+          `${wrongPayoutTags.length} charge(s) déjà réconciliée(s) avec un autre payout :\n${wrongPayoutTags.join('\n')}\nCorrigez le deposit_ref (remettez-le à null) pour re-réconcilier.`);
+      }
     } catch (error: any) {
       this.toastService.showError('Lookup payout', error?.message || 'Erreur Stripe API');
     } finally {
@@ -294,7 +320,6 @@ export class StripeReconciliationComponent {
       this.toastService.showWarning('Payout', 'Montant net invalide');
       return;
     }
-
     this.processingPayout = true;
     const reconciledAt = new Date().toISOString();
     const pId = this.payoutId.trim();
@@ -320,7 +345,7 @@ export class StripeReconciliationComponent {
         } as any,
         operations: snapshotFees > 0 ? [{
           label: 'virement organisme CB',
-          values: { 'BNQ': snapshotFees / 100 },
+          values: { [this.CB_fees_account]: snapshotFees / 100 },
         }] : [],
       });
 
@@ -347,6 +372,10 @@ export class StripeReconciliationComponent {
       // Reset
       this.payoutId = '';
       this.netBancaire = null;
+      this.payoutDate = new Date().toISOString().slice(0, 10);
+      this.expectedGrossCents = 0;
+      this.expectedChargeCount = 0;
+      this.isManualPayout = false;
       await this.loadLines();
     } catch (error: any) {
       console.error('Erreur création payout:', error);

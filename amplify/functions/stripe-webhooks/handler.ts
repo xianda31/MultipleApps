@@ -88,6 +88,61 @@ async function recordStripeTransaction(session: Stripe.Checkout.Session): Promis
 }
 
 /**
+ * Enregistre une transaction Terminal (PaymentIntent card_present) dans StripeTransaction
+ */
+async function recordTerminalTransaction(pi: Stripe.PaymentIntent): Promise<void> {
+  if (!STRIPE_TRANSACTION_TABLE) {
+    console.error('STRIPE_TRANSACTION_TABLE_NAME not configured — terminal transaction not recorded');
+    return;
+  }
+
+  const existing = await docClient.send(new GetCommand({
+    TableName: STRIPE_TRANSACTION_TABLE,
+    Key: { id: pi.id },
+  }));
+  if (existing.Item) {
+    console.log(`Terminal transaction ${pi.id} already recorded — skipping`);
+    return;
+  }
+
+  const meta = pi.metadata || {};
+  const now = new Date().toISOString();
+
+  await docClient.send(new PutCommand({
+    TableName: STRIPE_TRANSACTION_TABLE,
+    Item: {
+      id: pi.id,
+      stripeSessionId: pi.id,
+      stripeTag: meta['stripeTag'] || `stripe:${pi.id.slice(-12)}`,
+      bookEntryId: meta['bookEntryId'] || null,
+      buyerMemberId: meta['buyerMemberId'] || null,
+      status: 'completed',
+      amountCents: pi.amount || 0,
+      currency: pi.currency || 'eur',
+      customerEmail: null,
+      processed: false,
+      source: 'terminal',
+      ttl: Math.floor(Date.now() / 1000) + 3 * 365 * 24 * 3600,
+      stripeMeta: {
+        season: meta['season'] || '',
+        date: meta['date'] || '',
+        memberName: meta['memberName'] || '',
+        debtAmountCents: '0',
+        assetAmountCents: '0',
+        totalAmount: String(pi.amount || 0),
+        productCount: '0',
+      },
+      createdAt: now,
+      updatedAt: now,
+      __typename: 'StripeTransaction',
+    },
+    ConditionExpression: 'attribute_not_exists(id)',
+  }));
+
+  console.log(`Terminal transaction ${pi.id} recorded in DynamoDB`);
+}
+
+/**
  * Handler principal: Traite les événements Stripe
  */
 export async function handler(event: any): Promise<any> {
@@ -115,9 +170,12 @@ export async function handler(event: any): Promise<any> {
       }
 
       case 'payment_intent.succeeded': {
-        // Événement de confirmation finale du paiement
+        // Transactions Terminal (card_present) — enregistrer dans StripeTransaction
         const paymentIntent = stripeEvent.data.object as Stripe.PaymentIntent;
-        console.log(`PaymentIntent réussi: ${paymentIntent.id}, client_secret: ${paymentIntent.client_secret}`);
+        console.log(`PaymentIntent réussi: ${paymentIntent.id}, source: ${paymentIntent.metadata?.['source']}`);
+        if (paymentIntent.metadata?.['source'] === 'terminal') {
+          await recordTerminalTransaction(paymentIntent);
+        }
         break;
       }
 

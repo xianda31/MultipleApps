@@ -1,5 +1,6 @@
 export const environment = {
     production: true,
+    tpe_simulated: false,  // TPE physique requis en production
     region: 'eu-west-3',
     aws_access_key_id: 'xxxxxxxxxxxxxxxxxxxxx',
     aws_secret_access_key: 'yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy',

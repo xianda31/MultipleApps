@@ -35,6 +35,9 @@ export class SysConfComponent {
       trace_mode: [false],
       season: [''],
       club_bank_key: [''],
+      online_payment_active: [false],
+      tpe_payment_active: [false],
+      CB_fees_account: [''],
 
       fee_rates: this.fb.array([
         this.fb.group({

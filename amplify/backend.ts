@@ -17,6 +17,7 @@ import { sesMailing } from "./functions/ses-mailing/resource";
 import { emailUnsubscribe } from "./functions/email-unsubscribe/resource";
 import { stripeCheckout } from "./functions/stripe-checkout/resource";
 import { stripeWebhooks } from "./functions/stripe-webhooks/resource";
+import { stripeConnectionToken } from "./functions/stripe-connection-token/resource";
 import { auth } from "./auth/resource";
 import { data } from "./data/resource";
 import { storage } from "./storage/resource";
@@ -31,6 +32,7 @@ const backend = defineBackend({
   emailUnsubscribe,
   stripeCheckout,
   stripeWebhooks,
+  stripeConnectionToken,
 });
 
 // create a new API stack
@@ -60,6 +62,11 @@ const stripeCheckoutIntegration = new HttpLambdaIntegration(
 const stripeWebhooksIntegration = new HttpLambdaIntegration(
   "StripeWebhooksIntegration",
   backend.stripeWebhooks.resources.lambda
+);
+
+const stripeConnectionTokenIntegration = new HttpLambdaIntegration(
+  "StripeConnectionTokenIntegration",
+  backend.stripeConnectionToken.resources.lambda
 );
 
 
@@ -139,6 +146,22 @@ httpApi.addRoutes({
   methods: [HttpMethod.POST],
   integration: stripeWebhooksIntegration,
   // PAS de authorization -> Stripe doit pouvoir appeler
+});
+
+// 🔒 Stripe Terminal - Connection Token (staff uniquement)
+httpApi.addRoutes({
+  path: "/api/stripe/connection-token",
+  methods: [HttpMethod.POST],
+  integration: stripeConnectionTokenIntegration,
+  authorizer: userPoolAuthorizer,
+});
+
+// 🔒 Stripe Terminal - PaymentIntent card_present (staff uniquement)
+httpApi.addRoutes({
+  path: "/api/stripe/terminal-payment-intent",
+  methods: [HttpMethod.POST],
+  integration: stripeCheckoutIntegration,
+  authorizer: userPoolAuthorizer,
 });
 
 httpApi.addRoutes({

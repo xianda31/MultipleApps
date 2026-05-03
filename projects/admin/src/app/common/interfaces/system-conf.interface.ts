@@ -38,6 +38,10 @@ export interface SystemConfiguration {
     season: string;
     club_bank_key: string;
 
+    online_payment_active: boolean;
+    tpe_payment_active: boolean;
+    CB_fees_account: string;
+
     fee_rates: Fee_rate[];
 
     profit_and_loss: Profit_and_loss;

@@ -57,8 +57,15 @@
         }
 
         <div *ngIf="buyer || onlineMode">
-          <app-cart [message]="message" [onlineMode]="onlineMode" [canEditPrice]="canEditPrice" [members]="members"
+          <app-cart [message]="message" [onlineMode]="onlineMode" [canEditPrice]="canEditPrice" [members]="members" [onlinePaymentActive]="onlinePaymentActive"
+            [tpePaymentActive]="tpePaymentActive"
+            [readerConnected]="tpeReaderConnected"
+            [tpePaymentInProgress]="tpePaymentInProgress"
+            [tpeReaderLabel]="tpeReaderLabel"
             (complete)="cart_confirmed()" (stripeCheckout)="on_stripe_checkout()"
+            (tpePayment)="onPayByCard()"
+            (connectReader)="onConnectReader()"
+            (disconnectReader)="onDisconnectReader()"
             (assetUsableChange)="asset_amount = $event"
             (debtAmountChange)="debt_amount = $event">
           </app-cart>
@@ -67,7 +74,7 @@
       </div>
 
       <!-- Panel: Products (scrollable) -->
-      <div class="shop-panel-products">
+      <div class="shop-panel-products" [class.pe-none]="onlineMode && !onlinePaymentActive" [class.opacity-50]="onlineMode && !onlinePaymentActive">
         <div *ngFor="let products of products_array | keyvalue | moveToEnd:'LIC'">
           <div class="shop-product-grid">
             <div *ngFor="let product of products.value">
