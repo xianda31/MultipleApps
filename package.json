@@ -9,7 +9,7 @@
     "ng": "ng",
     "sandbox": "ampx sandbox --profile amplify-dev --identifier toto --exclude amplify/node_modules --exclude \"**/amplify_outputs.json\"",
     "start": "ng serve",
-    "build": "ng build admin",
+    "build": "ng build admin --configuration production",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "postinstall": "node scripts/link-amplify-deps.cjs"
