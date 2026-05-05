@@ -56,6 +56,9 @@ export class BalanceComponent {
 
     this.systemDataService.get_configuration().subscribe(
       (configuration) => {
+        if (this.current_season && configuration.season !== this.current_season) {
+          this.loaded = false; // transition de saison : bloquer le check jusqu'au rechargement complet
+        }
         this.selected_season = configuration.season;
         this.current_season = configuration.season;
         this.next_season = this.systemDataService.next_season(this.current_season);
@@ -63,14 +66,13 @@ export class BalanceComponent {
         return configuration.season;
       });
 
-      this.bookService.list_book_entries().pipe(
+    this.bookService.list_book_entries().pipe(
       switchMap(() => this.financialService.list_balance_sheets())
     ).subscribe((balance_sheets) => {
       this.balance_board = this.financialService.compute_balance_board(this.current_season);
-      this.check_balance_vs_profit_and_loss();
-
-      this.export_url = this.financialService.export_balance_sheets()
+      this.export_url = this.financialService.export_balance_sheets();
       this.loaded = true;
+      this.check_balance_vs_profit_and_loss();
     });
   }
 
@@ -79,6 +81,7 @@ export class BalanceComponent {
   check_balance_vs_profit_and_loss() {
     this.trading_result = this.bookService.get_trading_result();
     this.balance_error = this.Round(this.balance_board.delta.actif_total - this.trading_result);
+    if (!this.loaded) return; // données en cours de chargement, pas de toast prématuré
     if (this.balance_error !== 0) {
       console.log('incohérence entre résultat et bilan', this.balance_error, this.balance_board.delta.actif_total, this.trading_result);
       this.toastService.showWarning('consolidation financière', 'incohérence entre résultat et bilan');
@@ -95,12 +98,16 @@ export class BalanceComponent {
     let current_season = this.balance_board.current.season;
     let next_season = this.systemDataService.next_season(current_season);
 
-    this.bookService.generate_next_season_entries(next_season)
-      .subscribe((nbr) => {
-        this.toastService.showSuccess('cloture saison', nbr + 'écritures de report générées pour la saison ' + next_season);
-        // finalisation  : passage à la nouvelle saison
-        this.systemDataService.change_to_new_season(next_season);
-      });
+    // Sauvegarde obligatoire du bilan N avant de générer les écritures N+1 :
+    // le compute_balance_board de N+1 lit previous_balance_sheet[N], qui doit être à jour.
+    this.financialService.save_balance_sheet(this.balance_board.current).subscribe(() => {
+      this.bookService.generate_next_season_entries(next_season)
+        .subscribe((nbr) => {
+          this.toastService.showSuccess('cloture saison', nbr + ' écritures de report générées pour la saison ' + next_season);
+          // finalisation  : passage à la nouvelle saison
+          this.systemDataService.change_to_new_season(next_season);
+        });
+    });
   }
 
   save_balance_sheet() {
@@ -126,7 +133,7 @@ export class BalanceComponent {
         this.due = 'dettes';
         break;
       case 'commited_payments':
-  this.backNavigationService.goToBankReconciliation();
+        this.backNavigationService.goToBankReconciliation();
         break;
       default:
         console.error('Unknown account type:', account);

@@ -25,21 +25,22 @@ export class FinancialReportService {
   private _sheets_to_records(sheets: Balance_sheet[]): Balance_record[] {
     return sheets.map((sheet) => {
       const { in_bank_total, wip_total, actif_total, cashbox, ...record } = sheet;
-      return record as Balance_record;
+      return record as Balance_record; // stripe_pending reste dans record car il est dans Balance_record
     }
     );
   }
   private _records_to_sheets(records: Balance_record[]): Balance_sheet[] {
     return records.map((record) => {
       let in_bank_total = record.bank + record.savings;
-      let cashbox = record.cash + record.client_debts;
-      let wip_total = record.uncashed_cheques + record.outstanding_expenses + record.gift_vouchers;
+      let stripe_pending = record.stripe_pending || 0;
+      let cashbox = record.cash + record.client_debts + record.uncashed_cheques + stripe_pending;
+      let wip_total = record.outstanding_expenses + record.gift_vouchers;
       let actif_total = in_bank_total + cashbox + wip_total;
 
       return {
         ...record,
-        stripe_pending: 0,
-        in_bank_total: record.bank + record.savings,
+        stripe_pending: stripe_pending,
+        in_bank_total: in_bank_total,
         wip_total: wip_total,
         cashbox: cashbox,
         actif_total: actif_total,
@@ -69,15 +70,16 @@ export class FinancialReportService {
     const index = this._balance_sheets.findIndex((sheet) => sheet.season === balance_sheet.season);
     if (index !== -1) {
       this._balance_sheets[index] = balance_sheet;
-      return this.balance_sheets_upload_to_S3().pipe(
-        map(() => {
-          this._balance_sheets$.next(this._balance_sheets);
-          return balance_sheet;
-        })
-      );
     } else {
-      throw new Error(`Balance sheet for season ${balance_sheet.season} not found`);
+      // première sauvegarde de cette saison : on l'ajoute
+      this._balance_sheets.push(balance_sheet);
     }
+    return this.balance_sheets_upload_to_S3().pipe(
+      map(() => {
+        this._balance_sheets$.next(this._balance_sheets);
+        return balance_sheet;
+      })
+    );
   }
 
   // CRUDL balance_sheet
@@ -133,19 +135,7 @@ export class FinancialReportService {
     return from(this.fileService.download_json_file('accounting/balance_history.txt')).pipe(
       map((data) => {
         let balance_records = data as Balance_record[];
-        let balance_sheets = balance_records.map((record) => {
-          let in_bank_total = record.bank + record.savings;
-          let cashbox = record.cash + record.client_debts;
-          let wip_total = record.uncashed_cheques + record.outstanding_expenses + record.gift_vouchers;
-          let actif_total = in_bank_total + cashbox + wip_total;
-          return {
-            ...record,
-            in_bank_total: in_bank_total,
-            cashbox: cashbox,
-            wip_total: wip_total,
-            actif_total: actif_total
-          } as Balance_sheet;
-        });
+        let balance_sheets = this._records_to_sheets(balance_records);
         return balance_sheets;
       }),
       map((balance_sheets) => {

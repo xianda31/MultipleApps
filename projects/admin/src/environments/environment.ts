@@ -1,5 +1,6 @@
 export const environment = {
-    production: true,
+    production: false,
+    tpe_simulated: true,  // Simulateur Stripe Terminal (pas de TPE physique requis)
         region: 'eu-west-3',
     aws_access_key_id: 'xxxxxxxxxxxxxxxxxxxxx',
     aws_secret_access_key: 'yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy',

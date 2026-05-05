@@ -2,7 +2,6 @@ import { Type } from "@angular/core";
 import { TournamentsComponent } from "../tournaments/tournaments/tournaments.component";
 import { SettingsComponent } from "../members/settings/settings.component";
 import { PurchasesComponent } from "../../front/purchases/purchases.component";
-// import { FrontShopComponent } from "../../front/shop/front-shop.component";
 import { GameCardsOwnedComponent } from "../../front/game-cards-owned/game-cards-owned.component";
 import { Routes } from "@angular/router";
 import { IframeComponent } from "../../front/front/iframe/iframe";

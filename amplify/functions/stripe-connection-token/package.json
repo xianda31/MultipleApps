@@ -1,0 +1,13 @@
+{
+  "name": "stripe-connection-token",
+  "version": "1.0.0",
+  "description": "Stripe Terminal Connection Token Lambda",
+  "type": "module",
+  "main": "handler.ts",
+  "dependencies": {
+    "stripe": "^14.14.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  }
+}

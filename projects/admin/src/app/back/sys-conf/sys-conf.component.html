@@ -107,18 +107,60 @@
                   </div>
                 </div>
               </div>
-              <div class="mt-3">comptes pertes et profits :</div>
-              <div class="row g-2 my-2" formGroupName="profit_and_loss">
+              <div class="mt-3 fw-bold">paiement par CB</div>
+              <div class="row g-2  align-items-center">
+                <div class="col-12 col-md-3 d-flex align-items-center gap-2">
+                  <span class="text-nowrap">paiement en ligne</span>
+                  <div class="form-check form-switch mb-0">
+                    <input type="checkbox" class="form-check-input" role="switch" formControlName="online_payment_active">
+                  </div>
+                  <span class="text-nowrap" [class]="systemFormGroup.get('online_payment_active')?.value ? 'text-success' : 'text-muted'">
+                    {{systemFormGroup.get('online_payment_active')?.value ? 'activé' : 'désactivé'}}
+                  </span>
+                </div>
+                <div class="col-12 col-md-3 d-flex align-items-center gap-2">
+                  <span class="text-nowrap">TPE</span>
+                  <div class="form-check form-switch mb-0">
+                    <input type="checkbox" class="form-check-input" role="switch" formControlName="tpe_payment_active">
+                  </div>
+                  <span class="text-nowrap" [class]="systemFormGroup.get('tpe_payment_active')?.value ? 'text-success' : 'text-muted'">
+                    {{systemFormGroup.get('tpe_payment_active')?.value ? 'activé' : 'désactivé'}}
+                  </span>
+                </div>
+                <div class="col-12 col-md-6">
+                  <div class="input-group">
+                    <span class="input-group-text">compte frais paiements CB</span>
+                    <select class="form-select" formControlName="CB_fees_account">
+                      <option value="">(aucun)</option>
+                      <option *ngFor="let exp of expenses.controls" [value]="exp.get('key')?.value">
+                        {{exp.get('key')?.value}} — {{exp.get('description')?.value}}
+                      </option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="mt-3 fw-bold">comptes pertes et profits :</div>
+              <div class="row g-2 " formGroupName="profit_and_loss">
                 <div class="col-12 col-md-6 mb-2 mb-md-0">
                   <div class="input-group">
                     <span class="input-group-text">charge/débit</span>
-                    <input type="text" class="form-control" formControlName="debit_key">
+                    <select class="form-select" formControlName="debit_key">
+                      <option value="">(aucun)</option>
+                      <option *ngFor="let exp of expenses.controls" [value]="exp.get('key')?.value">
+                        {{exp.get('key')?.value}} — {{exp.get('description')?.value}}
+                      </option>
+                    </select>
                   </div>
                 </div>
                 <div class="col-12 col-md-6">
                   <div class="input-group">
                     <span class="input-group-text">recette/crédit</span>
-                    <input type="text" class="form-control" formControlName="credit_key">
+                    <select class="form-select" formControlName="credit_key">
+                      <option value="">(aucun)</option>
+                      <option *ngFor="let rev of revenues.controls" [value]="rev.get('key')?.value">
+                        {{rev.get('key')?.value}} — {{rev.get('description')?.value}}
+                      </option>
+                    </select>
                   </div>
                 </div>
               </div>

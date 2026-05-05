@@ -213,6 +213,7 @@ export const TRANSACTION_ID_TO_NATURE: { [key in TRANSACTION_ID]?: string } = {
   [TRANSACTION_ID.report_prélèvement]: 'report prélèvement',
   [TRANSACTION_ID.report_chèque]: 'report chèque',
   [TRANSACTION_ID.report_carte]: 'report carte',
+  [TRANSACTION_ID.report_psp]: 'report PSP Stripe',
   [TRANSACTION_ID.annulation_dette_adhérent]: 'annulation dette adhérent',
   [TRANSACTION_ID.dépôt_collecte_espèces]: 'versement espèces', // or 'fond en espèces'
   [TRANSACTION_ID.dépôt_collecte_chèques]: 'versement chèques',
@@ -245,6 +246,7 @@ export const TRANSACTION_ID_TO_NATURE: { [key in TRANSACTION_ID]?: string } = {
 export const TRANSACTION_ID_TO_CHRONO: { [key in TRANSACTION_ID]?: string } = {
   [TRANSACTION_ID.report_prélèvement]: 'B',
   [TRANSACTION_ID.report_chèque]: 'B',
+  [TRANSACTION_ID.report_psp]: 'B',
   [TRANSACTION_ID.dépôt_collecte_espèces]: 'B', // or 'fond en espèces'
   [TRANSACTION_ID.dépôt_collecte_chèques]: 'B',
   [TRANSACTION_ID.dépôt_caisse_espèces]: 'B',

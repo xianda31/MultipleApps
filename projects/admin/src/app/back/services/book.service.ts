@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 
 import { BookEntry, Revenue, FINANCIAL_ACCOUNT, BALANCE_ACCOUNT, Expense, CUSTOMER_ACCOUNT, TRANSACTION_ID, Operation, AMOUNTS,  Formatted_purchase, Item } from '../../common/interfaces/accounting.interface';
 // import { Schema } from '../../../../amplify/data/resource';
-import { BehaviorSubject, catchError, from, map, Observable, of, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, catchError, distinctUntilKeyChanged, from, map, Observable, of, switchMap, tap } from 'rxjs';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { ToastService } from '../../common/services/toast.service';
 import { TRANSACTION_CLASS, TRANSACTION_DIRECTORY } from '../../common/interfaces/transaction.definition';
@@ -166,6 +166,7 @@ export class BookService {
           return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
         });
         this._book_entries$.next(this._book_entries);
+        this.toastService.showInfo('comptabilité', `données saison ${season} chargées`);
       }),
       switchMap(() => this._book_entries$.asObservable()),
       catchError((error) => {
@@ -179,6 +180,7 @@ export class BookService {
   list_book_entries(): Observable<BookEntry[]> {
 
     return this.systemDataService.get_configuration().pipe(
+      distinctUntilKeyChanged('season'),  // évite le double-fire quand save_configuration émet deux fois
       switchMap((conf) => {
         let season = conf.season;
         if (this.season_filter !== season) {
@@ -943,6 +945,31 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
 
       });
 
+    // B.3 report des ventes par paiement digital (Stripe / PSP) non encore associées à un payout
+    // Une ligne par paiement (comme les chèques) pour permettre la réconciliation individuelle en N+1
+    const stripe_unreconciled = this._book_entries.filter((entry) =>
+      (entry.amounts[FINANCIAL_ACCOUNT.STRIPE_debit] || 0) > 0 &&
+      !entry.deposit_ref
+    );
+    stripe_unreconciled.forEach((entry) => {
+      const amount = entry.amounts[FINANCIAL_ACCOUNT.STRIPE_debit]!;
+      const label = entry.operations.reduce((acc, op) => acc + op.label + ' ', entry.date.toString() + ':');
+      const book_entry: BookEntry = {
+        id: '',
+        season: next_season,
+        date: this.systemDataService.start_date(next_season),
+        transaction_id: TRANSACTION_ID.report_psp,
+        amounts: { [FINANCIAL_ACCOUNT.STRIPE_debit]: amount, [BALANCE_ACCOUNT.BAL_debit]: amount },
+        stripeTag: entry.stripeTag,  // conservé pour réconciliation N+1
+        operations: [{ label: label, values: {} }],
+      };
+      next_season_entries.push(book_entry);
+    });
+    if (stripe_unreconciled.length > 0) {
+      const total = stripe_unreconciled.reduce((acc, e) => acc + (e.amounts[FINANCIAL_ACCOUNT.STRIPE_debit] || 0), 0);
+      this.toastService.showInfo('report PSP', `${stripe_unreconciled.length} paiements Stripe (${total} €) reportés sur la saison ${next_season}`);
+    }
+
     // C. report des dettes clients
     let debts = this.get_debts();
     if (Array.from(debts).length !== 0) {
@@ -970,6 +997,29 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
         next_season_entries.push(book_entry);
       }
     }
+
+    // D. report des chèques non encore déposés (chèques en caisse)
+    this._book_entries
+      .filter((entry) =>
+        this.transactionService.get_transaction(entry.transaction_id).cheque === 'in' &&
+        !entry.bank_report &&
+        (!entry.deposit_ref || entry.deposit_ref.startsWith('TEMP_'))
+      )
+      .forEach((entry) => {
+        let amount = entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit];
+        if (!amount) throw Error('montant du chèque non défini !?!?')
+        let label = entry.operations.reduce((acc, op) => { return acc + op.label + ' ' }, entry.date.toString() + ':');;
+        let book_entry: BookEntry = {
+          id: '',
+          season: next_season,
+          date: this.systemDataService.start_date(next_season),
+          transaction_id:  TRANSACTION_ID.report_chèque_reçu,
+          amounts: { [FINANCIAL_ACCOUNT.CASHBOX_debit]: amount, [BALANCE_ACCOUNT.BAL_debit]: amount },
+          cheque_ref:  entry.cheque_ref ,
+          operations: [{ label: label, values: {} }],
+        }
+        next_season_entries.push(book_entry);
+      });
 
     return this.book_entries_bulk_create$(next_season_entries);
   }

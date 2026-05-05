@@ -17,6 +17,10 @@ import { StripeCheckoutOrchestrator } from './stripe-checkout/stripe-checkout.or
 import { ShopInitializationService } from './services/shop-initialization.service';
 import { BuyerContextService } from './services/buyer-context.service';
 import { ShopProductService } from './services/shop-product.service';
+import { StripeTerminalService, TerminalStatus } from './services/stripe-terminal.service';
+import { SystemDataService } from '../../common/services/system-data.service';
+import { PaymentMode } from './cart/cart.interface';
+import { environment } from '../../../environments/environment';
 
 /**
  * ShopComponent — Interface de gestion des ventes (cartes, adhésions, produits)
@@ -80,6 +84,14 @@ export class ShopComponent {
   private allProducts: Product[] = [];
   isSaving: boolean = false;  // For non-Stripe cart confirmation
   private stripeCheckoutPrepared = false;  // Éviter les doublons
+  onlinePaymentActive: boolean = true;
+
+  // ── TPE (Stripe Terminal) ──────────────────────────────────
+  tpePaymentActive: boolean = false;
+  tpePaymentInProgress: boolean = false;
+  tpeReaderConnected: boolean = false;
+  tpeReaderLabel: string = '';
+  tpeStatus: TerminalStatus = 'idle';
 
   // STRIPE OBSERVABLES (from orchestrator) - as getters to avoid initialization order issues
   get isProcessing$() { return this.stripeCheckout.isProcessing$; }
@@ -115,11 +127,23 @@ export class ShopComponent {
     private shopInit: ShopInitializationService,
     private buyerContext: BuyerContextService,
     private shopProducts: ShopProductService,
+    private systemDataService: SystemDataService,
+    private stripeTerminal: StripeTerminalService,
   ) {}
 
   ngOnInit(): void {
     // Apply default for @Input (not auto-applied by Angular)
     this.onlineMode ??= true;
+
+    if (this.onlineMode) {
+      this.systemDataService.get_configuration().subscribe(conf => {
+        this.onlinePaymentActive = conf.online_payment_active ?? false;
+      });
+    } else {
+      this.systemDataService.get_configuration().subscribe(conf => {
+        this.tpePaymentActive = conf.tpe_payment_active ?? false;
+      });
+    }
 
     const routeOnlineMode = this.route.snapshot.data['onlineMode'];
     if (routeOnlineMode !== undefined) {
@@ -445,12 +469,121 @@ export class ShopComponent {
   }
 
 
-
   /**
    * Résout l'icône pour un produit
    * Préfère le compte (source de vérité) → fallback sur glyph en DB
    */
   getProductGlyph(product: Product): string {
     return resolveGlyph(product.account, product.glyph);
+  }
+
+  // ── TPE (Stripe Terminal) ──────────────────────────────────
+
+  /**
+   * Découvre et connecte le premier reader Bluetooth disponible.
+   * En dev/sandbox : utilise le simulateur Stripe (simulated=true).
+   */
+  async onConnectReader(): Promise<void> {
+    try {
+      const simulated = environment.tpe_simulated;
+      const readers = await this.stripeTerminal.discoverReaders(simulated);
+
+      if (readers.length === 0) {
+        this.toastService.showWarning('TPE', 'Aucun reader trouvé. Vérifiez le Bluetooth et l\'appairage.');
+        return;
+      }
+
+      // Connecter automatiquement le premier reader trouvé
+      await this.stripeTerminal.connectReader(readers[0]);
+      this.tpeReaderConnected = true;
+      this.tpeReaderLabel = readers[0].label || readers[0].id || 'WisePad 3';
+      this.tpeStatus = 'connected';
+      this.toastService.showSuccess('TPE', `Reader connecté : ${this.tpeReaderLabel}`);
+
+      // Suivre les changements d'état
+      this.stripeTerminal.status$.subscribe(status => {
+        this.tpeStatus = status;
+        if (status === 'disconnected') {
+          this.tpeReaderConnected = false;
+          this.tpeReaderLabel = '';
+          this.toastService.showWarning('TPE', 'WisePad 3 déconnecté — cliquez "Connecter TPE" pour reconnecter.');
+        }
+      });
+    } catch (err: any) {
+      this.toastService.showError('TPE', err.message || 'Erreur de connexion au reader');
+    }
+  }
+
+  /**
+   * Déconnecte le reader Bluetooth.
+   */
+  async onDisconnectReader(): Promise<void> {
+    try {
+      await this.stripeTerminal.disconnectReader();
+      this.tpeReaderConnected = false;
+      this.tpeReaderLabel = '';
+      this.tpeStatus = 'idle';
+      this.toastService.showSuccess('TPE', 'Reader déconnecté.');
+    } catch (err: any) {
+      this.toastService.showError('TPE', err.message || 'Erreur lors de la déconnexion');
+    }
+  }
+
+  /**
+   * Déclenche le flux de paiement TPE :
+   * 1. Crée le PaymentIntent côté serveur
+   * 2. SDK collecte la carte via le WisePad 3
+   * 3. SDK traite le paiement
+   * 4. Enregistre la vente (BookEntry)
+   * Le webhook payment_intent.succeeded enregistre la StripeTransaction en parallèle.
+   */
+  async onPayByCard(): Promise<void> {
+    if (!this.buyer) {
+      this.toastService.showWarning('TPE', 'Sélectionner un acheteur');
+      return;
+    }
+
+    const amountCents = Math.round(this.cartService.getCartAmount() * 100);
+    if (amountCents <= 0) {
+      this.toastService.showWarning('TPE', 'Montant invalide (≤ 0)');
+      return;
+    }
+
+    this.tpePaymentInProgress = true;
+
+    try {
+      const memberName = this.buyer.lastname + ' ' + this.buyer.firstname;
+
+      // 1. Créer le PaymentIntent côté serveur (validation prix + metadata)
+      const { clientSecret, stripeTag } = await this.stripeTerminal.createPaymentIntent({
+        amountCents,
+        memberName,
+        buyerMemberId: this.buyer.id,
+        season: this.session.season,
+        date: this.session.date,
+      });
+
+      // 2. Stocker le stripeTag dans le panier pour traçabilité BookEntry
+      this.cartService.setStripeTag(stripeTag);
+
+      // 3. Présenter la carte sur le TPE et traiter le paiement
+      await this.stripeTerminal.collectAndProcess(clientSecret);
+
+      // 4. Paiement accepté → enregistrer la vente avec mode CARTE
+      this.cartService.payment = {
+        amount: this.cartService.getCartAmount(),
+        payer_id: this.buyer.id,
+        mode: PaymentMode.CARD,
+        bank: '',
+        cheque_no: '',
+      };
+      this.cart_confirmed();
+      this.toastService.showSuccess('Paiement CB', 'Carte acceptée — vente enregistrée');
+    } catch (err: any) {
+      this.toastService.showError('Paiement CB', err.message || 'Erreur paiement TPE');
+      this.stripeTerminal.resetStatus();
+    } finally {
+      this.tpePaymentInProgress = false;
+    }
   }
 }

@@ -597,7 +597,39 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     cash: 'none',
     cheque: 'none',
   },
+  // report d'encours PSP (Stripe) : fonds reçus non encore virés en banque
+  [TRANSACTION_ID.report_psp]: {
+    label: 'REPORT PSP STRIPE',
+    invoice_required: false,
+    tooltip: 'report des fonds Stripe non encore virés en banque sur l\'année suivante',
+    class: TRANSACTION_CLASS.BALANCE,
+    financial_accounts: [...balance_sheet_accounts, ...financial_debits],
+    financial_accounts_to_charge: [BALANCE_ACCOUNT.BAL_debit, FINANCIAL_ACCOUNT.STRIPE_debit],
+    nominative: false,
+    pure_financial: true,
+    revenue_account_to_show: false,
+    require_deposit_ref: false,
+    cash: 'none',
+    cheque: 'none',
+  },
 
+// report de chèques reçus mais non encaissés 
+  [TRANSACTION_ID.report_chèque_reçu]: {
+    label: 'REPORT CHEQUE',
+    invoice_required: false,
+    tooltip: 'report des chèques reçus mais non encaissés sur l\'année suivante',
+    class: TRANSACTION_CLASS.BALANCE,
+    financial_accounts: [...balance_sheet_accounts, ...financial_debits],
+    financial_accounts_to_charge: [BALANCE_ACCOUNT.BAL_debit, FINANCIAL_ACCOUNT.CASHBOX_debit],
+    nominative: false,
+    pure_financial: true,
+    revenue_account_to_show: false,
+    require_deposit_ref: true,
+    cash: 'none',
+    cheque: 'in',
+  },
+
+ 
  
 
 

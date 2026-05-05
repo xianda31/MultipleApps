@@ -67,6 +67,88 @@
     </div>
   </div>
 
+  <!-- Section 1bis: Rapprochements existants (annulation possible) -->
+  @if (reconciledPayouts.length > 0) {
+    <div class="card border-0 bg-light mb-3">
+      <div class="card-header bg-transparent">
+        <span class="fw-semibold">Rapprochements enregistrés</span>
+        <small class="text-muted ms-2">({{ reconciledPayouts.length }} payout(s) réconcilié(s))</small>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>ID Payout</th>
+              <th>Date écriture</th>
+              <th class="text-end">Brut / Frais / Net</th>
+              <th class="text-center">Doublons</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (rp of reconciledPayouts; track rp.payoutId) {
+              <tr [class.table-warning]="rp.bookEntries.length > 1">
+                <td><small class="font-monospace text-muted">{{ rp.payoutId }}</small></td>
+                <td>{{ formatDate(rp.bookEntries[0].date) }}</td>
+                <td class="text-end small">
+                  @for (be of rp.bookEntries; track be.id) {
+                    <div>
+                      <span class="text-muted">brut {{ formatAmount((be.amounts['stripe_out'] || 0) * 100) }}</span>
+                      / net <strong>{{ formatAmount((be.amounts['bank_in'] || 0) * 100) }}</strong>
+                    </div>
+                  }
+                </td>
+                <td class="text-center">
+                  @if (rp.bookEntries.length > 1) {
+                    <span class="badge bg-danger">{{ rp.bookEntries.length }} doublons !</span>
+                  } @else {
+                    <span class="badge bg-success">OK</span>
+                  }
+                </td>
+                <td class="text-end">
+                  <button class="btn btn-sm btn-outline-danger"
+                          (click)="undoPayout(rp.payoutId)"
+                          [disabled]="undoingPayoutId !== null">
+                    @if (undoingPayoutId === rp.payoutId) {
+                      <span class="spinner-border spinner-border-sm me-1"></span>
+                    }
+                    Annuler
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  <!-- Section 1ter: Paiements orphelins (deposit_ref sans écriture virement) -->
+  @if (orphanedPayments.length > 0) {
+    <div class="alert alert-warning d-flex align-items-center gap-3 mb-3">
+      <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+      <div class="flex-grow-1">
+        <strong>{{ orphanedPayments.length }} paiement(s) orphelin(s)</strong>
+        — deposit_ref enregistré mais aucune écriture virement correspondante en BD :
+        <ul class="mb-0 mt-1 small">
+          @for (e of orphanedPayments; track e.id) {
+            <li>
+              {{ formatDate(e.date) }} — {{ e.operations[0]?.member || e.stripeTag || e.tag }}
+              ({{ formatAmount((e.amounts['stripe_in'] || 0) * 100) }})
+              <span class="font-monospace text-muted">→ {{ e.deposit_ref }}</span>
+            </li>
+          }
+        </ul>
+      </div>
+      <button class="btn btn-warning btn-sm" (click)="fixOrphans()" [disabled]="fixingOrphans">
+        @if (fixingOrphans) {
+          <span class="spinner-border spinner-border-sm me-1"></span>
+        }
+        Réintégrer
+      </button>
+    </div>
+  }
+
   <!-- Section 2: Paiements en attente de réconciliation -->
   <h6 class="fw-semibold mt-3">Paiements carte à réconcilier</h6>
   @if (loadingLines) {
