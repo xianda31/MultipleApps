@@ -137,7 +137,7 @@ export class ShopComponent {
 
     if (this.onlineMode) {
       this.systemDataService.get_configuration().subscribe(conf => {
-        this.onlinePaymentActive = conf.online_payment_active ?? true;
+        this.onlinePaymentActive = conf.online_payment_active ?? false;
       });
     } else {
       this.systemDataService.get_configuration().subscribe(conf => {

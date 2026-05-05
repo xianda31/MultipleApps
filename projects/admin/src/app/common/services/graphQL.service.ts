@@ -455,6 +455,21 @@ export class DBhandler {
     if (errors) throw errors;
   }
 
+  async resetStripeTransactionPayout(id: string): Promise<void> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { errors } = await client.models.StripeTransaction.update({ id, payoutId: null, reconciledAt: null } as any);
+    if (errors) throw errors;
+  }
+
+  async listStripeTransactionsByPayoutId(payoutId: string): Promise<any[]> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { data, errors } = await client.models.StripeTransaction.list({ limit: 300 });
+    if (errors) throw errors;
+    return (data as any[]).filter((t: any) => t.payoutId === payoutId);
+  }
+
 
 
 

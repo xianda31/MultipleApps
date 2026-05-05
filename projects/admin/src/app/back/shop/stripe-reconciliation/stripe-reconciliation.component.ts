@@ -41,6 +41,14 @@ export class StripeReconciliationComponent {
   lines: PayoutLine[] = [];
   loadingLines = false;
 
+  // Rapprochements déjà effectués (annulation possible)
+  reconciledPayouts: { payoutId: string; bookEntries: BookEntry[] }[] = [];
+  undoingPayoutId: string | null = null;
+
+  // Paiements orphelins : deposit_ref set mais aucune écriture virement correspondante
+  orphanedPayments: BookEntry[] = [];
+  fixingOrphans = false;
+
   // Liste des payouts Stripe
   availablePayouts: StripePayout[] = [];
   loadingPayouts = false;
@@ -168,19 +176,35 @@ export class StripeReconciliationComponent {
       const allBookEntries = this.bookService.get_book_entries();
 
       // BookEntries virement_stripe_vers_banque avec deposit_ref po_xxx = payouts déjà réconciliés
-      this.reconciledPayoutIds = new Set(
-        allBookEntries
-          .filter(e =>
-            e.transaction_id === TRANSACTION_ID.virement_stripe_vers_banque &&
-            e.deposit_ref?.startsWith('po_')
-          )
-          .map(e => e.deposit_ref!)
+      const payoutBookEntries = allBookEntries.filter(e =>
+        e.transaction_id === TRANSACTION_ID.virement_stripe_vers_banque &&
+        e.deposit_ref?.startsWith('po_')
+      );
+      this.reconciledPayoutIds = new Set(payoutBookEntries.map(e => e.deposit_ref!));
+
+      // Regrouper les bookEntries de virement par payoutId (pour permettre l'annulation)
+      const payoutMap = new Map<string, BookEntry[]>();
+      for (const e of payoutBookEntries) {
+        const pId = e.deposit_ref!;
+        if (!payoutMap.has(pId)) payoutMap.set(pId, []);
+        payoutMap.get(pId)!.push(e);
+      }
+      this.reconciledPayouts = [...payoutMap.entries()]
+        .map(([payoutId, bookEntries]) => ({ payoutId, bookEntries }))
+        .sort((a, b) => b.bookEntries[0].date.localeCompare(a.bookEntries[0].date));
+
+      // Paiements orphelins : deposit_ref set mais aucune écriture virement correspondante
+      this.orphanedPayments = allBookEntries.filter(e =>
+        e.transaction_id === TRANSACTION_ID.achat_adhérent_par_carte &&
+        e.deposit_ref?.startsWith('po_') &&
+        !this.reconciledPayoutIds.has(e.deposit_ref)
       );
 
-      // BookEntries achat_adhérent_par_carte sans deposit_ref (= non encore réconciliés avec un payout)
+      // BookEntries achat_adhérent_par_carte ou report_psp sans deposit_ref (= non encore réconciliés avec un payout)
       const bookEntries = allBookEntries
         .filter(e =>
-          e.transaction_id === TRANSACTION_ID.achat_adhérent_par_carte &&
+          (e.transaction_id === TRANSACTION_ID.achat_adhérent_par_carte ||
+           e.transaction_id === TRANSACTION_ID.report_psp) &&
           !e.deposit_ref &&
           e.stripeTag   // a un tag Stripe = paiement Stripe confirmé
         );
@@ -305,6 +329,73 @@ export class StripeReconciliationComponent {
   }
 
   /**
+   * Réinitialise deposit_ref sur les paiements orphelins
+   * (deposit_ref set mais aucune écriture virement correspondante en BD)
+   */
+  async fixOrphans(): Promise<void> {
+    if (this.orphanedPayments.length === 0) return;
+    this.fixingOrphans = true;
+    try {
+      await Promise.all(
+        this.orphanedPayments.map(e => this.bookService.update_book_entry({ ...e, deposit_ref: null as any }))
+      );
+      this.toastService.showSuccess('Réparation',
+        `${this.orphanedPayments.length} paiement(s) orphelin(s) réintégré(s) dans la liste`
+      );
+      await this.loadLines();
+    } catch (error: any) {
+      console.error('Erreur fixOrphans:', error);
+      this.toastService.showError('Réparation', 'Erreur lors de la réinitialisation');
+    } finally {
+      this.fixingOrphans = false;
+    }
+  }
+
+  /**
+   * Annule un rapprochement existant :
+   * - Supprime toutes les écritures virement_stripe_vers_banque liées au payoutId
+   * - Réinitialise payoutId + reconciledAt sur les StripeTransactions correspondantes
+   * - Les BookEntries paiement (deposit_ref) sont réinitialisés si présents
+   */
+  async undoPayout(pId: string): Promise<void> {
+    this.undoingPayoutId = pId;
+    try {
+      const allBookEntries = this.bookService.get_book_entries();
+
+      // 1. Supprimer toutes les écritures virement liées à ce payoutId (peut être > 1 si doublon)
+      const payoutEntries = allBookEntries.filter(e =>
+        e.transaction_id === TRANSACTION_ID.virement_stripe_vers_banque &&
+        e.deposit_ref === pId
+      );
+      await Promise.all(payoutEntries.map(e => this.bookService.delete_book_entry(e)));
+
+      // 2. Réinitialiser deposit_ref sur les BookEntries paiement marqués avec ce payoutId
+      const paymentEntries = allBookEntries.filter(e =>
+        e.transaction_id === TRANSACTION_ID.achat_adhérent_par_carte &&
+        e.deposit_ref === pId
+      );
+      await Promise.all(
+        paymentEntries.map(e => this.bookService.update_book_entry({ ...e, deposit_ref: null as any }))
+      );
+
+      // 3. Réinitialiser payoutId sur les StripeTransactions
+      const transactions = await this.dbHandler.listStripeTransactionsByPayoutId(pId);
+      await Promise.all(transactions.map((t: any) => this.dbHandler.resetStripeTransactionPayout(t.id)));
+
+      const count = payoutEntries.length;
+      this.toastService.showSuccess('Annulation',
+        `Rapprochement ${pId} annulé — ${count} écriture(s) supprimée(s), ${transactions.length} transaction(s) réinitialisée(s)`
+      );
+      await this.loadLines();
+    } catch (error: any) {
+      console.error('Erreur annulation payout:', error);
+      this.toastService.showError('Annulation', 'Erreur lors de l\'annulation du rapprochement');
+    } finally {
+      this.undoingPayoutId = null;
+    }
+  }
+
+  /**
    * Approche A+B : créer l'écriture virement + marquer les BookEntries
    */
   async createPayout(): Promise<void> {
@@ -325,20 +416,30 @@ export class StripeReconciliationComponent {
     const pId = this.payoutId.trim();
 
     // Capturer les valeurs avant les opérations async (les getters seraient recalculés à 0 après loadLines)
-    const snapshotCount = this.selectedLines.length;
+    // IMPORTANT: selectedLines est un getter sur this.lines — create_book_entry émet _book_entries$ ce qui
+    // déclenche la subscription ngOnInit → loadLines() → this.lines est reconstruit avec selected=false
+    const snapshotLines = [...this.selectedLines];
+    const snapshotCount = snapshotLines.length;
     const snapshotGross = this.selectedGrossCents;
     const netCents = Math.round(this.netBancaire * 100);
     const snapshotFees = snapshotGross - netCents;
     const snapshotNet = netCents;
 
+    // bank_report au format YY-MM (même convention que le rapprochement bancaire)
+    const pd = new Date(this.payoutDate);
+    const bank_report = pd.getFullYear().toString().slice(-2) + '-' + (1 + pd.getMonth()).toString().padStart(2, '0');
+
     try {
-      // 1. Écriture virement_stripe_vers_banque
+      // 1. Écriture virement_stripe_vers_banque — bank_report positionné d'emblée
+      //    car la date du virement Stripe = date du relevé bancaire → pas besoin de repasser
+      //    par la page rapprochement bancaire pour pointer cette ligne.
       await this.bookService.create_book_entry({
         id: '',
         season: this.systemDataService.get_season(new Date(this.payoutDate)),
         date: this.payoutDate,
         transaction_id: TRANSACTION_ID.virement_stripe_vers_banque,
         deposit_ref: pId,
+        bank_report: bank_report,
         amounts: {
           [FINANCIAL_ACCOUNT.STRIPE_credit]: snapshotGross / 100,
           [FINANCIAL_ACCOUNT.BANK_debit]: snapshotNet / 100,
@@ -351,14 +452,14 @@ export class StripeReconciliationComponent {
 
       // 2. Mettre à jour deposit_ref sur chaque BookEntry sélectionné
       await Promise.all(
-        this.selectedLines.map(l =>
+        snapshotLines.map(l =>
           this.bookService.update_book_entry({ ...l.bookEntry, deposit_ref: pId })
         )
       );
 
       // 3. Taguer les StripeTransactions avec le payoutId
       await Promise.all(
-        this.selectedLines
+        snapshotLines
           .filter(l => l.stripeTransaction)
           .map(l => this.dbHandler.updateStripeTransactionPayout(l.stripeTransaction.id, pId, reconciledAt))
       );

@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { BatchService } from '../SDK_v3.service';
 import { ToastService } from '../../../common/services/toast.service';
 import { environment } from '../../../../environments/environment';
-import outputs from '../../../../../../../amplify_outputs.json';
 import { switchMap, of, map } from 'rxjs';
 
 interface BackupFile {
@@ -64,10 +63,8 @@ export class BookBackupComponent implements OnInit {
       || window.location.hostname.includes('sandbox')
       || window.location.hostname.includes('localhost');
 
-// Extraire l'apid depuis l'URL AppSync dans amplify_outputs (source de vérité per-deployment)
-    const graphqlUrl: string = (outputs as any).data?.url ?? '';
-    const apidMatch = graphqlUrl.match(/\/\/([^\.]+)\./);
-    this.currentApid = apidMatch?.[1] ?? '';
+    // Choisir l'apid selon l'environnement (sandbox ou prod)
+    this.currentApid = this.isSandbox ? environment.sandbox_apid : environment.production_apid;
 
     // Trouver la table BookEntry correspondant à l'environnement courant
     this.batchService.listTables().subscribe({

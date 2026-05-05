@@ -26,15 +26,19 @@ export class SystemDataService {
 
    get_configuration(): Observable<SystemConfiguration> {
 
-    let remote_load$ = from(this.fileService.download_json_file('system/system_configuration.txt')).pipe(
+    if (this._system_configuration) {
+      // Conf déjà chargée : retourner le BehaviorSubject directement (reste ouvert, émet les changements futurs)
+      return this._system_configuration$.asObservable();
+    }
+
+    // Premier appel : charger depuis S3, puis émettre via le BehaviorSubject
+    return from(this.fileService.download_json_file('system/system_configuration.txt')).pipe(
       tap((conf) => {
         this._system_configuration = conf;
         this._system_configuration$.next(this._system_configuration);
       }),
       switchMap(() => this._system_configuration$.asObservable())
     );
- 
-    return this._system_configuration ? of(this._system_configuration) : remote_load$;
   }
 
   /**

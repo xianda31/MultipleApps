@@ -28,9 +28,11 @@ export enum TRANSACTION_ID {
   achat_adhérent_par_carte = 'achat_adhérent_par_carte',
   report_avoir = 'report_avoir',
   report_chèque = 'report_chèque',
+  report_chèque_reçu = 'report_chèque_reçu',
   report_carte = 'report_carte',
   report_dette = 'report_dette',
   report_prélèvement = 'report_prélèvement',
+  report_psp = 'report_psp',
 
 }
 
