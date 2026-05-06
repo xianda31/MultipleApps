@@ -35,7 +35,7 @@ export interface Revenue_and_expense_tree {
 export interface SystemConfiguration {
     club_identifier: string;
     trace_mode: boolean;
-    season: string;
+    season?: string; // lecture seule depuis S3 (compatibilité anciens fichiers) — géré localement par SystemDataService
     club_bank_key: string;
 
     online_payment_active: boolean;

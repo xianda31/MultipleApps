@@ -57,7 +57,7 @@ export class BooksListComponent {
     this.loaded = false;
     this.checkMobilePortrait();
     this.systemDataService.get_configuration().subscribe(
-      (conf) => { this.season = conf.season; }
+      (conf) => { this.season = conf.season!; }
     );
 
 

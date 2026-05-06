@@ -14,13 +14,21 @@
 
     <span class="d-none d-md-inline fs-5 ms-1" style="padding-left:1em;">
       Bridge Club <span style="white-space:nowrap">Saint-Orens</span>
-      - saison {{season}}
+      - saison
+      <button class="btn btn-sm btn-link p-0 px-1" (click)="go_to_prev_season()" title="Saison précédente"><i class="bi bi-chevron-left"></i></button>
+      <span [class.text-warning]="season !== today_season" [title]="season !== today_season ? 'Consultation historique — saison non courante' : ''">{{season}}</span>
+      <button class="btn btn-sm btn-link p-0 px-1" (click)="go_to_next_season()" [disabled]="season >= today_season" title="Saison suivante"><i class="bi bi-chevron-right"></i></button>
       <span class="badge bg-success" style="font-size: 0.6rem;">{{entries_nbr}}</span>
       <span *ngIf="!production_mode" class="badge bg-dark" style="font-size: 0.6rem;">dev</span>
       <span *ngIf="assistances_nbr" class="badge bg-warning" style="font-size: 0.6rem; color: rgb(252, 249, 249);">{{assistances_nbr}} ticket(s)</span>
     </span>
 
-    <span class="d-sm-inline d-md-none fs-5 ms-1">BCSTO {{season}}</span>
+    <span class="d-sm-inline d-md-none fs-5 ms-1 d-flex align-items-center gap-1">
+      BCSTO
+      <button class="btn btn-sm btn-link p-0" (click)="go_to_prev_season()"><i class="bi bi-chevron-left"></i></button>
+      <span [class.text-warning]="season !== today_season">{{season}}</span>
+      <button class="btn btn-sm btn-link p-0" (click)="go_to_next_season()" [disabled]="season >= today_season"><i class="bi bi-chevron-right"></i></button>
+    </span>
 
     <!-- backdoor to front + toggle breaking-news -->
     <div class="d-flex ms-auto align-items-center me-2 gap-3">

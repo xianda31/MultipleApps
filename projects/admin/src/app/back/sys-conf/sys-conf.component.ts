@@ -21,7 +21,6 @@ export class SysConfComponent {
   systemFormGroup!: FormGroup;
   loaded!: boolean;
   export_file_url: any;
-  current_season: string = '';
 
   constructor(
     private systemDataService: SystemDataService,
@@ -33,7 +32,6 @@ export class SysConfComponent {
     this.systemFormGroup = this.fb.group({
       club_identifier: [''],
       trace_mode: [false],
-      season: [''],
       club_bank_key: [''],
       online_payment_active: [false],
       tpe_payment_active: [false],
@@ -89,12 +87,6 @@ export class SysConfComponent {
     this.systemDataService.get_configuration()
       .subscribe({
         next: (configuration) => {
-          this.current_season = configuration.season;
-          // configuration.fee_rates=[
-          //   { key: FEE_RATE.STANDARD, member_price: 0, non_member_price: 0 },
-          //   { key: FEE_RATE.ACCESSION, member_price: 0, non_member_price: 0 },
-          //   { key: FEE_RATE.SUMMER, member_price: 0, non_member_price: 0 }
-          // ]
           this.loadDataInFormGroup(configuration);
           // console.log('configuration', configuration);
           this.export_file_url = this.fileService.json_to_blob(configuration);
@@ -120,9 +112,6 @@ export class SysConfComponent {
 
   save_configuration() {
     const new_configuration: SystemConfiguration = this.systemFormGroup.value;
-    if (new_configuration.season !== this.current_season) { // if season has changed
-      this.systemDataService.change_to_new_season(new_configuration.season);   // trigger next season observable
-    }
     console.log('nouvelle configuration', new_configuration);
     this.systemDataService.save_configuration(new_configuration);
     this.toastService.showSuccess('configuration sauvegardée', 'les nouvelles données ont été enregistrées');
@@ -130,10 +119,6 @@ export class SysConfComponent {
 
   get_trace_mode() {
     return this.systemFormGroup.get('trace_mode')?.value;
-  }
-
-  get season() {
-    return this.systemFormGroup.get('season')?.value;
   }
   get expenses() {
     return this.systemFormGroup.get('revenue_and_expense_tree')?.get('expenses') as FormArray;
@@ -241,20 +226,6 @@ export class SysConfComponent {
       // let json = JSON.parse(text);
       // this.loadDataInFormGroup(JSON.parse(text));
     }
-  }
-
-  prev_season() {
-    let current_season = this.systemFormGroup.get('season')?.value;
-    let prev_season = this.systemDataService.previous_season(current_season);
-    this.systemFormGroup.get('season')?.setValue(prev_season);
-    this.systemFormGroup.markAsTouched();
-  }
-  next_season() {
-    let current_season = this.systemFormGroup.get('season')?.value;
-    let next_season = this.systemDataService.next_season(current_season);
-    this.systemFormGroup.get('season')?.setValue(next_season);
-    this.systemFormGroup.markAsTouched();
-
   }
 
 }

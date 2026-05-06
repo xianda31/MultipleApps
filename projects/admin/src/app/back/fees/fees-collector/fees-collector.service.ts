@@ -44,7 +44,7 @@ export class FeesCollectorService {
   ) {
     this.systemDataService.get_configuration().subscribe((sys_conf) => {
       this.sys_conf = sys_conf;
-      this.game.season = sys_conf.season;
+      this.game.season = sys_conf.season!;
       // this.init_game();
     });
     this.membersService.listMembers().subscribe((members) => {
@@ -340,7 +340,7 @@ export class FeesCollectorService {
 
 
   set_game(tournament: club_tournament) {
-    this.game.season = this.sys_conf.season;
+    this.game.season = this.sys_conf.season!;
     this.game.alphabetic_sort = false;
     this.game.fees_doubled = tournament.tournament_name.includes('ROY') ? true : false;
     this.game.fee_rate = (tournament.tournament_name.includes('ELEVES') || tournament.tournament_name.includes('ACCESSION')) ? FEE_RATE.ACCESSION : FEE_RATE.STANDARD;

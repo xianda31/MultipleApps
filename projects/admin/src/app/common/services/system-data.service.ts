@@ -14,6 +14,7 @@ import { normalizeBreakpoints } from '../utils/ui-utils';
 export class SystemDataService {
   private _system_configuration !: SystemConfiguration;
   private _system_configuration$: BehaviorSubject<SystemConfiguration> = new BehaviorSubject(this._system_configuration);
+  private _active_season: string;
   // Separate UI settings cache and observable (stored in its own file)
   private _ui_settings: UIConfiguration | undefined;
   private _ui_settings$: BehaviorSubject<UIConfiguration | undefined> = new BehaviorSubject<UIConfiguration | undefined>(undefined);
@@ -21,14 +22,16 @@ export class SystemDataService {
     private fileService: FileService,
     private toastService: ToastService
   ) {
+    this._active_season = this.get_today_season();
   }
 
 
-   get_configuration(): Observable<SystemConfiguration> {
+  get_configuration(): Observable<SystemConfiguration> {
+    // La saison affichée est toujours _active_season (variable locale, non lue depuis S3)
+    const withActiveSeason = (conf: SystemConfiguration) => conf ? { ...conf, season: this._active_season } : conf;
 
     if (this._system_configuration) {
-      // Conf déjà chargée : retourner le BehaviorSubject directement (reste ouvert, émet les changements futurs)
-      return this._system_configuration$.asObservable();
+      return this._system_configuration$.asObservable().pipe(map(withActiveSeason));
     }
 
     // Premier appel : charger depuis S3, puis émettre via le BehaviorSubject
@@ -37,8 +40,19 @@ export class SystemDataService {
         this._system_configuration = conf;
         this._system_configuration$.next(this._system_configuration);
       }),
-      switchMap(() => this._system_configuration$.asObservable())
+      switchMap(() => this._system_configuration$.asObservable().pipe(map(withActiveSeason)))
     );
+  }
+
+  /**
+   * Change la saison locale (navigation historique) — sans persistance S3.
+   * Déclenche le rechargement des écritures comptables pour tous les abonnés.
+   */
+  set_local_season(season: string) {
+    this._active_season = season;
+    if (this._system_configuration) {
+      this._system_configuration$.next(this._system_configuration);
+    }
   }
 
   /**
@@ -249,10 +263,11 @@ export class SystemDataService {
       this._system_configuration = conf;
       try { this._system_configuration$.next(this._system_configuration); } catch (e) { /* ignore */ }
     } catch (e) { /* ignore */ }
-    // Persist to S3 in background. Ensure UI settings are NOT embedded into the system configuration file.
+    // Persist to S3 — season is NOT persisted (managed locally)
     try {
       const toUpload: any = { ...(conf as any) };
       if (toUpload.ui_settings !== undefined) delete toUpload.ui_settings;
+      delete toUpload.season; // saison gérée localement, pas dans S3
       this.fileService.upload_to_S3(toUpload, 'system/', 'system_configuration.txt', true).then(() => {
       }).catch((err) => {
         console.warn('save_configuration: upload error', err);
@@ -292,10 +307,8 @@ export class SystemDataService {
   }
 
   async change_to_new_season(season: string) {
-    this._system_configuration.season = season;
-    console.log('new season', this._system_configuration.season);
-    this.save_configuration(this._system_configuration);
-    // Note: save_configuration already publishes the updated configuration.
+    // Mise à jour locale uniquement — la saison n'est plus persistée en S3
+    this.set_local_season(season);
   }
 
 

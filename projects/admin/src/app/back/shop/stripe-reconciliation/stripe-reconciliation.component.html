@@ -133,7 +133,7 @@
         <ul class="mb-0 mt-1 small">
           @for (e of orphanedPayments; track e.id) {
             <li>
-              {{ formatDate(e.date) }} — {{ e.operations[0]?.member || e.stripeTag || e.tag }}
+              {{ formatDate(e.date) }} — {{ e.operations[0].member || e.stripeTag || e.tag }}
               ({{ formatAmount((e.amounts['stripe_in'] || 0) * 100) }})
               <span class="font-monospace text-muted">→ {{ e.deposit_ref }}</span>
             </li>

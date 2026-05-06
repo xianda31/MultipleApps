@@ -33,7 +33,7 @@ export class BookService {
   ) {
 
     this.systemDataService.get_configuration().subscribe((conf) => {
-      this.season = conf.season;
+      this.season = conf.season!;
     });
   }
 
@@ -182,7 +182,7 @@ export class BookService {
     return this.systemDataService.get_configuration().pipe(
       distinctUntilKeyChanged('season'),  // évite le double-fire quand save_configuration émet deux fois
       switchMap((conf) => {
-        let season = conf.season;
+        let season = conf.season!;
         if (this.season_filter !== season) {
           this.season_filter = season;
           // this._book_entries = null!;

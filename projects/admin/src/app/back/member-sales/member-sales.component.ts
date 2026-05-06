@@ -57,7 +57,7 @@ export class MemberSalesComponent {
       }),
       switchMap(() => this.systemDataService.get_configuration()),
       tap((conf) => {
-        this.season = conf.season;
+        this.season = conf.season!;
         this.accounts = conf.revenue_and_expense_tree.revenues;
 
       }),

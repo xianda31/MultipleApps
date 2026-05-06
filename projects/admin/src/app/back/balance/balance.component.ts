@@ -37,6 +37,7 @@ export class BalanceComponent {
 
   truncature = '1.2-2';// '1.0-0';  //
   // truncature2 = '1.2-2';// '1.2-2';  //
+  private _skip_next_check = false;
 
   constructor(
     private systemDataService: SystemDataService,
@@ -58,9 +59,10 @@ export class BalanceComponent {
       (configuration) => {
         if (this.current_season && configuration.season !== this.current_season) {
           this.loaded = false; // transition de saison : bloquer le check jusqu'au rechargement complet
+          this._skip_next_check = true; // ignorer la première vérification après le changement
         }
-        this.selected_season = configuration.season;
-        this.current_season = configuration.season;
+        this.selected_season = configuration.season!;
+        this.current_season = configuration.season!;
         this.next_season = this.systemDataService.next_season(this.current_season);
 
         return configuration.season;
@@ -81,15 +83,15 @@ export class BalanceComponent {
   check_balance_vs_profit_and_loss() {
     this.trading_result = this.bookService.get_trading_result();
     this.balance_error = this.Round(this.balance_board.delta.actif_total - this.trading_result);
-    if (!this.loaded) return; // données en cours de chargement, pas de toast prématuré
+    if (!this.loaded) return;
+    if (this._skip_next_check) {
+      this._skip_next_check = false;
+      return; // première vérification après changement de saison : pas de fausse alerte
+    }
     if (this.balance_error !== 0) {
       console.log('incohérence entre résultat et bilan', this.balance_error, this.balance_board.delta.actif_total, this.trading_result);
       this.toastService.showWarning('consolidation financière', 'incohérence entre résultat et bilan');
-
-      // this.bookService.check_book_entries_loaded();
     }
-
-
   }
 
   // cloture comptable : initialisation des reports financiers

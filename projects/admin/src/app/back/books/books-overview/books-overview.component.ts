@@ -133,7 +133,7 @@ export class BooksOverviewComponent {
       }),
       switchMap((conf) => {
         return combineLatest([
-          this.financialService.read_balance_sheet(this.systemDataService.previous_season(conf.season)),
+          this.financialService.read_balance_sheet(this.systemDataService.previous_season(conf.season!)),
           this.bookService.list_book_entries()
         ]);
       }),

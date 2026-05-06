@@ -67,7 +67,7 @@ export class DashboardComponent {
 
     this.systemDataService.get_configuration().subscribe((conf) => {
       // Générer tous les mois de la saison courante (juillet à juin)
-      this.season = conf.season;
+      this.season = conf.season!;
       this.p_and_l_sections = conf.revenue_and_expense_tree.sections;
       this.revenue_definitions = conf.revenue_and_expense_tree.revenues;
       this.expense_definitions = conf.revenue_and_expense_tree.expenses;

@@ -35,7 +35,7 @@ export class AdminComponent {
 
     this.book_entries_number$ = this.bookService.list_book_entries().pipe(map((entries) => entries.length));
 
-    this.season$ = this.systemDataService.get_configuration().pipe(map((conf) => conf.season));
+    this.season$ = this.systemDataService.get_configuration().pipe(map((conf) => conf.season!));
 
 
   }

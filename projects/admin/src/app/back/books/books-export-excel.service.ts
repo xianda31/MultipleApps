@@ -34,7 +34,7 @@ export class BooksExportExcelService {
     this.systemDataService.get_configuration().subscribe(
       (conf) => {
         this.conf = conf;
-        this.season = conf.season;
+        this.season = conf.season!;
       });
 
     this.bookService.list_book_entries().subscribe(

@@ -56,7 +56,7 @@ export class ImportExcelComponent {
 
 
     this.systemDataService.get_configuration().subscribe((configuration) => {
-      this.current_season = configuration.season;
+      this.current_season = configuration.season!;
       let revenue_keys = configuration.revenue_and_expense_tree.revenues.map((revenue) => revenue.key);
       let expense_keys = configuration.revenue_and_expense_tree.expenses.map((expense) => expense.key);
       this.op_value_keys = [...revenue_keys, ...expense_keys, ...Object.keys(EXTRA_CUSTOMER_IN), ...Object.keys(EXTRA_CUSTOMER_OUT)];;

@@ -72,11 +72,11 @@ export class CashBoxStatusComponent {
     this.systemDataService.get_configuration().pipe(
       map((conf) => {
         this.banks = conf.banks;
-        this.season = conf.season;
+        this.season = conf.season!;
         return conf;
       }),
       switchMap((conf) =>
-        this.financialService.read_balance_sheet(this.systemDataService.previous_season(conf.season))
+        this.financialService.read_balance_sheet(this.systemDataService.previous_season(conf.season!))
       ),
       tap((prev_balance_sheet) => {
         this.prev_balance_sheet = prev_balance_sheet;

@@ -118,7 +118,7 @@ export class BooksEditorComponent {
       switchMap(([data, params, conf]) => {
         let access = data['access'];
         this.protected_mode = !(access && (access === 'full'));
-        this.season = conf.season;
+        this.season = conf.season!;
         this.banks = conf.banks;
         this.club_bank = this.banks.find(bank => bank.key === conf.club_bank_key)!;
         this.expenses_accounts = conf.revenue_and_expense_tree.expenses;

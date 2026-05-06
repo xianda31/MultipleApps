@@ -18,6 +18,7 @@ import { REQUEST_STATUS } from '../../common/interfaces/assistance-request.inter
 import { NavbarMenu } from './back-navbar.interface';
 import { STATIC_MENUS } from './back-navbar.definition';
 import { BreakingNewsService } from '../breaking-news/breaking-news.service';
+import { SystemDataService } from '../../common/services/system-data.service';
 
 
 
@@ -33,6 +34,7 @@ export class BackNavbarComponent implements OnInit, OnDestroy {
   
   @Input() season: string = '';
   @Input() entries_nbr: number = 0;
+  today_season: string = '';
   accreditation_level!: number;
   accreditation_levels = Group_priorities;
   production_mode: boolean = false;
@@ -79,6 +81,7 @@ export class BackNavbarComponent implements OnInit, OnDestroy {
     private assistanceService: AssistanceRequestService,
     private router: Router,
     public breakingNewsService: BreakingNewsService,
+    private systemDataService: SystemDataService,
   ) { 
     this.authorizationFlag$ = this.breakingNewsService.authorizationFlag$;
   }
@@ -92,6 +95,7 @@ export class BackNavbarComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.today_season = this.systemDataService.get_today_season();
 
     this.assistanceService.getOpenRequestsCount().subscribe(count => {
       this.assistances_nbr = count;
@@ -152,5 +156,12 @@ export class BackNavbarComponent implements OnInit, OnDestroy {
     }
   }
 
+  go_to_prev_season() {
+    this.systemDataService.set_local_season(this.systemDataService.previous_season(this.season));
+  }
+
+  go_to_next_season() {
+    this.systemDataService.set_local_season(this.systemDataService.next_season(this.season));
+  }
 
 }
