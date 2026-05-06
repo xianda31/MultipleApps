@@ -21,6 +21,7 @@ export class BookService {
   private _book_entries!: BookEntry[];
   private _book_entries$ = new BehaviorSubject<BookEntry[]>([]);
   season: string = '';
+  trace_mode: boolean = false;
   private season_filter: string = '';
   private force_reload: boolean = false; // force reload of book entries if true
   private higlighting: { [key: string]: boolean } = {};
@@ -34,6 +35,7 @@ export class BookService {
 
     this.systemDataService.get_configuration().subscribe((conf) => {
       this.season = conf.season!;
+      this.trace_mode = conf.trace_mode || false;
     });
   }
 
@@ -166,7 +168,10 @@ export class BookService {
           return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
         });
         this._book_entries$.next(this._book_entries);
-        this.toastService.showInfo('comptabilité', `données saison ${season} chargées`);
+        if (this.trace_mode) {
+          this.toastService.showInfo('comptabilité', `données saison ${season} chargées`);
+        }
+        this.season = season;
       }),
       switchMap(() => this._book_entries$.asObservable()),
       catchError((error) => {

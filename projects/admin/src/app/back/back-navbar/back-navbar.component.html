@@ -1,5 +1,5 @@
 <div class="bg-light p-0 m-0" style="width: 100%;">
-  <div id="navbar-header" class="d-flex d-inline align-items-start w-100  px-2 pt-1 pb-1 position-relative">
+  <div id="navbar-header" class="d-flex align-items-center w-100 px-2 pt-1 pb-1 position-relative">
     <!-- Mobile sidebar toggle button -->
     <button *ngIf="(logged_member$ | async)" class="btn btn-outline-secondary d-md-none text-center" type="button"
       data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar" aria-controls="mobileSidebar">
@@ -9,7 +9,7 @@
 
     <span class="d-none d-md-inline logo-overlap" style="margin-right:0.5em;">
       <img src="admin.jpg" alt="BCSTO logo" class="me-1 logo-navbar"
-        style="height:2.7em;max-height:56px;width:auto;display:block;" />
+        style="height:2.7em;max-height:56px;width:auto;" />
     </span>
 
     <span class="d-none d-md-inline fs-5 ms-1" style="padding-left:1em;">
@@ -18,9 +18,9 @@
       <button class="btn btn-sm btn-link p-0 px-1" (click)="go_to_prev_season()" title="Saison précédente"><i class="bi bi-chevron-left"></i></button>
       <span [class.text-warning]="season !== today_season" [title]="season !== today_season ? 'Consultation historique — saison non courante' : ''">{{season}}</span>
       <button class="btn btn-sm btn-link p-0 px-1" (click)="go_to_next_season()" [disabled]="season >= today_season" title="Saison suivante"><i class="bi bi-chevron-right"></i></button>
-      <span class="badge bg-success" style="font-size: 0.6rem;">{{entries_nbr}}</span>
-      <span *ngIf="!production_mode" class="badge bg-dark" style="font-size: 0.6rem;">dev</span>
-      <span *ngIf="assistances_nbr" class="badge bg-warning" style="font-size: 0.6rem; color: rgb(252, 249, 249);">{{assistances_nbr}} ticket(s)</span>
+      <span class="badge bg-success ms-1" style="font-size: 0.6rem; vertical-align: middle;">{{entries_nbr}}</span>
+      <span *ngIf="!production_mode" class="badge bg-dark ms-1" style="font-size: 0.6rem; vertical-align: middle;">dev</span>
+      <span *ngIf="assistances_nbr" class="badge bg-warning ms-1" style="font-size: 0.6rem; vertical-align: middle; color: rgb(252, 249, 249);">{{assistances_nbr}} ticket(s)</span>
     </span>
 
     <span class="d-sm-inline d-md-none fs-5 ms-1 d-flex align-items-center gap-1">

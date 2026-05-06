@@ -14,7 +14,6 @@ import { filter } from 'rxjs/operators';
 import { Member } from '../../common/interfaces/member.interface';
 import { MemberSettingsService } from '../../common/services/member-settings.service';
 import { AssistanceRequestService } from '../../common/services/assistance-request.service';
-import { REQUEST_STATUS } from '../../common/interfaces/assistance-request.interface';
 import { NavbarMenu } from './back-navbar.interface';
 import { STATIC_MENUS } from './back-navbar.definition';
 import { BreakingNewsService } from '../breaking-news/breaking-news.service';
