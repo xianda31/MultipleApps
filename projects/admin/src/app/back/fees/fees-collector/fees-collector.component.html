@@ -63,7 +63,7 @@
                 <span> {{ game.tournament.name }}</span>
             </div>
             
-            <div class="col-12 col-md-2 border border-secondary rounded py-1 text-center">
+            <div class="col-12 col-md-3 border border-secondary rounded py-1 text-center">
                 <div *ngFor="let fee_rate of fee_rates" class="form-check form-check-inline me-2">
                     <input class="form-check-input" type="radio" name="inlineRadioOptions"
                     [id]="'inlineRadio' + fee_rate" [value]="fee_rate" [ngModel]="game.fee_rate"
@@ -81,7 +81,7 @@
                 </div>
             </div>
             
-            <div *ngIf="game && game.tournament" class="col-12 col-md-2 d-none d-md-flex justify-content-end">
+            <div *ngIf="game && game.tournament" class="col-12 col-md-1 d-none d-md-flex justify-content-end">
                 <span class="ms-2 text-primary fw-bolder">
                     {{game.gamers.length / 2 | number:'1.0-0'}} paires
                 </span>
@@ -120,7 +120,7 @@
 
         <!-- loop sur les gamers -->
         <div class="row" style="max-height: 70vh; overflow-y: auto;">
-            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 row-cols-xl-4 g-2">
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 row-cols-xl-6 g-2">
                 <ng-container *ngFor="let gamer of game.gamers">
                     <div class="col gamer-container" *ngIf="shouldShowGamer(gamer)"
                         [ngClass]="{'explode-disappear': isDisappearing(gamer)}">
