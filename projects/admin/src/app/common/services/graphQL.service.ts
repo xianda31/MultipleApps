@@ -296,6 +296,154 @@ export class DBhandler {
     );
   }
 
+  // VISIT TRACKING SERVICE
+
+  async createVisitSession(input: {
+    sessionId: string;
+    date: string;
+    yearMonth: string;
+    firstSeenAt: string;
+    lastSeenAt: string;
+    pageViewCount: number;
+    authenticated: boolean;
+    memberId?: string;
+    section: string;
+  }): Promise<void> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { errors } = await client.models.VisitSession.create(input);
+    if (errors) throw errors;
+  }
+
+  async readVisitSession(sessionId: string): Promise<{
+    sessionId: string;
+    date: string;
+    yearMonth: string;
+    firstSeenAt: string;
+    lastSeenAt: string;
+    pageViewCount: number;
+    authenticated: boolean;
+    memberId?: string | null;
+    section: string;
+  } | null> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { data, errors } = await client.models.VisitSession.get({ sessionId });
+    if (errors) throw errors;
+    return (data as unknown as {
+      sessionId: string;
+      date: string;
+      yearMonth: string;
+      firstSeenAt: string;
+      lastSeenAt: string;
+      pageViewCount: number;
+      authenticated: boolean;
+      memberId?: string | null;
+      section: string;
+    }) || null;
+  }
+
+  async updateVisitSession(input: {
+    sessionId: string;
+    lastSeenAt: string;
+    pageViewCount: number;
+    authenticated: boolean;
+    memberId?: string;
+    section?: string;
+  }): Promise<void> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { errors } = await client.models.VisitSession.update(input);
+    if (errors) throw errors;
+  }
+
+  async createVisitDailyStat(input: {
+    date: string;
+    section: string;
+    yearMonth: string;
+    totalSessions: number;
+    authenticatedSessions: number;
+    anonymousSessions: number;
+    pageViews: number;
+  }): Promise<void> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { errors } = await client.models.VisitDailyStat.create(input);
+    if (errors) throw errors;
+  }
+
+  async readVisitDailyStat(date: string, section: string): Promise<{
+    date: string;
+    section: string;
+    yearMonth: string;
+    totalSessions: number;
+    authenticatedSessions: number;
+    anonymousSessions: number;
+    pageViews: number;
+  } | null> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { data, errors } = await client.models.VisitDailyStat.get({ date, section });
+    if (errors) throw errors;
+    return (data as unknown as {
+      date: string;
+      section: string;
+      yearMonth: string;
+      totalSessions: number;
+      authenticatedSessions: number;
+      anonymousSessions: number;
+      pageViews: number;
+    }) || null;
+  }
+
+  async updateVisitDailyStat(input: {
+    date: string;
+    section: string;
+    totalSessions: number;
+    authenticatedSessions: number;
+    anonymousSessions: number;
+    pageViews: number;
+  }): Promise<void> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { errors } = await client.models.VisitDailyStat.update(input);
+    if (errors) throw errors;
+  }
+
+  listVisitDailyStats(): Observable<{
+    date: string;
+    section: string;
+    yearMonth: string;
+    totalSessions: number;
+    authenticatedSessions: number;
+    anonymousSessions: number;
+    pageViews: number;
+  }[]> {
+    return this._authMode().pipe(
+      switchMap((authMode) => {
+        const client = generateClient<Schema>({ authMode });
+        return from(
+          client.models.VisitDailyStat.list({ limit: 5000 })
+            .then(({ data, errors }) => {
+              if (errors) {
+                console.error('VisitDailyStat.list error', errors);
+                return [];
+              }
+              return data as unknown as {
+                date: string;
+                section: string;
+                yearMonth: string;
+                totalSessions: number;
+                authenticatedSessions: number;
+                anonymousSessions: number;
+                pageViews: number;
+              }[];
+            })
+        );
+      })
+    );
+  }
+
   // SNIPPETS SERVICE
 
   // SNIPPET CREATE PROMISE

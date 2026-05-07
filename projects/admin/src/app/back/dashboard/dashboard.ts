@@ -12,6 +12,7 @@ import { MembersService } from '../../common/services/members.service';
 import { FinancialReportService } from '../services/financial_report.service';
 import { Balance_board, Balance_sheet } from '../../common/interfaces/balance.interface';
 import { Revenue_and_expense_definition } from '../../common/interfaces/system-conf.interface';
+import { PageViewService, PageViewStats } from '../../common/services/page-view.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -51,6 +52,10 @@ export class DashboardComponent {
   revenue_definitions: Revenue_and_expense_definition[] = [];
   expense_definitions: Revenue_and_expense_definition[] = [];
 
+  pageViewStats: PageViewStats | null = null;
+  pageViewChartData: any = {};
+  pageViewChartOptions!: ChartOptions<any>;
+
   constructor(
     private bookService: BookService,
     private systemDataService: SystemDataService,
@@ -58,6 +63,7 @@ export class DashboardComponent {
     private graphService: DashboardGraphService,
     private memberService: MembersService,
     private financialService: FinancialReportService,
+    private pageViewService: PageViewService,
   ) {
     this.ivSuffixColorMap = this.graphService.getIVSuffixColorMap();
   }
@@ -73,6 +79,34 @@ export class DashboardComponent {
       this.expense_definitions = conf.revenue_and_expense_tree.expenses;
       this.startYear = parseInt(this.season.slice(0, 4));
       this.allMonths = this.generateSeasonMonths(this.startYear);
+
+      // Visites
+      this.pageViewService.getStats(this.allMonths).subscribe(stats => {
+        this.pageViewStats = stats;
+        this.pageViewChartData = {
+          labels: this.allMonths.map(ym => {
+            const [y, m] = ym.split('-');
+            return new Date(+y, +m - 1).toLocaleString('fr-FR', { month: 'short', year: '2-digit' });
+          }),
+          datasets: [
+            {
+              label: 'Connectés',
+              data: stats.byMonth.map(b => b.authenticated),
+              backgroundColor: 'rgba(13, 110, 253, 0.6)',
+            },
+            {
+              label: 'Anonymes',
+              data: stats.byMonth.map(b => b.anonymous),
+              backgroundColor: 'rgba(108, 117, 125, 0.4)',
+            },
+          ],
+        };
+        this.pageViewChartOptions = {
+          responsive: true,
+          scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } },
+          plugins: { legend: { position: 'bottom' } },
+        };
+      });
 
 
       this.initialize_financial_data(this.allMonths).subscribe(({ chartRevenue, chartExpense, chartResult }) => {

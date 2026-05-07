@@ -312,6 +312,51 @@ const schema = a.schema({
     ]),
 
     
+  // Suivi des visites (analytics interne) - niveau session
+
+  VisitSession: a.model({
+    sessionId: a.string().required(),
+    date: a.string().required(),
+    yearMonth: a.string().required(),
+    firstSeenAt: a.string().required(),
+    lastSeenAt: a.string().required(),
+    pageViewCount: a.integer().required(),
+    authenticated: a.boolean().required(),
+    memberId: a.string(),
+    section: a.string().required(),
+  })
+    .identifier(['sessionId'])
+    .authorization((allow) => [
+      allow.guest().to(['read', 'create', 'update']),
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Editor).to(['read', 'create', 'update']),
+      allow.group(Group_names.Support).to(['read', 'create', 'update']),
+      allow.group(Group_names.Member).to(['read', 'create', 'update']),
+    ]),
+
+  // Suivi des visites (analytics interne) - agrégat journalier
+
+  VisitDailyStat: a.model({
+    date: a.string().required(),
+    section: a.string().required(),
+    yearMonth: a.string().required(),
+    totalSessions: a.integer().required(),
+    authenticatedSessions: a.integer().required(),
+    anonymousSessions: a.integer().required(),
+    pageViews: a.integer().required(),
+  })
+    .identifier(['date', 'section'])
+    .authorization((allow) => [
+      allow.guest().to(['read', 'create', 'update']),
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Editor).to(['read', 'create', 'update']),
+      allow.group(Group_names.Support).to(['read', 'create', 'update']),
+      allow.group(Group_names.Member).to(['read', 'create', 'update']),
+    ]),
+
+
     // Assistance requests
 
 AssistanceRequest: a.model({

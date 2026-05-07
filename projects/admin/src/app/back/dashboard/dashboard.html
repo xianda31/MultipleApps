@@ -1,4 +1,42 @@
 <div class="container-fluid p-md-4">
+
+    <!-- Visites Section -->
+    <div class="row g-4 mb-5" *ngIf="pageViewStats">
+        <div class="col-12">
+            <h5 class="fw-bold text-secondary mb-3">Fréquentation du site</h5>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card">
+                <h5 class="card-header bg-light fw-bold">Aujourd'hui</h5>
+                <div class="card-body p-4 text-center">
+                    <div class="fs-1 fw-bold text-primary">{{pageViewStats.today}}</div>
+                    <div class="text-muted small mb-2">sessions</div>
+                    <div class="small text-muted mb-3">{{pageViewStats.todayPageViews}} pages vues</div>
+                    <div class="d-flex justify-content-center gap-4">
+                        <div>
+                            <div class="fw-bold text-success">{{pageViewStats.todayAuthenticated}}</div>
+                            <div class="text-muted small">connectés</div>
+                        </div>
+                        <div>
+                            <div class="fw-bold text-secondary">{{pageViewStats.todayAnonymous}}</div>
+                            <div class="text-muted small">anonymes</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-8">
+            <div class="card">
+                <h5 class="card-header bg-light fw-bold">Visites par mois — saison {{season}}</h5>
+                <div class="card-body p-4">
+                    <div class="chart-container chart-container-visits" style="position: relative;">
+                        <canvas baseChart [data]="pageViewChartData" [options]="pageViewChartOptions" [type]="'bar'"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Finance Section -->
     <div class="row row-cols-1 row-cols-md-3 g-4 mb-5">
         <div class="col">

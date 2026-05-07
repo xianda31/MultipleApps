@@ -22,10 +22,11 @@ export class AuthentificationService {
   private _auth_event$: BehaviorSubject<AuthEvent> = new BehaviorSubject<AuthEvent>({ event: '' });
 
   private _logged_member$: BehaviorSubject<Member | null> = new BehaviorSubject<Member | null>(null);
+
   constructor(
     private toastService: ToastService,
     private memberService: MembersService,
-    private assistanceRequestService: AssistanceRequestService
+    private assistanceRequestService: AssistanceRequestService,
   ) {
 
 
@@ -38,6 +39,10 @@ export class AuthentificationService {
 
   get logged_member$(): Observable<Member | null> {
     return this._logged_member$ as Observable<Member | null>;
+  }
+
+  get currentMember(): Member | null {
+    return this._logged_member$.getValue();
   }
 
   get auth_event$(): Observable<AuthEvent> {
@@ -78,6 +83,7 @@ export class AuthentificationService {
           } else {
             let member = await this.memberService.readMember(member_id);
             this._logged_member$.next(member);
+            
             // this.changeMode(Process_flow.SIGNED_IN);
             resolve(member_id);
           }

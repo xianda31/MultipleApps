@@ -20,8 +20,8 @@
 
 .chart-container {
   flex: 1 1 auto;
-  min-height: 200px;
-  height: auto;
+  min-height: 240px;
+  height: 240px;
   
   canvas {
     max-width: 100%;
@@ -29,6 +29,11 @@
     height: 100% !important;
     width: 100% !important;
   }
+}
+
+.chart-container-visits {
+  min-height: 220px;
+  height: 220px;
 }
 
 .card-body {
@@ -50,6 +55,18 @@
 .d-inline-flex.border {
   flex-shrink: 0;
   margin-bottom: 0.5rem;
+}
+
+@media (max-width: 992px) {
+  .chart-container {
+    min-height: 210px;
+    height: 210px;
+  }
+
+  .chart-container-visits {
+    min-height: 190px;
+    height: 190px;
+  }
 }
 
 
