@@ -30,7 +30,7 @@ export class InputPlayerComponent implements ControlValueAccessor {
   onTouch: () => void = () => { };
   disabled = false;
 
-  displayPlayerFn = (player: FFBplayer) => `${player.firstname} ${player.lastname} (${player.license_number})`;
+  displayPlayerFn = (player: FFBplayer) => `${player.lastname} ${player.firstname} (${player.license_number})`;
 
   constructor(
     private ffbService: FFB_proxyService
@@ -73,7 +73,7 @@ export class InputPlayerComponent implements ControlValueAccessor {
   }
 
   onPlayerSelected(player: FFBplayer) {
-    this.str_player = `${player.firstname} ${player.lastname} (${player.license_number})`;
+    this.str_player = `${player.lastname} ${player.firstname} (${player.license_number})`;
     this.onChange(player);
   }
 

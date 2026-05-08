@@ -404,6 +404,13 @@ export class FeesCollectorService {
       this.game.gamers.push(new_gamer);
       this.update_members_debts();
       this.update_members_credits();
+      // Sort gamers after adding new player
+      if (this.game.alphabetic_sort) {
+        this.game.gamers = this.game.gamers.sort((a, b) => a.lastname.localeCompare(b.lastname));
+      } else {
+        this.game.gamers = this.game.gamers.sort((a, b) => a.index - b.index);
+      }
+
       this.update_members_assets();   // will update gamers game_credits & trigger _game$.next(this.game)
     }
   }

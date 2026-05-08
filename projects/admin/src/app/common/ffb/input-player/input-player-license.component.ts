@@ -65,7 +65,7 @@ export class InputPlayerLicenseComponent implements ControlValueAccessor {
   }
 
   selectPartner(partner: FFBplayer) {
-    this.str_player = `${partner.firstname} ${partner.lastname} (${partner.license_number})`;
+    this.str_player = `${partner.lastname} ${partner.firstname} (${partner.license_number})`;
     this.onChange(partner.license_number?.toString() || '');
     this.showSuggestions = false;
   }
