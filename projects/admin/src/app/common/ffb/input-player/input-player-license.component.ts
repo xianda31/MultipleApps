@@ -25,6 +25,8 @@ export class InputPlayerLicenseComponent implements ControlValueAccessor {
   partners!: FFBplayer[];
   showSuggestions: boolean = false;
   private hideSuggestionsTimeout: any;
+  private selectedLicense: string | null = null;
+  private hasBlurred = false;
 
   onChange: (value: string) => void = () => { };
   onTouch: () => void = () => { };
@@ -36,9 +38,12 @@ export class InputPlayerLicenseComponent implements ControlValueAccessor {
 
   writeValue(input: any): void {
     if (input === undefined || input === null) {
+      this.str_player = '';
+      this.selectedLicense = null;
       return;
     }
     this.str_player = input;
+    this.selectedLicense = null;
   }
   registerOnChange(fn: any): void {
     this.onChange = fn;
@@ -50,15 +55,23 @@ export class InputPlayerLicenseComponent implements ControlValueAccessor {
     this.disabled = isDisabled;
   }
 
+  get showInvalidSelection(): boolean {
+    return this.hasBlurred && this.str_player.trim().length > 0 && !this.selectedLicense;
+  }
+
   setValue(str_player: string) {
     this.onTouch();
+
+    // Toute saisie manuelle invalide la licence tant qu'aucun partenaire n'est sélectionné.
+    this.selectedLicense = null;
+    this.onChange('');
+
     if (str_player.length > 3) {
       this.ffbService.searchPlayersSuchAs(str_player)
         .then((partners: FFBplayer[]) => {
           this.partners = partners;
           this.showSuggestions = true;
         });
-      this.onChange(this.getLicenceNbr(str_player));
     } else {
       this.showSuggestions = false;
     }
@@ -66,19 +79,19 @@ export class InputPlayerLicenseComponent implements ControlValueAccessor {
 
   selectPartner(partner: FFBplayer) {
     this.str_player = `${partner.lastname} ${partner.firstname} (${partner.license_number})`;
-    this.onChange(partner.license_number?.toString() || '');
+    this.selectedLicense = partner.license_number?.toString() || '';
+    this.hasBlurred = false;
+    this.onChange(this.selectedLicense);
     this.showSuggestions = false;
   }
 
   hideSuggestionsDelay() {
+    this.hasBlurred = true;
     // Délai pour permettre au click sur une option de se déclencher
     this.hideSuggestionsTimeout = setTimeout(() => {
       this.showSuggestions = false;
     }, 200);
   }
 
-  getLicenceNbr(str: string): string {
-    return str.substring(0, str.length - 1).split('(')[1] ?? '';
-  }
 }
 

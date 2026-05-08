@@ -1,12 +1,15 @@
 <div class="custom-dropdown-container position-relative w-100">
   <input type="text"
-    style="outline:none;border:none;width: 100%;"
+    class="dropdown-input"
     [(ngModel)]="searchValue"
     (ngModelChange)="onInputChange($any($event))"
     (focus)="onFocus()"
     (blur)="hideSuggestionsDelay()"
+    [class.is-invalid-input]="invalid"
     [placeholder]="placeholder"
     autocomplete="off">
+
+  <div *ngIf="invalid && invalidMessage" class="invalid-feedback-msg">{{ invalidMessage }}</div>
 
   <ul *ngIf="showSuggestions && getFilteredItems().length > 0"
     class="dropdown-list position-absolute start-0 end-0 mt-1 list-unstyled border rounded shadow-sm"

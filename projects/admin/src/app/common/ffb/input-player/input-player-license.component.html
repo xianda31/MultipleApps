@@ -1,12 +1,15 @@
 <div class="input-player-container position-relative">
     <input type="text" 
-        style="outline:none;border:none;width: 100%;" 
+        class="player-license-input"
         [(ngModel)]="str_player"
         (ngModelChange)="setValue(str_player)"
         (focus)="showSuggestions = true"
         (blur)="hideSuggestionsDelay()"
+        [class.is-invalid-input]="showInvalidSelection"
         [placeholder]="placeholder"
         autocomplete="off">
+
+    <div *ngIf="showInvalidSelection" class="invalid-feedback-msg">Veuillez sélectionner un joueur dans la liste</div>
     
     <!-- Dropdown personnalisé pour autocomplétion mobile -->
     <ul *ngIf="showSuggestions && partners && partners.length > 0" 

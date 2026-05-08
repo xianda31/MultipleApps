@@ -14,9 +14,12 @@ export class CustomDropdownComponent {
   @Input() placeholder = 'Rechercher...';
   @Input() searchValue = '';
   @Input() displayFn: (item: any) => string = (item) => item.toString();
+  @Input() invalid = false;
+  @Input() invalidMessage = '';
 
   @Output() itemSelected = new EventEmitter<any>();
   @Output() searchValueChange = new EventEmitter<string>();
+  @Output() blurred = new EventEmitter<void>();
 
   showSuggestions = false;
 
@@ -32,6 +35,7 @@ export class CustomDropdownComponent {
   }
 
   hideSuggestionsDelay() {
+    this.blurred.emit();
     setTimeout(() => {
       this.showSuggestions = false;
     }, 200);

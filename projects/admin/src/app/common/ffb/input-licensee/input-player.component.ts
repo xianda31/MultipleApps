@@ -3,8 +3,6 @@ import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR, ReactiveFormsModu
 import { FFBplayer } from '../interface/FFBplayer.interface';
 import { FFB_proxyService } from '../services/ffb.service';
 import { CommonModule } from '@angular/common';
-import { FFB_licensee } from '../interface/licensee.interface';
-import { Player } from '../interface/tournament_teams.interface';
 import { CustomDropdownComponent } from '../../components/custom-dropdown/custom-dropdown.component';
 
 @Component({
@@ -25,8 +23,10 @@ export class InputPlayerComponent implements ControlValueAccessor {
 
   str_player: string = '';
   players: FFBplayer[] = [];
+  private selectedPlayer: FFBplayer | null = null;
+  private hasBlurred = false;
 
-  onChange: (value: FFBplayer) => void = () => { };
+  onChange: (value: FFBplayer | null) => void = () => { };
   onTouch: () => void = () => { };
   disabled = false;
 
@@ -40,11 +40,15 @@ export class InputPlayerComponent implements ControlValueAccessor {
     if (input) {
       if (typeof input === 'string') {
         this.str_player = input;
+        this.selectedPlayer = null;
       } else if (input && typeof input === 'object') {
-        this.str_player = this.displayPlayerFn(input);
+        const player = input as FFBplayer;
+        this.selectedPlayer = player;
+        this.str_player = this.displayPlayerFn(player);
       }
     } else {
       this.str_player = '';
+      this.selectedPlayer = null;
     }
   }
   registerOnChange(fn: any): void {
@@ -57,33 +61,37 @@ export class InputPlayerComponent implements ControlValueAccessor {
     this.disabled = isDisabled;
   }
 
+  get showInvalidSelection(): boolean {
+    return this.hasBlurred && this.str_player.trim().length > 0 && !this.selectedPlayer;
+  }
+
   onSearchChange(value: string) {
     this.onTouch();
     this.str_player = value;
+
+    // Toute saisie manuelle invalide la sélection tant que l'utilisateur n'a pas recliqué une suggestion.
+    if (!this.selectedPlayer || value !== this.displayPlayerFn(this.selectedPlayer)) {
+      this.selectedPlayer = null;
+      this.onChange(null);
+    }
+
     if (value.length > 3) {
       this.ffbService.searchPlayersSuchAs(value)
         .then((players) => {
           this.players = players;
         });
-      const selectedPlayer = this.search(value);
-      if (selectedPlayer) {
-        this.onChange(selectedPlayer);
-      }
     }
   }
 
   onPlayerSelected(player: FFBplayer) {
+    this.selectedPlayer = player;
+    this.hasBlurred = false;
     this.str_player = `${player.lastname} ${player.firstname} (${player.license_number})`;
     this.onChange(player);
   }
 
-  private search(str: string): FFBplayer | undefined {
-    const license = this.getLicenceNbr(str);
-    return this.players.find((player) => player.license_number === license);
-  }
-
-  private getLicenceNbr(str: string): string {
-    return str.substring(0, str.length - 1).split('(')[1] ?? '';
+  onInputBlur() {
+    this.hasBlurred = true;
   }
 }
 

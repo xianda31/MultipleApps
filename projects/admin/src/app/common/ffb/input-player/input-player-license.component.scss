@@ -33,3 +33,19 @@ input {
     outline: none;
   }
 }
+
+.player-license-input {
+  outline: none;
+  border: none;
+  width: 100%;
+
+  &.is-invalid-input {
+    box-shadow: inset 0 -2px 0 #dc3545;
+  }
+}
+
+.invalid-feedback-msg {
+  color: #dc3545;
+  font-size: 0.8rem;
+  margin-top: 0.2rem;
+}
