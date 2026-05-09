@@ -55,7 +55,17 @@ export class GroupsListComponent implements OnInit {
           }
         }
       }
-      this.usersArray = Array.from(_users.values());
+      this.usersArray = Array.from(_users.values()).sort((a, b) => {
+        // Trier d'abord par groupe
+        const groupIndexA = this.groups.indexOf(a.highest_group);
+        const groupIndexB = this.groups.indexOf(b.highest_group);
+
+        if (groupIndexA !== groupIndexB) {
+          return groupIndexA - groupIndexB;
+        }
+        // Puis par lastname à l'intérieur du même groupe
+        return a.member.lastname.localeCompare(b.member.lastname);
+      });
 
     } catch (error) {
       console.error(`Error listing users `, error);
@@ -119,7 +129,7 @@ export class GroupsListComponent implements OnInit {
     const client = generateClient<Schema>()
     try {
       const { data, errors } = await client.mutations.addUserToGroup({ userId: userId, groupName: groupName });
-      if(errors) this._error_handling(errors)
+      if (errors) this._error_handling(errors)
     }
     catch (error) { this._error_handling(error) }
   }
@@ -128,7 +138,7 @@ export class GroupsListComponent implements OnInit {
     const client = generateClient<Schema>();
     try {
       const { data, errors } = await client.mutations.removeUserFromGroup({ userId: userId, groupName: groupName });
-      if(errors) this._error_handling(errors)
+      if (errors) this._error_handling(errors)
     }
     catch (error) { this._error_handling(error) }
   }
