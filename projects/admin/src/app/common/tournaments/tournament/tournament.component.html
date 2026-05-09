@@ -36,8 +36,8 @@
                                     </div>
                                 </td>
                                 <td *ngFor="let player of team.players">
-                                    {{player.person.firstname}}
                                     {{player.person.lastname | uppercase}}
+                                    {{player.person.firstname}}
                                 </td>
                                 <ng-container *ngIf="team.is_isolated_player">
                                     <!-- <td></td> -->
@@ -62,7 +62,7 @@
                         <label class="form-label fw-semibold small">1er joueur</label>
                         <div class="form-control form-control-sm bg-light">
                             <i class="bi bi-person-check-fill text-success me-1"></i>
-                            {{whoAmI?.firstname}} {{whoAmI?.lastname}}
+                             {{whoAmI?.lastname | uppercase}} {{whoAmI?.firstname }}
                         </div>
                     </div>
                     <!-- 2e joueur (partenaire optionnel) -->
