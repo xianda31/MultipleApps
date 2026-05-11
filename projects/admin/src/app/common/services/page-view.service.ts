@@ -99,15 +99,15 @@ export class PageViewService {
     }
   }
 
-  getStats(seasonMonths: string[]): Observable<PageViewStats> {
+  getStats(monthWindow: string[]): Observable<PageViewStats> {
     const today = new Date().toISOString().slice(0, 10);
     return this.db.listVisitDailyStats().pipe(
       map(stats => {
-        const seasonStats = stats.filter(v => seasonMonths.includes(v.yearMonth));
-        const todayStats = seasonStats.filter(v => v.date === today);
+        const scopedStats = stats.filter(v => monthWindow.includes(v.yearMonth));
+        const todayStats = scopedStats.filter(v => v.date === today);
 
-        const byMonth = seasonMonths.map(ym => {
-          const monthStats = seasonStats.filter(v => v.yearMonth === ym);
+        const byMonth = monthWindow.map(ym => {
+          const monthStats = scopedStats.filter(v => v.yearMonth === ym);
           return {
             yearMonth: ym,
             total: monthStats.reduce((acc, row) => acc + (row.totalSessions || 0), 0),

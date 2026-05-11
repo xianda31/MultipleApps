@@ -24,6 +24,7 @@ import { PageViewService, PageViewStats } from '../../common/services/page-view.
 export class DashboardComponent {
 
   allMonths: string[] = [];
+  visitMonths: string[] = [];
   startYear!: number;
   season!: string;
   expensesAndRevenuesChartData: any = {};
@@ -79,12 +80,13 @@ export class DashboardComponent {
       this.expense_definitions = conf.revenue_and_expense_tree.expenses;
       this.startYear = parseInt(this.season.slice(0, 4));
       this.allMonths = this.generateSeasonMonths(this.startYear);
+      this.visitMonths = this.generateRollingYearMonths();
 
       // Visites
-      this.pageViewService.getStats(this.allMonths).subscribe(stats => {
+      this.pageViewService.getStats(this.visitMonths).subscribe(stats => {
         this.pageViewStats = stats;
         this.pageViewChartData = {
-          labels: this.allMonths.map(ym => {
+          labels: this.visitMonths.map(ym => {
             const [y, m] = ym.split('-');
             return new Date(+y, +m - 1).toLocaleString('fr-FR', { month: 'short', year: '2-digit' });
           }),
@@ -460,6 +462,21 @@ export class DashboardComponent {
     for (let month = 1; month <= 6; month++) {
       months.push(`${startYear + 1}-${String(month).padStart(2, '0')}`);
     }
+    return months;
+  }
+
+  generateRollingYearMonths(): string[] {
+    const months: string[] = [];
+    const now = new Date();
+
+    // 12 mois glissants, le mois courant en dernière position
+    for (let offset = 11; offset >= 0; offset--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      months.push(`${yyyy}-${mm}`);
+    }
+
     return months;
   }
 }

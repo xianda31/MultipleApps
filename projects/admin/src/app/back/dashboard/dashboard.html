@@ -4,7 +4,7 @@
     <div class="row g-4 mb-5" *ngIf="pageViewStats">
         <div class="col-4">
             <div class="card">
-                <h5 class="card-header bg-light fw-bold">Visites site — saison {{season}}</h5>
+                <h5 class="card-header bg-light fw-bold">Visites site — 12 derniers mois</h5>
                 <div class="card-body p-4">
                     <div class="chart-container chart-container-visits" style="position: relative;">
                         <canvas baseChart [data]="pageViewChartData" [options]="pageViewChartOptions" [type]="'bar'"></canvas>
