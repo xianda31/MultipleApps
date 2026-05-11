@@ -3,11 +3,9 @@ import { DBhandler } from './graphQL.service';
 import { Observable, map } from 'rxjs';
 
 export interface PageViewStats {
-  today: number;
-  todayPageViews: number;
   todayAuthenticated: number;
   todayAnonymous: number;
-  byMonth: { yearMonth: string; total: number; pageViews: number; authenticated: number; anonymous: number }[];
+  byMonth: { yearMonth: string; total: number; authenticated: number; anonymous: number }[];
 }
 
 interface LocalVisitSession {
@@ -32,7 +30,7 @@ export class PageViewService {
     const nowIso = now.toISOString();
     const date = nowIso.slice(0, 10);
     const yearMonth = nowIso.slice(0, 7);
-    const section = 'site';
+    const section = url.startsWith('/back') ? 'back' : 'front';
     const isAuthenticated = !!userId;
 
     const local = this.getLocalSession();
@@ -76,7 +74,8 @@ export class PageViewService {
           await this.db.updateVisitSession({
             sessionId: currentSession.sessionId,
             lastSeenAt: nowIso,
-            pageViewCount: (currentSession.pageViewCount || 0) + 1,
+            // Keep session alive without tracking page-by-page navigation.
+            pageViewCount: currentSession.pageViewCount || 1,
             authenticated: currentSession.authenticated || isAuthenticated,
             memberId: currentSession.memberId || userId,
             section,
@@ -112,15 +111,12 @@ export class PageViewService {
           return {
             yearMonth: ym,
             total: monthStats.reduce((acc, row) => acc + (row.totalSessions || 0), 0),
-            pageViews: monthStats.reduce((acc, row) => acc + (row.pageViews || 0), 0),
             authenticated: monthStats.reduce((acc, row) => acc + (row.authenticatedSessions || 0), 0),
             anonymous: monthStats.reduce((acc, row) => acc + (row.anonymousSessions || 0), 0),
           };
         });
 
         return {
-          today: todayStats.reduce((acc, row) => acc + (row.totalSessions || 0), 0),
-          todayPageViews: todayStats.reduce((acc, row) => acc + (row.pageViews || 0), 0),
           todayAuthenticated: todayStats.reduce((acc, row) => acc + (row.authenticatedSessions || 0), 0),
           todayAnonymous: todayStats.reduce((acc, row) => acc + (row.anonymousSessions || 0), 0),
           byMonth,
@@ -156,7 +152,8 @@ export class PageViewService {
       totalSessions: base.totalSessions,
       authenticatedSessions: base.authenticatedSessions,
       anonymousSessions: base.anonymousSessions,
-      pageViews: (base.pageViews || 0) + 1,
+      // Page views are no longer tracked as a metric.
+      pageViews: base.pageViews || 0,
     };
 
     if (params.isNewSession) {

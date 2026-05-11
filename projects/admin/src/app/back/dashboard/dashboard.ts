@@ -104,7 +104,7 @@ export class DashboardComponent {
         this.pageViewChartOptions = {
           responsive: true,
           scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } },
-          plugins: { legend: { position: 'bottom' } },
+          plugins: { legend: { display: false } },
         };
       });
 
