@@ -104,7 +104,15 @@ export class DashboardComponent {
         this.pageViewChartOptions = {
           responsive: true,
           scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } },
-          plugins: { legend: { display: false } },
+          plugins: {
+            legend: { display: false },
+            datalabels: {
+              display: (context: any) => {
+                const value = context.dataset?.data?.[context.dataIndex];
+                return value !== null && value !== undefined && Number(value) !== 0;
+              },
+            },
+          },
         };
       });
 
