@@ -84,6 +84,8 @@ export const MAP = {
 
 export type ACCOUNTS_COL = { [key: string]: string }
 
+// Legacy fixed template maps kept for compatibility with existing code paths.
+// New exports should prefer buildDynamicExcelTemplateColumns().
 export const PRODUCTS_COL: ACCOUNTS_COL = {
   'BIB': 'G',
   'PAF': 'H',
@@ -152,6 +154,115 @@ export const FINANCIAL_COL: { [key in FINANCIAL_ACCOUNT | BALANCE_ACCOUNT]: stri
   ...FINANCIAL_COL_in,
   ...FINANCIAL_COL_out,
 } as { [key in FINANCIAL_ACCOUNT | BALANCE_ACCOUNT]: string };
+
+export type CUSTOMER_COL_MAP = { [key in CUSTOMER_ACCOUNT]?: string };
+export type FINANCIAL_COL_MAP = { [key in FINANCIAL_ACCOUNT | BALANCE_ACCOUNT]?: string };
+
+export interface DynamicExcelTemplateColumns {
+  products_col: ACCOUNTS_COL;
+  expenses_col: ACCOUNTS_COL;
+  extra_customer_in: CUSTOMER_COL_MAP;
+  financial_col_in: FINANCIAL_COL_MAP;
+  extra_customer_out: CUSTOMER_COL_MAP;
+  financial_col_out: FINANCIAL_COL_MAP;
+  financial_col: FINANCIAL_COL_MAP;
+  map_end: { [key: string]: string };
+  map: { [key: string]: string };
+  header: string[];
+}
+
+export function columnIndexToLetter(index: number): string {
+  let letter = '';
+  let num = index;
+  while (num > 0) {
+    const remainder = (num - 1) % 26;
+    letter = String.fromCharCode(65 + remainder) + letter;
+    num = Math.floor((num - 1) / 26);
+  }
+  return letter;
+}
+
+export function buildDynamicExcelTemplateColumns(revenueKeys: string[], expenseKeys: string[]): DynamicExcelTemplateColumns {
+  const products_col: ACCOUNTS_COL = {};
+  const expenses_col: ACCOUNTS_COL = {};
+  const extra_customer_in: CUSTOMER_COL_MAP = {};
+  const financial_col_in: FINANCIAL_COL_MAP = {};
+  const extra_customer_out: CUSTOMER_COL_MAP = {};
+  const financial_col_out: FINANCIAL_COL_MAP = {};
+  const map_end: { [key: string]: string } = {};
+
+  // Colonnes réservées pour le préambule (A-F)
+  let current_col_index = Object.keys(MAP_start).length + 1;
+
+  revenueKeys.forEach((key) => {
+    products_col[key] = columnIndexToLetter(current_col_index);
+    current_col_index++;
+  });
+
+  expenseKeys.forEach((key) => {
+    expenses_col[key] = columnIndexToLetter(current_col_index);
+    current_col_index++;
+  });
+
+  Object.keys(EXTRA_CUSTOMER_IN).forEach((key) => {
+    extra_customer_in[key as CUSTOMER_ACCOUNT] = columnIndexToLetter(current_col_index);
+    current_col_index++;
+  });
+
+  Object.keys(FINANCIAL_COL_in).forEach((key) => {
+    financial_col_in[key as FINANCIAL_ACCOUNT | BALANCE_ACCOUNT] = columnIndexToLetter(current_col_index);
+    current_col_index++;
+  });
+
+  Object.keys(EXTRA_CUSTOMER_OUT).forEach((key) => {
+    extra_customer_out[key as CUSTOMER_ACCOUNT] = columnIndexToLetter(current_col_index);
+    current_col_index++;
+  });
+
+  Object.keys(FINANCIAL_COL_out).forEach((key) => {
+    financial_col_out[key as FINANCIAL_ACCOUNT | BALANCE_ACCOUNT] = columnIndexToLetter(current_col_index);
+    current_col_index++;
+  });
+
+  Object.keys(MAP_end).forEach((key) => {
+    map_end[key] = columnIndexToLetter(current_col_index);
+    current_col_index++;
+  });
+
+  const financial_col: FINANCIAL_COL_MAP = {
+    ...financial_col_in,
+    ...financial_col_out,
+  };
+
+  const map = {
+    ...MAP_start,
+    ...map_end,
+  };
+
+  const header = [
+    ...Object.keys(MAP_start),
+    ...Object.keys(products_col),
+    ...Object.keys(expenses_col),
+    ...Object.keys(extra_customer_in),
+    ...Object.keys(financial_col_in),
+    ...Object.keys(extra_customer_out),
+    ...Object.keys(financial_col_out),
+    ...Object.keys(map_end),
+  ];
+
+  return {
+    products_col,
+    expenses_col,
+    extra_customer_in,
+    financial_col_in,
+    extra_customer_out,
+    financial_col_out,
+    financial_col,
+    map_end,
+    map,
+    header,
+  };
+}
 
 
 

@@ -3,10 +3,10 @@ import { catchError, of } from 'rxjs';
 import * as ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { SystemConfiguration } from '../../common/interfaces/system-conf.interface';
-import { BookEntry } from '../../common/interfaces/accounting.interface';
+import { BALANCE_ACCOUNT, BookEntry, CUSTOMER_ACCOUNT, FINANCIAL_ACCOUNT } from '../../common/interfaces/accounting.interface';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { BookService } from '../services/book.service';
-import { PRODUCTS_COL, COL, EXPENSES_COL, MAP_start, EXTRA_CUSTOMER_IN, FINANCIAL_COL_in, EXTRA_CUSTOMER_OUT, FINANCIAL_COL_out, MAP_end, TRANSACTION_ID_TO_CHRONO, CUSTOMER_COL, FINANCIAL_COL, MAP, TRANSACTION_ID_TO_NATURE } from '../../common/excel/excel.interface';
+import { MAP_start, TRANSACTION_ID_TO_CHRONO, TRANSACTION_ID_TO_NATURE, ACCOUNTS_COL, buildDynamicExcelTemplateColumns } from '../../common/excel/excel.interface';
 import { TransactionService } from '../services/transaction.service';
 
 @Injectable({
@@ -20,8 +20,18 @@ export class BooksExportExcelService {
   workbook!: ExcelJS.Workbook;
   worksheet !: ExcelJS.Worksheet;
   chrono = 1;
-  revenue_keys: string[] = [];
-  expense_keys: string[] = [];
+  
+  // Colonnes dynamiques basées sur sys-conf
+  dynamic_products_col: ACCOUNTS_COL = {};
+  dynamic_expenses_col: ACCOUNTS_COL = {};
+  dynamic_extra_customer_in: { [key in CUSTOMER_ACCOUNT]?: string } = {};
+  dynamic_extra_customer_out: { [key in CUSTOMER_ACCOUNT]?: string } = {};
+  dynamic_financial_col_in: { [key in FINANCIAL_ACCOUNT | BALANCE_ACCOUNT]?: string } = {};
+  dynamic_financial_col_out: { [key in FINANCIAL_ACCOUNT | BALANCE_ACCOUNT]?: string } = {};
+  dynamic_financial_col: { [key in FINANCIAL_ACCOUNT | BALANCE_ACCOUNT]?: string } = {};
+  dynamic_map_end: { [key: string]: string } = {};
+  dynamic_map: { [key: string]: string } = { ...MAP_start };
+  dynamic_header: string[] = [];
 
   truncature = '1.2-2';  // '1.0-0';// '1.2-2';  //
   constructor(
@@ -35,20 +45,59 @@ export class BooksExportExcelService {
       (conf) => {
         this.conf = conf;
         this.season = conf.season!;
+        // Générer les mappings de colonnes dynamiques
+        this.buildDynamicColumnMappings();
       });
 
     this.bookService.list_book_entries().subscribe(
       (book_entries) => {
         this.book_entries = book_entries;
         this.loaded = true;
-        this.revenue_keys = this.conf.revenue_and_expense_tree.revenues.map((item) => item.key);
-        this.expense_keys = this.conf.revenue_and_expense_tree.expenses.map((item) => item.key);
       }),
       catchError((err) => {
         console.error('Error loading book entries:', err);
         this.loaded = true; // still loaded, but no entries
         return of([]);
       });
+  }
+
+  /**
+   * Génère dynamiquement les mappings de colonnes pour les revenues et expenses
+   * basés sur la configuration système
+   */
+  private buildDynamicColumnMappings(): void {
+    if (!this.conf?.revenue_and_expense_tree) {
+      console.warn('revenue_and_expense_tree not found in configuration');
+      return;
+    }
+
+    const dynamicTemplate = buildDynamicExcelTemplateColumns(
+      this.conf.revenue_and_expense_tree.revenues.map((revenue) => revenue.key),
+      this.conf.revenue_and_expense_tree.expenses.map((expense) => expense.key),
+    );
+
+    this.dynamic_products_col = dynamicTemplate.products_col;
+    this.dynamic_expenses_col = dynamicTemplate.expenses_col;
+    this.dynamic_extra_customer_in = dynamicTemplate.extra_customer_in;
+    this.dynamic_financial_col_in = dynamicTemplate.financial_col_in;
+    this.dynamic_extra_customer_out = dynamicTemplate.extra_customer_out;
+    this.dynamic_financial_col_out = dynamicTemplate.financial_col_out;
+    this.dynamic_financial_col = dynamicTemplate.financial_col;
+    this.dynamic_map_end = dynamicTemplate.map_end;
+    this.dynamic_map = dynamicTemplate.map;
+    this.dynamic_header = dynamicTemplate.header;
+  }
+
+  /**
+   * Convertit une lettre de colonne Excel en index numérique (1-based)
+   * A → 1, B → 2, ..., Z → 26, AA → 27, AB → 28, ...
+   */
+  private columnLetterToIndex(letter: string): number {
+    let index = 0;
+    for (let i = 0; i < letter.length; i++) {
+      index = index * 26 + (letter.charCodeAt(i) - 64);
+    }
+    return index;
   }
 
   downloadToExcel() {
@@ -86,24 +135,25 @@ export class BooksExportExcelService {
       fgColor: { argb: "70AD47" } // Standard green
     };
 
-    Object.entries(PRODUCTS_COL).forEach(([key, value]) => {
-      let columnNumber = COL[value as unknown as keyof typeof COL];
-      this.worksheet.columns[columnNumber - 1].width = 5; // Set width for better visibility
+    // Appliquer couleur aux colonnes de revenues
+    Object.entries(this.dynamic_products_col).forEach(([key, value]) => {
+      let columnNumber = this.columnLetterToIndex(value);
+      this.worksheet.columns[columnNumber - 1].width = 5;
       this.worksheet.eachRow((row, rowNumber) => {
         const cell = row.getCell(columnNumber);
         cell.fill = products_fill;
       });
     });
-    Object.entries(EXPENSES_COL).forEach(([key, value]) => {
-      let columnNumber = COL[value as keyof typeof COL];
-      this.worksheet.columns[columnNumber - 1].width = 5; // Set width for better visibility
 
+    // Appliquer couleur aux colonnes d'expenses
+    Object.entries(this.dynamic_expenses_col).forEach(([key, value]) => {
+      let columnNumber = this.columnLetterToIndex(value);
+      this.worksheet.columns[columnNumber - 1].width = 5;
       this.worksheet.eachRow((row, rowNumber) => {
         const cell = row.getCell(columnNumber);
         cell.fill = expenses_fill;
       });
     });
-
   }
 
   add_borders() {
@@ -124,19 +174,7 @@ export class BooksExportExcelService {
   }
 
   create_HeaderRow() {
-
-    let header = [
-      ...Object.keys(MAP_start),
-      ...Object.keys(PRODUCTS_COL),
-      ...Object.keys(EXPENSES_COL),
-      ...Object.keys(EXTRA_CUSTOMER_IN),
-      ...Object.keys(FINANCIAL_COL_in),
-      ...Object.keys(EXTRA_CUSTOMER_OUT),
-      ...Object.keys(FINANCIAL_COL_out),
-      ...Object.keys(MAP_end),
-    ];
-
-    this.worksheet.addRow(header);
+    this.worksheet.addRow(this.dynamic_header);
 
     this.worksheet.columns.forEach((col) => {
       col.font = { name: 'Colibri', size: 8 };
@@ -148,8 +186,8 @@ export class BooksExportExcelService {
     this.worksheet.columns[4].width = 20;
     this.worksheet.columns[4].alignment = { horizontal: 'left', vertical: 'middle' }
 
-    Object.entries(PRODUCTS_COL).forEach(([key, value]) => {
-      let columnNumber = COL[value as keyof typeof COL];
+    Object.entries(this.dynamic_products_col).forEach(([key, value]) => {
+      let columnNumber = this.columnLetterToIndex(value);
       this.worksheet.columns[columnNumber - 1].font = { name: 'Colibri', size: 8, color: { argb: 'FFFFFFFF' } };
     });
 
@@ -167,134 +205,153 @@ export class BooksExportExcelService {
       console.error('Transaction not found for entry:', entry);
       return;
     }
-    let rows: any[] = [];
+    
     let chrono_header = TRANSACTION_ID_TO_CHRONO[entry.transaction_id];
+    let firstRow: ExcelJS.Row | null = null;
+    let lastRow: ExcelJS.Row | null = null;
 
     if (entry.operations.length === 0) {
-
-      let row: any[] = [
-        chrono_header + ('00' + this.chrono++).slice(-3),
-        new Date(entry.date),
-        '' + new Date(entry.date).toLocaleDateString('fr-FR', { month: 'long' }),
-        '',
-        entry.tag,
-      ];
-      rows.push(row);
-
-      this.add_financials(entry, rows[0])
-      this.add_rows(rows);
+      // Créer une ligne vide et remplir les colonnes dynamiquement
+      const row = this.worksheet.addRow([]);
+      firstRow = row;
+      lastRow = row;
+      
+      // Remplir les colonnes de MAP_start
+      this.setRowCellByMapKey(row, 'chrono', chrono_header + ('00' + this.chrono++).slice(-3), MAP_start);
+      this.setRowCellByMapKey(row, 'date', new Date(entry.date), MAP_start);
+      this.setRowCellByMapKey(row, 'mois', '' + new Date(entry.date).toLocaleDateString('fr-FR', { month: 'long' }), MAP_start);
+      this.setRowCellByMapKey(row, 'intitulé', '', MAP_start);
+      this.setRowCellByMapKey(row, 'info', entry.tag, MAP_start);
+      this.setRowCellByMapKey(row, 'n° carte', '', MAP_start);
+      
+      this.add_financials(entry, row);
 
     } else {
-
-
       // Add the operation values
       if (transaction.revenue_account_to_show === true) {
+        entry.operations.forEach((op, index) => {
+          const row = this.worksheet.addRow([]);
+          if (index === 0) firstRow = row;
+          lastRow = row;
+          
+          // Remplir les colonnes de MAP_start
+          this.setRowCellByMapKey(row, 'chrono', chrono_header + ('00' + this.chrono++).slice(-3), MAP_start);
+          this.setRowCellByMapKey(row, 'date', new Date(entry.date), MAP_start);
+          this.setRowCellByMapKey(row, 'mois', '' + new Date(entry.date).toLocaleDateString('fr-FR', { month: 'long' }), MAP_start);
+          this.setRowCellByMapKey(row, 'intitulé', op.member ?? op.label, MAP_start);
+          this.setRowCellByMapKey(row, 'info', '', MAP_start);
 
-        entry.operations.forEach((op) => {
-
-          let row: any[] = [
-            chrono_header + ('00' + this.chrono++).slice(-3),
-            new Date(entry.date),
-            '' + new Date(entry.date).toLocaleDateString('fr-FR', { month: 'long' }),
-            op.member ?? op.label,
-            '',
-          ];
-
+          // Remplir les colonnes de revenues dynamiques
           if (op.values) {
-            Object.entries(PRODUCTS_COL).forEach(([key, col], index) => {
+            Object.entries(this.dynamic_products_col).forEach(([key, colLetter]) => {
               if (op.values[key] !== undefined) {
-                let column = COL[col as keyof typeof COL];
-                row[column - 1] = op.values[key];
+                const colNum = this.columnLetterToIndex(colLetter);
+                row.getCell(colNum).value = op.values[key];
               }
             });
 
-            row[(COL[CUSTOMER_COL.creance_in as keyof typeof COL]) - 1] = op.values['creance_in'] ? op.values['creance_in'] : '';
-            row[(COL[CUSTOMER_COL.avoir_in as keyof typeof COL]) - 1] = op.values['avoir_in'] ? op.values['avoir_in'] : '';
-            row[(COL[CUSTOMER_COL.creance_out as keyof typeof COL]) - 1] = op.values['creance_out'] ? op.values['creance_out'] : '';
-            row[(COL[CUSTOMER_COL.avoir_out as keyof typeof COL]) - 1] = op.values['avoir_out'] ? op.values['avoir_out'] : '';
+            // Remplir les colonnes de customer accounts
+            const creance_in_col = this.columnLetterToIndex(this.dynamic_extra_customer_in.creance_in as string);
+            const avoir_in_col = this.columnLetterToIndex(this.dynamic_extra_customer_in.avoir_in as string);
+            const creance_out_col = this.columnLetterToIndex(this.dynamic_extra_customer_out.creance_out as string);
+            const avoir_out_col = this.columnLetterToIndex(this.dynamic_extra_customer_out.avoir_out as string);
+            
+            row.getCell(creance_in_col).value = op.values['creance_in'] ?? '';
+            row.getCell(avoir_in_col).value = op.values['avoir_in'] ?? '';
+            row.getCell(creance_out_col).value = op.values['creance_out'] ?? '';
+            row.getCell(avoir_out_col).value = op.values['avoir_out'] ?? '';
           }
 
-          rows.push(row);
+          if (index === 0) {
+            this.add_financials(entry, row);
+          }
         });
-
-
       } else {
+        entry.operations.forEach((op, index) => {
+          const row = this.worksheet.addRow([]);
+          if (index === 0) firstRow = row;
+          lastRow = row;
+          
+          // Remplir les colonnes de MAP_start
+          this.setRowCellByMapKey(row, 'chrono', chrono_header + ('00' + this.chrono++).slice(-3), MAP_start);
+          this.setRowCellByMapKey(row, 'date', new Date(entry.date), MAP_start);
+          this.setRowCellByMapKey(row, 'mois', '' + new Date(entry.date).toLocaleDateString('fr-FR', { month: 'long' }), MAP_start);
+          this.setRowCellByMapKey(row, 'intitulé', op.member ?? op.label, MAP_start);
+          this.setRowCellByMapKey(row, 'info', '', MAP_start);
 
-        entry.operations.forEach((op) => {
-
-          let row: any[] = [
-            chrono_header + ('00' + this.chrono++).slice(-3),
-            new Date(entry.date),
-            '' + new Date(entry.date).toLocaleDateString('fr-FR', { month: 'long' }),
-            op.member ?? op.label,
-            '',
-          ];
+          // Remplir les colonnes d'expenses dynamiques
           if (op.values) {
-            Object.entries(EXPENSES_COL).forEach(([key, col], index) => {
+            Object.entries(this.dynamic_expenses_col).forEach(([key, colLetter]) => {
               if (op.values[key] !== undefined) {
-                let column = COL[col as keyof typeof COL];
-                row[column-1] = op.values[key];
+                const colNum = this.columnLetterToIndex(colLetter);
+                row.getCell(colNum).value = op.values[key];
               }
             });
           }
-          row[(COL[CUSTOMER_COL.creance_out as keyof typeof COL]) - 1] = op.values['creance_out'] ? op.values['creance_out'] : '';
-          row[(COL[CUSTOMER_COL.avoir_out as keyof typeof COL]) - 1] = op.values['avoir_out'] ? op.values['avoir_out'] : '';
+          
+          const creance_out_col = this.columnLetterToIndex(this.dynamic_extra_customer_out.creance_out as string);
+          const avoir_out_col = this.columnLetterToIndex(this.dynamic_extra_customer_out.avoir_out as string);
+          row.getCell(creance_out_col).value = op.values['creance_out'] ?? '';
+          row.getCell(avoir_out_col).value = op.values['avoir_out'] ?? '';
 
-          rows.push(row);
-
+          if (index === 0) {
+            this.add_financials(entry, row);
+          }
         });
       }
-
-      this.add_financials(entry, rows[0])
-      this.add_rows(rows);
     }
 
+    // Fusionner les cellules si plusieurs lignes
+    if (firstRow && lastRow && firstRow.number !== lastRow.number) {
+      this.mergeCellsForBookEntry(firstRow.number, lastRow.number);
+    }
   }
 
-  add_financials(entry: BookEntry, row: any[]) {
-    Object.entries(FINANCIAL_COL).forEach(([key, value]) => {
+  /**
+   * Fusionne les cellules pour une BookEntry sur plusieurs lignes
+   */
+  private mergeCellsForBookEntry(startRowNum: number, endRowNum: number): void {
+    const colsToMerge = [...new Set(Object.values({ ...MAP_start, ...this.dynamic_financial_col, ...this.dynamic_map_end }))];
+    colsToMerge.forEach(colLetter => {
+      const colNum = this.columnLetterToIndex(colLetter);
+      this.worksheet.mergeCells(startRowNum, colNum, endRowNum, colNum);
+    });
+  }
+
+  /**
+   * Définit la valeur d'une cellule en utilisant la clé du MAP
+   */
+  private setRowCellByMapKey(row: ExcelJS.Row, mapKey: string, value: any, mapObj: { [key: string]: string }): void {
+    const colLetter = mapObj[mapKey];
+    if (colLetter) {
+      const colNum = this.columnLetterToIndex(colLetter);
+      row.getCell(colNum).value = value;
+    }
+  }
+
+  /**
+   * Ajoute les montants financiers à la ligne
+   */
+  add_financials(entry: BookEntry, row: ExcelJS.Row) {
+    Object.entries(this.dynamic_financial_col).forEach(([key, colLetter]) => {
       if (entry.amounts[key as keyof typeof entry.amounts] !== undefined) {
-        let amount = entry.amounts[key as keyof typeof entry.amounts];
-        let col = COL[value as keyof typeof COL] - 1;
-        row[col] = amount;
+        const amount = entry.amounts[key as keyof typeof entry.amounts];
+        const colNum = this.columnLetterToIndex(colLetter as string);
+        row.getCell(colNum).value = amount;
       }
     });
 
-    row[(COL[MAP['info'] as keyof typeof COL]) - 1] = entry.tag ?? '';
-    row[(COL[MAP['pointage'] as keyof typeof COL]) - 1] = entry.bank_report ?? '';
-    row[(COL[MAP['n° chèque'] as keyof typeof COL]) - 1] = entry.cheque_ref ?? '';
-    row[(COL[MAP['bordereau'] as keyof typeof COL]) - 1] = entry.deposit_ref ?? '';
+    // Ajouter les informations complémentaires
+    this.setRowCellByMapKey(row, 'info', entry.tag ?? '', this.dynamic_map);
+    this.setRowCellByMapKey(row, 'pointage', entry.bank_report ?? '', this.dynamic_map);
+    this.setRowCellByMapKey(row, 'n° chèque', entry.cheque_ref ?? '', this.dynamic_map);
+    this.setRowCellByMapKey(row, 'bordereau', entry.deposit_ref ?? '', this.dynamic_map);
 
-    // let transaction = this.transactionService.get_transaction(entry.transaction_id);
     let nature = TRANSACTION_ID_TO_NATURE[entry.transaction_id];
     if (nature) {
-      row[(COL[MAP['nature'] as keyof typeof COL]) - 1] = nature;
+      this.setRowCellByMapKey(row, 'nature', nature, this.dynamic_map);
     } else {
-
       console.warn('Transaction ID not found in TRANSACTION_ID_TO_NATURE:', entry.transaction_id);
-    }
-
-  }
-
-  add_rows(rows: any[]) {
-    const newRows = this.worksheet.addRows(rows);
-
-    // merge cells if there are multiple rows
-
-    if (rows.length > 1 && newRows.length > 0) {
-
-      let start_row = newRows[0].number;
-      let end_row = start_row + rows.length - 1;
-
-      const colsToMerge = [...new Set(Object.values({ ...MAP_start, ...FINANCIAL_COL, ...MAP_end }))];
-      colsToMerge.forEach(element => {
-        this.worksheet.mergeCells(
-          start_row,
-          COL[element as keyof typeof COL],
-          end_row,
-          COL[element as keyof typeof COL]
-        );
-      });
     }
   }
 
