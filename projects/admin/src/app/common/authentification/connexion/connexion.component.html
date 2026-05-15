@@ -283,7 +283,7 @@
                     *ngIf="(mode$ | async) === process_flow.SIGN_IN || (mode$ | async) === process_flow.SIGN_UP">
                     <div class="col-12 col-sm-12 col-lg-8 mb-3">
                         <div class="form-floating">
-                            <input class="form-control sepia-input" autocomplete="email" type="text" id="email"
+                            <input #emailInput class="form-control sepia-input" autocomplete="username email" type="text" id="email"
                                 formControlName="email">
                             <label for="email">adresse mail (même que pour la FFB)</label>
                         </div>
@@ -301,7 +301,7 @@
                     *ngIf="(mode$ | async) === process_flow.SIGN_IN || (mode$ | async) === process_flow.SIGN_UP">
                     <div class="col-12 col-sm-12 col-lg-8 mb-3">
                         <div class="form-floating position-relative">
-                            <input class="form-control sepia-input with-eye" autocomplete="password"
+                            <input #passwordInput class="form-control sepia-input with-eye" autocomplete="current-password"
                                 [type]="showPassword ? 'text' : 'password'" id="password" formControlName="password">
                             <label for="password">mot de passe</label>
                             <button type="button" class="btn btn-sm toggle-psw" (click)="togglePasswordVisibility()"

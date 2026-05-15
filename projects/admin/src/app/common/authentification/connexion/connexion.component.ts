@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule, Location } from '@angular/common';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
@@ -22,7 +22,7 @@ const GROUP_ICONS = Group_icons;
   styleUrl: './connexion.component.scss',
   imports: [CommonModule, FormsModule, ReactiveFormsModule],
 })
-export class ConnexionComponent {
+export class ConnexionComponent implements AfterViewInit {
 
   sign_up_sent: boolean = false;
   process_flow = Process_flow;
@@ -51,6 +51,9 @@ export class ConnexionComponent {
   // mode: Process_flow = Process_flow.SIGN_IN;
 
   loggerForm!: FormGroup;
+
+  @ViewChild('emailInput') emailInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('passwordInput') passwordInput?: ElementRef<HTMLInputElement>;
 
   get email() { return this.loggerForm.get('email')!; }
   get password() { return this.loggerForm.get('password')!; }
@@ -110,6 +113,14 @@ export class ConnexionComponent {
     });
   }
 
+  ngAfterViewInit(): void {
+    // Chrome may apply autofill after Angular initializes controls.
+    // Re-sync a few times on startup so first submit works reliably.
+    this.syncAutofillValuesFromDom();
+    setTimeout(() => this.syncAutofillValuesFromDom(), 50);
+    setTimeout(() => this.syncAutofillValuesFromDom(), 250);
+  }
+
   async signIn() {
     await this.auth.signIn(this.email!.value, this.password!.value)
       .then((member_id) => {
@@ -139,6 +150,7 @@ export class ConnexionComponent {
   }
 
   async onSubmit() {
+    this.syncAutofillValuesFromDom();
     if (this.isSubmitting) return;
     this.isSubmitting = true;
     try {
@@ -215,6 +227,24 @@ export class ConnexionComponent {
     } finally {
       this.isSubmitting = false;
     }
+  }
+
+  private syncAutofillValuesFromDom(): void {
+    const emailFromDom = this.emailInput?.nativeElement?.value?.trim() || '';
+    const pwdFromDom = this.passwordInput?.nativeElement?.value || '';
+
+    if (emailFromDom && emailFromDom !== this.email.value) {
+      this.email.setValue(emailFromDom, { emitEvent: true });
+      this.email.markAsDirty();
+    }
+
+    if (pwdFromDom && pwdFromDom !== this.password.value) {
+      this.password.setValue(pwdFromDom, { emitEvent: true });
+      this.password.markAsDirty();
+    }
+
+    this.email.updateValueAndValidity({ onlySelf: true, emitEvent: false });
+    this.password.updateValueAndValidity({ onlySelf: true, emitEvent: false });
   }
 
   goSignUp() {
