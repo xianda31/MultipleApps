@@ -41,6 +41,7 @@ export interface SystemConfiguration {
     online_payment_active: boolean;
     tpe_payment_active: boolean;
     CB_fees_account: string;
+    minimum_cb_amount: number;
 
     fee_rates: Fee_rate[];
 

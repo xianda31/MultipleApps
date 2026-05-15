@@ -85,6 +85,7 @@ export class ShopComponent {
   isSaving: boolean = false;  // For non-Stripe cart confirmation
   private stripeCheckoutPrepared = false;  // Éviter les doublons
   onlinePaymentActive: boolean = true;
+  minimumCbAmount: number | null = null;
 
   // ── TPE (Stripe Terminal) ──────────────────────────────────
   tpePaymentActive: boolean = false;
@@ -135,15 +136,11 @@ export class ShopComponent {
     // Apply default for @Input (not auto-applied by Angular)
     this.onlineMode ??= true;
 
-    if (this.onlineMode) {
-      this.systemDataService.get_configuration().subscribe(conf => {
-        this.onlinePaymentActive = conf.online_payment_active ?? false;
-      });
-    } else {
-      this.systemDataService.get_configuration().subscribe(conf => {
-        this.tpePaymentActive = conf.tpe_payment_active ?? false;
-      });
-    }
+    this.systemDataService.get_configuration().subscribe(conf => {
+      this.onlinePaymentActive = conf.online_payment_active;
+      this.tpePaymentActive = conf.tpe_payment_active;
+      this.minimumCbAmount = conf.minimum_cb_amount;
+    });
 
     const routeOnlineMode = this.route.snapshot.data['onlineMode'];
     if (routeOnlineMode !== undefined) {
@@ -450,6 +447,16 @@ export class ShopComponent {
       if (totalDiscountCents > 0) discountAmountCents = totalDiscountCents;
     }
 
+    const cartTotal = this.cartService.getCartAmount();
+    if (this.minimumCbAmount === null) {
+      this.toastService.showWarning('Paiement en ligne', 'Configuration non chargée — réessayez dans un instant');
+      return;
+    }
+    if (this.minimumCbAmount > 0 && cartTotal < this.minimumCbAmount) {
+      this.toastService.showWarning('Paiement en ligne', `Montant minimum CB : ${this.minimumCbAmount.toFixed(2)} €`);
+      return;
+    }
+
     try {
       const result = await this.stripeCheckout.initiateCheckout(
         cartItems,
@@ -546,6 +553,14 @@ export class ShopComponent {
     const amountCents = Math.round(this.cartService.getCartAmount() * 100);
     if (amountCents <= 0) {
       this.toastService.showWarning('TPE', 'Montant invalide (≤ 0)');
+      return;
+    }
+    if (this.minimumCbAmount === null) {
+      this.toastService.showWarning('TPE', 'Configuration non chargée — réessayez dans un instant');
+      return;
+    }
+    if (this.minimumCbAmount > 0 && amountCents < Math.round(this.minimumCbAmount * 100)) {
+      this.toastService.showWarning('TPE', `Montant minimum CB : ${this.minimumCbAmount.toFixed(2)} €`);
       return;
     }
 

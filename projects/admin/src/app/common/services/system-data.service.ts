@@ -27,11 +27,17 @@ export class SystemDataService {
 
 
   get_configuration(): Observable<SystemConfiguration> {
-    // La saison affichée est toujours _active_season (variable locale, non lue depuis S3)
-    const withActiveSeason = (conf: SystemConfiguration) => conf ? { ...conf, season: this._active_season } : conf;
+    // Normalise la conf : injecte la saison locale + valeurs par défaut pour les champs optionnels
+    const normalize = (conf: SystemConfiguration): SystemConfiguration => conf ? {
+      ...conf,
+      season: this._active_season,
+      online_payment_active: conf.online_payment_active ?? false,
+      tpe_payment_active: conf.tpe_payment_active ?? false,
+      minimum_cb_amount: conf.minimum_cb_amount ?? 0,
+    } : conf;
 
     if (this._system_configuration) {
-      return this._system_configuration$.asObservable().pipe(map(withActiveSeason));
+      return this._system_configuration$.asObservable().pipe(map(normalize));
     }
 
     // Premier appel : charger depuis S3, puis émettre via le BehaviorSubject
@@ -39,8 +45,15 @@ export class SystemDataService {
       tap((conf) => {
         this._system_configuration = conf;
         this._system_configuration$.next(this._system_configuration);
+        const missing: string[] = [];
+        if (conf.online_payment_active == null) missing.push('online_payment_active');
+        if (conf.tpe_payment_active == null) missing.push('tpe_payment_active');
+        if (conf.minimum_cb_amount == null) missing.push('minimum_cb_amount');
+        if (missing.length) {
+          try { this.toastService.showWarning('Configuration', `Champs manquants (valeurs par défaut appliquées) : ${missing.join(', ')}`); } catch (e) { /* ignore */ }
+        }
       }),
-      switchMap(() => this._system_configuration$.asObservable().pipe(map(withActiveSeason)))
+      switchMap(() => this._system_configuration$.asObservable().pipe(map(normalize)))
     );
   }
 

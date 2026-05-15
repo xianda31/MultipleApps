@@ -21,6 +21,8 @@ export class SysConfComponent {
   systemFormGroup!: FormGroup;
   loaded!: boolean;
   export_file_url: any;
+  newBankKey = '';
+  newBankName = '';
 
   constructor(
     private systemDataService: SystemDataService,
@@ -36,6 +38,7 @@ export class SysConfComponent {
       online_payment_active: [false],
       tpe_payment_active: [false],
       CB_fees_account: [''],
+      minimum_cb_amount: [0],
 
       fee_rates: this.fb.array([
         this.fb.group({
@@ -140,6 +143,20 @@ export class SysConfComponent {
     return this.systemFormGroup.get('banks') as FormArray;
   }
 
+  get bankOptions(): { key: string; name: string }[] {
+    const seen = new Set<string>();
+    return this.banks.controls
+      .map(ctrl => ({
+        key: String(ctrl.get('key')?.value ?? '').trim(),
+        name: String(ctrl.get('name')?.value ?? '').trim(),
+      }))
+      .filter(bank => {
+        if (!bank.key || seen.has(bank.key)) return false;
+        seen.add(bank.key);
+        return true;
+      });
+  }
+
   // Ajoute un nouveau code banque '???'/'autre'
   addBankCode(): void {
     const banks = this.banks;
@@ -149,6 +166,26 @@ export class SysConfComponent {
     if (!last || last.get('key')?.value !== '???') {
       banks.push(this.fb.group({ key: ['???'], name: ['autre'] }));
     }
+  }
+
+  addBankFromDraft(): void {
+    const key = this.newBankKey.trim();
+    const name = this.newBankName.trim();
+
+    if (!key) {
+      this.toastService.showInfo('banques', 'Le code banque est requis');
+      return;
+    }
+
+    const exists = this.banks.controls.some(ctrl => String(ctrl.get('key')?.value ?? '').trim() === key);
+    if (exists) {
+      this.toastService.showInfo('banques', `Le code banque "${key}" existe déjà`);
+      return;
+    }
+
+    this.banks.push(this.fb.group({ key: [key], name: [name] }));
+    this.newBankKey = '';
+    this.newBankName = '';
   }
 
   // Quand la key du dernier code banque est modifiée, recrée '???'/'autre' si besoin
