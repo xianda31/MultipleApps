@@ -22,7 +22,9 @@ export class PageViewService {
   constructor(private db: DBhandler) {}
 
   async trackVisit(url: string, userId?: string): Promise<void> {
-    if (!url.startsWith('/back') && !url.startsWith('/front') && url !== '/') {
+    const cleanUrl = this.normalizeUrl(url);
+
+    if (!this.shouldTrackUrl(cleanUrl)) {
       return;
     }
 
@@ -30,7 +32,7 @@ export class PageViewService {
     const nowIso = now.toISOString();
     const date = nowIso.slice(0, 10);
     const yearMonth = nowIso.slice(0, 7);
-    const section = url.startsWith('/back') ? 'back' : 'front';
+    const section = cleanUrl.startsWith('/back') ? 'back' : 'front';
     const isAuthenticated = !!userId;
 
     const local = this.getLocalSession();
@@ -211,5 +213,19 @@ export class PageViewService {
       return crypto.randomUUID();
     }
     return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }
+
+  private normalizeUrl(url: string): string {
+    const noHash = url.split('#', 1)[0] || '';
+    const noQuery = noHash.split('?', 1)[0] || '';
+    return noQuery || '/';
+  }
+
+  private shouldTrackUrl(url: string): boolean {
+    // Skip technical routes that create noisy anonymous sessions.
+    if (url === '/' || url === '/front/authentication') {
+      return false;
+    }
+    return url.startsWith('/back') || url.startsWith('/front');
   }
 }
