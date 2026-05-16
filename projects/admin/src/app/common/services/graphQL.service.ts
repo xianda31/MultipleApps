@@ -1,4 +1,3 @@
- 
 import { Injectable } from '@angular/core';
 import { generateClient } from 'aws-amplify/api';
 import { catchError, from, lastValueFrom, map, Observable, of, switchMap, tap, filter } from 'rxjs';

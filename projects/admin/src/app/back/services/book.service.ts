@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 
 import { BookEntry, Revenue, FINANCIAL_ACCOUNT, BALANCE_ACCOUNT, Expense, CUSTOMER_ACCOUNT, TRANSACTION_ID, Operation, AMOUNTS,  Formatted_purchase, Item } from '../../common/interfaces/accounting.interface';
 // import { Schema } from '../../../../amplify/data/resource';
-import { BehaviorSubject, catchError, distinctUntilKeyChanged, from, map, Observable, of, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, catchError, combineLatest, distinctUntilKeyChanged, from, map, Observable, of, switchMap, tap } from 'rxjs';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { ToastService } from '../../common/services/toast.service';
 import { TRANSACTION_CLASS, TRANSACTION_DIRECTORY } from '../../common/interfaces/transaction.definition';
 import { Profit_and_loss } from '../../common/interfaces/system-conf.interface';
 import { DBhandler } from '../../common/services/graphQL.service';
+import { AuthentificationService } from '../../common/authentification/authentification.service';
 import { TransactionService } from './transaction.service';
 import { PaymentMode, SALE_ACCOUNTS } from '../shop/cart/cart.interface';
 
@@ -23,19 +24,30 @@ export class BookService {
   season: string = '';
   trace_mode: boolean = false;
   private season_filter: string = '';
-  private force_reload: boolean = false; // force reload of book entries if true
+  private _loading: boolean = false; // true pendant le chargement initial, évite un double remote_load
   private higlighting: { [key: string]: boolean } = {};
 
   constructor(
     private systemDataService: SystemDataService,
     private toastService: ToastService,
     private transactionService: TransactionService,
-    private dbHandler: DBhandler
+    private dbHandler: DBhandler,
+    private authService: AuthentificationService
   ) {
 
-    this.systemDataService.get_configuration().subscribe((conf) => {
+    // Chargement conditionné à l'authentification : BookEntry est une donnée métier
+    // accessible uniquement aux membres connectés (plus de allow.guest() dans le schema).
+    // combineLatest garantit qu'un seul remote_load() est lancé, et uniquement après login.
+    combineLatest([
+      this.systemDataService.get_configuration().pipe(distinctUntilKeyChanged('season')),
+      this.authService.logged_member$
+    ]).subscribe(([conf, member]) => {
       this.season = conf.season!;
       this.trace_mode = conf.trace_mode || false;
+      if (member !== null && (this.season_filter !== this.season || !this._book_entries)) {
+        this.season_filter = this.season;
+        this._initiate_load(this.season);
+      }
     });
   }
 
@@ -161,9 +173,12 @@ export class BookService {
   // list
 
 
-  private remote_load(season: string): Observable<BookEntry[]> {
-    return this.dbHandler.listBookEntries(season).pipe(
-      tap((entries) => {
+  private _initiate_load(season: string): void {
+    if (this._loading) return;
+    this._loading = true;
+    this.dbHandler.listBookEntries(season).subscribe({
+      next: (entries) => {
+        this._loading = false;
         this._book_entries = entries.sort((a, b) => {
           return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
         });
@@ -171,35 +186,19 @@ export class BookService {
         if (this.trace_mode) {
           this.toastService.showInfo('comptabilité', `données saison ${season} chargées`);
         }
-        this.season = season;
-      }),
-      switchMap(() => this._book_entries$.asObservable()),
-      catchError((error) => {
+      },
+      error: (error) => {
+        this._loading = false;
         console.error('Error fetching book entries:', error);
         this.toastService.showError('base comptabilité', 'Erreur de chargement de la base de données');
-        return of([] as BookEntry[]);
-      })
-    );
+      }
+    });
   }
 
   list_book_entries(): Observable<BookEntry[]> {
-
-    return this.systemDataService.get_configuration().pipe(
-      distinctUntilKeyChanged('season'),  // évite le double-fire quand save_configuration émet deux fois
-      switchMap((conf) => {
-        let season = conf.season!;
-        if (this.season_filter !== season) {
-          this.season_filter = season;
-          // this._book_entries = null!;
-          this.force_reload = true; // force reload of book entries if season changed
-        } else {
-          this.force_reload = false;
-        }
-
-        return (this._book_entries && !this.force_reload) ? this._book_entries$.asObservable() : this.remote_load(season);
-      })
-    );
-
+    // Le chargement est piloté par le constructeur (singleton).
+    // Tous les subscribers partagent le même BehaviorSubject.
+    return this._book_entries$.asObservable();
   }
 
   book_entries_bulk_delete$(season: string): Observable<number> {

@@ -158,9 +158,9 @@ export class SystemDataService {
         const defaultPath = (ui && (ui as any).default_tournament_image) ? (ui as any).default_tournament_image : undefined;
         const defaultObs = defaultPath
           ? this.fileService.getPresignedUrl$(defaultPath).pipe(
-              map((url: string) => ['__default__', url] as [string, string | null]),
-              catchError(() => of(['__default__', null] as [string, string | null]))
-            )
+            map((url: string) => ['__default__', url] as [string, string | null]),
+            catchError(() => of(['__default__', null] as [string, string | null]))
+          )
           : of(null);
 
         const allObs = defaultObs ? [...pathObs, defaultObs] : pathObs;
@@ -226,14 +226,14 @@ export class SystemDataService {
   async save_ui_settings(ui: UIConfiguration) {
 
     this._ui_settings = ui;
-    
+
     // Persist to S3 with pretty formatting
 
     try {
       await this.fileService.upload_to_S3(ui, 'system/', 'ui_settings.txt', true);
-      
+
       this._ui_settings$.next(ui);
-      
+
     } catch (err) {
       console.warn('save_ui_settings: upload error', err);
       try { console.error('[SystemDataService] save_ui_settings(): upload_to_S3 failed', { err, timestamp: new Date().toISOString() }); } catch (e) { /* ignore */ }
@@ -334,7 +334,7 @@ export class SystemDataService {
   // around season and date 
 
   trace_on() {
-    return this._system_configuration.trace_mode ;
+    return this._system_configuration.trace_mode;
   }
 
   get_today_season(): string {
