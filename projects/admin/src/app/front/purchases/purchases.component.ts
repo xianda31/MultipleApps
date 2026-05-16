@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { BookService } from '../../back/services/book.service';
 import { AuthentificationService } from '../../common/authentification/authentification.service';
-import { map, switchMap } from 'rxjs';
+import { map, Observable, switchMap } from 'rxjs';
 import { MembersService } from '../../common/services/members.service';
 import { CommonModule } from '@angular/common';
 import { TitleService } from '../title/title.service';
@@ -22,7 +22,8 @@ export class PurchasesComponent {
   member_full_name: string = '';
   achats_ventes !: Formatted_purchase[];
   season!: string;
-  avoirs:number=0;
+  avoirs: number = 0;
+  loading$!: Observable<boolean>;
 
   constructor(
     private bookService: BookService,
@@ -34,6 +35,7 @@ export class PurchasesComponent {
 
   ngOnInit() {
 
+    this.loading$ = this.bookService.loading$;
     this.season = this.systemDataService.get_season(new Date());
 
     this.titleService.setTitle('Achats ' + this.season);

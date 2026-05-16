@@ -1,4 +1,9 @@
 <div class="offset-md-1 col-md-10 offset-xl-3 col-xl-6 mt-3 ">
+    @if ((loading$ | async)) {
+    <div class="text-center text-muted py-4">
+      <span class="spinner-border spinner-border-sm me-2" role="status"></span>Chargement de vos achats...
+    </div>
+    }
     @if (achats_ventes && achats_ventes.length > 0) {
     <div class="card-body">
         <strong class="card-title">

@@ -33,6 +33,7 @@ export class BackNavbarComponent implements OnInit, OnDestroy {
   
   @Input() season: string = '';
   @Input() entries_nbr: number = 0;
+  @Input() loading: boolean = false;
   today_season: string = '';
   accreditation_level!: number;
   accreditation_levels = Group_priorities;

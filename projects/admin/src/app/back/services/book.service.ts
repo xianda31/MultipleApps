@@ -24,7 +24,9 @@ export class BookService {
   season: string = '';
   trace_mode: boolean = false;
   private season_filter: string = '';
-  private _loading: boolean = false; // true pendant le chargement initial, évite un double remote_load
+  private _loading: boolean = false;
+  private _loading$ = new BehaviorSubject<boolean>(false);
+  get loading$(): Observable<boolean> { return this._loading$.asObservable(); }
   private higlighting: { [key: string]: boolean } = {};
 
   constructor(
@@ -176,9 +178,11 @@ export class BookService {
   private _initiate_load(season: string): void {
     if (this._loading) return;
     this._loading = true;
+    this._loading$.next(true);
     this.dbHandler.listBookEntries(season).subscribe({
       next: (entries) => {
         this._loading = false;
+        this._loading$.next(false);
         this._book_entries = entries.sort((a, b) => {
           return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
         });
@@ -189,6 +193,7 @@ export class BookService {
       },
       error: (error) => {
         this._loading = false;
+        this._loading$.next(false);
         console.error('Error fetching book entries:', error);
         this.toastService.showError('base comptabilité', 'Erreur de chargement de la base de données');
       }

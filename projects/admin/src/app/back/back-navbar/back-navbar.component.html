@@ -19,6 +19,7 @@
       <span [class.text-warning]="season !== today_season" [title]="season !== today_season ? 'Consultation historique — saison non courante' : ''">{{season}}</span>
       <button class="btn btn-sm btn-link p-0 px-1" (click)="go_to_next_season()" [disabled]="season >= today_season" title="Saison suivante"><i class="bi bi-chevron-right"></i></button>
       <span class="badge bg-success ms-1" style="font-size: 0.6rem; vertical-align: middle;">{{entries_nbr}}</span>
+      <span *ngIf="loading" class="ms-1" style="vertical-align: middle;"><span class="spinner-border spinner-border-sm text-secondary" role="status" style="width:0.65rem;height:0.65rem;border-width:0.1em;"></span></span>
       <span *ngIf="!production_mode" class="badge bg-dark ms-1" style="font-size: 0.6rem; vertical-align: middle;">dev</span>
       <span *ngIf="assistances_nbr" class="badge bg-warning ms-1" style="font-size: 0.6rem; vertical-align: middle; color: rgb(252, 249, 249);">{{assistances_nbr}} ticket(s)</span>
     </span>

@@ -20,6 +20,7 @@ import { LocalStorageService } from '../services/local-storage.service';
 export class AdminComponent {
   season$ = new Observable<string>();
   book_entries_number$ = new Observable<number>();
+  loading$!: Observable<boolean>;
 
 
   constructor(
@@ -33,6 +34,7 @@ export class AdminComponent {
 
     this.localStorageService.setItem('entry_point', 'back');
 
+    this.loading$ = this.bookService.loading$;
     this.book_entries_number$ = this.bookService.list_book_entries().pipe(map((entries) => entries.length));
 
     this.season$ = this.systemDataService.get_configuration().pipe(map((conf) => conf.season!));
