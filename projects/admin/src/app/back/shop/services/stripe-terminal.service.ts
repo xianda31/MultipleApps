@@ -97,7 +97,6 @@ export class StripeTerminalService {
 
     if (!simulated) {
       const btAvailable = 'bluetooth' in navigator;
-      console.log('[StripeTerminal] navigator.bluetooth disponible :', btAvailable);
       if (!btAvailable) {
         throw new Error('Web Bluetooth non disponible dans ce navigateur/Electron. Vérifiez les flags Chromium.');
       }
@@ -106,9 +105,7 @@ export class StripeTerminalService {
     const config = simulated
       ? { simulated: true }
       : { simulated: false, discoveryMethod: 'bluetooth' };
-    console.log('[StripeTerminal] discoverReaders config:', config);
     const result = await this.terminal.discoverReaders(config);
-    console.log('[StripeTerminal] discoverReaders result:', JSON.stringify(result));
     if ((result as any).error) throw new Error((result as any).error.message);
     return (result as any).discoveredReaders as any[];
   }

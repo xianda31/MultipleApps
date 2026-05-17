@@ -29,9 +29,6 @@ function createWindow() {
     : 'http://localhost:4200/back';
   win.loadURL(url);
 
-  // Ouvrir DevTools (temporaire pour diagnostic Bluetooth) — à retirer après validation
-  win.webContents.openDevTools();
-
   // F12 pour toggle DevTools
   win.webContents.on('before-input-event', (event, input) => {
     if (input.key === 'F12') {
@@ -45,7 +42,6 @@ function createWindow() {
   // On sélectionne automatiquement le WisePad 3 (ou le premier appareil si non identifié).
   win.webContents.on('select-bluetooth-device', (event, deviceList, callback) => {
     event.preventDefault();
-    console.log('[BT] Devices discovered:', deviceList.map(d => `${d.deviceName} (${d.deviceId})`));
 
     const wisepad = deviceList.find(d => {
       const name = (d.deviceName || '').toLowerCase();
@@ -53,19 +49,15 @@ function createWindow() {
     });
 
     if (wisepad) {
-      console.log('[BT] WisePad 3 selected:', wisepad.deviceName);
       callback(wisepad.deviceId);
     } else if (deviceList.length > 0) {
-      // Aucun WisePad identifié dans la liste actuelle — sélectionner le premier disponible
-      console.log('[BT] Selecting first available device:', deviceList[0].deviceName);
       callback(deviceList[0].deviceId);
     }
-    // Si la liste est vide : ne pas appeler callback → le scan BLE continue
+    // Si liste vide : ne pas appeler callback → le scan BLE continue
   });
 
   // Gérer les demandes de couplage BLE (PIN/passkey) si nécessaire
   session.defaultSession.setBluetoothPairingHandler((details, callback) => {
-    console.log('[BT] Pairing request:', details.deviceId, details.pairingKind);
     // WisePad 3 : confirmer le couplage sans PIN (Just Works)
     callback({ confirmed: true });
   });
@@ -73,6 +65,15 @@ function createWindow() {
 
 // Autoriser les requêtes Web Bluetooth (permission handler)
 app.whenReady().then(() => {
+  // Vérification synchrone des permissions — REQUIS pour Web Bluetooth depuis URL distante.
+  // Sans ce handler, requestDevice() échoue silencieusement avant même de scanner.
+  session.defaultSession.setPermissionCheckHandler((webContents, permission, requestingOrigin) => {
+    if (permission === 'bluetooth') {
+      return true;
+    }
+    return null; // comportement par défaut pour les autres
+  });
+
   session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
     if (permission === 'media' || permission === 'bluetooth') {
       callback(true);
