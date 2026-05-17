@@ -147,8 +147,8 @@ Dans l'app admin → **Sys-Conf** → toggle **"Paiement TPE"** → Sauvegarder.
 | Compte Stripe | `acct_1TUT9cEZzRSlmbmG` — Bridge Club de Saint-Orens |
 | SSM sandbox | `/amplify/multipleapps/toto-sandbox-7be7f8659d/` |
 | API Gateway sandbox | `https://z3rkjs1mak.execute-api.eu-west-3.amazonaws.com/` |
-| `pk_test_` (sandbox) | `pk_test_51TUT9cEZzRSlmbmGgSAK7jO...` |
-| Webhook secret (sandbox) | `whsec_5gKv63VECUa4fbiEljNrnKJzALKSFQvs` |
+| `pk_test_` (sandbox) | `pk_test_51XXXX...` (voir Stripe Dashboard) |
+| Webhook secret (sandbox) | `whsec_XXXX...` (voir Stripe Dashboard → Webhooks) |
 
 ---
 
