@@ -496,7 +496,7 @@ export class ShopComponent {
       const readers = await this.stripeTerminal.discoverReaders(simulated);
 
       if (readers.length === 0) {
-        this.toastService.showWarning('TPE', 'Aucun reader trouvé. Vérifiez le Bluetooth et l\'appairage.');
+        this.toastService.showWarning('TPE', 'Aucun reader trouvé. WisePad 3 allumé ? Vérifiez la console (F12) pour le diagnostic Bluetooth.');
         return;
       }
 
