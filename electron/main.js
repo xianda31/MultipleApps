@@ -7,7 +7,6 @@
  */
 
 const { app, BrowserWindow, session } = require('electron');
-const path = require('path');
 
 // Activer Web Bluetooth (désactivé par défaut dans Electron)
 app.commandLine.appendSwitch('enable-experimental-web-platform-features');
@@ -24,9 +23,11 @@ function createWindow() {
     },
   });
 
-  // Charger l'app Angular buildée
-  const indexPath = path.join(__dirname, '..', 'dist', 'admin', 'browser', 'index.html');
-  win.loadFile(indexPath);
+  // Dev : pointe sur ng serve local ; prod (exe packagé) : URL de production
+  const url = app.isPackaged
+    ? 'https://bridgeclubsaintorens.fr/back'
+    : 'http://localhost:4200/back';
+  win.loadURL(url);
 
   // En dev uniquement : ouvrir DevTools
   if (process.env['NODE_ENV'] === 'development') {

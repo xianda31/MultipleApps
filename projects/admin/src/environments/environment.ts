@@ -1,6 +1,6 @@
 export const environment = {
     production: false,
-    tpe_simulated: true,  // Simulateur Stripe Terminal (pas de TPE physique requis)
+    tpe_simulated: false,  // TPE physique WisePad 3 — remettre true pour le simulateur
         region: 'eu-west-3',
     aws_access_key_id: 'xxxxxxxxxxxxxxxxxxxxx',
     aws_secret_access_key: 'yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy',

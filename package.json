@@ -11,7 +11,7 @@
     "sandbox": "ampx sandbox --profile amplify-dev --identifier toto --exclude amplify/node_modules --exclude \"**/amplify_outputs.json\"",
     "start": "ng serve",
     "build": "ng build admin --configuration production",
-    "build:electron": "ng build admin --configuration production && electron-builder",
+    "build:electron": "electron-builder",
     "electron:dev": "ng build admin --configuration development && electron .",
     "electron": "electron .",
     "watch": "ng build --watch --configuration development",
@@ -21,12 +21,15 @@
   "build": {
     "appId": "com.association.caisse",
     "productName": "Caisse",
+    "directories": {
+      "output": "dist/caisse-build"
+    },
     "files": [
       "electron/**/*",
       "dist/admin/**/*"
     ],
     "win": {
-      "target": "nsis",
+      "target": "dir",
       "icon": "projects/admin/public/favicon.ico"
     },
     "nsis": {
