@@ -35,6 +35,20 @@
     </div>
     }
 
+    @if (tpePaymentInProgress && tpeRemoteMode) {
+    <div class="alert alert-info d-flex align-items-center my-3" role="alert">
+      <div class="spinner-border spinner-border-sm me-2 flex-shrink-0" role="status"></div>
+      <div class="flex-grow-1">
+        <strong>En attente du TPE Android…</strong>
+        <div class="small mt-1">
+          Ouvrez <strong>ppTPE</strong> sur la tablette Android, puis confirmez le paiement de
+          <strong>{{ remotePendingAmount.toFixed(2) }} €</strong>.
+        </div>
+      </div>
+      <button type="button" class="btn-close ms-3" title="Annuler" (click)="cancelRemotePayment()"></button>
+    </div>
+    }
+
     <!-- Main content: 2-panel layout -->
     <div class="shop-panels">
 
@@ -56,16 +70,42 @@
         </div>
         }
 
+        @if (tpePaymentActive && !onlineMode) {
+        <div class="tpe-status-card"
+          [class.connected]="tpeReaderConnected"
+          [class.scanning]="!tpeReaderConnected && tpeReaderScanning">
+          <div class="tpe-status-label">
+            @if (tpeReaderConnected) {
+            <i class="bi bi-terminal text-success"></i>
+            <span class="fw-semibold text-success">{{ tpeReaderLabel }}</span>
+            <i class="bi bi-check-circle-fill text-success fs-6"></i>
+            } @else if (tpeReaderScanning) {
+            <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
+            <span class="fw-semibold text-warning ms-1">Recherche du TPE…</span>
+            } @else {
+            <i class="bi bi-phone text-danger"></i>
+            <span class="fw-semibold text-danger">Pas de TPE connecté</span>
+            }
+          </div>
+          @if (!tpeRemoteMode && !tpeReaderConnected && !tpeReaderScanning) {
+          <button type="button" class="btn-tpe-action" (click)="onRetryConnect()">
+            <i class="bi bi-arrow-clockwise me-1"></i>Réessayer
+          </button>
+          } @else if (!tpeRemoteMode && tpeReaderConnected) {
+          <button type="button" class="btn-tpe-action disconnect" (click)="onDisconnectReader()">
+            <i class="bi bi-x-circle me-1"></i>Déconnecter
+          </button>
+          }
+        </div>
+        }
+
         <div *ngIf="buyer || onlineMode">
           <app-cart [message]="message" [onlineMode]="onlineMode" [canEditPrice]="canEditPrice" [members]="members" [onlinePaymentActive]="onlinePaymentActive"
             [tpePaymentActive]="tpePaymentActive"
             [readerConnected]="tpeReaderConnected"
             [tpePaymentInProgress]="tpePaymentInProgress"
-            [tpeReaderLabel]="tpeReaderLabel"
             (complete)="cart_confirmed()" (stripeCheckout)="on_stripe_checkout()"
             (tpePayment)="onPayByCard()"
-            (connectReader)="onConnectReader()"
-            (disconnectReader)="onDisconnectReader()"
             (assetUsableChange)="asset_amount = $event"
             (debtAmountChange)="debt_amount = $event">
           </app-cart>

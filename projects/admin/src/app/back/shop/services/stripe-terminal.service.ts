@@ -1,22 +1,34 @@
 /**
  * StripeTerminalService
- * Gestion du lecteur TPE physique via le SDK Stripe Terminal JS.
+ * Gestion du lecteur TPE physique via le SDK Stripe Terminal JS (Electron)
+ * ou @capacitor-community/stripe-terminal (Android — ppTPE).
  *
  * Flux:
- * 1. init()              — charge le SDK (une seule fois par session navigateur)
- * 2. discoverReaders()   — liste les readers Bluetooth disponibles
+ * 1. init()              — charge le SDK selon la plateforme
+ * 2. discoverReaders()   — liste les readers BLE/simulés disponibles
  * 3. connectReader()     — appaire un reader
  * 4. createPaymentIntent() — crée un PaymentIntent côté serveur (Lambda)
  * 5. collectAndProcess() — SDK collecte la carte et traite le paiement
  * 6. disconnectReader()  — libère le reader
  *
- * Contrainte navigateur : Web Bluetooth API → Chrome/Edge uniquement.
+ * Plateforme Android  : @capacitor-community/stripe-terminal → BLE direct.
+ * Plateforme Electron : @stripe/terminal-js → simulé (dev) ou internet.
  */
 
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
+import { environment } from '../../../../environments/environment';
 import { post } from 'aws-amplify/api';
 import { fetchAuthSession } from 'aws-amplify/auth';
+import { Capacitor } from '@capacitor/core';
+import {
+  StripeTerminal,
+  TerminalConnectTypes,
+  TerminalEventsEnum,
+  SimulatedCardType,
+  SimulateReaderUpdate,
+  type ReaderInterface,
+} from '@capacitor-community/stripe-terminal';
 
 export type TerminalStatus =
   | 'idle'
@@ -37,6 +49,10 @@ export class StripeTerminalService {
   private terminal: any = null;
   private reader: any = null;
 
+  /** true quand on tourne sous Android (Capacitor) */
+  private readonly isAndroid = Capacitor.isNativePlatform();
+  private capacitorInitialized = false;
+
   private readonly _status$ = new BehaviorSubject<TerminalStatus>('idle');
   readonly status$ = this._status$.asObservable();
 
@@ -56,31 +72,76 @@ export class StripeTerminalService {
     return this._status$.value;
   }
 
+  get isNativeAndroid(): boolean {
+    return this.isAndroid;
+  }
+
   // ──────────────────────────────────────────────────────────
   // Initialisation
   // ──────────────────────────────────────────────────────────
 
   /**
    * Charge le SDK Stripe Terminal (une seule fois) et crée l'instance.
-   * Doit être appelé avant toute autre opération Terminal.
+   * Sur Android : initialise le plugin Capacitor.
+   * Sur Electron/web : charge @stripe/terminal-js.
    */
   async init(): Promise<void> {
+    if (this.isAndroid) {
+      await this.initCapacitor();
+    } else {
+      await this.initWeb();
+    }
+  }
+
+  private async initWeb(): Promise<void> {
     if (this.terminal) return;
-
     const { loadStripeTerminal } = await import('@stripe/terminal-js');
-    const StripeTerminal = await loadStripeTerminal();
-    if (!StripeTerminal) throw new Error('[StripeTerminal] Impossible de charger le SDK (vérifiez la connexion réseau)');
-
-    this.terminal = StripeTerminal.create({
+    const StripeTerminalJS = await loadStripeTerminal();
+    if (!StripeTerminalJS) throw new Error('[StripeTerminal] Impossible de charger le SDK');
+    this.terminal = StripeTerminalJS.create({
       onFetchConnectionToken: () => this.fetchConnectionToken(),
       onUnexpectedReaderDisconnect: () => {
-        console.warn('[StripeTerminal] Reader disconnected unexpectedly — Bluetooth perdu');
         this.reader = null;
         this._status$.next('disconnected');
         this._readerLabel$.next('');
-        // Signal UI : l'utilisateur peut relancer onConnectReader() pour re-scanner
       },
     });
+  }
+
+  private async initCapacitor(): Promise<void> {
+    if (this.capacitorInitialized) return;
+
+    // Fournir le connection token quand le plugin le demande
+    await StripeTerminal.addListener(
+      TerminalEventsEnum.RequestedConnectionToken,
+      async () => {
+        try {
+          const token = await this.fetchConnectionToken();
+          await StripeTerminal.setConnectionToken({ token });
+        } catch (e: any) {
+          console.error('[StripeTerminal] fetchConnectionToken échoué:', e?.message);
+        }
+      },
+    );
+
+    // Déconnexion inattendue
+    await StripeTerminal.addListener(
+      TerminalEventsEnum.UnexpectedReaderDisconnect,
+      () => {
+        this.reader = null;
+        this._status$.next('disconnected');
+        this._readerLabel$.next('');
+      },
+    );
+
+    // Attendre que le SDK soit pleinement initialisé (event Loaded)
+    // avant de résoudre — sinon discoverReaders() échoue silencieusement
+    await new Promise<void>((resolve) => {
+      StripeTerminal.addListener(TerminalEventsEnum.Loaded, () => resolve());
+      StripeTerminal.initialize({ isTest: true });
+    });
+
+    this.capacitorInitialized = true;
   }
 
   // ──────────────────────────────────────────────────────────
@@ -95,13 +156,39 @@ export class StripeTerminalService {
   async discoverReaders(simulated = false): Promise<any[]> {
     await this.init();
 
-    if (!simulated) {
-      const btAvailable = 'bluetooth' in navigator;
-      if (!btAvailable) {
-        throw new Error('Web Bluetooth non disponible dans ce navigateur/Electron. Vérifiez les flags Chromium.');
-      }
+    if (this.isAndroid) {
+      return new Promise<ReaderInterface[]>((resolve) => {
+        let handle: any;
+
+        // Timeout 15s — annule le scan si aucun reader trouvé
+        const timer = setTimeout(() => {
+          handle?.remove();
+          StripeTerminal.cancelDiscoverReaders().catch(() => {});
+          resolve([]);
+        }, 15000);
+
+        // Les readers arrivent via event, pas dans la Promise
+        StripeTerminal.addListener(
+          TerminalEventsEnum.DiscoveredReaders,
+          ({ readers }) => {
+            clearTimeout(timer);
+            handle?.remove();
+            StripeTerminal.cancelDiscoverReaders().catch(() => {});
+            resolve(readers ?? []);
+          },
+        ).then(h => { handle = h; });
+
+        StripeTerminal.discoverReaders({
+          type: environment.tpe_simulated ? TerminalConnectTypes.Internet : TerminalConnectTypes.Bluetooth,
+          locationId: environment.tpe_location_id,
+        }).catch(() => {}); // résultat ignoré — readers via event
+      });
     }
 
+    // Electron / web : SDK JS
+    if (!simulated && !('bluetooth' in navigator)) {
+      throw new Error('Web Bluetooth non disponible dans ce navigateur/Electron.');
+    }
     const config = simulated
       ? { simulated: true }
       : { simulated: false, discoveryMethod: 'bluetooth' };
@@ -119,6 +206,18 @@ export class StripeTerminalService {
     this._status$.next('connecting');
     this._errorMessage$.next('');
 
+    if (this.isAndroid) {
+      await StripeTerminal.connectReader({
+        reader: reader as ReaderInterface,
+        autoReconnectOnUnexpectedDisconnect: true,
+      });
+      this.reader = reader;
+      this._status$.next('connected');
+      this._readerLabel$.next(reader.label || reader.serialNumber || 'WisePad 3');
+      return;
+    }
+
+    // Electron / web
     const isBluetooth = reader.device_type === 'bbpos_wisepad3'
       || (reader as any).discoveryMethod === 'bluetooth'
       || (!reader.ip_address && !reader.base_url);
@@ -126,19 +225,16 @@ export class StripeTerminalService {
     const connectFn = isBluetooth
       ? () => (this.terminal as any).connectBluetoothReader(reader, {
           fail_if_in_use: false,
-          // Reconnexion automatique si déconnexion inattendue
           autoReconnectOnUnexpectedDisconnect: true,
         })
       : () => this.terminal.connectReader(reader, { fail_if_in_use: false });
 
     const result = await connectFn();
-
     if ((result as any).error) {
       this._status$.next('error');
       this._errorMessage$.next((result as any).error.message);
       throw new Error((result as any).error.message);
     }
-
     this.reader = (result as any).reader;
     this._status$.next('connected');
     this._readerLabel$.next(reader.label || reader.id || 'WisePad 3');
@@ -148,8 +244,12 @@ export class StripeTerminalService {
    * Déconnecte le reader actuel.
    */
   async disconnectReader(): Promise<void> {
-    if (!this.terminal || !this.reader) return;
-    await this.terminal.disconnectReader();
+    if (!this.reader) return;
+    if (this.isAndroid) {
+      await StripeTerminal.disconnectReader();
+    } else {
+      if (this.terminal) await this.terminal.disconnectReader();
+    }
     this.reader = null;
     this._status$.next('idle');
     this._readerLabel$.next('');
@@ -199,22 +299,78 @@ export class StripeTerminalService {
     this._status$.next('collecting');
     this._errorMessage$.next('');
 
-    // Étape 1 : collecte de la carte (appui sur le TPE par le client)
+    if (this.isAndroid) {
+      return new Promise<TerminalPaymentResult>((resolve, reject) => {
+        let hConfirmed: any;
+        let hFailed: any;
+        let hCanceled: any;
+
+        const cleanup = () => {
+          hConfirmed?.remove();
+          hFailed?.remove();
+          hCanceled?.remove();
+        };
+
+        // paymentIntentId = partie avant "_secret_" dans le clientSecret
+        const paymentIntentId = clientSecret.split('_secret_')[0];
+
+        StripeTerminal.addListener(
+          TerminalEventsEnum.ConfirmedPaymentIntent,
+          () => {
+            cleanup();
+            this._status$.next('success');
+            resolve({ paymentIntentId, stripeTag: `stripe:${paymentIntentId.slice(-12)}` });
+          },
+        ).then(h => { hConfirmed = h; });
+
+        StripeTerminal.addListener(
+          TerminalEventsEnum.Failed,
+          (info: { message: string; code?: string; declineCode?: string }) => {
+            cleanup();
+            this._status$.next('connected');
+            this._errorMessage$.next(info.message);
+            reject(new Error(info.message));
+          },
+        ).then(h => { hFailed = h; });
+
+        StripeTerminal.addListener(
+          TerminalEventsEnum.Canceled,
+          () => {
+            cleanup();
+            this._status$.next('connected');
+            reject(new Error('Paiement annulé'));
+          },
+        ).then(h => { hCanceled = h; });
+
+        const configureSimulator = environment.tpe_simulated
+          ? StripeTerminal.setSimulatorConfiguration({ simulatedCard: SimulatedCardType.Visa, update: SimulateReaderUpdate.None })
+          : Promise.resolve();
+
+        configureSimulator
+          .then(() => StripeTerminal.collectPaymentMethod({ paymentIntent: clientSecret }))
+          .then(() => StripeTerminal.confirmPaymentIntent())
+          .catch(err => {
+            cleanup();
+            this._status$.next('connected');
+            this._errorMessage$.next(err?.message ?? 'Erreur collecte');
+            reject(err);
+          });
+      });
+    }
+
+    // Electron / web
     const collectResult = await this.terminal.collectPaymentMethod(clientSecret);
     if (collectResult.error) {
       this._status$.next('connected');
       this._errorMessage$.next(collectResult.error.message);
       throw new Error(collectResult.error.message);
     }
-
-    // Étape 2 : traitement du paiement
     const processResult = await this.terminal.processPayment(collectResult.paymentIntent);
     if (processResult.error) {
       this._status$.next('connected');
       this._errorMessage$.next(processResult.error.message);
       throw new Error(processResult.error.message);
     }
-
     this._status$.next('success');
     const pi = processResult.paymentIntent;
     return {
@@ -227,8 +383,12 @@ export class StripeTerminalService {
    * Annule la collecte en cours (ex: client change d'avis).
    */
   async cancelCollect(): Promise<void> {
-    if (!this.terminal) return;
-    await this.terminal.cancelCollectPaymentMethod();
+    if (this.isAndroid) {
+      await StripeTerminal.cancelCollectPaymentMethod();
+    } else {
+      if (!this.terminal) return;
+      await this.terminal.cancelCollectPaymentMethod();
+    }
     this._status$.next('connected');
   }
 

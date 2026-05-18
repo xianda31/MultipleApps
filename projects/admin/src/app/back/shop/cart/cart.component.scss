@@ -193,9 +193,14 @@
   transition: all 0.2s ease;
   text-align: center;
 
-  &:hover {
+  &:hover:not(:disabled) {
     border-color: #667eea;
     color: #667eea;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
   }
 
   &.active {

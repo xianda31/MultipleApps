@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ppTPE</string>
+    <string name="title_activity_main">ppTPE</string>
+    <string name="package_name">fr.bridgeclubsaintorens.pptpe</string>
+    <string name="custom_url_scheme">fr.bridgeclubsaintorens.pptpe</string>
+</resources>

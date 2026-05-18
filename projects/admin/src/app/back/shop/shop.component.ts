@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormGroup, FormControl, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { LicenseStatus, Member } from '../../common/interfaces/member.interface';
@@ -17,10 +17,12 @@ import { StripeCheckoutOrchestrator } from './stripe-checkout/stripe-checkout.or
 import { ShopInitializationService } from './services/shop-initialization.service';
 import { BuyerContextService } from './services/buyer-context.service';
 import { ShopProductService } from './services/shop-product.service';
-import { StripeTerminalService, TerminalStatus } from './services/stripe-terminal.service';
+import { StripeTerminalService } from './services/stripe-terminal.service';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { PaymentMode } from './cart/cart.interface';
 import { environment } from '../../../environments/environment';
+import { generateClient } from 'aws-amplify/data';
+import { Schema } from '../../../../../../amplify/data/resource';
 
 /**
  * ShopComponent — Interface de gestion des ventes (cartes, adhésions, produits)
@@ -61,7 +63,7 @@ import { environment } from '../../../environments/environment';
   templateUrl: './shop.component.html',
   styleUrl: './shop.component.scss'
 })
-export class ShopComponent {
+export class ShopComponent implements OnDestroy {
   @Input() member_id: string | null = null;
   @Input() onlineMode !: boolean;
   members!: Member[];
@@ -90,9 +92,18 @@ export class ShopComponent {
   // ── TPE (Stripe Terminal) ──────────────────────────────────
   tpePaymentActive: boolean = false;
   tpePaymentInProgress: boolean = false;
+  // État réactif : alimenté par shopInit (AppSync TPESession en remote, BLE en local)
   tpeReaderConnected: boolean = false;
   tpeReaderLabel: string = '';
-  tpeStatus: TerminalStatus = 'idle';
+  tpeReaderScanning: boolean = false;
+
+  // Sur PC (Electron/web) : toujours mode distant — WisePad 3 est côté Android.
+  get tpeRemoteMode(): boolean {
+    return !this.stripeTerminal.isNativeAndroid;
+  }
+  private pendingPaymentRequestId: string | null = null;
+  private paymentRequestSub: any = null;
+  remotePendingAmount: number = 0;
 
   // STRIPE OBSERVABLES (from orchestrator) - as getters to avoid initialization order issues
   get isProcessing$() { return this.stripeCheckout.isProcessing$; }
@@ -140,7 +151,15 @@ export class ShopComponent {
       this.onlinePaymentActive = conf.online_payment_active;
       this.tpePaymentActive = conf.tpe_payment_active;
       this.minimumCbAmount = conf.minimum_cb_amount;
+      // Lancer l'auto-connexion TPE dès que la config est connue
+      if (!this.onlineMode) {
+        this.shopInit.initTPE(conf.tpe_payment_active).catch(console.error);
+      }
     });
+    // Brancher les observables TPE du service sur les champs locaux
+    this.shopInit.tpeReaderConnected$.subscribe(v => this.tpeReaderConnected = v);
+    this.shopInit.tpeReaderLabel$.subscribe(v => this.tpeReaderLabel = v);
+    this.shopInit.tpeScanning$.subscribe(v => this.tpeReaderScanning = v);
 
     const routeOnlineMode = this.route.snapshot.data['onlineMode'];
     if (routeOnlineMode !== undefined) {
@@ -196,6 +215,11 @@ export class ShopComponent {
         this.tryCompleteStripeCheckout();
       });
     });
+  }
+
+  ngOnDestroy(): void {
+    this.paymentRequestSub?.unsubscribe();
+    // shopInit (singleton root) gère sa propre subscription TPESession
   }
 
   /**
@@ -487,49 +511,20 @@ export class ShopComponent {
   // ── TPE (Stripe Terminal) ──────────────────────────────────
 
   /**
-   * Découvre et connecte le premier reader Bluetooth disponible.
-   * En dev/sandbox : utilise le simulateur Stripe (simulated=true).
+   * Relance la découverte BLE (Android uniquement — bouton "Réessayer").
+   * En mode distant (PC) : sans effet (connexion conduite par AppSync/TPESession).
    */
-  async onConnectReader(): Promise<void> {
-    try {
-      const simulated = environment.tpe_simulated;
-      const readers = await this.stripeTerminal.discoverReaders(simulated);
-
-      if (readers.length === 0) {
-        this.toastService.showWarning('TPE', 'Aucun reader trouvé. Vérifiez que le WisePad 3 est allumé et à portée Bluetooth.');
-        return;
-      }
-
-      // Connecter automatiquement le premier reader trouvé
-      await this.stripeTerminal.connectReader(readers[0]);
-      this.tpeReaderConnected = true;
-      this.tpeReaderLabel = readers[0].label || readers[0].id || 'WisePad 3';
-      this.tpeStatus = 'connected';
-      this.toastService.showSuccess('TPE', `Reader connecté : ${this.tpeReaderLabel}`);
-
-      // Suivre les changements d'état
-      this.stripeTerminal.status$.subscribe(status => {
-        this.tpeStatus = status;
-        if (status === 'disconnected') {
-          this.tpeReaderConnected = false;
-          this.tpeReaderLabel = '';
-          this.toastService.showWarning('TPE', 'WisePad 3 déconnecté — cliquez "Connecter TPE" pour reconnecter.');
-        }
-      });
-    } catch (err: any) {
-      this.toastService.showError('TPE', err.message || 'Erreur de connexion au reader');
-    }
+  async onRetryConnect(): Promise<void> {
+    await this.shopInit.retryBLEDiscovery();
   }
 
   /**
-   * Déconnecte le reader Bluetooth.
+   * Déconnecte le reader BLE (Android local uniquement).
    */
   async onDisconnectReader(): Promise<void> {
     try {
       await this.stripeTerminal.disconnectReader();
-      this.tpeReaderConnected = false;
-      this.tpeReaderLabel = '';
-      this.tpeStatus = 'idle';
+      this.shopInit.notifyDisconnected();
       this.toastService.showSuccess('TPE', 'Reader déconnecté.');
     } catch (err: any) {
       this.toastService.showError('TPE', err.message || 'Erreur lors de la déconnexion');
@@ -566,6 +561,16 @@ export class ShopComponent {
 
     this.tpePaymentInProgress = true;
 
+    // ── Conf A : mode distant — PC crée le PaymentRequest, ppTPE gère le TPE ──
+    if (this.tpeRemoteMode) {
+      const memberName = this.buyer.lastname + ' ' + this.buyer.firstname;
+      this.onPayByCardRemote(amountCents, memberName).catch(err => {
+        this.toastService.showError('Paiement CB', err.message || 'Erreur PaymentRequest');
+        this.tpePaymentInProgress = false;
+      });
+      return;
+    }
+
     try {
       const memberName = this.buyer.lastname + ' ' + this.buyer.firstname;
 
@@ -600,5 +605,109 @@ export class ShopComponent {
     } finally {
       this.tpePaymentInProgress = false;
     }
+  }
+
+  /**
+   * Conf A — PC crée PaymentIntent + PaymentRequest AppSync, attend le résultat via subscription.
+   * ppTPE (Android) reçoit la requête, collecte la carte, met à jour le status.
+   */
+  private async onPayByCardRemote(amountCents: number, memberName: string): Promise<void> {
+    const buyerId = this.buyer!.id;
+    const cartAmount = amountCents / 100;
+
+    // 1. Créer le PaymentIntent côté serveur
+    const { clientSecret, paymentIntentId, stripeTag } = await this.stripeTerminal.createPaymentIntent({
+      amountCents,
+      memberName,
+      buyerMemberId: buyerId,
+      season: this.session.season,
+      date: this.session.date,
+    });
+    this.cartService.setStripeTag(stripeTag);
+    this.remotePendingAmount = cartAmount;
+
+    // 2. Créer le PaymentRequest dans AppSync
+    const client = generateClient<Schema>();
+    const ttl = Math.floor(Date.now() / 1000) + 86400; // purge auto 24h
+    const { data, errors } = await client.models.PaymentRequest.create({
+      clientSecret,
+      paymentIntentId,
+      amountCents,
+      memberName,
+      season: this.session.season,
+      date: this.session.date,
+      stripeTag,
+      status: 'pending',
+      ttl,
+    } as any);
+
+    if (errors?.length || !data?.id) {
+      throw new Error('Impossible de créer le PaymentRequest AppSync');
+    }
+    this.pendingPaymentRequestId = data.id;
+
+    // 3. observeQuery filtré sur cet ID — plus fiable que onUpdate() dont la
+    //    souscription WebSocket peut manquer la mutation si elle n'est pas encore établie.
+    this.paymentRequestSub = (client.models.PaymentRequest.observeQuery({
+      filter: { id: { eq: data.id } },
+    }) as any).subscribe({
+      next: ({ items }: any) => {
+        const updated = items?.[0];
+        if (!updated) return;
+
+        if (updated.status === 'success') {
+          this.paymentRequestSub?.unsubscribe();
+          this.paymentRequestSub = null;
+          this.pendingPaymentRequestId = null;
+          this.cartService.payment = {
+            amount: cartAmount,
+            payer_id: buyerId,
+            mode: PaymentMode.CARD,
+            bank: '',
+            cheque_no: '',
+          };
+          this.cart_confirmed();
+          this.tpePaymentInProgress = false;
+          this.toastService.showSuccess('Paiement CB', 'Carte acceptée — vente enregistrée');
+
+        } else if (updated.status === 'failed') {
+          this.paymentRequestSub?.unsubscribe();
+          this.paymentRequestSub = null;
+          this.pendingPaymentRequestId = null;
+          this.tpePaymentInProgress = false;
+          this.toastService.showError('Paiement CB', updated.errorMessage || 'Paiement refusé par le TPE');
+
+        } else if (updated.status === 'cancelled') {
+          this.paymentRequestSub?.unsubscribe();
+          this.paymentRequestSub = null;
+          this.pendingPaymentRequestId = null;
+          this.tpePaymentInProgress = false;
+          this.toastService.showWarning('Paiement CB', 'Paiement annulé');
+        }
+      },
+      error: () => {
+        this.tpePaymentInProgress = false;
+        this.toastService.showError('TPE', 'Connexion AppSync perdue');
+      },
+    });
+  }
+
+  /**
+   * Annule le PaymentRequest en attente (mode distant) et réinitialise l'état.
+   */
+  async cancelRemotePayment(): Promise<void> {
+    this.paymentRequestSub?.unsubscribe();
+    this.paymentRequestSub = null;
+    if (this.pendingPaymentRequestId) {
+      try {
+        const client = generateClient<Schema>();
+        await client.models.PaymentRequest.update({
+          id: this.pendingPaymentRequestId,
+          status: 'cancelled',
+        } as any);
+      } catch { /* ignore — TTL nettoiera automatiquement */ }
+      this.pendingPaymentRequestId = null;
+    }
+    this.tpePaymentInProgress = false;
   }
 }

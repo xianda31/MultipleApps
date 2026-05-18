@@ -146,18 +146,15 @@
                 <i class="bi bi-arrow-up-circle me-1"></i>Avance
             </button>
             @if (tpePaymentActive) {
-            @if (!readerConnected) {
-            <button type="button" class="btn-pay" (click)="connectReader.emit()">
-                <i class="bi bi-bluetooth me-1"></i>Connecter TPE
+            <button type="button" class="btn-pay" [class.active]="selected_payment.mode === paymentMode.CARD"
+                [disabled]="!readerConnected"
+                [title]="!readerConnected ? 'Activez ppTPE pour payer par carte' : ''"
+                (click)="selected_payment.mode = paymentMode.CARD; payment_mode_change()">
+                <i class="bi bi-credit-card me-1"></i>Carte
             </button>
-            } @else {
-            <button type="button" class="btn-pay active tpe-connected" (click)="disconnectReader.emit()"
-                title="Cliquer pour déconnecter">
-                <i class="bi bi-bluetooth-fill me-1"></i>{{ tpeReaderLabel || 'TPE' }}
-            </button>
-            }
             }
         </div>
+
         @if (selected_payment.mode === paymentMode.CHEQUE) {
         <div class="cheque-fields mt-2">
             <select [ngClass]="!selected_payment.bank?'to-fill-in':''" class="form-select form-select-sm mb-2"
@@ -180,20 +177,16 @@
             <i class="bi bi-credit-card me-2"></i>Payer par carte
         </button>
         } @else {
-        <button type="button" class="btn-checkout" [disabled]="cart_is_not_valid()" (click)="validate_sale()">
-            <i class="bi bi-check-circle me-2"></i>Confirmer le panier
-        </button>
-        @if (tpePaymentActive && readerConnected) {
-        <button type="button" class="btn-checkout btn-checkout-tpe"
-            [disabled]="cart_is_not_valid_for_tpe() || tpePaymentInProgress"
-            (click)="tpePayment.emit()">
-            @if (tpePaymentInProgress) {
-            <span class="spinner-border spinner-border-sm me-2" role="status"></span>En cours…
+        <button type="button" class="btn-checkout"
+            [disabled]="cart_is_not_valid() || (selected_payment.mode === paymentMode.CARD && tpePaymentInProgress)"
+            (click)="validate_sale()">
+            @if (selected_payment.mode === paymentMode.CARD && tpePaymentInProgress) {
+            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+            En attente du TPE…
             } @else {
-            <i class="bi bi-credit-card-2-front me-2"></i>Payer par carte
+            <i class="bi bi-check-circle me-2"></i>Confirmer le panier
             }
         </button>
-        }
         @if (!cart_is_not_valid()) {
         <input type="text" class="form-control form-control-sm" placeholder="commentaire (optionnel)"
             [(ngModel)]="cart.tag">

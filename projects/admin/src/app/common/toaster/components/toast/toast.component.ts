@@ -49,6 +49,7 @@ export class ToastComponent implements OnChanges {
   }
 
   show() {
+    if (!this.toastEl?.nativeElement) return;
     this.toast = new Toast(
       this.toastEl.nativeElement,
       this.event.type === EventTypes.Error ? { autohide: false, } : { delay: 6000, });
