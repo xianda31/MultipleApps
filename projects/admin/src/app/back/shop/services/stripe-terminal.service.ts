@@ -291,6 +291,28 @@ export class StripeTerminalService {
   }
 
   /**
+   * Annule un PaymentIntent en attente côté Stripe (Lambda stripe-checkout).
+   * Silencieux si déjà capturé ou annulé.
+   */
+  async cancelPaymentIntent(paymentIntentId: string): Promise<void> {
+    const authToken = await this.getAuthToken();
+    const restOp = post({
+      apiName: this.API_NAME,
+      path: '/api/stripe/terminal-payment-intent',
+      options: {
+        body: { action: 'cancel', paymentIntentId } as any,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+        },
+      },
+    });
+    const { body } = await restOp.response;
+    const json = JSON.parse(await body.text());
+    if (json.error) throw new Error(json.error);
+  }
+
+  /**
    * Collecte le moyen de paiement via le TPE puis traite le paiement.
    * Retourne le résultat avec paymentIntentId et stripeTag.
    */

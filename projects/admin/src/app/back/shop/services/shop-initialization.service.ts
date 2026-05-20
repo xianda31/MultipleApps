@@ -34,6 +34,8 @@ export class ShopInitializationService implements OnDestroy {
   private tpeSessionSub: any = null;
   private tpeInitialized = false;
   private tpeToastShown  = false;
+  private lastKnownConnectedTtl = 0; // Unix s — utilisé par le timer de staleness
+  private stalenessTimer: any = null;
 
   constructor(
     private systemDataService: SystemDataService,
@@ -150,17 +152,25 @@ export class ShopInitializationService implements OnDestroy {
           const sorted = [...items].sort((a: any, b: any) =>
             (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''),
           );
-          const connected = sorted.find((s: any) => s.status === 'connected');
-          const scanning  = sorted.find((s: any) => s.status === 'scanning');
+          // Ignorer les sessions non rafraîchies depuis > 10 min (ppTPE arrêté)
+          // On compare via ttl (écrit explicitement par ppTPE = Date.now()/1000 + 3600)
+          // plutôt que updatedAt qui peut être absent du payload de subscription AppSync.
+          const STALE_TTL_FLOOR = Math.floor(Date.now() / 1000) + 57 * 60; // 3600 - 180 (heartbeat 3 min)
+          const fresh = (s: any) => Number(s.ttl) > STALE_TTL_FLOOR;
+          const connected = sorted.find((s: any) => s.status === 'connected' && fresh(s));
+          const scanning  = sorted.find((s: any) => s.status === 'scanning'  && fresh(s));
           if (connected) {
+            this.lastKnownConnectedTtl = Number(connected.ttl);
             this.tpeReaderConnected$.next(true);
             this.tpeReaderLabel$.next(connected.readerLabel || 'WisePad 3');
             this.tpeScanning$.next(false);
           } else if (scanning) {
+            this.lastKnownConnectedTtl = 0;
             this.tpeReaderConnected$.next(false);
             this.tpeReaderLabel$.next('');
             this.tpeScanning$.next(true);
           } else {
+            this.lastKnownConnectedTtl = 0;
             this.tpeReaderConnected$.next(false);
             this.tpeReaderLabel$.next('');
             this.tpeScanning$.next(false);
@@ -170,6 +180,20 @@ export class ShopInitializationService implements OnDestroy {
           console.warn('[TPESession] subscription error:', err?.message);
         },
       });
+      // Timer de détection de staleness : ré-évalue le TTL sans attendre un événement AppSync
+      // Heartbeat ppTPE = 15s → TTL = now+3600. Stale si last_write > 30s → floor = now+3570
+      this.stalenessTimer = setInterval(() => {
+        if (this.lastKnownConnectedTtl > 0) {
+          const staleFloor = Math.floor(Date.now() / 1000) + 3570; // 3600 - 30s
+          if (this.lastKnownConnectedTtl <= staleFloor) {
+            console.warn('[TPESession] TTL expiré — ppTPE inactif détecté');
+            this.lastKnownConnectedTtl = 0;
+            this.tpeReaderConnected$.next(false);
+            this.tpeReaderLabel$.next('');
+            this.tpeScanning$.next(false);
+          }
+        }
+      }, 10_000); // vérification toutes les 10 s
     } catch (err: any) {
       console.warn('[TPESession] observeQuery failed:', err?.message);
     }
@@ -203,5 +227,9 @@ export class ShopInitializationService implements OnDestroy {
 
   ngOnDestroy(): void {
     this.tpeSessionSub?.unsubscribe();
+    if (this.stalenessTimer !== null) {
+      clearInterval(this.stalenessTimer);
+      this.stalenessTimer = null;
+    }
   }
 }

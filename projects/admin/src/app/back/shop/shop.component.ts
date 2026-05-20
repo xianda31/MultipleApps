@@ -102,6 +102,8 @@ export class ShopComponent implements OnDestroy {
     return !this.stripeTerminal.isNativeAndroid;
   }
   private pendingPaymentRequestId: string | null = null;
+  private pendingPaymentIntentId: string | null = null;
+  private pendingPaymentTimeout: any = null;
   private paymentRequestSub: any = null;
   remotePendingAmount: number = 0;
 
@@ -219,7 +221,15 @@ export class ShopComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.paymentRequestSub?.unsubscribe();
+    this.clearPendingPaymentTimeout();
     // shopInit (singleton root) gère sa propre subscription TPESession
+  }
+
+  private clearPendingPaymentTimeout(): void {
+    if (this.pendingPaymentTimeout !== null) {
+      clearTimeout(this.pendingPaymentTimeout);
+      this.pendingPaymentTimeout = null;
+    }
   }
 
   /**
@@ -625,6 +635,7 @@ export class ShopComponent implements OnDestroy {
     });
     this.cartService.setStripeTag(stripeTag);
     this.remotePendingAmount = cartAmount;
+    this.pendingPaymentIntentId = paymentIntentId;
 
     // 2. Créer le PaymentRequest dans AppSync
     const client = generateClient<Schema>();
@@ -646,6 +657,15 @@ export class ShopComponent implements OnDestroy {
     }
     this.pendingPaymentRequestId = data.id;
 
+    // Timeout de sécurité : si ppTPE ne passe pas en 'processing' dans les 30s
+    // c'est qu'il est inactif — annuler proprement le PaymentIntent Stripe
+    this.pendingPaymentTimeout = setTimeout(() => {
+      if (this.pendingPaymentRequestId) {
+        this.cancelRemotePayment();
+        this.toastService.showWarning('TPE', 'TPE ne répond pas — paiement annulé');
+      }
+    }, 30_000);
+
     // 3. observeQuery filtré sur cet ID — plus fiable que onUpdate() dont la
     //    souscription WebSocket peut manquer la mutation si elle n'est pas encore établie.
     this.paymentRequestSub = (client.models.PaymentRequest.observeQuery({
@@ -655,7 +675,14 @@ export class ShopComponent implements OnDestroy {
         const updated = items?.[0];
         if (!updated) return;
 
+        if (updated.status === 'processing') {
+          // ppTPE a pris en charge la demande — on laisse continuer sans timeout
+          this.clearPendingPaymentTimeout();
+          return;
+        }
+
         if (updated.status === 'success') {
+          this.clearPendingPaymentTimeout();
           this.paymentRequestSub?.unsubscribe();
           this.paymentRequestSub = null;
           this.pendingPaymentRequestId = null;
@@ -671,6 +698,7 @@ export class ShopComponent implements OnDestroy {
           this.toastService.showSuccess('Paiement CB', 'Carte acceptée — vente enregistrée');
 
         } else if (updated.status === 'failed') {
+          this.clearPendingPaymentTimeout();
           this.paymentRequestSub?.unsubscribe();
           this.paymentRequestSub = null;
           this.pendingPaymentRequestId = null;
@@ -678,6 +706,7 @@ export class ShopComponent implements OnDestroy {
           this.toastService.showError('Paiement CB', updated.errorMessage || 'Paiement refusé par le TPE');
 
         } else if (updated.status === 'cancelled') {
+          this.clearPendingPaymentTimeout();
           this.paymentRequestSub?.unsubscribe();
           this.paymentRequestSub = null;
           this.pendingPaymentRequestId = null;
@@ -696,17 +725,25 @@ export class ShopComponent implements OnDestroy {
    * Annule le PaymentRequest en attente (mode distant) et réinitialise l'état.
    */
   async cancelRemotePayment(): Promise<void> {
+    this.clearPendingPaymentTimeout();
     this.paymentRequestSub?.unsubscribe();
     this.paymentRequestSub = null;
-    if (this.pendingPaymentRequestId) {
+
+    const prId = this.pendingPaymentRequestId;
+    const piId = this.pendingPaymentIntentId;
+    this.pendingPaymentRequestId = null;
+    this.pendingPaymentIntentId = null;
+
+    if (prId) {
       try {
         const client = generateClient<Schema>();
-        await client.models.PaymentRequest.update({
-          id: this.pendingPaymentRequestId,
-          status: 'cancelled',
-        } as any);
+        await client.models.PaymentRequest.update({ id: prId, status: 'cancelled' } as any);
       } catch { /* ignore — TTL nettoiera automatiquement */ }
-      this.pendingPaymentRequestId = null;
+    }
+    if (piId) {
+      try {
+        await this.stripeTerminal.cancelPaymentIntent(piId);
+      } catch { /* ignore — déjà capturé ou annulé */ }
     }
     this.tpePaymentInProgress = false;
   }

@@ -16,7 +16,7 @@
     "electron": "electron .",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "postinstall": "node scripts/link-amplify-deps.cjs"
+    "postinstall": "node scripts/link-amplify-deps.cjs && powershell -ExecutionPolicy Bypass -File scripts/patch-stripe-terminal-android.ps1"
   },
   "build": {
     "appId": "com.association.caisse",

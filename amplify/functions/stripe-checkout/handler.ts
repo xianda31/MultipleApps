@@ -672,7 +672,24 @@ async function handleTerminalPaymentIntent(event: any): Promise<any> {
     return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Invalid JSON body' }) };
   }
 
-  const { amountCents, memberName, buyerMemberId, season, date, bookEntryId } = body;
+  const { action, paymentIntentId: cancelId, amountCents, memberName, buyerMemberId, season, date, bookEntryId } = body;
+
+  // ── Action : annulation d'un PaymentIntent en attente ──
+  if (action === 'cancel') {
+    if (!cancelId || typeof cancelId !== 'string') {
+      return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'paymentIntentId required for cancel' }) };
+    }
+    try {
+      const pi = await stripe.paymentIntents.cancel(cancelId);
+      return { statusCode: 200, headers: CORS, body: JSON.stringify({ status: pi.status }) };
+    } catch (err: any) {
+      // Déjà capturé ou annulé : ne pas traiter comme une erreur côté client
+      if (err?.code === 'payment_intent_unexpected_state') {
+        return { statusCode: 200, headers: CORS, body: JSON.stringify({ status: 'already_processed' }) };
+      }
+      return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: err.message }) };
+    }
+  }
 
   if (!amountCents || !Number.isInteger(amountCents) || amountCents <= 0) {
     return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'amountCents must be a positive integer' }) };

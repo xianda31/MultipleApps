@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Amplify } from 'aws-amplify';
@@ -9,6 +9,7 @@ import {
   StripeTerminal,
   TerminalConnectTypes,
   TerminalEventsEnum,
+  ConnectionStatus,
   SimulatedCardType,
   SimulateReaderUpdate,
   type ReaderInterface,
@@ -17,7 +18,7 @@ import outputs from '../../../../amplify_outputs.json';
 import { environment } from '../environments/environment';
 import type { Schema } from '../../../../amplify/data/resource';
 
-type AppState = 'checking-auth' | 'login' | 'scanning' | 'connected' | 'processing' | 'error';
+type AppState = 'checking-auth' | 'login' | 'scanning' | 'connecting' | 'connected' | 'processing' | 'error';
 
 @Component({
   selector: 'app-root',
@@ -27,8 +28,10 @@ type AppState = 'checking-auth' | 'login' | 'scanning' | 'connected' | 'processi
   styleUrls: ['./app.component.scss'],
 })
 export class AppComponent implements OnInit, OnDestroy {
+  private cdr = inject(ChangeDetectorRef);
   state: AppState = 'checking-auth';
   readerLabel = '';
+  firmwareProgress = 0;
   currentMemberName = '';
   currentAmountCents = 0;
   errorMessage = '';
@@ -42,6 +45,9 @@ export class AppComponent implements OnInit, OnDestroy {
   private paymentRequestSub: any = null;
   private capacitorInitialized = false;
   private readonly processedPaymentIds = new Set<string>();
+  private heartbeatInterval: any = null;
+  private resumeWatchdog: any = null;
+  private tpeStarting = false;
 
   // ──────────────────────────────────────────────────────────
   // Lifecycle
@@ -82,6 +88,10 @@ export class AppComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.paymentRequestSub?.unsubscribe();
+    this.stopHeartbeat();
+    this.clearResumeWatchdog();
+    // Fermeture propre : marquer la session comme déconnectée
+    this.upsertTPESession('disconnected', '').catch(() => {});
   }
 
   // ──────────────────────────────────────────────────────────
@@ -116,7 +126,8 @@ export class AppComponent implements OnInit, OnDestroy {
   async onSignOut(): Promise<void> {
     this.paymentRequestSub?.unsubscribe();
     this.paymentRequestSub = null;
-    await this.upsertTPESession('disconnected', '');
+    this.stopHeartbeat();
+    await this.upsertTPESession('disconnected', '');  
     await StripeTerminal.disconnectReader().catch(() => {});
     await signOut();
     this.state = 'login';
@@ -131,6 +142,8 @@ export class AppComponent implements OnInit, OnDestroy {
   // ──────────────────────────────────────────────────────────
 
   private async startTPE(): Promise<void> {
+    if (this.tpeStarting) return; // évite les démarrages simultanés
+    this.tpeStarting = true;
     this.state = 'scanning';
     this.errorMessage = '';
     try {
@@ -139,25 +152,36 @@ export class AppComponent implements OnInit, OnDestroy {
 
       const readers = await this.discoverReaders();
       if (readers.length === 0) {
-        this.errorMessage = 'Aucun lecteur trouvé (15s). Vérifiez que le WisePad 3 est allumé et à portée Bluetooth.';
+        this.errorMessage = 'Aucun lecteur trouvé (30s). Vérifiez que le WisePad 3 est allumé et à portée Bluetooth.';
         this.state = 'error';
         await this.upsertTPESession('disconnected', '');
         return;
       }
 
-      await StripeTerminal.connectReader({
-        reader: readers[0],
-        autoReconnectOnUnexpectedDisconnect: true,
-      });
+      this.state = 'connecting';
       this.readerLabel = this.friendlyReaderLabel(readers[0]);
+
+      const connectTimeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Timeout connexion lecteur (15 min)')), 900000)
+      );
+      await Promise.race([
+        StripeTerminal.connectReader({
+          reader: readers[0],
+          autoReconnectOnUnexpectedDisconnect: true,
+        }),
+        connectTimeout,
+      ]);
       this.state = 'connected';
       await this.upsertTPESession('connected', this.readerLabel);
+      this.startHeartbeat();
       this.subscribePaymentRequests();
 
     } catch (e: any) {
       this.errorMessage = e.message || 'Erreur initialisation TPE';
       this.state = 'error';
       await this.upsertTPESession('disconnected', '');
+    } finally {
+      this.tpeStarting = false;
     }
   }
 
@@ -165,15 +189,19 @@ export class AppComponent implements OnInit, OnDestroy {
     if (this.capacitorInitialized) return;
 
     await StripeTerminal.addListener(TerminalEventsEnum.RequestedConnectionToken, async () => {
+      console.log('[ppTPE] RequestedConnectionToken fired — fetching token...');
       try {
         const token = await this.fetchConnectionToken();
+        console.log('[ppTPE] Connection token fetched OK, longueur:', token?.length);
         await StripeTerminal.setConnectionToken({ token });
       } catch (e: any) {
-        console.error('[ppTPE] fetchConnectionToken error:', e?.message);
+        console.error('[ppTPE] fetchConnectionToken ERREUR:', e?.message);
+        await StripeTerminal.setConnectionToken({ token: '' });
       }
     });
 
     await StripeTerminal.addListener(TerminalEventsEnum.UnexpectedReaderDisconnect, async () => {
+      this.stopHeartbeat();
       this.readerLabel = '';
       this.paymentRequestSub?.unsubscribe();
       this.paymentRequestSub = null;
@@ -182,8 +210,101 @@ export class AppComponent implements OnInit, OnDestroy {
       setTimeout(() => this.startTPE(), 3000);
     });
 
+    // Auto-reconnect BLE échoué → reprendre le scan
+    await StripeTerminal.addListener(TerminalEventsEnum.ReaderReconnectFailed, async () => {
+      console.warn('[ppTPE] ReaderReconnectFailed — reprise du scan');
+      this.stopHeartbeat();
+      this.readerLabel = '';
+      this.paymentRequestSub?.unsubscribe();
+      this.paymentRequestSub = null;
+      await this.upsertTPESession('disconnected', '');
+      this.state = 'scanning';
+      setTimeout(() => this.startTPE(), 3000);
+    });
+
+    // Reconnect BLE lancé → stopper le heartbeat immédiatement
+    // L'admin détecte la staleness dans les ~3 min sans attendre la fin du cycle de reconnect
+    await StripeTerminal.addListener(TerminalEventsEnum.ReaderReconnectStarted, async () => {
+      console.warn('[ppTPE] ReaderReconnectStarted — heartbeat suspendu');
+      this.stopHeartbeat();
+      await this.upsertTPESession('scanning', '');
+    });
+
+    // Reconnect BLE réussi → reprendre le heartbeat
+    await StripeTerminal.addListener(TerminalEventsEnum.ReaderReconnectSucceeded, async () => {
+      console.log('[ppTPE] ReaderReconnectSucceeded — heartbeat repris');
+      await this.upsertTPESession('connected', this.readerLabel);
+      this.startHeartbeat();
+    });
+
+    await StripeTerminal.addListener(TerminalEventsEnum.StartInstallingUpdate, () => {
+      console.log('[ppTPE] Mise à jour firmware WisePad 3 démarrée');
+      this.firmwareProgress = 0;
+      this.cdr.detectChanges();
+    });
+
+    await StripeTerminal.addListener(TerminalEventsEnum.ReaderSoftwareUpdateProgress, ({ progress }) => {
+      this.firmwareProgress = Math.round((progress ?? 0) * 100);
+      this.cdr.detectChanges();
+    });
+
+    await StripeTerminal.addListener(TerminalEventsEnum.FinishInstallingUpdate, () => {
+      console.log('[ppTPE] Mise à jour firmware WisePad 3 terminée');
+      this.firmwareProgress = 0;
+    });
+
+    // Changement d'état BLE → source de vérité pour la détection de déconnexion
+    // (cet événement est délivré au réveil de veille, couvrant le cas background)
+    await StripeTerminal.addListener(TerminalEventsEnum.ConnectionStatusChange, async ({ status }) => {
+      console.log('[ppTPE] ConnectionStatusChange:', status);
+      if (status === ConnectionStatus.NotConnected) {
+        this.clearResumeWatchdog();
+        if (this.state === 'connected' || this.state === 'processing') {
+          console.warn('[ppTPE] ConnectionStatus NOT_CONNECTED → forcer reconnexion');
+          this.stopHeartbeat();
+          this.readerLabel = '';
+          this.paymentRequestSub?.unsubscribe();
+          this.paymentRequestSub = null;
+          await this.upsertTPESession('scanning', '');
+          this.state = 'scanning';
+          setTimeout(() => this.startTPE(), 3000);
+        }
+      } else if (status === ConnectionStatus.Connected) {
+        // Confirme la connexion BLE (y compris après réveil de veille)
+        this.clearResumeWatchdog();
+        if (this.state === 'connected' || this.state === 'processing') {
+          this.startHeartbeat(); // redémarre le timer suspendu pendant la veille
+        }
+      }
+    });
+
+    // Watchdog au réveil : si aucun ConnectionStatus(Connected) dans les 5s → forcer reconnexion
+    // Couvre le cas où les events SDK ont été perdus pendant la mise en veille Android
+    document.addEventListener('resume', () => {
+      if (this.state === 'connected' || this.state === 'processing') {
+        console.warn('[ppTPE] App resumed — watchdog BLE 5s démarré');
+        this.clearResumeWatchdog();
+        this.resumeWatchdog = setTimeout(async () => {
+          if (this.state === 'connected' || this.state === 'processing') {
+            console.warn('[ppTPE] Watchdog: aucune confirmation BLE → forcer reconnexion');
+            this.stopHeartbeat();
+            this.readerLabel = '';
+            this.paymentRequestSub?.unsubscribe();
+            this.paymentRequestSub = null;
+            await this.upsertTPESession('scanning', '');
+            this.state = 'scanning';
+            setTimeout(() => this.startTPE(), 500);
+          }
+        }, 5000);
+      }
+    });
+
     await new Promise<void>((resolve) => {
-      StripeTerminal.addListener(TerminalEventsEnum.Loaded, () => resolve());
+      StripeTerminal.addListener(TerminalEventsEnum.Loaded, () => {
+        console.log('[ppTPE] StripeTerminal Loaded — SDK initialisé (isTest:', environment.tpe_isTest, ')');
+        resolve();
+      });
+      console.log('[ppTPE] StripeTerminal.initialize() appelé (isTest:', environment.tpe_isTest, ')');
       StripeTerminal.initialize({ isTest: environment.tpe_isTest });
     });
 
@@ -197,14 +318,23 @@ export class AppComponent implements OnInit, OnDestroy {
       const timer = setTimeout(() => {
         handle?.remove();
         StripeTerminal.cancelDiscoverReaders().catch(() => {});
+        console.warn('[ppTPE] discoverReaders: timeout 30s — aucun lecteur BLE détecté');
         resolve([]);
-      }, 15000);
+      }, 30000);
 
       StripeTerminal.addListener(TerminalEventsEnum.DiscoveredReaders, ({ readers }) => {
+        console.log('[ppTPE] DiscoveredReaders event reçu, lecteurs bruts:', JSON.stringify(readers));
+        const candidates = (readers ?? []).filter(r =>
+          environment.tpe_simulated ? true : !r.simulated
+        );
+        if (candidates.length === 0) {
+          // Continuer le scan : seulement des simulateurs trouvés pour l'instant
+          console.log('[ppTPE] DiscoveredReaders: lecteurs simulés ignorés, attente du WisePad 3...');
+          return;
+        }
         clearTimeout(timer);
         handle?.remove();
-        StripeTerminal.cancelDiscoverReaders().catch(() => {});
-        resolve(readers ?? []);
+        StripeTerminal.cancelDiscoverReaders().catch(() => {}).finally(() => resolve(candidates));
       }).then((h) => { handle = h; });
 
       if (environment.tpe_simulated) {
@@ -214,12 +344,24 @@ export class AppComponent implements OnInit, OnDestroy {
         }).catch(() => {});
       }
 
-      StripeTerminal.discoverReaders({
+      const discoverOpts: any = {
         type: environment.tpe_simulated
           ? TerminalConnectTypes.Internet
           : TerminalConnectTypes.Bluetooth,
         locationId: environment.tpe_location_id,
-      }).catch(() => {});
+      };
+      console.log('[ppTPE] discoverReaders appelé avec options:', JSON.stringify(discoverOpts));
+
+      // Vérification permission localisation (requise pour BLE physique sur Android < 12)
+      if ('permissions' in navigator) {
+        (navigator as any).permissions.query({ name: 'geolocation' }).then((r: any) => {
+          console.log('[ppTPE] Permission geolocation état:', r.state); // granted / denied / prompt
+        }).catch(() => {});
+      }
+
+      StripeTerminal.discoverReaders(discoverOpts).catch((e: any) => {
+        console.error('[ppTPE] discoverReaders ERREUR:', e?.message);
+      });
     });
   }
 
@@ -287,6 +429,34 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   // ──────────────────────────────────────────────────────────
+  // Heartbeat TTL — maintient la session "fraîche" toutes les 3 min
+  // Permet à l'admin de détecter la perte de ppTPE en ≤ 3 min
+  // ──────────────────────────────────────────────────────────
+
+  private startHeartbeat(): void {
+    this.stopHeartbeat();
+    this.heartbeatInterval = setInterval(() => {
+      if (this.state === 'connected' || this.state === 'processing') {
+        this.upsertTPESession('connected', this.readerLabel).catch(() => {});
+      }
+    }, 15 * 1000); // toutes les 15 secondes
+  }
+
+  private stopHeartbeat(): void {
+    if (this.heartbeatInterval !== null) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+    }
+  }
+
+  private clearResumeWatchdog(): void {
+    if (this.resumeWatchdog !== null) {
+      clearTimeout(this.resumeWatchdog);
+      this.resumeWatchdog = null;
+    }
+  }
+
+  // ──────────────────────────────────────────────────────────
   // TPESession AppSync
   // ──────────────────────────────────────────────────────────
 
@@ -298,15 +468,15 @@ export class AppComponent implements OnInit, OnDestroy {
     const ttl = Math.floor(Date.now() / 1000) + 3600;
     const payload = { id: this.tpeSessionId, status, readerLabel: label, ttl };
     try {
-      // Tente une mise à jour (record existant)
-      await this.client.models.TPESession.update(payload as any);
-    } catch {
-      // Première fois : crée avec l'ID fixe
-      try {
-        await this.client.models.TPESession.create(payload as any);
-      } catch (e: any) {
-        console.warn('[ppTPE] TPESession upsert error:', e?.message);
+      // update() ne throw PAS en Amplify Gen2 si le record n'existe pas :
+      // il retourne { errors } silencieusement → on vérifie explicitement
+      const { errors } = await (this.client.models.TPESession.update(payload as any) as any);
+      if (errors?.length) {
+        // Record inexistant (purgé par DynamoDB TTL ou première utilisation)
+        await (this.client.models.TPESession.create(payload as any) as any);
       }
+    } catch (e: any) {
+      console.warn('[ppTPE] TPESession upsert error:', e?.message);
     }
   }
 
