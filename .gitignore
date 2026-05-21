@@ -58,5 +58,11 @@ Thumbs.db
 
 # amplify
 .amplify
+
+# Capacitor Android build artifacts
+android/.gradle/
+android/.kotlin/
+android/app/build/
+android/build/
 amplify_outputs*
 amplifyconfiguration*

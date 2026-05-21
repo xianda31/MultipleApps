@@ -76,6 +76,68 @@
     padding: 0.5rem 0.25rem 2rem;
 }
 
+/* ===== TPE Status Card ===== */
+.tpe-status-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin: 0.5rem 0;
+    padding: 0.5rem 0.75rem;
+    border: 1.5px solid #f5c6cb;
+    border-radius: 8px;
+    background: #fff5f5;
+    font-size: 0.83rem;
+    transition: border-color 0.2s, background 0.2s;
+
+    &.connected {
+        border-color: #198754;
+        background: #f0fff4;
+    }
+
+    &.scanning {
+        border-color: #ffc107;
+        background: #fffbf0;
+    }
+}
+
+.tpe-status-label {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex: 1;
+}
+
+.tpe-heartbeat {
+    animation: tpe-blink 3s ease-in-out infinite;
+}
+
+@keyframes tpe-blink {
+    0%, 85%, 100% { opacity: 1; }
+    90%           { opacity: 0.15; }
+}
+
+.btn-tpe-action {
+    border: 1.5px solid #667eea;
+    border-radius: 6px;
+    padding: 0.2rem 0.55rem;
+    font-size: 0.78rem;
+    cursor: pointer;
+    background: transparent;
+    color: #667eea;
+    white-space: nowrap;
+    transition: opacity 0.15s;
+
+    &.disconnect {
+        border-color: #dc3545;
+        color: #dc3545;
+    }
+
+    &:hover {
+        opacity: 0.75;
+    }
+}
+
 /* ===== Product grid (replaces Bootstrap row/col-6) ===== */
 .shop-product-grid {
     display: grid;
