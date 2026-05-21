@@ -432,7 +432,45 @@ AssistanceRequest: a.model({
     allow.group(Group_names.Support).to(['read', 'create', 'update', 'delete']),
     allow.group(Group_names.Member).to(['read', 'create']),
   ]),
-  
+
+  // ─── Paiement CB via ppTPE (conf A : PC → AppSync → ppTPE → WisePad 3) ───
+  // PC crée le PaymentRequest (status: pending), ppTPE le reçoit via subscription,
+  // exécute le paiement Terminal, puis met à jour le status.
+
+  PaymentRequest: a.model({
+    clientSecret: a.string().required(),     // Stripe PaymentIntent client_secret
+    paymentIntentId: a.string().required(),  // Stripe pi_xxx
+    amountCents: a.integer().required(),
+    memberName: a.string().required(),
+    season: a.string().required(),
+    date: a.string().required(),
+    bookEntryId: a.string(),                 // BookEntry à mettre à jour après paiement
+    stripeTag: a.string(),                   // pour réconciliation
+    status: a.enum(['pending', 'processing', 'success', 'failed', 'cancelled']),
+    errorMessage: a.string(),                // message d'erreur si status=failed
+    ttl: a.integer(),                        // purge auto DynamoDB (epoch seconds, ~24h)
+  })
+    .authorization((allow) => [
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Editor).to(['read', 'create', 'update']),
+      allow.group(Group_names.Support).to(['read', 'create', 'update']),
+    ]),
+  // ─── État de connexion ppTPE (Android publie, PC souscrit) ───
+  // ppTPE Android crée/met à jour cette entrée quand il connecte un reader.
+  // Le PC souscrit via observeQuery pour afficher l'état réel en temps réel.
+  TPESession: a.model({
+    readerLabel: a.string(),         // ex: 'WisePad 3', 'Stripe Reader S700 Simulator'
+    readerSerial: a.string(),        // serial du reader (identifiant unique)
+    status: a.enum(['scanning', 'connected', 'disconnected']),
+    ttl: a.integer(),                // purge auto DynamoDB (epoch seconds, ~24h)
+  })
+    .authorization((allow) => [
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Editor).to(['read', 'create', 'update']),
+      allow.group(Group_names.Support).to(['read', 'create', 'update']),
+    ]),
 });
 export type Schema = ClientSchema<typeof schema>;
 

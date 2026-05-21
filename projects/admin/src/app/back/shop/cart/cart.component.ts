@@ -23,15 +23,12 @@ export class CartComponent {
   @Output() assetUsableChange = new EventEmitter<number>();  // Émettre quand l'avoir utilisable change
   @Output() debtAmountChange = new EventEmitter<number>();  // Émettre quand la dette à inclure change
   @Output() tpePayment = new EventEmitter<void>();          // Paiement par TPE demandé
-  @Output() connectReader = new EventEmitter<void>();        // Connecter le reader TPE
-  @Output() disconnectReader = new EventEmitter<void>();     // Déconnecter le reader TPE
   @Input() message: string = '';
   @Input() onlineMode = false;
   @Input() onlinePaymentActive = true;
   @Input() tpePaymentActive = false;    // Flag système : TPE activé
   @Input() readerConnected = false;     // Reader Bluetooth connecté
   @Input() tpePaymentInProgress = false; // Paiement TPE en cours
-  @Input() tpeReaderLabel = '';         // Libellé du reader connecté
   @Input() canEditPrice = false;  // Si false, modifier les prix est désactivé
   @Input() members: Member[] = [];  // Liste des membres pour la sélection du payee
 
@@ -204,16 +201,19 @@ export class CartComponent {
   }
 
   validate_sale() {
+    if (this.selected_payment.mode === PaymentMode.CARD) {
+      this.tpePayment.emit();
+      return;
+    }
     this.complete.emit();
     this.clear_payment();
     this.debt_amount = 0;
     this.asset_available = 0;
-
   }
 
 
   cart_is_not_valid(): boolean {
-    // Cas spécial : dette compensée par avoir et paiement espèces
+    // Cas spécial : dette compensée par avoir, paiement espèces, total nul
     if (
       this.debt_amount > 0 &&
       this.asset_available >= this.debt_amount &&
@@ -222,11 +222,19 @@ export class CartComponent {
     ) {
       return false;
     }
-    return !this.selected_payment.mode 
-      || (this.cart.items.length === 0 && !(this.total_amount()>0))
-      || (this.total_amount()<0)
-      || (this.selected_payment.mode === PaymentMode.CHEQUE && (  !this.selected_payment.bank || !this.selected_payment.cheque_no) )
-      || this.cart.items.some((item) => !item.payee);
+    // Validations communes
+    if (!this.selected_payment.mode) return true;
+    if (this.cart.items.length === 0 && !(this.total_amount() > 0)) return true;
+    if (this.total_amount() < 0) return true;
+    if (this.cart.items.some((item) => !item.payee)) return true;
+    // Validations par mode
+    if (this.selected_payment.mode === PaymentMode.CARD) {
+      return this.total_amount() <= 0 || !this.readerConnected;
+    }
+    if (this.selected_payment.mode === PaymentMode.CHEQUE) {
+      return !this.selected_payment.bank || !this.selected_payment.cheque_no;
+    }
+    return false;
   }
 
   /** Validation pour paiement TPE : pas besoin de mode de paiement sélectionné. */
