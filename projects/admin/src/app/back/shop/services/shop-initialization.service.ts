@@ -34,8 +34,15 @@ export class ShopInitializationService implements OnDestroy {
   private tpeSessionSub: any = null;
   private tpeInitialized = false;
   private tpeToastShown  = false;
-  private lastKnownConnectedTtl = 0; // Unix s — utilisé par le timer de staleness
+  private lastKnownConnectedTtl = 0; // Unix s — utilisé par le staleness timer
   private stalenessTimer: any = null;
+  private wakeGraceUntil = 0; // ms — staleness timer suspendu après réveil de veille
+  private readonly onVisibilityChange = () => {
+    if (document.visibilityState === 'visible') {
+      // Laisse 15s au heartbeat de ppTPE pour arriver via AppSync avant de juger la fraîcheur
+      this.wakeGraceUntil = Date.now() + 15_000;
+    }
+  };
 
   constructor(
     private systemDataService: SystemDataService,
@@ -152,11 +159,11 @@ export class ShopInitializationService implements OnDestroy {
           const sorted = [...items].sort((a: any, b: any) =>
             (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''),
           );
-          // Ignorer les sessions non rafraîchies depuis > 10 min (ppTPE arrêté)
-          // On compare via ttl (écrit explicitement par ppTPE = Date.now()/1000 + 3600)
-          // plutôt que updatedAt qui peut être absent du payload de subscription AppSync.
-          const STALE_TTL_FLOOR = Math.floor(Date.now() / 1000) + 57 * 60; // 3600 - 180 (heartbeat 3 min)
-          const fresh = (s: any) => Number(s.ttl) > STALE_TTL_FLOOR;
+          // Fraîcheur TTL : même fenêtre 5 min que le staleness timer.
+          // Évite le flash "connecté" au démarrage si le dernier record est stale.
+          // ppTPE en background < 5 min : heartbeat resume remet le TTL à jour immédiatement.
+          const staleFloor = Math.floor(Date.now() / 1000) + 3300; // 3600 - 300s (5 min)
+          const fresh = (s: any) => Number(s.ttl) > staleFloor;
           const connected = sorted.find((s: any) => s.status === 'connected' && fresh(s));
           const scanning  = sorted.find((s: any) => s.status === 'scanning'  && fresh(s));
           if (connected) {
@@ -180,20 +187,23 @@ export class ShopInitializationService implements OnDestroy {
           console.warn('[TPESession] subscription error:', err?.message);
         },
       });
-      // Timer de détection de staleness : ré-évalue le TTL sans attendre un événement AppSync
-      // Heartbeat ppTPE = 15s → TTL = now+3600. Stale si last_write > 30s → floor = now+3570
+      // Staleness timer : détecte ppTPE arrêté sans écriture explicite 'disconnected'
+      // Fenêtre 5 min : tolère les backgrounds courts, détecte un crash en ≤5 min.
+      // Math : TTL = write_time+3600 ; stale si write_time+3600 ≤ now+(3600-300)
+      //        ⇔ write_time ≤ now-300 ⇔ dernière écriture il y a > 5 min.
+      document.addEventListener('visibilitychange', this.onVisibilityChange);
       this.stalenessTimer = setInterval(() => {
-        if (this.lastKnownConnectedTtl > 0) {
-          const staleFloor = Math.floor(Date.now() / 1000) + 3570; // 3600 - 30s
+        if (this.lastKnownConnectedTtl > 0 && Date.now() > this.wakeGraceUntil) {
+          const staleFloor = Math.floor(Date.now() / 1000) + 3300; // 3600 - 300s (5 min)
           if (this.lastKnownConnectedTtl <= staleFloor) {
-            console.warn('[TPESession] TTL expiré — ppTPE inactif détecté');
+            console.warn('[TPESession] Staleness détectée — ppTPE inactif depuis > 5 min');
             this.lastKnownConnectedTtl = 0;
             this.tpeReaderConnected$.next(false);
             this.tpeReaderLabel$.next('');
             this.tpeScanning$.next(false);
           }
         }
-      }, 10_000); // vérification toutes les 10 s
+      }, 15_000); // vérification toutes les 15 s
     } catch (err: any) {
       console.warn('[TPESession] observeQuery failed:', err?.message);
     }
@@ -227,6 +237,7 @@ export class ShopInitializationService implements OnDestroy {
 
   ngOnDestroy(): void {
     this.tpeSessionSub?.unsubscribe();
+    document.removeEventListener('visibilitychange', this.onVisibilityChange);
     if (this.stalenessTimer !== null) {
       clearInterval(this.stalenessTimer);
       this.stalenessTimer = null;

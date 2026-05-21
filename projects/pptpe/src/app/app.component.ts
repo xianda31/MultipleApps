@@ -47,6 +47,7 @@ export class AppComponent implements OnInit, OnDestroy {
   private readonly processedPaymentIds = new Set<string>();
   private heartbeatInterval: any = null;
   private resumeWatchdog: any = null;
+  private lastResumeTime = 0;
   private tpeStarting = false;
 
   // ──────────────────────────────────────────────────────────
@@ -281,7 +282,12 @@ export class AppComponent implements OnInit, OnDestroy {
     // Watchdog au réveil : si aucun ConnectionStatus(Connected) dans les 5s → forcer reconnexion
     // Couvre le cas où les events SDK ont été perdus pendant la mise en veille Android
     document.addEventListener('resume', () => {
+      const now = Date.now();
+      if (now - this.lastResumeTime < 1000) return; // débounce Capacitor double-fire
+      this.lastResumeTime = now;
       if (this.state === 'connected' || this.state === 'processing') {
+        // Heartbeat immédiat pour éviter la détection de staleness côté shop
+        this.upsertTPESession('connected', this.readerLabel).catch(() => {});
         console.warn('[ppTPE] App resumed — watchdog BLE 5s démarré');
         this.clearResumeWatchdog();
         this.resumeWatchdog = setTimeout(async () => {
@@ -435,9 +441,24 @@ export class AppComponent implements OnInit, OnDestroy {
 
   private startHeartbeat(): void {
     this.stopHeartbeat();
-    this.heartbeatInterval = setInterval(() => {
+    this.heartbeatInterval = setInterval(async () => {
       if (this.state === 'connected' || this.state === 'processing') {
-        this.upsertTPESession('connected', this.readerLabel).catch(() => {});
+        // Vérifier que le SDK connaît toujours un reader connecté avant d'écrire 'connected'
+        try {
+          const { reader } = await StripeTerminal.getConnectedReader();
+          if (reader) {
+            this.upsertTPESession('connected', this.readerLabel).catch(() => {});
+          } else {
+            console.warn('[ppTPE] Heartbeat: getConnectedReader() = null malgré state=connected → déconnexion forcée');
+            this.state = 'idle';
+            this.cdr.detectChanges();
+            this.stopHeartbeat();
+            await this.upsertTPESession('disconnected', '');
+          }
+        } catch {
+          // En cas d'erreur SDK, ne pas perturber — on garde l'état actuel
+          this.upsertTPESession('connected', this.readerLabel).catch(() => {});
+        }
       }
     }, 15 * 1000); // toutes les 15 secondes
   }
