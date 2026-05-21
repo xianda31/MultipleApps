@@ -356,6 +356,64 @@ const schema = a.schema({
     ]),
 
 
+  // ── Sondages ─────────────────────────────────────────────────────────────
+
+  Survey: a.model({
+    title: a.string().required(),
+    description: a.string(),
+    status: a.enum(['draft', 'active', 'closed']),
+    closingDate: a.string().required(), // ISO date — date limite de réponse
+    season: a.string().required(),
+  })
+    .authorization((allow) => [
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Editor).to(['read']),
+      allow.group(Group_names.Member).to(['read']),
+    ]),
+
+  SurveyQuestion: a.model({
+    surveyId: a.string().required(),
+    order: a.integer().required(),
+    text: a.string().required(),
+    options: a.string().array().required(), // 2 à 4 choix possibles
+  })
+    .authorization((allow) => [
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Editor).to(['read']),
+      allow.group(Group_names.Member).to(['read']),
+    ]),
+
+  SurveyResponse: a.model({
+    surveyId: a.string().required(),
+    memberId: a.string().required(),     // license_number ou cognitoId
+    memberEmail: a.string().required(),
+    memberName: a.string(),              // prénom + nom pour le tableau admin
+    answers: a.json().required(),        // { [questionId]: optionIndex }
+  })
+    .authorization((allow) => [
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Member).to(['read', 'create', 'update']),
+    ]),
+
+  // Tokens pour accès mail sans login (UUID v4, validés côté Lambda)
+  SurveyToken: a.model({
+    token: a.string().required(),        // UUID v4 — clé primaire
+    surveyId: a.string().required(),
+    memberId: a.string().required(),
+    memberEmail: a.string().required(),
+    memberName: a.string(),
+    expiresAt: a.string().required(),    // = closingDate du sondage
+    usedAt: a.string(),                  // date première soumission
+  })
+    .identifier(['token'])
+    .authorization((allow) => [
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
+    ]),
+
     // Assistance requests
 
 AssistanceRequest: a.model({
