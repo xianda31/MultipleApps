@@ -81,4 +81,34 @@ export class MailingService {
             throw new Error(error?.error?.error || error?.message || 'Erreur lors de l\'envoi du mail');
         }
     }
+
+    /**
+     * Envoie un sondage à une liste de destinataires via ses-mailing (mode survey).
+     * Génère un token SurveyToken par destinataire côté Lambda.
+     */
+    async sendSurvey(params: {
+        surveyId: string;
+        subject: string;
+        surveyBodyHtml: string;   // corps sans template (markers [SURVEY_LINK] inclus)
+        closingDate?: string;
+        recipients: Array<{ email: string; name: string; memberId: string }>;
+        attachments?: Array<{filename: string; content: string; contentType: string}>;
+    }): Promise<any> {
+        if (!params.recipients.length) throw new Error('Aucun destinataire');
+        const emailTemplate = this.buildEmailTemplate(params.surveyBodyHtml);
+        try {
+            return await this.mailingApi.sendSurvey({
+                surveyId: params.surveyId,
+                subject: params.subject,
+                emailTemplate,
+                closingDate: params.closingDate,
+                recipients: params.recipients,
+                from: this.defaultFrom,
+                baseUrl: window.location.origin,
+                attachments: params.attachments?.length ? params.attachments : undefined,
+            });
+        } catch (error: any) {
+            throw new Error(error?.error?.error || error?.message || 'Erreur lors de l\'envoi du sondage');
+        }
+    }
 }

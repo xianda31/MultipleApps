@@ -45,6 +45,9 @@ export const BACK_ROUTE_PATHS = {
   Assistance: 'communication/assistance',
   Mailing: 'communication/mailing',
   BreakingNews: 'communication/breaking-news',
+  SondageList: 'communication/sondage',
+  SondageEditor: 'communication/sondage/editor/:id',
+  SondageResultats: 'communication/sondage/:id/resultats',
   CMSWrapper:'site/cms-wrapper',
   SignOut: 'signout'
 };

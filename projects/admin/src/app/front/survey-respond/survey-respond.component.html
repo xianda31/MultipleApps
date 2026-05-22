@@ -1,0 +1,230 @@
+<!-- Fond neutre, centré, mobile-friendly -->
+<div style="min-height:100vh;background:#f5f7fa;padding:24px 16px;font-family:Arial,Helvetica,sans-serif">
+  <div style="max-width:620px;margin:0 auto">
+
+    <!-- Logo / en-tête club -->
+    <div style="text-align:center;margin-bottom:28px">
+      <p style="color:#888;font-size:13px;margin:4px 0">Bridge Club Saint-Orens</p>
+    </div>
+
+    <!-- ── Chargement ── -->
+    @if (state === 'loading') {
+      <div style="text-align:center;padding:60px 0;color:#888">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p style="margin-top:12px">Chargement…</p>
+      </div>
+    }
+
+    <!-- ── Erreur (token invalide / expiré) ── -->
+    @if (state === 'error') {
+      <div style="background:white;border-radius:10px;padding:32px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+        <p style="font-size:40px;margin:0">⚠️</p>
+        <h2 style="color:#c0392b;margin:12px 0 8px">Lien invalide</h2>
+        <p style="color:#555">{{ errorMsg }}</p>
+        <p style="color:#aaa;font-size:12px;margin-top:20px">
+          Ce lien est à usage personnel et ne peut pas être partagé.<br>
+          Contactez le club si vous avez besoin d'aide.
+        </p>
+      </div>
+    }
+
+    <!-- ── Formulaire (form) ── -->
+    @if ((state === 'form' || state === 'done') && data) {
+      <div style="background:white;border-radius:10px;padding:32px;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+
+        <!-- Intro personnalisée -->
+        <p style="font-size:16px;color:#333;margin:0 0 6px 0">
+          Bonjour <strong>{{ firstName }}</strong>,
+        </p>
+        <p style="font-size:14px;color:#aaa;margin:0 0 24px 0">
+          Ce formulaire vous est adressé personnellement ; ne le partagez pas.
+        </p>
+        <hr style="border:none;border-top:1px solid #eee;margin:0 0 24px 0">
+
+        <!-- Titre sondage -->
+        <h1 style="font-size:20px;color:#333;margin:0 0 10px 0">{{ survey!.title }}</h1>
+        @if (survey!.description) {
+          <p style="font-size:15px;color:#555;line-height:1.7;margin:0 0 24px 0"
+             [innerHTML]="survey!.description"></p>
+        }
+
+        
+        <!-- ════ SONDAGE CLÔTURÉ ════ -->
+        @if (isClosed) {
+          <div style="text-align:center;padding:20px 0 8px">
+            <p style="font-size:32px;margin:0">🔒</p>
+            <h3 style="color:#888;margin:12px 0 6px">Ce questionnaire est clôturé</h3>
+            <p style="color:#aaa;font-size:14px">Les réponses ne peuvent plus être modifiées.</p>
+          </div>
+          <!-- Récapitulatif si déjà répondu -->
+          @if (existingResponse) {
+            <hr style="border:none;border-top:1px solid #eee;margin:20px 0">
+            <p style="color:#888;font-size:13px;margin:0 0 12px 0;text-align:center">Votre réponse enregistrée :</p>
+            @if (isRsvp) {
+              <p style="text-align:center;font-size:15px;font-weight:bold;color:#555">
+                @if (status === 'confirmed') { ✅ Présent(e) }
+                @if (status === 'declined') { ❌ Absent(e) }
+                @if (status === 'cancelled') { 🔕 Annulé }
+              </p>
+            } @else {
+              @for (q of questions; track q.id) {
+                <div style="margin-bottom:10px">
+                  <p style="font-size:13px;color:#888;margin:0 0 2px 0">{{ q.text }}</p>
+                  <p style="font-weight:bold;color:#333;margin:0">{{ q.options[answers[q.id]] }}</p>
+                </div>
+              }
+            }
+          }
+        }
+
+        <!-- ════ POLL ════ -->
+        @if (!isRsvp && !isClosed) {
+
+          <!-- Formulaire de réponse -->
+          @if (state === 'form') {
+            @for (q of questions; track q.id) {
+              <div style="margin-bottom:24px">
+                <p style="font-weight:bold;color:#333;margin:0 0 10px 0">{{ q.text }}</p>
+                @for (opt of q.options; track $index) {
+                  <label style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:6px;cursor:pointer;margin-bottom:6px"
+                         [style.background]="answers[q.id] === $index ? '#eef1ff' : '#f8f9fa'">
+                    <input type="radio" [name]="'q_'+q.id"
+                           [checked]="answers[q.id] === $index"
+                           (change)="answers[q.id] = $index"
+                           style="width:16px;height:16px;cursor:pointer">
+                    <span style="color:#333">{{ opt }}</span>
+                  </label>
+                }
+              </div>
+            }
+
+            @if (saveError) {
+              <p style="color:#c0392b;font-size:14px;margin-bottom:12px">{{ saveError }}</p>
+            }
+
+            <button [disabled]="saving || !allAnswered"
+                    (click)="submitPoll()"
+                    style="width:100%;padding:14px;background:#667eea;color:white;border:none;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer;opacity:1"
+                    [style.opacity]="saving || !allAnswered ? '0.6' : '1'">
+              @if (saving) { Envoi en cours… } @else { Soumettre ma réponse }
+            </button>
+          }
+
+          <!-- Confirmation après vote -->
+          @if (state === 'done') {
+            <div style="text-align:center;padding:16px 0">
+              <p style="font-size:36px;margin:0">✅</p>
+              <h3 style="color:#27ae60;margin:12px 0 8px">Merci pour votre participation !</h3>
+              <p style="color:#666">Votre réponse a bien été enregistrée.</p>
+            </div>
+            <hr style="border:none;border-top:1px solid #eee;margin:20px 0">
+            <!-- Récapitulatif des réponses -->
+            @for (q of questions; track q.id) {
+              <div style="margin-bottom:14px">
+                <p style="font-size:13px;color:#888;margin:0 0 4px 0">{{ q.text }}</p>
+                <p style="font-weight:bold;color:#333;margin:0">
+                  {{ q.options[answers[q.id]] }}
+                </p>
+              </div>
+            }
+            <button (click)="editAgain()"
+                    style="margin-top:16px;width:100%;padding:12px;background:white;color:#667eea;border:2px solid #667eea;border-radius:8px;font-size:15px;cursor:pointer">
+              Modifier ma réponse
+            </button>
+          }
+        }
+
+        <!-- ════ RSVP ════ -->
+        @if (isRsvp && !isClosed) {
+
+          <!-- Pas encore répondu -->
+          @if (!existingResponse) {
+            <p style="color:#555;margin-bottom:24px">Merci de confirmer votre présence :</p>
+            @if (saveError) {
+              <p style="color:#c0392b;font-size:14px;margin-bottom:12px">{{ saveError }}</p>
+            }
+            <div style="display:flex;gap:12px">
+              <button [disabled]="saving" (click)="rsvpAnswer('confirmed')"
+                      style="flex:1;padding:14px;background:#27ae60;color:white;border:none;border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer">
+                @if (saving) { … } @else { ✅ Je confirme ma présence }
+              </button>
+              <button [disabled]="saving" (click)="rsvpAnswer('declined')"
+                      style="flex:1;padding:14px;background:#e74c3c;color:white;border:none;border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer">
+                @if (saving) { … } @else { ❌ Je ne pourrai pas venir }
+              </button>
+            </div>
+          }
+
+          <!-- Confirmé -->
+          @if (status === 'confirmed') {
+            <div style="text-align:center;padding:16px 0">
+              <p style="font-size:36px;margin:0">✅</p>
+              <h3 style="color:#27ae60;margin:12px 0 8px">Votre présence est confirmée</h3>
+              <p style="color:#666">Merci, nous vous attendons !</p>
+            </div>
+            @if (saveError) { <p style="color:#c0392b;font-size:14px">{{ saveError }}</p> }
+            <div style="display:flex;gap:10px;margin-top:20px">
+              <button [disabled]="saving" (click)="changeStatus('declined')"
+                      style="flex:1;padding:11px;background:white;color:#e74c3c;border:2px solid #e74c3c;border-radius:8px;font-size:14px;cursor:pointer">
+                Finalement je ne viendrai pas
+              </button>
+              <button [disabled]="saving" (click)="changeStatus('cancelled')"
+                      style="flex:1;padding:11px;background:white;color:#888;border:2px solid #ddd;border-radius:8px;font-size:14px;cursor:pointer">
+                Annuler ma participation
+              </button>
+            </div>
+          }
+
+          <!-- Décliné -->
+          @if (status === 'declined') {
+            <div style="text-align:center;padding:16px 0">
+              <p style="font-size:36px;margin:0">❌</p>
+              <h3 style="color:#e74c3c;margin:12px 0 8px">Vous avez décliné l'invitation</h3>
+              <p style="color:#666">Nous en prenons note.</p>
+            </div>
+            @if (saveError) { <p style="color:#c0392b;font-size:14px">{{ saveError }}</p> }
+            <div style="display:flex;gap:10px;margin-top:20px">
+              <button [disabled]="saving" (click)="changeStatus('confirmed')"
+                      style="flex:1;padding:12px;background:#27ae60;color:white;border:none;border-radius:8px;font-size:15px;cursor:pointer">
+                Finalement je viendrai !
+              </button>
+              <button [disabled]="saving" (click)="changeStatus('cancelled')"
+                      style="flex:1;padding:12px;background:white;color:#888;border:2px solid #ddd;border-radius:8px;font-size:14px;cursor:pointer">
+                Annuler ma réponse
+              </button>
+            </div>
+          }
+
+          <!-- Annulé -->
+          @if (status === 'cancelled') {
+            <div style="text-align:center;padding:16px 0">
+              <p style="font-size:36px;margin:0">🔕</p>
+              <h3 style="color:#888;margin:12px 0 8px">Participation annulée</h3>
+              <p style="color:#aaa">Votre réponse a été annulée.</p>
+            </div>
+            @if (saveError) { <p style="color:#c0392b;font-size:14px">{{ saveError }}</p> }
+            <div style="display:flex;gap:10px;margin-top:20px">
+              <button [disabled]="saving" (click)="changeStatus('confirmed')"
+                      style="flex:1;padding:12px;background:#27ae60;color:white;border:none;border-radius:8px;font-size:15px;cursor:pointer">
+                ✅ Je confirme ma présence
+              </button>
+              <button [disabled]="saving" (click)="changeStatus('declined')"
+                      style="flex:1;padding:12px;background:white;color:#e74c3c;border:2px solid #e74c3c;border-radius:8px;font-size:15px;cursor:pointer">
+                Je ne viendrai pas
+              </button>
+            </div>
+          }
+        }
+
+        <!-- Footer note -->
+        @if (survey!.footerNote) {
+          <p style="color:#aaa;font-size:12px;margin-top:28px;text-align:center">{{ survey!.footerNote }}</p>
+        }
+      </div>
+    }
+
+    <p style="text-align:center;color:#ccc;font-size:11px;margin-top:24px">
+      Bridge Club Saint-Orens — lien personnel, ne pas partager
+    </p>
+  </div>
+</div>

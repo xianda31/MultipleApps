@@ -361,9 +361,11 @@ const schema = a.schema({
   Survey: a.model({
     title: a.string().required(),
     description: a.string(),
+    footerNote: a.string(),
+    surveyType: a.enum(['poll', 'rsvp', 'invitation']),  // 'poll' = QCM simple, 'rsvp' = RSVP, 'invitation' = sondage avec Question 0
     status: a.enum(['draft', 'active', 'closed']),
-    closingDate: a.string().required(), // ISO date — date limite de réponse
-    season: a.string().required(),
+    closingDate: a.string().required(),
+    season: a.string(),
   })
     .authorization((allow) => [
       allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
@@ -374,9 +376,10 @@ const schema = a.schema({
 
   SurveyQuestion: a.model({
     surveyId: a.string().required(),
-    order: a.integer().required(),
+    order: a.integer().required(),         // -1 = question d'invitation, 0+ = questions normales
     text: a.string().required(),
-    options: a.string().array().required(), // 2 à 4 choix possibles
+    options: a.string().array().required(),        // texte complet des choix
+    optionKeywords: a.string().array(),            // mot-clef court affiché dans le tableau résultats
   })
     .authorization((allow) => [
       allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
@@ -387,10 +390,14 @@ const schema = a.schema({
 
   SurveyResponse: a.model({
     surveyId: a.string().required(),
+    surveyTokenId: a.string(),           // token UUID associé (accès sans login)
     memberId: a.string().required(),     // license_number ou cognitoId
     memberEmail: a.string().required(),
     memberName: a.string(),              // prénom + nom pour le tableau admin
     answers: a.json().required(),        // { [questionId]: optionIndex }
+    // poll: 'submitted' | rsvp: 'confirmed' | 'declined' | 'cancelled'
+    status: a.string(),
+    submittedAt: a.string(),             // ISO date de la dernière modification
   })
     .authorization((allow) => [
       allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
@@ -406,7 +413,7 @@ const schema = a.schema({
     memberEmail: a.string().required(),
     memberName: a.string(),
     expiresAt: a.string().required(),    // = closingDate du sondage
-    usedAt: a.string(),                  // date première soumission
+    lastActivityAt: a.string(),          // dernière action (vote, annulation, rétablissement)
   })
     .identifier(['token'])
     .authorization((allow) => [

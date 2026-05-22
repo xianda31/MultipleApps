@@ -35,6 +35,9 @@ import { CmsWrapper } from './pages/cms-wrapper/cms-wrapper';
 import { CompetitionsComponent } from './competitions/competitions';
 import { DashboardComponent } from './dashboard/dashboard';
 import { StripeReconciliationComponent } from './shop/stripe-reconciliation/stripe-reconciliation.component';
+import { SondageListComponent } from './sondage/sondage-list/sondage-list.component';
+import { SondageEditorComponent } from './sondage/sondage-editor/sondage-editor.component';
+import { SondageResultatsComponent } from './sondage/sondage-resultats/sondage-resultats.component';
 
 
 export const routes: Routes = [
@@ -89,6 +92,9 @@ export const routes: Routes = [
       { path: BACK_ROUTE_PATHS.Assistance, component: BackAssistanceComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.Mailing, component: MailingComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.BreakingNews, component: BreakingNewsDefineComponent, canActivate: [AuthGuard] },
+      { path: BACK_ROUTE_PATHS.SondageList, component: SondageListComponent, canActivate: [AuthGuard] },
+      { path: BACK_ROUTE_PATHS.SondageEditor, component: SondageEditorComponent, canActivate: [AuthGuard] },
+      { path: BACK_ROUTE_PATHS.SondageResultats, component: SondageResultatsComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.Competitions, component: CompetitionsComponent, data: { access: 'full' }, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.StripeProducts, redirectTo: BACK_ROUTE_PATHS.Products, pathMatch: 'full' },
       { path: BACK_ROUTE_PATHS.StripeOnlineShop, component: ShopComponent, canActivate: [AuthGuard], data: { onlineMode: true } },

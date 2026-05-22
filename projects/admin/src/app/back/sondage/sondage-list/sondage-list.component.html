@@ -1,0 +1,104 @@
+<div class="container-fluid py-3">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0"><i class="bi bi-bar-chart-line me-2"></i>Sondages</h4>
+    <button class="btn btn-primary btn-sm" (click)="goCreate()">
+      <i class="bi bi-plus-lg me-1"></i>Nouveau sondage
+    </button>
+  </div>
+
+  @if (loading) {
+    <div class="text-muted">Chargement…</div>
+  } @else if (surveys.length === 0) {
+    <div class="alert alert-light">Aucun sondage créé.</div>
+  } @else {
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Titre</th>
+            <!-- <th>Saison</th> -->
+            <th>Clôture</th>
+            <th>État</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (s of surveys; track s.id) {
+            <tr>
+              <td>{{ s.title }}</td>
+              <!-- <td>{{ s.season }}</td> -->
+              <td>{{ s.closingDate | date:'dd/MM/yyyy' }}</td>
+              <td>
+                <span class="badge bg-{{ statusClass[s.status ?? 'draft'] }}">
+                  {{ statusLabel[s.status ?? 'draft'] }}
+                </span>
+              </td>
+              <td class="text-end">
+                <div class="btn-group btn-group-sm">
+                  <button class="btn btn-outline-secondary" title="Éditer" (click)="goEdit(s.id)">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="btn btn-outline-info" title="Résultats" (click)="goResultats(s.id)">
+                    <i class="bi bi-table"></i>
+                  </button>
+                  <!-- @if (s.status === 'draft' || s.status === 'active') {
+                    <button class="btn btn-outline-success" title="Envoyer" (click)="openSendPanel(s)">
+                      <i class="bi bi-send"></i>
+                    </button>
+                  } -->
+                  @if (s.status === 'active') {
+                    <button class="btn btn-outline-warning" title="Clôturer" (click)="close(s)">
+                      <i class="bi bi-lock"></i>
+                    </button>
+                  }
+                  @if (s.status === 'closed') {
+                    <button class="btn btn-outline-success" title="Rouvrir" (click)="reopen(s)">
+                      <i class="bi bi-unlock"></i>
+                    </button>
+                  }
+                  @if (s.status === 'draft') {
+                    <button class="btn btn-outline-danger" title="Supprimer" (click)="deleteSurvey(s)">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+<!-- Backdrop -->
+<!-- <div class="offcanvas-backdrop fade" [class.show]="!!sendTargetSurvey"
+  [style.display]="sendTargetSurvey ? 'block' : 'none'"
+  (click)="closeSendPanel()"></div> -->
+
+<!-- Panneau d'envoi -->
+<!-- <div class="offcanvas offcanvas-end" [class.show]="!!sendTargetSurvey" style="width:500px;visibility:visible">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">
+      <i class="bi bi-send me-2"></i>Envoyer le sondage
+    </h5>
+    <button type="button" class="btn-close" (click)="closeSendPanel()"></button>
+  </div>
+  <div class="offcanvas-body d-flex flex-column gap-3">
+    @if (sendTargetSurvey) {
+      <div class="alert alert-light mb-0">
+        <strong>{{ sendTargetSurvey.title }}</strong><br>
+        <small class="text-muted">Clôture : {{ sendTargetSurvey.closingDate | date:'dd/MM/yyyy' }}</small>
+      </div>
+      <app-recipient-selector (selectionChange)="onSendRecipientsChange($event)"></app-recipient-selector>
+      <div class="mt-auto d-flex justify-content-end gap-2">
+        <button class="btn btn-secondary" (click)="closeSendPanel()" [disabled]="sending">Annuler</button>
+        <button class="btn btn-success" (click)="confirmSend()"
+          [disabled]="sending || sendRecipients.length === 0">
+          @if (sending) { <span class="spinner-border spinner-border-sm me-1"></span> }
+          Envoyer ({{ sendRecipients.length }})
+        </button>
+      </div>
+    }
+  </div>
+</div> -->

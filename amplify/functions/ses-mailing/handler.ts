@@ -1,6 +1,7 @@
 import { SESClient, SendEmailCommand, SendRawEmailCommand } from '@aws-sdk/client-ses';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, ScanCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, ScanCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
+import { randomUUID } from 'crypto';
 
 const ses = new SESClient({ region: process.env.AWS_REGION });
 const client = new DynamoDBClient({});
@@ -51,6 +52,91 @@ function createRawEmail(
   return rawEmail;
 }
 
+// ── Survey send handler ────────────────────────────────────────────────────
+
+async function handleSurveySend(body: any, event: any) {
+  const {
+    surveyId,
+    subject,
+    emailTemplate,   // HTML complet avec [SURVEY_LINK] comme marqueur
+    closingDate,
+    recipients,      // Array<{ email, name, memberId }>
+    from,
+  } = body;
+
+  if (!surveyId || !subject || !emailTemplate || !recipients?.length) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'Missing required fields for survey send' }) };
+  }
+
+  const surveyTokenTable = process.env.SURVEY_TOKEN_TABLE_NAME;
+  if (!surveyTokenTable) {
+    return { statusCode: 500, body: JSON.stringify({ error: 'SURVEY_TOKEN_TABLE_NAME not configured' }) };
+  }
+
+  const fromAddress = from || '"Bridge Club Saint-Orens" <noreply@bridgeclubsaintorens.fr>';
+    const publicBaseUrl = (body.baseUrl as string | undefined)?.replace(/\/$/, '')
+      || process.env.PUBLIC_BASE_URL?.replace(/\/$/, '')
+      || 'https://admin.bridgeclubsaintorens.fr';
+  const apiEndpoint = process.env.API_ENDPOINT
+    || (event.requestContext?.domainName ? `https://${event.requestContext.domainName}` : publicBaseUrl);
+
+  const expiresAt = closingDate || new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString();
+  const now = new Date().toISOString();
+
+  const results: { email: string; status: 'sent' | 'error'; error?: string }[] = [];
+
+  for (const recipient of recipients) {
+    const token = randomUUID();
+    const surveyLink = `${publicBaseUrl}/front/sondage?token=${token}`;
+
+    try {
+      // 1. Persister le token
+      await docClient.send(new PutCommand({
+        TableName: surveyTokenTable,
+        Item: {
+          token,
+          surveyId,
+          memberId: recipient.memberId || recipient.email,
+          memberEmail: recipient.email,
+          memberName: recipient.name || '',
+          expiresAt,
+          lastActivityAt: now,
+        },
+      }));
+
+      // 2. Email personnalisé : remplacer [SURVEY_LINK] + ajouter désinscription
+      const unsubscribeLink = `<hr style="margin-top:30px;border:none;border-top:1px solid #e0e0e0"><p style="text-align:center;font-size:12px;color:#999">Vous ne souhaitez plus recevoir nos emails ? <a href="${apiEndpoint}/api/unsubscribe?email=${encodeURIComponent(recipient.email)}" style="color:#667eea">Cliquez ici pour vous désinscrire</a>.</p>`;
+      const personalizedHtml = emailTemplate
+        .replace(/\[SURVEY_LINK\]/g, surveyLink)
+        .replace('</body>', unsubscribeLink + '</body>');
+
+      await ses.send(new SendEmailCommand({
+        Source: fromAddress,
+        Destination: { ToAddresses: [recipient.email] },
+        Message: {
+          Subject: { Data: subject, Charset: 'UTF-8' },
+          Body: { Html: { Data: personalizedHtml, Charset: 'UTF-8' } },
+        },
+      }));
+
+      results.push({ email: recipient.email, status: 'sent' });
+      console.log(`✅ Survey ${surveyId} sent to ${recipient.email} token=${token}`);
+
+    } catch (err: any) {
+      console.error(`❌ Survey send failed for ${recipient.email}:`, err);
+      results.push({ email: recipient.email, status: 'error', error: err.message });
+    }
+  }
+
+  const sentCount = results.filter(r => r.status === 'sent').length;
+  const errors = results.filter(r => r.status === 'error');
+
+  return {
+    statusCode: 200,
+    body: JSON.stringify({ success: true, sentCount, errorCount: errors.length, errors }),
+  };
+}
+
 export const handler = async (event: any) => {
   // Vérifier l'authentification et les groupes
   const claims = event.requestContext?.authorizer?.jwt?.claims;
@@ -95,7 +181,14 @@ export const handler = async (event: any) => {
   }
 
   // event.body est stringifié si appelé via API Gateway HTTP
-  const { from, to, cc, subject, bodyText, bodyHtml, attachments, replyTo } = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
+  const parsedBody = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
+
+  // ── Mode sondage : surveyId fourni dans le body ────────────────────────────
+  if (parsedBody.surveyId) {
+    return handleSurveySend(parsedBody, event);
+  }
+
+  const { from, to, cc, subject, bodyText, bodyHtml, attachments, replyTo } = parsedBody;
   
   console.log('📧 Email request:', { 
     from, 

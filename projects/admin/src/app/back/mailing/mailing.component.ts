@@ -2,102 +2,100 @@ import { Component, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angula
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MailingService, SendEmailParams } from './mailing.service';
-import { MembersService } from '../../common/services/members.service';
 import { Member } from '../../common/interfaces/member.interface';
+import { RecipientSelectorComponent } from '../../common/components/recipient-selector/recipient-selector.component';
+import { SondageService, SurveyItem } from '../sondage/sondage.service';
 
 @Component({
   selector: 'app-mailing.component',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RecipientSelectorComponent],
   templateUrl: './mailing.component.html',
   styleUrl: './mailing.component.scss'
 })
-
 export class MailingComponent implements OnInit, AfterViewInit {
   @ViewChild('editorDiv') editorDiv!: ElementRef<HTMLDivElement>;
-  
-  recipientMode: 'all' | 'selected' = 'all'; // Mode de sélection
-  members: Member[] = [];
-  memberSelection: Map<string, boolean> = new Map(); // Map pour stocker les sélections
-  selectedMembers: string[] = []; // IDs des membres sélectionnés
-  toList = '';
+  @ViewChild('previewFrame') previewFrame!: ElementRef<HTMLIFrameElement>;
+
+  // Sondage optionnel
+  surveys: SurveyItem[] = [];
+  selectedSurveyId = '';
+  selectedSurvey: SurveyItem | null = null;
+  loadingSurvey = false;
+
+  // Message
+  recipients: Member[] = [];
   subject = '';
-  bodyHtml = ''; // Contenu HTML
+  bodyHtml = '';
   sending = false;
   result: any = null;
   error: string | null = null;
   skippedRecipients: string[] = [];
   attachments: Array<{filename: string, content: string, contentType: string}> = [];
 
+  get isSurveyMode(): boolean { return !!this.selectedSurveyId; }
+
   constructor(
     private mailingService: MailingService,
-    private membersService: MembersService
-  ) {
-    console.log('MailingComponent initialized');
-  }
+    private sondageService: SondageService
+  ) {}
 
   ngOnInit() {
-    // Charger la liste des membres avec email valide (contient @ et pas de ?)
-    this.membersService.listMembers().subscribe(members => {
-      this.members = members.filter(m => m.email && m.email.includes('@') && !m.email.includes('?'));
-    });
+    this.sondageService.listSurveys().then(s => this.surveys = s);
   }
 
   ngAfterViewInit() {
-    // Initialiser le contenu de l'éditeur si nécessaire
     if (this.editorDiv && this.bodyHtml) {
       this.editorDiv.nativeElement.innerHTML = this.bodyHtml;
     }
+    this.updatePreview();
   }
 
-  // Compter les membres qui acceptent les mailings
-  getActiveMailingCount(): number {
-    return this.members.filter(m => m.accept_mailing).length;
-  }
-
-  // Gérer la sélection/désélection de membres
-  onMemberSelectionChange(member: Member) {
-    const isSelected = this.memberSelection.get(member.id) || false;
-    if (isSelected) {
-      if (!this.selectedMembers.includes(member.id)) {
-        this.selectedMembers.push(member.id);
-      }
-    } else {
-      this.selectedMembers = this.selectedMembers.filter(id => id !== member.id);
+  async onSurveySelect(id: string) {
+    if (!id) { this.selectedSurvey = null; this.updatePreview(); return; }
+    this.loadingSurvey = true;
+    try {
+      this.selectedSurvey = await this.sondageService.getSurvey(id);
+      if (this.selectedSurvey && !this.subject) this.subject = (this.selectedSurvey as any).title ?? '';
+      this.updatePreview();
+    } finally {
+      this.loadingSurvey = false;
     }
   }
 
-  // Vérifier si un membre est sélectionné
-  isMemberSelected(memberId: string): boolean {
-    return this.memberSelection.get(memberId) || false;
+  /** Bouton CTA sondage injecté automatiquement en fin de corps */
+  private surveyCtaHtml(): string {
+    return `
+      <div style="text-align:center;margin:32px 0">
+        <a href="[SURVEY_LINK]"
+           style="background-color:#667eea;color:white;padding:14px 32px;border-radius:6px;
+                  text-decoration:none;font-size:16px;font-weight:bold;display:inline-block">
+          Accès au sondage
+        </a>
+      </div>`;
   }
 
-  // Basculer la sélection d'un membre
-  toggleMemberSelection(memberId: string) {
-    const currentValue = this.memberSelection.get(memberId) || false;
-    this.memberSelection.set(memberId, !currentValue);
-    if (!currentValue) {
-      this.selectedMembers.push(memberId);
-    } else {
-      this.selectedMembers = this.selectedMembers.filter(id => id !== memberId);
+  updatePreview() {
+    if (this.previewFrame) {
+      const body = this.isSurveyMode
+        ? this.bodyHtml + this.surveyCtaHtml()
+        : this.bodyHtml;
+      this.previewFrame.nativeElement.srcdoc = this.mailingService.buildEmailTemplate(body);
     }
   }
 
-  // Méthode pour prévisualiser le template complet
-  getFullPreview(): string {
-    return this.mailingService.buildEmailTemplate(this.bodyHtml);
+  onRecipientsChange(members: Member[]) {
+    this.recipients = members;
   }
 
-  // Méthode appelée lors de la modification de l'éditeur contenteditable
   onContentChange(event: Event): void {
     const element = event.target as HTMLElement;
     this.bodyHtml = element.innerHTML;
+    this.updatePreview();
   }
 
-  // Appliquer un formatage au texte sélectionné
   formatText(command: string, value?: string): void {
     document.execCommand(command, false, value);
-    // Mettre le focus sur l'éditeur après le formatage
     this.editorDiv?.nativeElement.focus();
   }
 
@@ -107,7 +105,7 @@ export class MailingComponent implements OnInit, AfterViewInit {
       Array.from(files).forEach(file => {
         const reader = new FileReader();
         reader.onload = () => {
-          const base64 = (reader.result as string).split(',')[1]; // Retirer le préfixe data:xxx;base64,
+          const base64 = (reader.result as string).split(',')[1];
           this.attachments.push({
             filename: file.name,
             content: base64,
@@ -123,39 +121,13 @@ export class MailingComponent implements OnInit, AfterViewInit {
     this.attachments.splice(index, 1);
   }
 
-  openMailPreview() {
-    let fullBodyHtml = this.mailingService.buildEmailTemplate(this.bodyHtml);
-    
-    // Ajouter les pièces jointes si présentes
-    if (this.attachments.length > 0) {
-      const attachmentsList = this.attachments
-        .map(att => `<li>${att.filename}</li>`)
-        .join('');
-      const attachmentsSection = `
-        <div style="margin-top: 20px; padding: 15px; background-color: #f0f0f0; border-left: 4px solid #667eea;">
-          <strong>Pièces jointes (${this.attachments.length}) :</strong>
-          <ul style="margin: 10px 0; padding-left: 20px;">
-            ${attachmentsList}
-          </ul>
-        </div>
-      `;
-      fullBodyHtml = fullBodyHtml.replace('</body>', attachmentsSection + '</body>');
-    }
-    
-    const newWindow = window.open('', '_blank');
-    if (newWindow) {
-      newWindow.document.write(fullBodyHtml);
-      newWindow.document.close();
-    }
-  }
-
   resetForm() {
     this.subject = '';
     this.bodyHtml = '';
     this.attachments = [];
-    this.selectedMembers = [];
-    this.memberSelection.clear();
-    this.recipientMode = 'all';
+    this.recipients = [];
+    this.selectedSurveyId = '';
+    this.selectedSurvey = null;
     if (this.editorDiv) {
       this.editorDiv.nativeElement.innerHTML = '';
     }
@@ -166,46 +138,63 @@ export class MailingComponent implements OnInit, AfterViewInit {
     this.result = null;
     this.error = null;
     this.skippedRecipients = [];
-    
-    let toArray: string[] = [];
-    
-    if (this.recipientMode === 'all') {
-      // Tous les membres avec email ET qui acceptent les mails
-      toArray = this.members
-        .filter(m => m.email && m.accept_mailing)
-        .map(m => m.email) as string[];
-    } else {
-      // Membres sélectionnés manuellement (vérifier aussi accept_mailing)
-      toArray = this.selectedMembers
-        .map(id => this.members.find(m => m.id === id))
-        .filter(m => m && m.email && m.accept_mailing)
-        .map(m => m!.email) as string[];
+
+    if (this.isSurveyMode) {
+      if (!this.selectedSurvey) {
+        this.error = 'Sondage introuvable.';
+        this.sending = false;
+        return;
+      }
+      if (!this.recipients.length) {
+        this.error = 'Aucun destinataire sélectionné.';
+        this.sending = false;
+        return;
+      }
+      const recipientPayload = this.recipients.map(m => ({
+        email: m.email!,
+        name: `${m.firstname ?? ''} ${m.lastname ?? ''}`.trim(),
+        memberId: m.id,
+      }));
+      this.mailingService.sendSurvey({
+        surveyId: this.selectedSurvey.id,
+        subject: this.subject,
+        surveyBodyHtml: this.bodyHtml + this.surveyCtaHtml(),
+        closingDate: (this.selectedSurvey as any).closingDate,
+        recipients: recipientPayload,
+        attachments: this.attachments.length > 0 ? this.attachments : undefined,
+      }).then(res => {
+        this.result = res;
+        this.sending = false;
+      }).catch(err => {
+        this.error = err?.message || "Erreur lors de l'envoi du sondage";
+        this.sending = false;
+      });
+      return;
     }
-    
+
+    const toArray = this.recipients.map(m => m.email).filter(Boolean) as string[];
     if (toArray.length === 0) {
       this.error = 'Aucun destinataire sélectionné.';
       this.sending = false;
       return;
     }
-    
     const emailParams: SendEmailParams = {
       to: toArray,
       subject: this.subject,
       bodyHtml: this.bodyHtml,
       attachments: this.attachments.length > 0 ? this.attachments : undefined
     };
-
     this.mailingService.sendEmail(emailParams)
       .then((res) => {
         this.result = res;
         this.skippedRecipients = res.skippedRecipients || [];
         this.sending = false;
-        this.openMailPreview();
         this.resetForm();
       })
       .catch((err) => {
-        this.error = err?.message || 'Erreur lors de l\'envoi';
+        this.error = err?.message || "Erreur lors de l'envoi";
         this.sending = false;
       });
   }
 }
+

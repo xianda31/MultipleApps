@@ -1,136 +1,118 @@
 <div class="container mt-4">
 	<h3>Envoi d'email aux membres</h3>
+
 	<div class="row">
 		<!-- Colonne gauche : Formulaire -->
 		<div class="col-md-6">
 			<form (ngSubmit)="sendMail()" #mailForm="ngForm">
-				<!-- Sélection des destinataires -->
+
+				<!-- Destinataires -->
 				<div class="mb-3">
 					<label class="form-label">Destinataires</label>
-					<div class="btn-group w-100 mb-2" role="group">
-						<input type="radio" class="btn-check" name="recipientMode" id="modeAll" 
-							[(ngModel)]="recipientMode" value="all" checked>
-						<label class="btn btn-outline-primary" for="modeAll">
-							Tous les membres ({{ getActiveMailingCount() }}/{{ members.length }})
-						</label>
-						
-						<input type="radio" class="btn-check" name="recipientMode" id="modeSelected" 
-							[(ngModel)]="recipientMode" value="selected">
-						<label class="btn btn-outline-primary" for="modeSelected">
-							Sélection personnalisée
-						</label>
-					</div>
-					
-					<!-- Liste de sélection (visible uniquement en mode 'selected') -->
-					<div *ngIf="recipientMode === 'selected'" class="border rounded p-2" style="max-height: 200px; overflow-y: auto;">
-						<div class="form-check" *ngFor="let member of members">
-							<input class="form-check-input" type="checkbox" 
-								[id]="'member-' + member.id" 
-								[checked]="isMemberSelected(member.id)"
-								[disabled]="!member.accept_mailing"
-								(change)="toggleMemberSelection(member.id)">
-							<label class="form-check-label small" [for]="'member-' + member.id"
-								[class.text-muted]="!member.accept_mailing"
-								[class.text-decoration-line-through]="!member.accept_mailing">
-								{{ member.lastname }} {{ member.firstname }} ({{ member.email }})
-								<span *ngIf="!member.accept_mailing" class="badge bg-secondary ms-1">Refus mailing</span>
-							</label>
-						</div>
-					</div>
-					<div *ngIf="recipientMode === 'selected'" class="small text-muted mt-1">
-						{{ selectedMembers.length }} membre(s) sélectionné(s) · 
-						{{ getActiveMailingCount() }} acceptent les mailings sur {{ members.length }} membres
-					</div>
+					<app-recipient-selector (selectionChange)="onRecipientsChange($event)"></app-recipient-selector>
 				</div>
+
+				<!-- Sujet -->
 				<div class="mb-3">
-					<label>Sujet</label>
+					<label class="form-label">Sujet</label>
 					<input class="form-control" [(ngModel)]="subject" name="subject" required>
 				</div>
-				
+
 				<!-- Pièces jointes -->
 				<div class="mb-3">
 					<label class="form-label">Pièces jointes</label>
-					<input type="file" class="form-control" (change)="onFileSelected($event)" multiple 
+					<input type="file" class="form-control" (change)="onFileSelected($event)" multiple
 						accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png">
 					<div class="small text-muted mt-1">Formats acceptés : PDF, Word, Excel, Images</div>
-					
-					<!-- Liste des pièces jointes -->
-					<div *ngIf="attachments.length > 0" class="mt-2">
-						<div *ngFor="let attachment of attachments; let i = index" 
-							class="d-flex align-items-center justify-content-between border rounded p-2 mb-1">
-							<span class="small">
-								📎 {{ attachment.filename }} 
-								<span class="text-muted">({{ (attachment.content.length * 0.75 / 1024).toFixed(1) }} KB)</span>
-							</span>
-							<button type="button" class="btn btn-sm btn-danger" (click)="removeAttachment(i)">
-								×
-							</button>
+					@if (attachments.length > 0) {
+						<div class="mt-2">
+							@for (att of attachments; track $index) {
+								<div class="d-flex align-items-center justify-content-between border rounded p-2 mb-1">
+									<span class="small">
+										📎 {{ att.filename }}
+										<span class="text-muted">({{ (att.content.length * 0.75 / 1024).toFixed(1) }} KB)</span>
+									</span>
+									<button type="button" class="btn btn-sm btn-danger" (click)="removeAttachment($index)">×</button>
+								</div>
+							}
 						</div>
-					</div>
+					}
 				</div>
-				
+
+				<!-- Sondage (optionnel) -->
+				<div class="mb-3">
+					<label class="form-label">Sondage associé <span class="text-muted fw-normal">(optionnel)</span></label>
+					<select class="form-select" [(ngModel)]="selectedSurveyId" name="surveyId"
+						(ngModelChange)="onSurveySelect($event)">
+						<option value="">— Aucun sondage —</option>
+						@for (s of surveys; track s.id) {
+							<option [value]="s.id">{{ s.title }}
+								@if (s.status === 'draft') { (brouillon) }
+								@if (s.status === 'active') { (en cours) }
+								@if (s.status === 'closed') { (clôturé) }
+							</option>
+						}
+					</select>
+					@if (loadingSurvey) {
+						<div class="small text-muted mt-1">
+							<span class="spinner-border spinner-border-sm me-1"></span>Chargement…
+						</div>
+					}
+					@if (isSurveyMode && selectedSurvey) {
+						<div class="alert alert-info py-2 small mt-2 mb-0">
+							<i class="bi bi-info-circle me-1"></i>
+							Mode sondage actif — un bouton <strong>Accès au sondage</strong> sera ajouté automatiquement en fin de message.
+							Clôture : {{ selectedSurvey.closingDate | date:'dd/MM/yyyy' }}
+						</div>
+					}
+				</div>
+
 				<!-- Éditeur HTML -->
 				<div class="mb-3">
-					<label>Corps du texte</label>
-					<!-- Barre d'outils de formatage -->
+					<label class="form-label">Corps du message</label>
 					<div class="btn-toolbar mb-2 border-bottom pb-2" role="toolbar">
-						<div class="btn-group btn-group-sm me-2" role="group">
-							<button type="button" class="btn btn-outline-primary" (click)="formatText('bold')" title="Gras">
-								<strong>G</strong>
-							</button>
-							<button type="button" class="btn btn-outline-primary" (click)="formatText('italic')" title="Italique">
-								<em>I</em>
-							</button>
-							<button type="button" class="btn btn-outline-primary" (click)="formatText('underline')" title="Souligné">
-								<u>S</u>
-							</button>
+						<div class="btn-group btn-group-sm me-2">
+							<button type="button" class="btn btn-outline-primary" (click)="formatText('bold')" title="Gras"><strong>G</strong></button>
+							<button type="button" class="btn btn-outline-primary" (click)="formatText('italic')" title="Italique"><em>I</em></button>
+							<button type="button" class="btn btn-outline-primary" (click)="formatText('underline')" title="Souligné"><u>S</u></button>
 						</div>
-						<div class="btn-group btn-group-sm me-2" role="group">
-							<button type="button" class="btn btn-outline-primary" (click)="formatText('insertUnorderedList')" title="Liste à puces">
-								• Liste
-							</button>
-							<button type="button" class="btn btn-outline-primary" (click)="formatText('insertOrderedList')" title="Liste numérotée">
-								1. Liste
-							</button>
+						<div class="btn-group btn-group-sm me-2">
+							<button type="button" class="btn btn-outline-primary" (click)="formatText('insertUnorderedList')">• Liste</button>
+							<button type="button" class="btn btn-outline-primary" (click)="formatText('insertOrderedList')">1. Liste</button>
 						</div>
-						<div class="btn-group btn-group-sm" role="group">
-							<button type="button" class="btn btn-outline-primary" (click)="formatText('formatBlock', '<h3>')" title="Titre">
-								H3
-							</button>
-							<button type="button" class="btn btn-outline-primary" (click)="formatText('formatBlock', '<p>')" title="Paragraphe">
-								P
-							</button>
+						<div class="btn-group btn-group-sm me-2">
+							<button type="button" class="btn btn-outline-primary" (click)="formatText('formatBlock', '<h3>')">H3</button>
+							<button type="button" class="btn btn-outline-primary" (click)="formatText('formatBlock', '<p>')">P</button>
 						</div>
 					</div>
-					
-					<div 
+					<div
 						#editorDiv
-						contenteditable="true" 
-						class="form-control editor-content" 
+						contenteditable="true"
+						class="form-control editor-content"
 						style="min-height: 400px; overflow-y: auto;"
 						(input)="onContentChange($event)"
 						(blur)="onContentChange($event)"
-						data-placeholder="Tapez ou collez votre contenu ici (HTML formaté accepté)...">
+						data-placeholder="Tapez votre message ici…">
 					</div>
 					<input type="hidden" name="bodyHtml" [(ngModel)]="bodyHtml" required>
 				</div>
+
 			</form>
 		</div>
-		
+
 		<!-- Colonne droite : Prévisualisation -->
 		<div class="col-md-6">
 			<div class="sticky-top" style="top: 20px;">
 				<h5>Prévisualisation</h5>
-				<div class="border rounded p-2 mb-3" style="background-color: #f9f9f9; max-height: 60vh; overflow-y: auto;">
-					<div [innerHTML]="getFullPreview()"></div>
-				</div>
-				
-				<!-- Bouton d'envoi et résultats -->
-				<button class="btn btn-success w-100 mb-2" [disabled]="sending || !mailForm.form.valid" (click)="sendMail()">
+				<iframe #previewFrame style="width:100%;height:60vh;border:1px solid #dee2e6;border-radius:4px"
+					sandbox="allow-same-origin"></iframe>
+
+				<button class="btn btn-success w-100 mb-2 mt-2" [disabled]="sending || !subject.trim() || !recipients.length"
+					(click)="sendMail()">
 					<span *ngIf="sending" class="spinner-border spinner-border-sm me-2"></span>
-					Envoyer
+					@if (isSurveyMode) { Envoyer le sondage } @else { Envoyer }
 				</button>
-				
+
 				<div *ngIf="result" class="alert alert-success">
 					✅ Envoi réussi ! {{ result.sentCount }} email(s) envoyé(s).
 					<div *ngIf="skippedRecipients.length > 0" class="mt-2">
@@ -145,3 +127,4 @@
 		</div>
 	</div>
 </div>
+

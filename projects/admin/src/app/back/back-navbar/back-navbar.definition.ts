@@ -81,7 +81,8 @@ export const STATIC_MENUS: NavbarMenu[] = [
         subMenus: [
             { label: 'Assistance', route: BACK_ROUTE_PATHS.Assistance },
             { label: 'Mailing', route: BACK_ROUTE_PATHS.Mailing },
-            { label: 'Breaking News', route: BACK_ROUTE_PATHS.BreakingNews }
+            { label: 'Breaking News', route: BACK_ROUTE_PATHS.BreakingNews },
+            { label: 'Sondage', route: BACK_ROUTE_PATHS.SondageList }
         ]
     },
     {

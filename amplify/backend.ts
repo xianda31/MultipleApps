@@ -18,6 +18,7 @@ import { emailUnsubscribe } from "./functions/email-unsubscribe/resource";
 import { stripeCheckout } from "./functions/stripe-checkout/resource";
 import { stripeWebhooks } from "./functions/stripe-webhooks/resource";
 import { stripeConnectionToken } from "./functions/stripe-connection-token/resource";
+import { surveyRespond } from "./functions/survey-respond/resource";
 import { auth } from "./auth/resource";
 import { data } from "./data/resource";
 import { storage } from "./storage/resource";
@@ -33,6 +34,7 @@ const backend = defineBackend({
   stripeCheckout,
   stripeWebhooks,
   stripeConnectionToken,
+  surveyRespond,
 });
 
 // create a new API stack
@@ -67,6 +69,11 @@ const stripeWebhooksIntegration = new HttpLambdaIntegration(
 const stripeConnectionTokenIntegration = new HttpLambdaIntegration(
   "StripeConnectionTokenIntegration",
   backend.stripeConnectionToken.resources.lambda
+);
+
+const surveyRespondIntegration = new HttpLambdaIntegration(
+  "SurveyRespondIntegration",
+  backend.surveyRespond.resources.lambda
 );
 
 
@@ -107,6 +114,13 @@ httpApi.addRoutes({
   path: "/api/unsubscribe",
   methods: [HttpMethod.GET],
   integration: emailUnsubscribeIntegration,
+});
+
+// Public routes for survey response (token = auth mechanism)
+httpApi.addRoutes({
+  path: "/api/survey/respond",
+  methods: [HttpMethod.GET, HttpMethod.POST, HttpMethod.PATCH],
+  integration: surveyRespondIntegration,
 });
 
 // 🔒 Stripe Checkout - Autorisation optionnelle (visiteur peut acheter sans compte)
@@ -214,7 +228,27 @@ if (cfnStripeTransactionTable) {
 // Grant both email Lambdas access to Member table
 const memberTable = backend.data.resources.tables['Member'];
 memberTable.grantReadWriteData(backend.emailUnsubscribe.resources.lambda);
-memberTable.grantReadData(backend.sesMailing.resources.lambda); // Read-only pour vérifier accept_mailing
+memberTable.grantReadData(backend.sesMailing.resources.lambda);
+
+// Grant sesMailing access to SurveyToken table (mode survey)
+const surveyTokenTable = backend.data.resources.tables['SurveyToken'];
+surveyTokenTable.grantReadWriteData(backend.sesMailing.resources.lambda);
+backend.sesMailing.addEnvironment('SURVEY_TOKEN_TABLE_NAME', surveyTokenTable.tableName);
+
+// Grant surveyRespond access to all survey tables (public Lambda — token-based auth)
+const surveyResponseTable = backend.data.resources.tables['SurveyResponse'];
+const surveyTable = backend.data.resources.tables['Survey'];
+const surveyQuestionTable = backend.data.resources.tables['SurveyQuestion'];
+
+surveyTokenTable.grantReadWriteData(backend.surveyRespond.resources.lambda);
+surveyResponseTable.grantReadWriteData(backend.surveyRespond.resources.lambda);
+surveyTable.grantReadData(backend.surveyRespond.resources.lambda);
+surveyQuestionTable.grantReadData(backend.surveyRespond.resources.lambda);
+
+backend.surveyRespond.addEnvironment('SURVEY_TOKEN_TABLE_NAME', surveyTokenTable.tableName);
+backend.surveyRespond.addEnvironment('SURVEY_RESPONSE_TABLE_NAME', surveyResponseTable.tableName);
+backend.surveyRespond.addEnvironment('SURVEY_TABLE_NAME', surveyTable.tableName);
+backend.surveyRespond.addEnvironment('SURVEY_QUESTION_TABLE_NAME', surveyQuestionTable.tableName);
 
 // Grant SES permissions to sesMailing Lambda
 const sesPolicy = new Policy(apiStack, "SesMailingPolicy", {
@@ -227,6 +261,7 @@ const sesPolicy = new Policy(apiStack, "SesMailingPolicy", {
   ],
 });
 backend.sesMailing.resources.lambda.role?.attachInlinePolicy(sesPolicy);
+
 
 // Set environment variable for table name
 backend.emailUnsubscribe.addEnvironment('MEMBER_TABLE_NAME', memberTable.tableName);

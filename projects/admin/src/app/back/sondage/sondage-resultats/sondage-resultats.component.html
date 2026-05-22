@@ -1,0 +1,136 @@
+<div class="container-fluid py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <button class="btn btn-sm btn-outline-secondary me-2" (click)="back()">
+                <i class="bi bi-arrow-left"></i>
+            </button>
+            <span class="fw-semibold fs-5">{{ surveyTitle }}</span>
+            <span class="text-muted ms-2 small">— {{ responses.length }} réponse(s)</span>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-primary" (click)="openAddVote()">
+                <i class="bi bi-pencil-square me-1"></i>Saisir un vote
+            </button>
+            <button class="btn btn-sm btn-outline-success" (click)="exportCsv()" [disabled]="responses.length === 0">
+                <i class="bi bi-download me-1"></i>Export CSV
+            </button>
+        </div>
+    </div>
+
+    @if (loading) {
+    <div class="text-muted">Chargement…</div>
+    } @else if (responses.length === 0) {
+    <div class="alert alert-light">Aucune réponse reçue.</div>
+    } @else {
+    <div class="table-responsive">
+        <table class="table table-bordered table-sm align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th style="min-width:180px">Membre</th>
+                    <th style="min-width:180px">Paiement</th>
+                    <th class="text-nowrap">Choix du</th>
+                    @for (q of questions; track q.id) {
+                    <th [class.text-warning-emphasis]="q.order === -1">
+                        @if (q.order === -1) { <i class="bi bi-person-check me-1"></i> }
+                        {{ q.text }}
+                    </th>
+                    }
+                    <th class="text-center" style="width:60px"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (r of responses; track r.id) {
+                <tr>
+                    <td>
+                        <div class="fw-semibold">{{ r.memberName }}</div>
+                        <!-- <div class="text-muted small">{{ r.memberEmail }}</div> -->
+                    </td>
+                    <td>
+                        <div class="fw-semibold">{{ hasPayed(r.memberId) ? 'Oui' : 'Non' }}</div>
+                    </td>
+                    <td class="text-nowrap">{{ r.updatedAt | date:'dd/MM/yyyy HH:mm' }}</td>
+                    @for (q of questions; track q.id) {
+                    <td [class.text-muted]="q.order !== -1 && isAbsent(r)">
+                        @if (q.order === -1 && isAbsent(r)) {
+                        <span class="badge bg-secondary">Absent</span>
+                        } @else {
+                        {{ getAnswer(r, q.id) }}
+                        }
+                    </td>
+                    }
+                    <td class="text-center text-nowrap">
+                        <button class="btn btn-sm btn-link p-0 me-2" title="Modifier" (click)="openEditVote(r)">
+                            <i class="bi bi-pencil text-primary"></i>
+                        </button>
+                        <button class="btn btn-sm btn-link p-0" title="Supprimer" (click)="deleteResponse(r)">
+                            <i class="bi bi-trash text-danger"></i>
+                        </button>
+                    </td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    }
+</div>
+
+<!-- ── Offcanvas : saisie manuelle ──────────────────────────────────────── -->
+@if (manualOpen) {
+<div class="offcanvas-backdrop fade show" (click)="manualOpen = false"></div>
+}
+<div class="offcanvas offcanvas-end" [class.show]="manualOpen" tabindex="-1" style="width:420px">
+    <div class="offcanvas-header border-bottom">
+        <h5 class="offcanvas-title">
+            {{ editingResponseId ? 'Modifier un vote' : 'Saisir un vote nominatif' }}
+        </h5>
+        <button type="button" class="btn-close" (click)="manualOpen = false"></button>
+    </div>
+    <div class="offcanvas-body">
+
+        <!-- Sélecteur membre -->
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Membre</label>
+            <select class="form-select" [(ngModel)]="manualMemberId" (ngModelChange)="onManualMemberChange($event)"
+                [disabled]="!!editingResponseId">
+                <option value="">— Choisir un membre —</option>
+                @for (m of sortedMembersForSelect; track m.id) {
+                <option [value]="m.id">
+                    {{ m.lastname | uppercase }} {{ m.firstname }}
+                    @if (alreadyVotedIds.has(m.id)) { (déjà voté) }
+                </option>
+                }
+            </select>
+            @if (editingResponseId) {
+            <div class="form-text">Pour changer le membre, supprimez d'abord ce vote.</div>
+            }
+        </div>
+
+        <!-- Questions -->
+        @for (q of questions; track q.id) {
+        <div class="mb-3">
+            <p class="fw-semibold mb-2">{{ q.text }}</p>
+            @for (opt of q.options; track $index) {
+            <div class="form-check">
+                <input class="form-check-input" type="radio" [name]="'q_' + q.id" [id]="'q_' + q.id + '_' + $index"
+                    [checked]="manualAnswers[q.id] === $index" (change)="manualAnswers[q.id] = $index">
+                <label class="form-check-label" [for]="'q_' + q.id + '_' + $index">
+                    {{ q.optionKeywords[$index]?.trim() || opt }}
+                </label>
+            </div>
+            }
+        </div>
+        }
+
+        @if (manualError) {
+        <div class="alert alert-danger py-2 small">{{ manualError }}</div>
+        }
+
+        <div class="d-flex gap-2 mt-3">
+            <button class="btn btn-primary flex-grow-1" [disabled]="savingManual" (click)="saveManualVote()">
+                @if (savingManual) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                {{ editingResponseId ? 'Enregistrer la modification' : 'Enregistrer le vote' }}
+            </button>
+            <button class="btn btn-outline-secondary" (click)="manualOpen = false">Annuler</button>
+        </div>
+    </div>
+</div>

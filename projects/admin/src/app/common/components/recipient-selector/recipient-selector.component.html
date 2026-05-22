@@ -1,0 +1,73 @@
+<div>
+  <!-- Toggle mode -->
+  <div class="btn-group w-100 mb-2" role="group">
+    <input type="radio" class="btn-check" name="recipientMode_{{uniqueId}}" id="modeAll_{{uniqueId}}"
+      [checked]="recipientMode === 'all'" (click)="toggleMode('all')">
+    <label class="btn btn-outline-primary" for="modeAll_{{uniqueId}}">
+      Tous les membres
+      <span class="badge bg-primary ms-1">{{ activeMailingCount }}</span>
+    </label>
+
+    <input type="radio" class="btn-check" name="recipientMode_{{uniqueId}}" id="modeSelected_{{uniqueId}}"
+      [checked]="recipientMode === 'selected'" (click)="toggleMode('selected')">
+    <label class="btn btn-outline-primary" for="modeSelected_{{uniqueId}}">
+      Sélection personnalisée
+      @if (recipientMode === 'selected' && selectedCount > 0) {
+        <span class="badge bg-success ms-1">{{ selectedCount }}</span>
+      }
+    </label>
+  </div>
+
+  <!-- Liste de sélection -->
+  @if (recipientMode === 'selected') {
+    <div class="border rounded p-2">
+      <!-- Filtre + actions rapides -->
+      <div class="d-flex gap-2 mb-2">
+        <input class="form-control form-control-sm" [(ngModel)]="filterText"
+          placeholder="Filtrer…" style="max-width:200px">
+        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="selectAll()">
+          Tout cocher
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="clearSelection()">
+          Tout décocher
+        </button>
+      </div>
+
+      <!-- Liste membres -->
+      <div style="max-height:220px;overflow-y:auto">
+        @for (m of filteredMembers; track m.id) {
+          <div class="form-check py-1 border-bottom">
+            <input class="form-check-input" type="checkbox"
+              [id]="'mbr-' + m.id"
+              [checked]="isSelected(m.id)"
+              [disabled]="!m.accept_mailing"
+              (change)="toggleMember(m.id)">
+            <label class="form-check-label small w-100" [for]="'mbr-' + m.id"
+              [class.text-muted]="!m.accept_mailing">
+              {{ m.lastname }} {{ m.firstname }}
+              <span class="text-muted ms-1">{{ m.email }}</span>
+              @if (!m.accept_mailing) {
+                <span class="badge bg-secondary ms-1">refus mailing</span>
+              }
+            </label>
+          </div>
+        }
+        @if (filteredMembers.length === 0) {
+          <div class="text-muted small p-2">Aucun résultat</div>
+        }
+      </div>
+
+      <div class="text-muted small mt-2">
+        {{ selectedCount }} sélectionné(s) · {{ activeMailingCount }} acceptent les mailings
+        sur {{ members.length }} membres
+      </div>
+    </div>
+  }
+
+  @if (recipientMode === 'all') {
+    <div class="text-muted small">
+      {{ activeMailingCount }} membres avec email valide et accord mailing
+      sur {{ members.length }} au total.
+    </div>
+  }
+</div>
