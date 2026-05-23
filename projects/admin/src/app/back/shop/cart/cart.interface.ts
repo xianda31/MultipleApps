@@ -51,6 +51,7 @@ export interface Cart {
   buyer_name: string;
   tag ?: string;
   stripeTag?: string;  // Tag Stripe court (stripe:XXXXX) pour traçabilité
+  productTag?: string; // Tag produit pour faciliter le filtrage en compta (ex: "PAF Tournoi XYZ")
 }
 
 

@@ -1039,6 +1039,12 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
     return rounded * Math.sign(value);
   }
 
+  // utilitaire pour trouver un paiement d'un adherent à partir d'un product_Tag
+get_member_payment_by_product_tag(member: string, product_tag: string): number | null{
+    if (!this._book_entries) return null;
+    return 666
+    ;
+  }
 
   // utilitaire pour surligner les opérations bancaires (reconciliation bancaire)
   init_highlighting() {

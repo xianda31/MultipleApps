@@ -2,7 +2,10 @@ import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core'
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { SondageService, SurveyType } from '../sondage.service';
+import { firstValueFrom } from 'rxjs';
+import { SondageService } from '../sondage.service';
+import { ProductService } from '../../../common/services/product.service';
+import { Product } from '../../products/product.interface';
 
 interface QuestionForm {
   id?: string;
@@ -29,6 +32,7 @@ export class SondageEditorComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private sondageService = inject(SondageService);
+  private productService = inject(ProductService);
 
   showPreview = false;
   @ViewChild('previewFrame') previewFrame!: ElementRef<HTMLIFrameElement>;
@@ -42,7 +46,8 @@ export class SondageEditorComponent implements OnInit {
   description = '';
   footerNote = '';
   closingDate = '';
-
+  tag = '';
+  pafProducts: Product[] = [];
   @ViewChild('descriptionEditor') descriptionEditor!: ElementRef<HTMLDivElement>;
 
   questions: QuestionForm[] = [];
@@ -55,6 +60,9 @@ export class SondageEditorComponent implements OnInit {
   }
 
   async ngOnInit() {
+    const products = await firstValueFrom(this.productService.listProducts());
+    this.pafProducts = (products ?? []).filter(p => p.account === 'PAF');
+
     this.surveyId = this.route.snapshot.paramMap.get('id') ?? 'new';
     this.isNew = this.surveyId === 'new';
 
@@ -65,6 +73,7 @@ export class SondageEditorComponent implements OnInit {
         this.description = survey.description ?? '';
         this.footerNote = (survey as any).footerNote ?? '';
         this.closingDate = survey.closingDate;
+        this.tag = survey.productTag ?? '';
         setTimeout(() => {
           if (this.descriptionEditor) {
             this.descriptionEditor.nativeElement.innerHTML = this.description;
@@ -81,6 +90,10 @@ export class SondageEditorComponent implements OnInit {
           keyword: (q.optionKeywords ?? [])[i] ?? '',
         })),
       }));
+    }
+
+    if (!this.tag && this.pafProducts.length === 1) {
+      this.tag = this.pafProducts[0].name;
     }
 
     if (this.regularQuestions.length === 0) this.addQuestion();
@@ -128,14 +141,13 @@ export class SondageEditorComponent implements OnInit {
     if (!this.title.trim() || !this.closingDate) return;
     this.saving = true;
     this.saveError = null;
-    const derivedType: SurveyType = this.invitationQuestion ? 'invitation' : 'poll';
     try {
       if (this.isNew) {
         const created = await this.sondageService.createSurvey({
           title: this.title.trim(),
           description: this.description.trim() || undefined,
           footerNote: this.footerNote.trim() || undefined,
-          surveyType: derivedType,
+          productTag: this.tag.trim(),
           closingDate: this.closingDate,
           status: 'draft',
         });
@@ -146,7 +158,7 @@ export class SondageEditorComponent implements OnInit {
           title: this.title.trim(),
           description: this.description.trim() || undefined,
           footerNote: this.footerNote.trim() || undefined,
-          surveyType: derivedType,
+          productTag: this.tag.trim(),
           closingDate: this.closingDate,
         });
       }

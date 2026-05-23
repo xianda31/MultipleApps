@@ -16,6 +16,7 @@ export interface SurveyInput {
   footerNote?: string;
   surveyType?: SurveyType;
   closingDate: string;
+  productTag?: string;
   status?: SurveyStatus;
 }
 

@@ -70,6 +70,7 @@ const schema = a.schema({
     label: a.string().required(),
     member: a.string(),
     values: a.json().required(),
+    productCodes:a.string()
   }),
 
   BookEntry: a.model({
@@ -86,6 +87,7 @@ const schema = a.schema({
     deposit_ref: a.string(),
     bank_report: a.string(),
     invoice_ref: a.string(),
+    // product_tag: a.string(), // pour faciliter le filtrage des ventes en compta (ex: "PAF Tournoi XYZ")
 
   })
     .authorization((allow) => [
@@ -190,6 +192,7 @@ const schema = a.schema({
   SaleItem: a.model({
     id: a.id().required(),
     name: a.string().required(),          // label court (Stripe + back)
+    productCcode: a.string(),             // code produit interne (optionnel)
     description: a.string().required(),   // label long
     glyph: a.string().required(),         // icône UI back-office
     price: a.float().required(),          // en euros (source of truth — prix total de l'achat)
@@ -365,7 +368,7 @@ const schema = a.schema({
     surveyType: a.enum(['poll', 'rsvp', 'invitation']),  // 'poll' = QCM simple, 'rsvp' = RSVP, 'invitation' = sondage avec Question 0
     status: a.enum(['draft', 'active', 'closed']),
     closingDate: a.string().required(),
-    season: a.string(),
+    productTag: a.string(),
   })
     .authorization((allow) => [
       allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),

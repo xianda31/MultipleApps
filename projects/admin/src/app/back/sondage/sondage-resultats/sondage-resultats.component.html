@@ -1,4 +1,4 @@
-<div class="container-fluid py-3">
+<div class="container-fluid container-md py-3">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
             <button class="btn btn-sm btn-outline-secondary me-2" (click)="back()">
@@ -26,9 +26,12 @@
         <table class="table table-bordered table-sm align-middle">
             <thead class="table-light">
                 <tr>
-                    <th style="min-width:180px">Membre</th>
-                    <th style="min-width:180px">Paiement</th>
-                    <th class="text-nowrap">Choix du</th>
+                    <th class="text-center" style="width:60px">#</th>
+                    <th class="text-start">Participant</th>
+                    <th class="text-center">Adhérent</th>
+                    <th class="text-center">Paiement</th>
+                    <th class="text-nowrap">Créé le</th>
+                    <th class="text-nowrap">Mis à jour le</th>
                     @for (q of questions; track q.id) {
                     <th [class.text-warning-emphasis]="q.order === -1">
                         @if (q.order === -1) { <i class="bi bi-person-check me-1"></i> }
@@ -39,20 +42,27 @@
                 </tr>
             </thead>
             <tbody>
-                @for (r of responses; track r.id) {
+                @for (r of responses; track r.id; let i = $index) {
                 <tr>
+                    <td class="text-center text-muted">{{ i + 1 }}</td>
                     <td>
-                        <div class="fw-semibold">{{ r.memberName }}</div>
+                        <div class="fw-semibold">{{ (r.lastName + ' ' + r.firstName).trim() || r.memberName }}</div>
                         <!-- <div class="text-muted small">{{ r.memberEmail }}</div> -->
                     </td>
-                    <td>
-                        <div class="fw-semibold">{{ hasPayed(r.memberId) ? 'Oui' : 'Non' }}</div>
+                    <td class="text-center">
+                        @if (r.memberId !== r.memberEmail) {
+                        Oui
+                        } @else {
+                        <span class="badge bg-secondary">Non</span>
+                        }
                     </td>
-                    <td class="text-nowrap">{{ r.updatedAt | date:'dd/MM/yyyy HH:mm' }}</td>
+                    <td class="text-center"> {{ r.isMember ? product_paied(r.memberId) : '?' }} </td>
+                    <td class="text-nowrap">{{ r.createdAt | date:'dd/MM/yyyy' }}</td>
+                    <td class="text-nowrap">{{ r.updatedAt | date:'dd/MM/yyyy' }}</td>
                     @for (q of questions; track q.id) {
-                    <td [class.text-muted]="q.order !== -1 && isAbsent(r)">
+                    <td class="text-center" [class.text-muted]="q.order !== -1 && isAbsent(r)">
                         @if (q.order === -1 && isAbsent(r)) {
-                        <span class="badge bg-secondary">Absent</span>
+                        <span class="badge bg-secondary">Non</span>
                         } @else {
                         {{ getAnswer(r, q.id) }}
                         }

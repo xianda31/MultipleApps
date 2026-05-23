@@ -51,6 +51,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
     this.productForm = new FormGroup({
       id: new FormControl(),
       name: new FormControl('', Validators.required),
+      productCcode: new FormControl(''),
       description: new FormControl('', Validators.required),
       price: new FormControl('', [Validators.required, Validators.min(0)]),
       account: new FormControl('', Validators.required),
@@ -67,7 +68,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
   }
 
   onNewProduct() {
-    this.productForm.reset({ paired: false, stripeEnabled: false, active: true, currency: 'EUR' });
+    this.productForm.reset({ productCcode: '', paired: false, stripeEnabled: false, active: true, currency: 'EUR' });
     this.accountInput = '';
     this.product_selected = false;
     this.showModal = true;
@@ -79,41 +80,44 @@ export class ProductsComponent implements OnInit, OnDestroy {
     this.product_selected = false;
   }
 
-  onCreateProduct() {
+  async onCreateProduct() {
     let new_product = this.productForm.getRawValue();
     // Déterminer auto le glyph basé sur le compte
     new_product.glyph = getGlyphForAccount(new_product.account);
-    this.productService.createProduct(new_product);
+    await this.productService.createProduct(new_product);
     this.showModal = false;
     this.productForm.reset();
     this.product_selected = false;
   }
 
   onReadProduct(product: Product) {
-    this.productForm.patchValue(product);
+    this.productForm.patchValue({
+      ...product,
+      productCcode: product.productCode ?? (product as any).productCode ?? ''
+    });
     this.accountInput = product.account ?? '';
     this.product_selected = true;
     this.showModal = true;
   }
 
-  onModProduct(product: Product) {
+  async onModProduct(product: Product) {
     // console.log('mod product', product);
-    this.productService.updateProduct(product);
+    await this.productService.updateProduct(product);
 
   }
-  onUpdateProduct() {
+  async onUpdateProduct() {
     let product = this.productForm.getRawValue();
     // Déterminer auto le glyph basé sur le compte
     product.glyph = getGlyphForAccount(product.account);
-    this.productService.updateProduct(product);
+    await this.productService.updateProduct(product);
     this.showModal = false;
     this.product_selected = false;
     this.productForm.reset();
   }
 
-  onDeleteProduct(product: Product) {
+  async onDeleteProduct(product: Product) {
     if (!confirm(`Supprimer "${product.name}" ?`)) return;
-    this.productService.deleteProduct(product);
+    await this.productService.deleteProduct(product);
     this.product_selected = false;
     this.productForm.reset();
   }

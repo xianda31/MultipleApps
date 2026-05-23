@@ -60,7 +60,7 @@ async function handleSurveySend(body: any, event: any) {
     subject,
     emailTemplate,   // HTML complet avec [SURVEY_LINK] comme marqueur
     closingDate,
-    recipients,      // Array<{ email, name, memberId }>
+    recipients,      // Array<{ email, name, memberId?, isExternal? }>
     from,
   } = body;
 
@@ -105,7 +105,10 @@ async function handleSurveySend(body: any, event: any) {
       }));
 
       // 2. Email personnalisé : remplacer [SURVEY_LINK] + ajouter désinscription
-      const unsubscribeLink = `<hr style="margin-top:30px;border:none;border-top:1px solid #e0e0e0"><p style="text-align:center;font-size:12px;color:#999">Vous ne souhaitez plus recevoir nos emails ? <a href="${apiEndpoint}/api/unsubscribe?email=${encodeURIComponent(recipient.email)}" style="color:#667eea">Cliquez ici pour vous désinscrire</a>.</p>`;
+      const isExternalRecipient = recipient.isExternal === true || !recipient.memberId;
+      const unsubscribeLink = isExternalRecipient
+        ? ''
+        : `<hr style="margin-top:30px;border:none;border-top:1px solid #e0e0e0"><p style="text-align:center;font-size:12px;color:#999">Vous ne souhaitez plus recevoir nos emails ? <a href="${apiEndpoint}/api/unsubscribe?email=${encodeURIComponent(recipient.email)}" style="color:#667eea">Cliquez ici pour vous désinscrire</a>.</p>`;
       const personalizedHtml = emailTemplate
         .replace(/\[SURVEY_LINK\]/g, surveyLink)
         .replace('</body>', unsubscribeLink + '</body>');

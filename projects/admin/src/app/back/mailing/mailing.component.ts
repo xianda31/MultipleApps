@@ -1,6 +1,7 @@
 import { Component, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { MailingService, SendEmailParams } from './mailing.service';
 import { Member } from '../../common/interfaces/member.interface';
 import { RecipientSelectorComponent } from '../../common/components/recipient-selector/recipient-selector.component';
@@ -15,7 +16,6 @@ import { SondageService, SurveyItem } from '../sondage/sondage.service';
 })
 export class MailingComponent implements OnInit, AfterViewInit {
   @ViewChild('editorDiv') editorDiv!: ElementRef<HTMLDivElement>;
-  @ViewChild('previewFrame') previewFrame!: ElementRef<HTMLIFrameElement>;
 
   // Sondage optionnel
   surveys: SurveyItem[] = [];
@@ -25,8 +25,13 @@ export class MailingComponent implements OnInit, AfterViewInit {
 
   // Message
   recipients: Member[] = [];
+  externalRecipients: Array<{ email: string; name: string }> = [];
+  externalEmail = '';
+  externalName = '';
+  externalRecipientError: string | null = null;
   subject = '';
   bodyHtml = '';
+  previewHtml: SafeHtml = '';
   sending = false;
   result: any = null;
   error: string | null = null;
@@ -34,10 +39,13 @@ export class MailingComponent implements OnInit, AfterViewInit {
   attachments: Array<{filename: string, content: string, contentType: string}> = [];
 
   get isSurveyMode(): boolean { return !!this.selectedSurveyId; }
+  get surveyRecipientCount(): number { return this.recipients.length + this.externalRecipients.length; }
+  get totalRecipientCount(): number { return this.recipients.length + this.externalRecipients.length; }
 
   constructor(
     private mailingService: MailingService,
-    private sondageService: SondageService
+    private sondageService: SondageService,
+    private sanitizer: DomSanitizer
   ) {}
 
   ngOnInit() {
@@ -52,7 +60,12 @@ export class MailingComponent implements OnInit, AfterViewInit {
   }
 
   async onSurveySelect(id: string) {
-    if (!id) { this.selectedSurvey = null; this.updatePreview(); return; }
+    if (!id) {
+      this.selectedSurvey = null;
+      this.externalRecipientError = null;
+      this.updatePreview();
+      return;
+    }
     this.loadingSurvey = true;
     try {
       this.selectedSurvey = await this.sondageService.getSurvey(id);
@@ -75,22 +88,65 @@ export class MailingComponent implements OnInit, AfterViewInit {
       </div>`;
   }
 
+  private stripScripts(html: string): string {
+    return html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+  }
+
   updatePreview() {
-    if (this.previewFrame) {
-      const body = this.isSurveyMode
-        ? this.bodyHtml + this.surveyCtaHtml()
-        : this.bodyHtml;
-      this.previewFrame.nativeElement.srcdoc = this.mailingService.buildEmailTemplate(body);
-    }
+    const body = this.isSurveyMode
+      ? this.bodyHtml + this.surveyCtaHtml()
+      : this.bodyHtml;
+    const html = this.stripScripts(this.mailingService.buildEmailTemplate(body));
+    this.previewHtml = this.sanitizer.bypassSecurityTrustHtml(html);
   }
 
   onRecipientsChange(members: Member[]) {
     this.recipients = members;
+    this.externalRecipientError = null;
+  }
+
+  addExternalRecipient() {
+    this.externalRecipientError = null;
+    const email = this.externalEmail.trim().toLowerCase();
+    const name = this.externalName.trim();
+
+    if (!email) {
+      this.externalRecipientError = 'Veuillez saisir une adresse email externe.';
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      this.externalRecipientError = 'Adresse email invalide.';
+      return;
+    }
+
+    const alreadyInMembers = this.recipients.some((m) => (m.email ?? '').trim().toLowerCase() === email);
+    if (alreadyInMembers) {
+      this.externalRecipientError = 'Cette adresse est déjà présente dans les membres sélectionnés.';
+      return;
+    }
+
+    const alreadyInExternals = this.externalRecipients.some((r) => r.email.toLowerCase() === email);
+    if (alreadyInExternals) {
+      this.externalRecipientError = 'Cette adresse externe est déjà ajoutée.';
+      return;
+    }
+
+    this.externalRecipients.push({ email, name });
+    this.externalEmail = '';
+    this.externalName = '';
+  }
+
+  removeExternalRecipient(index: number) {
+    this.externalRecipients.splice(index, 1);
+    this.externalRecipientError = null;
   }
 
   onContentChange(event: Event): void {
-    const element = event.target as HTMLElement;
-    this.bodyHtml = element.innerHTML;
+    const editorHtml = this.editorDiv?.nativeElement?.innerHTML;
+    const eventHtml = (event.target as HTMLElement | null)?.innerHTML;
+    this.bodyHtml = editorHtml ?? eventHtml ?? '';
     this.updatePreview();
   }
 
@@ -126,11 +182,16 @@ export class MailingComponent implements OnInit, AfterViewInit {
     this.bodyHtml = '';
     this.attachments = [];
     this.recipients = [];
+    this.externalRecipients = [];
+    this.externalEmail = '';
+    this.externalName = '';
+    this.externalRecipientError = null;
     this.selectedSurveyId = '';
     this.selectedSurvey = null;
     if (this.editorDiv) {
       this.editorDiv.nativeElement.innerHTML = '';
     }
+    this.updatePreview();
   }
 
   sendMail() {
@@ -145,16 +206,23 @@ export class MailingComponent implements OnInit, AfterViewInit {
         this.sending = false;
         return;
       }
-      if (!this.recipients.length) {
+      if (this.surveyRecipientCount === 0) {
         this.error = 'Aucun destinataire sélectionné.';
         this.sending = false;
         return;
       }
-      const recipientPayload = this.recipients.map(m => ({
+      const memberRecipientPayload = this.recipients.map(m => ({
         email: m.email!,
         name: `${m.firstname ?? ''} ${m.lastname ?? ''}`.trim(),
         memberId: m.id,
+        isExternal: false,
       }));
+      const externalRecipientPayload = this.externalRecipients.map(r => ({
+        email: r.email,
+        name: r.name,
+        isExternal: true,
+      }));
+      const recipientPayload = [...memberRecipientPayload, ...externalRecipientPayload];
       this.mailingService.sendSurvey({
         surveyId: this.selectedSurvey.id,
         subject: this.subject,
@@ -172,7 +240,9 @@ export class MailingComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    const toArray = this.recipients.map(m => m.email).filter(Boolean) as string[];
+    const memberEmails = this.recipients.map(m => (m.email ?? '').trim().toLowerCase()).filter(Boolean);
+    const externalEmails = this.externalRecipients.map(r => r.email.trim().toLowerCase()).filter(Boolean);
+    const toArray = [...new Set([...memberEmails, ...externalEmails])] as string[];
     if (toArray.length === 0) {
       this.error = 'Aucun destinataire sélectionné.';
       this.sending = false;

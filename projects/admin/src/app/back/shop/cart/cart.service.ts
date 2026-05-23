@@ -22,7 +22,6 @@ export class CartService {
   constructor(
     private bookService: BookService,
     private productService: ProductService,
-    private membersService: MembersService,
     private gameCardService: GameCardService
 
   ) { }
@@ -187,6 +186,16 @@ export class CartService {
     let payees: Map<string, CartItem[]> = new Map();
 
     this._cart.items.forEach((cartitem) => {
+
+      // si le produit est de type PAF , mémoriser le nom du produit dans le champ productTag du cart pour faciliter le filtrage en compta (ex: "PAF Tournoi XYZ")
+      if (cartitem.product_account === 'PAF') {
+        const product = this.productService.getProduct(cartitem.product_id);
+        if (product) {
+          this._cart.productTag = product.name;
+        }
+      }
+
+
       const isShared = cartitem.paired_with && cartitem.product_account === 'CAR';
 
       if (isShared) {
@@ -239,6 +248,7 @@ export class CartService {
          label: 'vendu par ' + this.seller,
         member: payee,
          values: {} as operation_values,
+        productCodes: '',
       };
 
       // génération d'une ligne operation si compte déjà utilisé même si même payee
@@ -253,10 +263,28 @@ export class CartService {
             label: 'vendu par ' + this.seller,
             member: payee,
             values: {} as operation_values,
+            productCodes: '',
           };
           ops[op_index].values[account] = cartitem.paied;
+          const product = this.productService.getProduct(cartitem.product_id) as any;
+          const productCode = product?.productCcode ?? product?.productCode ?? '';
+          if (productCode) {
+            const taggedProductCode = `#${productCode}`;
+            ops[op_index].productCodes = ops[op_index].productCodes
+              ? `${ops[op_index].productCodes} ${taggedProductCode}`
+              : taggedProductCode;
+          }
+
         } else {
           ops[op_index].values[account] = cartitem.paied;
+          const product = this.productService.getProduct(cartitem.product_id) as any;
+          const productCode = product?.productCcode ?? product?.productCode ?? '';
+          if (productCode) {
+            const taggedProductCode = `#${productCode}`;
+            ops[op_index].productCodes = ops[op_index].productCodes
+              ? `${ops[op_index].productCodes} ${taggedProductCode}`
+              : taggedProductCode;
+          }
         }
       });
       // paiement du panier à crédit

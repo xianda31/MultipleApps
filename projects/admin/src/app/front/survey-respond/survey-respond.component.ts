@@ -29,18 +29,27 @@ export class SurveyRespondComponent implements OnInit {
   get survey() { return this.data?.survey ?? null; }
   get questions() { return this.data?.questions ?? []; }
   get existingResponse() { return this.data?.existingResponse ?? null; }
-  get isRsvp() { return this.survey?.surveyType === 'rsvp'; }
+  get invitationQuestion() {
+    return this.questions.find((q: any) => q.order === -1) ?? null;
+  }
+  get isInvitationDeclined(): boolean {
+    const q = this.invitationQuestion;
+    if (!q) return false;
+    const idx = this.answers[q.id];
+    // Convention: option index 0 of invitation question means "absent / ne vient pas".
+    return idx === 0;
+  }
   get isClosed() {
     if (!this.survey) return false;
     if (this.survey.status === 'closed') return true;
     if (!this.survey.closingDate) return false;
     return new Date(this.survey.closingDate).getTime() <= Date.now();
   }
-  get status() { return this.existingResponse?.status ?? null; }
   get firstName() { return this.data?.memberName?.split(' ')?.[0] ?? this.data?.memberName ?? ''; }
 
   /** True si toutes les questions ont une réponse */
   get allAnswered(): boolean {
+    if (this.isInvitationDeclined) return true;
     return this.questions.every(q => this.answers[q.id] !== undefined);
   }
 
@@ -75,38 +84,13 @@ export class SurveyRespondComponent implements OnInit {
   // ── Poll : soumettre ────────────────────────────────────────────────────
 
   async submitPoll() {
-    if (!this.allAnswered) { this.saveError = 'Veuillez répondre à toutes les questions.'; return; }
+    if (!this.allAnswered) {
+      this.saveError = 'Veuillez répondre à toutes les questions (sauf si vous avez indiqué ne pas venir à la question 0).';
+      return;
+    }
     this.saving = true; this.saveError = '';
     try {
       await this.surveyService.submit(this.token, this.answers);
-      await this.reload();
-    } catch (e: any) {
-      this.saveError = e?.message ?? 'Erreur';
-    } finally { this.saving = false; }
-  }
-
-  // ── RSVP : statut ───────────────────────────────────────────────────────
-
-  async rsvpAnswer(status: 'confirmed' | 'declined') {
-    this.saving = true; this.saveError = '';
-    try {
-      if (this.existingResponse) {
-        await this.surveyService.updateStatus(this.token, status);
-      } else {
-        // Première réponse RSVP : soumettre + statut
-        await this.surveyService.submit(this.token, this.answers);
-        await this.surveyService.updateStatus(this.token, status);
-      }
-      await this.reload();
-    } catch (e: any) {
-      this.saveError = e?.message ?? 'Erreur';
-    } finally { this.saving = false; }
-  }
-
-  async changeStatus(status: 'confirmed' | 'declined' | 'cancelled') {
-    this.saving = true; this.saveError = '';
-    try {
-      await this.surveyService.updateStatus(this.token, status);
       await this.reload();
     } catch (e: any) {
       this.saveError = e?.message ?? 'Erreur';

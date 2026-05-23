@@ -17,7 +17,6 @@ type Survey = SurveyItem;
 export class SondageListComponent implements OnInit {
   private router = inject(Router);
   private sondageService = inject(SondageService);
-  private mailingService = inject(MailingService);
   surveys: Survey[] = [];
   loading = true;
 

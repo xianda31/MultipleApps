@@ -13,6 +13,7 @@
                     <tr>
                         <!-- <th>Produit</th> -->
                         <th>Nom</th>
+                        <th>Code</th>
                         <th>Description</th>
                         <th class="text-center">Compte</th>
                         <th class="text-center">Prix</th>
@@ -33,6 +34,7 @@
                             }
                         </td> -->
                         <td>{{ product.name }}</td>
+                        <td>{{ product.productCode || $any(product).productCode || '-' }}</td>
                         <td>{{ product.description }}</td>
                         <td class="text-center">{{ product.account }}</td>
                         <td class="text-end">{{ product.price | currency:'€':'symbol':'2.2-2':'fr' }}</td>
@@ -89,6 +91,10 @@
                         <div class="col-md-4">
                             <label class="form-label">Nom</label>
                             <input type="text" class="form-control" formControlName="name">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Code</label>
+                            <input type="text" class="form-control" formControlName="productCcode">
                         </div>
                         <div class="col-md-5">
                             <label class="form-label">Description</label>

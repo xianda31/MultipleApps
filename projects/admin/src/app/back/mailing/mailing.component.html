@@ -10,6 +10,40 @@
 				<div class="mb-3">
 					<label class="form-label">Destinataires</label>
 					<app-recipient-selector (selectionChange)="onRecipientsChange($event)"></app-recipient-selector>
+					<div class="card mt-2">
+						<div class="card-body py-2">
+							<div class="small fw-semibold mb-2">Ajouter un destinataire externe (non-membre)</div>
+							<div class="row g-2 align-items-end">
+								<div class="col-md-6">
+									<label class="form-label small mb-1">Email externe</label>
+									<input class="form-control form-control-sm" [(ngModel)]="externalEmail" name="externalEmail"
+										placeholder="exemple@domaine.fr">
+								</div>
+								<div class="col-md-4">
+									<label class="form-label small mb-1">Nom (optionnel)</label>
+									<input class="form-control form-control-sm" [(ngModel)]="externalName" name="externalName"
+										placeholder="Prénom Nom">
+								</div>
+								<div class="col-md-2 d-grid">
+									<button type="button" class="btn btn-sm btn-outline-primary" (click)="addExternalRecipient()">Ajouter</button>
+								</div>
+							</div>
+							@if (externalRecipientError) {
+								<div class="small text-danger mt-2">{{ externalRecipientError }}</div>
+							}
+							@if (externalRecipients.length > 0) {
+								<div class="mt-2 small">
+									<div class="text-muted mb-1">Destinataires externes ajoutés :</div>
+									@for (r of externalRecipients; track r.email; let i = $index) {
+										<div class="d-flex align-items-center justify-content-between border rounded px-2 py-1 mb-1">
+											<span>{{ r.email }} @if (r.name) { - {{ r.name }} }</span>
+											<button type="button" class="btn btn-sm btn-link text-danger p-0" (click)="removeExternalRecipient(i)">Retirer</button>
+										</div>
+									}
+								</div>
+							}
+						</div>
+					</div>
 				</div>
 
 				<!-- Sujet -->
@@ -104,13 +138,12 @@
 		<div class="col-md-6">
 			<div class="sticky-top" style="top: 20px;">
 				<h5>Prévisualisation</h5>
-				<iframe #previewFrame style="width:100%;height:60vh;border:1px solid #dee2e6;border-radius:4px"
-					sandbox="allow-same-origin"></iframe>
+				<div class="preview-surface" [innerHTML]="previewHtml"></div>
 
-				<button class="btn btn-success w-100 mb-2 mt-2" [disabled]="sending || !subject.trim() || !recipients.length"
+				<button class="btn btn-success w-100 mb-2 mt-2" [disabled]="sending || !subject.trim() || totalRecipientCount === 0"
 					(click)="sendMail()">
 					<span *ngIf="sending" class="spinner-border spinner-border-sm me-2"></span>
-					@if (isSurveyMode) { Envoyer le sondage } @else { Envoyer }
+					@if (isSurveyMode) { Envoyer le sondage ({{ totalRecipientCount }}) } @else { Envoyer ({{ totalRecipientCount }}) }
 				</button>
 
 				<div *ngIf="result" class="alert alert-success">

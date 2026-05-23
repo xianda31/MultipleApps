@@ -106,6 +106,7 @@ export interface Operation {
   label: string;          // libellé de l'opération
   member?: string;        // nom de l'adhérent
   values: operation_values;
+  productCodes?: string;
 }
 
 export interface Session {
@@ -144,6 +145,7 @@ export interface BookEntry {
   bank_report?: string | null;       // (mois) relevé bancaire
   deposit_ref?: string;       //  référence bordereau de dépôt
   invoice_ref?: string;       // référence facture fournisseur
+  // product_tag?: string;      // Tag produit pour faciliter le filtrage en compta (ex: "PAF Tournoi XYZ")
   operations: Operation[];
 }
 

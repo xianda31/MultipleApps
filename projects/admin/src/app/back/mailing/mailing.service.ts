@@ -91,7 +91,7 @@ export class MailingService {
         subject: string;
         surveyBodyHtml: string;   // corps sans template (markers [SURVEY_LINK] inclus)
         closingDate?: string;
-        recipients: Array<{ email: string; name: string; memberId: string }>;
+        recipients: Array<{ email: string; name: string; memberId?: string; isExternal?: boolean }>;
         attachments?: Array<{filename: string; content: string; contentType: string}>;
     }): Promise<any> {
         if (!params.recipients.length) throw new Error('Aucun destinataire');

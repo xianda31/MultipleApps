@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { SondageService } from '../sondage.service';
 import { MembersService } from '../../../common/services/members.service';
 import { Member } from '../../../common/interfaces/member.interface';
+import { BookService } from '../../services/book.service';
 
 interface QuestionResult {
   id: string;
@@ -17,8 +18,12 @@ interface QuestionResult {
 interface ResponseRow {
   id: string;
   memberName: string;
+  firstName: string;
+  lastName: string;
   memberEmail: string;
   memberId: string;
+  isMember: boolean;
+  createdAt: string;
   updatedAt: string;
   answers: Record<string, number>; // questionId → optionIndex
 }
@@ -34,9 +39,11 @@ export class SondageResultatsComponent implements OnInit {
   private router = inject(Router);
   private sondageService = inject(SondageService);
   private membersService = inject(MembersService);
+  private bookService = inject(BookService);
 
   surveyId = '';
   surveyTitle = '';
+  surveyProductTag = ''; // pour faciliter le filtrage en compta (ex: "PAF Tournoi XYZ")
   questions: QuestionResult[] = [];
   responses: ResponseRow[] = [];
   members: Member[] = [];
@@ -73,6 +80,7 @@ export class SondageResultatsComponent implements OnInit {
     ]);
 
     this.surveyTitle = survey?.title ?? '';
+    this.surveyProductTag = survey?.productTag ?? '';
 
     this.questions = (qs as any[]).map((q: any) => ({
       id: q.id, order: q.order, text: q.text, options: q.options ?? [],
@@ -88,31 +96,82 @@ export class SondageResultatsComponent implements OnInit {
   }
 
   private setResponses(raw: any[]) {
-    this.responses = raw.map((r: any) => ({
-      id: r.id,
-      memberName: r.memberName?.trim() || r.memberEmail,
-      memberEmail: r.memberEmail,
-      memberId: r.memberId,
-      updatedAt: r.updatedAt ?? r.submittedAt,
-      answers: (() => { let v = r.answers; if (typeof v === 'string') v = JSON.parse(v); if (typeof v === 'string') v = JSON.parse(v); return v ?? {}; })(),
-    }));
+    const mappedResponses = raw.map((r: any) => {
+      const memberName = r.memberName?.trim() || r.memberEmail;
+      const { firstName, lastName } = this.parseMemberName(memberName);
+      return {
+        id: r.id,
+        memberName,
+        firstName,
+        lastName,
+        memberEmail: r.memberEmail,
+        memberId: r.memberId,
+        createdAt: r.createdAt,
+        updatedAt: r.updatedAt ?? r.submittedAt,
+        answers: (() => { let v = r.answers; if (typeof v === 'string') v = JSON.parse(v); if (typeof v === 'string') v = JSON.parse(v); return v ?? {}; })(),
+        isMember: r.memberId !== r.memberEmail, // convention : si memberId === memberEmail alors c'est un non-membre
+      };
+    });
+
+    this.responses = mappedResponses.sort((a, b) => {
+      const aAbsent = this.isAbsent(a);
+      const bAbsent = this.isAbsent(b);
+
+      // Présents en premier, absents ensuite.
+      if (aAbsent !== bAbsent) return aAbsent ? 1 : -1;
+
+      const aLabel = `${a.lastName} ${a.firstName}`.trim() || a.memberName;
+      const bLabel = `${b.lastName} ${b.firstName}`.trim() || b.memberName;
+      return aLabel.localeCompare(bLabel, 'fr', { sensitivity: 'base' });
+    });
+
     this.alreadyVotedIds = new Set(this.responses.map(r => r.memberId));
+  }
+
+  private parseMemberName(memberName: string): { firstName: string; lastName: string } {
+    const parts = (memberName ?? '').trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return { firstName: '', lastName: '' };
+    if (parts.length === 1) return { firstName: parts[0], lastName: '' };
+    return {
+      firstName: parts[0],
+      lastName: parts.slice(1).join(' '),
+    };
   }
 
   get invitationQuestion(): QuestionResult | null {
     return this.questions.find(q => q.order === -1) ?? null;
   }
 
+  private normalizeAnswer(value: string): string {
+    return (value ?? '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim();
+  }
+
   isAbsent(row: ResponseRow): boolean {
     const invQ = this.invitationQuestion;
     if (!invQ) return false;
-    // La première option (index 0) correspond à « absent » par convention (premier choix)
-    // L'admin peut avoir défini un autre ordre ; on ne présume pas, on laisse la valeur visible.
-    // isAbsent = true si l'option choisie a un keyword 'Absent' (insensible à la casse)
+
+    // Convention historique: l'option 0 de la question d'invitation représente l'absence.
+    // On complète avec une détection par libellé/keyword pour couvrir les variantes (ex: "Non").
     const idx = row.answers[invQ.id];
     if (idx === undefined) return false;
-    const kw = (invQ.optionKeywords[idx] ?? '').toLowerCase();
-    return kw === 'absent';
+
+    if (idx === 0) return true;
+
+    const keyword = this.normalizeAnswer(invQ.optionKeywords[idx] ?? '');
+    const optionText = this.normalizeAnswer(invQ.options[idx] ?? '');
+    const value = keyword || optionText;
+
+    return value === 'absent'
+      || value === 'non'
+      || value === 'no'
+      || value.includes('ne viendrai pas')
+      || value.includes('ne viens pas')
+      || value.includes('declined')
+      || value.includes('cancelled');
   }
 
   getAnswer(row: ResponseRow, questionId: string): string {
@@ -204,12 +263,15 @@ export class SondageResultatsComponent implements OnInit {
 
   exportCsv() {
     const headers = ['Nom', 'Paiement', 'Date', ...this.questions.map(q => q.text)];
-    const rows = this.responses.map(r => [
-      r.memberName,
-      this.hasPayed(r.memberId) ? 'Oui' : 'Non',
-      new Date(r.updatedAt).toLocaleDateString('fr-FR'),
-      ...this.questions.map(q => this.getAnswer(r, q.id)),
-    ]);
+    const rows = this.responses.map(r => {
+      const payment = r.isMember ? this.product_paied(r.memberId) : null;
+      return [
+        r.memberName,
+        payment ?? '',
+        new Date(r.updatedAt).toLocaleDateString('fr-FR'),
+        ...this.questions.map(q => this.getAnswer(r, q.id)),
+      ];
+    });
     const csv = [headers, ...rows].map(row => row.map(c => `"${c}"`).join(';')).join('\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -218,11 +280,12 @@ export class SondageResultatsComponent implements OnInit {
     URL.revokeObjectURL(url);
   }
 
-  hasPayed(memberId: string): boolean {
-    // TODO : remplacer par une vraie vérification de paiement, par exemple en ajoutant un champ "hasPayed" dans les réponses
-    // pour l'instant on considère que les membres dont le nom contient "payé" ont payé, juste pour la démo
+  product_paied( memberId: string): number | null {
     const member = this.members.find(m => m.id === memberId);
-    return member ? /payé/i.test(`${member.firstname} ${member.lastname}`) : false;
+    // pour l'instant on renvoie 0
+    return member ? 0 : null;
+    // TODO : remplacer par une vraie vérification de paiement, par exemple en ajoutant un champ "get_member_payment_by_product_tag" dans les réponses
+    // return member ? this.bookService.get_member_payment_by_product_tag(this.membersService.full_name(member), this.surveyProductTag) : null;
   }
 
   back() { this.router.navigate(['/back/communication/sondage']); }

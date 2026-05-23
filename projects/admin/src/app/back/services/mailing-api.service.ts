@@ -45,7 +45,7 @@ export class MailingApiService {
     subject: string;
     emailTemplate: string;
     closingDate?: string;
-    recipients: Array<{ email: string; name: string; memberId: string }>;
+    recipients: Array<{ email: string; name: string; memberId?: string; isExternal?: boolean }>;
     from?: string;
     baseUrl?: string;
     attachments?: Array<{filename: string, content: string, contentType: string}>;

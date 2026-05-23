@@ -3,6 +3,7 @@ import { Schema } from "../../../../../../amplify/data/resource";
 export interface SaleItem {
   id: string;
   name: string;
+  productCode?: string | null;
   description: string;
   glyph: string;
   price: number;              // en euros (prix total de l'achat)
