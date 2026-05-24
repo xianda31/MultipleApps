@@ -2,8 +2,6 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { SondageService, SurveyItem } from '../sondage.service';
-import { MailingService } from '../../mailing/mailing.service';
-import { RecipientSelectorComponent } from '../../../common/components/recipient-selector/recipient-selector.component';
 import { Member } from '../../../common/interfaces/member.interface';
 
 type Survey = SurveyItem;
@@ -26,13 +24,11 @@ export class SondageListComponent implements OnInit {
   sendResult: any = null;
   sendError: string | null = null;
 
-  readonly statusLabel: Record<string, string> = {
-    draft: 'Brouillon',
+  readonly statusLabel: Record<'active' | 'closed', string> = {
     active: 'En cours',
     closed: 'Clôturé',
   };
-  readonly statusClass: Record<string, string> = {
-    draft: 'secondary',
+  readonly statusClass: Record<'active' | 'closed', string> = {
     active: 'success',
     closed: 'danger',
   };
@@ -121,5 +117,26 @@ export class SondageListComponent implements OnInit {
     if (!confirm(`Supprimer « ${survey.title} » ?`)) return;
     await this.sondageService.deleteSurvey(survey.id);
     this.surveys = this.surveys.filter(s => s.id !== survey.id);
+  }
+
+  effectiveStatus(survey: Survey): 'active' | 'closed' {
+    if (survey.status === 'closed') return 'closed';
+    return this.isTimedOut(survey) ? 'closed' : 'active';
+  }
+
+  canClose(survey: Survey): boolean {
+    return this.effectiveStatus(survey) === 'active';
+  }
+
+  canReopen(survey: Survey): boolean {
+    return survey.status === 'closed' && !this.isTimedOut(survey);
+  }
+
+  private isTimedOut(survey: Survey): boolean {
+    if (!survey.closingDate) return false;
+    const closing = new Date(survey.closingDate);
+    if (Number.isNaN(closing.getTime())) return false;
+    closing.setHours(23, 59, 59, 999);
+    return Date.now() > closing.getTime();
   }
 }

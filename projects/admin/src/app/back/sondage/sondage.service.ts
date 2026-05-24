@@ -49,7 +49,7 @@ export class SondageService {
   }
 
   async createSurvey(input: SurveyInput): Promise<SurveyItem> {
-    const { data } = await this.m.Survey.create({ ...input, status: input.status ?? 'draft' });
+    const { data } = await this.m.Survey.create({ ...input, status: input.status ?? 'active' });
     return data;
   }
 

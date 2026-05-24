@@ -44,6 +44,11 @@
 
       <!-- Titre sondage -->
       <h1 style="font-size:20px;color:#333;margin:0 0 10px 0">{{ survey!.title }}</h1>
+      @if (survey!.closingDate) {
+      <p style="font-size:13px;color:#888;margin:0 0 16px 0">
+        Date limite  : <strong>{{ survey!.closingDate | date:'dd/MM/yyyy' }}</strong>
+      </p>
+      }
       @if (survey!.description) {
       <p style="font-size:15px;color:#555;line-height:1.7;margin:0 0 24px 0" [innerHTML]="survey!.description"></p>
       }
@@ -55,6 +60,11 @@
         <p style="font-size:32px;margin:0">🔒</p>
         <h3 style="color:#888;margin:12px 0 6px">Ce questionnaire est clôturé</h3>
         <p style="color:#aaa;font-size:14px">Les réponses ne peuvent plus être modifiées.</p>
+        @if (survey!.closingDate) {
+        <p style="color:#aaa;font-size:13px;margin:8px 0 0 0">
+          Clôturé le {{ survey!.closingDate | date:'dd/MM/yyyy' }}
+        </p>
+        }
       </div>
 
       <!-- Récapitulatif si déjà répondu -->

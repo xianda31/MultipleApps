@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -6,6 +6,9 @@ import { SondageService } from '../sondage.service';
 import { MembersService } from '../../../common/services/members.service';
 import { Member } from '../../../common/interfaces/member.interface';
 import { BookService } from '../../services/book.service';
+import { ProductService } from '../../../common/services/product.service';
+import { SaleItem } from '../../products/sale-item.interface';
+import { firstValueFrom } from 'rxjs';
 
 interface QuestionResult {
   id: string;
@@ -35,15 +38,19 @@ interface ResponseRow {
   templateUrl: './sondage-resultats.component.html',
 })
 export class SondageResultatsComponent implements OnInit {
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  private sondageService = inject(SondageService);
-  private membersService = inject(MembersService);
-  private bookService = inject(BookService);
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private sondageService: SondageService,
+    private membersService: MembersService,
+    private bookService: BookService,
+    private productService: ProductService,
+  ) {}
+  
 
   surveyId = '';
   surveyTitle = '';
-  surveyProductTag = ''; // pour faciliter le filtrage en compta (ex: "PAF Tournoi XYZ")
+  surveySaleItem: SaleItem | null = null;
   questions: QuestionResult[] = [];
   responses: ResponseRow[] = [];
   members: Member[] = [];
@@ -80,7 +87,14 @@ export class SondageResultatsComponent implements OnInit {
     ]);
 
     this.surveyTitle = survey?.title ?? '';
-    this.surveyProductTag = survey?.productTag ?? '';
+    const surveyProductRef = (survey?.productTag ?? '').trim();
+    const products = await firstValueFrom(this.productService.listProducts());
+    this.surveySaleItem = !surveyProductRef
+      ? null
+      : products.find((p) => p.id === surveyProductRef)
+        ?? products.find((p) => p.productCode === surveyProductRef)
+        ?? products.find((p) => p.name === surveyProductRef)
+        ?? null;
 
     this.questions = (qs as any[]).map((q: any) => ({
       id: q.id, order: q.order, text: q.text, options: q.options ?? [],
@@ -282,11 +296,30 @@ export class SondageResultatsComponent implements OnInit {
 
   product_paied( memberId: string): number | null {
     const member = this.members.find(m => m.id === memberId);
-    // pour l'instant on renvoie 0
-    return member ? 0 : null;
+    const full_name = member ? this.membersService.full_name(member) : null;
+    if (!full_name) return null;
+
+    const account = this.surveySaleItem?.account;
+    const productCode = this.surveySaleItem?.productCode?.trim();
+    if (!account || !productCode) return 0;
+    const expectedCode = productCode.replace(/^#/, '').toLowerCase();
+    
+    const revenues = this.bookService.get_revenues_from_members().filter((revenue) => revenue.member === full_name);
+    const total = revenues.reduce((sum, rev) => {
+      const codes = (rev.productCodes ?? '')
+        .split(/\s+/)
+        .map((code) => code.replace(/^#/, '').toLowerCase())
+        .filter(Boolean);
+      if (!codes.includes(expectedCode)) return sum;
+      const amount = rev.values[account];
+      return sum + (typeof amount === 'number' ? amount : 0);
+    }, 0);
+    return total;
     // TODO : remplacer par une vraie vérification de paiement, par exemple en ajoutant un champ "get_member_payment_by_product_tag" dans les réponses
-    // return member ? this.bookService.get_member_payment_by_product_tag(this.membersService.full_name(member), this.surveyProductTag) : null;
+    
+    // return member ? this.bookService.get_member_payment_by_product_tag(this.membersService.full_name(member), this.surveySaleItemTag) : null;
   }
 
   back() { this.router.navigate(['/back/communication/sondage']); }
 }
+  

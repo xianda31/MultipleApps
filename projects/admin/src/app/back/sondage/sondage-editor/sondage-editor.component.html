@@ -29,10 +29,11 @@
         <input class="form-control" type="date" [(ngModel)]="closingDate" />
       </div>
       <div class="mb-3">
-        <label class="form-label fw-semibold">Produit à la vente <span class="text-danger">*</span></label>
+        <label class="form-label fw-semibold">Code Produit <span class="text-muted fw-normal">(optionnel)</span></label>
         <select class="form-select" [(ngModel)]="tag">
+          <option value="">— Aucun —</option>
           @for (p of pafProducts; track p.id) {
-            <option [value]="p.name">{{ p.name }}</option>
+            <option [value]="p.id">{{ p.name }}</option>
           }
         </select>
       </div>
@@ -144,7 +145,7 @@
     </div>
   }
   <div class="d-flex gap-2 mb-4">
-    <button class="btn btn-primary" (click)="save()" [disabled]="saving || !title.trim() || !closingDate || !tag.trim()">
+    <button class="btn btn-primary" (click)="save()" [disabled]="saving || !title.trim() || !closingDate">
       @if (saving) { <span class="spinner-border spinner-border-sm me-1"></span> }
       Enregistrer
     </button>

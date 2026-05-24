@@ -46,6 +46,7 @@ export class SondageEditorComponent implements OnInit {
   description = '';
   footerNote = '';
   closingDate = '';
+  // Holds selected SaleItem.id (legacy surveys may still have stored product name).
   tag = '';
   pafProducts: Product[] = [];
   @ViewChild('descriptionEditor') descriptionEditor!: ElementRef<HTMLDivElement>;
@@ -61,7 +62,7 @@ export class SondageEditorComponent implements OnInit {
 
   async ngOnInit() {
     const products = await firstValueFrom(this.productService.listProducts());
-    this.pafProducts = (products ?? []).filter(p => p.account === 'PAF');
+    this.pafProducts = (products ?? []) ; // .filter(p => p.account === 'PAF'); tous les produits peuvent être proposés ; c'est plus général
 
     this.surveyId = this.route.snapshot.paramMap.get('id') ?? 'new';
     this.isNew = this.surveyId === 'new';
@@ -73,7 +74,7 @@ export class SondageEditorComponent implements OnInit {
         this.description = survey.description ?? '';
         this.footerNote = (survey as any).footerNote ?? '';
         this.closingDate = survey.closingDate;
-        this.tag = survey.productTag ?? '';
+        this.tag = this.resolveProductId(survey.productTag ?? '');
         setTimeout(() => {
           if (this.descriptionEditor) {
             this.descriptionEditor.nativeElement.innerHTML = this.description;
@@ -93,7 +94,7 @@ export class SondageEditorComponent implements OnInit {
     }
 
     if (!this.tag && this.pafProducts.length === 1) {
-      this.tag = this.pafProducts[0].name;
+      this.tag = this.pafProducts[0].id;
     }
 
     if (this.regularQuestions.length === 0) this.addQuestion();
@@ -137,6 +138,13 @@ export class SondageEditorComponent implements OnInit {
 
   trackByIndex(index: number) { return index; }
 
+  private resolveProductId(storedProductTag: string): string {
+    const value = (storedProductTag ?? '').trim();
+    if (!value) return '';
+    if (this.pafProducts.some(p => p.id === value)) return value;
+    return this.pafProducts.find(p => p.name === value)?.id ?? '';
+  }
+
   async save() {
     if (!this.title.trim() || !this.closingDate) return;
     this.saving = true;
@@ -147,9 +155,9 @@ export class SondageEditorComponent implements OnInit {
           title: this.title.trim(),
           description: this.description.trim() || undefined,
           footerNote: this.footerNote.trim() || undefined,
-          productTag: this.tag.trim(),
+          productTag: this.tag || undefined,
           closingDate: this.closingDate,
-          status: 'draft',
+          status: 'active',
         });
         this.surveyId = created.id;
         this.isNew = false;
@@ -158,7 +166,7 @@ export class SondageEditorComponent implements OnInit {
           title: this.title.trim(),
           description: this.description.trim() || undefined,
           footerNote: this.footerNote.trim() || undefined,
-          productTag: this.tag.trim(),
+          productTag: this.tag || undefined,
           closingDate: this.closingDate,
         });
       }

@@ -43,7 +43,10 @@ export class SurveyRespondComponent implements OnInit {
     if (!this.survey) return false;
     if (this.survey.status === 'closed') return true;
     if (!this.survey.closingDate) return false;
-    return new Date(this.survey.closingDate).getTime() <= Date.now();
+
+    const closingDate = new Date(this.survey.closingDate);
+    closingDate.setHours(23, 59, 59, 999);
+    return closingDate.getTime() < Date.now();
   }
   get firstName() { return this.data?.memberName?.split(' ')?.[0] ?? this.data?.memberName ?? ''; }
 
