@@ -9,6 +9,7 @@ import { BookService } from '../../services/book.service';
 import { ProductService } from '../../../common/services/product.service';
 import { SaleItem } from '../../products/sale-item.interface';
 import { firstValueFrom } from 'rxjs';
+import { BACK_ROUTE_ABS_PATHS } from '../../routes/back-route-paths';
 
 interface QuestionResult {
   id: string;
@@ -320,6 +321,6 @@ export class SondageResultatsComponent implements OnInit {
     // return member ? this.bookService.get_member_payment_by_product_tag(this.membersService.full_name(member), this.surveySaleItemTag) : null;
   }
 
-  back() { this.router.navigate(['/back/communication/sondage']); }
+  back() { this.router.navigate([BACK_ROUTE_ABS_PATHS['SondageList']]); }
 }
   

@@ -63,6 +63,8 @@
                     <td class="text-center" [class.text-muted]="q.order !== -1 && isAbsent(r)">
                         @if (q.order === -1 && isAbsent(r)) {
                         <span class="badge bg-secondary">Non</span>
+                        } @else if (q.order !== -1 && isAbsent(r)) {
+                        
                         } @else {
                         {{ getAnswer(r, q.id) }}
                         }
