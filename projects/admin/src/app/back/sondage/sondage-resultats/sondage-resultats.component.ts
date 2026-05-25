@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ChartOptions } from 'chart.js';
+import { BaseChartDirective } from 'ng2-charts';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SondageService } from '../sondage.service';
 import { MembersService } from '../../../common/services/members.service';
@@ -35,7 +37,7 @@ interface ResponseRow {
 @Component({
   selector: 'app-sondage-resultats',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, BaseChartDirective],
   templateUrl: './sondage-resultats.component.html',
 })
 export class SondageResultatsComponent implements OnInit {
@@ -322,5 +324,48 @@ export class SondageResultatsComponent implements OnInit {
   }
 
   back() { this.router.navigate([BACK_ROUTE_ABS_PATHS['SondageList']]); }
+
+  private readonly CHART_COLORS = [
+    'rgba(13,110,253,0.75)',
+    'rgba(25,135,84,0.75)',
+    'rgba(220,53,69,0.75)',
+    'rgba(255,193,7,0.9)',
+    'rgba(108,117,125,0.65)',
+    'rgba(13,202,240,0.75)',
+    'rgba(111,66,193,0.75)',
+  ];
+
+  get questionCharts(): Array<{ question: QuestionResult; chartData: any; chartOptions: ChartOptions<'bar'> }> {
+    return this.questions
+      .filter(q => q.order !== -1)
+      .map(q => {
+        const labels = q.options.map((opt, idx) => {
+          const kw = q.optionKeywords[idx]?.trim();
+          return kw || opt;
+        });
+        const counts = q.options.map((_, idx) =>
+          this.responses.filter(r => !this.isAbsent(r) && r.answers[q.id] === idx).length
+        );
+        return {
+          question: q,
+          chartData: {
+            labels,
+            datasets: [{
+              data: counts,
+              backgroundColor: labels.map((_, i) => this.CHART_COLORS[i % this.CHART_COLORS.length]),
+              borderWidth: 1,
+            }],
+          },
+          chartOptions: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { beginAtZero: true, ticks: { stepSize: 1 } },
+            },
+          } as ChartOptions<'bar'>,
+        };
+      });
+  }
 }
   
