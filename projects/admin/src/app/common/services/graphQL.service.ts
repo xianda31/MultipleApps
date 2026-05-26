@@ -20,6 +20,23 @@ export class DBhandler {
   constructor(
   ) { }
 
+  private sanitizeSaleItemInput(product: Partial<Product>): any {
+    const {
+      productCode,
+      productCcode,
+      createdAt,
+      updatedAt,
+      ...rest
+    } = product as any;
+
+    const normalizedCode = productCode ?? productCcode ?? null;
+
+    return {
+      ...rest,
+      productCcode: normalizedCode,
+    };
+  }
+
 
   private _authMode(): Observable<'userPool' | 'identityPool'> {
     return safeGetCurrentUser$().pipe(
@@ -508,7 +525,8 @@ export class DBhandler {
   async createStripeProduct(product: StripeProductInput): Promise<StripeProduct> {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode });
-    const { data, errors } = await client.models.SaleItem.create(product as any);
+    const input = this.sanitizeSaleItemInput(product as any);
+    const { data, errors } = await client.models.SaleItem.create(input as any);
     if (errors) throw errors;
     return data as unknown as StripeProduct;
   }
@@ -528,7 +546,8 @@ export class DBhandler {
   async updateStripeProduct(product: StripeProduct & { id: string }): Promise<StripeProduct> {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode });
-    const { data, errors } = await client.models.SaleItem.update(product as any);
+    const input = this.sanitizeSaleItemInput(product as any);
+    const { data, errors } = await client.models.SaleItem.update(input as any);
     if (errors) throw errors;
     return data as unknown as StripeProduct;
   }
@@ -627,7 +646,8 @@ export class DBhandler {
   async createProduct(product: Product_input): Promise<Product> {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode: authMode });
-    const { data, errors } = await client.models.SaleItem.create(product as any);
+    const input = this.sanitizeSaleItemInput(product as any);
+    const { data, errors } = await client.models.SaleItem.create(input as any);
     if (errors) throw errors;
     return data as unknown as Product;
   }
@@ -645,7 +665,8 @@ export class DBhandler {
   async updateProduct(product: Product): Promise<Product> {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode: authMode });
-    const { data, errors } = await client.models.SaleItem.update(product as any);
+    const input = this.sanitizeSaleItemInput(product as any);
+    const { data, errors } = await client.models.SaleItem.update(input as any);
     if (errors) throw errors;
     return data as unknown as Product;
   }

@@ -51,7 +51,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
     this.productForm = new FormGroup({
       id: new FormControl(),
       name: new FormControl('', Validators.required),
-      productCcode: new FormControl(''),
+      productCode: new FormControl(''),
       description: new FormControl('', Validators.required),
       price: new FormControl('', [Validators.required, Validators.min(0)]),
       account: new FormControl('', Validators.required),
@@ -68,7 +68,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
   }
 
   onNewProduct() {
-    this.productForm.reset({ productCcode: '', paired: false, stripeEnabled: false, active: true, currency: 'EUR' });
+    this.productForm.reset({ productCode: '', paired: false, stripeEnabled: false, active: true, currency: 'EUR' });
     this.accountInput = '';
     this.product_selected = false;
     this.showModal = true;
@@ -93,7 +93,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
   onReadProduct(product: Product) {
     this.productForm.patchValue({
       ...product,
-      productCcode: product.productCode ?? (product as any).productCode ?? ''
+      productCode: product.productCode ?? (product as any).productCcode ?? ''
     });
     this.accountInput = product.account ?? '';
     this.product_selected = true;
