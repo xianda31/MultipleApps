@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { MailingApiService } from '../services/mailing-api.service';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { MAILING_TEMPLATE } from './mailing-template';
+import { environment } from '../../../environments/environment';
 
 export interface EmailAttachment {
     filename: string;
@@ -23,7 +24,12 @@ export class MailingService {
 
     private readonly defaultFrom = '"Bridge Club Saint-Orens" <noreply@bridgeclubsaintorens.fr>';
     private readonly defaultReplyTo = '"Bridge Club Saint-Orens" <bridge.saintorens@free.fr>';
-    private ccEmail = '';
+    private readonly fallbackCcEmail = (
+        (environment as typeof environment & { mailingCcEmail?: string }).mailingCcEmail
+        || this.extractEmailAddress(this.defaultReplyTo)
+        || ''
+    ).trim();
+    private ccEmail = this.fallbackCcEmail;
     private tagline = 'Votre club de bridge convivial et dynamique';
 
     constructor(
@@ -32,9 +38,23 @@ export class MailingService {
     ) {
         // Charger la configuration système (ccEmail et tagline) une seule fois
         this.systemDataService.get_ui_settings().subscribe(ui => {
-            this.ccEmail = ui?.email?.ccEmail || '';
+            this.ccEmail = (ui?.email?.ccEmail || this.fallbackCcEmail || '').trim();
             this.tagline = ui?.email?.tagline || 'Votre club de bridge convivial et dynamique';
         });
+    }
+
+    private getCcRecipients(): string[] | undefined {
+        const cc = this.ccEmail.trim();
+        return cc ? [cc] : undefined;
+    }
+
+    private extractEmailAddress(value: string): string {
+        const match = value.match(/<([^>]+)>/);
+        return (match?.[1] || value || '').trim();
+    }
+
+    getConfiguredCcEmail(): string {
+        return this.ccEmail.trim();
     }
 
     /**
@@ -67,7 +87,7 @@ export class MailingService {
         const emailRequest = {
             from: this.defaultFrom,
             to: params.to,
-            cc: this.ccEmail ? [this.ccEmail] : undefined,
+            cc: this.getCcRecipients(),
             subject: params.subject,
             bodyHtml: fullBodyHtml,
             attachments: params.attachments && params.attachments.length > 0 ? params.attachments : undefined,
@@ -104,6 +124,7 @@ export class MailingService {
                 closingDate: params.closingDate,
                 recipients: params.recipients,
                 from: this.defaultFrom,
+                cc: this.getCcRecipients(),
                 baseUrl: window.location.origin,
                 attachments: params.attachments?.length ? params.attachments : undefined,
             });

@@ -146,8 +146,26 @@
 					@if (isSurveyMode) { Envoyer le sondage ({{ totalRecipientCount }}) } @else { Envoyer ({{ totalRecipientCount }}) }
 				</button>
 
+				<div class="small mb-2" *ngIf="configuredCcEmail; else noConfiguredCc">
+					📬 Copie club configurée : <strong>{{ configuredCcEmail }}</strong>
+				</div>
+				<ng-template #noConfiguredCc>
+					<div class="small text-muted mb-2">ℹ️ Aucune adresse de copie club configurée.</div>
+				</ng-template>
+
 				<div *ngIf="result" class="alert alert-success">
 					✅ Envoi réussi ! {{ result.sentCount }} email(s) envoyé(s).
+					<div class="mt-2 small" *ngIf="result.ccRequested && result.ccSent">
+						📬 Copie club envoyée avec succès.
+						<div class="text-muted">Destinataire : {{ result.ccRecipient || configuredCcEmail }}</div>
+						<div class="text-muted" *ngIf="result.ccMessageId">MessageId SES : {{ result.ccMessageId }}</div>
+					</div>
+					<div class="mt-2 small text-warning" *ngIf="result.ccRequested && result.ccError">
+						⚠️ Copie club non envoyée : {{ result.ccError }}
+					</div>
+					<div class="mt-2 small text-muted" *ngIf="!result.ccRequested">
+						ℹ️ Aucune adresse de copie club configurée (ccEmail).
+					</div>
 					<div *ngIf="skippedRecipients.length > 0" class="mt-2">
 						<strong>⚠️ {{ skippedRecipients.length }} destinataire(s) exclu(s)</strong> (ont refusé les mailings) :
 						<ul class="mb-0 mt-1 small">

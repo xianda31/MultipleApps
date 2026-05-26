@@ -41,6 +41,7 @@ export class MailingComponent implements OnInit, AfterViewInit {
   get isSurveyMode(): boolean { return !!this.selectedSurveyId; }
   get surveyRecipientCount(): number { return this.recipients.length + this.externalRecipients.length; }
   get totalRecipientCount(): number { return this.recipients.length + this.externalRecipients.length; }
+  get configuredCcEmail(): string { return this.mailingService.getConfiguredCcEmail(); }
 
   constructor(
     private mailingService: MailingService,

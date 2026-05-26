@@ -9,6 +9,12 @@ const docClient = DynamoDBDocumentClient.from(client);
 
 const BATCH_CONCURRENCY = 10;
 
+function extractEmailAddress(value?: string): string {
+  if (!value) return '';
+  const match = value.match(/<([^>]+)>/);
+  return (match?.[1] || value).trim();
+}
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -95,6 +101,7 @@ async function handleSurveySend(body: any, event: any) {
     closingDate,
     recipients,      // Array<{ email, name, memberId?, isExternal? }>
     from,
+    cc,
   } = body;
 
   if (!surveyId || !subject || !emailTemplate || !recipients?.length) {
@@ -107,6 +114,7 @@ async function handleSurveySend(body: any, event: any) {
   }
 
   const fromAddress = from || '"Bridge Club Saint-Orens" <noreply@bridgeclubsaintorens.fr>';
+  const fromEmail = extractEmailAddress(fromAddress);
     const publicBaseUrl = (body.baseUrl as string | undefined)?.replace(/\/$/, '')
       || process.env.PUBLIC_BASE_URL?.replace(/\/$/, '')
       || 'https://admin.bridgeclubsaintorens.fr';
@@ -166,10 +174,42 @@ async function handleSurveySend(body: any, event: any) {
 
   const sentCount = results.filter(r => r.status === 'sent').length;
   const errors = results.filter(r => r.status === 'error');
+  const ccRequested = !!(cc && cc.length > 0);
+
+  // Copie globale unique de suivi (sans lien tokenise, qui est propre a chaque destinataire).
+  let ccSent = false;
+  let ccError: string | undefined;
+  let ccMessageId: string | undefined;
+  let ccRecipient: string | undefined;
+  if (ccRequested) {
+    const trackingNote = `<hr style="margin-top:30px;border:none;border-top:1px solid #e0e0e0"><p style="text-align:center;font-size:12px;color:#999">Copie de suivi envoyee au club. Les liens de sondage dans les emails destinataires sont individualises.</p>`;
+    const ccHtml = emailTemplate
+      .replace(/\[SURVEY_LINK\]/g, '#')
+      .replace('</body>', trackingNote + '</body>');
+
+    try {
+      ccRecipient = cc[0];
+      const ccResult = await ses.send(new SendEmailCommand({
+        Source: fromAddress,
+        Destination: {
+          ToAddresses: [fromEmail],
+          BccAddresses: cc,
+        },
+        Message: {
+          Subject: { Data: `[COPIE] ${subject}`, Charset: 'UTF-8' },
+          Body: { Html: { Data: ccHtml, Charset: 'UTF-8' } },
+        },
+      }));
+      ccSent = true;
+      ccMessageId = ccResult?.MessageId;
+    } catch (error: any) {
+      ccError = error?.message || 'CC send failed';
+    }
+  }
 
   return {
     statusCode: 200,
-    body: JSON.stringify({ success: true, sentCount, errorCount: errors.length, errors }),
+    body: JSON.stringify({ success: true, sentCount, errorCount: errors.length, errors, ccRequested, ccSent, ccError, ccMessageId, ccRecipient }),
   };
 }
 
@@ -225,6 +265,7 @@ export const handler = async (event: any) => {
   }
 
   const { from, to, cc, subject, bodyText, bodyHtml, attachments, replyTo } = parsedBody;
+  const fromEmail = extractEmailAddress(from);
   
   console.log('📧 Email request:', { 
     from, 
@@ -350,23 +391,29 @@ export const handler = async (event: any) => {
     }
 
     // Si un CC est defini, envoyer un email separe au CC (sans lien de desinscription personnalise)
+    const ccRequested = !!(cc && cc.length > 0);
     let ccSent = false;
     let ccError: string | undefined;
-    if (cc && cc.length > 0) {
+    let ccMessageId: string | undefined;
+    let ccRecipient: string | undefined;
+    if (ccRequested) {
       console.log(`📧 Sending CC copy to ${cc.join(', ')}`);
 
       const ccUnsubscribeLink = `<hr style="margin-top: 30px; border: none; border-top: 1px solid #e0e0e0;"><p style="text-align: center; font-size: 12px; color: #999;">Email envoyé en copie pour suivi.</p>`;
       const ccHtml = (bodyHtml || `<p>${bodyText || ''}</p>`) + ccUnsubscribeLink;
 
       try {
+        ccRecipient = cc[0];
         if (attachments && attachments.length > 0) {
-          const rawEmail = createRawEmail(from, cc, subject, ccHtml, attachments, undefined, replyTo);
-          await sendWithRetry(() => ses.send(new SendRawEmailCommand({ RawMessage: { Data: Buffer.from(rawEmail) } })));
+          const rawEmail = createRawEmail(from, [fromEmail], subject, ccHtml, attachments, cc, replyTo);
+          const ccRawResult = await sendWithRetry(() => ses.send(new SendRawEmailCommand({ RawMessage: { Data: Buffer.from(rawEmail) } })));
+          ccMessageId = (ccRawResult as any)?.MessageId;
         } else {
           const ccParams: any = {
             Source: from,
             Destination: {
-              ToAddresses: cc
+              ToAddresses: [fromEmail],
+              BccAddresses: cc,
             },
             Message: {
               Subject: { Data: subject },
@@ -378,7 +425,8 @@ export const handler = async (event: any) => {
             ccParams.ReplyToAddresses = [replyTo];
           }
 
-          await sendWithRetry(() => ses.send(new SendEmailCommand(ccParams)));
+          const ccResult = await sendWithRetry(() => ses.send(new SendEmailCommand(ccParams)));
+          ccMessageId = (ccResult as any)?.MessageId;
         }
         ccSent = true;
       } catch (error: any) {
@@ -396,8 +444,11 @@ export const handler = async (event: any) => {
         skippedCount: recipients.length - validRecipients.length,
         skippedRecipients,
         totalRecipients: recipients.length,
+        ccRequested,
         ccSent,
         ccError,
+        ccMessageId,
+        ccRecipient,
       }) 
     };
   } catch (err: any) {
