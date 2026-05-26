@@ -35,7 +35,6 @@ export class  ProductService {
         const products = await firstValueFrom(
             this.dbHandler.listProducts().pipe(
                 map((items) => items.map((item) => this.normalizeProduct(item, this._products?.find((existing) => existing.id === item.id)))),
-                map((items) => items.filter((item) => item.active)),
                 switchMap((items) => this.sorted_products(items))
             )
         );
@@ -119,7 +118,6 @@ export class  ProductService {
 
         const _listProducts = this.dbHandler.listProducts().pipe(
             map((products) => products.map((product) => this.normalizeProduct(product, this._products?.find((existing) => existing.id === product.id)))),
-            map((products) => products.filter((product) => product.active)),
             // map((products) => products.sort((a, b) => b.price - a.price)),
             switchMap((products) => this.sorted_products(products)),
             map((products) => {
@@ -134,11 +132,20 @@ export class  ProductService {
     sorted_products(products: Product[]): Observable<Product[]> {
         return this.systemDataService.get_configuration().pipe(
             map((conf) => {
-                const products_accounts = conf.revenue_and_expense_tree.revenues.map((account) => account.key);
+                const products_accounts = conf.revenue_and_expense_tree.revenues.map((account) => account.key?.trim());
+                const knownAccounts = new Set(products_accounts.filter(Boolean));
+
                 const sorted_products: Product[] = [];
                 products_accounts.forEach((key) => {
-                    sorted_products.push(...products.filter((product) => product.account === key));
+                    sorted_products.push(...products.filter((product) => (product.account ?? '').trim() === key));
                 });
+
+                // Conserver les produits dont le compte n'est pas (ou plus) dans la configuration.
+                const unmatchedProducts = products
+                    .filter((product) => !knownAccounts.has((product.account ?? '').trim()))
+                    .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'fr'));
+
+                sorted_products.push(...unmatchedProducts);
                 return sorted_products;
             })
         );
