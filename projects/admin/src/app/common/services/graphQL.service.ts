@@ -23,18 +23,16 @@ export class DBhandler {
   private sanitizeSaleItemInput(product: Partial<Product>): any {
     const {
       productCode,
-      productCcode,
       createdAt,
       updatedAt,
       ...rest
     } = product as any;
 
-    const normalizedCode = productCode ?? productCcode ?? null;
+    const normalizedCode = productCode ?? null;
 
     return {
       ...rest,
       productCode: normalizedCode,
-      productCcode: normalizedCode,
     };
   }
 

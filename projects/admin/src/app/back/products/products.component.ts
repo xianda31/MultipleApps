@@ -93,7 +93,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
   onReadProduct(product: Product) {
     this.productForm.patchValue({
       ...product,
-      productCode: product.productCode ?? (product as any).productCcode ?? ''
+      productCode: product.productCode ?? ''
     });
     this.accountInput = product.account ?? '';
     this.product_selected = true;

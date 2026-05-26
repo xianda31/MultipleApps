@@ -193,7 +193,6 @@ const schema = a.schema({
     id: a.id().required(),
     name: a.string().required(),          // label court (Stripe + back)
     productCode: a.string(),              // code produit interne (optionnel)
-    productCcode: a.string(),             // DEPRECATED: typo historique, conserve temporairement
     description: a.string().required(),   // label long
     glyph: a.string().required(),         // icône UI back-office
     price: a.float().required(),          // en euros (source of truth — prix total de l'achat)

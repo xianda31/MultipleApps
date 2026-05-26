@@ -23,7 +23,7 @@ export class  ProductService {
     private normalizeProduct(product: any, previousProduct?: Product): Product {
         return {
             ...product,
-            productCode: product?.productCode ?? product?.productCcode ?? previousProduct?.productCode ?? null,
+            productCode: product?.productCode ?? previousProduct?.productCode ?? null,
         } as Product;
     }
 

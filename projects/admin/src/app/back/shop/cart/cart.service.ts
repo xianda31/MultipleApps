@@ -267,7 +267,7 @@ export class CartService {
           };
           ops[op_index].values[account] = cartitem.paied;
           const product = this.productService.getProduct(cartitem.product_id) as any;
-          const productCode = product?.productCode ?? product?.productCcode ?? '';
+          const productCode = product?.productCode ?? '';
           if (productCode) {
             const taggedProductCode = `#${productCode}`;
             ops[op_index].productCodes = ops[op_index].productCodes
@@ -278,7 +278,7 @@ export class CartService {
         } else {
           ops[op_index].values[account] = cartitem.paied;
           const product = this.productService.getProduct(cartitem.product_id) as any;
-          const productCode = product?.productCode ?? product?.productCcode ?? '';
+          const productCode = product?.productCode ?? '';
           if (productCode) {
             const taggedProductCode = `#${productCode}`;
             ops[op_index].productCodes = ops[op_index].productCodes
