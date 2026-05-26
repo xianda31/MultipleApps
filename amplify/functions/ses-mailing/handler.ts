@@ -7,6 +7,39 @@ const ses = new SESClient({ region: process.env.AWS_REGION });
 const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
 
+const BATCH_CONCURRENCY = 10;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function sendWithRetry<T>(operation: () => Promise<T>, maxAttempts = 3): Promise<T> {
+  let lastError: any;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await operation();
+    } catch (error: any) {
+      lastError = error;
+      const errorName = error?.name || '';
+      const isRetryable =
+        errorName === 'Throttling' ||
+        errorName === 'ThrottlingException' ||
+        errorName === 'TooManyRequestsException' ||
+        errorName === 'ServiceUnavailable' ||
+        error?.$retryable;
+
+      if (!isRetryable || attempt === maxAttempts) {
+        throw error;
+      }
+
+      await sleep(250 * attempt);
+    }
+  }
+
+  throw lastError;
+}
+
 // Fonction pour créer un email MIME avec pièces jointes
 function createRawEmail(
   from: string, 
@@ -206,9 +239,8 @@ export const handler = async (event: any) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Missing required fields' }) };
   }
   
-  const apiEndpoint = process.env.API_ENDPOINT || event.requestContext?.domainName 
-    ? `https://${event.requestContext.domainName}` 
-    : 'https://your-api.amazonaws.com';
+  const apiEndpoint = process.env.API_ENDPOINT
+    || (event.requestContext?.domainName ? `https://${event.requestContext.domainName}` : 'https://your-api.amazonaws.com');
   
   try {
     // Préparer la liste des destinataires
@@ -256,26 +288,26 @@ export const handler = async (event: any) => {
       };
     }
     
-    // AWS SES limite: 50 destinataires par appel sendEmail
-    const MAX_RECIPIENTS_PER_BATCH = 50;
+    // Limiter la concurrence pour eviter le throttling SES sur les envois massifs.
+    const MAX_RECIPIENTS_PER_BATCH = BATCH_CONCURRENCY;
     const batches: string[][] = [];
     
-    // Diviser les destinataires en lots de 50
+    // Diviser les destinataires en lots de taille limitee
     for (let i = 0; i < validRecipients.length; i += MAX_RECIPIENTS_PER_BATCH) {
       batches.push(validRecipients.slice(i, i + MAX_RECIPIENTS_PER_BATCH));
     }
     
-    console.log(`📦 Sending to ${validRecipients.length} recipients in ${batches.length} batch(es)`);
-    
-    // Envoyer chaque email individuellement pour personnaliser le lien de désinscription
-    const sendPromises = validRecipients.map(async (recipientEmail) => {
-      const unsubscribeLink = `<hr style="margin-top: 30px; border: none; border-top: 1px solid #e0e0e0;"><p style="text-align: center; font-size: 12px; color: #999;">Vous ne souhaitez plus recevoir nos emails ? <a href="${apiEndpoint}/unsubscribe?email=${encodeURIComponent(recipientEmail)}" style="color: #667eea;">Cliquez ici pour vous désinscrire</a>.</p>`;
+    console.log(`📦 Sending to ${validRecipients.length} recipients in ${batches.length} batch(es) of ${MAX_RECIPIENTS_PER_BATCH}`);
+
+    // Envoyer chaque email individuellement pour personnaliser le lien de desinscription
+    const sendOneEmail = async (recipientEmail: string) => {
+      const unsubscribeLink = `<hr style="margin-top: 30px; border: none; border-top: 1px solid #e0e0e0;"><p style="text-align: center; font-size: 12px; color: #999;">Vous ne souhaitez plus recevoir nos emails ? <a href="${apiEndpoint}/api/unsubscribe?email=${encodeURIComponent(recipientEmail)}" style="color: #667eea;">Cliquez ici pour vous désinscrire</a>.</p>`;
       const personalizedHtml = (bodyHtml || `<p>${bodyText || ''}</p>`) + unsubscribeLink;
       
       // Si des pièces jointes, utiliser SendRawEmailCommand
       if (attachments && attachments.length > 0) {
         const rawEmail = createRawEmail(from, [recipientEmail], subject, personalizedHtml, attachments, undefined, replyTo);
-        return ses.send(new SendRawEmailCommand({ RawMessage: { Data: Buffer.from(rawEmail) } }));
+        return sendWithRetry(() => ses.send(new SendRawEmailCommand({ RawMessage: { Data: Buffer.from(rawEmail) } })));
       }
       
       // Sans pièce jointe, utiliser SendEmailCommand
@@ -294,54 +326,78 @@ export const handler = async (event: any) => {
         params.ReplyToAddresses = [replyTo];
       }
       
-      return ses.send(new SendEmailCommand(params));
-    });
-    
-    // Si un CC est défini, envoyer un email séparé au CC (sans lien de désinscription personnalisé)
+      return sendWithRetry(() => ses.send(new SendEmailCommand(params)));
+    };
+
+    const failures: Array<{ email: string; error: string }> = [];
+    let sentCount = 0;
+
+    for (const batch of batches) {
+      const settled = await Promise.allSettled(batch.map((recipientEmail) => sendOneEmail(recipientEmail)));
+      settled.forEach((result, index) => {
+        const email = batch[index];
+        if (result.status === 'fulfilled') {
+          sentCount += 1;
+          return;
+        }
+
+        const reason: any = result.reason;
+        failures.push({
+          email,
+          error: reason?.message || String(reason) || 'Unknown SES error',
+        });
+      });
+    }
+
+    // Si un CC est defini, envoyer un email separe au CC (sans lien de desinscription personnalise)
+    let ccSent = false;
+    let ccError: string | undefined;
     if (cc && cc.length > 0) {
       console.log(`📧 Sending CC copy to ${cc.join(', ')}`);
-      
+
       const ccUnsubscribeLink = `<hr style="margin-top: 30px; border: none; border-top: 1px solid #e0e0e0;"><p style="text-align: center; font-size: 12px; color: #999;">Email envoyé en copie pour suivi.</p>`;
       const ccHtml = (bodyHtml || `<p>${bodyText || ''}</p>`) + ccUnsubscribeLink;
-      
-      const ccPromise = async () => {
-        // Si des pièces jointes, utiliser SendRawEmailCommand
+
+      try {
         if (attachments && attachments.length > 0) {
           const rawEmail = createRawEmail(from, cc, subject, ccHtml, attachments, undefined, replyTo);
-          return ses.send(new SendRawEmailCommand({ RawMessage: { Data: Buffer.from(rawEmail) } }));
+          await sendWithRetry(() => ses.send(new SendRawEmailCommand({ RawMessage: { Data: Buffer.from(rawEmail) } })));
+        } else {
+          const ccParams: any = {
+            Source: from,
+            Destination: {
+              ToAddresses: cc
+            },
+            Message: {
+              Subject: { Data: subject },
+              Body: { Html: { Data: ccHtml } }
+            },
+          };
+
+          if (replyTo) {
+            ccParams.ReplyToAddresses = [replyTo];
+          }
+
+          await sendWithRetry(() => ses.send(new SendEmailCommand(ccParams)));
         }
-        
-        const ccParams: any = {
-          Source: from,
-          Destination: { 
-            ToAddresses: cc
-          },
-          Message: {
-            Subject: { Data: subject },
-            Body: { Html: { Data: ccHtml } }
-          },
-        };
-        
-        if (replyTo) {
-          ccParams.ReplyToAddresses = [replyTo];
-        }
-        
-        return ses.send(new SendEmailCommand(ccParams));
-      };
-      
-      sendPromises.push(ccPromise());
+        ccSent = true;
+      } catch (error: any) {
+        ccError = error?.message || 'CC send failed';
+      }
     }
-    
-    const results = await Promise.all(sendPromises);
+
     return { 
       statusCode: 200, 
       body: JSON.stringify({ 
         success: true, 
-        sentCount: validRecipients.length,
+        sentCount,
+        failureCount: failures.length,
+        failures,
         skippedCount: recipients.length - validRecipients.length,
         skippedRecipients,
         totalRecipients: recipients.length,
-        results 
+        ccSent,
+        ccError,
       }) 
     };
   } catch (err: any) {
