@@ -33,6 +33,7 @@ export class DBhandler {
 
     return {
       ...rest,
+      productCode: normalizedCode,
       productCcode: normalizedCode,
     };
   }
