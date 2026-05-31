@@ -110,6 +110,7 @@ export const handler = async (event: any) => {
       existingResponse: existing
         ? { id: existing.id, answers: existing.answers, status: existing.status, submittedAt: existing.submittedAt }
         : null,
+      memberId: tokenItem!.memberId,
       memberName: tokenItem!.memberName,
     });
   }

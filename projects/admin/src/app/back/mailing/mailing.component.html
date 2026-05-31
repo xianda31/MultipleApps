@@ -14,15 +14,20 @@
 						<div class="card-body py-2">
 							<div class="small fw-semibold mb-2">Ajouter un destinataire externe (non-membre)</div>
 							<div class="row g-2 align-items-end">
-								<div class="col-md-6">
+								<div class="col-md-5">
 									<label class="form-label small mb-1">Email externe</label>
 									<input class="form-control form-control-sm" [(ngModel)]="externalEmail" name="externalEmail"
 										placeholder="exemple@domaine.fr">
 								</div>
-								<div class="col-md-4">
-									<label class="form-label small mb-1">Nom (optionnel)</label>
-									<input class="form-control form-control-sm" [(ngModel)]="externalName" name="externalName"
-										placeholder="Prénom Nom">
+								<div class="col-md-3">
+									<label class="form-label small mb-1">Prénom</label>
+									<input class="form-control form-control-sm" [(ngModel)]="externalFirstName" name="externalFirstName"
+										placeholder="Prénom">
+								</div>
+								<div class="col-md-2">
+									<label class="form-label small mb-1">Nom</label>
+									<input class="form-control form-control-sm" [(ngModel)]="externalLastName" name="externalLastName"
+										placeholder="Nom">
 								</div>
 								<div class="col-md-2 d-grid">
 									<button type="button" class="btn btn-sm btn-outline-primary" (click)="addExternalRecipient()">Ajouter</button>
@@ -81,7 +86,7 @@
 						<option value="">— Aucun sondage —</option>
 						@for (s of surveys; track s.id) {
 							<option [value]="s.id">{{ s.title }}
-								@if (s.status === 'draft') { (brouillon) }
+
 								@if (s.status === 'active') { (en cours) }
 								@if (s.status === 'closed') { (clôturé) }
 							</option>

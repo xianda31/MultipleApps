@@ -450,10 +450,11 @@ export class AppComponent implements OnInit, OnDestroy {
             this.upsertTPESession('connected', this.readerLabel).catch(() => {});
           } else {
             console.warn('[ppTPE] Heartbeat: getConnectedReader() = null malgré state=connected → déconnexion forcée');
-            this.state = 'idle';
+            this.state = 'scanning';
             this.cdr.detectChanges();
             this.stopHeartbeat();
             await this.upsertTPESession('disconnected', '');
+            setTimeout(() => this.startTPE(), 3000);
           }
         } catch {
           // En cas d'erreur SDK, ne pas perturber — on garde l'état actuel

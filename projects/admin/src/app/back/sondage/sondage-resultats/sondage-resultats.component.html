@@ -5,7 +5,10 @@
                 <i class="bi bi-arrow-left"></i>
             </button>
             <span class="fw-semibold fs-5">{{ surveyTitle }}</span>
-            <span class="text-muted ms-2 small">— {{ responses.length }} réponse(s)</span>
+            <span class="text-muted ms-2 small">
+                — {{ responses.length }} réponse(s)
+                @if (isRsvpMode) { dont {{ presentCount }} présent(s) }
+            </span>
         </div>
     </div>
     <!-- graphique -->
@@ -66,7 +69,7 @@
                 <tr>
                     <td class="text-center text-muted">{{ i + 1 }}</td>
                     <td>
-                        <div class="fw-semibold">{{ (r.lastName + ' ' + r.firstName).trim() || r.memberName }}</div>
+                        <div class="fw-semibold">{{ getResponseFullName(r) }}</div>
                         <!-- <div class="text-muted small">{{ r.memberEmail }}</div> -->
                     </td>
                     <td class="text-center">

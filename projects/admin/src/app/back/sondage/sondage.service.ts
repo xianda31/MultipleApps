@@ -6,7 +6,7 @@ export type SurveyItem = Schema['Survey']['type'];
 export type SurveyQuestionItem = Schema['SurveyQuestion']['type'];
 export type SurveyResponseItem = Schema['SurveyResponse']['type'];
 
-export type SurveyStatus = 'draft' | 'active' | 'closed';
+export type SurveyStatus = 'active' | 'closed';
 export type SurveyType = 'poll' | 'rsvp' | 'invitation';
 export type ResponseStatus = 'submitted' | 'confirmed' | 'declined' | 'cancelled';
 

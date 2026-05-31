@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { SurveyRespondService, SurveyRespondData } from './survey-respond.service';
+import { MembersService } from '../../common/services/members.service';
+import { Member } from '../../common/interfaces/member.interface';
 
 type PageState = 'loading' | 'error' | 'form' | 'done';
 
@@ -15,6 +17,7 @@ type PageState = 'loading' | 'error' | 'form' | 'done';
 export class SurveyRespondComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private surveyService = inject(SurveyRespondService);
+  private membersService = inject(MembersService);
 
   state: PageState = 'loading';
   errorMsg = '';
@@ -22,6 +25,7 @@ export class SurveyRespondComponent implements OnInit {
 
   data: SurveyRespondData | null = null;
   answers: Record<string, number> = {};  // questionId → optionIndex
+  members: Member[] = [];
 
   saving = false;
   saveError = '';
@@ -48,7 +52,11 @@ export class SurveyRespondComponent implements OnInit {
     closingDate.setHours(23, 59, 59, 999);
     return closingDate.getTime() < Date.now();
   }
-  get firstName() { return this.data?.memberName?.split(' ')?.[0] ?? this.data?.memberName ?? ''; }
+  get firstName() {
+    if (!this.data?.memberId) return this.data?.memberName?.split(' ')?.[0] ?? '';
+    const member = this.members.find(m => m.id === this.data!.memberId);
+    return member?.firstname ?? '';
+  }
 
   /** True si toutes les questions ont une réponse */
   get allAnswered(): boolean {
@@ -63,6 +71,10 @@ export class SurveyRespondComponent implements OnInit {
       this.state = 'error';
       return;
     }
+    // Charger les membres pour pouvoir récupérer le firstName
+    this.membersService.listMembers().subscribe(members => {
+      this.members = members;
+    });
     await this.reload();
   }
 

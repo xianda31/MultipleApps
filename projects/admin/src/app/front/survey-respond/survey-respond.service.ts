@@ -5,6 +5,7 @@ const API_BASE = (outputs as any).custom?.API?.ffbProxyApi?.endpoint?.replace(/\
 
 export interface SurveyRespondData {
   token: string;
+  memberId: string;
   memberName: string;
   survey: {
     id: string;

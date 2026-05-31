@@ -46,6 +46,7 @@ export class SondageEditorComponent implements OnInit {
   description = '';
   footerNote = '';
   closingDate = '';
+  status: 'active' | 'closed' = 'active';
   // Holds selected SaleItem.id (legacy surveys may still have stored product name).
   tag = '';
   pafProducts: Product[] = [];
@@ -74,6 +75,7 @@ export class SondageEditorComponent implements OnInit {
         this.description = survey.description ?? '';
         this.footerNote = (survey as any).footerNote ?? '';
         this.closingDate = survey.closingDate;
+        this.status = (survey.status ?? 'active') as 'active' | 'closed';
         this.tag = this.resolveProductId(survey.productTag ?? '');
         setTimeout(() => {
           if (this.descriptionEditor) {
@@ -168,6 +170,7 @@ export class SondageEditorComponent implements OnInit {
           footerNote: this.footerNote.trim() || undefined,
           productTag: this.tag || undefined,
           closingDate: this.closingDate,
+          status: this.status,
         });
       }
 

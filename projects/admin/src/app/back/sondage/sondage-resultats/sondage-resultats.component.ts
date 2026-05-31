@@ -45,7 +45,7 @@ export class SondageResultatsComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private sondageService: SondageService,
-    private membersService: MembersService,
+    public membersService: MembersService,
     private bookService: BookService,
     private productService: ProductService,
   ) {}
@@ -80,6 +80,16 @@ export class SondageResultatsComponent implements OnInit {
     });
   }
 
+  /** Récupère le nom complet à partir d'une réponse (ResponseRow) */
+  getResponseFullName(r: ResponseRow): string {
+    const member = this.members.find(m => m.id === r.memberId);
+    if (member) {
+      return this.membersService.full_name(member);
+    }
+    // Fallback si le membre n'est pas trouvé
+    return (r.lastName + ' ' + r.firstName).trim() || r.memberName;
+  }
+
   async ngOnInit() {
     this.surveyId = this.route.snapshot.paramMap.get('id') ?? '';
 
@@ -104,9 +114,8 @@ export class SondageResultatsComponent implements OnInit {
       optionKeywords: q.optionKeywords ?? [],
     }));
 
-    this.membersService.listMembers().subscribe(members => {
-      this.members = members;
-    });
+    // Charger les membres avant de trier les réponses
+    this.members = await firstValueFrom(this.membersService.listMembers());
 
     this.setResponses(rs as any[]);
     this.loading = false;
@@ -137,8 +146,9 @@ export class SondageResultatsComponent implements OnInit {
       // Présents en premier, absents ensuite.
       if (aAbsent !== bAbsent) return aAbsent ? 1 : -1;
 
-      const aLabel = `${a.lastName} ${a.firstName}`.trim() || a.memberName;
-      const bLabel = `${b.lastName} ${b.firstName}`.trim() || b.memberName;
+      // Trier en utilisant le nom affiché (member.lastname firstname) pour la cohérence
+      const aLabel = this.getResponseFullName(a);
+      const bLabel = this.getResponseFullName(b);
       return aLabel.localeCompare(bLabel, 'fr', { sensitivity: 'base' });
     });
 
@@ -157,6 +167,14 @@ export class SondageResultatsComponent implements OnInit {
 
   get invitationQuestion(): QuestionResult | null {
     return this.questions.find(q => q.order === -1) ?? null;
+  }
+
+  get isRsvpMode(): boolean {
+    return !!this.invitationQuestion;
+  }
+
+  get presentCount(): number {
+    return this.responses.filter(r => !this.isAbsent(r)).length;
   }
 
   private normalizeAnswer(value: string): string {
@@ -282,11 +300,18 @@ export class SondageResultatsComponent implements OnInit {
     const headers = ['Nom', 'Paiement', 'Date', ...this.questions.map(q => q.text)];
     const rows = this.responses.map(r => {
       const payment = r.isMember ? this.product_paied(r.memberId) : null;
+      const answers = this.questions.map(q => {
+        // Si RSVP et présence=non → vider les réponses des questions non-invitation
+        if (this.isAbsent(r) && q.order !== -1) {
+          return '';
+        }
+        return this.getAnswer(r, q.id);
+      });
       return [
         r.memberName,
         payment ?? '',
         new Date(r.updatedAt).toLocaleDateString('fr-FR'),
-        ...this.questions.map(q => this.getAnswer(r, q.id)),
+        ...answers,
       ];
     });
     const csv = [headers, ...rows].map(row => row.map(c => `"${c}"`).join(';')).join('\n');

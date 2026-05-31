@@ -27,7 +27,8 @@ export class MailingComponent implements OnInit, AfterViewInit {
   recipients: Member[] = [];
   externalRecipients: Array<{ email: string; name: string }> = [];
   externalEmail = '';
-  externalName = '';
+  externalFirstName = '';
+  externalLastName = '';
   externalRecipientError: string | null = null;
   subject = '';
   bodyHtml = '';
@@ -109,7 +110,9 @@ export class MailingComponent implements OnInit, AfterViewInit {
   addExternalRecipient() {
     this.externalRecipientError = null;
     const email = this.externalEmail.trim().toLowerCase();
-    const name = this.externalName.trim();
+    const firstName = this.externalFirstName.trim();
+    const lastName = this.externalLastName.trim();
+    const name = (firstName + ' ' + lastName).trim();
 
     if (!email) {
       this.externalRecipientError = 'Veuillez saisir une adresse email externe.';
@@ -136,7 +139,8 @@ export class MailingComponent implements OnInit, AfterViewInit {
 
     this.externalRecipients.push({ email, name });
     this.externalEmail = '';
-    this.externalName = '';
+    this.externalFirstName = '';
+    this.externalLastName = '';
   }
 
   removeExternalRecipient(index: number) {
@@ -185,7 +189,8 @@ export class MailingComponent implements OnInit, AfterViewInit {
     this.recipients = [];
     this.externalRecipients = [];
     this.externalEmail = '';
-    this.externalName = '';
+    this.externalFirstName = '';
+    this.externalLastName = '';
     this.externalRecipientError = null;
     this.selectedSurveyId = '';
     this.selectedSurvey = null;
