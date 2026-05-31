@@ -1,8 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ChartOptions } from 'chart.js';
+import { ChartOptions, Chart } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
+import ChartDataLabelsPlugin from 'chartjs-plugin-datalabels';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SondageService } from '../sondage.service';
 import { MembersService } from '../../../common/services/members.service';
@@ -12,6 +13,8 @@ import { ProductService } from '../../../common/services/product.service';
 import { SaleItem } from '../../products/sale-item.interface';
 import { firstValueFrom } from 'rxjs';
 import { BACK_ROUTE_ABS_PATHS } from '../../routes/back-route-paths';
+
+Chart.register(ChartDataLabelsPlugin);
 
 interface QuestionResult {
   id: string;
@@ -482,7 +485,15 @@ export class SondageResultatsComponent implements OnInit {
           chartOptions: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
+            plugins: {
+              legend: { display: false },
+              datalabels: {
+                anchor: 'center',
+                align: 'center',
+                font: { weight: 'bold', size: 14 },
+                color: '#fff',
+              },
+            },
             scales: {
               y: { beginAtZero: true, ticks: { stepSize: 1 } },
             },
