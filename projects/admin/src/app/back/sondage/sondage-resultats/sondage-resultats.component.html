@@ -76,7 +76,7 @@
                         @if (r.memberId !== r.memberEmail) {
                         Oui
                         } @else {
-                        <span class="badge bg-secondary">Non</span>
+                        <span class="badge bg-secondary">ext</span>
                         }
                     </td>
                     <td class="text-center"> {{ r.isMember ? product_paied(r.memberId) : '?' }} </td>
@@ -122,23 +122,61 @@
     </div>
     <div class="offcanvas-body">
 
-        <!-- Sélecteur membre -->
+        <!-- Sélecteur participant -->
         <div class="mb-3">
-            <label class="form-label fw-semibold">Membre</label>
-            <select class="form-select" [(ngModel)]="manualMemberId" (ngModelChange)="onManualMemberChange($event)"
-                [disabled]="!!editingResponseId">
-                <option value="">— Choisir un membre —</option>
-                @for (m of sortedMembersForSelect; track m.id) {
-                <option [value]="m.id">
-                    {{ m.lastname | uppercase }} {{ m.firstname }}
-                    @if (alreadyVotedIds.has(m.id)) { (déjà voté) }
-                </option>
-                }
-            </select>
-            @if (editingResponseId) {
-            <div class="form-text">Pour changer le membre, supprimez d'abord ce vote.</div>
-            }
+            <label class="form-label fw-semibold">Type de participant</label>
+            <div class="btn-group w-100" role="group">
+                <input type="radio" class="btn-check" id="manual_member" [checked]="!manualIsExternal" 
+                    (change)="manualIsExternal = false" [disabled]="!!editingResponseId">
+                <label class="btn btn-outline-primary" for="manual_member">Adhérent</label>
+
+                <input type="radio" class="btn-check" id="manual_external" [checked]="manualIsExternal"
+                    (change)="manualIsExternal = true" [disabled]="!!editingResponseId">
+                <label class="btn btn-outline-primary" for="manual_external">Externe</label>
+            </div>
         </div>
+
+        @if (!manualIsExternal) {
+            <!-- Sélecteur membre adhérent -->
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Adhérent</label>
+                <select class="form-select" [(ngModel)]="manualMemberId" (ngModelChange)="onManualMemberChange($event)"
+                    [disabled]="!!editingResponseId">
+                    <option value="">— Choisir un adhérent —</option>
+                    @for (m of sortedMembersForSelect; track m.id) {
+                    <option [value]="m.id">
+                        {{ m.lastname | uppercase }} {{ m.firstname }}
+                        @if (alreadyVotedIds.has(m.id)) { (déjà voté) }
+                    </option>
+                    }
+                </select>
+                @if (editingResponseId) {
+                <div class="form-text">Pour changer le participant, supprimez d'abord ce vote.</div>
+                }
+            </div>
+        } @else {
+            <!-- Saisie participant externe -->
+            <div class="row g-2 align-items-end mb-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Email</label>
+                    <input class="form-control" type="email" [(ngModel)]="manualExternalEmail" name="externalEmail"
+                        placeholder="exemple@domaine.fr" [disabled]="!!editingResponseId">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Prénom</label>
+                    <input class="form-control" [(ngModel)]="manualExternalFirstName" name="externalFirstName"
+                        placeholder="Prénom" [disabled]="!!editingResponseId">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Nom</label>
+                    <input class="form-control" [(ngModel)]="manualExternalLastName" name="externalLastName"
+                        placeholder="Nom" [disabled]="!!editingResponseId">
+                </div>
+            </div>
+            @if (editingResponseId) {
+            <div class="form-text">Pour changer le participant, supprimez d'abord ce vote.</div>
+            }
+        }
 
         <!-- Questions -->
         @for (q of questions; track q.id) {
@@ -149,7 +187,7 @@
                 <input class="form-check-input" type="radio" [name]="'q_' + q.id" [id]="'q_' + q.id + '_' + $index"
                     [checked]="manualAnswers[q.id] === $index" (change)="manualAnswers[q.id] = $index">
                 <label class="form-check-label" [for]="'q_' + q.id + '_' + $index">
-                    {{ q.optionKeywords[$index]?.trim() || opt }}
+                    {{ (q.optionKeywords[$index] || '').trim() || opt }}
                 </label>
             </div>
             }

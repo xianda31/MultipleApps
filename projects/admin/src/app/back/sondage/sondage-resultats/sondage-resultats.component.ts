@@ -62,7 +62,11 @@ export class SondageResultatsComponent implements OnInit {
   // ── Vote manuel ────────────────────────────────────────────────────────────
   manualOpen = false;
   editingResponseId: string | null = null;   // null = nouveau vote
-  manualMemberId = '';                        // m.id sélectionné
+  manualMemberId = '';                        // m.id sélectionné (vide si externe)
+  manualIsExternal = false;                   // true = saisie d'un externe
+  manualExternalEmail = '';
+  manualExternalFirstName = '';
+  manualExternalLastName = '';
   manualAnswers: Record<string, number> = {};
   savingManual = false;
   manualError: string | null = null;
@@ -86,8 +90,10 @@ export class SondageResultatsComponent implements OnInit {
     if (member) {
       return this.membersService.full_name(member);
     }
-    // Fallback si le membre n'est pas trouvé
-    return (r.lastName + ' ' + r.firstName).trim() || r.memberName;
+    // Fallback pour votants externes
+    const lastName = (r.lastName || '').toUpperCase();
+    const firstName = r.firstName || '';
+    return (lastName + ' ' + firstName).trim() || r.memberName;
   }
 
   async ngOnInit() {
@@ -209,6 +215,25 @@ export class SondageResultatsComponent implements OnInit {
       || value.includes('cancelled');
   }
 
+  /** Trouve l'index de l'option "présent" pour la question d'invitation */
+  private getDefaultPresentOptionIndex(): number {
+    const invQ = this.invitationQuestion;
+    if (!invQ) return 1; // Fallback: deuxième option
+    
+    // Chercher l'option qui ne représente pas l'absence
+    for (let i = 1; i < invQ.options.length; i++) {
+      const keyword = this.normalizeAnswer(invQ.optionKeywords[i] ?? '');
+      const optionText = this.normalizeAnswer(invQ.options[i] ?? '');
+      const value = keyword || optionText;
+      
+      // On considère que ce n'est pas une absence
+      if (!['absent', 'non', 'no'].includes(value) && !value.includes('ne viendrai pas') && !value.includes('ne viens pas')) {
+        return i;
+      }
+    }
+    return 1; // Fallback: deuxième option
+  }
+
   getAnswer(row: ResponseRow, questionId: string): string {
     const q = this.questions.find(q => q.id === questionId);
     if (!q) return '—';
@@ -224,14 +249,37 @@ export class SondageResultatsComponent implements OnInit {
   openAddVote() {
     this.editingResponseId = null;
     this.manualMemberId = '';
+    this.manualIsExternal = false;
+    this.manualExternalEmail = '';
+    this.manualExternalFirstName = '';
+    this.manualExternalLastName = '';
     this.manualAnswers = {};
+    // Pré-sélectionner l'option "présent" pour la question d'invitation (RSVP)
+    const invQ = this.invitationQuestion;
+    if (invQ) {
+      this.manualAnswers[invQ.id] = this.getDefaultPresentOptionIndex();
+    }
     this.manualError = null;
     this.manualOpen = true;
   }
 
   openEditVote(row: ResponseRow) {
     this.editingResponseId = row.id;
-    this.manualMemberId = row.memberId;
+    const isExternal = row.memberId === row.memberEmail;
+    this.manualIsExternal = isExternal;
+    if (isExternal) {
+      this.manualMemberId = '';
+      this.manualExternalEmail = row.memberEmail;
+      // Parse name into firstName and lastName for editing
+      const parts = row.memberName?.split(' ') || [''];
+      this.manualExternalFirstName = parts[0];
+      this.manualExternalLastName = parts.slice(1).join(' ');
+    } else {
+      this.manualMemberId = row.memberId;
+      this.manualExternalEmail = '';
+      this.manualExternalFirstName = '';
+      this.manualExternalLastName = '';
+    }
     this.manualAnswers = { ...row.answers };
     this.manualError = null;
     this.manualOpen = true;
@@ -240,7 +288,8 @@ export class SondageResultatsComponent implements OnInit {
   /** Quand l'admin change de membre dans le select → pré-remplir si déjà voté */
   onManualMemberChange(memberId: string) {
     this.manualMemberId = memberId;
-    const existing = this.responses.find(r => r.memberId === memberId);
+    if (!memberId) return;
+    const existing = this.responses.find(r => r.memberId === memberId && r.memberId !== r.memberEmail);
     if (existing && !this.editingResponseId) {
       // pré-remplir avec le vote existant et basculer en mode édition
       this.editingResponseId = existing.id;
@@ -251,32 +300,79 @@ export class SondageResultatsComponent implements OnInit {
     }
   }
 
+  onManualModeToggle() {
+    this.manualIsExternal = !this.manualIsExternal;
+    this.manualMemberId = '';
+    this.manualExternalEmail = '';
+    this.manualExternalFirstName = '';
+    this.manualExternalLastName = '';
+    this.manualAnswers = {};
+    this.editingResponseId = null;
+  }
+
   async saveManualVote() {
-    if (!this.manualMemberId) {
-      this.manualError = 'Veuillez sélectionner un membre.';
-      return;
-    }
     const requiredQs = this.questions.filter(q => q.order !== -1); // invitation optionnelle
     if (requiredQs.some(q => this.manualAnswers[q.id] === undefined)) {
       this.manualError = 'Veuillez répondre à toutes les questions.';
       return;
     }
+    
+    // Vérifier que la question d'invitation est répondue si elle existe
+    const invQ = this.invitationQuestion;
+    if (invQ && this.manualAnswers[invQ.id] === undefined) {
+      this.manualError = 'Veuillez indiquer la présence/absence.';
+      return;
+    }
+
+    let externalEmail = '';
+    let externalName = '';
+
+    if (this.manualIsExternal) {
+      externalEmail = this.manualExternalEmail.trim().toLowerCase();
+      const firstName = this.manualExternalFirstName.trim();
+      const lastName = this.manualExternalLastName.trim();
+      externalName = firstName || lastName ? `${firstName} ${lastName}`.trim() : externalEmail;
+      if (!externalEmail) {
+        this.manualError = 'Veuillez saisir une adresse email pour le participant externe.';
+        return;
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(externalEmail)) {
+        this.manualError = 'Adresse email invalide.';
+        return;
+      }
+    } else {
+      if (!this.manualMemberId) {
+        this.manualError = 'Veuillez sélectionner un membre.';
+        return;
+      }
+    }
+
     this.savingManual = true;
     this.manualError = null;
     try {
-      const member = this.members.find(m => m.id === this.manualMemberId);
-      if (!member) throw new Error('Membre introuvable');
-
       if (this.editingResponseId) {
         await this.sondageService.updateResponseAnswers(this.editingResponseId, this.manualAnswers);
       } else {
-        await this.sondageService.createManualResponse({
-          surveyId: this.surveyId,
-          memberId: member.id,
-          memberEmail: member.email,
-          memberName: `${member.firstname} ${member.lastname}`.trim(),
-          answers: this.manualAnswers,
-        });
+        if (this.manualIsExternal) {
+          await this.sondageService.createManualResponse({
+            surveyId: this.surveyId,
+            memberId: externalEmail,
+            memberEmail: externalEmail,
+            memberName: externalName,
+            answers: this.manualAnswers,
+          });
+        } else {
+          const member = this.members.find(m => m.id === this.manualMemberId);
+          if (!member) throw new Error('Membre introuvable');
+          await this.sondageService.createManualResponse({
+            surveyId: this.surveyId,
+            memberId: member.id,
+            memberEmail: member.email,
+            memberName: `${member.firstname} ${member.lastname}`.trim(),
+            answers: this.manualAnswers,
+          });
+        }
       }
       // Recharger les réponses
       const rs = await this.sondageService.listResponsesForSurvey(this.surveyId);
@@ -297,8 +393,9 @@ export class SondageResultatsComponent implements OnInit {
   }
 
   exportCsv() {
-    const headers = ['Nom', 'Paiement', 'Date', ...this.questions.map(q => q.text)];
+    const headers = ['Nom', 'Adhérent', 'Paiement', 'Date', ...this.questions.map(q => q.text)];
     const rows = this.responses.map(r => {
+      const isMember = r.memberId !== r.memberEmail ? 'Oui' : 'ext';
       const payment = r.isMember ? this.product_paied(r.memberId) : null;
       const answers = this.questions.map(q => {
         // Si RSVP et présence=non → vider les réponses des questions non-invitation
@@ -308,7 +405,8 @@ export class SondageResultatsComponent implements OnInit {
         return this.getAnswer(r, q.id);
       });
       return [
-        r.memberName,
+        this.getResponseFullName(r),
+        isMember,
         payment ?? '',
         new Date(r.updatedAt).toLocaleDateString('fr-FR'),
         ...answers,
