@@ -373,8 +373,9 @@ const schema = a.schema({
     .authorization((allow) => [
       allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
       allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
-      allow.group(Group_names.Editor).to(['read']),
-      allow.group(Group_names.Member).to(['read']),
+      allow.group(Group_names.Editor).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Support).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Member).to(['read', 'create', 'update', 'delete']),
     ]),
 
   SurveyQuestion: a.model({
@@ -387,8 +388,9 @@ const schema = a.schema({
     .authorization((allow) => [
       allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
       allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
-      allow.group(Group_names.Editor).to(['read']),
-      allow.group(Group_names.Member).to(['read']),
+      allow.group(Group_names.Editor).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Support).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Member).to(['read', 'create', 'update', 'delete']),
     ]),
 
   SurveyResponse: a.model({
@@ -405,7 +407,9 @@ const schema = a.schema({
     .authorization((allow) => [
       allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
       allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
-      allow.group(Group_names.Member).to(['read', 'create', 'update']),
+      allow.group(Group_names.Editor).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Support).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Member).to(['read', 'create', 'update', 'delete']),
     ]),
 
   // Tokens pour accès mail sans login (UUID v4, validés côté Lambda)
@@ -422,6 +426,9 @@ const schema = a.schema({
     .authorization((allow) => [
       allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
       allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Editor).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Support).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Member).to(['read', 'create', 'update', 'delete']),
     ]),
 
     // Assistance requests
