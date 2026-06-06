@@ -38,6 +38,7 @@ import { StripeReconciliationComponent } from './shop/stripe-reconciliation/stri
 import { SondageListComponent } from './sondage/sondage-list/sondage-list.component';
 import { SondageEditorComponent } from './sondage/sondage-editor/sondage-editor.component';
 import { SondageResultatsComponent } from './sondage/sondage-resultats/sondage-resultats.component';
+import { CollecteVenteComponent } from './collecte/collecte-vente.component';
 
 
 export const routes: Routes = [
@@ -50,6 +51,7 @@ export const routes: Routes = [
       { path: BACK_ROUTE_PATHS.Shop, component: ShopComponent, data: { onlineMode: false }, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.FeesCollector, component: FeesCollectorComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.Products, component: ProductsComponent, canActivate: [AuthGuard] },
+      { path: BACK_ROUTE_PATHS.CollecteVente, component: CollecteVenteComponent, canActivate: [AuthGuard] },
 
 
       { path: BACK_ROUTE_PATHS.MembersDatabase, component: MembersComponent, canActivate: [AuthGuard] },

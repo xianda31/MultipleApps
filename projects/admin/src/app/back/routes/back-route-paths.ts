@@ -4,6 +4,7 @@ export const BACK_ROUTE_PATHS = {
   Shop: 'caisse/ventes',
   FeesCollector: 'caisse/droits-de-table',
   Products: 'caisse/produits',
+  CollecteVente: 'caisse/collecte',
   MembersDatabase: 'members/database',
   GameCardsEditor: 'members/cartes-admission',
   MemberSales: 'members/controls',

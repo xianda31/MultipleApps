@@ -25,7 +25,10 @@ export class ShopProductService {
     return this.productService.listProducts().pipe(
       map((products) => ({
         allProducts: products,
-        productsArray: this.productService.products_by_accounts(products),
+        // shopEnabled !== false : compatibilité avec les anciens produits (null/undefined = activé)
+        productsArray: this.productService.products_by_accounts(
+          products.filter((p) => p.shopEnabled !== false),
+        ),
       }))
     );
   }

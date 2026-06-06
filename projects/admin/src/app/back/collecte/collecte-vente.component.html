@@ -1,0 +1,255 @@
+<div class="container-fluid container-xxl py-3">
+
+  <div class="card mb-4">
+    <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+      <div class="d-flex align-items-center flex-wrap gap-2">
+        <span class="fw-semibold"><i class="bi bi-people-fill me-2"></i>Ventes non nominatives</span>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          style="width: clamp(320px, 42vw, 560px);"
+          placeholder="Titre de l'événement"
+          [(ngModel)]="eventTitle"
+          [disabled]="saleSubmitInProgress">
+      </div>
+
+      <div class="d-flex align-items-center flex-wrap gap-2 ms-lg-auto">
+        <span class="small text-muted">le {{ todayLabel }}</span>
+
+        @if (selectedPaymentMode === paymentMode.CARD && tpePaymentActive) {
+          <span class="small" [ngClass]="tpeStatusClass">
+            <i class="bi bi-circle-fill me-1"></i>{{ tpeStatusLabel }}
+            @if (tpeReaderLabel) { — {{ tpeReaderLabel }} }
+          </span>
+        }
+      </div>
+    </div>
+    
+    <div class="card-body">
+      <div class="row g-3 collecte-main-row">
+        <div class="col-12 col-lg-4">
+          <div class="collecte-products-panel">
+            <div class="fw-semibold mb-2"><i class="bi bi-basket2 me-1"></i>Produits</div>
+
+            <!-- Grille produits (même structure que Shop) -->
+            @if (batchProductsMap.size === 0) {
+              <p class="text-muted small mb-0">Aucun produit avec <em>batchEnabled</em> actif.</p>
+            } @else {
+              @for (group of batchProductsMap | keyvalue; track group.key) {
+                <div class="collecte-product-grid">
+                  @for (product of group.value; track product.id) {
+                    <div [style]="getProductGradientStyle(product)"
+                         class="collecte-product-card"
+                         [class.disabled]="!canAddProduct"
+                         (click)="canAddProduct && addToMiniCart(product)">
+                      <div class="shop-product-header">
+                        <div class="shop-product-glyph">
+                          @if (getProductGlyph(product).startsWith('bi-')) {
+                            <i [class]="'bi ' + getProductGlyph(product)"></i>
+                          } @else {
+                            {{ getProductGlyph(product) }}
+                          }
+                        </div>
+                        <div class="shop-product-name">{{ product.name }}</div>
+                      </div>
+                      <div class="shop-product-price-row">
+                        <div class="shop-product-price">
+                          <span class="price">{{ product.price.toFixed(2) }}€</span>
+                        </div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            }
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-4">
+          <div class="collecte-payment-panel">
+            <div class="fw-semibold mb-2"><i class="bi bi-cart3 me-1"></i>Panier</div>
+
+            @if (miniCartItems.length === 0) {
+              <div class="mini-cart-empty text-muted small mb-3">
+                Aucun produit dans le panier.
+              </div>
+            } @else {
+              <div class="mini-cart-list mb-3">
+                @for (item of miniCartItems; track item.product.id) {
+                  <div class="mini-cart-item">
+                    <div class="mini-cart-item-info">
+                      <div class="mini-cart-item-name">{{ item.product.name }}</div>
+                      <div class="mini-cart-item-price">{{ item.product.price | currency:'EUR':'symbol':'1.2-2':'fr' }}</div>
+                    </div>
+                    <div class="mini-cart-item-actions">
+                      <button type="button" class="btn btn-light btn-sm" [disabled]="saleSubmitInProgress" (click)="decreaseMiniCartItem(item.product.id)">−</button>
+                      <span class="mini-cart-qty">{{ item.quantity }}</span>
+                      <button type="button" class="btn btn-light btn-sm" [disabled]="saleSubmitInProgress" (click)="increaseMiniCartItem(item.product.id)">+</button>
+                      <button type="button"
+                              class="btn btn-link text-danger btn-sm p-0 ms-2"
+                              title="Supprimer"
+                              [class.disabled]="saleSubmitInProgress"
+                              [attr.aria-disabled]="saleSubmitInProgress"
+                              (click)="!saleSubmitInProgress && removeMiniCartItem(item.product.id)">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+
+            <label class="form-label small fw-semibold">Mode de règlement</label>
+            <div class="payment-buttons mb-3">
+              <button type="button" class="btn-pay" [class.active]="selectedPaymentMode === paymentMode.CASH"
+                      [disabled]="saleSubmitInProgress"
+                      (click)="selectPaymentMode(paymentMode.CASH)">
+                <i class="bi bi-cash me-1"></i>Espèces
+              </button>
+              <button type="button" class="btn-pay" [class.active]="selectedPaymentMode === paymentMode.CHEQUE"
+                      [disabled]="saleSubmitInProgress"
+                      (click)="selectPaymentMode(paymentMode.CHEQUE)">
+                <i class="bi bi-file-earmark-text me-1"></i>Chèque
+              </button>
+              @if (tpePaymentActive) {
+                <button type="button" class="btn-pay" [class.active]="selectedPaymentMode === paymentMode.CARD"
+                        [disabled]="saleSubmitInProgress || !tpeReaderConnected"
+                        [title]="!tpeReaderConnected ? 'Activez ppTPE pour payer par carte' : ''"
+                        (click)="selectPaymentMode(paymentMode.CARD)">
+                  <i class="bi bi-credit-card me-1"></i>Carte (TPE)
+                </button>
+              }
+            </div>
+
+            <!-- Connexion / déconnexion (Android BLE uniquement) -->
+            @if (tpePaymentActive && selectedPaymentMode === paymentMode.CARD && isNativeAndroid) {
+              <div class="d-flex gap-2 mb-3">
+                @if (!tpeReaderConnected) {
+                  <button class="btn btn-outline-primary btn-sm"
+                          [disabled]="tpeReaderScanning"
+                          (click)="scanAndConnect()">
+                    @if (tpeReaderScanning) {
+                      <span class="spinner-border spinner-border-sm me-1"></span>Recherche…
+                    } @else {
+                      <i class="bi bi-bluetooth me-1"></i>Connecter TPE
+                    }
+                  </button>
+                } @else {
+                  <button class="btn btn-outline-secondary btn-sm" (click)="disconnect()">
+                    <i class="bi bi-x-circle me-1"></i>Déconnecter
+                  </button>
+                }
+              </div>
+            } @else if (tpePaymentActive && selectedPaymentMode === paymentMode.CARD && !tpeReaderConnected) {
+              <p class="text-muted small mb-3">
+                <i class="bi bi-info-circle me-1"></i>
+                Lancez <strong>ppTPE</strong> sur la tablette Android pour activer le paiement par carte.
+              </p>
+            }
+
+            @if (selectedPaymentMode === paymentMode.CARD && tpePaymentInProgress) {
+              <div class="alert alert-info mt-3 mb-0">
+                <span class="spinner-border spinner-border-sm me-2"></span>
+                Lecture de la carte en cours…
+              </div>
+            }
+
+            <button type="button"
+                    class="btn btn-primary w-100 mt-3"
+                    [disabled]="!canValidateMiniCart || saleSubmitInProgress || tpePaymentInProgress"
+                    (click)="validateMiniCart()">
+              @if (saleSubmitInProgress || (selectedPaymentMode === paymentMode.CARD && tpePaymentInProgress)) {
+                <span class="spinner-border spinner-border-sm me-2"></span>
+                Traitement en cours…
+              } @else {
+                <i class="bi bi-check-circle me-2"></i>
+                @if (selectedPaymentMode === paymentMode.CARD) {
+                  {{ miniCartTotal | currency:'EUR':'symbol':'1.2-2':'fr' }} en carte
+                } @else if (selectedPaymentMode === paymentMode.CHEQUE) {
+                  {{ miniCartTotal | currency:'EUR':'symbol':'1.2-2':'fr' }} en chèque
+                } @else {
+                  {{ miniCartTotal | currency:'EUR':'symbol':'1.2-2':'fr' }} en espèces
+                }
+              }
+            </button>
+
+            @if (!eventTitle.trim()) {
+              <div class="text-danger small mt-2">
+                Renseignez le titre de l'événement pour activer l'encaissement.
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-4">
+          <div class="collecte-book-panel">
+            <div class="fw-semibold mb-2">
+              <i class="bi bi-journal-check me-2"></i>Collecté ({{ todayLabel }})
+            </div>
+
+          <div class="persist-card persist-cash">
+            <div class="persist-title persist-header-line">
+              <span class="persist-type d-inline-flex align-items-center">
+                <i class="bi bi-cash me-1"></i>Espèces
+              </span>
+              <span class="persist-main d-inline-flex align-items-center">{{ cashAmount | currency:'EUR':'symbol':'1.2-2':'fr' }}</span>
+              <span class="persist-count text-muted small text-nowrap">{{ cashEncaissementsCount }} encaissements</span>
+            </div>
+            @if (cashByAccount.length > 0) {
+              <ul class="persist-list mb-0 mt-2">
+                @for (line of cashByAccount; track line.account) {
+                  <li><span>{{ line.account }}</span><strong>{{ line.amount | currency:'EUR':'symbol':'1.2-2':'fr' }}</strong></li>
+                }
+              </ul>
+            }
+          </div>
+
+          <div class="persist-card persist-cheque mt-2">
+            <div class="persist-title persist-header-line">
+              <span class="persist-type d-inline-flex align-items-center">
+                <i class="bi bi-file-earmark-text me-1"></i>Chèques
+              </span>
+              <span class="persist-main d-inline-flex align-items-center">{{ chequeAmount | currency:'EUR':'symbol':'1.2-2':'fr' }}</span>
+              <span class="persist-count text-muted small text-nowrap">{{ chequeEncaissementsCount }} encaissements</span>
+            </div>
+            @if (chequeByAccount.length > 0) {
+              <ul class="persist-list mb-0 mt-2">
+                @for (line of chequeByAccount; track line.account) {
+                  <li><span>{{ line.account }}</span><strong>{{ line.amount | currency:'EUR':'symbol':'1.2-2':'fr' }}</strong></li>
+                }
+              </ul>
+            }
+          </div>
+
+          <div class="persist-card persist-cardpay mt-2">
+            <div class="persist-title persist-header-line">
+              <span class="persist-type d-inline-flex align-items-center">
+                <i class="bi bi-credit-card me-1"></i>Carte (TPE)
+              </span>
+              <span class="persist-main d-inline-flex align-items-center">{{ cbAccumulatedAmount | currency:'EUR':'symbol':'1.2-2':'fr' }}</span>
+              <span class="persist-count text-muted small text-nowrap">{{ cbEncaissementsCount }} encaissements</span>
+            </div>
+            @if (cbByAccount.length > 0) {
+              <ul class="persist-list mb-0 mt-2">
+                @for (line of cbByAccount; track line.account) {
+                  <li><span>{{ line.account }}</span><strong>{{ line.amount | currency:'EUR':'symbol':'1.2-2':'fr' }}</strong></li>
+                }
+              </ul>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-3 p-3 rounded border bg-light  text-muted">
+        <strong class="text-dark">Emploi : </strong>
+        <span class="ms-2">
+          <strong>Cet écran sert à saisir des recettes non nominatives <sup class="text-muted">(note)</sup> lors d'un événement.</strong><br> Sélectionnez des produits, constituez un panier,
+          choisissez le mode de règlement puis encaissez.<br> Les montants sont cumulés et enregistrés  en écritures comptables du jour.<br><br>
+          <strong>note : </strong> L'utilisateur gère en parallèle, si nécessaire, sa propre liste papier de noms d'acheteurs pour pouvoir les pointer.
+        </span>
+      </div>
+
+    </div>
+  </div>
+
+</div>

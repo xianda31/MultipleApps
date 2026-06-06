@@ -200,6 +200,22 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     cash: 'none',
     cheque: 'none',
   },
+  // paiements par TPE (Stripe Terminal) — collecte non-nominative, montant agrégé
+  // deposit_ref = ID du virement Stripe (payout) qui regroupe les paiements CB
+  [TRANSACTION_ID.collecte_par_cb]: {
+    label: 'PAIEMENT PAR CARTE (TPE)',
+    invoice_required: false,
+    tooltip: 'paiements CB collectés via TPE Stripe — montant agrégé, non nominatif',
+    class: TRANSACTION_CLASS.OTHER_REVENUE,
+    financial_accounts: financial_debits,
+    financial_accounts_to_charge: [FINANCIAL_ACCOUNT.STRIPE_debit],
+    nominative: false,
+    pure_financial: false,
+    revenue_account_to_show: true,
+    require_deposit_ref: true,   // deposit_ref = Stripe payout ID (regroupement de paiements)
+    cash: 'none',
+    cheque: 'none',
+  },
   //   [TRANSACTION_ID.debit_avoir]: {
   //   label: 'DEBIT D\'UN AVOIR',
   //   tooltip: 'débit d\'un avoir',

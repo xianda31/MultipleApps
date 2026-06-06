@@ -21,9 +21,6 @@ import { StripeTerminalService } from './services/stripe-terminal.service';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { PaymentMode } from './cart/cart.interface';
 import { environment } from '../../../environments/environment';
-import { generateClient } from 'aws-amplify/data';
-import { Schema } from '../../../../../../amplify/data/resource';
-
 /**
  * ShopComponent — Interface de gestion des ventes (cartes, adhésions, produits)
  *
@@ -101,11 +98,11 @@ export class ShopComponent implements OnDestroy {
   get tpeRemoteMode(): boolean {
     return !this.stripeTerminal.isNativeAndroid;
   }
-  private pendingPaymentRequestId: string | null = null;
-  private pendingPaymentIntentId: string | null = null;
-  private pendingPaymentTimeout: any = null;
-  private paymentRequestSub: any = null;
-  remotePendingAmount: number = 0;
+
+  /** Montant en attente du paiement distant (pour affichage dans le bandeau). */
+  get remotePendingAmount(): number {
+    return this.stripeTerminal.remotePendingAmount$.value;
+  }
 
   // STRIPE OBSERVABLES (from orchestrator) - as getters to avoid initialization order issues
   get isProcessing$() { return this.stripeCheckout.isProcessing$; }
@@ -220,16 +217,8 @@ export class ShopComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.paymentRequestSub?.unsubscribe();
-    this.clearPendingPaymentTimeout();
+    this.stripeTerminal.cancelRemotePayment();
     // shopInit (singleton root) gère sa propre subscription TPESession
-  }
-
-  private clearPendingPaymentTimeout(): void {
-    if (this.pendingPaymentTimeout !== null) {
-      clearTimeout(this.pendingPaymentTimeout);
-      this.pendingPaymentTimeout = null;
-    }
   }
 
   /**
@@ -618,74 +607,18 @@ export class ShopComponent implements OnDestroy {
   }
 
   /**
-   * Conf A — PC crée PaymentIntent + PaymentRequest AppSync, attend le résultat via subscription.
-   * ppTPE (Android) reçoit la requête, collecte la carte, met à jour le status.
+   * Conf A — PC délègue au service StripeTerminalService.startRemotePayment().
+   * Toute la logique AppSync/timing est centralisée dans le service.
    */
   private async onPayByCardRemote(amountCents: number, memberName: string): Promise<void> {
     const buyerId = this.buyer!.id;
     const cartAmount = amountCents / 100;
 
-    // 1. Créer le PaymentIntent côté serveur
-    const { clientSecret, paymentIntentId, stripeTag } = await this.stripeTerminal.createPaymentIntent({
-      amountCents,
-      memberName,
-      buyerMemberId: buyerId,
-      season: this.session.season,
-      date: this.session.date,
-    });
-    this.cartService.setStripeTag(stripeTag);
-    this.remotePendingAmount = cartAmount;
-    this.pendingPaymentIntentId = paymentIntentId;
-
-    // 2. Créer le PaymentRequest dans AppSync
-    const client = generateClient<Schema>();
-    const ttl = Math.floor(Date.now() / 1000) + 86400; // purge auto 24h
-    const { data, errors } = await client.models.PaymentRequest.create({
-      clientSecret,
-      paymentIntentId,
-      amountCents,
-      memberName,
-      season: this.session.season,
-      date: this.session.date,
-      stripeTag,
-      status: 'pending',
-      ttl,
-    } as any);
-
-    if (errors?.length || !data?.id) {
-      throw new Error('Impossible de créer le PaymentRequest AppSync');
-    }
-    this.pendingPaymentRequestId = data.id;
-
-    // Timeout de sécurité : si ppTPE ne passe pas en 'processing' dans les 30s
-    // c'est qu'il est inactif — annuler proprement le PaymentIntent Stripe
-    this.pendingPaymentTimeout = setTimeout(() => {
-      if (this.pendingPaymentRequestId) {
-        this.cancelRemotePayment();
-        this.toastService.showWarning('TPE', 'TPE ne répond pas — paiement annulé');
-      }
-    }, 30_000);
-
-    // 3. observeQuery filtré sur cet ID — plus fiable que onUpdate() dont la
-    //    souscription WebSocket peut manquer la mutation si elle n'est pas encore établie.
-    this.paymentRequestSub = (client.models.PaymentRequest.observeQuery({
-      filter: { id: { eq: data.id } },
-    }) as any).subscribe({
-      next: ({ items }: any) => {
-        const updated = items?.[0];
-        if (!updated) return;
-
-        if (updated.status === 'processing') {
-          // ppTPE a pris en charge la demande — on laisse continuer sans timeout
-          this.clearPendingPaymentTimeout();
-          return;
-        }
-
-        if (updated.status === 'success') {
-          this.clearPendingPaymentTimeout();
-          this.paymentRequestSub?.unsubscribe();
-          this.paymentRequestSub = null;
-          this.pendingPaymentRequestId = null;
+    await this.stripeTerminal.startRemotePayment(
+      { amountCents, memberName, buyerMemberId: buyerId, season: this.session.season, date: this.session.date },
+      {
+        onPaymentIntentCreated: (stripeTag) => this.cartService.setStripeTag(stripeTag),
+        onSuccess: (_piId, _stripeTag) => {
           this.cartService.payment = {
             amount: cartAmount,
             payer_id: buyerId,
@@ -696,55 +629,32 @@ export class ShopComponent implements OnDestroy {
           this.cart_confirmed();
           this.tpePaymentInProgress = false;
           this.toastService.showSuccess('Paiement CB', 'Carte acceptée — vente enregistrée');
-
-        } else if (updated.status === 'failed') {
-          this.clearPendingPaymentTimeout();
-          this.paymentRequestSub?.unsubscribe();
-          this.paymentRequestSub = null;
-          this.pendingPaymentRequestId = null;
+        },
+        onFailed: (msg) => {
           this.tpePaymentInProgress = false;
-          this.toastService.showError('Paiement CB', updated.errorMessage || 'Paiement refusé par le TPE');
-
-        } else if (updated.status === 'cancelled') {
-          this.clearPendingPaymentTimeout();
-          this.paymentRequestSub?.unsubscribe();
-          this.paymentRequestSub = null;
-          this.pendingPaymentRequestId = null;
+          this.toastService.showError('Paiement CB', msg);
+        },
+        onCancelled: () => {
           this.tpePaymentInProgress = false;
           this.toastService.showWarning('Paiement CB', 'Paiement annulé');
-        }
+        },
+        onTimeout: () => {
+          this.tpePaymentInProgress = false;
+          this.toastService.showWarning('TPE', 'TPE ne répond pas — paiement annulé');
+        },
+        onError: () => {
+          this.tpePaymentInProgress = false;
+          this.toastService.showError('TPE', 'Connexion AppSync perdue');
+        },
       },
-      error: () => {
-        this.tpePaymentInProgress = false;
-        this.toastService.showError('TPE', 'Connexion AppSync perdue');
-      },
-    });
+    );
   }
 
   /**
-   * Annule le PaymentRequest en attente (mode distant) et réinitialise l'état.
+   * Annule le PaymentRequest en attente (mode distant) — délégué au service.
    */
   async cancelRemotePayment(): Promise<void> {
-    this.clearPendingPaymentTimeout();
-    this.paymentRequestSub?.unsubscribe();
-    this.paymentRequestSub = null;
-
-    const prId = this.pendingPaymentRequestId;
-    const piId = this.pendingPaymentIntentId;
-    this.pendingPaymentRequestId = null;
-    this.pendingPaymentIntentId = null;
-
-    if (prId) {
-      try {
-        const client = generateClient<Schema>();
-        await client.models.PaymentRequest.update({ id: prId, status: 'cancelled' } as any);
-      } catch { /* ignore — TTL nettoiera automatiquement */ }
-    }
-    if (piId) {
-      try {
-        await this.stripeTerminal.cancelPaymentIntent(piId);
-      } catch { /* ignore — déjà capturé ou annulé */ }
-    }
     this.tpePaymentInProgress = false;
+    await this.stripeTerminal.cancelRemotePayment();
   }
 }

@@ -5,6 +5,7 @@ export enum TRANSACTION_ID {
   achat_adhérent_par_chèque = 'achat_adhérent_par_chèque',
   achat_adhérent_par_virement = 'achat_adhérent_par_virement',
   vente_en_espèces = 'vente_en_espèces',
+  collecte_par_cb = 'collecte_par_cb',
   vente_par_virement = 'vente_par_virement',
   vente_par_chèque = 'vente_par_chèque',
   dépôt_collecte_espèces = 'dépôt_collecte_espèces',

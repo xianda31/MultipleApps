@@ -12,6 +12,8 @@ export interface SaleItem {
   currency: string;
   stripeEnabled: boolean;
   active: boolean;
+  shopEnabled?: boolean | null;   // visible dans Shop (vente nominative adhérent)
+  batchEnabled?: boolean | null;  // visible dans CollecteVente (vente en batch/événement)
   createdAt?: string;
   updatedAt?: string;
 }

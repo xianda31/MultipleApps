@@ -19,6 +19,8 @@
                         <th class="text-center">Prix</th>
                         <th class="text-center">Couple</th>
                         <th class="text-center">En ligne</th>
+                        <th class="text-center">Vente membre</th>
+                        <th class="text-center">Vente publique</th>
                         <th class="text-center">Actif</th>
                         <th class="text-center">Actions</th>
                     </tr>
@@ -50,6 +52,20 @@
                                 <input class="form-check-input" type="checkbox" role="switch"
                                     [id]="'stripeEnabled-' + product.id" [checked]="product.stripeEnabled"
                                     (change)="product.stripeEnabled = !product.stripeEnabled; onModProduct(product)">
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <div class="form-check form-switch d-flex justify-content-center mb-0">
+                                <input class="form-check-input" type="checkbox" role="switch"
+                                    [id]="'shopEnabled-' + product.id" [checked]="product.shopEnabled"
+                                    (change)="product.shopEnabled = !product.shopEnabled; onModProduct(product)">
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <div class="form-check form-switch d-flex justify-content-center mb-0">
+                                <input class="form-check-input" type="checkbox" role="switch"
+                                    [id]="'batchEnabled-' + product.id" [checked]="product.batchEnabled"
+                                    (change)="product.batchEnabled = !product.batchEnabled; onModProduct(product)">
                             </div>
                         </td>
                         <td class="text-center">
@@ -127,6 +143,14 @@
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" role="switch" id="modal-stripe" formControlName="stripeEnabled">
                                 <label class="form-check-label" for="modal-stripe">En ligne</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="modal-shop" formControlName="shopEnabled">
+                                <label class="form-check-label" for="modal-shop">Vente adhérent</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="modal-batch" formControlName="batchEnabled">
+                                <label class="form-check-label" for="modal-batch">Non nominatif</label>
                             </div>
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" role="switch" id="modal-active" formControlName="active">

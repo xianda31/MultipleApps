@@ -20,6 +20,8 @@ import { BehaviorSubject } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { post } from 'aws-amplify/api';
 import { fetchAuthSession } from 'aws-amplify/auth';
+import { generateClient } from 'aws-amplify/data';
+import { Schema } from '../../../../../../../amplify/data/resource';
 import { Capacitor } from '@capacitor/core';
 import {
   StripeTerminal,
@@ -61,6 +63,15 @@ export class StripeTerminalService {
 
   private readonly _errorMessage$ = new BehaviorSubject<string>('');
   readonly errorMessage$ = this._errorMessage$.asObservable();
+
+  /** Montant en attente d'un paiement distant (pour affichage dans les composants). */
+  readonly remotePendingAmount$ = new BehaviorSubject<number>(0);
+
+  // ── Remote mode (PC) : relay AppSync → ppTPE ─────────────────────────────
+  private _pendingPaymentRequestId: string | null = null;
+  private _pendingPaymentIntentId: string | null = null;
+  private _pendingPaymentTimeout: any = null;
+  private _paymentRequestSub: any = null;
 
   private readonly API_NAME = 'ffbProxyApi';
 
@@ -450,5 +461,155 @@ export class StripeTerminalService {
   private async getAuthToken(): Promise<string> {
     const session = await fetchAuthSession();
     return session.tokens?.idToken?.toString() || '';
+  }
+
+  // ──────────────────────────────────────────────────────────
+  // Mode distant (PC) : relay AppSync → ppTPE
+  // Logique de timing et de retry centralisée ici — ne pas dupliquer.
+  // ──────────────────────────────────────────────────────────
+
+  /**
+   * Crée le PaymentIntent + PaymentRequest AppSync, puis observe le résultat.
+   * ppTPE (Android) reçoit la requête, encaisse la carte, met à jour le status.
+   * Toutes les constantes de timing sont ici (timeout 30 s, observeQuery, etc.).
+   */
+  async startRemotePayment(
+    params: {
+      amountCents: number;
+      memberName: string;
+      buyerMemberId?: string;
+      season: string;
+      date: string;
+    },
+    callbacks: {
+      /** Appelé juste après createPaymentIntent — permet de capturer le stripeTag avant la collecte. */
+      onPaymentIntentCreated?: (stripeTag: string) => void;
+      /** ppTPE a pris en charge la demande (désactivation du timeout). */
+      onProcessing?: () => void;
+      /** Carte acceptée — le paiement est confirmé. */
+      onSuccess: (paymentIntentId: string, stripeTag: string) => void;
+      /** Carte refusée ou erreur Stripe. */
+      onFailed: (message: string) => void;
+      /** Paiement annulé (par ppTPE ou par l'utilisateur). */
+      onCancelled: () => void;
+      /** ppTPE ne répond pas dans les 30 s. */
+      onTimeout: () => void;
+      /** Connexion AppSync perdue. */
+      onError: () => void;
+    },
+  ): Promise<void> {
+    // 1. Créer le PaymentIntent côté serveur
+    const { clientSecret, paymentIntentId, stripeTag } = await this.createPaymentIntent(params);
+    callbacks.onPaymentIntentCreated?.(stripeTag);
+
+    this.remotePendingAmount$.next(params.amountCents / 100);
+    this._pendingPaymentIntentId = paymentIntentId;
+
+    // 2. Créer le PaymentRequest dans AppSync
+    const client = generateClient<Schema>() as any;
+    const ttl = Math.floor(Date.now() / 1000) + 86400; // purge auto 24h
+    const { data, errors } = await client.models.PaymentRequest.create({
+      clientSecret,
+      paymentIntentId,
+      amountCents: params.amountCents,
+      memberName: params.memberName,
+      season: params.season,
+      date: params.date,
+      stripeTag,
+      status: 'pending',
+      ttl,
+    } as any);
+
+    if (errors?.length || !data?.id) {
+      throw new Error('Impossible de créer le PaymentRequest AppSync');
+    }
+    this._pendingPaymentRequestId = data.id;
+
+    // Timeout de sécurité : si ppTPE ne passe pas en 'processing' dans les 30 s
+    // c'est qu'il est inactif — annuler proprement le PaymentIntent Stripe.
+    this._pendingPaymentTimeout = setTimeout(() => {
+      if (this._pendingPaymentRequestId) {
+        this.cancelRemotePayment();
+        callbacks.onTimeout();
+      }
+    }, 30_000);
+
+    // 3. observeQuery filtré sur cet ID — plus fiable que onUpdate() dont la
+    //    souscription WebSocket peut manquer la mutation si elle n'est pas encore établie.
+    this._paymentRequestSub = (client.models.PaymentRequest.observeQuery({
+      filter: { id: { eq: data.id } },
+    }) as any).subscribe({
+      next: ({ items }: any) => {
+        const updated = items?.[0];
+        if (!updated) return;
+
+        if (updated.status === 'processing') {
+          // ppTPE a pris en charge la demande — désactiver le timeout
+          this._clearPendingPaymentTimeout();
+          callbacks.onProcessing?.();
+          return;
+        }
+        if (updated.status === 'success') {
+          this._clearPendingPaymentTimeout();
+          this._cleanupPaymentSub();
+          this.remotePendingAmount$.next(0);
+          callbacks.onSuccess(paymentIntentId, stripeTag);
+        } else if (updated.status === 'failed') {
+          this._clearPendingPaymentTimeout();
+          this._cleanupPaymentSub();
+          this.remotePendingAmount$.next(0);
+          callbacks.onFailed(updated.errorMessage || 'Paiement refusé par le TPE');
+        } else if (updated.status === 'cancelled') {
+          this._clearPendingPaymentTimeout();
+          this._cleanupPaymentSub();
+          this.remotePendingAmount$.next(0);
+          callbacks.onCancelled();
+        }
+      },
+      error: () => {
+        this.remotePendingAmount$.next(0);
+        callbacks.onError();
+      },
+    });
+  }
+
+  /**
+   * Annule le PaymentRequest en attente et réinitialise l'état.
+   * Idempotent — sûr à appeler plusieurs fois ou en ngOnDestroy.
+   */
+  async cancelRemotePayment(): Promise<void> {
+    this._clearPendingPaymentTimeout();
+    this._cleanupPaymentSub();
+
+    const prId = this._pendingPaymentRequestId;
+    const piId = this._pendingPaymentIntentId;
+    this._pendingPaymentRequestId = null;
+    this._pendingPaymentIntentId = null;
+    this.remotePendingAmount$.next(0);
+
+    if (prId) {
+      try {
+        const client = generateClient<Schema>() as any;
+        await client.models.PaymentRequest.update({ id: prId, status: 'cancelled' } as any);
+      } catch { /* TTL nettoiera automatiquement */ }
+    }
+    if (piId) {
+      try {
+        await this.cancelPaymentIntent(piId);
+      } catch { /* ignore — déjà capturé ou annulé */ }
+    }
+  }
+
+  private _clearPendingPaymentTimeout(): void {
+    if (this._pendingPaymentTimeout !== null) {
+      clearTimeout(this._pendingPaymentTimeout);
+      this._pendingPaymentTimeout = null;
+    }
+  }
+
+  private _cleanupPaymentSub(): void {
+    this._paymentRequestSub?.unsubscribe();
+    this._paymentRequestSub = null;
+    this._pendingPaymentRequestId = null;
   }
 }

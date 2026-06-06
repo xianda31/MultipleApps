@@ -59,6 +59,8 @@ export class ProductsComponent implements OnInit, OnDestroy {
       currency: new FormControl({ value: 'EUR', disabled: true }),
       stripeEnabled: new FormControl<boolean>(false, { nonNullable: true }),
       active: new FormControl<boolean>(true, { nonNullable: true }),
+      shopEnabled: new FormControl<boolean>(true, { nonNullable: true }),
+      batchEnabled: new FormControl<boolean>(false, { nonNullable: true }),
       // glyph est auto-déterminé basé sur `account` — ne pas inclure dans le formulaire
     });
 
@@ -68,7 +70,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
   }
 
   onNewProduct() {
-    this.productForm.reset({ productCode: '', paired: false, stripeEnabled: false, active: true, currency: 'EUR' });
+    this.productForm.reset({ productCode: '', paired: false, stripeEnabled: false, active: true, currency: 'EUR', shopEnabled: true, batchEnabled: false });
     this.accountInput = '';
     this.product_selected = false;
     this.showModal = true;

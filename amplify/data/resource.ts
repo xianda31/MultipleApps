@@ -201,6 +201,8 @@ const schema = a.schema({
     currency: a.string().required(),      // "EUR" par défaut
     stripeEnabled: a.boolean().required(), // vendable en ligne
     active: a.boolean().required(),
+    shopEnabled: a.boolean(),          // visible dans Shop (vente nominative adhérent)
+    batchEnabled: a.boolean(),         // visible dans CollecteVente (vente en batch/événement)
   })
     .identifier(['id'])
     .authorization((allow) => [
@@ -405,6 +407,7 @@ const schema = a.schema({
     submittedAt: a.string(),             // ISO date de la dernière modification
   })
     .authorization((allow) => [
+      allow.guest().to(['read', 'create', 'update', 'delete']),
       allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
       allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
       allow.group(Group_names.Editor).to(['read', 'create', 'update', 'delete']),
@@ -447,7 +450,7 @@ AssistanceRequest: a.model({
     allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
     allow.group(Group_names.Editor).to(['read', 'create', 'update', 'delete']),
     allow.group(Group_names.Support).to(['read', 'create', 'update', 'delete']),
-    allow.group(Group_names.Member).to(['read', 'create']),
+    allow.group(Group_names.Member).to(['read', 'create', 'update', 'delete']),
   ]),
 
   // ─── Paiement CB via ppTPE (conf A : PC → AppSync → ppTPE → WisePad 3) ───
