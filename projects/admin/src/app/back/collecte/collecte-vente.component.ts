@@ -21,6 +21,7 @@ import {
   Operation,
   TRANSACTION_ID,
 } from '../../common/interfaces/accounting.interface';
+import { TRANSACTION_DIRECTORY } from '../../common/interfaces/transaction.definition';
 
 interface MiniCartItem {
   product: Product;
@@ -267,7 +268,7 @@ export class CollecteVenteComponent implements OnInit, OnDestroy {
       try {
         await this._upsertCollecteEntry(
           TRANSACTION_ID.dépôt_collecte_espèces,
-          FINANCIAL_ACCOUNT.CASHBOX_debit,
+          this._getCollecteFinancialAccount(TRANSACTION_ID.dépôt_collecte_espèces),
           valuesByAccount,
           titleTag,
         );
@@ -285,7 +286,7 @@ export class CollecteVenteComponent implements OnInit, OnDestroy {
       try {
         await this._upsertCollecteEntry(
           TRANSACTION_ID.dépôt_collecte_chèques,
-          FINANCIAL_ACCOUNT.CASHBOX_debit,
+          this._getCollecteFinancialAccount(TRANSACTION_ID.dépôt_collecte_chèques),
           valuesByAccount,
           titleTag,
         );
@@ -315,7 +316,7 @@ export class CollecteVenteComponent implements OnInit, OnDestroy {
             try {
               await this._upsertCollecteEntry(
                 TRANSACTION_ID.collecte_par_cb,
-                FINANCIAL_ACCOUNT.STRIPE_debit,
+                this._getCollecteFinancialAccount(TRANSACTION_ID.collecte_par_cb),
                 valuesByAccount,
                 titleTag,
               );
@@ -368,7 +369,7 @@ export class CollecteVenteComponent implements OnInit, OnDestroy {
 
       await this._upsertCollecteEntry(
         TRANSACTION_ID.collecte_par_cb,
-        FINANCIAL_ACCOUNT.STRIPE_debit,
+        this._getCollecteFinancialAccount(TRANSACTION_ID.collecte_par_cb),
         valuesByAccount,
         titleTag,
       );
@@ -414,15 +415,13 @@ export class CollecteVenteComponent implements OnInit, OnDestroy {
     const mergedByAccount = this._mergeValues(this._extractEntryAccountValues(existing), deltaByAccount);
     const total = this._sumValues(mergedByAccount);
     const encaissementsCount = this._extractEncaissementsCount(existing) + 1;
+    const normalizedAmounts = this._normalizeCollecteAmounts(existing.amounts, financialAccount, total);
     const updatedEntry: BookEntry = {
       ...existing,
       season,
       date,
       tag,
-      amounts: {
-        ...existing.amounts,
-        [financialAccount]: total,
-      },
+      amounts: normalizedAmounts,
       operations: [{ label: this._encaissementsLabel(encaissementsCount), values: mergedByAccount }],
     };
     await this.bookService.update_book_entry(updatedEntry);
@@ -439,9 +438,9 @@ export class CollecteVenteComponent implements OnInit, OnDestroy {
       if (existingTag) this.eventTitle = existingTag;
     }
 
-    this.cashAmount = this._entryFinancialAmount(cash, FINANCIAL_ACCOUNT.CASHBOX_debit);
-    this.chequeAmount = this._entryFinancialAmount(cheque, FINANCIAL_ACCOUNT.CASHBOX_debit);
-    this.cbAccumulatedAmount = this._entryFinancialAmount(cb, FINANCIAL_ACCOUNT.STRIPE_debit);
+    this.cashAmount = this._entryFinancialAmount(cash, this._getCollecteFinancialAccount(TRANSACTION_ID.dépôt_collecte_espèces));
+    this.chequeAmount = this._entryFinancialAmount(cheque, this._getCollecteFinancialAccount(TRANSACTION_ID.dépôt_collecte_chèques));
+    this.cbAccumulatedAmount = this._entryFinancialAmount(cb, this._getCollecteFinancialAccount(TRANSACTION_ID.collecte_par_cb));
     this.cashEncaissementsCount = cash ? this._extractEncaissementsCount(cash) : 0;
     this.chequeEncaissementsCount = cheque ? this._extractEncaissementsCount(cheque) : 0;
     this.cbEncaissementsCount = cb ? this._extractEncaissementsCount(cb) : 0;
@@ -488,6 +487,43 @@ export class CollecteVenteComponent implements OnInit, OnDestroy {
 
   private _sumValues(values: Record<string, number>): number {
     return Math.round((Object.values(values).reduce((sum, amount) => sum + amount, 0)) * 100) / 100;
+  }
+
+  private _normalizeCollecteAmounts(
+    currentAmounts: AMOUNTS,
+    financialAccount: FINANCIAL_ACCOUNT,
+    total: number,
+  ): AMOUNTS {
+    const amounts: AMOUNTS = { ...currentAmounts };
+    const financialDebitAccounts: FINANCIAL_ACCOUNT[] = [
+      FINANCIAL_ACCOUNT.CASHBOX_debit,
+      FINANCIAL_ACCOUNT.BANK_debit,
+      FINANCIAL_ACCOUNT.STRIPE_debit,
+      FINANCIAL_ACCOUNT.SAVING_debit,
+    ];
+
+    financialDebitAccounts.forEach((account) => {
+      if (account !== financialAccount) {
+        delete amounts[account];
+      }
+    });
+
+    amounts[financialAccount] = total;
+
+    return amounts;
+  }
+
+  private _getCollecteFinancialAccount(transactionId: TRANSACTION_ID): FINANCIAL_ACCOUNT {
+    const mapping = TRANSACTION_DIRECTORY[transactionId]?.financial_accounts_to_charge ?? [];
+    const account = mapping.find((key) => this._isFinancialAccount(key));
+    if (!account) {
+      throw new Error(`Aucun compte financier défini dans TRANSACTION_DIRECTORY pour ${transactionId}`);
+    }
+    return account;
+  }
+
+  private _isFinancialAccount(key: unknown): key is FINANCIAL_ACCOUNT {
+    return Object.values(FINANCIAL_ACCOUNT).includes(key as FINANCIAL_ACCOUNT);
   }
 
   private _toAccountAmountRows(values: Record<string, number>): AccountAmount[] {
