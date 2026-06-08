@@ -20,7 +20,7 @@ import { ShopProductService } from './services/shop-product.service';
 import { StripeTerminalService } from './services/stripe-terminal.service';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { PaymentMode } from './cart/cart.interface';
-import { environment } from '../../../environments/environment';
+import { CardPaymentOrchestratorService } from '../services/card-payment-orchestrator.service';
 /**
  * ShopComponent — Interface de gestion des ventes (cartes, adhésions, produits)
  *
@@ -96,7 +96,7 @@ export class ShopComponent implements OnDestroy {
 
   // Sur PC (Electron/web) : toujours mode distant — WisePad 3 est côté Android.
   get tpeRemoteMode(): boolean {
-    return !this.stripeTerminal.isNativeAndroid;
+    return this.cardPaymentOrchestrator.isRemoteMode;
   }
 
   /** Montant en attente du paiement distant (pour affichage dans le bandeau). */
@@ -140,6 +140,7 @@ export class ShopComponent implements OnDestroy {
     private shopProducts: ShopProductService,
     private systemDataService: SystemDataService,
     private stripeTerminal: StripeTerminalService,
+    private cardPaymentOrchestrator: CardPaymentOrchestratorService,
   ) {}
 
   ngOnInit(): void {
@@ -217,7 +218,7 @@ export class ShopComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.stripeTerminal.cancelRemotePayment();
+    this.cardPaymentOrchestrator.cancelRemotePayment();
     // shopInit (singleton root) gère sa propre subscription TPESession
   }
 
@@ -559,11 +560,51 @@ export class ShopComponent implements OnDestroy {
     }
 
     this.tpePaymentInProgress = true;
+    const memberName = this.buyer.lastname + ' ' + this.buyer.firstname;
+    const paymentParams = {
+      amountCents,
+      memberName,
+      buyerMemberId: this.buyer.id,
+      season: this.session.season,
+      date: this.session.date,
+    };
 
     // ── Conf A : mode distant — PC crée le PaymentRequest, ppTPE gère le TPE ──
     if (this.tpeRemoteMode) {
-      const memberName = this.buyer.lastname + ' ' + this.buyer.firstname;
-      this.onPayByCardRemote(amountCents, memberName).catch(err => {
+      this.cardPaymentOrchestrator.payByCard(
+        paymentParams,
+        {
+          onPaymentIntentCreated: (stripeTag) => this.cartService.setStripeTag(stripeTag),
+          onSuccess: () => {
+            this.cartService.payment = {
+              amount: this.cartService.getCartAmount(),
+              payer_id: this.buyer!.id,
+              mode: PaymentMode.CARD,
+              bank: '',
+              cheque_no: '',
+            };
+            this.cart_confirmed();
+            this.tpePaymentInProgress = false;
+            this.toastService.showSuccess('Paiement CB', 'Carte acceptée — vente enregistrée');
+          },
+          onFailed: (msg) => {
+            this.tpePaymentInProgress = false;
+            this.toastService.showError('Paiement CB', msg);
+          },
+          onCancelled: () => {
+            this.tpePaymentInProgress = false;
+            this.toastService.showWarning('Paiement CB', 'Paiement annulé');
+          },
+          onTimeout: () => {
+            this.tpePaymentInProgress = false;
+            this.toastService.showWarning('TPE', 'TPE ne répond pas — paiement annulé');
+          },
+          onError: () => {
+            this.tpePaymentInProgress = false;
+            this.toastService.showError('TPE', 'Connexion AppSync perdue');
+          },
+        },
+      ).catch(err => {
         this.toastService.showError('Paiement CB', err.message || 'Erreur PaymentRequest');
         this.tpePaymentInProgress = false;
       });
@@ -571,33 +612,27 @@ export class ShopComponent implements OnDestroy {
     }
 
     try {
-      const memberName = this.buyer.lastname + ' ' + this.buyer.firstname;
-
-      // 1. Créer le PaymentIntent côté serveur (validation prix + metadata)
-      const { clientSecret, stripeTag } = await this.stripeTerminal.createPaymentIntent({
-        amountCents,
-        memberName,
-        buyerMemberId: this.buyer.id,
-        season: this.session.season,
-        date: this.session.date,
-      });
-
-      // 2. Stocker le stripeTag dans le panier pour traçabilité BookEntry
-      this.cartService.setStripeTag(stripeTag);
-
-      // 3. Présenter la carte sur le TPE et traiter le paiement
-      await this.stripeTerminal.collectAndProcess(clientSecret);
-
-      // 4. Paiement accepté → enregistrer la vente avec mode CARTE
-      this.cartService.payment = {
-        amount: this.cartService.getCartAmount(),
-        payer_id: this.buyer.id,
-        mode: PaymentMode.CARD,
-        bank: '',
-        cheque_no: '',
-      };
-      this.cart_confirmed();
-      this.toastService.showSuccess('Paiement CB', 'Carte acceptée — vente enregistrée');
+      await this.cardPaymentOrchestrator.payByCard(
+        paymentParams,
+        {
+          onPaymentIntentCreated: (stripeTag) => this.cartService.setStripeTag(stripeTag),
+          onSuccess: () => {
+            this.cartService.payment = {
+              amount: this.cartService.getCartAmount(),
+              payer_id: this.buyer!.id,
+              mode: PaymentMode.CARD,
+              bank: '',
+              cheque_no: '',
+            };
+            this.cart_confirmed();
+            this.toastService.showSuccess('Paiement CB', 'Carte acceptée — vente enregistrée');
+          },
+          onFailed: (msg) => this.toastService.showError('Paiement CB', msg),
+          onCancelled: () => this.toastService.showWarning('Paiement CB', 'Paiement annulé'),
+          onTimeout: () => this.toastService.showWarning('TPE', 'TPE ne répond pas — paiement annulé'),
+          onError: () => this.toastService.showError('TPE', 'Connexion AppSync perdue'),
+        },
+      );
     } catch (err: any) {
       this.toastService.showError('Paiement CB', err.message || 'Erreur paiement TPE');
       this.stripeTerminal.resetStatus();
@@ -607,54 +642,10 @@ export class ShopComponent implements OnDestroy {
   }
 
   /**
-   * Conf A — PC délègue au service StripeTerminalService.startRemotePayment().
-   * Toute la logique AppSync/timing est centralisée dans le service.
-   */
-  private async onPayByCardRemote(amountCents: number, memberName: string): Promise<void> {
-    const buyerId = this.buyer!.id;
-    const cartAmount = amountCents / 100;
-
-    await this.stripeTerminal.startRemotePayment(
-      { amountCents, memberName, buyerMemberId: buyerId, season: this.session.season, date: this.session.date },
-      {
-        onPaymentIntentCreated: (stripeTag) => this.cartService.setStripeTag(stripeTag),
-        onSuccess: (_piId, _stripeTag) => {
-          this.cartService.payment = {
-            amount: cartAmount,
-            payer_id: buyerId,
-            mode: PaymentMode.CARD,
-            bank: '',
-            cheque_no: '',
-          };
-          this.cart_confirmed();
-          this.tpePaymentInProgress = false;
-          this.toastService.showSuccess('Paiement CB', 'Carte acceptée — vente enregistrée');
-        },
-        onFailed: (msg) => {
-          this.tpePaymentInProgress = false;
-          this.toastService.showError('Paiement CB', msg);
-        },
-        onCancelled: () => {
-          this.tpePaymentInProgress = false;
-          this.toastService.showWarning('Paiement CB', 'Paiement annulé');
-        },
-        onTimeout: () => {
-          this.tpePaymentInProgress = false;
-          this.toastService.showWarning('TPE', 'TPE ne répond pas — paiement annulé');
-        },
-        onError: () => {
-          this.tpePaymentInProgress = false;
-          this.toastService.showError('TPE', 'Connexion AppSync perdue');
-        },
-      },
-    );
-  }
-
-  /**
    * Annule le PaymentRequest en attente (mode distant) — délégué au service.
    */
   async cancelRemotePayment(): Promise<void> {
     this.tpePaymentInProgress = false;
-    await this.stripeTerminal.cancelRemotePayment();
+    await this.cardPaymentOrchestrator.cancelRemotePayment();
   }
 }

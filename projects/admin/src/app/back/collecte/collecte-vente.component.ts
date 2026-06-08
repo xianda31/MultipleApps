@@ -12,6 +12,7 @@ import { SystemDataService } from '../../common/services/system-data.service';
 import { StripeTerminalService, TerminalStatus } from '../shop/services/stripe-terminal.service';
 import { ShopInitializationService } from '../shop/services/shop-initialization.service';
 import { ShopProductService } from '../shop/services/shop-product.service';
+import { CardPaymentOrchestratorService } from '../services/card-payment-orchestrator.service';
 import { PaymentMode } from '../shop/cart/cart.interface';
 
 import {
@@ -85,6 +86,7 @@ export class CollecteVenteComponent implements OnInit, OnDestroy {
     private systemDataService: SystemDataService,
     private stripeTerminal: StripeTerminalService,
     private shopInit: ShopInitializationService,
+    private cardPaymentOrchestrator: CardPaymentOrchestratorService,
   ) {}
 
   ngOnInit(): void {
@@ -137,7 +139,7 @@ export class CollecteVenteComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.stripeTerminal.cancelRemotePayment();
+    this.cardPaymentOrchestrator.cancelRemotePayment();
     this.subs.forEach((s) => s.unsubscribe());
   }
 
@@ -149,7 +151,7 @@ export class CollecteVenteComponent implements OnInit, OnDestroy {
 
   /** Sur PC : le SDK local n'est pas connecté — ppTPE gère la connexion via AppSync. */
   get tpeRemoteMode(): boolean {
-    return !this.stripeTerminal.isNativeAndroid;
+    return this.cardPaymentOrchestrator.isRemoteMode;
   }
 
   get tpeStatusLabel(): string {
@@ -306,10 +308,16 @@ export class CollecteVenteComponent implements OnInit, OnDestroy {
     }
     this.tpePaymentInProgress = true;
 
-    // Sur PC : ppTPE gère la connexion BLE — passer par le relay AppSync (service)
+    const paymentParams = {
+      amountCents: totalCents,
+      memberName: 'Collecte',
+      season: this.session.season,
+      date: this.session.date,
+    };
+
     if (this.tpeRemoteMode) {
-      this.stripeTerminal.startRemotePayment(
-        { amountCents: totalCents, memberName: 'Collecte', season: this.session.season, date: this.session.date },
+      this.cardPaymentOrchestrator.payByCard(
+        paymentParams,
         {
           onSuccess: async () => {
             this.tpePaymentInProgress = false;
@@ -357,24 +365,26 @@ export class CollecteVenteComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Android local BLE : SDK directement connecté
     try {
-      const { clientSecret } = await this.stripeTerminal.createPaymentIntent({
-        amountCents: totalCents,
-        memberName: 'Collecte',
-        season: this.session.season,
-        date: this.session.date,
-      });
-      await this.stripeTerminal.collectAndProcess(clientSecret);
-
-      await this._upsertCollecteEntry(
-        TRANSACTION_ID.collecte_par_cb,
-        this._getCollecteFinancialAccount(TRANSACTION_ID.collecte_par_cb),
-        valuesByAccount,
-        titleTag,
+      await this.cardPaymentOrchestrator.payByCard(
+        paymentParams,
+        {
+          onSuccess: async () => {
+            await this._upsertCollecteEntry(
+              TRANSACTION_ID.collecte_par_cb,
+              this._getCollecteFinancialAccount(TRANSACTION_ID.collecte_par_cb),
+              valuesByAccount,
+              titleTag,
+            );
+            this.toastService.showSuccess('CB acceptée', `${totalItems} produit(s) — ${total} €`);
+            this.clearMiniCart();
+          },
+          onFailed: (msg) => this.toastService.showError('Paiement CB', msg),
+          onCancelled: () => this.toastService.showWarning('Paiement CB', 'Paiement annulé'),
+          onTimeout: () => this.toastService.showWarning('TPE', 'TPE ne répond pas — paiement annulé'),
+          onError: () => this.toastService.showError('TPE', 'Connexion AppSync perdue'),
+        },
       );
-      this.toastService.showSuccess('CB acceptée', `${totalItems} produit(s) — ${total} €`);
-      this.clearMiniCart();
     } catch (err: any) {
       this.toastService.showError('Paiement CB', err.message ?? 'Erreur TPE');
       this.stripeTerminal.resetStatus();
