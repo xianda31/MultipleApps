@@ -298,6 +298,10 @@
     overflow-y: auto;
   }
 
+  .fees-collector-root:not(.compact-footer-visible) .fees-gamers-scroll {
+    max-height: calc(100dvh - 125px);
+  }
+
   .fees-gamers-grid {
     --bs-gutter-x: 0.35rem;
     --bs-gutter-y: 0.35rem;
@@ -315,13 +319,42 @@
 
   .fees-collector-footer {
     display: block;
-    position: sticky;
-    bottom: 0;
-    z-index: 5;
+    position: static;
     background: #fff;
+    border-top: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    pointer-events: none;
+    transition: max-height 180ms ease, opacity 140ms ease, padding 140ms ease;
+  }
+
+  .fees-collector-footer.compact-footer-visible {
     border-top: 1px solid rgba(0, 0, 0, 0.08);
-    padding-top: 0.35rem;
-    padding-bottom: 0.35rem;
+    padding-top: 0.2rem;
+    padding-bottom: 0.2rem;
+    max-height: 260px;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .fees-collector-footer .text-muted {
+    font-size: 0.72rem;
+    line-height: 1.05;
+  }
+
+  .fees-collector-footer .btn,
+  .fees-collector-footer .btn-sm {
+    font-size: 0.7rem;
+    padding: 0.1rem 0.3rem;
+    line-height: 1.1;
+  }
+
+  .fees-collector-footer .row {
+    --bs-gutter-x: 0.35rem;
+    --bs-gutter-y: 0.2rem;
   }
 }
 

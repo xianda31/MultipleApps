@@ -1,4 +1,4 @@
-import { Component, OnDestroy } from '@angular/core';
+import { AfterViewChecked, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { TournamentService } from '../../../common/services/tournament.service';
@@ -33,7 +33,7 @@ import { Bank } from '../../../common/interfaces/system-conf.interface';
   styleUrl: './fees-collector.component.scss'
 })
 
-export class FeesCollectorComponent implements OnDestroy {
+export class FeesCollectorComponent implements OnDestroy, AfterViewChecked {
   GAME_STATUS = Game_status;
   FEE_RATE = FEE_RATE;
   next_tournaments: club_tournament_extended[] = [];
@@ -51,10 +51,12 @@ export class FeesCollectorComponent implements OnDestroy {
   modalErrorMessage: string = '';
   addPlayersModalOpen: boolean = false;
   hideValidated: boolean = false;
+  compactFooterVisible: boolean = false;
   disappearingGamers: Map<number, boolean> = new Map();
   CARD_PRICE !: number;
   members: Member[] = [];
   banks: Bank[] = [];
+  @ViewChild('feesGamersScroll') feesGamersScroll?: ElementRef<HTMLDivElement>;
 
   constructor(
     private tournamentService: TournamentService,
@@ -138,6 +140,37 @@ export class FeesCollectorComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.breakingNewsService.deactivate(); // Hide banner when leaving page
+  }
+
+  ngAfterViewChecked(): void {
+    this.updateCompactFooterVisibility();
+  }
+
+  onGamersScroll(event: Event): void {
+    const target = event.target as HTMLElement | null;
+    if (!target) {
+      return;
+    }
+    this.compactFooterVisible = this.computeIsAtBottom(target);
+  }
+
+  private updateCompactFooterVisibility(): void {
+    const el = this.feesGamersScroll?.nativeElement;
+    if (!el) {
+      return;
+    }
+    const atBottom = this.computeIsAtBottom(el);
+    if (atBottom !== this.compactFooterVisible) {
+      this.compactFooterVisible = atBottom;
+    }
+  }
+
+  private computeIsAtBottom(el: HTMLElement): boolean {
+    const maxScrollable = el.scrollHeight - el.clientHeight;
+    if (maxScrollable <= 2) {
+      return true;
+    }
+    return el.scrollTop + el.clientHeight >= el.scrollHeight - 4;
   }
 
 

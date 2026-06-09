@@ -1,4 +1,4 @@
-<div class="card shadow-lg mt-3 g-0 fees-collector-root">
+<div class="card shadow-lg mt-3 g-0 fees-collector-root" [class.compact-footer-visible]="compactFooterVisible">
     <div class="card-header fees-collector-header">
         <!-- bandeau tournoi date, mode roy rené , alread_charges ? , add_team -->
 
@@ -121,7 +121,7 @@
     <div *ngIf="game " class="card-body fees-collector-body">
 
         <!-- loop sur les gamers -->
-        <div class="row fees-gamers-scroll">
+        <div class="row fees-gamers-scroll" #feesGamersScroll (scroll)="onGamersScroll($event)">
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 row-cols-xl-6 g-2 fees-gamers-grid">
                 <ng-container *ngFor="let gamer of game.gamers">
                     <div class="col gamer-container" *ngIf="shouldShowGamer(gamer)"
@@ -147,7 +147,7 @@
     </div>
 
     <!-- footer -->
-    <div *ngIf="game " class="card-footer fees-collector-footer">
+    <div *ngIf="game " class="card-footer fees-collector-footer" [class.compact-footer-visible]="compactFooterVisible">
         <div class="row justify-content-between align-items-center">
             <ng-container *ngTemplateOutlet="save_dialog"></ng-container>
             <div class="col">
