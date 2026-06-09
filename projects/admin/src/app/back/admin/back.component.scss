@@ -30,3 +30,10 @@
   position: relative;
   background: var(--bs-light, #f8f9fa);
 }
+
+.admin-scrollable-content > * {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}

@@ -1,0 +1,9 @@
+.product-table-scroll {
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
+/* Keep all columns reachable on small screens through horizontal scroll. */
+.product-table-scroll .table {
+	min-width: 980px;
+}

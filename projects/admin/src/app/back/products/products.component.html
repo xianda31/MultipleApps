@@ -8,7 +8,8 @@
         </div>
         <div class="card-body">
             @if (products) {
-            <table class="table table-sm table-striped table-hover">
+            <div class="table-responsive product-table-scroll">
+            <table class="table table-sm table-striped table-hover mb-0">
                 <thead>
                     <tr>
                         <!-- <th>Produit</th> -->
@@ -87,6 +88,7 @@
                     }
                 </tbody>
             </table>
+            </div>
             }
         </div>
     </div>

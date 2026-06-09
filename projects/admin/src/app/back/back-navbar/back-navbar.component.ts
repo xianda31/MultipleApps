@@ -30,6 +30,8 @@ import { SystemDataService } from '../../common/services/system-data.service';
 })
 export class BackNavbarComponent implements OnInit, OnDestroy {
     navbarMenus: NavbarMenu[] = STATIC_MENUS;
+  private compactLandscapeMql: MediaQueryList | null = null;
+  private compactLandscapeListener?: (event: MediaQueryListEvent) => void;
   
   @Input() season: string = '';
   @Input() entries_nbr: number = 0;
@@ -92,6 +94,11 @@ export class BackNavbarComponent implements OnInit, OnDestroy {
     document.body.style.removeProperty('padding-right');
     document.body.classList.remove('modal-open');
     document.querySelectorAll('.offcanvas-backdrop').forEach(el => el.remove());
+    document.body.classList.remove('force-mobile-navbar');
+
+    if (this.compactLandscapeMql && this.compactLandscapeListener) {
+      this.compactLandscapeMql.removeEventListener('change', this.compactLandscapeListener);
+    }
   }
 
   ngOnInit(): void {
@@ -143,6 +150,18 @@ export class BackNavbarComponent implements OnInit, OnDestroy {
       }
     });
     this.production_mode = environment.production;
+
+    // In compact phone landscape, force the mobile navbar to avoid desktop-width overflow.
+    this.compactLandscapeMql = window.matchMedia('(orientation: landscape) and (max-height: 520px) and (max-width: 991.98px)');
+    this.applyCompactNavbarMode(this.compactLandscapeMql.matches);
+    this.compactLandscapeListener = (event: MediaQueryListEvent) => {
+      this.applyCompactNavbarMode(event.matches);
+    };
+    this.compactLandscapeMql.addEventListener('change', this.compactLandscapeListener);
+  }
+
+  private applyCompactNavbarMode(enabled: boolean): void {
+    document.body.classList.toggle('force-mobile-navbar', enabled);
   }
 
   async signOut() {

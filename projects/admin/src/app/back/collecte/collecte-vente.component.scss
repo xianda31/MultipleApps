@@ -1,3 +1,8 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
 /* Collecte Vente */
 
 .collecte-main-row {
@@ -275,7 +280,7 @@
   }
 }
 
-@media (orientation: portrait) and (min-width: 600px) and (max-width: 991.98px) {
+@media (max-width: 991.98px) {
   .collecte-main-row > :nth-child(1),
   .collecte-main-row > :nth-child(2) {
     flex: 0 0 50%;

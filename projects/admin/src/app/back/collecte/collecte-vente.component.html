@@ -193,9 +193,9 @@
                   <span class="persist-type d-inline-flex align-items-center">
                     <i class="bi bi-cash me-1"></i>Espèces
                   </span>
-                  <span class="persist-main d-inline-flex align-items-center">{{ cashAmount | currency:'EUR':'symbol':'1.2-2':'fr' }}</span>
                   <span class="persist-count text-muted small text-nowrap">({{ cashEncaissementsCount }})</span>
                 </div>
+                <div class="persist-main persist-amount">{{ cashAmount | currency:'EUR':'symbol':'1.2-2':'fr' }}</div>
               </div>
 
               <div class="persist-card persist-cheque mt-2">
@@ -203,9 +203,9 @@
                   <span class="persist-type d-inline-flex align-items-center">
                     <i class="bi bi-file-earmark-text me-1"></i>Chèques
                   </span>
-                  <span class="persist-main d-inline-flex align-items-center">{{ chequeAmount | currency:'EUR':'symbol':'1.2-2':'fr' }}</span>
                   <span class="persist-count text-muted small text-nowrap">({{ chequeEncaissementsCount }})</span>
                 </div>
+                <div class="persist-main persist-amount">{{ chequeAmount | currency:'EUR':'symbol':'1.2-2':'fr' }}</div>
               </div>
 
               <div class="persist-card persist-cardpay mt-2">
@@ -213,9 +213,9 @@
                   <span class="persist-type d-inline-flex align-items-center">
                     <i class="bi bi-credit-card me-1"></i>Carte
                   </span>
-                  <span class="persist-main d-inline-flex align-items-center">{{ cbAccumulatedAmount | currency:'EUR':'symbol':'1.2-2':'fr' }}</span>
                   <span class="persist-count text-muted small text-nowrap">({{ cbEncaissementsCount }})</span>
                 </div>
+                <div class="persist-main persist-amount">{{ cbAccumulatedAmount | currency:'EUR':'symbol':'1.2-2':'fr' }}</div>
               </div>
             </div>
           </div>

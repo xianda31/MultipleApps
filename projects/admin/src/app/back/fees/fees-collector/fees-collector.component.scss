@@ -1,3 +1,8 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
 // Boutons de mode de paiement harmonisés avec cart
 .btn-pay {
   flex: 1;
@@ -213,8 +218,8 @@
   box-shadow: 0 8px 20px rgba(0,0,0,0.25) !important;
 }
 
-/* Compact mode for recent Android phones in landscape (limited viewport height). */
-@media (orientation: landscape) and (max-height: 520px) {
+/* Compact tablet mode aligned with Bootstrap md range for consistency across devices. */
+@media (orientation: landscape) and (min-width: 768px) and (max-width: 991.98px) {
   .fees-collector-root {
     margin-top: 0 !important;
     border-top: 0 !important;
@@ -356,10 +361,16 @@
     --bs-gutter-x: 0.35rem;
     --bs-gutter-y: 0.2rem;
   }
+
+  /* In landscape tablet range, use three cards per row to avoid unused right-side space. */
+  .fees-gamers-grid > .gamer-container {
+    flex: 0 0 33.333333%;
+    max-width: 33.333333%;
+  }
 }
 
 /* Tablet portrait: keep two player cards per row for better space usage. */
-@media (orientation: portrait) and (min-width: 600px) and (max-width: 991.98px) {
+@media (orientation: portrait) and (min-width: 768px) and (max-width: 991.98px) {
   .fees-gamers-grid > .gamer-container {
     flex: 0 0 50%;
     max-width: 50%;
