@@ -1,10 +1,10 @@
 
 <div class="p-0 m-0 admin-container">
-  <div style="position: sticky; top: 0; z-index: 1030;">
+  <div class="admin-top-sticky">
     <app-back-navbar [season]="(season$ | async) ?? ''" [entries_nbr]="(book_entries_number$ | async) ?? 0" [loading]="(loading$ | async) ?? false"
     ></app-back-navbar>
   </div>
-  <div class="container-fluid justify-content-center admin-scrollable-content" style="overflow-x: hidden;">
+  <div class="container-fluid px-0 justify-content-center admin-scrollable-content" style="overflow-x: hidden;">
     <app-toaster></app-toaster>
     <router-outlet></router-outlet>
   </div>

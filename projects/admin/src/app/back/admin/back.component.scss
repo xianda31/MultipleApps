@@ -6,7 +6,27 @@
   min-height: 100dvh;
 }
 
+.admin-top-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+  background: var(--bs-light, #f8f9fa);
+  margin-bottom: -1px;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.admin-top-sticky > app-back-navbar {
+  display: block;
+  background: var(--bs-light, #f8f9fa);
+}
+
 .admin-scrollable-content {
   flex: 1;
   overflow-x: hidden;
+  --bs-gutter-x: 0;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  position: relative;
+  background: var(--bs-light, #f8f9fa);
 }

@@ -51,21 +51,21 @@
   </div>
 
   <!-- Desktop navigation -->
-  <nav class="navbar navbar-expand-md navbar-light bg-light shadow-sm d-none d-md-block py-0" style="padding-left:5.5em; width: 100%; ">
-    <div class="navbar-collapse d-flex" style="padding-left:0; width: 100%;">
+  <nav class="navbar navbar-expand-md navbar-light bg-light d-none d-md-block py-0 desktop-top-nav">
+    <div class="navbar-collapse d-flex desktop-nav-collapse">
       <!-- <ul class="navbar-nav me-auto mb-md-0 mb-lg-0 align-items-start menu-sm-tight">
       </ul> -->
-      <ul class="navbar-nav mb-0 mt-0 align-items-end" style="padding-left:0; flex-wrap: wrap; gap: 0.15rem; row-gap: 0.1rem;">
+      <ul class="navbar-nav mb-0 mt-0 align-items-end desktop-menu" style="border:0; box-shadow:none; text-decoration:none;">
         <ng-container *ngFor="let menu of navbarMenus">
           <li *ngIf="accreditation_level >= (menu.minLevel || 0) && (!menu.adminOnly || accreditation_level >= accreditation_levels.Administrateur) && (!menu.isDev || !production_mode) && (!menu.isSystem || accreditation_level >= accreditation_levels.Systeme)" class="nav-item" [ngClass]="{'dropdown': menu.subMenus}">
             <ng-container *ngIf="!menu.subMenus">
-              <a class="nav-link d-flex align-items-center px-2" [routerLink]="menu.route" style="font-size: 0.875rem; padding-top: 0.25rem; padding-bottom: 0.25rem;">
+              <a class="nav-link d-flex align-items-center px-2" [routerLink]="menu.route" style="font-size: 0.875rem; padding-top: 0.25rem; padding-bottom: 0.25rem; text-decoration:none; border-bottom:0; box-shadow:none;">
                 <i *ngIf="menu.icon" class="bi {{menu.icon}}" style="font-size: 0.95rem;"></i>
                 <span class="ms-1">{{menu.label}}</span>
               </a>
             </ng-container>
             <ng-container *ngIf="menu.subMenus">
-              <a class="nav-link dropdown-toggle d-flex align-items-center px-2" href="javascript:void(0)" id="navbarDropdown{{menu.label}}" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 0.875rem; padding-top: 0.25rem; padding-bottom: 0.25rem;">
+              <a class="nav-link dropdown-toggle d-flex align-items-center px-2" href="javascript:void(0)" id="navbarDropdown{{menu.label}}" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 0.875rem; padding-top: 0.25rem; padding-bottom: 0.25rem; text-decoration:none; border-bottom:0; box-shadow:none;">
                 <i *ngIf="menu.icon" class="bi {{menu.icon}}" style="font-size: 0.95rem;"></i>
                 <span class="ms-1">{{menu.label}}</span>
               </a>

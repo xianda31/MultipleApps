@@ -1,8 +1,8 @@
-<div class="card shadow-lg mt-3 g-0">
-    <div class="card-header">
+<div class="card shadow-lg mt-3 g-0 fees-collector-root">
+    <div class="card-header fees-collector-header">
         <!-- bandeau tournoi date, mode roy rené , alread_charges ? , add_team -->
 
-        <div *ngIf="!selected_tournament || selected_tournament === undefined" class="row gy-2">
+        <div *ngIf="!selected_tournament || selected_tournament === undefined" class="row gy-2 fees-tournament-picker">
             <div class="col-12 d-flex align-items-center">
                 <h5 class="mb-0 d-none d-sm-inline">Droits de table</h5>
                 <span class="text-muted ms-2  d-sm-inline"> sélectionner le tournoi</span>
@@ -57,13 +57,13 @@
             </div>
         </div>
 
-        <div *ngIf="game " class="row  justify-content-between align-items-center">
-            <div *ngIf="game && game.tournament" class="col-12 col-md-4 justify-content-around align-items-center text-primary-emphasis  d-flex">
+        <div *ngIf="game " class="row justify-content-between align-items-center fees-toolbar">
+            <div *ngIf="game && game.tournament" class="col-12 col-md-4 justify-content-around align-items-center text-primary-emphasis d-flex fees-toolbar-main">
                 <span> {{ game.tournament.date | date:'EEEE d MMMM':'':'fr-FR' }}</span>
                 <span> {{ game.tournament.name }}</span>
             </div>
             
-            <div class="col-12 col-md-3 border border-secondary rounded py-1 text-center">
+            <div class="col-12 col-md-3 border border-secondary rounded py-1 text-center fees-toolbar-rates">
                 <div *ngFor="let fee_rate of fee_rates" class="form-check form-check-inline me-2">
                     <input class="form-check-input" type="radio" name="inlineRadioOptions"
                     [id]="'inlineRadio' + fee_rate" [value]="fee_rate" [ngModel]="game.fee_rate"
@@ -73,7 +73,7 @@
             </div>
             
 
-            <div class="col-12 col-md-2 d-flex justify-content-center align-items-center">
+            <div class="col-12 col-md-2 d-flex justify-content-center align-items-center fees-toolbar-toggle">
                 <div class="form-check form-switch mb-0">
                     <input class="form-check-input" type="checkbox" [checked]="game.fees_doubled" role="switch"
                         (change)="toggle_fee()">
@@ -94,33 +94,35 @@
             </div>
             <!-- </ng-container> -->
 
+            <div class="col-12 fees-header-inline-filters">
+                <div class="d-flex gap-3 align-items-center fees-filters mb-0">
+                    <span class="form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox" role="switch" [checked]="game.alphabetic_sort"
+                            (change)="toggle_sort()">
+                        <label class="form-check-label">tri alphabétique</label>
+                    </span>
+
+                    <span class="form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox" role="switch" [checked]="hideValidated"
+                            (change)="toggle_hide_validated()">
+                        <label class="form-check-label">
+                            {{ hideValidated ? 'validés masqués' : 'validés affichés' }}
+                        </label>
+                    </span>
+                </div>
+            </div>
+
 
 
         </div>
 
     </div>
 
-    <div *ngIf="game " class="card-body">
-
-        <div class="d-flex gap-3 mb-2 align-items-center">
-            <span class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" role="switch" [checked]="game.alphabetic_sort"
-                    (change)="toggle_sort()">
-                <label class="form-check-label">tri alphabétique</label>
-            </span>
-
-            <span class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" role="switch" [checked]="hideValidated"
-                    (change)="toggle_hide_validated()">
-                <label class="form-check-label">
-                    {{ hideValidated ? 'validés masqués' : 'validés affichés' }}
-                </label>
-            </span>
-        </div>
+    <div *ngIf="game " class="card-body fees-collector-body">
 
         <!-- loop sur les gamers -->
-        <div class="row" style="max-height: 70vh; overflow-y: auto;">
-            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 row-cols-xl-6 g-2">
+        <div class="row fees-gamers-scroll">
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 row-cols-xl-6 g-2 fees-gamers-grid">
                 <ng-container *ngFor="let gamer of game.gamers">
                     <div class="col gamer-container" *ngIf="shouldShowGamer(gamer)"
                         [ngClass]="{'explode-disappear': isDisappearing(gamer)}">
@@ -145,7 +147,7 @@
     </div>
 
     <!-- footer -->
-    <div *ngIf="game " class="card-footer">
+    <div *ngIf="game " class="card-footer fees-collector-footer">
         <div class="row justify-content-between align-items-center">
             <ng-container *ngTemplateOutlet="save_dialog"></ng-container>
             <div class="col">

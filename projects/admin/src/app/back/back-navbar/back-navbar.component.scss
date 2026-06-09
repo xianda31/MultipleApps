@@ -1,3 +1,18 @@
+:host {
+    display: block;
+    position: relative;
+    z-index: 1;
+    background: var(--bs-light, #f8f9fa);
+    border: 0 !important;
+    box-shadow: none !important;
+}
+
+.bg-light.p-0.m-0 {
+    background-color: var(--bs-light, #f8f9fa) !important;
+    border: 0 !important;
+    box-shadow: none !important;
+}
+
 .offcanvas.offcanvas-start .navbar-nav.menu-sm-tight > .nav-item,
 .offcanvas.offcanvas-start .navbar-nav.menu-sm-tight > .dropdown,
 .offcanvas.offcanvas-start .navbar-nav.menu-sm-tight > .nav-link,
@@ -65,4 +80,136 @@
 .logo-overlap {
     z-index: 2;
     position: relative;
+}
+
+.desktop-top-nav {
+    padding-left: 5.5em;
+    width: 100%;
+    border: 0 !important;
+    box-shadow: none !important;
+    position: relative;
+    background: var(--bs-light, #f8f9fa) !important;
+    padding-bottom: 0 !important;
+    margin-bottom: -1px;
+}
+
+.desktop-nav-collapse {
+    padding-left: 0;
+    width: 100%;
+    border: 0 !important;
+    box-shadow: none !important;
+}
+
+.desktop-menu {
+    padding-left: 0;
+    flex-wrap: nowrap;
+    gap: 0.15rem;
+    row-gap: 0;
+    border: 0 !important;
+    box-shadow: none !important;
+    overflow-x: clip !important;
+    overflow-y: visible;
+    white-space: nowrap;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none;
+}
+
+.desktop-menu::-webkit-scrollbar {
+    height: 0 !important;
+    width: 0 !important;
+    display: none;
+}
+
+.desktop-menu::-webkit-scrollbar-track,
+.desktop-menu::-webkit-scrollbar-thumb {
+    background: transparent !important;
+}
+
+.desktop-menu .nav-item,
+.desktop-menu .nav-link,
+.desktop-menu .dropdown-toggle {
+    border: 0 !important;
+    border-bottom: 0 !important;
+    box-shadow: none !important;
+    text-decoration: none !important;
+}
+
+.desktop-top-nav .nav-link,
+.desktop-top-nav .dropdown-toggle {
+    line-height: 1 !important;
+    border-bottom: 0 !important;
+    box-shadow: none !important;
+    background-image: none !important;
+}
+
+#navbar-header + .desktop-top-nav {
+    border-top: 0 !important;
+    box-shadow: none !important;
+    margin-top: 0 !important;
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+    .bg-light.p-0.m-0 {
+        box-shadow: none !important;
+        border-bottom: 0 !important;
+        border-top: 0 !important;
+        outline: 0 !important;
+    }
+
+    #navbar-header {
+        padding-top: 0.2rem !important;
+        padding-bottom: 0.2rem !important;
+        border-bottom: 0 !important;
+    }
+
+    .desktop-top-nav {
+        padding-left: 4.2em;
+        box-shadow: none !important;
+        border-top: 0 !important;
+        border-bottom: 0 !important;
+    }
+
+    .desktop-top-nav.navbar,
+    .desktop-nav-collapse {
+        box-shadow: none !important;
+        border: 0 !important;
+    }
+
+    .logo-navbar {
+        height: 2.1em;
+    }
+
+    .desktop-menu {
+        flex-wrap: nowrap;
+        overflow-x: clip !important;
+        overflow-y: visible;
+        row-gap: 0;
+        white-space: nowrap;
+        scrollbar-width: none !important;
+    }
+
+    .desktop-menu .nav-link,
+    .desktop-menu .dropdown-toggle {
+        font-size: 0.78rem !important;
+        padding-top: 0.12rem !important;
+        padding-bottom: 0.12rem !important;
+        padding-left: 0.45rem !important;
+        padding-right: 0.45rem !important;
+        line-height: 1;
+    }
+
+    #navbar-header .fs-5 {
+        font-size: 1rem !important;
+        line-height: 1.1;
+    }
+}
+
+.desktop-top-nav .desktop-menu,
+.desktop-top-nav .desktop-menu > .nav-item,
+.desktop-top-nav .desktop-menu > .nav-item > .nav-link,
+.desktop-top-nav .desktop-menu > .nav-item > .dropdown-toggle {
+    border-bottom: 0 !important;
+    box-shadow: none !important;
+    background-image: none !important;
+    text-decoration: none !important;
 }

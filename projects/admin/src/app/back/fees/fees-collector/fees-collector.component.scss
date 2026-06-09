@@ -97,6 +97,11 @@
   border-color: #dee2e6 !important;     /* Bootstrap gray-300 */
 }
 
+.fees-toolbar-main {
+  font-size: 0.9rem;
+  line-height: 1.15;
+}
+
 /* Radios plus gros pour la colonne droite du fee editor */
 // Remove duplicate/old definition
 
@@ -206,4 +211,124 @@
 .gamer-container .position-absolute.top-50.start-50.translate-middle img.img-fluid.rounded-circle:hover {
   transform: scale(1.20) !important;
   box-shadow: 0 8px 20px rgba(0,0,0,0.25) !important;
+}
+
+/* Compact mode for recent Android phones in landscape (limited viewport height). */
+@media (orientation: landscape) and (max-height: 520px) {
+  .fees-collector-root {
+    margin-top: 0 !important;
+    border-top: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .fees-collector-root.card,
+  .fees-collector-root .card-header {
+    border-top: 0 !important;
+  }
+
+  .fees-collector-root .card-header {
+    border-bottom: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .fees-collector-root .card-body {
+    border-top: 0 !important;
+  }
+
+  .fees-collector-header {
+    padding: 0.25rem 0.45rem !important;
+  }
+
+  .fees-collector-body {
+    padding: 0.3rem 0.45rem 0.45rem !important;
+  }
+
+  .fees-collector-header h5,
+  .fees-toolbar-main {
+    font-size: 0.85rem;
+    line-height: 1.1;
+  }
+
+  .fees-collector-header .text-muted,
+  .fees-toolbar .form-check-label,
+  .fees-toolbar-rates .form-check-label,
+  .fees-filters .form-check-label {
+    font-size: 0.78rem;
+    line-height: 1.05;
+  }
+
+  .fees-toolbar .btn,
+  .fees-toolbar .btn-sm {
+    font-size: 0.76rem;
+    padding: 0.15rem 0.4rem;
+  }
+
+  .fees-toolbar {
+    --bs-gutter-x: 0.45rem;
+    --bs-gutter-y: 0.3rem;
+  }
+
+  .fees-toolbar-main,
+  .fees-toolbar-rates,
+  .fees-toolbar-toggle {
+    margin-bottom: 0 !important;
+  }
+
+  .fees-header-inline-filters {
+    padding-top: 0.1rem;
+  }
+
+  .fees-filters {
+    flex-wrap: wrap;
+    gap: 0.6rem !important;
+  }
+
+  .fees-filters .form-check-input {
+    transform: scale(0.9);
+    margin-top: 0;
+  }
+
+  .fees-toolbar-rates .form-check {
+    margin-right: 0.35rem !important;
+    margin-bottom: 0 !important;
+  }
+
+  .fees-gamers-scroll {
+    max-height: calc(100dvh - 165px);
+    overflow-y: auto;
+  }
+
+  .fees-gamers-grid {
+    --bs-gutter-x: 0.35rem;
+    --bs-gutter-y: 0.35rem;
+  }
+
+  .fees-gamers-grid h6 {
+    font-size: 0.88rem;
+    margin-bottom: 0;
+  }
+
+  .fees-gamers-grid .text-muted,
+  .fees-gamers-grid .small {
+    font-size: 0.72rem !important;
+  }
+
+  .fees-collector-footer {
+    display: block;
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    background: #fff;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    padding-top: 0.35rem;
+    padding-bottom: 0.35rem;
+  }
+}
+
+/* Tablet portrait: keep two player cards per row for better space usage. */
+@media (orientation: portrait) and (min-width: 600px) and (max-width: 991.98px) {
+  .fees-gamers-grid > .gamer-container {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
 }
