@@ -308,3 +308,10 @@
   }
 }
 
+@media (max-width: 767.98px) {
+  .collecte-main-row > :nth-child(3) {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+  }
+}
+
