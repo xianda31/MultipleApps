@@ -187,55 +187,37 @@
               <i class="bi bi-journal-check me-2"></i>Collecté ({{ todayLabel }})
             </div>
 
-          <div class="persist-card persist-cash">
-            <div class="persist-title persist-header-line">
-              <span class="persist-type d-inline-flex align-items-center">
-                <i class="bi bi-cash me-1"></i>Espèces
-              </span>
-              <span class="persist-main d-inline-flex align-items-center">{{ cashAmount | currency:'EUR':'symbol':'1.2-2':'fr' }}</span>
-              <span class="persist-count text-muted small text-nowrap">{{ cashEncaissementsCount }} encaissements</span>
-            </div>
-            @if (cashByAccount.length > 0) {
-              <ul class="persist-list mb-0 mt-2">
-                @for (line of cashByAccount; track line.account) {
-                  <li><span>{{ line.account }}</span><strong>{{ line.amount | currency:'EUR':'symbol':'1.2-2':'fr' }}</strong></li>
-                }
-              </ul>
-            }
-          </div>
+            <div class="persist-cards-row">
+              <div class="persist-card persist-cash">
+                <div class="persist-title persist-header-line">
+                  <span class="persist-type d-inline-flex align-items-center">
+                    <i class="bi bi-cash me-1"></i>Espèces
+                  </span>
+                  <span class="persist-main d-inline-flex align-items-center">{{ cashAmount | currency:'EUR':'symbol':'1.2-2':'fr' }}</span>
+                  <span class="persist-count text-muted small text-nowrap">({{ cashEncaissementsCount }})</span>
+                </div>
+              </div>
 
-          <div class="persist-card persist-cheque mt-2">
-            <div class="persist-title persist-header-line">
-              <span class="persist-type d-inline-flex align-items-center">
-                <i class="bi bi-file-earmark-text me-1"></i>Chèques
-              </span>
-              <span class="persist-main d-inline-flex align-items-center">{{ chequeAmount | currency:'EUR':'symbol':'1.2-2':'fr' }}</span>
-              <span class="persist-count text-muted small text-nowrap">{{ chequeEncaissementsCount }} encaissements</span>
-            </div>
-            @if (chequeByAccount.length > 0) {
-              <ul class="persist-list mb-0 mt-2">
-                @for (line of chequeByAccount; track line.account) {
-                  <li><span>{{ line.account }}</span><strong>{{ line.amount | currency:'EUR':'symbol':'1.2-2':'fr' }}</strong></li>
-                }
-              </ul>
-            }
-          </div>
+              <div class="persist-card persist-cheque mt-2">
+                <div class="persist-title persist-header-line">
+                  <span class="persist-type d-inline-flex align-items-center">
+                    <i class="bi bi-file-earmark-text me-1"></i>Chèques
+                  </span>
+                  <span class="persist-main d-inline-flex align-items-center">{{ chequeAmount | currency:'EUR':'symbol':'1.2-2':'fr' }}</span>
+                  <span class="persist-count text-muted small text-nowrap">({{ chequeEncaissementsCount }})</span>
+                </div>
+              </div>
 
-          <div class="persist-card persist-cardpay mt-2">
-            <div class="persist-title persist-header-line">
-              <span class="persist-type d-inline-flex align-items-center">
-                <i class="bi bi-credit-card me-1"></i>Carte (TPE)
-              </span>
-              <span class="persist-main d-inline-flex align-items-center">{{ cbAccumulatedAmount | currency:'EUR':'symbol':'1.2-2':'fr' }}</span>
-              <span class="persist-count text-muted small text-nowrap">{{ cbEncaissementsCount }} encaissements</span>
+              <div class="persist-card persist-cardpay mt-2">
+                <div class="persist-title persist-header-line">
+                  <span class="persist-type d-inline-flex align-items-center">
+                    <i class="bi bi-credit-card me-1"></i>Carte
+                  </span>
+                  <span class="persist-main d-inline-flex align-items-center">{{ cbAccumulatedAmount | currency:'EUR':'symbol':'1.2-2':'fr' }}</span>
+                  <span class="persist-count text-muted small text-nowrap">({{ cbEncaissementsCount }})</span>
+                </div>
+              </div>
             </div>
-            @if (cbByAccount.length > 0) {
-              <ul class="persist-list mb-0 mt-2">
-                @for (line of cbByAccount; track line.account) {
-                  <li><span>{{ line.account }}</span><strong>{{ line.amount | currency:'EUR':'symbol':'1.2-2':'fr' }}</strong></li>
-                }
-              </ul>
-            }
           </div>
         </div>
       </div>

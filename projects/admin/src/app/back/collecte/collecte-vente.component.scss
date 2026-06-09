@@ -99,25 +99,22 @@
 }
 
 .persist-header-line {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
   column-gap: 0.5rem;
 }
 
 .persist-type {
-  grid-column: 1;
   justify-self: start;
 }
 
-.persist-main {
-  grid-column: 2;
-  justify-self: center;
+.persist-count {
+  justify-self: end;
 }
 
-.persist-count {
-  grid-column: 3;
-  justify-self: end;
+.persist-main {
+  font-weight: 700;
 }
 
 .persist-amount {
@@ -275,6 +272,34 @@
 
   .collecte-book-panel {
     margin-top: 0.5rem;
+  }
+}
+
+@media (orientation: portrait) and (min-width: 600px) and (max-width: 991.98px) {
+  .collecte-main-row > :nth-child(1),
+  .collecte-main-row > :nth-child(2) {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+
+  .collecte-main-row > :nth-child(3) {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+
+  .persist-cards-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.4rem;
+  }
+
+  .persist-cards-row .persist-card {
+    margin-top: 0 !important;
+    padding: 0.55rem;
+  }
+
+  .persist-cards-row .persist-title {
+    font-size: 0.82rem;
   }
 }
 
