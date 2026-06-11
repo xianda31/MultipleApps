@@ -117,7 +117,7 @@
       <div formArrayName="operations">
         <!-- pour chaque operation de la transaction -->
         <div class="row align-items-end mx-0"
-          *ngFor="let operation of operations.controls; let i = index ; let last = last">
+          *ngFor="let operation of operations.controls; let i = index ; let last = last; trackBy: trackByOperationControl">
           <div class="col-12 mt-2">
             <!-- transaction d'une transaction non nominative -->
             <div *ngIf="!selected_transaction.nominative" class="row align-items-end mx-0 p-1 mb-1">

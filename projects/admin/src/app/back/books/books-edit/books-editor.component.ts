@@ -344,7 +344,19 @@ export class BooksEditorComponent {
 
   delete_operation(index: number) {
     this.operations.removeAt(index);
+    const reindexedSearchInput: { [key: number]: string } = {};
+    Object.keys(this.memberSearchInput)
+      .map((key) => Number(key))
+      .filter((key) => key !== index)
+      .sort((a, b) => a - b)
+      .forEach((key) => {
+        const newKey = key > index ? key - 1 : key;
+        reindexedSearchInput[newKey] = this.memberSearchInput[key];
+      });
+    this.memberSearchInput = reindexedSearchInput;
   }
+
+  trackByOperationControl = (_index: number, control: AbstractControl) => control;
 
   add_operation(transaction: Transaction, operation_initial?: Operation) {
 
