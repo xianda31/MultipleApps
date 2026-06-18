@@ -214,6 +214,53 @@ const schema = a.schema({
       allow.group(Group_names.Member).to(['read']),
     ]),
 
+  TicketingReservationStatus: a.enum(['reserved', 'sold', 'cancelled']),
+  TicketingPaymentMode: a.enum(['cash', 'cheque', 'card', 'other']),
+  TicketingPaymentStatus: a.enum(['active', 'cancelled']),
+
+  TicketingReservation: a.model({
+    season: a.string().required(),
+    date: a.date().required(),
+    eventTitle: a.string().required(),
+    reservationKey: a.string().required(),
+    memberName: a.string().required(),
+    isMember: a.boolean().required(),
+    reservationStatus: a.ref('TicketingReservationStatus').required(),
+    paidAmount: a.float(),
+    paidAccount: a.string(),
+    paidProductId: a.string(),
+    paymentMode: a.ref('TicketingPaymentMode'),
+    paymentId: a.string(),
+    paidAt: a.datetime(),
+    accountedAt: a.datetime(),
+    source: a.string(),
+  })
+    .authorization((allow) => [
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Editor).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Support).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Member).to(['read']),
+    ]),
+
+  TicketingPayment: a.model({
+    season: a.string().required(),
+    date: a.date().required(),
+    eventTitle: a.string().required(),
+    status: a.ref('TicketingPaymentStatus').required(),
+    paymentMode: a.ref('TicketingPaymentMode').required(),
+    totalAmount: a.float().required(),
+    reservationCount: a.integer().required(),
+    accountedAt: a.datetime(),
+  })
+    .authorization((allow) => [
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Editor).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Support).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Member).to(['read']),
+    ]),
+
 
   // Stripe Transactions (paiements par carte)
   StripeTransaction: a.model({

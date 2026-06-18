@@ -52,7 +52,6 @@
                     <th class="text-center" style="width:60px">#</th>
                     <th class="text-start">Participant</th>
                     <th class="text-center">Adhérent</th>
-                    <th class="text-center">Règlement</th>
                     <!-- <th class="text-nowrap">Créé le</th> -->
                     <th class="text-nowrap">Mis à jour le</th>
                     @for (q of questions; track q.id) {
@@ -79,7 +78,6 @@
                         <span class="badge bg-secondary">ext</span>
                         }
                     </td>
-                    <td class="text-center"> {{ r.isMember ? product_paied(r.memberId) : '?' }} </td>
                     <!-- <td class="text-nowrap">{{ r.createdAt | date:'dd/MM/yyyy' }}</td> -->
                     <td class="text-nowrap">{{ r.updatedAt | date:'dd/MM/yyyy' }}</td>
                     @for (q of questions; track q.id) {

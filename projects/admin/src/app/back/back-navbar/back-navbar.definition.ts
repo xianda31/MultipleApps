@@ -18,7 +18,7 @@ export const STATIC_MENUS: NavbarMenu[] = [
         minLevel: Group_priorities.Contributeur,
         subMenus: [
             { label: 'vente adhérent', route: BACK_ROUTE_PATHS.Shop },
-            { label: 'vente groupée', route: BACK_ROUTE_PATHS.CollecteVente },
+            { label: 'billetterie', route: BACK_ROUTE_PATHS.Billetterie },
             { label: 'produits à la vente', route: BACK_ROUTE_PATHS.Products }
         ]
     },

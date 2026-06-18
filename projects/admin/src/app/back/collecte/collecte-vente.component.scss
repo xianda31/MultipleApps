@@ -84,6 +84,57 @@
   gap: 0.35rem;
 }
 
+.reservation-list {
+  max-height: 520px;
+  overflow: auto;
+  border: 1px solid #e7e9ee;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.reservation-row {
+  padding: 0.5rem 0.65rem;
+  border-bottom: 1px dashed #e2e5ea;
+}
+
+.reservation-row:last-child {
+  border-bottom: 0;
+}
+
+.reservation-row.row-selected {
+  background: #eef3ff;
+}
+
+.reservation-row .fw-semibold {
+  font-size: 0.98rem;
+  line-height: 1.25;
+}
+
+.reservation-row .small {
+  font-size: 0.9rem;
+}
+
+.payment-line {
+  align-items: flex-start;
+}
+
+.payment-line-content {
+  min-width: 0;
+  flex: 1;
+}
+
+.payment-line-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.payment-line-names {
+  margin-top: 0.2rem;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .mini-cart-qty {
   min-width: 1.3rem;
   text-align: center;

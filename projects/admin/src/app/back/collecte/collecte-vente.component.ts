@@ -3,7 +3,6 @@ import { CommonModule, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 
-import { resolveGlyph } from '../../common/utilities/account-glyph.mapper';
 import { Product } from '../products/product.interface';
 import { ProductService } from '../../common/services/product.service';
 import { BookService } from '../services/book.service';
@@ -11,82 +10,85 @@ import { ToastService } from '../../common/services/toast.service';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { StripeTerminalService, TerminalStatus } from '../shop/services/stripe-terminal.service';
 import { ShopInitializationService } from '../shop/services/shop-initialization.service';
-import { ShopProductService } from '../shop/services/shop-product.service';
 import { CardPaymentOrchestratorService } from '../services/card-payment-orchestrator.service';
 import { PaymentMode } from '../shop/cart/cart.interface';
+import { SurveyResultsService } from '../sondage/survey-results.service';
+import { SondageService, SurveyItem } from '../sondage/sondage.service';
 
 import {
   BookEntry,
   FINANCIAL_ACCOUNT,
-  AMOUNTS,
-  Operation,
   TRANSACTION_ID,
 } from '../../common/interfaces/accounting.interface';
 import { TRANSACTION_DIRECTORY } from '../../common/interfaces/transaction.definition';
+import { TicketingPayment, TicketingService, TicketingReservation } from './ticketing.service';
 
-interface MiniCartItem {
-  product: Product;
-  quantity: number;
-}
-
-interface AccountAmount {
-  account: string;
-  amount: number;
+interface ReservationView extends TicketingReservation {
+  selected: boolean;
+  price: number;
+  product: Product | null;
 }
 
 @Component({
-  selector: 'app-collecte-vente',
+  selector: 'app-billetterie',
   standalone: true,
   imports: [CommonModule, FormsModule, CurrencyPipe],
   templateUrl: './collecte-vente.component.html',
   styleUrl: './collecte-vente.component.scss',
 })
-export class CollecteVenteComponent implements OnInit, OnDestroy {
-
-  // ── Produits ──────────────────────────────────────────────
-  /** Produits organisés par compte (même structure que Shop) */
-  batchProductsMap: Map<string, Product[]> = new Map();
-  miniCartItems: MiniCartItem[] = [];
-
-  // ── TPE ───────────────────────────────────────────────────
+export class BilletterieComponent implements OnInit, OnDestroy {
   paymentMode = PaymentMode;
   selectedPaymentMode: PaymentMode = PaymentMode.CASH;
-  tpePaymentActive: boolean = false;
+  tpePaymentActive = false;
 
   tpeStatus: TerminalStatus = 'idle';
-  tpeReaderLabel: string = '';
-  tpeReaderScanning: boolean = false;
-  tpeReaderConnected: boolean = false;
-  tpePaymentInProgress: boolean = false;
-  saleSubmitInProgress: boolean = false;
+  tpeReaderLabel = '';
+  tpeReaderScanning = false;
+  tpeReaderConnected = false;
+  tpePaymentInProgress = false;
+  saleSubmitInProgress = false;
+  accountingInProgress = false;
 
-  // ── Persistance comptable du jour ─────────────────────────
-  todayLabel: string = '';
-  eventTitle: string = '';
-  cashAmount: number = 0;
-  chequeAmount: number = 0;
-  cbAccumulatedAmount: number = 0;
-  cashEncaissementsCount: number = 0;
-  chequeEncaissementsCount: number = 0;
-  cbEncaissementsCount: number = 0;
-  cashByAccount: AccountAmount[] = [];
-  chequeByAccount: AccountAmount[] = [];
-  cbByAccount: AccountAmount[] = [];
+  todayLabel = '';
+  eventTitle = '';
 
-  // ── Session ───────────────────────────────────────────────
+  memberProduct: Product | null = null;
+  nonMemberProduct: Product | null = null;
+  private batchProducts: Product[] = [];
+
+  reservations: ReservationView[] = [];
+  soldReservations: ReservationView[] = [];
+  payments: TicketingPayment[] = [];
+
+  memberFilter = '';
+  showOnlyUnpaid = true;
+
+  // ── Ingestion sondage ─────────────────────────────────────────────────────
+  availableSurveys: SurveyItem[] = [];
+  selectedSurveyId = '';
+  loadingSurveys = false;
+  importingSurvey = false;
+
+  soldCount = 0;
+  notSoldCount = 0;
+  chequeAmountsByValue: Array<{ amount: number; count: number }> = [];
+  cashAmount = 0;
+  cbAccumulatedAmount = 0;
+
   private session = { date: '', season: '' };
-
   private subs: Subscription[] = [];
 
   constructor(
     private productService: ProductService,
-    private shopProducts: ShopProductService,
+    private ticketingService: TicketingService,
     private bookService: BookService,
     private toastService: ToastService,
     private systemDataService: SystemDataService,
     private stripeTerminal: StripeTerminalService,
     private shopInit: ShopInitializationService,
     private cardPaymentOrchestrator: CardPaymentOrchestratorService,
+    private surveyResults: SurveyResultsService,
+    private sondageService: SondageService,
   ) {}
 
   ngOnInit(): void {
@@ -97,15 +99,14 @@ export class CollecteVenteComponent implements OnInit, OnDestroy {
     };
     this.todayLabel = this._formatDateFr(this.session.date);
 
-    // Charger les produits batch (organisés par compte, paired en dernier)
     this.subs.push(
       this.productService.listProducts().subscribe((products) => {
-        const batchOnly = products.filter((p) => !!p.batchEnabled && !!p.active);
-        this.batchProductsMap = this.productService.products_by_accounts(batchOnly);
+        this.batchProducts = products.filter((p) => !!p.batchEnabled && !!p.active);
+        this._resolvePricingProducts();
+        this._applyPricing();
       }),
     );
 
-    // Initialiser le TPE (idempotent — même logique que Shop)
     this.subs.push(
       this.systemDataService.get_configuration().subscribe((conf) => {
         this.tpePaymentActive = !!conf.tpe_payment_active;
@@ -116,26 +117,13 @@ export class CollecteVenteComponent implements OnInit, OnDestroy {
       }),
     );
 
-    // tpeReaderConnected : source autoritaire (AppSync sur PC, BLE sur Android)
-    this.subs.push(
-      this.shopInit.tpeReaderConnected$.subscribe((v) => (this.tpeReaderConnected = v)),
-    );
-    this.subs.push(
-      this.shopInit.tpeReaderLabel$.subscribe((v) => (this.tpeReaderLabel = v)),
-    );
-    // tpeStatus : pour l'affichage de la phase de paiement (collecting, error…)
-    this.subs.push(
-      this.stripeTerminal.status$.subscribe((s) => (this.tpeStatus = s)),
-    );
-    this.subs.push(
-      this.shopInit.tpeScanning$.subscribe((v) => (this.tpeReaderScanning = v)),
-    );
+    this.subs.push(this.shopInit.tpeReaderConnected$.subscribe((v) => (this.tpeReaderConnected = v)));
+    this.subs.push(this.shopInit.tpeReaderLabel$.subscribe((v) => (this.tpeReaderLabel = v)));
+    this.subs.push(this.stripeTerminal.status$.subscribe((s) => (this.tpeStatus = s)));
+    this.subs.push(this.shopInit.tpeScanning$.subscribe((v) => (this.tpeReaderScanning = v)));
 
-    this.subs.push(
-      this.bookService.list_book_entries().subscribe((entries) => {
-        this._refreshCollecteState(entries);
-      }),
-    );
+    void this.refreshFromDb();
+    void this.loadAvailableSurveys();
   }
 
   ngOnDestroy(): void {
@@ -143,23 +131,16 @@ export class CollecteVenteComponent implements OnInit, OnDestroy {
     this.subs.forEach((s) => s.unsubscribe());
   }
 
-  // ── Getters UI ────────────────────────────────────────────
-
   get isNativeAndroid(): boolean {
     return this.stripeTerminal.isNativeAndroid;
   }
 
-  /** Sur PC : le SDK local n'est pas connecté — ppTPE gère la connexion via AppSync. */
   get tpeRemoteMode(): boolean {
     return this.cardPaymentOrchestrator.isRemoteMode;
   }
 
   get tpeStatusLabel(): string {
-    // En mode distant (PC), stripeTerminal.status$ reste 'idle' même quand le TPE
-    // distant est connecté via AppSync. On se base sur tpeReaderConnected.
-    if (this.tpeReaderConnected && (this.tpeStatus === 'idle' || this.tpeStatus === 'disconnected')) {
-      return 'Connecté';
-    }
+    if (this.tpeReaderConnected && (this.tpeStatus === 'idle' || this.tpeStatus === 'disconnected')) return 'Connecté';
     const labels: Record<TerminalStatus, string> = {
       idle: 'Déconnecté',
       connecting: 'Connexion…',
@@ -178,25 +159,46 @@ export class CollecteVenteComponent implements OnInit, OnDestroy {
     return 'text-secondary';
   }
 
-  get miniCartTotal(): number {
-    return this.miniCartItems.reduce((total, item) => total + item.product.price * item.quantity, 0);
+  get filteredReservations(): ReservationView[] {
+    const term = this._normalize(this.memberFilter);
+    return this.reservations
+      .filter((row) => {
+        if (this.showOnlyUnpaid && row.reservationStatus === 'sold') return false;
+        if (!term) return true;
+        return this._normalize(row.memberName).includes(term);
+      })
+      .sort((a, b) => a.memberName.localeCompare(b.memberName, 'fr', { sensitivity: 'base' }));
   }
 
-  get miniCartCount(): number {
-    return this.miniCartItems.reduce((total, item) => total + item.quantity, 0);
+  get selectedCount(): number {
+    return this.reservations.filter((row) => row.selected).length;
   }
 
-  get canAddProduct(): boolean {
-    return !this.tpePaymentInProgress && !this.saleSubmitInProgress;
+  get selectedTotal(): number {
+    return Math.round(
+      this.reservations
+        .filter((row) => row.selected)
+        .reduce((sum, row) => sum + row.price, 0) * 100,
+    ) / 100;
   }
 
   get canValidateMiniCart(): boolean {
-    if (this.saleSubmitInProgress) return false;
+    if (this.saleSubmitInProgress || this.accountingInProgress) return false;
     if (!this.eventTitle.trim()) return false;
-    if (this.miniCartItems.length === 0) return false;
+    if (this.selectedCount === 0) return false;
+    if (!this.memberProduct || !this.nonMemberProduct) return false;
     if (this.selectedPaymentMode !== PaymentMode.CARD) return true;
-    if (!this.tpePaymentActive) return false;
-    return this.tpeReaderConnected;
+    return this.tpePaymentActive && this.tpeReaderConnected;
+  }
+
+  get canWriteAccountingEntry(): boolean {
+    return !this.accountingInProgress
+      && !!this.eventTitle.trim()
+      && this.soldReservations.some((row) => !row.accountedAt);
+  }
+
+  get activePayments(): TicketingPayment[] {
+    return this.payments.filter((payment) => payment.status !== 'cancelled');
   }
 
   selectPaymentMode(mode: PaymentMode): void {
@@ -204,41 +206,26 @@ export class CollecteVenteComponent implements OnInit, OnDestroy {
     this.selectedPaymentMode = mode;
   }
 
-  addToMiniCart(product: Product): void {
-    if (!this.canAddProduct) return;
-    const existingItem = this.miniCartItems.find((item) => item.product.id === product.id);
-    if (existingItem) {
-      existingItem.quantity += 1;
-      return;
-    }
-    this.miniCartItems.push({ product, quantity: 1 });
+  toggleReservationSelection(id: string): void {
+    const row = this.reservations.find((r) => r.id === id);
+    if (!row) return;
+    row.selected = !row.selected;
   }
 
-  increaseMiniCartItem(productId: string): void {
-    const item = this.miniCartItems.find((entry) => entry.product.id === productId);
-    if (item) item.quantity += 1;
+  selectAllVisibleUnpaid(): void {
+    this.filteredReservations
+      .filter((row) => row.reservationStatus !== 'sold')
+      .forEach((row) => {
+        row.selected = true;
+      });
   }
 
-  decreaseMiniCartItem(productId: string): void {
-    const item = this.miniCartItems.find((entry) => entry.product.id === productId);
-    if (!item) return;
-    item.quantity -= 1;
-    if (item.quantity <= 0) {
-      this.removeMiniCartItem(productId);
-    }
+  clearSelection(): void {
+    this.reservations.forEach((row) => {
+      row.selected = false;
+    });
   }
 
-  removeMiniCartItem(productId: string): void {
-    this.miniCartItems = this.miniCartItems.filter((item) => item.product.id !== productId);
-  }
-
-  clearMiniCart(): void {
-    this.miniCartItems = [];
-  }
-
-  // ── TPE : scan & connexion ────────────────────────────────
-
-  /** Relance la découverte BLE (Android uniquement — même logique que Shop). */
   async scanAndConnect(): Promise<void> {
     await this.shopInit.retryBLEDiscovery();
   }
@@ -252,50 +239,49 @@ export class CollecteVenteComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ── TPE : validation du mini-panier ──────────────────────
-
   async validateMiniCart(): Promise<void> {
     if (!this.canValidateMiniCart) return;
+
+    const selected = this.reservations.filter((row) => row.selected);
+    if (selected.length === 0) return;
+
     this.saleSubmitInProgress = true;
 
-    const total = Math.round(this.miniCartTotal * 100) / 100;
-    const totalCents = Math.round(total * 100);
-    const totalItems = this.miniCartCount;
-    const valuesByAccount = this._buildMiniCartValuesByAccount();
-    const titleTag = this.eventTitle.trim();
+    const persistSale = async () => {
+      const total = Math.round(selected.reduce((sum, row) => sum + row.price, 0) * 100) / 100;
+      const payment = await this.ticketingService.createPayment({
+        season: this.session.season,
+        date: this.session.date,
+        eventTitle: this.eventTitle.trim(),
+        paymentMode: this._toTicketingMode(this.selectedPaymentMode),
+        totalAmount: total,
+        reservationCount: selected.length,
+      });
 
-    await this._syncCollecteTagsForToday(titleTag);
+      await this.ticketingService.markReservationsSold({
+        reservationIds: selected.map((row) => row.id),
+        paymentId: payment.id,
+        paymentMode: this._toTicketingMode(this.selectedPaymentMode),
+        paidByReservationId: Object.fromEntries(
+          selected.map((row) => [
+            row.id,
+            {
+              amount: row.price,
+              account: row.product?.account ?? '',
+              productId: row.product?.id ?? '',
+            },
+          ]),
+        ),
+      });
+    };
 
-    if (this.selectedPaymentMode === PaymentMode.CASH) {
+    if (this.selectedPaymentMode === PaymentMode.CASH || this.selectedPaymentMode === PaymentMode.CHEQUE) {
       try {
-        await this._upsertCollecteEntry(
-          TRANSACTION_ID.dépôt_collecte_espèces,
-          this._getCollecteFinancialAccount(TRANSACTION_ID.dépôt_collecte_espèces),
-          valuesByAccount,
-          titleTag,
-        );
-        this.toastService.showSuccess('Encaissement espèces', `${totalItems} produit(s) — ${total} €`);
-        this.clearMiniCart();
+        await persistSale();
+        this.toastService.showSuccess('Billetterie', `${selected.length} réservation(s) encaissée(s)`);
+        await this.refreshFromDb();
       } catch (err: any) {
-        this.toastService.showError('Encaissement espèces', err?.message ?? 'Erreur de persistance comptable');
-      } finally {
-        this.saleSubmitInProgress = false;
-      }
-      return;
-    }
-
-    if (this.selectedPaymentMode === PaymentMode.CHEQUE) {
-      try {
-        await this._upsertCollecteEntry(
-          TRANSACTION_ID.dépôt_collecte_chèques,
-          this._getCollecteFinancialAccount(TRANSACTION_ID.dépôt_collecte_chèques),
-          valuesByAccount,
-          titleTag,
-        );
-        this.toastService.showSuccess('Encaissement chèque', `${totalItems} produit(s) — ${total} €`);
-        this.clearMiniCart();
-      } catch (err: any) {
-        this.toastService.showError('Encaissement chèque', err?.message ?? 'Erreur de persistance comptable');
+        this.toastService.showError('Billetterie', err?.message ?? 'Erreur de persistance ticketing');
       } finally {
         this.saleSubmitInProgress = false;
       }
@@ -306,58 +292,56 @@ export class CollecteVenteComponent implements OnInit, OnDestroy {
       this.saleSubmitInProgress = false;
       return;
     }
+
     this.tpePaymentInProgress = true;
 
+    const total = Math.round(selected.reduce((sum, row) => sum + row.price, 0) * 100) / 100;
     const paymentParams = {
-      amountCents: totalCents,
-      memberName: 'Collecte',
+      amountCents: Math.round(total * 100),
+      memberName: 'Ticketing',
       season: this.session.season,
       date: this.session.date,
     };
 
+    const onSuccess = async () => {
+      await persistSale();
+      this.toastService.showSuccess('Paiement CB', `${selected.length} réservation(s) encaissée(s)`);
+      await this.refreshFromDb();
+    };
+
     if (this.tpeRemoteMode) {
-      this.cardPaymentOrchestrator.payByCard(
-        paymentParams,
-        {
-          onSuccess: async () => {
-            this.tpePaymentInProgress = false;
-            try {
-              await this._upsertCollecteEntry(
-                TRANSACTION_ID.collecte_par_cb,
-                this._getCollecteFinancialAccount(TRANSACTION_ID.collecte_par_cb),
-                valuesByAccount,
-                titleTag,
-              );
-              this.toastService.showSuccess('CB acceptée', `${totalItems} produit(s) — ${total} €`);
-            } catch (err: any) {
-              this.toastService.showError('Paiement CB', err?.message ?? 'Paiement validé mais persistance comptable en erreur');
-            } finally {
-              this.saleSubmitInProgress = false;
-            }
-            this.clearMiniCart();
-          },
-          onFailed: (msg) => {
-            this.tpePaymentInProgress = false;
+      this.cardPaymentOrchestrator.payByCard(paymentParams, {
+        onSuccess: async () => {
+          this.tpePaymentInProgress = false;
+          try {
+            await onSuccess();
+          } catch (err: any) {
+            this.toastService.showError('Paiement CB', err?.message ?? 'Paiement validé mais persistance en erreur');
+          } finally {
             this.saleSubmitInProgress = false;
-            this.toastService.showError('Paiement CB', msg);
-          },
-          onCancelled: () => {
-            this.tpePaymentInProgress = false;
-            this.saleSubmitInProgress = false;
-            this.toastService.showWarning('Paiement CB', 'Paiement annulé');
-          },
-          onTimeout: () => {
-            this.tpePaymentInProgress = false;
-            this.saleSubmitInProgress = false;
-            this.toastService.showWarning('TPE', 'TPE ne répond pas — paiement annulé');
-          },
-          onError: () => {
-            this.tpePaymentInProgress = false;
-            this.saleSubmitInProgress = false;
-            this.toastService.showError('TPE', 'Connexion AppSync perdue');
-          },
+          }
         },
-      ).catch((err) => {
+        onFailed: (msg) => {
+          this.tpePaymentInProgress = false;
+          this.saleSubmitInProgress = false;
+          this.toastService.showError('Paiement CB', msg);
+        },
+        onCancelled: () => {
+          this.tpePaymentInProgress = false;
+          this.saleSubmitInProgress = false;
+          this.toastService.showWarning('Paiement CB', 'Paiement annulé');
+        },
+        onTimeout: () => {
+          this.tpePaymentInProgress = false;
+          this.saleSubmitInProgress = false;
+          this.toastService.showWarning('TPE', 'TPE ne répond pas — paiement annulé');
+        },
+        onError: () => {
+          this.tpePaymentInProgress = false;
+          this.saleSubmitInProgress = false;
+          this.toastService.showError('TPE', 'Connexion AppSync perdue');
+        },
+      }).catch((err) => {
         this.toastService.showError('Paiement CB', err.message || 'Erreur PaymentRequest');
         this.tpePaymentInProgress = false;
         this.saleSubmitInProgress = false;
@@ -366,25 +350,13 @@ export class CollecteVenteComponent implements OnInit, OnDestroy {
     }
 
     try {
-      await this.cardPaymentOrchestrator.payByCard(
-        paymentParams,
-        {
-          onSuccess: async () => {
-            await this._upsertCollecteEntry(
-              TRANSACTION_ID.collecte_par_cb,
-              this._getCollecteFinancialAccount(TRANSACTION_ID.collecte_par_cb),
-              valuesByAccount,
-              titleTag,
-            );
-            this.toastService.showSuccess('CB acceptée', `${totalItems} produit(s) — ${total} €`);
-            this.clearMiniCart();
-          },
-          onFailed: (msg) => this.toastService.showError('Paiement CB', msg),
-          onCancelled: () => this.toastService.showWarning('Paiement CB', 'Paiement annulé'),
-          onTimeout: () => this.toastService.showWarning('TPE', 'TPE ne répond pas — paiement annulé'),
-          onError: () => this.toastService.showError('TPE', 'Connexion AppSync perdue'),
-        },
-      );
+      await this.cardPaymentOrchestrator.payByCard(paymentParams, {
+        onSuccess,
+        onFailed: (msg) => this.toastService.showError('Paiement CB', msg),
+        onCancelled: () => this.toastService.showWarning('Paiement CB', 'Paiement annulé'),
+        onTimeout: () => this.toastService.showWarning('TPE', 'TPE ne répond pas — paiement annulé'),
+        onError: () => this.toastService.showError('TPE', 'Connexion AppSync perdue'),
+      });
     } catch (err: any) {
       this.toastService.showError('Paiement CB', err.message ?? 'Erreur TPE');
       this.stripeTerminal.resetStatus();
@@ -394,133 +366,287 @@ export class CollecteVenteComponent implements OnInit, OnDestroy {
     }
   }
 
-  private async _upsertCollecteEntry(
-    transactionId: TRANSACTION_ID,
-    financialAccount: FINANCIAL_ACCOUNT,
-    deltaByAccount: Record<string, number>,
-    tag: string,
-  ): Promise<void> {
-    const date = this._todayIso();
-    const season = this.systemDataService.get_season(new Date(date));
-    const existing = this.bookService.get_book_entries().find(
-      (entry) => entry.date === date && entry.transaction_id === transactionId,
-    );
+  async writeAccountingEntry(): Promise<void> {
+    if (!this.canWriteAccountingEntry) return;
 
-    if (!existing) {
-      const total = this._sumValues(deltaByAccount);
-      const encaissementsCount = 1;
-      const entry: BookEntry = {
-        id: '',
-        season,
-        date,
-        tag,
-        amounts: { [financialAccount]: total },
-        operations: [{ label: this._encaissementsLabel(encaissementsCount), values: { ...deltaByAccount } }],
-        transaction_id: transactionId,
-      };
-      await this.bookService.create_book_entry(entry);
+    const pending = this.soldReservations.filter((row) => !row.accountedAt);
+    if (pending.length === 0) return;
+
+    this.accountingInProgress = true;
+
+    try {
+      await this._writeModeAccounting(PaymentMode.CASH, pending.filter((row) => row.paymentMode === 'cash'));
+      await this._writeModeAccounting(PaymentMode.CHEQUE, pending.filter((row) => row.paymentMode === 'cheque'));
+      await this._writeModeAccounting(PaymentMode.CARD, pending.filter((row) => row.paymentMode === 'card'));
+
+      await this.ticketingService.markAccounted({
+        reservationIds: pending.map((row) => row.id),
+        paymentIds: [...new Set(pending.map((row) => row.paymentId).filter((id): id is string => !!id))],
+      });
+
+      this.toastService.showSuccess('Comptabilité', `${pending.length} réservation(s) intégrée(s) en compta`);
+      await this.refreshFromDb();
+    } catch (err: any) {
+      this.toastService.showError('Comptabilité', err?.message ?? 'Erreur lors de l\'écriture comptable');
+    } finally {
+      this.accountingInProgress = false;
+    }
+  }
+
+  exportBilletterieCsv(): void {
+    const headers = ['nom', 'adhérent', 'montant réglé', 'type de paiement'];
+    const rows = this.soldReservations
+      .sort((a, b) => a.memberName.localeCompare(b.memberName, 'fr', { sensitivity: 'base' }))
+      .map((row) => [
+        row.memberName,
+        row.isMember ? 'oui' : 'non',
+        (row.paidAmount ?? 0).toFixed(2),
+        row.paymentId && this._paymentIsGrouped(row.paymentId) ? 'autre' : this._paymentLabel(row.paymentMode),
+      ]);
+
+    const csv = [headers, ...rows].map((line) => line.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(';')).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `ticketing-${this.session.date}.csv`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async refreshFromDb(): Promise<void> {
+    try {
+      if (!this.eventTitle.trim()) {
+        const fromDate = await this.ticketingService.listReservationsForDate(this.session.date);
+        if (fromDate.length === 1) {
+          this.eventTitle = fromDate[0].eventTitle;
+        }
+      }
+
+      if (!this.eventTitle.trim()) {
+        this.reservations = [];
+        this.soldReservations = [];
+        this.payments = [];
+        this._refreshSummary();
+        return;
+      }
+
+      const [allReservations, payments] = await Promise.all([
+        this.ticketingService.listReservations(this.session.date, this.eventTitle.trim()),
+        this.ticketingService.listPayments(this.session.date, this.eventTitle.trim()),
+      ]);
+      this.reservations = allReservations
+        .filter((row) => row.reservationStatus !== 'sold')
+        .map((row) => ({ ...row, selected: false, ...this._priceForReservation(row) }));
+
+      this.soldReservations = allReservations
+        .filter((row) => row.reservationStatus === 'sold')
+        .map((row) => ({ ...row, selected: false, ...this._priceForReservation(row) }));
+
+      this.payments = payments;
+
+      this._refreshSummary();
+    } catch (err: any) {
+      this.toastService.showError('Billetterie', err?.message ?? 'Erreur de chargement ticketing');
+    }
+  }
+
+  onEventTitleBlur(): void {
+    void this.refreshFromDb();
+  }
+
+  onSurveySelected(surveyId: string): void {
+    if (!surveyId) {
+      this.eventTitle = '';
+      void this.refreshFromDb();
+      return;
+    }
+    const survey = this.availableSurveys.find(s => s.id === surveyId);
+    if (survey?.title) {
+      this.eventTitle = survey.title;
+    }
+    void this.importFromSurvey();
+  }
+
+  async loadAvailableSurveys(): Promise<void> {
+    this.loadingSurveys = true;
+    try {
+      this.availableSurveys = await this.sondageService.listSurveys();
+    } catch (err: any) {
+      this.toastService.showError('Billetterie', err?.message ?? 'Erreur de chargement des sondages');
+    } finally {
+      this.loadingSurveys = false;
+    }
+  }
+
+  async importFromSurvey(): Promise<void> {
+    if (!this.selectedSurveyId) {
+      this.toastService.showWarning('Billetterie', 'Sélectionnez un sondage.');
+      return;
+    }
+    if (!this.eventTitle.trim()) {
+      this.toastService.showWarning('Billetterie', 'Renseignez le titre de l\'\u00e9vénement avant import.');
       return;
     }
 
-    const mergedByAccount = this._mergeValues(this._extractEntryAccountValues(existing), deltaByAccount);
-    const total = this._sumValues(mergedByAccount);
-    const encaissementsCount = this._extractEncaissementsCount(existing) + 1;
-    const normalizedAmounts = this._normalizeCollecteAmounts(existing.amounts, financialAccount, total);
-    const updatedEntry: BookEntry = {
-      ...existing,
-      season,
-      date,
-      tag,
-      amounts: normalizedAmounts,
-      operations: [{ label: this._encaissementsLabel(encaissementsCount), values: mergedByAccount }],
-    };
-    await this.bookService.update_book_entry(updatedEntry);
+    this.importingSurvey = true;
+    try {
+      const rows = await this.surveyResults.getReservationsFromSurvey(this.selectedSurveyId);
+      if (rows.length === 0) {
+        this.toastService.showWarning('Billetterie', 'Aucune réservation valide dans ce sondage (aucun présent).');
+        return;
+      }
+
+      const result = await this.ticketingService.importReservations(rows, {
+        date: this.session.date,
+        season: this.session.season,
+        eventTitle: this.eventTitle.trim(),
+        source: `survey:${this.selectedSurveyId}`,
+      });
+
+      this.toastService.showSuccess('Billetterie', `${result.created} créée(s), ${result.updated} mise(s) à jour`);
+      await this.refreshFromDb();
+    } catch (err: any) {
+      this.toastService.showError('Billetterie', err?.message ?? 'Erreur d\'import depuis le sondage');
+    } finally {
+      this.importingSurvey = false;
+    }
   }
 
-  private _refreshCollecteState(entries: BookEntry[]): void {
-    const date = this._todayIso();
-    const cash = entries.find((entry) => entry.date === date && entry.transaction_id === TRANSACTION_ID.dépôt_collecte_espèces);
-    const cheque = entries.find((entry) => entry.date === date && entry.transaction_id === TRANSACTION_ID.dépôt_collecte_chèques);
-    const cb = entries.find((entry) => entry.date === date && entry.transaction_id === TRANSACTION_ID.collecte_par_cb);
+  canCancelPayment(payment: TicketingPayment): boolean {
+    return payment.status !== 'cancelled' && !payment.accountedAt && !this.saleSubmitInProgress && !this.accountingInProgress;
+  }
 
-    if (!this.eventTitle.trim()) {
-      const existingTag = [cash, cheque, cb].find((entry) => !!entry?.tag)?.tag;
-      if (existingTag) this.eventTitle = existingTag;
+  getPaymentLinkedNames(payment: TicketingPayment): string {
+    const linkedNames = this.soldReservations
+      .filter((row) => row.paymentId === payment.id)
+      .map((row) => row.memberName);
+
+    if (linkedNames.length === 0) {
+      return payment.status === 'cancelled'
+        ? 'réservations relibérées'
+        : 'noms indisponibles';
     }
 
-    this.cashAmount = this._entryFinancialAmount(cash, this._getCollecteFinancialAccount(TRANSACTION_ID.dépôt_collecte_espèces));
-    this.chequeAmount = this._entryFinancialAmount(cheque, this._getCollecteFinancialAccount(TRANSACTION_ID.dépôt_collecte_chèques));
-    this.cbAccumulatedAmount = this._entryFinancialAmount(cb, this._getCollecteFinancialAccount(TRANSACTION_ID.collecte_par_cb));
-    this.cashEncaissementsCount = cash ? this._extractEncaissementsCount(cash) : 0;
-    this.chequeEncaissementsCount = cheque ? this._extractEncaissementsCount(cheque) : 0;
-    this.cbEncaissementsCount = cb ? this._extractEncaissementsCount(cb) : 0;
-
-    this.cashByAccount = this._toAccountAmountRows(this._extractEntryAccountValues(cash));
-    this.chequeByAccount = this._toAccountAmountRows(this._extractEntryAccountValues(cheque));
-    this.cbByAccount = this._toAccountAmountRows(this._extractEntryAccountValues(cb));
+    return linkedNames.join(', ');
   }
 
-  private _entryFinancialAmount(entry: BookEntry | undefined, financialAccount: FINANCIAL_ACCOUNT): number {
-    if (!entry) return 0;
-    return Math.round(((entry.amounts[financialAccount] ?? 0) as number) * 100) / 100;
+  getPaymentModeLabel(mode: string | null | undefined): string {
+    return this._paymentLabel(mode);
   }
 
-  private _buildMiniCartValuesByAccount(): Record<string, number> {
-    const values: Record<string, number> = {};
-    this.miniCartItems.forEach((item) => {
-      const key = item.product.account;
-      const amount = item.product.price * item.quantity;
-      values[key] = Math.round(((values[key] ?? 0) + amount) * 100) / 100;
+  async cancelPayment(payment: TicketingPayment): Promise<void> {
+    if (!this.canCancelPayment(payment)) return;
+    if (!confirm(`Annuler le paiement de ${payment.totalAmount?.toFixed(2) ?? '0.00'} € ?`)) return;
+
+    try {
+      await this.ticketingService.cancelPayment(payment);
+      this.toastService.showSuccess('Billetterie', 'Paiement annulé, réservations relibérées.');
+      await this.refreshFromDb();
+    } catch (err: any) {
+      this.toastService.showError('Billetterie', err?.message ?? 'Erreur lors de l\'annulation du paiement');
+    }
+  }
+
+  private async _writeModeAccounting(mode: PaymentMode, reservations: ReservationView[]): Promise<void> {
+    if (reservations.length === 0) return;
+
+    const valuesByAccount: Record<string, number> = {};
+    reservations.forEach((row) => {
+      const key = row.paidAccount?.trim() || row.product?.account || '';
+      const amount = Math.round((row.paidAmount ?? row.price ?? 0) * 100) / 100;
+      if (!key || amount <= 0) return;
+      valuesByAccount[key] = Math.round(((valuesByAccount[key] ?? 0) + amount) * 100) / 100;
     });
-    return values;
+
+    if (Object.keys(valuesByAccount).length === 0) return;
+
+    const transactionId = this._transactionIdForMode(mode);
+    const financialAccount = this._getCollecteFinancialAccount(transactionId);
+    const total = Math.round(Object.values(valuesByAccount).reduce((sum, amount) => sum + amount, 0) * 100) / 100;
+
+    const entry: BookEntry = {
+      id: '',
+      season: this.session.season,
+      date: this.session.date,
+      tag: this.eventTitle.trim(),
+      amounts: { [financialAccount]: total },
+      operations: [{ label: `${reservations.length} encaissements billetterie`, values: valuesByAccount }],
+      transaction_id: transactionId,
+    };
+
+    await this.bookService.create_book_entry(entry);
   }
 
-  private _extractEntryAccountValues(entry: BookEntry | undefined): Record<string, number> {
-    const values: Record<string, number> = {};
-    if (!entry) return values;
+  private _refreshSummary(): void {
+    this.soldCount = this.soldReservations.length;
+    this.notSoldCount = this.reservations.length;
 
-    entry.operations.forEach((operation) => {
-      Object.entries(operation.values).forEach(([account, amount]) => {
-        values[account] = Math.round(((values[account] ?? 0) + amount) * 100) / 100;
+    this.cashAmount = Math.round(
+      this.activePayments
+        .filter((payment) => payment.paymentMode === 'cash')
+        .reduce((sum, payment) => sum + (payment.totalAmount ?? 0), 0) * 100,
+    ) / 100;
+
+    this.cbAccumulatedAmount = Math.round(
+      this.activePayments
+        .filter((payment) => payment.paymentMode === 'card')
+        .reduce((sum, payment) => sum + (payment.totalAmount ?? 0), 0) * 100,
+    ) / 100;
+
+    const cheques = new Map<number, number>();
+    this.activePayments
+      .filter((payment) => payment.paymentMode === 'cheque')
+      .forEach((payment) => {
+        const amount = Math.round((payment.totalAmount ?? 0) * 100) / 100;
+        cheques.set(amount, (cheques.get(amount) ?? 0) + 1);
       });
-    });
-    return values;
+
+    this.chequeAmountsByValue = [...cheques.entries()]
+      .map(([amount, count]) => ({ amount, count }))
+      .sort((a, b) => b.amount - a.amount);
   }
 
-  private _mergeValues(base: Record<string, number>, delta: Record<string, number>): Record<string, number> {
-    const merged: Record<string, number> = { ...base };
-    Object.entries(delta).forEach(([account, amount]) => {
-      merged[account] = Math.round(((merged[account] ?? 0) + amount) * 100) / 100;
-    });
-    return merged;
+  private _resolvePricingProducts(): void {
+    const byText = (product: Product) => this._normalize(`${product.name} ${product.productCode ?? ''}`);
+
+    this.memberProduct = this.batchProducts.find((product) => /adh|member/.test(byText(product))) ?? this.batchProducts[0] ?? null;
+    this.nonMemberProduct = this.batchProducts.find((product) => /non|ext|guest|invite/.test(byText(product)))
+      ?? this.batchProducts.find((product) => product.id !== this.memberProduct?.id)
+      ?? this.memberProduct;
   }
 
-  private _sumValues(values: Record<string, number>): number {
-    return Math.round((Object.values(values).reduce((sum, amount) => sum + amount, 0)) * 100) / 100;
+  private _applyPricing(): void {
+    this.reservations = this.reservations.map((row) => ({ ...row, ...this._priceForReservation(row) }));
+    this.soldReservations = this.soldReservations.map((row) => ({ ...row, ...this._priceForReservation(row) }));
   }
 
-  private _normalizeCollecteAmounts(
-    currentAmounts: AMOUNTS,
-    financialAccount: FINANCIAL_ACCOUNT,
-    total: number,
-  ): AMOUNTS {
-    const amounts: AMOUNTS = { ...currentAmounts };
-    const financialDebitAccounts: FINANCIAL_ACCOUNT[] = [
-      FINANCIAL_ACCOUNT.CASHBOX_debit,
-      FINANCIAL_ACCOUNT.BANK_debit,
-      FINANCIAL_ACCOUNT.STRIPE_debit,
-      FINANCIAL_ACCOUNT.SAVING_debit,
-    ];
+  private _priceForReservation(reservation: TicketingReservation): { price: number; product: Product | null } {
+    const product = reservation.isMember ? this.memberProduct : this.nonMemberProduct;
+    return { price: product?.price ?? 0, product };
+  }
 
-    financialDebitAccounts.forEach((account) => {
-      if (account !== financialAccount) {
-        delete amounts[account];
-      }
-    });
+  private _paymentIsGrouped(paymentId: string): boolean {
+    return this.soldReservations.filter((row) => row.paymentId === paymentId).length > 1;
+  }
 
-    amounts[financialAccount] = total;
+  private _paymentLabel(mode: string | null | undefined): string {
+    if (mode === 'cash') return 'espèces';
+    if (mode === 'cheque') return 'chèque';
+    if (mode === 'card') return 'CB';
+    return 'autre';
+  }
 
-    return amounts;
+  private _toTicketingMode(mode: PaymentMode): 'cash' | 'cheque' | 'card' | 'other' {
+    if (mode === PaymentMode.CHEQUE) return 'cheque';
+    if (mode === PaymentMode.CARD) return 'card';
+    return 'cash';
+  }
+
+  private _transactionIdForMode(mode: PaymentMode): TRANSACTION_ID {
+    if (mode === PaymentMode.CHEQUE) return TRANSACTION_ID.dépôt_collecte_chèques;
+    if (mode === PaymentMode.CARD) return TRANSACTION_ID.collecte_par_cb;
+    return TRANSACTION_ID.dépôt_collecte_espèces;
   }
 
   private _getCollecteFinancialAccount(transactionId: TRANSACTION_ID): FINANCIAL_ACCOUNT {
@@ -536,59 +662,16 @@ export class CollecteVenteComponent implements OnInit, OnDestroy {
     return Object.values(FINANCIAL_ACCOUNT).includes(key as FINANCIAL_ACCOUNT);
   }
 
-  private _toAccountAmountRows(values: Record<string, number>): AccountAmount[] {
-    return Object.entries(values)
-      .map(([account, amount]) => ({ account, amount }))
-      .sort((a, b) => a.account.localeCompare(b.account));
-  }
-
-  private _todayIso(): string {
-    return new Date().toISOString().split('T')[0];
-  }
-
-  private _extractEncaissementsCount(entry: BookEntry): number {
-    const label = entry.operations?.[0]?.label ?? '';
-    const match = label.match(/^(\d+)\s+encaissements?$/i);
-    if (!match) return 0;
-    const count = Number(match[1]);
-    return Number.isFinite(count) ? count : 0;
-  }
-
-  private _encaissementsLabel(count: number): string {
-    return `${count} encaissements`;
-  }
-
-  private async _syncCollecteTagsForToday(title: string): Promise<void> {
-    const date = this._todayIso();
-    const entries = this.bookService.get_book_entries().filter((entry) =>
-      entry.date === date && [
-        TRANSACTION_ID.dépôt_collecte_espèces,
-        TRANSACTION_ID.dépôt_collecte_chèques,
-        TRANSACTION_ID.collecte_par_cb,
-      ].includes(entry.transaction_id),
-    );
-
-    const updates = entries
-      .filter((entry) => entry.tag !== title)
-      .map((entry) => this.bookService.update_book_entry({ ...entry, tag: title }));
-
-    if (updates.length > 0) {
-      await Promise.all(updates);
-    }
+  private _normalize(value: string): string {
+    return (value ?? '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim();
   }
 
   private _formatDateFr(isoDate: string): string {
     const [year, month, day] = isoDate.split('-');
     return `${day}/${month}/${year.slice(-2)}`;
-  }
-
-  // ── Utilitaires ───────────────────────────────────────────
-
-  getProductGradientStyle(product: Product): string {
-    return this.shopProducts.getProductGradientStyle(product);
-  }
-
-  getProductGlyph(product: Product): string {
-    return resolveGlyph(product.account, product.glyph);
   }
 }
