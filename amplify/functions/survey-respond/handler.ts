@@ -74,6 +74,39 @@ async function getExistingResponse(surveyId: string, memberId: string) {
   return Items?.[0] ?? null;
 }
 
+async function getAllResponses(surveyId: string) {
+  const { Items } = await db.send(new ScanCommand({
+    TableName: RESPONSE_TABLE,
+    FilterExpression: 'surveyId = :sid',
+    ExpressionAttributeValues: { ':sid': surveyId },
+  }));
+  return (Items ?? []) as any[];
+}
+
+function computeAggregatedResults(
+  questions: any[],
+  allResponses: any[],
+): Record<string, number[]> {
+  const result: Record<string, number[]> = {};
+  for (const q of questions) {
+    result[q.id] = (q.options ?? []).map(() => 0);
+  }
+  for (const response of allResponses) {
+    let answers = response.answers;
+    if (typeof answers === 'string') {
+      try { answers = JSON.parse(answers); } catch { continue; }
+    }
+    if (!answers || typeof answers !== 'object') continue;
+    for (const [qId, optIdx] of Object.entries(answers)) {
+      const idx = Number(optIdx);
+      if (result[qId] && Number.isInteger(idx) && idx >= 0 && idx < result[qId].length) {
+        result[qId][idx] += 1;
+      }
+    }
+  }
+  return result;
+}
+
 // ── Handler ────────────────────────────────────────────────────────────────
 
 export const handler = async (event: any) => {
@@ -85,10 +118,11 @@ export const handler = async (event: any) => {
     const { valid, tokenItem, reason } = await validateToken(token);
     if (!valid) return err(410, reason ?? 'Token invalide');
 
-    const [survey, questions, existing] = await Promise.all([
+    const [survey, questions, existing, allResponses] = await Promise.all([
       getSurvey(tokenItem!.surveyId),
       getQuestions(tokenItem!.surveyId),
       getExistingResponse(tokenItem!.surveyId, tokenItem!.memberId),
+      getAllResponses(tokenItem!.surveyId),
     ]);
 
     if (!survey) return err(404, 'Sondage introuvable');
@@ -106,12 +140,14 @@ export const handler = async (event: any) => {
       survey: { id: survey.id, title: survey.title, description: survey.description,
                 surveyType: survey.surveyType ?? 'poll', status: survey.status ?? 'active', closingDate: survey.closingDate,
                 footerNote: survey.footerNote },
-      questions: questions.map((q: any) => ({ id: q.id, text: q.text, options: q.options, order: q.order })),
+      questions: questions.map((q: any) => ({ id: q.id, text: q.text, options: q.options, order: q.order, optionKeywords: q.optionKeywords ?? [] })),
       existingResponse: existing
         ? { id: existing.id, answers: existing.answers, status: existing.status, submittedAt: existing.submittedAt }
         : null,
       memberId: tokenItem!.memberId,
       memberName: tokenItem!.memberName,
+      aggregatedResults: computeAggregatedResults(questions, allResponses),
+      totalRespondents: allResponses.length,
     });
   }
 

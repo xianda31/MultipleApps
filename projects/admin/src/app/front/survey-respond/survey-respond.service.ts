@@ -16,13 +16,15 @@ export interface SurveyRespondData {
     closingDate?: string;
     footerNote?: string;
   };
-  questions: Array<{ id: string; text: string; options: string[]; order: number }>;
+  questions: Array<{ id: string; text: string; options: string[]; optionKeywords: string[]; order: number }>;
   existingResponse: {
     id: string;
     answers: Record<string, number>;
     status: string;
     submittedAt: string;
   } | null;
+  aggregatedResults?: Record<string, number[]>;
+  totalRespondents?: number;
 }
 
 @Injectable({ providedIn: 'root' })

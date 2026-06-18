@@ -1,9 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ChartOptions, Chart } from 'chart.js';
-import { BaseChartDirective } from 'ng2-charts';
-import ChartDataLabelsPlugin from 'chartjs-plugin-datalabels';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SondageService } from '../sondage.service';
 import { SurveyResultsService, QuestionResult, ResponseRow } from '../survey-results.service';
@@ -12,12 +9,10 @@ import { Member } from '../../../common/interfaces/member.interface';
 import { firstValueFrom } from 'rxjs';
 import { BACK_ROUTE_ABS_PATHS } from '../../routes/back-route-paths';
 
-Chart.register(ChartDataLabelsPlugin);
-
 @Component({
   selector: 'app-sondage-resultats',
   standalone: true,
-  imports: [CommonModule, FormsModule, BaseChartDirective],
+  imports: [CommonModule, FormsModule],
   templateUrl: './sondage-resultats.component.html',
 })
 export class SondageResultatsComponent implements OnInit {
@@ -324,45 +319,37 @@ export class SondageResultatsComponent implements OnInit {
     'rgba(111,66,193,0.75)',
   ];
 
-  get questionCharts(): Array<{ question: QuestionResult; chartData: any; chartOptions: ChartOptions<'bar'> }> {
+  get questionProgress(): Array<{
+    question: QuestionResult;
+    total: number;
+    options: Array<{
+      label: string;
+      count: number;
+      percent: number;
+      percentLabel: string;
+      color: string;
+    }>;
+  }> {
+    const total = this.presentCount;
+
     return this.questions
       .filter(q => q.order !== -1)
-      .map(q => {
-        const labels = q.options.map((opt, idx) => {
-          const kw = q.optionKeywords[idx]?.trim();
-          return kw || opt;
-        });
-        const counts = q.options.map((_, idx) =>
-          this.responses.filter(r => !this.isAbsent(r) && r.answers[q.id] === idx).length
-        );
-        return {
-          question: q,
-          chartData: {
-            labels,
-            datasets: [{
-              data: counts,
-              backgroundColor: labels.map((_, i) => this.CHART_COLORS[i % this.CHART_COLORS.length]),
-              borderWidth: 1,
-            }],
-          },
-          chartOptions: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { display: false },
-              datalabels: {
-                anchor: 'center',
-                align: 'center',
-                font: { weight: 'bold', size: 14 },
-                color: '#fff',
-              },
-            },
-            scales: {
-              y: { beginAtZero: true, ticks: { stepSize: 1 } },
-            },
-          } as ChartOptions<'bar'>,
-        };
-      });
+      .map((q) => ({
+        question: q,
+        total,
+        options: q.options.map((opt, idx) => {
+          const label = q.optionKeywords[idx]?.trim() || opt;
+          const count = this.responses.filter((r) => !this.isAbsent(r) && r.answers[q.id] === idx).length;
+          const percent = total > 0 ? Math.round((count / total) * 100) : 0;
+          return {
+            label,
+            count,
+            percent,
+            percentLabel: `${percent} %`,
+            color: this.CHART_COLORS[idx % this.CHART_COLORS.length],
+          };
+        }),
+      }));
   }
 }
   

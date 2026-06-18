@@ -43,6 +43,34 @@ export class SurveyRespondComponent implements OnInit {
     // Convention: option index 0 of invitation question means "absent / ne vient pas".
     return idx === 0;
   }
+
+  private readonly PROGRESS_COLORS = [
+    '#0d6efd', '#198754', '#dc3545', '#ffc107', '#6c757d', '#0dcaf0', '#6f42c1',
+  ];
+
+  get questionProgress(): Array<{
+    question: { id: string; text: string; options: string[] };
+    total: number;
+    options: Array<{ label: string; count: number; percent: number; percentLabel: string; color: string }>;
+  }> {
+    if (!this.data?.aggregatedResults) return [];
+    return this.questions
+      .filter(q => q.order !== -1)
+      .map(q => {
+        const counts = this.data!.aggregatedResults![q.id] ?? [];
+        const total = counts.reduce((a, b) => a + b, 0);
+        return {
+          question: q,
+          total,
+          options: q.options.map((opt, idx) => {
+            const label = q.optionKeywords?.[idx]?.trim() || opt;
+            const count = counts[idx] ?? 0;
+            const percent = total > 0 ? Math.round((count / total) * 100) : 0;
+            return { label, count, percent, percentLabel: `${percent} %`, color: this.PROGRESS_COLORS[idx % this.PROGRESS_COLORS.length] };
+          }),
+        };
+      });
+  }
   get isClosed() {
     if (!this.survey) return false;
     if (this.survey.status === 'closed') return true;

@@ -89,35 +89,38 @@ export class SurveyResultsService {
 
     const idx = row.answers[invQ.id];
     if (idx === undefined) return false;
-    if (idx === 0) return true;
 
     const keyword = this.normalizeAnswer(invQ.optionKeywords[idx] ?? '');
     const optionText = this.normalizeAnswer(invQ.options[idx] ?? '');
     const value = keyword || optionText;
 
+    return this.isAbsenceValue(value);
+  }
+
+  getDefaultPresentOptionIndex(questions: QuestionResult[]): number {
+    const invQ = this.invitationQuestion(questions);
+    if (!invQ) return 0;
+    for (let i = 0; i < invQ.options.length; i++) {
+      const keyword = this.normalizeAnswer(invQ.optionKeywords[i] ?? '');
+      const optionText = this.normalizeAnswer(invQ.options[i] ?? '');
+      const value = keyword || optionText;
+      if (!this.isAbsenceValue(value)) {
+        return i;
+      }
+    }
+    return 0;
+  }
+
+  private isAbsenceValue(value: string): boolean {
     return value === 'absent'
       || value === 'non'
       || value === 'no'
       || value.includes('ne viendrai pas')
       || value.includes('ne viens pas')
+      || value.includes('ne participe pas')
+      || value.includes('pas present')
       || value.includes('declined')
       || value.includes('cancelled');
-  }
-
-  getDefaultPresentOptionIndex(questions: QuestionResult[]): number {
-    const invQ = this.invitationQuestion(questions);
-    if (!invQ) return 1;
-    for (let i = 1; i < invQ.options.length; i++) {
-      const keyword = this.normalizeAnswer(invQ.optionKeywords[i] ?? '');
-      const optionText = this.normalizeAnswer(invQ.options[i] ?? '');
-      const value = keyword || optionText;
-      if (!['absent', 'non', 'no'].includes(value)
-        && !value.includes('ne viendrai pas')
-        && !value.includes('ne viens pas')) {
-        return i;
-      }
-    }
-    return 1;
   }
 
   // ── Affichage nom ─────────────────────────────────────────────────────────
