@@ -40,8 +40,8 @@ export class SurveyRespondComponent implements OnInit {
     const q = this.invitationQuestion;
     if (!q) return false;
     const idx = this.answers[q.id];
-    // Convention: option index 0 of invitation question means "absent / ne vient pas".
-    return idx === 0;
+    // Convention stricte : index 0 = présent (OUI), index 1 = absent (NON / ne vient pas).
+    return idx === 1;
   }
 
   private readonly PROGRESS_COLORS = [

@@ -70,22 +70,12 @@
           <input class="form-control" [(ngModel)]="invitationQuestion.text"
             placeholder="Ex : Serez-vous présent(e) ?" />
         </div>
-        <label class="form-label text-muted small">Choix (2 à 4) — Texte + Mot-clé</label>
+        <label class="form-label text-muted small">Exactement 2 choix — option 1 = présent (OUI), option 2 = absent (NON)</label>
         @for (opt of invitationQuestion.options; track trackByIndex($index)) {
           <div class="input-group input-group-sm mb-1">
             <span class="input-group-text">{{ $index + 1 }}</span>
             <input class="form-control" [(ngModel)]="opt.text" placeholder="Texte de l'option" />
-            <input class="form-control" [(ngModel)]="opt.keyword" placeholder="Mot-clé court" style="max-width:120px" />
-            <button class="btn btn-outline-secondary" (click)="removeOption(invitationQuestion!, $index)"
-              [disabled]="invitationQuestion.options.length <= 2" title="Supprimer">
-              <i class="bi bi-x"></i>
-            </button>
           </div>
-        }
-        @if (invitationQuestion.options.length < 4) {
-          <button class="btn btn-sm btn-outline-secondary mt-1" (click)="addOption(invitationQuestion!)">
-            <i class="bi bi-plus me-1"></i>Ajouter un choix
-          </button>
         }
       </div>
     </div>

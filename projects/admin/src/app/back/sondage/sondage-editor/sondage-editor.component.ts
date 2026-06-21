@@ -108,7 +108,7 @@ export class SondageEditorComponent implements OnInit {
 
   addInvitationQuestion() {
     if (this.invitationQuestion) return;
-    this.questions.unshift({ text: 'Serez-vous présent(e) ?', isInvitation: true, options: [{ text: 'Je ne viens pas', keyword: 'Absent' }, { text: 'Je serai présent(e)', keyword: 'Présent' }] });
+    this.questions.unshift({ text: 'Serez-vous présent(e) ?', isInvitation: true, options: [{ text: 'OUI', keyword: '' }, { text: 'NON', keyword: '' }] });
   }
 
   removeInvitationQuestion() {

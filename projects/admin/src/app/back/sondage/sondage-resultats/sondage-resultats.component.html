@@ -27,7 +27,7 @@
                         <div>
                             <div class="d-flex justify-content-between align-items-center small mb-1">
                                 <span class="text-truncate pe-2">{{ opt.label }}</span>
-                                <span class="text-nowrap">{{ opt.count }} ({{ opt.percentLabel }})</span>
+                                <span class="text-nowrap">{{ opt.count }}</span>
                             </div>
                             <div class="progress" role="progressbar" [attr.aria-valuenow]="opt.percent" aria-valuemin="0" aria-valuemax="100" style="height: 10px;">
                                 <div class="progress-bar" [style.width.%]="opt.percent" [style.backgroundColor]="opt.color"></div>
