@@ -160,11 +160,11 @@ export class CompetitionService {
       tap((orgs: CompetitionOrganization[]) => {
         this._preferred_organizations = orgs.filter(org => labels.includes(org.label));
       }),
-      switchMap(() => from(this.ffbService.getSeasons())),
+      switchMap(() => from(this.ffbService.getCurrentSeason())),
       // recupérer la saison correspondant au nom donné
-      map((seasons: CompetitionSeason[]) => {
-        const selected_season = seasons.find(s => s.name === season);
-        return selected_season;
+      map((seasonObj: CompetitionSeason | null) => {
+        // getCurrentSeason() now returns a single object, check if it matches requested season
+        return (seasonObj && (seasonObj as any).name === season) ? seasonObj : undefined;
       }),
       // récupère les données des compétitions à partir du fichier S3 si disponible (en série dans la séquence RxJS)
       switchMap((seasonObj: CompetitionSeason | undefined) => {
@@ -356,14 +356,14 @@ export class CompetitionService {
     }
   }
 
-  getSeasons(): Observable<CompetitionSeason[]> {
-    return from(this.ffbService.getSeasons());
+  getSeasons(): Observable<CompetitionSeason | null> {
+    return from(this.ffbService.getCurrentSeason());
   }
 
   getCurrentCompetitionSeason(): Observable<CompetitionSeason | null> {
     const current_season = this.systemService.get_today_season();
-    return from(this.ffbService.getSeasons()).pipe(
-      map(seasons => seasons.find(s => s.name === current_season) || null)
+    return from(this.ffbService.getCurrentSeason()).pipe(
+      map(season => (season && (season as any).name === current_season) ? season : null)
     );
   }
 

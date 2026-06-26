@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { MembersService } from '../../common/services/members.service';
-import { LicenseesService } from '../licensees/services/licensees.service';
+import { LicenseesService } from '../../common/services/licensees.service';
 import { Observable, switchMap, tap, take } from 'rxjs';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule, UpperCasePipe } from '@angular/common';
@@ -8,7 +8,7 @@ import { NgbModal, NgbTooltipModule, NgbDropdownModule } from '@ng-bootstrap/ng-
 import { GetNewbeeComponent } from '../modals/get-newbee/get-newbee.component';
 import { InputPlayerComponent } from '../ffb/input-licensee/input-player.component';
 import { FFBplayer } from '../ffb/interface/FFBplayer.interface';
-import { FFB_licensee } from '../ffb/interface/licensee.interface';
+import { ClubMember } from '../ffb/interface/club-member.interface';
 import { Member, LicenseStatus } from '../interfaces/member.interface';
 import { SystemDataService } from '../services/system-data.service';
 import { ToastService } from '../services/toast.service';
@@ -37,7 +37,7 @@ enum FILTER {
 export class MembersComponent implements OnInit {
   members: Member[] = [];
   filteredMembers: Member[] = [];
-  licensees: FFB_licensee[] = [];
+  licensees: ClubMember[] = [];
   sympatisants_number: number = 0;
   no_license_nbr: number = 0;
   lost_members_nbr: number = 0;
@@ -96,19 +96,19 @@ export class MembersComponent implements OnInit {
       tap(() => {
         this.operations = this.bookService.get_operations();
       }),
-      switchMap(() => this.licenseesService.list_FFB_licensees$()),
+      switchMap(() => this.licenseesService.getClubMembers$()),
       tap((licensees) => {
         this.licensees = licensees;
-        this.sympatisants_number = this.licensees.reduce((count, licensee) => {
-          return count + (licensee.is_sympathisant ? 1 : 0);
+        this.sympatisants_number = this.licensees.reduce((count, clubMember) => {
+          return count + (!clubMember.licensee ? 1 : 0);
         }, 0);
       }),
       switchMap(() => this.membersService.listMembers()),
       take(1)
     ).subscribe({
       next: (members: Member[]) => {
-        this.members = members;
-        this.avatar_urls$ = this.collect_avatars(members);
+        this.members = members.sort((a, b) => a.lastname.localeCompare(b.lastname, 'fr', { sensitivity: 'base' }));
+        this.avatar_urls$ = this.collect_avatars(this.members);
         this.filterOnStatus(this.selected_filter);
         this.loading = false;
         // console.log(this.members);
@@ -117,8 +117,8 @@ export class MembersComponent implements OnInit {
         Promise.all([
           this.check_membership_paied(),
           this.reset_license_statuses(),
-          this.updateDBfromFFB(),
-          this.update_iv()
+          this.updateDBfromFFB()
+          // update_iv() removed: Ranking now provides iv directly
         ]).catch(err => console.error('Erreur lors du traitement des membres:', err));
       },
       error: () => { this.loading = false; this.toastService.showError('Membres', 'Erreur lors du chargement des membres'); },
@@ -236,27 +236,27 @@ export class MembersComponent implements OnInit {
     }
   }
 
-  async update_iv() {
-    const updates: Promise<any>[] = [];
-
-    for (const member of this.members) {
-      if (member.iv == null && member.person_id !== undefined && member.person_id !== null) {
-        const iv : FFBPersonIV | undefined = await this.licenseesService.get_iv(member.person_id);
-        if (iv !== undefined) {
-          console.log(`Mise à jour de l'iv pour ${member.lastname} ${member.firstname} (person_id: ${member.person_id}) (iv: ${iv.iv}, code: ${iv.code})`);
-          member.iv = iv.iv;
-          member.iv_code = iv.code;
-          updates.push(this.membersService.updateMember(member));
-        }
-      }
-    }
-    await Promise.all(updates);
-  }
+  // DEPRECATED: Ranking now provides iv directly - no need to fetch from FFB
+  // async update_iv() {
+  //   const updates: Promise<any>[] = [];
+  //   for (const member of this.members) {
+  //     if (member.iv == null && member.person_id !== undefined && member.person_id !== null) {
+  //       const iv : FFBPersonIV | undefined = await this.licenseesService.get_iv(member.person_id);
+  //       if (iv !== undefined) {
+  //         console.log(`Mise à jour de l'iv pour ${member.lastname} ${member.firstname} (person_id: ${member.person_id}) (iv: ${iv.iv}, code: ${iv.code})`);
+  //         member.iv = iv.iv;
+  //         member.iv_code = iv.code;
+  //         updates.push(this.membersService.updateMember(member));
+  //       }
+  //     }
+  //   }
+  //   await Promise.all(updates);
+  // }
 
   async reset_license_statuses() {
     const updates: Promise<any>[] = [];
     for (const member of this.members) {
-      const existsInFFB = this.licensees.some((l) => l.license_number === member.license_number);
+      const existsInFFB = this.licensees.some((l) => l.ffbId === member.person_id);
 
       // Reset la licence seulement si elle n'existe pas dans FFB et n'est pas déjà UNREGISTERED
       if (!existsInFFB && member.license_status !== LicenseStatus.UNREGISTERED) {
@@ -285,7 +285,7 @@ export class MembersComponent implements OnInit {
         default: //'Tous':
           throw new Error('Filtre inconnu' + filter);
       }
-    });
+    }).sort((a, b) => a.lastname.localeCompare(b.lastname, 'fr', { sensitivity: 'base' }));
   }
 
 
@@ -295,47 +295,54 @@ export class MembersComponent implements OnInit {
       updates.push(this.createOrUpdateMember(licensee));
     });
     await Promise.all(updates);
+    // Retrier et refilter après les mises à jour FFB
+    this.members.sort((a, b) => a.lastname.localeCompare(b.lastname, 'fr', { sensitivity: 'base' }));
+    this.filterOnStatus(this.selected_filter);
   }
 
-  async createOrUpdateMember(licensee: FFB_licensee) {
-    const existingMember = this.members.find((m) => m.license_number === licensee.license_number);
+  async createOrUpdateMember(clubMember: ClubMember) {
+    // Match by license_number: use pre-computed license_number_padded from adapter
+    // Fallback to compute padding if property doesn't exist (defensive coding)
+    const ffbIdPadded = (clubMember as any).license_number_padded || clubMember.ffbId.toString().padStart(8, '0');
+    const existingMember = this.members.find((m) => m.license_number === ffbIdPadded);
 
     if (existingMember) {
-      const updatedMember = this.compare(existingMember, licensee);
+      const updatedMember = this.compare(existingMember, clubMember, ffbIdPadded);
       // Seulement updater si compare() détecte des changements (retourne non-null)
       if (updatedMember !== null) {
         await this.membersService.updateMember(updatedMember);
       }
     } else {
       // Créer nouveau membre seulement s'il n'existe pas
-      const newMember = this.createNewMember(licensee);
+      const newMember = this.createNewMember(clubMember, ffbIdPadded);
       await this.membersService.createMember(newMember);
     }
   }
 
 
-  compare(member: Member, licensee: FFB_licensee): Member | null {
+  compare(member: Member, clubMember: ClubMember, ffbIdPadded: string): Member | null {
 
     let nextMember: Member = {
       id: member.id,
-      license_number: licensee.license_number,
-      gender: licensee.gender,
-      firstname: licensee.firstname,
-      lastname: licensee.lastname.toUpperCase(),
-      birthdate: licensee.birthdate,
-      city: this.capitalize_first(licensee.city?.toLowerCase()),
-      season: (licensee.season || licensee.license_id) ? this.season : '',
-      email: licensee.email?.trim().toLowerCase() ?? '',
-      phone_one: licensee.phone_one,
-      license_taken_at: licensee.orga_license_name ?? 'BCSTO',
-      register_date: licensee.register_date ?? '',
-      license_status: licensee.register ? (licensee.license_id ? LicenseStatus.DULY_REGISTERED : LicenseStatus.PROMOTED_ONLY) : LicenseStatus.UNREGISTERED,
-      is_sympathisant: licensee.is_sympathisant ?? false,
+      license_number: ffbIdPadded,
+      gender: clubMember.gender,
+      firstname: clubMember.firstName,
+      lastname: clubMember.lastName.toUpperCase(),
+      birthdate: clubMember.birthdate,
+      city: member.city,
+      season: clubMember.licensee ? this.season : '',
+      email: member.email,
+      phone_one: member.phone_one,
+      license_taken_at: clubMember.club?.label ?? 'BCSTO',
+      register_date: clubMember.mainRegistration?.createdAt ? clubMember.mainRegistration.createdAt.split('T')[0] : '',
+      license_status: clubMember.licensee ? LicenseStatus.DULY_REGISTERED : (clubMember.eLicensee ? LicenseStatus.PROMOTED_ONLY : LicenseStatus.UNREGISTERED),
+      is_sympathisant: !clubMember.licensee,
       accept_mailing: member.accept_mailing,
       has_avatar: member.has_avatar,
       membership_date: member.membership_date,
-      person_id: licensee.person_id ?? member.person_id,
-
+      person_id: clubMember.ffbId,
+      iv: member.iv,
+      iv_code: member.iv_code,
     }
     let is: { [key: string]: any } = member;
     let next: { [key: string]: any } = nextMember;
@@ -355,26 +362,28 @@ export class MembersComponent implements OnInit {
     return diff ? nextMember : null;
   }
 
-  createNewMember(licensee: FFB_licensee): Member {
+  createNewMember(clubMember: ClubMember, ffbIdPadded: string): Member {
     return {
       id: '',
-      gender: licensee.gender,
-      firstname: licensee.firstname,
-      lastname: licensee.lastname.toUpperCase(),
-      license_number: licensee.license_number,
-      birthdate: licensee.birthdate,
-      city: this.capitalize_first(licensee.city?.toLowerCase()),
-      season: licensee.season ?? (licensee.register ? this.season : ''),
-      email: licensee.email ?? '',
-      accept_mailing: licensee.email ? true : false,
-      phone_one: licensee.phone_one,
-      is_sympathisant: licensee.is_sympathisant ?? false,
-      license_status: licensee.register ? (licensee.license_id ? LicenseStatus.DULY_REGISTERED : LicenseStatus.PROMOTED_ONLY) : LicenseStatus.UNREGISTERED,
-      license_taken_at: licensee.orga_license_name ?? 'BCSTO',
-      register_date: licensee.register_date ?? '',
+      gender: clubMember.gender,
+      firstname: clubMember.firstName,
+      lastname: clubMember.lastName.toUpperCase(),
+      license_number: ffbIdPadded,
+      birthdate: clubMember.birthdate,
+      city: '',
+      season: clubMember.licensee ? this.season : '',
+      email: '',
+      accept_mailing: false,
+      phone_one: '',
+      is_sympathisant: !clubMember.licensee,
+      license_status: clubMember.licensee ? LicenseStatus.DULY_REGISTERED : (clubMember.eLicensee ? LicenseStatus.PROMOTED_ONLY : LicenseStatus.UNREGISTERED),
+      license_taken_at: clubMember.club?.label ?? 'BCSTO',
+      register_date: clubMember.mainRegistration?.createdAt ? clubMember.mainRegistration.createdAt.split('T')[0] : '',
       membership_date: '',
       has_avatar: false,
-      person_id: licensee.person_id ?? undefined,
+      person_id: clubMember.ffbId,
+      iv: undefined,
+      iv_code: undefined,
     }
   }
   deleteMember(member: Member) {
@@ -385,8 +394,8 @@ export class MembersComponent implements OnInit {
 
   private refreshMembers(): void {
     this.membersService.listMembers().pipe(take(1)).subscribe((members: Member[]) => {
-      this.members = members;
-      this.avatar_urls$ = this.collect_avatars(members);
+      this.members = members.sort((a, b) => a.lastname.localeCompare(b.lastname, 'fr', { sensitivity: 'base' }));
+      this.avatar_urls$ = this.collect_avatars(this.members);
       this.filterOnStatus(this.selected_filter);
     });
   }
@@ -398,5 +407,6 @@ export class MembersComponent implements OnInit {
       }
     });
   }
+  
 
 }

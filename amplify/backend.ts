@@ -37,6 +37,15 @@ const backend = defineBackend({
   surveyRespond,
 });
 
+// Add SSM GetParameter permission to ffbProxy Lambda function
+backend.ffbProxy.resources.lambda.role?.addToPrincipalPolicy(
+  new PolicyStatement({
+    effect: Effect.ALLOW,
+    actions: ["ssm:GetParameter"],
+    resources: ["arn:aws:ssm:eu-west-3:*:parameter/FFB_API_V2_TOKEN"],
+  })
+);
+
 // create a new API stack
 const apiStack = backend.createStack("api-stack");
 
@@ -179,13 +188,13 @@ httpApi.addRoutes({
 });
 
 httpApi.addRoutes({
-  path: "/v1/{proxy+}",
+  path: "/ffb/{proxy+}",
   methods: [ HttpMethod.PUT, HttpMethod.POST, HttpMethod.DELETE],
   integration: httpLambdaIntegration,
   authorizer: userPoolAuthorizer,
 });
 httpApi.addRoutes({
-  path: "/v1/{proxy+}",
+  path: "/ffb/{proxy+}",
   methods: [HttpMethod.GET],
   integration: httpLambdaIntegration,
 });
@@ -249,6 +258,15 @@ backend.surveyRespond.addEnvironment('SURVEY_TOKEN_TABLE_NAME', surveyTokenTable
 backend.surveyRespond.addEnvironment('SURVEY_RESPONSE_TABLE_NAME', surveyResponseTable.tableName);
 backend.surveyRespond.addEnvironment('SURVEY_TABLE_NAME', surveyTable.tableName);
 backend.surveyRespond.addEnvironment('SURVEY_QUESTION_TABLE_NAME', surveyQuestionTable.tableName);
+
+// FFB proxy migration flags (gradual V2 rollout)
+backend.ffbProxy.addEnvironment('FFB_MIGRATION_ENABLED', 'true');
+backend.ffbProxy.addEnvironment('FFB_API_VERSION', 'v1');
+backend.ffbProxy.addEnvironment('FFB_API_V2_ENDPOINTS', 'organizations/1438/club_tournament');
+backend.ffbProxy.addEnvironment('FFB_API_V2_BASE_URL', 'https://api-lancelot.ffbridge.fr/');
+backend.ffbProxy.addEnvironment('FFB_V2_GROUP_ID', '21334');
+backend.ffbProxy.addEnvironment('FFB_API_V1_TOKEN', '');
+backend.ffbProxy.addEnvironment('FFB_PROXY_DEBUG', 'true');
 
 // Grant SES permissions to sesMailing Lambda
 const sesPolicy = new Policy(apiStack, "SesMailingPolicy", {

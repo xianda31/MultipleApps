@@ -1,311 +1,302 @@
-import { Handler } from "aws-lambda";
-// const url = "https://jsonplaceholder.typicode.com/users";
-const ffbUrl = "https://api.ffbridge.fr/api/v1/";
-const token = "Bearer eyJhbGciOiJSUzI1NiJ9.eyJyb2xlcyI6WyJST0xFX1dPUktBUkVBX1VTRVIiLCJST0xFX1VTRVIiXSwidXNlcm5hbWUiOiIyNDM5NzUyIiwicGluIjoiMDAwMCIsIm1lZGlhIjoxLCJkZWZhdWx0X2xhbmRpbmdwYWdlIjoibGljZW5zZWUiLCJlbWFpbCI6ImNocnJlbm91eEB5YWhvby5mciIsInBob25lIjoiMDc0OTE5NDAxOCIsInRva2VuX3NlY3VyaXplciI6bnVsbCwic2lnbl9pbl9zZWNvbmRfZmFjdG9yIjpmYWxzZSwiaXNfYWRtaW5fdXNlciI6ZmFsc2UsImlzX3ZhbGlkX2xpY2Vuc2UiOnRydWUsImlhdCI6MTY3NjgxOTQxNiwiZXhwIjozMTU1Mjc2ODE5NDE2LCJpc19mcm9tX2V4dGVybmFsX2FwaSI6ZmFsc2UsImd0bWNsaWVudGlkIjoiMCJ9.APMJKiStZDgkLTESRvJpS6cz67ZLLZXaHLMZoyqbEDTG7hs2NnI8HZZ6Kl8eZxjMt-TOZgYfiHnaX93zXUXFQ0b3BikSlbTJOl9bSZ56cnlGrKVeW39faW-JoUiXYHsg2UIwaiZfCCbDzKJhM4Bs2L3r0tlOV3ONxgNmbeRXEkafY7-VSTiq7NDU4HEPUNMjCNLU16a8H4N92WGykTntfgS81IJGswmtH3FkfKjvoncV_4Ph32Ik8JezqhO_SDKXFu4jnFHOr98W61KKrvgZsUb7ZjSnCS8WPHv60yor8xMJmV-Bl9YbydG0BRnn-NNvZvNPQkP047CGaLCqLQHNl0qmh3Hf6n4E5BGZ3yivtXtVqhGM3uITOiajoy8hBcku0s4fFnYf1pIExrA8NF9T5NVcaJMutNBPMop82IUThgiVFS1wAGhnubQCT3Qz9kvpB1hCRRtJHRBVxDU9wBodKX6QdjfbKA8InW-AiM2hlhNG-fuMU5nQGj-CGzPrriTST4UVKEST6sSFEBIdOiygYPgVwIXS1BCZz3NzBm36H7spu4TUf1nQj9F4QS7P8AoglakIuTcpxx2RzrJgEY5CVlwdTwuHfPw1x5Xqdd11-cABpV7X3aMKYaf4WM84WNUVuvyl4LtiNMO3zUaSk-mSqSTn2HsGbr9IR3S4WKF89EE";
+﻿import { Handler } from "aws-lambda";
+import { SSMClient, GetParameterCommand } from "@aws-sdk/client-ssm";
+
+const ssmClient = new SSMClient({ region: process.env.AWS_REGION || "eu-west-3" });
+
+function isProxyDebugEnabled(): boolean {
+  return (process.env.FFB_PROXY_DEBUG || "false").toLowerCase() === "true";
+}
+
+function asBearerToken(token: string): string {
+  const trimmed = (token || "").trim();
+  if (!trimmed) {
+    console.warn("[FFB API] asBearerToken: Empty token provided!");
+    return "";
+  }
+  const result = trimmed.toLowerCase().startsWith("bearer ") ? trimmed : `Bearer ${trimmed}`;
+  const preview = result.substring(0, 30) + "..." + result.substring(result.length - 10);
+  console.log(`[FFB API] asBearerToken: Prepared token: ${preview}`);
+  return result;
+}
+
+interface FFBApiConfig {
+  baseUrl: string;
+  token: string;
+}
+
+// FFB V2 API Configuration
+const FFB_API_V2: FFBApiConfig = {
+  baseUrl: process.env.FFB_API_V2_BASE_URL || "https://api-lancelot.ffbridge.fr/",
+  token: "",
+};
+
+async function loadV2Token(): Promise<void> {
+  try {
+    console.log("[FFB API] Loading V2 token from SSM Parameter Store...");
+    const response = await ssmClient.send(
+      new GetParameterCommand({
+        Name: "FFB_API_V2_TOKEN",
+        WithDecryption: true,
+      })
+    );
+    const tokenValue = response.Parameter?.Value || "";
+    FFB_API_V2.token = asBearerToken(tokenValue);
+    const preview = FFB_API_V2.token.substring(0, 30) + "..." + FFB_API_V2.token.substring(FFB_API_V2.token.length - 20);
+    console.log(`[FFB API] ✅ V2 token loaded from SSM: ${preview}`);
+  } catch (error) {
+    const message = `[FFB API] ❌ CRITICAL: Failed to fetch token from SSM Parameter Store: ${error}. Token is required. Please manually update FFB_API_V2_TOKEN in AWS SSM.`;
+    console.error(message);
+    throw new Error(message);
+  }
+}
+
+const CLUB_CODE = process.env.FFB_CLUB_CODE || "5500020";
+const CLUB_GROUP_ID = process.env.FFB_GROUP_ID || "21334";
+
+function formatDateYYYYMMDD(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function addDays(date: Date, days: number): Date {
+  const copy = new Date(date);
+  copy.setDate(copy.getDate() + days);
+  return copy;
+}
+
+async function fetchFFBApi(
+  ffbEndpoint: string,
+  options?: RequestInit,
+  clientToken?: string,
+  requiresAuth: boolean = true
+): Promise<any> {
+  // Only load token if endpoint requires authentication
+  if (requiresAuth) {
+    // Always load from SSM first. Only use clientToken if it's explicitly provided via x-ffb-token
+    if (clientToken) {
+      FFB_API_V2.token = clientToken;
+      console.log("[FFB API] Using explicit x-ffb-token from client");
+    } else {
+      // Load from SSM or use fallback
+      await loadV2Token();
+    }
+  } else {
+    console.log(`[FFB API] Public endpoint, skipping authentication for ${ffbEndpoint}`);
+  }
+
+  const baseUrl = FFB_API_V2.baseUrl.endsWith("/") ? FFB_API_V2.baseUrl : `${FFB_API_V2.baseUrl}/`;
+  const url = baseUrl + ffbEndpoint;
+  const method = options?.method || "GET";
+
+  console.log(`[FFB API] V2 ${method} ${ffbEndpoint} (auth=${requiresAuth})`);
+  
+  if (requiresAuth) {
+    const tokenPreview = FFB_API_V2.token.substring(0, 30) + "..." + FFB_API_V2.token.substring(FFB_API_V2.token.length - 10);
+    console.log(`[FFB API] Token: ${tokenPreview} (length=${FFB_API_V2.token.length})`);
+  }
+
+  try {
+    const headers: Record<string, string> = {};
+    if (options?.headers && typeof options.headers === 'object') {
+      Object.assign(headers, options.headers);
+    }
+    if (requiresAuth && FFB_API_V2.token) {
+      headers.Authorization = FFB_API_V2.token;
+    }
+
+    const response = await fetch(url, {
+      ...options,
+      headers,
+    });
+
+    const rawBody = await response.text();
+    let data: any = null;
+    try {
+      data = rawBody ? JSON.parse(rawBody) : null;
+    } catch {
+      data = {
+        error: "Non-JSON upstream response",
+        upstreamStatus: response.status,
+        body: rawBody,
+      };
+    }
+
+    console.log(`[FFB API] Response status=${response.status} for ${ffbEndpoint}`);
+
+    if (!response.ok) {
+      const sample = rawBody.length > 200 ? rawBody.substring(0, 200) + "..." : rawBody;
+      console.error(`[FFB API][ERR] Upstream status=${response.status} endpoint=${ffbEndpoint} body=${sample}`);
+
+      if (data && typeof data === "object") {
+        data.upstreamStatus = response.status;
+        data.upstreamOk = false;
+        data.endpoint = ffbEndpoint;
+      }
+      return data;
+    }
+
+    return data;
+  } catch (error) {
+    console.error(`[FFB API] Error fetching ${ffbEndpoint}:`, error);
+    throw error;
+  }
+}
+
+function httpResponse(statusCode: number, data: any): any {
+  return {
+    statusCode,
+    body: JSON.stringify(data),
+    headers: { "Content-Type": "application/json" },
+  };
+}
+
+function requiresAuthentication(route: string): boolean {
+  // Public endpoints that don't need authentication
+  const publicEndpoints = [
+    "ffb/seasons/current",
+    "ffb/seasons/next",
+    "ffb/organizations",
+  ];
+  return !publicEndpoints.includes(route);
+}
 
 export const handler: Handler = async (event) => {
-    try {
-        let path = event.pathParameters?.proxy || "";
-        // Handle dynamic competitions/organizations/{organization_id}
-        const competitionsOrgMatch = path.match(/^competitions\/organizations\/(\d+)$/);
-        if (competitionsOrgMatch) {
-            const organization_id = competitionsOrgMatch[1];
-            // Support ?search=... and/or ?season_id=...
-            const params = [];
-            if (event.queryStringParameters?.search) {
-                params.push("search=" + encodeURIComponent(event.queryStringParameters.search));
-            }
-            if (event.queryStringParameters?.season_id) {
-                params.push("season_id=" + encodeURIComponent(event.queryStringParameters.season_id));
-            }
-            const url = params.length > 0
-                ? ffbUrl + `competitions/organizations/${organization_id}` + "?" + params.join("&")
-                : ffbUrl + `competitions/organizations/${organization_id}`;
-            try {
-                const res = await fetch(
-                    url,
-                    { headers: { Authorization: token }, },
-                );
-                return res.json();
-            } catch (e) {
-                return {
-                    'statusCode': 500,
-                    'body': 'remote server error :' + e
-                };
-            }
-        }
-        switch (path) {
-            case "members":
-                // recuperer le parametre person_id
-                if (event.queryStringParameters?.person_id) {
-                const person_id = event.queryStringParameters.person_id ;
-                try {
-                    const res = await fetch (
-                        ffbUrl + path + '/' + person_id,
-                        { headers: { Authorization: token }, },
-                    );
-                    return res.json();
-                } catch (e) {
-                    return {
-                        'statusCode': 500,
-                        'body': 'remote server error :' + e
-                    };
-                }
-                }
-                return {
-                    'statusCode': 400,
-                    'body': 'proxy error : missing person_id'
-                };
+  try {
+    const xFfbToken = event.headers?.["x-ffb-token"];
+    console.log("[FFB API] Available headers:", Object.keys(event.headers || {}));
 
+    // Only use explicit x-ffb-token header, IGNORE Authorization (it's AWS SigV4, not FFB token)
+    const clientToken = xFfbToken ? asBearerToken(xFfbToken) : undefined;
 
-
-            case "search-members":
-                // traitement search-members&search=...
-                if (event.queryStringParameters?.search) {
-                    try {
-                        const res = await fetch(
-                            ffbUrl + path + "?search=" + event.queryStringParameters.search,
-                            { headers: { Authorization: token }, },
-                        );
-                        return res.json();
-                    } catch (e) {
-                        return {
-                            'statusCode': 500,
-                            'body': 'remote server error :' + e
-                        };
-                    }
-                }
-                return {
-                    'statusCode': 400,
-                    'body': 'proxy error : invalid path'
-                }
-
-            case "subscription-search-members":
-                if (event.queryStringParameters?.search) {
-                    try {
-                        const res = await fetch(
-                            ffbUrl + path +
-                            "?search=" + event.queryStringParameters.search
-                            + "&alive=1&bbo=false",
-                            { headers: { Authorization: token }, },
-                        );
-                        return res.json();
-                    } catch (e) {
-                        return {
-                            'statusCode': 500,
-                            'body': 'remote server error :' + e
-                        };
-                    }
-                }
-                return {
-                    'statusCode': 400,
-                    'body': 'proxy error : invalid path'
-                };
-            // ----------------------------------------API Competitions 
-
-            case "seasons":
-                try {
-                    const res = await fetch(
-                        ffbUrl + path,
-                        { headers: { Authorization: token }, },
-                    );
-                    return res.json();
-                } catch (e) {
-                    return {
-                        'statusCode': 500,
-                        'body': 'remote server error :' + e
-                    };
-                }
-
-
-
-            case "organizations/all":
-                try {
-                    const res = await fetch(
-                        ffbUrl + path,
-                        { headers: { Authorization: token }, },
-                    );
-                    return res.json();
-                } catch (e) {
-                    return {
-                        'statusCode': 500,
-                        'body': 'remote server error :' + e
-                    };
-                }
-
-
-            case "competitions/final-ranking":
-                // attend queryStringParameters.competition_id et .season_id
-                if (event.queryStringParameters?.competition_id && event.queryStringParameters?.organization_id) {
-                    const competition_id = event.queryStringParameters.competition_id;
-                    const organization_id = event.queryStringParameters.organization_id ;
-                    const finalRankingPath = `competitions/${competition_id}/organizations/${organization_id}/final-ranking`;
-                    try {
-                        const res = await fetch(
-                            ffbUrl + finalRankingPath,
-                            { headers: { Authorization: token }, },
-                        );
-                        return res.json();
-                    } catch (e) {
-                        return {
-                            'statusCode': 500,
-                            'body': 'remote server error :' + e
-                        };
-                    }
-                }
-                return {
-                    'statusCode': 400,
-                    'body': 'proxy error : missing competition_id '
-                };
-            case "competitions/stades":
-                // attend queryStringParameters.competition_id et .season_id
-                if (event.queryStringParameters?.competition_id && event.queryStringParameters?.organization_id) {
-                    const competition_id = event.queryStringParameters.competition_id;
-                    const organization_id = event.queryStringParameters.organization_id ;
-                    const finalRankingPath = `competitions/${competition_id}/organizations/${organization_id}/stades`;
-                    try {
-                        const res = await fetch(
-                            ffbUrl + finalRankingPath,
-                            { headers: { Authorization: token }, },
-                        );
-                        return res.json();
-                    } catch (e) {
-                        return {
-                            'statusCode': 500,
-                            'body': 'remote server error :' + e
-                        };
-                    }
-                }
-                return {
-                    'statusCode': 400,
-                    'body': 'proxy error : missing competition_id '
-                };
-
-            case "competitions/stades":
-                // attend queryStringParameters.competition_id et .season_id
-                if (event.queryStringParameters?.competition_id) {
-                    const competition_id = event.queryStringParameters.competition_id;
-                    const finalRankingPath = `competitions/${competition_id}/organizations/1/stades`;
-                    try {
-                        const res = await fetch(
-                            ffbUrl + finalRankingPath,
-                            { headers: { Authorization: token }, },
-                        );
-                        return res.json();
-                    } catch (e) {
-                        return {
-                            'statusCode': 500,
-                            'body': 'remote server error :' + e
-                        };
-                    }
-                }
-                return {
-                    'statusCode': 400,
-                    'body': 'proxy error : missing competition_id '
-                };
-
-
-            // ----------------------------------------API Tournament management for club 1438
-            case "organizations/1438/club_tournament":
-            case "organizations/1438/members":
-                try {
-                    const res = await fetch(
-                        ffbUrl + path,
-                        { headers: { Authorization: token }, },
-                    );
-                    return res.json();
-                } catch (e) {
-                    return {
-                        'statusCode': 500,
-                        'body': 'remote server error :' + e
-                    };
-                }
-
-            case "organizations/1438/tournament":
-
-                let method = event.requestContext?.http.method || "GET";
-
-                if (method === "GET" && event.queryStringParameters?.id) {
-                    try {
-                        const res = await fetch(
-                            ffbUrl + path + "/" + event.queryStringParameters.id,
-                            {
-                                method: "GET",
-                                headers: { Authorization: token },
-                            },
-                        );
-                        return res.json();
-                    } catch (e) {
-                        return {
-                            'statusCode': 500,
-                            'body': 'remote server error :' + e
-                        };
-                    }
-                }
-
-                if (method === "DELETE" && event.queryStringParameters?.id && event.queryStringParameters?.team_id) {
-                    try {
-                        const res = await fetch(
-                            ffbUrl + path
-                            + "/" + event.queryStringParameters.id
-                            + "/subscription" + "/" + event.queryStringParameters.team_id,
-                            {
-                                method: "DELETE",
-                                headers: { Authorization: token },
-                            },
-                        );
-                        return res.json();
-                    } catch (e) {
-                        return {
-                            'statusCode': 500,
-                            'body': 'remote server error :' + e
-                        };
-                    }
-                }
-
-
-
-                if (method === "POST"
-                    && event.queryStringParameters?.id
-                    && event.body !== null) {
-                    try {
-                        const res = await fetch(
-                            ffbUrl + path + "/" + event.queryStringParameters.id + "/subscription",
-                            {
-                                method: "POST",
-                                headers: { Authorization: token, "Content-Type": "application/json" },
-                                body: event.body || "{}",
-                            }
-                        );
-                        return res.json();
-                    } catch (e) {
-                        return {
-                            'statusCode': 500,
-                            'body': 'remote server error :' + e
-                        };
-                    }
-                }
-
-
-                return {
-                    'statusCode': 400,
-                    'body': 'proxy error : invalid path'
-                };
-
-
-
-            default:
-                return {
-                    'statusCode': 400,
-                    'body': 'proxy error : invalid path'
-                };
-        }
-
+    if (clientToken) {
+      const preview = clientToken.substring(0, 30) + "..." + clientToken.substring(clientToken.length - 20);
+      console.log(`[FFB API] Client x-ffb-token received: ${preview}`);
+    } else {
+      console.log("[FFB API] No x-ffb-token header, will load from SSM");
     }
-    catch (e) {
-        return {
-            'statusCode': 400,
-            'body': 'proxy error' + e
-        };
+
+    const route = `ffb/${event.pathParameters?.proxy || ""}`;
+    const queryParams = event.queryStringParameters || {};
+    const method = event.requestContext?.http.method || "GET";
+
+    console.log(`[FFB API] Route: ${route}`);
+
+    let ffbEndpoint: string;
+
+    switch (route) {
+      case "ffb/seasons/current":
+        ffbEndpoint = "seasons/current";
+        break;
+      case "ffb/seasons/next":
+        ffbEndpoint = "seasons/next";
+        break;
+
+      case "ffb/persons/search":
+        {
+          const params = new URLSearchParams();
+          if (queryParams.name) params.set("name", queryParams.name);
+          params.set("sortField", queryParams.sortField || "lastName");
+          if (queryParams.alive) params.set("alive", queryParams.alive);
+          ffbEndpoint = `persons/search?${params.toString()}`;
+        }
+        break;
+
+      case "ffb/club-members":
+        {
+          const params = new URLSearchParams();
+          params.set("ffbCode", CLUB_CODE);
+          if (queryParams.seasonId) params.set("seasonId", queryParams.seasonId);
+          params.set("currentPage", queryParams.currentPage || "1");
+          params.set("maxPerPage", "80");
+          params.set("sortField", "lastName");
+          ffbEndpoint = `persons/search?${params.toString()}`;
+        }
+        break;
+
+      case "ffb/club-sessions":
+        {
+          const now = new Date();
+          const dateFrom = formatDateYYYYMMDD(now);
+          const dateTo = formatDateYYYYMMDD(addDays(now, 28));
+
+          const params = new URLSearchParams();
+          params.set("dateFrom", dateFrom);
+          params.set("dateTo", dateTo);
+          params.set("currentPage", "1");
+          params.set("maxPerPage", "80");
+          params.set("groupId", CLUB_GROUP_ID);
+          params.append("context[]", "groupSession.entryCount");
+
+          ffbEndpoint = `competitions/groupSessions/search?${params.toString()}`;
+        }
+        break;
+
+      case "ffb/organizations":
+        ffbEndpoint = "organizations/all";
+        break;
+
+      case "ffb/person":
+        if (!queryParams.id) {
+          return httpResponse(400, { error: "Missing person id" });
+        }
+        ffbEndpoint = `persons/${queryParams.id}`;
+        break;
+
+      case "ffb/competition-results":
+        if (!queryParams.competition_id || !queryParams.organization_id) {
+          return httpResponse(400, { error: "Missing competition_id or organization_id" });
+        }
+        ffbEndpoint = `competitions/${queryParams.competition_id}/organizations/${queryParams.organization_id}/final-ranking`;
+        break;
+
+      case "ffb/competition-phases":
+        if (!queryParams.competition_id) {
+          return httpResponse(400, { error: "Missing competition_id" });
+        }
+        {
+          const org_id = queryParams.organization_id || "1";
+          ffbEndpoint = `competitions/${queryParams.competition_id}/organizations/${org_id}/stades`;
+        }
+        break;
+
+      case "ffb/club-team":
+        if (!queryParams.id) {
+          return httpResponse(400, { error: "Missing tournament id" });
+        }
+        ffbEndpoint = `organizations/${CLUB_CODE}/tournament/${queryParams.id}`;
+        break;
+
+      default:
+        return httpResponse(404, { error: `Unknown route: ${route}` });
     }
+
+    const options: RequestInit = { method };
+
+    if ((method === "POST" || method === "PUT") && event.body) {
+      options.headers = { "Content-Type": "application/json" };
+      options.body = event.body;
+    }
+
+    const requiresAuth = requiresAuthentication(route);
+    const data = await fetchFFBApi(ffbEndpoint, options, clientToken, requiresAuth);
+
+    let statusCode = 200;
+    if (data && typeof data === "object") {
+      if (data.upstreamStatus) {
+        statusCode = data.upstreamStatus;
+      } else if (data.error) {
+        statusCode = 400;
+      }
+    }
+
+    return httpResponse(statusCode, data);
+  } catch (error) {
+    console.error("[FFB API] Handler error:", error);
+    return httpResponse(500, {
+      error: "Proxy error",
+      details: error instanceof Error ? error.message : String(error),
+    });
+  }
 };

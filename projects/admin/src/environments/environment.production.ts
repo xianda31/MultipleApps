@@ -10,7 +10,9 @@ export const environment = {
     s3_prod_bucket: '',
     s3_sandbox_bucket: '',
     back_guard: true,
-    low_game_card_message: true
+    low_game_card_message: true,
+    ffbProxyPathPrefix: '/v1',
+    ffbProxyPathOverrides: {}
 
 };
 

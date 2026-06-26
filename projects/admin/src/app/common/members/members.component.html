@@ -99,10 +99,10 @@
             <td class="text-center">
               @if (member.license_status === 'duly_registered') {
               <span
-                ngbTooltip="{{member.license_taken_at === 'BCSTO' ? 'licencié au Club' : 'Sympathisant licencié au ' + member.license_taken_at}}"
+                ngbTooltip="{{member.license_taken_at === 'Bridge Club de Saint Orens' ? 'licencié au Club' : 'Sympathisant licencié au ' + member.license_taken_at}}"
                 tooltipClass="my-custom-class" placement="right">
                 <i [style]="member.membership_date ? '' : 'color : red;'"
-                  [class]="member.license_taken_at !== 'BCSTO' ? 'bi bi-tencent-qq' : 'bi bi-person-square'"></i>
+                  [class]="member.license_taken_at !== 'Bridge Club de Saint Orens' ? 'bi bi-tencent-qq' : 'bi bi-person-square'"></i>
               </span>
               } @else if (member.license_status === 'unregistered') {
               @if (member.membership_date) {

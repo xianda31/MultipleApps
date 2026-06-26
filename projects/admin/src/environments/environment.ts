@@ -10,5 +10,7 @@ export const environment = {
     back_guard: true,
     mailingCcEmail: 'xxxxx',
     low_game_card_message: false,
+    ffbProxyPathPrefix: '/v1',
+    ffbProxyPathOverrides: {},
 
 };
