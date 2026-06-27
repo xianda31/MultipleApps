@@ -45,6 +45,9 @@ export class GetMemberSettingsComponent {
       ico_url$: [of(this.default_ico)],
       has_avatar: [false],
       accept_mailing: [true],
+      city: [''],
+      email: [''],
+      phone_one: [''],
     });
   }
 
@@ -56,12 +59,18 @@ export class GetMemberSettingsComponent {
     this.initialSettings = {
       has_avatar: this.member.has_avatar ?? false,
       accept_mailing: this.member.accept_mailing ?? true,
+      city: this.member.city ?? '',
+      email: this.member.email ?? '',
+      phone_one: this.member.phone_one ?? '',
     };
 
     this.preferenceForm.patchValue({
       ico_url$: this.memberSettingsService.getAvatarUrl(this.member),
       accept_mailing: this.member.accept_mailing ?? true,
-      has_avatar: this.member.has_avatar ?? false
+      has_avatar: this.member.has_avatar ?? false,
+      city: this.member.city ?? '',
+      email: this.member.email ?? '',
+      phone_one: this.member.phone_one ?? '',
     });
 
 
@@ -78,6 +87,9 @@ export class GetMemberSettingsComponent {
     let new_preference: Member_settings = {
       has_avatar: this.preferenceForm.value.has_avatar,
       accept_mailing: this.preferenceForm.value.accept_mailing,
+      city: this.preferenceForm.value.city ?? '',
+      email: this.preferenceForm.value.email ?? '',
+      phone_one: this.preferenceForm.value.phone_one ?? '',
     };
     if (this.base64_ico) {
       this.upload_avatar_file();

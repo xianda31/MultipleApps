@@ -41,7 +41,7 @@ export class MembersComponent implements OnInit {
   sympatisants_number: number = 0;
   no_license_nbr: number = 0;
   lost_members_nbr: number = 0;
-  new_player!: FFBplayer;
+  new_player!: ClubMember;
   season: string = '';
   operations: Revenue[] = [];
   FILTERS = FILTER;
@@ -154,14 +154,16 @@ export class MembersComponent implements OnInit {
     this.lost_members_nbr = this.members.filter(m => !m.membership_date && (m.license_status === LicenseStatus.UNREGISTERED)).length;
   }
 
-  add_licensee(player: FFBplayer) {
-    if (player) {
-      const new_member: Member = this.player2member(player);
-      this.membersService.createMember(new_member).then(() => {
-        this.refreshMembers();
-        this.new_player = null as any;
-      });
-    }
+  add_licensee(player: ClubMember) {
+    if (!player) { return; }
+
+    const ffbIdPadded = (player as any).license_number_padded || player.ffbId.toString().padStart(8, '0');
+    const new_member: Member = this.createNewMember(player, ffbIdPadded);
+    console.log('Ajout d\'un nouveau membre :', new_member);
+    this.membersService.createMember(new_member).then(() => {
+      this.refreshMembers();
+      this.new_player = null as any;
+    });
   }
 
   add_newbee() {
@@ -175,10 +177,10 @@ export class MembersComponent implements OnInit {
             this.toastService.showWarning('Nouveau membre', `Un membre avec l'email ${newbee.email} existe déjà`);
             return;
           }
-          
+
           let new_member: Member = {
             id: '',
-            gender: newbee.gender=== 1 ? 'M' : 'F',
+            gender: newbee.gender === 1 ? 'M' : 'F',
             firstname: newbee.firstname,
             lastname: newbee.lastname.toUpperCase(),
             license_number: '??' + newbee.lastname.toUpperCase().slice(0, 3) + newbee.firstname.slice(0, 3),
@@ -407,6 +409,6 @@ export class MembersComponent implements OnInit {
       }
     });
   }
-  
+
 
 }

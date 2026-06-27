@@ -198,8 +198,11 @@ export const handler: Handler = async (event) => {
           const params = new URLSearchParams();
           if (queryParams.name) params.set("name", queryParams.name);
           params.set("sortField", queryParams.sortField || "lastName");
+          params.set("currentPage", queryParams.currentPage || "1");
+          params.set("maxPerPage", queryParams.maxPerPage || "80");
           if (queryParams.alive) params.set("alive", queryParams.alive);
           ffbEndpoint = `persons/search?${params.toString()}`;
+          console.log(`[FFB API] persons/search: name=${queryParams.name} currentPage=${queryParams.currentPage || "1"} maxPerPage=${queryParams.maxPerPage || "80"}`);
         }
         break;
 

@@ -1,6 +1,6 @@
 import { Component, forwardRef, Input } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR, ReactiveFormsModule } from '@angular/forms';
-import { FFBplayer } from '../interface/FFBplayer.interface';
+import { ClubMember } from '../interface/club-member.interface';
 import { FFB_proxyService } from '../services/ffb.service';
 import { CommonModule } from '@angular/common';
 import { CustomDropdownComponent } from '../../components/custom-dropdown/custom-dropdown.component';
@@ -22,15 +22,15 @@ export class InputPlayerComponent implements ControlValueAccessor {
   @Input() placeholder!: string;
 
   str_player: string = '';
-  players: FFBplayer[] = [];
-  private selectedPlayer: FFBplayer | null = null;
+  players: ClubMember[] = [];
+  private selectedPlayer: ClubMember | null = null;
   private hasBlurred = false;
 
-  onChange: (value: FFBplayer | null) => void = () => { };
+  onChange: (value: ClubMember | null) => void = () => { };
   onTouch: () => void = () => { };
   disabled = false;
 
-  displayPlayerFn = (player: FFBplayer) => `${player.lastname} ${player.firstname} (${player.license_number})`;
+  displayPlayerFn = (player: ClubMember) => `${player.lastName} ${player.firstName} (${player.ffbId})`;
 
   constructor(
     private ffbService: FFB_proxyService
@@ -42,7 +42,7 @@ export class InputPlayerComponent implements ControlValueAccessor {
         this.str_player = input;
         this.selectedPlayer = null;
       } else if (input && typeof input === 'object') {
-        const player = input as FFBplayer;
+        const player = input as ClubMember;
         this.selectedPlayer = player;
         this.str_player = this.displayPlayerFn(player);
       }
@@ -80,13 +80,15 @@ export class InputPlayerComponent implements ControlValueAccessor {
         .then((players) => {
           this.players = players;
         });
+    } else {
+      console.log(value,' : Input too short for search');
     }
   }
 
-  onPlayerSelected(player: FFBplayer) {
+  onPlayerSelected(player: ClubMember) {
     this.selectedPlayer = player;
     this.hasBlurred = false;
-    this.str_player = `${player.lastname} ${player.firstname} (${player.license_number})`;
+    this.str_player = `${player.lastName} ${player.firstName} (${player.ffbId})`;
     this.onChange(player);
   }
 

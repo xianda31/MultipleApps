@@ -79,6 +79,10 @@ export class MembersService {
     try {
       const newMember = await this.dbHandler.createMember(member_input);
       this.toastService.showSuccess('Membre créé', `${newMember.lastname} ${newMember.firstname}`);
+      // Initialize cache if empty
+      if (!this._members) {
+        this._members = [];
+      }
       this._members.push(newMember as Member);
       this._members = this._members.sort((a, b) => a.lastname.localeCompare(b.lastname))
       this._members$.next(this._members);

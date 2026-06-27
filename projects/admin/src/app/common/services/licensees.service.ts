@@ -28,11 +28,5 @@ export class LicenseesService {
     return this.clubMembers$;
   }
 
-  /**
-   * Get IV (International Values) for a person
-   */
-  async get_iv(person_id: number): Promise<FFBPersonIV | undefined> {
-    const person = await this.FFBService.getFFBPerson(person_id);
-    return person?.iv;
-  }
+ 
 }

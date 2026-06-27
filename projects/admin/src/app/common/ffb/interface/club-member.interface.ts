@@ -23,6 +23,7 @@ export interface ClubMember {
   deathSeason: any | null;
   season: SeasonInfo;
   mainRegistration: RegistrationInfo;
+  license_number_padded?: string; // Added by adapter: ffbId padded to 8 digits for DB matching
 }
 
 export interface ClubInfo {

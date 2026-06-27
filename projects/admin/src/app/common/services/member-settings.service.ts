@@ -63,15 +63,21 @@ private settings_change$: BehaviorSubject<number> = new BehaviorSubject<number>(
         if (settings) {
           // Les settings retournés contiennent les nouvelles valeurs
           const settings_changed = (settings.has_avatar !== member.has_avatar) ||
-            (settings.accept_mailing !== member.accept_mailing);
+            (settings.accept_mailing !== member.accept_mailing) ||
+            (settings.city !== member.city) ||
+            (settings.email !== member.email) ||
+            (settings.phone_one !== member.phone_one);
 
           console.log('Settings returned from modal:', settings);
-          console.log('Current member settings:', { has_avatar: member.has_avatar, accept_mailing: member.accept_mailing });
+          console.log('Current member settings:', { has_avatar: member.has_avatar, accept_mailing: member.accept_mailing, city: member.city, email: member.email, phone_one: member.phone_one });
           console.log('Settings changed?', settings_changed);
 
           if (settings_changed) {
             member.has_avatar = settings.has_avatar;
             member.accept_mailing = settings.accept_mailing;
+            member.city = settings.city;
+            member.email = settings.email;
+            member.phone_one = settings.phone_one;
             this.set_settingsChange();
             this.membersService.updateMember(member).then(() => {
               this.toastService.showSuccess(` préférences de ${this.membersService.full_name(member)}`, 'Mise à jour effectuée');

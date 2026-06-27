@@ -3,6 +3,9 @@ import { Schema } from "../../../../../../amplify/data/resource";
 export interface Member_settings{
   has_avatar: boolean;
   accept_mailing: boolean;
+  city: string;
+  email: string;
+  phone_one: string;
 }
 
 export interface Member extends Member_settings{
@@ -12,10 +15,7 @@ export interface Member extends Member_settings{
   lastname: string;
   license_number: string;
   birthdate: string
-  city: string
   season: string
-  email: string
-  phone_one: string
   is_sympathisant: boolean
   license_status: string
   license_taken_at: string

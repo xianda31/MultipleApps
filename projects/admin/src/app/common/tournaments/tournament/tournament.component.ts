@@ -4,10 +4,11 @@ import { ToastService } from '../../services/toast.service';
 import { AuthentificationService } from '../../authentification/authentification.service';
 import { Player, Team } from '../../ffb/interface/tournament_teams.interface';
 import { Member } from '../../interfaces/member.interface';
+import { ClubMember } from '../../ffb/interface/club-member.interface';
 import { FormControl, Validators, FormsModule, ReactiveFormsModule, ValidationErrors, AbstractControl, FormBuilder } from '@angular/forms';
 import { CommonModule, Location, UpperCasePipe } from '@angular/common';
 import { TournamentService } from '../../services/tournament.service';
-import { InputPlayerLicenseComponent } from '../../ffb/input-player/input-player-license.component';
+import { InputPlayerComponent } from '../../ffb/input-licensee/input-player.component';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -15,7 +16,7 @@ import { map } from 'rxjs/operators';
 @Component({
   selector: 'app-tournament',
   standalone: true,
-  imports: [UpperCasePipe, InputPlayerLicenseComponent, CommonModule, FormsModule, ReactiveFormsModule, NgbTooltipModule],
+  imports: [UpperCasePipe, InputPlayerComponent, CommonModule, FormsModule, ReactiveFormsModule, NgbTooltipModule],
   templateUrl: './tournament.component.html',
   styleUrl: './tournament.component.scss'
 })
@@ -66,7 +67,10 @@ export class TournamentComponent implements OnInit {
   }
 
   player2_validator = (control: AbstractControl): ValidationErrors | null => {
-    if (this.has_subscribed(Number(control.value))) {
+    if (!control.value) return null; // Allow empty (not yet selected)
+    const clubMember = control.value as ClubMember;
+    const licenseNumber = clubMember.license_number_padded || clubMember.ffbId.toString().padStart(8, '0');
+    if (this.has_subscribed(Number(licenseNumber))) {
       return { 'already_engaged': true };
     }
     return null;
@@ -101,7 +105,9 @@ export class TournamentComponent implements OnInit {
   subscribeWithPlayer2() {
     let license_pair: string[] = [];
     license_pair.push(this.whoAmI!.license_number.toString());
-    license_pair.push(this.player2.value.toString());
+    const clubMember = this.player2.value as ClubMember;
+    const licenseNumber = clubMember.license_number_padded || clubMember.ffbId.toString().padStart(8, '0');
+    license_pair.push(licenseNumber);
     this.createTeam(license_pair);
   }
 

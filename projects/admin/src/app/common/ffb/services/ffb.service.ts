@@ -87,7 +87,7 @@ export class FFB_proxyService {
   }
 
 
-  async searchPlayersSuchAs(hint: string): Promise<FFBplayer[]> {
+  async searchPlayersSuchAs(hint: string, currentPage: number = 1, maxPerPage: number = 80): Promise<ClubMember[]> {
     try {
       const restOperation = get({
         apiName: this.API_NAME,
@@ -95,14 +95,15 @@ export class FFB_proxyService {
         options: {
           queryParams: {
             name: hint,
-            alive: "1"
+            currentPage: String(currentPage),
+            maxPerPage: String(maxPerPage)
           }
         }
       });
       const { body } = await restOperation.response;
-      // console.log('GET call succeeded: ', await body.text());
       const data = await body.json();
-      return toFfbPlayerList(data);
+      // FFB V2 returns { items: [...], pagination: {...} } - same format as club-members
+      return toClubMemberList(data);
     } catch (error) {
       console.log('GET call failed: ', error);
       return [];
@@ -123,12 +124,13 @@ export class FFB_proxyService {
           throw new Error('Réponse serveur invalide');
         }
       } catch (error: any) {
+        console.log('GET call failed: ', error);
         return Promise.reject(error);
       }
     })());
   }
 
-  async getAdherents(seasonId?: string): Promise<ClubMember[]> {
+  async getAdherents(seasonId?: string): Promise<ClubMember[]> {              // VALIDATED
     try {
       // In FFB V2, seasonId is required for club-members endpoint
       let actualSeasonId = seasonId || '';
