@@ -3,7 +3,6 @@ import { Observable, from } from 'rxjs';
 import { shareReplay } from 'rxjs/operators';
 import { ClubMember } from '../ffb/interface/club-member.interface';
 import { FFB_proxyService } from '../ffb/services/ffb.service';
-import { FFBPersonIV } from '../interfaces/FFBperson.interface';
 
 @Injectable({
   providedIn: 'root'

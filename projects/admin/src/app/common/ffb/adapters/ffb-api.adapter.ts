@@ -1,5 +1,4 @@
 import { Competition, CompetitionOrganization, CompetitionPhases, CompetitionSeason, CompetitionTeam } from '../../../back/competitions/competitions.interface';
-import { FFBPerson } from '../../interfaces/FFBperson.interface';
 import { ClubMember } from '../interface/club-member.interface';
 import { Tournament } from '../interface/club_tournament.interface';
 import { TournamentTeams } from '../interface/tournament_teams.interface';
@@ -13,9 +12,7 @@ import {
   ApiCompetitionSeasonDto,
   ApiCompetitionTeamDto,
   ApiFfbLicenseeDto,
-  ApiFfbPersonDto,
   ApiFfbPlayerDto,
-  ApiPersonDto,
   ApiTournamentDto,
   ApiTournamentTeamsDto,
 } from '../contracts/ffb-api.contracts';
@@ -206,20 +203,6 @@ export function toClubMemberList(payload: unknown): ClubMember[] {
   }));
 }
 
-export function toFfbPerson(payload: unknown): FFBPerson | null {
-  if (!payload || typeof payload !== 'object') {
-    return null;
-  }
-  return payload as unknown as ApiFfbPersonDto as unknown as FFBPerson;
-}
-
-export function toPerson(payload: unknown): FFBPerson | null {
-  if (!payload || typeof payload !== 'object') {
-    return null;
-  }
-  return payload as unknown as ApiPersonDto as unknown as FFBPerson;
-}
-
 export function toTournamentTeams(payload: unknown): TournamentTeams | null {
   if (!payload || typeof payload !== 'object') {
     return null;
@@ -270,7 +253,7 @@ export function toTournamentTeamsFromV2(
 export function toPersonV2(payload: unknown): { license_number: string; firstName: string; lastName: string } | null {
   if (!isRecord(payload)) return null;
 
-  const ffbId = asNumber(payload.ffbId, 0);
+  const ffbId = asNumber(payload['ffbId'], 0);
   if (!ffbId) {
     console.warn('[FFB Adapter] toPersonV2: ffbId missing or 0', payload);
     return null;
@@ -278,7 +261,7 @@ export function toPersonV2(payload: unknown): { license_number: string; firstNam
 
   return {
     license_number: ffbId.toString().padStart(8, '0'),
-    firstName: asString(payload.firstName, ''),
-    lastName: asString(payload.lastName, '').toUpperCase(),
+    firstName: asString(payload['firstName'], ''),
+    lastName: asString(payload['lastName'], '').toUpperCase(),
   };
 }

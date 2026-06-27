@@ -15,7 +15,6 @@ import { PhonePipe } from '../pipes/phone.pipe';
 import { MemberSettingsService } from '../services/member-settings.service';
 import { BookService } from '../../back/services/book.service';
 import { Revenue } from '../interfaces/accounting.interface';
-import { FFBPersonIV } from '../interfaces/FFBperson.interface';
 
 
 enum FILTER {

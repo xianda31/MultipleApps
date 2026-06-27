@@ -13,7 +13,6 @@ import { FFBplayer } from '../../../common/ffb/interface/FFBplayer.interface';
 import { MembersService } from '../../../common/services/members.service';
 import { ToastService } from '../../../common/services/toast.service';
 import { DBhandler } from "../../../common/services/graphQL.service";
-import { FFBPerson } from '../../../common/interfaces/FFBperson.interface';
 import { MemberSettingsService } from '../../../common/services/member-settings.service';
 import { FFB_proxyService } from '../../../common/ffb/services/ffb.service';
 import { PaymentMode } from '../../shop/cart/cart.interface';

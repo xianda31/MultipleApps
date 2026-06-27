@@ -5,7 +5,6 @@ import { ClubMember } from '../interface/club-member.interface';
 import { TournamentTeams } from '../interface/tournament_teams.interface';
 import { from, Observable } from 'rxjs';
 import { Competition, CompetitionOrganization, CompetitionPhases, CompetitionSeason, CompetitionTeam} from '../../../back/competitions/competitions.interface';
-import { FFBPerson } from '../../interfaces/FFBperson.interface';
 import { environment } from '../../../../environments/environment';
 import {
   toCompetitionList,
@@ -15,8 +14,6 @@ import {
   toCompetitionSeasonList,
   toCompetitionTeamList,
   toClubMemberList,
-  toFfbPerson,
-  toPerson,
   toTournamentList,
   toTournamentTeams,
   toTournamentTeamsFromV2,
@@ -65,27 +62,6 @@ export class FFB_proxyService {
     return `${normalizedPrefix}/${normalizedEndpoint}`;
   }
 
-
-  async get_player(person_id:number): Promise<FFBPerson | null> {
-    try {
-      const restOperation = get({
-        apiName: this.API_NAME,
-        path: this.buildPath(FFB_ENDPOINTS.memberByPersonId),
-        options: {
-          queryParams: {
-            id: person_id.toString()
-          }
-        }
-          });
-      const { body } = await restOperation.response;
-      const data = await body.json();
-      return toPerson(data);
-    } catch (error) {
-      console.log('GET call failed: ', error);
-      return null;
-
-    }
-  }
 
 
   async searchPlayersSuchAs(hint: string, currentPage: number = 1, maxPerPage: number = 80): Promise<ClubMember[]> {   // VALIDATED
