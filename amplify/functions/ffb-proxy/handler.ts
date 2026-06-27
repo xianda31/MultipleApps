@@ -198,12 +198,13 @@ export const handler: Handler = async (event) => {
         {
           const params = new URLSearchParams();
           if (queryParams.name) params.set("name", queryParams.name);
+          params.set("ffbCode", CLUB_CODE);  // FFB V2 requires club code for person search
           params.set("sortField", queryParams.sortField || "lastName");
           params.set("currentPage", queryParams.currentPage || "1");
           params.set("maxPerPage", queryParams.maxPerPage || "80");
           if (queryParams.alive) params.set("alive", queryParams.alive);
           ffbEndpoint = `persons/search?${params.toString()}`;
-          console.log(`[FFB API] persons/search: name=${queryParams.name} currentPage=${queryParams.currentPage || "1"} maxPerPage=${queryParams.maxPerPage || "80"}`);
+          console.log(`[FFB API] persons/search: name=${queryParams.name} ffbCode=${CLUB_CODE} currentPage=${queryParams.currentPage || "1"} maxPerPage=${queryParams.maxPerPage || "80"}`);
         }
         break;
 
@@ -250,10 +251,16 @@ export const handler: Handler = async (event) => {
         break;
 
       case "ffb/person":
-        if (!queryParams.id) {
-          return httpResponse(400, { error: "Missing person id" });
+        {
+          // Support both legacy 'id' and V2 'personId' query params
+          const personId = queryParams.personId || queryParams.id;
+          if (!personId) {
+            console.log(`[Handler] ERROR: ffb/person requires personId or id parameter`);
+            return httpResponse(400, { error: "Missing personId or id parameter" });
+          }
+          ffbEndpoint = `persons/${personId}`;
+          console.log(`[Handler] ffb/person: personId=${personId}`);
         }
-        ffbEndpoint = `persons/${queryParams.id}`;
         break;
 
       case "ffb/competition-results":

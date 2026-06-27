@@ -8,6 +8,7 @@ import { club_tournament_extended, FEE_RATE, Game, Game_status, Gamer } from '..
 import { PdfService } from '../../../common/services/pdf.service';
 import { HorizontalAlignment, PDF_table } from '../../../common/interfaces/pdf-table.interface';
 import { FFBplayer } from '../../../common/ffb/interface/FFBplayer.interface';
+import { ClubMember } from '../../../common/ffb/interface/club-member.interface';
 import { InputPlayerComponent } from '../../../common/ffb/input-licensee/input-player.component';
 import { InputMemberComponent } from '../../input-member/input-member.component';
 import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
@@ -47,8 +48,8 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
   already_charged: boolean = false;
   pdfLoading = false;
   new_player!: FFBplayer | null;
-  new_pair_player1!: FFBplayer | null;
-  new_pair_player2!: FFBplayer | null;
+  new_pair_player1!: ClubMember | null;
+  new_pair_player2!: ClubMember | null;
   modalErrorMessage: string = '';
   addPlayersModalOpen: boolean = false;
   hideValidated: boolean = false;
@@ -329,7 +330,7 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
     this.modalErrorMessage = '';
   }
 
-  add_pair(player1: FFBplayer | null, player2: FFBplayer | null) {
+  add_pair(player1: ClubMember | null, player2: ClubMember | null) {
     this.modalErrorMessage = '';
 
     // Vérifier que au moins un joueur est saisi
@@ -338,39 +339,43 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
       return;
     }
 
-    // Vérifier que les joueurs ne sont pas déjà inscrits
-    if (player1) {
-      const player1Exists = this.game.gamers.some(
-        g => g.license === player1.license_number && g.license !== ''
-      );
-      if (player1Exists) {
-        this.modalErrorMessage = `${player1.firstname} ${player1.lastname} est déjà inscrit dans ce tournoi.`;
-        return;
-      }
-    }
-
-    if (player2) {
-      const player2Exists = this.game.gamers.some(
-        g => g.license === player2.license_number && g.license !== ''
-      );
-      if (player2Exists) {
-        this.modalErrorMessage = `${player2.firstname} ${player2.lastname} est déjà inscrit dans ce tournoi.`;
-        return;
-      }
-    }
-
-    // Vérifier que ce ne sont pas les mêmes joueurs
-    if (player1 && player2 && player1.license_number === player2.license_number && player1.license_number !== '') {
+    // Vérifier que ce ne sont pas les mêmes joueurs (comparaison par person_id)
+    if (player1 && player2 && player1.id === player2.id) {
       this.modalErrorMessage = 'Les deux joueurs doivent être différents.';
       return;
     }
 
-    // Tout est ok, ajouter les joueurs
+    // Vérifier que les joueurs ne sont pas déjà inscrits (comparaison par FFB person_id)
     if (player1) {
-      this.feesCollectorService.add_player(player1);
+      const player1Exists = this.game.gamers.some(g => g.ffb_person_id === player1.id);
+      if (player1Exists) {
+        this.modalErrorMessage = `${player1.firstName} ${player1.lastName} est déjà inscrit dans ce tournoi.`;
+        return;
+      }
+    }
+
+    if (player2) {
+      const player2Exists = this.game.gamers.some(g => g.ffb_person_id === player2.id);
+      if (player2Exists) {
+        this.modalErrorMessage = `${player2.firstName} ${player2.lastName} est déjà inscrit dans ce tournoi.`;
+        return;
+      }
+    }
+
+    // Tout est ok, ajouter les joueurs (conversion ClubMember → FFBplayer)
+    const toFFBplayer = (m: ClubMember): FFBplayer => ({
+      license_number: m.license_number_padded || m.ffbId.toString().padStart(8, '0'),
+      firstname: m.firstName,
+      lastname: m.lastName,
+      person_id: m.id,
+      gender: typeof m.gender === 'number' ? m.gender : (m.gender === 'M' ? 1 : 2),
+    } as unknown as FFBplayer);
+
+    if (player1) {
+      this.feesCollectorService.add_player(toFFBplayer(player1));
     }
     if (player2) {
-      this.feesCollectorService.add_player(player2);
+      this.feesCollectorService.add_player(toFFBplayer(player2));
     }
     this.log_game_state();
     this.closeAddPlayersModal();

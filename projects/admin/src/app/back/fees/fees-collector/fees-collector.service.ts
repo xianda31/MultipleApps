@@ -15,6 +15,7 @@ import { ToastService } from '../../../common/services/toast.service';
 import { DBhandler } from "../../../common/services/graphQL.service";
 import { FFBPerson } from '../../../common/interfaces/FFBperson.interface';
 import { MemberSettingsService } from '../../../common/services/member-settings.service';
+import { FFB_proxyService } from '../../../common/ffb/services/ffb.service';
 import { PaymentMode } from '../../shop/cart/cart.interface';
 
 
@@ -39,9 +40,8 @@ export class FeesCollectorService {
     private gameCardService: GameCardService,
     private BookService: BookService,
     private membersSettingsService: MemberSettingsService,
+    private ffbService: FFB_proxyService,
     private DBhandler: DBhandler
-
-
   ) {
     this.systemDataService.get_configuration().subscribe((sys_conf) => {
       this.sys_conf = sys_conf;
@@ -359,20 +359,41 @@ export class FeesCollectorService {
     this.tournamentService.readTeams(tournament!.team_tournament_id).pipe(
       map((tteams: TournamentTeams) => tteams.items),
       map((items) => items.flatMap((team) => team.players.map((player, idx) => ({ player, teamId: team.id, playerIndex: idx })))),
-    ).subscribe((playerData) => {
+    ).subscribe(async (playerData) => {
       console.log(`[FeesCollectorService] Loading ${playerData.length} players from tournament`);
       
-      this.game.gamers = playerData.map(({ player, teamId, playerIndex }, index) => {
+      // Build gamer list with FFB license lookup for ALL players (members + non-members)
+      // This validates the FFB service and ensures license consistency
+      this.game.gamers = await Promise.all(playerData.map(async ({ player, teamId, playerIndex }, index) => {
         // Find member by FFB person_id (player.id from FFB API)
         const member = this.members.find(m => m.person_id === player.id);
-        
-        // TODO: For non-members, fetch FFB_ENDPOINTS.memberByPersonId to get actual license_number
-        // Currently using FFB_${player.id} as placeholder (not a real license number)
-        const license = member ? member.license_number : `FFB_${player.id}`;
         const isMember = !!member;
         
-        console.log(`[FeesCollectorService] Player: ${player.firstName} ${player.lastName} (FFB person_id=${player.id})`);
-        console.log(`  - Found member: ${isMember ? 'YES - license=' + member!.license_number : 'NO (using FFB_' + player.id + ' placeholder)'}`);
+        // Fetch license from FFB API for ALL players (validation + consistency)
+        const ffbPerson = await this.ffbService.getFFBPerson(player.id);
+        
+        if (!ffbPerson?.license_number) {
+          // CRITICAL ERROR: FFB API should always return license info
+          const errorMsg = `[FeesCollectorService] CRITICAL: Failed to retrieve FFB license for player ${player.firstName} ${player.lastName} (person_id=${player.id})`;
+          console.error(errorMsg);
+          this.toastService.showError('FFB Erreur', `License FFB manquante pour ${player.firstName} ${player.lastName}`);
+          throw new Error(errorMsg);
+        }
+        
+        const license = ffbPerson.license_number;
+        
+        // Validate consistency for members
+        if (isMember && license !== member!.license_number) {
+          console.warn(
+            `[FeesCollectorService] License mismatch for member ${player.firstName} ${player.lastName}: ` +
+            `FFB=${license} vs DB=${member!.license_number}`
+          );
+        }
+        
+        console.log(
+          `[FeesCollectorService] Player: ${player.firstName} ${player.lastName} (person_id=${player.id}) ` +
+          `→ ${isMember ? 'Member' : 'Non-member'} license=${license}`
+        );
         
         return {
           license: license,
@@ -390,9 +411,10 @@ export class FeesCollectorService {
           enabled: true,
           photo_url$: isMember ? this.membersSettingsService.getAvatarUrl(member) : null,
           member_id: isMember ? member!.id : null,
-          my_birthday: isMember ? member!.birthdate : null
+          my_birthday: isMember ? member!.birthdate : null,
+          ffb_person_id: player.id,
         };
-      });
+      }));
 
       let factor = this.game.fees_doubled ? 2 : 1;
       this.game.gamers.forEach((gamer) => {
@@ -418,6 +440,7 @@ export class FeesCollectorService {
         is_member: !!member,
         member_id: member?.id || null,
         my_birthday: member?.birthdate === new Date().toISOString().slice(0, 10) ? new Date().toISOString().slice(0, 10) : null,
+        ffb_person_id: player.person_id,
 
         game_credits: 0,
         acc_credits: (!!member) ? this.check_acc(this.membersService.full_name(member)) : false,

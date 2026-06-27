@@ -20,10 +20,12 @@ import {
   toTournamentList,
   toTournamentTeams,
   toTournamentTeamsFromV2,
+  toPersonV2,
 } from '../adapters/ffb-api.adapter';
 
 const FFB_ENDPOINTS = {
   memberByPersonId: 'ffb/person',
+  person: 'ffb/person',
   memberSearch: 'ffb/persons/search',
   seasons: 'ffb/seasons/current',
   organizations: 'ffb/organizations',
@@ -247,23 +249,29 @@ export class FFB_proxyService {
     }
   }
 
-    async getFFBPerson(id: number): Promise<FFBPerson | null> {
+    async getFFBPerson(id: number): Promise<{ license_number: string; firstName: string; lastName: string } | null> {
     try {
+      console.log(`[FFB Service] getFFBPerson: Fetching person ${id} from FFB V2 API`);
       const restOperation = get({
         apiName: this.API_NAME,
-        path: this.buildPath(FFB_ENDPOINTS.memberByPersonId),
+        path: this.buildPath(FFB_ENDPOINTS.person),
         options: {
           queryParams: {
-            id: id.toString()
+            personId: id.toString()
           }
         }
       });
       const { body } = await restOperation.response;
-      // console.log('GET call succeeded: ', await body.text());
       const data = await body.json();
-      return toFfbPerson(data);
+      const person = toPersonV2(data);
+      if (person) {
+        console.log(`[FFB Service] getFFBPerson: Got license_number=${person.license_number} for person ${id}`);
+      } else {
+        console.warn(`[FFB Service] getFFBPerson: Could not extract license for person ${id}`);
+      }
+      return person;
     } catch (error) {
-      console.log('GET call failed: ', error);
+      console.error(`[FFB Service] getFFBPerson failed for person ${id}:`, error);
       return null;
     }
   }

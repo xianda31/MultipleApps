@@ -5,6 +5,7 @@ import { Tournament } from '../interface/club_tournament.interface';
 import { TournamentTeams } from '../interface/tournament_teams.interface';
 import { GroupSession, GroupSessionSearchResponse } from '../interface/group-session.interface';
 import { TeamSearchResponse, TeamItem } from '../interface/team-search.interface';
+import { PersonResponse } from '../interface/person-response.interface';
 import {
   ApiCompetitionDto,
   ApiCompetitionOrganizationDto,
@@ -259,5 +260,25 @@ export function toTournamentTeamsFromV2(
           current_page: asNumber(pagination.current_page, 1),
         }
       : undefined,
+  };
+}
+
+/**
+ * Extract license_number and player info from FFB V2 /persons/{id} response
+ * Used for non-members to get their actual license number
+ */
+export function toPersonV2(payload: unknown): { license_number: string; firstName: string; lastName: string } | null {
+  if (!isRecord(payload)) return null;
+
+  const ffbId = asNumber(payload.ffbId, 0);
+  if (!ffbId) {
+    console.warn('[FFB Adapter] toPersonV2: ffbId missing or 0', payload);
+    return null;
+  }
+
+  return {
+    license_number: ffbId.toString().padStart(8, '0'),
+    firstName: asString(payload.firstName, ''),
+    lastName: asString(payload.lastName, '').toUpperCase(),
   };
 }

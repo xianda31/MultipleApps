@@ -52,6 +52,7 @@ export interface Gamer {
     photo_url$: Observable<string> | null;
     member_id: string | null;
     my_birthday:string | null;
+    ffb_person_id?: number; // FFB person_id (ClubMember.id) for deduplication
 }
 
 export type Game_input = Omit<Schema['Game']['type'], 'id' | 'createdAt' | 'updatedAt'> ;
