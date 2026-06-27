@@ -178,7 +178,7 @@ export class MembersComponent implements OnInit {
           
           let new_member: Member = {
             id: '',
-            gender: newbee.gender=== 1 ? 'M.' : 'Mme',
+            gender: newbee.gender=== 1 ? 'M' : 'F',
             firstname: newbee.firstname,
             lastname: newbee.lastname.toUpperCase(),
             license_number: '??' + newbee.lastname.toUpperCase().slice(0, 3) + newbee.firstname.slice(0, 3),
@@ -216,7 +216,7 @@ export class MembersComponent implements OnInit {
 
     return {
       id: '',
-      gender: player.gender === 1 ? 'M.' : 'Mme',
+      gender: player.gender === 1 ? 'M' : 'F',
       firstname: player.firstname,
       lastname: player.lastname.toUpperCase(),
       license_number: player.license_number,

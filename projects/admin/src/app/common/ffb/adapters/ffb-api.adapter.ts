@@ -34,6 +34,19 @@ function asString(value: unknown, fallback = ''): string {
   return typeof value === 'string' ? value : fallback;
 }
 
+/**
+ * Capitalize text: uppercase first letter after each space or dash.
+ * Handles compound names and accents (François, Jean-Claude, Marie France)
+ */
+function capitalize(text: string): string {
+  if (!text) return text;
+  return text
+    .toLowerCase()
+    .split(/(\s+|-)/g)  // Split while preserving delimiters
+    .map(part => /^[\s-]+$/.test(part) ? part : (part.charAt(0).toUpperCase() + part.slice(1)))
+    .join('');
+}
+
 function toLegacyTournamentFromV2GroupSession(raw: unknown): Tournament {
   const groupSession: any = isRecord(raw) ? raw : {};
   const session: any = isRecord(groupSession.session) ? groupSession.session : {};
@@ -186,8 +199,8 @@ export function toClubMemberList(payload: unknown): ClubMember[] {
   // Normalize: pad ffbId to 8 digits and clean up whitespace in text fields
   return members.map((member: any) => ({
     ...member,
-    firstName: asString(member.firstName, '').trim(),
-    lastName: asString(member.lastName, '').trim(),
+    firstName: capitalize(asString(member.firstName, '').trim()),
+    lastName: asString(member.lastName, '').trim().toUpperCase(),
     gender: asString(member.gender, '').trim(),
     // Store padded license number for consistent matching with DB Member.license_number
     license_number_padded: asNumber(member.ffbId, 0).toString().padStart(8, '0'),
