@@ -7,7 +7,6 @@ import { CommonModule, UpperCasePipe } from '@angular/common';
 import { NgbModal, NgbTooltipModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { GetNewbeeComponent } from '../modals/get-newbee/get-newbee.component';
 import { InputPlayerComponent } from '../ffb/input-licensee/input-player.component';
-import { FFBplayer } from '../ffb/interface/FFBplayer.interface';
 import { ClubMember } from '../ffb/interface/club-member.interface';
 import { Member, LicenseStatus } from '../interfaces/member.interface';
 import { SystemDataService } from '../services/system-data.service';
@@ -214,51 +213,10 @@ export class MembersComponent implements OnInit {
     return str;
   }
 
-  player2member(player: FFBplayer): Member {
-
-    return {
-      id: '',
-      gender: player.gender === 1 ? 'M' : 'F',
-      firstname: player.firstname,
-      lastname: player.lastname.toUpperCase(),
-      license_number: player.license_number,
-      birthdate: player.birthdate,
-      city: this.capitalize_first(player.city.toLowerCase()),
-      season: player.last_season,
-      email: '?',
-      phone_one: '?',
-      license_taken_at: player.last_club ?? '??',
-      // register_date: ''
-      license_status: player.is_current_season ? LicenseStatus.DULY_REGISTERED : LicenseStatus.UNREGISTERED,
-      is_sympathisant: false,
-      accept_mailing: true,
-      has_avatar: false,
-      membership_date: '',
-      person_id: player.person_id
-    }
-  }
-
-  // DEPRECATED: Ranking now provides iv directly - no need to fetch from FFB
-  // async update_iv() {
-  //   const updates: Promise<any>[] = [];
-  //   for (const member of this.members) {
-  //     if (member.iv == null && member.person_id !== undefined && member.person_id !== null) {
-  //       const iv : FFBPersonIV | undefined = await this.licenseesService.get_iv(member.person_id);
-  //       if (iv !== undefined) {
-  //         console.log(`Mise à jour de l'iv pour ${member.lastname} ${member.firstname} (person_id: ${member.person_id}) (iv: ${iv.iv}, code: ${iv.code})`);
-  //         member.iv = iv.iv;
-  //         member.iv_code = iv.code;
-  //         updates.push(this.membersService.updateMember(member));
-  //       }
-  //     }
-  //   }
-  //   await Promise.all(updates);
-  // }
-
   async reset_license_statuses() {
     const updates: Promise<any>[] = [];
     for (const member of this.members) {
-      const existsInFFB = this.licensees.some((l) => l.ffbId === member.person_id);
+      const existsInFFB = this.licensees.some((l) => l.id === member.person_id);
 
       // Reset la licence seulement si elle n'existe pas dans FFB et n'est pas déjà UNREGISTERED
       if (!existsInFFB && member.license_status !== LicenseStatus.UNREGISTERED) {
@@ -342,7 +300,7 @@ export class MembersComponent implements OnInit {
       accept_mailing: member.accept_mailing,
       has_avatar: member.has_avatar,
       membership_date: member.membership_date,
-      person_id: clubMember.ffbId,
+      person_id: clubMember.id,
       iv: member.iv,
       iv_code: member.iv_code,
     }
@@ -383,7 +341,7 @@ export class MembersComponent implements OnInit {
       register_date: clubMember.mainRegistration?.createdAt ? clubMember.mainRegistration.createdAt.split('T')[0] : '',
       membership_date: '',
       has_avatar: false,
-      person_id: clubMember.ffbId,
+      person_id: clubMember.id,
       iv: undefined,
       iv_code: undefined,
     }

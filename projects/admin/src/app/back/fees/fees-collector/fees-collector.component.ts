@@ -41,6 +41,7 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
   fee_rates: FEE_RATE[] = Object.values(FEE_RATE);
   selected_fee_rate: FEE_RATE = FEE_RATE.STANDARD;
   days_back: number = 0;
+  tournamentsWindow: number = 28; // Dynamically extensible window (4 weeks)
   private daysBack$ = new BehaviorSubject<number>(0);
   game!: Game;
   already_charged: boolean = false;
@@ -105,7 +106,10 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     this.daysBack$.pipe(
-      switchMap(v => this.tournamentService.list_next_tournaments(v))
+      switchMap(v => {
+        console.log(`[FeesCollector] Loading tournaments: days_back=${v}, window=${this.tournamentsWindow} days`);
+        return this.tournamentService.list_next_tournaments(v, this.tournamentsWindow);
+      })
     ).subscribe({
       next: async (tournaments) => {
         const withStatus: club_tournament_extended[] = tournaments.map(t => ({ ...t, chrono: chrono(t.date) }));
@@ -204,6 +208,13 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
 
   one_week_back() {
     this.days_back += 7;
+    this.daysBack$.next(this.days_back);
+  }
+
+  extend_week() {
+    this.tournamentsWindow += 7;
+    console.log(`[FeesCollector] Extended tournament window to ${this.tournamentsWindow} days`);
+    // Force reload with new window
     this.daysBack$.next(this.days_back);
   }
 

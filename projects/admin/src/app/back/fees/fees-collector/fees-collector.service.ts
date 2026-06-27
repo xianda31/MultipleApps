@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { TournamentService } from '../../../common/services/tournament.service';
-import { Person, Player, Team, TournamentTeams } from '../../../common/ffb/interface/tournament_teams.interface';
+import { TournamentTeams } from '../../../common/ffb/interface/tournament_teams.interface';
 import { BehaviorSubject, map, Observable } from 'rxjs';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { Member } from '../../../common/interfaces/member.interface';
@@ -13,6 +13,7 @@ import { FFBplayer } from '../../../common/ffb/interface/FFBplayer.interface';
 import { MembersService } from '../../../common/services/members.service';
 import { ToastService } from '../../../common/services/toast.service';
 import { DBhandler } from "../../../common/services/graphQL.service";
+import { FFBPerson } from '../../../common/interfaces/FFBperson.interface';
 import { MemberSettingsService } from '../../../common/services/member-settings.service';
 import { PaymentMode } from '../../shop/cart/cart.interface';
 
@@ -356,14 +357,42 @@ export class FeesCollectorService {
     this.game.gamers = [];
 
     this.tournamentService.readTeams(tournament!.team_tournament_id).pipe(
-      map((tteams: TournamentTeams) => tteams.teams),
-      map((teams: Team[]) => teams.filter((team) => !team.is_isolated_player)),
-      map((teams: Team[]) => teams.map((team) => team.players)),
-      map((players: Player[][]) => players.flat()),
-      map((players: Player[]) => players.map((player) => player.person)),
-    ).subscribe((persons: Person[]) => {
-      this.game.gamers = persons.map((person, index) => this.person2gamer(person, index));
-
+      map((tteams: TournamentTeams) => tteams.items),
+      map((items) => items.flatMap((team) => team.players.map((player, idx) => ({ player, teamId: team.id, playerIndex: idx })))),
+    ).subscribe((playerData) => {
+      console.log(`[FeesCollectorService] Loading ${playerData.length} players from tournament`);
+      
+      this.game.gamers = playerData.map(({ player, teamId, playerIndex }, index) => {
+        // Find member by FFB person_id (player.id from FFB API)
+        const member = this.members.find(m => m.person_id === player.id);
+        
+        // TODO: For non-members, fetch FFB_ENDPOINTS.memberByPersonId to get actual license_number
+        // Currently using FFB_${player.id} as placeholder (not a real license number)
+        const license = member ? member.license_number : `FFB_${player.id}`;
+        const isMember = !!member;
+        
+        console.log(`[FeesCollectorService] Player: ${player.firstName} ${player.lastName} (FFB person_id=${player.id})`);
+        console.log(`  - Found member: ${isMember ? 'YES - license=' + member!.license_number : 'NO (using FFB_' + player.id + ' placeholder)'}`);
+        
+        return {
+          license: license,
+          firstname: player.firstName,
+          lastname: player.lastName,
+          is_member: isMember,
+          game_credits: isMember ? this.gameCardService.get_member_credit(member!.license_number) : 0,
+          acc_credits: isMember ? this.check_acc(this.membersService.full_name(member)) : false,
+          debt: 0,
+          credit: 0,
+          index: index,
+          in_euro: !isMember,
+          price: isMember ? this.game.member_trn_price : this.game.non_member_trn_price,
+          validated: false,
+          enabled: true,
+          photo_url$: isMember ? this.membersSettingsService.getAvatarUrl(member) : null,
+          member_id: isMember ? member!.id : null,
+          my_birthday: isMember ? member!.birthdate : null
+        };
+      });
 
       let factor = this.game.fees_doubled ? 2 : 1;
       this.game.gamers.forEach((gamer) => {
@@ -470,39 +499,7 @@ export class FeesCollectorService {
   }
 
 
-  private person2gamer(person: Person, index: number): Gamer {
 
-    let to_string = (license_number: number): string => {
-      return ('00' + license_number).slice(-8);
-    }
-
-    let license = to_string(person.license_number);
-    let member = this.is_member(license);
-    let in_euro = !member;
-    let price = member ? this.game.member_trn_price : this.game.non_member_trn_price;
-
-    let game_credits = (member) ? this.gameCardService.get_member_credit(license) : 0;
-    let acc_credits = (member) ? this.check_acc(this.membersService.full_name(member)) : false;
-
-    return {
-      license: license,
-      firstname: person.firstname,
-      lastname: person.lastname.toUpperCase(),
-      is_member: !!member,
-      member_id: member ? member.id : null,
-      my_birthday: member ? member.birthdate : null,
-      game_credits: game_credits,
-      acc_credits: acc_credits,
-      debt: 0,
-      credit: 0,
-      in_euro: in_euro,
-      index: index,
-      price: price,
-      validated: false,
-      enabled: true,
-      photo_url$: member ? this.membersSettingsService.getAvatarUrl(member) : null
-    };
-  }
 
   generate_member_images() {
     this.game.gamers.forEach((gamer) => {

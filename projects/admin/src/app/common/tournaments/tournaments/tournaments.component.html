@@ -50,12 +50,11 @@
 
                 <div class="pt-0 g-0 d-flex flex-column mt-auto">
                     <div class="text-center  ">
-                        <ng-container *ngIf="t.teams.length; else none">
-                            {{ (t.teams.length - (t.isolated_player_count || 0)) }} {{ ((t.teams.length -
-                            (t.isolated_player_count || 0)) === 1) ? 'paire inscrite' : 'paires inscrites' }}
-                            <div *ngIf="t.isolated_player_count">
-                                {{ t.isolated_player_count === 1 ? 'et une personne cherche un partenaire' : ('et ' +
-                                t.isolated_player_count + ' personnes cherchent un partenaire') }}
+                        <ng-container *ngIf="t.items.length; else none">
+                            {{ getPairedTeamCount(t) }} {{ (getPairedTeamCount(t) === 1) ? 'paire inscrite' : 'paires inscrites' }}
+                            <div *ngIf="getIsolatedPlayerCount(t)">
+                                {{ getIsolatedPlayerCount(t) === 1 ? 'et une personne cherche un partenaire' : ('et ' +
+                                getIsolatedPlayerCount(t) + ' personnes cherchent un partenaire') }}
                             </div>
 
                         </ng-container>

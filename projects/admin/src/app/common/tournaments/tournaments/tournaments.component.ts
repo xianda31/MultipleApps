@@ -127,13 +127,23 @@ export class TournamentsComponent {
     if (!this.license_nbr) {
       return false; // If no license number is set, return false
     }
-    for (let team of tTeams.teams) {
-      if ((team.players[0].person.license_number === this.license_nbr)
-        || (team.players[1]?.person.license_number === this.license_nbr)) {
+    const license = this.license_nbr.toString();
+    for (let team of tTeams.items) {
+      const playerId1 = team.players[0]?.id.toString() || '';
+      const playerId2 = team.players[1]?.id.toString() || '';
+      if ((playerId1 === license) || (playerId2 === license)) {
         return true;
       }
     }
     return false;
+  }
+
+  getIsolatedPlayerCount(tournament: TournamentTeams): number {
+    return tournament.items.filter(team => team.players.length === 1).length;
+  }
+
+  getPairedTeamCount(tournament: TournamentTeams): number {
+    return tournament.items.length - this.getIsolatedPlayerCount(tournament);
   }
 
   selectTournament(tournamentId: number) {

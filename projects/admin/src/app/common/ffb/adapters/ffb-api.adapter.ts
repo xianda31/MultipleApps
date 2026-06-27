@@ -1,9 +1,10 @@
 import { Competition, CompetitionOrganization, CompetitionPhases, CompetitionSeason, CompetitionTeam } from '../../../back/competitions/competitions.interface';
 import { FFBPerson } from '../../interfaces/FFBperson.interface';
 import { ClubMember } from '../interface/club-member.interface';
-import { FFBplayer } from '../interface/FFBplayer.interface';
 import { Tournament } from '../interface/club_tournament.interface';
-import { Person, TournamentTeams } from '../interface/tournament_teams.interface';
+import { TournamentTeams } from '../interface/tournament_teams.interface';
+import { GroupSession, GroupSessionSearchResponse } from '../interface/group-session.interface';
+import { TeamSearchResponse, TeamItem } from '../interface/team-search.interface';
 import {
   ApiCompetitionDto,
   ApiCompetitionOrganizationDto,
@@ -127,7 +128,7 @@ function toLegacyTournamentFromV2GroupSession(raw: unknown): Tournament {
     simultaneous_moment: null,
     simultaneous_code: null,
     simultaneous_tournament_id: null,
-    team_tournament_id: sessionId ? String(sessionId) : '',
+    team_tournament_id: asNumber(groupSession.id, 0).toString(),
     nbr_inscrit: entryCount,
     has_isolated_player: false,
     paid_amount: 0,
@@ -178,9 +179,6 @@ export function toCompetitionPhases(payload: unknown): CompetitionPhases | null 
   return payload as unknown as ApiCompetitionPhasesDto as unknown as CompetitionPhases;
 }
 
-export function toFfbPlayerList(payload: unknown): FFBplayer[] {
-  return asArray<ApiFfbPlayerDto>(payload) as unknown as FFBplayer[];
-}
 
 /**
  * Extract ClubMembers from FFB V2 paginated API response
@@ -214,11 +212,11 @@ export function toFfbPerson(payload: unknown): FFBPerson | null {
   return payload as unknown as ApiFfbPersonDto as unknown as FFBPerson;
 }
 
-export function toPerson(payload: unknown): Person | null {
+export function toPerson(payload: unknown): FFBPerson | null {
   if (!payload || typeof payload !== 'object') {
     return null;
   }
-  return payload as unknown as ApiPersonDto as unknown as Person;
+  return payload as unknown as ApiPersonDto as unknown as FFBPerson;
 }
 
 export function toTournamentTeams(payload: unknown): TournamentTeams | null {
@@ -226,4 +224,40 @@ export function toTournamentTeams(payload: unknown): TournamentTeams | null {
     return null;
   }
   return payload as unknown as ApiTournamentTeamsDto as unknown as TournamentTeams;
+}
+
+export function toTournamentTeamsFromV2(
+  payload: unknown,
+  groupSessionId: string,
+  tournament?: any
+): TournamentTeams {
+  const response: any = isRecord(payload) ? payload : {};
+  const items = asArray<TeamItem>(response.items);
+  const pagination = isRecord(response.pagination) ? response.pagination : undefined;
+
+  // Extract metadata from tournament or create defaults
+  const date = tournament?.date || '';
+  const tournamentName = tournament?.tournament_name || 'Tournament';
+  const sessionName = tournament?.session_name || '';
+  const time = tournament?.time || '00:00';
+
+  return {
+    subscription_tournament: {
+      id: asNumber(parseInt(groupSessionId, 10), 0),
+      organization_club_tournament: {
+        date,
+        tournament_name: tournamentName,
+        session_name: sessionName,
+        time,
+      },
+    },
+    items,
+    pagination: pagination
+      ? {
+          total_pages: asNumber(pagination.total_pages, 1),
+          total_items: asNumber(pagination.total_items, items.length),
+          current_page: asNumber(pagination.current_page, 1),
+        }
+      : undefined,
+  };
 }

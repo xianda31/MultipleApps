@@ -2,8 +2,7 @@ import { Injectable } from '@angular/core';
 import { del, get, post } from 'aws-amplify/api';
 import { Tournament } from '../interface/club_tournament.interface';
 import { ClubMember } from '../interface/club-member.interface';
-import { FFBplayer } from '../interface/FFBplayer.interface';
-import { Person, TournamentTeams } from '../interface/tournament_teams.interface';
+import { TournamentTeams } from '../interface/tournament_teams.interface';
 import { from, Observable } from 'rxjs';
 import { Competition, CompetitionOrganization, CompetitionPhases, CompetitionSeason, CompetitionTeam} from '../../../back/competitions/competitions.interface';
 import { FFBPerson } from '../../interfaces/FFBperson.interface';
@@ -17,10 +16,10 @@ import {
   toCompetitionTeamList,
   toClubMemberList,
   toFfbPerson,
-  toFfbPlayerList,
   toPerson,
   toTournamentList,
   toTournamentTeams,
+  toTournamentTeamsFromV2,
 } from '../adapters/ffb-api.adapter';
 
 const FFB_ENDPOINTS = {
@@ -65,7 +64,7 @@ export class FFB_proxyService {
   }
 
 
-  async get_player(person_id:number): Promise<Person | null> {
+  async get_player(person_id:number): Promise<FFBPerson | null> {
     try {
       const restOperation = get({
         apiName: this.API_NAME,
@@ -87,7 +86,7 @@ export class FFB_proxyService {
   }
 
 
-  async searchPlayersSuchAs(hint: string, currentPage: number = 1, maxPerPage: number = 80): Promise<ClubMember[]> {
+  async searchPlayersSuchAs(hint: string, currentPage: number = 1, maxPerPage: number = 80): Promise<ClubMember[]> {   // VALIDATED
     try {
       const restOperation = get({
         apiName: this.API_NAME,
@@ -109,22 +108,69 @@ export class FFB_proxyService {
       return [];
     }
   }
-  _getTournaments(): Observable<Tournament[]> {
-    const restOperation = get({
-      apiName: this.API_NAME,
-      path: this.buildPath(FFB_ENDPOINTS.clubTournaments),
-    });
+  _getTournaments(dateFrom?: Date, dateTo?: Date): Observable<Tournament[]> {  // VALIDATED
     return from((async () => {
       try {
-        const response = await restOperation.response;
-        if (response.body && response.body.json) {
-          const payload = await response.body.json();
-          return toTournamentList(payload);
-        } else {
-          throw new Error('Réponse serveur invalide');
+        console.log('[FFB Service] _getTournaments: fetching group sessions...');
+        
+        // Load all pages from FFB V2 (paginated response)
+        const allTournaments: Tournament[] = [];
+        let currentPage = 1;
+        let totalPages = 1;
+        let totalItems = 0;
+        
+        while (currentPage <= totalPages) {
+          console.log(`[FFB Service] _getTournaments: loading page ${currentPage}/${totalPages}...`);
+          
+          const queryParams: Record<string, string> = {
+            currentPage: String(currentPage),
+            maxPerPage: '80'
+          };
+          
+          // Add date filters if provided
+          if (dateFrom) {
+            queryParams['dateFrom'] = this.formatDateYYYYMMDD(dateFrom);
+          }
+          if (dateTo) {
+            queryParams['dateTo'] = this.formatDateYYYYMMDD(dateTo);
+          }
+          
+          const restOperation = get({
+            apiName: this.API_NAME,
+            path: this.buildPath(FFB_ENDPOINTS.clubTournaments),
+            options: {
+              queryParams
+            }
+          });
+          
+          const { body } = await restOperation.response;
+          const payload = await body.json();
+          
+          // Convert V2 response to tournaments
+          const pageTournaments = toTournamentList(payload);
+          allTournaments.push(...pageTournaments);
+          
+          // Extract pagination metadata
+          const pagination = (payload as any)?.pagination;
+          if (pagination && typeof pagination === 'object') {
+            if (currentPage === 1) {
+              totalPages = pagination.total_pages || 1;
+              totalItems = pagination.total_items || 0;
+              console.log(`[FFB Service] Pagination plan: ${totalItems} tournaments in ${totalPages} page(s)`);
+            }
+            console.log(`[FFB Service] Page ${currentPage}/${totalPages}: got ${pageTournaments.length} items, total so far: ${allTournaments.length}/${totalItems}`);
+          } else {
+            console.warn(`[FFB Service] No pagination metadata on page ${currentPage}, assuming single page`);
+            break;
+          }
+          
+          currentPage++;
         }
+        
+        console.log(`[FFB Service] _getTournaments complete: fetched ${allTournaments.length} tournaments`);
+        return allTournaments;
       } catch (error: any) {
-        console.log('GET call failed: ', error);
+        console.error('[FFB Service] _getTournaments failed:', error);
         return Promise.reject(error);
       }
     })());
@@ -223,25 +269,29 @@ export class FFB_proxyService {
   }
 
 
-  async postTeam(tournamentId: string, licences: string[]): Promise<TournamentTeams | null> {
+  async postTeam(groupSessionId: string, licences: string[]): Promise<TournamentTeams | null> {
 
     let players: { license_number: string, computed_amount: number }[] = [];
     licences.forEach(licence => {
       players.push({ license_number: licence, computed_amount: 0 });
     });
     try {
+      console.log(`[FFB Service] postTeam: groupSessionId=${groupSessionId}, players=${licences.join(',')}`);
       const restOperation = post({
         apiName: this.API_NAME,
         path: this.buildPath(FFB_ENDPOINTS.tournamentTeam),
         options: {
           body: { players: players },
           queryParams: {
-            id: tournamentId.toString()
+            groupSessionId: groupSessionId,
+            currentPage: '1',
+            maxPerPage: '80'
           }
         }
       });
       const { body } = await restOperation.response;
       const data = await body.json();
+      console.log(`[FFB Service] postTeam succeeded`);
       return toTournamentTeams(data);
     } catch (error) {
       console.log('POST call failed: ', error);
@@ -249,22 +299,20 @@ export class FFB_proxyService {
     }
   }
 
-  async deleteTeam(tournamentId: string, teamId: string): Promise<boolean | null> {
+  async deleteTeam(groupSessionId: string, teamId: string): Promise<boolean | null> {
     try {
+      console.log(`[FFB Service] deleteTeam: groupSessionId=${groupSessionId}, teamId=${teamId}`);
       const restOperation = del({
         apiName: this.API_NAME,
         path: this.buildPath(FFB_ENDPOINTS.tournamentTeam),
         options: {
           queryParams: {
-            id: tournamentId.toString(),
+            groupSessionId: groupSessionId,
             team_id: teamId.toString()
           }
         }
       });
-      // const { body } = await restOperation.response;
-      // const data = await body.json();
-      // const data2 = data as unknown as TournamentTeams;
-      // console.log('DELETE call succeeded: ', restOperation.response);
+      console.log(`[FFB Service] deleteTeam succeeded`);
       return true;
     } catch (error) {
       console.log('DELETE call failed: ', error);
@@ -272,29 +320,29 @@ export class FFB_proxyService {
     }
   }
 
-  async getTournamentTeams(id: string): Promise<TournamentTeams> {
-    // console.log('getTournamentTeams id:', id);
-    let promise: Promise<TournamentTeams> = new Promise(async (resolve, reject) => {
-      try {
-        const restOperation = get({
-          apiName: this.API_NAME,
-          path: this.buildPath(FFB_ENDPOINTS.tournamentTeam),
-          options: { queryParams: { id: id } }
-        });
-        const { body } = await restOperation.response;
-        const json = await body.json();
-        const data = toTournamentTeams(json); // was TournamentTeaming
-        if (!data) {
-          reject(new Error('Réponse tournoi invalide'));
-          return;
+  async getTournamentTeams(groupSessionId: string, tournament?: any): Promise<TournamentTeams> {   // VALIDATED
+    try {
+      console.log(`[FFB Service] getTournamentTeams: groupSessionId=${groupSessionId}`);
+      const restOperation = get({
+        apiName: this.API_NAME,
+        path: this.buildPath(FFB_ENDPOINTS.tournamentTeam),
+        options: { 
+          queryParams: { 
+            groupSessionId: groupSessionId,
+            currentPage: '1',
+            maxPerPage: '80'
+          } 
         }
-        resolve(data);
-      } catch (error) {
-        console.log('GET call failed: ', error);
-        reject(error);
-      }
-    });
-    return promise;
+      });
+      const { body } = await restOperation.response;
+      const json = await body.json();
+      
+      // Convert V2 TeamSearchResponse to TournamentTeams with session metadata
+      return toTournamentTeamsFromV2(json, groupSessionId, tournament);
+    } catch (error) {
+      console.log('GET tournament teams failed: ', error);
+      throw error;
+    }
   }
 // API competition
 
@@ -404,6 +452,13 @@ async getCurrentSeason() : Promise<CompetitionSeason | null> {
       console.log('GET call failed: ', error);
       return null;
     }
+  }
+
+  private formatDateYYYYMMDD(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
 }

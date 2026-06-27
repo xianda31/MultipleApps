@@ -7,15 +7,16 @@ function isProxyDebugEnabled(): boolean {
   return (process.env.FFB_PROXY_DEBUG || "false").toLowerCase() === "true";
 }
 
-function asBearerToken(token: string): string {
+function asLancelotToken(token: string): string {
   const trimmed = (token || "").trim();
   if (!trimmed) {
-    console.warn("[FFB API] asBearerToken: Empty token provided!");
+    console.warn("[FFB API] asLancelotToken: Empty token provided!");
     return "";
   }
-  const result = trimmed.toLowerCase().startsWith("bearer ") ? trimmed : `Bearer ${trimmed}`;
+  // Remove 'Bearer ' prefix if present (FFB V2 uses raw JWT with X-Lancelot-Authorization header)
+  const result = trimmed.toLowerCase().startsWith("bearer ") ? trimmed.substring(7) : trimmed;
   const preview = result.substring(0, 30) + "..." + result.substring(result.length - 10);
-  console.log(`[FFB API] asBearerToken: Prepared token: ${preview}`);
+  console.log(`[FFB API] asLancelotToken: Prepared JWT (length=${result.length}): ${preview}`);
   return result;
 }
 
@@ -40,9 +41,9 @@ async function loadV2Token(): Promise<void> {
       })
     );
     const tokenValue = response.Parameter?.Value || "";
-    FFB_API_V2.token = asBearerToken(tokenValue);
+    FFB_API_V2.token = asLancelotToken(tokenValue);
     const preview = FFB_API_V2.token.substring(0, 30) + "..." + FFB_API_V2.token.substring(FFB_API_V2.token.length - 20);
-    console.log(`[FFB API] ✅ V2 token loaded from SSM: ${preview}`);
+    console.log(`[FFB API] ✅ V2 token loaded from SSM (Lancelot format): ${preview}`);
   } catch (error) {
     const message = `[FFB API] ❌ CRITICAL: Failed to fetch token from SSM Parameter Store: ${error}. Token is required. Please manually update FFB_API_V2_TOKEN in AWS SSM.`;
     console.error(message);
@@ -103,7 +104,7 @@ async function fetchFFBApi(
       Object.assign(headers, options.headers);
     }
     if (requiresAuth && FFB_API_V2.token) {
-      headers.Authorization = FFB_API_V2.token;
+      headers["X-Lancelot-Authorization"] = FFB_API_V2.token;
     }
 
     const response = await fetch(url, {
@@ -168,7 +169,7 @@ export const handler: Handler = async (event) => {
     console.log("[FFB API] Available headers:", Object.keys(event.headers || {}));
 
     // Only use explicit x-ffb-token header, IGNORE Authorization (it's AWS SigV4, not FFB token)
-    const clientToken = xFfbToken ? asBearerToken(xFfbToken) : undefined;
+    const clientToken = xFfbToken ? asLancelotToken(xFfbToken) : undefined;
 
     if (clientToken) {
       const preview = clientToken.substring(0, 30) + "..." + clientToken.substring(clientToken.length - 20);
@@ -220,19 +221,27 @@ export const handler: Handler = async (event) => {
 
       case "ffb/club-sessions":
         {
-          const now = new Date();
-          const dateFrom = formatDateYYYYMMDD(now);
-          const dateTo = formatDateYYYYMMDD(addDays(now, 28));
+          // Get date parameters from client, with fallback defaults
+          let dateFromStr = queryParams.dateFrom as string;
+          let dateToStr = queryParams.dateTo as string;
+          
+          // If not provided, use defaults: 3 days from now to 365 days from now
+          if (!dateFromStr || !dateToStr) {
+            const now = new Date();
+            dateFromStr = formatDateYYYYMMDD(addDays(now, 3)); // Start from 3 days from now
+            dateToStr = formatDateYYYYMMDD(addDays(now, 365)); // End 1 year from now
+          }
 
           const params = new URLSearchParams();
-          params.set("dateFrom", dateFrom);
-          params.set("dateTo", dateTo);
-          params.set("currentPage", "1");
-          params.set("maxPerPage", "80");
+          params.set("dateFrom", dateFromStr);
+          params.set("dateTo", dateToStr);
+          params.set("currentPage", queryParams.currentPage || "1");
+          params.set("maxPerPage", queryParams.maxPerPage || "80");
           params.set("groupId", CLUB_GROUP_ID);
           params.append("context[]", "groupSession.entryCount");
 
           ffbEndpoint = `competitions/groupSessions/search?${params.toString()}`;
+          console.log(`[FFB API] club-sessions: dateFrom=${dateFromStr} dateTo=${dateToStr} currentPage=${queryParams.currentPage || "1"} maxPerPage=${queryParams.maxPerPage || "80"} groupId=${CLUB_GROUP_ID}`);
         }
         break;
 
@@ -265,10 +274,21 @@ export const handler: Handler = async (event) => {
         break;
 
       case "ffb/club-team":
-        if (!queryParams.id) {
-          return httpResponse(400, { error: "Missing tournament id" });
+        {
+          console.log(`[Handler] ffb/club-team received with params:`, JSON.stringify(queryParams, null, 2));
+          if (!queryParams.groupSessionId) {
+            console.log(`[Handler] ERROR: Missing groupSessionId. Params were: ${JSON.stringify(queryParams)}`);
+            return httpResponse(400, { error: "Missing groupSessionId parameter" });
+          }
+          const params = new URLSearchParams();
+          params.set("groupSessionId", queryParams.groupSessionId);
+          params.set("currentPage", queryParams.currentPage || "1");
+          params.set("maxPerPage", queryParams.maxPerPage || "80");
+          params.append("context[]", "team.currentTeamEntry");
+          
+          ffbEndpoint = `entries/teams/search?${params.toString()}`;
+          console.log(`[Handler] club-team (V2): groupSessionId=${queryParams.groupSessionId} currentPage=${queryParams.currentPage || "1"} maxPerPage=${queryParams.maxPerPage || "80"}`);
         }
-        ffbEndpoint = `organizations/${CLUB_CODE}/tournament/${queryParams.id}`;
         break;
 
       default:
@@ -284,6 +304,13 @@ export const handler: Handler = async (event) => {
 
     const requiresAuth = requiresAuthentication(route);
     const data = await fetchFFBApi(ffbEndpoint, options, clientToken, requiresAuth);
+
+    // Debug logging for clubSessions endpoint
+    if (route === "ffb/club-sessions" && data && typeof data === "object") {
+      const pagination = (data as any).pagination;
+      const itemCount = Array.isArray((data as any).items) ? (data as any).items.length : 0;
+      console.log(`[FFB API] club-sessions response: ${itemCount} items returned, pagination:`, pagination);
+    }
 
     let statusCode = 200;
     if (data && typeof data === "object") {

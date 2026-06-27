@@ -36,10 +36,10 @@
                                     </div>
                                 </td>
                                 <td *ngFor="let player of team.players">
-                                    {{player.person.lastname | uppercase}}
-                                    {{player.person.firstname}}
+                                    {{player.lastName | uppercase}}
+                                    {{player.firstName}}
                                 </td>
-                                <ng-container *ngIf="team.is_isolated_player">
+                                <ng-container *ngIf="team.players.length === 1">
                                     <!-- <td></td> -->
                                     <td *ngIf="!already_subscribed && (is_member$ | async)"
                                         class="text-start align-content-center">

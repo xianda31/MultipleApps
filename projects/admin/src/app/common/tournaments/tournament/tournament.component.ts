@@ -2,7 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ToastService } from '../../services/toast.service';
 import { AuthentificationService } from '../../authentification/authentification.service';
-import { Player, Team } from '../../ffb/interface/tournament_teams.interface';
+import { TeamItem } from '../../ffb/interface/team-search.interface';
+import { FFBPlayer } from '../../ffb/interface/team-search.interface';
 import { Member } from '../../interfaces/member.interface';
 import { ClubMember } from '../../ffb/interface/club-member.interface';
 import { FormControl, Validators, FormsModule, ReactiveFormsModule, ValidationErrors, AbstractControl, FormBuilder } from '@angular/forms';
@@ -26,7 +27,7 @@ export class TournamentComponent implements OnInit {
   tteam_tournament_id!: string;
   tournament_name = '';
   tournament_date = '';
-  teams: Team[] = [];
+  teams: TeamItem[] = [];
   whoAmI: Member | null = null;
   already_subscribed = false;
   is_member$!: Observable<boolean>;
@@ -45,7 +46,7 @@ export class TournamentComponent implements OnInit {
       this.tteam_tournament_id = params.get('tournament_id') || '';
       this.TournamentService.getTournamentTeams(this.tteam_tournament_id)
         .subscribe((tteams) => {
-          this.teams = tteams.teams;
+          this.teams = tteams.items;
           this.tournament_date = tteams.subscription_tournament.organization_club_tournament.date;
           this.tournament_name = tteams.subscription_tournament.organization_club_tournament.tournament_name;
           this.already_subscribed = this.has_subscribed(Number(this.whoAmI?.license_number));
@@ -82,23 +83,26 @@ export class TournamentComponent implements OnInit {
     }
 
     for (let team of this.teams) {
-      if ((team.players[0].person.license_number === license_nbr)
-        || (team.players[1]?.person.license_number === license_nbr)) {
+      const player1License = Number(team.players[0]?.id.toString());
+      const player2License = Number(team.players[1]?.id.toString() || '0');
+      if ((player1License === license_nbr) || (player2License === license_nbr)) {
         return true;
       }
     }
     return false;
   }
 
-  is_in_team(license: string | undefined, team: Team): boolean {
+  is_in_team(license: string | undefined, team: TeamItem): boolean {
     if (license === undefined) return false;
     let license_nbr: number = Number(license);
-    return ((team.players[0].person.license_number === license_nbr) || (team.players[1]?.person.license_number === license_nbr));
+    const player1License = Number(team.players[0]?.id.toString() || '0');
+    const player2License = Number(team.players[1]?.id.toString() || '0');
+    return (player1License === license_nbr) || (player2License === license_nbr);
   }
 
-  completeTeam(player: Player) {
+  completeTeam(player: FFBPlayer) {
     let license_pair: string[] = [];
-    license_pair.push(player.person.license_number.toString());
+    license_pair.push(player.id.toString());
     license_pair.push(this.whoAmI!.license_number.toString());
     this.createTeam(license_pair);
   }
@@ -127,7 +131,7 @@ export class TournamentComponent implements OnInit {
       .catch((error) => { console.log('TeamsComponent.createTeam', error); });
   }
 
-  deleteTeam(team: Team) {
+  deleteTeam(team: TeamItem) {
 
     this.TournamentService.deleteTeam(this.tteam_tournament_id.toString(), team.id.toString())
       .then((data) => {
