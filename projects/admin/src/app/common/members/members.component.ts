@@ -15,6 +15,8 @@ import { PhonePipe } from '../pipes/phone.pipe';
 import { MemberSettingsService } from '../services/member-settings.service';
 import { BookService } from '../../back/services/book.service';
 import { Revenue } from '../interfaces/accounting.interface';
+import { FFB_proxyService } from '../ffb/services/ffb.service';
+import { PersonV2 } from '../ffb/interface/person-v2.interface';
 
 
 enum FILTER {
@@ -80,7 +82,7 @@ export class MembersComponent implements OnInit {
     private modalService: NgbModal,
     private toastService: ToastService,
     private bookService: BookService,
-
+    private ffbService: FFB_proxyService,
   ) {
   }
 
@@ -152,11 +154,11 @@ export class MembersComponent implements OnInit {
     this.lost_members_nbr = this.members.filter(m => !m.membership_date && (m.license_status === LicenseStatus.UNREGISTERED)).length;
   }
 
-  add_licensee(player: ClubMember) {
+  async add_licensee(player: ClubMember) {
     if (!player) { return; }
 
-    const ffbIdPadded = (player as any).license_number_padded || player.ffbId.toString().padStart(8, '0');
-    const new_member: Member = this.createNewMember(player, ffbIdPadded);
+    const personV2 = await this.ffbService.getFFBPerson(player.id).catch(() => null);
+    const new_member: Member = this.createNewMember(player, personV2);
     console.log('Ajout d\'un nouveau membre :', new_member);
     this.membersService.createMember(new_member).then(() => {
       this.refreshMembers();
@@ -260,20 +262,18 @@ export class MembersComponent implements OnInit {
   }
 
   async createOrUpdateMember(clubMember: ClubMember) {
-    // Match by license_number: use pre-computed license_number_padded from adapter
-    // Fallback to compute padding if property doesn't exist (defensive coding)
-    const ffbIdPadded = (clubMember as any).license_number_padded || clubMember.ffbId.toString().padStart(8, '0');
-    const existingMember = this.members.find((m) => m.license_number === ffbIdPadded);
+    const existingMember = this.members.find((m) => m.license_number === clubMember.license_number);
 
     if (existingMember) {
-      const updatedMember = this.compare(existingMember, clubMember, ffbIdPadded);
+      const updatedMember = this.compare(existingMember, clubMember, clubMember.license_number);
       // Seulement updater si compare() détecte des changements (retourne non-null)
       if (updatedMember !== null) {
         await this.membersService.updateMember(updatedMember);
       }
     } else {
-      // Créer nouveau membre seulement s'il n'existe pas
-      const newMember = this.createNewMember(clubMember, ffbIdPadded);
+      // Nouveau membre : enrichir avec PersonV2 (email, tél., ville)
+      const personV2 = await this.ffbService.getFFBPerson(clubMember.id).catch(() => null);
+      const newMember = this.createNewMember(clubMember, personV2);
       await this.membersService.createMember(newMember);
     }
   }
@@ -300,8 +300,8 @@ export class MembersComponent implements OnInit {
       has_avatar: member.has_avatar,
       membership_date: member.membership_date,
       person_id: clubMember.id,
-      iv: member.iv,
-      iv_code: member.iv_code,
+      iv: clubMember.season?.ranking?.iv,
+      // iv_code: this.membersService.iv_code(clubMember.season?.ranking?.iv ?? 0),
     }
     let is: { [key: string]: any } = member;
     let next: { [key: string]: any } = nextMember;
@@ -321,19 +321,19 @@ export class MembersComponent implements OnInit {
     return diff ? nextMember : null;
   }
 
-  createNewMember(clubMember: ClubMember, ffbIdPadded: string): Member {
+  createNewMember(clubMember: ClubMember, personV2: PersonV2 | null): Member {
     return {
       id: '',
       gender: clubMember.gender,
       firstname: clubMember.firstName,
       lastname: clubMember.lastName.toUpperCase(),
-      license_number: ffbIdPadded,
+      license_number: clubMember.license_number,
       birthdate: clubMember.birthdate,
-      city: '',
+      city: personV2?.city ?? '',
       season: clubMember.licensee ? this.season : '',
-      email: '',
-      accept_mailing: false,
-      phone_one: '',
+      email: personV2?.email ?? '',
+      accept_mailing: personV2?.email ? true : false,
+      phone_one: personV2?.phone ?? '',
       is_sympathisant: !clubMember.licensee,
       license_status: clubMember.licensee ? LicenseStatus.DULY_REGISTERED : (clubMember.eLicensee ? LicenseStatus.PROMOTED_ONLY : LicenseStatus.UNREGISTERED),
       license_taken_at: clubMember.club?.label ?? 'BCSTO',
@@ -367,5 +367,34 @@ export class MembersComponent implements OnInit {
     });
   }
 
+  get_iv_code(iv: number | undefined): string {
+    if (iv === undefined) return '';
+    return this.membersService.iv_code(iv);
+  }
+
+  /**
+   * Parse IV code into series and symbol parts for display
+   * Only card suits (♥, ♦, ♣, ♠) are colored/bold, not series or SA/N
+   * Examples: "4♥" → {series: "4", suit: "♥", suitColor: "#d32f2f", tail: ""}
+   *           "4SA" → {series: "4", suit: "", suitColor: "#000", tail: "SA"}
+   */
+  get_iv_code_parts(iv: number | undefined): { series: string; suit: string; suitColor: string; tail: string } {
+    const code = this.get_iv_code(iv);
+    
+    // Extract: series (leading digits), suit (one of ♥♦♣♠), tail (SA/N or empty)
+    const match = code.match(/^(\d*)([♥♦♣♠]?)(.*)$/);
+    
+    if (match) {
+      const series = match[1];
+      const suit = match[2];
+      const tail = match[3];
+      // Only suits get color
+      const suitColor = (suit === '♥' || suit === '♦') ? '#d32f2f' : '#000';
+      return { series, suit, suitColor, tail };
+    }
+    
+    // Fallback for codes like "NVL", "NC"
+    return { series: code, suit: '', suitColor: '#000', tail: '' };
+  }
 
 }

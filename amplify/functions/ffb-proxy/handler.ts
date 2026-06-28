@@ -32,6 +32,10 @@ const FFB_API_V2: FFBApiConfig = {
 };
 
 async function loadV2Token(): Promise<void> {
+  if (FFB_API_V2.token) {
+    return;
+  }
+
   try {
     console.log("[FFB API] Loading V2 token from SSM Parameter Store...");
     const response = await ssmClient.send(
@@ -45,6 +49,13 @@ async function loadV2Token(): Promise<void> {
     const preview = FFB_API_V2.token.substring(0, 30) + "..." + FFB_API_V2.token.substring(FFB_API_V2.token.length - 20);
     console.log(`[FFB API] ✅ V2 token loaded from SSM (Lancelot format): ${preview}`);
   } catch (error) {
+    const fallback = asLancelotToken(process.env.FFB_API_V2_TOKEN || "");
+    if (fallback) {
+      FFB_API_V2.token = fallback;
+      console.warn("[FFB API] ⚠️ SSM read failed; using FFB_API_V2_TOKEN env fallback.");
+      return;
+    }
+
     const message = `[FFB API] ❌ CRITICAL: Failed to fetch token from SSM Parameter Store: ${error}. Token is required. Please manually update FFB_API_V2_TOKEN in AWS SSM.`;
     console.error(message);
     throw new Error(message);
@@ -156,16 +167,45 @@ function httpResponse(statusCode: number, data: any): any {
 function requiresAuthentication(route: string): boolean {
   // Public endpoints that don't need authentication
   const publicEndpoints = [
-    "ffb/seasons/current",
-    "ffb/seasons/next",
-    "ffb/organizations",
+    "seasons/current",
+    "seasons/next",
+    "organizations",
   ];
   return !publicEndpoints.includes(route);
 }
 
+function getHeaderCaseInsensitive(headers: Record<string, string | undefined> | undefined, name: string): string | undefined {
+  if (!headers) return undefined;
+  const wanted = name.toLowerCase();
+  for (const [key, value] of Object.entries(headers)) {
+    if (key.toLowerCase() === wanted) {
+      return value;
+    }
+  }
+  return undefined;
+}
+
+function normalizeProxyRoute(event: any): string {
+  const proxy = (event.pathParameters?.proxy || "").replace(/^\/+/, "");
+  if (!proxy) return "";
+
+  if (proxy.startsWith("ffb_v2/")) {
+    return proxy.substring("ffb_v2/".length);
+  }
+
+  if (proxy.startsWith("ffb/")) {
+    return proxy.substring("ffb/".length);
+  }
+
+  return proxy;
+}
+
 export const handler: Handler = async (event) => {
   try {
-    const xFfbToken = event.headers?.["x-ffb-token"];
+    console.log(`[Handler] ⚡ INVOKED: ${event.requestContext?.http.method || "?"} ${event.rawPath || event.path || "?"}`);
+    console.log(`[Handler] Proxy param: ${event.pathParameters?.proxy || "(none)"}`);
+    
+    const xFfbToken = getHeaderCaseInsensitive(event.headers, "x-ffb-token");
     console.log("[FFB API] Available headers:", Object.keys(event.headers || {}));
 
     // Only use explicit x-ffb-token header, IGNORE Authorization (it's AWS SigV4, not FFB token)
@@ -178,23 +218,24 @@ export const handler: Handler = async (event) => {
       console.log("[FFB API] No x-ffb-token header, will load from SSM");
     }
 
-    const route = `ffb/${event.pathParameters?.proxy || ""}`;
+    const proxy = event.pathParameters?.proxy || "";
+    const route = normalizeProxyRoute(event);
     const queryParams = event.queryStringParameters || {};
     const method = event.requestContext?.http.method || "GET";
 
-    console.log(`[FFB API] Route: ${route}`);
+    console.log(`[FFB API] Route canonical: raw='${proxy}' canonical='${route}' path='${event.rawPath || ""}'`);
 
     let ffbEndpoint: string;
 
     switch (route) {
-      case "ffb/seasons/current":
+      case "seasons/current":
         ffbEndpoint = "seasons/current";
         break;
-      case "ffb/seasons/next":
+      case "seasons/next":
         ffbEndpoint = "seasons/next";
         break;
 
-      case "ffb/persons/search":
+      case "persons/search":
         {
           const params = new URLSearchParams();
           if (queryParams.name) params.set("name", queryParams.name);
@@ -208,7 +249,7 @@ export const handler: Handler = async (event) => {
         }
         break;
 
-      case "ffb/club-members":
+      case "club-members":
         {
           const params = new URLSearchParams();
           params.set("ffbCode", CLUB_CODE);
@@ -220,7 +261,7 @@ export const handler: Handler = async (event) => {
         }
         break;
 
-      case "ffb/club-sessions":
+      case "club-sessions":
         {
           // Get date parameters from client, with fallback defaults
           let dateFromStr = queryParams.dateFrom as string;
@@ -246,31 +287,31 @@ export const handler: Handler = async (event) => {
         }
         break;
 
-      case "ffb/organizations":
+      case "organizations":
         ffbEndpoint = "organizations/all";
         break;
 
-      case "ffb/person":
+      case "person":
         {
           // Support both legacy 'id' and V2 'personId' query params
           const personId = queryParams.personId || queryParams.id;
           if (!personId) {
-            console.log(`[Handler] ERROR: ffb/person requires personId or id parameter`);
+            console.log(`[Handler] ERROR: person requires personId or id parameter`);
             return httpResponse(400, { error: "Missing personId or id parameter" });
           }
           ffbEndpoint = `persons/${personId}`;
-          console.log(`[Handler] ffb/person: personId=${personId}`);
+          console.log(`[Handler] person: personId=${personId}`);
         }
         break;
 
-      case "ffb/competition-results":
+      case "competition-results":
         if (!queryParams.competition_id || !queryParams.organization_id) {
           return httpResponse(400, { error: "Missing competition_id or organization_id" });
         }
         ffbEndpoint = `competitions/${queryParams.competition_id}/organizations/${queryParams.organization_id}/final-ranking`;
         break;
 
-      case "ffb/competition-phases":
+      case "competition-phases":
         if (!queryParams.competition_id) {
           return httpResponse(400, { error: "Missing competition_id" });
         }
@@ -280,7 +321,7 @@ export const handler: Handler = async (event) => {
         }
         break;
 
-      case "ffb/club-team":
+      case "club-team":
         {
           console.log(`[Handler] ffb/club-team received with params:`, JSON.stringify(queryParams, null, 2));
           if (!queryParams.groupSessionId) {
@@ -298,6 +339,50 @@ export const handler: Handler = async (event) => {
         }
         break;
 
+      // FFB V2 Team Creation endpoint - POST team with players
+      case route.match(/^entries\/groupSessions\/\d+\/createTeam$/)?.[0]:
+        {
+          const groupSessionId = proxy.match(/entries\/groupSessions\/(\d+)\/createTeam/)?.[1];
+          if (!groupSessionId) {
+            console.error(`[Handler][postTeam] ERROR: Could not extract groupSessionId from path: ${proxy}`);
+            return httpResponse(400, { error: "Invalid groupSessionId in path" });
+          }
+          
+          let bodyData: any = {};
+          try {
+            bodyData = event.body ? (typeof event.body === 'string' ? JSON.parse(event.body) : event.body) : {};
+          } catch (parseError) {
+            console.error(`[Handler][postTeam] ERROR: Invalid JSON body:`, event.body);
+            return httpResponse(400, { error: "Invalid JSON in request body" });
+          }
+
+          const players = bodyData.players || [];
+          const captainId = bodyData.captainId;
+          
+          console.log(`[Handler][postTeam] POST /entries/groupSessions/${groupSessionId}/createTeam`);
+          console.log(`[Handler][postTeam] Request body: { players: [${players.join(', ')}], captainId: ${captainId} }`);
+          console.log(`[Handler][postTeam] Player count: ${players.length}, Captain: ${captainId}`);
+          
+          ffbEndpoint = `entries/groupSessions/${groupSessionId}/createTeam`;
+        }
+        break;
+
+      // FFB V2 Team Entry deletion endpoint
+      case route.match(/^entries\/team-entries\/\d+$/)?.[0]:
+        {
+          const teamId = proxy.match(/entries\/team-entries\/(\d+)/)?.[1];
+          if (!teamId) {
+            console.error(`[Handler][deleteTeam] ERROR: Could not extract teamId from path: ${proxy}`);
+            return httpResponse(400, { error: "Invalid teamId in path" });
+          }
+          
+          console.log(`[Handler][deleteTeam] DELETE /entries/team-entries/${teamId}`);
+          console.log(`[Handler][deleteTeam] Deleting team entry with ID: ${teamId}`);
+          
+          ffbEndpoint = `entries/team-entries/${teamId}`;
+        }
+        break;
+
       default:
         return httpResponse(404, { error: `Unknown route: ${route}` });
     }
@@ -312,8 +397,28 @@ export const handler: Handler = async (event) => {
     const requiresAuth = requiresAuthentication(route);
     const data = await fetchFFBApi(ffbEndpoint, options, clientToken, requiresAuth);
 
+    // Instrumentation for postTeam endpoint
+    if (route.match(/^entries\/groupSessions\/\d+\/createTeam$/)) {
+      const groupSessionId = proxy.match(/entries\/groupSessions\/(\d+)\/createTeam/)?.[1];
+      if (data?.error) {
+        console.error(`[Handler][postTeam] ❌ FAILURE: groupSessionId=${groupSessionId} FFB API returned error:`, JSON.stringify(data));
+      } else {
+        console.log(`[Handler][postTeam] ✅ SUCCESS: groupSessionId=${groupSessionId} Response:`, JSON.stringify(data).substring(0, 200));
+      }
+    }
+
+    // Instrumentation for deleteTeam endpoint
+    if (route.match(/^entries\/team-entries\/\d+$/)) {
+      const teamId = proxy.match(/entries\/team-entries\/(\d+)/)?.[1];
+      if (data?.error) {
+        console.error(`[Handler][deleteTeam] ❌ FAILURE: teamId=${teamId} FFB API returned error:`, JSON.stringify(data));
+      } else {
+        console.log(`[Handler][deleteTeam] ✅ SUCCESS: teamId=${teamId}`);
+      }
+    }
+
     // Debug logging for clubSessions endpoint
-    if (route === "ffb/club-sessions" && data && typeof data === "object") {
+    if (route === "club-sessions" && data && typeof data === "object") {
       const pagination = (data as any).pagination;
       const itemCount = Array.isArray((data as any).items) ? (data as any).items.length : 0;
       console.log(`[FFB API] club-sessions response: ${itemCount} items returned, pagination:`, pagination);
@@ -328,9 +433,21 @@ export const handler: Handler = async (event) => {
       }
     }
 
+    // Additional instrumentation for postTeam and deleteTeam responses
+    if (route.match(/^entries\/groupSessions\/\d+\/createTeam$/)) {
+      const groupSessionId = event.pathParameters?.proxy?.match(/entries\/groupSessions\/(\d+)\/createTeam/)?.[1];
+      console.log(`[Handler][postTeam] Returning HTTP ${statusCode} for groupSessionId=${groupSessionId}`);
+    }
+
+    if (route.match(/^entries\/team-entries\/\d+$/)) {
+      const teamId = event.pathParameters?.proxy?.match(/entries\/team-entries\/(\d+)/)?.[1];
+      console.log(`[Handler][deleteTeam] Returning HTTP ${statusCode} for teamId=${teamId}`);
+    }
+
     return httpResponse(statusCode, data);
   } catch (error) {
     console.error("[FFB API] Handler error:", error);
+    console.error("[FFB API] Handler error details:", error instanceof Error ? error.stack : String(error));
     return httpResponse(500, {
       error: "Proxy error",
       details: error instanceof Error ? error.message : String(error),

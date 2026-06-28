@@ -187,14 +187,15 @@ httpApi.addRoutes({
   authorizer: userPoolAuthorizer,
 });
 
+// FFB V2 routes (canonical namespace)
 httpApi.addRoutes({
-  path: "/ffb/{proxy+}",
+  path: "/api/ffb/v2/{proxy+}",
   methods: [ HttpMethod.PUT, HttpMethod.POST, HttpMethod.DELETE],
   integration: httpLambdaIntegration,
   authorizer: userPoolAuthorizer,
 });
 httpApi.addRoutes({
-  path: "/ffb/{proxy+}",
+  path: "/api/ffb/v2/{proxy+}",
   methods: [HttpMethod.GET],
   integration: httpLambdaIntegration,
 });

@@ -225,4 +225,40 @@ get_birthdays_this_month(): Observable<Member[]> {
     );
   }
 
+  /**
+   * Convert IV (Index Value) to readable classification string
+   * Symbols: ♠ (Pique), ♥ (Cœur), ♦ (Carreau), ♣ (Trèfle)
+   * Examples: NVL (Nouveau Licencié), 4♣, 3♥, 2SA (Promotion), 1♠, 1N (Nationale)
+   */
+  iv_code(iv: number): string {
+    // Define IV thresholds and their classifications
+    const ivMap: { [key: number]: string } = {
+      0: 'NC',      // Non classé
+      20: 'NVL',    // Nouveau Licencié
+      22: '4♣',     // 4ème série Trèfle
+      24: '4♦',     // 4ème série Carreau
+      26: '4♥',     // 4ème série Cœur
+      28: '4♠',     // 4ème série Pique
+      30: '4SA',    // 4ème série Promotion
+      32: '3♣',     // 3ème série Trèfle
+      34: '3♦',     // 3ème série Carreau
+      36: '3♥',     // 3ème série Cœur
+      38: '3♠',     // 3ème série Pique
+      40: '3SA',    // 3ème série Promotion
+      44: '2♣',     // 2ème série Trèfle
+      48: '2♦',     // 2ème série Carreau
+      52: '2♥',     // 2ème série Cœur
+      56: '2♠',     // 2ème série Pique
+      60: '2SA',    // 2ème série Promotion
+      68: '1♣',     // 1ère série Trèfle
+      76: '1♦',     // 1ère série Carreau
+      84: '1♥',     // 1ère série Cœur
+      92: '1♠',     // 1ère série Pique
+      100: '1N',    // 1ère série Nationale
+    };
+
+    // Return exact match or 'NC' if not found
+    return ivMap[iv] ?? 'NC';
+  }
+
 }

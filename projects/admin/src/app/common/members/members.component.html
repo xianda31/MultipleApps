@@ -136,7 +136,14 @@
               <i [class]="member.accept_mailing ? 'bi bi-check-circle-fill text-success' : 'bi bi-x-circle-fill text-danger'"></i>
               }
             </td>
-            <td class="d-none d-sm-table-cell text-center">{{ member.iv !== null ? member.iv + ' ' + member.iv_code : '-' }}</td>
+            <td class="d-none d-sm-table-cell text-center">
+              @if (member.iv !== null) {
+                @let parts = get_iv_code_parts(member.iv);
+                <span>{{ parts.series }}<span [style.color]="parts.suitColor" style="font-weight: bold;">{{ parts.suit }}</span>{{ parts.tail }}</span>
+              } @else {
+                -
+              }
+            </td>
             <td class="d-none d-sm-table-cell text-center"> <i (click)="access_settings(member)"
                 class="bi bi-gear-fill"></i> </td>
             <td class="d-none d-sm-table-cell text-center">

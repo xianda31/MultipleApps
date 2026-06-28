@@ -380,10 +380,9 @@ export class DashboardComponent {
             const yyyy = d.getFullYear();
             const mm = String(d.getMonth() + 1).padStart(2, '0');
             const key = `${yyyy}-${mm}`;
-            const totalInscrit = typeof trn.nbr_inscrit === 'number' ? trn.nbr_inscrit : parseInt(trn.nbr_inscrit, 10);
-            // Calculer le nombre de paires: (total - joueurs isolés) / 2
-            const isolatedCount = trn.has_isolated_player ? 1 : 0;
-            const pairCount = Math.floor((totalInscrit - isolatedCount) / 2);
+            const totalInscrit = trn.entryCount || 0;
+            // Calculer le nombre de paires: total / 2 (simplified without isolated player info)
+            const pairCount = Math.floor(totalInscrit / 2);
             pairCountsByMonth[key] = (pairCountsByMonth[key] || 0) + (isNaN(pairCount) ? 0 : pairCount);
             tournamentCountByMonth[key] = (tournamentCountByMonth[key] || 0) + 1;
           });

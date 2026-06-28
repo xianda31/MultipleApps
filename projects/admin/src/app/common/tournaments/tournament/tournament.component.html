@@ -30,9 +30,9 @@
                                 <td>
                                     <div class="text-center">
                                         <i class="bi bi-trash3-fill text-warning"
-                                            *ngIf="is_in_team(whoAmI?.license_number,team)"
+                                            *ngIf="i_am_in_team( team)"
                                             (click)="deleteTeam(team)"></i>
-                                        <span *ngIf="!is_in_team(whoAmI?.license_number,team)">{{i+1}}</span>
+                                        <span *ngIf="!i_am_in_team( team)">{{i+1}}</span>
                                     </div>
                                 </td>
                                 <td *ngFor="let player of team.players">

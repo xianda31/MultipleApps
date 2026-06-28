@@ -1,19 +1,16 @@
 import { Competition, CompetitionOrganization, CompetitionPhases, CompetitionSeason, CompetitionTeam } from '../../../back/competitions/competitions.interface';
 import { ClubMember } from '../interface/club-member.interface';
-import { Tournament } from '../interface/club_tournament.interface';
+import { TournamentV2 } from '../interface/tournament-v2.interface';
 import { TournamentTeams } from '../interface/tournament_teams.interface';
-import { GroupSession, GroupSessionSearchResponse } from '../interface/group-session.interface';
-import { TeamSearchResponse, TeamItem } from '../interface/team-search.interface';
-import { PersonResponse } from '../interface/person-response.interface';
+import { PersonV2 } from '../interface/person-v2.interface';
+import { PersonV2Ranking } from '../interface/person-v2.interface';
+import { TeamItem } from '../interface/team-search.interface';
 import {
   ApiCompetitionDto,
   ApiCompetitionOrganizationDto,
   ApiCompetitionPhasesDto,
   ApiCompetitionSeasonDto,
   ApiCompetitionTeamDto,
-  ApiFfbLicenseeDto,
-  ApiFfbPlayerDto,
-  ApiTournamentDto,
   ApiTournamentTeamsDto,
 } from '../contracts/ffb-api.contracts';
 
@@ -46,14 +43,11 @@ function capitalize(text: string): string {
     .join('');
 }
 
-function toLegacyTournamentFromV2GroupSession(raw: unknown): Tournament {
+function toTournamentV2(raw: unknown): TournamentV2 {
   const groupSession: any = isRecord(raw) ? raw : {};
   const session: any = isRecord(groupSession.session) ? groupSession.session : {};
-  const group: any = isRecord(groupSession.group) ? groupSession.group : {};
-  const phase: any = isRecord(group.phase) ? group.phase : {};
-  const stade: any = isRecord(phase.stade) ? phase.stade : {};
-  const organization: any = isRecord(stade.organization) ? stade.organization : {};
 
+  // Extract time from ISO date string
   const isoDate = asString(groupSession.date, '');
   const parsedDate = isoDate ? new Date(isoDate) : null;
   const hasValidDate = parsedDate !== null && !Number.isNaN(parsedDate.getTime());
@@ -61,90 +55,27 @@ function toLegacyTournamentFromV2GroupSession(raw: unknown): Tournament {
     ? `${String(parsedDate.getHours()).padStart(2, '0')}:${String(parsedDate.getMinutes()).padStart(2, '0')}`
     : '00:00';
 
-  const entryCount = asNumber(groupSession.entryCount, 0);
-  const expectedBoardCount = asNumber(groupSession.expectedBoardCount, 0);
-  const maxTeamCount = asNumber(groupSession.maxTeamCount, 0);
-  const organizationId = asNumber(organization.id, 1438);
-  const sessionId = session.id;
-
   return {
     id: asNumber(groupSession.id, 0),
-    organization_id: organizationId,
     date: isoDate,
-    moment_id: 0,
-    tournament_name: asString(groupSession.description, asString(session.label, 'Tournoi')),
-    max_teams: maxTeamCount,
-    tournament_place_type_id: 0,
-    tournament_type_id: 0,
+    description: asString(groupSession.description, asString(session.label, 'Tournoi')),
+    entryCount: asNumber(groupSession.entryCount, 0),
+    moment: asString(groupSession.moment, ''),
+    location: asString(groupSession.location, ''),
+    maxTeamCount: asNumber(groupSession.maxTeamCount, 0),
+    expectedBoardCount: asNumber(groupSession.expectedBoardCount, 0),
     time,
-    computed_amount: 0,
-    tournament_status: 0,
-    is_loaded: true,
-    type_code: asString(session.format, ''),
-    session_id: sessionId ?? null,
-    player_count: entryCount,
-    session_name: asString(session.label, ''),
-    session_access_key: '',
-    deputy_director_access_key: asString(groupSession.deputyDirectorAccessKey, ''),
-    director_access_key: asString(groupSession.directorAccessKey, ''),
-    target_link: null,
-    nb_deal: expectedBoardCount,
-    iv_player_max: 0,
-    droped_target_link: null,
-    edulib_students_group_id: null,
-    vimeo_id: null,
-    is_halftime: false,
-    nb_round: 0,
-    date_end: null,
-    description: groupSession.description ?? null,
-    mail_sent: null,
-    moment_code: asString(groupSession.moment, ''),
-    moment_label: asString(groupSession.moment, ''),
-    type_id: '',
-    type_label: asString(session.rankingScoringType, ''),
-    place_id: '',
-    place_code: asString(groupSession.location, ''),
-    place_label: asString(groupSession.location, ''),
-    tournament_place_id: 0,
-    tournament_place_code: asString(groupSession.location, ''),
-    tournament_place_label: asString(groupSession.location, ''),
-    tournament_type_code: asString(session.format, ''),
-    tournament_type_label: asString(session.format, ''),
-    referee_id: 0,
-    deputy_referee_1_id: null,
-    deputy_referee_2_id: null,
-    referee_license_number: '',
-    referee_firstname: '',
-    referee_lastname: '',
-    deputy_referee_1_license_number: null,
-    deputy_referee_1_firstname: null,
-    deputy_referee_1_lastname: null,
-    deputy_referee_2_license_number: null,
-    deputy_referee_2_firstname: null,
-    deputy_referee_2_lastname: null,
-    simultaneous_label: null,
-    simultaneous_moment: null,
-    simultaneous_code: null,
-    simultaneous_tournament_id: null,
-    team_tournament_id: asNumber(groupSession.id, 0).toString(),
-    nbr_inscrit: entryCount,
-    has_isolated_player: false,
-    paid_amount: 0,
-    DUPexists: false,
   };
 }
 
-export function toTournamentList(payload: unknown): Tournament[] {
-  if (Array.isArray(payload)) {
-    return asArray<ApiTournamentDto>(payload).map((dto) => ({ ...dto })) as Tournament[];
-  }
-
-  const boxedPayload: any = payload;
-  if (isRecord(payload) && Array.isArray(boxedPayload?.items)) {
-    return boxedPayload.items.map((item: unknown) => toLegacyTournamentFromV2GroupSession(item));
-  }
-
-  return [];
+/**
+ * Convert FFB V2 paginated GroupSession response to minimal TournamentV2[] interface
+ * Handles: { items: GroupSession[], pagination: {...} }
+ */
+export function toTournamentV2List(payload: unknown): TournamentV2[] {
+  const boxedPayload: any = isRecord(payload) ? payload : {};
+  const items = asArray<unknown>(boxedPayload.items);
+  return items.map((item: unknown) => toTournamentV2(item));
 }
 
 export function toCompetitionSeasonList(payload: unknown): CompetitionSeason[] {
@@ -192,14 +123,13 @@ export function toClubMemberList(payload: unknown): ClubMember[] {
     members = asArray<ClubMember>(payload);
   }
   
-  // Normalize: pad ffbId to 8 digits and clean up whitespace in text fields
+  // Normalize fields and compute license_number from ffbId
   return members.map((member: any) => ({
     ...member,
+    license_number: asNumber(member.ffbId, 0).toString().padStart(8, '0'),
     firstName: capitalize(asString(member.firstName, '').trim()),
     lastName: asString(member.lastName, '').trim().toUpperCase(),
     gender: asString(member.gender, '').trim(),
-    // Store padded license number for consistent matching with DB Member.license_number
-    license_number_padded: asNumber(member.ffbId, 0).toString().padStart(8, '0'),
   }));
 }
 
@@ -247,10 +177,9 @@ export function toTournamentTeamsFromV2(
 }
 
 /**
- * Extract license_number and player info from FFB V2 /persons/{id} response
- * Used for non-members to get their actual license number
+ * Extract person info from FFB V2 /ffb/person response
  */
-export function toPersonV2(payload: unknown): { license_number: string; firstName: string; lastName: string } | null {
+export function toPersonV2(payload: unknown): PersonV2 | null {
   if (!isRecord(payload)) return null;
 
   const ffbId = asNumber(payload['ffbId'], 0);
@@ -259,9 +188,31 @@ export function toPersonV2(payload: unknown): { license_number: string; firstNam
     return null;
   }
 
+  const address: any = isRecord(payload['address']) ? payload['address'] : {};
+  const phone1: any = isRecord(payload['phone1']) ? payload['phone1'] : null;
+  const season: any = isRecord(payload['season']) ? payload['season'] : {};
+  const ranking: any = isRecord(season['ranking']) ? season['ranking'] : null;
+
+  const personRanking: PersonV2Ranking | null = ranking
+    ? {
+        ic: asNumber(ranking['ic'], 0),
+        iv: asNumber(ranking['iv'], 0),
+        pe: asNumber(ranking['pe'], 0),
+        pec: asNumber(ranking['pec'], 0),
+        pp: asNumber(ranking['pp'], 0),
+        ppc: asNumber(ranking['ppc'], 0),
+      }
+    : null;
+
   return {
     license_number: ffbId.toString().padStart(8, '0'),
     firstName: asString(payload['firstName'], ''),
     lastName: asString(payload['lastName'], '').toUpperCase(),
+    email: asString(payload['email'], ''),
+    address: asString(address['address'], ''),
+    city: asString(address['city'], ''),
+    phone: phone1 ? asString(phone1['number'], '') : null,
+    seasonCategory: asString(season['category'], ''),
+    ranking: personRanking,
   };
 }

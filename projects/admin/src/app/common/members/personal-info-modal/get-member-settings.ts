@@ -46,7 +46,7 @@ export class GetMemberSettingsComponent {
       has_avatar: [false],
       accept_mailing: [true],
       city: [''],
-      email: [''],
+      email: [{ value: '', disabled: true }],
       phone_one: [''],
     });
   }

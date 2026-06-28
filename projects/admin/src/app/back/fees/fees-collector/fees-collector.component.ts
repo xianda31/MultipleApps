@@ -364,7 +364,7 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
 
     // Tout est ok, ajouter les joueurs (conversion ClubMember → FFBplayer)
     const toFFBplayer = (m: ClubMember): FFBplayer => ({
-      license_number: m.license_number_padded || m.ffbId.toString().padStart(8, '0'),
+      license_number: m.license_number,
       firstname: m.firstName,
       lastname: m.lastName,
       person_id: m.id,

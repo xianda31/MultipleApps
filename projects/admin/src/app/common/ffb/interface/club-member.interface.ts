@@ -6,24 +6,16 @@
 
 export interface ClubMember {
   id: number;
-  migrationId: number;
-  ffbId: number;
+  license_number: string;    // ffbId padded to 8 digits (computed by adapter)
   firstName: string;
   lastName: string;
   gender: "M" | "F" | string;
-  birthdate: string; // ISO8601
-  avatarUrl: string | null;
+  birthdate: string;         // ISO8601
   club: ClubInfo;
-  clubLicensee: boolean;
   licensee: boolean;
   eLicensee: boolean;
-  hasBeenLicensee: boolean;
-  hasBeenClubLicensee: boolean;
-  hasBeenELicensee: boolean;
-  deathSeason: any | null;
   season: SeasonInfo;
   mainRegistration: RegistrationInfo;
-  license_number_padded?: string; // Added by adapter: ffbId padded to 8 digits for DB matching
 }
 
 export interface ClubInfo {

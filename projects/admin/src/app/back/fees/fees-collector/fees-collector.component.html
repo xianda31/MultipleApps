@@ -28,28 +28,21 @@
                                                                                                 'text-bg-success': trn.status === GAME_STATUS.COMPLETED
                                                                                             }">{{ trn.status }}</span>
                                     {{ trn.date | date:'EEEE d MMMM':'':'fr-FR' }}
-                                    <div class="small text-muted">{{ trn.time }}</div>
-                                    <div class="text-center">{{ trn.tournament_name }}</div>
+                                    <div class="small text-muted">{{ trn.time || '00:00' }}</div>
+                                    <div class="text-center">{{ trn.description || 'Tournoi' }}</div>
                                 </h6>
                                 <div class="card-body py-2">
                                     <div class="card-text text-center">
-                                        <div *ngIf="trn.nbr_inscrit > 0; else noInscrits">
+                                        <div *ngIf="trn.entryCount > 0; else noInscrits">
                                             <small>
                                                 paires inscrites :
-                                                {{ ((trn.nbr_inscrit - (trn.has_isolated_player ? 1 : 0)) / 2) |
+                                                {{ (trn.entryCount / 2) |
                                                 number:'1.0-0' }}
                                             </small>
                                         </div>
                                         <ng-template #noInscrits>
                                             <small>aucune inscription</small>
                                         </ng-template>
-
-                                        <div *ngIf="trn.has_isolated_player" class="mt-1">
-                                            <small>
-                                                + 1 <i class="bi bi-person-arms-up"></i>
-                                                <span class="text-info-emphasis">cherche un partenaire</span>
-                                            </small>
-                                        </div>
                                     </div>
                                 </div>
 

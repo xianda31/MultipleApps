@@ -49,14 +49,14 @@ export class TournamentComponent implements OnInit {
           this.teams = tteams.items;
           this.tournament_date = tteams.subscription_tournament.organization_club_tournament.date;
           this.tournament_name = tteams.subscription_tournament.organization_club_tournament.tournament_name;
-          this.already_subscribed = this.has_subscribed(Number(this.whoAmI?.license_number));
+          this.already_subscribed = this.has_subscribed(this.whoAmI?.person_id);
         });
     });
 
 
     this.auth.logged_member$.subscribe((member) => {
       this.whoAmI = member;
-      this.already_subscribed = this.has_subscribed(Number(this.whoAmI?.license_number));
+      this.already_subscribed = this.has_subscribed(this.whoAmI?.person_id);
     });
 
     this.player2 = this.fb.control(null, [Validators.required, this.player2_validator]);
@@ -70,60 +70,68 @@ export class TournamentComponent implements OnInit {
   player2_validator = (control: AbstractControl): ValidationErrors | null => {
     if (!control.value) return null; // Allow empty (not yet selected)
     const clubMember = control.value as ClubMember;
-    const licenseNumber = clubMember.license_number_padded || clubMember.ffbId.toString().padStart(8, '0');
-    if (this.has_subscribed(Number(licenseNumber))) {
+    const personId = clubMember.id;
+    if (this.has_subscribed(personId)) {
       return { 'already_engaged': true };
     }
     return null;
   }
 
-  has_subscribed(license_nbr: number): boolean {
+  has_subscribed(person_id: number | undefined): boolean {
+    if (person_id === undefined) {
+      return false;
+    }
     if (this.teams === undefined) {
       return false;
     }
 
     for (let team of this.teams) {
-      const player1License = Number(team.players[0]?.id.toString());
-      const player2License = Number(team.players[1]?.id.toString() || '0');
-      if ((player1License === license_nbr) || (player2License === license_nbr)) {
+      const player1PersonId = team.players[0]?.id;
+      const player2PersonId = team.players[1]?.id;
+      if ((player1PersonId === person_id) || (player2PersonId === person_id)) {
         return true;
       }
     }
     return false;
   }
 
-  is_in_team(license: string | undefined, team: TeamItem): boolean {
-    if (license === undefined) return false;
-    let license_nbr: number = Number(license);
-    const player1License = Number(team.players[0]?.id.toString() || '0');
-    const player2License = Number(team.players[1]?.id.toString() || '0');
-    return (player1License === license_nbr) || (player2License === license_nbr);
+  // is_in_team(person_id: number | undefined, team: TeamItem): boolean {
+  //   if (person_id === undefined) return false;
+  //   const player1PersonId = team.players[0]?.id;
+  //   const player2PersonId = team.players[1]?.id;
+  //   return (player1PersonId === person_id) || (player2PersonId === person_id);
+  // }
+    i_am_in_team(team: TeamItem): boolean {
+    const person_id = this.whoAmI?.person_id;
+    if (person_id === undefined) return false;
+    const player1PersonId = team.players[0]?.id;
+    const player2PersonId = team.players[1]?.id;
+    return (player1PersonId === person_id) || (player2PersonId === person_id);
   }
 
   completeTeam(player: FFBPlayer) {
-    let license_pair: string[] = [];
-    license_pair.push(player.id.toString());
-    license_pair.push(this.whoAmI!.license_number.toString());
-    this.createTeam(license_pair);
+    let player_pair: string[] = [];
+    player_pair.push(player.id.toString());
+    player_pair.push(this.whoAmI!.person_id?.toString() || '');
+    this.createTeam(player_pair);
   }
   subscribeWithPlayer2() {
-    let license_pair: string[] = [];
-    license_pair.push(this.whoAmI!.license_number.toString());
+    let player_pair: string[] = [];
+    player_pair.push(this.whoAmI!.person_id?.toString() || '');
     const clubMember = this.player2.value as ClubMember;
-    const licenseNumber = clubMember.license_number_padded || clubMember.ffbId.toString().padStart(8, '0');
-    license_pair.push(licenseNumber);
-    this.createTeam(license_pair);
+    player_pair.push(clubMember.id.toString());
+    this.createTeam(player_pair);
   }
 
   subscribeSolo() {
-    let license_pair: string[] = [];
-    license_pair.push(this.whoAmI!.license_number.toString());
-    this.createTeam(license_pair, 'solo');
+    let player_pair: string[] = [];
+    player_pair.push(this.whoAmI!.person_id?.toString() || '');
+    this.createTeam(player_pair, 'solo');
   }
 
-  createTeam(license_pair: string[], solo?: string) {
+  createTeam(player_pair: string[], solo?: string) {
 
-    this.TournamentService.createTeam(this.tteam_tournament_id.toString(), license_pair)
+    this.TournamentService.createTeam(this.tteam_tournament_id.toString(), player_pair)
       .then((data) => {
         const msg = (solo === 'solo') ? "vous êtes inscrit(e) en solo" : "vous êtes inscrit(e) en équipe";
         this.toastService.showSuccess("tournoi du " + this.tournament_date, msg);

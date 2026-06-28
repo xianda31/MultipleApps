@@ -25,7 +25,7 @@ export class TournamentsComponent {
 
   next_tournament_teams: TournamentTeams[] = [];
 
-  license_nbr = 0; // License number of the logged member
+  person_id: number | undefined; // Person ID of the logged member
   // logged: boolean = false;
   loading: boolean = true;
   in_error: boolean = false;
@@ -53,7 +53,7 @@ export class TournamentsComponent {
 
     this.auth.logged_member$.subscribe((member) => {
       const whoAmI = member;
-      this.license_nbr = whoAmI ? Number(whoAmI.license_number) : 0;
+      this.person_id = whoAmI?.person_id;
       this.logged = whoAmI || null;
     });
   }
@@ -124,14 +124,13 @@ export class TournamentsComponent {
 
   registrated_in(tTeams: TournamentTeams): boolean {
 
-    if (!this.license_nbr) {
-      return false; // If no license number is set, return false
+    if (!this.person_id) {
+      return false; // If not logged or person_id not set, return false
     }
-    const license = this.license_nbr.toString();
     for (let team of tTeams.items) {
-      const playerId1 = team.players[0]?.id.toString() || '';
-      const playerId2 = team.players[1]?.id.toString() || '';
-      if ((playerId1 === license) || (playerId2 === license)) {
+      const playerId1 = team.players[0]?.id;
+      const playerId2 = team.players[1]?.id;
+      if ((playerId1 === this.person_id) || (playerId2 === this.person_id)) {
         return true;
       }
     }

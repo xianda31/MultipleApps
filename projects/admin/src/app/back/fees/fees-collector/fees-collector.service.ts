@@ -230,7 +230,7 @@ export class FeesCollectorService {
     this.tournament = null;
   }
 
-  get_tournament(): club_tournament | null {
+  get_tournament(): club_tournament_extended | null {
     // check if debt or credit have changed since tournament load
     if (this.tournament) {
       this.update_members_debts();
@@ -254,7 +254,8 @@ export class FeesCollectorService {
       this.set_game(tournament);
       this.tournament.status = Game_status.INITIAL;
     } else {
-      const already_charged = this.BookService.search_tournament_fees_entry(tournament.date, tournament.tournament_name) !== undefined;
+      const tournamentName = tournament.description || 'Tournoi';
+      const already_charged = this.BookService.search_tournament_fees_entry(tournament.date, tournamentName) !== undefined;
       if (already_charged) {
         this.tournament.status = Game_status.COMPLETED;
         this.game = game; // restore previous game state
@@ -273,7 +274,7 @@ export class FeesCollectorService {
   }
 
 
-  async check_tournament_status(tournament: club_tournament): Promise<Game_status> {
+  async check_tournament_status(tournament: club_tournament_extended): Promise<Game_status> {
     try {
       // Guard: if sys_conf is not initialized yet, return INITIAL status
       if (!this.sys_conf) {
@@ -293,8 +294,9 @@ export class FeesCollectorService {
       let already_charged = false;
       if (this.members && this.members.length > 0) {
         try {
-          already_charged = this.BookService.search_tournament_fees_entry(tournament.date, tournament.tournament_name) !== undefined;
-          console.log(`Tournament ${tournament.tournament_name} on ${tournament.date} already charged:`, already_charged);
+          const tournamentName = tournament.description || 'Tournoi';
+          already_charged = this.BookService.search_tournament_fees_entry(tournament.date, tournamentName) !== undefined;
+          console.log(`Tournament ${tournamentName} on ${tournament.date} already charged:`, already_charged);
         } catch (bookError) {
           // BookService.search_tournament_fees_entry() may throw if _book_entries not yet initialized
           // Silent catch: this is expected in degraded mode
@@ -339,23 +341,23 @@ export class FeesCollectorService {
   }
 
 
-  set_game(tournament: club_tournament) {
+  set_game(tournament: club_tournament_extended) {
     this.game.season = this.sys_conf.season!;
     this.game.alphabetic_sort = false;
-    this.game.fees_doubled = tournament.tournament_name.includes('ROY') ? true : false;
-    this.game.fee_rate = (tournament.tournament_name.includes('ELEVES') || tournament.tournament_name.includes('ACCESSION')) ? FEE_RATE.ACCESSION : FEE_RATE.STANDARD;
+    this.game.fees_doubled = tournament.description?.includes('ROY') ? true : false;
+    this.game.fee_rate = (tournament.description?.includes('ELEVES') || tournament.description?.includes('ACCESSION')) ? FEE_RATE.ACCESSION : FEE_RATE.STANDARD;
     this.game.member_trn_price = +this.get_fee_rate(this.game.fee_rate).member_price;
     this.game.non_member_trn_price = +this.get_fee_rate(this.game.fee_rate).non_member_price;
     this.game.tournament = {
       id: tournament.id,
-      name: tournament.tournament_name,
+      name: tournament.description || 'Tournoi',
       date: tournament.date,
-      time: tournament.time
+      time: tournament.time || '00:00'
     };
 
     this.game.gamers = [];
 
-    this.tournamentService.readTeams(tournament!.team_tournament_id).pipe(
+    this.tournamentService.readTeams(tournament.id.toString()).pipe(
       map((tteams: TournamentTeams) => tteams.items),
       map((items) => items.flatMap((team) => team.players.map((player, idx) => ({ player, teamId: team.id, playerIndex: idx })))),
     ).subscribe(async (playerData) => {
