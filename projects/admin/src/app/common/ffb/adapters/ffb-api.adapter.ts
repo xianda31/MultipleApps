@@ -58,7 +58,7 @@ function toTournamentV2(raw: unknown): TournamentV2 {
   return {
     id: asNumber(groupSession.id, 0),
     date: isoDate,
-    description: asString(groupSession.description, asString(session.label, 'Tournoi')),
+    description: asString(session.label, 'Tournoi'),
     entryCount: asNumber(groupSession.entryCount, 0),
     moment: asString(groupSession.moment, ''),
     location: asString(groupSession.location, ''),
@@ -151,8 +151,11 @@ export function toTournamentTeamsFromV2(
 
   // Extract metadata from tournament or create defaults
   const date = tournament?.date || '';
-  const tournamentName = tournament?.tournament_name || 'Tournament';
-  const sessionName = tournament?.session_name || '';
+  const tournamentName = asString(
+    tournament?.description,
+    asString(tournament?.tournament_name, asString(tournament?.session_name, ''))
+  );
+  const sessionName = asString(tournament?.session_name, asString(tournament?.description, ''));
   const time = tournament?.time || '00:00';
 
   return {

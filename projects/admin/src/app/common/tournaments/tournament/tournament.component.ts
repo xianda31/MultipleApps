@@ -95,12 +95,7 @@ export class TournamentComponent implements OnInit {
     return false;
   }
 
-  // is_in_team(person_id: number | undefined, team: TeamItem): boolean {
-  //   if (person_id === undefined) return false;
-  //   const player1PersonId = team.players[0]?.id;
-  //   const player2PersonId = team.players[1]?.id;
-  //   return (player1PersonId === person_id) || (player2PersonId === person_id);
-  // }
+
     i_am_in_team(team: TeamItem): boolean {
     const person_id = this.whoAmI?.person_id;
     if (person_id === undefined) return false;
