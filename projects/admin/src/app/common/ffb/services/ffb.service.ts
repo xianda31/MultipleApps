@@ -7,6 +7,7 @@ import { TournamentTeams } from '../interface/tournament_teams.interface';
 import { from, Observable } from 'rxjs';
 import { Competition, CompetitionOrganization, CompetitionPhases, CompetitionSeason, CompetitionTeam } from '../../../back/competitions/competitions.interface';
 import { environment } from '../../../../environments/environment';
+import { SystemDataService } from '../../services/system-data.service';
 import {
   toCompetitionList,
   toCompetitionOrganizationList,
@@ -42,7 +43,28 @@ export class FFB_proxyService {
   private readonly API_NAME = 'ffbProxyApi';
   private readonly ffbPathOverrides = ((environment as any).ffbProxyPathOverrides || {}) as Record<string, string>;
 
-  constructor() { }
+  constructor(private systemDataService: SystemDataService) { }
+
+  private getTraceHeaders(): Record<string, string> {
+    let traceMode = false;
+    try {
+      traceMode = !!this.systemDataService.trace_on();
+    } catch {
+      traceMode = false;
+    }
+    return { 'x-trace-mode': traceMode ? 'true' : 'false' };
+  }
+
+  private withTraceHeaders<T extends Record<string, any>>(options?: T): T & { headers: Record<string, string> } {
+    const mergedHeaders = {
+      ...(options?.['headers'] || {}),
+      ...this.getTraceHeaders(),
+    };
+    return {
+      ...(options || {}),
+      ['headers']: mergedHeaders,
+    } as T & { headers: Record<string, string> };
+  }
 
   private buildPath(endpoint: string): string {
     const overridden = this.ffbPathOverrides[endpoint];
@@ -60,13 +82,13 @@ export class FFB_proxyService {
       const restOperation = get({
         apiName: this.API_NAME,
         path: this.buildPath(FFB_ENDPOINTS.memberSearch),
-        options: {
+        options: this.withTraceHeaders({
           queryParams: {
             name: hint,
             currentPage: String(currentPage),
             maxPerPage: String(maxPerPage)
           }
-        }
+        })
       });
       const { body } = await restOperation.response;
       const data = await body.json();
@@ -80,8 +102,6 @@ export class FFB_proxyService {
   _getTournaments(dateFrom?: Date, dateTo?: Date): Observable<TournamentV2[]> {  // VALIDATED - returns V2 native interface
     return from((async () => {
       try {
-        console.log('[FFB Service] _getTournaments: fetching group sessions...');
-
         // Load all pages from FFB V2 (paginated response)
         const allTournaments: TournamentV2[] = [];
         let currentPage = 1;
@@ -89,8 +109,6 @@ export class FFB_proxyService {
         let totalItems = 0;
 
         while (currentPage <= totalPages) {
-          console.log(`[FFB Service] _getTournaments: loading page ${currentPage}/${totalPages}...`);
-
           const queryParams: Record<string, string> = {
             currentPage: String(currentPage),
             maxPerPage: '80'
@@ -107,9 +125,9 @@ export class FFB_proxyService {
           const restOperation = get({
             apiName: this.API_NAME,
             path: this.buildPath(FFB_ENDPOINTS.clubTournaments),
-            options: {
+            options: this.withTraceHeaders({
               queryParams
-            }
+            })
           });
 
           const { body } = await restOperation.response;
@@ -125,18 +143,14 @@ export class FFB_proxyService {
             if (currentPage === 1) {
               totalPages = pagination.total_pages || 1;
               totalItems = pagination.total_items || 0;
-              console.log(`[FFB Service] Pagination plan: ${totalItems} tournaments in ${totalPages} page(s)`);
             }
-            console.log(`[FFB Service] Page ${currentPage}/${totalPages}: got ${pageTournaments.length} items, total so far: ${allTournaments.length}/${totalItems}`);
           } else {
-            console.warn(`[FFB Service] No pagination metadata on page ${currentPage}, assuming single page`);
             break;
           }
 
           currentPage++;
         }
 
-        console.log(`[FFB Service] _getTournaments complete: fetched ${allTournaments.length} tournaments`);
         return allTournaments;
       } catch (error: any) {
         console.error('[FFB Service] _getTournaments failed:', error);
@@ -150,16 +164,11 @@ export class FFB_proxyService {
       // In FFB V2, seasonId is required for club-members endpoint
       let actualSeasonId = seasonId || '';
       if (!actualSeasonId) {
-        console.log('[FFB Service] getAdherents: seasonId not provided, fetching current season...');
         const season = await this.getCurrentSeason();
-        console.log('[FFB Service] getCurrentSeason response:', season);
         if (season) {
           actualSeasonId = (season as any)?.id || (season as any)?.season_id || '';
-          console.log('[FFB Service] Got seasonId:', actualSeasonId);
         }
       }
-
-      console.log('[FFB Service] getAdherents: calling club-members with seasonId:', actualSeasonId);
 
       // Load all pages from FFB V2 (paginated response)
       const allItems: ClubMember[] = [];
@@ -169,17 +178,16 @@ export class FFB_proxyService {
       let perPage = 80;
 
       while (currentPage <= totalPages) {
-        console.log(`[FFB Service] getAdherents: loading page ${currentPage}/${totalPages}...`);
         const restOperation = get({
           apiName: this.API_NAME,
           path: this.buildPath(FFB_ENDPOINTS.clubMembers),
-          options: {
+          options: this.withTraceHeaders({
             queryParams: {
               seasonId: actualSeasonId,
               currentPage: String(currentPage),
               maxPerPage: "80"
             }
-          }
+          })
         });
         const { body } = await restOperation.response;
         const data = await body.json();
@@ -196,19 +204,15 @@ export class FFB_proxyService {
             totalPages = pagination.total_pages || 1;
             totalItems = pagination.total_items || 0;
             perPage = pagination.per_page || 80;
-            console.log(`[FFB Service] Pagination plan: ${totalItems} adherents in ${totalPages} page(s) (${perPage}/page)`);
           }
-          console.log(`[FFB Service] Page ${currentPage}/${totalPages}: got ${pageItems.length} items, total so far: ${allItems.length}/${totalItems}`);
         } else {
           // No pagination metadata, something went wrong
-          console.warn(`[FFB Service] No pagination metadata on page ${currentPage}`);
           break;
         }
 
         currentPage++;
       }
 
-      console.log(`[FFB Service] getAdherents complete: fetched ${allItems.length}/${totalItems} adherents in ${currentPage - 1} request(s)`);
       return allItems;
     } catch (error) {
       console.error('[FFB Service] getAdherents failed:', error);
@@ -218,24 +222,18 @@ export class FFB_proxyService {
 
   async getFFBPerson(id: number): Promise<PersonV2 | null> {
     try {
-      console.log(`[FFB Service] getFFBPerson: Fetching person ${id} from FFB V2 API`);
       const restOperation = get({
         apiName: this.API_NAME,
         path: this.buildPath(FFB_ENDPOINTS.person),
-        options: {
+        options: this.withTraceHeaders({
           queryParams: {
             personId: id.toString()
           }
-        }
+        })
       });
       const { body } = await restOperation.response;
       const data = await body.json();
       const person = toPersonV2(data);
-      if (person) {
-        console.log(`[FFB Service] getFFBPerson: Got license_number=${person.license_number} for person ${id}`);
-      } else {
-        console.warn(`[FFB Service] getFFBPerson: Could not extract license for person ${id}`);
-      }
       return person;
     } catch (error) {
       console.error(`[FFB Service] getFFBPerson failed for person ${id}:`, error);
@@ -252,11 +250,9 @@ export class FFB_proxyService {
    */
   async postTeam(groupSessionId: string, personIds: number[]): Promise<boolean> {  // VALIDATED
     if (!groupSessionId) {
-      console.warn('[FFB Service] postTeam: no groupSessionId provided');
       return false;
     }
     if (!personIds || personIds.length === 0) {
-      console.warn('[FFB Service] postTeam: no players provided');
       return false;
     }
 
@@ -264,22 +260,19 @@ export class FFB_proxyService {
     const playersAsNumbers = personIds;
 
     try {
-      console.log(`[FFB Service] postTeam: groupSessionId=${groupSessionId}, personIds=[${personIds.join(',')}], captainId=${captainId}`);
-      console.log(`[FFB Service] postTeam: payload will be { players: [${playersAsNumbers.join(', ')}], captainId: ${captainId} }`);
-      
+
       const restOperation = post({
         apiName: this.API_NAME,
         path: this.buildPath(`${FFB_ENDPOINTS.teamCreate}/${groupSessionId}/createTeam`),
-        options: {
+        options: this.withTraceHeaders({
           body: {
             players: playersAsNumbers,
             captainId: captainId
           }
-        }
+        })
       });
       const { body } = await restOperation.response;
       await body.json(); // Consume response but don't use it
-      console.log(`[FFB Service] postTeam succeeded`);
       return true;
     } catch (error) {
       console.error('[FFB Service] postTeam failed: ', error);
@@ -294,17 +287,15 @@ export class FFB_proxyService {
    */
   async deleteTeam(groupSessionId: string, teamId: string): Promise<boolean | null> {   // VALIDATED
     if (!teamId) {
-      console.warn('[FFB Service] deleteTeam: no teamId provided');
       return null;
     }
     try {
-      console.log(`[FFB Service] deleteTeam: teamId=${teamId}`);
       const restOperation = del({
         apiName: this.API_NAME,
-        path: this.buildPath(`${FFB_ENDPOINTS.teamEntries}/${teamId}`)
+        path: this.buildPath(`${FFB_ENDPOINTS.teamEntries}/${teamId}`),
+        options: this.withTraceHeaders()
       });
       await restOperation.response; // Wait for response to complete
-      console.log(`[FFB Service] deleteTeam succeeded`);
       return true;
     } catch (error) {
       console.error('[FFB Service] deleteTeam failed: ', error);
@@ -314,17 +305,16 @@ export class FFB_proxyService {
 
   async getTournamentTeams(groupSessionId: string, tournament?: any): Promise<TournamentTeams> {   // VALIDATED
     try {
-      console.log(`[FFB Service] getTournamentTeams: groupSessionId=${groupSessionId}`);
       const restOperation = get({
         apiName: this.API_NAME,
         path: this.buildPath(FFB_ENDPOINTS.tournamentTeam),
-        options: {
+        options: this.withTraceHeaders({
           queryParams: {
             groupSessionId: groupSessionId,
             currentPage: '1',
             maxPerPage: '80'
           }
-        }
+        })
       });
       const { body } = await restOperation.response;
       const json = await body.json();
@@ -346,6 +336,7 @@ export class FFB_proxyService {
       const restOperation = get({
         apiName: this.API_NAME,
         path: this.buildPath(FFB_ENDPOINTS.organizations),
+        options: this.withTraceHeaders(),
       });
       const { body } = await restOperation.response;
       const data = await body.json();
@@ -358,14 +349,13 @@ export class FFB_proxyService {
 
   async getCurrentSeason(): Promise<CompetitionSeason | null> {
     try {
-      console.log('[FFB Service] getCurrentSeason: calling seasons/current');
       const restOperation = get({
         apiName: this.API_NAME,
         path: this.buildPath(FFB_ENDPOINTS.seasons),
+        options: this.withTraceHeaders(),
       });
       const { body } = await restOperation.response;
       const data = await body.json();
-      console.log('[FFB Service] getCurrentSeason success:', data);
       return toCompetitionSeason(data);
     } catch (error) {
       console.error('[FFB Service] getCurrentSeason failed:', error);
@@ -378,6 +368,7 @@ export class FFB_proxyService {
       const restOperation = get({
         apiName: this.API_NAME,
         path: this.buildPath(FFB_ENDPOINTS.organizations),
+        options: this.withTraceHeaders(),
       });
       const { body } = await restOperation.response;
       const data = await body.json();
@@ -393,11 +384,11 @@ export class FFB_proxyService {
       const restOperation = get({
         apiName: this.API_NAME,
         path: this.buildPath('/api/ffb/v2/competitions/by-organization/' + organization_id),
-        options: {
+        options: this.withTraceHeaders({
           queryParams: {
             season_id: season_id,
           }
-        }
+        })
       });
       const { body } = await restOperation.response;
       const data = await body.json();
@@ -413,12 +404,12 @@ export class FFB_proxyService {
       const restOperation = get({
         apiName: this.API_NAME,
         path: this.buildPath(FFB_ENDPOINTS.finalRanking),
-        options: {
+        options: this.withTraceHeaders({
           queryParams: {
             competition_id: competition_id,
             organization_id: organization_id
           }
-        }
+        })
       });
       const { body } = await restOperation.response;
       const data = await body.json();
@@ -433,12 +424,12 @@ export class FFB_proxyService {
       const restOperation = get({
         apiName: this.API_NAME,
         path: this.buildPath(FFB_ENDPOINTS.phases),
-        options: {
+        options: this.withTraceHeaders({
           queryParams: {
             competition_id: competition_id,
             organization_id: organization_id
           }
-        }
+        })
       });
       const { body } = await restOperation.response;
       const data = await body.json();

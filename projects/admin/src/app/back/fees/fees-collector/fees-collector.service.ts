@@ -296,7 +296,6 @@ export class FeesCollectorService {
         try {
           const tournamentName = tournament.description || 'Tournoi';
           already_charged = this.BookService.search_tournament_fees_entry(tournament.date, tournamentName) !== undefined;
-          console.log(`Tournament ${tournamentName} on ${tournament.date} already charged:`, already_charged);
         } catch (bookError) {
           // BookService.search_tournament_fees_entry() may throw if _book_entries not yet initialized
           // Silent catch: this is expected in degraded mode
@@ -361,8 +360,7 @@ export class FeesCollectorService {
       map((tteams: TournamentTeams) => tteams.items),
       map((items) => items.flatMap((team) => team.players.map((player, idx) => ({ player, teamId: team.id, playerIndex: idx })))),
     ).subscribe(async (playerData) => {
-      console.log(`[FeesCollectorService] Loading ${playerData.length} players from tournament`);
-      
+
       // Build gamer list with FFB license lookup for ALL players (members + non-members)
       // This validates the FFB service and ensures license consistency
       this.game.gamers = await Promise.all(playerData.map(async ({ player, teamId, playerIndex }, index) => {
@@ -390,12 +388,7 @@ export class FeesCollectorService {
             `FFB=${license} vs DB=${member!.license_number}`
           );
         }
-        
-        console.log(
-          `[FeesCollectorService] Player: ${player.firstName} ${player.lastName} (person_id=${player.id}) ` +
-          `→ ${isMember ? 'Member' : 'Non-member'} license=${license}`
-        );
-        
+
         return {
           license: license,
           firstname: player.firstName,

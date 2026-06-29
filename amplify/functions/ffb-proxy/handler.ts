@@ -7,6 +7,12 @@ function isProxyDebugEnabled(): boolean {
   return (process.env.FFB_PROXY_DEBUG || "false").toLowerCase() === "true";
 }
 
+function isTruthyFlag(value: string | undefined): boolean {
+  if (!value) return false;
+  const normalized = value.trim().toLowerCase();
+  return normalized === "true" || normalized === "1" || normalized === "yes" || normalized === "on";
+}
+
 function asLancelotToken(token: string): string {
   const trimmed = (token || "").trim();
   if (!trimmed) {
@@ -185,6 +191,14 @@ function getHeaderCaseInsensitive(headers: Record<string, string | undefined> | 
   return undefined;
 }
 
+function isTraceEnabledForRequest(event: any): boolean {
+  const headerTraceMode = getHeaderCaseInsensitive(event?.headers, "x-trace-mode");
+  if (headerTraceMode !== undefined) {
+    return isTruthyFlag(headerTraceMode);
+  }
+  return isProxyDebugEnabled();
+}
+
 function normalizeProxyRoute(event: any): string {
   const proxy = (event.pathParameters?.proxy || "").replace(/^\/+/, "");
   if (!proxy) return "";
@@ -201,6 +215,13 @@ function normalizeProxyRoute(event: any): string {
 }
 
 export const handler: Handler = async (event) => {
+  const originalConsoleLog = console.log;
+  const traceEnabled = isTraceEnabledForRequest(event);
+
+  if (!traceEnabled) {
+    console.log = (() => {}) as typeof console.log;
+  }
+
   try {
     console.log(`[Handler] ⚡ INVOKED: ${event.requestContext?.http.method || "?"} ${event.rawPath || event.path || "?"}`);
     console.log(`[Handler] Proxy param: ${event.pathParameters?.proxy || "(none)"}`);
@@ -452,5 +473,7 @@ export const handler: Handler = async (event) => {
       error: "Proxy error",
       details: error instanceof Error ? error.message : String(error),
     });
+  } finally {
+    console.log = originalConsoleLog;
   }
 };

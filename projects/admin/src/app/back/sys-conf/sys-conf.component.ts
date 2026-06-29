@@ -23,6 +23,10 @@ export class SysConfComponent {
   export_file_url: any;
   newBankKey = '';
   newBankName = '';
+  traceModeEnabled = false;
+  bankOptionsList: { key: string; name: string }[] = [];
+  private isLoadingForm = false;
+  private lastExportSnapshot = '';
 
   constructor(
     private systemDataService: SystemDataService,
@@ -103,7 +107,15 @@ export class SysConfComponent {
 
     // Met à jour le blob d'export à chaque modification du formulaire
     this.systemFormGroup.valueChanges.subscribe(val => {
+      if (this.isLoadingForm) return;
+      const snapshot = JSON.stringify(val);
+      if (snapshot === this.lastExportSnapshot) return;
+      this.lastExportSnapshot = snapshot;
       this.export_file_url = this.fileService.json_to_blob(val);
+    });
+
+    this.systemFormGroup.get('trace_mode')?.valueChanges.subscribe((value) => {
+      this.traceModeEnabled = !!value;
     });
   }
 
@@ -120,9 +132,6 @@ export class SysConfComponent {
     this.toastService.showSuccess('configuration sauvegardée', 'les nouvelles données ont été enregistrées');
   }
 
-  get_trace_mode() {
-    return this.systemFormGroup.get('trace_mode')?.value;
-  }
   get expenses() {
     return this.systemFormGroup.get('revenue_and_expense_tree')?.get('expenses') as FormArray;
   }
@@ -143,7 +152,7 @@ export class SysConfComponent {
     return this.systemFormGroup.get('banks') as FormArray;
   }
 
-  get bankOptions(): { key: string; name: string }[] {
+  private computeBankOptions(): { key: string; name: string }[] {
     const seen = new Set<string>();
     return this.banks.controls
       .map(ctrl => ({
@@ -157,6 +166,10 @@ export class SysConfComponent {
       });
   }
 
+  private refreshBankOptions(): void {
+    this.bankOptionsList = this.computeBankOptions();
+  }
+
   // Ajoute un nouveau code banque '???'/'autre'
   addBankCode(): void {
     const banks = this.banks;
@@ -165,6 +178,7 @@ export class SysConfComponent {
     const last = banks.at(banks.length - 1);
     if (!last || last.get('key')?.value !== '???') {
       banks.push(this.fb.group({ key: ['???'], name: ['autre'] }));
+      this.refreshBankOptions();
     }
   }
 
@@ -184,6 +198,7 @@ export class SysConfComponent {
     }
 
     this.banks.push(this.fb.group({ key: [key], name: [name] }));
+    this.refreshBankOptions();
     this.newBankKey = '';
     this.newBankName = '';
   }
@@ -196,6 +211,7 @@ export class SysConfComponent {
     if (i === banks.length - 1 && banks.at(i).get('key')?.value !== '???') {
       this.addBankCode();
     }
+    this.refreshBankOptions();
   }
   get club_bank(): string {
     let key = this.systemFormGroup.get('club_bank_key')?.value;
@@ -215,7 +231,8 @@ export class SysConfComponent {
   }
 
   loadDataInFormGroup(configuration: SystemConfiguration) {
-    this.systemFormGroup.patchValue(configuration);
+    this.isLoadingForm = true;
+    this.systemFormGroup.patchValue(configuration, { emitEvent: false });
     // patchValue doest not work for FormArray ; work-around method : clear and re-populate
     this.sections.clear();
     this.expenses.clear();
@@ -242,6 +259,12 @@ export class SysConfComponent {
     configuration.banks.forEach((bank: any) => {
       this.banks.push(this.fb.group(bank));
     });
+
+    this.refreshBankOptions();
+    this.traceModeEnabled = !!this.systemFormGroup.get('trace_mode')?.value;
+    this.lastExportSnapshot = JSON.stringify(this.systemFormGroup.value);
+    this.export_file_url = this.fileService.json_to_blob(this.systemFormGroup.value);
+    this.isLoadingForm = false;
 
   }
 

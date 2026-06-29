@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ToastEvent } from '../../models/toast-event';
 import { CommonModule } from '@angular/common';
 import { ToastComponent } from '../toast/toast.component';
 import { ToastService } from '../../../services/toast.service';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-toaster',
@@ -12,8 +13,9 @@ import { ToastService } from '../../../services/toast.service';
   styleUrls: ['./toaster.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ToasterComponent implements OnInit {
+export class ToasterComponent implements OnInit, OnDestroy {
   currentToasts: ToastEvent[] = [];
+  private readonly destroyed$ = new Subject<void>();
 
   constructor(
     private toastService: ToastService,
@@ -24,8 +26,13 @@ export class ToasterComponent implements OnInit {
     this.subscribeToToasts();
   }
 
+  ngOnDestroy() {
+    this.destroyed$.next();
+    this.destroyed$.complete();
+  }
+
   subscribeToToasts() {
-    this.toastService.toastEvents.subscribe((toasts) => {
+    this.toastService.toastEvents.pipe(takeUntil(this.destroyed$)).subscribe((toasts) => {
       const currentToast: ToastEvent = {
         type: toasts.type,
         title: toasts.title,
@@ -33,12 +40,12 @@ export class ToasterComponent implements OnInit {
       };
 
       this.currentToasts.push(currentToast);
-      this.cdr.detectChanges();
+      this.cdr.markForCheck();
     });
   }
 
   dispose(index: number) {
     this.currentToasts.splice(index, 1);
-    this.cdr.detectChanges();
+    this.cdr.markForCheck();
   }
 }
