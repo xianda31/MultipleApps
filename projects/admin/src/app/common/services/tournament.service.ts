@@ -36,9 +36,7 @@ export class TournamentService {
         
         const dateTo = new Date(today);
         dateTo.setDate(today.getDate() + window);
-        
-        console.log(`[TournamentService] list_next_tournaments(days_back=${days_back}, window=${window}): dateFrom=${dateFrom.toISOString()} dateTo=${dateTo.toISOString()}`);
-        
+
         // Always fetch from API to ensure data reflects current window parameters
         return this.ffbService._getTournaments(dateFrom, dateTo).pipe(
             map((tournaments: TournamentV2[]) => {

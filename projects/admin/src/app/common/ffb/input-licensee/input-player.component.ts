@@ -81,7 +81,7 @@ export class InputPlayerComponent implements ControlValueAccessor {
           this.players = players;
         });
     } else {
-      console.log(value,' : Input too short for search');
+      // console.log(value,' : Input too short for search');
     }
   }
 

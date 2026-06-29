@@ -34,6 +34,12 @@ export class CustomDropdownComponent {
     this.showSuggestions = false;
   }
 
+  onItemMouseDown(event: MouseEvent, item: any) {
+    // Prevent input blur from closing the list before selection is applied.
+    event.preventDefault();
+    this.selectItem(item);
+  }
+
   hideSuggestionsDelay() {
     this.blurred.emit();
     setTimeout(() => {

@@ -76,8 +76,6 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
       this.banks = conf.banks || [];
     });
 
-    console.log('FeesCollectorComponent initialized');
-
     this.membersService.listMembers().subscribe(members => {
       this.members = members;
     });
@@ -108,7 +106,6 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
     today.setHours(0, 0, 0, 0);
     this.daysBack$.pipe(
       switchMap(v => {
-        console.log(`[FeesCollector] Loading tournaments: days_back=${v}, window=${this.tournamentsWindow} days`);
         return this.tournamentService.list_next_tournaments(v, this.tournamentsWindow);
       })
     ).subscribe({

@@ -15,7 +15,7 @@
     class="dropdown-list position-absolute start-0 end-0 mt-1 list-unstyled border rounded shadow-sm"
     style="z-index: 1000; max-height: 300px; overflow-y: auto; background: white;">
     <li *ngFor="let item of getFilteredItems()"
-      (click)="selectItem(item)"
+      (mousedown)="onItemMouseDown($event, item)"
       class="p-2 cursor-pointer hover-highlight">
       {{ displayFn(item) }}
     </li>
