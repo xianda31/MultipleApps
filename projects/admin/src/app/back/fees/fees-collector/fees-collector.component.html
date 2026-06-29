@@ -4,14 +4,14 @@
 
         <div *ngIf="!selected_tournament || selected_tournament === undefined" class="row gy-2 fees-tournament-picker">
             <div class="col-12 d-flex align-items-center">
-                <h5 class="mb-0 d-none d-sm-inline">Droits de table</h5>
-                <span class="text-muted ms-2  d-sm-inline"> sélectionner le tournoi</span>
-                <span class="text-muted ms-2 small">(recherche: {{tournamentsWindow}} jours)</span>
-                <button class="btn btn-sm btn-primary ms-auto" (click)="one_week_back()" title="reculer d'une semaine">
+                <h5 class="mb-0 d-none d-sm-inline">Tournois Club</h5>
+                <!-- <span class="text-muted ms-2  d-sm-inline"> sélectionner le tournoi</span> -->
+                <span class="text-muted ms-2 small">(fenêtre de recherche: {{tournamentsWindow}} jours)</span>
+                <button class="btn btn-sm btn-primary ms-auto" (click)="one_week_back()" title="début de recherche -7 jours">
                     <i class="bi bi-skip-backward"></i>
                 </button>
-                <button class="btn btn-sm btn-outline-primary ms-2" (click)="extend_week()" title="ajouter une semaine à la recherche">
-                    <i class="bi bi-skip-forward"></i>
+                <button class="btn btn-sm btn-outline-primary ms-2" (click)="extend_week()" title="fin de recherche +7 jours">
+                    <i class="bi bi-chevron-double-right"></i>
                 </button>
             </div>
             <div *ngFor="let chrono of ['passed', 'today', 'upcoming']; let i = index">
