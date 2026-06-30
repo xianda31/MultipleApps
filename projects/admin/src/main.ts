@@ -17,10 +17,16 @@ Amplify.configure(outputs);
 const amplifyConfig = Amplify.getConfig();
 
 // Normalize REST API endpoints: remove trailing slash to avoid double-slash in paths
+const outputsAny = outputs as any;
+const restApiFromConfig = (
+  amplifyConfig.API?.REST && Object.keys(amplifyConfig.API.REST as Record<string, any>).length > 0
+    ? amplifyConfig.API.REST
+    : outputsAny?.custom?.API
+) as Record<string, any>;
 const restApi = Object.fromEntries(
-  Object.entries(outputs.custom.API as Record<string, any>).map(([name, cfg]) => [
+  Object.entries(restApiFromConfig || {}).map(([name, cfg]) => [
     name,
-    { ...cfg, endpoint: cfg.endpoint.replace(/\/$/, '') }
+    { ...cfg, endpoint: typeof cfg?.endpoint === 'string' ? cfg.endpoint.replace(/\/$/, '') : cfg?.endpoint }
   ])
 );
 

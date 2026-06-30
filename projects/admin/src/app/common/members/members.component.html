@@ -82,7 +82,7 @@
                 </li>
               </ul>
             </th>
-            <th class="d-none d-sm-table-cell text-center">iv</th>
+            <!-- <th class="d-none d-sm-table-cell text-center">iv</th> -->
             <th class="d-none d-sm-table-cell text-center">préf.</th>
             <th class="d-none d-sm-table-cell text-center">Actions</th>
           </tr>
@@ -136,14 +136,14 @@
               <i [class]="member.accept_mailing ? 'bi bi-check-circle-fill text-success' : 'bi bi-x-circle-fill text-danger'"></i>
               }
             </td>
-            <td class="d-none d-sm-table-cell text-center">
+            <!-- <td class="d-none d-sm-table-cell text-center">
               @if (member.iv !== null) {
                 @let parts = get_iv_code_parts(member.iv);
                 <span>{{ parts.series }}<span [style.color]="parts.suitColor" style="font-weight: bold;">{{ parts.suit }}</span>{{ parts.tail }}</span>
               } @else {
                 -
               }
-            </td>
+            </td> -->
             <td class="d-none d-sm-table-cell text-center"> <i (click)="access_settings(member)"
                 class="bi bi-gear-fill"></i> </td>
             <td class="d-none d-sm-table-cell text-center">
