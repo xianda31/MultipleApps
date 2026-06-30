@@ -124,18 +124,20 @@ export class TournamentService {
 
     // C(RU)DL Team
 
-    async createTeam(tteams_id: string, player_pair: string[]): Promise<void> {
+    async createTeam(tteams_id: string, player_pair: number[]): Promise<void> {
         try {
-            // player_pair contains person_ids as strings, convert to numbers for FFB V2 API
-            const person_ids: number[] = player_pair.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
-            
-            if (person_ids.length !== player_pair.length) {
-                console.warn(`[TournamentService] createTeam: Some player IDs were invalid`);
-                this.toastService.showError('Création d\'équipe', 'IDs de joueurs invalides');
+            if (player_pair.length !== 2 || player_pair.some(id => !Number.isFinite(id))) {
+                console.warn(`[TournamentService] createTeam: Exactly 2 valid player IDs are required`);
+                this.toastService.showError('Création d\'équipe', 'Une équipe doit contenir exactement 2 joueurs valides');
                 return;
             }
 
-            const success = await this.ffbService.postTeam(tteams_id, person_ids);
+            if (player_pair[0] === player_pair[1]) {
+                this.toastService.showError('Création d\'équipe', 'Les deux joueurs doivent être différents');
+                return;
+            }
+
+            const success = await this.ffbService.postTeam(tteams_id, player_pair);
             if (success) {
                 // Reload teams from FFB API to get fresh data
                 const freshTeams = await this.ffbService.getTournamentTeams(tteams_id);

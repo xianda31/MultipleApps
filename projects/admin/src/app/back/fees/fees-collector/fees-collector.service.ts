@@ -363,23 +363,47 @@ export class FeesCollectorService {
 
       // Build gamer list with FFB license lookup for ALL players (members + non-members)
       // This validates the FFB service and ensures license consistency
-      this.game.gamers = await Promise.all(playerData.map(async ({ player, teamId, playerIndex }, index) => {
-        // Find member by FFB person_id (player.id from FFB API)
-        const member = this.members.find(m => m.person_id === player.id);
+      const gamersOrNull = await Promise.all(
+        playerData.map(async ({ player, teamId, playerIndex }, index): Promise<Gamer | null> => {
+        // Canonical person id for V2 business flow: member.person_id or player.id.
+        const playerPersonId = typeof player.id === 'number' && Number.isFinite(player.id) ? player.id : undefined;
+        const playerMigrationId = typeof (player as any).migrationId === 'number' && Number.isFinite((player as any).migrationId)
+          ? (player as any).migrationId
+          : undefined;
+
+        // Find local member with either key to avoid hard dependency on one ICD variant.
+        const member = this.members.find(m => {
+          const personId = m.person_id;
+          return typeof personId === 'number' && (personId === playerPersonId || personId === playerMigrationId);
+        });
         const isMember = !!member;
-        
-        // Fetch license from FFB API for ALL players (validation + consistency)
-        const ffbPerson = await this.ffbService.getFFBPerson(player.id);
-        
-        if (!ffbPerson?.license_number) {
-          // CRITICAL ERROR: FFB API should always return license info
-          const errorMsg = `[FeesCollectorService] CRITICAL: Failed to retrieve FFB license for player ${player.firstName} ${player.lastName} (person_id=${player.id})`;
-          console.error(errorMsg);
-          this.toastService.showError('FFB Erreur', `License FFB manquante pour ${player.firstName} ${player.lastName}`);
-          throw new Error(errorMsg);
+
+        // Prefer local member license to avoid unnecessary /person calls and reduce 503 pressure.
+        let resolvedPersonId: number | undefined = member?.person_id ?? playerPersonId;
+        let license = member?.license_number ?? '';
+
+        // For non-members (or missing local license), use one canonical id only.
+        if (!license && typeof resolvedPersonId === 'number') {
+          try {
+            const ffbPerson = await this.ffbService.getFFBPerson(resolvedPersonId);
+            if (ffbPerson?.license_number) {
+              license = ffbPerson.license_number;
+            }
+          } catch (error) {
+            console.warn(`[FeesCollectorService] getFFBPerson unavailable for person ${resolvedPersonId}`, error);
+          }
         }
-        
-        const license = ffbPerson.license_number;
+
+        // Keep roster loading even if person endpoint fails for one player.
+        if (!license) {
+          if (member?.license_number) {
+            license = member.license_number;
+            console.warn(`[FeesCollectorService] Fallback license from member DB for ${player.firstName} ${player.lastName}`);
+          } else {
+            console.warn(`[FeesCollectorService] Unable to resolve license for ${player.firstName} ${player.lastName}; player skipped`);
+            return null;
+          }
+        }
         
         // Validate consistency for members
         if (isMember && license !== member!.license_number) {
@@ -406,9 +430,12 @@ export class FeesCollectorService {
           photo_url$: isMember ? this.membersSettingsService.getAvatarUrl(member) : null,
           member_id: isMember ? member!.id : null,
           my_birthday: isMember ? member!.birthdate : null,
-          ffb_person_id: player.id,
+          ffb_person_id: resolvedPersonId,
         };
-      }));
+      })
+      );
+
+      this.game.gamers = gamersOrNull.filter((gamer): gamer is Gamer => gamer !== null);
 
       let factor = this.game.fees_doubled ? 2 : 1;
       this.game.gamers.forEach((gamer) => {

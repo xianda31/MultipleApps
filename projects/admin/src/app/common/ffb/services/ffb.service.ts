@@ -4,7 +4,7 @@ import { TournamentV2 } from '../interface/tournament-v2.interface';
 import { PersonV2 } from '../interface/person-v2.interface';
 import { ClubMember } from '../interface/club-member.interface';
 import { TournamentTeams } from '../interface/tournament_teams.interface';
-import { from, Observable } from 'rxjs';
+import { catchError, firstValueFrom, from, Observable, of, take } from 'rxjs';
 import { Competition, CompetitionOrganization, CompetitionPhases, CompetitionSeason, CompetitionTeam } from '../../../back/competitions/competitions.interface';
 import { environment } from '../../../../environments/environment';
 import { SystemDataService } from '../../services/system-data.service';
@@ -42,17 +42,30 @@ export class FFB_proxyService {
 
   private readonly API_NAME = 'ffbProxyApi';
   private readonly ffbPathOverrides = ((environment as any).ffbProxyPathOverrides || {}) as Record<string, string>;
+  private traceModeEnabled = false;
+  private configReadyPromise: Promise<void>;
 
-  constructor(private systemDataService: SystemDataService) { }
+  constructor(private systemDataService: SystemDataService) {
+    this.configReadyPromise = firstValueFrom(
+      this.systemDataService.get_configuration().pipe(
+        take(1),
+        catchError(() => of(undefined as any))
+      )
+    ).then((conf) => {
+      this.traceModeEnabled = !!conf?.trace_mode;
+    });
+
+    this.systemDataService.get_configuration().subscribe((conf) => {
+      this.traceModeEnabled = !!conf?.trace_mode;
+    });
+  }
+
+  private async ensureConfigReady(): Promise<void> {
+    await this.configReadyPromise;
+  }
 
   private getTraceHeaders(): Record<string, string> {
-    let traceMode = false;
-    try {
-      traceMode = !!this.systemDataService.trace_on();
-    } catch {
-      traceMode = false;
-    }
-    return { 'x-trace-mode': traceMode ? 'true' : 'false' };
+    return { 'x-trace-mode': this.traceModeEnabled ? 'true' : 'false' };
   }
 
   private withTraceHeaders<T extends Record<string, any>>(options?: T): T & { headers: Record<string, string> } {
@@ -79,6 +92,7 @@ export class FFB_proxyService {
 
   async searchPlayersSuchAs(hint: string, currentPage: number = 1, maxPerPage: number = 80): Promise<ClubMember[]> {   // VALIDATED
     try {
+      await this.ensureConfigReady();
       const restOperation = get({
         apiName: this.API_NAME,
         path: this.buildPath(FFB_ENDPOINTS.memberSearch),
@@ -102,6 +116,7 @@ export class FFB_proxyService {
   _getTournaments(dateFrom?: Date, dateTo?: Date): Observable<TournamentV2[]> {  // VALIDATED - returns V2 native interface
     return from((async () => {
       try {
+        await this.ensureConfigReady();
         // Load all pages from FFB V2 (paginated response)
         const allTournaments: TournamentV2[] = [];
         let currentPage = 1;
@@ -161,6 +176,7 @@ export class FFB_proxyService {
 
   async getAdherents(seasonId?: string): Promise<ClubMember[]> {              // VALIDATED
     try {
+      await this.ensureConfigReady();
       // In FFB V2, seasonId is required for club-members endpoint
       let actualSeasonId = seasonId || '';
       if (!actualSeasonId) {
@@ -220,8 +236,9 @@ export class FFB_proxyService {
     }
   }
 
-  async getFFBPerson(id: number): Promise<PersonV2 | null> {
+  async getFFBPerson(id: number): Promise<PersonV2 | null> {   // VALIDATED
     try {
+      await this.ensureConfigReady();
       const restOperation = get({
         apiName: this.API_NAME,
         path: this.buildPath(FFB_ENDPOINTS.person),
@@ -260,6 +277,7 @@ export class FFB_proxyService {
     const playersAsNumbers = personIds;
 
     try {
+      await this.ensureConfigReady();
 
       const restOperation = post({
         apiName: this.API_NAME,
@@ -290,6 +308,7 @@ export class FFB_proxyService {
       return null;
     }
     try {
+      await this.ensureConfigReady();
       const restOperation = del({
         apiName: this.API_NAME,
         path: this.buildPath(`${FFB_ENDPOINTS.teamEntries}/${teamId}`),
@@ -305,6 +324,7 @@ export class FFB_proxyService {
 
   async getTournamentTeams(groupSessionId: string, tournament?: any): Promise<TournamentTeams> {   // VALIDATED
     try {
+      await this.ensureConfigReady();
       const restOperation = get({
         apiName: this.API_NAME,
         path: this.buildPath(FFB_ENDPOINTS.tournamentTeam),
@@ -333,6 +353,7 @@ export class FFB_proxyService {
 
   async getOrganizations(): Promise<CompetitionOrganization[]> {
     try {
+      await this.ensureConfigReady();
       const restOperation = get({
         apiName: this.API_NAME,
         path: this.buildPath(FFB_ENDPOINTS.organizations),
@@ -347,8 +368,9 @@ export class FFB_proxyService {
     }
   }
 
-  async getCurrentSeason(): Promise<CompetitionSeason | null> {
+  async getCurrentSeason(): Promise<CompetitionSeason | null> {  // VALIDATED
     try {
+      await this.ensureConfigReady();
       const restOperation = get({
         apiName: this.API_NAME,
         path: this.buildPath(FFB_ENDPOINTS.seasons),
@@ -365,6 +387,7 @@ export class FFB_proxyService {
 
   async getCompetitionOrganizations(): Promise<CompetitionOrganization[]> {
     try {
+      await this.ensureConfigReady();
       const restOperation = get({
         apiName: this.API_NAME,
         path: this.buildPath(FFB_ENDPOINTS.organizations),
@@ -381,6 +404,7 @@ export class FFB_proxyService {
 
   async getCompetitions(season_id: string, organization_id: string): Promise<Competition[]> {
     try {
+      await this.ensureConfigReady();
       const restOperation = get({
         apiName: this.API_NAME,
         path: this.buildPath('/api/ffb/v2/competitions/by-organization/' + organization_id),
@@ -401,6 +425,7 @@ export class FFB_proxyService {
 
   async getCompetitionResults(competition_id: string, organization_id: string): Promise<CompetitionTeam[]> {
     try {
+      await this.ensureConfigReady();
       const restOperation = get({
         apiName: this.API_NAME,
         path: this.buildPath(FFB_ENDPOINTS.finalRanking),
@@ -421,6 +446,7 @@ export class FFB_proxyService {
   }
   async getCompetitionPhases(competition_id: string, organization_id: string): Promise<CompetitionPhases | null> {
     try {
+      await this.ensureConfigReady();
       const restOperation = get({
         apiName: this.API_NAME,
         path: this.buildPath(FFB_ENDPOINTS.phases),
@@ -445,6 +471,6 @@ export class FFB_proxyService {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
-  }
+    }
 
 }

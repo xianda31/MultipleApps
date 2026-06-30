@@ -105,31 +105,28 @@ export class TournamentComponent implements OnInit {
   }
 
   completeTeam(player: FFBPlayer) {
-    let player_pair: string[] = [];
-    player_pair.push(player.id.toString());
-    player_pair.push(this.whoAmI!.person_id?.toString() || '');
+    const me = this.whoAmI?.person_id;
+    if (me === undefined) return;
+    const player_pair: number[] = [player.id, me];
     this.createTeam(player_pair);
   }
   subscribeWithPlayer2() {
-    let player_pair: string[] = [];
-    player_pair.push(this.whoAmI!.person_id?.toString() || '');
-    const clubMember = this.player2.value as ClubMember;
-    player_pair.push(clubMember.id.toString());
+    const me = this.whoAmI?.person_id;
+    if (me === undefined) return;
+    const partner: ClubMember = this.player2.value;
+    if (!partner?.id) {
+      this.toastService.showError('tournoi', 'Merci de sélectionner un partenaire.');
+      return;
+    }
+    const player_pair: number[] = [me, partner.id];
     this.createTeam(player_pair);
   }
 
-  subscribeSolo() {
-    let player_pair: string[] = [];
-    player_pair.push(this.whoAmI!.person_id?.toString() || '');
-    this.createTeam(player_pair, 'solo');
-  }
-
-  createTeam(player_pair: string[], solo?: string) {
+  createTeam(player_pair: number[]) {
 
     this.TournamentService.createTeam(this.tteam_tournament_id.toString(), player_pair)
       .then((data) => {
-        const msg = (solo === 'solo') ? "vous êtes inscrit(e) en solo" : "vous êtes inscrit(e) en équipe";
-        this.toastService.showSuccess("tournoi du " + this.tournament_date, msg);
+        this.toastService.showSuccess("tournoi du " + this.tournament_date, "vous êtes inscrit(e) en équipe");
       })
       .catch((error) => { console.log('TeamsComponent.createTeam', error); });
   }

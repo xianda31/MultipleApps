@@ -65,10 +65,9 @@
                              {{whoAmI?.lastname | uppercase}} {{whoAmI?.firstname }}
                         </div>
                     </div>
-                    <!-- 2e joueur (partenaire optionnel) -->
+                    <!-- 2e joueur (partenaire requis) -->
                     <div class="flex-fill">
-                        <label class="form-label fw-semibold small">2eme joueur <span
-                                class="text-muted">(optionnel)</span></label>
+                        <label class="form-label fw-semibold small">2eme joueur</label>
                         <app-input-player [formControl]="player2" placeholder="mon partenaire"
                             class="form-control form-control-sm">
                         </app-input-player>
@@ -78,9 +77,6 @@
                 </div>
                 <!-- Boutons -->
                 <div class="d-flex gap-2 justify-content-around">
-                    <button class="btn btn-sm btn-outline-primary" (click)="subscribeSolo()">
-                        <i class="bi bi-person me-1"></i>S'inscrire seul
-                    </button>
                     <button class="btn btn-sm btn-primary" (click)="subscribeWithPlayer2()" [disabled]="!player2.valid">
                         <i class="bi bi-people me-1"></i>Inscrire l'équipe
                     </button>

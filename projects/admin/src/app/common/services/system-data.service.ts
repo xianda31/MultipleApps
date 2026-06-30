@@ -334,7 +334,7 @@ export class SystemDataService {
   // around season and date 
 
   trace_on() {
-    return this._system_configuration.trace_mode;
+    return !!this._system_configuration?.trace_mode;
   }
 
   get_today_season(): string {
