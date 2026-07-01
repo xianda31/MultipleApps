@@ -29,6 +29,28 @@ export class BookService {
   get loading$(): Observable<boolean> { return this._loading$.asObservable(); }
   private higlighting: { [key: string]: boolean } = {};
 
+  // BookEntry.date is an Amplify date field and must be stored as YYYY-MM-DD.
+  private normalizeBookDate(date: string): string {
+    if (!date) return date;
+
+    // FFB V2 may provide timestamps like 2026-07-01T14:30:00+02:00.
+    const isoDatePrefix = date.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (isoDatePrefix) {
+      return `${isoDatePrefix[1]}-${isoDatePrefix[2]}-${isoDatePrefix[3]}`;
+    }
+
+    const parsed = new Date(date);
+    if (Number.isNaN(parsed.getTime())) {
+      console.warn('[BookService] Invalid date input for normalizeBookDate:', date);
+      return date;
+    }
+
+    const year = parsed.getFullYear();
+    const month = String(parsed.getMonth() + 1).padStart(2, '0');
+    const day = String(parsed.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
   constructor(
     private systemDataService: SystemDataService,
     private toastService: ToastService,
@@ -101,6 +123,7 @@ export class BookService {
         default:
           this.toastService.showError('base comptabilité', errorType);
       }
+      console.error('Error creating book entry:', error);
       throw errorType;
     }
   }
@@ -721,6 +744,8 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
   }
 
   create_tournament_fees_entry(date: string,tag:string, fees_amount: number) {
+    const normalizedDate = this.normalizeBookDate(date);
+
     let amounts: AMOUNTS = {};
     amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] = fees_amount;
 
@@ -728,12 +753,12 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
     // operation.values['DdT'] = fees_amount;
     // operation.label = 'droits de table';
 
-    let seasonValue = this.systemDataService.get_season(new Date(date));
+    let seasonValue = this.systemDataService.get_season(new Date(`${normalizedDate}T00:00:00`));
     const entry: BookEntry = {
       id: '',
       season: seasonValue,
       tag: tag,
-      date: date,
+      date: normalizedDate,
       amounts: amounts,
       operations: [operation],
       // class: TRANSACTION_CLASS.OTHER_REVENUE,
@@ -744,8 +769,9 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
 
 
   search_tournament_fees_entry(date: string, tag: string): BookEntry | undefined {
+    const normalizedDate = this.normalizeBookDate(date);
     return this._book_entries.find((entry) => {
-      return entry.tag === tag && entry.date === date && entry.transaction_id === TRANSACTION_ID.vente_en_espèces &&
+      return entry.tag === tag && this.normalizeBookDate(entry.date) === normalizedDate && entry.transaction_id === TRANSACTION_ID.vente_en_espèces &&
         entry.operations.some(op => op.label === 'droits de table' && op.values['DdT'] !== undefined);
     });
   }

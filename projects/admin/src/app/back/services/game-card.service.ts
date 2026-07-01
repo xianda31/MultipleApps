@@ -19,6 +19,26 @@ export class GameCardService {
   private _gameCards!: GameCard[];
   private gameCards$: BehaviorSubject<GameCard[]> = new BehaviorSubject<GameCard[]>(this._gameCards);
 
+  private normalizeStampDate(date: string): string {
+    if (!date) return date;
+
+    const isoDatePrefix = date.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (isoDatePrefix) {
+      return `${isoDatePrefix[1]}-${isoDatePrefix[2]}-${isoDatePrefix[3]}`;
+    }
+
+    const parsed = new Date(date);
+    if (Number.isNaN(parsed.getTime())) {
+      console.warn('[GameCardService] Invalid stamp date input:', date);
+      return date;
+    }
+
+    const year = parsed.getFullYear();
+    const month = String(parsed.getMonth() + 1).padStart(2, '0');
+    const day = String(parsed.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
   constructor(
     private membersService: MembersService,
     private toastService: ToastService,
@@ -86,6 +106,7 @@ export class GameCardService {
 
 
   async stamp_member_card(member: Member, stamp_date: string, double: boolean): Promise<boolean> {
+    const normalizedStampDate = this.normalizeStampDate(stamp_date);
 
     let cards = this._gameCards.filter(c => c.owners.some(owner => (owner.license_number === member.license_number) && (c.stamps.length < c.initial_qty)));
     if (cards.length === 0) {
@@ -99,7 +120,7 @@ export class GameCardService {
       .filter(c => c.owners.some(owner => owner.license_number === member.license_number))
       .reduce((total, card) => total + (card.initial_qty - card.stamps.length), 0);
 
-    cards[0].stamps.push(stamp_date);
+    cards[0].stamps.push(normalizedStampDate);
     await this.updateCard(cards[0])
       .catch(error => { console.error('Error stamping member card:', error); });
 
@@ -112,7 +133,7 @@ export class GameCardService {
       if (doubleCards.length === 0) {
         this.toastService.showError('Gestion des cartes', `Aucune carte disponible pour le 2ème tampon de ${member.firstname} ${member.lastname}`);
       } else {
-        doubleCards[0].stamps.push(stamp_date);
+        doubleCards[0].stamps.push(normalizedStampDate);
         await this.updateCard(doubleCards[0])
           .catch(error => { console.error('Error stamping member card (double):', error); });
       }
