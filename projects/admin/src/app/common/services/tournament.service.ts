@@ -26,6 +26,16 @@ export class TournamentService {
     ) {
     }
 
+    private isFfbMaintenanceError(err: any): boolean {
+        if (!err) return false;
+
+        const status = err?.statusCode || err?.$metadata?.httpStatusCode || err?.response?.statusCode;
+        const raw = `${err?.name || ''} ${err?.message || ''} ${err?.toString?.() || ''}`.toLowerCase();
+
+        // Amplify can surface upstream 503 as UnknownError with very little detail.
+        return status === 503 || raw.includes('503') || raw.includes('service unavailable') || raw.includes('unknownerror');
+    }
+
     list_next_tournaments(days_back: number, tournamentsWindow?: number): Observable<TournamentV2[]> {
         const window = tournamentsWindow || TOURNAMENTS_WINDOW;
         // Calculate date range: (today - days_back) to (today + window)
@@ -50,7 +60,37 @@ export class TournamentService {
             }),
             catchError((err: any) => {
                 console.warn('[TournamentService] Erreur lors de la récupération des tournois', err);
-                return throwError(() => err);
+                return from(this.ffbService.checkAlive()).pipe(
+                    map((health) => {
+                        const maintenanceDetected = health.maintenance || (!health.alive && this.isFfbMaintenanceError(err));
+                        if (maintenanceDetected) {
+                            this.toastService.showError(
+                                'FFB en maintenance',
+                                'ffbridge.fr est actuellement en maintenance (HTTP 503). Les tournois sont temporairement indisponibles.'
+                            );
+                        } else {
+                            this.toastService.showError(
+                                'Tournois FFB indisponibles',
+                                'Le service FFB est temporairement indisponible. Réessaie dans quelques minutes.'
+                            );
+                        }
+                        return [] as TournamentV2[];
+                    }),
+                    catchError(() => {
+                        if (this.isFfbMaintenanceError(err)) {
+                            this.toastService.showError(
+                                'FFB en maintenance',
+                                'ffbridge.fr est actuellement en maintenance (HTTP 503). Les tournois sont temporairement indisponibles.'
+                            );
+                        } else {
+                            this.toastService.showError(
+                                'Tournois FFB indisponibles',
+                                'Le service FFB est temporairement indisponible. Réessaie dans quelques minutes.'
+                            );
+                        }
+                        return of([]);
+                    })
+                );
             })
         );
     }

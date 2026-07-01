@@ -22,6 +22,7 @@ import {
 } from '../adapters/ffb-api.adapter';
 
 const FFB_ENDPOINTS = {
+  alive: '/api/ffb/v2/alive',
   person: '/api/ffb/v2/person',
   memberSearch: '/api/ffb/v2/persons/search',
   seasons: '/api/ffb/v2/seasons/current',
@@ -86,6 +87,28 @@ export class FFB_proxyService {
     }
     // Endpoint already contains full path with namespace prefix
     return endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  }
+
+  async checkAlive(): Promise<{ alive: boolean; maintenance: boolean; upstreamStatus?: number }> {
+    try {
+      await this.ensureConfigReady();
+      const restOperation = get({
+        apiName: this.API_NAME,
+        path: this.buildPath(FFB_ENDPOINTS.alive),
+        options: this.withTraceHeaders(),
+      });
+
+      const { body } = await restOperation.response;
+      const payload = await body.json() as any;
+      return {
+        alive: !!payload?.alive,
+        maintenance: !!payload?.maintenance,
+        upstreamStatus: payload?.upstreamStatus,
+      };
+    } catch (error) {
+      console.warn('[FFB Service] checkAlive failed:', error);
+      return { alive: false, maintenance: false };
+    }
   }
 
 

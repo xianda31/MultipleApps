@@ -249,6 +249,12 @@ export const handler: Handler = async (event) => {
     let ffbEndpoint: string;
 
     switch (route) {
+      case "alive":
+        // Lightweight health check used by the frontend only on failure paths.
+        // seasons/current is public in V2 and allows detecting maintenance windows.
+        ffbEndpoint = "seasons/current";
+        break;
+
       case "seasons/current":
         ffbEndpoint = "seasons/current";
         break;
@@ -417,6 +423,19 @@ export const handler: Handler = async (event) => {
 
     const requiresAuth = requiresAuthentication(route);
     const data = await fetchFFBApi(ffbEndpoint, options, clientToken, requiresAuth);
+
+    if (route === "alive") {
+      const upstreamStatus = Number((data as any)?.upstreamStatus || 200);
+      const isMaintenance = upstreamStatus === 503;
+      const alive = !isMaintenance && !((data as any)?.error && upstreamStatus >= 500);
+
+      return httpResponse(200, {
+        alive,
+        maintenance: isMaintenance,
+        upstreamStatus,
+        checkedEndpoint: ffbEndpoint,
+      });
+    }
 
     // Instrumentation for postTeam endpoint
     if (route.match(/^entries\/groupSessions\/\d+\/createTeam$/)) {
