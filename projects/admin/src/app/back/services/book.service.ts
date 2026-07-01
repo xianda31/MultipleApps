@@ -51,6 +51,27 @@ export class BookService {
     return `${year}-${month}-${day}`;
   }
 
+  private parseGraphQLError(error: unknown): { type: string; message: string } {
+    const normalize = (err: any): { type: string; message: string } => {
+      const type = err?.errorType ?? err?.extensions?.errorType ?? err?.name ?? 'UnknownError';
+      const message = typeof err?.message === 'string'
+        ? err.message
+        : (typeof err === 'string' ? err : JSON.stringify(err));
+      return { type, message };
+    };
+
+    if (Array.isArray(error) && error.length > 0) {
+      return normalize(error[0]);
+    }
+
+    const nestedErrors = (error as any)?.errors;
+    if (Array.isArray(nestedErrors) && nestedErrors.length > 0) {
+      return normalize(nestedErrors[0]);
+    }
+
+    return normalize(error as any);
+  }
+
   constructor(
     private systemDataService: SystemDataService,
     private toastService: ToastService,
@@ -112,19 +133,21 @@ export class BookService {
       }));
       return (created_entry);
     } catch (error) {
-      let errorType: string = '.. accès refusé ... êtes-vous bien connecté ?';
-      if (Array.isArray(error) && error.length > 0 && typeof error[0] === 'object' && error[0] !== null && 'errorType' in error[0]) {
-        errorType = (error[0] as { errorType: string, message: string }).errorType;
-      }
-      switch (errorType) {
+      const parsed = this.parseGraphQLError(error);
+
+      switch (parsed.type) {
         case 'Unauthorized':
           this.toastService.showWarning('base comptabilité', 'Vous n\'êtes pas autorisé à créer une entrée comptable');
           break;
         default:
-          this.toastService.showError('base comptabilité', errorType);
+          this.toastService.showError('base comptabilité', `${parsed.type}: ${parsed.message}`);
       }
-      console.error('Error creating book entry:', error);
-      throw errorType;
+      console.error('[BookService.create_book_entry] createBookEntry failed', {
+        parsed,
+        attemptedEntry: book_entry,
+        rawError: error,
+      });
+      throw error;
     }
   }
 
