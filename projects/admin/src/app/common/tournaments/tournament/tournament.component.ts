@@ -104,12 +104,12 @@ export class TournamentComponent implements OnInit {
     return (player1PersonId === person_id) || (player2PersonId === person_id);
   }
 
-  completeTeam(player: FFBPlayer) {
-    const me = this.whoAmI?.person_id;
-    if (me === undefined) return;
-    const player_pair: number[] = [player.id, me];
-    this.createTeam(player_pair);
-  }
+  // completeTeam(player: FFBPlayer) {
+  //   const me = this.whoAmI?.person_id;
+  //   if (me === undefined) return;
+  //   const player_pair: number[] = [player.id, me];
+  //   this.createTeam(player_pair);
+  // }
   subscribeWithPlayer2() {
     const me = this.whoAmI?.person_id;
     if (me === undefined) return;

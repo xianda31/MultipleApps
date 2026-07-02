@@ -22,7 +22,7 @@
                                 <th scope="col"></th>
                                 <th scope="col"></th>
                                 <th scope="col"></th>
-                                <!-- <th scope="col" ></th> -->
+                                <th scope="col" ></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -39,15 +39,15 @@
                                     {{player.lastName | uppercase}}
                                     {{player.firstName}}
                                 </td>
-                                <ng-container *ngIf="team.players.length === 1">
-                                    <!-- <td></td> -->
+                                <td class="text-end pe-2 small">{{team.iv}}</td>
+                                <!-- <ng-container *ngIf="team.players.length === 1">
                                     <td *ngIf="!already_subscribed && (is_member$ | async)"
                                         class="text-start align-content-center">
                                         <button [disabled]="!whoAmI" class="btn btn-sm btn-primary"
                                             (click)="completeTeam(team.players[0])">Compléter
                                         </button>
                                     </td>
-                                </ng-container>
+                                </ng-container> -->
                             </tr>
                         </tbody>
                     </table>
