@@ -134,20 +134,23 @@
                 <i class="bi bi-cash me-1"></i>Espèces
             </button>
             <button type="button" class="btn-pay" [class.active]="selected_payment.mode === paymentMode.CHEQUE"
+                [disabled]="isZeroTotal()"
                 (click)="selected_payment.mode = paymentMode.CHEQUE; payment_mode_change()">
                 <i class="bi bi-file-earmark-text me-1"></i>Chèque
             </button>
             <button type="button" class="btn-pay" [class.active]="selected_payment.mode === paymentMode.TRANSFER"
+                [disabled]="isZeroTotal()"
                 (click)="selected_payment.mode = paymentMode.TRANSFER; payment_mode_change()">
                 <i class="bi bi-bank me-1"></i>Virement
             </button>
             <button type="button" class="btn-pay" [class.active]="selected_payment.mode === paymentMode.CREDIT"
+                [disabled]="isZeroTotal()"
                 (click)="selected_payment.mode = paymentMode.CREDIT; payment_mode_change()">
                 <i class="bi bi-arrow-up-circle me-1"></i>Avance
             </button>
             @if (tpePaymentActive) {
             <button type="button" class="btn-pay" [class.active]="selected_payment.mode === paymentMode.CARD"
-                [disabled]="!readerConnected"
+                [disabled]="isZeroTotal() || !readerConnected"
                 [title]="!readerConnected ? 'Activez ppTPE pour payer par carte' : ''"
                 (click)="selected_payment.mode = paymentMode.CARD; payment_mode_change()">
                 <i class="bi bi-credit-card me-1"></i>Carte

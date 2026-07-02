@@ -83,6 +83,13 @@ export class CartComponent {
         this.clear_payment();
       }
       this.total_amount.update(() => this.cartService.getCartAmount());
+
+      // Business rule: for a zero total, only CASH mode is allowed.
+      if (this.isZeroTotal()) {
+        this.selected_payment.mode = PaymentMode.CASH;
+        this.payment_mode_change();
+      }
+
       // Calculer l'avoir réellement utilisable
       this.asset_usable = this.calculate_usable_asset();
       // Émettre le changement d'asset_usable pour que le parent (shop) puisse l'utiliser
@@ -197,7 +204,14 @@ export class CartComponent {
   }
 
   payment_mode_change() {
+    if (this.isZeroTotal() && this.selected_payment.mode !== PaymentMode.CASH) {
+      this.selected_payment.mode = PaymentMode.CASH;
+    }
     this.cartService.payment = this.selected_payment;
+  }
+
+  isZeroTotal(): boolean {
+    return this.total_amount() === 0;
   }
 
   validate_sale() {
