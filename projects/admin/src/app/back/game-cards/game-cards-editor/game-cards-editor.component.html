@@ -1,83 +1,94 @@
 <div *ngIf="loaded">
-    <div class=" card shadow-lg mt-3 g-0">
-        <div class="card-header">
-            <div class="row justify-content-between align-items-center">
-                <div class="col-auto">
-                    <h4 class="ms-1 d-none d-sm-inline">Gestion des cartes d'admission tournoi</h4>
-                </div>
-                <div class="col-auto">
-                    <h6 class="text-muted">({{total_asset}} admissions réparties sur {{cards.length - total_null_cards}} cartes )</h6>
-                </div>
-            </div>
-            <hr>
-            <div class="row justify-content-between align-items-start">
-                <div class="col col-md-3 ">
-                    <button class="btn btn-sm btn-outline-primary btn-animated" (click)="createGameCard()">
-                        Création carte
-                    </button>
-                </div>
+    <div class="container-fluid container-lg">
 
-                <div class="col col-md-6">
-                    <div class="d-flex align-items-center flex-nowrap">
-                        <div class="form-check form-switch mb-0">
-                            <input class="form-check-input" type="checkbox" role="switch"
-                                [checked]="non_null_cards_only" (change)="non_null_cards_only = $event.target.checked">
-                            <label class="form-check-label mb-0 ms-2"> cartes non vides seulement </label>
-                        </div>
-
-                        <div *ngIf="total_null_cards > 0  && !non_null_cards_only" class="ms-5">
-                            <button class="btn btn-sm btn-outline-warning " (click)="deleteNulls()">
-                                Suppression cartes vides ({{total_null_cards}})
-                            </button>
-                        </div>
+        <div class=" card shadow-lg mt-3 g-0">
+            <div class="card-header">
+                <div class="row justify-content-between align-items-center">
+                    <div class="col-auto">
+                        <h4 class="ms-1 d-none d-sm-inline">Gestion des cartes d'admission tournoi</h4>
+                    </div>
+                    <div class="col-auto">
+                        <h6 class="text-muted">({{total_asset}} admissions réparties sur {{cards.length -
+                            total_null_cards}} cartes )</h6>
                     </div>
                 </div>
+                <hr>
+                <div class="row justify-content-between align-items-start">
+                    <div class="col col-md-3 ">
+                        <button class="btn btn-sm btn-outline-primary btn-animated" (click)="createGameCard()">
+                            Création carte
+                        </button>
+                    </div>
 
-                <div class="col col-md-3 text-end">
-                    <button class="btn btn-sm btn-outline-success " (click)="exportToExcel()">
-                        Export Excel
-                    </button>
+                    <div class="col col-md-6">
+                        <div class="d-flex align-items-center flex-nowrap">
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" role="switch"
+                                    [checked]="non_null_cards_only"
+                                    (change)="non_null_cards_only = $event.target.checked">
+                                <label class="form-check-label mb-0 ms-2"> cartes non vides seulement </label>
+                            </div>
+
+                            <div *ngIf="total_null_cards > 0  && !non_null_cards_only" class="ms-5">
+                                <button class="btn btn-sm btn-outline-warning " (click)="deleteNulls()">
+                                    Suppression cartes vides ({{total_null_cards}})
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col col-md-3 text-end">
+                        <button class="btn btn-sm btn-outline-success " (click)="exportToExcel()">
+                            Export Excel
+                        </button>
+                    </div>
+
                 </div>
-
+                <!-- </div> -->
             </div>
-            <!-- </div> -->
-        </div>
-        <div class="card-body">
-            <table class="table  table-sm table-striped table-responsive">
-                <thead>
-                    <tr>
-                        <th class="text-start">titulaire(s)</th>
-                        <th>création</th>
-                        <th class="text-center">crédit</th>
-                        <th class="text-center">actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <ng-container *ngFor="let card of cards ">
-                        <tr *ngIf="!is_null(card) || !non_null_cards_only ">
-                            <td class="text-start">
-                                <div *ngFor="let owner of card.owners">
-                                    <!-- <span *ngIf="j > 0"> &nbsp; et &nbsp; </span> -->
-                                    {{owner.lastname}} <span class="d-none d-sm-inline">{{owner.firstname}}</span>
-                                </div>
-                            </td>
-                            <td>{{card.createdAt | date:'dd/MM'}}</td>
-                            <td class="text-center">
-                                <span>{{card.initial_qty - stamps_number(card) }}</span>
-                            </td>
-                            <td class="text-center ">
-                                <button class="btn btn-sm btn-primary me-1" (click)="editGameCard(card)">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                                <button class="btn btn-sm btn-danger" (click)="deleteGameCard(card, $event)">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </td>
+            <div class="card-body">
+                <table class="table  table-sm table-striped table-responsive">
+                    <thead>
+                        <tr>
+                            <th class="text-start">titulaire(s)</th>
+                            <th>création</th>
+                            <th class="text-center">crédit</th>
+                            <th class="text-start"><i class="bi bi-chat-square-dots"></i></th>
+                            <th class="text-center">actions</th>
                         </tr>
-                    </ng-container>
-                </tbody>
-            </table>
-        </div>
+                    </thead>
+                    <tbody>
+                        <ng-container *ngFor="let card of cards ">
+                            <tr *ngIf="!is_null(card) || !non_null_cards_only ">
+                                <td class="text-start">
+                                    <div *ngFor="let owner of card.owners">
+                                        <!-- <span *ngIf="j > 0"> &nbsp; et &nbsp; </span> -->
+                                        {{owner.lastname}} <span class="d-none d-sm-inline">{{owner.firstname}}</span>
+                                    </div>
+                                </td>
+                                <td>{{card.createdAt | date:'dd/MM/yy'}}</td>
+                                <td class="text-center">
+                                    <span>{{card.initial_qty - stamps_number(card) }}</span>
+                                </td>
+                                <td class="text-start ">
+                                    <i *ngIf="card.manual_creation" class="bi bi-gift" title="création manuelle"></i>
+                                    <span *ngIf="card.manual_creation">&nbsp;</span>
+                                    {{card.comment}}
+                                </td>
+                                <td class="text-center ">
+                                    <button class="btn btn-sm btn-primary me-1" (click)="editGameCard(card)">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" (click)="deleteGameCard(card, $event)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </ng-container>
+                    </tbody>
+                </table>
+            </div>
 
+        </div>
     </div>
 </div>

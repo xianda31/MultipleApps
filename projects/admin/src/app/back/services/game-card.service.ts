@@ -39,6 +39,26 @@ export class GameCardService {
     return `${year}-${month}-${day}`;
   }
 
+  private parseAmplifyError(error: unknown): { type: string; message: string; path?: string } {
+    const asObj = (err: any) => {
+      const type = err?.errorType ?? err?.extensions?.errorType ?? err?.name ?? 'UnknownError';
+      const message = typeof err?.message === 'string' ? err.message : JSON.stringify(err);
+      const path = Array.isArray(err?.path) ? err.path.join('.') : undefined;
+      return { type, message, path };
+    };
+
+    if (Array.isArray(error) && error.length > 0) {
+      return asObj(error[0]);
+    }
+
+    const nestedErrors = (error as any)?.errors;
+    if (Array.isArray(nestedErrors) && nestedErrors.length > 0) {
+      return asObj(nestedErrors[0]);
+    }
+
+    return asObj(error as any);
+  }
+
   constructor(
     private membersService: MembersService,
     private toastService: ToastService,
@@ -262,12 +282,26 @@ export class GameCardService {
       switchMap(() => this.gameCards$.asObservable()));
   }
 
-  async createCard(owners: Member[], qty?: number): Promise<GameCard> {
+  async createCard(owners: Member[], qty?: number, comment?: string, manualCreation: boolean = false): Promise<GameCard> {
+    const normalizedComment = comment?.trim();
+    if (manualCreation && !normalizedComment) {
+      this.toastService.showWarning('Gestion des cartes', 'Le commentaire est obligatoire pour une création manuelle');
+      return Promise.reject('Missing comment for manual creation');
+    }
+
     const card_input: PlayBook_input = {
       licenses: owners.map((member) => member.license_number),
       initial_qty: qty ?? MAX_STAMPS,
       stamps: []
     };
+    if (normalizedComment) {
+      card_input.comment = normalizedComment;
+    }
+    // Keep backward compatibility with environments not yet migrated with this field.
+    if (manualCreation) {
+      card_input.manual_creation = true;
+    }
+
     try {
       const createdPlayBook = await this.dbHandler.createPlayBook(card_input);
       const new_card: GameCard = {
@@ -276,6 +310,8 @@ export class GameCardService {
         initial_qty: createdPlayBook.initial_qty,
         stamps: createdPlayBook.stamps.filter((stamp): stamp is string => stamp !== null),
         licenses: createdPlayBook.licenses,
+        comment: createdPlayBook.comment ?? undefined,
+        manual_creation: createdPlayBook.manual_creation ?? false,
         createdAt: createdPlayBook.createdAt,
       };
       if (this._gameCards) {   // cache update if exists
@@ -287,14 +323,24 @@ export class GameCardService {
       }
       return new_card;
     } catch (errors) {
-      if (Array.isArray(errors) && errors.length > 0 && typeof errors[0] === 'object' && errors[0] !== null && 'errorType' in errors[0]) {
-        if ((errors[0] as any).errorType === 'Unauthorized') {
-          this.toastService.showError('Gestion des cartes', 'Vous n\'êtes pas autorisé à créer une carte de tournoi');
-          return Promise.reject('Unauthorized');
-        }
+      const parsed = this.parseAmplifyError(errors);
+
+      if (parsed.type === 'Unauthorized') {
+        this.toastService.showError('Gestion des cartes', 'Vous n\'êtes pas autorisé à créer une carte de tournoi');
+        console.error('[GameCardService.createCard] Unauthorized', {
+          parsed,
+          attemptedInput: card_input,
+          rawError: errors,
+        });
+        return Promise.reject('Unauthorized');
       }
 
       this.toastService.showError('Gestion des cartes', 'Une erreur est survenue lors de la création de la carte de tournoi');
+      console.error('[GameCardService.createCard] createPlayBook failed', {
+        parsed,
+        attemptedInput: card_input,
+        rawError: errors,
+      });
       return Promise.reject('Error creating game card');
     }
   }
@@ -309,6 +355,8 @@ export class GameCardService {
         stamps: updatedBook.stamps.filter((stamp): stamp is string => stamp !== null),
         owners: card.owners,
         initial_qty: updatedBook.initial_qty,
+        comment: updatedBook.comment ?? undefined,
+        manual_creation: updatedBook.manual_creation ?? false,
         createdAt: updatedBook.createdAt,
       };
       this._gameCards = this._gameCards.filter(c => c.id !== card.id);
@@ -389,6 +437,8 @@ export class GameCardService {
                 initial_qty: card.initial_qty,
                 stamps: (card.stamps ?? []).filter((stamp): stamp is string => stamp !== null),
                 licenses: card.licenses.filter((license): license is string => license !== null),
+                comment: card.comment ?? undefined,
+                manual_creation: card.manual_creation ?? false,
                 createdAt: card.createdAt,
                 updatedAt: card.updatedAt
               };

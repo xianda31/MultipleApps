@@ -106,6 +106,8 @@ const schema = a.schema({
     initial_qty: a.integer().required(),
     licenses: a.string().array().required(),
     stamps: a.string().array().required(),
+    comment: a.string(),
+    manual_creation: a.boolean(),
   })
     .authorization((allow) => [
       allow.guest().to(['read']),

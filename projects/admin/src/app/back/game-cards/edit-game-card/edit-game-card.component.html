@@ -18,12 +18,16 @@
         <div class="row justify-content-between  align-items-center mb-2">
             <div class="col-6 text-muted">
                 <span class="fw-bolder me-1">créée le :</span>
-                <span >{{card.createdAt |date}} </span>
+                <span>{{ card.createdAt | date:'dd/MM/yyyy' }}</span>
             </div>
             <div class="col-6 text-muted text-center">
                 <span class="fw-bolder me-1">crédit restant :</span>
                 <span class="badge bg-success">{{free_places_nbr}}</span>
             </div>
+        </div>
+        <div *ngIf="card.manual_creation" class="text-muted mb-2">
+            <span><i class="bi bi-tags-fill"></i> &nbsp;</span>
+            <span>{{ card.comment }}</span>
         </div>
     </div>
 </div>
@@ -38,6 +42,8 @@
             </div>
         </div>
     </div>
+
+    
 </div>
 
 <!-- </ng-container> -->

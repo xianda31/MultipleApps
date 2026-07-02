@@ -10,6 +10,8 @@ export interface PlayBook {
   initial_qty: number;
   stamps: string[];
   licenses: string[];
+  comment?: string;
+  manual_creation?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }

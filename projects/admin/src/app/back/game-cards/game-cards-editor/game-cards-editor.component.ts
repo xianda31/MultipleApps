@@ -49,12 +49,13 @@ stamps_number(card: GameCard): number {
 
   createGameCard() {
     const modalRef = this.modalService.open(GetGameCardsOwnersComponent, { centered: true });
-    modalRef.result.then((response: { owners:Member[],qty:number}) => {
+    modalRef.result.then((response: { owners:Member[],qty:number, comment?: string }) => {
       if (response) {
         const owners: Member[] = response.owners;
         const qty: number = response.qty;
+        const comment: string | undefined = response.comment;
 
-        this.gameCardService.createCard(owners,qty);
+        this.gameCardService.createCard(owners, qty, comment, true);
       }
     });
   }

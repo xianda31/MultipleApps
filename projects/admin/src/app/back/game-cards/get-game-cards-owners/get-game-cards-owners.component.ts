@@ -33,6 +33,7 @@ constructor(
       quantity: [MAX_STAMPS, [Validators.required, Validators.min(1), Validators.max(MAX_STAMPS)]],
       owner1: [null, Validators.required],
       owner2: [null],
+      comment: ['', Validators.required],
     });
   }
 
@@ -41,9 +42,10 @@ constructor(
   get owner2() { return this.ownersForm.get('owner2')!; }
 
   create() {
-    let response: { owners: Member[], qty: number } = {
+    let response: { owners: Member[], qty: number, comment?: string } = {
       owners: [],
-      qty: this.ownersForm.value.quantity
+      qty: this.ownersForm.value.quantity,
+      comment: this.ownersForm.value.comment?.trim() || undefined
     };
     if (this.ownersForm.value.owner1) {
       response.owners.push(this.ownersForm.value.owner1);
