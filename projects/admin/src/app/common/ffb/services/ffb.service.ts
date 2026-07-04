@@ -5,16 +5,19 @@ import { PersonV2 } from '../interface/person-v2.interface';
 import { ClubMember } from '../interface/club-member.interface';
 import { TournamentTeams } from '../interface/tournament_teams.interface';
 import { catchError, firstValueFrom, from, Observable, of, take } from 'rxjs';
-import { Competition, CompetitionOrganization, CompetitionPhases, CompetitionSeason, CompetitionTeam } from '../../../back/competitions/competitions.interface';
+import { Competition, CompetitionOrganization, CompetitionPhases, CompetitionSeason, CompetitionTeam, Competition_V2, Entity_V2 } from '../../../back/competitions/competitions.interface';
 import { environment } from '../../../../environments/environment';
 import { SystemDataService } from '../../services/system-data.service';
 import {
   toCompetitionList,
+  toCompetitionListFromSearchResponse,
+  toCompetitionListFromSearchResponseLegacy,
   toCompetitionOrganizationList,
   toCompetitionPhases,
   toCompetitionSeason,
   toCompetitionSeasonList,
   toCompetitionTeamList,
+  toEntityV2List,
   toClubMemberList,
   toTournamentV2List,
   toTournamentTeamsFromV2,
@@ -29,6 +32,8 @@ const FFB_ENDPOINTS = {
   organizations: '/api/ffb/v2/organizations',
   finalRanking: '/api/ffb/v2/competition-results',
   phases: '/api/ffb/v2/competition-phases',
+  competitionSearch: '/api/ffb/v2/results/search',
+  entitySearch: '/api/ffb/v2/entities/search',
   clubTournaments: '/api/ffb/v2/club-sessions',
   clubMembers: '/api/ffb/v2/club-members',
   tournamentTeam: '/api/ffb/v2/club-team',
@@ -425,23 +430,72 @@ export class FFB_proxyService {
     }
   }
 
-  async getCompetitions(season_id: string, organization_id: string): Promise<Competition[]> {
+  async getCompetitionsForResults(season_id: string): Promise<Competition[]> {
     try {
       await this.ensureConfigReady();
       const restOperation = get({
         apiName: this.API_NAME,
-        path: this.buildPath('/api/ffb/v2/competitions/by-organization/' + organization_id),
+        path: this.buildPath(FFB_ENDPOINTS.competitionSearch),
         options: this.withTraceHeaders({
           queryParams: {
-            season_id: season_id,
+            competitionType: 'federal',
+            season: season_id,
+            currentPage: '1',
+            maxPerPage: '80',
           }
         })
       });
       const { body } = await restOperation.response;
       const data = await body.json();
-      return toCompetitionList(data);
+      return toCompetitionListFromSearchResponseLegacy(data);
     } catch (error) {
-      console.log('getCompetitions : GET call failed: ', error);
+      console.error('[FFB Service] getCompetitionsForResults failed:', error);
+      return [];
+    }
+  }
+
+  async getCompetitions(season_id: string): Promise<Competition_V2[]> {
+    try {
+      await this.ensureConfigReady();
+      const restOperation = get({
+        apiName: this.API_NAME,
+        path: this.buildPath(FFB_ENDPOINTS.competitionSearch),
+        options: this.withTraceHeaders({
+          queryParams: {
+            competitionType: 'federal',
+            season: season_id,
+            currentPage: '1',
+            maxPerPage: '80',
+          }
+        })
+      });
+      const { body } = await restOperation.response;
+      const data = await body.json();
+      return toCompetitionListFromSearchResponse(data);
+    } catch (error) {
+      console.error('[FFB Service] getCompetitions failed:', error);
+      return [];
+    }
+  }
+
+  async getEntity(label: string): Promise<Entity_V2[]> {
+    try {
+      await this.ensureConfigReady();
+      const restOperation = get({
+        apiName: this.API_NAME,
+        path: this.buildPath(FFB_ENDPOINTS.entitySearch),
+        options: this.withTraceHeaders({
+          queryParams: {
+            active: '1',
+            label,
+          }
+        })
+      });
+      const { body } = await restOperation.response;
+      const data = await body.json();
+      return toEntityV2List(data);
+    } catch (error) {
+      console.error('[FFB Service] getEntity failed:', error);
       return [];
     }
   }

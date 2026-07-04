@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Competition, CompetitionOrganization, CompetitionResultsMap, CompetitionTeam, Player, CompetitionResults, COMPETITION_DIVISION_LABELS } from './competitions.interface';
+import { Competition, CompetitionOrganization, CompetitionResultsMap, CompetitionTeam, Player, CompetitionResults, COMPETITION_DIVISION_LABELS, Competition_V2, Entity_V2 } from './competitions.interface';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CompetitionService } from './competition.service';
@@ -10,7 +10,7 @@ import { UIConfiguration } from '../../common/interfaces/ui-conf.interface';
 import { Member } from '../../common/interfaces/member.interface';
 import { MembersService } from '../../common/services/members.service';
 import { FileService } from '../../common/services/files.service';
-import { from, of, catchError, concat, tap } from 'rxjs';
+import { from, of, catchError, concat, tap, forkJoin, map, switchMap } from 'rxjs';
 
 @Component({
   selector: 'app-competitions',
@@ -21,7 +21,8 @@ import { from, of, catchError, concat, tap } from 'rxjs';
 })
 export class CompetitionsComponent {
   current_season: string = '';
-  competitions: Competition[] = [];
+  competitions: Competition_V2[] = [];
+  preferred_entities: Entity_V2[] = [];
   organizations: CompetitionOrganization[] = [];
   results_extracted: boolean = false;
   team_results: CompetitionResultsMap = {};
@@ -93,19 +94,62 @@ export class CompetitionsComponent {
       } else {
         this.preferred_organization_labels = defaultLabels;
       }
-      this.one_year_back =  false;
-      this.competitionService.getCompetitionOrganizations(this.preferred_organization_labels).subscribe(orgs => {
-        this.organizations = orgs;
+    
+      this.one_year_back =  true; // pour tester, on peut forcer à true pour voir les résultats de la saison précédente
+
+      const preferredLabels = [
+        this.preferred_organization_labels.national,
+        this.preferred_organization_labels.ligue,
+        this.preferred_organization_labels.comite,
+      ];
+
+      const preferredEntities$ = forkJoin(
+        preferredLabels.map((label) =>
+          this.competitionService.getEntity(label).pipe(
+            tap((entities) => {
+              console.log('[CompetitionsComponent] getEntity response for label:', label, entities);
+            }),
+            map((entities) => entities[0] ?? null),
+            catchError(() => of(null))
+          )
+        )
+      ).pipe(
+        map((entities) => entities.filter((e): e is Entity_V2 => !!e))
+      );
+
+      preferredEntities$.pipe(
+        tap((entities) => {
+          this.preferred_entities = entities;
+          console.log('[CompetitionsComponent] preferred_entities resolved:', entities);
+
+          // Keep organizations map usable for existing display helpers.
+          this.organizations = entities.map((entity) => ({
+            id: entity.id,
+            label: entity.label,
+            type: entity.type,
+            subordinate_id: 0,
+            organization_code: '',
+            has_realbridge_tournament: false,
+            has_funbridge_tournament: false,
+            is_club_digital: false,
+            can_renew_member: false,
+            can_renew_external_member: false,
+            email_renew_member: null,
+          }));
+        }),
+        switchMap(() => this.competitionService.getCompetitions('37'))
+      ).subscribe((competitions) => {
+        console.log('[CompetitionsComponent] getCompetitions response:', competitions);
+        this.competitions = competitions;
       });
       
       this.show_full_team =  false;
       // this.show_infos = ui?.competitions?.show_infos || false;
       this.no_filter =  false;
-      this.update_results();
+      // this.update_results();   // TEST
       this.data_ready = true;
     });
   }
-
   /**
    * Retourne vrai si la calculation_date est dans les derniers RECENT_CALCULATION_DAYS jours.
    */

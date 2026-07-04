@@ -94,6 +94,20 @@ export interface CompetitionSeason {
   is_license_creation_forbidden: boolean;
   can_bypass_blocking: boolean;
 }
+
+export interface Competition_V2 {
+  label: string;
+  division: {
+    label: string;
+  };
+}
+
+export interface Entity_V2 {
+  label: string;
+  id: number;
+  type: 'federation' | 'committee' | 'league' | 'zone';
+}
+
 export interface Competition {
   id: number;
   label: string;

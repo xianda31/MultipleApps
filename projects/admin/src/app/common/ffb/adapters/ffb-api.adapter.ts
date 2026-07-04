@@ -1,4 +1,4 @@
-import { Competition, CompetitionOrganization, CompetitionPhases, CompetitionSeason, CompetitionTeam } from '../../../back/competitions/competitions.interface';
+import { Competition, CompetitionOrganization, CompetitionPhases, CompetitionSeason, CompetitionTeam, Competition_V2, Entity_V2 } from '../../../back/competitions/competitions.interface';
 import { ClubMember } from '../interface/club-member.interface';
 import { TournamentV2 } from '../interface/tournament-v2.interface';
 import { TournamentTeams } from '../interface/tournament_teams.interface';
@@ -7,6 +7,8 @@ import { PersonV2Ranking } from '../interface/person-v2.interface';
 import { TeamItem } from '../interface/team-search.interface';
 import {
   ApiCompetitionDto,
+  ApiCompetitionSearchResponseDto,
+  ApiEntitySearchResponseDto,
   ApiCompetitionOrganizationDto,
   ApiCompetitionPhasesDto,
   ApiCompetitionSeasonDto,
@@ -95,6 +97,85 @@ export function toCompetitionOrganizationList(payload: unknown): CompetitionOrga
 
 export function toCompetitionList(payload: unknown): Competition[] {
   return asArray<ApiCompetitionDto>(payload) as unknown as Competition[];
+}
+
+export function toCompetitionListFromSearchResponse(payload: unknown): Competition_V2[] {
+  const maybeItems = isRecord(payload) ? (payload as Record<string, unknown>)['items'] : [];
+  const items = asArray<any>(maybeItems);
+
+  return items.map((item: any) => {
+    const competition = isRecord(item?.competition) ? item.competition : {};
+    const division = isRecord(item?.division) ? item.division : {};
+    return {
+      label: asString(competition?.label, ''),
+      division: {
+        label: asString(division?.label, 'Aucune Division'),
+      },
+    } satisfies Competition_V2;
+  });
+}
+
+export function toCompetitionListFromSearchResponseLegacy(payload: unknown): Competition[] {
+  const maybeItems = isRecord(payload) ? (payload as Record<string, unknown>)['items'] : [];
+  const items = asArray<any>(maybeItems);
+
+  return items.map((item: any) => {
+    const division = isRecord(item?.division) ? item.division : {};
+    const competition = isRecord(item?.competition) ? item.competition : {};
+
+    return {
+      id: asNumber(item?.id, 0),
+      label: asString(item?.label, ''),
+      season_id: 0,
+      previous_season_id: null,
+      pe_bonus_process_duration: null,
+      pe_bonus_process_enabled: false,
+      simultaneous_code: null,
+      organization_id: 0,
+      division: {
+        id: asNumber(division?.id, 0),
+        label: asString(division?.label, 'Aucune Division'),
+      },
+      calculation_date: null,
+      family: {
+        id: asNumber(competition?.id, 0),
+        label: asString(competition?.label, ''),
+        is_ko: false,
+      },
+      type: {
+        id: 0,
+        label: 'Fédérale',
+        code: 'federal',
+      },
+      format: {
+        id: 0,
+        label: '',
+        code: '',
+      },
+      festival: null,
+      archive_date: null,
+      allGroupsProbated: false,
+      subscription_type: null,
+      is_paid: false,
+      billing_date: null,
+      billing_docdate: null,
+      nb_phases: 0,
+      nb_simultaneous_phases: 0,
+    } as Competition;
+  });
+}
+
+export function toEntityV2List(payload: unknown): Entity_V2[] {
+  const boxedPayload: ApiEntitySearchResponseDto | Record<string, unknown> = isRecord(payload)
+    ? (payload as Record<string, unknown>)
+    : { items: [] };
+  const items = asArray<any>((boxedPayload as any).items);
+
+  return items.map((item: any) => ({
+    label: asString(item?.label, ''),
+    id: asNumber(item?.id, 0),
+    type: asString(item?.type, 'zone') as Entity_V2['type'],
+  }));
 }
 
 export function toCompetitionTeamList(payload: unknown): CompetitionTeam[] {

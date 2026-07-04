@@ -95,6 +95,55 @@ export type ApiCompetitionDto = Record<string, unknown>;
 export type ApiCompetitionPhasesDto = Record<string, unknown>;
 export type ApiCompetitionTeamDto = Record<string, unknown>;
 
+export interface ApiCompetitionSearchCompetitionDetailsDto {
+  id: number;
+  label: string;
+  migrationId: number;
+}
+
+export interface ApiCompetitionSearchDivisionDetailsDto {
+  id: number;
+  label: string;
+  migrationId: number;
+}
+
+export interface ApiCompetitionSearchItemDto {
+  id: number;
+  label: string;
+  competition: ApiCompetitionSearchCompetitionDetailsDto;
+  division: ApiCompetitionSearchDivisionDetailsDto;
+  festivalSeason: string | null;
+  sponsor: string | null;
+}
+
+export interface ApiCompetitionSearchResponseDto {
+  items: ApiCompetitionSearchItemDto[];
+}
+
+export interface ApiEntitySearchItemDto {
+  label: string;
+  ffbCode: string;
+  id: number;
+  migrationId: number;
+  type: 'federation' | 'committee' | 'league' | 'zone';
+  name?: string;
+  labelArticle?: string;
+}
+
+export interface ApiEntitySearchPaginationDto {
+  current_page: number;
+  has_previous_page: boolean;
+  has_next_page: boolean;
+  per_page: number;
+  total_items: number;
+  total_pages: number;
+}
+
+export interface ApiEntitySearchResponseDto {
+  items: ApiEntitySearchItemDto[];
+  pagination: ApiEntitySearchPaginationDto;
+}
+
 export type ApiFfbPersonDto = Record<string, unknown>;
 export type ApiFfbPlayerDto = Record<string, unknown>;
 export type ApiFfbLicenseeDto = Record<string, unknown>;

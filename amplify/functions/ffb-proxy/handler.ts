@@ -318,6 +318,30 @@ export const handler: Handler = async (event) => {
         ffbEndpoint = "organizations/all";
         break;
 
+      case "results/search":
+        {
+          const params = new URLSearchParams();
+          params.set("competitionType", (queryParams.competitionType as string) || "federal");
+          params.set("season", (queryParams.season as string) || "");
+          params.set("currentPage", (queryParams.currentPage as string) || "1");
+          params.set("maxPerPage", (queryParams.maxPerPage as string) || "80");
+          ffbEndpoint = `results/search/?${params.toString()}`;
+        }
+        break;
+
+      case "entities/search":
+        {
+          const params = new URLSearchParams();
+          params.set("active", (queryParams.active as string) || "1");
+          params.set("label", (queryParams.label as string) || "");
+          params.append("type[]", "federation");
+          params.append("type[]", "committee");
+          params.append("type[]", "league");
+          params.append("type[]", "zone");
+          ffbEndpoint = `organizations/entities/search?${params.toString()}`;
+        }
+        break;
+
       case "person":
         {
           // Support both legacy 'id' and V2 'personId' query params
