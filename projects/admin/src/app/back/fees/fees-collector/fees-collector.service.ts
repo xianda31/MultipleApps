@@ -254,7 +254,7 @@ export class FeesCollectorService {
       this.set_game(tournament);
       this.tournament.status = Game_status.INITIAL;
     } else {
-      const tournamentName = tournament.description || 'Tournoi';
+      const tournamentName = tournament.title ;
       const already_charged = this.BookService.search_tournament_fees_entry(tournament.date, tournamentName) !== undefined;
       if (already_charged) {
         this.tournament.status = Game_status.COMPLETED;
@@ -294,7 +294,7 @@ export class FeesCollectorService {
       let already_charged = false;
       if (this.members && this.members.length > 0) {
         try {
-          const tournamentName = tournament.description || 'Tournoi';
+          const tournamentName = tournament.title || 'Tournoi';
           already_charged = this.BookService.search_tournament_fees_entry(tournament.date, tournamentName) !== undefined;
         } catch (bookError) {
           // BookService.search_tournament_fees_entry() may throw if _book_entries not yet initialized
@@ -343,13 +343,21 @@ export class FeesCollectorService {
   set_game(tournament: club_tournament_extended) {
     this.game.season = this.sys_conf.season!;
     this.game.alphabetic_sort = false;
-    this.game.fees_doubled = tournament.description?.includes('ROY') ? true : false;
-    this.game.fee_rate = (tournament.description?.includes('ELEVES') || tournament.description?.includes('ACCESSION')) ? FEE_RATE.ACCESSION : FEE_RATE.STANDARD;
+    const descriptionLower = (tournament.title ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+    this.game.fees_doubled = descriptionLower.includes('roy');
+    this.game.fee_rate = descriptionLower.includes('ete')
+      ? FEE_RATE.HOLIDAYS
+      : (descriptionLower.includes('eleves') || descriptionLower.includes('accession'))
+        ? FEE_RATE.ACCESSION
+        : FEE_RATE.STANDARD;
     this.game.member_trn_price = +this.get_fee_rate(this.game.fee_rate).member_price;
     this.game.non_member_trn_price = +this.get_fee_rate(this.game.fee_rate).non_member_price;
     this.game.tournament = {
       id: tournament.id,
-      name: tournament.description || 'Tournoi',
+      name: tournament.title || 'Tournoi',
       date: tournament.date,
       time: tournament.time || '00:00'
     };

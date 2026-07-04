@@ -5,7 +5,7 @@
 export interface TournamentV2 {
   id: number;                    // groupSessionId (also used as team_tournament_id)
   date: string;                  // ISO 8601 date (YYYY-MM-DD)
-  description?: string;          // session.label
+  title: string;                 // session.label
   entryCount: number;            // nbr_inscrit
   moment?: string;               // phase moment
   location?: string;             // place_code
