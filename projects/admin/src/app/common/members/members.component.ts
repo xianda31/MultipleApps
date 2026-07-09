@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { MembersService } from '../../common/services/members.service';
 import { LicenseesService } from '../../common/services/licensees.service';
-import { Observable, switchMap, tap, take } from 'rxjs';
+import { Observable, switchMap, tap, take, filter, firstValueFrom } from 'rxjs';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule, UpperCasePipe } from '@angular/common';
 import { NgbModal, NgbTooltipModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
@@ -93,6 +93,7 @@ export class MembersComponent implements OnInit {
 
     this.loading = true;
     this.bookService.list_book_entries().pipe(
+      filter(() => this.bookService.is_book_entries_loaded()),
       tap(() => {
         this.operations = this.bookService.get_operations();
       }),
@@ -110,16 +111,21 @@ export class MembersComponent implements OnInit {
         this.members = members.sort((a, b) => a.lastname.localeCompare(b.lastname, 'fr', { sensitivity: 'base' }));
         this.avatar_urls$ = this.collect_avatars(this.members);
         this.filterOnStatus(this.selected_filter);
-        this.loading = false;
         // console.log(this.members);
 
-        // Lancer les checks en parallèle en arrière-plan (sans bloquer l'affichage)
-        Promise.all([
-          this.check_membership_paied(),
-          this.reset_license_statuses(),
-          this.updateDBfromFFB()
+        // Enchaînement déterministe pour éviter les écritures concurrentes sur membership_date.
+        void (async () => {
+          await this.updateDBfromFFB();
+          await this.refreshMembersAsync();
+          await this.reset_license_statuses();
+          await this.check_membership_paied();
+          this.filterOnStatus(this.selected_filter);
           // update_iv() removed: Ranking now provides iv directly
-        ]).catch(err => console.error('Erreur lors du traitement des membres:', err));
+        })()
+          .catch(err => console.error('Erreur lors du traitement des membres:', err))
+          .finally(() => {
+            this.loading = false;
+          });
       },
       error: () => { this.loading = false; this.toastService.showError('Membres', 'Erreur lors du chargement des membres'); },
     });
@@ -352,11 +358,14 @@ export class MembersComponent implements OnInit {
   }
 
   private refreshMembers(): void {
-    this.membersService.listMembers().pipe(take(1)).subscribe((members: Member[]) => {
-      this.members = members.sort((a, b) => a.lastname.localeCompare(b.lastname, 'fr', { sensitivity: 'base' }));
-      this.avatar_urls$ = this.collect_avatars(this.members);
-      this.filterOnStatus(this.selected_filter);
-    });
+    void this.refreshMembersAsync();
+  }
+
+  private async refreshMembersAsync(): Promise<void> {
+    const members = await firstValueFrom(this.membersService.listMembers().pipe(take(1)));
+    this.members = members.sort((a, b) => a.lastname.localeCompare(b.lastname, 'fr', { sensitivity: 'base' }));
+    this.avatar_urls$ = this.collect_avatars(this.members);
+    this.filterOnStatus(this.selected_filter);
   }
 
   access_settings(member: Member): void {
