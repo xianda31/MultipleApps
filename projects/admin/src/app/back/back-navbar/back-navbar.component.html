@@ -21,7 +21,7 @@
       <span class="badge bg-success ms-1" style="font-size: 0.6rem; vertical-align: middle;">{{entries_nbr}}</span>
       <span *ngIf="loading" class="ms-1" style="vertical-align: middle;"><span class="spinner-border spinner-border-sm text-secondary" role="status" style="width:0.65rem;height:0.65rem;border-width:0.1em;"></span></span>
       <span *ngIf="!production_mode" class="badge bg-dark ms-1" style="font-size: 0.6rem; vertical-align: middle;">dev</span>
-      <span *ngIf="assistances_nbr" class="badge bg-warning ms-1" style="font-size: 0.6rem; vertical-align: middle; color: rgb(252, 249, 249);">{{assistances_nbr}} ticket(s)</span>
+      <span *ngIf="assistances_nbr" class="badge bg-warning ms-1" (click)="go_to_assistance()" style="font-size: 0.6rem; vertical-align: middle; color: rgb(252, 249, 249);">{{assistances_nbr}} ticket(s)</span>
     </span>
 
     <span class="d-sm-inline d-md-none fs-5 ms-1 d-flex align-items-center gap-1">

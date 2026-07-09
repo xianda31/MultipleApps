@@ -183,4 +183,8 @@ export class BackNavbarComponent implements OnInit, OnDestroy {
     this.systemDataService.set_local_season(this.systemDataService.next_season(this.season));
   }
 
+  go_to_assistance() {
+    this.router.navigate([this.BACK_ROUTE_PATHS.Assistance]);
+  }
+
 }
