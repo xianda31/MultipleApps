@@ -100,7 +100,7 @@ export class MembersComponent implements OnInit {
       tap((licensees) => {
         this.licensees = licensees;
         this.sympatisants_number = this.licensees.reduce((count, clubMember) => {
-          return count + (!clubMember.licensee ? 1 : 0);
+          return count + (!clubMember.licence ? 1 : 0);
         }, 0);
       }),
       switchMap(() => this.membersService.listMembers()),
@@ -289,13 +289,13 @@ export class MembersComponent implements OnInit {
       lastname: clubMember.lastName.toUpperCase(),
       birthdate: clubMember.birthdate,
       city: member.city,
-      season: clubMember.licensee ? this.season : '',
+      season: clubMember.licence ? this.season : '',
       email: member.email,
       phone_one: member.phone_one,
       license_taken_at: clubMember.club?.label ?? 'BCSTO',
       register_date: clubMember.mainRegistration?.createdAt ? clubMember.mainRegistration.createdAt.split('T')[0] : '',
-      license_status: clubMember.licensee ? LicenseStatus.DULY_REGISTERED : (clubMember.eLicensee ? LicenseStatus.PROMOTED_ONLY : LicenseStatus.UNREGISTERED),
-      is_sympathisant: !clubMember.licensee,
+      license_status: clubMember.licence ? LicenseStatus.DULY_REGISTERED : LicenseStatus.UNREGISTERED,
+      is_sympathisant: !clubMember.licence,
       accept_mailing: member.accept_mailing,
       has_avatar: member.has_avatar,
       membership_date: member.membership_date,
@@ -330,12 +330,12 @@ export class MembersComponent implements OnInit {
       license_number: clubMember.license_number,
       birthdate: clubMember.birthdate,
       city: personV2?.city ?? '',
-      season: clubMember.licensee ? this.season : '',
+      season: clubMember.licence ? this.season : '',
       email: personV2?.email ?? '',
       accept_mailing: personV2?.email ? true : false,
       phone_one: personV2?.phone ?? '',
-      is_sympathisant: !clubMember.licensee,
-      license_status: clubMember.licensee ? LicenseStatus.DULY_REGISTERED : (clubMember.eLicensee ? LicenseStatus.PROMOTED_ONLY : LicenseStatus.UNREGISTERED),
+      is_sympathisant: !clubMember.licence,
+      license_status: clubMember.licence ? LicenseStatus.DULY_REGISTERED : LicenseStatus.UNREGISTERED,
       license_taken_at: clubMember.club?.label ?? 'BCSTO',
       register_date: clubMember.mainRegistration?.createdAt ? clubMember.mainRegistration.createdAt.split('T')[0] : '',
       membership_date: '',
