@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { MembersService } from '../../common/services/members.service';
 import { LicenseesService } from '../../common/services/licensees.service';
-import { Observable, switchMap, tap, take } from 'rxjs';
+import { Observable, switchMap, tap, take, filter, firstValueFrom } from 'rxjs';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule, UpperCasePipe } from '@angular/common';
 import { NgbModal, NgbTooltipModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
@@ -49,9 +49,9 @@ export class MembersComponent implements OnInit {
   selected_filter: FILTER = FILTER.MEMBER;
   filter_icons: { [key in FILTER]: string } = {
     [FILTER.MEMBER]: 'bi bi-person-check-fill',
-    [FILTER.MEMBER_AT_FFB]: 'bi bi-person-badge-fill',
-    [FILTER.STUDENT]: 'bi bi-mortarboard-fill',
-    [FILTER.UNKNOWN]: 'bi bi-person-slash',
+    [FILTER.MEMBER_AT_FFB]: 'bi bi-hand-thumbs-up-fill',
+    [FILTER.STUDENT]: 'bi bi-person-workspace',
+    [FILTER.UNKNOWN]: 'bi bi-heartbreak-fill',
   };
   loading: boolean = true;
   avatar_urls$: { [key: string]: Observable<string> } = {};
@@ -93,6 +93,7 @@ export class MembersComponent implements OnInit {
 
     this.loading = true;
     this.bookService.list_book_entries().pipe(
+      filter(() => this.bookService.is_book_entries_loaded()),
       tap(() => {
         this.operations = this.bookService.get_operations();
       }),
@@ -100,7 +101,7 @@ export class MembersComponent implements OnInit {
       tap((licensees) => {
         this.licensees = licensees;
         this.sympatisants_number = this.licensees.reduce((count, clubMember) => {
-          return count + (!clubMember.licensee ? 1 : 0);
+          return count + (!clubMember.licence ? 1 : 0);
         }, 0);
       }),
       switchMap(() => this.membersService.listMembers()),
@@ -110,16 +111,21 @@ export class MembersComponent implements OnInit {
         this.members = members.sort((a, b) => a.lastname.localeCompare(b.lastname, 'fr', { sensitivity: 'base' }));
         this.avatar_urls$ = this.collect_avatars(this.members);
         this.filterOnStatus(this.selected_filter);
-        this.loading = false;
         // console.log(this.members);
 
-        // Lancer les checks en parallèle en arrière-plan (sans bloquer l'affichage)
-        Promise.all([
-          this.check_membership_paied(),
-          this.reset_license_statuses(),
-          this.updateDBfromFFB()
+        // Enchaînement déterministe pour éviter les écritures concurrentes sur membership_date.
+        void (async () => {
+          await this.updateDBfromFFB();
+          await this.refreshMembersAsync();
+          await this.reset_license_statuses();
+          await this.check_membership_paied();
+          this.filterOnStatus(this.selected_filter);
           // update_iv() removed: Ranking now provides iv directly
-        ]).catch(err => console.error('Erreur lors du traitement des membres:', err));
+        })()
+          .catch(err => console.error('Erreur lors du traitement des membres:', err))
+          .finally(() => {
+            this.loading = false;
+          });
       },
       error: () => { this.loading = false; this.toastService.showError('Membres', 'Erreur lors du chargement des membres'); },
     });
@@ -289,13 +295,13 @@ export class MembersComponent implements OnInit {
       lastname: clubMember.lastName.toUpperCase(),
       birthdate: clubMember.birthdate,
       city: member.city,
-      season: clubMember.licensee ? this.season : '',
+      season: clubMember.licence ? this.season : '',
       email: member.email,
       phone_one: member.phone_one,
       license_taken_at: clubMember.club?.label ?? 'BCSTO',
       register_date: clubMember.mainRegistration?.createdAt ? clubMember.mainRegistration.createdAt.split('T')[0] : '',
-      license_status: clubMember.licensee ? LicenseStatus.DULY_REGISTERED : (clubMember.eLicensee ? LicenseStatus.PROMOTED_ONLY : LicenseStatus.UNREGISTERED),
-      is_sympathisant: !clubMember.licensee,
+      license_status: clubMember.licence ? LicenseStatus.DULY_REGISTERED : LicenseStatus.UNREGISTERED,
+      is_sympathisant: !clubMember.licence,
       accept_mailing: member.accept_mailing,
       has_avatar: member.has_avatar,
       membership_date: member.membership_date,
@@ -330,12 +336,12 @@ export class MembersComponent implements OnInit {
       license_number: clubMember.license_number,
       birthdate: clubMember.birthdate,
       city: personV2?.city ?? '',
-      season: clubMember.licensee ? this.season : '',
+      season: clubMember.licence ? this.season : '',
       email: personV2?.email ?? '',
       accept_mailing: personV2?.email ? true : false,
       phone_one: personV2?.phone ?? '',
-      is_sympathisant: !clubMember.licensee,
-      license_status: clubMember.licensee ? LicenseStatus.DULY_REGISTERED : (clubMember.eLicensee ? LicenseStatus.PROMOTED_ONLY : LicenseStatus.UNREGISTERED),
+      is_sympathisant: !clubMember.licence,
+      license_status: clubMember.licence ? LicenseStatus.DULY_REGISTERED : LicenseStatus.UNREGISTERED,
       license_taken_at: clubMember.club?.label ?? 'BCSTO',
       register_date: clubMember.mainRegistration?.createdAt ? clubMember.mainRegistration.createdAt.split('T')[0] : '',
       membership_date: '',
@@ -352,11 +358,14 @@ export class MembersComponent implements OnInit {
   }
 
   private refreshMembers(): void {
-    this.membersService.listMembers().pipe(take(1)).subscribe((members: Member[]) => {
-      this.members = members.sort((a, b) => a.lastname.localeCompare(b.lastname, 'fr', { sensitivity: 'base' }));
-      this.avatar_urls$ = this.collect_avatars(this.members);
-      this.filterOnStatus(this.selected_filter);
-    });
+    void this.refreshMembersAsync();
+  }
+
+  private async refreshMembersAsync(): Promise<void> {
+    const members = await firstValueFrom(this.membersService.listMembers().pipe(take(1)));
+    this.members = members.sort((a, b) => a.lastname.localeCompare(b.lastname, 'fr', { sensitivity: 'base' }));
+    this.avatar_urls$ = this.collect_avatars(this.members);
+    this.filterOnStatus(this.selected_filter);
   }
 
   access_settings(member: Member): void {

@@ -270,6 +270,10 @@ export class BookService {
     return this._book_entries ?? []; // if no book entries are loaded yet
   }
 
+  is_book_entries_loaded(): boolean {
+    return this._book_entries !== undefined && !this._loading;
+  }
+
   private format_data(revenues: Revenue[], expenses: Expense[]) : Formatted_purchase[] {
 
       let transform_key = (key: string): string => {    // solution provisoire

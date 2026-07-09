@@ -12,8 +12,7 @@ export interface ClubMember {
   gender: "M" | "F" | string;
   birthdate: string;         // ISO8601
   club: ClubInfo;
-  licensee: boolean;
-  eLicensee: boolean;
+  licence: boolean;
   season: SeasonInfo;
   mainRegistration: RegistrationInfo;
 }
