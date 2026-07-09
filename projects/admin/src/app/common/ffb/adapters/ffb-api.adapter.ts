@@ -1,6 +1,7 @@
-import { Competition, CompetitionOrganization, CompetitionPhases, CompetitionSeason, CompetitionTeam, Competition_V2, Entity_V2 } from '../../../back/competitions/competitions.interface';
+import { Competition, CompetitionOrganization, CompetitionPhases, CompetitionSeason, CompetitionTeam, CompetitionResultStade_V2, Competition_V2, Entity_V2 } from '../../../back/competitions/competitions.interface';
 import { ClubMember } from '../interface/club-member.interface';
 import { TournamentV2 } from '../interface/tournament-v2.interface';
+import { FFB_Season } from '../interface/ffb-season.interface';
 import { TournamentTeams } from '../interface/tournament_teams.interface';
 import { PersonV2 } from '../interface/person-v2.interface';
 import { PersonV2Ranking } from '../interface/person-v2.interface';
@@ -8,7 +9,9 @@ import { TeamItem } from '../interface/team-search.interface';
 import {
   ApiCompetitionDto,
   ApiCompetitionSearchResponseDto,
+  ApiCompetitionDivisionResultDto,
   ApiEntitySearchResponseDto,
+  ApiFfbSeasonDto,
   ApiCompetitionOrganizationDto,
   ApiCompetitionPhasesDto,
   ApiCompetitionSeasonDto,
@@ -91,6 +94,31 @@ export function toCompetitionSeason(payload: unknown): CompetitionSeason | null 
   return payload as unknown as ApiCompetitionSeasonDto as unknown as CompetitionSeason;
 }
 
+export function toFfbSeason(payload: unknown): FFB_Season | null {
+  if (!isRecord(payload)) {
+    return null;
+  }
+
+  const dto = payload as unknown as ApiFfbSeasonDto;
+  return {
+    id: asNumber((dto as any)?.id, 0),
+    label: asString((dto as any)?.label, asString((payload as any)?.name, '')),
+    startDate: asString((dto as any)?.startDate, asString((payload as any)?.start_date, '')),
+    endDate: asString((dto as any)?.endDate, asString((payload as any)?.end_date, '')),
+  };
+}
+
+export function toFfbSeasonList(payload: unknown): FFB_Season[] {
+  const boxed = isRecord(payload) ? payload : {};
+  const items = Array.isArray((boxed as any).items)
+    ? asArray<unknown>((boxed as any).items)
+    : asArray<unknown>(payload);
+
+  return items
+    .map((item) => toFfbSeason(item))
+    .filter((season): season is FFB_Season => season !== null);
+}
+
 export function toCompetitionOrganizationList(payload: unknown): CompetitionOrganization[] {
   return asArray<ApiCompetitionOrganizationDto>(payload).map((dto) => ({ ...dto })) as CompetitionOrganization[];
 }
@@ -107,11 +135,44 @@ export function toCompetitionListFromSearchResponse(payload: unknown): Competiti
     const competition = isRecord(item?.competition) ? item.competition : {};
     const division = isRecord(item?.division) ? item.division : {};
     return {
+      id: asNumber(item?.id, asNumber((competition as any)?.id, 0)),
       label: asString(competition?.label, ''),
-      division: {
-        label: asString(division?.label, 'Aucune Division'),
-      },
+      division: asString(division?.label, 'Aucune Division'),
     } satisfies Competition_V2;
+  });
+}
+
+export function toCompetitionResultStades(payload: unknown): CompetitionResultStade_V2[] {
+  if (!isRecord(payload)) {
+    return [];
+  }
+
+  const dto = payload as unknown as ApiCompetitionDivisionResultDto;
+  const stades = asArray<any>((dto as any).stades);
+
+  return stades.map((stade: any) => {
+    const organization = isRecord(stade?.organization) ? stade.organization : {};
+    const groupment = isRecord(stade?.groupment) ? stade.groupment : {};
+    const phases = asArray<any>(stade?.phases);
+
+    return {
+      groupement: {
+        id: asNumber(groupment?.id, asNumber(organization?.id, 0)),
+        name: asString(groupment?.name, asString(groupment?.label, asString(organization?.name, asString(organization?.label, '')))),
+        type: asString(groupment?.type, asString(organization?.type, '')),
+      },
+      name: asString(organization?.name, asString(groupment?.name, asString(organization?.label, asString(groupment?.label, '')))),
+      phases: phases.map((phase: any) => {
+        const groups = asArray<any>(phase?.groups);
+        return {
+          label: asString(phase?.label, ''),
+          hasResult: !!stade?.hasResult,
+          groups: groups.map((group: any) => ({
+            id: asNumber(group?.id, 0),
+          })),
+        };
+      }),
+    } as CompetitionResultStade_V2;
   });
 }
 
@@ -173,6 +234,7 @@ export function toEntityV2List(payload: unknown): Entity_V2[] {
 
   return items.map((item: any) => ({
     label: asString(item?.label, ''),
+    ffbCode: asString(item?.ffbCode, ''),
     id: asNumber(item?.id, 0),
     type: asString(item?.type, 'zone') as Entity_V2['type'],
   }));

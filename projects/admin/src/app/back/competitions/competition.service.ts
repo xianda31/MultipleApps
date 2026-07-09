@@ -1,12 +1,13 @@
 
 import { Injectable } from '@angular/core';
-import { Competition, COMPETITION_DIVISION_LABELS, COMPETITION_LEVELS, CompetitionOrganization, CompetitionSeason, CompetitionTeam, Competition_V2, Entity_V2, Player, CompetitionPhases } from './competitions.interface';
+import { Competition, COMPETITION_DIVISION_LABELS, COMPETITION_LEVELS, CompetitionOrganization, CompetitionResultStade_V2, CompetitionTeam, Competition_V2, Entity_V2, Player, CompetitionPhases } from './competitions.interface';
+import { FFB_Season } from '../../common/ffb/interface/ffb-season.interface';
 
 import { CompetitionResultsMap } from './competitions.interface';
 import { FFB_proxyService } from '../../common/ffb/services/ffb.service';
 import { MembersService } from '../../common/services/members.service';
 import { SystemDataService } from '../../common/services/system-data.service';
-import { from, map, Observable, catchError, of, switchMap, tap, lastValueFrom } from 'rxjs';
+import { from, map, Observable, catchError, of, switchMap, tap, lastValueFrom, concatMap, reduce } from 'rxjs';
 import { Member } from '../../common/interfaces/member.interface';
 import { FileService } from '../../common/services/files.service';
 
@@ -23,6 +24,14 @@ export class CompetitionService {
   ffbScanDone: boolean = false;
 
   COMPETITION_LEVELS = COMPETITION_LEVELS;
+
+  private traceFfb(message: string, context?: unknown): void {
+    if (typeof context === 'undefined') {
+      console.log(`[FFB TRACE][CompetitionService] ${message}`);
+      return;
+    }
+    console.log(`[FFB TRACE][CompetitionService] ${message}`, context);
+  }
 
   constructor(
     private ffbService: FFB_proxyService,
@@ -124,7 +133,7 @@ export class CompetitionService {
       labelToUse = competition.label;
     }
     const division_labels = COMPETITION_DIVISION_LABELS;
-    const norm = (s: string | undefined) => (s || '').normalize('NFD').replace(/[[\u0300-\u036f]/g, '').toLowerCase();
+    const norm = (s: string | undefined) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
     // normalize labelToUse once
     const nLabel = norm(labelToUse);
     const key = Object.keys(division_labels).find(k => {
@@ -167,12 +176,26 @@ export class CompetitionService {
       email_renew_member: null,
     }));
 
+    this.traceFfb('Start getCompetionsResults', {
+      season,
+      full_regeneration,
+      preferredOrganizations: labels,
+    });
+
     return from(this.ffbService.getCurrentSeason()).pipe(
-      switchMap((seasonObj: CompetitionSeason | null) => {
-        if (!seasonObj || (seasonObj as any).name !== season) {
+      switchMap((seasonObj: FFB_Season | null) => {
+        this.traceFfb('Response getCurrentSeason', {
+          requestedSeason: season,
+          seasonId: seasonObj?.id ?? null,
+          seasonLabel: seasonObj?.label ?? null,
+        });
+
+        if (!seasonObj || seasonObj.label !== season) {
           console.warn(`[CompetitionService] getCompetionsResults: season not found or mismatched (${season})`);
           return of([] as Competition[]);
         }
+
+        this.traceFfb('Request getCompetitionsForResults', { seasonId: String(seasonObj.id) });
 
         return from(this.ffbService.getCompetitionsForResults(String(seasonObj.id))).pipe(
           switchMap((competitions: Competition[]) => {
@@ -204,9 +227,13 @@ export class CompetitionService {
           map((competitions: Competition[]) => {
             return competitions
               .filter(c => !c.label.startsWith('E '))
+               .filter(c => !c.label.startsWith('Funtour'))
               .filter(c => c.type.label === 'Fédérale')
               .filter(c => c.allGroupsProbated === true)
               .filter(c => !this.is_logged_in_S3(c));
+          }),
+          tap((competitions: Competition[]) => {
+            this.traceFfb('Competitions to process after filters', { count: competitions.length });
           }),
           switchMap((competitions: Competition[]) => {
             return from(this.runSerial(competitions) as Promise<CompetitionResultsMap>).pipe(
@@ -225,12 +252,23 @@ export class CompetitionService {
   private async runSerial(competitions: Competition[]): Promise<CompetitionResultsMap> {
     const results: CompetitionResultsMap = {};
     for (const comp of competitions) {
+      this.traceFfb('Request getCompetitionResults/getCompetitionPhases', {
+        competitionId: comp.id,
+        organizationId: comp.organization_id,
+      });
+
       // Injecte le assigned_division selon la logique initiale
       comp.assigned_division = this.getDivisionCategoryToLabel(comp);
       comp.assigned_label = comp.assigned_division === 'Interclubs' ? comp.label : comp.family.label;
       // Appelle la méthode combinée qui renvoie teams + phases
       const payload = await lastValueFrom(this.getCompetitionResults(String(comp.id), String(comp.organization_id)));
       let compTeam = payload.teams || [];
+
+      this.traceFfb('Response getCompetitionResults/getCompetitionPhases', {
+        competitionId: comp.id,
+        teamsCount: compTeam.length,
+        hasPhases: !!payload.phases,
+      });
       // Récupère la calculation_date depuis les phases si présentes
       try {
         const phases = payload.phases;
@@ -283,6 +321,10 @@ export class CompetitionService {
 
       // Skip if no teams after filtering (club doesn't participate in this competition)
       if (safeCompTeam.length === 0) {
+        this.traceFfb('Skip competition after member filter (no team to keep)', {
+          competitionId: comp.id,
+          teamsBeforeFilter,
+        });
         continue;
       }
 
@@ -358,36 +400,171 @@ export class CompetitionService {
     }
   }
 
-  getSeasons(): Observable<CompetitionSeason | null> {
+  getSeasons(): Observable<FFB_Season | null> {
     return from(this.ffbService.getCurrentSeason());
   }
 
-  getCurrentCompetitionSeason(): Observable<CompetitionSeason | null> {
+  getCurrentCompetitionSeason(): Observable<FFB_Season | null> {
     const current_season = this.systemService.get_today_season();
     return from(this.ffbService.getCurrentSeason()).pipe(
-      map(season => (season && (season as any).name === current_season) ? season : null)
+      map(season => (season && season.label === current_season) ? season : null)
     );
+  }
+
+  getPreviousSeasons(): Observable<FFB_Season[]> {
+    return from(this.ffbService.getPreviousSeasons());
   }
 
   getCompetitions(seasonId: string): Observable<Competition_V2[]> {
     return from(this.ffbService.getCompetitions(seasonId));
   }
 
+  getCompetitionsByOrganization(seasonId: string, organizationId: string): Observable<Competition_V2[]> {
+    return from(this.ffbService.getCompetitionsByOrganization(seasonId, organizationId));
+  }
+
   getEntity(label: string): Observable<Entity_V2[]> {
     return from(this.ffbService.getEntity(label));
   }
+
+  getCompetitionResultsBySeason(competitionId: string, seasonId: string): Observable<CompetitionResultStade_V2[]> {
+    return from(this.ffbService.getCompetitionDivisionResults(competitionId, seasonId)).pipe(
+      catchError((err) => {
+        console.error(`Erreur lors du chargement des stades pour la compétition ${competitionId} (saison ${seasonId}):`, err);
+        return of([] as CompetitionResultStade_V2[]);
+      })
+    );
+  }
+
+  loadPreferredOrganizationCompetitionsWithStades(
+    seasonId: string,
+    preferredOrganizations: Entity_V2[],
+    preferredOrganizationLabels?: { comite: string; ligue: string; national: string }
+  ): Observable<{ seasonId: string; competitions: Competition_V2[] }> {
+    if (!seasonId || preferredOrganizations.length === 0) {
+      return of({
+        seasonId,
+        competitions: [],
+      });
+    }
+
+    const allowedStadeNames = this.getAllowedStadeNames(preferredOrganizationLabels);
+
+    this.traceFfb('Start loadPreferredOrganizationCompetitionsWithStades', {
+      seasonId,
+      organizationIds: preferredOrganizations.map((org) => org.id),
+      allowedStadeNames,
+    });
+
+    return from(preferredOrganizations).pipe(
+      concatMap((organization) =>
+        (this.traceFfb('Request getCompetitionsByOrganization', {
+          seasonId,
+          organizationId: organization.id,
+        }),
+        this.getCompetitionsByOrganization(seasonId, String(organization.id)).pipe(
+          map((competitions) => ({ organizationId: organization.id, competitions })),
+          catchError(() => of({ organizationId: organization.id, competitions: [] as Competition_V2[] }))
+        ))
+      ),
+      reduce((allCompetitions, entry) => {
+        const filteredCompetitions = this.filterCompetitionsForDisplay(entry.competitions);
+        allCompetitions.push(...filteredCompetitions);
+        return allCompetitions;
+      }, [] as Competition_V2[]),
+      map((competitions) => this.uniqueCompetitionsById(competitions)),
+      switchMap((competitions) => {
+        if (competitions.length === 0) {
+          return of({ seasonId, competitions });
+        }
+
+        return from(competitions).pipe(
+          concatMap((competition) =>
+            (this.traceFfb('Request getCompetitionDivisionResults', {
+              competitionId: competition.id,
+              seasonId,
+            }),
+            this.getCompetitionResultsBySeason(String(competition.id), seasonId).pipe(
+              map((stades) => ({ competitionId: competition.id, stades })),
+              catchError(() => of({ competitionId: competition.id, stades: [] as CompetitionResultStade_V2[] }))
+            ))
+          ),
+          reduce((stadesById, entry) => {
+            const filteredStades = this.filterStadesByPreferredLabels(entry.stades, allowedStadeNames);
+            stadesById[entry.competitionId] = filteredStades;
+            return stadesById;
+          }, {} as { [competitionId: number]: CompetitionResultStade_V2[] }),
+          map((stadesById) =>
+            competitions.map((competition) => ({
+              ...competition,
+              stades: stadesById[competition.id] || [],
+            }))
+          ),
+          map((competitionsWithStades) => ({ seasonId, competitions: competitionsWithStades }))
+        );
+      })
+    );
+  }
+
+  /**
+   * Version simplifiee: getCompetitionResults(id)
+   * Retourne les stades reduits pour la saison courante.
+   */
+  getCompetitionResults(competitionId: string): Observable<CompetitionResultStade_V2[]>;
 
   /**
    * Récupère à la fois les résultats (teams) et les phases pour une compétition.
    * Retourne un objet { teams, phases } où phases peut être null.
    */
-  getCompetitionResults(competitionId: string, organization_id: string): Observable<{ teams: CompetitionTeam[]; phases: CompetitionPhases | null }> {
+  getCompetitionResults(competitionId: string, organization_id: string): Observable<{ teams: CompetitionTeam[]; phases: CompetitionPhases | null }>;
+
+  getCompetitionResults(
+    competitionId: string,
+    organization_id?: string
+  ): Observable<CompetitionResultStade_V2[] | { teams: CompetitionTeam[]; phases: CompetitionPhases | null }> {
+    if (!organization_id) {
+      return from(this.ffbService.getCurrentSeason()).pipe(
+        switchMap((season) => {
+          if (!season) {
+            return of([] as CompetitionResultStade_V2[]);
+          }
+          this.traceFfb('Request getCompetitionDivisionResults (current season)', {
+            competitionId,
+            seasonId: String(season.id),
+          });
+          return from(this.ffbService.getCompetitionDivisionResults(competitionId, String(season.id)));
+        }),
+        catchError((err) => {
+          console.error(`Erreur lors du chargement des stades pour la compétition ${competitionId}:`, err);
+          return of([] as CompetitionResultStade_V2[]);
+        })
+      );
+    }
+
     // Utilise Promise.all pour appeler les deux endpoints en parallèle
+    this.traceFfb('Request parallel competition endpoints', {
+      competitionId,
+      organization_id,
+      endpoints: ['getCompetitionResults', 'getCompetitionPhases'],
+    });
+
     return from(Promise.all([
       this.ffbService.getCompetitionResults(competitionId, organization_id),
       this.ffbService.getCompetitionPhases(competitionId, organization_id)
     ])).pipe(
-      map(([teams, phases]) => ({ teams: (teams || []) as CompetitionTeam[], phases: (phases as CompetitionPhases | null) })),
+      map(([teams, phases]) => {
+        const normalizedTeams = (teams || []) as CompetitionTeam[];
+        const normalizedPhases = phases as CompetitionPhases | null;
+
+        this.traceFfb('Response parallel competition endpoints', {
+          competitionId,
+          organization_id,
+          teamsCount: normalizedTeams.length,
+          hasPhases: !!normalizedPhases,
+        });
+
+        return { teams: normalizedTeams, phases: normalizedPhases };
+      }),
       catchError((err) => {
         console.error(`Erreur lors du chargement des résultats/phases pour la compétition ${competitionId}:`, err);
         return of({ teams: [], phases: null });
@@ -427,6 +604,71 @@ export class CompetitionService {
     }
 
     return false;
+  }
+
+  private filterCompetitionsForDisplay(competitions: Competition_V2[]): Competition_V2[] {
+    const divisionKeys = Object.keys(COMPETITION_DIVISION_LABELS);
+    const normalize = (value: string) =>
+      (value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase();
+
+    return competitions.filter((competition) => {
+      const normalizedLabel = normalize(competition.label || '');
+      if (normalizedLabel.startsWith('e ') || normalizedLabel.startsWith('funtour')) {
+        return false;
+      }
+
+      const divisionLabel = competition.division || '';
+      return divisionKeys.some((key) => normalize(divisionLabel).startsWith(normalize(key)));
+    });
+  }
+
+  private uniqueCompetitionsById(competitions: Competition_V2[]): Competition_V2[] {
+    const uniqueById = new Map<number, Competition_V2>();
+    competitions.forEach((competition) => {
+      if (!uniqueById.has(competition.id)) {
+        uniqueById.set(competition.id, competition);
+      }
+    });
+    return Array.from(uniqueById.values());
+  }
+
+  private getAllowedStadeNames(preferredOrganizationLabels?: { comite: string; ligue: string; national: string }): string[] {
+    if (!preferredOrganizationLabels) {
+      return [];
+    }
+
+    return [
+      preferredOrganizationLabels.national,
+      preferredOrganizationLabels.ligue,
+      preferredOrganizationLabels.comite,
+    ].filter((name): name is string => !!name && name.trim().length > 0);
+  }
+
+  private filterStadesByPreferredLabels(stades: CompetitionResultStade_V2[], allowedNames: string[]): CompetitionResultStade_V2[] {
+    if (!allowedNames.length) {
+      return stades;
+    }
+
+    const normalize = (value: string) =>
+      (value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+
+    const normalizedAllowedNames = allowedNames.map(normalize);
+
+    return stades.filter((stade) => {
+      const normalizedStadeName = normalize(stade.name || '');
+      return normalizedAllowedNames.some((allowedName) =>
+        normalizedStadeName === allowedName ||
+        normalizedStadeName.includes(allowedName) ||
+        allowedName.includes(normalizedStadeName)
+      );
+    });
   }
 
   /**

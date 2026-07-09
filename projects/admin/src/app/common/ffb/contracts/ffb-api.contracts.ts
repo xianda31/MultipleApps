@@ -77,6 +77,17 @@ export interface ApiCompetitionSeasonDto {
   can_bypass_blocking: boolean;
 }
 
+export interface ApiFfbSeasonDto {
+  blockingDate: string;
+  endDate: string;
+  freeRenewStartDate: string;
+  renewLicenseEndDate: string;
+  startDate: string;
+  current: boolean;
+  id: number;
+  label: string;
+}
+
 export interface ApiCompetitionOrganizationDto {
   id: number;
   label: string;
@@ -118,6 +129,68 @@ export interface ApiCompetitionSearchItemDto {
 
 export interface ApiCompetitionSearchResponseDto {
   items: ApiCompetitionSearchItemDto[];
+}
+
+export interface ApiCompetitionDivisionGroupDto {
+  id: number;
+  migrationId: number;
+  label: string;
+  unique: boolean;
+  resultCount: number;
+  resultTotal: number;
+  roundCount: number | null;
+  setupType: unknown;
+}
+
+export interface ApiCompetitionDivisionPhaseDto {
+  id: number;
+  migrationId: number;
+  label: string;
+  groupCount: number;
+  unique: boolean;
+  simultaneous: boolean;
+  nextPhase: unknown;
+  groups: ApiCompetitionDivisionGroupDto[];
+}
+
+export interface ApiCompetitionDivisionOrganizationDto {
+  id: number;
+  migrationId: number;
+  label: string;
+  labelArticle: string | null;
+  ffbCode: string;
+  type: 'federation' | 'league' | 'committee';
+  name: string;
+}
+
+export interface ApiCompetitionDivisionStadeDto {
+  id: number;
+  migrationId: number;
+  migrationCompetitionId: number;
+  nextStade: number | null;
+  hasResult: boolean;
+  phaseCount: number;
+  groupment: ApiCompetitionDivisionOrganizationDto | null;
+  organization: ApiCompetitionDivisionOrganizationDto | null;
+  phases: ApiCompetitionDivisionPhaseDto[];
+}
+
+export interface ApiCompetitionDivisionResultDto {
+  label: string;
+  competition: {
+    label: string;
+    id: number;
+    migrationId: number;
+    format: string;
+  };
+  division: {
+    id: number;
+    label: string;
+    migrationId: number;
+  };
+  festivalSeason: unknown;
+  sponsor: unknown;
+  stades: ApiCompetitionDivisionStadeDto[];
 }
 
 export interface ApiEntitySearchItemDto {

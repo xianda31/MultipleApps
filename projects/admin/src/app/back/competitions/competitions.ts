@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Competition, CompetitionOrganization, CompetitionResultsMap, CompetitionTeam, Player, CompetitionResults, COMPETITION_DIVISION_LABELS, Competition_V2, Entity_V2 } from './competitions.interface';
+import { Competition, CompetitionOrganization, CompetitionResultPhase_V2, CompetitionResultStade_V2, CompetitionResultsMap, CompetitionTeam, Player, CompetitionResults, COMPETITION_DIVISION_LABELS, Competition_V2, Entity_V2 } from './competitions.interface';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CompetitionService } from './competition.service';
@@ -24,6 +24,7 @@ export class CompetitionsComponent {
   competitions: Competition_V2[] = [];
   preferred_entities: Entity_V2[] = [];
   organizations: CompetitionOrganization[] = [];
+  selectedCompetitionSeasonId: string = '';
   results_extracted: boolean = false;
   team_results: CompetitionResultsMap = {};
   filtered_team_results: CompetitionResultsMap = {};
@@ -83,7 +84,7 @@ export class CompetitionsComponent {
     this.systemService.get_ui_settings().subscribe(ui => {
       this.ui_config_loaded = ui;
       
-      const defaultLabels = { comite: 'Comité des Pyrénées', ligue: 'Ligue 06 LR-PY', national: 'FFB' };
+      const defaultLabels = { comite: 'Pyrénées', ligue: 'Ligue 06 LR-PY', national: 'FFB' };
       if (ui?.competitions?.preferred_organizations && typeof ui.competitions.preferred_organizations === 'object') {
         const orgs = ui.competitions.preferred_organizations;
         this.preferred_organization_labels = {
@@ -106,9 +107,6 @@ export class CompetitionsComponent {
       const preferredEntities$ = forkJoin(
         preferredLabels.map((label) =>
           this.competitionService.getEntity(label).pipe(
-            tap((entities) => {
-              console.log('[CompetitionsComponent] getEntity response for label:', label, entities);
-            }),
             map((entities) => entities[0] ?? null),
             catchError(() => of(null))
           )
@@ -120,15 +118,22 @@ export class CompetitionsComponent {
       preferredEntities$.pipe(
         tap((entities) => {
           this.preferred_entities = entities;
-          console.log('[CompetitionsComponent] preferred_entities resolved:', entities);
+
+          const nationalLabel = this.preferred_organization_labels.national;
+          const nationalEntity = entities.find((entity) => entity.label === nationalLabel) ?? null;
+          const organizationsToLoad = nationalEntity ? [nationalEntity] : entities;
+
+          if (!nationalEntity) {
+            console.warn('[CompetitionsComponent] National organization not found, fallback to all preferred organizations');
+          }
 
           // Keep organizations map usable for existing display helpers.
-          this.organizations = entities.map((entity) => ({
+          this.organizations = organizationsToLoad.map((entity) => ({
             id: entity.id,
             label: entity.label,
             type: entity.type,
             subordinate_id: 0,
-            organization_code: '',
+            organization_code: entity.ffbCode,
             has_realbridge_tournament: false,
             has_funbridge_tournament: false,
             is_club_digital: false,
@@ -136,11 +141,43 @@ export class CompetitionsComponent {
             can_renew_external_member: false,
             email_renew_member: null,
           }));
+
+          this.preferred_entities = organizationsToLoad;
         }),
-        switchMap(() => this.competitionService.getCompetitions('37'))
-      ).subscribe((competitions) => {
-        console.log('[CompetitionsComponent] getCompetitions response:', competitions);
-        this.competitions = competitions;
+        switchMap((entities) => this.competitionService.getPreviousSeasons().pipe(
+          map((seasons) => {
+            const nationalLabel = this.preferred_organization_labels.national;
+            const nationalEntity = entities.find((entity) => entity.label === nationalLabel) ?? null;
+            const organizationsToLoad = nationalEntity ? [nationalEntity] : entities;
+            return { entities: organizationsToLoad, seasons };
+          })
+        )),
+        switchMap(({ entities, seasons }) => {
+          const seasonIndex = this.one_year_back ? 1 : 0;
+          const selectedSeason = seasons[seasonIndex] ?? seasons[0];
+
+          if (!selectedSeason) {
+            console.warn('[CompetitionsComponent] No season returned by getPreviousSeasons');
+            return of({ seasonId: '', competitions: [] as Competition_V2[] });
+          }
+
+          return this.competitionService.loadPreferredOrganizationCompetitionsWithStades(
+            String(selectedSeason.id),
+            entities,
+            this.preferred_organization_labels
+          );
+        })
+      ).subscribe({
+        next: ({ seasonId, competitions }) => {
+          console.log('[CompetitionsComponent] getCompetitions response:', competitions);
+          this.selectedCompetitionSeasonId = seasonId;
+          this.competitions = competitions;
+          this.results_extracted = true;
+        },
+        error: (error) => {
+          console.error('[CompetitionsComponent] Error while loading competitions/stades V2:', error);
+          this.results_extracted = true;
+        }
       });
       
       this.show_full_team =  false;
@@ -150,6 +187,16 @@ export class CompetitionsComponent {
       this.data_ready = true;
     });
   }
+
+  getPhaseGroupIds(phase: CompetitionResultPhase_V2): string {
+    return phase.groups.map((g) => g.id).join(', ');
+  }
+
+  getCompetitionStades(competitionId: number): CompetitionResultStade_V2[] {
+    const competition = this.competitions.find((item) => item.id === competitionId);
+    return competition?.stades || [];
+  }
+
   /**
    * Retourne vrai si la calculation_date est dans les derniers RECENT_CALCULATION_DAYS jours.
    */

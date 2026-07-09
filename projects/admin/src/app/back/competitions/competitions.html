@@ -1,9 +1,9 @@
-<div *ngIf="data_ready">
+<div>
     <div class="container-fluid py-3">
         <div class="row">
             <!-- Bloc back-office uniquement -->
             <div *ngIf="back_office_mode" class="col-12 col-lg-4 col-xl-3 mb-3 mb-lg-0">
-                <div class="card mb-3 mt-5 shadow-sm">
+                <div *ngIf="ui_config_loaded as uiConfig; else settingsLoading" class="card mb-3 mt-5 shadow-sm">
                     <div class="card-header ">
                         <span class="fw-bolder text-center d-block mb-3">Panneau de réglage</span>
 
@@ -24,12 +24,12 @@
                                                 {{ division }}
                                             </div>
                                             <input type="range" class="form-range" style="width: 200px;"
-                                                [(ngModel)]="ui_config_loaded.competitions.result_filter_thresholds[division]"
+                                                [(ngModel)]="uiConfig.competitions.result_filter_thresholds[division]"
                                                 min="1" max="100" step="1" (change)="onParamsChange(false)"
                                                 [disabled]="no_filter" />
                                             <span class="badge bg-secondary ms-2"
                                                 style="min-width: 40px; text-align: center;">{{
-                                                ui_config_loaded.competitions.result_filter_thresholds[division]
+                                                uiConfig.competitions.result_filter_thresholds[division]
                                                 }}</span>
                                         </div>
                                     </div>
@@ -41,7 +41,7 @@
                                     données détaillées</label>
                                 <div class="form-check form-switch ms-auto">
                                     <input class="form-check-input" type="checkbox" id="showTheoricalRankBack"
-                                        [(ngModel)]="ui_config_loaded.competitions.show_infos"
+                                        [(ngModel)]="uiConfig.competitions.show_infos"
                                         (change)="onParamsChange(false)" />
                                 </div>
                             </div>
@@ -59,6 +59,13 @@
                         <!-- </div> -->
                     </div>
                 </div>
+                <ng-template #settingsLoading>
+                    <div class="card mb-3 mt-5 shadow-sm">
+                        <div class="card-body text-muted small py-4 text-center">
+                            Chargement de la configuration des compétitions...
+                        </div>
+                    </div>
+                </ng-template>
                 <div *ngIf="back_office_mode" class="card mb-3 mt-5 shadow-sm">
                     <div class="card-header">
                         <span class="fw-bolder text-center d-block mb-3">les derniers résultats</span>
@@ -104,144 +111,71 @@
                 </div>
 
                 <div *ngIf="results_extracted">
-                    <!-- Actualisation FFB en arrière-plan - overlay au centre -->
-                    <div *ngIf="is_refreshing" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-                        <div class="d-flex flex-column align-items-center gap-3">
-                            <div class="spinner-border text-info" role="status" style="width: 3rem; height: 3rem;">
-                                <span class="visually-hidden">{{ spinnerMessage }}</span>
-                            </div>
-                            <span style="font-size: 1rem; color: #0d6efd;">{{ spinnerMessage }}</span>
+                    <div *ngIf="is_refreshing" class="alert alert-info d-flex align-items-center gap-2 mb-3">
+                        <div class="spinner-border spinner-border-sm" role="status"></div>
+                        <span>{{ spinnerMessage }}</span>
+                    </div>
+
+                    <div class="card mb-3 shadow-sm">
+                        <div class="card-header fw-bold">Étape 1 - Saison sélectionnée</div>
+                        <div class="card-body small">
+                            <div><span class="text-muted">Season ID:</span> {{ selectedCompetitionSeasonId }}</div>
+                            <div><span class="text-muted">Saison:</span> {{ current_season }}</div>
+                            <div><span class="text-muted">Mode:</span> {{ one_year_back ? 'année précédente' : 'année courante' }}</div>
                         </div>
                     </div>
 
-                    <!-- paramètres visualisation -->
-                    <div class="d-inline-block w-auto mb-3">
-                        <div class=" d-flex align-items-center" style="gap: 2rem">
-                            <div class="form-check form-switch mb-0">
-                                <input class="form-check-input" type="checkbox" id="noFilterSwitch"
-                                    [(ngModel)]="no_filter" (change)="onParamsChange(false)">
-                                <label class="form-check-label" for="noFilterSwitch">résultats complets</label>
-                            </div>
-                            <div class="form-check form-switch mb-0">
-                                <input class="form-check-input" type="checkbox" id="showFullTeamSwitch"
-                                    [(ngModel)]="show_full_team">
-                                <label class="form-check-label" for="showFullTeamSwitch">équipes complètes</label>
-                            </div>
-                            <div class="form-check form-switch mb-0">
-                                <input class="form-check-input" type="checkbox" id="showFullTeamSwitch"
-                                    [(ngModel)]="one_year_back" (change)="onParamsChange(true)">
-                                <label class="form-check-label" for="showFullTeamSwitch">année précédente</label>
+                    <div class="card mb-3 shadow-sm">
+                        <div class="card-header fw-bold">Étape 2 - Organisations préférées</div>
+                        <div class="card-body small">
+                            <div *ngIf="organizations.length === 0" class="text-muted">Aucune organisation résolue.</div>
+                            <div *ngFor="let organization of organizations" class="d-flex justify-content-between border-bottom py-1">
+                                <span>{{ organization.label }}</span>
+                                <span class="text-muted">{{ organization.ffbCode || 'sans ffbCode' }}</span>
                             </div>
                         </div>
                     </div>
 
-
-                    <!-- Bloc résultats -->
-                    <div *ngIf="(filtered_team_results | keyvalue).length > 0" class="row mb-3" style="gap:0;">
-                        <div *ngIf="results_extracted && (filtered_team_results | keyvalue).length === 0"
-                            class="alert alert-info text-center my-4">
-                            Aucun résultat à afficher pour la saison {{current_season}}.
-                        </div>
-                        <div class=" px-1 col-12 col-md" *ngFor="let division of divisions; let i = index">
-                            <div class=" text-center  text-uppercase text-primary fw-bolder mt-2 mb-2">
-                                {{ division }}
+                    <div class="card mb-3 shadow-sm">
+                        <div class="card-header fw-bold">Étape 3 - Compétitions retenues</div>
+                        <div class="card-body small">
+                            <div *ngIf="competitions.length === 0" class="text-muted">Aucune compétition retenue.</div>
+                            <div *ngFor="let competition of competitions" class="border-bottom py-1">
+                                <div class="d-flex justify-content-between">
+                                    <span class="fw-semibold">{{ competition.label }}</span>
+                                    <span class="text-muted">#{{ competition.id }}</span>
+                                </div>
+                                <div class="text-muted">Division: {{ competition.division }}</div>
                             </div>
-                            <div class="d-flex flex-column gap-3">
-                                <ng-container *ngFor="let result of filtered_team_results | keyvalue">
-                                    <!-- result.key = competitionId, result.value = CompetitionResults[] -->
-                                    <ng-container *ngIf="result.value.length > 0 && hasTeamsToDisplay(result.value)"
-                                        [ngTemplateOutlet]="competitionCard" [ngTemplateOutletContext]="{
-                                                    divisionCategory: result.value[0].competition.assigned_division,
-                                                    result: result,
-                                                    division: division
-                                                }">
-                                    </ng-container>
+                        </div>
+                    </div>
+
+                    <div class="card mb-3 shadow-sm">
+                        <div class="card-header fw-bold">Étape 4 - Stades chargés</div>
+                        <div class="card-body small">
+                            <div *ngIf="competitions.length === 0" class="text-muted">Pas de stades sans compétition.</div>
+                            <div *ngFor="let competition of competitions" class="mb-3">
+                                <div class="fw-semibold mb-1">{{ competition.label }} <span class="text-muted">(#{{ competition.id }})</span></div>
+                                <ng-container *ngIf="getCompetitionStades(competition.id).length > 0; else noStades">
+                                    <div *ngFor="let stade of getCompetitionStades(competition.id)" class="ms-3 mb-2 border-start ps-3">
+                                        <div>{{ stade.name || 'Sans nom' }}</div>
+                                        <div class="text-muted ms-2">
+                                            groupement: #{{ stade.groupement?.id || 0 }} - {{ stade.groupement?.name || 'N/A' }} - {{ stade.groupement?.type || 'N/A' }}
+                                        </div>
+                                        <div *ngFor="let phase of stade.phases" class="ms-2 text-muted">
+                                            {{ phase.label }} - hasResult: {{ phase.hasResult }} - groups: {{ getPhaseGroupIds(phase) }}
+                                        </div>
+                                    </div>
                                 </ng-container>
+                                <ng-template #noStades>
+                                    <div class="ms-3 text-muted">Aucun stade chargé.</div>
+                                </ng-template>
                             </div>
                         </div>
-                    </div>
-                    <div class="mt-2 text-center" style="font-size: 0.6em;">résultats à date pour la saison
-                        {{current_season}} -
-                        données FFB
                     </div>
                 </div>
 
             </div>
         </div>
-
-        <ng-template #competitionCard let-divisionCategory="divisionCategory" let-result="result"
-            let-division="division">
-            <ng-container *ngIf="divisionCategory === division">
-                <div class="card nice_shadow" style="font-size:0.9em;">
-                    <div class="card-header text-center text-primary">
-                        <span class="fw-bold">
-                            {{ result.value[0].competition.assigned_label }}
-                        </span>
-                        <div *ngIf="ui_config_loaded.competitions.show_infos" style="font-size: 0.7em;">{{result.key}}
-                            {{result.value[0].competition.family.label}} - {{
-                            (result.value[0].competition.label) }}</div>
-                    </div>
-                    <div class="card-body p-2">
-                        <ng-container *ngFor="let res of result.value; let i = index">
-                            <div class="mb-2">
-                                <hr *ngIf="i > 0" class="my-2">
-                                <div *ngIf="getFilteredTeams(res).length !== 0"
-                                    class="text-primary mb-1 d-flex align-items-center position-relative">
-                                    <span class="d-flex align-items-center"
-                                        [ngClass]="{'recent-date': isRecentCalculation(res.competition.calculation_date)}">
-                                        {{ get_organization_label(res.competition.organization_id) }}</span>
-                                    <span class="ms-auto small d-flex align-items-center">
-                                        {{ res.competition.calculation_date | date:'shortDate' }}
-                                    </span>
-                                </div>
-                                <ng-container *ngFor="let team of getFilteredTeams(res)">
-                                    <div class="mb-2">
-                                        <div class="d-flex align-items-center">
-                                            <span class="me-2 d-flex flex-column align-items-center rank-style">
-                                                <span>
-                                                    {{ team.rank + (team.rank===1?'er':'eme') }}
-                                                </span>
-                                                <span *ngIf="ui_config_loaded.competitions.show_infos"
-                                                    style="font-size: 0.7em;" class="d-flex align-items-center gap-1">
-                                                    <i class="bi bi-align-center" style="font-size: 0.9em;"></i>{{ (team.weighted_rank | number:'1.0-0') }}
-                                                </span>
-                                            </span>
-                                            <span
-                                                class="ms-3 d-flex flex-row flex-grow-1 w-100 justify-content-between align-items-start">
-                                                <ng-container *ngIf="!show_full_team; else playersColumn">
-                                                    <span>
-                                                        <ng-container
-                                                            *ngFor="let player of getDisplayedPlayers(team.players); let i = index; let last = last">
-                                                            <span
-                                                                [ngClass]="{'fw-semibold': isMember(player), 'fst-italic': !isMember(player), 'player-small': true}">
-                                                                {{ player.firstname }} {{
-                                                                player.lastname }}
-                                                            </span>
-                                                            <ng-container *ngIf="!last"> -
-                                                            </ng-container>
-                                                        </ng-container>
-                                                    </span>
-                                                </ng-container>
-                                                <ng-template #playersColumn>
-                                                    <span class="d-flex flex-column">
-                                                        <span *ngFor="let player of team.players">
-                                                            <span *ngIf="isMember(player) || show_full_team"
-                                                                [ngClass]="{'fw-semibold': isMember(player), 'fst-italic': !isMember(player), 'player-small': true}">
-                                                                {{ player.firstname }} {{
-                                                                player.lastname }}
-                                                            </span>
-                                                        </span>
-                                                    </span>
-                                                </ng-template>
-                                            </span>
-                                        </div>
-                                    </div>
-                                </ng-container>
-                            </div>
-                        </ng-container>
-                    </div>
-                </div>
-            </ng-container>
-        </ng-template>
     </div>
 </div>

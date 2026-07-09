@@ -174,6 +174,7 @@ function requiresAuthentication(route: string): boolean {
   // Public endpoints that don't need authentication
   const publicEndpoints = [
     "seasons/current",
+    "seasons/search",
     "seasons/next",
     "organizations",
   ];
@@ -258,6 +259,14 @@ export const handler: Handler = async (event) => {
       case "seasons/current":
         ffbEndpoint = "seasons/current";
         break;
+      case "seasons/search":
+        {
+          const params = new URLSearchParams();
+          params.set("maxSeason", (queryParams.maxSeason as string) || "current");
+          params.set("maxPerPage", (queryParams.maxPerPage as string) || "2");
+          ffbEndpoint = `seasons/search?${params.toString()}`;
+        }
+        break;
       case "seasons/next":
         ffbEndpoint = "seasons/next";
         break;
@@ -323,9 +332,26 @@ export const handler: Handler = async (event) => {
           const params = new URLSearchParams();
           params.set("competitionType", (queryParams.competitionType as string) || "federal");
           params.set("season", (queryParams.season as string) || "");
+          if (queryParams.organizationId) params.set("organizationId", queryParams.organizationId as string);
           params.set("currentPage", (queryParams.currentPage as string) || "1");
           params.set("maxPerPage", (queryParams.maxPerPage as string) || "80");
           ffbEndpoint = `results/search/?${params.toString()}`;
+        }
+        break;
+
+      case route.match(/^results\/competitionDivisions\/\d+$/)?.[0]:
+        {
+          const competitionId = route.match(/^results\/competitionDivisions\/(\d+)$/)?.[1];
+          if (!competitionId) {
+            return httpResponse(400, { error: "Missing competition id in path" });
+          }
+          if (!queryParams.seasonId) {
+            return httpResponse(400, { error: "Missing seasonId" });
+          }
+
+          const params = new URLSearchParams();
+          params.set("seasonId", queryParams.seasonId);
+          ffbEndpoint = `results/competitionDivisions/${competitionId}?${params.toString()}`;
         }
         break;
 

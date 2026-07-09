@@ -1,21 +1,23 @@
 import { Injectable } from '@angular/core';
 import { del, get, post } from 'aws-amplify/api';
 import { TournamentV2 } from '../interface/tournament-v2.interface';
+import { FFB_Season } from '../interface/ffb-season.interface';
 import { PersonV2 } from '../interface/person-v2.interface';
 import { ClubMember } from '../interface/club-member.interface';
 import { TournamentTeams } from '../interface/tournament_teams.interface';
 import { catchError, firstValueFrom, from, Observable, of, take } from 'rxjs';
-import { Competition, CompetitionOrganization, CompetitionPhases, CompetitionSeason, CompetitionTeam, Competition_V2, Entity_V2 } from '../../../back/competitions/competitions.interface';
+import { Competition, CompetitionOrganization, CompetitionPhases, CompetitionResultStade_V2, CompetitionTeam, Competition_V2, Entity_V2 } from '../../../back/competitions/competitions.interface';
 import { environment } from '../../../../environments/environment';
 import { SystemDataService } from '../../services/system-data.service';
 import {
   toCompetitionList,
   toCompetitionListFromSearchResponse,
   toCompetitionListFromSearchResponseLegacy,
+  toCompetitionResultStades,
   toCompetitionOrganizationList,
   toCompetitionPhases,
-  toCompetitionSeason,
-  toCompetitionSeasonList,
+  toFfbSeason,
+  toFfbSeasonList,
   toCompetitionTeamList,
   toEntityV2List,
   toClubMemberList,
@@ -28,11 +30,13 @@ const FFB_ENDPOINTS = {
   alive: '/api/ffb/v2/alive',
   person: '/api/ffb/v2/person',
   memberSearch: '/api/ffb/v2/persons/search',
-  seasons: '/api/ffb/v2/seasons/current',
+  currentSeason: '/api/ffb/v2/seasons/current',
+  previousSeasonsSearch: '/api/ffb/v2/seasons/search',
   organizations: '/api/ffb/v2/organizations',
   finalRanking: '/api/ffb/v2/competition-results',
   phases: '/api/ffb/v2/competition-phases',
   competitionSearch: '/api/ffb/v2/results/search',
+  competitionDivisionResults: '/api/ffb/v2/results/competitionDivisions',
   entitySearch: '/api/ffb/v2/entities/search',
   clubTournaments: '/api/ffb/v2/club-sessions',
   clubMembers: '/api/ffb/v2/club-members',
@@ -92,6 +96,30 @@ export class FFB_proxyService {
     }
     // Endpoint already contains full path with namespace prefix
     return endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  }
+
+  private async getCompetitionSearchPayload(seasonId: string, organizationId?: string): Promise<unknown> {
+    await this.ensureConfigReady();
+    const queryParams: Record<string, string> = {
+      competitionType: 'federal',
+      season: seasonId,
+      currentPage: '1',
+      maxPerPage: '80',
+    };
+
+    if (organizationId) {
+      queryParams['organizationId'] = organizationId;
+    }
+
+    const restOperation = get({
+      apiName: this.API_NAME,
+      path: this.buildPath(FFB_ENDPOINTS.competitionSearch),
+      options: this.withTraceHeaders({
+        queryParams,
+      })
+    });
+    const { body } = await restOperation.response;
+    return body.json();
   }
 
   async checkAlive(): Promise<{ alive: boolean; maintenance: boolean; upstreamStatus?: number }> {
@@ -396,20 +424,42 @@ export class FFB_proxyService {
     }
   }
 
-  async getCurrentSeason(): Promise<CompetitionSeason | null> {  // VALIDATED
+  async getCurrentSeason(): Promise<FFB_Season | null> {  // VALIDATED
     try {
       await this.ensureConfigReady();
       const restOperation = get({
         apiName: this.API_NAME,
-        path: this.buildPath(FFB_ENDPOINTS.seasons),
+        path: this.buildPath(FFB_ENDPOINTS.currentSeason),
         options: this.withTraceHeaders(),
       });
       const { body } = await restOperation.response;
       const data = await body.json();
-      return toCompetitionSeason(data);
+      return toFfbSeason(data);
     } catch (error) {
       console.error('[FFB Service] getCurrentSeason failed:', error);
       return null;
+    }
+  }
+
+  async getPreviousSeasons(): Promise<FFB_Season[]> {
+    try {
+      await this.ensureConfigReady();
+      const restOperation = get({
+        apiName: this.API_NAME,
+        path: this.buildPath(FFB_ENDPOINTS.previousSeasonsSearch),
+        options: this.withTraceHeaders({
+          queryParams: {
+            maxSeason: 'current',
+            maxPerPage: '2',
+          }
+        }),
+      });
+      const { body } = await restOperation.response;
+      const data = await body.json();
+      return toFfbSeasonList(data);
+    } catch (error) {
+      console.error('[FFB Service] getPreviousSeasons failed:', error);
+      return [];
     }
   }
 
@@ -432,21 +482,7 @@ export class FFB_proxyService {
 
   async getCompetitionsForResults(season_id: string): Promise<Competition[]> {
     try {
-      await this.ensureConfigReady();
-      const restOperation = get({
-        apiName: this.API_NAME,
-        path: this.buildPath(FFB_ENDPOINTS.competitionSearch),
-        options: this.withTraceHeaders({
-          queryParams: {
-            competitionType: 'federal',
-            season: season_id,
-            currentPage: '1',
-            maxPerPage: '80',
-          }
-        })
-      });
-      const { body } = await restOperation.response;
-      const data = await body.json();
+      const data = await this.getCompetitionSearchPayload(season_id);
       return toCompetitionListFromSearchResponseLegacy(data);
     } catch (error) {
       console.error('[FFB Service] getCompetitionsForResults failed:', error);
@@ -456,24 +492,20 @@ export class FFB_proxyService {
 
   async getCompetitions(season_id: string): Promise<Competition_V2[]> {
     try {
-      await this.ensureConfigReady();
-      const restOperation = get({
-        apiName: this.API_NAME,
-        path: this.buildPath(FFB_ENDPOINTS.competitionSearch),
-        options: this.withTraceHeaders({
-          queryParams: {
-            competitionType: 'federal',
-            season: season_id,
-            currentPage: '1',
-            maxPerPage: '80',
-          }
-        })
-      });
-      const { body } = await restOperation.response;
-      const data = await body.json();
+      const data = await this.getCompetitionSearchPayload(season_id);
       return toCompetitionListFromSearchResponse(data);
     } catch (error) {
       console.error('[FFB Service] getCompetitions failed:', error);
+      return [];
+    }
+  }
+
+  async getCompetitionsByOrganization(season_id: string, organizationId: string): Promise<Competition_V2[]> {
+    try {
+      const data = await this.getCompetitionSearchPayload(season_id, organizationId);
+      return toCompetitionListFromSearchResponse(data);
+    } catch (error) {
+      console.error('[FFB Service] getCompetitionsByOrganization failed:', error);
       return [];
     }
   }
@@ -540,6 +572,27 @@ export class FFB_proxyService {
     } catch (error) {
       console.log('GET call failed: ', error);
       return null;
+    }
+  }
+
+  async getCompetitionDivisionResults(competitionId: string, seasonId: string): Promise<CompetitionResultStade_V2[]> {
+    try {
+      await this.ensureConfigReady();
+      const restOperation = get({
+        apiName: this.API_NAME,
+        path: this.buildPath(`${FFB_ENDPOINTS.competitionDivisionResults}/${competitionId}`),
+        options: this.withTraceHeaders({
+          queryParams: {
+            seasonId: seasonId,
+          }
+        })
+      });
+      const { body } = await restOperation.response;
+      const data = await body.json();
+      return toCompetitionResultStades(data);
+    } catch (error) {
+      console.error('[FFB Service] getCompetitionDivisionResults failed:', error);
+      return [];
     }
   }
 
