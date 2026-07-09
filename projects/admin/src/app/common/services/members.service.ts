@@ -3,7 +3,6 @@ import { BehaviorSubject, Observable, tap, switchMap, of, map } from 'rxjs';
 import { Member } from '../interfaces/member.interface';
 import { ToastService } from '../services/toast.service';
 import { DBhandler } from './graphQL.service';
-import { FileService, S3_ROOT_FOLDERS } from './files.service';
 
 @Injectable({
   providedIn: 'root'

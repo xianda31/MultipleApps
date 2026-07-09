@@ -49,9 +49,9 @@ export class MembersComponent implements OnInit {
   selected_filter: FILTER = FILTER.MEMBER;
   filter_icons: { [key in FILTER]: string } = {
     [FILTER.MEMBER]: 'bi bi-person-check-fill',
-    [FILTER.MEMBER_AT_FFB]: 'bi bi-person-badge-fill',
-    [FILTER.STUDENT]: 'bi bi-mortarboard-fill',
-    [FILTER.UNKNOWN]: 'bi bi-person-slash',
+    [FILTER.MEMBER_AT_FFB]: 'bi bi-hand-thumbs-up-fill',
+    [FILTER.STUDENT]: 'bi bi-person-workspace',
+    [FILTER.UNKNOWN]: 'bi bi-heartbreak-fill',
   };
   loading: boolean = true;
   avatar_urls$: { [key: string]: Observable<string> } = {};
