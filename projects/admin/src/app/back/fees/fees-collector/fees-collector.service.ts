@@ -369,67 +369,34 @@ export class FeesCollectorService {
       map((items) => items.flatMap((team) => team.players.map((player, idx) => ({ player, teamId: team.id, playerIndex: idx })))),
     ).subscribe(async (playerData) => {
 
-      // Build gamer list with FFB license lookup for ALL players (members + non-members)
-      // This validates the FFB service and ensures license consistency
+      // Membership detection is license-based only: resolve player license then compare normalized values.
       const gamersOrNull = await Promise.all(
-        playerData.map(async ({ player, teamId, playerIndex }, index): Promise<Gamer | null> => {
-        // Canonical person id for V2 business flow: player.id only.
+        playerData.map(async ({ player }, index): Promise<Gamer | null> => {
         const playerPersonId = typeof player.id === 'number' && Number.isFinite(player.id) ? player.id : undefined;
-
-        // Find local member with canonical person_id.
-        let member = this.members.find(m => {
-          const personId = m.person_id;
-          return typeof personId === 'number' && personId === playerPersonId;
-        });
-
-        // Prefer local member license to avoid unnecessary /person calls and reduce 503 pressure.
-        let resolvedPersonId: number | undefined = member?.person_id ?? playerPersonId;
-        let license = member?.license_number ?? '';
-
-        // For non-members (or missing local license), use one canonical id only.
-        if (!license && typeof resolvedPersonId === 'number') {
-          try {
-            const ffbPerson = await this.ffbService.getFFBPerson(resolvedPersonId);
-            if (ffbPerson?.license_number) {
-              license = ffbPerson.license_number;
-            }
-          } catch (error) {
-            console.warn(`[FeesCollectorService] getFFBPerson unavailable for person ${resolvedPersonId}`, error);
-          }
+        if (typeof playerPersonId !== 'number') {
+          console.warn(`[FeesCollectorService] Missing person id for ${player.firstName} ${player.lastName}; player skipped`);
+          return null;
         }
 
-        // Fallback match for members missing person_id: resolve by normalized license_number.
-        if (!member && license) {
-          const normalizedLicense = String(license).padStart(8, '0');
-          member = this.members.find((m) => String(m.license_number ?? '').padStart(8, '0') === normalizedLicense);
-          if (member && typeof member.person_id === 'number') {
-            resolvedPersonId = member.person_id;
-          }
+        let playerLicense = '';
+        try {
+          const person = await this.ffbService.getFFBPerson(playerPersonId);
+          playerLicense = String(person?.license_number ?? '').padStart(8, '0');
+        } catch (error) {
+          console.warn(`[FeesCollectorService] getFFBPerson unavailable for person ${playerPersonId}`, error);
+          return null;
         }
 
+        if (!playerLicense || playerLicense === '00000000') {
+          console.warn(`[FeesCollectorService] Missing license for ${player.firstName} ${player.lastName}; player skipped`);
+          return null;
+        }
+
+        const member = this.members.find((m) => String(m.license_number ?? '').padStart(8, '0') === playerLicense);
         const isMember = !!member;
 
-        // Keep roster loading even if person endpoint fails for one player.
-        if (!license) {
-          if (member?.license_number) {
-            license = member.license_number;
-            console.warn(`[FeesCollectorService] Fallback license from member DB for ${player.firstName} ${player.lastName}`);
-          } else {
-            console.warn(`[FeesCollectorService] Unable to resolve license for ${player.firstName} ${player.lastName}; player skipped`);
-            return null;
-          }
-        }
-        
-        // Validate consistency for members
-        if (isMember && license !== member!.license_number) {
-          console.warn(
-            `[FeesCollectorService] License mismatch for member ${player.firstName} ${player.lastName}: ` +
-            `FFB=${license} vs DB=${member!.license_number}`
-          );
-        }
-
         return {
-          license: license,
+          license: playerLicense,
           firstname: player.firstName,
           lastname: player.lastName,
           is_member: isMember,
@@ -445,7 +412,7 @@ export class FeesCollectorService {
           photo_url$: member ? this.membersSettingsService.getAvatarUrl(member!) : null,
           member_id: isMember ? member!.id : null,
           my_birthday: isMember ? member!.birthdate : null,
-          ffb_person_id: resolvedPersonId,
+          ffb_person_id: playerPersonId,
         };
       })
       );
