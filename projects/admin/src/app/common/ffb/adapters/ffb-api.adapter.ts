@@ -35,6 +35,40 @@ function asString(value: unknown, fallback = ''): string {
   return typeof value === 'string' ? value : fallback;
 }
 
+function toTeamPlayer(raw: unknown): TeamItem['players'][number] {
+  const player = isRecord(raw) ? raw : {};
+  const seasonRaw = isRecord(player['season']) ? player['season'] : {};
+  const rankingRaw = isRecord(seasonRaw['ranking']) ? seasonRaw['ranking'] : {};
+
+  return {
+    id: asNumber(player['id'], 0),
+    ffbId: asNumber(player['ffbId'], 0),
+    migrationId: asNumber(player['migrationId'], 0),
+    firstName: asString(player['firstName'], ''),
+    lastName: asString(player['lastName'], ''),
+    season: {
+      id: asNumber(seasonRaw['id'], 0),
+      ranking: {
+        ic: asNumber(rankingRaw['ic'], 0),
+        iv: asNumber(rankingRaw['iv'], 0),
+        pe: asNumber(rankingRaw['pe'], 0),
+        pec: asNumber(rankingRaw['pec'], 0),
+        pp: asNumber(rankingRaw['pp'], 0),
+        ppc: asNumber(rankingRaw['ppc'], 0),
+      },
+    },
+  };
+}
+
+function toTeamItem(raw: unknown): TeamItem {
+  const item = isRecord(raw) ? raw : {};
+  return {
+    ...(item as unknown as TeamItem),
+    captain: toTeamPlayer(item['captain']),
+    players: asArray<unknown>(item['players']).map(toTeamPlayer),
+  } as TeamItem;
+}
+
 /**
  * Capitalize text: uppercase first letter after each space or dash.
  * Handles compound names and accents (François, Jean-Claude, Marie France)
@@ -289,7 +323,7 @@ export function toTournamentTeamsFromV2(
   tournament?: any
 ): TournamentTeams {
   const response: any = isRecord(payload) ? payload : {};
-  const items = asArray<TeamItem>(response.items);
+  const items = asArray<unknown>(response.items).map(toTeamItem);
   const pagination = isRecord(response.pagination) ? response.pagination : undefined;
 
   // Extract metadata from tournament or create defaults
