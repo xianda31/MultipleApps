@@ -373,18 +373,14 @@ export class FeesCollectorService {
       // This validates the FFB service and ensures license consistency
       const gamersOrNull = await Promise.all(
         playerData.map(async ({ player, teamId, playerIndex }, index): Promise<Gamer | null> => {
-        // Canonical person id for V2 business flow: member.person_id or player.id.
+        // Canonical person id for V2 business flow: player.id only.
         const playerPersonId = typeof player.id === 'number' && Number.isFinite(player.id) ? player.id : undefined;
-        const playerMigrationId = typeof (player as any).migrationId === 'number' && Number.isFinite((player as any).migrationId)
-          ? (player as any).migrationId
-          : undefined;
 
-        // Find local member with either key to avoid hard dependency on one ICD variant.
-        const member = this.members.find(m => {
+        // Find local member with canonical person_id.
+        let member = this.members.find(m => {
           const personId = m.person_id;
-          return typeof personId === 'number' && (personId === playerPersonId || personId === playerMigrationId);
+          return typeof personId === 'number' && personId === playerPersonId;
         });
-        const isMember = !!member;
 
         // Prefer local member license to avoid unnecessary /person calls and reduce 503 pressure.
         let resolvedPersonId: number | undefined = member?.person_id ?? playerPersonId;
@@ -401,6 +397,17 @@ export class FeesCollectorService {
             console.warn(`[FeesCollectorService] getFFBPerson unavailable for person ${resolvedPersonId}`, error);
           }
         }
+
+        // Fallback match for members missing person_id: resolve by normalized license_number.
+        if (!member && license) {
+          const normalizedLicense = String(license).padStart(8, '0');
+          member = this.members.find((m) => String(m.license_number ?? '').padStart(8, '0') === normalizedLicense);
+          if (member && typeof member.person_id === 'number') {
+            resolvedPersonId = member.person_id;
+          }
+        }
+
+        const isMember = !!member;
 
         // Keep roster loading even if person endpoint fails for one player.
         if (!license) {
@@ -427,7 +434,7 @@ export class FeesCollectorService {
           lastname: player.lastName,
           is_member: isMember,
           game_credits: isMember ? this.gameCardService.get_member_credit(member!.license_number) : 0,
-          acc_credits: isMember ? this.check_acc(this.membersService.full_name(member)) : false,
+          acc_credits: member ? this.check_acc(this.membersService.full_name(member!)) : false,
           debt: 0,
           credit: 0,
           index: index,
@@ -435,7 +442,7 @@ export class FeesCollectorService {
           price: isMember ? this.game.member_trn_price : this.game.non_member_trn_price,
           validated: false,
           enabled: true,
-          photo_url$: isMember ? this.membersSettingsService.getAvatarUrl(member) : null,
+          photo_url$: member ? this.membersSettingsService.getAvatarUrl(member!) : null,
           member_id: isMember ? member!.id : null,
           my_birthday: isMember ? member!.birthdate : null,
           ffb_person_id: resolvedPersonId,
