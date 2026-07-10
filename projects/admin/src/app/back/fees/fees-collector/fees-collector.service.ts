@@ -14,7 +14,6 @@ import { MembersService } from '../../../common/services/members.service';
 import { ToastService } from '../../../common/services/toast.service';
 import { DBhandler } from "../../../common/services/graphQL.service";
 import { MemberSettingsService } from '../../../common/services/member-settings.service';
-import { FFB_proxyService } from '../../../common/ffb/services/ffb.service';
 import { PaymentMode } from '../../shop/cart/cart.interface';
 
 
@@ -39,7 +38,6 @@ export class FeesCollectorService {
     private gameCardService: GameCardService,
     private BookService: BookService,
     private membersSettingsService: MemberSettingsService,
-    private ffbService: FFB_proxyService,
     private DBhandler: DBhandler
   ) {
     this.systemDataService.get_configuration().subscribe((sys_conf) => {
@@ -367,28 +365,14 @@ export class FeesCollectorService {
     this.tournamentService.readTeams(tournament.id.toString()).pipe(
       map((tteams: TournamentTeams) => tteams.items),
       map((items) => items.flatMap((team) => team.players.map((player, idx) => ({ player, teamId: team.id, playerIndex: idx })))),
-    ).subscribe(async (playerData) => {
+    ).subscribe((playerData) => {
 
-      // Membership detection is license-based only: resolve player license then compare normalized values.
-      const gamersOrNull = await Promise.all(
-        playerData.map(async ({ player }, index): Promise<Gamer | null> => {
+      // Membership detection is license-based only via FFB native ffbId.
+      const gamersOrNull = playerData.map(({ player }, index): Gamer | null => {
         const playerPersonId = typeof player.id === 'number' && Number.isFinite(player.id) ? player.id : undefined;
-        if (typeof playerPersonId !== 'number') {
-          console.warn(`[FeesCollectorService] Missing person id for ${player.firstName} ${player.lastName}; player skipped`);
-          return null;
-        }
-
-        let playerLicense = '';
-        try {
-          const person = await this.ffbService.getFFBPerson(playerPersonId);
-          playerLicense = String(person?.license_number ?? '').padStart(8, '0');
-        } catch (error) {
-          console.warn(`[FeesCollectorService] getFFBPerson unavailable for person ${playerPersonId}`, error);
-          return null;
-        }
-
+        const playerLicense = String(player.ffbId ?? '').padStart(8, '0');
         if (!playerLicense || playerLicense === '00000000') {
-          console.warn(`[FeesCollectorService] Missing license for ${player.firstName} ${player.lastName}; player skipped`);
+          console.warn(`[FeesCollectorService] Missing ffbId/license for ${player.firstName} ${player.lastName}; player skipped`);
           return null;
         }
 
@@ -414,8 +398,7 @@ export class FeesCollectorService {
           my_birthday: isMember ? member!.birthdate : null,
           ffb_person_id: playerPersonId,
         };
-      })
-      );
+      });
 
       this.game.gamers = gamersOrNull.filter((gamer): gamer is Gamer => gamer !== null);
 

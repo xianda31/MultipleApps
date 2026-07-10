@@ -27,7 +27,8 @@ export interface TeamItem {
 
 export interface FFBPlayer {
   id: number;
-  migrationId: number;
+  ffbId: number;
+  migrationId?: number;
   firstName: string;
   lastName: string;
   season: Season;
