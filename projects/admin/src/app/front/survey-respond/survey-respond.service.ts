@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
-import outputs from '../../../../../../amplify_outputs.json';
+import { get, post, patch } from 'aws-amplify/api';
 
-const API_BASE = (outputs as any).custom?.API?.ffbProxyApi?.endpoint?.replace(/\/$/, '') ?? '';
+const API_NAME = 'ffbProxyApi';
+const SURVEY_RESPOND_PATH = '/api/survey/respond';
 
 export interface SurveyRespondData {
   token: string;
@@ -31,29 +32,44 @@ export interface SurveyRespondData {
 export class SurveyRespondService {
 
   async load(token: string): Promise<SurveyRespondData> {
-    const res = await fetch(`${API_BASE}/api/survey/respond?token=${encodeURIComponent(token)}`);
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+    const restOperation = get({
+      apiName: API_NAME,
+      path: SURVEY_RESPOND_PATH,
+      options: {
+        queryParams: { token },
+      },
+    });
+    const { body } = await restOperation.response;
+    const json = await body.json() as unknown;
+    if ((json as any)?.error) throw new Error((json as any).error ?? 'HTTP error');
     return json as SurveyRespondData;
   }
 
   async submit(token: string, answers: Record<string, number>): Promise<void> {
-    const res = await fetch(`${API_BASE}/api/survey/respond`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token, answers }),
+    const restOperation = post({
+      apiName: API_NAME,
+      path: SURVEY_RESPOND_PATH,
+      options: {
+        body: { token, answers } as any,
+        headers: { 'Content-Type': 'application/json' },
+      },
     });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+    const { body } = await restOperation.response;
+    const json = await body.json() as unknown;
+    if ((json as any)?.error) throw new Error((json as any).error ?? 'HTTP error');
   }
 
   async updateStatus(token: string, status: 'confirmed' | 'declined' | 'cancelled' | 'submitted'): Promise<void> {
-    const res = await fetch(`${API_BASE}/api/survey/respond`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token, status }),
+    const restOperation = patch({
+      apiName: API_NAME,
+      path: SURVEY_RESPOND_PATH,
+      options: {
+        body: { token, status } as any,
+        headers: { 'Content-Type': 'application/json' },
+      },
     });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+    const { body } = await restOperation.response;
+    const json = await body.json() as unknown;
+    if ((json as any)?.error) throw new Error((json as any).error ?? 'HTTP error');
   }
 }

@@ -275,6 +275,9 @@ const schema = a.schema({
     amountCents: a.integer().required(),
     currency: a.string().required(),
     customerEmail: a.string(),
+    confirmationEmailSentAt: a.string(),
+    confirmationEmailProcessingAt: a.string(),
+    confirmationEmailError: a.string(),
     stripeMeta: a.json(),                    // season, date, memberName, amounts...
     processed: a.boolean(),                  // true après confirmation frontend
     amountFeesCents: a.integer(),            // frais Stripe prélevés (pour Phase 2 reconciliation)

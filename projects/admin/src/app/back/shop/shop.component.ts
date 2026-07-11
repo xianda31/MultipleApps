@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormGroup, FormControl, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { LicenseStatus, Member } from '../../common/interfaces/member.interface';
@@ -21,6 +21,7 @@ import { StripeTerminalService } from './services/stripe-terminal.service';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { PaymentMode } from './cart/cart.interface';
 import { CardPaymentOrchestratorService } from '../services/card-payment-orchestrator.service';
+import { Subscription } from 'rxjs';
 /**
  * ShopComponent — Interface de gestion des ventes (cartes, adhésions, produits)
  *
@@ -60,7 +61,7 @@ import { CardPaymentOrchestratorService } from '../services/card-payment-orchest
   templateUrl: './shop.component.html',
   styleUrl: './shop.component.scss'
 })
-export class ShopComponent implements OnDestroy {
+export class ShopComponent implements OnInit, OnDestroy {
   @Input() member_id: string | null = null;
   @Input() onlineMode !: boolean;
   members!: Member[];
@@ -85,6 +86,9 @@ export class ShopComponent implements OnDestroy {
   private stripeCheckoutPrepared = false;  // Éviter les doublons
   onlinePaymentActive: boolean = true;
   minimumCbAmount: number | null = null;
+  private checkoutStateSubscription?: Subscription;
+  private successBannerTimer: ReturnType<typeof setTimeout> | null = null;
+  private lastSuccessSessionId: string | null = null;
 
   // ── TPE (Stripe Terminal) ──────────────────────────────────
   tpePaymentActive: boolean = false;
@@ -146,6 +150,22 @@ export class ShopComponent implements OnDestroy {
   ngOnInit(): void {
     // Apply default for @Input (not auto-applied by Angular)
     this.onlineMode ??= true;
+
+    this.checkoutStateSubscription = this.stripeCheckout.checkoutState$.subscribe((state) => {
+      if (state.checkoutPhase.phase === 'success') {
+        const sessionId = state.checkoutPhase.sessionId;
+        if (this.lastSuccessSessionId !== sessionId) {
+          this.lastSuccessSessionId = sessionId;
+          this.toastService.showSuccess('Paiement confirmé', 'Reçu Stripe disponible.');
+        }
+        this.scheduleSuccessBannerDismiss();
+      } else {
+        this.clearSuccessBannerTimer();
+        if (state.checkoutPhase.phase === 'idle') {
+          this.lastSuccessSessionId = null;
+        }
+      }
+    });
 
     this.systemDataService.get_configuration().subscribe(conf => {
       this.onlinePaymentActive = conf.online_payment_active;
@@ -218,6 +238,8 @@ export class ShopComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.checkoutStateSubscription?.unsubscribe();
+    this.clearSuccessBannerTimer();
     this.cardPaymentOrchestrator.cancelRemotePayment();
     // shopInit (singleton root) gère sa propre subscription TPESession
   }
@@ -438,6 +460,7 @@ export class ShopComponent implements OnDestroy {
   }
 
   dismissSuccessBanner(): void {
+    this.clearSuccessBannerTimer();
     this.stripeCheckout.reset();
     this.stripeCheckoutPrepared = false;
     this.cartService.clearCart();
@@ -450,6 +473,22 @@ export class ShopComponent implements OnDestroy {
       }
     }
     this.router.navigate([], { relativeTo: this.route, queryParams: {} });
+  }
+
+  private scheduleSuccessBannerDismiss(): void {
+    this.clearSuccessBannerTimer();
+    this.successBannerTimer = setTimeout(() => {
+      if (this.stripeCheckout.getCurrentPhase() === 'success') {
+        this.dismissSuccessBanner();
+      }
+    }, 10000);
+  }
+
+  private clearSuccessBannerTimer(): void {
+    if (this.successBannerTimer !== null) {
+      clearTimeout(this.successBannerTimer);
+      this.successBannerTimer = null;
+    }
   }
 
   async on_stripe_checkout(): Promise<void> {

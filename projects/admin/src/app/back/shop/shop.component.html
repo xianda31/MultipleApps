@@ -25,6 +25,9 @@
       <div class="flex-grow-1">
         <strong>Paiement confirmé !</strong> Vos achats ont été enregistrés.
         @let url = (receiptUrl$ | async);
+        <div class="small text-muted mt-1">
+          Un e-mail de confirmation vous a été envoyé.
+        </div>
         @if (url) {
         <a [href]="url" target="_blank" rel="noopener" class="ms-2">
           <i class="bi bi-receipt me-1"></i>Voir le reçu
