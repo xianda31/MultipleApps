@@ -21,6 +21,7 @@ import { StripeTerminalService } from './services/stripe-terminal.service';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { PaymentMode } from './cart/cart.interface';
 import { CardPaymentOrchestratorService } from '../services/card-payment-orchestrator.service';
+import { BookService } from '../services/book.service';
 import { Subscription } from 'rxjs';
 /**
  * ShopComponent — Interface de gestion des ventes (cartes, adhésions, produits)
@@ -87,8 +88,12 @@ export class ShopComponent implements OnInit, OnDestroy {
   onlinePaymentActive: boolean = true;
   minimumCbAmount: number | null = null;
   private checkoutStateSubscription?: Subscription;
+  private bookEntriesSubscription?: Subscription;
+  private bookEntriesLoadingSubscription?: Subscription;
   private successBannerTimer: ReturnType<typeof setTimeout> | null = null;
   private lastSuccessSessionId: string | null = null;
+  private bookEntriesReady = false;
+  private shouldNotifyBuyerFlagsAfterSync = false;
 
   // ── TPE (Stripe Terminal) ──────────────────────────────────
   tpePaymentActive: boolean = false;
@@ -145,6 +150,7 @@ export class ShopComponent implements OnInit, OnDestroy {
     private systemDataService: SystemDataService,
     private stripeTerminal: StripeTerminalService,
     private cardPaymentOrchestrator: CardPaymentOrchestratorService,
+    private bookService: BookService,
   ) {}
 
   ngOnInit(): void {
@@ -191,6 +197,21 @@ export class ShopComponent implements OnInit, OnDestroy {
       this.session = state.session;
       this.operations = state.operations;
       this.canEditPrice = state.canEditPrice;
+
+      this.bookEntriesReady = this.bookService.is_book_entries_loaded();
+
+      this.bookEntriesLoadingSubscription = this.bookService.loading$.subscribe((loading) => {
+        this.bookEntriesReady = !loading && this.bookService.is_book_entries_loaded();
+      });
+
+      // Keep operations in sync after initial load (important in dev refresh flows).
+      this.bookEntriesSubscription = this.bookService.list_book_entries().subscribe(() => {
+        this.operations = this.bookService.get_operations();
+        if (this.buyer && this.bookEntriesReady) {
+          this.updateBuyerPaymentFlags(this.buyer, this.shouldNotifyBuyerFlagsAfterSync);
+          this.shouldNotifyBuyerFlagsAfterSync = false;
+        }
+      });
 
       // initializeShop() a déjà chargé les book_entries via loadOperations()
       // -> pas besoin d'un deuxième appel list_book_entries()
@@ -239,6 +260,8 @@ export class ShopComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.checkoutStateSubscription?.unsubscribe();
+    this.bookEntriesSubscription?.unsubscribe();
+    this.bookEntriesLoadingSubscription?.unsubscribe();
     this.clearSuccessBannerTimer();
     this.cardPaymentOrchestrator.cancelRemotePayment();
     // shopInit (singleton root) gère sa propre subscription TPESession
@@ -425,28 +448,39 @@ export class ShopComponent implements OnInit, OnDestroy {
     this.debt_amount = state.debtAmount;
     this.asset_amount = state.assetAmount;
 
-    // Check license status
-    this.license_paied = (buyer.license_status === LicenseStatus.DULY_REGISTERED);
-    if (!this.license_paied) {
-      this.toastService.showWarning('licence', `${buyer.firstname} ${buyer.lastname} n'a pas de licence pour cette saison`);
+    if (this.bookEntriesReady) {
+      this.updateBuyerPaymentFlags(buyer, true);
+    } else {
+      this.message = '';
+      this.shouldNotifyBuyerFlagsAfterSync = true;
     }
-
-    // Check membership payment by looking at operations
-    const fullName = this.membersService.full_name(buyer);
-    this.membership_paied = this.operations
-      .filter((op) => op.member === fullName)
-      .some((op) => op.values['ADH']);
-
-    if (!this.membership_paied) {
-      this.toastService.showWarning('adhésion', `${buyer.firstname} ${buyer.lastname} n'a pas payé l'adhésion au Club`);
-    }
-
-    // Generate aggregated message
-    this.message = this.buyerContext.determineLicenseMessage(this.license_paied, this.membership_paied);
 
     // Add asset info if available
     if (this.asset_amount > 0) {
       this.toastService.showInfo('avoir', `cette personne a un avoir de ${this.asset_amount.toFixed(2)} €`);
+    }
+  }
+
+  private updateBuyerPaymentFlags(buyer: Member, notifyWarnings: boolean): void {
+    const fullName = this.membersService.full_name(buyer);
+
+    this.license_paied = this.operations
+      .filter((op) => op.member === fullName)
+      .some((op) => op.values['LIC']);
+
+    this.membership_paied = this.operations
+      .filter((op) => op.member === fullName)
+      .some((op) => op.values['ADH']);
+
+    this.message = this.buyerContext.determineLicenseMessage(this.license_paied, this.membership_paied);
+
+    if (!notifyWarnings) return;
+
+    if (!this.license_paied) {
+      this.toastService.showWarning('licence', `${buyer.firstname} ${buyer.lastname} n'a pas de licence pour cette saison`);
+    }
+    if (!this.membership_paied) {
+      this.toastService.showWarning('adhésion', `${buyer.firstname} ${buyer.lastname} n'a pas payé l'adhésion au Club`);
     }
   }
 
