@@ -21,9 +21,11 @@ function Resolve-DeviceId {
         return $RequestedDeviceId
     }
 
-    $devices = adb devices | Select-String "\tdevice$" | ForEach-Object {
-        ($_ -split "`t")[0].Trim()
-    }
+    $devices = @(
+        adb devices |
+            Select-String "^\S+\s+device$" |
+            ForEach-Object { (($_.Line -split "\s+")[0]).Trim() }
+    )
 
     if (-not $devices -or $devices.Count -eq 0) {
         throw "No Android device detected (adb devices)."
@@ -33,7 +35,7 @@ function Resolve-DeviceId {
         throw "Multiple Android devices detected. Re-run with -DeviceId <serial>."
     }
 
-    return $devices[0]
+    return [string]$devices[0]
 }
 
 Require-Command "adb"
@@ -51,14 +53,14 @@ Write-Host "Using device: $resolvedDeviceId"
 Write-Host "Local APK: $ApkPath"
 Write-Host "Remote APK: $remotePath"
 
-adb -s $resolvedDeviceId push $ApkPath $remotePath | Out-Host
-adb -s $resolvedDeviceId shell "ls -la $remotePath" | Out-Host
+adb -s "$resolvedDeviceId" push $ApkPath $remotePath | Out-Host
+adb -s "$resolvedDeviceId" shell "ls -la $remotePath" | Out-Host
 
 # Trigger media scan so file managers can refresh quicker.
-adb -s $resolvedDeviceId shell am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d "file://$remotePath" | Out-Host
+adb -s "$resolvedDeviceId" shell am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d "file://$remotePath" | Out-Host
 
 # Open Android package installer directly on the copied APK.
-adb -s $resolvedDeviceId shell am start -n com.google.android.packageinstaller/com.android.packageinstaller.InstallStart -a android.intent.action.VIEW -d "file://$remotePath" -t "application/vnd.android.package-archive" --grant-read-uri-permission | Out-Host
+adb -s "$resolvedDeviceId" shell am start -n com.google.android.packageinstaller/com.android.packageinstaller.InstallStart -a android.intent.action.VIEW -d "file://$remotePath" -t "application/vnd.android.package-archive" --grant-read-uri-permission | Out-Host
 
 Write-Host ""
 Write-Host "Installer launched. Confirm installation on the tablet screen."
