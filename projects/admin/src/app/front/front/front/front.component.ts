@@ -24,6 +24,12 @@ import { Member } from '../../../common/interfaces/member.interface';
 import { MemberSettingsService } from '../../../common/services/member-settings.service';
 import { CommandRegistryService } from '../../../common/services/command-registry.service';
 import { FrontNavbarComponent } from '../../front-navbar/front-navbar.component';
+import { NAVITEM_PLUGIN } from '../../../common/interfaces/plugin.interface';
+
+type StripeReturnState = {
+  checkout: 'success' | 'cancel';
+  sessionId: string | null;
+};
 
 @Component({
   selector: 'app-front',
@@ -80,6 +86,7 @@ export class FrontComponent implements AfterViewInit {
   @ViewChild('headerBanner', { static: false }) headerBanner!: ElementRef<HTMLElement>;
   private headerObserver?: MutationObserver;
   footerObserver: any;
+  private pendingStripeReturn: StripeReturnState | null = null;
 
   constructor(
     private siteLayoutService: SiteLayoutService,
@@ -97,6 +104,7 @@ export class FrontComponent implements AfterViewInit {
   ) { }
 
   ngOnInit(): void {
+    this.captureStripeReturnContext();
     this.localStorageService.setItem('entry_point', 'front');
     this.onResize(); // Ensure correct mode on init
     this.siteLayoutService.getAlbums().subscribe((albums) => {
@@ -107,6 +115,7 @@ export class FrontComponent implements AfterViewInit {
     this.navitemService.loadNavItems(initialSandbox).subscribe(() => {
       this.navbar_menus = this.navitemService.getMenuStructure();
       this.footer_menus = this.navitemService.getMenuStructure().filter(menu => menu.navitem.position === NAVITEM_POSITION.FOOTER);
+      this.resolvePendingStripeReturn();
     });
     // Subscribe sandbox mode to reload navitems when mode changes
     this.sandboxService.sandbox$.subscribe((sandbox) => {
@@ -115,6 +124,7 @@ export class FrontComponent implements AfterViewInit {
       this.navitemService.loadNavItems(sandbox).subscribe(() => {
         this.navbar_menus = this.navitemService.getMenuStructure();
         this.footer_menus = this.navitemService.getMenuStructure().filter(menu => menu.navitem.position === NAVITEM_POSITION.FOOTER);
+        this.resolvePendingStripeReturn();
       });
     });
     // Load UI settings (logo/background) from dedicated UI settings file
@@ -149,6 +159,51 @@ export class FrontComponent implements AfterViewInit {
       }
     });
     this.onResize(); // Initial orientation
+  }
+
+  private captureStripeReturnContext(): void {
+    const params = new URLSearchParams(window.location.search);
+    const checkout = params.get('checkout');
+    if (checkout !== 'success' && checkout !== 'cancel') return;
+
+    this.pendingStripeReturn = {
+      checkout,
+      sessionId: params.get('session_id'),
+    };
+  }
+
+  private resolvePendingStripeReturn(): void {
+    if (!this.pendingStripeReturn) return;
+
+    const onlineShopPath = this.navitemService.getPathByPlugin(NAVITEM_PLUGIN.ONLINE_SHOP);
+    if (onlineShopPath) {
+      const queryParams: any = { checkout: this.pendingStripeReturn.checkout };
+      if (this.pendingStripeReturn.sessionId) {
+        queryParams.session_id = this.pendingStripeReturn.sessionId;
+      }
+      const onlineShopSegments = onlineShopPath
+        .split('/')
+        .filter(Boolean);
+      this.pendingStripeReturn = null;
+      this.router.navigate(['/front', ...onlineShopSegments], {
+        queryParams,
+        replaceUrl: true,
+      });
+      return;
+    }
+
+    // Fallback de secours si le menu dynamique ONLINE_SHOP n'est pas encore publié.
+    if (this.pendingStripeReturn.checkout === 'success') {
+      const queryParams = this.pendingStripeReturn.sessionId
+        ? { session_id: this.pendingStripeReturn.sessionId }
+        : {};
+      this.pendingStripeReturn = null;
+      this.router.navigate(['/front/checkout-success'], { queryParams, replaceUrl: true });
+      return;
+    }
+
+    this.pendingStripeReturn = null;
+    this.router.navigate(['/front/checkout-cancel'], { replaceUrl: true });
   }
 
   get brandNavitem(): NavItem | null {
