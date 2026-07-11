@@ -149,7 +149,7 @@ export class StripeTerminalService {
     // avant de résoudre — sinon discoverReaders() échoue silencieusement
     await new Promise<void>((resolve) => {
       StripeTerminal.addListener(TerminalEventsEnum.Loaded, () => resolve());
-      StripeTerminal.initialize({ isTest: true });
+      StripeTerminal.initialize({ isTest: environment.tpe_isTest });
     });
 
     this.capacitorInitialized = true;

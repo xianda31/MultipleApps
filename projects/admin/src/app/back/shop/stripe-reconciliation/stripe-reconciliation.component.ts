@@ -217,6 +217,11 @@ export class StripeReconciliationComponent {
           (t: any) => t.bookEntryId === be.id || (be.stripeTag && t.stripeTag === be.stripeTag)
         ) || null;
 
+        // Keep only payments confirmed by Stripe webhooks.
+        if (!st) {
+          return null;
+        }
+
         const grossCents = Math.round(((be.amounts as any)[FINANCIAL_ACCOUNT.STRIPE_debit] || 0) * 100);
 
         const member = this.members.find(m =>
@@ -226,10 +231,17 @@ export class StripeReconciliationComponent {
           ? member.lastname + ' ' + member.firstname
           : be.operations.find(op => op.member)?.member || be.tag || '(inconnu)';
 
-        const cartSummary = be.operations
+        const details = be.operations
           .filter(op => op.member)
           .map(op => op.label)
           .join(', ') || this.formatAmount(grossCents);
+
+        const paymentChannel = st?.source === 'terminal' ? 'vente TPE' : 'vente en ligne';
+        const normalizedDetails = details.replace(/^vendu par\s+/i, '').trim();
+        const isRedundantDetails =
+          (paymentChannel === 'vente en ligne' && normalizedDetails.toLowerCase() === 'en ligne') ||
+          (paymentChannel === 'vente TPE' && normalizedDetails.toLowerCase() === 'tpe');
+        const cartSummary = `${paymentChannel}${normalizedDetails && !isRedundantDetails ? ' — ' + normalizedDetails : ''}`;
 
         const line: PayoutLine = {
           bookEntry: be,
@@ -242,7 +254,7 @@ export class StripeReconciliationComponent {
           selected: false,
         };
         return line;
-      });
+      }).filter((line): line is PayoutLine => line !== null);
     } catch (error) {
       console.error('Erreur chargement lignes payout:', error);
       this.toastService.showError('Réconciliation', 'Impossible de charger les paiements');

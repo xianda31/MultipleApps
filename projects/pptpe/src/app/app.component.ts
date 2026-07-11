@@ -128,7 +128,7 @@ export class AppComponent implements OnInit, OnDestroy {
     this.paymentRequestSub?.unsubscribe();
     this.paymentRequestSub = null;
     this.stopHeartbeat();
-    await this.upsertTPESession('disconnected', '');  
+    await this.upsertTPESession('disconnected', '');
     await StripeTerminal.disconnectReader().catch(() => {});
     await signOut();
     this.state = 'login';

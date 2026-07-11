@@ -5,6 +5,7 @@
   "type": "module",
   "main": "handler.ts",
   "dependencies": {
+    "@aws-sdk/client-ses": "^3.609.0",
     "stripe": "^14.14.0"
   },
   "devDependencies": {

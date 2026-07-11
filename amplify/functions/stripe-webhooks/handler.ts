@@ -9,10 +9,13 @@
 
 import Stripe from 'stripe';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, PutCommand, GetCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, PutCommand, GetCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import { SESClient, SendRawEmailCommand } from '@aws-sdk/client-ses';
+import { buildPurchaseConfirmationMailTemplate } from '../shared/mail-template';
 
 const ddbClient = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(ddbClient);
+const ses = new SESClient({ region: process.env.AWS_REGION });
 
 const stripe = new Stripe(process.env['STRIPE_SECRET_KEY'] || '', {
   apiVersion: '2024-04-10' as any,
@@ -20,6 +23,197 @@ const stripe = new Stripe(process.env['STRIPE_SECRET_KEY'] || '', {
 
 const WEBHOOK_SECRET = process.env['STRIPE_WEBHOOK_SECRET'] || '';
 const STRIPE_TRANSACTION_TABLE = process.env['STRIPE_TRANSACTION_TABLE_NAME'] || '';
+const DEFAULT_FROM = '"Bridge Club Saint-Orens" <noreply@bridgeclubsaintorens.fr>';
+const DEFAULT_REPLY_TO = '"Bridge Club Saint-Orens" <bridge.saintorens@free.fr>';
+
+function resolvePurchaseEmailTemplateOptions() {
+  return {
+    brandTitle: process.env['STRIPE_PURCHASE_EMAIL_BRAND_TITLE'] || 'Bridge Club Saint-Orens',
+    tagline: process.env['STRIPE_PURCHASE_EMAIL_TAGLINE'] || 'Confirmation de votre achat',
+    accentColor: process.env['STRIPE_PURCHASE_EMAIL_ACCENT_COLOR'] || '#2b8a3e',
+    footerEmail: process.env['STRIPE_PURCHASE_EMAIL_FOOTER_EMAIL'] || 'bridge.saintorens@free.fr',
+    footerWebsite: process.env['STRIPE_PURCHASE_EMAIL_FOOTER_WEBSITE'] || 'https://bridgeclubsaintorens.fr',
+  };
+}
+
+function formatAmount(cents: number): string {
+  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format((cents || 0) / 100);
+}
+
+function createRawEmail(
+  from: string,
+  to: string[],
+  subject: string,
+  htmlBody: string,
+  attachments: Array<{ filename: string; content: string; contentType: string }>,
+  replyTo?: string,
+): string {
+  const boundary = `----=_Part_${Date.now()}`;
+
+  let rawEmail = `From: ${from}\r\n`;
+  rawEmail += `To: ${to.join(', ')}\r\n`;
+  if (replyTo) {
+    rawEmail += `Reply-To: ${replyTo}\r\n`;
+  }
+  rawEmail += `Subject: ${subject}\r\n`;
+  rawEmail += `MIME-Version: 1.0\r\n`;
+  rawEmail += `Content-Type: multipart/mixed; boundary="${boundary}"\r\n\r\n`;
+
+  rawEmail += `--${boundary}\r\n`;
+  rawEmail += `Content-Type: text/html; charset=UTF-8\r\n`;
+  rawEmail += `Content-Transfer-Encoding: 7bit\r\n\r\n`;
+  rawEmail += `${htmlBody}\r\n\r\n`;
+
+  for (const attachment of attachments) {
+    rawEmail += `--${boundary}\r\n`;
+    rawEmail += `Content-Type: ${attachment.contentType}; name="${attachment.filename}"\r\n`;
+    rawEmail += `Content-Disposition: attachment; filename="${attachment.filename}"\r\n`;
+    rawEmail += `Content-Transfer-Encoding: base64\r\n\r\n`;
+    rawEmail += `${attachment.content}\r\n\r\n`;
+  }
+
+  rawEmail += `--${boundary}--`;
+  return rawEmail;
+}
+
+async function getReceiptAttachment(sessionId: string): Promise<{ receiptUrl: string | null; attachment: { filename: string; content: string; contentType: string } | null }> {
+  const session = await stripe.checkout.sessions.retrieve(sessionId, {
+    expand: ['payment_intent.latest_charge'],
+  });
+
+  const pi = session.payment_intent as Stripe.PaymentIntent | null;
+  const charge = pi?.latest_charge as Stripe.Charge | null;
+  const receiptUrl = charge?.receipt_url || null;
+  if (!receiptUrl) {
+    return { receiptUrl: null, attachment: null };
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    const response = await fetch(receiptUrl, { signal: controller.signal });
+    clearTimeout(timeout);
+
+    if (!response.ok) {
+      return { receiptUrl, attachment: null };
+    }
+
+    const contentType = response.headers.get('content-type') || 'text/html; charset=UTF-8';
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const filename = contentType.includes('pdf')
+      ? `recu-stripe-${sessionId}.pdf`
+      : `recu-stripe-${sessionId}.html`;
+
+    return {
+      receiptUrl,
+      attachment: {
+        filename,
+        content: buffer.toString('base64'),
+        contentType,
+      },
+    };
+  } catch (error) {
+    console.error('[stripe-mail] Unable to fetch receipt attachment:', error);
+    return { receiptUrl, attachment: null };
+  }
+}
+
+async function sendPurchaseConfirmationEmail(session: Stripe.Checkout.Session): Promise<void> {
+  const recipient = session.customer_email || session.customer_details?.email || null;
+  if (!recipient) {
+    console.log('[stripe-mail] No customer email available for session', session.id);
+    return;
+  }
+
+  if (!STRIPE_TRANSACTION_TABLE) {
+    console.error('[stripe-mail] STRIPE_TRANSACTION_TABLE_NAME not configured — email skipped');
+    return;
+  }
+
+  const current = await docClient.send(new GetCommand({
+    TableName: STRIPE_TRANSACTION_TABLE,
+    Key: { id: session.id },
+  }));
+
+  const existing = current.Item as any | undefined;
+  if (!existing) {
+    console.log('[stripe-mail] Transaction not yet recorded, email skipped for', session.id);
+    return;
+  }
+  if (existing.confirmationEmailSentAt) {
+    console.log('[stripe-mail] Confirmation email already sent for', session.id);
+    return;
+  }
+
+  const claimAt = new Date().toISOString();
+  try {
+    await docClient.send(new UpdateCommand({
+      TableName: STRIPE_TRANSACTION_TABLE,
+      Key: { id: session.id },
+      UpdateExpression: 'SET confirmationEmailProcessingAt = :now, updatedAt = :now',
+      ConditionExpression: 'attribute_not_exists(confirmationEmailSentAt) AND attribute_not_exists(confirmationEmailProcessingAt)',
+      ExpressionAttributeValues: {
+        ':now': claimAt,
+      },
+    }));
+  } catch (error: any) {
+    console.log('[stripe-mail] Email claim skipped for', session.id, '-', error?.message || error);
+    return;
+  }
+
+  const memberName = String(session.metadata?.memberName || session.customer_details?.name || '');
+  const amount = formatAmount(session.amount_total || 0);
+  const currency = String(session.currency || 'eur').toUpperCase();
+  const { receiptUrl, attachment } = await getReceiptAttachment(session.id);
+  const subject = `Confirmation de votre achat - ${amount}`;
+
+  const bodyHtml = buildPurchaseConfirmationMailTemplate({
+    memberName,
+    amount,
+    currency,
+    receiptUrl,
+  }, resolvePurchaseEmailTemplateOptions());
+
+  const rawEmail = createRawEmail(
+    DEFAULT_FROM,
+    [recipient],
+    subject,
+    bodyHtml,
+    attachment ? [attachment] : [],
+    DEFAULT_REPLY_TO,
+  );
+
+  try {
+    await ses.send(new SendRawEmailCommand({
+      RawMessage: { Data: Buffer.from(rawEmail) },
+      Destinations: [recipient],
+      Source: DEFAULT_FROM,
+    }));
+
+    await docClient.send(new UpdateCommand({
+      TableName: STRIPE_TRANSACTION_TABLE,
+      Key: { id: session.id },
+      UpdateExpression: 'SET confirmationEmailSentAt = :now, updatedAt = :now REMOVE confirmationEmailProcessingAt, confirmationEmailError',
+      ExpressionAttributeValues: {
+        ':now': new Date().toISOString(),
+      },
+    }));
+
+    console.log('[stripe-mail] Confirmation email sent to', recipient, 'for session', session.id);
+  } catch (error: any) {
+    const errorMessage = error?.message || String(error);
+    console.error('[stripe-mail] Failed to send confirmation email for', session.id, errorMessage);
+    await docClient.send(new UpdateCommand({
+      TableName: STRIPE_TRANSACTION_TABLE,
+      Key: { id: session.id },
+      UpdateExpression: 'SET confirmationEmailError = :error, updatedAt = :now REMOVE confirmationEmailProcessingAt',
+      ExpressionAttributeValues: {
+        ':error': errorMessage,
+        ':now': new Date().toISOString(),
+      },
+    })).catch(() => undefined);
+  }
+}
 
 /**
  * Valide la signature du webhook Stripe
@@ -166,6 +360,9 @@ export async function handler(event: any): Promise<any> {
         // Créer la transaction dès que Stripe confirme la session, même si status n'est pas encore 'paid'
         // (le status peut être 'unpaid' en attendant un webhook payment_intent.succeeded)
         await recordStripeTransaction(session);
+        if (session.payment_status === 'paid' || session.payment_status === 'no_payment_required') {
+          await sendPurchaseConfirmationEmail(session);
+        }
         break;
       }
 
@@ -183,6 +380,7 @@ export async function handler(event: any): Promise<any> {
         const session = stripeEvent.data.object as Stripe.Checkout.Session;
         console.log(`Paiement asynchrone réussi: ${session.id}`);
         await recordStripeTransaction(session);
+        await sendPurchaseConfirmationEmail(session);
         break;
       }
 

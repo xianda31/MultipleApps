@@ -226,6 +226,13 @@ backend.stripeCheckout.addEnvironment('SALE_ITEM_TABLE_NAME', saleItemTable.tabl
 const stripeTransactionTable = backend.data.resources.tables['StripeTransaction'];
 stripeTransactionTable.grantReadWriteData(backend.stripeWebhooks.resources.lambda);
 backend.stripeWebhooks.addEnvironment('STRIPE_TRANSACTION_TABLE_NAME', stripeTransactionTable.tableName);
+backend.stripeWebhooks.resources.lambda.role?.addToPrincipalPolicy(
+  new PolicyStatement({
+    effect: Effect.ALLOW,
+    actions: ['ses:SendEmail', 'ses:SendRawEmail'],
+    resources: ['*'],
+  })
+);
 
 // Activer TTL DynamoDB sur le champ 'ttl' (purge auto 3 ans)
 // Amplify Gen 2 imbrique la table dans un construct enfant — on cherche le CfnTable en profondeur

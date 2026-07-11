@@ -32,10 +32,13 @@ Remove-Item -Path "amplify/amplify_outputs.json" -Force -ErrorAction SilentlyCon
 Write-Host "  → Waiting for file system to settle..."
 Start-Sleep -Seconds 2
 
+# Remove stale CDK read locks that can trigger false MultipleSandboxInstancesError
+Get-ChildItem -Path ".amplify/artifacts/cdk.out" -Filter "read.*.lock" -File -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+
 # 4. Launch sandbox - it will run indefinitely until Ctrl+C
 Write-Host "`n▶️  Starting Amplify Sandbox (profile: amplify-dev, identifier: toto)" -ForegroundColor Green
 Write-Host "   Sandbox is running - press Ctrl+C to stop" -ForegroundColor Gray
 Write-Host "   Logs: CloudWatch under stack amplify-multipleapps-toto-sandbox-*`n" -ForegroundColor Gray
 
 # Run sandbox and let it stay running
-npm run sandbox -- --profile amplify-dev --identifier toto
+npm run sandbox

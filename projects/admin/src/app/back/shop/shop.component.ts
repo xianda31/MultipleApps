@@ -62,7 +62,7 @@ import { Subscription } from 'rxjs';
   templateUrl: './shop.component.html',
   styleUrl: './shop.component.scss'
 })
-export class ShopComponent implements OnDestroy {
+export class ShopComponent implements OnInit, OnDestroy {
   @Input() member_id: string | null = null;
   @Input() onlineMode !: boolean;
   members!: Member[];
@@ -157,6 +157,22 @@ export class ShopComponent implements OnDestroy {
     // Apply default for @Input (not auto-applied by Angular)
     this.onlineMode ??= true;
 
+    this.checkoutStateSubscription = this.stripeCheckout.checkoutState$.subscribe((state) => {
+      if (state.checkoutPhase.phase === 'success') {
+        const sessionId = state.checkoutPhase.sessionId;
+        if (this.lastSuccessSessionId !== sessionId) {
+          this.lastSuccessSessionId = sessionId;
+          this.toastService.showSuccess('Paiement confirmé', 'Reçu Stripe disponible.');
+        }
+        this.scheduleSuccessBannerDismiss();
+      } else {
+        this.clearSuccessBannerTimer();
+        if (state.checkoutPhase.phase === 'idle') {
+          this.lastSuccessSessionId = null;
+        }
+      }
+    });
+
     this.systemDataService.get_configuration().subscribe(conf => {
       this.onlinePaymentActive = conf.online_payment_active;
       this.tpePaymentActive = conf.tpe_payment_active;
@@ -246,6 +262,7 @@ export class ShopComponent implements OnDestroy {
     this.checkoutStateSubscription?.unsubscribe();
     this.bookEntriesSubscription?.unsubscribe();
     this.bookEntriesLoadingSubscription?.unsubscribe();
+    this.clearSuccessBannerTimer();
     this.cardPaymentOrchestrator.cancelRemotePayment();
     // shopInit (singleton root) gère sa propre subscription TPESession
   }
@@ -477,6 +494,7 @@ export class ShopComponent implements OnDestroy {
   }
 
   dismissSuccessBanner(): void {
+    this.clearSuccessBannerTimer();
     this.stripeCheckout.reset();
     this.stripeCheckoutPrepared = false;
     this.cartService.clearCart();
@@ -489,6 +507,22 @@ export class ShopComponent implements OnDestroy {
       }
     }
     this.router.navigate([], { relativeTo: this.route, queryParams: {} });
+  }
+
+  private scheduleSuccessBannerDismiss(): void {
+    this.clearSuccessBannerTimer();
+    this.successBannerTimer = setTimeout(() => {
+      if (this.stripeCheckout.getCurrentPhase() === 'success') {
+        this.dismissSuccessBanner();
+      }
+    }, 10000);
+  }
+
+  private clearSuccessBannerTimer(): void {
+    if (this.successBannerTimer !== null) {
+      clearTimeout(this.successBannerTimer);
+      this.successBannerTimer = null;
+    }
   }
 
   async on_stripe_checkout(): Promise<void> {

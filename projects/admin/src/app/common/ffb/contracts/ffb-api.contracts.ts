@@ -77,6 +77,17 @@ export interface ApiCompetitionSeasonDto {
   can_bypass_blocking: boolean;
 }
 
+export interface ApiFfbSeasonDto {
+  blockingDate: string;
+  endDate: string;
+  freeRenewStartDate: string;
+  renewLicenseEndDate: string;
+  startDate: string;
+  current: boolean;
+  id: number;
+  label: string;
+}
+
 export interface ApiCompetitionOrganizationDto {
   id: number;
   label: string;
@@ -94,6 +105,117 @@ export interface ApiCompetitionOrganizationDto {
 export type ApiCompetitionDto = Record<string, unknown>;
 export type ApiCompetitionPhasesDto = Record<string, unknown>;
 export type ApiCompetitionTeamDto = Record<string, unknown>;
+
+export interface ApiCompetitionSearchCompetitionDetailsDto {
+  id: number;
+  label: string;
+  migrationId: number;
+}
+
+export interface ApiCompetitionSearchDivisionDetailsDto {
+  id: number;
+  label: string;
+  migrationId: number;
+}
+
+export interface ApiCompetitionSearchItemDto {
+  id: number;
+  label: string;
+  competition: ApiCompetitionSearchCompetitionDetailsDto;
+  division: ApiCompetitionSearchDivisionDetailsDto;
+  festivalSeason: string | null;
+  sponsor: string | null;
+}
+
+export interface ApiCompetitionSearchResponseDto {
+  items: ApiCompetitionSearchItemDto[];
+}
+
+export interface ApiCompetitionDivisionGroupDto {
+  id: number;
+  migrationId: number;
+  label: string;
+  unique: boolean;
+  resultCount: number;
+  resultTotal: number;
+  roundCount: number | null;
+  setupType: unknown;
+}
+
+export interface ApiCompetitionDivisionPhaseDto {
+  id: number;
+  migrationId: number;
+  label: string;
+  groupCount: number;
+  unique: boolean;
+  simultaneous: boolean;
+  nextPhase: unknown;
+  groups: ApiCompetitionDivisionGroupDto[];
+}
+
+export interface ApiCompetitionDivisionOrganizationDto {
+  id: number;
+  migrationId: number;
+  label: string;
+  labelArticle: string | null;
+  ffbCode: string;
+  type: 'federation' | 'league' | 'committee';
+  name: string;
+}
+
+export interface ApiCompetitionDivisionStadeDto {
+  id: number;
+  migrationId: number;
+  migrationCompetitionId: number;
+  nextStade: number | null;
+  hasResult: boolean;
+  phaseCount: number;
+  groupment: ApiCompetitionDivisionOrganizationDto | null;
+  organization: ApiCompetitionDivisionOrganizationDto | null;
+  phases: ApiCompetitionDivisionPhaseDto[];
+}
+
+export interface ApiCompetitionDivisionResultDto {
+  label: string;
+  competition: {
+    label: string;
+    id: number;
+    migrationId: number;
+    format: string;
+  };
+  division: {
+    id: number;
+    label: string;
+    migrationId: number;
+  };
+  festivalSeason: unknown;
+  sponsor: unknown;
+  stades: ApiCompetitionDivisionStadeDto[];
+}
+
+export interface ApiEntitySearchItemDto {
+  label: string;
+  ffbCode: string;
+  id: number;
+  migrationId: number;
+  type: 'federation' | 'committee' | 'league' | 'zone';
+  name?: string;
+  labelArticle?: string;
+}
+
+export interface ApiEntitySearchPaginationDto {
+  current_page: number;
+  has_previous_page: boolean;
+  has_next_page: boolean;
+  per_page: number;
+  total_items: number;
+  total_pages: number;
+}
+
+export interface ApiEntitySearchResponseDto {
+  items: ApiEntitySearchItemDto[];
+  pagination: ApiEntitySearchPaginationDto;
+}
 
 export type ApiFfbPersonDto = Record<string, unknown>;
 export type ApiFfbPlayerDto = Record<string, unknown>;

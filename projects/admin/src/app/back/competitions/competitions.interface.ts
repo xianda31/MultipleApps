@@ -71,6 +71,7 @@ export interface CompetitionTeam {
 export interface CompetitionOrganization {
   id: number;
   label: string;
+  ffbCode?: string;
   type: string;
   subordinate_id: number;
   organization_code: string;
@@ -94,6 +95,41 @@ export interface CompetitionSeason {
   is_license_creation_forbidden: boolean;
   can_bypass_blocking: boolean;
 }
+
+export interface Competition_V2 {
+  id: number;
+  label: string;
+  division: string;
+  stades?: CompetitionResultStade_V2[];
+}
+
+export interface CompetitionResultGroup_V2 {
+  id: number;
+}
+
+export interface CompetitionResultPhase_V2 {
+  label: string;
+  hasResult: boolean;
+  groups: CompetitionResultGroup_V2[];
+}
+
+export interface CompetitionResultStade_V2 {
+  groupement?: {
+    id: number;
+    name: string;
+    type: string;
+  };
+  name: string;
+  phases: CompetitionResultPhase_V2[];
+}
+
+export interface Entity_V2 {
+  label: string;
+  ffbCode: string;
+  id: number;
+  type: 'federation' | 'committee' | 'league' | 'zone';
+}
+
 export interface Competition {
   id: number;
   label: string;
