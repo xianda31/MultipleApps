@@ -18,6 +18,7 @@ import {
   ApiCompetitionTeamDto,
   ApiTournamentTeamsDto,
 } from '../contracts/ffb-api.contracts';
+import { normalizeGender } from '../../utils/gender.util';
 
 function asArray<T>(payload: unknown): T[] {
   return Array.isArray(payload) ? (payload as T[]) : [];
@@ -306,7 +307,7 @@ export function toClubMemberList(payload: unknown): ClubMember[] {
     license_number: asNumber(member.ffbId, 0).toString().padStart(8, '0'),
     firstName: capitalize(asString(member.firstName, '').trim()),
     lastName: asString(member.lastName, '').trim().toUpperCase(),
-    gender: asString(member.gender, '').trim(),
+    gender: normalizeGender(asString(member.gender, '').trim()),
   }));
 }
 

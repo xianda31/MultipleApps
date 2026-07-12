@@ -10,6 +10,7 @@ import { formatRowColsClasses } from '../../utils/ui-utils';
 import { SystemDataService } from '../../services/system-data.service';
 import { combineLatest } from 'rxjs';
 import { Member } from '../../interfaces/member.interface';
+import { isFemaleGender } from '../../utils/gender.util';
 
 @Component({
   selector: 'app-tournaments',
@@ -135,6 +136,10 @@ export class TournamentsComponent {
       }
     }
     return false;
+  }
+
+  isLoggedFemale(): boolean {
+    return isFemaleGender(this.logged?.gender);
   }
 
   getIsolatedPlayerCount(tournament: TournamentTeams): number {

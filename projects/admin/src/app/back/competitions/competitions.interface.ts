@@ -1,3 +1,5 @@
+import { MemberGender } from '../../common/interfaces/member.interface';
+
 // Libellés de divisions pour les compétitions
 export const COMPETITION_DIVISIONS: string[] = ['Division de Ligue', 'Expert', 'Performance', 'Challenge', 'Espérance','Interclubs','Autres'];
 export const COMPETITION_DIVISION_LABELS: { [key: string]: string } = {
@@ -39,7 +41,7 @@ export interface CompetitionResultsMap {
 }
 export interface Player {
   id: number;
-  gender: string;
+  gender: MemberGender;
   license_number: string;
   firstname: string;
   lastname: string;

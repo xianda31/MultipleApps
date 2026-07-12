@@ -21,6 +21,7 @@ import { PaymentMode } from '../../shop/cart/cart.interface';
 import { ProductService } from '../../../common/services/product.service';
 import { BreakingNewsService } from '../../breaking-news/breaking-news.service';
 import { Member } from '../../../common/interfaces/member.interface';
+import { normalizeGender } from '../../../common/utils/gender.util';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { Bank } from '../../../common/interfaces/system-conf.interface';
 
@@ -365,7 +366,7 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
       firstname: m.firstName,
       lastname: m.lastName,
       person_id: m.id,
-      gender: typeof m.gender === 'number' ? m.gender : (m.gender === 'M' ? 1 : 2),
+      gender: normalizeGender(m.gender) === 'M' ? 1 : 2,
     } as unknown as FFBplayer);
 
     if (player1) {

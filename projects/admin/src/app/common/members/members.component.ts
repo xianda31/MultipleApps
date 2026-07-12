@@ -17,6 +17,7 @@ import { BookService } from '../../back/services/book.service';
 import { Revenue } from '../interfaces/accounting.interface';
 import { FFB_proxyService } from '../ffb/services/ffb.service';
 import { PersonV2 } from '../ffb/interface/person-v2.interface';
+import { normalizeGender } from '../utils/gender.util';
 
 
 enum FILTER {
@@ -186,7 +187,7 @@ export class MembersComponent implements OnInit {
 
           let new_member: Member = {
             id: '',
-            gender: newbee.gender === 1 ? 'M' : 'F',
+            gender: normalizeGender(newbee.gender),
             firstname: newbee.firstname,
             lastname: newbee.lastname.toUpperCase(),
             license_number: '??' + newbee.lastname.toUpperCase().slice(0, 3) + newbee.firstname.slice(0, 3),
@@ -290,7 +291,7 @@ export class MembersComponent implements OnInit {
     let nextMember: Member = {
       id: member.id,
       license_number: ffbIdPadded,
-      gender: clubMember.gender,
+      gender: normalizeGender(clubMember.gender),
       firstname: clubMember.firstName,
       lastname: clubMember.lastName.toUpperCase(),
       birthdate: clubMember.birthdate,
@@ -330,7 +331,7 @@ export class MembersComponent implements OnInit {
   createNewMember(clubMember: ClubMember, personV2: PersonV2 | null): Member {
     return {
       id: '',
-      gender: clubMember.gender,
+      gender: normalizeGender(clubMember.gender),
       firstname: clubMember.firstName,
       lastname: clubMember.lastName.toUpperCase(),
       license_number: clubMember.license_number,

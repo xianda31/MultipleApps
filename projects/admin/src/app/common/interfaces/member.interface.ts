@@ -8,9 +8,11 @@ export interface Member_settings{
   phone_one: string;
 }
 
+export type MemberGender = 'M' | 'F' | 'U';
+
 export interface Member extends Member_settings{
   id: string;
-  gender: string;
+  gender: MemberGender;
   firstname: string;
   lastname: string;
   license_number: string;

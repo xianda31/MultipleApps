@@ -16,7 +16,7 @@
             <div *ngIf="registrated_in(t)"
                 class="position-absolute bg-info text-white fw-bold d-flex align-items-center justify-content-center"
                 style="width: 130px; padding: 6px 0; transform: rotate(45deg); font-size: 0.8em; top: 18px; right: -32px; z-index: 1;">
-                INSCRIT<span *ngIf="logged?.gender === 'Mme'">E</span>
+                INSCRIT<span *ngIf="isLoggedFemale()">E</span>
             </div>
 
             <div class="card-body d-flex flex-column">

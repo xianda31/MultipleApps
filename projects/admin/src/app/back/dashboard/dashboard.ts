@@ -13,6 +13,7 @@ import { FinancialReportService } from '../services/financial_report.service';
 import { Balance_board, Balance_sheet } from '../../common/interfaces/balance.interface';
 import { Revenue_and_expense_definition } from '../../common/interfaces/system-conf.interface';
 import { PageViewService, PageViewStats } from '../../common/services/page-view.service';
+import { normalizeGender } from '../../common/utils/gender.util';
 
 @Component({
   selector: 'app-dashboard',
@@ -236,9 +237,9 @@ export class DashboardComponent {
             if (mDiff < 0 || (mDiff === 0 && now.getDate() < birth.getDate())) {
               age--;
             }
-            return { age, gender: m.gender };
+            return { age, gender: normalizeGender(m.gender) };
           })
-          .filter(a => a !== null && a.age >= 0) as { age: number, gender: any }[];
+          .filter(a => a !== null && a.age >= 0) as { age: number, gender: 'M' | 'F' | 'U' }[];
 
         const ages = agesWithGender.map(a => a.age);
         // Déterminer la borne min et max
@@ -270,20 +271,18 @@ export class DashboardComponent {
             if (!age_groups.includes(label)) age_groups.push(label);
           }
           group_counts[label]++;
-          if (gender === 1 || gender === 'M.') {
+          if (gender === 'M') {
             group_counts_male[label]++;
-          } else if (gender === 0 || gender === 'Mme') {
-            group_counts_female[label]++;
-          } else {
+          } else if (gender === 'F') {
             group_counts_female[label]++;
           }
         }
 
         // calculer la moyenne d'âge par genre
-        const totalMale = agesWithGender.filter(a => a.gender === 1 || a.gender === 'M.').length;
-        const totalFemale = agesWithGender.filter(a => a.gender === 0 || a.gender === 'Mme').length;
-        this.averageMaleAge = totalMale > 0 ? agesWithGender.filter(a => a.gender === 1 || a.gender === 'M.').reduce((sum, a) => sum + a.age, 0) / totalMale : 0;
-        this.averageFemaleAge = totalFemale > 0 ? agesWithGender.filter(a => a.gender === 0 || a.gender === 'Mme').reduce((sum, a) => sum + a.age, 0) / totalFemale : 0;
+        const totalMale = agesWithGender.filter(a => a.gender === 'M').length;
+        const totalFemale = agesWithGender.filter(a => a.gender === 'F').length;
+        this.averageMaleAge = totalMale > 0 ? agesWithGender.filter(a => a.gender === 'M').reduce((sum, a) => sum + a.age, 0) / totalMale : 0;
+        this.averageFemaleAge = totalFemale > 0 ? agesWithGender.filter(a => a.gender === 'F').reduce((sum, a) => sum + a.age, 0) / totalFemale : 0;
 
         // Supprimer les premières tranches vides
         while (age_groups.length > 0 && group_counts[age_groups[0]] === 0) {

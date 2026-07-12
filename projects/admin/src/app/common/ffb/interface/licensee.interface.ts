@@ -1,10 +1,12 @@
 
+import { MemberGender } from '../../interfaces/member.interface';
+
 export interface FFB_licensee {
     committee_school_id: any
     committee_school_label: any
     committee_school_city: any
     person_id: number
-    gender: string
+    gender: MemberGender
     firstname: string
     lastname: string
     license_number: string

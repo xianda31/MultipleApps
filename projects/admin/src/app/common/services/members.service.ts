@@ -44,7 +44,7 @@ export class MembersService {
     // return a placeholder Member to satisfy callers by construction
     return {
       id,
-      gender: '',
+      gender: 'U',
       firstname: '',
       lastname: '',
       license_number: '',

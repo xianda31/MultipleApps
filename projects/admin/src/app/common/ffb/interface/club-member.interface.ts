@@ -1,3 +1,5 @@
+import { MemberGender } from '../../interfaces/member.interface';
+
 /**
  * FFB API V2 ClubMember - Direct mapping from FFB V2 /persons/search API response
  * Represents a member of a club as returned by FFB V2 API (RGPD compliant)
@@ -9,7 +11,7 @@ export interface ClubMember {
   license_number: string;    // ffbId padded to 8 digits (computed by adapter)
   firstName: string;
   lastName: string;
-  gender: "M" | "F" | string;
+  gender: MemberGender;
   birthdate: string;         // ISO8601
   club: ClubInfo;
   licence: boolean;

@@ -154,11 +154,13 @@ const schema = a.schema({
 
   // Adhérents et personal data
 
+  MemberGender: a.enum(['M', 'F', 'U']),
+
 
   Member: a.model({
     license_number: a.string().required(),
     email: a.string().required(),
-    gender: a.string(),
+    gender: a.ref('MemberGender'),
     firstname: a.string(),
     lastname: a.string(),
     birthdate: a.string(),
