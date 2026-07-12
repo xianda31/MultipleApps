@@ -2,6 +2,7 @@ import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Injectable } from '@angular/core';
 import { S3Client, ListObjectsV2Command, DeleteObjectCommand, CopyObjectCommand, _Object, ListObjectsV2CommandOutput } from '@aws-sdk/client-s3';
+import { fetchAuthSession } from 'aws-amplify/auth';
 import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -14,11 +15,20 @@ export class S3CloneService {
   }
 
   constructor() {
+    // Use only Cognito/Amplify session credentials to avoid hardcoded AK/SK in frontend.
     this.client = new S3Client({
       region: environment.region,
-      credentials: {
-        accessKeyId: environment.aws_access_key_id,
-        secretAccessKey: environment.aws_secret_access_key,
+      credentials: async () => {
+        const session = await fetchAuthSession();
+        const creds: any = session.credentials;
+        if (!creds?.accessKeyId || !creds?.secretAccessKey) {
+          throw new Error('No AWS credentials available from Amplify session.');
+        }
+        return {
+          accessKeyId: creds.accessKeyId,
+          secretAccessKey: creds.secretAccessKey,
+          sessionToken: creds.sessionToken,
+        };
       },
     });
   }

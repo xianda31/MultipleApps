@@ -333,6 +333,28 @@ const cloneDbPolicy = new Policy(bookBackupStack, 'CloneDbPolicy', {
 });
 systemeGroupRole.attachInlinePolicy(cloneDbPolicy);
 
+// Grant Systeme group S3 access for clone-S3 maintenance tool (cross-bucket list/copy/delete)
+const cloneS3BucketArns = [
+  'arn:aws:s3:::amplify-d129hzsf6g08ma-*-bcstodrivebucket*',
+  'arn:aws:s3:::amplify-multipleapps-toto-bcstodrivebucket*',
+];
+
+const cloneS3Policy = new Policy(bookBackupStack, 'CloneS3Policy', {
+  statements: [
+    new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: ['s3:ListBucket'],
+      resources: cloneS3BucketArns,
+    }),
+    new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: ['s3:GetObject', 's3:PutObject', 's3:DeleteObject'],
+      resources: cloneS3BucketArns.map((arn) => `${arn}/*`),
+    }),
+  ],
+});
+systemeGroupRole.attachInlinePolicy(cloneS3Policy);
+
 // add outputs to the configuration file
 backend.addOutput({
   custom: {
