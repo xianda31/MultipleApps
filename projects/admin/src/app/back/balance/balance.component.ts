@@ -82,13 +82,19 @@ export class BalanceComponent {
 
   check_balance_vs_profit_and_loss() {
     this.trading_result = this.bookService.get_trading_result();
-    this.balance_error = this.Round(this.balance_board.delta.actif_total - this.trading_result);
+    const balanceDeltaCents = this.toCents(this.balance_board.delta.actif_total);
+    const tradingResultCents = this.toCents(this.trading_result);
+    const diffCents = balanceDeltaCents - tradingResultCents;
+
+    this.balance_error = diffCents / 100;
     if (!this.loaded) return;
     if (this._skip_next_check) {
       this._skip_next_check = false;
       return; // première vérification après changement de saison : pas de fausse alerte
     }
-    if (this.balance_error !== 0) {
+
+    // Ignore float noise: only warn when discrepancy is strictly above 1 cent.
+    if (Math.abs(diffCents) > 1) {
       console.log('incohérence entre résultat et bilan', this.balance_error, this.balance_board.delta.actif_total, this.trading_result);
       this.toastService.showWarning('consolidation financière', 'incohérence entre résultat et bilan');
     }
@@ -151,6 +157,11 @@ export class BalanceComponent {
     const neat = +(Math.abs(value).toPrecision(15));
     const rounded = Math.round(neat * 100) / 100;
     return rounded * Math.sign(value);
+  }
+
+  private toCents(value: number): number {
+    const neat = +(Math.abs(value).toPrecision(15));
+    return Math.round(neat * 100) * Math.sign(value);
   }
 
 }
