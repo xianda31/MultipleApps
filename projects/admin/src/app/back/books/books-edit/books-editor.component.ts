@@ -435,6 +435,25 @@ export class BooksEditorComponent {
     }
   }
 
+  private buildOperationLabel(transactionId: TRANSACTION_ID, label: string | undefined, member: string | undefined): string {
+    const trimmedMember = (member ?? '').trim();
+
+    if (transactionId === TRANSACTION_ID.attribution_avoir) {
+      return trimmedMember ? `avoir attribué à ${trimmedMember}` : 'avoir attribué';
+    }
+
+    if (
+      transactionId === TRANSACTION_ID.achat_adhérent_par_chèque
+      || transactionId === TRANSACTION_ID.achat_adhérent_par_virement
+      || transactionId === TRANSACTION_ID.achat_adhérent_par_carte
+      || transactionId === TRANSACTION_ID.achat_adhérent_en_espèces
+    ) {
+      return trimmedMember ? `achat adhérent ${trimmedMember}` : 'achat adhérent';
+    }
+
+    return (label ?? '').trim();
+  }
+
   onSubmit() {
     let operations: Operation[] = [];
     let amounts: { [key: string]: number } = {};
@@ -473,7 +492,11 @@ export class BooksEditorComponent {
 
 
       return {
-        label: (operation as FormGroup).controls['label']?.value,
+        label: this.buildOperationLabel(
+          this.transaction_id,
+          (operation as FormGroup).controls['label']?.value,
+          (operation as FormGroup).controls['member']?.value
+        ),
         member: (operation as FormGroup).controls['member']?.value,
         values: op_values
       };
