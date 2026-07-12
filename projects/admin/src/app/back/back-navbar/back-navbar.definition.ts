@@ -19,7 +19,7 @@ export const STATIC_MENUS: NavbarMenu[] = [
         subMenus: [
             { label: 'vente adhérent', route: BACK_ROUTE_PATHS.Shop },
             { label: 'billetterie', route: BACK_ROUTE_PATHS.Billetterie },
-            { label: 'produits à la vente', route: BACK_ROUTE_PATHS.Products }
+            // { label: 'produits à la vente', route: BACK_ROUTE_PATHS.Products }
         ]
     },
     {
@@ -41,10 +41,11 @@ export const STATIC_MENUS: NavbarMenu[] = [
         subMenus: [
             { label: 'état de caisse', route: BACK_ROUTE_PATHS.CashBoxStatus },
             { label: 'rapprochement bancaire', route: BACK_ROUTE_PATHS.BankReconciliation },
-            { label: 'écritures', route: BACK_ROUTE_PATHS.BooksEditor },
-            { label: 'synthèse', route: BACK_ROUTE_PATHS.BooksOverview },
+            { label: 'rapprochement stripe', route: BACK_ROUTE_PATHS.StripeReconciliation },
+            { label: 'écriture', route: BACK_ROUTE_PATHS.BooksEditor },
             { label: 'résultats', route: BACK_ROUTE_PATHS.ExpenseAndRevenue },
-            { label: 'bilan', route: BACK_ROUTE_PATHS.Balance }
+            { label: 'bilan', route: BACK_ROUTE_PATHS.Balance },
+            { label: 'synthèse', route: BACK_ROUTE_PATHS.BooksOverview }
             // { label: 'factures', route: BACK_ROUTE_PATHS.Invoices },
         ]
     },
@@ -106,18 +107,6 @@ export const STATIC_MENUS: NavbarMenu[] = [
             { label: 'clone DB', route: BACK_ROUTE_PATHS.CloneDB },
             { label: 'clone S3', route: BACK_ROUTE_PATHS.CloneS3 },
             // { label: 'ComiteeBookletViewer', route: BACK_ROUTE_PATHS.ComiteeBooklet }
-        ]
-    },
-    {
-        label: 'Stripe',
-        key: 'stripe',
-        icon: 'bi-cart3',
-        minLevel: Group_priorities.Systeme,
-        isDev: false,
-        subMenus: [
-            { label: 'produits', route: BACK_ROUTE_PATHS.StripeProducts },
-            { label: 'rapprochement', route: BACK_ROUTE_PATHS.StripeReconciliation },
-            { label: 'simu online shop', route: BACK_ROUTE_PATHS.StripeOnlineShop }
         ]
     },
 ]

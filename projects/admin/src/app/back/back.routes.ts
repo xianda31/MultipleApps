@@ -99,8 +99,6 @@ export const routes: Routes = [
       { path: BACK_ROUTE_PATHS.SondageEditor, component: SondageEditorComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.SondageResultats, component: SondageResultatsComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.Competitions, component: CompetitionsComponent, data: { access: 'full' }, canActivate: [AuthGuard] },
-      { path: BACK_ROUTE_PATHS.StripeProducts, redirectTo: BACK_ROUTE_PATHS.Products, pathMatch: 'full' },
-      { path: BACK_ROUTE_PATHS.StripeOnlineShop, component: ShopComponent, canActivate: [AuthGuard], data: { onlineMode: true } },
       { path: BACK_ROUTE_PATHS.StripeReconciliation, component: StripeReconciliationComponent, canActivate: [AuthGuard] },
 
 

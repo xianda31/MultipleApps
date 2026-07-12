@@ -32,8 +32,6 @@ export const BACK_ROUTE_PATHS = {
 
   Dashboard: 'dashboard',
 
-  StripeProducts: 'stripe/products',
-  StripeOnlineShop: 'stripe/onlineshop',  // simulation d'une page front pour test 
   StripeReconciliation: 'stripe/reconciliation',
   // Stripe: 'stripe',
   
