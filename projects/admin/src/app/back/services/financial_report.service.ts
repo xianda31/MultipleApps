@@ -25,9 +25,20 @@ export class FinancialReportService {
   private _sheets_to_records(sheets: Balance_sheet[]): Balance_record[] {
     return sheets.map((sheet) => {
       const { in_bank_total, wip_total, actif_total, cashbox, ...record } = sheet;
-      return record as Balance_record; // stripe_pending reste dans record car il est dans Balance_record
+      return this._round_record_values(record as Balance_record); // stripe_pending reste dans record car il est dans Balance_record
     }
     );
+  }
+
+  private _round_record_values(record: Balance_record): Balance_record {
+    const rounded = { ...record } as Balance_record;
+    (Object.keys(rounded) as Array<keyof Balance_record>).forEach((key) => {
+      const value = rounded[key];
+      if (typeof value === 'number') {
+        (rounded as any)[key] = this.Round(value);
+      }
+    });
+    return rounded;
   }
   private _records_to_sheets(records: Balance_record[]): Balance_sheet[] {
     return records.map((record) => {
