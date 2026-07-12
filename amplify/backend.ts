@@ -163,6 +163,14 @@ httpApi.addRoutes({
   authorizer: userPoolAuthorizer,
 });
 
+// 🔒 Stripe Webhook Health - santé des webhooks Stripe (Admin)
+httpApi.addRoutes({
+  path: "/api/stripe/webhook-health",
+  methods: [HttpMethod.GET],
+  integration: stripeCheckoutIntegration,
+  authorizer: userPoolAuthorizer,
+});
+
 // 🔒 Stripe Webhooks - Pas d'autorisation (Stripe appel en webhook)
 httpApi.addRoutes({
   path: "/api/stripe/webhooks",

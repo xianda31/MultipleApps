@@ -160,6 +160,9 @@ export async function handler(event: any): Promise<any> {
   if (path.endsWith('/receipt')) {
     return handleReceipt(event);
   }
+  if (path.endsWith('/webhook-health')) {
+    return handleWebhookHealth(event);
+  }
   if (path.endsWith('/payout-lookup')) {
     return handlePayoutLookup(event);
   }
@@ -170,6 +173,68 @@ export async function handler(event: any): Promise<any> {
     return handleTerminalPaymentIntent(event);
   }
   return handleCheckout(event);
+}
+
+/**
+ * Santé des webhooks Stripe sur les 7 derniers jours.
+ * Source: Stripe Events API + pending_webhooks.
+ */
+async function handleWebhookHealth(event: any): Promise<any> {
+  const CORS = { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' };
+
+  if (!isStaffCaller(event)) {
+    return { statusCode: 403, headers: CORS, body: JSON.stringify({ error: 'Admin required' }) };
+  }
+  if (!STRIPE_SECRET_KEY) {
+    return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: 'STRIPE_SECRET_KEY not configured' }) };
+  }
+
+  try {
+    const since = Math.floor(Date.now() / 1000) - 7 * 24 * 60 * 60;
+    const trackedTypes: Stripe.Event.Type[] = [
+      'checkout.session.completed',
+      'payment_intent.succeeded',
+      'payment_intent.payment_failed',
+    ];
+
+    const events = await stripe.events.list({
+      types: trackedTypes,
+      created: { gte: since },
+      limit: 100,
+    });
+
+    const items = events.data
+      .sort((a, b) => b.created - a.created)
+      .map((e) => ({
+        id: e.id,
+        type: e.type,
+        created: new Date(e.created * 1000).toISOString(),
+        pendingWebhooks: e.pending_webhooks,
+        status: e.pending_webhooks > 0 ? 'pending' : 'delivered',
+      }));
+
+    const pendingCount = items.filter((i) => i.pendingWebhooks > 0).length;
+
+    return {
+      statusCode: 200,
+      headers: CORS,
+      body: JSON.stringify({
+        windowDays: 7,
+        totalEvents: items.length,
+        pendingEvents: pendingCount,
+        deliveredEvents: items.length - pendingCount,
+        status: pendingCount > 0 ? 'warning' : 'ok',
+        events: items.slice(0, 20),
+      }),
+    };
+  } catch (error: any) {
+    console.error('[webhook-health] ERROR:', error?.message || error);
+    return {
+      statusCode: 500,
+      headers: CORS,
+      body: JSON.stringify({ error: 'Failed to load webhook health: ' + (error?.message || 'unknown') }),
+    };
+  }
 }
 
 /**

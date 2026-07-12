@@ -150,6 +150,41 @@ export class StripeService {
   }
 
   /**
+   * Récupère un indicateur de santé webhook (fenêtre 7 jours).
+   */
+  async getWebhookHealth(): Promise<{
+    windowDays: number;
+    totalEvents: number;
+    pendingEvents: number;
+    deliveredEvents: number;
+    status: 'ok' | 'warning';
+    events: { id: string; type: string; created: string; pendingWebhooks: number; status: string }[];
+  }> {
+    try {
+      const session = await fetchAuthSession();
+      const headers: Record<string, string> = {};
+      if (session.tokens?.idToken) {
+        headers['Authorization'] = `Bearer ${session.tokens.idToken.toString()}`;
+      }
+
+      const restOperation = get({
+        apiName: this.API_NAME,
+        path: '/api/stripe/webhook-health',
+        options: { headers },
+      });
+
+      const { body } = await restOperation.response;
+      const responseText = await body.text();
+      const response = JSON.parse(responseText);
+      if (response.error) throw new Error(response.error);
+      return response;
+    } catch (error: any) {
+      console.error('Erreur webhook health Stripe:', error);
+      throw new Error(`Impossible de charger la santé webhook: ${error?.message || 'Erreur inconnue'}`);
+    }
+  }
+
+  /**
    * Lookup payout Stripe : retourne les charges associées à un payout (Admin seulement)
    */
   async lookupPayout(payoutId: string): Promise<{

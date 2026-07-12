@@ -30,6 +30,15 @@ interface StripePayout {
   automatic: boolean;
 }
 
+interface WebhookHealth {
+  windowDays: number;
+  totalEvents: number;
+  pendingEvents: number;
+  deliveredEvents: number;
+  status: 'ok' | 'warning';
+  events: { id: string; type: string; created: string; pendingWebhooks: number; status: string }[];
+}
+
 @Component({
   selector: 'app-stripe-reconciliation',
   standalone: true,
@@ -54,6 +63,11 @@ export class StripeReconciliationComponent {
   loadingPayouts = false;
   payoutsError: string | null = null;
   private reconciledPayoutIds = new Set<string>();
+
+  // Santé webhook Stripe
+  webhookHealth: WebhookHealth | null = null;
+  loadingWebhookHealth = false;
+  webhookHealthError: string | null = null;
 
   get filteredPayouts(): StripePayout[] {
     return this.availablePayouts.filter(p => !this.reconciledPayoutIds.has(p.id));
@@ -120,6 +134,7 @@ export class StripeReconciliationComponent {
   ) {}
 
   ngOnInit(): void {
+    this.loadWebhookHealth();
     this.loadStripePayouts();
     this.systemDataService.get_configuration().subscribe(conf => {
       this.CB_fees_account = conf.CB_fees_account || '';
@@ -133,6 +148,22 @@ export class StripeReconciliationComponent {
         this.loadLines();
       });
     });
+  }
+
+  async loadWebhookHealth(): Promise<void> {
+    this.loadingWebhookHealth = true;
+    this.webhookHealthError = null;
+    try {
+      this.webhookHealth = await this.stripeService.getWebhookHealth();
+    } catch (error: any) {
+      this.webhookHealthError = error?.message || 'Impossible de charger la santé webhook';
+    } finally {
+      this.loadingWebhookHealth = false;
+    }
+  }
+
+  webhookHealthBadgeClass(): string {
+    return this.webhookHealth?.status === 'ok' ? 'bg-success' : 'bg-warning text-dark';
   }
 
   async loadStripePayouts(): Promise<void> {
