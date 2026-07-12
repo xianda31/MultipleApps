@@ -9,7 +9,7 @@ import { GroupService } from '../../common/authentification/group.service';
 import { environment } from '../../../environments/environment';
 import { NgbCollapseModule, NgbDropdown, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { Accreditation } from '../../common/authentification/group.interface';
-import { Observable } from 'rxjs';
+import { Observable, of, switchMap } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { Member } from '../../common/interfaces/member.interface';
 import { MemberSettingsService } from '../../common/services/member-settings.service';
@@ -104,9 +104,13 @@ export class BackNavbarComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.today_season = this.systemDataService.get_today_season();
 
-    this.assistanceService.getOpenRequestsCount().subscribe(count => {
-      this.assistances_nbr = count;
-    });
+    this.auth.logged_member$
+      .pipe(
+        switchMap((member) => member ? this.assistanceService.getOpenRequestsCount() : of(0))
+      )
+      .subscribe(count => {
+        this.assistances_nbr = count;
+      });
     // Fermer tous les dropdowns lors de la navigation
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)

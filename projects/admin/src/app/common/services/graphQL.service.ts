@@ -296,6 +296,11 @@ export class DBhandler {
   listAssistanceRequests(): Observable<AssistanceRequest[]> {
     return this._authMode().pipe(
       switchMap((authMode) => {
+        // Assistance list is restricted to authenticated groups; skip guest mode.
+        if (authMode === 'identityPool') {
+          return of([] as AssistanceRequest[]);
+        }
+
         const client = generateClient<Schema>({ authMode });
         return from(
           client.models.AssistanceRequest.list({ limit: 300 })
