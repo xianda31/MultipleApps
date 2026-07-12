@@ -33,11 +33,11 @@
                   <td> {{balance_board.current.bank | number:truncature:'fr'}}</td>
                 </tr>
                 <tr class="fw-bolder">
-                  <td class="text-start">FOND DE CAISSE</td>
+                  <td class="text-start">AUTRES LIQUIDITÉS</td>
                   <td> {{balance_board.current.cashbox | number:truncature:'fr'}} </td>
                 </tr>
                 <tr class="fw-light fs-6">
-                  <td>espèces</td>
+                  <td>fond de caisse</td>
                   <td> {{balance_board.current.cash | number:truncature:'fr'}}</td>
                 </tr>
                 <tr class="fw-light fs-6">
@@ -111,7 +111,7 @@
                 <td class="table-secondary"> {{balance_board.previous.bank}} </td>
               </tr>
               <tr class="fw-bolder">
-                <td class="text-start">FOND DE CAISSE</td>
+                <td class="text-start">AUTRES LIQUIDITÉS</td>
                 <td> {{balance_board.current.cashbox | number:truncature:'fr'}} </td>
                 <td>&#8205;</td>
                 <td class="variation">{{balance_board.delta.cashbox| number:truncature:'fr'}}</td>
@@ -119,7 +119,7 @@
                 <td class="table-secondary fs-6">{{balance_board.previous.cashbox | number:truncature:'fr'}} </td>
               </tr>
               <tr class="fw-light fs-6">
-                <td>espèces</td>
+                <td>fond de caisse</td>
                 <td> {{balance_board.current.cash | number:truncature:'fr'}}</td>
                 <td>&#8205;</td>
                 <td class="variation">{{balance_board.delta.cash| number:truncature:'fr'}}</td>
@@ -236,7 +236,7 @@
                 <td class="text-start">REPORT A NOUVEAU</td>
                 <td>{{balance_board.previous.actif_total | number:truncature:'fr'}}</td>
               </tr>
-              <!-- alignment with "FOND DE CAISSE" -->
+              <!-- alignment with "AUTRES LIQUIDITÉS" -->
               <tr *ngFor="let n of [1, 2]" class="fw-light fs-6">
                 <td>&#8205;</td>
                 <td>&#8205;</td>
