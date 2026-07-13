@@ -1,7 +1,6 @@
-import { ApplicationConfig, LOCALE_ID, provideZoneChangeDetection, InjectionToken, isDevMode } from '@angular/core';
+import { ApplicationConfig, LOCALE_ID, provideZoneChangeDetection, InjectionToken } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { InMemoryScrollingOptions, provideRouter, withComponentInputBinding, withInMemoryScrolling } from '@angular/router';
-import { provideServiceWorker } from '@angular/service-worker';
 import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 
 import { routes } from './app.routes';
@@ -91,10 +90,6 @@ export const appConfig: ApplicationConfig = {
       deps: [SystemDataService],
       multi: true
     },
-    { provide: APP_SANDBOX, useFactory: (sandboxService: SandboxService) => sandboxService.value, deps: [SandboxService] },
-    provideServiceWorker('ngsw-worker.js', {
-      enabled: !isDevMode(),
-      registrationStrategy: 'registerWhenStable:30000'
-    })
+    { provide: APP_SANDBOX, useFactory: (sandboxService: SandboxService) => sandboxService.value, deps: [SandboxService] }
   ]
 };
