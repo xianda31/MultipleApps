@@ -1,2 +1,13 @@
 
 <router-outlet></router-outlet>
+
+<button
+	*ngIf="canInstallAndroid"
+	class="android-install-btn"
+	type="button"
+	(click)="installAndroidApp()"
+	aria-label="Installer l'application"
+>
+	<i class="bi bi-phone"></i>
+	Installer l'app
+</button>
