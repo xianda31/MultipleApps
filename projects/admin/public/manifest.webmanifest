@@ -1,6 +1,7 @@
 {
 	"name": "bcsto",
 	"short_name": "bcsto",
+	"id": "/",
 	"start_url": "/",
 	"scope": "/",
 	"display": "standalone",
@@ -16,6 +17,12 @@
 			"src": "assets/icons/android-chrome-512x512.png",
 			"sizes": "512x512",
 			"type": "image/png"
+		},
+		{
+			"src": "assets/icons/maskable-512x512.png",
+			"sizes": "512x512",
+			"type": "image/png",
+			"purpose": "maskable any"
 		}
 	]
 }
