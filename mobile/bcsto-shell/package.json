@@ -1,0 +1,20 @@
+{
+  "name": "bcsto-shell",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "cap:sync": "npx cap sync android",
+    "cap:add:android": "npx cap add android",
+    "apk:debug": "cd android && .\\gradlew.bat assembleDebug"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@capacitor/android": "^8.4.1",
+    "@capacitor/cli": "^8.4.1",
+    "@capacitor/core": "^8.4.1",
+    "png-to-ico": "^3.0.2"
+  }
+}

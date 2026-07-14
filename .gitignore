@@ -8,6 +8,7 @@
 
 # Node
 /node_modules
+**/node_modules
 amplify/node_modules
 amplify/**/node_modules
 npm-debug.log
@@ -64,5 +65,8 @@ android/.gradle/
 android/.kotlin/
 android/app/build/
 android/build/
+mobile/**/android/.gradle/
+mobile/**/android/app/build/
+mobile/**/android/build/
 amplify_outputs*
 amplifyconfiguration*

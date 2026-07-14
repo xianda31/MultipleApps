@@ -1,0 +1,9 @@
+{
+  "appId": "fr.bridgeclubsaintorens.bcsto",
+  "appName": "bcsto",
+  "webDir": "www",
+  "server": {
+    "url": "https://bridgeclubsaintorens.fr",
+    "androidScheme": "https"
+  }
+}
