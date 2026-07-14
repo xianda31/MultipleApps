@@ -19,6 +19,10 @@ export class GameCardService {
   private _gameCards!: GameCard[];
   private gameCards$: BehaviorSubject<GameCard[]> = new BehaviorSubject<GameCard[]>(this._gameCards);
 
+  private normalizeLicense(value: string | null | undefined): string {
+    return (value ?? '').trim();
+  }
+
   private normalizeStampDate(date: string): string {
     if (!date) return date;
 
@@ -347,13 +351,23 @@ export class GameCardService {
 
   async updateCard(card: GameCard): Promise<GameCard> {
     try {
-      const { owners, ...playBook } = card; // Destructure to remove owners
+      // Keep backend payload aligned with edited owners regardless of caller-provided licenses.
+      const cardToPersist: GameCard = {
+        ...card,
+        licenses: Array.from(new Set(
+          card.owners
+            .map(owner => this.normalizeLicense(owner.license_number))
+            .filter((license): license is string => !!license)
+        ))
+      };
+
+      const { owners, ...playBook } = cardToPersist; // Destructure to remove owners
       const updatedBook = await this.dbHandler.updatePlayBook(playBook);
       const updatedGameCard: GameCard = {
         id: updatedBook.id,
         licenses: updatedBook.licenses.filter((license): license is string => license !== null),
         stamps: updatedBook.stamps.filter((stamp): stamp is string => stamp !== null),
-        owners: card.owners,
+        owners: cardToPersist.owners,
         initial_qty: updatedBook.initial_qty,
         comment: updatedBook.comment ?? undefined,
         manual_creation: updatedBook.manual_creation ?? false,
@@ -421,7 +435,10 @@ export class GameCardService {
             this._gameCards = cards.map(card => {
               const owners = card.licenses
                 .filter((license): license is string => license !== null)
-                .map((license) => this.members.find(member => member.license_number === license))
+                .map((license) => {
+                  const normalized = this.normalizeLicense(license);
+                  return this.members.find(member => this.normalizeLicense(member.license_number) === normalized);
+                })
                 .filter((owner): owner is Member => owner !== undefined);
 
               if (owners.length === 0) {
