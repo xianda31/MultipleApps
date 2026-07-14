@@ -13,6 +13,7 @@ import { DynamicRoutesService } from './common/services/dynamic-routes.service';
 import { SandboxService } from './common/services/sandbox.service';
 import { SystemDataService } from './common/services/system-data.service';
 import { applyUiThemeInitializer } from './common/utils/ui-utils';
+import { provideServiceWorker } from '@angular/service-worker';
 
 // Fonction d'initialisation pour précharger les routes dynamiques du front
 export const APP_SANDBOX = new InjectionToken<boolean>('APP_SANDBOX');
@@ -90,6 +91,10 @@ export const appConfig: ApplicationConfig = {
       deps: [SystemDataService],
       multi: true
     },
-    { provide: APP_SANDBOX, useFactory: (sandboxService: SandboxService) => sandboxService.value, deps: [SandboxService] }
+    { provide: APP_SANDBOX, useFactory: (sandboxService: SandboxService) => sandboxService.value, deps: [SandboxService] },
+    provideServiceWorker('ngsw-worker.js', {
+      enabled: true,
+      registrationStrategy: 'registerWhenStable:30000'
+    })
   ]
 };

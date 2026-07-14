@@ -187,6 +187,7 @@
                 }
               ],
               "outputHashing": "all",
+              "serviceWorker": "projects/admin/ngsw-config.json",
               "optimization": {
                 "scripts": true,
                 "styles": {
@@ -298,6 +299,7 @@
                 "output": "assets"
               }
             ],
+            "serviceWorker": "projects/admin/ngsw-config.json",
             "styles": [
               "projects/admin/src/styles.scss"
             ],
@@ -308,7 +310,6 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "5MB",
                   "maximumError": "4MB"
                 },
                 {
