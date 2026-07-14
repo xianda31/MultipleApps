@@ -1,0 +1,22 @@
+[
+  {
+    "source": "/manifest.webmanifest",
+    "target": "/manifest.webmanifest",
+    "status": "200"
+  },
+  {
+    "source": "/ngsw-worker.js",
+    "target": "/ngsw-worker.js",
+    "status": "200"
+  },
+  {
+    "source": "/ngsw.json",
+    "target": "/ngsw.json",
+    "status": "200"
+  },
+  {
+    "source": "</^[^.]+$|\\.(?!(css|gif|ico|jpg|jpeg|js|png|txt|svg|woff|woff2|ttf|map|json|webmanifest)$)([^.]+$)/>",
+    "target": "/index.html",
+    "status": "200"
+  }
+]
