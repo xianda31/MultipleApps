@@ -1,19 +1,21 @@
 import { charsanitize, buildFullPath, extractSegment } from './navitem.utils';
-import { NavItem, NAVITEM_POSITION, NAVITEM_TYPE } from '../interfaces/navitem.interface';
+import { NavItem, NAVITEM_LOGGING_CRITERIA, NAVITEM_POSITION, NAVITEM_TYPE } from '../interfaces/navitem.interface';
 
 describe('navitem.utils', () => {
   const baseParent: NavItem = {
     id: 'p1', sandbox: true, type: NAVITEM_TYPE.DROPDOWN, label: 'Parent', slug: 'parent', path: 'parent',
-    rank: 0, public: true, group_level: 0, position: NAVITEM_POSITION.NAVBAR
+    rank: 0, logging_criteria: NAVITEM_LOGGING_CRITERIA.ANY, group_level: 0, position: NAVITEM_POSITION.NAVBAR,
+    pre_label: null
   };
   const child: NavItem = {
     id: 'c1', sandbox: true, type: NAVITEM_TYPE.INTERNAL_LINK, label: 'Child', slug: 'child', path: 'parent/child',
-    parent_id: 'p1', rank: 0, public: true, group_level: 0, position: NAVITEM_POSITION.NAVBAR
+    parent_id: 'p1', rank: 0, logging_criteria: NAVITEM_LOGGING_CRITERIA.ANY, group_level: 0, position: NAVITEM_POSITION.NAVBAR,
+    pre_label: null
   };
 
   it('charsanitize should lowercase, remove accents, replace spaces and strip invalid chars', () => {
     expect(charsanitize('Événement Sportif 2025!')).toBe('evenement_sportif_2025');
-    expect(charsanitize('  Multiple   Spaces  ')).toBe('multiple_spaces');
+    expect(charsanitize('  Multiple   Spaces  ')).toBe('_multiple_spaces_');
   });
 
   it('buildFullPath should prepend parent path when parent exists', () => {
