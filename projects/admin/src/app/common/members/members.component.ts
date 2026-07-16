@@ -20,11 +20,17 @@ import { PersonV2 } from '../ffb/interface/person-v2.interface';
 import { normalizeGender } from '../utils/gender.util';
 
 
-enum FILTER {
-  'MEMBER' = 'membre',
-  'MEMBER_AT_FFB' = 'membre licencié à la FFB',
-  'STUDENT' = 'membre sans licence',
-  'UNKNOWN' = 'non adhérent',
+enum MEMBER_STATUS {
+  ADHERENT = 'ADHERENT',
+  CLUB_LICENSEE = 'CLUB_LICENSEE',
+  SYMPATHISANT = 'SYMPATHISANT',
+  NO_LICENSE = 'NO_LICENSE',
+  NON_ADHERENT = 'NON_ADHERENT',
+}
+
+type MemberStatusConfig = {
+  label: string;
+  iconClass: string;
 };
 
 @Component({
@@ -36,6 +42,9 @@ enum FILTER {
   styleUrl: './members.component.scss'
 })
 export class MembersComponent implements OnInit {
+  private readonly CLUB_LICENSE_NAME = 'Bridge Club de Saint Orens';
+  private readonly LICENSED_STATUSES = [LicenseStatus.DULY_REGISTERED, LicenseStatus.PROMOTED_ONLY];
+
   members: Member[] = [];
   filteredMembers: Member[] = [];
   licensees: ClubMember[] = [];
@@ -45,15 +54,28 @@ export class MembersComponent implements OnInit {
   new_player!: ClubMember;
   season: string = '';
   operations: Revenue[] = [];
-  FILTERS = FILTER;
-  filters = Object.values(FILTER);
-  selected_filter: FILTER = FILTER.MEMBER;
-  filter_icons: { [key in FILTER]: string } = {
-    [FILTER.MEMBER]: 'bi bi-person-check-fill',
-    [FILTER.MEMBER_AT_FFB]: 'bi bi-hand-thumbs-up-fill',
-    [FILTER.STUDENT]: 'bi bi-person-workspace',
-    [FILTER.UNKNOWN]: 'bi bi-heartbreak-fill',
+  STATUSES = MEMBER_STATUS;
+  filters: MEMBER_STATUS[] = [
+    MEMBER_STATUS.ADHERENT,
+    MEMBER_STATUS.CLUB_LICENSEE,
+    MEMBER_STATUS.SYMPATHISANT,
+    MEMBER_STATUS.NO_LICENSE,
+    MEMBER_STATUS.NON_ADHERENT,
+  ];
+  statusConfig: Record<MEMBER_STATUS, MemberStatusConfig> = {
+    [MEMBER_STATUS.ADHERENT]: { label: 'vue FFB', iconClass: 'bi bi-person-check-fill' },
+    [MEMBER_STATUS.CLUB_LICENSEE]: { label: 'adhérent licencié', iconClass: 'bi bi-person-square' },
+    [MEMBER_STATUS.SYMPATHISANT]: { label: 'sympathisant', iconClass: 'bi bi-tencent-qq' },
+    [MEMBER_STATUS.NO_LICENSE]: { label: 'adhérent sans licence', iconClass: 'bi bi-person-circle' },
+    [MEMBER_STATUS.NON_ADHERENT]: { label: 'non adhérent', iconClass: 'bi bi-heartbreak-fill' },
   };
+  selected_filter: MEMBER_STATUS = MEMBER_STATUS.ADHERENT;
+  statusLegend: MEMBER_STATUS[] = [
+    MEMBER_STATUS.CLUB_LICENSEE,
+    MEMBER_STATUS.SYMPATHISANT,
+    MEMBER_STATUS.NO_LICENSE,
+    MEMBER_STATUS.NON_ADHERENT,
+  ];
   loading: boolean = true;
   avatar_urls$: { [key: string]: Observable<string> } = {};
 
@@ -101,15 +123,14 @@ export class MembersComponent implements OnInit {
       switchMap(() => this.licenseesService.getClubMembers$()),
       tap((licensees) => {
         this.licensees = licensees;
-        this.sympatisants_number = this.licensees.reduce((count, clubMember) => {
-          return count + (!clubMember.licence ? 1 : 0);
-        }, 0);
+        console.log('Licensees fetched from FFB:', this.licensees);
       }),
       switchMap(() => this.membersService.listMembers()),
       take(1)
     ).subscribe({
       next: (members: Member[]) => {
         this.members = members.sort((a, b) => a.lastname.localeCompare(b.lastname, 'fr', { sensitivity: 'base' }));
+        this.sympatisants_number = this.computeSympathisantsNumber(this.members);
         this.avatar_urls$ = this.collect_avatars(this.members);
         this.filterOnStatus(this.selected_filter);
         // console.log(this.members);
@@ -120,6 +141,7 @@ export class MembersComponent implements OnInit {
           await this.refreshMembersAsync();
           await this.reset_license_statuses();
           await this.check_membership_paied();
+          this.sympatisants_number = this.computeSympathisantsNumber(this.members);
           this.filterOnStatus(this.selected_filter);
           // update_iv() removed: Ranking now provides iv directly
         })()
@@ -141,6 +163,10 @@ export class MembersComponent implements OnInit {
     return avatarUrls;
   }
 
+  private computeSympathisantsNumber(members: Member[]): number {
+    return members.filter((member) => this.getMemberStatus(member) === MEMBER_STATUS.SYMPATHISANT).length;
+  }
+
   async check_membership_paied() {
     const updates: Promise<any>[] = [];
     this.members.forEach((member) => {
@@ -157,8 +183,8 @@ export class MembersComponent implements OnInit {
       }
     });
     await Promise.all(updates);
-    this.no_license_nbr = this.members.filter(m => m.membership_date && (m.license_status === LicenseStatus.UNREGISTERED)).length;
-    this.lost_members_nbr = this.members.filter(m => !m.membership_date && (m.license_status === LicenseStatus.UNREGISTERED)).length;
+    this.no_license_nbr = this.members.filter((member) => this.getMemberStatus(member) === MEMBER_STATUS.NO_LICENSE).length;
+    this.lost_members_nbr = this.members.filter((member) => this.getMemberStatus(member) === MEMBER_STATUS.NON_ADHERENT).length;
   }
 
   async add_licensee(player: ClubMember) {
@@ -237,23 +263,77 @@ export class MembersComponent implements OnInit {
   }
 
 
-  filterOnStatus(filter: FILTER) {
-    this.selected_filter = filter;
-    this.filteredMembers = this.members.filter((member: Member) => {
-      switch (filter) {
-        case FILTER.MEMBER_AT_FFB: //'membre licencié':
-          return ((member.license_status === LicenseStatus.DULY_REGISTERED || member.license_status === LicenseStatus.PROMOTED_ONLY));
-        case FILTER.STUDENT: //'membre sans licence':
-          return (member.membership_date && (member.license_status === LicenseStatus.UNREGISTERED));
-        case FILTER.MEMBER: //'membre (i.e. adhérent ou déclaré à la FFB)':
-          return (member.membership_date || (member.license_status === LicenseStatus.DULY_REGISTERED || member.license_status === LicenseStatus.PROMOTED_ONLY));
-        case FILTER.UNKNOWN: //'non adhérent':
-          return (!member.membership_date && (member.license_status === LicenseStatus.UNREGISTERED));
+  private isLicensed(member: Member): boolean {
+    return this.LICENSED_STATUSES.includes(member.license_status as LicenseStatus);
+  }
 
-        default: //'Tous':
-          throw new Error('Filtre inconnu' + filter);
-      }
-    }).sort((a, b) => a.lastname.localeCompare(b.lastname, 'fr', { sensitivity: 'base' }));
+  private hasPaidMembership(member: Member): boolean {
+    return !!member.membership_date;
+  }
+
+  private isLicenseAtClub(member: Member): boolean {
+    return member.license_taken_at === this.CLUB_LICENSE_NAME;
+  }
+
+  private isAdherent(member: Member): boolean {
+    return this.hasPaidMembership(member) || this.isLicensed(member);
+  }
+
+  getMemberStatus(member: Member): MEMBER_STATUS {
+    if (this.isLicensed(member)) {
+      return this.isLicenseAtClub(member) ? MEMBER_STATUS.CLUB_LICENSEE : MEMBER_STATUS.SYMPATHISANT;
+    }
+
+    if (this.hasPaidMembership(member)) {
+      return MEMBER_STATUS.NO_LICENSE;
+    }
+
+    return MEMBER_STATUS.NON_ADHERENT;
+  }
+
+  private matchesFilter(member: Member, filter: MEMBER_STATUS): boolean {
+    if (filter === MEMBER_STATUS.ADHERENT) {
+      return this.isAdherent(member);
+    }
+
+    return this.getMemberStatus(member) === filter;
+  }
+
+  filterOnStatus(filter: MEMBER_STATUS) {
+    this.selected_filter = filter;
+    this.filteredMembers = this.members
+      .filter((member: Member) => this.matchesFilter(member, filter))
+      .sort((a, b) => a.lastname.localeCompare(b.lastname, 'fr', { sensitivity: 'base' }));
+  }
+
+  getStatusLabel(status: MEMBER_STATUS): string {
+    return this.statusConfig[status].label;
+  }
+
+  getFilterIconClass(status: MEMBER_STATUS): string {
+    return this.statusConfig[status].iconClass;
+  }
+
+  getMemberStatusIconClass(member: Member): string {
+    return this.getFilterIconClass(this.getMemberStatus(member));
+  }
+
+  isStatusWarning(member: Member): boolean {
+    return this.isLicensed(member) && !this.hasPaidMembership(member);
+  }
+
+  getMemberStatusTooltip(member: Member): string {
+    const status = this.getMemberStatus(member);
+
+    if (status === MEMBER_STATUS.SYMPATHISANT) {
+      return `Sympathisant licencié au ${member.license_taken_at}`;
+    }
+
+    if (status === MEMBER_STATUS.CLUB_LICENSEE && this.isStatusWarning(member)) {
+      return 'Membre licencié au club sans adhésion payée';
+    }
+
+    return this.getStatusLabel(status);
   }
 
 

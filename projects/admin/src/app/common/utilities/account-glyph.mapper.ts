@@ -10,14 +10,14 @@
  * Basée sur la structure réelle des revenues_and_expense_tree
  */
 export const ACCOUNT_GLYPH_MAP: Record<string, string> = {
-  'ADH': 'bi-person-vcard-fill',      // Adhésion au club
-  'LIC': 'bi-credit-card-fill',       // Collecte licences FFB
-  'CAR': 'bi-ticket-perforated-fill',         // Carte de 10+2 droits de table
-  'ACC': 'bi-ticket-detailed-fill',            // Forfait tournoi accession
-  'PER': 'bi-graph-up-arrow',         // Cours perfectionnement
-  'INI': 'bi-eject-fill',       // Cours initiation
-  'BIB': 'bi-book-fill',              // Vente de livres
-  'PAF': 'bi-star-fill',              // Participation fête
+  'ADH': 'bi-person-vcard',      // Adhésion au club
+  'LIC': 'bi-suit-club',       // Licences FFB
+  'CAR': 'bi-table',                     // Carte de 10+2 droits de table
+  'ACC': 'bi-cup-hot',            // Forfait tournoi accession
+  'PER': 'bi-award',                     // Cours perfectionnement
+  'INI': 'bi-easel',                   // Cours initiation
+  'BIB': 'bi-book',              // Vente de livres
+  'PAF': 'bi-balloon-fill',              // Participation fête
   'DdT': 'bi-wallet2',                // Droit de table à l'unité
   'KFE': 'bi-cup-hot',                // Machine café
   'DEFAULT': 'bi-tag-fill',           // Default générique

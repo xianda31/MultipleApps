@@ -10,10 +10,11 @@
           </ng-container>
         </div>
         <ng-container *ngIf="!loading">
-          <div class="col-auto card-title me-4">{{licensees.length}} de la base FFB {{licensees.length -
-            sympatisants_number}} licenciés + {{sympatisants_number}} sympathisants </div>
+          <div class="col-auto card-title me-4">{{licensees.length}} de la base FFB : 
+            {{licensees.length - sympatisants_number}} licenciés + {{sympatisants_number}} sympathisants </div>
           <div class="col-auto card-title me-4">{{no_license_nbr}} adhérents sans licence</div>
           <div class="col-auto card-title me-4">{{lost_members_nbr}} non adhérents</div>
+          
           </ng-container>
       </div>
     </div>
@@ -44,27 +45,32 @@
 
       <hr class="my-3">
 
-      <div *ngIf="!loading" class="table-responsive" style="max-height: 75vh; overflow-y: auto;">
+      <div *ngIf="!loading" class="small text-muted mb-2 d-flex flex-wrap gap-3 align-items-center">
+        <span class="fw-semibold">Légende :</span>
+        <span *ngFor="let status of statusLegend">
+          <i [class]="getFilterIconClass(status)"></i> {{ getStatusLabel(status) }}
+        </span>
+
+      </div>
+
+      <div *ngIf="!loading" class="table-responsive members-table-scroll">
       <table class="table table-striped table-sm table-bordered">
         <thead class="sticky-top table-light">
           <tr>
-            <!-- <th style="width: 4%;">#</th> -->
+            <th class="text-end" style="width: 4%;">#</th>
             <th class="text-center" style="width: 8%;"></th>
             <th style="width: 18%;">Nom</th>
             <th style="width: 18%;">Prénom</th>
             <th class="text-center" style="width: 12%;">
               {{filteredMembers.length}}
-              <ng-container *ngIf="selected_filter === FILTERS.MEMBER_AT_FFB; else iconOnly">
-                <span style="color:#009478">FFB</span>
-              </ng-container>
-              <ng-template #iconOnly>
-                <i [class]="filter_icons[selected_filter]"></i>
-              </ng-template>
+              <i [class]="getFilterIconClass(selected_filter)"></i>
               <div ngbDropdown class="btn-group">
                 <span class="dropdown-toggle dropdown-toggle-split" ngbDropdownToggle></span>
                 <ul ngbDropdownMenu class="dropdown-menu">
                   <li *ngFor="let filter of filters ">
-                    <a class="dropdown-item" (click)="filterOnStatus(filter)">{{filter}}</a>
+                    <a class="dropdown-item" (click)="filterOnStatus(filter)">
+                      <i [class]="getFilterIconClass(filter)"></i> {{ getStatusLabel(filter) }}
+                    </a>
                   </li>
                 </ul>
               </div>
@@ -89,7 +95,7 @@
         </thead>
         <tbody>
           <tr *ngFor="let member of filteredMembers; let i = index">
-            <!-- <td>{{i + 1}}</td> -->
+            <td>{{i + 1}}</td>
             <td class="text-center align-middle">
               <img *ngIf="avatar_urls$[member.license_number] | async as avatarUrl" [src]="avatarUrl" alt="avatar"
                 class="rounded-circle table-avatar">
@@ -97,24 +103,12 @@
             <td>{{member.lastname | uppercase}}</td>
             <td>{{member.firstname}}</td>
             <td class="text-center">
-              @if (member.license_status === 'duly_registered') {
               <span
-                ngbTooltip="{{member.license_taken_at === 'Bridge Club de Saint Orens' ? 'licencié au Club' : 'Sympathisant licencié au ' + member.license_taken_at}}"
+                ngbTooltip="{{ getMemberStatusTooltip(member) }}"
                 tooltipClass="my-custom-class" placement="right">
-                <i [style]="member.membership_date ? '' : 'color : red;'"
-                  [class]="member.license_taken_at !== 'Bridge Club de Saint Orens' ? 'bi bi-tencent-qq' : 'bi bi-person-square'"></i>
+                <i [class.text-danger]="isStatusWarning(member)"
+                  [class]="getMemberStatusIconClass(member)"></i>
               </span>
-              } @else if (member.license_status === 'unregistered') {
-              @if (member.membership_date) {
-              <span ngbTooltip="{{ 'adhérent non licencié ' }}" tooltipClass="my-custom-class" placement="right">
-                <i [class]="filter_icons[FILTERS.STUDENT]"></i>
-              </span>
-              } @else {
-              <i [class]="filter_icons[FILTERS.UNKNOWN]"></i>
-              }
-              } @else {
-              <!-- empty cell -->
-              }
             </td>
 
             <td class="d-none d-sm-table-cell">
