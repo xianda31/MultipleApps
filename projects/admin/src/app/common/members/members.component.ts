@@ -123,7 +123,7 @@ export class MembersComponent implements OnInit {
       switchMap(() => this.licenseesService.getClubMembers$()),
       tap((licensees) => {
         this.licensees = licensees;
-        console.log('Licensees fetched from FFB:', this.licensees);
+        // console.log('Licensees fetched from FFB:', this.licensees);
       }),
       switchMap(() => this.membersService.listMembers()),
       take(1)
