@@ -330,7 +330,7 @@ export class MembersComponent implements OnInit {
     }
 
     if (status === MEMBER_STATUS.CLUB_LICENSEE && this.isStatusWarning(member)) {
-      return 'Membre licencié au club sans adhésion payée';
+      return 'Membre licencié au club. Paiement adhésion à régulariser.';
     }
 
     return this.getStatusLabel(status);

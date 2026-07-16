@@ -290,25 +290,68 @@ export function toCompetitionPhases(payload: unknown): CompetitionPhases | null 
 /**
  * Extract ClubMembers from FFB V2 paginated API response
  * FFB V2 returns { items: ClubMember[], pagination: {...} }
- * No transformation needed - ClubMember structure matches API response exactly
+ * Keep only fields required by the app (avoid leaking full FFB payload)
  */
 export function toClubMemberList(payload: unknown): ClubMember[] {
   // Handle FFB V2 paginated response: { items: ClubMember[], pagination: {...} }
-  let members: ClubMember[] = [];
+  let members: unknown[] = [];
   if (isRecord(payload) && Array.isArray((payload as any).items)) {
-    members = asArray<ClubMember>((payload as any).items);
+    members = asArray<unknown>((payload as any).items);
   } else {
-    members = asArray<ClubMember>(payload);
+    members = asArray<unknown>(payload);
   }
-  
-  // Normalize fields and compute license_number from ffbId
-  return members.map((member: any) => ({
-    ...member,
-    license_number: asNumber(member.ffbId, 0).toString().padStart(8, '0'),
-    firstName: capitalize(asString(member.firstName, '').trim()),
-    lastName: asString(member.lastName, '').trim().toUpperCase(),
-    gender: normalizeGender(asString(member.gender, '').trim()),
-  }));
+
+  // Normalize and project to the strict ClubMember shape only.
+  return members.map((raw: unknown) => {
+    const member = isRecord(raw) ? raw : {};
+    const club = isRecord(member['club']) ? member['club'] : {};
+    const committee = isRecord(club['committee']) ? club['committee'] : {};
+    const zone = isRecord(committee['zone']) ? committee['zone'] : {};
+    const season = isRecord(member['season']) ? member['season'] : {};
+    const ranking = isRecord(season['ranking']) ? season['ranking'] : undefined;
+    const mainRegistration = isRecord(member['mainRegistration']) ? member['mainRegistration'] : {};
+
+    return {
+      id: asNumber(member['id'], 0),
+      license_number: asNumber(member['ffbId'], 0).toString().padStart(8, '0'),
+      firstName: capitalize(asString(member['firstName'], '').trim()),
+      lastName: asString(member['lastName'], '').trim().toUpperCase(),
+      gender: normalizeGender(asString(member['gender'], '').trim()),
+      birthdate: asString(member['birthdate'], ''),
+      licence: !!member['licence'],
+      club: {
+        id: asNumber(club['id'], 0),
+        ffbCode: asString(club['ffbCode'], ''),
+        name: asString(club['name'], ''),
+        label: asString(club['label'], ''),
+        type: asString(club['type'], ''),
+        committee: {
+          id: asNumber(committee['id'], 0),
+          label: asString(committee['label'], ''),
+          zone: {
+            id: asNumber(zone['id'], 0),
+            label: asString(zone['label'], ''),
+          },
+        },
+      },
+      season: {
+        id: asNumber(season['id'], 0),
+        category: asString(season['category'], ''),
+        ranking: ranking
+          ? {
+              ic: asNumber(ranking['ic'], 0),
+              iv: asNumber(ranking['iv'], 0),
+              pe: asNumber(ranking['pe'], 0),
+              pp: asNumber(ranking['pp'], 0),
+            }
+          : undefined,
+      },
+      mainRegistration: {
+        free: !!mainRegistration['free'],
+        createdAt: asString(mainRegistration['createdAt'], ''),
+      },
+    } satisfies ClubMember;
+  });
 }
 
 export function toTournamentTeams(payload: unknown): TournamentTeams | null {

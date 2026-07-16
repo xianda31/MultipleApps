@@ -50,7 +50,7 @@
         <span *ngFor="let status of statusLegend">
           <i [class]="getFilterIconClass(status)"></i> {{ getStatusLabel(status) }}
         </span>
-
+        <span><span class="text-danger">en rouge</span> : anomalie paiement</span>
       </div>
 
       <div *ngIf="!loading" class="table-responsive members-table-scroll">
