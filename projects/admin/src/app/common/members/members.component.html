@@ -57,7 +57,7 @@
       <table class="table table-striped table-sm table-bordered">
         <thead class="sticky-top table-light">
           <tr>
-            <th class="text-end" style="width: 4%;">#</th>
+            <th class="text-center pe-3" style="width: 4%;">#</th>
             <th class="text-center" style="width: 8%;"></th>
             <th style="width: 18%;">Nom</th>
             <th style="width: 18%;">Prénom</th>
@@ -95,7 +95,7 @@
         </thead>
         <tbody>
           <tr *ngFor="let member of filteredMembers; let i = index">
-            <td>{{i + 1}}</td>
+            <td class="text-end pe-3">{{i + 1}}</td>
             <td class="text-center align-middle">
               <img *ngIf="avatar_urls$[member.license_number] | async as avatarUrl" [src]="avatarUrl" alt="avatar"
                 class="rounded-circle table-avatar">
