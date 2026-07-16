@@ -67,7 +67,7 @@ export class MembersComponent implements OnInit {
     [MEMBER_STATUS.CLUB_LICENSEE]: { label: 'adhérent licencié', iconClass: 'bi bi-person-square' },
     [MEMBER_STATUS.SYMPATHISANT]: { label: 'sympathisant', iconClass: 'bi bi-tencent-qq' },
     [MEMBER_STATUS.NO_LICENSE]: { label: 'adhérent sans licence', iconClass: 'bi bi-person-circle' },
-    [MEMBER_STATUS.NON_ADHERENT]: { label: 'non adhérent', iconClass: 'bi bi-heartbreak-fill' },
+    [MEMBER_STATUS.NON_ADHERENT]: { label: 'adhésion non renouvelée', iconClass: 'bi bi-heartbreak-fill' },
   };
   selected_filter: MEMBER_STATUS = MEMBER_STATUS.ADHERENT;
   statusLegend: MEMBER_STATUS[] = [
