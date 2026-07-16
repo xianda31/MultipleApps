@@ -38,3 +38,21 @@ table.table.table-sm tbody tr td {
   min-height: 18rem;
   overflow-y: auto;
 }
+
+@media (max-width: 576px) and (orientation: portrait) {
+  .members-stats-line {
+    font-size: 0.8rem;
+    line-height: 1.15;
+    gap: 0.25rem;
+  }
+
+  .members-stats-line .card-title {
+    margin-right: 0.5rem !important;
+    margin-bottom: 0.1rem;
+  }
+
+  .members-legend-line {
+    line-height: 1.1;
+    gap: 0.45rem !important;
+  }
+}

@@ -11,7 +11,7 @@
           </ng-container>
         </div>
         <ng-container *ngIf="!loading">
-          <div class="col-12 d-flex flex-wrap align-items-center mt-1">
+          <div class="col-12 d-flex flex-wrap align-items-center mt-1 members-stats-line">
             <div class="card-title me-4"> 🛢<span class="small fw-bolder">FFB</span> → {{licensees.length}} adhérents
               ( {{licensees.length - sympatisants_number}} licenciés + {{sympatisants_number}} sympathisants )
             </div>
@@ -49,7 +49,7 @@
 
       <hr class="my-3">
 
-      <div *ngIf="!loading" class="small text-muted mb-2 d-flex flex-wrap gap-3 align-items-center">
+      <div *ngIf="!loading" class="small text-muted mb-2 d-flex flex-wrap gap-3 align-items-center members-legend-line">
         <span class="fw-semibold">Légende :</span>
         <span *ngFor="let status of statusLegend">
           <i [class]="getFilterIconClass(status)"></i> {{ getStatusLabel(status) }}
