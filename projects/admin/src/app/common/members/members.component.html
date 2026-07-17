@@ -12,8 +12,8 @@
         </div>
         <ng-container *ngIf="!loading">
           <div class="col-12 d-flex flex-wrap align-items-center mt-1 members-stats-line">
-            <div class="card-title me-4"> 🛢<span class="small fw-bolder">FFB</span> → {{licensees.length}} adhérents
-              ( {{licensees.length - sympatisants_number}} licenciés + {{sympatisants_number}} sympathisants )
+            <div class="card-title me-4"> 🛢<span class="small fw-bolder">FFB</span> → {{ffb_adherents_nbr}} adhérents
+              ( {{club_licensees_nbr}} licenciés + {{sympatisants_number}} sympathisants )
             </div>
             <div class="card-title me-4"> 🛢<span class="small fw-bolder">Club</span> → + {{no_license_nbr}} adhérents sans licence</div>
             <div class="card-title me-4"> et {{lost_members_nbr}} adhésions non renouvelées</div>

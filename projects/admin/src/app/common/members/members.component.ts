@@ -48,6 +48,8 @@ export class MembersComponent implements OnInit {
   members: Member[] = [];
   filteredMembers: Member[] = [];
   licensees: ClubMember[] = [];
+  ffb_adherents_nbr: number = 0;
+  club_licensees_nbr: number = 0;
   sympatisants_number: number = 0;
   no_license_nbr: number = 0;
   lost_members_nbr: number = 0;
@@ -130,7 +132,7 @@ export class MembersComponent implements OnInit {
     ).subscribe({
       next: (members: Member[]) => {
         this.members = members.sort((a, b) => a.lastname.localeCompare(b.lastname, 'fr', { sensitivity: 'base' }));
-        this.sympatisants_number = this.computeSympathisantsNumber(this.members);
+        this.recomputeStatusCounters(this.members);
         this.avatar_urls$ = this.collect_avatars(this.members);
         this.filterOnStatus(this.selected_filter);
         // console.log(this.members);
@@ -141,7 +143,7 @@ export class MembersComponent implements OnInit {
           await this.refreshMembersAsync();
           await this.reset_license_statuses();
           await this.check_membership_paied();
-          this.sympatisants_number = this.computeSympathisantsNumber(this.members);
+          this.recomputeStatusCounters(this.members);
           this.filterOnStatus(this.selected_filter);
           // update_iv() removed: Ranking now provides iv directly
         })()
@@ -167,6 +169,34 @@ export class MembersComponent implements OnInit {
     return members.filter((member) => this.getMemberStatus(member) === MEMBER_STATUS.SYMPATHISANT).length;
   }
 
+  /**
+   * SPEC - Indicateurs de la ligne "Répertoire Club"
+   *
+   * Source unique:
+   * - Tous les compteurs affichés sont dérivés de la même classification `getMemberStatus(member)`
+   *   pour éviter les incohérences entre sources (FFB direct vs membres locaux).
+   *
+   * Règles de statut:
+   * 1) CLUB_LICENSEE: membre licencié (duly_registered|promoted_only) avec licence prise au club.
+   * 2) SYMPATHISANT: membre licencié (duly_registered|promoted_only) avec licence prise hors club.
+   * 3) NO_LICENSE: membre non licencié mais avec adhésion club payée (membership_date renseignée).
+   * 4) NON_ADHERENT: membre non licencié et sans adhésion payée.
+   *
+   * Formules des compteurs:
+   * - club_licensees_nbr = nombre de CLUB_LICENSEE
+   * - sympatisants_number = nombre de SYMPATHISANT
+   * - ffb_adherents_nbr = club_licensees_nbr + sympatisants_number
+   * - no_license_nbr = nombre de NO_LICENSE
+   * - lost_members_nbr = nombre de NON_ADHERENT
+   */
+  private recomputeStatusCounters(members: Member[]): void {
+    this.club_licensees_nbr = members.filter((member) => this.getMemberStatus(member) === MEMBER_STATUS.CLUB_LICENSEE).length;
+    this.sympatisants_number = this.computeSympathisantsNumber(members);
+    this.ffb_adherents_nbr = this.club_licensees_nbr + this.sympatisants_number;
+    this.no_license_nbr = members.filter((member) => this.getMemberStatus(member) === MEMBER_STATUS.NO_LICENSE).length;
+    this.lost_members_nbr = members.filter((member) => this.getMemberStatus(member) === MEMBER_STATUS.NON_ADHERENT).length;
+  }
+
   async check_membership_paied() {
     const updates: Promise<any>[] = [];
     this.members.forEach((member) => {
@@ -183,8 +213,7 @@ export class MembersComponent implements OnInit {
       }
     });
     await Promise.all(updates);
-    this.no_license_nbr = this.members.filter((member) => this.getMemberStatus(member) === MEMBER_STATUS.NO_LICENSE).length;
-    this.lost_members_nbr = this.members.filter((member) => this.getMemberStatus(member) === MEMBER_STATUS.NON_ADHERENT).length;
+    this.recomputeStatusCounters(this.members);
   }
 
   async add_licensee(player: ClubMember) {
@@ -445,6 +474,7 @@ export class MembersComponent implements OnInit {
   private async refreshMembersAsync(): Promise<void> {
     const members = await firstValueFrom(this.membersService.listMembers().pipe(take(1)));
     this.members = members.sort((a, b) => a.lastname.localeCompare(b.lastname, 'fr', { sensitivity: 'base' }));
+    this.recomputeStatusCounters(this.members);
     this.avatar_urls$ = this.collect_avatars(this.members);
     this.filterOnStatus(this.selected_filter);
   }
