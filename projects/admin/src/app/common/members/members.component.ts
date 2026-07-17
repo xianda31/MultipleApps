@@ -68,7 +68,7 @@ export class MembersComponent implements OnInit {
     [MEMBER_STATUS.ADHERENT]: { label: 'vue FFB', iconClass: 'bi bi-person-check-fill' },
     [MEMBER_STATUS.CLUB_LICENSEE]: { label: 'adhérent licencié', iconClass: 'bi bi-person-square' },
     [MEMBER_STATUS.SYMPATHISANT]: { label: 'sympathisant', iconClass: 'bi bi-tencent-qq' },
-    [MEMBER_STATUS.NO_LICENSE]: { label: 'adhérent sans licence', iconClass: 'bi bi-person-circle' },
+    [MEMBER_STATUS.NO_LICENSE]: { label: 'adhérent sans n° de licence', iconClass: 'bi bi-mortarboard-fill' },
     [MEMBER_STATUS.NON_ADHERENT]: { label: 'adhésion non renouvelée', iconClass: 'bi bi-heartbreak-fill' },
   };
   selected_filter: MEMBER_STATUS = MEMBER_STATUS.ADHERENT;
@@ -125,7 +125,7 @@ export class MembersComponent implements OnInit {
       switchMap(() => this.licenseesService.getClubMembers$()),
       tap((licensees) => {
         this.licensees = licensees;
-        // console.log('Licensees fetched from FFB:', this.licensees);
+        console.log('Licensees fetched from FFB:', this.licensees);
       }),
       switchMap(() => this.membersService.listMembers()),
       take(1)
@@ -176,11 +176,14 @@ export class MembersComponent implements OnInit {
    * - Tous les compteurs affichés sont dérivés de la même classification `getMemberStatus(member)`
    *   pour éviter les incohérences entre sources (FFB direct vs membres locaux).
    *
-   * Règles de statut:
-   * 1) CLUB_LICENSEE: membre licencié (duly_registered|promoted_only) avec licence prise au club.
-   * 2) SYMPATHISANT: membre licencié (duly_registered|promoted_only) avec licence prise hors club.
-   * 3) NO_LICENSE: membre non licencié mais avec adhésion club payée (membership_date renseignée).
-   * 4) NON_ADHERENT: membre non licencié et sans adhésion payée.
+  * Règles de statut:
+  * 1) CLUB_LICENSEE: membre provenant de la base FFB, licencié (duly_registered|promoted_only)
+  *    avec licence prise au club.
+  * 2) SYMPATHISANT: membre provenant de la base FFB, avec licence prise hors club
+  *    OU non encore prise.
+  * 3) NO_LICENSE: membre ayant payé son adhésion et sans identifiant licence FFB
+  *    (license_number commençant par '?' ou person_id non défini).
+  * 4) NON_ADHERENT: membre hors base FFB, non licencié et sans adhésion payée.
    *
    * Formules des compteurs:
    * - club_licensees_nbr = nombre de CLUB_LICENSEE
@@ -296,6 +299,15 @@ export class MembersComponent implements OnInit {
     return this.LICENSED_STATUSES.includes(member.license_status as LicenseStatus);
   }
 
+  private isInFfbBase(member: Member): boolean {
+    return this.licensees.some((licensee) => licensee.id === member.person_id);
+  }
+
+  private hasNoLicenseIdentifier(member: Member): boolean {
+    const licenseNumber = (member.license_number || '').trim();
+    return licenseNumber.startsWith('?') || member.person_id === undefined || member.person_id === null;
+  }
+
   private hasPaidMembership(member: Member): boolean {
     return !!member.membership_date;
   }
@@ -305,15 +317,18 @@ export class MembersComponent implements OnInit {
   }
 
   private isAdherent(member: Member): boolean {
-    return this.hasPaidMembership(member) || this.isLicensed(member);
+    return this.hasPaidMembership(member) || this.isLicensed(member) || this.isInFfbBase(member);
   }
 
   getMemberStatus(member: Member): MEMBER_STATUS {
-    if (this.isLicensed(member)) {
-      return this.isLicenseAtClub(member) ? MEMBER_STATUS.CLUB_LICENSEE : MEMBER_STATUS.SYMPATHISANT;
+    if (this.isInFfbBase(member)) {
+      if (this.isLicensed(member) && this.isLicenseAtClub(member)) {
+        return MEMBER_STATUS.CLUB_LICENSEE;
+      }
+      return MEMBER_STATUS.SYMPATHISANT;
     }
 
-    if (this.hasPaidMembership(member)) {
+    if (this.hasPaidMembership(member) && this.hasNoLicenseIdentifier(member)) {
       return MEMBER_STATUS.NO_LICENSE;
     }
 
@@ -348,13 +363,17 @@ export class MembersComponent implements OnInit {
   }
 
   isStatusWarning(member: Member): boolean {
-    return this.isLicensed(member) && !this.hasPaidMembership(member);
+    return member.license_status === LicenseStatus.UNREGISTERED
+      || (this.isLicensed(member) && !this.hasPaidMembership(member));
   }
 
   getMemberStatusTooltip(member: Member): string {
     const status = this.getMemberStatus(member);
 
     if (status === MEMBER_STATUS.SYMPATHISANT) {
+      if (!this.isLicensed(member)) {
+        return 'Sympathisant rattaché FFB, licence non encore prise.';
+      }
       return `Sympathisant licencié au ${member.license_taken_at}`;
     }
 
