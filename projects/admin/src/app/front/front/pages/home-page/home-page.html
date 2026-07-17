@@ -42,8 +42,8 @@
             <h6 class="d-block text-success">un club dynamique, et convivial.</h6>
             <span class="d-block w-75">Son école de Bridge vous permettra de consolider votre technique, selon votre niveau.
             <span class="d-block w-75">Aujourd'hui,
-                nous sommes <span class="fw-bold">{{ licensee_nbr }}</span> adhérents licenciés ,
-                et <span class="fw-bold">{{ student_nbr }}</span> en apprentissage.
+                nous sommes <span class="fw-bold">{{ licensee_nbr }}</span> adhérents licenciés
+                <ng-container *ngIf="student_nbr > 0">, et <span class="fw-bold">{{ student_nbr }}</span> en apprentissage</ng-container>.
             </span>
             </span>
         </div>
