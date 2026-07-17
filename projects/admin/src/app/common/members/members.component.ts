@@ -133,10 +133,6 @@ export class MembersComponent implements OnInit {
     return avatarUrls;
   }
 
-  private computeSympathisantsNumber(members: Member[]): number {
-    return members.filter((member) => this.getMemberStatus(member) === MemberStatus.SYMPATHISANT).length;
-  }
-
   /**
    * SPEC - Indicateurs de la ligne "Répertoire Club"
    *
@@ -161,11 +157,12 @@ export class MembersComponent implements OnInit {
    * - lost_members_nbr = nombre de NON_ADHERENT
    */
   private recomputeStatusCounters(members: Member[]): void {
-    this.club_licensees_nbr = members.filter((member) => this.getMemberStatus(member) === MemberStatus.CLUB_LICENSEE).length;
-    this.sympatisants_number = this.computeSympathisantsNumber(members);
-    this.ffb_adherents_nbr = this.club_licensees_nbr + this.sympatisants_number;
-    this.no_license_nbr = members.filter((member) => this.getMemberStatus(member) === MemberStatus.NO_LICENSE).length;
-    this.lost_members_nbr = members.filter((member) => this.getMemberStatus(member) === MemberStatus.NON_ADHERENT).length;
+    const counters = this.membersService.computeStatusCounters(members, this.getFfbBaseReferences());
+    this.club_licensees_nbr = counters.clubLicensees;
+    this.sympatisants_number = counters.sympathisants;
+    this.ffb_adherents_nbr = counters.ffbAdherents;
+    this.no_license_nbr = counters.noLicense;
+    this.lost_members_nbr = counters.nonAdherents;
   }
 
   async add_licensee(player: ClubMember) {
@@ -229,16 +226,16 @@ export class MembersComponent implements OnInit {
   }
 
   private isAdherent(member: Member): boolean {
-    const isInFfbBase = this.membersService.isInFfbBase(member, this.getFfbPersonIds());
+    const isInFfbBase = this.membersService.isInFfbBase(member, this.getFfbBaseReferences());
     return this.membersService.hasPaidMembership(member) || this.membersService.isLicensed(member) || isInFfbBase;
   }
 
-  private getFfbPersonIds(): ReadonlySet<number> {
-    return new Set(this.licensees.map((licensee) => licensee.id));
+  private getFfbBaseReferences(): ReadonlySet<number | string> {
+    return this.membersService.buildFfbBaseReferences(this.licensees);
   }
 
   getMemberStatus(member: Member): MemberStatus {
-    return this.membersService.getMemberStatus(member, this.getFfbPersonIds());
+    return this.membersService.getMemberStatus(member, this.getFfbBaseReferences());
   }
 
   private matchesFilter(member: Member, filter: MemberStatus): boolean {

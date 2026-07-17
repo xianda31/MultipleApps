@@ -3,7 +3,7 @@ import { firstValueFrom, take } from 'rxjs';
 import { Expense, Formatted_purchase, Revenue } from '../../common/interfaces/accounting.interface';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { BookService } from '../services/book.service';
-import { LicenseStatus, Member } from '../../common/interfaces/member.interface';
+import { Member } from '../../common/interfaces/member.interface';
 import { InputMemberComponent } from '../input-member/input-member.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -41,7 +41,7 @@ export class MemberSalesComponent {
 
 
   members: Member[] = [];
-  ffbPersonIds: ReadonlySet<number> = new Set<number>();
+  ffbBaseReferences: ReadonlySet<number | string> = new Set<number | string>();
   selected_member: Member | null = null;
   truncature = '1.2-2';  // '1.0-0';// '1.2-2';  //
   constructor(
@@ -67,15 +67,15 @@ export class MemberSalesComponent {
         this.selected_member = null;
         this.season = conf.season!;
         this.accounts = conf.revenue_and_expense_tree.revenues;
-        this.ffbPersonIds = new Set(licensees.map((licensee) => licensee.id));
+        this.ffbBaseReferences = this.memberService.buildFfbBaseReferences(licensees);
 
         await firstValueFrom(this.bookService.list_book_entries().pipe(take(1)));
 
         this.operations = this.bookService.get_revenues_from_members();
-        this.check_license_declared();
-        this.check_membership_paied();
-        this.check_buy_without_membership();
-        this.check_membersNotDeclaredAtFFB();
+        this.checkLicenseDeclared();
+        this.checkMembershipPaid();
+        this.checkBuyWithoutMembership();
+        this.checkMembersNotDeclaredAtFFB();
       } catch (err) {
         console.error('Error loading member sales data:', err);
       } finally {
@@ -84,41 +84,16 @@ export class MemberSalesComponent {
     })();
   }
 
-  check_buy_without_membership() {
-
-    this.buyWithoutMembership = [];
-    this.members.forEach((member) => {
-      let full_name = this.memberService.full_name(member);
-      const buy_op = this.operations
-        .filter((op) => op.member === full_name);
-      const hasAdh = buy_op.some(op => op.values['ADH']);
-      const hasOther = buy_op.some(op => Object.keys(op.values).some(key => key !== 'ADH'));
-
-
-      if (!hasAdh && hasOther) {
-        this.buyWithoutMembership.push(full_name);
-      }
-    });
+  checkBuyWithoutMembership() {
+    this.buyWithoutMembership = this.memberService.getBuyWithoutMembership(this.members, this.operations);
   }
 
-  check_membership_paied() {
-    this.missingMembership = [];
-    this.members.forEach((member) => {
-      if (member.license_status !== LicenseStatus.UNREGISTERED) {
-        let full_name = this.memberService.full_name(member);
-        const adh_paied = this.operations
-          .filter((op) => op.member === full_name)
-          .some((op) => op.values['ADH'] !== undefined && op.values['ADH'] !== null);
-
-        if (!adh_paied) {
-          this.missingMembership.push(full_name);
-        }
-      }
-    });
+  checkMembershipPaid() {
+    this.missingMembership = this.memberService.getMissingMembership(this.members, this.operations);
   }
 
-  check_membersNotDeclaredAtFFB() {
-    const noLicenseMembers = this.memberService.getNoLicenseMembers(this.members, this.ffbPersonIds);
+  checkMembersNotDeclaredAtFFB() {
+    const noLicenseMembers = this.memberService.getNoLicenseMembers(this.members, this.ffbBaseReferences);
 
     this.membersNotDeclaredAtFFB = noLicenseMembers
       .map((member) => {
@@ -134,23 +109,11 @@ export class MemberSalesComponent {
     this.membersToBeDeclaredAtFFB_nbr = this.membersNotDeclaredAtFFB.filter((m) => m.license_number !== 'none').length;
   }
 
-  check_license_declared() {
-    this.collectedLicenses = [];
-    this.members.forEach((member) => {
-      if (member.license_status !== LicenseStatus.DULY_REGISTERED) {
-        let full_name = this.memberService.full_name(member);
-        const lic_paied = this.operations
-          .filter((op) => op.member === full_name)
-          .some((op) => op.values['LIC']);
-
-        if (lic_paied) {
-          this.collectedLicenses.push(full_name);
-        }
-      }
-    });
+  checkLicenseDeclared() {
+    this.collectedLicenses = this.memberService.getCollectedLicenses(this.members, this.operations);
   }
 
-  get_paiements(accountKey: string | null): { [key: string]: Payment } {
+  getPaiements(accountKey: string | null): { [key: string]: Payment } {
     if (!accountKey) {
       return {};
     }
@@ -174,14 +137,14 @@ export class MemberSalesComponent {
     return paiements;
   }
 
-  member_selected() {
+  memberSelected() {
     if (this.selected_member) {
       let full_name = this.memberService.full_name(this.selected_member);
       this.achats_ventes = this.bookService.get_formated_buy_operations(full_name)
     }
   }
 
-  member_clear() {
+  memberClear() {
     this.selected_member = null;
     this.revenues = [];
   }
@@ -190,6 +153,6 @@ export class MemberSalesComponent {
     const select = event.target as HTMLSelectElement;
     select.blur();
     const account = this.selected_account;
-    this.payments = this.get_paiements(this.selected_account?.key || null);
+    this.payments = this.getPaiements(this.selected_account?.key || null);
   }
 }

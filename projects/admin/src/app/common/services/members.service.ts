@@ -3,6 +3,7 @@ import { BehaviorSubject, Observable, tap, switchMap, of, map } from 'rxjs';
 import { Member } from '../interfaces/member.interface';
 import { ToastService } from '../services/toast.service';
 import { DBhandler } from './graphQL.service';
+import { ClubMember } from '../ffb/interface/club-member.interface';
 
 export enum MemberStatus {
   ADHERENT = 'ADHERENT',
@@ -11,6 +12,21 @@ export enum MemberStatus {
   NO_LICENSE = 'NO_LICENSE',
   NON_ADHERENT = 'NON_ADHERENT',
 }
+
+export type MemberStatusCounters = {
+  clubLicensees: number;
+  sympathisants: number;
+  ffbAdherents: number;
+  noLicense: number;
+  nonAdherents: number;
+};
+
+export type FfbBaseReferences = ReadonlySet<number | string>;
+
+type MemberOperation = {
+  member?: string;
+  values: { [key: string]: number };
+};
 
 @Injectable({
   providedIn: 'root'
@@ -283,19 +299,35 @@ get_birthdays_this_month(): Observable<Member[]> {
     return this.LICENSED_STATUSES.includes(member.license_status);
   }
 
-  isInFfbBase(member: Member, ffbPersonIds: ReadonlySet<number>): boolean {
-    if (member.person_id === undefined || member.person_id === null) {
-      return false;
+  isInFfbBase(member: Member, ffbBaseReferences: FfbBaseReferences): boolean {
+    const personId = member.person_id;
+    if (personId !== undefined && personId !== null && ffbBaseReferences.has(personId)) {
+      return true;
     }
-    return ffbPersonIds.has(member.person_id);
+
+    const licenseNumber = (member.license_number || '').trim();
+    if (licenseNumber && ffbBaseReferences.has(licenseNumber)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  buildFfbBaseReferences(licensees: ClubMember[]): FfbBaseReferences {
+    const refs = new Set<number | string>();
+    licensees.forEach((licensee) => {
+      refs.add(licensee.id);
+      refs.add(licensee.license_number);
+    });
+    return refs;
   }
 
   isLicenseAtClub(member: Member): boolean {
     return member.license_taken_at === this.CLUB_LICENSE_NAME;
   }
 
-  getMemberStatus(member: Member, ffbPersonIds: ReadonlySet<number>): MemberStatus {
-    if (this.isInFfbBase(member, ffbPersonIds)) {
+  getMemberStatus(member: Member, ffbBaseReferences: FfbBaseReferences): MemberStatus {
+    if (this.isInFfbBase(member, ffbBaseReferences)) {
       if (this.isLicensed(member) && this.isLicenseAtClub(member)) {
         return MemberStatus.CLUB_LICENSEE;
       }
@@ -309,8 +341,95 @@ get_birthdays_this_month(): Observable<Member[]> {
     return MemberStatus.NON_ADHERENT;
   }
 
-  getNoLicenseMembers(members: Member[], ffbPersonIds: ReadonlySet<number>): Member[] {
-    return members.filter((member) => this.getMemberStatus(member, ffbPersonIds) === MemberStatus.NO_LICENSE);
+  getNoLicenseMembers(members: Member[], ffbBaseReferences: FfbBaseReferences): Member[] {
+    return members.filter((member) => this.getMemberStatus(member, ffbBaseReferences) === MemberStatus.NO_LICENSE);
+  }
+
+  computeStatusCounters(members: Member[], ffbBaseReferences: FfbBaseReferences): MemberStatusCounters {
+    let clubLicensees = 0;
+    let sympathisants = 0;
+    let noLicense = 0;
+    let nonAdherents = 0;
+
+    members.forEach((member) => {
+      const status = this.getMemberStatus(member, ffbBaseReferences);
+      if (status === MemberStatus.CLUB_LICENSEE) {
+        clubLicensees += 1;
+      } else if (status === MemberStatus.SYMPATHISANT) {
+        sympathisants += 1;
+      } else if (status === MemberStatus.NO_LICENSE) {
+        noLicense += 1;
+      } else if (status === MemberStatus.NON_ADHERENT) {
+        nonAdherents += 1;
+      }
+    });
+
+    return {
+      clubLicensees,
+      sympathisants,
+      ffbAdherents: clubLicensees + sympathisants,
+      noLicense,
+      nonAdherents,
+    };
+  }
+
+  getCollectedLicenses(members: Member[], operations: MemberOperation[]): string[] {
+    const collected: string[] = [];
+
+    members.forEach((member) => {
+      if (member.license_status === 'duly_registered') {
+        return;
+      }
+
+      const fullName = this.full_name(member);
+      const licPaid = operations
+        .filter((op) => op.member === fullName)
+        .some((op) => !!op.values['LIC']);
+
+      if (licPaid) {
+        collected.push(fullName);
+      }
+    });
+
+    return collected;
+  }
+
+  getMissingMembership(members: Member[], operations: MemberOperation[]): string[] {
+    const missing: string[] = [];
+
+    members.forEach((member) => {
+      if (member.license_status === 'unregistered') {
+        return;
+      }
+
+      const fullName = this.full_name(member);
+      const adhPaid = operations
+        .filter((op) => op.member === fullName)
+        .some((op) => op.values['ADH'] !== undefined && op.values['ADH'] !== null);
+
+      if (!adhPaid) {
+        missing.push(fullName);
+      }
+    });
+
+    return missing;
+  }
+
+  getBuyWithoutMembership(members: Member[], operations: MemberOperation[]): string[] {
+    const buyWithoutMembership: string[] = [];
+
+    members.forEach((member) => {
+      const fullName = this.full_name(member);
+      const memberOperations = operations.filter((op) => op.member === fullName);
+      const hasAdh = memberOperations.some((op) => !!op.values['ADH']);
+      const hasOther = memberOperations.some((op) => Object.keys(op.values).some((key) => key !== 'ADH'));
+
+      if (!hasAdh && hasOther) {
+        buyWithoutMembership.push(fullName);
+      }
+    });
+
+    return buyWithoutMembership;
   }
 
 }
