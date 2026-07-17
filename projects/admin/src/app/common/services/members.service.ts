@@ -4,10 +4,20 @@ import { Member } from '../interfaces/member.interface';
 import { ToastService } from '../services/toast.service';
 import { DBhandler } from './graphQL.service';
 
+export enum MemberStatus {
+  ADHERENT = 'ADHERENT',
+  CLUB_LICENSEE = 'CLUB_LICENSEE',
+  SYMPATHISANT = 'SYMPATHISANT',
+  NO_LICENSE = 'NO_LICENSE',
+  NON_ADHERENT = 'NON_ADHERENT',
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class MembersService {
+  private readonly CLUB_LICENSE_NAME = 'Bridge Club de Saint Orens';
+  private readonly LICENSED_STATUSES = ['duly_registered', 'promoted_only'];
   private _members!: Member[];
   private _members$: BehaviorSubject<Member[]> = new BehaviorSubject(this._members);
 
@@ -258,6 +268,49 @@ get_birthdays_this_month(): Observable<Member[]> {
 
     // Return exact match or 'NC' if not found
     return ivMap[iv] ?? 'NC';
+  }
+
+  hasNoLicenseIdentifier(member: Member): boolean {
+    const licenseNumber = (member.license_number || '').trim();
+    return licenseNumber.startsWith('?') || member.person_id === undefined || member.person_id === null;
+  }
+
+  hasPaidMembership(member: Member): boolean {
+    return !!member.membership_date;
+  }
+
+  isLicensed(member: Member): boolean {
+    return this.LICENSED_STATUSES.includes(member.license_status);
+  }
+
+  isInFfbBase(member: Member, ffbPersonIds: ReadonlySet<number>): boolean {
+    if (member.person_id === undefined || member.person_id === null) {
+      return false;
+    }
+    return ffbPersonIds.has(member.person_id);
+  }
+
+  isLicenseAtClub(member: Member): boolean {
+    return member.license_taken_at === this.CLUB_LICENSE_NAME;
+  }
+
+  getMemberStatus(member: Member, ffbPersonIds: ReadonlySet<number>): MemberStatus {
+    if (this.isInFfbBase(member, ffbPersonIds)) {
+      if (this.isLicensed(member) && this.isLicenseAtClub(member)) {
+        return MemberStatus.CLUB_LICENSEE;
+      }
+      return MemberStatus.SYMPATHISANT;
+    }
+
+    if (this.hasPaidMembership(member) && this.hasNoLicenseIdentifier(member)) {
+      return MemberStatus.NO_LICENSE;
+    }
+
+    return MemberStatus.NON_ADHERENT;
+  }
+
+  getNoLicenseMembers(members: Member[], ffbPersonIds: ReadonlySet<number>): Member[] {
+    return members.filter((member) => this.getMemberStatus(member, ffbPersonIds) === MemberStatus.NO_LICENSE);
   }
 
 }

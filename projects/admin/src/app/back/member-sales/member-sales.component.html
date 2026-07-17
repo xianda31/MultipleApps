@@ -29,7 +29,7 @@
             <div [class]="' card nice_shadow h-100 ' + (missingMembership.length > 0 ? 'border-danger' : '')">
                 <div class="card-header">
                     <strong> FFB->[ADH] : </strong>
-                    licenciés FFB n'ayant pas réglé leur adhésion
+                    licenciés Club/sympathisants n'ayant pas réglé leur adhésion
                 </div>
                 <div class="card-body">
                     @if (missingMembership.length > 0) {
@@ -52,7 +52,7 @@
             <div [class]="' card nice_shadow h-100 ' + (buyWithoutMembership.length > 0 ? 'border-danger' : '')">
                 <div class="card-header">
                     <strong> [*]->[ADH] : </strong>
-                    membres achetant sans avoir réglé leur adhésion
+                    membres achetant sans adhésion à jour
                 </div>
                 <div class="card-body">
                     @if (buyWithoutMembership.length > 0) {
@@ -210,7 +210,7 @@
                     </ul>
                     } @else {
                     <div class="text-muted">
-                        <i class="bi bi-check-circle"></i> Toutes les adhérents déclarables à la FFB ont été déclarés
+                        <i class="bi bi-check-circle"></i> Tous les adhérents sont déclarés à la FFB
                     </div>
                     }
                 </div>

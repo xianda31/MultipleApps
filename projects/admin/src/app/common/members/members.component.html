@@ -32,7 +32,7 @@
           <div class="input-group input-group-sm  w-auto " style="max-width: 400px;">
             <span class="input-group-text" id="inputGroup-sizing-sm"><strong class="me-1">NON LICENCIÉ(E) </strong>(ex.
               débutant(e))</span>
-            <button class="btn  btn-primary btn-sm" (click)="add_newbee()">
+            <button class="btn  btn-primary btn-sm" (click)="addNewbee()">
               <i class="bi bi-mortarboard-fill"></i>
             </button>
           </div>
@@ -135,13 +135,13 @@
               </td>
               <!-- <td class="d-none d-sm-table-cell text-center">
               @if (member.iv !== null) {
-                @let parts = get_iv_code_parts(member.iv);
+                @let parts = getIvCodeParts(member.iv);
                 <span>{{ parts.series }}<span [style.color]="parts.suitColor" style="font-weight: bold;">{{ parts.suit }}</span>{{ parts.tail }}</span>
               } @else {
                 -
               }
             </td> -->
-              <td class="d-none d-sm-table-cell text-center"> <i (click)="access_settings(member)"
+              <td class="d-none d-sm-table-cell text-center"> <i (click)="accessSettings(member)"
                   class="bi bi-gear-fill"></i> </td>
               <td class="d-none d-sm-table-cell text-center">
                 <i class="bi bi-trash" (click)="deleteMember(member)"></i>
