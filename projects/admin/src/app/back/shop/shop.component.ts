@@ -486,7 +486,7 @@ export class ShopComponent implements OnInit, OnDestroy {
     const hasProfileLicense =
       buyer.license_status === LicenseStatus.DULY_REGISTERED ||
       buyer.license_status === LicenseStatus.PROMOTED_ONLY;
-    const hasProfileMembership = !!buyer.membership_date;
+    const hasProfileMembership = this.membersService.hasPaidMembership(buyer);
 
     this.license_paied = hasProfileLicense || hasLicenseOperation;
     this.membership_paied = hasProfileMembership || hasMembershipOperation;

@@ -202,8 +202,13 @@ export class MemberSyncService {
         for (const member of members) {
             const fullName = this.membersService.full_name(member);
             const memberOps = operations.filter((op) => op.member === fullName);
-            const hasAdh = memberOps.find((op) => 'ADH' in op.values);
-            const newMembershipDate = hasAdh ? hasAdh.date : '';
+            const firstAdh = memberOps.find((op) => 'ADH' in op.values);
+            if (!firstAdh) {
+                // Preserve the last known membership date when no ADH operation is found.
+                continue;
+            }
+
+            const newMembershipDate = firstAdh.date;
 
             if (member.membership_date !== newMembershipDate) {
                 const updatedMember: Member = {

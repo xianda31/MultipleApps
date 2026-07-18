@@ -222,7 +222,7 @@ export class DashboardComponent {
     group_counts_female: { [age_group: string]: number }
   }> {
     return this.memberService.listMembers().pipe(
-      map(members => members.filter(m => m.membership_date)), // Filtrer les membres ayant payé leur cotisation
+      map(members => members.filter(m => this.memberService.hasPaidMembership(m))),
       map(members => {
         this.membersCount = members.length;
         const now = new Date();
@@ -301,7 +301,7 @@ export class DashboardComponent {
     suffixOrder: string[]
   }> {
     return this.memberService.listMembers().pipe(
-      map(members => members.filter(m => m.membership_date)), // Filtrer les membres ayant payé leur cotisation
+      map(members => members.filter(m => this.memberService.hasPaidMembership(m))),
 
       map(members => {
         // Récupérer les membres avec iv_code et iv valides

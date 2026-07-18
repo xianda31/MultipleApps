@@ -4,6 +4,7 @@ import { Member } from '../interfaces/member.interface';
 import { ToastService } from '../services/toast.service';
 import { DBhandler } from './graphQL.service';
 import { ClubMember } from '../ffb/interface/club-member.interface';
+import { SystemDataService } from './system-data.service';
 
 export enum MemberStatus {
   ADHERENT = 'ADHERENT',
@@ -47,7 +48,9 @@ export class MembersService {
 
   constructor(
     private toastService: ToastService,
-    private dbHandler: DBhandler  ) { }
+    private dbHandler: DBhandler,
+    private systemDataService: SystemDataService,
+  ) { }
 
 
   listMembers(): Observable<Member[]> {
@@ -299,7 +302,12 @@ get_birthdays_this_month(): Observable<Member[]> {
   }
 
   hasPaidMembership(member: Member): boolean {
-    return !!member.membership_date;
+    if (!member.membership_date) {
+      return false;
+    }
+
+    const currentSeason = this.systemDataService.get_local_season();
+    return this.systemDataService.date_in_season(member.membership_date, currentSeason);
   }
 
   isLicensed(member: Member): boolean {

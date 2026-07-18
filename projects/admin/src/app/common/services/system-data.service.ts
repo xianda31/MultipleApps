@@ -68,6 +68,10 @@ export class SystemDataService {
     }
   }
 
+  get_local_season(): string {
+    return this._active_season;
+  }
+
   /**
    * UI settings live methods: kept in a separate file `system/ui_settings.txt`.
    */
