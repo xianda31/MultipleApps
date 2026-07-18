@@ -26,7 +26,7 @@ export class TournamentsComponent {
 
   next_tournament_teams: TournamentTeams[] = [];
 
-  person_id: number | undefined; // Person ID of the logged member
+  person_id: number | null | undefined; // Person ID of the logged member
   // logged: boolean = false;
   loading: boolean = true;
   in_error: boolean = false;
@@ -125,7 +125,7 @@ export class TournamentsComponent {
 
   registrated_in(tTeams: TournamentTeams): boolean {
 
-    if (!this.person_id) {
+    if (this.person_id === undefined || this.person_id === null) {
       return false; // If not logged or person_id not set, return false
     }
     for (let team of tTeams.items) {

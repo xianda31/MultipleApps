@@ -28,6 +28,14 @@ type MemberOperation = {
   values: { [key: string]: number };
 };
 
+const MEMBER_STATUS_VALUES: ReadonlySet<string> = new Set([
+  MemberStatus.ADHERENT,
+  MemberStatus.CLUB_LICENSEE,
+  MemberStatus.SYMPATHISANT,
+  MemberStatus.NO_LICENSE,
+  MemberStatus.NON_ADHERENT,
+]);
+
 @Injectable({
   providedIn: 'root'
 })
@@ -79,7 +87,6 @@ export class MembersService {
       season: '',
       email: '',
       phone_one: '',
-      is_sympathisant: false,
       license_status: '',
       license_taken_at: '',
       membership_date: '',
@@ -313,6 +320,13 @@ get_birthdays_this_month(): Observable<Member[]> {
     return false;
   }
 
+  /**
+   * Member-only heuristic: after sync, a member is considered in FFB base if person_id is present.
+   */
+  isInFfbBaseFromMemberData(member: Member): boolean {
+    return member.person_id !== undefined && member.person_id !== null;
+  }
+
   buildFfbBaseReferences(licensees: ClubMember[]): FfbBaseReferences {
     const refs = new Set<number | string>();
     licensees.forEach((licensee) => {
@@ -341,6 +355,35 @@ get_birthdays_this_month(): Observable<Member[]> {
     return MemberStatus.NON_ADHERENT;
   }
 
+  /**
+   * Canonical rule based only on member fields (no live FFB references).
+   */
+  deriveMemberStatusFromData(member: Member): MemberStatus {
+    if (this.isLicensed(member)) {
+      return this.isLicenseAtClub(member)
+        ? MemberStatus.CLUB_LICENSEE
+        : MemberStatus.SYMPATHISANT;
+    }
+
+    if (this.hasPaidMembership(member) && this.hasNoLicenseIdentifier(member)) {
+      return MemberStatus.NO_LICENSE;
+    }
+
+    return MemberStatus.NON_ADHERENT;
+  }
+
+  /**
+   * Read status with persisted value first, then fallback to canonical derivation.
+   */
+  resolveMemberStatus(member: Member): MemberStatus {
+    const persisted = member.memberStatus;
+    if (persisted && MEMBER_STATUS_VALUES.has(persisted) && persisted !== MemberStatus.ADHERENT) {
+      return persisted as MemberStatus;
+    }
+
+    return this.deriveMemberStatusFromData(member);
+  }
+
   getNoLicenseMembers(members: Member[], ffbBaseReferences: FfbBaseReferences): Member[] {
     return members.filter((member) => this.getMemberStatus(member, ffbBaseReferences) === MemberStatus.NO_LICENSE);
   }
@@ -353,6 +396,57 @@ get_birthdays_this_month(): Observable<Member[]> {
 
     members.forEach((member) => {
       const status = this.getMemberStatus(member, ffbBaseReferences);
+      if (status === MemberStatus.CLUB_LICENSEE) {
+        clubLicensees += 1;
+      } else if (status === MemberStatus.SYMPATHISANT) {
+        sympathisants += 1;
+      } else if (status === MemberStatus.NO_LICENSE) {
+        noLicense += 1;
+      } else if (status === MemberStatus.NON_ADHERENT) {
+        nonAdherents += 1;
+      }
+    });
+
+    return {
+      clubLicensees,
+      sympathisants,
+      ffbAdherents: clubLicensees + sympathisants,
+      noLicense,
+      nonAdherents,
+    };
+  }
+
+  /**
+   * SPEC - Indicateurs de la ligne "Répertoire Club"
+   *
+   * Source unique:
+   * - Tous les compteurs affichés sont dérivés de la même classification `resolveMemberStatus(member)`.
+   * - Le statut lu suit une règle unique: `member.memberStatus` persistant, puis fallback calculé.
+   *
+   * Règles de statut:
+   * 1) CLUB_LICENSEE: membre provenant de la base FFB, licencié (duly_registered|promoted_only)
+   *    avec licence prise au club.
+   * 2) SYMPATHISANT: membre provenant de la base FFB, avec licence prise hors club
+   *    OU non encore prise.
+   * 3) NO_LICENSE: membre ayant payé son adhésion et sans identifiant licence FFB
+   *    (license_number commençant par '?' ou person_id non défini).
+   * 4) NON_ADHERENT: membre hors base FFB, non licencié et sans adhésion payée.
+   *
+   * Formules des compteurs:
+   * - club_licensees_nbr = nombre de CLUB_LICENSEE
+   * - sympatisants_number = nombre de SYMPATHISANT
+   * - ffb_adherents_nbr = club_licensees_nbr + sympatisants_number
+   * - no_license_nbr = nombre de NO_LICENSE
+   * - lost_members_nbr = nombre de NON_ADHERENT
+   */
+  computeStatusCountersFromMembers(): MemberStatusCounters {
+    let clubLicensees = 0;
+    let sympathisants = 0;
+    let noLicense = 0;
+    let nonAdherents = 0;
+
+    (this._members ?? []).forEach((member) => {
+      const status = this.resolveMemberStatus(member);
       if (status === MemberStatus.CLUB_LICENSEE) {
         clubLicensees += 1;
       } else if (status === MemberStatus.SYMPATHISANT) {

@@ -4,7 +4,6 @@ import { GenericPageComponent } from '../generic-page/generic-page.component';
 import { TournamentsComponent } from '../../../../common/tournaments/tournaments/tournaments.component';
 import { EXTRA_TITLES, MENU_TITLES } from '../../../../common/interfaces/page_snippet.interface';
 import { MembersService } from '../../../../common/services/members.service';
-import { MemberSyncService } from '../../../../common/services/member-sync.service';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 import { BreakpointsSettings, UIConfiguration } from '../../../../common/interfaces/ui-conf.interface';
 import { combineLatest, map, Observable, switchMap, tap, interval, Subscription, catchError, of } from 'rxjs';
@@ -13,7 +12,6 @@ import { AuthentificationService } from '../../../../common/authentification/aut
 import { CommonModule } from '@angular/common';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { FileService } from '../../../../common/services/files.service';
-import { LicenseesService } from '../../../../common/services/licensees.service';
 
 @Component({
   selector: 'app-home-page',
@@ -52,8 +50,6 @@ export class HomePage {
   constructor(
     private titleService: TitleService,
     private membersService: MembersService,
-    private memberSyncService: MemberSyncService,
-    private licenseesService: LicenseesService,
     private systemDataService: SystemDataService,
     private auth: AuthentificationService,
     private breakpointObserver: BreakpointObserver,
@@ -71,23 +67,11 @@ export class HomePage {
 
     this.titleService.setTitle('Les actualités et les prochains tournois de régularité');
 
-    void (async () => {
-      try {
-        await this.memberSyncService.ensureMembersSynchronized(true);
-      } catch (err) {
-        console.error('Error synchronizing members for home counters:', err);
-      } finally {
-        this.countersSub = combineLatest([
-          this.membersService.listMembers(),
-          this.licenseesService.getClubMembers$(),
-        ]).subscribe(([members, licensees]) => {
-          const ffbBaseReferences = this.membersService.buildFfbBaseReferences(licensees);
-          const counters = this.membersService.computeStatusCounters(members, ffbBaseReferences);
-          this.licensee_nbr = counters.ffbAdherents;
-          this.student_nbr = counters.noLicense;
-        });
-      }
-    })();
+    this.countersSub = this.membersService.listMembers().subscribe((members) => {
+      const counters = this.membersService.computeStatusCountersFromMembers();
+      this.licensee_nbr = counters.ffbAdherents;
+      this.student_nbr = counters.noLicense;
+    });
 
     this.fileService.list_files(this.home_folder + '/').pipe(
       map((S3items) => S3items.filter(item => item.size !== 0)),

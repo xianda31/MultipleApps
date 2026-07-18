@@ -1,6 +1,5 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { MembersService, MemberStatus } from '../../common/services/members.service';
-import { LicenseesService } from '../../common/services/licensees.service';
 import { Observable, take, firstValueFrom } from 'rxjs';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule, UpperCasePipe } from '@angular/common';
@@ -34,7 +33,6 @@ type MemberStatusConfig = {
 export class MembersComponent implements OnInit {
   members: Member[] = [];
   filteredMembers: Member[] = [];
-  licensees: ClubMember[] = [];
   ffb_adherents_nbr: number = 0;
   club_licensees_nbr: number = 0;
   sympatisants_number: number = 0;
@@ -86,7 +84,6 @@ export class MembersComponent implements OnInit {
   // });
 
   constructor(
-    private licenseesService: LicenseesService,
     private membersService: MembersService,
     private memberSettingsService: MemberSettingsService,
     private sysConfService: SystemDataService,
@@ -105,14 +102,9 @@ export class MembersComponent implements OnInit {
     this.loading = true;
     void (async () => {
       try {
-        const [members, licensees] = await Promise.all([
-          this.memberSyncService.ensureMembersSynchronized(true),
-          firstValueFrom(this.licenseesService.getClubMembers$().pipe(take(1))),
-        ]);
-
-        this.licensees = licensees;
+        const members = await this.memberSyncService.ensureMembersSynchronized(true);
         this.members = members.sort((a, b) => a.lastname.localeCompare(b.lastname, 'fr', { sensitivity: 'base' }));
-        this.recomputeStatusCounters(this.members);
+        this.applyStatusCounters();
         this.avatar_urls$ = this.collect_avatars(this.members);
         this.filterOnStatus(this.selected_filter);
       } catch (err) {
@@ -133,31 +125,8 @@ export class MembersComponent implements OnInit {
     return avatarUrls;
   }
 
-  /**
-   * SPEC - Indicateurs de la ligne "Répertoire Club"
-   *
-   * Source unique:
-   * - Tous les compteurs affichés sont dérivés de la même classification `getMemberStatus(member)`
-   *   pour éviter les incohérences entre sources (FFB direct vs membres locaux).
-   *
-  * Règles de statut:
-  * 1) CLUB_LICENSEE: membre provenant de la base FFB, licencié (duly_registered|promoted_only)
-  *    avec licence prise au club.
-  * 2) SYMPATHISANT: membre provenant de la base FFB, avec licence prise hors club
-  *    OU non encore prise.
-  * 3) NO_LICENSE: membre ayant payé son adhésion et sans identifiant licence FFB
-  *    (license_number commençant par '?' ou person_id non défini).
-  * 4) NON_ADHERENT: membre hors base FFB, non licencié et sans adhésion payée.
-   *
-   * Formules des compteurs:
-   * - club_licensees_nbr = nombre de CLUB_LICENSEE
-   * - sympatisants_number = nombre de SYMPATHISANT
-   * - ffb_adherents_nbr = club_licensees_nbr + sympatisants_number
-   * - no_license_nbr = nombre de NO_LICENSE
-   * - lost_members_nbr = nombre de NON_ADHERENT
-   */
-  private recomputeStatusCounters(members: Member[]): void {
-    const counters = this.membersService.computeStatusCounters(members, this.getFfbBaseReferences());
+  private applyStatusCounters(): void {
+    const counters = this.membersService.computeStatusCountersFromMembers();
     this.club_licensees_nbr = counters.clubLicensees;
     this.sympatisants_number = counters.sympathisants;
     this.ffb_adherents_nbr = counters.ffbAdherents;
@@ -171,7 +140,7 @@ export class MembersComponent implements OnInit {
     const personV2 = await this.ffbService.getFFBPerson(player.id).catch(() => null);
     const new_member: Member = this.createNewMember(player, personV2);
     console.log('Ajout d\'un nouveau membre :', new_member);
-    this.membersService.createMember(new_member).then(() => {
+    this.memberSyncService.createMemberWithComputedStatus(new_member).then(() => {
       this.refreshMembers();
       this.new_player = null as any;
     });
@@ -202,14 +171,14 @@ export class MembersComponent implements OnInit {
             phone_one: newbee.phone ?? '',
             license_taken_at: 'BCSTO',
             license_status: LicenseStatus.UNREGISTERED,
-            is_sympathisant: false,
             accept_mailing: newbee.email ? true : false,
             has_avatar: false,
             membership_date: '',
+            memberStatus: 'NON_ADHERENT',
             person_id: undefined,
             iv: undefined
           }
-          this.membersService.createMember(new_member).then((_member) => {
+          this.memberSyncService.createMemberWithComputedStatus(new_member).then((_member) => {
             this.toastService.showSuccess('Nouveau membre non licencié', new_member.lastname + ' ' + new_member.firstname);
             this.refreshMembers();
           });
@@ -226,16 +195,11 @@ export class MembersComponent implements OnInit {
   }
 
   private isAdherent(member: Member): boolean {
-    const isInFfbBase = this.membersService.isInFfbBase(member, this.getFfbBaseReferences());
-    return this.membersService.hasPaidMembership(member) || this.membersService.isLicensed(member) || isInFfbBase;
-  }
-
-  private getFfbBaseReferences(): ReadonlySet<number | string> {
-    return this.membersService.buildFfbBaseReferences(this.licensees);
+    return this.getMemberStatus(member) !== MemberStatus.NON_ADHERENT;
   }
 
   getMemberStatus(member: Member): MemberStatus {
-    return this.membersService.getMemberStatus(member, this.getFfbBaseReferences());
+    return this.membersService.resolveMemberStatus(member);
   }
 
   private matchesFilter(member: Member, filter: MemberStatus): boolean {
@@ -301,13 +265,13 @@ export class MembersComponent implements OnInit {
       email: personV2?.email ?? '',
       accept_mailing: personV2?.email ? true : false,
       phone_one: personV2?.phone ?? '',
-      is_sympathisant: !clubMember.licence,
       license_status: clubMember.licence ? LicenseStatus.DULY_REGISTERED : LicenseStatus.UNREGISTERED,
       license_taken_at: clubMember.club?.label ?? 'BCSTO',
       register_date: clubMember.mainRegistration?.createdAt ? clubMember.mainRegistration.createdAt.split('T')[0] : '',
       membership_date: '',
       has_avatar: false,
       person_id: clubMember.id,
+      memberStatus: clubMember.licence ? 'CLUB_LICENSEE' : 'SYMPATHISANT',
       iv: undefined,
       iv_code: undefined,
     }
@@ -325,7 +289,7 @@ export class MembersComponent implements OnInit {
   private async refreshMembersAsync(): Promise<void> {
     const members = await firstValueFrom(this.membersService.listMembers().pipe(take(1)));
     this.members = members.sort((a, b) => a.lastname.localeCompare(b.lastname, 'fr', { sensitivity: 'base' }));
-    this.recomputeStatusCounters(this.members);
+    this.applyStatusCounters();
     this.avatar_urls$ = this.collect_avatars(this.members);
     this.filterOnStatus(this.selected_filter);
   }
