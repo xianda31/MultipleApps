@@ -77,8 +77,8 @@ export class TournamentComponent implements OnInit {
     return null;
   }
 
-  has_subscribed(person_id: number | undefined): boolean {
-    if (person_id === undefined) {
+  has_subscribed(person_id: number | null | undefined): boolean {
+    if (person_id === undefined || person_id === null) {
       return false;
     }
     if (this.teams === undefined) {
@@ -98,7 +98,7 @@ export class TournamentComponent implements OnInit {
 
     i_am_in_team(team: TeamItem): boolean {
     const person_id = this.whoAmI?.person_id;
-    if (person_id === undefined) return false;
+      if (person_id === undefined || person_id === null) return false;
     const player1PersonId = team.players[0]?.id;
     const player2PersonId = team.players[1]?.id;
     return (player1PersonId === person_id) || (player2PersonId === person_id);
@@ -112,7 +112,7 @@ export class TournamentComponent implements OnInit {
   // }
   subscribeWithPlayer2() {
     const me = this.whoAmI?.person_id;
-    if (me === undefined) return;
+    if (me === undefined || me === null) return;
     const partner: ClubMember = this.player2.value;
     if (!partner?.id) {
       this.toastService.showError('tournoi', 'Merci de sélectionner un partenaire.');

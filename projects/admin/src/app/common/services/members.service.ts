@@ -3,11 +3,45 @@ import { BehaviorSubject, Observable, tap, switchMap, of, map } from 'rxjs';
 import { Member } from '../interfaces/member.interface';
 import { ToastService } from '../services/toast.service';
 import { DBhandler } from './graphQL.service';
+import { ClubMember } from '../ffb/interface/club-member.interface';
+
+export enum MemberStatus {
+  ADHERENT = 'ADHERENT',
+  CLUB_LICENSEE = 'CLUB_LICENSEE',
+  SYMPATHISANT = 'SYMPATHISANT',
+  NO_LICENSE = 'NO_LICENSE',
+  NON_ADHERENT = 'NON_ADHERENT',
+}
+
+export type MemberStatusCounters = {
+  clubLicensees: number;
+  sympathisants: number;
+  ffbAdherents: number;
+  noLicense: number;
+  nonAdherents: number;
+};
+
+export type FfbBaseReferences = ReadonlySet<number | string>;
+
+type MemberOperation = {
+  member?: string;
+  values: { [key: string]: number };
+};
+
+const MEMBER_STATUS_VALUES: ReadonlySet<string> = new Set([
+  MemberStatus.ADHERENT,
+  MemberStatus.CLUB_LICENSEE,
+  MemberStatus.SYMPATHISANT,
+  MemberStatus.NO_LICENSE,
+  MemberStatus.NON_ADHERENT,
+]);
 
 @Injectable({
   providedIn: 'root'
 })
 export class MembersService {
+  private readonly CLUB_LICENSE_NAME = 'Bridge Club de Saint Orens';
+  private readonly LICENSED_STATUSES = ['duly_registered', 'promoted_only'];
   private _members!: Member[];
   private _members$: BehaviorSubject<Member[]> = new BehaviorSubject(this._members);
 
@@ -53,7 +87,6 @@ export class MembersService {
       season: '',
       email: '',
       phone_one: '',
-      is_sympathisant: false,
       license_status: '',
       license_taken_at: '',
       membership_date: '',
@@ -258,6 +291,239 @@ get_birthdays_this_month(): Observable<Member[]> {
 
     // Return exact match or 'NC' if not found
     return ivMap[iv] ?? 'NC';
+  }
+
+  hasNoLicenseIdentifier(member: Member): boolean {
+    const licenseNumber = (member.license_number || '').trim();
+    return licenseNumber.startsWith('?') || member.person_id === undefined || member.person_id === null;
+  }
+
+  hasPaidMembership(member: Member): boolean {
+    return !!member.membership_date;
+  }
+
+  isLicensed(member: Member): boolean {
+    return this.LICENSED_STATUSES.includes(member.license_status);
+  }
+
+  isInFfbBase(member: Member, ffbBaseReferences: FfbBaseReferences): boolean {
+    const personId = member.person_id;
+    if (personId !== undefined && personId !== null && ffbBaseReferences.has(personId)) {
+      return true;
+    }
+
+    const licenseNumber = (member.license_number || '').trim();
+    if (licenseNumber && ffbBaseReferences.has(licenseNumber)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Member-only heuristic: after sync, a member is considered in FFB base if person_id is present.
+   */
+  isInFfbBaseFromMemberData(member: Member): boolean {
+    return member.person_id !== undefined && member.person_id !== null;
+  }
+
+  buildFfbBaseReferences(licensees: ClubMember[]): FfbBaseReferences {
+    const refs = new Set<number | string>();
+    licensees.forEach((licensee) => {
+      refs.add(licensee.id);
+      refs.add(licensee.license_number);
+    });
+    return refs;
+  }
+
+  isLicenseAtClub(member: Member): boolean {
+    return member.license_taken_at === this.CLUB_LICENSE_NAME;
+  }
+
+  getMemberStatus(member: Member, ffbBaseReferences: FfbBaseReferences): MemberStatus {
+    if (this.isInFfbBase(member, ffbBaseReferences)) {
+      if (this.isLicensed(member) && this.isLicenseAtClub(member)) {
+        return MemberStatus.CLUB_LICENSEE;
+      }
+      return MemberStatus.SYMPATHISANT;
+    }
+
+    if (this.hasPaidMembership(member) && this.hasNoLicenseIdentifier(member)) {
+      return MemberStatus.NO_LICENSE;
+    }
+
+    return MemberStatus.NON_ADHERENT;
+  }
+
+  /**
+   * Canonical rule based only on member fields (no live FFB references).
+   */
+  deriveMemberStatusFromData(member: Member): MemberStatus {
+    if (this.isLicensed(member)) {
+      return this.isLicenseAtClub(member)
+        ? MemberStatus.CLUB_LICENSEE
+        : MemberStatus.SYMPATHISANT;
+    }
+
+    if (this.hasPaidMembership(member) && this.hasNoLicenseIdentifier(member)) {
+      return MemberStatus.NO_LICENSE;
+    }
+
+    return MemberStatus.NON_ADHERENT;
+  }
+
+  /**
+   * Read status with persisted value first, then fallback to canonical derivation.
+   */
+  resolveMemberStatus(member: Member): MemberStatus {
+    const persisted = member.memberStatus;
+    if (persisted && MEMBER_STATUS_VALUES.has(persisted) && persisted !== MemberStatus.ADHERENT) {
+      return persisted as MemberStatus;
+    }
+
+    return this.deriveMemberStatusFromData(member);
+  }
+
+  getNoLicenseMembers(members: Member[], ffbBaseReferences: FfbBaseReferences): Member[] {
+    return members.filter((member) => this.getMemberStatus(member, ffbBaseReferences) === MemberStatus.NO_LICENSE);
+  }
+
+  computeStatusCounters(members: Member[], ffbBaseReferences: FfbBaseReferences): MemberStatusCounters {
+    let clubLicensees = 0;
+    let sympathisants = 0;
+    let noLicense = 0;
+    let nonAdherents = 0;
+
+    members.forEach((member) => {
+      const status = this.getMemberStatus(member, ffbBaseReferences);
+      if (status === MemberStatus.CLUB_LICENSEE) {
+        clubLicensees += 1;
+      } else if (status === MemberStatus.SYMPATHISANT) {
+        sympathisants += 1;
+      } else if (status === MemberStatus.NO_LICENSE) {
+        noLicense += 1;
+      } else if (status === MemberStatus.NON_ADHERENT) {
+        nonAdherents += 1;
+      }
+    });
+
+    return {
+      clubLicensees,
+      sympathisants,
+      ffbAdherents: clubLicensees + sympathisants,
+      noLicense,
+      nonAdherents,
+    };
+  }
+
+  /**
+   * SPEC - Indicateurs de la ligne "Répertoire Club"
+   *
+   * Source unique:
+   * - Tous les compteurs affichés sont dérivés de la même classification `resolveMemberStatus(member)`.
+   * - Le statut lu suit une règle unique: `member.memberStatus` persistant, puis fallback calculé.
+   *
+   * Règles de statut:
+   * 1) CLUB_LICENSEE: membre provenant de la base FFB, licencié (duly_registered|promoted_only)
+   *    avec licence prise au club.
+   * 2) SYMPATHISANT: membre provenant de la base FFB, avec licence prise hors club
+   *    OU non encore prise.
+   * 3) NO_LICENSE: membre ayant payé son adhésion et sans identifiant licence FFB
+   *    (license_number commençant par '?' ou person_id non défini).
+   * 4) NON_ADHERENT: membre hors base FFB, non licencié et sans adhésion payée.
+   *
+   * Formules des compteurs:
+   * - club_licensees_nbr = nombre de CLUB_LICENSEE
+   * - sympatisants_number = nombre de SYMPATHISANT
+   * - ffb_adherents_nbr = club_licensees_nbr + sympatisants_number
+   * - no_license_nbr = nombre de NO_LICENSE
+   * - lost_members_nbr = nombre de NON_ADHERENT
+   */
+  computeStatusCountersFromMembers(): MemberStatusCounters {
+    let clubLicensees = 0;
+    let sympathisants = 0;
+    let noLicense = 0;
+    let nonAdherents = 0;
+
+    (this._members ?? []).forEach((member) => {
+      const status = this.resolveMemberStatus(member);
+      if (status === MemberStatus.CLUB_LICENSEE) {
+        clubLicensees += 1;
+      } else if (status === MemberStatus.SYMPATHISANT) {
+        sympathisants += 1;
+      } else if (status === MemberStatus.NO_LICENSE) {
+        noLicense += 1;
+      } else if (status === MemberStatus.NON_ADHERENT) {
+        nonAdherents += 1;
+      }
+    });
+
+    return {
+      clubLicensees,
+      sympathisants,
+      ffbAdherents: clubLicensees + sympathisants,
+      noLicense,
+      nonAdherents,
+    };
+  }
+
+  getCollectedLicenses(members: Member[], operations: MemberOperation[]): string[] {
+    const collected: string[] = [];
+
+    members.forEach((member) => {
+      if (member.license_status === 'duly_registered') {
+        return;
+      }
+
+      const fullName = this.full_name(member);
+      const licPaid = operations
+        .filter((op) => op.member === fullName)
+        .some((op) => !!op.values['LIC']);
+
+      if (licPaid) {
+        collected.push(fullName);
+      }
+    });
+
+    return collected;
+  }
+
+  getMissingMembership(members: Member[], operations: MemberOperation[]): string[] {
+    const missing: string[] = [];
+
+    members.forEach((member) => {
+      if (member.license_status === 'unregistered') {
+        return;
+      }
+
+      const fullName = this.full_name(member);
+      const adhPaid = operations
+        .filter((op) => op.member === fullName)
+        .some((op) => op.values['ADH'] !== undefined && op.values['ADH'] !== null);
+
+      if (!adhPaid) {
+        missing.push(fullName);
+      }
+    });
+
+    return missing;
+  }
+
+  getBuyWithoutMembership(members: Member[], operations: MemberOperation[]): string[] {
+    const buyWithoutMembership: string[] = [];
+
+    members.forEach((member) => {
+      const fullName = this.full_name(member);
+      const memberOperations = operations.filter((op) => op.member === fullName);
+      const hasAdh = memberOperations.some((op) => !!op.values['ADH']);
+      const hasOther = memberOperations.some((op) => Object.keys(op.values).some((key) => key !== 'ADH'));
+
+      if (!hasAdh && hasOther) {
+        buyWithoutMembership.push(fullName);
+      }
+    });
+
+    return buyWithoutMembership;
   }
 
 }

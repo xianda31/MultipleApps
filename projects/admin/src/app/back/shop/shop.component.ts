@@ -22,7 +22,8 @@ import { SystemDataService } from '../../common/services/system-data.service';
 import { PaymentMode } from './cart/cart.interface';
 import { CardPaymentOrchestratorService } from '../services/card-payment-orchestrator.service';
 import { BookService } from '../services/book.service';
-import { Subscription } from 'rxjs';
+import { firstValueFrom, Subscription, take } from 'rxjs';
+import { MemberSyncService } from '../../common/services/member-sync.service';
 /**
  * ShopComponent — Interface de gestion des ventes (cartes, adhésions, produits)
  *
@@ -151,6 +152,7 @@ export class ShopComponent implements OnInit, OnDestroy {
     private stripeTerminal: StripeTerminalService,
     private cardPaymentOrchestrator: CardPaymentOrchestratorService,
     private bookService: BookService,
+    private memberSyncService: MemberSyncService,
   ) {}
 
   ngOnInit(): void {
@@ -231,11 +233,18 @@ export class ShopComponent implements OnInit, OnDestroy {
         });
       }
 
-      // Load members and setup buyer selection
-      this.membersService.listMembers().subscribe((members) => {
-        this.members = members;
-        this.setupBuyerFromRoute();
-      });
+      // Load members after synchronization with FFB-backed refresh.
+      void (async () => {
+        try {
+          await this.memberSyncService.ensureMembersSynchronized();
+          this.members = await firstValueFrom(this.membersService.listMembers().pipe(take(1)));
+          this.setupBuyerFromRoute();
+        } catch (error) {
+          console.error('ShopComponent: failed to synchronize members before loading buyer list', error);
+          this.members = await firstValueFrom(this.membersService.listMembers().pipe(take(1)));
+          this.setupBuyerFromRoute();
+        }
+      })();
 
       // Watch logged member changes (auth)
       this.auth.logged_member$.subscribe((member) => {
@@ -464,13 +473,23 @@ export class ShopComponent implements OnInit, OnDestroy {
   private updateBuyerPaymentFlags(buyer: Member, notifyWarnings: boolean): void {
     const fullName = this.membersService.full_name(buyer);
 
-    this.license_paied = this.operations
+    const hasLicenseOperation = this.operations
       .filter((op) => op.member === fullName)
       .some((op) => op.values['LIC']);
 
-    this.membership_paied = this.operations
+    const hasMembershipOperation = this.operations
       .filter((op) => op.member === fullName)
       .some((op) => op.values['ADH']);
+
+    // Prefer member profile status (source of truth from Members sync),
+    // and keep accounting operations as fallback when profile fields lag.
+    const hasProfileLicense =
+      buyer.license_status === LicenseStatus.DULY_REGISTERED ||
+      buyer.license_status === LicenseStatus.PROMOTED_ONLY;
+    const hasProfileMembership = !!buyer.membership_date;
+
+    this.license_paied = hasProfileLicense || hasLicenseOperation;
+    this.membership_paied = hasProfileMembership || hasMembershipOperation;
 
     this.message = this.buyerContext.determineLicenseMessage(this.license_paied, this.membership_paied);
 

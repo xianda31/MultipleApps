@@ -60,8 +60,8 @@ stamps_number(card: GameCard): number {
     });
   }
 
-  updateGameCard(card: GameCard) {
-    this.gameCardService.updateCard(card)
+  async updateGameCard(card: GameCard): Promise<void> {
+    await this.gameCardService.updateCard(card);
   }
 
   deleteGameCard(card: GameCard, event?: Event) {
@@ -84,10 +84,10 @@ stamps_number(card: GameCard): number {
   editGameCard(card: GameCard) {
     const modalRef = this.modalService.open(EditGameCardComponent, { centered: true });
     modalRef.componentInstance.card = card;
-    modalRef.result.then((new_card: GameCard) => {
+    modalRef.result.then(async (new_card: GameCard) => {
       if (new_card) {
         console.log('GameCardsEditorComponent.editGameCard', new_card);
-        this.updateGameCard(new_card);
+        await this.updateGameCard(new_card);
         if (new_card.stamps.length === 0) {
           this.total_null_cards++;
         }

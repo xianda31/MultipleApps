@@ -176,6 +176,7 @@ const schema = a.schema({
     accept_mailing: a.boolean(),
     membership_date: a.string(),
     person_id: a.integer(),
+    memberStatus: a.string(),
     iv: a.integer(),
     iv_code: a.string(),
 

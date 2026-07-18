@@ -18,13 +18,13 @@ export interface Member extends Member_settings{
   license_number: string;
   birthdate: string
   season: string
-  is_sympathisant: boolean
   license_status: string
   license_taken_at: string
   membership_date: string;
   orga_license_name?: string;
   register_date?: string;
-  person_id?:number;    // index FFB_licencee 
+  person_id?: number | null;    // index FFB_licencee
+  memberStatus?: string;
   iv?: number;
   iv_code?:string;
   createdAt?: string;

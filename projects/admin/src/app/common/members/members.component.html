@@ -2,19 +2,23 @@
   <div class="card">
     <div class="card-header">
       <div class="row justify-content-start align-items-center fs-5">
-        <div class="col-auto card-title me-4 d-flex align-items-center"> Répertoire Club :
+        <div class="col-auto card-title me-4 d-flex align-items-center"> <span class="fw-bold">Répertoire Club</span>
           <ng-container *ngIf="loading">
-            <div class="spinner-border text-primary ms-2 align-middle" style="width: 1.5em; height: 1.5em; font-size: inherit; vertical-align: middle;" role="status">
+            <div class="spinner-border text-primary ms-2 align-middle"
+              style="width: 1.5em; height: 1.5em; font-size: inherit; vertical-align: middle;" role="status">
               <span class="visually-hidden">Chargement...</span>
             </div>
           </ng-container>
         </div>
         <ng-container *ngIf="!loading">
-          <div class="col-auto card-title me-4">{{licensees.length}} de la base FFB {{licensees.length -
-            sympatisants_number}} licenciés + {{sympatisants_number}} sympathisants </div>
-          <div class="col-auto card-title me-4">{{no_license_nbr}} adhérents sans licence</div>
-          <div class="col-auto card-title me-4">{{lost_members_nbr}} non adhérents</div>
-          </ng-container>
+          <div class="col-12 d-flex flex-wrap align-items-center mt-1 members-stats-line">
+            <div class="card-title me-4"> 🛢<span class="small fw-bolder">FFB :</span> {{ffb_adherents_nbr}} adhérents
+              ( {{club_licensees_nbr}} licenciés + {{sympatisants_number}} sympathisants )
+            </div>
+            <div class="card-title me-4"> 🛢<span class="small fw-bolder">Club :</span> {{lost_members_nbr}} adhésions non renouvelées</div>
+            <div class="card-title me-4"> et {{no_license_nbr}} débutant(s) non licencié(s)</div>
+          </div>
+        </ng-container>
       </div>
     </div>
 
@@ -26,15 +30,16 @@
         </div> -->
         <div class="col-md-6 ">
           <div class="input-group input-group-sm  w-auto " style="max-width: 400px;">
-            <span class="input-group-text" id="inputGroup-sizing-sm"><strong class="me-1">NON LICENCIÉ(E) </strong>(ex. débutant(e))</span>
-            <button class="btn  btn-primary btn-sm" (click)="add_newbee()">
-              <i class="bi bi-person-workspace"></i>
+            <span class="input-group-text" id="inputGroup-sizing-sm"><strong class="me-1">NON LICENCIÉ(E) </strong>(ex.
+              débutant(e))</span>
+            <button class="btn  btn-primary btn-sm" (click)="addNewbee()">
+              <i class="bi bi-mortarboard-fill"></i>
             </button>
           </div>
         </div>
         <div class="col-md-6">
           <div class="input-group input-group-sm ">
-            <span class="input-group-text" id="inputGroup-sizing-sm"><strong >LICENCIÉ(E) </strong>     :</span>
+            <span class="input-group-text" id="inputGroup-sizing-sm"><strong>LICENCIÉ(E) </strong> :</span>
             <app-input-player listeId="new_guest" placeholder="Nom ou prénom (sélection liste)" type="text"
               class="form-control form-control-sm" style="max-width: 300px;" [(ngModel)]="new_player"
               (ngModelChange)="add_licensee(new_player)"></app-input-player>
@@ -44,114 +49,106 @@
 
       <hr class="my-3">
 
-      <div *ngIf="!loading" class="table-responsive" style="max-height: 75vh; overflow-y: auto;">
-      <table class="table table-striped table-sm table-bordered">
-        <thead class="sticky-top table-light">
-          <tr>
-            <!-- <th style="width: 4%;">#</th> -->
-            <th class="text-center" style="width: 8%;"></th>
-            <th style="width: 18%;">Nom</th>
-            <th style="width: 18%;">Prénom</th>
-            <th class="text-center" style="width: 12%;">
-              {{filteredMembers.length}}
-              <ng-container *ngIf="selected_filter === FILTERS.MEMBER_AT_FFB; else iconOnly">
-                <span style="color:#009478">FFB</span>
-              </ng-container>
-              <ng-template #iconOnly>
-                <i [class]="filter_icons[selected_filter]"></i>
-              </ng-template>
-              <div ngbDropdown class="btn-group">
-                <span class="dropdown-toggle dropdown-toggle-split" ngbDropdownToggle></span>
-                <ul ngbDropdownMenu class="dropdown-menu">
-                  <li *ngFor="let filter of filters ">
-                    <a class="dropdown-item" (click)="filterOnStatus(filter)">{{filter}}</a>
+      <div *ngIf="!loading" class="small text-muted mb-2 d-flex flex-wrap gap-3 align-items-center members-legend-line">
+        <span class="fw-semibold">Légende :</span>
+        <span *ngFor="let status of statusLegend">
+          <i [class]="getFilterIconClass(status)"></i> {{ getStatusLabel(status) }}
+        </span>
+        <span><span class="text-danger">en rouge</span> : anomalie paiement</span>
+      </div>
+
+      <div *ngIf="!loading" class="table-responsive members-table-scroll">
+        <table class="table table-striped table-sm table-bordered">
+          <thead class="sticky-top table-light">
+            <tr>
+              <th class="text-center pe-3" style="width: 4%;">#</th>
+              <th class="text-center" style="width: 8%;"></th>
+              <th style="width: 18%;">Nom</th>
+              <th style="width: 18%;">Prénom</th>
+              <th class="text-center" style="width: 12%;">
+                {{filteredMembers.length}}
+                <i [class]="getFilterIconClass(selected_filter)"></i>
+                <div ngbDropdown class="btn-group">
+                  <span class="dropdown-toggle dropdown-toggle-split" ngbDropdownToggle></span>
+                  <ul ngbDropdownMenu class="dropdown-menu">
+                    <li *ngFor="let filter of filters ">
+                      <a class="dropdown-item" (click)="filterOnStatus(filter)">
+                        <i [class]="getFilterIconClass(filter)"></i> {{ getStatusLabel(filter) }}
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </th>
+
+
+              <th class="d-none d-sm-table-cell" ngbDropdown style="cursor:pointer;">
+                <span ngbDropdownToggle style="font-weight: bold;">
+                  {{ infoColumnLabels[selectedInfoColumn] }}
+                  <!-- <i class="bi bi-caret-down-fill" style="font-size:0.8em;"></i> -->
+                </span>
+                <ul ngbDropdownMenu>
+                  <li *ngFor="let col of infoColumns">
+                    <a class="dropdown-item" (click)="selectedInfoColumn = col">{{ infoColumnLabels[col] }}</a>
                   </li>
                 </ul>
-              </div>
-            </th>
+              </th>
+              <!-- <th class="d-none d-sm-table-cell text-center">iv</th> -->
+              <th class="d-none d-sm-table-cell text-center">préf.</th>
+              <th class="d-none d-sm-table-cell text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let member of filteredMembers; let i = index">
+              <td class="text-end pe-3">{{i + 1}}</td>
+              <td class="text-center align-middle">
+                <img *ngIf="avatar_urls$[member.license_number] | async as avatarUrl" [src]="avatarUrl" alt="avatar"
+                  class="rounded-circle table-avatar">
+              </td>
+              <td>{{member.lastname | uppercase}}</td>
+              <td>{{member.firstname}}</td>
+              <td class="text-center">
+                <span ngbTooltip="{{ getMemberStatusTooltip(member) }}" tooltipClass="my-custom-class"
+                  placement="right">
+                  <i [class.text-danger]="isStatusWarning(member)" [class]="getMemberStatusIconClass(member)"></i>
+                </span>
+              </td>
 
-
-            <th class="d-none d-sm-table-cell" ngbDropdown style="cursor:pointer;">
-              <span ngbDropdownToggle style="font-weight: bold;">
-                {{ infoColumnLabels[selectedInfoColumn] }}
-                <!-- <i class="bi bi-caret-down-fill" style="font-size:0.8em;"></i> -->
-              </span>
-              <ul ngbDropdownMenu>
-                <li *ngFor="let col of infoColumns">
-                  <a class="dropdown-item" (click)="selectedInfoColumn = col">{{ infoColumnLabels[col] }}</a>
-                </li>
-              </ul>
-            </th>
-            <!-- <th class="d-none d-sm-table-cell text-center">iv</th> -->
-            <th class="d-none d-sm-table-cell text-center">préf.</th>
-            <th class="d-none d-sm-table-cell text-center">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let member of filteredMembers; let i = index">
-            <!-- <td>{{i + 1}}</td> -->
-            <td class="text-center align-middle">
-              <img *ngIf="avatar_urls$[member.license_number] | async as avatarUrl" [src]="avatarUrl" alt="avatar"
-                class="rounded-circle table-avatar">
-            </td>
-            <td>{{member.lastname | uppercase}}</td>
-            <td>{{member.firstname}}</td>
-            <td class="text-center">
-              @if (member.license_status === 'duly_registered') {
-              <span
-                ngbTooltip="{{member.license_taken_at === 'Bridge Club de Saint Orens' ? 'licencié au Club' : 'Sympathisant licencié au ' + member.license_taken_at}}"
-                tooltipClass="my-custom-class" placement="right">
-                <i [style]="member.membership_date ? '' : 'color : red;'"
-                  [class]="member.license_taken_at !== 'Bridge Club de Saint Orens' ? 'bi bi-tencent-qq' : 'bi bi-person-square'"></i>
-              </span>
-              } @else if (member.license_status === 'unregistered') {
-              @if (member.membership_date) {
-              <span ngbTooltip="{{ 'adhérent non licencié ' }}" tooltipClass="my-custom-class" placement="right">
-                <i [class]="filter_icons[FILTERS.STUDENT]"></i>
-              </span>
-              } @else {
-              <i [class]="filter_icons[FILTERS.UNKNOWN]"></i>
-              }
-              } @else {
-              <!-- empty cell -->
-              }
-            </td>
-
-            <td class="d-none d-sm-table-cell">
-              @if (selectedInfoColumn === 'license_number') {
-              {{ member.license_number }}
-              } @else if (selectedInfoColumn === 'membership_date') {
-              {{ member.membership_date ? (member.membership_date | date:'dd/MM/yyyy') : '' }}
-              } @else if (selectedInfoColumn === 'register_date') {
-              {{ member.register_date ? (member.register_date | date:'dd/MM/yyyy') : '' }}
-              } @else if (selectedInfoColumn === 'email') {
-              {{ member.email }}
-              } @else if (selectedInfoColumn === 'birthdate') {
-              {{ member.birthdate | date:'dd/MM/yyyy' : '' }}
-              } @else if (selectedInfoColumn === 'phone_one') {
-              {{ member.phone_one | phone }}
-              } @else if (selectedInfoColumn === 'city') {
-              {{ member.city }}
-              } @else if (selectedInfoColumn === 'accept_mailing') {
-              <i [class]="member.accept_mailing ? 'bi bi-check-circle-fill text-success' : 'bi bi-x-circle-fill text-danger'"></i>
-              }
-            </td>
-            <!-- <td class="d-none d-sm-table-cell text-center">
+              <td class="d-none d-sm-table-cell">
+                @if (selectedInfoColumn === 'license_number') {
+                {{ member.license_number }}
+                } @else if (selectedInfoColumn === 'membership_date') {
+                {{ member.membership_date ? (member.membership_date | date:'dd/MM/yyyy') : '' }}
+                } @else if (selectedInfoColumn === 'register_date') {
+                {{ member.register_date ? (member.register_date | date:'dd/MM/yyyy') : '' }}
+                } @else if (selectedInfoColumn === 'email') {
+                {{ member.email }}
+                } @else if (selectedInfoColumn === 'birthdate') {
+                {{ member.birthdate | date:'dd/MM/yyyy' : '' }}
+                } @else if (selectedInfoColumn === 'phone_one') {
+                {{ member.phone_one | phone }}
+                } @else if (selectedInfoColumn === 'city') {
+                {{ member.city }}
+                } @else if (selectedInfoColumn === 'accept_mailing') {
+                <i
+                  [class]="member.accept_mailing ? 'bi bi-check-circle-fill text-success' : 'bi bi-x-circle-fill text-danger'"></i>
+                }
+              </td>
+              <!-- <td class="d-none d-sm-table-cell text-center">
               @if (member.iv !== null) {
-                @let parts = get_iv_code_parts(member.iv);
+                @let parts = getIvCodeParts(member.iv);
                 <span>{{ parts.series }}<span [style.color]="parts.suitColor" style="font-weight: bold;">{{ parts.suit }}</span>{{ parts.tail }}</span>
               } @else {
                 -
               }
             </td> -->
-            <td class="d-none d-sm-table-cell text-center"> <i (click)="access_settings(member)"
-                class="bi bi-gear-fill"></i> </td>
-            <td class="d-none d-sm-table-cell text-center">
-              <i class="bi bi-trash" (click)="deleteMember(member)"></i>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+              <td class="d-none d-sm-table-cell text-center"> <i (click)="accessSettings(member)"
+                  class="bi bi-gear-fill"></i> </td>
+              <td class="d-none d-sm-table-cell text-center">
+                <i class="bi bi-trash" (click)="deleteMember(member)"></i>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
     </div>

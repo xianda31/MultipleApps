@@ -65,6 +65,15 @@ android/.gradle/
 android/.kotlin/
 android/app/build/
 android/build/
+android/keystore.properties
+android/*.jks
+android/*.keystore
+mobile/**/android/.gradle/
+mobile/**/android/app/build/
+mobile/**/android/build/
+mobile/**/android/capacitor-cordova-android-plugins/
+mobile/**/android/app/src/main/assets/
+mobile/**/android/app/src/main/res/xml/config.xml
 mobile/**/android/.gradle/
 mobile/**/android/app/build/
 mobile/**/android/build/

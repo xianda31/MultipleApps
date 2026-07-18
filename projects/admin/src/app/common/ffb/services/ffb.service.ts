@@ -29,7 +29,7 @@ import {
 const FFB_ENDPOINTS = {
   alive: '/api/ffb/v2/alive',
   person: '/api/ffb/v2/person',
-  memberSearch: '/api/ffb/v2/persons/search',
+  personSearch: '/api/ffb/v2/persons/search',
   currentSeason: '/api/ffb/v2/seasons/current',
   previousSeasonsSearch: '/api/ffb/v2/seasons/search',
   organizations: '/api/ffb/v2/organizations',
@@ -144,26 +144,65 @@ export class FFB_proxyService {
     }
   }
 
+  private buildPlayerSearchQueryParams(hint: string, currentPage?: number, maxPerPage?: number): Record<string, string> {
+    const queryParams: Record<string, string> = {
+      name: hint,
+      sortField: 'lastName',
+      alive: '1',
+    };
 
+    if (currentPage !== undefined) {
+      queryParams['currentPage'] = String(currentPage);
+    }
 
-  async searchPlayersSuchAs(hint: string, currentPage: number = 1, maxPerPage: number = 80): Promise<ClubMember[]> {   // VALIDATED
+    if (maxPerPage !== undefined) {
+      queryParams['maxPerPage'] = String(maxPerPage);
+    }
+
+    return queryParams;
+  }
+
+  async searchPlayersSuchAs(hint: string): Promise<ClubMember[]> {   // VALIDATED
     try {
       await this.ensureConfigReady();
       const restOperation = get({
         apiName: this.API_NAME,
-        path: this.buildPath(FFB_ENDPOINTS.memberSearch),
+        path: this.buildPath(FFB_ENDPOINTS.personSearch),
         options: this.withTraceHeaders({
-          queryParams: {
-            name: hint,
-            currentPage: String(currentPage),
-            maxPerPage: String(maxPerPage)
-          }
+          queryParams: this.buildPlayerSearchQueryParams(hint)
         })
       });
       const { body } = await restOperation.response;
       const data = await body.json();
-      // FFB V2 returns { items: [...], pagination: {...} } - same format as club-members
-      return toClubMemberList(data);
+
+      const firstPageItems = toClubMemberList(data);
+      const pagination = (data as any)?.pagination;
+
+      if (!pagination || typeof pagination !== 'object') {
+        return firstPageItems;
+      }
+
+      const totalPages = pagination.total_pages || 1;
+      const perPage = pagination.per_page || 80;
+      if (totalPages <= 1) {
+        return firstPageItems;
+      }
+
+      const allItems: ClubMember[] = [...firstPageItems];
+      for (let currentPage = 2; currentPage <= totalPages; currentPage++) {
+        const nextRestOperation = get({
+          apiName: this.API_NAME,
+          path: this.buildPath(FFB_ENDPOINTS.personSearch),
+          options: this.withTraceHeaders({
+            queryParams: this.buildPlayerSearchQueryParams(hint, currentPage, perPage)
+          })
+        });
+        const { body: nextBody } = await nextRestOperation.response;
+        const nextData = await nextBody.json();
+        allItems.push(...toClubMemberList(nextData));
+      }
+
+      return allItems;
     } catch (error) {
       console.log('GET call failed: ', error);
       return [];

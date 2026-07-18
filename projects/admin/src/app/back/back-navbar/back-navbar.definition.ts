@@ -19,7 +19,7 @@ export const STATIC_MENUS: NavbarMenu[] = [
         subMenus: [
             { label: 'vente adhérent', route: BACK_ROUTE_PATHS.Shop },
             { label: 'billetterie', route: BACK_ROUTE_PATHS.Billetterie },
-            // { label: 'produits à la vente', route: BACK_ROUTE_PATHS.Products }
+            { label: 'produits à la vente', route: BACK_ROUTE_PATHS.Products }
         ]
     },
     {

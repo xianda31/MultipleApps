@@ -2,20 +2,16 @@ import { Component } from '@angular/core';
 import { TitleService } from '../../../title/title.service';
 import { GenericPageComponent } from '../generic-page/generic-page.component';
 import { TournamentsComponent } from '../../../../common/tournaments/tournaments/tournaments.component';
-import { Router, ActivatedRoute } from '@angular/router';
-import { NavItemsService } from '../../../../common/services/navitem.service';
-import { NAVITEM_PLUGIN } from '../../../../common/interfaces/plugin.interface';
 import { EXTRA_TITLES, MENU_TITLES } from '../../../../common/interfaces/page_snippet.interface';
 import { MembersService } from '../../../../common/services/members.service';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 import { BreakpointsSettings, UIConfiguration } from '../../../../common/interfaces/ui-conf.interface';
 import { combineLatest, map, Observable, switchMap, tap, interval, Subscription, catchError, of } from 'rxjs';
-import { LicenseStatus, Member } from '../../../../common/interfaces/member.interface';
+import { Member } from '../../../../common/interfaces/member.interface';
 import { AuthentificationService } from '../../../../common/authentification/authentification.service';
 import { CommonModule } from '@angular/common';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { FileService } from '../../../../common/services/files.service';
-import { ConnexionComponent } from '../../../../common/authentification/connexion/connexion.component';
 
 @Component({
   selector: 'app-home-page',
@@ -41,6 +37,7 @@ export class HomePage {
   readonly FADE_OUT_MS = 1500;      // sequential fade-out duration
   // readonly FADE_IN_MS = 1500;       // sequential fade-in duration
   private rotationSub?: Subscription;
+  private countersSub?: Subscription;
   transitioning = false; // legacy flag (unused in sequential fade)
   opacity = 1;           // controls sequential fade opacity
   tournaments_row_cols: BreakpointsSettings = { SM: 1, MD: 2, LG: 3, XL: 4 };
@@ -70,9 +67,10 @@ export class HomePage {
 
     this.titleService.setTitle('Les actualités et les prochains tournois de régularité');
 
-    this.membersService.listMembers().subscribe((members) => {
-      this.licensee_nbr = members.filter(m => m.license_status !== LicenseStatus.UNREGISTERED).length;
-      this.student_nbr = members.filter(m => m.membership_date && (m.license_status === LicenseStatus.UNREGISTERED)).length;
+    this.countersSub = this.membersService.listMembers().subscribe((members) => {
+      const counters = this.membersService.computeStatusCountersFromMembers();
+      this.licensee_nbr = counters.ffbAdherents;
+      this.student_nbr = counters.noLicense;
     });
 
     this.fileService.list_files(this.home_folder + '/').pipe(
@@ -167,6 +165,7 @@ export class HomePage {
 
   ngOnDestroy(): void {
     this.rotationSub?.unsubscribe();
+    this.countersSub?.unsubscribe();
   }
 
   next_birthdays: { day: string; members: Member[]; }[] = [];

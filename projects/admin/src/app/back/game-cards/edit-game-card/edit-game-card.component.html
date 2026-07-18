@@ -10,10 +10,41 @@
         </div>
         <div class="text-muted">
             <span class="fw-bolder">titulaire(s) :</span>
-            <span *ngFor="let owner of card.owners; let j = index">
-                <span *ngIf="j > 0"> &nbsp;et&nbsp; </span>
-                {{owner.lastname}} {{owner.firstname}}
-            </span>
+            <div class="d-flex flex-column gap-2 mt-1">
+                <div class="d-flex flex-wrap gap-1 align-items-center">
+                    <ng-container *ngFor="let owner of card.owners">
+                        <span class="badge text-bg-light border">
+                            {{owner.lastname}} {{owner.firstname}}
+                        </span>
+                        <button
+                            *ngIf="canRemoveOwner()"
+                            class="btn btn-sm btn-outline-danger py-0 px-1"
+                            type="button"
+                            (click)="removeOwner(owner.license_number)">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </ng-container>
+                </div>
+
+                <div class="input-group input-group-sm" *ngIf="card.owners.length < 2">
+                    <select
+                        class="form-select"
+                        [value]="selectedOwnerLicense"
+                        (change)="selectedOwnerLicense = $any($event.target).value">
+                        <option value="">Ajouter un titulaire...</option>
+                        <option *ngFor="let member of ownerCandidates()" [value]="member.license_number">
+                            {{member.lastname}} {{member.firstname}}
+                        </option>
+                    </select>
+                    <button
+                        class="btn btn-outline-primary"
+                        type="button"
+                        [disabled]="!selectedOwnerLicense"
+                        (click)="addOwner()">
+                        Ajouter
+                    </button>
+                </div>
+            </div>
         </div>
         <div class="row justify-content-between  align-items-center mb-2">
             <div class="col-6 text-muted">
