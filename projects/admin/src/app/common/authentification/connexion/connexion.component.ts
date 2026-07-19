@@ -10,7 +10,6 @@ import { AuthentificationRedirectService } from '../authentification-redirect.se
 import { MembersService } from '../../services/members.service';
 import { Group_icons } from '../group.interface';
 import { TitleService } from '../../../front/title/title.service';
-import { InputCodeComponent } from '../../components/input-code/input-code.component';
 
 const EMAIL_PATTERN = "^[_A-Za-z0-9-\+]+(\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\.[A-Za-z0-9]+)*(\.[A-Za-z]{2,})$";
 const PSW_PATTERN = '^(?!\\s+)(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[\\^$*.[\\]{}()?"!@#%&/\\\\,><\': ;| _~`=+-]).{8,256}(?<!\\s)$';
@@ -21,17 +20,13 @@ const GROUP_ICONS = Group_icons;
   standalone: true,
   templateUrl: './connexion.component.html',
   styleUrl: './connexion.component.scss',
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, InputCodeComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
 })
 export class ConnexionComponent implements AfterViewInit {
-  readonly confirmationCodeLength = 6;
-  resendCooldownSeconds = 0;
-  signupCooldownSeconds = 0;
-  private resendCooldownTimer: ReturnType<typeof setInterval> | null = null;
-  private signupCooldownTimer: ReturnType<typeof setInterval> | null = null;
 
   sign_up_sent: boolean = false;
   process_flow = Process_flow;
+  canShowSignUp = false;
   isBackContext: boolean = false;
 
   logging_msg: string = '';
@@ -76,7 +71,7 @@ export class ConnexionComponent implements AfterViewInit {
   ) {
     this.loggerForm = this.fb.group({
       email: ['', { validators: [Validators.required, Validators.pattern(EMAIL_PATTERN)] }],
-      password: ['', [Validators.required]],
+      password: ['', [Validators.required, Validators.pattern(PSW_PATTERN)]],
       // new password is only used in RESET PASSWORD flows; validators applied dynamically when needed
       new_password: [''],
       code: [''],
@@ -88,9 +83,6 @@ export class ConnexionComponent implements AfterViewInit {
     // Track current mode for navigation decisions
     this.mode$.subscribe(m => {
        this.currentMode = m;
-       if (m === Process_flow.CONFIRM_RESET_PASSWORD || m === Process_flow.CONFIRM_SIGN_UP) {
-      this.normalizeCodeControl();
-       }
       // console.log('Current auth mode:', m);
       });
     
@@ -142,7 +134,15 @@ export class ConnexionComponent implements AfterViewInit {
         } else if (name === 'PasswordResetRequiredException') {
           this.logging_msg = 'Réinitialisation requise. Un code vous a été envoyé par e-mail.';
         } else if (name === 'NotAuthorizedException') {
-          this.logging_msg = 'Adresse e-mail ou mot de passe incorrect.';
+          // Vérifier si l'email existe dans la base membres
+          const member = await this.membersService.searchMemberByEmail(this.email.value);
+          if (member) {
+            this.logging_msg = "Compte inexistant ou mot de passe incorrect.";
+            this.canShowSignUp = true;
+          } else {
+            this.logging_msg = "Email inconnu.";
+            this.canShowSignUp = false;
+          }
         } else {
           this.logging_msg = err?.message || 'Connexion impossible';
         }
@@ -251,42 +251,26 @@ export class ConnexionComponent implements AfterViewInit {
     // Clear any previous sign-in error when switching to sign-up
     this.logging_msg = '';
     this.signup_msg = '';
+    this.canShowSignUp = false;
     // Add async member-existence check only for sign-up flow
     this.loggerForm.get('email')?.addAsyncValidators(this.emailValidator);
     this.loggerForm.get('email')?.updateValueAndValidity({ emitEvent: false });
-    this.password.setValidators([Validators.required, Validators.pattern(PSW_PATTERN)]);
-    this.password.updateValueAndValidity({ onlySelf: true, emitEvent: false });
-    this.resetCodeControl();
     this.auth.changeMode(Process_flow.SIGN_UP);
   }
 
   async signUp() {
-    if (this.signupCooldownSeconds > 0) {
-      this.signup_msg = 'Quota Cognito temporairement saturé. Merci de patienter avant de réessayer.';
-      return;
-    }
-
     let member = await this.membersService.searchMemberByEmail(this.email.value);
     await this.auth.signUp(this.email.value, this.password.value, member!.id)
       .then(({ isSignUpComplete, nextStep }) => {
         this.sign_up_sent = true;
-        this.resetCodeControl();
       })
       .catch((err) => {
-        if (err.name === 'UsernameExistsException') {
-          this.signup_msg = 'Compte déjà créé mais non confirmé. Saisissez le code reçu par e-mail.';
-          this.sign_up_sent = true;
-          this.resetCodeControl();
-          return;
+        if(err.name !== 'UsernameExistsException') {
+          console.warn('sign up erreur imprévue',err);
+        }else{
+          this.logging_msg = 'vous avez déjà un compte, veuillez vous connecter';
+          this.auth.changeMode(Process_flow.SIGN_IN);
         }
-
-        if (err.name === 'LimitExceededException') {
-          this.signup_msg = 'Quota quotidien Cognito atteint. Attendez 24h ou configurez Amazon SES pour augmenter la capacité d\'envoi.';
-          this.startSignupCooldown(300);
-          return;
-        }
-
-        console.warn('sign up erreur imprévue',err);
       });
   }
 
@@ -300,7 +284,6 @@ export class ConnexionComponent implements AfterViewInit {
         this.logging_msg = '';
         this.toastService.showSuccess('création compte', 'Compte confirmé. Vous pouvez vous connecter.');
         this.sign_up_sent = false;
-        this.resetCodeControl();
         this.auth.changeMode(Process_flow.SIGN_IN);
       })
       .catch((err) => {
@@ -323,7 +306,6 @@ export class ConnexionComponent implements AfterViewInit {
     this.loggerForm.controls['code'].updateValueAndValidity({ onlySelf: true, emitEvent: false });
     this.loggerForm.controls['new_password'].setValidators([Validators.required, Validators.pattern(PSW_PATTERN)]);
     this.loggerForm.controls['new_password'].updateValueAndValidity({ onlySelf: true, emitEvent: false });
-    this.resetCodeControl();
     this.auth.changeMode(Process_flow.RESET_PASSWORD);
   }
   resetPassword() {
@@ -333,83 +315,9 @@ export class ConnexionComponent implements AfterViewInit {
     this.loggerForm.get('new_password')?.disable({ emitEvent: false });
   }
   resendConfirmEmailCode() {
-    if (this.resendCooldownSeconds > 0 || !this.email.value) return;
-
-    this.auth.resendConfirmationCode(this.email.value)
-      .then(() => {
-        this.startResendCooldown(45);
-      })
-      .catch((err: any) => {
-        if (err?.name === 'LimitExceededException') {
-          this.signup_msg = 'Trop de demandes de code. Patientez un instant avant de réessayer.';
-          this.startResendCooldown(90);
-        }
-      });
+    if (!this.email.value) return;
+    this.auth.resendConfirmationCode(this.email.value);
   }
-
-  private startResendCooldown(seconds: number): void {
-    if (this.resendCooldownTimer) {
-      clearInterval(this.resendCooldownTimer);
-      this.resendCooldownTimer = null;
-    }
-
-    this.resendCooldownSeconds = seconds;
-    this.resendCooldownTimer = setInterval(() => {
-      if (this.resendCooldownSeconds <= 1) {
-        this.resendCooldownSeconds = 0;
-        if (this.resendCooldownTimer) {
-          clearInterval(this.resendCooldownTimer);
-          this.resendCooldownTimer = null;
-        }
-        return;
-      }
-
-      this.resendCooldownSeconds -= 1;
-    }, 1000);
-  }
-
-  private stopResendCooldown(): void {
-    if (this.resendCooldownTimer) {
-      clearInterval(this.resendCooldownTimer);
-      this.resendCooldownTimer = null;
-    }
-    this.resendCooldownSeconds = 0;
-  }
-
-  private startSignupCooldown(seconds: number): void {
-    if (this.signupCooldownTimer) {
-      clearInterval(this.signupCooldownTimer);
-      this.signupCooldownTimer = null;
-    }
-
-    this.signupCooldownSeconds = seconds;
-    this.signupCooldownTimer = setInterval(() => {
-      if (this.signupCooldownSeconds <= 1) {
-        this.signupCooldownSeconds = 0;
-        if (this.signupCooldownTimer) {
-          clearInterval(this.signupCooldownTimer);
-          this.signupCooldownTimer = null;
-        }
-        return;
-      }
-
-      this.signupCooldownSeconds -= 1;
-    }, 1000);
-  }
-
-  private stopSignupCooldown(): void {
-    if (this.signupCooldownTimer) {
-      clearInterval(this.signupCooldownTimer);
-      this.signupCooldownTimer = null;
-    }
-    this.signupCooldownSeconds = 0;
-  }
-
-  ngOnDestroy(): void {
-    this.stopResendCooldown();
-    this.stopSignupCooldown();
-  }
-
   resendResetPasswordCode() {
     if (!this.email.value) return;
     this.auth.resetPassword(this.email.value);
@@ -428,8 +336,6 @@ export class ConnexionComponent implements AfterViewInit {
     this.loggerForm.get('code')?.reset('');
     this.loggerForm.get('code')?.setValidators([]);
     this.loggerForm.get('code')?.updateValueAndValidity({ onlySelf: true, emitEvent: false });
-    this.password.setValidators([Validators.required]);
-    this.password.updateValueAndValidity({ onlySelf: true, emitEvent: false });
     const newPwdCtrl = this.loggerForm.get('new_password');
     if (newPwdCtrl?.disabled) newPwdCtrl.enable({ emitEvent: false });
     newPwdCtrl?.reset('');
@@ -437,21 +343,9 @@ export class ConnexionComponent implements AfterViewInit {
     newPwdCtrl?.updateValueAndValidity({ onlySelf: true, emitEvent: false });
     this.logging_msg = '';
     this.signup_msg = '';
-    this.resetCodeControl();
     this.showPassword = false;
     this.showNewPassword = false;
     this.auth.changeMode(Process_flow.SIGN_IN);
-  }
-
-  private resetCodeControl(value = ''): void {
-    const normalized = value.replace(/\D/g, '').slice(0, this.confirmationCodeLength);
-    this.code.setValue(normalized, { emitEvent: false });
-    this.code.markAsPristine();
-    this.code.updateValueAndValidity({ onlySelf: true, emitEvent: false });
-  }
-
-  private normalizeCodeControl(): void {
-    this.resetCodeControl(this.code.value ?? '');
   }
   
 
