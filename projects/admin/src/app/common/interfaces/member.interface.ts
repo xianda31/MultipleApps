@@ -17,7 +17,6 @@ export interface Member extends Member_settings{
   lastname: string;
   license_number: string;
   birthdate: string
-  season: string
   license_status: string
   license_taken_at: string
   membership_date: string;

@@ -87,7 +87,6 @@ export class MembersService {
       license_number: '',
       birthdate: '',
       city: '',
-      season: '',
       email: '',
       phone_one: '',
       license_status: '',

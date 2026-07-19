@@ -165,7 +165,6 @@ const schema = a.schema({
     lastname: a.string(),
     birthdate: a.string(),
     city: a.string(),
-    season: a.string(),
     phone_one: a.string(),
     orga_license_name: a.string(),
     is_sympathisant: a.boolean(),

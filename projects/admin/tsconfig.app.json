@@ -5,9 +5,10 @@
   "compilerOptions": {
     "outDir": "../../out-tsc/app",
     "types": [],
-    "noPropertyAccessFromIndexSignature": false
+    "noPropertyAccessFromIndexSignature": false,
+    "resolveJsonModule": true
   },
   "files": ["src/main.ts", "src/polyfills.ts"],
-  "include": ["src/**/*.d.ts"],
+  "include": ["src/**/*.d.ts", "../../amplify_outputs.json"],
   "exclude": ["../../amplify/**"]
 }

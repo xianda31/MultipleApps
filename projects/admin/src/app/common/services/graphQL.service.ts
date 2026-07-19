@@ -164,11 +164,39 @@ export class DBhandler {
 
   // Members Service
 
+  private readonly memberSelectionSet = [
+    'id',
+    'license_number',
+    'email',
+    'gender',
+    'firstname',
+    'lastname',
+    'birthdate',
+    'city',
+    'phone_one',
+    'orga_license_name',
+    'is_sympathisant',
+    'license_status',
+    'license_taken_at',
+    'register_date',
+    'has_avatar',
+    'accept_mailing',
+    'membership_date',
+    'person_id',
+    'memberStatus',
+    'iv',
+    'iv_code',
+    'createdAt',
+    'updatedAt',
+  ] as const;
+
   // MEMBER CREATE PROMISE
   async createMember(member: Member_input): Promise<Member> {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode: authMode });
-    const { data, errors } = await client.models.Member.create(member);
+    const { data, errors } = await client.models.Member.create(member, {
+      selectionSet: this.memberSelectionSet,
+    });
     if (errors) throw errors;
     return data as unknown as Member;
   }
@@ -177,7 +205,9 @@ export class DBhandler {
   async readMember(id: string): Promise<Member | null> {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode: authMode });
-    const { data, errors } = await client.models.Member.get({ id });
+    const { data, errors } = await client.models.Member.get({ id }, {
+      selectionSet: this.memberSelectionSet,
+    });
     if (errors) throw errors;
     return data as unknown as Member;
   }
@@ -186,7 +216,9 @@ export class DBhandler {
   async updateMember(member: Member): Promise<Member> {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode: authMode });
-    const { data, errors } = await client.models.Member.update(member);
+    const { data, errors } = await client.models.Member.update(member, {
+      selectionSet: this.memberSelectionSet,
+    });
     if (errors) throw errors;
     return data as unknown as Member;
   }
@@ -206,7 +238,10 @@ export class DBhandler {
       switchMap((authMode) => {
         const client = generateClient<Schema>({ authMode: authMode });
         return from(
-          client.models.Member.list({ limit: 300 })
+          client.models.Member.list({
+            limit: 300,
+            selectionSet: this.memberSelectionSet,
+          })
             .then(({ data, errors }) => {
               if (errors) {
                 console.error('Member.list error', errors);

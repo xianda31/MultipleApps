@@ -60,10 +60,9 @@ export class MemberSyncService {
         ]);
 
         let members = await this.getMembersSnapshot();
-        const season = this.systemDataService.get_season(new Date());
 
         for (const licensee of licensees) {
-            await this.createOrUpdateMember(members, licensee, season);
+            await this.createOrUpdateMember(members, licensee);
         }
 
         members = await this.commitPhase(() => this.resetObsoleteLicenses(members, licensees));
@@ -96,11 +95,11 @@ export class MemberSyncService {
         return this.getMembersSnapshot();
     }
 
-    private async createOrUpdateMember(members: Member[], clubMember: ClubMember, season: string): Promise<void> {
+    private async createOrUpdateMember(members: Member[], clubMember: ClubMember): Promise<void> {
         const existingMember = members.find((m) => m.license_number === clubMember.license_number);
 
         if (existingMember) {
-            const updatedMember = this.buildUpdatedMember(existingMember, clubMember, season);
+            const updatedMember = this.buildUpdatedMember(existingMember, clubMember);
             if (updatedMember) {
                 await this.membersService.updateMember(updatedMember);
             }
@@ -108,11 +107,11 @@ export class MemberSyncService {
         }
 
         const personV2 = await this.ffbService.getFFBPerson(clubMember.id).catch(() => null);
-        const newMember = this.createNewMember(clubMember, personV2, season);
+        const newMember = this.createNewMember(clubMember, personV2);
         await this.membersService.createMember(newMember);
     }
 
-    private buildUpdatedMember(member: Member, clubMember: ClubMember, season: string): Member | null {
+    private buildUpdatedMember(member: Member, clubMember: ClubMember): Member | null {
         const nextMember: Member = {
             id: member.id,
             license_number: clubMember.license_number,
@@ -121,7 +120,6 @@ export class MemberSyncService {
             lastname: clubMember.lastName.toUpperCase(),
             birthdate: clubMember.birthdate,
             city: member.city,
-            season: clubMember.licence ? season : '',
             email: member.email,
             phone_one: member.phone_one,
             license_taken_at: clubMember.club?.label ?? 'BCSTO',
@@ -150,7 +148,7 @@ export class MemberSyncService {
         return null;
     }
 
-    private createNewMember(clubMember: ClubMember, personV2: PersonV2 | null, season: string): Member {
+    private createNewMember(clubMember: ClubMember, personV2: PersonV2 | null): Member {
         const nextMember: Member = {
             id: '',
             gender: normalizeGender(clubMember.gender),
@@ -159,7 +157,6 @@ export class MemberSyncService {
             license_number: clubMember.license_number,
             birthdate: clubMember.birthdate,
             city: personV2?.city ?? '',
-            season: clubMember.licence ? season : '',
             email: personV2?.email ?? '',
             accept_mailing: !!personV2?.email,
             phone_one: personV2?.phone ?? '',

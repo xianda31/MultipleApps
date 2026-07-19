@@ -8,7 +8,6 @@ import { GetNewbeeComponent } from '../modals/get-newbee/get-newbee.component';
 import { InputPlayerComponent } from '../ffb/input-licensee/input-player.component';
 import { ClubMember } from '../ffb/interface/club-member.interface';
 import { Member, LicenseStatus } from '../interfaces/member.interface';
-import { SystemDataService } from '../services/system-data.service';
 import { ToastService } from '../services/toast.service';
 import { PhonePipe } from '../pipes/phone.pipe';
 import { MemberSettingsService } from '../services/member-settings.service';
@@ -39,7 +38,6 @@ export class MembersComponent implements OnInit {
   no_license_nbr: number = 0;
   lost_members_nbr: number = 0;
   new_player!: ClubMember;
-  season: string = '';
   STATUSES = MemberStatus;
   filters: MemberStatus[] = [
     MemberStatus.ADHERENT,
@@ -86,7 +84,6 @@ export class MembersComponent implements OnInit {
   constructor(
     private membersService: MembersService,
     private memberSettingsService: MemberSettingsService,
-    private sysConfService: SystemDataService,
     private modalService: NgbModal,
     private toastService: ToastService,
     private ffbService: FFB_proxyService,
@@ -95,10 +92,6 @@ export class MembersComponent implements OnInit {
   }
 
   ngOnInit(): void {
-
-    let today = new Date();
-    this.season = this.sysConfService.get_season(today);
-
     this.loading = true;
     void (async () => {
       try {
@@ -166,7 +159,6 @@ export class MembersComponent implements OnInit {
             license_number: '??' + newbee.lastname.toUpperCase().slice(0, 3) + newbee.firstname.slice(0, 3),
             birthdate: newbee.birthdate,
             city: this.capitalizeFirst(newbee.city.toLowerCase()),
-            season: '',
             email: newbee.email ?? '',
             phone_one: newbee.phone ?? '',
             license_taken_at: 'BCSTO',
@@ -251,7 +243,6 @@ export class MembersComponent implements OnInit {
     return this.getStatusLabel(status);
   }
 
-
   createNewMember(clubMember: ClubMember, personV2: PersonV2 | null): Member {
     return {
       id: '',
@@ -261,7 +252,6 @@ export class MembersComponent implements OnInit {
       license_number: clubMember.license_number,
       birthdate: clubMember.birthdate,
       city: personV2?.city ?? '',
-      season: clubMember.licence ? this.season : '',
       email: personV2?.email ?? '',
       accept_mailing: personV2?.email ? true : false,
       phone_one: personV2?.phone ?? '',
