@@ -57,11 +57,20 @@ export class AuthentificationService {
   }
 
   async resendConfirmationCode(email: string): Promise<void> {
+    console.info('[Auth] resendConfirmationCode:start', { email });
     try {
-      await resendSignUpCode({ username: email });
+      const result = await resendSignUpCode({ username: email });
+      console.info('[Auth] resendConfirmationCode:success', { email, result });
+      this.toastService.showSuccess('confirmation', 'Un code vous a été renvoyé par e-mail.');
     } catch (err: any) {
-      // Non bloquant, affichage informatif seulement
-      this.toastService.showInfo('confirmation', err?.message || 'Impossible de renvoyer le code');
+      console.error('[Auth] resendConfirmationCode:error', {
+        email,
+        name: err?.name,
+        message: err?.message,
+        err,
+      });
+      this.toastService.showError('confirmation', err?.message || 'Impossible de renvoyer le code');
+      throw err;
     }
   }
  
@@ -152,7 +161,6 @@ export class AuthentificationService {
             // Compte non confirmé: rester en vérification par e-mail
             await this.resendConfirmationCode(email);
             this.changeMode(Process_flow.CONFIRM_SIGN_UP);
-            this.toastService.showInfo('connexion', 'Compte non confirmé : un code vous a été renvoyé par e-mail');
             reject(err);
           } else if (err.name === 'PasswordResetRequiredException') {
             // Mot de passe à réinitialiser: envoyer le code par e-mail et basculer sur la confirmation
@@ -171,36 +179,66 @@ export class AuthentificationService {
 
 
   async signUp(email: string, password: string, member_id: string): Promise<SignUpOutput> {
-    // console.log('sign up', email, password, member_id);
+    console.info('[Auth] signUp:start', { email, member_id });
     let promise = new Promise<SignUpOutput>((resolve, reject) => {
       signUp({
         username: email,
         password: password,
         options: {
           userAttributes: {
+            email: email,
             "custom:member_id": member_id
           }
         }
       })
-        .catch((err) => {
+        .catch(async (err) => {
+          console.error('[Auth] signUp:error', {
+            email,
+            member_id,
+            name: err?.name,
+            message: err?.message,
+          });
           if (err instanceof AuthError) {
             switch (err.name) {
               case 'UserAlreadyAuthenticatedException':
                 this.toastService.showInfo('sign up', 'vous êtes déjà inscrit');
+                this._mode = Process_flow.SIGN_IN;
+                this._mode$.next(this._mode);
                 break;
-              case 'UsernameExistsException':
-                this.toastService.showInfo('création de compte', 'vous avez déjà un compte');
+              case 'UsernameExistsException': {
+                this.toastService.showInfo('sign up', 'Compte déjà créé. Saisissez le code déjà reçu ou renvoyez-en un manuellement.');
+                this._mode = Process_flow.CONFIRM_SIGN_UP;
+                this._mode$.next(this._mode);
                 break;
+              }
               case 'InvalidPasswordException':
                 this.toastService.showInfo('sign up', 'mot de passe non conforme');
+                this._mode = Process_flow.SIGN_UP;
+                this._mode$.next(this._mode);
+                break;
+              case 'LimitExceededException':
+                this.toastService.showInfo('sign up', 'Quota quotidien Cognito atteint. Réessayez plus tard ou activez Amazon SES pour augmenter la capacité d\'envoi.');
+                this._mode = Process_flow.SIGN_UP;
+                this._mode$.next(this._mode);
                 break;
               default:
+                console.warn('[Auth] signUp:unhandled-auth-error', {
+                  email,
+                  member_id,
+                  name: err?.name,
+                  message: err?.message,
+                });
                 this.toastService.showInfo('sign up', err.message);
+                this._mode = Process_flow.SIGN_IN;
+                this._mode$.next(this._mode);
                 break;
             }
-            this._mode = Process_flow.SIGN_IN;
-            this._mode$.next(this._mode);
           } else {
+            console.warn('[Auth] signUp:non-auth-error', {
+              email,
+              member_id,
+              message: err?.message,
+            });
             this.toastService.showInfo('sign up', err.message);
           }
           reject(err);
@@ -208,6 +246,12 @@ export class AuthentificationService {
         .then((res) => {
           if (res) {
             let output = res as SignUpOutput;
+            console.info('[Auth] signUp:success', {
+              email,
+              member_id,
+              isSignUpComplete: output.isSignUpComplete,
+              nextStep: output.nextStep,
+            });
             if (output.nextStep.signUpStep === 'CONFIRM_SIGN_UP') {
               this._mode = Process_flow.CONFIRM_SIGN_UP;
               this._mode$.next(this._mode);
@@ -265,9 +309,11 @@ export class AuthentificationService {
   }
 
   async confirmSignUp(email: string, code: string): Promise<any> {
+    console.info('[Auth] confirmSignUp:start', { email, codeLength: (code || '').length });
     let promise = new Promise((resolve, reject) => {
       confirmSignUp({ username: email, confirmationCode: code })
         .then(({ isSignUpComplete, nextStep }) => {
+          console.info('[Auth] confirmSignUp:success', { email, isSignUpComplete, nextStep });
 
           // this.toastService.showSuccess('sign up', 'confirmed');
           this._mode = Process_flow.SIGN_IN;
@@ -275,6 +321,13 @@ export class AuthentificationService {
         }
         )
         .catch((err) => {
+          console.error('[Auth] confirmSignUp:error', {
+            email,
+            codeLength: (code || '').length,
+            name: err?.name,
+            message: err?.message,
+            err,
+          });
           this.toastService.showError('sign up confirmation', err.message);
           reject(err);
         });

@@ -1,0 +1,27 @@
+<div class="input-code" [style.--code-length]="length" (click)="focus(activeIndex)">
+  <input
+    #proxyInput
+    type="text"
+    class="input-code__proxy"
+    [attr.aria-label]="ariaLabel"
+    [attr.inputmode]="digitsOnly ? 'numeric' : 'text'"
+    [attr.autocomplete]="digitsOnly ? 'one-time-code' : 'off'"
+    [value]="value"
+    [attr.maxlength]="length"
+    [disabled]="disabled"
+    (focus)="onProxyFocus()"
+    (blur)="onProxyBlur()"
+    (keydown)="onProxyKeydown($event)"
+    (input)="onProxyInput($event)" />
+
+  <button
+    *ngFor="let char of chars; let index = index"
+    type="button"
+    class="input-code__cell"
+    [class.is-active]="index === activeIndex"
+    [disabled]="disabled"
+    [attr.aria-label]="'Caractere ' + (index + 1)"
+    (click)="onShellClick(index)">
+    {{ char }}
+  </button>
+</div>
