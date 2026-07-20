@@ -18,14 +18,14 @@ export class AssistanceRequestService {
    * Crée une demande d'assistance automatique pour tracer les pannes de connexion.
    * Utilisé pour les cas où la session est corrompue ou incohérente.
    */
-  async reportAuthError(email: string, errorType: string, errorDetails: string) {
+  async reportAuthError(email: string, summary: string, errorDetails: string) {
     try {
       const input: AssistanceRequestInput = {
         nom: '[SYSTÈME]',
         prenom: 'Auto-rapport',
         email: email || 'inconnu',
         type: 'Problème à la connexion',
-        texte: `[Auto-diagnostic] ${errorType}\n\nDétails: ${errorDetails}\n\nDate: ${new Date().toISOString()}\nUser-Agent: ${navigator.userAgent}`,
+        texte: `[Auto-diagnostic] ${summary}\n\nDétails techniques: ${errorDetails}\n\nDate: ${new Date().toISOString()}\nUser-Agent: ${navigator.userAgent}`,
         status: REQUEST_STATUS.NEW
       };
       await this.db.createAssistanceRequest(input);

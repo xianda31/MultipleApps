@@ -5,6 +5,28 @@
     min-height: 50%;
 }
 
+.auth-form-shell {
+    width: 100%;
+    max-width: 500px;
+}
+
+.auth-card {
+    border: 1px solid #d7ddd1;
+    border-radius: 0.75rem;
+    box-shadow: 0 16px 40px rgba(50, 73, 49, 0.08);
+}
+
+.auth-card__logo {
+    max-width: 82px;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.auth-card__content {
+    padding: 0.5rem 0.75rem 0.25rem;
+}
+
 .bcsto {
     width: auto;
     max-height: 100px;
@@ -28,6 +50,7 @@
 /* Auth form layout tweaks */
 .auth-field {
     max-width: 420px;
+    margin: 0 auto;
 }
 
 .auth-input {
@@ -35,10 +58,20 @@
 }
 
 .btn-login {
-    padding: 0.75rem 0.5rem; /* taller, narrower */
+    padding: 0.8rem 0.9rem;
     font-weight: 600;
-    text-transform: uppercase; /* uppercase text */
-    color: #fff; /* ensure white text on green */
+    letter-spacing: 0.01em;
+    color: #fff;
+    border-radius: 0.5rem;
+}
+
+.btn-outline-success.btn-login {
+    color: #198754;
+}
+
+.btn-outline-success.btn-login:hover,
+.btn-outline-success.btn-login:focus {
+    color: #fff;
 }
 
 .link-forgot {
@@ -54,6 +87,52 @@
 .subtitle-email {
     font-size: 0.9rem;
     color: var(--bs-secondary-color, #6c757d);
+}
+
+.auth-helper-note {
+    padding: 0.8rem 0.95rem;
+    border-radius: 0.65rem;
+    background: linear-gradient(180deg, #f7fbf3 0%, #eef7e8 100%);
+    border: 1px solid #cfe2c7;
+    color: #466245;
+    font-size: 0.92rem;
+    line-height: 1.45;
+}
+
+.auth-action-group {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0.75rem;
+}
+
+.auth-action-group__primary,
+.auth-action-group__secondary {
+    width: 100%;
+}
+
+.auth-inline-link-row {
+    min-height: 1.75rem;
+}
+
+.auth-support {
+    padding-top: 1rem;
+    margin-top: 0.75rem;
+    border-top: 1px solid #e3e8dd;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    color: #647160;
+    text-align: center;
+}
+
+.auth-support__title {
+    margin-bottom: 0.2rem;
+    font-weight: 600;
+    color: #4d5c49;
+}
+
+.auth-support__link {
+    color: #146c43;
+    text-decoration: underline;
 }
 
 /* Inputs: equal width is handled by Bootstrap grid; increase height and set pale yellow background */
@@ -169,6 +248,24 @@
     h5 {
         margin-bottom: 0.2rem !important;
         font-size: 0.95rem !important;
+    }
+}
+
+@media (max-width: 575px) {
+    .auth-card__logo {
+        max-width: 72px;
+    }
+
+    .auth-card__content {
+        padding: 0.35rem 0.25rem 0.1rem;
+    }
+
+    .auth-action-group {
+        grid-template-columns: 1fr;
+    }
+
+    .auth-helper-note {
+        font-size: 0.88rem;
     }
 }
 
