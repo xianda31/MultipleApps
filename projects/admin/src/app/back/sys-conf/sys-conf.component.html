@@ -70,6 +70,18 @@
                   <label class="form-check-label ms-2">{{traceModeEnabled ? 'activé' : 'désactivé'}}</label>
                 </div>
               </div>
+              <div class="row mt-3 align-items-center">
+                <div class="col-12 col-md-6 fw-bold">Rétention des tickets d'assistance résolus</div>
+                <div class="col-12 col-md-4">
+                  <div class="input-group input-group-sm">
+                    <input type="number" class="form-control" formControlName="assistance_request_retention_days" min="1" step="1">
+                    <span class="input-group-text">jours</span>
+                  </div>
+                </div>
+                <div class="col-12 col-md-2 text-muted small">
+                  purge auto via TTL
+                </div>
+              </div>
             </div>
           </div>
         </div>

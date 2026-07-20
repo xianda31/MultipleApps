@@ -497,6 +497,7 @@ AssistanceRequest: a.model({
   type: a.string().required(),
   texte: a.string().required(),
   status: a.string().required(),
+  ttl: a.integer(),                        // TTL DynamoDB (epoch seconds) — purge auto après résolution
 })
 .authorization((allow) => [
   allow.guest().to(['create']),

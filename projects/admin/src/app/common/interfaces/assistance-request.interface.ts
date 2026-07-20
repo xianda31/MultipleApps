@@ -7,6 +7,7 @@ export interface AssistanceRequest {
     texte: string;
     status: string;
     createdAt: string;
+    ttl?: number;
 }
 
 export interface AssistanceRequestInput {
@@ -16,6 +17,7 @@ export interface AssistanceRequestInput {
     type: string;
     texte: string;
     status: string;
+    ttl?: number;
 }
 
 const REQUEST_TYPES = [

@@ -64,6 +64,19 @@ export class AssistanceRequestService {
     }
   }
 
+  async deleteRequest(id: string) {
+    try {
+      await this.db.deleteAssistanceRequest(id);
+      if (this._requests) {
+        this._requests = this._requests.filter((request) => request.id !== id);
+        this._request$.next(this._requests);
+      }
+      this.toastService.showSuccess('Demande supprimée', `La demande a bien été supprimée.`);
+    } catch (error) {
+      this.toastService.showError('Erreur', `La suppression de la demande a échoué.`);
+    }
+  }
+
   getAllRequests(): Observable<AssistanceRequest[]> {
 
     let remote_loads$ = this.db.listAssistanceRequests().pipe(

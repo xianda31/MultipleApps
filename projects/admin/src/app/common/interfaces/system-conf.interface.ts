@@ -38,6 +38,8 @@ export interface SystemConfiguration {
     season?: string; // lecture seule depuis S3 (compatibilité anciens fichiers) — géré localement par SystemDataService
     club_bank_key: string;
 
+    assistance_request_retention_days?: number;
+
     online_payment_active: boolean;
     tpe_payment_active: boolean;
     CB_fees_account: string;

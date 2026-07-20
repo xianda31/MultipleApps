@@ -250,6 +250,14 @@ if (cfnStripeTransactionTable) {
   cfnStripeTransactionTable.timeToLiveSpecification = { enabled: true, attributeName: 'ttl' };
 }
 
+// Activer TTL DynamoDB sur les demandes d'assistance résolues
+const assistanceRequestTable = backend.data.resources.tables['AssistanceRequest'];
+const cfnAssistanceRequestTable = assistanceRequestTable.node.tryFindChild('Resource') as CfnTable
+  ?? assistanceRequestTable.node.children.find((c: Construct): c is CfnTable => c instanceof CfnTable);
+if (cfnAssistanceRequestTable) {
+  cfnAssistanceRequestTable.timeToLiveSpecification = { enabled: true, attributeName: 'ttl' };
+}
+
 // Grant both email Lambdas access to Member table
 const memberTable = backend.data.resources.tables['Member'];
 memberTable.grantReadWriteData(backend.emailUnsubscribe.resources.lambda);

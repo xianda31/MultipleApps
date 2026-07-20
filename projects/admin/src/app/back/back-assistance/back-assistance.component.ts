@@ -4,6 +4,8 @@ import { AssistanceRequest, REQUEST_STATUS } from '../../common/interfaces/assis
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AssistanceRequestService } from '../../common/services/assistance-request.service';
+import { SystemDataService } from '../../common/services/system-data.service';
+import { take } from 'rxjs';
 
 @Component({
     selector: 'app-back-assistance',
@@ -23,8 +25,16 @@ export class BackAssistanceComponent implements OnInit {
 
     statusFilter: string = '';
     sortOrder: 'asc' | 'desc' = 'desc';
+    private resolvedRetentionDays = 90;
 
-    constructor(private assistanceService: AssistanceRequestService) { }
+    get resolvedRetentionLabel(): string {
+        return `Suppression automatique des tickets résolus après ${this.resolvedRetentionDays} jours`;
+    }
+
+    constructor(
+        private assistanceService: AssistanceRequestService,
+        private systemDataService: SystemDataService
+    ) { }
 
     getStatusBadgeClass(status: string): string {
         if (status === REQUEST_STATUS.NEW) return 'bg-danger';
@@ -45,6 +55,9 @@ export class BackAssistanceComponent implements OnInit {
     }
 
     ngOnInit() {
+        this.systemDataService.get_configuration().pipe(take(1)).subscribe((conf) => {
+            this.resolvedRetentionDays = conf.assistance_request_retention_days ?? 90;
+        });
         this.assistanceService.getAllRequests().subscribe(requests => {
             this.requests = requests;
         });
@@ -67,7 +80,14 @@ export class BackAssistanceComponent implements OnInit {
     }
 
     updateStatus(request: AssistanceRequest, newStatus: string) {
-        const updated = { ...request, status: newStatus };
+        const ttl = newStatus === REQUEST_STATUS.RESOLVED
+            ? Math.floor(Date.now() / 1000) + this.resolvedRetentionDays * 24 * 3600
+            : undefined;
+        const updated = { ...request, status: newStatus, ttl };
         this.assistanceService.updateRequest(updated);
+    }
+
+    deleteRequest(request: AssistanceRequest) {
+        this.assistanceService.deleteRequest(request.id);
     }
 }

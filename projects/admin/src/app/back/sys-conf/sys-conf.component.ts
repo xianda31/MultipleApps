@@ -39,6 +39,7 @@ export class SysConfComponent {
       club_identifier: [''],
       trace_mode: [false],
       club_bank_key: [''],
+      assistance_request_retention_days: [90],
       online_payment_active: [false],
       tpe_payment_active: [false],
       CB_fees_account: [''],
