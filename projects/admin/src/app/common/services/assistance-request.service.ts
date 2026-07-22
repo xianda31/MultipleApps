@@ -10,6 +10,8 @@ export class AssistanceRequestService {
   _requests !: AssistanceRequest[];
   _request$: BehaviorSubject<AssistanceRequest[]> = new BehaviorSubject(this._requests);
 
+  private readonly AUTH_REPORT_SCHEMA_VERSION = '2';
+
   constructor(
     private db: DBhandler,
      private toastService: ToastService) { }
@@ -18,14 +20,49 @@ export class AssistanceRequestService {
    * Crée une demande d'assistance automatique pour tracer les pannes de connexion.
    * Utilisé pour les cas où la session est corrompue ou incohérente.
    */
-  async reportAuthError(email: string, summary: string, errorDetails: string) {
+  async reportAuthError(
+    email: string,
+    summary: string,
+    errorDetails: string,
+    context?: {
+      stage?: string;
+      memberId?: string;
+      loginId?: string;
+      recoveryAttempted?: boolean;
+      retryAttempted?: boolean;
+      errorName?: string;
+      source?: string;
+    }
+  ) {
     try {
+      const nowIso = new Date().toISOString();
+      const safeEmail = (email || 'inconnu').trim().toLowerCase();
+      const stage = context?.stage || 'inconnue';
+      const fingerprint = this.buildFingerprint(safeEmail, summary, errorDetails, stage);
+
+      const lines = [
+        `[Auto-diagnostic Auth v${this.AUTH_REPORT_SCHEMA_VERSION}] ${summary}`,
+        `Etape: ${stage}`,
+        `Email: ${safeEmail}`,
+        `member_id: ${context?.memberId || 'absent'}`,
+        `loginId: ${context?.loginId || 'absent'}`,
+        `Recovery tentee: ${context?.recoveryAttempted ? 'oui' : 'non'}`,
+        `Retry tente: ${context?.retryAttempted ? 'oui' : 'non'}`,
+        `Nom erreur: ${context?.errorName || 'non fourni'}`,
+        `Source: ${context?.source || 'authentification.service'}`,
+        `Fingerprint: ${fingerprint}`,
+        '',
+        `Details techniques: ${errorDetails}`,
+        `Date: ${nowIso}`,
+        `User-Agent: ${navigator.userAgent}`,
+      ];
+
       const input: AssistanceRequestInput = {
         nom: '[SYSTÈME]',
         prenom: 'Auto-rapport',
-        email: email || 'inconnu',
+        email: safeEmail,
         type: 'Problème à la connexion',
-        texte: `[Auto-diagnostic] ${summary}\n\nDétails techniques: ${errorDetails}\n\nDate: ${new Date().toISOString()}\nUser-Agent: ${navigator.userAgent}`,
+        texte: lines.join('\n'),
         status: REQUEST_STATUS.NEW
       };
       await this.db.createAssistanceRequest(input);
@@ -34,6 +71,15 @@ export class AssistanceRequestService {
       // Ne pas bloquer le flux principal si le rapport échoue
       console.warn('[AssistanceRequestService] Impossible de signaler la panne:', err);
     }
+  }
+
+  private buildFingerprint(email: string, summary: string, details: string, stage: string): string {
+    const seed = `${email}|${summary}|${details}|${stage}`;
+    let hash = 0;
+    for (let i = 0; i < seed.length; i++) {
+      hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+    }
+    return `AUTH-${hash.toString(16).toUpperCase().padStart(8, '0')}`;
   }
 
   async createRequest(input: AssistanceRequestInput) {
