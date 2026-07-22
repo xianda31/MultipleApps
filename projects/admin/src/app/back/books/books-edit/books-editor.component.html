@@ -70,6 +70,13 @@
         </ng-container>
       </div>
 
+      <!-- Stripe tag -->
+      <div *ngIf="transaction_id && transaction_with_stripe_tag(transaction_id)" class="col-sm-3">
+        <label for="stripeTag">Stripe tag</label>
+        <input type="text" class="form-control font-monospace" id="stripeTag" formControlName="stripeTag"
+               placeholder="stripe:XXXXXXXXXXXX">
+      </div>
+
       <!-- bordereau -->
       <div *ngIf="!protected_mode && transaction_with_deposit(transaction_id)" class=" col-md-3  col-sm-3 ">
         <label for="deposit_ref">Bordereau</label>
@@ -83,7 +90,7 @@
           <i class="bi bi-cloud-check"></i> la modification est enregistrée immédiatement
         </small>
         <!-- pas de facture -->
-        <ng-container *ngIf="creation || (!selected_book_entry?.invoice_ref)">
+        <ng-container *ngIf="creation || (!selected_book_entry.invoice_ref)">
           <div class="input-group">
             <input type="text" class="form-control" id="invoice_ref" placeholder="aucune facture"
               formControlName="invoice_ref">
@@ -92,14 +99,14 @@
           </div>
         </ng-container>
         <!-- non documenté -->
-        <ng-container *ngIf="!creation && selected_book_entry?.invoice_ref === 'N/A'">
+        <ng-container *ngIf="!creation && selected_book_entry.invoice_ref === 'N/A'">
           <div class="input-group">
             <span class="input-group-text"><i class="bi bi-file-earmark text-secondary"></i>&nbsp;non documenté</span>
             <button class="btn btn-outline-secondary" type="button" (click)="clear_invoice_na()">effacer</button>
           </div>
         </ng-container>
         <!-- facture référencée -->
-        <ng-container *ngIf="!creation && selected_book_entry?.invoice_ref && selected_book_entry?.invoice_ref !== 'N/A'">
+        <ng-container *ngIf="!creation && selected_book_entry.invoice_ref && selected_book_entry.invoice_ref !== 'N/A'">
           <div class="input-group">
             <button class="btn btn-outline-primary" type="button" (click)="invoiceService.download_invoice(selected_book_entry.invoice_ref!, season)">view</button>
             <input type="text" class="form-control" id="invoice_ref" formControlName="invoice_ref">

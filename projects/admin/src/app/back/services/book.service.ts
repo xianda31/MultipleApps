@@ -803,6 +803,66 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
     });
   }
 
+  /**
+   * Cherche une BookEntry par son stripeTag (traçabilité Stripe)
+   */
+  find_book_entry_by_stripe_tag(stripeTag: string): BookEntry | undefined {
+    if (!this._book_entries) return undefined;
+    return this._book_entries.find((entry) => entry.stripeTag === stripeTag);
+  }
+
+  /**
+   * Crée une BookEntry refund symétrique de la source
+   * - Copie les operations (libellés et valeurs)
+   * - Inverse les amounts: stripe_out = source.stripe_in
+   * - Transaction type = annulation_paiement_carte_adhérent
+   * - Date = aujourd'hui
+   * - stripeTag = source.stripeTag (traçabilité)
+   */
+  async create_refund_book_entry(
+    sourceEntry: BookEntry,
+    refundAmountCents: number
+  ): Promise<BookEntry> {
+    if (!sourceEntry.stripeTag) {
+      throw new Error('BookEntry source must have a stripeTag');
+    }
+
+    const today = new Date();
+    const refundAmountEuro = refundAmountCents / 100;
+
+    // Copier et inverser les opérations de la source
+    const refundOperations: Operation[] = sourceEntry.operations.map(op => ({
+      label: op.label,
+      member: op.member,
+      values: Object.fromEntries(Object.entries(op.values).map(([key, val]) => [key, -val]))
+    }));
+
+    // Créer les amounts inversés
+    const refundAmounts: AMOUNTS = {};
+    
+    // Si la source avait stripe_in (débit Stripe = argent entrant), le refund aura stripe_out (crédit Stripe = argent sortant)
+    if (sourceEntry.amounts[FINANCIAL_ACCOUNT.STRIPE_debit]) {
+      refundAmounts[FINANCIAL_ACCOUNT.STRIPE_credit] = refundAmountEuro;
+    } else if (sourceEntry.amounts[FINANCIAL_ACCOUNT.STRIPE_credit]) {
+      refundAmounts[FINANCIAL_ACCOUNT.STRIPE_debit] = refundAmountEuro;
+    } else {
+      throw new Error('Source BookEntry must have Stripe amounts');
+    }
+
+    const refundEntry: BookEntry = {
+      id: '',
+      season: sourceEntry.season,
+      date: today.toISOString().split('T')[0],
+      transaction_id: TRANSACTION_ID.annulation_paiement_carte_adhérent,
+      amounts: refundAmounts,
+      operations: refundOperations,
+      stripeTag: sourceEntry.stripeTag,
+      tag: sourceEntry.tag ? `refund_${sourceEntry.tag}` : undefined
+    };
+
+    return this.create_book_entry(refundEntry);
+  }
+
   get_total_revenues(key?: string): number {
     let total = (values: { [key: string]: number }): number => {
       return Object.entries(values).reduce((acc, [key, value]) => acc + ((!Object.values(CUSTOMER_ACCOUNT).includes(key as CUSTOMER_ACCOUNT)) ? value : 0), 0);

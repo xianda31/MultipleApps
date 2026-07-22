@@ -75,6 +75,7 @@ export type Transaction = {
   invoice_required: boolean,
   cash: 'in' | 'out' | 'none',
   cheque: 'in' | 'out' | 'none',
+  stripe: 'in' | 'out' | 'none',
   profit_and_loss_keys?: string[];  // clés P&L additionnelles pour débits (ex. frais Stripe)
 };
 
@@ -99,6 +100,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     require_deposit_ref: false,
     cash: 'in',
     cheque: 'none',
+    stripe: 'none',
   },
   // paiement par chèque par un adhérent
   [TRANSACTION_ID.achat_adhérent_par_chèque]: {
@@ -115,6 +117,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     require_deposit_ref: true,
     cash: 'none',
     cheque: 'in',
+    stripe: 'none',
   },
   // paiement par carte (Stripe) d'un adhérent
   // deposit_ref = ID du virement Stripe (payout) qui regroupe les paiements individuels
@@ -133,6 +136,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     require_deposit_ref: true,   // deposit_ref = Stripe payout ID (regroupement de paiements)
     cash: 'none',
     cheque: 'none',
+    stripe: 'none',
   },
 
   // paiement par virement d'un adhérent
@@ -150,6 +154,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     require_deposit_ref: false,
     cash: 'none',
     cheque: 'none',
+    stripe: 'none',
   },
 
   //B.  vente unitaire à tiers ****
@@ -169,6 +174,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     require_deposit_ref: false,
     cash: 'in',
     cheque: 'none',
+    stripe: 'none',
   },
 
   // réception de chèque(s) de la par d'autres qu'un adhérent
@@ -185,6 +191,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     require_deposit_ref: true,
     cash: 'none',
     cheque: 'in',
+    stripe: 'none',
   },
   [TRANSACTION_ID.vente_par_virement]: {
      label: 'VIREMENT EN NOTRE FAVEUR',
@@ -199,6 +206,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     require_deposit_ref: false,
     cash: 'none',
     cheque: 'none',
+    stripe: 'none',
   },
   // paiements par TPE (Stripe Terminal) — collecte non-nominative, montant agrégé
   // deposit_ref = ID du virement Stripe (payout) qui regroupe les paiements CB
@@ -215,6 +223,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     require_deposit_ref: true,   // deposit_ref = Stripe payout ID (regroupement de paiements)
     cash: 'none',
     cheque: 'none',
+    stripe: 'none',
   },
   //   [TRANSACTION_ID.debit_avoir]: {
   //   label: 'DEBIT D\'UN AVOIR',
@@ -247,6 +256,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     require_deposit_ref: false, // was true ... to be checked
     cash: 'none',
     cheque: 'none',
+    stripe: 'none',
   },
 
   // dépot de fonds en chèques (non tracés)
@@ -263,6 +273,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     require_deposit_ref: true,
     cash: 'none',
     cheque: 'none',
+    stripe: 'none',
   },
     // interet de l'épargne
     [TRANSACTION_ID.intérêt_épargne]: {
@@ -278,6 +289,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
       require_deposit_ref: false,
       cash: 'none',
       cheque: 'none',
+      stripe: 'none',
     },
 
   // D.  mouvements de fonds ****
@@ -297,6 +309,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     require_deposit_ref: true,
     cash: 'out',
     cheque: 'none',
+    stripe: 'none',
   },
   // dépot de chèques (receptionnés en caisse) en banque
   [TRANSACTION_ID.dépôt_caisse_chèques]: {
@@ -313,6 +326,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     require_deposit_ref: true,
     cash: 'none',
     cheque: 'out',
+    stripe: 'none',
   },
 
   // versement sur compte épargne
@@ -330,6 +344,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     require_deposit_ref: false,
     cash: 'none',
     cheque: 'none',
+    stripe: 'none',
   },
   // retrait du compte épargne
   [TRANSACTION_ID.retrait_épargne_vers_banque]: {
@@ -346,6 +361,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     require_deposit_ref: false,
     cash: 'none',
     cheque: 'none',
+    stripe: 'none',
   },
 
   // règlement Stripe vers compte bancaire (encaissement des paiements)
@@ -362,6 +378,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     require_deposit_ref: true,  // deposit_ref = Stripe payout ID
     cash: 'none',
     cheque: 'none',
+    stripe: 'none',
     profit_and_loss_keys: [],  // rempli dynamiquement lors du règlement avec frais Stripe (Phase 2)
   },
 
@@ -383,6 +400,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     require_deposit_ref: false,
     cash: 'none',
     cheque: 'none',
+    stripe: 'none',
   },
 
   // annulation d'une dette adhérent
@@ -400,6 +418,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     require_deposit_ref: false,
     cash: 'none',
     cheque: 'none',
+    stripe: 'none',
   },
 
   // classe REIMBURSEMENT
@@ -418,6 +437,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     require_deposit_ref: false,
     cash: 'none',
     cheque: 'out',
+    stripe: 'none',
   },
   // remboursement d'achat en espèces
   [TRANSACTION_ID.remboursement_achat_adhérent_en_espèces]: {
@@ -433,6 +453,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     require_deposit_ref: false,
     cash: 'out',
     cheque: 'none',
+    stripe: 'none',
   },
   // remboursement d'achat par avoir
   [TRANSACTION_ID.remboursement_achat_adhérent_par_avoir]: {
@@ -449,10 +470,25 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     require_deposit_ref: false,
     cash: 'none',
     cheque: 'none',
+    stripe: 'none',
   },
-
-
- // F. achat , dépenses
+// annulation achat par carte
+  [TRANSACTION_ID.annulation_paiement_carte_adhérent]: {
+     label: 'annulation paiement carte adhérent',
+     invoice_required: false,
+    tooltip: 'annulation d\'un achat adhérent par carte',
+    class: TRANSACTION_CLASS.REIMBURSEMENT,
+    financial_accounts: financial_credits,
+    optional_accounts: customer_asset_credit,
+    financial_accounts_to_charge: [FINANCIAL_ACCOUNT.STRIPE_credit],
+    nominative: true,
+    pure_financial: false,
+    revenue_account_to_show: true,
+    require_deposit_ref: false,
+    cash: 'none',
+    cheque: 'none',
+    stripe: 'out',
+  },
   // ****  CLASS = EXPENSE ****
 
   // achat en espèces d'une prestation ou service
@@ -469,6 +505,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     require_deposit_ref: false,
     cash: 'out',
     cheque: 'none',
+    stripe: 'none',
   },
 
   // paiement par chèque d'une prestation ou service
@@ -486,6 +523,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     require_deposit_ref: false,
     cash: 'none',
     cheque: 'out',
+    stripe: 'none',
   },
   // paiement à un tiers d'une prestation ou service par virement
   [TRANSACTION_ID.dépense_par_virement]: {
@@ -501,6 +539,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     require_deposit_ref: false,
     cash: 'none',
     cheque: 'none',
+    stripe: 'none',
   },
   // paiement par carte bancaire d'une prestation ou de marchandises
   [TRANSACTION_ID.dépense_par_carte]: {
@@ -516,6 +555,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     require_deposit_ref: false,
     cash: 'none',
     cheque: 'none',
+    stripe: 'none',
   },
   // prélèvement sur le compte bancaire par une autre entité
   [TRANSACTION_ID.dépense_par_prélèvement]: {
@@ -531,6 +571,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     require_deposit_ref: false,
     cash: 'none',
     cheque: 'none',
+    stripe: 'none',
   },
 
   // G. opérations spécifiques bilan
@@ -550,6 +591,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     require_deposit_ref: false,
     cash: 'none',
     cheque: 'none',
+    stripe: 'none',
   },
   // report d'encours paiement par chèque d'une prestation ou service
   [TRANSACTION_ID.report_chèque]: {
@@ -566,6 +608,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     require_deposit_ref: true,
     cash: 'none',
     cheque: 'out',
+    stripe: 'none',
   },
   // report d'encours paiement par carte d'une prestation ou service
   [TRANSACTION_ID.report_carte]: {
@@ -582,6 +625,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     require_deposit_ref: false,
     cash: 'none',
     cheque: 'none',
+    stripe: 'none',
   },
   [TRANSACTION_ID.report_dette]: {
      label: 'report de dette',
@@ -597,6 +641,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     require_deposit_ref: false,
     cash: 'none',
     cheque: 'none',
+    stripe: 'none',
   },
   [TRANSACTION_ID.report_prélèvement]: {
      label: 'REPORT PRELEVEMENT',
@@ -612,6 +657,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     require_deposit_ref: false,
     cash: 'none',
     cheque: 'none',
+    stripe: 'none',
   },
   // report d'encours PSP (Stripe) : fonds reçus non encore virés en banque
   [TRANSACTION_ID.report_psp]: {
@@ -627,9 +673,10 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     require_deposit_ref: false,
     cash: 'none',
     cheque: 'none',
+    stripe: 'none',
   },
 
-// report de chèques reçus mais non encaissés 
+ // report de chèques reçus mais non encaissés 
   [TRANSACTION_ID.report_chèque_reçu]: {
     label: 'REPORT CHEQUE',
     invoice_required: false,
@@ -643,6 +690,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     require_deposit_ref: true,
     cash: 'none',
     cheque: 'in',
+    stripe: 'none',
   },
 
  

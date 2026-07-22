@@ -1,6 +1,36 @@
-<div class="container-fluid mt-3">
+<div class="container-fluid container-xl px-lg-3 mt-3">
   <h4>Réconciliation Stripe — Virements bancaires</h4>
   <p class="text-muted small">Cliquez sur un virement Stripe pour identifier automatiquement les paiements correspondants.</p>
+
+  @if (isDevMode) {
+    <div class="card border border-warning-subtle bg-light mb-3">
+      <div class="card-body py-2 d-flex flex-wrap align-items-center gap-3">
+        <span class="fw-semibold">Source Stripe</span>
+        <span class="badge bg-dark">dev-only</span>
+        <div class="form-check form-check-inline mb-0">
+          <input class="form-check-input" type="radio" name="stripeSource" id="stripeSourceTest" value="test"
+                 [(ngModel)]="stripeSource" (change)="onStripeSourceChange()">
+          <label class="form-check-label" for="stripeSourceTest">Stripe test</label>
+        </div>
+        <div class="form-check form-check-inline mb-0">
+          <input class="form-check-input" type="radio" name="stripeSource" id="stripeSourceLive" value="live"
+                 [(ngModel)]="stripeSource" (change)="onStripeSourceChange()">
+          <label class="form-check-label" for="stripeSourceLive">Stripe production</label>
+        </div>
+        @if (isProductionReadOnlyMode) {
+          <span class="badge bg-warning text-dark">Lecture seule</span>
+          <span class="small text-muted">Les écritures locales de réconciliation sont désactivées dans ce mode.</span>
+        }
+      </div>
+    </div>
+  }
+
+  @if (isProductionReadOnlyMode) {
+    <div class="alert alert-warning small">
+      <i class="bi bi-exclamation-triangle me-1"></i>
+      Mode diagnostic activé : lecture des payouts et webhooks depuis Stripe production, sans création, annulation ou réintégration d'écritures locales.
+    </div>
+  }
 
   <!-- Section 0: Santé webhook Stripe -->
   <div class="card border-0 bg-light mb-3">
@@ -26,8 +56,8 @@
         </div>
       } @else if (webhookHealth) {
         <div class="d-flex flex-wrap gap-3 align-items-center mb-2">
-          <span class="badge" [class]="webhookHealthBadgeClass()">
-            {{ webhookHealth.status === 'ok' ? 'OK' : 'À surveiller' }}
+          <span class="badge" [class]="webhookHealth.status === 'ok' ? 'bg-success' : 'bg-info'">
+            {{ webhookHealth.status === 'ok' ? 'OK' : 'Livraison en cours' }}
           </span>
           <span class="small text-muted">Total: <strong>{{ webhookHealth.totalEvents }}</strong></span>
           <span class="small text-success">Livrés: <strong>{{ webhookHealth.deliveredEvents }}</strong></span>
@@ -175,9 +205,9 @@
                   }
                 </td>
                 <td class="text-end">
-                  <button class="btn btn-sm btn-outline-danger"
+                    <button class="btn btn-sm btn-outline-danger"
                           (click)="undoPayout(rp.payoutId)"
-                          [disabled]="undoingPayoutId !== null">
+                      [disabled]="undoingPayoutId !== null || isProductionReadOnlyMode">
                     @if (undoingPayoutId === rp.payoutId) {
                       <span class="spinner-border spinner-border-sm me-1"></span>
                     }
@@ -209,7 +239,7 @@
           }
         </ul>
       </div>
-      <button class="btn btn-warning btn-sm" (click)="fixOrphans()" [disabled]="fixingOrphans">
+      <button class="btn btn-warning btn-sm" (click)="fixOrphans()" [disabled]="fixingOrphans || isProductionReadOnlyMode">
         @if (fixingOrphans) {
           <span class="spinner-border spinner-border-sm me-1"></span>
         }
@@ -251,14 +281,22 @@
       </thead>
       <tbody>
         @for (line of lines; track line.bookEntry.id) {
-          <tr [class.table-primary]="line.selected">
+          <tr [class.table-primary]="line.selected && !$any(line).isRefunded"
+              [class.table-warning]="$any(line).isRefunded">
             <td>
               <input type="checkbox" class="form-check-input" [(ngModel)]="line.selected">
             </td>
             <td>{{ formatDate(line.bookEntry.date) }}</td>
             <td>{{ line.buyerName }}</td>
-            <td><small class="text-muted">{{ line.cartSummary }}</small></td>
-            <td class="text-end fw-semibold">{{ formatAmount(line.grossCents) }}</td>
+            <td>
+              <small class="text-muted">{{ line.cartSummary }}</small>
+              @if ($any(line).isRefunded) {
+                <span class="badge bg-warning text-dark ms-1"><i class="bi bi-arrow-counterclockwise me-1"></i>remboursé Stripe</span>
+              }
+            </td>
+            <td class="text-end fw-semibold" [class.text-decoration-line-through]="$any(line).isRefunded">
+              {{ formatAmount(line.grossCents) }}
+            </td>
             <td><small class="font-monospace text-muted">{{ line.bookEntry.stripeTag }}</small></td>
           </tr>
         }
@@ -277,9 +315,9 @@
 
   <!-- Section 3: Formulaire de validation du payout -->
   @if (!loadingLines) {
-    <div class="card border-primary mt-3" style="max-width: 560px;">
+    <div class="card border-primary mt-3" >
       <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-        <span>Créer l'écriture de virement Stripe</span>
+        <span>{{ isProductionReadOnlyMode ? 'Diagnostic payout Stripe (lecture seule)' : 'Créer l\'écriture de virement Stripe' }}</span>
         <button class="btn btn-sm btn-outline-light ms-auto" (click)="loadLines()" [disabled]="loadingLines">
           <i class="bi bi-arrow-clockwise"></i>
         </button>
@@ -350,16 +388,122 @@
           </div>
         }
 
+        @if (missingBookEntryProposals.length > 0) {
+          <div class="alert alert-info py-2 small mb-2">
+            <div class="fw-semibold mb-1">
+              <i class="bi bi-journal-plus me-1"></i>
+              Écriture comptable manquante détectée
+            </div>
+            <div class="mb-2">
+              La charge Stripe est bien cohérente, mais aucune BookEntry locale ne lui correspond encore.
+              La prise en compte proposée consiste à générer plus tard une BookEntry avec le tag ci-dessous.
+            </div>
+            <div class="table-responsive">
+              <table class="table table-sm table-borderless mb-0 align-middle">
+                <thead>
+                  <tr>
+                    <th>Tag proposé</th>
+                    <th class="text-end">Brut</th>
+                    <th class="text-end">Frais</th>
+                    <th class="text-end">Net</th>
+                    <th>Charge Stripe</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (proposal of missingBookEntryProposals; track proposal.chargeId) {
+                    <tr>
+                      <td>
+                        <div class="font-monospace text-primary fw-semibold">{{ proposal.proposedBookEntryTag }}</div>
+                        <div class="text-muted small">BookEntry à générer plus tard</div>
+                      </td>
+                      <td class="text-end">{{ formatAmount(proposal.grossCents) }}</td>
+                      <td class="text-end">{{ formatAmount(proposal.feesCents) }}</td>
+                      <td class="text-end fw-semibold">{{ formatAmount(proposal.netCents) }}</td>
+                      <td><small class="font-monospace text-muted">{{ proposal.chargeId }}</small></td>
+                      <td class="text-end">
+                        @if (proposal.canRegenerate) {
+                          <button class="btn btn-sm btn-outline-primary"
+                                  (click)="regenerateMissingBookEntry(proposal)"
+                                  [disabled]="regeneratingProposalTag === proposal.proposedBookEntryTag || isProductionReadOnlyMode">
+                            @if (regeneratingProposalTag === proposal.proposedBookEntryTag) {
+                              <span class="spinner-border spinner-border-sm me-1"></span>
+                            }
+                            Régénérer
+                          </button>
+                        } @else {
+                          <span class="badge bg-secondary">Données incomplètes</span>
+                        }
+                      </td>
+                    </tr>
+                    <tr class="table-light">
+                      <td colspan="6" class="small text-muted">
+                        saison {{ proposal.season }} · date {{ formatDate(proposal.date) }} · membre {{ proposal.memberName || 'inconnu' }} · tag {{ proposal.proposedBookEntryTag }}
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        }
+
+        @if (stripeRefunds.length > 0) {
+          <div class="alert alert-warning py-2 small mb-2">
+            <div class="fw-semibold mb-1">
+              <i class="bi bi-arrow-counterclockwise me-1"></i>
+              Remboursement(s) Stripe inclus dans ce payout
+            </div>
+            <div class="mb-2 text-muted">
+              Ces remboursements réduisent le net bancaire. Ils nécessiteront une écriture comptable séparée.
+            </div>
+            <table class="table table-sm table-borderless mb-0 align-middle">
+              <thead>
+                <tr>
+                  <th>Tag charge origine</th>
+                  <th class="text-end">Montant remboursé</th>
+                  <th>Motif</th>
+                  <th>Refund ID</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (refund of stripeRefunds; track refund.refundId) {
+                  <tr>
+                    <td>
+                      @if (refund.stripeTag) {
+                        <span class="font-monospace text-warning fw-semibold">{{ refund.stripeTag }}</span>
+                      } @else {
+                        <span class="text-muted font-monospace">{{ refund.chargeId || '—' }}</span>
+                      }
+                    </td>
+                    <td class="text-end text-danger fw-semibold">{{ formatAmount(-refund.amountCents) }}</td>
+                    <td><small class="text-muted">{{ refund.reason || 'non précisé' }}</small></td>
+                    <td><small class="font-monospace text-muted">{{ refund.refundId }}</small></td>
+                  </tr>
+                }
+              </tbody>
+              <tfoot class="table-warning fw-bold">
+                <tr>
+                  <td colspan="3" class="text-end">Net encaissé par le club</td>
+                  <td class="text-end text-success">
+                    {{ formatAmount(netBancaire !== null ? netBancaire * 100 : 0) }}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        }
+
         <!-- Bouton valider -->
         <button class="btn w-100 mt-1"
-                [class.btn-primary]="selectionCoherent"
+                [class.btn-primary]="selectionCoherent && !isProductionReadOnlyMode"
                 [class.btn-outline-secondary]="!selectionCoherent"
                 (click)="createPayout()"
-                [disabled]="processingPayout || !payoutId.trim() || selectedLines.length === 0 || !netBancaire || !selectionCoherent">
+                [disabled]="processingPayout || !payoutId.trim() || selectedLines.length === 0 || !netBancaire || !selectionCoherent || isProductionReadOnlyMode">
           @if (processingPayout) {
             <span class="spinner-border spinner-border-sm me-1"></span>
           }
-          Valider — {{ selectedLines.length }} paiement(s)
+          {{ isProductionReadOnlyMode ? 'Écriture désactivée en lecture seule' : 'Valider — ' + selectedLines.length + ' paiement(s)' }}
           @if (netBancaire) { ({{ formatAmount((netBancaire * 100)) }} net) }
         </button>
       </div>

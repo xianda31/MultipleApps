@@ -9,6 +9,7 @@ import { SystemDataService } from '../../../common/services/system-data.service'
 import { StripeService } from '../../../front/services/stripe.service';
 import { Member } from '../../../common/interfaces/member.interface';
 import { BookEntry, TRANSACTION_ID, FINANCIAL_ACCOUNT } from '../../../common/interfaces/accounting.interface';
+import { environment } from '../../../../environments/environment';
 
 interface PayoutLine {
   bookEntry: BookEntry;
@@ -30,11 +31,37 @@ interface StripePayout {
   automatic: boolean;
 }
 
+interface StripeRefundItem {
+  refundId: string | null;
+  chargeId: string | null;
+  stripeTag: string | null;
+  bookEntryId: string | null;
+  amountCents: number;  // négatif = remboursement sortant du payout
+  feesCents: number;
+  netCents: number;
+  reason: string | null;
+}
+
+interface MissingBookEntryProposal {
+  chargeId: string;
+  stripeTag: string;
+  bookEntryId: string | null;
+  grossCents: number;
+  feesCents: number;
+  netCents: number;
+  proposedBookEntryTag: string;
+  memberName: string;
+  season: string;
+  date: string;
+  canRegenerate: boolean;
+}
+
 interface WebhookHealth {
   windowDays: number;
   totalEvents: number;
   pendingEvents: number;
   deliveredEvents: number;
+  stripeEnvironment?: 'test' | 'live';
   status: 'ok' | 'warning';
   events: { id: string; type: string; created: string; pendingWebhooks: number; status: string }[];
 }
@@ -46,6 +73,8 @@ interface WebhookHealth {
   templateUrl: './stripe-reconciliation.component.html',
 })
 export class StripeReconciliationComponent {
+  stripeSource: 'test' | 'live' = 'test';
+  readonly isDevMode = !environment.production;
 
   lines: PayoutLine[] = [];
   loadingLines = false;
@@ -63,6 +92,7 @@ export class StripeReconciliationComponent {
   loadingPayouts = false;
   payoutsError: string | null = null;
   private reconciledPayoutIds = new Set<string>();
+  private diagnosticStripeTransactions: any[] = [];
 
   // Santé webhook Stripe
   webhookHealth: WebhookHealth | null = null;
@@ -71,6 +101,14 @@ export class StripeReconciliationComponent {
 
   get filteredPayouts(): StripePayout[] {
     return this.availablePayouts.filter(p => !this.reconciledPayoutIds.has(p.id));
+  }
+
+  get isProductionReadOnlyMode(): boolean {
+    return this.isDevMode && this.stripeSource === 'live';
+  }
+
+  get effectiveStripeSource(): 'test' | 'live' {
+    return this.isDevMode ? this.stripeSource : 'test';
   }
 
   // Formulaire payout
@@ -84,6 +122,9 @@ export class StripeReconciliationComponent {
   // Données de cohérence issues du lookup automatique
   expectedGrossCents = 0;    // brut total attendu (depuis Stripe, payout auto uniquement)
   expectedChargeCount = 0;   // nombre de charges attendues
+  missingBookEntryProposals: MissingBookEntryProposal[] = [];
+  stripeRefunds: StripeRefundItem[] = [];
+  regeneratingProposalTag: string | null = null;
 
   // Computed
   get selectedLines(): PayoutLine[] { return this.lines.filter(l => l.selected); }
@@ -134,6 +175,9 @@ export class StripeReconciliationComponent {
   ) {}
 
   ngOnInit(): void {
+    if (!this.isDevMode) {
+      this.stripeSource = 'test';
+    }
     this.loadWebhookHealth();
     this.loadStripePayouts();
     this.systemDataService.get_configuration().subscribe(conf => {
@@ -154,7 +198,7 @@ export class StripeReconciliationComponent {
     this.loadingWebhookHealth = true;
     this.webhookHealthError = null;
     try {
-      this.webhookHealth = await this.stripeService.getWebhookHealth();
+      this.webhookHealth = await this.stripeService.getWebhookHealth(this.effectiveStripeSource);
     } catch (error: any) {
       this.webhookHealthError = error?.message || 'Impossible de charger la santé webhook';
     } finally {
@@ -162,15 +206,12 @@ export class StripeReconciliationComponent {
     }
   }
 
-  webhookHealthBadgeClass(): string {
-    return this.webhookHealth?.status === 'ok' ? 'bg-success' : 'bg-warning text-dark';
-  }
 
   async loadStripePayouts(): Promise<void> {
     this.loadingPayouts = true;
     this.payoutsError = null;
     try {
-      this.availablePayouts = await this.stripeService.listPayouts();
+      this.availablePayouts = await this.stripeService.listPayouts(this.effectiveStripeSource);
     } catch (error: any) {
       this.payoutsError = error?.message || 'Impossible de charger les virements Stripe';
     } finally {
@@ -184,7 +225,31 @@ export class StripeReconciliationComponent {
     this.netBancaire = payout.amountCents / 100;
     this.expectedGrossCents = 0;
     this.expectedChargeCount = 0;
+    this.missingBookEntryProposals = [];
+    this.stripeRefunds = [];
     await this.lookupPayout();
+  }
+
+  async onStripeSourceChange(): Promise<void> {
+    this.webhookHealth = null;
+    this.webhookHealthError = null;
+    this.availablePayouts = [];
+    this.payoutsError = null;
+    this.payoutId = '';
+    this.netBancaire = null;
+    this.expectedGrossCents = 0;
+    this.expectedChargeCount = 0;
+    this.missingBookEntryProposals = [];
+    this.stripeRefunds = [];
+    this.lines.forEach(l => l.selected = false);
+    await Promise.all([this.loadWebhookHealth(), this.loadStripePayouts()]);
+  }
+
+  private findMatchingLineForCharge(charge: { bookEntryId?: string | null; stripeTag?: string | null }): PayoutLine | null {
+    return this.lines.find(l =>
+      (!!charge.bookEntryId && l.bookEntry.id === charge.bookEntryId) ||
+      (!!charge.stripeTag && l.bookEntry.stripeTag && l.bookEntry.stripeTag === charge.stripeTag)
+    ) || null;
   }
 
   payoutStatusClass(status: string): string {
@@ -242,6 +307,7 @@ export class StripeReconciliationComponent {
 
       // StripeTransactions complétées sans payoutId
       const stripeTransactions = await this.dbHandler.listUnpayoutedStripeTransactions();
+      this.diagnosticStripeTransactions = stripeTransactions;
 
       this.lines = bookEntries.map(be => {
         const st = stripeTransactions.find(
@@ -309,7 +375,9 @@ export class StripeReconciliationComponent {
     this.lookingUp = true;
     this.isManualPayout = false;
     try {
-      const result = await this.stripeService.lookupPayout(this.payoutId.trim());
+      const result = await this.stripeService.lookupPayout(this.payoutId.trim(), this.effectiveStripeSource);
+      this.missingBookEntryProposals = [];
+      this.stripeRefunds = [];
 
       if (result.isManual) {
         this.isManualPayout = true;
@@ -331,17 +399,43 @@ export class StripeReconciliationComponent {
       const pId = this.payoutId.trim();
       let matched = 0;
       const wrongPayoutTags: string[] = [];
+      const missingBookEntryProposals: MissingBookEntryProposal[] = [];
+
+      // Construire un set des stripeTag remboursés pour marquage visuel
+      const refundedTags = new Set<string>(
+        (result.refunds || []).filter((r: any) => r.stripeTag).map((r: any) => r.stripeTag)
+      );
 
       result.charges.forEach((charge: any) => {
-        const line = this.lines.find(l =>
-          l.bookEntry.id === charge.bookEntryId ||
-          (l.bookEntry.stripeTag && l.bookEntry.stripeTag === charge.stripeTag)
-        );
+        const line = this.findMatchingLineForCharge(charge);
         if (line) {
           line.selected = true;
           line.feesCents = charge.feesCents;
+          (line as any).isRefunded = refundedTags.has(charge.stripeTag);
           matched++;
         } else if (charge.stripeTag) {
+          const matchingStripeTransaction = this.diagnosticStripeTransactions.find((t: any) =>
+            t.bookEntryId === charge.bookEntryId || t.stripeTag === charge.stripeTag
+          ) || null;
+          const stripeMeta = matchingStripeTransaction?.stripeMeta || {};
+          const memberName = String(stripeMeta.memberName || matchingStripeTransaction?.customerEmail || '');
+          const date = String(stripeMeta.date || this.payoutDate || '');
+          const season = String(stripeMeta.season || (date ? this.systemDataService.get_season(new Date(date)) : this.systemDataService.get_season(new Date())));
+
+          missingBookEntryProposals.push({
+            chargeId: charge.chargeId,
+            stripeTag: charge.stripeTag,
+            bookEntryId: charge.bookEntryId || null,
+            grossCents: charge.grossCents,
+            feesCents: charge.feesCents,
+            netCents: charge.netCents,
+            proposedBookEntryTag: charge.stripeTag,
+            memberName,
+            season,
+            date,
+            canRegenerate: !!matchingStripeTransaction,
+          });
+
           // Détecter si cette charge est déjà réconciliée avec un AUTRE payout (deposit_ref incorrect)
           const alreadyReconciled = allBookEntries.find(e =>
             e.stripeTag === charge.stripeTag &&
@@ -354,8 +448,10 @@ export class StripeReconciliationComponent {
         }
       });
 
-      // Pré-remplir le net bancaire
+      // Pré-remplir le net bancaire (inclut la déduction des remboursements)
       this.netBancaire = result.totalNetCents / 100;
+      this.missingBookEntryProposals = missingBookEntryProposals;
+      this.stripeRefunds = result.refunds || [];
 
       this.toastService.showSuccess('Lookup payout',
         `${matched} paiement(s) identifié(s) sur ${result.charges.length} charge(s) Stripe`);
@@ -376,6 +472,10 @@ export class StripeReconciliationComponent {
    * (deposit_ref set mais aucune écriture virement correspondante en BD)
    */
   async fixOrphans(): Promise<void> {
+    if (this.isProductionReadOnlyMode) {
+      this.toastService.showWarning('Mode lecture seule', 'La réintégration est désactivée lorsque Stripe production est utilisé en lecture seule.');
+      return;
+    }
     if (this.orphanedPayments.length === 0) return;
     this.fixingOrphans = true;
     try {
@@ -401,6 +501,10 @@ export class StripeReconciliationComponent {
    * - Les BookEntries paiement (deposit_ref) sont réinitialisés si présents
    */
   async undoPayout(pId: string): Promise<void> {
+    if (this.isProductionReadOnlyMode) {
+      this.toastService.showWarning('Mode lecture seule', 'L\'annulation est désactivée lorsque Stripe production est utilisé en lecture seule.');
+      return;
+    }
     this.undoingPayoutId = pId;
     try {
       const allBookEntries = this.bookService.get_book_entries();
@@ -442,6 +546,10 @@ export class StripeReconciliationComponent {
    * Approche A+B : créer l'écriture virement + marquer les BookEntries
    */
   async createPayout(): Promise<void> {
+    if (this.isProductionReadOnlyMode) {
+      this.toastService.showWarning('Mode lecture seule', 'La création d\'écriture est désactivée lorsque Stripe production est utilisé en lecture seule.');
+      return;
+    }
     if (!this.payoutId.trim()) {
       this.toastService.showWarning('Payout', 'Identifiant payout Stripe requis');
       return;
@@ -529,9 +637,62 @@ export class StripeReconciliationComponent {
     }
   }
 
+  async regenerateMissingBookEntry(proposal: MissingBookEntryProposal): Promise<void> {
+    if (this.isProductionReadOnlyMode) {
+      this.toastService.showWarning('Mode lecture seule', 'La régénération est désactivée lorsque Stripe production est utilisé en lecture seule.');
+      return;
+    }
+    if (this.regeneratingProposalTag) return;
+
+    const existing = this.bookService.get_book_entries().find(e => e.stripeTag === proposal.proposedBookEntryTag);
+    if (existing) {
+      this.toastService.showWarning('Régénération', 'Une BookEntry portant déjà ce tag existe dans la base.');
+      return;
+    }
+
+    const matchingStripeTransaction = this.diagnosticStripeTransactions.find((t: any) =>
+      t.stripeTag === proposal.proposedBookEntryTag || t.id === proposal.chargeId || t.bookEntryId === proposal.bookEntryId
+    ) || null;
+
+    const stripeMeta = matchingStripeTransaction?.stripeMeta || {};
+    const memberName = String(stripeMeta.memberName || proposal.memberName || '').trim();
+    const season = String(stripeMeta.season || proposal.season || this.systemDataService.get_season(new Date(proposal.date)));
+    const date = String(stripeMeta.date || proposal.date || new Date().toISOString().slice(0, 10));
+
+    this.regeneratingProposalTag = proposal.proposedBookEntryTag;
+    try {
+      const regenerated = await this.bookService.create_book_entry({
+        id: '',
+        season,
+        date,
+        transaction_id: TRANSACTION_ID.achat_adhérent_par_carte,
+        stripeTag: proposal.proposedBookEntryTag,
+        amounts: {
+          [FINANCIAL_ACCOUNT.STRIPE_debit]: proposal.grossCents / 100,
+        },
+        operations: [{
+          label: memberName ? `vente Stripe réintégrée - ${memberName}` : 'vente Stripe réintégrée',
+          member: memberName || undefined,
+          values: {},
+        }],
+      });
+
+      this.toastService.showSuccess('Régénération', `BookEntry recréée avec le tag ${regenerated.stripeTag || proposal.proposedBookEntryTag}`);
+      this.missingBookEntryProposals = this.missingBookEntryProposals.filter(p => p.proposedBookEntryTag !== proposal.proposedBookEntryTag);
+      await this.loadLines();
+    } catch (error: any) {
+      console.error('Erreur régénération BookEntry manquante:', error);
+      this.toastService.showError('Régénération', error?.message || 'Impossible de recréer la BookEntry');
+    } finally {
+      this.regeneratingProposalTag = null;
+    }
+  }
+
   formatAmount(cents: number): string {
     return (cents / 100).toFixed(2) + ' €';
   }
+
+  totalRefundsReducer = (sum: number, r: StripeRefundItem) => sum + (-r.amountCents);
 
   formatDate(iso: string): string {
     if (!iso) return '—';

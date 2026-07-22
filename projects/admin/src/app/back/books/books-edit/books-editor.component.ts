@@ -178,6 +178,7 @@ export class BooksEditorComponent {
       'transaction_id': ['', Validators.required],
       'amounts': new FormArray([]),
       'tag': [''],
+      'stripeTag': [''],
       'bank_name': [''],
       'cheque_number': [''],
       'deposit_ref': [''],
@@ -200,6 +201,7 @@ export class BooksEditorComponent {
       transac_class: transac_class,
       transaction_id: book_entry.transaction_id,
       tag: book_entry.tag,
+      stripeTag: book_entry.stripeTag,
       bank_name: book_entry.cheque_ref?.slice(0, 3),
       cheque_number: book_entry.cheque_ref?.slice(3),
       deposit_ref: book_entry.deposit_ref,
@@ -555,6 +557,8 @@ export class BooksEditorComponent {
 
   save_book_entry(amounts: { [key: string]: number }, operations: Operation[]) {
 
+    const stripeTag = this.form.controls['stripeTag'].value?.toString()?.trim();
+
     let booking: BookEntry = {
       season: this.systemDataService.get_season(new Date(this.form.controls['date'].value)),
       date: this.form.controls['date'].value,
@@ -564,6 +568,7 @@ export class BooksEditorComponent {
       deposit_ref: this.form.controls['deposit_ref'].value ?? undefined,
       invoice_ref: this.form.controls['invoice_ref'].value ?? undefined,
       tag: this.form.controls['tag'].value ?? undefined,
+      stripeTag: stripeTag || undefined,
       amounts: amounts,
       operations: operations
     };
@@ -626,6 +631,7 @@ export class BooksEditorComponent {
         amounts: { ...this.selected_book_entry.amounts },
         operations: this.selected_book_entry.operations.map(op => ({ ...op })),
         ...(this.selected_book_entry.tag ? { tag: this.selected_book_entry.tag } : {}),
+        ...(this.selected_book_entry.stripeTag ? { stripeTag: this.selected_book_entry.stripeTag } : {}),
       };
       const duplicateEntry = await this.bookService.create_book_entry(new_book_entry);
       this.toastService.showSuccess('duplication', 'écriture dupliquée');
@@ -729,6 +735,11 @@ export class BooksEditorComponent {
 
   transaction_with_deposit(transaction_id: TRANSACTION_ID): boolean {
     return this.transactionService.get_transaction(transaction_id).require_deposit_ref;
+  }
+
+  transaction_with_stripe_tag(transaction_id: TRANSACTION_ID): boolean {
+    return transaction_id === TRANSACTION_ID.achat_adhérent_par_carte
+      || transaction_id === TRANSACTION_ID.collecte_par_cb;
   }
 
   transaction_with_invoice(transaction_id: TRANSACTION_ID): boolean {

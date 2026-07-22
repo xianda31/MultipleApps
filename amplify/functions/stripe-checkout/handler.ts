@@ -16,11 +16,41 @@ const docClient = DynamoDBDocumentClient.from(ddbClient);
 // Variables d'environnement
 const SALE_ITEM_TABLE = process.env['SALE_ITEM_TABLE_NAME'];
 const STRIPE_SECRET_KEY = process.env['STRIPE_SECRET_KEY'];
+const STRIPE_LIVE_SECRET_KEY = process.env['STRIPE_LIVE_SECRET_KEY'];
 const STRIPE_PUBLISHABLE_KEY = process.env['STRIPE_PUBLISHABLE_KEY'];
 
 const stripe = new Stripe(STRIPE_SECRET_KEY || 'dummy', {
   apiVersion: '2024-04-10' as any,
 });
+
+const stripeLive = STRIPE_LIVE_SECRET_KEY
+  ? new Stripe(STRIPE_LIVE_SECRET_KEY, { apiVersion: '2024-04-10' as any })
+  : null;
+
+type StripeEnvironment = 'test' | 'live';
+
+function getHeader(event: any, name: string): string {
+  const headers = event?.headers || {};
+  const target = name.toLowerCase();
+  const entry = Object.entries(headers).find(([key]) => key.toLowerCase() === target);
+  return String(entry?.[1] || '');
+}
+
+function resolveStripeReadEnvironment(event: any): StripeEnvironment {
+  const requested = getHeader(event, 'x-stripe-environment').toLowerCase();
+  return requested === 'live' ? 'live' : 'test';
+}
+
+function getStripeForReadOnly(event: any): { client: Stripe; environment: StripeEnvironment } {
+  const environment = resolveStripeReadEnvironment(event);
+  if (environment === 'live') {
+    if (!stripeLive) {
+      throw new Error('STRIPE_LIVE_SECRET_KEY not configured');
+    }
+    return { client: stripeLive, environment };
+  }
+  return { client: stripe, environment };
+}
 
 interface CheckoutRequest {
   productIds: string[];
@@ -172,6 +202,12 @@ export async function handler(event: any): Promise<any> {
   if (path.endsWith('/terminal-payment-intent')) {
     return handleTerminalPaymentIntent(event);
   }
+  if (path.endsWith('/refundable-charges')) {
+    return handleRefundableCharges(event);
+  }
+  if (path.endsWith('/refund')) {
+    return handleCreateRefund(event);
+  }
   return handleCheckout(event);
 }
 
@@ -190,6 +226,7 @@ async function handleWebhookHealth(event: any): Promise<any> {
   }
 
   try {
+    const { client, environment } = getStripeForReadOnly(event);
     const since = Math.floor(Date.now() / 1000) - 7 * 24 * 60 * 60;
     const trackedTypes: Stripe.Event.Type[] = [
       'checkout.session.completed',
@@ -197,7 +234,7 @@ async function handleWebhookHealth(event: any): Promise<any> {
       'payment_intent.payment_failed',
     ];
 
-    const events = await stripe.events.list({
+    const events = await client.events.list({
       types: trackedTypes,
       created: { gte: since },
       limit: 100,
@@ -223,6 +260,7 @@ async function handleWebhookHealth(event: any): Promise<any> {
         totalEvents: items.length,
         pendingEvents: pendingCount,
         deliveredEvents: items.length - pendingCount,
+        stripeEnvironment: environment,
         status: pendingCount > 0 ? 'warning' : 'ok',
         events: items.slice(0, 20),
       }),
@@ -570,8 +608,13 @@ async function handlePayoutList(_event: any): Promise<any> {
     return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: 'STRIPE_SECRET_KEY not configured' }) };
   }
   try {
+    const event = _event;
+    if (!isStaffCaller(event)) {
+      return { statusCode: 403, headers: CORS, body: JSON.stringify({ error: 'Admin required' }) };
+    }
+    const { client, environment } = getStripeForReadOnly(event);
     const since = Math.floor(Date.now() / 1000) - 30 * 24 * 60 * 60; // 30 jours
-    const payouts = await stripe.payouts.list({
+    const payouts = await client.payouts.list({
       limit: 30,
       created: { gte: since },
     });
@@ -586,7 +629,7 @@ async function handlePayoutList(_event: any): Promise<any> {
     return {
       statusCode: 200,
       headers: CORS,
-      body: JSON.stringify({ payouts: result }),
+      body: JSON.stringify({ payouts: result, stripeEnvironment: environment }),
     };
   } catch (error: any) {
     console.error('[payout-list] ERROR:', error?.message || error);
@@ -613,6 +656,7 @@ async function handlePayoutLookup(event: any): Promise<any> {
   }
 
   try {
+    const { client, environment } = getStripeForReadOnly(event);
     let bodyObj: any = {};
     if (typeof event.body === 'string') bodyObj = JSON.parse(event.body);
     else if (event.body) bodyObj = event.body;
@@ -625,7 +669,7 @@ async function handlePayoutLookup(event: any): Promise<any> {
     // Récupérer toutes les balance transactions du payout, en expandant la charge et son payment_intent
     let btList: Stripe.ApiList<Stripe.BalanceTransaction>;
     try {
-      btList = await stripe.balanceTransactions.list({
+      btList = await client.balanceTransactions.list({
         payout: payoutId,
         limit: 100,
         expand: ['data.source', 'data.source.payment_intent'],
@@ -652,6 +696,7 @@ async function handlePayoutLookup(event: any): Promise<any> {
     }
 
     const chargeItems = btList.data.filter((bt: any) => bt.type === 'charge');
+    const refundItems = btList.data.filter((bt: any) => bt.type === 'refund');
 
     // Pour chaque charge, résoudre le stripeTag via la checkout session (session.id.slice(-12))
     // car les metadata PaymentIntent sont vides (stripeTag calculé après création session)
@@ -667,7 +712,7 @@ async function handlePayoutLookup(event: any): Promise<any> {
       // Priorité 2 : retrouver la checkout session via payment_intent → session.id.slice(-12)
       if (!stripeTag && pi?.id) {
         try {
-          const sessions = await stripe.checkout.sessions.list({ payment_intent: pi.id, limit: 1 });
+          const sessions = await client.checkout.sessions.list({ payment_intent: pi.id, limit: 1 });
           if (sessions.data.length > 0) {
             const sessionId = sessions.data[0].id;
             stripeTag = `stripe:${sessionId.slice(-12)}`;
@@ -688,6 +733,44 @@ async function handlePayoutLookup(event: any): Promise<any> {
       };
     }));
 
+    // Pour chaque refund, résoudre le stripeTag de la charge originale
+    const refunds = await Promise.all(refundItems.map(async (bt: any) => {
+      const refund = bt.source as Stripe.Refund;
+      const chargeId: string | null = typeof refund?.charge === 'string' ? refund.charge : (refund?.charge as any)?.id || null;
+      let stripeTag: string | null = null;
+      let bookEntryId: string | null = null;
+
+      if (chargeId) {
+        try {
+          const chargeObj = await client.charges.retrieve(chargeId, { expand: ['payment_intent'] });
+          const pi = chargeObj?.payment_intent as Stripe.PaymentIntent | null;
+          const meta = pi?.metadata || {};
+          stripeTag = meta['stripeTag'] || null;
+          bookEntryId = meta['bookEntryId'] || null;
+          if (!stripeTag && pi?.id) {
+            const sessions = await client.checkout.sessions.list({ payment_intent: pi.id, limit: 1 });
+            if (sessions.data.length > 0) {
+              stripeTag = `stripe:${sessions.data[0].id.slice(-12)}`;
+              bookEntryId = bookEntryId || sessions.data[0].metadata?.['bookEntryId'] || null;
+            }
+          }
+        } catch (e) {
+          console.warn(`[payout-lookup] Could not resolve charge for refund ${refund?.id}:`, e);
+        }
+      }
+
+      return {
+        refundId: refund?.id || null,
+        chargeId,
+        stripeTag,
+        bookEntryId,
+        amountCents: bt.amount,  // négatif côté balance Stripe, on garde le signe
+        feesCents: bt.fee,
+        netCents: bt.net,
+        reason: refund?.reason || null,
+      };
+    }));
+
     const charges_final = charges;
 
     return {
@@ -695,10 +778,13 @@ async function handlePayoutLookup(event: any): Promise<any> {
       headers: CORS,
       body: JSON.stringify({
         payoutId,
+        stripeEnvironment: environment,
         totalGrossCents: charges_final.reduce((s: number, c: any) => s + c.grossCents, 0),
         totalFeesCents: charges_final.reduce((s: number, c: any) => s + c.feesCents, 0),
-        totalNetCents: charges_final.reduce((s: number, c: any) => s + c.netCents, 0),
+        totalNetCents: charges_final.reduce((s: number, c: any) => s + c.netCents, 0)
+                     + refunds.reduce((s: number, r: any) => s + r.netCents, 0),
         charges: charges_final,
+        refunds,
       }),
     };
   } catch (error: any) {
@@ -795,6 +881,244 @@ async function handleTerminalPaymentIntent(event: any): Promise<any> {
   } catch (err: any) {
     console.error('[terminal-payment-intent] Stripe error:', err);
     return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: err.message }) };
+  }
+}
+
+/**
+ * Récupère les charges Stripe avec filtres paramétrables
+ * Query params:
+ *   - charge_status: 'succeeded' | 'failed' | 'pending' (default: 'succeeded')
+ *   - payout_status: 'pending' | 'paid' | 'failed' (default: 'pending')
+ *   - refund_status: 'not_refunded' | 'partial' | 'full' (default: 'not_refunded,partial')
+ * Admin-only
+ */
+async function handleRefundableCharges(event: any): Promise<any> {
+  const CORS = { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' };
+
+  console.log('[refundable-charges] START - checking admin access');
+  if (!isStaffCaller(event)) {
+    console.log('[refundable-charges] DENIED - not staff');
+    return { statusCode: 403, headers: CORS, body: JSON.stringify({ error: 'Admin required' }) };
+  }
+  if (!STRIPE_SECRET_KEY) {
+    console.log('[refundable-charges] ERROR - STRIPE_SECRET_KEY not configured');
+    return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: 'STRIPE_SECRET_KEY not configured' }) };
+  }
+
+  try {
+    // Récupérer les query parameters
+    const queryParams = event.queryStringParameters || {};
+    const chargeStatusFilter = (queryParams.charge_status || 'succeeded').split(',').map((s: string) => s.trim());
+    const payoutStatusFilter = (queryParams.payout_status || 'pending').split(',').map((s: string) => s.trim());
+    const refundStatusFilter = (queryParams.refund_status || 'not_refunded,partial').split(',').map((s: string) => s.trim());
+
+    console.log('[refundable-charges] Filters:', {
+      chargeStatusFilter,
+      payoutStatusFilter,
+      refundStatusFilter,
+    });
+
+    console.log('[refundable-charges] Getting stripe client');
+    const { client, environment } = getStripeForReadOnly(event);
+    const since = Math.floor(Date.now() / 1000) - 90 * 24 * 60 * 60; // 90 jours
+
+    // Récupérer les balance transactions (uniquement celles qui ne sont pas encore payées = pending payout)
+    console.log('[refundable-charges] Fetching balance transactions');
+    const btList = await client.balanceTransactions.list({
+      limit: 100,
+      created: { gte: since },
+      expand: ['data.source', 'data.source.payment_intent'],
+      // Note: Stripe API n'a pas de filtre direct "payout_status pending"
+      // On va filtrer manuellement après récupération
+    });
+
+    console.log(`[refundable-charges] Found ${btList.data.length} balance transactions`);
+    const chargeItems = btList.data.filter((bt: any) => bt.type === 'charge');
+    console.log(`[refundable-charges] Found ${chargeItems.length} charges`);
+
+    // Pour chaque charge, récupérer ses détails de refund
+    const charges = await Promise.all(chargeItems.map(async (bt: any) => {
+      const charge = bt.source as Stripe.Charge;
+      const pi = charge?.payment_intent as Stripe.PaymentIntent | null;
+      const meta = pi?.metadata || {};
+
+      // Récupérer le stripeTag
+      let stripeTag: string | null = meta['stripeTag'] || null;
+      if (!stripeTag && pi?.id) {
+        try {
+          const sessions = await client.checkout.sessions.list({ payment_intent: pi.id, limit: 1 });
+          if (sessions.data.length > 0) {
+            const sessionId = sessions.data[0].id;
+            stripeTag = `stripe:${sessionId.slice(-12)}`;
+          }
+        } catch (e) {
+          console.warn(`[refundable-charges] Could not resolve session for PI ${pi.id}`);
+        }
+      }
+
+      // Récupérer la charge complète
+      let fullCharge: Stripe.Charge;
+      try {
+        fullCharge = await client.charges.retrieve(charge?.id || '');
+      } catch (e) {
+        console.warn(`[refundable-charges] Could not retrieve charge ${charge?.id}`);
+        return null;
+      }
+
+      // Filtrer par charge_status
+      if (!chargeStatusFilter.includes(fullCharge.status)) {
+        return null;
+      }
+
+      // Déterminer le refund_status
+      const refundStatus = fullCharge.refunded === false
+        ? 'not_refunded'
+        : fullCharge.amount_refunded === fullCharge.amount
+          ? 'full'
+          : 'partial';
+
+      // Filtrer par refund_status
+      if (!refundStatusFilter.includes(refundStatus)) {
+        return null;
+      }
+
+      // Déterminer le payout_status (si la balance transaction a un payout associé)
+      // Si bt.payout est null/undefined, c'est pending
+      // Si bt.payout existe, vérifier le status du payout
+      let payoutStatus = 'pending';
+      if (bt.payout) {
+        try {
+          const payout = await client.payouts.retrieve(bt.payout as string);
+          payoutStatus = payout.status; // 'paid', 'pending', 'failed', etc.
+        } catch (e) {
+          console.warn(`[refundable-charges] Could not retrieve payout ${bt.payout}`);
+        }
+      }
+
+      // Filtrer par payout_status
+      if (!payoutStatusFilter.includes(payoutStatus)) {
+        return null;
+      }
+
+      return {
+        chargeId: charge?.id || '',
+        stripeTag,
+        customerName: fullCharge.billing_details?.name || null,
+        amountCents: fullCharge.amount,
+        feeCents: bt.fee || 0,
+        netCents: bt.net || (fullCharge.amount - (bt.fee || 0)),
+        createdAt: fullCharge.created * 1000, // Convert to milliseconds
+        refundedAmountCents: fullCharge.amount_refunded || 0,
+        chargeStatus: fullCharge.status,
+        payoutStatus,
+        refundStatus,
+      };
+    }));
+
+    const refundableCharges = charges.filter((c) => c !== null);
+
+    console.log(`[refundable-charges] SUCCESS - returning ${refundableCharges.length} charges`);
+    return {
+      statusCode: 200,
+      headers: CORS,
+      body: JSON.stringify({
+        charges: refundableCharges,
+        filters: {
+          chargeStatus: chargeStatusFilter,
+          payoutStatus: payoutStatusFilter,
+          refundStatus: refundStatusFilter,
+        },
+        stripeEnvironment: environment,
+      }),
+    };
+  } catch (error: any) {
+    console.error('[refundable-charges] ERROR:', error?.message || error);
+    return {
+      statusCode: 500,
+      headers: CORS,
+      body: JSON.stringify({ error: 'Failed to list refundable charges: ' + (error?.message || 'unknown') }),
+    };
+  }
+}
+
+/**
+ * Crée un refund Stripe pour une charge donnée
+ * Admin-only
+ */
+async function handleCreateRefund(event: any): Promise<any> {
+  const CORS = { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' };
+
+  if (!isStaffCaller(event)) {
+    return { statusCode: 403, headers: CORS, body: JSON.stringify({ error: 'Admin required' }) };
+  }
+  if (!STRIPE_SECRET_KEY) {
+    return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: 'STRIPE_SECRET_KEY not configured' }) };
+  }
+
+  try {
+    const { client } = getStripeForReadOnly(event);
+    let bodyObj: any = {};
+    if (typeof event.body === 'string') bodyObj = JSON.parse(event.body);
+    else if (event.body) bodyObj = event.body;
+
+    const { chargeId, amountCents, reason, stripeTag } = bodyObj;
+
+    if (!chargeId || typeof chargeId !== 'string') {
+      return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'chargeId required' }) };
+    }
+    if (!amountCents || typeof amountCents !== 'number' || amountCents <= 0) {
+      return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'amountCents must be > 0' }) };
+    }
+
+    // Vérifier que la charge existe et qu'on peut la refunder
+    const charge = await client.charges.retrieve(chargeId);
+    if (!charge) {
+      return { statusCode: 404, headers: CORS, body: JSON.stringify({ error: 'Charge not found' }) };
+    }
+
+    const maxRefundable = charge.amount - (charge.amount_refunded || 0);
+    if (amountCents > maxRefundable) {
+      return {
+        statusCode: 400,
+        headers: CORS,
+        body: JSON.stringify({
+          error: `Cannot refund ${amountCents} cents, max refundable is ${maxRefundable}`,
+        }),
+      };
+    }
+
+    // Créer le refund
+    // Note: Stripe n'accepte que 'duplicate' | 'fraudulent' | 'requested_by_customer' comme reason
+    // Le motif libre est mis en metadata
+    const refund = await client.refunds.create({
+      charge: chargeId,
+      amount: amountCents,
+      reason: 'requested_by_customer',
+      metadata: {
+        ...(stripeTag ? { stripeTag } : {}),
+        ...(reason ? { motif: reason } : {}),
+        refundedAt: new Date().toISOString(),
+      },
+    });
+
+    return {
+      statusCode: 200,
+      headers: CORS,
+      body: JSON.stringify({
+        refundId: refund.id,
+        chargeId: refund.charge,
+        amountCents: refund.amount,
+        status: refund.status,
+        stripeTag,
+      }),
+    };
+  } catch (error: any) {
+    console.error('[create-refund] ERROR:', error?.message || error);
+    return {
+      statusCode: 500,
+      headers: CORS,
+      body: JSON.stringify({ error: 'Failed to create refund: ' + (error?.message || 'unknown') }),
+    };
   }
 }
 

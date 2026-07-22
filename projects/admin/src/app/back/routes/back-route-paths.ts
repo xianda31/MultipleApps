@@ -33,6 +33,7 @@ export const BACK_ROUTE_PATHS = {
   Dashboard: 'dashboard',
 
   StripeReconciliation: 'stripe/reconciliation',
+  StripeRefunds: 'stripe/refunds',
   // Stripe: 'stripe',
   
   RootVolume: 'outils/disk',

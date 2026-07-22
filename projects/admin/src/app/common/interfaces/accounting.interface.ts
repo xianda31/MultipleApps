@@ -20,6 +20,7 @@ export enum TRANSACTION_ID {
   remboursement_achat_adhérent_par_chèque = 'remboursement_achat_adhérent_par_chèque',
   remboursement_achat_adhérent_en_espèces = 'remboursement_achat_adhérent_en_espèces',
   remboursement_achat_adhérent_par_avoir = 'remboursement_achat_adhérent_par_avoir',
+  annulation_paiement_carte_adhérent = 'annulation_paiement_carte_adhérent',
   annulation_dette_adhérent = 'annulation_dette',
   dépense_en_espèces = 'dépense_en_espèces',
   dépense_par_chèque = 'dépense_par_chèque',

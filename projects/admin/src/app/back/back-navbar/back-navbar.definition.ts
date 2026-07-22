@@ -41,12 +41,21 @@ export const STATIC_MENUS: NavbarMenu[] = [
         subMenus: [
             { label: 'état de caisse', route: BACK_ROUTE_PATHS.CashBoxStatus },
             { label: 'rapprochement bancaire', route: BACK_ROUTE_PATHS.BankReconciliation },
-            { label: 'rapprochement stripe', route: BACK_ROUTE_PATHS.StripeReconciliation },
             { label: 'écriture', route: BACK_ROUTE_PATHS.BooksEditor },
             { label: 'résultats', route: BACK_ROUTE_PATHS.ExpenseAndRevenue },
             { label: 'bilan', route: BACK_ROUTE_PATHS.Balance },
             { label: 'synthèse', route: BACK_ROUTE_PATHS.BooksOverview }
             // { label: 'factures', route: BACK_ROUTE_PATHS.Invoices },
+        ]
+    },
+    {
+        label: 'Stripe',
+        key: 'stripe',
+        icon: 'bi-credit-card',
+        minLevel: Group_priorities.Administrateur,
+        subMenus: [
+            { label: 'remboursements', route: BACK_ROUTE_PATHS.StripeRefunds },
+            { label: 'rapprochement', route: BACK_ROUTE_PATHS.StripeReconciliation }
         ]
     },
     {

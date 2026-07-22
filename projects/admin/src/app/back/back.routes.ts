@@ -35,6 +35,7 @@ import { CmsWrapper } from './pages/cms-wrapper/cms-wrapper';
 import { CompetitionsComponent } from './competitions/competitions';
 import { DashboardComponent } from './dashboard/dashboard';
 import { StripeReconciliationComponent } from './shop/stripe-reconciliation/stripe-reconciliation.component';
+import { StripeRefundsComponent } from './shop/stripe-refunds/stripe-refunds.component';
 import { SondageListComponent } from './sondage/sondage-list/sondage-list.component';
 import { SondageEditorComponent } from './sondage/sondage-editor/sondage-editor.component';
 import { SondageResultatsComponent } from './sondage/sondage-resultats/sondage-resultats.component';
@@ -100,6 +101,7 @@ export const routes: Routes = [
       { path: BACK_ROUTE_PATHS.SondageResultats, component: SondageResultatsComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.Competitions, component: CompetitionsComponent, data: { access: 'full' }, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.StripeReconciliation, component: StripeReconciliationComponent, canActivate: [AuthGuard] },
+      { path: BACK_ROUTE_PATHS.StripeRefunds, component: StripeRefundsComponent, canActivate: [AuthGuard] },
 
 
       { path: '', component: BackPageComponent },

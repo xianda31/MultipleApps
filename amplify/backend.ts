@@ -179,6 +179,22 @@ httpApi.addRoutes({
   // PAS de authorization -> Stripe doit pouvoir appeler
 });
 
+// 🔒 Stripe Refundable Charges - Admin uniquement (liste charges remboursables)
+httpApi.addRoutes({
+  path: "/api/stripe/refundable-charges",
+  methods: [HttpMethod.GET],
+  integration: stripeCheckoutIntegration,
+  authorizer: userPoolAuthorizer,
+});
+
+// 🔒 Stripe Create Refund - Admin uniquement (crée refund)
+httpApi.addRoutes({
+  path: "/api/stripe/refund",
+  methods: [HttpMethod.POST],
+  integration: stripeCheckoutIntegration,
+  authorizer: userPoolAuthorizer,
+});
+
 // 🔒 Stripe Terminal - Connection Token (staff uniquement)
 httpApi.addRoutes({
   path: "/api/stripe/connection-token",

@@ -8,6 +8,7 @@ export const stripeCheckout = defineFunction({
   memoryMB: 512,
   environment: {
     STRIPE_SECRET_KEY: secret('STRIPE_SECRET_KEY'),
+    STRIPE_LIVE_SECRET_KEY: secret('STRIPE_LIVE_SECRET_KEY'),
     STRIPE_PUBLISHABLE_KEY: secret('STRIPE_PUBLISHABLE_KEY'),
   },
 });

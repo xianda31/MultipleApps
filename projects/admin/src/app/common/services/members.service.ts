@@ -504,9 +504,7 @@ get_birthdays_this_month(): Observable<Member[]> {
       }
 
       const fullName = this.full_name(member);
-      const adhPaid = operations
-        .filter((op) => op.member === fullName)
-        .some((op) => op.values['ADH'] !== undefined && op.values['ADH'] !== null);
+      const adhPaid = this.hasAdhPaid(fullName, operations);
 
       if (!adhPaid) {
         missing.push(fullName);
@@ -522,7 +520,7 @@ get_birthdays_this_month(): Observable<Member[]> {
     members.forEach((member) => {
       const fullName = this.full_name(member);
       const memberOperations = operations.filter((op) => op.member === fullName);
-      const hasAdh = memberOperations.some((op) => !!op.values['ADH']);
+      const hasAdh = this.hasAdhPaid(fullName, memberOperations);
       const hasOther = memberOperations.some((op) => Object.keys(op.values).some((key) => key !== 'ADH'));
 
       if (!hasAdh && hasOther) {
@@ -531,6 +529,41 @@ get_birthdays_this_month(): Observable<Member[]> {
     });
 
     return buyWithoutMembership;
+  }
+
+  /**
+   * Compte les occurrences d'adhésion pour un membre
+   * Logique: nombre impair = payée, nombre pair = non payée ou annulée
+   * Ex: 1 achat = payée, 1 achat + 1 annulation = non payée
+   */
+  private countAdhOccurrences(fullName: string, operations: MemberOperation[]): number {
+    return operations
+      .filter((op) => op.member === fullName && op.values['ADH'] !== undefined && op.values['ADH'] !== null)
+      .length;
+  }
+
+  /**
+   * Vérifie si l'adhésion est payée (nombre impair d'occurrences)
+   */
+  hasAdhPaid(fullName: string, operations: MemberOperation[]): boolean {
+    return this.countAdhOccurrences(fullName, operations) % 2 === 1;
+  }
+
+  /**
+   * Compte les occurrences de licence pour un membre
+   * Logique: nombre impair = payée, nombre pair = non payée ou annulée
+   */
+  private countLicOccurrences(fullName: string, operations: MemberOperation[]): number {
+    return operations
+      .filter((op) => op.member === fullName && op.values['LIC'] !== undefined && op.values['LIC'] !== null)
+      .length;
+  }
+
+  /**
+   * Vérifie si la licence est payée (nombre impair d'occurrences)
+   */
+  hasLicPaid(fullName: string, operations: MemberOperation[]): boolean {
+    return this.countLicOccurrences(fullName, operations) % 2 === 1;
   }
 
 }

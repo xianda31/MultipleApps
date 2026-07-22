@@ -473,13 +473,9 @@ export class ShopComponent implements OnInit, OnDestroy {
   private updateBuyerPaymentFlags(buyer: Member, notifyWarnings: boolean): void {
     const fullName = this.membersService.full_name(buyer);
 
-    const hasLicenseOperation = this.operations
-      .filter((op) => op.member === fullName)
-      .some((op) => op.values['LIC']);
+    const hasLicenseOperation = this.membersService.hasLicPaid(fullName, this.operations);
 
-    const hasMembershipOperation = this.operations
-      .filter((op) => op.member === fullName)
-      .some((op) => op.values['ADH']);
+    const hasMembershipOperation = this.membersService.hasAdhPaid(fullName, this.operations);
 
     // Prefer member profile status (source of truth from Members sync),
     // and keep accounting operations as fallback when profile fields lag.
