@@ -425,7 +425,12 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
     }
 
     return this._book_entries
-      .filter(book_entry => [TRANSACTION_CLASS.REVENUE_FROM_MEMBER].includes(this.transactionService.transaction_class(book_entry.transaction_id)))
+      // Inclut les remboursements (ex: annulation_paiement_carte_adhérent) pour conserver
+      // la symétrie des opérations ADH positives/négatives dans les parcours adhésion.
+      .filter(book_entry =>
+        [TRANSACTION_CLASS.REVENUE_FROM_MEMBER, TRANSACTION_CLASS.REIMBURSEMENT]
+          .includes(this.transactionService.transaction_class(book_entry.transaction_id))
+      )
       .reduce((acc, book_entry) => {
         const revenues = book_entry.operations
           .map(op => ({

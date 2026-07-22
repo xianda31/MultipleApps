@@ -568,21 +568,15 @@ export class StripeReconciliationComponent {
     const snapshotFees = snapshotGrossAfterRefunds - netCents;
     const snapshotNet = netCents;
 
-    // bank_report au format YY-MM (même convention que le rapprochement bancaire)
-    const pd = new Date(this.payoutDate);
-    const bank_report = pd.getFullYear().toString().slice(-2) + '-' + (1 + pd.getMonth()).toString().padStart(2, '0');
-
     try {
-      // 1. Écriture virement_stripe_vers_banque — bank_report positionné d'emblée
-      //    car la date du virement Stripe = date du relevé bancaire → pas besoin de repasser
-      //    par la page rapprochement bancaire pour pointer cette ligne.
+      // 1. Écriture virement_stripe_vers_banque
+      // bank_report reste non renseigné pour laisser le pointage manuel en rapprochement bancaire.
       await this.bookService.create_book_entry({
         id: '',
         season: this.systemDataService.get_season(new Date(this.payoutDate)),
         date: this.payoutDate,
         transaction_id: TRANSACTION_ID.virement_stripe_vers_banque,
         deposit_ref: pId,
-        bank_report: bank_report,
         amounts: {
           [FINANCIAL_ACCOUNT.STRIPE_credit]: snapshotGrossAfterRefunds / 100,
           [FINANCIAL_ACCOUNT.BANK_debit]: snapshotNet / 100,
