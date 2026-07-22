@@ -88,7 +88,15 @@ export class AuthentificationService {
           let member_id = attributes['custom:member_id'];
           // console.log('member_id', member_id);
           if (!member_id) {
-            reject('local storage invalid');
+            // Fallback: chercher par email si custom:member_id manque
+            console.warn('[Auth] custom:member_id manquant, fallback par email', { email });
+            const memberByEmail = await this.memberService.searchMemberByEmail(email);
+            if (memberByEmail) {
+              this._logged_member$.next(memberByEmail);
+              resolve(memberByEmail.id);
+            } else {
+              reject('Utilisateur authentifié mais non trouvé en base (email: ' + email + ')');
+            }
           } else {
             let member = await this.memberService.readMember(member_id);
             this._logged_member$.next(member);
