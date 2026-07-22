@@ -6,6 +6,24 @@
   50% { opacity: 0; }
 }
 
+.buyer-warning {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid #f1d08a;
+  background: #fff8e8;
+  color: #7a5a12;
+  font-size: 0.82rem;
+  line-height: 1.2;
+
+  i {
+    font-size: 0.9rem;
+    flex: 0 0 auto;
+  }
+}
+
 .to-fill-in {
     border-color: red;
 }

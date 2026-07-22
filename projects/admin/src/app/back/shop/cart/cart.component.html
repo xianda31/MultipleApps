@@ -2,8 +2,9 @@
 <div class="cart-panel">
 
     @if (message) {
-    <div class="alert alert-danger mb-3 py-2 blinking">
-        <strong>{{ message.toUpperCase() }}</strong>
+    <div class="buyer-warning mb-2">
+        <i class="bi bi-exclamation-circle me-1"></i>
+        <span>{{ message }}</span>
     </div>
     }
 
@@ -175,7 +176,7 @@
     </div>
     <div class="cart-actions">
         @if (onlineMode) {
-        <button type="button" class="btn-checkout" [disabled]="stripe_checkout_not_ready()"
+        <button type="button" class="btn-checkout" [disabled]="stripe_checkout_not_ready() || checkoutDisabled"
             (click)="stripeCheckout.emit()">
             <i class="bi bi-credit-card me-2"></i>Payer par carte
         </button>
@@ -194,6 +195,12 @@
         <input type="text" class="form-control form-control-sm" placeholder="commentaire (optionnel)"
             [(ngModel)]="cart.tag">
         }
+        }
+
+        @if (checkoutWarning) {
+        <div class="alert alert-warning py-1 px-2 mt-2 mb-0 small">
+            <i class="bi bi-exclamation-triangle me-1"></i>{{ checkoutWarning }}
+        </div>
         }
     </div>
     }

@@ -19,7 +19,7 @@ import { BuyerContextService } from './services/buyer-context.service';
 import { ShopProductService } from './services/shop-product.service';
 import { StripeTerminalService } from './services/stripe-terminal.service';
 import { SystemDataService } from '../../common/services/system-data.service';
-import { PaymentMode } from './cart/cart.interface';
+import { CartItem, PaymentMode } from './cart/cart.interface';
 import { CardPaymentOrchestratorService } from '../services/card-payment-orchestrator.service';
 import { BookService } from '../services/book.service';
 import { firstValueFrom, Subscription, take } from 'rxjs';
@@ -91,10 +91,14 @@ export class ShopComponent implements OnInit, OnDestroy {
   private checkoutStateSubscription?: Subscription;
   private bookEntriesSubscription?: Subscription;
   private bookEntriesLoadingSubscription?: Subscription;
+  private cartSubscription?: Subscription;
   private successBannerTimer: ReturnType<typeof setTimeout> | null = null;
   private lastSuccessSessionId: string | null = null;
   private bookEntriesReady = false;
   private shouldNotifyBuyerFlagsAfterSync = false;
+  private cartItemsSnapshot: CartItem[] = [];
+  membershipCheckoutBlocked = false;
+  membershipCheckoutWarning = '';
 
   // ── TPE (Stripe Terminal) ──────────────────────────────────
   tpePaymentActive: boolean = false;
@@ -199,6 +203,7 @@ export class ShopComponent implements OnInit, OnDestroy {
       this.session = state.session;
       this.operations = state.operations;
       this.canEditPrice = state.canEditPrice;
+      this.validateMembershipGuardrailBeforeCheckout();
 
       this.bookEntriesReady = this.bookService.is_book_entries_loaded();
 
@@ -209,6 +214,7 @@ export class ShopComponent implements OnInit, OnDestroy {
       // Keep operations in sync after initial load (important in dev refresh flows).
       this.bookEntriesSubscription = this.bookService.list_book_entries().subscribe(() => {
         this.operations = this.bookService.get_operations();
+        this.validateMembershipGuardrailBeforeCheckout();
         if (this.buyer && this.bookEntriesReady) {
           this.updateBuyerPaymentFlags(this.buyer, this.shouldNotifyBuyerFlagsAfterSync);
           this.shouldNotifyBuyerFlagsAfterSync = false;
@@ -257,6 +263,12 @@ export class ShopComponent implements OnInit, OnDestroy {
         this.onBuyerChange(value['buyer']);
       });
 
+      // Snapshot du panier pour détecter les doublons avant enregistrement.
+      this.cartSubscription = this.cartService.cart$.subscribe((cart) => {
+        this.cartItemsSnapshot = cart.items || [];
+        this.validateMembershipGuardrailBeforeCheckout();
+      });
+
       // Load and organize products
       this.shopProducts.loadAndOrganizeProducts().subscribe((data) => {
         this.allProducts = data.allProducts;
@@ -271,6 +283,7 @@ export class ShopComponent implements OnInit, OnDestroy {
     this.checkoutStateSubscription?.unsubscribe();
     this.bookEntriesSubscription?.unsubscribe();
     this.bookEntriesLoadingSubscription?.unsubscribe();
+    this.cartSubscription?.unsubscribe();
     this.clearSuccessBannerTimer();
     this.cardPaymentOrchestrator.cancelRemotePayment();
     // shopInit (singleton root) gère sa propre subscription TPESession
@@ -402,8 +415,10 @@ export class ShopComponent implements OnInit, OnDestroy {
   }
 
   cart_confirmed(): void {
-    
     let full_name = this.membersService.first_then_last_name(this.buyer!);
+    if (!this.validateMembershipGuardrailBeforeCheckout()) {
+      return;
+    }
     this.isSaving = true;
     this.cartService.save_sale(this.session, this.buyer!)
       .then(() => {
@@ -437,6 +452,63 @@ export class ShopComponent implements OnInit, OnDestroy {
     return member ? member.lastname + ' ' + member.firstname : '???';
   }
 
+  private isMembershipProduct(product: Product): boolean {
+    const account = String((product as any)?.account || '').toUpperCase();
+    return account.startsWith('ADH');
+  }
+
+  private getMembershipBeneficiaryNamesInCart(): string[] {
+    const names: string[] = [];
+    for (const item of this.cartItemsSnapshot) {
+      const isMembershipItem = String(item.product_account || '').toUpperCase().startsWith('ADH');
+      if (!isMembershipItem) continue;
+      if (item.payee_name) names.push(item.payee_name);
+      if (item.paired_name) names.push(item.paired_name);
+    }
+    return names;
+  }
+
+  private validateMembershipGuardrailBeforeCheckout(): boolean {
+    const beneficiaryNames = this.getMembershipBeneficiaryNamesInCart();
+    if (beneficiaryNames.length === 0) {
+      this.membershipCheckoutBlocked = false;
+      this.membershipCheckoutWarning = '';
+      return true;
+    }
+
+    const counts = new Map<string, number>();
+    beneficiaryNames.forEach((name) => counts.set(name, (counts.get(name) || 0) + 1));
+    const duplicates = [...counts.entries()].filter(([, count]) => count > 1).map(([name]) => name);
+    if (duplicates.length > 0) {
+      this.membershipCheckoutBlocked = true;
+      this.membershipCheckoutWarning = `Attention, doublon d'adhésion dans le panier pour : ${duplicates.join(', ')}`;
+      return false;
+    }
+
+    const alreadyPaid: string[] = [];
+    const uniqueNames = [...new Set(beneficiaryNames)];
+    for (const fullName of uniqueNames) {
+      const member = this.members.find(m => this.membersService.full_name(m) === fullName);
+      const hasHistoryMembership = member
+        ? (this.membersService.hasPaidMembership(member) || this.membersService.hasAdhPaid(fullName, this.operations))
+        : this.membersService.hasAdhPaid(fullName, this.operations);
+
+      if (hasHistoryMembership) {
+        alreadyPaid.push(fullName);
+      }
+    }
+
+    if (alreadyPaid.length > 0) {
+      this.membershipCheckoutBlocked = true;
+      this.membershipCheckoutWarning = `Attention, ${alreadyPaid.join(', ')} a déjà son adhésion`;
+      return false;
+    }
+
+    this.membershipCheckoutBlocked = false;
+    this.membershipCheckoutWarning = '';
+    return true;
+  }
+
 
   /**
    * Gère les changements d'acheteur dans le formulaire
@@ -457,10 +529,10 @@ export class ShopComponent implements OnInit, OnDestroy {
     this.debt_amount = state.debtAmount;
     this.asset_amount = state.assetAmount;
 
-    if (this.bookEntriesReady) {
-      this.updateBuyerPaymentFlags(buyer, true);
-    } else {
-      this.message = '';
+    // Affichage immédiat: on calcule déjà le message à partir du profil membre.
+    // Quand les écritures sont prêtes, on recalculera avec l'historique comptable.
+    this.updateBuyerPaymentFlags(buyer, this.bookEntriesReady);
+    if (!this.bookEntriesReady) {
       this.shouldNotifyBuyerFlagsAfterSync = true;
     }
 
@@ -543,6 +615,10 @@ export class ShopComponent implements OnInit, OnDestroy {
   async on_stripe_checkout(): Promise<void> {
     const member = this.onlineMode ? this.logged_member : this.buyer;
     const cartItems = this.cartService.getCartItems();
+
+    if (!this.validateMembershipGuardrailBeforeCheckout()) {
+      return;
+    }
 
     // Calculer la ristourne globale (mode offline uniquement)
     // = différence entre prix DB et prix saisis dans le cart
@@ -630,6 +706,10 @@ export class ShopComponent implements OnInit, OnDestroy {
   async onPayByCard(): Promise<void> {
     if (!this.buyer) {
       this.toastService.showWarning('TPE', 'Sélectionner un acheteur');
+      return;
+    }
+
+    if (!this.validateMembershipGuardrailBeforeCheckout()) {
       return;
     }
 

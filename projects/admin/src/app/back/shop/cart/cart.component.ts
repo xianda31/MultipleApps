@@ -31,6 +31,8 @@ export class CartComponent {
   @Input() tpePaymentInProgress = false; // Paiement TPE en cours
   @Input() canEditPrice = false;  // Si false, modifier les prix est désactivé
   @Input() members: Member[] = [];  // Liste des membres pour la sélection du payee
+  @Input() checkoutDisabled = false;  // Blocage métier (ex: adhésion déjà payée)
+  @Input() checkoutWarning = '';      // Message affiché sous le bouton de validation
 
   debt_amount = 0;
   asset_available = 0;
@@ -215,6 +217,9 @@ export class CartComponent {
   }
 
   validate_sale() {
+    if (this.checkoutDisabled) {
+      return;
+    }
     if (this.selected_payment.mode === PaymentMode.CARD) {
       this.tpePayment.emit();
       return;
@@ -241,6 +246,7 @@ export class CartComponent {
     if (this.cart.items.length === 0 && !(this.total_amount() > 0)) return true;
     if (this.total_amount() < 0) return true;
     if (this.cart.items.some((item) => !item.payee)) return true;
+    if (this.checkoutDisabled) return true;
     // Validations par mode
     if (this.selected_payment.mode === PaymentMode.CARD) {
       return this.total_amount() <= 0 || !this.readerConnected;
@@ -255,7 +261,8 @@ export class CartComponent {
   cart_is_not_valid_for_tpe(): boolean {
     return (this.cart.items.length === 0 && !(this.total_amount() > 0))
       || this.total_amount() <= 0
-      || this.cart.items.some((item) => !item.payee);
+      || this.cart.items.some((item) => !item.payee)
+      || this.checkoutDisabled;
   }
 
 }
