@@ -391,55 +391,28 @@
         @if (missingBookEntryProposals.length > 0) {
           <div class="alert alert-info py-2 small mb-2">
             <div class="fw-semibold mb-1">
-              <i class="bi bi-journal-plus me-1"></i>
+              <i class="bi bi-journal-x me-1"></i>
               Écriture comptable manquante détectée
             </div>
             <div class="mb-2">
-              La charge Stripe est bien cohérente, mais aucune BookEntry locale ne lui correspond encore.
-              La prise en compte proposée consiste à générer plus tard une BookEntry avec le tag ci-dessous.
+              La charge Stripe est cohérente mais la BookEntry d'origine est absente.
+              Pour ce cas d'anomalie, utilisez <strong>books-editor</strong> pour recréer manuellement l'écriture.
             </div>
             <div class="table-responsive">
               <table class="table table-sm table-borderless mb-0 align-middle">
                 <thead>
                   <tr>
-                    <th>Tag proposé</th>
+                    <th>Date transaction</th>
                     <th class="text-end">Brut</th>
-                    <th class="text-end">Frais</th>
-                    <th class="text-end">Net</th>
-                    <th>Charge Stripe</th>
-                    <th></th>
+                    <th>stripeTag</th>
                   </tr>
                 </thead>
                 <tbody>
                   @for (proposal of missingBookEntryProposals; track proposal.chargeId) {
                     <tr>
-                      <td>
-                        <div class="font-monospace text-primary fw-semibold">{{ proposal.proposedBookEntryTag }}</div>
-                        <div class="text-muted small">BookEntry à générer plus tard</div>
-                      </td>
+                      <td>{{ formatDate(proposal.date) }}</td>
                       <td class="text-end">{{ formatAmount(proposal.grossCents) }}</td>
-                      <td class="text-end">{{ formatAmount(proposal.feesCents) }}</td>
-                      <td class="text-end fw-semibold">{{ formatAmount(proposal.netCents) }}</td>
-                      <td><small class="font-monospace text-muted">{{ proposal.chargeId }}</small></td>
-                      <td class="text-end">
-                        @if (proposal.canRegenerate) {
-                          <button class="btn btn-sm btn-outline-primary"
-                                  (click)="regenerateMissingBookEntry(proposal)"
-                                  [disabled]="regeneratingProposalTag === proposal.proposedBookEntryTag || isProductionReadOnlyMode">
-                            @if (regeneratingProposalTag === proposal.proposedBookEntryTag) {
-                              <span class="spinner-border spinner-border-sm me-1"></span>
-                            }
-                            Régénérer
-                          </button>
-                        } @else {
-                          <span class="badge bg-secondary">Données incomplètes</span>
-                        }
-                      </td>
-                    </tr>
-                    <tr class="table-light">
-                      <td colspan="6" class="small text-muted">
-                        saison {{ proposal.season }} · date {{ formatDate(proposal.date) }} · membre {{ proposal.memberName || 'inconnu' }} · tag {{ proposal.proposedBookEntryTag }}
-                      </td>
+                      <td><small class="font-monospace text-muted">{{ proposal.stripeTag }}</small></td>
                     </tr>
                   }
                 </tbody>
@@ -449,48 +422,10 @@
         }
 
         @if (stripeRefunds.length > 0) {
-          <div class="alert alert-warning py-2 small mb-2">
-            <div class="fw-semibold mb-1">
-              <i class="bi bi-arrow-counterclockwise me-1"></i>
-              Remboursement(s) Stripe inclus dans ce payout
-            </div>
-            <div class="mb-2 text-muted">
-              Ces remboursements réduisent le net bancaire. Ils nécessiteront une écriture comptable séparée.
-            </div>
-            <table class="table table-sm table-borderless mb-0 align-middle">
-              <thead>
-                <tr>
-                  <th>Tag charge origine</th>
-                  <th class="text-end">Montant remboursé</th>
-                  <th>Motif</th>
-                  <th>Refund ID</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (refund of stripeRefunds; track refund.refundId) {
-                  <tr>
-                    <td>
-                      @if (refund.stripeTag) {
-                        <span class="font-monospace text-warning fw-semibold">{{ refund.stripeTag }}</span>
-                      } @else {
-                        <span class="text-muted font-monospace">{{ refund.chargeId || '—' }}</span>
-                      }
-                    </td>
-                    <td class="text-end text-danger fw-semibold">{{ formatAmount(-refund.amountCents) }}</td>
-                    <td><small class="text-muted">{{ refund.reason || 'non précisé' }}</small></td>
-                    <td><small class="font-monospace text-muted">{{ refund.refundId }}</small></td>
-                  </tr>
-                }
-              </tbody>
-              <tfoot class="table-warning fw-bold">
-                <tr>
-                  <td colspan="3" class="text-end">Net encaissé par le club</td>
-                  <td class="text-end text-success">
-                    {{ formatAmount(netBancaire !== null ? netBancaire * 100 : 0) }}
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
+          <div class="alert alert-info py-2 small mb-2 d-flex align-items-center gap-2">
+            <i class="bi bi-arrow-counterclockwise"></i>
+            <span>Net remboursé à l'émetteur :</span>
+            <strong>{{ formatAmount(stripeRefunds.reduce(totalRefundsReducer, 0)) }}</strong>
           </div>
         }
 

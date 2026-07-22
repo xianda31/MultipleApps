@@ -45,15 +45,8 @@ interface StripeRefundItem {
 interface MissingBookEntryProposal {
   chargeId: string;
   stripeTag: string;
-  bookEntryId: string | null;
   grossCents: number;
-  feesCents: number;
-  netCents: number;
-  proposedBookEntryTag: string;
-  memberName: string;
-  season: string;
   date: string;
-  canRegenerate: boolean;
 }
 
 interface WebhookHealth {
@@ -124,18 +117,23 @@ export class StripeReconciliationComponent {
   expectedChargeCount = 0;   // nombre de charges attendues
   missingBookEntryProposals: MissingBookEntryProposal[] = [];
   stripeRefunds: StripeRefundItem[] = [];
-  regeneratingProposalTag: string | null = null;
 
   // Computed
   get selectedLines(): PayoutLine[] { return this.lines.filter(l => l.selected); }
   get selectedGrossCents(): number { return this.selectedLines.reduce((s, l) => s + l.grossCents, 0); }
+  get totalRefundsAbsCents(): number {
+    return this.stripeRefunds.reduce((sum, r) => sum + Math.max(0, -r.amountCents), 0);
+  }
+  get selectedGrossAfterRefundsCents(): number {
+    return Math.max(0, this.selectedGrossCents - this.totalRefundsAbsCents);
+  }
   get selectedFeesCents(): number { return this.selectedLines.reduce((s, l) => s + l.feesCents, 0); }
   get selectedNetCents(): number { return this.selectedGrossCents - this.selectedFeesCents; }
   get allSelected(): boolean { return this.lines.length > 0 && this.lines.every(l => l.selected); }
 
   // Cohérence de la sélection
   get impliedFeesCents(): number {
-    return this.netBancaire !== null ? this.selectedGrossCents - Math.round(this.netBancaire * 100) : 0;
+    return this.netBancaire !== null ? this.selectedGrossAfterRefundsCents - Math.round(this.netBancaire * 100) : 0;
   }
   get selectionCoherent(): boolean {
     if (this.selectedLines.length === 0 || !this.netBancaire) return false;
@@ -144,7 +142,8 @@ export class StripeReconciliationComponent {
       return this.selectedGrossCents === this.expectedGrossCents;
     }
     // Manuel: frais implicites < 10% du brut
-    return this.impliedFeesCents >= 0 && this.impliedFeesCents / this.selectedGrossCents < 0.10;
+    if (this.selectedGrossAfterRefundsCents <= 0) return false;
+    return this.impliedFeesCents >= 0 && this.impliedFeesCents / this.selectedGrossAfterRefundsCents < 0.10;
   }
   get coherenceWarning(): string | null {
     if (this.selectedLines.length === 0 || !this.netBancaire) return null;
@@ -154,7 +153,9 @@ export class StripeReconciliationComponent {
         return `Brut sélectionné (${this.formatAmount(this.selectedGrossCents)}) ≠ brut Stripe attendu (${this.formatAmount(this.expectedGrossCents)}) — écart : ${diff > 0 ? '+' : ''}${this.formatAmount(diff)}`;
       }
     } else if (this.isManualPayout && this.impliedFeesCents > 0) {
-      const rate = this.impliedFeesCents / this.selectedGrossCents;
+      const rate = this.selectedGrossAfterRefundsCents > 0
+        ? this.impliedFeesCents / this.selectedGrossAfterRefundsCents
+        : 1;
       if (rate >= 0.10) {
         return `Frais implicites inhabituellement élevés (${(rate * 100).toFixed(1)}% du brut) — vérifiez la sélection.`;
       }
@@ -418,22 +419,13 @@ export class StripeReconciliationComponent {
             t.bookEntryId === charge.bookEntryId || t.stripeTag === charge.stripeTag
           ) || null;
           const stripeMeta = matchingStripeTransaction?.stripeMeta || {};
-          const memberName = String(stripeMeta.memberName || matchingStripeTransaction?.customerEmail || '');
           const date = String(stripeMeta.date || this.payoutDate || '');
-          const season = String(stripeMeta.season || (date ? this.systemDataService.get_season(new Date(date)) : this.systemDataService.get_season(new Date())));
 
           missingBookEntryProposals.push({
             chargeId: charge.chargeId,
             stripeTag: charge.stripeTag,
-            bookEntryId: charge.bookEntryId || null,
             grossCents: charge.grossCents,
-            feesCents: charge.feesCents,
-            netCents: charge.netCents,
-            proposedBookEntryTag: charge.stripeTag,
-            memberName,
-            season,
             date,
-            canRegenerate: !!matchingStripeTransaction,
           });
 
           // Détecter si cette charge est déjà réconciliée avec un AUTRE payout (deposit_ref incorrect)
@@ -571,9 +563,9 @@ export class StripeReconciliationComponent {
     // déclenche la subscription ngOnInit → loadLines() → this.lines est reconstruit avec selected=false
     const snapshotLines = [...this.selectedLines];
     const snapshotCount = snapshotLines.length;
-    const snapshotGross = this.selectedGrossCents;
+    const snapshotGrossAfterRefunds = this.selectedGrossAfterRefundsCents;
     const netCents = Math.round(this.netBancaire * 100);
-    const snapshotFees = snapshotGross - netCents;
+    const snapshotFees = snapshotGrossAfterRefunds - netCents;
     const snapshotNet = netCents;
 
     // bank_report au format YY-MM (même convention que le rapprochement bancaire)
@@ -592,7 +584,7 @@ export class StripeReconciliationComponent {
         deposit_ref: pId,
         bank_report: bank_report,
         amounts: {
-          [FINANCIAL_ACCOUNT.STRIPE_credit]: snapshotGross / 100,
+          [FINANCIAL_ACCOUNT.STRIPE_credit]: snapshotGrossAfterRefunds / 100,
           [FINANCIAL_ACCOUNT.BANK_debit]: snapshotNet / 100,
         } as any,
         operations: snapshotFees > 0 ? [{
@@ -617,7 +609,7 @@ export class StripeReconciliationComponent {
 
       this.toastService.showSuccess('Payout',
         `Écriture créée — ${snapshotCount} paiement(s) réconcilié(s) ` +
-        `(brut: ${this.formatAmount(snapshotGross)}, ` +
+        `(brut net de remboursements: ${this.formatAmount(snapshotGrossAfterRefunds)}, ` +
         `frais: ${this.formatAmount(snapshotFees)}, ` +
         `net: ${this.formatAmount(snapshotNet)})`);
 
@@ -634,57 +626,6 @@ export class StripeReconciliationComponent {
       this.toastService.showError('Payout', 'Erreur lors de la création de l\'écriture');
     } finally {
       this.processingPayout = false;
-    }
-  }
-
-  async regenerateMissingBookEntry(proposal: MissingBookEntryProposal): Promise<void> {
-    if (this.isProductionReadOnlyMode) {
-      this.toastService.showWarning('Mode lecture seule', 'La régénération est désactivée lorsque Stripe production est utilisé en lecture seule.');
-      return;
-    }
-    if (this.regeneratingProposalTag) return;
-
-    const existing = this.bookService.get_book_entries().find(e => e.stripeTag === proposal.proposedBookEntryTag);
-    if (existing) {
-      this.toastService.showWarning('Régénération', 'Une BookEntry portant déjà ce tag existe dans la base.');
-      return;
-    }
-
-    const matchingStripeTransaction = this.diagnosticStripeTransactions.find((t: any) =>
-      t.stripeTag === proposal.proposedBookEntryTag || t.id === proposal.chargeId || t.bookEntryId === proposal.bookEntryId
-    ) || null;
-
-    const stripeMeta = matchingStripeTransaction?.stripeMeta || {};
-    const memberName = String(stripeMeta.memberName || proposal.memberName || '').trim();
-    const season = String(stripeMeta.season || proposal.season || this.systemDataService.get_season(new Date(proposal.date)));
-    const date = String(stripeMeta.date || proposal.date || new Date().toISOString().slice(0, 10));
-
-    this.regeneratingProposalTag = proposal.proposedBookEntryTag;
-    try {
-      const regenerated = await this.bookService.create_book_entry({
-        id: '',
-        season,
-        date,
-        transaction_id: TRANSACTION_ID.achat_adhérent_par_carte,
-        stripeTag: proposal.proposedBookEntryTag,
-        amounts: {
-          [FINANCIAL_ACCOUNT.STRIPE_debit]: proposal.grossCents / 100,
-        },
-        operations: [{
-          label: memberName ? `vente Stripe réintégrée - ${memberName}` : 'vente Stripe réintégrée',
-          member: memberName || undefined,
-          values: {},
-        }],
-      });
-
-      this.toastService.showSuccess('Régénération', `BookEntry recréée avec le tag ${regenerated.stripeTag || proposal.proposedBookEntryTag}`);
-      this.missingBookEntryProposals = this.missingBookEntryProposals.filter(p => p.proposedBookEntryTag !== proposal.proposedBookEntryTag);
-      await this.loadLines();
-    } catch (error: any) {
-      console.error('Erreur régénération BookEntry manquante:', error);
-      this.toastService.showError('Régénération', error?.message || 'Impossible de recréer la BookEntry');
-    } finally {
-      this.regeneratingProposalTag = null;
     }
   }
 

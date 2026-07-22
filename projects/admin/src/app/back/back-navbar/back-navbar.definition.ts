@@ -54,8 +54,8 @@ export const STATIC_MENUS: NavbarMenu[] = [
         icon: 'bi-credit-card',
         minLevel: Group_priorities.Administrateur,
         subMenus: [
-            { label: 'remboursements', route: BACK_ROUTE_PATHS.StripeRefunds },
             { label: 'rapprochement', route: BACK_ROUTE_PATHS.StripeReconciliation }
+            { label: 'remboursement', route: BACK_ROUTE_PATHS.StripeRefunds },
         ]
     },
     {
