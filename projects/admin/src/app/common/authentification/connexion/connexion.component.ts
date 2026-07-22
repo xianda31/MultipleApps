@@ -83,28 +83,28 @@ export class ConnexionComponent implements AfterViewInit {
       code: [''],
     });
   }
-  
+
   async ngOnInit() {
     this.mode$ = this.auth.mode$;
     // Track current mode for navigation decisions
     this.mode$.subscribe(m => {
-       this.currentMode = m;
-       if (m === Process_flow.CONFIRM_RESET_PASSWORD || m === Process_flow.CONFIRM_SIGN_UP) {
-      this.normalizeCodeControl();
-       }
+      this.currentMode = m;
+      if (m === Process_flow.CONFIRM_RESET_PASSWORD || m === Process_flow.CONFIRM_SIGN_UP) {
+        this.normalizeCodeControl();
+      }
       // console.log('Current auth mode:', m);
-      });
-    
+    });
+
     // Detect context: if current URL contains /back, it's back context
     const currentUrl = this.router.url;
     this.isBackContext = currentUrl.includes('/back');
     if (this.isBackContext) {
       this.authRedirectService.setReturnUrl('/back', 'back');
     }
-    
+
     // Reset title on init
     this.titleService.setTitle('Authentification');
-    
+
     // After successful login, redirect to original page or context default
     // filter+take(1) ensures the subscription auto-completes after first login
     // preventing zombie subscriptions from consuming returnUrl on subsequent logins
@@ -133,9 +133,9 @@ export class ConnexionComponent implements AfterViewInit {
   async signIn() {
     await this.auth.signIn(this.email!.value, this.password!.value)
       .then((member_id) => {
-         if (!member_id) { console.warn('sign in', 'erreur imprévue'); }
-         this.logging_msg ='';
-        })
+        if (!member_id) { console.warn('sign in', 'erreur imprévue'); }
+        this.logging_msg = '';
+      })
       .catch(async (err) => {
         const name = err?.name || '';
         const message = String(err?.message || '');
@@ -166,19 +166,62 @@ export class ConnexionComponent implements AfterViewInit {
     this.isSubmitting = true;
     try {
       switch (this.currentMode) {
-      case Process_flow.SIGN_IN: {
-        if (!this.email.value || !this.password.value) {
-          this.email.markAsTouched();
-          this.password.markAsTouched();
-          this.logging_msg = 'Veuillez saisir une adresse mail et un mot de passe valides';
+        case Process_flow.SIGN_IN: {
+          if (!this.email.value || !this.password.value) {
+            this.email.markAsTouched();
+            this.password.markAsTouched();
+            this.logging_msg = 'Veuillez saisir une adresse mail et un mot de passe valides';
+            break;
+          }
+          await this.signIn();
           break;
         }
-        await this.signIn();
-        break;
-      }
-      case Process_flow.SIGN_UP: {
-        // If a sign-up code has been sent, treat submit as confirmation
-        if (this.sign_up_sent) {
+        case Process_flow.SIGN_UP: {
+          // If a sign-up code has been sent, treat submit as confirmation
+          if (this.sign_up_sent) {
+            if (this.email.invalid || !this.code.value) {
+              this.email.markAsTouched();
+              this.code.markAsTouched();
+              this.signup_msg = 'Renseignez le code reçu par e-mail';
+              break;
+            }
+            await this.confirmSignUp();
+            break;
+          }
+          // Otherwise perform initial sign-up
+          if (this.email.invalid || this.password.invalid) {
+            this.email.markAsTouched();
+            this.password.markAsTouched();
+            this.signup_msg = 'Veuillez saisir un e-mail et un mot de passe valides';
+            break;
+          }
+          await this.signUp();
+          break;
+        }
+        case Process_flow.RESET_PASSWORD: {
+          const newPwdCtrl = this.loggerForm.get('new_password');
+          if (this.email.invalid || newPwdCtrl?.invalid) {
+            this.email.markAsTouched();
+            newPwdCtrl?.markAsTouched();
+            this.logging_msg = 'Saisissez un e-mail et un nouveau mot de passe valides';
+            break;
+          }
+          await Promise.resolve(this.resetPassword());
+          break;
+        }
+        case Process_flow.CONFIRM_RESET_PASSWORD: {
+          const newPwdCtrl = this.loggerForm.get('new_password');
+          if (this.email.invalid || !this.code.value || newPwdCtrl?.invalid) {
+            this.email.markAsTouched();
+            this.code.markAsTouched();
+            newPwdCtrl?.markAsTouched();
+            this.logging_msg = 'Renseignez le code reçu et vérifiez votre nouveau mot de passe';
+            break;
+          }
+          await Promise.resolve(this.confirmPassword());
+          break;
+        }
+        case Process_flow.CONFIRM_SIGN_UP: {
           if (this.email.invalid || !this.code.value) {
             this.email.markAsTouched();
             this.code.markAsTouched();
@@ -188,52 +231,9 @@ export class ConnexionComponent implements AfterViewInit {
           await this.confirmSignUp();
           break;
         }
-        // Otherwise perform initial sign-up
-        if (this.email.invalid || this.password.invalid) {
-          this.email.markAsTouched();
-          this.password.markAsTouched();
-          this.signup_msg = 'Veuillez saisir un e-mail et un mot de passe valides';
+        default:
+          // No action for other modes
           break;
-        }
-        await this.signUp();
-        break;
-      }
-      case Process_flow.RESET_PASSWORD: {
-        const newPwdCtrl = this.loggerForm.get('new_password');
-        if (this.email.invalid || newPwdCtrl?.invalid) {
-          this.email.markAsTouched();
-          newPwdCtrl?.markAsTouched();
-          this.logging_msg = 'Saisissez un e-mail et un nouveau mot de passe valides';
-          break;
-        }
-        await Promise.resolve(this.resetPassword());
-        break;
-      }
-      case Process_flow.CONFIRM_RESET_PASSWORD: {
-        const newPwdCtrl = this.loggerForm.get('new_password');
-        if (this.email.invalid || !this.code.value || newPwdCtrl?.invalid) {
-          this.email.markAsTouched();
-          this.code.markAsTouched();
-          newPwdCtrl?.markAsTouched();
-          this.logging_msg = 'Renseignez le code reçu et vérifiez votre nouveau mot de passe';
-          break;
-        }
-        await Promise.resolve(this.confirmPassword());
-        break;
-      }
-      case Process_flow.CONFIRM_SIGN_UP: {
-        if (this.email.invalid || !this.code.value) {
-          this.email.markAsTouched();
-          this.code.markAsTouched();
-          this.signup_msg = 'Renseignez le code reçu par e-mail';
-          break;
-        }
-        await this.confirmSignUp();
-        break;
-      }
-      default:
-        // No action for other modes
-        break;
       }
     } finally {
       this.isSubmitting = false;
@@ -297,7 +297,7 @@ export class ConnexionComponent implements AfterViewInit {
           return;
         }
 
-        console.warn('sign up erreur imprévue',err);
+        console.warn('sign up erreur imprévue', err);
       });
   }
 
@@ -426,7 +426,7 @@ export class ConnexionComponent implements AfterViewInit {
     if (!this.email.value) return;
     this.auth.resetPassword(this.email.value);
   }
-  
+
   confirmPassword() {
     const newPwd = this.loggerForm.get('new_password')?.value;
     this.auth.newPassword(this.email.value, this.code.value, newPwd);
@@ -465,7 +465,7 @@ export class ConnexionComponent implements AfterViewInit {
   private normalizeCodeControl(): void {
     this.resetCodeControl(this.code.value ?? '');
   }
-  
+
 
 
 

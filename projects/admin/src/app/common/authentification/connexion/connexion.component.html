@@ -2,9 +2,9 @@
     <form [formGroup]="loggerForm" (ngSubmit)="onSubmit()" class="auth-form-shell">
         <div class="card mb-5 position-relative auth-card">
             <img src="bcsto.jpg" alt="Logo du club" class="auth-card__logo nice_shadow">
-            <div class="card-body">
+            <div class="card-body p-2">
                 <div class="row">
-                    <div class="text-muted px-2 py-2 auth-card__content">
+                    <div class="text-muted px-0 py-2 auth-card__content">
                             <ng-container *ngTemplateOutlet="mode_cases"></ng-container>
                             <ng-container [ngTemplateOutlet]="show_form"> </ng-container>
 
@@ -34,26 +34,28 @@
             </div>
 
             <ng-template #sign_in>
-                <div class="row mt-2 justify-content-center">
+                <div class="row mt-1 justify-content-center">
                     <div class="col-12 col-sm-12 col-lg-8">
                         <span class="d-block text-danger auth-feedback-message">{{ logging_msg }}</span>
                     </div>
                 </div>
-                <div class="row mt-2 justify-content-center">
+                <div class="row mt-1 justify-content-center">
                     <div class="col-12 col-sm-12 col-lg-8">
                         <div class="auth-helper-note">
                             <strong>Jamais encore connecté ?</strong>
                             La création de compte est nécessaire, et réservée aux adhérents du club.
+                            <div class="mt-2">
+                                <button class="btn btn-outline-success btn-sm w-100" type="button"
+                                    (click)="goSignUp()">
+                                    {{ labels.creerCompte }}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="row mt-3 justify-content-around">
-                    <div class="col-12 col-sm-12 col-lg-8 auth-action-group">
-                        <button class="btn btn-outline-success btn-login auth-action-group__secondary" type="button"
-                            (click)="goSignUp()">
-                            {{ labels.creerCompte }}
-                        </button>
-                        <button class="btn btn-success btn-login auth-action-group__primary" type="submit" translate="no"
+                <div class="row mt-2 justify-content-center">
+                    <div class="col-12 col-sm-12 col-lg-8">
+                        <button class="btn btn-success btn-login w-100" type="submit" translate="no"
                             [disabled]="isSubmitting || email.invalid || password.invalid">
                             <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status"
                                 aria-hidden="true"></span>
@@ -61,7 +63,7 @@
                         </button>
                     </div>
                 </div>
-                <div class="row mt-3 justify-content-center">
+                <div class="row mt-2 justify-content-center">
                     <div class="col-12 col-sm-12 col-lg-8 d-flex justify-content-end auth-inline-link-row">
                         <button class="btn btn-link p-0 link-forgot" type="button" (click)="newPassword()">Mot de passe
                             oublié ?</button>
@@ -160,7 +162,7 @@
             </ng-template>
 
             <ng-template #sign_up>
-                <div class="row mt-2 justify-content-center">
+                <div class="row mt-1 justify-content-center">
                     <div class="col-12 col-sm-12 col-lg-8">
                         <span class="d-block text-danger auth-feedback-message">{{ signup_msg }}</span>
                     </div>
@@ -331,11 +333,12 @@
                                 <i [ngClass]="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
                             </button>
                         </div>
+                        <div class="small text-muted mt-2 mb-2">
+                            minimum 8 caractères, 1 majuscule, 1 chiffre, 1 caractère spécial
+                        </div>
                         <div>
                             <span *ngIf="password.dirty && password.hasError('pattern')" class="text-danger">
-                                complexité mot de passe insuffisante (8 caractères mini, 1 majuscule, 1 chiffre, 1
-                                caractère
-                                spécial)
+                                complexité mot de passe insuffisante
                             </span>
                         </div>
                     </div>
