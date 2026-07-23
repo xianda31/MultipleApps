@@ -38,6 +38,7 @@ export const auth = defineAuth({
   ],
 
   userAttributes: {
+    // Legacy attribute kept in Cognito for backward compatibility; email is now the source of truth.
     "custom:member_id": {
       dataType: "String",
       mutable: true,

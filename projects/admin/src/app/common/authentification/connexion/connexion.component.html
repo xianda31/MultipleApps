@@ -53,13 +53,20 @@
                         </div>
                     </div>
                 </div>
+                <div class="row mt-2 justify-content-center" *ngIf="isRestoringSession && currentMode === process_flow.SIGN_IN">
+                    <div class="col-12 col-sm-12 col-lg-8">
+                        <div class="auth-helper-note">
+                            Reconnexion automatique en cours...
+                        </div>
+                    </div>
+                </div>
                 <div class="row mt-2 justify-content-center">
                     <div class="col-12 col-sm-12 col-lg-8">
                         <button class="btn btn-success btn-login w-100" type="submit" translate="no"
-                            [disabled]="isSubmitting || email.invalid || password.invalid">
-                            <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status"
+                            [disabled]="isSubmitting || isRestoringSession || email.invalid || password.invalid">
+                            <span *ngIf="isSubmitting || isRestoringSession" class="spinner-border spinner-border-sm me-2" role="status"
                                 aria-hidden="true"></span>
-                            {{ labels.connexion }}
+                            {{ isRestoringSession ? 'Reconnexion...' : labels.connexion }}
                         </button>
                     </div>
                 </div>
@@ -308,7 +315,7 @@
                     <div class="col-12 col-sm-12 col-lg-8 mb-3">
                         <div class="form-floating">
                             <input #emailInput class="form-control sepia-input" autocomplete="username email" type="text" id="email"
-                                formControlName="email">
+                                formControlName="email" [readonly]="isRestoringSession && currentMode === process_flow.SIGN_IN">
                             <label for="email">adresse mail (même que pour la FFB)</label>
                         </div>
                         <div>
@@ -326,7 +333,8 @@
                     <div class="col-12 col-sm-12 col-lg-8 mb-3">
                         <div class="form-floating position-relative">
                             <input #passwordInput class="form-control sepia-input with-eye" autocomplete="current-password"
-                                [type]="showPassword ? 'text' : 'password'" id="password" formControlName="password">
+                                [type]="showPassword ? 'text' : 'password'" id="password" formControlName="password"
+                                [readonly]="isRestoringSession && currentMode === process_flow.SIGN_IN">
                             <label for="password">mot de passe</label>
                             <button type="button" class="btn btn-sm toggle-psw" (click)="togglePasswordVisibility()"
                                 [attr.aria-label]="showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'">

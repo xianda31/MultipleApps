@@ -39,6 +39,7 @@ export const Group_icons: { [K in Group_names]: string } = {
  export enum UserAttributes {
   email = 'email',
   email_verified = 'email_verified',
+  // Legacy Cognito attribute; do not use for member lookup.
   member_id ="custom:member_id",
   sub = 'sub'
 }

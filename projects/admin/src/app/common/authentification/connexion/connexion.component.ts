@@ -41,6 +41,7 @@ export class ConnexionComponent implements AfterViewInit {
   showNewPassword = false; // toggle for reset new password
   currentMode?: Process_flow;
   isSubmitting = false;
+  isRestoringSession = true;
 
   // Labels sécurisés pour éviter les problèmes de cache/build
   readonly labels = {
@@ -86,6 +87,9 @@ export class ConnexionComponent implements AfterViewInit {
 
   async ngOnInit() {
     this.mode$ = this.auth.mode$;
+    this.auth.isRestoringSession$.subscribe((isRestoring) => {
+      this.isRestoringSession = isRestoring;
+    });
     // Track current mode for navigation decisions
     this.mode$.subscribe(m => {
       this.currentMode = m;
@@ -162,7 +166,7 @@ export class ConnexionComponent implements AfterViewInit {
 
   async onSubmit() {
     this.syncAutofillValuesFromDom();
-    if (this.isSubmitting) return;
+    if (this.isSubmitting || this.isRestoringSession) return;
     this.isSubmitting = true;
     try {
       switch (this.currentMode) {

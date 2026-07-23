@@ -11,6 +11,9 @@ export class AssistanceRequestService {
   _request$: BehaviorSubject<AssistanceRequest[]> = new BehaviorSubject(this._requests);
 
   private readonly AUTH_REPORT_SCHEMA_VERSION = '2';
+  private readonly AUTH_REPORT_DEDUP_WINDOW_MS = 30 * 60 * 1000;
+  private readonly AUTH_REPORT_STORAGE_PREFIX = 'auth-assistance-report:';
+  private readonly inFlightAuthReports = new Map<string, Promise<void>>();
 
   constructor(
     private db: DBhandler,
@@ -40,7 +43,58 @@ export class AssistanceRequestService {
       const stage = context?.stage || 'inconnue';
       const fingerprint = this.buildFingerprint(safeEmail, summary, errorDetails, stage);
 
-      const lines = [
+      const existingInFlight = this.inFlightAuthReports.get(fingerprint);
+      if (existingInFlight) {
+        await existingInFlight;
+        return;
+      }
+
+      const reportPromise = this.createDeduplicatedAuthReport({
+        safeEmail,
+        summary,
+        errorDetails,
+        stage,
+        fingerprint,
+        nowIso,
+        context,
+      });
+
+      this.inFlightAuthReports.set(fingerprint, reportPromise);
+      await reportPromise;
+    } catch (err) {
+      // Ne pas bloquer le flux principal si le rapport échoue
+      console.warn('[AssistanceRequestService] Impossible de signaler la panne:', err);
+    } finally {
+      const fingerprint = this.buildFingerprint((email || 'inconnu').trim().toLowerCase(), summary, errorDetails, context?.stage || 'inconnue');
+      this.inFlightAuthReports.delete(fingerprint);
+    }
+  }
+
+  private async createDeduplicatedAuthReport(params: {
+    safeEmail: string;
+    summary: string;
+    errorDetails: string;
+    stage: string;
+    fingerprint: string;
+    nowIso: string;
+    context?: {
+      stage?: string;
+      memberId?: string;
+      loginId?: string;
+      recoveryAttempted?: boolean;
+      retryAttempted?: boolean;
+      errorName?: string;
+      source?: string;
+    };
+  }): Promise<void> {
+    const { safeEmail, summary, errorDetails, stage, fingerprint, nowIso, context } = params;
+
+    if (this.isFingerprintLocked(fingerprint)) {
+      console.info('[AssistanceRequestService] Rapport auth ignoré (déjà envoyé récemment)', { fingerprint });
+      return;
+    }
+
+    const lines = [
         `[Auto-diagnostic Auth v${this.AUTH_REPORT_SCHEMA_VERSION}] ${summary}`,
         `Etape: ${stage}`,
         `Email: ${safeEmail}`,
@@ -66,10 +120,44 @@ export class AssistanceRequestService {
         status: REQUEST_STATUS.NEW
       };
       await this.db.createAssistanceRequest(input);
+      this.lockFingerprint(fingerprint, nowIso);
       console.log('[AssistanceRequestService] Panne de connexion signalée automatiquement');
-    } catch (err) {
-      // Ne pas bloquer le flux principal si le rapport échoue
-      console.warn('[AssistanceRequestService] Impossible de signaler la panne:', err);
+  }
+
+  private isFingerprintLocked(fingerprint: string): boolean {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+
+    const key = `${this.AUTH_REPORT_STORAGE_PREFIX}${fingerprint}`;
+    const raw = window.localStorage.getItem(key);
+    if (!raw) {
+      return false;
+    }
+
+    const sentAt = Number(raw);
+    if (!Number.isFinite(sentAt)) {
+      window.localStorage.removeItem(key);
+      return false;
+    }
+
+    const isFresh = Date.now() - sentAt < this.AUTH_REPORT_DEDUP_WINDOW_MS;
+    if (!isFresh) {
+      window.localStorage.removeItem(key);
+    }
+    return isFresh;
+  }
+
+  private lockFingerprint(fingerprint: string, nowIso: string): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      const key = `${this.AUTH_REPORT_STORAGE_PREFIX}${fingerprint}`;
+      window.localStorage.setItem(key, String(Date.parse(nowIso)));
+    } catch {
+      // Ignore storage issues
     }
   }
 

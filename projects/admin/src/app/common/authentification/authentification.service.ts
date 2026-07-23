@@ -22,15 +22,15 @@ export class AuthentificationService {
   private _auth_event$: BehaviorSubject<AuthEvent> = new BehaviorSubject<AuthEvent>({ event: '' });
 
   private _logged_member$: BehaviorSubject<Member | null> = new BehaviorSubject<Member | null>(null);
+  private _isRestoringSession$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
 
   constructor(
     private toastService: ToastService,
     private memberService: MembersService,
     private assistanceRequestService: AssistanceRequestService,
   ) {
-
-
-    this.getCurrentUser();    // recherche si un user est déjà connecté (application mémoire locale)
+    this.getCurrentUser()
+      .finally(() => this._isRestoringSession$.next(false));
   }
 
   get mode$(): Observable<Process_flow> {
@@ -39,6 +39,10 @@ export class AuthentificationService {
 
   get logged_member$(): Observable<Member | null> {
     return this._logged_member$ as Observable<Member | null>;
+  }
+
+  get isRestoringSession$(): Observable<boolean> {
+    return this._isRestoringSession$ as Observable<boolean>;
   }
 
   get currentMember(): Member | null {
@@ -54,6 +58,22 @@ export class AuthentificationService {
   changeMode(mode: Process_flow) {
     this._mode = mode;
     this._mode$.next(this._mode);
+  }
+
+  private async resolveMemberFromEmails(...emails: Array<string | undefined>): Promise<Member | null> {
+    for (const candidate of emails) {
+      const normalizedEmail = (candidate || '').trim().toLowerCase();
+      if (!normalizedEmail) {
+        continue;
+      }
+
+      const member = await this.memberService.searchMemberByEmail(normalizedEmail);
+      if (member) {
+        return member;
+      }
+    }
+
+    return null;
   }
 
   async resendConfirmationCode(email: string): Promise<void> {
@@ -84,141 +104,54 @@ export class AuthentificationService {
           let { isSignedIn, nextStep } = await signIn(signInInput);
 
           const attributes = await fetchUserAttributes();
-          const member_id = attributes['custom:member_id'];
-          const normalizedEmail = (email || '').trim().toLowerCase();
-
-          // Source de vérité: email. custom:member_id reste un fallback legacy.
-          const memberByEmail = normalizedEmail
-            ? await this.memberService.searchMemberByEmail(normalizedEmail)
-            : null;
+          const memberByEmail = await this.resolveMemberFromEmails(attributes['email'], email);
 
           if (memberByEmail) {
             this._logged_member$.next(memberByEmail);
             resolve(memberByEmail.id);
-          } else if (member_id) {
-            const memberById = await this.memberService.readMember(member_id);
-            if (memberById) {
-              this._logged_member$.next(memberById);
-              resolve(memberById.id);
-            } else {
-              reject('Utilisateur authentifié mais non trouvé en base (email: ' + normalizedEmail + ')');
-            }
           } else {
+            const normalizedEmail = (attributes['email'] || email || '').trim().toLowerCase();
             reject('Utilisateur authentifié mais non trouvé en base (email: ' + normalizedEmail + ')');
           }
         } catch (err: any) {
 
           if (err.name === 'UserAlreadyAuthenticatedException') {
-            // Tenter de récupérer la session existante
-            let recoveredMember: any = null;
-            let recoveredMemberId: string | undefined;
+            // Une session locale existe déjà: réhydrater le membre par e-mail sans relancer un cycle signOut/signIn.
             let recoveryLoginId: string | undefined;
 
             try {
               const user = await getCurrentUser();
               recoveryLoginId = user.signInDetails?.loginId;
               const attributes = await fetchUserAttributes();
-              recoveredMemberId = attributes['custom:member_id'];
-              // Priorité email: email saisi, puis loginId récupéré, puis member_id legacy
-              const normalizedInputEmail = (email || '').trim().toLowerCase();
-              const normalizedRecoveryLogin = (recoveryLoginId || '').trim().toLowerCase();
+              const recoveredMember = await this.resolveMemberFromEmails(
+                attributes['email'],
+                recoveryLoginId,
+                email,
+              );
 
-              const memberByInputEmail = normalizedInputEmail
-                ? await this.memberService.searchMemberByEmail(normalizedInputEmail)
-                : null;
-
-              if (memberByInputEmail) {
-                recoveredMember = memberByInputEmail;
-              } else if (
-                normalizedRecoveryLogin &&
-                normalizedRecoveryLogin !== normalizedInputEmail
-              ) {
-                const memberByRecoveryLogin = await this.memberService.searchMemberByEmail(normalizedRecoveryLogin);
-                if (memberByRecoveryLogin) {
-                  recoveredMember = memberByRecoveryLogin;
-                }
+              if (recoveredMember) {
+                this._logged_member$.next(recoveredMember);
+                resolve(recoveredMember.id);
+                return;
               }
 
-              if (!recoveredMember && recoveredMemberId) {
-                const memberByLegacyId = await this.memberService.readMember(recoveredMemberId);
-                if (memberByLegacyId) { recoveredMember = memberByLegacyId; }
-              }
-            } catch (innerErr: any) {
-              // Tokens expirés ou session invalide
+              await signOut({ global: false }).catch(() => {});
               this.assistanceRequestService.reportAuthError(
                 email,
-                'Impossible de récupérer la session utilisateur après vérification',
-                `Erreur interne: ${innerErr?.message || innerErr}`,
+                'Session authentifiee sans fiche membre associee',
+                `email=${attributes['email'] || 'absent'}, loginId=${recoveryLoginId || 'absent'}, aucun membre trouve par email`,
                 {
-                  stage: 'UserAlreadyAuthenticatedException/recovery',
-                  memberId: recoveredMemberId,
+                  stage: 'UserAlreadyAuthenticatedException/recovery/member-not-found',
                   loginId: recoveryLoginId,
                   recoveryAttempted: true,
                   retryAttempted: false,
-                  errorName: innerErr?.name,
+                  errorName: 'MemberNotFoundByEmail',
                 }
               );
-            }
-
-            if (recoveredMember) {
-              this._logged_member$.next(recoveredMember);
-              resolve(recoveredMember.id);
-              return;
-            }
-
-            // Session périmée : nettoyer les tokens et relancer la connexion automatiquement
-            await signOut({ global: false }).catch(() => {});
-            try {
-              await signIn(signInInput);
-              const retryAttrs = await fetchUserAttributes();
-              const retryMemberId = retryAttrs['custom:member_id'];
-              const retryEmail = (email || '').trim().toLowerCase();
-              const retryMemberByEmail = retryEmail
-                ? await this.memberService.searchMemberByEmail(retryEmail)
-                : null;
-
-              if (retryMemberByEmail) {
-                this._logged_member$.next(retryMemberByEmail);
-                resolve(retryMemberByEmail.id);
-              } else if (retryMemberId) {
-                const retryMember = await this.memberService.readMember(retryMemberId);
-                if (retryMember) {
-                  this._logged_member$.next(retryMember);
-                  resolve(retryMember.id);
-                } else {
-                  this.assistanceRequestService.reportAuthError(
-                    email,
-                    'Session corrompue (UserAlreadyAuthenticatedException)',
-                    `member_id=${retryMemberId || 'absent'}, loginId=${recoveryLoginId || 'absent'}, membre introuvable après fallback`,
-                    {
-                      stage: 'UserAlreadyAuthenticatedException/retry/fallback-failed',
-                      memberId: retryMemberId,
-                      loginId: recoveryLoginId,
-                      recoveryAttempted: true,
-                      retryAttempted: true,
-                      errorName: 'MemberNotFoundAfterFallback',
-                    }
-                  );
-                  reject(new Error('Compte vérifié, mais la connexion n\'a pas pu être finalisée'));
-                }
-              } else {
-                this.assistanceRequestService.reportAuthError(
-                  email,
-                  'Session corrompue (UserAlreadyAuthenticatedException)',
-                  `member_id=absent, loginId=${recoveryLoginId || 'absent'}, attribut custom:member_id absent après retry`,
-                  {
-                    stage: 'UserAlreadyAuthenticatedException/retry/member-id-missing',
-                    memberId: undefined,
-                    loginId: recoveryLoginId,
-                    recoveryAttempted: true,
-                    retryAttempted: true,
-                    errorName: 'MissingCustomMemberIdAfterRetry',
-                  }
-                );
-                reject(new Error('Session invalide, veuillez réessayer'));
-              }
-            } catch (retryErr: any) {
-              reject(retryErr);
+              reject(new Error('Compte authentifié, mais aucune fiche membre ne correspond à cet e-mail'));
+            } catch (innerErr: any) {
+              await signOut({ global: false }).catch(() => {});
+              reject(innerErr);
             }
           } else if (err.name === 'UserNotConfirmedException') {
             // Compte non confirmé: rester en vérification par e-mail
@@ -241,8 +174,8 @@ export class AuthentificationService {
   }
 
 
-  async signUp(email: string, password: string, member_id: string): Promise<SignUpOutput> {
-    console.info('[Auth] signUp:start', { email, member_id });
+  async signUp(email: string, password: string, _member_id: string): Promise<SignUpOutput> {
+    console.info('[Auth] signUp:start', { email });
     let promise = new Promise<SignUpOutput>((resolve, reject) => {
       signUp({
         username: email,
@@ -250,14 +183,12 @@ export class AuthentificationService {
         options: {
           userAttributes: {
             email: email,
-            "custom:member_id": member_id
           }
         }
       })
         .catch(async (err) => {
           console.error('[Auth] signUp:error', {
             email,
-            member_id,
             name: err?.name,
             message: err?.message,
           });
@@ -287,7 +218,6 @@ export class AuthentificationService {
               default:
                 console.warn('[Auth] signUp:unhandled-auth-error', {
                   email,
-                  member_id,
                   name: err?.name,
                   message: err?.message,
                 });
@@ -299,7 +229,6 @@ export class AuthentificationService {
           } else {
             console.warn('[Auth] signUp:non-auth-error', {
               email,
-              member_id,
               message: err?.message,
             });
             this.toastService.showInfo('sign up', err.message);
@@ -311,7 +240,6 @@ export class AuthentificationService {
             let output = res as SignUpOutput;
             console.info('[Auth] signUp:success', {
               email,
-              member_id,
               isSignUpComplete: output.isSignUpComplete,
               nextStep: output.nextStep,
             });
@@ -402,23 +330,14 @@ export class AuthentificationService {
     try {
       const { username, userId, signInDetails } = await getCurrentUser();
       const attributes = await fetchUserAttributes();
-      const member_id = attributes['custom:member_id'];
-      const normalizedEmail = (attributes['email'] || signInDetails?.loginId || '').trim().toLowerCase();
-
-      // Source de vérité: email. member_id est traité en fallback legacy.
-      const memberByEmail = normalizedEmail
-        ? await this.memberService.searchMemberByEmail(normalizedEmail)
-        : null;
+      const memberByEmail = await this.resolveMemberFromEmails(
+        attributes['email'],
+        signInDetails?.loginId,
+      );
 
       if (memberByEmail) {
         this._logged_member$.next(memberByEmail);
         return memberByEmail.id;
-      }
-
-      if (member_id) {
-        const memberById = await this.memberService.readMember(member_id);
-        this._logged_member$.next(memberById);
-        return memberById ? memberById.id : null;
       }
 
       return null;
