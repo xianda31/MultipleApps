@@ -8,13 +8,15 @@
 
 import Stripe from 'stripe';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, GetCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, DeleteCommand, GetCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 
 const ddbClient = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(ddbClient);
 
 // Variables d'environnement
 const SALE_ITEM_TABLE = process.env['SALE_ITEM_TABLE_NAME'];
+const BOOK_ENTRY_TABLE = process.env['BOOK_ENTRY_TABLE_NAME'];
+const STRIPE_TRANSACTION_TABLE = process.env['STRIPE_TRANSACTION_TABLE_NAME'];
 const STRIPE_SECRET_KEY = process.env['STRIPE_SECRET_KEY'];
 const STRIPE_LIVE_SECRET_KEY = process.env['STRIPE_LIVE_SECRET_KEY'];
 const STRIPE_PUBLISHABLE_KEY = process.env['STRIPE_PUBLISHABLE_KEY'];
@@ -187,6 +189,12 @@ async function getValidatedProducts(
  */
 export async function handler(event: any): Promise<any> {
   const path = event.rawPath || event.path || '';
+  if (path.endsWith('/mark-processed')) {
+    return handleMarkProcessed(event);
+  }
+  if (path.endsWith('/cancel')) {
+    return handleCancelCheckout(event);
+  }
   if (path.endsWith('/receipt')) {
     return handleReceipt(event);
   }
@@ -209,6 +217,95 @@ export async function handler(event: any): Promise<any> {
     return handleCreateRefund(event);
   }
   return handleCheckout(event);
+}
+
+/**
+ * Marque une StripeTransaction comme traitée côté backend.
+ * Route protégée UserPool (utilisateur connecté requis).
+ */
+async function handleMarkProcessed(event: any): Promise<any> {
+  const CORS = { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' };
+
+  if (!STRIPE_TRANSACTION_TABLE) {
+    return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: 'STRIPE_TRANSACTION_TABLE_NAME not configured' }) };
+  }
+
+  if (!STRIPE_SECRET_KEY) {
+    return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: 'STRIPE_SECRET_KEY not configured' }) };
+  }
+
+  let bodyObj: any;
+  try {
+    bodyObj = typeof event.body === 'string' ? JSON.parse(event.body) : (event.body || {});
+  } catch {
+    return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Invalid JSON body' }) };
+  }
+
+  const sessionId = bodyObj.sessionId;
+  if (!sessionId || typeof sessionId !== 'string' || !sessionId.startsWith('cs_')) {
+    return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Valid sessionId is required' }) };
+  }
+
+  const claims = event.requestContext?.authorizer?.jwt?.claims || event.requestContext?.authorizer?.claims || {};
+  const callerEmail = String(claims.email || '').trim().toLowerCase();
+
+  try {
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    if (session.payment_status !== 'paid') {
+      return {
+        statusCode: 409,
+        headers: CORS,
+        body: JSON.stringify({ error: 'Session not paid yet' }),
+      };
+    }
+
+    const stripeEmail = String(session.customer_email || session.customer_details?.email || '').trim().toLowerCase();
+    if (callerEmail && stripeEmail && callerEmail !== stripeEmail) {
+      return {
+        statusCode: 403,
+        headers: CORS,
+        body: JSON.stringify({ error: 'Forbidden: checkout does not belong to current user' }),
+      };
+    }
+
+    // SessionId is the PK of StripeTransaction (id=session.id) in webhook persistence.
+    const existing = await docClient.send(new GetCommand({
+      TableName: STRIPE_TRANSACTION_TABLE,
+      Key: { id: sessionId },
+    }));
+
+    if (!existing.Item) {
+      // Non-bloquant: le webhook peut arriver juste après le retour frontend.
+      return {
+        statusCode: 200,
+        headers: CORS,
+        body: JSON.stringify({ ok: true, pendingWebhook: true }),
+      };
+    }
+
+    await docClient.send(new UpdateCommand({
+      TableName: STRIPE_TRANSACTION_TABLE,
+      Key: { id: sessionId },
+      UpdateExpression: 'SET processed = :processed, updatedAt = :updatedAt',
+      ExpressionAttributeValues: {
+        ':processed': true,
+        ':updatedAt': new Date().toISOString(),
+      },
+    }));
+
+    return {
+      statusCode: 200,
+      headers: CORS,
+      body: JSON.stringify({ ok: true, sessionId }),
+    };
+  } catch (error: any) {
+    console.error('[stripe-mark-processed] ERROR:', error?.message || error);
+    return {
+      statusCode: 500,
+      headers: CORS,
+      body: JSON.stringify({ error: 'Failed to mark transaction processed' }),
+    };
+  }
 }
 
 /**
@@ -318,6 +415,83 @@ async function handleReceipt(event: any): Promise<any> {
       statusCode: 500,
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
       body: JSON.stringify({ error: 'Failed to retrieve receipt' }),
+    };
+  }
+}
+
+/**
+ * Annule un checkout en cours et supprime le BookEntry précréé.
+ * Route protégée UserPool (utilisateur connecté requis).
+ */
+async function handleCancelCheckout(event: any): Promise<any> {
+  const CORS = { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' };
+
+  if (!BOOK_ENTRY_TABLE) {
+    return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: 'BOOK_ENTRY_TABLE_NAME not configured' }) };
+  }
+
+  if (!STRIPE_SECRET_KEY) {
+    return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: 'STRIPE_SECRET_KEY not configured' }) };
+  }
+
+  let bodyObj: any;
+  try {
+    bodyObj = typeof event.body === 'string' ? JSON.parse(event.body) : (event.body || {});
+  } catch {
+    return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Invalid JSON body' }) };
+  }
+
+  const bookEntryId = bodyObj.bookEntryId;
+  const sessionId = bodyObj.sessionId;
+
+  if (!bookEntryId || typeof bookEntryId !== 'string') {
+    return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'bookEntryId is required' }) };
+  }
+  if (!sessionId || typeof sessionId !== 'string' || !sessionId.startsWith('cs_')) {
+    return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Valid sessionId is required' }) };
+  }
+
+  const claims = event.requestContext?.authorizer?.jwt?.claims || event.requestContext?.authorizer?.claims || {};
+  const callerEmail = String(claims.email || '').trim().toLowerCase();
+
+  try {
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+    // Si Stripe indique paiement confirmé, on refuse la suppression comptable.
+    if (session.payment_status === 'paid') {
+      return {
+        statusCode: 409,
+        headers: CORS,
+        body: JSON.stringify({ error: 'Session already paid; BookEntry cannot be cancelled' }),
+      };
+    }
+
+    // Garde-fou: si email présent côté Stripe et côté token, il doit correspondre.
+    const stripeEmail = String(session.customer_email || session.customer_details?.email || '').trim().toLowerCase();
+    if (callerEmail && stripeEmail && callerEmail !== stripeEmail) {
+      return {
+        statusCode: 403,
+        headers: CORS,
+        body: JSON.stringify({ error: 'Forbidden: checkout does not belong to current user' }),
+      };
+    }
+
+    await docClient.send(new DeleteCommand({
+      TableName: BOOK_ENTRY_TABLE,
+      Key: { id: bookEntryId },
+    }));
+
+    return {
+      statusCode: 200,
+      headers: CORS,
+      body: JSON.stringify({ ok: true, deletedBookEntryId: bookEntryId }),
+    };
+  } catch (error: any) {
+    console.error('[stripe-cancel] ERROR:', error?.message || error);
+    return {
+      statusCode: 500,
+      headers: CORS,
+      body: JSON.stringify({ error: 'Failed to cancel checkout' }),
     };
   }
 }

@@ -97,6 +97,7 @@ export class ShopComponent implements OnInit, OnDestroy {
   private bookEntriesReady = false;
   private shouldNotifyBuyerFlagsAfterSync = false;
   private cartItemsSnapshot: CartItem[] = [];
+  private traceModeEnabled = false;
   membershipCheckoutBlocked = false;
   membershipCheckoutWarning = '';
 
@@ -180,6 +181,7 @@ export class ShopComponent implements OnInit, OnDestroy {
     });
 
     this.systemDataService.get_configuration().subscribe(conf => {
+      this.traceModeEnabled = !!conf.trace_mode;
       this.onlinePaymentActive = conf.online_payment_active;
       this.tpePaymentActive = conf.tpe_payment_active;
       this.minimumCbAmount = conf.minimum_cb_amount;
@@ -239,17 +241,23 @@ export class ShopComponent implements OnInit, OnDestroy {
         });
       }
 
-      // Load members after synchronization with FFB-backed refresh.
+      // Online checkout should not trigger FFB synchronization.
+      // FFB sync is reserved for back-office (offline) sessions.
       void (async () => {
+        if (this.onlineMode) {
+          this.members = await firstValueFrom(this.membersService.listMembers().pipe(take(1)));
+          this.setupBuyerFromRoute();
+          return;
+        }
+
         try {
           await this.memberSyncService.ensureMembersSynchronized();
-          this.members = await firstValueFrom(this.membersService.listMembers().pipe(take(1)));
-          this.setupBuyerFromRoute();
         } catch (error) {
           console.error('ShopComponent: failed to synchronize members before loading buyer list', error);
-          this.members = await firstValueFrom(this.membersService.listMembers().pipe(take(1)));
-          this.setupBuyerFromRoute();
         }
+
+        this.members = await firstValueFrom(this.membersService.listMembers().pipe(take(1)));
+        this.setupBuyerFromRoute();
       })();
 
       // Watch logged member changes (auth)
@@ -367,14 +375,19 @@ export class ShopComponent implements OnInit, OnDestroy {
     if (!sessionId) return;
 
     this.stripeCheckoutPrepared = true;
-    console.log('[Shop] Stripe retour détecté, sessionId:', sessionId);
+    this.traceLog('[Shop] Stripe retour détecté, sessionId:', sessionId);
 
     // BookEntry-first : le BookEntry est déjà créé, on marque juste processed
     this.stripeCheckout.completeCheckout(sessionId, this.session).subscribe({
-      next: () => console.log('[Shop] completeCheckout next'),
+      next: () => this.traceLog('[Shop] completeCheckout next'),
       error: (error) => console.error('[Shop] completeCheckout error:', error),
-      complete: () => console.log('[Shop] completeCheckout complete'),
+      complete: () => this.traceLog('[Shop] completeCheckout complete'),
     });
+  }
+
+  private traceLog(message?: any, ...optionalParams: any[]): void {
+    if (!this.traceModeEnabled) return;
+    console.log(message, ...optionalParams);
   }
 
   on_product_click(product: Product) {

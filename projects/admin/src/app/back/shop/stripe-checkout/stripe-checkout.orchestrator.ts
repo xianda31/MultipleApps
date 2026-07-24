@@ -137,6 +137,7 @@ export class StripeCheckoutOrchestrator {
 
     // 4. Stocker bookEntryId pour annulation (session_id est disponible dans l'URL Stripe au retour)
     sessionStorage.setItem('stripe_book_entry_id', bookEntry.id);
+    sessionStorage.setItem('stripe_session_id', sessionId);
 
     return { sessionUrl: response.data.sessionUrl };
   }
@@ -179,6 +180,7 @@ export class StripeCheckoutOrchestrator {
             });
             // Nettoyer sessionStorage
             sessionStorage.removeItem('stripe_book_entry_id');
+            sessionStorage.removeItem('stripe_session_id');
           }),
           map(() => ({} as BookEntry)), // BookEntry déjà créé — retourne un objet vide pour compatibilité
           catchError((error) => {
@@ -207,13 +209,13 @@ export class StripeCheckoutOrchestrator {
    */
   private markProcessed(sessionId: string): Observable<void> {
     return new Observable((observer) => {
-      this.dbHandler.markStripeTransactionProcessed(sessionId)
+      this.stripeService.markCheckoutProcessed(sessionId)
         .then(() => {
           observer.next();
           observer.complete();
         })
         .catch((error) => {
-          console.error('Error marking stripe transaction processed:', error);
+          console.warn('[Stripe] mark processed backend call failed (non-blocking):', error);
           observer.next(); // Non-bloquant
           observer.complete();
         });
@@ -249,17 +251,59 @@ export class StripeCheckoutOrchestrator {
    */
   async cancelPendingCheckout(): Promise<void> {
     const bookEntryId = sessionStorage.getItem('stripe_book_entry_id');
-    if (bookEntryId) {
+    const sessionId = sessionStorage.getItem('stripe_session_id');
+
+    if (bookEntryId && sessionId) {
       try {
-        await this.dbHandler.deleteBookEntry(bookEntryId);
+        await this.stripeService.cancelCheckout(bookEntryId, sessionId);
         console.log(`[Stripe] BookEntry ${bookEntryId} supprimé suite à annulation`);
       } catch (error) {
-        console.error('[Stripe] Erreur suppression BookEntry annulé:', error);
+        if (this.isUnauthorizedGraphQLError(error)) {
+          console.info('[Stripe] Suppression BookEntry annulé non autorisée pour le rôle courant (traitement différé par réconciliation).');
+        } else {
+          console.error('[Stripe] Erreur suppression BookEntry annulé via endpoint backend:', error);
+          // Fallback local pour les rôles qui ont delete (staff), utile si le backend cancel est indisponible.
+          try {
+            await this.dbHandler.deleteBookEntry(bookEntryId);
+            console.log(`[Stripe] BookEntry ${bookEntryId} supprimé via fallback local`);
+          } catch (fallbackError) {
+            console.error('[Stripe] Fallback suppression locale BookEntry annulé en échec:', fallbackError);
+          }
+        }
         // Non-bloquant — sera détecté à la réconciliation
+      }
+    } else if (bookEntryId) {
+      // Compatibilité sessionStorage ancien format (sans sessionId)
+      try {
+        await this.dbHandler.deleteBookEntry(bookEntryId);
+        console.log(`[Stripe] BookEntry ${bookEntryId} supprimé (legacy fallback)`);
+      } catch (error) {
+        if (this.isUnauthorizedGraphQLError(error)) {
+          console.info('[Stripe] Suppression legacy non autorisée (attendu pour membre).');
+        } else {
+          console.error('[Stripe] Erreur suppression legacy BookEntry annulé:', error);
+        }
       }
     }
     sessionStorage.removeItem('stripe_book_entry_id');
+    sessionStorage.removeItem('stripe_session_id');
     this.reset();
+  }
+
+  private isUnauthorizedGraphQLError(error: unknown): boolean {
+    if (Array.isArray(error) && error.length > 0) {
+      const first = error[0] as any;
+      return first?.errorType === 'Unauthorized' || first?.extensions?.errorType === 'Unauthorized';
+    }
+
+    const nestedErrors = (error as any)?.errors;
+    if (Array.isArray(nestedErrors) && nestedErrors.length > 0) {
+      const first = nestedErrors[0] as any;
+      return first?.errorType === 'Unauthorized' || first?.extensions?.errorType === 'Unauthorized';
+    }
+
+    const err = error as any;
+    return err?.errorType === 'Unauthorized' || err?.extensions?.errorType === 'Unauthorized' || err?.name === 'Unauthorized';
   }
 
   /**

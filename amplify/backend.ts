@@ -147,6 +147,22 @@ httpApi.addRoutes({
   integration: stripeCheckoutIntegration,
 });
 
+// Stripe Cancel Checkout - utilisateur connecté (suppression BookEntry côté backend)
+httpApi.addRoutes({
+  path: "/api/stripe/cancel",
+  methods: [HttpMethod.POST],
+  integration: stripeCheckoutIntegration,
+  authorizer: userPoolAuthorizer,
+});
+
+// Stripe Mark Processed - utilisateur connecté (maj StripeTransaction côté backend)
+httpApi.addRoutes({
+  path: "/api/stripe/mark-processed",
+  methods: [HttpMethod.POST],
+  integration: stripeCheckoutIntegration,
+  authorizer: userPoolAuthorizer,
+});
+
 // 🔒 Stripe Payout Lookup - Admin uniquement (réconciliation payout)
 httpApi.addRoutes({
   path: "/api/stripe/payout-lookup",
@@ -246,8 +262,17 @@ const saleItemTable = backend.data.resources.tables['SaleItem'];
 saleItemTable.grantReadData(backend.stripeCheckout.resources.lambda);
 backend.stripeCheckout.addEnvironment('SALE_ITEM_TABLE_NAME', saleItemTable.tableName);
 
-// Grant stripeWebhooks write access to StripeTransaction table (data recording only)
+// Grant stripeCheckout delete access to BookEntry table for authenticated checkout cancel flow
+const bookEntryTable = backend.data.resources.tables['BookEntry'];
+bookEntryTable.grantReadWriteData(backend.stripeCheckout.resources.lambda);
+backend.stripeCheckout.addEnvironment('BOOK_ENTRY_TABLE_NAME', bookEntryTable.tableName);
+
+// Grant stripeCheckout read/write access to StripeTransaction table for processed flag updates
 const stripeTransactionTable = backend.data.resources.tables['StripeTransaction'];
+stripeTransactionTable.grantReadWriteData(backend.stripeCheckout.resources.lambda);
+backend.stripeCheckout.addEnvironment('STRIPE_TRANSACTION_TABLE_NAME', stripeTransactionTable.tableName);
+
+// Grant stripeWebhooks write access to StripeTransaction table (data recording only)
 stripeTransactionTable.grantReadWriteData(backend.stripeWebhooks.resources.lambda);
 backend.stripeWebhooks.addEnvironment('STRIPE_TRANSACTION_TABLE_NAME', stripeTransactionTable.tableName);
 backend.stripeWebhooks.resources.lambda.role?.addToPrincipalPolicy(

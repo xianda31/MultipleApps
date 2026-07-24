@@ -35,6 +35,8 @@ const MOCK_PAYOUTS: Record<string, any> = {
 export class StripeService {
   private readonly API_NAME = 'ffbProxyApi';
   private readonly CHECKOUT_PATH = '/api/stripe/checkout';
+  private readonly CANCEL_PATH = '/api/stripe/cancel';
+  private readonly MARK_PROCESSED_PATH = '/api/stripe/mark-processed';
 
   constructor() {}
 
@@ -128,6 +130,58 @@ export class StripeService {
     } catch (error: any) {
       console.error('Erreur récupération reçu Stripe:', error);
       return null;
+    }
+  }
+
+  /**
+   * Annule un checkout côté backend et supprime le BookEntry précréé.
+   */
+  async cancelCheckout(bookEntryId: string, sessionId: string): Promise<void> {
+    const headers = await this.buildAuthenticatedHeaders({
+      'Content-Type': 'application/json',
+    });
+
+    const restOperation = post({
+      apiName: this.API_NAME,
+      path: this.CANCEL_PATH,
+      options: {
+        body: { bookEntryId, sessionId } as any,
+        headers,
+      },
+    });
+
+    const { body } = await restOperation.response;
+    const responseText = await body.text();
+    const response = JSON.parse(responseText);
+
+    if (response?.error) {
+      throw new Error(response.error);
+    }
+  }
+
+  /**
+   * Marque une transaction Stripe comme traitée via endpoint backend sécurisé.
+   */
+  async markCheckoutProcessed(sessionId: string): Promise<void> {
+    const headers = await this.buildAuthenticatedHeaders({
+      'Content-Type': 'application/json',
+    });
+
+    const restOperation = post({
+      apiName: this.API_NAME,
+      path: this.MARK_PROCESSED_PATH,
+      options: {
+        body: { sessionId } as any,
+        headers,
+      },
+    });
+
+    const { body } = await restOperation.response;
+    const responseText = await body.text();
+    const response = JSON.parse(responseText);
+
+    if (response?.error) {
+      throw new Error(response.error);
     }
   }
 

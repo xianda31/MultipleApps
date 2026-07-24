@@ -44,6 +44,19 @@ export class DBhandler {
     );
   }
 
+  private isUnauthorizedGraphQLError(error: unknown): boolean {
+    const entries = Array.isArray(error) ? error : [error];
+    return entries.some((entry: any) => {
+      const message = String(entry?.message ?? '').toLowerCase();
+      const errorType = String(entry?.errorType ?? entry?.extensions?.errorType ?? '').toLowerCase();
+      return (
+        message.includes('unauthorized') ||
+        message.includes('not authorized') ||
+        errorType.includes('unauthorized')
+      );
+    });
+  }
+
 
 
   // PAGE SERVICE
@@ -642,7 +655,14 @@ export class DBhandler {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode });
     const { errors } = await client.models.StripeTransaction.update({ id, processed: true } as any);
-    if (errors) throw errors;
+    if (errors && errors.length > 0) {
+      if (this.isUnauthorizedGraphQLError(errors)) {
+        // Expected in member online flow: member role has read-only on StripeTransaction.
+        console.info('[Stripe] markStripeTransactionProcessed ignored (unauthorized for current role).');
+        return;
+      }
+      throw errors;
+    }
   }
 
   async listProcessedUnpayoutedStripeTransactions(): Promise<any[]> {
