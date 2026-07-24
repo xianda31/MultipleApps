@@ -280,13 +280,19 @@
         </tr>
       </thead>
       <tbody>
-        @for (line of lines; track line.bookEntry.id) {
+        @for (line of lines; track line.stripeTransaction.id) {
           <tr [class.table-primary]="line.selected && !$any(line).isRefunded"
               [class.table-warning]="$any(line).isRefunded">
             <td>
               <input type="checkbox" class="form-check-input" [(ngModel)]="line.selected">
             </td>
-            <td>{{ formatDate(line.bookEntry.date) }}</td>
+            <td>
+              @if (line.bookEntry) {
+                {{ formatDate(line.bookEntry.date) }}
+              } @else {
+                —
+              }
+            </td>
             <td>{{ line.buyerName }}</td>
             <td>
               <small class="text-muted">{{ line.cartSummary }}</small>
@@ -297,7 +303,7 @@
             <td class="text-end fw-semibold" [class.text-decoration-line-through]="$any(line).isRefunded">
               {{ formatAmount(line.grossCents) }}
             </td>
-            <td><small class="font-monospace text-muted">{{ line.bookEntry.stripeTag }}</small></td>
+            <td><small class="font-monospace text-muted">{{ line.bookEntry?.stripeTag }}</small></td>
           </tr>
         }
       </tbody>
