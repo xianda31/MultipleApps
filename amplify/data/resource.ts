@@ -95,7 +95,8 @@ const schema = a.schema({
       allow.group(Group_names.Admin).to(['read', 'create', 'update']),
       allow.group(Group_names.Editor).to(['read', 'create']),
       allow.group(Group_names.Support).to(['read', 'create']),
-      allow.group(Group_names.Member).to(['read']),
+      // Online checkout (BookEntry-first) needs member-side create before Stripe redirect.
+      allow.group(Group_names.Member).to(['read', 'create']),
 
     ]),
 
