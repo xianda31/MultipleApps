@@ -59,6 +59,8 @@ export class CheckoutSuccessComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+
+
   /**
    * Récupère le statut de la session Stripe
    * ✅ Optionnel: pour afficher les détails de la transaction
@@ -99,4 +101,5 @@ export class CheckoutSuccessComponent implements OnInit, OnDestroy {
       currency: 'EUR'
     }).format(centAmount / 100);
   }
+
 }

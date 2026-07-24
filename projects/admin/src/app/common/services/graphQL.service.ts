@@ -651,6 +651,14 @@ export class DBhandler {
     return (data as any[]).filter((t: any) => t.status === 'completed' && !t.payoutId);
   }
 
+  async listAbandonedStripeTransactions(): Promise<any[]> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { data, errors } = await client.models.StripeTransaction.list({ limit: 300 });
+    if (errors) throw errors;
+    return (data as any[]).filter((t: any) => t.status === 'abandoned');
+  }
+
   async markStripeTransactionProcessed(id: string): Promise<void> {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode });

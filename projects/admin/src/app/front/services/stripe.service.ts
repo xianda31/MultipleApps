@@ -186,6 +186,29 @@ export class StripeService {
   }
 
   /**
+   * Force l'abandon d'une session de paiement en attente (timeout 3D Secure).
+   * Annule le PaymentIntent et marque la StripeTransaction comme 'abandoned'.
+   */
+  async forceAbandonSession(sessionId: string): Promise<void> {
+    const restOperation = post({
+      apiName: this.API_NAME,
+      path: '/api/stripe/force-abandon',
+      options: {
+        body: { sessionId } as any,
+        headers: { 'Content-Type': 'application/json' }
+      },
+    });
+
+    const { body } = await restOperation.response;
+    const responseText = await body.text();
+    const response = JSON.parse(responseText);
+
+    if (response?.error) {
+      throw new Error(response.error);
+    }
+  }
+
+  /**
    * Liste les payouts Stripe récents (30 derniers jours)
    */
   async listPayouts(stripeEnvironment: 'test' | 'live' = 'test'): Promise<{

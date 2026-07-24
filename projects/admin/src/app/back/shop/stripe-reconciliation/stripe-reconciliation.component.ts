@@ -12,7 +12,7 @@ import { BookEntry, TRANSACTION_ID, FINANCIAL_ACCOUNT } from '../../../common/in
 import { environment } from '../../../../environments/environment';
 
 interface PayoutLine {
-  bookEntry: BookEntry;
+  bookEntry: BookEntry | null;     // null pour les transactions abandonnées sans BookEntry
   stripeTransaction: any | null;   // StripeTransaction enrichie
   buyerName: string;
   cartSummary: string;
@@ -248,8 +248,10 @@ export class StripeReconciliationComponent {
 
   private findMatchingLineForCharge(charge: { bookEntryId?: string | null; stripeTag?: string | null }): PayoutLine | null {
     return this.lines.find(l =>
-      (!!charge.bookEntryId && l.bookEntry.id === charge.bookEntryId) ||
-      (!!charge.stripeTag && l.bookEntry.stripeTag && l.bookEntry.stripeTag === charge.stripeTag)
+      l.bookEntry && (
+        (!!charge.bookEntryId && l.bookEntry.id === charge.bookEntryId) ||
+        (!!charge.stripeTag && l.bookEntry.stripeTag && l.bookEntry.stripeTag === charge.stripeTag)
+      )
     ) || null;
   }
 
@@ -306,12 +308,15 @@ export class StripeReconciliationComponent {
           e.stripeTag   // a un tag Stripe = paiement Stripe confirmé
         );
 
-      // StripeTransactions complétées sans payoutId
+      // StripeTransactions complétées sans payoutId + transactions abandonnées
       const stripeTransactions = await this.dbHandler.listUnpayoutedStripeTransactions();
-      this.diagnosticStripeTransactions = stripeTransactions;
+      const abandonedTransactions = await this.dbHandler.listAbandonedStripeTransactions();
+      const allStripeTransactions = [...stripeTransactions, ...abandonedTransactions];
+      this.diagnosticStripeTransactions = allStripeTransactions;
 
+      // Créer les lignes depuis les BookEntries
       this.lines = bookEntries.map(be => {
-        const st = stripeTransactions.find(
+        const st = allStripeTransactions.find(
           (t: any) => t.bookEntryId === be.id || (be.stripeTag && t.stripeTag === be.stripeTag)
         ) || null;
 
@@ -353,6 +358,31 @@ export class StripeReconciliationComponent {
         };
         return line;
       }).filter((line): line is PayoutLine => line !== null);
+
+      // Ajouter les transactions abandonnées sans BookEntry correspondante
+      const abandonedWithoutBookEntry = abandonedTransactions.filter(at =>
+        !allBookEntries.find(be => be.id === at.bookEntryId || be.stripeTag === at.stripeTag)
+      );
+
+      const abandonedLines = abandonedWithoutBookEntry.map(st => {
+        const grossCents = st.amountCents || 0;
+        const cartSummary = `Paiement abandonné (${st.source === 'terminal' ? 'TPE' : 'en ligne'})`;
+        const abandonedAtTime = st.abandonedAt ? new Date(st.abandonedAt).toLocaleString('fr-FR') : 'inconnu';
+
+        const line: PayoutLine = {
+          bookEntry: null,  // Pas de BookEntry pour les abandons
+          stripeTransaction: st,
+          buyerName: st.stripeMeta?.memberName || '(inconnu)',
+          cartSummary: `${cartSummary} — Abandonné le ${abandonedAtTime}`,
+          grossCents,
+          feesCents: st?.amountFeesCents || 0,
+          get netCents() { return this.grossCents - this.feesCents; },
+          selected: false,
+        };
+        return line;
+      });
+
+      this.lines = [...this.lines, ...abandonedLines];
     } catch (error) {
       console.error('Erreur chargement lignes payout:', error);
       this.toastService.showError('Réconciliation', 'Impossible de charger les paiements');
@@ -364,7 +394,7 @@ export class StripeReconciliationComponent {
   toggleAll(checked: boolean): void {
     this.lines.forEach(l => l.selected = checked);
   }
-
+ 
   /**
    * Approche B : auto-sélection depuis Stripe API
    */
@@ -589,9 +619,11 @@ export class StripeReconciliationComponent {
 
       // 2. Mettre à jour deposit_ref sur chaque BookEntry sélectionné
       await Promise.all(
-        snapshotLines.map(l =>
-          this.bookService.update_book_entry({ ...l.bookEntry, deposit_ref: pId })
-        )
+        snapshotLines
+          .filter(l => l.bookEntry)
+          .map(l =>
+            this.bookService.update_book_entry({ ...l.bookEntry!, deposit_ref: pId })
+          )
       );
 
       // 3. Taguer les StripeTransactions avec le payoutId

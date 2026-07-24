@@ -390,6 +390,46 @@ export async function handler(event: any): Promise<any> {
         break;
       }
 
+      case 'checkout.session.expired': {
+        const session = stripeEvent.data.object as Stripe.Checkout.Session;
+        console.log(`Session Stripe expirée: ${session.id}`);
+        if (STRIPE_TRANSACTION_TABLE) {
+          await docClient.send(new UpdateCommand({
+            TableName: STRIPE_TRANSACTION_TABLE,
+            Key: { id: session.id },
+            UpdateExpression: 'SET #status = :status, abandonedAt = :now, updatedAt = :now',
+            ExpressionAttributeNames: {
+              '#status': 'status',
+            },
+            ExpressionAttributeValues: {
+              ':status': 'abandoned',
+              ':now': new Date().toISOString(),
+            },
+          })).catch((err) => console.error(`[checkout.session.expired] Failed to update ${session.id}:`, err));
+        }
+        break;
+      }
+
+      case 'payment_intent.canceled': {
+        const paymentIntent = stripeEvent.data.object as Stripe.PaymentIntent;
+        console.log(`PaymentIntent annulé: ${paymentIntent.id}`);
+        if (STRIPE_TRANSACTION_TABLE) {
+          await docClient.send(new UpdateCommand({
+            TableName: STRIPE_TRANSACTION_TABLE,
+            Key: { id: paymentIntent.id },
+            UpdateExpression: 'SET #status = :status, abandonedAt = :now, updatedAt = :now',
+            ExpressionAttributeNames: {
+              '#status': 'status',
+            },
+            ExpressionAttributeValues: {
+              ':status': 'abandoned',
+              ':now': new Date().toISOString(),
+            },
+          })).catch((err) => console.error(`[payment_intent.canceled] Failed to update ${paymentIntent.id}:`, err));
+        }
+        break;
+      }
+
       default:
         // Ignorer les autres événements
         break;

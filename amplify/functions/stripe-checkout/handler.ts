@@ -195,6 +195,9 @@ export async function handler(event: any): Promise<any> {
   if (path.endsWith('/cancel')) {
     return handleCancelCheckout(event);
   }
+  if (path.endsWith('/force-abandon')) {
+    return handleForceAbandonCheckout(event);
+  }
   if (path.endsWith('/receipt')) {
     return handleReceipt(event);
   }
@@ -415,6 +418,101 @@ async function handleReceipt(event: any): Promise<any> {
       statusCode: 500,
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
       body: JSON.stringify({ error: 'Failed to retrieve receipt' }),
+    };
+  }
+}
+
+/**
+ * Force l'abandon d'une session de paiement en attente de finalisation 3D Secure.
+ * Annule le PaymentIntent et marque la StripeTransaction comme 'abandoned'.
+ * Route non protégée (l'utilisateur peut forcer l'abandon après timeout).
+ */
+async function handleForceAbandonCheckout(event: any): Promise<any> {
+  const CORS = { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' };
+
+  if (!STRIPE_SECRET_KEY) {
+    return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: 'STRIPE_SECRET_KEY not configured' }) };
+  }
+
+  if (!STRIPE_TRANSACTION_TABLE) {
+    return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: 'STRIPE_TRANSACTION_TABLE_NAME not configured' }) };
+  }
+
+  let bodyObj: any;
+  try {
+    bodyObj = typeof event.body === 'string' ? JSON.parse(event.body) : (event.body || {});
+  } catch {
+    return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Invalid JSON body' }) };
+  }
+
+  const sessionId = bodyObj.sessionId;
+  if (!sessionId || typeof sessionId !== 'string' || !sessionId.startsWith('cs_')) {
+    return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Valid sessionId is required' }) };
+  }
+
+  try {
+    // Récupérer la session Stripe avec son PaymentIntent associé
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    const paymentIntentId = session.payment_intent as string | null;
+
+    // Ne pas forcer l'abandon si le paiement est déjà confirmé
+    if (session.payment_status === 'paid') {
+      return {
+        statusCode: 409,
+        headers: CORS,
+        body: JSON.stringify({ error: 'Session already paid; cannot be abandoned' }),
+      };
+    }
+
+    // Annuler le PaymentIntent si présent
+    if (paymentIntentId) {
+      try {
+        await stripe.paymentIntents.cancel(paymentIntentId);
+        console.log(`[force-abandon] PaymentIntent ${paymentIntentId} cancelled`);
+      } catch (err: any) {
+        // Si déjà annulé ou traité, continuer quand même
+        if (err?.code !== 'payment_intent_unexpected_state') {
+          console.error(`[force-abandon] Failed to cancel PaymentIntent ${paymentIntentId}:`, err?.message);
+        }
+      }
+    }
+
+    // Marquer la StripeTransaction comme 'abandoned' en DynamoDB
+    const now = new Date().toISOString();
+    try {
+      await docClient.send(new UpdateCommand({
+        TableName: STRIPE_TRANSACTION_TABLE,
+        Key: { id: sessionId },
+        UpdateExpression: 'SET #status = :status, abandonedAt = :abandonedAt, updatedAt = :updatedAt',
+        ExpressionAttributeNames: {
+          '#status': 'status',
+        },
+        ExpressionAttributeValues: {
+          ':status': 'abandoned',
+          ':abandonedAt': now,
+          ':updatedAt': now,
+        },
+      }));
+      console.log(`[force-abandon] StripeTransaction ${sessionId} marked as abandoned`);
+    } catch (dbErr: any) {
+      console.warn(`[force-abandon] Could not update StripeTransaction (non-blocking):`, dbErr?.message);
+    }
+
+    return {
+      statusCode: 200,
+      headers: CORS,
+      body: JSON.stringify({
+        ok: true,
+        sessionId,
+        message: 'Session abandoned successfully'
+      }),
+    };
+  } catch (error: any) {
+    console.error('[force-abandon] ERROR:', error?.message || error);
+    return {
+      statusCode: 500,
+      headers: CORS,
+      body: JSON.stringify({ error: 'Failed to abandon session' }),
     };
   }
 }
