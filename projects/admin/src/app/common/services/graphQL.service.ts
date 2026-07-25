@@ -639,24 +639,26 @@ export class DBhandler {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode });
     const { data, errors } = await client.models.StripeTransaction.list({ limit: 300 });
-    if (errors) throw errors;
-    return (data as any[]).filter((t: any) => t.status === 'completed' && !t.processed);
+    if (errors?.length) console.error('StripeTransaction.list (unprocessed) partial errors', errors);
+    // Filtrer les items null (violation de champ requis côté AppSync sur des
+    // enregistrements corrompus) avant tout accès aux propriétés.
+    return ((data as any[] | null) ?? []).filter(Boolean).filter((t: any) => t.status === 'completed' && !t.processed);
   }
 
   async listUnpayoutedStripeTransactions(): Promise<any[]> {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode });
     const { data, errors } = await client.models.StripeTransaction.list({ limit: 300 });
-    if (errors) throw errors;
-    return (data as any[]).filter((t: any) => t.status === 'completed' && !t.payoutId);
+    if (errors?.length) console.error('StripeTransaction.list (unpayouted) partial errors', errors);
+    return ((data as any[] | null) ?? []).filter(Boolean).filter((t: any) => t.status === 'completed' && !t.payoutId);
   }
 
   async listAbandonedStripeTransactions(): Promise<any[]> {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode });
     const { data, errors } = await client.models.StripeTransaction.list({ limit: 300 });
-    if (errors) throw errors;
-    return (data as any[]).filter((t: any) => t.status === 'abandoned');
+    if (errors?.length) console.error('StripeTransaction.list (abandoned) partial errors', errors);
+    return ((data as any[] | null) ?? []).filter(Boolean).filter((t: any) => ['abandoned', 'canceled', 'incomplete', 'expired'].includes(t.status));
   }
 
   async markStripeTransactionProcessed(id: string): Promise<void> {
@@ -677,8 +679,8 @@ export class DBhandler {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode });
     const { data, errors } = await client.models.StripeTransaction.list({ limit: 300 });
-    if (errors) throw errors;
-    return (data as any[]).filter((t: any) => t.processed === true && !t.payoutId);
+    if (errors?.length) console.error('StripeTransaction.list (processed/unpayouted) partial errors', errors);
+    return ((data as any[] | null) ?? []).filter(Boolean).filter((t: any) => t.processed === true && !t.payoutId);
   }
 
   async updateStripeTransactionPayout(id: string, payoutId: string, reconciledAt: string): Promise<void> {
@@ -699,8 +701,8 @@ export class DBhandler {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode });
     const { data, errors } = await client.models.StripeTransaction.list({ limit: 300 });
-    if (errors) throw errors;
-    return (data as any[]).filter((t: any) => t.payoutId === payoutId);
+    if (errors?.length) console.error('StripeTransaction.list (by payoutId) partial errors', errors);
+    return ((data as any[] | null) ?? []).filter(Boolean).filter((t: any) => t.payoutId === payoutId);
   }
 
 

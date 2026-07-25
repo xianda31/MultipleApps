@@ -328,10 +328,17 @@ async function handleWebhookHealth(event: any): Promise<any> {
   try {
     const { client, environment } = getStripeForReadOnly(event);
     const since = Math.floor(Date.now() / 1000) - 7 * 24 * 60 * 60;
+    // Types "abandon" suivis séparément pour visibilité dans les stats santé
+    // (paiements 3D Secure jamais finalisés, PaymentIntent Terminal annulés).
+    const abandonTypes: Stripe.Event.Type[] = [
+      'checkout.session.expired',
+      'payment_intent.canceled',
+    ];
     const trackedTypes: Stripe.Event.Type[] = [
       'checkout.session.completed',
       'payment_intent.succeeded',
       'payment_intent.payment_failed',
+      ...abandonTypes,
     ];
 
     const events = await client.events.list({
@@ -340,7 +347,17 @@ async function handleWebhookHealth(event: any): Promise<any> {
       limit: 100,
     });
 
+    // Stripe Checkout annule et recrée automatiquement le PaymentIntent sous-jacent
+    // quand le client modifie panier/coordonnées avant paiement (cancellation_reason
+    // = 'automatic'). Ce n'est PAS un abandon — on l'exclut pour ne pas polluer les stats.
+    const isNoiseAutoCancel = (e: Stripe.Event): boolean => {
+      if (e.type !== 'payment_intent.canceled') return false;
+      const pi = e.data.object as Stripe.PaymentIntent;
+      return pi.cancellation_reason === 'automatic';
+    };
+
     const items = events.data
+      .filter((e) => !isNoiseAutoCancel(e))
       .sort((a, b) => b.created - a.created)
       .map((e) => ({
         id: e.id,
@@ -351,6 +368,7 @@ async function handleWebhookHealth(event: any): Promise<any> {
       }));
 
     const pendingCount = items.filter((i) => i.pendingWebhooks > 0).length;
+    const abandonedCount = items.filter((i) => (abandonTypes as string[]).includes(i.type)).length;
 
     return {
       statusCode: 200,
@@ -360,6 +378,7 @@ async function handleWebhookHealth(event: any): Promise<any> {
         totalEvents: items.length,
         pendingEvents: pendingCount,
         deliveredEvents: items.length - pendingCount,
+        abandonedEvents: abandonedCount,
         stripeEnvironment: environment,
         status: pendingCount > 0 ? 'warning' : 'ok',
         events: items.slice(0, 20),

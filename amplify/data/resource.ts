@@ -274,7 +274,8 @@ const schema = a.schema({
     stripeTag: a.string(),                   // Tag court (stripe:XXXXX) — même valeur que BookEntry.stripeTag
     bookEntryId: a.string(),                 // ID du BookEntry associé (BookEntry-first)
     buyerMemberId: a.string(),               // DynamoDB Member ID de l'acheteur
-    status: a.enum(['pending', 'completed', 'failed']),
+    // Statuts internes + états Stripe d'abandon/expiration utilisés par la réconciliation.
+    status: a.enum(['pending', 'completed', 'failed', 'abandoned', 'canceled', 'incomplete', 'expired']),
     amountCents: a.integer().required(),
     currency: a.string().required(),
     customerEmail: a.string(),

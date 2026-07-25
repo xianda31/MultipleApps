@@ -394,10 +394,16 @@ export async function handler(event: any): Promise<any> {
         const session = stripeEvent.data.object as Stripe.Checkout.Session;
         console.log(`Session Stripe expirée: ${session.id}`);
         if (STRIPE_TRANSACTION_TABLE) {
+          // ConditionExpression: n'update QUE si la transaction existe déjà (créée par
+          // checkout.session.completed). Sinon la session n'a jamais été enregistrée
+          // (ex: abandon en plein 3D Secure) et un UpdateCommand créerait un item
+          // fantôme incomplet (sans stripeSessionId/amountCents/currency requis par le
+          // schéma), ce qui casse ensuite la lecture GraphQL en réconciliation.
           await docClient.send(new UpdateCommand({
             TableName: STRIPE_TRANSACTION_TABLE,
             Key: { id: session.id },
             UpdateExpression: 'SET #status = :status, abandonedAt = :now, updatedAt = :now',
+            ConditionExpression: 'attribute_exists(id)',
             ExpressionAttributeNames: {
               '#status': 'status',
             },
@@ -405,7 +411,13 @@ export async function handler(event: any): Promise<any> {
               ':status': 'abandoned',
               ':now': new Date().toISOString(),
             },
-          })).catch((err) => console.error(`[checkout.session.expired] Failed to update ${session.id}:`, err));
+          })).catch((err) => {
+            if (err?.name === 'ConditionalCheckFailedException') {
+              console.log(`[checkout.session.expired] No existing transaction for ${session.id} — nothing to mark abandoned`);
+            } else {
+              console.error(`[checkout.session.expired] Failed to update ${session.id}:`, err);
+            }
+          });
         }
         break;
       }
@@ -414,10 +426,15 @@ export async function handler(event: any): Promise<any> {
         const paymentIntent = stripeEvent.data.object as Stripe.PaymentIntent;
         console.log(`PaymentIntent annulé: ${paymentIntent.id}`);
         if (STRIPE_TRANSACTION_TABLE) {
+          // La StripeTransaction est indexée par checkout session id (cs_...), pas par
+          // PaymentIntent id (pi_...), sauf pour les transactions Terminal. Sans la
+          // ConditionExpression, un paiement en ligne annulé créerait ici un item
+          // fantôme keyed par pi_... — incomplet et jamais lu par la réconciliation.
           await docClient.send(new UpdateCommand({
             TableName: STRIPE_TRANSACTION_TABLE,
             Key: { id: paymentIntent.id },
             UpdateExpression: 'SET #status = :status, abandonedAt = :now, updatedAt = :now',
+            ConditionExpression: 'attribute_exists(id)',
             ExpressionAttributeNames: {
               '#status': 'status',
             },
@@ -425,7 +442,13 @@ export async function handler(event: any): Promise<any> {
               ':status': 'abandoned',
               ':now': new Date().toISOString(),
             },
-          })).catch((err) => console.error(`[payment_intent.canceled] Failed to update ${paymentIntent.id}:`, err));
+          })).catch((err) => {
+            if (err?.name === 'ConditionalCheckFailedException') {
+              console.log(`[payment_intent.canceled] No existing transaction keyed by ${paymentIntent.id} — nothing to mark abandoned`);
+            } else {
+              console.error(`[payment_intent.canceled] Failed to update ${paymentIntent.id}:`, err);
+            }
+          });
         }
         break;
       }

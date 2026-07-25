@@ -54,6 +54,7 @@ interface WebhookHealth {
   totalEvents: number;
   pendingEvents: number;
   deliveredEvents: number;
+  abandonedEvents?: number;   // checkout.session.expired + payment_intent.canceled (paiements non finalisés)
   stripeEnvironment?: 'test' | 'live';
   status: 'ok' | 'warning';
   events: { id: string; type: string; created: string; pendingWebhooks: number; status: string }[];
