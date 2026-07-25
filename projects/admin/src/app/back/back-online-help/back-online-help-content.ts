@@ -27,7 +27,7 @@ export const HELP_TOPICS: HelpTopic[] = [
   {
     id: 'tournois',
     title: 'Tournois',
-    summary: 'Point d entree pour les droits de table et les flux de vente lies aux tournois.',
+    summary: 'À l’ouverture d’un tournoi de régularité, cette page permet de vérifier la présence effective des joueurs inscrits et de pointer les droits de table (carte ou espèces).',
     route: BACK_ROUTE_ABS_PATHS['FeesCollector'],
     nav: {
       menuTitle: 'Tournois',
@@ -35,14 +35,19 @@ export const HELP_TOPICS: HelpTopic[] = [
       groupLevel: 'Contributeur',
     },
     functionalities: [
-      'Collecte des droits de table.',
-      'Passage vers la boutique avec membre preselectionne.',
-      'Suivi du flux evenementiel avant comptabilisation.',
+      'Vérification de la présence effective des joueurs inscrits.',
+      'Pointage des droits de table par mode de règlement.',
+      'Préparation de l’enregistrement des droits de table du tournoi.',
     ],
     howTo: [
-      'Verifier la saison et la table de reference.',
-      'Saisir les droits de table par participant.',
-      'Finaliser le paiement dans la boutique si necessaire.',
+      'Sélectionner le tournoi concerné pour afficher les joueurs inscrits.',
+      'Pour chaque joueur présent, pointer le mode de règlement choisi (carte, espèces) ou utiliser le bouton NP pour non présent ou non payant.',
+      'Quand tous les joueurs ont été pointés, accepter l’enregistrement des droits de table.',
+    ],
+    caution: [
+      'Le nombre de droits de table de la carte d’un joueur est affiché en bas à gauche.',
+      'L’icône chariot permet de lancer une vente rapide d’une nouvelle carte de droits d’entrée.',
+      'Les dettes et avoirs ne sont pas pris en compte par cette vente rapide ; pour en tenir compte, passer par le menu Boutique / vente adhérent.',
     ],
     children: [
       {
@@ -70,7 +75,7 @@ export const HELP_TOPICS: HelpTopic[] = [
   {
     id: 'boutique',
     title: 'Boutique',
-    summary: 'Gestion des ventes adherents, billetterie et catalogue produits.',
+    summary: 'Gestion des ventes adhérents, de la billetterie et du catalogue produits.',
     route: BACK_ROUTE_ABS_PATHS['Shop'],
     nav: {
       menuTitle: 'Boutique',
@@ -78,17 +83,17 @@ export const HELP_TOPICS: HelpTopic[] = [
       groupLevel: 'Contributeur',
     },
     functionalities: [
-      'Creation de paniers de vente.',
+      'Création de paniers de vente.',
       'Gestion des modes de paiement.',
-      'Suivi du catalogue de produits vendables.',
+      'Suivi du catalogue des produits vendables.',
     ],
     howTo: [
-      'Ouvrir la boutique et selectionner l acheteur.',
-      'Verifier le panier et les montants.',
-      'Valider le paiement et controler la confirmation.',
+      'Ouvrir la boutique puis sélectionner l’acheteur.',
+      'Vérifier le panier, les montants et le mode de paiement.',
+      'Valider le paiement puis contrôler la confirmation.',
     ],
     caution: [
-      'En cas d ambiguite CB/Stripe, controler ensuite la section Stripe.',
+      'En cas d’ambiguïté CB/Stripe, contrôler ensuite la section Stripe.',
     ],
     children: [
       {
@@ -177,7 +182,7 @@ export const HELP_TOPICS: HelpTopic[] = [
       {
         id: 'adherents-repertoire',
         title: 'repertoire',
-        summary: 'Consultation et mise a jour des fiches adherents.',
+        summary: 'Consultation et mise à jour des fiches adhérents, avec recalcul saisonnier des dates d’adhésion.',
         route: BACK_ROUTE_ABS_PATHS['MembersDatabase'],
         nav: {
           menuTitle: 'Adherents',
@@ -186,12 +191,23 @@ export const HELP_TOPICS: HelpTopic[] = [
           groupLevel: 'Contributeur',
         },
         functionalities: [
-          'Recherche multi-criteres des membres.',
-          'Edition des donnees de contact/statut.',
+          'Recherche multicritère des membres.',
+          'Édition des données de contact et de statut.',
+          'Recalcul automatique des dates d’adhésion lors d’un changement de saison.',
+          'Régénération de l’état d’adhésion sur la saison sélectionnée à partir des écritures ADH.',
+          'Mise à jour du statut membre et de la couleur d’icône après recalcul.',
         ],
         howTo: [
-          'Utiliser les filtres pour trouver le membre.',
-          'Sauvegarder apres verification des champs sensibles.',
+          'Utiliser les filtres pour trouver le membre cible.',
+          'Changer la saison via la barre de navigation du back-office.',
+          'Attendre la synchronisation automatique des membres.',
+          'Vérifier la colonne Date d’adhésion puis l’icône de statut.',
+          'Sauvegarder après vérification des champs sensibles.',
+        ],
+        caution: [
+          'Le recalcul utilise la saison locale active.',
+          'Si aucune écriture ADH n’est trouvée sur la saison sélectionnée, la date est conservée seulement si elle est antérieure à cette saison; sinon elle est vidée.',
+          'Une date vide peut faire passer le statut en NON_ADHERENT pour la saison affichée.',
         ],
       },
       {
@@ -240,7 +256,7 @@ export const HELP_TOPICS: HelpTopic[] = [
   {
     id: 'comptabilite',
     title: 'Comptabilite',
-    summary: 'Saisie, rapprochement et analyse des ecritures comptables.',
+    summary: 'Saisie, rapprochement et analyse des écritures comptables.',
     route: BACK_ROUTE_ABS_PATHS['BooksOverview'],
     nav: {
       menuTitle: 'Comptabilite',
@@ -248,14 +264,14 @@ export const HELP_TOPICS: HelpTopic[] = [
       groupLevel: 'Administrateur',
     },
     functionalities: [
-      'Etat de caisse et rapprochement bancaire.',
-      'Edition des ecritures comptables.',
-      'Analyse resultats, bilan et synthese.',
+      'État de caisse et rapprochement bancaire.',
+      'Édition des écritures comptables.',
+      'Analyse des résultats, du bilan et de la synthèse.',
     ],
     howTo: [
-      'Verifier d abord l etat de caisse.',
+      'Vérifier d’abord l’état de caisse.',
       'Rapprocher les mouvements bancaires.',
-      'Clore l analyse sur les vues resultats/bilan/synthese.',
+      'Clore l’analyse sur les vues résultats, bilan et synthèse.',
     ],
     children: [
       {
@@ -457,7 +473,7 @@ export const HELP_TOPICS: HelpTopic[] = [
       'Sauvegarde comptable et maintenance.',
     ],
     howTo: [
-      'Valider le droit necessaire avant action.',
+      'Valider le niveau de droit necessaire avant action.',
       'Appliquer le changement cible.',
       'Verifier l impact metier apres execution.',
     ],
@@ -681,14 +697,14 @@ export const HELP_TOPICS: HelpTopic[] = [
       groupLevel: 'Editeur',
     },
     functionalities: [
-      'Traitement des demandes d assistance front.',
-      'Diffusion d informations par mailing/breaking news.',
-      'Creation et suivi de sondages.',
+      'Traitement des demandes d’assistance front.',
+      'Diffusion d’informations via mailing et breaking news.',
+      'Création et suivi de sondages.',
     ],
     howTo: [
-      'Traiter d abord les tickets prioritaires.',
+      'Traiter d’abord les tickets prioritaires.',
       'Planifier ensuite les communications.',
-      'Suivre les reponses des sondages si actifs.',
+      'Suivre les réponses des sondages actifs.',
     ],
     children: [
       {
@@ -817,7 +833,7 @@ export const HELP_TOPICS: HelpTopic[] = [
   {
     id: 'devtools',
     title: 'DevTools',
-    summary: 'Operations techniques reservees au groupe Systeme.',
+    summary: 'Operations techniques réservées aux développeurs et administrateurs système.',
     route: BACK_ROUTE_ABS_PATHS['RootVolume'],
     nav: {
       menuTitle: 'DevTools',
@@ -922,7 +938,7 @@ export const HELP_TOPICS: HelpTopic[] = [
   {
     id: 'documentation',
     title: 'Documentation',
-    summary: 'Aide en ligne du back-office et reference utilisateur.',
+    summary: 'Aide en ligne du back-office et référence utilisateur.',
     route: BACK_ROUTE_ABS_PATHS['OnlineHelp'],
     nav: {
       menuTitle: 'Documentation',
@@ -930,14 +946,14 @@ export const HELP_TOPICS: HelpTopic[] = [
       groupLevel: 'Membre',
     },
     functionalities: [
-      'Consultation des chapitres d aide.',
-      'Navigation par menus/sous-menus aligns navbar.',
+      'Consultation des chapitres d’aide.',
+      'Navigation par menus et sous-menus alignés sur la navbar.',
       'Support de correction du contenu fonctionnel.',
     ],
     howTo: [
-      'Choisir un menu dans le sommaire a gauche.',
+      'Choisir un menu dans le sommaire à gauche.',
       'Ouvrir un sous-sujet si besoin.',
-      'Utiliser Ouvrir l ecran pour acceder a la fonctionnalite.',
+      'Utiliser Ouvrir l’écran pour accéder à la fonctionnalité.',
     ],
   },
 ];
