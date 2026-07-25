@@ -1,0 +1,104 @@
+<div class="container-fluid px-lg-4 mt-4 px-0 back-help">
+  <section class="card border-0 shadow-sm back-help__hero">
+    <div class="card-body p-4">
+      <div class="back-help__eyebrow">Back office</div>
+      <h3 class="mb-2">Aide en ligne</h3>
+      <!-- <p class="mb-0 text-muted back-help__intro">
+        Base de reference des fonctionnalites back-office. Les chapitres ci-dessous decrivent les usages,
+        les parcours et les points de vigilance.
+      </p> -->
+      <div class="back-help__meta mt-1">
+        <!-- <div><strong>Version de contenu:</strong> {{ contentVersion }}</div> -->
+        <!-- <div><strong>Fichier de correction:</strong> {{ contentSourceFile }}</div> -->
+      </div>
+    </div>
+  </section>
+
+  <section class="row g-3 mt-1">
+    <div class="col-12 col-xl-4">
+      <div class="card border-0 shadow-sm back-help__tree">
+        <div class="card-body p-3 p-lg-4">
+          <div class="back-help__topic" *ngFor="let topic of topics">
+            <button class="btn back-help__topic-btn text-start p-0 w-100"
+              [class.back-help__topic-btn--selected]="selectedMenuTopic.id === topic.id"
+              (click)="selectTopic(topic)">
+              <div class="fw-semibold d-flex align-items-center gap-2">
+                <i class="bi {{ topic.nav.icon }}"></i>
+                <span>{{ topic.title }}</span>
+              </div>
+              <div class="small text-muted">{{ topic.summary }}</div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-xl-8">
+      <div class="card border-0 shadow-sm h-100 back-help__detail">
+        <div class="card-body p-3 p-lg-4">
+          <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-2">
+            <h3 class="h4 mb-0">{{ selectedDetailTopic.title }}</h3>
+            <a *ngIf="selectedDetailTopic.route && selectedDetailTopic.nav.subMenuTitle && canAccessTopic(selectedDetailTopic)" class="btn btn-outline-secondary btn-sm" [routerLink]="selectedDetailTopic.route">
+              Ouvrir l ecran
+            </a>
+          </div>
+
+          <p class="text-muted mb-4">
+            <span class="fw-semibold">Menu:</span> {{ selectedMenuTopic.title }}
+            <span *ngIf="selectedDetailTopic.id !== selectedMenuTopic.id"> • <span class="fw-semibold">Sous-menu:</span> {{ selectedDetailTopic.title }}</span>
+          </p>
+
+          <p class="text-muted mb-4">{{ selectedDetailTopic.summary }}</p>
+
+          <div class="back-help__section mb-4">
+            <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
+              <h4 class="h6 text-uppercase back-help__section-title mb-0">Niveau d habilitation</h4>
+            </div>
+            <div class="back-help__group-checklist mt-2 d-flex flex-wrap gap-3">
+              <div class="form-check back-help__group-item" *ngFor="let group of orderedGroups">
+                <input class="form-check-input" type="checkbox" [checked]="isGroupChecked(group.value)" disabled>
+                <label class="form-check-label back-help__group-label">{{ group.label }}</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="back-help__section">
+            <h4 class="h6 text-uppercase back-help__section-title">Fonctionnalites couvertes</h4>
+            <ng-container *ngIf="selectedMenuTopic.children?.length; else noSubMenuFeatures">
+              <div class="d-flex flex-column gap-2">
+                <button
+                  *ngFor="let child of selectedMenuTopic.children"
+                  class="btn text-start back-help__feature-btn"
+                  type="button"
+                  [class.back-help__feature-btn--selected]="selectedDetailTopic.id === child.id"
+                  (click)="selectSubTopic(child)">
+                  <div class="fw-semibold">{{ child.title }}</div>
+                  <div class="small">{{ child.summary }}</div>
+                </button>
+              </div>
+            </ng-container>
+            <ng-template #noSubMenuFeatures>
+              <ul class="mb-0">
+                <li *ngFor="let item of selectedMenuTopic.functionalities">{{ item }}</li>
+              </ul>
+            </ng-template>
+          </div>
+
+          <div class="back-help__section mt-4">
+            <h4 class="h6 text-uppercase back-help__section-title">Parcours conseille</h4>
+            <ol class="mb-0">
+              <li *ngFor="let step of selectedDetailTopic.howTo">{{ step }}</li>
+            </ol>
+          </div>
+
+          <div class="back-help__section mt-4" *ngIf="selectedDetailTopic.caution?.length">
+            <h4 class="h6 text-uppercase back-help__section-title">Points de vigilance</h4>
+            <ul class="mb-0">
+              <li *ngFor="let warning of selectedDetailTopic.caution">{{ warning }}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

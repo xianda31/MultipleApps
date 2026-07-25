@@ -42,6 +42,7 @@ export const BACK_ROUTE_PATHS = {
   UiConf: 'site/ui',
   Competitions: 'site/competitions',
   Home: 'home',
+  OnlineHelp: 'communication/aide-en-ligne',
   Assistance: 'communication/assistance',
   Mailing: 'communication/mailing',
   BreakingNews: 'communication/breaking-news',

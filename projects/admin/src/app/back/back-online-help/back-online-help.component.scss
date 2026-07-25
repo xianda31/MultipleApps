@@ -1,0 +1,150 @@
+.back-help__hero {
+  background: linear-gradient(135deg, #f5efe2 0%, #fffaf0 100%);
+}
+
+.back-help__eyebrow {
+  color: #8a5a10;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.back-help__intro {
+  max-width: 60rem;
+}
+
+.back-help__meta {
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.88rem;
+  color: #6d5a3b;
+}
+
+.back-help__tree {
+  background: #fffdf8;
+}
+
+.back-help__topic + .back-help__topic {
+  margin-top: 1rem;
+}
+
+.back-help__toggle {
+  min-width: 2rem;
+  line-height: 1.2;
+}
+
+.back-help__topic-btn {
+  background: transparent;
+  border: 0;
+  width: 100%;
+  color: #2b2418;
+}
+
+.back-help__topic-btn--selected {
+  color: #7a4b00;
+}
+
+.back-help__children {
+  margin-left: 2.5rem;
+  margin-top: 0.65rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.back-help__child-btn {
+  border: 1px solid #e6ded0;
+  border-radius: 0.5rem;
+  background: #fff;
+  padding: 0.55rem 0.7rem;
+  color: #332a1f;
+}
+
+.back-help__child-btn--selected {
+  border-color: #caa36a;
+  background: #fff7ea;
+}
+
+.back-help__detail {
+  background: #ffffff;
+}
+
+.back-help__section-title {
+  color: #8a5a10;
+  letter-spacing: 0.03em;
+}
+
+.back-help__section li + li {
+  margin-top: 0.35rem;
+}
+
+.back-help__section ol li + li {
+  margin-top: 0.5rem;
+}
+
+.back-help__feature-btn {
+  max-width: 24rem;
+  width: 100%;
+  border: 1px solid #d7c4a4;
+  background: #fffdf8;
+  color: #2b2418;
+  padding: 0.65rem 0.85rem;
+}
+
+.back-help__feature-btn:hover,
+.back-help__feature-btn:focus {
+  border-color: #b89457;
+  background: #fff8ec;
+  color: #2b2418;
+  box-shadow: none;
+}
+
+.back-help__feature-btn--selected {
+  border-color: #7a4b00;
+  background: #f4e2bf;
+  color: #1f1a12;
+  box-shadow: none;
+}
+
+.back-help__group-checklist {
+  color: #1f1a12;
+}
+
+.back-help__group-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-right: 0;
+}
+
+.back-help__group-item .form-check-input {
+  margin-top: 0;
+  border-color: #7a4b00;
+  box-shadow: none;
+}
+
+.back-help__group-item .form-check-input:checked {
+  background-color: #7a4b00;
+  border-color: #7a4b00;
+}
+
+.back-help__group-label {
+  font-weight: 700;
+  color: #1f1a12;
+}
+
+.back-help__topic-btn:hover,
+.back-help__topic-btn:focus,
+.back-help__child-btn:hover,
+.back-help__child-btn:focus {
+  text-decoration: none;
+}
+
+.back-help__topic-btn .small,
+.back-help__child-btn .small {
+  line-height: 1.2;
+}
+
+.back-help__detail .btn {
+  font-weight: 600;
+}

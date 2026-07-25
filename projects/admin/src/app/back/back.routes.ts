@@ -29,6 +29,7 @@ import { MenusEditorComponent } from './menus/menus-editor/menus-editor';
 import { UiConfComponent } from './ui-conf/ui-conf.component';
 import { CloneS3Component } from './maintenance/clone-S3/clone-s3.component';
 import { BackAssistanceComponent } from './back-assistance/back-assistance.component';
+import { BackOnlineHelpComponent } from './back-online-help/back-online-help.component';
 import { MailingComponent } from './mailing/mailing.component';
 import { BreakingNewsDefineComponent } from './breaking-news/breaking-news-define.component';
 import { CmsWrapper } from './pages/cms-wrapper/cms-wrapper';
@@ -93,6 +94,7 @@ export const routes: Routes = [
       { path: BACK_ROUTE_PATHS.CMSWrapper, component: CmsWrapper, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.Home, component: BackPageComponent },
       { path: BACK_ROUTE_PATHS.SignOut, component: BackPageComponent },
+      { path: BACK_ROUTE_PATHS.OnlineHelp, component: BackOnlineHelpComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.Assistance, component: BackAssistanceComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.Mailing, component: MailingComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.BreakingNews, component: BreakingNewsDefineComponent, canActivate: [AuthGuard] },

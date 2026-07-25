@@ -118,4 +118,11 @@ export const STATIC_MENUS: NavbarMenu[] = [
             // { label: 'ComiteeBookletViewer', route: BACK_ROUTE_PATHS.ComiteeBooklet }
         ]
     },
-]
+        {
+        label: 'Documentation',
+        key: 'documentation',
+        icon: 'bi-question-circle',
+        route: BACK_ROUTE_PATHS.OnlineHelp,
+        minLevel: Group_priorities.Membre,
+    },
+];
