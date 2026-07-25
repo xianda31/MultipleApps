@@ -62,11 +62,6 @@
           <span class="small text-muted">Total: <strong>{{ webhookHealth.totalEvents }}</strong></span>
           <span class="small text-success">Livrés: <strong>{{ webhookHealth.deliveredEvents }}</strong></span>
           <span class="small text-warning">En attente: <strong>{{ webhookHealth.pendingEvents }}</strong></span>
-          @if (webhookHealth.abandonedEvents) {
-            <span class="small text-secondary" title="Sessions expirées (3D Secure non finalisé) + PaymentIntent Terminal annulés">
-              Abandonnés: <strong>{{ webhookHealth.abandonedEvents }}</strong>
-            </span>
-          }
         </div>
 
         @if (webhookHealth.events.length > 0) {
