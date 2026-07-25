@@ -195,13 +195,34 @@ export class MemberSyncService {
 
     private async syncMembershipDates(members: Member[], operations: Revenue[]): Promise<void> {
         const updates: Promise<any>[] = [];
+        const selectedSeason = this.systemDataService.get_local_season();
+        const selectedSeasonStart = new Date(this.systemDataService.start_date(selectedSeason));
 
         for (const member of members) {
             const fullName = this.membersService.full_name(member);
             const memberOps = operations.filter((op) => op.member === fullName);
             const firstAdh = memberOps.find((op) => 'ADH' in op.values);
             if (!firstAdh) {
-                // Preserve the last known membership date when no ADH operation is found.
+                if (!member.membership_date) {
+                    continue;
+                }
+
+                const membershipDate = new Date(member.membership_date);
+                const keepHistoricalDate = !Number.isNaN(membershipDate.getTime())
+                    && !Number.isNaN(selectedSeasonStart.getTime())
+                    && membershipDate < selectedSeasonStart;
+
+                const nextMembershipDate = keepHistoricalDate ? member.membership_date : '';
+                if (nextMembershipDate !== member.membership_date) {
+                    const updatedMember: Member = {
+                        ...member,
+                        membership_date: nextMembershipDate,
+                    };
+                    updatedMember.memberStatus = this.membersService.resolveMemberStatus(updatedMember);
+                    updates.push(
+                        this.membersService.updateMember(updatedMember)
+                    );
+                }
                 continue;
             }
 

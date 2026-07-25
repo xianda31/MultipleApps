@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { MembersService, MemberStatus } from '../../common/services/members.service';
-import { Observable, take, firstValueFrom } from 'rxjs';
+import { Observable, Subject, distinctUntilKeyChanged, firstValueFrom, skip, take, takeUntil } from 'rxjs';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule, UpperCasePipe } from '@angular/common';
 import { NgbModal, NgbTooltipModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
@@ -15,6 +15,7 @@ import { FFB_proxyService } from '../ffb/services/ffb.service';
 import { PersonV2 } from '../ffb/interface/person-v2.interface';
 import { normalizeGender } from '../utils/gender.util';
 import { MemberSyncService } from '../services/member-sync.service';
+import { SystemDataService } from '../services/system-data.service';
 
 type MemberStatusConfig = {
   label: string;
@@ -76,6 +77,9 @@ export class MembersComponent implements OnInit {
     accept_mailing: 'Accepte mails',
   };
   selectedInfoColumn: string = 'membership_date';
+  private readonly destroy$ = new Subject<void>();
+  private seasonRefreshInFlight = false;
+  private pendingSeasonRefresh = false;
 
   // radioButtonGroup: FormGroup = new FormGroup({
   //   radioButton: new FormControl('Tous')
@@ -88,25 +92,26 @@ export class MembersComponent implements OnInit {
     private toastService: ToastService,
     private ffbService: FFB_proxyService,
     private memberSyncService: MemberSyncService,
+    private systemDataService: SystemDataService,
   ) {
   }
 
   ngOnInit(): void {
     this.loading = true;
-    void (async () => {
-      try {
-        const members = await this.memberSyncService.ensureMembersSynchronized(true);
-        this.members = members.sort((a, b) => a.lastname.localeCompare(b.lastname, 'fr', { sensitivity: 'base' }));
-        this.applyStatusCounters();
-        this.avatar_urls$ = this.collect_avatars(this.members);
-        this.filterOnStatus(this.selected_filter);
-      } catch (err) {
-        console.error('Erreur lors du chargement des membres:', err);
-        this.toastService.showError('Membres', 'Erreur lors du chargement des membres');
-      } finally {
-        this.loading = false;
-      }
-    })();
+    this.systemDataService.get_configuration().pipe(
+      distinctUntilKeyChanged('season'),
+      skip(1),
+      takeUntil(this.destroy$),
+    ).subscribe(() => {
+      void this.handleSeasonChange();
+    });
+
+    void this.loadMembersWithSynchronization(true);
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
 
@@ -125,6 +130,51 @@ export class MembersComponent implements OnInit {
     this.ffb_adherents_nbr = counters.ffbAdherents;
     this.no_license_nbr = counters.noLicense;
     this.lost_members_nbr = counters.nonAdherents;
+  }
+
+  private applyMembers(members: Member[]): void {
+    this.members = members.sort((a, b) => a.lastname.localeCompare(b.lastname, 'fr', { sensitivity: 'base' }));
+    this.applyStatusCounters();
+    this.avatar_urls$ = this.collect_avatars(this.members);
+    this.filterOnStatus(this.selected_filter);
+  }
+
+  private async loadMembersWithSynchronization(forceSync: boolean): Promise<void> {
+    this.loading = true;
+    try {
+      const members = await this.memberSyncService.ensureMembersSynchronized(forceSync);
+      this.applyMembers(members);
+    } catch (err) {
+      console.error('Erreur lors du chargement des membres:', err);
+      this.toastService.showError('Membres', 'Erreur lors du chargement des membres');
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  private async handleSeasonChange(): Promise<void> {
+    if (this.seasonRefreshInFlight) {
+      this.pendingSeasonRefresh = true;
+      return;
+    }
+
+    this.seasonRefreshInFlight = true;
+    this.loading = true;
+
+    try {
+      do {
+        this.pendingSeasonRefresh = false;
+        await this.memberSyncService.ensureMembersSynchronized(true);
+      } while (this.pendingSeasonRefresh);
+
+      await this.refreshMembersAsync();
+    } catch (err) {
+      console.error('Erreur lors de la mise à jour saison des membres:', err);
+      this.toastService.showError('Membres', 'Erreur lors de la mise à jour saison');
+    } finally {
+      this.loading = false;
+      this.seasonRefreshInFlight = false;
+    }
   }
 
   async add_licensee(player: ClubMember) {
@@ -278,10 +328,7 @@ export class MembersComponent implements OnInit {
 
   private async refreshMembersAsync(): Promise<void> {
     const members = await firstValueFrom(this.membersService.listMembers().pipe(take(1)));
-    this.members = members.sort((a, b) => a.lastname.localeCompare(b.lastname, 'fr', { sensitivity: 'base' }));
-    this.applyStatusCounters();
-    this.avatar_urls$ = this.collect_avatars(this.members);
-    this.filterOnStatus(this.selected_filter);
+    this.applyMembers(members ?? []);
   }
 
   accessSettings(member: Member): void {
