@@ -301,7 +301,11 @@ export class StripeReconciliationComponent {
         )
         .forEach(e => {
           const tag = e.stripeTag as string;
-          const refundedCents = Math.round((((e.amounts as any)[FINANCIAL_ACCOUNT.STRIPE_credit] || 0) as number) * 100);
+          const stripeCreditCents = Math.round(Math.abs((((e.amounts as any)[FINANCIAL_ACCOUNT.STRIPE_credit] || 0) as number) * 100));
+          const stripeDebitCents = Math.round(Math.abs((((e.amounts as any)[FINANCIAL_ACCOUNT.STRIPE_debit] || 0) as number) * 100));
+          // Défensif: selon la source choisie au remboursement, le montant peut être porté
+          // sur stripe_out (attendu) ou stripe_in (legacy/mauvais appariement de source).
+          const refundedCents = Math.max(stripeCreditCents, stripeDebitCents);
           refundedCentsByStripeTag.set(tag, (refundedCentsByStripeTag.get(tag) || 0) + refundedCents);
         });
 
@@ -338,7 +342,9 @@ export class StripeReconciliationComponent {
           !e.deposit_ref &&
           e.stripeTag &&   // a un tag Stripe = paiement Stripe confirmé
           (() => {
-            const grossCents = Math.round((((e.amounts as any)[FINANCIAL_ACCOUNT.STRIPE_debit] || 0) as number) * 100);
+            const stripeInCents = Math.round(Math.abs((((e.amounts as any)[FINANCIAL_ACCOUNT.STRIPE_debit] || 0) as number) * 100));
+            const stripeOutCents = Math.round(Math.abs((((e.amounts as any)[FINANCIAL_ACCOUNT.STRIPE_credit] || 0) as number) * 100));
+            const grossCents = Math.max(stripeInCents, stripeOutCents);
             const refundedCents = refundedCentsByStripeTag.get(e.stripeTag as string) || 0;
             return refundedCents < grossCents;
           })()

@@ -55,15 +55,6 @@
           <i class="bi bi-exclamation-triangle me-1"></i>{{ webhookHealthError }}
         </div>
       } @else if (webhookHealth) {
-        <div class="d-flex flex-wrap gap-3 align-items-center mb-2">
-          <span class="badge" [class]="webhookHealth.status === 'ok' ? 'bg-success' : 'bg-info'">
-            {{ webhookHealth.status === 'ok' ? 'OK' : 'Livraison en cours' }}
-          </span>
-          <span class="small text-muted">Total: <strong>{{ webhookHealth.totalEvents }}</strong></span>
-          <span class="small text-success">Livrés: <strong>{{ webhookHealth.deliveredEvents }}</strong></span>
-          <span class="small text-warning">En attente: <strong>{{ webhookHealth.pendingEvents }}</strong></span>
-        </div>
-
         @if (webhookHealth.paymentSummary) {
           <div class="row g-2 mb-2">
             <div class="col-6 col-md-2">
@@ -96,7 +87,7 @@
         @if (webhookHealth.paymentAttempts; as paymentAttempts) {
           <details class="mt-2">
             <summary class="small text-muted" style="cursor: pointer; user-select: none;">
-              Voir les dernières tentatives de paiement ({{ paymentAttempts.length }})
+              Voir les dernières transactions ({{ paymentAttempts.length }})
             </summary>
             <div class="table-responsive mt-2">
               <table class="table table-sm mb-0">
@@ -113,7 +104,7 @@
                 <tbody>
                   @for (pi of paymentAttempts; track pi.id) {
                     <tr>
-                      <td><small>{{ formatDate(pi.created) }}</small></td>
+                      <td><small>{{ formatDateTime(pi.created) }}</small></td>
                       <td class="text-end"><small>{{ formatAmount(pi.amountCents) }}</small></td>
                       <td><small>{{ pi.currency }}</small></td>
                       <td>

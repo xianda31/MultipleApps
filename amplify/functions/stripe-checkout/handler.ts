@@ -363,6 +363,7 @@ async function handleWebhookHealth(event: any): Promise<any> {
         'payment_intent.payment_failed',
         'payment_intent.canceled',
         'payment_intent.requires_action',
+        'charge.refunded',
       ],
       created: { gte: sincePayments },
       limit: 100,
@@ -371,7 +372,11 @@ async function handleWebhookHealth(event: any): Promise<any> {
     const lastEventByPaymentIntent = new Map<string, number>();
     for (const ev of paymentIntentEvents.data) {
       const obj = ev.data.object as any;
-      const piId = typeof obj?.id === 'string' && obj.id.startsWith('pi_') ? obj.id : null;
+      const piIdFromPaymentIntentObject = typeof obj?.id === 'string' && obj.id.startsWith('pi_') ? obj.id : null;
+      const piIdFromChargeObject = typeof obj?.payment_intent === 'string' && obj.payment_intent.startsWith('pi_')
+        ? obj.payment_intent
+        : null;
+      const piId = piIdFromPaymentIntentObject || piIdFromChargeObject;
       if (!piId) continue;
       const current = lastEventByPaymentIntent.get(piId) || 0;
       if (ev.created > current) {
