@@ -24,7 +24,8 @@ Start-Sleep -Milliseconds 500
 # 2. Clean ALL CDK/Amplify artifacts (complete wipe)
 Write-Host "  → Cleaning CDK & Amplify artifacts..."
 Remove-Item -Path ".amplify" -Recurse -Force -ErrorAction SilentlyContinue
-Remove-Item -Path "amplify_outputs.json" -Force -ErrorAction SilentlyContinue
+# Keep root amplify_outputs.json so Angular watch does not fail with TS2307 while sandbox regenerates it.
+# The file will be refreshed by sandbox when ready.
 Remove-Item -Path "amplify/.amplify" -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item -Path "amplify/amplify_outputs.json" -Force -ErrorAction SilentlyContinue
 

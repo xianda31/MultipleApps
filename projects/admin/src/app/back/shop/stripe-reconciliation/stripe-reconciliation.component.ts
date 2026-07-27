@@ -57,6 +57,23 @@ interface WebhookHealth {
   stripeEnvironment?: 'test' | 'live';
   status: 'ok' | 'warning';
   events: { id: string; type: string; created: string; pendingWebhooks: number; status: string }[];
+  paymentSummary?: {
+    succeeded: number;
+    canceled: number;
+    incomplete: number;
+    refunded: number;
+  };
+  paymentAttempts?: {
+    id: string;
+    amountCents: number;
+    currency: string;
+    status: string;
+    refunded: boolean;
+    created: string;
+    updatedAt: string;
+    buyerName: string | null;
+    customerEmail: string | null;
+  }[];
 }
 
 @Component({
@@ -668,6 +685,46 @@ export class StripeReconciliationComponent {
         day: '2-digit', month: '2-digit', year: 'numeric'
       });
     } catch { return iso; }
+  }
+
+  formatDateTime(iso: string): string {
+    if (!iso) return '—';
+    try {
+      return new Date(iso).toLocaleString('fr-FR', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      });
+    } catch { return iso; }
+  }
+
+  paymentIntentStatusLabel(attempt: { status: string; refunded?: boolean }): string {
+    if (attempt.refunded) return 'Remboursé';
+    const status = attempt.status;
+    switch (status) {
+      case 'succeeded': return 'Réussi';
+      case 'canceled': return 'Annulé';
+      case 'requires_action': return 'Incomplet (3DS)';
+      case 'requires_payment_method': return 'Échoué / moyen requis';
+      case 'processing': return 'En traitement';
+      case 'requires_confirmation': return 'À confirmer';
+      case 'requires_capture': return 'Non capturé';
+      default: return status;
+    }
+  }
+
+  paymentIntentStatusBadgeClass(attempt: { status: string; refunded?: boolean }): string {
+    if (attempt.refunded) return 'bg-primary';
+    const status = attempt.status;
+    switch (status) {
+      case 'succeeded': return 'bg-success';
+      case 'canceled': return 'bg-secondary';
+      case 'requires_action': return 'bg-info text-dark';
+      case 'requires_payment_method': return 'bg-danger';
+      case 'processing': return 'bg-warning text-dark';
+      case 'requires_confirmation': return 'bg-warning text-dark';
+      case 'requires_capture': return 'bg-warning text-dark';
+      default: return 'bg-light text-dark';
+    }
   }
 }
 

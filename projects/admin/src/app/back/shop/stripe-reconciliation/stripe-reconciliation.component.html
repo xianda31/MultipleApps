@@ -64,32 +64,65 @@
           <span class="small text-warning">En attente: <strong>{{ webhookHealth.pendingEvents }}</strong></span>
         </div>
 
-        @if (webhookHealth.events.length > 0) {
+        @if (webhookHealth.paymentSummary) {
+          <div class="row g-2 mb-2">
+            <div class="col-6 col-md-2">
+              <div class="border rounded p-2 h-100">
+                <div class="small text-muted">Réussis</div>
+                <div class="fw-semibold text-success">{{ webhookHealth.paymentSummary.succeeded }}</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-2">
+              <div class="border rounded p-2 h-100">
+                <div class="small text-muted">Incomplets</div>
+                <div class="fw-semibold text-info">{{ webhookHealth.paymentSummary.incomplete }}</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-2">
+              <div class="border rounded p-2 h-100">
+                <div class="small text-muted">Annulés</div>
+                <div class="fw-semibold text-secondary">{{ webhookHealth.paymentSummary.canceled }}</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-2">
+              <div class="border rounded p-2 h-100">
+                <div class="small text-muted">Remboursés</div>
+                <div class="fw-semibold text-primary">{{ webhookHealth.paymentSummary.refunded }}</div>
+              </div>
+            </div>
+          </div>
+        }
+
+        @if (webhookHealth.paymentAttempts; as paymentAttempts) {
           <details class="mt-2">
             <summary class="small text-muted" style="cursor: pointer; user-select: none;">
-              Voir les derniers événements ({{ webhookHealth.events.length }})
+              Voir les dernières tentatives de paiement ({{ paymentAttempts.length }})
             </summary>
             <div class="table-responsive mt-2">
               <table class="table table-sm mb-0">
                 <thead class="table-light">
                   <tr>
-                    <th>Type</th>
                     <th>Date</th>
-                    <th>ID</th>
-                    <th>Pending</th>
+                    <th class="text-end">Montant</th>
+                    <th>Devise</th>
+                    <th>État</th>
+                    <th>Acheteur</th>
+                    <th>Dernière mise à jour</th>
                   </tr>
                 </thead>
                 <tbody>
-                  @for (ev of webhookHealth.events; track ev.id) {
+                  @for (pi of paymentAttempts; track pi.id) {
                     <tr>
-                      <td><small>{{ ev.type }}</small></td>
-                      <td><small>{{ formatDate(ev.created) }}</small></td>
-                      <td><small class="font-monospace text-muted">{{ ev.id }}</small></td>
+                      <td><small>{{ formatDate(pi.created) }}</small></td>
+                      <td class="text-end"><small>{{ formatAmount(pi.amountCents) }}</small></td>
+                      <td><small>{{ pi.currency }}</small></td>
                       <td>
-                        <span [class]="ev.pendingWebhooks > 0 ? 'badge bg-warning text-dark' : 'badge bg-success'">
-                          {{ ev.pendingWebhooks }}
+                        <span class="badge" [class]="paymentIntentStatusBadgeClass(pi)">
+                          {{ paymentIntentStatusLabel(pi) }}
                         </span>
                       </td>
+                      <td><small>{{ pi.buyerName || pi.customerEmail || '—' }}</small></td>
+                      <td><small>{{ formatDateTime(pi.updatedAt) }}</small></td>
                     </tr>
                   }
                 </tbody>

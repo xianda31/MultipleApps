@@ -327,16 +327,20 @@ async function handleWebhookHealth(event: any): Promise<any> {
 
   try {
     const { client, environment } = getStripeForReadOnly(event);
-    const since = Math.floor(Date.now() / 1000) - 7 * 24 * 60 * 60;
+    const sinceWebhook = Math.floor(Date.now() / 1000) - 7 * 24 * 60 * 60;
+    const sincePayments = Math.floor(Date.now() / 1000) - 30 * 24 * 60 * 60;
     const trackedTypes: Stripe.Event.Type[] = [
       'checkout.session.completed',
       'payment_intent.succeeded',
       'payment_intent.payment_failed',
+      'payment_intent.canceled',
+      'payment_intent.requires_action',
+      'checkout.session.expired',
     ];
 
     const events = await client.events.list({
       types: trackedTypes,
-      created: { gte: since },
+      created: { gte: sinceWebhook },
       limit: 100,
     });
 
@@ -352,6 +356,90 @@ async function handleWebhookHealth(event: any): Promise<any> {
 
     const pendingCount = items.filter((i) => i.pendingWebhooks > 0).length;
 
+    // Événements PI pour récupérer la dernière mise à jour métier de chaque tentative
+    const paymentIntentEvents = await client.events.list({
+      types: [
+        'payment_intent.succeeded',
+        'payment_intent.payment_failed',
+        'payment_intent.canceled',
+        'payment_intent.requires_action',
+      ],
+      created: { gte: sincePayments },
+      limit: 100,
+    });
+
+    const lastEventByPaymentIntent = new Map<string, number>();
+    for (const ev of paymentIntentEvents.data) {
+      const obj = ev.data.object as any;
+      const piId = typeof obj?.id === 'string' && obj.id.startsWith('pi_') ? obj.id : null;
+      if (!piId) continue;
+      const current = lastEventByPaymentIntent.get(piId) || 0;
+      if (ev.created > current) {
+        lastEventByPaymentIntent.set(piId, ev.created);
+      }
+    }
+
+    // Snapshot des PaymentIntents (vision proche du Dashboard Payments Stripe)
+    const paymentIntents = await client.paymentIntents.list({
+      created: { gte: sincePayments },
+      limit: 100,
+      expand: ['data.latest_charge'],
+    });
+
+    const paymentAttempts = await Promise.all(paymentIntents.data.map(async (pi) => {
+      const latestCharge = pi.latest_charge as Stripe.Charge | null;
+      const refunded = !!(latestCharge?.refunded || (latestCharge?.amount_refunded || 0) > 0);
+
+      let buyerName: string | null = pi.metadata?.['memberName'] || null;
+      let customerEmail: string | null = pi.receipt_email || pi.metadata?.['customerEmail'] || null;
+
+      try {
+        const sessions = await client.checkout.sessions.list({ payment_intent: pi.id, limit: 1 });
+        const session = sessions.data?.[0] || null;
+        if (session) {
+          buyerName =
+            session.metadata?.['memberName'] ||
+            session.customer_details?.name ||
+            buyerName;
+          customerEmail =
+            session.customer_details?.email ||
+            session.customer_email ||
+            customerEmail;
+        }
+      } catch {
+        // Certaines tentatives ne viennent pas de Checkout (ex: Terminal), fallback metadata/charge.
+      }
+
+      if (!buyerName) {
+        buyerName = latestCharge?.billing_details?.name || null;
+      }
+
+      const lastStatusEpoch = lastEventByPaymentIntent.get(pi.id) || pi.created;
+
+      return {
+        id: pi.id,
+        amountCents: pi.amount || 0,
+        currency: (pi.currency || 'eur').toUpperCase(),
+        status: pi.status,
+        refunded,
+        created: new Date(pi.created * 1000).toISOString(),
+        updatedAt: new Date(lastStatusEpoch * 1000).toISOString(),
+        buyerName,
+        customerEmail,
+      };
+    }));
+
+    paymentAttempts.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+
+    const paymentSummary = {
+      succeeded: paymentAttempts.filter((p) => p.status === 'succeeded').length,
+      canceled: paymentAttempts.filter((p) => p.status === 'canceled').length,
+      incomplete: paymentAttempts.filter((p) =>
+        ['requires_payment_method', 'requires_confirmation', 'requires_action', 'processing', 'requires_capture'].includes(p.status)
+      ).length,
+      refunded: paymentAttempts.filter((p) => p.refunded).length,
+    };
+
     return {
       statusCode: 200,
       headers: CORS,
@@ -363,6 +451,8 @@ async function handleWebhookHealth(event: any): Promise<any> {
         stripeEnvironment: environment,
         status: pendingCount > 0 ? 'warning' : 'ok',
         events: items.slice(0, 20),
+        paymentSummary,
+        paymentAttempts: paymentAttempts.slice(0, 20),
       }),
     };
   } catch (error: any) {
