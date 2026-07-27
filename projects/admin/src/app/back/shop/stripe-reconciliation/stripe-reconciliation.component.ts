@@ -291,6 +291,20 @@ export class StripeReconciliationComponent {
     try {
       const allBookEntries = this.bookService.get_book_entries();
 
+      // Index des montants remboursés par stripeTag (annulation_paiement_carte_adhérent).
+      // Permet d'exclure les paiements entièrement remboursés de la liste à réconcilier.
+      const refundedCentsByStripeTag = new Map<string, number>();
+      allBookEntries
+        .filter(e =>
+          e.transaction_id === TRANSACTION_ID.annulation_paiement_carte_adhérent &&
+          !!e.stripeTag
+        )
+        .forEach(e => {
+          const tag = e.stripeTag as string;
+          const refundedCents = Math.round((((e.amounts as any)[FINANCIAL_ACCOUNT.STRIPE_credit] || 0) as number) * 100);
+          refundedCentsByStripeTag.set(tag, (refundedCentsByStripeTag.get(tag) || 0) + refundedCents);
+        });
+
       // BookEntries virement_stripe_vers_banque avec deposit_ref po_xxx = payouts déjà réconciliés
       const payoutBookEntries = allBookEntries.filter(e =>
         e.transaction_id === TRANSACTION_ID.virement_stripe_vers_banque &&
@@ -322,7 +336,12 @@ export class StripeReconciliationComponent {
           (e.transaction_id === TRANSACTION_ID.achat_adhérent_par_carte ||
            e.transaction_id === TRANSACTION_ID.report_psp) &&
           !e.deposit_ref &&
-          e.stripeTag   // a un tag Stripe = paiement Stripe confirmé
+          e.stripeTag &&   // a un tag Stripe = paiement Stripe confirmé
+          (() => {
+            const grossCents = Math.round((((e.amounts as any)[FINANCIAL_ACCOUNT.STRIPE_debit] || 0) as number) * 100);
+            const refundedCents = refundedCentsByStripeTag.get(e.stripeTag as string) || 0;
+            return refundedCents < grossCents;
+          })()
         );
 
       // StripeTransactions complétées sans payoutId + transactions abandonnées

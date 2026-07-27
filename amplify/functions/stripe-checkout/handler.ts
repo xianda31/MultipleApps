@@ -1250,7 +1250,7 @@ async function handleTerminalPaymentIntent(event: any): Promise<any> {
  * Récupère les charges Stripe avec filtres paramétrables
  * Query params:
  *   - charge_status: 'succeeded' | 'failed' | 'pending' (default: 'succeeded')
- *   - payout_status: 'pending' | 'paid' | 'failed' (default: 'pending')
+ *   - payout_status: 'pending' | 'in_transit' | 'paid' | 'failed' | 'unknown' (default: 'pending')
  *   - refund_status: 'not_refunded' | 'partial' | 'full' (default: 'not_refunded,partial')
  * Admin-only
  */
@@ -1345,9 +1345,10 @@ async function handleRefundableCharges(event: any): Promise<any> {
       }
 
       // Déterminer le payout_status (si la balance transaction a un payout associé)
-      // Si bt.payout est null/undefined, c'est pending
-      // Si bt.payout existe, vérifier le status du payout
-      let payoutStatus = 'pending';
+      // Si bt.payout est null/undefined, c'est pending.
+      // Si bt.payout existe mais sa récupération échoue, on marque unknown pour éviter
+      // les faux positifs "pending" dans la liste des transactions remboursables.
+      let payoutStatus = bt.payout ? 'unknown' : 'pending';
       if (bt.payout) {
         try {
           const payout = await client.payouts.retrieve(bt.payout as string);
