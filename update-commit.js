@@ -10,32 +10,20 @@ try {
   console.log(`📌 [Git-Commit-Hook] Hash détecté : ${hash}`);
 
   // 2. Dossier contenant les environnements Angular
-  const envDir = path.join(__dirname, 'projects', 'admin', 'src', 'environments');
+  const envFile = path.join(__dirname, 'projects', 'admin', 'src', 'environments', 'commitHash.json');
 
-  if (!fs.existsSync(envDir)) {
-    console.error(`❌ [Git-Commit-Hook] Erreur: Le dossier ${envDir} n'existe pas.`);
+  if (!fs.existsSync(envFile)) {
+    console.error(`❌ [Git-Commit-Hook] Erreur: Le fichier ${envFile} n'existe pas.`);
     process.exit(1);
   }
 
-  // 3. Lecture de tous les fichiers du dossier (environment.ts, environment.prod.ts, etc.)
-  const files = fs.readdirSync(envDir);
+ 
+  // 3. Écrit proprement le JSON
+  const jsonPath = path.join(__dirname, 'projects', 'admin', 'src', 'environments', 'commitHash.json');
+  const jsonContent = JSON.stringify({ commitHash: hash }, null, 2);
+  fs.writeFileSync(jsonPath, jsonContent, 'utf8');
 
-  files.forEach(file => {
-    // On ne traite que les fichiers TypeScript (.ts)
-    if (file.endsWith('.ts')) {
-      const filePath = path.join(envDir, file);
-      let content = fs.readFileSync(filePath, 'utf8');
-
-      if (content.includes('__COMMIT_HASH__')) {
-        content = content.replace('__COMMIT_HASH__', hash);
-        fs.writeFileSync(filePath, content, 'utf8');
-        console.log(`✅ [Git-Commit-Hook] Commit injecté avec succès dans : ${file}`);
-      } else {
-        console.log(`ℹ️ [Git-Commit-Hook] Passé : ${file} (pas de placeholder __COMMIT_HASH__)`);
-      }
-    }
-  });
-
+  console.log(`✅ [Git-Build] commitHash.json mis à jour avec le commit : ${hash}`);
 } catch (error) {
-  console.error('❌ [Git-Commit-Hook] Erreur lors de la récupération du commit Git :', error.message);
+  console.error('❌ [Git-Build] Impossible de récupérer le commit Git, utilisation de la valeur par défaut.');
 }

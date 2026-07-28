@@ -1,6 +1,7 @@
+import {commitHash} from './commitHash.json';
 export const environment = {
     production: true,
-    commitHash: '7527f1a3',
+    commitHash: commitHash,
     tpe_location_id: 'tml_GgoOpQdSXARzTR',
     tpe_simulated: false,  // TPE physique requis en production
     tpe_isTest: false,
