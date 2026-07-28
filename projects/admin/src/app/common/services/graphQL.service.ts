@@ -203,11 +203,22 @@ export class DBhandler {
     'updatedAt',
   ] as const;
 
+  private normalizeMemberEmail<T extends { email?: string | null }>(member: T): T {
+    if (!member || typeof member.email !== 'string') {
+      return member;
+    }
+    return {
+      ...member,
+      email: member.email.trim().toLowerCase(),
+    };
+  }
+
   // MEMBER CREATE PROMISE
   async createMember(member: Member_input): Promise<Member> {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode: authMode });
-    const { data, errors } = await client.models.Member.create(member, {
+    const normalizedMember = this.normalizeMemberEmail(member);
+    const { data, errors } = await client.models.Member.create(normalizedMember, {
       selectionSet: this.memberSelectionSet,
     });
     if (errors) throw errors;
@@ -229,7 +240,8 @@ export class DBhandler {
   async updateMember(member: Member): Promise<Member> {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode: authMode });
-    const { data, errors } = await client.models.Member.update(member, {
+    const normalizedMember = this.normalizeMemberEmail(member);
+    const { data, errors } = await client.models.Member.update(normalizedMember, {
       selectionSet: this.memberSelectionSet,
     });
     if (errors) throw errors;
@@ -287,18 +299,52 @@ export class DBhandler {
     const normalizedEmail = email.trim().toLowerCase();
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode: authMode });
-    const { data, errors } = await client.models.Member.list({
-      filter: { email: { eq: normalizedEmail } },
-      limit: 300
-    });
-    if (errors) {
-      console.error(errors);
-      return null;
-    }
-    if (data.length === 0) {
-      return null; // No member found with the given email
-    }
-    return data[0] as unknown as Member;   // array of only one element, hopefully !!!
+    // 1) Recherche directe paginée avec filtre email exact normalisé
+    let nextToken: string | null | undefined = undefined;
+    do {
+      const page: any = await client.models.Member.list({
+        filter: { email: { eq: normalizedEmail } },
+        limit: 300,
+        nextToken: nextToken || undefined,
+      } as any);
+
+      if (page.errors) {
+        console.error(page.errors);
+        throw new Error('MemberSearchByEmailQueryFailed');
+      }
+
+      if (Array.isArray(page.data) && page.data.length > 0) {
+        return page.data[0] as unknown as Member;
+      }
+
+      nextToken = page.nextToken;
+    } while (nextToken);
+
+    // 2) Fallback défensif paginé: e-mails legacy non normalisés (casse / espaces)
+    nextToken = undefined;
+    do {
+      const page: any = await client.models.Member.list({
+        limit: 300,
+        nextToken: nextToken || undefined,
+      } as any);
+
+      if (page.errors) {
+        console.error(page.errors);
+        throw new Error('MemberScanByEmailFallbackFailed');
+      }
+
+      const member = ((page.data as unknown as Member[]) || []).find((m) =>
+        String(m?.email || '').trim().toLowerCase() === normalizedEmail
+      );
+
+      if (member) {
+        return member;
+      }
+
+      nextToken = page.nextToken;
+    } while (nextToken);
+
+    return null;
   }
 
 

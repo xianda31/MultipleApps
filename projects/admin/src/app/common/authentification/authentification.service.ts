@@ -61,16 +61,32 @@ export class AuthentificationService {
   }
 
   private async resolveMemberFromEmails(...emails: Array<string | undefined>): Promise<Member | null> {
+    const lookupFailures: Array<{ email: string; message: string }> = [];
+
     for (const candidate of emails) {
       const normalizedEmail = (candidate || '').trim().toLowerCase();
       if (!normalizedEmail) {
         continue;
       }
 
-      const member = await this.memberService.searchMemberByEmail(normalizedEmail);
-      if (member) {
-        return member;
+      try {
+        const member = await this.memberService.searchMemberByEmail(normalizedEmail);
+        if (member) {
+          return member;
+        }
+      } catch (error: any) {
+        lookupFailures.push({
+          email: normalizedEmail,
+          message: error?.message || 'unknown lookup error',
+        });
       }
+    }
+
+    if (lookupFailures.length > 0) {
+      const err: any = new Error('Member lookup failed');
+      err.name = 'MemberLookupFailedException';
+      err.details = lookupFailures;
+      throw err;
     }
 
     return null;
@@ -115,6 +131,23 @@ export class AuthentificationService {
           }
         } catch (err: any) {
 
+          if (err?.name === 'MemberLookupFailedException') {
+            this.assistanceRequestService.reportAuthError(
+              email,
+              'Echec technique de recherche membre',
+              `lookupDetails=${JSON.stringify(err?.details || [])}`,
+              {
+                stage: 'signIn/member-lookup-failed',
+                loginId: email,
+                recoveryAttempted: false,
+                retryAttempted: false,
+                errorName: err?.name || 'MemberLookupFailedException',
+              }
+            );
+            reject(new Error('Connexion impossible temporairement (recherche adhérent indisponible). Réessayez dans quelques instants.'));
+            return;
+          }
+
           if (err.name === 'UserAlreadyAuthenticatedException') {
             // Une session locale existe déjà: réhydrater le membre par e-mail sans relancer un cycle signOut/signIn.
             let recoveryLoginId: string | undefined;
@@ -135,20 +168,73 @@ export class AuthentificationService {
                 return;
               }
 
+              // Fallback robuste: nettoyer la session locale et retenter une authentification explicite
+              // avec les identifiants saisis. Ce cas survient quand le navigateur conserve une
+              // session partielle/ancienne qui ne correspond pas au login demandé.
               await signOut({ global: false }).catch(() => {});
-              this.assistanceRequestService.reportAuthError(
-                email,
-                'Session authentifiee sans fiche membre associee',
-                `email=${attributes['email'] || 'absent'}, loginId=${recoveryLoginId || 'absent'}, aucun membre trouve par email`,
-                {
-                  stage: 'UserAlreadyAuthenticatedException/recovery/member-not-found',
-                  loginId: recoveryLoginId,
-                  recoveryAttempted: true,
-                  retryAttempted: false,
-                  errorName: 'MemberNotFoundByEmail',
+
+              try {
+                await signIn(signInInput);
+                const retryAttributes = await fetchUserAttributes();
+                const retriedMember = await this.resolveMemberFromEmails(
+                  retryAttributes['email'],
+                  email,
+                );
+
+                if (retriedMember) {
+                  this._logged_member$.next(retriedMember);
+                  resolve(retriedMember.id);
+                  return;
                 }
-              );
-              reject(new Error('Compte authentifié, mais aucune fiche membre ne correspond à cet e-mail'));
+
+                this.assistanceRequestService.reportAuthError(
+                  email,
+                  'Session authentifiee sans fiche membre associee',
+                  `email=${retryAttributes['email'] || 'absent'}, loginId=${email || 'absent'}, aucun membre trouve apres retry`,
+                  {
+                    stage: 'UserAlreadyAuthenticatedException/recovery/member-not-found-after-retry',
+                    loginId: email,
+                    recoveryAttempted: true,
+                    retryAttempted: true,
+                    errorName: 'MemberNotFoundByEmail',
+                  }
+                );
+                reject(new Error('Compte authentifié, mais aucune fiche membre ne correspond à cet e-mail'));
+                return;
+              } catch (retryErr: any) {
+                if (retryErr?.name === 'MemberLookupFailedException') {
+                  this.assistanceRequestService.reportAuthError(
+                    email,
+                    'Echec technique de recherche membre apres recuperation de session',
+                    `recoveryLoginId=${recoveryLoginId || 'absent'}, lookupDetails=${JSON.stringify(retryErr?.details || [])}`,
+                    {
+                      stage: 'UserAlreadyAuthenticatedException/recovery/member-lookup-failed',
+                      loginId: recoveryLoginId || email,
+                      recoveryAttempted: true,
+                      retryAttempted: true,
+                      errorName: retryErr?.name || 'MemberLookupFailedException',
+                    }
+                  );
+                  reject(new Error('Connexion impossible temporairement (recherche adhérent indisponible). Réessayez dans quelques instants.'));
+                  return;
+                }
+
+                this.assistanceRequestService.reportAuthError(
+                  email,
+                  'Recuperation de session echouee',
+                  `recoveryLoginId=${recoveryLoginId || 'absent'}, retryError=${retryErr?.name || 'unknown'}:${retryErr?.message || 'unknown'}`,
+                  {
+                    stage: 'UserAlreadyAuthenticatedException/recovery/retry-sign-in-failed',
+                    loginId: recoveryLoginId || email,
+                    recoveryAttempted: true,
+                    retryAttempted: true,
+                    errorName: retryErr?.name || 'RetrySignInFailed',
+                  }
+                );
+                reject(retryErr);
+                return;
+              }
+
             } catch (innerErr: any) {
               await signOut({ global: false }).catch(() => {});
               reject(innerErr);
