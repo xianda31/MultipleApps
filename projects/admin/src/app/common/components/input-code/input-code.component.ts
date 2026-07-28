@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, Input, QueryList, ViewChildren, forwardRef } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Input, QueryList, ViewChildren, forwardRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Component({
@@ -16,7 +16,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
     },
   ],
 })
-export class InputCodeComponent implements ControlValueAccessor {
+export class InputCodeComponent implements ControlValueAccessor, AfterViewInit {
   @Input() length = 6;
   @Input() digitsOnly = true;
   @Input() ariaLabel = 'Code de verification';
@@ -49,6 +49,10 @@ export class InputCodeComponent implements ControlValueAccessor {
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
+  }
+
+  ngAfterViewInit(): void {
+    this.focus(0);
   }
 
   focus(index = 0): void {
