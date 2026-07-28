@@ -10,7 +10,7 @@
     "ng": "ng",
     "sandbox": "ampx sandbox --profile amplify-dev --identifier toto --exclude amplify/node_modules --exclude \"**/amplify_outputs.json\"",
     "start": "ng serve",
-    "update-commit": "node update-commit.js",
+    "update-commit": "node update-commit-hash.js",
     "prestart": "npm run update-commit",
     "prebuild": "npm run update-commit",
     "build": "ng build admin --configuration production",
