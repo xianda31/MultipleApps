@@ -17,7 +17,13 @@ frontend:
   phases:
     preBuild:
       commands:
-        - npm ci
+        - |
+          if [ -d node_modules ]; then
+            echo "node_modules restored from cache, skipping full install"
+            npm install --prefer-offline --no-audit --no-fund 2>/dev/null || npm ci
+          else
+            npm ci
+          fi
         - npm run update-commit-hash
     build:
       commands:
