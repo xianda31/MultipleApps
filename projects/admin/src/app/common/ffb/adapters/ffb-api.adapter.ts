@@ -46,7 +46,7 @@ function toTeamPlayer(raw: unknown): TeamItem['players'][number] {
     ffbId: asNumber(player['ffbId'], 0),
     migrationId: asNumber(player['migrationId'], 0),
     firstName: asString(player['firstName'], ''),
-    lastName: asString(player['lastName'], ''),
+    lastName: asString(player['lastName'], '').toUpperCase(),
     season: {
       id: asNumber(seasonRaw['id'], 0),
       ranking: {
