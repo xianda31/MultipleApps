@@ -18,6 +18,7 @@ import { NavbarMenu } from './back-navbar.interface';
 import { STATIC_MENUS } from './back-navbar.definition';
 import { BreakingNewsService } from '../breaking-news/breaking-news.service';
 import { SystemDataService } from '../../common/services/system-data.service';
+import { BACK_ROUTE_ABS_PATHS } from '../routes/back-route-paths';
 
 
 
@@ -44,9 +45,10 @@ export class BackNavbarComponent implements OnInit, OnDestroy {
   logged_member$: Observable<Member | null> = new Observable<Member | null>();
   
   avatar$ !: Observable<string>;
-  assistances_nbr : number = 0;
+  new_assistances_nbr : number = 0;
+  in_progress_assistances_nbr : number = 0;
   authorizationFlag$: Observable<boolean>;
- BACK_ROUTE_PATHS = BACK_ROUTE_PATHS;
+//  BACK_ROUTE_PATHS = BACK_ROUTE_PATHS;
   
   // Mobile menu collapse states
   mobileMenus = {
@@ -106,10 +108,11 @@ export class BackNavbarComponent implements OnInit, OnDestroy {
 
     this.auth.logged_member$
       .pipe(
-        switchMap((member) => member ? this.assistanceService.getOpenRequestsCount() : of(0))
+        switchMap((member) => member ? this.assistanceService.getOpenRequestsCount() : of([0, 0]))
       )
       .subscribe(count => {
-        this.assistances_nbr = count;
+        this.new_assistances_nbr = count[0];
+        this.in_progress_assistances_nbr = count[1];
       });
     // Fermer tous les dropdowns lors de la navigation
     this.router.events.pipe(
@@ -148,7 +151,7 @@ export class BackNavbarComponent implements OnInit, OnDestroy {
           icon: 'bi-person-circle',
           isUser: true,
           subMenus: [
-            { label: 'Déconnexion', route: this.BACK_ROUTE_PATHS.SignOut, icon: 'bi-box-arrow-right' }
+            { label: 'Déconnexion', route: BACK_ROUTE_ABS_PATHS['SignOut'], icon: 'bi-box-arrow-right' }
           ]
         });
       }
@@ -188,7 +191,7 @@ export class BackNavbarComponent implements OnInit, OnDestroy {
   }
 
   go_to_assistance() {
-    this.router.navigate([this.BACK_ROUTE_PATHS.Assistance]);
+    this.router.navigate([BACK_ROUTE_ABS_PATHS['Assistance']]);
   }
 
 }

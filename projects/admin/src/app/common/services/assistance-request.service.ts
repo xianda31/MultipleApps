@@ -224,9 +224,12 @@ export class AssistanceRequestService {
     return this._requests ? this._request$.asObservable() : remote_loads$;
   }
 
-  getOpenRequestsCount(): Observable<number> {
+  getOpenRequestsCount(): Observable<number[]> {
     return this.getAllRequests().pipe(
-      map((requests) => requests.filter((r) => r.status !== REQUEST_STATUS.RESOLVED).length)
+      map((requests) => [
+        requests.filter((r) => r.status === REQUEST_STATUS.NEW).length,
+        requests.filter((r) => r.status === REQUEST_STATUS.IN_PROGRESS).length
+      ])
     );
   }
 }
