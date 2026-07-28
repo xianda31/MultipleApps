@@ -1,7 +1,9 @@
-import {commitHash} from './commitHash.json';
+import buildInfo from './commitHash.json';
+import type { BuildInfo } from './build-info.interface';
+
 export const environment = {
     production: true,
-    commitHash: commitHash,
+    buildInfo: buildInfo as BuildInfo,
     tpe_location_id: 'tml_GgoOpQdSXARzTR',
     tpe_simulated: false,  // TPE physique requis en production
     tpe_isTest: false,

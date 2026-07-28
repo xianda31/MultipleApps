@@ -1,3 +1,10 @@
 {
-  "commitHash": "2fbeb334"
+  "commitHash": "dev-local",
+  "commitHashFull": "dev-local-full",
+  "commitMessage": "local development",
+  "branch": "local",
+  "author": "local",
+  "buildNumber": null,
+  "buildTimestamp": "2026-07-28T00:00:00Z",
+  "environment": "local"
 }

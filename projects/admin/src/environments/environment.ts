@@ -1,6 +1,9 @@
+import buildInfo from './commitHash.json';
+import type { BuildInfo } from './build-info.interface';
+
 export const environment = {
     production: false,
-    commitHash: '7527f1a3',
+    buildInfo: buildInfo as BuildInfo,
     tpe_simulated: false,
     tpe_isTest: true,
     tpe_location_id: 'tml_GgeMgAM0xIX5YQ',  // Stripe Terminal Location — Bridge Club Saint-Orens (test)

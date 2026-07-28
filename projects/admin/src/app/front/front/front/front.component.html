@@ -183,7 +183,13 @@
           </div>
         </div>
       </div>
-      <span class=" ms-auto mt-auto text-white small " style="font-size: smaller;">build : {{ commitHash }}</span>
+      <span class=" ms-auto mt-auto text-white small " style="font-size: smaller;">
+        @if (buildInfo.buildNumber) {
+          build: #{{ buildInfo.buildNumber }} · {{ buildInfo.commitHash }}
+        } @else {
+          build: {{ buildInfo.commitHash }} (local)
+        }
+      </span>
       <!-- <div class="footer-banner-img d-flex align-items-center" *ngIf="isLaptopMode">
         <img src="VilleDeStOrens.png" alt="Saint-Orens" class="img-fluid nice_shadow" />
       </div> -->
