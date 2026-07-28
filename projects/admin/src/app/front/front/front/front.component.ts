@@ -25,6 +25,7 @@ import { MemberSettingsService } from '../../../common/services/member-settings.
 import { CommandRegistryService } from '../../../common/services/command-registry.service';
 import { FrontNavbarComponent } from '../../front-navbar/front-navbar.component';
 import { NAVITEM_PLUGIN } from '../../../common/interfaces/plugin.interface';
+import { environment } from '../../../../environments/environment.production';
 
 type StripeReturnState = {
   checkout: 'success' | 'cancel';
@@ -53,6 +54,7 @@ export class FrontComponent implements AfterViewInit {
   private labelCache = new Map<string, Promise<string>>();
   isPortrait = true;
   isMobileLandscape = false;
+  commitHash = environment.commitHash || 'dev';
 
   @HostListener('window:resize')
   onResize() {

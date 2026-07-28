@@ -36,8 +36,8 @@
         </div>
       </div>
 
-      <app-front-navbar [brandNavitem]="brandNavitem" [navbar_menus]="navbar_menus"
-        [logged_member$]="logged_member$" [avatar$]="avatar$" [isPortrait]="isPortrait" [isMobile]="false"
+      <app-front-navbar [brandNavitem]="brandNavitem" [navbar_menus]="navbar_menus" [logged_member$]="logged_member$"
+        [avatar$]="avatar$" [isPortrait]="isPortrait" [isMobile]="false"
         [label_transformer]="label_transformer.bind(this)" [trackNavitemId]="trackNavitemId.bind(this)"
         [onCommand]="onCommand.bind(this)" [imageClubUrl]="imageClubUrl" [logoUrl]="logoUrl"
         (espaceMembre)="EspaceMembre()">
@@ -71,7 +71,8 @@
                     [ngTemplateOutletContext]="{ mode: 'mobile' }"></ng-template>
                 </div>
                 @if (!(logged_member$ | async)) {
-                <button class="btn btn-sm btn-light flex-shrink-0 me-2 d-flex align-items-center gap-1" (click)="EspaceMembre()">
+                <button class="btn btn-sm btn-light flex-shrink-0 me-2 d-flex align-items-center gap-1"
+                  (click)="EspaceMembre()">
                   <i class="bi bi-person-bounding-box text-dark"></i>
                   <span class="d-none d-sm-inline text-dark small">Accès membre</span>
                 </button>
@@ -136,7 +137,7 @@
       <!-- Mode laptop : logo + nom club centré + date calée à droite -->
       <span *ngSwitchCase="'laptop'" class="d-flex align-items-center w-100">
         <ng-template [ngTemplateOutlet]="tplLogo"></ng-template>
-        <span class="flex-grow-1 text-center text-nowrap">{{ club_name }}        </span>
+        <span class="flex-grow-1 text-center text-nowrap">{{ club_name }} </span>
         <span class="small text-nowrap ms-auto me-2">{{today | date:'EEEE d MMMM yyyy':'':'fr-FR' }}</span>
       </span>
       <!-- Mode mobile (landscape et portrait) : nom club centré + date en dessous -->
@@ -151,22 +152,21 @@
 
 
   <ng-template #tplImageClub>
-        <img class="w-100 nice_shadow"
-          [class.d-none]="isMobileLandscape"
-          [class.d-md-block]="!isMobilePortrait && !isMobileLandscape"
-          [src]="imageClubUrl"
-          alt="image_club"
-          style="height: 100px; width: 100vw; object-fit: cover; display: block;" />
+    <img class="w-100 nice_shadow" [class.d-none]="isMobileLandscape"
+      [class.d-md-block]="!isMobilePortrait && !isMobileLandscape" [src]="imageClubUrl" alt="image_club"
+      style="height: 100px; width: 100vw; object-fit: cover; display: block;" />
   </ng-template>
 
   <ng-template #tplContent>
     <div class="row content-row">
-      <div [ngClass]="{ 'col-xxl-12': !isMobilePortrait && !isMobileLandscape, 'col-12 px-0': isMobilePortrait || isMobileLandscape }" class="justify-content-center main-content">
+      <div
+        [ngClass]="{ 'col-xxl-12': !isMobilePortrait && !isMobileLandscape, 'col-12 px-0': isMobilePortrait || isMobileLandscape }"
+        class="justify-content-center main-content">
         <div class="mt-2 mb-2">
           <app-title></app-title>
         </div>
 
-        <router-outlet ></router-outlet>
+        <router-outlet></router-outlet>
       </div>
     </div>
   </ng-template>
@@ -174,14 +174,16 @@
   <ng-template #tplFooter>
     <div class="footer-banner d-flex align-items-center justify-content-between flex-wrap mt-auto">
       <div class="footer-banner-content flex-grow-1 py-1" style="line-height: 1.2;">
-        <div class="text-center">© 2026 {{ club_name }}</div>
-        <div class="row justify-content-center">
+        <div class="text-center">© 2026 {{ club_name }}
+        </div>
+        <div class="row justify-content-center align-items-center">
           <div *ngFor="let menu of footer_menus; trackBy: trackNavitemId" class="col-auto">
             <a [routerLink]="menu.navitem.path" class="mb-0 footer-banner" style="text-decoration: none;">{{
               menu.navitem.label }}</a>
           </div>
         </div>
       </div>
+      <span class=" ms-auto mt-auto text-white small " style="font-size: smaller;">build : {{ commitHash }}</span>
       <!-- <div class="footer-banner-img d-flex align-items-center" *ngIf="isLaptopMode">
         <img src="VilleDeStOrens.png" alt="Saint-Orens" class="img-fluid nice_shadow" />
       </div> -->
