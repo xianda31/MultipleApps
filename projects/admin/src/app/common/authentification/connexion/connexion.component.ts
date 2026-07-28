@@ -90,6 +90,15 @@ export class ConnexionComponent implements AfterViewInit {
     this.auth.isRestoringSession$.subscribe((isRestoring) => {
       this.isRestoringSession = isRestoring;
     });
+    
+    // Normalize email input automatically (trim + lowercase)
+    this.email.valueChanges.subscribe((value) => {
+      const normalized = (value || '').trim().toLowerCase();
+      if (value !== normalized) {
+        this.email.setValue(normalized, { emitEvent: false });
+      }
+    });
+    
     // Track current mode for navigation decisions
     this.mode$.subscribe(m => {
       this.currentMode = m;
