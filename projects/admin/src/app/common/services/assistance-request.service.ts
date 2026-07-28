@@ -3,6 +3,8 @@ import { DBhandler } from './graphQL.service';
 import { AssistanceRequest, AssistanceRequestInput, REQUEST_STATUS } from '../interfaces/assistance-request.interface';
 import { BehaviorSubject, Observable, switchMap, tap, map } from 'rxjs';
 import { ToastService } from './toast.service';
+import { environment } from '../../../environments/environment';
+import type { BuildInfo } from '../../../environments/build-info.interface';
 
 
 @Injectable({ providedIn: 'root' })
@@ -94,34 +96,40 @@ export class AssistanceRequestService {
       return;
     }
 
+    const buildInfo: BuildInfo = environment.buildInfo;
+    const buildLabel = buildInfo.buildNumber 
+      ? `build #${buildInfo.buildNumber} (${buildInfo.commitHash})`
+      : `build ${buildInfo.commitHash} (local)`;
+    
     const lines = [
-        `[Auto-diagnostic Auth v${this.AUTH_REPORT_SCHEMA_VERSION}] ${summary}`,
-        `Etape: ${stage}`,
-        `Email: ${safeEmail}`,
-        `member_id: ${context?.memberId || 'absent'}`,
-        `loginId: ${context?.loginId || 'absent'}`,
-        `Recovery tentee: ${context?.recoveryAttempted ? 'oui' : 'non'}`,
-        `Retry tente: ${context?.retryAttempted ? 'oui' : 'non'}`,
-        `Nom erreur: ${context?.errorName || 'non fourni'}`,
-        `Source: ${context?.source || 'authentification.service'}`,
-        `Fingerprint: ${fingerprint}`,
-        '',
-        `Details techniques: ${errorDetails}`,
-        `Date: ${nowIso}`,
-        `User-Agent: ${navigator.userAgent}`,
-      ];
+      `[Auto-diagnostic Auth v${this.AUTH_REPORT_SCHEMA_VERSION}] ${summary}`,
+      `Etape: ${stage}`,
+      `Email: ${safeEmail}`,
+      `member_id: ${context?.memberId || 'absent'}`,
+      `loginId: ${context?.loginId || 'absent'}`,
+      `Recovery tentee: ${context?.recoveryAttempted ? 'oui' : 'non'}`,
+      `Retry tente: ${context?.retryAttempted ? 'oui' : 'non'}`,
+      `Nom erreur: ${context?.errorName || 'non fourni'}`,
+      `Source: ${context?.source || 'authentification.service'}`,
+      `Fingerprint: ${fingerprint}`,
+      '',
+      `Details techniques: ${errorDetails}`,
+      `Date: ${nowIso}`,
+      `Build/Déploiement: ${buildLabel}`,
+      `User-Agent: ${navigator.userAgent}`,
+    ];
 
-      const input: AssistanceRequestInput = {
-        nom: '[SYSTÈME]',
-        prenom: 'Auto-rapport',
-        email: safeEmail,
-        type: 'Problème à la connexion',
-        texte: lines.join('\n'),
-        status: REQUEST_STATUS.NEW
-      };
-      await this.db.createAssistanceRequest(input);
-      this.lockFingerprint(fingerprint, nowIso);
-      console.log('[AssistanceRequestService] Panne de connexion signalée automatiquement');
+    const input: AssistanceRequestInput = {
+      nom: '[SYSTÈME]',
+      prenom: 'Auto-rapport',
+      email: safeEmail,
+      type: 'Problème à la connexion',
+      texte: lines.join('\n'),
+      status: REQUEST_STATUS.NEW
+    };
+    await this.db.createAssistanceRequest(input);
+    this.lockFingerprint(fingerprint, nowIso);
+    console.log('[AssistanceRequestService] Panne de connexion signalée automatiquement');
   }
 
   private isFingerprintLocked(fingerprint: string): boolean {

@@ -5,7 +5,8 @@ import { AssistanceRequestService } from '../../../common/services/assistance-re
 import { CommonModule } from '@angular/common';
 import { REQUEST_STATUS, REQUEST_TYPES } from '../../../common/interfaces/assistance-request.interface';
 import { TitleService } from '../../title/title.service';
-
+import { environment } from '../../../../environments/environment';
+import type { BuildInfo } from '../../../../environments/build-info.interface';
 
 
 @Component({
@@ -49,7 +50,18 @@ export class AssistanceComponent {
         if (this.form.invalid) return;
         this.loading = true;
         try {
-            await this.assistanceRequestService.createRequest(this.form.value);
+            const formData = this.form.value;
+            // Enrichir le texte avec les infos de déploiement
+            const buildInfo: BuildInfo = environment.buildInfo;
+            const buildLabel = buildInfo.buildNumber 
+              ? `build #${buildInfo.buildNumber} (${buildInfo.commitHash})`
+              : `build ${buildInfo.commitHash} (local)`;
+            const enrichedText = `${formData.texte}\n\n---\nBuild/Déploiement: ${buildLabel}\nDate rapport: ${new Date().toISOString()}`;
+            
+            await this.assistanceRequestService.createRequest({
+                ...formData,
+                texte: enrichedText
+            });
             this.success = true;
             this.form.reset();
             this.submitted = false;
