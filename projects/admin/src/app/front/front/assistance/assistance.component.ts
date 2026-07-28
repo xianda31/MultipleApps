@@ -53,10 +53,8 @@ export class AssistanceComponent {
             const formData = this.form.value;
             // Enrichir le texte avec les infos de déploiement
             const buildInfo: BuildInfo = environment.buildInfo;
-            const buildLabel = buildInfo.buildNumber 
-              ? `build #${buildInfo.buildNumber} (${buildInfo.commitHash})`
-              : `build ${buildInfo.commitHash} (local)`;
-            const enrichedText = `${formData.texte}\n\n---\nBuild/Déploiement: ${buildLabel}\nDate rapport: ${new Date().toISOString()}`;
+            const buildLabel = `build ${buildInfo.commitHash} | ${new Date(buildInfo.buildTimestamp).toLocaleString()}`;
+            const enrichedText = `${formData.texte}\n\n---\nBuild: ${buildLabel}`;
             
             await this.assistanceRequestService.createRequest({
                 ...formData,

@@ -1,10 +1,4 @@
 export interface BuildInfo {
-  commitHash: string;
-  commitHashFull: string;
-  commitMessage: string;
-  branch: string;
-  author: string;
-  buildNumber: number | null;
-  buildTimestamp: string;
-  environment: string;
+  commitHash: string;     // 7-char hash
+  buildTimestamp: string; // ISO timestamp
 }

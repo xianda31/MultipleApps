@@ -97,9 +97,7 @@ export class AssistanceRequestService {
     }
 
     const buildInfo: BuildInfo = environment.buildInfo;
-    const buildLabel = buildInfo.buildNumber 
-      ? `build #${buildInfo.buildNumber} (${buildInfo.commitHash})`
-      : `build ${buildInfo.commitHash} (local)`;
+    const buildLabel = `build ${buildInfo.commitHash} | ${new Date(buildInfo.buildTimestamp).toLocaleString()}`;
     
     const lines = [
       `[Auto-diagnostic Auth v${this.AUTH_REPORT_SCHEMA_VERSION}] ${summary}`,

@@ -12,7 +12,6 @@
     "start": "ng serve",
     "update-commit-hash": "node update-commit-hash.js",
     "prestart": "npm run update-commit-hash",
-    "prebuild": "npm run update-commit-hash",
     "build": "ng build admin --configuration production",
     "build:electron": "electron-builder",
     "electron:dev": "ng build admin --configuration development && electron .",
