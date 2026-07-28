@@ -299,7 +299,7 @@ export class DBhandler {
     const normalizedEmail = email.trim().toLowerCase();
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode: authMode });
-    // 1) Recherche directe paginée avec filtre email exact normalisé
+    
     let nextToken: string | null | undefined = undefined;
     do {
       const page: any = await client.models.Member.list({
@@ -320,7 +320,7 @@ export class DBhandler {
       nextToken = page.nextToken;
     } while (nextToken);
 
-    // 2) Fallback défensif paginé: e-mails legacy non normalisés (casse / espaces)
+    // Fallback pour données héritage non-normalisées : recherche case-insensitive
     nextToken = undefined;
     do {
       const page: any = await client.models.Member.list({
@@ -330,7 +330,7 @@ export class DBhandler {
 
       if (page.errors) {
         console.error(page.errors);
-        throw new Error('MemberScanByEmailFallbackFailed');
+        throw new Error('MemberSearchByEmailFallbackFailed');
       }
 
       const member = ((page.data as unknown as Member[]) || []).find((m) =>
@@ -338,6 +338,10 @@ export class DBhandler {
       );
 
       if (member) {
+        console.warn('[DB] Member found via case-insensitive fallback', { 
+          storedEmail: member.email, 
+          searchedEmail: normalizedEmail 
+        });
         return member;
       }
 
