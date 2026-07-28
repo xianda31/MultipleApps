@@ -9,21 +9,35 @@ try {
   const hash = execSync('git rev-parse --short HEAD').toString().trim();
   console.log(`📌 [Git-Commit-Hook] Hash détecté : ${hash}`);
 
-  // 2. Dossier contenant les environnements Angular
-  const envFile = path.join(__dirname, 'projects', 'admin', 'src', 'environments', 'commitHash.json');
+  // 2. Chemin du fichier JSON
+  const jsonPath = path.join(__dirname, 'projects', 'admin', 'src', 'environments', 'commitHash.json');
 
-  if (!fs.existsSync(envFile)) {
-    console.error(`❌ [Git-Commit-Hook] Erreur: Le fichier ${envFile} n'existe pas.`);
-    process.exit(1);
+  if (!fs.existsSync(jsonPath)) {
+    console.warn(`⚠️  [Git-Commit-Hook] Le fichier ${jsonPath} n'existe pas, création...`);
   }
 
- 
-  // 3. Écrit proprement le JSON
-  const jsonPath = path.join(__dirname, 'projects', 'admin', 'src', 'environments', 'commitHash.json');
-  const jsonContent = JSON.stringify({ commitHash: hash }, null, 2);
-  fs.writeFileSync(jsonPath, jsonContent, 'utf8');
+  // 3. Lire le contenu actuel (s'il existe)
+  let currentContent = null;
+  try {
+    currentContent = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+  } catch {
+    currentContent = null;
+  }
 
-  console.log(`✅ [Git-Build] commitHash.json mis à jour avec le commit : ${hash}`);
+  // 4. Vérifier si le hash a changé
+  const newContent = { commitHash: hash };
+  
+  if (currentContent && currentContent.commitHash === hash) {
+    console.log(`ℹ️  [Git-Build] Pas de changement : le hash est déjà ${hash}`);
+    process.exit(0);
+  }
+
+  // 5. Écrire le JSON seulement s'il y a un changement
+  const jsonString = JSON.stringify(newContent, null, 2) + '\n';
+  fs.writeFileSync(jsonPath, jsonString, 'utf8');
+
+  console.log(`✅ [Git-Build] commitHash.json mis à jour : ${hash}`);
 } catch (error) {
-  console.error('❌ [Git-Build] Impossible de récupérer le commit Git, utilisation de la valeur par défaut.');
+  console.error('❌ [Git-Build] Erreur:', error.message);
+  process.exit(1);
 }
