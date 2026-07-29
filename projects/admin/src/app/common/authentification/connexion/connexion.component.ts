@@ -293,6 +293,11 @@ export class ConnexionComponent implements AfterViewInit {
     let member = await this.membersService.searchMemberByEmail(this.email.value);
     await this.auth.signUp(this.email.value, this.password.value, member!.id)
       .then(({ isSignUpComplete, nextStep }) => {
+        // Persiste l'email dans la fiche membre si absent (e.g. créé par sync FFB sans email)
+        if (member && (!member.email || member.email.trim() === '')) {
+          this.membersService.updateMember({ ...member, email: this.email.value.trim().toLowerCase() })
+            .catch((err) => console.warn('[signUp] Failed to update member email:', err));
+        }
         this.sign_up_sent = true;
         this.resetCodeControl();
       })
