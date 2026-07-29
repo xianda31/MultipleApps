@@ -220,6 +220,20 @@ export class ShopComponent implements OnInit, OnDestroy {
         if (this.buyer && this.bookEntriesReady) {
           this.updateBuyerPaymentFlags(this.buyer, this.shouldNotifyBuyerFlagsAfterSync);
           this.shouldNotifyBuyerFlagsAfterSync = false;
+          // Rafraîchit l'avoir en mode online (chargé avant les book entries au premier render)
+          if (this.onlineMode) {
+            const updatedAsset = this.buyerContext.loadAssets(this.buyer);
+            updatedAsset.then((assetAmount) => {
+              if (assetAmount !== this.asset_amount) {
+                this.asset_amount = assetAmount;
+                const buyerName = this.buyer!.lastname + ' ' + this.buyer!.firstname;
+                this.cartService.setAsset(buyerName, assetAmount);
+                if (assetAmount > 0) {
+                  this.toastService.showInfo('avoir', `cette personne a un avoir de ${assetAmount.toFixed(2)} €`);
+                }
+              }
+            });
+          }
         }
       });
 
