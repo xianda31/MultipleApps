@@ -8,8 +8,14 @@ import * as pdfjsLib from 'pdfjs-dist';
 import { TitleService } from '../../front/title/title.service';
 
 // Configure PDF.js worker with local version (v4.x compatible)
+// Use the bundled worker from pdfjs-dist package (ES module .mjs)
 if (typeof window !== 'undefined') {
-    (pdfjsLib as any).GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+    const pdfjsWorkerSrc = `/assets/pdf.worker.min.mjs`;
+    try {
+        (pdfjsLib as any).GlobalWorkerOptions.workerSrc = pdfjsWorkerSrc;
+    } catch (e) {
+        console.warn('[PdfViewerComponent] Failed to set PDF.js worker source:', e);
+    }
 }
 
 @Component({

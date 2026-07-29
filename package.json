@@ -18,7 +18,7 @@
     "electron": "electron .",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "postinstall": "node scripts/link-amplify-deps.cjs && node scripts/patch-stripe-terminal-conditional.cjs"
+    "postinstall": "node scripts/link-amplify-deps.cjs && node scripts/patch-stripe-terminal-conditional.cjs && node scripts/copy-pdfjs-worker.cjs"
   },
   "build": {
     "appId": "com.association.caisse",
