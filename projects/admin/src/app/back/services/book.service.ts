@@ -896,7 +896,7 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
     let _in = Object.entries(entry.amounts).reduce((acc, [key, value]: [string, number]) => acc + (key.includes('in') ? value : 0), 0);
     let _out = Object.entries(entry.amounts).reduce((acc, [key, value]: [string, number]) => acc + (key.includes('out') ? value : 0), 0);
 
-    return (_in === 0) ? _out : _in;
+    return (_in === 0) ? -_out : _in;
   }
 
   get_trading_result(): number {
