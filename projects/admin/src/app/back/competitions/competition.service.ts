@@ -30,7 +30,7 @@ export class CompetitionService {
       console.log(`[FFB TRACE][CompetitionService] ${message}`);
       return;
     }
-    console.log(`[FFB TRACE][CompetitionService] ${message}`, context);
+    // console.log(`[FFB TRACE][CompetitionService] ${message}`, context);
   }
 
   constructor(
@@ -150,7 +150,8 @@ export class CompetitionService {
   getCompetionsResults(
     season: string,
     organization_labels: { comite: string; ligue: string; national: string },
-    full_regeneration: boolean
+    full_regeneration: boolean,
+    preferredEntities?: Entity_V2[]  // Load by organizations instead of FFB search
   ): Observable<CompetitionResultsMap> {
     let labels: string[];
     if (organization_labels && typeof organization_labels === 'object') {
@@ -182,30 +183,82 @@ export class CompetitionService {
       preferredOrganizations: labels,
     });
 
-    return from(this.ffbService.getCurrentSeason()).pipe(
-      switchMap((seasonObj: FFB_Season | null) => {
-        this.traceFfb('Response getCurrentSeason', {
+    // Fetch both current and previous seasons to ensure we find the requested season
+    return from(Promise.all([
+      this.ffbService.getCurrentSeason(),
+      this.ffbService.getPreviousSeasons()
+    ])).pipe(
+      switchMap(([currentSeason, previousSeasons]: [FFB_Season | null, FFB_Season[]]) => {
+        // Combine all available seasons
+        const allSeasons: FFB_Season[] = [];
+        if (currentSeason) allSeasons.push(currentSeason);
+        allSeasons.push(...(previousSeasons || []));
+        
+        // Remove duplicates by label
+        const uniqueSeasons = Array.from(
+          new Map(allSeasons.map(s => [s.label, s])).values()
+        );
+        
+        // Find the season matching the requested label
+        const seasonObj = uniqueSeasons.find(s => s.label === season);
+        
+        this.traceFfb('Response getAllSeasons', {
           requestedSeason: season,
-          seasonId: seasonObj?.id ?? null,
-          seasonLabel: seasonObj?.label ?? null,
+          availableSeasons: uniqueSeasons.map(s => s.label),
+          matchedSeasonId: seasonObj?.id ?? null,
+          matchedSeasonLabel: seasonObj?.label ?? null,
         });
 
-        if (!seasonObj || seasonObj.label !== season) {
-          console.warn(`[CompetitionService] getCompetionsResults: season not found or mismatched (${season})`);
+        if (!seasonObj) {
+          console.warn(`[CompetitionService] getCompetionsResults: season not found (${season}). Available seasons: ${uniqueSeasons.map(s => s.label).join(', ')}`);
           return of([] as Competition[]);
         }
 
         this.traceFfb('Request getCompetitionsForResults', { seasonId: String(seasonObj.id) });
 
-        return from(this.ffbService.getCompetitionsForResults(String(seasonObj.id))).pipe(
-          switchMap((competitions: Competition[]) => {
+        // Build a competition ID to organization ID map if preferred entities available
+        const orgMapSource$ = preferredEntities && preferredEntities.length > 0
+          ? from(preferredEntities).pipe(
+              concatMap((org: Entity_V2) =>
+                this.getCompetitionsByOrganization(String(seasonObj.id), String(org.id)).pipe(
+                  map((comps: Competition_V2[]) => ({
+                    orgId: org.id,
+                    compIds: new Set(comps.map(c => c.id))
+                  })),
+                  catchError(() => of({ orgId: org.id, compIds: new Set<number>() }))
+                )
+              ),
+              reduce((map: Map<number, number>, entry) => {
+                for (const compId of entry.compIds) {
+                  map.set(compId, entry.orgId);
+                }
+                return map;
+              }, new Map<number, number>()),
+              tap((map) => console.log(`[CompetitionService] Built map: ${map.size} competitions across preferred organizations`))
+            )
+          : of(new Map<number, number>());
+
+        return orgMapSource$.pipe(
+          switchMap((compIdToOrgIdMap) => {
+            // Fetch all competitions from search and enrich with organization_id
+            return from(this.ffbService.getCompetitionsForResults(String(seasonObj.id))).pipe(
+              map((competitions: Competition[]) => ({
+                seasonObj,
+                competitions: competitions.map(comp => ({
+                  ...comp,
+                  organization_id: compIdToOrgIdMap.get(comp.id) || comp.organization_id || 0
+                }))
+              }))
+            );
+          }),
+          switchMap((payload: { seasonObj: FFB_Season; competitions: Competition[] }) => {
             if (full_regeneration === true) {
               this._team_results = {};
-              return of(competitions);
+              return of(payload);
             }
 
             const safeSeason = season.replace(/\//g, '_');
-            return from(this.fileService.download_json_file('any/resultats' + safeSeason + '.txt')).pipe(
+            return from(this.fileService.download_json_file('any/resultats' + safeSeason + '.txt', true, false)).pipe(
               tap((data: any) => {
                 this._team_results = data;
               }),
@@ -213,34 +266,60 @@ export class CompetitionService {
                 this._team_results = {};
                 return of(null);
               }),
-              map(() => competitions)
+              map(() => payload)
             );
           }),
-          tap((competitions: Competition[]) => {
-            console.log(`[CompetitionService][V2] results/search returned ${competitions.length} competitions`);
+          tap((payload: { seasonObj: FFB_Season; competitions: Competition[] }) => {
+            console.log(`[CompetitionService][V2] results/search returned ${payload.competitions.length} competitions`);
           }),
-          switchMap((competitions: Competition[]) => {
+          switchMap((payload: { seasonObj: FFB_Season; competitions: Competition[] }) => {
             return from(this.ensureMembersLoaded()).pipe(
-              map(() => competitions)
+              map(() => payload)
             );
           }),
-          map((competitions: Competition[]) => {
-            return competitions
-              .filter(c => !c.label.startsWith('E '))
-               .filter(c => !c.label.startsWith('Funtour'))
-              .filter(c => c.type.label === 'Fédérale')
-              .filter(c => c.allGroupsProbated === true)
-              .filter(c => !this.is_logged_in_S3(c));
+          map((payload: { seasonObj: FFB_Season; competitions: Competition[] }) => {
+            console.log(`[CompetitionService] Filter chain start: ${payload.competitions.length} competitions from search`);
+            let current = payload.competitions;
+            
+            current = current.filter(c => !c.label.startsWith('E '));
+            console.log(`[CompetitionService] After 'not E*': ${current.length} remain`);
+            
+            current = current.filter(c => !c.label.startsWith('Funtour'));
+            console.log(`[CompetitionService] After 'not Funtour': ${current.length} remain`);
+            
+            current = current.filter(c => c.type.label === 'Fédérale');
+            console.log(`[CompetitionService] After 'type=Fédérale': ${current.length} remain`);
+            
+            // For current season, require allGroupsProbated. For past seasons or full_regeneration, skip this filter.
+            const isCurrentSeason = this.systemService.get_today_season() === season;
+            if (isCurrentSeason && !full_regeneration) {
+              current = current.filter(c => c.allGroupsProbated === true);
+              console.log(`[CompetitionService] After 'allGroupsProbated' (current season): ${current.length} remain`);
+            } else {
+              console.log(`[CompetitionService] Skipping 'allGroupsProbated' filter (isCurrentSeason=${isCurrentSeason}, full_regeneration=${full_regeneration})`);
+            }
+            
+            current = current.filter(c => full_regeneration || !this.is_logged_in_S3(c));
+            console.log(`[CompetitionService] After 'S3 filter (full_regeneration=${full_regeneration})': ${current.length} remain`);
+            
+            return { ...payload, competitions: current };
           }),
-          tap((competitions: Competition[]) => {
-            this.traceFfb('Competitions to process after filters', { count: competitions.length });
+          tap((payload: { seasonObj: FFB_Season; competitions: Competition[] }) => {
+            console.log(`[CompetitionService] After all filters: ${payload.competitions.length} competitions remain (from search)`, {
+              totalFromSearch: payload.competitions.length,
+              full_regeneration,
+              filters: ['not E*', 'not Funtour', 'type=Fédérale', 'allGroupsProbated=true', full_regeneration ? 'S3 filter skipped' : 'not in S3']
+            });
+            this.traceFfb('Competitions to process after filters', { count: payload.competitions.length });
           }),
-          switchMap((competitions: Competition[]) => {
-            return from(this.runSerial(competitions) as Promise<CompetitionResultsMap>).pipe(
+          switchMap((payload: { seasonObj: FFB_Season; competitions: Competition[] }) => {
+            return from(this.runSerial(payload.competitions) as Promise<CompetitionResultsMap>).pipe(
               map((results: CompetitionResultsMap) => {
                 return { ...this._team_results, ...results };
               }),
-              tap((merged) => this.saveResults(season, merged)),
+              switchMap((merged) => from(this.saveResults(season, merged)).pipe(
+                map(() => merged)
+              )),
             );
           })
         );
@@ -251,43 +330,39 @@ export class CompetitionService {
   // Exécution séquentielle des requêtes pour chaque compétition
   private async runSerial(competitions: Competition[]): Promise<CompetitionResultsMap> {
     const results: CompetitionResultsMap = {};
+    console.log(`[CompetitionService] runSerial() starting with ${competitions.length} competitions`);
+    
+    let successCount = 0;
+    let skippedCount = 0;
+    let notFoundCount = 0;
+    
     for (const comp of competitions) {
-      this.traceFfb('Request getCompetitionResults/getCompetitionPhases', {
-        competitionId: comp.id,
-        organizationId: comp.organization_id,
-      });
-
-      // Injecte le assigned_division selon la logique initiale
-      comp.assigned_division = this.getDivisionCategoryToLabel(comp);
-      comp.assigned_label = comp.assigned_division === 'Interclubs' ? comp.label : comp.family.label;
-      // Appelle la méthode combinée qui renvoie teams + phases
-      const payload = await lastValueFrom(this.getCompetitionResults(String(comp.id), String(comp.organization_id)));
-      let compTeam = payload.teams || [];
-
-      this.traceFfb('Response getCompetitionResults/getCompetitionPhases', {
-        competitionId: comp.id,
-        teamsCount: compTeam.length,
-        hasPhases: !!payload.phases,
-      });
-      // Récupère la calculation_date depuis les phases si présentes
       try {
-        const phases = payload.phases;
-        if (phases && Array.isArray((phases as any).phases) && (phases as any).phases.length > 0) {
-          const firstPhase = (phases as any).phases[0];
-          if (firstPhase.calculation_date) {
-            comp.calculation_date = firstPhase.calculation_date;
-          } else if (Array.isArray(firstPhase.groups) && firstPhase.groups.length > 0) {
-            const firstGroup = firstPhase.groups[0];
-            comp.calculation_date = firstGroup.calculation_date ?? firstGroup.probation_date ?? null;
-          } else {
-            comp.calculation_date = null;
-          }
-        } else {
-          comp.calculation_date = null;
+        this.traceFfb('Request getCompetitionResults', {
+          competitionId: comp.id,
+        });
+
+        // Injecte le assigned_division selon la logique initiale
+        comp.assigned_division = this.getDivisionCategoryToLabel(comp);
+        comp.assigned_label = comp.assigned_division === 'Interclubs' ? comp.label : comp.family.label;
+        
+        // Appel avec organization_id pour récupérer les teams
+        // (pas avec saison seule qui ne retourne que les stades/phases)
+        if (!comp.organization_id || comp.organization_id === 0) {
+          console.warn(`[CompetitionService] Skipping competition ${comp.id} - no organization_id`);
+          continue;
         }
-      } catch (err) {
-        comp.calculation_date = null;
-      }
+
+        const compTeam: CompetitionTeam[] = await this.ffbService.getCompetitionResults(String(comp.id), String(comp.organization_id));
+        
+        console.log(`[CompetitionService] Competition ${comp.id}: received ${compTeam.length} teams from FFB`);
+
+        this.traceFfb('Response getCompetitionResults', {
+          competitionId: comp.id,
+          teamsCount: compTeam.length,
+        });
+        
+        console.log(`[CompetitionService] Competition ${comp.id}: received ${compTeam.length} teams from FFB`);
 
       // Filter teams to keep only those with at least one member
       const teamsBeforeFilter = compTeam.length;
@@ -296,6 +371,19 @@ export class CompetitionService {
       this.calculatePePercentageBeforeFilter(comp, compTeam);
 
       const filteredTeams = (compTeam || []).filter(team => this.has_a_member(team.players));
+      
+      console.log(`[CompetitionService] Competition ${comp.id}: ${teamsBeforeFilter} teams → ${filteredTeams.length} after member filter`);
+
+      if (teamsBeforeFilter > 0 && filteredTeams.length === 0) {
+        console.warn(`[CompetitionService] SUSPICIOUS: ${comp.id} had ${teamsBeforeFilter} teams but 0 after member filter. Members loaded: ${this._memberLoaded}, member count: ${this._members?.length || 0}`);
+        // Log first team details for debugging
+        if (compTeam.length > 0) {
+          const firstTeam = compTeam[0];
+          console.warn(`[CompetitionService] First team: ${firstTeam.team_name}, players: ${firstTeam.players.length}`, {
+            playerSample: firstTeam.players.slice(0, 2).map(p => ({ name: `${p.firstname} ${p.lastname}`, license: p.license_number }))
+          });
+        }
+      }
 
       // add is_member field to each player
       filteredTeams.forEach(team => {
@@ -330,7 +418,26 @@ export class CompetitionService {
 
       if (!results[comp.id]) results[comp.id] = [];
       results[comp.id].unshift({ competition: comp, teams: safeCompTeam });
+      successCount++;
+      
+      } catch (error: any) {
+        const statusCode = error?.status || error?.statusCode || 'unknown';
+        if (statusCode === 404) {
+          console.log(`[CompetitionService] 404 for competition ${comp.id} with org ${comp.organization_id} - no results in FFB`);
+          notFoundCount++;
+        } else {
+          console.error(`[CompetitionService] Error loading competition ${comp.id}:`, error?.message || error);
+        }
+      }
     }
+    
+    console.log(`[CompetitionService] runSerial() completed:`, {
+      total: competitions.length,
+      success: successCount,
+      notFound: notFoundCount,
+      skipped: skippedCount,
+      resultsCount: Object.keys(results).length
+    });
     return results;
   }
 
@@ -363,10 +470,17 @@ export class CompetitionService {
     });
   }
 
-  saveResults(season: string, results: CompetitionResultsMap): void {
+  async saveResults(season: string, results: CompetitionResultsMap): Promise<void> {
     const safeSeason = season.replace(/\//g, '_');
-    // Ne pas créer le fichier si les résultats sont vides
-    if (results && Object.keys(results).length > 0) {
+    console.log(`[CompetitionService] saveResults() called for season: ${season} (file: resultats${safeSeason}.txt)`);
+    
+    // Always create file, even if empty (avoids 404s on future loads of seasons with no results)
+    const isEmpty = !results || Object.keys(results).length === 0;
+    
+    if (isEmpty) {
+      console.log(`CompetitionService: No results to save for season ${season}, creating empty file.`);
+      await this.fileService.upload_to_S3({}, 'any/', 'resultats' + safeSeason + '.txt');
+    } else {
       // DEBUG: Log structure before saving - WITH CRITICAL WARNINGS for empty teams
       const debugInfo = Object.entries(results).map(([compId, dataArr]) => {
         const data = dataArr[0];
@@ -394,9 +508,8 @@ export class CompetitionService {
 
       console.debug(`CompetitionService [DEBUG] Saving ${Object.keys(results).length} competitions to S3`, debugInfo);
 
-      this.fileService.upload_to_S3(results, 'any/', 'resultats' + safeSeason + '.txt');
-    } else {
-      console.log('Aucun résultat à sauvegarder, fichier S3 non créé.');
+      await this.fileService.upload_to_S3(results, 'any/', 'resultats' + safeSeason + '.txt');
+      console.log(`✅ [CompetitionService] Successfully saved ${Object.keys(results).length} competitions for season ${season}`);
     }
   }
 
@@ -541,12 +654,7 @@ export class CompetitionService {
       );
     }
 
-    // Utilise Promise.all pour appeler les deux endpoints en parallèle
-    this.traceFfb('Request parallel competition endpoints', {
-      competitionId,
-      organization_id,
-      endpoints: ['getCompetitionResults', 'getCompetitionPhases'],
-    });
+    // Cas 3: avec org_id → utilise Promise.all des deux endpoints en parallèle
 
     return from(Promise.all([
       this.ffbService.getCompetitionResults(competitionId, organization_id),

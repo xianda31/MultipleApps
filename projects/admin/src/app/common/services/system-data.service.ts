@@ -246,6 +246,23 @@ export class SystemDataService {
     }
   }
 
+  /**
+   * Save only thresholds without triggering global config reload
+   * This prevents unnecessary component re-initialization
+   */
+  async saveThresholdsOnly(ui: UIConfiguration) {
+    this._ui_settings = ui;
+    
+    try {
+      await this.fileService.upload_to_S3(ui, 'system/', 'ui_settings.txt', true);
+      // Note: Do NOT call this._ui_settings$.next(ui) - that would trigger global reload
+      console.log('[SystemDataService] Thresholds saved silently without triggering reload');
+    } catch (err) {
+      console.warn('saveThresholdsOnly: upload error', err);
+      try { console.error('[SystemDataService] saveThresholdsOnly(): upload_to_S3 failed', { err, timestamp: new Date().toISOString() }); } catch (e) { /* ignore */ }
+    }
+  }
+
   private getDefaultUi(): UIConfiguration {
     return {
       template: {

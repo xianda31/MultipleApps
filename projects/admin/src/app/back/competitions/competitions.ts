@@ -25,6 +25,7 @@ export class CompetitionsComponent {
   preferred_entities: Entity_V2[] = [];
   organizations: CompetitionOrganization[] = [];
   selectedCompetitionSeasonId: string = '';
+  selectedSeasonLabel: string = '';  // Track season label for results loading
   results_extracted: boolean = false;
   team_results: CompetitionResultsMap = {};
   filtered_team_results: CompetitionResultsMap = {};
@@ -96,94 +97,18 @@ export class CompetitionsComponent {
         this.preferred_organization_labels = defaultLabels;
       }
     
-      this.one_year_back =  true; // pour tester, on peut forcer à true pour voir les résultats de la saison précédente
-
-      const preferredLabels = [
-        this.preferred_organization_labels.national,
-        this.preferred_organization_labels.ligue,
-        this.preferred_organization_labels.comite,
-      ];
-
-      const preferredEntities$ = forkJoin(
-        preferredLabels.map((label) =>
-          this.competitionService.getEntity(label).pipe(
-            map((entities) => entities[0] ?? null),
-            catchError(() => of(null))
-          )
-        )
-      ).pipe(
-        map((entities) => entities.filter((e): e is Entity_V2 => !!e))
-      );
-
-      preferredEntities$.pipe(
-        tap((entities) => {
-          this.preferred_entities = entities;
-
-          const nationalLabel = this.preferred_organization_labels.national;
-          const nationalEntity = entities.find((entity) => entity.label === nationalLabel) ?? null;
-          const organizationsToLoad = nationalEntity ? [nationalEntity] : entities;
-
-          if (!nationalEntity) {
-            console.warn('[CompetitionsComponent] National organization not found, fallback to all preferred organizations');
-          }
-
-          // Keep organizations map usable for existing display helpers.
-          this.organizations = organizationsToLoad.map((entity) => ({
-            id: entity.id,
-            label: entity.label,
-            type: entity.type,
-            subordinate_id: 0,
-            organization_code: entity.ffbCode,
-            has_realbridge_tournament: false,
-            has_funbridge_tournament: false,
-            is_club_digital: false,
-            can_renew_member: false,
-            can_renew_external_member: false,
-            email_renew_member: null,
-          }));
-
-          this.preferred_entities = organizationsToLoad;
-        }),
-        switchMap((entities) => this.competitionService.getPreviousSeasons().pipe(
-          map((seasons) => {
-            const nationalLabel = this.preferred_organization_labels.national;
-            const nationalEntity = entities.find((entity) => entity.label === nationalLabel) ?? null;
-            const organizationsToLoad = nationalEntity ? [nationalEntity] : entities;
-            return { entities: organizationsToLoad, seasons };
-          })
-        )),
-        switchMap(({ entities, seasons }) => {
-          const seasonIndex = this.one_year_back ? 1 : 0;
-          const selectedSeason = seasons[seasonIndex] ?? seasons[0];
-
-          if (!selectedSeason) {
-            console.warn('[CompetitionsComponent] No season returned by getPreviousSeasons');
-            return of({ seasonId: '', competitions: [] as Competition_V2[] });
-          }
-
-          return this.competitionService.loadPreferredOrganizationCompetitionsWithStades(
-            String(selectedSeason.id),
-            entities,
-            this.preferred_organization_labels
-          );
-        })
-      ).subscribe({
-        next: ({ seasonId, competitions }) => {
-          console.log('[CompetitionsComponent] getCompetitions response:', competitions);
-          this.selectedCompetitionSeasonId = seasonId;
-          this.competitions = competitions;
-          this.results_extracted = true;
-        },
-        error: (error) => {
-          console.error('[CompetitionsComponent] Error while loading competitions/stades V2:', error);
-          this.results_extracted = true;
-        }
-      });
+      this.one_year_back = false;  // Default: current season
       
-      this.show_full_team =  false;
-      // this.show_infos = ui?.competitions?.show_infos || false;
-      this.no_filter =  false;
-      // this.update_results();   // TEST
+      // Show spinner before starting to load competitions
+      this.results_extracted = false;
+      this.is_refreshing = true;
+      this.spinnerMessage = 'Chargement des compétitions...';
+      
+      // Delegate to reloadCompetitionsAndResults to avoid code duplication
+      this.reloadCompetitionsAndResults();
+      
+      this.show_full_team = false;
+      this.no_filter = false;
       this.data_ready = true;
     });
   }
@@ -208,19 +133,124 @@ export class CompetitionsComponent {
     return diffMs >= 0 && diffMs <= this.RECENT_CALCULATION_DAYS * 24 * 60 * 60 * 1000;
   }
   onParamsChange(reload:boolean): void {
-
     if (reload) {
       this.results_extracted = false;
-      this.full_regeneration = true;
-      this.update_results();
-      this.full_regeneration = false;
+      this.is_refreshing = true;
+      this.spinnerMessage = 'Chargement de la saison...';
+      
+      if (this.back_office_mode) {
+        // Back-office: reload competitions V2 AND results (with FFB recalc)
+        this.full_regeneration = true;
+        this.selectedSeasonLabel = '';  // Reset to trigger full reload
+        this.reloadCompetitionsAndResults();
+        // Note: Do NOT reset full_regeneration here - let it be cleared by update_results() after completion
+      } else {
+        // Front mode: only load results from S3 for the new season (no FFB)
+        this.update_results();
+      }
+    } else {
+      this.thresholdsModified = true;
     }
+  }
+
+  onThresholdChange(division: string): void {
+    // Just mark as modified
+    // User must click "Sauvegarder" button to persist thresholds
     this.thresholdsModified = true;
-    this.titleService.setTitle('Résultats des compétitions ' + this.current_season);
+  }
+
+  private reloadCompetitionsAndResults(): void {
+    // Same logic as initial load, but preserves current toggle state
+    const preferredLabels = [
+      this.preferred_organization_labels.national,
+      this.preferred_organization_labels.ligue,
+      this.preferred_organization_labels.comite,
+    ];
+
+    const preferredEntities$ = forkJoin(
+      preferredLabels.map((label) =>
+        this.competitionService.getEntity(label).pipe(
+          map((entities) => entities[0] ?? null),
+          catchError(() => of(null))
+        )
+      )
+    ).pipe(
+      map((entities) => entities.filter((e): e is Entity_V2 => !!e))
+    );
+
+    preferredEntities$.pipe(
+      tap((entities) => {
+        this.preferred_entities = entities;
+
+        const nationalLabel = this.preferred_organization_labels.national;
+        const nationalEntity = entities.find((entity) => entity.label === nationalLabel) ?? null;
+        const organizationsToLoad = nationalEntity ? [nationalEntity] : entities;
+
+        if (!nationalEntity) {
+          console.warn('[CompetitionsComponent] National organization not found, fallback to all preferred organizations');
+        }
+
+        // Keep organizations map usable for existing display helpers.
+        this.organizations = organizationsToLoad.map((entity) => ({
+          id: entity.id,
+          label: entity.label,
+          type: entity.type,
+          subordinate_id: 0,
+          organization_code: entity.ffbCode,
+          has_realbridge_tournament: false,
+          has_funbridge_tournament: false,
+          is_club_digital: false,
+          can_renew_member: false,
+          can_renew_external_member: false,
+          email_renew_member: null,
+        }));
+      }),
+      switchMap((entities) => this.competitionService.getPreviousSeasons().pipe(
+        map((seasons) => ({entities, seasons}))
+      )),
+      switchMap(({ entities, seasons }) => {
+        const seasonIndex = this.one_year_back ? 1 : 0;
+        const selectedSeason = seasons[seasonIndex] ?? seasons[0];
+
+        if (!selectedSeason) {
+          console.warn('[CompetitionsComponent] No season returned by getPreviousSeasons');
+          return of({ seasonId: '', competitions: [] as Competition_V2[], selectedSeason: null });
+        }
+
+        return this.competitionService.loadPreferredOrganizationCompetitionsWithStades(
+          String(selectedSeason.id),
+          entities,
+          this.preferred_organization_labels
+        ).pipe(
+          map(result => ({...result, selectedSeason}))
+        );
+      })
+    ).subscribe({
+      next: ({ seasonId, competitions, selectedSeason }) => {
+        console.log('[CompetitionsComponent] getCompetitions response:', competitions);
+        this.selectedCompetitionSeasonId = seasonId;
+        this.competitions = competitions;
+        if (selectedSeason) {
+          this.selectedSeasonLabel = selectedSeason.label;
+          this.current_season = selectedSeason.label;
+        }
+        this.update_results();
+      },
+      error: (error) => {
+        console.error('[CompetitionsComponent] Error reloading competitions:', error);
+        this.results_extracted = true;
+        this.is_refreshing = false;
+      }
+    });
   }
 
   update_results(): void {
-    this.current_season = this.one_year_back ? this.systemService.previous_season(this.systemService.get_today_season()) : this.systemService.get_today_season();
+    // Use stored season label if available, otherwise calculate
+    if (!this.selectedSeasonLabel) {
+      this.current_season = this.one_year_back ? this.systemService.previous_season(this.systemService.get_today_season()) : this.systemService.get_today_season();
+    } else {
+      this.current_season = this.selectedSeasonLabel;
+    }
     this.titleService.setTitle('Résultats des compétitions ' + this.current_season);
     this.results_extracted = false;
     this.is_refreshing = false;
@@ -228,18 +258,20 @@ export class CompetitionsComponent {
 
     const safeSeason = this.current_season.replace(/\//g, '_');
     
-    // Step 1: Create observable to load cached S3 results
-    const cachedResults$ = from(this.fileService.download_json_file('any/resultats' + safeSeason + '.txt')).pipe(
+    // Step 1: Create observable to load cached S3 results (silent on 404, it's normal for new seasons)
+    const cachedResults$ = from(this.fileService.download_json_file('any/resultats' + safeSeason + '.txt', true, false)).pipe(
       catchError(() => of({} as CompetitionResultsMap)),
       tap(() => {
-        // Cache loaded, now FFB scan starts
-        this.is_refreshing = true;
-        this.spinnerMessage = 'Actualisation des données FFB en cours...';
+        // Only trigger FFB scan in back-office mode
+        if (this.back_office_mode) {
+          this.is_refreshing = true;
+          this.spinnerMessage = 'Actualisation des données FFB en cours...';
+        }
       })
     );
 
     // Step 2: Create observable for fresh results (includes FFB rescan)
-    const freshResults$ = this.competitionService.getCompetionsResults(this.current_season, this.preferred_organization_labels, this.full_regeneration).pipe(
+    const freshResults$ = this.competitionService.getCompetionsResults(this.current_season, this.preferred_organization_labels, this.full_regeneration, this.preferred_entities).pipe(
       tap(() => {
         // FFB scan completed
         this.competitionService.ffbScanDone = true;
@@ -248,19 +280,30 @@ export class CompetitionsComponent {
     );
 
     // Step 3: Emit cached results first, then fresh results (skip FFB scan on return visit)
-    const pipeline$ = this.competitionService.ffbScanDone && !this.full_regeneration
+    // In front mode, only load from S3 cache (no FFB recalculation)
+    const pipeline$ = !this.back_office_mode
       ? cachedResults$.pipe(tap(() => { this.is_refreshing = false; }))
-      : concat(cachedResults$, freshResults$);
+      : this.competitionService.ffbScanDone && !this.full_regeneration
+        ? cachedResults$.pipe(tap(() => { this.is_refreshing = false; }))
+        : concat(cachedResults$, freshResults$);
 
     pipeline$.subscribe(
       results => {
         this.processResults(results);
         this.results_extracted = true;
+        // Auto-save thresholds after FFB recalculation in back-office mode
+        if (this.back_office_mode && this.thresholdsModified) {
+          this.saveThresholds();
+        }
+        // Clear the regeneration flag after processing
+        this.full_regeneration = false;
       },
       error => {
         console.error('Erreur lors du chargement des résultats:', error);
         this.results_extracted = true;
         this.is_refreshing = false;
+        // Clear the regeneration flag even on error
+        this.full_regeneration = false;
       }
     );
   }
@@ -308,15 +351,22 @@ export class CompetitionsComponent {
   }
 
   saveThresholds(): void {
-    // Get the current UI config and merge thresholds before saving
-    this.systemService.save_ui_settings(this.ui_config_loaded)
-      .then(() => {
-        this.thresholdsModified = false;
-        console.log('Seuils sauvegardés:', this.ui_config_loaded.competitions.result_filter_thresholds);
-      })
-      .catch((err: unknown) => {
-        console.error('Erreur lors de la sauvegarde des seuils:', err);
-      });
+    // Save thresholds only (without triggering global config reload)
+    const thresholdsOnly = {
+      ...this.ui_config_loaded,
+      competitions: {
+        ...this.ui_config_loaded.competitions,
+        result_filter_thresholds: this.ui_config_loaded.competitions.result_filter_thresholds,
+      }
+    };
+    
+    // Call systemService method without triggering subject re-emit
+    this.systemService.saveThresholdsOnly(thresholdsOnly).then(() => {
+      this.thresholdsModified = false;
+      console.log('Seuils sauvegardés:', this.ui_config_loaded.competitions.result_filter_thresholds);
+    }).catch((err: unknown) => {
+      console.error('Erreur lors de la sauvegarde des seuils:', err);
+    });
   }
 
   get_organization_label(id: number): string {

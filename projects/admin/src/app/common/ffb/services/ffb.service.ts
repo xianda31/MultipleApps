@@ -522,6 +522,11 @@ export class FFB_proxyService {
   async getCompetitionsForResults(season_id: string): Promise<Competition[]> {
     try {
       const data = await this.getCompetitionSearchPayload(season_id);
+      const items = (data as any)?.items;
+      if (Array.isArray(items) && items.length > 0) {
+        console.log('[FFB] getCompetitionsForResults first item keys:', Object.keys(items[0]));
+        console.log('[FFB] getCompetitionsForResults first item:', JSON.stringify(items[0]).substring(0, 400));
+      }
       return toCompetitionListFromSearchResponseLegacy(data);
     } catch (error) {
       console.error('[FFB Service] getCompetitionsForResults failed:', error);

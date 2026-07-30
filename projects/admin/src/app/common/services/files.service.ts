@@ -281,7 +281,7 @@ export class FileService {
   }
 
 
-  async download_json_file(path: string, bypassCache: boolean = true): Promise<any> {
+  async download_json_file(path: string, bypassCache: boolean = true, showErrorToast: boolean = true): Promise<any> {
     // Use getUrl to get a presigned URL, then fetch with cache control to bypass browser cache
     try {
       const urlResult = await getUrl({ path: path });
@@ -302,12 +302,16 @@ export class FileService {
         return data;
       } catch (parseErr) {
         console.error('download_json_file: JSON parse error for', path, parseErr);
-        this.toastService.showError('Configuration système', `Fichier ${path} invalide (erreur de parsing)`);
+        if (showErrorToast) {
+          this.toastService.showError('Configuration système', `Fichier ${path} invalide (erreur de parsing)`);
+        }
         throw parseErr;
       }
     } catch (error: any) {
       console.error('download_json_file: failed to download', path, error);
-      this.toastService.showError('Configuration système', 'Impossible de charger le fichier ' + path + ' — ' + (error?.message || error));
+      if (showErrorToast) {
+        this.toastService.showError('Configuration système', 'Impossible de charger le fichier ' + path + ' — ' + (error?.message || error));
+      }
       throw error;
     }
   }
