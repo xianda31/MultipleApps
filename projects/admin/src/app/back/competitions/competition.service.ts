@@ -22,6 +22,7 @@ export class CompetitionService {
   private _memberLoaded = false;
   private _memberPromise: Promise<void>;
   ffbScanDone: boolean = false;
+  traceCompetitionIds: number[] = [40]; // TEMP debug: restrict runSerial to competition[22] id=40
 
   COMPETITION_LEVELS = COMPETITION_LEVELS;
 
@@ -271,6 +272,8 @@ export class CompetitionService {
           }),
           tap((payload: { seasonObj: FFB_Season; competitions: Competition[] }) => {
             console.log(`[CompetitionService][V2] results/search returned ${payload.competitions.length} competitions`);
+            console.log(`[CompetitionService] Competitions list (id | label | division | orgId):`,
+              payload.competitions.map(c => `${c.id} | ${c.label} | ${c.division.label} | org:${c.organization_id}`));
           }),
           switchMap((payload: { seasonObj: FFB_Season; competitions: Competition[] }) => {
             return from(this.ensureMembersLoaded()).pipe(
@@ -337,7 +340,12 @@ export class CompetitionService {
     let notFoundCount = 0;
     
     for (const comp of competitions) {
+      // single-competition debug filter
+      if (this.traceCompetitionIds.length > 0 && !this.traceCompetitionIds.includes(comp.id)) {
+        continue;
+      }
       try {
+        console.log(`[CompetitionService][TRACE] Processing competition id=${comp.id} label="${comp.label}" org=${comp.organization_id}`);
         this.traceFfb('Request getCompetitionResults', {
           competitionId: comp.id,
         });

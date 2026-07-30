@@ -221,7 +221,7 @@ export function toCompetitionListFromSearchResponseLegacy(payload: unknown): Com
 
     return {
       id: asNumber(item?.id, 0),
-      label: asString(item?.label, ''),
+      label: asString(competition?.label, asString(item?.label, '')), // v2: label is in item.competition.label
       season_id: 0,
       previous_season_id: null,
       pe_bonus_process_duration: null,

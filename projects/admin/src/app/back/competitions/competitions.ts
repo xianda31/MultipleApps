@@ -97,7 +97,8 @@ export class CompetitionsComponent {
         this.preferred_organization_labels = defaultLabels;
       }
     
-      this.one_year_back = false;  // Default: current season
+      // this.one_year_back = false;  // Default: current season
+      this.one_year_back = true;  // for testing: load previous season by default
       
       // Show spinner before starting to load competitions
       this.results_extracted = false;
@@ -228,11 +229,16 @@ export class CompetitionsComponent {
     ).subscribe({
       next: ({ seasonId, competitions, selectedSeason }) => {
         console.log('[CompetitionsComponent] getCompetitions response:', competitions);
+        console.log('[CompetitionsComponent] competitions[22]:', competitions[22]);
         this.selectedCompetitionSeasonId = seasonId;
         this.competitions = competitions;
         if (selectedSeason) {
           this.selectedSeasonLabel = selectedSeason.label;
           this.current_season = selectedSeason.label;
+        }
+        // Mettre à jour la cible de debug si competitions[22] est connu
+        if (competitions[22]) {
+          this.competitionService.traceCompetitionIds = [competitions[22].id];
         }
         this.update_results();
       },
