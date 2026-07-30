@@ -272,6 +272,50 @@
     </div>
   }
 
+  <!-- Section 1quater: Checkouts abandonnés (BookEntry stripeTag sans StripeTransaction) -->
+  @if (abandonedCheckouts.length > 0) {
+    <div class="alert alert-danger d-flex align-items-start gap-3 mb-3">
+      <i class="bi bi-exclamation-octagon-fill fs-5 mt-1"></i>
+      <div class="flex-grow-1">
+        <strong>{{ abandonedCheckouts.length }} checkout(s) abandonné(s)</strong>
+        — BookEntry créé mais paiement Stripe jamais confirmé. Ces écritures ne seront jamais réconciliées et faussent la comptabilité.
+        <table class="table table-sm mb-0 mt-2 bg-white">
+          <thead class="table-light">
+            <tr>
+              <th>Date</th>
+              <th>Acheteur</th>
+              <th class="text-end">Montant</th>
+              <th>Tag Stripe</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (be of abandonedCheckouts; track be.id) {
+              <tr>
+                <td><small>{{ formatDate(be.date) }}</small></td>
+                <td><small>{{ be.operations[0]?.member || '(inconnu)' }}</small></td>
+                <td class="text-end fw-semibold">{{ formatAmount(((be.amounts)['stripe_in'] || 0) * 100) }}</td>
+                <td><small class="font-monospace text-muted">{{ be.stripeTag }}</small></td>
+                <td class="text-end">
+                  <button class="btn btn-sm btn-danger"
+                          (click)="deleteAbandonedCheckout(be)"
+                          [disabled]="deletingAbandonedId !== null || isProductionReadOnlyMode">
+                    @if (deletingAbandonedId === be.id) {
+                      <span class="spinner-border spinner-border-sm me-1"></span>
+                    } @else {
+                      <i class="bi bi-trash me-1"></i>
+                    }
+                    Supprimer
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
   <!-- Section 2: Paiements en attente de réconciliation -->
   <h6 class="fw-semibold mt-3">Paiements carte à réconcilier</h6>
   @if (loadingLines) {

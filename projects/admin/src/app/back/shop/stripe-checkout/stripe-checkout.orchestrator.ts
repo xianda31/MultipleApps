@@ -135,7 +135,14 @@ export class StripeCheckoutOrchestrator {
       throw error;
     }
 
-    // 4. Stocker bookEntryId pour annulation (session_id est disponible dans l'URL Stripe au retour)
+    // 4. Nettoyer l'éventuel BookEntry orphelin de la session précédente avant d'écraser sessionStorage
+    const staleBookEntryId = sessionStorage.getItem('stripe_book_entry_id');
+    const staleSessionId = sessionStorage.getItem('stripe_session_id');
+    if (staleBookEntryId && staleSessionId) {
+      this.stripeService.cancelCheckout(staleBookEntryId, staleSessionId)
+        .catch(err => console.warn('[Stripe] Cleanup orphelin précédent échoué (non-bloquant):', err));
+    }
+
     sessionStorage.setItem('stripe_book_entry_id', bookEntry.id);
     sessionStorage.setItem('stripe_session_id', sessionId);
 

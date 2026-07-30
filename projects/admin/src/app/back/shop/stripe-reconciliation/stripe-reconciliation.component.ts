@@ -97,6 +97,10 @@ export class StripeReconciliationComponent {
   orphanedPayments: BookEntry[] = [];
   fixingOrphans = false;
 
+  // Checkouts abandonnés : BookEntry achat_carte avec stripeTag mais aucune StripeTransaction confirmée
+  abandonedCheckouts: BookEntry[] = [];
+  deletingAbandonedId: string | null = null;
+
   // Liste des payouts Stripe
   availablePayouts: StripePayout[] = [];
   loadingPayouts = false;
@@ -357,12 +361,12 @@ export class StripeReconciliationComponent {
       this.diagnosticStripeTransactions = allStripeTransactions;
 
       // Créer les lignes depuis les BookEntries
-      this.lines = bookEntries.map(be => {
+      const mappedLines = bookEntries.map(be => {
         const st = allStripeTransactions.find(
           (t: any) => t.bookEntryId === be.id || (be.stripeTag && t.stripeTag === be.stripeTag)
         ) || null;
 
-        // Keep only payments confirmed by Stripe webhooks.
+        // Pas de StripeTransaction = checkout abandonné sans retour sur cancel_url
         if (!st) {
           return null;
         }
@@ -399,7 +403,11 @@ export class StripeReconciliationComponent {
           selected: false,
         };
         return line;
-      }).filter((line): line is PayoutLine => line !== null);
+      });
+
+      // Collecter les BookEntries orphelins (stripeTag présent mais aucune StripeTransaction)
+      this.abandonedCheckouts = bookEntries.filter((_, i) => mappedLines[i] === null);
+      this.lines = mappedLines.filter((line): line is PayoutLine => line !== null);
 
       // Ajouter les transactions abandonnées sans BookEntry correspondante
       const abandonedWithoutBookEntry = abandonedTransactions.filter(at =>
@@ -694,6 +702,20 @@ export class StripeReconciliationComponent {
       this.toastService.showError('Payout', 'Erreur lors de la création de l\'écriture');
     } finally {
       this.processingPayout = false;
+    }
+  }
+
+  async deleteAbandonedCheckout(be: BookEntry): Promise<void> {
+    if (this.isProductionReadOnlyMode) return;
+    this.deletingAbandonedId = be.id;
+    try {
+      await this.bookService.delete_book_entry(be);
+      this.toastService.showSuccess('Nettoyage', `BookEntry orphelin supprimé (${be.stripeTag})`);
+      await this.loadLines();
+    } catch (error: any) {
+      this.toastService.showError('Nettoyage', 'Impossible de supprimer le BookEntry');
+    } finally {
+      this.deletingAbandonedId = null;
     }
   }
 
