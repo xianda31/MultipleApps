@@ -170,7 +170,7 @@ export function toCompetitionListFromSearchResponse(payload: unknown): Competiti
     const competition = isRecord(item?.competition) ? item.competition : {};
     const division = isRecord(item?.division) ? item.division : {};
     return {
-      id: asNumber(item?.id, asNumber((competition as any)?.id, 0)),
+      id: asNumber(competition?.id, asNumber(item?.id, 0)), // use stable competition.id, not result-item.id
       label: asString(competition?.label, ''),
       division: asString(division?.label, 'Aucune Division'),
     } satisfies Competition_V2;
@@ -220,7 +220,7 @@ export function toCompetitionListFromSearchResponseLegacy(payload: unknown): Com
     const competition = isRecord(item?.competition) ? item.competition : {};
 
     return {
-      id: asNumber(item?.id, 0),
+      id: asNumber(competition?.id, asNumber(item?.id, 0)), // use stable competition.id, not result-item.id
       label: asString(competition?.label, asString(item?.label, '')), // v2: label is in item.competition.label
       season_id: 0,
       previous_season_id: null,

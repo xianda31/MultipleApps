@@ -22,7 +22,7 @@ export class CompetitionService {
   private _memberLoaded = false;
   private _memberPromise: Promise<void>;
   ffbScanDone: boolean = false;
-  traceCompetitionIds: number[] = [40]; // TEMP debug: restrict runSerial to competition[22] id=40
+  traceCompetitionIds: number[] = [7]; // TEMP debug: restrict runSerial to competition.id=7 ("Mixte /2", item[22])
 
   COMPETITION_LEVELS = COMPETITION_LEVELS;
 
@@ -363,6 +363,7 @@ export class CompetitionService {
 
         // Récupère les phases pour obtenir les session IDs
         const phases: CompetitionPhases | null = await this.ffbService.getCompetitionPhases(String(comp.id), String(comp.organization_id));
+        console.log(`[CompetitionService][TRACE] getCompetitionPhases(competition_id=${comp.id}, org_id=${comp.organization_id}) → phases=${phases?.phases?.length ?? 'null'}`);
         if (!phases?.phases?.length) {
           console.log(`[CompetitionService] Competition ${comp.id}: no phases found`);
           continue;
