@@ -361,7 +361,29 @@ export class CompetitionService {
           continue;
         }
 
-        const compTeam: CompetitionTeam[] = await this.ffbService.getCompetitionResults(String(comp.id), String(comp.organization_id));
+        // Récupère les phases pour obtenir les session IDs
+        const phases: CompetitionPhases | null = await this.ffbService.getCompetitionPhases(String(comp.id), String(comp.organization_id));
+        if (!phases?.phases?.length) {
+          console.log(`[CompetitionService] Competition ${comp.id}: no phases found`);
+          continue;
+        }
+
+        const sessionIds: number[] = [];
+        for (const phase of phases.phases) {
+          for (const group of phase.groups) {
+            for (const session of group.sessions) {
+              sessionIds.push(session.id);
+            }
+          }
+        }
+        console.log(`[CompetitionService] Competition ${comp.id}: ${sessionIds.length} sessions found → ${sessionIds.join(', ')}`);
+
+        if (!sessionIds.length) {
+          console.log(`[CompetitionService] Competition ${comp.id}: no sessions found`);
+          continue;
+        }
+
+        const compTeam: CompetitionTeam[] = await this.ffbService.getSessionRankingAsTeams(sessionIds);
         
         console.log(`[CompetitionService] Competition ${comp.id}: received ${compTeam.length} teams from FFB`);
 

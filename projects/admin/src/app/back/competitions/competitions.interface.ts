@@ -302,6 +302,53 @@ export interface CompetitionPhaseSession {
   moment_id: number | null;
 }
 
+// FFB V2 results/sessions/{id}/ranking
+export interface SessionRankingPlayer {
+  id: number;
+  ffbId: number;
+  firstName: string;
+  lastName: string;
+  gender: 'M' | 'F';
+  club: string | null;
+  migrationId: number;
+}
 
+export interface SessionRankingTeam {
+  id: number;
+  label: string;
+  orientation: 'NS' | 'EW';
+  player1: SessionRankingPlayer;
+  player2: SessionRankingPlayer;
+  player3: SessionRankingPlayer | null;
+  player4: SessionRankingPlayer | null;
+  player5: SessionRankingPlayer | null;
+  player6: SessionRankingPlayer | null;
+  player7: SessionRankingPlayer | null;
+  player8: SessionRankingPlayer | null;
+  section: string;
+  startTableNumber: number | null;
+}
 
+export interface SessionRankingEntry {
+  id: number;
+  rank: number;
+  sessionScore: number;
+  totalScore: number;
+  section: string;
+  tableNumber: number;
+  orientation: 'NS' | 'EW';
+  team: SessionRankingTeam;
+  carryOver: number | null;
+  ffbclubnetId: number | null;
+  handicapPercentage: number | null;
+  pe: number | null;
+  peBonus: number | null;
+  rankWithoutHandicap: number | null;
+  scoreHandicap: number | null;
+  scorePenalty: number | null;
+  simultaneousId: number | null;
+  theoreticalRank: number | null;
+  totalBonus: number | null;
+  totalScoreWithoutHandicap: number | null;
+}
 

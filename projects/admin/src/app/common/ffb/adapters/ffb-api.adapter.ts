@@ -1,4 +1,4 @@
-import { Competition, CompetitionOrganization, CompetitionPhases, CompetitionSeason, CompetitionTeam, CompetitionResultStade_V2, Competition_V2, Entity_V2 } from '../../../back/competitions/competitions.interface';
+import { Competition, CompetitionOrganization, CompetitionPhases, CompetitionSeason, CompetitionTeam, CompetitionResultStade_V2, Competition_V2, Entity_V2, Player, SessionRankingEntry, SessionRankingPlayer } from '../../../back/competitions/competitions.interface';
 import { ClubMember } from '../interface/club-member.interface';
 import { TournamentV2 } from '../interface/tournament-v2.interface';
 import { FFB_Season } from '../interface/ffb-season.interface';
@@ -277,6 +277,62 @@ export function toEntityV2List(payload: unknown): Entity_V2[] {
 
 export function toCompetitionTeamList(payload: unknown): CompetitionTeam[] {
   return asArray<ApiCompetitionTeamDto>(payload) as unknown as CompetitionTeam[];
+}
+
+export function toSessionRankingList(payload: unknown): SessionRankingEntry[] {
+  return asArray<SessionRankingEntry>(payload);
+}
+
+/** Aggregate session ranking entries (potentially from multiple sessions) into CompetitionTeam list. */
+export function sessionRankingToCompetitionTeams(entries: SessionRankingEntry[]): CompetitionTeam[] {
+  if (!entries.length) return [];
+
+  const byTeam = new Map<number, SessionRankingEntry[]>();
+  for (const entry of entries) {
+    const tid = entry.team.id;
+    if (!byTeam.has(tid)) byTeam.set(tid, []);
+    byTeam.get(tid)!.push(entry);
+  }
+
+  return Array.from(byTeam.values()).map(teamEntries => {
+    const last = teamEntries[teamEntries.length - 1];
+    const totalPe = teamEntries.reduce((s, e) => s + (e.pe ?? 0), 0);
+    const totalPeBonus = teamEntries.reduce((s, e) => s + (e.peBonus ?? 0), 0);
+    const sessionsPlayed = teamEntries.length;
+
+    const team = last.team;
+    const rawPlayers: SessionRankingPlayer[] = [
+      team.player1, team.player2, team.player3, team.player4,
+      team.player5, team.player6, team.player7, team.player8,
+    ].filter((p): p is SessionRankingPlayer => p !== null);
+
+    const playerCount = rawPlayers.length || 1;
+    const players: Player[] = rawPlayers.map(p => ({
+      id: p.id,
+      gender: p.gender,
+      license_number: String(p.ffbId),
+      firstname: p.firstName,
+      lastname: p.lastName.toUpperCase(),
+      nb_deals_played: sessionsPlayed,
+      pp: 0,
+      pp_bonus: 0,
+      pe: totalPe / playerCount,
+      pe_bonus: totalPeBonus / playerCount,
+      pp_extra: 0,
+      pe_extra: 0,
+      is_ic_used: false,
+    }));
+
+    return {
+      team_id: team.id,
+      team_iv: 0,
+      team_name: team.label,
+      rank: last.rank,
+      theorical_rank: last.theoreticalRank ?? last.rank,
+      is_ic_used: false,
+      players,
+    } as CompetitionTeam;
+  });
 }
 
 export function toCompetitionPhases(payload: unknown): CompetitionPhases | null {

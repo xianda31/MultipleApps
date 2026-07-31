@@ -6,7 +6,7 @@ import { PersonV2 } from '../interface/person-v2.interface';
 import { ClubMember } from '../interface/club-member.interface';
 import { TournamentTeams } from '../interface/tournament_teams.interface';
 import { catchError, firstValueFrom, from, Observable, of, take } from 'rxjs';
-import { Competition, CompetitionOrganization, CompetitionPhases, CompetitionResultStade_V2, CompetitionTeam, Competition_V2, Entity_V2 } from '../../../back/competitions/competitions.interface';
+import { Competition, CompetitionOrganization, CompetitionPhases, CompetitionResultStade_V2, CompetitionTeam, Competition_V2, Entity_V2, SessionRankingEntry } from '../../../back/competitions/competitions.interface';
 import { environment } from '../../../../environments/environment';
 import { SystemDataService } from '../../services/system-data.service';
 import {
@@ -19,6 +19,8 @@ import {
   toFfbSeason,
   toFfbSeasonList,
   toCompetitionTeamList,
+  toSessionRankingList,
+  sessionRankingToCompetitionTeams,
   toEntityV2List,
   toClubMemberList,
   toTournamentV2List,
@@ -34,6 +36,7 @@ const FFB_ENDPOINTS = {
   previousSeasonsSearch: '/api/ffb/v2/seasons/search',
   organizations: '/api/ffb/v2/organizations',
   finalRanking: '/api/ffb/v2/competition-results',
+  sessionRanking: '/api/ffb/v2/session-ranking',
   phases: '/api/ffb/v2/competition-phases',
   competitionSearch: '/api/ffb/v2/results/search',
   competitionDivisionResults: '/api/ffb/v2/results/competitionDivisions',
@@ -596,6 +599,35 @@ export class FFB_proxyService {
       console.log('GET call failed: ', error);
       return [];
     }
+  }
+
+  async getSessionRanking(sessionId: number): Promise<SessionRankingEntry[]> {
+    try {
+      await this.ensureConfigReady();
+      const restOperation = get({
+        apiName: this.API_NAME,
+        path: this.buildPath(FFB_ENDPOINTS.sessionRanking),
+        options: this.withTraceHeaders({
+          queryParams: { session_id: String(sessionId) }
+        })
+      });
+      const { body } = await restOperation.response;
+      const data = await body.json();
+      console.log(`[FFB] getSessionRanking(${sessionId}): ${Array.isArray(data) ? data.length : '?'} entries`);
+      return toSessionRankingList(data);
+    } catch (error) {
+      console.log(`[FFB] getSessionRanking(${sessionId}) failed:`, error);
+      return [];
+    }
+  }
+
+  async getSessionRankingAsTeams(sessionIds: number[]): Promise<CompetitionTeam[]> {
+    const allEntries: SessionRankingEntry[] = [];
+    for (const sid of sessionIds) {
+      const entries = await this.getSessionRanking(sid);
+      allEntries.push(...entries);
+    }
+    return sessionRankingToCompetitionTeams(allEntries);
   }
   async getCompetitionPhases(competition_id: string, organization_id: string): Promise<CompetitionPhases | null> {
     try {

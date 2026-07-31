@@ -385,6 +385,13 @@ export const handler: Handler = async (event) => {
         ffbEndpoint = `competitions/${queryParams.competition_id}/organizations/${queryParams.organization_id}/final-ranking`;
         break;
 
+      case "session-ranking":
+        if (!queryParams.session_id) {
+          return httpResponse(400, { error: "Missing session_id" });
+        }
+        ffbEndpoint = `results/sessions/${queryParams.session_id}/ranking`;
+        break;
+
       case "competition-phases":
         if (!queryParams.competition_id) {
           return httpResponse(400, { error: "Missing competition_id" });
