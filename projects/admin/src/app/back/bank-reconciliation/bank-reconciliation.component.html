@@ -112,7 +112,7 @@
           <td class="col-4 text-start"> {{book_label(book_entry)}}</td>
           <td class="col-1 text-end pe-3">{{book_entry.amounts['bank_out'] ? (book_entry.amounts['bank_out'] | number:
             truncature) : '' }}</td>
-          <td class="col-1 text-end pe-3">{{book_entry.amounts['bank_in'] ? (book_entry.amounts['bank_in'] |
+          <td class="col-1 text-end text-success fw-bolder pe-3">{{book_entry.amounts['bank_in'] ? (book_entry.amounts['bank_in'] |
             number:truncature) : ''}}
           </td>
 
@@ -130,7 +130,7 @@
             </div>
           </td>
           <td class="col-1 text-end">
-            <i (click)="show_book_entry(book_entry.id)" class="bi bi-info-circle"></i>
+            <i (click)="show_book_entry(book_entry.id)" class="bi bi-eye"></i>
             <i (click)="highlight(book_entry)" class="bi bi-highlighter ms-5"></i>
             <!-- <i [ngbTooltip]="book_label(book_entry)" tooltipClass="my-custom-class" placement="end"
               class="bi bi-info-circle"></i> -->

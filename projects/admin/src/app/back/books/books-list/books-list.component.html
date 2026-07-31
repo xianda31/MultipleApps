@@ -60,9 +60,14 @@
             <td *ngIf="first" (click)="show_book_entry(entry.id)" [rowSpan]="entry.operations.length"> {{entry.date |
               date: 'dd/MM'}} </td>
             <td>{{operation.member ? operation.member : operation.label}}</td>
-            <td>{{operation.values | json}}</td>
-            <td *ngIf="first" [rowSpan]="entry.operations.length" class="text-end pe-3"> {{total_amount(entry) |
-              number:truncature:'fr'}}
+            <td>
+              <span *ngFor="let value of operation.values | keyvalue ; let lastKey=last" >
+                <span *ngIf="!lastKey" [class]="value.value < 0 ? 'text-danger' : ''">{{value.key}} : {{value.value}},&nbsp;</span>
+                <span *ngIf="lastKey" [class]="value.value < 0 ? 'text-danger' : ''">{{value.key}} : {{value.value}}</span>
+              </span>
+            </td>
+            <td *ngIf="first" [rowSpan]="entry.operations.length" [class]="total_amount(entry)>0 ? 'text-success fw-bold text-end pe-3' : 'text-end pe-3'"> {{total_amount(entry) |
+              number:truncature:'fr'}} 
             </td>
             <td *ngIf="first" [rowSpan]="entry.operations.length">
               <ng-container *ngIf="invoice_required(entry)">
