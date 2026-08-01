@@ -35,10 +35,18 @@ export class AppComponent implements OnInit, OnDestroy {
   currentMemberName = '';
   currentAmountCents = 0;
   errorMessage = '';
+  tokenError = '';
   loginEmail = '';
   loginPassword = '';
+  showLoginPassword = false;
+  readonly appVersion = environment.buildDate;
   loginError = '';
   loginLoading = false;
+
+  // Token cache — pré-fetché avant connectReader pour répondre instantanément au SDK
+  private cachedToken: string | null = null;
+  private cachedTokenAt = 0;
+  private readonly TOKEN_TTL_MS = 4 * 60 * 1000;
 
   private client!: ReturnType<typeof generateClient<Schema>>;
   private tpeSessionId: string | null = null;
@@ -149,6 +157,8 @@ export class AppComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
     try {
       await this.initCapacitor();
+      // Nettoie toute session résiduelle après que le SDK est initialisé
+      await StripeTerminal.disconnectReader().catch(() => {});
       await this.upsertTPESession('scanning', '');
 
       const readers = await this.discoverReaders();
@@ -158,6 +168,9 @@ export class AppComponent implements OnInit, OnDestroy {
         await this.upsertTPESession('disconnected', '');
         return;
       }
+
+      // Pré-charger le token pour que RequestedConnectionToken soit servi sans latence Lambda
+      await this.getCachedConnectionToken();
 
       this.state = 'connecting';
       this.readerLabel = this.friendlyReaderLabel(readers[0]);
@@ -186,22 +199,28 @@ export class AppComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Demande explicite des permissions BLE runtime (Android 12+)
   private async initCapacitor(): Promise<void> {
     if (this.capacitorInitialized) return;
 
     await StripeTerminal.addListener(TerminalEventsEnum.RequestedConnectionToken, async () => {
       console.log('[ppTPE] RequestedConnectionToken fired — fetching token...');
       try {
-        const token = await this.fetchConnectionToken();
+        const token = await this.getCachedConnectionToken();
         console.log('[ppTPE] Connection token fetched OK, longueur:', token?.length);
+        this.tokenError = '';
         await StripeTerminal.setConnectionToken({ token });
       } catch (e: any) {
-        console.error('[ppTPE] fetchConnectionToken ERREUR:', e?.message);
+        const msg = e?.message || 'Erreur inconnue';
+        console.error('[ppTPE] fetchConnectionToken ERREUR:', msg);
+        this.tokenError = `Token: ${msg}`;
+        this.cdr.detectChanges();
         await StripeTerminal.setConnectionToken({ token: '' });
       }
     });
 
     await StripeTerminal.addListener(TerminalEventsEnum.UnexpectedReaderDisconnect, async () => {
+      console.warn('[ppTPE] UnexpectedReaderDisconnect');
       this.stopHeartbeat();
       this.readerLabel = '';
       this.paymentRequestSub?.unsubscribe();
@@ -249,27 +268,33 @@ export class AppComponent implements OnInit, OnDestroy {
       this.cdr.detectChanges();
     });
 
-    await StripeTerminal.addListener(TerminalEventsEnum.FinishInstallingUpdate, () => {
-      console.log('[ppTPE] Mise à jour firmware WisePad 3 terminée');
+    await StripeTerminal.addListener(TerminalEventsEnum.FinishInstallingUpdate, (args: any) => {
+      if (args?.error) {
+        console.error('[ppTPE] Mise à jour firmware ÉCHOUÉE:', args.error);
+        this.tokenError = `Firmware: ${args.error}`;
+        this.cdr.detectChanges();
+      } else {
+        console.log('[ppTPE] Mise à jour firmware WisePad 3 terminée');
+      }
       this.firmwareProgress = 0;
     });
 
-    // Changement d'état BLE → source de vérité pour la détection de déconnexion
-    // (cet événement est délivré au réveil de veille, couvrant le cas background)
+    // Motif de déconnexion BLE (diagnostic)
+    await StripeTerminal.addListener(TerminalEventsEnum.DisconnectedReader, ({ reason }: any) => {
+      console.warn('[ppTPE] DisconnectedReader reason:', reason ?? 'none');
+      if (reason) {
+        this.tokenError = `Déco: ${reason}`;
+        this.cdr.detectChanges();
+      }
+    });
+
+    // ConnectionStatusChange sert uniquement à confirmer le réveil BLE (watchdog + heartbeat).
+    // Ne pas déclencher de reconnexion ici : cet événement ne distingue pas les
+    // déconnexions attendues (disconnectReader) des inattendues → utiliser UnexpectedReaderDisconnect.
     await StripeTerminal.addListener(TerminalEventsEnum.ConnectionStatusChange, async ({ status }) => {
       console.log('[ppTPE] ConnectionStatusChange:', status);
       if (status === ConnectionStatus.NotConnected) {
         this.clearResumeWatchdog();
-        if (this.state === 'connected' || this.state === 'processing') {
-          console.warn('[ppTPE] ConnectionStatus NOT_CONNECTED → forcer reconnexion');
-          this.stopHeartbeat();
-          this.readerLabel = '';
-          this.paymentRequestSub?.unsubscribe();
-          this.paymentRequestSub = null;
-          await this.upsertTPESession('scanning', '');
-          this.state = 'scanning';
-          setTimeout(() => this.startTPE(), 3000);
-        }
       } else if (status === ConnectionStatus.Connected) {
         // Confirme la connexion BLE (y compris après réveil de veille)
         this.clearResumeWatchdog();
@@ -515,6 +540,17 @@ export class AppComponent implements OnInit, OnDestroy {
   // ──────────────────────────────────────────────────────────
   // Stripe connection token
   // ──────────────────────────────────────────────────────────
+
+  private async getCachedConnectionToken(): Promise<string> {
+    if (this.cachedToken && Date.now() - this.cachedTokenAt < this.TOKEN_TTL_MS) {
+      console.log('[ppTPE] Connection token servi depuis cache');
+      return this.cachedToken;
+    }
+    const token = await this.fetchConnectionToken();
+    this.cachedToken = token;
+    this.cachedTokenAt = Date.now();
+    return token;
+  }
 
   private async fetchConnectionToken(): Promise<string> {
     const session = await fetchAuthSession();
