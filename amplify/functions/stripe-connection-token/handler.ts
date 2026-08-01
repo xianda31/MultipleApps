@@ -7,8 +7,6 @@
 import Stripe from 'stripe';
 
 const STRIPE_SECRET_KEY = process.env['STRIPE_SECRET_KEY'];
-// TEMP diagnostic - remove after confirming sk_live_
-console.log('[ct] key_prefix:', (STRIPE_SECRET_KEY || '').substring(0, 12));
 
 const stripe = new Stripe(STRIPE_SECRET_KEY || 'dummy', {
   apiVersion: '2024-04-10' as any,
