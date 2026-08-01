@@ -65,6 +65,21 @@ if ($BuildApk) {
     Require-Command "npm"
     Require-Command "npx"
 
+    # Regenerate amplify_outputs.json from production (non-blocking if credentials expired)
+    Write-Host "Fetching production amplify_outputs.json..."
+    Push-Location $PSScriptRoot\..
+    npx ampx generate outputs --branch master --app-id d129hzsf6g08ma --profile amplify-dev --out-dir .
+    if ($LASTEXITCODE -ne 0) { Write-Warning "Could not refresh amplify_outputs.json (credentials?). Using existing file." }
+    Pop-Location
+
+    # Stamp build date (YYMMDD) into environment before Angular build
+    $buildDate = (Get-Date).ToString("yyMMdd")
+    $envFile = Join-Path $PSScriptRoot "..\projects\pptpe\src\environments\environment.ts"
+    $envContent = Get-Content $envFile -Raw
+    $envContent = $envContent -replace "buildDate: '[^']*'", "buildDate: '$buildDate'"
+    [System.IO.File]::WriteAllText($envFile, $envContent, [System.Text.Encoding]::UTF8)
+    Write-Host "Build date set to $buildDate"
+
     Write-Host "Building ppTPE web assets..."
     Invoke-Checked -Command "npm" -Arguments @("run", "ng", "--", "build", "pptpe", "--configuration", "production") -WorkingDirectory $PSScriptRoot\..
 
@@ -77,18 +92,47 @@ if ($BuildApk) {
     Invoke-Checked -Command ".\gradlew.bat" -Arguments @($gradleTask) -WorkingDirectory $PSScriptRoot\..\android
 
     if ($Release -and $ApkPath -eq "android/app/build/outputs/apk/debug/app-debug.apk") {
-        $signedReleaseApk = "android/app/build/outputs/apk/release/app-release.apk"
-        $unsignedReleaseApk = "android/app/build/outputs/apk/release/app-release-unsigned.apk"
-        if (Test-Path $signedReleaseApk) {
-            $ApkPath = $signedReleaseApk
-        }
-        elseif (Test-Path $unsignedReleaseApk) {
-            $ApkPath = $unsignedReleaseApk
-        }
-        else {
-            $ApkPath = $signedReleaseApk
-        }
+        $releaseDir = "android/app/build/outputs/apk/release"
+        # Prefer arm64 split APK, then universal, then unsigned
+        $candidates = @(
+            "$releaseDir/app-arm64-v8a-release.apk",
+            "$releaseDir/app-release.apk",
+            "$releaseDir/app-release-unsigned.apk",
+            "$releaseDir/app-armeabi-v7a-release.apk"
+        )
+        $ApkPath = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+        if (-not $ApkPath) { $ApkPath = "$releaseDir/app-arm64-v8a-release.apk" }
+    } elseif (-not $Release) {
+        $debugDir = "android/app/build/outputs/apk/debug"
+        $candidates = @(
+            "$debugDir/app-arm64-v8a-debug.apk",
+            "$debugDir/app-debug.apk",
+            "$debugDir/app-armeabi-v7a-debug.apk"
+        )
+        $ApkPath = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+        if (-not $ApkPath) { $ApkPath = "$debugDir/app-debug.apk" }
     }
+}
+
+# Resolve APK path even when not rebuilding
+if ($Release -and $ApkPath -eq "android/app/build/outputs/apk/debug/app-debug.apk") {
+    $releaseDir = "android/app/build/outputs/apk/release"
+    $candidates = @(
+        "$releaseDir/app-arm64-v8a-release.apk",
+        "$releaseDir/app-release.apk",
+        "$releaseDir/app-armeabi-v7a-release.apk"
+    )
+    $ApkPath = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+    if (-not $ApkPath) { $ApkPath = "$releaseDir/app-arm64-v8a-release.apk" }
+} elseif (-not $Release -and $ApkPath -eq "android/app/build/outputs/apk/debug/app-debug.apk") {
+    $debugDir = "android/app/build/outputs/apk/debug"
+    $candidates = @(
+        "$debugDir/app-arm64-v8a-debug.apk",
+        "$debugDir/app-debug.apk",
+        "$debugDir/app-armeabi-v7a-debug.apk"
+    )
+    $ApkPath = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+    if (-not $ApkPath) { $ApkPath = "$debugDir/app-debug.apk" }
 }
 
 if (-not (Test-Path $ApkPath)) {
@@ -96,23 +140,11 @@ if (-not (Test-Path $ApkPath)) {
 }
 
 $resolvedDeviceId = Resolve-DeviceId -RequestedDeviceId $DeviceId
-$stamp = Get-Date -Format "yyyyMMdd-HHmmss"
-$remoteName = "$RemoteNamePrefix-$stamp.apk"
-$remotePath = "/sdcard/Download/$remoteName"
 
 Write-Host "Using device: $resolvedDeviceId"
-Write-Host "Local APK: $ApkPath"
-Write-Host "Remote APK: $remotePath"
+Write-Host "Installing APK: $ApkPath"
 
-adb -s "$resolvedDeviceId" push $ApkPath $remotePath | Out-Host
-adb -s "$resolvedDeviceId" shell "ls -la $remotePath" | Out-Host
-
-# Trigger media scan so file managers can refresh quicker.
-adb -s "$resolvedDeviceId" shell am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d "file://$remotePath" | Out-Host
-
-# Open Android package installer directly on the copied APK.
-adb -s "$resolvedDeviceId" shell am start -n com.google.android.packageinstaller/com.android.packageinstaller.InstallStart -a android.intent.action.VIEW -d "file://$remotePath" -t "application/vnd.android.package-archive" --grant-read-uri-permission | Out-Host
+adb -s "$resolvedDeviceId" install -r $ApkPath | Out-Host
 
 Write-Host ""
-Write-Host "Installer launched. Confirm installation on the tablet screen."
-Write-Host "If needed, open manually: $remotePath"
+Write-Host "Installation complete."
