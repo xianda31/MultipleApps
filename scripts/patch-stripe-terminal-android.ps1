@@ -21,9 +21,12 @@ val isSimulated = call.getString("type") == TerminalConnectTypes.Simulated.webEv
 if ($content -match [regex]::Escape($buggy)) {
     $content = $content -replace [regex]::Escape($buggy), $fixed
     Set-Content $file $content -NoNewline
-    Write-Host "✅ Patch appliqué : BluetoothDiscoveryConfiguration(isSimulated) corrigé" -ForegroundColor Green
+    Write-Host "OK Patch 1 applique : BluetoothDiscoveryConfiguration(isSimulated)" -ForegroundColor Green
 } elseif ($content -match 'val isSimulated = call.getString') {
-    Write-Host "✅ Patch déjà appliqué" -ForegroundColor Yellow
+    Write-Host "OK Patch 1 deja applique" -ForegroundColor Yellow
 } else {
-    Write-Host "⚠️  Pattern non trouvé — vérifier manuellement la version du plugin" -ForegroundColor Yellow
+    Write-Host "WARN Patch 1 : Pattern non trouve - verifier manuellement la version du plugin" -ForegroundColor Yellow
 }
+
+# Patch 2 SUPPRIME: updatePaymentIntent(false) casse confirmPaymentIntent avec lecteur physique
+# (erreur "card_present[emv_data] required") — NE PAS APPLIQUER avec WP3 physique

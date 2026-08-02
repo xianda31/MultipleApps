@@ -137,7 +137,9 @@ export class AppComponent implements OnInit, OnDestroy {
     this.paymentRequestSub = null;
     this.stopHeartbeat();
     await this.upsertTPESession('disconnected', '');
-    await StripeTerminal.disconnectReader().catch(() => {});
+    if (this.capacitorInitialized) {
+      await StripeTerminal.disconnectReader().catch(() => {});
+    }
     await signOut();
     this.state = 'login';
     this.readerLabel = '';
@@ -157,7 +159,7 @@ export class AppComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
     try {
       await this.initCapacitor();
-      // Nettoie toute session résiduelle après que le SDK est initialisé
+      // Clean up any residual session -- SDK is guaranteed initialized here
       await StripeTerminal.disconnectReader().catch(() => {});
       await this.upsertTPESession('scanning', '');
 
@@ -377,7 +379,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
       const discoverOpts: any = {
         type: environment.tpe_simulated
-          ? TerminalConnectTypes.Internet
+          ? TerminalConnectTypes.Bluetooth  // simulated BLE (WPC30SIMULATOR) -- avoids S700 TLV bug
           : TerminalConnectTypes.Bluetooth,
         locationId: environment.tpe_location_id,
       };

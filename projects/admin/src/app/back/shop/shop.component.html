@@ -4,10 +4,26 @@
 
     <!-- Header bar -->
     <div class="shop-header-bar">
-      <span class="fw-semibold">   {{onlineMode ? 'Boutique en ligne' : 'Vente aux adhérents'}}</span>
+      <span class="fw-semibold">{{onlineMode ? 'Boutique en ligne' : 'Vente aux adhérents'}}</span>
+      @if (tpePaymentActive && !onlineMode) {
+      <div class="tpe-header-center">
+        <img src="/wisepad-3.jpg" class="tpe-reader-img"
+          [class.state-connected]="tpeReaderConnected"
+          [class.state-scanning]="!tpeReaderConnected && tpeReaderScanning"
+          [class.state-disconnected]="!tpeReaderConnected && !tpeReaderScanning"
+          [title]="tpeReaderConnected ? tpeReaderLabel : (tpeReaderScanning ? 'Recherche du TPE…' : 'Cliquer pour réessayer')"
+          [style.cursor]="!tpeRemoteMode && !tpeReaderConnected && !tpeReaderScanning ? 'pointer' : 'default'"
+          (click)="!tpeRemoteMode && !tpeReaderConnected && !tpeReaderScanning && onRetryConnect()" alt="WisePad 3">
+        @if (!tpeRemoteMode && tpeReaderConnected) {
+        <button type="button" class="btn-tpe-disconnect-xs" (click)="onDisconnectReader()" title="Déconnecter">
+          <i class="bi bi-x-circle"></i>
+        </button>
+        }
+      </div>
+      }
       <div *ngIf="!onlineMode" class="d-flex align-items-center gap-2 ms-auto">
         <input type="date" class="form-control form-control-sm" style="max-width:160px;"
-          (ngModelChange)="date_change($event)" [(ngModel)]="session.date"          >
+          (ngModelChange)="date_change($event)" [(ngModel)]="session.date">
       </div>
     </div>
 
@@ -73,84 +89,52 @@
         </div>
         }
 
-        @if (tpePaymentActive && !onlineMode) {
-        <div class="tpe-status-card"
-          [class.connected]="tpeReaderConnected"
-          [class.scanning]="!tpeReaderConnected && tpeReaderScanning">
-          <div class="tpe-status-label">
-            @if (tpeReaderConnected) {
-            <i class="bi bi-terminal text-success"></i>
-            <span class="fw-semibold text-success">{{ tpeReaderLabel }}</span>
-            <i class="bi bi-check-circle-fill text-success fs-6 tpe-heartbeat"></i>
-            } @else if (tpeReaderScanning) {
-            <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
-            <span class="fw-semibold text-warning ms-1">Recherche du TPE…</span>
-            } @else {
-            <i class="bi bi-phone text-danger"></i>
-            <span class="fw-semibold text-danger">Pas de TPE connecté</span>
-            }
-          </div>
-          @if (!tpeRemoteMode && !tpeReaderConnected && !tpeReaderScanning) {
-          <button type="button" class="btn-tpe-action" (click)="onRetryConnect()">
-            <i class="bi bi-arrow-clockwise me-1"></i>Réessayer
-          </button>
-          } @else if (!tpeRemoteMode && tpeReaderConnected) {
-          <button type="button" class="btn-tpe-action disconnect" (click)="onDisconnectReader()">
-            <i class="bi bi-x-circle me-1"></i>Déconnecter
-          </button>
-          }
-        </div>
-        }
-
         <div *ngIf="buyer || onlineMode">
-          <app-cart [message]="message" [onlineMode]="onlineMode" [canEditPrice]="canEditPrice" [members]="members" [onlinePaymentActive]="onlinePaymentActive"
-            [tpePaymentActive]="tpePaymentActive"
-            [readerConnected]="tpeReaderConnected"
-            [tpePaymentInProgress]="tpePaymentInProgress"
-            [checkoutDisabled]="membershipCheckoutBlocked"
-            [checkoutWarning]="membershipCheckoutWarning"
-            (complete)="cart_confirmed()" (stripeCheckout)="on_stripe_checkout()"
-            (tpePayment)="onPayByCard()"
-            (assetUsableChange)="asset_amount = $event"
-            (debtAmountChange)="debt_amount = $event">
+          <app-cart [message]="message" [onlineMode]="onlineMode" [canEditPrice]="canEditPrice" [members]="members"
+            [onlinePaymentActive]="onlinePaymentActive" [tpePaymentActive]="tpePaymentActive"
+            [readerConnected]="tpeReaderConnected" [tpePaymentInProgress]="tpePaymentInProgress"
+            [checkoutDisabled]="membershipCheckoutBlocked" [checkoutWarning]="membershipCheckoutWarning"
+            (complete)="cart_confirmed()" (stripeCheckout)="on_stripe_checkout()" (tpePayment)="onPayByCard()"
+            (assetUsableChange)="asset_amount = $event" (debtAmountChange)="debt_amount = $event">
           </app-cart>
         </div>
 
       </div>
 
       <!-- Panel: Products (scrollable) -->
-      <div class="shop-panel-products" [class.pe-none]="onlineMode && !onlinePaymentActive" [class.opacity-50]="onlineMode && !onlinePaymentActive">
+      <div class="shop-panel-products" [class.pe-none]="onlineMode && !onlinePaymentActive"
+        [class.opacity-50]="onlineMode && !onlinePaymentActive">
         <div *ngFor="let products of products_array | keyvalue | moveToEnd:'LIC'">
           <div class="shop-product-grid">
             <div *ngFor="let product of products.value">
               <ng-container *ngIf="product.active && (!onlineMode || product.stripeEnabled)">
-              <div [style]="product_gradient_style(product)" class="shop-product-card"
-                (click)="on_product_click(product)"
-                [title]="product.description && product.description !== product.name ? product.description : ''">
+                <div [style]="product_gradient_style(product)" class="shop-product-card"
+                  (click)="on_product_click(product)"
+                  [title]="product.description && product.description !== product.name ? product.description : ''">
 
-                <div class="shop-product-header">
-                  <div class="shop-product-glyph">
-                    @if ((getProductGlyph(product))?.startsWith('bi-')) {
-                    <i [class]="'bi ' + getProductGlyph(product)"></i>
-                    } @else {
-                    {{getProductGlyph(product)}}
+                  <div class="shop-product-header">
+                    <div class="shop-product-glyph">
+                      @if ((getProductGlyph(product))?.startsWith('bi-')) {
+                      <i [class]="'bi ' + getProductGlyph(product)"></i>
+                      } @else {
+                      {{getProductGlyph(product)}}
+                      }
+                    </div>
+                    <div class="shop-product-name">{{product.name}}</div>
+                  </div>
+
+                  <div class="shop-product-price-row">
+                    @if (product.paired) {
+                    <div class="shop-paired-badge">
+                      <i class="bi bi-people-fill"></i>
+                    </div>
                     }
+                    <div class="shop-product-price">
+                      <span class="price">{{product.price.toFixed(2)}}€</span>
+                    </div>
                   </div>
-                  <div class="shop-product-name">{{product.name}}</div>
-                </div>
 
-                <div class="shop-product-price-row">
-                  @if (product.paired) {
-                  <div class="shop-paired-badge">
-                    <i class="bi bi-people-fill"></i>
-                  </div>
-                  }
-                  <div class="shop-product-price">
-                    <span class="price">{{product.price.toFixed(2)}}€</span>
-                  </div>
                 </div>
-
-              </div>
               </ng-container>
             </div>
           </div>

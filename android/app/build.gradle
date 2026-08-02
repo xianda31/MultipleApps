@@ -35,6 +35,11 @@ android {
     }
 
     buildTypes {
+        debug {
+            applicationIdSuffix ".debug"
+            resValue "string", "app_name", "ppTPE TEST"
+            resValue "string", "title_activity_main", "ppTPE TEST"
+        }
         release {
             if (hasKeystoreProperties) {
                 signingConfig signingConfigs.release
