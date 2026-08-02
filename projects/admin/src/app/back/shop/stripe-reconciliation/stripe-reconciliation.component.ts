@@ -386,7 +386,7 @@ export class StripeReconciliationComponent {
           .join(', ') || this.formatAmount(grossCents);
 
         const paymentChannel = st?.source === 'terminal' ? 'vente par TPE' : 'vente en ligne';
-        const normalizedDetails = details.replace(/^vendu par\s+/i, '').trim();
+        const normalizedDetails = st?.source === 'terminal' ? '' : details.replace(/^vendu par\s+/i, '').trim();
         const isRedundantDetails =
           (paymentChannel === 'vente en ligne' && normalizedDetails.toLowerCase() === 'en ligne') ||
           (paymentChannel === 'vente par TPE' && normalizedDetails.toLowerCase() === 'tpe');
