@@ -225,6 +225,111 @@ function validateWebhookSignature(body: string, signature: string): any {
   return stripe.webhooks.constructEvent(body, signature, WEBHOOK_SECRET);
 }
 
+async function getTerminalReceiptAttachment(paymentIntentId: string): Promise<{ receiptUrl: string | null; attachment: { filename: string; content: string; contentType: string } | null }> {
+  const charges = await stripe.charges.list({ payment_intent: paymentIntentId, limit: 1 });
+  const receiptUrl = charges.data[0]?.receipt_url || null;
+  if (!receiptUrl) return { receiptUrl: null, attachment: null };
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    const response = await fetch(receiptUrl, { signal: controller.signal });
+    clearTimeout(timeout);
+    if (!response.ok) return { receiptUrl, attachment: null };
+
+    const contentType = response.headers.get('content-type') || 'text/html; charset=UTF-8';
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const filename = contentType.includes('pdf')
+      ? `recu-stripe-${paymentIntentId}.pdf`
+      : `recu-stripe-${paymentIntentId}.html`;
+    return { receiptUrl, attachment: { filename, content: buffer.toString('base64'), contentType } };
+  } catch (error) {
+    console.error('[stripe-mail] Unable to fetch terminal receipt attachment:', error);
+    return { receiptUrl, attachment: null };
+  }
+}
+
+async function sendTerminalConfirmationEmail(pi: Stripe.PaymentIntent): Promise<void> {
+  const recipient = (pi.metadata?.['buyerEmail'] || '').trim().toLowerCase();
+  if (!recipient) {
+    console.log('[stripe-mail] No buyerEmail in PaymentIntent metadata — terminal email skipped', pi.id);
+    return;
+  }
+  if (!STRIPE_TRANSACTION_TABLE) {
+    console.error('[stripe-mail] STRIPE_TRANSACTION_TABLE_NAME not configured — terminal email skipped');
+    return;
+  }
+
+  const current = await docClient.send(new GetCommand({ TableName: STRIPE_TRANSACTION_TABLE, Key: { id: pi.id } }));
+  const existing = current.Item as any | undefined;
+  if (!existing) {
+    console.log('[stripe-mail] Terminal transaction not yet recorded, email skipped for', pi.id);
+    return;
+  }
+  if (existing.confirmationEmailSentAt) {
+    console.log('[stripe-mail] Terminal confirmation email already sent for', pi.id);
+    return;
+  }
+
+  const claimAt = new Date().toISOString();
+  try {
+    await docClient.send(new UpdateCommand({
+      TableName: STRIPE_TRANSACTION_TABLE,
+      Key: { id: pi.id },
+      UpdateExpression: 'SET confirmationEmailProcessingAt = :now, updatedAt = :now',
+      ConditionExpression: 'attribute_not_exists(confirmationEmailSentAt) AND attribute_not_exists(confirmationEmailProcessingAt)',
+      ExpressionAttributeValues: { ':now': claimAt },
+    }));
+  } catch (error: any) {
+    console.log('[stripe-mail] Terminal email claim skipped for', pi.id, '-', error?.message || error);
+    return;
+  }
+
+  const memberName = String(pi.metadata?.['memberName'] || '');
+  const amount = formatAmount(pi.amount || 0);
+  const currency = String(pi.currency || 'eur').toUpperCase();
+  const { receiptUrl, attachment } = await getTerminalReceiptAttachment(pi.id);
+  const subject = `Confirmation de votre achat - ${amount}`;
+
+  const bodyHtml = buildPurchaseConfirmationMailTemplate(
+    { memberName, amount, currency, receiptUrl },
+    resolvePurchaseEmailTemplateOptions(),
+  );
+
+  const rawEmail = createRawEmail(
+    DEFAULT_FROM,
+    [recipient],
+    subject,
+    bodyHtml,
+    attachment ? [attachment] : [],
+    DEFAULT_REPLY_TO,
+  );
+
+  try {
+    await ses.send(new SendRawEmailCommand({
+      RawMessage: { Data: Buffer.from(rawEmail) },
+      Destinations: [recipient],
+      Source: DEFAULT_FROM,
+    }));
+    await docClient.send(new UpdateCommand({
+      TableName: STRIPE_TRANSACTION_TABLE,
+      Key: { id: pi.id },
+      UpdateExpression: 'SET confirmationEmailSentAt = :now, updatedAt = :now REMOVE confirmationEmailProcessingAt, confirmationEmailError',
+      ExpressionAttributeValues: { ':now': new Date().toISOString() },
+    }));
+    console.log('[stripe-mail] Terminal confirmation email sent to', recipient, 'for', pi.id);
+  } catch (error: any) {
+    const errorMessage = error?.message || String(error);
+    console.error('[stripe-mail] Failed to send terminal confirmation email for', pi.id, errorMessage);
+    await docClient.send(new UpdateCommand({
+      TableName: STRIPE_TRANSACTION_TABLE,
+      Key: { id: pi.id },
+      UpdateExpression: 'SET confirmationEmailError = :error, updatedAt = :now REMOVE confirmationEmailProcessingAt',
+      ExpressionAttributeValues: { ':error': errorMessage, ':now': new Date().toISOString() },
+    })).catch(() => undefined);
+  }
+}
+
 /**
  * Enregistre le paiement Stripe dans StripeTransaction DynamoDB
  * Rôle unique : persistance des données brutes. Zéro logique métier.
@@ -372,6 +477,7 @@ export async function handler(event: any): Promise<any> {
         console.log(`PaymentIntent réussi: ${paymentIntent.id}, source: ${paymentIntent.metadata?.['source']}`);
         if (paymentIntent.metadata?.['source'] === 'terminal') {
           await recordTerminalTransaction(paymentIntent);
+          await sendTerminalConfirmationEmail(paymentIntent);
         }
         break;
       }

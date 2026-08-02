@@ -11,6 +11,7 @@ export interface CardPaymentParams {
   season: string;
   date: string;
   buyerMemberId?: string;
+  buyerEmail?: string;
 }
 
 export interface CardPaymentCallbacks {
