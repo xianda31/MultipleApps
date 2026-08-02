@@ -1372,7 +1372,7 @@ async function handleRefundableCharges(event: any): Promise<any> {
       return {
         chargeId: charge?.id || '',
         stripeTag,
-        customerName: fullCharge.billing_details?.name || null,
+        customerName: fullCharge.billing_details?.name || meta['memberName'] || null,
         amountCents: fullCharge.amount,
         feeCents: bt.fee || 0,
         netCents: bt.net || (fullCharge.amount - (bt.fee || 0)),
