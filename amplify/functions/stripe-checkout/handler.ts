@@ -1190,7 +1190,7 @@ async function handleTerminalPaymentIntent(event: any): Promise<any> {
     return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Invalid JSON body' }) };
   }
 
-  const { action, paymentIntentId: cancelId, amountCents, memberName, buyerMemberId, season, date, bookEntryId } = body;
+  const { action, paymentIntentId: cancelId, amountCents, memberName, buyerMemberId, buyerEmail, season, date, bookEntryId } = body;
 
   // ── Action : annulation d'un PaymentIntent en attente ──
   if (action === 'cancel') {
@@ -1228,6 +1228,7 @@ async function handleTerminalPaymentIntent(event: any): Promise<any> {
       metadata: {
         memberName: memberName.trim(),
         buyerMemberId: buyerMemberId || '',
+        buyerEmail: buyerEmail || '',
         season: season || '',
         date: date || '',
         stripeTag,
@@ -1371,7 +1372,7 @@ async function handleRefundableCharges(event: any): Promise<any> {
       return {
         chargeId: charge?.id || '',
         stripeTag,
-        customerName: fullCharge.billing_details?.name || null,
+        customerName: fullCharge.billing_details?.name || meta['memberName'] || null,
         amountCents: fullCharge.amount,
         feeCents: bt.fee || 0,
         netCents: bt.net || (fullCharge.amount - (bt.fee || 0)),

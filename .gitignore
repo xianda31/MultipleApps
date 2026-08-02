@@ -79,3 +79,4 @@ mobile/**/android/app/build/
 mobile/**/android/build/
 amplify_outputs*
 amplifyconfiguration*
+scripts/.pptpe-outputs/

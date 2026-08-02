@@ -385,11 +385,11 @@ export class StripeReconciliationComponent {
           .map(op => op.label)
           .join(', ') || this.formatAmount(grossCents);
 
-        const paymentChannel = st?.source === 'terminal' ? 'vente TPE' : 'vente en ligne';
-        const normalizedDetails = details.replace(/^vendu par\s+/i, '').trim();
+        const paymentChannel = st?.source === 'terminal' ? 'vente par TPE' : 'vente en ligne';
+        const normalizedDetails = st?.source === 'terminal' ? '' : details.replace(/^vendu par\s+/i, '').trim();
         const isRedundantDetails =
           (paymentChannel === 'vente en ligne' && normalizedDetails.toLowerCase() === 'en ligne') ||
-          (paymentChannel === 'vente TPE' && normalizedDetails.toLowerCase() === 'tpe');
+          (paymentChannel === 'vente par TPE' && normalizedDetails.toLowerCase() === 'tpe');
         const cartSummary = `${paymentChannel}${normalizedDetails && !isRedundantDetails ? ' — ' + normalizedDetails : ''}`;
 
         const line: PayoutLine = {
@@ -416,7 +416,7 @@ export class StripeReconciliationComponent {
 
       const abandonedLines = abandonedWithoutBookEntry.map(st => {
         const grossCents = st.amountCents || 0;
-        const cartSummary = `Paiement abandonné (${st.source === 'terminal' ? 'TPE' : 'en ligne'})`;
+        const cartSummary = `Paiement abandonné (${st.source === 'terminal' ? 'par TPE' : 'en ligne'})`;
         const abandonedAtTime = st.abandonedAt ? new Date(st.abandonedAt).toLocaleString('fr-FR') : 'inconnu';
 
         const line: PayoutLine = {

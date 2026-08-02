@@ -284,6 +284,7 @@ const schema = a.schema({
     confirmationEmailError: a.string(),
     stripeMeta: a.json(),                    // season, date, memberName, amounts...
     processed: a.boolean(),                  // true après confirmation frontend
+    source: a.string(),                      // 'terminal' pour paiement TPE, absent pour Checkout
     amountFeesCents: a.integer(),            // frais Stripe prélevés (pour Phase 2 reconciliation)
     amountNetCents: a.integer(),             // montant net reçu = amountCents - amountFeesCents
     reconciledAt: a.string(),                // date/heure de la réconciliation avec payout Stripe

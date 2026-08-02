@@ -760,6 +760,7 @@ export class ShopComponent implements OnInit, OnDestroy {
       amountCents,
       memberName,
       buyerMemberId: this.buyer.id,
+      buyerEmail: this.buyer.email || '',
       season: this.session.season,
       date: this.session.date,
     };
