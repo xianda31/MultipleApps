@@ -1,3 +1,42 @@
+<ng-container *ngIf="debugMode">
+  <div class="container py-3">
+    <div class="d-flex align-items-center gap-3 mb-3">
+      <h6 class="mb-0 text-primary fw-bold">Diagnostic FFB — pas à pas</h6>
+      <button class="btn btn-outline-secondary btn-sm" (click)="debugMode = false">Affichage normal</button>
+      <button class="btn btn-outline-danger btn-sm" (click)="resetDebug()">Reset</button>
+    </div>
+    <div class="d-flex align-items-center gap-2 mb-3">
+      <button class="btn btn-primary btn-sm"
+        [disabled]="debugRunning || debugStep >= 5"
+        (click)="runNextDebugStep()">
+        {{ debugStep === 0 ? '▶ Démarrer' : '▶ Étape suivante' }}
+      </button>
+      <button class="btn btn-success btn-sm"
+        [disabled]="debugRunning"
+        (click)="runAllDebugSteps()">
+        ▶▶ Tout enchainer
+      </button>
+      <span class="badge bg-secondary">{{ debugStep }} / 5</span>
+      <span *ngIf="debugRunning" class="text-muted small fst-italic">appel en cours…</span>
+    </div>
+    <div class="mb-2 small text-muted" *ngIf="debugStep === 0">
+      Étapes : (1) getPreviousSeasons → (2) getEntity(ligue) → (3) getCompetitionsByOrg → (4) getCompetitionPhases → (5) getSessionRanking
+    </div>
+
+    <div *ngFor="let step of debugStepResults" class="card mb-3 shadow-sm">
+      <div class="card-header py-1 small fw-bold text-white"
+        [class.bg-success]="step.status === 'ok'"
+        [class.bg-danger]="step.status === 'error'">
+        {{ step.label }}
+      </div>
+      <div class="card-body p-2">
+        <pre class="small mb-0" style="max-height: 500px; overflow: auto; white-space: pre-wrap;">{{ step.data | json }}</pre>
+      </div>
+    </div>
+  </div>
+</ng-container>
+
+<ng-container *ngIf="!debugMode">
 <div *ngIf="data_ready">
     <div class="container-fluid py-3">
         <div class="row">
@@ -245,3 +284,4 @@
         </ng-template>
     </div>
 </div>
+</ng-container>

@@ -327,9 +327,11 @@ export const handler: Handler = async (event) => {
       case "results/search":
         {
           const params = new URLSearchParams();
+          params.append("location[]", "ftf"); // ftf = face-to-face (présentiel) ; exclut les tournois en ligne
           params.set("competitionType", (queryParams.competitionType as string) || "federal");
           params.set("season", (queryParams.season as string) || "");
-          if (queryParams.organizationId) params.set("organizationId", queryParams.organizationId as string);
+          // FFB uses groupmentId for ligue/comité entities (not organizationId)
+          if (queryParams.organizationId) params.set("groupmentId", queryParams.organizationId as string);
           params.set("currentPage", (queryParams.currentPage as string) || "1");
           params.set("maxPerPage", (queryParams.maxPerPage as string) || "80");
           ffbEndpoint = `results/search/?${params.toString()}`;
@@ -389,7 +391,24 @@ export const handler: Handler = async (event) => {
         if (!queryParams.session_id) {
           return httpResponse(400, { error: "Missing session_id" });
         }
-        ffbEndpoint = `results/sessions/${queryParams.session_id}/ranking`;
+        {
+          const params = new URLSearchParams();
+          params.set('paginate', 'true');
+          if (queryParams.simultaneous_id) params.set('simultaneousId', queryParams.simultaneous_id as string);
+          ffbEndpoint = `results/sessions/${queryParams.session_id}/ranking?${params.toString()}`;
+        }
+        break;
+
+      case "group-sessions":
+        if (!queryParams.group_id) {
+          return httpResponse(400, { error: "Missing group_id" });
+        }
+        {
+          const params = new URLSearchParams();
+          params.append("context[]", "result_status");
+          params.append("context[]", "result_data");
+          ffbEndpoint = `competitions/groups/${queryParams.group_id}/groupSessions?${params.toString()}`;
+        }
         break;
 
       case "competition-phases":

@@ -10,7 +10,7 @@ import { UIConfiguration } from '../../common/interfaces/ui-conf.interface';
 import { Member } from '../../common/interfaces/member.interface';
 import { MembersService } from '../../common/services/members.service';
 import { FileService } from '../../common/services/files.service';
-import { from, of, catchError, concat, tap, forkJoin, map, switchMap } from 'rxjs';
+import { from, of, catchError, concat, tap, forkJoin, map, switchMap, firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-competitions',
@@ -49,6 +49,16 @@ export class CompetitionsComponent {
   private _members: Member[] = [];
   // nombre de jours pour considérer une calculation_date comme récente
   private readonly RECENT_CALCULATION_DAYS: number = 30;
+
+  // ── Debug step-by-step ─────────────────────────────────────
+  debugMode = false;
+  debugStep = 0;
+  debugRunning = false;
+  debugStepResults: Array<{ label: string; data: any; status: 'ok' | 'error' }> = [];
+  private _debugSeasonId = '';
+  private _debugOrgId = 0;
+  private _debugCompetitionId = 0;
+  private _debugSessionIds: number[] = [];
 
 
   constructor(
@@ -191,8 +201,8 @@ export class CompetitionsComponent {
           console.warn('[CompetitionsComponent] National organization not found, fallback to all preferred organizations');
         }
 
-        // Keep organizations map usable for existing display helpers.
-        this.organizations = organizationsToLoad.map((entity) => ({
+        // all preferred entities needed for get_organization_label lookups
+        this.organizations = entities.map((entity) => ({
           id: entity.id,
           label: entity.label,
           type: entity.type,
@@ -229,16 +239,11 @@ export class CompetitionsComponent {
     ).subscribe({
       next: ({ seasonId, competitions, selectedSeason }) => {
         console.log('[CompetitionsComponent] getCompetitions response:', competitions);
-        console.log('[CompetitionsComponent] competitions[22]:', competitions[22]);
         this.selectedCompetitionSeasonId = seasonId;
         this.competitions = competitions;
         if (selectedSeason) {
           this.selectedSeasonLabel = selectedSeason.label;
           this.current_season = selectedSeason.label;
-        }
-        // Mettre à jour la cible de debug si competitions[22] est connu
-        if (competitions[22]) {
-          this.competitionService.traceCompetitionIds = [competitions[22].id];
         }
         this.update_results();
       },
@@ -378,24 +383,15 @@ export class CompetitionsComponent {
   get_organization_label(id: number): string {
     const org = this.organizations.find(o => o.id === id);
     if (!org) return 'Inconnu';
-    // Cherche le niveau correspondant à l'organisation
-    const orgLabel = org.label;
-    let niveau: string | undefined = undefined;
-    for (const [level, label] of Object.entries(this.preferred_organization_labels)) {
-      if (label === orgLabel) {
-        niveau = level;
-        break;
-      }
-    }
+    // preferred_entities order matches preferredLabels: [national, ligue, comite]
+    const levelKeys = ['national', 'ligue', 'comite'] as const;
+    const idx = this.preferred_entities.findIndex(e => e.id === id);
+    const niveau = idx >= 0 ? levelKeys[idx] : undefined;
     switch (niveau) {
-      case 'comite':
-        return 'Résultats Comité';
-      case 'ligue':
-        return 'Résultats Finale de Ligue';
-      case 'national':
-        return 'Résultats Finale Nationale';
-      default:
-        return 'Résultats ' + org.label;
+      case 'comite':   return 'Comité';
+      case 'ligue':    return 'Finale de Ligue';
+      case 'national': return 'Finale Nationale';
+      default:         return org.label;
     }
   }
 
@@ -415,7 +411,7 @@ export class CompetitionsComponent {
 
   getDisplayedPlayers(players: Player[]): Player[] {
     if (!this.show_full_team) {
-      return players.filter(p => this.isMember(p));
+      return players.filter(p => p.is_member);
     }
     return players;
   }
@@ -447,6 +443,122 @@ export class CompetitionsComponent {
   /**
    * Récupère les compétitions récentes groupées par division
    */
+  resetDebug(): void {
+    this.debugStep = 0;
+    this.debugStepResults = [];
+    this._debugSeasonId = '';
+    this._debugOrgId = 0;
+    this._debugCompetitionId = 0;
+    this._debugSessionIds = [];
+  }
+
+  async runNextDebugStep(): Promise<void> {
+    this.debugRunning = true;
+    this.debugStep++;
+    try {
+      switch (this.debugStep) {
+        case 1: {
+          const seasons = await firstValueFrom(this.competitionService.getPreviousSeasons());
+          const idx = this.one_year_back ? 1 : 0;
+          this._debugSeasonId = String(seasons[idx]?.id ?? seasons[0]?.id ?? '');
+          this._pushDebugStep('Step 1 — getPreviousSeasons', {
+            count: seasons.length,
+            seasons: seasons.map(s => ({ id: s.id, label: s.label })),
+            one_year_back: this.one_year_back,
+            selectedIndex: idx,
+            selectedSeasonId: this._debugSeasonId,
+          }, 'ok');
+          break;
+        }
+        case 2: {
+          const ligueLabel = this.preferred_organization_labels.ligue;
+          const entities = await firstValueFrom(this.competitionService.getEntity(ligueLabel));
+          const entity = entities[0] ?? null;
+          this._debugOrgId = entity?.id ?? 0;
+          this._pushDebugStep(`Step 2 — getEntity('${ligueLabel}')`, {
+            found: entities.length,
+            entity: entity ? { id: entity.id, label: entity.label, ffbCode: entity.ffbCode } : null,
+            selectedOrgId: this._debugOrgId,
+          }, entity ? 'ok' : 'error');
+          break;
+        }
+        case 3: {
+          const comps = await firstValueFrom(this.competitionService.getCompetitionsByOrganization(this._debugSeasonId, String(this._debugOrgId)));
+          const target = comps.find(c => c.label === 'Mixte /2' && c.division === 'Division de Ligue') ?? comps.find(c => c.label === 'Mixte /2') ?? null;
+          this._debugCompetitionId = target?.id ?? 0;
+          this._pushDebugStep(`Step 3 — getCompetitionsByOrganization(season=${this._debugSeasonId}, org=${this._debugOrgId})`, {
+            total: comps.length,
+            allCompetitions: comps.map(c => ({ id: c.id, label: c.label, division: c.division })),
+            target_Mixte2: target ? { id: target.id, label: target.label } : 'NOT FOUND',
+            selectedCompId: this._debugCompetitionId,
+          }, target ? 'ok' : 'error');
+          break;
+        }
+        case 4: {
+          // FFB sequence: results/competitionDivisions/{id}?seasonId=X → groups → competitions/groups/{groupId}/groupSessions → last session.id
+          const stades = await firstValueFrom(this.competitionService.getCompetitionResultsBySeason(
+            String(this._debugCompetitionId), this._debugSeasonId
+          ));
+          const ligueStade = stades.find(s => s.groupement?.id === this._debugOrgId) ?? null;
+          const groupIds: number[] = [];
+          if (ligueStade) {
+            for (const phase of ligueStade.phases) {
+              for (const group of phase.groups) {
+                if (group.id) groupIds.push(group.id);
+              }
+            }
+          }
+          const sessionIds: number[] = [];
+          const groupSessionDetails: any[] = [];
+          for (const groupId of groupIds) {
+            const sessions = await firstValueFrom(this.competitionService.debugGetGroupSessions(groupId));
+            // take the session with the latest date (final séance), not last index (array is not date-sorted)
+            const lastSession = sessions.reduce((best: any, s: any) => {
+              if (!s.date) return best;
+              if (!best || new Date(s.date) > new Date(best.date)) return s;
+              return best;
+            }, null);
+            groupSessionDetails.push({ groupId, sessionCount: sessions.length, groupSessionId: lastSession?.id ?? null, sessionId: lastSession?.session?.id ?? null, lastSessionDate: lastSession?.date ?? null });
+            if (lastSession?.session?.id) sessionIds.push(lastSession.session.id);
+          }
+          this._debugSessionIds = sessionIds;
+          this._pushDebugStep(
+            `Step 4 — competitionDivisions(${this._debugCompetitionId}) → groupSessions`,
+            { stadesTotal: stades.length, ligueStade: ligueStade ? { groupement: ligueStade.groupement, phasesCount: ligueStade.phases.length } : 'NOT FOUND', groupIds, groupSessionDetails, sessionIds },
+            sessionIds.length > 0 ? 'ok' : 'error'
+          );
+          break;
+        }
+        case 5: {
+          const perSession: any[] = [];
+          for (const sid of this._debugSessionIds) {
+            const entries = await firstValueFrom(this.competitionService.debugGetSessionRanking(sid));
+            perSession.push({ sessionId: sid, count: entries.length, sample: entries.slice(0, 3), rank10: entries.find((e: any) => e.rank === 10) ?? null });
+          }
+          this._pushDebugStep(`Step 5 — getSessionRanking (${this._debugSessionIds.length} sessions)`, {
+            sessions: perSession,
+          }, perSession.some(s => s.count > 0) ? 'ok' : 'error');
+          break;
+        }
+      }
+    } catch (err: any) {
+      this._pushDebugStep(`Step ${this.debugStep} — ERREUR`, err?.message ?? String(err), 'error');
+    }
+    this.debugRunning = false;
+  }
+
+  async runAllDebugSteps(): Promise<void> {
+    this.resetDebug();
+    for (let i = 0; i < 5; i++) {
+      await this.runNextDebugStep();
+      if (this.debugStepResults.at(-1)?.status === 'error') break;
+    }
+  }
+
+  private _pushDebugStep(label: string, data: any, status: 'ok' | 'error'): void {
+    this.debugStepResults.push({ label, data, status });
+  }
+
   getRecentCompetitions(): { [division: string]: Array<{ label: string; date: string; organization: string }> } {
     const recentByDivision: { [division: string]: Array<{ label: string; date: string; organization: string }> } = {};
 

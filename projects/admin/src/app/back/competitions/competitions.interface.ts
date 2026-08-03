@@ -3,7 +3,7 @@ import { MemberGender } from '../../common/interfaces/member.interface';
 // Libellés de divisions pour les compétitions
 export const COMPETITION_DIVISIONS: string[] = ['Division de Ligue', 'Expert', 'Performance', 'Challenge', 'Espérance','Interclubs','Autres'];
 export const COMPETITION_DIVISION_LABELS: { [key: string]: string } = {
-  'DN': 'Division de Ligue',
+  'Division de Ligue': 'Division de Ligue',
   'Expert': 'Expert',
   'Performance': 'Performance',
   'Challenge': 'Challenge',
@@ -65,7 +65,8 @@ export interface CompetitionTeam {
   theorical_rank: number;
   is_ic_used: boolean;
   players: Player[];
-    // additional fields for service use
+  // additional fields for service use
+  totalScore?: number;
   pe_pourcentage?: number;
   weighted_rank?: number;
 }
@@ -99,7 +100,8 @@ export interface CompetitionSeason {
 }
 
 export interface Competition_V2 {
-  id: number;
+  id: number;          // item.id — unique per season+division (used for getCompetitionDivisionResults)
+  competitionId: number; // competition.id — template id (used for orgMap lookup)
   label: string;
   division: string;
   stades?: CompetitionResultStade_V2[];
@@ -107,11 +109,13 @@ export interface Competition_V2 {
 
 export interface CompetitionResultGroup_V2 {
   id: number;
+  resultCount: number;
 }
 
 export interface CompetitionResultPhase_V2 {
   label: string;
   hasResult: boolean;
+  simultaneous: boolean;
   groups: CompetitionResultGroup_V2[];
 }
 

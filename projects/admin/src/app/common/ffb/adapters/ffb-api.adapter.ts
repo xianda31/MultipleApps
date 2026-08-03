@@ -170,7 +170,8 @@ export function toCompetitionListFromSearchResponse(payload: unknown): Competiti
     const competition = isRecord(item?.competition) ? item.competition : {};
     const division = isRecord(item?.division) ? item.division : {};
     return {
-      id: asNumber(competition?.id, asNumber(item?.id, 0)), // use stable competition.id, not result-item.id
+      id: asNumber(item?.id, asNumber(competition?.id, 0)), // item.id = unique result entry per season+division (e.g. 41 for Mixte/2 Division de Ligue)
+      competitionId: asNumber(competition?.id, asNumber(item?.id, 0)), // competition template id (e.g. 7 for Mixte/2, for orgMap lookup)
       label: asString(competition?.label, ''),
       division: asString(division?.label, 'Aucune Division'),
     } satisfies Competition_V2;
@@ -202,8 +203,10 @@ export function toCompetitionResultStades(payload: unknown): CompetitionResultSt
         return {
           label: asString(phase?.label, ''),
           hasResult: !!stade?.hasResult,
+          simultaneous: !!phase?.simultaneous,
           groups: groups.map((group: any) => ({
             id: asNumber(group?.id, 0),
+            resultCount: asNumber(group?.resultCount, 0),
           })),
         };
       }),
@@ -220,7 +223,7 @@ export function toCompetitionListFromSearchResponseLegacy(payload: unknown): Com
     const competition = isRecord(item?.competition) ? item.competition : {};
 
     return {
-      id: asNumber(competition?.id, asNumber(item?.id, 0)), // use stable competition.id, not result-item.id
+      id: asNumber(item?.id, asNumber(competition?.id, 0)), // item.id = unique result entry per season+division
       label: asString(competition?.label, asString(item?.label, '')), // v2: label is in item.competition.label
       season_id: 0,
       previous_season_id: null,
@@ -280,6 +283,10 @@ export function toCompetitionTeamList(payload: unknown): CompetitionTeam[] {
 }
 
 export function toSessionRankingList(payload: unknown): SessionRankingEntry[] {
+  // paginate=true returns { items: [...], pagination: {...} }; plain array otherwise
+  if (isRecord(payload) && Array.isArray((payload as any).items)) {
+    return asArray<SessionRankingEntry>((payload as any).items);
+  }
   return asArray<SessionRankingEntry>(payload);
 }
 
@@ -311,8 +318,8 @@ export function sessionRankingToCompetitionTeams(entries: SessionRankingEntry[])
       id: p.id,
       gender: p.gender,
       license_number: String(p.ffbId),
-      firstname: p.firstName,
-      lastname: p.lastName.toUpperCase(),
+      firstname: p.firstName ?? '',
+      lastname: (p.lastName ?? '').toUpperCase(),
       nb_deals_played: sessionsPlayed,
       pp: 0,
       pp_bonus: 0,
@@ -330,6 +337,7 @@ export function sessionRankingToCompetitionTeams(entries: SessionRankingEntry[])
       rank: last.rank,
       theorical_rank: last.theoreticalRank ?? last.rank,
       is_ic_used: false,
+      totalScore: last.totalScore,
       players,
     } as CompetitionTeam;
   });

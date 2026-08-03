@@ -37,6 +37,7 @@ const FFB_ENDPOINTS = {
   organizations: '/api/ffb/v2/organizations',
   finalRanking: '/api/ffb/v2/competition-results',
   sessionRanking: '/api/ffb/v2/session-ranking',
+  groupSessions: '/api/ffb/v2/group-sessions',
   phases: '/api/ffb/v2/competition-phases',
   competitionSearch: '/api/ffb/v2/results/search',
   competitionDivisionResults: '/api/ffb/v2/results/competitionDivisions',
@@ -103,26 +104,39 @@ export class FFB_proxyService {
 
   private async getCompetitionSearchPayload(seasonId: string, organizationId?: string): Promise<unknown> {
     await this.ensureConfigReady();
-    const queryParams: Record<string, string> = {
-      competitionType: 'federal',
-      season: seasonId,
-      currentPage: '1',
-      maxPerPage: '80',
-    };
+    const PER_PAGE = 80;
+    let allItems: any[] = [];
+    let page = 1;
+    let hasNext = true;
 
-    if (organizationId) {
-      queryParams['organizationId'] = organizationId;
+    while (hasNext) {
+      const queryParams: Record<string, string> = {
+        competitionType: 'federal',
+        season: seasonId,
+        currentPage: String(page),
+        maxPerPage: String(PER_PAGE),
+      };
+      if (organizationId) queryParams['organizationId'] = organizationId;
+
+      const restOperation = get({
+        apiName: this.API_NAME,
+        path: this.buildPath(FFB_ENDPOINTS.competitionSearch),
+        options: this.withTraceHeaders({ queryParams }),
+      });
+      const { body } = await restOperation.response;
+      const data = await body.json() as any;
+
+      const items = Array.isArray(data?.items) ? data.items : [];
+      allItems = [...allItems, ...items];
+      hasNext = data?.pagination?.has_next_page === true;
+      page++;
     }
 
-    const restOperation = get({
-      apiName: this.API_NAME,
-      path: this.buildPath(FFB_ENDPOINTS.competitionSearch),
-      options: this.withTraceHeaders({
-        queryParams,
-      })
-    });
-    const { body } = await restOperation.response;
-    return body.json();
+    return { items: allItems };
+  }
+
+  async getCompetitionsSearchRaw(seasonId: string, organizationId?: string): Promise<unknown> {
+    return this.getCompetitionSearchPayload(seasonId, organizationId);
   }
 
   async checkAlive(): Promise<{ alive: boolean; maintenance: boolean; upstreamStatus?: number }> {
@@ -601,34 +615,84 @@ export class FFB_proxyService {
     }
   }
 
-  async getSessionRanking(sessionId: number): Promise<SessionRankingEntry[]> {
+  async getSessionRanking(sessionId: number, simultaneousId?: number): Promise<SessionRankingEntry[]> {
     try {
       await this.ensureConfigReady();
+      const queryParams: Record<string, string> = { session_id: String(sessionId) };
+      if (simultaneousId) queryParams['simultaneous_id'] = String(simultaneousId);
       const restOperation = get({
         apiName: this.API_NAME,
         path: this.buildPath(FFB_ENDPOINTS.sessionRanking),
-        options: this.withTraceHeaders({
-          queryParams: { session_id: String(sessionId) }
-        })
+        options: this.withTraceHeaders({ queryParams })
       });
       const { body } = await restOperation.response;
-      const data = await body.json();
-      console.log(`[FFB] getSessionRanking(${sessionId}): ${Array.isArray(data) ? data.length : '?'} entries`);
+      const data = await body.json() as any;
+      const count = Array.isArray(data) ? data.length : (data?.items?.length ?? 0);
+      console.log(`[FFB] getSessionRanking(${sessionId}${simultaneousId ? `/simult${simultaneousId}` : ''}): ${count} entries`);
       return toSessionRankingList(data);
-    } catch (error) {
-      console.log(`[FFB] getSessionRanking(${sessionId}) failed:`, error);
+    } catch (error: any) {
+      if ((error?.status || error?.statusCode) !== 404) {
+        console.warn(`[FFB] getSessionRanking(${sessionId}) failed:`, error?.message || error);
+      }
       return [];
     }
   }
 
-  async getSessionRankingAsTeams(sessionIds: number[]): Promise<CompetitionTeam[]> {
+  async getSessionRankingAsTeams(sessions: { id: number; simultaneousId: number | null }[]): Promise<CompetitionTeam[]> {
     const allEntries: SessionRankingEntry[] = [];
-    for (const sid of sessionIds) {
-      const entries = await this.getSessionRanking(sid);
+    for (const s of sessions) {
+      // Do NOT pass simultaneousId: calling without it returns the full combined national ranking
+      const entries = await this.getSessionRanking(s.id);
       allEntries.push(...entries);
     }
     return sessionRankingToCompetitionTeams(allEntries);
   }
+  async getGroupSessions(groupId: number): Promise<any[]> {
+    try {
+      await this.ensureConfigReady();
+      const restOperation = get({
+        apiName: this.API_NAME,
+        path: this.buildPath(FFB_ENDPOINTS.groupSessions),
+        options: this.withTraceHeaders({
+          queryParams: { group_id: String(groupId) }
+        })
+      });
+      const { body } = await restOperation.response;
+      const data = await body.json();
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      console.error('[FFB Service] getGroupSessions failed:', error);
+      return [];
+    }
+  }
+
+  // Returns the latest session.id (ranking session) from a group's groupSessions
+  async getSessionIdFromGroup(groupId: number): Promise<number | null> {
+    const r = await this.getSessionWithDateFromGroup(groupId);
+    return r?.id ?? null;
+  }
+
+  // Returns session id + best available date + simultaneousId for a group
+  async getSessionWithDateFromGroup(groupId: number): Promise<{ id: number; date: string | null; simultaneousId: number | null } | null> {
+    const sessions = await this.getGroupSessions(groupId);
+    const latest = sessions.reduce((best: any, s: any) => {
+      if (!s.date) return best;
+      if (!best || new Date(s.date) > new Date(best.date)) return s;
+      return best;
+    }, null);
+    if (!latest?.session?.id) return null;
+    const date: string | null =
+      latest.resultImportDate ??
+      latest.session?.resultImportDate ??
+      latest.date ??
+      null;
+    const simultaneousId: number | null =
+      latest.session?.simultaneousId ??
+      latest.simultaneousId ??
+      null;
+    return { id: latest.session.id, date, simultaneousId };
+  }
+
   async getCompetitionPhases(competition_id: string, organization_id: string): Promise<CompetitionPhases | null> {
     try {
       await this.ensureConfigReady();
