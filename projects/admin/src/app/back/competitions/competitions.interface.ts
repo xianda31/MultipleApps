@@ -149,6 +149,7 @@ export interface Competition {
   cumulated_pe_percentage?: number;
   assigned_division?: string;
   assigned_label?: string;
+  session_id?: number;
 
   division: {
     id: number;

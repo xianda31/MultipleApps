@@ -10,7 +10,7 @@ import { UIConfiguration } from '../../common/interfaces/ui-conf.interface';
 import { Member } from '../../common/interfaces/member.interface';
 import { MembersService } from '../../common/services/members.service';
 import { FileService } from '../../common/services/files.service';
-import { from, of, catchError, concat, tap, forkJoin, map, switchMap, firstValueFrom } from 'rxjs';
+import { from, of, catchError, concat, tap, forkJoin, map, switchMap, firstValueFrom, Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-competitions',
@@ -43,6 +43,8 @@ export class CompetitionsComponent {
   ui_config_loaded!: UIConfiguration;
   no_filter: boolean = false;
   full_regeneration: boolean = false;
+  scanMode: boolean = false;
+  private _resultsSub?: Subscription;
   data_ready: boolean = false;
   trace_mode: boolean = false;
   is_refreshing: boolean = false;
@@ -110,13 +112,13 @@ export class CompetitionsComponent {
       // this.one_year_back = false;  // Default: current season
       this.one_year_back = true;  // for testing: load previous season by default
       
-      // Show spinner before starting to load competitions
+      // Show spinner before starting to load from S3 cache
       this.results_extracted = false;
       this.is_refreshing = true;
       this.spinnerMessage = 'Chargement des compétitions...';
       
-      // Delegate to reloadCompetitionsAndResults to avoid code duplication
-      this.reloadCompetitionsAndResults();
+      // Initial load: cache only — scan FFB is user-initiated via "Scan FFB" button
+      this.update_results();
       
       this.show_full_team = false;
       this.no_filter = false;
@@ -143,23 +145,17 @@ export class CompetitionsComponent {
     const diffMs = Date.now() - d.getTime();
     return diffMs >= 0 && diffMs <= this.RECENT_CALCULATION_DAYS * 24 * 60 * 60 * 1000;
   }
-  onParamsChange(reload:boolean): void {
-    if (reload) {
-      this.results_extracted = false;
-      this.is_refreshing = true;
-      this.spinnerMessage = 'Chargement de la saison...';
-      
-      if (this.back_office_mode) {
-        // Back-office: reload competitions V2 AND results (with FFB recalc)
-        this.full_regeneration = true;
-        this.selectedSeasonLabel = '';  // Reset to trigger full reload
-        this.reloadCompetitionsAndResults();
-        // Note: Do NOT reset full_regeneration here - let it be cleared by update_results() after completion
-      } else {
-        // Front mode: only load results from S3 for the new season (no FFB)
-        this.update_results();
-      }
-    } else {
+  launchScan(): void {
+    this.scanMode = true;
+    this.results_extracted = false;
+    this.is_refreshing = true;
+    this.spinnerMessage = 'Chargement de la saison...';
+    this.selectedSeasonLabel = '';
+    this.reloadCompetitionsAndResults();
+  }
+
+  onParamsChange(reload: boolean): void {
+    if (!reload) {
       this.thresholdsModified = true;
     }
   }
@@ -269,36 +265,26 @@ export class CompetitionsComponent {
 
     const safeSeason = this.current_season.replace(/\//g, '_');
     
-    // Step 1: Create observable to load cached S3 results (silent on 404, it's normal for new seasons)
+    // Step 1: Load cached S3 results
     const cachedResults$ = from(this.fileService.download_json_file('any/resultats' + safeSeason + '.txt', true, false)).pipe(
-      catchError(() => of({} as CompetitionResultsMap)),
-      tap(() => {
-        // Only trigger FFB scan in back-office mode
-        if (this.back_office_mode) {
-          this.is_refreshing = true;
-          this.spinnerMessage = 'Actualisation des données FFB en cours...';
-        }
-      })
+      catchError(() => of({} as CompetitionResultsMap))
     );
 
-    // Step 2: Create observable for fresh results (includes FFB rescan)
+    // Step 2: FFB rescan (only when user explicitly launches via Scan FFB button)
     const freshResults$ = this.competitionService.getCompetionsResults(this.current_season, this.preferred_organization_labels, this.full_regeneration, this.preferred_entities).pipe(
       tap(() => {
-        // FFB scan completed
         this.competitionService.ffbScanDone = true;
         this.is_refreshing = false;
       })
     );
 
-    // Step 3: Emit cached results first, then fresh results (skip FFB scan on return visit)
-    // In front mode, only load from S3 cache (no FFB recalculation)
-    const pipeline$ = !this.back_office_mode
+    // Step 3: cache-only unless scanMode is active
+    const pipeline$ = !this.back_office_mode || !this.scanMode
       ? cachedResults$.pipe(tap(() => { this.is_refreshing = false; }))
-      : this.competitionService.ffbScanDone && !this.full_regeneration
-        ? cachedResults$.pipe(tap(() => { this.is_refreshing = false; }))
-        : concat(cachedResults$, freshResults$);
+      : concat(cachedResults$, freshResults$);
 
-    pipeline$.subscribe(
+    this._resultsSub?.unsubscribe();
+    this._resultsSub = pipeline$.subscribe(
       results => {
         this.processResults(results);
         this.results_extracted = true;
@@ -308,13 +294,14 @@ export class CompetitionsComponent {
         }
         // Clear the regeneration flag after processing
         this.full_regeneration = false;
+        this.scanMode = false;
       },
       error => {
         console.error('Erreur lors du chargement des résultats:', error);
         this.results_extracted = true;
         this.is_refreshing = false;
-        // Clear the regeneration flag even on error
         this.full_regeneration = false;
+        this.scanMode = false;
       }
     );
   }

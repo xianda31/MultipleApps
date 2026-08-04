@@ -221,7 +221,7 @@ export class FFB_proxyService {
 
       return allItems;
     } catch (error) {
-      console.log('GET call failed: ', error);
+      console.error('[FFB Service] getClubMembers failed:', error);
       return [];
     }
   }
@@ -454,7 +454,7 @@ export class FFB_proxyService {
       // Convert V2 TeamSearchResponse to TournamentTeams with session metadata
       return toTournamentTeamsFromV2(json, groupSessionId, tournament);
     } catch (error) {
-      console.log('GET tournament teams failed: ', error);
+      console.error('[FFB Service] getTournamentTeams failed:', error);
       throw error;
     }
   }
@@ -475,7 +475,7 @@ export class FFB_proxyService {
       const data = await body.json();
       return toCompetitionOrganizationList(data);
     } catch (error) {
-      console.log('GET call failed: ', error);
+      console.error('[FFB Service] getOrganizations failed:', error);
       return [];
     }
   }
@@ -531,7 +531,7 @@ export class FFB_proxyService {
       const data = await body.json();
       return toCompetitionOrganizationList(data);
     } catch (error) {
-      console.log('GET call failed: ', error);
+      console.error('[FFB Service] getCompetitionOrganizations failed:', error);
       return [];
     }
   }
@@ -539,11 +539,6 @@ export class FFB_proxyService {
   async getCompetitionsForResults(season_id: string): Promise<Competition[]> {
     try {
       const data = await this.getCompetitionSearchPayload(season_id);
-      const items = (data as any)?.items;
-      if (Array.isArray(items) && items.length > 0) {
-        console.log('[FFB] getCompetitionsForResults first item keys:', Object.keys(items[0]));
-        console.log('[FFB] getCompetitionsForResults first item:', JSON.stringify(items[0]).substring(0, 400));
-      }
       return toCompetitionListFromSearchResponseLegacy(data);
     } catch (error) {
       console.error('[FFB Service] getCompetitionsForResults failed:', error);
@@ -610,7 +605,7 @@ export class FFB_proxyService {
       const data = await body.json();
       return toCompetitionTeamList(data);
     } catch (error) {
-      console.log('GET call failed: ', error);
+      console.error('[FFB Service] getCompetitionResults failed:', error);
       return [];
     }
   }
@@ -628,7 +623,7 @@ export class FFB_proxyService {
       const { body } = await restOperation.response;
       const data = await body.json() as any;
       const count = Array.isArray(data) ? data.length : (data?.items?.length ?? 0);
-      console.log(`[FFB] getSessionRanking(${sessionId}${simultaneousId ? `/simult${simultaneousId}` : ''}): ${count} entries`);
+      console.debug(`[FFB] getSessionRanking(${sessionId}): ${count} entries`);
       return toSessionRankingList(data);
     } catch (error: any) {
       if ((error?.status || error?.statusCode) !== 404) {
@@ -675,7 +670,14 @@ export class FFB_proxyService {
   // Returns session id + best available date + simultaneousId for a group
   async getSessionWithDateFromGroup(groupId: number): Promise<{ id: number; date: string | null; simultaneousId: number | null } | null> {
     const sessions = await this.getGroupSessions(groupId);
-    const latest = sessions.reduce((best: any, s: any) => {
+    // Only consider sessions with published ranking — hasResult and resultImportDate are on the nested session object
+    const hasRanking = (s: any) =>
+      s.session?.hasResult === true && s.session?.resultImportDate != null;
+    const withResult = sessions.filter(hasRanking);
+    // No published results for this group — nothing to rank
+    if (withResult.length === 0) return null;
+    // console.log(`[getSessionWithDateFromGroup] group=${groupId} total=${sessions.length} withRanking=${withResult.length} — scoring=${withResult[0]?.session?.rankingScoringType ?? '?'}`);
+    const latest = withResult.reduce((best: any, s: any) => {
       if (!s.date) return best;
       if (!best || new Date(s.date) > new Date(best.date)) return s;
       return best;
@@ -710,7 +712,7 @@ export class FFB_proxyService {
       const data = await body.json();
       return toCompetitionPhases(data);
     } catch (error) {
-      console.log('GET call failed: ', error);
+      console.error('[FFB Service] getCompetitionPhases failed:', error);
       return null;
     }
   }
