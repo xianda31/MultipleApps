@@ -109,6 +109,7 @@ const schema = a.schema({
     stamps: a.string().array().required(),
     comment: a.string(),
     manual_creation: a.boolean(),
+    bookEntry_id: a.string(),
   })
     .authorization((allow) => [
       allow.guest().to(['read']),

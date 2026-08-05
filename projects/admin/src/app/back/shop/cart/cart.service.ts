@@ -153,7 +153,7 @@ export class CartService {
         .then(async (sale) => {
           resolve(sale);
           // process game card creation using the snapshot (avoids race with clearCart)
-          await this.handle_game_card(session, itemsSnapshot);
+          await this.handle_game_card(session, itemsSnapshot, sale.id);
           this.clearCart();
         })
         .catch((error) => {
@@ -334,7 +334,7 @@ export class CartService {
   }
 
 
-  async handle_game_card(session: Session, items?: CartItem[]) {
+  async handle_game_card(session: Session, items?: CartItem[], bookEntryId?: string) {
     const cartItems = items ?? this._cart.items;
     for (const cartitem of cartItems) {
       if (cartitem.product_account !== 'CAR') continue;
@@ -343,7 +343,7 @@ export class CartService {
       if (cartitem.paired_with) members.push(cartitem.paired_with);
 
       // Toujours MAX_STAMPS jetons au total (défaut de createCard)
-      await this.gameCardService.createCard(members)
+      await this.gameCardService.createCard(members, undefined, undefined, false, bookEntryId)
         .catch(error => {
           console.error('Error à la création de la carte', cartitem.payee_name, error);
         });

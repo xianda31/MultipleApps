@@ -12,6 +12,7 @@ export interface PlayBook {
   licenses: string[];
   comment?: string;
   manual_creation?: boolean;
+  bookEntry_id?: string;
   createdAt?: string;
   updatedAt?: string;
 }

@@ -601,10 +601,9 @@ export class FeesCollectorService {
     const co_buyer = (members.length > 1) ? this.membersService.full_name(members[1]) : undefined;
     return new Promise<boolean>(async (resolve, reject) => {
       try {
-        const card = await this.gameCardService.createCard(members); // MAX_STAMPS par défaut
+        const bookEntry = await this.BookService.create_game_card_sale(buyer, card_price, mode, co_buyer, check_ref);
+        const card = await this.gameCardService.createCard(members, undefined, undefined, false, bookEntry.id);
         if (card) {
-          const buyer = this.membersService.full_name(members[0]);
-          await this.BookService.create_game_card_sale(buyer, card_price, mode, co_buyer, check_ref);
           this.update_members_debts();  // update debts after sale
           this.update_members_credits(); // update credits after sale
           resolve(true);

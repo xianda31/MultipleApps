@@ -23,6 +23,8 @@ export class GameCardsEditorComponent implements OnInit {
   total_null_cards: number = 0;
   loaded: boolean = false;
   non_null_cards_only: boolean = true;
+  orphanIds = new Set<string>();
+  orphanCheckDone = false;
 
   constructor(
     private gameCardService: GameCardService,
@@ -40,12 +42,20 @@ export class GameCardsEditorComponent implements OnInit {
       this.total_asset = cards.reduce((acc, card) => acc + card.initial_qty-card.stamps.length, 0);
       this.total_null_cards = cards.reduce((acc, card) => acc + ((card.initial_qty-card.stamps.length) === 0 ? 1 : 0), 0);
       this.loaded = true;
+      this.gameCardService.findOrphanCards(cards).then(ids => {
+        this.orphanIds = ids;
+        this.orphanCheckDone = true;
+      });
     });
   }
 
 stamps_number(card: GameCard): number {
    return  card.stamps.length;
 }
+
+  isOrphan(card: GameCard): boolean {
+    return this.orphanIds.has(card.id);
+  }
 
   createGameCard() {
     const modalRef = this.modalService.open(GetGameCardsOwnersComponent, { centered: true });

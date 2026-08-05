@@ -13,14 +13,14 @@
                     </div>
                 </div>
                 <hr>
-                <div class="row justify-content-between align-items-start">
-                    <div class="col col-md-3 ">
+                <div class="row align-items-center gy-2">
+                    <div class="col-12 col-md-auto">
                         <button class="btn btn-sm btn-outline-primary btn-animated" (click)="createGameCard()">
                             Création carte
                         </button>
                     </div>
 
-                    <div class="col col-md-6">
+                    <div class="col-12 col-md">
                         <div class="d-flex align-items-center flex-nowrap">
                             <div class="form-check form-switch mb-0">
                                 <input class="form-check-input" type="checkbox" role="switch"
@@ -37,14 +37,20 @@
                         </div>
                     </div>
 
-                    <div class="col col-md-3 text-end">
+                    <div *ngIf="orphanIds.size > 0" class="col-12 col-md-auto">
+                        <div class="alert alert-warning mb-0 py-1 px-2 small">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            {{ orphanIds.size }} carte(s) sans vente associée
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-auto ms-md-auto text-end">
                         <button class="btn btn-sm btn-outline-success " (click)="exportToExcel()">
                             Export Excel
                         </button>
                     </div>
 
                 </div>
-                <!-- </div> -->
             </div>
             <div class="card-body">
                 <table class="table  table-sm table-striped table-responsive">
@@ -71,6 +77,8 @@
                                     <span>{{card.initial_qty - stamps_number(card) }}</span>
                                 </td>
                                 <td class="text-start ">
+                                    <i *ngIf="isOrphan(card)" class="bi bi-exclamation-triangle-fill text-warning me-1"
+                                        title="BookEntry introuvable — carte orpheline"></i>
                                     <i *ngIf="card.manual_creation" class="bi bi-gift" title="création manuelle"></i>
                                     <span *ngIf="card.manual_creation">&nbsp;</span>
                                     {{card.comment}}

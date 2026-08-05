@@ -286,7 +286,9 @@ export class GameCardService {
       switchMap(() => this.gameCards$.asObservable()));
   }
 
-  async createCard(owners: Member[], qty?: number, comment?: string, manualCreation: boolean = false): Promise<GameCard> {
+  static readonly ORPHAN_CHECK_FROM = '2026-08-05';
+
+  async createCard(owners: Member[], qty?: number, comment?: string, manualCreation: boolean = false, bookEntryId?: string): Promise<GameCard> {
     const normalizedComment = comment?.trim();
     if (manualCreation && !normalizedComment) {
       this.toastService.showWarning('Gestion des cartes', 'Le commentaire est obligatoire pour une création manuelle');
@@ -305,6 +307,9 @@ export class GameCardService {
     if (manualCreation) {
       card_input.manual_creation = true;
     }
+    if (bookEntryId) {
+      card_input.bookEntry_id = bookEntryId;
+    }
 
     try {
       const createdPlayBook = await this.dbHandler.createPlayBook(card_input);
@@ -316,6 +321,7 @@ export class GameCardService {
         licenses: createdPlayBook.licenses,
         comment: createdPlayBook.comment ?? undefined,
         manual_creation: createdPlayBook.manual_creation ?? false,
+        bookEntry_id: createdPlayBook.bookEntry_id ?? undefined,
         createdAt: createdPlayBook.createdAt,
       };
       if (this._gameCards) {   // cache update if exists
@@ -456,6 +462,7 @@ export class GameCardService {
                 licenses: card.licenses.filter((license): license is string => license !== null),
                 comment: card.comment ?? undefined,
                 manual_creation: card.manual_creation ?? false,
+                bookEntry_id: card.bookEntry_id ?? undefined,
                 createdAt: card.createdAt,
                 updatedAt: card.updatedAt
               };
@@ -469,5 +476,21 @@ export class GameCardService {
         );
       })
     );
+  }
+
+  async findOrphanCards(cards: GameCard[]): Promise<Set<string>> {
+    const orphans = new Set<string>();
+    const candidates = cards.filter(
+      c => !c.manual_creation && !!c.bookEntry_id && !!c.createdAt && c.createdAt >= GameCardService.ORPHAN_CHECK_FROM
+    );
+    await Promise.all(candidates.map(async (card) => {
+      try {
+        const entry = await this.dbHandler.readBookEntry(card.bookEntry_id!);
+        if (!entry) { orphans.add(card.id); }
+      } catch {
+        orphans.add(card.id);
+      }
+    }));
+    return orphans;
   }
 }
