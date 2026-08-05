@@ -252,7 +252,8 @@ export class FeesCollectorService {
       this.set_game(tournament);
       this.tournament.status = Game_status.INITIAL;
     } else {
-      const tournamentName = tournament.title ;
+      const tournamentName = game.tournament?.name || tournament.title || 'Tournoi';
+      await this.BookService.whenBookEntriesLoaded();
       const already_charged = this.BookService.search_tournament_fees_entry(tournament.date, tournamentName) !== undefined;
       if (already_charged) {
         this.tournament.status = Game_status.COMPLETED;
@@ -290,15 +291,12 @@ export class FeesCollectorService {
       // Guard: Only check BookService if members are loaded (sign that initialization is progressing)
       // In degraded mode, members may not be loaded yet, so skip this check
       let already_charged = false;
-      if (this.members && this.members.length > 0) {
-        try {
-          const tournamentName = tournament.title || 'Tournoi';
-          already_charged = this.BookService.search_tournament_fees_entry(tournament.date, tournamentName) !== undefined;
-        } catch (bookError) {
-          // BookService.search_tournament_fees_entry() may throw if _book_entries not yet initialized
-          // Silent catch: this is expected in degraded mode
-          already_charged = false;
-        }
+      try {
+        await this.BookService.whenBookEntriesLoaded();
+        const tournamentName = game.tournament?.name || tournament.title || 'Tournoi';
+        already_charged = this.BookService.search_tournament_fees_entry(tournament.date, tournamentName) !== undefined;
+      } catch (bookError) {
+        already_charged = false;
       }
 
       if (already_charged) {

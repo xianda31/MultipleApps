@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 
 import { BookEntry, Revenue, FINANCIAL_ACCOUNT, BALANCE_ACCOUNT, Expense, CUSTOMER_ACCOUNT, TRANSACTION_ID, Operation, AMOUNTS,  Formatted_purchase, Item } from '../../common/interfaces/accounting.interface';
 // import { Schema } from '../../../../amplify/data/resource';
-import { BehaviorSubject, catchError, combineLatest, distinctUntilKeyChanged, from, map, Observable, of, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, catchError, combineLatest, distinctUntilKeyChanged, filter, firstValueFrom, from, map, Observable, of, race, skipWhile, switchMap, tap, timer } from 'rxjs';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { ToastService } from '../../common/services/toast.service';
 import { TRANSACTION_CLASS, TRANSACTION_DIRECTORY } from '../../common/interfaces/transaction.definition';
@@ -272,6 +272,23 @@ export class BookService {
 
   is_book_entries_loaded(): boolean {
     return this._book_entries !== undefined && !this._loading;
+  }
+
+  // Resolves once _book_entries is populated, or when loading ends (success or failure).
+  whenBookEntriesLoaded(): Promise<BookEntry[]> {
+    if (this.is_book_entries_loaded()) return Promise.resolve(this._book_entries ?? []);
+    return firstValueFrom(
+      race(
+        // wait for loading cycle false→true→false
+        this.loading$.pipe(
+          skipWhile(loading => !loading),
+          filter(loading => !loading),
+          map(() => this._book_entries ?? [])
+        ),
+        // fallback after 8s if loading never starts or hangs
+        timer(8000).pipe(map(() => this._book_entries ?? []))
+      )
+    );
   }
 
   private format_data(revenues: Revenue[], expenses: Expense[]) : Formatted_purchase[] {
