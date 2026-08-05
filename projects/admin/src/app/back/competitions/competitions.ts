@@ -24,6 +24,7 @@ export class CompetitionsComponent {
   competitions: Competition_V2[] = [];
   preferred_entities: Entity_V2[] = [];
   organizations: CompetitionOrganization[] = [];
+  readonly DEBUG_DISPLAY = false;
   selectedCompetitionSeasonId: string = '';
   selectedSeasonLabel: string = '';  // Track season label for results loading
   results_extracted: boolean = false;
@@ -48,6 +49,8 @@ export class CompetitionsComponent {
   data_ready: boolean = false;
   trace_mode: boolean = false;
   is_refreshing: boolean = false;
+  scanProgress!: import('rxjs').BehaviorSubject<{ current: number; total: number }>;
+  private _scanDataReady = false;
   private _members: Member[] = [];
   // nombre de jours pour considérer une calculation_date comme récente
   private readonly RECENT_CALCULATION_DAYS: number = 30;
@@ -70,7 +73,9 @@ export class CompetitionsComponent {
     private route: ActivatedRoute,
     private memberService: MembersService,
     private fileService: FileService,
-  ) { }
+  ) {
+    this.scanProgress = competitionService.scanProgress$;
+  }
 
   ngOnInit(): void {
     // Load members for filtering
@@ -109,15 +114,14 @@ export class CompetitionsComponent {
         this.preferred_organization_labels = defaultLabels;
       }
     
-      // this.one_year_back = false;  // Default: current season
-      this.one_year_back = true;  // for testing: load previous season by default
+      this.one_year_back = ui?.competitions?.one_year_back ?? false;
       
       // Show spinner before starting to load from S3 cache
       this.results_extracted = false;
-      this.is_refreshing = true;
+      this.is_refreshing = false; // overlay only on user-initiated scan
       this.spinnerMessage = 'Chargement des compétitions...';
-      
-      // Initial load: cache only — scan FFB is user-initiated via "Scan FFB" button
+
+      // Init: S3 cache only — full FFB reload happens on explicit scan
       this.update_results();
       
       this.show_full_team = false;
@@ -145,13 +149,40 @@ export class CompetitionsComponent {
     const diffMs = Date.now() - d.getTime();
     return diffMs >= 0 && diffMs <= this.RECENT_CALCULATION_DAYS * 24 * 60 * 60 * 1000;
   }
+  get processedCount(): number {
+    return Object.keys(this.team_results).length;
+  }
+
+  razCache(): void {
+    this.team_results = {};
+    this.filtered_team_results = {};
+    this.full_regeneration = true;
+    this.launchScan();
+  }
+
   launchScan(): void {
     this.scanMode = true;
     this.results_extracted = false;
     this.is_refreshing = true;
-    this.spinnerMessage = 'Chargement de la saison...';
+    this.spinnerMessage = 'Mise à jour des données FFB...';
     this.selectedSeasonLabel = '';
-    this.reloadCompetitionsAndResults();
+    const estimatedTotal = this.competitions.length || 1;
+    this.competitionService.scanProgress$.next({ current: 0, total: estimatedTotal });
+    if (this._scanDataReady) {
+      this.update_results();
+    } else {
+      this.reloadCompetitionsAndResults();
+    }
+  }
+
+  onOneYearBackChange(): void {
+    if (this.back_office_mode) {
+      this.ui_config_loaded.competitions.one_year_back = this.one_year_back;
+      this.systemService.save_ui_settings(this.ui_config_loaded);
+    }
+    this.selectedSeasonLabel = '';
+    this._scanDataReady = false;
+    this.update_results();
   }
 
   onParamsChange(reload: boolean): void {
@@ -251,6 +282,46 @@ export class CompetitionsComponent {
     });
   }
 
+  // Silently loads entities/season/competitions so next scan skips the setup phase
+  private _preloadScanData(): void {
+    this._scanDataReady = false;
+    const preferredLabels = [
+      this.preferred_organization_labels.national,
+      this.preferred_organization_labels.ligue,
+      this.preferred_organization_labels.comite,
+    ];
+    forkJoin(
+      preferredLabels.map(label =>
+        this.competitionService.getEntity(label).pipe(
+          map(entities => entities[0] ?? null),
+          catchError(() => of(null))
+        )
+      )
+    ).pipe(
+      map(entities => entities.filter((e): e is Entity_V2 => !!e)),
+      switchMap(entities => this.competitionService.getPreviousSeasons().pipe(
+        map(seasons => ({ entities, seasons }))
+      )),
+      switchMap(({ entities, seasons }) => {
+        const selectedSeason = seasons[this.one_year_back ? 1 : 0] ?? seasons[0];
+        if (!selectedSeason) return of(null);
+        return this.competitionService.loadPreferredOrganizationCompetitionsWithStades(
+          String(selectedSeason.id), entities, this.preferred_organization_labels
+        ).pipe(map(result => ({ ...result, entities, selectedSeason })));
+      })
+    ).subscribe({
+      next: (data) => {
+        if (!data) return;
+        this.preferred_entities = data.entities;
+        this.competitions = data.competitions;
+        this.selectedCompetitionSeasonId = data.seasonId;
+        this.selectedSeasonLabel = data.selectedSeason.label;
+        this._scanDataReady = true;
+      },
+      error: () => { /* silent — scan will fall back to reloadCompetitionsAndResults */ }
+    });
+  }
+
   update_results(): void {
     // Use stored season label if available, otherwise calculate
     if (!this.selectedSeasonLabel) {
@@ -260,8 +331,10 @@ export class CompetitionsComponent {
     }
     this.titleService.setTitle('Résultats des compétitions ' + this.current_season);
     this.results_extracted = false;
-    this.is_refreshing = false;
-    this.spinnerMessage = 'Chargement des résultats...';
+    if (!this.scanMode) {
+      this.is_refreshing = false;
+      this.spinnerMessage = 'Chargement des résultats...';
+    }
 
     const safeSeason = this.current_season.replace(/\//g, '_');
     
@@ -278,10 +351,10 @@ export class CompetitionsComponent {
       })
     );
 
-    // Step 3: cache-only unless scanMode is active
+    // scan mode: fresh FFB results only (no stale cache displayed behind the overlay)
     const pipeline$ = !this.back_office_mode || !this.scanMode
       ? cachedResults$.pipe(tap(() => { this.is_refreshing = false; }))
-      : concat(cachedResults$, freshResults$);
+      : freshResults$;
 
     this._resultsSub?.unsubscribe();
     this._resultsSub = pipeline$.subscribe(
@@ -295,6 +368,10 @@ export class CompetitionsComponent {
         // Clear the regeneration flag after processing
         this.full_regeneration = false;
         this.scanMode = false;
+        // Silently pre-load scan prerequisites so next scan skips setup phase
+        if (this.back_office_mode && !this.scanMode) {
+          this._preloadScanData();
+        }
       },
       error => {
         console.error('Erreur lors du chargement des résultats:', error);
@@ -306,6 +383,8 @@ export class CompetitionsComponent {
     );
   }
 
+  private readonly _orgTypeOrder: Record<string, number> = { committee: 0, league: 1, federation: 2 };
+
   private processResults(results: CompetitionResultsMap): void {
     // Filtrer les CompetitionResults dont toutes les teams sont vides
     const filteredResults: CompetitionResultsMap = {};
@@ -314,6 +393,12 @@ export class CompetitionsComponent {
         Array.isArray(r.teams) && r.teams.some((team: CompetitionTeam) => Array.isArray(team.players) && team.players.length > 0)
       );
       if (validResults.length > 0) {
+        // committee → league → federation
+        validResults.sort((a, b) => {
+          const typeOf = (orgId: number) => this.preferred_entities.find(e => e.id === orgId)?.type ?? '';
+          return (this._orgTypeOrder[typeOf(a.competition.organization_id)] ?? 99)
+               - (this._orgTypeOrder[typeOf(b.competition.organization_id)] ?? 99);
+        });
         filteredResults[Number(compId)] = validResults;
       }
     });
@@ -367,18 +452,13 @@ export class CompetitionsComponent {
     });
   }
 
-  get_organization_label(id: number): string {
-    const org = this.organizations.find(o => o.id === id);
-    if (!org) return 'Inconnu';
-    // preferred_entities order matches preferredLabels: [national, ligue, comite]
-    const levelKeys = ['national', 'ligue', 'comite'] as const;
-    const idx = this.preferred_entities.findIndex(e => e.id === id);
-    const niveau = idx >= 0 ? levelKeys[idx] : undefined;
-    switch (niveau) {
-      case 'comite':   return 'Comité';
-      case 'ligue':    return 'Finale de Ligue';
-      case 'national': return 'Finale Nationale';
-      default:         return org.label;
+  get_organization_label(id: number, orgType?: string): string {
+    const type = orgType ?? this.preferred_entities.find(e => e.id === id)?.type;
+    switch (type) {
+      case 'committee':  return 'Comité';
+      case 'league':     return 'Finale de Ligue';
+      case 'federation': return 'Finale Nationale';
+      default:           return 'Inconnu';
     }
   }
 
@@ -392,8 +472,9 @@ export class CompetitionsComponent {
   }
 
   isMember(player: Player): boolean {
-    // Check if player's license_number exists in members list
-    return this._members.some(m => m.license_number === player.license_number);
+    if (!player.license_number) return false;
+    const n = Number(player.license_number);
+    return !isNaN(n) && this._members.some(m => Number(m.license_number) === n);
   }
 
   getDisplayedPlayers(players: Player[]): Player[] {

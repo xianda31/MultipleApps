@@ -110,6 +110,7 @@ export interface Competition_V2 {
 export interface CompetitionResultGroup_V2 {
   id: number;
   resultCount: number;
+  organizationId?: number; // org/comité this group belongs to, if provided by the API
 }
 
 export interface CompetitionResultPhase_V2 {
@@ -145,6 +146,7 @@ export interface Competition {
   pe_bonus_process_enabled: boolean;
   simultaneous_code: string | null;
   organization_id: number;
+  organization_type?: string; // persisted so front mode needs no entity API call
   // additional fields for service use
   cumulated_pe_percentage?: number;
   assigned_division?: string;

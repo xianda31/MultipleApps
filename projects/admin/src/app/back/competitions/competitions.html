@@ -77,7 +77,7 @@
                             <!-- visualisation des données détaillées (rank ..)-->
                             <div class="d-flex align-items-center mt-3">
                                 <label class="form-check-label fw-bolder" for="showTheoricalRankBack">Montrer les
-                                    données détaillées</label>
+                                    données debug</label>
                                 <div class="form-check form-switch ms-auto">
                                     <input class="form-check-input" type="checkbox" id="showTheoricalRankBack"
                                         [(ngModel)]="ui_config_loaded.competitions.show_infos"
@@ -85,12 +85,19 @@
                                 </div>
                             </div>
 
-                            <!-- RAZ toggle + Scan FFB button -->
-                            <div class="d-flex align-items-center mt-3 gap-2">
-                                <div class="form-check mb-0">
-                                    <input class="form-check-input" type="checkbox" id="razToggle"
-                                        [(ngModel)]="full_regeneration" />
-                                    <label class="form-check-label fw-bold" for="razToggle">RAZ cache</label>
+                            <!-- RAZ cache + stats + Scan FFB button -->
+                            <div class="d-flex align-items-start mt-3 gap-2 flex-wrap">
+                                <div class="d-flex flex-column ">
+                                    <button class="btn btn-outline-secondary btn-sm"
+                                        (click)="razCache()" [disabled]="is_refreshing">
+                                        <i class="bi bi-trash"></i> RAZ cache
+                                    </button>
+                                    <span class="text-muted mt-1" style="font-size:0.75em;">
+                                        <span title="compétitions avec résultats membres stockées en archive S3">{{ processedCount }} en cache</span>
+                                        <ng-container *ngIf="(filtered_team_results | keyvalue).length !== processedCount">
+                                            &nbsp;· <span title="visibles selon seuils d'affichage">{{ (filtered_team_results | keyvalue).length }} visibles</span>
+                                        </ng-container>
+                                    </span>
                                 </div>
                                 <button class="btn btn-primary btn-sm ms-auto"
                                     (click)="launchScan()" [disabled]="is_refreshing">
@@ -127,7 +134,7 @@
                                 </div>
                             </ng-container>
                             <ng-template #noRecent>
-                                <div class="text-muted text-center small">Aucune compétition récente</div>
+                                <div class="text-muted text-center small">Aucune compétition récente ({{ current_season }})</div>
                             </ng-template>
                         </div>
 
@@ -137,28 +144,27 @@
 
             <div [ngClass]="back_office_mode ? 'col-12 col-lg-8 col-xl-9' : 'col-12'">
 
-                <div *ngIf="!results_extracted" class="row mb-3 justify-content-center">
-                    <div class="text-center">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Chargement...</span>
-                        </div>
-                        <div>
-                            {{ spinnerMessage }}
-                        </div>
+                <!-- Scan FFB progress bar overlay -->
+                <div *ngIf="is_refreshing" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 300px;">
+                    <div class="d-flex flex-column align-items-center gap-3">
+                        <span style="font-size: 1rem; color: #0d6efd;">{{ spinnerMessage }}</span>
+                        <ng-container *ngIf="(scanProgress | async) as p">
+                            <div class="w-100">
+                                <div class="progress" style="height: 12px;">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-info"
+                                        [style.width.%]="p.total > 0 ? (p.current / p.total * 100) : 100">
+                                    </div>
+                                </div>
+                                <div class="text-center text-muted mt-1" style="font-size: 0.8em;">
+                                    <ng-container *ngIf="p.total > 0">{{ p.current }} / {{ p.total }}</ng-container>
+                                    <ng-container *ngIf="p.total === 0">préparation...</ng-container>
+                                </div>
+                            </div>
+                        </ng-container>
                     </div>
                 </div>
 
                 <div *ngIf="results_extracted">
-                    <!-- Actualisation FFB en arrière-plan - overlay au centre -->
-                    <div *ngIf="is_refreshing" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-                        <div class="d-flex flex-column align-items-center gap-3">
-                            <div class="spinner-border text-info" role="status" style="width: 3rem; height: 3rem;">
-                                <span class="visually-hidden">{{ spinnerMessage }}</span>
-                            </div>
-                            <span style="font-size: 1rem; color: #0d6efd;">{{ spinnerMessage }}</span>
-                        </div>
-                    </div>
-
                     <!-- paramètres visualisation -->
                     <div class="d-inline-block w-auto mb-3">
                         <div class=" d-flex align-items-center" style="gap: 2rem">
@@ -174,7 +180,7 @@
                             </div>
                             <div class="form-check form-switch mb-0">
                                 <input class="form-check-input" type="checkbox" id="showFullTeamSwitch"
-                                    [(ngModel)]="one_year_back" (change)="onParamsChange(true)">
+                                    [(ngModel)]="one_year_back" (change)="onOneYearBackChange()">
                                 <label class="form-check-label" for="showFullTeamSwitch">année précédente</label>
                             </div>
                         </div>
@@ -182,11 +188,11 @@
 
 
                     <!-- Bloc résultats -->
+                    <div *ngIf="results_extracted && (filtered_team_results | keyvalue).length === 0"
+                        class="d-flex justify-content-center align-items-center" style="min-height: 30vh;">
+                        <span class="text-muted fs-5">Aucun résultat disponible pour la saison {{ current_season }}.</span>
+                    </div>
                     <div *ngIf="(filtered_team_results | keyvalue).length > 0" class="row mb-3" style="gap:0;">
-                        <div *ngIf="results_extracted && (filtered_team_results | keyvalue).length === 0"
-                            class="alert alert-info text-center my-4">
-                            Aucun résultat à afficher pour la saison {{current_season}}.
-                        </div>
                         <div class=" px-1 col-12 col-md" *ngFor="let division of divisions; let i = index">
                             <div class=" text-center  text-uppercase text-primary fw-bolder mt-2 mb-2">
                                 {{ division }}
@@ -222,8 +228,8 @@
                         <span class="fw-bold">
                             {{ result.value[0].competition.assigned_label }}
                         </span>
-                        <span style="font-size: 0.65em; opacity: 0.5; margin-left: 4px;">#{{result.key}}</span>
-                        <div *ngIf="ui_config_loaded.competitions.show_infos" style="font-size: 0.7em;">{{result.key}}
+                        <span *ngIf="DEBUG_DISPLAY" style="font-size: 0.65em; opacity: 0.5; margin-left: 4px;">#{{result.key}}</span>
+                        <div *ngIf="DEBUG_DISPLAY" style="font-size: 0.7em;">{{result.key}}
                             {{result.value[0].competition.family.label}} - {{
                             (result.value[0].competition.label) }}</div>
                     </div>
@@ -235,9 +241,9 @@
                                     class="text-primary mb-1 d-flex align-items-center position-relative">
                                     <span class="d-flex align-items-center"
                                         [ngClass]="{'recent-date': isRecentCalculation(res.competition.calculation_date)}">
-                                        {{ get_organization_label(res.competition.organization_id) }}</span>
+                                        {{ get_organization_label(res.competition.organization_id, res.competition.organization_type) }}</span>
                                     <span class="ms-auto small d-flex align-items-center gap-2">
-                                        <span style="opacity:0.4; font-size:0.8em;">s{{res.competition.session_id}}</span>
+                                        <span *ngIf="DEBUG_DISPLAY" style="opacity:0.4; font-size:0.8em;">s{{res.competition.session_id}}</span>
                                         {{ res.competition.calculation_date | date:'shortDate' }}
                                     </span>
                                 </div>
@@ -260,7 +266,7 @@
                                                         <ng-container
                                                             *ngFor="let player of getDisplayedPlayers(team.players); let i = index; let last = last">
                                                             <span
-                                                                [ngClass]="{'fw-semibold': isMember(player), 'fst-italic': !isMember(player), 'player-small': true}">
+                                                                [ngClass]="{'fw-semibold': player.is_member, 'fst-italic': !player.is_member, 'player-small': true}">
                                                                 {{ player.firstname }} {{
                                                                 player.lastname }}
                                                             </span>
@@ -272,8 +278,8 @@
                                                 <ng-template #playersColumn>
                                                     <span class="d-flex flex-column">
                                                         <span *ngFor="let player of team.players">
-                                                            <span *ngIf="isMember(player) || show_full_team"
-                                                                [ngClass]="{'fw-semibold': isMember(player), 'fst-italic': !isMember(player), 'player-small': true}">
+                                                            <span *ngIf="player.is_member || show_full_team"
+                                                                [ngClass]="{'fw-semibold': player.is_member, 'fst-italic': !player.is_member, 'player-small': true}">
                                                                 {{ player.firstname }} {{
                                                                 player.lastname }}
                                                             </span>

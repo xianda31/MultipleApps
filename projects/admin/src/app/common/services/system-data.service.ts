@@ -87,6 +87,7 @@ export class SystemDataService {
           national: ''
         },
         result_filter_thresholds: {},
+        one_year_back: false,
         show_infos: false,
       }
     };
@@ -215,6 +216,7 @@ export class SystemDataService {
               national: ''
             },
             result_filter_thresholds: {},
+            one_year_back: false,
             show_infos: false,
           }
         };

@@ -207,6 +207,10 @@ export function toCompetitionResultStades(payload: unknown): CompetitionResultSt
           groups: groups.map((group: any) => ({
             id: asNumber(group?.id, 0),
             resultCount: asNumber(group?.resultCount, 0),
+            organizationId: asNumber(
+              group?.groupment?.id ?? group?.groupement?.id ?? group?.organization?.id ?? group?.organizationId,
+              0
+            ) || undefined,
           })),
         };
       }),

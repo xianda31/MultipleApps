@@ -7,7 +7,7 @@ import { CompetitionResultsMap } from './competitions.interface';
 import { FFB_proxyService } from '../../common/ffb/services/ffb.service';
 import { MembersService } from '../../common/services/members.service';
 import { SystemDataService } from '../../common/services/system-data.service';
-import { from, map, Observable, catchError, of, switchMap, tap, lastValueFrom, concatMap, reduce, forkJoin } from 'rxjs';
+import { from, map, Observable, catchError, of, switchMap, tap, lastValueFrom, concatMap, reduce, forkJoin, BehaviorSubject } from 'rxjs';
 import { Member } from '../../common/interfaces/member.interface';
 import { FileService } from '../../common/services/files.service';
 
@@ -16,6 +16,7 @@ import { FileService } from '../../common/services/files.service';
 })
 export class CompetitionService {
   private _members: Member[] = [];
+  private _preferredEntities: Entity_V2[] = [];
   private _team_results: CompetitionResultsMap = {};
   private _organizations: CompetitionOrganization[] = [];
   private _preferred_organizations: CompetitionOrganization[] = [];
@@ -23,6 +24,7 @@ export class CompetitionService {
   private _memberPromise: Promise<void>;
   ffbScanDone: boolean = false;
   traceCompetitionIds: number[] = [];
+  readonly scanProgress$ = new BehaviorSubject<{ current: number; total: number }>({ current: 0, total: 0 });
 
   COMPETITION_LEVELS = COMPETITION_LEVELS;
 
@@ -140,6 +142,7 @@ export class CompetitionService {
     full_regeneration: boolean,
     preferredEntities?: Entity_V2[]  // Load by organizations instead of FFB search
   ): Observable<CompetitionResultsMap> {
+    this._preferredEntities = preferredEntities ?? [];
     let labels: string[];
     if (organization_labels && typeof organization_labels === 'object') {
       labels = [organization_labels[COMPETITION_LEVELS.National], organization_labels[COMPETITION_LEVELS.Ligue], organization_labels[COMPETITION_LEVELS.Comite]];
@@ -208,6 +211,7 @@ export class CompetitionService {
           ...(preferredEntities ?? []).map(org => ({ org })),
           { org: null }, // null = national search
         ];
+        console.log(`[CompetitionService] org search IDs:`, allOrgs.map(o => o.org ? `${o.org.label}=${o.org.id}` : 'national'));
         const orgMapSource$ = from(allOrgs).pipe(
           concatMap(({ org }) => {
             const search$ = org
@@ -272,12 +276,27 @@ export class CompetitionService {
             }
             current = current.filter(c => full_regeneration || !this.is_logged_in_S3(c));
             console.log(`[CompetitionService] Filters: ${payload.competitions.length} → ${current.length} to process`);
+            if (current.length > 0) {
+              this.scanProgress$.next({ current: 0, total: current.length });
+            }
             return { ...payload, competitions: current };
           }),
           switchMap((payload: { seasonObj: FFB_Season; competitions: Competition[]; baseResults: CompetitionResultsMap }) => {
-            return from(this.runSerial(payload.competitions, String(payload.seasonObj.id)) as Promise<CompetitionResultsMap>).pipe(
+            return from(this.runSerial(payload.competitions, String(payload.seasonObj.id), payload.baseResults) as Promise<CompetitionResultsMap>).pipe(
               map((results: CompetitionResultsMap) => {
-                return { ...payload.baseResults, ...results };
+                // Per-org merge: fresh entries replace cached entries for the same org only
+                const merged: CompetitionResultsMap = { ...payload.baseResults };
+                for (const [compIdStr, freshEntries] of Object.entries(results)) {
+                  const compId = Number(compIdStr);
+                  if (!merged[compId]?.length) {
+                    merged[compId] = freshEntries;
+                  } else {
+                    const freshOrgIds = new Set(freshEntries.map((e: { competition: Competition; teams: CompetitionTeam[] }) => e.competition.organization_id));
+                    const keptCached = merged[compId].filter(e => !freshOrgIds.has(e.competition.organization_id));
+                    merged[compId] = [...keptCached, ...freshEntries];
+                  }
+                }
+                return merged;
               }),
               switchMap((merged) => from(this.saveResults(season, merged)).pipe(
                 map(() => merged)
@@ -290,19 +309,33 @@ export class CompetitionService {
   }
 
   // Exécution séquentielle des requêtes pour chaque compétition
-  private async runSerial(competitions: Competition[], seasonId: string): Promise<CompetitionResultsMap> {
+  private async runSerial(
+    competitions: Competition[],
+    seasonId: string,
+    baseResults: CompetitionResultsMap = {},
+  ): Promise<CompetitionResultsMap> {
     const results: CompetitionResultsMap = {};
-    console.log(`[CompetitionService] runSerial() starting with ${competitions.length} competitions`);
+    const total = competitions.length;
+    console.log(`[CompetitionService] runSerial() starting with ${total} competitions`);
+    this.scanProgress$.next({ current: 0, total });
     const BATCH = 3;
     for (let i = 0; i < competitions.length; i += BATCH) {
       const batch = competitions.slice(i, i + BATCH);
-      const batchResults = await Promise.all(batch.map(c => this._processComp(c, seasonId)));
-      for (const r of batchResults) {
-        if (r) {
+      const batchResults = await Promise.all(batch.map(c => {
+        const coveredOrgIds = new Set<number>(
+          (baseResults[c.id] ?? []).map(e => e.competition.organization_id)
+        );
+        return this._processComp(c, seasonId, coveredOrgIds);
+      }));
+      for (const entries of batchResults) {
+        for (const r of entries) {
           if (!results[r.compId]) results[r.compId] = [];
-          results[r.compId].unshift(r.entry);
+          if (!results[r.compId].some(e => e.competition.organization_id === r.entry.competition.organization_id)) {
+            results[r.compId].unshift(r.entry);
+          }
         }
       }
+      this.scanProgress$.next({ current: Math.min(i + BATCH, total), total });
     }
     console.log(`[CompetitionService] runSerial() completed: ${Object.keys(results).length} competitions with results`);
     return results;
@@ -311,65 +344,117 @@ export class CompetitionService {
   private async _processComp(
     comp: Competition,
     seasonId: string,
-  ): Promise<{ compId: number; entry: { competition: Competition; teams: CompetitionTeam[] } } | null> {
-    if (this.traceCompetitionIds.length > 0 && !this.traceCompetitionIds.includes(comp.id)) return null;
-    // organization_id = 0 allowed for national competitions (Espérance etc.)
-    if (comp.organization_id == null) return null;
+    coveredOrgIds: Set<number> = new Set(),
+  ): Promise<Array<{ compId: number; entry: { competition: Competition; teams: CompetitionTeam[] } }>> {
+    if (this.traceCompetitionIds.length > 0 && !this.traceCompetitionIds.includes(comp.id)) return [];
+    if (comp.organization_id == null) return [];
+    console.log(`[_processComp] ENTER comp ${comp.id} org=${comp.organization_id} (${comp.label})`);
     try {
       comp.assigned_division = this.getDivisionCategoryToLabel(comp);
       comp.assigned_label = comp.assigned_division === 'Interclubs' ? comp.label : comp.family.label;
 
       let stades = await this.ffbService.getCompetitionDivisionResults(String(comp.id), seasonId);
-      // Retry with competition template id if item.id returns nothing
       if (!stades.length && comp.family?.id && comp.family.id !== comp.id) {
         stades = await this.ffbService.getCompetitionDivisionResults(String(comp.family.id), seasonId);
       }
-      let orgStade = stades.find(s => s.groupement?.id === comp.organization_id);
-      // If org stade's finale is non-sim multi-group, prefer a simultaneous stade (national FN)
-      if (orgStade?.phases?.length) {
-        const lp = orgStade.phases[orgStade.phases.length - 1];
-        if (!lp.simultaneous && lp.groups.length > 1) {
-          const simStade = stades.find(s => s.phases?.length > 0 && (s.phases[s.phases.length - 1].simultaneous));
-          if (simStade) {
-            orgStade = simStade;
-            comp.organization_id = simStade.groupement?.id ?? comp.organization_id;
-          }
+      if (!stades.length) return [];
+
+      // Match stades by type:id — avoids confusing e.g. Bretagne (committee:6) with Ligue 06 (league:6)
+      const preferredKeys = new Map(this._preferredEntities.map(e => [`${e.type}:${e.id}`, e]));
+      const primaryEntity = this._preferredEntities.find(e => e.id === comp.organization_id);
+      const primaryOrgId = comp.organization_id;
+
+      const matchesPrimary = (s: CompetitionResultStade_V2): boolean =>
+        s.phases?.length > 0 && s.groupement?.id === primaryOrgId
+        && (!primaryEntity || s.groupement?.type === primaryEntity.type);
+
+      const matchesPreferred = (s: CompetitionResultStade_V2): boolean => {
+        if (!s.phases?.length || matchesPrimary(s)) return false;
+        return preferredKeys.has(`${s.groupement?.type ?? ''}:${s.groupement?.id ?? -1}`);
+      };
+
+      const orderedStades = [
+        ...stades.filter(matchesPrimary),
+        ...stades.filter(matchesPreferred),
+      ];
+      const results: Array<{ compId: number; entry: { competition: Competition; teams: CompetitionTeam[] } }> = [];
+      const processedKeys = new Set<string>(); // type:id to avoid duplicate org processing
+
+      for (const stade of orderedStades) {
+        const orgId: number | undefined = stade.groupement?.id;
+        if (!orgId) continue;
+        const stadeKey = `${stade.groupement?.type ?? ''}:${orgId}`;
+        if (processedKeys.has(stadeKey)) continue;
+        processedKeys.add(stadeKey);
+        if (coveredOrgIds.has(orgId)) continue; // already in cache
+
+        const result = await this._processStadePhases(stade, orgId, comp, seasonId);
+        if (result) results.push(result);
+      }
+
+      return results;
+    } catch (error: any) {
+      if ((error?.status || error?.statusCode) !== 404) {
+        console.error(`[CompetitionService] Error comp ${comp.id}:`, error?.message || error);
+      }
+      return [];
+    }
+  }
+
+  // Tries phases from last to first — returns the first phase where club members are found
+  private async _processStadePhases(
+    stade: any,
+    orgId: number,
+    comp: Competition,
+    seasonId: string,
+  ): Promise<{ compId: number; entry: { competition: Competition; teams: CompetitionTeam[] } } | null> {
+    for (let phaseIdx = stade.phases.length - 1; phaseIdx >= 0; phaseIdx--) {
+      const phase = stade.phases[phaseIdx];
+      // Independent multi-group phases: try to find the group matching a preferred org directly
+      if (!phase.simultaneous && phase.groups.length > 1) {
+        const preferredOrgIds = new Set<number>(this._preferredEntities.map(e => e.id));
+        preferredOrgIds.add(orgId);
+        const matchingGroup = phase.groups.find(
+          (g: any) => g.resultCount > 0 && g.organizationId && preferredOrgIds.has(g.organizationId)
+        );
+        if (!matchingGroup) {
+          continue; // no org info or no matching group — skip
         }
+        const session = await this.ffbService.getSessionWithDateFromGroup(matchingGroup.id);
+        if (!session) continue;
+        const compTeam = await this.ffbService.getSessionRankingAsTeams([session]);
+        const filteredTeams = compTeam.filter(t => this.has_a_member(t.players));
+        if (!filteredTeams.length) continue;
+        console.log(`[_processComp] comp ${comp.id} org=${orgId}: multi-group phase=${phaseIdx}, group=${matchingGroup.id} (orgId=${matchingGroup.organizationId}), sessions=[${session.id}], ${compTeam.length} teams`);
+        const compCopy: Competition = { ...comp, organization_id: orgId, organization_type: stade.groupement?.type };
+        this.calculatePePercentageBeforeFilter(compCopy, compTeam);
+        filteredTeams.forEach(team => { team.players.forEach(p => { p.is_member = this.isMember(p); }); });
+        filteredTeams.sort((a, b) => (this.has_a_member(a.players) ? 0 : 1) - (this.has_a_member(b.players) ? 0 : 1));
+        filteredTeams.forEach(t => t.players.sort((p1, p2) => (p1.is_member ? 0 : 1) - (p2.is_member ? 0 : 1)));
+        compCopy.calculation_date = session.date;
+        compCopy.session_id = session.id;
+        return { compId: comp.id, entry: { competition: compCopy, teams: filteredTeams } };
       }
-      // Fallback: national competitions (org=0) or org mismatch — use first stade with phases
-      if (!orgStade?.phases?.length) {
-        orgStade = stades.find(s => s.phases?.length > 0);
-        if (orgStade?.groupement?.id) comp.organization_id = orgStade.groupement.id;
-      }
-      if (!orgStade?.phases?.length) return null;
 
-      // Use last phase only — earlier phases are qualifying rounds, last phase has the final cumulative ranking
-      const finalPhase = orgStade.phases[orgStade.phases.length - 1];
-      // Non-simultaneous multi-group = independent local groups, merged ranking is meaningless
-      if (!finalPhase.simultaneous && finalPhase.groups.length > 1) return null;
+      const groupsToFetch = phase.simultaneous
+        ? phase.groups.filter((g: any) => g.resultCount > 0).slice(0, 1)
+        : phase.groups;
+      if (!groupsToFetch.length) continue;
 
-      // For simultaneous (FN) phases: one representative group is enough — the ranking returns all venues combined
-      const groupsToFetch = finalPhase.simultaneous
-        ? finalPhase.groups.filter(g => g.resultCount > 0).slice(0, 1)
-        : finalPhase.groups;
-      if (!groupsToFetch.length) return null;
       const sessionResults = (await Promise.all(
-        groupsToFetch.map(g => this.ffbService.getSessionWithDateFromGroup(g.id))
+        groupsToFetch.map((g: any) => this.ffbService.getSessionWithDateFromGroup(g.id))
       )).filter((r): r is { id: number; date: string | null; simultaneousId: number | null } => r !== null);
-      if (!sessionResults.length) return null;
-
-      const latestDate = sessionResults
-        .map(r => r.date)
-        .filter((d): d is string => !!d)
-        .sort()
-        .at(-1) ?? null;
+      if (!sessionResults.length) continue;
 
       const compTeam = await this.ffbService.getSessionRankingAsTeams(sessionResults);
-      // console.log(`[_processComp] comp ${comp.id} (${comp.label}): ${sessionResults.length} sessions, ${compTeam.length} teams, date=${latestDate}, sim=${finalPhase.simultaneous}`);
-      this.calculatePePercentageBeforeFilter(comp, compTeam);
-
       const filteredTeams = compTeam.filter(t => this.has_a_member(t.players));
-      if (!filteredTeams.length) return null;
+      if (!filteredTeams.length) continue;
+
+      const sessionIds = sessionResults.map(s => s.id).join(',');
+      console.log(`[_processComp] comp ${comp.id} org=${orgId}: phase=${phaseIdx}, sessions=[${sessionIds}], ${compTeam.length} teams, sim=${phase.simultaneous}`);
+
+      const compCopy: Competition = { ...comp, organization_id: orgId, organization_type: stade.groupement?.type };
+      this.calculatePePercentageBeforeFilter(compCopy, compTeam);
 
       filteredTeams.forEach(team => {
         team.players.forEach(p => { p.is_member = this.isMember(p); });
@@ -377,15 +462,13 @@ export class CompetitionService {
       filteredTeams.sort((a, b) => (this.has_a_member(a.players) ? 0 : 1) - (this.has_a_member(b.players) ? 0 : 1));
       filteredTeams.forEach(t => t.players.sort((p1, p2) => (p1.is_member ? 0 : 1) - (p2.is_member ? 0 : 1)));
 
-      comp.calculation_date = latestDate; // null = date inconnue, la date pipe affichera rien
-      comp.session_id = sessionResults[0]?.id;
-      return { compId: comp.id, entry: { competition: comp, teams: filteredTeams } };
-    } catch (error: any) {
-      if ((error?.status || error?.statusCode) !== 404) {
-        console.error(`[CompetitionService] Error comp ${comp.id}:`, error?.message || error);
-      }
-      return null;
+      const latestDate = sessionResults.map(r => r.date).filter((d): d is string => !!d).sort().at(-1) ?? null;
+      compCopy.calculation_date = latestDate;
+      compCopy.session_id = sessionResults[0]?.id;
+
+      return { compId: comp.id, entry: { competition: compCopy, teams: filteredTeams } };
     }
+    return null;
   }
 
   // weighted_rank = inverted totalScore so existing filter (weighted_rank <= threshold) maps to totalScore >= (100-threshold)

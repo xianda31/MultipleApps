@@ -33,6 +33,13 @@ export function applyUiThemeInitializer(systemDataService: SystemDataService) {
         }
         if (navbarBg) root.style.setProperty('--navbar-bg', navbarBg);
         if (navbarTextColor) root.style.setProperty('--navbar-text', navbarTextColor);
+
+        // Set font early so all components (including routed plugins) inherit the right font
+        const siteFont = t.club?.font ?? t.site_font ?? t.main_font ?? null;
+        if (siteFont) {
+          root.style.setProperty('--site-font', siteFont);
+          root.style.setProperty('--content-font', siteFont);
+        }
       } catch (e) {
       // ignore errors, keep default theme variables from assets
     }
@@ -78,7 +85,8 @@ export function applyUiThemeFromConfig(ui: UIConfiguration | null | undefined) {
   const root = document.documentElement;
   // Contenu page (autour du router)
   // Prefer new nested properties, fall back to legacy flat keys for older stored configs
-  const contentFont = t.site_font ?? t.content_font ?? t['content_font'];
+  const contentFont = t.club?.font ?? t.site_font ?? t.content_font ?? t['content_font'];
+  const siteFont = t.club?.font ?? t.site_font ?? t.main_font ?? null;
   const contentBg = t?.content?.bg ?? t?.content_bg;
   const contentText = t?.content?.text_color ?? t?.content_text_color;
   const bannerBg = t?.banner?.bg ?? t?.banner_bg;
@@ -112,21 +120,16 @@ export function applyUiThemeFromConfig(ui: UIConfiguration | null | undefined) {
   else if (bannerTextColor) root.style.setProperty('--footer-text', bannerTextColor);
 
   // --- Google Fonts dynamic injection ---
-  // Remove previous dynamic font links
   const prevLinks = document.querySelectorAll('link[data-ui-dynamic-font]');
   prevLinks.forEach(l => l.parentNode?.removeChild(l));
 
-  // Helper to build Google Fonts URL for a font family
   function buildGoogleFontUrl(font: string): string | null {
     if (!font) return null;
-    // Extract family name (before comma)
     const family = font.split(',')[0].replace(/['\"]/g, '').trim().replace(/ /g, '+');
     if (!family) return null;
     return `https://fonts.googleapis.com/css?family=${family}:400,700&display=swap`;
   }
 
-  // Inject fonts: prefer site_font then fallbacks. Keep deduplicated set.
-  const siteFont = t.site_font ?? t.main_font ?? null;
   const bannerFont = t.banner?.font ?? t.banner_font ?? siteFont;
   const navbarFont = t.navbar?.font ?? t.navbar_font ?? siteFont;
   const loadedFonts = new Set<string>();

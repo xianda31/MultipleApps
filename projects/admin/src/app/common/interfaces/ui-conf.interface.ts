@@ -20,7 +20,7 @@ export interface ImageSize {
 export interface CompetitionsUIConfig {
   preferred_organizations: { [key in COMPETITION_LEVELS]: string };
   result_filter_thresholds: { [key: string]: number };
-  // one_year_back: boolean;
+  one_year_back: boolean;
   show_infos: boolean;
   // no_filter: boolean;
   // show_members_only: boolean;
