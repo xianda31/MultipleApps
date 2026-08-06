@@ -1046,7 +1046,7 @@ async function handlePayoutLookup(event: any): Promise<any> {
         limit: 100,
       });
     } catch (_stripeErr: any) {
-      console.warn(`[payout-lookup] balanceTransactions.list({payout}) failed for ${payoutId} — falling back to manual mode. Stripe error: ${_stripeErr?.message} (code: ${_stripeErr?.code}, type: ${_stripeErr?.type}, status: ${_stripeErr?.statusCode}, raw: ${JSON.stringify(_stripeErr?.raw ?? {})})`);
+      console.warn(`[payout-lookup] balanceTransactions.list({payout}) failed for ${payoutId} — falling back to manual mode. HTTP ${_stripeErr?.statusCode} (requestId: ${_stripeErr?.raw?.requestId ?? _stripeErr?.requestId}, type: ${_stripeErr?.raw?.type ?? _stripeErr?.type})`);
       return {
         statusCode: 200,
         headers: CORS,
