@@ -6,6 +6,7 @@ import { BookService } from '../../services/book.service';
 import { ToastService } from '../../../common/services/toast.service';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { TRANSACTION_ID } from '../../../common/interfaces/accounting.interface';
 
 interface StripeCharge {
   chargeId: string;
@@ -21,6 +22,7 @@ interface StripeCharge {
   refundStatus: 'not_refunded' | 'partial' | 'full';
   isProcessing: boolean;
   hasBookEntry: boolean;
+  isPaidOut: boolean;  // deposit_ref set = charge déjà réconciliée dans un virement
   errorMessage?: string;
 }
 
@@ -42,11 +44,11 @@ export class StripeRefundsComponent implements OnInit {
   showDisabled = true; // Afficher les transactions orphelines (sans écriture comptable)
 
   get visibleCharges(): StripeCharge[] {
-    return this.showDisabled ? this.charges : this.charges.filter(c => c.hasBookEntry);
+    return this.charges.filter(c => !c.isPaidOut && (this.showDisabled || c.hasBookEntry));
   }
 
   get hasOrphanCharges(): boolean {
-    return this.charges.some(c => !c.hasBookEntry);
+    return this.charges.some(c => !c.hasBookEntry && !c.isPaidOut);
   }
 
   constructor(
@@ -75,12 +77,20 @@ export class StripeRefundsComponent implements OnInit {
     })
       .then((charges: StripeCharge[]) => {
         this.charges = charges
-          .map(c => ({
-            ...c,
-            isProcessing: false,
-            errorMessage: undefined,
-            hasBookEntry: !!c.stripeTag && !!this.bookService.find_book_entry_by_stripe_tag(c.stripeTag)
-          }))
+          .map(c => {
+            const achatEntry = c.stripeTag
+              ? this.bookService.get_book_entries().find(
+                  e => e.stripeTag === c.stripeTag && e.transaction_id === TRANSACTION_ID.achat_adhérent_par_carte
+                )
+              : undefined;
+            return {
+              ...c,
+              isProcessing: false,
+              errorMessage: undefined,
+              hasBookEntry: !!achatEntry,
+              isPaidOut: !!achatEntry?.deposit_ref,
+            };
+          })
           .sort((a, b) => b.createdAt - a.createdAt);
         this.isLoading = false;
       })

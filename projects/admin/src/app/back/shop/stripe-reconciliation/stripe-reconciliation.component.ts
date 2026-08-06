@@ -469,8 +469,7 @@ export class StripeReconciliationComponent {
         return;
       }
 
-      // Mémoriser les totaux Stripe pour contrôle de cohérence
-      this.expectedGrossCents = result.totalGrossCents;
+      // expectedGrossCents sera ajusté après la boucle (charges remboursées exclues)
       this.expectedChargeCount = result.charges.length;
 
       // Désélectionner tout d'abord
@@ -487,6 +486,16 @@ export class StripeReconciliationComponent {
         (result.refunds || []).filter((r: any) => r.stripeTag).map((r: any) => r.stripeTag)
       );
 
+      // stripeTag des remboursements déjà comptabilisés localement (annulation_paiement_carte_adhérent)
+      const localRefundedTags = new Set<string>(
+        allBookEntries
+          .filter(e => e.transaction_id === TRANSACTION_ID.annulation_paiement_carte_adhérent && !!e.stripeTag)
+          .map(e => e.stripeTag as string)
+      );
+
+      // grossCents à soustraire de expectedGrossCents pour les charges remboursées sans ligne
+      const refundedNoLineTags = new Set<string>();
+
       result.charges.forEach((charge: any) => {
         const line = this.findMatchingLineForCharge(charge);
         if (line) {
@@ -495,6 +504,12 @@ export class StripeReconciliationComponent {
           (line as any).isRefunded = refundedTags.has(charge.stripeTag);
           matched++;
         } else if (charge.stripeTag) {
+          // charge exclue des lignes car entièrement remboursée localement → pas une anomalie
+          if (localRefundedTags.has(charge.stripeTag) || refundedTags.has(charge.stripeTag)) {
+            refundedNoLineTags.add(charge.stripeTag);
+            return;
+          }
+
           const matchingStripeTransaction = this.diagnosticStripeTransactions.find((t: any) =>
             t.bookEntryId === charge.bookEntryId || t.stripeTag === charge.stripeTag
           ) || null;
@@ -520,10 +535,16 @@ export class StripeReconciliationComponent {
         }
       });
 
+      // Retirer du brut attendu et des remboursements affichés les paires +/- déjà équilibrées localement
+      const refundedNoLineGross = result.charges
+        .filter((c: any) => refundedNoLineTags.has(c.stripeTag))
+        .reduce((s: number, c: any) => s + c.grossCents, 0);
+
       // Pré-remplir le net bancaire (inclut la déduction des remboursements)
       this.netBancaire = result.totalNetCents / 100;
+      this.expectedGrossCents = result.totalGrossCents - refundedNoLineGross;
       this.missingBookEntryProposals = missingBookEntryProposals;
-      this.stripeRefunds = result.refunds || [];
+      this.stripeRefunds = (result.refunds || []).filter((r: any) => !refundedNoLineTags.has(r.stripeTag));
 
       this.toastService.showSuccess('Lookup payout',
         `${matched} paiement(s) identifié(s) sur ${result.charges.length} charge(s) Stripe`);
