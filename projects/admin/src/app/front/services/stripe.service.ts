@@ -317,10 +317,11 @@ export class StripeService {
     charge_status?: string;
     payout_status?: string;
     refund_status?: string;
-  }) {
+  }, stripeEnvironment: 'test' | 'live' = 'live') {
     try {
       const headers = await this.buildAuthenticatedHeaders({
         'Content-Type': 'application/json',
+        'X-Stripe-Environment': stripeEnvironment,
       });
 
       // Construire les query params
@@ -359,10 +360,11 @@ export class StripeService {
     amountCents: number;
     reason?: string;
     stripeTag?: string;
-  }) {
+  }, stripeEnvironment: 'test' | 'live' = 'live') {
     try {
       const headers = await this.buildAuthenticatedHeaders({
         'Content-Type': 'application/json',
+        'X-Stripe-Environment': stripeEnvironment,
       });
       const restOperation = post({
         apiName: this.API_NAME,

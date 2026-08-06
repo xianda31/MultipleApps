@@ -60,6 +60,9 @@ export class StripeRefundsComponent implements OnInit {
     this.season = this.systemDataService.get_local_season();
   }
 
+  // page remboursements opère toujours en live (action réelle sur données prod)
+  private readonly stripeSource: 'test' | 'live' = 'live';
+
   ngOnInit() {
     this.loadCharges();
   }
@@ -74,7 +77,7 @@ export class StripeRefundsComponent implements OnInit {
       charge_status: 'succeeded',
       payout_status: 'pending',
       refund_status: 'not_refunded,partial'
-    })
+    }, this.stripeSource)
       .then((charges: StripeCharge[]) => {
         this.charges = charges
           .map(c => {
@@ -155,7 +158,7 @@ export class StripeRefundsComponent implements OnInit {
         amountCents: Math.round(this.refundAmount * 100),
         reason: this.refundReason || 'Remboursement client',
         stripeTag: this.selectedCharge.stripeTag
-      });
+      }, this.stripeSource);
 
       if (!refundResponse || !refundResponse.refundId) {
         throw new Error('Refund creation failed');
