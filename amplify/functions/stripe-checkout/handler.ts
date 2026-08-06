@@ -25,8 +25,10 @@ const stripe = new Stripe(STRIPE_SECRET_KEY || 'dummy', {
   apiVersion: '2024-04-10' as any,
 });
 
-const stripeLive = STRIPE_LIVE_SECRET_KEY
-  ? new Stripe(STRIPE_LIVE_SECRET_KEY, { apiVersion: '2024-04-10' as any })
+// Only initialize live client if the key looks like a real Stripe key (sk_live_ or rk_live_)
+const isValidLiveKey = !!STRIPE_LIVE_SECRET_KEY && /^[sr]k_live_/.test(STRIPE_LIVE_SECRET_KEY);
+const stripeLive = isValidLiveKey
+  ? new Stripe(STRIPE_LIVE_SECRET_KEY!, { apiVersion: '2024-04-10' as any })
   : null;
 
 type StripeEnvironment = 'test' | 'live';
@@ -47,7 +49,9 @@ function getStripeForReadOnly(event: any): { client: Stripe; environment: Stripe
   const environment = resolveStripeReadEnvironment(event);
   if (environment === 'live') {
     if (!stripeLive) {
-      throw new Error('STRIPE_LIVE_SECRET_KEY not configured');
+      // STRIPE_LIVE_SECRET_KEY absent or invalid — STRIPE_SECRET_KEY is the live key in this setup
+      console.warn('[stripe] STRIPE_LIVE_SECRET_KEY not configured, using STRIPE_SECRET_KEY for live');
+      return { client: stripe, environment };
     }
     return { client: stripeLive, environment };
   }
