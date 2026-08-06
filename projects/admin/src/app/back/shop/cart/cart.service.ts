@@ -184,6 +184,7 @@ export class CartService {
   cart2Operations(): Operation[] {
     let operations: Operation[] = [];
     let payees: Map<string, CartItem[]> = new Map();
+    let cobuyer_ops: Operation[] = [];
 
     this._cart.items.forEach((cartitem) => {
 
@@ -199,11 +200,17 @@ export class CartService {
       const isShared = cartitem.paired_with && cartitem.product_account === 'CAR';
 
       if (isShared) {
-        // Shared (CAR): une seule opération au nom des deux membres
-        const sharedKey = cartitem.payee_name + ' / ' + cartitem.paired_name;
-        const existing = payees.get(sharedKey) ?? [];
+        // buyer: full price — normal payees processing handles creance_in for CREDIT
+        const existing = payees.get(cartitem.payee_name) ?? [];
         existing.push(cartitem);
-        payees.set(sharedKey, existing);
+        payees.set(cartitem.payee_name, existing);
+        // co-buyer: 0 price — appended outside main loop
+        cobuyer_ops.push({
+          label: 'vendu par ' + this.seller + ' (co-acheteur)',
+          member: cartitem.paired_name!,
+          values: { 'CAR': 0 } as operation_values,
+          productCodes: '',
+        });
       } else if (cartitem.paired_with) {
         // Per-member (ADH-c, PERF-c): deux opérations distinctes à prix unitaire (= total / 2)
         const unitPrice = cartitem.paied / 2;
@@ -297,6 +304,7 @@ export class CartService {
       });
     }
 
+    cobuyer_ops.forEach(op => operations.push(op));
     return operations;
   }
 
@@ -325,6 +333,9 @@ export class CartService {
   }
 
   payments2fValue(payment_mode: PaymentMode): AMOUNTS {
+    if (payment_mode === PaymentMode.CREDIT) {
+      return { [FINANCIAL_ACCOUNT.CASHBOX_debit]: 0 };
+    }
     let f_amounts: AMOUNTS = {};
     if (Object.values(FINANCIAL_ACCOUNT).includes(SALE_ACCOUNTS[payment_mode] as FINANCIAL_ACCOUNT)) {
       const account = SALE_ACCOUNTS[payment_mode] as FINANCIAL_ACCOUNT;
