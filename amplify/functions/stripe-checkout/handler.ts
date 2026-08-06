@@ -30,6 +30,9 @@ const isValidLiveKey = !!STRIPE_LIVE_SECRET_KEY && /^[sr]k_live_/.test(STRIPE_LI
 const stripeLive = isValidLiveKey
   ? new Stripe(STRIPE_LIVE_SECRET_KEY!, { apiVersion: '2024-04-10' as any })
   : null;
+if (!isValidLiveKey) {
+  console.warn('[stripe] STRIPE_LIVE_SECRET_KEY absent or invalid — live requests fall back to STRIPE_SECRET_KEY');
+}
 
 type StripeEnvironment = 'test' | 'live';
 
@@ -49,8 +52,6 @@ function getStripeForReadOnly(event: any): { client: Stripe; environment: Stripe
   const environment = resolveStripeReadEnvironment(event);
   if (environment === 'live') {
     if (!stripeLive) {
-      // STRIPE_LIVE_SECRET_KEY absent or invalid — STRIPE_SECRET_KEY is the live key in this setup
-      console.warn('[stripe] STRIPE_LIVE_SECRET_KEY not configured, using STRIPE_SECRET_KEY for live');
       return { client: stripe, environment };
     }
     return { client: stripeLive, environment };
@@ -1037,13 +1038,12 @@ async function handlePayoutLookup(event: any): Promise<any> {
       return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Invalid payoutId (expected po_...)' }) };
     }
 
-    // Récupérer toutes les balance transactions du payout, en expandant la charge et son payment_intent
+    // Expand omis volontairement : l’expand nested sur le filtre payout déclenche un StripeAPIError
     let btList: Stripe.ApiList<Stripe.BalanceTransaction>;
     try {
       btList = await client.balanceTransactions.list({
         payout: payoutId,
         limit: 100,
-        expand: ['data.source', 'data.source.payment_intent'],
       });
     } catch (_stripeErr: any) {
       console.warn(`[payout-lookup] balanceTransactions.list({payout}) failed for ${payoutId} — falling back to manual mode. Stripe error: ${_stripeErr?.message} (code: ${_stripeErr?.code}, type: ${_stripeErr?.type})`);
@@ -1067,30 +1067,33 @@ async function handlePayoutLookup(event: any): Promise<any> {
     // Pour chaque charge, résoudre le stripeTag via la checkout session (session.id.slice(-12))
     // car les metadata PaymentIntent sont vides (stripeTag calculé après création session)
     const charges = await Promise.all(chargeItems.map(async (bt: any) => {
-      const charge = bt.source as Stripe.Charge;
-      const pi = charge?.payment_intent as Stripe.PaymentIntent | null;
-      const meta = pi?.metadata || {};
+      // bt.source est un ID string (pas expandé) — récupérer la charge avec payment_intent
+      const chargeId: string | null = typeof bt.source === 'string' ? bt.source : (bt.source as any)?.id || null;
+      let stripeTag: string | null = null;
+      let bookEntryId: string | null = null;
 
-      // Priorité 1 : metadata directe (futures sessions)
-      let stripeTag: string | null = meta['stripeTag'] || null;
-      let bookEntryId: string | null = meta['bookEntryId'] || null;
-
-      // Priorité 2 : retrouver la checkout session via payment_intent → session.id.slice(-12)
-      if (!stripeTag && pi?.id) {
+      if (chargeId) {
         try {
-          const sessions = await client.checkout.sessions.list({ payment_intent: pi.id, limit: 1 });
-          if (sessions.data.length > 0) {
-            const sessionId = sessions.data[0].id;
-            stripeTag = `stripe:${sessionId.slice(-12)}`;
-            bookEntryId = bookEntryId || sessions.data[0].metadata?.['bookEntryId'] || null;
+          const chargeObj = await client.charges.retrieve(chargeId, { expand: ['payment_intent'] });
+          const pi = chargeObj?.payment_intent as Stripe.PaymentIntent | null;
+          const meta = pi?.metadata || {};
+          stripeTag = meta['stripeTag'] || null;
+          bookEntryId = meta['bookEntryId'] || null;
+          if (!stripeTag && pi?.id) {
+            const sessions = await client.checkout.sessions.list({ payment_intent: pi.id, limit: 1 });
+            if (sessions.data.length > 0) {
+              const sessionId = sessions.data[0].id;
+              stripeTag = `stripe:${sessionId.slice(-12)}`;
+              bookEntryId = bookEntryId || sessions.data[0].metadata?.['bookEntryId'] || null;
+            }
           }
         } catch (e) {
-          console.warn(`[payout-lookup] Could not resolve session for PI ${pi.id}:`, e);
+          console.warn(`[payout-lookup] Could not resolve charge ${chargeId}:`, e);
         }
       }
 
       return {
-        chargeId: charge?.id || null,
+        chargeId,
         stripeTag,
         bookEntryId,
         grossCents: bt.amount,

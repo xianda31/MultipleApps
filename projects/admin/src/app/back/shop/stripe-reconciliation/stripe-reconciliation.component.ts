@@ -467,7 +467,7 @@ export class StripeReconciliationComponent {
         // virement automatique Stripe : toutes les lignes en attente font partie du virement
         this.lines.forEach(l => l.selected = true);
         this.toastService.showWarning('Sélection automatique indisponible',
-          'L\'identification des paiements n\'est pas disponible pour ce virement — cochez les lignes manuellement puis saisissez le net Stripe.');
+          'Les paiements en attente ont été présélectionnés — vérifiez la sélection et le montant net, puis validez.');
         return;
       }
 
