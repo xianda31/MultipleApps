@@ -1041,25 +1041,20 @@ async function handlePayoutLookup(event: any): Promise<any> {
         limit: 100,
         expand: ['data.source', 'data.source.payment_intent'],
       });
-    } catch (stripeErr: any) {
-      const isManualPayout = stripeErr?.message?.toLowerCase().includes('manual')
-        || stripeErr?.message?.toLowerCase().includes('payout_not_found')
-        || stripeErr?.code === 'invalid_request_error';
-      if (isManualPayout) {
-        return {
-          statusCode: 200,
-          headers: CORS,
-          body: JSON.stringify({
-            payoutId,
-            isManual: true,
-            totalGrossCents: 0,
-            totalFeesCents: 0,
-            totalNetCents: 0,
-            charges: [],
-          }),
-        };
-      }
-      throw stripeErr;
+    } catch (_stripeErr: any) {
+      console.warn(`[payout-lookup] balanceTransactions.list({payout}) failed for ${payoutId} — falling back to manual mode. Stripe error: ${_stripeErr?.message} (code: ${_stripeErr?.code}, type: ${_stripeErr?.type})`);
+      return {
+        statusCode: 200,
+        headers: CORS,
+        body: JSON.stringify({
+          payoutId,
+          isManual: true,
+          totalGrossCents: 0,
+          totalFeesCents: 0,
+          totalNetCents: 0,
+          charges: [],
+        }),
+      };
     }
 
     const chargeItems = btList.data.filter((bt: any) => bt.type === 'charge');

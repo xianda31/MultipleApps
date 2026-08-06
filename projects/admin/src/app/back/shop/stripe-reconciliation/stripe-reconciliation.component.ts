@@ -122,7 +122,7 @@ export class StripeReconciliationComponent {
   }
 
   get effectiveStripeSource(): 'test' | 'live' {
-    return this.isDevMode ? this.stripeSource : 'test';
+    return this.isDevMode ? this.stripeSource : 'live';
   }
 
   // Formulaire payout
@@ -464,8 +464,10 @@ export class StripeReconciliationComponent {
         this.isManualPayout = true;
         this.expectedGrossCents = 0;
         this.expectedChargeCount = 0;
-        this.toastService.showWarning('Virement manuel',
-          'Ce virement a été créé manuellement — sélectionnez les paiements manuellement dans la liste.');
+        // virement automatique Stripe : toutes les lignes en attente font partie du virement
+        this.lines.forEach(l => l.selected = true);
+        this.toastService.showWarning('Sélection automatique indisponible',
+          'L\'identification des paiements n\'est pas disponible pour ce virement — cochez les lignes manuellement puis saisissez le net Stripe.');
         return;
       }
 
