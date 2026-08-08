@@ -198,19 +198,24 @@ export class TournamentService {
         return from(this.ffbService.getTournamentTeams(tteams_id));
     }
 
-    async deleteTeam(tteams_id: string, team_id: string): Promise<void> {
+    async deleteTeam(tteams_id: string, teamEntryId: string): Promise<boolean> {
         const tteams = this.find_tournamentTeamsById(tteams_id);
         if (!tteams) {
-            throw new Error(`TournamentTeams with id ${tteams_id} not found in cached data.`);
+            return false;
         } else {
             try {
-                await this.ffbService.deleteTeam(tteams_id, team_id);
-                tteams.items = tteams.items.filter(team => team.id.toString() !== team_id);
+                const deleted = await this.ffbService.deleteTeam(tteams_id, teamEntryId);
+                if (!deleted) {
+                    return false;
+                }
+                tteams.items = tteams.items.filter(team => team.currentTeamEntry?.id.toString() !== teamEntryId);
                 this._tournamentTeams$.next(this._tournamentTeams);
                     // Update cached observable for this tteams_id so future callers get fresh data
                     this._teamFetchCache.set(tteams_id, of(tteams));
+                return true;
             } catch (error) {
                 console.error('Error deleting team:', error);
+                return false;
             }
         }
 

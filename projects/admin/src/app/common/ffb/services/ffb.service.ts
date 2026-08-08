@@ -46,7 +46,7 @@ const FFB_ENDPOINTS = {
   clubMembers: '/api/ffb/v2/club-members',
   tournamentTeam: '/api/ffb/v2/club-team',
   teamCreate: '/api/ffb/v2/entries/groupSessions',
-  teamEntries: '/api/ffb/v2/entries/team-entries',
+  teamEntries: '/api/ffb/v2/entries/pro/team-entries',
 } as const;
 
 @Injectable({
@@ -412,18 +412,18 @@ export class FFB_proxyService {
 
   /**
    * DELETE team from FFB V2 API
-   * URL: https://api-lancelot.ffbridge.fr/entries/team-entries/{teamId}
+    * URL: https://api-lancelot.ffbridge.fr/entries/pro/team-entries/{teamId}
    * groupSessionId parameter kept for backward compatibility but not used in V2 API
    */
-  async deleteTeam(groupSessionId: string, teamId: string): Promise<boolean | null> {   // VALIDATED
-    if (!teamId) {
+  async deleteTeam(groupSessionId: string, teamEntryId: string): Promise<boolean | null> {   // VALIDATED
+    if (!teamEntryId) {
       return null;
     }
     try {
       await this.ensureConfigReady();
       const restOperation = del({
         apiName: this.API_NAME,
-        path: this.buildPath(`${FFB_ENDPOINTS.teamEntries}/${teamId}`),
+        path: this.buildPath(`${FFB_ENDPOINTS.teamEntries}/${teamEntryId}`),
         options: this.withTraceHeaders()
       });
       await restOperation.response; // Wait for response to complete

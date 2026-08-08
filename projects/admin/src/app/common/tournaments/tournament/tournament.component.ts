@@ -132,10 +132,19 @@ export class TournamentComponent implements OnInit {
   }
 
   deleteTeam(team: TeamItem) {
+    const teamEntryId = team.currentTeamEntry?.id;
+    if (!teamEntryId) {
+      this.toastService.showError("tournoi", "inscription d'équipe introuvable");
+      return;
+    }
 
-    this.TournamentService.deleteTeam(this.tteam_tournament_id.toString(), team.id.toString())
-      .then((data) => {
-        this.toastService.showSuccess("tournoi", "vous êtes désinscrit(s) !");
+    this.TournamentService.deleteTeam(this.tteam_tournament_id.toString(), teamEntryId.toString())
+      .then((deleted) => {
+        if (deleted) {
+          this.toastService.showSuccess("tournoi", "vous êtes désinscrit(s) !");
+        } else {
+          this.toastService.showError("tournoi", "la désinscription a été refusée");
+        }
       })
       .catch((error) => { console.log('TeamsComponent.deleteTeam', error); });
   }

@@ -468,18 +468,18 @@ export const handler: Handler = async (event) => {
         break;
 
       // FFB V2 Team Entry deletion endpoint
-      case route.match(/^entries\/team-entries\/\d+$/)?.[0]:
+      case route.match(/^entries\/pro\/team-entries\/\d+$/)?.[0]:
         {
-          const teamId = proxy.match(/entries\/team-entries\/(\d+)/)?.[1];
+          const teamId = proxy.match(/entries\/pro\/team-entries\/(\d+)/)?.[1];
           if (!teamId) {
             console.error(`[Handler][deleteTeam] ERROR: Could not extract teamId from path: ${proxy}`);
             return httpResponse(400, { error: "Invalid teamId in path" });
           }
           
-          console.log(`[Handler][deleteTeam] DELETE /entries/team-entries/${teamId}`);
+          console.log(`[Handler][deleteTeam] DELETE /entries/pro/team-entries/${teamId}`);
           console.log(`[Handler][deleteTeam] Deleting team entry with ID: ${teamId}`);
           
-          ffbEndpoint = `entries/team-entries/${teamId}`;
+          ffbEndpoint = `entries/pro/team-entries/${teamId}`;
         }
         break;
 
@@ -521,8 +521,8 @@ export const handler: Handler = async (event) => {
     }
 
     // Instrumentation for deleteTeam endpoint
-    if (route.match(/^entries\/team-entries\/\d+$/)) {
-      const teamId = proxy.match(/entries\/team-entries\/(\d+)/)?.[1];
+    if (route.match(/^entries\/pro\/team-entries\/\d+$/)) {
+      const teamId = proxy.match(/entries\/pro\/team-entries\/(\d+)/)?.[1];
       if (data?.error) {
         console.error(`[Handler][deleteTeam] ❌ FAILURE: teamId=${teamId} FFB API returned error:`, JSON.stringify(data));
       } else {
@@ -552,8 +552,8 @@ export const handler: Handler = async (event) => {
       console.log(`[Handler][postTeam] Returning HTTP ${statusCode} for groupSessionId=${groupSessionId}`);
     }
 
-    if (route.match(/^entries\/team-entries\/\d+$/)) {
-      const teamId = event.pathParameters?.proxy?.match(/entries\/team-entries\/(\d+)/)?.[1];
+    if (route.match(/^entries\/pro\/team-entries\/\d+$/)) {
+      const teamId = event.pathParameters?.proxy?.match(/entries\/pro\/team-entries\/(\d+)/)?.[1];
       console.log(`[Handler][deleteTeam] Returning HTTP ${statusCode} for teamId=${teamId}`);
     }
 
