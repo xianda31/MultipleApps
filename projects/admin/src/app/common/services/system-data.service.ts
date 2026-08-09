@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { SystemConfiguration } from '../interfaces/system-conf.interface';
 import { UIConfiguration } from '../interfaces/ui-conf.interface';
-import { BehaviorSubject, from, Observable, switchMap, tap, catchError, of, combineLatest, map, first } from 'rxjs';
+import { BehaviorSubject, from, Observable, switchMap, tap, catchError, of, combineLatest, map, first, shareReplay } from 'rxjs';
 import { FileService } from './files.service';
 import { ToastService } from './toast.service';
 import { normalizeBreakpoints } from '../utils/ui-utils';
@@ -18,6 +18,7 @@ export class SystemDataService {
   // Separate UI settings cache and observable (stored in its own file)
   private _ui_settings: UIConfiguration | undefined;
   private _ui_settings$: BehaviorSubject<UIConfiguration | undefined> = new BehaviorSubject<UIConfiguration | undefined>(undefined);
+  private _tournamentTypeUrls$?: Observable<{ [key: string]: string | null }>;
   constructor(
     private fileService: FileService,
     private toastService: ToastService
@@ -148,8 +149,12 @@ export class SystemDataService {
    * Useful for components that want the ready-to-use URL for each keyword.
    */
   tournamentsTypeWithUrl$(): Observable<{ [key: string]: string | null }> {
+    if (this._tournamentTypeUrls$) {
+      return this._tournamentTypeUrls$;
+    }
+
     // Use full UI settings so we can also resolve an explicit default image path if present.
-    return this.get_ui_settings().pipe(
+    this._tournamentTypeUrls$ = this.get_ui_settings().pipe(
       switchMap((ui) => {
         const mapping = (ui && ui.tournaments_type) ? ui.tournaments_type : {};
         const entries = Object.entries(mapping || {});
@@ -179,8 +184,10 @@ export class SystemDataService {
             return Object.fromEntries(filtered);
           })
         );
-      })
+      }),
+      shareReplay({ bufferSize: 1, refCount: false })
     );
+    return this._tournamentTypeUrls$;
   }
 
   /**

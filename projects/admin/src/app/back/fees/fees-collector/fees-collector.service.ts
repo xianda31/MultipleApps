@@ -364,7 +364,7 @@ export class FeesCollectorService {
 
     this.game.gamers = [];
 
-    this.tournamentService.readTeams(tournament.id.toString()).pipe(
+    this.tournamentService.getTournamentTeams(tournament.id.toString(), { refresh: false }).pipe(
       map((tteams: TournamentTeams) => tteams.items),
       map((items) => items.flatMap((team) => team.players.map((player, idx) => ({ player, teamId: team.id, playerIndex: idx })))),
     ).subscribe((playerData) => {

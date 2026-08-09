@@ -8,9 +8,12 @@ import { TitleService } from '../../../front/title/title.service';
 import { BreakpointsSettings } from '../../interfaces/ui-conf.interface';
 import { formatRowColsClasses } from '../../utils/ui-utils';
 import { SystemDataService } from '../../services/system-data.service';
-import { combineLatest } from 'rxjs';
+import { combineLatest, filter, forkJoin, map, of, switchMap, take } from 'rxjs';
 import { Member } from '../../interfaces/member.interface';
 import { isFemaleGender } from '../../utils/gender.util';
+import { TournamentV2 } from '../../ffb/interface/tournament-v2.interface';
+
+const MAX_TOURNAMENTS_LISTED = 8;
 
 @Component({
   selector: 'app-tournaments',
@@ -31,6 +34,7 @@ export class TournamentsComponent {
   loading: boolean = true;
   in_error: boolean = false;
   logged: Member | null = null;
+  private tournamentTypeUrls: { [key: string]: string | null } = {};
 
 
 
@@ -50,33 +54,51 @@ export class TournamentsComponent {
 
 
     if (this.displayTitle !== false) this.titleService.setTitle('Les prochains tournois de régularité');
+    this.loadTournamentImages();
     this.loadTournamentTeams();
-
-    this.auth.logged_member$.subscribe((member) => {
-      const whoAmI = member;
-      this.person_id = whoAmI?.person_id;
-      this.logged = whoAmI || null;
-    });
   }
 
+  private loadTournamentImages(): void {
+    this.systemDataService.tournamentsTypeWithUrl$().pipe(take(1)).subscribe({
+      next: (typesMap) => {
+        this.tournamentTypeUrls = typesMap || {};
+        this.next_tournament_teams = this.enrichWithImages(this.next_tournament_teams);
+      },
+      error: (error) => console.warn('[TournamentsComponent] Tournament images unavailable', error)
+    });
+  }
 
   loadTournamentTeams() {
     this.loading = true;
     combineLatest([
-      this.systemDataService.tournamentsTypeWithUrl$(),
-      this.tournamentService.list_next_tournament_teams()
-    ]).subscribe({
-      next: ([types_map, next_tournament_teams]: [any, TournamentTeams[]]) => {
-            const mapObj = types_map || {};
-            // Enrich each team with une image_url
-            const enrichedTeams = next_tournament_teams.map((team) => {
-              const rawName = team.subscription_tournament.organization_club_tournament.tournament_name || '';
-              // Nettoyage : suppression des accents uniquement
-              const nameKey = rawName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-              const imageUrl = this.findImageUrlForName(nameKey, mapObj);
-              return Object.assign(team as any, { image_url: imageUrl });
-            });
-        this.next_tournament_teams = enrichedTeams;
+      this.tournamentService.list_next_tournaments(0),
+      combineLatest([
+        this.auth.isRestoringSession$,
+        this.auth.logged_member$
+      ]).pipe(
+        filter(([isRestoring]) => !isRestoring),
+        map(([, member]) => member)
+      )
+    ]).pipe(
+      switchMap(([tournaments, member]) => {
+        this.person_id = member?.person_id;
+        this.logged = member;
+
+        const nextTournaments = [...tournaments]
+          .sort((left, right) => new Date(left.date).getTime() - new Date(right.date).getTime())
+          .slice(0, MAX_TOURNAMENTS_LISTED);
+        if (!member || nextTournaments.length === 0) {
+          return of(nextTournaments.map(tournament => this.deserializeTournament(tournament)));
+        }
+        return forkJoin(
+          nextTournaments.map((tournament) =>
+            this.tournamentService.getTournamentTeams(tournament.id.toString())
+          )
+        );
+      })
+    ).subscribe({
+      next: (nextTournamentTeams) => {
+        this.next_tournament_teams = this.enrichWithImages(nextTournamentTeams);
         this.loading = false;
       },
       error: (err) => {
@@ -85,6 +107,38 @@ export class TournamentsComponent {
         console.error('Erreur lors du chargement des tournois :', err);
       }
     });
+  }
+
+  private enrichWithImages(tournamentTeams: TournamentTeams[]): TournamentTeams[] {
+    return tournamentTeams.map((team) => {
+      const rawName = team.subscription_tournament.organization_club_tournament.tournament_name || '';
+      const nameKey = rawName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const imageUrl = this.findImageUrlForName(nameKey, this.tournamentTypeUrls);
+      return Object.assign(team as any, { image_url: imageUrl });
+    });
+  }
+
+  private deserializeTournament(tournament: TournamentV2): TournamentTeams {
+    const parsedDate = new Date(tournament.date);
+    const time = Number.isNaN(parsedDate.getTime())
+      ? ''
+      : `${String(parsedDate.getHours()).padStart(2, '0')}:${String(parsedDate.getMinutes()).padStart(2, '0')}`;
+
+    return {
+      subscription_tournament: {
+        id: tournament.id,
+        organization_club_tournament: {
+          date: tournament.date,
+          tournament_name: tournament.title,
+          session_name: tournament.title,
+          time,
+          entryCount: tournament.entryCount,
+          isolatedPlayerCount: tournament.isolatedPlayerCount,
+          ivPlayerMax: tournament.ivPlayerMax,
+        }
+      },
+      items: []
+    };
   }
 
   private findImageUrlForName(nameKey: string, mapObj: any): string | null {
@@ -157,7 +211,8 @@ export class TournamentsComponent {
   }
 
   getPairedTeamCount(tournament: TournamentTeams): number {
-    return Math.max(0, tournament.items.length - this.getIsolatedPlayerCount(tournament));
+    const entryCount = tournament.subscription_tournament.organization_club_tournament.entryCount;
+    return Math.max(0, entryCount - this.getIsolatedPlayerCount(tournament));
   }
 
   selectTournament(tournamentId: number) {

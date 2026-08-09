@@ -465,6 +465,7 @@ export function toTournamentTeamsFromV2(
         tournament_name: tournamentName,
         session_name: sessionName,
         time,
+        entryCount: typeof tournament?.entryCount === 'number' ? tournament.entryCount : items.length,
         isolatedPlayerCount,
         ivPlayerMax,
       },

@@ -13,6 +13,7 @@ export interface TournamentTeams {
       tournament_name: string;
       session_name: string;
       time: string;
+      entryCount: number;
       isolatedPlayerCount?: number;
       ivPlayerMax?: number;
     };
