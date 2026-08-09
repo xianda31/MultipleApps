@@ -112,8 +112,14 @@ export class TournamentsComponent {
   date_of(tTeams: TournamentTeams): string {
     return tTeams.subscription_tournament.organization_club_tournament.date;
   }
+  time_of(tTeams: TournamentTeams): string {
+    return tTeams.subscription_tournament.organization_club_tournament.time;
+  }
   name_of(tTeams: TournamentTeams): string {
     return tTeams.subscription_tournament.organization_club_tournament.tournament_name;
+  }
+  ivPlayerMax_of(tTeams: TournamentTeams): number | undefined {
+    return tTeams.subscription_tournament.organization_club_tournament.ivPlayerMax;
   }
 
 
@@ -143,11 +149,15 @@ export class TournamentsComponent {
   }
 
   getIsolatedPlayerCount(tournament: TournamentTeams): number {
+    const apiCount = tournament.subscription_tournament.organization_club_tournament.isolatedPlayerCount;
+    if (apiCount !== undefined) {
+      return apiCount;
+    }
     return tournament.items.filter(team => team.players.length === 1).length;
   }
 
   getPairedTeamCount(tournament: TournamentTeams): number {
-    return tournament.items.length - this.getIsolatedPlayerCount(tournament);
+    return Math.max(0, tournament.items.length - this.getIsolatedPlayerCount(tournament));
   }
 
   selectTournament(tournamentId: number) {

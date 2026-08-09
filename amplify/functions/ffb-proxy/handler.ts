@@ -314,6 +314,8 @@ export const handler: Handler = async (event) => {
           params.set("maxPerPage", queryParams.maxPerPage || "80");
           params.set("groupId", CLUB_GROUP_ID);
           params.append("context[]", "groupSession.entryCount");
+          params.append("context[]", "groupSession.isolatedPlayerCount");
+          params.append("context[]", "groupSession.ivPlayerMax");
 
           ffbEndpoint = `competitions/groupSessions/search?${params.toString()}`;
           console.log(`[FFB API] club-sessions: dateFrom=${dateFromStr} dateTo=${dateToStr} currentPage=${queryParams.currentPage || "1"} maxPerPage=${queryParams.maxPerPage || "80"} groupId=${CLUB_GROUP_ID}`);

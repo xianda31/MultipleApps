@@ -351,11 +351,15 @@ export class FeesCollectorService {
         : FEE_RATE.STANDARD;
     this.game.member_trn_price = +this.get_fee_rate(this.game.fee_rate).member_price;
     this.game.non_member_trn_price = +this.get_fee_rate(this.game.fee_rate).non_member_price;
+    const tournamentDate = new Date(tournament.date);
+    const tournamentTime = Number.isNaN(tournamentDate.getTime())
+      ? '00:00'
+      : `${String(tournamentDate.getHours()).padStart(2, '0')}:${String(tournamentDate.getMinutes()).padStart(2, '0')}`;
     this.game.tournament = {
       id: tournament.id,
       name: tournament.title || 'Tournoi',
       date: tournament.date,
-      time: tournament.time || '00:00'
+      time: tournamentTime
     };
 
     this.game.gamers = [];

@@ -7,6 +7,8 @@ export interface GroupSession {
   date: string; // ISO8601
   description: string;
   entryCount: number;
+  isolatedPlayerCount?: number;
+  ivPlayerMax?: number;
   entryScope: string;
   expectedBoardCount: number;
   location: string;

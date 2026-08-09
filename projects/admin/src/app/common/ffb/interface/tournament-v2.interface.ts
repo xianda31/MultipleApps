@@ -7,10 +7,11 @@ export interface TournamentV2 {
   date: string;                  // ISO 8601 date (YYYY-MM-DD)
   title: string;                 // session.label
   entryCount: number;            // nbr_inscrit
+  isolatedPlayerCount?: number;  // players looking for a partner
+  ivPlayerMax?: number;          // maximum player IV
   moment?: string;               // phase moment
   location?: string;             // place_code
   maxTeamCount?: number;         // max teams
   expectedBoardCount?: number;   // nb_deal
-  time?: string;                 // tournament time (HH:MM) - may not be in API response
 }
 

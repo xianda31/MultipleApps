@@ -13,6 +13,8 @@ export interface TournamentTeams {
       tournament_name: string;
       session_name: string;
       time: string;
+      isolatedPlayerCount?: number;
+      ivPlayerMax?: number;
     };
   };
   // Teams from FFB V2 API

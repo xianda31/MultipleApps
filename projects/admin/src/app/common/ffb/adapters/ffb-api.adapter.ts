@@ -87,24 +87,23 @@ function toTournamentV2(raw: unknown): TournamentV2 {
   const groupSession: any = isRecord(raw) ? raw : {};
   const session: any = isRecord(groupSession.session) ? groupSession.session : {};
 
-  // Extract time from ISO date string
   const isoDate = asString(groupSession.date, '');
-  const parsedDate = isoDate ? new Date(isoDate) : null;
-  const hasValidDate = parsedDate !== null && !Number.isNaN(parsedDate.getTime());
-  const time = hasValidDate
-    ? `${String(parsedDate.getHours()).padStart(2, '0')}:${String(parsedDate.getMinutes()).padStart(2, '0')}`
-    : '00:00';
 
   return {
     id: asNumber(groupSession.id, 0),
     date: isoDate,
     title: asString(session.label, 'Tournoi'),
     entryCount: asNumber(groupSession.entryCount, 0),
+    isolatedPlayerCount: typeof groupSession.isolatedPlayerCount === 'number'
+      ? groupSession.isolatedPlayerCount
+      : undefined,
+    ivPlayerMax: typeof groupSession.ivPlayerMax === 'number'
+      ? groupSession.ivPlayerMax
+      : undefined,
     moment: asString(groupSession.moment, ''),
     location: asString(groupSession.location, ''),
     maxTeamCount: asNumber(groupSession.maxTeamCount, 0),
     expectedBoardCount: asNumber(groupSession.expectedBoardCount, 0),
-    time,
   };
 }
 
@@ -447,7 +446,16 @@ export function toTournamentTeamsFromV2(
     )
   );
   const sessionName = asString(tournament?.session_name, asString(tournament?.title, asString(tournament?.description, '')));
-  const time = tournament?.time || '00:00';
+  const parsedDate = date ? new Date(date) : null;
+  const time = parsedDate && !Number.isNaN(parsedDate.getTime())
+    ? `${String(parsedDate.getHours()).padStart(2, '0')}:${String(parsedDate.getMinutes()).padStart(2, '0')}`
+    : '';
+  const isolatedPlayerCount = typeof tournament?.isolatedPlayerCount === 'number'
+    ? tournament.isolatedPlayerCount
+    : undefined;
+  const ivPlayerMax = typeof tournament?.ivPlayerMax === 'number'
+    ? tournament.ivPlayerMax
+    : undefined;
 
   return {
     subscription_tournament: {
@@ -457,6 +465,8 @@ export function toTournamentTeamsFromV2(
         tournament_name: tournamentName,
         session_name: sessionName,
         time,
+        isolatedPlayerCount,
+        ivPlayerMax,
       },
     },
     items,

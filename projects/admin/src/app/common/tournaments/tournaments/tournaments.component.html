@@ -22,18 +22,20 @@
             <div class="card-body d-flex flex-column">
 
                 <div class="d-flex align-items-center justify-content-start">
-                    <h5 class="text-success fw-bolder mb-0">
-                        {{ date_of(t) | date:'EEEE d MMMM':'':'fr-FR' }}
-                    </h5>
+                    <h4 class="text-success fw-bolder mb-0">
+                        {{ date_of(t) | date:'EEEE d MMMM':'':'fr-FR' }}<ng-container *ngIf="time_of(t)"> &nbsp;&nbsp;
+                            {{ time_of(t) }}</ng-container>
+                    </h4>
                 </div>
 
                 <div class="row  g-0">
-                    <div class="col col-sm-9 col-md-8  d-flex justify-content-start align-items-center px-1">
-                        <h6 class="text-start">
-                            <!-- <div class="fs-5 text-primary fw-bolder">{{ date_of(t) | date:'EEEE d MMMM':'':'fr-FR' }}
-                            </div> -->
+                    <div class="col col-sm-9 col-md-8 d-flex flex-column justify-content-center align-items-start px-1">
+                        <div class="text-start fw-bolder mb-0">
                             {{name_of(t)}}
-                        </h6>
+                        </div>
+                        <div *ngIf="ivPlayerMax_of(t)" class="small text-muted">
+                            (IV max: {{ ivPlayerMax_of(t) }})
+                        </div>
                     </div>
                     <div class="col col-sm-3 col-md-4 d-flex">
                         <div class="overflow-hidden w-100">
@@ -48,31 +50,24 @@
                     </div>
                 </div>
 
-                <div class="pt-0 g-0 d-flex flex-column mt-auto">
-                    <div class="text-center  ">
-                        <ng-container *ngIf="t.items.length; else none">
-                            {{ getPairedTeamCount(t) }} {{ (getPairedTeamCount(t) === 1) ? 'paire inscrite' : 'paires inscrites' }}
-                            <div *ngIf="getIsolatedPlayerCount(t)">
-                                {{ getIsolatedPlayerCount(t) === 1 ? 'et une personne cherche un partenaire' : ('et ' +
-                                getIsolatedPlayerCount(t) + ' personnes cherchent un partenaire') }}
-                            </div>
-
-                        </ng-container>
-                        <ng-template #none>aucune inscription</ng-template>
+                <div class="mt-auto pt-2 g-0 d-flex justify-content-center align-items-center gap-3 ">
+                    <div class="text-center fw-bolder mb-0">
+                        <i class="bi bi-people-fill me-1"></i> {{ getPairedTeamCount(t) }}
+                        <span *ngIf="getIsolatedPlayerCount(t)">
+                            <i class="bi bi-person-fill-exclamation ms-3 me-1"></i> {{ getIsolatedPlayerCount(t) }}
+                        </span>
                     </div>
-                    <!-- <hr> -->
 
-                    <div *ngIf="logged" class=" d-flex justify-content-center align-items-center ">
+                    <div *ngIf="logged" class="d-flex justify-content-center align-items-center">
                         <div class="ms-1" style="cursor:pointer;"
                             (click)="selectTournament(t.subscription_tournament.id)">
                             <div class="btn btn-outline-primary  py-1 px-2 nice_shadow">
-                                <i class="bi bi-people-fill me-1"></i>
-                                Voir les inscriptions
+                                Les inscriptions
                             </div>
                         </div>
                     </div>
-
                 </div>
+                
             </div>
         </div>
     </div>
