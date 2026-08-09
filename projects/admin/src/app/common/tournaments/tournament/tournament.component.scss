@@ -1,0 +1,41 @@
+.team-number-cell,
+.team-iv-cell {
+	width: 3rem;
+	white-space: nowrap;
+}
+
+.team-players {
+	display: flex;
+	gap: 1rem;
+}
+
+.team-player {
+	display: flex;
+	flex: 1 1 0;
+	gap: 0.35rem;
+	align-items: baseline;
+}
+
+@media (max-width: 576px) and (orientation: portrait) {
+	tbody tr:nth-child(even) > td {
+		background-color: rgba(0, 0, 0, 0.04);
+	}
+
+	tbody td {
+		vertical-align: middle;
+	}
+
+	.team-players {
+		flex-direction: column;
+		gap: 0.25rem;
+	}
+
+	.team-player {
+		display: block;
+	}
+
+	.team-player .small {
+		margin-left: 0.25rem;
+		white-space: nowrap;
+	}
+}

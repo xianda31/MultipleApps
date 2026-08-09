@@ -472,16 +472,16 @@ export const handler: Handler = async (event) => {
       // FFB V2 Team Entry deletion endpoint
       case route.match(/^entries\/pro\/team-entries\/\d+$/)?.[0]:
         {
-          const teamId = proxy.match(/entries\/pro\/team-entries\/(\d+)/)?.[1];
-          if (!teamId) {
-            console.error(`[Handler][deleteTeam] ERROR: Could not extract teamId from path: ${proxy}`);
-            return httpResponse(400, { error: "Invalid teamId in path" });
+          const tournamentRegistrationId = proxy.match(/entries\/pro\/team-entries\/(\d+)/)?.[1];
+          if (!tournamentRegistrationId) {
+            console.error(`[Handler][deleteTeam] ERROR: Could not extract tournamentRegistrationId from path: ${proxy}`);
+            return httpResponse(400, { error: "Invalid tournamentRegistrationId in path" });
           }
           
-          console.log(`[Handler][deleteTeam] DELETE /entries/pro/team-entries/${teamId}`);
-          console.log(`[Handler][deleteTeam] Deleting team entry with ID: ${teamId}`);
+          console.log(`[Handler][deleteTeam] DELETE /entries/pro/team-entries/${tournamentRegistrationId}`);
+          console.log(`[Handler][deleteTeam] Deleting tournament registration with ID: ${tournamentRegistrationId}`);
           
-          ffbEndpoint = `entries/pro/team-entries/${teamId}`;
+          ffbEndpoint = `entries/pro/team-entries/${tournamentRegistrationId}`;
         }
         break;
 
@@ -524,11 +524,11 @@ export const handler: Handler = async (event) => {
 
     // Instrumentation for deleteTeam endpoint
     if (route.match(/^entries\/pro\/team-entries\/\d+$/)) {
-      const teamId = proxy.match(/entries\/pro\/team-entries\/(\d+)/)?.[1];
+      const tournamentRegistrationId = proxy.match(/entries\/pro\/team-entries\/(\d+)/)?.[1];
       if (data?.error) {
-        console.error(`[Handler][deleteTeam] ❌ FAILURE: teamId=${teamId} FFB API returned error:`, JSON.stringify(data));
+        console.error(`[Handler][deleteTeam] ❌ FAILURE: tournamentRegistrationId=${tournamentRegistrationId} FFB API returned error:`, JSON.stringify(data));
       } else {
-        console.log(`[Handler][deleteTeam] ✅ SUCCESS: teamId=${teamId}`);
+        console.log(`[Handler][deleteTeam] ✅ SUCCESS: tournamentRegistrationId=${tournamentRegistrationId}`);
       }
     }
 
@@ -555,8 +555,8 @@ export const handler: Handler = async (event) => {
     }
 
     if (route.match(/^entries\/pro\/team-entries\/\d+$/)) {
-      const teamId = event.pathParameters?.proxy?.match(/entries\/pro\/team-entries\/(\d+)/)?.[1];
-      console.log(`[Handler][deleteTeam] Returning HTTP ${statusCode} for teamId=${teamId}`);
+      const tournamentRegistrationId = event.pathParameters?.proxy?.match(/entries\/pro\/team-entries\/(\d+)/)?.[1];
+      console.log(`[Handler][deleteTeam] Returning HTTP ${statusCode} for tournamentRegistrationId=${tournamentRegistrationId}`);
     }
 
     return httpResponse(statusCode, data);

@@ -1,11 +1,9 @@
 import { Competition, CompetitionOrganization, CompetitionPhases, CompetitionSeason, CompetitionTeam, CompetitionResultStade_V2, Competition_V2, Entity_V2, Player, SessionRankingEntry, SessionRankingPlayer } from '../../../back/competitions/competitions.interface';
 import { ClubMember } from '../interface/club-member.interface';
-import { TournamentV2 } from '../interface/tournament-v2.interface';
+import { RegisteredTeam, TournamentTeams, Tournament } from '../interface/tournament.interface';
 import { FFB_Season } from '../interface/ffb-season.interface';
-import { TournamentTeams } from '../interface/tournament_teams.interface';
 import { PersonV2 } from '../interface/person-v2.interface';
 import { PersonV2Ranking } from '../interface/person-v2.interface';
-import { TeamItem } from '../interface/team-search.interface';
 import {
   ApiCompetitionDto,
   ApiCompetitionSearchResponseDto,
@@ -36,7 +34,7 @@ function asString(value: unknown, fallback = ''): string {
   return typeof value === 'string' ? value : fallback;
 }
 
-function toTeamPlayer(raw: unknown): TeamItem['players'][number] {
+function toTeamPlayer(raw: unknown): RegisteredTeam['players'][number] {
   const player = isRecord(raw) ? raw : {};
   const seasonRaw = isRecord(player['season']) ? player['season'] : {};
   const rankingRaw = isRecord(seasonRaw['ranking']) ? seasonRaw['ranking'] : {};
@@ -61,13 +59,15 @@ function toTeamPlayer(raw: unknown): TeamItem['players'][number] {
   };
 }
 
-function toTeamItem(raw: unknown): TeamItem {
+function toRegisteredTeam(raw: unknown): RegisteredTeam {
   const item = isRecord(raw) ? raw : {};
+  const currentTeamEntry = isRecord(item['currentTeamEntry']) ? item['currentTeamEntry'] : {};
   return {
-    ...(item as unknown as TeamItem),
-    captain: toTeamPlayer(item['captain']),
+    id: asNumber(item['id'], 0),
+    iv: asNumber(item['iv'], 0),
     players: asArray<unknown>(item['players']).map(toTeamPlayer),
-  } as TeamItem;
+    tournamentRegistrationId: asNumber(currentTeamEntry['id'], 0),
+  };
 }
 
 /**
@@ -83,7 +83,7 @@ function capitalize(text: string): string {
     .join('');
 }
 
-function toTournamentV2(raw: unknown): TournamentV2 {
+function toTournamentV2(raw: unknown): Tournament {
   const groupSession: any = isRecord(raw) ? raw : {};
   const session: any = isRecord(groupSession.session) ? groupSession.session : {};
 
@@ -108,10 +108,10 @@ function toTournamentV2(raw: unknown): TournamentV2 {
 }
 
 /**
- * Convert FFB V2 paginated GroupSession response to minimal TournamentV2[] interface
+ * Convert FFB V2 paginated GroupSession response to minimal Tournament[] interface
  * Handles: { items: GroupSession[], pagination: {...} }
  */
-export function toTournamentV2List(payload: unknown): TournamentV2[] {
+export function toTournamentV2List(payload: unknown): Tournament[] {
   const boxedPayload: any = isRecord(payload) ? payload : {};
   const items = asArray<unknown>(boxedPayload.items);
   return items.map((item: unknown) => toTournamentV2(item));
@@ -434,7 +434,7 @@ export function toTournamentTeamsFromV2(
   tournament?: any
 ): TournamentTeams {
   const response: any = isRecord(payload) ? payload : {};
-  const items = asArray<unknown>(response.items).map(toTeamItem);
+  const items = asArray<unknown>(response.items).map(toRegisteredTeam);
   const pagination = isRecord(response.pagination) ? response.pagination : undefined;
 
   // Extract metadata from tournament or create defaults
@@ -445,11 +445,6 @@ export function toTournamentTeamsFromV2(
     asString(tournament?.tournament_name, asString(tournament?.session_name, ''))
     )
   );
-  const sessionName = asString(tournament?.session_name, asString(tournament?.title, asString(tournament?.description, '')));
-  const parsedDate = date ? new Date(date) : null;
-  const time = parsedDate && !Number.isNaN(parsedDate.getTime())
-    ? `${String(parsedDate.getHours()).padStart(2, '0')}:${String(parsedDate.getMinutes()).padStart(2, '0')}`
-    : '';
   const isolatedPlayerCount = typeof tournament?.isolatedPlayerCount === 'number'
     ? tournament.isolatedPlayerCount
     : undefined;
@@ -458,17 +453,17 @@ export function toTournamentTeamsFromV2(
     : undefined;
 
   return {
-    subscription_tournament: {
+    tournament: {
       id: asNumber(parseInt(groupSessionId, 10), 0),
-      organization_club_tournament: {
-        date,
-        tournament_name: tournamentName,
-        session_name: sessionName,
-        time,
-        entryCount: typeof tournament?.entryCount === 'number' ? tournament.entryCount : items.length,
-        isolatedPlayerCount,
-        ivPlayerMax,
-      },
+      date,
+      title: tournamentName,
+      entryCount: typeof tournament?.entryCount === 'number' ? tournament.entryCount : items.length,
+      isolatedPlayerCount,
+      ivPlayerMax,
+      moment: typeof tournament?.moment === 'string' ? tournament.moment : undefined,
+      location: typeof tournament?.location === 'string' ? tournament.location : undefined,
+      maxTeamCount: typeof tournament?.maxTeamCount === 'number' ? tournament.maxTeamCount : undefined,
+      expectedBoardCount: typeof tournament?.expectedBoardCount === 'number' ? tournament.expectedBoardCount : undefined,
     },
     items,
     pagination: pagination

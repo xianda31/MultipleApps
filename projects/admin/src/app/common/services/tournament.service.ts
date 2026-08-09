@@ -1,10 +1,9 @@
 import { Injectable } from '@angular/core';
 import { club_tournament } from '../ffb/interface/club_tournament.interface';
-import { TournamentV2 } from '../ffb/interface/tournament-v2.interface';
+import { TournamentTeams, Tournament } from '../ffb/interface/tournament.interface';
 import { BehaviorSubject, from, map, Observable, tap, of, catchError } from 'rxjs';
 import { shareReplay } from 'rxjs/operators';
 import { FFB_proxyService } from '../ffb/services/ffb.service';
-import { TournamentTeams } from '../ffb/interface/tournament_teams.interface';
 import { ToastService } from './toast.service';
 
 const TOURNAMENTS_WINDOW = 28; // Days (4 weeks) for searching tournaments
@@ -13,8 +12,8 @@ const TOURNAMENTS_WINDOW = 28; // Days (4 weeks) for searching tournaments
     providedIn: 'root',
 })
 export class TournamentService {
-    private _tournaments!: TournamentV2[];
-    private _tournamentCache = new Map<string, TournamentV2[]>();
+    private _tournaments!: Tournament[];
+    private _tournamentCache = new Map<string, Tournament[]>();
     private _tournamentTeams: TournamentTeams[] = [];
     private _tournamentTeams$ = new BehaviorSubject<TournamentTeams[]>([]);
     // Cache for in-flight or resolved TournamentTeams observables to avoid repeated remote calls
@@ -40,7 +39,7 @@ export class TournamentService {
         days_back: number,
         tournamentsWindow?: number,
         options: { refresh?: boolean } = { refresh: false }
-    ): Observable<TournamentV2[]> {
+    ): Observable<Tournament[]> {
         const window = tournamentsWindow || TOURNAMENTS_WINDOW;
         // Calculate date range: (today - days_back) to (today + window)
         const today = new Date();
@@ -59,7 +58,7 @@ export class TournamentService {
         }
 
         return this.ffbService._getTournaments(dateFrom, dateTo).pipe(
-            map((tournaments: TournamentV2[]) => {
+            map((tournaments: Tournament[]) => {
                 if (!Array.isArray(tournaments)) {
                     this.toastService.showError('connexion au serveur FFB', 'Erreur serveur FFB ou format inattendu lors de la récupération des tournois');
                     console.error('Erreur serveur FFB ou format inattendu lors de la récupération des tournois');
@@ -85,7 +84,7 @@ export class TournamentService {
                                 'Le service FFB est temporairement indisponible. Réessaie dans quelques minutes.'
                             );
                         }
-                        return [] as TournamentV2[];
+                        return [] as Tournament[];
                     }),
                     catchError(() => {
                         if (this.isFfbMaintenanceError(err)) {
@@ -123,7 +122,7 @@ export class TournamentService {
         const request = from(this.ffbService.getTournamentTeams(tteams_id, tournament)).pipe(
             tap((teams) => {
                 const index = this._tournamentTeams.findIndex(
-                    item => item.subscription_tournament.id === teams.subscription_tournament.id
+                    item => item.tournament.id === teams.tournament.id
                 );
                 if (index >= 0) {
                     this._tournamentTeams[index] = teams;
@@ -143,11 +142,11 @@ export class TournamentService {
 
 
     private find_tournamentTeamsById(tteams_id: string): TournamentTeams | undefined {
-        return this._tournamentTeams.find(t => t.subscription_tournament.id.toString() === tteams_id);
+        return this._tournamentTeams.find(t => t.tournament.id.toString() === tteams_id);
     }
 
     private date_of(tTeams: TournamentTeams): string {
-        return tTeams.subscription_tournament.organization_club_tournament.date;
+        return tTeams.tournament.date;
     }
 
     // C(RU)DL Team
@@ -182,17 +181,19 @@ export class TournamentService {
         }
     }
 
-    async deleteTeam(tteams_id: string, teamEntryId: string): Promise<boolean> {
+    async deleteTeam(tteams_id: string, tournamentRegistrationId: string): Promise<boolean> {
         const tteams = this.find_tournamentTeamsById(tteams_id);
         if (!tteams) {
             return false;
         } else {
             try {
-                const deleted = await this.ffbService.deleteTeam(tteams_id, teamEntryId);
+                const deleted = await this.ffbService.deleteTeam(tteams_id, tournamentRegistrationId);
                 if (!deleted) {
                     return false;
                 }
-                tteams.items = tteams.items.filter(team => team.currentTeamEntry?.id.toString() !== teamEntryId);
+                tteams.items = tteams.items.filter(
+                    team => team.tournamentRegistrationId.toString() !== tournamentRegistrationId
+                );
                 this._tournamentTeams$.next(this._tournamentTeams);
                     // Update cached observable for this tteams_id so future callers get fresh data
                     this._teamFetchCache.set(tteams_id, of(tteams));

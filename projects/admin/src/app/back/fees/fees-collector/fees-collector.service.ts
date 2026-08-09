@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { TournamentService } from '../../../common/services/tournament.service';
-import { TournamentTeams } from '../../../common/ffb/interface/tournament_teams.interface';
+import { TournamentTeams } from '../../../common/ffb/interface/tournament.interface';
 import { BehaviorSubject, map, Observable } from 'rxjs';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { Member } from '../../../common/interfaces/member.interface';

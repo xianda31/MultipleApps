@@ -1,10 +1,9 @@
 import { Injectable } from '@angular/core';
 import { del, get, post } from 'aws-amplify/api';
-import { TournamentV2 } from '../interface/tournament-v2.interface';
+import { TournamentTeams, Tournament } from '../interface/tournament.interface';
 import { FFB_Season } from '../interface/ffb-season.interface';
 import { PersonV2 } from '../interface/person-v2.interface';
 import { ClubMember } from '../interface/club-member.interface';
-import { TournamentTeams } from '../interface/tournament_teams.interface';
 import { catchError, firstValueFrom, from, Observable, of, take } from 'rxjs';
 import { Competition, CompetitionOrganization, CompetitionPhases, CompetitionResultStade_V2, CompetitionTeam, Competition_V2, Entity_V2, SessionRankingEntry } from '../../../back/competitions/competitions.interface';
 import { environment } from '../../../../environments/environment';
@@ -225,12 +224,12 @@ export class FFB_proxyService {
       return [];
     }
   }
-  _getTournaments(dateFrom?: Date, dateTo?: Date): Observable<TournamentV2[]> {  // VALIDATED - returns V2 native interface
+  _getTournaments(dateFrom?: Date, dateTo?: Date): Observable<Tournament[]> {  // VALIDATED - returns V2 native interface
     return from((async () => {
       try {
         await this.ensureConfigReady();
         // Load all pages from FFB V2 (paginated response)
-        const allTournaments: TournamentV2[] = [];
+        const allTournaments: Tournament[] = [];
         let currentPage = 1;
         let totalPages = 1;
         let totalItems = 0;
@@ -260,7 +259,7 @@ export class FFB_proxyService {
           const { body } = await restOperation.response;
           const payload = await body.json();
 
-          // Convert V2 response to minimal TournamentV2 interface
+          // Convert V2 response to minimal Tournament interface
           const pageTournaments = toTournamentV2List(payload);
           allTournaments.push(...pageTournaments);
 
@@ -412,18 +411,18 @@ export class FFB_proxyService {
 
   /**
    * DELETE team from FFB V2 API
-    * URL: https://api-lancelot.ffbridge.fr/entries/pro/team-entries/{teamId}
+    * URL: https://api-lancelot.ffbridge.fr/entries/pro/team-entries/{tournamentRegistrationId}
    * groupSessionId parameter kept for backward compatibility but not used in V2 API
    */
-  async deleteTeam(groupSessionId: string, teamEntryId: string): Promise<boolean | null> {   // VALIDATED
-    if (!teamEntryId) {
+  async deleteTeam(groupSessionId: string, tournamentRegistrationId: string): Promise<boolean | null> {   // VALIDATED
+    if (!tournamentRegistrationId) {
       return null;
     }
     try {
       await this.ensureConfigReady();
       const restOperation = del({
         apiName: this.API_NAME,
-        path: this.buildPath(`${FFB_ENDPOINTS.teamEntries}/${teamEntryId}`),
+        path: this.buildPath(`${FFB_ENDPOINTS.teamEntries}/${tournamentRegistrationId}`),
         options: this.withTraceHeaders()
       });
       await restOperation.response; // Wait for response to complete

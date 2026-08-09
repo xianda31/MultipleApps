@@ -10,8 +10,10 @@
 
 <div *ngIf="!loading && !in_error" class="equal-height-cards" [ngClass]="rowCols()" [style]="gridStyle()">
     <div class="col" *ngFor="let t of next_tournament_teams">
-        <div class="card h-100 nice_shadow position-relative" style="overflow: hidden;">
 
+        <div class="card h-100 nice_shadow position-relative"
+            style="cursor:pointer; border-radius: 0.5rem; overflow:hidden;"
+            (click)="selectTournament(t.tournament.id)">
             <!-- Bandeau diagonal coin supérieur droit -->
             <div *ngIf="registrated_in(t)"
                 class="position-absolute bg-info text-white fw-bold d-flex align-items-center justify-content-center"
@@ -50,24 +52,15 @@
                     </div>
                 </div>
 
-                <div class="mt-auto pt-2 g-0 d-flex justify-content-center align-items-center gap-3 ">
-                    <div class="text-center fw-bolder mb-0">
-                        <i class="bi bi-people-fill me-1"></i> {{ getPairedTeamCount(t) }}
-                        <span *ngIf="getIsolatedPlayerCount(t)">
-                            <i class="bi bi-person-fill-exclamation ms-3 me-1"></i> {{ getIsolatedPlayerCount(t) }}
-                        </span>
+                <div class="mt-auto pt-2 g-0 d-flex justify-content-around align-items-center  text-success fw-bolder">
+                    <div  *ngIf="getPairedTeamCount(t)">
+                        {{ getPairedTeamCount(t) }} paire{{ getPairedTeamCount(t) > 1 ? 's' : '' }}
                     </div>
-
-                    <div *ngIf="logged" class="d-flex justify-content-center align-items-center">
-                        <div class="ms-1" style="cursor:pointer;"
-                            (click)="selectTournament(t.subscription_tournament.id)">
-                            <div class="btn btn-outline-primary  py-1 px-2 nice_shadow">
-                                Les inscriptions
-                            </div>
-                        </div>
+                    <div  *ngIf="getIsolatedPlayerCount(t)">
+                         {{ getIsolatedPlayerCount(t) }} {{ getIsolatedPlayerCount(t) > 1 ? 'joueurs isolés' : 'joueur isolé' }}
                     </div>
                 </div>
-                
+
             </div>
         </div>
     </div>

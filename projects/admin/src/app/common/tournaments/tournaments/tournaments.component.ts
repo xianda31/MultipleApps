@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, HostListener, Input } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TournamentService } from '../../services/tournament.service';
-import { TournamentTeams } from '../../ffb/interface/tournament_teams.interface';
+import { TournamentTeams, Tournament } from '../../ffb/interface/tournament.interface';
 import { AuthentificationService } from '../../authentification/authentification.service';
 import { TitleService } from '../../../front/title/title.service';
 import { BreakpointsSettings } from '../../interfaces/ui-conf.interface';
@@ -11,7 +11,6 @@ import { SystemDataService } from '../../services/system-data.service';
 import { combineLatest, filter, forkJoin, map, of, switchMap, take } from 'rxjs';
 import { Member } from '../../interfaces/member.interface';
 import { isFemaleGender } from '../../utils/gender.util';
-import { TournamentV2 } from '../../ffb/interface/tournament-v2.interface';
 
 const MAX_TOURNAMENTS_LISTED = 8;
 
@@ -111,32 +110,16 @@ export class TournamentsComponent {
 
   private enrichWithImages(tournamentTeams: TournamentTeams[]): TournamentTeams[] {
     return tournamentTeams.map((team) => {
-      const rawName = team.subscription_tournament.organization_club_tournament.tournament_name || '';
+      const rawName = team.tournament.title || '';
       const nameKey = rawName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
       const imageUrl = this.findImageUrlForName(nameKey, this.tournamentTypeUrls);
       return Object.assign(team as any, { image_url: imageUrl });
     });
   }
 
-  private deserializeTournament(tournament: TournamentV2): TournamentTeams {
-    const parsedDate = new Date(tournament.date);
-    const time = Number.isNaN(parsedDate.getTime())
-      ? ''
-      : `${String(parsedDate.getHours()).padStart(2, '0')}:${String(parsedDate.getMinutes()).padStart(2, '0')}`;
-
+  private deserializeTournament(tournament: Tournament): TournamentTeams {
     return {
-      subscription_tournament: {
-        id: tournament.id,
-        organization_club_tournament: {
-          date: tournament.date,
-          tournament_name: tournament.title,
-          session_name: tournament.title,
-          time,
-          entryCount: tournament.entryCount,
-          isolatedPlayerCount: tournament.isolatedPlayerCount,
-          ivPlayerMax: tournament.ivPlayerMax,
-        }
-      },
+      tournament,
       items: []
     };
   }
@@ -164,16 +147,19 @@ export class TournamentsComponent {
   }
 
   date_of(tTeams: TournamentTeams): string {
-    return tTeams.subscription_tournament.organization_club_tournament.date;
+    return tTeams.tournament.date;
   }
   time_of(tTeams: TournamentTeams): string {
-    return tTeams.subscription_tournament.organization_club_tournament.time;
+    const date = new Date(tTeams.tournament.date);
+    return Number.isNaN(date.getTime())
+      ? ''
+      : `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
   }
   name_of(tTeams: TournamentTeams): string {
-    return tTeams.subscription_tournament.organization_club_tournament.tournament_name;
+    return tTeams.tournament.title;
   }
   ivPlayerMax_of(tTeams: TournamentTeams): number | undefined {
-    return tTeams.subscription_tournament.organization_club_tournament.ivPlayerMax;
+    return tTeams.tournament.ivPlayerMax;
   }
 
 
@@ -203,7 +189,7 @@ export class TournamentsComponent {
   }
 
   getIsolatedPlayerCount(tournament: TournamentTeams): number {
-    const apiCount = tournament.subscription_tournament.organization_club_tournament.isolatedPlayerCount;
+    const apiCount = tournament.tournament.isolatedPlayerCount;
     if (apiCount !== undefined) {
       return apiCount;
     }
@@ -211,7 +197,7 @@ export class TournamentsComponent {
   }
 
   getPairedTeamCount(tournament: TournamentTeams): number {
-    const entryCount = tournament.subscription_tournament.organization_club_tournament.entryCount;
+    const entryCount = tournament.tournament.entryCount;
     return Math.max(0, entryCount - this.getIsolatedPlayerCount(tournament));
   }
 

@@ -1,7 +1,7 @@
 import { Observable } from "rxjs";
 import { Schema } from "../../../../../../amplify/data/resource";
 import { club_tournament } from "../../common/ffb/interface/club_tournament.interface";
-import { TournamentV2 } from "../../common/ffb/interface/tournament-v2.interface";
+import { Tournament } from "../../common/ffb/interface/tournament.interface";
 
 
 interface Fees_context {
@@ -19,7 +19,7 @@ export enum Game_status {
     COMPLETED = 'terminé'
 }
 
-export interface club_tournament_extended extends TournamentV2 {
+export interface club_tournament_extended extends Tournament {
   status?: Game_status;
   chrono?: 'passed' | 'today' | 'upcoming';
 };

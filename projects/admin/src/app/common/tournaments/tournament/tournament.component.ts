@@ -2,8 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ToastService } from '../../services/toast.service';
 import { AuthentificationService } from '../../authentification/authentification.service';
-import { TeamItem } from '../../ffb/interface/team-search.interface';
-import { FFBPlayer } from '../../ffb/interface/team-search.interface';
+import { FFBPlayer, RegisteredTeam } from '../../ffb/interface/tournament.interface';
 import { Member } from '../../interfaces/member.interface';
 import { ClubMember } from '../../ffb/interface/club-member.interface';
 import { FormControl, Validators, FormsModule, ReactiveFormsModule, ValidationErrors, AbstractControl, FormBuilder } from '@angular/forms';
@@ -27,7 +26,7 @@ export class TournamentComponent implements OnInit {
   tteam_tournament_id!: string;
   tournament_name = '';
   tournament_date = '';
-  teams: TeamItem[] = [];
+  teams: RegisteredTeam[] = [];
   whoAmI: Member | null = null;
   already_subscribed = false;
   is_member$!: Observable<boolean>;
@@ -47,8 +46,8 @@ export class TournamentComponent implements OnInit {
       this.TournamentService.getTournamentTeams(this.tteam_tournament_id)
         .subscribe((tteams) => {
           this.teams = tteams.items;
-          this.tournament_date = tteams.subscription_tournament.organization_club_tournament.date;
-          this.tournament_name = tteams.subscription_tournament.organization_club_tournament.tournament_name;
+          this.tournament_date = tteams.tournament.date;
+          this.tournament_name = tteams.tournament.title;
           this.already_subscribed = this.has_subscribed(this.whoAmI?.person_id);
         });
     });
@@ -96,7 +95,7 @@ export class TournamentComponent implements OnInit {
   }
 
 
-    i_am_in_team(team: TeamItem): boolean {
+    i_am_in_team(team: RegisteredTeam): boolean {
     const person_id = this.whoAmI?.person_id;
       if (person_id === undefined || person_id === null) return false;
     const player1PersonId = team.players[0]?.id;
@@ -131,14 +130,17 @@ export class TournamentComponent implements OnInit {
       .catch((error) => { console.log('TeamsComponent.createTeam', error); });
   }
 
-  deleteTeam(team: TeamItem) {
-    const teamEntryId = team.currentTeamEntry?.id;
-    if (!teamEntryId) {
+  deleteTeam(team: RegisteredTeam) {
+    const tournamentRegistrationId = team.tournamentRegistrationId;
+    if (!tournamentRegistrationId) {
       this.toastService.showError("tournoi", "inscription d'équipe introuvable");
       return;
     }
 
-    this.TournamentService.deleteTeam(this.tteam_tournament_id.toString(), teamEntryId.toString())
+    this.TournamentService.deleteTeam(
+      this.tteam_tournament_id.toString(),
+      tournamentRegistrationId.toString()
+    )
       .then((deleted) => {
         if (deleted) {
           this.toastService.showSuccess("tournoi", "vous êtes désinscrit(s) !");
