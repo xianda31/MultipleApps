@@ -84,12 +84,13 @@ export class GetMemberSettingsComponent {
   }
 
   save() {
+    const formValue = this.preferenceForm.getRawValue();
     let new_preference: Member_settings = {
-      has_avatar: this.preferenceForm.value.has_avatar,
-      accept_mailing: this.preferenceForm.value.accept_mailing,
-      city: this.preferenceForm.value.city ?? '',
-      email: this.preferenceForm.value.email ?? '',
-      phone_one: this.preferenceForm.value.phone_one ?? '',
+      has_avatar: formValue.has_avatar,
+      accept_mailing: formValue.accept_mailing,
+      city: formValue.city ?? '',
+      email: formValue.email ?? '',
+      phone_one: formValue.phone_one ?? '',
     };
     if (this.base64_ico) {
       this.upload_avatar_file();
