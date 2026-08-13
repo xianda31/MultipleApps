@@ -1,4 +1,4 @@
-import { ApplicationConfig, LOCALE_ID, provideZoneChangeDetection, InjectionToken } from '@angular/core';
+import { ApplicationConfig, inject, InjectionToken, LOCALE_ID, provideAppInitializer, provideZoneChangeDetection } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { InMemoryScrollingOptions, provideRouter, withComponentInputBinding, withInMemoryScrolling } from '@angular/router';
 import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
@@ -14,6 +14,7 @@ import { SandboxService } from './common/services/sandbox.service';
 import { SystemDataService } from './common/services/system-data.service';
 import { applyUiThemeInitializer } from './common/utils/ui-utils';
 import { provideServiceWorker } from '@angular/service-worker';
+import { AppUpdateService } from './common/services/app-update.service';
 
 // Fonction d'initialisation pour précharger les routes dynamiques du front
 export const APP_SANDBOX = new InjectionToken<boolean>('APP_SANDBOX');
@@ -92,9 +93,12 @@ export const appConfig: ApplicationConfig = {
       multi: true
     },
     { provide: APP_SANDBOX, useFactory: (sandboxService: SandboxService) => sandboxService.value, deps: [SandboxService] },
+    provideAppInitializer(() => {
+      void inject(AppUpdateService).checkAtStartup();
+    }),
     provideServiceWorker('ngsw-worker.js', {
       enabled: true,
-      registrationStrategy: 'registerWhenStable:30000'
+      registrationStrategy: 'registerImmediately'
     })
   ]
 };
