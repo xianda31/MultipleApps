@@ -12,6 +12,7 @@ import { Member } from '../../interfaces/member.interface';
 })
 export class RecipientSelectorComponent implements OnInit {
   @Output() selectionChange = new EventEmitter<Member[]>();
+  @Output() membershipChange = new EventEmitter<Member[]>();
 
   private membersService = inject(MembersService);
 
@@ -39,7 +40,7 @@ export class RecipientSelectorComponent implements OnInit {
   }
 
   get allSelected(): boolean {
-    return this.activeMailingCount > 0 && this.selectedCount === this.activeMailingCount;
+    return this.members.length > 0 && this.selectedCount === this.members.length;
   }
 
   get selectionIndeterminate(): boolean {
@@ -48,7 +49,7 @@ export class RecipientSelectorComponent implements OnInit {
 
   ngOnInit() {
     this.membersService.listMembers().subscribe(members => {
-      this.members = members.filter(m => this.hasValidEmail(m));
+      this.members = members;
       this.emit();
     });
   }
@@ -60,7 +61,7 @@ export class RecipientSelectorComponent implements OnInit {
 
   toggleAllMembers(checked: boolean) {
     if (checked) {
-      this.members.filter(m => m.accept_mailing).forEach(m => this.memberSelection.set(m.id, true));
+      this.members.forEach(m => this.memberSelection.set(m.id, true));
     } else {
       this.memberSelection.clear();
     }
@@ -79,7 +80,7 @@ export class RecipientSelectorComponent implements OnInit {
     this.memberSelection.clear();
     this.members.forEach((member) => {
       const fullName = this.membersService.full_name(member);
-      if (requestedNames.has(fullName) && member.accept_mailing) {
+      if (requestedNames.has(fullName)) {
         this.memberSelection.set(member.id, true);
         loadedNames.add(fullName);
       }
@@ -94,11 +95,16 @@ export class RecipientSelectorComponent implements OnInit {
   }
 
   resolve(): Member[] {
-    return this.members.filter(m => m.accept_mailing && this.memberSelection.get(m.id));
+    return this.selectedMembers().filter(m => m.accept_mailing && this.hasValidEmail(m));
   }
 
   private emit() {
+    this.membershipChange.emit(this.selectedMembers());
     this.selectionChange.emit(this.resolve());
+  }
+
+  private selectedMembers(): Member[] {
+    return this.members.filter(m => this.memberSelection.get(m.id));
   }
 
   private hasValidEmail(m: Member): boolean {

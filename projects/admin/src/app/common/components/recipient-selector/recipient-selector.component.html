@@ -1,5 +1,4 @@
-<div>
-  <div class="border rounded p-2">
+<div class="member-recipient-selector">
     <div class="d-flex flex-wrap gap-3 align-items-center mb-2">
       <div class="form-check mb-0">
         <input class="form-check-input" type="checkbox" [id]="'all-members-' + uniqueId"
@@ -25,7 +24,6 @@
           <input class="form-check-input" type="checkbox"
             [id]="'mbr-' + m.id"
             [checked]="isSelected(m.id)"
-            [disabled]="!m.accept_mailing"
             (change)="toggleMember(m.id)">
           <label class="form-check-label small w-100" [for]="'mbr-' + m.id"
             [class.text-muted]="!m.accept_mailing">
@@ -33,6 +31,9 @@
             <span class="text-muted ms-1">{{ m.email }}</span>
             @if (!m.accept_mailing) {
               <span class="badge bg-secondary ms-1">refus mailing</span>
+            }
+            @if (!m.email || !m.email.includes('@') || m.email.includes('?')) {
+              <span class="badge bg-secondary ms-1">email invalide</span>
             }
           </label>
         </div>
@@ -45,8 +46,7 @@
     </div>
 
     <div class="text-muted small">
-      {{ selectedCount }} sélectionné(s) · {{ activeMailingCount }} acceptent les mailings
+      {{ selectedCount }} dans la liste · {{ resolve().length }} destinataire(s) envoyable(s)
       sur {{ members.length }} membres
     </div>
-  </div>
 </div>

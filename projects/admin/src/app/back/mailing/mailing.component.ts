@@ -6,7 +6,7 @@ import { MailingService, SendEmailParams } from './mailing.service';
 import { Member } from '../../common/interfaces/member.interface';
 import { RecipientSelectorComponent } from '../../common/components/recipient-selector/recipient-selector.component';
 import { SondageService, SurveyItem } from '../sondage/sondage.service';
-import { firstValueFrom } from 'rxjs';
+import { filter, firstValueFrom, switchMap, take } from 'rxjs';
 import { DBhandler } from '../../common/services/graphQL.service';
 import { AuthentificationService } from '../../common/authentification/authentification.service';
 import { MembersService } from '../../common/services/members.service';
@@ -42,6 +42,7 @@ export class MailingComponent implements OnInit, AfterViewInit {
 
   // Message
   recipients: Member[] = [];
+  selectedListMembers: Member[] = [];
   externalRecipients: Array<{ email: string; name: string }> = [];
   externalEmail = '';
   externalFirstName = '';
@@ -75,7 +76,12 @@ export class MailingComponent implements OnInit, AfterViewInit {
 
   ngOnInit() {
     this.sondageService.listSurveys().then(s => this.surveys = s);
-    void this.loadMailingLists();
+    this.auth.isRestoringSession$.pipe(
+      filter((isRestoring) => !isRestoring),
+      switchMap(() => this.auth.logged_member$),
+      filter((member) => member !== null),
+      take(1),
+    ).subscribe(() => void this.loadMailingLists());
   }
 
   ngAfterViewInit() {
@@ -129,6 +135,10 @@ export class MailingComponent implements OnInit, AfterViewInit {
   onRecipientsChange(members: Member[]) {
     this.recipients = members;
     this.externalRecipientError = null;
+  }
+
+  onMembershipChange(members: Member[]) {
+    this.selectedListMembers = members;
     if (this.selectedMailingListId && !this.applyingMailingList) {
       this.mailingListDirty = true;
     }
@@ -172,7 +182,7 @@ export class MailingComponent implements OnInit, AfterViewInit {
   async createMailingList(): Promise<void> {
     const title = this.mailingListTitle.trim();
     const owner = this.auth.currentMember?.firstname?.trim();
-    if (!title || this.recipients.length === 0) {
+    if (!title || this.selectedListMembers.length === 0) {
       this.mailingListError = 'Renseignez un titre et sélectionnez au moins un membre.';
       return;
     }
@@ -204,7 +214,7 @@ export class MailingComponent implements OnInit, AfterViewInit {
 
   async updateSelectedMailingList(): Promise<void> {
     const mailingList = this.selectedMailingList;
-    if (!mailingList || this.recipients.length === 0) {
+    if (!mailingList || this.selectedListMembers.length === 0) {
       this.mailingListError = 'Sélectionnez une liste et au moins un membre.';
       return;
     }
@@ -259,7 +269,7 @@ export class MailingComponent implements OnInit, AfterViewInit {
   }
 
   private selectedMemberNames(): string[] {
-    return [...new Set(this.recipients.map((member) => this.membersService.full_name(member)))];
+    return [...new Set(this.selectedListMembers.map((member) => this.membersService.full_name(member)))];
   }
 
   private clearMailingListFeedback(): void {

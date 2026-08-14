@@ -9,7 +9,10 @@
 				<!-- Destinataires -->
 				<div class="mb-3">
 					<label class="form-label">Destinataires</label>
-					<div class="mailing-list-toolbar mb-2">
+					<div class="card member-mailing-card mb-2">
+						<div class="card-body py-2">
+							<div class="small fw-semibold mb-2">Membres et listes de diffusion</div>
+							<div class="mailing-list-toolbar mb-2">
 						<div class="row g-2 align-items-end">
 							<div class="col-12 d-flex flex-column flex-sm-row align-items-sm-center gap-1 gap-sm-2">
 								<label class="form-label small mb-0 flex-shrink-0" for="mailingListSelect">Diffusion :</label>
@@ -25,12 +28,12 @@
 						</div>
 						<div class="d-flex flex-wrap gap-2 mt-2">
 							<button type="button" class="btn btn-sm btn-primary"
-								[disabled]="mailingListBusy || creatingMailingList || recipients.length === 0"
+								[disabled]="mailingListBusy || creatingMailingList || selectedListMembers.length === 0"
 								(click)="startMailingListCreation()">
 								<i class="bi bi-plus-lg me-1"></i>Nouvelle liste
 							</button>
 							<button type="button" class="btn btn-sm btn-outline-primary"
-								[disabled]="mailingListBusy || !selectedMailingListId || recipients.length === 0"
+								[disabled]="mailingListBusy || !selectedMailingListId || selectedListMembers.length === 0"
 								(click)="updateSelectedMailingList()">
 								<i class="bi bi-floppy me-1"></i>Mettre à jour
 							</button>
@@ -67,8 +70,13 @@
 						@if (mailingListError) {
 							<div class="small text-danger mt-2">{{ mailingListError }}</div>
 						}
+							</div>
+							<app-recipient-selector
+								(selectionChange)="onRecipientsChange($event)"
+								(membershipChange)="onMembershipChange($event)">
+							</app-recipient-selector>
+						</div>
 					</div>
-					<app-recipient-selector (selectionChange)="onRecipientsChange($event)"></app-recipient-selector>
 					<div class="card mt-2">
 						<div class="card-body py-2">
 							<div class="small fw-semibold mb-2">Ajouter un destinataire externe (non-membre)</div>
