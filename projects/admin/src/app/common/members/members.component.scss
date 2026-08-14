@@ -39,6 +39,17 @@ table.table.table-sm tbody tr td {
   overflow-y: auto;
 }
 
+@media (max-width: 576px), (orientation: landscape) and (max-height: 576px) and (pointer: coarse) {
+  .members-page {
+    --bs-gutter-x: 0;
+  }
+
+  .members-table-scroll {
+    margin-right: calc(-1 * var(--bs-card-spacer-x));
+    margin-left: calc(-1 * var(--bs-card-spacer-x));
+  }
+}
+
 @media (max-width: 576px) and (orientation: portrait) {
   .members-stats-line {
     font-size: 0.8rem;

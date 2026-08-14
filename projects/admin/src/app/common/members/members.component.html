@@ -1,4 +1,4 @@
-<div class="mt-2 container-fluid container-md">
+<div class="mt-2 container-fluid container-md members-page">
   <div class="card">
     <div class="card-header">
       <div class="row justify-content-start align-items-center fs-5">
@@ -23,32 +23,6 @@
     </div>
 
     <div class="card-body">
-      <!-- ajout d'un adhérent licencié supplémentaire -->
-      <h6 class="fw-bold">ajout de personne :</h6>
-      <div class=" row justify-content-around align-items-end">
-        <!-- <div class="col-md-4">
-        </div> -->
-        <div class="col-md-6 ">
-          <div class="input-group input-group-sm  w-auto " style="max-width: 400px;">
-            <span class="input-group-text" id="inputGroup-sizing-sm"><strong class="me-1">NON LICENCIÉ(E) </strong>(ex.
-              débutant(e))</span>
-            <button class="btn  btn-primary btn-sm" (click)="addNewbee()">
-              <i class="bi bi-mortarboard-fill"></i>
-            </button>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="input-group input-group-sm ">
-            <span class="input-group-text" id="inputGroup-sizing-sm"><strong>LICENCIÉ(E) </strong> :</span>
-            <app-input-player listeId="new_guest" placeholder="Nom ou prénom (sélection liste)" type="text"
-              class="form-control form-control-sm" style="max-width: 300px;" [(ngModel)]="new_player"
-              (ngModelChange)="add_licensee(new_player)"></app-input-player>
-          </div>
-        </div>
-      </div>
-
-      <hr class="my-3">
-
       <div *ngIf="!loading" class="small text-muted mb-2 d-flex flex-wrap gap-3 align-items-center members-legend-line">
         <span class="fw-semibold">Légende :</span>
         <span *ngFor="let status of statusLegend">
@@ -149,6 +123,30 @@
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <hr class="my-3">
+
+      <!-- ajout d'un adhérent licencié supplémentaire -->
+      <h6 class="fw-bold">ajout de personne :</h6>
+      <div class="row justify-content-around align-items-end">
+        <div class="col-md-6">
+          <div class="input-group input-group-sm w-auto" style="max-width: 400px;">
+            <span class="input-group-text" id="inputGroup-sizing-sm"><strong class="me-1">NON LICENCIÉ(E) </strong>(ex.
+              débutant(e))</span>
+            <button class="btn btn-primary btn-sm" (click)="addNewbee()">
+              <i class="bi bi-mortarboard-fill"></i>
+            </button>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text" id="inputGroup-sizing-sm"><strong>LICENCIÉ(E) </strong> :</span>
+            <app-input-player listeId="new_guest" placeholder="Nom ou prénom (sélection liste)" type="text"
+              class="form-control form-control-sm" style="max-width: 300px;" [(ngModel)]="new_player"
+              (ngModelChange)="add_licensee(new_player)"></app-input-player>
+          </div>
+        </div>
       </div>
 
     </div>
