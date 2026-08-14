@@ -21,7 +21,7 @@
 									(ngModelChange)="onMailingListSelect($event)">
 									<option value="">Liste libre</option>
 									@for (list of mailingLists; track list.id) {
-										<option [value]="list.id">{{ list.title }} · {{ list.owner }} · [{{ list.members.length }} dest.]</option>
+										<option [value]="list.id">liste {{ list.title }} de {{ list.owner }} : {{ list.members.length }} membre(s)</option>
 									}
 								</select>
 							</div>
