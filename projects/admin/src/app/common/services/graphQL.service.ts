@@ -12,6 +12,7 @@ import { Page, Page_input, Snippet, Snippet_input } from '../interfaces/page_sni
 import { Game, Game_input } from '../../back/fees/fees.interface';
 import { NavItem, NavItem_input } from '../interfaces/navitem.interface';
 import { AssistanceRequest, AssistanceRequestInput } from '../interfaces/assistance-request.interface';
+import { MailingList, MailingListInput } from '../../back/mailing/mailing-list.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -277,6 +278,56 @@ export class DBhandler {
         );
       })
     )
+  }
+
+  // MAILING LIST SERVICE
+
+  async createMailingList(mailingList: MailingListInput): Promise<MailingList> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { data, errors } = await client.models.MailingList.create(mailingList);
+    if (errors) throw errors;
+    return data as unknown as MailingList;
+  }
+
+  async readMailingList(id: string): Promise<MailingList | null> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { data, errors } = await client.models.MailingList.get({ id });
+    if (errors) throw errors;
+    return data as unknown as MailingList | null;
+  }
+
+  async updateMailingList(mailingList: MailingList): Promise<MailingList> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { data, errors } = await client.models.MailingList.update(mailingList);
+    if (errors) throw errors;
+    return data as unknown as MailingList;
+  }
+
+  async deleteMailingList(id: string): Promise<boolean> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { errors } = await client.models.MailingList.delete({ id });
+    if (errors) throw errors;
+    return true;
+  }
+
+  listMailingLists(): Observable<MailingList[]> {
+    return this._authMode().pipe(
+      switchMap((authMode) => {
+        const client = generateClient<Schema>({ authMode });
+        return from(
+          client.models.MailingList.list({ limit: 300 })
+            .then(({ data, errors }) => {
+              if (errors) throw errors;
+              return (data as unknown as MailingList[])
+                .sort((left, right) => left.title.localeCompare(right.title, 'fr', { sensitivity: 'base' }));
+            })
+        );
+      })
+    );
   }
 
   // MEMBER SEARCH BY LICENSE NUMBER

@@ -300,6 +300,18 @@ const schema = a.schema({
       allow.group(Group_names.Member).to(['read']),
     ]),
 
+  MailingList: a.model({
+    title: a.string().required(),
+    owner: a.string().required(),
+    members: a.string().array().required(),
+  })
+    .authorization((allow) => [
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Editor).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Support).to(['read', 'create', 'update', 'delete']),
+    ]),
+
   // Site web
 
 

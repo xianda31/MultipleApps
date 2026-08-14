@@ -16,17 +16,18 @@ export class RecipientSelectorComponent implements OnInit {
   private membersService = inject(MembersService);
 
   readonly uniqueId = Math.random().toString(36).slice(2);
-  recipientMode: 'all' | 'selected' = 'selected';
   members: Member[] = [];
   memberSelection = new Map<string, boolean>();
   filterText = '';
+  showSelectedOnly = false;
 
   get filteredMembers(): Member[] {
-    if (!this.filterText.trim()) return this.members;
     const q = this.filterText.toLowerCase();
-    return this.members.filter(m =>
-      `${m.lastname} ${m.firstname} ${m.email}`.toLowerCase().includes(q)
-    );
+    return this.members.filter((member) => {
+      const matchesSelection = !this.showSelectedOnly || this.isSelected(member.id);
+      const matchesText = !q || `${member.lastname} ${member.firstname} ${member.email}`.toLowerCase().includes(q);
+      return matchesSelection && matchesText;
+    });
   }
 
   get activeMailingCount(): number {
@@ -37,6 +38,14 @@ export class RecipientSelectorComponent implements OnInit {
     return this.members.filter(m => this.memberSelection.get(m.id)).length;
   }
 
+  get allSelected(): boolean {
+    return this.activeMailingCount > 0 && this.selectedCount === this.activeMailingCount;
+  }
+
+  get selectionIndeterminate(): boolean {
+    return this.selectedCount > 0 && !this.allSelected;
+  }
+
   ngOnInit() {
     this.membersService.listMembers().subscribe(members => {
       this.members = members.filter(m => this.hasValidEmail(m));
@@ -44,18 +53,17 @@ export class RecipientSelectorComponent implements OnInit {
     });
   }
 
-  toggleMode(mode: 'all' | 'selected') {
-    this.recipientMode = mode;
-    this.emit();
-  }
-
   toggleMember(id: string) {
     this.memberSelection.set(id, !(this.memberSelection.get(id) ?? false));
     this.emit();
   }
 
-  selectAll() {
-    this.members.filter(m => m.accept_mailing).forEach(m => this.memberSelection.set(m.id, true));
+  toggleAllMembers(checked: boolean) {
+    if (checked) {
+      this.members.filter(m => m.accept_mailing).forEach(m => this.memberSelection.set(m.id, true));
+    } else {
+      this.memberSelection.clear();
+    }
     this.emit();
   }
 
@@ -64,16 +72,29 @@ export class RecipientSelectorComponent implements OnInit {
     this.emit();
   }
 
+  loadMemberNames(memberNames: string[]): string[] {
+    const requestedNames = new Set(memberNames);
+    const loadedNames = new Set<string>();
+
+    this.memberSelection.clear();
+    this.members.forEach((member) => {
+      const fullName = this.membersService.full_name(member);
+      if (requestedNames.has(fullName) && member.accept_mailing) {
+        this.memberSelection.set(member.id, true);
+        loadedNames.add(fullName);
+      }
+    });
+    this.emit();
+
+    return memberNames.filter((name) => !loadedNames.has(name));
+  }
+
   isSelected(id: string): boolean {
     return this.memberSelection.get(id) ?? false;
   }
 
-  /** Résolution finale : filtrée accept_mailing selon le mode */
   resolve(): Member[] {
-    if (this.recipientMode === 'all') {
-      return this.members.filter(m => m.accept_mailing);
-    }
-    return this.members.filter(m => this.memberSelection.get(m.id));
+    return this.members.filter(m => m.accept_mailing && this.memberSelection.get(m.id));
   }
 
   private emit() {

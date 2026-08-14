@@ -9,6 +9,65 @@
 				<!-- Destinataires -->
 				<div class="mb-3">
 					<label class="form-label">Destinataires</label>
+					<div class="mailing-list-toolbar mb-2">
+						<div class="row g-2 align-items-end">
+							<div class="col-12 d-flex flex-column flex-sm-row align-items-sm-center gap-1 gap-sm-2">
+								<label class="form-label small mb-0 flex-shrink-0" for="mailingListSelect">Diffusion :</label>
+								<select id="mailingListSelect" class="form-select form-select-sm"
+									[ngModel]="selectedMailingListId" name="mailingListId"
+									(ngModelChange)="onMailingListSelect($event)">
+									<option value="">Liste libre</option>
+									@for (list of mailingLists; track list.id) {
+										<option [value]="list.id">{{ list.title }} · {{ list.owner }} · [{{ list.members.length }} dest.]</option>
+									}
+								</select>
+							</div>
+						</div>
+						<div class="d-flex flex-wrap gap-2 mt-2">
+							<button type="button" class="btn btn-sm btn-primary"
+								[disabled]="mailingListBusy || creatingMailingList || recipients.length === 0"
+								(click)="startMailingListCreation()">
+								<i class="bi bi-plus-lg me-1"></i>Nouvelle liste
+							</button>
+							<button type="button" class="btn btn-sm btn-outline-primary"
+								[disabled]="mailingListBusy || !selectedMailingListId || recipients.length === 0"
+								(click)="updateSelectedMailingList()">
+								<i class="bi bi-floppy me-1"></i>Mettre à jour
+							</button>
+							<button type="button" class="btn btn-sm btn-outline-danger"
+								[disabled]="mailingListBusy || !selectedMailingListId"
+								(click)="deleteSelectedMailingList()" title="Supprimer la liste">
+								<i class="bi bi-trash me-1"></i>Supprimer
+							</button>
+							@if (mailingListDirty) {
+								<span class="small text-warning align-self-center">Sélection modifiée, liste non enregistrée</span>
+							}
+						</div>
+						@if (creatingMailingList) {
+							<div class="row g-2 align-items-end mt-1">
+								<div class="col-sm-8">
+									<label class="form-label small mb-1" for="mailingListTitle">Titre de la nouvelle liste</label>
+									<input id="mailingListTitle" class="form-control form-control-sm"
+										[(ngModel)]="mailingListTitle" name="mailingListTitle" maxlength="100"
+										placeholder="Ex. Compétiteurs du jeudi">
+								</div>
+								<div class="col-sm-4 d-flex gap-2">
+									<button type="button" class="btn btn-sm btn-primary flex-grow-1"
+										[disabled]="mailingListBusy || !mailingListTitle.trim()"
+										(click)="createMailingList()">Créer</button>
+									<button type="button" class="btn btn-sm btn-outline-secondary"
+										[disabled]="mailingListBusy"
+										(click)="cancelMailingListCreation()">Annuler</button>
+								</div>
+							</div>
+						}
+						@if (mailingListMessage) {
+							<div class="small text-success mt-2">{{ mailingListMessage }}</div>
+						}
+						@if (mailingListError) {
+							<div class="small text-danger mt-2">{{ mailingListError }}</div>
+						}
+					</div>
 					<app-recipient-selector (selectionChange)="onRecipientsChange($event)"></app-recipient-selector>
 					<div class="card mt-2">
 						<div class="card-body py-2">
