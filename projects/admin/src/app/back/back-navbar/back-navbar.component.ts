@@ -19,6 +19,8 @@ import { STATIC_MENUS } from './back-navbar.definition';
 import { BreakingNewsService } from '../breaking-news/breaking-news.service';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { BACK_ROUTE_ABS_PATHS } from '../routes/back-route-paths';
+import { BookService } from '../services/book.service';
+import { StripeReconciliationHealthService } from '../shop/services/stripe-reconciliation-health.service';
 
 
 
@@ -48,6 +50,7 @@ export class BackNavbarComponent implements OnInit, OnDestroy {
   new_assistances_nbr : number = 0;
   in_progress_assistances_nbr : number = 0;
   authorizationFlag$: Observable<boolean>;
+  stripeWarningCount$: Observable<number>;
 //  BACK_ROUTE_PATHS = BACK_ROUTE_PATHS;
   
   // Mobile menu collapse states
@@ -86,8 +89,11 @@ export class BackNavbarComponent implements OnInit, OnDestroy {
     private router: Router,
     public breakingNewsService: BreakingNewsService,
     private systemDataService: SystemDataService,
+    private bookService: BookService,
+    private stripeReconciliationHealth: StripeReconciliationHealthService,
   ) { 
     this.authorizationFlag$ = this.breakingNewsService.authorizationFlag$;
+    this.stripeWarningCount$ = this.stripeReconciliationHealth.staleAbandonedCheckoutCount$;
   }
 
   ngOnDestroy(): void {
@@ -114,6 +120,9 @@ export class BackNavbarComponent implements OnInit, OnDestroy {
         this.new_assistances_nbr = count[0];
         this.in_progress_assistances_nbr = count[1];
       });
+    this.bookService.list_book_entries().subscribe(() => {
+      this.refreshStripeWarningIfAuthorized();
+    });
     // Fermer tous les dropdowns lors de la navigation
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
@@ -144,6 +153,7 @@ export class BackNavbarComponent implements OnInit, OnDestroy {
         if (groups.length > 0) {
           let group = groups[0] as Group_names;
           this.accreditation_level = Group_priorities[group];
+          this.refreshStripeWarningIfAuthorized();
         }
         // Ajout dynamique du User menu à la fin
         this.navbarMenus.push({
@@ -192,6 +202,21 @@ export class BackNavbarComponent implements OnInit, OnDestroy {
 
   go_to_assistance() {
     this.router.navigate([BACK_ROUTE_ABS_PATHS['Assistance']]);
+  }
+
+  go_to_stripe_reconciliation() {
+    this.router.navigate([BACK_ROUTE_ABS_PATHS['StripeReconciliation']]);
+  }
+
+  private refreshStripeWarningIfAuthorized(): void {
+    if (
+      this.accreditation_level >= Group_priorities.Administrateur &&
+      this.bookService.is_book_entries_loaded()
+    ) {
+      this.stripeReconciliationHealth.refresh().catch(error =>
+        console.error('Erreur chargement indicateur Stripe:', error)
+      );
+    }
   }
 
 }

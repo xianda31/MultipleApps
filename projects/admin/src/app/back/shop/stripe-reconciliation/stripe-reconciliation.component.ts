@@ -10,6 +10,7 @@ import { StripeService } from '../../../front/services/stripe.service';
 import { Member } from '../../../common/interfaces/member.interface';
 import { BookEntry, TRANSACTION_ID, FINANCIAL_ACCOUNT } from '../../../common/interfaces/accounting.interface';
 import { environment } from '../../../../environments/environment';
+import { StripeReconciliationHealthService } from '../services/stripe-reconciliation-health.service';
 
 interface PayoutLine {
   bookEntry: BookEntry | null;     // null pour les transactions abandonnées sans BookEntry
@@ -194,6 +195,7 @@ export class StripeReconciliationComponent {
     private toastService: ToastService,
     private systemDataService: SystemDataService,
     private stripeService: StripeService,
+    private stripeReconciliationHealth: StripeReconciliationHealthService,
   ) {}
 
   ngOnInit(): void {
@@ -295,24 +297,6 @@ export class StripeReconciliationComponent {
     try {
       const allBookEntries = this.bookService.get_book_entries();
 
-      // Index des montants remboursés par stripeTag (annulation_paiement_carte_adhérent).
-      // Permet d'exclure les paiements entièrement remboursés de la liste à réconcilier.
-      const refundedCentsByStripeTag = new Map<string, number>();
-      allBookEntries
-        .filter(e =>
-          e.transaction_id === TRANSACTION_ID.annulation_paiement_carte_adhérent &&
-          !!e.stripeTag
-        )
-        .forEach(e => {
-          const tag = e.stripeTag as string;
-          const stripeCreditCents = Math.round(Math.abs((((e.amounts as any)[FINANCIAL_ACCOUNT.STRIPE_credit] || 0) as number) * 100));
-          const stripeDebitCents = Math.round(Math.abs((((e.amounts as any)[FINANCIAL_ACCOUNT.STRIPE_debit] || 0) as number) * 100));
-          // Défensif: selon la source choisie au remboursement, le montant peut être porté
-          // sur stripe_out (attendu) ou stripe_in (legacy/mauvais appariement de source).
-          const refundedCents = Math.max(stripeCreditCents, stripeDebitCents);
-          refundedCentsByStripeTag.set(tag, (refundedCentsByStripeTag.get(tag) || 0) + refundedCents);
-        });
-
       // BookEntries virement_stripe_vers_banque avec deposit_ref po_xxx = payouts déjà réconciliés
       const payoutBookEntries = allBookEntries.filter(e =>
         e.transaction_id === TRANSACTION_ID.virement_stripe_vers_banque &&
@@ -338,26 +322,10 @@ export class StripeReconciliationComponent {
         !this.reconciledPayoutIds.has(e.deposit_ref)
       );
 
-      // BookEntries achat_adhérent_par_carte ou report_psp sans deposit_ref (= non encore réconciliés avec un payout)
-      const bookEntries = allBookEntries
-        .filter(e =>
-          (e.transaction_id === TRANSACTION_ID.achat_adhérent_par_carte ||
-           e.transaction_id === TRANSACTION_ID.report_psp) &&
-          !e.deposit_ref &&
-          e.stripeTag &&   // a un tag Stripe = paiement Stripe confirmé
-          (() => {
-            const stripeInCents = Math.round(Math.abs((((e.amounts as any)[FINANCIAL_ACCOUNT.STRIPE_debit] || 0) as number) * 100));
-            const stripeOutCents = Math.round(Math.abs((((e.amounts as any)[FINANCIAL_ACCOUNT.STRIPE_credit] || 0) as number) * 100));
-            const grossCents = Math.max(stripeInCents, stripeOutCents);
-            const refundedCents = refundedCentsByStripeTag.get(e.stripeTag as string) || 0;
-            return refundedCents < grossCents;
-          })()
-        );
-
-      // StripeTransactions complétées sans payoutId + transactions abandonnées
-      const stripeTransactions = await this.dbHandler.listUnpayoutedStripeTransactions();
-      const abandonedTransactions = await this.dbHandler.listAbandonedStripeTransactions();
-      const allStripeTransactions = [...stripeTransactions, ...abandonedTransactions];
+      const healthSnapshot = await this.stripeReconciliationHealth.refresh();
+      const bookEntries = healthSnapshot.candidateBookEntries;
+      const abandonedTransactions = healthSnapshot.abandonedTransactions;
+      const allStripeTransactions = healthSnapshot.allStripeTransactions;
       this.diagnosticStripeTransactions = allStripeTransactions;
 
       // Créer les lignes depuis les BookEntries
@@ -405,8 +373,7 @@ export class StripeReconciliationComponent {
         return line;
       });
 
-      // Collecter les BookEntries orphelins (stripeTag présent mais aucune StripeTransaction)
-      this.abandonedCheckouts = bookEntries.filter((_, i) => mappedLines[i] === null);
+      this.abandonedCheckouts = healthSnapshot.abandonedCheckouts;
       this.lines = mappedLines.filter((line): line is PayoutLine => line !== null);
 
       // Ajouter les transactions abandonnées sans BookEntry correspondante

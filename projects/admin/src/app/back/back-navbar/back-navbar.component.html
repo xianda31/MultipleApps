@@ -21,6 +21,16 @@
       <span class="badge bg-success ms-1" style="font-size: 0.6rem; vertical-align: middle;">{{entries_nbr}}</span>
       <span *ngIf="loading" class="ms-1" style="vertical-align: middle;"><span class="spinner-border spinner-border-sm text-secondary" role="status" style="width:0.65rem;height:0.65rem;border-width:0.1em;"></span></span>
       <span *ngIf="!production_mode" class="badge bg-dark ms-1" style="font-size: 0.6rem; vertical-align: middle;">dev</span>
+      <ng-container *ngIf="accreditation_level >= accreditation_levels.Administrateur">
+        <span *ngIf="(stripeWarningCount$ | async) as stripeWarningCount"
+          class="badge bg-danger ms-1"
+          role="button"
+          title="{{stripeWarningCount}} checkout(s) Stripe abandonné(s) depuis plus de 24 h"
+          (click)="go_to_stripe_reconciliation()"
+          style="font-size: 0.6rem; vertical-align: middle;">
+          <i class="bi bi-exclamation-triangle-fill me-1"></i>Stripe {{stripeWarningCount}}
+        </span>
+      </ng-container>
       <span *ngIf="new_assistances_nbr" class="badge bg-warning ms-1" (click)="go_to_assistance()" style="font-size: 0.6rem; vertical-align: middle; color: rgb(252, 249, 249);"> new : {{new_assistances_nbr}}</span>
       <span *ngIf="in_progress_assistances_nbr" class="badge bg-info ms-1" (click)="go_to_assistance()" style="font-size: 0.6rem; vertical-align: middle; color: rgb(252, 249, 249);"> progress : {{in_progress_assistances_nbr}} </span>
 
