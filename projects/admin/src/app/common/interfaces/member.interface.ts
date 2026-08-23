@@ -1,7 +1,6 @@
 import { Schema } from "../../../../../../amplify/data/resource";
 
 export interface Member_settings{
-  has_avatar: boolean;
   accept_mailing: boolean;
   city: string;
   email: string;

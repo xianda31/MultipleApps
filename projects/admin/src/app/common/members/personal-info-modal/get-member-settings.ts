@@ -24,6 +24,7 @@ export class GetMemberSettingsComponent {
   preference!: Member_settings;
   base64_ico: string = '';
   full_name: string = '';
+  avatarFileExists = false;
   // Sauvegarder les valeurs initiales pour la comparaison
   initialSettings!: Member_settings;
 
@@ -43,7 +44,6 @@ export class GetMemberSettingsComponent {
 
     this.preferenceForm = this.formbuilder.group({
       ico_url$: [of(this.default_ico)],
-      has_avatar: [false],
       accept_mailing: [true],
       city: [''],
       email: [{ value: '', disabled: true }],
@@ -57,7 +57,6 @@ export class GetMemberSettingsComponent {
 
     // Sauvegarder les valeurs initiales
     this.initialSettings = {
-      has_avatar: this.member.has_avatar ?? false,
       accept_mailing: this.member.accept_mailing ?? true,
       city: this.member.city ?? '',
       email: this.member.email ?? '',
@@ -65,20 +64,21 @@ export class GetMemberSettingsComponent {
     };
 
     this.preferenceForm.patchValue({
-      ico_url$: this.memberSettingsService.getAvatarUrl(this.member),
       accept_mailing: this.member.accept_mailing ?? true,
-      has_avatar: this.member.has_avatar ?? false,
       city: this.member.city ?? '',
       email: this.member.email ?? '',
       phone_one: this.member.phone_one ?? '',
     });
 
+    this.memberSettingsService.getAvatarUrl(this.member).subscribe((avatarUrl) => {
+      this.avatarFileExists = !!avatarUrl;
+      this.preferenceForm.patchValue({
+        ico_url$: of(avatarUrl)
+      });
+    });
 
   };
 
-  get has_avatar() {
-    return this.preferenceForm.get('has_avatar')?.value;
-  }
   get ico_url$() {
     return this.preferenceForm.get('ico_url$')?.value;
   }
@@ -86,7 +86,6 @@ export class GetMemberSettingsComponent {
   save() {
     const formValue = this.preferenceForm.getRawValue();
     let new_preference: Member_settings = {
-      has_avatar: formValue.has_avatar,
       accept_mailing: formValue.accept_mailing,
       city: formValue.city ?? '',
       email: formValue.email ?? '',
@@ -112,8 +111,8 @@ export class GetMemberSettingsComponent {
         img.onload = () => {
           // Resize and convert to base64
           this.base64_ico = this.resize_to_avatar(img, 64);
+          this.avatarFileExists = true;
           this.preferenceForm.patchValue({ ico_url$: of(this.base64_ico) });
-          this.preferenceForm.patchValue({ has_avatar: true });
         };
         img.src = e.target.result;
       };
@@ -123,10 +122,8 @@ export class GetMemberSettingsComponent {
 
   resetIco() {
     this.base64_ico = '';
+    this.avatarFileExists = false;
     this.delete_avatar_file();
-    this.preferenceForm.patchValue({
-      has_avatar: false
-    });
 
   }
 
@@ -167,6 +164,7 @@ export class GetMemberSettingsComponent {
   async delete_avatar_file() {
     const ico_file_name = this.full_name + '.png';
     await this.fileService.delete_file(this.avatar_path + ico_file_name).then(() => {
+      this.memberSettingsService.set_settingsChange();
       this.toastService.showSuccess(` préférences de ${this.full_name}`, 'Photo supprimée');
     });
   }
@@ -175,6 +173,7 @@ export class GetMemberSettingsComponent {
     const ico_blob = this.imageService.base64ToBlob(this.base64_ico);
     const ico_file = new File([ico_blob], `${this.full_name}.png`, { type: 'image/png' });
     await this.fileService.upload_file(ico_file, 'portraits/').then(() => {
+      this.memberSettingsService.set_settingsChange();
       this.toastService.showSuccess(` préférences de ${this.full_name}`, 'Photo mise à jour');
     });
   }

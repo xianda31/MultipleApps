@@ -202,7 +202,13 @@ export class FeesCollectorService {
           if (gamer.is_member) {
             let credit = solvencies.get(gamer.license) ?? 0;
             gamer.game_credits = credit;
-            gamer.photo_url$ = this.membersSettingsService.getAvatarUrl(this.membersService.getMemberbyLicense(gamer.license)!);
+            const member = this.membersService.getMemberbyLicense(gamer.license);
+            if (!member) {
+              console.warn(`[FeesCollectorService] Member flagged as member but not found for license ${gamer.license}`);
+              gamer.photo_url$ = null;
+              return;
+            }
+            gamer.photo_url$ = this.membersSettingsService.getAvatarUrl(member);
           }
         });
 

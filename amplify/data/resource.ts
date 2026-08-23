@@ -173,7 +173,6 @@ const schema = a.schema({
     license_status: a.string(),
     license_taken_at: a.string(),
     register_date: a.string(),
-    has_avatar: a.boolean(),
     accept_mailing: a.boolean(),
     membership_date: a.string(),
     person_id: a.integer(),

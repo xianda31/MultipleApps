@@ -92,7 +92,6 @@ export class MembersService {
       license_status: '',
       license_taken_at: '',
       membership_date: '',
-      has_avatar: false,
       accept_mailing: false
     } as Member;
   }

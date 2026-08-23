@@ -30,14 +30,10 @@ private settings_change$: BehaviorSubject<number> = new BehaviorSubject<number>(
   // utilities functions (once members are loaded)
 
   getAvatarUrl(member: Member): Observable<string> {
-    if (!member || !member.has_avatar) {
-      return of('');
-    }
-    
     const avatar_path = S3_ROOT_FOLDERS.PORTRAITS + '/';
     const avatar_file = avatar_path + this.membersService.full_name(member) + '.png';
 
-    return this.fileService.getPresignedUrl$(avatar_file, false, false).pipe(
+    return this.fileService.getPresignedUrl$(avatar_file, true, true).pipe(
       catchError((error) => {
         // Silencieusement ignorer l'erreur et retourner une chaîne vide
         // console.warn(`Avatar non trouvé pour ${this.membersService.full_name(member)}`);
@@ -62,18 +58,16 @@ private settings_change$: BehaviorSubject<number> = new BehaviorSubject<number>(
       modalRef.result.then((settings) => {
         if (settings) {
           // Les settings retournés contiennent les nouvelles valeurs
-          const settings_changed = (settings.has_avatar !== member.has_avatar) ||
-            (settings.accept_mailing !== member.accept_mailing) ||
+          const settings_changed = (settings.accept_mailing !== member.accept_mailing) ||
             (settings.city !== member.city) ||
             (settings.email !== member.email) ||
             (settings.phone_one !== member.phone_one);
 
           console.log('Settings returned from modal:', settings);
-          console.log('Current member settings:', { has_avatar: member.has_avatar, accept_mailing: member.accept_mailing, city: member.city, email: member.email, phone_one: member.phone_one });
+          console.log('Current member settings:', { accept_mailing: member.accept_mailing, city: member.city, email: member.email, phone_one: member.phone_one });
           console.log('Settings changed?', settings_changed);
 
           if (settings_changed) {
-            member.has_avatar = settings.has_avatar;
             member.accept_mailing = settings.accept_mailing;
             member.city = settings.city;
             member.email = settings.email;

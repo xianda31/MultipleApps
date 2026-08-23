@@ -193,7 +193,6 @@ export class DBhandler {
     'license_status',
     'license_taken_at',
     'register_date',
-    'has_avatar',
     'accept_mailing',
     'membership_date',
     'person_id',
